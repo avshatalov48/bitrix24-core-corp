@@ -235,6 +235,32 @@ class ItemService implements Errorable
 		}
 	}
 
+	/**
+	 * @param array $sourceIds
+	 * @return ItemForm[]
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getItemsBySourceIds(array $sourceIds): array
+	{
+		$items = [];
+
+		$queryObject = ItemTable::getList([
+			'filter' => ['SOURCE_ID' => $sourceIds]
+		]);
+		while ($itemData = $queryObject->fetch())
+		{
+			$itemForm = new ItemForm();
+
+			$itemForm->fillFromDatabase($itemData);
+
+			$items[] = $itemForm;
+		}
+
+		return $items;
+	}
+
 	public function getItemsStoryPointsBySourceId(array $sourceIds): array
 	{
 		try
@@ -294,67 +320,30 @@ class ItemService implements Errorable
 		return new ItemForm();
 	}
 
-	public function getItemIdsBySourceIds(
-		array $sourceIds,
-		int $entityId = 0,
-		PageNavigation $nav = null,
-		bool $active = false
-	): array
+	public function getItemIdsBySourceIds(array $sourceIds, array $entityIds = []): array
 	{
 		$itemIds = [];
 
-		try
+		$filter = ['SOURCE_ID' => $sourceIds];
+		if ($entityIds)
 		{
-			$filter = ['SOURCE_ID' => $sourceIds];
-			if ($entityId)
-			{
-				$filter['ENTITY_ID'] = $entityId;
-			}
-			if ($active)
-			{
-				$filter['=ACTIVE'] = 'Y';
-			}
-
-			$queryParams = [
-				'select' => ['ID'],
-				'filter' => $filter,
-				'order' => [
-					'SORT' => 'ASC',
-					'ID' => 'DESC',
-				],
-			];
-
-			if ($nav)
-			{
-				$queryParams['offset'] = $nav->getOffset();
-				$queryParams['limit'] = $nav->getLimit() + 1;
-			}
-
-			$queryObject = ItemTable::getList($queryParams);
-
-			$n = 0;
-			while ($itemData = $queryObject->fetch())
-			{
-				$n++;
-
-				if ($nav && $n > $nav->getPageSize())
-				{
-					break;
-				}
-
-				$itemIds[] = $itemData['ID'];
-			}
-
-			if ($nav)
-			{
-				$nav->setRecordCount($nav->getOffset() + $n);
-			}
+			$filter['ENTITY_ID'] = $entityIds;
 		}
-		catch (\Exception $exception)
+
+		$queryParams = [
+			'select' => ['ID'],
+			'filter' => $filter,
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'DESC',
+			],
+		];
+
+		$queryObject = ItemTable::getList($queryParams);
+
+		while ($itemData = $queryObject->fetch())
 		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ITEM)
-			);
+			$itemIds[] = $itemData['ID'];
 		}
 
 		return $itemIds;
@@ -441,24 +430,60 @@ class ItemService implements Errorable
 		}
 	}
 
+	/**
+	 * Moves up the items in entity.
+	 *
+	 * @param array $itemIds Items list id.
+	 * @param int $entityId Entity id.
+	 * @param PushService|null $pushService For push.
+	 * @return void
+	 */
 	public function moveItemsToEntity(array $itemIds, int $entityId, PushService $pushService = null): void
 	{
+		if (empty($itemIds))
+		{
+			return;
+		}
+
 		try
 		{
-			foreach ($itemIds as $itemId)
+			$sortInfo = [];
+
+			foreach ($itemIds as $key => $itemId)
 			{
-				$item = new ItemForm();
-
-				$item->setId($itemId);
-				$item->setEntityId($entityId);
-
-				$this->changeItem($item, $pushService);
+				$sortInfo[$itemId] = [
+					'sort' => $key + 1,
+					'entityId' => $entityId,
+					'updatedItemId' => $itemId,
+				];
 			}
+
+			$limit = count($itemIds);
+
+			$queryObject = ItemTable::getList([
+				'select' => ['ID', 'SORT'],
+				'filter' => ['ENTITY_ID' => $entityId],
+				'order' => ['SORT' => 'ASC', 'ID' => 'DESC'],
+				'limit' => $limit,
+			]);
+			while ($itemData = $queryObject->fetch())
+			{
+				$sortInfo[$itemData['ID']] = [
+					'sort' => $itemData['SORT'] + $limit,
+					'entityId' => $entityId,
+					'updatedItemId' => $itemData['ID'],
+				];
+			}
+
+			$this->sortItems($sortInfo, $pushService);
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_MOVE_ITEM)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_MOVE_ITEM
+				)
 			);
 		}
 	}
@@ -556,28 +581,32 @@ class ItemService implements Errorable
 		{
 			$itemIds = [];
 			$sortWhens = [];
+			$entityWhens = [];
 
 			$updatedItems = [];
 
 			foreach($sortInfo as $itemId => $info)
 			{
-				$itemId = (is_numeric($itemId) ? (int)$itemId : 0);
-				$sort = (is_numeric($info['sort']) ? (int)$info['sort'] : 0);
-				$entityId = (is_numeric($info['entityId']) ? (int)$info['entityId'] : 0);
+				$itemId = (is_numeric($itemId) ? (int) $itemId : 0);
+				$sort = (is_numeric($info['sort']) ? (int) $info['sort'] : 0);
+				$entityId = (is_numeric($info['entityId']) ? (int) $info['entityId'] : 0);
+				$updatedItemId = (is_numeric($info['updatedItemId']) ? (int) $info['updatedItemId'] : 0);
+				$tmpId = (is_string($info['tmpId']) ? $info['tmpId'] : '');
+
 				if ($itemId)
 				{
 					$itemIds[] = $itemId;
-					$sortWhens[] = 'WHEN ID = '.$itemId.' THEN '.$sort;
-					$updatedItemId = (is_numeric($info['updatedItemId']) ? (int)$info['updatedItemId'] : 0);
+					$sortWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $sort;
+
 					if ($updatedItemId)
 					{
-						$tmpId = (is_string($info['tmpId']) ? $info['tmpId'] : '');
 						$updatedItems[$itemId] = [
 							'sort' => $sort,
 							'tmpId' => $tmpId,
 						];
 						if ($entityId)
 						{
+							$entityWhens[] = 'WHEN ID = ' . $itemId . ' THEN ' . $entityId;
 							$updatedItems[$itemId]['entityId'] = $entityId;
 						}
 					}
@@ -586,9 +615,16 @@ class ItemService implements Errorable
 
 			if ($itemIds)
 			{
-				$data = [
-					'SORT' => new SqlExpression('(CASE '.implode(' ', $sortWhens).' END)')
-				];
+				$data = [];
+				if ($sortWhens)
+				{
+					$data['SORT'] = new SqlExpression('(CASE ' . implode(' ', $sortWhens) . ' END)');
+				}
+				if ($entityWhens && count($entityWhens) === count($sortWhens))
+				{
+					$data['ENTITY_ID'] = new SqlExpression('(CASE ' . implode(' ', $entityWhens) . ' END)');
+				}
+
 				ItemTable::updateMulti($itemIds, $data);
 			}
 
@@ -600,7 +636,10 @@ class ItemService implements Errorable
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHANGE_SORT)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_CHANGE_SORT
+				)
 			);
 		}
 	}
@@ -702,72 +741,6 @@ class ItemService implements Errorable
 			return (int) $itemData['SOURCE_ID'];
 		}
 		return 0;
-	}
-
-	/**
-	 * Returns a hierarchy of children by a parent entity id.
-	 *
-	 * @param EntityForm $entity Entity object.
-	 * @param PageNavigation|null $nav If you need to navigation.
-	 * @param array $filteredSourceIds If you need to get filtered items.
-	 * @return array ItemForm[]
-	 */
-	public function getHierarchyChildItems(
-		EntityForm $entity,
-		PageNavigation $nav = null,
-		array $filteredSourceIds = []
-	): array
-	{
-		$queryParams = [
-			'select' => ['*'],
-			'filter' => [
-				'ENTITY_ID'=> $entity->getId(),
-				'=ACTIVE' => 'Y',
-			],
-			'order' => [
-				'SORT' => 'ASC',
-				'ID' => 'DESC',
-			],
-		];
-
-		if (!empty($filteredSourceIds))
-		{
-			$queryParams['filter']['SOURCE_ID'] = $filteredSourceIds;
-		}
-
-		if ($nav)
-		{
-			$queryParams['offset'] = $nav->getOffset();
-			$queryParams['limit'] = $nav->getLimit() + 1;
-		}
-
-		$queryObject = ItemTable::getList($queryParams);
-
-		$tree = [];
-
-		$n = 0;
-		while ($item = $queryObject->fetch())
-		{
-			$n++;
-
-			if ($nav && $n > $nav->getPageSize())
-			{
-				break;
-			}
-
-			$itemForm = new ItemForm();
-
-			$itemForm->fillFromDatabase($item);
-
-			$tree[] = $itemForm;
-		}
-
-		if ($nav)
-		{
-			$nav->setRecordCount($nav->getOffset() + $n);
-		}
-
-		return $tree;
 	}
 
 	public function getSumStoryPointsBySourceIds(array $sourceIds): float

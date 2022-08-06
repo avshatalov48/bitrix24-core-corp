@@ -10,7 +10,6 @@ import TileLayerAuth from '../leaflet/src/tilelayerauth';
 import TokenContainer from './tokencontainer';
 import NominatimResponseConverter from './responseconverters/nominatimresponseconverter';
 import AutocompleteResponseConverter from './responseconverters/autocompleteresponseconverter';
-import AutocompleteRequester from './requesters/autocomplerequester'
 
 export type OSMFactoryProps = {
 	languageId: string,
@@ -58,20 +57,12 @@ export default class OSMFactory
 
 		const autocompleteResponseConverter = new AutocompleteResponseConverter({languageId: params.languageId});
 
-		const autocompleteRequester = new AutocompleteRequester({
-			languageId: params.languageId,
-			sourceLanguageId: params.sourceLanguageId,
-			serviceUrl: params.serviceUrl,
-			hostName: params.hostName,
-			tokenContainer: tokenContainer,
-			responseConverter: autocompleteResponseConverter,
-			autocompleteReplacements: params.autocompleteReplacements
-		});
-
 		osmParams.autocompleteService = new AutocompleteService({
 			languageId: params.languageId,
 			autocompletePromptsCount: params.autocompletePromptsCount || 7,
-			autocompleteRequester: autocompleteRequester
+			sourceLanguageId: params.sourceLanguageId,
+			responseConverter: autocompleteResponseConverter,
+			autocompleteReplacements: params.autocompleteReplacements
 		});
 
 		const geocodingService = new GeocodingService({

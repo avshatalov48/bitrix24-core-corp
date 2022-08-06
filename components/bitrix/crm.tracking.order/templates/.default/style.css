@@ -1,6 +1,7 @@
 .crm-analytics-source-block {
 	background: #fff;
 	padding: 23px 22px 29px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-analytics-source-header {

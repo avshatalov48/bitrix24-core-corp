@@ -27,18 +27,7 @@ export class SchemeSelector
 			labelId: string,
 		}
 	) {
-		if (converter instanceof Converter)
-		{
-			this.#converter = converter;
-		}
-		else
-		{
-			console.error(
-				'Converter is invalid in SchemeSelector constructor. Expected instance of Converter, got ' + (typeof converter)
-			);
-		}
-
-
+		this.#converter = converter;
 		this.#entityId = Number(params.entityId);
 		this.#container = document.getElementById(params.containerId);
 		this.#menuButton = document.getElementById(params.buttonId);

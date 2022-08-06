@@ -8,6 +8,7 @@
 namespace Bitrix\Crm\Binding;
 
 use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -51,6 +52,7 @@ class ContactCompanyTable extends Entity\DataManager
 			'SORT' => array('data_type' => 'integer', 'default_value' => 0),
 			'ROLE_ID' => array('data_type' => 'integer', 'default_value' => 0),
 			'IS_PRIMARY' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'N'),
+			(new Reference('CONTACT', ContactTable::class, Join::on('this.CONTACT_ID', 'ref.ID'))),
 			(new Reference('COMPANY', CompanyTable::class, Join::on('this.COMPANY_ID', 'ref.ID'))),
 		);
 	}

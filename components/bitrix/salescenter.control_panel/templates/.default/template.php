@@ -24,6 +24,7 @@ Extension::load([
 	'popup',
 	'ajax',
 	'applayout',
+	'ui.design-tokens',
 ]);
 
 \Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();

@@ -1,8 +1,11 @@
-<?
+<?php
 
 use Bitrix\Crm\Ads\AdsAudience;
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /*
  * Use for inheritance
@@ -89,6 +92,11 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$clientId = $this->clientId;
+		$accountId = $this->accountId;
+		$audienceId = $this->audienceId;
+
+		$this->logDebug($clientId, $accountId, $audienceId);
 
 		$documentId = $this->GetDocumentId();
 		//$documentId[0] - crm
@@ -113,28 +121,27 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 			$isError = true;
 		}
 
-		$provider = static::getAdsProvider($this->clientId);
+		$provider = static::getAdsProvider($clientId);
 		if (!$provider)
 		{
 			$isError = true;
 		}
 
-		if (!$this->accountId && $provider && $provider['IS_SUPPORT_ACCOUNT'])
+		if (!$accountId && $provider && $provider['IS_SUPPORT_ACCOUNT'])
 		{
 			$isError = true;
 		}
 
 		$audienceList = array();
-		if ($this->audienceId)
+		if ($audienceId)
 		{
 			$audienceList[] = array(
-				'id' => $this->audienceId,
+				'id' => $audienceId,
 				'contactType' => null
 			);
 		}
 		if ($this->audiencePhoneId)
 		{
-
 			$audienceList[] = array(
 				'id' => $this->audiencePhoneId,
 				'contactType' => \Bitrix\Seo\Retargeting\Audience::ENUM_CONTACT_TYPE_PHONE
@@ -158,8 +165,8 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 			foreach ($audienceList as $audience)
 			{
 				$config = new \Bitrix\Seo\Retargeting\AdsAudienceConfig();
-				$config->clientId = $this->clientId;
-				$config->accountId = $this->accountId;
+				$config->clientId = $clientId;
+				$config->accountId = $accountId;
 				$config->audienceId = $audience['id'];
 				$config->contactType = $audience['contactType'];
 				$config->type = static::getAdsType();
@@ -231,44 +238,7 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		));
 
 
-		$dialog->setMap(array(
-			'clientId' => array(
-				'Name' => 'Client id',
-				'FieldName' => 'CLIENT_ID',
-				'Type' => 'string',
-				'Required' => false
-			),
-			'accountId' => array(
-				'Name' => 'Account id',
-				'FieldName' => 'ACCOUNT_ID',
-				'Type' => 'string',
-				'Required' => false
-			),
-			'audienceId' => array(
-				'Name' => 'Audience id',
-				'FieldName' => 'AUDIENCE_ID',
-				'Type' => 'string',
-				'Required' => false
-			),
-			'audiencePhoneId' => array(
-				'Name' => 'Audience id for phones',
-				'FieldName' => 'AUDIENCE_PHONE_ID',
-				'Type' => 'string',
-				'Required' => false
-			),
-			'audienceEmailId' => array(
-				'Name' => 'Audience id for emails',
-				'FieldName' => 'AUDIENCE_EMAIL_ID',
-				'Type' => 'string',
-				'Required' => false
-			),
-			'autoRemoveDayNumber' => array(
-				'Name' => 'Days auto remove from audience',
-				'FieldName' => 'AUTO_REMOVE_DAY_NUMBER',
-				'Type' => 'string',
-				'Required' => false
-			),
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		$provider = static::getAdsProvider($dialog->getCurrentValue('CLIENT_ID'));
 
@@ -297,6 +267,48 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		));
 
 		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'clientId' => [
+				'Name' => GetMessage('CRM_CREATE_ADS_CLIENT_ID'),
+				'FieldName' => 'CLIENT_ID',
+				'Type' => 'string',
+				'Required' => false
+			],
+			'accountId' => [
+				'Name' => GetMessage('CRM_CREATE_ADS_ACCOUNT_ID'),
+				'FieldName' => 'ACCOUNT_ID',
+				'Type' => 'string',
+				'Required' => false
+			],
+			'audienceId' => [
+				'Name' => GetMessage('CRM_CREATE_ADS_AUDIENCE_ID'),
+				'FieldName' => 'AUDIENCE_ID',
+				'Type' => 'string',
+				'Required' => false
+			],
+			'audiencePhoneId' => [
+				'Name' => 'Audience id for phones',
+				'FieldName' => 'AUDIENCE_PHONE_ID',
+				'Type' => 'string',
+				'Required' => false
+			],
+			'audienceEmailId' => [
+				'Name' => 'Audience id for emails',
+				'FieldName' => 'AUDIENCE_EMAIL_ID',
+				'Type' => 'string',
+				'Required' => false
+			],
+			'autoRemoveDayNumber' => [
+				'Name' => 'Days auto remove from audience',
+				'FieldName' => 'AUTO_REMOVE_DAY_NUMBER',
+				'Type' => 'string',
+				'Required' => false
+			],
+		];
 	}
 
 	/*
@@ -332,22 +344,68 @@ class CBPCrmCreateAdsActivityVk extends CBPActivity
 		return true;
 	}
 
-	/*
-	 * Request router
-	 *
-	 * */
-	public static function getAjaxResponse($request)
+	private function logDebug($clientId, $accountId, $audienceId)
 	{
-		$answer = array(
-			'data' => array(),
-			'errors' => array(),
-		);
+		if (!$this->workflow->isDebug())
+		{
+			return;
+		}
 
-		return $answer;
+		if ($clientId && $accountId && $audienceId)
+		{
+			$audienceId = $this->getAudienceName($clientId, $accountId, $audienceId);
+		}
+
+		if ($clientId)
+		{
+			$clientId = $this->getProfileName($clientId);
+		}
+
+		$map = $this->getDebugInfo([
+			'clientId' => $clientId,
+			'audienceId' => $audienceId,
+		]);
+
+		$this->writeDebugInfo([
+			'clientId' => $map['clientId'],
+			'accountId' => $map['accountId'],
+			'audienceId' => $map['audienceId'],
+		]);
 	}
 
-	public function useForcedTracking()
+	private function getProfileName($clientId)
 	{
-		return true;
+		$service = AdsAudience::getService();
+		$service->setClientId($clientId);
+
+		$authAdapter = $service::getAuthAdapter(static::getAdsType());
+		$authAdapter->setService($service);
+
+		$account = $service::getAccount(static::getAdsType());
+		$account->setService($service);
+		$account->getRequest()->setAuthAdapter($authAdapter);
+
+		$profile = $account->getProfileCached();
+
+		return $profile ? $profile['NAME'] : $clientId;
+	}
+
+	private function getAudienceName($clientId, $accountId, $audienceId)
+	{
+		$service = AdsAudience::getService();
+		$service->setClientId($clientId);
+
+		$audience = $service::getAudience(static::getAdsType());
+		$audience->setService($service);
+		$audience->setAccountId($accountId);
+
+		$item = $audience->getById($audienceId);
+
+		if ($item)
+		{
+			return $item['NAME'] ?: $item['ID'];
+		}
+
+		return $audienceId;
 	}
 }

@@ -3,7 +3,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
 use Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load(array("ui.buttons", "ui.alerts"));
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.alerts", "ui.fonts.opensans"]);
 
 /**
  * @var array $arParams

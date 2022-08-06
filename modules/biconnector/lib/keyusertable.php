@@ -115,7 +115,7 @@ class KeyUserTable extends DataManager
 		$where = \Bitrix\Main\Entity\Query::buildFilterSql($entity, $filter);
 		if ($where <> '')
 		{
-			$sql = "DELETE FROM {$sqlTableName} WHERE ".$where;
+			$sql = 'DELETE FROM ' . $sqlTableName . ' WHERE ' . $where;
 			$entity->getConnection()->queryExecute($sql);
 		}
 	}

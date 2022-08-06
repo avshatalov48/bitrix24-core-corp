@@ -38,6 +38,9 @@
 	padding: 10px 10px 0;
 	height: 100%;
 	background: #37404b;
+	border-radius: var(--popup-window-border-radius);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 	-webkit-box-orient: vertical;
 	-webkit-box-direction: normal;
 	align-content: center;

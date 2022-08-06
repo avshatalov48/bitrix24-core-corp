@@ -57,8 +57,8 @@
 
 /*Buttons*/
 .bx-otp-info-btn{
-	font-family:'Open Sans', Helvetica, Arial, sans-serif;
-	font-weight:bold;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	display:inline-block;
 	-webkit-box-sizing:border-box;
 	-moz-box-sizing:border-box;

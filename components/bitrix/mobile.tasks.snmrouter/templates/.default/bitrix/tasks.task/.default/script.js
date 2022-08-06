@@ -987,7 +987,10 @@
 					}
 					else if (response.errors && response.errors.length)
 					{
-
+						if (response.errors[0].message)
+						{
+							window.app.alert({text : response.errors[0].message, title : BX.message("MB_TASKS_TASK_ERROR_TITLE")});
+						}
 					}
 					else
 					{

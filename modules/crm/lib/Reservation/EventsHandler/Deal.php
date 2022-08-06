@@ -5,8 +5,10 @@ namespace Bitrix\Crm\Reservation\EventsHandler;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Catalog;
+use Bitrix\Crm\Service\Sale\BasketService;
 use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Sale;
+use CCrmOwnerType;
 use CCrmSaleHelper;
 
 Main\Localization\Loc::loadLanguageFile(__FILE__);
@@ -119,6 +121,7 @@ final class Deal
 		$entityBuilder->setOwnerId($dealId);
 
 		$dealProducts = self::getDealProducts($dealId);
+		$dealProductsToBasketItems = BasketService::getInstance()->getRowIdsToBasketIdsByEntity(CCrmOwnerType::Deal, $dealId);
 
 		$basketReservation = new Crm\Reservation\BasketReservation();
 		$basketReservation->addProducts($dealProducts);
@@ -130,7 +133,7 @@ final class Deal
 			$reservedProduct = $reservedProducts[$product['ID']] ?? null;
 			$storeId = $reservedProduct ? $reservedProduct['STORE_ID'] : $defaultStore;
 
-			$xmlId = null;
+			$basketItemId = null;
 			if ($reservedProduct)
 			{
 				$basketReservationData = Sale\Reservation\Internals\BasketReservationTable::getById(
@@ -138,13 +141,22 @@ final class Deal
 				)->fetch();
 				if ($basketReservationData)
 				{
-					$basketItem = Sale\Repository\BasketItemRepository::getInstance()->getById(
-						$basketReservationData['BASKET_ID']
-					);
-					if ($basketItem)
-					{
-						$xmlId = $basketItem->getField('XML_ID');
-					}
+					$basketItemId = $basketReservationData['BASKET_ID'];
+				}
+			}
+
+			if (!$basketItemId && isset($dealProductsToBasketItems[$product['ID']]))
+			{
+				$basketItemId = $dealProductsToBasketItems[$product['ID']];
+			}
+
+			$xmlId = null;
+			if ($basketItemId)
+			{
+				$basketItem = Sale\Repository\BasketItemRepository::getInstance()->getById($basketItemId);
+				if ($basketItem)
+				{
+					$xmlId = $basketItem->getField('XML_ID');
 				}
 			}
 

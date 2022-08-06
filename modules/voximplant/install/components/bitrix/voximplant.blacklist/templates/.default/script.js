@@ -81,8 +81,12 @@
 
 		deleteNumber: function (numberId)
 		{
-			BX.Voximplant.confirm(" ", BX.message("BLACKLIST_DELETE_CONFIRM")).then(function()
+			BX.Voximplant.confirm(" ", BX.message("BLACKLIST_DELETE_CONFIRM")).then(function(result)
 			{
+				if (!result)
+				{
+					return;
+				}
 				BX.ajax.runComponentAction('bitrix:voximplant.blacklist', 'deleteNumber', {
 					mode: "class",
 					data: {
@@ -194,7 +198,7 @@
 							BX.create("label", {
 								attrs: {for: "voximplant-blacklist-settings-register-crm"},
 								props: {className: "voximplant-blacklist-label"},
-								text: BX.message("BLACKLIST_REGISTER_IN_CRM")
+								text: BX.message("BLACKLIST_REGISTER_IN_CRM_2")
 							})
 						]
 					}),
@@ -320,16 +324,14 @@
 					onSliderCloseComplete: this.onSliderCloseComplete.bind(this),
 					onDestroy: this.onSliderDestroy.bind(this)
 				},
-				contentCallback: function(slider) {
-					var promise = new BX.Promise();
+				contentCallback: (slider) => {
 					this.slider = slider;
-
-					setTimeout(function() {
-						promise.resolve(this.render());
-					}.bind(this), 0);
-
-					return promise;
-				}.bind(this)
+					return new Promise((resolve) => {
+						top.BX.loadExt('voximplant.common').then(() => {
+							resolve(this.render());
+						})
+					})
+				}
 			});
 		},
 

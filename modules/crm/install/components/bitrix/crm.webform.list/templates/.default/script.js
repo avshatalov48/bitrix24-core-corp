@@ -243,7 +243,7 @@
 	  }, {
 	    key: "showSiteCode",
 	    value: function showSiteCode(id) {
-	      BX.Crm.Form.Embed.open(id);
+	      BX.Crm.Form.Embed.openSlider(id);
 	    }
 	  }, {
 	    key: "activateList",

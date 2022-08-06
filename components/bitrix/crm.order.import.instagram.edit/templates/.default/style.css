@@ -10,6 +10,7 @@
 .crm-order-instagram-edit-block {
 	background: #fff;
 	padding: 23px 20px 28px 24px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-order-instagram-edit-block + .crm-order-instagram-edit-block {
@@ -94,6 +95,7 @@
 	background: #def6fe;
 	padding: 8px 13px 8px 15px;
 	margin: 18px 0 5px;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .crm-order-instagram-edit-connect + .crm-order-instagram-edit-connect {

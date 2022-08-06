@@ -24,6 +24,7 @@ define(
 			'REBUILD_SECURITY_ATTRS',
 			'BACKGROUND_INDEX_REBUILD',
 			'BACKGROUND_MERGE',
+			'BACKGROUND_DUP_VOL_DATA_PREPARE',
 		],
 		true
 	)
@@ -54,8 +55,10 @@ if (!CModule::IncludeModule('crm'))
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Duplicate\Background\CompanyIndexRebuild;
 use Bitrix\Crm\Agent\Duplicate\Background\CompanyMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
+use Bitrix\Crm\Integrity\Volatile;
 
 $userPerms = CCrmPerms::GetCurrentUserPermissions();
 if(!CCrmPerms::IsAuthorized())
@@ -993,6 +996,57 @@ elseif ($action === 'BACKGROUND_MERGE')
 		[
 			'STATUS' => 'PROGRESS',
 			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['FOUND_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}
+elseif ($action === 'BACKGROUND_DUP_VOL_DATA_PREPARE')
+{
+	$isNeedToShowDupVolDataPrepare = false;
+	$typeInfo = Volatile\TypeInfo::getInstance()->getIdsByEntityTypes([CCrmOwnerType::Company]);
+	$stateMap = [];
+	if (isset($typeInfo[CCrmOwnerType::Company]))
+	{
+		foreach ($typeInfo[CCrmOwnerType::Company] as $id)
+		{
+			$agent = IndexRebuild::getInstance($id);
+			if ($agent->isActive())
+			{
+				$state = $agent->state()->getData();
+				/** @noinspection PhpClassConstantAccessedViaChildClassInspection */
+				if (isset($state['STATUS']) && $state['STATUS'] === IndexRebuild::STATUS_RUNNING)
+				{
+					$stateMap[$id] = $state;
+					$isNeedToShowDupVolDataPrepare = true;
+				}
+			}
+		}
+	}
+
+	if(!$isNeedToShowDupVolDataPrepare)
+	{
+		__CrmCompanyListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$percentageSum = 0;
+	$percentageCount = 0;
+	foreach ($stateMap as $state)
+	{
+		$percentage = (int)round(
+			100 * $state['PROGRESS_VARS']['PROCESSED_ITEMS'] / $state['PROGRESS_VARS']['TOTAL_ITEMS']
+		);
+		$percentage = ($percentage > 100) ? 100 : $percentage;
+		$percentageSum += $percentage;
+		$percentageCount++;
+	}
+
+	$percentage = (int)round($percentageSum / $percentageCount);
+	$percentage = ($percentage > 100) ? 100 : $percentage;
+
+	__CrmCompanyListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $percentage,
 			'TOTAL_ITEMS' => 100,
 		]
 	);

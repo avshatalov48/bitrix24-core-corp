@@ -1,8 +1,11 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-class CBPCrmEventAddActivity
-	extends CBPActivity
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+class CBPCrmEventAddActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
@@ -41,6 +44,12 @@ class CBPCrmEventAddActivity
 			'USER_ID' => $userId ?: 0,
 		);
 		$CCrmEvent = new CCrmEvent();
+
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo());
+		}
+
 		if (!$CCrmEvent->Add($arFields, false))
 		{
 			global $APPLICATION;
@@ -85,27 +94,7 @@ class CBPCrmEventAddActivity
 			'siteId' => $siteId
 		));
 
-		$dialog->setMap(array(
-			'EventType' => array(
-				'Name' => GetMessage('BPEAA_EVENT_TYPE'),
-				'FieldName' => 'event_type',
-				'Type' => 'select',
-				'Required' => true,
-				'Options' => CCrmStatus::GetStatusList('EVENT_TYPE'),
-			),
-			'EventText' => array(
-				'Name' => GetMessage('BPEAA_EVENT_TEXT'),
-				'Description' => GetMessage('BPEAA_EVENT_TEXT'),
-				'FieldName' => 'event_text',
-				'Type' => 'text',
-				'Required' => true,
-			),
-			'EventUser' => [
-				'Name' => GetMessage('BPEAA_EVENT_USER'),
-				'FieldName' => 'event_user',
-				'Type' => 'user'
-			]
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -135,5 +124,48 @@ class CBPCrmEventAddActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'EventType' => [
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPEAA_EVENT_TYPE'),
+				'FieldName' => 'event_type',
+				'Type' => 'select',
+				'Required' => true,
+				'Options' => CCrmStatus::GetStatusList('EVENT_TYPE'),
+			],
+			'EventText' => [
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPEAA_EVENT_TEXT'),
+				'Description' => \Bitrix\Main\Localization\Loc::getMessage('BPEAA_EVENT_TEXT'),
+				'FieldName' => 'event_text',
+				'Type' => 'text',
+				'Required' => true,
+			],
+			'EventUser' => [
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPEAA_EVENT_USER'),
+				'FieldName' => 'event_user',
+				'Type' => 'user'
+			]
+		];
+	}
+
+	protected function getDebugInfo(array $values = [] , array $map = []): array
+	{
+		$onlyDesignerFields = ['EventType'];
+
+		if (count($map) <= 0)
+		{
+			$map = static::getPropertiesMap($this->getDocumentType());
+		}
+
+		// temporary
+		foreach ($onlyDesignerFields as $key)
+		{
+			unset($map[$key]);
+		}
+
+		return parent::getDebugInfo($values, $map);
 	}
 }

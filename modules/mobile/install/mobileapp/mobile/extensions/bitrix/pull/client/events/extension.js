@@ -387,7 +387,7 @@
 				type = handler.getSubscriptionType();
 			}
 
-			this.subscribe({
+			return this.subscribe({
 				type: type,
 				moduleId: handler.getModuleId(),
 				callback: function(data)

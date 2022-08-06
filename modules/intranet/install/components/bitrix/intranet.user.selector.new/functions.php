@@ -234,10 +234,6 @@ class CIntranetUserSelectorHelper
 		if (!isset($arLastUsers[$cacheKey]))
 		{
 			$arSubDeps = CIntranetUtils::getSubordinateDepartments($USER->GetID(), true);
-			if (!class_exists('CUserOptions'))
-			{
-				include_once($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/main/classes/" . $GLOBALS['DBType'] . "/favorites.php");
-			}
 
 			$arLastSelected = CUserOptions::GetOption("intranet", "user_search", array());
 			if (is_array($arLastSelected) && $arLastSelected['last_selected'] <> '')

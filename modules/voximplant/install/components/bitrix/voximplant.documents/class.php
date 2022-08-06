@@ -39,6 +39,10 @@ class CVoxImplantComponentDocuments extends CBitrixComponent
 				unset($this->arResult['DOCUMENTS'][$key]['REGION_NAME']);
 			}
 		}
+		else
+		{
+			$this->arResult['DOCUMENTS'] = [];
+		}
 
 		$documents->setFilledByUser($this->getCurrentUserId());
 

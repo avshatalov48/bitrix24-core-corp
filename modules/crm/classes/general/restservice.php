@@ -25,6 +25,7 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Security\EntityAuthorization;
@@ -85,6 +86,12 @@ final class CCrmRestService extends IRestService
 		'crm.lead.delete',
 		'crm.lead.productrows.set',
 		'crm.lead.productrows.get',
+		'crm.lead.contact.fields',
+		'crm.lead.contact.add',
+		'crm.lead.contact.delete',
+		'crm.lead.contact.items.get',
+		'crm.lead.contact.items.set',
+		'crm.lead.contact.items.delete',
 		//endregion
 		//region Deal
 		'crm.deal.fields',
@@ -1234,10 +1241,8 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 			$systemFields = [
 				'DATE_CREATE',
 				'DATE_MODIFY',
-				'MOVED_TIME',
 				'CREATED_BY_ID',
 				'MODIFY_BY_ID',
-				'MOVED_BY_ID',
 			];
 
 			foreach ($systemFields as $systemField)
@@ -5749,6 +5754,14 @@ class CCrmLeadRestProxy extends CCrmRestProxyBase
 				return $this->setProductRows($ID, $rows);
 			}
 		}
+		elseif($name === 'CONTACT')
+		{
+			$bindRequestDetails = $nameDetails;
+			$bindRequestName = array_shift($bindRequestDetails);
+			$bindingProxy = new CCrmEntityBindingProxy(CCrmOwnerType::Lead, CCrmOwnerType::Contact);
+
+			return $bindingProxy->processMethodRequest($bindRequestName, $bindRequestDetails, $arParams, $nav, $server);
+		}
 		return parent::processMethodRequest($name, $nameDetails, $arParams, $nav, $server);
 	}
 	protected function getIdentityFieldName()
@@ -9755,12 +9768,16 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			throw new RestException("Parameter 'entityTypeID' is not defined");
 		}
 
-		if($entityTypeID !== CCrmOwnerType::Deal
+		if(
+			$entityTypeID !== CCrmOwnerType::Deal
+			&& $entityTypeID !== CCrmOwnerType::Lead
 			&& $entityTypeID !== CCrmOwnerType::Quote
 			&& $entityTypeID !== CCrmOwnerType::Contact
-			&& $entityTypeID !== CCrmOwnerType::Company)
+			&& $entityTypeID !== CCrmOwnerType::Company
+		)
 		{
 			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);
+
 			throw new RestException("The owner entity type '{$entityTypeName}' is not supported in current context.");
 		}
 
@@ -9794,6 +9811,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 	{
 		return $this->entityTypeID;
 	}
+
 	/**
 	 * @return array
 	 */
@@ -9828,6 +9846,7 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		}
 		return $this->FIELDS_INFO;
 	}
+
 	public function addItem($ownerEntityID, $fields)
 	{
 		$ownerEntityID = (int)$ownerEntityID;
@@ -9845,8 +9864,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		$this->internalizeFields($fields, $fieldInfos, array());
 
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if($this->ownerEntityTypeID === CCrmOwnerType::Deal
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		if(
+			$this->ownerEntityTypeID === CCrmOwnerType::Deal
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//DEAL -> CONTACT
 			$categoryID = CCrmDeal::GetCategoryID($ownerEntityID);
@@ -9907,8 +9928,67 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Quote
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Lead
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
+		{
+			// LEAD -> CONTACT
+			if(!CCrmLead::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			{
+				throw new AccessException();
+			}
+
+			if(!CCrmLead::Exists($ownerEntityID))
+			{
+				throw new RestException('Not found.');
+			}
+
+			if(!EntityBinding::verifyEntityBinding(CCrmOwnerType::Contact, $fields))
+			{
+				throw new RestException("The parameter 'fields' is not valid.");
+			}
+
+			$entityID = EntityBinding::resolveEntityID(CCrmOwnerType::Contact, $fields);
+			if($entityID <= 0)
+			{
+				throw new RestException("The parameter 'fields' is not valid.");
+			}
+
+			$items = LeadContactTable::getLeadBindings($ownerEntityID);
+			if(is_array(EntityBinding::findBindingByEntityID(CCrmOwnerType::Contact, $entityID, $items)))
+			{
+				return false;
+			}
+
+			$effectiveItems = array_merge($items, [$fields]);
+			if(EntityBinding::isPrimary($fields) || EntityBinding::findPrimaryBinding($effectiveItems) === null)
+			{
+				EntityBinding::markAsPrimary($effectiveItems, CCrmOwnerType::Contact, $entityID);
+			}
+
+			$removedItems = [];
+			$addedItems = [];
+
+			EntityBinding::prepareBindingChanges(
+				CCrmOwnerType::Contact,
+				$items,
+				$effectiveItems,
+				$addedItems,
+				$removedItems
+			);
+
+			if(!empty($addedItems))
+			{
+				LeadContactTable::bindContacts($ownerEntityID, $addedItems);
+			}
+
+			return true;
+		}
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Quote
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//QUOTE -> CONTACT
 			if(!CCrmQuote::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -9962,8 +10042,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Contact
-			&& $this->entityTypeID === CCrmOwnerType::Company)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Contact
+			&& $this->entityTypeID === CCrmOwnerType::Company
+		)
 		{
 			//CONTACT -> COMPANY
 			if(!CCrmContact::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10017,8 +10099,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Company
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Company
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//COMPANY -> CONTACT
 			if(!CCrmCompany::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10072,10 +10156,13 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
+
 		$ownerEntityTypeName = CCrmOwnerType::ResolveName($this->ownerEntityTypeID);
 		$entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+
 		throw new RestException("The binding type '{$ownerEntityTypeName} - {$entityTypeName}' is not supported in current context.");
 	}
+
 	public function deleteItem($ownerEntityID, $fields)
 	{
 		$ownerEntityID = (int)$ownerEntityID;
@@ -10093,8 +10180,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		$this->internalizeFields($fields, $fieldInfos, array());
 
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if($this->ownerEntityTypeID === CCrmOwnerType::Deal
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		if(
+			$this->ownerEntityTypeID === CCrmOwnerType::Deal
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//DEAL -> CONTACT
 			$categoryID = CCrmDeal::GetCategoryID($ownerEntityID);
@@ -10164,8 +10253,76 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Quote
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Lead
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
+		{
+			// LEAD -> CONTACT
+			if(!CCrmLead::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			{
+				throw new AccessException();
+			}
+
+			if(!CCrmLead::Exists($ownerEntityID))
+			{
+				throw new RestException('Not found.');
+			}
+
+			if(!EntityBinding::verifyEntityBinding(CCrmOwnerType::Contact, $fields))
+			{
+				throw new RestException("The parameter 'fields' is not valid.");
+			}
+
+			$entityID = EntityBinding::resolveEntityID(CCrmOwnerType::Contact, $fields);
+			if($entityID <= 0)
+			{
+				throw new RestException("The parameter 'fields' is not valid.");
+			}
+
+			$items = LeadContactTable::getLeadBindings($ownerEntityID);
+			$itemIndex = EntityBinding::findBindingIndexByEntityID(CCrmOwnerType::Contact, $entityID, $items);
+			if($itemIndex < 0)
+			{
+				return false;
+			}
+
+			$item = $items[$itemIndex];
+			$effectiveItems = $items;
+			array_splice($effectiveItems, $itemIndex, 1);
+
+			if(EntityBinding::isPrimary($item))
+			{
+				EntityBinding::markFirstAsPrimary($effectiveItems);
+			}
+
+			$removedItems = [];
+			$addedItems = [];
+
+			EntityBinding::prepareBindingChanges(
+				CCrmOwnerType::Contact,
+				$items,
+				$effectiveItems,
+				$addedItems,
+				$removedItems
+			);
+
+			if(!empty($addedItems))
+			{
+				LeadContactTable::bindContacts($ownerEntityID, $addedItems);
+			}
+
+			if(!empty($removedItems))
+			{
+				LeadContactTable::unbindContacts($ownerEntityID, $removedItems);
+			}
+
+			return true;
+		}
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Quote
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//QUOTE -> CONTACT
 			if(!CCrmQuote::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10228,8 +10385,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Contact
-			&& $this->entityTypeID === CCrmOwnerType::Company)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Contact
+			&& $this->entityTypeID === CCrmOwnerType::Company
+		)
 		{
 			//CONTACT -> COMPANY
 			if(!CCrmContact::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10292,8 +10451,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Company
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Company
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//COMPANY -> CONTACT
 			if(!CCrmCompany::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10351,10 +10512,13 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return true;
 		}
+
 		$ownerEntityTypeName = CCrmOwnerType::ResolveName($this->ownerEntityTypeID);
 		$entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+
 		throw new RestException("The binding type '{$ownerEntityTypeName} - {$entityTypeName}' is not supported in current context.");
 	}
+
 	public function getItems($ownerEntityID)
 	{
 		$ownerEntityID = (int)$ownerEntityID;
@@ -10364,8 +10528,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		}
 
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if($this->ownerEntityTypeID === CCrmOwnerType::Deal
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		if(
+			$this->ownerEntityTypeID === CCrmOwnerType::Deal
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			$categoryID = CCrmDeal::GetCategoryID($ownerEntityID);
 			if($categoryID < 0)
@@ -10381,8 +10547,22 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return DealContactTable::getDealBindings($ownerEntityID);
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Quote
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Lead
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
+		{
+			if(!CCrmLead::CheckReadPermission($ownerEntityID, $userPermissions))
+			{
+				throw new AccessException();
+			}
+
+			return LeadContactTable::getLeadBindings($ownerEntityID);
+		}
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Quote
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			if(!CCrmQuote::CheckReadPermission($ownerEntityID, $userPermissions))
 			{
@@ -10391,8 +10571,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return QuoteContactTable::getQuoteBindings($ownerEntityID);
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Contact
-			&& $this->entityTypeID === CCrmOwnerType::Company)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Contact
+			&& $this->entityTypeID === CCrmOwnerType::Company
+		)
 		{
 			if(!CCrmContact::CheckReadPermission($ownerEntityID, $userPermissions))
 			{
@@ -10401,8 +10583,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 			return ContactCompanyTable::getContactBindings($ownerEntityID);
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Company
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Company
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			if(!CCrmCompany::CheckReadPermission($ownerEntityID, $userPermissions))
 			{
@@ -10414,8 +10598,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 		$ownerEntityTypeName = CCrmOwnerType::ResolveName($this->ownerEntityTypeID);
 		$entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+
 		throw new RestException("The binding type '{$ownerEntityTypeName} - {$entityTypeName}' is not supported in current context.");
 	}
+
 	public function setItems($ownerEntityID, $items)
 	{
 		$ownerEntityID = (int)$ownerEntityID;
@@ -10439,8 +10625,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		}
 
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if($this->ownerEntityTypeID === CCrmOwnerType::Deal
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		if(
+			$this->ownerEntityTypeID === CCrmOwnerType::Deal
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//DEAL -> CONTACT
 			$categoryID = CCrmDeal::GetCategoryID($ownerEntityID);
@@ -10494,10 +10682,66 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			{
 				DealContactTable::bindContacts($ownerEntityID, $addedItems);
 			}
+
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Quote
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Lead
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
+		{
+			// LEAD -> CONTACT
+			if(!CCrmLead::CheckUpdatePermission($ownerEntityID, $userPermissions))
+			{
+				throw new AccessException();
+			}
+
+			if(!CCrmLead::Exists($ownerEntityID))
+			{
+				throw new RestException('Not found.');
+			}
+
+			try
+			{
+				EntityBinding::normalizeEntityBindings(CCrmOwnerType::Contact, $effectiveItems);
+			}
+			catch(Main\SystemException $ex)
+			{
+				throw new RestException(
+					$ex->getMessage(),
+					RestException::ERROR_CORE,
+					CRestServer::STATUS_INTERNAL,
+					$ex
+				);
+			}
+
+			$removedItems = [];
+			$addedItems = [];
+
+			EntityBinding::prepareBindingChanges(
+				CCrmOwnerType::Contact,
+				LeadContactTable::getLeadBindings($ownerEntityID),
+				$effectiveItems,
+				$addedItems,
+				$removedItems
+			);
+
+			if(!empty($removedItems))
+			{
+				LeadContactTable::unbindContacts($ownerEntityID, $removedItems);
+			}
+
+			if(!empty($addedItems))
+			{
+				LeadContactTable::bindContacts($ownerEntityID, $addedItems);
+			}
+
+			return true;
+		}
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Quote
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//QUOTE -> CONTACT
 			if(!CCrmQuote::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10546,8 +10790,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			}
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Contact
-			&& $this->entityTypeID === CCrmOwnerType::Company)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Contact
+			&& $this->entityTypeID === CCrmOwnerType::Company
+		)
 		{
 			//CONTACT -> COMPANY
 			if(!CCrmContact::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10596,8 +10842,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			}
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Company
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Company
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			//COMPANY -> CONTACT
 			if(!CCrmCompany::CheckUpdatePermission($ownerEntityID, $userPermissions))
@@ -10649,8 +10897,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 		$ownerEntityTypeName = CCrmOwnerType::ResolveName($this->ownerEntityTypeID);
 		$entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+
 		throw new RestException("The binding type '{$ownerEntityTypeName} - {$entityTypeName}' is not supported in current context.");
 	}
+
 	public function deleteItems($ownerEntityID)
 	{
 		$ownerEntityID = (int)$ownerEntityID;
@@ -10660,8 +10910,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 		}
 
 		$userPermissions = CCrmPerms::GetCurrentUserPermissions();
-		if($this->ownerEntityTypeID === CCrmOwnerType::Deal
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		if(
+			$this->ownerEntityTypeID === CCrmOwnerType::Deal
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			$categoryID = CCrmDeal::GetCategoryID($ownerEntityID);
 			if($categoryID < 0)
@@ -10676,10 +10928,27 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			}
 
 			DealContactTable::unbindAllContacts($ownerEntityID);
+
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Quote
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Lead
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
+		{
+			if(!CCrmLead::CheckReadPermission($ownerEntityID, $userPermissions))
+			{
+				throw new AccessException();
+			}
+
+			LeadContactTable::unbindAllContacts($ownerEntityID);
+
+			return true;
+		}
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Quote
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			if(!CCrmQuote::CheckReadPermission($ownerEntityID, $userPermissions))
 			{
@@ -10689,8 +10958,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			QuoteContactTable::unbindAllContacts($ownerEntityID);
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Contact
-			&& $this->entityTypeID === CCrmOwnerType::Company)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Contact
+			&& $this->entityTypeID === CCrmOwnerType::Company
+		)
 		{
 			if(!CCrmContact::CheckReadPermission($ownerEntityID, $userPermissions))
 			{
@@ -10700,8 +10971,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 			ContactCompanyTable::unbindAllCompanies($ownerEntityID);
 			return true;
 		}
-		elseif($this->ownerEntityTypeID === CCrmOwnerType::Company
-			&& $this->entityTypeID === CCrmOwnerType::Contact)
+		elseif(
+			$this->ownerEntityTypeID === CCrmOwnerType::Company
+			&& $this->entityTypeID === CCrmOwnerType::Contact
+		)
 		{
 			if(!CCrmCompany::CheckReadPermission($ownerEntityID, $userPermissions))
 			{
@@ -10714,8 +10987,10 @@ class CCrmEntityBindingProxy extends CCrmRestProxyBase
 
 		$ownerEntityTypeName = CCrmOwnerType::ResolveName($this->ownerEntityTypeID);
 		$entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+
 		throw new RestException("The binding type '{$ownerEntityTypeName} - {$entityTypeName}' is not supported in current context.");
 	}
+
 	public function processMethodRequest($name, $nameDetails, $arParams, $nav, $server)
 	{
 		$name = mb_strtoupper($name);

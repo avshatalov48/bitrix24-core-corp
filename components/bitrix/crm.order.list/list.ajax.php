@@ -18,7 +18,7 @@ define(
 );
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
-require_once(__DIR__ . '/class.php');
+CBitrixComponent::includeComponentClass('bitrix:crm.order.list');
 global $DB, $APPLICATION;
 if(!function_exists('__CrmOrderListEndResponse'))
 {

@@ -5,7 +5,7 @@ $haveConnection = false;
 $configParams = \Bitrix\Main\Config\Configuration::getValue('connections');
 if (is_array($configParams))
 {
-	include_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/lib/connection.php');
+	include_once $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/lib/connection.php';
 	foreach ($configParams as $connectionName => $connectionParams)
 	{
 		if (is_a($connectionParams['className'], '\Bitrix\BIConnector\Connection', true))

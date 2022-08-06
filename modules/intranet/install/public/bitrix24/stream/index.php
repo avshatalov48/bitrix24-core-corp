@@ -1,6 +1,14 @@
-<?
+<?php
+
+/**
+ * @global  \CMain $APPLICATION
+ * @global  \CUser $USER
+ */
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/index.php");
+
 $APPLICATION->SetPageProperty("NOT_SHOW_NAV_CHAIN", "Y");
 $APPLICATION->SetPageProperty("title", htmlspecialcharsbx(COption::GetOptionString("main", "site_name", "Bitrix24")));
 
@@ -118,7 +126,7 @@ if ($GLOBALS["USER"]->IsAuthorized())
 		Array(
 			"BLOG_URL" => "",
 			"FILTER" => array(
-				">UF_BLOG_POST_IMPRTNT" => 0,
+				"=UF_BLOG_POST_IMPRTNT" => 1,
 				"!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $GLOBALS["USER"]->GetId(), "VALUE" => "Y")
 			),
 			"FILTER_NAME" => "",

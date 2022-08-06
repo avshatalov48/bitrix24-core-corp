@@ -9,13 +9,14 @@ class Realization extends Base
 		$result = [];
 
 		$counter = 0;
+		$foundProducts = [];
 
 		foreach ($dealProducts as $dealProduct)
 		{
 			$index = static::searchProduct($dealProduct, $orderProducts);
 			if ($index === false)
 			{
-				$basketItem = $this->getBasketItemByEntityProduct($dealProduct);
+				$basketItem = $this->getBasketItemByEntityProduct($dealProduct, $foundProducts);
 				if ($basketItem)
 				{
 					$dealProduct['BASKET_CODE'] = $basketItem->getBasketCode();

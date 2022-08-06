@@ -6,35 +6,25 @@ use Bitrix\Crm\ContactTable;
 use Bitrix\Crm\Item;
 use Bitrix\Main\Localization\Loc;
 
+/**
+ * @property \Bitrix\Crm\Contact entityObject
+ */
 class Contact extends Item
 {
 	public const FIELD_NAME_PHOTO = 'PHOTO';
 	public const FIELD_NAME_EXPORT = 'EXPORT';
+	public const FIELD_NAME_COMPANY_BINDINGS = 'COMPANY_BINDINGS';
+	public const FIELD_NAME_COMPANIES = 'COMPANIES';
 	public const FIELD_NAME_COMPANY_IDS = 'COMPANY_IDS';
-
-	protected function compilePrimaryForBinding(array $contactBinding): array
-	{
-		return [];
-	}
-
-	protected function getContactBindingTableClassName(): string
-	{
-		return '';
-	}
 
 	protected function disableCheckUserFields(): void
 	{
 		ContactTable::disableUserFieldsCheck();
 	}
 
-	public function getTitle(): ?string
+	public function getHeading(): ?string
 	{
-		return \CCrmContact::PrepareFormattedName([
-			'HONORIFIC' => $this->getHonorific(),
-			'NAME' => $this->getName(),
-			'LAST_NAME' => $this->getLastName(),
-			'SECOND_NAME' => $this->getSecondName(),
-		]);
+		return $this->entityObject->getFormattedName();
 	}
 
 	public function getTitlePlaceholder(): ?string

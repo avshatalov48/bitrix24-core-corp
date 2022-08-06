@@ -328,7 +328,6 @@ if (
 )
 {
 	$arResult["bShowRequestSentMessage"] = $arResult["CurrentUserPerms"]["InitiatedByType"];
-/*
 	if (\Bitrix\Socialnetwork\Helper\UserToGroup\RequestPopup::checkHideRequestPopup([
 		'userId' => (int)$USER->getId(),
 		'groupId' => (int)$arResult['Group']['ID'],
@@ -336,7 +335,7 @@ if (
 	{
 		$arResult["bShowRequestSentMessage"] = false;
 	}
-*/
+
 	$arResult["UserRelationId"] = false;
 	$res = \Bitrix\Socialnetwork\UserToGroupTable::getList(array(
 		'filter' => array(

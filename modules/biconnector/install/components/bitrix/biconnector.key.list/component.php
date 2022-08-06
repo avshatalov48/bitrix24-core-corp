@@ -123,7 +123,7 @@ while ($data = $keyList->fetch())
 	{
 		$userEmptyAvatar = '';
 		$photoUrl = $fileInfo['src'];
-		$userAvatar = " style='background-image: url(\"{$photoUrl}\")'";
+		$userAvatar = ' style="background-image: url(\'' . $photoUrl . '\')"';
 	}
 
 	$userNameElement = '<span class="biconnector-key-grid-avatar ui-icon ui-icon-common-user' . $userEmptyAvatar . '">'
@@ -132,8 +132,8 @@ while ($data = $keyList->fetch())
 		. '<span class="biconnector-key-grid-username-inner">' . $userName . '</span>';
 
 	$data['CREATED_BY'] = '<div class="biconnector-key-grid-username-wrapper">'
-		.'<a class="biconnector-key-grid-username" href="/company/personal/user/' . $data['CREATED_BY'] . '/">' . $userNameElement . '</a>'
-		.'</div>';
+		. '<a class="biconnector-key-grid-username" href="/company/personal/user/' . $data['CREATED_BY'] . '/">' . $userNameElement . '</a>'
+		. '</div>';
 
 	$data['DATE_CREATE'] = preg_replace('/([0-9]{2}:[0-9]{2}):[0-9]{2}/', '\\1', $data['DATE_CREATE']);
 	$data['APPLICATION'] = htmlspecialcharsEx($data['BICONNECTOR_KEY_APPLICATION_APP_NAME']);

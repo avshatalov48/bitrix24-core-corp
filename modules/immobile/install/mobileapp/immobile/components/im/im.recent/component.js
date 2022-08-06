@@ -5,6 +5,7 @@
 
 var { ChatSelector } = jn.require('im/chat/selector/chat');
 var { EntityReady } = jn.require('entity-ready');
+var { SelectorDialogListAdapter } = jn.require('im/chat/selector/adapter/dialog-list');
 
 var REVISION = 19; // api revision - sync with im/lib/revision.php
 
@@ -4271,7 +4272,7 @@ RecentList.search = {};
 RecentList.search.init = function ()
 {
 	this.selector = null;
-	this.ui = new SelectorListAdapter(dialogList);
+	this.ui = new SelectorDialogListAdapter(dialogList);
 };
 
 RecentList.search.onSearchShow = function ()

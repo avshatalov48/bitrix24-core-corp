@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_CHANGE_NEW_RESPONSIBLE_ID"] = "Responsible person changed to";
 $MESS["CRM_CHANGE_RESPONSIBLE_EMPTY_PROP"] = "The responsible person is not specified.";
 $MESS["CRM_CHANGE_RESPONSIBLE_GETTER_TYPE"] = "Select new responsible person";
 $MESS["CRM_CHANGE_RESPONSIBLE_GETTER_TYPE_F"] = "first available";

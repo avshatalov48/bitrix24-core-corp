@@ -627,7 +627,7 @@ else
 			}
 
 			$arResult['ENTITY_TYPE_CAPTION'] = $factory->getEntityDescription();
-			$arResult['ENTITY_TITLE'] = $item->getTitle();
+			$arResult['ENTITY_TITLE'] = $item->getHeading();
 			if ($factory->isStagesEnabled())
 			{
 				$arResult['STAGE_ID'] = $item->getStageId();

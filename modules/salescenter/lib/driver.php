@@ -56,7 +56,7 @@ final class Driver
 		if(LandingManager::getInstance()->isEnabled())
 		{
 			LandingManager::getInstance()->tryInstallDefaultSiteOnce();
-			$params['siteTemplateCode'] = LandingManager::SITE_TEMPLATE_CODE;
+			$params['siteTemplateCode'] = LandingManager::SITE_MAINPAGE_TEMPLATE_CODE;
 			$params['connectedSiteId'] = LandingManager::getInstance()->getConnectedSiteId();
 			$params['isSitePublished'] = LandingManager::getInstance()->isSitePublished();
 			$params['isSiteExists'] = LandingManager::getInstance()->isSiteExists();

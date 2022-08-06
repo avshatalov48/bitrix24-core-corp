@@ -202,6 +202,14 @@ class CCrmSipHelper
 
 					$fields['INVOICES'] = $invoices;
 					unset($invoices);
+
+					$invoiceIds = \Bitrix\Crm\Binding\EntityContactTable::getEntityIds(\CCrmOwnerType::SmartInvoice, $entityID);
+					if (!empty($invoiceIds))
+					{
+						$fields['SMART_INVOICES'] = static::loadSmartInvoices([
+							'@ID' => $invoiceIds,
+						]);
+					}
 				}
 			}
 		}
@@ -282,6 +290,10 @@ class CCrmSipHelper
 
 					$fields['INVOICES'] = $invoices;
 					unset($invoices);
+
+					$fields['SMART_INVOICES'] = static::loadSmartInvoices([
+						'=COMPANY_ID' => $entityID,
+					]);
 				}
 			}
 		}
@@ -448,6 +460,52 @@ class CCrmSipHelper
 				$result[] = $deal['ID'];
 			}
 		}
+		return $result;
+	}
+
+	protected static function loadSmartInvoices(array $filter): ?array
+	{
+		if (!\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
+		{
+			return null;
+		}
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartInvoice);
+		if (!$factory)
+		{
+			return null;
+		}
+		$invoices = $factory->getItemsFilteredByPermissions([
+			'select' => [
+				Bitrix\Crm\Item::FIELD_NAME_ID,
+				Bitrix\Crm\Item::FIELD_NAME_TITLE,
+				Bitrix\Crm\Item::FIELD_NAME_CLOSE_DATE,
+				Bitrix\Crm\Item::FIELD_NAME_OPPORTUNITY,
+				Bitrix\Crm\Item::FIELD_NAME_CURRENCY_ID,
+				Bitrix\Crm\Item::FIELD_NAME_STAGE_ID,
+				Bitrix\Crm\Item::FIELD_NAME_CATEGORY_ID,
+			],
+			'filter' => array_merge(
+				[
+					// todo stage semantic filter
+				],
+				$filter
+			),
+			'order' => [
+				'ID' => 'DESC',
+			],
+			'limit' => 2,
+		]);
+		$router = \Bitrix\Crm\Service\Container::getInstance()->getRouter();
+		$result = [];
+		foreach ($invoices as $invoice)
+		{
+			$data = $invoice->getCompatibleData();
+			$data['HEADING'] = $invoice->getHeading();
+			$data['SHOW_URL'] = $router->getItemDetailUrl(\CCrmOwnerType::SmartInvoice, $invoice->getId());
+			$data['PRICE_FORMATTED'] = CCrmCurrency::MoneyToString($data['OPPORTUNITY'], $data['CURRENCY_ID']);
+			$result[] = $data;
+		}
+
 		return $result;
 	}
 }

@@ -2,7 +2,6 @@
 
 namespace Bitrix\Location\Entity;
 
-use Bitrix\Location\Common\IPoint;
 use Bitrix\Location\Entity\Address\AddressLink;
 use Bitrix\Location\Entity\Address\AddressLinkCollection;
 use Bitrix\Location\Entity\Address\Converter\ArrayConverter;
@@ -19,7 +18,7 @@ use Bitrix\Main\Web\Json;
  * Class Address
  * @package Bitrix\Location\Entity
  */
-final class Address implements IPoint
+final class Address
 {
 	/** @var int  */
 	private $id = 0;

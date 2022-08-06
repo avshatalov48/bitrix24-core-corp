@@ -4,7 +4,6 @@ namespace Bitrix\Mobile\Component;
 
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Socialnetwork\Component\LogList\Util;
@@ -16,7 +15,6 @@ use Bitrix\Mobile\Component\LogList\Page;
 use Bitrix\Mobile\Component\LogList\Counter;
 use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Main\Application;
-use Bitrix\Main\IO;
 use Bitrix\Mobile\Livefeed;
 
 Loader::requireModule('socialnetwork');
@@ -36,9 +34,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 
 	public $useLogin = false;
 
-	protected function getParamsInstance()
+	protected function getParamsInstance(): Param
 	{
-		if($this->paramsInstance === null)
+		if ($this->paramsInstance === null)
 		{
 			$this->paramsInstance = new Param([
 				'component' => $this,
@@ -51,9 +49,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $this->paramsInstance;
 	}
 
-	public function getPathInstance()
+	public function getPathInstance(): Path
 	{
-		if($this->pathInstance === null)
+		if ($this->pathInstance === null)
 		{
 			$this->pathInstance = new Path([
 				'component' => $this,
@@ -64,9 +62,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $this->pathInstance;
 	}
 
-	public function getParamsPhotogalleryInstance()
+	public function getParamsPhotogalleryInstance(): ParamPhotogallery
 	{
-		if($this->paramsPhotogalleryInstance === null)
+		if ($this->paramsPhotogalleryInstance === null)
 		{
 			$this->paramsPhotogalleryInstance = new ParamPhotogallery([
 				'component' => $this
@@ -76,9 +74,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $this->paramsPhotogalleryInstance;
 	}
 
-	protected function getProcessorInstance()
+	protected function getProcessorInstance(): Processor
 	{
-		if($this->processorInstance === null)
+		if ($this->processorInstance === null)
 		{
 			$this->processorInstance = new Processor([
 				'component' => $this,
@@ -89,9 +87,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $this->processorInstance;
 	}
 
-	public function getLogPageProcessorInstance()
+	public function getLogPageProcessorInstance(): Page
 	{
-		if($this->logPageProcessorInstance === null)
+		if ($this->logPageProcessorInstance === null)
 		{
 			$this->logPageProcessorInstance = new Page([
 				'component' => $this,
@@ -103,9 +101,9 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $this->logPageProcessorInstance;
 	}
 
-	public function getCounterProcessorInstance()
+	public function getCounterProcessorInstance(): Counter
 	{
-		if($this->counterProcessorInstance === null)
+		if ($this->counterProcessorInstance === null)
 		{
 			$this->counterProcessorInstance = new Counter([
 				'component' => $this,
@@ -188,8 +186,8 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		$paramsInstance->prepareDimensionsParams($params);
 
 		if (
-			$request->get('ACTION') === 'CONVERT'
-			&& $params['LOG_ID'] <= 0
+			$params['LOG_ID'] <= 0
+			&& $request->get('ACTION') === 'CONVERT'
 		)
 		{
 			$convertResult = \CSocNetLogTools::getDataFromRatingEntity($request->get('ENTITY_TYPE_ID'), $request->get('ENTITY_ID'), false);
@@ -213,24 +211,24 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $params;
 	}
 
-	protected function getBackgroundData()
+	protected function getBackgroundData(): array
 	{
 		return Livefeed\Helper::getBackgroundData();
 	}
 
-	protected function getBackgroundCommonData()
+	protected function getBackgroundCommonData(): array
 	{
 		return [
 			'url' => Application::getInstance()->getPersonalRoot().'/templates/mobile_app/images/lenta/background_common.png'
 		];
 	}
 
-	protected function getMedalsData()
+	protected function getMedalsData(): array
 	{
 		return Livefeed\Helper::getMedalsData();
 	}
 
-	protected function getImportantData()
+	protected function getImportantData(): array
 	{
 		$mobileSourceDir = Application::getInstance()->getPersonalRoot().'/templates/mobile_app/images/lenta/important';
 		$params = $this->arParams;
@@ -241,7 +239,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		];
 	}
 
-	protected function getPostFormData()
+	protected function getPostFormData(): array
 	{
 		$sourceDir = Application::getInstance()->getPersonalRoot().'/js/mobile/images/postform';
 
@@ -264,7 +262,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		];
 	}
 
-	protected function prepareData()
+	protected function prepareData(): array
 	{
 		global $USER;
 
@@ -306,8 +304,8 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		{
 			\CSocNetTools::initGlobalExtranetArrays();
 
-			$config = \Bitrix\Main\Application::getConnection()->getConfiguration();
-			$result['ftMinTokenSize'] = (isset($config['ft_min_token_size']) ? $config['ft_min_token_size'] : \CSQLWhere::FT_MIN_TOKEN_SIZE);
+			$config = Application::getConnection()->getConfiguration();
+			$result['ftMinTokenSize'] = ($config['ft_min_token_size'] ?? \CSQLWhere::FT_MIN_TOKEN_SIZE);
 
 			$result['Events'] = false;
 
@@ -350,11 +348,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		$allowToAll = ComponentHelper::getAllowToAllDestination();
 
 		$result['bDenyToAll'] = ($result['bExtranetSite'] || !$allowToAll);
-		$result['bDefaultToAll'] = (
-			$allowToAll
-				? (Option::get('socialnetwork', 'default_livefeed_toall', 'Y') === 'Y')
-				: false
-		);
+		$result['bDefaultToAll'] = ($allowToAll && Option::get('socialnetwork', 'default_livefeed_toall', 'Y') === 'Y');
 
 		if ($result['bExtranetSite'])
 		{
@@ -409,7 +403,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $result;
 	}
 
-	protected function getEntriesData(&$result)
+	protected function getEntriesData(&$result): void
 	{
 		$params = $this->arParams;
 
@@ -428,7 +422,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		$queryResultData = $this->getEntryIdList($result);
 
 		if (
-			(int)$queryResultData['countAll'] < (int)$params['PAGE_SIZE']
+			$queryResultData['countAll'] < (int)$params['PAGE_SIZE']
 			&& !empty($processorInstance->getFilterKey('>=LOG_UPDATE'))
 		)
 		{
@@ -442,7 +436,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		$this->getPinnedIdList($result);
 	}
 
-	protected function processEvent(&$result, &$cnt, array $eventFields = [], array $options = [])
+	protected function processEvent(&$result, &$cnt, array $eventFields = [], array $options = []): void
 	{
 		static $timemanInstalled = null;
 		static $tasksInstalled = null;
@@ -463,16 +457,16 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 
 		if (
 			(
-				in_array($eventFields['EVENT_ID'], [ 'timeman_entry', 'report' ])
-				&& !$timemanInstalled
-			)
-			|| (
-				$eventFields['EVENT_ID'] === 'tasks'
-				&& !$tasksInstalled
+				!$tasksInstalled
+				&& $eventFields['EVENT_ID'] === 'tasks'
 			)
 			|| (
 				$eventFields['EVENT_ID'] === 'lists_new_element'
 				&& !$listsInstalled
+			)
+			|| (
+				in_array($eventFields['EVENT_ID'], [ 'timeman_entry', 'report' ], true)
+				&& !$timemanInstalled
 			)
 		)
 		{
@@ -534,7 +528,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		}
 	}
 
-	protected function getEntryIdList(&$result)
+	protected function getEntryIdList(&$result): array
 	{
 		$params = $this->arParams;
 
@@ -588,7 +582,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		return $returnResult;
 	}
 
-	protected function getPinnedIdList(&$result)
+	protected function getPinnedIdList(&$result): void
 	{
 		$result['pinnedEvents'] = [];
 		$result['pinnedIdList'] = [];
@@ -615,8 +609,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		$filter['PINNED_USER_ID'] = $result['currentUserId'];
 
 		$select = $processorInstance->getSelect();
-		unset($select['TMP_ID']);
-		unset($select['PINNED_USER_ID']);
+		unset($select['TMP_ID'], $select['PINNED_USER_ID']);
 
 		$res = \CSocNetLog::getList(
 			[
@@ -643,7 +636,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		}
 	}
 
-	public function setFollowData(&$result)
+	public function setFollowData(&$result): void
 	{
 		if ($result['currentUserId'] <= 0)
 		{
@@ -670,7 +663,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		}
 	}
 
-	public function setExpertModeData(&$result)
+	public function setExpertModeData(&$result): void
 	{
 		if ($result['currentUserId'] <= 0)
 		{
@@ -702,7 +695,7 @@ class LogList  extends \Bitrix\Socialnetwork\Component\LogListCommon
 		}
 	}
 
-	public function setExtranetData(&$result)
+	public function setExtranetData(&$result): void
 	{
 		$result['bExtranetSite'] = (
 			Loader::includeModule('extranet')

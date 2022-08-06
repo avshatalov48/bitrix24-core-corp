@@ -113,7 +113,24 @@ $MESS["TASKS_SCRUM_SPRINT_BLANK_3"] = " или перетащите задачи
 $MESS["TASKS_SCRUM_SPRINT_BLANK_4"] = "Перетащите задачи из бэклога, чтобы начать планирование спринта.";
 $MESS["TASKS_SCRUM_PLAN_SPRINT_DROPZONE"] = "Начните новый спринт";
 $MESS["TASKS_SCRUM_COMPLETED_SPRINT_EMPTY"] = "В этом спринте нет завершённых задач";
+$MESS["TASKS_SCRUM_EMPTY_SEARCH_STUB_BACKLOG"] = "В бэклоге по вашему запросу ничего не найдено";
+$MESS["TASKS_SCRUM_EMPTY_SEARCH_STUB_SPRINT"] = "В спринте задач не найдено";
+$MESS["TASKS_SCRUM_EMPTY_SEARCH_STUB_COMPLETED"] = "В завершённых спринтах задач не найдено";
+$MESS["TASKS_SCRUM_AVERAGE_NUMBER_STORY_POINTS"] = "Среднее количество выполненных Стори Поинтов за последние спринты";
 
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_TASK_HINT"] = "Открыть задачу";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_FILE_HINT"] = "Прикрепить файл";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT"] = "Открыть DoD";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_MOVE_HINT"] = "Переместить задачи";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_SPRINT_HINT"] = "Переместить в спринт";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_BACKLOG_HINT"] = "Переместить в бэклог";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_TAG_HINT"] = "Добавить тег";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_EPIC_HINT"] = "Добавить эпик";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_DEC_BACKLOG_HINT"] = "Создать связанную задачу";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_DEC_SPRINT_HINT"] = "Декомпозировать на подзадачи";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_REMOVE_HINT"] = "Удалить";
+
+$MESS["WDUF_MY_DISK"] = "Мой диск";
 $MESS["KANBAN_SORT_TITLE_MY"] = "Сортировка:";
 $MESS["KANBAN_SORT_TITLE"] = "Новые задачи:";
 $MESS["KANBAN_SORT_DESC"] = "Сверху";

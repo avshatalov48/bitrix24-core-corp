@@ -21,11 +21,13 @@ class TaskStartRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if (!in_array($task->getStatus(), [\CTasks::STATE_NEW, \CTasks::STATE_PENDING]))
 		{
+			$this->controller->addError(static::class, 'Incorrect status');
 			return false;
 		}
 
@@ -46,7 +48,12 @@ class TaskStartRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "edit_tasks")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;
@@ -57,6 +64,7 @@ class TaskStartRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$this->controller->addError(static::class, 'Access to task start denied');
 		return false;
 	}
 }

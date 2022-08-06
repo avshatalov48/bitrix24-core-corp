@@ -1120,7 +1120,7 @@
 
 		isInitiator()
 		{
-			return this.call.userId < this.userId;
+			return this.call && (this.call.userId < this.userId);
 		}
 
 		updateCalculatedState()
@@ -1218,12 +1218,12 @@
 
 		getSignaling()
 		{
-			return this.call.signaling;
+			return this.call ? this.call.signaling : null;
 		}
 
 		log()
 		{
-			this.call.log.apply(this.call, arguments);
+			this.call && this.call.log.apply(this.call, arguments);
 		}
 
 		sendIceCandidates()
@@ -1232,6 +1232,10 @@
 			{
 				clearTimeout(this.candidatesTimeout);
 				this.candidatesTimeout = null;
+			}
+			if (!this.call)
+			{
+				return;
 			}
 
 			this.log("User " + this.userId + ": sending ICE candidates due to the timeout");
@@ -1612,8 +1616,11 @@
 		reconnect()
 		{
 			clearTimeout(this.reconnectAfterDisconnectTimeout);
-
 			this.connectionAttempt++;
+			if (!this.call)
+			{
+				return;
+			}
 
 			if (this.connectionAttempt > 3)
 			{
@@ -1907,6 +1914,9 @@
 
 			clearTimeout(this.signalingConnectionTimeout);
 			this.signalingConnectionTimeout = null;
+
+			clearTimeout(this.reconnectAfterDisconnectTimeout);
+			this.reconnectAfterDisconnectTimeout = null;
 
 			this.callbacks.onStateChanged = DoNothing;
 			this.callbacks.onStreamReceived = DoNothing;

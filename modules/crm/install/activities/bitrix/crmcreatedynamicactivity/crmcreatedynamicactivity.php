@@ -52,6 +52,8 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			$entityFieldsValues[$realFieldId] = $fieldValue;
 		}
 		$this->preparedProperties['DynamicEntitiesFields'] = $entityFieldsValues;
+
+		$this->writeDebugInfo($this->getDebugInfo());
 	}
 
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
@@ -79,6 +81,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				$fieldsValues[$fieldId] = $fieldValue;
 			}
 		}
+		$this->logDocumentFields($fieldsValues);
 
 		$documentType = CCrmBizProcHelper::ResolveDocumentType($this->DynamicTypeId);
 		try
@@ -105,6 +108,16 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		}
 
 		return $errorCollection;
+	}
+
+	private function logDocumentFields(array $fields)
+	{
+		$this->writeDebugInfo(
+			$this->getDebugInfo(
+				$fields,
+				array_intersect_key(static::getEntityFields($this->DynamicTypeId), $fields),
+			)
+		);
 	}
 
 	protected static function getFileName(): string
@@ -155,7 +168,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			if (isset($documentType) && static::isTypeSupported($entityTypeId))
 			{
 				$typeNames[$entityTypeId] = static::getDocumentService()->getDocumentTypeName($documentType);
-				$entitiesFields[$entityTypeId] = static::getEntityFields($entityTypeId);
+				$entitiesFields[$entityTypeId] = static::getEntityFieldsWithPrefix($entityTypeId);
 			}
 		}
 
@@ -177,27 +190,45 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		];
 	}
 
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$map = static::getPropertiesDialogMap();
+		unset($map['DynamicEntitiesFields']);
+
+		return $map;
+	}
+
 	private static function isTypeSupported(int $entityTypeId): bool
 	{
 		return (bool)CCrmBizProcHelper::ResolveDocumentName($entityTypeId);
 	}
 
+	private static function getEntityFieldsWithPrefix(int $entityTypeId): array
+	{
+		$entityFields = [];
+		foreach (static::getEntityFields($entityTypeId) as $fieldId => $field)
+		{
+			$field['FieldName'] = "{$entityTypeId}_{$field['FieldName']}";
+			$entityFields["{$entityTypeId}_{$fieldId}"] = $field;
+		}
+
+		return $entityFields;
+	}
+
 	private static function getEntityFields(int $entityTypeId): array
 	{
 		$documentType = CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
-		$documentService = static::getDocumentService();
 		$entityFields = [];
 
-		foreach ($documentService->GetDocumentFields($documentType) as $fieldId => $field)
+		foreach (static::getDocumentService()->GetDocumentFields($documentType) as $fieldId => $field)
 		{
 			$isIgnoredField = !$field['Editable'] || static::isInternalField($fieldId) || static::isMultiField($field);
 
 			if (!$isIgnoredField || static::isRequiredFieldId($fieldId))
 			{
-				$entityFieldId = "{$entityTypeId}_{$fieldId}";
-
-				$entityFields[$entityFieldId] = $field;
-				$entityFields[$entityFieldId]['FieldName'] = $entityTypeId . '_' . mb_strtolower($fieldId);
+				$entityFields[$fieldId] = $field;
+				$entityFields[$fieldId]['FieldName'] = mb_strtolower($fieldId);
+				$entityFields[$fieldId]['Type'] = $field['Type'] !== 'UF:date' ? $field['Type'] : 'date';
 			}
 		}
 

@@ -11,6 +11,7 @@ import {StoreSelector} from "catalog.store-selector";
 import ReserveControl from "./reserve.control";
 import {PopupMenu} from "main.popup";
 import {ProductSelector} from "catalog.product-selector";
+import StoreAvailablePopup from './store.available.popup';
 
 type Action = {
 	type: string,
@@ -34,12 +35,17 @@ export class Row
 	mainSelector: ?ProductSelector;
 	reserveControl: ?ReserveControl;
 	storeSelector: ?StoreSelector;
+	storeAvailablePopup: ?StoreAvailablePopup;
 	fields: Object = {};
 	externalActions: Array<Action> = [];
 
 	handleFocusUnchangeablePrice = this.#showChangePriceNotify.bind(this);
 	handleChangeStoreData = this.#onChangeStoreData.bind(this);
 	handleProductErrorsChange = Runtime.debounce(this.#onProductErrorsChange, 500, this);
+	handleMainSelectorClear = Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this);
+	handleStoreFieldChange = Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this);
+	handleStoreFieldClear = Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this);
+	handleOnGridUpdated = this.#onGridUpdated.bind(this);
 
 	cache = new Cache.MemoryCache();
 	modeChanges = {
@@ -58,6 +64,7 @@ export class Row
 		this.#initActions();
 		this.#initSelector();
 		this.#initStoreSelector();
+		this.#initStoreAvailablePopup();
 		this.#initReservedControl();
 		this.modifyBasePriceInput();
 		this.refreshFieldsLayout();
@@ -82,6 +89,11 @@ export class Row
 	clearChanges()
 	{
 		this.getModel().clearChangedList();
+	}
+
+	isNewRow(): Boolean
+	{
+		return isNaN(+this.getField('ID'));
 	}
 
 	getId(): string
@@ -175,7 +187,7 @@ export class Row
 			EventEmitter.unsubscribe(
 				this.mainSelector,
 				'onClear',
-				Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this)
+				this.handleMainSelectorClear
 			);
 		}
 
@@ -185,13 +197,13 @@ export class Row
 			EventEmitter.unsubscribe(
 				this.storeSelector,
 				'onChange',
-				Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this)
+				this.handleStoreFieldChange
 			);
 
 			EventEmitter.unsubscribe(
 				this.storeSelector,
 				'onClear',
-				Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this)
+				this.handleStoreFieldClear
 			);
 		}
 
@@ -263,7 +275,7 @@ export class Row
 
 	modifyBasePriceInput(): void
 	{
-		const priceNode = this.getNode().querySelector('[data-name="PRICE"]');
+		const priceNode = this.#getNodeChildByDataName('PRICE');
 		if (!priceNode)
 		{
 			return;
@@ -414,7 +426,7 @@ export class Row
 			this.mainSelector = new ProductSelector('crm_grid_' + this.getId(), selectorOptions);
 		}
 
-		const mainInfoNode = this.getNode().querySelector('[data-name="MAIN_INFO"]');
+		const mainInfoNode = this.#getNodeChildByDataName('MAIN_INFO');
 		if (mainInfoNode)
 		{
 			const numberSelector = mainInfoNode.querySelector('.main-grid-row-number');
@@ -437,7 +449,7 @@ export class Row
 		EventEmitter.subscribe(
 			this.mainSelector,
 			'onClear',
-			Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this)
+			this.handleMainSelectorClear
 		);
 	}
 
@@ -466,7 +478,7 @@ export class Row
 				model: this.model,
 			}
 		);
-		const storeWrapper = this.getNode().querySelector('[data-name="STORE_INFO"]');
+		const storeWrapper = this.#getNodeChildByDataName('STORE_INFO');
 		if (this.storeSelector && storeWrapper)
 		{
 			storeWrapper.innerHTML = '';
@@ -481,13 +493,34 @@ export class Row
 		EventEmitter.subscribe(
 			this.storeSelector,
 			'onChange',
-			Runtime.debounce(this.#onStoreFieldChange.bind(this), 500, this)
+			this.handleStoreFieldChange
 		);
 
 		EventEmitter.subscribe(
 			this.storeSelector,
 			'onClear',
-			Runtime.debounce(this.#onStoreFieldClear.bind(this), 500, this)
+			this.handleStoreFieldClear
+		);
+	}
+
+	#initStoreAvailablePopup()
+	{
+		const storeAvaiableNode = this.#getNodeChildByDataName('STORE_AVAILABLE');
+		if (!storeAvaiableNode)
+		{
+			return;
+		}
+
+		this.storeAvailablePopup = new StoreAvailablePopup({
+			rowId: this.id,
+			model: this.getModel(),
+			node: storeAvaiableNode,
+		});
+
+		// runs once because after grid update, row re-created.
+		EventEmitter.subscribeOnce(
+			'Grid::updated',
+			this.handleOnGridUpdated
 		);
 	}
 
@@ -510,7 +543,7 @@ export class Row
 
 	#initReservedControl()
 	{
-		const storeWrapper = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+		const storeWrapper = this.#getNodeChildByDataName('RESERVE_INFO');
 		if (storeWrapper)
 		{
 			this.reserveControl = new ReserveControl({
@@ -591,7 +624,7 @@ export class Row
 
 	layoutReserveControl()
 	{
-		const storeWrapper = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+		const storeWrapper = this.#getNodeChildByDataName('RESERVE_INFO');
 		if (storeWrapper && this.reserveControl)
 		{
 			storeWrapper.innerHTML = '';
@@ -1213,6 +1246,7 @@ export class Row
 		}
 
 		this.setField('STORE_ID', preparedValue);
+		this.setField('STORE_AVAILABLE', this.model.getStoreCollection().getStoreAvailableAmount(value));
 
 		this.updateUiStoreAmountData();
 		this.addActionProductChange();
@@ -1220,29 +1254,29 @@ export class Row
 
 	#onChangeStoreData()
 	{
-		if (this.isReserveBlocked())
-		{
-			return;
-		}
-
 		const storeId = this.getField('STORE_ID');
-		const currentAmount = this.getModel().getStoreCollection().getStoreAmount(storeId);
 
-		if (currentAmount <= 0 && this.getModel().isChanged())
+		if (!this.isReserveBlocked() && this.isNewRow())
 		{
-			const maxStore = this.getModel().getStoreCollection().getMaxFilledStore();
-			if (maxStore.AMOUNT > currentAmount && this.storeSelector)
+			const currentAmount = this.getModel().getStoreCollection().getStoreAmount(storeId);
+			if (currentAmount <= 0 && this.getModel().isChanged())
 			{
-				this.storeSelector.onStoreSelect(maxStore.STORE_ID, Text.decode(maxStore.STORE_TITLE));
+				const maxStore = this.getModel().getStoreCollection().getMaxFilledStore();
+				if (maxStore.AMOUNT > currentAmount && this.storeSelector)
+				{
+					this.storeSelector.onStoreSelect(maxStore.STORE_ID, Text.decode(maxStore.STORE_TITLE));
+				}
 			}
 		}
+
+		this.setField('STORE_AVAILABLE', this.model.getStoreCollection().getStoreAvailableAmount(storeId));
 
 		this.updateUiStoreAmountData();
 	}
 
 	updateUiStoreAmountData()
 	{
-		const availableWrapper = this.getNode().querySelector('[data-name="STORE_AVAILABLE"]');
+		const availableWrapper = this.#getNodeChildByDataName('STORE_AVAILABLE');
 		if (!Type.isDomNode(availableWrapper))
 		{
 			return;
@@ -1270,7 +1304,7 @@ export class Row
 	setRowReserved(value)
 	{
 		this.setField('ROW_RESERVED', value)
-		const reserveWrapper = this.getNode().querySelector('[data-name="ROW_RESERVED"]');
+		const reserveWrapper = this.#getNodeChildByDataName('ROW_RESERVED');
 		if (!Type.isDomNode(reserveWrapper))
 		{
 			return;
@@ -1294,7 +1328,7 @@ export class Row
 	setDeductedQuantity(value)
 	{
 		this.setField('DEDUCTED_QUANTITY', value);
-		const deductedWrapper = this.getNode().querySelector('[data-name="DEDUCTED_QUANTITY"]');
+		const deductedWrapper = this.#getNodeChildByDataName('DEDUCTED_QUANTITY');
 		if (!Type.isDomNode(deductedWrapper))
 		{
 			return;
@@ -1393,11 +1427,12 @@ export class Row
 				currency: this.getEditor().getCurrencyId(),
 				iblockId: fields['IBLOCK_ID'],
 				basePriceId: fields['BASE_PRICE_ID'],
+				isSimpleModel: Text.toInteger(fields['PRODUCT_ID']) <= 0 && Type.isStringFilled(fields['NAME']),
 				skuTree: Type.isStringFilled(fields['SKU_TREE']) ? JSON.parse(fields['SKU_TREE']) : null,
 				fields,
 			});
 
-			let imageInfo = Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null
+			const imageInfo = Type.isStringFilled(fields['IMAGE_INFO']) ? JSON.parse(fields['IMAGE_INFO']) : null
 
 			if (Type.isObject(imageInfo))
 			{
@@ -1592,7 +1627,7 @@ export class Row
 
 	setReserveQuantity(value)
 	{
-		const node = this.getNode().querySelector('[data-name="RESERVE_INFO"]');
+		const node = this.#getNodeChildByDataName('RESERVE_INFO');
 		const input = node?.querySelector('input[name="INPUT_RESERVE_QUANTITY"]');
 		if (Type.isElementNode(input))
 		{
@@ -2185,5 +2220,18 @@ export class Row
 	#isReserveEqualProductQuantity(): Boolean
 	{
 		return this.editor.getSettingValue('isReserveEqualProductQuantity', false);
+	}
+
+	#getNodeChildByDataName(name: String): HTMLElement
+	{
+		return this.getNode().querySelector(`[data-name="${name}"]`);
+	}
+
+	#onGridUpdated(): void
+	{
+		if (this.storeAvailablePopup)
+		{
+			this.storeAvailablePopup.refreshStoreInfo();
+		}
 	}
 }

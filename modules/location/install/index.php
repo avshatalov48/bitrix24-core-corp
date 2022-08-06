@@ -155,6 +155,22 @@ Class location extends CModule
 		");
 	}
 
+	public function installAreas()
+	{
+		/**
+		 * @see \Bitrix\Location\Infrastructure\DataInstaller::installAreasAgent()
+		 */
+		CAgent::AddAgent(
+			"\\Bitrix\\Location\\Infrastructure\\DataInstaller::installAreasAgent();",
+			"location",
+			"N",
+			120,
+			'',
+			'Y',
+			\ConvertTimeStamp(time() + \CTimeZone::GetOffset() + 120, 'FULL')
+		);
+	}
+
 	public function DoUninstall()
 	{
 		global $APPLICATION, $step;
@@ -207,6 +223,7 @@ Class location extends CModule
 		}
 
 		$this->installSources();
+		$this->installAreas();
 		$this->setDefaultFormatCode();
 
 		return true;

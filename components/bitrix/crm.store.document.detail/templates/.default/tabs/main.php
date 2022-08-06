@@ -109,3 +109,13 @@ global $APPLICATION;
 		?>
 	</div>
 </div>
+
+<script>
+	BX.addCustomEvent('Schedule:onBeforeRefreshLayout', function(event) {
+		var plannedBlock = document.querySelector('.crm-entity-stream-section.crm-entity-stream-section-planned');
+		if (plannedBlock)
+		{
+			BX.hide(plannedBlock.parentElement);
+		}
+	});
+</script>

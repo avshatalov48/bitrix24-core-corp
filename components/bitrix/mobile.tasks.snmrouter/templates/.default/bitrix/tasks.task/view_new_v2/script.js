@@ -22,7 +22,8 @@
 				setTitle: false
 			}),
 			currentTs: opts.currentTs,
-			guid: opts.guid
+			guid: opts.guid,
+			statuses: opts.statuses
 		});
 
 		this.handleInitStack(nf, BX.Mobile.Tasks.detail, opts);
@@ -296,6 +297,14 @@
 							IMAGE: group.image || false
 						};
 						this.getFormElement(eventData.name).callback({b_groups: [group]});
+						break;
+
+					case 'status':
+						var statusNode = BX('bx-task-status-' + this.task['ID']);
+						if (statusNode)
+						{
+							statusNode.innerHTML = BX.message('TASKS_STATUS_' + this.statuses[eventData.values.status]);
+						}
 						break;
 				}
 			}, this));

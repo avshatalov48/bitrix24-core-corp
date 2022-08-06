@@ -162,7 +162,7 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 				"order_product_exist_dialog",
 				{
 					title: this._settings.messages['CRM_ORDER_PL_PROD_EXIST_DLG_TITLE'],
-					content: this._settings.messages['CRM_ORDER_PL_PROD_EXIST_DLG_TEXT'].replace('#NAME#', this.getProductName(params.id)),
+					content: this._settings.messages['CRM_ORDER_PL_PROD_EXIST_DLG_TEXT_FOR_DOUBLE'].replace('#NAME#', this.getProductName(params.id)),
 					buttons:
 						[
 							{
@@ -170,11 +170,11 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 								type: BX.Crm.DialogButtonType.accept,
 								text: this._settings.messages['CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_ADD'],
 								callback: BX.proxy(function(button){
-										this.setChanged();
-										this._controller.onProductAdd(params.id, params.quantity);
-										button.getDialog().close();
-									},
-									this)
+									this.setChanged();
+									this._controller.onProductAdd(params.id, params.quantity, 'N');
+									button.getDialog().close();
+								},
+								this)
 							},
 							{
 								id: "cancel",
@@ -351,7 +351,7 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 			var nodes = BX.findChildren(
 				document,
 				{
-					attribute: {'data-product-id': productId}
+					attribute: {'data-offer-id': productId}
 				},
 				true
 			);
@@ -373,7 +373,7 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 				document,
 				{
 					attribute: {
-						'data-product-id': productId,
+						'data-offer-id': productId,
 						'data-product-field': 'name'
 					}
 				},
@@ -384,7 +384,7 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 			{
 				if(nodes.hasOwnProperty(i))
 				{
-					return nodes[i].innerHTML;
+					return nodes[i].dataset.fullname || nodes[i].innerHTML;
 				}
 			}
 

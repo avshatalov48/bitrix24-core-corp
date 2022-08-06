@@ -39,7 +39,7 @@
 .crm-analytics-utm-editor-field-input {
 	border: 1px solid #c6cdd3;
 	outline: none;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	color: #333;
 	padding: 7px 9px 9px;
 	width: 100%;
@@ -54,7 +54,7 @@
 }
 
 .crm-analytics-utm-editor-field-input-decs {
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	background: #d3f3fd;
 	font: 15px/21px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #535c69;

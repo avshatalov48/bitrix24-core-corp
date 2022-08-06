@@ -6,6 +6,8 @@ define('DisableEventsCheck', true);
 
 use Bitrix\Main\Config;
 use Bitrix\Main\Mail;
+use Bitrix\Main\Loader;
+use Bitrix\Mail\Helper;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -1572,6 +1574,13 @@ elseif($action == 'SAVE_EMAIL')
 		__CrmActivityEditorEndResponse(array('ERROR' => 'Could not load module "subscribe"!'));
 	}
 
+	if(!CModule::includeModule('mail'))
+	{
+		__CrmActivityEditorEndResponse(['ERROR' => getMessage(
+			'CRM_ACTIVITY_EDITOR_MAIL_MODULE_NOT_INSTALLED'
+		)]);
+	}
+
 	$siteID = !empty($_REQUEST['siteID']) ? $_REQUEST['siteID'] : SITE_ID;
 
 	$data = isset($_POST['DATA']) && is_array($_POST['DATA']) ? $_POST['DATA'] : array();
@@ -1609,6 +1618,10 @@ elseif($action == 'SAVE_EMAIL')
 	$cc  = array();
 	$bcc = array();
 
+	$countCc = 0;
+	$countBcc = 0;
+	$countTo = 0;
+
 	// Bindings & Communications -->
 	$arBindings = array();
 	$arComms = array();
@@ -1629,12 +1642,42 @@ elseif($action == 'SAVE_EMAIL')
 					$item['__field'] = $field;
 
 					$commData[] = $item;
+
+					if($field === 'to')
+					{
+						$countTo++;
+					}
+					else if($field === 'cc')
+					{
+						$countCc++;
+					}
+					else if($field === 'bcc')
+					{
+						$countBcc++;
+					}
 				}
 				catch (\Exception $e)
 				{
 				}
 			}
 		}
+	}
+
+	$emailsLimitToSendMessage = (
+		\CModule::includeModule('bitrix24')
+		&& (
+			\CBitrix24::IsDemoLicense()
+			|| !(bool)\Bitrix\Bitrix24\Feature::isFeatureEnabled('mail_mailbox_sync')
+		)
+	)
+		? 1
+		: -1
+	;
+	if($emailsLimitToSendMessage !== -1 && ($countTo > $emailsLimitToSendMessage || $countCc > $emailsLimitToSendMessage || $countBcc > $emailsLimitToSendMessage))
+	{
+		__CrmActivityEditorEndResponse([
+			'ERROR_HTML' => \Bitrix\Main\Localization\Loc::getMessage('CRM_MESSAGE_NEW_TARIFF_RESTRICTION',["#COUNT#" => $emailsLimitToSendMessage])
+		]);
 	}
 
 	if (count($commData) > 10)
@@ -2358,12 +2401,12 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
-	$maxSize = (int) Config\Option::get('main', 'max_file_size', 0);
+	$maxSize = Helper\Message::getMaxAttachedFilesSize();
 	if ($maxSize > 0 && $maxSize <= ceil($totalSize / 3) * 4) // base64 coef.
 	{
 		__CrmActivityEditorEndResponse(array('ERROR' => getMessage(
 			'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
-			['#SIZE#' => \CFile::formatSize($maxSize)]
+			['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding())]
 		)));
 	}
 

@@ -23,8 +23,7 @@ Extension::load([
 <script>
 	BX.ready(function() {
 		(new BX.Crm.Config.Catalog.App({propsData: {
-			initData: <?=CUtil::PhpToJSObject($arResult)?>,
-			stateChangeCallbackFn: BX.SidePanel.Instance.getTopSlider().getData().get('stateChangeCallbackFn'),
+			initData: <?=CUtil::PhpToJSObject($arResult)?>
 		}})).$mount(
 			document.getElementById('catalogConfig')
 		);

@@ -230,7 +230,7 @@ $readDatetimeFormatted = !empty($activity['SETTINGS']['READ_CONFIRMED']) && $act
 			</div>
 		</div>
 	</div>
-	<div id="activity_<?=$activity['ID'] ?>_body" class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider"></div>
+	<div id="activity_<?=$activity['ID'] ?>_body" class="crm-task-list-mail-item-inner-body crm-task-list-mail-item-inner-body-slider crm-mail-message-wrapper"></div>
 </div>
 <? if (!empty($activity['__files'])):
 

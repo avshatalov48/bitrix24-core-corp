@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Kanban;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Helper\Sort;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\TaskTable as Task;
 use Bitrix\Tasks\MemberTable;
@@ -811,16 +812,14 @@ class StagesTable extends Entity\DataManager
 
 		// get additional data
 		$currentUsers = array();
-		$res = Task::getById($taskId);
-		if (($task = $res->fetch()))
-		{
-			$currentUsers[] = $task['RESPONSIBLE_ID'];
-			$currentUsers[] = $task['CREATED_BY'];
-		}
-		else
+		$task = TaskRegistry::getInstance()->get($taskId);
+		if (!$task)
 		{
 			return;
 		}
+
+		$currentUsers[] = $task['RESPONSIBLE_ID'];
+		$currentUsers[] = $task['CREATED_BY'];
 
 		// get current other members
 		$res = \CTaskMembers::GetList(
@@ -909,14 +908,14 @@ class StagesTable extends Entity\DataManager
 			}
 
 			// set sorting
-			$res = (new Sort())->getPosition((int) $taskId, $order, 0, (int) $task['GROUP_ID']);
-			if ($row = $res->fetch())
+			$targetId = (new Sort())->getPositionForGroup((int) $taskId, $order, (int) $task['GROUP_ID']);
+			if ($targetId)
 			{
 				SortingTable::setSorting(
 					\Bitrix\Tasks\Util\User::getId() > 0 ? \Bitrix\Tasks\Util\User::getId() : $task['CREATED_BY'],
 					$task['GROUP_ID'],
 					$taskId,
-					$row['ID'],
+					$targetId,
 					$order == 'asc' ? false : true
 				);
 			}
@@ -939,15 +938,15 @@ class StagesTable extends Entity\DataManager
 					$userId
 				);
 
-				$res = (new Sort())->getPosition((int) $taskId, $order, (int)$userId);
+				$targetId = (new Sort())->getPositionForUser((int) $taskId, $order, (int)$userId);
 
-				if ($row = $res->fetch())
+				if ($targetId)
 				{
 					SortingTable::setSorting(
 						$userId,
 						0,
 						$taskId,
-						$row['ID'],
+						$targetId,
 						$order == 'asc' ? false : true
 					);
 				}

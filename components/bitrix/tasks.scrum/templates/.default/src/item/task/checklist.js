@@ -12,6 +12,8 @@ export class Checklist extends EventEmitter
 	{
 		super(params);
 
+		this.setEventNamespace('BX.Tasks.Scrum.Item.Checklist');
+
 		this.complete = (Type.isInteger(params.complete) ? parseInt(params.complete, 10) : 0);
 		this.all = (Type.isInteger(params.all) ? parseInt(params.all, 10) : 0);
 

@@ -62,7 +62,7 @@ class OrderTarget extends BaseTarget
 		return isset($entity['STATUS_ID']) ? $entity['STATUS_ID'] : '';
 	}
 
-	public function setEntityStatus($statusId)
+	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
 		$oldStatus = $this->getEntityStatus();

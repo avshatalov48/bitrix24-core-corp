@@ -73,8 +73,15 @@ class Menu
 				->add(new MapItem('user_menu', 'USER_PROFILE_MENU'))
 			,
 			(new MapSection('user', 'user_detail'))
-				->add(new MapItem('top_menu', 'USER_PROFILE_TOOLBAR'))
-			,
+				->add(new MapItem('top_menu', 'USER_PROFILE_TOOLBAR')),
+			(new MapSection('user_brief', 'top_panel'))
+				->add(new MapItem('user_menu', 'USER_PROFILE_MENU')),
+			(new MapSection('user_brief', 'user_detail'))
+				->add(new MapItem('top_menu', 'USER_PROFILE_TOOLBAR')),
+			(new MapSection('user_basic', 'top_panel'))
+				->add(new MapItem('user_menu', 'USER_PROFILE_MENU')),
+			(new MapSection('user_basic', 'user_detail'))
+				->add(new MapItem('top_menu', 'USER_PROFILE_TOOLBAR')),
 			(new MapSection('crm', 'crm_switcher'))
 				->add(new MapItem('deal', 'CRM_DEAL_LIST_TOOLBAR'))
 				->add(new MapItem('lead', 'CRM_LEAD_LIST_TOOLBAR'))

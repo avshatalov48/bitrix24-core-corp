@@ -1,17 +1,14 @@
-import {Loc, Tag, Text, Type, Event, Dom} from 'main.core';
+import {Loc, Tag, Text, Type, Event, Dom, Runtime} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 
-import {MessageBox} from 'ui.dialogs.messagebox';
-
+import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
 import {Button} from 'ui.buttons';
 
 import {RequestSender} from './request.sender';
 import {TypeStorage} from './type.storage';
 import {Tabs} from './tabs';
-import {ItemType} from './item.type';
-
-import type {ItemTypeParams} from './item.type';
+import {ItemType, ItemTypeParams} from './item.type';
 
 type Params = {
 	requestSender: RequestSender,
@@ -35,6 +32,8 @@ export class List extends EventEmitter
 
 		this.setEventNamespace('BX.Tasks.Scrum.Dod.List');
 
+		this.sidePanelManager = BX.SidePanel.Instance;
+
 		this.requestSender = params.requestSender;
 
 		this.groupId = parseInt(params.groupId, 10);
@@ -46,7 +45,6 @@ export class List extends EventEmitter
 		this.tabs = new Tabs();
 
 		this.empty = true;
-		this.activeTypeData = null;
 
 		this.node = null;
 	}
@@ -122,7 +120,7 @@ export class List extends EventEmitter
 		})
 			.then((response) => {
 				loader.hide();
-				top.BX.Runtime.html(listNode, response.data.html);
+				Runtime.html(listNode, response.data.html);
 			})
 			.catch((response) => {
 				this.requestSender.showErrorAlert(response);
@@ -196,11 +194,11 @@ export class List extends EventEmitter
 		return this.node;
 	}
 
-	save()
+	save(): Promise
 	{
 		const activeType = this.getActiveType();
 
-		this.requestSender.saveList({
+		return this.requestSender.saveList({
 			typeId: activeType.getId(),
 			taskId: this.taskId,
 			groupId: this.groupId,
@@ -209,7 +207,7 @@ export class List extends EventEmitter
 			.then(() => {
 				if (this.isSkipNotifications())
 				{
-					this.solve();
+					return this.solve();
 				}
 				else
 				{
@@ -217,24 +215,26 @@ export class List extends EventEmitter
 					{
 						if (this.isAllToggled())
 						{
-							this.emit('resolve');
+							return 'resolve';
 						}
 						else
 						{
-							this.emit('reject');
-
 							this.showInfoPopup();
+
+							return 'wait';
 						}
 					}
 					else
 					{
 						if (this.isAllToggled())
 						{
-							this.emit('resolve');
+							return 'resolve';
 						}
 						else
 						{
 							this.showConfirmPopup();
+
+							return 'wait';
 						}
 					}
 				}
@@ -265,34 +265,34 @@ export class List extends EventEmitter
 		return type.isDodRequired();
 	}
 
-	solve()
+	solve(): string
 	{
 		if (this.isListRequired(this.getActiveType()))
 		{
 			if (this.isAllToggled())
 			{
-				this.emit('resolve');
+				return 'resolve';
 			}
 			else
 			{
-				this.emit('reject');
+				return 'reject';
 			}
 		}
 		else
 		{
-			this.emit('resolve');
+			return 'resolve';
 		}
 	}
 
 	getListItems(): Array
 	{
 		/* eslint-disable */
-		if (typeof top.BX.Tasks.CheckListInstance === 'undefined')
+		if (typeof BX.Tasks.CheckListInstance === 'undefined')
 		{
 			return [];
 		}
 
-		const treeStructure = top.BX.Tasks.CheckListInstance.getTreeStructure();
+		const treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 
 		return treeStructure.getRequestData();
 		/* eslint-enable */
@@ -301,14 +301,14 @@ export class List extends EventEmitter
 	isAllToggled(): boolean
 	{
 		/* eslint-disable */
-		if (typeof top.BX.Tasks.CheckListInstance === 'undefined')
+		if (typeof BX.Tasks.CheckListInstance === 'undefined')
 		{
 			return false;
 		}
 
 		let isAllToggled = true;
 
-		const treeStructure = top.BX.Tasks.CheckListInstance.getTreeStructure();
+		const treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 
 		treeStructure.getDescendants()
 			.forEach((checkList) => {
@@ -325,12 +325,31 @@ export class List extends EventEmitter
 
 	showInfoPopup()
 	{
-		MessageBox.alert(Loc.getMessage('TASKS_SCRUM_DOD_INFO_TEXT'));
+		const popupOptions = {};
+		const currentSlider = this.sidePanelManager.getTopSlider();
+		if (currentSlider)
+		{
+			popupOptions.targetContainer = currentSlider.getContainer();
+		}
+
+		(new MessageBox({
+			message: Loc.getMessage('TASKS_SCRUM_DOD_INFO_TEXT'),
+			popupOptions: popupOptions,
+			buttons: MessageBoxButtons.OK
+		})).show();
 	}
 
 	showConfirmPopup()
 	{
+		const popupOptions = {};
+		const currentSlider = this.sidePanelManager.getTopSlider();
+		if (currentSlider)
+		{
+			popupOptions.targetContainer = currentSlider.getContainer();
+		}
+
 		const messageBox = new MessageBox({
+			popupOptions: popupOptions,
 			message: Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_TEXT_COMPLETE'),
 			modal: true,
 			buttons: [

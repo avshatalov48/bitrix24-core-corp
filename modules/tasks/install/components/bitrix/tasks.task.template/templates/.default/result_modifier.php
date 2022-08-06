@@ -1,15 +1,19 @@
-<?
-use Bitrix\Main\Localization\Loc;
+<?php
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\HttpApplication;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
-use Bitrix\Tasks\Util;
-use Bitrix\Tasks\Util\Site;
-use Bitrix\Tasks\UI;
-use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk;
-
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util;
+use Bitrix\Tasks\Util\Site;
 
 // create template controller with js-dependency injections
 $arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
@@ -22,16 +26,18 @@ $title = str_replace("#ID#", $template->getId(), Loc::getMessage('TASKS_TASK_TEM
 $helper->setTitle($title);
 $helper->addBodyClass('task-form-page');
 
-$this->__component->tryParseBooleanParameter($arParams["ENABLE_MENU_TOOLBAR"], true);
+$request = HttpApplication::getInstance()->getContext()->getRequest()->toArray();
+$isIFrame = (isset($request['IFRAME']) && $request['IFRAME'] === 'Y');
 
-if($helper->checkHasFatals())
+$this->__component->tryParseBooleanParameter($arParams['ENABLE_MENU_TOOLBAR'], !$isIFrame);
+
+if ($helper->checkHasFatals())
 {
 	return;
 }
 
 $type = $arParams["GROUP_ID"] > 0 ? "group" : "user";
 $BBCodeMode = $arResult['ITEM']['DESCRIPTION_IN_BBCODE'] == 'Y';
-$request = \Bitrix\Main\HttpApplication::getInstance()->getContext()->getRequest()->toArray();
 $groups = $arResult['DATA']['GROUP'];
 $users = $arResult['DATA']['USER'];
 $tasks = $arResult['DATA']['TASK'];

@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\Conversion;
+use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Main;
 use \Bitrix\Main\Type\Date;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
@@ -370,8 +371,73 @@ abstract class EntityConversionMapper
 			return;
 		}
 
+		if ($srcField && $srcField['USER_TYPE_ID'] === 'address'
+			&& $dstField && $dstField['USER_TYPE_ID'] === 'address')
+		{
+
+			if (isset($srcField['MULTIPLE']) && $srcField['MULTIPLE'] === 'Y')
+			{
+				$addresses = $srcFields[$srcFieldID];
+				if (!is_array($addresses))
+				{
+					$addresses = [$addresses];
+				}
+
+				if (isset($dstField['MULTIPLE']) && $dstField['MULTIPLE'] === 'Y')
+				{
+					foreach ($addresses as $address)
+					{
+						if (!isset($dstFields[$dstFieldID]))
+						{
+							$dstFields[$dstFieldID] = [];
+						}
+						$dstFields[$dstFieldID][] = static::getAddressFields($address);
+					}
+				}
+				elseif (!empty($addresses))
+				{
+					$address = $addresses[0];
+					$dstFields[$dstFieldID] = static::getAddressFields($address);
+				}
+			}
+			else
+			{
+				$dstFields[$dstFieldID] = static::getAddressFields($srcFields[$srcFieldID]);
+			}
+
+			return;
+		}
+
 		$dstFields[$dstFieldID] = $srcFields[$srcFieldID];
 	}
+
+	protected static function getAddressFields($value)
+	{
+		if (!Main\Loader::includeModule('fileman') || !$value)
+		{
+			return null;
+		}
+
+		if (!AddressType::isRawValue($value))
+		{
+			return $value;
+		}
+
+		$addressFields = AddressType::getAddressFieldsByValue($value);
+		unset($addressFields['id']);
+
+		try
+		{
+			$addressFields = Main\Web\Json::encode($addressFields);
+		}
+		catch (Main\ArgumentException $exception)
+		{
+			return null;
+		}
+
+		return $addressFields;
+	}
+
 	protected static function getEnumerationMap(array $field, $flip = false)
 	{
 		$result = array();

@@ -103,6 +103,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 					this._entityTypeName = BX.prop.getString(this._settings, "entityTypeName", "");
 				}
 				this._entityTypeId = BX.prop.getInteger(this._settings, "entityTypeId", 0);
+				this._categoryId = BX.prop.getInteger(this._settings, "categoryId", 0);
 
 				this._mode = BX.prop.getInteger(this._settings, "mode", BX.Crm.EntityEditorClientMode.select);
 				if(this._mode === BX.Crm.EntityEditorClientMode.edit && !(this._entityInfo && this._entityInfo.canUpdate()))
@@ -342,7 +343,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				this._searchControl = new BX.UI.Dropdown(
 					{
 						searchAction: "crm.api.entity.search",
-						searchOptions: { types: [ this._entityTypeName ], scope: "index" },
+						searchOptions: { types: [ this._entityTypeName ], categoryId: this._categoryId, scope: "index" },
 						searchResultRenderer: null,
 						targetElement: this._searchInput,
 						items: BX.prop.getArray(this._settings, "lastEntityInfos", []),
@@ -621,6 +622,11 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				if(this.hasRequisitesField())
 				{
 					this._entityInfo.setRequisitesForSave(this.getRequisitesFieldValueForSave());
+				}
+
+				if(this._clientEntityEditorEnabled && BX.type.isInteger(this._categoryId))
+				{
+					this._entityInfo.setCategoryId(this._categoryId);
 				}
 			},
 			focus: function()

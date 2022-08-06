@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
-(function (exports,immobile_chat_application_core,main_date,mobile_pull_client,im_model,im_provider_rest,im_lib_localstorage,pull_component_status,ui_vue,im_component_dialog,im_view_quotepanel,ui_vue_vuex,ui_vue_components_smiles,im_lib_utils,main_core_events,im_const,im_eventHandler,im_lib_logger,im_lib_timer) {
+(function (exports,immobile_chat_application_core,main_date,mobile_pull_client,im_model,im_provider_rest,im_lib_localstorage,pull_component_status,ui_fonts_opensans,ui_vue,im_component_dialog,im_view_quotepanel,ui_vue_vuex,ui_vue_components_smiles,im_lib_utils,main_core_events,im_const,im_eventHandler,im_lib_logger,im_lib_timer) {
 	'use strict';
 
 	/**
@@ -126,6 +126,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "handleImChatGetError",
 	    value: function handleImChatGetError(error) {
 	      if (error.ex.error === 'ACCESS_ERROR') {
+	        BXMobileApp.Events.postToComponent('chatdialog::access::error', [], 'im.messenger');
 	        app.closeController();
 	      }
 	    }
@@ -564,6 +565,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnReadList, this.onClickOnReadList);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.doubleClickOnMessage, this.onDoubleClickOnMessage);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnUserName, this.onClickOnUserName);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnMention, this.onClickOnMention);
 	      main_core_events.EventEmitter.subscribe(im_const.EventType.dialog.clickOnCommand, this.onClickOnCommand);
@@ -579,6 +581,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnReadList, this.onClickOnReadList);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.doubleClickOnMessage, this.onDoubleClickOnMessage);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnUserName, this.onClickOnUserName);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnMention, this.onClickOnMention);
 	      main_core_events.EventEmitter.unsubscribe(im_const.EventType.dialog.clickOnCommand, this.onClickOnCommand);
@@ -641,21 +644,28 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      im_lib_logger.Logger.warn('Message retry:', event);
 	      this.getApplication().retrySendMessage(event.message);
 	    },
-	    onClickOnReadList: function onClickOnReadList(_ref7) {
+	    onDoubleClickOnMessage: function onDoubleClickOnMessage(_ref7) {
 	      var event = _ref7.data;
+	      im_lib_logger.Logger.warn('Message double click:', event);
+	      main_core_events.EventEmitter.emit('ui:reaction:press', {
+	        id: 'message' + event.message.id
+	      });
+	    },
+	    onClickOnReadList: function onClickOnReadList(_ref8) {
+	      var event = _ref8.data;
 	      this.getApplication().openReadedList(event.list);
 	    },
 	    onSetFocus: function onSetFocus() {
 	      this.getApplication().setTextFocus();
 	    },
-	    onSetText: function onSetText(_ref8) {
-	      var event = _ref8.data;
+	    onSetText: function onSetText(_ref9) {
+	      var event = _ref9.data;
 	      this.getApplication().setText(event.text);
 	    },
-	    onClickOnKeyboardButton: function onClickOnKeyboardButton(_ref9) {
+	    onClickOnKeyboardButton: function onClickOnKeyboardButton(_ref10) {
 	      var _this2 = this;
 
-	      var event = _ref9.data;
+	      var event = _ref10.data;
 
 	      if (event.action === 'ACTION') {
 	        var _event$params = event.params,
@@ -722,17 +732,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	      return false;
 	    },
-	    onClickOnChatTeaser: function onClickOnChatTeaser(_ref10) {
+	    onClickOnChatTeaser: function onClickOnChatTeaser(_ref11) {
 	      var _this3 = this;
 
-	      var event = _ref10.data;
+	      var event = _ref11.data;
 	      this.$Bitrix.Data.get('controller').application.joinParentChat(event.message.id, 'chat' + event.message.params.CHAT_ID).then(function (dialogId) {
 	        _this3.getApplication().openDialog(dialogId);
 	      })["catch"](function () {});
 	    },
-	    onClickOnDialog: function onClickOnDialog(_ref11) {//this.getApplication().controller.hideSmiles();
+	    onClickOnDialog: function onClickOnDialog(_ref12) {//this.getApplication().controller.hideSmiles();
 
-	      var event = _ref11.data;
+	      var event = _ref12.data;
 	    },
 	    onSmilesSelectSmile: function onSmilesSelectSmile(event) {
 	      console.warn('Smile selected:', event);
@@ -748,8 +758,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      //this.getApplication().controller.hideSmiles();
 	      this.getApplication().setTextFocus();
 	    },
-	    onOpenUserList: function onOpenUserList(_ref12) {
-	      var event = _ref12.data;
+	    onOpenUserList: function onOpenUserList(_ref13) {
+	      var event = _ref13.data;
 	      this.getApplication().openUserList(event);
 	    },
 	    getController: function getController() {
@@ -1197,6 +1207,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      BXMobileApp.Events.postToComponent("chatdialog::init::complete", [{
 	        dialogId: this.controller.application.getDialogId()
 	      }, true], 'im.recent');
+	      BXMobileApp.Events.postToComponent("chatdialog::init::complete", [{
+	        dialogId: this.controller.application.getDialogId()
+	      }, true], 'im.messenger');
 	      return this.requestData();
 	    }
 	  }, {
@@ -1664,7 +1677,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      }
 
 	      if (dialog.entityType === 'GENERAL') {
-	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/mobile/components/bitrix/im.recent/images/avatar_general_x3.png");
+	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_general_x3.png");
 	      }
 
 	      result.name = dialog.name;
@@ -1679,10 +1692,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      result.desc = chatTypeTitle;
 
 	      if (dialog.entityType === 'SUPPORT24_QUESTION') {
-	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/mobile/components/bitrix/im.recent/images/avatar_24_question_x3.png");
+	        result.avatar = encodeURI(this.controller.getHost() + "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_24_question_x3.png");
 	        result.desc = '';
 	      }
 
+	      console.warn(result);
 	      return result;
 	    }
 	  }, {
@@ -2102,6 +2116,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            dialogId: data.payload.dialogId,
 	            counter: data.payload.fields.counter
 	          }, true], 'im.recent');
+	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	            dialogId: data.payload.dialogId,
+	            counter: data.payload.fields.counter
+	          }, true], 'im.messenger');
 	        }
 	      } else if (data.type === 'dialogues/set') {
 	        data.payload.forEach(function (dialog) {
@@ -2113,6 +2131,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	            dialogId: dialog.dialogId,
 	            counter: dialog.counter
 	          }, true], 'im.recent');
+	          BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+	            dialogId: dialog.dialogId,
+	            counter: dialog.counter
+	          }, true], 'im.messenger');
 	        });
 	      }
 	    }
@@ -2880,6 +2902,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      BXMobileApp.Events.postToComponent("onOpenDialog", [{
 	        dialogId: dialogId
 	      }, true], 'im.recent');
+	      BXMobileApp.Events.postToComponent('ImMobile.Messenger.Dialog:open', [{
+	        dialogId: dialogId
+	      }], 'im.messenger');
 	    }
 	  }, {
 	    key: "openPhoneMenu",
@@ -2907,7 +2932,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var currentUser = this.controller.application.getCurrentUser();
 	      var dialog = this.controller.application.getDialogData();
 	      var messageUser = message.authorId > 0 ? this.controller.getStore().getters['users/get'](message.authorId, true) : null;
-	      this.messageMenuInstance = BackdropMenu.create('im.dialog.menu.mess|' + this.controller.application.getDialogId()).setItems([BackdropMenuItem.create('reply').setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_REPLY')).setIcon(BackdropMenuIcon.reply).skip(function (message) {
+	      this.messageMenuInstance = BackdropMenu.create('im.dialog.menu.mess|' + this.controller.application.getDialogId()).setTestId('im-dialog-menu-mess').setItems([BackdropMenuItem.create('reply').setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_REPLY')).setIcon(BackdropMenuIcon.reply).skip(function (message) {
 	        var dialog = _this26.controller.application.getDialogData();
 
 	        if (dialog.type === 'announcement' && !dialog.managerList.includes(_this26.controller.application.getUserId())) {
@@ -2975,7 +3000,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        } else if (params.id === 'share') {
 	          var _dialog = _this26.controller.application.getDialogData();
 
-	          var subMenu = BackdropMenu.create('im.dialog.menu.mess.submenu|' + _this26.controller.application.getDialogId()).setItems([BackdropMenuItem.create('share_task').setIcon(BackdropMenuIcon.task).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_TASK')), BackdropMenuItem.create('share_post').setIcon(BackdropMenuIcon.lifefeed).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST_NEWS')), BackdropMenuItem.create('share_chat').setIcon(BackdropMenuIcon.chat).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_CHAT'))]).setEventListener(function (name, params, options, backdrop) {
+	          var subMenu = BackdropMenu.create('im.dialog.menu.mess.submenu|' + _this26.controller.application.getDialogId()).setTestId('im-dialog-menu-mess-submenu-share').setItems([BackdropMenuItem.create('share_task').setIcon(BackdropMenuIcon.task).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_TASK')), BackdropMenuItem.create('share_post').setIcon(BackdropMenuIcon.lifefeed).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_POST_NEWS')), BackdropMenuItem.create('share_chat').setIcon(BackdropMenuIcon.chat).setTitle(_this26.getLocalize('MOBILE_MESSAGE_MENU_SHARE_CHAT'))]).setEventListener(function (name, params, options, backdrop) {
 	            if (name !== 'selected') {
 	              return false;
 	            }
@@ -3502,5 +3527,5 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	exports.MobileDialogApplication = MobileDialogApplication;
 
-}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Messenger.Application,BX,BX,BX.Messenger.Model,BX.Messenger.Provider.Rest,BX.Messenger.Lib,window,BX,BX.Messenger,BX,BX,window,BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib));
+}((this.BX.Messenger.Application = this.BX.Messenger.Application || {}),BX.Messenger.Application,BX.Main,BX,BX.Messenger.Model,BX.Messenger.Provider.Rest,BX.Messenger.Lib,window,BX,BX,BX.Messenger,BX,BX,window,BX.Messenger.Lib,BX.Event,BX.Messenger.Const,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib));
 //# sourceMappingURL=dialog.bundle.js.map

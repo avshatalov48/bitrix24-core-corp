@@ -39,9 +39,6 @@ if ($_REQUEST['MODE'] == 'EMPLOYEES')
 
 	if ($SECTION_ID == 'last')
 	{
-		if (!class_exists('CUserOptions'))
-			include_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".$GLOBALS['DBType']."/favorites.php");
-
 		$arLastSelected = CUserOptions::GetOption("intranet", "user_search", array());
 		if (is_array($arLastSelected) && $arLastSelected['last_selected'] <> '')
 			$arLastSelected = array_unique(explode(',', $arLastSelected['last_selected']));

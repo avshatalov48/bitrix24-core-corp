@@ -25,7 +25,8 @@ Extension::load([
 	'crm.entity-editor.manager.duplicates',
 	'crm.entity-editor.field.address.ui',
 	'crm.entity-editor.field.bank-details',
-	'crm.entity-editor.field.requisite-autocomplete'
+	'crm.entity-editor.field.requisite-autocomplete',
+	'crm.entity-editor.field.image',
 ]);
 
 $requisiteFields = [];
@@ -49,6 +50,8 @@ $APPLICATION->IncludeComponent(
 		'INITIAL_MODE' => 'edit',
 		'GUID' => $formParams['FORM_ID'],
 		'CONFIG_ID' => $formParams['CONFIG_ID'],
+		'ENTITY_ID' => $arResult['REQUISITE_ID'],
+		'ENTITY_TYPE_NAME' => CCrmOwnerType::RequisiteName,
 		'ENTITY_FIELDS' => $formParams['FIELDS'],
 		'ENABLE_CONFIGURATION_UPDATE' => true,
 		'ENABLE_USER_FIELD_MANDATORY_CONTROL' => false,

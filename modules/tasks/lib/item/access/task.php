@@ -62,15 +62,6 @@ final class Task extends \Bitrix\Tasks\Item\Access
 	{
 		$accessController = $this->getAccessController($item->getUserId());
 		$res = $accessController->check(ActionDictionary::ACTION_TASK_SAVE, TaskModel::createNew(), $this->getTaskModel($item));
-		if (!$res)
-		{
-			(new Log('DEBUG_TASKS_TASK_FROM_TEMPLATE_ACCESS'))->collect([
-				$accessController->getErrors(),
-				$item->getUserId(),
-				$item->getRawValues(),
-			]);
-		}
-
 		return $this->makeResult($res, 'create');
 	}
 

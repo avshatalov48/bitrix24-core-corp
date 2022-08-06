@@ -1,112 +1,60 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Bitrix24;
 
-$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+$APPLICATION->SetAdditionalCSS('/bitrix/js/intranet/intranet-common.css');
 
 Loc::loadMessages(__FILE__);
 
 $helper = $arResult['HELPER'];
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
-$toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
-
-
-$isIFrame = isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y";
-
-if ($isIFrame)
+if ($arParams['ENABLE_MENU_TOOLBAR'])
 {
-$APPLICATION->RestartBuffer();
-?>
-<!DOCTYPE html>
-<html>
-<head>
-    <?$APPLICATION->ShowHead(); ?>
-    <script data-skip-moving="true">
-        // Prevent loading page without header and footer
-        if (window === window.top)
-        {
-            window.location = "<?=CUtil::JSEscape($APPLICATION->GetCurPageParam("", array("IFRAME", "IFRAME_TYPE"))); ?>" + window.location.hash;
-        }
-    </script>
-</head>
-<body class="template-<?=SITE_TEMPLATE_ID?> <?$APPLICATION->ShowProperty("BodyClass");?> <?if($isSideSlider):?>task-iframe-popup-side-slider<?endif?>" onload="window.top.BX.onCustomEvent(window.top, 'tasksIframeLoad');" onunload="window.top.BX.onCustomEvent(window.top, 'tasksIframeUnload');">
-<div class="tasks-iframe-header">
-    <div class="pagetitle-wrap">
-        <div class="pagetitle-inner-container" style="padding: 0 18px 0 30px">
-            <div class="pagetitle" >
-                <span id="pagetitle" class="pagetitle-item"><?$APPLICATION->ShowTitle(false);?><?if($existingTask):?><span class="task-page-link-btn js-id-copy-page-url" title="<?=Loc::getMessage('TASKS_TIP_TEMPLATE_COPY_CURRENT_URL')?>"></span><?endif?></span>
-            </div>
-            <?
-            echo $APPLICATION->ShowViewContent("inside_pagetitle");
-            ?>
-        </div>
-        <div class="pagetitle-below" style="padding: 0 18px 0 30px"><?$APPLICATION->ShowViewContent("below_pagetitle")?></div>
-    </div>
-</div>
-<div style="padding: 0 30px;">
-    <?}
-
-?>
-
-
-<?if($arParams["ENABLE_MENU_TOOLBAR"]):?>
-
-	<?php $APPLICATION->IncludeComponent(
+	$APPLICATION->IncludeComponent(
 		'bitrix:tasks.interface.topmenu',
 		'',
-		array(
-			'USER_ID' => $arParams[ 'USER_ID' ],
-
-			'GROUP_ID' => $arParams[ 'GROUP_ID' ],
+		[
+			'USER_ID' => $arParams['USER_ID'],
+			'GROUP_ID' => $arParams['GROUP_ID'],
 			'SECTION_URL_PREFIX' => '',
-
-			'PATH_TO_GROUP_TASKS' => $arParams[ 'PATH_TO_GROUP_TASKS' ],
-			'PATH_TO_GROUP_TASKS_TASK' => $arParams[ 'PATH_TO_GROUP_TASKS_TASK' ],
-			'PATH_TO_GROUP_TASKS_VIEW' => $arParams[ 'PATH_TO_GROUP_TASKS_VIEW' ],
-			'PATH_TO_GROUP_TASKS_REPORT' => $arParams[ 'PATH_TO_GROUP_TASKS_REPORT' ],
-
-			'PATH_TO_USER_TASKS' => $arParams[ 'PATH_TO_USER_TASKS' ],
-			'PATH_TO_USER_TASKS_TASK' => $arParams[ 'PATH_TO_USER_TASKS_TASK' ],
-			'PATH_TO_USER_TASKS_VIEW' => $arParams[ 'PATH_TO_USER_TASKS_VIEW' ],
-			'PATH_TO_USER_TASKS_REPORT' => $arParams[ 'PATH_TO_USER_TASKS_REPORT' ],
-			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams[ 'PATH_TO_USER_TASKS_TEMPLATES' ],
-			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams[ 'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' ],
-
-			'PATH_TO_CONPANY_DEPARTMENT' => $arParams[ 'PATH_TO_CONPANY_DEPARTMENT' ],
-
-			'SHOW_SECTION_TEMPLATES'=> 'Y',
+			'PATH_TO_GROUP_TASKS' => $arParams['PATH_TO_GROUP_TASKS'],
+			'PATH_TO_GROUP_TASKS_TASK' => $arParams['PATH_TO_GROUP_TASKS_TASK'],
+			'PATH_TO_GROUP_TASKS_VIEW' => $arParams['PATH_TO_GROUP_TASKS_VIEW'],
+			'PATH_TO_GROUP_TASKS_REPORT' => $arParams['PATH_TO_GROUP_TASKS_REPORT'],
+			'PATH_TO_USER_TASKS' => $arParams['PATH_TO_USER_TASKS'],
+			'PATH_TO_USER_TASKS_TASK' => $arParams['PATH_TO_USER_TASKS_TASK'],
+			'PATH_TO_USER_TASKS_VIEW' => $arParams['PATH_TO_USER_TASKS_VIEW'],
+			'PATH_TO_USER_TASKS_REPORT' => $arParams['PATH_TO_USER_TASKS_REPORT'],
+			'PATH_TO_USER_TASKS_TEMPLATES' => $arParams['PATH_TO_USER_TASKS_TEMPLATES'],
+			'PATH_TO_USER_TASKS_PROJECTS_OVERVIEW' => $arParams['PATH_TO_USER_TASKS_PROJECTS_OVERVIEW'],
+			'PATH_TO_CONPANY_DEPARTMENT' => $arParams['PATH_TO_CONPANY_DEPARTMENT'],
+			'SHOW_SECTION_TEMPLATES' => 'Y',
 			'MARK_TEMPLATES' => 'Y',
-			'MARK_ACTIVE_ROLE'=>'N'
-		),
+			'MARK_ACTIVE_ROLE' => 'N',
+		],
 		$component,
-		array('HIDE_ICONS' => true)
-	); ?>
+		['HIDE_ICONS' => true]
+	);
+}
+?>
 
-	<?//top right menu?>
-	<?/*$this->SetViewTarget("pagetitle", 100);?>
-	<div class="task-list-toolbar">
-		   <div class="task-list-toolbar-actions">
-			   <a href="<?=htmlspecialcharsbx($toList)?>" class="task-list-back"><?=Loc::getMessage('TASKS_TASK_TEMPLATE_COMPONENT_TEMPLATE_TO_LIST')?></a>
-		   </div>
-	</div>
-	<?$this->EndViewTarget();*/?>
-
-<?endif?>
-
-<?$this->SetViewTarget(($isIFrame? 'inside_pagetitle' : 'pagetitle'), 100);?>
+<?php $this->SetViewTarget('pagetitle', 100); ?>
 	<div class="task-list-toolbar">
 		<div class="task-list-toolbar-actions">
 			<button class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting webform-cogwheel" id="templateEditPopupMenuOptions"></button>
 		</div>
 	</div>
-<?$this->EndViewTarget();?>
+<?php $this->EndViewTarget(); ?>
 
 <?$helper->displayFatals();?>
 <?if(!$helper->checkHasFatals()):?>

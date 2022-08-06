@@ -22,7 +22,10 @@ if (!empty($arResult['ERRORS']))
 
 $taskService = new \Bitrix\Tasks\Scrum\Service\TaskService($arParams['USER_ID']);
 
-$filterInstance = $taskService->getFilterInstance($arParams['GROUP_ID'], $arParams['IS_COMPLETED_SPRINT'] === 'Y');
+$filterInstance = $taskService->getFilterInstance(
+	$arParams['GROUP_ID'],
+	$arParams['IS_COMPLETED_SPRINT'] === 'Y' ? 'complete' : 'active'
+);
 
 $messages = Loc::loadLanguageFile(__FILE__);
 

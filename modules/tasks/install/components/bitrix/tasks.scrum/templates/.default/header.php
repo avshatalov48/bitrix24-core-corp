@@ -18,6 +18,7 @@ use Bitrix\Tasks\Internals\Counter\CounterDictionary;
 use Bitrix\Tasks\UI\ScopeDictionary;
 
 Extension::load([
+	'tasks',
 	'ui.forms',
 	'ui.layout-form',
 	'ui.buttons.icons',

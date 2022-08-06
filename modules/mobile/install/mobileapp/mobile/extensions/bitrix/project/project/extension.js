@@ -89,9 +89,9 @@
 			}
 		}
 
-		updateTasksCounter(tabTitle, data)
+		updateTasksCounter(data)
 		{
-			this.tabs.updateItem(tabTitle, data);
+			this.tabs.updateItem(WorkgroupUtil.tabNames.tasks, data);
 		}
 
 		onTabSelected(params)

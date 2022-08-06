@@ -1,22 +1,25 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Order;
 
-class CBPCrmGetPaymentInfoActivity
-	extends CBPActivity
+class CBPCrmGetPaymentInfoActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			'Title' => '',
 			'OrderId' => null,
 
 			//return
 			'PaymentId' => null,
 			'PaymentAccountNumber' => null,
-		);
+		];
 
 		$this->SetPropertiesTypes([
 			'PaymentId' => [
@@ -47,6 +50,7 @@ class CBPCrmGetPaymentInfoActivity
 		{
 			$orderId = reset($orderId);
 		}
+		$this->writeDebugInfo($this->getDebugInfo());
 
 		if (!$orderId)
 		{
@@ -64,6 +68,14 @@ class CBPCrmGetPaymentInfoActivity
 
 				break;
 			}
+		}
+		else
+		{
+			$this->writeToTrackingService(
+				GetMessage('CRM_BP_GPI_ORDER_NOT_FOUND'),
+				0,
+				CBPTrackingType::Debug,
+			);
 		}
 
 		return CBPActivityExecutionStatus::Closed;
@@ -85,15 +97,20 @@ class CBPCrmGetPaymentInfoActivity
 			'siteId' => $siteId
 		]);
 
-		$dialog->setMap([
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
 			'OrderId' => [
 				'Name' => GetMessage('CRM_BP_GPI_ORDER_ID'),
 				'FieldName' => 'order_id',
 				'Type' => 'int'
 			],
-		]);
-
-		return $dialog;
+		];
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)

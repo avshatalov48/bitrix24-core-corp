@@ -128,13 +128,6 @@ export default class Fields extends EventEmitter
 
 		this.#address.setFieldValue(field.type, field.value);
 
-		if(field.type !== this.#addressFormat.fieldForUnRecognized)
-		{
-			this.#address.location = null;
-			this.#address.latitude = '';
-			this.#address.longitude = '';
-		}
-
 		this.emit(Fields.#onAddressChangedEvent, {
 			address: this.#address,
 			changedField: field

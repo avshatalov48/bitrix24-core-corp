@@ -6,7 +6,7 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 
-CJSCore::Init("sidepanel");
+\Bitrix\Main\UI\Extension::load(['sidepanel', 'ui.design-tokens']);
 
 Loc::loadMessages(__FILE__);
 

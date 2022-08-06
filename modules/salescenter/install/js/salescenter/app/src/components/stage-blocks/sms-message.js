@@ -4,6 +4,10 @@ import { StageMixin } from './stage-mixin';
 import { Error, SenderList, UserAvatar, MessageEdit, MessageView, MessageEditor, MessageControl } from 'salescenter.component.stage-block.sms-message';
 import { Manager } from "salescenter.manager";
 import { SenderConfig } from "salescenter.lib";
+import {UI} from "ui.notification";
+
+const TYPE_PHONE = 'phone';
+const TYPE_SENDER = 'sender';
 
 const SmsMessage = {
 	props: {
@@ -39,6 +43,18 @@ const SmsMessage = {
 			type: String,
 			required: true
 		},
+		contactEditorUrl: {
+			type: String,
+			required: true
+		},
+		ownerTypeId: {
+			type: Number,
+			required: true
+		},
+		ownerId: {
+			type: Number,
+			required: true
+		},
 		titleTemplate: {
 			type: String,
 			required: true
@@ -70,6 +86,7 @@ const SmsMessage = {
 	data()
 	{
 		return {
+			contactPhone: this.phone,
 			currentSenderCode: null,
 			senders: [],
 			pushedToUseBitrix24Notifications: null,
@@ -99,7 +116,7 @@ const SmsMessage = {
 		},
 		title()
 		{
-			return this.titleTemplate.replace('#PHONE#', this.phone);
+			return this.titleTemplate.replace('#PHONE#', this.contactPhone);
 		},
 		errors()
 		{
@@ -120,6 +137,7 @@ const SmsMessage = {
 						text: this.getConnectionErrorText(sender),
 						fixer: SenderConfig.openSliderFreeMessages(sender.connectUrl),
 						fixText: this.getConnectionErrorFixText(sender),
+						type: TYPE_SENDER
 					});
 
 					if (sender.code === SenderConfig.BITRIX24)
@@ -134,13 +152,14 @@ const SmsMessage = {
 				{
 					result.push({
 						text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_' + this.currentSender.code.toUpperCase() + '_NOT_AVAILABLE'),
+						type: TYPE_SENDER
 					});
 				}
 				else
 				{
 					if (this.currentSender.isConnected)
 					{
-						result = this.currentSender.usageErrors.map(error => ({ text: error }))
+						result = this.currentSender.usageErrors.map(error => ({ text: error, type: TYPE_SENDER }))
 					}
 					else
 					{
@@ -148,6 +167,7 @@ const SmsMessage = {
 							text: this.getConnectionErrorText(this.currentSender),
 							fixer: this.getFixer(this.currentSender.connectUrl),
 							fixText: this.getConnectionErrorFixText(this.currentSender),
+							type: TYPE_SENDER
 						});
 
 						if (this.currentSender.code === SenderConfig.BITRIX24)
@@ -158,9 +178,25 @@ const SmsMessage = {
 				}
 			}
 
-			if (!this.phone)
+			if (!this.contactPhone)
 			{
-				result.push({text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY')});
+				if(this.contactEditorUrl.length > 0)
+				{
+					result.push({
+						text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY'),
+						fixer: this.getFixer(this.contactEditorUrl),
+						fixText: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY_SETTINGS'),
+						type: TYPE_PHONE
+					});
+				}
+				else
+				{
+					result.push({
+						text: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_ALERT_PHONE_EMPTY'),
+						type: TYPE_PHONE
+					});
+				}
+
 			}
 
 			if (this.pushedToUseBitrix24Notifications === 'N' && bitrix24ConnectUrlError)
@@ -177,6 +213,10 @@ const SmsMessage = {
 		this.initialize(this.initCurrentSenderCode, this.initSenders, this.initPushedToUseBitrix24Notifications);
 	},
 	methods: {
+		onConfigureContactPhone()
+		{
+			this.$emit('stage-block-sms-message-on-change-contact-phone');
+		},
 		getConnectionErrorText(sender)
 		{
 			const messageCode = 'SALESCENTER_SEND_ORDER_BY_SMS_' + sender.code.toUpperCase() + '_NOT_CONNECTED_WARNING';
@@ -196,7 +236,17 @@ const SmsMessage = {
 			return () => {
 				if (typeof fixUrl === 'string')
 				{
-					return Manager.openSlider(fixUrl);
+					return Manager.openSlider(fixUrl, {
+						events: {
+							onLoad: function(event) {
+								const slider = event.getSlider();
+								const sliderBx = slider.getFrameWindow().BX;
+								sliderBx.addCustomEvent("BX.Crm.EntityEditor:onNothingChanged", () => slider.close());
+								sliderBx.addCustomEvent("BX.Crm.EntityEditor:onCancel", () => slider.close());
+								sliderBx.addCustomEvent("onCrmEntityUpdate", () => slider.close());
+							}
+						}
+					});
 				}
 
 				if (typeof fixUrl === 'object' && fixUrl !== null)
@@ -244,11 +294,51 @@ const SmsMessage = {
 					}
 				});
 		},
+		handlePhoneErrorFix()
+		{
+			Ajax.runComponentAction("bitrix:salescenter.app", "refreshContactPhone", {
+				mode: "class",
+				data: {
+					fields:{
+						ownerId: this.ownerId,
+						ownerTypeId: this.ownerTypeId,
+					}
+				},
+			})
+			.then((resolve)=> {
+				if (BX.type.isObject(resolve.data) && Object.values(resolve.data).length > 0)
+				{
+					if(this.contactPhone != resolve.data.contactPhone)
+					{
+						UI.Notification.Center.notify({
+							content: Loc.getMessage('SALESCENTER_SEND_ORDER_BY_SMS_SENDER_PHONE_CHANGE', {
+								'#TITLE#': resolve.data.title
+							}),
+						});
+					}
+
+					this.contactPhone = resolve.data.contactPhone;
+					this.onConfigureContactPhone();
+				}
+			});
+		},
+		hendleSmsErrorBlock(event)
+		{
+			if(event.data.type === TYPE_PHONE)
+			{
+				this.handlePhoneErrorFix()
+			}
+			else
+			{
+				this.handleErrorFix()
+			}
+		},
 		openBitrix24NotificationsHelp(event)
 		{
 			BX.Salescenter.Manager.openBitrix24NotificationsHelp(event);
 		},
 	},
+	//language=Vue
 	template: `
 		<stage-block-item			
 			:config="configForBlock"
@@ -266,7 +356,7 @@ const SmsMessage = {
 				<div :class="containerClassMixin" class="salescenter-app-payment-by-sms-item-container-offtop">
 					<sms-error-block
 						v-for="error in errors"
-						v-on:on-configure="handleErrorFix"
+						v-on:on-configure="hendleSmsErrorBlock($event)"
 						:error="error"
 					>
 					</sms-error-block>

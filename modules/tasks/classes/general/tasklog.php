@@ -283,6 +283,23 @@ class CTaskLog
 						$changes['STAGE'] = $stageChanges;
 					}
 				}
+				elseif ($key === 'UF_CRM_TASK')
+				{
+					if (!empty($added = implode(',', array_diff($value, $currentFields[$key]))))
+					{
+						$changes['UF_CRM_TASK_ADDED'] = [
+							'FROM_VALUE' => false,
+							'TO_VALUE' => $added,
+						];
+					}
+					if (!empty($deleted = implode(',', array_diff($currentFields[$key], $value))))
+					{
+						$changes['UF_CRM_TASK_DELETED'] = [
+							'FROM_VALUE' => $deleted,
+							'TO_VALUE' => false,
+						];
+					}
+				}
 				else
 				{
 					if ($comparedFields[$key]['TYPE'] === 'text')

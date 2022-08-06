@@ -211,7 +211,7 @@ this.BX = this.BX || {};
 	      if (column) {
 	        column.loadTasks().then(function () {
 	          column.rerenderSubtitle();
-	        }).catch(function () {});
+	        })["catch"](function () {});
 	      }
 	    }
 	  }, {
@@ -253,165 +253,7 @@ this.BX = this.BX || {};
 	  return PullManager;
 	}();
 
-	function _templateObject16() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"rpa-kanban-tasks-popup-inner\" data-role=\"rpa-kanban-column-tasks-item\">\n\t\t\t\t<div class=\"rpa-kanban-tasks-popup-list\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<a href=\"", "\" class=\"rpa-kanban-tasks-popup-add\">", "</a>\n\t\t\t</div>"]);
-
-	  _templateObject16 = function _templateObject16() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject15() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-tasks-popup-item\">\n\t\t\t\t\t\t<a href=\"", "\" class=\"rpa-kanban-tasks-popup-name\">", "</a>\n\t\t\t\t\t\t<div class=\"rpa-kanban-tasks-popup-desc\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-tasks-popup-delete\" onclick=\"", "\">", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>"]);
-
-	  _templateObject15 = function _templateObject15() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject14() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-item rpa-kanban-column-task-responsible-item-other\">\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-other-text\">+", "</span>\n\t\t\t\t\t</span>"]);
-
-	  _templateObject14 = function _templateObject14() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-column-task-responsible\">\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-responsible-list\" style=\"background-color: ", "\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject13 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"rpa-kanban-column-task-responsible-add\"></a>"]);
-
-	  _templateObject12 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-add\"></span>"]);
-
-	  _templateObject11 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-item\" title=\"", "\">\n\t\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\" style=\"border-color: ", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</span>"]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<img src=\"", "\" alt=\"\">"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-btn\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-btn-title\">", "</span>\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-btn-counter\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-block\">\n\t\t\t\t\t\t<div class=\"rpa-kanban-column-task-inner\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"main-kanban-column-settings-button\">\n\t\t\t\t\t\t<a class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-themes main-kanban-column-settings-button-rpa\" href=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"main-kanban-column-settings-button\" onclick=\"", "\">\n\t\t\t\t<button class=\"ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting\"></button>\n\t\t\t</div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-form-buttons\">\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-primary\" onclick=\"", "\">", "</button>\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-link\" onclick=\"", "\">", "</button>\n\t\t\t</div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"main-kanban-column-add-item-button\" onclick=\"", "\"></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"main-kanban-column-subtitle-box\"></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15;
 
 	var Column = /*#__PURE__*/function (_Kanban$Column) {
 	  babelHelpers.inherits(Column, _Kanban$Column);
@@ -510,7 +352,7 @@ this.BX = this.BX || {};
 	    key: "getSubTitleNode",
 	    value: function getSubTitleNode() {
 	      if (!this.layout.subtitleNode) {
-	        this.layout.subtitleNode = main_core.Tag.render(_templateObject());
+	        this.layout.subtitleNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"main-kanban-column-subtitle-box\"></div>"])));
 	      }
 
 	      return this.layout.subtitleNode;
@@ -538,7 +380,7 @@ this.BX = this.BX || {};
 	    key: "renderSubTitleAddButton",
 	    value: function renderSubTitleAddButton() {
 	      if (!this.layout.subTitleAddButton) {
-	        this.layout.subTitleAddButton = main_core.Tag.render(_templateObject2(), this.handleAddItemButtonClick.bind(this));
+	        this.layout.subTitleAddButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-kanban-column-add-item-button\" onclick=\"", "\"></div>"])), this.handleAddItemButtonClick.bind(this));
 	      }
 
 	      return this.layout.subTitleAddButton;
@@ -553,7 +395,7 @@ this.BX = this.BX || {};
 	          className += ' rpa-kanban-form-with-settings';
 	        }
 
-	        this.layout.quickFormContainer = main_core.Tag.render(_templateObject3(), className);
+	        this.layout.quickFormContainer = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"])), className);
 	      }
 
 	      return this.layout.quickFormContainer;
@@ -562,7 +404,7 @@ this.BX = this.BX || {};
 	    key: "renderQuickFormButtons",
 	    value: function renderQuickFormButtons() {
 	      if (!this.layout.quickFormButtons) {
-	        this.layout.quickFormButtons = main_core.Tag.render(_templateObject4(), this.handleFormSaveButtonClick.bind(this), main_core.Loc.getMessage('RPA_KANBAN_QUICK_FORM_SAVE_BUTTON'), this.handleFormCancelButtonClick.bind(this), main_core.Loc.getMessage('RPA_KANBAN_QUICK_FORM_CANCEL_BUTTON'));
+	        this.layout.quickFormButtons = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-form-buttons\">\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-primary\" onclick=\"", "\">", "</button>\n\t\t\t\t<button class=\"ui-btn ui-btn-sm ui-btn-link\" onclick=\"", "\">", "</button>\n\t\t\t</div>"])), this.handleFormSaveButtonClick.bind(this), main_core.Loc.getMessage('RPA_KANBAN_QUICK_FORM_SAVE_BUTTON'), this.handleFormCancelButtonClick.bind(this), main_core.Loc.getMessage('RPA_KANBAN_QUICK_FORM_CANCEL_BUTTON'));
 	      }
 
 	      return this.layout.quickFormButtons;
@@ -606,7 +448,7 @@ this.BX = this.BX || {};
 
 	          _this2.bindKeyDownEvents();
 	        });
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this2.getGrid().stopProgress();
 
 	        _this2.getGrid().showErrorFromResponse(response);
@@ -742,7 +584,7 @@ this.BX = this.BX || {};
 	    key: "renderSubTitleSettingsButton",
 	    value: function renderSubTitleSettingsButton() {
 	      if (!this.layout.subTitleSettingsButton) {
-	        this.layout.subTitleSettingsButton = main_core.Tag.render(_templateObject5(), this.openSettings.bind(this));
+	        this.layout.subTitleSettingsButton = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"main-kanban-column-settings-button\" onclick=\"", "\">\n\t\t\t\t<button class=\"ui-btn ui-btn-xs ui-btn-link ui-btn-icon-setting\"></button>\n\t\t\t</div>"])), this.openSettings.bind(this));
 	      }
 
 	      return this.layout.subTitleSettingsButton;
@@ -771,7 +613,7 @@ this.BX = this.BX || {};
 	    value: function renderSubTitleAddTaskButton() {
 	      if (!this.layout.subTitleAddTaskButton) {
 	        var url = this.buildAddRobotUrl();
-	        this.layout.subTitleAddTaskButton = main_core.Tag.render(_templateObject6(), url, main_core.Loc.getMessage('RPA_KANBAN_COLUMN_ADD_TASK_BTN'));
+	        this.layout.subTitleAddTaskButton = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"main-kanban-column-settings-button\">\n\t\t\t\t\t\t<a class=\"ui-btn ui-btn-xs ui-btn-light-border ui-btn-no-caps ui-btn-round ui-btn-themes main-kanban-column-settings-button-rpa\" href=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t"])), url, main_core.Loc.getMessage('RPA_KANBAN_COLUMN_ADD_TASK_BTN'));
 	      }
 
 	      return this.layout.subTitleAddTaskButton;
@@ -780,7 +622,7 @@ this.BX = this.BX || {};
 	    key: "renderSubTitleTasks",
 	    value: function renderSubTitleTasks(tasks) {
 	      if (!this.layout.subTitleTasks) {
-	        this.layout.subTitleTasks = main_core.Tag.render(_templateObject7(), this.renderSubTitleResponsible(tasks, true), this.renderSubTitleTasksButton(tasks));
+	        this.layout.subTitleTasks = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-block\">\n\t\t\t\t\t\t<div class=\"rpa-kanban-column-task-inner\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.renderSubTitleResponsible(tasks, true), this.renderSubTitleTasksButton(tasks));
 	      }
 
 	      return this.layout.subTitleTasks;
@@ -789,7 +631,7 @@ this.BX = this.BX || {};
 	    key: "renderSubTitleTasksButton",
 	    value: function renderSubTitleTasksButton(tasks) {
 	      if (!this.layout.subTitleTasksButton) {
-	        this.layout.subTitleTasksButton = main_core.Tag.render(_templateObject8(), this.showTasks.bind(this, tasks), main_core.Loc.getMessage('RPA_KANBAN_TASKS'), tasks.length);
+	        this.layout.subTitleTasksButton = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-btn\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-btn-title\">", "</span>\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-btn-counter\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), this.showTasks.bind(this, tasks), main_core.Loc.getMessage('RPA_KANBAN_TASKS'), tasks.length);
 	      }
 
 	      return this.layout.subTitleTasksButton;
@@ -803,12 +645,19 @@ this.BX = this.BX || {};
 	      var plusHandler = this.showTasks.bind(this, tasks);
 	      tasks.forEach(function (task) {
 	        task.users.forEach(function (user) {
-	          var img = user.photoSrc ? main_core.Tag.render(_templateObject9(), user.photoSrc) : null;
-	          responsibleElements.push(main_core.Tag.render(_templateObject10(), user.name, "#" + _this5.getColor(), img));
+	          var style = 'border-color: #' + _this5.getColor() + ';';
+
+	          if (user.photoSrc) {
+	            style += ' background-image: url(' + main_core.Text.encode(user.photoSrc) + ');';
+	          } else {
+	            style += ' background-size: 60%;';
+	          }
+
+	          responsibleElements.push(main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-item\" title=\"", "\">\n\t\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\" style=\"", "\">\n\t\t\t\t\t</span>\n\t\t\t\t</span>"])), user.name, style));
 	        });
 	      });
 	      responsibleElements = this.sliceResponsibleListElements(responsibleElements);
-	      var plusNode = main_core.Tag.render(_templateObject11());
+	      var plusNode = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-add\"></span>"])));
 
 	      if (showTaskListMenu) {
 	        BX.bind(plusNode, 'click', plusHandler);
@@ -823,11 +672,11 @@ this.BX = this.BX || {};
 	            }
 	          });
 	        } else {
-	          plusNode = main_core.Tag.render(_templateObject12(), this.buildEditRobotUrl(task['robotName']));
+	          plusNode = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<a href=\"", "\" class=\"rpa-kanban-column-task-responsible-add\"></a>"])), this.buildEditRobotUrl(task['robotName']));
 	        }
 	      }
 
-	      return main_core.Tag.render(_templateObject13(), "#" + this.getColor(), plusHandler, responsibleElements, plusNode);
+	      return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-column-task-responsible\">\n\t\t\t\t\t<div class=\"rpa-kanban-column-task-responsible-list\" style=\"background-color: ", "\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), "#" + this.getColor(), plusHandler, responsibleElements, plusNode);
 	    }
 	  }, {
 	    key: "sliceResponsibleListElements",
@@ -835,7 +684,7 @@ this.BX = this.BX || {};
 	      if (elements.length > 4) {
 	        var counter = elements.length - 4;
 	        elements = elements.slice(0, 4);
-	        elements.push(main_core.Tag.render(_templateObject14(), counter));
+	        elements.push(main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<span class=\"rpa-kanban-column-task-responsible-item rpa-kanban-column-task-responsible-item-other\">\n\t\t\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-other-text\">+", "</span>\n\t\t\t\t\t</span>"])), counter));
 	      }
 
 	      return elements;
@@ -908,9 +757,9 @@ this.BX = this.BX || {};
 	      var _this7 = this;
 
 	      var elements = tasks.map(function (task) {
-	        return main_core.Tag.render(_templateObject15(), _this7.buildEditRobotUrl(task['robotName']), main_core.Text.encode(task['title']), _this7.renderSubTitleResponsible([task]), _this7.deleteTaskHandler.bind(_this7, task), main_core.Loc.getMessage('RPA_KANBAN_COLUMN_DELETE_TASK_BTN'));
+	        return main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-tasks-popup-item\">\n\t\t\t\t\t\t<a href=\"", "\" class=\"rpa-kanban-tasks-popup-name\">", "</a>\n\t\t\t\t\t\t<div class=\"rpa-kanban-tasks-popup-desc\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-tasks-popup-delete\" onclick=\"", "\">", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>"])), _this7.buildEditRobotUrl(task['robotName']), main_core.Text.encode(task['title']), _this7.renderSubTitleResponsible([task]), _this7.deleteTaskHandler.bind(_this7, task), main_core.Loc.getMessage('RPA_KANBAN_COLUMN_DELETE_TASK_BTN'));
 	      });
-	      return main_core.Tag.render(_templateObject16(), elements, this.buildAddRobotUrl(), main_core.Loc.getMessage('RPA_KANBAN_COLUMN_ADD_TASK_BTN'));
+	      return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"rpa-kanban-tasks-popup-inner\" data-role=\"rpa-kanban-column-tasks-item\">\n\t\t\t\t<div class=\"rpa-kanban-tasks-popup-list\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<a href=\"", "\" class=\"rpa-kanban-tasks-popup-add\">", "</a>\n\t\t\t</div>"])), elements, this.buildAddRobotUrl(), main_core.Loc.getMessage('RPA_KANBAN_COLUMN_ADD_TASK_BTN'));
 	    }
 	  }, {
 	    key: "deleteTaskHandler",
@@ -953,7 +802,7 @@ this.BX = this.BX || {};
 	            _this8.getGrid().stopProgress();
 
 	            promise.fulfill();
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this8.getGrid().stopProgress();
 
 	            promise.reject();
@@ -1126,7 +975,7 @@ this.BX = this.BX || {};
 	          _this13.setTasks(response.data.tasks);
 
 	          resolve();
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this13.getGrid().stopProgress().showErrorFromResponse(response);
 
 	          reject();
@@ -1193,135 +1042,7 @@ this.BX = this.BX || {};
 	  return Column;
 	}(main_kanban.Kanban.Column);
 
-	function _templateObject13$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-item-counter\" onclick=\"", "\" ", ">\n\t\t\t\t\t<div class=\"rpa-kanban-item-counter-text\">", "</div>\n\t\t\t\t\t<div class=\"rpa-kanban-item-counter-value\">", "</div>\n\t\t\t\t</div>\n\t\t"]);
-
-	  _templateObject13$1 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"rpa-kanban-column-task-responsible-item ", "\" \n\t\t\t href=\"", "\" title=\"", "\">\n\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\">\n\t\t\t\t\t", "\n\t\t\t\t</span>\n\t\t\t</a>\n\t\t"]);
-
-	  _templateObject12$1 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-column-task-responsible-list\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t"]);
-
-	  _templateObject11$1 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-item-contact\">\n\t\t\t\t\t<span class=\"rpa-kanban-item-contact-im\"></span>\n\t\t\t\t</div>\n\t\t"]);
-
-	  _templateObject10$1 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-user\">\n\t\t\t\t", "\n\t\t\t\t<a class=\"rpa-kanban-item-user-name rpa-kanban-item-field-item-value\" href=\"", "\">", "</a>\n\t\t\t</div>"]);
-
-	  _templateObject9$1 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<a class=\"rpa-kanban-item-user-photo\" href=\"", "\" style=\"background-image: url(", ")\"></a>"]);
-
-	  _templateObject8$1 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"rpa-kanban-item-description\"></div>\n\t\t"]);
-
-	  _templateObject7$1 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"rpa-kanban-item-shadow\"></div>\n\t\t"]);
-
-	  _templateObject6$1 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-value\">", "</span>\n\t\t\t\t\t\t</div>"]);
-
-	  _templateObject5$1 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-field-list\"></div>"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<a class=\"rpa-kanban-item-title\" href=\"", "\">", "</a>"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div ondblclick=\"", "\" class=\"main-kanban-item-default rpa-kanban-item\"></div>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10$1, _templateObject11$1, _templateObject12$1, _templateObject13$1;
 
 	var Item = /*#__PURE__*/function (_Kanban$Item) {
 	  babelHelpers.inherits(Item, _Kanban$Item);
@@ -1359,7 +1080,7 @@ this.BX = this.BX || {};
 	      this.renderShadow();
 
 	      if (!this.layout.content) {
-	        this.layout.content = main_core.Tag.render(_templateObject$1(), this.onDoubleClick.bind(this));
+	        this.layout.content = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<div ondblclick=\"", "\" class=\"main-kanban-item-default rpa-kanban-item\"></div>"])), this.onDoubleClick.bind(this));
 	      } else {
 	        main_core.Dom.clean(this.layout.content);
 	      }
@@ -1475,7 +1196,7 @@ this.BX = this.BX || {};
 	              _this3.editorReject = reject;
 	            });
 	          }
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          main_core.Dom.removeClass(_this3.layout.container, 'main-kanban-item-waiting');
 	          reject(response.errors);
 	        });
@@ -1652,7 +1373,7 @@ this.BX = this.BX || {};
 
 	          main_core.Dom.removeClass(_this5.layout.container, 'main-kanban-item-waiting');
 	          resolve(response);
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject(response);
 	          main_core.Dom.removeClass(_this5.layout.container, 'main-kanban-item-waiting');
 	        });
@@ -1693,7 +1414,7 @@ this.BX = this.BX || {};
 	        }).then(function (response) {
 	          main_core.Dom.removeClass(_this6.layout.container, 'main-kanban-item-waiting');
 	          resolve(response);
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject(response);
 	          main_core.Dom.removeClass(_this6.layout.container, 'main-kanban-item-waiting');
 	        });
@@ -1753,7 +1474,7 @@ this.BX = this.BX || {};
 	      }
 
 	      if (!this.layout.title) {
-	        this.layout.title = main_core.Tag.render(_templateObject2$1(), href, title);
+	        this.layout.title = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<a class=\"rpa-kanban-item-title\" href=\"", "\">", "</a>"])), href, title);
 	      } else {
 	        this.layout.title.innerText = title;
 	      }
@@ -1766,7 +1487,7 @@ this.BX = this.BX || {};
 	      var _this7 = this;
 
 	      if (!this.layout.fieldList) {
-	        this.layout.fieldList = main_core.Tag.render(_templateObject3$1());
+	        this.layout.fieldList = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-field-list\"></div>"])));
 	      }
 
 	      this.layout.fieldList.innerHTML = '';
@@ -1779,10 +1500,10 @@ this.BX = this.BX || {};
 	            var renderedUser = _this7.renderUser(fieldName);
 
 	            if (renderedUser) {
-	              _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject4$1(), main_core.Text.encode(fields[fieldName].title), renderedUser));
+	              _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>"])), main_core.Text.encode(fields[fieldName].title), renderedUser));
 	            }
 	          } else {
-	            _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject5$1(), main_core.Text.encode(fields[fieldName].title), _this7.getDisplayableValue(fieldName))); // field with link
+	            _this7.layout.fieldList.appendChild(main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"rpa-kanban-item-field-item\">\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-name\">", "</span>\n\t\t\t\t\t\t\t<span class=\"rpa-kanban-item-field-item-value\">", "</span>\n\t\t\t\t\t\t</div>"])), main_core.Text.encode(fields[fieldName].title), _this7.getDisplayableValue(fieldName))); // field with link
 
 	            /*this.layout.fieldList.appendChild(Tag.render`
 	            	<div class="rpa-kanban-item-field-item">
@@ -1799,12 +1520,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderShadow",
 	    value: function renderShadow() {
-	      return main_core.Tag.render(_templateObject6$1());
+	      return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"rpa-kanban-item-shadow\"></div>\n\t\t"])));
 	    }
 	  }, {
 	    key: "renderDescription",
 	    value: function renderDescription() {
-	      this.layout.description = main_core.Tag.render(_templateObject7$1());
+	      this.layout.description = main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"rpa-kanban-item-description\"></div>\n\t\t"])));
 	    }
 	  }, {
 	    key: "renderUserPhoto",
@@ -1813,7 +1534,7 @@ this.BX = this.BX || {};
 	          photo = _ref.photo;
 
 	      if (main_core.Type.isString(link) && main_core.Type.isString(photo)) {
-	        return main_core.Tag.render(_templateObject8$1(), main_core.Text.encode(link), main_core.Text.encode(photo));
+	        return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["<a class=\"rpa-kanban-item-user-photo\" href=\"", "\" style=\"background-image: url(", ")\"></a>"])), main_core.Text.encode(link), main_core.Text.encode(photo));
 	      }
 
 	      return null;
@@ -1826,7 +1547,7 @@ this.BX = this.BX || {};
 
 	      if (userInfo) {
 	        var photo = this.renderUserPhoto(userInfo);
-	        return main_core.Tag.render(_templateObject9$1(), photo ? photo : '', main_core.Text.encode(userInfo.link), main_core.Text.encode(userInfo.fullName));
+	        return main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-kanban-item-user\">\n\t\t\t\t", "\n\t\t\t\t<a class=\"rpa-kanban-item-user-name rpa-kanban-item-field-item-value\" href=\"", "\">", "</a>\n\t\t\t</div>"])), photo ? photo : '', main_core.Text.encode(userInfo.link), main_core.Text.encode(userInfo.fullName));
 	      }
 
 	      return null;
@@ -1834,7 +1555,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderContact",
 	    value: function renderContact() {
-	      return main_core.Tag.render(_templateObject10$1());
+	      return main_core.Tag.render(_templateObject10$1 || (_templateObject10$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-item-contact\">\n\t\t\t\t\t<span class=\"rpa-kanban-item-contact-im\"></span>\n\t\t\t\t</div>\n\t\t"])));
 	    }
 	  }, {
 	    key: "renderTasksParticipants",
@@ -1860,7 +1581,7 @@ this.BX = this.BX || {};
 	        elements.push(this.renderTaskParticipant(waitingFor, waitingForCnt > 1));
 	      }
 
-	      return main_core.Tag.render(_templateObject11$1(), elements);
+	      return main_core.Tag.render(_templateObject11$1 || (_templateObject11$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-column-task-responsible-list\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t"])), elements);
 	    }
 	  }, {
 	    key: "renderTaskParticipant",
@@ -1868,12 +1589,12 @@ this.BX = this.BX || {};
 	      var link = _ref2.link,
 	          photo = _ref2.photo,
 	          fullName = _ref2.fullName;
-	      return main_core.Tag.render(_templateObject12$1(), isMore ? 'rpa-kanban-column-task-responsible-item-more' : '', main_core.Text.encode(link), main_core.Text.encode(fullName), photo ? "<img src=\"".concat(main_core.Text.encode(photo), "\" alt=\"\">") : '');
+	      return main_core.Tag.render(_templateObject12$1 || (_templateObject12$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<a class=\"rpa-kanban-column-task-responsible-item ", "\" \n\t\t\t href=\"", "\" title=\"", "\">\n\t\t\t\t<span class=\"rpa-kanban-column-task-responsible-img\" ", ">\t\n\t\t\t\t</span>\n\t\t\t</a>\n\t\t"])), isMore ? 'rpa-kanban-column-task-responsible-item-more' : '', main_core.Text.encode(link), main_core.Text.encode(fullName), photo ? 'style="background-image: url(' + main_core.Text.encode(photo) + '"' : '');
 	    }
 	  }, {
 	    key: "renderTasksCounter",
 	    value: function renderTasksCounter() {
-	      return main_core.Tag.render(_templateObject13$1(), this.showTasks.bind(this), this.getTasksCounter() <= 0 ? 'style="display: none;"' : '', main_core.Loc.getMessage('RPA_KANBAN_TASKS'), this.getTasksCounter());
+	      return main_core.Tag.render(_templateObject13$1 || (_templateObject13$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"rpa-kanban-item-counter\" onclick=\"", "\" ", ">\n\t\t\t\t\t<div class=\"rpa-kanban-item-counter-text\">", "</div>\n\t\t\t\t\t<div class=\"rpa-kanban-item-counter-value\">", "</div>\n\t\t\t\t</div>\n\t\t"])), this.showTasks.bind(this), this.getTasksCounter() <= 0 ? 'style="display: none;"' : '', main_core.Loc.getMessage('RPA_KANBAN_TASKS'), this.getTasksCounter());
 	    }
 	  }, {
 	    key: "hasEmptyMandatoryFields",
@@ -2138,7 +1859,7 @@ this.BX = this.BX || {};
 	        } // save sorting
 
 
-	        item.saveCurrentState().saveSort().catch(function (response) {
+	        item.saveCurrentState().saveSort()["catch"](function (response) {
 	          _this3.onItemMoveError(item, response, itemPreviousState);
 	        });
 	        return;
@@ -2194,7 +1915,7 @@ this.BX = this.BX || {};
 
 	        item.showEditor(targetColumnId).then(function (response) {
 	          _this4.onEditorSave(item, response);
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this4.onItemMoveError(item, response, itemPreviousState);
 	        });
 	      } else {
@@ -2206,7 +1927,7 @@ this.BX = this.BX || {};
 	          item.setStageId(targetColumnId);
 	        }
 
-	        item.savePosition().catch(function (response) {
+	        item.savePosition()["catch"](function (response) {
 	          var isShowEditor = false;
 	          var isShowTasks = false;
 	          var isTasksError = false;
@@ -2236,7 +1957,7 @@ this.BX = this.BX || {};
 	              if (response.cancel === true) {
 	                _this4.onItemMoveError(item, null, itemPreviousState);
 	              }
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this4.onItemMoveError(item, response, itemPreviousState);
 	            });
 	          } else if (isShowTasks) {
@@ -2251,7 +1972,7 @@ this.BX = this.BX || {};
 	                  item.render();
 	                }
 	              }
-	            }).catch(function (response) {
+	            })["catch"](function (response) {
 	              _this4.onItemMoveError(item, response, itemPreviousState);
 	            });
 	          } else if (isTasksError) {
@@ -2340,7 +2061,7 @@ this.BX = this.BX || {};
 	        _this5.stopProgress();
 
 	        column.update(response.data);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this5.stopProgress();
 
 	        _this5.showErrorFromResponse(response, true);
@@ -2373,7 +2094,7 @@ this.BX = this.BX || {};
 	        promise.fulfill(_this6.transformColumnActionResponseToColumnOptions(response));
 
 	        _this6.stopProgress();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        var error = response.errors.pop().message;
 	        promise.reject(error);
 
@@ -2400,7 +2121,7 @@ this.BX = this.BX || {};
 	        _this7.stopProgress();
 
 	        promise.fulfill();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this7.stopProgress();
 
 	        var error = response.errors.pop().message;
@@ -2450,7 +2171,7 @@ this.BX = this.BX || {};
 	        }
 
 	        _this8.getFirstColumn().rerenderSubtitle();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this8.showErrorFromResponse(response, true);
 	      });
 	    }
@@ -2493,7 +2214,7 @@ this.BX = this.BX || {};
 	          });
 	        });
 	        promise.fulfill(items);
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        var error = response.errors.pop().message;
 	        promise.reject(error);
 	      });
@@ -2553,7 +2274,7 @@ this.BX = this.BX || {};
 	        if (!main_core.Type.isNil(promise)) {
 	          promise.fulfill();
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this9.stopProgress();
 
 	        _this9.showErrorFromResponse(response);
@@ -2686,7 +2407,7 @@ this.BX = this.BX || {};
 	                item.render();
 	              });
 	            });
-	          }).catch(function (response) {
+	          })["catch"](function (response) {
 	            _this11.stopProgress();
 
 	            _this11.showErrorFromResponse(response);
@@ -2749,7 +2470,7 @@ this.BX = this.BX || {};
 	          _this12.stopProgress();
 
 	          _this12.syncEditorFields(editor, result);
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          _this12.stopProgress();
 
 	          _this12.showErrorFromResponse(response);
@@ -2859,7 +2580,7 @@ this.BX = this.BX || {};
 	        }
 
 	        _this13.stopProgress();
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this13.stopProgress();
 
 	        _this13.showErrorFromResponse(response);

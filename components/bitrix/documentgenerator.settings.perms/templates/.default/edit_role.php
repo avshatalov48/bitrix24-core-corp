@@ -10,15 +10,16 @@ use Bitrix\DocumentGenerator\UserPermissions;
 Loc::loadLanguageFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load([
+	'sidepanel',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.alerts',
 	'ui.info-helper',
+	'ui.design-tokens',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
-CJSCore::Init(['sidepanel']);
 ?>
 	<div class="docs-config-wrap" id="docs-role">
 		<div id="role-alert-container"></div>

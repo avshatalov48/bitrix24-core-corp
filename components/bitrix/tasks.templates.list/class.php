@@ -7,6 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Grid;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
+use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TemplateSubtaskLimit;
 
@@ -87,11 +88,17 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			return null;
 		}
 
+		$filter = [
+			'ID' => $ids,
+		];
+
 		if($isAllSelected)
 		{
-			$mgrResult = Manager\Task\Template::getList($this->userId, ['select' => ['ID'], 'filter' => []]);
-			$ids = array_column($mgrResult['DATA'], 'ID');
+			$filter = [];
 		}
+
+		$mgrResult = Manager\Task\Template::getList($this->userId, ['select' => ['ID'], 'filter' => $filter]);
+		$ids = array_column($mgrResult['DATA'], 'ID');
 
 		\CTaskTemplates::DeleteBatch($ids);
 
@@ -153,12 +160,13 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			$params['order'] = $order;
 		}
 
-		$result = \Bitrix\Tasks\Item\Task\Template::find($params);
+		$data = [];
+		$result = Template::find($params);
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
-			/** @var Item $item */
-			foreach($result as $item)
+			/** @var Template $item */
+			foreach ($result as $item)
 			{
 				$data[] = $item->export(empty($select) ? [] : '~');
 			}
@@ -352,7 +360,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 	 */
 	private function getUF()
 	{
-		$uf = \Bitrix\Tasks\Item\Task\Template::getUserFieldControllerClass();
+		$uf = Template::getUserFieldControllerClass();
 
 		$scheme = $uf::getScheme();
 		unset($scheme['UF_TASK_WEBDAV_FILES']);
@@ -383,7 +391,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 				'name'     => GetMessage('TASKS_TEMPLATE_DEADLINE_AFTER'),
 				'editable' => false,
 				'default'  => true,
-				'sort'     => 'DEADLINE',
+				'sort'     => false,
 			],
 			'TASKS_TEMPLATE_RESPONSIBLE_ID' => [
 				'id'       => 'TASKS_TEMPLATE_RESPONSIBLE_ID',
@@ -523,7 +531,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		{
 			$gridSort = $this->getGridOptions()->GetSorting(
 				array(
-					'sort' => array('DEADLINE' => 'desc,nulls', 'ID' => 'asc'),
+					'sort' => array('ID' => 'asc'),
 					'vars' => array('by' => 'by', 'order' => 'order')
 				)
 			);
@@ -535,14 +543,6 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		if (!array_key_exists('ID', $sortResult))
 		{
 			$sortResult['ID'] = 'asc';
-		}
-
-		foreach ($sortResult as $key => &$value)
-		{
-			if (in_array($key, array('DEADLINE')))
-			{
-				$value = $value.',nulls';
-			}
 		}
 
 		return $sortResult;

@@ -48,7 +48,6 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 		$sections = [];
 
 		$mainElements = [
-			['name' => Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER],
 			['name' => EditorAdapter::FIELD_OPPORTUNITY],
 			['name' => Item::FIELD_NAME_BEGIN_DATE],
 			['name' => Item::FIELD_NAME_CLOSE_DATE],
@@ -140,7 +139,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 
 	protected function isPageTitleEditable(): bool
 	{
-		return false;
+		return true;
 	}
 
 	public function getInlineEditorEntityConfig(): array
@@ -167,7 +166,7 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 	{
 		parent::initializeEditorAdapter();
 
-		$locationString = CCrmLocations::getLocationString($this->item->getLocationId());
+		$locationString = CCrmLocations::getLocationStringByCode($this->item->getLocationId());
 		if (empty($locationString))
 		{
 			$locationString = '';
@@ -179,6 +178,10 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 				$this->item,
 				Item::FIELD_NAME_LOCATION_ID
 			)
+		);
+		$this->editorAdapter->addEntityData(
+			'IS_USE_NUMBER_IN_TITLE_PLACEHOLDER',
+			\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isUseNumberInTitlePlaceholder(),
 		);
 	}
 

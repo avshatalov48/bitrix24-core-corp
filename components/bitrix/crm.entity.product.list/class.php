@@ -957,11 +957,6 @@ final class CCrmEntityProductListComponent
 			return;
 		}
 
-		$shippedRowMap = Container::getInstance()->getShipmentProductService()->getShippedQuantityByEntity(
-			$this->entity['TYPE_ID'],
-			$this->entity['ID']
-		);
-
 		if (is_array($this->arParams['~PRODUCTS']))
 		{
 			$this->rows = $this->arParams['~PRODUCTS'];
@@ -974,11 +969,6 @@ final class CCrmEntityProductListComponent
 				}
 
 				$id = $row['ID'];
-				$row['DEDUCTED_QUANTITY'] = null;
-				if ((int)$row['PRODUCT_ID'] > 0)
-				{
-					$row['DEDUCTED_QUANTITY'] = $shippedRowMap[$id] ?? 0.0;
-				}
 
 				$intFields = [
 					'IBLOCK_ID',
@@ -1027,49 +1017,56 @@ final class CCrmEntityProductListComponent
 		elseif ($this->entity['ID'] > 0)
 		{
 			$this->rows = CCrmProductRow::LoadRows($this->entity['TYPE_CODE'], $this->entity['ID']);
-			if ($this->rows && $this->isAllowedInventoryManagement())
+		}
+
+		if ($this->rows && $this->isAllowedInventoryManagement())
+		{
+			$shippedRowMap = Container::getInstance()->getShipmentProductService()->getShippedQuantityByEntity(
+				$this->entity['TYPE_ID'],
+				$this->entity['ID']
+			);
+
+			$reserveData = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getList([
+				'filter' => [
+					'=ROW_ID' => array_column($this->rows, 'ID'),
+				],
+				'select' => [
+					'INPUT_RESERVE_QUANTITY' => 'RESERVE_QUANTITY',
+					'DATE_RESERVE_END',
+					'ROW_ID',
+					'STORE_ID',
+				],
+			]);
+
+			$reserveRowMap = [];
+			while ($reservation = $reserveData->fetch())
 			{
-				$reserveData = \Bitrix\Crm\Reservation\Internals\ProductRowReservationTable::getList([
-					'filter' => [
-						'=ROW_ID' => array_column($this->rows, 'ID'),
-					],
-					'select' => [
-						'INPUT_RESERVE_QUANTITY' => 'RESERVE_QUANTITY',
-						'DATE_RESERVE_END',
-						'ROW_ID',
-						'STORE_ID',
-					],
-				]);
+				$rowId = $reservation['ROW_ID'];
+				unset($reservation['ROW_ID']);
 
-				$reserveRowMap = [];
-				while ($reservation = $reserveData->fetch())
+				if ($reservation['DATE_RESERVE_END'] instanceof Date)
 				{
-					$rowId = $reservation['ROW_ID'];
-					unset($reservation['ROW_ID']);
+					$reservation['DATE_RESERVE_END'] = $reservation['DATE_RESERVE_END']->toString();
+				}
+				$reserveRowMap[$rowId] = $reservation;
+			}
 
-					if ($reservation['DATE_RESERVE_END'] instanceof Date)
-					{
-						$reservation['DATE_RESERVE_END'] = $reservation['DATE_RESERVE_END']->toString();
-					}
-					$reserveRowMap[$rowId] = $reservation;
+			foreach ($this->rows as &$row)
+			{
+				$id = $row['ID'];
+
+				if ($reserveRowMap[$id])
+				{
+					$row = array_merge($row, $reserveRowMap[$id]);
 				}
 
-				foreach ($this->rows as &$row)
+				$row['DEDUCTED_QUANTITY'] = null;
+				if ((int)$row['PRODUCT_ID'] > 0)
 				{
-					$id = $row['ID'];
-
-					if ($reserveRowMap[$id])
-					{
-						$row += $reserveRowMap[$id];
-					}
-
-					$row['DEDUCTED_QUANTITY'] = null;
-					if ((int)$row['PRODUCT_ID'] > 0)
-					{
-						$row['DEDUCTED_QUANTITY'] = $shippedRowMap[$id] ?? 0.0;
-					}
+					$row['DEDUCTED_QUANTITY'] = $shippedRowMap[$id] ?? 0.0;
 				}
 			}
+			unset($row);
 		}
 	}
 
@@ -2270,7 +2267,6 @@ final class CCrmEntityProductListComponent
 						&& (int)$storeId > 0
 						&& isset($storeOfferMap[$data['OFFER_ID']][$storeId])
 						&& 	$this->isAllowedInventoryManagement()
-						&& !$this->isReservationRestrictedByPlan()
 					)
 					{
 						$storeInfo = $storeOfferMap[$data['OFFER_ID']][$storeId];

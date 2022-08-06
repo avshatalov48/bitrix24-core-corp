@@ -6,14 +6,9 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
 
-Main\Localization\Loc::loadMessages(__FILE__);
-
 class DynamicEntity extends Platform
 {
-	public const CODE_DELIMITER = '_';
-	public const TRADING_PLATFORM_CODE = 'dynamic';
-
-	protected $entity = [];
+	protected $entity;
 
 	/**
 	 * @return string
@@ -23,14 +18,7 @@ class DynamicEntity extends Platform
 	 */
 	protected function getName(): string
 	{
-		$data = $this->getInfo();
-
-		return Main\Localization\Loc::getMessage(
-			'CRM_ORDER_TRADING_PLATFORM_DYNAMIC_ENTITY',
-			[
-				'#DYNAMIC_ENTITY#' => $data['TITLE']
-			]
-		);
+		return \CCrmOwnerType::GetDescription($this->getEntityTypeId());
 	}
 
 	/**
@@ -57,7 +45,7 @@ class DynamicEntity extends Platform
 	 */
 	protected function getEntityTypeId() : int
 	{
-		return (int)mb_substr($this->getCode(), mb_strrpos($this->getCode(), '_') + 1);
+		return \CCrmOwnerType::ResolveID($this->getCode());
 	}
 
 	/**
@@ -66,7 +54,7 @@ class DynamicEntity extends Platform
 	 */
 	public static function getCodeByEntityTypeId($id) : string
 	{
-		return static::TRADING_PLATFORM_CODE.static::CODE_DELIMITER.$id;
+		return mb_strtolower(\CCrmOwnerType::ResolveName($id));
 	}
 
 	public static function onEntityAdd(Main\Event $event)

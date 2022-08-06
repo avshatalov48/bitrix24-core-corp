@@ -37,6 +37,8 @@ class ViewedTable extends TaskDataManager
 {
 	private const STEP_LIMIT = 5000;
 
+	private static $cache = [];
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -288,6 +290,12 @@ class ViewedTable extends TaskDataManager
 	 */
 	private static function viewTask(int $taskId, int $userId, DateTime $viewedDate): void
 	{
+		$cacheKey = $taskId.'.'.$userId.'.'.$viewedDate->getTimestamp();
+		if (array_key_exists($cacheKey, self::$cache))
+		{
+			return;
+		}
+
 		$list = static::getList([
 			'select' => ['TASK_ID', 'USER_ID'],
 			'filter' => [
@@ -308,6 +316,8 @@ class ViewedTable extends TaskDataManager
 				'VIEWED_DATE' => $viewedDate,
 			]);
 		}
+
+		self::$cache[$cacheKey] = true;
 	}
 
 	/**

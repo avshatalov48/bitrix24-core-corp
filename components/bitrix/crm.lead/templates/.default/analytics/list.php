@@ -65,7 +65,8 @@ else
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
 				'DISABLE_NAVIGATION_BAR' => 'Y',
 				'HIDE_FILTER' => !$applyFilter
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

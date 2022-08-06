@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_popupcomponentsmaker,main_core,main_core_events) {
+(function (exports,ui_manual,ui_popupcomponentsmaker,main_core,ui_dialogs_messagebox,main_core_events) {
 	'use strict';
 
 	var RequestSender = /*#__PURE__*/function () {
@@ -13,7 +13,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function sendRequest(controller, action) {
 	      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      return new Promise(function (resolve, reject) {
-	        top.BX.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
 	          data: data
 	        }).then(resolve, reject);
 	      });
@@ -47,7 +47,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showErrorAlert",
 	    value: function showErrorAlert(response, alertTitle) {
 	      if (main_core.Type.isUndefined(response.errors)) {
-	        console.log(response);
+	        console.error(response);
 	        return;
 	      }
 
@@ -58,7 +58,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
 	          var title = alertTitle ? alertTitle : main_core.Loc.getMessage('TSM_ERROR_POPUP_TITLE');
-	          top.BX.UI.Dialogs.MessageBox.alert(message, title);
+	          ui_dialogs_messagebox.MessageBox.alert(message, title);
 	        }
 	      }
 	    }
@@ -99,7 +99,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showByExtension",
 	    value: function showByExtension(name, params) {
 	      var extensionName = 'tasks.scrum.' + name.toLowerCase();
-	      return main_core.Runtime.loadExtension(extensionName).then(function (exports) {
+	      return top.BX.Runtime.loadExtension(extensionName).then(function (exports) {
 	        name = name.replaceAll('-', '');
 
 	        if (exports && exports[name]) {
@@ -115,16 +115,18 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return SidePanel;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
 	var Methodology = /*#__PURE__*/function () {
 	  function Methodology(params) {
 	    babelHelpers.classCallCheck(this, Methodology);
 	    this.groupId = parseInt(params.groupId, 10);
-	    this.teamSpeedPath = params.teamSpeedPath ? params.teamSpeedPath : '';
-	    this.burnDownPath = params.burnDownPath ? params.burnDownPath : '';
+	    this.teamSpeedPath = main_core.Type.isString(params.teamSpeedPath) ? params.teamSpeedPath : '';
+	    this.burnDownPath = main_core.Type.isString(params.burnDownPath) ? params.burnDownPath : '';
+	    this.pathToTask = main_core.Type.isString(params.pathToTask) ? params.pathToTask : '';
 	    this.requestSender = new RequestSender();
 	    this.sidePanel = new SidePanel();
 	    this.menu = null;
+	    this.hintManager = null;
 	  }
 
 	  babelHelpers.createClass(Methodology, [{
@@ -277,31 +279,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        var baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
 	        var tutorClasses = 'tasks-scrum__widget-methodology--training tasks-scrum__widget-methodology--bg';
-	        var url = response.data.url;
-	        var existsTutor = url !== '';
-	        var iconClass = existsTutor ? 'ui-icon-service-tutorial' : 'ui-icon-service-light-tutorial';
-	        var blockClass = existsTutor ? '--active' : '';
-	        var labelClass = existsTutor ? '--hidden' : '';
-	        var node = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"", " ", " ", "\"\n\t\t\t\t\t\tdata-role=\"open-tutor\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ", " tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--description\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label ", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, tutorClasses, blockClass, iconClass, main_core.Loc.getMessage('TSF_TUTORIAL_TITLE'), main_core.Loc.getMessage('TSF_TUTORIAL_TEXT'), labelClass, main_core.Loc.getMessage('TSF_TEAM_SPEED_LABEL'));
+	        var node = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div\n\t\t\t\t\t\tclass=\"", " ", " --active\"\n\t\t\t\t\t\tdata-role=\"open-tutor\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--conteiner\">\n\t\t\t\t\t\t\t\t<div class=\"ui-icon ui-icon-service-tutorial tasks-scrum__widget-methodology--icon\">\n\t\t\t\t\t\t\t\t\t<i></i>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--content\">\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--name\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--description\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"tasks-scrum__widget-methodology--label --hidden\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), baseClasses, tutorClasses, main_core.Loc.getMessage('TSF_TUTORIAL_TITLE'), main_core.Loc.getMessage('TSF_TUTORIAL_TEXT'), main_core.Loc.getMessage('TSF_TEAM_SPEED_LABEL'));
 	        main_core.Event.bind(node, 'click', function () {
-	          if (existsTutor) {
-	            main_core.ajax.runAction('bitrix:tasks.scrum.info.saveAnalyticsLabel', {
-	              data: {
-	                groupId: _this5.groupId
-	              },
-	              analyticsLabel: {
-	                scrum: 'Y',
-	                action: 'guide_open'
-	              }
-	            }).then(function () {
-	              _this5.sidePanel.openSidePanel(url, {
-	                width: 1000,
-	                contentCallback: function contentCallback() {
-	                  return _this5.createTutorFrame(url);
-	                }
-	              });
-	            });
-	          }
+	          ui_manual.Manual.show('scrum', response.data.urlParams, {
+	            scrum: 'Y',
+	            action: 'guide_open'
+	          });
 	        });
 	        return node;
 	      })["catch"](function (response) {
@@ -328,19 +311,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return node;
 	    }
 	  }, {
-	    key: "createTutorFrame",
-	    value: function createTutorFrame(url) {
-	      var frameStyles = 'position: absolute; left: 0; top: 0; padding: 0;' + ' border: none; margin: 0; width: 100%; height: 100%;';
-	      return new Promise(function (resolve) {
-	        return resolve(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<iframe style=\"", "\" src=\"", "\"></iframe>"])), frameStyles, url));
-	      });
-	    }
-	  }, {
 	    key: "showEpics",
 	    value: function showEpics() {
 	      this.sidePanel.showByExtension('Epic', {
 	        view: 'list',
-	        groupId: this.groupId
+	        groupId: this.groupId,
+	        pathToTask: this.pathToTask
+	      }).then(function (extension) {
+	        BX.Tasks.Scrum.EpicInstance = extension;
 	      });
 	      this.menu.close();
 	    }
@@ -401,7 +379,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "initHints",
 	    value: function initHints(node) {
-	      BX.UI.Hint.init(node);
+	      this.hintManager = BX.UI.Hint.createInstance({
+	        popupParameters: {
+	          closeByEsc: true,
+	          autoHide: true
+	        }
+	      });
+	      this.hintManager.init(node);
 	    }
 	  }]);
 	  return Methodology;
@@ -409,5 +393,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Methodology = Methodology;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI,BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.Manual,BX.UI,BX,BX.UI.Dialogs,BX.Event));
 //# sourceMappingURL=methodology.bundle.js.map

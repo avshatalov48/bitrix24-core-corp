@@ -41,6 +41,7 @@ else
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
 				'HIDE_FILTER' => true
 			],
+			'USE_UI_TOOLBAR' => 'Y',
 		],
 		$component
 	);

@@ -1,0 +1,95 @@
+.b24-form-click-btn-wrapper button,
+.b24-form-click-btn-wrapper a {
+	cursor: pointer;
+}
+
+.b24-form-click-btn-wrapper button {
+	border-radius: 2px;
+	margin: 0;
+	min-width: 80px;
+	height: 39px;
+	font-size: 15px;
+	line-height: 20px;
+	vertical-align: baseline;
+	padding: 0 19px;
+	align-items: center;
+	border: 0;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-outlined > button {
+	border: 1px solid #3bc8f5;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-rounded > button {
+	border-radius: 19.5px;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-center > button {
+	display: block;
+	margin: 0 auto;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-left > button {
+	display: block;
+	margin-right: auto;
+	margin-left: 0;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-right > button {
+	display: block;
+	margin-left: auto;
+	margin-right: 0;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-plain.--b24-mod-inline {
+	display: inline;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-plain.--b24-mod-center {
+	text-align: center;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-plain.--b24-mod-left {
+	text-align: left;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-plain.--b24-mod-right {
+	text-align: right;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-dotted > a {
+	border-bottom: 1px dotted;
+}
+
+.b24-form-click-btn-wrapper.--b24-mod-solid > a {
+	border-bottom: 1px solid;
+}
+
+button.b24-form-click-btn-font-elegant {
+	font-family: Georgia, "Helvetica Neue", Arial,  Helvetica, sans-serif;
+	font-style: italic;
+	font-weight: normal;
+}
+
+button.b24-form-click-btn-font-classic {
+	font-family: Georgia, "Helvetica Neue", Arial,  Helvetica, sans-serif;
+	font-style: normal;
+	font-weight: bold;
+}
+
+button.b24-form-click-btn-font-modern {
+	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+}
+
+a.b24-form-click-btn-font-elegant {
+	font-style: italic;
+}
+
+a.b24-form-click-btn-font-classic {
+	font-style: normal;
+}
+
+a.b24-form-click-btn-font-modern {
+	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+}

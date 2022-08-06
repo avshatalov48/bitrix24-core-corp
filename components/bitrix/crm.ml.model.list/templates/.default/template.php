@@ -10,7 +10,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'ui.progressbar',
 	'ui.progressround',
 	'ui.buttons',
-	'sidepanel'
+	'sidepanel',
+	'ui.design-tokens',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");

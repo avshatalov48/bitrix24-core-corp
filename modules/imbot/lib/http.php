@@ -3,41 +3,86 @@ namespace Bitrix\ImBot;
 
 use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
+use Bitrix\Main\Web\HttpClient;
 use Bitrix\Main\Web\Json;
+use Bitrix\Main\Config\Option;
 
 
 class Http
 {
-	const TYPE_BITRIX24 = 'B24';
-	const TYPE_CP = 'CP';
-	const VERSION = 1;
+	public const
+		TYPE_BITRIX24 = 'B24',
+		TYPE_CP = 'CP';
 
-	public const ERROR_NETWORK = 'NETWORK_ERROR';
-	public const ERROR_ANSWER = 'ANSWER_MALFORMED';
+	public const
+		ERROR_NETWORK = 'NETWORK_ERROR',
+		ERROR_ANSWER = 'ANSWER_MALFORMED';
 
-	private $controllerUrl = 'https://marta.bitrix.info/json/';
+	private const SERVICE_MAP = [
+		'ru' => 'https://marta.bitrix.info/json/',
+		'eu' => 'https://marta-eu.bitrix.info/json/',
+	];
+
+	/** @var string */
 	private $licenceCode = '';
+
+	/** @var string */
 	private $domain = '';
+
+	/** @var string */
+	private $region = '';
+
+	/** @var string */
 	private $type = '';
+
+	/** @var string */
 	private $botId = '';
+
+	/** @var string */
+	private $controllerUrl = '';
 
 	/** @var Error */
 	private $error;
 
 
-	function __construct($botId)
+	public function __construct($botId)
 	{
 		$this->botId = $botId;
 		$this->error = new Error(null, '', '');
-		if (defined('BOT_CONTROLLER_URL'))
-		{
-			$this->controllerUrl = BOT_CONTROLLER_URL;
-		}
+		$this->region = Main\Application::getInstance()->getLicense()->getRegion() ?: 'ru';
+		$this->setControllerUrl($this->getServiceEndpoint($this->region));
 		$this->licenceCode = $this->detectLicenceCode();
 		$this->type = $this->detectPortalType();
-		$this->domain = self::getServerAddress();
+		$this->setPortalDomain(self::getServerAddress());
 
 		\Bitrix\Main\Loader::includeModule('im');
+	}
+
+	/**
+	 * Returns controller service endpoint url.
+	 *
+	 * @param string $region Portal region.
+	 * @return string
+	 */
+	public function getServiceEndpoint(string $region): string
+	{
+		if (defined('BOT_CONTROLLER_URL'))
+		{
+			$serviceEndpoint = \BOT_CONTROLLER_URL;
+		}
+		else
+		{
+			if (in_array($region, ['ru', 'by', 'kz'], true))
+			{
+				$serviceEndpoint = self::SERVICE_MAP['ru'];
+			}
+			else
+			{
+				$serviceEndpoint = self::SERVICE_MAP['eu'];
+			}
+		}
+
+		return $serviceEndpoint;
 	}
 
 	/**
@@ -45,12 +90,12 @@ class Http
 	 *
 	 * @return string
 	 */
-	public static function getServerAddress()
+	public static function getServerAddress(): string
 	{
 		static $publicUrl;
 		if ($publicUrl === null)
 		{
-			$publicUrl = Main\Config\Option::get('imbot', "portal_url");
+			$publicUrl = Option::get('imbot', 'portal_url');
 
 			if (defined('BOT_CLIENT_URL'))
 			{
@@ -61,7 +106,7 @@ class Http
 				$context = Main\Application::getInstance()->getContext();
 				$scheme = $context->getRequest()->isHttps() ? 'https' : 'http';
 				$server = $context->getServer();
-				$domain = Main\Config\Option::get('main', 'server_name', '');
+				$domain = Option::get('main', 'server_name', '');
 				if (empty($domain))
 				{
 					$domain = $server->getServerName();
@@ -69,22 +114,30 @@ class Http
 				if (preg_match('/^(?<domain>.+):(?<port>\d+)$/', $domain, $matches))
 				{
 					$domain = $matches['domain'];
-					$port   = $matches['port'];
+					$port = (int)$matches['port'];
 				}
 				else
 				{
-					$port = $server->getServerPort();
+					$port = (int)$server->getServerPort();
 				}
-				$port = in_array($port, array(80, 443)) ? '' : ':'.$port;
+				$port = in_array($port, [0, 80, 443]) ? '' : ':'.$port;
 
 				$publicUrl = $scheme.'://'.$domain.$port;
+			}
+			if (!(mb_strpos($publicUrl, 'https://') === 0 || mb_strpos($publicUrl, 'http://') === 0))
+			{
+				$publicUrl = 'https://' . $publicUrl;
 			}
 		}
 
 		return $publicUrl;
 	}
 
-
+	/**
+	 * @param string $type
+	 * @param string $str
+	 * @return string
+	 */
 	public static function requestSign($type, $str)
 	{
 		if ($type == self::TYPE_BITRIX24 && function_exists('bx_sign'))
@@ -135,12 +188,13 @@ class Http
 		$params['BX_LICENCE'] = $this->licenceCode;
 		$params['BX_DOMAIN'] = $this->domain;
 		$params['BX_TYPE'] = $this->type;
-		$params['BX_VERSION'] = self::VERSION;
+		$params['BX_REGION'] = $this->region;
+		$params['BX_VERSION'] = Main\ModuleManager::getVersion('imbot');
 		$params['BX_LANG'] = \Bitrix\Im\Bot::getDefaultLanguage();
 		$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 		$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
 
-		$waitResponse = $waitResponse ? true : \Bitrix\Main\Config\Option::get('imbot', 'wait_response', false);
+		$waitResponse = $waitResponse ? true : (bool)Option::get('imbot', 'wait_response', false);
 
 		Log::write([$this->controllerUrl, $params], 'COMMAND: '.$command);
 
@@ -148,38 +202,28 @@ class Http
 		$controllerUrl .= 'BOT='.$this->botId.'&';
 		$controllerUrl .= 'COMMAND='.$command;
 
-		$httpClient = new \Bitrix\Main\Web\HttpClient([
-			'socketTimeout' => 20,
-			'streamTimeout' => 60,
-			'waitResponse' => $waitResponse,
-			'disableSslVerification' => true,
-			'headers' => [
-				'User-Agent' => 'Bitrix Bot Client ('.$this->botId.')',
-				'x-bitrix-licence' => $this->licenceCode,
-				'x-bitrix-imbot' => $this->botId,
-			]
-		]);
+		$httpClient = $this->instanceHttpClient($waitResponse);
 
 		$result = $httpClient->post($controllerUrl, $params);
 		$errorCode = $httpClient->getHeaders()->get('x-bitrix-error');
 
 		Log::write(['response' => $result, 'error' => $errorCode], 'COMMAND RESULT: '.$command);
 
-			if ($result === false)
+		if ($result === false)
+		{
+			// check for network errors
+			$errors = $httpClient->getError();
+			if (!empty($errors))
 			{
-				// check for network errors
-				$errors = $httpClient->getError();
-				if (!empty($errors))
-				{
-					$result = [
-						'error' => [
-							'code' => self::ERROR_NETWORK,
-							'msg' => 'Network connection error.',
-							'errorStack' => $errors,
-						]
-					];
-				}
+				$result = [
+					'error' => [
+						'code' => self::ERROR_NETWORK,
+						'msg' => 'Network connection error.',
+						'errorStack' => $errors,
+					]
+				];
 			}
+		}
 		elseif ($waitResponse)
 		{
 			// try to parse result
@@ -290,7 +334,7 @@ class Http
 	{
 		if (defined('BX24_HOST_NAME'))
 		{
-			$licenceCode = BX24_HOST_NAME;
+			$licenceCode = \BX24_HOST_NAME;
 		}
 		else
 		{
@@ -347,5 +391,23 @@ class Http
 	{
 		$this->botId = $botCode;
 		return $this;
+	}
+
+	/**
+	 * @return HttpClient
+	 */
+	public function instanceHttpClient(bool $waitResponse = false): HttpClient
+	{
+		return new HttpClient([
+			'socketTimeout' => 20,
+			'streamTimeout' => 60,
+			'waitResponse' => $waitResponse,
+			'disableSslVerification' => true,
+			'headers' => [
+				'User-Agent' => 'Bitrix Bot Client ('.$this->botId.')',
+				'x-bitrix-licence' => $this->licenceCode,
+				'x-bitrix-imbot' => $this->botId,
+			]
+		]);
 	}
 }

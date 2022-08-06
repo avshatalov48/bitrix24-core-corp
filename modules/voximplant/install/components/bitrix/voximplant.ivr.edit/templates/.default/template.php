@@ -10,6 +10,8 @@ CJSCore::Init([
 	'phone_number',
 	'sidepanel',
 	'ui.alerts',
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/player/mediaplayer/jwplayer.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/voximplant.config.edit/templates/.default/style.css');

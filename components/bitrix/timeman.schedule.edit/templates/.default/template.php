@@ -15,7 +15,7 @@ use Bitrix\Timeman\Model\Schedule\ScheduleTable;
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.schedule.shift.edit/templates/.default/shift.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.schedule.edit/templates/.default/js/shift-multiple.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.interface.popup.timepicker/templates/.default/duration-picker.js');
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'loader']);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'loader', 'ui.design-tokens']);
 
 global $APPLICATION;
 

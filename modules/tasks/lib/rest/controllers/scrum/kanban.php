@@ -346,7 +346,8 @@ class Kanban extends Base
 
 					StagesTable::setWorkMode(StagesTable::WORK_MODE_ACTIVE_SPRINT);
 
-					if (StagesTable::delete($stage['ID'], $sprint->getId()))
+					$res = StagesTable::delete($stage['ID'], $sprint->getId());
+					if ($res && $res->isSuccess())
 					{
 						return true;
 					}

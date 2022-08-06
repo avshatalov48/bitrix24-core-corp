@@ -20,6 +20,7 @@ class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -39,6 +40,7 @@ class TaskRenewRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (!in_array($status, [\CTasks::STATE_COMPLETED, \CTasks::STATE_DEFERRED], true))
 		{
+			$this->controller->addError(static::class, 'Incorrect status');
 			return false;
 		}
 

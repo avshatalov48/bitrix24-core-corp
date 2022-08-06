@@ -2,61 +2,13 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_core_events) {
 	'use strict';
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
+
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-content-block-add-field\">\n\t\t\t<span class=\"ui-entity-card-content-add-field\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t</div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-field-fieldset-delete\">\n\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t</div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"Y\" />"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div id=\"", "\" class=\"ui-entity-editor-field-fieldset\"></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-entity-editor-container\"></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
 	var EntityEditorFieldsetField = /*#__PURE__*/function (_BX$UI$EntityEditorFi) {
 	  babelHelpers.inherits(EntityEditorFieldsetField, _BX$UI$EntityEditorFi);
 
@@ -102,7 +54,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      this._fieldsetContainer = main_core.Tag.render(_templateObject());
+	      this._fieldsetContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-entity-editor-container\"></div>"])));
 	      main_core.Dom.append(this._fieldsetContainer, this._wrapper);
 
 	      if (this._mode === BX.UI.EntityEditorMode.edit) {
@@ -130,7 +82,7 @@ this.BX = this.BX || {};
 	      var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 	      var context = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      var containerId = this._entityId + '_container_' + id;
-	      main_core.Dom.append(main_core.Tag.render(_templateObject2(), containerId), this._fieldsetContainer);
+	      main_core.Dom.append(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div id=\"", "\" class=\"ui-entity-editor-field-fieldset\"></div>"])), containerId), this._fieldsetContainer);
 	      var entityEditorId = this._entityId + '_' + id;
 	      var prefix = this.getName() + '[' + id + ']';
 	      var section = {
@@ -227,7 +179,7 @@ this.BX = this.BX || {};
 	          var inputName = "".concat(this.getName(), "[").concat(id, "][DELETED]");
 
 	          if (!container.querySelector("input[name=\"".concat(inputName, "\"]"))) {
-	            main_core.Dom.append(main_core.Tag.render(_templateObject3(), inputName), container);
+	            main_core.Dom.append(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\" name=\"", "\" value=\"Y\" />"])), inputName), container);
 	          }
 	        }
 	      }
@@ -293,12 +245,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDeleteButton",
 	    value: function getDeleteButton(id) {
-	      return main_core.Tag.render(_templateObject4(), this.onDeleteButtonClick.bind(this, id), main_core.Loc.getMessage('UI_ENTITY_EDITOR_DELETE'));
+	      return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-field-fieldset-delete\">\n\t\t\t<span class=\"ui-link ui-link-secondary\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t</div>"])), this.onDeleteButtonClick.bind(this, id), main_core.Loc.getMessage('UI_ENTITY_EDITOR_DELETE'));
 	    }
 	  }, {
 	    key: "getAddButton",
 	    value: function getAddButton() {
-	      return main_core.Tag.render(_templateObject5(), this.onAddButtonClick.bind(this), main_core.Loc.getMessage('UI_ENTITY_EDITOR_ADD'));
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-content-block-add-field\">\n\t\t\t<span class=\"ui-entity-card-content-add-field\" onclick=\"", "\">\n\t\t\t\t", "\n\t\t\t</span>\n\t\t</div>"])), this.onAddButtonClick.bind(this), main_core.Loc.getMessage('UI_ENTITY_EDITOR_ADD'));
 	    }
 	  }, {
 	    key: "initializeExistedValues",

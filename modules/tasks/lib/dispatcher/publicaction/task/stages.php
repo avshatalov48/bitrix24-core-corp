@@ -191,7 +191,8 @@ final class Stages extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			}
 			if (empty($rows))
 			{
-				if (StagesTable::delete($id, $stage['ENTITY_ID']))
+				$res = StagesTable::delete($id, $stage['ENTITY_ID']);
+				if ($res && $res->isSuccess())
 				{
 					return true;
 				}

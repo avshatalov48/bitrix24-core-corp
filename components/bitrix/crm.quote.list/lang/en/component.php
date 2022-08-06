@@ -58,4 +58,3 @@ $MESS["CRM_COLUMN_WEBFORM"] = "Created by CRM form";
 $MESS["CRM_QUOTE_NAV_TITLE_LIST_SHORT"] = "Quotes";
 $MESS["CRM_PRESET_MY_IN_WORK"] = "My (in progress)";
 $MESS["CRM_FILTER_MYCOMPANY_TITLE"] = "Your company name";
-?>

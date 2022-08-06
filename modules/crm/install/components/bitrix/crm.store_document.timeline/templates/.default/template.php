@@ -15,7 +15,7 @@ global $APPLICATION;
 				'CRM_TIMELINE_HISTORY_STUB': '<?= \Bitrix\Main\Localization\Loc::getMessage('TIMELINE_STUB_MESSAGE') ?>',
 			});
 
-			BX.addCustomEvent('BX.CrmSchedule:onBeforeRefreshLayout', function(event) {
+			BX.addCustomEvent('Schedule:onBeforeRefreshLayout', function(event) {
 				var plannedBlock = document.querySelector('.crm-entity-stream-section.crm-entity-stream-section-planned');
 				if (plannedBlock)
 				{

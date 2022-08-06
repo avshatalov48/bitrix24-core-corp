@@ -6,6 +6,7 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load([
 	"voximplant.common",
 	"ui.buttons",
+	"ui.design-tokens",
 ])
 ?>
 

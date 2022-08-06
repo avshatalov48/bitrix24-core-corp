@@ -1,9 +1,12 @@
 <?php
 namespace Bitrix\Crm\Agent\Duplicate;
 
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Main\Config\Option;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use CCrmOwnerType;
 
 class CompanyDuplicateIndexRebuildAgent extends EntityDuplicateIndexRebuildAgent
 {
@@ -136,8 +139,16 @@ class CompanyDuplicateIndexRebuildAgent extends EntityDuplicateIndexRebuildAgent
 
 		foreach ($itemIDs as $ID)
 		{
-			DuplicateRequisiteCriterion::registerByEntity(\CCrmOwnerType::Company, $ID);
-			DuplicateBankDetailCriterion::registerByEntity(\CCrmOwnerType::Company, $ID);
+			DuplicateRequisiteCriterion::registerByEntity(CCrmOwnerType::Company, $ID);
+			DuplicateBankDetailCriterion::registerByEntity(CCrmOwnerType::Company, $ID);
+
+			//region Register volatile duplicate criterion fields
+			DuplicateVolatileCriterion::register(
+				CCrmOwnerType::Company,
+				$ID,
+				[FieldCategory::REQUISITE, FieldCategory::BANK_DETAIL]
+			);
+			//endregion Register volatile duplicate criterion fields
 		}
 	}
 }

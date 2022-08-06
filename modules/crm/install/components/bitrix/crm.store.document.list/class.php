@@ -212,7 +212,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$result['SHOW_NAVIGATION_PANEL'] = true;
 		$result['NAV_PARAM_NAME'] = 'page';
 		$result['SHOW_PAGESIZE'] = true;
-		$result['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => 10], ['NAME' => 20, 'VALUE' => 20], ['NAME' => 50, 'VALUE' => 50]];
+		$result['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => '10'], ['NAME' => 20, 'VALUE' => '20'], ['NAME' => 50, 'VALUE' => '50']];
 		$result['SHOW_ROW_CHECKBOXES'] = true;
 		$result['SHOW_CHECK_ALL_CHECKBOXES'] = true;
 		$result['SHOW_ACTION_PANEL'] = true;
@@ -761,7 +761,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			'FILTER' => $this->filter->getFieldArrays(),
 			'FILTER_PRESETS' => [],
 			'ENABLE_LABEL' => true,
-			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 		];
 		UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 

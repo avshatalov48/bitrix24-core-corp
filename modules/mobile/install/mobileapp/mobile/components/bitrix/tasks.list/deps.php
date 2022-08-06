@@ -4,7 +4,7 @@ return [
 	'extensions' => [
 		'cache',
 		'entity-ready',
-		'files',
+		'uploader/const',
 		'notify',
 		'pull/client/events',
 		'reload/listeners',

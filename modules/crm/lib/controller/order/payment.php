@@ -7,12 +7,11 @@ use Bitrix\Crm;
 use Bitrix\Sale;
 
 Main\Localization\Loc::loadLanguageFile(__FILE__);
+Main\Loader::requireModule('sale');
 
-class Payment extends Main\Engine\Controller
+class Payment extends Entity
 {
 	private const PAYMENT_ACCESS_DENIED_ERROR_CODE = 'PAYMENT_ACCESS_DENIED';
-
-	private $needEnableAutomation = false;
 
 	protected function processBeforeAction(Main\Engine\Action $action)
 	{
@@ -31,21 +30,14 @@ class Payment extends Main\Engine\Controller
 			return false;
 		}
 
-		if (Sale\Configuration::isEnableAutomaticReservation())
-		{
-			Sale\Configuration::disableAutomaticReservation();
-			$this->needEnableAutomation = true;
-		}
+		$this->temporarilyDisableAutomationIfNeeded();
 
 		return parent::processBeforeAction($action);
 	}
 
 	protected function processAfterAction(Main\Engine\Action $action, $result)
 	{
-		if ($this->needEnableAutomation)
-		{
-			Sale\Configuration::enableAutomaticReservation();
-		}
+		$this->restoreDisabledAutomationIfNeeded();
 
 		parent::processAfterAction($action, $result);
 	}

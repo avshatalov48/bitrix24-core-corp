@@ -6,7 +6,8 @@
 .intranet-binding-menu-btn-round .ui-btn-menu {
 	text-transform: none;
 	height: 27px;
-	font: 13px/25px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .intranet-binding-menu-btn-round .ui-btn-main {

@@ -1,12 +1,13 @@
 .crm-alert {
 	width: 100%;
 	background: #FCFBE4;
-	border-bottom: 4px solid #eef2f4;
+	margin-bottom: 4px;
 	text-align: center;
 	overflow: hidden;
 	opacity: 0;
 	max-height: 0;
 	padding: 0 15px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-alert.crm-alert-entity-counter-animate-hide {

@@ -129,7 +129,10 @@ namespace.EntityEditor.prototype =
 
 			if (personalMobile && this.initialFields["PERSONAL_MOBILE"] != personalMobile)
 			{
-				this.managerInstance.showSmsPopup(personalMobile);
+				if (this.managerInstance.showSmsPopup instanceof Function)
+				{
+					this.managerInstance.showSmsPopup(personalMobile);
+				}
 				this.managerInstance.personalMobile = personalMobile;
 			}
 		}

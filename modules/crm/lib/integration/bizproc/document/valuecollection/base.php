@@ -671,7 +671,7 @@ abstract class Base extends ValueCollection
 		{
 			if (isset($this->document[$field]))
 			{
-				$this->document[$field] = 'user_' . $this->document[$field];
+				$this->document[$field] = $this->document[$field] > 0 ? 'user_' . $this->document[$field] : null;
 			}
 		}
 	}

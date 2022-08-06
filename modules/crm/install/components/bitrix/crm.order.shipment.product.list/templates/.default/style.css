@@ -376,6 +376,8 @@
 .crm-order-total-wrapper {
 	padding: 20px;
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
+	margin-top: var(--ui-space-stack-md);
 }
 
 .crm-order-total-discounts {
@@ -513,6 +515,10 @@
 a.crm-order-product-store-add-item {
 	display: block;
 	padding-top: 15px;
+}
+
+.crm-order-product-store-container + .crm-order-product-store-add-item {
+	padding-top: 0;
 }
 
 .crm-entity-widget-content-input.barcode-error { border-color: #f00; }

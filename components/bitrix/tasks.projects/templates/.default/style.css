@@ -2,10 +2,6 @@
     background-color: transparent!important;
 }
 
-.tasks-pagetitle-view .ui-side-panel-wrap-workarea {
-    display: none;
-}
-
 .tasks-projects-filter-btn-add {
     padding-right: 17px;
 }

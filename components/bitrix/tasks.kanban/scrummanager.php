@@ -9,14 +9,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
+use Bitrix\Tasks\Scrum\Service\ItemService;
+use Bitrix\Tasks\Scrum\Service\KanbanService;
 
 class ScrumManager
 {
 	private $groupId;
 
+	private static $listScrumItems = [];
+
 	public function __construct(int $groupId)
 	{
-		$this->groupId = (int)$groupId;
+		$this->groupId = (int) $groupId;
 	}
 
 	public function isScrumProject(): bool
@@ -40,12 +44,55 @@ class ScrumManager
 		return $responsibleId;
 	}
 
+	/**
+	 * The method returns a map that can be used to determine if the base task has subtasks in the current sprint.
+	 *
+	 * @param int $sprintId Sprint id.
+	 * @param array $taskIds List task ids.
+	 * @return array
+	 * @throws \TasksException
+	 */
+	public function buildMapOfExistenceOfSubtasks(int $sprintId, array $taskIds): array
+	{
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
+		$kanbanService = new KanbanService();
+
+		$mapOfExistenceOfSubtasks = [];
+
+		$queryObject = \CTasks::getList(
+			['ID' => 'ASC'],
+			[
+				'GROUP_ID' => $this->groupId,
+				'PARENT_ID' => $taskIds,
+			],
+			['ID', 'PARENT_ID']
+		);
+		while ($data = $queryObject->fetch())
+		{
+			if ($kanbanService->isTaskInKanban($sprintId, $data['ID']))
+			{
+				$mapOfExistenceOfSubtasks[$data['PARENT_ID']] = true;
+			}
+		}
+
+		foreach ($taskIds as $taskId)
+		{
+			$mapOfExistenceOfSubtasks[$taskId] = array_key_exists($taskId, $mapOfExistenceOfSubtasks);
+		}
+
+		return $mapOfExistenceOfSubtasks;
+	}
+
 	public function groupBySubTasks(TaskRegistry $taskRegistry, array $items, array $columns): array
 	{
 		$parentTasks = [];
 
-		list($updatedItems, $subTasksItems, $updatedColumns) = $this->extractSubTasksItems($items, $columns);
-		list($updatedItems, $updatedColumns) = $this->extractParentTasksItems(
+		[$updatedItems, $subTasksItems, $updatedColumns] = $this->extractSubTasksItems($items, $columns);
+		[$updatedItems, $updatedColumns] = $this->extractParentTasksItems(
 			$updatedItems,
 			$subTasksItems,
 			$updatedColumns
@@ -56,16 +103,41 @@ class ScrumManager
 			$column['total'] = 0;
 		}
 
+		$itemService = new ItemService();
+
 		foreach ($subTasksItems as $item)
 		{
 			if (!array_key_exists($item['parentId'], $parentTasks))
 			{
 				$parentTaskData = $taskRegistry->get($item['parentId']);
+				if (!$parentTaskData)
+				{
+					continue;
+				}
+				$parentGroupId = (int) $parentTaskData['GROUP_ID'];
+				$subTaskGroupId = (int) $item['data']['groupId'];
+				if ($parentGroupId !== $subTaskGroupId)
+				{
+					$updatedItems[] = $item;
+
+					continue;
+				}
+
+				if (!isset(self::$listScrumItems[$parentTaskData['ID']]))
+				{
+					self::$listScrumItems[$parentTaskData['ID']] = $itemService
+						->getItemBySourceId($parentTaskData['ID'])
+					;
+				}
+
+				$scrumItem = self::$listScrumItems[$parentTaskData['ID']];
+
 				$parentTasks[$item['parentId']] = [
 					'id' => $parentTaskData['ID'],
 					'name' => $parentTaskData['TITLE'],
 					'completed' => ($parentTaskData['STATUS'] == \CTasks::STATE_COMPLETED ? 'Y' : 'N'),
-					'storyPoints' => $this->getStoryPoints($parentTaskData['ID'], $items),
+					'storyPoints' => $scrumItem->getStoryPoints(),
+					'isVisibilitySubtasks' => $scrumItem->getInfo()->isVisibilitySubtasks() ? 'Y' : 'N',
 				];
 				$parentTasks[$item['parentId']]['columns'] = $columns;
 				$parentTasks[$item['parentId']]['items'] = [];
@@ -145,18 +217,5 @@ class ScrumManager
 		}
 
 		return $columns;
-	}
-
-	private function getStoryPoints(int $parentItemId, array $items): string
-	{
-		foreach ($items as $item)
-		{
-			if ($item['id'] == $parentItemId)
-			{
-				return $item['data']['storyPoints'] ?? '';
-			}
-		}
-
-		return '';
 	}
 }

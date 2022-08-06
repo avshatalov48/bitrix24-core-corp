@@ -1038,7 +1038,7 @@ if(typeof(BX.CrmItemStatusManager) === "undefined")
 	BX.CrmItemStatusManager.current = new BX.CrmItemStatusManager();
 
 	BX.CrmItemStatusManager.messages = {};
-	BX.CrmQuoteStatusManager.infos = [];
+	BX.CrmItemStatusManager.infos = [];
 }
 
 if(typeof(BX.CrmProgressManager) === "undefined")

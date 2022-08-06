@@ -5,10 +5,8 @@ namespace Bitrix\Location\Source\Google;
 use Bitrix\Location\Entity\Location;
 use Bitrix\Location\Entity\Generic\Collection;
 use Bitrix\Location\Entity\Location\Parents;
-use Bitrix\Location\Common\Point;
 use Bitrix\Location\Exception\RuntimeException;
 use Bitrix\Location\Repository\Location\Capability\IFindByExternalId;
-use Bitrix\Location\Repository\Location\Capability\IFindByPoint;
 use Bitrix\Location\Repository\Location\Capability\IFindByText;
 use Bitrix\Location\Repository\Location\Capability\IFindParents;
 use Bitrix\Location\Repository\Location\IRepository;
@@ -29,8 +27,7 @@ Loc::loadMessages(__FILE__);
  * Class Google
  * @package Bitrix\Location\Source
  */
-class Repository extends BaseRepository
-	implements IRepository, IFindByExternalId, IFindByPoint, IFindByText, IFindParents, ISource
+class Repository extends BaseRepository implements IRepository, IFindByExternalId, IFindByText, IFindParents, ISource
 {
 	/** @var string  */
 	protected $apiKey = '';
@@ -69,21 +66,6 @@ class Repository extends BaseRepository
 			new Converters\ByIdConverter($languageId),
 			[
 				'placeid' => $locationExternalId,
-				'language' => $this->googleSource->convertLang($languageId)
-			]
-		);
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	public function findByPoint(Point $point, string $languageId)
-	{
-		return $this->find(
-			new Requesters\ByCoordsRequester($this->httpClient, $this->cachePool),
-			new Converters\ByCoordsConverter($languageId),
-			[
-				'latlng' => $point->getLatitude().','.$point->getLongitude(),
 				'language' => $this->googleSource->convertLang($languageId)
 			]
 		);

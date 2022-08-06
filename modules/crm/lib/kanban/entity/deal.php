@@ -80,38 +80,10 @@ class Deal extends Entity
 
 	public function getFilterPresets(): array
 	{
-		$user = $this->getCurrentUserInfo();
-
-		return [
-			'filter_in_work' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_DPR_WORK'),
-				'default' => true,
-				'fields' => [
-					'STAGE_SEMANTIC_ID' => [
-						\Bitrix\Crm\PhaseSemantics::PROCESS
-					]
-				]
-			],
-			'filter_my' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_DPR_WORK_MY'),
-				'disallow_for_all' => true,
-				'fields' => [
-					'ASSIGNED_BY_ID_name' => $user['name'],
-					'ASSIGNED_BY_ID' => $user['id'],
-					'STAGE_SEMANTIC_ID' => [
-						\Bitrix\Crm\PhaseSemantics::PROCESS
-					]
-				]
-			],
-			'filter_closed' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_DPR_WON'),
-				'fields' => [
-					'STAGE_SEMANTIC_ID' => [
-						[\Bitrix\Crm\PhaseSemantics::SUCCESS, \Bitrix\Crm\PhaseSemantics::FAILURE]
-					]
-				]
-			],
-		];
+		return (new Filter\Preset\Deal())
+			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->getDefaultPresets()
+		;
 	}
 
 	public function isRestPlacementSupported(): bool

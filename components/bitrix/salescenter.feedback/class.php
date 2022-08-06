@@ -89,7 +89,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 		$this->arResult['fields']['values']['CONTACT_EMAIL'] = CurrentUser::get()->getEmail();
 		if ($this->arParams['FEEDBACK_TYPE'] === self::FEEDBACK_TYPE_INTEGRATION_REQUEST)
 		{
-			$this->arResult['domain'] = 'https://cp.bitrix.ru';
+			$this->arResult['domain'] = 'https://bitrix24.team';
 			$this->arResult['presets'] = [
 				'url' => defined('BX24_HOST_NAME') ? BX24_HOST_NAME : $_SERVER['SERVER_NAME'],
 				'tarif' => Bitrix24Manager::getInstance()->getLicenseType(),

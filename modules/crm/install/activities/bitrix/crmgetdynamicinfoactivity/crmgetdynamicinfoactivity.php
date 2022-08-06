@@ -59,6 +59,11 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		/**@var \Bitrix\Bizproc\Automation\Engine\Condition $condition*/
 		foreach ($conditionGroup->getItems() as [$condition, $joiner])
 		{
+			if (!isset($fieldsMap[$condition->getField()]))
+			{
+				continue;
+			}
+
 			$value = $this->convertToDocumentValue($fieldsMap[$condition->getField()], $condition->getValue());
 			switch ($condition->getOperator())
 			{

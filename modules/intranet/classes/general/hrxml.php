@@ -44,16 +44,7 @@ class CUserHRXMLImport
 
 			if (intval($dbRes->SelectedRowsCount()) < 1)
 			{
-				if (ToUpper($GLOBALS['DBType']) != 'MYSQL')
-				{
-					$i = 0;
-					while ($arRes = $dbRes->Fetch()) $i++;
-					$bError = $i < 1;
-				}
-				else
-				{
-					$bError = true;
-				}
+				$bError = true;
 			}
 		}
 		else

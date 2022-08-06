@@ -9,7 +9,6 @@ use Bitrix\Crm\EventTable;
 use Bitrix\Crm\Service\EventHistory\EventHistoryData;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventManager;
@@ -32,14 +31,23 @@ class EventHistory
 	 * Creates a new 'view' record in the EventsTable for the provided object
 	 *
 	 * @param TrackedObject $trackedObject
+	 * @param Context|null $context
 	 *
 	 * @return Result
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registerView(TrackedObject $trackedObject): Result
+	public function registerView(TrackedObject $trackedObject, Context $context = null): Result
 	{
+		$context = $context ?? Container::getInstance()->getContext();
+		$userId = $context->getUserId();
+		if (!$userId)
+		{
+			return new Result();
+		}
+		if (!Container::getInstance()->getUserBroker()->isRealUser($userId))
+		{
+			return new Result();
+		}
+
 		$subQuery = EventRelationsTable::query()
 			->addSelect('EVENT_ID')
 			->addFilter('=ENTITY_TYPE', $trackedObject->getEntityType())
@@ -53,6 +61,7 @@ class EventHistory
 			->addSelect('DATE_CREATE')
 			->addFilter('=EVENT_TYPE', static::EVENT_TYPE_VIEW)
 			->addFilter('>=DATE_CREATE', $time)
+			->addFilter('=CREATED_BY_ID', $userId)
 			->addFilter('@ID', new SqlExpression($subQuery->getQuery()))
 			->addOrder('DATE_CREATE', 'DESC')
 			->setLimit(1);
@@ -65,46 +74,42 @@ class EventHistory
 
 		$eventData = $trackedObject->prepareViewEventData();
 
-		return $this->add(static::EVENT_TYPE_VIEW, $eventData);
+		return $this->add(static::EVENT_TYPE_VIEW, $eventData, $context);
 	}
 
 	/**
 	 * Creates a new 'delete' record in the EventsTable for the provided object
 	 *
 	 * @param TrackedObject $trackedObject
-	 *
+	 * @param Context|null $context
 	 * @return Result
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registerDelete(TrackedObject $trackedObject): Result
+	public function registerDelete(TrackedObject $trackedObject, Context $context = null): Result
 	{
 		$eventData = $trackedObject->prepareDeleteEventData();
 
-		return $this->add(static::EVENT_TYPE_DELETE, $eventData);
+		return $this->add(static::EVENT_TYPE_DELETE, $eventData, $context);
 	}
 
 	/**
 	 * Creates a new 'update' record in the EventsTable. The objects are compared and found differences are registered.
 	 *
 	 * @param TrackedObject $trackedObject
-	 *
+	 * @param Context|null $context
 	 * @return Result
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function registerUpdate(TrackedObject $trackedObject): Result
+	public function registerUpdate(TrackedObject $trackedObject, Context $context = null): Result
 	{
 		$eventData = $trackedObject->prepareUpdateEventData();
 
-		return $this->add(static::EVENT_TYPE_UPDATE, $eventData);
+		return $this->add(static::EVENT_TYPE_UPDATE, $eventData, $context);
 	}
 
-	public function registerExport(TrackedObject $trackedObject): Result
+	public function registerExport(TrackedObject $trackedObject, Context $context = null): Result
 	{
 		$eventData = $trackedObject->prepareExportEventData();
 
-		return $this->add(static::EVENT_TYPE_EXPORT, $eventData);
+		return $this->add(static::EVENT_TYPE_EXPORT, $eventData, $context);
 	}
 
 	/**
@@ -112,12 +117,10 @@ class EventHistory
 	 *
 	 * @param int $eventType
 	 * @param EventHistoryData|EventHistoryData[] $eventData
-	 *
+	 * @param Context|null $context
 	 * @return Result
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected function add(int $eventType, $eventData): Result
+	protected function add(int $eventType, $eventData, Context $context = null): Result
 	{
 		$result = new Result();
 
@@ -125,7 +128,7 @@ class EventHistory
 		{
 			foreach ($eventData as $eventDataNested)
 			{
-				$localResult = $this->add($eventType, $eventDataNested);
+				$localResult = $this->add($eventType, $eventDataNested, $context);
 				if (!$localResult->isSuccess())
 				{
 					$result->addErrors($localResult->getErrors());
@@ -139,7 +142,7 @@ class EventHistory
 
 		$this->sendEvent('OnBeforeCrmAddEvent', $eventDataArray);
 
-		$eventTableRecord = $this->createEventTableRecord($eventType);
+		$eventTableRecord = $this->createEventTableRecord($eventType, $context);
 		/** @noinspection PhpParamsInspection */
 		$eventTableResult = $this->saveRecord($eventTableRecord, $eventDataArray);
 		if (!empty($eventTableResult->getErrors()))
@@ -148,7 +151,7 @@ class EventHistory
 			return $result;
 		}
 
-		$eventRelationsTableRecord = $this->createEventRelationsTableRecord($eventTableResult->getId());
+		$eventRelationsTableRecord = $this->createEventRelationsTableRecord($eventTableResult->getId(), $context);
 		/** @noinspection PhpParamsInspection */
 		$eventRelationsTableResult = $this->saveRecord($eventRelationsTableRecord, $eventDataArray);
 		if (!empty($eventRelationsTableResult->getErrors()))
@@ -172,18 +175,19 @@ class EventHistory
 
 	/**
 	 * Creates an EO_Event object with default values set
-	 * @param int $eventType
 	 *
+	 * @param int $eventType
+	 * @param Context|null $context
 	 * @return EO_Event
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected function createEventTableRecord(int $eventType): EO_Event
+	protected function createEventTableRecord(int $eventType, Context $context = null): EO_Event
 	{
+		$context = $context ?? Container::getInstance()->getContext();
+
 		// Empty strings by default because old API (CCrmEvent) was using them instead of NULL value
 		return EventTable::createObject(
 			[
-				'CREATED_BY_ID' => Container::getInstance()->getContext()->getUserId(),
+				'CREATED_BY_ID' => $context->getUserId(),
 				'EVENT_ID' => '',
 				'EVENT_NAME' => $this->getDefaultEventName($eventType),
 				'EVENT_TYPE' => $eventType,
@@ -211,14 +215,15 @@ class EventHistory
 
 	/**
 	 * Creates an EO_EventRelations object with default values set
-	 * @param int $eventId
 	 *
+	 * @param int $eventId
+	 * @param Context|null $context
 	 * @return EO_EventRelations
-	 * @throws ArgumentException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	protected function createEventRelationsTableRecord(int $eventId): EO_EventRelations
+	protected function createEventRelationsTableRecord(int $eventId, Context $context = null): EO_EventRelations
 	{
+		$context = $context ?? Container::getInstance()->getContext();
+
 		// Empty strings by default because old API (CCrmEvent) was using them instead of NULL value
 		return EventRelationsTable::createObject(
 			[
@@ -227,7 +232,7 @@ class EventHistory
 				'ENTITY_TYPE' => '',
 				'ENTITY_ID' => 0,
 				'ENTITY_FIELD' => '',
-				'ASSIGNED_BY_ID' => Container::getInstance()->getContext()->getUserId(),
+				'ASSIGNED_BY_ID' => $context->getUserId(),
 			]
 		);
 	}

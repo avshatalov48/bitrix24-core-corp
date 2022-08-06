@@ -88,7 +88,7 @@ class EventHandler
 			$page = new AnalyticBoard();
 			$page->setBatchKey(self::BATCH_BI);
 			$page->setBoardKey($menuItem['id']);
-			$page->setTitle($title);
+			$page->setTitle(htmlspecialcharsBx($title));
 			$page->setExternal(true);
 			$page->setExternalUrl($menuItem['url']);
 			$page->setSliderSupport(true);

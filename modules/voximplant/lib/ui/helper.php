@@ -55,6 +55,8 @@ class Helper
 			Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 			Asset::getInstance()->addJs('/bitrix/js/crm/crm.js');
 			Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
+
+			\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 			Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 			?><script type="text/javascript">
 			BX.ready(

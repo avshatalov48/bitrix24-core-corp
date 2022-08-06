@@ -12,6 +12,7 @@ return [
 	],
 	'js' => '/bitrix/js/salescenter/app/dist/app.bundle.js',
 	'rel' => [
+		'ui.design-tokens',
 		'rest.client',
 		'main.loader',
 		'salescenter.marketplace',

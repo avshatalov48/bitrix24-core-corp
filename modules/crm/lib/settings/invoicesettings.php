@@ -10,6 +10,8 @@ use Bitrix\Main\ModuleManager;
 
 class InvoiceSettings
 {
+	use Traits\UseNumberInTitlePlaceholder;
+
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 
@@ -37,6 +39,7 @@ class InvoiceSettings
 		$this->isEnableSign = new BooleanSetting('invoice_enable_public_b24_sign', true);
 		$this->isShowInvoiceTransitionNotice = new BooleanSetting('invoice_show_transition_notice', true);
 		$this->isOldInvoicesEnabled = new BooleanSetting('old_invoice_enable', true);
+		$this->initIsUseNumberInTitlePlaceholderSettings(\CCrmOwnerType::SmartInvoice);
 	}
 	/**
 	 * Get current instance

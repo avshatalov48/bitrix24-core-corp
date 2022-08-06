@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Filter;
 use Bitrix\Crm\Item;
 
 class SmartInvoice extends Dynamic
@@ -10,11 +11,18 @@ class SmartInvoice extends Dynamic
 	{
 		$fields = [];
 		$fields[Item::FIELD_NAME_TITLE] = '';
-		$fields[Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = '';
 		$fields[Item::FIELD_NAME_BEGIN_DATE] = '';
 		$fields[Item::FIELD_NAME_OPPORTUNITY] = '';
 		$fields['CLIENT'] = '';
 
 		return $fields;
+	}
+
+	public function getFilterPresets(): array
+	{
+		return (new Filter\Preset\SmartInvoice())
+			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->getDefaultPresets()
+		;
 	}
 }

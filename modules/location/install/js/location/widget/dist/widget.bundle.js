@@ -180,7 +180,7 @@ this.BX.Location = this.BX.Location || {};
 	        return '';
 	      }
 
-	      return this.address.toString(this.addressFormat, location_core.AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA);
+	      return this.address.toString(this.addressFormat, location_core.AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA, location_core.AddressStringConverter.CONTENT_TYPE_TEXT);
 	    },
 	    containerStyles: function containerStyles() {
 	      return {
@@ -2744,20 +2744,20 @@ this.BX.Location = this.BX.Location || {};
 	        isChanged = true;
 	      } // this.#addressString === null until autocompete'll be rendered
 	      else if (babelHelpers.classPrivateFieldGet(this, _addressString$1).customTail !== '') {
-	          babelHelpers.classPrivateFieldGet(this, _address$3).setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$4).fieldForUnRecognized, babelHelpers.classPrivateFieldGet(this, _addressString$1).customTail);
+	          var currentValue = babelHelpers.classPrivateFieldGet(this, _address$3).getFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$4).fieldForUnRecognized);
+	          var newValue = currentValue ? currentValue + babelHelpers.classPrivateFieldGet(this, _addressString$1).customTail : babelHelpers.classPrivateFieldGet(this, _addressString$1).customTail;
+	          babelHelpers.classPrivateFieldGet(this, _address$3).setFieldValue(babelHelpers.classPrivateFieldGet(this, _addressFormat$4).fieldForUnRecognized, newValue);
 	          isChanged = true;
 	        }
 	    }
 
 	    if (isChanged) {
+	      babelHelpers.classPrivateFieldGet(this, _addressString$1).setValueFromAddress(babelHelpers.classPrivateFieldGet(this, _address$3));
+
 	      _classPrivateMethodGet$6(this, _onAddressChangedEventEmit, _onAddressChangedEventEmit2).call(this, [], {
 	        storeAsLastAddress: false
 	      });
 	    }
-	  }
-
-	  if (babelHelpers.classPrivateFieldGet(this, _prompt)) {
-	    babelHelpers.classPrivateFieldGet(this, _prompt).close();
 	  } // Let's prevent other onInputFocusOut handlers.
 
 
@@ -4005,13 +4005,6 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  babelHelpers.classPrivateFieldGet(this, _address$4).setFieldValue(field.type, field.value);
-
-	  if (field.type !== babelHelpers.classPrivateFieldGet(this, _addressFormat$5).fieldForUnRecognized) {
-	    babelHelpers.classPrivateFieldGet(this, _address$4).location = null;
-	    babelHelpers.classPrivateFieldGet(this, _address$4).latitude = '';
-	    babelHelpers.classPrivateFieldGet(this, _address$4).longitude = '';
-	  }
-
 	  this.emit(_classStaticPrivateFieldSpecGet$3(Fields, Fields, _onAddressChangedEvent$1), {
 	    address: babelHelpers.classPrivateFieldGet(this, _address$4),
 	    changedField: field

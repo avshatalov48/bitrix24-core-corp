@@ -115,24 +115,6 @@ export class Entry
 		}
 	}
 
-	openEpicEditForm(epicId: number)
-	{
-		const view = this.getView();
-		if (view instanceof Plan)
-		{
-			view.openEpicEditForm(epicId);
-		}
-	}
-
-	removeEpic(epicId: number)
-	{
-		const view = this.getView();
-		if (view instanceof Plan)
-		{
-			view.removeEpic(epicId);
-		}
-	}
-
 	setDisplayPriority(menuItem: HTMLElement, value: string)
 	{
 		if (!Dom.hasClass(menuItem, 'menu-popup-item-accept'))

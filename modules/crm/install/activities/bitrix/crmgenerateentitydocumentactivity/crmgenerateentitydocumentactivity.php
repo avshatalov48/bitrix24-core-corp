@@ -287,17 +287,6 @@ class CBPCrmGenerateEntityDocumentActivity
 		}
 	}
 
-	public function HandleFault(Exception $exception)
-	{
-		$status = $this->Cancel();
-		if ($status == CBPActivityExecutionStatus::Canceling)
-		{
-			return CBPActivityExecutionStatus::Faulting;
-		}
-
-		return $status;
-	}
-
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
 	{
 		if (!Loader::includeModule("crm"))

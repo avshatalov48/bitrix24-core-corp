@@ -185,7 +185,7 @@ class Sprint extends Controller
 		$kanbanService = new KanbanService();
 		$userService = new UserService();
 
-		$sprint = $sprintService->getActiveSprintByGroupId($groupId, $itemService);
+		$sprint = $sprintService->getActiveSprintByGroupId($groupId);
 		if ($sprint->isEmpty())
 		{
 			$this->errorCollection->setError(

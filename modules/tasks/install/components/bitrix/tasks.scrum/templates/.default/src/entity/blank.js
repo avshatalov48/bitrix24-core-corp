@@ -1,14 +1,11 @@
 import {Dom, Tag, Loc} from 'main.core';
-import {EventEmitter} from 'main.core.events';
 
 import {Entity} from './entity';
 
-export class Blank extends EventEmitter
+export class Blank
 {
 	constructor(entity: Entity)
 	{
-		super();
-
 		this.entity = entity;
 
 		this.node = null;

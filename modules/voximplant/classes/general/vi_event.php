@@ -3,6 +3,7 @@
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Voximplant as VI;
+use Bitrix\Main\Localization\Loc;
 
 class CVoxImplantEvent
 {
@@ -17,7 +18,7 @@ class CVoxImplantEvent
 				$arCorrectPhones["WORK_PHONE"] = CVoxImplantPhone::Normalize($arFields["WORK_PHONE"]);
 				if (!$arCorrectPhones["WORK_PHONE"])
 				{
-					$APPLICATION->throwException(GetMessage('ERROR_WORK_PHONE').' '.GetMessage('ERROR_NUMBER'));
+					$APPLICATION->throwException(Loc::getMessage('ERROR_WORK_PHONE').' '.Loc::getMessage('ERROR_NUMBER'));
 					$error = true;
 				}
 			}
@@ -33,7 +34,7 @@ class CVoxImplantEvent
 				$arCorrectPhones["PERSONAL_PHONE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_PHONE"]);
 				if (!$arCorrectPhones["PERSONAL_PHONE"])
 				{
-					$APPLICATION->throwException(GetMessage('ERROR_PERSONAL_PHONE').' '.GetMessage('ERROR_NUMBER'));
+					$APPLICATION->throwException(Loc::getMessage('ERROR_PERSONAL_PHONE').' '.Loc::getMessage('ERROR_NUMBER'));
 					$error = true;
 				}
 			}
@@ -49,7 +50,7 @@ class CVoxImplantEvent
 				$arCorrectPhones["PERSONAL_MOBILE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_MOBILE"]);
 				if (!$arCorrectPhones["PERSONAL_MOBILE"])
 				{
-					$APPLICATION->throwException(GetMessage('ERROR_PERSONAL_MOBILE').' '.GetMessage('ERROR_NUMBER'));
+					$APPLICATION->throwException(Loc::getMessage('ERROR_PERSONAL_MOBILE').' '.Loc::getMessage('ERROR_NUMBER'));
 					$error = true;
 				}
 			}
@@ -70,7 +71,7 @@ class CVoxImplantEvent
 					$existingEntity = CVoxImplantIncoming::getByInternalPhoneNumber($phoneInner);
 					if ($existingEntity && !($existingEntity['ENTITY_TYPE'] === 'user' && $existingEntity['ENTITY_ID'] == $arFields['ID']))
 					{
-						$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER_IN_USAGE'));
+						$APPLICATION->throwException(Loc::getMessage('ERROR_PHONE_INNER_IN_USAGE'));
 						$error = true;
 					}
 					else
@@ -80,7 +81,7 @@ class CVoxImplantEvent
 				}
 				else
 				{
-					$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER_2'));
+					$APPLICATION->throwException(Loc::getMessage('ERROR_PHONE_INNER_2'));
 					$error = true;
 				}
 			}
@@ -93,6 +94,7 @@ class CVoxImplantEvent
 
 	public static function OnBeforeUserUpdate(&$arFields)
 	{
+		$error = false;
 		if ($arFields["ID"] > 0)
 		{
 			$arPhones = Array();
@@ -108,8 +110,8 @@ class CVoxImplantEvent
 					$arPhones[$phone['PHONE_MNEMONIC']] = $phone;
 				}
 			}
+			/** @global \CMain $APPLICATION */
 			global $APPLICATION;
-			$error = false;
 			if(is_set($arFields, "WORK_PHONE"))
 			{
 				if ($arFields["WORK_PHONE"] <> '')
@@ -117,7 +119,7 @@ class CVoxImplantEvent
 					$arCorrectPhones["WORK_PHONE"] = CVoxImplantPhone::Normalize($arFields["WORK_PHONE"]);
 					if (!$arCorrectPhones["WORK_PHONE"])
 					{
-						$APPLICATION->throwException(GetMessage('ERROR_WORK_PHONE').' '.GetMessage('ERROR_NUMBER'));
+						$APPLICATION->throwException(Loc::getMessage('ERROR_WORK_PHONE').' '.Loc::getMessage('ERROR_NUMBER'));
 						$error = true;
 					}
 				}
@@ -133,7 +135,7 @@ class CVoxImplantEvent
 					$arCorrectPhones["PERSONAL_PHONE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_PHONE"]);
 					if (!$arCorrectPhones["PERSONAL_PHONE"])
 					{
-						$APPLICATION->throwException(GetMessage('ERROR_PERSONAL_PHONE').' '.GetMessage('ERROR_NUMBER'));
+						$APPLICATION->throwException(Loc::getMessage('ERROR_PERSONAL_PHONE').' '.Loc::getMessage('ERROR_NUMBER'));
 						$error = true;
 					}
 				}
@@ -149,7 +151,7 @@ class CVoxImplantEvent
 					$arCorrectPhones["PERSONAL_MOBILE"] = CVoxImplantPhone::Normalize($arFields["PERSONAL_MOBILE"]);
 					if (!$arCorrectPhones["PERSONAL_MOBILE"])
 					{
-						$APPLICATION->throwException(GetMessage('ERROR_PERSONAL_MOBILE').' '.GetMessage('ERROR_NUMBER'));
+						$APPLICATION->throwException(Loc::getMessage('ERROR_PERSONAL_MOBILE').' '.Loc::getMessage('ERROR_NUMBER'));
 						$error = true;
 					}
 				}
@@ -169,7 +171,7 @@ class CVoxImplantEvent
 						$existingEntity = CVoxImplantIncoming::getByInternalPhoneNumber($phoneInner);
 						if ($existingEntity && !($existingEntity['ENTITY_TYPE'] === 'user' && $existingEntity['ENTITY_ID'] == $arFields['ID']))
 						{
-							$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER_IN_USAGE'));
+							$APPLICATION->throwException(Loc::getMessage('ERROR_PHONE_INNER_IN_USAGE'));
 							$error = true;
 						}
 						else
@@ -180,7 +182,7 @@ class CVoxImplantEvent
 					}
 					else
 					{
-						$APPLICATION->throwException(GetMessage('ERROR_PHONE_INNER_2'));
+						$APPLICATION->throwException(Loc::getMessage('ERROR_PHONE_INNER_2'));
 						$error = true;
 					}
 				}
@@ -207,25 +209,60 @@ class CVoxImplantEvent
 						{
 							if ($phone == '')
 							{
-								VI\PhoneTable::delete($arPhones[$mnemonic]['ID']);
+								$res = VI\PhoneTable::delete($arPhones[$mnemonic]['ID']);
+								if (!$res->isSuccess())
+								{
+									$APPLICATION->throwException(implode('; ', $res->getErrorMessages()));
+								}
 							}
 							else
 							{
-								VI\PhoneTable::update($arPhones[$mnemonic]['ID'], Array('PHONE_NUMBER' => $phone));
+								$res = VI\PhoneTable::update($arPhones[$mnemonic]['ID'], Array('PHONE_NUMBER' => $phone));
+								if (!$res->isSuccess())
+								{
+									$error = true;
+								}
 							}
 						}
 					}
-					else if ($phone <> '')
+					elseif ($phone <> '')
 					{
-						VI\PhoneTable::add(Array('USER_ID' => (int)$arFields['ID'], 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
+						$res = VI\PhoneTable::add(Array('USER_ID' => (int)$arFields['ID'], 'PHONE_NUMBER' => $phone, 'PHONE_MNEMONIC' => $mnemonic));
+						if (!$res->isSuccess())
+						{
+							$error = true;
+						}
+					}
+					if ($error)
+					{
+						$errDesc = '';
+						if ($res instanceof \Bitrix\Main\ORM\Data\Result)
+						{
+							$errDesc .= implode(' ', $res->getErrorMessages());
+						}
+						else
+						{
+							switch ($mnemonic)
+							{
+								case 'PERSONAL_MOBILE':
+									$errDesc = Loc::getMessage('ERROR_PERSONAL_MOBILE');
+									break;
+								case 'PERSONAL_PHONE':
+									$errDesc = Loc::getMessage('ERROR_PERSONAL_PHONE');
+									break;
+								case 'WORK_PHONE':
+									$errDesc = Loc::getMessage('ERROR_WORK_PHONE');
+									break;
+							}
+						}
+						$errDesc .= ' '.Loc::getMessage('ERROR_NUMBER');
+						$APPLICATION->throwException($errDesc);
 					}
 				}
 			}
-			else
-			{
-				return false;
-			}
 		}
+
+		return !$error;
 	}
 
 	public static function OnAfterUserUpdate(&$fields)
@@ -270,7 +307,7 @@ class CVoxImplantEvent
 		return [
 			"voximplant" => [
 				"notifications" => [
-					"NAME" => GetMessage('VI_EVENTS_NOTIFICATIONS'),
+					"NAME" => Loc::getMessage('VI_EVENTS_NOTIFICATIONS'),
 					"SITE" => "Y",
 					"MAIL" => "Y",
 					"XMPP" => "N",
@@ -278,7 +315,7 @@ class CVoxImplantEvent
 					"DISABLED" => [],
 				],
 				"status_notifications" => [
-					"NAME" => GetMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS'),
+					"NAME" => Loc::getMessage('VI_EVENTS_SIP_STATUS_NOTIFICATIONS'),
 					"SITE" => "Y",
 					"MAIL" => "Y",
 					"XMPP" => "N",

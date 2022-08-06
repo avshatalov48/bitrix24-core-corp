@@ -89,7 +89,7 @@ class Page
 			return;
 		}
 
-		if (Instance.getOption('preventNextPage', false) === true)
+		if (Instance.getOption('refreshFrameCacheNeeded', false) === true)
 		{
 			return;
 		}
@@ -110,49 +110,59 @@ class Page
 					Type.isPlainObject(data)
 					&& Type.isPlainObject(data.PROPS)
 					&& Type.isStringFilled(data.PROPS.CONTENT)
-					&& (
+				)
+				{
+					if (
 						Type.isUndefined(data.LAST_TS)
 						|| parseInt(data.LAST_TS) <= 0
 						|| parseInt(Loc.getMessage('MSLFirstPageLastTS')) <= 0
 						|| parseInt(data.LAST_TS) < parseInt(Loc.getMessage('MSLFirstPageLastTS'))
-					)
-				)
-				{
-					this.processAjaxBlock(data.PROPS, {
-						type: 'next',
-						callback: () => {
-							Instance.recalcMaxScroll();
-
-							oMSL.registerBlocksToCheck();
-							setTimeout(oMSL.checkNodesHeight.bind(oMSL), 100);
-
-							EventEmitter.emit('BX.UserContentView.onRegisterViewAreaListCall', new BaseEvent({
-								compatData: [{
-									containerId: 'lenta_wrapper',
-									className: 'post-item-contentview',
-									fullContentClassName: 'post-item-full-content',
-								}],
-							}));
-						}
-					});
-
-					let pageNumber = this.getPageNumber();
-
-					if (
-						parseInt(Loc.getMessage('MSLPageNavNum')) > 0
-						&& pageNumber > 0
+						|| (
+							parseInt(data.LAST_TS) === parseInt(Loc.getMessage('MSLFirstPageLastTS'))
+							&& (
+								parseInt(data.LAST_ID) <= 0
+								|| parseInt(Loc.getMessage('MSLFirstPageLastId')) <= 0
+								|| parseInt(data.LAST_ID) !== parseInt(Loc.getMessage('MSLFirstPageLastId'))
+							)
+						)
 					)
 					{
-						this.setPageNumber(pageNumber + 1);
-						let nextUrl = Uri.removeParam(this.getNextPageUrl(), ['PAGEN_' + Loc.getMessage('MSLPageNavNum')]);
-						nextUrl = Uri.addParam(nextUrl, {
-							[`PAGEN_${parseInt(Loc.getMessage('MSLPageNavNum'))}`]: (this.getPageNumber() + 1),
+						this.processAjaxBlock(data.PROPS, {
+							type: 'next',
+							callback: () => {
+								Instance.recalcMaxScroll();
+
+								oMSL.registerBlocksToCheck();
+								setTimeout(oMSL.checkNodesHeight.bind(oMSL), 100);
+
+								EventEmitter.emit('BX.UserContentView.onRegisterViewAreaListCall', new BaseEvent({
+									compatData: [{
+										containerId: 'lenta_wrapper',
+										className: 'post-item-contentview',
+										fullContentClassName: 'post-item-full-content',
+									}],
+								}));
+							}
 						});
 
-						this.setNextPageUrl(nextUrl);
-					}
+						let pageNumber = this.getPageNumber();
 
-					document.addEventListener('scroll', this.onScroll);
+						if (
+							parseInt(Loc.getMessage('MSLPageNavNum')) > 0
+							&& pageNumber > 0
+						)
+						{
+							this.setPageNumber(pageNumber + 1);
+							let nextUrl = Uri.removeParam(this.getNextPageUrl(), ['PAGEN_' + Loc.getMessage('MSLPageNavNum')]);
+							nextUrl = Uri.addParam(nextUrl, {
+								[`PAGEN_${parseInt(Loc.getMessage('MSLPageNavNum'))}`]: (this.getPageNumber() + 1),
+							});
+
+							this.setNextPageUrl(nextUrl);
+						}
+
+						document.addEventListener('scroll', this.onScroll);
+					}
 				}
 				else
 				{
@@ -252,7 +262,7 @@ class Page
 					&& Type.isStringFilled(data.PROPS.CONTENT)
 				)
 				{
-					this.setPreventNextPage(false);
+					this.setRefreshFrameCacheNeeded(false);
 
 					BitrixMobile.LazyLoad.clearImages();
 					app.hidePopupLoader();
@@ -544,10 +554,10 @@ class Page
 		return this.nextUrl;
 	}
 
-	setPreventNextPage(status)
+	setRefreshFrameCacheNeeded(status)
 	{
 		Instance.setOptions({
-			preventNextPage: !!status
+			refreshFrameCacheNeeded: !!status
 		});
 
 		const refreshNeededNode = document.getElementById('next_page_refresh_needed');
@@ -561,6 +571,10 @@ class Page
 			refreshNeededNode.style.display = (!!status ? 'block' : 'none');
 			nextPageCurtainNode.style.display = (!!status ? 'none' : 'block');
 		}
+
+		EventEmitter.emit('BX.UserContentView.onSetPreventNextPage', new BaseEvent({
+			compatData: [ !!status ],
+		}));
 	}
 }
 

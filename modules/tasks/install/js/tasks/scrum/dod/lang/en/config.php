@@ -11,5 +11,7 @@ $MESS["TASKS_SCRUM_DOD_LABEL_EMPTY"] = "Definition of Done needs to be <span>con
 $MESS["TASKS_SCRUM_DOD_LABEL_TYPES"] = "Task type";
 $MESS["TASKS_SCRUM_DOD_LABEL_USER_SELECTOR"] = "Ask for DoD:";
 $MESS["TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL"] = "These items are required to be completed";
+$MESS["TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY"] = "Settings have been saved.";
 $MESS["TASKS_SCRUM_DOD_TITLE"] = "Definition of Done";
+$MESS["TASKS_SCRUM_DOD_TOOLBAR_SETTINGS"] = "Configure";
 $MESS["TSD_ERROR_POPUP_TITLE"] = "That's an error.";

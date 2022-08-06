@@ -61,7 +61,7 @@ class CrmToolbarComponent extends Bitrix\Crm\Component\Base
 
 		if(!empty($this->arResult['filter']) && is_array($this->arResult['filter']))
 		{
-			$this->arResult['filter']['THEME'] = Bitrix\Main\UI\Filter\Theme::LIGHT;
+			$this->arResult['filter']['THEME'] = Bitrix\Main\UI\Filter\Theme::MUTED;
 			Toolbar::addFilter($this->arResult['filter']);
 		}
 

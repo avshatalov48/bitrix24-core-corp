@@ -15,8 +15,11 @@ if($arResult['ADDITIONAL_CSS_PATH'] <> '')
 	\Bitrix\Main\Page\Asset::getInstance()->addCss($arResult['ADDITIONAL_CSS_PATH']);
 }
 
-\Bitrix\Main\UI\Extension::load('ui.buttons');
-\Bitrix\Main\UI\Extension::load('sale.barcode');
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'sale.barcode',
+	'ui.design-tokens'
+]);
 
 if(SITE_TEMPLATE_ID === 'bitrix24')
 {

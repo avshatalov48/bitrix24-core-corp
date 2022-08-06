@@ -64,6 +64,7 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 			this.version = '1.0.0';
 
 			this.id = id? id.toString(): 'backdrop.menu';
+			this.testId = this.id;
 
 			this.bounceEnable = false;
 			this.hideNavigationBar = true;
@@ -108,6 +109,17 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 		setVersion(version)
 		{
 			this.version = version;
+			return this;
+		}
+
+		/**
+		 *
+		 * @param testId
+		 * @returns {BackdropMenu}
+		 */
+		setTestId(testId)
+		{
+			this.testId = testId.toString();
 			return this;
 		}
 
@@ -400,6 +412,15 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 
 		/**
 		 *
+		 * @returns {string}
+		 */
+		getTestId()
+		{
+			return this.testId;
+		}
+
+		/**
+		 *
 		 * @returns {boolean}
 		 */
 		hasItems()
@@ -519,6 +540,7 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 
 			this.postEvent('backdrop.menu:showSubMenu', {
 				id: menu.id,
+				testId: menu.getTestId(),
 				config: menu.compile(),
 				componentId: componentId
 			});
@@ -612,6 +634,7 @@ var BackdropMenuAnimationType = WidgetListAnimationType;
 						name: 'list',
 						settings: {
 							objectName: "List",
+							testId: this.getTestId(),
 							backdrop: options
 						}
 					}

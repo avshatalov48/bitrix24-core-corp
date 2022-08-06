@@ -334,7 +334,7 @@
 .crm-entity-stream-section-context-menu {
 	position: absolute;
 	top: -10px;
-	right: -10px;
+	right: 0;
 	z-index: 550;
 	width: 20px;
 	height: 20px;
@@ -380,7 +380,7 @@
 	z-index: 500;
 	box-sizing: border-box;
 	width: 100%;
-	border-radius: 2px;
+	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md, 2px));
 	background-color: #fff;
 	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
 	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -1015,6 +1015,7 @@
 	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	resize: none;
 	transition: 400ms all ease;
+	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md));
 }
 
 .crm-entity-stream-content-new-comment-textarea-shadow {
@@ -2126,7 +2127,9 @@
 
 .crm-entity-stream-section-comment.crm-entity-stream-section-animate-start .crm-entity-stream-section-icon { left: 5px; }
 
-.crm-entity-stream-section-comment .crm-entity-stream-section-content { border-radius: 2px 0; }
+.crm-entity-stream-section-comment .crm-entity-stream-section-content {
+	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md, 2px 0));
+}
 
 .crm-entity-stream-section-comment .feed-com-img-wrap img{
 	max-width: 100%;

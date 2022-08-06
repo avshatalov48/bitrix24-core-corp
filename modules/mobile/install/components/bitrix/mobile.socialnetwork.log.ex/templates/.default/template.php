@@ -24,8 +24,6 @@ $mobileContext = new \Bitrix\Mobile\Context();
 
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/mobile.socialnetwork.log.ex/templates/.default/mobile_files.js");
 $APPLICATION->AddHeadScript("/bitrix/components/bitrix/mobile.socialnetwork.log.ex/templates/.default/script_attached.js");
-$APPLICATION->AddHeadScript("/bitrix/components/bitrix/rating.vote/templates/mobile_comment_like/script_attached.js");
-$APPLICATION->AddHeadScript("/bitrix/js/main/rating_like.js");
 $APPLICATION->AddHeadScript(SITE_TEMPLATE_PATH."/components/bitrix/voting.current/.userfield/script.js");
 
 $targetHtml = '';
@@ -68,6 +66,7 @@ UI\Extension::load([
 	'mobile.diskfile',
 	'ui.buttons',
 	'main.rating',
+	'mobile.rating.comment',
 	'ui.livefeed.background'
 ]);
 
@@ -319,6 +318,7 @@ else
 				MSLPathToKnowledgeGroup: '<?=CUtil::JSEscape($arResult["KNOWLEDGE_PATH"])?>',
 				MSLTitleKnowledgeGroup: '<?=GetMessageJS("MOBILE_LOG_MENU_KNOWLEDGE")?>',
 				MSLFirstPageLastTS : <?= (int)$arResult["dateLastPageTS"] ?>,
+				MSLFirstPageLastId : <?= (int)$arResult["lastPageId"] ?>,
 				MSLSliderAddPost: '<?=GetMessageJS("MOBILE_LOG_SLIDER_ADD_POST")?>',
 				MSLSliderFavorites: '<?=GetMessageJS("MOBILE_LOG_SLIDER_FAVORITES")?>',
 				MSLLoadScriptsNeeded: '<?=(COption::GetOptionString('main', 'optimize_js_files', 'N') === 'Y' ? 'N' : 'Y')?>',
@@ -649,7 +649,7 @@ else
 	{
 		$APPLICATION->RestartBuffer();
 		$res = array(
-			'ERROR_MESSAGE' => Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND')
+			'ERROR_MESSAGE' => Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND2')
 		);
 
 		CMain::FinalActions(CUtil::PhpToJSObject($res));
@@ -659,7 +659,7 @@ else
 		if ($arParams["LOG_ID"] > 0)
 		{
 			?><div class="post-wrap">
-				<div class="lenta-block-empty"><?=Loc::getMessage("MOBILE_LOG_ERROR_ENTRY_NOT_FOUND");?></div>
+				<div class="lenta-block-empty"><?= Loc::getMessage('MOBILE_LOG_ERROR_ENTRY_NOT_FOUND2') ?></div>
 			</div><?php
 		}
 		elseif (empty($arResult['pinnedEvents']))
@@ -772,7 +772,8 @@ else
 					"JS" => $arAdditionalData["SCRIPTS"],
 					"CSS" => $arAdditionalData["CSS"]
 				),
-				"LAST_TS" => ($arResult["dateLastPageTS"] ? (int)$arResult["dateLastPageTS"] : 0)
+				"LAST_TS" => ($arResult["dateLastPageTS"] ? (int)$arResult["dateLastPageTS"] : 0),
+				'LAST_ID' => ($arResult['lastPageId'] ? (int)$arResult['lastPageId'] : 0),
 			);
 
 			if ($arResult["COUNTER_TO_CLEAR"])

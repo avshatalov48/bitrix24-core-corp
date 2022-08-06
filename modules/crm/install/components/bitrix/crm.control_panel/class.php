@@ -223,16 +223,16 @@ class CrmControlPanel extends CBitrixComponent
 			{
 				$actions[] = [
 					'ID' => 'CREATE',
-					'URL' => $routerService->getItemDetailUrl($entityTypeId, 0, $categoryId),
+					'URL' => $routerService->getItemDetailUrl($entityTypeId, 0, $categoryId)->getLocator(),
 				];
 			}
 
-			$result[$menuId] = [
+			$result[] = [
 				'ID' => $menuId,
 				'MENU_ID' => 'menu_crm_' . strtolower($menuId),
 				'NAME' => $category->getName(),
 				'TITLE' => $category->getName(),
-				'URL' => $routerService->getItemListUrl($entityTypeId, $categoryId),
+				'URL' => $routerService->getItemListUrl($entityTypeId, $categoryId)->getLocator(),
 				'COUNTER' => $counter->getValue(),
 				'COUNTER_ID' => $counter->getCode(),
 				'ACTIONS' => $actions

@@ -6,6 +6,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Loader;
+
 \Bitrix\Main\UI\Extension::load(array("ui.fonts.opensans", "ui.buttons", "ui.alerts", "ui.forms", "ui.icons", "ui.sidepanel-content"));
 
 global $APPLICATION;
@@ -13,6 +15,8 @@ $APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_BACKOFFICE_NAME"));
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
+
+$isByLicense = Loader::includeModule('bitrix24') && \CBitrix24::getLicensePrefix() === 'by';
 
 /**
  * Bitrix vars
@@ -49,7 +53,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 					</div>
 				</div>
 				<hr class="crm-onec-separator">
-				<div class="crm-onec-install-description"><?=GetMessage("CRM_1C_START_DOC_INFO_TEXT")?></div>
+				<div class="crm-onec-install-description"><?=GetMessage($isByLicense ? "CRM_1C_START_DOC_INFO_TEXT_BY" : "CRM_1C_START_DOC_INFO_TEXT")?></div>
 			</div>
 		</div>
 		<div class="ui-slider-content-box">
@@ -88,4 +92,3 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
     window.ONEC_APP_SID = '<?=CUtil::JSEscape($sid)?>';
     BXOneCStart("backoffice");
 </script>
-

@@ -52,7 +52,7 @@ class ContactMatcher extends BaseEntityMatcher
 		switch ($property['CRM_FIELD_CODE'])
 		{
 			case 'FULL_NAME':
-				list($lastName, $firstName, $secondName) = explode(' ', $property['VALUE']);
+				[$lastName, $firstName, $secondName] = explode(' ', $property['VALUE']);
 
 				if (!isset($fields['LAST_NAME']) && !empty($lastName))
 				{
@@ -73,6 +73,24 @@ class ContactMatcher extends BaseEntityMatcher
 		}
 
 		parent::prepareGeneralField($fields, $property);
+	}
+
+	public function create()
+	{
+		$contactId = parent::create();
+		if ($contactId > 0)
+		{
+			$arErrors = [];
+
+			\CCrmBizProcHelper::AutoStartWorkflows(
+				$this->getEntityTypeId(),
+				$contactId,
+				\CCrmBizProcEventType::Create,
+				$arErrors
+			);
+		}
+
+		return $contactId;
 	}
 
 	protected function getFieldsToCreate(array $fields)

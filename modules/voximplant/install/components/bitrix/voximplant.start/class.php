@@ -35,6 +35,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result['SHOW_LINES'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_LINE, \Bitrix\Voximplant\Security\Permissions::ACTION_MODIFY);
 		$result['SHOW_STATISTICS'] = $this->permissions->canPerform(\Bitrix\Voximplant\Security\Permissions::ENTITY_CALL_DETAIL, \Bitrix\Voximplant\Security\Permissions::ACTION_VIEW);
 		$result['SHOW_PAY_BUTTON'] = \Bitrix\Voximplant\Security\Helper::isAdmin() && !\Bitrix\Voximplant\Limits::isRestOnly();
+		$result['SHOW_VOXIMPLANT'] = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() !== 'by';
 		$result['LINK_TO_BUY_SIP'] = CVoxImplantSip::getBuyLink();
 		$result['LINK_TO_TARIFFS'] = CVoxImplantMain::getTariffsUrl();
 		$result['IS_REST_ONLY'] = \Bitrix\Voximplant\Limits::isRestOnly();
@@ -46,6 +47,7 @@ class VoximplantStartComponent extends \CBitrixComponent
 		$result['TELEPHONY_AVAILABLE'] = \Bitrix\Voximplant\Limits::canManageTelephony();
 		$result['CRM_CALLBACK_FORM_CREATE_URL'] = $this->getCrmFormCreateUri();
 		$result['CRM_CALLBACK_FORM_LIST_URL'] = $this->getCrmFormListUri();
+		$result['IS_SHOWN_PRIVACY_POLICY'] = $this->isShownPrivacyPolicy();
 
 		if(!$this->isRestOnly())
 		{
@@ -82,30 +84,8 @@ class VoximplantStartComponent extends \CBitrixComponent
 				]);
 			}
 
-			foreach ($rentedNumbers as $rentedNumber)
-			{
-				$result['NUMBERS_LIST'][] = [
-					'NUMBER' => $rentedNumber['NUMBER'],
-					'TYPE' => CVoxImplantConfig::MODE_RENT,
-					'NAME' => $rentedNumber['FORMATTED_NUMBER'],
-					'DESCRIPTION' => CVoxImplantPhone::getNumberDescription($rentedNumber)
-				];
-			}
 			$callerIds = CVoxImplantPhone::PrepareCallerIdFields($accountInfo->caller_ids);
-
-			CVoxImplantPhone::syncCallerIds([
-				'callerIds' => $callerIds
-			]);
-
-			foreach ($callerIds as $callerId)
-			{
-				$result['NUMBERS_LIST'][] = [
-					'NUMBER' => $callerId['NUMBER'],
-					'TYPE' => CVoxImplantConfig::MODE_LINK,
-					'NAME' => $callerId['FORMATTED_NUMBER'],
-					'DESCRIPTION' => CVoxImplantPhone::getCallerIdDescription($callerId)
-				];
-			}
+			CVoxImplantPhone::syncCallerIds(['callerIds' => $callerIds]);
 
 			$sipConnections = \Bitrix\Voximplant\ConfigTable::getList([
 				'select' => [
@@ -121,14 +101,35 @@ class VoximplantStartComponent extends \CBitrixComponent
 				]
 			])->fetchAll();
 
-			foreach ($sipConnections as $sipConnection)
+			if ($result['SHOW_LINES'])
 			{
-				$result['NUMBERS_LIST'][] = [
-					'NUMBER' => $sipConnection['SEARCH_ID'],
-					'TYPE' => CVoxImplantConfig::MODE_SIP,
-					'NAME' => $sipConnection['PHONE_NAME'] ?: CVoxImplantConfig::GetDefaultPhoneName($sipConnection),
-					'DESCRIPTION' => CVoxImplantSip::getConnectionDescription($sipConnection)
-				];
+				foreach ($callerIds as $callerId)
+				{
+					$result['NUMBERS_LIST'][] = [
+						'NUMBER' => $callerId['NUMBER'],
+						'TYPE' => CVoxImplantConfig::MODE_LINK,
+						'NAME' => $callerId['FORMATTED_NUMBER'],
+						'DESCRIPTION' => CVoxImplantPhone::getCallerIdDescription($callerId)
+					];
+				}
+				foreach ($rentedNumbers as $rentedNumber)
+				{
+					$result['NUMBERS_LIST'][] = [
+						'NUMBER' => $rentedNumber['NUMBER'],
+						'TYPE' => CVoxImplantConfig::MODE_RENT,
+						'NAME' => $rentedNumber['FORMATTED_NUMBER'],
+						'DESCRIPTION' => CVoxImplantPhone::getNumberDescription($rentedNumber)
+					];
+				}
+				foreach ($sipConnections as $sipConnection)
+				{
+					$result['NUMBERS_LIST'][] = [
+						'NUMBER' => $sipConnection['SEARCH_ID'],
+						'TYPE' => CVoxImplantConfig::MODE_SIP,
+						'NAME' => $sipConnection['PHONE_NAME'] ?: CVoxImplantConfig::GetDefaultPhoneName($sipConnection),
+						'DESCRIPTION' => CVoxImplantSip::getConnectionDescription($sipConnection)
+					];
+				}
 			}
 
 			$result['LANG'] = $this->account->GetAccountLang();
@@ -695,5 +696,10 @@ class VoximplantStartComponent extends \CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	private function isShownPrivacyPolicy()
+	{
+		return !in_array($this->account->GetAccountLang(false), ['ru', 'kz', 'by']);
 	}
 }

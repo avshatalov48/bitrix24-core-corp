@@ -38,8 +38,7 @@ class UserOperationChecker implements IUserOperationChecker
 
 	public function canDoOperation($operationName, $options = [])
 	{
-		return $this->isUserAdmin() ||
-			   $this->hasAccessToOperation($operationName);
+		return $this->isUserAdmin() || $this->hasAccessToOperation($operationName);
 	}
 
 	private function hasAccessToOperation($operationName)

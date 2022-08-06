@@ -42,15 +42,14 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	public function Execute()
 	{
-		if (!CModule::IncludeModule('crm')
-			|| !CModule::IncludeModule('salescenter')
-		)
+		if (!$this->checkModules())
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
 
 		$orderId = is_array($this->OrderId) ? reset($this->OrderId) : $this->OrderId;
 
+		$this->logOrderId($orderId);
 		if (CBPHelper::getBool($this->Autocreate))
 		{
 			$this->Url = $this->getUrlByDealId($this->getCurrentDealId());
@@ -59,8 +58,31 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 		{
 			$this->Url = $this->getUrlByOrderId((int)$orderId);
 		}
+		$this->logUrl();
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	private function checkModules(): bool
+	{
+		return (
+			Main\Loader::includeModule('crm')
+			&& Main\Loader::includeModule('salescenter')
+			&& Main\Loader::includeModule('catalog')
+			&& Main\Loader::includeModule('iblock')
+		);
+	}
+
+	private function logOrderId($orderId): void
+	{
+		$map = static::getPropertiesDialogMap();
+
+		$this->writeDebugInfo(
+			$this->getDebugInfo(
+				['OrderId' => $orderId],
+				['OrderId' => $map['OrderId']]
+			)
+		);
 	}
 
 	private function getCurrentDealId(): int
@@ -142,11 +164,64 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 	{
 		$manager = new Order\ProductManager(CCrmOwnerType::Deal, $dealId);
 
-		$products = [];
+		$products = $manager->getPayableItems();
+		$products = $this->fillProductsProperties($products);
+		// re-index the products array by the 'BASKET_CODE' key
+		$products = array_combine(array_column($products, 'BASKET_CODE'), $products);
 
-		foreach ($manager->getPayableItems() as $item)
+		return $products;
+	}
+
+	private function fillProductsProperties(array $products): array
+	{
+		$productIds = array_column($products, 'OFFER_ID');
+		if (empty($productIds))
 		{
-			$products[$item['BASKET_CODE']] = $item;
+			return $products;
+		}
+
+		$propertyValues = array_fill_keys($productIds, []);
+		$iblockIds = array_unique(array_values(CIBlockElement::GetIBlockByIDList($productIds)));
+		foreach ($iblockIds as $iblockId)
+		{
+			$basketPropertiesCodes = array_values(\Bitrix\Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId, ['CODE' => 'Y']));
+			CIBlockElement::GetPropertyValuesArray($propertyValues, $iblockId, ['ID' => $productIds], ['CODE' => $basketPropertiesCodes]);
+		}
+
+		$products = array_combine(array_column($products, 'OFFER_ID'), $products);
+		foreach ($propertyValues as $productId => $properties)
+		{
+			foreach ($properties as $code => $property)
+			{
+				if (empty($property['VALUE']))
+				{
+					continue;
+				}
+
+				if (empty($products[$productId]['PROPS']))
+				{
+					$products[$productId]['PROPS'] = [];
+				}
+
+				$displayValue = $property['VALUE'];
+
+				if (!empty($property['USER_TYPE']))
+				{
+					$userTypeDescription = CIBlockProperty::GetUserType($property['USER_TYPE']);
+					if (isset($userTypeDescription['GetPublicViewHTML']))
+					{
+						$userType = $userTypeDescription['GetPublicViewHTML'];
+						$displayValue = (string)$userType($property, ['VALUE' => $property['VALUE']], ['MODE' => 'SIMPLE_TEXT']);
+					}
+				}
+
+				$products[$productId]['PROPS'][] = [
+					'NAME' => $property['NAME'],
+					'SORT' => $property['SORT'],
+					'CODE' => $code,
+					'VALUE' => $displayValue,
+				];
+			}
 		}
 
 		return $products;
@@ -161,6 +236,13 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 		}
 
 		return null;
+	}
+
+	private function logUrl(): void
+	{
+		$this->writeDebugInfo(
+			$this->getDebugInfo(['Url' => $this->Url], static::getReturnPropertiesMap())
+		);
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
@@ -254,6 +336,17 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 				'FieldName' => 'order_id',
 				'Type' => FieldType::INT,
 			],
+		];
+	}
+
+	protected static function getReturnPropertiesMap(): array
+	{
+		return [
+			'Url' => [
+				'Name' => Main\Localization\Loc::getMessage('CRM_BP_GPU_URL_CREATED'),
+				'FieldName' => 'url',
+				'Type' => FieldType::STRING,
+			]
 		];
 	}
 }

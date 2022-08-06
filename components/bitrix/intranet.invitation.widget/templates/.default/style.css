@@ -87,7 +87,8 @@
 	color: #fff;
 	opacity: .7;
 	border-color: rgba(255, 255, 255, .7);
-	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-item--expired .license-widget-item-link-text:hover {
@@ -214,7 +215,8 @@
 }
 
 .license-widget--invite .license-widget-item-text {
-	font-family: "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-item--company {
@@ -301,7 +303,8 @@
 
 .license-widget-item-num {
 	opacity: .5;
-	font: 12px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	margin-top: 3px;
 }
 
@@ -386,7 +389,8 @@
 
 .license-widget-head-title {
 	color: #525c69;
-	font: 13px/18px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-item--own {
@@ -458,13 +462,15 @@
 
 .license-widget-index-value {
 	color: #333;
-	font: 15px/20px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-index-dif {
 	color: #858c96;
 	position: relative;
-	font: 11px/12px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-index-dif--rise:before,
@@ -514,7 +520,8 @@
 
 .license-widget-mode-title {
 	color: #04ACC2;
-	font: 11px/14px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .license-widget-mode-head {
@@ -534,7 +541,8 @@
 
 .license-widget-mode-value {
 	color: #525C69;
-	font: 12px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-mode {
@@ -581,7 +589,8 @@
 	color: #0CAFE3;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	font: 12px/24px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-align: center;
 }
 
@@ -636,7 +645,8 @@
 	opacity: .7;
 	vertical-align: top;
 	padding-right: 0;
-	font-family: "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .license-widget-item--alert .license-widget-item-btn {

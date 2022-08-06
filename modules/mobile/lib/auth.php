@@ -34,14 +34,15 @@ class Auth
 			$userId = $USER->getId();
 		}
 
-		$hash = \CUser::GetHitAuthHash($path, $userId);
+		$siteId = \CSite::GetDefSite();
+		$hash = \CUser::GetHitAuthHash($path, $userId, $siteId);
 		if ($hash)
 		{
 			return $hash;
 		}
 		else
 		{
-			return \CUser::AddHitAuthHash($path, $userId, SITE_ID);
+			return \CUser::AddHitAuthHash($path, $userId, $siteId);
 		}
 	}
 

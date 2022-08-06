@@ -3,21 +3,24 @@
 use Bitrix\Crm;
 
 if (!CModule::IncludeModule('bizproc'))
+{
 	return;
+}
 
-IncludeModuleLangFile(dirname(__FILE__)."/crm_document.php");
+IncludeModuleLangFile(dirname(__FILE__) . '/crm_document.php');
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Main;
 
-class CCrmDocumentDeal extends CCrmDocument
-	implements IBPWorkflowDocument
+class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 {
 	static public function GetDocumentFields($documentType)
 	{
-		$arDocumentID = self::GetDocumentInfo($documentType.'_0');
+		$arDocumentID = self::GetDocumentInfo($documentType . '_0');
 		if (empty($arDocumentID))
+		{
 			throw new CBPArgumentNullException('documentId');
+		}
 
 		$arResult = self::getEntityFields($arDocumentID['TYPE']);
 
@@ -69,72 +72,72 @@ class CCrmDocumentDeal extends CCrmDocument
 		\Bitrix\Main\Localization\Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].BX_ROOT.'/components/bitrix/crm.'.
 			mb_strtolower($entityType).'.edit/component.php');
 
-		$printableFieldNameSuffix = ' ('.GetMessage('CRM_FIELD_BP_TEXT').')';
+		$printableFieldNameSuffix = ' (' . GetMessage('CRM_FIELD_BP_TEXT') . ')';
 
-		$arResult = array(
-			'ID' => array(
+		$arResult = [
+			'ID' => [
 				'Name' => GetMessage('CRM_FIELD_ID'),
 				'Type' => 'int',
 				'Filterable' => true,
 				'Editable' => false,
 				'Required' => false,
-			),
-			'CRM_ID' => array(
+			],
+			'CRM_ID' => [
 				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CRM_ID'),
 				'Type' => 'string',
-			),
-			'TITLE' => array(
+			],
+			'TITLE' =>[
 				'Name' => GetMessage('CRM_FIELD_TITLE_DEAL'),
 				'Type' => 'string',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => true,
-			),
-			'OPPORTUNITY' => array(
+			],
+			'OPPORTUNITY' => [
 				'Name' => GetMessage('CRM_FIELD_OPPORTUNITY'),
 				'Type' => 'string',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'CURRENCY_ID' => array(
+			],
+			'CURRENCY_ID' => [
 				'Name' => GetMessage('CRM_FIELD_CURRENCY_ID'),
 				'Type' => 'select',
 				'Options' => CCrmCurrencyHelper::PrepareListItems(),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'OPPORTUNITY_ACCOUNT' => array(
+			],
+			'OPPORTUNITY_ACCOUNT' => [
 				'Name' => GetMessage('CRM_FIELD_OPPORTUNITY_ACCOUNT'),
 				'Type' => 'string',
 				'Filterable' => true,
 				'Editable' => false,
 				'Required' => false,
-			),
-			'ACCOUNT_CURRENCY_ID' => array(
+			],
+			'ACCOUNT_CURRENCY_ID' => [
 				'Name' => GetMessage('CRM_FIELD_ACCOUNT_CURRENCY_ID'),
 				'Type' => 'select',
 				'Options' => CCrmCurrencyHelper::PrepareListItems(),
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'PROBABILITY' => array(
+			],
+			'PROBABILITY' => [
 				'Name' => GetMessage('CRM_FIELD_PROBABILITY'),
 				'Type' => 'string',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-			'ASSIGNED_BY_ID' => array(
+			],
+			'ASSIGNED_BY_ID' => [
 				'Name' => GetMessage('CRM_FIELD_ASSIGNED_BY_ID'),
 				'Type' => 'user',
 				'Filterable' => true,
 				'Editable' => true,
 				'Required' => false,
-			),
-		);
+			],
+		];
 
 		$arResult += parent::getAssignedByFields();
 		$arResult += [
@@ -395,135 +398,18 @@ class CCrmDocumentDeal extends CCrmDocument
 	{
 		if(!is_array($arFields))
 		{
-			throw new Exception("Entity fields must be array");
+			throw new Exception('Entity fields must be array');
 		}
 
 		global $DB;
 		$arDocumentID = self::GetDocumentInfo($parentDocumentId);
 		if ($arDocumentID == false)
+		{
 			$arDocumentID['TYPE'] = $parentDocumentId;
-
-		$arDocumentFields = self::GetDocumentFields($arDocumentID['TYPE']);
-
-		$arKeys = array_keys($arFields);
-		foreach ($arKeys as $key)
-		{
-			if (!array_key_exists($key, $arDocumentFields))
-			{
-				//Fix for issue #40374
-				unset($arFields[$key]);
-				continue;
-			}
-
-			$arFields[$key] = (is_array($arFields[$key]) && !CBPHelper::IsAssociativeArray($arFields[$key])) ? $arFields[$key] : array($arFields[$key]);
-
-			if ($arDocumentFields[$key]["Type"] == "user")
-			{
-				$ar = array();
-				foreach ($arFields[$key] as $v1)
-				{
-					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
-					{
-						$ar[] = mb_substr($v1, mb_strlen("user_"));
-					}
-					else
-					{
-						$a1 = self::GetUsersFromUserGroup($v1, "DEAL_0");
-						foreach ($a1 as $a11)
-							$ar[] = $a11;
-					}
-				}
-
-				$arFields[$key] = $ar;
-			}
-			elseif ($arDocumentFields[$key]["Type"] == "select" && mb_substr($key, 0, 3) == "UF_")
-			{
-				self::InternalizeEnumerationField('CRM_DEAL', $arFields, $key);
-			}
-			elseif ($arDocumentFields[$key]["Type"] == "file")
-			{
-				$arFileOptions = array('ENABLE_ID' => true);
-				foreach ($arFields[$key] as &$value)
-				{
-					//Issue #40380. Secure URLs and file IDs are allowed.
-					$file = false;
-					CCrmFileProxy::TryResolveFile($value, $file, $arFileOptions);
-					$value = $file;
-				}
-				unset($value);
-			}
-			elseif ($arDocumentFields[$key]["Type"] == "S:HTML")
-			{
-				foreach ($arFields[$key] as &$value)
-				{
-					$value = array("VALUE" => $value);
-				}
-				unset($value);
-			}
-
-			if (!$arDocumentFields[$key]["Multiple"] && is_array($arFields[$key]))
-			{
-				if (count($arFields[$key]) > 0)
-				{
-					$a = array_values($arFields[$key]);
-					$arFields[$key] = $a[0];
-				}
-				else
-				{
-					$arFields[$key] = null;
-				}
-			}
 		}
 
-		if(isset($arFields['COMMENTS']))
-		{
-			$arFields['COMMENTS'] = static::sanitizeCommentsValue($arFields['COMMENTS']);
-		}
-
-		if(isset($arFields['BEGINDATE']) && $arFields['BEGINDATE'] instanceof Main\Type\Date)
-		{
-			$arFields['BEGINDATE'] = (string) $arFields['BEGINDATE'];
-		}
-		if(isset($arFields['CLOSEDATE']) && $arFields['CLOSEDATE'] instanceof Main\Type\Date)
-		{
-			$arFields['CLOSEDATE'] = (string) $arFields['CLOSEDATE'];
-		}
-
-		//region Category & Stage
-		if(isset($arFields['STAGE_ID']))
-		{
-			if($arFields['STAGE_ID'] === '')
-			{
-				unset($arFields['STAGE_ID']);
-			}
-			else
-			{
-				$stageID = $arFields['STAGE_ID'];
-				$stageCategoryID = DealCategory::resolveFromStageID($stageID);
-				if(!isset($arFields['CATEGORY_ID']))
-				{
-					$arFields['CATEGORY_ID'] = $stageCategoryID;
-				}
-				else
-				{
-					$categoryID = (int)$arFields['CATEGORY_ID'];
-					if($categoryID !== $stageCategoryID)
-					{
-						throw new Exception(
-							GetMessage(
-								'CRM_DOCUMENT_DEAL_STAGE_MISMATCH_ERROR',
-								array(
-									'#CATEGORY#' => DealCategory::getName($categoryID),
-									'#TARG_CATEGORY#' => DealCategory::getName($stageCategoryID),
-									'#TARG_STAGE#' => DealCategory::getStageName($stageID, $stageCategoryID)
-								)
-							)
-						);
-					}
-				}
-			}
-		}
-		//endregion
+		$arFields = self::performTypeCast($arDocumentID, $arFields);
+		$arFields = self::performTypeCast4CategoryAndStage($arFields);
 
 		$useTransaction = static::shouldUseTransaction();
 
@@ -552,11 +438,18 @@ class CCrmDocumentDeal extends CCrmDocument
 			throw new Exception($CCrmEntity->LAST_ERROR);
 		}
 
-		if (COption::GetOptionString("crm", "start_bp_within_bp", "N") == "Y")
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Deal, $id, $arFields);
+		}
+
+		if (COption::GetOptionString('crm', 'start_bp_within_bp', 'N') == 'Y')
 		{
 			$CCrmBizProc = new CCrmBizProc('DEAL');
 			if (false === $CCrmBizProc->CheckFields(false, true))
+			{
 				throw new Exception($CCrmBizProc->LAST_ERROR);
+			}
 
 			if ($id && $id > 0 && !$CCrmBizProc->StartWorkflow($id))
 			{
@@ -566,11 +459,6 @@ class CCrmDocumentDeal extends CCrmDocument
 				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
 			}
-		}
-
-		if (isset($arFields['TRACKING_SOURCE_ID']))
-		{
-			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Deal, $id, $arFields);
 		}
 
 		//region automation
@@ -597,120 +485,28 @@ class CCrmDocumentDeal extends CCrmDocument
 
 		$arDocumentID = self::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
+		{
 			throw new CBPArgumentNullException('documentId');
+		}
 
 		$dbDocumentList = CCrmDeal::GetListEx(
-			array(),
-			array('ID' => $arDocumentID['ID'], 'CHECK_PERMISSIONS' => 'N'),
+			[],
+			[
+				'ID' => $arDocumentID['ID'],
+				'CHECK_PERMISSIONS' => 'N',
+			],
 			false,
 			false,
-			array('ID', 'CATEGORY_ID', 'STAGE_ID')
+			['ID', 'CATEGORY_ID', 'STAGE_ID']
 		);
 
 		$arPresentFields = $dbDocumentList->Fetch();
 		if (!is_array($arPresentFields))
+		{
 			throw new Exception(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
-
-		$arDocumentFields = self::GetDocumentFields($arDocumentID['TYPE']);
-
-		$arKeys = array_keys($arFields);
-		foreach ($arKeys as $key)
-		{
-			if (!array_key_exists($key, $arDocumentFields))
-			{
-				//Fix for issue #40374
-				unset($arFields[$key]);
-				continue;
-			}
-
-			$arFields[$key] = (is_array($arFields[$key]) && !CBPHelper::IsAssociativeArray($arFields[$key])) ? $arFields[$key] : array($arFields[$key]);
-
-			if ($arDocumentFields[$key]["Type"] == "user")
-			{
-				$ar = array();
-				foreach ($arFields[$key] as $v1)
-				{
-					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
-					{
-						$ar[] = mb_substr($v1, mb_strlen("user_"));
-					}
-					else
-					{
-						$a1 = self::GetUsersFromUserGroup($v1, $documentId);
-						foreach ($a1 as $a11)
-							$ar[] = $a11;
-					}
-				}
-
-				$arFields[$key] = $ar;
-			}
-			elseif ($arDocumentFields[$key]["Type"] == "select" && mb_substr($key, 0, 3) == "UF_")
-			{
-				self::InternalizeEnumerationField('CRM_DEAL', $arFields, $key);
-			}
-			elseif ($arDocumentFields[$key]["Type"] == "file")
-			{
-				$arFileOptions = array('ENABLE_ID' => true);
-				foreach ($arFields[$key] as &$value)
-				{
-					//Issue #40380. Secure URLs and file IDs are allowed.
-					$file = false;
-					if (\CCrmFileProxy::TryResolveFile($value, $file, $arFileOptions))
-					{
-						global $USER_FIELD_MANAGER;
-						if ($USER_FIELD_MANAGER instanceof \CUserTypeManager)
-						{
-							$prevValue = $USER_FIELD_MANAGER->GetUserFieldValue(
-								\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Deal),
-								$key,
-								$arDocumentID['ID']
-							);
-							if ($prevValue)
-							{
-								$file['old_id'] = $prevValue;
-							}
-						}
-					}
-					$value = $file;
-				}
-				unset($value, $prevValue);
-			}
-			elseif ($arDocumentFields[$key]["Type"] == "S:HTML")
-			{
-				foreach ($arFields[$key] as &$value)
-				{
-					$value = array("VALUE" => $value);
-				}
-				unset($value);
-			}
-
-			if (!$arDocumentFields[$key]["Multiple"] && is_array($arFields[$key]))
-			{
-				if (count($arFields[$key]) > 0)
-				{
-					$a = array_values($arFields[$key]);
-					$arFields[$key] = $a[0];
-				}
-				else
-				{
-					$arFields[$key] = null;
-				}
-			}
 		}
 
-		if(isset($arFields['COMMENTS']) && $arFields['COMMENTS'] !== '')
-		{
-			$arFields['COMMENTS'] = static::sanitizeCommentsValue($arFields['COMMENTS']);
-		}
-
-		if(isset($arFields['BEGINDATE']) && $arFields['BEGINDATE'] instanceof Main\Type\Date)
-		{
-			$arFields['BEGINDATE'] = (string) $arFields['BEGINDATE'];
-		}
-		if(isset($arFields['CLOSEDATE']) && $arFields['CLOSEDATE'] instanceof Main\Type\Date)
-		{
-			$arFields['CLOSEDATE'] = (string) $arFields['CLOSEDATE'];
-		}
+		$arFields = self::performTypeCast($arDocumentID, $arFields, true);
 
 		//region Category & Stage
 		$categoryID = isset($arPresentFields['CATEGORY_ID']) ? (int)$arPresentFields['CATEGORY_ID'] : 0;
@@ -719,31 +515,8 @@ class CCrmDocumentDeal extends CCrmDocument
 			throw new Exception(GetMessage('CRM_DOCUMENT_DEAL_CATEGORY_CHANGE_ERROR'));
 		}
 
-		if(isset($arFields['STAGE_ID']))
-		{
-			if($arFields['STAGE_ID'] === '')
-			{
-				unset($arFields['STAGE_ID']);
-			}
-			else
-			{
-				$stageID = $arFields['STAGE_ID'];
-				$stageCategoryID = DealCategory::resolveFromStageID($stageID);
-				if($stageCategoryID !== $categoryID)
-				{
-					throw new Exception(
-						GetMessage(
-							'CRM_DOCUMENT_DEAL_STAGE_MISMATCH_ERROR',
-							array(
-								'#CATEGORY#' => DealCategory::getName($categoryID),
-								'#TARG_CATEGORY#' => DealCategory::getName($stageCategoryID),
-								'#TARG_STAGE#' => DealCategory::getStageName($stageID, $stageCategoryID)
-							)
-						)
-					);
-				}
-			}
-		}
+		$arFields = self::performTypeCast4CategoryAndStage($arFields, $categoryID);
+
 		//endregion
 
 		if(empty($arFields))
@@ -777,7 +550,7 @@ class CCrmDocumentDeal extends CCrmDocument
 			[
 				'DISABLE_USER_FIELD_CHECK' => true,
 				'REGISTER_SONET_EVENT' => true,
-				'CURRENT_USER' => static::getSystemUserId()
+				'CURRENT_USER' => $modifiedById ?? static::getSystemUserId()
 			]
 		);
 
@@ -790,11 +563,22 @@ class CCrmDocumentDeal extends CCrmDocument
 			throw new Exception($CCrmEntity->LAST_ERROR);
 		}
 
-		if (COption::GetOptionString("crm", "start_bp_within_bp", "N") == "Y")
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(
+				\CCrmOwnerType::Deal,
+				$arDocumentID['ID'],
+				$arFields
+			);
+		}
+
+		if (COption::GetOptionString('crm', 'start_bp_within_bp', 'N') == 'Y')
 		{
 			$CCrmBizProc = new CCrmBizProc('DEAL');
 			if (false === $CCrmBizProc->CheckFields($arDocumentID['ID'], true))
+			{
 				throw new Exception($CCrmBizProc->LAST_ERROR);
+			}
 
 			if ($res && !$CCrmBizProc->StartWorkflow($arDocumentID['ID']))
 			{
@@ -804,15 +588,6 @@ class CCrmDocumentDeal extends CCrmDocument
 				}
 				throw new Exception($CCrmBizProc->LAST_ERROR);
 			}
-		}
-
-		if (isset($arFields['TRACKING_SOURCE_ID']))
-		{
-			Crm\Tracking\UI\Details::saveEntityData(
-				\CCrmOwnerType::Deal,
-				$arDocumentID['ID'],
-				$arFields
-			);
 		}
 
 		//region automation
@@ -829,11 +604,38 @@ class CCrmDocumentDeal extends CCrmDocument
 	public static function getDocumentName($documentId)
 	{
 		$arDocumentID = self::GetDocumentInfo($documentId);
-		$dbRes = CCrmDeal::GetListEx([], ['=ID' => $arDocumentID['ID'], 'CHECK_PERMISSIONS' => 'N'],
-			false, false, ['TITLE']
+		$dbRes = CCrmDeal::GetListEx(
+			[],
+			[
+				'=ID' => $arDocumentID['ID'],
+				'CHECK_PERMISSIONS' => 'N',
+			],
+			false,
+			false,
+			['TITLE']
 		);
 		$arRes = $dbRes ? $dbRes->Fetch() : null;
 		return $arRes ? $arRes['TITLE'] : '';
+	}
+
+	public static function getDocumentCategories($documentType)
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Deal);
+		$categories = null;
+
+		if ($factory->isCategoriesSupported())
+		{
+			$categories = [];
+			foreach ($factory->getCategories() as $category)
+			{
+				$categories[$category->getId()] = [
+					'id' => $category->getId(),
+					'name' => $category->getName(),
+				];
+			}
+		}
+
+		return $categories;
 	}
 
 	public static function normalizeDocumentId($documentId)
@@ -848,5 +650,202 @@ class CCrmDocumentDeal extends CCrmDocument
 	public static function createAutomationTarget($documentType)
 	{
 		return Crm\Automation\Factory::createTarget(\CCrmOwnerType::Deal);
+	}
+
+	private static function performTypeCast(array $documentInfo, array $fields, bool $isUpdate = false): array
+	{
+		$documentId = $documentInfo['TYPE'] . '_' . ($isUpdate ? $documentInfo['ID'] : '0');
+		$documentFields = self::GetDocumentFields($documentInfo['TYPE']);
+
+		$keys = array_keys($fields);
+		foreach ($keys as $key)
+		{
+			if (!array_key_exists($key, $documentFields))
+			{
+				//Fix for issue #40374
+				unset($fields[$key]);
+				continue;
+			}
+
+			$fields[$key] = (is_array($fields[$key]) && !CBPHelper::IsAssociativeArray($fields[$key]))
+				? $fields[$key]
+				: [$fields[$key]]
+			;
+
+			if ($documentFields[$key]['Type'] == 'user')
+			{
+				$ar = [];
+				foreach ($fields[$key] as $v1)
+				{
+					if (mb_substr($v1, 0, mb_strlen('user_')) == 'user_')
+					{
+						$ar[] = mb_substr($v1, mb_strlen('user_'));
+					}
+					else
+					{
+						$a1 = self::GetUsersFromUserGroup($v1, $documentId);
+						foreach ($a1 as $a11)
+						{
+							$ar[] = $a11;
+						}
+					}
+				}
+
+				$fields[$key] = $ar;
+			}
+			elseif ($documentFields[$key]['Type'] == 'select' && mb_substr($key, 0, 3) == 'UF_')
+			{
+				self::InternalizeEnumerationField('CRM_DEAL', $fields, $key);
+			}
+			elseif ($documentFields[$key]['Type'] == 'file')
+			{
+				$arFileOptions = ['ENABLE_ID' => true];
+				foreach ($fields[$key] as &$value)
+				{
+					//Issue #40380. Secure URLs and file IDs are allowed.
+					$file = false;
+					$resultResolveFile = CCrmFileProxy::TryResolveFile($value, $file, $arFileOptions);
+					if ($isUpdate && $resultResolveFile)
+					{
+						global $USER_FIELD_MANAGER;
+						if ($USER_FIELD_MANAGER instanceof \CUserTypeManager)
+						{
+							$prevValue = $USER_FIELD_MANAGER->GetUserFieldValue(
+								\CCrmOwnerType::ResolveUserFieldEntityID(\CCrmOwnerType::Deal),
+								$key,
+								$documentInfo['ID']
+							);
+							if ($prevValue)
+							{
+								$file['old_id'] = $prevValue;
+							}
+						}
+					}
+					$value = $file;
+				}
+				unset($value);
+				if ($isUpdate)
+				{
+					unset($prevValue);
+				}
+			}
+			elseif ($documentFields[$key]['Type'] == 'S:HTML')
+			{
+				foreach ($fields[$key] as &$value)
+				{
+					$value = ['VALUE' => $value];
+				}
+				unset($value);
+			}
+
+			if (!$documentFields[$key]['Multiple'] && is_array($fields[$key]))
+			{
+				if (count($fields[$key]) > 0)
+				{
+					$a = array_values($fields[$key]);
+					$fields[$key] = $a[0];
+				}
+				else
+				{
+					$fields[$key] = null;
+				}
+			}
+		}
+
+		if(isset($fields['COMMENTS']))
+		{
+			$fields['COMMENTS'] = static::sanitizeCommentsValue($fields['COMMENTS']);
+		}
+		if(isset($fields['BEGINDATE']) && $fields['BEGINDATE'] instanceof Main\Type\Date)
+		{
+			$fields['BEGINDATE'] = (string)$fields['BEGINDATE'];
+		}
+		if(isset($fields['CLOSEDATE']) && $fields['CLOSEDATE'] instanceof Main\Type\Date)
+		{
+			$fields['CLOSEDATE'] = (string)$fields['CLOSEDATE'];
+		}
+
+		return $fields;
+	}
+
+	private static function performTypeCast4CategoryAndStage(array $fields, int $presentCategoryID = null): array
+	{
+		if (!isset($fields['STAGE_ID']))
+		{
+			return $fields;
+		}
+
+		if($fields['STAGE_ID'] === '')
+		{
+			unset($fields['STAGE_ID']);
+
+			return $fields;
+		}
+
+		$stageID = $fields['STAGE_ID'];
+		$stageCategoryID = DealCategory::resolveFromStageID($stageID);
+		if($presentCategoryID === null && !isset($fields['CATEGORY_ID']))
+		{
+			$fields['CATEGORY_ID'] = $stageCategoryID;
+
+			return $fields;
+		}
+
+		$categoryID = $presentCategoryID ?? (int)$fields['CATEGORY_ID'];
+		if($categoryID !== $stageCategoryID)
+		{
+			throw new Exception(
+				GetMessage(
+					'CRM_DOCUMENT_DEAL_STAGE_MISMATCH_ERROR',
+					[
+						'#CATEGORY#' => DealCategory::getName($categoryID),
+						'#TARG_CATEGORY#' => DealCategory::getName($stageCategoryID),
+						'#TARG_STAGE#' => DealCategory::getStageName($stageID, $stageCategoryID)
+					]
+				)
+			);
+		}
+
+		return $fields;
+	}
+
+	public static function createTestDocument(string $documentType, array $fields, int $createdById): ?string
+	{
+		if (empty($fields))
+		{
+			return null;
+		}
+
+		$documentInfo = self::GetDocumentInfo($documentType);
+		if (empty($documentInfo))
+		{
+			$documentInfo['TYPE'] = $documentType;
+		}
+
+		$fields = self::performTypeCast($documentInfo, $fields);
+		$fields = self::performTypeCast4CategoryAndStage($fields);
+
+		$deal = new CCrmDeal(true);
+		$id = $deal->Add(
+			$fields,
+			true,
+			[
+				'DISABLE_USER_FIELD_CHECK' => true,
+				'REGISTER_SONET_EVENT' => true,
+				'CURRENT_USER' => $createdById,
+			]
+		);
+
+		if (!$id || $id <= 0)
+		{
+			throw new Exception($deal->LAST_ERROR);
+		}
+
+		if (isset($arFields['TRACKING_SOURCE_ID']))
+		{
+			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Deal, $id, $arFields);
+		}
+
+		return \CCrmOwnerType::DealName . '_' . $id;
 	}
 }

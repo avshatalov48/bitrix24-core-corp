@@ -61,6 +61,7 @@ export default class BaseRequester
 				'Authorization': `Bearer ${this.#tokenContainer.token}`,
 				'Bx-Location-Osm-Host': this.#hostName,
 			}),
+			referrerPolicy: 'no-referrer'
 		})
 			.then((response) => {
 

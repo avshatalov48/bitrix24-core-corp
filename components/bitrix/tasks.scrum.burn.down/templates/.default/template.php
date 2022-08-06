@@ -18,13 +18,22 @@ use Bitrix\Main\Web\Json;
 Extension::load([
 	'amcharts4',
 	'amcharts4_theme_animated',
+	'ui.entity-selector',
+	'ui.buttons',
 ]);
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
+$this->SetViewTarget('pagetitle');
 ?>
 
-<div class="tasks-scrum-sprint-burn-down-info">
+<div id="tasks-scrum-sprint-burn-down-chart-selector"></div>
+
+<?php
+$this->EndViewTarget();
+?>
+
+<div id="tasks-scrum-sprint-burn-down-chart-info" class="tasks-scrum-sprint-burn-down-info">
 	<div class="tasks-scrum-sprint-burn-down-info-name">
 		<?= HtmlFilter::encode($arResult['sprint']['name']) ?>
 	</div>
@@ -36,7 +45,12 @@ $messages = Loc::loadLanguageFile(__FILE__);
 	{
 		BX.message(<?= Json::encode($messages) ?>);
 
-		(new BX.Tasks.Scrum.BurnDownChart())
+		(new BX.Tasks.Scrum.BurnDownChart({
+			groupId: <?= (int) $arResult['groupId'] ?>,
+			selectorContainer: document.getElementById('tasks-scrum-sprint-burn-down-chart-selector'),
+			infoContainer: document.getElementById('tasks-scrum-sprint-burn-down-chart-info'),
+			currentSprint: <?= Json::encode($arResult['sprint']) ?>
+		}))
 			.render(
 				document.getElementById('tasks-scrum-sprint-burn-down-chart'),
 				<?= Json::encode($arResult['chart']) ?>

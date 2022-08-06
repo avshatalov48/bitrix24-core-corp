@@ -27,12 +27,12 @@ class Base extends Controller
 			$docParams = [];
 			foreach ($matches[1] as $row)
 			{
-				list($paramName, $paramText) = explode(' ', $row, 2);
+				[$paramName, $paramText] = explode(' ', $row, 2);
 
 				switch ($paramName)
 				{
 					case 'param':
-						list($fieldType, $fieldName, $fieldDesc) = explode(' ', $paramText, 3);
+						[$fieldType, $fieldName, $fieldDesc] = explode(' ', $paramText, 3);
 						$fieldName = mb_substr($fieldName, 1);
 
 						$docParams[$paramName][$fieldName] = [
@@ -41,7 +41,7 @@ class Base extends Controller
 						];
 						break;
 					case 'return':
-						list($fieldType, $fieldDesc) = explode(' ', $paramText, 2);
+						[$fieldType, $fieldDesc] = explode(' ', $paramText, 2);
 
 						$docParams[$paramName] = [
 							'type'        => $fieldType,
@@ -119,5 +119,13 @@ class Base extends Controller
 		}
 
 		return $fields;
+	}
+
+	/**
+	 * @return int|null
+	 */
+	protected function getUserId()
+	{
+		return CurrentUser::get()->getId();
 	}
 }

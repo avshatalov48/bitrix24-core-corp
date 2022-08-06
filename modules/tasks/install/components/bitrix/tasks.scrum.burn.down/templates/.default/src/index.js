@@ -1,6 +1,24 @@
-import {Loc, Text, Tag, Dom} from 'main.core';
+import {Loc, Text, Type, ajax} from 'main.core';
+import {BaseEvent} from 'main.core.events';
+
+import {Dialog} from 'ui.entity-selector';
+import {Button} from 'ui.buttons';
 
 import '../css/base.css';
+
+type Params = {
+	groupId: number,
+	selectorContainer?: HTMLElement,
+	infoContainer?: HTMLElement,
+	currentSprint: Sprint,
+}
+
+type Sprint = {
+	id: number,
+	name: string,
+	dateStartFormatted: string,
+	dateEndFormatted: string
+}
 
 type ChartData = {
 	day: number,
@@ -10,8 +28,13 @@ type ChartData = {
 
 export class BurnDownChart
 {
-	constructor()
+	constructor(params: Params)
 	{
+		this.groupId = Type.isNumber(params.groupId) ? parseInt(params.groupId, 10) : 0;
+		this.selectorContainer = params.selectorContainer;
+		this.infoContainer = params.infoContainer;
+		this.currentSprint = params.currentSprint;
+
 		/* eslint-disable */
 		this.sidePanelManager = BX.SidePanel.Instance;
 		/* eslint-enable */
@@ -21,7 +44,90 @@ export class BurnDownChart
 
 	render(chartDiv: HTMLElement, data: ChartData)
 	{
+		this.renderSelectorTo(this.selectorContainer);
+
 		setTimeout(() => this.create(chartDiv, data), 300);
+	}
+
+	renderSelectorTo(selectorContainer: HTMLElement)
+	{
+		if (!Type.isElementNode(selectorContainer))
+		{
+			return;
+		}
+
+		this.selectorButton = new Button({
+			text: this.currentSprint.dateStartFormatted + ' - ' + this.currentSprint.dateEndFormatted,
+			color: Button.Color.LIGHT_BORDER,
+			dropdown: true,
+			className: 'ui-btn-themes',
+			onclick: () => {
+				const dialog = this.createSelectorDialog(this.selectorButton.getContainer(), this.currentSprint);
+				dialog.show();
+			},
+		});
+
+		this.selectorButton.renderTo(selectorContainer);
+	}
+
+	createSelectorDialog(targetNode: HTMLElement, currentSprint: Sprint): Dialog
+	{
+		return new Dialog({
+			targetNode: targetNode,
+			width: 400,
+			height: 300,
+			multiple: false,
+			dropdownMode: true,
+			enableSearch: true,
+			compactView: true,
+			showAvatars: false,
+			cacheable: false,
+			preselectedItems: [['sprint-selector' , currentSprint.id]],
+			entities: [
+				{
+					id: 'sprint-selector',
+					options: {
+						groupId: this.groupId
+					},
+					dynamicLoad: true,
+					dynamicSearch: true
+				}
+			],
+			events: {
+				'Item:onSelect': (event: BaseEvent) => {
+					const { item: selectedItem } = event.getData();
+
+					this.selectorButton.setText(selectedItem.customData.get('label'));
+
+					this.changeChart(selectedItem.getId());
+				},
+			},
+		});
+	}
+
+	changeChart(sprintId: number)
+	{
+		ajax.runComponentAction(
+			'bitrix:tasks.scrum.burn.down',
+			'changeChart',
+			{
+				mode: 'class',
+				data: {
+					groupId: this.groupId,
+					sprintId: sprintId
+				}
+			}
+		)
+			.then((response) => {
+				this.chart.data = response.data.chart;
+				this.currentSprint = response.data.sprint;
+
+				this.infoContainer
+					.querySelector('.tasks-scrum-sprint-burn-down-info-name')
+					.textContent = Text.encode(this.currentSprint.name)
+				;
+			})
+		;
 	}
 
 	create(chartDiv: HTMLElement, data: ChartData)

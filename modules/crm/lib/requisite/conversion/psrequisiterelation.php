@@ -1,5 +1,7 @@
 <?php
+
 namespace Bitrix\Crm\Requisite\Conversion;
+
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 

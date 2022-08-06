@@ -60,4 +60,3 @@ $MESS["CRM_COLUMN_CLIENT"] = "Клиент";
 $MESS["CRM_COLUMN_SUM"] = "Сумма/Валюта";
 $MESS["CRM_COLUMN_WEBFORM"] = "Создано CRM-формой";
 $MESS["CRM_PRESET_MY_IN_WORK"] = "Мои в работе";
-?>

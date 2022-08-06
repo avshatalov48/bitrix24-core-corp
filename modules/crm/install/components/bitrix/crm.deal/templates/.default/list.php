@@ -1,10 +1,15 @@
 <?php
-if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
-$categoryID = isset($arResult['VARIABLES']['category_id']) ? (int)$arResult['VARIABLES']['category_id'] : -1;
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
-\Bitrix\Crm\Settings\Crm::markAsInitiated();
+Bitrix\Crm\Settings\Crm::markAsInitiated();
 
+$categoryID = isset($arResult['VARIABLES']['category_id'])
+	? (int)$arResult['VARIABLES']['category_id']
+	: -1;
 $isSlider = ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER');
 if (!$isSlider)
 {
@@ -80,20 +85,10 @@ else
 
 	if($isBitrix24Template)
 	{
-		$this->SetViewTarget('inside_pagetitle', 100);
-	}
-	$catalogPath = ($arResult['IS_RECURRING'] !== 'Y') ? $arResult['PATH_TO_DEAL_CATEGORY'] : $arResult['PATH_TO_DEAL_RECUR_CATEGORY'];
-
-	if(SITE_TEMPLATE_ID === 'bitrix24')
-	{
 		$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 		$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-toolbar-modifier');
 	}
 
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	if (!$isSlider)
@@ -123,30 +118,32 @@ else
 		);
 	}
 
-	$this->SetViewTarget('pagetitle');
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.deal.menu',
-			'',
-			array(
-				'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
-				'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'],
-				'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
-				'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'],
-				'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
-				'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'],
-				'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'],
-				'IS_RECURRING' => $arResult['IS_RECURRING'],
-				'ELEMENT_ID' => 0,
-				'CATEGORY_ID' => $categoryID,
-				'TYPE' => 'list',
-				'IN_SLIDER' => $isSlider ? 'Y' : 'N',
-			),
-			$component
-		);
-	$this->EndViewTarget();
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.deal.menu',
+		'',
+		[
+			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_LIST'],
+			'PATH_TO_DEAL_SHOW' => $arResult['PATH_TO_DEAL_SHOW'],
+			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
+			'PATH_TO_DEAL_FUNNEL' => $arResult['PATH_TO_DEAL_FUNNEL'],
+			'PATH_TO_DEAL_IMPORT' => $arResult['PATH_TO_DEAL_IMPORT'],
+			'PATH_TO_DEAL_RECUR' => $arResult['PATH_TO_DEAL_RECUR'],
+			'PATH_TO_DEAL_RECUR_CATEGORY' => $arResult['PATH_TO_DEAL_RECUR_CATEGORY'],
+			'IS_RECURRING' => $arResult['IS_RECURRING'],
+			'ELEMENT_ID' => 0,
+			'CATEGORY_ID' => $categoryID,
+			'TYPE' => 'list',
+			'IN_SLIDER' => $isSlider ? 'Y' : 'N',
+		],
+		$component
+	);
 
-	if (!$isSlider)
+	if(!$isSlider)
 	{
+		$catalogPath = ($arResult['IS_RECURRING'] !== 'Y')
+			? $arResult['PATH_TO_DEAL_CATEGORY']
+			: $arResult['PATH_TO_DEAL_RECUR_CATEGORY'];
+
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.deal_category.panel',
 			$isBitrix24Template ? 'tiny' : '',
@@ -179,7 +176,6 @@ else
 		);
 	}
 
-
 	$APPLICATION->IncludeComponent(
 		'bitrix:ui.sidepanel.wrapper',
 		'',
@@ -211,7 +207,8 @@ else
 					->getDefaultSuffix($categoryID),
 				'DISABLE_NAVIGATION_BAR' => ($arResult['IS_RECURRING'] === 'Y' && $isSlider) ? 'Y' : 'N',
 				'CATEGORY_ID' => $categoryID
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 

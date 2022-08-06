@@ -5,7 +5,7 @@
  */
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-content"]);
+CJSCore::Init(["voximplant.common", "ui.alerts", "ui.buttons", "ui.sidepanel-content", "ui.design-tokens"]);
 
 ?>
 <div class="ui-slider-section">

@@ -19,10 +19,18 @@ $messages = Loc::loadLanguageFile(
 	. Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/template.php')
 );
 Asset::getInstance()->addJs(Path::normalize('/bitrix/activities/bitrix/crmgetdynamicinfoactivity/script.js'));
-Asset::getInstance()->addJs(
-	Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/script.js')
-);
+
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
+global $APPLICATION;
+$APPLICATION->IncludeComponent(
+	'bitrix:bizproc.automation',
+	'',
+	[
+		'API_MODE' => 'Y',
+		'DOCUMENT_TYPE' => $dialog->getDocumentType(),
+	]
+);
+
 $map = $dialog->getMap();
 $returnFieldsProperty = $map['ReturnFields'];
 unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty['Getter']);

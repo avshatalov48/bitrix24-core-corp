@@ -2,9 +2,12 @@
 
 return [
 	'extensions' => [
-		'files',
+		"files/const",
+		"files/converter",
+		"files/entry",
 		'task',
 		'disk',
+		'user/account'
 	],
 	'components' => [
 		'user.profile',

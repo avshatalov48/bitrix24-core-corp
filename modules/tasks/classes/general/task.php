@@ -295,6 +295,7 @@ class CTasks
 		try
 		{
 			$handler->update($taskId, $arFields);
+			$this->lastOperationResultData = $handler->getLegacyOperationResultData();
 		}
 		catch (\Bitrix\Tasks\Control\Exception\TaskUpdateException $e)
 		{
@@ -650,31 +651,35 @@ class CTasks
 					$arSqlSearch[] = "({$sAliasPrefix}T.ID IN ({$innerQuery}))";
 					break;
 
-				case "TAG":
+				case 'TAG':
 					if (!is_array($val))
 					{
-						$val = array($val);
+						$val = [$val];
 					}
-					$arConds = array();
-					foreach ($val as $tag)
+					$tags = array_filter(
+						array_map(
+							static function ($tag) use ($DB) {
+								return ($tag ? $DB->ForSql($tag) : false);
+							},
+							$val
+						)
+					);
+					$tagsCount = count($tags);
+					if ($tagsCount)
 					{
-						if ($tag)
-						{
-							$arConds[] = "(".$sAliasPrefix."TT.NAME = '".$DB->ForSql($tag)."')";
-						}
-					}
-					if (count($arConds))
-					{
-						$arSqlSearch[] = trim($sAliasPrefix."T.ID IN(
-							SELECT
-								".$sAliasPrefix."TT.TASK_ID
-							FROM
-								b_tasks_tag ".$sAliasPrefix."TT
-							WHERE
-								(".implode(" OR ", $arConds).")
-							AND
-								".$sAliasPrefix."TT.TASK_ID = ".$sAliasPrefix."T.ID
-						)");
+						$tags = "('" . implode("','", $tags) . "')";
+						$arSqlSearch[] = trim("
+							{$sAliasPrefix}T.ID IN (
+								SELECT TT.TASK_ID
+								FROM (
+									SELECT TASK_ID, COUNT(1) AS CNT
+									FROM b_tasks_tag
+									WHERE NAME IN {$tags}
+									GROUP BY TASK_ID
+									HAVING CNT = {$tagsCount}
+								) TT
+							)
+						");
 					}
 					break;
 
@@ -3360,7 +3365,7 @@ class CTasks
 					}
 					break;
 				case 'SCRUM':
-
+					$isScrumRequest = ($filter['SCRUM_TASKS'] === 'Y');
 					$hasStatusKey = (
 						in_array('REAL_STATUS', $filterKeys, true)
 						&& self::containCompletedInActiveSprintStatus($filter)
@@ -3368,6 +3373,7 @@ class CTasks
 					$hasStoryPointsKey = in_array('STORY_POINTS', $filterKeys, true);
 					$hasEpicKey = in_array('EPIC', $filterKeys, true);
 
+					$scrumJoin = '';
 					$statusJoin = '';
 					$storyPointsJoin = '';
 					$epicJoin = '';
@@ -3385,6 +3391,27 @@ class CTasks
 						{
 							$epicValue = $filterValue['EPIC'];
 						}
+					}
+
+					if ($isScrumRequest)
+					{
+						$scrumEntityTableName = EntityTable::getTableName();
+						$scrumItemTableName = ItemTable::getTableName();
+
+						$scrumJoin = " INNER JOIN {$scrumEntityTableName} {$joinAlias}BTSE
+							ON {$joinAlias}BTSE.GROUP_ID = {$sourceAlias}.GROUP_ID
+						";
+						if (isset($filter['SCRUM_ENTITY_IDS']))
+						{
+							$entityIds = $filter['SCRUM_ENTITY_IDS'];
+							$scrumJoin .= "AND {$joinAlias}BTSE.ID IN (" . implode(', ', $entityIds) . ")";
+						}
+
+						$scrumJoin .= " INNER JOIN {$scrumItemTableName} {$joinAlias}BTSI
+							ON {$joinAlias}BTSI.SOURCE_ID = {$sourceAlias}.ID
+							AND {$joinAlias}BTSI.ENTITY_ID = {$joinAlias}BTSE.ID
+							AND {$joinAlias}BTSI.ACTIVE = 'Y'
+						";
 					}
 
 					if ($hasStatusKey)
@@ -3450,7 +3477,7 @@ class CTasks
 						}
 					}
 
-					$relatedJoins[$join] = $statusJoin . $storyPointsJoin . $epicJoin;
+					$relatedJoins[$join] = $scrumJoin . $statusJoin . $storyPointsJoin . $epicJoin;
 
 					break;
 			}
@@ -6022,6 +6049,7 @@ class CTasks
 			'DOER' => 						array(0, 0, 0, 1, 0),
 			'MEMBER' => 					array(0, 0, 0, 1, 0),
 			'TAG' => 						array(0, 0, 0, 1, 0),
+			'EPIC' => 						array(1, 1, 0, 1, 0),
 			'ONLY_ROOT_TASKS' => 			array(0, 0, 0, 1, 0),
 		);
 	}

@@ -3,8 +3,12 @@
 namespace Bitrix\Crm\Integrity;
 
 use Bitrix\Crm\Communication\Type;
+use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Item;
 use Bitrix\Main;
+use CCrmOwnerType;
 
 class DuplicateManager
 {
@@ -15,7 +19,9 @@ class DuplicateManager
 			return new CriterionRegistrar\Decorator\OrganizationCriterion(
 				new CriterionRegistrar\Decorator\PersonCriterion(
 					new CriterionRegistrar\Decorator\CommunicationCriterion(
-						new CriterionRegistrar\EntityRanking(),
+						new CriterionRegistrar\Decorator\VolatileCriterion(
+							new CriterionRegistrar\EntityRanking(),
+						),
 					),
 				),
 				Item\Lead::FIELD_NAME_COMPANY_TITLE,
@@ -26,7 +32,9 @@ class DuplicateManager
 		{
 			return new CriterionRegistrar\Decorator\OrganizationCriterion(
 				new CriterionRegistrar\Decorator\CommunicationCriterion(
-					new CriterionRegistrar\EntityRanking(),
+					new CriterionRegistrar\Decorator\VolatileCriterion(
+						new CriterionRegistrar\EntityRanking(),
+					),
 				),
 				Item::FIELD_NAME_TITLE,
 			);
@@ -36,7 +44,51 @@ class DuplicateManager
 		{
 			return new CriterionRegistrar\Decorator\PersonCriterion(
 				new CriterionRegistrar\Decorator\CommunicationCriterion(
-					new CriterionRegistrar\EntityRanking(),
+					new CriterionRegistrar\Decorator\VolatileCriterion(
+						new CriterionRegistrar\EntityRanking(),
+					),
+				),
+			);
+		}
+
+		return new CriterionRegistrar\NullRegistrar();
+	}
+
+	public static function getCriterionRegistrarForReindex(int $entityTypeId): CriterionRegistrar
+	{
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return new CriterionRegistrar\Decorator\OrganizationCriterion(
+				new CriterionRegistrar\Decorator\PersonCriterion(
+					new CriterionRegistrar\Decorator\CommunicationCriterion(
+						new CriterionRegistrar\Decorator\VolatileCriterionReindex(
+							new CriterionRegistrar\EntityRanking(),
+						),
+					),
+				),
+				Item\Lead::FIELD_NAME_COMPANY_TITLE,
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Company)
+		{
+			return new CriterionRegistrar\Decorator\OrganizationCriterion(
+				new CriterionRegistrar\Decorator\CommunicationCriterion(
+					new CriterionRegistrar\Decorator\VolatileCriterionReindex(
+						new CriterionRegistrar\EntityRanking(),
+					),
+				),
+				Item::FIELD_NAME_TITLE,
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return new CriterionRegistrar\Decorator\PersonCriterion(
+				new CriterionRegistrar\Decorator\CommunicationCriterion(
+					new CriterionRegistrar\Decorator\VolatileCriterionReindex(
+						new CriterionRegistrar\EntityRanking(),
+					),
 				),
 			);
 		}
@@ -98,8 +150,20 @@ class DuplicateManager
 		}
 		else
 		{
-			throw new Main\NotSupportedException("Criterion type(s): '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context");
+			foreach (DuplicateVolatileCriterion::getAllSupportedDedupeTypes() as $volatileTypeId)
+			{
+				if (($typeID & $volatileTypeId) === $typeID)
+				{
+					return DuplicateVolatileCriterion::createFromMatches($matches);
+				}
+			}
 		}
+
+		throw new Main\NotSupportedException(
+			"Criterion type(s): '"
+			. DuplicateIndexType::resolveName($typeID)
+			. "' is not supported in current context"
+		);
 	}
 	/**
 	* @return Duplicate
@@ -252,24 +316,24 @@ class DuplicateManager
 	{
 		$entityTypeID = (int)$entityTypeID;
 
-		if($entityTypeID !== \CCrmOwnerType::Lead
-			&& $entityTypeID !== \CCrmOwnerType::Contact
-			&& $entityTypeID !== \CCrmOwnerType::Company)
+		if($entityTypeID !== CCrmOwnerType::Lead
+			&& $entityTypeID !== CCrmOwnerType::Contact
+			&& $entityTypeID !== CCrmOwnerType::Company)
 		{
 			return array();
 		}
 
 		$result = array();
-		if($entityTypeID === \CCrmOwnerType::Lead || $entityTypeID === \CCrmOwnerType::Contact)
+		if($entityTypeID === CCrmOwnerType::Lead || $entityTypeID === CCrmOwnerType::Contact)
 		{
 			$result = array_merge($result, DuplicatePersonCriterion::getSupportedDedupeTypes());
 		}
-		if($entityTypeID === \CCrmOwnerType::Lead || $entityTypeID === \CCrmOwnerType::Company)
+		if($entityTypeID === CCrmOwnerType::Lead || $entityTypeID === CCrmOwnerType::Company)
 		{
 			$result = array_merge($result, DuplicateOrganizationCriterion::getSupportedDedupeTypes());
 		}
 		$result = array_merge($result, DuplicateCommunicationCriterion::getSupportedDedupeTypes());
-		if ($entityTypeID === \CCrmOwnerType::Contact || $entityTypeID === \CCrmOwnerType::Company)
+		if ($entityTypeID === CCrmOwnerType::Contact || $entityTypeID === CCrmOwnerType::Company)
 		{
 			$result = array_merge(
 				$result,
@@ -277,7 +341,33 @@ class DuplicateManager
 				DuplicateBankDetailCriterion::getSupportedDedupeTypes()
 			);
 		}
-		return $result;
+
+		// Volatile types
+		$volatileTypesByEntityId = [];
+		$idsByEntityTypes = Volatile\TypeInfo::getInstance()->getIdsByEntityTypes([$entityTypeID]);
+		if (is_array($idsByEntityTypes[$entityTypeID]))
+		{
+			foreach ($idsByEntityTypes[$entityTypeID] as $volatileTypeId)
+			{
+				$data = Volatile\Type\State::getInstance()->get($volatileTypeId)->getData();
+				if (
+					in_array(
+						$data['stateId'],
+						[
+							Volatile\Type\State::STATE_ASSIGNED,
+							Volatile\Type\State::STATE_INDEX,
+							Volatile\Type\State::STATE_READY,
+						],
+						true
+					)
+				)
+				{
+					$volatileTypesByEntityId[] = $volatileTypeId;
+				}
+			}
+		}
+
+		return array_merge($result, $volatileTypesByEntityId);
 	}
 	public static function parseScopeOption($options)
 	{
@@ -299,11 +389,13 @@ class DuplicateManager
 	}
 	public static function getDedupeTypeScopeMap($entityTypeID)
 	{
-		$result = array();
+		$result = [];
 
 		$rqFieldScopeMap = $bdFieldScopeMap = null;
 		foreach (self::getSupportedDedupeTypes($entityTypeID) as $typeID)
 		{
+			$scopes = [''];
+
 			$isRequisite = (($typeID & DuplicateIndexType::REQUISITE) === $typeID);
 			$isBankDetail = (($typeID & DuplicateIndexType::BANK_DETAIL) === $typeID);
 			if($isRequisite || $isBankDetail)
@@ -314,7 +406,7 @@ class DuplicateManager
 					$fieldScopeMap = &$bdFieldScopeMap;
 				if ($fieldScopeMap === null)
 				{
-					$fieldScopeMap = array();
+					$fieldScopeMap = [];
 					if ($isRequisite)
 						$fieldsMap = DuplicateRequisiteCriterion::getIndexedFieldsMap($entityTypeID, true);
 					else
@@ -327,12 +419,45 @@ class DuplicateManager
 						}
 					}
 				}
-				$scopes = isset($fieldScopeMap[$typeID]) ? array_keys($fieldScopeMap[$typeID]) : array();
+				$scopes = isset($fieldScopeMap[$typeID]) ? array_keys($fieldScopeMap[$typeID]) : [];
 				unset($fieldScopeMap);
 			}
 			else
 			{
-				$scopes = array('');
+				$isVolatile = false;
+				$volatileTypeId = DuplicateIndexType::UNDEFINED;
+				foreach (DuplicateVolatileCriterion::getSupportedDedupeTypes() as $currentTypeId)
+				{
+					if ((($typeID & $currentTypeId) === $currentTypeId))
+					{
+						$volatileTypeId = $currentTypeId;
+						$isVolatile = true;
+						break;
+					}
+				}
+				if ($isVolatile)
+				{
+					$typeInfo = Volatile\TypeInfo::getInstance();
+					$info = $typeInfo->getById($volatileTypeId);
+					if (
+						!empty($info)
+						&& isset($info['CATEGORY_INFO']['categoryId'])
+						&& isset($info['CATEGORY_INFO']['params']['countryId'])
+					)
+					{
+						$categoryId = $info['CATEGORY_INFO']['categoryId'];
+						$countryId = $info['CATEGORY_INFO']['params']['countryId'];
+						switch ($categoryId)
+						{
+							case Volatile\FieldCategory::REQUISITE:
+								$scopes = [EntityRequisite::formatDuplicateCriterionScope($countryId)];
+								break;
+							case Volatile\FieldCategory::BANK_DETAIL:
+								$scopes = [EntityBankDetail::formatDuplicateCriterionScope($countryId)];
+								break;
+						}
+					}
+				}
 			}
 			if (!empty($scopes))
 			{

@@ -117,6 +117,10 @@ class ShiftForm extends BaseForm
 
 	public function getFormattedBreakDuration($defaultBreakDuration = 1 * 60 * 60)
 	{
-		return $this->timeHelper->convertSecondsToHoursMinutes($this->breakDuration ?? $defaultBreakDuration);
+		return $this->timeHelper->convertSecondsToHoursMinutes(
+			$this->breakDuration === null
+				? $defaultBreakDuration
+				: $this->breakDuration
+		);
 	}
 }

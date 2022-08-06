@@ -1595,12 +1595,14 @@ class CAllCrmDeal
 
 	static public function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = [])
 	{
+		$allowSkipCheckOtherEntityTypes = false;
 		if(isset($arOptions['RESTRICT_BY_ENTITY_TYPES'])
 			&& is_array($arOptions['RESTRICT_BY_ENTITY_TYPES'])
 			&& !empty($arOptions['RESTRICT_BY_ENTITY_TYPES'])
 		)
 		{
 			$entityTypes = $arOptions['RESTRICT_BY_ENTITY_TYPES'];
+			$allowSkipCheckOtherEntityTypes = true;
 		}
 		else
 		{
@@ -1617,6 +1619,7 @@ class CAllCrmDeal
 			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
 				->setOperations((array)$mPermType)
 				->setAliasPrefix((string)$sAliasPrefix)
+				->setSkipCheckOtherEntityTypes($allowSkipCheckOtherEntityTypes)
 		;
 
 		$queryBuilder = Crm\Service\Container::getInstance()
@@ -3422,37 +3425,6 @@ class CAllCrmDeal
 						$parentContactIDs,
 						$parents
 					);
-
-					//Register contact & company relations
-					if($sonetEventType === CCrmLiveFeedEvent::Owner)
-					{
-						if(is_array($removedContactIDs))
-						{
-							CCrmLiveFeed::PrepareOwnershipRelations(
-								CCrmOwnerType::Contact,
-								$removedContactIDs,
-								$parents
-							);
-						}
-
-						if($oldCompanyID > 0)
-						{
-							CCrmLiveFeed::PrepareOwnershipRelations(
-								CCrmOwnerType::Company,
-								array($oldCompanyID),
-								$parents
-							);
-						}
-
-						if($newCompanyID > 0)
-						{
-							CCrmLiveFeed::PrepareOwnershipRelations(
-								CCrmOwnerType::Company,
-								array($newCompanyID),
-								$parents
-							);
-						}
-					}
 
 					if(!empty($parents))
 					{

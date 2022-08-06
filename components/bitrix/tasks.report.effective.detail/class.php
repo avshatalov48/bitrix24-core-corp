@@ -98,6 +98,7 @@ class TasksReportEffectiveDetailComponent extends TasksBaseComponent
 
 		$this->arParams['HEADERS'] = $this->getGridHeaders();
 		$this->arResult['TASK_LIMIT_EXCEEDED'] = $taskLimitExceeded;
+		$this->arResult['KPI_LIMIT_EXCEEDED'] = $kpiLimitExceeded;
 	}
 
 	private function getViolationList()

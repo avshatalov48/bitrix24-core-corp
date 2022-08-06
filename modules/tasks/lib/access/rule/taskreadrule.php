@@ -28,6 +28,7 @@ class TaskReadRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -44,7 +45,12 @@ class TaskReadRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "view_all")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'view_all',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;
@@ -74,6 +80,7 @@ class TaskReadRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$this->controller->addError(static::class, 'Access to read task denied');
 		return false;
 	}
 }

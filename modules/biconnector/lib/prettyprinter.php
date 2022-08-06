@@ -20,7 +20,7 @@ class PrettyPrinter
 		}
 		elseif (count($rows) == 1)
 		{
-			$ll = array();
+			$ll = [];
 			foreach ($rows[0] as $header => $value)
 			{
 				$ll[$header] = strlen($header);
@@ -28,12 +28,12 @@ class PrettyPrinter
 			$l = max($ll);
 			foreach ($rows[0] as $header => $value)
 			{
-				echo str_pad($header, $l, " ").": ".$value."\n";
+				echo str_pad($header, $l, ' ') . ': ' . $value . "\n";
 			}
 		}
 		else
 		{
-			$ll = array();
+			$ll = [];
 			foreach ($rows[0] as $header => $value)
 			{
 				$ll[$header] = strlen($header);
@@ -51,29 +51,29 @@ class PrettyPrinter
 				{
 					foreach ($row as $header => $value)
 					{
-						echo str_pad("+", $ll[$header] + 3, "-");
+						echo str_pad('+', $ll[$header] + 3, '-');
 					}
 					echo "+\n";
 					foreach ($row as $header => $value)
 					{
-						echo str_pad("| ".$header, $ll[$header] + 3, " ");
+						echo str_pad('| ' . $header, $ll[$header] + 3, ' ');
 					}
 					echo "|\n";
 					foreach ($row as $header => $value)
 					{
-						echo str_pad("+", $ll[$header] + 3, "-");
+						echo str_pad('+', $ll[$header] + 3, '-');
 					}
 					echo "+\n";
 				}
 				foreach ($row as $header => $value)
 				{
-					echo str_pad("| ".$value, $ll[$header] + 3, " ");
+					echo str_pad('| ' . $value, $ll[$header] + 3, ' ');
 				}
 				echo "|\n";
 			}
 			foreach ($row as $header => $value)
 			{
-				echo str_pad("+", $ll[$header] + 3, "-");
+				echo str_pad('+', $ll[$header] + 3, '-');
 			}
 			echo "+\n";
 		}

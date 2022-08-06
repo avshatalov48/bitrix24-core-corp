@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Model;
 
 use Bitrix\Crm\Category\Entity\ItemCategory;
+use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Entity\BooleanField;
@@ -200,6 +201,8 @@ class ItemCategoryTable extends DataManager
 			);
 			Container::getInstance()->getFactory($entityTypeId)->clearCategoriesCache();
 			unset(static::$categoryToEntityTypeRelations[$id]);
+
+			(new ItemCategoryUserField($entityTypeId))->deleteByCategoryId($id);
 		}
 
 		return $result;

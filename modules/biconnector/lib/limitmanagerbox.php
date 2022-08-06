@@ -61,7 +61,7 @@ class LimitManagerBox extends LimitManager
 	public function checkLimitWarning()
 	{
 		$expireDate = $this->getLimitDate();
-		$daysLeft = $expireDate->getDiff(new \Bitrix\Main\Type\Date())->d;
+		$daysLeft = $expireDate->getDiff(new \Bitrix\Main\Type\Date())->days;
 
 		return ($daysLeft >= static::GRACE_PERIOD_DAYS);
 	}

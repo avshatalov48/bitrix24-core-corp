@@ -261,7 +261,7 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-\Bitrix\Main\UI\Extension::load('ui.buttons');
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens']);
 
 $property = &$arResult['PROPERTY'];
 

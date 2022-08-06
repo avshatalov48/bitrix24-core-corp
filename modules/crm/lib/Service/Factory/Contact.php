@@ -2,23 +2,28 @@
 
 namespace Bitrix\Crm\Service\Factory;
 
+use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Category\Entity\ClientDefaultCategory;
 use Bitrix\Crm\Category\Entity\ItemCategory;
+use Bitrix\Crm\Comparer\ComparerBase;
 use Bitrix\Crm\ContactTable;
-use Bitrix\Crm\Conversion\EntityConversionConfig;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\ItemCategoryTable;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Context;
+use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Crm\Statistics;
 use Bitrix\Crm\StatusTable;
-use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Objectify\Values;
+use Bitrix\Main\Result;
 
 class Contact extends Service\Factory
 {
@@ -26,7 +31,7 @@ class Contact extends Service\Factory
 
 	public function __construct()
 	{
-		Loc::loadMessages(Path::combine(__DIR__, '..', '..', 'classes', 'general', 'crm_contact.php'));
+		Loc::loadMessages(Path::combine(__DIR__, '..', '..', '..', 'classes', 'general', 'crm_contact.php'));
 	}
 
 	public function isSourceEnabled(): bool
@@ -39,6 +44,16 @@ class Contact extends Service\Factory
 		return false;
 	}
 
+	public function isNewRoutingForAutomationEnabled(): bool
+	{
+		return false;
+	}
+
+	public function isNewRoutingForListEnabled(): bool
+	{
+		return false;
+	}
+
 	public function isRecyclebinEnabled(): bool
 	{
 		return ContactSettings::getCurrent()->isRecycleBinEnabled();
@@ -47,11 +62,6 @@ class Contact extends Service\Factory
 	public function isDeferredCleaningEnabled(): bool
 	{
 		return ContactSettings::getCurrent()->isDeferredCleaningEnabled();
-	}
-
-	public function isNewRoutingForAutomationEnabled(): bool
-	{
-		return false;
 	}
 
 	public function isUseInUserfieldEnabled(): bool
@@ -69,22 +79,17 @@ class Contact extends Service\Factory
 		return false;
 	}
 
-	public function isStagesEnabled(): bool
-	{
-		return false;
-	}
-
-	public function getStagesEntityId(?int $categoryId = null): ?string
-	{
-		throw new NotSupportedException('Contact doesn\'t support stages');
-	}
-
-	public function isNewRoutingForListEnabled(): bool
-	{
-		return false;
-	}
-
 	public function isBizProcEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isMultiFieldsEnabled(): bool
+	{
+		return true;
+	}
+
+	public function isCountersEnabled(): bool
 	{
 		return true;
 	}
@@ -94,9 +99,73 @@ class Contact extends Service\Factory
 		return ContactTable::class;
 	}
 
-	public function isMultiFieldsEnabled(): bool
+	public function isFieldExists(string $commonFieldName): bool
 	{
-		return true;
+		if (
+			$commonFieldName === Item\Contact::FIELD_NAME_COMPANIES
+			|| $commonFieldName === Item\Contact::FIELD_NAME_COMPANY_IDS
+		)
+		{
+			return parent::isFieldExists(Item\Contact::FIELD_NAME_COMPANY_BINDINGS);
+		}
+
+		return parent::isFieldExists($commonFieldName);
+	}
+
+	protected function prepareSelect(array $select): array
+	{
+		$select = parent::prepareSelect($select);
+
+		$selectWithoutCompanies = array_diff(
+			$select,
+			[Item\Contact::FIELD_NAME_COMPANIES, Item\Contact::FIELD_NAME_COMPANY_IDS],
+		);
+		$isCompaniesInSelect = ($select !== $selectWithoutCompanies);
+
+		$select = $selectWithoutCompanies;
+
+		if ($isCompaniesInSelect)
+		{
+			$select[] = Item\Contact::FIELD_NAME_COMPANY_BINDINGS;
+			$select[] = Item::FIELD_NAME_COMPANY_ID;
+		}
+
+		return $select;
+	}
+
+	protected function getSelectForGetItem(): array
+	{
+		$select = parent::getSelectForGetItem();
+
+		if ($this->isFieldExists(Item\Contact::FIELD_NAME_COMPANIES))
+		{
+			$select[] = Item\Contact::FIELD_NAME_COMPANIES;
+		}
+
+		return $select;
+	}
+
+	protected function configureItem(Item $item, EntityObject $entityObject): void
+	{
+		parent::configureItem($item, $entityObject);
+
+		$fieldNameMap =
+			(new Item\FieldImplementation\Binding\FieldNameMap())
+				->setSingleId(Item::FIELD_NAME_COMPANY_ID)
+				->setMultipleIds(Item\Contact::FIELD_NAME_COMPANY_IDS)
+				->setBindings(Item\Contact::FIELD_NAME_COMPANY_BINDINGS)
+				->setBoundEntities(Item\Contact::FIELD_NAME_COMPANIES)
+		;
+
+		$item->addImplementation(
+			new Item\FieldImplementation\Binding(
+				$entityObject,
+				\CCrmOwnerType::Company,
+				$fieldNameMap,
+				ContactCompanyTable::getEntity(),
+				Container::getInstance()->getCompanyBroker(),
+			)
+		);
 	}
 
 	/**
@@ -136,22 +205,33 @@ class Contact extends Service\Factory
 			],
 			Item::FIELD_NAME_LAST_NAME => [
 				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::HasDefaultValue, \CCrmFieldInfoAttr::CanNotBeEmptied],
+				'CLASS' => Field\LastName::class
 			],
 			Item::FIELD_NAME_FULL_NAME => [
 				'TYPE' => Field::TYPE_STRING,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::AutoGenerated,
+				],
 				'CLASS' => Field\FullName::class,
 			],
 			Item\Contact::FIELD_NAME_PHOTO => [
 				'TYPE' => Field::TYPE_FILE,
 				'VALUE_TYPE' => Field::VALUE_TYPE_IMAGE,
+				'CLASS' => Field\Photo::class,
 			],
 			Item::FIELD_NAME_BIRTHDATE => [
 				'TYPE' => Field::TYPE_DATE,
 			],
 			Item::FIELD_NAME_BIRTHDAY_SORT => [
 				'TYPE' => Field::TYPE_INTEGER,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Hidden],
+				'ATTRIBUTES' => [
+					\CCrmFieldInfoAttr::Hidden,
+					\CCrmFieldInfoAttr::ReadOnly,
+					\CCrmFieldInfoAttr::AutoGenerated,
+				],
 				'CLASS' => Field\BirthdaySort::class,
 			],
 			Item::FIELD_NAME_TYPE_ID => [
@@ -167,6 +247,9 @@ class Contact extends Service\Factory
 			Item::FIELD_NAME_SOURCE_DESCRIPTION => [
 				'TYPE' => Field::TYPE_TEXT,
 			],
+			Item::FIELD_NAME_POST => [
+				'TYPE' => Field::TYPE_STRING,
+			],
 			Item::FIELD_NAME_COMMENTS => [
 				'TYPE' => Field::TYPE_TEXT,
 				'ATTRIBUTES' => [],
@@ -179,46 +262,59 @@ class Contact extends Service\Factory
 			],
 			Item\Contact::FIELD_NAME_EXPORT => [
 				'TYPE' => Field::TYPE_BOOLEAN,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::HasDefaultValue],
+			],
+			Item::FIELD_NAME_HAS_PHONE => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
+				'CLASS' => Field\HasPhone::class,
+			],
+			Item::FIELD_NAME_HAS_EMAIL => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
+				'CLASS' => Field\HasEmail::class,
+			],
+			Item::FIELD_NAME_HAS_IMOL => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
+				'CLASS' => Field\HasImol::class,
 			],
 			Item::FIELD_NAME_ASSIGNED => [
 				'TYPE' => Field::TYPE_USER,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Required],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::CanNotBeEmptied, \CCrmFieldInfoAttr::HasDefaultValue],
 				'CLASS' => Field\Assigned::class,
 			],
 			Item::FIELD_NAME_CREATED_BY => [
 				'TYPE' => Field::TYPE_USER,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
 				'CLASS' => Field\CreatedBy::class,
 			],
 			Item::FIELD_NAME_UPDATED_BY => [
 				'TYPE' => Field::TYPE_USER,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
 				'CLASS' => Field\UpdatedBy::class,
 			],
 			Item::FIELD_NAME_CREATED_TIME => [
 				'TYPE' => Field::TYPE_DATETIME,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
 				'CLASS' => Field\CreatedTime::class,
 			],
 			Item::FIELD_NAME_UPDATED_TIME => [
 				'TYPE' => Field::TYPE_DATETIME,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly, \CCrmFieldInfoAttr::AutoGenerated],
 				'CLASS' => Field\UpdatedTime::class,
 			],
 			Item::FIELD_NAME_COMPANY_ID => [
 				'TYPE' => Field::TYPE_CRM_COMPANY,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::Deprecated],
-				'SETTINGS' => [
-					'parentEntityTypeId' => \CCrmOwnerType::Company,
-				],
 			],
 			Item\Contact::FIELD_NAME_COMPANY_IDS => [
 				'TYPE' => Field::TYPE_CRM_COMPANY,
 				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple],
-				'SETTINGS' => [
-					'parentEntityTypeId' => \CCrmOwnerType::Company,
-				],
+			],
+			Item\Contact::FIELD_NAME_COMPANIES => [
+				'TYPE' => Field::TYPE_CRM_COMPANY,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::Multiple]
 			],
 			Item::FIELD_NAME_LEAD_ID => [
 				'TYPE' => Field::TYPE_CRM_LEAD,
@@ -287,60 +383,170 @@ class Contact extends Service\Factory
 	protected function getTrackedFieldNames(): array
 	{
 		return [
+			Item::FIELD_NAME_HONORIFIC,
 			Item::FIELD_NAME_NAME,
 			Item::FIELD_NAME_LAST_NAME,
 			Item::FIELD_NAME_SECOND_NAME,
+			Item::FIELD_NAME_FM,
+			Item::FIELD_NAME_POST,
+			Item::FIELD_NAME_COMMENTS,
+			Item::FIELD_NAME_SOURCE_ID,
+			Item::FIELD_NAME_SOURCE_DESCRIPTION,
+			Item::FIELD_NAME_TYPE_ID,
 			Item::FIELD_NAME_ASSIGNED,
+			Item::FIELD_NAME_BIRTHDATE,
 		];
 	}
 
 	protected function getDependantTrackedObjects(): array
 	{
-		return [];
+		$companyTrackedObject = new TrackedObject\Company();
+		$companyTrackedObject->makeThisObjectDependant(Item\Contact::FIELD_NAME_COMPANIES);
+
+		return [$companyTrackedObject];
 	}
 
-	public function getAddOperation(Item $item, Context $context = null): Operation\Add
+	protected function configureAddOperation(Operation $operation): void
 	{
-		// duplication and statistic procession is not ready yet
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
+		$operation
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\WithCancel\Update(
+					'OnBeforeCrmContactAdd',
+					'CRM_CONTACT_CREATION_CANCELED',
+				),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearCache('b_crm_contact'),
+			)
+		;
+
+		if ($operation->getItem()->getCategoryId() === 0)
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\Compatible\SocialNetwork\ProcessAdd(),
+				)
+			;
+		}
+
+		$operation
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent('OnAfterCrmContactAdd'),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\ExternalAdd('OnAfterExternalCrmContactAdd'),
+			)
+		;
 	}
 
 	public function getUpdateOperation(Item $item, Context $context = null): Operation\Update
 	{
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
+		$operation = parent::getUpdateOperation($item, $context);
+
+		$operation
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\WithCancel\Update(
+					'OnBeforeCrmContactUpdate',
+					'CRM_CONTACT_UPDATE_CANCELED',
+				),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearCache(
+					null,
+					'crm_entity_name_' . $this->getEntityTypeId() . '_',
+					[Item::FIELD_NAME_NAME, Item::FIELD_NAME_LAST_NAME, Item::FIELD_NAME_SECOND_NAME]
+				)
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new class extends Operation\Action {
+					public function process(Item $item): Result
+					{
+						$itemBeforeSave = $this->getItemBeforeSave();
+						if (!$itemBeforeSave)
+						{
+							return new Result();
+						}
+
+						$difference = ComparerBase::compareEntityFields(
+							$itemBeforeSave->getData(Values::ACTUAL),
+							$item->getData(),
+						);
+
+						if (
+							$difference->isChanged(Item::FIELD_NAME_NAME)
+							|| $difference->isChanged(Item::FIELD_NAME_SECOND_NAME)
+							|| $difference->isChanged(Item::FIELD_NAME_LAST_NAME)
+							|| $difference->isChanged(Item::FIELD_NAME_HONORIFIC)
+						)
+						{
+							\CCrmActivity::ResetEntityCommunicationSettings($item->getEntityTypeId(), $item->getId());
+						}
+
+						return new Result();
+					}
+				}
+			)
+		;
+
+		if ($operation->getItem()->getCategoryId() === 0)
+		{
+			$operation
+				->addAction(
+					Operation::ACTION_AFTER_SAVE,
+					new Operation\Action\Compatible\SocialNetwork\ProcessUpdate(),
+				)
+			;
+		}
+
+		$operation
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent('OnAfterCrmContactUpdate'),
+			)
+		;
+
+		return $operation;
 	}
 
 	public function getDeleteOperation(Item $item, Context $context = null): Operation\Delete
 	{
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
+		$operation = parent::getDeleteOperation($item, $context);
+
+		$operation
+			->addAction(
+				Operation::ACTION_BEFORE_SAVE,
+				new Operation\Action\Compatible\SendEvent\WithCancel\Delete('OnBeforeCrmContactDelete')
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\ClearCache(
+					'b_crm_contact',
+					'crm_entity_name_' . $this->getEntityTypeId() . '_'
+				)
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SocialNetwork\ProcessDelete(),
+			)
+			->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmContactDelete')
+			)
+		;
+
+		return $operation;
 	}
 
-	public function getConversionOperation(
-		Item $item,
-		EntityConversionConfig $configs,
-		Context $context = null
-	): Service\Operation\Conversion
+	protected function getStatisticsFacade(): ?Statistics\OperationFacade
 	{
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
-	}
-
-	public function getCopyOperation(Item $item, Context $context = null): Operation\Copy
-	{
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
-	}
-
-	public function getRestoreOperation(Item $item, Context $context = null): Operation\Restore
-	{
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
-	}
-
-	public function getImportOperation(Item $item, Context $context = null): Operation\Import
-	{
-		throw new InvalidOperationException('Contact factory is not ready to work with operations yet');
-	}
-
-	public function isCountersEnabled(): bool
-	{
-		return true;
+		return new Statistics\OperationFacade\Contact();
 	}
 }

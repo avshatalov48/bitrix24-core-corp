@@ -40,6 +40,7 @@ $frame = $this->createFrame()->begin();
 	{
 		$classList = [
 			'sidebar-widget-item',
+			'--row',
 		];
 
 		if (++$i === count($arResult['USERS']))

@@ -85,14 +85,21 @@ export class Name extends EventEmitter
 			const removeNode = this.node.querySelector('.tasks-scrum__sprint--remove');
 
 			Event.bind(removeNode, 'click', () => {
-				MessageBox.confirm(
-					Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_SPRINT'),
-					(messageBox) => {
-						this.emit('removeSprint');
-						messageBox.close();
-					},
-					Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
-				);
+				if (this.sprint.isEmpty())
+				{
+					this.emit('removeSprint');
+				}
+				else
+				{
+					MessageBox.confirm(
+						Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_SPRINT'),
+						(messageBox) => {
+							this.emit('removeSprint');
+							messageBox.close();
+						},
+						Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
+					);
+				}
 			});
 		}
 

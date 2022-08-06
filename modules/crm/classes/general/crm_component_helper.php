@@ -495,6 +495,34 @@ class CCrmComponentHelper
 
 		return $tabParams;
 	}
+
+	/**
+	 * @param int $entityTypeId Entity type ID
+	 * @param int $categoryId   Entity category ID
+	 *
+	 * @return int[][]
+	 *
+	 * @todo: temporary stub to get entity client field additional parameters
+	 */
+	public static function getEntityClientFieldCategoryParams(int $entityTypeId, int $categoryId = 0): array
+	{
+		/**
+		 * It is required to determine the available parameters according to the specified
+		 * $entityTypeId/$categoryId. In the future, we will implement a repository in which
+		 * these links will be stored.
+		 *
+		 * | $entityTypeId | $categoryId | $companyCategoryId | UNIQUE?
+		 * | $entityTypeId | $categoryId | $contactCategoryId | UNIQUE?
+		 * ...
+		 *
+		 * We are currently returning default category ID for all entities.
+		 */
+
+		return [
+			CCrmOwnerType::Contact => ["categoryId" => 0],
+			CCrmOwnerType::Company => ["categoryId" => 0],
+		];
+	}
 }
 
 class CCrmInstantEditorHelper

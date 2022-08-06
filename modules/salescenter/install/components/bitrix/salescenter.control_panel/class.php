@@ -1014,7 +1014,7 @@ class SalesCenterControlPanelComponent extends CBitrixComponent implements Contr
 
 		return [
 			'id' => 'userconsent',
-			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_TILE'),
+			'title' => Loc::getMessage('SALESCENTER_CONTROL_PANEL_USERCONSENT_TILE_2'),
 			'image' => $this->getImagePath().'userconsent.svg',
 			'data' => [
 				'url' => $userConsentSettingPath,

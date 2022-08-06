@@ -1582,9 +1582,50 @@ class FieldSynchronizer
 		return $result;
 	}
 
+	/**
+	 * Normalization request fields.
+	 *
+	 * Normalization includes:
+	 * 1. merge an fields with short and full field codes.
+	 * Example: in request exists fields `ORDER_PROPERTY_IDCODE` and `PROPERTY_IDCODE`,
+	 * then the values of these fields will be combined into one element `ORDER_PROPERTY_IDCODE`.
+	 *
+	 * @param array $fields
+	 *
+	 * @return array
+	 */
+	private static function getNormalizedFields(array $fields): array
+	{
+		$result = [];
+
+		foreach ($fields as $fieldCode => $field)
+		{
+			$normalizedName = self::getOrderPropertyName($fieldCode, $field['ID']);
+			if (isset($result[$normalizedName]))
+			{
+				if ($normalizedName === $fieldCode)
+				{
+					$result[$normalizedName] = $field + $result[$normalizedName];
+				}
+				else
+				{
+					$result[$normalizedName] += $field;
+				}
+			}
+			else
+			{
+				$result[$normalizedName] = $field;
+			}
+		}
+
+		return $result;
+	}
+
 	public static function save($personTypeId, $fields, $relations = [])
 	{
 		$result = new Result();
+
+		$fields = static::getNormalizedFields($fields);
 
 		list($itemsToCreate, $itemsToUpdate) = static::getFieldsToSynchronize($personTypeId, $fields, $relations);
 

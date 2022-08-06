@@ -16,6 +16,7 @@ CJSCore::RegisterExt(
 			'tasks',
 			'tasks_util',
 			'tasks_component',
+			'ui.design-tokens',
 			'viewer' // it is necessary to show iframe's images in a top window
 		),
 		'lang' => $folder.'/lang/'.LANGUAGE_ID.'/template.php'

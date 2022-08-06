@@ -19,11 +19,13 @@ class TaskDeferRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if (!in_array($task->getStatus(), [\CTasks::STATE_NEW, \CTasks::STATE_PENDING]))
 		{
+			$this->controller->addError(static::class, 'Incorrect status');
 			return false;
 		}
 

@@ -193,7 +193,7 @@ else
 	}
 	elseif(($_GET["mode"] == "import") && $_SESSION["BX_CML2_IMPORT"]["zip"])
 	{
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/".$GLOBALS["DBType"]."/cml2.php");
+		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/mysql/cml2.php");
 
 		if(!array_key_exists("last_zip_entry", $_SESSION["BX_CML2_IMPORT"]))
 			$_SESSION["BX_CML2_IMPORT"]["last_zip_entry"] = "";
@@ -224,7 +224,7 @@ else
 
 		$obXMLFile = new CIBlockXMLFile;
 
-		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/".$GLOBALS["DBType"]."/cml2.php");
+		require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/iblock/classes/mysql/cml2.php");
 		if ($NS['STEP'] >= 4)
 			require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/classes/general/cml2.php");
 

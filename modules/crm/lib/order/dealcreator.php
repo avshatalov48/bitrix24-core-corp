@@ -24,10 +24,6 @@ class DealCreator
 
 		$fields = $this->getDealFieldsOnCreate();
 		$dealId = (int)$facility->registerDeal($fields);
-		if ($dealId > 0)
-		{
-			$this->addProductsToDeal($dealId);
-		}
 
 		return $dealId;
 	}
@@ -101,7 +97,7 @@ class DealCreator
 		];
 	}
 
-	protected function addProductsToDeal($dealId)
+	public function addProductsToDeal($dealId)
 	{
 		$result = [];
 
@@ -110,13 +106,19 @@ class DealCreator
 		/** @var BasketItem $basketItem */
 		foreach ($this->order->getBasket() as $basketItem)
 		{
+			$basePriceWithoutVat = $basketItem->getBasePrice();
+			if ($basketItem->isVatInPrice())
+			{
+				$basePriceWithoutVat -= $basketItem->getVat();
+			}
+
 			$item = [
 				'PRODUCT_ID' => $basketItem->getField('PRODUCT_ID'),
 				'PRODUCT_NAME' => $basketItem->getField('NAME'),
 				'PRICE' => $basketItem->getBasePrice(),
 				'PRICE_ACCOUNT' => $basketItem->getBasePrice(),
-				'PRICE_EXCLUSIVE' => $basketItem->getBasePrice(),
-				'PRICE_NETTO' => $basketItem->getBasePrice(),
+				'PRICE_EXCLUSIVE' => $basePriceWithoutVat,
+				'PRICE_NETTO' => $basePriceWithoutVat,
 				'PRICE_BRUTTO' => $basketItem->getBasePrice(),
 				'QUANTITY' => $basketItem->getQuantity(),
 				'MEASURE_CODE' => $basketItem->getField('MEASURE_CODE'),

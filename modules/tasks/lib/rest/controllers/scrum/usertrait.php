@@ -8,20 +8,11 @@
 
 namespace Bitrix\Tasks\Rest\Controllers\Scrum;
 
-use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\UserTable;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 
 trait UserTrait
 {
-	/**
-	 * @return null
-	 */
-	private function getUserId()
-	{
-		return CurrentUser::get()->getId();
-	}
-
 	/**
 	 * @param int $groupId
 	 * @return bool

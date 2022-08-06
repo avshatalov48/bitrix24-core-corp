@@ -399,7 +399,7 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 			$this->errors[] = Loc::getMessage('CRM_WEBFORM_ERROR_SECURITY');
 			return false;
 		}
-		if ($this->arParams['VIEW_TYPE'] !== 'frame')
+		if (!in_array($this->arParams['VIEW_TYPE'], ['frame', 'preview'], true))
 		{
 			$landingUrl = $this->form->getLandingUrl();
 			if ($landingUrl)
@@ -711,6 +711,17 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 			$this->arParams['SHOW_SUCCESS'] = $showAgreement == 'Y' ? 'Y' : 'N';
 		}
 
+		if(!isset($this->arParams['PREVIEW_TYPE']))
+		{
+			$previewType = $this->request->get('preview');
+			$this->arParams['PREVIEW_TYPE'] = $previewType ? $previewType : 'inline';
+		}
+
+		if(!isset($this->arParams['PREVIEW_ID']))
+		{
+			$this->arParams['PREVIEW_ID'] = $this->request->get('preview_id');
+		}
+
 		return true;
 	}
 
@@ -747,6 +758,18 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		}
 		else
 		{
+			switch ($this->arParams['VIEW_TYPE'])
+			{
+				case 'frame':
+					$this->includeWebFormFrameTemplate();
+					break;
+				case 'preview':
+					$this->includeWebFormPreviewTemplate();
+					break;
+				default:
+					$this->includeWebFormTemplate();
+					break;
+			}
 			if($this->arParams['VIEW_TYPE'] == 'frame')
 			{
 				$this->includeWebFormFrameTemplate();
@@ -809,6 +832,48 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		global $APPLICATION;
 		$APPLICATION->RestartBuffer();
 		$this->includeComponentTemplate('frame');
+		CMain::FinalActions();
+		exit;
+	}
+
+	protected function includeWebFormPreviewTemplate()
+	{
+		global $APPLICATION;
+		$APPLICATION->RestartBuffer();
+
+		if (!\Bitrix\Main\Loader::includeModule('crm') || !WebForm\Manager::checkReadPermission())
+		{
+			die('access denied');
+		}
+
+		$previewTypeParam = $this->arParams['PREVIEW_TYPE'];
+		$this->arResult['PREVIEW']['TYPE'] = $previewTypeParam;
+		$this->arResult['PREVIEW']['SCRIPT'] = '';
+
+		switch ($previewTypeParam)
+		{
+			case 'button':
+			case 'ol':
+				$button = new \Bitrix\Crm\SiteButton\Button((int)$this->arParams['PREVIEW_ID']);
+				$this->arResult['PREVIEW']['SCRIPT'] = \Bitrix\Crm\SiteButton\Script::getScript($button);
+				break;
+			case 'click':
+			case 'auto':
+			case 'inline':
+			default:
+				$form = new WebForm\Form((int)$this->arParams['FORM_ID']);
+				$formData = $form->get();
+				$this->arResult['PREVIEW']['VIEWS'] = $formData['FORM_SETTINGS']['VIEWS'] ?? [];
+
+				$scripts = WebForm\Script::getListContext($formData, []);
+
+				if (isset($scripts[strtoupper($previewTypeParam)]['text'])) {
+					$this->arResult['PREVIEW']['SCRIPT'] = $scripts[strtoupper($previewTypeParam)]['text'];
+				}
+				break;
+		}
+
+		$this->includeComponentTemplate('preview');
 		CMain::FinalActions();
 		exit;
 	}

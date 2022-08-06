@@ -13,7 +13,8 @@
 .telephony-report-call-dynamics-grid-value-down {
 	position: static;
 	padding-left: 0;
-	font: 14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 }
 

@@ -13,18 +13,19 @@
 	margin: 0 0 17px 0;
 	padding: 0 0 12px 0;
 	border-bottom: 1px solid rgba(130,139,149,.19);
-	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 }
 .telephony-report-call-dynamics-modal-subtitle {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 	opacity: .84;
 }
 .telephony-report-call-dynamics-modal-main .telephony-report-chart-card-subtitle {
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .telephony-report-call-dynamics-modal-main {}
 .telephony-report-call-dynamics-modal-content {
@@ -34,12 +35,14 @@
 	justify-content: space-between;
 }
 .telephony-report-call-dynamics-modal-value {
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
 .telephony-report-call-dynamics-modal-percent-value {
-	font: 15px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-left: 20px;
 }
 

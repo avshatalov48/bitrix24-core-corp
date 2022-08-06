@@ -43,46 +43,18 @@ class InitialSettingsAgent
 			return '';
 		}
 
+		$taskId = (int) $initialTask['ID'];
 
-		if ($initialTask['SYS'] === 'Y')
+		if ($taskId)
 		{
-			// if task is system = create task like default and bind it
-			$initialTask['SYS'] = 'N';
-			$initialTask['NAME'] = $initialTask['NAME'] . '_converted_editable';
-			unset($initialTask['ID']);
-			unset($initialTask['LETTER']);
-			unset($initialTask['TITLE']);
-			unset($initialTask['DESC']);
-			$newTaskId = CTask::Add($initialTask);
-			if ($newTaskId)
-			{
-				$operations = CTask::GetOperations($defaultTaskId, true);
-				if (!empty($operations))
-				{
-					\CTask::SetOperations($newTaskId, $operations, true);
-				}
-			}
-			if (!$newTaskId)
-			{
-				$existedTask = CTask::GetList([], ["NAME" => $initialTask['NAME']])->Fetch();
-				if ($existedTask)
-				{
-					$newTaskId = $existedTask['ID'];
-				}
-			}
+			Application::getConnection()
+				->query("
+					INSERT IGNORE INTO `b_timeman_task_access_code` (`TASK_ID`, `ACCESS_CODE`) 
+					VALUES ('" . $taskId . "', 'G2');"
+				)
+			;
 		}
-		else
-		{
-			$newTaskId = $initialTask['ID'];
-		}
-		// assign task id to access code
-		if ((int)$newTaskId > 0)
-		{
-			TaskAccessCodeTable::add([
-				'TASK_ID' => $newTaskId,
-				'ACCESS_CODE' => 'G2',
-			]);
-		}
+
 		return '';
 	}
 

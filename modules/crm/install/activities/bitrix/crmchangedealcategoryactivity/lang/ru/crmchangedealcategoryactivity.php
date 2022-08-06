@@ -11,3 +11,4 @@ $MESS['CRM_CDCA_MOVE_ERROR_CATEGORY_NOT_CHANGED'] = 'Сделка уже при�
 $MESS['CRM_CDCA_MOVE_ERROR_RESPONSIBLE_NOT_FOUND'] = 'Не указан ответственный сделки';
 $MESS['CRM_CDCA_MOVE_ERROR_STAGE_NOT_FOUND'] = 'Не удалось определить новую стадию сделки';
 $MESS["CRM_CDCA_CYCLING_ERROR"] = "Сделка не перемещена. Подозрение на зацикливание действия";
+$MESS["CRM_CDCA_CYCLING_EXCEPTION_MESSAGE"] = "Выполнение робота пропущено";

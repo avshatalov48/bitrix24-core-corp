@@ -228,6 +228,7 @@ class CheckList extends CompositeTreeItem
 	{
 		$saveResult = new Result();
 
+		$this->cloneFileAttachments();
 		$fieldsChecking = $this->checkFields();
 		if (!$fieldsChecking->isSuccess())
 		{
@@ -264,6 +265,25 @@ class CheckList extends CompositeTreeItem
 		$saveResult->setData(['ITEM' => $this]);
 
 		return $saveResult;
+	}
+
+	/**
+	 * @return void
+	 */
+	private function cloneFileAttachments()
+	{
+		if (
+			$this->fields->getId()
+			|| !$this->fields->getCopiedId()
+			|| empty($this->fields->getAttachments())
+		)
+		{
+			return;
+		}
+
+		$attachments = $this->fields->getAttachments();
+		$clone = \Bitrix\Tasks\Integration\Disk::cloneFileAttachment(array_keys($attachments));
+		$this->fields->setAttachments($clone);
 	}
 
 	/**

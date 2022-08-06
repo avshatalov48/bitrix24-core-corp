@@ -580,11 +580,11 @@ include('InAppNotifier');
 		{
 			if (isChecked)
 			{
-				this.complete();
+				this.onCompleteAction();
 			}
 			else
 			{
-				this.renew();
+				this.onRenewAction();
 			}
 		}
 
@@ -697,14 +697,7 @@ include('InAppNotifier');
 						return;
 					}
 					this.updateTask({deadline: newTs, activityDate: Date.now()});
-
-					console.log('tasks.view.native::onItemAction::changeDeadline');
-					BX.postWebEvent('tasks.view.native::onItemAction', {
-						taskId: this.task.id,
-						taskGuid: this.guid,
-						name: 'deadline',
-						values: {deadline: newTs},
-					});
+					this.sendOnItemActionWebEvent('deadline', {deadline: newTs});
 				}
 			);
 		}
@@ -735,16 +728,7 @@ include('InAppNotifier');
 							responsible: TaskCard.getItemDataFromUser(user),
 							activityDate: Date.now(),
 						});
-
-						console.log('tasks.view.native::onItemAction::changeResponsible');
-						BX.postWebEvent('tasks.view.native::onItemAction', {
-							taskId: this.task.id,
-							taskGuid: this.guid,
-							name: 'responsible',
-							values: {
-								user: this.task.responsible,
-							},
-						});
+						this.sendOnItemActionWebEvent('responsible', {user: this.task.responsible});
 					}
 				})
 			;
@@ -752,7 +736,37 @@ include('InAppNotifier');
 
 		onDelegateAction()
 		{
-			this.delegate();
+			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
+				.setSingleChoose(true)
+				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'))
+				.setSelected({
+					user: [{
+						id: this.task.responsible.id,
+						title: this.task.responsible.name,
+						imageUrl: this.task.responsible.icon,
+					}],
+				})
+				.open()
+				.then((recipients) => {
+					if (recipients.user && recipients.user.length > 0)
+					{
+						const user = recipients.user[0];
+
+						if (Number(this.task.responsible.id) === Number(user.id))
+						{
+							return;
+						}
+						this.updateTask({
+							responsible: TaskCard.getItemDataFromUser(user),
+							activityDate: Date.now(),
+						});
+						this.task.delegate().then(() => BX.postWebEvent('tasks.view.native::onTaskUpdate', {
+							taskId: this.task.id,
+							responsible: true,
+						}, true));
+					}
+				})
+			;
 		}
 
 		onChangeGroupAction()
@@ -784,16 +798,7 @@ include('InAppNotifier');
 						this.task.groupId = Number(group.id);
 						this.task.group = TaskCard.getItemDataFromGroup(group);
 						this.updateTask({});
-
-						console.log('tasks.view.native::onItemAction::changeGroup');
-						BX.postWebEvent('tasks.view.native::onItemAction', {
-							taskId: this.task.id,
-							taskGuid: this.guid,
-							name: 'group',
-							values: {
-								group: this.task.group,
-							},
-						});
+						this.sendOnItemActionWebEvent('group', {group: this.task.group});
 					}
 				})
 			;
@@ -972,7 +977,7 @@ include('InAppNotifier');
 			}
 		}
 
-		addToFavorite()
+		onAddToFavoriteAction()
 		{
 			const taskId = this.task.id;
 
@@ -991,7 +996,7 @@ include('InAppNotifier');
 			});
 		}
 
-		removeFromFavorite()
+		onRemoveFromFavoriteAction()
 		{
 			const taskId = this.task.id;
 
@@ -1022,10 +1027,12 @@ include('InAppNotifier');
 				activityDate: Date.now(),
 			});
 			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
 
 			this.task.approve().then(() => {
 				this.updateTask();
 				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
 			});
 		}
 
@@ -1042,10 +1049,12 @@ include('InAppNotifier');
 				activityDate: Date.now(),
 			});
 			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
 
 			this.task.disapprove().then(() => {
 				this.updateTask();
 				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
 			});
 		}
 
@@ -1057,10 +1066,12 @@ include('InAppNotifier');
 
 			this.updateTask({status: Task.statusList.inprogress});
 			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
 
 			this.task.start().then(() => {
 				this.updateTask();
 				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
 			});
 		}
 
@@ -1072,10 +1083,12 @@ include('InAppNotifier');
 
 			this.updateTask({status: Task.statusList.pending});
 			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
 
 			this.task.pause().then(() => {
 				this.updateTask();
 				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
 			});
 		}
 
@@ -1090,14 +1103,16 @@ include('InAppNotifier');
 				activityDate: Date.now(),
 			});
 			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
 
 			this.task.renew().then(() => {
 				this.updateTask();
 				this.redrawTaskPopupMenu();
 			});
+			this.sendOnItemActionStatusWebEvent();
 		}
 
-		complete()
+		onCompleteAction()
 		{
 			if (!this.task.isRequireResult || this.task.isHasResult)
 			{
@@ -1106,10 +1121,12 @@ include('InAppNotifier');
 					activityDate: Date.now(),
 				});
 				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
 
 				this.task.complete().then(() => {
 					this.updateTask();
 					this.redrawTaskPopupMenu();
+					this.sendOnItemActionStatusWebEvent();
 				});
 			}
 			else
@@ -1119,83 +1136,6 @@ include('InAppNotifier');
 				this.task.status = oldStatus;
 				this.updateTask();
 			}
-		}
-
-		renew()
-		{
-			this.updateTask({
-				status: Task.statusList.pending,
-				activityDate: Date.now(),
-			});
-			this.redrawTaskPopupMenu();
-
-			this.task.renew().then(() => {
-				this.updateTask();
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		approve()
-		{
-			this.updateTask({
-				status: Task.statusList.completed,
-				activityDate: Date.now(),
-			});
-			this.redrawTaskPopupMenu();
-
-			this.task.approve().then(() => {
-				this.updateTask();
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		disapprove()
-		{
-			this.updateTask({
-				status: Task.statusList.pending,
-				activityDate: Date.now(),
-			});
-			this.redrawTaskPopupMenu();
-
-			this.task.disapprove().then(() => {
-				this.updateTask();
-				this.redrawTaskPopupMenu();
-			});
-		}
-
-		delegate()
-		{
-			(new RecipientSelector('TASKS_MEMBER_SELECTOR_EDIT_responsible', ['user']))
-				.setSingleChoose(true)
-				.setTitle(BX.message('TASKS_TASK_DETAIL_TITLE_RESPONSIBLE'))
-				.setSelected({
-					user: [{
-						id: this.task.responsible.id,
-						title: this.task.responsible.name,
-						imageUrl: this.task.responsible.icon,
-					}],
-				})
-				.open()
-				.then((recipients) => {
-					if (recipients.user && recipients.user.length > 0)
-					{
-						const user = recipients.user[0];
-
-						if (Number(this.task.responsible.id) === Number(user.id))
-						{
-							return;
-						}
-						this.updateTask({
-							responsible: TaskCard.getItemDataFromUser(user),
-							activityDate: Date.now(),
-						});
-						this.task.delegate().then(() => BX.postWebEvent('tasks.view.native::onTaskUpdate', {
-							taskId: this.task.id,
-							responsible: true,
-						}, true));
-					}
-				})
-			;
 		}
 
 		onRemoveAction()
@@ -1238,6 +1178,21 @@ include('InAppNotifier');
 			{
 				this.updateTask({activityDate: Date.now()});
 			}
+		}
+
+		sendOnItemActionStatusWebEvent()
+		{
+			this.sendOnItemActionWebEvent('status', {status: this.task.status});
+		}
+
+		sendOnItemActionWebEvent(name, values)
+		{
+			BX.postWebEvent('tasks.view.native::onItemAction', {
+				name,
+				values,
+				taskId: this.task.id,
+				taskGuid: this.guid,
+			});
 		}
 
 		// task popup menu
@@ -1301,12 +1256,12 @@ include('InAppNotifier');
 				'favorite.add': {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_ADD_FAVORITE_TASK'),
 					iconUrl: `${urlPrefix}add-favorite.png`,
-					action: this.addToFavorite,
+					action: this.onAddToFavoriteAction,
 				},
 				'favorite.remove': {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_DELETE_FAVORITE_TASK'),
 					iconUrl: `${urlPrefix}delete-favorite.png`,
-					action: this.removeFromFavorite,
+					action: this.onRemoveFromFavoriteAction,
 				},
 				start: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_START_TASK'),
@@ -1316,12 +1271,12 @@ include('InAppNotifier');
 				complete: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_CLOSE_TASK'),
 					iconUrl: `${urlPrefix}finish.png`,
-					action: this.complete,
+					action: this.onCompleteAction,
 				},
 				renew: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_RENEW_TASK'),
 					iconUrl: `${urlPrefix}renew.png`,
-					action: this.renew,
+					action: this.onRenewAction,
 				},
 				pause: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_PAUSE_TASK'),
@@ -1331,17 +1286,17 @@ include('InAppNotifier');
 				disapprove: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_REDO_TASK'),
 					iconUrl: `${urlPrefix}renew.png`,
-					action: this.disapprove,
+					action: this.onDisapproveAction,
 				},
 				approve: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_APPROVE_TASK'),
 					iconUrl: `${urlPrefix}finish.png`,
-					action: this.approve,
+					action: this.onApproveAction,
 				},
 				delegate: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_DELEGATE_TASK'),
 					iconUrl: `${urlPrefix}delegate.png`,
-					action: this.delegate,
+					action: this.onDelegateAction,
 					disable: this.taskLimitExceeded,
 				},
 				update: {

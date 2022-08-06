@@ -97,6 +97,16 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 		$this->arResult['canUpdateWorktime'] = $this->userPermissionsManager->canUpdateWorktime($record->getUserId());
 		$this->arResult['useEmployeesTimezone'] = $this->useEmployeesTimezone();
 
+		$recordManager = DependencyManager::getInstance()->buildWorktimeRecordManager(
+			$record,
+			$record->obtainSchedule(),
+			$record->obtainShift()
+		);
+		$this->arResult['canChangeWorktime'] = (
+			!$this->userPermissionsManager->canUpdateWorktime($record->getUserId())
+			&& ($recordManager->isRecordExpired() && $this->currentUserId == $record->getUserId())
+		);
+
 		$recordForm = new WorktimeRecordForm($record);
 		if ($record->obtainSchedule())
 		{
@@ -566,7 +576,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 			$this->arResult['WORKTIME_REPORT']['REPORT'] = $arRes['REPORT'];
 			if ((CBXFeatures::isFeatureEnabled('Tasks') && \Bitrix\Main\Loader::includeModule('tasks')))
 			{
-				$this->arResult['WORKTIME_REPORT']['TASKS'] = unserialize($arRes['TASKS']);
+				$this->arResult['WORKTIME_REPORT']['TASKS'] = unserialize($arRes['TASKS'], ['allowed_classes' => false]);
 				if (!is_array($this->arResult['WORKTIME_REPORT']['TASKS']))
 				{
 					$this->arResult['WORKTIME_REPORT']['TASKS'] = [];
@@ -583,7 +593,7 @@ class WorktimeRecordReportComponent extends Timeman\Component\BaseComponent
 
 			if (CBXFeatures::IsFeatureEnabled('Calendar'))
 			{
-				$this->arResult['WORKTIME_REPORT']['EVENTS'] = unserialize($arRes['EVENTS']);
+				$this->arResult['WORKTIME_REPORT']['EVENTS'] = unserialize($arRes['EVENTS'], ['allowed_classes' => false]);
 				if (!is_array($this->arResult['WORKTIME_REPORT']['EVENTS']))
 				{
 					$this->arResult['WORKTIME_REPORT']['EVENTS'] = [];

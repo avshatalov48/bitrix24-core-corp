@@ -285,6 +285,27 @@ final class FromTemplate extends Util\Replicator\Task
 	}
 
 	/**
+	 * @param int $templateId
+	 * @return mixed|string
+	 * @throws \Bitrix\Main\ArgumentException
+	 */
+	public static function forceRepeatTask(int $templateId, int $userId = 0)
+	{
+		$parameters = [
+			"FORCE_EXECUTE" => true,
+			"AGENT_NAME_TEMPLATE" => "",
+			"RESULT" => null,
+		];
+
+		if ($userId)
+		{
+			$parameters['FORCE_USER'] = $userId;
+		}
+
+		return static::repeatTask($templateId, $parameters);
+	}
+
+	/**
 	 * Agent handler for repeating tasks.
 	 * Create new task based on given template.
 	 *
@@ -295,11 +316,19 @@ final class FromTemplate extends Util\Replicator\Task
 	 */
 	public static function repeatTask($templateId, array $parameters = [])
 	{
+		$forceExecute = false;
+		if (array_key_exists('FORCE_EXECUTE', $parameters))
+		{
+			$forceExecute = $parameters['FORCE_EXECUTE'];
+		}
+
 		$templateId = (int)$templateId;
 		if (!$templateId)
 		{
 			return ''; // delete agent
 		}
+
+		$userId = static::getEffectiveUser();
 
 		static::liftLogAgent();
 
@@ -318,7 +347,15 @@ final class FromTemplate extends Util\Replicator\Task
 			$replicateParams = $template['REPLICATE_PARAMS'] = unserialize($template['REPLICATE_PARAMS'], ['allowed_classes' => false]);
 
 			$executionTime = static::getExecutionTime($agentName, $replicateParams);
-			if ($executionTime && (static::taskByTemplateAlreadyExist($templateId, $executionTime) || time() < MakeTimeStamp($executionTime)))
+			if (
+				$executionTime
+				&&
+				(
+					static::taskByTemplateAlreadyExist($templateId, $executionTime)
+					|| time() < MakeTimeStamp($executionTime)
+				)
+				&& !$forceExecute
+			)
 			{
 				return $agentName;
 			}
@@ -334,8 +371,6 @@ final class FromTemplate extends Util\Replicator\Task
 			$resumeReplication = true;
 			$replicationCancelReason = '';
 
-			// get effective user is (actually, admin)
-			$userId = static::getEffectiveUser();
 			if (!$userId)
 			{
 				$createMessage = Loc::getMessage('TASKS_REPLICATOR_TASK_WAS_NOT_CREATED');
@@ -359,9 +394,17 @@ final class FromTemplate extends Util\Replicator\Task
 
 				if (intval($template['CREATED_BY']))
 				{
+					if (array_key_exists('FORCE_USER', $parameters))
+					{
+						$userId = (int) $parameters['FORCE_USER'];
+					}
+					else
+					{
+						$userId = (int) $template['CREATED_BY'];
+					}
 					$userChanged = true;
 					$originalUser = User::getOccurAsId();
-					User::setOccurAsId($template['CREATED_BY']); // not admin in logs, but template creator
+					User::setOccurAsId($userId); // not admin in logs, but template creator
 				}
 
 				try

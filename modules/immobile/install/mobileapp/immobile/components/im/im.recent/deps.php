@@ -14,6 +14,7 @@ return [
 		'im:chat/timer',
 		'im:chat/dialogcache',
 		'im:chat/const/background',
+		'im:chat/selector/adapter/dialog-list',
 		'user/profile',
 		'pull/client/events',
 		'intranet/invite',

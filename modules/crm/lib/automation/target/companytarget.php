@@ -45,11 +45,6 @@ class CompanyTarget extends BaseTarget
 		return null;
 	}
 
-	public function setEntityStatus($statusId)
-	{
-		return;
-	}
-
 	public function getEntityStatuses()
 	{
 		return [];

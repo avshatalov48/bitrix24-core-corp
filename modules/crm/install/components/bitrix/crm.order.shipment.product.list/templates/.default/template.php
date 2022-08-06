@@ -3,8 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 
 use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load("ui.fonts.ruble");
-\Bitrix\Main\UI\Extension::load('sale.barcode');
+\Bitrix\Main\UI\Extension::load(['ui.fonts.ruble', 'sale.barcode', 'ui.design-tokens']);
 
 Loc::loadMessages(__FILE__);
 
@@ -153,7 +152,7 @@ foreach($arResult['PRODUCTS'] as $product)
 
 
 		$storeTmpl =
-			'<div class="crm-order-product-store-container" data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="min-height: 39px; margin-top: 25px; margin-bottom: -29px;  padding-bottom: 10px;">'.
+			'<div class="crm-order-product-store-container" data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="min-height: 39px;">'.
 				'<span class="crm-order-product-store-name">
 					<a href="/shop/settings/cat_store_edit/?ID=#STORE_ID#&lang='.LANGUAGE_ID.'&publicSidePanel=Y">#STORE_NAME#</a>
 				</span>'.
@@ -204,7 +203,7 @@ foreach($arResult['PRODUCTS'] as $product)
 			'</div>';
 
 		$storeRemainingQuantityTmpl =
-			'<div data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="min-height: 39px; margin-top: 29px; margin-bottom: -29px;  padding-bottom: 10px;">'.
+			'<div data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="min-height: 39px;">'.
 				'<span class="crm-entity-widget-content-block-value">#AMOUNT# #MEASURE_TEXT#</span>'.
 			'</div>';
 

@@ -1,6 +1,7 @@
 <?
 $MESS["CRM_ACT_EMAIL_AUTH"] = "Ошибка авторизации";
-$MESS["CRM_ACT_EMAIL_NOCRM"] = "Модуль crm не установлен";
+$MESS["CRM_ACT_EMAIL_NOCRM"] = "Модуль CRM не установлен";
+$MESS["CRM_ACT_EMAIL_NO_MAIL"] = "Модуль Mail не установлен.";
 $MESS["CRM_ACT_EMAIL_AJAX_ERROR"] = "Ошибка при обработке запроса";
 $MESS["CRM_ACT_EMAIL_RCPT"] = "Кому";
 $MESS["CRM_ACT_EMAIL_RCPT_CC"] = "Копия";

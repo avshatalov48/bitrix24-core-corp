@@ -128,7 +128,7 @@
 			}
 			else
 			{
-				console.error("Can not start call. No userId or dialogId in event");
+				CallUtil.error("Can not start call. No userId or dialogId in event");
 				navigator.notification.alert(BX.message("MOBILE_CALL_INTERNAL_ERROR").replace("#ERROR_CODE#", "E001"));
 				return;
 			}
@@ -161,7 +161,7 @@
 		{
 			if (!CallUtil.isDeviceSupported())
 			{
-				console.error(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
+				CallUtil.error(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
 				navigator.notification.alert(BX.message("MOBILE_CALL_UNSUPPORTED_VERSION"));
 				return;
 			}
@@ -235,7 +235,7 @@
 				}
 			}).catch((error) =>
 			{
-				console.error(error);
+				CallUtil.error(error);
 				if (error instanceof DeviceAccessError)
 				{
 					CallUtil.showDeviceAccessConfirm(video, () => Application.openSettings());
@@ -303,7 +303,7 @@
 				});
 			}).catch((error) =>
 			{
-				console.error(error);
+				CallUtil.error(error);
 				if (error.code && error.code == "ALREADY_FINISHED")
 				{
 					navigator.notification.alert(BX.message("MOBILE_CALL_ALREADY_FINISHED"));
@@ -325,7 +325,7 @@
 
 		onIncomingCall(e)
 		{
-			console.warn("incoming.call", e);
+			CallUtil.warn("incoming.call", e);
 
 			if (!CallUtil.isDeviceSupported())
 			{
@@ -335,6 +335,12 @@
 
 			const newCall = callEngine.calls[e.callId];
 			this.callWithLegacyMobile = (e.isLegacyMobile === true);
+
+			if (newCall instanceof CallStub)
+			{
+				CallUtil.error("This call is already finished");
+				return;
+			}
 
 			if (this.currentCall)
 			{
@@ -359,7 +365,7 @@
 				}
 				else
 				{
-					console.warn("can't participate in two calls");
+					CallUtil.warn("can't participate in two calls");
 					newCall.decline(486);
 				}
 				return;
@@ -367,13 +373,13 @@
 
 			if (this.callView)
 			{
-				console.error("call view already exists");
+				CallUtil.error("call view already exists");
 				return;
 			}
 
 			if (newCall.associatedEntity.type === "chat" && newCall.associatedEntity.advanced["chatType"] === "videoconf")
 			{
-				console.error("conferences are not supported yet");
+				CallUtil.error("conferences are not supported yet");
 				return;
 			}
 
@@ -389,13 +395,13 @@
 					this.nativeCall = nativeCall;
 					if (Application.isBackground())
 					{
-						console.warn(CallUtil.getDateForLog() + ": Waking up p&p");
+						CallUtil.warn("Waking up p&p");
 						CallUtil.forceBackgroundConnectPull(10).then(() => {
 							if (this.currentCall)
 							{
 								this.currentCall.repeatAnswerEvents();
 
-								console.warn(CallUtil.getDateForLog() + ": checking self state");
+								CallUtil.warn("checking self state");
 								callEngine.getRestClient().callMethod("im.call.getUserState", {callId: this.currentCall.id}).then(response => {
 									let data = response.data();
 									let myState = data.STATE;
@@ -405,7 +411,7 @@
 										this.clearEverything();
 									}
 								}).catch(response => {
-									console.error(response);
+									CallUtil.error(response);
 									if (Application.isBackground())
 									{
 										Application.isBackground();
@@ -413,7 +419,7 @@
 								});
 							}
 						}).catch((err) => {
-							console.error("Could not connect to p&p", err);
+							CallUtil.error("Could not connect to p&p", err);
 
 							this.clearEverything();
 						})
@@ -430,19 +436,19 @@
 				video: video,
 				viewStatus: e.autoAnswer ? "call" : "incoming"
 			}).then(() => {
-				console.warn("showIncomingCall success");
+				CallUtil.warn("showIncomingCall success");
 				if (this.currentCall && e.autoAnswer)
 				{
-					console.warn("auto-answer A");
+					CallUtil.warn("auto-answer A");
 					this.onAnswerButtonClick(video);
 				}
 				if (this.nativeCall && this.nativeCall.connected && !this.callAnswered)
 				{
-					console.warn("Native call is connected, but we did not receive answered event.")
+					CallUtil.warn("Native call is connected, but we did not receive answered event.")
 					this.answerCurrentCall(this.nativeCall.params.video);
 				}
 			}).catch((error) => {
-				console.error(error);
+				CallUtil.error(error);
 				this.clearEverything();
 			});
 		}
@@ -452,14 +458,14 @@
 			media.audioPlayer().stopPlayingSound();
 			if (!this.currentCall)
 			{
-				console.error("no call to answer");
+				CallUtil.error("no call to answer");
 				this.clearEverything();
 				return;
 			}
 			this.currentCall.setVideoEnabled(useVideo);
 			if (this.callAnswered)
 			{
-				console.log("Call already answered");
+				CallUtil.log("Call already answered");
 			}
 			this.callAnswered = true;
 
@@ -479,19 +485,17 @@
 				}
 			}).catch(error =>
 			{
-				console.error(error);
+				CallUtil.error(error);
 				if (error instanceof DeviceAccessError)
 				{
-					callUtil.showDeviceAccessConfirm(
+					if (this.currentCall)
+					{
+						this.currentCall.decline();
+					}
+					CallUtil.showDeviceAccessConfirm(
 						useVideo,
 						() => Application.openSettings(),
-						() =>
-						{
-							if (this.currentCall)
-							{
-								this.currentCall.decline();
-							}
-						},
+						() => 	{ },
 					);
 				}
 				else if (error instanceof CallJoinedElseWhereError)
@@ -563,12 +567,19 @@
 
 					if (params.video && this.currentCall && this.currentCall.getLocalMedia)
 					{
-						this.currentCall.getLocalMedia().then(() => resolve());
+						this.requestDeviceAccess(true).then(() => {
+							this.currentCall.getLocalMedia();
+						}).catch((error) =>
+						{
+							CallUtil.error(error);
+							if (error instanceof DeviceAccessError)
+							{
+								CallUtil.showDeviceAccessConfirm(params.video, () => Application.openSettings());
+							}
+						})
 					}
-					else
-					{
-						resolve();
-					}
+
+					resolve();
 				});
 			});
 
@@ -593,8 +604,7 @@
 				}
 				else
 				{
-					console.error("cannot join 2 calls yet");
-
+					CallUtil.error("cannot join 2 calls yet");
 				}
 			}
 			else
@@ -603,15 +613,24 @@
 					"",
 					(button) =>
 					{
-						if (button != 3)
+						if (button == 4)
 						{
-							this.joinCall(callId, button == 1);
+							return;
 						}
+
+						if (button == 3)
+						{
+							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{dialogId: this.currentCall.associatedEntity.id}], 'im.messenger');
+							return;
+						}
+
+						this.joinCall(callId, button == 1);
 					},
 					BX.message("MOBILE_CALL_JOIN_GROUP_CALL"),
 					[
 						BX.message("MOBILE_CALL_WITH_VIDEO"),
 						BX.message("MOBILE_CALL_WITHOUT_VIDEO"),
+						BX.message("MOBILE_CALL_OPEN_CHAT"),
 						BX.message("MOBILE_CALL_MICROPHONE_CANCEL"),
 					],
 				)
@@ -784,7 +803,7 @@
 				this.openWidgetLayer()
 					.then(() =>
 					{
-						console.warn("creating new CallLayout");
+						CallUtil.warn("creating new CallLayout");
 						this.callView = new CallLayout(viewProps);
 						this.rootWidget.showComponent(this.callView);
 						this.callViewPromise = null;
@@ -792,7 +811,7 @@
 						resolve();
 					})
 					.catch(error => {
-						console.error(error);
+						CallUtil.error(error);
 						this.callViewPromise = null;
 					});
 			});
@@ -891,12 +910,12 @@
 
 		onAppActive()
 		{
+			CallUtil.log("onAppActive");
 			if (!this.currentCall)
 			{
 				CallUtil.warn("no current call");
 				return;
 			}
-			this.currentCall.log("onAppActive");
 
 			const push = Application.getLastNotification();
 
@@ -907,11 +926,11 @@
 				&& push.id.startsWith('IM_CALL_')
 			)
 			{
-				console.log("check push");
+				CallUtil.log("check push");
 				try
 				{
 					let pushParams = JSON.parse(push.params);
-					console.log(pushParams);
+					CallUtil.log(pushParams);
 
 					const callFields = pushParams.PARAMS.call;
 					const isVideo = pushParams.PARAMS.video;
@@ -919,25 +938,25 @@
 
 					if (callId == this.currentCall.id)
 					{
-						console.warn("auto-answer B");
+						CallUtil.warn("auto-answer B");
 						this.answerCurrentCall(isVideo);
 					}
 				}
 				catch (e)
 				{
 					// do nothing
-					console.error(e);
+					CallUtil.error(e);
 				}
 			}
 			else
 			{
-				console.log("onAppActive");
+				CallUtil.log("onAppActive");
 				this.currentCall.log("onAppActive");
 				this.currentCall.setVideoPaused(false);
 
 				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver")
 				{
-					console.warn("switching audio output to speaker on application activation");
+					CallUtil.warn("switching audio output to speaker on application activation");
 					this._selectSpeaker();
 				}
 			}
@@ -950,7 +969,7 @@
 				return;
 			}
 
-			console.log("onAppPaused");
+			CallUtil.log("onAppPaused");
 			this.currentCall.log("onAppPaused");
 			this.currentCall.setVideoPaused(true);
 		}
@@ -978,7 +997,7 @@
 			{
 				return;
 			}
-			console.log("onAudioDeviceChanged", deviceName);
+			CallUtil.log("onAudioDeviceChanged", deviceName);
 			if (this.skipNextDeviceChangeEvent)
 			{
 				this.skipNextDeviceChangeEvent = false;
@@ -1061,6 +1080,7 @@
 			if (this.currentCall)
 			{
 				BX.postComponentEvent("onOpenDialog", [{dialogId: this.currentCall.associatedEntity.id}, true], "im.recent");
+				BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{dialogId: this.currentCall.associatedEntity.id}], 'im.messenger');
 			}
 		}
 
@@ -1068,6 +1088,7 @@
 		{
 			this.fold();
 			BX.postComponentEvent("onOpenDialog", [{dialogId: userId}, true], "im.recent");
+			BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{dialogId: userId}], 'im.messenger');
 		}
 
 		onFloorRequestButtonClick()
@@ -1097,12 +1118,12 @@
 
 		onAnswerButtonClick(useVideo)
 		{
-			console.log(CallUtil.getDateForLog() + " onAnswerButtonClick");
+			CallUtil.log("onAnswerButtonClick");
 
 			this.answerCurrentCall(useVideo);
 			if (this.nativeCall)
 			{
-				console.log("looks like the native call is not answered , calling answer");
+				CallUtil.log("looks like the native call is not answered , calling answer");
 				this.ignoreNativeCallAnswer = true;
 				this.nativeCall.answer();
 			}
@@ -1255,7 +1276,7 @@
 
 		onCallCallFailure()
 		{
-			console.error("onCallFailure");
+			CallUtil.error("onCallFailure");
 			this.clearEverything();
 			navigator.notification.alert(BX.message("MOBILE_CALL_INTERNAL_ERROR").replace("#ERROR_CODE#", "E003"));
 		}
@@ -1303,10 +1324,10 @@
 		{
 			if (e.local)
 			{
-				console.warn("joined local call");
+				CallUtil.warn("joined local call");
 				if (!this._hasHeadphones() && JNVIAudioManager.currentDevice == "receiver" && !Application.isBackground())
 				{
-					console.warn("no headphones");
+					CallUtil.warn("no headphones");
 					this._selectSpeaker();
 				}
 
@@ -1320,7 +1341,7 @@
 		{
 			if (!e.local && this.currentCall && this.currentCall.ready)
 			{
-				console.error(new Error("received remote leave with active call!"));
+				CallUtil.error(new Error("received remote leave with active call!"));
 				return;
 			}
 
@@ -1334,7 +1355,7 @@
 
 		onNativeCallAnswered(nativeAction)
 		{
-			console.log(CallUtil.getDateForLog() + " onNativeCallAnswered");
+			CallUtil.log("onNativeCallAnswered");
 
 			if (this.nativeCall)
 			{
@@ -1355,7 +1376,7 @@
 					}
 					else
 					{
-						console.error("callView is not initialized");
+						CallUtil.error("callView is not initialized");
 					}
 				}
 			}
@@ -1492,14 +1513,14 @@
 					"AVATAR_HR": "Y",
 				}).then(response => this.callView.updateUserData(response.data()));
 
-				console.log("trying get video");
+				CallUtil.log("trying get video");
 				MediaDevices.getUserMedia({audio: true, video: true}).then(stream =>
 				{
-					console.log("video track received");
-					console.log(stream.getTracks());
+					CallUtil.log("video track received");
+					CallUtil.log(stream.getTracks());
 					this.stream = stream;
 					this.callView.setVideoStream(env.userId, stream);
-				}).catch(err => console.error(err));
+				}).catch(err => CallUtil.error(err));
 			});
 		}
 
@@ -1511,7 +1532,7 @@
 				items.push({
 					text: `items ${i}`,
 					iconClass: "returnToSpeaker",
-					onClick: () => console.log(`item ${i} click`),
+					onClick: () => CallUtil.log(`item ${i} click`),
 				});
 				if (withSeparators)
 				{
@@ -1528,7 +1549,7 @@
 						color: "#FF0000",
 						onClick: () =>
 						{
-							console.log(456);
+							CallUtil.log(456);
 						},
 					},
 					{separator: true},
@@ -1536,7 +1557,7 @@
 				],
 				onClose: () =>
 				{
-					console.log("test menu closed");
+					CallUtil.log("test menu closed");
 					this.menu && this.menu.destroy();
 					uicomponent.widgetLayer() && uicomponent.widgetLayer().close();
 				},
@@ -1547,8 +1568,8 @@
 			});
 
 			this.openWidgetLayer().then(() => this.menu.show())
-				.then(() => console.log("success"))
-				.catch((e) => console.error(e));
+				.then(() => CallUtil.log("success"))
+				.catch((e) => CallUtil.error(e));
 		}
 
 		testDevices()
@@ -1582,7 +1603,7 @@
 				},
 			});
 
-			console.log(menuItems);
+			CallUtil.log(menuItems);
 
 			this.menu = new CallMenu({
 				items: menuItems,
@@ -1595,13 +1616,13 @@
 			});
 
 			this.openWidgetLayer().then(() => this.menu.show())
-				.then(() => console.log("success"))
-				.catch((e) => console.error(e));
+				.then(() => CallUtil.log("success"))
+				.catch((e) => CallUtil.error(e));
 		}
 
 		ttt()
 		{
-			console.log(pathToExtension + "img/blank.png");
+			CallUtil.log(pathToExtension + "img/blank.png");
 			callInterface.indicator().setMode("active");
 			callInterface.indicator().imageUrl = pathToExtension + "img/blank.png";
 			callInterface.indicator().show();
@@ -1609,14 +1630,14 @@
 
 		openVideoConf(alias)
 		{
-			console.log("CallEvents::openVideoConf", alias);
+			CallUtil.log("CallEvents::openVideoConf", alias);
 			let jitsiServer =  BX.componentParameters.get("jitsiServer");
 			if (!jitsiServer)
 			{
-				console.error('Component parameter jitsiServer is empty');
+				CallUtil.error('Component parameter jitsiServer is empty');
 			}
 			let confAddress = 'org.jitsi.meet://' + jitsiServer + '/' + alias;
-			console.log(confAddress);
+			CallUtil.log(confAddress);
 			if (Application.canOpenUrl(confAddress))
 			{
 				Application.openUrl(confAddress);

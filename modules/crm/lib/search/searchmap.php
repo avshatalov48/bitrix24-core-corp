@@ -83,6 +83,7 @@ class SearchMap
 	}
 	public function addUserByID($userID)
 	{
+		$userID = (int)$userID;
 		if($userID <= 0)
 		{
 			return;

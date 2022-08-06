@@ -18,6 +18,7 @@ class TemplateCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$template)
 		{
+			$this->controller->addError(static::class, 'Incorrect template');
 			return false;
 		}
 

@@ -75,15 +75,20 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$this->request
 		);
 
-		if(!($payment = $this->buildPayment($paymentFields)) || !$this->result->isSuccess())
+		$payment = $this->buildPayment($paymentFields);
+		if (!$payment || !$this->result->isSuccess())
 		{
 			return;
 		}
 
-		$collection = $payment->getCollection();
-		$order = $collection->getOrder();
-		$res = $order->save();
+		$verifyResult = $payment->verify();
+		if (!$verifyResult->isSuccess())
+		{
+			$this->addErrors($verifyResult->getErrors());
+			return;
+		}
 
+		$res = $payment->getCollection()->getOrder()->save();
 		if(!$res->isSuccess())
 		{
 			$this->addErrors($res->getErrors());

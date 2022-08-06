@@ -7,11 +7,10 @@ use Bitrix\Crm\History;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Statistics;
-use Bitrix\Crm\Statistics\OperationFacade;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Result;
 
-class Deal extends OperationFacade
+final class Deal extends Statistics\OperationFacade
 {
 	public function add(Item $item): Result
 	{
@@ -20,9 +19,11 @@ class Deal extends OperationFacade
 			return new Result();
 		}
 
-		Statistics\DealSumStatisticEntry::register($item->getId(), $item->getCompatibleData());
-		Statistics\DealInvoiceStatisticEntry::synchronize($item->getId(), $item->getCompatibleData());
-		History\DealStageHistoryEntry::register($item->getId(), $item->getCompatibleData(), ['IS_NEW' => true]);
+		$compatibleData = $item->getCompatibleData();
+
+		Statistics\DealSumStatisticEntry::register($item->getId(), $compatibleData);
+		Statistics\DealInvoiceStatisticEntry::synchronize($item->getId(), $compatibleData);
+		History\DealStageHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => true]);
 
 		if ($item->getLeadId() > 0)
 		{
@@ -39,12 +40,14 @@ class Deal extends OperationFacade
 			return new Result();
 		}
 
-		Statistics\DealSumStatisticEntry::register($item->getId(), $item->getCompatibleData());
-		History\DealStageHistoryEntry::synchronize($item->getId(), $item->getCompatibleData());
-		Statistics\DealInvoiceStatisticEntry::synchronize($item->getId(), $item->getCompatibleData());
-		Statistics\DealActivityStatisticEntry::synchronize($item->getId(), $item->getCompatibleData());
-		DealChannelBinding::synchronize($item->getId(), $item->getCompatibleData());
-		History\DealStageHistoryEntry::register($item->getId(), $item->getCompatibleData(), ['IS_NEW' => false]);
+		$compatibleData = $item->getCompatibleData();
+
+		Statistics\DealSumStatisticEntry::register($item->getId(), $compatibleData);
+		History\DealStageHistoryEntry::synchronize($item->getId(), $compatibleData);
+		Statistics\DealInvoiceStatisticEntry::synchronize($item->getId(), $compatibleData);
+		Statistics\DealActivityStatisticEntry::synchronize($item->getId(), $compatibleData);
+		DealChannelBinding::synchronize($item->getId(), $compatibleData);
+		History\DealStageHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => false]);
 
 		$difference = ComparerBase::compareEntityFields(
 			$itemBeforeSave->getData(Values::ACTUAL),

@@ -22,3 +22,4 @@ $MESS['CRM_SEMA_NO_RESPONSIBLE'] = 'Не найден ответственный
 $MESS['CRM_SEMA_DEFAULT_BODY'] = '[без текста]';
 $MESS['CRM_SEMA_EMAIL_CREATION_CANCELED'] = 'Операция создания письма отменена';
 $MESS['CRM_SEMA_TIMELINE_ERROR'] = 'Письмо не отправлено. #ERROR_TEXT#';
+$MESS['CRM_SEMA_ACTIVITY_LINK_LABEL'] = 'Открыть письмо';

@@ -6,7 +6,7 @@ use CTimeZone;
 
 class Helper
 {
-	public static function getInstance()
+	public static function getInstance(): Helper
 	{
 		static $instance = null;
 

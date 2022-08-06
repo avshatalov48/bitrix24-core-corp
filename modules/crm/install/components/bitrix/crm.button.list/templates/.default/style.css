@@ -1028,7 +1028,7 @@ div.intranet-button-list-widget-content {
 	padding: 16px;
 	background: #fff;
 	border: 1px solid #caced7;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 14px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #535c69;
 	box-sizing: border-box;

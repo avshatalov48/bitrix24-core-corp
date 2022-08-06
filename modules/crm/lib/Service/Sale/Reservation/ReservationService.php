@@ -3,11 +3,9 @@
 namespace Bitrix\Crm\Service\Sale\Reservation;
 
 use Bitrix\Crm\Binding\OrderEntityTable;
-use Bitrix\Crm\ClientInfo;
-use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Integration\Sale\Reservation\Config\Entity\Deal;
 use Bitrix\Crm\Integration\Sale\Reservation\Config\EntityFactory;
-use Bitrix\Crm\Order\Builder\OrderBuilderCrm;
+use Bitrix\Crm\Order\OrderCreator;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Crm\Reservation\BasketReservation;
 use Bitrix\Crm\Reservation\Internals\ProductReservationMapTable;
@@ -19,7 +17,6 @@ use Bitrix\Crm\Reservation\Strategy\ReservePaidProductsStrategy;
 use Bitrix\Crm\Reservation\Strategy\ReserveQuantityEqualProductQuantityStrategy;
 use Bitrix\Crm\Reservation\Strategy\Strategy;
 use Bitrix\Crm\Service\Sale\BasketService;
-use Bitrix\Main\Context;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
@@ -27,8 +24,6 @@ use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Configuration;
-use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
-use Bitrix\Sale\Helpers\Order\Builder\SettingsContainer;
 use Bitrix\Sale\Order;
 use CCrmDeal;
 use CCrmOwnerType;
@@ -244,84 +239,6 @@ class ReservationService
 	}
 
 	/**
-	 * Order creater from deal.
-	 *
-	 * @todo replace to good building or OrderCreater!
-	 *
-	 * @param int $dealId
-	 *
-	 * @return Order|null
-	 */
-	private function createOrder(int $dealId): ?Order
-	{
-		$settings = new SettingsContainer([
-			'createDefaultPaymentIfNeed' => false,
-			'createDefaultShipmentIfNeed' => false,
-			'clearReservesIfEmpty' => false,
-			'createUserIfNeed' => SettingsContainer::SET_ANONYMOUS_USER,
-		]);
-		$builder = new OrderBuilderCrm($settings);
-
-		$dealFields = $this->getDealFields($dealId);
-		$userId = (int)($dealFields['ASSIGNED_BY_ID'] ?? 0);
-		$currencyId = (string)($dealFields['CURRENCY_ID'] ?? '');
-
-		try
-		{
-			$clientInfo = ClientInfo::createFromOwner(
-				CCrmOwnerType::Deal,
-				$dealId
-			)->toArray(false);
-
-			$builder->build([
-				'SITE_ID' => Context::getCurrent()->getSite(),
-				'USER_ID' => $userId,
-				'CURRENCY' => $currencyId,
-				'OWNER_ID' => $dealId,
-				'OWNER_TYPE_ID' => CCrmOwnerType::Deal,
-				'CLIENT' => $clientInfo,
-			]);
-			$order = $builder->getOrder();
-			if ($order)
-			{
-				$order->getContactCompanyCollection()->disableAutoCreationMode();
-
-				$result = $order->save();
-				if ($result->isSuccess())
-				{
-					return $order;
-				}
-			}
-		}
-		catch (BuildingException $e)
-		{
-			// pass
-		}
-
-		return null;
-	}
-
-	/**
-	 * Gets deal fields for order builder.
-	 *
-	 * @param int $dealId
-	 *
-	 * @return array|null
-	 */
-	private function getDealFields(int $dealId): ?array
-	{
-		return DealTable::getRow([
-			'select' => [
-				'ASSIGNED_BY_ID',
-				'CURRENCY_ID',
-			],
-			'filter' => [
-				'=ID' => $dealId,
-			],
-		]);
-	}
-
-	/**
 	 * Synchronize deal product rows reserves with order basket items.
 	 *
 	 * @param int $dealId
@@ -342,7 +259,7 @@ class ReservationService
 		);
 		if (!$orderId)
 		{
-			$order = $this->createOrder($dealId);
+			$order = (new OrderCreator($dealId))->create();
 			if (!$order)
 			{
 				return;
@@ -396,6 +313,22 @@ class ReservationService
 
 			$this->synchronizeOrderForDeal($dealId, $dealProducts, false);
 		}
+		else
+		{
+			$this->removeReservesProductsByDeal($dealId);
+		}
+	}
+
+	private function removeReservesProductsByDeal(int $dealId): void
+	{
+		$entityBuilder = new \Bitrix\Crm\Reservation\Entity\EntityBuilder();
+		$entityBuilder
+			->setOwnerTypeId(\CCrmOwnerType::Deal)
+			->setOwnerId($dealId)
+		;
+		$entity = $entityBuilder->build();
+
+		(new \Bitrix\Crm\Reservation\Manager($entity))->unReserve();
 	}
 
 	/**

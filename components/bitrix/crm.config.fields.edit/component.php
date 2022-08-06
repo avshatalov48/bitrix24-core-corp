@@ -14,8 +14,9 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 	return;
 }
 
-$arResult['ENTITY_ID'] = isset($_REQUEST['entity_id']) ? $_REQUEST['entity_id']: $arParams['FIELS_ENTITY_ID'];
-$arResult['FIELD_ID'] = isset($_REQUEST['field_id']) ? $_REQUEST['field_id']: $arParams['FIELS_FIELD_ID'];
+$arResult['ENTITY_ID'] = $_REQUEST['entity_id'] ?? $arParams['FIELS_ENTITY_ID'];
+$arResult['FIELD_ID'] = $_REQUEST['field_id'] ?? $arParams['FIELS_FIELD_ID'];
+$arResult['CATEGORY_ID'] = $_REQUEST['category_id'] ?? 0;
 
 global $USER_FIELD_MANAGER;
 
@@ -136,13 +137,13 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 		$arField = array(
 			'USER_TYPE_ID' => $_POST['USER_TYPE_ID'],
 			'ENTITY_ID' => $arResult['ENTITY_ID'],
+			'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 			'SORT' => $_POST['SORT'],
 			'MULTIPLE' => $_POST['MULTIPLE'] == 'Y' ? 'Y' : 'N',
 			'MANDATORY' => $_POST['MANDATORY'] == 'Y' ? 'Y' : 'N',
 			'SHOW_FILTER' => $_POST['SHOW_FILTER'] == 'Y' ? 'E' : 'N', // E - 'By mask' is default
 			'SHOW_IN_LIST' => $_POST['SHOW_IN_LIST'] == 'Y' ? 'Y' : 'N'
 		);
-
 
 		if(isset($_POST['USE_MULTI_LANG_LABEL']) && $_POST['USE_MULTI_LANG_LABEL'] === 'Y')
 		{

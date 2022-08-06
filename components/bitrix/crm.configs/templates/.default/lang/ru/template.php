@@ -84,6 +84,5 @@ $MESS["CRM_CONFIGS_DESCRIPTION_APP"] = "<b>Перенос данных из др
 эффективнее. Подключите сервисы для работы с рассылками, посадочными страницами, чатами, звонками, для расчета
 KPI и другие. В каталоге постоянно появляются новые приложения.";
 $MESS["CRM_CONFIGS_NO_ACCESS_ERROR"] = "Нет доступа";
-$MESS["CRM_CONFIGS_DEAL_CATEGORY"] = "Направления сделок";
+$MESS["CRM_CONFIGS_DEAL_CATEGORY"] = "Воронки продаж";
 $MESS["CRM_CONFIGS_CONFIGURATION_APP"] = "Отраслевые сценарии";
-?>

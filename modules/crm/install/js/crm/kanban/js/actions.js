@@ -332,13 +332,16 @@
 												BX.ajax.runComponentAction('bitrix:crm.kanban', 'restore', {
 													mode: 'ajax',
 													data: {
-														entityIds: (ids.length ? ids : [ids]),
+														entityIds: (Array.isArray(ids) ? ids : [ids]),
 														entityTypeId: grid.data.entityTypeInt
 													}
 												}).then(function(response) {
 													removedItems.forEach(function(item){
 														var column = grid.getColumn(item.options.columnId);
-														column.addItem(item);
+														var items = column.getItems();
+														var beforeItem = items.length ? items[0] : null;
+														item.visible = true;
+														column.addItem(item, beforeItem);
 													});
 													var autoHideDelay = 6000;
 													BX.UI.Notification.Center.notify({

@@ -324,79 +324,64 @@ if (typeof(BX.Tasks.SortManager) === "undefined")
 
 if (typeof BX.Tasks.SprintSelector === 'undefined')
 {
-	BX.Tasks.SprintSelector = function(containerId, sprints, params)
+	BX.Tasks.SprintSelector = function(containerId, params)
 	{
 		if (!BX(containerId))
 		{
 			return;
 		}
 
-		var sprintItems = [];
-		for (var i = 0, c = sprints.length; i < c; i++)
-		{
-			var baseSprintName = (sprints[i]['NAME'] ? sprints[i]['NAME'] : '');
-			var sprintName = (baseSprintName ? baseSprintName + ' ' : '');
-			var sprintDate = sprints[i]['START_TIME'] + ' - ' + sprints[i]['FINISH_TIME'];
-			if (baseSprintName)
-			{
-				sprintDate = '(' + sprintDate + ')';
-			}
-
-			sprintItems.push({
-				id: sprints[i]['ID'],
-				entityId: 'sprint',
-				tabs: 'recents',
-				title: sprintName + sprintDate,
-				customData: {
-					sprintName: baseSprintName,
-					sprintDateStart: sprints[i]['START_TIME'],
-					sprintDateEnd: sprints[i]['FINISH_TIME'],
-				}
-			});
-		}
-
-		var sprintsSelectorDialog = new BX.UI.EntitySelector.Dialog({
-			targetNode: BX(containerId),
-			width: 400,
-			height: 300,
-			multiple: false,
-			dropdownMode: true,
-			enableSearch: true,
-			compactView: true,
-			showAvatars: false,
-			recentTabOptions: {
-				itemOrder: null
-			},
-			selectedItems: [sprintItems[0]],
-			items: sprintItems,
-			events: {
-				'Item:onSelect': function(event) {
-					var selectedItem = event.getData().item;
-					BX.onCustomEvent(
-						BX(containerId),
-						'onTasksGroupSelectorChange',
-						[
-							{
-								id: params.groupId,
-								sprintId: selectedItem.id,
-								name: selectedItem.customData.get('sprintName')
-							}
-						]
-					);
-
-					var selectorTextNode = BX(containerId).querySelector('.webform-small-button-text');
-					selectorTextNode.innerHTML =
-						BX.util.htmlspecialchars(selectedItem.customData.get('sprintDateStart')) +
-						' - ' + BX.util.htmlspecialchars(selectedItem.customData.get('sprintDateEnd'));
-				},
-			},
-		});
-
 		BX.bind(
 			BX(containerId).querySelector('.webform-small-button'),
 			"click",
 			function()
 			{
+				var sprintsSelectorDialog = new BX.UI.EntitySelector.Dialog({
+					targetNode: BX(containerId),
+					width: 400,
+					height: 300,
+					multiple: false,
+					dropdownMode: true,
+					enableSearch: true,
+					compactView: true,
+					showAvatars: false,
+					cacheable: false,
+					preselectedItems: [['sprint-selector' , params.sprintId]],
+					entities: [
+						{
+							id: 'sprint-selector',
+							options: {
+								groupId: params.groupId,
+								onlyCompleted: true
+							},
+							dynamicLoad: true,
+							dynamicSearch: true
+						}
+					],
+					events: {
+						'Item:onSelect': function(event) {
+							var selectedItem = event.getData().item;
+
+							params.sprintId = selectedItem.id;
+
+							BX.onCustomEvent(
+								BX(containerId),
+								'onTasksGroupSelectorChange',
+								[
+									{
+										id: params.groupId,
+										sprintId: selectedItem.id,
+										name: selectedItem.customData.get('name')
+									}
+								]
+							);
+
+							var selectorTextNode = BX(containerId).querySelector('.webform-small-button-text');
+							selectorTextNode.innerHTML = selectedItem.customData.get('label');
+						},
+					},
+				});
+
 				sprintsSelectorDialog.show();
 			}
 		);

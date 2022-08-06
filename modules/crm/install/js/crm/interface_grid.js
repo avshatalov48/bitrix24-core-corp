@@ -768,6 +768,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			this._gridBeforeRequestHandler = BX.delegate(this.onGridDataRequest, this);
 			this._applyCounterFilterHandler = BX.delegate(this.onApplyCounterFilter, this);
 			this._entityConvertHandler = BX.delegate(this.onEntityConvert, this);
+			this._singleEntityConvertHandler = BX.delegate(this.onSingleEntityConvert, this);
 			this._externalEventHandler = BX.delegate(this.onExternalEvent, this);
 
 			//region Row count loader
@@ -782,6 +783,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			}
 			BX.addCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
 			BX.addCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
+			BX.addCustomEvent(window, "Crm.EntityConverter.SingleConverted", this._singleEntityConvertHandler);
 			BX.addCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
 		},
 		destroy: function()
@@ -790,6 +792,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			BX.removeCustomEvent(window, "Grid::beforeRequest", this._gridBeforeRequestHandler);
 			BX.removeCustomEvent(window, "BX.CrmEntityCounterPanel:applyFilter", this._applyCounterFilterHandler);
 			BX.removeCustomEvent(window, "Crm.EntityConverter.Converted", this._entityConvertHandler);
+			BX.removeCustomEvent(window, "Crm.EntityConverter.SingleConverted", this._singleEntityConvertHandler);
 			BX.removeCustomEvent(window, "onLocalStorageSet", this._externalEventHandler);
 			this.releaseRowCountLoader();
 		},
@@ -1687,6 +1690,13 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		onEntityConvert: function(sender, eventArgs)
 		{
 			if(this.getOwnerTypeName() === BX.prop.getString(eventArgs, "entityTypeName"))
+			{
+				BX.Main.gridManager.reload(this.getGridId());
+			}
+		},
+		onSingleEntityConvert: function(event)
+		{
+			if (event.getData().entityTypeName === this.getOwnerTypeName())
 			{
 				BX.Main.gridManager.reload(this.getGridId());
 			}

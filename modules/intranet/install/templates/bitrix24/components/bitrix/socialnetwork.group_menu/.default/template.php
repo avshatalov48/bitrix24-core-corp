@@ -59,14 +59,14 @@ if (
 {
 	?><script>
 		BX.ready(function() {
-			BX.SocialnetworkUICommon.showRecallJoinRequestPopup({
+			(new BX.Socialnetwork.UI.RecallJoinRequest({
 				RELATION_ID: <?= (int)$arResult["UserRelationId"] ?>,
 				GROUP_ID: <?= (int)$arResult['Group']['ID'] ?>,
 				URL_REJECT_OUTGOING_REQUEST: '<?= CUtil::JSEscape($arResult["Urls"]["UserRequests"]) ?>',
 				URL_GROUPS_LIST: '<?= CUtil::JSEscape($arResult["Urls"]["GroupsList"]) ?>',
 				PROJECT: <?= ($arResult["Group"]["PROJECT"] === "Y" ? 'true' : 'false') ?>,
 				SCRUM: <?= ($arResult['isScrumProject'] ? 'true' : 'false') ?>,
-			});
+			})).showPopup();
 		});
 	</script><?php
 }

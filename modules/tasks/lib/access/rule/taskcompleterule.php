@@ -21,11 +21,13 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if ($task->isClosed())
 		{
+			$this->controller->addError(static::class, 'Task already completed');
 			return false;
 		}
 
@@ -43,6 +45,7 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			{
 				return true;
 			}
+			$this->controller->addError(static::class, 'Task is supposedly completed');
 			return false;
 		}
 
@@ -58,7 +61,12 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "edit_tasks")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;
@@ -69,6 +77,7 @@ class TaskCompleteRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$this->controller->addError(static::class, 'Access to complete task denied');
 		return false;
 	}
 }

@@ -1,10 +1,11 @@
 import {Dom, Event, Loc, Tag, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
-import 'main.polyfill.intersectionobserver';
-
 import {Entity} from './entity';
 import {Item} from '../item/item';
+
+import 'ui.hint';
+import 'main.polyfill.intersectionobserver';
 
 import '../css/action-panel.css';
 
@@ -45,6 +46,8 @@ export class ActionPanel extends EventEmitter
 
 		this.isBlockBlur = false;
 
+		this.hintManager = null;
+
 		this.observeBindElement();
 	}
 
@@ -52,6 +55,16 @@ export class ActionPanel extends EventEmitter
 	{
 		this.node = this.calculatePanelPosition(this.createActionPanel());
 		this.bindItems();
+
+		this.hintManager = BX.UI.Hint.createInstance({
+			popupParameters: {
+				closeByEsc: true,
+				autoHide: true,
+				animation: null
+			}
+		});
+
+		this.hintManager.init(this.node);
 
 		Dom.append(this.node, document.body);
 	}
@@ -67,7 +80,17 @@ export class ActionPanel extends EventEmitter
 			this.observer.disconnect();
 		}
 
+		this.hideHint();
+
 		this.emit('onDestroy');
+	}
+
+	hideHint()
+	{
+		if (this.hintManager)
+		{
+			this.hintManager.hide();
+		}
 	}
 
 	getNode(): HTMLElement
@@ -80,7 +103,7 @@ export class ActionPanel extends EventEmitter
 		return this.item;
 	}
 
-	createActionPanel()
+	createActionPanel(): HTMLElement
 	{
 		let task = '';
 		let attachment = '';
@@ -111,7 +134,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.task.disable === true ? '--disabled' : '';
 
 			task = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-task ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-task ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--icon"></span>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK')}
@@ -126,7 +152,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.attachment.disable === true ? '--disabled' : '';
 
 			attachment = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-attachment ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-attachment ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_FILE_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--icon"></span>
 				</div>
 				<div class="tasks-scrum__action-panel--separator"></div>
@@ -135,11 +164,13 @@ export class ActionPanel extends EventEmitter
 
 		if (this.itemList.dod.activity)
 		{
-
 			const disableClass = this.itemList.dod.disable === true ? '--disabled' : '';
 
 			dod = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-dod ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-dod ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD')}
 					</span>
@@ -153,7 +184,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.move.disable === true ? '--disabled' : '';
 
 			move = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-move ${arrowClass} ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-move ${arrowClass} ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_MOVE_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_MOVE')}
 					</span>
@@ -165,11 +199,13 @@ export class ActionPanel extends EventEmitter
 		if (this.itemList.sprint.activity)
 		{
 			const disableClass = this.itemList.sprint.disable === true ? '--disabled' : '';
-
 			const sprintArrowClass = this.itemList.sprint.multiple === true ? arrowClass : '';
 
 			sprint = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-sprint ${sprintArrowClass} ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-sprint ${sprintArrowClass} ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_SPRINT_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_SPRINT')}
 					</span>
@@ -183,7 +219,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.backlog.disable === true ? '--disabled' : '';
 
 			backlog = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-backlog ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-backlog ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_BACKLOG_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_BACKLOG')}
 					</span>
@@ -197,7 +236,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.tags.disable === true ? '--disabled' : '';
 
 			tags = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-tags ${arrowClass} ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-tags ${arrowClass} ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TAG_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TAGS')}
 					</span>
@@ -211,7 +253,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.epic.disable === true ? '--disabled' : '';
 
 			epic = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-epics ${arrowClass} ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-epics ${arrowClass} ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_EPIC_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_EPIC')}
 					</span>
@@ -223,9 +268,20 @@ export class ActionPanel extends EventEmitter
 		if (this.itemList.decomposition.activity)
 		{
 			const disableClass = this.itemList.decomposition.disable === true ? '--disabled' : '';
+			const decClass = this.entity.isBacklog()
+				? 'tasks-scrum__action-panel--btn-decomposition-backlog'
+				: 'tasks-scrum__action-panel--btn-decomposition-sprint'
+			;
+			const hintText = this.entity.isBacklog()
+				? Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DEC_BACKLOG_HINT')
+				: Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DEC_SPRINT_HINT')
+			;
 
 			decomposition = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-decomposition ${disableClass}">
+				<div
+					class="${baseBtnClass} ${decClass} ${disableClass}"
+					data-hint="${hintText}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--icon"></span>
 				</div>
 				<div class="tasks-scrum__action-panel--separator"></div>
@@ -237,7 +293,10 @@ export class ActionPanel extends EventEmitter
 			const disableClass = this.itemList.remove.disable === true ? '--disabled' : '';
 
 			remove = Tag.render`
-				<div class="${baseBtnClass} tasks-scrum__action-panel--btn-remove ${disableClass}">
+				<div
+					class="${baseBtnClass} tasks-scrum__action-panel--btn-remove ${disableClass}"
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_REMOVE_HINT')}" data-hint-no-icon
+				>
 					<span class="tasks-scrum__action-panel--icon"></span>
 				</div>
 			`;
@@ -345,8 +404,13 @@ export class ActionPanel extends EventEmitter
 
 		if (this.itemList.decomposition.activity && this.itemList.decomposition.disable !== true)
 		{
+			const decClass = this.entity.isBacklog()
+				? 'tasks-scrum__action-panel--btn-decomposition-backlog'
+				: 'tasks-scrum__action-panel--btn-decomposition-sprint'
+			;
+
 			Event.bind(
-				this.node.querySelector('.tasks-scrum__action-panel--btn-decomposition'),
+				this.node.querySelector('.' + decClass),
 				'click',
 				this.itemList.decomposition.callback
 			);

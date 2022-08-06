@@ -2911,7 +2911,7 @@ include('InAppNotifier');
 						start: taskListOffset,
 						params: {
 							...TaskList.queryParams,
-							...{COUNT_TOTAL: 'N'},
+							...{GET_PLUS_ONE: 'Y'},
 						},
 					}],
 				};
@@ -2924,7 +2924,7 @@ include('InAppNotifier');
 						order: this.order.get(),
 						params: {
 							...TaskList.queryParams,
-							...{COUNT_TOTAL: 'N'},
+							...{GET_PLUS_ONE: 'Y'},
 						},
 					}];
 				}
@@ -3674,7 +3674,24 @@ include('InAppNotifier');
 				case BX.FileUploadEvents.TASK_NOT_FOUND:
 				case BX.FileUploadEvents.FILE_READ_ERROR:
 				case TaskUploaderEvents.FILE_SUCCESS_UPLOAD:
+					this.fileStorage.removeFiles([taskId]);
+					this.updateItem(eventData.file.extra.params.taskId, {});
+					break;
+
 				case TaskUploaderEvents.FILE_FAIL_UPLOAD:
+					if (
+						eventData.errors
+						&& Array.isArray(eventData.errors)
+						&& eventData.errors.length
+					)
+					{
+						InAppNotifier.showNotification({
+							backgroundColor: '#075776',
+							time: 5,
+							blur: true,
+							message: `${eventData.errors[0].message}: ${eventData.file.name}`,
+						});
+					}
 					this.fileStorage.removeFiles([taskId]);
 					this.updateItem(eventData.file.extra.params.taskId, {});
 					break;
@@ -3944,6 +3961,10 @@ include('InAppNotifier');
 					activityDate: Date.now(),
 				});
 				task.renew();
+			}
+			else if (task.isWaitCtrlCounts)
+			{
+				this.onApproveAction(task);
 			}
 			else
 			{

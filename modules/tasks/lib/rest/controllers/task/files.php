@@ -39,6 +39,18 @@ class Files extends Base
 				'FIELD_NAME' => 'UF_TASK_WEBDAV_FILES',
 			]
 		);
+		if (!$attachmentId)
+		{
+			global $APPLICATION;
+
+			$exception = $APPLICATION->GetException();
+			foreach ($exception->GetMessages() as $message)
+			{
+				$this->errorCollection->add([new Error($message['text'])]);
+			}
+
+			return null;
+		}
 
 		return ['attachmentId' => $attachmentId];
 	}

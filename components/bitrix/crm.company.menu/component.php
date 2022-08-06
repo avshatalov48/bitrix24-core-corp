@@ -193,29 +193,28 @@ if($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
-	if($bAdd)
+	$createUrl = CComponentEngine::MakePathFromTemplate(
+		$arParams[$isSliderEnabled ? 'PATH_TO_COMPANY_DETAILS' : 'PATH_TO_COMPANY_EDIT'],
+		['company_id' => 0]
+	);
+
+	if($isMyCompanyMode)
 	{
-		$createUrl = CComponentEngine::MakePathFromTemplate(
-			$arParams[$isSliderEnabled ? 'PATH_TO_COMPANY_DETAILS' : 'PATH_TO_COMPANY_EDIT'],
-			array('company_id' => 0)
-		);
-
-		if ($isMyCompanyMode)
-		{
-			$createUrl = CHTTP::urlAddParams($createUrl, array('mycompany' => 'y'));
-		}
-		if ($arResult['CATEGORY_ID'] > 0)
-		{
-			$createUrl = CCrmUrlUtil::AddUrlParams($createUrl, ['category_id' => $arResult['CATEGORY_ID']]);
-		}
-
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-			'LINK' => $createUrl,
-			'HIGHLIGHT' => true
-		);
-		unset($link);
+		$createUrl = CHTTP::urlAddParams($createUrl, ['mycompany' => 'y']);
 	}
+
+	if($arResult['CATEGORY_ID'] > 0)
+	{
+		$createUrl = CCrmUrlUtil::AddUrlParams($createUrl, ['category_id' => $arResult['CATEGORY_ID']]);
+	}
+
+	$arResult['BUTTONS'][] = [
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'LINK' => $createUrl,
+		'HIGHLIGHT' => true,
+		'IS_DISABLED' => !$bAdd,
+		'HINT' => GetMessage('CRM_COMPANY_ADD_HINT')
+	];
 
 	if (!$isMyCompanyMode && $bImport && !$isInSlider)
 	{

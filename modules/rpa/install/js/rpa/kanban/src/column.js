@@ -463,11 +463,17 @@ export default class Column extends Kanban.Column
 
 		tasks.forEach((task) => {
 			task.users.forEach((user) => {
-				let img = user.photoSrc ? Tag.render`<img src="${user.photoSrc}" alt="">` : null;
-
+				let style = 'border-color: #' + this.getColor() + ';';
+				if (user.photoSrc)
+				{
+					style += ' background-image: url(' + Text.encode(user.photoSrc) + ');';
+				}
+				else
+				{
+					style += ' background-size: 60%;';
+				}
 				responsibleElements.push(Tag.render`<span class="rpa-kanban-column-task-responsible-item" title="${user.name}">
-					<span class="rpa-kanban-column-task-responsible-img" style="border-color: ${"#" + this.getColor()}">
-						${img}
+					<span class="rpa-kanban-column-task-responsible-img" style="${style}">
 					</span>
 				</span>`);
 			});

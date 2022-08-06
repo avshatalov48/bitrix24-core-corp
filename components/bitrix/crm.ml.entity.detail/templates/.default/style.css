@@ -57,6 +57,7 @@
 .crm-ml-entity-content {
 	background: #fff;
 	padding: 20px 20px 100px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-ml-entity-content-img-block {

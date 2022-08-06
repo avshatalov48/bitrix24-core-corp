@@ -426,7 +426,7 @@ abstract class Body
 		$modifier = preg_replace('#index=[\d]+#', '', $modifier);
 		if($innerProvider instanceof DataProvider)
 		{
-			$value = $this->printValue($innerProvider->getValue($name), $placeholder, $modifier);
+			$value = self::printValue($innerProvider->getValue($name), $placeholder, $modifier);
 		}
 		else
 		{
@@ -451,12 +451,12 @@ abstract class Body
 		/** @var DataProvider $innerProvider */
 		foreach ($arrayDataProvider as $innerProvider)
 		{
-			$value[] = $this->printValue($innerProvider->getValue($name), $placeholder, $innerModifier);
+			$value[] = self::printValue($innerProvider->getValue($name), $placeholder, $innerModifier);
 		}
 
 		$value = new Multiple($value);
 
-		return $this->printValue($value, $placeholder, $outerModifier);
+		return self::printValue($value, $placeholder, $outerModifier);
 	}
 
 	/**

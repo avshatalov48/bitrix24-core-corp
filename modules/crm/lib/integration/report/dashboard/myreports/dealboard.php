@@ -16,7 +16,7 @@ Loc::loadMessages(__FILE__);
 
 class DealBoard
 {
-	const VERSION = '2';
+	const VERSION = '3';
 	const BOARD_KEY = 'crm-vc-myreports-deal';
 	const CATEGORY_OPTION = "crm.myreports.deal.categoryId";
 
@@ -85,7 +85,9 @@ class DealBoard
 		$widget->setCategoryKey('crm');
 		$widget->setBoardId(self::BOARD_KEY);
 
-		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
+		$widgetHandler = $widget->getWidgetHandler(true);
+		$widgetHandler->getConfiguration('color')->setValue('transparent');
+		$widget->addConfigurations($widgetHandler->getConfigurations());
 
 		return $widget;
 	}

@@ -16,11 +16,7 @@ class Forms extends \IRestService
 	public static function userProfile($params, $n, \CRestServer $server)
 	{
 		global $USER_FIELD_MANAGER;
-		$region = "";
-		if (method_exists(\Bitrix\Main\Application::getInstance(), "getLicense"))
-		{
-			$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
-		}
+		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 		$result = [];
 		$result["fields"] = [
 			'PERSONAL_PHOTO' =>

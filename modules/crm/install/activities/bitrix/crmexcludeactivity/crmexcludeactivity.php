@@ -1,13 +1,18 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-class CBPCrmExcludeActivity
-	extends CBPActivity
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+class CBPCrmExcludeActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array("Title" => "");
+		$this->arProperties = [
+			"Title" => ""
+		];
 	}
 
 	public function Execute()
@@ -29,6 +34,20 @@ class CBPCrmExcludeActivity
 				false,
 				['COMMENT' => GetMessage('CRM_EXA_COMMENT')]
 			);
+
+			$map = $this->getDebugInfo(
+				[
+					'ExcludedId' => $entityId
+				],
+				[
+					'ExcludedId' => [
+						'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_EXA_DEBUG_MESSAGE'),
+						'Type' => 'text',
+						'Required' => true,
+					]
+				],
+			);
+			$this->writeDebugInfo($map);
 		}
 		catch(\Bitrix\Main\SystemException $ex)
 		{

@@ -16,8 +16,12 @@ use Bitrix\Main\Engine\UrlManager;
 \Bitrix\Main\Loader::includeModule('ui');
 
 CUtil::InitJSCore(['popup']);
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+\Bitrix\Main\UI\Extension::load([
+	"ui.buttons",
+	"ui.buttons.icons",
+	"ui.fonts.opensans",
+]);
+
 
 $toolbarId = mb_strtolower($arResult['GRID_ID']).'_toolbar';
 

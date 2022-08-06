@@ -183,7 +183,7 @@ ChatDataConverter.getElementFormat = function(element)
 
 	item.styles = {};
 	item.styles.avatar = this.getAvatarFormat(element);
-	item.styles.title = this.getTitleFormat(element.type, element[element.type]);
+	item.styles.title = this.getTitleFormat(element);
 	item.styles.subtitle = this.getTextFormat(element);
 	item.styles.date = this.getDateFormat(element);
 	item.styles.counter = this.getCounterFormat(element);
@@ -247,22 +247,7 @@ ChatDataConverter.getAvatarFormat = function(element)
 	{
 		if (element.user.network && element.user.external_auth_id === 'support24')
 		{
-			if (ChatUtils.getAvatar(element.user.avatar))
-			{
-				result = {
-					image : {
-						url: this.imagePath+'/status_24_x3.png'
-					}
-				}
-			}
-		}
-		else if (element.invited && !element.user.last_activity_date)
-		{
-			result = {
-				image : {
-					url: this.imagePath+'/status_user_wait_x3.png'
-				}
-			}
+
 		}
 		else
 		{
@@ -303,88 +288,55 @@ ChatDataConverter.getAvatarFormat = function(element)
 				result.additionalImage = {name: 'special_status_crm'};
 			}
 		}
-		else
-		{
-			if (element.chat.id == this.generalChatId)
-			{
-				if (ChatUtils.getAvatar(element.chat.avatar))
-				{
-					result = {
-						image : {
-							url: this.imagePath+'/avatar_general_x3.png'
-						}
-					}
-				}
-			}
-			else if (element.chat.type == 'support24Notifier')
-			{
-				if (ChatUtils.getAvatar(element.chat.avatar))
-				{
-					result = {
-						image : {
-							url: this.imagePath+'/status_24_x3.png'
-						}
-					}
-				}
-			}
-			else if (element.chat.type == 'chat')
-			{
-				result = {
-					image: {name: 'status_dialog_chat'}
-				};
-			}
-			else if (element.chat.type == 'open')
-			{
-				result = {
-					image: {name: 'status_dialog_open'}
-				};
-			}
-		}
 	}
 
 	return result;
 };
 
-ChatDataConverter.getTitleFormat = function(type, entity)
+ChatDataConverter.getTitleFormat = function(element)
 {
 	let result = {};
-	if (type == 'user')
+	if (element.type == 'user')
 	{
-		if (entity.id == this.userId)
+		if (element.user.id == this.userId)
 		{
 			result = {
 				image: {name: 'name_status_owner'}
 			};
 		}
-		else if (entity.network && entity.external_auth_id === 'support24')
+		else if (element.user.network && element.user.external_auth_id === 'support24')
 		{
-			result = {
-				color: '#0165af',
-				image: {name: 'name_status_support24'}
-			};
+			if (ChatUtils.getAvatar(element.user.avatar))
+			{
+				result = {
+					image : {
+						url: this.imagePath + '/status_24.png'
+					}
+				};
+			}
 		}
-		else if (entity.network)
+		else if (element.user.network)
 		{
 			result = {
 				color: '#0a962f',
 				image: {name: 'name_status_network'}
 			};
 		}
-		else if (entity.bot)
+		else if (element.user.bot)
 		{
 			result = {
 				color: '#725acc',
 				image: {name: 'name_status_bot'}
 			};
 		}
-		else if (entity.extranet)
+		else if (element.user.extranet)
 		{
 			result = {
 				color: '#ca7b00',
 				image: {name: 'name_status_extranet'}
 			};
 		}
-		else if (entity.connector)
+		else if (element.user.connector)
 		{
 			result = {
 				color: '#0a962f',
@@ -393,7 +345,7 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 		}
 		else
 		{
-			let status = ChatMessengerCommon.getUserStatus(entity);
+			let status = ChatMessengerCommon.getUserStatus(element.user);
 			if (status == 'vacation')
 			{
 				result = {
@@ -408,9 +360,9 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 			}
 		}
 	}
-	else if (type == 'chat')
+	else if (element.type == 'chat')
 	{
-		if (entity.type == 'lines')
+		if (element.chat.type == 'lines')
 		{
 			if (this.listType == 'recent')
 			{
@@ -419,13 +371,13 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 					image: {name: 'name_status_lines'},
 				};
 			}
-			else if (entity.owner == this.userId)
+			else if (element.chat.owner == this.userId)
 			{
 				result = {
 					image: {name: 'name_status_owner'},
 				};
 			}
-			else if (entity.owner == 0)
+			else if (element.chat.owner == 0)
 			{
 				result = {
 					image: {name: 'name_status_new'},
@@ -433,28 +385,45 @@ ChatDataConverter.getTitleFormat = function(type, entity)
 				};
 			}
 		}
-		else if (entity.type == 'call')
+		else if (element.chat.type == 'open' && element.chat.id !== this.generalChatId)
+		{
+			result = {
+				image: {
+					url: this.imagePath + '/status_dialog_open.png',
+				}
+			};
+		}
+		else if (element.chat.type == 'call')
 		{
 			result = {
 				image: {name: 'name_status_call'},
 			};
 		}
-		else if (entity.type == 'support24Notifier' || entity.type == 'support24Question')
+		else if (element.chat.type == 'support24Notifier' || element.chat.type == 'support24Question')
 		{
 			result = {
 				color: '#0165af',
 			};
+
+			if (ChatUtils.getAvatar(element.chat.avatar))
+			{
+				result.image = {
+					url: this.imagePath + '/status_24.png',
+				};
+			}
 		}
 		else
 		{
-			if (entity.extranet)
+			if (element.chat.extranet)
 			{
 				result = {
 					color: '#ca7b00',
 					image: {name: 'name_status_extranet'}
 				};
 			}
-			if (entity.mute_list[this.userId])
+
+			//move from the condition when the native bug with 2 icons not displayed at the same time is fixed.
+			if (element.chat.mute_list[this.userId])
 			{
 				result.additionalImage = {name: 'name_status_mute'};
 			}
@@ -491,12 +460,19 @@ ChatDataConverter.getCounterFormat = function(element)
 ChatDataConverter.getDateFormat = function(element)
 {
 	let name = '';
+	let url = '';
 	let sizeMultiplier = 0.7;
+
 	if (element.message.author_id == this.userId)
 	{
 		if (element.type == 'user' && element.user.id == this.userId)
 		{
 			name = 'message_delivered';
+		}
+		else if (element.liked)
+		{
+			url = this.imagePath + '/status_reaction.png';
+			sizeMultiplier = 1.2;
 		}
 		else if (element.message.status == 'received')
 		{
@@ -529,7 +505,19 @@ ChatDataConverter.getDateFormat = function(element)
 		}
 	}
 
-	return {image: {name: name, sizeMultiplier: sizeMultiplier}};
+	const date = {
+		image: {
+			sizeMultiplier,
+			url,
+		}
+	};
+
+	if (name !== '')
+	{
+		date.image.name = name;
+	}
+
+	return date;
 };
 
 ChatDataConverter.getTextFormat = function(element)
@@ -1134,7 +1122,7 @@ ChatDataConverter.getListElementByUser = function(element)
 	}
 
 	item.styles = {};
-	item.styles.title = this.getTitleFormat('user', item.source);
+	item.styles.title = this.getTitleFormat(element);
 
 	return item;
 };
@@ -1179,7 +1167,7 @@ ChatDataConverter.getListElementByChat = function(element)
 	}
 
 	item.styles = {};
-	item.styles.title = this.getTitleFormat('chat', item.source);
+	item.styles.title = this.getTitleFormat(element);
 
 	return item;
 };

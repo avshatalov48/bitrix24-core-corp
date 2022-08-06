@@ -52,13 +52,6 @@ export class Epic extends EventEmitter
 		;
 
 		EventEmitter.subscribe(
-			'BX.Tasks.Scrum.Epic:openEdit',
-			(baseEvent: BaseEvent) => {
-				this.openEditForm(baseEvent.getData());
-			})
-		;
-
-		EventEmitter.subscribe(
 			'BX.Tasks.Scrum.Epic:filterByTag',
 			(baseEvent: BaseEvent) => {
 				this.emit('filterByTag', baseEvent.getData())
@@ -79,41 +72,6 @@ export class Epic extends EventEmitter
 			'Epic',
 			{
 				view: 'add',
-				groupId: this.groupId
-			}
-		);
-	}
-
-	openEditForm(epicId: number): Promise
-	{
-		return this.sidePanel.showByExtension(
-			'Epic',
-			{
-				view: 'edit',
-				groupId: this.groupId,
-				epicId: epicId
-			}
-		);
-	}
-
-	openViewForm(epicId: number): Promise
-	{
-		return this.sidePanel.showByExtension(
-			'Epic',
-			{
-				view: 'view',
-				groupId: this.groupId,
-				epicId: epicId
-			}
-		);
-	}
-
-	openList(): Promise
-	{
-		return this.sidePanel.showByExtension(
-			'Epic',
-			{
-				view: 'list',
 				groupId: this.groupId
 			}
 		);

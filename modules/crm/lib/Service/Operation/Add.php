@@ -49,7 +49,7 @@ class Add extends Operation
 
 	protected function save(): Result
 	{
-		return $this->item->save($this->isCheckFieldsEnabled());
+		return $this->item->save($this->isCheckFieldsEnabled() && $this->isCheckRequiredUserFields());
 	}
 
 	protected function registerDuplicateCriteria(): void
@@ -115,11 +115,13 @@ class Add extends Operation
 			$this->fieldsCollection->toArray(),
 			[],
 			$this->item->getData(),
-			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+			$this->getContext()->getUserId(),
 		);
 
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
 
+		//todo this will be false for company, but we still have to register bindings changed. Introduce another factory flag?
 		if ($factory->isClientEnabled())
 		{
 			RelationController::getInstance()->registerEventsByBindingsChange(
@@ -127,6 +129,18 @@ class Add extends Operation
 				\CCrmOwnerType::Contact,
 				[],
 				$this->item->getContactBindings(),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext()->getUserId(),
+			);
+		}
+
+		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
+		{
+			RelationController::getInstance()->registerEventsByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Company,
+				[],
+				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
 				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
 			);
 		}
@@ -151,7 +165,8 @@ class Add extends Operation
 		{
 			MarkController::getInstance()->onItemMoveToFinalStage(
 				$this->getItemIdentifier(),
-				$newStage->getSemantics()
+				$newStage->getSemantics(),
+				$this->getContext()->getUserId(),
 			);
 		}
 	}
@@ -187,10 +202,15 @@ class Add extends Operation
 	{
 		$result = parent::checkLimits();
 
-		$restriction = RestrictionManager::getDynamicTypesLimitRestriction();
-		if ($restriction->isCreateItemRestricted($this->item->getEntityTypeId()))
+		$addOperationRestriction = RestrictionManager::getAddOperationRestriction($this->item->getEntityTypeId());
+		if (!$addOperationRestriction->hasPermission())
 		{
-			$result->addError($restriction->getCreateItemRestrictedError());
+			$result->addError(
+				new Error(
+					$addOperationRestriction->getErrorMessage(),
+					$addOperationRestriction->getErrorCode(),
+				)
+			);
 		}
 
 		return $result;

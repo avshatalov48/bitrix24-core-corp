@@ -9,7 +9,7 @@ define("NO_AGENT_CHECK", true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/component.php');
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/component.php');
 
 class CVNSetupAjax
 {

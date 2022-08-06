@@ -586,7 +586,7 @@ BX.Tasks.CheckList.DragManager = (function()
 		}
 
 		var dragObjectNode = this.getNodeByDragButton(dragButton);
-		if (dragObjectNode.getCheckList().fields.getIsSelected())
+		if (!dragObjectNode || dragObjectNode.getCheckList().fields.getIsSelected())
 		{
 			return;
 		}

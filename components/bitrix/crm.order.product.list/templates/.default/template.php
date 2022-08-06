@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Grid\Panel\Actions;
 use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load("ui.fonts.ruble");
+\Bitrix\Main\UI\Extension::load(["ui.fonts.ruble", "ui.design-tokens"]);
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_grid.js');
 
@@ -202,6 +202,7 @@ foreach($arResult['PRODUCTS'] as $product)
 		</div>';
 
 	$properties = '';
+	$propertiesNames = '';
 	if (!empty($product['PROPS']) && is_array($product['PROPS']))
 	{
 		$properties = '<div class="crm-order-product-control-additional">';
@@ -213,8 +214,10 @@ foreach($arResult['PRODUCTS'] as $product)
 			$name = htmlspecialcharsbx($property['NAME']);
 			$value = htmlspecialcharsbx($property['VALUE']);
 			$properties .= "<div>{$name}: {$value}</div>";
+			$propertiesNames .= "{$name}: {$value}, ";
 		}
 		$properties .= '</div>';
+		$propertiesNames = mb_substr($propertiesNames, 0, -2);
 	}
 
 	$name = $product['NAME'];
@@ -223,9 +226,10 @@ foreach($arResult['PRODUCTS'] as $product)
 
 	if(!empty($product['EDIT_PAGE_URL']))
 	{
+		$nameWithProperties = $propertiesNames ? "{$name} ({$propertiesNames})" : $name;
 		$productEditUrl = $product['EDIT_PAGE_URL'];
 		//$actionEditScript = "BX.SidePanel.Instance.open('".$productEditUrl."'); return;";
-		$name = '<a href="'.$productEditUrl.'" data-product-id="'.$product['PRODUCT_ID'].'" data-product-field="name" class="crm-order-product-info-name-text">'.$name.'</a>';
+		$name = '<a href="'.$productEditUrl.'" data-product-id="'.$product['PRODUCT_ID'].'" data-offer-id="'.$product['OFFER_ID'].'" data-product-field="name" data-fullname="'. htmlspecialcharsbx($nameWithProperties) .'" class="crm-order-product-info-name-text">'.$name.'</a>';
 		if ((int)$product['TYPE'] === \Bitrix\Crm\Order\BasketItem::TYPE_SET)
 		{
 			$name = '<span class="main-grid-plus-button"></span>'.$name;
@@ -317,7 +321,7 @@ foreach($arResult['PRODUCTS'] as $product)
 			</div>',
 		'VAT' => '
 			<div class="crm-order-product-info-price">
-				<div class="crm-order-product-info-price-current">'.(is_null($product['VAT_ID']) ? Loc::getMessage('CRM_ORDER_PL_NO') : Loc::getMessage('CRM_ORDER_PL_VAT').' '.(int)($product['VAT_RATE']*100).'%').'</div>
+				<div class="crm-order-product-info-price-current">'.(is_null($product['VAT_RATE']) ? Loc::getMessage('CRM_ORDER_PL_NO_2') : Loc::getMessage('CRM_ORDER_PL_VAT_2', ['#VAT_RATE#' => (int)($product['VAT_RATE']*100)])).'</div>
 				<div class="crm-order-product-info-price-desc"></div>
 			</div>',
 		'VAT_INCLUDED' => $vatIncludedColumn,
@@ -627,7 +631,7 @@ if(is_array($arResult['COUPONS_LIST']))
 					code2Id: <?=CUtil::PhpToJSObject($code2Id)?>,
 					messages:<?=CUtil::PhpToJSObject([
 						'CRM_ORDER_PL_PROD_EXIST_DLG_TITLE' => Loc::getMessage('CRM_ORDER_PL_PROD_EXIST_DLG_TITLE'),
-						'CRM_ORDER_PL_PROD_EXIST_DLG_TEXT' => Loc::getMessage('CRM_ORDER_PL_PROD_EXIST_DLG_TEXT'),
+						'CRM_ORDER_PL_PROD_EXIST_DLG_TEXT_FOR_DOUBLE' => Loc::getMessage('CRM_ORDER_PL_PROD_EXIST_DLG_TEXT_FOR_DOUBLE'),
 						'CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_ADD' => Loc::getMessage('CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_ADD'),
 						'CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_CANCEL' => Loc::getMessage('CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_CANCEL')
 					])?>,

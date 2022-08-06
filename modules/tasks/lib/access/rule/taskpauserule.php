@@ -24,11 +24,13 @@ class TaskPauseRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if ($task->getStatus() !== \CTasks::STATE_IN_PROGRESS)
 		{
+			$this->controller->addError(static::class, 'Incorrect status');
 			return false;
 		}
 
@@ -49,7 +51,12 @@ class TaskPauseRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "edit_tasks")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;
@@ -60,6 +67,7 @@ class TaskPauseRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$this->controller->addError(static::class, 'Access to pause task denied');
 		return false;
 	}
 }

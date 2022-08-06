@@ -327,40 +327,115 @@
 			this.ui = ui
 			this.onsuccess = onsuccess;
 			this.url = url
-			this.setState({external}, ()=>{
-				if (url) {
-					this.onResult({value: url})
-				}
-			})
+			this.state = {external};
 		}
 
-		render() {
-			let {external = false} = this.state;
-			if(external)
-			{
-				return View({
+		renderAcceptDialog(resolve) {
+			let { styles } = jn.require("qrauth/styles")
+			let action = new PrimaryButton({});
+			action.props = {
+				text: BX.message('ACCEPT_QR_AUTH'),
+				style: { button: styles.button, text: styles.buttonText},
+				onClick: () => {
+					if (resolve) {
+						resolve(true)
+					}
+				}
+			}
+
+			let cancel = new CancelButton({});
+			cancel.props = {
+				text: BX.message('DECLINE_QR_AUTH'),
+				style: { button: styles.button, text: styles.buttonText},
+				onClick: () => {
+					if (resolve) {
+						resolve(false)
+					}
+				}
+			}
+
+			return View({
+					style: {
+						justifyContent: 'flex-start',
+						alignItems: 'center'
+					}
+				},
+				View({style: {flex: 1, alignItems: 'center'}},
+					View({style:{marginTop:28}}, Image({
 						style: {
-							justifyContent: 'top',
-							alignItems: 'center'
-						}
-					}, View({style:{flex:1, justifyContent:"center"}}, Image({
-						style: {
-							opacity: 0.8,
-							width: 200,
-							selfAlign:"center",
-							height: 200
+							opacity: 0.5,
+							width: 140,
+							height: 140
 						},
 						svg: {uri: `${currentDomain}${pathToExtension}images/qr.svg`}
 					})),
-					this.successView()
-				)
+					View(
+						{
+							style:{
+								margin: 20,
+								padding: 20
+							}
+						},
+						BBCodeText({
+							style: {
+								fontSize: 19,
+								fontWeight:'bold',
+								color: '#333333'
+							},
+							value: BX.message('QR_WARNING').replace("#DOMAIN#", currentDomain)
+						})
+					),
 
+					action,
+					cancel
+				),
+			)
+		}
+
+		render() {
+			let {external = false, accepted = false} = this.state;
+			if(external)
+			{
+				if (accepted === true) {
+					return View({
+							style: {
+								justifyContent: 'flex-start',
+								alignItems: 'center'
+							}
+						}, View({style:{flex:1, justifyContent:"center"}}, Image({
+							style: {
+								opacity: 0.8,
+								width: 200,
+								selfAlign:"center",
+								height: 200
+							},
+							svg: {uri: `${currentDomain}${pathToExtension}images/qr.svg`}
+						})),
+						this.successView()
+					)
+				}
+				else {
+					return this.renderAcceptDialog( accepted => {
+						if (accepted) {
+							this.setState({accepted}, ()=>{
+								if (this.url) {
+									this.onResult({value: this.url})
+								}
+							})
+						}
+						else
+						{
+							this.ui.close();
+						}
+					})
+				}
 			}
 			else
 			{
 				return View({}, this.cameraView())
 			}
 		}
+
 
 		cameraView()
 		{

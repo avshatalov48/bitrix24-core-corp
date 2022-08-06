@@ -6,19 +6,22 @@ use Bitrix\Crm\Service\Container;
 class QuoteSettings
 {
 	use Traits\EnableFactory;
+	use Traits\UseNumberInTitlePlaceholder;
 
-	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
-	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
+	const VIEW_LIST = EntityViewSettings::LIST_VIEW_NAME;
+	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW_NAME;
 
 	private static $current;
 	private $enableViewEvent;
 	private $isOpened;
+	private $isUseNumberInTitlePlaceholder;
 
 	public function __construct()
 	{
 		$this->isOpened = new BooleanSetting('quote_opened_flag', true);
 		$this->enableViewEvent = new BooleanSetting('quote_enable_view_event', true);
 		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Quote);
+		$this->initIsUseNumberInTitlePlaceholderSettings(\CCrmOwnerType::Quote);
 	}
 	/**
 	 * Get current instance
@@ -30,6 +33,7 @@ class QuoteSettings
 		{
 			self::$current = new QuoteSettings();
 		}
+
 		return self::$current;
 	}
 	/**
@@ -58,6 +62,7 @@ class QuoteSettings
 	public function getCurrentListViewID()
 	{
 		$view = Container::getInstance()->getRouter()->getCurrentListView(\CCrmOwnerType::Quote);
+
 		return EntityViewSettings::resolveID($view);
 	}
 	/**

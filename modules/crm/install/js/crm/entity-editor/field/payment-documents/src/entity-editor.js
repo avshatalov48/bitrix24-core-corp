@@ -870,13 +870,7 @@ export class EntityEditorPaymentDocuments
 			this.reloadModel();
 		};
 
-		let actionName = 'sale.payment.setpaid';
-		if (this._isUsedInventoryManagement)
-		{
-			actionName = 'crm.order.payment.setPaid';
-		}
-
-		ajax.runAction(actionName, {
+		ajax.runAction('crm.order.payment.setPaid', {
 			data: {
 				id: payment.ID,
 				value: strPaid,
@@ -892,7 +886,6 @@ export class EntityEditorPaymentDocuments
 			return;
 		}
 
-		// positive approach - render success first, then do actual query
 		this._docs().forEach(doc => {
 			if (doc.TYPE === 'SHIPMENT' && doc.ID === shipment.ID) {
 				doc.DEDUCTED = strShipped;
@@ -911,7 +904,7 @@ export class EntityEditorPaymentDocuments
 			this.reloadModel();
 		};
 
-		let actionName = 'sale.shipment.setshipped';
+		let actionName = 'crm.order.shipment.setShipped';
 		if (this._isUsedInventoryManagement)
 		{
 			actionName = 'crm.api.realizationdocument.setShipped';
@@ -933,7 +926,6 @@ export class EntityEditorPaymentDocuments
 			return;
 		}
 
-		// positive approach - render success first, then do actual query
 		this._docs().forEach(doc => {
 			if (doc.TYPE === 'SHIPMENT_DOCUMENT' && doc.ID === shipment.ID) {
 				doc.DEDUCTED = strShipped;
@@ -998,18 +990,12 @@ export class EntityEditorPaymentDocuments
 
 	_resolveRemoveDocumentActionName(type: string)
 	{
-		let actionBaseName = 'sale';
-		if (this._isUsedInventoryManagement)
-		{
-			actionBaseName = 'crm.order';
-		}
-
 		let action = '';
 
 		if (type === 'PAYMENT') {
-			action = actionBaseName + '.payment.delete';
+			action = 'crm.order.payment.delete';
 		} else if (type === 'SHIPMENT') {
-			action = actionBaseName + '.shipment.delete';
+			action = 'crm.order.shipment.delete';
 		} else if (type === 'SHIPMENT_DOCUMENT') {
 			action = 'crm.api.realizationdocument.setRealization';
 		}

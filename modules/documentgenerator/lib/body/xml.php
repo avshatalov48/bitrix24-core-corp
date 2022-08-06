@@ -254,9 +254,9 @@ abstract class Xml extends Body
 	 * @param \DOMDocument $document
 	 * @return \DOMNodeList
 	 */
-	public static function getDocumentContentNodes(\DOMDocument $document)
+	public static function getDocumentContentNodes(\DOMDocument $document, string $prefix = '')
 	{
-		$bodyNodeName = static::getBodyNodeName();
+		$bodyNodeName = static::getBodyNodeName($prefix);
 		$node = $document;
 		do
 		{
@@ -293,7 +293,7 @@ abstract class Xml extends Body
 			return $content;
 		}
 
-		$result = '<?xml version="1.0"?><'.$documentNodeName;
+		$result = '<?xml version="1.0"?>' . PHP_EOL . '<'.$documentNodeName;
 
 		foreach($namespaces as $prefix => $uri)
 		{

@@ -44,7 +44,7 @@ abstract class ContactCompanyToOrder extends StorageStrategy
 		{
 			if ($client::getEntityType() === $parentEntityTypeId)
 			{
-				$parents[] = new ItemIdentifier($client::getEntityType(), $client->getId());
+				$parents[] = new ItemIdentifier($client::getEntityType(), $client->getField('ENTITY_ID'));
 			}
 		}
 

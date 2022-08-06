@@ -634,10 +634,7 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 			return $result;
 		}
 
-		if (
-			ResultManager::requireResult($id)
-			&& !ResultManager::hasResult($id)
-		)
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE_RESULT, $id))
 		{
 			$this->errors->add('RESULT_REQUIRED', Loc::getMessage('TASKS_ACTION_RESULT_REQUIRED'), false, ['ui' => 'notification']);
 			return $result;

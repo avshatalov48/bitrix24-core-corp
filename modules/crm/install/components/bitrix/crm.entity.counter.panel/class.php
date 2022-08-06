@@ -45,12 +45,6 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 	}
 	protected function initialize()
 	{
-		if(isset($this->arParams['SHOW_STUB']) && $this->arParams['SHOW_STUB'] === 'Y')
-		{
-			$this->arResult['SHOW_STUB'] = true;
-			return;
-		}
-
 		if (!Bitrix\Main\Loader::includeModule('crm'))
 		{
 			$this->errors[] = GetMessage('CRM_MODULE_NOT_INSTALLED');
@@ -91,12 +85,6 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 			$this->isVisible = false;
 		}
 
-		if(!EntityCounterFactory::isEntityTypeSupported($this->entityTypeID))
-		{
-			$this->arResult['SHOW_STUB'] = true;
-			return;
-		}
-
 		if(isset($this->arParams['PATH_TO_ENTITY_LIST']))
 		{
 			$this->entityListUrl = $this->arParams['PATH_TO_ENTITY_LIST'];
@@ -134,26 +122,7 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$this->arResult['TOTAL'] = $total;
 		$this->arResult['CODES'] = $codes;
 		$this->arResult['DATA'] = $data;
-
-		/*
-		 * Messages are used:
-		 * CRM_COUNTER_DEAL_CAPTION
-		 * CRM_COUNTER_LEAD_CAPTION
-		 * CRM_COUNTER_CONTACT_CAPTION
-		 * CRM_COUNTER_COMPANY_CAPTION
-		 */
-		$this->arResult['ENTITY_CAPTION'] = GetMessage("CRM_COUNTER_{$this->entityTypeName}_CAPTION");
-
 		$this->arResult['ENTITY_NUMBER_DECLENSIONS'] = \Bitrix\Crm\MessageHelper::getEntityNumberDeclensionMessages($this->entityTypeID);
 		$this->arResult['ENTITY_PLURALS'] = \Bitrix\Crm\MessageHelper::getEntityPluralMessages($this->entityTypeID);
-
-		/*
-		 * Messages are used:
-		 * CRM_COUNTER_DEAL_STUB
-		 * CRM_COUNTER_LEAD_STUB
-		 * CRM_COUNTER_CONTACT_STUB
-		 * CRM_COUNTER_COMPANY_STUB
-		 */
-		$this->arResult['STUB_MESSAGE'] = GetMessage("CRM_COUNTER_{$this->entityTypeName}_STUB");
 	}
 }

@@ -32,6 +32,7 @@ if(typeof BX.Crm.EntityEditorDupManager === "undefined")
 				this._serviceUrl = BX.prop.getString(this._settings, "serviceUrl", "");
 				this._entityTypeName = BX.prop.getString(this._settings, "entityTypeName", "");
 				this._form = BX.prop.get(this._settings, "form", null);
+				this._ignoredItems = BX.prop.getArray(this._settings, 'ignoredItems', []);
 
 				this._controller = BX.CrmDupController.create(
 					this._id,
@@ -39,7 +40,8 @@ if(typeof BX.Crm.EntityEditorDupManager === "undefined")
 						serviceUrl: this._serviceUrl,
 						entityTypeName: this._entityTypeName,
 						form: this._form,
-						searcSummaryPosition: "right"
+						searcSummaryPosition: "right",
+						ignoredItems: this._ignoredItems
 					}
 				);
 			},

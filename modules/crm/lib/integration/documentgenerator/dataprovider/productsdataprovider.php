@@ -214,7 +214,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			$this->data['TOTAL_DISCOUNT'] += $product->getRawValue('QUANTITY') * $product->getRawValue('DISCOUNT_SUM');
 			$this->data['TOTAL_QUANTITY'] += $product->getRawValue('QUANTITY');
 			$this->data['TOTAL_RAW'] += $product->getRawValue('PRICE_RAW_SUM');
-			$this->data['TOTAL_RAW_BEFORE_DISCOUNT'] += $product->getRawValue('PRICE_RAW_NETTO');
+			$this->data['TOTAL_RAW_BEFORE_DISCOUNT'] += $product->getRawValue('QUANTITY') * $product->getRawValue('PRICE_RAW_NETTO');
 			$crmProducts[] = DataProviderManager::getInstance()->getArray($product, ['rawValue' => true]);
 		}
 		$calcOptions = [];

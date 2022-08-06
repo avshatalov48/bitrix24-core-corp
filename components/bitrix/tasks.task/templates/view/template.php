@@ -197,13 +197,10 @@ if (
 			</div>
 		<? endif ?>
 
-		<? if (!$arParams["PUBLIC_MODE"]):
-
-			?><div class="task-detail-extra"><?
-
-				?>
-			<?
+		<?php if (!$arParams["PUBLIC_MODE"]): ?>
+			<div class="task-detail-extra<?= (!empty($templateData["RELATED_TASK"]) ? ' --flex-wrap' : '') ?>"><?
 				if($can["EDIT"] || !empty($templateData["GROUP"])):?>
+				<div class="task-detail-group-wrap">
 					<div class="task-detail-group --flex-center">
 						<span class="task-detail-group-label"><?=Loc::getMessage("TASKS_TTDP_PROJECT_TASK_IN")?>:</span>
 						<?$APPLICATION->IncludeComponent(
@@ -224,8 +221,8 @@ if (
 							null,
 							array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
 						);?>
-
 					</div>
+				</div>
 				<?endif?>
 				<div class="task-detail-extra-right"><?php
 
@@ -321,11 +318,11 @@ if (
 				?></div>
 
 				<? if (!empty($templateData["RELATED_TASK"])):?>
-				<div class="task-detail-supertask"><?
-					?><span class="task-detail-supertask-label"><?=Loc::getMessage("TASKS_PARENT_TASK")?>:</span><?
-					?><span class="task-detail-supertask-name"><a href="<?=$templateData["RELATED_TASK"]["URL"]?>"
-						class="task-detail-group-link"><?=htmlspecialcharsbx($templateData["RELATED_TASK"]["TITLE"])?></a></span>
-				</div>
+					<div class="task-detail-supertask"><?
+						?><span class="task-detail-supertask-label"><?=Loc::getMessage("TASKS_PARENT_TASK")?>:</span><?
+						?><span class="task-detail-supertask-name"><a href="<?=$templateData["RELATED_TASK"]["URL"]?>"
+																	  class="task-detail-group-link"><?=htmlspecialcharsbx($templateData["RELATED_TASK"]["TITLE"])?></a></span>
+					</div>
 				<? endif ?>
 
 				<?if($arResult["AUX_DATA"]['MAIL']['FORWARD']):?>
@@ -336,7 +333,6 @@ if (
 						</span>
 					</div>
 				<?endif?>
-
 			</div>
 		<? endif ?>
 
@@ -388,6 +384,7 @@ if (
 				"NAME_TEMPLATE" => $templateData["NAME_TEMPLATE"],
 				"CAN" => $can,
 				"TASK_ID" => $taskData["ID"],
+
 				"IS_SCRUM_TASK" => $arParams['IS_SCRUM_TASK'],
 				"TASK" => $taskData,
 				"TIMER_IS_RUNNING_FOR_CURRENT_USER" => !!$templateData["TIMER_IS_RUNNING_FOR_CURRENT_USER"],
@@ -491,7 +488,7 @@ if (
 
 	<?php
 		$hasRestPlacement = false;
-		// получить список встроенных приложений
+		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 		if(\Bitrix\Main\Loader::includeModule('rest'))
 		{
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
@@ -772,6 +769,7 @@ $APPLICATION->IncludeComponent(
 		"SHOW_COPY_URL_LINK" => $arParams['SHOW_COPY_URL_LINK'],
 		"TASK_LIMIT_EXCEEDED" => $taskLimitExceeded,
 		'CALENDAR_SETTINGS' => $arResult['CALENDAR_SETTINGS'],
+		'IS_SCRUM_TASK' => $arParams['IS_SCRUM_TASK'],
 	),
 	null,
 	array("HIDE_ICONS" => "Y")

@@ -22,7 +22,7 @@
 	position: relative;
 	padding: 15px 19px 15px 13px;
 	border: 1px solid #e1e2e3;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-md, 3px);
 	margin: 10px auto;
 	background: #fff;
 }
@@ -46,6 +46,7 @@
 	-moz-user-select: none;
 	-webkit-user-select: none;
 	-ms-user-select: none;
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .rpa-stage-phase-panel {
@@ -279,6 +280,7 @@
 
 .rpa-stage-success .rpa-stage-phase {
 	background: #dbf199;
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .light-icon .rpa-stage-phase-icon-arrow {
@@ -427,6 +429,7 @@
 	padding: 0 6px;
 	box-sizing: border-box;
 	width: 100%;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .rpa-stage-edit-mode .rpa-stage-phase-title-form {

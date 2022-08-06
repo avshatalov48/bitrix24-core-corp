@@ -204,6 +204,7 @@ class QuoteTable extends DataManager
 
 			(new TextField('CONTENT'))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_CONTENT'))
+				->addSaveDataModifier($fieldRepository->getHtmlNormalizer())
 			,
 
 			(new IntegerField('CONTENT_TYPE'))
@@ -212,6 +213,7 @@ class QuoteTable extends DataManager
 
 			(new TextField('TERMS'))
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_TERMS'))
+				->addSaveDataModifier($fieldRepository->getHtmlNormalizer())
 			,
 
 			(new IntegerField('TERMS_TYPE'))

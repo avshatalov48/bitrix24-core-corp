@@ -12,8 +12,17 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
-Extension::load(['ui.icons', 'ui.alerts', 'ui.forms', 'sidepanel', 'ui.sidepanel-content']);
+
+Extension::load([
+	'ui.icons',
+	'ui.alerts',
+	'ui.forms',
+	'sidepanel',
+	'ui.sidepanel-content',
+	'ui.design-tokens',
+]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $iconClass = htmlspecialcharsbx($arResult['ROW']['ICON_CLASS']);

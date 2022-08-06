@@ -21,7 +21,8 @@ $userUrl = CComponentEngine::MakePathFromTemplate($arParams['~PATH_TO_USER_PROFI
 Main\UI\Extension::load([
 	'ui.hint',
 	'qrcode',
-	'ui.qrauthorization'
+	'ui.qrauthorization',
+	'ui.fonts.opensans',
 ]);
 $themePicker = new ThemePicker($arParams['SITE_TEMPLATE_ID'] ?: (defined('SITE_TEMPLATE_ID') ? SITE_TEMPLATE_ID : 'bitrix24'));
 

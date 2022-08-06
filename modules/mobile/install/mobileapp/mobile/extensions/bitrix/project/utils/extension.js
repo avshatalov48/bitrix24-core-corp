@@ -282,14 +282,11 @@
 
 		static updateTasksCounter(value)
 		{
-			BX.postComponentEvent('background:updateTasksCounter', [
-				WorkgroupUtil.tabNames.tasks,
-				{
-					title: BX.message('MOBILE_PROJECT_TAB_TASKS'),
-					counter: Number(value),
-					label: (value > 0 ? String(value) : ''),
-				}
-			]);
+			BX.postComponentEvent('background:updateTasksCounter', [{
+				title: BX.message('MOBILE_PROJECT_TAB_TASKS'),
+				counter: Number(value),
+				label: (value > 0 ? String(value) : ''),
+			}]);
 		}
 
 		static onTabSelectedCalendar(url)

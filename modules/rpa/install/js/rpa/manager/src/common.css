@@ -5,6 +5,7 @@
 .rpa-automation-block {
 	background: #fff;
 	padding: 13px 0 29px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .rpa-edit-robot .rpa-automation-block-hidden {
@@ -71,7 +72,7 @@
 }
 
 .rpa-automation-options-item {
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-sm, 3px);
 	box-shadow: 0 0 0 1px rgba(181, 185, 191, .5);
 	width: 100%;
 	height: 97px;
@@ -347,7 +348,7 @@
 
 .rpa-edit-robot-btn-block {
 	height: 39px;
-	border-radius: 2px;
+	border-radius: var(--ui-btn-radius, 2px);
 	position: relative;
 	text-transform: uppercase;
 	padding: 0 20px;
@@ -521,6 +522,7 @@
 	vertical-align: middle;
 	background: #fff;
 	border: 1px solid #eaecef;
+	border-radius: var(--ui-field-border-radius);
 	height: 23px;
 	padding: 0 6px;
 	font-family: "OpenSans-Bold", 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -655,17 +657,21 @@
 	margin-bottom: 9px;
 }
 
-.rpa-item-detail .employee.field-item .uf-employee-image,
+.rpa-item-detail .employee.field-item .uf-employee-image {
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2218%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%229%22%20r%3D%229%22%20fill%3D%22%23525C68%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M13.32%2011.281c0-.42-.56-.9-1.662-1.18a3.778%203.778%200%2001-1.052-.47c-.07-.04-.06-.406-.06-.406l-.355-.053c0-.03-.03-.47-.03-.47.425-.14.38-.967.38-.967.27.147.446-.507.446-.507.32-.909-.159-.854-.159-.854a5.612%205.612%200%20000-1.673c-.212-1.84-3.411-1.34-3.032-.74-.935-.168-.721%201.92-.721%201.92l.202.54c-.398.254-.121.56-.107.913.02.522.344.414.344.414.02.86.452.972.452.972.081.54.03.448.03.448l-.384.045c.006.123-.005.246-.03.367-.452.197-.55.313-.999.507-.868.373-1.81.859-1.979%201.512-.167.654-.323%202.078-.323%202.078h9.51l-.47-2.396z%22/%3E%3C/g%3E%3C/svg%3E);
+}
 .rpa-kanban-item .employee.field-item .uf-employee-image {
 	width: 18px;
 	height: 18px;
-	background-size: unset;
+	background-size: cover !important;
 	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2218%22%20height%3D%2218%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Ccircle%20cx%3D%229%22%20cy%3D%229%22%20r%3D%229%22%20fill%3D%22%23525C68%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M13.32%2011.281c0-.42-.56-.9-1.662-1.18a3.778%203.778%200%2001-1.052-.47c-.07-.04-.06-.406-.06-.406l-.355-.053c0-.03-.03-.47-.03-.47.425-.14.38-.967.38-.967.27.147.446-.507.446-.507.32-.909-.159-.854-.159-.854a5.612%205.612%200%20000-1.673c-.212-1.84-3.411-1.34-3.032-.74-.935-.168-.721%201.92-.721%201.92l.202.54c-.398.254-.121.56-.107.913.02.522.344.414.344.414.02.86.452.972.452.972.081.54.03.448.03.448l-.384.045c.006.123-.005.246-.03.367-.452.197-.55.313-.999.507-.868.373-1.81.859-1.979%201.512-.167.654-.323%202.078-.323%202.078h9.51l-.47-2.396z%22/%3E%3C/g%3E%3C/svg%3E);
 }
 
-.rpa-item-detail .employee.field-item .uf-employee-data,
+.rpa-item-detail .employee.field-item .uf-employee-data{
+	left: 32px;
+}
 .rpa-kanban-item .employee.field-item .uf-employee-data {
-	left: 27px;
+	left: 23px;
 }
 
 .rpa-item-detail .fields.employee .crm-widget-employee-change {

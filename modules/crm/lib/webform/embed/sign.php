@@ -199,6 +199,16 @@ class Sign
 			array_map(
 				function ($key, $value)
 				{
+					$value = str_replace(
+						[
+							self::delimiterData,
+							self::delimiterSign,
+							self::delimiterDataItem,
+							self::delimiterDataList,
+						],
+						'',
+						$value
+					);
 					return urlencode($key . self::delimiterDataItem . $value);
 				},
 				array_keys($this->properties),

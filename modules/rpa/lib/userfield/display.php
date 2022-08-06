@@ -54,6 +54,8 @@ class Display
 							'URL_TEMPLATE',
 							Driver::getInstance()->getUrlManager()->getFileUrlTemplate($this->type->getId(), $id, $userField->getName())
 						);
+						$view->setAdditionalParameter('printable', true);
+
 						$field = $userField->toArray();
 						$field['VALUE'] = $value;
 

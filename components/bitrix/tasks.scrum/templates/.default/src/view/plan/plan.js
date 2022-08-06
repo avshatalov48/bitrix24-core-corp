@@ -42,6 +42,7 @@ import {FilterHandler} from '../../utility/filter.handler';
 import {Input} from '../../utility/input';
 import {TagSearcher} from '../../utility/tag.searcher';
 import {Decomposition} from '../../utility/decomposition';
+import {Tool} from '../../utility/tool';
 
 import type {EpicType} from '../../item/task/epic';
 import type {ResponsibleType} from '../../item/task/responsible';
@@ -58,14 +59,15 @@ type Params = {
 	sprints: Array<SprintParams>,
 	views: Views,
 	tags: {
-		epic: EpicType,
+		epic: Array<EpicType>,
 		task: Array
 	},
 	defaultResponsible: ResponsibleType,
 	pageSize: number,
 	isShortView: 'Y' | 'N',
 	displayPriority: string,
-	mandatoryExists: 'Y' | 'N'
+	mandatoryExists: 'Y' | 'N',
+	isExactSearchApplied: 'Y' | 'N'
 }
 
 export class Plan extends View
@@ -86,6 +88,7 @@ export class Plan extends View
 		this.views = params.views;
 		this.isShortView = params.isShortView;
 		this.displayPriority = params.displayPriority;
+		this.isExactSearchApplied = params.isExactSearchApplied;
 
 		this.entityStorage = new EntityStorage();
 		this.entityStorage.addBacklog(Backlog.buildBacklog(params.backlog));
@@ -110,12 +113,13 @@ export class Plan extends View
 			isOwnerCurrentUser: params.isOwnerCurrentUser
 		});
 
-		this.tagSearcher = new TagSearcher();
+		this.tagSearcher = new TagSearcher({
+			requestSender: this.requestSender,
+			filter: this.filter,
+			groupId: params.groupId
+		});
 		Object.values(params.tags.epic).forEach((epic) => {
 			this.tagSearcher.addEpicToSearcher(epic);
-		});
-		Object.values(params.tags.task).forEach((tagName) => {
-			this.tagSearcher.addTagToSearcher(tagName);
 		});
 
 		this.planBuilder = new PlanBuilder({
@@ -125,7 +129,8 @@ export class Plan extends View
 			pageNumberToCompletedSprints: params.pageNumberToCompletedSprints,
 			displayPriority: params.displayPriority,
 			isShortView: params.isShortView,
-			mandatoryExists: params.mandatoryExists
+			mandatoryExists: params.mandatoryExists,
+			isExactSearchApplied: params.isExactSearchApplied
 		});
 		this.planBuilder.subscribe('beforeCreateSprint', (baseEvent: BaseEvent) => {
 			const requestData = baseEvent.getData();
@@ -176,7 +181,8 @@ export class Plan extends View
 			filter: this.filter,
 			requestSender: this.requestSender,
 			entityStorage: this.entityStorage,
-			planBuilder: this.planBuilder
+			planBuilder: this.planBuilder,
+			pageSize: this.pageSize
 		});
 
 		this.epic = new Epic({
@@ -218,6 +224,7 @@ export class Plan extends View
 		this.input.subscribe('remove', this.onRemoveInput.bind(this));
 
 		this.actionPanel = null;
+		this.responsibleDialog = null;
 
 		this.bindHandlers();
 
@@ -273,6 +280,7 @@ export class Plan extends View
 		this.entityStorage.getBacklog().subscribe('updateItem', this.onUpdateItem.bind(this));
 		this.entityStorage.getBacklog().subscribe('showTask', this.onShowTask.bind(this));
 		this.entityStorage.getBacklog().subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
+		this.entityStorage.getBacklog().subscribe('onShowResponsibleDialog', this.onShowResponsibleDialog.bind(this));
 		this.entityStorage.getBacklog().subscribe('openAddEpicForm', this.onOpenEpicForm.bind(this));
 		this.entityStorage.getBacklog().subscribe('tagsSearchOpen', this.onTagsSearchOpen.bind(this));
 		this.entityStorage.getBacklog().subscribe('tagsSearchClose', this.onTagsSearchClose.bind(this));
@@ -312,6 +320,7 @@ export class Plan extends View
 		sprint.subscribe('startSprint', this.onStartSprint.bind(this));
 		sprint.subscribe('completeSprint', this.onCompleteSprint.bind(this));
 		sprint.subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
+		sprint.subscribe('onShowResponsibleDialog', this.onShowResponsibleDialog.bind(this));
 		sprint.subscribe('removeSprint', this.onRemoveSprint.bind(this));
 		sprint.subscribe('changeSprintName', this.onChangeSprintName.bind(this));
 		sprint.subscribe('changeSprintDeadline', this.onChangeSprintDeadline.bind(this));
@@ -327,6 +336,7 @@ export class Plan extends View
 		sprint.subscribe('loadItems', this.onLoadItems.bind(this));
 		sprint.subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 		sprint.subscribe('showLinked', this.onShowLinked.bind(this));
+		sprint.subscribe('showDropzone', this.onShowDropZone.bind(this));
 		sprint.subscribe('toggleVisibilityContent', () => {
 			this.planBuilder.adjustSprintListWidth();
 		});
@@ -397,6 +407,12 @@ export class Plan extends View
 		{
 			this.searchItems.stop();
 		}
+
+		if (this.diskManager && !this.diskManager.isClickInside(event.target))
+		{
+			this.diskManager.closeAttachmentMenu();
+			this.diskManager = null;
+		}
 	}
 
 	onShowBacklogInput(baseEvent: BaseEvent)
@@ -449,6 +465,7 @@ export class Plan extends View
 
 		entity.hideBlank();
 		entity.hideDropzone();
+		entity.hideEmptySearchStub();
 	}
 
 	onRemoveInput(baseEvent: BaseEvent)
@@ -463,22 +480,36 @@ export class Plan extends View
 			{
 				if (this.entityStorage.existsAtLeastOneItem())
 				{
-					entity.showDropzone();
+					if (entity.isExactSearchApplied())
+					{
+						entity.showEmptySearchStub();
+					}
+					else
+					{
+						entity.showDropzone();
+					}
 				}
 				else
 				{
 					entity.showBlank();
 				}
-
 			}
 			else
 			{
-				entity.showDropzone();
+				if (entity.getNumberTasks() > 0 && entity.isExactSearchApplied())
+				{
+					entity.showEmptySearchStub();
+				}
+				else
+				{
+					entity.showDropzone();
+				}
 			}
 		}
 
 		if (this.decomposition)
 		{
+			this.decomposition.getParentItem().deactivateDecompositionMode();
 			this.decomposition = null;
 		}
 
@@ -569,9 +600,6 @@ export class Plan extends View
 
 			this.fillItemAfterCreation(newItem, response.data);
 
-			response.data.tags.forEach((tag) => {
-				this.tagSearcher.addTagToSearcher(tag);
-			});
 			entity.setItem(newItem);
 
 			this.updateEntityCounters(entity);
@@ -637,6 +665,8 @@ export class Plan extends View
 		const sprint: Sprint = baseEvent.getTarget();
 		const subTasks: SubTasks = baseEvent.getData();
 
+		sprint.appendNodeAfterItem(subTasks.render(), subTasks.getParentItem().getNode());
+
 		this.requestSender.getSubTaskItems({
 			entityId: sprint.getId(),
 			taskId: subTasks.getParentItem().getSourceId()
@@ -647,7 +677,7 @@ export class Plan extends View
 					sprint.setItem(subTaskItem);
 					subTasks.addTask(subTaskItem);
 				});
-				subTasks.show();
+				subTasks.getParentItem().showSubTasks();
 				sprint.deactivateSubTaskLoading(subTasks.getParentItem());
 				this.planBuilder.adjustSprintListWidth();
 			})
@@ -659,15 +689,22 @@ export class Plan extends View
 
 	onChangeTaskResponsible(baseEvent: BaseEvent)
 	{
-		this.pullItem.addIdToSkipUpdating(baseEvent.getData().getId());
+		const item: Item = baseEvent.getData();
+
+		this.pullItem.addIdToSkipUpdating(item.getId());
 
 		this.requestSender.changeTaskResponsible({
-			itemId: baseEvent.getData().getId(),
-			sourceId: baseEvent.getData().getSourceId(),
-			responsible: baseEvent.getData().getResponsible().getValue(),
+			itemId: item.getId(),
+			sourceId: item.getSourceId(),
+			responsible: item.getResponsible().getValue(),
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});
+	}
+
+	onShowResponsibleDialog(baseEvent: BaseEvent)
+	{
+		this.responsibleDialog = baseEvent.getData();
 	}
 
 	onOpenEpicForm(baseEvent: BaseEvent)
@@ -719,13 +756,18 @@ export class Plan extends View
 			sprintId: sprint.getId(),
 			sortInfo: this.sprintMover.calculateSprintSort()
 		})
-		.then((response) => {
+		.then(() => {
 
-			[...sprint.getItems().values()]
-				.map((item: Item) => {
-					this.moveToBacklog(sprint, item);
-				})
-			;
+			if (!sprint.isEmpty())
+			{
+				[...sprint.getItems().values()]
+					.map((item: Item) => {
+						sprint.addItemToGroupMode(item);
+					})
+				;
+
+				this.itemMover.moveToWithGroupMode(sprint, this.entityStorage.getBacklog(), null, false, false);
+			}
 
 			this.destroyActionPanel();
 
@@ -901,47 +943,24 @@ export class Plan extends View
 	{
 		const tag = baseEvent.getData();
 		const currentValue = this.filter.getValueFromField({name: 'TAG', value: ''});
+		const newValue = (String(tag) === String(currentValue) ? [] : [String(tag)]);
 
-		if (String(tag) === String(currentValue))
-		{
-			this.filter.setValueToField({name: 'TAG', value: ''});
-		}
-		else
-		{
-			this.filter.setValueToField({name: 'TAG', value: String(tag)});
-		}
-
+		this.filter.setValuesToField([
+			{
+				name: 'TAG',
+				value: newValue,
+			},
+			{
+				name: 'TAG_label',
+				value: newValue,
+			},
+		]);
 		this.filter.scrollToSearchContainer();
 	}
 
 	onEpicSearchOpen(baseEvent: BaseEvent)
 	{
 		this.tagSearcher.showEpicSearchDialog(this.input, baseEvent.getData());
-
-		this.tagSearcher.unsubscribeAll('createEpic');
-		this.tagSearcher.subscribe('createEpic', (baseEvent: BaseEvent) => {
-			const epicName: string = baseEvent.getData();
-
-			this.input.disable();
-
-			this.requestSender.createEpic(
-				{
-					groupId: this.groupId,
-					name: epicName
-				}
-			)
-				.then((response) => {
-					this.input.unDisable();
-					this.input.getInputNode().focus();
-					const epic: EpicType = response.data;
-					this.input.setEpic(epic);
-					this.epic.onAfterAdd((new BaseEvent()).setData(epic));
-				})
-				.catch((response) => {
-					this.requestSender.showErrorAlert(response);
-				})
-			;
-		});
 	}
 
 	onEpicSearchClose()
@@ -1012,16 +1031,6 @@ export class Plan extends View
 		;
 	}
 
-	onShowTeamSpeedChart()
-	{
-		this.sidePanel.showByExtension('Team-Speed-Chart', { groupId: this.groupId });
-	}
-
-	onOpenListEpicGrid()
-	{
-		this.epic.openList();
-	}
-
 	onChangeShortView(baseEvent: BaseEvent)
 	{
 		const isShortView = baseEvent.getData();
@@ -1051,6 +1060,7 @@ export class Plan extends View
 					if (!entity.isCompleted())
 					{
 						entity.setShortView(isShortView);
+						entity.adjustListItemsWidth();
 						entity.fadeIn();
 					}
 				})
@@ -1181,6 +1191,27 @@ export class Plan extends View
 		{
 			this.actionPanel.calculatePanelTopPosition();
 		}
+
+		if (this.diskManager)
+		{
+			this.diskManager.closeAttachmentMenu();
+			this.diskManager = null;
+		}
+
+		if (this.itemMover.hasActionPanelDialog())
+		{
+			this.itemMover.closeActionPanelDialogs();
+		}
+
+		if (this.tagSearcher.hasActionPanelDialog())
+		{
+			this.tagSearcher.closeActionPanelDialogs();
+		}
+
+		if (this.responsibleDialog && this.responsibleDialog.isOpen())
+		{
+			this.responsibleDialog.hide();
+		}
 	}
 
 	onShowBlank(baseEvent: BaseEvent)
@@ -1194,11 +1225,38 @@ export class Plan extends View
 			}
 			if (this.entityStorage.existsAtLeastOneItem())
 			{
-				backlog.showDropzone();
+				if (backlog.isExactSearchApplied())
+				{
+					backlog.showEmptySearchStub();
+				}
+				else
+				{
+					backlog.showDropzone();
+				}
 			}
 			else
 			{
 				backlog.showBlank();
+			}
+		}, 200);
+	}
+
+	onShowDropZone(baseEvent: BaseEvent)
+	{
+		const sprint: Sprint = baseEvent.getTarget();
+
+		setTimeout(() => {
+			if (!sprint.isEmpty())
+			{
+				return;
+			}
+			if (sprint.getNumberTasks() > 0 && sprint.isExactSearchApplied())
+			{
+				sprint.showEmptySearchStub();
+			}
+			else
+			{
+				sprint.showDropzone();
 			}
 		}, 200);
 	}
@@ -1306,14 +1364,27 @@ export class Plan extends View
 					activity: true,
 					disable : !item.isEditAllowed(),
 					callback: (event) => {
-						const diskManager = new DiskManager({
-							ufDiskFilesFieldName: 'UF_TASK_WEBDAV_FILES'
+						if (this.diskManager)
+						{
+							this.diskManager.closeAttachmentMenu();
+							this.diskManager = null;
+
+							return;
+						}
+						this.diskManager = new DiskManager({
+							targetElement: event.currentTarget
 						});
-						diskManager.subscribe('onFinish', (baseEvent) => {
+						this.diskManager.subscribe('onFinish', (baseEvent) => {
 							this.attachFilesToTask(entity, baseEvent.getData());
 						});
-						diskManager.showAttachmentMenu(event.currentTarget);
-						this.actionPanel.subscribe('onDestroy', () => diskManager.closeAttachmentMenu());
+						this.diskManager.showAttachmentMenu(event.currentTarget);
+						this.actionPanel.subscribe('onDestroy', () => {
+							if (this.diskManager)
+							{
+								this.diskManager.closeAttachmentMenu();
+								this.diskManager = null;
+							}
+						});
 					},
 				},
 				dod: {
@@ -1354,12 +1425,24 @@ export class Plan extends View
 				tags: {
 					activity: true,
 					callback: (event) => {
+						if (this.tagSearcher.hasActionPanelDialog())
+						{
+							this.tagSearcher.closeActionPanelDialogs();
+
+							return;
+						}
 						this.showTagSearcher(entity, item, event.currentTarget);
 					},
 				},
 				epic: {
 					activity: true,
 					callback: (event) => {
+						if (this.tagSearcher.hasActionPanelDialog())
+						{
+							this.tagSearcher.closeActionPanelDialogs();
+
+							return;
+						}
 						this.showEpicSearcher(entity, item, event.currentTarget);
 					},
 				},
@@ -1471,13 +1554,14 @@ export class Plan extends View
 
 		const valueWithoutEpic =
 			epic
-				? value.replace(new RegExp('@' + epic.name + '$', 'g'), '')
+				? value.replace(new RegExp('@' + Tool.escapeRegex(epic.name) + '$', 'g'), '')
 				: value
 		;
 
 		const item = Item.buildItem({
-			'itemId': '',
-			'name': valueWithoutEpic
+			'id': '',
+			'name': valueWithoutEpic,
+			'groupId': this.getCurrentGroupId()
 		});
 
 		item.setShortView(this.isShortView);
@@ -1511,11 +1595,6 @@ export class Plan extends View
 		item.setResponsible(responseData.responsible);
 		item.setSourceId(responseData.sourceId);
 		item.setAllowedActions(responseData.allowedActions);
-	}
-
-	openEpicEditForm(epicId)
-	{
-		this.epic.openEditForm(epicId);
 	}
 
 	updateEntityCounters(sourceEntity: Entity, endEntity?: Entity)
@@ -1594,25 +1673,11 @@ export class Plan extends View
 	moveItem(item: Item, bindButton: HTMLElement)
 	{
 		this.itemMover.moveItem(item, bindButton);
-		this.itemMover.subscribe('moveMenuClose', () => {
-			const existOpenMenu = this.itemMover.hasActionPanelDialog() || this.tagSearcher.hasActionPanelDialog();
-			if (!existOpenMenu)
-			{
-				this.destroyActionPanel();
-			}
-		});
 	}
 
 	moveToSprint(entityFrom: Entity, item: Item, bindButton: HTMLElement)
 	{
 		this.itemMover.moveToAnotherEntity(entityFrom, item, null, bindButton);
-		this.itemMover.subscribe('moveToSprintMenuClose', () => {
-			const existOpenMenu = this.itemMover.hasActionPanelDialog() || this.tagSearcher.hasActionPanelDialog();
-			if (!existOpenMenu)
-			{
-				this.destroyActionPanel();
-			}
-		});
 
 		if (this.entityStorage.getSprintsAvailableForFilling(entityFrom).size <= 1)
 		{
@@ -1764,6 +1829,8 @@ export class Plan extends View
 		this.decomposition = new Decomposition({
 			parentItem: parentItem
 		});
+
+		parentItem.activateDecompositionMode();
 
 		const renderInputAfterSubTasks = (subTasks: SubTasks) => {
 			if (!subTasks.isShown())

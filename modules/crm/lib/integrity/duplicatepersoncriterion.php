@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Integrity;
 use Bitrix\Main;
 use Bitrix\Crm;
+
 class DuplicatePersonCriterion extends DuplicateCriterion
 {
 	private static $langIncluded = false;
@@ -11,6 +12,8 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 
 	public function __construct($lastName, $name = '', $secondName = '')
 	{
+		parent::__construct();
+
 		$this->setLastName($lastName);
 		$this->setName($name);
 		$this->setSecondName($secondName);
@@ -224,7 +227,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 		}
 		return $results;
 	}
-	public static function prepareSortParams($entityTypeID, array &$entityIDs)
+	public static function prepareSortParams($entityTypeID, array $entityIDs)
 	{
 		if(empty($entityIDs))
 		{
@@ -368,7 +371,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 		}
 		else
 		{
-			$filter['%LAST_NAME'] = new \CSQLWhereExpression('?s', self::prepareCode($this->lastName).'%');
+			$filter['%LAST_NAME'] = new Main\DB\SqlExpression('?s', self::prepareCode($this->lastName).'%');
 		}
 
 		if($this->name !== '')
@@ -379,7 +382,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 			}
 			else
 			{
-				$filter['%NAME'] = new \CSQLWhereExpression('?s', self::prepareCode($this->name).'%');
+				$filter['%NAME'] = new Main\DB\SqlExpression('?s', self::prepareCode($this->name).'%');
 			}
 		}
 
@@ -391,7 +394,7 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 			}
 			else
 			{
-				$filter['%SECOND_NAME'] = new \CSQLWhereExpression('?s', self::prepareCode($this->secondName).'%');
+				$filter['%SECOND_NAME'] = new Main\DB\SqlExpression('?s', self::prepareCode($this->secondName).'%');
 			}
 		}
 

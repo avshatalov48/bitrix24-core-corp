@@ -1619,7 +1619,12 @@ class Form
 					$resultRedirectUrl = null;
 					if ($resultEntity->getOrderId())
 					{
-						$urlInfo = SalesCenter\Integration\LandingManager::getInstance()->getUrlInfoByOrderId($resultEntity->getOrderId());
+						$urlInfo = SalesCenter\Integration\LandingManager::getInstance()->getUrlInfoByOrderId(
+							$resultEntity->getOrderId(),
+							[
+								'paymentId' => $resultEntity->getPaymentId() ?: 0
+							]
+						);
 						$resultRedirectUrl = $urlInfo['url'] ?? null;
 					}
 					elseif($resultEntity->getInvoiceId())

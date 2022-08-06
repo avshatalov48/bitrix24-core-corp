@@ -1,0 +1,4 @@
+<?php
+
+$MESS['IMMOBILE_MESSENGER_DIALOG_INPUT_PLACEHOLDER_TEXT'] = 'Написать сообщение ...';
+$MESS['IMMOBILE_MESSENGER_DIALOG_UNNAMED'] = 'Загрузка...';

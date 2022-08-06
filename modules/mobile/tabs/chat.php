@@ -32,7 +32,7 @@ class Chat implements Tabable
 		}
 		else
 		{
-			$component = $this->getChatComponent();
+			$component = $this->getRecentComponent();
 		}
 
 		return [
@@ -44,14 +44,43 @@ class Chat implements Tabable
 	}
 
 
-	public function getChatComponent()
+	public function getMessengerComponent(): array
+	{
+		return [
+			'name' => 'JSComponentChatRecent',
+			'componentCode' => 'im.messenger',
+			'scriptPath' => \Bitrix\MobileApp\Janative\Manager::getComponentPath('im:messenger'),
+			'params' => array_merge(
+				$this->getComponentParams(),
+				[
+					'TAB_CODE' => 'chats',
+					'COMPONENT_CODE' => 'im.messenger',
+					'MESSAGES' => [
+						'COMPONENT_TITLE' => Loc::getMessage('TAB_NAME_IM_RECENT_FULL'),
+					],
+					'MIN_SEARCH_SIZE' => \Bitrix\Main\ORM\Query\Filter\Helper::getMinTokenSize(),
+					'IS_NETWORK_SEARCH_AVAILABLE' => $this->isNetworkSearchAvailable(),
+				]
+			),
+			'settings' => [
+				'useSearch' => true,
+				'preload' => true,
+				'titleParams' => [
+					'useLargeTitleMode' => true,
+					'text' => Loc::getMessage('TAB_NAME_IM_RECENT_FULL'),
+				],
+			],
+		];
+	}
+
+	public function getRecentComponent(): array
 	{
 		return [
 			"name" => "JSComponentChatRecent",
 			"componentCode" => "im.recent",
 			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:im.recent"),
 			"params" => array_merge(
-				self::getComponentParams(),
+				$this->getComponentParams(),
 				[
 					"TAB_CODE" => "chats",
 					"COMPONENT_CODE" => "im.recent",
@@ -73,8 +102,8 @@ class Chat implements Tabable
 
 	public function getNavigationComponent()
 	{
-		$chatComponent = $this->getChatComponent();
-
+		$chatComponent = $this->getMessengerComponent();
+		$openlinesChatComponent = $this->getRecentComponent();
 
 		// recent list
 		$chats = [
@@ -90,11 +119,11 @@ class Chat implements Tabable
 				"id" => "openlines",
 				"title" => Loc::getMessage("TAB_NAME_IM_OPENLINES_SHORT"),
 				"component" => array_merge(
-					$chatComponent,
+					$openlinesChatComponent,
 					[
 						"componentCode" => "im.openlines.recent",
 						"params" => array_merge(
-							$chatComponent["params"],
+							$openlinesChatComponent["params"],
 							[
 								"TAB_CODE" => "openlines",
 								"COMPONENT_CODE" => "im.openlines.recent",
@@ -104,7 +133,7 @@ class Chat implements Tabable
 							]
 						),
 						"settings" => array_merge(
-							$chatComponent["settings"],
+							$openlinesChatComponent["settings"],
 							[
 								"preload" => false,
 								"useSearch" => false,
@@ -184,6 +213,11 @@ class Chat implements Tabable
 				]
 			],
 		];
+	}
+
+	private function isNetworkSearchAvailable()
+	{
+		return Loader::includeModule('imbot') && class_exists('\Bitrix\ImBot\Integration\Ui\EntitySelector\NetworkProvider');
 	}
 
 	private function getComponentParams()

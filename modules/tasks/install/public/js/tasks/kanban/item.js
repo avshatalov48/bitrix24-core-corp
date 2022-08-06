@@ -23,7 +23,7 @@ BX.Tasks.Kanban.Item = function(options)
 	this.isSprintView = (options.isSprintView === 'Y');
 	this.networkEnabled = options.networkEnabled || false;
 	this.storyPoints = (this.data.storyPoints ? this.data.storyPoints : '');
-
+	this.epic = (BX.type.isPlainObject(this.data.epic) ? this.data.epic : null);
 	this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
 };
 
@@ -437,11 +437,47 @@ BX.Tasks.Kanban.Item.prototype = {
 			userRole = 'O';
 		}
 
+		var entities;
+		if (this.isSprintView)
+		{
+			entities = [
+				{
+					id: 'scrum-user',
+					options: {
+						groupId: this.getGrid().getGroupId()
+					},
+					dynamicLoad: true
+				},
+				{
+					id: 'department'
+				}
+			];
+		}
+		else
+		{
+			entities = [
+				{
+					id: 'user',
+					options: {
+						emailUsers: true,
+						networkUsers: this.networkEnabled,
+						extranetUsers: true,
+						inviteGuestLink: true,
+						myEmailUsers: true
+					}
+				},
+				{
+					id: 'department',
+				}
+			];
+		}
+
 		BX.loadExt('ui.entity-selector').then(function() {
 			var userDialog = new BX.UI.EntitySelector.Dialog({
 				targetNode: targetNode,
 				enableSearch: true,
 				multiple: false,
+				dropdownMode: this.isSprintView,
 				context: 'KANBAN_RESPONSIBLE_SELECTOR_' + action + data.id,
 				preselectedItems: [
 					['user', userId]
@@ -449,21 +485,7 @@ BX.Tasks.Kanban.Item.prototype = {
 				undeselectedItems: [
 					['user', userId]
 				],
-				entities: [
-					{
-						id: 'user',
-						options: {
-							emailUsers: true,
-							networkUsers: this.networkEnabled,
-							extranetUsers: true,
-							inviteGuestLink: true,
-							myEmailUsers: true
-						}
-					},
-					{
-						id: 'department',
-					}
-				],
+				entities: entities,
 				events: {
 					'Item:onSelect': function(event) {
 						var item = event.getData().item;
@@ -531,6 +553,13 @@ BX.Tasks.Kanban.Item.prototype = {
 	getTaskUrl: function(id)
 	{
 		return this.getGridData().pathToTask.replace("#task_id#", id);
+	},
+
+	isCompleted: function()
+	{
+		var data = this.getData();
+
+		return data.completed;
 	},
 
 	/**
@@ -614,12 +643,12 @@ BX.Tasks.Kanban.Item.prototype = {
 			&& (!draggableItem.getColumn().isFinishType())
 		)
 		{
-			BX.loadExt('tasks.scrum.dod').then(function() {
-				if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.Dod === 'undefined')
+			top.BX.loadExt('tasks.scrum.dod').then(function() {
+				if (typeof top.BX.Tasks.Scrum === 'undefined' || typeof top.BX.Tasks.Scrum.Dod === 'undefined')
 				{
 					taskCompletePromise.fulfill();
 				}
-				this.scrumDod = new BX.Tasks.Scrum.Dod({
+				this.scrumDod = new top.BX.Tasks.Scrum.Dod({
 					groupId: this.getData()['groupId'],
 					taskId: draggableItem.getId()
 				});
@@ -659,15 +688,26 @@ BX.Tasks.Kanban.Item.prototype = {
 	 */
 	setFilterTag: function()
 	{
-		var tagName = BX.proxy_context.textContent.substr(1),
-			gridData = this.getGridData(),
-			filterManager = BX.Main.filterManager.getById(gridData.gridId),
-			filterApi = filterManager.getApi(),
-			currValues = filterManager.getFilterFieldsValues();
+		var tagName = BX.proxy_context.textContent.substring(1);
+		var gridData = this.getGridData();
+		var filterManager = BX.Main.filterManager.getById(gridData.gridId);
 
-		currValues.TAG = tagName;
-		filterApi.setFields(currValues);
-		filterApi.apply();
+		filterManager.getApi().extendFilter({
+			TAG: tagName,
+			TAG_label: tagName
+		});
+	},
+
+	/**
+	 * Set epic to the filter.
+	 * @returns {void}
+	 */
+	setFilterEpic: function(epicId)
+	{
+		var gridData = this.getGridData();
+		var filterManager = BX.Main.filterManager.getById(gridData.gridId);
+
+		filterManager.getApi().extendFilter({ EPIC: String(epicId) });
 	},
 
 	/**
@@ -685,7 +725,6 @@ BX.Tasks.Kanban.Item.prototype = {
 		var color = this.getColumn().getColor();
 		var rgb = BX.util.hex2rgb(color);
 		var rgba = "rgba(" + rgb.r + "," + rgb.g + "," + rgb.b + "," + ".7)";
-		var withoutControl = data.completed || (!data.allow_complete && !data.allow_start);
 		var formatLang = BX.message("LANGUAGE_ID");
 
 		if (formatLang !== "en" && formatLang !== "de")
@@ -721,7 +760,7 @@ BX.Tasks.Kanban.Item.prototype = {
 			{
 				this.tag = BX.create("span", {
 					props: {
-						className: "ui-label ui-label-tag-light ui-label-fill ui-label-sm ui-label-link"
+						className: "ui-label ui-label-tag-light ui-label-fill ui-label-md ui-label-link"
 					},
 					children: [
 						BX.create("span", {
@@ -995,37 +1034,95 @@ BX.Tasks.Kanban.Item.prototype = {
 			this.user_container.appendChild(this.responsible);
 		}
 		// time
-		this.switchVisible(
-			this.time_logs,
-			data.time_tracking
-		);
-		if (data.time_tracking)
+		if (this.time_logs)
 		{
-			this.time_logs.textContent = parseInt(data.time_estimate) > 0
-										? this.renderTime(data.time_logs) + " / " + this.renderTime(data.time_estimate, false)
-										: this.renderTime(data.time_logs);
+			this.switchVisible(
+				this.time_logs,
+				data.time_tracking
+			);
+			if (data.time_tracking)
+			{
+				this.time_logs.textContent = parseInt(data.time_estimate) > 0
+					? this.renderTime(data.time_logs) + " / " + this.renderTime(data.time_estimate, false)
+					: this.renderTime(data.time_logs);
+			}
+			else
+			{
+				this.time_logs.textContent = "";
+			}
 		}
-		else
-		{
-			this.time_logs.textContent = "";
-		}
+
 		// controls block
-		this.switchClass(
-			this.container,
-			"tasks-kanban-item-without-control",
-			withoutControl
-		);
-		if (this.task_start)
+		if (!this.getGrid().isScrumGrid())
 		{
-			this.switchVisible(this.task_start, !withoutControl);
-			this.switchVisible(this.task_start, data.allow_start);
-		}
-		if (this.task_complete)
-		{
-			this.switchVisible(this.task_complete, data.allow_complete);
+			this.switchClass(
+				this.container,
+				'tasks-kanban-item-without-control',
+				(data.completed || (!data.allow_complete && !data.allow_start))
+			);
+			if (this.task_start)
+			{
+				this.switchVisible(this.task_start, data.allow_start);
+			}
+			if (this.task_complete)
+			{
+				this.switchVisible(this.task_complete, data.allow_complete);
+			}
 		}
 
 		return this.container;
+	},
+
+	animate: function(params)
+	{
+		var duration = params.duration;
+		var draw = params.draw;
+
+		// linear function by default, you can set non-linear animation function in timing key
+		var timing = (params.timing || function(timeFraction){
+			return timeFraction;
+		});
+
+		var useAnimation = ((params.useAnimation && !this.isAnimationInProgress) || false);
+
+		var start = performance.now();
+
+		return new Promise(
+			function(resolve, reject)
+			{
+				if (!useAnimation)
+				{
+					this.isAnimationInProgress = false;
+					return resolve();
+				}
+
+				var self = this;
+				self.isAnimationInProgress = true;
+
+				requestAnimationFrame(function animate(time)
+				{
+					var timeFraction = (time - start) / duration;
+					if (timeFraction > 1)
+					{
+						timeFraction = 1;
+					}
+
+					var progress = timing(timeFraction);
+					draw(progress);
+
+					if (timeFraction < 1)
+					{
+						requestAnimationFrame(animate);
+					}
+
+					if (progress === 1)
+					{
+						self.isAnimationInProgress = false;
+						resolve();
+					}
+				}.bind(this));
+			}.bind(this)
+		);
 	},
 
 	/**
@@ -1066,6 +1163,36 @@ BX.Tasks.Kanban.Item.prototype = {
 		this.container.appendChild(this.link);
 
 		//endregion
+
+		if (this.getGrid().isScrumGrid())
+		{
+			//region epic
+
+			if (this.epic)
+			{
+				var colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
+				var colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
+
+				this.epicNode = BX.create("span", {
+					props: {
+						className: "tasks-kanban-item-epic"
+					},
+					style: {
+						background: colorBackground,
+						borderColor: colorBorder
+					},
+					text: this.epic.name,
+					events: {
+						click: BX.delegate(function(e) {
+							this.setFilterEpic(this.epic.id);
+							e.stopPropagation();
+						}, this)
+					}
+				});
+
+				this.container.appendChild(this.epicNode);
+			}
+		}
 
 		//region tags
 		this.tags = BX.create("span", {
@@ -1182,18 +1309,18 @@ BX.Tasks.Kanban.Item.prototype = {
 
 		//endregion
 
-		//region  time
-		this.time_logs = BX.create("div", {
-			props: {
-				className: "tasks-kanban-item-timelogs"
-			}
-		});
-		this.actions_container.appendChild(this.time_logs);
-
-		//endregion
-
 		if (!this.getGrid().isScrumGrid())
 		{
+			//region  time
+			this.time_logs = BX.create("div", {
+				props: {
+					className: "tasks-kanban-item-timelogs"
+				}
+			});
+			this.actions_container.appendChild(this.time_logs);
+
+			//endregion
+
 			this.track_control = BX.create("div", {
 				props: {
 					className: "tasks-kanban-item-control"
@@ -1377,6 +1504,22 @@ BX.Tasks.Kanban.Item.prototype = {
 	{
 		clearTimeout(this.timer);
 		itemBlock.classList.remove("tasks-kanban-item-hover");
+	},
+
+	convertHexToRGBA: function (hexCode, opacity)
+	{
+		var hex = hexCode.replace('#', '');
+
+		if (hex.length === 3)
+		{
+			hex = String(hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2]);
+		}
+
+		var r = parseInt(hex.substring(0, 2), 16);
+		var g = parseInt(hex.substring(2, 4), 16);
+		var b = parseInt(hex.substring(4, 6), 16);
+
+		return 'rgba(' + r + ',' + g + ',' + b + ',' + opacity + ')';
 	}
 
 };

@@ -1,7 +1,9 @@
-import {Loc, Type} from 'main.core';
+import {Loc} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {Layout} from 'ui.sidepanel.layout';
+import {CancelButton} from 'ui.buttons';
+import {UI} from 'ui.notification';
 
 import 'ui.layout-form';
 import 'ui.forms';
@@ -51,8 +53,14 @@ export class Dod extends EventEmitter
 			skipNotifications: params.skipNotifications
 		});
 
-		this.list.subscribe('resolve', () => this.emit('resolve'));
-		this.list.subscribe('reject', () => this.emit('reject'));
+		this.list.subscribe('resolve', () => {
+			this.emit('resolve');
+			this.sidePanelManager.close(false);
+		});
+		this.list.subscribe('reject', () => {
+			this.emit('reject');
+			this.sidePanelManager.close(false);
+		});
 		this.list.subscribe('showSettings', () => {
 			this.sidePanelManager.close(false, () => this.showSettings());
 		});
@@ -95,7 +103,7 @@ export class Dod extends EventEmitter
 				width: 1000,
 				contentCallback: () => {
 					return Layout.createContent({
-						extensions: ['tasks.scrum.dod', 'ui.entity-selector'],
+						extensions: ['tasks.scrum.dod', 'ui.entity-selector', 'tasks'],
 						title: Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
 						content: this.createSettingsContent.bind(this),
 						design: {
@@ -106,7 +114,8 @@ export class Dod extends EventEmitter
 				},
 				events: {
 					onLoad: this.onLoadSettings.bind(this),
-					onClose: this.onCloseSettings.bind(this)
+					onClose: this.onCloseSettings.bind(this),
+					onCloseComplete: this.onCloseSettingsComplete.bind(this)
 				}
 			}
 		);
@@ -121,11 +130,20 @@ export class Dod extends EventEmitter
 				width: 800,
 				contentCallback: () => {
 					return Layout.createContent({
-						extensions: ['tasks.scrum.dod'],
+						extensions: ['tasks.scrum.dod', 'tasks'],
 						title: Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
 						content: this.createListContent.bind(this),
 						design: {
 							section: false
+						},
+						toolbar: ({Button}) => {
+							return [
+								new Button({
+									color: Button.Color.LIGHT_BORDER,
+									text: Loc.getMessage('TASKS_SCRUM_DOD_TOOLBAR_SETTINGS'),
+									onclick: this.showSettings.bind(this),
+								}),
+							];
 						},
 						buttons: ({cancelButton, SaveButton}) => {
 							return [
@@ -133,7 +151,12 @@ export class Dod extends EventEmitter
 									text: this.getListButtonText(),
 									onclick: this.onSaveList.bind(this)
 								}),
-								cancelButton
+								new CancelButton({
+									onclick: () => {
+										this.emit('reject')
+										this.sidePanelManager.close(false);
+									}
+								}),
 							];
 						}
 					});
@@ -187,10 +210,33 @@ export class Dod extends EventEmitter
 
 	onCloseSettings()
 	{
-		this.settings.saveSettings()
-			.then(() => {})
-			.catch(() => {})
-		;
+		if (this.settings.isChanged())
+		{
+			this.settings.saveSettings()
+				.then(() => {
+					UI.Notification.Center.notify({
+						autoHideDelay: 1000,
+						content: Loc.getMessage('TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY')
+					});
+				})
+				.catch(() => {})
+			;
+		}
+	}
+
+	onCloseSettingsComplete()
+	{
+		const currentSlider = this.sidePanelManager.getTopSlider();
+		if (currentSlider)
+		{
+			if (
+				currentSlider.getUrl() === 'tasks-scrum-dod-list-side-panel'
+				&& this.settings.isChanged()
+			)
+			{
+				currentSlider.reload();
+			}
+		}
 	}
 
 	onSaveList()
@@ -200,9 +246,20 @@ export class Dod extends EventEmitter
 			return;
 		}
 
-		this.list.save();
-
-		this.sidePanelManager.close(false);
+		this.list.save()
+			.then((decision: string) => {
+				if (decision === 'resolve')
+				{
+					this.emit('resolve');
+					this.sidePanelManager.close(false);
+				}
+				else if (decision === 'reject')
+				{
+					this.emit('reject');
+					this.sidePanelManager.close(false);
+				}
+			})
+		;
 	}
 
 	getListButtonText(): string

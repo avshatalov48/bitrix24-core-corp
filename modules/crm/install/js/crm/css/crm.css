@@ -563,19 +563,16 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 }
 
 .crm-list-top-bar {
-	background:#f7f9fa;
-	background:-webkit-linear-gradient(top, #eaf1f3, #fff);
-	background:-moz-linear-gradient(top, #eaf1f3, #fff);
-	background:-o-linear-gradient(top, #eaf1f3, #fff);
-	background:-ms-linear-gradient(top, #eaf1f3, #fff);
-	background:linear-gradient(to bottom, #eaf1f3, #fff);
-	border:1px solid #f1f1f1;
-	border-radius:4px 4px 0 0;
-	-webkit-box-shadow:inset 0 1px 0 #fff;
-	box-shadow:inset 0 1px 0 #fff;
-	height:37px;
-	padding:9px 7px 0;
+	background:#fff;
+	border-radius: var(--ui-border-radius-md);
+	padding: 10px 12px 9px 12px;
+	margin-bottom: var(--ui-space-stack-2xs, 8px);
 }
+
+/*.crm-list-top-bar ~ .crm-grid,
+.crm-list-top-bar + div > .crm-grid {
+	--main-grid-top-border-radius: 0;
+}*/
 
 .crm-toolbar-alignment-right {float:right; text-align:right;}
 
@@ -4602,7 +4599,7 @@ body table.bx-interface-grid tr.bx-green.bx-odd td, body table.bx-interface-grid
 	background-color: #fff;
 	border: 1px solid;
 	border-color: #bcd0d5 #b9cdd3 #b2c6cc;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-md, 3px);
 	-webkit-box-shadow: 0 1px 2px #dae0e0;
 	box-shadow: 0 1px 2px #dae0e0;
 	padding: 6px 6px 0;
@@ -4637,7 +4634,7 @@ body table.bx-interface-grid tr.bx-green.bx-odd td, body table.bx-interface-grid
 
 .crm-right-block-item {
 	background-color: #f0f5f5;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-sm, 2px);
 	margin-bottom: 6px;
 	padding: 9px 14px 9px;
 }
@@ -4784,6 +4781,7 @@ div.crm-right-block div.crm-right-block-deadline .crm-right-block-date {
 .bx-crm-dialog-activity-diskuf-container-inner {
 	background-color: #fff;
 	border: 1px solid #c6cdd3;
+	border-radius: var(--ui-field-border-radius);
 	margin: 0 4px 0 0;
 	padding: 0 14px 14px;
 }
@@ -5967,6 +5965,9 @@ td.wd-fa-add-file-light-cell {
 	display: block;
 	margin-bottom: 3px;
 	text-align: left;
+	border-radius: var(--ui-space-stack-xs);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 }
 
 .sidebar-tab:last-child {
@@ -6042,6 +6043,10 @@ td.wd-fa-add-file-light-cell {
 	background: #fff;
 	font-size: 0;
 	float: left;
+	border-radius: var(--ui-space-stack-xs);
+}
+.view-report-sidebar ~ .view-report-wrapper {
+	border-top-left-radius: 0;
 }
 
 .view-report-wrapper-inner {
@@ -6078,7 +6083,8 @@ td.wd-fa-add-file-light-cell {
 	border: 1px solid #ededed;
 	display: inline-block;
 	margin-bottom: 15px;
-  transition: all .25s linear;
+	transition: all .25s linear;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .view-report-wrapper-inner-img:before {
@@ -7085,6 +7091,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	overflow: hidden;
 	padding: 30px 15px 0 15px;
 	border-bottom: 1px solid transparent;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-portriat-wrapper {
@@ -8370,7 +8377,7 @@ a.crm-client-contacts-block-text-mail:hover{
 .crm-pagetitle-view .ui-side-panel-wrap-below {
 	display: flex;
 	align-items: center;
-	padding: 0 5px 0 13px;
+	padding: 0 var(--ui-space-inline-none, 5px) 0 0;
 	border-top: 1px solid #dce2e6;
 	box-sizing: border-box;
 }

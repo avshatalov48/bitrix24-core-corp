@@ -19,6 +19,7 @@ Bitrix\Main\UI\Extension::load([
 	'ui.forms',
 	'ui.entity-selector',
 	'ui.notification',
+	'ui.fonts.opensans',
 ]);
 
 foreach ($arResult['ERRORS'] as $error)
@@ -183,4 +184,4 @@ BX.ready(function ()
 	tagSelector.renderTo(document.getElementById('user-selector'));
 });
 </script>
-<?php endif;?>
+<?php endif;

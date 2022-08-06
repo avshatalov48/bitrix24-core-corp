@@ -145,35 +145,31 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 	 * Gets sprints of current groups.
 	 * @return array
 	 */
-	protected function getSprints()
+	protected function getSprint()
 	{
-		$sprints = [];
+		$currentSprint = [];
 
 		if (
-			$this->arParams['GROUP_ID'] &&
-			$this->arParams['SPRINT_ID']//mark that we are in sprint mode
+			$this->arParams['GROUP_ID']
+			&& $this->arParams['SPRINT_ID'] > 0
 		)
 		{
 			if ($this->arResult['IS_SCRUM_PROJECT'])
 			{
 				$sprintService = new SprintService();
-				$listSprints = $sprintService->getSprintsByGroupId($this->arParams['GROUP_ID']);
-				foreach ($listSprints as $sprint)
-				{
-					if ($sprint->isCompletedSprint())
-					{
-						$sprints[$sprint->getId()] = [
-							'ID' => $sprint->getId(),
-							'NAME' => $sprint->getName(),
-							'START_TIME' => $sprint->getDateStart()->format(Bitrix\Main\Type\Date::getFormat()),
-							'FINISH_TIME' => $sprint->getDateEnd()->format(Bitrix\Main\Type\Date::getFormat()),
-						];
-					}
-				}
+
+				$sprint = $sprintService->getSprintById($this->arParams['SPRINT_ID']);
+
+				$currentSprint = [
+					'ID' => $sprint->getId(),
+					'NAME' => $sprint->getName(),
+					'START_TIME' => $sprint->getDateStart()->format(Bitrix\Main\Type\Date::getFormat()),
+					'FINISH_TIME' => $sprint->getDateEnd()->format(Bitrix\Main\Type\Date::getFormat()),
+				];
 			}
 		}
 
-		return $sprints;
+		return $currentSprint;
 	}
 
 	protected function checkParameters()
@@ -219,7 +215,7 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($this->arParams['GROUP_ID']);
 		$this->arResult['IS_SCRUM_PROJECT'] = ($group && $group->isScrumProject());
-		$this->arResult['SPRINTS'] = $this->getSprints();
+		$this->arResult['SPRINT'] = $this->getSprint();
 	}
 
 	protected function canCreateGroupTasks($groupId)

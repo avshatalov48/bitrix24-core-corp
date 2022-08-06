@@ -915,6 +915,7 @@ abstract class Kanban
 		}
 
 		$filter = Deal\OrderFilter::prepareFilter($filter);
+		$filter = \Bitrix\Crm\Automation\Debugger\DebuggerFilter::prepareFilter($filter, $this->entity->getTypeId());
 
 		//deal
 		if($this->entity->isCategoriesSupported())
@@ -1188,7 +1189,7 @@ abstract class Kanban
 
 		if ($columns === null)
 		{
-			$columns = $this->getColumns();
+			$columns = $this->getColumns(false, false, $this->params);
 		}
 
 		$parameters = [

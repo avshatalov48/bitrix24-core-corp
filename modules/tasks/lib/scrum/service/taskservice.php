@@ -12,12 +12,14 @@ use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Internals\Counter\Template\CounterStyle;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
+use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Helper\Common;
 use Bitrix\Tasks\Helper\Filter;
@@ -91,21 +93,25 @@ class TaskService implements Errorable
 		return $this->executiveUserId;
 	}
 
-	public function getFilterInstance(int $groupId, bool $isCompletedSprint = false): Common
+	public function getFilterInstance(int $groupId, string $view = 'plan'): ?Common
 	{
-		if ($isCompletedSprint)
+		$availableViews = [
+			'plan' => 'TASKS_GRID_ROLE_ID_4096_'.$groupId.'_ADVANCED_N',
+			'active' => 'TASKS_GRID_ROLE_ID_4096_'.$groupId.'_ACTIVE_N',
+			'complete' => 'TASKS_GRID_ROLE_ID_4096_'.$groupId.'_COMPLETED_N',
+		];
+
+		if (!isset($availableViews[$view]))
 		{
-			$filterId = 'TASKS_GRID_ROLE_ID_4096_'.$groupId.'_COMPLETED_N';
+			return null;
 		}
-		else
-		{
-			$filterId = 'TASKS_GRID_ROLE_ID_4096_'.$groupId.'_ADVANCED_N';
-		}
+
+		$filterId = $availableViews[$view];
 
 		$filterInstance = Filter::getInstance($this->executiveUserId, $groupId, $filterId);
 
 		$presets = Filter::getPresets($filterInstance);
-		if ($isCompletedSprint)
+		if ($view === 'complete')
 		{
 			unset($presets['filter_tasks_scrum']);
 		}
@@ -114,6 +120,18 @@ class TaskService implements Errorable
 		if (!$savedOptions)
 		{
 			// todo remove after fix main filter
+
+			if ($view === 'active')
+			{
+				$planPresets = (Filter::getInstance($this->executiveUserId, $groupId, $availableViews['plan']))
+					->getAllPresets()
+				;
+				if (count($planPresets) >= 5)
+				{
+					$presets = $planPresets;
+				}
+			}
+
 			$filterOptions = new Options($filterId, $presets);
 			$filterOptions->save();
 		}
@@ -123,7 +141,11 @@ class TaskService implements Errorable
 
 	public function getFilter(Common $filterInstance): array
 	{
-		return $filterInstance->process();
+		$filter = $filterInstance->process();
+
+		$filter['SCRUM_TASKS'] = 'Y';
+
+		return $filter;
 	}
 
 	public function createTask(array $taskFields): int
@@ -292,31 +314,66 @@ class TaskService implements Errorable
 		}
 	}
 
-	public function getTaskIdsByFilter(array $filter): array
+	public function getTaskIdsByFilter(
+		array $filter,
+		?PageNavigation $navigation = null,
+		array $entityIds = []
+	): array
 	{
 		$taskIds = [];
 
 		try
 		{
 			$filter['ONLY_ROOT_TASKS'] = ($filter['ONLY_ROOT_TASKS'] === 'N' ? 'N' : 'Y');
+			if ($entityIds)
+			{
+				$filter['SCRUM_ENTITY_IDS'] = $entityIds;
+			}
 
-			[$rows, $queryObject] = $this->getList([
+			if ($navigation)
+			{
+				$navParams = [
+					'nPageSize' => $navigation->getLimit(),
+					'iNumPageSize' => $navigation->getOffset(),
+					'iNumPage' => $navigation->getCurrentPage(),
+					'getPlusOne' => true,
+				];
+			}
+			else
+			{
+				$navParams = [];
+			}
+
+			$getListParams = [
 				'select' => ['ID'],
-				'filter' => $filter,
-			]);
+				'legacyFilter' => $filter,
+				'order' => ['SCRUM_ITEMS_SORT' => 'ASC'],
+				'group' => [],
+				'NAV_PARAMS' => $navParams,
+			];
 
-			if (count($rows) <= 0)
+			$result = Manager\Task::getList($this->executiveUserId, $getListParams);
+			$tasks = array_values($result['DATA']);
+
+			if (count($tasks) <= 0)
 			{
 				return $taskIds;
 			}
 
-			/**
-			 * @var \CTaskItem[] $rows
-			 */
-			foreach ($rows as $row)
+			$n = 0;
+			foreach ($tasks as $task)
 			{
-				$taskData = $row->getData();
-				$taskIds[] = $taskData['ID'];
+				if ($navigation && ++$n > $navigation->getLimit())
+				{
+					break;
+				}
+
+				$taskIds[] = $task['ID'];
+			}
+
+			if ($navigation)
+			{
+				$navigation->setRecordCount($navigation->getOffset() + $n);
 			}
 
 			return $taskIds;
@@ -361,30 +418,6 @@ class TaskService implements Errorable
 					$message,
 					self::ERROR_COULD_NOT_READ_TAGS
 				)
-			);
-
-			return [];
-		}
-	}
-
-	public function getTagsByUserIds(array $userIds): array
-	{
-		try
-		{
-			$tags = [];
-			$queryObject = \CTaskTags::getList([], ['USER_ID' => $userIds]);
-			while ($tag = $queryObject->fetch())
-			{
-				$tags[] = $tag['NAME'];
-			}
-			return array_unique($tags);
-		}
-		catch (\Exception $exception)
-		{
-			$message = $exception->getMessage().$exception->getTraceAsString();
-
-			$this->errorCollection->setError(
-				new Error($message, self::ERROR_COULD_NOT_READ_TAGS)
 			);
 
 			return [];
@@ -446,19 +479,6 @@ class TaskService implements Errorable
 
 			return false;
 		}
-	}
-
-	public function setTaskTags(array $taskTags): void
-	{
-		foreach ($taskTags as $taskTag)
-		{
-			$this->tasksTags[$taskTag] = $taskTag;
-		}
-	}
-
-	public function getTasksTags(): array
-	{
-		return $this->tasksTags;
 	}
 
 	public function hasAccessToCounters(): bool
@@ -632,7 +652,12 @@ class TaskService implements Errorable
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
 
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_CHECK_COMPLETED_TASK));
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_CHECK_COMPLETED_TASK
+				)
+			);
 
 			return false;
 		}
@@ -669,13 +694,22 @@ class TaskService implements Errorable
 		{
 			$message = $exception->getMessage().$exception->getTraceAsString();
 
-			$this->errorCollection->setError(new Error($message, self::ERROR_COULD_NOT_CHECK_COMPLETED_TASK));
+			$this->errorCollection->setError(
+				new Error(
+					$message,
+					self::ERROR_COULD_NOT_CHECK_COMPLETED_TASK
+				)
+			);
 
 			return [];
 		}
 	}
 
-	public function getSubTaskIds(int $groupId, int $taskId, bool $notCompleted = true): array
+	public function getSubTaskIds(
+		int $groupId,
+		int $taskId,
+		bool $notCompleted = true
+	): array
 	{
 		$taskIds = [];
 
@@ -703,7 +737,10 @@ class TaskService implements Errorable
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_GET_SUB_TASK_IDS)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_CHECK_GET_SUB_TASK_IDS
+				)
 			);
 		}
 
@@ -738,7 +775,10 @@ class TaskService implements Errorable
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_IS_SUB_TASK)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_CHECK_IS_SUB_TASK
+				)
 			);
 
 			return 0;
@@ -760,7 +800,10 @@ class TaskService implements Errorable
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_CHECK_IS_LINKED_TASK)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_CHECK_IS_LINKED_TASK
+				)
 			);
 
 			return [];
@@ -826,9 +869,11 @@ class TaskService implements Errorable
 
 			$itemsData[$taskId] = [
 				'name' => $taskInfo['TITLE'],
+				'groupId' => $groupId,
 				'responsibleId' => ($taskInfo['RESPONSIBLE_ID'] ?? 0),
 				'completed' => ($taskInfo['STATUS'] == \CTasks::STATE_COMPLETED) ? 'Y' : 'N',
 				'attachedFilesCount' => $attachedFilesCount,
+				'isImportant' => ($taskInfo['PRIORITY'] == \CTasks::PRIORITY_HIGH) ? 'Y' : 'N',
 			];
 
 			$parentId = (int) $taskInfo['PARENT_ID'];
@@ -853,7 +898,7 @@ class TaskService implements Errorable
 		return $itemsData;
 	}
 
-	public function getItemsDynamicData(array $taskIds, $itemsData): array
+	public function getItemsDynamicData(int $groupId, array $taskIds, $itemsData): array
 	{
 		foreach ($taskIds as $taskId)
 		{
@@ -876,8 +921,6 @@ class TaskService implements Errorable
 		foreach ($tags as $taskId => $tagList)
 		{
 			$itemsData[$taskId]['tags'] = $tagList;
-
-			$this->setTaskTags($tagList);
 		}
 
 		foreach ($taskIds as $taskId)
@@ -887,7 +930,7 @@ class TaskService implements Errorable
 		}
 
 		// todo
-		foreach ($this->getSubTasksInfo($taskIds) as $taskId => $subTasksInfo)
+		foreach ($this->getSubTasksInfo($groupId, $taskIds) as $taskId => $subTasksInfo)
 		{
 			$subTasks = [];
 			$completedSubTasks = [];
@@ -954,7 +997,8 @@ class TaskService implements Errorable
 		{
 			if ($fields['GROUP_ID'] && Loader::includeModule('socialnetwork'))
 			{
-				$group = Workgroup::getById($fields['GROUP_ID']);
+				$currentGroupId = (int) $fields['GROUP_ID'];
+				$group = Workgroup::getById($currentGroupId);
 				if ($group && $group->isScrumProject())
 				{
 					self::createScrumItem($taskId, $fields);
@@ -969,6 +1013,14 @@ class TaskService implements Errorable
 							(new CacheService($parentItem->getSourceId(), CacheService::ITEM_TASKS))->clean();
 
 							$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+							$entityService = new EntityService();
+							$parentEntity = $entityService->getEntityById($parentItem->getEntityId());
+							if ($parentEntity->getGroupId() === $currentGroupId)
+							{
+								$parentItem->getInfo()->setVisibilitySubtasks('Y');
+							}
+
 							$itemService->changeItem($parentItem, $pushService);
 						}
 					}
@@ -993,12 +1045,15 @@ class TaskService implements Errorable
 	{
 		try
 		{
-			$currentGroupId = (int)$previousFields['GROUP_ID'];
+			$currentGroupId = (int) $previousFields['GROUP_ID'];
 
 			$isScrumTaskUpdated = false;
 			if (Loader::includeModule('socialnetwork'))
 			{
-				$currentGroupId = (int)($fields['GROUP_ID'] > 0 ? $fields['GROUP_ID'] : $previousFields['GROUP_ID']);
+				$currentGroupId = (int) ($fields['GROUP_ID'] > 0
+					? $fields['GROUP_ID']
+					: $previousFields['GROUP_ID']
+				);
 				$group = Workgroup::getById($currentGroupId);
 				if ($group && $group->isScrumProject())
 				{
@@ -1087,6 +1142,18 @@ class TaskService implements Errorable
 				)
 			);
 
+			$isEpicChangeAction = (isset($fields['EPIC']) && $fields['EPIC'] !== $previousFields['EPIC']);
+			if ($isEpicChangeAction)
+			{
+				$itemService = new ItemService();
+				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
+
+				$scrumItem = $itemService->getItemBySourceId($taskId);
+				$scrumItem->setEpicId($fields['EPIC']);
+
+				$itemService->changeItem($scrumItem, $pushService);
+			}
+
 			$isParentChangeAction =
 				isset($fields['PARENT_ID'])
 				&& $fields['PARENT_ID'] != $previousFields['PARENT_ID']
@@ -1128,6 +1195,7 @@ class TaskService implements Errorable
 				$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 				$itemService->changeItem($itemService->getItemBySourceId($taskId), $pushService);
 			}
+
 			if ($isRenewAction)
 			{
 				$parentId = (int) $previousFields['PARENT_ID'];
@@ -1137,12 +1205,35 @@ class TaskService implements Errorable
 					{
 						self::moveTaskToActiveSprint($taskId, $currentGroupId);
 					}
+
+					$itemService = new ItemService();
+
+					$item = $itemService->getItemBySourceId($taskId);
+					$parentItem = $itemService->getItemBySourceId($parentId);
+					if (!$item->isEmpty() && !$parentItem->isEmpty())
+					{
+						$entityService = new EntityService();
+						$parentEntity = $entityService->getEntityById($parentItem->getEntityId());
+						if ($parentEntity->getGroupId() === $currentGroupId)
+						{
+							$kanbanService = new KanbanService();
+							if ($kanbanService->isTaskInFinishStatus($parentEntity->getId(), $taskId))
+							{
+								$kanbanService->addTaskToNewStatus($parentEntity->getId(), $taskId);
+							}
+
+							$parentItem->getInfo()->setVisibilitySubtasks('Y');
+
+							$itemService->changeItem($parentItem);
+						}
+					}
 				}
 				else
 				{
 					self::moveTaskToBacklog($taskId, $currentGroupId);
 				}
 			}
+
 			if ($isCompleteAction)
 			{
 				self::moveTaskToFinishStatus($taskId, $currentGroupId);
@@ -1171,6 +1262,7 @@ class TaskService implements Errorable
 					'PARENT_ID',
 					'STATUS',
 					'UF_TASK_WEBDAV_FILES',
+					'PRIORITY',
 				]
 			);
 			while ($data = $queryObject->fetch())
@@ -1308,7 +1400,7 @@ class TaskService implements Errorable
 		}
 	}
 
-	private function getSubTasksInfo(array $taskIds): array
+	private function getSubTasksInfo(int $groupId, array $taskIds): array
 	{
 		$subTasksInfo = [];
 
@@ -1321,7 +1413,10 @@ class TaskService implements Errorable
 		{
 			$queryObject = \CTasks::getList(
 				['ID' => 'ASC'],
-				['PARENT_ID' => $taskIds],
+				[
+					'GROUP_ID' => $groupId,
+					'PARENT_ID' => $taskIds,
+				],
 				['ID', 'STATUS', 'PARENT_ID']
 			);
 			while ($taskData = $queryObject->fetch())
@@ -1436,7 +1531,9 @@ class TaskService implements Errorable
 				{
 					$parentTaskId = $parentScrumItem->getSourceId();
 
-					$sort = count($taskService->getSubTasksInfo([$parentTaskId])[$parentTaskId]);
+					$groupId = (int) $fields['GROUP_ID'];
+
+					$sort = count($taskService->getSubTasksInfo($groupId, [$parentTaskId])[$parentTaskId]);
 					$sort = ($sort === 0 ? 1 : $sort);
 
 					self::createItem(
@@ -1488,6 +1585,9 @@ class TaskService implements Errorable
 			$scrumItem->setEntityId($entity->getId());
 			$scrumItem->setSourceId($taskId);
 			$scrumItem->setSort($sort);
+
+			$epicId = (is_numeric($fields['EPIC']) ? (int) $fields['EPIC'] : $epicId);
+
 			$scrumItem->setEpicId($epicId);
 
 			$itemService->createTaskItem($scrumItem, $pushService);

@@ -134,6 +134,14 @@ class CVoxImplantConfig
 		$showRestApps = $params['showRestApps'] == true;
 		$showInboundOnly = $params['showInboundOnly'] == true;
 
+		static $cache = [];
+		$cacheKey = ($showRestApps ? 'r' : '_') . ($showInboundOnly ? 'i' : '_');
+
+		if (isset($cache[$cacheKey]))
+		{
+			return $cache[$cacheKey];
+		}
+
 		$cacheTtl = 86400; //1 day
 		$result = Array();
 
@@ -275,7 +283,9 @@ class CVoxImplantConfig
 			}
 		}
 
-		return $result;
+		$cache[$cacheKey] = $result;
+
+		return $cache[$cacheKey];
 	}
 
 	public static function GetLine($lineId)

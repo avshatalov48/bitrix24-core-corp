@@ -256,11 +256,9 @@ class CheckListFields
 
 		$checkTitle = static function($value)
 		{
-			$maxTitleLength = 255;
-
 			if (is_string($value) && trim($value) !== '')
 			{
-				return trim(mb_substr($value, 0, $maxTitleLength));
+				return trim($value);
 			}
 
 			return null;
@@ -392,7 +390,7 @@ class CheckListFields
 
 		$checkTitle = static function($value)
 		{
-			return $value !== '' && mb_strlen($value) <= 255;
+			return $value !== '';
 		};
 
 		$checkBoolean = static function($value)

@@ -35,7 +35,7 @@ class TypesMap
 
 		$types = Container::getInstance()->getDynamicTypesMap()->load([
 			'isLoadStages' => false,
-			'isLoadCategoies' => false,
+			'isLoadCategories' => false,
 		])->getTypes();
 		foreach ($types as $dynamicType)
 		{

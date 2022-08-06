@@ -12,6 +12,8 @@ export class Comments extends EventEmitter
 	{
 		super(taskCounter);
 
+		this.setEventNamespace('BX.Tasks.Scrum.Item.Comments');
+
 		if (Type.isUndefined(taskCounter) || Type.isNull(taskCounter))
 		{
 			taskCounter = {

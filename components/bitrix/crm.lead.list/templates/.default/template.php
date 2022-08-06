@@ -55,6 +55,9 @@ endif;
 if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']):
 	?><div id="backgroundLeadMergeWrapper"></div><?
 endif;
+if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE']):
+	?><div id="backgroundLeadDupVolDataPrepareWrapper"></div><?
+endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
 ?><div id="rebuildLeadDupIndexMsg" class="crm-view-message">
@@ -1583,6 +1586,32 @@ if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
 					serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>",
 					actionName: "BACKGROUND_MERGE",
 					container: "backgroundLeadMergeWrapper",
+					enableLayout: true
+				}
+			);
+			manager.runAfter(100);
+		});
+	</script><?
+}
+if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			if (BX.AutorunProcessPanel.isExists("backgroundLeadIndexRebuild"))
+			{
+				return;
+			}
+			BX.AutorunProcessManager.messages =
+				{
+					title: "<?=GetMessageJS('CRM_LEAD_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_TITLE')?>",
+					stateTemplate: "<?=GetMessageJS('CRM_LEAD_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_STATE')?>"
+				};
+			var manager = BX.AutorunProcessManager.create(
+				"backgroundLeadDupVolDataPrepare",
+				{
+					serviceUrl: "<?='/bitrix/components/bitrix/crm.lead.list/list.ajax.php?'.bitrix_sessid_get()?>",
+					actionName: "BACKGROUND_DUP_VOL_DATA_PREPARE",
+					container: "backgroundLeadDupVolDataPrepareWrapper",
 					enableLayout: true
 				}
 			);

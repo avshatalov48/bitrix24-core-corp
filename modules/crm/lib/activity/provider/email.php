@@ -301,7 +301,7 @@ class Email extends Activity\Provider\Base
 		$activity['PROVIDER_ID'] = Crm\Activity\Provider\Email::getId();
 		$activity['PROVIDER_TYPE_ID'] = self::TYPE_EMAIL_COMPRESSED;
 
-		$bodyId = Crm\Activity\MailBodyTable::addByBody($activity['DESCRIPTION']);
+		$bodyId = Crm\Activity\MailBodyTable::addByBody($activity['DESCRIPTION'] ?? '');
 
 		$description = [
 			'DESCRIPTION' => $activity['DESCRIPTION'],

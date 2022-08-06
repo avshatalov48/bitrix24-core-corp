@@ -24,10 +24,11 @@ class MarkController extends Controller
 	 *
 	 * @param string $finalStageSemantics - semantics of a final stage (constant of \Bitrix\Crm\PhaseSemantics)
 	 * @param ItemIdentifier $item - item that was moved to a final stage
+	 * @param int|null $authorId
 	 *
 	 * @throws ArgumentException
 	 */
-	public function onItemMoveToFinalStage(ItemIdentifier $item, string $finalStageSemantics): void
+	public function onItemMoveToFinalStage(ItemIdentifier $item, string $finalStageSemantics, ?int $authorId = null): void
 	{
 		if (!PhaseSemantics::isDefined($finalStageSemantics))
 		{
@@ -47,7 +48,7 @@ class MarkController extends Controller
 				'MARK_TYPE_ID' => TimelineMarkType::getMarkTypeByPhaseSemantics($finalStageSemantics),
 				'ENTITY_TYPE_ID' => $item->getEntityTypeId(),
 				'ENTITY_ID' => $item->getEntityId(),
-				'AUTHOR_ID' => static::getCurrentOrDefaultAuthorId(),
+				'AUTHOR_ID' => ($authorId > 0) ? $authorId : static::getCurrentOrDefaultAuthorId(),
 				'BINDINGS' => $bindings,
 			]
 		);

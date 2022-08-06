@@ -51,6 +51,10 @@ export default {
 		{
 			this.reload(this.activeMenuItem);
 		},
+		onReload()
+		{
+			this.reload(this.activeMenuItem);
+		},
 		sendPaymentDeliveryForm(event)
 		{
 			if (!this.isAllowedPaymentDeliverySubmitButton)
@@ -241,6 +245,7 @@ export default {
 			order: state => state.orderCreation,
 		})
 	},
+	//language=Vue
 	template: `
 		<div
 			:class="wrapperClass"
@@ -352,6 +357,7 @@ export default {
 		        <template v-else>
 			        <deal-receiving-payment
 			        	v-if="mode === 'payment_delivery'"
+						@stage-block-on-reload="onReload"
 			        	@stage-block-send-on-send="sendPaymentDeliveryForm($event)"
 			        	:sendAllowed="isAllowedPaymentDeliverySubmitButton"
 			        />

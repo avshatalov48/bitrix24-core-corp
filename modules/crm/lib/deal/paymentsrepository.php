@@ -2,10 +2,12 @@
 
 namespace Bitrix\Crm\Deal;
 
-use Bitrix\Crm\Order\PaymentCollection;
-use Bitrix\Crm\Workflow\PaymentWorkflow;
-use Bitrix\Main\Loader;
-use Bitrix\Main\LoaderException;
+use Bitrix\Crm\Order;
+use Bitrix\Main\Entity;
+use Bitrix\Crm\Binding;
+use Bitrix\Main\DB;
+use Bitrix\Crm\Workflow;
+use Bitrix\Main;
 use Bitrix\Sale;
 
 /**
@@ -14,18 +16,16 @@ use Bitrix\Sale;
  */
 final class PaymentsRepository
 {
-	use OrdersMapMixin;
-
 	/**
-	 * @throws LoaderException
+	 * @throws Main\LoaderException
 	 */
 	public function __construct()
 	{
-		Loader::includeModule('sale');
+		Main\Loader::includeModule('sale');
 	}
 
 	/**
-	 * Returns map [dealId => stage of latest related payment]
+	 * Returns map [dealId => stage of the latest related payment]
 	 * @param array $dealIds
 	 * @return array<int, string>
 	 */
@@ -36,34 +36,69 @@ final class PaymentsRepository
 			return [];
 		}
 
-		$orderToDealMap = $this->getOrderToDealMap($dealIds);
-		$orderIds = array_keys($orderToDealMap);
+		static $result = [];
 
-		if (count($orderIds) === 0)
+		$dealIdsForLoadingStages = [];
+		foreach ($dealIds as $dealId)
 		{
-			return [];
+			if (!isset($result[$dealId]))
+			{
+				$dealIdsForLoadingStages[] = $dealId;
+			}
 		}
 
+		if ($dealIdsForLoadingStages)
+		{
+			$result += $this->loadPaymentStages($dealIdsForLoadingStages);
+		}
+
+		$dealIdsAsKey = array_fill_keys($dealIds, true);
+
+		return array_filter(
+			$result,
+			static function ($key) use ($dealIdsAsKey)
+			{
+				return isset($dealIdsAsKey[$key]);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	protected function loadPaymentStages(array $dealIds) : array
+	{
 		$result = [];
+
 		$paymentRepository = Sale\Repository\PaymentRepository::getInstance();
 
-		$payments = PaymentCollection::getList([
-			'select' => ['ID', 'ORDER_ID'],
-			'filter' => ['=ORDER_ID' => $orderIds],
+		$dbRes = Order\PaymentCollection::getList([
+			'select' => ['ID', 'DEAL_ID' => 'DEAL_BINDING.OWNER_ID'],
+			'filter' => [
+				'@DEAL_ID' => $dealIds,
+			],
 			'order' => ['ORDER_ID' => 'desc', 'ID' => 'desc'],
+			'runtime' => [
+				new Entity\ReferenceField(
+					'DEAL_BINDING',
+					Binding\OrderEntityTable::class,
+					[
+						'=this.ORDER_ID' => 'ref.ORDER_ID',
+						'=ref.OWNER_TYPE_ID' => new DB\SqlExpression(\CCrmOwnerType::Deal)
+					],
+					['join_type' => 'inner']
+				)
+			]
 		]);
-		while ($payment = $payments->fetch())
+		while ($payment = $dbRes->fetch())
 		{
-			$paymentId = (int)$payment['ID'];
-			$orderId = (int)$payment['ORDER_ID'];
-			$dealId = $orderToDealMap[$orderId];
-			if ($dealId && !isset($result[$dealId]))
+			if (isset($result[$payment['DEAL_ID']]))
 			{
-				$paymentObject = $paymentRepository->getById($paymentId);
-				if ($paymentObject)
-				{
-					$result[$dealId] = PaymentWorkflow::createFrom($paymentObject)->getStage();
-				}
+				continue;
+			}
+
+			$paymentObject = $paymentRepository->getById($payment['ID']);
+			if ($paymentObject)
+			{
+				$result[$payment['DEAL_ID']] = Workflow\PaymentWorkflow::createFrom($paymentObject)->getStage();
 			}
 		}
 

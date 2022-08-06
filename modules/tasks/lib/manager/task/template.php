@@ -440,15 +440,6 @@ final class Template extends \Bitrix\Tasks\Manager
 			return $result; // nothing to do
 		}
 
-		// todo: when we edit task with rights loose, this condition will make troubles. temporary commented out
-		/*
-		$task = static::getTask($userId, $taskId);
-		if($parameters['MODE'] != self::MODE_ADD && !$task->isActionAllowed(\CTaskItem::ACTION_EDIT)) // on edit check rights we must
-		{
-			throw new \Bitrix\Tasks\ActionNotAllowedException();
-		}
-		*/
-
 		$data = array();
 
 		$replicate = $taskData[$replicateKey] == 'Y';
@@ -466,7 +457,7 @@ final class Template extends \Bitrix\Tasks\Manager
 					'CREATED_BY' => $taskData['CREATED_BY'],
 					'REPLICATE_PARAMS' => $taskData[$templateKey]['REPLICATE_PARAMS']
 				);
-				$replicateParams = ReplicateParamsCorrector::correctReplicateParamsByTemplateData($templateData);
+				$replicateParams = (new ReplicateParamsCorrector((int)$userId))->correctReplicateParamsByTemplateData($templateData);
 				$taskData[$templateKey]['REPLICATE_PARAMS'] = $replicateParams;
 
 				if($parameters['MODE'] == static::MODE_ADD) // task add, replicate = y

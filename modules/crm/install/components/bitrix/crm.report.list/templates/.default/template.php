@@ -62,7 +62,7 @@ if ($showOldFunnel()):
 ?>
 <script>
 (function() {
-	const table = document.querySelector('#reports_list_table_crm .reports-list-table:last-child');
+	const table = document.querySelector('#reports_list_table_crm .reports-list-table:last-child > tbody');
 	if (!table)
 	{
 		return;

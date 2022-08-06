@@ -119,9 +119,10 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 	{
 		$filterData = $this->getFilterData();
 
-		$userId = $this->arParams['USER_ID'];
-		$groupId = (array_key_exists('GROUP_ID', $filterData) ? $filterData['GROUP_ID'] : 0);
+		$userId = (int)$this->arParams['USER_ID'];
+		$groupId = (int)(array_key_exists('GROUP_ID', $filterData) ? $filterData['GROUP_ID'] : 0);
 		$groupCondition = ($groupId > 0 ? "AND T.GROUP_ID = {$groupId}" : '');
+		$deferredStatus = CTasks::STATE_DEFERRED;
 
 		$dateTo = (new Datetime($filterData['DATETIME_to']))->format('Y-m-d H:i:s');
 		$dateFrom = (new Datetime($filterData['DATETIME_from']))->format('Y-m-d H:i:s');
@@ -138,7 +139,7 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 				{$groupCondition}
 				AND T.CREATED_DATE <= '{$dateTo}'
 				AND (T.CLOSED_DATE >= '{$dateFrom}' OR T.CLOSED_DATE is null)
-				AND T.STATUS != 6
+				AND T.STATUS != {$deferredStatus}
 		";
 
 		$connection = Main\Application::getConnection();

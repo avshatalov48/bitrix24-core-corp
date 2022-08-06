@@ -30,11 +30,13 @@ export class BackendProvider extends AbstractBackendProvider
 				{
 					mode: 'ajax',
 					data: {
-						paysystemId: this.paySystemId,
-						returnUrl: this.returnUrl,
-						orderId: this.orderId,
-						paymentId: this.paymentId,
-						access: this.accessCode,
+						fields: {
+							paySystemId: this.paySystemId,
+							returnUrl: this.returnUrl,
+							orderId: this.orderId,
+							paymentId: this.paymentId,
+							accessCode: this.accessCode,
+						}
 					},
 				}
 			).then((response) => {

@@ -25,6 +25,13 @@ if(Main\Loader::includeModule("bitrix24"))
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
+$region = Main\Application::getInstance()->getLicense()->getRegion();
+$privacyDesc = $region
+	? Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT_' . mb_strtoupper($region))
+	: null
+;
+$privacyDesc = $privacyDesc ?: Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT');
+
 $descImagePath = $this->GetFolder() . "/images/demo_main_";
 $descImagePath .= (in_array(LANGUAGE_ID, array('ru', 'ua', 'kz', 'by')) ? 'ru' : (LANGUAGE_ID === 'de' ? 'de' : 'en'));
 $descImagePath .= ".png";
@@ -285,7 +292,7 @@ UI\Toolbar\Facade\Toolbar::addFilter([
 	"DISABLE_SEARCH" => false,
 	"ENABLE_LIVE_SEARCH" => true,
 	"ENABLE_LABEL" => true,
-	'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+	'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 ]);
 
 
@@ -301,7 +308,7 @@ if(!$arResult['HIDE_DESC'] || !$arResult['HIDE_DESC_FZ152']):?>
 			<div class="crm-webform-list-info-inner">
 
 				<div class="crm-webform-list-info-list-container">
-					<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT')?>
+					<?=$privacyDesc?>
 					<br>
 					<br>
 				</div>

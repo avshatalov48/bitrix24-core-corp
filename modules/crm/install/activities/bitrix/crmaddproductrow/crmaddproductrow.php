@@ -15,12 +15,11 @@ class CBPCrmAddProductRow extends CBPActivity
 		parent::__construct($name);
 		$this->arProperties = [
 			'Title' => '',
+			'ProductId' => null,
+			'RowPriceAccount' => null,
+			'RowQuantity' => 1,
+			'RowDiscountRate' => null
 		];
-
-		foreach (self::getPropertiesMap() as $key => $property)
-		{
-			$this->arProperties[$key] = $property['Default'] ?? null;
-		}
 	}
 
 	public function Execute()
@@ -44,6 +43,11 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		if (!$product)
 		{
+			$this->writeDebugInfo($this->getDebugInfo(
+				['ProductId' => $id],
+				['ProductId' => static::getPropertiesMap($this->getDocumentType())['ProductId']]
+			));
+
 			$this->WriteToTrackingService(GetMessage('CRM_APR_GET_PRODUCT_ERROR'), 0, CBPTrackingType::Error);
 
 			return CBPActivityExecutionStatus::Closed;
@@ -86,6 +90,13 @@ class CBPCrmAddProductRow extends CBPActivity
 			$productRow = Crm\ProductRow::createFromArray($row);
 			$addResult = $entity::addProductRows($this->getDocumentId()[2], [$productRow])->isSuccess();
 		}
+
+		$this->writeDebugInfo($this->getDebugInfo([
+			'ProductId' => $row['PRODUCT_ID'],
+			'RowPriceAccount' => $price,
+			'RowQuantity' => $row['QUANTITY'],
+			'RowDiscountRate' => $row['DISCOUNT_RATE']
+		]));
 
 		if (!$addResult)
 		{
@@ -159,12 +170,12 @@ class CBPCrmAddProductRow extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
-		$dialog->setMap(self::getPropertiesMap());
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
 
-	private static function getPropertiesMap(): array
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		$productSettings = [];
 		if (Main\Loader::includeModule('iblock') && Main\Loader::includeModule('catalog'))
@@ -226,7 +237,7 @@ class CBPCrmAddProductRow extends CBPActivity
 
 		$documentService = CBPRuntime::GetRuntime(true)->getDocumentService();
 
-		foreach (self::getPropertiesMap() as $key => $property)
+		foreach (static::getPropertiesMap($documentType) as $key => $property)
 		{
 			$properties[$key] = $documentService->GetFieldInputValue(
 				$documentType,

@@ -120,10 +120,6 @@
 			if (this.isScheduleFixed)
 			{
 				this.showWorkdaysBySelectedValue(this.workdaysToggle.textContent);
-				if (this.convertFormattedTimeToSecs(this.breakTimeLink.value) === 0)
-				{
-					this.setBreakSeconds(3600);
-				}
 			}
 			if (selectedValue === this.shiftedScheduleTypeName)
 			{

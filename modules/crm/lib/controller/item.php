@@ -949,7 +949,9 @@ class Item extends Base
 		}
 
 		return [
-			'id' => (int)$id,
+			'item' => [
+				'id' => (int)$id,
+			]
 		];
 	}
 }

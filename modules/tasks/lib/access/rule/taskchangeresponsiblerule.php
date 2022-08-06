@@ -23,6 +23,7 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -33,6 +34,7 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (!$this->canChangeResponsible($task))
 		{
+			$this->controller->addError(static::class, 'Access to change responsible denied');
 			return false;
 		}
 
@@ -46,6 +48,7 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $member, $this->newTask))
 			{
+				$this->controller->addError(static::class, 'Access to assign responsible denied');
 				return false;
 			}
 		}
@@ -78,7 +81,12 @@ class TaskChangeResponsibleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "edit_tasks")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;

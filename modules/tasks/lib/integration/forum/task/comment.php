@@ -228,6 +228,15 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			)
 		);
 
+		// $feed->update() works with global-defined user fields
+		foreach ($data as $key => $value)
+		{
+			if (Util\UserField::isUFKey($key))
+			{
+				$GLOBALS[$key] = $value;
+			}
+		}
+
 		$updateResult = $feed->edit($id, $data);
 		if($updateResult)
 		{

@@ -135,7 +135,7 @@ class Type extends Controller
 		$typeForm->setId($type->getId());
 		$typeForm->setName($name);
 
-		$typeService->changeType($type);
+		$typeService->changeType($typeForm);
 
 		if ($typeService->getErrors())
 		{

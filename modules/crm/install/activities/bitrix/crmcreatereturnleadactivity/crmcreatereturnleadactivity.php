@@ -1,8 +1,11 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-class CBPCrmCreateReturnLeadActivity
-	extends CBPActivity
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+class CBPCrmCreateReturnLeadActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
@@ -93,12 +96,15 @@ class CBPCrmCreateReturnLeadActivity
 			]
 		);
 
+		$this->logDebug($leadTitle, $responsibles[0]);
+
 		if (!$id)
 		{
 			$this->WriteToTrackingService($leadEntity->LAST_ERROR, 0, CBPTrackingType::Error);
 		}
 		else
 		{
+			$this->logDebugId($id);
 			$this->LeadId = $id;
 			if (\COption::GetOptionString("crm", "start_bp_within_bp", "N") == "Y")
 			{
@@ -134,19 +140,7 @@ class CBPCrmCreateReturnLeadActivity
 			'siteId' => $siteId
 		));
 
-		$dialog->setMap(array(
-			'LeadTitle' => array(
-				'Name' => GetMessage('CRM_CRL_LEAD_TITLE'),
-				'Description' => GetMessage('CRM_CRL_LEAD_TITLE'),
-				'FieldName' => 'lead_title',
-				'Type' => 'string'
-			),
-			'Responsible' => array(
-				'Name' => GetMessage('CRM_CRL_RESPONSIBLE'),
-				'FieldName' => 'responsible',
-				'Type' => 'user'
-			),
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -175,5 +169,42 @@ class CBPCrmCreateReturnLeadActivity
 		$arCurrentActivity["Properties"] = $arProperties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'LeadTitle' => [
+				'Name' => GetMessage('CRM_CRL_LEAD_TITLE'),
+				'Description' => GetMessage('CRM_CRL_LEAD_TITLE'),
+				'FieldName' => 'lead_title',
+				'Type' => 'string'
+			],
+			'Responsible' => [
+				'Name' => GetMessage('CRM_CRL_RESPONSIBLE'),
+				'FieldName' => 'responsible',
+				'Type' => 'user'
+			],
+		];
+	}
+
+	private function logDebug($leadTitle, $responsible)
+	{
+		$debugInfo = $this->getDebugInfo([
+			'LeadTitle' => $leadTitle,
+			'Responsible' => 'user_' . $responsible,
+		]);
+
+		$this->writeDebugInfo($debugInfo);
+	}
+
+	private function logDebugId($id)
+	{
+		$debugInfo = $this->getDebugInfo(
+			['LeadId' => $id],
+			['LeadId' => GetMessage('CRM_CRL_CREATED_LEAD')],
+		);
+
+		$this->writeDebugInfo($debugInfo);
 	}
 }

@@ -99,17 +99,19 @@ if ($isErrorOccured)
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Duplicate\Background\CompanyIndexRebuild;
 use Bitrix\Crm\Agent\Duplicate\Background\CompanyMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Tracking;
+use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\CompanyAddress;
-use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Settings\CompanySettings;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -321,7 +323,7 @@ if($fromAnalytics)
 
 $arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter || $enableReportFilter);
 
-$CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmCompany::$sUFEntityID);
+$CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmCompany::$sUFEntityID, ['categoryId' => $arResult['CATEGORY_ID']]);
 $CCrmFieldMulti = new CCrmFieldMulti();
 
 $arResult['GRID_ID'] =
@@ -355,12 +357,20 @@ $requisite = new \Bitrix\Crm\EntityRequisite();
 //region Filter Presets Initialization
 if (!$bInternal)
 {
-	$currentUserID = $arResult['CURRENT_USER_ID'];
-	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
-	$arResult['FILTER_PRESETS'] = array(
-		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'disallow_for_all' => true, 'fields' => array('ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
-		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CHANGE_MY'), 'disallow_for_all' => true, 'fields' => array('MODIFY_BY_ID_name' => $currentUserName, 'MODIFY_BY_ID' => $currentUserID))
+	$filterFlags = Crm\Filter\CompanySettings::FLAG_NONE;
+	if($enableOutmodedFields)
+	{
+		$filterFlags |= Crm\Filter\CompanySettings::FLAG_ENABLE_ADDRESS;
+	}
+	$entityFilter = Crm\Filter\Factory::createEntityFilter(
+		new Crm\Filter\CompanySettings(['ID' => $arResult['GRID_ID'], 'flags' => $filterFlags])
 	);
+	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Company())
+		->setUserId((int) $arResult['CURRENT_USER_ID'])
+		->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
+		->setDefaultValues($entityFilter->getDefaultFieldIDs())
+		->getDefaultPresets()
+	;
 }
 //endregion
 
@@ -384,20 +394,7 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 if (!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'BANKING_DETAILS', 'COMMENTS'];
-	$filterFlags = Crm\Filter\CompanySettings::FLAG_NONE;
-	if($enableOutmodedFields)
-	{
-		$filterFlags |= Crm\Filter\CompanySettings::FLAG_ENABLE_ADDRESS;
-	}
 
-	$entityFilter = Crm\Filter\Factory::createEntityFilter(
-		new Crm\Filter\CompanySettings(
-				array(
-					'ID' => $arResult['GRID_ID'],
-					'flags' => $filterFlags
-				)
-		)
-	);
 	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 	if(empty($effectiveFilterFieldIDs))
 	{
@@ -2495,6 +2492,29 @@ if (!$isInExportMode)
 		$arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'] = $isNeedToShowDupMergeProcess;
 		unset($isNeedToShowDupMergeProcess, $agent);
 		//endregion Show the process of merge duplicates
+
+		//region Show the progress of data preparing for volatile duplicate types
+		$isNeedToShowDupVolDataPrepare = false;
+		$typeInfo = Volatile\TypeInfo::getInstance()->getIdsByEntityTypes([CCrmOwnerType::Company]);
+		if (isset($typeInfo[CCrmOwnerType::Company]))
+		{
+			foreach ($typeInfo[CCrmOwnerType::Company] as $id)
+			{
+				$agent = IndexRebuild::getInstance($id);
+				if ($agent->isActive())
+				{
+					$state = $agent->state()->getData();
+					/** @noinspection PhpClassConstantAccessedViaChildClassInspection */
+					if (isset($state['STATUS']) && $state['STATUS'] === IndexRebuild::STATUS_RUNNING)
+					{
+						$isNeedToShowDupVolDataPrepare = true;
+					}
+				}
+			}
+		}
+		$arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'] = $isNeedToShowDupVolDataPrepare;
+		unset($isNeedToShowDupVolDataPrepare, $typeInfo, $id, $agent, $state);
+		//endregion Show the progress of data preparing for volatile duplicate types
 	}
 
 	$this->IncludeComponentTemplate();

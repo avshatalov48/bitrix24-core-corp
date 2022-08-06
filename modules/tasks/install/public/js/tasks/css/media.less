@@ -99,6 +99,7 @@
 	min-height: 33px;
 
 	border: 1px solid @color-border;
+	border-radius: var(--task-form-field-border-radius, var(--ui-border-radius-2xs));
 	padding: 5px 5px 0 5px;
 
 	&.inline {
@@ -288,6 +289,7 @@
 
 		-webkit-transition: background-color 0.2s linear;
 		transition: background-color 0.2s linear;
+		border-radius: var(--task-form-field-item-border-radius, var(--ui-border-radius-3xs));
 		.task-form-field-inline-item();
 
 		// hiding the ability to click on links with void reference

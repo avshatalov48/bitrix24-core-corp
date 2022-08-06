@@ -17,6 +17,7 @@ use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons;
+use Bitrix\UI\Buttons\Icon;
 use Bitrix\UI\Toolbar;
 
 abstract class ItemList extends Base
@@ -183,21 +184,18 @@ abstract class ItemList extends Base
 		{
 			$category = $this->factory->getDefaultCategory();
 		}
-		if (
-			$container->getUserPermissions()->checkAddPermissions(
-				$this->entityTypeId,
-				$category ? $category->getId() : null
-			)
-		)
+
+		$isEnabled = $container->getUserPermissions()->checkAddPermissions(
+			$this->entityTypeId,
+			$category ? $category->getId() : null
+		);
+		$addButtonParameters = $this->getAddButtonParameters(!$isEnabled);
+		if ($isTypeSettingsRestricted)
 		{
-			$addButtonParameters = $this->getAddButtonParameters();
-			if ($isTypeSettingsRestricted)
-			{
-				$addButtonParameters['onclick'] = $dynamicTypesLimit->getShowFeatureJsHandler();
-				unset($addButtonParameters['link']);
-			}
-			$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button($addButtonParameters);
+			$addButtonParameters['onclick'] = $isEnabled ? $dynamicTypesLimit->getShowFeatureJsHandler() : null;
+			unset($addButtonParameters['link']);
 		}
+		$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button($addButtonParameters);
 
 		if ($this->factory->isCategoriesEnabled())
 		{
@@ -210,6 +208,7 @@ abstract class ItemList extends Base
 			)
 			{
 				$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
+					'icon' => defined('Icon::FUNNEL') ? Icon::FUNNEL : '',
 					'color' => Buttons\Color::LIGHT_BORDER,
 					'className' => 'ui-btn ui-btn-themes ui-btn-light-border ui-btn-dropdown ui-toolbar-btn-dropdown',
 					'text' => $this->category ? $this->category->getName() : Loc::getMessage('CRM_TYPE_TOOLBAR_ALL_ITEMS'),
@@ -223,6 +222,7 @@ abstract class ItemList extends Base
 						'role' => 'bx-crm-toolbar-categories-button',
 						'entity-type-id' => $this->factory->getEntityTypeId(),
 						'category-id' => $this->category ? $this->category->getId() : null,
+						'toolbar-collapsed-icon' => defined('Icon::FUNNEL') ? Icon::FUNNEL : '',
 					],
 				]);
 			}
@@ -262,6 +262,9 @@ abstract class ItemList extends Base
 				'menu' => [
 					'id' => 'crm-toolbar-settings-menu',
 					'items' => $settingsItems,
+					'offsetLeft' => 20,
+					'closeByEsc' => true,
+					'angle' => true
 				],
 			]);
 			$settingsButton->addAttribute('id', static::TOOLBAR_SETTINGS_BUTTON_ID);
@@ -494,19 +497,40 @@ abstract class ItemList extends Base
 
 	abstract protected function getListViewType(): string;
 
-	protected function getAddButtonParameters(): array
+	protected function getAddButtonParameters(bool $isDisabled = false): array
 	{
+		$link = Service\Container::getInstance()->getRouter()
+			->getItemDetailUrl(
+				$this->entityTypeId,
+				0,
+				$this->getCategoryId()
+			)
+			->getUri()
+		;
+
+		// disabled button configuration
+		$disabledButtonDataset = [];
+		$disabledButtonClass = '';
+		if($isDisabled)
+		{
+			$link = null;
+			$hintMsg = $this->entityTypeId === \CCrmOwnerType::SmartInvoice
+				? 'CRM_SMART_INVOICE_ADD_HINT'
+				: 'CRM_TYPE_ITEM_ADD_HINT';
+			$disabledButtonDataset = [
+				'hint' => Loc::getMessage($hintMsg),
+				'hint-no-icon' => '',
+			];
+			$disabledButtonClass = 'ui-btn-disabled-ex'; // to correct display hint
+		}
+
 		return [
 			'color' => Buttons\Color::SUCCESS,
 			'text' => Loc::getMessage('CRM_COMMON_ACTION_ADD'),
 			'icon' => Buttons\Icon::ADD,
-			'link' => Service\Container::getInstance()->getRouter()
-				->getItemDetailUrl(
-					$this->entityTypeId,
-					0,
-					$this->getCategoryId()
-				)
-				->getUri(),
+			'link' => $link,
+			'dataset' => $disabledButtonDataset,
+			'className' => $disabledButtonClass,
 		];
 	}
 }

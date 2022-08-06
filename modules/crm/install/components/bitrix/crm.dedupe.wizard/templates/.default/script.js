@@ -522,11 +522,12 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 		var indexAgentState = this.getIndexAgentState();
 		var nextStatus = BX.prop.getString(indexAgentState, "NEXT_STATUS", "")
 		var status = BX.prop.getString(indexAgentState, "STATUS", "")
+		var selectedTypeNames = BX.prop.getArray(this._wizard.getConfig(), "typeNames", []);
 		var layoutComplete = false;
 
 		if (nextStatus === 'STATUS_UNDEFINED')
 		{
-			if (status === 'STATUS_INACTIVE' || status === 'STATUS_STOPPED')
+			if (selectedTypeNames.length <= 0 || status === 'STATUS_INACTIVE' || status === 'STATUS_STOPPED')
 			{
 				this.layoutBeforeStart();
 				layoutComplete = true;
@@ -762,8 +763,7 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 					this.clearMergeAgentState();
 				}
 
-				if (!isActive && isStatusActive
-				)
+				if (!isActive && isStatusActive)
 				{
 					status = "STATUS_STOPPED";
 					isStatusActive = false;
@@ -840,8 +840,9 @@ if(typeof(BX.Crm.DedupeWizardScanning) === "undefined")
 				{
 					var data = BX.prop.getObject(response, "data", {});
 					if (
-						data["STATUS"] === "STATUS_PENDING_STOP"
-						|| data["STATUS"] === "STATUS_STOPPEND"
+						data["STATUS"] === "STATUS_INACTIVE"
+						|| data["STATUS"] === "STATUS_PENDING_STOP"
+						|| data["STATUS"] === "STATUS_STOPPED"
 						|| data['NEXT_STATUS'] === "STATUS_PENDING_STOP"
 					)
 					{
@@ -1254,7 +1255,7 @@ if(typeof(BX.Crm.DedupeWizardMerging) === "undefined")
 					var data = BX.prop.getObject(response, "data", {});
 					if (
 						data["STATUS"] === "STATUS_PENDING_STOP"
-						|| data["STATUS"] === "STATUS_STOPPEND"
+						|| data["STATUS"] === "STATUS_STOPPED"
 						|| data['NEXT_STATUS'] === "STATUS_PENDING_STOP"
 					)
 					{

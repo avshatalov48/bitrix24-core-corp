@@ -3,7 +3,11 @@ global $APPLICATION;
 /** @var array $arResult */
 
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
-CJSCore::Init(array('popup'));
+
+\Bitrix\Main\UI\Extension::load([
+	'popup',
+	'ui.design-tokens',
+]);
 
 if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y')
 {

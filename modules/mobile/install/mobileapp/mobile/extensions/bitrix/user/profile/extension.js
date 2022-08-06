@@ -3,7 +3,6 @@
 */
 
 (()=>{
-
 	let statusColor = status =>{
 		let colors = {
 			admin: "#2FC6F6",
@@ -92,6 +91,7 @@
 
 		error(message)
 		{
+			console.error(message);
 			let errorMessage = BX.message("SOMETHING_WENT_WRONG");
 			if(message && typeof message == "string")
 				errorMessage = message;
@@ -310,11 +310,9 @@
 
 		onItemSelected(item)
 		{
-
 			let valueForOpening = item.subtitle;
 			if(item.params)
 			{
-
 				if(item.params.code == "communicate")
 				{
 					this.openChat(this.userId,  {
@@ -406,15 +404,27 @@
 			{
 				console.info('BX.MobileTools.openChat: open chat in JSNative component');
 
-				let openDialog = () => BX.postComponentEvent("onOpenDialog", [{
-					dialogId: dialogId,
-					dialogTitleParams: dialogTitleParams ? {
-						name: dialogTitleParams.name || '',
-						avatar: dialogTitleParams.avatar || '',
-						color: dialogTitleParams.color || '',
-						description: dialogTitleParams.description || ''
-					} : false
-				}], 'im.recent');
+				let openDialog = () => {
+					BX.postComponentEvent("onOpenDialog", [{
+						dialogId: dialogId,
+						dialogTitleParams: dialogTitleParams ? {
+							name: dialogTitleParams.name || '',
+							avatar: dialogTitleParams.avatar || '',
+							color: dialogTitleParams.color || '',
+							description: dialogTitleParams.description || ''
+						} : false
+					}], 'im.recent');
+
+					BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{
+						dialogId: dialogId,
+						dialogTitleParams: dialogTitleParams ? {
+							name: dialogTitleParams.name || '',
+							avatar: dialogTitleParams.avatar || '',
+							color: dialogTitleParams.color || '',
+							description: dialogTitleParams.description || ''
+						} : false
+					}], 'im.messenger');
+				}
 
 				if(this.isBackdrop)
 				{
@@ -783,7 +793,6 @@
 
 	class ProfileEdit extends Profile
 	{
-
 		init()
 		{
 			this.changed = false;
@@ -801,32 +810,42 @@
 			super.init();
 		}
 
+		onItemSelected(item) {
+			if(item.id === "delete_account") {
+				let { openDeleteDialog } = jn.require("user/account-delete")
+				openDeleteDialog()
+			}
+		}
+
 		onItemChanged(data)
 		{
-			console.log(data);
 			this.changed = true;
-			if(data.type == "userpic")
+			if (data.id === "delete_account") {
+				this.onItemSelected(data);
+				return;
+			}
+			if(data.type === "userpic")
 			{
-				if(data.value == "")
+				if(data.value === "")
 				{
 					this.updateAvatar(false)
 				}
 				else
 				{
-					FileProcessing.resize("avatarResize", {
+					let {FileConverter} = jn.require("files/converter")
+					let {getFile} = jn.require("files/entry")
+					let converter = new FileConverter()
+					converter.resize("avatarResize", {
 						url:data.value,
 						width:1000,
 						height:1000,
 					}).then(path => {
-						BX.FileUtils.fileForReading(path)
-							.then(file=>
-							{
+						getFile(path)
+							.then(file => {
 								file.readMode = BX.FileConst.READ_MODE.DATA_URL;
 								file.readNext()
-									.then(fileData=>
-									{
-										if(fileData.content)
-										{
+									.then(fileData=> {
+										if(fileData.content) {
 											let content = fileData.content;
 											this.updateAvatar([
 												"avatar.png",
@@ -950,7 +969,30 @@
 			};
 
 			let items = Object.values(this.formFields);
+			if (this.userId === Number(env.userId) && Application.getPlatform() === "ios")
+			{
+				let { isCloudAccount } = jn.require("user/account-delete")
+				if (isCloudAccount())
+				{
+					items.push({
+						sectionCode: 'account',
+						type: "default",
+						title: BX.message('DELETE_ACCOUNT'),
+						id: "delete_account",
+						styles: {
+							title: {
+								font: {color: "#fb0000"}
+							},
+						}
+					})
+
+					this.formSections.push({id: "account", title: ""})
+				}
+			}
+
 			this.form.setItems(items, this.formSections);
+
+			console.log(items, this.formSections);
 			this.form.setRightButtons([
 				{
 					name: BX.message("SAVE_FORM"),
@@ -964,7 +1006,7 @@
 							this.form.getItems()
 								.filter(item =>
 								{
-									if(item.type === "userpic")
+									if(item.type === "userpic" || item.type === "default")
 										return false;
 									let oldValue = this.formFields[item.id].value
 									if( typeof oldValue === "undefined") {

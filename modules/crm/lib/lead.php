@@ -9,16 +9,15 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\History\Entity\LeadStatusHistoryTable;
 use Bitrix\Crm\History\Entity\LeadStatusHistoryWithSupposedTable;
+use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\BooleanField;
-use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
@@ -63,8 +62,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 	public static function getMap()
 	{
-		global $DB;
-
 		$fieldRepository = Main\DI\ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
 		$map = [
@@ -146,6 +143,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 				'IS_CONVERT',
 				'CASE WHEN %s = \'CONVERTED\' THEN 1 ELSE 0 END',
 				['STATUS_ID'],
+				['values' => [0, 1]]
 			))
 				->configureValueType(BooleanField::class)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_IS_CONVERT_FIELD'))
@@ -179,35 +177,15 @@ class LeadTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getTitle(),
 
-			(new StringField('FULL_NAME'))
-				->configureNullable()
-				->configureSize(100)
-			,
+			$fieldRepository->getFullName(),
 
-			(new StringField('NAME'))
-				->configureNullable()
-				->configureSize(50)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_NAME_FIELD'))
-			,
+			$fieldRepository->getName(),
 
-			(new StringField('LAST_NAME'))
-				->configureNullable()
-				->configureSize(50)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_LAST_NAME_FIELD'))
-			,
+			$fieldRepository->getLastName(),
 
-			(new StringField('SECOND_NAME'))
-				->configureNullable()
-				->configureSize(50)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_SECOND_NAME_FIELD'))
-			,
+			$fieldRepository->getSecondName(),
 
-			(new ExpressionField(
-				'SHORT_NAME',
-				$DB->concat("%s","' '", "UPPER(".$DB->substr("%s", 1, 1).")", "'.'"),
-				['LAST_NAME', 'NAME'],
-			))
-				->configureValueType(StringField::class)
+			$fieldRepository->getShortName()
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_SHORT_NAME_FIELD'))
 			,
 
@@ -217,16 +195,9 @@ class LeadTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_COMPANY_TITLE_FIELD'))
 			,
 
-			(new StringField('POST'))
-				->configureNullable()
-				->configureSize(255)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_POST_FIELD'))
-			,
+			$fieldRepository->getPost(),
 
-			(new TextField('ADDRESS'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_ADDRESS_FIELD'))
-			,
+			$fieldRepository->getAddress(),
 
 			$fieldRepository->getComments(),
 
@@ -244,42 +215,17 @@ class LeadTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_DATE_CLOSED_FIELD'))
 			,
 
-			(new DateField('BIRTHDATE'))
-				->configureNullable()
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_BIRTHDATE_FIELD'))
-			,
+			$fieldRepository->getBirthdate(),
 
-			(new IntegerField('BIRTHDAY_SORT'))
-				->configureRequired()
-				->configureDefaultValue(1024)
-			,
+			$fieldRepository->getBirthdaySort(),
 
-			(new StringField('HONORIFIC'))
-				->configureNullable()
-				->configureSize(128)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HONORIFIC_FIELD'))
-			,
+			$fieldRepository->getHonorific(),
 
-			(new BooleanField('HAS_PHONE'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue(false)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HAS_PHONE_FIELD'))
-			,
+			$fieldRepository->getHasPhone(),
 
-			(new BooleanField('HAS_EMAIL'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue(false)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HAS_EMAIL_FIELD'))
-			,
+			$fieldRepository->getHasEmail(),
 
-			(new BooleanField('HAS_IMOL'))
-				->configureRequired()
-				->configureStorageValues('N', 'Y')
-				->configureDefaultValue(false)
-				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_HAS_IMOL_FIELD'))
-			,
+			$fieldRepository->getHasImol(),
 
 			(new ExpressionField(
 				'LOGIN',
@@ -292,9 +238,7 @@ class LeadTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_IS_RETURN_CUSTOMER_FIELD'))
 			,
 
-			(new IntegerField('FACE_ID'))
-				->configureNullable()
-			,
+			$fieldRepository->getFaceId(),
 
 			$fieldRepository->getSearchContent(),
 
@@ -312,92 +256,93 @@ class LeadTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EVENT_RELATION_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'PHONE_MOBILE',
-				'PHONE',
-				'MOBILE',
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Phone::VALUE_TYPE_MOBILE
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PHONE_MOBILE_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'PHONE_WORK',
-				'PHONE',
-				'WORK',
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Phone::VALUE_TYPE_WORK
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PHONE_WORK_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'PHONE_MAILING',
-				'PHONE',
-				'MAILING'
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Phone::VALUE_TYPE_MAILING
 			),
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'EMAIL_HOME',
-				'EMAIL',
-				'HOME'
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Email::VALUE_TYPE_HOME
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EMAIL_HOME_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'EMAIL_WORK',
-				'EMAIL',
-				'WORK',
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Email::VALUE_TYPE_WORK
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EMAIL_WORK_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'EMAIL_MAILING',
-				'EMAIL',
-				'MAILING'
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Email::VALUE_TYPE_MAILING
 			),
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'SKYPE',
-				'IM',
-				'SKYPE'
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Im::ID,
+				Multifield\Type\Im::VALUE_TYPE_SKYPE
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_SKYPE_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'ICQ',
-				'IM',
-				'ICQ',
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Im::ID,
+				Multifield\Type\Im::VALUE_TYPE_ICQ
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_ICQ_FIELD'))
 			,
 
-			(new ExpressionField(
+			$fieldRepository->getMultifieldValueLike(
 				'IMOL',
-				'('.$DB->TopSql(
-					'SELECT FM.VALUE '.
-					'FROM b_crm_field_multi FM '.
-					'WHERE FM.ENTITY_ID = \'LEAD\' '.
-					'AND FM.ELEMENT_ID = %s '.
-					'AND FM.TYPE_ID = \'IM\' '.
-					'AND FM.VALUE LIKE \'imol|%%\' '.
-					'ORDER BY FM.ID', 1
-				).')',
-				['ID'],
-			))
-				->configureValueType(StringField::class)
-			,
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Im::ID,
+				'imol|%%'
+			),
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'EMAIL',
-				'EMAIL',
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Email::ID,
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_EMAIL_FIELD'))
 			,
 
-			static::getMultifieldValueExpression(
+			$fieldRepository->getMultifieldValue(
 				'PHONE',
-				'PHONE'
+				\CCrmOwnerType::Lead,
+				Multifield\Type\Phone::ID,
 			)
 				->configureTitle(Loc::getMessage('CRM_LEAD_ENTITY_PHONE_FIELD'))
 			,
@@ -453,41 +398,6 @@ class LeadTable extends Main\ORM\Data\DataManager
 		];
 
 		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Lead));
-	}
-
-	private static function getMultifieldValueExpression(
-		string $fieldName,
-		string $typeId,
-		?string $valueType = null
-	): ExpressionField
-	{
-		global $DB;
-
-		$sqlHelper = Main\Application::getConnection()->getSqlHelper();
-
-		$sql =
-			'SELECT FM.VALUE ' .
-			'FROM b_crm_field_multi FM ' .
-			"WHERE FM.ENTITY_ID = 'LEAD' " .
-			'AND FM.ELEMENT_ID = %s ' .
-			'AND FM.TYPE_ID = ' . $sqlHelper->convertToDbString($typeId) . ' '
-		;
-
-		if (!is_null($valueType))
-		{
-			$sql .= 'AND FM.VALUE_TYPE = ' . $sqlHelper->convertToDbString($valueType) . ' ';
-		}
-
-		$sql .= 'ORDER BY FM.ID';
-
-		return
-			(new ExpressionField(
-				$fieldName,
-				'(' . $DB->TopSql($sql, 1) . ')',
-				['ID'],
-			))
-				->configureValueType(StringField::class)
-		;
 	}
 
 	private static function ensureStatusesLoaded()

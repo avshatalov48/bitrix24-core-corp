@@ -628,7 +628,7 @@ final class Task extends Base
 				$taskService = new TaskService($params['SIFT_THROUGH_FILTER']['userId']);
 				$filterInstance = $taskService->getFilterInstance(
 					$params['SIFT_THROUGH_FILTER']['groupId'],
-					$params['SIFT_THROUGH_FILTER']['isCompletedSprint'] === 'Y'
+					$params['SIFT_THROUGH_FILTER']['isCompletedSprint'] === 'Y' ? 'complete' : 'active'
 				);
 			}
 			else
@@ -641,13 +641,24 @@ final class Task extends Base
 			$filter = array_merge($filter, $filterInstance->process());
 			unset($filter['ONLY_ROOT_TASKS']);
 		}
+
 		$navParams = [
 			'nPageSize' => $pageNavigation->getLimit(),
 			'iNumPageSize' => $pageNavigation->getOffset(),
 			'iNumPage' => $pageNavigation->getCurrentPage(),
+			'getTotalCount' => true,
 		];
-		$key = (isset($params['COUNT_TOTAL']) && $params['COUNT_TOTAL'] === 'N' ? 'getPlusOne' : 'getTotalCount');
-		$navParams[$key] = true;
+		if (
+			($getPlusOne = (isset($params['GET_PLUS_ONE']) && $params['GET_PLUS_ONE'] === 'Y'))
+			|| (int)$this->getRequest()->get('start') === -1
+		)
+		{
+			if ($getPlusOne)
+			{
+				$navParams['getPlusOne'] = true;
+			}
+			unset($navParams['getTotalCount']);
+		}
 
 		$getListParams = [
 			'select' => $this->prepareSelect($select),

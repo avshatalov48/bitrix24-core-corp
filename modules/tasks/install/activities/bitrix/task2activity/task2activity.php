@@ -7,9 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Text\Emoji;
 
-class CBPTask2Activity
-	extends CBPActivity
-	implements IBPEventActivity, IBPActivityExternalEventListener, IBPEventDrivenActivity
+class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener, IBPEventDrivenActivity
 {
 	private $isInEventActivityMode = false;
 	private static $cycleCounter = [];
@@ -102,9 +100,12 @@ class CBPTask2Activity
 
 		$documentId = $this->GetDocumentId();
 
+		$logMap = static::getPropertiesMap($this->getDocumentType());
+
 		$this->checkCycling($documentId);
 
 		$fields = $this->Fields;
+
 		$fields["CREATED_BY"] = CBPHelper::ExtractUsers($this->Fields["CREATED_BY"], $documentId, true);
 		$fields["RESPONSIBLE_ID"] = CBPHelper::ExtractUsers($this->Fields["RESPONSIBLE_ID"], $documentId, true);
 		$fields["ACCOMPLICES"] = CBPHelper::ExtractUsers($this->Fields["ACCOMPLICES"], $documentId);
@@ -151,9 +152,16 @@ class CBPTask2Activity
 			$parentId = is_array($fields['PARENT_ID']) ? reset($fields['PARENT_ID']) : $fields['PARENT_ID'];
 			if(is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId)))
 			{
-				$this->WriteToTrackingService(GetMessage('BPTA1A_TASK_TASK_PRESENCE_ERROR',
-					['#TASK_ID#' => $parentId]
-				));
+				$parentIdModifiedProperty = $logMap['PARENT_ID'];
+				$parentIdModifiedProperty['BaseType'] = 'string';
+				$this->writeDebugInfo($this->getDebugInfo(['PARENT_ID' => $parentId], ['PARENT_ID' => $parentIdModifiedProperty]));
+
+				$this->WriteToTrackingService(
+					GetMessage('BPTA1A_TASK_TASK_PRESENCE_ERROR', ['#TASK_ID#' => $parentId]),
+					0,
+					CBPTrackingType::Error
+				);
+
 				return false;
 			}
 			elseif(empty($arFieldsChecked['GROUP_ID']))
@@ -231,11 +239,19 @@ class CBPTask2Activity
 
 		if (empty($arFieldsChecked['CREATED_BY']))
 		{
+			$this->writeDebugInfo(
+				$this->getDebugInfo(
+					['CREATED_BY' => $arFieldsChecked['CREATED_BY']],
+					['CREATED_BY' => $logMap['CREATED_BY']]
+				)
+			);
+
 			$this->WriteToTrackingService(
 				GetMessage("BPSA_CREATED_BY_ERROR"),
 				0,
 				CBPTrackingType::Error
 			);
+
 			return false;
 		}
 
@@ -271,6 +287,8 @@ class CBPTask2Activity
 		$errors = array();
 		try
 		{
+			$this->writeDebugInfo($this->getDebugInfo(array_merge($arFieldsChecked, ['HoldToClose' => $this->HoldToClose])));
+
 			// todo: use \Bitrix\Tasks\Item\Task here
 			$task = CTaskItem::add($arFieldsChecked, \Bitrix\Tasks\Util\User::getAdminId());
 			$result = $task->getId();
@@ -330,6 +348,22 @@ class CBPTask2Activity
 
 					\CTaskCheckListItem::add($taskItem, ['TITLE' => $checkListItem]);
 				}
+			}
+
+			if (count(array_filter($checkListItems)) === count($checkListItems))
+			{
+				$map = $this->getDebugInfo(
+					['CHECK_LIST_ITEMS' => $checkListItems],
+					[
+						"CHECK_LIST_ITEMS" => [
+							"Name" => GetMessage("BPSA_CHECK_LIST_ITEMS"),
+							"Type" => "string",
+							"Required" => false,
+							"Multiple" => true,
+						],
+					]
+				);
+				$this->writeDebugInfo($map);
 			}
 		}
 
@@ -425,7 +459,7 @@ class CBPTask2Activity
 			return;
 		}
 
-		list($documentType, $documentId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+		[$documentType, $documentId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 
 		$documentStage = $this->getDocumentStage($documentType);
 
@@ -471,11 +505,11 @@ class CBPTask2Activity
 		switch ($documentType)
 		{
 			case CCrmOwnerType::LeadName:
-				return $document['STATUS_ID'];
+			case CCrmOwnerType::QuoteName:
+				return $document['STATUS_ID'] ?? '';
 
-			case CCrmOwnerType::Quote:
 			case CCrmOwnerType::DealName:
-				return $document['STAGE_ID'];
+				return $document['STAGE_ID'] ?? '';
 
 			default:
 				$documentTypeId = CCrmOwnerType::ResolveID($documentType);
@@ -572,17 +606,6 @@ class CBPTask2Activity
 				return true;
 			}
 		}
-	}
-
-	public function HandleFault(Exception $exception)
-	{
-		$status = $this->Cancel();
-		if ($status == CBPActivityExecutionStatus::Canceling)
-		{
-			return CBPActivityExecutionStatus::Faulting;
-		}
-
-		return $status;
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $currentSiteId = null)
@@ -925,7 +948,18 @@ class CBPTask2Activity
 				"Editable" => true,
 				"Required" => true,
 				"Multiple" => false,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
+			),
+			"DESCRIPTION" => array(
+				"Name" => GetMessage("BPTA1A_TASKDETAILTEXT"),
+				"Type" => "T",
+				"Editable" => true,
+				"Required" => false,
+				"Multiple" => false,
+				"BaseType" => "text"
 			),
 			"ACCOMPLICES" => array(
 				"Name" => GetMessage("BPTA1A_TASKACCOMPLICES"),
@@ -959,16 +993,8 @@ class CBPTask2Activity
 				"Multiple" => false,
 				"BaseType" => "datetime"
 			),
-			"DESCRIPTION" => array(
-				"Name" => GetMessage("BPTA1A_TASKDETAILTEXT"),
-				"Type" => "T",
-				"Editable" => true,
-				"Required" => false,
-				"Multiple" => false,
-				"BaseType" => "text"
-			),
 			"PRIORITY" => array(
-				"Name" => GetMessage("BPTA1A_TASKPRIORITY_V2"),
+				"Name" => GetMessage("BPTA1A_TASKPRIORITY_V3"),
 				"Type" => "L",
 				"Options" => $arTaskPriority,
 				"Editable" => true,
@@ -1070,5 +1096,65 @@ class CBPTask2Activity
 			$this->WriteToTrackingService(GetMessage("BPSA_CYCLING_ERROR_1"), 0, CBPTrackingType::Error);
 			throw new Exception();
 		}
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$fields = self::__GetFields();
+		$bpOptions = [
+			'HoldToClose' => [
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPTA1A_HOLD_TO_CLOSE'),
+				'Type' => \Bitrix\Bizproc\FieldType::BOOL,
+				'BaseType' => \Bitrix\Bizproc\FieldType::BOOL,
+				'Required' => true,
+				'Default' => 'N'
+			],
+		];
+
+		return array_merge($fields, $bpOptions);
+	}
+
+	protected function getDebugInfo(array $values = [], array $map = []): array
+	{
+		$onlyDesignerFields = ['AUTO_LINK_TO_CRM_ENTITY', 'UF_CRM_TASK', 'UF_TASK_WEBDAV_FILES'];
+		$mustBeInBPUserStyle = ['CREATED_BY', 'RESPONSIBLE_ID', 'ACCOMPLICES', 'AUDITORS'];
+
+		if (count($map) <= 0)
+		{
+			$map = static::getPropertiesMap($this->getDocumentType());
+		}
+
+		$fields = $this->Fields;
+
+		foreach ($map as $key => $property)
+		{
+			if (array_key_exists($key, $values))
+			{
+				// hack
+				if ($key === 'PRIORITY')
+				{
+					$map[$key]['BaseType'] = 'bool';
+					$values[$key]= ((int)$values['PRIORITY'] === 2);
+				}
+
+				// temporary
+				if (in_array($key, $onlyDesignerFields))
+				{
+					unset($map[$key]);
+				}
+
+				//hack
+				if (in_array($key, $mustBeInBPUserStyle))
+				{
+					$values[$key] = $fields[$key];
+				}
+
+				continue;
+			}
+
+			unset($map[$key]);
+		}
+
+		return parent::getDebugInfo($values, $map);
 	}
 }

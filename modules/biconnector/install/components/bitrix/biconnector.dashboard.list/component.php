@@ -80,7 +80,6 @@ $keyList = \Bitrix\BIConnector\DashboardTable::getList([
 ]);
 while ($data = $keyList->fetch())
 {
-
 	$userEmptyAvatar = ' dashboard-grid-avatar-empty';
 	$userAvatar = '';
 
@@ -106,7 +105,7 @@ while ($data = $keyList->fetch())
 	{
 		$userEmptyAvatar = '';
 		$photoUrl = $fileInfo['src'];
-		$userAvatar = " style='background-image: url(\"{$photoUrl}\")'";
+		$userAvatar = ' style="background-image: url(\'' . $photoUrl . '\')"';
 	}
 
 	$userNameElement = '<span class="dashboard-grid-avatar ui-icon ui-icon-common-user' . $userEmptyAvatar . '">'
@@ -115,8 +114,8 @@ while ($data = $keyList->fetch())
 		. '<span class="dashboard-grid-username-inner">' . $userName . '</span>';
 
 	$data['CREATED_BY'] = '<div class="dashboard-grid-username-wrapper">'
-		.'<a class="dashboard-grid-username" href="/company/personal/user/' . $data['CREATED_BY'] . '/">' . $userNameElement . '</a>'
-		.'</div>';
+		. '<a class="dashboard-grid-username" href="/company/personal/user/' . $data['CREATED_BY'] . '/">' . $userNameElement . '</a>'
+		. '</div>';
 
 	$url = str_replace('#ID#', urlencode($data['ID']), $arParams['DASHBOARD_VIEW_URL']);
 

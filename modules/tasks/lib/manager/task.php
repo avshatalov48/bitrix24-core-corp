@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -41,8 +41,6 @@ use Bitrix\Tasks\Util\UserField\Task as UserField;
 
 final class Task extends \Bitrix\Tasks\Manager
 {
-	const LIMIT_PAGE_SIZE = 50;
-
 	// standard CRUD
 
 	/**
@@ -912,7 +910,7 @@ final class Task extends \Bitrix\Tasks\Manager
 
 		if (is_array($items) && !empty($items))
 		{
-			TaskRegistry::getInstance()->load(array_column($items, 'ID'), true);
+			(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($userId, array_column($items, 'ID'));
 
 			foreach ($items as $taskData)
 			{

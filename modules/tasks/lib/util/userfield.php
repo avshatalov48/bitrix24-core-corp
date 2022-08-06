@@ -306,6 +306,7 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 					$userId,
 					array('SKIP' => $skip)
 				);
+				$values[$field] = $valueClone;
 
 				if($skip)
 				{
@@ -316,13 +317,22 @@ abstract class UserField // todo: extends Dictionary, to iterate over user field
 					if(!static::isValueEmpty($valueClone))
 					{
 						$newData[$field] = $valueClone;
-						$values[$field] = $valueClone;
 					}
 				}
 			}
 		}
 
 		$result->setData($newData);
+
+		(new \Bitrix\Tasks\Internals\Log\Log('DEBUG_TASKS_TEMPLATE_REPLICATION_FILE_CLONE'))->collect([
+			$userId,
+			$values['UF_TASK_WEBDAV_FILES'],
+			array_keys($scheme),
+			array_keys($toScheme),
+			$scheme['UF_TASK_WEBDAV_FILES'],
+			$toScheme['UF_TASK_WEBDAV_FILES'],
+			$data['UF_TASK_WEBDAV_FILES'],
+		]);
 
 		return $result;
 	}

@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_DUP_VOLATILE_FIELD_CATEGORY_REQUISITE"] = "Contact or company details";
+$MESS["CRM_DUP_VOLATILE_FIELD_CATEGORY_BANK_DETAIL"] = "Banking details";

@@ -807,14 +807,18 @@ class CVoxImplantHistory
 	 */
 	public static function getBriefDetails($callId)
 	{
-		$call = VI\StatisticTable::getRow(array('filter' => array('=CALL_ID' => $callId)));
-		if(!$call)
+		$call = VI\StatisticTable::getRow(['filter' => ['=CALL_ID' => $callId]]);
+		if (!$call)
+		{
 			return false;
+		}
 
-		return array(
+		return [
 			'CALL_ID' => $call['CALL_ID'],
 			'CALL_TYPE' => $call['INCOMING'],
 			'CALL_TYPE_TEXT' => static::getDirectionText($call['INCOMING'], true),
+			'PORTAL_NUMBER' => $call['PORTAL_NUMBER'],
+			'PORTAL_LINE' => \CVoxImplantConfig::GetLine($call['PORTAL_NUMBER']),
 			'STATUS_CODE '=> $call['CALL_FAILED_CODE'],
 			'STATUS_TEXT' => self::getStatusText($call["CALL_FAILED_CODE"]),
 			'SUCCESSFUL' => $call['CALL_FAILED_CODE'] == '200',
@@ -822,8 +826,9 @@ class CVoxImplantHistory
 			'HAS_TRANSCRIPT' => ($call['TRANSCRIPT_ID'] > 0),
 			'TRANSCRIPT_PENDING' => ($call['TRANSCRIPT_PENDING'] == 'Y'),
 			'DURATION_TEXT' => static::convertDurationToText($call['CALL_DURATION'], CVoxImplantHistory::DURATION_FORMAT_BRIEF),
-			'COMMENT' =>  $call['COMMENT']
-		);
+			'COMMENT' =>  $call['COMMENT'],
+			'PORTAL_NUMBER' => $call['PORTAL_NUMBER'],
+		];
 	}
 
 	public static function getStatusText($statusCode)

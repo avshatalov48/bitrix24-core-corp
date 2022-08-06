@@ -749,7 +749,7 @@ if ($arResult['EVENT_ENTITY_LINK'] == 'Y')
 		{
 			$itemId = $item->getId();
 			$arEntityList[$typeName][$itemId] = [
-				'ENTITY_TITLE' => $item->getTitle(),
+				'ENTITY_TITLE' => $item->getHeading(),
 				'ENTITY_LINK' => $router->getItemDetailUrl(
 					$entityTypeId,
 					$itemId,

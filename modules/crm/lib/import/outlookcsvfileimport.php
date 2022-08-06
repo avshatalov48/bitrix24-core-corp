@@ -79,14 +79,17 @@ class OutlookCsvFileImport extends CsvFileImport
 			$this->headerMap = $this->originalHeaderMap;
 		}
 	}
+
 	public function getDefaultEncoding()
-		{
-			return $this->headerLanguage === 'ru' ? 'Windows-1251' : 'Windows-1252';
-		}
-		public function getDefaultSeparator()
-		{
-			return ',';
-		}
+	{
+		return 'UTF-8';
+	}
+
+	public function getDefaultSeparator()
+	{
+		return ',';
+	}
+
 	public function checkHeaders(array &$messages)
 	{
 		IncludeModuleLangFile(__FILE__);
@@ -131,13 +134,7 @@ class OutlookCsvFileImport extends CsvFileImport
 
 		if(!$hasName && !$hasEmail && !$hasPhone)
 		{
-			$messages[] = GetMessage(
-				'CRM_IMPORT_OUTLOOK_REQUIREMENTS',
-				array(
-					'#FILE_ENCODING#' => $this->getDefaultEncoding(),
-					'#FILE_LANG#' => $this->headerLanguage
-				)
-			);
+			$messages[] = GetMessage('CRM_IMPORT_OUTLOOK_REQUIREMENTS_NEW', ['#FILE_LANG#' => $this->headerLanguage]);
 		}
 
 		return $hasName || $hasEmail || $hasPhone;

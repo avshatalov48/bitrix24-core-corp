@@ -700,7 +700,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 					}
 				}
 				elseif ($handlerItem['main']
-					|| ($zone !== 'ru' && $handler === 'paypal')
+					|| (in_array( $zone, ['ru', 'by']) === false && $handler === 'paypal')
 				)
 				{
 					$paySystemPanel[$handler] = [];

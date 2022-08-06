@@ -107,6 +107,22 @@
 	border-radius: 2px;
 }
 
+.tasks-scrum-epic-grid-tasks-total:hover {
+	color: #525c69;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.tasks-scrum-epic-grid-tasks-completed:hover {
+	color: #525c69;
+	cursor: pointer;
+	text-decoration: underline;
+}
+
+.tasks-scrum-epic-grid-empty-count {
+	cursor: default;
+}
+
 .tasks-scrum-epic-grid-tags {
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -121,7 +137,6 @@
 }
 
 .tasks-scrum-epic-grid-tags div {
-	cursor: pointer;
 	margin-bottom: 7px;
 	margin-right: 0;
 }

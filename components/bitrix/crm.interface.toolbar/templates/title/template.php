@@ -1,18 +1,24 @@
 <?php
+
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-use Bitrix\Main;
+use Bitrix\Main\UI\Extension;
+use Bitrix\UI\Buttons\AddButton;
+use Bitrix\UI\Buttons\Button;
+use Bitrix\UI\Buttons\Color;
+use Bitrix\UI\Buttons\Icon;
+use Bitrix\UI\Buttons\JsCode;
+use Bitrix\UI\Buttons\SettingsButton;
+use Bitrix\UI\Buttons\Split\Button as SplitButton;
+use Bitrix\UI\Toolbar\ButtonLocation;
+use Bitrix\UI\Toolbar\Facade\Toolbar;
 
 /** @var array $arParams */
 
-CJSCore::RegisterExt('popup_menu', ['js' => ['/bitrix/js/main/popup_menu.js']]);
-Main\UI\Extension::load([
-	'ui.buttons',
-	'ui.buttons.icons'
-]);
+Extension::load(['crm.toolbar-component', 'ui.design-tokens']);
 
 $toolbarId = $arParams['TOOLBAR_ID'];
 $items = [];
@@ -37,115 +43,127 @@ foreach($arParams['BUTTONS'] as $item)
 	}
 }
 
-//region toolbar buttons
-$this->SetViewTarget('inside_pagetitle', 0);
-?><div id="<?=htmlspecialcharsbx($toolbarId)?>" class="pagetitle-container pagetitle-align-left-container"><?
+if(!empty($settingsItems))
+{
+	$settingsButtonId = htmlspecialcharsbx($toolbarId);
+	$settingsMenuId = htmlspecialcharsbx("{$toolbarId}_settings_menu");
+	$settingsButton = new SettingsButton([
+		'id' => $settingsButtonId,
+		'menu' => [
+			'id' => $settingsMenuId,
+			'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($settingsItems, $toolbarId),
+			'offsetLeft' => 20,
+			'closeByEsc' => true,
+			'angle' => true
+		]
+	]);
+	Toolbar::addButton($settingsButton);
+}
+
 $itemCount = count($items);
 for($i = 0; $i < $itemCount; $i++)
 {
 	$item = $items[$i];
-	$type = $item['TYPE'] ?? '';
 	$text = isset($item['TEXT']) ? htmlspecialcharsbx(strip_tags($item['TEXT'])) : '';
 	$title = isset($item['TITLE']) ? htmlspecialcharsbx(strip_tags($item['TITLE'])) : '';
-	$link = isset($item['LINK']) ? htmlspecialcharsbx($item['LINK']) : '#';
 	$icon = isset($item['ICON']) ? htmlspecialcharsbx($item['ICON']) : '';
-	$onClick = isset($item['ONCLICK']) ? htmlspecialcharsbx($item['ONCLICK']) : '';
+	$link = $item['LINK'] ?? '#';
+	$onClick = $item['ONCLICK'] ? new JsCode($item['ONCLICK']) : '';
+	$type = $item['TYPE'] ?? '';
+	$buttonId = "{$toolbarId}_button_{$i}";
+
+	// disabled button configuration
+	$disabledButtonDataset = [];
+	$disabledButtonClass = '';
+	$isDisabled = isset($item['IS_DISABLED']) && $item['IS_DISABLED'] === true;
+	if($isDisabled)
+	{
+		$link = null;
+		$onClick = null;
+		$disabledButtonDataset = [
+			'hint' => htmlspecialcharsbx($item['HINT']),
+			'hint-no-icon' => '',
+		];
+		$disabledButtonClass = 'ui-btn-disabled-ex'; // to correct display hint
+	}
 
 	if($type === 'crm-context-menu')
 	{
-		$buttonID = "{$toolbarId}_button_{$i}";
+		$menuItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : [];
+		$menuButton = new Button([
+			'id' => htmlspecialcharsbx($buttonId),
+			'link' => $link,
+			'text' => $text,
+			'color' => Color::SUCCESS,
+			'icon' => Icon::ADD,
+			'click' => new JsCode('
+				var popup = this.menuWindow.popupWindow;
+				if (popup) {popup.setOffset({offsetLeft: BX.pos(popup.bindElement).width - 17});}
+			'),
+			'menu' => [
+				'id' => htmlspecialcharsbx($buttonId).'_menu',
+				'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($menuItems),
+				'closeByEsc' => true,
+				'angle' => true,
+			]
+		]);
 
-		$menuItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : array();
-		?>
-		<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-success ui-btn-dropdown" style="margin-right: 12px;" <?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>>
-			<?=$text?>
-		</button>
-		<?
-		if(!empty($menuItems))
-		{
-			?><script type="text/javascript">
-				BX.ready(
-					function()
-					{
-						BX.InterfaceToolBar.create(
-							"<?=CUtil::JSEscape($toolbarId)?>",
-							BX.CrmParamBag.create(
-								{
-									"buttonId": "<?=CUtil::JSEscape($buttonID)?>",
-									"items": <?=CUtil::PhpToJSObject($menuItems)?>
-								}
-							)
-						);
-					}
-				);
-			</script><?
-		}
+		Toolbar::addButton($menuButton, ButtonLocation::AFTER_TITLE);
 	}
 	elseif($type === 'crm-btn-double')
 	{
-		$buttonID = "{$toolbarId}_button_{$i}";
-		$bindElementID = "{$buttonID}_anchor";
-		$menuItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : array();
-		?>
-		<script type="text/javascript">
-			BX.ready(
-				function()
-				{
-					BX.InterfaceToolBar.create(
-						"<?=CUtil::JSEscape($toolbarId)?>",
-						BX.CrmParamBag.create(
-							{
-								"buttonId": "<?=CUtil::JSEscape($buttonID)?>",
-								"bindElementId": "<?=CUtil::JSEscape($bindElementID)?>",
-								"items": <?=CUtil::PhpToJSObject($menuItems)?>,
-								"autoClose": true
-							}
-						)
-					);
-				}
-			);
-		</script>
-        <div id="<?=$bindElementID?>" class="ui-btn-split ui-btn-success" style="margin-right: 12px;">
-            <a href="<?=$link?>" class="ui-btn-main" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a>
-            <button id="<?=$buttonID?>" class="ui-btn-menu"></button>
-        </div>
-		<?
+		$bindElementID = "{$buttonId}_anchor";
+		$splitItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : [];
+		$splitButton = new SplitButton([
+			'id' => htmlspecialcharsbx($buttonId),
+			'icon' => Icon::ADD,
+			'title' => $title,
+			'text' => $text,
+			'color' => Color::SUCCESS,
+			'menuButton' => [
+				'click' => new JsCode('
+					var popup = this.getSplitButton().menuWindow.popupWindow;
+					if (popup) { popup.setOffset({offsetLeft: BX.pos(popup.bindElement).width - 20});}
+				')
+			],
+			'menu' => [
+				'id' => htmlspecialcharsbx($bindElementID),
+				'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($splitItems),
+				'closeByEsc' => true,
+				'angle' => true,
+			],
+			'mainButton' => [
+				'link' => $link,
+				'click' => $onClick,
+			],
+			'dataset' => $disabledButtonDataset,
+			'className' => $disabledButtonClass,
+		]);
+
+		Toolbar::addButton($splitButton, ButtonLocation::AFTER_TITLE);
 	}
 	elseif(!isset($item['SEPARATOR']))
 	{
-		?>
-		<a href="<?=$link?>" class="ui-btn ui-btn-success ui-btn-icon-add crm-btn-toolbar-add" title="<?=$title?>"<?=$onClick !== '' ? " onclick=\"{$onClick}; return false;\"" : ''?>><?=$text?></a>
-		<?
+		$addButton = new AddButton([
+			'id' => htmlspecialcharsbx($buttonId),
+			'icon' => Icon::ADD,
+			'text' => $text,
+			'link' => $link,
+			'onclick' => $onClick,
+			'dataset' => $disabledButtonDataset,
+			'className' => $disabledButtonClass
+		]);
+
+		Toolbar::addButton($addButton, ButtonLocation::AFTER_TITLE);
 	}
 }
-?></div><?
-$this->EndViewTarget();
+?>
 
-if(!empty($settingsItems))
-{
-	$buttonID = "{$toolbarId}_button";
-	//region Settings
-	$this->SetViewTarget('inside_pagetitle', 10000);
-
-	?><div id="<?=htmlspecialcharsbx($toolbarId)?>" class="pagetitle-container pagetitle-align-right-container">
-	<script type="text/javascript">
-		BX.ready(
-			function ()
-			{
-				BX.InterfaceToolBar.create(
-					"<?=CUtil::JSEscape($toolbarId)?>",
-					BX.CrmParamBag.create(
-						{
-							"buttonId": "<?=CUtil::JSEscape($buttonID)?>",
-							"items": <?=CUtil::PhpToJSObject($settingsItems)?>
-						}
-					)
-				);
-			}
-		);
-	</script>
-	<button id="<?=htmlspecialcharsbx($buttonID)?>" class="ui-btn ui-btn-light-border ui-btn-themes ui-btn-icon-setting"></button>
-	</div><?
-
-	$this->EndViewTarget();
-}
+<script type="text/javascript">
+	BX.ready(function() {
+		if(BX.getClass('BX.Crm.ToolbarComponent'))
+		{
+			var toolbar = BX.Crm.ToolbarComponent.Instance;
+		}
+	})
+</script>

@@ -1155,11 +1155,6 @@ abstract class Item extends LazyAccess
 						));
 					}
 
-					if ($this->id)
-					{
-						\Bitrix\Tasks\Kanban\StagesTable::pinInStage($this->id);
-					}
-
 					$this->executeHooksAfter($state);
 					$this->doPostActions($state);
 

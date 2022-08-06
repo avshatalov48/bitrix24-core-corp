@@ -242,7 +242,7 @@ JCCalendarViewDay.prototype.__drawData = function()
 			}
 		}
 
-		if (this.ENTRIES[i]['DATA'].length == 0 && !this._parent.FILTER.USERS_ALL)
+		if (this.ENTRIES[i]['DATA'].length == 0 && this._parent.FILTER.USERS_ALL == 'N')
 		{
 			continue;
 		}

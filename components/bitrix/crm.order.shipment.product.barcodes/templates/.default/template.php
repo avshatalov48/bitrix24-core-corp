@@ -10,7 +10,7 @@ Loc::loadMessages(__FILE__);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
 
-\Bitrix\Main\UI\Extension::load('ui.buttons');
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens']);
 
 if(SITE_TEMPLATE_ID === 'bitrix24')
 {

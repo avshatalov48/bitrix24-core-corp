@@ -7,7 +7,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 \Bitrix\Main\Loader::includeModule('intranet');
 
-CUtil::initJSCore(array('ajax', 'popup', 'ui.design-tokens'));
+CUtil::initJSCore(array('ajax', 'popup', 'ui.design-tokens', 'ui.fonts.opensans'));
 
 ?><!DOCTYPE html>
 <html>

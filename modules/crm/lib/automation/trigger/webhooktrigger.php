@@ -54,20 +54,10 @@ class WebHookTrigger extends BaseTrigger
 
 	public static function canExecute($entityTypeId, $entityId)
 	{
-		if ($entityTypeId === \CCrmOwnerType::Lead)
-		{
-			return \CCrmLead::CheckUpdatePermission($entityId);
-		}
-		elseif ($entityTypeId === \CCrmOwnerType::Deal)
-		{
-			return \CCrmDeal::CheckUpdatePermission($entityId);
-		}
-		elseif ($entityTypeId === \CCrmOwnerType::Order)
-		{
-			return \Bitrix\Crm\Order\Permissions\Order::checkUpdatePermission($entityId);
-		}
-
-		return false;
+		return \CCrmAuthorizationHelper::CheckUpdatePermission(
+			\CCrmOwnerType::ResolveName($entityTypeId),
+			$entityId
+		);
 	}
 
 	private static function getPassword($userId)

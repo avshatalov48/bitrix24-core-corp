@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["CRM_IMPORT_OUTLOOK_ALIAS_FIRST_NAME"] = "Имя";
 $MESS["CRM_IMPORT_OUTLOOK_ALIAS_MIDDLE_NAME"] = "Отчество";
 $MESS["CRM_IMPORT_OUTLOOK_ALIAS_LAST_NAME"] = "Фамилия";
@@ -41,4 +41,4 @@ $MESS["CRM_IMPORT_OUTLOOK_ALIAS_NOTES"] = "Заметки";
 $MESS["CRM_IMPORT_OUTLOOK_ALIAS_WEB_PAGE"] = "Веб-страница";
 $MESS["CRM_IMPORT_OUTLOOK_ERROR_FIELDS_NOT_FOUND"] = "Не удалось найти ни одного из следующих полей: #FIELD_LIST#";
 $MESS["CRM_IMPORT_OUTLOOK_REQUIREMENTS"] = "Для успешного импорта необходимо выполнить следующие требования. Кодировка файла: #FILE_ENCODING#. Язык для названий полей: #FILE_LANG#. Разделитель полей: запятая.";
-?>
+$MESS["CRM_IMPORT_OUTLOOK_REQUIREMENTS_NEW"] = "Для успешного импорта необходимо выполнить следующие требования. Кодировка файла: UTF-8. Язык для названий полей: #FILE_LANG#. Разделитель полей: запятая.";

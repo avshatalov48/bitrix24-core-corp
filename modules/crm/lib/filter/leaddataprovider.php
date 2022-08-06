@@ -63,11 +63,12 @@ class LeadDataProvider extends EntityDataProvider
 	{
 		$addressLabels = EntityAddress::getShortLabels();
 
-		$result =  array(
+		$result = [
 			'ID' => $this->createField('ID'),
 			'TITLE' => $this->createField(
 				'TITLE',
 				[
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -78,7 +79,10 @@ class LeadDataProvider extends EntityDataProvider
 			),
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'NAME' => $this->createField(
 				'NAME',
@@ -125,6 +129,27 @@ class LeadDataProvider extends EntityDataProvider
 					],
 				]
 			),
+			'ASSIGNED_BY_ID' => $this->createField(
+				'ASSIGNED_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
+			),
+			'OPPORTUNITY' => $this->createField(
+				'OPPORTUNITY',
+				[
+					'type' => 'number',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
 				[
@@ -152,38 +177,31 @@ class LeadDataProvider extends EntityDataProvider
 			),
 			'STATUS_ID' => $this->createField(
 				'STATUS_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'STATUS_SEMANTIC_ID' => $this->createField(
 				'STATUS_SEMANTIC_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'default' => true,
+					'partial' => true
+				]
 			),
 			'STATUS_CONVERTED' => $this->createField(
 				'STATUS_CONVERTED',
-				array('type' => 'checkbox', 'name' => Loc::getMessage('CRM_LEAD_FILTER_STATUS_PROCESSED'))
-			),
-			'OPPORTUNITY' => $this->createField(
-				'OPPORTUNITY',
 				[
-					'type' => 'number',
-					'data' => [
-						'additionalFilter' => [
-							'isEmpty',
-							'hasAnyValue',
-						],
-					],
+					'type' => 'checkbox',
+					'name' => Loc::getMessage('CRM_LEAD_FILTER_STATUS_PROCESSED')
 				]
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
-				array('type' => 'list', 'partial' => true)
-			),
-			'ASSIGNED_BY_ID' => $this->createField(
-				'ASSIGNED_BY_ID',
 				[
-					'type' => 'entity_selector',
-					'default' => true,
-					'partial' => true,
+					'type' => 'list',
+					'partial' => true
 				]
 			),
 			'CREATED_BY_ID' => $this->createField(
@@ -202,35 +220,53 @@ class LeadDataProvider extends EntityDataProvider
 			),
 			'IS_RETURN_CUSTOMER' => $this->createField(
 				'IS_RETURN_CUSTOMER',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'ACTIVITY_COUNTER' => $this->createField(
 				'ACTIVITY_COUNTER',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'COMMUNICATION_TYPE' => $this->createField(
 				'COMMUNICATION_TYPE',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'HAS_PHONE' => $this->createField(
 				'HAS_PHONE',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'PHONE' => $this->createField('PHONE'),
 			'HAS_EMAIL' => $this->createField(
 				'HAS_EMAIL',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'EMAIL' => $this->createField('EMAIL'),
 			'WEB' => $this->createField('WEB'),
 			'IM' => $this->createField('IM'),
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'COMPANY_TITLE' => $this->createField(
 				'COMPANY_TITLE',
@@ -358,9 +394,12 @@ class LeadDataProvider extends EntityDataProvider
 			),
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
-		);
+		];
 
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
 
@@ -406,18 +445,27 @@ class LeadDataProvider extends EntityDataProvider
 
 		$result['STATUS_ID_FROM_HISTORY'] = $this->createField(
 			'STATUS_ID_FROM_HISTORY',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		$result['STATUS_ID_FROM_SUPPOSED_HISTORY'] = $this->createField(
 			'STATUS_ID_FROM_SUPPOSED_HISTORY',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 
 		$result['STATUS_SEMANTIC_ID_FROM_HISTORY'] = $this->createField(
 			'STATUS_SEMANTIC_ID_FROM_HISTORY',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		return $result;

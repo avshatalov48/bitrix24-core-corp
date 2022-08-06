@@ -60,7 +60,8 @@ CJSCore::RegisterExt(
 			'tasks_util_query',
 			'tasks_shared_form_projectplan',
 			'task_calendar',
-			'tasks'
+			'tasks',
+			'ui.design-tokens',
 		),
 		'lang' => $folder.'/lang/'.LANGUAGE_ID.'/template.php'
 	)

@@ -39,7 +39,7 @@ class CBIConnectorSqlBuilder extends CSQLWhere
 
 	public function getJoins()
 	{
-		$result = array();
+		$result = [];
 
 		foreach ($this->c_joins as $key => $counter)
 		{

@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 
 class CrmCompanies extends CrmEntity
 {
@@ -66,7 +67,7 @@ class CrmCompanies extends CrmEntity
 			'id' => $prefix.$data['ID'],
 			'entityType' => 'companies',
 			'entityId' => $data['ID'],
-			'name' => htmlspecialcharsbx(str_replace(array(';', ','), ' ', $data['TITLE'])),
+			'name' => htmlspecialcharsbx(Emoji::decode(str_replace(array(';', ','), ' ', $data['TITLE']))),
 			'desc' => htmlspecialcharsbx(implode(', ', $descList))
 		];
 

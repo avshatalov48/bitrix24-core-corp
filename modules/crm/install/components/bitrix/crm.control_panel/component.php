@@ -412,10 +412,6 @@ if($isAdmin || CCrmCompany::CheckReadPermission(0, $userPermissions))
 		'ACTIONS' => $actions
 	);
 }
-
-$stdItems += $this->getAvailableCategoriesMenuItems(CCrmOwnerType::Contact);
-$stdItems += $this->getAvailableCategoriesMenuItems(CCrmOwnerType::Company);
-
 $invoiceEntityTypeId = \CCrmOwnerType::SmartInvoice;
 if (InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 {
@@ -1089,6 +1085,11 @@ else
 	unset($itemInfo);
 }
 
+$items = array_merge(
+	$items,
+	$this->getAvailableCategoriesMenuItems(CCrmOwnerType::Contact),
+	$this->getAvailableCategoriesMenuItems(CCrmOwnerType::Company)
+);
 
 $events = GetModuleEvents('crm', 'OnAfterCrmControlPanelBuild');
 while($event = $events->Fetch())

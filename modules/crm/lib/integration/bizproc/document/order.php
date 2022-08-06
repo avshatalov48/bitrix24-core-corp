@@ -500,8 +500,8 @@ class Order extends \CCrmDocument implements \IBPWorkflowDocument
 
 		if (
 			$operation == \CBPCanUserOperateOperation::CreateWorkflow
-			||
-			$operation == \CBPCanUserOperateOperation::CreateAutomation
+			|| $operation == \CBPCanUserOperateOperation::CreateAutomation
+			|| $operation === \CBPCanUserOperateOperation::DebugAutomation
 		)
 		{
 			return (\CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($userPermissions));

@@ -81,6 +81,11 @@ class DealConverter extends EntityConverter
 	 */
 	public function isFinished()
 	{
+		if ($this->currentPhase === static::PHASE_NEW_API)
+		{
+			return parent::isFinished();
+		}
+
 		return DealConversionPhase::isFinal($this->currentPhase);
 	}
 	/**

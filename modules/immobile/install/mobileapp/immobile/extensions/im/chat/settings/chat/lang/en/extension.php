@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["SE_CHAT_AUTOPLAY_TITLE"] = "Autoplay";
 $MESS["SE_CHAT_AUTOPLAY_VIDEO_TITLE"] = "Video";
 $MESS["SE_CHAT_BACKGROUND_COLOR_CREAMY"] = "Cream";
@@ -13,9 +13,10 @@ $MESS["SE_CHAT_DESC"] = "Any changes to the settings in this group will be appli
 $MESS["SE_CHAT_ENABLE_TITLE"] = "Use new chat";
 $MESS["SE_CHAT_HISTORY_SHOW_TITLE"] = "Show history when inviting";
 $MESS["SE_CHAT_HISTORY_TITLE"] = "Chat history";
+$MESS["SE_CHAT_NATIVE_DIALOG_ENABLE_TITLE"] = "Enable";
+$MESS["SE_CHAT_NATIVE_DIALOG_TITLE"] = "Native chat (Beta)";
 $MESS["SE_CHAT_QUOTE_ENABLE_TITLE"] = "Enable";
 $MESS["SE_CHAT_QUOTE_FROM_LEFT_TITLE"] = "To the right";
 $MESS["SE_CHAT_QUOTE_FROM_RIGHT_TITLE"] = "To the left";
 $MESS["SE_CHAT_QUOTE_TITLE"] = "Swipe-to-quote reply";
 $MESS["SE_CHAT_TITLE"] = "Chats";
-?>

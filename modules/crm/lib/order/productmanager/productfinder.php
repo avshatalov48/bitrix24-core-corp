@@ -12,16 +12,15 @@ trait ProductFinder
 	 * Get basket items from order
 	 *
 	 * @param array $product
+	 * @param array $foundProducts array with history founded items
 	 * @return Crm\Order\BasketItem|null
 	 */
-	protected function getBasketItemByEntityProduct(array $product, bool $checkQuantity = false):? Crm\Order\BasketItem
+	protected function getBasketItemByEntityProduct(array $product, array & $foundProducts, bool $checkQuantity = false):? Crm\Order\BasketItem
 	{
 		if (!$this->getOrder())
 		{
 			return null;
 		}
-
-		static $foundProducts = [];
 
 		/** @var Crm\Order\BasketItem $basketItem */
 		foreach ($this->getOrder()->getBasket() as $basketItem)
@@ -46,7 +45,7 @@ trait ProductFinder
 					}
 				}
 
-				if ($checkQuantity && $basketItem->getQuantity() !== $product['QUANTITY'])
+				if ($checkQuantity && $basketItem->getQuantity() !== (float)$product['QUANTITY'])
 				{
 					continue;
 				}

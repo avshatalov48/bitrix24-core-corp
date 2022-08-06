@@ -179,7 +179,7 @@ class Manager
 		return $pool->getConnection($this->connectionName);
 	}
 
-	public function startQuery($sourceId, $fields = '', $filters = '')
+	public function startQuery($sourceId, $fields = '', $filters = '', $input = '', $request_method = '', $request_uri = '')
 	{
 		$statData = [
 			'TIMESTAMP_X' => new \Bitrix\Main\Type\DateTime(),
@@ -194,6 +194,18 @@ class Manager
 		if ($filters)
 		{
 			$statData['FILTERS'] = $filters;
+		}
+		if ($input)
+		{
+			$statData['INPUT'] = $input;
+		}
+		if ($request_method)
+		{
+			$statData['REQUEST_METHOD'] = $request_method;
+		}
+		if ($request_uri)
+		{
+			$statData['REQUEST_URI'] = $request_uri;
 		}
 
 		$addResult = \Bitrix\BIConnector\LogTable::add($statData);

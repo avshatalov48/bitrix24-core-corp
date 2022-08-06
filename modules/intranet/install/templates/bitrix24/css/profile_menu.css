@@ -71,7 +71,8 @@
 	position: relative;
 	margin: 0 0 0 30px;
 	border-bottom: 1px solid transparent;
-	font: 13px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525C69;
 	letter-spacing: -0.3px;
 	transition: border-bottom .3s;
@@ -97,7 +98,8 @@
 	height: 16px;
 	border-radius: 10px;
 	background: #42C2EC;
-	font: 12px "OpenSans-Semibold", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	letter-spacing: -0.28px;
 }
@@ -191,7 +193,8 @@
 	border-bottom: 1px solid transparent;
 	color: #545c6a;
 	font-size: 20px;
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	-webkit-transition: .1s;
 	transition: .1s;
 	vertical-align: middle;
@@ -207,7 +210,8 @@
 .profile-menu-group .profile-menu-name {
 	margin: 1px 9px 0 0;
 	max-width: 100%;
-	font: 24px/31px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 24px/31px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	white-space: nowrap;
 	overflow: hidden;
@@ -337,7 +341,8 @@ a.profile-menu-name:hover {
 	color: #545c6a;
 	margin: 0;
 	padding: 10px 20px 22px 20px;
-	font-family: 'OpenSans-Semibold', sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	-webkit-transition: .1s;
 	-moz-transition: .1s;
 	transition: .1s;
@@ -382,7 +387,8 @@ a.profile-menu-name:hover {
 .profile-menu-type {
 	flex: 1 0 auto;
 	margin: 0 15px 0 0;
-	font: 13px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #A8ADB4;
 }
 

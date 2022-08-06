@@ -53,8 +53,10 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 	protected function init(): void
 	{
 		parent::init();
+
 		// load messages from old ajax.php file
 		Loc::loadMessages(Path::combine(__DIR__, 'ajax.php'));
+
 		if($this->getErrors())
 		{
 			return;
@@ -62,35 +64,47 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 		$entityTypeId = $this->arParams['entityTypeId'] ?? \CCrmOwnerType::Deal;
 		$this->factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
-		if (!$this->factory)
+		if(!$this->factory)
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_TYPE_TYPE_NOT_FOUND')));
+
 			return;
 		}
-		if (!$this->factory->isCategoriesEnabled() && $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead)
+
+		if(!$this->factory->isCategoriesEnabled() && $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead)
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ENTITY_CATEGORY_DISABLED')));
+
 			return;
 		}
-		if (!$this->userPermissions->canWriteConfig())
+
+		if(!$this->userPermissions->canWriteConfig())
 		{
 			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ACCESS_DENIED')));
+
 			return;
 		}
 
 		$this->tunnelManager = new Crm\Automation\TunnelManager($this->factory->getEntityTypeId());
 
 		$name = $this->factory->getEntityDescription();
-		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead)
+
+		if($this->factory->getEntityTypeId() === \CCrmOwnerType::Lead)
 		{
-			$this->getApplication()->SetTitle(Loc::getMessage('CRM_SALES_STATUSES_TITLE'));
+			$title = Loc::getMessage('CRM_SALES_STATUSES_TITLE');
+		}
+		else if($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
+		{
+			$title = Loc::getMessage('CRM_SALES_TUNNELS_TITLE_DEAL');
 		}
 		else
 		{
-			$this->getApplication()->SetTitle(Loc::getMessage('CRM_SALES_TUNNELS_TITLE', [
+			$title = Loc::getMessage('CRM_SALES_TUNNELS_TITLE', [
 				'#NAME#' => htmlspecialcharsbx($name),
-			]));
+			]);
 		}
+
+		$this->getApplication()->SetTitle($title);
 	}
 
 	/**

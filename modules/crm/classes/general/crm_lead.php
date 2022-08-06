@@ -4,21 +4,21 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
+use Bitrix\Crm\Counter\EntityCounterManager;
+use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Integration\PullManager;
-use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
-use Bitrix\Crm\Integrity\DuplicatePersonCriterion;
-use Bitrix\Crm\Integrity\DuplicateOrganizationCriterion;
-use Bitrix\Crm\Integrity\DuplicateEntityRanking;
-use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
-use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
+use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
+use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
+use Bitrix\Crm\Integrity\DuplicateManager;
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile;
+use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
+use Bitrix\Crm\UtmTable;
 
 class CAllCrmLead
 {
@@ -1351,9 +1351,6 @@ class CAllCrmLead
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
 
-		// ALLOW_SET_SYSTEM_FIELDS is deprecated temporary option. It will be removed soon! Do not use it!
-		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? $isRestoration;
-
 		$userID = isset($options['CURRENT_USER'])
 			? (int)$options['CURRENT_USER'] : CCrmSecurityHelper::GetCurrentUserID();
 
@@ -1365,23 +1362,23 @@ class CAllCrmLead
 
 		unset($arFields['ID']);
 
-		if(!($allowSetSystemFields && isset($arFields['DATE_CREATE'])))
+		if(!($isRestoration && isset($arFields['DATE_CREATE'])))
 		{
 			unset($arFields['DATE_CREATE']);
 			$arFields['~DATE_CREATE'] = $DB->CurrentTimeFunction();
 		}
 
-		if(!($allowSetSystemFields && isset($arFields['DATE_MODIFY'])))
+		if(!($isRestoration && isset($arFields['DATE_MODIFY'])))
 		{
 			unset($arFields['DATE_MODIFY']);
 			$arFields['~DATE_MODIFY'] = $DB->CurrentTimeFunction();
 		}
 
-		if(!($allowSetSystemFields && isset($arFields['MOVED_TIME'])))
+		if(!($isRestoration && isset($arFields['MOVED_TIME'])))
 		{
 			unset($arFields['MOVED_TIME']);
 		}
-		if(!($allowSetSystemFields && isset($arFields['MOVED_BY_ID'])))
+		if(!($isRestoration && isset($arFields['MOVED_BY_ID'])))
 		{
 			unset($arFields['MOVED_BY_ID']);
 		}
@@ -1753,15 +1750,13 @@ class CAllCrmLead
 		}
 		//endregion
 
-		$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
-
+		$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
 		$data =
 			(new Crm\Integrity\CriterionRegistrar\Data())
 				->setEntityTypeId(\CCrmOwnerType::Lead)
 				->setEntityId($ID)
 				->setCurrentFields($arFields)
 		;
-
 		$duplicateCriterionRegistrar->register($data);
 
 		if($assignedByID > 0)
@@ -2029,6 +2024,8 @@ class CAllCrmLead
 		{
 			$options = array();
 		}
+
+		$options['IS_COMPARE_ENABLED'] = $bCompare;
 
 		if ($this->isUseOperation())
 		{
@@ -2718,8 +2715,7 @@ class CAllCrmLead
 				}
 			}
 
-			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
-
+			$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
 			$data =
 				(new Crm\Integrity\CriterionRegistrar\Data())
 					->setEntityTypeId(\CCrmOwnerType::Lead)
@@ -2727,14 +2723,12 @@ class CAllCrmLead
 					->setCurrentFields($arFields)
 					->setPreviousFields($arRow)
 			;
-
 			$duplicateCriterionRegistrar->update($data);
 
-			$enableDupIndexInvalidation = isset($arOptions['ENABLE_DUP_INDEX_INVALIDATION'])
-				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
+			$enableDupIndexInvalidation = (bool)($arOptions['ENABLE_DUP_INDEX_INVALIDATION'] ?? true);
 			if(!$isSystemAction && $enableDupIndexInvalidation)
 			{
-				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsDirty(CCrmOwnerType::Lead, $ID);
+				DuplicateManager::markDuplicateIndexAsDirty(CCrmOwnerType::Lead, $ID);
 			}
 
 			if($bResult && (isset($arFields['ASSIGNED_BY_ID']) || isset($arFields['STATUS_ID'])))
@@ -2769,7 +2763,7 @@ class CAllCrmLead
 
 				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
 				{
-					\Bitrix\Crm\Integrity\DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Lead, $ID);
+					DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Lead, $ID);
 				}
 			}
 
@@ -3174,17 +3168,15 @@ class CAllCrmLead
 
 			if($enableDupIndexInvalidation)
 			{
-				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Lead, $ID);
+				DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Lead, $ID);
 			}
 
-			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
-
+			$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
 			$data =
 				(new Crm\Integrity\CriterionRegistrar\Data())
 					->setEntityTypeId(\CCrmOwnerType::Lead)
 					->setEntityId($ID)
 			;
-
 			$duplicateCriterionRegistrar->unregister($data);
 
 			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Lead, $ID);
@@ -3493,19 +3485,15 @@ class CAllCrmLead
 
 			$checkSystemFieldsResult = (new \Bitrix\Crm\Service\Operation\Import(
 				$factory->createItem(),
-				new \Bitrix\Crm\Service\Operation\Settings(\Bitrix\Crm\Service\Container::getInstance()->getContext()),
+				new \Bitrix\Crm\Service\Operation\Settings(Container::getInstance()->getContext()),
 				$factory->getFieldsCollection()
 			))->checkSystemFieldsValues([
 				\Bitrix\Crm\Item::FIELD_NAME_CREATED_TIME => isset($arFields['DATE_CREATE'])
-					? \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_CREATE'])
+					? Main\Type\DateTime::createFromUserTime($arFields['DATE_CREATE'])
 					: null
 				,
 				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_TIME => isset($arFields['DATE_MODIFY'])
-					? \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['DATE_MODIFY'])
-					: null
-				,
-				\Bitrix\Crm\Item::FIELD_NAME_MOVED_TIME => isset($arFields['MOVED_TIME'])
-					? \Bitrix\Main\Type\DateTime::createFromUserTime($arFields['MOVED_TIME'])
+					? Main\Type\DateTime::createFromUserTime($arFields['DATE_MODIFY'])
 					: null
 				,
 				\Bitrix\Crm\Item::FIELD_NAME_CREATED_BY =>
@@ -3514,11 +3502,6 @@ class CAllCrmLead
 						: null
 				,
 				\Bitrix\Crm\Item::FIELD_NAME_UPDATED_BY =>
-					(isset($arFields['MODIFY_BY_ID']) && $arFields['MODIFY_BY_ID'] != $currentUserId)
-						? (int)$arFields['MODIFY_BY_ID']
-						: null
-				,
-				\Bitrix\Crm\Item::FIELD_NAME_MOVED_BY =>
 					(isset($arFields['MODIFY_BY_ID']) && $arFields['MODIFY_BY_ID'] != $currentUserId)
 						? (int)$arFields['MODIFY_BY_ID']
 						: null
@@ -4501,12 +4484,11 @@ class CAllCrmLead
 			$IDs
 		);
 
-		$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Lead);
+		$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrarForReindex(\CCrmOwnerType::Lead);
 
 		while($fields = $dbResult->Fetch())
 		{
 			$ID = (int)$fields['ID'];
-
 			$fields['FM'] = $entityMultifields[$ID] ?? null;
 
 			$data =
@@ -4515,7 +4497,6 @@ class CAllCrmLead
 					->setEntityId($ID)
 					->setCurrentFields($fields)
 			;
-
 			$duplicateCriterionRegistrar->register($data);
 		}
 	}

@@ -6,6 +6,7 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
 
@@ -17,9 +18,16 @@ use Bitrix\Main\ORM\Fields\Validators\LengthValidator;
  * <li> ID int mandatory
  * <li> TIMESTAMP_X datetime mandatory
  * <li> KEY_ID int mandatory
- * <li> SOURCE_ID string(50) mandatory
- * <li> ROW_NUM int mandatory
- * <li> REAL_TIME double mandatory
+ * <li> SERVICE_ID string(150) mandatory
+ * <li> SOURCE_ID string(150) mandatory
+ * <li> FIELDS text optional
+ * <li> FILTERS text optional
+ * <li> ROW_NUM int optional
+ * <li> REAL_TIME double optional
+ * <li> INPUT text optional
+ * <li> REQUEST_METHOD string(15) optional
+ * <li> REQUEST_URI string(2000) optional
+ * <li> KEY_ID reference to {@link \Bitrix\BIConnector\BIConnectorKeyTable}
  * </ul>
  *
  * @package Bitrix\BIConnector
@@ -95,6 +103,26 @@ class LogTable extends DataManager
 					'title' => Loc::getMessage('LOG_ENTITY_FILTERS_FIELD'),
 				]
 			),
+			new TextField(
+				'INPUT',
+				[
+					'title' => Loc::getMessage('LOG_ENTITY_INPUT_FIELD'),
+				]
+			),
+			new StringField(
+				'REQUEST_METHOD',
+				[
+					'validation' => [__CLASS__, 'validateRequestMethod'],
+					'title' => Loc::getMessage('LOG_ENTITY_REQUEST_METHOD_FIELD'),
+				]
+			),
+			new StringField(
+				'REQUEST_URI',
+				[
+					'validation' => [__CLASS__, 'validateRequestUri'],
+					'title' => Loc::getMessage('LOG_ENTITY_REQUEST_URI_FIELD'),
+				]
+			),
 			new IntegerField(
 				'ROW_NUM',
 				[
@@ -131,6 +159,30 @@ class LogTable extends DataManager
 	{
 		return [
 			new LengthValidator(null, 150),
+		];
+	}
+
+	/**
+	 * Returns validators for REQUEST_METHOD field.
+	 *
+	 * @return array
+	 */
+	public static function validateRequestMethod(): array
+	{
+		return [
+			new LengthValidator(null, 15),
+		];
+	}
+
+	/**
+	 * Returns validators for REQUEST_URI field.
+	 *
+	 * @return array
+	 */
+	public static function validateRequestUri(): array
+	{
+		return [
+			new LengthValidator(null, 2000),
 		];
 	}
 

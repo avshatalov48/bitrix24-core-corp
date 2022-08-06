@@ -18,7 +18,7 @@ class GMailCsvFileImport extends CsvFileImport
 	}
 	public function getDefaultEncoding()
 	{
-		return 'UTF-16';
+		return 'UTF-8';
 	}
 	public function getDefaultSeparator()
 	{
@@ -50,7 +50,7 @@ class GMailCsvFileImport extends CsvFileImport
 
 		if(!$hasName && !$hasEmail && !$hasPhone)
 		{
-			$messages[] = GetMessage('CRM_IMPORT_GMAIL_REQUIREMENTS');
+			$messages[] = GetMessage('CRM_IMPORT_GMAIL_REQUIREMENTS_NEW');
 		}
 
 		return $hasName || $hasEmail || $hasPhone;

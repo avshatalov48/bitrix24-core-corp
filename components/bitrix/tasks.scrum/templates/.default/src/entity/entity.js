@@ -44,10 +44,12 @@ export class Entity extends EventEmitter
 		this.node = null;
 		this.listItems = null;
 
+		this.itemLoader = null;
 		this.itemsLoaderNode = null;
 
 		this.blank = null;
 		this.dropzone = null;
+		this.emptySearchStub = null;
 	}
 
 	setEntityParams(params: EntityParams)
@@ -58,11 +60,10 @@ export class Entity extends EventEmitter
 		this.setStoryPoints(params.storyPoints);
 		this.setShortView(params.isShortView);
 		this.setMandatory(params.mandatoryExists);
-
-		this.exactSearchApplied = (params.isExactSearchApplied === 'Y');
+		this.setExactSearchApplied(params.isExactSearchApplied);
 
 		this.pageSize = parseInt(params.pageSize, 10);
-		this.pageNumberItems = (Type.isInteger(params.pageNumberItems) ? parseInt(params.pageNumberItems, 10) : 1);
+		this.setPageNumberItems(params.pageNumberItems);
 	}
 
 	setListItems(entity: Entity)
@@ -190,6 +191,16 @@ export class Entity extends EventEmitter
 		return this.pageNumberItems;
 	}
 
+	setPageNumberItems(pageNumberItems: number)
+	{
+		if (Type.isInteger(pageNumberItems))
+		{
+			pageNumberItems = parseInt(pageNumberItems, 10);
+		}
+
+		this.pageNumberItems = pageNumberItems ? pageNumberItems : 1;
+	}
+
 	incrementPageNumberItems()
 	{
 		this.pageNumberItems++;
@@ -229,6 +240,7 @@ export class Entity extends EventEmitter
 
 		this.hideBlank();
 		this.hideDropzone();
+		this.hideEmptySearchStub();
 
 		this.adjustListItemsWidth();
 	}
@@ -285,9 +297,9 @@ export class Entity extends EventEmitter
 		return (this.numberTasks ? this.numberTasks : this.getItems().size);
 	}
 
-	setExactSearchApplied(value: boolean)
+	setExactSearchApplied(value: 'Y' | 'N')
 	{
-		this.exactSearchApplied = Boolean(value);
+		this.exactSearchApplied = value === 'Y';
 	}
 
 	isExactSearchApplied(): boolean
@@ -326,11 +338,16 @@ export class Entity extends EventEmitter
 			this.emit('updateItem', baseEvent.getData());
 		});
 
-		item.subscribe('showTask', (baseEvent: BaseEvent) => this.emit('showTask', baseEvent.getTarget()));
+		item.subscribe('showTask', (baseEvent: BaseEvent) => {
+			this.emit('showTask', baseEvent.getTarget());
+		});
 
 		item.subscribe('changeTaskResponsible', (baseEvent: BaseEvent) => {
-			const item = baseEvent.getTarget();
-			this.emit('changeTaskResponsible', item);
+			this.emit('changeTaskResponsible', baseEvent.getTarget());
+		});
+
+		item.subscribe('onShowResponsibleDialog', (baseEvent: BaseEvent) => {
+			this.emit('onShowResponsibleDialog', baseEvent.getData());
 		});
 
 		item.subscribe('filterByEpic', (baseEvent: BaseEvent) => {
@@ -534,26 +551,31 @@ export class Entity extends EventEmitter
 		return this.activeLoadItems === true;
 	}
 
-	showItemsLoader()
+	showItemsLoader(): Loader
 	{
 		const listPosition = Dom.getPosition(this.itemsLoaderNode);
 
-		const loader = new Loader({
+		if (this.itemLoader)
+		{
+			this.itemLoader.destroy();
+		}
+
+		this.itemLoader = new Loader({
 			target: this.itemsLoaderNode,
 			size: 60,
 			mode: 'inline',
 			offset: {
 				top: '7px',
-				left: `${(listPosition.width / 2 - 30)}px`
+				left: `${((listPosition.width / 2) - 45)}px`
 			}
 		});
 
 		if (this.getNumberItems() >= this.pageSize)
 		{
-			loader.show();
+			this.itemLoader.show();
 		}
 
-		return loader;
+		return this.itemLoader;
 	}
 
 	setStats() {}
@@ -590,6 +612,22 @@ export class Entity extends EventEmitter
 		}
 	}
 
+	showEmptySearchStub()
+	{
+		if (this.emptySearchStub)
+		{
+			Dom.addClass(this.emptySearchStub.getNode(), '--open');
+		}
+	}
+
+	hideEmptySearchStub()
+	{
+		if (this.emptySearchStub)
+		{
+			Dom.removeClass(this.emptySearchStub.getNode(), '--open');
+		}
+	}
+
 	getDropzone(): ?HTMLElement
 	{
 		return this.dropzone ? this.dropzone.getNode() : null;
@@ -616,6 +654,11 @@ export class Entity extends EventEmitter
 
 	adjustListItemsWidth()
 	{
+		if (Type.isNull(this.getListItemsNode()))
+		{
+			return;
+		}
+
 		const hasListItemsScroll = this.getListItemsNode().scrollHeight > this.getListItemsNode().clientHeight;
 
 		if (hasListItemsScroll)

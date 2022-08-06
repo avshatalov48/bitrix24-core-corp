@@ -201,9 +201,21 @@ BX.namespace('Tasks.Component');
 					context: 'TASKS_MEMBER_SELECTOR_EDIT_' + this.option('userType'),
 					entities: this.getDialogEntities(),
 					preselectedItems: this.getDialogSelectedItems(),
+					autoHide: true,
+					autoHideHandler: function(event) {
+						if (!BX.Dom.hasClass(event.target, 'task-form-field-item-delete'))
+						{
+							return true;
+						}
+
+						var itemNode = event.target.parentElement;
+						var item = this.getItemByNode(itemNode);
+
+						return (!item || item.detectScope() !== itemNode);
+					}.bind(this),
+					hideOnSelect: (this.option('userType') === 'responsible'),
 					events: {
-						'Item:onSelect': function(event)
-						{
+						'Item:onSelect': function(event) {
 							if (this.dialogCallback === false)
 							{
 								return;
@@ -212,33 +224,37 @@ BX.namespace('Tasks.Component');
 							var item = event.getData().item;
 							var userData = this.prepareUserData(item);
 
-							BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ this.option('userType') +'Selected', userData);
+							BX.Event.EventEmitter.emit(
+								'BX.Tasks.MemberSelector:' + this.option('userType') + 'Selected',
+								userData
+							);
 						}.bind(this),
-						'Item:onDeselect': function(event)
-						{
+						'Item:onDeselect': function(event) {
 							if (this.dialogCallback === false)
 							{
 								return;
 							}
-
-							var item = event.getData().item;
-							var userData = this.prepareUserData(item);
 
 							if(
 								this.option('hidePreviousIfSingleAndRequired')
 								&& this.vars.constraint.min === 1
 								&& this.count() === 1
-							) // special behaviour
+							)
 							{
 								this.forceDeleteFirst();
 							}
 							else
 							{
-								BX.Event.EventEmitter.emit('BX.Tasks.MemberSelector:'+ this.option('userType') +'Deselected', userData);
+								var item = event.getData().item;
+								var userData = this.prepareUserData(item);
+
+								BX.Event.EventEmitter.emit(
+									'BX.Tasks.MemberSelector:' + this.option('userType') + 'Deselected',
+									userData
+								);
 							}
 						}.bind(this),
-						'onHide': function(event)
-						{
+						'onHide': function() {
 							if (
 								this.option('hidePreviousIfSingleAndRequired')
 								&& this.vars.constraint.min > 0
@@ -267,7 +283,14 @@ BX.namespace('Tasks.Component');
 
 						if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
 						{
-							BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+							BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+								isLimit: true,
+								limitAnalyticsLabels: {
+									module: 'tasks',
+									source: 'taskEdit',
+									subject: userType
+								}
+							});
 							return;
 						}
 
@@ -471,7 +494,14 @@ BX.namespace('Tasks.Component');
 
 				if ((userType === 'accomplice' || userType === 'auditor') && taskLimitExceeded)
 				{
-					BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+					BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'taskEdit',
+							subject: userType
+						}
+					});
 					return;
 				}
 
@@ -489,25 +519,23 @@ BX.namespace('Tasks.Component');
 			// item "delete" cross clicked
 			onItemDeleteByCross: function(value)
 			{
-				if(!this.callMethod(BX.Tasks.UserItemSet, 'onItemDeleteByCross', arguments))
+				if (this.callMethod(BX.Tasks.UserItemSet, 'onItemDeleteByCross', arguments))
 				{
-					if(this.option('hidePreviousIfSingleAndRequired')) // special behaviour
-					{
-						if (
-							this.vars.constraint.min === 1
-							&& this.count() === 1
-						)
-						{
-							this.forceDeleteFirst();
-							this.getDialog().setTargetNode(this.scope());
-							this.getDialog().show();
-						}
-					}
-
-					return false;
+					return true;
 				}
 
-				return true;
+				if (
+					this.option('hidePreviousIfSingleAndRequired')
+					&& this.vars.constraint.min === 1
+					&& this.count() === 1
+				)
+				{
+					this.forceDeleteFirst();
+					this.getDialog().setTargetNode(this.scope());
+					this.getDialog().show();
+				}
+
+				return false;
 			},
 
 			forceDeleteFirst: function()

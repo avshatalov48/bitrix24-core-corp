@@ -30,6 +30,11 @@ IntranetInvite.init = function()
 
 IntranetInvite.isRecentComponent = function()
 {
+	if (BX.componentParameters.get('COMPONENT_CODE') === "im.messenger")
+	{
+		return true;
+	}
+
 	if (BX.componentParameters.get('COMPONENT_CODE') === "im.recent")
 	{
 		return true;

@@ -2073,6 +2073,7 @@ div.crm-selector-wrapper div.crm-selector-inner-wrapper {
 	display: inline-block;
 	padding: 5px 0 5px 8px;
 	border: 1px solid #d9d9d9;
+	border-radius: var(--ui-field-border-radius);
 	background-color: #fff;
 	vertical-align: top;
 }

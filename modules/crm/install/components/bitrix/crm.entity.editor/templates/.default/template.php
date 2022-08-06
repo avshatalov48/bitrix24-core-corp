@@ -269,6 +269,10 @@ if(!empty($htmlEditorConfigs))
 			);
 			<?php endif;?>
 
+			var contextParams = {
+				CATEGORY_ID: <?=$arParams['EXTRAS']['CATEGORY_ID'] ?? 0?>
+			};
+
 			var userFieldManager = BX.UI.EntityUserFieldManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
@@ -279,6 +283,7 @@ if(!empty($htmlEditorConfigs))
 					creationPageUrl: "<?=CUtil::JSEscape($arResult['USER_FIELD_CREATE_PAGE_URL'])?>",
 					languages: <?=CUtil::PhpToJSObject($arResult['LANGUAGES'])?>,
 					fieldPrefix: "<?=CUtil::JSEscape($arResult['USER_FIELD_PREFIX'])?>",
+					contextParams: contextParams,
 				}
 			);
 
@@ -377,8 +382,8 @@ if(!empty($htmlEditorConfigs))
 				enumerationLegend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ENUM_LEGEND')?>",
 				urlTitle: "<?=GetMessageJS('CRM_ENTITY_ED_UF_URL_TITLE')?>",
 				urlLegend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_URL_LEGEND')?>",
-				addressTitle: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ADDRESS_TITLE')?>",
-				addressLegend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ADDRESS_LEGEND')?>",
+				addressTitle: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ADDRESS_TITLE_2')?>",
+				addressLegend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_ADDRESS_LEGEND_2')?>",
 				resourcebookingTitle: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_TITLE')?>",
 				resourcebookingLegend: "<?=GetMessageJS('CRM_ENTITY_ED_UF_RESOURCEBOOKING_LEGEND')?>",
 				fileTitle: "<?=GetMessageJS('CRM_ENTITY_ED_UF_FILE_TITLE')?>",

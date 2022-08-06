@@ -20,7 +20,6 @@ $MESS["STRESS_SHARE_ALERT_GOTIT"] = "Got it!";
 $MESS["STRESS_SHARE_ALERT_TITLE"] = "This feature is not yet available";
 $MESS["STRESS_SHARE_CANCEL"] = "Cancel";
 $MESS["STRESS_SHARE_COMING_SOON"] = "Soon you will be able to share your results!";
-$MESS["STRESS_SHARE_LIVE_STREAM"] = "Activity Stream";
 $MESS["STRESS_SHARE_NEWS"] = "Feed";
 $MESS["STRESS_SHARE_POST_MESSAGE"] = "Here's my stress level
 ";

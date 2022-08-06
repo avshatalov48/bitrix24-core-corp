@@ -1,8 +1,11 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-class CBPCrmControlNotifyActivity
-	extends CBPActivity
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+class CBPCrmControlNotifyActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
@@ -29,6 +32,8 @@ class CBPCrmControlNotifyActivity
 		{
 			$toUserIds = array_merge($toUserIds, $this->getUserHead($fromUserId));
 		}
+
+		$this->logDebug($toUserIds);
 
 		if (!$toUserIds)
 		{
@@ -219,38 +224,7 @@ class CBPCrmControlNotifyActivity
 			'currentValues' => $arCurrentValues
 		));
 
-		$dialog->setMap(array(
-			'MessageText' => array(
-				'Name' => GetMessage('CRM_CTRNA_MESSAGE'),
-				'Description' => GetMessage('CRM_CTRNA_MESSAGE'),
-				'FieldName' => 'message_text',
-				'Type' => 'text',
-				'Required' => true
-			),
-			'ToHead' => array(
-				'Name' => GetMessage('CRM_CTRNA_TO_HEAD'),
-				'FieldName' => 'to_head',
-				'Type' => 'bool',
-				'Default' => 'Y'
-			),
-			'ToUsers' => array(
-				'Name' => GetMessage('CRM_CTRNA_TO_USERS'),
-				'FieldName' => 'to_users',
-				'Type' => 'user',
-				'Default' => 'CONTROL_HEAD',
-				'Required' => true,
-				'Multiple' => true,
-				'Settings' => [
-					'additionalFields' => array(
-						array(
-							'id' => 'CONTROL_HEAD',
-							'entityId' => 'CONTROL_HEAD',
-							'name' => GetMessage('CRM_CTRNA_TO_HEAD'),
-						)
-					)
-				]
-			),
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -263,7 +237,7 @@ class CBPCrmControlNotifyActivity
 			"MessageText" => $arCurrentValues["message_text"]
 		);
 
-		list($toUsers, $toHead) = CBPHelper::UsersStringToArray(
+		[$toUsers, $toHead] = CBPHelper::UsersStringToArray(
 			$arCurrentValues["to_users"],
 			$documentType,
 			$arErrors,
@@ -289,5 +263,55 @@ class CBPCrmControlNotifyActivity
 		$arCurrentActivity["Properties"] = $arProperties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'MessageText' => [
+				'Name' => GetMessage('CRM_CTRNA_MESSAGE'),
+				'Description' => GetMessage('CRM_CTRNA_MESSAGE'),
+				'FieldName' => 'message_text',
+				'Type' => 'text',
+				'Required' => true
+			],
+			'ToHead' => [
+				'Name' => GetMessage('CRM_CTRNA_TO_HEAD'),
+				'FieldName' => 'to_head',
+				'Type' => 'bool',
+				'Default' => 'Y'
+			],
+			'ToUsers' => [
+				'Name' => GetMessage('CRM_CTRNA_TO_USERS'),
+				'FieldName' => 'to_users',
+				'Type' => 'user',
+				'Default' => 'CONTROL_HEAD',
+				'Required' => true,
+				'Multiple' => true,
+				'Settings' => [
+					'additionalFields' => [
+						[
+							'id' => 'CONTROL_HEAD',
+							'entityId' => 'CONTROL_HEAD',
+							'name' => GetMessage('CRM_CTRNA_TO_HEAD'),
+						]
+					]
+				]
+			],
+		];
+	}
+
+	private function logDebug($users)
+	{
+		$debugInfo = $this->getDebugInfo([
+			'ToUsers' => array_map(
+				fn($userId) => 'user_' . $userId,
+				$users
+			),
+		]);
+
+		unset($debugInfo['ToHead']);
+
+		$this->writeDebugInfo($debugInfo);
 	}
 }

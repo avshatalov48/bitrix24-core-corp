@@ -204,35 +204,18 @@ $arResult['AJAX_ID'] = isset($arParams['AJAX_ID']) ? $arParams['AJAX_ID'] : '';
 $arResult['AJAX_OPTION_JUMP'] = isset($arParams['AJAX_OPTION_JUMP']) ? $arParams['AJAX_OPTION_JUMP'] : 'N';
 $arResult['AJAX_OPTION_HISTORY'] = isset($arParams['AJAX_OPTION_HISTORY']) ? $arParams['AJAX_OPTION_HISTORY'] : 'N';
 
-$currentUserID = $arResult['CURRENT_USER_ID'];
-
 //region Filter Presets Initialization
 if (!$bInternal)
 {
-	//region Preparation of work statuses
-	$processStatusIDs = array();
-	foreach(array_keys(CCrmQuote::GetStatuses()) as $statusID)
-	{
-		if(CCrmQuote::GetSemanticID($statusID) === Bitrix\Crm\PhaseSemantics::PROCESS)
-		{
-			$processStatusIDs[] = $statusID;
-		}
-	}
-	//endregion
-	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
-	$arResult['FILTER_PRESETS'] = array(
-		'filter_new' => array('name' => GetMessage('CRM_PRESET_NEW'), 'fields' => array('STATUS_ID' => array('selDRAFT' => 'DRAFT'))),
-		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'fields' => array( 'ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
-		'filter_my_in_work' => array(
-			'name' => GetMessage('CRM_PRESET_MY_IN_WORK'),
-			'default' => true,
-			'fields' => array(
-				'ASSIGNED_BY_ID_name' => $currentUserName,
-				'ASSIGNED_BY_ID' => $currentUserID,
-				'STATUS_ID' => $processStatusIDs
-			)
-		)
+	$entityFilter = Crm\Filter\Factory::createEntityFilter(
+		new Crm\Filter\QuoteSettings(['ID' => $arResult['GRID_ID']])
 	);
+	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Quote())
+		->setUserId($arResult['CURRENT_USER_ID'])
+		->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
+		->setDefaultValues($entityFilter->getDefaultFieldIDs())
+		->getDefaultPresets()
+	;
 }
 //endregion
 
@@ -252,11 +235,6 @@ $arNavParams['bShowAll'] = false;
 if (!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
-	$entityFilter = Crm\Filter\Factory::createEntityFilter(
-		new Crm\Filter\QuoteSettings(
-			array('ID' => $arResult['GRID_ID'])
-		)
-	);
 
 	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 	if(empty($effectiveFilterFieldIDs))
@@ -1742,7 +1720,7 @@ while($arQuote = $obRes->GetNext())
 		$tsMax = mktime(0, 0, 0, date('m',$tsNow), date('d',$tsNow), date('Y',$tsNow));
 
 		$counterData = array(
-			'CURRENT_USER_ID' => $currentUserID,
+			'CURRENT_USER_ID' => $arResult['CURRENT_USER_ID'],
 			'ENTITY' => $arQuote
 		);
 		$bReckoned = CCrmUserCounter::IsReckoned(CCrmUserCounter::CurrentQuoteActivies, $counterData);

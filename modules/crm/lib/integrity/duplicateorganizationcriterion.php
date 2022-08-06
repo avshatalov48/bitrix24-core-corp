@@ -13,6 +13,8 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 
 	public function __construct($title)
 	{
+		parent::__construct();
+
 		$this->useStrictComparison = false;
 		$this->setTitle($title);
 	}
@@ -266,7 +268,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		}
 		return $results;
 	}
-	public static function prepareSortParams($entityTypeID, array &$entityIDs)
+	public static function prepareSortParams($entityTypeID, array $entityIDs)
 	{
 		if(empty($entityIDs))
 		{
@@ -387,7 +389,7 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 		}
 		else
 		{
-			$filter['%TITLE'] = new \CSQLWhereExpression('?s', mb_strtoupper($this->title).'%');
+			$filter['%TITLE'] = new Main\DB\SqlExpression('?s', mb_strtoupper($this->title).'%');
 		}
 
 		if(\CCrmOwnerType::IsDefined($entityTypeID))

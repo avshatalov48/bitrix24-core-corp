@@ -20,6 +20,7 @@ return [
 		'im.provider.rest',
 		'im.lib.localstorage',
 		'pull.component.status',
+		'ui.fonts.opensans',
 		'ui.vue',
 		'im.component.dialog',
 		'im.view.quotepanel',

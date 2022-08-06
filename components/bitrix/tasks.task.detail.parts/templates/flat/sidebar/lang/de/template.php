@@ -31,6 +31,7 @@ $MESS["TASKS_SIDEBAR_TEMPLATE"] = "Vorlage";
 $MESS["TASKS_SIDEBAR_TEMPLATE_NOT_ACCESSIBLE"] = "Die Aufgabe wiederholt sich, die Vorlage kann nicht angezeigt werden";
 $MESS["TASKS_SIDEBAR_TIME_ESTIMATE"] = "Zeit geplant";
 $MESS["TASKS_SIDEBAR_TIME_SPENT_IN_LOGS"] = "Zeit aufgewendet";
+$MESS["TASKS_TASK_EPIC"] = "Epic";
 $MESS["TASKS_TTDP_TEMPLATE_COPY_CURRENT_URL"] = "Aufgabenlink in den Zwischenspeicher kopieren";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_ACCOMPLICES"] = "Mitwirkende";
 $MESS["TASKS_TTDP_TEMPLATE_USER_VIEW_AUDITORS"] = "Beobachter";

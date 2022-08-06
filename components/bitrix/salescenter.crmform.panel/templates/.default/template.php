@@ -31,6 +31,7 @@ Extension::load([
 	'popup',
 	'salescenter.manager',
 	'salescenter.app',
+	'ui.design-tokens',
 ]);
 ?>
 

@@ -13,6 +13,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 global $USER_FIELD_MANAGER, $USER, $APPLICATION, $DB;
 
+use Bitrix\Crm\PhaseSemantics;
+
 $isErrorOccured = false;
 $errorMessage = '';
 
@@ -488,43 +490,49 @@ $arResult['EFFECTIVE_CATEGORY_ID'] = $effectiveCategoryID;
 $arResult['CATEGORY_LIST'] = DealCategory::prepareSelectListItems($arResult['CATEGORY_ACCESS']['READ']);
 
 //region Filter Presets Initialization
-if (!$bInternal && $arParams['IS_RECURRING'] !== 'Y')
+if (!$bInternal)
 {
-	$currentUserID = $arResult['CURRENT_USER_ID'];
-	$currentUserName = Container::getInstance()->getUserBroker()->getName($currentUserID);
-	$arResult['FILTER_PRESETS'] = [
-		'filter_in_work' => [
-			'name' => GetMessage('CRM_PRESET_IN_WORK'),
-			'default' => true,
-			'fields' => ['STAGE_SEMANTIC_ID' => [Bitrix\Crm\PhaseSemantics::PROCESS]]
-		],
-		'filter_my' => [
-			'name' => GetMessage('CRM_PRESET_MY'),
-			'disallow_for_all' => true,
-			'fields' => [
-				'ASSIGNED_BY_ID_name' => $currentUserName,
-				'ASSIGNED_BY_ID' => $currentUserID,
-				'STAGE_SEMANTIC_ID' => [Bitrix\Crm\PhaseSemantics::PROCESS]
-			]
-		],
-		'filter_closed' => [
-			'name' => GetMessage('CRM_PRESET_WON'),
-			'fields' => ['STAGE_SEMANTIC_ID' => [Bitrix\Crm\PhaseSemantics::SUCCESS, Bitrix\Crm\PhaseSemantics::FAILURE]]
-		],
-		'filter_payed' => [
-			'name' => GetMessage('CRM_PRESET_PAYED'),
-			'fields' => [
-				'PAYMENT_STAGE' => [Crm\Workflow\PaymentStage::PAID]
-			]
-		],
-	];
+	$flags = Crm\Filter\DealSettings::FLAG_NONE | Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
+	if ($arParams['IS_RECURRING'] === 'Y')
+	{
+		$flags |= Crm\Filter\DealSettings::FLAG_RECURRING;
+	}
+
+	$entityFilter = Crm\Filter\Factory::createEntityFilter(
+		new Crm\Filter\DealSettings([
+			'ID' => $arResult['GRID_ID'],
+			'categoryID' => $arResult['CATEGORY_ID'],
+			'categoryAccess' => $arResult['CATEGORY_ACCESS'],
+			'flags' => $flags,
+		])
+	);
+
+	if ($arParams['IS_RECURRING'] !== 'Y')
+	{
+		if ($externalFilterId)
+		{
+			$fields = $entityFilter->getFields();
+			foreach ($fields as $field)
+			{
+				$arResult['FILTER'][] = $field->toArray();
+			}
+
+			$arResult['FILTER_PRESETS'] = [];
+		}
+		else
+		{
+			$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Deal())
+				->setUserId($arResult['CURRENT_USER_ID'])
+				->setUserName(Container::getInstance()->getUserBroker()->getName($arResult['CURRENT_USER_ID']))
+				->setDefaultValues($entityFilter->getDefaultFieldIDs())
+				->getDefaultPresets()
+			;
+		}
+	}
 }
 //endregion
 
-
-
-
-if (!empty($externalFilterId))
+if(!empty($externalFilterId))
 {
 	Main\Loader::includeModule('report');
 	$arResult['GRID_ID'] = 'report_' . $boardId . '_grid';
@@ -557,46 +565,6 @@ $clientFieldsRestrictionManager->removeRestrictedFieldsFromFilter($filterOptions
 if (!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'COMMENTS'];
-	$flags = \Bitrix\Crm\Filter\DealSettings::FLAG_NONE | \Bitrix\Crm\Filter\DealSettings::FLAG_ENABLE_CLIENT_FIELDS;
-	if ($arParams['IS_RECURRING'] === 'Y')
-	{
-		$flags |= Crm\Filter\DealSettings::FLAG_RECURRING;
-	}
-	if ($externalFilterId)
-	{
-		$entityFilter = Crm\Filter\Factory::createEntityFilter(
-			new Crm\Filter\DealSettings(
-				array(
-					'ID' => $arResult['GRID_ID'],
-					'categoryID' => $arResult['CATEGORY_ID'],
-					'categoryAccess' => $arResult['CATEGORY_ACCESS'],
-					'flags' => $flags,
-				)
-			)
-		);
-
-		$fields = $entityFilter->getFields();
-		foreach ($fields as $field)
-		{
-			$arResult['FILTER'][] = $field->toArray();
-		}
-
-		$arResult['FILTER_PRESETS'] = [];
-	}
-	else
-	{
-		$entityFilter = Crm\Filter\Factory::createEntityFilter(
-			new Crm\Filter\DealSettings(
-				array(
-					'ID' => $arResult['GRID_ID'],
-					'categoryID' => $arResult['CATEGORY_ID'],
-					'categoryAccess' => $arResult['CATEGORY_ACCESS'],
-					'flags' => $flags,
-				)
-			)
-		);
-	}
-
 
 	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 	if(empty($effectiveFilterFieldIDs))
@@ -1175,6 +1143,7 @@ if(isset($arFilter['ACTIVITY_COUNTER']))
 //endregion
 
 $arFilter = Crm\Deal\OrderFilter::prepareFilter($arFilter);
+$arFilter = Crm\Automation\Debugger\DebuggerFilter::prepareFilter($arFilter, \CCrmOwnerType::Deal);
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
 
@@ -2102,8 +2071,6 @@ if (!$bInternal)
 if ($isInExportMode)
 {
 	$productHeaderIndex = array_search('PRODUCT_ID', $arSelectedHeaders, true);
-	//$productRowsEnabled = \Bitrix\Crm\Settings\DealSettings::getCurrent()->isProductRowExportEnabled();
-
 	if($productHeaderIndex <= 0 && $isStExportProductsFields)
 	{
 		$arSelectedHeaders[] = 'PRODUCT_ID';

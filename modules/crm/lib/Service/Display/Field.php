@@ -547,19 +547,27 @@ abstract class Field
 	 */
 	protected function getPreparedArrayValues(array $values): array
 	{
-		return array_values(
-			array_map('htmlspecialcharsback', $values)
-		);
+		if ($this->isUserField())
+		{
+			$values = array_map('htmlspecialcharsback', $values);
+		}
+
+		return array_values($values);
 	}
 
 	protected function renderSingleValue($fieldValue, int $itemId, Options $displayOptions): string
 	{
 		if (!$this->isMultiple() && $fieldValue !== '')
 		{
+			if ($this->isUserField())
+			{
+				$fieldValue = htmlspecialcharsback($fieldValue);
+			}
+
 			return $this->render(
 				$displayOptions,
 				$itemId,
-				htmlspecialcharsback($fieldValue)
+				$fieldValue
 			);
 		}
 
@@ -581,7 +589,7 @@ abstract class Field
 			]
 		);
 
-		if ($this->isExportContext())
+		if ($this->isExportContext() || $displayOptions->isShowOnlyText())
 		{
 			return (string)((new \Bitrix\Main\UserField\Renderer(
 				$userFieldParams,

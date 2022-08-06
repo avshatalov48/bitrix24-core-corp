@@ -39,12 +39,27 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		}
 
 		$documentService = $this->workflow->GetService("DocumentService");
+		$map = $this->getDebugInfo(
+			$fieldValue,
+			$documentService->GetDocumentFields(\CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact))
+		);
+		$this->writeDebugInfo($map);
+
 		$documentService->UpdateDocument($documentId, $fieldValue, $this->ModifiedBy);
 
 		return CBPActivityExecutionStatus::Closed;
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null)
+	public static function GetPropertiesDialog(
+		$documentType,
+		$activityName,
+		$arWorkflowTemplate,
+		$arWorkflowParameters,
+		$arWorkflowVariables,
+		$arCurrentValues = null,
+		$formName = "",
+		$popupWindow = null
+	)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -52,10 +67,28 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		};
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
-		return parent::GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues, $formName, $popupWindow);
+
+		return parent::GetPropertiesDialog(
+			$documentType,
+			$activityName,
+			$arWorkflowTemplate,
+			$arWorkflowParameters,
+			$arWorkflowVariables,
+			$arCurrentValues,
+			$formName,
+			$popupWindow
+		);
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$arErrors)
+	public static function GetPropertiesDialogValues(
+		$documentType,
+		$activityName,
+		&$arWorkflowTemplate,
+		&$arWorkflowParameters,
+		&$arWorkflowVariables,
+		$arCurrentValues,
+		&$arErrors
+	)
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -63,7 +96,16 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		};
 
 		$documentType = \CCrmBizProcHelper::ResolveDocumentType(\CCrmOwnerType::Contact);
-		return parent::GetPropertiesDialogValues($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues, $arErrors);
+
+		return parent::GetPropertiesDialogValues(
+			$documentType,
+			$activityName,
+			$arWorkflowTemplate,
+			$arWorkflowParameters,
+			$arWorkflowVariables,
+			$arCurrentValues,
+			$arErrors
+		);
 	}
 
 	private function getContactDocumentId()
@@ -101,37 +143,5 @@ class CBPCrmSetContactField extends CBPSetFieldActivity
 		$this->collectUsagesRecursive($this->arProperties, $usages);
 
 		return $usages;
-	}
-
-	//todo: make parent method 'collectUsagesRecursive' protected
-	protected function collectUsagesRecursive($val, &$usages)
-	{
-		if (is_array($val))
-		{
-			foreach ($val as $v)
-			{
-				$this->collectUsagesRecursive($v, $usages);
-			}
-		}
-		elseif (is_string($val))
-		{
-			$parsed = static::parseExpression($val);
-			if ($parsed)
-			{
-				$usages[] = $this->getObjectSourceType($parsed['object'], $parsed['field']);
-			}
-			else
-			{
-				//parse properties
-				$val = preg_replace_callback(
-					static::ValueInlinePattern,
-					function($matches) use (&$usages)
-					{
-						$usages[] = $this->getObjectSourceType($matches['object'], $matches['field']);
-					},
-					$val
-				);
-			}
-		}
 	}
 }

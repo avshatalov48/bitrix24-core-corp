@@ -4,7 +4,7 @@ namespace Bitrix\Crm\Integrity;
 
 class DedupeConfig
 {
-	protected const OPTION_KEY = 'crm.dedupe.wizard';
+	public const OPTION_KEY = 'crm.dedupe.wizard';
 
 	/** @var $userId int */
 	protected $userId;

@@ -7,7 +7,8 @@
 .mp-apps-title {
 	font-size: 22px;
 	line-height: 30px;
-	font-family: "OpenSans-Regular", Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 	margin-bottom: 10px;
 }
@@ -34,7 +35,8 @@
 	font-size: 22px;
 	line-height: 22px;
 	color: #333;
-	font-family: "OpenSans-Semibold", Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .mp-apps-desc {

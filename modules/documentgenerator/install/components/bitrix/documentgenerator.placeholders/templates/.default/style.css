@@ -8,7 +8,8 @@
 
 .docs-placeholder-section {
 	padding: 27px 25px 34px 27px;
-	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .docs-placeholder-title-inner {

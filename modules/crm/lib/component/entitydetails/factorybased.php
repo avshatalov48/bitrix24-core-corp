@@ -9,7 +9,6 @@ use Bitrix\Crm\Controller\Entity;
 use Bitrix\Crm\EO_Status;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Format\Money;
-use Bitrix\Crm\Format\TextHelper;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
@@ -41,6 +40,7 @@ use Bitrix\Main\UserField\Types\DoubleType;
 use Bitrix\Main\Web\Uri;
 use Bitrix\UI\Buttons;
 use Bitrix\UI\Toolbar\ButtonLocation;
+use CCrmComponentHelper;
 use CLists;
 
 abstract class FactoryBased extends BaseComponent implements Controllerable
@@ -312,7 +312,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			]);
 		}
 
-		return $this->item->getTitle() ?? '';
+		return $this->item->getHeading() ?? '';
 	}
 
 	protected function isPageTitleEditable(): bool
@@ -701,6 +701,11 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 				),
 				'ENTITY_ID' => $this->getEntityID(),
 				'ENTITY_TYPE_NAME' => $this->getEntityName(),
+				'ENTITY_TITLE' =>
+					$this->item->isNew()
+						? $this->getTitle()
+						: $this->item->getTitlePlaceholder()
+				,
 				'CUSTOM_SITE_ID' => $this->getSiteId(),
 				'CUSTOM_LANGUAGE_ID' => $this->getLanguageId(),
 				'ALLOW_EDIT' => $this->isReadOnly() ? 'N' : 'Y',
@@ -1160,6 +1165,8 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		if ($this->factory->isClientEnabled() && isset($data[EditorAdapter::FIELD_CLIENT_DATA_NAME]))
 		{
+			// TODO: compare incoming category ID with actual category ID from store
+
 			$result = $this->editorAdapter->saveClientData(
 				$this->item,
 				$data[EditorAdapter::FIELD_CLIENT_DATA_NAME]
@@ -1339,10 +1346,6 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					$value = str_replace(',', '.', $value);
 				}
 			}
-			if ($field->getValueType() === Field::VALUE_TYPE_HTML)
-			{
-				$value = TextHelper::sanitizeHtml($value);
-			}
 
 			$setData[$name] = $value;
 		}
@@ -1416,13 +1419,17 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 	protected function addRecentlyUsedItem(int $entityTypeId, int $id): void
 	{
+		// TODO: need to detect category ID when will implement real category params feature
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams($this->factory->getEntityTypeId());
+
 		Entity::addLastRecentlyUsedItems(
 			$this->getComponentName(),
 			mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)),
 			[
 				[
 					'ENTITY_TYPE_ID' => $entityTypeId,
-					'ENTITY_ID' => $id
+					'ENTITY_ID' => $id,
+					'CATEGORY_ID' => $categoryParams[$entityTypeId]['categoryId'] ?? 0,
 				]
 			]
 		);
@@ -1537,7 +1544,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 
 		return [
 			'ENTITY_SCOPE' => FieldAttributeManager::getItemConfigScope($this->item),
-			'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(),
+			'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages($this->entityTypeId),
 			'ENTITY_PHASES' => $entityPhases,
 		];
 	}

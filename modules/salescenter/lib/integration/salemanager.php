@@ -14,6 +14,7 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale\Payment;
 use Bitrix\Main\Loader;
+use Bitrix\Sale\PaySystem\ClientType;
 use Bitrix\SalesCenter;
 use Bitrix\Salescenter\Analytics;
 use Bitrix\Salescenter\SaleshubItem;
@@ -452,7 +453,7 @@ class SaleManager extends Base
 			$filter = array_merge($filter, $additionalFilter);
 		}
 		$params = [
-			'select' => ['ID', 'NAME', 'ACTION_FILE', 'PS_MODE', 'SORT'],
+			'select' => ['ID', 'NAME', 'ACTION_FILE', 'PS_MODE', 'PS_CLIENT_TYPE', 'SORT'],
 			'filter' => $filter,
 			'order' => ['ID' => 'DESC'],
 		];
@@ -467,6 +468,8 @@ class SaleManager extends Base
 		$result = [];
 		while ($item = $dbRes->fetch())
 		{
+			$item['PS_CLIENT_TYPE'] = $item['PS_CLIENT_TYPE'] ?: ClientType::DEFAULT;
+			
 			$result[$item['ID']] = $item;
 		}
 

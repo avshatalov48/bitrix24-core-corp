@@ -301,7 +301,7 @@ foreach ($typesMap->getTypes() as $type)
 			}
 		}
 		$arResult['ROLE_PERM'][$entityName] = $permissionSet;
-		$entityOperationsMap[$entityName] = $isAutomationEnabled ? $operationsWithAutomation : $operations;
+		$entityOperationsMap[$entityName] = $isAutomationEnabled ? $operationsWithAutomation : $operationsWithImport;
 	}
 }
 

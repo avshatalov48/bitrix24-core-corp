@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+use Bitrix\Main\Engine\ActionFilter\Service\Token;
 use Bitrix\Socialnetwork\Livefeed;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
@@ -34,6 +35,8 @@ if (!$USER->IsAuthorized())
 	ShowError(GetMessage("SONET_SLM_NOT_AUTHORIZED"));
 	return;
 }
+
+$currentUserId = (int)$USER->getId();
 
 $arParams["PATH_TO_USER"] = trim($arParams["PATH_TO_USER"]);
 $arParams["PATH_TO_GROUP"] = trim($arParams["PATH_TO_GROUP"]);
@@ -388,7 +391,7 @@ if ($arEvent)
 					if (
 						$arResult["COUNTER_TYPE"] === "**"
 						&& $arResult["LAST_LOG_TS"] > 0
-						&& (int)$arCommentTmp["EVENT"]["USER_ID"] !== (int)$USER->getId()
+						&& (int)$arCommentTmp["EVENT"]["USER_ID"] !== $currentUserId
 						&& (
 							!is_array($arParams['UNREAD_COMMENTS_ID_LIST'])
 							|| in_array((int)$arCommentTmp['EVENT']['ID'], $arParams['UNREAD_COMMENTS_ID_LIST'], true)
@@ -435,7 +438,7 @@ if ($arEvent)
 		}
 	}
 
-	$arResult["CONTENT_ID"] = false;
+	$arResult['CONTENT_ID'] = '';
 	if (!empty($arParams["CONTENT_ID"]))
 	{
 		$arResult["CONTENT_ID"] = $arParams["CONTENT_ID"];
@@ -453,7 +456,7 @@ if ($arEvent)
 
 		foreach($event->getResults() as $eventResult)
 		{
-			if($eventResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
+			if ($eventResult->getType() == \Bitrix\Main\EventResult::SUCCESS)
 			{
 				$eventParams = $eventResult->getParameters();
 
@@ -467,6 +470,13 @@ if ($arEvent)
 			}
 		}
 	}
+
+	$arResult['CONTENT_VIEW_KEY_SIGNED'] = (string)($arParams['CONTENT_VIEW_KEY_SIGNED'] ?? (
+		(is_object($USER) && $USER->isAuthorized())
+		&& (string)$arResult['CONTENT_ID'] !== ''
+			? (new Token($currentUserId))->generate($arResult['CONTENT_ID'])
+			: ''
+	));
 
 	if (
 		isset($arParams["IS_LIST"])
@@ -488,8 +498,14 @@ if ($arEvent)
 $arResult["Event"] = $arEvent;
 
 $arResult["isCurrentUserEventOwner"] = (
-	((int)$arEvent['EVENT']['USER_ID'] === (int)$USER->getId())
+	((int)$arEvent['EVENT']['USER_ID'] === $currentUserId)
 	|| CSocNetUser::isCurrentUserModuleAdmin(SITE_ID, false)
+);
+
+$arResult['LOG_ID_TOKEN'] = (
+	$currentUserId > 0
+		? (new Token($currentUserId))->generate($arParams['LOG_ID'])
+		: ''
 );
 
 $this->IncludeComponentTemplate();

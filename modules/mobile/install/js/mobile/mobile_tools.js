@@ -48,6 +48,21 @@
 						description: dialogTitleParams.description || ''
 					}: false
 				}, 'im.recent');
+
+				const openDialogOptions = {
+					dialogId,
+				};
+
+				if (dialogTitleParams)
+				{
+					openDialogOptions.dialogTitleParams = dialogTitleParams;
+				}
+
+				BXMobileApp.Events.postToComponent(
+					'ImMobile.Messenger.Dialog:open',
+					openDialogOptions,
+					'im.messenger'
+				);
 			}
 			else
 			{

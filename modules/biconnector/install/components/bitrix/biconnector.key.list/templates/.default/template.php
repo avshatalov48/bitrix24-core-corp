@@ -19,6 +19,7 @@ use Bitrix\Main\Localization\Loc;
 	'ui.buttons',
 	'ui.icons',
 	'ui.notification',
+	'ui.fonts.opensans',
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
@@ -29,9 +30,7 @@ if ($arResult['CAN_WRITE'])
 {
 ?>
 <div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
-		<div class="ui-btn-split ui-btn-primary">
-			<a href="<?=$arParams['KEY_ADD_URL']?>" class="ui-btn-main"><?=Loc::getMessage('CT_BBKL_TOOLBAR_ADD')?></a>
-		</div>
+	<a href="<?=$arParams['KEY_ADD_URL']?>" class="ui-btn ui-btn-primary"><?=Loc::getMessage('CT_BBKL_TOOLBAR_ADD')?></a>
 </div>
 <?php
 }
@@ -179,5 +178,5 @@ $APPLICATION->IncludeComponent(
 <?php
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {
-	$APPLICATION->IncludeComponent("bitrix:biconnector.limit.lock", "");
+	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '');
 }

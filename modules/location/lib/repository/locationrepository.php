@@ -2,7 +2,6 @@
 
 namespace Bitrix\Location\Repository;
 
-use Bitrix\Location\Common\Point;
 use Bitrix\Location\Entity;
 use Bitrix\Location\Repository\Location\Strategy\Delete;
 use Bitrix\Location\Repository\Location\Strategy\Find;
@@ -53,17 +52,6 @@ class LocationRepository
 	}
 
 	/**
-	 * @param Point $point
-	 * @param string $languageId
-	 * @param int $searchScope
-	 * @return Entity\Generic\Collection|bool
-	 */
-	public function findByPoint(Point $point, string $languageId, int $searchScope)
-	{
-		return $this->findStrategy->findByPoint($point, $languageId, $searchScope);
-	}
-
-	/**
 	 * @param string $text
 	 * @param string $languageId
 	 * @param int $searchScope
@@ -72,6 +60,16 @@ class LocationRepository
 	public function findByText(string $text, string $languageId, int $searchScope)
 	{
 		return $this->findStrategy->findByText($text, $languageId, $searchScope);
+	}
+
+	/**
+	 * @param array $params
+	 * @param int $searchScope
+	 * @return array
+	 */
+	public function autocomplete(array $params, int $searchScope)
+	{
+		return $this->findStrategy->autocomplete($params, $searchScope);
 	}
 
 	/**

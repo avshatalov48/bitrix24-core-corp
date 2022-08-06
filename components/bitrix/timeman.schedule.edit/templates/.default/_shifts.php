@@ -118,15 +118,18 @@ use Bitrix\Main\Localization\Loc;
 				<div class="timeman-schedule-form-worktime-item">
 					<div class="timeman-schedule-form-worktime-title"><?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SCHEDULE_EDIT_BREAK_DURATION_TITLE')); ?></div>
 					<div class="timeman-schedule-form-worktime-value">
-						<span class="timeman-schedule-form-worktime-value-text"
-								data-role="timeman-shift-break-toggle"
-						><?= htmlspecialcharsbx(htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()))
-							?></span>
-						<input name="<?= $shiftFormName . "[$shiftIndex][breakDurationFormatted]" ?>"
-								data-role="timeman-shift-break-time"
-								type="hidden"
-								class="timeman-schedule-form-worktime-input-value-text"
-								value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()) ?>">
+						<span
+							class="timeman-schedule-form-worktime-value-text"
+							data-role="timeman-shift-break-toggle"
+						><?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()) ?>
+						</span>
+						<input
+							name="<?= $shiftFormName . "[$shiftIndex][breakDurationFormatted]" ?>"
+							data-role="timeman-shift-break-time"
+							type="hidden"
+							class="timeman-schedule-form-worktime-input-value-text"
+							value="<?= htmlspecialcharsbx($shiftForm->getFormattedBreakDuration()) ?>"
+						>
 					</div>
 				</div>
 				<div class="timeman-schedule-form-worktime-item">

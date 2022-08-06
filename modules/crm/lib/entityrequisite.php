@@ -7,6 +7,9 @@ use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Format\RequisiteAddressFormatter;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
+use Bitrix\Crm\Requisite\Country;
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
@@ -17,6 +20,7 @@ use Bitrix\Main\Text\Encoding;
 use Bitrix\Location\Entity\Address;
 use CCrmFieldInfoAttr;
 use CCrmInstantEditorHelper;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
@@ -362,6 +366,8 @@ class EntityRequisite
 				'RQ_REGON' => [['type' => 'length', 'params' => ['min' => null, 'max' => 9]]],
 				'RQ_KRS' => [['type' => 'length', 'params' => ['min' => null, 'max' => 10]]],
 				'RQ_PESEL' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
+				'RQ_SIGNATURE' => ['type' => 'file_type', 'params' => [ 'onlyImage' => true, ] ],
+				'RQ_STAMP' => ['type' => 'file_type', 'params' => [ 'onlyImage' => true, ]],
 			];
 		}
 
@@ -615,14 +621,14 @@ class EntityRequisite
 		$id = $result->isSuccess() ? (int)$result->getId() : 0;
 		if ($id > 0)
 		{
-			$entityTypeId = isset($fields['ENTITY_TYPE_ID']) ? (int)$fields['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
+			$entityTypeId = isset($fields['ENTITY_TYPE_ID']) ? (int)$fields['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
 			$entityId = isset($fields['ENTITY_ID']) ? (int)$fields['ENTITY_ID'] : 0;
 
 			if (is_array($addresses))
 			{
-				if(!\CCrmOwnerType::IsDefined($entityTypeId) || $entityId <= 0)
+				if(!CCrmOwnerType::IsDefined($entityTypeId) || $entityId <= 0)
 				{
-					$entityTypeId = \CCrmOwnerType::Requisite;
+					$entityTypeId = CCrmOwnerType::Requisite;
 					$entityId = $id;
 				}
 
@@ -634,7 +640,7 @@ class EntityRequisite
 					}
 
 					EntityAddress::register(
-						\CCrmOwnerType::Requisite,
+						CCrmOwnerType::Requisite,
 						$id,
 						$addressTypeID,
 						array(
@@ -655,10 +661,18 @@ class EntityRequisite
 				}
 			}
 
-			if (($entityTypeId === \CCrmOwnerType::Company || $entityTypeId === \CCrmOwnerType::Contact)
+			if (($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact)
 				&& $entityId > 0)
 			{
 				DuplicateRequisiteCriterion::registerByEntity($entityTypeId, $entityId);
+
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					$entityTypeId,
+					$entityId,
+					[FieldCategory::REQUISITE]
+				);
+				//endregion Register volatile duplicate criterion fields
 			}
 
 			//region Send event
@@ -937,8 +951,8 @@ class EntityRequisite
 		$requisite = $this->getList(
 			array(
 				'filter' => ['=ID' => $id],
-				'select' => ['ADDRESS_ONLY'],
-				'limit' => 1
+				'select' => array_merge(['ADDRESS_ONLY'], self::getFileFields()),
+				'limit' => 1,
 			)
 		)->fetch();
 		if(!is_array($requisite))
@@ -970,7 +984,7 @@ class EntityRequisite
 		}
 
 		$entityBeforeUpdate = null;
-		$entityTypeId = \CCrmOwnerType::Undefined;
+		$entityTypeId = CCrmOwnerType::Undefined;
 		$entityId = 0;
 		$entityTypeIdModified = $entityIdModified = false;
 		if (isset($fields['ENTITY_TYPE_ID']))
@@ -978,7 +992,8 @@ class EntityRequisite
 			$entityTypeId = (int)$fields['ENTITY_TYPE_ID'];
 			if ($entityBeforeUpdate === null)
 				$entityBeforeUpdate = EntityRequisite::getOwnerEntityById($id);
-			if (\CCrmOwnerType::IsDefined($entityBeforeUpdate['ENTITY_TYPE_ID'])
+			if (
+				CCrmOwnerType::IsDefined($entityBeforeUpdate['ENTITY_TYPE_ID'])
 				&& $entityBeforeUpdate['ENTITY_ID'] > 0)
 			{
 				if ($entityTypeId !== $entityBeforeUpdate['ENTITY_TYPE_ID'])
@@ -992,7 +1007,8 @@ class EntityRequisite
 			$entityId = (int)$fields['ENTITY_ID'];
 			if ($entityBeforeUpdate === null)
 				$entityBeforeUpdate = EntityRequisite::getOwnerEntityById($id);
-			if (\CCrmOwnerType::IsDefined($entityBeforeUpdate['ENTITY_TYPE_ID'])
+			if (
+				CCrmOwnerType::IsDefined($entityBeforeUpdate['ENTITY_TYPE_ID'])
 				&& $entityBeforeUpdate['ENTITY_ID'] > 0)
 			{
 				if ($entityId !== $entityBeforeUpdate['ENTITY_ID'])
@@ -1046,7 +1062,7 @@ class EntityRequisite
 
 					if(isset($address['DELETED']) && $address['DELETED'] === 'Y')
 					{
-						RequisiteAddress::unregister(\CCrmOwnerType::Requisite, $id, $addressTypeId);
+						RequisiteAddress::unregister(CCrmOwnerType::Requisite, $id, $addressTypeId);
 						continue;
 					}
 
@@ -1104,34 +1120,57 @@ class EntityRequisite
 						$actualFields = $dbResult->fetch();
 						if(is_array($actualFields))
 						{
-							$anchorTypeID = isset($actualFields['ENTITY_TYPE_ID']) ? (int)$actualFields['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
+							$anchorTypeID = isset($actualFields['ENTITY_TYPE_ID']) ? (int)$actualFields['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
 							$anchorID = isset($actualFields['ENTITY_ID']) ? (int)$actualFields['ENTITY_ID'] : 0;
-							if(!\CCrmOwnerType::IsDefined($anchorTypeID) || $anchorID <= 0)
+							if(!CCrmOwnerType::IsDefined($anchorTypeID) || $anchorID <= 0)
 							{
-								$anchorTypeID = \CCrmOwnerType::Requisite;
+								$anchorTypeID = CCrmOwnerType::Requisite;
 								$anchorID = $id;
 							}
 
 							$actualAddressFields['ANCHOR_TYPE_ID'] = $anchorTypeID;
 							$actualAddressFields['ANCHOR_ID'] = $anchorID;
 
-							EntityAddress::register(\CCrmOwnerType::Requisite, $id, $addressTypeId, $actualAddressFields);
+							EntityAddress::register(CCrmOwnerType::Requisite, $id, $addressTypeId, $actualAddressFields);
 						}
 					}
+				}
+			}
+			foreach (self::getFileFields() as $fileField)
+			{
+				if (
+					array_key_exists($fileField, $fields)
+					&& $requisite[$fileField] != $fields[$fileField]
+				)
+				{
+					\CFile::Delete($requisite[$fileField]);
 				}
 			}
 
 			if ($entityTypeIdModified || $entityIdModified)
 			{
 				DuplicateRequisiteCriterion::registerByEntity(
-					$entityBeforeUpdate['ENTITY_TYPE_ID'], $entityBeforeUpdate['ENTITY_ID']
+					$entityBeforeUpdate['ENTITY_TYPE_ID'],
+					$entityBeforeUpdate['ENTITY_ID']
 				);
-
 				DuplicateBankDetailCriterion::registerByEntity(
-					$entityBeforeUpdate['ENTITY_TYPE_ID'], $entityBeforeUpdate['ENTITY_ID']
+					$entityBeforeUpdate['ENTITY_TYPE_ID'],
+					$entityBeforeUpdate['ENTITY_ID']
 				);
-
 				DuplicateRequisiteCriterion::unregister($entityTypeId, $entityId);
+
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					$entityBeforeUpdate['ENTITY_TYPE_ID'],
+					$entityBeforeUpdate['ENTITY_ID'],
+					[FieldCategory::REQUISITE, FieldCategory::BANK_DETAIL]
+				);
+				DuplicateVolatileCriterion::register(
+					$entityTypeId,
+					$entityId,
+					[FieldCategory::REQUISITE, FieldCategory::BANK_DETAIL]
+				);
+				//endregion Register volatile duplicate criterion fields
 			}
 
 			if (isset($fields['ENTITY_TYPE_ID']) && isset($fields['ENTITY_ID']))
@@ -1139,19 +1178,53 @@ class EntityRequisite
 				DuplicateRequisiteCriterion::registerByEntity(
 					(int)$fields['ENTITY_TYPE_ID'], (int)$fields['ENTITY_ID']
 				);
+
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					(int)$fields['ENTITY_TYPE_ID'],
+					(int)$fields['ENTITY_ID'],
+					[FieldCategory::REQUISITE]
+				);
+				//endregion Register volatile duplicate criterion fields
+
 				if ($entityTypeIdModified || $entityIdModified)
 				{
 					DuplicateBankDetailCriterion::registerByEntity(
 						(int)$fields['ENTITY_TYPE_ID'], (int)$fields['ENTITY_ID']
 					);
+
+					//region Register volatile duplicate criterion fields
+					DuplicateVolatileCriterion::register(
+						(int)$fields['ENTITY_TYPE_ID'],
+						(int)$fields['ENTITY_ID'],
+						[FieldCategory::BANK_DETAIL]
+					);
+					//endregion Register volatile duplicate criterion fields
 				}
 			}
 			else
 			{
 				DuplicateRequisiteCriterion::registerByRequisite($id);
+
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					CCrmOwnerType::Requisite,
+					$id,
+					[FieldCategory::REQUISITE]
+				);
+				//endregion Register volatile duplicate criterion fields
+
 				if ($entityTypeIdModified || $entityIdModified)
 				{
-					DuplicateBankDetailCriterion::registerByParent(\CCrmOwnerType::Requisite, $id);
+					DuplicateBankDetailCriterion::registerByParent(CCrmOwnerType::Requisite, $id);
+
+					//region Register volatile duplicate criterion fields
+					DuplicateVolatileCriterion::register(
+						CCrmOwnerType::Requisite,
+						$id,
+						[FieldCategory::BANK_DETAIL]
+					);
+					//endregion Register volatile duplicate criterion fields
 				}
 			}
 		}
@@ -1169,20 +1242,44 @@ class EntityRequisite
 
 	public function delete($id, $options = array())
 	{
+		$requisite = $this->getList([
+			'filter' => ['=ID' => $id],
+			'select' => array_merge(['ID'], self::getFileFields()),
+			'limit' => 1,
+		])->fetch();
+
 		$entityInfo = self::getOwnerEntityById($id);
 
 		EntityLink::unregisterByRequisite($id);
 		RequisiteAddress::deleteByEntityId($id);
 
 		$bankDetail = EntityBankDetail::getSingleInstance();
-		$bankDetail->deleteByEntity(\CCrmOwnerType::Requisite, $id);
+		$bankDetail->deleteByEntity(CCrmOwnerType::Requisite, $id);
 
 		$result = RequisiteTable::delete($id);
 
+		if ($result->isSuccess())
+		{
+			foreach (self::getFileFields() as $fileField)
+			{
+				if ($requisite[$fileField] > 0)
+				{
+					\CFile::Delete($requisite[$fileField]);
+				}
+			}
+		}
 		if ($result->isSuccess()
 			&& \CCrmOwnerType::IsDefined($entityInfo['ENTITY_TYPE_ID']) && $entityInfo['ENTITY_ID'] > 0)
 		{
 			DuplicateRequisiteCriterion::RegisterByEntity($entityInfo['ENTITY_TYPE_ID'], $entityInfo['ENTITY_ID']);
+
+			//region Register volatile duplicate criterion fields
+			DuplicateVolatileCriterion::register(
+				$entityInfo['ENTITY_TYPE_ID'],
+				$entityInfo['ENTITY_ID'],
+				[FieldCategory::REQUISITE]
+			);
+			//endregion Register volatile duplicate criterion fields
 		}
 
 		//region Send event
@@ -1446,6 +1543,20 @@ class EntityRequisite
 				'RQ_REGON' => ['TYPE' => 'string'],
 				'RQ_KRS' => ['TYPE' => 'string'],
 				'RQ_PESEL' => ['TYPE' => 'string'],
+				'RQ_SIGNATURE' => [
+					'TYPE' => 'file',
+					'VALUE_TYPE' => 'image',
+					'ATTRIBUTES' => [
+						CCrmFieldInfoAttr::Hidden,
+					],
+				],
+				'RQ_STAMP' => [
+					'TYPE' => 'file',
+					'VALUE_TYPE' => 'image',
+					'ATTRIBUTES' => [
+						CCrmFieldInfoAttr::Hidden,
+					],
+				],
 			];
 		}
 		return self::$FIELD_INFOS;
@@ -1563,6 +1674,8 @@ class EntityRequisite
 		'RQ_REGON',
 		'RQ_KRS',
 		'RQ_PESEL',
+		'RQ_SIGNATURE',
+		'RQ_STAMP',
 	];
 
 	private static $rqlistFields = [
@@ -1920,10 +2033,35 @@ class EntityRequisite
 				'RQ_REGON' => [110],
 				'RQ_KRS' => [110],
 				'RQ_PESEL' => [110],
+				'RQ_SIGNATURE' => [
+					Country::ID_RUSSIA,
+					Country::ID_BELARUS,
+					Country::ID_UKRAINE,
+					Country::ID_GERMANY,
+					Country::ID_USA,
+					Country::ID_COLOMBIA,
+					Country::ID_KAZAKHSTAN,
+					Country::ID_POLAND,
+				],
+				'RQ_STAMP' => [
+					Country::ID_RUSSIA,
+					Country::ID_BELARUS,
+					Country::ID_UKRAINE,
+					Country::ID_GERMANY,
+					Country::ID_USA,
+					Country::ID_COLOMBIA,
+					Country::ID_KAZAKHSTAN,
+					Country::ID_POLAND,
+				],
 			];
 		}
 
 		return self::$rqFieldCountryMap;
+	}
+
+	public function getUsedCountries(): array
+	{
+		return RequisiteTable::getUsedCountries();
 	}
 
 	protected function loadPhrases(int $countryId): array
@@ -2193,17 +2331,24 @@ class EntityRequisite
 		foreach ($this->getRqFields() as $rqFieldName)
 			$rqFields[$rqFieldName] = true;
 		$fieldTitles = $this->getFieldsTitles($countryId);
+		$fieldsInfo = self::getFieldsInfo();
 		foreach (RequisiteTable::getMap() as $fieldName => $fieldInfo)
 		{
 			if (isset($fieldInfo['reference']) && $fieldInfo['data_type'] !== 'Address')
 				continue;
 
-			$fieldTitle = (isset($fieldTitles[$fieldName])) ? $fieldTitles[$fieldName] : '';
+			$fieldType = $fieldInfo['data_type'] ?? 'string';
+			if ($fieldsInfo[$fieldName]['TYPE'] === 'file')
+			{
+				$fieldType = $fieldsInfo[$fieldName]['VALUE_TYPE'] == 'image' ? 'image' : 'file';
+			}
+
+			$fieldTitle =  $fieldTitles[$fieldName] ?? '';
 			$result[$fieldName] = array(
 				'title' => is_string($fieldTitle) ? $fieldTitle : '',
-				'type' => $fieldInfo['data_type'],
+				'type' => $fieldType,
 				'required' => (isset($fieldInfo['required']) && $fieldInfo['required']),
-				'formType' => isset($formTypes[$fieldName]) ? $formTypes[$fieldName] : 'text',
+				'formType' => $formTypes[$fieldName] ?? 'text',
 				'multiple' => false,
 				'settings' => null,
 				'isRQ' => isset($rqFields[$fieldName]),
@@ -2369,7 +2514,7 @@ class EntityRequisite
 	{
 		$entityTypeId = intval($entityTypeId);
 
-		if ($entityTypeId !== \CCrmOwnerType::Company && $entityTypeId !== \CCrmOwnerType::Contact)
+		if ($entityTypeId !== CCrmOwnerType::Company && $entityTypeId !== CCrmOwnerType::Contact)
 			return false;
 
 		return true;
@@ -2382,11 +2527,11 @@ class EntityRequisite
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact
+		if ($entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckCreatePermission($entityType);
 		}
 
@@ -2400,16 +2545,16 @@ class EntityRequisite
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
+		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
 		{
 			return \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact
+		if ($entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckUpdatePermission($entityType, $entityID);
 		}
 
@@ -2423,16 +2568,16 @@ class EntityRequisite
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
+		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
 		{
 			return \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact
+		if ($entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckDeletePermission($entityType, $entityID);
 		}
 
@@ -2448,20 +2593,20 @@ class EntityRequisite
 
 		if(intval($entityTypeID)<=0 && intval($entityID) <= 0)
 		{
-			return (\CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Company, 0) &&
-					\CCrmAuthorizationHelper::CheckReadPermission(\CCrmOwnerType::Contact, 0));
+			return (\CCrmAuthorizationHelper::CheckReadPermission(CCrmOwnerType::Company, 0) &&
+					\CCrmAuthorizationHelper::CheckReadPermission(CCrmOwnerType::Contact, 0));
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
+		if ($entityTypeID === CCrmOwnerType::Company && $entityID > 0 && \CCrmCompany::isMyCompany((int)$entityID))
 		{
 			return true;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact
+		if ($entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact
 		)
 		{
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityID);
 		}
 
@@ -2499,12 +2644,12 @@ class EntityRequisite
 		if (!self::checkEntityType($entityTypeId))
 			return false;
 
-		if ($entityTypeId === \CCrmOwnerType::Company)
+		if ($entityTypeId === CCrmOwnerType::Company)
 		{
 			if (!\CCrmCompany::Exists($entityId))
 				return false;
 		}
-		else if ($entityTypeId === \CCrmOwnerType::Contact)
+		else if ($entityTypeId === CCrmOwnerType::Contact)
 		{
 			if (!\CCrmContact::Exists($entityId))
 				return false;
@@ -2521,12 +2666,12 @@ class EntityRequisite
 		if ($entityId <= 0)
 			return false;
 
-		if ($entityTypeId === \CCrmOwnerType::Company)
+		if ($entityTypeId === CCrmOwnerType::Company)
 		{
 			if (!\CCrmCompany::CheckReadPermission($entityId))
 				return false;
 		}
-		else if ($entityTypeId === \CCrmOwnerType::Contact)
+		else if ($entityTypeId === CCrmOwnerType::Contact)
 		{
 			if (!\CCrmContact::CheckReadPermission($entityId))
 				return false;
@@ -2547,12 +2692,12 @@ class EntityRequisite
 		if ($entityId <= 0)
 			return false;
 
-		if ($entityTypeId === \CCrmOwnerType::Company)
+		if ($entityTypeId === CCrmOwnerType::Company)
 		{
 			if (!\CCrmCompany::CheckUpdatePermission($entityId))
 				return false;
 		}
-		else if ($entityTypeId === \CCrmOwnerType::Contact)
+		else if ($entityTypeId === CCrmOwnerType::Contact)
 		{
 			if (!\CCrmContact::CheckUpdatePermission($entityId))
 				return false;
@@ -2565,10 +2710,11 @@ class EntityRequisite
 		return true;
 	}
 
-	public function prepareViewData($fields, $fieldsInViewMap, $options = array())
+	public function prepareViewData($fields, $fieldsInViewMap, $options = [])
 	{
 		$optionValueHtml = false;
 		$optionValueText = true;
+		$optionAllowFileValues = false;
 
 		if (is_array($options) && isset($options['VALUE_HTML'])
 			&& ($options['VALUE_HTML'] === 'Y' || $options['VALUE_HTML'] === true))
@@ -2584,6 +2730,11 @@ class EntityRequisite
 		else if ($optionValueHtml)
 		{
 			$optionValueText = false;
+		}
+
+		if (isset($options['ALLOW_FILE_VALUES']) && ($options['ALLOW_FILE_VALUES'] === true))
+		{
+			$optionAllowFileValues = true;
 		}
 
 		$result = array(
@@ -2653,6 +2804,10 @@ class EntityRequisite
 					if ($fieldInfo['isRQ'])
 					{
 						$textValue = '';
+						if (!$optionAllowFileValues && in_array($fieldInfo['type'], ['file', 'image']))
+						{
+							$skip = true;
+						}
 						if ($fieldInfo['type'] === 'boolean')
 						{
 							if ($fieldInfo['isUF'])
@@ -2878,14 +3033,14 @@ class EntityRequisite
 		if($companyId > 0)
 		{
 			$entityList[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'ENTITY_ID' => $companyId,
 			];
 		}
 		if($contactId > 0)
 		{
 			$entityList[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
 				'ENTITY_ID' => $contactId,
 			];
 		}
@@ -2909,7 +3064,7 @@ class EntityRequisite
 		if ($myCompanyId > 0)
 		{
 			$entityList[] = [
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
 				'ENTITY_ID' => $myCompanyId,
 			];
 		}
@@ -3008,7 +3163,7 @@ class EntityRequisite
 									array(
 										'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
 										'filter' => array(
-											'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+											'=ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 											'=ENTITY_ID' => $requisiteIdLinked
 										),
 										'select' => array('ID'),
@@ -3121,7 +3276,7 @@ class EntityRequisite
 									array(
 										'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
 										'filter' => array(
-											'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+											'=ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 											'=ENTITY_ID' => $mcRequisiteIdLinked
 										),
 										'select' => array('ID'),
@@ -3385,7 +3540,7 @@ class EntityRequisite
 
 				if ($isAddressOnly)
 				{
-					$bankDetail->deleteByEntity(\CCrmOwnerType::Requisite, $requisiteID);
+					$bankDetail->deleteByEntity(CCrmOwnerType::Requisite, $requisiteID);
 				}
 				else
 				{
@@ -3430,7 +3585,7 @@ class EntityRequisite
 							if ((int)$requisiteID > 0)
 							{
 								$bankDetailFields['ENTITY_ID'] = $requisiteID;
-								$bankDetailFields['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
+								$bankDetailFields['ENTITY_TYPE_ID'] = CCrmOwnerType::Requisite;
 								$saveBankDetailsResult = $bankDetail->add($bankDetailFields);
 								if ($saveBankDetailsResult->isSuccess())
 								{
@@ -3550,7 +3705,7 @@ class EntityRequisite
 		}
 
 		$dbResult = AddressTable::getList(
-			array('filter' => array('ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite, 'ENTITY_ID' => $id))
+			array('filter' => array('ENTITY_TYPE_ID' => CCrmOwnerType::Requisite, 'ENTITY_ID' => $id))
 		);
 
 		$results = array();
@@ -3666,9 +3821,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 610
-							]
+							],
+							11 => [
+								'ID' => 12,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 620
+							],
+							12 => [
+								'ID' => 13,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 630
+							],
 						],
-						'LAST_FIELD_ID' => 11
+						'LAST_FIELD_ID' => 13,
 					]
 				],
 				1 => [
@@ -3750,9 +3919,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							]
+							],
+							10 => [
+								'ID' => 9,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 610
+							],
+							11 => [
+								'ID' => 10,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 620
+							],
 						],
-						'LAST_FIELD_ID' => 8
+						'LAST_FIELD_ID' => 10,
 					]
 				],
 				2 => [
@@ -3834,9 +4017,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 600
-							]
+							],
+							10 => [
+								'ID' => 11,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 610
+							],
+							11 => [
+								'ID' => 12,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 620
+							],
 						],
-						'LAST_FIELD_ID' => 10
+						'LAST_FIELD_ID' => 12,
 					]
 				],
 				// by
@@ -3912,9 +4109,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 590
-							]
+							],
+							10 => [
+								'ID' => 10,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 600
+							],
+							11 => [
+								'ID' => 11,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 610
+							],
 						],
-						'LAST_FIELD_ID' => 9
+						'LAST_FIELD_ID' => 11,
 					]
 				],
 				4 => [
@@ -3982,9 +4193,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							]
+							],
+							10 => [
+								'ID' => 9,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 590
+							],
+							11 => [
+								'ID' => 10,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 600
+							],
 						],
-						'LAST_FIELD_ID' => 8
+						'LAST_FIELD_ID' => 10,
 					]
 				],
 				5 => [
@@ -4038,9 +4263,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							]
+							],
+							6 => [
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 570
+							],
+							7 => [
+								'ID' => 8,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 580
+							],
 						],
-						'LAST_FIELD_ID' => 6
+						'LAST_FIELD_ID' => 8,
 					]
 				],
 				// kz
@@ -4137,9 +4376,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 620
-							]
+							],
+							12 => [
+								'ID' => 13,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 630
+							],
+							13 => [
+								'ID' => 14,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 640
+							],
 						],
-						'LAST_FIELD_ID' => 12
+						'LAST_FIELD_ID' => 14,
 					]
 				],
 				7 => [
@@ -4242,9 +4495,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 630
-							]
+							],
+							13 => [
+								'ID' => 14,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 640,
+							],
+							14 => [
+								'ID' => 15,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 650,
+							],
 						],
-						'LAST_FIELD_ID' => 13
+						'LAST_FIELD_ID' => 15,
 					]
 				],
 				8 => [
@@ -4277,9 +4544,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							]
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540,
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
 						],
-						'LAST_FIELD_ID' => 3
+						'LAST_FIELD_ID' => 5,
 					]
 				],
 				// ua
@@ -4348,9 +4629,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 580
-							]
+							],
+							8 => [
+								'ID' => 9,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 590
+							],
+							9 => [
+								'ID' => 10,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 600
+							],
 						],
-						'LAST_FIELD_ID' => 8
+						'LAST_FIELD_ID' => 10,
 					]
 				],
 				10 => [
@@ -4404,9 +4699,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
-							]
+							],
+							6 => [
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 570
+							],
+							7 => [
+								'ID' => 8,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 580
+							],
 						],
-						'LAST_FIELD_ID' => 6
+						'LAST_FIELD_ID' => 8,
 					]
 				],
 				// de
@@ -4454,9 +4763,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 550
-							]
+							],
+							5 => [
+								'ID' => 6,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 560
+							],
+							6 => [
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 570
+							],
 						],
-						'LAST_FIELD_ID' => 5
+						'LAST_FIELD_ID' => 7,
 					]
 				],
 				12 => [
@@ -4489,9 +4812,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							]
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
 						],
-						'LAST_FIELD_ID' => 3
+						'LAST_FIELD_ID' => 5,
 					]
 				],
 				// co
@@ -4547,8 +4884,22 @@ class EntityRequisite
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
 							],
+							6 => [
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 570
+							],
+							7 => [
+								'ID' => 8,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 580
+							],
 						],
-						'LAST_FIELD_ID' => 6
+						'LAST_FIELD_ID' => 8,
 					]
 				],
 				14 => [
@@ -4603,8 +4954,22 @@ class EntityRequisite
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 560
 							],
+							6 => [
+								'ID' => 7,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 570
+							],
+							7 => [
+								'ID' => 8,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 580
+							],
 						],
-						'LAST_FIELD_ID' => 6
+						'LAST_FIELD_ID' => 8,
 					]
 				],
 				// us
@@ -4638,9 +5003,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							]
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
 						],
-						'LAST_FIELD_ID' => 3
+						'LAST_FIELD_ID' => 5,
 					]
 				],
 				16 => [
@@ -4673,9 +5052,23 @@ class EntityRequisite
 								'FIELD_TITLE' => '',
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 530
-							]
+							],
+							3 => [
+								'ID' => 4,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 540
+							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
 						],
-						'LAST_FIELD_ID' => 3
+						'LAST_FIELD_ID' => 5,
 					]
 				],
 				// pl
@@ -4738,8 +5131,22 @@ class EntityRequisite
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 570
 							],
+							7 => [
+								'ID' => 8,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 580
+							],
+							8 => [
+								'ID' => 9,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 590
+							],
 						],
-						'LAST_FIELD_ID' => 3,
+						'LAST_FIELD_ID' => 10,
 					]
 				],
 				18 => [
@@ -4780,8 +5187,22 @@ class EntityRequisite
 								'IN_SHORT_LIST' => 'N',
 								'SORT' => 540
 							],
+							4 => [
+								'ID' => 5,
+								'FIELD_NAME' => 'RQ_SIGNATURE',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 550
+							],
+							5 => [
+								'ID' => 6,
+								'FIELD_NAME' => 'RQ_STAMP',
+								'FIELD_TITLE' => '',
+								'IN_SHORT_LIST' => 'N',
+								'SORT' => 560
+							],
 						],
-						'LAST_FIELD_ID' => 3
+						'LAST_FIELD_ID' => 6,
 					]
 				],
 			];
@@ -5170,8 +5591,8 @@ class EntityRequisite
 
 	public function prepareEntityListExternalFilter(&$filter, $params = array())
 	{
-		$entityTypeId = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
-		if ($entityTypeId === \CCrmOwnerType::Undefined)
+		$entityTypeId = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
+		if ($entityTypeId === CCrmOwnerType::Undefined)
 		{
 			return;
 		}
@@ -5328,7 +5749,7 @@ class EntityRequisite
 																" INNER JOIN b_crm_preset PR ON RQ.PRESET_ID = PR.ID".
 																" INNER JOIN b_crm_addr AR".
 																" ON AR.TYPE_ID {$addressTypeCompare}".
-																" AND AR.ENTITY_TYPE_ID = ".\CCrmOwnerType::Requisite.
+																" AND AR.ENTITY_TYPE_ID = ". CCrmOwnerType::Requisite.
 																" AND AR.ENTITY_ID = RQ.ID".
 																" WHERE {$prepareWhere})"
 														];
@@ -5341,7 +5762,7 @@ class EntityRequisite
 															" INNER JOIN b_crm_preset PR ON RQ.PRESET_ID = PR.ID".
 															" INNER JOIN b_crm_addr AR".
 															" ON AR.TYPE_ID {$addressTypeCompare}".
-															" AND AR.ENTITY_TYPE_ID = ".\CCrmOwnerType::Requisite.
+															" AND AR.ENTITY_TYPE_ID = ". CCrmOwnerType::Requisite.
 															" AND AR.ENTITY_ID = RQ.ID".
 															" WHERE {$where}".
 															") {$alias}".
@@ -5730,7 +6151,7 @@ class EntityRequisite
 					$res = $addr->getList(
 						array(
 							'filter' => array(
-								'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+								'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 								'ENTITY_ID' => array_keys($addressRelations)
 							)
 						)
@@ -6330,7 +6751,7 @@ class EntityRequisite
 			}
 			unset($enttityId, $entityRequisites, $requisiteId, $requisiteFields);
 			$bankDetailList = EntityBankDetail::getByOwners(
-				\CCrmOwnerType::Requisite, array_keys($requisiteListById),
+				CCrmOwnerType::Requisite, array_keys($requisiteListById),
 				$requisiteListById
 			);
 			$bankDetail = EntityBankDetail::getSingleInstance();
@@ -6684,11 +7105,11 @@ class EntityRequisite
 			$errCode = 0;
 			switch ($entityTypeId)
 			{
-				case \CCrmOwnerType::Company:
+				case CCrmOwnerType::Company:
 					$errMsg = GetMessage('CRM_REQUISITE_ERR_COMPANY_NOT_EXISTS', array('#ID#' => $entityId));
 					$errCode = self::ERR_COMPANY_NOT_EXISTS;
 					break;
-				case \CCrmOwnerType::Contact:
+				case CCrmOwnerType::Contact:
 					$errMsg = GetMessage('CRM_REQUISITE_ERR_CONTACT_NOT_EXISTS', array('#ID#' => $entityId));
 					$errCode = self::ERR_CONTACT_NOT_EXISTS;
 					break;
@@ -6703,11 +7124,11 @@ class EntityRequisite
 			$errCode = 0;
 			switch ($entityTypeId)
 			{
-				case \CCrmOwnerType::Company:
+				case CCrmOwnerType::Company:
 					$errMsg = GetMessage('CRM_REQUISITE_ERR_ACCESS_DENIED_COMPANY_UPDATE', array('#ID#' => $entityId));
 					$errCode = self::ERR_ACCESS_DENIED_COMPANY_UPDATE;
 					break;
-				case \CCrmOwnerType::Contact:
+				case CCrmOwnerType::Contact:
 					$errMsg = GetMessage('CRM_REQUISITE_ERR_ACCESS_DENIED_CONTACT_UPDATE', array('#ID#' => $entityId));
 					$errCode = self::ERR_ACCESS_DENIED_CONTACT_UPDATE;
 					break;
@@ -6716,7 +7137,7 @@ class EntityRequisite
 			return $result;
 		}
 
-		$entityTypeName = \CCrmOwnerType::GetDescription($entityTypeId);
+		$entityTypeName = CCrmOwnerType::GetDescription($entityTypeId);
 		if ($presetId === 0)
 		{
 			$presetId = self::getDefaultPresetId($entityTypeId);
@@ -6844,7 +7265,7 @@ class EntityRequisite
 					|| ($rqImportMode === 'REPLACE'
 						&&  !RequisiteAddress::areEquals($addresses[$addrTypeId], $requisiteAddresses[$addrTypeId])))
 				{
-					EntityAddress::register(\CCrmOwnerType::Requisite, $requisiteId, $addrTypeId, $address);
+					EntityAddress::register(CCrmOwnerType::Requisite, $requisiteId, $addrTypeId, $address);
 				}
 			}
 		}
@@ -6949,7 +7370,7 @@ class EntityRequisite
 
 		$r = $row->fetch();
 
-		$result['ENTITY_TYPE_ID'] = isset($r['ENTITY_TYPE_ID']) ? (int)$r['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
+		$result['ENTITY_TYPE_ID'] = isset($r['ENTITY_TYPE_ID']) ? (int)$r['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
 		$result['ENTITY_ID'] = isset($r['ENTITY_ID']) ? (int)$r['ENTITY_ID'] : 0;
 
 		return $result;
@@ -6969,11 +7390,11 @@ class EntityRequisite
 
 		$countryCode = EntityPreset::getCountryCodeById(EntityPreset::getCurrentCountryId());
 		$personType = '';
-		if($entityTypeId === \CCrmOwnerType::Company)
+		if($entityTypeId === CCrmOwnerType::Company)
 		{
 			$personType = $countryCode === 'RU' ? 'COMPANY' : 'LEGALENTITY';
 		}
-		elseif($entityTypeId === \CCrmOwnerType::Contact)
+		elseif($entityTypeId === CCrmOwnerType::Contact)
 		{
 			$personType = 'PERSON';
 		}
@@ -7006,9 +7427,9 @@ class EntityRequisite
 	{
 		$presetId = 0;
 
-		if($entityTypeId !== \CCrmOwnerType::Company && $entityTypeId !== \CCrmOwnerType::Contact)
+		if($entityTypeId !== CCrmOwnerType::Company && $entityTypeId !== CCrmOwnerType::Contact)
 		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
 
@@ -7018,7 +7439,7 @@ class EntityRequisite
 		if (!is_array($optionValue))
 			$optionValue = array();
 
-		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
 		if (!empty($entityTypeName))
 		{
 			if (isset($optionValue[$entityTypeName]))
@@ -7034,9 +7455,9 @@ class EntityRequisite
 
 	public static function setDefaultPresetId($entityTypeId, $presetId)
 	{
-		if($entityTypeId !== \CCrmOwnerType::Company && $entityTypeId !== \CCrmOwnerType::Contact)
+		if($entityTypeId !== CCrmOwnerType::Company && $entityTypeId !== CCrmOwnerType::Contact)
 		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
 
@@ -7071,7 +7492,7 @@ class EntityRequisite
 		if (!is_array($optionValue))
 			$optionValue = array();
 
-		$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+		$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
 		$optionValue[$entityTypeName] = $presetId;
 		Main\Config\Option::set('crm', 'requisite_default_presets', serialize($optionValue));
 	}
@@ -7174,7 +7595,7 @@ class EntityRequisite
 	}
 	public static function prepareEntityInfoBatch($entityTypeId, &$entityInfos, $scope, $typeName, $options = null)
 	{
-		if (!($entityTypeId === \CCrmOwnerType::Company || $entityTypeId === \CCrmOwnerType::Contact))
+		if (!($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact))
 		{
 			return;
 		}
@@ -7230,7 +7651,7 @@ class EntityRequisite
 	{
 		$result = array();
 
-		if (!($entityTypeId === \CCrmOwnerType::Company || $entityTypeId === \CCrmOwnerType::Contact)
+		if (!($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact)
 			|| !is_array($entityIds))
 		{
 			return $result;
@@ -7264,9 +7685,9 @@ class EntityRequisite
 	{
 		$result = array();
 
-		if($entityTypeId !== \CCrmOwnerType::Company && $entityTypeId !== \CCrmOwnerType::Contact)
+		if($entityTypeId !== CCrmOwnerType::Company && $entityTypeId !== CCrmOwnerType::Contact)
 		{
-			$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+			$entityTypeName = CCrmOwnerType::ResolveName($entityTypeId);
 			throw new Main\NotSupportedException("Entity type: '{$entityTypeName}' is not supported in current context");
 		}
 
@@ -7367,13 +7788,13 @@ class EntityRequisite
 		foreach($links as $link)
 		{
 			$entityTypeID = isset($link['ENTITY_TYPE_ID'])
-				? (int)$link['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
+				? (int)$link['ENTITY_TYPE_ID'] : CCrmOwnerType::Undefined;
 			$entityID = isset($link['ENTITY_ID'])
 				? (int)$link['ENTITY_ID'] : 0;
 			$requisiteID = isset($link['REQUISITE_ID'])
 				? (int)$link['REQUISITE_ID'] : 0;
 
-			if(!(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0 && $requisiteID > 0))
+			if(!(CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0 && $requisiteID > 0))
 			{
 				continue;
 			}
@@ -7417,8 +7838,8 @@ class EntityRequisite
 		$ignorePermissions = (bool)$ignorePermissions;
 
 		if ($entityTypeId > 0
-			&& ($entityTypeId === \CCrmOwnerType::Company
-				|| $entityTypeId === \CCrmOwnerType::Contact)
+			&& ($entityTypeId === CCrmOwnerType::Company
+				|| $entityTypeId === CCrmOwnerType::Contact)
 			&& $entityId > 0 && $requisiteId > 0)
 		{
 
@@ -7453,7 +7874,7 @@ class EntityRequisite
 					$settings['BANK_DETAIL_ID_SELECTED'] = $bankDetailId;
 				}
 				$requisite->saveSettings($entityTypeId, $entityId, $settings);
-				EntityAddress::setDef(\CCrmOwnerType::Requisite, $requisiteId);
+				EntityAddress::setDef(CCrmOwnerType::Requisite, $requisiteId);
 				$result = true;
 			}
 		}
@@ -7547,5 +7968,19 @@ class EntityRequisite
 	{
 		// No need to do anything yet
 		// it is possible to delete list field items in the future
+	}
+
+	public static function getFileFields(): array
+	{
+		$fileFields = [];
+		foreach (self::getFieldsInfo() as $fieldId => $fieldInfo)
+		{
+			if (in_array($fieldInfo['TYPE'], ['file', 'image']))
+			{
+				$fileFields[] = $fieldId;
+			}
+		}
+
+		return $fileFields;
 	}
 }

@@ -11,5 +11,6 @@ return [
 		'im:chat/timer',
 		'im:chat/searchscopes',
 		'intranet/invite',
+		'im:messenger/const',
 	],
 ];

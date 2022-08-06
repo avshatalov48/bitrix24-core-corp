@@ -2,19 +2,12 @@
 
 namespace Bitrix\Location\Controller;
 
-use Bitrix\Location\Entity\Generic\Collection;
-use Bitrix\Location\Common\Point;
 use Bitrix\Location\Entity\Location\Parents;
-use Bitrix\Location\Exception\RuntimeException;
 use Bitrix\Location\Infrastructure\Service\ErrorService;
 use Bitrix\Location\Service;
 use Bitrix\Main\Engine\ActionFilter\Cors;
 use \Bitrix\Location\Entity;
 use Bitrix\Main\Engine\Response\AjaxJson;
-use Bitrix\Main\Error;
-use Bitrix\Main\ErrorCollection;
-use Bitrix\Main\Result;
-use Bitrix\Main\Web\Json;
 
 /**
  * Class Location
@@ -55,6 +48,15 @@ class Location extends \Bitrix\Main\Engine\Controller
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param array $params
+	 * @return array
+	 */
+	public function autocompleteAction(array $params)
+	{
+		return Service\LocationService::getInstance()->autocomplete($params, LOCATION_SEARCH_SCOPE_EXTERNAL);
 	}
 
 	/**

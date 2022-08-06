@@ -15,7 +15,7 @@ Loc::loadMessages(__FILE__);
 
 class InvoiceBoard
 {
-	const VERSION = '2';
+	const VERSION = '3';
 	const BOARD_KEY = 'crm-vc-myreports-invoice';
 
 	public static function getPanelGuid()
@@ -56,7 +56,9 @@ class InvoiceBoard
 		$widget->setCategoryKey('crm');
 		$widget->setBoardId(self::BOARD_KEY);
 
-		$widget->addConfigurations($widget->getWidgetHandler(true)->getConfigurations());
+		$widgetHandler = $widget->getWidgetHandler(true);
+		$widgetHandler->getConfiguration('color')->setValue('transparent');
+		$widget->addConfigurations($widgetHandler->getConfigurations());
 
 		return $widget;
 	}

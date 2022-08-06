@@ -12,7 +12,17 @@
 
 use Bitrix\Crm;
 
-CJSCore::Init(array('amcharts', 'amcharts_funnel', 'amcharts_serial', 'amcharts_pie', 'fx', 'drag_drop', 'popup', 'date'));
+CJSCore::Init([
+	'amcharts',
+	'amcharts_funnel',
+	'amcharts_serial',
+	'amcharts_pie',
+	'fx',
+	'drag_drop',
+	'popup',
+	'date',
+	'ui.design-tokens',
+]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 $asset->addCss('/bitrix/themes/.default/crm-entity-show.css');

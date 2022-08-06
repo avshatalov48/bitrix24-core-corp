@@ -179,23 +179,7 @@ if ($_POST['Update'] <> '' && \check_bitrix_sessid())
 	}
 }
 
-$portalPrefix = (static function () {
-	$portalZone = '';
-
-	if (Loader::includeModule('bitrix24'))
-	{
-		$licensePrefix = \CBitrix24::getLicensePrefix();
-		if ($licensePrefix !== false)
-		{
-			$portalZone = (string)$licensePrefix;
-		}
-	}
-	elseif (Loader::includeModule('intranet'))
-	{
-		$portalZone = \CIntranetUtils::getPortalZone();
-	}
-	return $portalZone;
-})();
+$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion() ?: '';
 
 ?>
 <form method="post" action="<?= $APPLICATION->getCurPage()?>?mid=<?=htmlspecialcharsbx($mid)?>&lang=<?= LANG?>">
@@ -232,13 +216,13 @@ $tabControl->beginNextTab();
 	<td><?= (Loc::getMessage('IMBOT_ENABLE_GIPHY_BOT') ?? ImBot\Bot\Giphy::getLangMessage('IMBOT_GIPHY_BOT_NAME'))?>:</td>
 	<td><input type="checkbox" name="BOT_GIPHY" value="Y" <?=(ImBot\Bot\Giphy::getBotId()? 'checked':'')?> /></td>
 </tr>
-<? if ($portalPrefix === 'ru' || $portalPrefix === ''): ?>
+<? if (in_array($region, ['ru', 'by', 'kz'], true)): ?>
 <tr>
 	<td><?= (Loc::getMessage('IMBOT_ENABLE_PROPERTIES_BOT') ?? ImBot\Bot\Properties::getLangMessage('IMBOT_PROPERTIES_BOT_NAME'))?>:</td>
 	<td><input type="checkbox" name="BOT_PROPERTIES" value="Y" <?=(ImBot\Bot\Properties::getBotId()? 'checked':'')?> /></td>
 </tr>
 <?endif;?>
-<? if ($portalPrefix === 'ua' || $portalPrefix === ''): ?>
+<? if ($region === 'ua'): ?>
 <tr>
 	<td><?= (Loc::getMessage('IMBOT_ENABLE_PROPERTIESUA_BOT')
 			?? ImBot\Bot\PropertiesUa::getLangMessage('IMBOT_PROPERTIESUA_BOT_NAME').' ('.Loc::getMessage('IMBOT_BOT_POSTFIX_UA').')') ?>:</td>

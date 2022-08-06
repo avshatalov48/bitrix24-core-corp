@@ -13,3 +13,5 @@ $MESS["TASKS_SCRUM_CREATE_TYPE"] = "Создать тип";
 $MESS["TASKS_SCRUM_CREATE_TYPE_PROMPT"] = "Создайте новый тип задачи";
 $MESS["TASKS_SCRUM_BUTTON_TEXT_REMOVE"] = "Удалить";
 $MESS["TASKS_SCRUM_DOD_LABEL_USER_SELECTOR"] = "Запрашивать DoD:";
+$MESS["TASKS_SCRUM_DOD_TOOLBAR_SETTINGS"] = "Настроить";
+$MESS["TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY"] = "Настройки сохранены";

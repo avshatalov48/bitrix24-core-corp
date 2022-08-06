@@ -186,6 +186,7 @@ class Page
 		}
 
 		$dateLastPage = false;
+		$result['lastPageId'] = 0;
 
 		if (!empty($lastEventFields))
 		{
@@ -194,14 +195,16 @@ class Page
 				&& $lastEventFields['LOG_UPDATE']
 			)
 			{
-				$result['dateLastPageTS'] = makeTimeStamp($lastEventFields['LOG_UPDATE'], \CSite::getDateFormat('FULL'));
+				$result['dateLastPageTS'] = makeTimeStamp($lastEventFields['LOG_UPDATE'], \CSite::getDateFormat());
 				$dateLastPage = convertTimeStamp($result['dateLastPageTS'], 'FULL');
 			}
 			elseif ($lastEventFields['DATE_FOLLOW'])
 			{
-				$result['dateLastPageTS'] = MakeTimeStamp($lastEventFields['DATE_FOLLOW'], \CSite::getDateFormat('FULL'));
+				$result['dateLastPageTS'] = MakeTimeStamp($lastEventFields['DATE_FOLLOW'], \CSite::getDateFormat());
 				$dateLastPage = convertTimeStamp($result['dateLastPageTS'], 'FULL');
 			}
+
+			$result['lastPageId'] = (int)$lastEventFields['ID'];
 		}
 
 		$dateLastPageStart = $this->getDateLastPageStart();

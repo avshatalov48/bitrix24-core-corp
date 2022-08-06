@@ -24,6 +24,7 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -35,6 +36,11 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if ($task instanceOf TemplateModel)
 		{
 			return $this->controller->check(ActionDictionary::ACTION_TEMPLATE_EDIT, $task, $params);
+		}
+
+		if (!$this->controller->check(ActionDictionary::ACTION_TASK_READ, $task, $params))
+		{
+			return false;
 		}
 
 		if (
@@ -51,6 +57,7 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			&& $checklist->getEntityId() !== $task->getId()
 		)
 		{
+			$this->controller->addError(static::class, 'Incorrect checklist data');
 			return false;
 		}
 
@@ -78,12 +85,18 @@ class ChecklistEditRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$task->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "edit_tasks")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$task->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;
 		}
 
+		$this->controller->addError(static::class, 'Access to edit checklist denied');
 		return false;
 	}
 }

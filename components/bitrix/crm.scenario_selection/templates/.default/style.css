@@ -39,6 +39,7 @@
 	flex-grow: 1;
 	padding: 19px 18px 15px;
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 .crm-scenario-selection-card:first-child {
 	margin-right: 17px;
@@ -51,7 +52,7 @@
 	padding: 21px 11px 26px 11px;
 	min-width: 359px;
 	box-shadow: 0 0 0 1px #a8adb4;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-sm, 2px);
 	transition: border .3s;
 	box-sizing: border-box;
 }

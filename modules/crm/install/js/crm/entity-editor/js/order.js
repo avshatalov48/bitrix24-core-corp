@@ -170,11 +170,11 @@ if(typeof BX.Crm.EntityEditorOrderController === "undefined")
 		this._loaderController.showLoader();
 	};
 
-	BX.Crm.EntityEditorOrderController.prototype.onProductAdd = function(productId, quantity)
+	BX.Crm.EntityEditorOrderController.prototype.onProductAdd = function(productId, quantity, useMerge)
 	{
 		this.ajax(
 			'addProduct',
-			{data: {PRODUCT_ID: productId, QUANTITY: quantity}},
+			{data: {PRODUCT_ID: productId, QUANTITY: quantity, USE_MERGE: useMerge || 'Y'}},
 			this._ajaxOptsPreset
 		);
 	};
@@ -4695,7 +4695,7 @@ if(typeof BX.Crm.EntityEditorPaymentStatus === "undefined")
 			}
 
 			_this.closePaidButtonMenu(index);
-			_this.setPaidButtonView(index, (_this.getValue('PAID') === 'Y'));
+			_this.setPaidButtonView(index, (_this.getModel().getField('PAID') === 'Y'));
 		};
 
 		var value = this.getValue();

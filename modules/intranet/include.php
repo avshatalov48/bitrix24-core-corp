@@ -2,7 +2,6 @@
 if (!CModule::IncludeModule('iblock'))
 	return false;
 
-
 $GLOBALS['INTR_DEPARTMENTS_CACHE'] = array();
 $GLOBALS['INTR_DEPARTMENTS_CACHE_VALUE'] = array();
 $GLOBALS['CACHE_HONOUR'] = null;
@@ -96,7 +95,7 @@ CJSCore::RegisterExt("intranet_theme_picker", array(
 	"js" => array("/bitrix/js/intranet/theme_picker/theme_picker.js"),
 	"css" => "/bitrix/js/intranet/theme_picker/theme_picker.css",
 	"lang" => "/bitrix/modules/intranet/install/js/theme_picker.php",
-	"rel" => array("popup", "color_picker", "ajax", "fx", "ui.design-tokens"),
+	"rel" => array("popup", "color_picker", "ajax", "fx", "ui.design-tokens", "ui.fonts.opensans"),
 	"bundle_js" => "intranet_theme_picker",
 	"bundle_css" => "intranet_theme_picker",
 ));

@@ -169,10 +169,7 @@ class BindingMenu
 	private static function getScriptItems(): array
 	{
 		$items = [];
-		if (
-			Option::get('crm', 'tmp_smart_scripts', 'N') !== 'Y'
-			|| !Loader::includeModule('bizproc')
-		)
+		if (!Loader::includeModule('bizproc'))
 		{
 			return $items;
 		}

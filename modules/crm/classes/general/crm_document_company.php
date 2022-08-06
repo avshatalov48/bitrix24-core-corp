@@ -617,7 +617,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			[
 				'DISABLE_USER_FIELD_CHECK' => true,
 				'REGISTER_SONET_EVENT' => true,
-				'CURRENT_USER' => static::getSystemUserId()
+				'CURRENT_USER' => $modifiedById ?? static::getSystemUserId()
 			]
 		);
 

@@ -13,6 +13,11 @@ class LeadTarget extends BaseTarget
 		return Factory::isAutomationAvailable(\CCrmOwnerType::Lead);
 	}
 
+	public function canTriggerSetExecuteBy(): bool
+	{
+		return true;
+	}
+
 	public function getEntityTypeId()
 	{
 		return \CCrmOwnerType::Lead;
@@ -61,16 +66,21 @@ class LeadTarget extends BaseTarget
 		return isset($entity['STATUS_ID']) ? $entity['STATUS_ID'] : '';
 	}
 
-	public function setEntityStatus($statusId)
+	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
 
-		$fields = array('STATUS_ID' => $statusId);
+		$fields = ['STATUS_ID' => $statusId];
+		if ($executeBy)
+		{
+			$fields['MODIFY_BY_ID'] = $executeBy;
+		}
+
 		$CCrmLead = new \CCrmLead(false);
 		$CCrmLead->Update($id, $fields, true, true, array(
 			'DISABLE_USER_FIELD_CHECK' => true,
 			'REGISTER_SONET_EVENT' => true,
-			'CURRENT_USER' => 0 //System user
+			'CURRENT_USER' => $executeBy ?? 0 //System user
 		));
 
 		$this->setEntityField('STATUS_ID', $statusId);

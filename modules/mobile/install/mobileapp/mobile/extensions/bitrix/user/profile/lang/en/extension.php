@@ -45,4 +45,5 @@ $MESS["AVATAR_CHANGED_SUCCESS"] = "Profile image has been updated";
 $MESS["PROFILE_CHANGED_SUCCESS"] = "Profile has been saved!";
 $MESS["PROFILE_EDIT"] = "Edit profile";
 $MESS["DEPARTMENTS"] = "Departments";
+$MESS['DELETE_ACCOUNT'] = 'Delete account';
 ?>

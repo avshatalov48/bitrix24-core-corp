@@ -502,7 +502,7 @@ class Manager
 		}
 	}
 
-	private static function getWidgetsByOpenlineId(int $lineId): array
+	public static function getWidgetsByOpenlineId(int $lineId): array
 	{
 		$result = [];
 		$widgets = Internals\ButtonTable::getList();

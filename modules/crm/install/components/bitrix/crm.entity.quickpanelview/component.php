@@ -1777,7 +1777,11 @@ elseif($entityTypeID === CCrmOwnerType::Quote)
 				$k = 'LOCATION_ID';
 				$entityData[$k] = array(
 					'type' => 'text',
-					'data' => array('text' => $v > 0 ? CCrmLocations::getLocationString($v) : GetMessage('CRM_ENTITY_QPV_LOCATION_NOT_ASSIGNED'))
+					'data' => [
+						'text' => $v > 0
+							? CCrmLocations::getLocationStringByCode($v)
+							: GetMessage('CRM_ENTITY_QPV_LOCATION_NOT_ASSIGNED')
+					]
 				);
 			}
 			else
@@ -2076,7 +2080,11 @@ elseif($entityTypeID === CCrmOwnerType::Invoice)
 			$k = 'LOCATION_ID';
 			$entityData[$k] = array(
 				'type' => 'text',
-				'data' => array('text' => $v > 0 ? CCrmLocations::getLocationString($v) : GetMessage('CRM_ENTITY_QPV_LOCATION_NOT_ASSIGNED'))
+				'data' => [
+					'text' => $v > 0
+						? CCrmLocations::getLocationStringByCode($v)
+						: GetMessage('CRM_ENTITY_QPV_LOCATION_NOT_ASSIGNED')
+				]
 			);
 		}
 		elseif($k === 'PAY_SYSTEM_ID')

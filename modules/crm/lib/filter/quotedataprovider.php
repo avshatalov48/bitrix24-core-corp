@@ -86,22 +86,12 @@ class QuoteDataProvider extends EntityDataProvider
 	 */
 	public function prepareFields()
 	{
-		$result =  array(
+		$result = [
 			'ID' => $this->createField('ID'),
-			'QUOTE_NUMBER' => $this->createField(
-				'QUOTE_NUMBER',
-				[
-					'data' => [
-						'additionalFilter' => [
-							'isEmpty',
-							'hasAnyValue',
-						],
-					],
-				]
-			),
 			'TITLE' => $this->createField(
 				'TITLE',
 				[
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -110,12 +100,16 @@ class QuoteDataProvider extends EntityDataProvider
 					],
 				]
 			),
-			'ASSIGNED_BY_ID' => $this->createField(
-				'ASSIGNED_BY_ID',
+			'QUOTE_NUMBER' => $this->createField(
+				'QUOTE_NUMBER',
 				[
-					'type' => 'entity_selector',
 					'default' => true,
-					'partial' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
 				]
 			),
 			'CREATED_BY_ID' => $this->createField(
@@ -136,6 +130,7 @@ class QuoteDataProvider extends EntityDataProvider
 				'OPPORTUNITY',
 				[
 					'type' => 'number',
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -146,11 +141,26 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
+			),
+			'ASSIGNED_BY_ID' => $this->createField(
+				'ASSIGNED_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			),
 			'STATUS_ID' => $this->createField(
 				'STATUS_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'default' => true,
+					'partial' => true
+				]
 			),
 			'BEGINDATE' => $this->createField(
 				'BEGINDATE',
@@ -168,7 +178,6 @@ class QuoteDataProvider extends EntityDataProvider
 				'CLOSEDATE',
 				[
 					'type' => 'date',
-					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -179,19 +188,30 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'CLOSED' => $this->createField(
 				'CLOSED',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'LEAD_ID' => $this->createField(
 				'LEAD_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'DEAL_ID' => $this->createField(
 				'DEAL_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'CONTACT_FULL_NAME' => $this->createField(
 				'CONTACT_FULL_NAME',
@@ -206,7 +226,10 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'COMPANY_TITLE' => $this->createField(
 				'COMPANY_TITLE',
@@ -221,7 +244,10 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'MYCOMPANY_ID' => $this->createField(
 				'MYCOMPANY_ID',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'COMMENTS' => $this->createField(
 				'COMMENTS',
@@ -267,13 +293,19 @@ class QuoteDataProvider extends EntityDataProvider
 			),
 			'ENTITIES_LINKS' => $this->createField(
 				'ENTITIES_LINKS',
-				array('type' => 'dest_selector', 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
-		);
+		];
 
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
 

@@ -47,7 +47,11 @@
 	transition: .2s;
 }
 
-.tasks-scrum__sprints--completed.--open .tasks-scrum__sprints--completed-header{
+.tasks-scrum__sprints--completed-header.--hide {
+	display: none;
+}
+
+.tasks-scrum__sprints--completed.--open .tasks-scrum__sprints--completed-header {
 	/*margin-bottom: 6px;*/
 	margin-bottom: 10px;
 }

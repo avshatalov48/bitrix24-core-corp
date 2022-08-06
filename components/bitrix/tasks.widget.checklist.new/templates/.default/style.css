@@ -99,7 +99,8 @@
 }
 
 .tasks-checklist-header-name.tasks-checklist-header-name-edit-mode {
-	flex: 1
+	flex: 1;
+	flex-direction: column;
 }
 
 
@@ -465,6 +466,7 @@
 .tasks-checklist-item-important {
 	width: 17px;
 	height: 17px;
+	min-width: 17px;
 	margin-right: 6px;
 	cursor: pointer;
 	position: relative;

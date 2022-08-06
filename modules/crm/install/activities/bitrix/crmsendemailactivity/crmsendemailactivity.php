@@ -51,7 +51,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
-		list($typeName, $ownerId) = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
+		[$typeName, $ownerId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 		$ownerTypeId = \CCrmOwnerType::ResolveID($typeName);
 		$ownerId = (int)$ownerId;
 
@@ -73,6 +73,7 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 		if (!$fromInfo)
 		{
+			$this->logDebug();
 			$this->writeError(GetMessage('CRM_SEMA_NO_FROM'), $userId);
 
 			return CBPActivityExecutionStatus::Closed;
@@ -86,6 +87,11 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$fromEncoded = $fromInfo['fromEncoded'];
 
 		[$to, $comEntityTypeId, $comEntityId] = $this->getToEmail($ownerTypeId, $ownerId);
+
+		$this->logDebug([
+			'MessageFrom' => $from,
+			'MessageTo' => $to,
+		]);
 
 		if (empty($to))
 		{
@@ -250,9 +256,9 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$arRawFiles =
 			isset($activityFields['STORAGE_ELEMENT_IDS']) && !empty($activityFields['STORAGE_ELEMENT_IDS'])
 				? \Bitrix\Crm\Integration\StorageManager::makeFileArray(
-					$activityFields['STORAGE_ELEMENT_IDS'],
-					$activityFields['STORAGE_TYPE_ID']
-				)
+				$activityFields['STORAGE_ELEMENT_IDS'],
+				$activityFields['STORAGE_TYPE_ID']
+			)
 				: []
 		;
 
@@ -375,6 +381,8 @@ class CBPCrmSendEmailActivity extends CBPActivity
 
 			return CBPActivityExecutionStatus::Closed;
 		}
+
+		$this->logDebugActivity($id);
 
 		addEventToStatFile(
 			'crm',
@@ -766,7 +774,9 @@ class CBPCrmSendEmailActivity extends CBPActivity
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $siteId = '')
 	{
 		if (!CModule::IncludeModule("crm"))
+		{
 			return '';
+		}
 
 		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
@@ -779,7 +789,14 @@ class CBPCrmSendEmailActivity extends CBPActivity
 			'siteId' => $siteId
 		]);
 
-		$map = [
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
 			'Subject' => [
 				'Name' => GetMessage('CRM_SEMA_EMAIL_SUBJECT'),
 				'Description' => GetMessage('CRM_SEMA_EMAIL_SUBJECT'),
@@ -853,10 +870,6 @@ class CBPCrmSendEmailActivity extends CBPActivity
 				'Type' => 'mail_sender',
 			]
 		];
-
-		$dialog->setMap($map);
-
-		return $dialog;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
@@ -990,5 +1003,43 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		$this->WriteToTrackingService($errorText, 0, CBPTrackingType::Error);
 		$timelineText = GetMessage('CRM_SEMA_TIMELINE_ERROR', ['#ERROR_TEXT#' => $errorText]);
 		\Bitrix\Crm\Timeline\BizprocController::getInstance()->onActivityError($this, $userId, $timelineText);
+	}
+
+	private function logDebug(array $values = [])
+	{
+		$fullMap = static::getPropertiesMap($this->getDocumentType());
+		$map = [
+			'MessageFrom' => $fullMap['MessageFrom']['Name'],
+			'MessageTo' => GetMessage('CRM_SEMA_EMAIL_TO'),
+			'Subject' => $fullMap['Subject'],
+		];
+
+		$debugInfo = $this->getDebugInfo($values, $map);
+		$this->writeDebugInfo($debugInfo);
+	}
+
+	private function logDebugActivity($id)
+	{
+		$value = sprintf(
+			'/bitrix/components/bitrix/crm.activity.planner/slider.php?site_id='
+			. SITE_ID . '&ajax_action=ACTIVITY_VIEW&activity_id=%d',
+			$id
+		);
+
+		$toWrite = [
+			'propertyName' => GetMessage("CRM_SEMA_MESSAGE_TEXT"),
+			'propertyValue' => $value,
+			'propertyLinkName' => GetMessage('CRM_SEMA_ACTIVITY_LINK_LABEL'),
+		];
+
+		$this->writeDebugTrack(
+			$this->getWorkflowInstanceId(),
+			$this->getName(),
+			$this->executionStatus,
+			$this->executionResult,
+			$this->Title ?? '',
+			$toWrite,
+			CBPTrackingType::DebugLink
+		);
 	}
 }

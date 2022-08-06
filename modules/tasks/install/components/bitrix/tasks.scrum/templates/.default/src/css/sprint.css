@@ -165,7 +165,7 @@
 
 .tasks-scrum__sprint--event-content {
 	display: flex;
-	padding: 5px 8px 6px 13px;
+	padding: 5px 13px 6px 13px;
 	background: var(--tasks_scrum-black_alpha_10);
 	border-radius: 36px;
 	margin: 1px 8px 0 7px;
@@ -180,7 +180,8 @@
 }
 
 .tasks-scrum__sprint--event-container:nth-of-type(2) {
-	margin-left: 15px;
+	margin-left: 13px;
+	flex: 1
 }
 
 .tasks-scrum__sprint--subtitle {
@@ -191,23 +192,30 @@
 	overflow: hidden;
 	transition: .2s;
 	flex-shrink: 2;
-	margin-right: 4px;
+	margin-right: 6px;
 }
 
 .tasks-scrum__sprint--point {
-	font: 12px/16px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 12px/13px "OpenSans-Regular", Helvetica, Arial, sans-serif;
 	background: var(--tasks_scrum-white_alpha_10);
 	border-radius: 36px;
-	padding: 1px 5px 0px;
-	min-width: 26px;
-	min-height: 17px;
+	padding: 0 4px;
+	min-width: 28px;
+	min-height: 15px;
 	text-align: center;
 	box-sizing: border-box;
 	transition: .2s;
 	flex-shrink: 0;
-	max-width: 47px;
+	max-width: 41px;
 	text-overflow: ellipsis;
 	overflow: hidden;
+	border: 1px solid transparent;
+}
+
+.tasks-scrum__sprint--point.--completed {
+	background-color: transparent;
+	margin-left: 5px;
+	border-color: var(--tasks_scrum-white_alpha_20);
 }
 
 .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprints .tasks-scrum__sprint--date-container {
@@ -216,6 +224,7 @@
 
 .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprints .tasks-scrum__sprint--point {
 	margin: 0 5px;
+	max-width: 34px;
 }
 
 .tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprint--btn-run.ui-btn {
@@ -407,11 +416,20 @@
 		max-width: 32%;
 	}
 
+	.bx-layout-table:not(.menu-collapsed-mode) .tasks-scrum__content.--with-header .tasks-scrum__name-container {
+		max-width: 26%;
+	}
+
 	.tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprint--btn-run.ui-btn {
 		width: 46px;
 		font-size: 0;
 		background-repeat: no-repeat;
 		background-position: 51% center;
+		flex-shrink: 0;
+	}
+
+	.tasks-scrum__sprint--point {
+		flex: 1;
 	}
 
 	.tasks-scrum__container.--width-priority-backlog .tasks-scrum__sprints--active .tasks-scrum__sprint--btn-run.ui-btn {

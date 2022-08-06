@@ -741,16 +741,21 @@ class Order extends ProductsDataProvider
 		}
 
 		$order = $this->getOrder();
+		$value = null;
 		if($order)
 		{
 			$property = $order->getPropertyCollection()->getItemByOrderPropertyId($propertyId);
 			if($property)
 			{
-				return $property->getValue();
+				$value = $property->getValue();
+				if (!empty($value) && $property->getType() === 'LOCATION')
+				{
+					$value = \CCrmLocations::getLocationStringByCode($value);
+				}
 			}
 		}
 
-		return null;
+		return $value;
 	}
 
 	public function getStatus(): ?string

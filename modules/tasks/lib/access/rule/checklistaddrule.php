@@ -23,6 +23,7 @@ class ChecklistAddRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -34,6 +35,11 @@ class ChecklistAddRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if ($task instanceOf TemplateModel)
 		{
 			return $this->controller->check(ActionDictionary::ACTION_TEMPLATE_EDIT, $task, $params);
+		}
+
+		if (!$this->controller->check(ActionDictionary::ACTION_TASK_READ, $task, $params))
+		{
+			return false;
 		}
 
 		if (

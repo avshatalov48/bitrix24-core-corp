@@ -275,6 +275,9 @@ return array(
 			'crm.basket' => [
 				'className' => \Bitrix\Crm\Service\Sale\BasketService::class,
 			],
+			'crm.order.buyer' => [
+				'className' => \Bitrix\Crm\Service\Sale\Order\BuyerService::class,
+			],
 			'crm.reservation.shipment' => [
 				'className' => \Bitrix\Crm\Service\Sale\Reservation\ShipmentService::class,
 				// TODO: 'autowire' => true,
@@ -296,6 +299,13 @@ return array(
 					'provider' => [
 						'moduleId' => 'crm',
 						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\CompanyProvider'
+					],
+				],
+				[
+					'entityId' => 'contact',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\ContactProvider'
 					],
 				],
 				[

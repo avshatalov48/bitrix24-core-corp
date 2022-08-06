@@ -415,6 +415,7 @@
 .document-limit-inner {
 	background: #fff;
 	padding: 50px 24px 175px 24px;
+	border-radius: var(--document-limit-border-radius, var(--ui-border-radius-md));
 }
 
 .document-limit-desc {

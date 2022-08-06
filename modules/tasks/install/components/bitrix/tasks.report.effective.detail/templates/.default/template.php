@@ -132,6 +132,7 @@ $APPLICATION->IncludeComponent(
 	BX.ready(function() {
 		new BX.Tasks.TasksReportEffectiveDetail(<?=Json::encode([
 			'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
+			'kpiLimitExceeded' => $arResult['KPI_LIMIT_EXCEEDED'],
 			'pathToTasks' => str_replace('#user_id#', $arParams['USER_ID'], $arParams['PATH_TO_USER_TASKS']),
 		])?>);
 	});

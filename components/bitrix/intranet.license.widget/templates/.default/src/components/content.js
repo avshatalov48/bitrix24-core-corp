@@ -1,31 +1,37 @@
+import {Loc, ajax} from 'main.core';
 import {Vue} from 'ui.vue';
-import {BannerComponent} from "./banner";
-import {Popup} from "main.popup";
 import 'sidepanel';
+import {ExpirationLevel} from "../expiration-options";
 
 export const ContentComponent = {
-	components: {BannerComponent},
 	props: [
 		"license",
 		"market",
 		"telephony",
 		"isAdmin",
-		"isCloud",
 		"partner",
-		"isExperimentalTemplate",
 	],
 	computed: {
-		localize(state)
+		ExpirationLevel: () => ExpirationLevel,
+		getTariffName()
 		{
-			return Vue.getFilteredPhrases('INTRANET_LICENSE_WIDGET_');
+			return this.license.isDemo ?
+				Loc.getMessage('INTRANET_LICENSE_WIDGET_TITLE_DEMO') :
+				Loc.getMessage('INTRANET_LICENSE_WIDGET_TITLE')
+		},
+		getTariffButtonName() {
+			return this.license.isDemo ?
+				Loc.getMessage('INTRANET_LICENSE_WIDGET_BUY') :
+				Loc.getMessage('INTRANET_LICENSE_WIDGET_PROLONG')
 		},
 		getTariffIconCLass()
 		{
-			if (this.license.isAlmostExpired)
+			const {expirationLevel} = this.license;
+			if (expirationLevel & expirationLevel.expired)
 			{
 				return 'license-widget-item-icon--low';
 			}
-			else if (this.license.isExpired)
+			if (expirationLevel & expirationLevel.soonExpired)
 			{
 				return 'license-widget-item-icon--expired';
 			}
@@ -51,26 +57,23 @@ export const ContentComponent = {
 			{
 				return 'license-widget-item-icon--expired';
 			}
-			else if (this.market.isAlmostExpired)
+			if (this.market.isAlmostExpired)
 			{
 				return 'license-widget-item-icon--low';
 			}
-			else
-			{
-				return 'license-widget-item-icon--mp';
-			}
+			return 'license-widget-item-icon--mp';
 		},
 	},
 	methods: {
 		sendAnalytics(code)
 		{
-			BX.ajax.runAction("intranet.license.analyticsLabel", {
+			ajax.runAction("intranet.license.analyticsLabel", {
 				data: {},
 				analyticsLabel: {
 					helperCode: code,
 					headerPopup: "Y"
 				}
-			}).then((response) => {}, (response) => {});
+			});
 		},
 		showInfoHelper(type)
 		{
@@ -94,7 +97,8 @@ export const ContentComponent = {
 		},
 		showHelper()
 		{
-			if (this.license.isFreeTariff)
+			console.error('intranet.license.widget: needs a helper iformation.');
+			if (this.license.isDemo)
 			{
 				const article = this.isCloud ? "limit_support_bitrix" : "limit_support_bitrix_box";
 				BX.UI.InfoHelper.show(article);
@@ -154,120 +158,58 @@ export const ContentComponent = {
 				}
 			});
 		},
-		showLicenseScanner(event)
-		{
-			BX.SidePanel.Instance.open(
-				'/bitrix/components/bitrix/bitrix24.license.scan/index.php',
-				{
-					width: 1195,
-					cacheable: false,
-				}
-			);
-		},
 	},
+
 	template: `
 		<div class="license-widget">
 			<!-- region license -->
 			<div
 				class="license-widget-item license-widget-item--main license-widget-item-margin-bottom-1x"
-				:class="{ 'license-widget-item--expired' : license.isExpired || license.isAlmostExpired }"
-			>
+				:class="{ 'license-widget-item--expired' : license.expirationLevel > ExpirationLevel.soonExpired }">
 				<div class="license-widget-inner">
 					<div class="license-widget-content">
 						<div class="license-widget-item-icon" :class="getTariffIconCLass" ></div>
 						<div class="license-widget-item-content">
 							<div class="license-widget-item-name">
-								<span>{{ license.name }}</span>
+								<span>{{ getTariffName }}</span>
 								<!--<span data-hint="Hint"></span>-->
 							</div>
 							<div class="license-widget-item-link">
 								<span
-									v-if="license.isFreeTariff"
-									key="licenseDesc"
+									v-if="license.isDemo"
 									class="license-widget-item-link-text"
 									@click="showInfoHelper('whyPay')"
 								>
-									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_WHY }}
+									{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_DESCRIPTION_WHY') }}
 								</span>
 								<a
 									v-else
-									key="licenseDesc"
 									class="license-widget-item-link-text"
 									target="_blank"
 									@click="showInfoHelper('licenseDesc')"
 								>
-									{{ localize.INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF }}
+									{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_DESCRIPTION_TARIFF') }}
 								</a>
 							</div>
 							<div
-								v-if="license.isExpired || license.isAlmostExpired"
+								v-if="license.expirationLevel & ExpirationLevel.soonExpired"
 								class="license-widget-item-info license-widget-item-info--exp"
 							>
-								<span class="license-widget-item-info-text">{{ license.daysLeftMessage }}</span>
+								<span class="license-widget-item-info-text">{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_DAYS_LEFT_SHORT', {'#NUM_DAYS#': license.daysLeft}) }}</span>
 							</div>
-							<div v-if="!license.isExpired && !license.isAlmostExpired
-										&& !license.isFreeTariff && !license.isUnlimitedDateTariff"
+							<div 
+								v-else
 								class="license-widget-item-info"
 							>
-								<span class="license-widget-item-info-text">{{ license.tillMessage }}</span>
+								<span class="license-widget-item-info-text">{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_TILL', {'#LICENSE_TILL#': license.expireDate}) }}</span>
 							</div>
 						</div>
 					</div>
-					<span v-if="license.isAutoPay" key="licenseButton" class="license-widget-item-btn license-widget-item-btn--disabled">
-						{{
-							license.isFreeTariff || license.isDemo
-							? localize.INTRANET_LICENSE_WIDGET_BUY
-							: localize.INTRANET_LICENSE_WIDGET_PROLONG
-						}}
-					</span>
-					<a v-else-if="isExperimentalTemplate && (license.isFreeTariff && !license.isDemo)" key="licenseButton"
-						:href="license.demoPath" target="_blank" 
-						class="license-widget-item-btn license-widget-item-btn--orange">
-						{{
-							localize.INTRANET_LICENSE_WIDGET_START_FREE_TRIAL_TITLE
-						}}
-					</a>
-					<a v-else key="licenseButton" :href="license.allPath" target="_blank" 
-						class="license-widget-item-btn"
-						>
-						{{
-							license.isFreeTariff || license.isDemo
-							? localize.INTRANET_LICENSE_WIDGET_BUY
-							: localize.INTRANET_LICENSE_WIDGET_PROLONG
-						}}
+					<a :href="license.allPath" target="_blank" class="license-widget-item-btn">
+						{{ getTariffButtonName }}
 					</a>
 				</div>
 			</div>
-			<div
-				v-if="license.showScanner"
-				class="license-widget-item license-widget-item--main license-widget-item-margin-bottom-1x"
-				:class="{ 'license-widget-item--expired' : license.isAlmostLocked }"
-			>
-				<div class="license-widget-inner">
-					<div class="license-widget-content">
-						<div class="license-widget-item-icon license-widget-item-icon--sc"></div>
-						<div class="license-widget-item-content">
-							<div class="license-widget-item-desc">
-								<span>
-								{{
-									license.scannerLockTillMessage
-									? license.scannerLockTillMessage
-									: localize.INTRANET_LICENSE_WIDGET_SCANNER
-								}}
-								</span>
-							</div>
-						</div>
-					</div>
-					<a @click="showLicenseScanner($event)" class="license-widget-item-btn-secondary">
-					{{
-						license.scannerLockTillMessage
-						? localize.INTRANET_LICENSE_WIDGET_SCANNER_DETAILS
-						: localize.INTRANET_LICENSE_WIDGET_SCANNER_START
-					}}
-					</a>
-				</div>
-			</div>
-
 			<!-- endregion -->
 
 			<!-- region vox & demo -->
@@ -281,7 +223,7 @@ export const ContentComponent = {
 							<div class="license-widget-item-icon license-widget-item-icon--tel"></div>
 							<div class="license-widget-item-content">
 								<div class="license-widget-item-name">
-									<span>{{ localize.INTRANET_LICENSE_WIDGET_TELEPHONY }}</span>
+									<span>{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_TELEPHONY') }}</span>
 									<!--<span data-hint="Hint"></span>-->
 								</div>
 								<div v-if="telephony.isConnected" class="license-widget-item-info">
@@ -289,7 +231,7 @@ export const ContentComponent = {
 										:href="telephony.buyPath"
 										class="license-widget-item-info-text"
 									>
-										{{ localize.INTRANET_LICENSE_WIDGET_TELEPHONY_CONNECTED }}
+										{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_TELEPHONY_CONNECTED') }}
 									</a>
 								</div>
 								<div
@@ -304,82 +246,60 @@ export const ContentComponent = {
 									class="license-widget-item-btn"
 									target="_blank"
 								>
-									{{ localize.INTRANET_LICENSE_WIDGET_CONNECT }}
+									{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_CONNECT') }}
 								</a>
-
 							</div>
 						</div>
 					</div>
 				</div>
-				<div class="license-widget-item" :class="{ 'license-widget-item--active' : license.isDemo }">
+				<div 
+					class="license-widget-item license-widget-item--active"
+					:class="{ 'license-widget-item--active' : license.isDemo }"
+					>
 					<div class="license-widget-inner">
-						<div v-if="isExperimentalTemplate && !license.isDemo && license.isDemoAvailable" class="license-widget-content" >
-							<div class="license-widget-item-icon license-widget-item-icon--demo"></div>
-							<div class="license-widget-item-content">
-								<div class="license-widget-item-name">
-									<span>{{ localize.INTRANET_LICENSE_WIDGET_BUY_HEADER }}</span>
-								</div>
-								<a :href="license.allPath" class="license-widget-item-btn" target="_blank">
-									{{ localize.INTRANET_LICENSE_WIDGET_BUY }}
-								</a>
-							</div>
-						</div>
-						<div v-else class="license-widget-content">
+						<div class="license-widget-content">
 							<div
 								class="license-widget-item-icon"
 								:class="[
-									license.isDemo && license.isDemoExpired
+									(license.isDemo && (license.expirationLevel & ExpirationLevel.soonExpired))
 									? 'license-widget-item-icon--expdemo'
 									: 'license-widget-item-icon--demo'
 								]"
 							></div>
 							<div class="license-widget-item-content">
 								<div class="license-widget-item-name">
-									<span>{{ localize.INTRANET_LICENSE_WIDGET_DEMO }}</span>
-									<!--<span data-hint="Hint"></span>-->
+									<span>{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_DEMO') }}</span>
 								</div>
-								<div v-if="license.isDemo" class="license-widget-item-link">
+								<div class="license-widget-item-link">
 									<a
 										class="license-widget-item-link-text"
 										:href="license.demoPath"
 										target="_blank"
 									>
-										{{ localize.INTRANET_LICENSE_WIDGET_OPPORTUNITIES }}
+										{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_OPPORTUNITIES') }}
 									</a>
 								</div>
-								<div v-if="license.isDemo && !license.isDemoExpired" class="license-widget-item-info">
+								<div 
+									v-if="!(license.expirationLevel & ExpirationLevel.soonExpired)" 
+									class="license-widget-item-info"
+								>
 									<span class="license-widget-item-info-text">
-										{{ license.tillMessage }}
+										{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_DAYS_LEFT_SHORT', {'#NUM_DAYS#': license.daysLeft}) }}
 									</span>
 								</div>
 								<div
-									v-if="license.isDemo && license.isDemoExpired"
+									v-else
 									class="license-widget-item-info license-widget-item-info--exp"
 								>
 									<span class="license-widget-item-info-text">
-										{{ license.daysLeftMessage }}
+										{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_TILL', {'#LICENSE_TILL#': license.expireDate}) }}
 									</span>
 								</div>
-								<div
-									v-if="!license.isDemo && !license.isDemoAvailable"
-									class="license-widget-item-text"
-								>
-										{{ localize.INTRANET_LICENSE_WIDGET_USED }}
-								</div>
-								<a
-									v-if="license.isDemoAvailable && !license.isDemo"
-									:href="license.demoPath"
-									class="license-widget-item-btn"
-									target="_blank"
-								>
-									{{ localize.INTRANET_LICENSE_WIDGET_TURN_ON }}
-								</a>
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-
 			<!-- endregion -->
 
 			<!-- region market -->
@@ -396,12 +316,12 @@ export const ContentComponent = {
 						></div>
 						<div class="license-widget-item-content">
 							<div class="license-widget-item-name">
-								<span>{{ localize.INTRANET_LICENSE_WIDGET_MARKET }}</span>
+								<span>{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_MARKET') }}</span>
 								<!--<span data-hint="Hint"></span>-->
 							</div>
 							<div class="license-widget-item-link">
 								<span class="license-widget-item-link-text" @click="showInfoHelper('market')">
-									{{ localize.INTRANET_LICENSE_WIDGET_MARKET_DESCRIPTION }}
+									{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_MARKET_DESCRIPTION') }}
 								</span>
 							</div>
 
@@ -432,7 +352,7 @@ export const ContentComponent = {
 						target="_blank"
 						@click="showMarketDemoPopup($event)"
 					>
-						{{ localize.INTRANET_LICENSE_WIDGET_TRY }}
+						{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_TRY') }}
 					</a>
 
 					<a
@@ -444,8 +364,8 @@ export const ContentComponent = {
 					>
 						{{
 							market.isPaid
-							? localize.INTRANET_LICENSE_WIDGET_PROLONG
-							: localize.INTRANET_LICENSE_WIDGET_BUY
+							? $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_PROLONG')
+							: $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_BUY')
 						}}
 					</a>
 				</div>
@@ -464,8 +384,8 @@ export const ContentComponent = {
 					<div class="license-widget-option-text">
 						{{
 							partner.isPartnerOrder
-							? localize.INTRANET_LICENSE_WIDGET_PARTNER_ORDER
-							: localize.INTRANET_LICENSE_WIDGET_PARTNER_CONNECT
+							? $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_ORDER')
+							: $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_PARTNER_CONNECT')
 						}}
 					</div>
 				</a>
@@ -473,17 +393,16 @@ export const ContentComponent = {
 					<svg xmlns="http://www.w3.org/2000/svg" width="19" height="18" fill="#525C69" opacity=".5">
 						<path fill-rule="evenodd" d="M16.996 4.652a1.6 1.6 0 011.593 1.455l.007.145v7.268a1.6 1.6 0 01-1.455 1.594l-.145.006H15.11l-.001 2.096a.3.3 0 01-.477.243l-.05-.048-1.963-2.292-4.046.001a1.6 1.6 0 01-1.593-1.454l-.007-.146v-1.382l6.43.001a2.1 2.1 0 002.096-1.95l.005-.15V4.652h1.492zM12.346 0a1.6 1.6 0 011.6 1.6v7.268a1.6 1.6 0 01-1.6 1.6l-5.373-.001-2.974 2.977a.3.3 0 01-.512-.212l-.001-2.765H1.6a1.6 1.6 0 01-1.6-1.6V1.6A1.6 1.6 0 011.6 0h10.747z"/>
 					</svg>
-					<div class="license-widget-option-text">{{ localize.INTRANET_LICENSE_WIDGET_SUPPORT }}</div>
+					<div class="license-widget-option-text">{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_SUPPORT') }}</div>
 				</a>
 				<a class="license-widget-option" :href="license.ordersPath" target="_blank">
 					<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#525C69" opacity=".5">
 						<path fill-rule="evenodd" d="M12.566 6.992a5.122 5.122 0 110 10.244 5.122 5.122 0 010-10.244zM9.383 0c.409 0 .798.179 1.064.49l2.251 2.626c.218.254.338.578.338.912v.911a7.365 7.365 0 00-2.005.176v-.843L9.126 2.006H2.006v11.03h3.413c.09.705.283 1.379.562 2.005H1.402A1.402 1.402 0 010 13.64V1.402C0 .628.628 0 1.402 0h7.98zm5.353 9.991l-2.75 2.75-1.147-1.147-.811.811 1.914 1.914.044.043 3.56-3.56-.81-.81zM6.67 8.022a7.12 7.12 0 00-.85 1.583h-1.81V8.023h2.66zm2.354-3.008l-.001.884c-.36.205-.7.439-1.019.7H4.011V5.014h5.014z"/>
 					</svg>
-					<div class="license-widget-option-text">{{ localize.INTRANET_LICENSE_WIDGET_ORDERS }}</div>
+					<div class="license-widget-option-text">{{ $Bitrix.Loc.getMessage('INTRANET_LICENSE_WIDGET_ORDERS') }}</div>
 				</a>
 			</div>
 			<!-- endregion -->
-			<BannerComponent></BannerComponent>
 		</div>
 	`,
 };

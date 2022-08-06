@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 
 class CrmContacts extends CrmEntity
 {
@@ -45,9 +46,9 @@ class CrmContacts extends CrmEntity
 			'name' => htmlspecialcharsbx(
 				\CCrmContact::prepareFormattedName([
 						'HONORIFIC' => isset($data['HONORIFIC']) ? $data['HONORIFIC'] : '',
-						'NAME' => isset($data['NAME']) ? $data['NAME'] : '',
-						'SECOND_NAME' => isset($data['SECOND_NAME']) ? $data['SECOND_NAME'] : '',
-						'LAST_NAME' => isset($data['LAST_NAME']) ? $data['LAST_NAME'] : ''
+						'NAME' => isset($data['NAME']) ? Emoji::decode($data['NAME']) : '',
+						'SECOND_NAME' => isset($data['SECOND_NAME']) ? Emoji::decode($data['SECOND_NAME']) : '',
+						'LAST_NAME' => isset($data['LAST_NAME']) ? Emoji::decode($data['LAST_NAME']) : ''
 				])
 			),
 			'desc' => htmlspecialcharsbx($data['COMPANY_TITLE'])

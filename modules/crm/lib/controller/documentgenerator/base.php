@@ -22,7 +22,7 @@ abstract class Base extends Controller
 	{
 		if(DocumentGeneratorManager::getInstance()->isEnabled())
 		{
-			return $this->getDocumentGeneratorController()->getAutoWiredParameters();
+			return $this->getDocumentGeneratorController()->getAutoWiredParameters($this);
 		}
 
 		return [];

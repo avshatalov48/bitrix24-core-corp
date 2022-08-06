@@ -1,100 +1,69 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /**
  * Bitrix vars
- * @global CUser $USER
- * @global CMain $APPLICATION
- * @global CDatabase $DB
- * @var array $arParams
  * @var array $arResult
- * @var CBitrixComponent $component
  */
 
-use Bitrix\Crm\Counter\EntityCounterType;
-\Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
+use Bitrix\Main\Page\Asset;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/counter.js');
-\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
+Extension::load(['ui.fonts.opensans', 'ui.counterpanel']);
+Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
-$guid = $arResult['GUID'];
-$prefix = mb_strtolower($guid);
-$caption = $arResult['ENTITY_CAPTION'];
-$total = isset($arResult['TOTAL']) ? $arResult['TOTAL'] : '0';
-$data = isset($arResult['DATA']) ? $arResult['DATA'] : array();
-$containerID = "{$prefix}_container";
-$valueContainerID = "{$prefix}_value_container";
-$stubContainerID = "{$prefix}_stub_container";
+$entityTypeId = (int)$arResult['ENTITY_TYPE_ID'];
 
-$showStub = $arResult['SHOW_STUB'] ? $arResult['SHOW_STUB'] : false;
-
-if($showStub)
+if (isset($arResult['EXTRAS']['DEAL_CATEGORY_ID']))
 {
-	?><div class="crm-counter">
-		<div class="crm-counter-title"><?=GetMessage('CRM_COUNTER_STUB')?></div>
-	</div><?
+	$categoryId = (int)$arResult['EXTRAS']['DEAL_CATEGORY_ID'];
+}
+elseif (isset($arResult['EXTRAS']['CATEGORY_ID']))
+{
+	$categoryId = (int)$arResult['EXTRAS']['CATEGORY_ID'];
 }
 else
 {
-	?><div id="<?=htmlspecialcharsbx($containerID)?>" class="crm-counter">
-		<div id="<?=htmlspecialcharsbx($valueContainerID)?>" class="crm-counter-title" style="<?=$total > 0 ? '' : 'display: none;'?>">
-			<span class="crm-page-name"><?=htmlspecialcharsbx($caption)?>: </span><?
-			foreach($data as $code => $item)
-			{
-				$typeID = isset($item['TYPE_ID']) ? $item['TYPE_ID'] : 0;
-				$typeName = isset($item['TYPE_NAME']) ? $item['TYPE_NAME'] : '';
-				$value = isset($item['VALUE']) ? $item['VALUE'] : '';
-				$url = isset($item['URL']) ? $item['URL'] : '#';
-
-				$className = 'crm-counter-link';
-				if($typeName === EntityCounterType::IDLE_NAME)
-				{
-					$className = 'crm-counter-nodate';
-				}
-				elseif($typeName === EntityCounterType::OVERDUE_NAME)
-				{
-					$className = 'crm-counter-overdue';
-				}
-				elseif($typeName === EntityCounterType::PENDING_NAME)
-				{
-					$className = 'crm-counter-pending';
-				}
-				?><a data-entity-counter-code="<?=$code?>"
-					data-type-id="<?=$typeID?>"
-					href="<?=htmlspecialcharsbx($url)?>"
-					class="crm-counter-container <?=$className?>"
-					style="<?=$value > 0 ? '' : 'display: none;'?>">
-				<?=GetMessage("CRM_COUNTER_TYPE_{$typeName}", array('#VALUE#' => $value))?>
-				</a><?
-			}
-		?></div>
-		<div id="<?=htmlspecialcharsbx($stubContainerID)?>" class="crm-counter-title" style="<?=$total > 0 ? 'display: none;' : ''?>">
-			<div class="crm-page-nocounter"><?=$arResult['STUB_MESSAGE']?></div>
-		</div>
-	</div>
-
-	<script>
-		BX.ready(
-			function()
-			{
-				BX.message(<?= CUtil::PhpToJSObject($arResult['ENTITY_PLURALS']) ?>);
-				BX.CrmEntityCounterPanel.create(
-					"<?=CUtil::JSEscape($guid)?>",
-					{
-						userId: <?=$arResult['USER_ID']?>,
-						userName: "<?=CUtil::JSEscape($arResult['USER_NAME'])?>",
-						codes: <?=CUtil::PhpToJSObject($arResult['CODES'])?>,
-						extras: <?=CUtil::PhpToJSObject($arResult['EXTRAS'])?>,
-						entityTypeId: "<?=CUtil::JSEscape($arResult['ENTITY_TYPE_ID'])?>",
-						containerId: "<?=CUtil::JSEscape($containerID)?>",
-						valueContainerId: "<?=CUtil::JSEscape($valueContainerID)?>",
-						stubContainerId: "<?=CUtil::JSEscape($stubContainerID)?>",
-						serviceUrl: "<?='/bitrix/components/bitrix/crm.entity.counter.panel/ajax.php?'.bitrix_sessid_get()?>",
-						data: <?=CUtil::PhpToJSObject($data)?>,
-						totalInfo: { value: <?=$total?>, caption: "<?=CUtil::JSEscape($caption)?>" }
-					}
-				);
-			}
-		);
-	</script><?
+	$categoryId = 0;
 }
+
+$prefix = mb_strtolower($arResult['GUID']);
+$containerId = htmlspecialcharsbx("{$prefix}_container");
+$filterLastPresetId = htmlspecialcharsbx(
+	sprintf(
+		'crm-counter-filter-last-preset-%d-%d',
+		$entityTypeId,
+		$categoryId
+	)
+);
+$filterLastPreset = CUserOptions::getOption('crm', $filterLastPresetId);
+$data = $arResult['DATA'] ?? [];
+uasort($data, fn($x , $y) => $x['TYPE_ID'] <=> $y['TYPE_ID']);
+?>
+
+<div id="<?= $containerId ?>" class="crm-counter"></div>
+<script>
+	BX.ready(function() {
+		BX.message(<?=CUtil::phpToJsObject(Loc::loadLanguageFile(__FILE__))?>);
+		BX.message(<?= CUtil::PhpToJSObject($arResult['ENTITY_PLURALS']) ?>);
+
+		// init counter panel
+		(new BX.Crm.EntityCounterPanel({
+			id: "<?= $containerId ?>",
+			entityTypeId: <?= $entityTypeId ?>,
+			userId: <?= (int)$arResult['USER_ID'] ?>,
+			userName: "<?= CUtil::JSEscape($arResult['USER_NAME']) ?>",
+			serviceUrl: "<?= '/bitrix/components/bitrix/crm.entity.counter.panel/ajax.php?'.bitrix_sessid_get() ?>",
+			data: <?= CUtil::PhpToJSObject($data) ?>,
+			codes: <?= CUtil::PhpToJSObject($arResult['CODES']) ?>,
+			extras: <?= CUtil::PhpToJSObject($arResult['EXTRAS']) ?>,
+			filterLastPresetId: "<?= $filterLastPresetId ?>",
+			filterLastPresetData: <?= CUtil::PhpToJSObject($filterLastPreset) ?>
+		})).init();
+	});
+</script>

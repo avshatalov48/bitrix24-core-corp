@@ -66,10 +66,6 @@
 
 	--gray_light: rgba(106,115,127,1);
 
-	--font_os_regular: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	--font_os_bold: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	--font_os_semibold: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	--font_os_light: "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	--font_helvetica: "Helvetica Neue", Helvetica Neue, Helvetica, Arial, sans-serif;
 }
 
@@ -160,7 +156,8 @@
 	-webkit-box-shadow: 0 1px 1px rgba(0,0,0,.145515);
 	        box-shadow: 0 1px 1px rgba(0,0,0,.145515);
 	border-radius: 22px;
-	font: 9px/13px var(--font_os_semibold);
+	font: 9px/13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--white);
 }
 
@@ -231,12 +228,14 @@
 }
 
 .system-auth-form__profile-name {
-	font: 15px/22px var(--font_os_semibold);
+	font: 15px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--gray);
 }
 
 .system-auth-form__profile-position {
-	font: 11px/14px var(--font_os_regular);
+	font: 11px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--graphite_alpha_70);
 }
 
@@ -469,25 +468,30 @@
 	    -ms-flex-align: center;
 	        align-items: center;
 	margin-bottom: 5px;
-	font: 12px/14px var(--font_os_semibold);
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--gray);
 	word-break: break-word;
 }
 
 .system-auth-form__item-title.--s {
-	font: 10px/13px var(--font_os_semibold);
+	font: 10px/13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .system-auth-form__item-title.--sm {
-	font: 13px/15px var(--font_os_semibold);
+	font: 13px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .system-auth-form__item-title.--l {
-	font: 14px/17px var(--font_os_semibold);
+	font: 14px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .system-auth-form__item-title.--xl {
-	font: 15px/22px var(--font_os_semibold);
+	font: 15px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .system-auth-form__item-title.--min-height {
@@ -500,7 +504,8 @@
 
 .system-auth-form__item-title.--lighter {
 	color: var(--gray_alpha_50);
-	font-family: var(--font_os_regular);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .system-auth-form__item-title.--white-space {
@@ -568,7 +573,8 @@
 }
 
 .system-auth-form__item-title.--link-light {
-	font: 10px/13px var(--font_os_regular);
+	font: 10px/13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--graphite_alpha_70);
 }
 
@@ -766,7 +772,8 @@
 
 .system-auth-form__show-history {
 	display: inline-block;
-	font: 10px/14px var(--font_os_regular);
+	font: 10px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--graphite_alpha_70);
 	border-bottom: 1px dashed var(--graphite_alpha_50);
 	cursor: pointer;
@@ -785,7 +792,8 @@
 	pointer-events: none;
 	color: #008ac6 !important;
 	border: none !important;
-	font-family: var(--font_os_regular);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .system-auth-form__ustat-icon {
@@ -925,7 +933,7 @@
 	position: absolute;
 	width: 51px;
 	height: 10px;
-	left: -2px;
+	left: -4px;
 	top: 50%;
 	margin-top: -5px;
 	background: url(images/system-auth-form__icon-stress--arrow.svg) center center no-repeat;
@@ -953,7 +961,8 @@
 	-webkit-transform: translateX(-50%);
 	    -ms-transform: translateX(-50%);
 	        transform: translateX(-50%);
-	font-family: var(--font_os_semibold);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--graphite);
 	text-align: center;
 	z-index: 99;
@@ -962,15 +971,16 @@
 .system-auth-form__stress-widget--content-title {
 	display: block;
 	overflow: hidden;
-	font: 6px/6px var(--font_os_semibold);
+	font: 6px/6px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	color: var(--graphite_alpha_70);
 }
 
 .system-auth-form__stress-widget--content-progress {
 	letter-spacing: -.325565px;
-	font: 19px/19px var(--font_os_semibold);
-	color: var(--font_os_semibold);
+	font: 19px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .system-auth-form__stress-widget--content-progress:after {
@@ -984,7 +994,8 @@
 	-webkit-transition: .2s;
 	-o-transition: .2s;
 	transition: .2s;
-	font: 10px var(--font_os_regular);
+	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .system-auth-form__stress-widget--content-progress.--empty:after {
@@ -1006,7 +1017,8 @@
 	margin-right: 2px;
 	padding: 0 7px;
 	border-radius: 12px;
-	font: 10px/21px var(--font_os_semibold);
+	font: 10px/21px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	white-space: nowrap;
 	-o-text-overflow: ellipsis;
@@ -1069,7 +1081,8 @@
 	    -ms-flex-align: center;
 	        align-items: center;
 	min-height: 32px;
-	font: 13px/16px var(--font_os_light);
+	font: 13px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: var(--gray);
 }
 
@@ -1189,7 +1202,8 @@
 	padding: 0 13px;
 	border-color: rgba(31,130,232,.3);
 	color: var(--graphite);
-	font: 12px/14px var(--font_os_semibold);
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .system-auth-form__profile-controls-btn.ui-btn:hover {

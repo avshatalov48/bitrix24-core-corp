@@ -7,9 +7,7 @@ BX.Tasks.TasksReportEffectiveInProgress = function(options)
 	this.pathToTasks = options.pathToTasks;
 
 	this.bindEvents();
-
-	var isLimit = options.taskLimitExceeded || options.kpiLimitExceeded;
-	this.handleFeatureDisabling(isLimit);
+	this.handleFeatureDisabling(options.taskLimitExceeded || options.kpiLimitExceeded);
 };
 
 BX.Tasks.TasksReportEffectiveInProgress.prototype = {
@@ -28,9 +26,9 @@ BX.Tasks.TasksReportEffectiveInProgress.prototype = {
 		}
 	},
 
-	handleFeatureDisabling: function(isLimit)
+	handleFeatureDisabling: function(isLimitExceeded)
 	{
-		if (isLimit)
+		if (isLimitExceeded)
 		{
 			BX.UI.InfoHelper.show('limit_tasks_efficiency', {
 				isLimit: true,

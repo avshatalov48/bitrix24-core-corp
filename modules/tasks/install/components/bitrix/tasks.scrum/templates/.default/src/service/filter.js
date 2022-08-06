@@ -126,31 +126,14 @@ export class Filter extends EventEmitter
 
 	setValueToField(value: ValueTypeField)
 	{
-		const filterApi = this.filterManager.getApi();
-		const filterFieldsValues = this.filterManager.getFilterFieldsValues();
-
-		filterFieldsValues[value.name] = value.value;
-
-		filterApi.setFields(filterFieldsValues);
-		filterApi.apply();
+		this.filterManager.getApi().extendFilter({[value.name]: value.value});
 	}
 
-	setValuesToField(values: ValueTypeField[], resetFields = false)
+	setValuesToField(values: ValueTypeField[])
 	{
-		const filterApi = this.filterManager.getApi();
-
-		let filterFieldsValues = {};
-		if (!resetFields)
-		{
-			filterFieldsValues = this.filterManager.getFilterFieldsValues();
-		}
-
-		values.forEach((value) => {
-			filterFieldsValues[value.name] = value.value;
-		});
-
-		filterApi.setFields(filterFieldsValues);
-		filterApi.apply();
+		this.filterManager.getApi().extendFilter(
+			values.reduce((res, value) => ({ ...res, [value.name]: value.value}), {})
+		);
 	}
 
 	getValueFromField(value: ValueTypeField): string

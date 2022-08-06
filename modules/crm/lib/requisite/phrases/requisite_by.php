@@ -28,6 +28,8 @@ $phrasesConfig = [
 		'CRM_REQUISITE_ENTITY_RQ_OKPO_BY_FIELD' => 'ОКПО',
 		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_NUM_BY_FIELD' => 'Номер св. о гос. регистрации',
 		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_DATE_BY_FIELD' => 'Дата св. о гос. регистрации',
-		'CRM_REQUISITE_ENTITY_RQ_BASE_DOC_BY_FIELD' => 'Основание действия'
+		'CRM_REQUISITE_ENTITY_RQ_BASE_DOC_BY_FIELD' => 'Основание действия',
+		'CRM_REQUISITE_ENTITY_RQ_SIGNATURE_BY_FIELD' => 'Подпись',
+		'CRM_REQUISITE_ENTITY_RQ_STAMP_BY_FIELD' => 'Печать',
 	]
 ];

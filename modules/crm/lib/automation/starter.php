@@ -92,6 +92,11 @@ class Starter
 		$triggerApplied = false;
 		$changedFields = $this->compareFields($fields, $prevFields);
 
+		if ($changedFields)
+		{
+			Factory::onFieldsChanged($this->entityTypeId, $this->entityId, $changedFields);
+		}
+
 		if ($this->isResponsibleChanged($changedFields))
 		{
 			$result = ResponsibleChangedTrigger::execute([[

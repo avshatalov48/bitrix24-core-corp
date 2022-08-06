@@ -661,34 +661,13 @@ if($enableToolbar)
 		$APPLICATION->IncludeComponent(
 			'bitrix:crm.interface.toolbar',
 			'',
-		array(
-			'TOOLBAR_ID' => $toolbarID,
-			'BUTTONS' => $toolbarButtons
-		),
-		$component,
-		array('HIDE_ICONS' => 'Y')
-	);
-}
-}
-
-if(!$isInternal)
-{
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		array('ENTITY_TYPE_NAME' => CCrmOwnerType::ActivityName)
-	);
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
+			array(
+				'TOOLBAR_ID' => $toolbarID,
+				'BUTTONS' => $toolbarButtons
+			),
+			$component,
+			array('HIDE_ICONS' => 'Y')
+		);
 	}
 }
 

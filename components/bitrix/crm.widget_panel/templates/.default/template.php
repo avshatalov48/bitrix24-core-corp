@@ -12,7 +12,18 @@
 
 use Bitrix\Crm;
 
-CJSCore::Init(array('amcharts', 'amcharts_funnel', 'amcharts_serial', 'amcharts_pie', 'fx', 'drag_drop', 'popup', 'date', 'sidepanel'));
+CJSCore::Init([
+	'amcharts',
+	'amcharts_funnel',
+	'amcharts_serial',
+	'amcharts_pie',
+	'fx',
+	'drag_drop',
+	'popup',
+	'date',
+	'sidepanel',
+	'ui.design-tokens',
+]);
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 $asset->addJs('/bitrix/js/crm/autorun_proc.js');

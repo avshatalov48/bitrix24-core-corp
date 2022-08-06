@@ -28,6 +28,7 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		}
 
 		[$this->CrmEntityType, $this->CrmEntityId] = $this->defineCrmEntityWithRequisites();
+		$this->logRequisiteProperties();
 
 		$executionStatus = $this->assertProperties();
 		if ($executionStatus !== CBPActivityExecutionStatus::Executing)
@@ -37,6 +38,8 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 
 		$fieldsValues = self::normalizeFieldsValues($this->FieldsValues);
 		$fieldsValues['RequisiteFields'] = $this->filterPresetRequisiteFields($fieldsValues['RequisiteFields']);
+
+		$this->logRequisiteValues($fieldsValues);
 
 		$requisiteSettings = EntityRequisite::getSingleInstance()->loadSettings(
 			$this->CrmEntityType,
@@ -49,6 +52,30 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		$this->updateRequisite($requisiteId, $bankDetailId, $fieldsValues);
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	protected function logRequisiteValues(array $requisiteValues): void
+	{
+		$requisiteFieldValues = $requisiteValues['RequisiteFields'];
+		$addressFieldValues = $requisiteValues['RequisiteFields'][EntityRequisite::ADDRESS][$this->AddressTypeId] ?? [];
+		unset($requisiteFieldValues['RequisiteFields'][EntityRequisite::ADDRESS]);
+		$countryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($this->RequisitePresetId);
+
+		$debugValues = array_merge($requisiteFieldValues, $addressFieldValues, $requisiteValues['BankDetailFields']);
+
+		$map = array_merge(
+			static::getRequisiteFieldsMap($countryId),
+			static::getUserFieldsMap(),
+			static::getAddressFieldsMap(),
+			static::getBankDetailMap(),
+		);
+
+		$this->writeDebugInfo($this->getDebugInfo($debugValues, array_intersect_key($map, $debugValues)));
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return parent::getPropertiesDialogMap();
 	}
 
 	protected function filterPresetRequisiteFields(array $requisiteFieldsValues)
@@ -102,7 +129,7 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 		 	else
 			{
 				$errorMessages = $res->getErrorMessages();
-				$this->WriteToTrackingService(end($errorMessages));
+				$this->WriteToTrackingService(end($errorMessages), 0, CBPTrackingType::Error);
 			}
 		}
 		if ($fieldsValues['BankDetailFields'])
@@ -115,7 +142,7 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 			else
 			{
 				$errorMessages = $res->getErrorMessages();
-				$this->WriteToTrackingService(end($errorMessages));
+				$this->WriteToTrackingService(end($errorMessages), 0, CBPTrackingType::Error);
 			}
 		}
 	}
@@ -177,7 +204,6 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')
 	{
 		$dialog = parent::GetPropertiesDialog(...func_get_args());
-		$dialog->setMap(array_merge($dialog->getMap(), self::getPropertiesDialogMap()));
 
 		$currentPresetId = (int)$dialog->getCurrentValue('requisite_preset');
 		$presetCountryId = 0;
@@ -358,7 +384,7 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 
 	protected static function getPropertiesDialogMap(): array
 	{
-		return [
+		return array_merge(parent::getPropertiesDialogMap(), [
 			'FieldsValues' => [
 				'FieldName' => 'FieldsValues',
 				'Getter' => function ($dialog, $property, $currentActivity, $compatible)
@@ -372,6 +398,6 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 					);
 				}
 			]
-		];
+		]);
 	}
 }

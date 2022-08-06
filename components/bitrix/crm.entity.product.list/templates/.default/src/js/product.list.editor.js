@@ -100,9 +100,19 @@ export class Editor
 			const container = this.getContainer();
 			headersToLock.forEach((headerId) => {
 				const header = container?.querySelector(`.main-grid-cell-head[data-name="${headerId}"] .main-grid-cell-head-container`);
-				const lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
-				lock.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
-				header?.insertBefore(lock, header.firstChild);
+				if (header)
+				{
+					Dom.addClass(header, 'main-grid-cell-head-locked');
+					header.onclick = (event) => {
+						if (Dom.hasClass(event.target, 'ui-hint-icon'))
+						{
+							return;
+						}
+						top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+					};
+					const lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
+					header.insertBefore(lock, header.firstChild);
+				}
 			});
 		}
 	}

@@ -93,9 +93,13 @@ class BlacklistTable extends Entity\DataManager
 		$data = $event->getParameter("fields");
 		$phoneNumber = $data["PHONE_NUMBER"];
 
+		$numberStripped = \CVoxImplantPhone::stripLetters($phoneNumber);
+		$numberParsed = PhoneNumber\Parser::getInstance()->parse($phoneNumber);
+		$numberE164 = $numberParsed->isValid() ? $numberParsed->format(PhoneNumber\Format::E164) : $numberStripped;
+
 		$result->modifyFields([
-			"NUMBER_STRIPPED" => \CVoxImplantPhone::stripLetters($phoneNumber),
-			"NUMBER_E164" => PhoneNumber\Parser::getInstance()->parse($phoneNumber)->format(PhoneNumber\Format::E164),
+			"NUMBER_STRIPPED" => $numberStripped,
+			"NUMBER_E164" => $numberE164,
 			"INSERTED" => new DateTime()
 		]);
 		return $result;

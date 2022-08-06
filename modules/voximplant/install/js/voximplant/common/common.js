@@ -211,7 +211,7 @@
 					return resolve (true);
 				}
 				BX.Voximplant.confirm(
-					BX.message("VOX_JS_COMMON_TERMS_OF_SERVICE"),
+					'',
 					disclaimerText,
 					{
 						ok: BX.message("VOX_JS_COMMON_AGREE"),

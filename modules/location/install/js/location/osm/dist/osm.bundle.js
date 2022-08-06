@@ -3,7 +3,17 @@ this.BX.Location = this.BX.Location || {};
 (function (exports,main_core,location_core) {
 	'use strict';
 
-	var _autocompleteRequester = new WeakMap();
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _sourceLanguageId = new WeakMap();
+
+	var _autocompleteResponseConverter = new WeakMap();
+
+	var _autocompleteReplacements = new WeakMap();
+
+	var _autocompletePromptsCount = new WeakMap();
+
+	var _processQuery = new WeakSet();
 
 	var AutocompleteService = /*#__PURE__*/function (_AutocompleteServiceB) {
 	  babelHelpers.inherits(AutocompleteService, _AutocompleteServiceB);
@@ -14,32 +24,90 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classCallCheck(this, AutocompleteService);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteService).call(this, props));
 
-	    _autocompleteRequester.set(babelHelpers.assertThisInitialized(_this), {
+	    _processQuery.add(babelHelpers.assertThisInitialized(_this));
+
+	    _sourceLanguageId.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompleteRequester, props.autocompleteRequester);
+	    _autocompleteResponseConverter.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _autocompleteReplacements.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _autocompletePromptsCount.set(babelHelpers.assertThisInitialized(_this), {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId, props.sourceLanguageId);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompleteResponseConverter, props.responseConverter);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompleteReplacements, props.autocompleteReplacements);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompletePromptsCount, props.autocompletePromptsCount);
 	    return _this;
 	  }
 
 	  babelHelpers.createClass(AutocompleteService, [{
 	    key: "autocomplete",
 	    value: function autocomplete(text, autocompleteServiceParams) {
+	      var _this2 = this;
+
 	      if (text === '') {
 	        return new Promise(function (resolve) {
 	          resolve([]);
 	        });
 	      }
 
-	      return babelHelpers.classPrivateFieldGet(this, _autocompleteRequester).request({
-	        text: text,
-	        autocompleteServiceParams: autocompleteServiceParams
+	      var params = {
+	        q: _classPrivateMethodGet(this, _processQuery, _processQuery2).call(this, text),
+	        limit: babelHelpers.classPrivateFieldGet(this, _autocompletePromptsCount),
+	        lang: babelHelpers.classPrivateFieldGet(this, _sourceLanguageId)
+	      };
+
+	      if (autocompleteServiceParams.biasPoint) {
+	        var lat = autocompleteServiceParams.biasPoint.latitude;
+	        var lon = autocompleteServiceParams.biasPoint.longitude;
+
+	        if (lat && lon) {
+	          params.lat = lat;
+	          params.lon = lon;
+	        }
+	      }
+
+	      return BX.ajax.runAction('location.api.location.autocomplete', {
+	        data: {
+	          params: params
+	        }
+	      }).then(function (response) {
+	        return response ? babelHelpers.classPrivateFieldGet(_this2, _autocompleteResponseConverter).convertResponse(response.data, {
+	          text: text,
+	          autocompleteServiceParams: autocompleteServiceParams
+	        }) : [];
+	      }).catch(function (response) {
+	        console.error(response);
 	      });
 	    }
 	  }]);
 	  return AutocompleteService;
 	}(location_core.AutocompleteServiceBase);
+
+	var _processQuery2 = function _processQuery2(query) {
+	  var result = query;
+
+	  for (var partToReplace in babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements)) {
+	    if (babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements).hasOwnProperty(partToReplace)) {
+	      result = result.replace(partToReplace, babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements)[partToReplace]);
+	    }
+	  }
+
+	  return result;
+	};
 
 	/* @preserve
 	 * Leaflet 1.6.0+Detached: 0c81bdf904d864fd12a286e3d1979f47aba17991.0c81bdf, a JS library for interactive maps. http://leafletjs.com
@@ -13211,7 +13279,7 @@ this.BX.Location = this.BX.Location || {};
 	  return TokenContainer;
 	}();
 
-	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _tokenContainer = new WeakMap();
 
@@ -13292,7 +13360,7 @@ this.BX.Location = this.BX.Location || {};
 	        }
 
 	        if (response.status === 401 && !isUnAuth) {
-	          _classPrivateMethodGet(_this2, _processUnauthorizedResponse, _processUnauthorizedResponse2).call(_this2, url, img, done);
+	          _classPrivateMethodGet$1(_this2, _processUnauthorizedResponse, _processUnauthorizedResponse2).call(_this2, url, img, done);
 
 	          return null;
 	        }
@@ -13368,7 +13436,7 @@ this.BX.Location = this.BX.Location || {};
 
 	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
 
-	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
 	 * Class for the autocomplete locations and addresses inputs
 	 */
@@ -13381,7 +13449,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _languageId = new WeakMap();
 
-	var _sourceLanguageId = new WeakMap();
+	var _sourceLanguageId$1 = new WeakMap();
 
 	var _map = new WeakMap();
 
@@ -13481,7 +13549,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: void 0
 	    });
 
-	    _sourceLanguageId.set(babelHelpers.assertThisInitialized(_this), {
+	    _sourceLanguageId$1.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: void 0
 	    });
@@ -13552,7 +13620,7 @@ this.BX.Location = this.BX.Location || {};
 	    });
 
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _languageId, props.languageId);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId, props.sourceLanguageId);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId$1, props.sourceLanguageId);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _geocodingService, props.geocodingService);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _mapFactoryMethod, props.mapFactoryMethod);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _markerFactoryMethod, props.markerFactoryMethod);
@@ -13584,12 +13652,12 @@ this.BX.Location = this.BX.Location || {};
 	          resolve();
 	        });
 	        babelHelpers.classPrivateFieldGet(_this2, _map).on('click', function (e) {
-	          _classPrivateMethodGet$1(_this2, _onMapClick, _onMapClick2).call(_this2, e.latlng.lat, e.latlng.lng);
+	          _classPrivateMethodGet$2(_this2, _onMapClick, _onMapClick2).call(_this2, e.latlng.lat, e.latlng.lng);
 	        });
 	        window.addEventListener('resize', function (event) {
 	          babelHelpers.classPrivateFieldSet(_this2, _isResizeInvalidated, true);
 
-	          _classPrivateMethodGet$1(_this2, _invalidateMapSize, _invalidateMapSize2).call(_this2);
+	          _classPrivateMethodGet$2(_this2, _invalidateMapSize, _invalidateMapSize2).call(_this2);
 	        });
 	        babelHelpers.classPrivateFieldSet(_this2, _marker, babelHelpers.classPrivateFieldGet(_this2, _markerFactoryMethod).call(_this2, [babelHelpers.classPrivateFieldGet(_this2, _location).latitude, babelHelpers.classPrivateFieldGet(_this2, _location).longitude], {
 	          draggable: babelHelpers.classPrivateFieldGet(_this2, _mode) === location_core.ControlMode.edit,
@@ -13597,7 +13665,7 @@ this.BX.Location = this.BX.Location || {};
 	        }));
 	        babelHelpers.classPrivateFieldGet(_this2, _marker).addTo(babelHelpers.classPrivateFieldGet(_this2, _map));
 	        babelHelpers.classPrivateFieldGet(_this2, _marker).on('move', function (e) {
-	          _classPrivateMethodGet$1(_this2, _onMarkerUpdatePosition, _onMarkerUpdatePosition2).call(_this2, e.latlng.lat, e.latlng.lng);
+	          _classPrivateMethodGet$2(_this2, _onMarkerUpdatePosition, _onMarkerUpdatePosition2).call(_this2, e.latlng.lat, e.latlng.lng);
 	        });
 	        babelHelpers.classPrivateFieldGet(_this2, _map).setView([babelHelpers.classPrivateFieldGet(_this2, _location).latitude, babelHelpers.classPrivateFieldGet(_this2, _location).longitude], _classStaticPrivateMethodGet(MapService, MapService, _chooseZoomByLocation).call(MapService, babelHelpers.classPrivateFieldGet(_this2, _location)));
 	        var tile = babelHelpers.classPrivateFieldGet(_this2, _tileLayerFactoryMethod).call();
@@ -13620,7 +13688,7 @@ this.BX.Location = this.BX.Location || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _isResizeInvalidated)) {
 	        babelHelpers.classPrivateFieldSet(this, _isResizeInvalidated, false);
 
-	        _classPrivateMethodGet$1(this, _invalidateMapSize, _invalidateMapSize2).call(this);
+	        _classPrivateMethodGet$2(this, _invalidateMapSize, _invalidateMapSize2).call(this);
 	      }
 	    }
 	  }, {
@@ -13694,7 +13762,7 @@ this.BX.Location = this.BX.Location || {};
 	        babelHelpers.classPrivateFieldGet(this, _marker).remove();
 	      }
 
-	      _classPrivateMethodGet$1(this, _adjustZoom, _adjustZoom2).call(this);
+	      _classPrivateMethodGet$2(this, _adjustZoom, _adjustZoom2).call(this);
 	    },
 	    get: function get() {
 	      return babelHelpers.classPrivateFieldGet(this, _location);
@@ -13742,7 +13810,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classPrivateFieldGet(this, _marker).setLatLng([lat, lng]);
 
-	    _classPrivateMethodGet$1(this, _createTimer, _createTimer2).call(this, lat, lng);
+	    _classPrivateMethodGet$2(this, _createTimer, _createTimer2).call(this, lat, lng);
 	  }
 	};
 
@@ -13757,7 +13825,7 @@ this.BX.Location = this.BX.Location || {};
 	    babelHelpers.classPrivateFieldSet(_this3, _timerId, null);
 	    babelHelpers.classPrivateFieldGet(_this3, _map).panTo([lat, lng]);
 	    var point = new location_core.Point(lat, lng);
-	    babelHelpers.classPrivateFieldGet(_this3, _geocodingService).reverse(point, _classPrivateMethodGet$1(_this3, _getReverseZoom, _getReverseZoom2).call(_this3)).then(function (location) {
+	    babelHelpers.classPrivateFieldGet(_this3, _geocodingService).reverse(point, _classPrivateMethodGet$2(_this3, _getReverseZoom, _getReverseZoom2).call(_this3)).then(function (location) {
 	      var result;
 
 	      if (location) {
@@ -13788,7 +13856,7 @@ this.BX.Location = this.BX.Location || {};
 	      }
 
 	      return result;
-	    }).then(_classPrivateMethodGet$1(_this3, _emitOnLocationChangedEvent, _emitOnLocationChangedEvent2).bind(_this3)).catch(function (response) {
+	    }).then(_classPrivateMethodGet$2(_this3, _emitOnLocationChangedEvent, _emitOnLocationChangedEvent2).bind(_this3)).catch(function (response) {
 	      location_core.ErrorPublisher.getInstance().notify(response.errors);
 	    });
 	  }, babelHelpers.classPrivateFieldGet(this, _changeDelay)));
@@ -13808,7 +13876,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _onMarkerUpdatePosition2 = function _onMarkerUpdatePosition2(lat, lng) {
 	  if (!babelHelpers.classPrivateFieldGet(this, _isUpdating) && babelHelpers.classPrivateFieldGet(this, _mode) === location_core.ControlMode.edit) {
-	    _classPrivateMethodGet$1(this, _createTimer, _createTimer2).call(this, lat, lng);
+	    _classPrivateMethodGet$2(this, _createTimer, _createTimer2).call(this, lat, lng);
 	  }
 	};
 
@@ -13875,7 +13943,7 @@ this.BX.Location = this.BX.Location || {};
 
 	var _languageId$1 = new WeakMap();
 
-	var _sourceLanguageId$1 = new WeakMap();
+	var _sourceLanguageId$2 = new WeakMap();
 
 	var _mapService = new WeakMap();
 
@@ -13901,7 +13969,7 @@ this.BX.Location = this.BX.Location || {};
 	      value: ''
 	    });
 
-	    _sourceLanguageId$1.set(babelHelpers.assertThisInitialized(_this), {
+	    _sourceLanguageId$2.set(babelHelpers.assertThisInitialized(_this), {
 	      writable: true,
 	      value: ''
 	    });
@@ -13931,7 +13999,7 @@ this.BX.Location = this.BX.Location || {};
 	      throw new location_core.SourceCreationError('props.sourceLanguageId must be a string');
 	    }
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId$1, props.sourceLanguageId);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceLanguageId$2, props.sourceLanguageId);
 
 	    if (!(props.mapService instanceof MapService)) {
 	      throw new location_core.SourceCreationError('props.mapService must be instanceof MapService');
@@ -13990,7 +14058,7 @@ this.BX.Location = this.BX.Location || {};
 
 	babelHelpers.defineProperty(OSM, "code", 'OSM');
 
-	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _responseConverter = new WeakMap();
 
@@ -14055,7 +14123,7 @@ this.BX.Location = this.BX.Location || {};
 	    value: function request(params) {
 	      var _this = this;
 
-	      return _classPrivateMethodGet$2(this, _fetch, _fetch2).call(this, params).then(function (response) {
+	      return _classPrivateMethodGet$3(this, _fetch, _fetch2).call(this, params).then(function (response) {
 	        return response ? babelHelpers.classPrivateFieldGet(_this, _responseConverter).convertResponse(response, params) : [];
 	      }).catch(function (response) {
 	        console.error(response);
@@ -14081,14 +14149,15 @@ this.BX.Location = this.BX.Location || {};
 	    headers: new Headers({
 	      'Authorization': "Bearer ".concat(babelHelpers.classPrivateFieldGet(this, _tokenContainer$1).token),
 	      'Bx-Location-Osm-Host': babelHelpers.classPrivateFieldGet(this, _hostName$1)
-	    })
+	    }),
+	    referrerPolicy: "no-referrer"
 	  }).then(function (response) {
 	    if (response.status === 200) {
 	      return response.json();
 	    }
 
 	    if (response.status === 401 && !isUnAuth) {
-	      return _classPrivateMethodGet$2(_this2, _processUnauthorizedResponse$1, _processUnauthorizedResponse2$1).call(_this2, params);
+	      return _classPrivateMethodGet$3(_this2, _processUnauthorizedResponse$1, _processUnauthorizedResponse2$1).call(_this2, params);
 	    }
 
 	    console.error("Response status: ".concat(response.status));
@@ -14103,7 +14172,7 @@ this.BX.Location = this.BX.Location || {};
 	  var _this3 = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _tokenContainer$1).refreshToken().then(function () {
-	    return _classPrivateMethodGet$2(_this3, _fetch, _fetch2).call(_this3, params, true);
+	    return _classPrivateMethodGet$3(_this3, _fetch, _fetch2).call(_this3, params, true);
 	  });
 	};
 
@@ -14181,7 +14250,7 @@ this.BX.Location = this.BX.Location || {};
 	  return BaseResponseConverter;
 	}();
 
-	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _createLocation = new WeakSet();
 
@@ -14234,7 +14303,7 @@ this.BX.Location = this.BX.Location || {};
 
 	        if (response.length > 0) {
 	          response.forEach(function (item) {
-	            var location = _classPrivateMethodGet$3(_this2, _createLocation, _createLocation2).call(_this2, item);
+	            var location = _classPrivateMethodGet$4(_this2, _createLocation, _createLocation2).call(_this2, item);
 
 	            if (location) {
 	              result.push(location);
@@ -14242,7 +14311,7 @@ this.BX.Location = this.BX.Location || {};
 	          });
 	        }
 	      } else if (babelHelpers.typeof(response) === 'object') {
-	        result = _classPrivateMethodGet$3(this, _createLocation, _createLocation2).call(this, response);
+	        result = _classPrivateMethodGet$4(this, _createLocation, _createLocation2).call(this, response);
 	      }
 
 	      return result;
@@ -14252,7 +14321,7 @@ this.BX.Location = this.BX.Location || {};
 	}(BaseResponseConverter);
 
 	var _createLocation2 = function _createLocation2(responseItem) {
-	  var externalId = _classPrivateMethodGet$3(this, _createExternalId, _createExternalId2).call(this, responseItem.osm_type, responseItem.osm_id);
+	  var externalId = _classPrivateMethodGet$4(this, _createExternalId, _createExternalId2).call(this, responseItem.osm_type, responseItem.osm_id);
 
 	  if (!externalId) {
 	    return null;
@@ -14262,7 +14331,7 @@ this.BX.Location = this.BX.Location || {};
 	    externalId: externalId,
 	    latitude: responseItem.lat,
 	    longitude: responseItem.lon,
-	    type: _classPrivateMethodGet$3(this, _convertLocationType, _convertLocationType2).call(this, responseItem.type),
+	    type: _classPrivateMethodGet$4(this, _convertLocationType, _convertLocationType2).call(this, responseItem.type),
 	    name: responseItem.display_name,
 	    languageId: this.languageId,
 	    sourceCode: this.sourceCode
@@ -14313,7 +14382,7 @@ this.BX.Location = this.BX.Location || {};
 	  return osmType.substr(0, 1).toLocaleUpperCase() + osmId;
 	};
 
-	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _createLocation$1 = new WeakSet();
 
@@ -14384,7 +14453,7 @@ this.BX.Location = this.BX.Location || {};
 	        } // Collapse a similar location data
 
 
-	        var hash = _classPrivateMethodGet$4(_this2, _createAnswerHash, _createAnswerHash2).call(_this2, item.properties);
+	        var hash = _classPrivateMethodGet$5(_this2, _createAnswerHash, _createAnswerHash2).call(_this2, item.properties);
 
 	        if (hashMap.indexOf(hash) !== -1) {
 	          return;
@@ -14393,7 +14462,7 @@ this.BX.Location = this.BX.Location || {};
 
 	        hashMap.push(hash);
 
-	        var location = _classPrivateMethodGet$4(_this2, _createLocation$1, _createLocation2$1).call(_this2, item, params.autocompleteServiceParams);
+	        var location = _classPrivateMethodGet$5(_this2, _createLocation$1, _createLocation2$1).call(_this2, item, params.autocompleteServiceParams);
 
 	        if (location) {
 	          if (location.address && addressLine2) {
@@ -14416,21 +14485,21 @@ this.BX.Location = this.BX.Location || {};
 
 	  var props = responseItem.properties;
 
-	  var externalId = _classPrivateMethodGet$4(this, _createExternalId$1, _createExternalId2$1).call(this, props.osm_type, props.osm_id);
+	  var externalId = _classPrivateMethodGet$5(this, _createExternalId$1, _createExternalId2$1).call(this, props.osm_type, props.osm_id);
 
 	  if (!externalId) {
 	    return null;
 	  }
 
-	  var name = _classPrivateMethodGet$4(this, _createLocationNameFromResponse, _createLocationNameFromResponse2).call(this, responseItem);
+	  var name = _classPrivateMethodGet$5(this, _createLocationNameFromResponse, _createLocationNameFromResponse2).call(this, responseItem);
 
 	  if (name === '') {
 	    return null;
 	  }
 
-	  var type = _classPrivateMethodGet$4(this, _convertLocationType$1, _convertLocationType2$1).call(this, props.type);
+	  var type = _classPrivateMethodGet$5(this, _convertLocationType$1, _convertLocationType2$1).call(this, props.type);
 
-	  var address = _classPrivateMethodGet$4(this, _createAddressFromResponse, _createAddressFromResponse2).call(this, responseItem, type);
+	  var address = _classPrivateMethodGet$5(this, _createAddressFromResponse, _createAddressFromResponse2).call(this, responseItem, type);
 
 	  var location = new location_core.Location({
 	    address: address,
@@ -14447,7 +14516,7 @@ this.BX.Location = this.BX.Location || {};
 	  }
 
 	  if (address) {
-	    var clarification = _classPrivateMethodGet$4(this, _makeClarification, _makeClarification2).call(this, address);
+	    var clarification = _classPrivateMethodGet$5(this, _makeClarification, _makeClarification2).call(this, address);
 
 	    if (clarification !== '') {
 	      location.setFieldValue(location_core.LocationType.TMP_TYPE_CLARIFICATION, clarification);
@@ -14456,7 +14525,7 @@ this.BX.Location = this.BX.Location || {};
 
 
 	  if (props.osm_value && props.osm_key) {
-	    var typeHint = _classPrivateMethodGet$4(this, _getItemTypeHint, _getItemTypeHint2).call(this, props.osm_key, props.osm_value);
+	    var typeHint = _classPrivateMethodGet$5(this, _getItemTypeHint, _getItemTypeHint2).call(this, props.osm_key, props.osm_value);
 
 	    if (typeHint !== '') {
 	      location.setFieldValue(location_core.LocationType.TMP_TYPE_HINT, typeHint);
@@ -14645,83 +14714,6 @@ this.BX.Location = this.BX.Location || {};
 	  return osmType.substr(0, 1).toLocaleUpperCase() + osmId;
 	};
 
-	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
-	var _autocompletePromptsCount = new WeakMap();
-
-	var _sourceCode = new WeakMap();
-
-	var _autocompleteReplacements = new WeakMap();
-
-	var _processQuery = new WeakSet();
-
-	var AutocompleteRequester = /*#__PURE__*/function (_BaseRequester) {
-	  babelHelpers.inherits(AutocompleteRequester, _BaseRequester);
-
-	  function AutocompleteRequester(props) {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, AutocompleteRequester);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(AutocompleteRequester).call(this, props));
-
-	    _processQuery.add(babelHelpers.assertThisInitialized(_this));
-
-	    _autocompletePromptsCount.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _sourceCode.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    _autocompleteReplacements.set(babelHelpers.assertThisInitialized(_this), {
-	      writable: true,
-	      value: void 0
-	    });
-
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompletePromptsCount, props.autocompletePromptsCount || 7);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _sourceCode, props.sourceCode || OSM.code);
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _autocompleteReplacements, props.autocompleteReplacements || {});
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(AutocompleteRequester, [{
-	    key: "createUrl",
-	    value: function createUrl(params) {
-	      var text = _classPrivateMethodGet$5(this, _processQuery, _processQuery2).call(this, params.text);
-
-	      var autocompleteServiceParams = params.autocompleteServiceParams;
-	      var result = "".concat(this.serviceUrl, "/?") + 'action=osmgateway.autocomplete.autocomplete' + "&params[q]=".concat(encodeURIComponent(text)) + "&params[limit]=".concat(babelHelpers.classPrivateFieldGet(this, _autocompletePromptsCount)) + "&params[lang]=".concat(this.sourceLanguageId) + "&params[version]=2";
-
-	      if (autocompleteServiceParams.biasPoint) {
-	        var lat = autocompleteServiceParams.biasPoint.latitude;
-	        var lon = autocompleteServiceParams.biasPoint.longitude;
-
-	        if (lat && lon) {
-	          result += "&params[lat]=".concat(lat, "&params[lon]=").concat(lon);
-	        }
-	      }
-
-	      return result;
-	    }
-	  }]);
-	  return AutocompleteRequester;
-	}(BaseRequester);
-
-	var _processQuery2 = function _processQuery2(query) {
-	  var result = query;
-
-	  for (var i in babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements)) {
-	    if (babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements).hasOwnProperty(i)) {
-	      result = result.replace(i, babelHelpers.classPrivateFieldGet(this, _autocompleteReplacements)[i]);
-	    }
-	  }
-
-	  return result;
-	};
-
 	var OSMFactory = /*#__PURE__*/function () {
 	  function OSMFactory() {
 	    babelHelpers.classCallCheck(this, OSMFactory);
@@ -14760,19 +14752,12 @@ this.BX.Location = this.BX.Location || {};
 	      var autocompleteResponseConverter = new AutocompleteResponseConverter({
 	        languageId: params.languageId
 	      });
-	      var autocompleteRequester = new AutocompleteRequester({
-	        languageId: params.languageId,
-	        sourceLanguageId: params.sourceLanguageId,
-	        serviceUrl: params.serviceUrl,
-	        hostName: params.hostName,
-	        tokenContainer: tokenContainer,
-	        responseConverter: autocompleteResponseConverter,
-	        autocompleteReplacements: params.autocompleteReplacements
-	      });
 	      osmParams.autocompleteService = new AutocompleteService({
 	        languageId: params.languageId,
 	        autocompletePromptsCount: params.autocompletePromptsCount || 7,
-	        autocompleteRequester: autocompleteRequester
+	        sourceLanguageId: params.sourceLanguageId,
+	        responseConverter: autocompleteResponseConverter,
+	        autocompleteReplacements: params.autocompleteReplacements
 	      });
 	      var geocodingService = new GeocodingService({
 	        searchRequester: searchRequester,

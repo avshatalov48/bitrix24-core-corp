@@ -86,17 +86,9 @@ class BacklogService implements Errorable
 	 * Returns an object with backlog data by scrum group id.
 	 *
 	 * @param int $groupId Scrum group id.
-	 * @param ItemService|null $itemService Item service object.
-	 * @param PageNavigation|null $nav For item navigation.
-	 * @param array $filteredSourceIds If you need to get filtered items.
 	 * @return EntityForm
 	 */
-	public function getBacklogByGroupId(
-		int $groupId,
-		ItemService $itemService = null,
-		PageNavigation $nav = null,
-		array $filteredSourceIds = []
-	): EntityForm
+	public function getBacklogByGroupId(int $groupId): EntityForm
 	{
 		$backlog = new EntityForm();
 
@@ -116,17 +108,15 @@ class BacklogService implements Errorable
 				$backlog->setModifiedBy($backlogData['MODIFIED_BY']);
 				$backlog->setEntityType($backlogData['ENTITY_TYPE']);
 				$backlog->setInfo($backlogData['INFO']);
-
-				if ($itemService)
-				{
-					$backlog->setChildren($itemService->getHierarchyChildItems($backlog, $nav, $filteredSourceIds));
-				}
 			}
 		}
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_BACKLOG)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_READ_BACKLOG
+				)
 			);
 		}
 

@@ -34,7 +34,9 @@ use \Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use \Bitrix\Tasks\Access\ActionDictionary;
 
 use \Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Form\ItemForm;
+use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\PushService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
@@ -298,7 +300,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$taskService = new TaskService($params['USER_ID'], $this->application);
 			$this->filterInstance = $taskService->getFilterInstance(
 				$this->arParams['GROUP_ID'],
-				$this->arParams['IS_COMPLETED_SPRINT'] === 'Y'
+				$this->arParams['IS_COMPLETED_SPRINT'] === 'Y' ? 'complete' : 'active'
 			);
 		}
 		else
@@ -898,14 +900,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 */
 	protected function getListParams()
 	{
-		$nPageSize = (
-			StagesTable::getWorkMode() == StagesTable::WORK_MODE_ACTIVE_SPRINT
-				? 1000
-				: $this->arParams['ITEMS_COUNT']
-		);
-
 		$this->listParams['NAV_PARAMS'] = array(
-			'nPageSize' => $nPageSize,
+			'nPageSize' => $this->arParams['ITEMS_COUNT'],
 			'iNumPage' => $this->arParams['ITEMS_PAGE'],
 			'bDescPageNumbering' => false,
 			'NavShowAll' => false,
@@ -965,7 +961,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 			$taskIds[$id] = $id;
 		}
 
-		\Bitrix\Tasks\Internals\Registry\TaskRegistry::getInstance()->load($taskIds, true);
+		(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($this->userId, $taskIds);
 
 		return ($asIs ? [$rows, $res] : $rows);
 	}
@@ -1460,7 +1456,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 
 			$canAddItem = ($this->arParams['SPRINT_SELECTED'] == 'Y')
 				? $stage['TO_UPDATE_ACCESS'] !== false
-				&& $this->arResult['MANDATORY_EXISTS'] === false
+				&& empty($this->arResult['MANDATORY_EXISTS'])
 				&& $this->arParams['IS_ACTIVE_SPRINT'] === 'Y'
 				: $stage['TO_UPDATE_ACCESS'] !== false
 			;
@@ -1627,7 +1623,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$task = $this->getCounters($task);
 				if ($this->arParams['SPRINT_ID'] > 0)
 				{
-					$task = $this->getStoryPoints($task);
+					$task = $this->getScrumData($task);
 				}
 
 				$task = $this->sendEvent('TimelineComponentGetItems', $task);
@@ -1754,7 +1750,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 				}
 				$items[$item['id']] = array(
 					'id' => $item['id'],
-					'parentId' => $item['parentId'],
+					'parentId' => empty($item['parentId']) ? null : $item['parentId'],
 					'columnId' => $column['ID'],
 					'data' => $item,
 					'isSprintView' => ($this->arParams['SPRINT_SELECTED'] == 'Y' ? 'Y' : 'N'),
@@ -1781,7 +1777,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$items = $this->getCounters($items);
 		if ($this->arParams['SPRINT_SELECTED'] == 'Y')
 		{
-			$items = $this->getStoryPoints($items);
+			$items = $this->getScrumData($items);
 		}
 
 		$items = $this->sendEvent('KanbanComponentGetItems', $items);
@@ -1910,13 +1906,51 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return $items;
 	}
 
-	private function getStoryPoints(array $items): array
+	private function getScrumData(array $items): array
 	{
 		$itemService = new ItemService();
+		$epicService = new EpicService(\Bitrix\Tasks\Util\User::getId());
 
-		foreach ($itemService->getItemsStoryPointsBySourceId(array_keys($items)) as $taskId => $storyPoints)
+		$scrumItems = $itemService->getItemsBySourceIds(array_keys($items));
+
+		$epicIds = [];
+		foreach ($scrumItems as $item)
 		{
-			$items[$taskId]['data']['storyPoints'] = $storyPoints;
+			$items[$item->getSourceId()]['data']['storyPoints'] = $item->getStoryPoints();
+			$items[$item->getSourceId()]['isVisibilitySubtasks'] = $item->getInfo()->isVisibilitySubtasks() ? 'Y' : 'N';
+
+			$epicIds[] = $item->getEpicId();
+		}
+
+		$epicIds = array_filter(array_unique($epicIds));
+
+		$epicsList = [];
+		if ($epicIds)
+		{
+			$queryResult = $epicService->getList(
+				[],
+				['ID' => $epicIds],
+				['ID' => 'ASC'],
+			);
+			if ($queryResult)
+			{
+				while ($data = $queryResult->fetch())
+				{
+					$epic = new EpicForm();
+
+					$epic->fillFromDatabase($data);
+
+					$epicsList[$epic->getId()] = $epic->toArray();
+				}
+			}
+		}
+
+		foreach ($scrumItems as $item)
+		{
+			$items[$item->getSourceId()]['data']['epic'] = array_key_exists($item->getEpicId(), $epicsList)
+				? $epicsList[$item->getEpicId()]
+				: []
+			;
 		}
 
 		return $items;
@@ -2966,55 +3000,23 @@ class TasksKanbanComponent extends \CBitrixComponent
 		return [];
 	}
 
-	protected function actionNeedUpdateParentTaskStatus(): array
+	protected function actionProceedParentTask(): array
 	{
-		$parentTaskId = (int) $this->request('parentTaskId');
+		$taskId = (int)$this->request('taskId');
 
-		$result = ['can' => false];
-
-		$actionToCheck = (string) $this->request('actionToCheck');
-		if (!in_array($actionToCheck, ['complete', 'renew'], true))
+		if (!$taskId)
 		{
-			return $result;
+			return [];
 		}
 
-		$action = $actionToCheck === 'complete'
-			? ActionDictionary::ACTION_TASK_COMPLETE
-			: ActionDictionary::ACTION_TASK_RENEW
-		;
-
-		if (!TaskAccessController::can($this->userId, $action, $parentTaskId))
+		$this->addFilter('ID', $taskId);
+		$data = $this->getData();
+		if ($data)
 		{
-			return $result;
+			return array_pop($data);
 		}
 
-		$isAllChildTasksCompleted = true;
-		$queryObject = TaskTable::getList([
-			'select' => ['ID', 'STATUS', 'PARENT_ID'],
-			'filter' => [
-				'PARENT_ID' => $parentTaskId,
-			],
-			'order' => ['ID' => 'ASC']
-		]);
-		while ($childTaskData = $queryObject->fetch())
-		{
-			if ($childTaskData['STATUS'] != \CTasks::STATE_COMPLETED)
-			{
-				$isAllChildTasksCompleted = false;
-			}
-		}
-
-		if ($actionToCheck === 'complete' && $isAllChildTasksCompleted)
-		{
-			return ['can' => true];
-		}
-
-		if ($actionToCheck === 'renew' && !$isAllChildTasksCompleted)
-		{
-			return ['can' => true];
-		}
-
-		return $result;
+		return [];
 	}
 
 	/**
@@ -3073,6 +3075,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 	 */
 	protected function actionGetColumnItems()
 	{
+		$items = [];
+
 		if (($columnId = $this->request('columnId')))
 		{
 			$this->addFilter('ONLY_STAGE_ID', $columnId);
@@ -3080,9 +3084,32 @@ class TasksKanbanComponent extends \CBitrixComponent
 			{
 				$this->setPageId($pageId);
 			}
-			return $this->getData();
+
+			$items = $this->getData();
+
+			$isSprintView = ($this->arParams['SPRINT_SELECTED'] === 'Y');
+			if ($isSprintView)
+			{
+				$scrumManager = new ScrumManager($this->arParams['GROUP_ID']);
+
+				$mapOfExistenceOfSubtasks = $scrumManager->buildMapOfExistenceOfSubtasks(
+					$this->arParams['SPRINT_ID'],
+					array_column($items, 'id')
+				);
+
+				foreach ($items as $key => $item)
+				{
+					$item['isParentTask'] = (!empty($mapOfExistenceOfSubtasks[$item['id']]));
+					$item['isSubTask'] = ($item['parentId'] !== null);
+
+					$items[$key] = $item;
+				}
+
+				return $items;
+			}
 		}
-		return array();
+
+		return $items;
 	}
 
 	/**
@@ -3836,16 +3863,13 @@ class TasksKanbanComponent extends \CBitrixComponent
 	{
 		try
 		{
-			if (
-				ResultManager::requireResult($taskId)
-				&& !ResultManager::hasResult($taskId)
-			)
+			$task = \CTaskItem::getInstance($taskId, $this->userId);
+			if (!$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE_RESULT))
 			{
 				$this->addError('TASKS_KANBAN_RESULT_REQUIRED');
 				return;
 			}
 
-			$task = \CTaskItem::getInstance($taskId, $this->userId);
 			if ($task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE) ||
 				$task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE))
 			{

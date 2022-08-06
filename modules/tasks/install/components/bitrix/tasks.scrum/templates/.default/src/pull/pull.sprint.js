@@ -69,6 +69,7 @@ export class PullSprint
 			sprintId: params.id
 		})
 			.then((response) => {
+				response.data.items = [];
 				const sprint = Sprint.buildSprint(response.data);
 				this.planBuilder.createSprintNode(sprint);
 			})
@@ -94,8 +95,9 @@ export class PullSprint
 			sprintId: params.id
 		})
 			.then((response) => {
+				response.data.items = [];
 				const tmpSprint = Sprint.buildSprint(response.data);
-				const sprint = this.entityStorage.findEntityByEntityId(tmpSprint.getId());
+				const sprint: Sprint = this.entityStorage.findEntityByEntityId(tmpSprint.getId());
 				if (sprint)
 				{
 					const currentStatus = sprint.getStatus();

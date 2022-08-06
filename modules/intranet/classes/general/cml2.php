@@ -50,14 +50,7 @@ class CUserCMLImport
 		$bError = false;
 		if (intval($dbRes->SelectedRowsCount()) < 3)
 		{
-			if (ToUpper($GLOBALS['DBType']) != 'MYSQL')
-			{
-				$i = 0;
-				while ($arRes = $dbRes->Fetch()) $i++;
-				$bError = $i < 3;
-			}
-			else
-				$bError = true;
+			$bError = true;
 		}
 
 		if ($bError)

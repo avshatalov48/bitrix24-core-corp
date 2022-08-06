@@ -55,7 +55,7 @@ class Update extends Operation
 
 	protected function save(): Result
 	{
-		return $this->item->save();
+		return $this->item->save($this->isCheckFieldsEnabled() && $this->isCheckRequiredUserFields());
 	}
 
 	public function isItemChanged(): bool
@@ -239,7 +239,7 @@ class Update extends Operation
 		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
 		$trackedObject = $factory->getTrackedObject($this->itemBeforeSave, $this->item);
 
-		return Container::getInstance()->getEventHistory()->registerUpdate($trackedObject);
+		return Container::getInstance()->getEventHistory()->registerUpdate($trackedObject, $this->getContext());
 	}
 
 	protected function createTimelineRecord(): void
@@ -265,11 +265,13 @@ class Update extends Operation
 			$this->fieldsCollection->toArray(),
 			$this->itemBeforeSave->getData(Values::ACTUAL),
 			$this->item->getData(),
-			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+			$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+			$this->getContext()->getUserId(),
 		);
 
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
 
+		//todo this will be false for company, but we still have to register bindings changed. Introduce another factory flag?
 		if ($factory->isClientEnabled())
 		{
 			RelationController::getInstance()->registerEventsByBindingsChange(
@@ -277,6 +279,18 @@ class Update extends Operation
 				\CCrmOwnerType::Contact,
 				$this->itemBeforeSave->remindActual(Item::FIELD_NAME_CONTACT_BINDINGS),
 				$this->item->getContactBindings(),
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext()->getUserId(),
+			);
+		}
+
+		if ($this->item->hasField(Item\Contact::FIELD_NAME_COMPANY_BINDINGS))
+		{
+			RelationController::getInstance()->registerEventsByBindingsChange(
+				$this->getItemIdentifier(),
+				\CCrmOwnerType::Company,
+				$this->itemBeforeSave->remindActual(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
+				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
 				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
 			);
 		}
@@ -286,6 +300,7 @@ class Update extends Operation
 			MarkController::getInstance()->onItemMoveToFinalStage(
 				$this->getItemIdentifier(),
 				$factory->getStageSemantics((string)$this->item->getStageId()),
+				$this->getContext()->getUserId(),
 			);
 		}
 	}
@@ -355,18 +370,13 @@ class Update extends Operation
 	{
 		$result = parent::checkLimits();
 
-		$restriction = RestrictionManager::getDynamicTypesLimitRestriction();
-		if ($restriction->isUpdateItemRestricted($this->item->getEntityTypeId()))
-		{
-			$result->addError($restriction->getUpdateItemRestrictedError());
-		}
 		$updateOperationRestriction = RestrictionManager::getUpdateOperationRestriction($this->getItemIdentifier());
 		if (!$updateOperationRestriction->hasPermission())
 		{
 			$result->addError(
 				new Error(
 					$updateOperationRestriction->getErrorMessage(),
-					$updateOperationRestriction->getErrorCode()
+					$updateOperationRestriction->getErrorCode(),
 				)
 			);
 		}

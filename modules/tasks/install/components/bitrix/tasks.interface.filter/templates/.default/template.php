@@ -50,7 +50,7 @@ if ($arParams['USE_GROUP_SELECTOR'] == 'Y' && $arParams['PROJECT_VIEW'] !== 'Y')
 	include(dirname(__FILE__).'/group_selector.php');
 }
 
-if ($arResult['SPRINTS'] && isset($arResult['SPRINTS'][$arParams['SPRINT_ID']]))
+if ($arResult['SPRINT'])
 {
 	include(dirname(__FILE__).'/sprint_selector.php');
 }

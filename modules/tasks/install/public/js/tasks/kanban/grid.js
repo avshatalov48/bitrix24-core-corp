@@ -24,6 +24,7 @@ BX.Tasks.Kanban.Grid = function(options)
 	this.parentTaskCompleted = Boolean(options.parentTaskCompleted);
 
 	this.neighborGrids = [];
+	this.delayedQueueForChildGrid = {};
 
 	BX.Kanban.Grid.apply(this, arguments);
 
@@ -114,6 +115,11 @@ BX.Tasks.Kanban.Grid.prototype = {
 	isRealtimeMode: function()
 	{
 		return this.data.newTaskOrder === "actual";
+	},
+
+	getGroupId: function()
+	{
+		return this.groupId;
 	},
 
 	/**
@@ -451,9 +457,10 @@ BX.Tasks.Kanban.Grid.prototype = {
 	{
 		var promise = new BX.Promise();
 
-		if (this.isGroupingMode())
+		if (this.isChildScrumGrid())
 		{
 			promise.fulfill([]);
+
 			return promise;
 		}
 
@@ -565,6 +572,128 @@ BX.Tasks.Kanban.Grid.prototype = {
 	},
 
 	/**
+	 *
+	 * @param {object} options
+	 * @param {string|number} options.id
+	 * @param {string|number} options.columnId
+	 * @param {string} [options.type]
+	 * @param {string|number} [options.targetId]
+	 * @returns {BX.Kanban.Item|null}
+	 */
+	addItem: function(options)
+	{
+		if (this.isScrumGrid())
+		{
+			var itemType = this.getItemType(options.type);
+			var item = new itemType(options);
+			if (!(item instanceof BX.Kanban.Item))
+			{
+				throw new Error("Item type must be an instance of BX.Kanban.Item");
+			}
+
+			if (this.isChildScrumGrid())
+			{
+				if ((item instanceof BX.Tasks.Kanban.Item) && item.isCompleted() === false)
+				{
+					BX.onCustomEvent(this, 'Kanban.Grid:onAddItemInProgress');
+				}
+
+				return BX.Kanban.Grid.prototype.addItem.apply(this, arguments);
+			}
+
+			options = options || {};
+			var column = this.getColumn(options.columnId), existGrid;
+			if (!column)
+			{
+				return null;
+			}
+
+			if (options.hasOwnProperty('isSubTask') && options.isSubTask)
+			{
+				existGrid = false;
+				this.getNeighborGrids()
+					.forEach(function(neighborGrid) {
+						if (!neighborGrid.isScrumGridHeader())
+						{
+							if (neighborGrid.isChildTask(options['parentId']))
+							{
+								neighborGrid.addItem(options);
+								delete this.delayedQueueForChildGrid[options['id']];
+								existGrid = true;
+							}
+						}
+					}.bind(this))
+				;
+				if (!existGrid)
+				{
+					this.delayedQueueForChildGrid[options['id']] = options;
+				}
+			}
+			else if (options.hasOwnProperty('isParentTask') && options.isParentTask)
+			{
+				if (options.hasOwnProperty('isVisibilitySubtasks') && options.isVisibilitySubtasks === 'N')
+				{
+					return BX.Kanban.Grid.prototype.addItem.apply(this, arguments);
+				}
+
+				existGrid = false;
+				this.getNeighborGrids()
+					.forEach(function(neighborGrid) {
+						if (!neighborGrid.isScrumGridHeader())
+						{
+							if (neighborGrid.isParentTask(options['id']))
+							{
+								existGrid = true;
+							}
+						}
+					}.bind(this))
+				;
+				if (!existGrid)
+				{
+					var columns = [];
+					this.getColumns()
+						.forEach(function(column) {
+							columns.push({
+								id: column.getId(),
+								name: column.getName(),
+								color: column.getColor(),
+								total: column.getTotal()
+							});
+						}.bind(this))
+					;
+
+					BX.onCustomEvent(this, 'Kanban.Grid:onAddParentTask', {
+						id: options.id,
+						name: options.data.name,
+						completed: options.data.completed ? 'Y' : 'N',
+						storyPoints: options.data.storyPoints,
+						columnId: options.columnId,
+						columns: columns,
+						items: []
+					});
+				}
+			}
+			else
+			{
+				return BX.Kanban.Grid.prototype.addItem.apply(this, arguments);
+			}
+		}
+		else
+		{
+			return BX.Kanban.Grid.prototype.addItem.apply(this, arguments);
+		}
+	},
+
+	addItemsFromQueue: function()
+	{
+		Object.values(this.delayedQueueForChildGrid)
+			.forEach(function (options) {
+				this.addItem(options);
+			}.bind(this))
+		;
+	},
+
+	/**
 	 * Add new task.
 	 * @param {BX.Kanban.Item} item
 	 * @returns {BX.Promise}
@@ -660,33 +789,39 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 					if (this.isChildScrumGrid())
 					{
-						var actionToCheck = (this.getFinishColumn().getId() === targetColumnId)
-							? 'complete'
-							: 'renew'
-						;
-
-						if (
-							this.isParentTaskCompleted() && actionToCheck === 'renew'
-							|| !this.isParentTaskCompleted() && actionToCheck === 'complete'
-						)
-						{
-							this.ajax({
-								action: 'needUpdateParentTaskStatus',
-								parentTaskId: this.parentTaskId,
-								actionToCheck: actionToCheck
-							}, function(response) {
-								if (!response.error && response.can)
-								{
-									this.updateParentTaskStatus(item, actionToCheck);
-								}
-								else if (response.error)
-								{
-									BX.Kanban.Utils.showErrorDialog(response.error, true);
-								}
-							}.bind(this), function(error) {
-								BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-							}.bind(this));
-						}
+						top.BX.loadExt('tasks.scrum.task-status').then(function() {
+							if (
+								!BX.type.isUndefined(top.BX.Tasks.Scrum)
+								&& !BX.type.isUndefined(top.BX.Tasks.Scrum.TaskStatus)
+							)
+							{
+								this.taskStatus = new top.BX.Tasks.Scrum.TaskStatus({
+									groupId: this.groupId,
+									parentTaskId: this.parentTaskId,
+									taskId: itemId,
+									action: (
+										this.getFinishColumn().getId() === targetColumnId
+										? 'complete'
+										: 'renew'
+									)
+								});
+								this.taskStatus.update()
+									.then(function(action) {
+										var actions = top.BX.Tasks.Scrum.TaskStatus.actions;
+										switch (action)
+										{
+											case actions.complete:
+											case actions.renew:
+											case actions.proceed:
+												this.updateParentTaskStatus(action);
+												break;
+											case actions.skip:
+												break;
+										}
+									}.bind(this))
+								;
+							}
+						}.bind(this));
 					}
 				}
 				else if (data)
@@ -701,58 +836,58 @@ BX.Tasks.Kanban.Grid.prototype = {
 		);
 	},
 
-	updateParentTaskStatus: function(item, actionToUpdate)
+	updateParentTaskStatus: function(action)
 	{
-		var isCompleteAction = actionToUpdate === 'complete';
-		var parentTaskName = BX.util.htmlspecialchars(this.parentTaskName);
+		if (action === 'proceed')
+		{
+			this.ajax({
+				action: 'proceedParentTask',
+				taskId: this.parentTaskId,
+			}, function(data) {
+				this.addItemToParentGrid(data);
+				var parentItem = this.getItemFromParentGrid(this.parentTaskId);
+				if (parentItem)
+				{
+					this.scrollToItem(parentItem);
+				}
+				setTimeout(function(){
+					BX.onCustomEvent(this, 'Kanban.Grid:onProceedParentTask', [this]);
+				}.bind(this), 300);
+			}.bind(this), function(error) {
+				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+			}.bind(this));
+		}
+		else
+		{
+			var isCompleteAction = action === 'complete';
 
-		(new BX.UI.Dialogs.MessageBox({
-			message: isCompleteAction
-				? BX.message('TASKS_SCRUM_KANBAN_PARENT_COMPLETE_MESSAGE').replace(/#name#/g, parentTaskName)
-				: BX.message('TASKS_SCRUM_KANBAN_PARENT_RENEW_MESSAGE')
-					.replace("#name#", parentTaskName)
-					.replace("#sub-name#", BX.util.htmlspecialchars(item.data.name))
-			,
-			buttons: BX.UI.Dialogs.MessageBoxButtons.OK_CANCEL,
-			okCaption: isCompleteAction
-				? BX.message('TASKS_SCRUM_KANBAN_PARENT_COMPLETE_OK_CAPTION')
-				: BX.message('TASKS_SCRUM_KANBAN_PARENT_RENEW_OK_CAPTION')
-			,
-			cancelCaption: isCompleteAction
-				? BX.message('TASKS_SCRUM_KANBAN_PARENT_COMPLETE_CANCEL_CAPTION')
-				: BX.message('TASKS_SCRUM_KANBAN_PARENT_RENEW_CANCEL_CAPTION')
-			,
-			minWidth: 300,
-			onOk: function (messageBox) {
-				messageBox.close();
-				this.ajax({
-					action: (isCompleteAction ? 'completeParentTask' : 'renewParentTask'),
-					taskId: this.parentTaskId,
-					finishColumnId: this.getFinishColumn().getId(),
-					newColumnId: this.getNewColumn().getId()
-				}, function(data) {
-					if (data && !data.error)
+			this.ajax({
+				action: (isCompleteAction ? 'completeParentTask' : 'renewParentTask'),
+				taskId: this.parentTaskId,
+				finishColumnId: this.getFinishColumn().getId(),
+				newColumnId: this.getNewColumn().getId()
+			}, function(data) {
+				if (data && !data.error)
+				{
+					if (isCompleteAction)
 					{
-						if (isCompleteAction)
-						{
-							this.parentTaskCompleted = true;
-							BX.onCustomEvent(this, 'Kanban.Grid:onCompleteParentTask', [this]);
-						}
-						else
-						{
-							this.parentTaskCompleted = false;
-							BX.onCustomEvent(this, 'Kanban.Grid:onRenewParentTask', [this]);
-						}
+						this.parentTaskCompleted = true;
+						BX.onCustomEvent(this, 'Kanban.Grid:onCompleteParentTask', [this]);
 					}
-					else if (data)
+					else
 					{
-						BX.Kanban.Utils.showErrorDialog(data.error, true);
+						this.parentTaskCompleted = false;
+						BX.onCustomEvent(this, 'Kanban.Grid:onRenewParentTask', [this]);
 					}
-				}.bind(this), function(error) {
-					BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
-				}.bind(this));
-			}.bind(this),
-		})).show();
+				}
+				else if (data)
+				{
+					BX.Kanban.Utils.showErrorDialog(data.error, true);
+				}
+			}.bind(this), function(error) {
+				BX.Kanban.Utils.showErrorDialog("Error: " + error, true);
+			}.bind(this));
+		}
 	},
 
 	/**
@@ -999,14 +1134,14 @@ BX.Tasks.Kanban.Grid.prototype = {
 					var taskData = data.AFTER;
 					if (this.isChildScrumGrid())
 					{
-						if (this.isChildTask(taskData))
+						if (this.isChildTask(taskData['PARENT_ID']))
 						{
 							this.refreshTask(taskId);
 						}
 					}
 					else
 					{
-						if (this.isParentTask(taskData))
+						if (!taskData['PARENT_ID'])
 						{
 							this.refreshTask(taskId);
 						}
@@ -1028,18 +1163,21 @@ BX.Tasks.Kanban.Grid.prototype = {
 
 					var requestParams = this.getData().params;
 
-					BX.ajax.runAction('tasks.task.list', {data: {
-						filter: {ID: taskId},
-						params: {
-							RETURN_ACCESS: 'Y',
-							SIFT_THROUGH_FILTER: {
-								sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
-								isCompletedSprint: (this.isScrumGrid() ? requestParams.IS_COMPLETED_SPRINT : 'N'),
-								userId: this.ownerId,
-								groupId: this.groupId
-							}
+					BX.ajax.runAction('tasks.task.list', {
+						data: {
+							filter: {ID: taskId},
+							params: {
+								RETURN_ACCESS: 'Y',
+								SIFT_THROUGH_FILTER: {
+									sprintKanban: (this.isScrumGrid() ? 'Y' : 'N'),
+									isCompletedSprint: (this.isScrumGrid() ? requestParams.IS_COMPLETED_SPRINT : 'N'),
+									userId: this.ownerId,
+									groupId: this.groupId
+								}
+							},
+							start: -1
 						}
-					}}).then(function(response) {
+					}).then(function(response) {
 						if (response.data.tasks.length > 0)
 						{
 							this.refreshTask(taskId);
@@ -1529,11 +1667,23 @@ BX.Tasks.Kanban.Grid.prototype = {
 	/**
 	 * @neighborGrid {BX.Tasks.Kanban.Grid}
 	 */
-	addNeighborGrid: function(neighborGrid)
+	addNeighborGrid: function(inputNeighborGrid)
 	{
-		if (this !== neighborGrid)
+		if (this !== inputNeighborGrid)
 		{
-			this.neighborGrids.push(neighborGrid);
+			var existGrid = false;
+			this.neighborGrids.forEach(
+				function(neighborGrid) {
+					if (neighborGrid === inputNeighborGrid)
+					{
+						existGrid = true;
+					}
+				})
+			;
+			if (!existGrid)
+			{
+				this.neighborGrids.push(inputNeighborGrid);
+			}
 		}
 	},
 
@@ -1545,6 +1695,34 @@ BX.Tasks.Kanban.Grid.prototype = {
 	getNeighborGrids: function()
 	{
 		return this.neighborGrids;
+	},
+
+	addItemToParentGrid: function(data)
+	{
+		this.neighborGrids.forEach(
+			function(neighborGrid) {
+				if (!neighborGrid.isScrumGridHeader() && !neighborGrid.isChildScrumGrid())
+				{
+					neighborGrid.addItemOrder(data);
+				}
+			})
+		;
+	},
+
+	getItemFromParentGrid: function(itemId)
+	{
+		var item = null;
+
+		this.neighborGrids.forEach(
+			function(neighborGrid) {
+				if (!neighborGrid.isScrumGridHeader() && !neighborGrid.isChildScrumGrid())
+				{
+					item = neighborGrid.getItem(itemId);
+				}
+			})
+		;
+
+		return item;
 	},
 
 	removeColumnsByIdFromNeighborGrids: function(columnId)
@@ -1586,14 +1764,29 @@ BX.Tasks.Kanban.Grid.prototype = {
 		return (this.parentTaskId > 0);
 	},
 
-	isParentTask: function(taskData)
+	isParentTask: function(id)
 	{
-		return !taskData['PARENT_ID'];
+		return (parseInt(id, 10) === this.parentTaskId);
 	},
 
-	isChildTask: function(taskData)
+	getParentTaskId: function()
 	{
-		return (taskData['PARENT_ID'] === this.parentTaskId);
+		return this.parentTaskId;
+	},
+
+	resetPaginationPage: function()
+	{
+		this.getColumns()
+			.forEach(function(column) {
+				column.getPagination().loadingInProgress = false;
+				column.getPagination().page = 1;
+			})
+		;
+	},
+
+	isChildTask: function(parentId)
+	{
+		return (parseInt(parentId, 10) === this.parentTaskId);
 	},
 
 	updateTotals: function()
@@ -1602,7 +1795,7 @@ BX.Tasks.Kanban.Grid.prototype = {
 			var total = 0;
 			this.getNeighborGrids()
 				.forEach(function(neighborGrid) {
-					total += neighborGrid.getColumn(column.getId()).getTotal();
+					total += neighborGrid.getColumn(column.getId()).getItemsCount();
 				})
 			;
 			column.setTotal(total);
@@ -1619,6 +1812,49 @@ BX.Tasks.Kanban.Grid.prototype = {
 		});
 
 		return columnsWidth + 'px';
+	},
+
+	hasItemInProgress: function()
+	{
+		var hasItemInProgress = false;
+
+		Object.values(this.getItems())
+			.forEach(function(item) {
+				if (!item.isCompleted())
+				{
+					hasItemInProgress = true;
+				}
+			})
+		;
+
+		return hasItemInProgress;
+	},
+
+	scrollToItem: function(item)
+	{
+		var scrollTimeout;
+		var scrollHandler = function () {
+			clearTimeout(scrollTimeout);
+			scrollTimeout = setTimeout(function() {
+				item.animate({
+					duration: 1000,
+					draw: function(progress) {
+						item.layout.container.style.opacity = progress * 100 + '%';
+					},
+					useAnimation: true
+				}).then(function(){
+					item.layout.container.style.opacity = '100%';
+				}.bind(this));
+			}, 100);
+			BX.unbind(window, 'scroll', scrollHandler);
+		};
+		BX.bind(window, 'scroll', scrollHandler);
+
+		item.getContainer().scrollIntoView({
+			behavior: 'smooth',
+			block: 'center',
+			inline: 'nearest'
+		});
 	}
 };
 

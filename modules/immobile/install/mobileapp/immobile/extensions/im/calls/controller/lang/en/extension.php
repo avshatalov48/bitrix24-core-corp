@@ -16,6 +16,7 @@ $MESS["MOBILE_CALL_NO_CAMERA_WITH_LEGACY_APP"] = "Cannot enable or disable the c
 $MESS["MOBILE_CALL_NO_MICROPHONE_ACCESS"] = "Cannot access the microphone";
 $MESS["MOBILE_CALL_NO_MICROPHONE_CAMERA_ACCESS"] = "Cannot access the microphone and camera";
 $MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Open App Store";
+$MESS["MOBILE_CALL_OPEN_CHAT"] = "Open chat";
 $MESS["MOBILE_CALL_OPEN_PLAY_MARKET"] = "Open Play Market";
 $MESS["MOBILE_CALL_UNSUPPORTED_VERSION"] = "Your application is out of date. Please update to make calls.";
 $MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Without video";

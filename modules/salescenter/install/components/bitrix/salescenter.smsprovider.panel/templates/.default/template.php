@@ -19,6 +19,7 @@ Extension::load([
 	'salescenter.manager',
 	'salescenter.app',
 	'salescenter.lib',
+	'ui.design-tokens',
 ]);
 ?>
 <div class="salescenter-smsprovider-title">

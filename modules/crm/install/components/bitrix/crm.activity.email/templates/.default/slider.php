@@ -1,5 +1,8 @@
 <? if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Main\Loader;
+use Bitrix\Mail\Helper;
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 
 $renderLog = function($log) use ($arResult)
@@ -112,19 +115,25 @@ BX.ready(function ()
 	</div>
 </div>
 
-<? $APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array()); ?>
+<?
+	$APPLICATION->includeComponent('bitrix:main.mail.confirm', '', array());
+
+	if(!Loader::includeModule("mail"))
+	{
+		echo getMessage('CRM_ACT_EMAIL_NO_MAIL');
+		die();
+	}
+?>
 
 <script type="text/javascript">
-
-<? $emailMaxSize = (int) \Bitrix\Main\Config\Option::get('main', 'max_file_size', 0); ?>
 
 BX.message({
 	CRM_ACT_EMAIL_REPLY_EMPTY_RCPT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_EMPTY_RCPT')) ?>',
 	CRM_ACT_EMAIL_REPLY_UPLOADING: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_REPLY_UPLOADING')) ?>',
-	CRM_ACT_EMAIL_MAX_SIZE: <?=$emailMaxSize ?>,
+	CRM_ACT_EMAIL_MAX_SIZE: <?=Helper\Message::getMaxAttachedFilesSize();?>,
 	CRM_ACT_EMAIL_MAX_SIZE_EXCEED: '<?=\CUtil::jsEscape(getMessage(
 		'CRM_ACTIVITY_EMAIL_MAX_SIZE_EXCEED',
-		['#SIZE#' => \CFile::formatSize($emailMaxSize)]
+		['#SIZE#' => \CFile::formatSize(Helper\Message::getMaxAttachedFilesSizeAfterEncoding(),1)]
 	)) ?>',
 	CRM_ACT_EMAIL_CREATE_NOTEMPLATE: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_CREATE_NOTEMPLATE')) ?>',
 	CRM_ACT_EMAIL_VIEW_READ_CONFIRMED_SHORT: '<?=\CUtil::jsEscape(getMessage('CRM_ACT_EMAIL_VIEW_READ_CONFIRMED_SHORT')) ?>',

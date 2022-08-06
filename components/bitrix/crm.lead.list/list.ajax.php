@@ -24,6 +24,7 @@ define(
 			'REBUILD_SECURITY_ATTRS',
 			'BACKGROUND_INDEX_REBUILD',
 			'BACKGROUND_MERGE',
+			'BACKGROUND_DUP_VOL_DATA_PREPARE',
 		],
 		true
 	)
@@ -53,10 +54,12 @@ if (!CModule::IncludeModule('crm'))
 
 use Bitrix\Crm\Agent\Duplicate\Background\LeadIndexRebuild;
 use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
-use Bitrix\Crm\Conversion\LeadConversionType;
-use Bitrix\Crm\Conversion\LeadConversionConfig;
-use Bitrix\Crm\Conversion\LeadConversionWizard;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Conversion\EntityConversionException;
+use Bitrix\Crm\Conversion\LeadConversionConfig;
+use Bitrix\Crm\Conversion\LeadConversionType;
+use Bitrix\Crm\Conversion\LeadConversionWizard;
+use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Main\Localization\Loc;
 
@@ -1353,6 +1356,57 @@ elseif ($action === 'BACKGROUND_MERGE')
 		[
 			'STATUS' => 'PROGRESS',
 			'PROCESSED_ITEMS' => (int)round(100 * $state['PROCESSED_ITEMS'] / $state['FOUND_ITEMS']),
+			'TOTAL_ITEMS' => 100,
+		]
+	);
+}
+elseif ($action === 'BACKGROUND_DUP_VOL_DATA_PREPARE')
+{
+	$isNeedToShowDupVolDataPrepare = false;
+	$typeInfo = Volatile\TypeInfo::getInstance()->getIdsByEntityTypes([CCrmOwnerType::Lead]);
+	$stateMap = [];
+	if (isset($typeInfo[CCrmOwnerType::Lead]))
+	{
+		foreach ($typeInfo[CCrmOwnerType::Lead] as $id)
+		{
+			$agent = IndexRebuild::getInstance($id);
+			if ($agent->isActive())
+			{
+				$state = $agent->state()->getData();
+				/** @noinspection PhpClassConstantAccessedViaChildClassInspection */
+				if (isset($state['STATUS']) && $state['STATUS'] === IndexRebuild::STATUS_RUNNING)
+				{
+					$stateMap[$id] = $state;
+					$isNeedToShowDupVolDataPrepare = true;
+				}
+			}
+		}
+	}
+
+	if(!$isNeedToShowDupVolDataPrepare)
+	{
+		__CrmLeadListEndResponse(array('STATUS' => 'COMPLETED'));
+	}
+
+	$percentageSum = 0;
+	$percentageCount = 0;
+	foreach ($stateMap as $state)
+	{
+		$percentage = (int)round(
+			100 * $state['PROGRESS_VARS']['PROCESSED_ITEMS'] / $state['PROGRESS_VARS']['TOTAL_ITEMS']
+		);
+		$percentage = ($percentage > 100) ? 100 : $percentage;
+		$percentageSum += $percentage;
+		$percentageCount++;
+	}
+
+	$percentage = (int)round($percentageSum / $percentageCount);
+	$percentage = ($percentage > 100) ? 100 : $percentage;
+
+	__CrmLeadListEndResponse(
+		[
+			'STATUS' => 'PROGRESS',
+			'PROCESSED_ITEMS' => $percentage,
 			'TOTAL_ITEMS' => 100,
 		]
 	);

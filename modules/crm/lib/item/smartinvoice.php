@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Item;
 
+use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Localization\Loc;
 
 /**
@@ -20,9 +21,20 @@ class SmartInvoice extends Dynamic
 
 	public function getTitlePlaceholder(): ?string
 	{
+		if (!InvoiceSettings::getCurrent()->isUseNumberInTitlePlaceholder())
+		{
+			$id = $this->getId();
+
+			return Loc::getMessage('CRM_SMART_INVOICE_TITLE_PLACEHOLDER', [
+				'#ID#' => ($id > 0) ? $id : '',
+			]);
+		}
+
+		$beginDate = $this->getBegindate();
+
 		return Loc::getMessage('CRM_SMART_INVOICE_TITLE', [
 			'#NUMBER#' => $this->getAccountNumber(),
-			'#BEGINDATE#' => $this->getBegindate() ?? '-',
+			'#BEGINDATE#' => $beginDate ?? '-',
 		]);
 	}
 }

@@ -784,11 +784,42 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 									array(
 										'INPUT_PREFIX' => $inputPrefix.'['.$blockName.']',
 										'DATA' => $taskData['SE_TAG'],
-										'TASK_ID' => (int)$taskData['ID'],
+										'GROUP_ID' => (array_key_exists('GROUP_ID', $taskData))
+											? $taskData['GROUP_ID']
+											: 0
+										,
+										'TASK_ID' => (int) $taskData['ID'],
+										'IS_SCRUM_TASK' => $arParams['IS_SCRUM_TASK'],
 									),
 									null,
 									array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")
 								);?>
+
+							</div>
+
+						<?php elseif($blockName == 'EPIC'):?>
+
+							<div class="task-options-item-open-inner">
+
+								<?php
+								$APPLICATION->IncludeComponent(
+									'bitrix:tasks.scrum.epic.selector',
+									'',
+									[
+										'canEdit' => true,
+										'groupId' => (array_key_exists('GROUP_ID', $taskData))
+											? $taskData['GROUP_ID']
+											: 0
+										,
+										'taskId' => (int) $taskData['ID'],
+										'epic' => $arParams['IS_SCRUM_TASK'] ? $arResult['DATA']['SCRUM']['EPIC'] : [],
+										'mode' => 'edit',
+										'inputName' => $inputPrefix.'['.$blockName.']',
+									],
+									null,
+									['HIDE_ICONS' => 'Y']
+								);
+								?>
 
 							</div>
 
@@ -915,7 +946,22 @@ if ($taskLimitExceeded || $taskRecurrentRestrict)
 
 				<?php foreach($arResult['COMPONENT_DATA']['STATE']['BLOCKS'] as $blockName => $block):?>
 					<?php if(array_key_exists(TasksTaskFormState::O_CHOSEN, $block) && isset($blocks[$blockName])):?>
-						<div data-bx-id="task-edit-<?=ToLower(str_replace('_', '-', $blockName))?>-block-place" class="task-edit-block-place">
+						<?php
+							$visibility = (
+							(
+								array_key_exists(TasksTaskFormState::O_HIDDEN, $block)
+								&& $block[TasksTaskFormState::O_HIDDEN] === true
+							) ?
+								'hidden'
+								: ''
+							);
+						?>
+						<div
+							data-bx-id="task-edit-<?=ToLower(str_replace('_', '-', $blockName))?>-block-place"
+							data-block-name="<?=$blockName?>"
+							data-group-id="<?=(array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0?>"
+							class="task-edit-block-place <?= $visibility ?>"
+						>
 							<?php if(!$block[TasksTaskFormState::O_CHOSEN]):?>
 								<?=$blocks[$blockName]?>
 							<?php endif?>

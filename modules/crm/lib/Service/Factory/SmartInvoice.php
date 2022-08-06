@@ -4,8 +4,8 @@ namespace Bitrix\Crm\Service\Factory;
 
 use Bitrix\Crm\Automation\Trigger\InvoiceTrigger;
 use Bitrix\Crm\Field;
-use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\InvoiceTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Model\Dynamic\TypeTable;
@@ -62,8 +62,10 @@ class SmartInvoice extends Dynamic
 	{
 		$settings = parent::getFieldsSettings();
 
-		//do not use Field\Title here. Empty title for invoice is a desirable behaviour
-		unset($settings[Item::FIELD_NAME_TITLE]['CLASS']);
+		if (InvoiceSettings::getCurrent()->isUseNumberInTitlePlaceholder())
+		{
+			unset($settings[Item::FIELD_NAME_TITLE]['CLASS'], $settings[Item::FIELD_NAME_TITLE]['ATTRIBUTES']);
+		}
 
 		$settings[Item::FIELD_NAME_MYCOMPANY_ID]['SETTINGS']['isEmbeddedEditorEnabled'] = true;
 

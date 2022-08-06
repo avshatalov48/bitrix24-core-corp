@@ -697,7 +697,20 @@ class CVoxImplantMain
 		$sanitizer->AddTags([
 			"a" => ["href", "target"]
 		]);
-		return $sanitizer->SanitizeHtml($accountLang === 'ru' ? GetMessage("VI_TOS_RU") : GetMessage("VI_TOS_EN"));
+
+		$text =
+			$accountLang === 'ru'
+				? \Bitrix\Main\Localization\Loc::getMessage("VI_TOS_RU")
+				: \Bitrix\Main\Localization\Loc::getMessage("VI_TOS_EN_2", [
+					"#LINK1START#" => '<a target="_blank" href="https://cdn.voximplant.com/data-processing-addendum-new.pdf">',
+					"#LINK1END#" => '</a>',
+					"#LINK2START#" => '<a target="_blank" href="https://voximplant.com/legal/privacy">',
+					"#LINK2END#" => '</a>',
+				]
+			)
+		;
+
+		return $sanitizer->SanitizeHtml($text);
 	}
 
 	public static function GetDemoTopUpWarning()

@@ -231,7 +231,7 @@ CREATE TABLE b_tasks_checklist_items (
 	CREATED_BY int(11) NOT NULL,
 	TOGGLED_BY int(11) DEFAULT NULL,
 	TOGGLED_DATE datetime DEFAULT NULL,
-	TITLE varchar(255) DEFAULT NULL,
+	TITLE TEXT DEFAULT NULL,
 	IS_COMPLETE char(1) NOT NULL DEFAULT 'N',
 	IS_IMPORTANT char(1) NOT NULL DEFAULT 'N',
 	SORT_INDEX int(11) NOT NULL DEFAULT '0',
@@ -260,7 +260,7 @@ create table b_tasks_template_chl_item (
 	ID int NOT NULL AUTO_INCREMENT,
 	TEMPLATE_ID int(11) NOT NULL,
 	SORT int(11) DEFAULT '0',
-	TITLE varchar(255) NOT NULL,
+	TITLE text NOT NULL,
 	CHECKED tinyint default '0',
 	IS_IMPORTANT char(1) NOT NULL DEFAULT 'N',
 	PRIMARY KEY (ID)
@@ -335,7 +335,8 @@ CREATE TABLE b_tasks_sorting (
 CREATE INDEX ix_tasks_sorting_tid_uid ON b_tasks_sorting(TASK_ID, USER_ID);
 CREATE INDEX ix_tasks_sorting_tid_gid ON b_tasks_sorting(TASK_ID, GROUP_ID);
 CREATE INDEX ix_tasks_sorting_sort ON b_tasks_sorting(SORT);
-ALTER TABLE b_tasks_sorting ADD INDEX ix_tasks_sorting_minimal (USER_ID, SORT);
+ALTER TABLE b_tasks_sorting ADD INDEX ix_tasks_sorting_perf1 (USER_ID, SORT, TASK_ID);
+ALTER TABLE b_tasks_sorting ADD INDEX ix_tasks_sorting_perf2 (GROUP_ID, SORT, TASK_ID);
 
 CREATE TABLE b_tasks_syslog (
 	ID int(11) NOT NULL AUTO_INCREMENT,
@@ -391,7 +392,8 @@ CREATE TABLE b_tasks_stages (
   ADDITIONAL_FILTER text default null,
   TO_UPDATE text default null,
   TO_UPDATE_ACCESS varchar(255) default null,
-  PRIMARY KEY (`ID`)
+  PRIMARY KEY (`ID`),
+  INDEX ix_tasks_stages_entity_id_entity_type (ENTITY_ID, ENTITY_TYPE)
 );
 
 CREATE TABLE b_tasks_task_stage (

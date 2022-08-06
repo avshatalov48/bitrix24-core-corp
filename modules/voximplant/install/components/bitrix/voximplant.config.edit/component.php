@@ -45,7 +45,7 @@ $arResult = array(
 	"SHOW_MELODIES" => true,
 	"SHOW_RULE_VOICEMAIL" => true,
 	"SHOW_TRANSCRIPTION" => !in_array(
-		$account->GetAccountLang(false),
+		\Bitrix\Main\Application::getInstance()->getLicense()->getRegion(),
 		\Bitrix\Voximplant\Transcript::getHiddenRegions(),
 		true
 	),

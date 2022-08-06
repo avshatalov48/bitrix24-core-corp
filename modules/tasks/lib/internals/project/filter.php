@@ -40,10 +40,12 @@ class Filter
 
 	public function processFilterSearch(Query $query, string $search): Query
 	{
-		$query->whereMatch(
-			'SEARCH_INDEX',
-			Helper::matchAgainstWildcard(Content::prepareStringToken(trim($search)))
-		);
+		$search = Helper::matchAgainstWildcard(Content::prepareStringToken(trim($search)));
+
+		if ($search !== '')
+		{
+			$query->whereMatch('SEARCH_INDEX', $search);
+		}
 
 		return $query;
 	}
@@ -234,6 +236,7 @@ class Filter
 		{
 			$types = Workgroup::getTypes([
 				'category' => ['projects', 'groups'],
+				'entityOptions' => ['scrum' => false],
 			]);
 		}
 

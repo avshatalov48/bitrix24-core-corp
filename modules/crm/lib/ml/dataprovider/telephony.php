@@ -141,7 +141,10 @@ class Telephony extends Base
 
 				if(count($messages) > 0)
 				{
-					$result["CALLS_TRANSCRIPTION"] = join(" ", array_slice($messages, 0, static::MAX_WORDS_TRANSCRIPTION));
+					$result["CALLS_TRANSCRIPTION"] = FeatureBuilder::clearText(
+						join(" ", $messages),
+						static::MAX_WORDS_TRANSCRIPTION
+					);
 				}
 			}
 		}

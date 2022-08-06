@@ -236,8 +236,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		//region Entity Info
 		$this->arResult['ENTITY_INFO'] = [
 			'DOCUMENT_ID' => $this->entityID,
-			'ENTITY_TYPE_ID' => CCrmOwnerType::OrderShipment,
-			'ENTITY_TYPE_NAME' => CCrmOwnerType::OrderShipmentName,
+			'ENTITY_ID' => $this->entityID,
+			'ENTITY_TYPE_ID' => CCrmOwnerType::ShipmentDocument,
+			'ENTITY_TYPE_NAME' => CCrmOwnerType::ShipmentDocument,
 			'TITLE' => $this->entityData['TITLE'],
 			'SHOW_URL' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::OrderShipment, $this->entityID, false),
 		];
@@ -534,7 +535,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			'type' => 'section',
 			'elements' => [
 				['name' => 'CLIENT'],
-				['name' => 'RESPONSIBLE_ID'],
 			],
 		];
 
@@ -575,6 +575,18 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			],
 		];
 
+		$extraConfig = [
+			'name' => 'extra',
+			'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_SECTION_EXTRA'),
+			'type' => 'section',
+			'elements' => [
+				['name' => 'RESPONSIBLE_ID'],
+			],
+			'data' => [
+				'isRemovable' => 'false',
+			],
+		];
+
 		if ($this->needDeliveryBlock())
 		{
 			$this->arResult['ENTITY_CONFIG'] = [
@@ -582,6 +594,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				$deliveryConfig,
 				$deliveryPropertiesConfig,
 				$productsConfig,
+				$extraConfig,
 			];
 		}
 		else
@@ -589,6 +602,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			$this->arResult['ENTITY_CONFIG'] = [
 				$mainConfig,
 				$productsConfig,
+				$extraConfig,
 			];
 		}
 	}
@@ -1062,12 +1076,14 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 		$this->entityData['USER_LIST_SELECT'] = $this->getDefaultUserList();
 
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::OrderShipment);
 		$this->entityData['LAST_COMPANY_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
 			Crm\Controller\Entity::getRecentlyUsedItems(
 				'crm.deal.details',
 				'company',
 				[
-					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company
+					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
 				]
 			)
 		);
@@ -1076,7 +1092,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				'crm.deal.details',
 				'contact',
 				[
-					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact
+					'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
 				]
 			)
 		);

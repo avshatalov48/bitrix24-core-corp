@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_core_events,ui_sidepanel_layout,main_core) {
+(function (exports,main_core_events,ui_sidepanel_layout,ui_confetti,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var RequestSender = /*#__PURE__*/function () {
@@ -14,7 +14,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      var analyticsLabel = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 	      return new Promise(function (resolve, reject) {
-	        top.BX.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
 	          data: data,
 	          analyticsLabel: analyticsLabel
 	        }).then(resolve, reject);
@@ -37,7 +37,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showErrorAlert",
 	    value: function showErrorAlert(response, alertTitle) {
 	      if (main_core.Type.isUndefined(response.errors)) {
-	        console.log(response);
+	        console.error(response);
 	        return;
 	      }
 
@@ -48,7 +48,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
 	          var title = alertTitle ? alertTitle : main_core.Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP');
-	          top.BX.UI.Dialogs.MessageBox.alert(message, title);
+	          ui_dialogs_messagebox.MessageBox.alert(message, title);
 	        }
 	      }
 	    }
@@ -91,7 +91,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        width: 700,
 	        contentCallback: function contentCallback() {
 	          return ui_sidepanel_layout.Layout.createContent({
-	            extensions: ['ui.dialogs.messagebox', 'ui.confetti', 'tasks.scrum.sprint-completion-form'],
+	            extensions: ['tasks.scrum.sprint-completion-form'],
 	            title: main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_TITLE'),
 	            content: _this2.createContent.bind(_this2),
 	            design: {
@@ -127,8 +127,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        groupId: this.groupId,
 	        direction: direction
 	      }).then(function (response) {
-	        if (top.BX.UI.Confetti) {
-	          top.BX.UI.Confetti.fire({
+	        if (ui_confetti.Confetti) {
+	          ui_confetti.Confetti.fire({
 	            particleCount: 400,
 	            spread: 80,
 	            origin: {
@@ -384,9 +384,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "initHints",
 	    value: function initHints(node) {
 	      // todo wtf hint
-	      top.BX.UI.Hint.popup = null;
-	      top.BX.UI.Hint.id = 'ui-hint-popup-' + +new Date();
-	      top.BX.UI.Hint.init(node);
+	      BX.UI.Hint.popup = null;
+	      BX.UI.Hint.id = 'ui-hint-popup-' + +new Date();
+	      BX.UI.Hint.init(node);
 	    }
 	  }]);
 	  return SprintCompletionForm;
@@ -394,5 +394,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.SprintCompletionForm = SprintCompletionForm;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX.UI.SidePanel,BX));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX.UI.SidePanel,BX.UI,BX,BX.UI.Dialogs));
 //# sourceMappingURL=sprint.completion.form.bundle.js.map

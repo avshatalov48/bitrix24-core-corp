@@ -6,6 +6,7 @@ import {Button} from 'ui.buttons';
 import {Slider} from 'catalog.store-use'
 import {Vue} from 'ui.vue';
 import ProductUpdater from './product-updater/template';
+import {Const} from './const';
 import 'ui.notification';
 import '../css/app.css';
 
@@ -20,11 +21,7 @@ export default Vue.extend({
 		initData: {
 			type: Object,
 			required: true
-		},
-		stateChangeCallbackFn: {
-			type: String,
-			required: false
-		},
+		}
 	},
 	data() {
 		return {
@@ -65,7 +62,7 @@ export default Vue.extend({
 		this.initialize(this.initData);
 		this.productUpdaterPopup = null;
 		this.settingsMenu = null;
-		this.slider = BX.SidePanel.Instance.getSlider('/crm/configs/catalog/');
+		this.slider = BX.SidePanel.Instance.getSlider(Const.url);
 	},
 	computed: {
 		isReservationUsed()
@@ -174,7 +171,7 @@ export default Vue.extend({
 				'/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode,
 				{}
 			)
-				.then(() => {
+				.then((slider) => {
 					ajax.runAction('catalog.config.isUsedInventoryManagement', {})
 						.then((response) => {
 							if (this.isStoreControlUsed !== response.data)
@@ -187,11 +184,10 @@ export default Vue.extend({
 								{
 									this.refresh();
 								}
-
-								if (this.stateChangeCallbackFn)
-								{
-									window.top[this.stateChangeCallbackFn]();
-								}
+							}
+							if (slider?.getData().get('isPresetApplied'))
+							{
+								this.showMessage(Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
 							}
 						});
 				});
@@ -227,7 +223,9 @@ export default Vue.extend({
 		},
 		showMessage(message)
 		{
-			BX.UI.Notification.Center.notify({content: message,});
+			top.BX.loadExt("ui.notification").then(() => {
+				top.BX.UI.Notification.Center.notify({content: message,});
+			});
 		},
 		initialize(data)
 		{

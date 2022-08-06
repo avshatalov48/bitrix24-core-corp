@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main;
 
@@ -8,7 +12,7 @@ class CBPCrmResourceBooking extends CBPActivity
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			"Title" => "",
 			"ResourceField" => null,
 			"ResourceName" => null,
@@ -18,7 +22,7 @@ class CBPCrmResourceBooking extends CBPActivity
 
 			//reserved
 			"ResourceId" => null,
-		);
+		];
 	}
 
 	public function Execute()
@@ -34,15 +38,31 @@ class CBPCrmResourceBooking extends CBPActivity
 
 		$start = $start ? Main\Type\DateTime::createFromUserTime($start) : null;
 
+		$fieldId = $this->ResourceField;
+
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo(
+				[
+					'ResourceField' => $fieldId,
+					'ResourceName' => $name,
+					'ResourceStart' => $start,
+					'ResourceDuration' => $duration,
+				]
+			));
+		}
+
 		if (!$start)
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_RB_ERROR_START_DATE"), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
 		if (!$duration)
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_RB_ERROR_DURATION_EMPTY"), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -51,10 +71,9 @@ class CBPCrmResourceBooking extends CBPActivity
 		if (!$users)
 		{
 			$this->WriteToTrackingService(GetMessage("CRM_RB_ERROR_RESOURCE_USERS"), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
-
-		$fieldId = $this->ResourceField;
 
 		$fieldValue[$fieldId] = [];
 
@@ -117,42 +136,7 @@ class CBPCrmResourceBooking extends CBPActivity
 			'siteId' => $siteId
 		));
 
-		$dialog->setMap(array(
-			'ResourceField' => array(
-				'Name' => GetMessage('CRM_RB_RESOURCE_FIELD'),
-				'FieldName' => 'resource_field',
-				'Type' => 'select',
-				'Required' => true,
-				'Options' => self::getResourceFields($documentType)
-			),
-			'ResourceName' => array(
-				'Name' => GetMessage('CRM_RB_RESOURCE_NAME'),
-				'Description' => GetMessage('CRM_RB_RESOURCE_NAME'),
-				'FieldName' => 'resource_name',
-				'Type' => 'string',
-			),
-			'ResourceStart' => array(
-				'Name' => GetMessage('CRM_RB_RESOURCE_START_DATE'),
-				'FieldName' => 'resource_start',
-				'Type' => 'datetime',
-				'Required' => true
-			),
-			'ResourceDuration' => array(
-				'Name' => GetMessage('CRM_RB_RESOURCE_DURATION'),
-				'FieldName' => 'resource_duration',
-				'Type' => 'select',
-				'Required' => true,
-				'Options' => self::getDurationOptions()
-			),
-			'ResourceUsers' => array(
-				'Name' => GetMessage('CRM_RB_RESOURCE_USERS'),
-				'FieldName' => 'resource_users',
-				'Type' => 'user',
-				'Required' => true,
-				'Multiple' => true,
-				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType)
-			),
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -216,5 +200,45 @@ class CBPCrmResourceBooking extends CBPActivity
 			}
 		}
 		return $result;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'ResourceField' => array(
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_RB_RESOURCE_FIELD'),
+				'FieldName' => 'resource_field',
+				'Type' => 'select',
+				'Required' => true,
+				'Options' => self::getResourceFields($documentType)
+			),
+			'ResourceName' => array(
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_RB_RESOURCE_NAME'),
+				'Description' => \Bitrix\Main\Localization\Loc::getMessage('CRM_RB_RESOURCE_NAME'),
+				'FieldName' => 'resource_name',
+				'Type' => 'string',
+			),
+			'ResourceStart' => array(
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_RB_RESOURCE_START_DATE'),
+				'FieldName' => 'resource_start',
+				'Type' => 'datetime',
+				'Required' => true
+			),
+			'ResourceDuration' => array(
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_RB_RESOURCE_DURATION'),
+				'FieldName' => 'resource_duration',
+				'Type' => 'select',
+				'Required' => true,
+				'Options' => self::getDurationOptions()
+			),
+			'ResourceUsers' => array(
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_RB_RESOURCE_USERS'),
+				'FieldName' => 'resource_users',
+				'Type' => 'user',
+				'Required' => true,
+				'Multiple' => true,
+				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType),
+			),
+		];
 	}
 }

@@ -56,6 +56,7 @@ $APPLICATION->restartBuffer();
 					<? endif ?>
 				</div>
 			</div><!--crm-task-list-header-->
+			<div class="crm-activity-slider-container">
 			<div class="crm-task-list-inner" data-role="additional-fields" style="display: none; ">
 				<div class="crm-task-list-mail-additionally-info">
 					<div class="crm-task-list-mail-additionally-info-title"><?=getMessage('CRM_ACTIVITY_PLANNER_ADDITIONAL2') ?></div>
@@ -225,6 +226,7 @@ $APPLICATION->restartBuffer();
 					</div>
 				</div>
 			<?endif?>
+			</div>
 		</div><!--crm-task-list-container-->
 	</div><!--crm-task-list-wrapper-->
 

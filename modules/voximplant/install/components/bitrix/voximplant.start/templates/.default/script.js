@@ -17,6 +17,7 @@ BX.Voximplant.Start = {
 	balanceMenu: null,
 	isTelephonyAvailable: null,
 
+	box: null,
 	balanceElements: [], // Element[]
 	lines: [],
 	crmIntegrationMenuItems: [],
@@ -41,6 +42,7 @@ BX.Voximplant.Start = {
 		this.isRestOnly = config.isRestOnly === 'Y';
 		this.crmFormListUrl = config.crmFormListUrl || '';
 		this.crmFormCreateUrl = config.crmFormCreateUrl || '';
+		this.isShownPrivacyPolicy = config.isShownPrivacyPolicy === 'Y';
 
 		if(this.mainMenuItems.length > 0)
 		{
@@ -105,10 +107,18 @@ BX.Voximplant.Start = {
 		{
 			this.onBalanceTypeChange(BX('balance-type').value);
 		}
+		if(this.isShownPrivacyPolicy)
+		{
+			BX.bind(BX('sip-buy'), 'click', this.onBuySipButtonClickWithPopup.bind(this));
+		}
+		else
+		{
+			BX.bind(BX('sip-buy'), 'click', this.onBuySipButtonClick.bind(this));
+		}
 
 		BX.bind(BX('balance-top-up'), 'click', this.onTopUpButtonClick.bind(this));
 		BX.bind(BX('balance-menu'), 'click', this.onBalanceMenuButtonClick.bind(this));
-		BX.bind(BX('sip-buy'), 'click', this.onBuySipButtonClick.bind(this));
+
 
 		if(BX.PULL)
 		{
@@ -324,6 +334,58 @@ BX.Voximplant.Start = {
 		{
 			topUpButton.parentElement.classList.remove("ui-btn-wait");
 		});
+	},
+
+	onBuySipButtonClickWithPopup: function()
+	{
+		this.sipBuyPopup = new BX.PopupWindow('connecting-to-sip', null, {
+			closeIcon: true,
+			closeByEsc: true,
+			autoHide: false,
+			content: BX.message("VOX_START_SIP_BUY_POPUP_TEXT")
+				.replace('#LINK1START#', '<a target="_blank" href="https://voximplant.com/legal/privacy">')
+				.replace('#LINK1END#', '</a>')
+				.replace('#LINK2START#', '<a target="_blank" href="https://cdn.voximplant.com/data-processing-addendum-new.pdf">')
+				.replace('#LINK2END#', '</a>')
+			,
+			zIndex: 16000,
+			maxWidth: 800,
+			overlay: {
+				color: 'gray',
+				opacity: 30
+			},
+			buttons: [
+				new BX.UI.Button({
+					text: BX.message("VOX_START_POPUP_BUTTON_I_AGREE"),
+					size: BX.UI.Button.Size.MEDIUM,
+					tag: BX.UI.Button.Tag.BUTTON,
+					color: BX.UI.Button.Color.LIGHT_BORDER,
+					onclick: function() {
+						this.onBuySipButtonClick();
+						this.sipBuyPopup.destroy();
+					}.bind(this),
+				}),
+				new BX.UI.Button({
+					text: BX.message("VOX_START_POPUP_BUTTON_CANCEL"),
+					size: BX.UI.Button.Size.MEDIUM,
+					tag: BX.UI.Button.Tag.BUTTON,
+					color: BX.UI.Button.Color.LIGHT,
+					onclick: function()
+					{
+						this.sipBuyPopup.destroy();
+					}.bind(this)
+				})
+			],
+			events: {
+				onPopupClose: function() {
+					this.destroy();
+				},
+				onPopupDestroy: function() {
+					this.sipBuyPopup = null;
+				}.bind(this)
+			}
+		});
+		this.sipBuyPopup.show();
 	},
 
 	onBuySipButtonClick: function()

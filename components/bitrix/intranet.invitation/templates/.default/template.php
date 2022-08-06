@@ -24,6 +24,7 @@ use Bitrix\Main\Localization\Loc;
 	'ui.entity-selector',
 	'ui.feedback.form',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 \CJSCore::Init(['phone_number']);

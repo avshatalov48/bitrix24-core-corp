@@ -4,7 +4,9 @@ BX.namespace('BX.Tasks');
 
 BX.Tasks.TagsSelector = function(options)
 {
+	this.groupId = (options.groupId || 0);
 	this.taskId = (options.taskId || 0);
+	this.isScrumTask = (options.isScrumTask === 'Y');
 	this.templateId = (options.templateId || 0);
 	this.tags = options.tags;
 
@@ -17,6 +19,11 @@ BX.Tasks.TagsSelector = function(options)
 			taskId: this.taskId
 		};
 		this.tags = [];
+	}
+
+	if (this.isScrumTask && this.groupId)
+	{
+		this.entity.options.groupId = this.groupId;
 	}
 };
 
@@ -40,7 +47,7 @@ BX.Tasks.TagsSelector.prototype = {
 				multiple: true,
 				dropdownMode: true,
 				compactView: true,
-				context: 'TASKS_TAG',
+				context: this.isScrumTask ? 'TASKS_SCRUM_TAG_' + this.groupId : 'TASKS_TAG',
 				entities: [
 					this.entity
 				],

@@ -108,6 +108,7 @@
 	overflow: hidden;
 	background: #fff;
 	border: 1px solid #e3e3e3;
+	border-radius: var(--ui-border-radius-md);
 	padding: 17px 145px 17px 20px;
 	position: relative;
 	font-size: 12px;
@@ -118,16 +119,7 @@
 
 .crm-tree-active {
 	background: #f5f8f9;
-}
-
-.crm-doc-cart:before {
-	content: '';
-	position: absolute;
-	left: 0;
-	top: 0;
-	bottom: 0;
-	width: 6px;
-	background: #f5f8f9;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-doc-cart-user {
@@ -259,7 +251,7 @@
 }
 
 .crm-doc-ul-li {
-	margin: -1px 0 0  0;
+	margin: -1px 0 var(--ui-space-stack-2xs, 4px) 0;
 }
 
 .crm-doc-three > .crm-doc-ul {

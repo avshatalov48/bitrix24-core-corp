@@ -3,6 +3,7 @@ import {EventEmitter} from 'main.core.events';
 
 import {Sprint} from '../../sprint';
 
+import 'ui.hint';
 
 export class Counters extends EventEmitter
 {
@@ -19,17 +20,16 @@ export class Counters extends EventEmitter
 
 	render(): HTMLElement
 	{
-		//todo maybe need for active sprint
-		//${this.sprint.getUncompletedStoryPoints().getPoints()}
-		//${this.sprint.getCompletedStoryPoints().getPoints()}
-
 		this.node = Tag.render`
 			<div class="tasks-scrum__sprint--event-content">
 				<div class="tasks-scrum__sprint--event-container">
 					<div class="tasks-scrum__sprint--subtitle">
 						${Loc.getMessage('TASKS_SCRUM_TASK_LABEL')}
 					</div>
-					<div class="tasks-scrum__sprint--point">
+					<div
+						class="tasks-scrum__sprint--point"
+						data-hint="${Loc.getMessage('TASKS_SCRUM_TASK_LABEL')}" data-hint-no-icon
+					>
 						${parseInt(this.sprint.getNumberTasks(), 10)}
 					</div>
 				</div>
@@ -37,13 +37,45 @@ export class Counters extends EventEmitter
 					<div class="tasks-scrum__sprint--subtitle">
 						${Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS')}
 					</div>
-					<div class="tasks-scrum__sprint--point">
+					<div
+						class="tasks-scrum__sprint--point"
+						data-hint="${Loc.getMessage('TASKS_SCRUM_SPRINT_HEADER_STORY_POINTS')}" data-hint-no-icon
+					>
 						${this.sprint.getStoryPoints().isEmpty() ? '-' : this.sprint.getStoryPoints().getPoints()}
 					</div>
+					${this.renderAverageNumberStoryPoints()}
 				</div>
 			</div>
 		`;
 
+		BX.UI.Hint.createInstance({
+			popupParameters: {
+				closeByEsc: true,
+				autoHide: true,
+				animation: null
+			}
+		}).init(this.node);
+
 		return this.node;
+	}
+
+	renderAverageNumberStoryPoints(): ?HTMLElement
+	{
+		if (
+			!this.sprint.isPlanned()
+			|| !this.sprint.getAverageNumberStoryPoints()
+		)
+		{
+			return '';
+		}
+
+		return Tag.render`
+			<div 
+				class="tasks-scrum__sprint--point --completed"
+				data-hint="${Loc.getMessage('TASKS_SCRUM_AVERAGE_NUMBER_STORY_POINTS')}" data-hint-no-icon
+			>
+				${this.sprint.getAverageNumberStoryPoints()}
+			</div>
+		`;
 	}
 }

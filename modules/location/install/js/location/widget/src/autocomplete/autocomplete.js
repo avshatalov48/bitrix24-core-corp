@@ -219,9 +219,14 @@ export default class Autocomplete extends EventEmitter
 				// this.#addressString === null until autocompete'll be rendered
 				else if (this.#addressString.customTail !== '')
 				{
+					const currentValue = this.#address.getFieldValue(this.#addressFormat.fieldForUnRecognized);
+					const newValue = currentValue
+						? currentValue + this.#addressString.customTail
+						: this.#addressString.customTail
+					;
 					this.#address.setFieldValue(
 						this.#addressFormat.fieldForUnRecognized,
-						this.#addressString.customTail
+						newValue
 					);
 					isChanged = true;
 				}
@@ -229,13 +234,9 @@ export default class Autocomplete extends EventEmitter
 
 			if (isChanged)
 			{
+				this.#addressString.setValueFromAddress(this.#address);
 				this.#onAddressChangedEventEmit([], {storeAsLastAddress: false});
 			}
-		}
-
-		if (this.#prompt)
-		{
-			this.#prompt.close();
 		}
 
 		// Let's prevent other onInputFocusOut handlers.

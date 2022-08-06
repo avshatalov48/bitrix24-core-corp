@@ -1,8 +1,12 @@
-<?
+<?php
 if(!CModule::IncludeModule('rest'))
-	return;
+{
+		return;
+}
 
 use Bitrix\Main\Loader;
+use Bitrix\Rest\OAuth;
+use Bitrix\Rest\APAuth;
 use Bitrix\Voximplant\Security;
 use Bitrix\Voximplant\Rest;
 use Bitrix\Voximplant\Integration;
@@ -122,7 +126,7 @@ class CVoxImplantRestService extends IRestService
 				),
 				CRestUtil::PLACEMENTS => array(
 					Rest\Helper::PLACEMENT_CALL_CARD => array(),
-					Bitrix\Voximplant\Integration\Rest\AppPlacement::ANALYTICS_MENU => array()
+					Integration\Rest\AppPlacement::ANALYTICS_MENU => array()
 				)
 			),
 			'call' => array(
@@ -649,9 +653,9 @@ class CVoxImplantRestService extends IRestService
 		if (empty($userIds))
 			throw new \Bitrix\Rest\AccessException('You have no permission to query selected users');
 
-		if (\Bitrix\Voximplant\Integration\Bitrix24::isInstalled())
+		if (Integration\Bitrix24::isInstalled())
 		{
-			$admins = \Bitrix\Voximplant\Integration\Bitrix24::getAdmins();
+			$admins = Integration\Bitrix24::getAdmins();
 		}
 		else
 		{
@@ -1277,6 +1281,11 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function registerExternalCall($params, $n, $server)
 	{
+		if($server->getAuthType() !== Oauth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\AuthTypeException();
+		}
+
 		/*
 		$permissions = Security\Permissions::createWithCurrentUser();
 		if(!$permissions->canPerform(Security\Permissions::ENTITY_CALL_DETAIL, Security\Permissions::ACTION_MODIFY, Security\Permissions::PERMISSION_ANY))
@@ -1356,6 +1365,11 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function finishExternalCall($params, $n, $server)
 	{
+		if($server->getAuthType() !== Oauth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\AuthTypeException();
+		}
+
 		/*
 		$permissions = Security\Permissions::createWithCurrentUser();
 		if(!$permissions->canPerform(Security\Permissions::ENTITY_CALL_DETAIL, Security\Permissions::ACTION_MODIFY, Security\Permissions::PERMISSION_ANY))
@@ -1541,6 +1555,11 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function addExternalLine($params, $n, $server)
 	{
+		if ($server->getAuthType() !== OAuth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\AuthTypeException();
+		}
+
 		$clientId = $server->getClientId();
 		$row = \Bitrix\Rest\AppTable::getByClientId($clientId);
 		$appId = $row['ID'];
@@ -1570,6 +1589,11 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function updateExternalLine($params, $n, $server)
 	{
+		if ($server->getAuthType() !== OAuth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\AuthTypeException();
+		}
+
 		$clientId = $server->getClientId();
 		$row = \Bitrix\Rest\AppTable::getByClientId($clientId);
 		$appId = $row['ID'];
@@ -1588,6 +1612,11 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function deleteExternalLine($params, $n, $server)
 	{
+		if ($server->getAuthType() !== OAuth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\AuthTypeException();
+		}
+
 		$clientId = $server->getClientId();
 		$row = \Bitrix\Rest\AppTable::getByClientId($clientId);
 		$appId = $row['ID'];
@@ -1608,6 +1637,11 @@ class CVoxImplantRestService extends IRestService
 	 */
 	public static function getExternalLines($params, $n, $server)
 	{
+		if ($server->getAuthType() !== OAuth\Auth::AUTH_TYPE && $server->getAuthType() !== APAuth\Auth::AUTH_TYPE)
+		{
+			throw new \Bitrix\Rest\AuthTypeException();
+		}
+
 		$clientId = $server->getClientId();
 		$row = \Bitrix\Rest\AppTable::getByClientId($clientId);
 		$appId = $row['ID'];

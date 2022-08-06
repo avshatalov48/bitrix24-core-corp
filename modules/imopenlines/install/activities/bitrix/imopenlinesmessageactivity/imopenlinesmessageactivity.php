@@ -88,9 +88,10 @@ class CBPImOpenLinesMessageActivity
 			}
 			else
 			{
-				$messageFields['SKIP_USER_CHECK'] = 'Y';
 				$messageFields['PARAMS']['CLASS'] = "bx-messenger-content-item-ol-output";
 			}
+
+			$messageFields['SKIP_USER_CHECK'] = 'Y';
 
 			$addResult = \Bitrix\ImOpenLines\Im::addMessage($messageFields);
 

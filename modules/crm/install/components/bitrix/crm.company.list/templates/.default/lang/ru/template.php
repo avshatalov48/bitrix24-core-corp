@@ -103,3 +103,5 @@ $MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_INDEX_REBUILD_TITLE"] = "Сканиро�
 $MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_INDEX_REBUILD_STATE"] = "#processed#%";
 $MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_MERGE_TITLE"] = "Объединение дубликатов компаний";
 $MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_MERGE_STATE"] = "#processed#%";
+$MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_TITLE"] = "Подготовка данных для поиска дубликатов компаний";
+$MESS["CRM_COMPANY_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_STATE"] = "#processed#%";

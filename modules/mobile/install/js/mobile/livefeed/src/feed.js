@@ -156,7 +156,7 @@ class Feed
 
 			if (!!bFromCache)
 			{
-				PageInstance.setPreventNextPage(true);
+				PageInstance.setRefreshFrameCacheNeeded(true);
 			}
 		});
 
@@ -850,7 +850,6 @@ class Feed
 	{
 		const logId = (params.logId ? parseInt(params.logId) : 0);
 		const value = (['Y', 'N'].indexOf(params.value) !== -1 ? params.value : null);
-		const pinActionContext = (Type.isStringFilled(params.pinActionContext) ? params.pinActionContext : 'list');
 
 		if (
 			!logId
@@ -880,27 +879,37 @@ class Feed
 				containerNode: document.getElementById(this.nodeId.feedContainer)
 			});
 		}
-		else if (value === 'Y')
+		else if (
+			value === 'Y'
+			&& Type.isDomNode(params.postNode)
+		)
 		{
-			if (Type.isDomNode(params.postNode))
+			app.showPopupLoader({text:""});
+
+			if (this.getOption('refreshFrameCacheNeeded', false) === true)
 			{
-				app.showPopupLoader({text:""});
-
-				PinnedPanelInstance.getPinnedData({
-					logId: logId
-				}).then((pinnedData) => {
-					app.hidePopupLoader();
-
-					PinnedPanelInstance.insertEntry({
-						logId: logId,
-						postNode: params.postNode,
-						pinnedContent: pinnedData
-					});
-
-				}, (response) => {
-					app.hidePopupLoader();
-				})
+				return;
 			}
+
+			const entityValue = postNode.getAttribute('data-security-entity-pin');
+			const tokenValue = postNode.getAttribute('data-security-token-pin');
+
+			PinnedPanelInstance.getPinnedData({
+				logId: logId,
+				entityValue: entityValue,
+				tokenValue: tokenValue,
+			}).then((pinnedData) => {
+				app.hidePopupLoader();
+
+				PinnedPanelInstance.insertEntry({
+					logId: logId,
+					postNode: params.postNode,
+					pinnedContent: pinnedData
+				});
+
+			}, (response) => {
+				app.hidePopupLoader();
+			})
 		}
 	}
 

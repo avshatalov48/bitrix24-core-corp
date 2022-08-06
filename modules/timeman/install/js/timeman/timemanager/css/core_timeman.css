@@ -184,7 +184,9 @@
 	background: #e9e9e9;
 	border: 1px solid #d4d4d4;
 	border-bottom: none;
-	border-radius: 3px 3px 0 0;
+	border-radius: var(--tm-tab, var(--ui-border-radius-xs, 3px));
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
 	cursor: pointer;
 	color: #747474;
 	display: inline-block;
@@ -199,7 +201,6 @@
 	background: #fff;
 	border: 1px solid #b0b0b0;
 	border-bottom: none;
-	border-radius: 3px 3px 0 0;
 	color: #000;
 	height: 24px;
 	line-height: 24px;
@@ -506,6 +507,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 	border: 1px solid #bcc0c5 !important;
 	color: #6b727b;
 	box-shadow: none;
+	border-radius: var(--ui-border-radius-2xs, 0);
 	font: bold 17px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	height: 32px;
 	padding: 0 18px 0 8px!important;
@@ -834,7 +836,7 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 	padding: 0 18px;
 	outline: none;
 	border: none;
-	border-radius: 2px;
+	border-radius: var(--tm-webform-small-button-border-radius, var(--ui-border-radius-2xs, 2px));
 	background: #ecedef;
 	box-shadow: 0 0 0 1px #c6cdd3 inset;
 	color: #7a818a;

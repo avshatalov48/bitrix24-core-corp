@@ -4,6 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
+\Bitrix\Main\UI\Extension::load(['uf']);
 ?>
 
 <?$arResult['HELPER']->displayFatals();?>
@@ -50,8 +51,8 @@ $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 									</span>
 									</div>
 									<div class="tasks-uf-panel-form-buttons">
-										<button type="button" class="js-id-item-set-item-save webform-small-button"><?=Loc::getMessage('TASKS_COMMON_SAVE')?></button>
-										<a class="js-id-item-set-item-cancel tasks-btn-cancel" href="javascript:void(0);"><?=Loc::getMessage('TASKS_COMMON_CANCEL')?></a>
+										<button type="button" class="js-id-item-set-item-save ui-btn"><?= Loc::getMessage('TASKS_COMMON_SAVE') ?></button>
+										<a class="js-id-item-set-item-cancel ui-btn ui-btn-link" href="javascript:void(0);"><?= Loc::getMessage('TASKS_COMMON_CANCEL') ?></a>
 									</div>
 									<div class="js-id-item-set-item-error task-message-label error invisible">
 									</div>

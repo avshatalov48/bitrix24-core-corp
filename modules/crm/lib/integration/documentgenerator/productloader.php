@@ -88,12 +88,10 @@ class ProductLoader
 	 */
 	public function clearCache(): self
 	{
-		$this->iblockValues = null;
 		$this->propertyValues = null;
 		$this->productIds = null;
 		$this->offerIds = null;
 		$this->offerToProductsMap = null;
-		$this->linkedElements = null;
 		$this->preparedPropertyValues = [];
 		$this->iblockValues = null;
 		$this->preparedIblockData = null;
@@ -398,44 +396,66 @@ class ProductLoader
 			return $this->getPreparedDirectoryImagePropertyValue($this->directoryImagePropertyCodes[$code], $elementId);
 		}
 
-		$property = $this->getPropertyByFieldCode($code);
-		if (!$property)
+		$productProperty = $this->getProductPropertyByFieldCode($code);
+		$offerProperty = $this->getOfferPropertyByFieldCode($code);
+		if (!$productProperty && !$offerProperty)
 		{
 			return null;
 		}
 
 		$isProduct = isset($this->productIds[$elementId]);
-		if ($isProduct)
+		if ($isProduct && $productProperty)
 		{
-			return $this->getPreparedPropertyValue($property, $elementId);
+			return $this->getPreparedPropertyValue($productProperty, $elementId);
 		}
 
-		$isOwnOfferProperty = isset($this->offerProperties[$property['ID']]);
-		if ($isOwnOfferProperty)
+		$value = null;
+		if ($offerProperty)
 		{
-			return $this->getPreparedPropertyValue($property, $elementId);
+			$value = $this->getPreparedPropertyValue($offerProperty, $elementId);
+		}
+		if ($value)
+		{
+			return $value;
 		}
 
 		$productId = $this->getProductIdByOfferId($elementId);
-		if (!$productId)
+		if (!$productId || !$productProperty)
 		{
 			return null;
 		}
 
-		return $this->getPreparedPropertyValue($property, $productId);
+		return $this->getPreparedPropertyValue($productProperty, $productId);
 	}
 
-	protected function getPropertyByFieldCode($code): ?array
+	protected function getProductPropertyByFieldCode($code): ?array
 	{
 		$propertyId = $this->getPropertyCodeByFieldCode($code);
-		$property = $this->productProperties[$propertyId] ?? $this->offerProperties[$propertyId] ?? null;
+		$property = $this->productProperties[$propertyId] ?? null;
 		if (!$property)
 		{
 			$this->fillPropertyCodesMap();
-			$propertyId = (int)$this->propertyCodes[$propertyId];
+			$propertyId = (int)($this->propertyCodes['product'][$propertyId] ?? 0);
 			if ($propertyId > 0)
 			{
-				$property = $this->productProperties[$propertyId] ?? $this->offerProperties[$propertyId] ?? null;
+				$property = $this->productProperties[$propertyId] ?? null;
+			}
+		}
+
+		return $property;
+	}
+
+	protected function getOfferPropertyByFieldCode($code): ?array
+	{
+		$propertyId = $this->getPropertyCodeByFieldCode($code);
+		$property = $this->offerProperties[$propertyId] ?? null;
+		if (!$property)
+		{
+			$this->fillPropertyCodesMap();
+			$propertyId = (int)($this->propertyCodes['offer'][$propertyId] ?? 0);
+			if ($propertyId > 0)
+			{
+				$property = $this->offerProperties[$propertyId] ?? null;
 			}
 		}
 
@@ -446,19 +466,22 @@ class ProductLoader
 	{
 		if ($this->propertyCodes === null)
 		{
-			$this->propertyCodes = [];
+			$this->propertyCodes = [
+				'product' => [],
+				'offer' => [],
+			];
 			foreach ($this->productProperties as $id => $property)
 			{
 				if (!empty($property['CODE']))
 				{
-					$this->propertyCodes[$property['CODE']] = $id;
+					$this->propertyCodes['product'][$property['CODE']] = $id;
 				}
 			}
 			foreach ($this->offerProperties as $id => $property)
 			{
 				if (!empty($property['CODE']))
 				{
-					$this->propertyCodes[$property['CODE']] = $id;
+					$this->propertyCodes['offer'][$property['CODE']] = $id;
 				}
 			}
 		}
@@ -998,11 +1021,7 @@ class ProductLoader
 			return $this->offerProperties;
 		}
 
-		$offerPropertyCodes = PropertyCatalogFeature::getOfferTreePropertyCodes($this->offerIblockId);
-		if (!empty($offerPropertyCodes))
-		{
-			$this->offerProperties = $this->loadPropertiesData($this->offerIblockId, $offerPropertyCodes);
-		}
+		$this->offerProperties = $this->loadPropertiesData($this->offerIblockId);
 
 		return $this->offerProperties;
 	}

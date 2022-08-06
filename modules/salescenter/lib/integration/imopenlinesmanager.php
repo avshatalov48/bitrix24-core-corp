@@ -95,7 +95,13 @@ class ImOpenLinesManager extends Base
 	}
 
 	/**
-	 * @return array
+	 * Get client info.
+	 *
+	 * About deals:
+	 * If a deal is not linked to the OpenLine, but a lead is linked that has an active (not finished) deal,
+	 * then the deal of the lead will be returned as `OWNER_*`.
+	 *
+	 * @return array with OWNER_ID, OWNER_TYPE_ID, COMPANY_ID, CONTACT_IDS, USER_ID
 	 */
 	public function getClientInfo()
 	{
@@ -108,13 +114,22 @@ class ImOpenLinesManager extends Base
 			{
 				if($crmInfo['DEAL'] > 0)
 				{
-					$clientInfo['OWNER_ID'] = (int) $crmInfo['DEAL'];
+					$clientInfo['OWNER_ID'] = (int)$crmInfo['DEAL'];
 					$clientInfo['OWNER_TYPE_ID'] = \CCrmOwnerType::Deal;
+				}
+				elseif($crmInfo['LEAD'] > 0)
+				{
+					$deal = CrmManager::getInstance()->getLeadActiveDeal($crmInfo['LEAD']);
+					if ($deal)
+					{
+						$clientInfo['OWNER_ID'] = $deal->getId();
+						$clientInfo['OWNER_TYPE_ID'] = \CCrmOwnerType::Deal;
+					}
 				}
 
 				if ((int)$crmInfo['COMPANY'] > 0)
 				{
-					$clientInfo['COMPANY_ID'] = (int) $crmInfo['COMPANY'];
+					$clientInfo['COMPANY_ID'] = (int)$crmInfo['COMPANY'];
 				}
 
 				if (!empty($crmInfo['CONTACT']))
@@ -579,7 +594,18 @@ class ImOpenLinesManager extends Base
 			}
 			else
 			{
-				$result->addErrors($resultSendMessage->getErrors());
+				foreach ($resultSendMessage->getErrors() as $error)
+				{
+					$errorMessage = $error->getMessage();
+					if ($errorMessage instanceof \CApplicationException)
+					{
+						$result->addError(new Error($errorMessage->GetString()));
+					}
+					else
+					{
+						$result->addError($error);
+					}
+				}
 			}
 
 			$notifyResult = $this->sendOrderCheckWarning($order, $dialogId);
@@ -627,7 +653,18 @@ class ImOpenLinesManager extends Base
 			}
 			else
 			{
-				$result->addErrors($resultSendMessage->getErrors());
+				foreach ($resultSendMessage->getErrors() as $error)
+				{
+					$errorMessage = $error->getMessage();
+					if ($errorMessage instanceof \CApplicationException)
+					{
+						$result->addError(new Error($errorMessage->GetString()));
+					}
+					else
+					{
+						$result->addError($error);
+					}
+				}
 			}
 
 			$notifyResult = $this->sendOrderCheckWarning($payment->getOrder(), $dialogId);

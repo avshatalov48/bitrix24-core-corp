@@ -20,7 +20,6 @@
 			BX.addCustomEvent("onChangeTitleProgress", (progress) => this.updateTitle(progress));
 
 			this.updateTitle();
-			this.setTopMenu();
 		}
 
 		updateTitle(progress = false)
@@ -31,40 +30,6 @@
 				largeMode: true,
 			});
 		}
-
-		setTopMenu()
-		{
-			let topMenuInstance = dialogs.createPopupMenu();
-			topMenuInstance.setData(
-				[{ id: "readAll", title: BX.message('IM_READ_ALL'), sectionCode: "general", iconName: "read"}],
-				[{ id: "general" }],
-				(event, item) => {
-					if (event === 'onItemSelected' && item.id === 'readAll')
-					{
-						this.readAll();
-					}
-				}
-			);
-
-			widget.setRightButtons([
-				{type: "more", callback: () => {topMenuInstance.show();}}
-			]);
-		}
-
-		readAll()
-		{
-			BX.rest.callMethod('im.notify.read.all')
-				.then(result => {
-					console.log('im.notify.read.all result:', result);
-					BX.postWebEvent("onBeforeNotificationsReload", {});
-				})
-				.catch(error => {
-					console.log('im.notify.read.all error:', error);
-				})
-			;
-
-			BX.postComponentEvent('chatdialog::notification::readAll', [], 'im.recent');
-		};
 	}
 
 	window.Notify = new NotifyLegacy();

@@ -85,7 +85,7 @@ class ReplicateParams extends \Bitrix\Tasks\Item\Field\Scalar
 				{
 					return '';
 				}
-				$value = UI::formatDateTime(strtotime($value));
+				$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
 				return UI::checkDateTime($value);
 			}),
 			"END_DATE" => array('VALUE' => function($value)
@@ -94,7 +94,7 @@ class ReplicateParams extends \Bitrix\Tasks\Item\Field\Scalar
 				{
 					return '';
 				}
-				$value = UI::formatDateTime(strtotime($value));
+				$value = \Bitrix\Main\Type\DateTime::createFromUserTime($value)->toString();
 				return UI::checkDateTime($value);
 			}),
 			"NEXT_EXECUTION_TIME" => array('VALUE' => StructureChecker::TYPE_STRING, 'DEFAULT' => '')

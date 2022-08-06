@@ -10,14 +10,17 @@ use Bitrix\Timeman\Security\UserPermissionsManager;
 
 Loc::loadLanguageFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load([
+	'sidepanel',
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.alerts',
+	'ui.design-tokens',
+]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 
-CJSCore::Init(['sidepanel']);
 /** @var UserPermissionsManager $permissionsManager */
 $permissionsManager = $arResult['userPermissionsManager'];
 /** @var \Bitrix\Timeman\Form\Security\TaskForm $taskForm */

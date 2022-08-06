@@ -9,7 +9,8 @@ return array(
 	"js" => "/bitrix/js/crm/entity-editor/field/fieldset/dist/fieldset.bundle.js",
 	'rel' =>  [
 		'ui.entity-editor',
-		'fx'
+		'fx',
+		'ui.design-tokens',
 	],
 	'skip_core' => true,
 );

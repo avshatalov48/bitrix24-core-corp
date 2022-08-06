@@ -8,6 +8,7 @@ import { Button, ButtonColor } from 'ui.buttons';
 import { MessageBox } from 'ui.dialogs.messagebox';
 import { Popup } from "main.popup";
 import { ajax as Ajax, Loc, Tag, Text, Type } from 'main.core';
+import { EventEmitter } from 'main.core.events';
 import 'ui.forms';
 
 declare type CategorySelectResult = {
@@ -493,6 +494,15 @@ export class Converter
 
 		BX.onCustomEvent(window, "Crm.EntityConverter.Converted", [ this, eventArgs ]);
 		BX.localStorage.set("onCrmEntityConvert", eventArgs, 10);
+
+		this.getConfig().getItems().forEach((item) => {
+			if (item.isActive())
+			{
+				EventEmitter.emit('Crm.EntityConverter.SingleConverted', {
+					entityTypeName: BX.CrmEntityType.resolveName(item.getEntityTypeId()),
+				});
+			}
+		});
 
 		return eventArgs["isRedirected"];
 	}

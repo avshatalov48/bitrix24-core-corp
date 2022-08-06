@@ -24,6 +24,7 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 	{
 		$accessKey = substr($input['key'], 0 ,32);
 		$languageCode = substr($input['key'], 32, 2);
+		$input['key'] = 'hide-the-key-from-the-log';
 	}
 	else
 	{
@@ -108,10 +109,14 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 		$connection = $manager->getDatabaseConnection();
 		$connection->lock('biconnector_data', -1);
 		$comma = '';
+
 		$logId = $manager->startQuery(
 			$_GET['table']
 			,'*'
 			,\Bitrix\Main\Web\Json::encode($result['where'], JSON_UNESCAPED_UNICODE)
+			,\Bitrix\Main\Web\Json::encode($input, JSON_UNESCAPED_UNICODE)
+			,$_SERVER['REQUEST_METHOD']
+			,preg_replace('/(?:^|\\?|&)token=(.+?)(?:$|&)/', 'token=hide-the-key-from-the-log', $_SERVER['REQUEST_URI'])
 		);
 
 		$stmt = $connection->getResource()->prepare($result['sql']);

@@ -24,6 +24,7 @@ Extension::load([
 	'crm.type-model',
 	'main.loader',
 	'ui.layout-form',
+	'ui.design-tokens',
 ]);
 
 /** @var CBitrixComponentTemplate $this */

@@ -10,9 +10,16 @@ if (!CModule::IncludeModule('crm'))
 
 $CrmPerms = new CCrmPerms($USER->GetID());
 if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-	die("Permission denied");
+{
+	echo "Permission denied";
+	\Bitrix\Main\Application::getInstance()->end();
+}
+
 if (!check_bitrix_sessid())
-	die("ER".GetMessage("BPWC_WNC_EMPTY_SESSID")." [bsid=".bitrix_sessid().";]");
+{
+	echo "ER".GetMessage("BPWC_WNC_EMPTY_SESSID")." [bsid=".bitrix_sessid().";]";
+	\Bitrix\Main\Application::getInstance()->end();
+}
 
 $errorMessage = "";
 if ($_POST["LOGIN"] == '')

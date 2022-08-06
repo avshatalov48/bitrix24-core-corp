@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class TemplateTable
  *
@@ -7,13 +7,14 @@
 
 namespace Bitrix\Tasks\Internals\Task;
 
-use Bitrix\Main,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Main\Entity\EnumField;
 
 Loc::loadMessages(__FILE__);
 
+use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
 use Bitrix\Tasks\Util\UserField;
 
 /**
@@ -34,6 +35,12 @@ use Bitrix\Tasks\Util\UserField;
  */
 class TemplateTable extends Main\Entity\DataManager
 {
+
+	public static function getObjectClass()
+	{
+		return TemplateObject::class;
+	}
+
 	/**
 	 * Returns userfield entity code, to make userfields work with orm
 	 *

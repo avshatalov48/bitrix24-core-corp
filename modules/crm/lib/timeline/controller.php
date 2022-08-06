@@ -70,12 +70,6 @@ class Controller
 	}
 	public static function prepareAuthorInfoBulk(array &$items)
 	{
-		$userProfilePath = \COption::GetOptionString('crm', mb_strtolower('PATH_TO_USER_PROFILE'), '');
-		if($userProfilePath === '')
-		{
-			$userProfilePath = '/company/personal/user/#user_id#/';
-		}
-
 		$userMap = array();
 		foreach($items as $ID => &$item)
 		{
@@ -101,48 +95,23 @@ class Controller
 		if(!empty($userMap))
 		{
 			$userIDs = array_keys($userMap);
-			$dbResultUser = \CUser::GetList(
-				'id',
-				'asc',
-				array('ID' => implode('|', $userIDs)),
-				array('FIELDS' => array('ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'TITLE', 'PERSONAL_PHOTO'))
-			);
-
-			while($user = $dbResultUser->Fetch())
+			$users = Container::getInstance()->getUserBroker()->getBunchByIds($userIDs);
+			foreach ($users as $user)
 			{
 				$userID = (int)$user['ID'];
 
-				$userName = \CUser::FormatName(
-					\CSite::getNameFormat(), $user, true, false);
+				$userName = \CUser::FormatName(\CSite::getNameFormat(), $user, true, false);
 
 				foreach($userMap[$userID] as $ID)
 				{
 					$items[$ID]['AUTHOR'] = array(
 						'FORMATTED_NAME' => $userName,
-						'SHOW_URL' => \CComponentEngine::MakePathFromTemplate(
-							$userProfilePath,
-							array('user_id' => $userID)
-						)
+						'SHOW_URL' => (string)$user['SHOW_URL'],
 					);
-				}
 
-				$userPhoto = isset($user['PERSONAL_PHOTO']) ? $user['PERSONAL_PHOTO'] : '';
-				if(!($userPhoto !== '' && isset($userMap[$userID])))
-				{
-					continue;
-				}
-
-				$fileInfo = \CFile::ResizeImageGet(
-					$userPhoto,
-					array('width' => 63, 'height' => 63),
-					BX_RESIZE_IMAGE_EXACT
-				);
-
-				if(is_array($fileInfo) && isset($fileInfo['src']))
-				{
-					foreach($userMap[$userID] as $ID)
+					if (isset($user['PHOTO_URL']))
 					{
-						$items[$ID]['AUTHOR']['IMAGE_URL'] = $fileInfo['src'];
+						$items[$ID]['AUTHOR']['IMAGE_URL'] = (string)$user['PHOTO_URL'];
 					}
 				}
 			}

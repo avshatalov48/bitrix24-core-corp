@@ -41,6 +41,7 @@ export type ItemParams = {
 	id: number | string,
 	tmpId: string,
 	name: string,
+	groupId: number,
 	checkListComplete: number,
 	checkListAll: number,
 	attachedFilesCount: number,
@@ -61,7 +62,8 @@ export type ItemParams = {
 	isLinkedTask?: 'Y' | 'N',
 	parentTaskId?: number,
 	isSubTask?: 'Y' | 'N',
-	subTasksInfo?: SubTasksInfo
+	subTasksInfo?: SubTasksInfo,
+	isImportant?: 'Y' | 'N',
 };
 
 export class Item extends EventEmitter
@@ -93,6 +95,7 @@ export class Item extends EventEmitter
 	setItemParams(params: ItemParams)
 	{
 		this.setId(params.id);
+		this.setGroupId(params.groupId);
 		this.setTmpId(params.tmpId);
 		this.setSort(params.sort);
 		this.setEntityId(params.entityId);
@@ -108,8 +111,11 @@ export class Item extends EventEmitter
 		this.setCompleted(params.completed);
 		this.setDisableStatus(false);
 		this.setAllowedActions(params.allowedActions);
+		this.setImportant(params.isImportant);
 
 		this.shortView = 'Y';
+
+		this.decompositionMode = false;
 	}
 
 	static buildItem(params: ItemParams): Item
@@ -160,7 +166,11 @@ export class Item extends EventEmitter
 
 	setName(inputName: string)
 	{
-		const name = new Name(inputName, this.isCompleted());
+		const name = new Name({
+			name: inputName,
+			isCompleted: this.isCompleted(),
+			isImportant: this.isImportant()
+		});
 
 		if (this.name)
 		{
@@ -367,9 +377,19 @@ export class Item extends EventEmitter
 		}
 	}
 
-	getId()
+	getId(): number | string
 	{
 		return this.id;
+	}
+
+	setGroupId(id: number)
+	{
+		this.groupId = (Type.isInteger(id) ? parseInt(id, 10) : 0);
+	}
+
+	getGroupId(): number
+	{
+		return this.groupId;
 	}
 
 	setTmpId(tmpId: string)
@@ -465,6 +485,16 @@ export class Item extends EventEmitter
 	setAllowedActions(allowedActions: AllowedActions)
 	{
 		this.allowedActions = (Type.isPlainObject(allowedActions) ? allowedActions : {});
+	}
+
+	setImportant(isImportant: 'Y' | 'N')
+	{
+		this.important = (isImportant === 'Y');
+	}
+
+	isImportant(): boolean
+	{
+		return this.important;
 	}
 
 	setSubTasksInfo(subTasksInfo: ?SubTasksInfo)
@@ -719,20 +749,24 @@ export class Item extends EventEmitter
 	{
 		Dom.addClass(this.getNode(), '--open');
 
-		this.toggle.show();
-
-		this.getSubTasks().show();
+		this.getSubTasks()
+			.show()
+			.then(() => {
+				this.toggle.show();
+			})
+		;
 	}
 
 	hideSubTasks()
 	{
 		Dom.removeClass(this.getNode(), '--open');
 
-		this.toggle.hide();
-
-		this.getSubTasks().hide();
-
-		this.unDisableToggle();
+		this.getSubTasks()
+			.hide()
+			.then(() => {
+				this.toggle.hide();
+			})
+		;
 	}
 
 	cleanSubTasks()
@@ -743,6 +777,21 @@ export class Item extends EventEmitter
 	isShownSubTasks(): boolean
 	{
 		return this.getSubTasks().isShown();
+	}
+
+	activateDecompositionMode()
+	{
+		this.decompositionMode = true;
+	}
+
+	deactivateDecompositionMode()
+	{
+		this.decompositionMode = false;
+	}
+
+	isDecompositionMode(): boolean
+	{
+		return this.decompositionMode;
 	}
 
 	setParentEntity(entityId: number, entityType: string)
@@ -807,6 +856,11 @@ export class Item extends EventEmitter
 		if (this.isCompleted() !== tmpItem.isCompleted())
 		{
 			this.setCompleted(tmpItem.isCompleted() ? 'Y' : 'N');
+		}
+		if (this.isImportant() !== tmpItem.isImportant())
+		{
+			this.setImportant(tmpItem.isImportant() ? 'Y' : 'N');
+			this.setName(tmpItem.getName().getValue());
 		}
 
 		this.setParentTask(tmpItem.isParentTask() ? 'Y' : 'N');
@@ -1045,18 +1099,23 @@ export class Item extends EventEmitter
 			return;
 		}
 
-		if (this.responsibleDialog)
+		if (this.responsibleDialog && this.responsibleDialog.isOpen())
 		{
-			this.responsibleDialog.destroy();
+			this.responsibleDialog.hide();
 			this.responsibleDialog = null;
 
 			return;
 		}
 
+		const responsible = this.getResponsible().getValue();
+		const preselectedItems = responsible ? [['user' , responsible.id]] : [];
+
 		this.responsibleDialog = new Dialog({
 			targetNode: this.responsible.getNode(),
 			enableSearch: true,
 			context: 'TASKS',
+			dropdownMode: true,
+			preselectedItems: preselectedItems,
 			events: {
 				'Item:onSelect': (event) => {
 					this.responsibleDialog.hide();
@@ -1073,16 +1132,19 @@ export class Item extends EventEmitter
 			},
 			entities: [
 				{
-					id: 'user',
+					id: 'scrum-user',
 					options: {
-						inviteEmployeeLink: false
-					}
+						groupId: this.getGroupId()
+					},
+					dynamicLoad: true
 				},
 				{
 					id: 'department'
 				}
 			]
 		});
+
+		this.emit('onShowResponsibleDialog', this.responsibleDialog);
 
 		this.responsibleDialog.show();
 	}
@@ -1105,21 +1167,12 @@ export class Item extends EventEmitter
 
 	onShowToggle()
 	{
-		Dom.addClass(this.getNode(), '--open');
-
-		this.toggle.show();
-
 		this.emit('showSubTasks', this.getSubTasks());
 	}
 
 	onHideToggle()
 	{
 		this.hideSubTasks();
-	}
-
-	unDisableToggle()
-	{
-		this.toggle.unDisable();
 	}
 
 	hasNode(parentNode: HTMLElement | Array<HTMLElement>, searchNode: HTMLElement, skipParent = false): boolean

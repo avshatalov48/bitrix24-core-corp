@@ -1,7 +1,7 @@
 <?php
 return [
 	'cache',
-	'files',
+	'uploader/const',
 	'list/*',
 	'reload/listeners',
 	'task/checklist/uploader/constants',

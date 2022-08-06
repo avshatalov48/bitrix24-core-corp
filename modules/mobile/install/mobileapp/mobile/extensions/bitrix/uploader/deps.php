@@ -1,2 +1,2 @@
 <?php
-return ["db", "files", "uploader/sender"];
+return ["db", "files", "uploader/const", "uploader/sender"];

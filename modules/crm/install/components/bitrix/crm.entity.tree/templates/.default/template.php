@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Localization\Loc;
 
+\Bitrix\Main\UI\Extension::load('ui.design-tokens');
+
 if (!function_exists('CrmEntityTreeConvertDateTime'))
 {
 	/*

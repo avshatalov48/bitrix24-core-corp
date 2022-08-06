@@ -31,7 +31,6 @@ import {SourceCreationError, MethodNotImplemented} from './common/error';
 import ErrorPublisher from './common/errorpublisher';
 import Storage from './common/storage';
 
-import Limit from './common/limit';
 import Point from './common/point';
 
 import DistanceCalculator from './common/distancecalculator';
@@ -69,7 +68,6 @@ export {
 
 	ErrorPublisher,
 	Storage,
-	Limit,
 	Point,
 
 	DistanceCalculator

@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
@@ -9,13 +10,15 @@ IncludeModuleLangFile(__FILE__);
 
 class CCrmUserType
 {
-	protected $cUFM = null;
 	public $sEntityID = '';
+
+	protected $cUFM = null;
+	protected $options = [];
+	protected $fieldNamePrefix;
+
 	private $arFields = null;
 	/** @var array|null  */
 	private static $enumerationItems = [];
-	protected $options;
-	protected $fieldNamePrefix;
 
 	public function GetAbstractFields(?array $params = [])
 	{
@@ -108,11 +111,25 @@ class CCrmUserType
 
 	/**
 	 * @param array $options
+	 *
 	 * @return $this
 	 */
 	public function setOptions(array $options)
 	{
 		$this->options = $options;
+
+		return $this;
+	}
+
+	/**
+	 * @param array $option
+	 *
+	 * @return $this
+	 */
+	public function setOption(array $option)
+	{
+		$this->options = array_merge($this->options, $option);
+
 		return $this;
 	}
 
@@ -1659,7 +1676,7 @@ class CCrmUserType
 					$fl = (COption::GetOptionString("crm", "bp_version", 2) == 2);
 					$rsEnum = call_user_func_array(array($arUserField['USER_TYPE']['CLASS_NAME'], 'GetList'), array($arUserField));
 					while($ar = $rsEnum->GetNext())
-						$editable[$ar[$fl ? 'XML_ID' : 'ID']] = $ar['VALUE'];
+						$editable[$ar[$fl ? 'XML_ID' : 'ID']] = $ar['~VALUE'] ?? $ar['VALUE'];
 				}
 			}
 
@@ -2155,6 +2172,12 @@ class CCrmUserType
 					unset($fields[$ufieldName]);
 				}
 			}
+		}
+
+		if(!empty($fields) && isset($this->options['categoryId']))
+		{
+			$entityTypeId = CCrmOwnerType::ResolveIDByUFEntityID($this->sEntityID);
+			$fields = (new ItemCategoryUserField($entityTypeId))->filter($this->options['categoryId'], $fields);
 		}
 
 		return $fields;

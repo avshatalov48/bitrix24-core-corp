@@ -232,6 +232,41 @@ else
 		'ID' => 0
 	);
 
+	$request = \Bitrix\Main\Application::getInstance()->getContext()->getRequest();
+	if ($request->get("redirect") === "y" && !\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
+	{
+		$url = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+			\CCrmOwnerType::SmartInvoice, 0
+		);
+		if ($url)
+		{
+			$params = [];
+			if ($request->get("contact"))
+			{
+				$params['contact_id'] = $request->get("contact");
+			}
+			if ($request->get('company'))
+			{
+				$params['company_id'] = $request->get('company');
+			}
+			if ($request->get('external_context'))
+			{
+				$params['external_context'] = $request->get('external_context');
+			}
+			if ($request->get('call_list_id'))
+			{
+				$params['call_list_id'] = $request->get('call_list_id');
+			}
+			if ($request->get('call_list_element'))
+			{
+				$params['call_list_element'] = $request->get('call_list_element');
+			}
+			$url->addParams($params);
+			LocalRedirect($url->getLocator());
+			return;
+		}
+	}
+
 	if ($bCreateFromQuote)
 	{
 		$arFields['UF_QUOTE_ID'] = $quoteId;

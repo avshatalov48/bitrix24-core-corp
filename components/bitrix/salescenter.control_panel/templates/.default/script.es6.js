@@ -29,7 +29,7 @@ class ControlPanel
 		{
 			if (BX.SidePanel.Instance)
 			{
-				BX.SidePanel.Instance.bindAnchors({
+				BX.SidePanel.Instance.bindAnchors(top.BX.clone({
 					rules: [
 						{
 							condition: [
@@ -51,7 +51,7 @@ class ControlPanel
 							]
 						}
 					]
-				});
+				}));
 			}
 
 			var adminSidePanel = top.BX.adminSidePanel || BX.adminSidePanel;

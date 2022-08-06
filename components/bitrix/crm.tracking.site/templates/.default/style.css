@@ -43,7 +43,7 @@
 .crm-analytics-channel-field-input {
 	border: 1px solid #c6cdd3;
 	outline: none;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	color: #525c69;
 	padding: 9px 9px 10px;
 	width: 352px;
@@ -127,7 +127,7 @@
 
 .crm-tracking-site-hidden-value-inner {
 	background: #fff;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	border: 1px solid #c6cdd3;
 	color: #333;
 	font-size: 12px;

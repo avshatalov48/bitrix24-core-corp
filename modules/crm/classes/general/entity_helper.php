@@ -197,7 +197,14 @@ class CCrmEntityHelper
 
 		$itemIdentifier = new ItemIdentifier($entityTypeId, $entityId);
 
-		static::registerRelationEvents($itemIdentifier, $params);
+		$options = static::extractArrayFromParams($params, 'options');
+		$authorId = null;
+		if (isset($options['CURRENT_USER']) && (int)$options['CURRENT_USER'] > 0)
+		{
+			$authorId = (int)$options['CURRENT_USER'];
+		}
+
+		static::registerRelationEvents($itemIdentifier, $params, $authorId);
 
 		$isMarkEventRegistrationEnabled = (bool)($params['isMarkEventRegistrationEnabled'] ?? true);
 		if ($isMarkEventRegistrationEnabled)
@@ -206,7 +213,11 @@ class CCrmEntityHelper
 		}
 	}
 
-	protected static function registerRelationEvents(ItemIdentifier $itemIdentifier, array $params): void
+	protected static function registerRelationEvents(
+		ItemIdentifier $itemIdentifier,
+		array $params,
+		?int $authorId = null
+	): void
 	{
 		$options = static::extractArrayFromParams($params, 'options');
 		$excludeFromRelationRegistration = static::extractArrayFromParams($options, 'EXCLUDE_FROM_RELATION_REGISTRATION');
@@ -216,7 +227,8 @@ class CCrmEntityHelper
 			static::extractArrayFromParams($params, 'fieldsInfo'),
 			static::extractArrayFromParams($params, 'previousFields'),
 			static::extractArrayFromParams($params, 'currentFields'),
-			$excludeFromRelationRegistration
+			$excludeFromRelationRegistration,
+			$authorId,
 		);
 
 		$bindings = static::extractArrayFromParams($params, 'bindings');
@@ -233,12 +245,13 @@ class CCrmEntityHelper
 				(int)($bindings['entityTypeId'] ?? 0),
 				static::extractArrayFromParams($bindings, 'previous'),
 				$currentBindings,
-				$excludeFromRelationRegistration
+				$excludeFromRelationRegistration,
+				$authorId,
 			);
 		}
 	}
 
-	protected static function registerMarkEvent(ItemIdentifier $itemIdentifier, array $params): void
+	protected static function registerMarkEvent(ItemIdentifier $itemIdentifier, array $params, ?int $authorId = null): void
 	{
 		$fieldsInfo = static::extractArrayFromParams($params, 'fieldsInfo');
 
@@ -257,7 +270,8 @@ class CCrmEntityHelper
 		{
 			Timeline\MarkController::getInstance()->onItemMoveToFinalStage(
 				$itemIdentifier,
-				$currentSemantics
+				$currentSemantics,
+				$authorId,
 			);
 		}
 	}
@@ -301,17 +315,10 @@ class CCrmEntityHelper
 		bool $checkPermissions
 	): void
 	{
-		if (isset($options['CURRENT_USER']) && $options['CURRENT_USER'] > 0)
+		$context = clone \Bitrix\Crm\Service\Container::getInstance()->getContext();
+		if (isset($options['CURRENT_USER']) && (int)$options['CURRENT_USER'] > 0)
 		{
-			$context = new \Bitrix\Crm\Service\Context();
 			$context->setUserId((int)$options['CURRENT_USER']);
-
-			$globalScope = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getScope();
-			$context->setScope($globalScope);
-		}
-		else
-		{
-			$context = \Bitrix\Crm\Service\Container::getInstance()->getContext();
 		}
 		$operation->setContext($context);
 

@@ -1586,15 +1586,19 @@ class CCrmDocument
 
 	public static function CanUserOperateDocumentType($operation, $userId, $documentType, $arParameters = array())
 	{
-		$arDocumentID = static::GetDocumentInfo($documentType.'_0');
+		$arDocumentID = static::GetDocumentInfo($documentType . '_0');
 		if (empty($arDocumentID))
+		{
 			throw new CBPArgumentNullException('documentId');
+		}
 
 		$userId = intval($userId);
 		if (!array_key_exists('AllUserGroups', $arParameters))
 		{
 			if (!array_key_exists('UserGroups', $arParameters))
+			{
 				$arParameters['UserGroups'] = static::PrepareUserGroups($userId);
+			}
 
 			$arParameters['AllUserGroups'] = $arParameters['UserGroups'];
 			$arParameters['AllUserGroups'][] = 'Author';
@@ -1604,7 +1608,7 @@ class CCrmDocument
 		{
 			return true;
 		}
-		elseif(in_array(1, $arParameters['AllUserGroups']))
+		elseif (in_array(1, $arParameters['AllUserGroups']))
 		{
 			return true;
 		}
@@ -1612,7 +1616,10 @@ class CCrmDocument
 		$permissionEntity = static::ResolvePermissionEntity($arDocumentID, $arParameters);
 		$userPermissions = CCrmPerms::GetUserPermissions($userId);
 
-		if ($operation == \CBPCanUserOperateOperation::CreateWorkflow)
+		if (
+			$operation == \CBPCanUserOperateOperation::CreateWorkflow
+			|| $operation === CBPCanUserOperateOperation::DebugAutomation
+		)
 		{
 			return \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission($userPermissions);
 		}
@@ -1621,7 +1628,7 @@ class CCrmDocument
 		{
 			if (isset($arParameters['DocumentCategoryId']) && $arParameters['DocumentCategoryId'] > 0)
 			{
-				$documentType .= '_C'.$arParameters['DocumentCategoryId'];
+				$documentType .= '_C' . $arParameters['DocumentCategoryId'];
 			}
 
 			return \CCrmAuthorizationHelper::CheckAutomationCreatePermission($documentType, $userPermissions);
@@ -1633,6 +1640,7 @@ class CCrmDocument
 		{
 			return CCrmAuthorizationHelper::CheckReadPermission($permissionEntity, 0, $userPermissions);
 		}
+
 		return CCrmAuthorizationHelper::CheckCreatePermission($permissionEntity, $userPermissions);
 	}
 
@@ -2314,6 +2322,20 @@ class CCrmDocument
 		return CCrmOwnerType::GetCategoryCaption($typeId);
 	}
 
+	public static function getDocumentDetailUrl(array $parameterDocumentId, array $options = [])
+	{
+		[$entityTypeId, $id] = CCrmBizProcHelper::resolveEntityId($parameterDocumentId);
+		$categoryId = array_key_exists('categoryId', $options) ? $options['categoryId'] : null;
+
+		$url = \Bitrix\Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl($entityTypeId, $id, $categoryId);
+		if ($url === null)
+		{
+			return '';
+		}
+
+		return $url->getUri();
+	}
+
 	protected static function getSystemUserId()
 	{
 		return 0;
@@ -2406,7 +2428,11 @@ class CCrmDocument
 
 	private static function isResumeWorkflowAvailable($documentId, int $eventType): bool
 	{
-		if ($eventType === CBPDocumentEventType::Automation)
+		if ($eventType === CBPDocumentEventType::Debug)
+		{
+			return true;
+		}
+		elseif ($eventType === CBPDocumentEventType::Automation)
 		{
 			$documentInfo = static::GetDocumentInfo($documentId);
 			$entityTypeId = \CCrmOwnerType::ResolveID($documentInfo['TYPE']);

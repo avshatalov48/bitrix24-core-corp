@@ -27,6 +27,7 @@ use Bitrix\SalesCenter\Model\PageTable;
 class LandingManager extends Base
 {
 	public const SITE_TEMPLATE_CODE = 'store-chats-dark';
+	public const SITE_MAINPAGE_TEMPLATE_CODE = 'store-chats-dark/mainpage';
 
 	protected const OPTION_SALESCENTER_SITE_ID = '~connected_site_id';
 	protected const OPTION_SALESCENTER_INSTALL_DEFAULT_SITES_TRIES_COUNT = '~install_default_site_tries_count';
@@ -806,7 +807,7 @@ class LandingManager extends Base
 			return null;
 		}
 
-		return $this->getUrlInfoByOrder($order);
+		return $this->getUrlInfoByOrder($order, $urlParameters);
 	}
 
 	/**

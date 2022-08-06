@@ -13,9 +13,10 @@ class Title extends Field
 	{
 		$result = new FieldAfterSaveResult();
 
-		if (empty($item->get($this->getName())) && !empty($item->getTitlePlaceholder()))
+		$defaultTitle = $item->getTitlePlaceholder();
+		if (!empty($defaultTitle) && $this->isItemValueEmpty($item))
 		{
-			$result->setNewValue($this->getName(), $item->getTitlePlaceholder());
+			$result->setNewValue($this->getName(), $defaultTitle);
 		}
 
 		return $result;

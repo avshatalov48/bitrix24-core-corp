@@ -271,16 +271,28 @@ elseif($action === 'SAVE')
 		$clientData = array();
 	}
 
-	$createdEntities = array();
-	$updateEntityInfos = array();
+	$createdEntities = [];
+	$updateEntityInfos = [];
+	$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+		CCrmOwnerType::Contact,
+		$categoryID
+	);
 
 	if(isset($clientData['COMPANY_DATA']) && is_array($clientData['COMPANY_DATA']))
 	{
-		$companyIDs = array();
+		$companyIDs = [];
 		$companyData = $clientData['COMPANY_DATA'];
 		foreach($companyData as $companyItem)
 		{
 			$companyID = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
+			$categoryId = isset($companyItem['categoryId']) ? (int)$companyItem['categoryId'] : 0;
+
+			// unlikely situation but check in case of mismatch
+			if($categoryId !== $categoryParams[CCrmOwnerType::Company]['categoryId'])
+			{
+				__CrmContactDetailsEndJsonResonse(['ERROR' => 'INVALID CLIENT COMPANY CATEGORY ID!']);
+			}
+
 			if($companyID <= 0)
 			{
 				$companyID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
@@ -328,10 +340,14 @@ elseif($action === 'SAVE')
 		$fields['COMPANY_IDS'] = $companyIDs;
 		if(!empty($fields['COMPANY_IDS']))
 		{
-			$companyBindings = array();
-			foreach($fields['COMPANY_IDS'] as $companyID)
+			$companyBindings = [];
+			foreach ($fields['COMPANY_IDS'] as $companyID)
 			{
-				$companyBindings[] = array('ENTITY_TYPE_ID' => CCrmOwnerType::Company, 'ENTITY_ID' => $companyID);
+				$companyBindings[] = [
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+					'ENTITY_ID' => $companyID,
+					'CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId']
+				];
 			}
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
 				'crm.contact.details',
@@ -648,6 +664,11 @@ elseif($action === 'DELETE')
 }
 elseif($action === 'RENDER_IMAGE_INPUT')
 {
+	/**
+	 * @deprecated
+	 * @see \Bitrix\Crm\Controller\Action\Entity\RenderImageInputAction
+	 */
+
 	$ID = isset($_POST['ACTION_ENTITY_ID']) ? max((int)$_POST['ACTION_ENTITY_ID'], 0) : 0;
 	if(($ID > 0 && !\CCrmContact::CheckUpdatePermission($ID, $currentUserPermissions))
 		|| ($ID === 0 && !\CCrmContact::CheckCreatePermission($currentUserPermissions))
@@ -711,7 +732,11 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	if (!\CCrmContact::CheckReadPermission($ID))
 	{
-		__CrmDealDetailsEndJsonResonse(['ERROR' => 'Access denied.']);
+		__CrmContactDetailsEndJsonResonse(['ERROR' => 'Access denied.']);
+	}
+	if($ID > 0 && !\CCrmContact::Exists($ID))
+	{
+		__CrmContactDetailsEndJsonResonse(['ERROR' => Main\Localization\Loc::getMessage('CRM_CONTACT_NOT_FOUND')]);
 	}
 
 	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])

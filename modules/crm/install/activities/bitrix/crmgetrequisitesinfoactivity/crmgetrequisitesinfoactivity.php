@@ -36,6 +36,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		}
 
 		[$this->CrmEntityType, $this->CrmEntityId] = $this->defineCrmEntityWithRequisites();
+		$this->logRequisiteProperties();
 		$executionStatus = $this->assertProperties();
 		if ($executionStatus !== CBPActivityExecutionStatus::Executing)
 		{
@@ -50,6 +51,10 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		$requisite = $this->getPresetRequisiteFieldsValues($presetFieldIds, $requisiteSettings);
 		$bankDetail = $this->getPresetBankDetailFieldsValues($requisiteSettings, $requisite);
 
+		$debugValues = [
+			'RequisiteFields' => $requisite,
+			'BankDetailFields' => $bankDetail,
+		];
 		$this->arProperties = array_merge($this->arProperties, $requisite, $bankDetail);
 
 		if (
@@ -61,9 +66,11 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			$addresses = EntityRequisite::getAddresses($requisite['ID']);
 			if (array_key_exists($this->AddressTypeId, $addresses))
 			{
+				$debugValues['RequisiteFields'][EntityRequisite::ADDRESS] = $addresses;
 				$this->arProperties = array_merge($this->arProperties, $addresses[$this->AddressTypeId]);
 			}
 		}
+		$this->logRequisiteValues($debugValues);
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -103,30 +110,71 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		return [$entityTypeId, $entityId];
 	}
 
+	protected function logRequisiteProperties(): void
+	{
+		$debugValues = [
+			'CrmEntityType' => $this->CrmEntityType,
+			'RequisitePresetId' => $this->RequisitePresetId,
+			'AddressTypeId' => $this->AddressTypeId,
+			'CountryId' => $this->CountryId
+		];
+
+		$debugInfo = $this->getDebugInfo($debugValues);
+		$this->writeDebugInfo($debugInfo);
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return static::getPropertiesDialogMap();
+	}
+
+	protected function logRequisiteValues(array $requisiteValues): void
+	{
+		$requisiteFieldValues = $requisiteValues['RequisiteFields'];
+		$addressFieldValues = $requisiteValues['RequisiteFields'][EntityRequisite::ADDRESS][$this->AddressTypeId] ?? [];
+		unset($requisiteFieldValues['RequisiteFields'][EntityRequisite::ADDRESS]);
+		$countryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($this->RequisitePresetId);
+
+		$debugValues = array_merge($requisiteFieldValues, $addressFieldValues, $requisiteValues['BankDetailFields']);
+
+		$map = array_merge(
+			static::getRequisiteFieldsMap($countryId),
+			static::getUserFieldsMap(),
+			static::getAddressFieldsMap(),
+			static::getBankDetailMap(),
+		);
+
+		$this->writeDebugInfo($this->getDebugInfo($debugValues, array_intersect_key($map, $debugValues)));
+	}
+
 	protected function assertProperties(): int
 	{
 		if (EntityRequisite::checkEntityType($this->CrmEntityType) === false)
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_GRI_ENTITY_TYPE_ERROR'));
+			$this->WriteToTrackingService(GetMessage('CRM_GRI_ENTITY_TYPE_ERROR'), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
 		if ($this->CrmEntityId <= 0)
 		{
 			$entityName = CCrmOwnerType::ResolveName($this->CrmEntityType);
-			$this->WriteToTrackingService(GetMessage("CRM_GRI_{$entityName}_NOT_EXISTS"));
+			$this->WriteToTrackingService(GetMessage("CRM_GRI_{$entityName}_NOT_EXISTS"), 0, CBPTrackingType::Error);
 			return CBPActivityExecutionStatus::Closed;
 		}
 		if (self::isRequisitePresetExists($this->CrmEntityType, $this->CrmEntityId, $this->RequisitePresetId) === false)
 		{
 			$presetName = self::getPropertiesDialogMap()['RequisitePresetId']['Options'][$this->RequisitePresetId];
-			$this->WriteToTrackingService(GetMessage(
-				'CRM_GRI_REQUISITE_PRESET_NOT_EXIST',
-				array(
-					'#TEMPLATE#' => $presetName,
-					'#TYPE#' => GetMessage('CRM_GRI_ENTITY_' . CCrmOwnerType::ResolveName($this->CrmEntityType)),
-					'#ID#' => $this->CrmEntityId
-				)
-			));
+			$this->WriteToTrackingService(
+				GetMessage(
+					'CRM_GRI_REQUISITE_PRESET_NOT_EXIST',
+					[
+						'#TEMPLATE#' => $presetName,
+						'#TYPE#' => GetMessage('CRM_GRI_ENTITY_' . CCrmOwnerType::ResolveName($this->CrmEntityType)),
+						'#ID#' => $this->CrmEntityId,
+					]
+				),
+				0,
+				CBPTrackingType::Error
+			);
 			return CBPActivityExecutionStatus::Closed;
 		}
 		return CBPActivityExecutionStatus::Executing;
@@ -210,7 +258,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 			'siteId' => $siteId
 		]);
 
-		$map = self::getPropertiesDialogMap();
+		$map = static::getPropertiesDialogMap();
 		if ($documentType[2] === CCrmOwnerType::ContactName || $documentType[2] === CCrmOwnerType::CompanyName)
 		{
 			unset($map['CrmEntityType']);
@@ -234,7 +282,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 		$properties = self::getValues(
 			$documentType,
 			$documentService,
-			self::getPropertiesDialogMap(),
+			static::getPropertiesDialogMap(),
 			$currentValues,
 			$errors
 		);
@@ -258,7 +306,7 @@ class CBPCrmGetRequisitesInfoActivity extends CBPActivity
 
 	protected static function getReturnValuesMap(array $currentValues)
 	{
-		$map = self::getPropertiesDialogMap();
+		$map = static::getPropertiesDialogMap();
 		$fieldPresetId = $map['RequisitePresetId']['FieldName'];
 		$fieldAddressTypeId = $map['AddressTypeId']['FieldName'];
 

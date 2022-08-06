@@ -102,10 +102,8 @@ class TaskObject extends EO_Task
 	 */
 	public function toArray(): array
 	{
-		$fields = TaskTable::getEntity()->getFields();
-
-		$data = [];
-		foreach ($fields as $fieldName => $field)
+		$data = $this->collectValues();
+		foreach ($data as $fieldName => $field)
 		{
 			if (
 				$field instanceof Main\ORM\Fields\Relations\Reference
@@ -117,11 +115,14 @@ class TaskObject extends EO_Task
 				continue;
 			}
 
-			$data[$fieldName] = $this->get($fieldName);
-
 			if ($data[$fieldName] instanceof DateTime)
 			{
 				$data[$fieldName] = $data[$fieldName]->getTimestamp();
+			}
+
+			if (is_object($data[$fieldName]))
+			{
+				unset($data[$fieldName]);
 			}
 		}
 		return $data;

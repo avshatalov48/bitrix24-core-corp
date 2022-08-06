@@ -506,6 +506,13 @@ class DuplicateList
 				$result[] = $typeID;
 			}
 		}
+		foreach (DuplicateVolatileCriterion::getSupportedDedupeTypes() as $typeID)
+		{
+			if (($this->typeID & $typeID) !== 0)
+			{
+				$result[] = $typeID;
+			}
+		}
 		return $result;
 	}
 

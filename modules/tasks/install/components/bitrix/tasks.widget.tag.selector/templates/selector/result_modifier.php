@@ -33,5 +33,7 @@ foreach($arParams['DATA'] as $i => $item)
 
 $arResult['JS_DATA'] = array(
 	'data' => $arParams['DATA'],
+	'groupId' => $arResult['GROUP_ID'],
 	'taskId' => $arParams['TASK_ID'],
+	'isScrumTask' => $arResult['IS_SCRUM_TASK'],
 );

@@ -273,7 +273,7 @@ class CCrmCheckCorrectionDetailsComponent extends Crm\Component\EntityDetails\Ba
 				'title' => Loc::getMessage('CRM_COLUMN_CHECK_CORRECTION_DOCUMENT_DATE'),
 				'editable' => $this->entityID == 0,
 				'type' => 'datetime',
-				'data' => ['enableTime' => true],
+				'data' => ['enableTime' => false],
 				'required' => true
 			],
 			[

@@ -28,9 +28,7 @@ if ($arResult['CAN_WRITE'])
 {
 ?>
 <div class="pagetitle-container pagetitle-align-right-container <?=$pagetitleAlignRightContainer?>">
-		<div class="ui-btn-split ui-btn-primary">
-			<a href="<?=$arParams['DASHBOARD_ADD_URL']?>" class="ui-btn-main"><?=Loc::getMessage('CT_BBDL_TOOLBAR_ADD')?></a>
-		</div>
+	<a href="<?=$arParams['DASHBOARD_ADD_URL']?>" class="ui-btn ui-btn-primary"><?=Loc::getMessage('CT_BBDL_TOOLBAR_ADD')?></a>
 </div>
 <?php
 }
@@ -110,5 +108,5 @@ $APPLICATION->IncludeComponent(
 <?php
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {
-	$APPLICATION->IncludeComponent("bitrix:biconnector.limit.lock", "");
+	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '');
 }

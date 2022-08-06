@@ -184,6 +184,7 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 
 			$result[] = [
 				'ID' => $documentElementRaw['ID'],
+				'NAME' => $sku ? $sku->getName() : '',
 				'PRODUCT_ID' => $documentElementRaw['ELEMENT_ID'],
 				'QUANTITY' => $documentElementRaw['AMOUNT'],
 				'PRICE' => $documentElementRaw['PURCHASING_PRICE'],

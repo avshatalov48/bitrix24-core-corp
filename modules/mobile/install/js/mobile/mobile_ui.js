@@ -497,134 +497,157 @@
 
 			});
 		},
-		addLivefeedLongTapHandler: function (node, params)
+		addLivefeedLongTapHandler: function(node, params)
 		{
+			this.currentLivefeedTouchEndHandler = function()
+			{
+				this.livefeedTouchEndHandler(node);
+			}.bind(this);
+
 			BX.MobileApp.Gesture.addLongTapListener(node, function (targetNode)
 			{
-				var likeButtonNode = null;
+				node.addEventListener('touchend', this.currentLivefeedTouchEndHandler);
 
-				if (
-					typeof BXRL != 'undefined'
-					&& typeof BXRL.render != 'undefined'
-					&& BX.type.isNotEmptyString(params.likeNodeClass)
-				)
+				if (!this.showReactionsPopupByLogTap(targetNode, node, params))
 				{
-					if (BX.hasClass(targetNode, params.likeNodeClass))
-					{
-						likeButtonNode = targetNode;
-					}
-					else
-					{
-						likeButtonNode = BX.findParent(targetNode, { className: params.likeNodeClass}, node);
-					}
-
-					if (likeButtonNode)
-					{
-						var likeId = likeButtonNode.getAttribute('data-rating-vote-id');
-						if (BX.type.isNotEmptyString(likeId))
-						{
-							app.exec("callVibration");
-
-							BXRL.render.showReactionsPopup({
-								bindElement: likeButtonNode,
-								likeId: likeId
-							});
-						}
-					}
+					this.showCopyDialogByLongTap(targetNode, node, params);
 				}
-
-				if (!likeButtonNode)
-				{
-					var menuItems = [];
-
-					var highlightNode = BX.findParent(targetNode, { className: params.copyItemClass }, node);
-
-					if (highlightNode)
-					{
-						var textBlock = null;
-						if (BX.type.isNotEmptyString(params.copyTextClass))
-						{
-							var copyableBlock = BX.findChild(highlightNode, { className: params.copyTextClass }, true);
-							if (copyableBlock)
-							{
-								textBlock = copyableBlock;
-							}
-						}
-						else
-						{
-							textBlock = highlightNode;
-						}
-
-						if (textBlock)
-						{
-							BX.addClass(highlightNode, "long-tap-activate");
-
-							menuItems.push({
-								title: BX.message("MUI_COPY_TEXT"),
-								callback: function ()
-								{
-									var text = BX.MobileTools.getTextBlock(textBlock);
-									if (text !== null)
-									{
-										app.exec("copyToClipboard", {text: text});
-
-										(new BXMobileApp.UI.NotificationBar({
-											message: BX.message("MUI_TEXT_COPIED"),
-											color: "#3a3735",
-											textColor: "#ffffff",
-											groupId: "clipboard",
-											maxLines: 1,
-											align: "center",
-											isGlobal: true,
-											useCloseButton: true,
-											autoHideTimeout: 1000,
-											hideOnTap: true
-										}, "copy")).show();
-									}
-
-								}
-							});
-
-							setTimeout(function ()
-							{
-								BX.removeClass(highlightNode, "long-tap-activate");
-							}, 1000);
-						}
-					}
-
-					var menuItemsNode = null;
-					if (BX.hasClass(targetNode, 'mobile-longtap-menu'))
-					{
-						menuItemsNode = targetNode;
-					}
-					else
-					{
-						menuItemsNode = BX.findParent(targetNode, { className: 'mobile-longtap-menu'}, node);
-					}
-
-					if (menuItemsNode)
-					{
-						var menuEventName = menuItemsNode.getAttribute('bx-longtap-menu-eventname');
-						if (BX.type.isNotEmptyString(menuEventName))
-						{
-							BX.Event.EventEmitter.emit(menuEventName, {
-								targetNode: targetNode,
-								menuItems: menuItems
-							});
-						}
-					}
-
-					if (menuItems.length > 0)
-					{
-						(new BXMobileApp.UI.ActionSheet({
-							buttons: menuItems
-						}, "menudialog")).show();
-
-						app.exec("callVibration");
-					}
-				}
-			});
+			}.bind(this));
 		},
+
+		livefeedTouchEndHandler: function(node)
+		{
+			if (BX.Type.isDomNode(this.copyDialogHighlightNode))
+			{
+				BX.removeClass(this.copyDialogHighlightNode, "long-tap-activate");
+			}
+
+			node.removeEventListener('touchend', this.currentLivefeedTouchEndHandler);
+		},
+
+		showReactionsPopupByLogTap: function(targetNode, node, params)
+		{
+			var likeButtonNode = null;
+
+			if (
+				typeof BXRL != 'undefined'
+				&& !BX.Type.isUndefined(BXRL.render)
+				&& BX.Type.isStringFilled(params.likeNodeClass)
+			)
+			{
+				if (BX.hasClass(targetNode, params.likeNodeClass))
+				{
+					likeButtonNode = targetNode;
+				}
+				else
+				{
+					likeButtonNode = BX.findParent(targetNode, { className: params.likeNodeClass}, node);
+				}
+
+				if (likeButtonNode)
+				{
+					var likeId = likeButtonNode.getAttribute('data-rating-vote-id');
+					if (BX.type.isNotEmptyString(likeId))
+					{
+						app.exec("callVibration");
+
+						BXRL.render.showReactionsPopup({
+							bindElement: likeButtonNode,
+							likeId: likeId
+						});
+					}
+				}
+			}
+
+			return BX.Type.isDomNode(likeButtonNode);
+		},
+
+		showCopyDialogByLongTap: function (targetNode, node, params)
+		{
+			var menuItems = [];
+
+			this.copyDialogHighlightNode = BX.findParent(targetNode, { className: params.copyItemClass }, node);
+
+			if (this.copyDialogHighlightNode)
+			{
+				var textBlock = null;
+				if (BX.type.isNotEmptyString(params.copyTextClass))
+				{
+					var copyableBlock = BX.findChild(this.copyDialogHighlightNode, { className: params.copyTextClass }, true);
+					if (copyableBlock)
+					{
+						textBlock = copyableBlock;
+					}
+				}
+				else
+				{
+					textBlock = this.copyDialogHighlightNode;
+				}
+
+				if (textBlock)
+				{
+					BX.addClass(this.copyDialogHighlightNode, "long-tap-activate");
+
+					menuItems.push({
+						title: BX.message("MUI_COPY_TEXT"),
+						callback: function ()
+						{
+							var text = BX.MobileTools.getTextBlock(textBlock);
+							if (text !== null)
+							{
+								app.exec("copyToClipboard", {text: text});
+
+								(new BXMobileApp.UI.NotificationBar({
+									message: BX.message("MUI_TEXT_COPIED"),
+									color: "#3a3735",
+									textColor: "#ffffff",
+									groupId: "clipboard",
+									maxLines: 1,
+									align: "center",
+									isGlobal: true,
+									useCloseButton: true,
+									autoHideTimeout: 1000,
+									hideOnTap: true
+								}, "copy")).show();
+							}
+
+						}
+					});
+				}
+			}
+
+			var menuItemsNode = null;
+			if (BX.hasClass(targetNode, 'mobile-longtap-menu'))
+			{
+				menuItemsNode = targetNode;
+			}
+			else
+			{
+				menuItemsNode = BX.findParent(targetNode, { className: 'mobile-longtap-menu'}, node);
+			}
+
+			if (menuItemsNode)
+			{
+				var menuEventName = menuItemsNode.getAttribute('bx-longtap-menu-eventname');
+				if (BX.type.isNotEmptyString(menuEventName))
+				{
+					BX.Event.EventEmitter.emit(menuEventName, {
+						targetNode: targetNode,
+						menuItems: menuItems
+					});
+				}
+			}
+
+			if (menuItems.length > 0)
+			{
+				(new BXMobileApp.UI.ActionSheet({
+					buttons: menuItems
+				}, "menudialog")).show();
+
+				app.exec("callVibration");
+			}
+		},
+
 		/**
 		 * @type Window.BX.MobileUI.List {addListener:Function, show:Function}
 		 */

@@ -2,6 +2,7 @@ import {Event, Loc, Tag, Text, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
 import {Layout} from 'ui.sidepanel.layout';
+import {Confetti} from 'ui.confetti';
 
 import {RequestSender} from './request.sender';
 
@@ -99,7 +100,7 @@ export class SprintCompletionForm extends EventEmitter
 				width: 700,
 				contentCallback: () => {
 					return Layout.createContent({
-						extensions: ['ui.dialogs.messagebox', 'ui.confetti', 'tasks.scrum.sprint-completion-form'],
+						extensions: ['tasks.scrum.sprint-completion-form'],
 						title: Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_FORM_TITLE'),
 						content: this.createContent.bind(this),
 						design: {
@@ -138,9 +139,9 @@ export class SprintCompletionForm extends EventEmitter
 			direction: direction
 		})
 			.then((response) => {
-				if (top.BX.UI.Confetti)
+				if (Confetti)
 				{
-					top.BX.UI.Confetti.fire({
+					Confetti.fire({
 						particleCount: 400,
 						spread: 80,
 						origin: {
@@ -626,8 +627,8 @@ export class SprintCompletionForm extends EventEmitter
 	initHints(node: HTMLElement)
 	{
 		// todo wtf hint
-		top.BX.UI.Hint.popup = null;
-		top.BX.UI.Hint.id = 'ui-hint-popup-' + (+new Date());
-		top.BX.UI.Hint.init(node);
+		BX.UI.Hint.popup = null;
+		BX.UI.Hint.id = 'ui-hint-popup-' + (+new Date());
+		BX.UI.Hint.init(node);
 	}
 }

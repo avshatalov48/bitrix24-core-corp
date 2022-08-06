@@ -153,6 +153,7 @@ if ($isBitrix24Cloud)
 }
 
 $APPLICATION->IncludeComponent("bitrix:intranet.placement", "", array());
+$APPLICATION->IncludeComponent('bitrix:bizproc.debugger', '', []);
 ?>
 
 <?

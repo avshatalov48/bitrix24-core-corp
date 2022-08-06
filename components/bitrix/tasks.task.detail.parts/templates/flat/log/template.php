@@ -101,6 +101,24 @@ if (!function_exists('lambda_sgkrg457d_funcFormatForHumanMinutes') )
 	}
 }
 
+if (!function_exists('prepareUfCrmEntities'))
+{
+	function prepareUfCrmEntities(array $entities): string
+	{
+		$elements = [];
+
+		foreach ($entities as $entity)
+		{
+			[$type, $id] = explode('_', $entity);
+			$typeId = CCrmOwnerType::ResolveID($type);
+			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
+			$title = CCrmOwnerType::GetCaption($typeId, $id);
+			$elements[] = "<a href='{$url}'>{$title}</a>";
+		}
+
+		return implode(', ', $elements);
+	}
+}
 
 $logRecords = isset($arParams["TEMPLATE_DATA"]["DATA"]["TASK"]["SE_LOG"]) ? $arParams["TEMPLATE_DATA"]["DATA"]["TASK"]["SE_LOG"] : array();
 $groups = $arParams["TEMPLATE_DATA"]["DATA"]["GROUP"];
@@ -576,6 +594,18 @@ $trackedFields = CTaskLog::getTrackedFields();
 
 			case "ADD_IN_REPORT":
 				echo $record["FROM_VALUE"] == "Y" ? Loc::getMessage("TASKS_SIDEBAR_IN_REPORT_YES") : Loc::getMessage("TASKS_SIDEBAR_IN_REPORT_NO")?><span class="task-log-arrow">&rarr;</span><? echo $record["TO_VALUE"] == "Y" ? Loc::getMessage("TASKS_SIDEBAR_IN_REPORT_YES") : Loc::getMessage("TASKS_SIDEBAR_IN_REPORT_NO");
+				break;
+
+			case "UF_CRM_TASK_ADDED":
+				$added = array_filter(explode(',', $record['TO_VALUE']));
+				sort($added);
+				echo prepareUfCrmEntities($added);
+				break;
+
+			case "UF_CRM_TASK_DELETED":
+				$deleted = array_filter(explode(',', $record['FROM_VALUE']));
+				sort($deleted);
+				echo prepareUfCrmEntities($deleted);
 				break;
 
 			default:

@@ -70,6 +70,7 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 			{
 				throw "BX.CrmNewEntityCounterPanel: Could not find valueContainer.";
 			}
+			BX.Dom.clean(this._counterContainer);
 
 			this._serviceUrl = BX.prop.getString(this._settings, "serviceUrl", "");
 			if(this._serviceUrl === "")

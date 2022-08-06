@@ -2,6 +2,7 @@
 $MESS["CRM_ACTION_DEFAULT_SUBJECT"] = "Neue Aktivität (#DATE#)";
 $MESS["CRM_ACTIVITY_COULD_NOT_CREATE_POSTING"] = "Die E-Mail-Nachricht konnte nicht registriert werden.";
 $MESS["CRM_ACTIVITY_COULD_NOT_SAVE_POSTING_FILE"] = "Die Datei \"#FILE_NAME#\" konnte zur Nachricht nicht angehängt werden.";
+$MESS["CRM_ACTIVITY_EDITOR_MAIL_MODULE_NOT_INSTALLED"] = "Das Modul Mail ist nicht installiert.";
 $MESS["CRM_ACTIVITY_EMAIL_BLACKLISTED"] = "E-Mail-Nachricht abgebrochen. Die folgenden Adressen sind in der %link_start% Sperrliste %link_end%: %emails%";
 $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Erstellung einer E-Mail-Nachricht wurde abgebrochen.";
 $MESS["CRM_ACTIVITY_EMAIL_EMPTY_FROM_FIELD"] = "Geben Sie bitte den Absender an.";
@@ -24,6 +25,7 @@ $MESS["CRM_INCOMING_CALL_ACTION_DEFAULT_SUBJECT_EXT"] = "Eingehender Anruf #TITL
 $MESS["CRM_LEAD_UPDATE_PERMISSION_DENIED"] = "Sie sind nicht berechtigt, Aktivitäten des Leads #TITLE#\" zu bearbeiten. Wenden Sie sich bitte an Ihren Intranet-Administrator.";
 $MESS["CRM_MEETING_ACTION_DEFAULT_SUBJECT"] = "Neuer Termin (#DATE#)";
 $MESS["CRM_MEETING_ACTION_DEFAULT_SUBJECT_EXT"] = "Termin mit #TITLE#";
+$MESS["CRM_MESSAGE_NEW_TARIFF_RESTRICTION"] = "Die Einschränkungen Ihres aktuellen Tarifs:<br/>\"An\", \"CC\", \"BBC\" - #COUNT# E-Mail (Empfänger)";
 $MESS["CRM_OUTGOING_CALL_ACTION_DEFAULT_SUBJECT_EXT"] = "Ausgehender Anruf #TITLE#";
 $MESS["CRM_PERMISSION_DENIED"] = "Zugriff verweigert";
 $MESS["CRM_TITLE_EMAIL_FROM"] = "Von";

@@ -1,3 +1,5 @@
+import {BaseEvent} from 'main.core.events';
+
 const Error = {
 	props: {
 		error: {
@@ -8,11 +10,11 @@ const Error = {
 	methods: {
 		openSlider()
 		{
-			this.error.fixer().then(() => this.onConfigure())
+			this.error.fixer().then(() => this.onConfigure(this.error))
 		},
-		onConfigure()
+		onConfigure(data)
 		{
-			this.$emit('on-configure');
+			this.$emit('on-configure', new BaseEvent({data}));
 		}
 	},
 	template: `

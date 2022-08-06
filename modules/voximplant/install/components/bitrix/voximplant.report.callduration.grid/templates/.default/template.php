@@ -5,7 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)	die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(["ui.icons", "ui.hint"]);
+Extension::load(["ui.icons", "ui.hint", "ui.fonts.opensans"]);
 
 $rows = [];
 

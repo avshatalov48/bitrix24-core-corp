@@ -113,14 +113,33 @@ class Item extends UserField\Internal\Item implements \JsonSerializable
 	 */
 	public function getAssignedById()
 	{
-		$value = parent::getAssignedById();
-		if(mb_strpos($value, '[') === 0)
+		return $this->resolveAssignedById(parent::getAssignedById());
+	}
+
+	public function remindActualAssignedById()
+	{
+		return $this->resolveAssignedById(parent::remindActualAssignedById());
+	}
+
+	private function resolveAssignedById($assignedById)
+	{
+		// multiple assigned, return as it is
+		if (is_array($assignedById))
 		{
-			$value = Json::decode($value);
-			return reset($value);
+			return $assignedById;
 		}
 
-		return $value;
+		// in case multiple assigned is disabled, but there are serialized values that we put in the DB before disabling
+		if (mb_strpos($assignedById, '[') === 0)
+		{
+			$deserializedValues = Json::decode($assignedById);
+
+			$assignedById = array_shift($deserializedValues);
+		}
+
+		// since value is stored in string field, we have to typecast it manually
+		// other entity types return int in similar methods, code don't expect to get a string
+		return is_numeric($assignedById) ? (int)$assignedById : null;
 	}
 
 	/**

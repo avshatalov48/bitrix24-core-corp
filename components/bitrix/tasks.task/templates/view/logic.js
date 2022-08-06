@@ -103,7 +103,11 @@ BX.namespace('Tasks.Component');
 		}
 
 		var checkListSlider = BX.Tasks.CheckListInstance.optionManager.slider;
-		if (!checkListSlider || checkListSlider !== event.getSlider())
+		if (
+			!checkListSlider
+			|| checkListSlider !== event.getSlider()
+			|| !this.isChecklistSidePanel(checkListSlider.getUrl())
+		)
 		{
 			return;
 		}
@@ -127,6 +131,25 @@ BX.namespace('Tasks.Component');
 		event.denyAction();
 		this.showChecklistCloseSliderPopup(checkListSlider);
 	};
+
+	BX.Tasks.Component.TaskView.prototype.isChecklistSidePanel = function(sidePanelUrl)
+	{
+		var isChecklistSidePanel = false;
+
+		var availableRules = [
+			new RegExp('/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/', 'i'),
+			new RegExp('/workgroups/group/(\\d+)/tasks/task/view/(\\d+)/', 'i'),
+			new RegExp('/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/', 'i'),
+		];
+		availableRules.forEach(function (rule) {
+			if (sidePanelUrl.match(rule))
+			{
+				isChecklistSidePanel = true;
+			}
+		});
+
+		return isChecklistSidePanel;
+	}
 
 	BX.Tasks.Component.TaskView.prototype.showChecklistCloseSliderPopup = function(checkListSlider)
 	{

@@ -3844,6 +3844,17 @@ if(typeof(BX.CrmEntityInfo) === "undefined")
 				this._settings["title"] = title;
 			}
 		},
+		getCategoryId: function()
+		{
+			return BX.prop.getInteger(this._settings, "categoryId", "");
+		},
+		setCategoryId: function(categoryId)
+		{
+			if(BX.type.isInteger(categoryId))
+			{
+				this._settings["categoryId"] = categoryId;
+			}
+		},
 		getDescription: function()
 		{
 			return BX.prop.getString(this._settings, "desc", "");

@@ -4,7 +4,7 @@ this.BX.Crm = this.BX.Crm || {};
 	'use strict';
 
 	/** @memberof BX.Crm.Timeline.Types */
-	var Item = {
+	const Item = {
 	  undefined: 0,
 	  activity: 1,
 	  creation: 2,
@@ -30,7 +30,7 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	/** @memberof BX.Crm.Timeline.Types */
 
-	var Mark = {
+	const Mark = {
 	  undefined: 0,
 	  waiting: 1,
 	  success: 2,
@@ -40,7 +40,7 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	/** @memberof BX.Crm.Timeline.Types */
 
-	var Delivery = {
+	const Delivery = {
 	  undefined: 0,
 	  taxiEstimationRequest: 1,
 	  taxiCallRequest: 2,
@@ -54,12 +54,12 @@ this.BX.Crm = this.BX.Crm || {};
 	};
 	/** @memberof BX.Crm.Timeline.Types */
 
-	var Order = {
+	const Order = {
 	  encourageBuyProducts: 100
 	};
 	/** @memberof BX.Crm.Timeline.Types */
 
-	var EditorMode = {
+	const EditorMode = {
 	  view: 1,
 	  edit: 2
 	};
@@ -74,7 +74,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline */
 
-	var Item$1 = /*#__PURE__*/function () {
+	let Item$1 = /*#__PURE__*/function () {
 	  function Item$$1() {
 	    babelHelpers.classCallCheck(this, Item$$1);
 	    this._id = "";
@@ -178,7 +178,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "hasPermissions",
 	    value: function hasPermissions() {
-	      var entityData = this.getAssociatedEntityData();
+	      const entityData = this.getAssociatedEntityData();
 	      return BX.type.isPlainObject(entityData["PERMISSIONS"]);
 	    }
 	  }, {
@@ -282,9 +282,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      /**/
 
 	      this.prepareActions();
-	      var actionQty = this._actions.length;
+	      const actionQty = this._actions.length;
 
-	      for (var i = 0; i < actionQty; i++) {
+	      for (let i = 0; i < actionQty; i++) {
 	        this._actions[i].layout();
 	      }
 
@@ -303,7 +303,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return null;
 	      }
 
-	      var app = new this._vueComponent({
+	      const app = new this._vueComponent({
 	        propsData: {
 	          self: this,
 	          langMessages: Item$$1.messages,
@@ -331,7 +331,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "refreshLayout",
 	    value: function refreshLayout() {
-	      var anchor = this._wrapper.previousSibling;
+	      const anchor = this._wrapper.previousSibling;
 	      this._wrapper = BX.remove(this._wrapper);
 	      this._playerWrappers = {};
 	      this.layout({
@@ -406,8 +406,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return text;
 	      }
 
-	      var offset = length - 1;
-	      var whilespaceOffset = text.substring(offset).search(/\s/i);
+	      let offset = length - 1;
+	      const whilespaceOffset = text.substring(offset).search(/\s/i);
 
 	      if (whilespaceOffset > 0) {
 	        offset += whilespaceOffset;
@@ -426,8 +426,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return [BX.util.htmlspecialchars(text).replace(/(?:\r\n|\r|\n)/g, '<br>')];
 	      }
 
-	      var offset = length - 1;
-	      var whilespaceOffset = text.substring(offset).search(/\s/i);
+	      let offset = length - 1;
+	      const whilespaceOffset = text.substring(offset).search(/\s/i);
 
 	      if (whilespaceOffset > 0) {
 	        offset += whilespaceOffset;
@@ -455,8 +455,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return [BX.util.htmlspecialchars(text)];
 	      }
 
-	      var offset = length - 1;
-	      var whilespaceOffset = text.substring(offset).search(/\s/i);
+	      let offset = length - 1;
+	      const whilespaceOffset = text.substring(offset).search(/\s/i);
 
 	      if (whilespaceOffset > 0) {
 	        offset += whilespaceOffset;
@@ -476,19 +476,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareAuthorLayout",
 	    value: function prepareAuthorLayout() {
-	      var authorInfo = this.getObjectDataParam("AUTHOR", null);
+	      const authorInfo = this.getObjectDataParam("AUTHOR", null);
 
 	      if (!authorInfo) {
 	        return null;
 	      }
 
-	      var showUrl = BX.prop.getString(authorInfo, "SHOW_URL", "");
+	      const showUrl = BX.prop.getString(authorInfo, "SHOW_URL", "");
 
 	      if (showUrl === "") {
 	        return null;
 	      }
 
-	      var link = BX.create("A", {
+	      const link = BX.create("A", {
 	        attrs: {
 	          className: "ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee",
 	          href: showUrl,
@@ -497,7 +497,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [BX.create('i', {})]
 	      });
-	      var imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
+	      const imageUrl = BX.prop.getString(authorInfo, "IMAGE_URL", "");
 
 	      if (imageUrl !== "") {
 	        link.children[0].style.backgroundImage = "url('" + imageUrl + "')";
@@ -539,7 +539,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "openContextMenu",
 	    value: function openContextMenu() {
-	      var menuItems = this.prepareContextMenuItems();
+	      const menuItems = this.prepareContextMenuItems();
 
 	      if (typeof IntranetExtensions !== "undefined") {
 	        menuItems.push(IntranetExtensions);
@@ -603,7 +603,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Item$$1.messages;
+	      const m = Item$$1.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
@@ -626,7 +626,7 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(Item$1, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Animation */
-	var Fasten = /*#__PURE__*/function () {
+	let Fasten = /*#__PURE__*/function () {
 	  function Fasten() {
 	    babelHelpers.classCallCheck(this, Fasten);
 	    this._id = "";
@@ -659,7 +659,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addFixedHistoryItem",
 	    value: function addFixedHistoryItem() {
-	      var node = this._finalItem.getWrapper();
+	      const node = this._finalItem.getWrapper();
 
 	      BX.addClass(node, 'crm-entity-stream-section-animate-start');
 
@@ -674,16 +674,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "run",
 	    value: function run() {
-	      var node = this._initialItem.getWrapper();
+	      const node = this._initialItem.getWrapper();
 
 	      this._clone = node.cloneNode(true);
 	      BX.addClass(this._clone, 'crm-entity-stream-section-animate-start crm-entity-stream-section-top-fixed');
 	      this._startPosition = BX.pos(node);
 	      this._clone.style.position = "absolute";
 	      this._clone.style.width = this._startPosition.width + "px";
-	      var _cloneHeight = this._startPosition.height;
-	      var _minHeight = 65;
-	      var _sumPaddingContent = 18;
+	      let _cloneHeight = this._startPosition.height;
+	      const _minHeight = 65;
+	      const _sumPaddingContent = 18;
 	      if (_cloneHeight < _sumPaddingContent + _minHeight) _cloneHeight = _sumPaddingContent + _minHeight;
 	      this._clone.style.height = _cloneHeight + "px";
 	      this._clone.style.top = this._startPosition.top + "px";
@@ -694,25 +694,25 @@ this.BX.Crm = this.BX.Crm || {};
 	        BX.addClass(this._clone, "crm-entity-stream-section-casper");
 	      }, this), 0);
 	      this._anchorPosition = BX.pos(this._anchor);
-	      var finish = {
+	      const finish = {
 	        top: this._anchorPosition.top,
 	        height: _cloneHeight + 15,
 	        opacity: 1
 	      };
 
-	      var _difference = this._startPosition.top - this._anchorPosition.bottom;
+	      const _difference = this._startPosition.top - this._anchorPosition.bottom;
 
-	      var _deepHistoryLimit = 2 * (document.body.clientHeight + this._startPosition.height);
+	      const _deepHistoryLimit = 2 * (document.body.clientHeight + this._startPosition.height);
 
 	      if (_difference > _deepHistoryLimit) {
 	        finish.top = this._startPosition.top - _deepHistoryLimit;
 	        finish.opacity = 0;
 	      }
 
-	      var _duration = Math.abs(finish.top - this._startPosition.top) * 2;
+	      let _duration = Math.abs(finish.top - this._startPosition.top) * 2;
 
 	      _duration = _duration < 1500 ? 1500 : _duration;
-	      var movingEvent = new BX.easing({
+	      const movingEvent = new BX.easing({
 	        duration: _duration,
 	        start: {
 	          top: this._startPosition.top,
@@ -746,7 +746,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Fasten();
+	      const self = new Fasten();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -756,7 +756,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var History = /*#__PURE__*/function (_Item) {
+	let History = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(History, _Item);
 
 	  function History() {
@@ -807,7 +807,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getCreatedTime",
 	    value: function getCreatedTime() {
 	      if (this._createdTime === null) {
-	        var time = BX.parseDate(this.getCreatedTimestamp(), false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	        const time = BX.parseDate(this.getCreatedTimestamp(), false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
 	        this._createdTime = new Date(time.getTime() + 1000 * Item$1.getUserTimezoneOffset());
 	      }
 
@@ -846,10 +846,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isDone",
 	    value: function isDone() {
-	      var typeId = this.getTypeId();
+	      const typeId = this.getTypeId();
 
 	      if (typeId === Item.activity) {
-	        var entityData = this.getAssociatedEntityData();
+	        const entityData = this.getAssociatedEntityData();
 	        return BX.CrmActivityStatus.isFinal(BX.prop.getInteger(entityData, "STATUS", 0));
 	      }
 
@@ -906,7 +906,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (!this.isFixed()) {
 	        this._data.IS_FIXED = 'Y';
 
-	        var fixedItem = this._fixedHistory.createItem(this._data);
+	        const fixedItem = this._fixedHistory.createItem(this._data);
 
 	        fixedItem._isFixed = true;
 
@@ -916,7 +916,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          add: false
 	        });
 	        this.refreshLayout();
-	        var animation = Fasten.create("", {
+	        const animation = Fasten.create("", {
 	          initialItem: this,
 	          finalItem: fixedItem,
 	          anchor: this._fixedHistory._anchor
@@ -951,8 +951,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onSuccessUnfasten",
 	    value: function onSuccessUnfasten(result) {
 	      if (BX.type.isNotEmptyString(result.ERROR)) return;
-	      var item;
-	      var historyItem;
+	      let item;
+	      let historyItem;
 
 	      if (this.isFixed()) {
 	        item = this;
@@ -963,7 +963,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (item) {
-	        var index = this._fixedHistory.getItemIndex(item);
+	        const index = this._fixedHistory.getItemIndex(item);
 
 	        item.clearAnimate();
 
@@ -980,8 +980,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "clearAnimate",
 	    value: function clearAnimate() {
 	      if (!BX.type.isDomNode(this._wrapper)) return;
-	      var wrapperPosition = BX.pos(this._wrapper);
-	      var hideEvent = new BX.easing({
+	      const wrapperPosition = BX.pos(this._wrapper);
+	      const hideEvent = new BX.easing({
 	        duration: 1000,
 	        start: {
 	          height: wrapperPosition.height,
@@ -1023,7 +1023,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapperClassName = this.getWrapperClassName();
+	      let wrapperClassName = this.getWrapperClassName();
 
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history" + " " + wrapperClassName;
@@ -1031,7 +1031,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
 	      }
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
@@ -1041,7 +1041,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: this.getIconClassName()
 	        }
 	      }));
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -1052,7 +1052,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
@@ -1084,7 +1084,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.prepareContentDetails()
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -1096,14 +1096,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareLayout",
 	    value: function prepareLayout(options) {
-	      var vueComponent = this.makeVueComponent(options, 'history');
+	      const vueComponent = this.makeVueComponent(options, 'history');
 	      this._wrapper = vueComponent ? vueComponent : this.prepareContent();
 
 	      if (this._wrapper) {
-	        var enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
+	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
 
 	        if (enableAdd) {
-	          var anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
+	          const anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
 
 	          if (anchor && anchor.nextSibling) {
 	            this._container.insertBefore(this._wrapper, anchor.nextSibling);
@@ -1134,7 +1134,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareFixedSwitcherLayout",
 	    value: function prepareFixedSwitcherLayout() {
-	      var isFixed = this.getTextDataParam("IS_FIXED") === 'Y';
+	      const isFixed = this.getTextDataParam("IS_FIXED") === 'Y';
 	      this._switcher = BX.create("span", {
 	        attrs: {
 	          className: "crm-entity-stream-section-top-fixed-btn"
@@ -1146,12 +1146,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (isFixed) BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-active");
 
 	      if (!this.isReadOnly() && !isFixed) {
-	        var manager = this._history.getManager();
+	        const manager = this._history.getManager();
 
 	        if (!manager.isSpotlightShowed()) {
 	          manager.setSpotlightShowed();
 	          BX.addClass(this._switcher, "crm-entity-stream-section-top-fixed-btn-spotlight");
-	          var spotlight = new BX.SpotLight({
+	          const spotlight = new BX.SpotLight({
 	            targetElement: this._switcher,
 	            targetVertex: "middle-center",
 	            lightMode: false,
@@ -1171,7 +1171,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -1202,7 +1202,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new History();
+	      const self = new History();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -1213,19 +1213,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
-	      var start = new Date();
+	      let start = new Date();
 	      start.setHours(0);
 	      start.setMinutes(0);
 	      start.setSeconds(0);
 	      start.setMilliseconds(0);
 	      start = start.getTime();
-	      var end = new Date();
+	      let end = new Date();
 	      end.setHours(23);
 	      end.setMinutes(59);
 	      end.setSeconds(59);
 	      end.setMilliseconds(999);
 	      end = end.getTime();
-	      var time = deadline.getTime();
+	      const time = deadline.getTime();
 	      return time < start || time >= start && time <= end;
 	    }
 	  }]);
@@ -1244,23 +1244,28 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  computed: {
-	    data: function data() {
+	    data() {
 	      return this.self._data;
 	    },
-	    fields: function fields() {
+
+	    fields() {
 	      return this.data.FIELDS ? this.data.FIELDS : null;
 	    },
-	    author: function author() {
+
+	    author() {
 	      return this.data.AUTHOR ? this.data.AUTHOR : null;
 	    },
-	    createdAt: function createdAt() {
+
+	    createdAt() {
 	      return this.self instanceof History ? this.self.formatTime(this.self.getCreatedTime()) : '';
 	    }
+
 	  },
 	  methods: {
-	    getLangMessage: function getLangMessage(key) {
+	    getLangMessage(key) {
 	      return this.langMessages.hasOwnProperty(key) ? this.langMessages[key] : key;
 	    }
+
 	  }
 	};
 
@@ -1280,9 +1285,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  methods: {
-	    addProductToDeal: function addProductToDeal() {
-	      var _this = this;
-
+	    addProductToDeal() {
 	      if (this.product.isInDeal) {
 	        return;
 	      }
@@ -1297,15 +1300,15 @@ this.BX.Crm = this.BX.Crm || {};
 	            price: this.product.price
 	          }
 	        }
-	      }).then(function (result) {
-	        _this.$emit('product-added-to-deal');
-
-	        _this.product.isInDeal = true;
-	      })["catch"](function (result) {
-	        _this.product.isInDeal = false;
+	      }).then(result => {
+	        this.$emit('product-added-to-deal');
+	        this.product.isInDeal = true;
+	      }).catch(result => {
+	        this.product.isInDeal = false;
 	      });
 	    },
-	    openDetailPage: function openDetailPage() {
+
+	    openDetailPage() {
 	      if (BX.type.isNotEmptyString(this.product.adminLink)) {
 	        var _this$product;
 
@@ -1316,21 +1319,26 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }
 	    }
+
 	  },
 	  computed: {
-	    isBottomAreaVisible: function isBottomAreaVisible() {
+	    isBottomAreaVisible() {
 	      return this.isVariationInfoVisible || this.isPriceVisible;
 	    },
-	    isVariationInfoVisible: function isVariationInfoVisible() {
+
+	    isVariationInfoVisible() {
 	      return this.product.hasOwnProperty('variationInfo') && this.product.variationInfo;
 	    },
-	    isPriceVisible: function isPriceVisible() {
+
+	    isPriceVisible() {
 	      return this.product.hasOwnProperty('price') && this.product.hasOwnProperty('currency') && this.product.price && this.product.currency;
 	    },
-	    price: function price() {
+
+	    price() {
 	      return BX.Currency.currencyFormat(this.product.price, this.product.currency, true);
 	    },
-	    imageStyle: function imageStyle() {
+
+	    imageStyle() {
 	      if (!this.product.image) {
 	        return {};
 	      }
@@ -1339,24 +1347,70 @@ this.BX.Crm = this.BX.Crm || {};
 	        backgroundImage: 'url(' + this.product.image + ')'
 	      };
 	    },
-	    buttonText: function buttonText() {
+
+	    buttonText() {
 	      return main_core.Loc.getMessage(this.product.isInDeal ? 'CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCT_IN_DEAL' : 'CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ADD_PRODUCT_TO_DEAL');
 	    }
+
 	  },
-	  template: "\n\t\t<li\n\t\t\t:class=\"{'crm-entity-stream-advice-list-item--active': product.isInDeal}\"\n\t\t\tclass=\"crm-entity-stream-advice-list-item\"\n\t\t>\t\n\t\t\t<div class=\"crm-entity-stream-advice-list-content\">\n\t\t\t\t<div\t\n\t\t\t\t\t:style=\"imageStyle\"\n\t\t\t\t\tclass=\"crm-entity-stream-advice-list-icon\"\n\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-advice-list-inner\">\n\t\t\t\t\t<a\n\t\t\t\t\t\t@click.prevent=\"openDetailPage\"\n\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-name\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{product.name}}\n\t\t\t\t\t</a>\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"isBottomAreaVisible\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-desc-box\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"isVariationInfoVisible\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-desc-name\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{product.variationInfo}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"isPriceVisible\"\n\t\t\t\t\t\t\tv-html=\"price\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-advice-list-desc-value\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div v-if=\"isAddToDealVisible\" class=\"crm-entity-stream-advice-list-btn-box\">\t\t\t\t\n\t\t\t\t<button\n\t\t\t\t\t@click=\"addProductToDeal\"\n\t\t\t\t\tclass=\"ui-btn ui-btn-round ui-btn-xs crm-entity-stream-advice-list-btn\"\n\t\t\t\t>\n\t\t\t\t\t{{buttonText}}\n\t\t\t\t</button>\n\t\t\t</div>\n\t\t</li>\n\t"
+	  template: `
+		<li
+			:class="{'crm-entity-stream-advice-list-item--active': product.isInDeal}"
+			class="crm-entity-stream-advice-list-item"
+		>	
+			<div class="crm-entity-stream-advice-list-content">
+				<div	
+					:style="imageStyle"
+					class="crm-entity-stream-advice-list-icon"
+				>
+				</div>
+				<div class="crm-entity-stream-advice-list-inner">
+					<a
+						@click.prevent="openDetailPage"
+						href="#"
+						class="crm-entity-stream-advice-list-name"
+					>
+						{{product.name}}
+					</a>
+					<div
+						v-if="isBottomAreaVisible"
+						class="crm-entity-stream-advice-list-desc-box"
+					>
+						<span
+							v-if="isVariationInfoVisible"
+							class="crm-entity-stream-advice-list-desc-name"
+						>
+							{{product.variationInfo}}
+						</span>
+						<span
+							v-if="isPriceVisible"
+							v-html="price"
+							class="crm-entity-stream-advice-list-desc-value"
+						>
+							
+						</span>
+					</div>
+				</div>
+			</div>
+			<div v-if="isAddToDealVisible" class="crm-entity-stream-advice-list-btn-box">				
+				<button
+					@click="addProductToDeal"
+					class="ui-btn ui-btn-round ui-btn-xs crm-entity-stream-advice-list-btn"
+				>
+					{{buttonText}}
+				</button>
+			</div>
+		</li>
+	`
 	};
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 	var component = ui_vue.Vue.extend({
 	  mixins: [HistoryItemMixin],
 	  components: {
 	    'product': Product
 	  },
-	  data: function data() {
+
+	  data() {
 	    return {
 	      isShortList: true,
 	      shortListProductsCnt: 3,
@@ -1367,19 +1421,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      isProductsGridAvailable: false
 	    };
 	  },
-	  created: function created() {
-	    var _this = this;
 
+	  created() {
 	    this.products = this.data.VIEWED_PRODUCTS;
 	    this.dealId = this.data.DEAL_ID;
 	    this._productsGrid = null;
 	    this.subscribeCustomEvents();
-	    BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', function (controller) {
-	      _this.setProductsGrid(controller.getProductList());
+	    BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', controller => {
+	      this.setProductsGrid(controller.getProductList());
 	    });
 	  },
+
 	  methods: {
-	    setProductsGrid: function setProductsGrid(productsGrid) {
+	    setProductsGrid(productsGrid) {
 	      this._productsGrid = productsGrid;
 
 	      if (this._productsGrid) {
@@ -1387,18 +1441,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.isProductsGridAvailable = true;
 	      }
 	    },
-	    showMore: function showMore() {
+
+	    showMore() {
 	      this.isShortList = false;
-	      var listWrap = document.querySelector('.crm-entity-stream-advice-list');
+	      const listWrap = document.querySelector('.crm-entity-stream-advice-list');
 	      listWrap.style.maxHeight = 950 + 'px';
 	    },
+
 	    // region event handlers
-	    handleProductAddingToDeal: function handleProductAddingToDeal() {
+	    handleProductAddingToDeal() {
 	      this.activeRequestsCnt++;
 	    },
-	    handleProductAddedToDeal: function handleProductAddedToDeal() {
-	      var _this2 = this;
 
+	    handleProductAddedToDeal() {
 	      if (this.activeRequestsCnt > 0) {
 	        this.activeRequestsCnt--;
 	      }
@@ -1415,14 +1470,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        ui_notification.UI.Notification.Center.notify({
 	          content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
 	          events: {
-	            onClose: function onClose(event) {
-	              _this2.isNotificationShown = false;
+	            onClose: event => {
+	              this.isNotificationShown = false;
 	            }
 	          },
 	          actions: [{
 	            title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
 	            events: {
-	              click: function click(event, balloon, action) {
+	              click: (event, balloon, action) => {
 	                BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
 	                balloon.close();
 	              }
@@ -1432,27 +1487,29 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.isNotificationShown = true;
 	      }
 	    },
+
 	    // endregion
 	    // region custom events
-	    subscribeCustomEvents: function subscribeCustomEvents() {
+	    subscribeCustomEvents() {
 	      main_core_events.EventEmitter.subscribe('EntityProductListController', this.onProductsGridCreated);
 	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
 	    },
-	    unsubscribeCustomEvents: function unsubscribeCustomEvents() {
+
+	    unsubscribeCustomEvents() {
 	      main_core_events.EventEmitter.unsubscribe('EntityProductListController', this.onProductsGridCreated);
 	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
 	    },
-	    onProductsGridCreated: function onProductsGridCreated(event) {
+
+	    onProductsGridCreated(event) {
 	      this.setProductsGrid(event.getData()[0]);
 	    },
-	    onProductsGridChanged: function onProductsGridChanged(event) {
-	      var _this3 = this;
 
+	    onProductsGridChanged(event) {
 	      if (!this._productsGrid) {
 	        return;
 	      }
 
-	      var dealOfferIds = this._productsGrid.products.map(function (product, index) {
+	      let dealOfferIds = this._productsGrid.products.map((product, index) => {
 	        if (!(product.hasOwnProperty('fields') && product.fields.hasOwnProperty('OFFER_ID'))) {
 	          return null;
 	        }
@@ -1460,76 +1517,84 @@ this.BX.Crm = this.BX.Crm || {};
 	        return product.fields.OFFER_ID;
 	      });
 
-	      var _iterator = _createForOfIteratorHelper(this.products.entries()),
-	          _step;
+	      for (const [i, product] of this.products.entries()) {
+	        let isInDeal = dealOfferIds.some(id => id == product.offerId);
 
-	      try {
-	        var _loop = function _loop() {
-	          var _step$value = babelHelpers.slicedToArray(_step.value, 2),
-	              i = _step$value[0],
-	              product = _step$value[1];
-
-	          var isInDeal = dealOfferIds.some(function (id) {
-	            return id == product.offerId;
-	          });
-
-	          if (product.isInDeal === isInDeal) {
-	            return "continue";
-	          }
-
-	          ui_vue.Vue.set(_this3.products, i, Object.assign({}, product, {
-	            isInDeal: isInDeal
-	          }));
-	        };
-
-	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-	          var _ret = _loop();
-
-	          if (_ret === "continue") continue;
+	        if (product.isInDeal === isInDeal) {
+	          continue;
 	        }
-	      } catch (err) {
-	        _iterator.e(err);
-	      } finally {
-	        _iterator.f();
+
+	        ui_vue.Vue.set(this.products, i, Object.assign({}, product, {
+	          isInDeal
+	        }));
 	      }
 	    },
+
 	    // endregion
-	    beforeDestroy: function beforeDestroy() {
+	    beforeDestroy() {
 	      this.unsubscribeCustomEvents();
 	    }
+
 	  },
 	  computed: {
-	    visibleProducts: function visibleProducts() {
-	      var result = [];
-	      var i = 1;
+	    visibleProducts() {
+	      let result = [];
+	      let i = 1;
 
-	      var _iterator2 = _createForOfIteratorHelper(this.products),
-	          _step2;
-
-	      try {
-	        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-	          var product = _step2.value;
-
-	          if (this.isShortList && i > this.shortListProductsCnt) {
-	            break;
-	          }
-
-	          result.push(product);
-	          i++;
+	      for (const product of this.products) {
+	        if (this.isShortList && i > this.shortListProductsCnt) {
+	          break;
 	        }
-	      } catch (err) {
-	        _iterator2.e(err);
-	      } finally {
-	        _iterator2.f();
+
+	        result.push(product);
+	        i++;
 	      }
 
 	      return result;
 	    },
-	    isShowMoreVisible: function isShowMoreVisible() {
+
+	    isShowMoreVisible() {
 	      return this.isShortList && this.products.length > this.shortListProductsCnt;
 	    }
+
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-advice\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-advice\"></div>\n\t\t\t<div class=\"crm-entity-stream-advice-content\">\n\t\t\t\t<div class=\"crm-entity-stream-advice-info\">\n\t\t\t\t\t".concat(main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_LOOK_AT_CLIENT_PRODUCTS'), "\n\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS'), "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-entity-stream-advice-inner\">\n\t\t\t\t\t<h3 class=\"crm-entity-stream-advice-subtitle\">\n\t\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_VIEWED_PRODUCTS'), "\n\t\t\t\t\t</h3>\n\t\t\t\t\t<!--<ul class=\"crm-entity-stream-advice-list\">-->\n\t\t\t\t\t<transition-group class=\"crm-entity-stream-advice-list\" name=\"list\" tag=\"ul\">\t\t\t\t\t\t\n\t\t\t\t\t\t<product\n\t\t\t\t\t\t\tv-for=\"product in visibleProducts\"\n\t\t\t\t\t\t\tv-bind:key=\"product\"\n\t\t\t\t\t\t\t:product=\"product\"\n\t\t\t\t\t\t\t:dealId=\"dealId\"\n\t\t\t\t\t\t\t:isAddToDealVisible=\"isProductsGridAvailable\"\n\t\t\t\t\t\t\t@product-added-to-deal=\"handleProductAddedToDeal\"\n\t\t\t\t\t\t\t@product-adding-to-deal=\"handleProductAddingToDeal\"\n\t\t\t\t\t\t></product>\n\t\t\t\t\t</transition-group>\n\t\t\t\t\t<!--</ul>-->\n\t\t\t\t\t<a\n\t\t\t\t\t\tv-if=\"isShowMoreVisible\"\n\t\t\t\t\t\t@click.prevent=\"showMore\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-advice-link\"\n\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t>\n\t\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE'), "\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info">
+					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_LOOK_AT_CLIENT_PRODUCTS')}
+					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS')}
+				</div>
+				<div class="crm-entity-stream-advice-inner">
+					<h3 class="crm-entity-stream-advice-subtitle">
+						${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_VIEWED_PRODUCTS')}
+					</h3>
+					<!--<ul class="crm-entity-stream-advice-list">-->
+					<transition-group class="crm-entity-stream-advice-list" name="list" tag="ul">						
+						<product
+							v-for="product in visibleProducts"
+							v-bind:key="product"
+							:product="product"
+							:dealId="dealId"
+							:isAddToDealVisible="isProductsGridAvailable"
+							@product-added-to-deal="handleProductAddedToDeal"
+							@product-adding-to-deal="handleProductAddingToDeal"
+						></product>
+					</transition-group>
+					<!--</ul>-->
+					<a
+						v-if="isShowMoreVisible"
+						@click.prevent="showMore"
+						class="crm-entity-stream-advice-link"
+						href="#"
+					>
+						${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE')}
+					</a>
+				</div>
+			</div>
+		</div>
+	`
 	});
 
 	var Author = {
@@ -1540,7 +1605,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  computed: {
-	    iStyle: function iStyle() {
+	    iStyle() {
 	      if (!this.author.IMAGE_URL) {
 	        return {};
 	      }
@@ -1550,8 +1615,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        'background-size': '21px'
 	      };
 	    }
+
 	  },
-	  template: "\n\t\t<a\n\t\t\tv-if=\"author.SHOW_URL\"\n\t\t\t:href=\"author.SHOW_URL\"\n\t\t\ttarget=\"_blank\"\n\t\t\t:title=\"author.FORMATTED_NAME\"\n\t\t\tclass=\"ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee\"\n\t\t>\n\t\t\t<i :style=\"iStyle\"></i>\t\n\t\t</a>\n\t"
+	  template: `
+		<a
+			v-if="author.SHOW_URL"
+			:href="author.SHOW_URL"
+			target="_blank"
+			:title="author.FORMATTED_NAME"
+			class="ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee"
+		>
+			<i :style="iStyle"></i>	
+		</a>
+	`
 	};
 
 	var component$1 = ui_vue.Vue.extend({
@@ -1559,7 +1635,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  components: {
 	    'author': Author
 	  },
-	  data: function data() {
+
+	  data() {
 	    return {
 	      entityData: null,
 	      messageId: null,
@@ -1574,9 +1651,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      isRefreshing: false
 	    };
 	  },
-	  created: function created() {
-	    var _this = this;
 
+	  created() {
 	    this.entityData = this.self.getAssociatedEntityData();
 
 	    if (this.entityData['MESSAGE_INFO']) {
@@ -1586,9 +1662,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    pull_client.PULL.subscribe({
 	      moduleId: 'notifications',
 	      command: 'message_update',
-	      callback: function callback(params) {
-	        if (params.message.ID == _this.messageId) {
-	          _this.refresh();
+	      callback: params => {
+	        if (params.message.ID == this.messageId) {
+	          this.refresh();
 	        }
 	      }
 	    });
@@ -1597,8 +1673,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      pull_client.PULL.extendWatch(this.entityData['PULL_TAG_NAME']);
 	    }
 	  },
+
 	  methods: {
-	    setMessageInfo: function setMessageInfo(messageInfo) {
+	    setMessageInfo(messageInfo) {
 	      this.messageId = messageInfo['MESSAGE']['ID'];
 
 	      if (messageInfo['HISTORY_ITEMS'] && Array.isArray(messageInfo['HISTORY_ITEMS']) && messageInfo['HISTORY_ITEMS'].length > 0 && messageInfo['HISTORY_ITEMS'][0] && messageInfo['HISTORY_ITEMS'][0]['PROVIDER_DATA'] && messageInfo['HISTORY_ITEMS'][0]['PROVIDER_DATA']['DESCRIPTION']) {
@@ -1616,9 +1693,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this.text = messageInfo['MESSAGE']['TEXT'] ? messageInfo['MESSAGE']['TEXT'] : main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_NO_MESSAGE_TEXT_2');
 	    },
-	    refresh: function refresh() {
-	      var _this2 = this;
 
+	    refresh() {
 	      if (this.isRefreshing) {
 	        return;
 	      }
@@ -1628,29 +1704,29 @@ this.BX.Crm = this.BX.Crm || {};
 	        data: {
 	          messageId: this.messageId
 	        }
-	      }).then(function (result) {
-	        _this2.setMessageInfo(result.data);
-
-	        _this2.isRefreshing = false;
-	      })["catch"](function (result) {
-	        _this2.isRefreshing = false;
+	      }).then(result => {
+	        this.setMessageInfo(result.data);
+	        this.isRefreshing = false;
+	      }).catch(result => {
+	        this.isRefreshing = false;
 	      });
 	    },
-	    viewActivity: function viewActivity() {
+
+	    viewActivity() {
 	      this.self.view();
 	    },
-	    capitalizeFirstLetter: function capitalizeFirstLetter(str) {
-	      var locale = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : navigator.language;
-	      return str.replace(/^(?:[a-z\xB5\xDF-\xF6\xF8-\xFF\u0101\u0103\u0105\u0107\u0109\u010B\u010D\u010F\u0111\u0113\u0115\u0117\u0119\u011B\u011D\u011F\u0121\u0123\u0125\u0127\u0129\u012B\u012D\u012F\u0131\u0133\u0135\u0137\u013A\u013C\u013E\u0140\u0142\u0144\u0146\u0148\u0149\u014B\u014D\u014F\u0151\u0153\u0155\u0157\u0159\u015B\u015D\u015F\u0161\u0163\u0165\u0167\u0169\u016B\u016D\u016F\u0171\u0173\u0175\u0177\u017A\u017C\u017E-\u0180\u0183\u0185\u0188\u018C\u0192\u0195\u0199\u019A\u019E\u01A1\u01A3\u01A5\u01A8\u01AD\u01B0\u01B4\u01B6\u01B9\u01BD\u01BF\u01C5\u01C6\u01C8\u01C9\u01CB\u01CC\u01CE\u01D0\u01D2\u01D4\u01D6\u01D8\u01DA\u01DC\u01DD\u01DF\u01E1\u01E3\u01E5\u01E7\u01E9\u01EB\u01ED\u01EF\u01F0\u01F2\u01F3\u01F5\u01F9\u01FB\u01FD\u01FF\u0201\u0203\u0205\u0207\u0209\u020B\u020D\u020F\u0211\u0213\u0215\u0217\u0219\u021B\u021D\u021F\u0223\u0225\u0227\u0229\u022B\u022D\u022F\u0231\u0233\u023C\u023F\u0240\u0242\u0247\u0249\u024B\u024D\u024F-\u0254\u0256\u0257\u0259\u025B\u025C\u0260\u0261\u0263\u0265\u0266\u0268-\u026C\u026F\u0271\u0272\u0275\u027D\u0280\u0282\u0283\u0287-\u028C\u0292\u029D\u029E\u0345\u0371\u0373\u0377\u037B-\u037D\u0390\u03AC-\u03CE\u03D0\u03D1\u03D5-\u03D7\u03D9\u03DB\u03DD\u03DF\u03E1\u03E3\u03E5\u03E7\u03E9\u03EB\u03ED\u03EF-\u03F3\u03F5\u03F8\u03FB\u0430-\u045F\u0461\u0463\u0465\u0467\u0469\u046B\u046D\u046F\u0471\u0473\u0475\u0477\u0479\u047B\u047D\u047F\u0481\u048B\u048D\u048F\u0491\u0493\u0495\u0497\u0499\u049B\u049D\u049F\u04A1\u04A3\u04A5\u04A7\u04A9\u04AB\u04AD\u04AF\u04B1\u04B3\u04B5\u04B7\u04B9\u04BB\u04BD\u04BF\u04C2\u04C4\u04C6\u04C8\u04CA\u04CC\u04CE\u04CF\u04D1\u04D3\u04D5\u04D7\u04D9\u04DB\u04DD\u04DF\u04E1\u04E3\u04E5\u04E7\u04E9\u04EB\u04ED\u04EF\u04F1\u04F3\u04F5\u04F7\u04F9\u04FB\u04FD\u04FF\u0501\u0503\u0505\u0507\u0509\u050B\u050D\u050F\u0511\u0513\u0515\u0517\u0519\u051B\u051D\u051F\u0521\u0523\u0525\u0527\u0529\u052B\u052D\u052F\u0561-\u0587\u10D0-\u10FA\u10FD-\u10FF\u13F8-\u13FD\u1C80-\u1C88\u1D79\u1D7D\u1D8E\u1E01\u1E03\u1E05\u1E07\u1E09\u1E0B\u1E0D\u1E0F\u1E11\u1E13\u1E15\u1E17\u1E19\u1E1B\u1E1D\u1E1F\u1E21\u1E23\u1E25\u1E27\u1E29\u1E2B\u1E2D\u1E2F\u1E31\u1E33\u1E35\u1E37\u1E39\u1E3B\u1E3D\u1E3F\u1E41\u1E43\u1E45\u1E47\u1E49\u1E4B\u1E4D\u1E4F\u1E51\u1E53\u1E55\u1E57\u1E59\u1E5B\u1E5D\u1E5F\u1E61\u1E63\u1E65\u1E67\u1E69\u1E6B\u1E6D\u1E6F\u1E71\u1E73\u1E75\u1E77\u1E79\u1E7B\u1E7D\u1E7F\u1E81\u1E83\u1E85\u1E87\u1E89\u1E8B\u1E8D\u1E8F\u1E91\u1E93\u1E95-\u1E9B\u1EA1\u1EA3\u1EA5\u1EA7\u1EA9\u1EAB\u1EAD\u1EAF\u1EB1\u1EB3\u1EB5\u1EB7\u1EB9\u1EBB\u1EBD\u1EBF\u1EC1\u1EC3\u1EC5\u1EC7\u1EC9\u1ECB\u1ECD\u1ECF\u1ED1\u1ED3\u1ED5\u1ED7\u1ED9\u1EDB\u1EDD\u1EDF\u1EE1\u1EE3\u1EE5\u1EE7\u1EE9\u1EEB\u1EED\u1EEF\u1EF1\u1EF3\u1EF5\u1EF7\u1EF9\u1EFB\u1EFD\u1EFF-\u1F07\u1F10-\u1F15\u1F20-\u1F27\u1F30-\u1F37\u1F40-\u1F45\u1F50-\u1F57\u1F60-\u1F67\u1F70-\u1F7D\u1F80-\u1FB4\u1FB6\u1FB7\u1FBC\u1FBE\u1FC2-\u1FC4\u1FC6\u1FC7\u1FCC\u1FD0-\u1FD3\u1FD6\u1FD7\u1FE0-\u1FE7\u1FF2-\u1FF4\u1FF6\u1FF7\u1FFC\u214E\u2170-\u217F\u2184\u24D0-\u24E9\u2C30-\u2C5F\u2C61\u2C65\u2C66\u2C68\u2C6A\u2C6C\u2C73\u2C76\u2C81\u2C83\u2C85\u2C87\u2C89\u2C8B\u2C8D\u2C8F\u2C91\u2C93\u2C95\u2C97\u2C99\u2C9B\u2C9D\u2C9F\u2CA1\u2CA3\u2CA5\u2CA7\u2CA9\u2CAB\u2CAD\u2CAF\u2CB1\u2CB3\u2CB5\u2CB7\u2CB9\u2CBB\u2CBD\u2CBF\u2CC1\u2CC3\u2CC5\u2CC7\u2CC9\u2CCB\u2CCD\u2CCF\u2CD1\u2CD3\u2CD5\u2CD7\u2CD9\u2CDB\u2CDD\u2CDF\u2CE1\u2CE3\u2CEC\u2CEE\u2CF3\u2D00-\u2D25\u2D27\u2D2D\uA641\uA643\uA645\uA647\uA649\uA64B\uA64D\uA64F\uA651\uA653\uA655\uA657\uA659\uA65B\uA65D\uA65F\uA661\uA663\uA665\uA667\uA669\uA66B\uA66D\uA681\uA683\uA685\uA687\uA689\uA68B\uA68D\uA68F\uA691\uA693\uA695\uA697\uA699\uA69B\uA723\uA725\uA727\uA729\uA72B\uA72D\uA72F\uA733\uA735\uA737\uA739\uA73B\uA73D\uA73F\uA741\uA743\uA745\uA747\uA749\uA74B\uA74D\uA74F\uA751\uA753\uA755\uA757\uA759\uA75B\uA75D\uA75F\uA761\uA763\uA765\uA767\uA769\uA76B\uA76D\uA76F\uA77A\uA77C\uA77F\uA781\uA783\uA785\uA787\uA78C\uA791\uA793\uA794\uA797\uA799\uA79B\uA79D\uA79F\uA7A1\uA7A3\uA7A5\uA7A7\uA7A9\uA7B5\uA7B7\uA7B9\uA7BB\uA7BD\uA7BF\uA7C1\uA7C3\uA7C8\uA7CA\uA7D1\uA7D7\uA7D9\uA7F6\uAB53\uAB70-\uABBF\uFB00-\uFB06\uFB13-\uFB17\uFF41-\uFF5A]|\uD801[\uDC28-\uDC4F\uDCD8-\uDCFB\uDD97-\uDDA1\uDDA3-\uDDB1\uDDB3-\uDDB9\uDDBB\uDDBC]|\uD803[\uDCC0-\uDCF2]|\uD806[\uDCC0-\uDCDF]|\uD81B[\uDE60-\uDE7F]|\uD83A[\uDD22-\uDD43])/, function (_char) {
-	        return _char.toLocaleUpperCase(locale);
-	      });
+
+	    capitalizeFirstLetter(str, locale = navigator.language) {
+	      return str.replace(/^\p{CWU}/u, char => char.toLocaleUpperCase(locale));
 	    }
+
 	  },
 	  computed: {
-	    communication: function communication() {
+	    communication() {
 	      return this.entityData['COMMUNICATION'] ? this.entityData['COMMUNICATION'] : null;
 	    },
-	    statusClass: function statusClass() {
+
+	    statusClass() {
 	      return {
 	        'crm-entity-stream-content-event-process': this.status.semantics === 'process',
 	        'crm-entity-stream-content-event-successful': this.status.semantics === 'success',
@@ -1658,14 +1734,72 @@ this.BX.Crm = this.BX.Crm || {};
 	        'crm-entity-stream-content-event-error-tip': this.isStatusError
 	      };
 	    },
-	    isStatusError: function isStatusError() {
+
+	    isStatusError() {
 	      return this.status.semantics === 'failure' && !!this.status.description;
 	    },
-	    statusErrorDescription: function statusErrorDescription() {
+
+	    statusErrorDescription() {
 	      return this.isStatusError ? this.status.description : '';
 	    }
+
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-sms\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t@click.prevent=\"viewActivity\"\n\t\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-event-title\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{title}}\n\t\t\t\t\t\t</a>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"status\"\n\t\t\t\t\t\t\t:class=\"statusClass\"\n\t\t\t\t\t\t\t:title=\"statusErrorDescription\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{status.name}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-sms\">\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-sms-status\">\n\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_VIA'), " \n\t\t\t\t\t\t\t\t<strong>\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_BITRIX24'), "\n\t\t\t\t\t\t\t\t</strong>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-sms-fragment\">\n\t\t\t\t\t\t\t\t<span>{{text}}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"communication\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-detail-contact-info\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{BX.message('CRM_TIMELINE_SMS_TO')}}\n\t\t\t\t\t\t\t<a v-if=\"communication.SHOW_URL\" :href=\"communication.SHOW_URL\">\n\t\t\t\t\t\t\t\t{{communication.TITLE}}\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t{{communication.TITLE}}\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<span v-if=\"communication.VALUE\">{{communication.VALUE}}</span>\n\t\t\t\t\t\t\t<template v-if=\"provider\">\n\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_IN_MESSENGER'), " {{provider}}\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\"></author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\t\n\t")
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-sms"></div>
+			<div class="crm-entity-stream-section-content">
+				<div class="crm-entity-stream-content-event">
+					<div class="crm-entity-stream-content-header">
+						<a
+							@click.prevent="viewActivity"
+							href="#"
+							class="crm-entity-stream-content-event-title"
+						>
+							{{title}}
+						</a>
+						<span
+							v-if="status"
+							:class="statusClass"
+							:title="statusErrorDescription"
+						>
+							{{status.name}}
+						</span>
+						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
+					</div>
+					<div class="crm-entity-stream-content-detail">
+						<div class="crm-entity-stream-content-detail-sms">
+							<div class="crm-entity-stream-content-detail-sms-status">
+								${main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_VIA')} 
+								<strong>
+									${main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_BITRIX24')}
+								</strong>
+							</div>
+							<div class="crm-entity-stream-content-detail-sms-fragment">
+								<span>{{text}}</span>
+							</div>
+						</div>
+						<div
+							v-if="communication"
+							class="crm-entity-stream-content-detail-contact-info"
+						>
+							{{BX.message('CRM_TIMELINE_SMS_TO')}}
+							<a v-if="communication.SHOW_URL" :href="communication.SHOW_URL">
+								{{communication.TITLE}}
+							</a>
+							<template v-else>
+								{{communication.TITLE}}
+							</template>
+							<span v-if="communication.VALUE">{{communication.VALUE}}</span>
+							<template v-if="provider">
+								${main_core.Loc.getMessage('CRM_TIMELINE_NOTIFICATION_IN_MESSENGER')} {{provider}}
+							</template>
+						</div>
+					</div>
+					<author v-if="author" :author="author"></author>
+				</div>
+			</div>
+		</div>	
+	`
 	});
 
 	var DeliveryServiceInfo = {
@@ -1676,23 +1810,54 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  computed: {
-	    isDeliveryServiceProfile: function isDeliveryServiceProfile() {
+	    isDeliveryServiceProfile() {
 	      return this.deliveryService.IS_PROFILE;
 	    },
-	    deliveryServiceName: function deliveryServiceName() {
+
+	    deliveryServiceName() {
 	      return this.isDeliveryServiceProfile ? this.deliveryService.PARENT_NAME : this.deliveryService.NAME;
 	    },
-	    deliveryProfileServiceName: function deliveryProfileServiceName() {
+
+	    deliveryProfileServiceName() {
 	      return this.deliveryService.NAME;
 	    },
-	    deliveryServiceLogoBackgroundUrl: function deliveryServiceLogoBackgroundUrl() {
+
+	    deliveryServiceLogoBackgroundUrl() {
 	      return this.isDeliveryServiceProfile ? this.deliveryService.PARENT_LOGO : this.deliveryService.LOGO;
 	      return logo ? {
 	        'background-image': 'url(' + logo + ')'
 	      } : {};
 	    }
+
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-content-delivery-title\">\n\t\t\t<div\n\t\t\t\tv-if=\"isDeliveryServiceProfile && deliveryService.LOGO\"\n\t\t\t\tclass=\"crm-entity-stream-content-delivery-icon\"\n\t\t\t\t:style=\"{'background-image': 'url(' + deliveryService.LOGO + ')'}\"\n\t\t\t>\n\t\t\t</div>\n\t\t\t<div class=\"crm-entity-stream-content-delivery-title-contnet\">\n\t\t\t\t<div\n\t\t\t\t\tv-if=\"deliveryServiceLogoBackgroundUrl\"\n\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-title-logo\"\n\t\t\t\t\t:style=\"{'background-image': 'url(' + deliveryServiceLogoBackgroundUrl + ')'}\"\n\t\t\t\t></div>\n\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-info\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-title-name\">\n\t\t\t\t\t\t{{deliveryServiceName}}\n\t\t\t\t\t</div>\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"isDeliveryServiceProfile\"\n\t\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-title-param\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{deliveryProfileServiceName}}\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: `
+		<div class="crm-entity-stream-content-delivery-title">
+			<div
+				v-if="isDeliveryServiceProfile && deliveryService.LOGO"
+				class="crm-entity-stream-content-delivery-icon"
+				:style="{'background-image': 'url(' + deliveryService.LOGO + ')'}"
+			>
+			</div>
+			<div class="crm-entity-stream-content-delivery-title-contnet">
+				<div
+					v-if="deliveryServiceLogoBackgroundUrl"
+					class="crm-entity-stream-content-delivery-title-logo"
+					:style="{'background-image': 'url(' + deliveryServiceLogoBackgroundUrl + ')'}"
+				></div>
+				<div class="crm-entity-stream-content-delivery-title-info">
+					<div class="crm-entity-stream-content-delivery-title-name">
+						{{deliveryServiceName}}
+					</div>
+					<div
+						v-if="isDeliveryServiceProfile"
+						class="crm-entity-stream-content-delivery-title-param"
+					>
+						{{deliveryProfileServiceName}}
+					</div>
+				</div>
+			</div>
+		</div>
+	`
 	};
 
 	var component$2 = ui_vue.Vue.extend({
@@ -1707,7 +1872,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String
 	    }
 	  },
-	  data: function data() {
+
+	  data() {
 	    return {
 	      entityData: null,
 	      deliveryInfo: null,
@@ -1716,38 +1882,38 @@ this.BX.Crm = this.BX.Crm || {};
 	      isCancellingRequest: false
 	    };
 	  },
+
 	  methods: {
 	    // region common activity methods
-	    completeActivity: function completeActivity() {
+	    completeActivity() {
 	      if (this.self.canComplete()) {
 	        this.self.setAsDone(!this.self.isDone());
 	      }
 	    },
-	    showContextMenu: function showContextMenu(event) {
-	      var _this = this;
 
-	      var popup = BX.PopupMenu.create('taxi_activity_context_menu_' + this.self.getId(), event.target, [{
+	    showContextMenu(event) {
+	      let popup = BX.PopupMenu.create('taxi_activity_context_menu_' + this.self.getId(), event.target, [{
 	        id: 'delete',
 	        text: this.getLangMessage('menuDelete'),
-	        onclick: function onclick() {
+	        onclick: () => {
 	          popup.close();
-	          var deletionDlgId = 'entity_timeline_deletion_' + _this.self.getId() + '_confirm';
-	          var dlg = BX.Crm.ConfirmationDialog.get(deletionDlgId);
+	          let deletionDlgId = 'entity_timeline_deletion_' + this.self.getId() + '_confirm';
+	          let dlg = BX.Crm.ConfirmationDialog.get(deletionDlgId);
 
 	          if (!dlg) {
 	            dlg = BX.Crm.ConfirmationDialog.create(deletionDlgId, {
-	              title: _this.getLangMessage('removeConfirmTitle'),
-	              content: _this.getLangMessage('deliveryRemove')
+	              title: this.getLangMessage('removeConfirmTitle'),
+	              content: this.getLangMessage('deliveryRemove')
 	            });
 	          }
 
-	          dlg.open().then(function (result) {
+	          dlg.open().then(result => {
 	            if (result.cancel) {
 	              return;
 	            }
 
-	            _this.self.remove();
-	          }, function (result) {});
+	            this.self.remove();
+	          }, result => {});
 	        }
 	      }], {
 	        autoHide: true,
@@ -1758,21 +1924,16 @@ this.BX.Crm = this.BX.Crm || {};
 	          offset: 0
 	        },
 	        events: {
-	          onPopupShow: function onPopupShow() {
-	            return BX.addClass(event.target, 'active');
-	          },
-	          onPopupClose: function onPopupClose() {
-	            return BX.removeClass(event.target, 'active');
-	          }
+	          onPopupShow: () => BX.addClass(event.target, 'active'),
+	          onPopupClose: () => BX.removeClass(event.target, 'active')
 	        }
 	      });
 	      popup.show();
 	    },
+
 	    // endregion
 	    // region delivery request methods
-	    createDeliveryRequest: function createDeliveryRequest() {
-	      var _this2 = this;
-
+	    createDeliveryRequest() {
 	      if (this.isLocked) {
 	        return;
 	      }
@@ -1786,21 +1947,17 @@ this.BX.Crm = this.BX.Crm || {};
 	            ACTIVITY_ID: this.activityId
 	          }
 	        }
-	      }).then(function (result) {
-	        _this2.refresh(function () {
-	          _this2.isCreatingRequest = false;
+	      }).then(result => {
+	        this.refresh(() => {
+	          this.isCreatingRequest = false;
 	        });
-	      })["catch"](function (result) {
-	        _this2.isCreatingRequest = false;
-
-	        _this2.showError(result.errors.map(function (item) {
-	          return item.message;
-	        }).join());
+	      }).catch(result => {
+	        this.isCreatingRequest = false;
+	        this.showError(result.errors.map(item => item.message).join());
 	      });
 	    },
-	    cancelDeliveryRequest: function cancelDeliveryRequest() {
-	      var _this3 = this;
 
+	    cancelDeliveryRequest() {
 	      if (this.isLocked || !this.deliveryRequest) {
 	        return;
 	      }
@@ -1811,70 +1968,61 @@ this.BX.Crm = this.BX.Crm || {};
 	          requestId: this.deliveryRequest['ID'],
 	          actionType: this.deliveryService['CANCEL_ACTION_CODE']
 	        }
-	      }).then(function (result) {
-	        var data = result.data;
+	      }).then(result => {
+	        const data = result.data;
 	        BX.ajax.runAction('crm.timeline.deliveryactivity.createcanceldeliveryrequestmessage', {
 	          data: {
-	            requestId: _this3.deliveryRequest['ID'],
+	            requestId: this.deliveryRequest['ID'],
 	            message: data.message
 	          }
-	        }).then(function (result) {
+	        }).then(result => {
 	          BX.ajax.runAction('sale.deliveryrequest.delete', {
 	            data: {
-	              requestId: _this3.deliveryRequest['ID']
+	              requestId: this.deliveryRequest['ID']
 	            }
-	          }).then(function (result) {
-	            _this3.refresh(function () {
-	              _this3.isCancellingRequest = false;
+	          }).then(result => {
+	            this.refresh(() => {
+	              this.isCancellingRequest = false;
 	            });
-	          })["catch"](function (result) {
-	            _this3.isCancellingRequest = false;
-
-	            _this3.showError(result.errors.map(function (item) {
-	              return item.message;
-	            }).join());
+	          }).catch(result => {
+	            this.isCancellingRequest = false;
+	            this.showError(result.errors.map(item => item.message).join());
 	          });
 	        });
-	      })["catch"](function (result) {
-	        _this3.isCancellingRequest = false;
-
-	        _this3.showError(result.errors.map(function (item) {
-	          return item.message;
-	        }).join());
+	      }).catch(result => {
+	        this.isCancellingRequest = false;
+	        this.showError(result.errors.map(item => item.message).join());
 	      });
 	    },
-	    checkRequestStatus: function checkRequestStatus() {
+
+	    checkRequestStatus() {
 	      BX.ajax.runAction('crm.timeline.deliveryactivity.checkrequeststatus');
 	    },
-	    startCheckingRequestStatus: function startCheckingRequestStatus() {
-	      var _this4 = this;
 
+	    startCheckingRequestStatus() {
 	      clearTimeout(this._checkRequestStatusTimeoutId);
-	      this._checkRequestStatusTimeoutId = setInterval(function () {
-	        return _this4.checkRequestStatus();
-	      }, 30 * 1000);
+	      this._checkRequestStatusTimeoutId = setInterval(() => this.checkRequestStatus(), 30 * 1000);
 	    },
-	    stopCheckingRequestStatus: function stopCheckingRequestStatus() {
+
+	    stopCheckingRequestStatus() {
 	      clearTimeout(this._checkRequestStatusTimeoutId);
 	    },
+
 	    // endregion
 	    // region refresh methods
-	    setDeliveryInfo: function setDeliveryInfo(deliveryInfo) {
+	    setDeliveryInfo(deliveryInfo) {
 	      this.deliveryInfo = deliveryInfo;
 	    },
-	    refresh: function refresh() {
-	      var _this5 = this;
 
-	      var callback = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
-
+	    refresh(callback = null) {
 	      if (this.isRefreshing) {
 	        return;
 	      }
 
 	      this.isRefreshing = true;
 
-	      var finallyCallback = function finallyCallback() {
-	        _this5.isRefreshing = false;
+	      const finallyCallback = () => {
+	        this.isRefreshing = false;
 
 	        if (callback) {
 	          callback();
@@ -1885,17 +2033,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        data: {
 	          activityId: this.activityId
 	        }
-	      }).then(function (result) {
-	        _this5.setDeliveryInfo(result.data);
-
+	      }).then(result => {
+	        this.setDeliveryInfo(result.data);
 	        finallyCallback();
-	      })["catch"](function (result) {
+	      }).catch(result => {
 	        finallyCallback();
 	      });
 	    },
-	    subscribePullEvents: function subscribePullEvents() {
-	      var _this6 = this;
 
+	    subscribePullEvents() {
 	      if (this._isPullSubscribed) {
 	        return;
 	      }
@@ -1903,40 +2049,36 @@ this.BX.Crm = this.BX.Crm || {};
 	      pull_client.PULL.subscribe({
 	        moduleId: 'crm',
 	        command: 'onOrderShipmentSave',
-	        callback: function callback(params) {
-	          if (_this6.shipmentIds.some(function (id) {
-	            return id == params.FIELDS.ID;
-	          })) {
-	            _this6.refresh();
+	        callback: params => {
+	          if (this.shipmentIds.some(id => id == params.FIELDS.ID)) {
+	            this.refresh();
 	          }
 	        }
 	      });
 	      pull_client.PULL.subscribe({
 	        moduleId: 'sale',
 	        command: 'onDeliveryServiceSave',
-	        callback: function callback(params) {
-	          if (_this6.deliveryServiceIds.some(function (id) {
-	            return id == params.ID;
-	          })) {
-	            _this6.refresh();
+	        callback: params => {
+	          if (this.deliveryServiceIds.some(id => id == params.ID)) {
+	            this.refresh();
 	          }
 	        }
 	      });
 	      pull_client.PULL.subscribe({
 	        moduleId: 'sale',
 	        command: 'onDeliveryRequestUpdate',
-	        callback: function callback(params) {
-	          if (_this6.deliveryRequestId == params.ID) {
-	            _this6.refresh();
+	        callback: params => {
+	          if (this.deliveryRequestId == params.ID) {
+	            this.refresh();
 	          }
 	        }
 	      });
 	      pull_client.PULL.subscribe({
 	        moduleId: 'sale',
 	        command: 'onDeliveryRequestDelete',
-	        callback: function callback(params) {
-	          if (_this6.deliveryRequestId == params.ID) {
-	            _this6.refresh();
+	        callback: params => {
+	          if (this.deliveryRequestId == params.ID) {
+	            this.refresh();
 	          }
 	        }
 	      });
@@ -1945,28 +2087,33 @@ this.BX.Crm = this.BX.Crm || {};
 	      pull_client.PULL.extendWatch('SALE_DELIVERY_REQUEST');
 	      this._isPullSubscribed = true;
 	    },
+
 	    //endregion
 	    // region miscellaneous
-	    callPhone: function callPhone(phone) {
+	    callPhone(phone) {
 	      if (this.canUseTelephony && typeof top.BXIM !== 'undefined') {
 	        top.BXIM.phoneTo(phone);
 	      } else {
 	        window.location.href = 'tel:' + phone;
 	      }
 	    },
-	    isPhone: function isPhone(property) {
+
+	    isPhone(property) {
 	      return property.hasOwnProperty('TAGS') && Array.isArray(property['TAGS']) && property['TAGS'].includes('phone');
 	    },
-	    showError: function showError(message) {
-	      BX.loadExt('ui.notification').then(function () {
+
+	    showError(message) {
+	      BX.loadExt('ui.notification').then(() => {
 	        BX.UI.Notification.Center.notify({
 	          content: message
 	        });
 	      });
 	    } // endregion
 
+
 	  },
-	  created: function created() {
+
+	  created() {
 	    this.entityData = this.self.getAssociatedEntityData();
 
 	    if (this.entityData['DELIVERY_INFO']) {
@@ -1980,43 +2127,48 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.startCheckingRequestStatus();
 	    }
 	  },
+
 	  computed: {
-	    activityId: function activityId() {
+	    activityId() {
 	      return this.data.ASSOCIATED_ENTITY.ID;
 	    },
+
 	    // region shipments
-	    shipments: function shipments() {
+	    shipments() {
 	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('SHIPMENTS') && Array.isArray(this.deliveryInfo['SHIPMENTS'])) {
 	        return this.deliveryInfo['SHIPMENTS'];
 	      }
 
 	      return null;
 	    },
-	    shipmentIds: function shipmentIds() {
-	      return this.shipments ? this.shipments.map(function (shipment) {
-	        return shipment['ID'];
-	      }) : [];
+
+	    shipmentIds() {
+	      return this.shipments ? this.shipments.map(shipment => shipment['ID']) : [];
 	    },
-	    shipment: function shipment() {
+
+	    shipment() {
 	      if (this.shipments && Array.isArray(this.shipments) && this.shipments.length > 0) {
 	        return this.shipments[0];
 	      }
 
 	      return null;
 	    },
-	    expectedDeliveryPriceFormatted: function expectedDeliveryPriceFormatted() {
+
+	    expectedDeliveryPriceFormatted() {
 	      return this.shipment && this.shipment.hasOwnProperty('BASE_PRICE_DELIVERY') ? this.shipment['BASE_PRICE_DELIVERY_FORMATTED'] : this.shipment['PRICE_DELIVERY_FORMATTED'];
 	    },
+
 	    // endregion
 	    // region delivery service
-	    deliveryService: function deliveryService() {
-	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_SERVICE') && babelHelpers["typeof"](this.deliveryInfo['DELIVERY_SERVICE']) === 'object' && this.deliveryInfo['DELIVERY_SERVICE'] !== null) {
+	    deliveryService() {
+	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_SERVICE') && typeof this.deliveryInfo['DELIVERY_SERVICE'] === 'object' && this.deliveryInfo['DELIVERY_SERVICE'] !== null) {
 	        return this.deliveryInfo['DELIVERY_SERVICE'];
 	      }
 
 	      return null;
 	    },
-	    deliveryServiceIds: function deliveryServiceIds() {
+
+	    deliveryServiceIds() {
 	      // @TODO
 	      if (!this.deliveryService) {
 	        return null;
@@ -2024,74 +2176,86 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      return this.deliveryService.IDS;
 	    },
+
 	    // endregion
 	    // region delivery request
-	    deliveryRequest: function deliveryRequest() {
-	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_REQUEST') && babelHelpers["typeof"](this.deliveryInfo['DELIVERY_REQUEST']) === 'object' && this.deliveryInfo['DELIVERY_REQUEST'] !== null) {
+	    deliveryRequest() {
+	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('DELIVERY_REQUEST') && typeof this.deliveryInfo['DELIVERY_REQUEST'] === 'object' && this.deliveryInfo['DELIVERY_REQUEST'] !== null) {
 	        return this.deliveryInfo['DELIVERY_REQUEST'];
 	      }
 
 	      return null;
 	    },
-	    deliveryRequestId: function deliveryRequestId() {
+
+	    deliveryRequestId() {
 	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('ID')) {
 	        return this.deliveryRequest['ID'];
 	      }
 
 	      return null;
 	    },
-	    deliveryRequestProperties: function deliveryRequestProperties() {
-	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('EXTERNAL_PROPERTIES') && babelHelpers["typeof"](this.deliveryRequest['EXTERNAL_PROPERTIES']) === 'object' && this.deliveryRequest['EXTERNAL_PROPERTIES'] !== null) {
+
+	    deliveryRequestProperties() {
+	      if (this.deliveryRequest && this.deliveryRequest.hasOwnProperty('EXTERNAL_PROPERTIES') && typeof this.deliveryRequest['EXTERNAL_PROPERTIES'] === 'object' && this.deliveryRequest['EXTERNAL_PROPERTIES'] !== null) {
 	        return this.deliveryRequest['EXTERNAL_PROPERTIES'];
 	      }
 
 	      return null;
 	    },
-	    deliveryRequestStatus: function deliveryRequestStatus() {
+
+	    deliveryRequestStatus() {
 	      if (!this.deliveryRequest) {
 	        return null;
 	      }
 
 	      return this.deliveryRequest['EXTERNAL_STATUS'];
 	    },
-	    deliveryRequestStatusSemantic: function deliveryRequestStatusSemantic() {
+
+	    deliveryRequestStatusSemantic() {
 	      if (!this.deliveryRequest) {
 	        return null;
 	      }
 
 	      return this.deliveryRequest['EXTERNAL_STATUS_SEMANTIC'];
 	    },
-	    isConnectedWithDeliveryRequest: function isConnectedWithDeliveryRequest() {
+
+	    isConnectedWithDeliveryRequest() {
 	      return !!this.deliveryRequest;
 	    },
-	    needCheckRequestStatus: function needCheckRequestStatus() {
+
+	    needCheckRequestStatus() {
 	      return this.isConnectedWithDeliveryRequest && this.mode === 'schedule';
 	    },
-	    isSendRequestButtonVisible: function isSendRequestButtonVisible() {
+
+	    isSendRequestButtonVisible() {
 	      return !this.isCreatingRequest && !this.isConnectedWithDeliveryRequest;
 	    },
+
 	    // endregion
 	    //region miscellaneous
-	    miscellaneous: function miscellaneous() {
+	    miscellaneous() {
 	      if (this.deliveryInfo && this.deliveryInfo.hasOwnProperty('MISCELLANEOUS')) {
 	        return this.deliveryInfo['MISCELLANEOUS'];
 	      }
 
 	      return null;
 	    },
-	    canUseTelephony: function canUseTelephony() {
+
+	    canUseTelephony() {
 	      return this.miscellaneous && this.miscellaneous.hasOwnProperty('CAN_USE_TELEPHONY') && this.miscellaneous['CAN_USE_TELEPHONY'];
 	    },
-	    template: function template() {
+
+	    template() {
 	      if (!this.miscellaneous || !this.miscellaneous.hasOwnProperty('TEMPLATE')) {
 	        return null;
 	      }
 
 	      return this.miscellaneous['TEMPLATE'];
 	    },
+
 	    // endregion
 	    // region classes
-	    cancelRequestButtonStyle: function cancelRequestButtonStyle() {
+	    cancelRequestButtonStyle() {
 	      return {
 	        'ui-btn': true,
 	        'ui-btn-sm': true,
@@ -2099,30 +2263,35 @@ this.BX.Crm = this.BX.Crm || {};
 	        'ui-btn-wait': this.isCancellingRequest
 	      };
 	    },
-	    statusClass: function statusClass() {
+
+	    statusClass() {
 	      return {
 	        'crm-entity-stream-content-event-process': this.deliveryRequestStatusSemantic === 'process',
 	        'crm-entity-stream-content-event-missing': this.deliveryRequestStatusSemantic === 'error',
 	        'crm-entity-stream-content-event-done': this.deliveryRequestStatusSemantic === 'success'
 	      };
 	    },
-	    wrapperContainerClass: function wrapperContainerClass() {
+
+	    wrapperContainerClass() {
 	      return {
 	        'crm-entity-stream-section-planned': this.mode === 'schedule'
 	      };
 	    },
-	    innerWrapperContainerClass: function innerWrapperContainerClass() {
+
+	    innerWrapperContainerClass() {
 	      return {
 	        'crm-entity-stream-content-event--delivery': this.mode !== 'schedule'
 	      };
 	    },
+
 	    // endregion
-	    isLocked: function isLocked() {
+	    isLocked() {
 	      return this.isRefreshing || this.isCreatingRequest || this.isCancellingRequest;
 	    }
+
 	  },
 	  watch: {
-	    needCheckRequestStatus: function needCheckRequestStatus(value) {
+	    needCheckRequestStatus: function (value) {
 	      if (value) {
 	        this.startCheckingRequestStatus();
 	      } else {
@@ -2130,7 +2299,154 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  },
-	  template: "\n\t\t<div\n\t\t\tclass=\"crm-entity-stream-section crm-entity-stream-section-new\"\n\t\t\t:class=\"wrapperContainerClass\"\n\t\t>\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div\n\t\t\t\tv-if=\"mode === 'schedule'\"\n\t\t\t\t@click=\"showContextMenu\"\n\t\t\t\tclass=\"crm-entity-stream-section-context-menu\"\n\t\t\t></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div\n\t\t\t\t\tclass=\"crm-entity-stream-content-event\"\n\t\t\t\t\t:class=\"innerWrapperContainerClass\"\n\t\t\t\t>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-title\">\n\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_SERVICE'), "\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"deliveryRequestStatus && deliveryRequestStatusSemantic\"\n\t\t\t\t\t\t\t:class=\"statusClass\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{deliveryRequestStatus}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">{{createdAt}}</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail crm-entity-stream-content-delivery\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<template v-if=\"mode === 'schedule'\">\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tv-if=\"isSendRequestButtonVisible\"\n\t\t\t\t\t\t\t\t\t@click=\"createDeliveryRequest\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-primary\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATE_DELIVERY_REQUEST'), "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span v-if=\"isCreatingRequest\" class=\"crm-entity-stream-content-delivery-status\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATING_REQUEST'), "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tv-if=\"isConnectedWithDeliveryRequest && deliveryService && deliveryService.IS_CANCELLABLE\"\n\t\t\t\t\t\t\t\t\t@click=\"cancelDeliveryRequest\"\n\t\t\t\t\t\t\t\t\t:class=\"cancelRequestButtonStyle\"\n\t\t\t\t\t\t\t\t>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t\t{{deliveryService.CANCEL_ACTION_NAME}}\n\t\t\t\t\t\t\t\t</span>\t\t\t\t\t\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<delivery-service-info\n\t\t\t\t\t\t\t\tv-if=\"deliveryService\"\n\t\t\t\t\t\t\t\t:deliveryService=\"deliveryService\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t</delivery-service-info>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row\">\n\t\t\t\t\t\t\t<table class=\"crm-entity-stream-content-delivery-order\">\n\t\t\t\t\t\t\t\t<tr v-if=\"shipment && shipment.ADDRESS_FROM_FORMATTED && shipment.ADDRESS_TO_FORMATTED\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM'), "\n\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"shipment.ADDRESS_FROM_FORMATTED\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO'), "\n\t\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span v-html=\"shipment.ADDRESS_TO_FORMATTED\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<tr v-if=\"shipment\">\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE'), "\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\t\tv-html=\"shipment.PRICE_DELIVERY_FORMATTED\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t style=\"font-size: 14px; color: #333;\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t\t<td>\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE'), "\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span style=\"font-size: 14px; color: #333; opacity: .5;\">\n\t\t\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\t\t\tv-html=\"expectedDeliveryPriceFormatted\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED'), "\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<!-- Properties --->\n\t\t\t\t\t\t\t\t<tr v-for=\"property in deliveryRequestProperties\">\n\t\t\t\t\t\t\t\t\t<td colspan=\"2\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-item\">\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-label\">\n\t\t\t\t\t\t\t\t\t\t\t\t{{property.NAME}}\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm\">\n\t\t\t\t\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\t\t\t\t\tv-if=\"isPhone(property)\"\n\t\t\t\t\t\t\t\t\t\t\t\t\t@click=\"callPhone(property.VALUE)\"\n\t\t\t\t\t\t\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-link\"\n\t\t\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{property.VALUE}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t\t<span v-else>\n\t\t\t\t\t\t\t\t\t\t\t\t\t{{property.VALUE}}\n\t\t\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t</td>\n\t\t\t\t\t\t\t\t</tr>\n\t\t\t\t\t\t\t\t<!-- end Properties --->\n\t\t\t\t\t\t\t</table>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div v-if=\"mode === 'schedule'\" class=\"crm-entity-stream-content-detail-planned-action\">\n\t\t\t\t\t\t<input @click=\"completeActivity\" type=\"checkbox\" class=\"crm-entity-stream-planned-apply-btn\">\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\">\n\t\t\t\t\t</author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: `
+		<div
+			class="crm-entity-stream-section crm-entity-stream-section-new"
+			:class="wrapperContainerClass"
+		>
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
+			<div
+				v-if="mode === 'schedule'"
+				@click="showContextMenu"
+				class="crm-entity-stream-section-context-menu"
+			></div>
+			<div class="crm-entity-stream-section-content">
+				<div
+					class="crm-entity-stream-content-event"
+					:class="innerWrapperContainerClass"
+				>
+					<div class="crm-entity-stream-content-header">
+						<span class="crm-entity-stream-content-event-title">
+							${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_SERVICE')}
+						</span>
+						<span
+							v-if="deliveryRequestStatus && deliveryRequestStatusSemantic"
+							:class="statusClass"
+						>
+							{{deliveryRequestStatus}}
+						</span>
+						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
+					</div>
+					<div class="crm-entity-stream-content-detail crm-entity-stream-content-delivery">
+						<div class="crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex">
+							<template v-if="mode === 'schedule'">
+								<span
+									v-if="isSendRequestButtonVisible"
+									@click="createDeliveryRequest"
+									class="ui-btn ui-btn-sm ui-btn-primary"
+								>
+									${main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATE_DELIVERY_REQUEST')}
+								</span>
+								<span v-if="isCreatingRequest" class="crm-entity-stream-content-delivery-status">
+									${main_core.Loc.getMessage('TIMELINE_DELIVERY_CREATING_REQUEST')}
+								</span>
+								<span
+									v-if="isConnectedWithDeliveryRequest && deliveryService && deliveryService.IS_CANCELLABLE"
+									@click="cancelDeliveryRequest"
+									:class="cancelRequestButtonStyle"
+								>								
+									{{deliveryService.CANCEL_ACTION_NAME}}
+								</span>					
+							</template>
+							<delivery-service-info
+								v-if="deliveryService"
+								:deliveryService="deliveryService"
+							>
+							</delivery-service-info>
+						</div>
+						<div class="crm-entity-stream-content-delivery-row">
+							<table class="crm-entity-stream-content-delivery-order">
+								<tr v-if="shipment && shipment.ADDRESS_FROM_FORMATTED && shipment.ADDRESS_TO_FORMATTED">
+									<td colspan="2">
+										<div class="crm-entity-stream-content-delivery-order-item">
+											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
+												<div class="crm-entity-stream-content-delivery-order-box">
+													<div class="crm-entity-stream-content-delivery-order-box-label">
+														${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM')}
+													</div>
+													<span v-html="shipment.ADDRESS_FROM_FORMATTED">
+													</span>
+												</div>
+												<div class="crm-entity-stream-content-delivery-order-box">
+													<div class="crm-entity-stream-content-delivery-order-box-label">
+														${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO')}
+													</div>
+													<span v-html="shipment.ADDRESS_TO_FORMATTED">
+													</span>
+												</div>
+											</div>
+										</div>
+									</td>
+								</tr>
+								<tr v-if="shipment">
+									<td>
+										<div class="crm-entity-stream-content-delivery-order-item">
+											<div class="crm-entity-stream-content-delivery-order-label">
+												${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE')}
+											</div>
+											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
+												<span
+													v-html="shipment.PRICE_DELIVERY_FORMATTED"
+													 style="font-size: 14px; color: #333;"
+												>
+												</span>
+											</div>
+										</div>
+									</td>
+									<td>
+										<div class="crm-entity-stream-content-delivery-order-item">
+											<div class="crm-entity-stream-content-delivery-order-label">
+												${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE')}
+											</div>
+											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
+												<span style="font-size: 14px; color: #333; opacity: .5;">
+													<span
+														v-html="expectedDeliveryPriceFormatted"
+													>
+													</span>
+												</span>
+												<span v-else>
+													${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED')}
+												</span>
+											</div>
+										</div>
+									</td>
+								</tr>
+								<!-- Properties --->
+								<tr v-for="property in deliveryRequestProperties">
+									<td colspan="2">
+										<div class="crm-entity-stream-content-delivery-order-item">
+											<div class="crm-entity-stream-content-delivery-order-label">
+												{{property.NAME}}
+											</div>
+											<div class="crm-entity-stream-content-delivery-order-value crm-entity-stream-content-delivery-order-value--sm">
+												<span
+													v-if="isPhone(property)"
+													@click="callPhone(property.VALUE)"
+													class="crm-entity-stream-content-delivery-link"
+												>
+													{{property.VALUE}}
+												</span>
+												<span v-else>
+													{{property.VALUE}}
+												</span>
+											</div>
+										</div>
+									</td>
+								</tr>
+								<!-- end Properties --->
+							</table>
+						</div>
+					</div>
+					<div v-if="mode === 'schedule'" class="crm-entity-stream-content-detail-planned-action">
+						<input @click="completeActivity" type="checkbox" class="crm-entity-stream-planned-apply-btn">
+					</div>
+					<author v-if="author" :author="author">
+					</author>
+				</div>
+			</div>
+		</div>
+	`
 	});
 
 	var component$3 = ui_vue.Vue.extend({
@@ -2140,57 +2456,107 @@ this.BX.Crm = this.BX.Crm || {};
 	    'delivery-service-info': DeliveryServiceInfo
 	  },
 	  computed: {
-	    deliveryService: function deliveryService() {
+	    deliveryService() {
 	      if (!this.data.FIELDS.hasOwnProperty('DELIVERY_SERVICE')) {
 	        return null;
 	      }
 
 	      return this.data.FIELDS.DELIVERY_SERVICE;
 	    },
-	    messageData: function messageData() {
+
+	    messageData() {
 	      if (!this.data.FIELDS.hasOwnProperty('MESSAGE_DATA')) {
 	        return null;
 	      }
 
 	      return this.data.FIELDS.MESSAGE_DATA;
 	    },
-	    messageTitle: function messageTitle() {
+
+	    messageTitle() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['TITLE'];
 	    },
-	    messageDescription: function messageDescription() {
+
+	    messageDescription() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['DESCRIPTION'];
 	    },
-	    messageStatus: function messageStatus() {
+
+	    messageStatus() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['STATUS'];
 	    },
-	    messageStatusSemantics: function messageStatusSemantics() {
+
+	    messageStatusSemantics() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['STATUS_SEMANTIC'];
 	    },
-	    messageStatusSemanticsClass: function messageStatusSemanticsClass() {
+
+	    messageStatusSemanticsClass() {
 	      return {
 	        'crm-entity-stream-content-event-process': this.messageStatusSemantics === 'process',
 	        'crm-entity-stream-content-event-missing': this.messageStatusSemantics === 'error',
 	        'crm-entity-stream-content-event-done': this.messageStatusSemantics === 'success'
 	      };
 	    }
+
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageTitle\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-event-title\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageTitle}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageStatus && messageStatusSemantics\"\n\t\t\t\t\t\t\t:class=\"messageStatusSemanticsClass\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageStatus}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">\n\t\t\t\t\t\t\t<span v-html=\"createdAt\">\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail\">\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex\">\n\t\t\t\t\t\t\t<delivery-service-info\n\t\t\t\t\t\t\t\tv-if=\"deliveryService\"\n\t\t\t\t\t\t\t\t:deliveryService=\"deliveryService\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t</delivery-service-info>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"messageDescription\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-delivery-description\"\n\t\t\t\t\t\t\tv-html=\"messageDescription\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\">\n\t\t\t\t\t</author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-new">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
+			<div class="crm-entity-stream-section-content">
+				<div class="crm-entity-stream-content-event">
+					<div class="crm-entity-stream-content-header">
+						<span
+							v-if="messageTitle"
+							class="crm-entity-stream-content-event-title"
+						>
+							{{messageTitle}}
+						</span>
+						<span
+							v-if="messageStatus && messageStatusSemantics"
+							:class="messageStatusSemanticsClass"
+						>
+							{{messageStatus}}
+						</span>
+						<span class="crm-entity-stream-content-event-time">
+							<span v-html="createdAt">
+							</span>
+						</span>
+					</div>
+					<div class="crm-entity-stream-content-detail">
+						<div class="crm-entity-stream-content-delivery-row crm-entity-stream-content-delivery-row--flex">
+							<delivery-service-info
+								v-if="deliveryService"
+								:deliveryService="deliveryService"
+							>
+							</delivery-service-info>
+						</div>
+						<div
+							v-if="messageDescription"
+							class="crm-entity-stream-content-delivery-description"
+							v-html="messageDescription"
+						>
+						</div>
+					</div>
+					<author v-if="author" :author="author">
+					</author>
+				</div>
+			</div>
+		</div>
+	`
 	});
 
 	var component$4 = ui_vue.Vue.extend({
@@ -2200,76 +2566,135 @@ this.BX.Crm = this.BX.Crm || {};
 	    'delivery-service-info': DeliveryServiceInfo
 	  },
 	  computed: {
-	    deliveryService: function deliveryService() {
+	    deliveryService() {
 	      if (!this.data.FIELDS.hasOwnProperty('DELIVERY_SERVICE')) {
 	        return null;
 	      }
 
 	      return this.data.FIELDS.DELIVERY_SERVICE;
 	    },
-	    messageData: function messageData() {
+
+	    messageData() {
 	      if (!this.data.FIELDS.hasOwnProperty('MESSAGE_DATA')) {
 	        return null;
 	      }
 
 	      return this.data.FIELDS.MESSAGE_DATA;
 	    },
-	    messageTitle: function messageTitle() {
+
+	    messageTitle() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['TITLE'];
 	    },
-	    messageDescription: function messageDescription() {
+
+	    messageDescription() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['DESCRIPTION'];
 	    },
-	    messageStatus: function messageStatus() {
+
+	    messageStatus() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['STATUS'];
 	    },
-	    messageStatusSemantics: function messageStatusSemantics() {
+
+	    messageStatusSemantics() {
 	      if (!this.messageData) {
 	        return null;
 	      }
 
 	      return this.messageData['STATUS_SEMANTIC'];
 	    },
-	    messageStatusSemanticsClass: function messageStatusSemanticsClass() {
+
+	    messageStatusSemanticsClass() {
 	      return {
 	        'crm-entity-stream-content-event-process': this.messageStatusSemantics === 'process',
 	        'crm-entity-stream-content-event-missing': this.messageStatusSemantics === 'error',
 	        'crm-entity-stream-content-event-done': this.messageStatusSemantics === 'success'
 	      };
 	    },
-	    addressFrom: function addressFrom() {
+
+	    addressFrom() {
 	      if (!this.data.FIELDS.hasOwnProperty('ADDRESS_FROM_FORMATTED')) {
 	        return null;
 	      }
 
 	      return this.data.FIELDS.ADDRESS_FROM_FORMATTED;
 	    },
-	    addressTo: function addressTo() {
+
+	    addressTo() {
 	      if (!this.data.FIELDS.hasOwnProperty('ADDRESS_TO_FORMATTED')) {
 	        return null;
 	      }
 
 	      return this.data.FIELDS.ADDRESS_TO_FORMATTED;
 	    }
+
 	  },
-	  template: "\n\t\t<div class=\"crm-entity-stream-section crm-entity-stream-section-new\">\n\t\t\t<div class=\"crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi\"></div>\n\t\t\t\n\t\t\t<div class=\"crm-entity-stream-section-content\">\n\t\t\t\t<div class=\"crm-entity-stream-content-event\">\n\t\t\t\t\t<div class=\"crm-entity-stream-content-header\">\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageTitle\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-event-title\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageTitle}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span\n\t\t\t\t\t\t\tv-if=\"messageStatus && messageStatusSemantics\"\n\t\t\t\t\t\t\t:class=\"messageStatusSemanticsClass\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{messageStatus}}\n\t\t\t\t\t\t</span>\n\t\t\t\t\t\t<span class=\"crm-entity-stream-content-event-time\">\n\t\t\t\t\t\t\t<span v-html=\"createdAt\">\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"crm-entity-stream-content-detail\">\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-html=\"messageDescription\"\n\t\t\t\t\t\t\tclass=\"crm-entity-stream-content-detail-description crm-delivery-taxi-caption\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"crm-entity-stream-content-detail-description\">\n\t\t\t\t\t\t\t<div v-if=\"addressFrom\" class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t".concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<span>{{addressFrom}}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div v-if=\"addressTo\" class=\"crm-entity-stream-content-delivery-order-box\">\n\t\t\t\t\t\t\t\t<div class=\"crm-entity-stream-content-delivery-order-box-label\">\n\t\t\t\t\t\t\t\t\t").concat(main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO'), "\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<span>{{addressTo}}</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<author v-if=\"author\" :author=\"author\">\n\t\t\t\t\t</author>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t")
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-new">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
+			
+			<div class="crm-entity-stream-section-content">
+				<div class="crm-entity-stream-content-event">
+					<div class="crm-entity-stream-content-header">
+						<span
+							v-if="messageTitle"
+							class="crm-entity-stream-content-event-title"
+						>
+							{{messageTitle}}
+						</span>
+						<span
+							v-if="messageStatus && messageStatusSemantics"
+							:class="messageStatusSemanticsClass"
+						>
+							{{messageStatus}}
+						</span>
+						<span class="crm-entity-stream-content-event-time">
+							<span v-html="createdAt">
+							</span>
+						</span>
+					</div>
+					<div class="crm-entity-stream-content-detail">
+						<div
+							v-html="messageDescription"
+							class="crm-entity-stream-content-detail-description crm-delivery-taxi-caption"
+						>
+						</div>
+						<div class="crm-entity-stream-content-detail-description">
+							<div v-if="addressFrom" class="crm-entity-stream-content-delivery-order-box">
+								<div class="crm-entity-stream-content-delivery-order-box-label">
+									${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_FROM')}
+								</div>
+								<span>{{addressFrom}}</span>
+							</div>
+							<div v-if="addressTo" class="crm-entity-stream-content-delivery-order-box">
+								<div class="crm-entity-stream-content-delivery-order-box-label">
+									${main_core.Loc.getMessage('TIMELINE_DELIVERY_TAXI_ADDRESS_TO')}
+								</div>
+								<span>{{addressTo}}</span>
+							</div>
+						</div>
+					</div>
+					<author v-if="author" :author="author">
+					</author>
+				</div>
+			</div>
+		</div>
+	`
 	});
 
 	/** @memberof BX.Crm.Timeline */
 
-	var Editor = /*#__PURE__*/function () {
+	let Editor = /*#__PURE__*/function () {
 	  function Editor() {
 	    babelHelpers.classCallCheck(this, Editor);
 	    this._id = "";
@@ -2418,9 +2843,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "resizeForm",
 	    value: function resizeForm() {
-	      var ghost = this.ensureGhostCreated();
-	      var computedStyle = getComputedStyle(this._input);
-	      var diff = parseInt(computedStyle.paddingBottom) + parseInt(computedStyle.paddingTop) + parseInt(computedStyle.borderTopWidth) + parseInt(computedStyle.borderBottomWidth) || 0;
+	      const ghost = this.ensureGhostCreated();
+	      const computedStyle = getComputedStyle(this._input);
+	      const diff = parseInt(computedStyle.paddingBottom) + parseInt(computedStyle.paddingTop) + parseInt(computedStyle.borderTopWidth) + parseInt(computedStyle.borderBottomWidth) || 0;
 	      ghost.innerHTML = BX.util.htmlspecialchars(this._input.value.replace(/[\r\n]{1}/g, '<br>'));
 	      this._input.style.minHeight = ghost.scrollHeight + diff + 'px';
 	    }
@@ -2430,7 +2855,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Tools */
 
-	var WaitConfigurationDialog = /*#__PURE__*/function () {
+	let WaitConfigurationDialog = /*#__PURE__*/function () {
 	  function WaitConfigurationDialog() {
 	    babelHelpers.classCallCheck(this, WaitConfigurationDialog);
 	    this._id = "";
@@ -2495,7 +2920,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = WaitConfigurationDialog.messages;
+	      const m = WaitConfigurationDialog.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }, {
@@ -2506,10 +2931,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTargetDateCaption",
 	    value: function getTargetDateCaption(name) {
-	      var length = this._targetDates.length;
+	      const length = this._targetDates.length;
 
-	      for (var i = 0; i < length; i++) {
-	        var info = this._targetDates[i];
+	      for (let i = 0; i < length; i++) {
+	        const info = this._targetDates[i];
 
 	        if (info["name"] === name) {
 	          return info["caption"];
@@ -2562,12 +2987,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareDialogContent",
 	    value: function prepareDialogContent() {
-	      var container = BX.create("div", {
+	      const container = BX.create("div", {
 	        attrs: {
 	          className: "crm-wait-popup-select-block"
 	        }
 	      });
-	      var wrapper = BX.create("div", {
+	      const wrapper = BX.create("div", {
 	        attrs: {
 	          className: "crm-wait-popup-select-wrapper"
 	        }
@@ -2631,7 +3056,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onDurationChange",
 	    value: function onDurationChange() {
-	      var duration = parseInt(this._durationInput.value);
+	      let duration = parseInt(this._durationInput.value);
 
 	      if (isNaN(duration) || duration <= 0) {
 	        duration = 1;
@@ -2657,12 +3082,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "openTargetMenu",
 	    value: function openTargetMenu() {
-	      var menuItems = [];
-	      var i = 0;
-	      var length = this._targetDates.length;
+	      const menuItems = [];
+	      let i = 0;
+	      const length = this._targetDates.length;
 
 	      for (; i < length; i++) {
-	        var info = this._targetDates[i];
+	        const info = this._targetDates[i];
 	        menuItems.push({
 	          text: info["caption"],
 	          title: info["caption"],
@@ -2708,13 +3133,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onSaveButtonClick",
 	    value: function onSaveButtonClick(e) {
-	      var callback = BX.prop.getFunction(this._settings, "onSave", null);
+	      const callback = BX.prop.getFunction(this._settings, "onSave", null);
 
 	      if (!callback) {
 	        return;
 	      }
 
-	      var params = {
+	      const params = {
 	        type: this._type
 	      };
 	      params["duration"] = this._duration;
@@ -2724,7 +3149,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onCancelButtonClick",
 	    value: function onCancelButtonClick(e) {
-	      var callback = BX.prop.getFunction(this._settings, "onCancel", null);
+	      const callback = BX.prop.getFunction(this._settings, "onCancel", null);
 
 	      if (callback) {
 	        callback(this);
@@ -2733,7 +3158,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onTargetSelect",
 	    value: function onTargetSelect(e, item) {
-	      var fieldName = BX.prop.getString(item, "value", "");
+	      const fieldName = BX.prop.getString(item, "value", "");
 
 	      if (fieldName !== "") {
 	        this._target = fieldName;
@@ -2746,7 +3171,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new WaitConfigurationDialog();
+	      const self = new WaitConfigurationDialog();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -2758,7 +3183,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Editors */
 
-	var Wait = /*#__PURE__*/function (_Editor) {
+	let Wait = /*#__PURE__*/function (_Editor) {
 	  babelHelpers.inherits(Wait, _Editor);
 
 	  function Wait() {
@@ -2788,7 +3213,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function doInitialize() {
 	      this._configContainer = BX(this.getSetting("configContainer"));
 	      this._serviceUrl = this.getSetting("serviceUrl", "");
-	      var config = BX.prop.getObject(this._settings, "config", {});
+	      const config = BX.prop.getObject(this._settings, "config", {});
 	      this._type = Wait.WaitingType.resolveTypeId(BX.prop.getString(config, "type", Wait.WaitingType.names.after));
 	      this._duration = BX.prop.getInteger(config, "duration", 1);
 	      this._target = BX.prop.getString(config, "target", "");
@@ -2803,11 +3228,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTargetDateCaption",
 	    value: function getTargetDateCaption(name) {
-	      var i = 0;
-	      var length = this._targetDates.length;
+	      let i = 0;
+	      const length = this._targetDates.length;
 
 	      for (; i < length; i++) {
-	        var info = this._targetDates[i];
+	        const info = this._targetDates[i];
 
 	        if (info["name"] === name) {
 	          return info["caption"];
@@ -2834,8 +3259,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var handler = BX.delegate(this.onMenuItemClick, this);
-	      var menuItems = [{
+	      const handler = BX.delegate(this.onMenuItemClick, this);
+	      const menuItems = [{
 	        id: "day_1",
 	        text: this.getMessage("oneDay"),
 	        onclick: handler
@@ -2860,7 +3285,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: this.getMessage("threeWeeks"),
 	        onclick: handler
 	      }];
-	      var customMenu = {
+	      const customMenu = {
 	        id: "custom",
 	        text: this.getMessage("custom"),
 	        items: []
@@ -2916,7 +3341,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var params = {
+	      const params = {
 	        type: Wait.WaitingType.after
 	      };
 
@@ -2953,7 +3378,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this._configDialog.setDuration(this._duration);
 
-	      var target = this._target;
+	      let target = this._target;
 
 	      if (target === "" && this._targetDates.length > 0) {
 	        target = this._targetDates[0]["name"];
@@ -3011,7 +3436,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._target = this._type === Wait.WaitingType.before ? BX.prop.getString(params, "target", "") : ""; //endregion
 	      //region Save settings
 
-	      var optionName = this._manager.getId().toLowerCase();
+	      const optionName = this._manager.getId().toLowerCase();
 
 	      BX.userOptions.save("crm.timeline.wait", optionName, "type", this._type === Wait.WaitingType.after ? "after" : "before");
 	      BX.userOptions.save("crm.timeline.wait", optionName, "duration", this._duration);
@@ -3084,14 +3509,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var description = this.getSummaryText();
-	      var comment = BX.util.trim(this._input.value);
+	      let description = this.getSummaryText();
+	      const comment = BX.util.trim(this._input.value);
 
 	      if (comment !== "") {
 	        description += "\n" + comment;
 	      }
 
-	      var data = {
+	      const data = {
 	        ID: 0,
 	        typeId: this._type,
 	        duration: this._duration,
@@ -3126,7 +3551,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onSaveSuccess",
 	    value: function onSaveSuccess(data) {
 	      this._isRequestRunning = this._isLocked = false;
-	      var error = BX.prop.getString(data, "ERROR", "");
+	      const error = BX.prop.getString(data, "ERROR", "");
 
 	      if (error !== "") {
 	        alert(error);
@@ -3148,13 +3573,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Wait.messages;
+	      const m = Wait.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Wait();
+	      const self = new Wait();
 	      self.initialize(id, settings);
 	      this.items[self.getId()] = self;
 	      return self;
@@ -3171,7 +3596,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    after: "after",
 	    before: "before"
 	  },
-	  resolveTypeId: function resolveTypeId(name) {
+	  resolveTypeId: function (name) {
 	    if (name === this.names.after) {
 	      return this.after;
 	    } else if (name === this.names.before) {
@@ -3184,10 +3609,10 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(Wait, "messages", {});
 	babelHelpers.defineProperty(Wait, "items", {});
 	babelHelpers.defineProperty(Wait, "Helper", {
-	  getDurationText: function getDurationText(duration, enableNumber) {
+	  getDurationText: function (duration, enableNumber) {
 	    enableNumber = !!enableNumber;
-	    var result = "";
-	    var type = "D";
+	    let result = "";
+	    let type = "D";
 
 	    if (enableNumber) {
 	      if (duration % 7 === 0) {
@@ -3208,7 +3633,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    return result;
 	  },
-	  getMessage: function getMessage(name) {
+	  getMessage: function (name) {
 	    return Wait.Helper.messages.hasOwnProperty(name) ? Wait.Helper.messages[name] : name;
 	  },
 	  messages: {}
@@ -3216,7 +3641,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Editors */
 
-	var Sms = /*#__PURE__*/function (_Editor) {
+	let Sms = /*#__PURE__*/function (_Editor) {
 	  babelHelpers.inherits(Sms, _Editor);
 
 	  function Sms() {
@@ -3265,7 +3690,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "doInitialize",
 	    value: function doInitialize() {
 	      this._serviceUrl = BX.util.remove_url_param(this.getSetting("serviceUrl", ""), ['sessid', 'site']);
-	      var config = BX.prop.getObject(this._settings, "config", {});
+	      const config = BX.prop.getObject(this._settings, "config", {});
 	      this._canUse = BX.prop.getBoolean(config, "canUse", false);
 	      this._canSendMessage = BX.prop.getBoolean(config, "canSendMessage", false);
 	      this._manageUrl = BX.prop.getString(config, "manageUrl", '');
@@ -3368,13 +3793,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "initSenderSelector",
 	    value: function initSenderSelector() {
-	      var defaultSenderId = this._defaults.senderId;
-	      var defaultSender = this._senders[0].canUse ? this._senders[0] : null;
-	      var restSender = null;
-	      var menuItems = [];
-	      var handler = this.onSenderSelectorClick.bind(this);
+	      const defaultSenderId = this._defaults.senderId;
+	      let defaultSender = this._senders[0].canUse ? this._senders[0] : null;
+	      let restSender = null;
+	      const menuItems = [];
+	      const handler = this.onSenderSelectorClick.bind(this);
 
-	      for (var i = 0; i < this._senders.length; ++i) {
+	      for (let i = 0; i < this._senders.length; ++i) {
 	        if (this._senders[i].canUse && this._senders[i].fromList.length && (this._senders[i].id === defaultSenderId || !defaultSender)) {
 	          defaultSender = this._senders[i];
 	        }
@@ -3398,11 +3823,11 @@ this.BX.Crm = this.BX.Crm || {};
 	            delimiter: true
 	          });
 
-	          for (var _i = 0; _i < restSender.fromList.length; ++_i) {
+	          for (let i = 0; i < restSender.fromList.length; ++i) {
 	            menuItems.push({
-	              text: restSender.fromList[_i].name,
+	              text: restSender.fromList[i].name,
 	              sender: restSender,
-	              from: restSender.fromList[_i],
+	              from: restSender.fromList[i],
 	              onclick: handler
 	            });
 	          }
@@ -3428,18 +3853,18 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onSenderSelectorClick(e, item) {
 	      if (item.sender) {
 	        if (!item.sender.canUse || !item.sender.fromList.length) {
-	          var url = BX.Uri.addParam(item.sender.manageUrl, {
+	          const url = BX.Uri.addParam(item.sender.manageUrl, {
 	            'IFRAME': 'Y'
 	          });
-	          var slider = BX.SidePanel.Instance.getTopSlider();
-	          var options = {
+	          const slider = BX.SidePanel.Instance.getTopSlider();
+	          const options = {
 	            events: {
-	              onClose: function onClose() {
+	              onClose: function () {
 	                if (slider) {
 	                  slider.reload();
 	                }
 	              },
-	              onCloseComplete: function onCloseComplete() {
+	              onCloseComplete: function () {
 	                if (!slider) {
 	                  document.location.reload();
 	                }
@@ -3456,7 +3881,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 
 	        this.setSender(item.sender, true);
-	        var from = item.from ? item.from : item.sender.fromList[0];
+	        const from = item.from ? item.from : item.sender.fromList[0];
 	        this.setFrom(from, true);
 	      }
 
@@ -3490,7 +3915,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        this._hideButtonsOnBlur = true;
 	      }
 
-	      var visualFn = sender.id === 'rest' ? 'hide' : 'show';
+	      const visualFn = sender.id === 'rest' ? 'hide' : 'show';
 	      BX[visualFn](this._fromContainerNode);
 
 	      if (setAsDefault) {
@@ -3515,10 +3940,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "initFromSelector",
 	    value: function initFromSelector() {
 	      if (this._fromList.length > 0) {
-	        var defaultFromId = this._defaults.from || this._fromList[0].id;
-	        var defaultFrom = null;
+	        const defaultFromId = this._defaults.from || this._fromList[0].id;
+	        let defaultFrom = null;
 
-	        for (var i = 0; i < this._fromList.length; ++i) {
+	        for (let i = 0; i < this._fromList.length; ++i) {
 	          if (this._fromList[i].id === defaultFromId || !defaultFrom) {
 	            defaultFrom = this._fromList[i];
 	          }
@@ -3534,10 +3959,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onFromSelectorClick",
 	    value: function onFromSelectorClick(e) {
-	      var menuItems = [];
-	      var handler = this.onFromSelectorItemClick.bind(this);
+	      const menuItems = [];
+	      const handler = this.onFromSelectorItemClick.bind(this);
 
-	      for (var i = 0; i < this._fromList.length; ++i) {
+	      for (let i = 0; i < this._fromList.length; ++i) {
 	        menuItems.push({
 	          text: this._fromList[i].name,
 	          from: this._fromList[i],
@@ -3581,10 +4006,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "initClientSelector",
 	    value: function initClientSelector() {
-	      var menuItems = [];
-	      var handler = this.onClientSelectorClick.bind(this);
+	      const menuItems = [];
+	      const handler = this.onClientSelectorClick.bind(this);
 
-	      for (var i = 0; i < this._communications.length; ++i) {
+	      for (let i = 0; i < this._communications.length; ++i) {
 	        menuItems.push({
 	          text: this._communications[i].caption,
 	          client: this._communications[i],
@@ -3624,10 +4049,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onToSelectorClick",
 	    value: function onToSelectorClick(e) {
-	      var menuItems = [];
-	      var handler = this.onToSelectorItemClick.bind(this);
+	      const menuItems = [];
+	      const handler = this.onToSelectorItemClick.bind(this);
 
-	      for (var i = 0; i < this._toList.length; ++i) {
+	      for (let i = 0; i < this._toList.length; ++i) {
 	        menuItems.push({
 	          text: this._toList[i].valueFormatted || this._toList[i].value,
 	          to: this._toList[i],
@@ -3701,17 +4126,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setMessageLengthCounter",
 	    value: function setMessageLengthCounter() {
-	      var length = this._input.value.length;
+	      const length = this._input.value.length;
 	      this._messageLengthCounterNode.textContent = length;
-	      var classFn = length >= this._messageLengthMax ? 'addClass' : 'removeClass';
+	      const classFn = length >= this._messageLengthMax ? 'addClass' : 'removeClass';
 	      BX[classFn](this._messageLengthCounterNode, 'crm-entity-stream-content-sms-symbol-counter-number-overhead');
 	      this.toggleSaveButton();
 	    }
 	  }, {
 	    key: "toggleSaveButton",
 	    value: function toggleSaveButton() {
-	      var sender = this.getSelectedSender();
-	      var enabled;
+	      const sender = this.getSelectedSender();
+	      let enabled;
 
 	      if (!sender || !sender.isTemplatesBased) {
 	        enabled = this._input.value.length > 0;
@@ -3728,9 +4153,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "save",
 	    value: function save() {
-	      var sender = this.getSelectedSender();
-	      var text = '';
-	      var templateId = '';
+	      const sender = this.getSelectedSender();
+	      let text = '';
+	      let templateId = '';
 
 	      if (!sender || !sender.isTemplatesBased) {
 	        text = this._input.value;
@@ -3739,7 +4164,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          return;
 	        }
 	      } else {
-	        var template = this.getSelectedTemplate();
+	        const template = this.getSelectedTemplate();
 
 	        if (!template) {
 	          return;
@@ -3799,7 +4224,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onSaveSuccess",
 	    value: function onSaveSuccess(data) {
 	      this._isRequestRunning = this._isLocked = false;
-	      var error = BX.prop.getString(data, "ERROR", "");
+	      const error = BX.prop.getString(data, "ERROR", "");
 
 	      if (error !== "") {
 	        alert(error);
@@ -3888,13 +4313,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (object instanceof BX.DocumentGenerator.Selector.Template) {
 	          this._documentSelector.createDocument(object).then(function (document) {
 	            this.pasteDocumentUrl(document);
-	          }.bind(this))["catch"](function (error) {
+	          }.bind(this)).catch(function (error) {
 	            console.error(error);
 	          }.bind(this));
 	        } else if (object instanceof BX.DocumentGenerator.Selector.Document) {
 	          this.pasteDocumentUrl(object);
 	        }
-	      }.bind(this))["catch"](function (error) {
+	      }.bind(this)).catch(function (error) {
 	        console.error(error);
 	      }.bind(this));
 	    }
@@ -3907,7 +4332,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        this._input.value = this._input.value + ' ' + document.getTitle() + ' ' + publicUrl;
 	        this.setMessageLengthCounter();
 	        this._source = 'document';
-	      }.bind(this))["catch"](function (error) {
+	      }.bind(this)).catch(function (error) {
 	        console.error(error);
 	      }.bind(this));
 	    }
@@ -4017,8 +4442,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "OnFileUploadSuccess",
 	    value: function OnFileUploadSuccess(fileResult, uf, file, uploaderFile) {
 	      this.hideLoader();
-	      var diskFileId = parseInt(fileResult.element_id.replace('n', ''));
-	      var fileName = fileResult.element_name;
+	      const diskFileId = parseInt(fileResult.element_id.replace('n', ''));
+	      const fileName = fileResult.element_name;
 	      this.pasteFileUrl(diskFileId, fileName);
 	    }
 	  }, {
@@ -4040,7 +4465,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          this.setMessageLengthCounter();
 	          this._source = 'file';
 	        }
-	      }.bind(this))["catch"](function (response) {
+	      }.bind(this)).catch(function (response) {
 	        console.error(response.errors.pop().message);
 	      });
 	    }
@@ -4082,7 +4507,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "showTemplateSelectDropdown",
 	    value: function showTemplateSelectDropdown(items) {
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (BX.Type.isArray(items)) {
 	        if (items.length) {
@@ -4102,8 +4527,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          });
 	        }
 	      } else if (this._senderId) {
-	        var loaderMenuId = this._templateSelectorMenuId + 'loader';
-	        var loaderMenuLoaderId = this._templateSelectorMenuId + 'loader';
+	        const loaderMenuId = this._templateSelectorMenuId + 'loader';
+	        const loaderMenuLoaderId = this._templateSelectorMenuId + 'loader';
 	        BX.PopupMenu.show({
 	          id: loaderMenuId,
 	          bindElement: this._templateSelectorNode,
@@ -4123,7 +4548,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        if (!this._isRequestRunning) {
 	          this._isRequestRunning = true;
-	          var senderId = this._senderId;
+	          const senderId = this._senderId;
 	          BX.ajax.runAction('messageservice.Sender.getTemplates', {
 	            data: {
 	              id: senderId,
@@ -4136,7 +4561,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }).then(function (response) {
 	            this._isRequestRunning = false;
 
-	            var sender = this._senders.find(function (sender) {
+	            const sender = this._senders.find(function (sender) {
 	              return sender.id === senderId;
 	            }.bind(this));
 
@@ -4149,7 +4574,7 @@ this.BX.Crm = this.BX.Crm || {};
 	                this.showTemplateSelectDropdown(sender.templates);
 	              }
 	            }
-	          }.bind(this))["catch"](function (response) {
+	          }.bind(this)).catch(function (response) {
 	            this._isRequestRunning = false;
 
 	            if (BX.PopupMenu.getMenuById(loaderMenuId)) {
@@ -4173,13 +4598,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getSelectedTemplate",
 	    value: function getSelectedTemplate() {
-	      var sender = this.getSelectedSender();
+	      const sender = this.getSelectedSender();
 
 	      if (!this._templateId || !sender || !sender.templates) {
 	        return null;
 	      }
 
-	      var template = sender.templates.find(function (template) {
+	      const template = sender.templates.find(function (template) {
 	        return template.ID == this._templateId;
 	      }.bind(this));
 	      return template ? template : null;
@@ -4187,7 +4612,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onTemplateSelectClick",
 	    value: function onTemplateSelectClick() {
-	      var sender = this.getSelectedSender();
+	      const sender = this.getSelectedSender();
 
 	      if (sender) {
 	        this.showTemplateSelectDropdown(sender.templates);
@@ -4199,7 +4624,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._templateId = item.value;
 	      this.applySelectedTemplate();
 	      this.toggleSaveButton();
-	      var menu = BX.PopupMenu.getMenuById(this._templateSelectorMenuId);
+	      const menu = BX.PopupMenu.getMenuById(this._templateSelectorMenuId);
 
 	      if (menu) {
 	        menu.close();
@@ -4208,7 +4633,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "toggleTemplateSelectAvailability",
 	    value: function toggleTemplateSelectAvailability() {
-	      var sender = this.getSelectedSender();
+	      const sender = this.getSelectedSender();
 
 	      if (sender && BX.Type.isArray(sender.templates) && !sender.templates.length) {
 	        BX.addClass(this._templateSelectorNode, 'ui-ctl-disabled');
@@ -4221,16 +4646,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "applySelectedTemplate",
 	    value: function applySelectedTemplate() {
-	      var sender = this.getSelectedSender();
+	      const sender = this.getSelectedSender();
 
 	      if (!this._templateId || !sender || !sender.templates) {
 	        this.hideNode(this._templatePreviewNode);
 	        this._templateTemplateTitleNode.textContent = '';
 	      } else {
-	        var template = this.getSelectedTemplate();
+	        const template = this.getSelectedTemplate();
 
 	        if (template) {
-	          var preview = BX.Text.encode(template.PREVIEW).replace(/\n/g, '<br>');
+	          const preview = BX.Text.encode(template.PREVIEW).replace(/\n/g, '<br>');
 	          this.showNode(this._templatePreviewNode);
 	          this._templatePreviewNode.innerHTML = preview;
 	          this._templateTemplateTitleNode.textContent = template.TITLE;
@@ -4243,7 +4668,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Sms();
+	      const self = new Sms();
 	      self.initialize(id, settings);
 	      Sms.items[self.getId()] = self;
 	      return self;
@@ -4256,7 +4681,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Editors */
 
-	var Rest = /*#__PURE__*/function (_Editor) {
+	let Rest = /*#__PURE__*/function (_Editor) {
 	  babelHelpers.inherits(Rest, _Editor);
 
 	  function Rest() {
@@ -4282,9 +4707,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	        top.BX.addCustomEvent(top, 'Rest:AppLayout:ApplicationInstall', BX.proxy(this.fireUpdateEvent, this));
 	      } else {
-	        var appId = _action.replace('activity_rest_', '');
+	        const appId = _action.replace('activity_rest_', '');
 
-	        var appData = appId.split('_');
+	        const appData = appId.split('_');
 	        BX.rest.AppLayout.openApplication(appData[0], {
 	          ID: this._ownerId
 	        }, {
@@ -4297,9 +4722,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "initializeInterface",
 	    value: function initializeInterface() {
 	      if (!!top.BX.rest && !!top.BX.rest.AppLayout) {
-	        var entityTypeId = this._manager._ownerTypeId,
-	            entityId = this._manager._ownerId;
-	        var PlacementInterface = top.BX.rest.AppLayout.initializePlacement(this.getSetting("placement", ''));
+	        const entityTypeId = this._manager._ownerTypeId,
+	              entityId = this._manager._ownerId;
+	        const PlacementInterface = top.BX.rest.AppLayout.initializePlacement(this.getSetting("placement", ''));
 
 	        PlacementInterface.prototype.reloadData = function (params, cb) {
 	          BX.Crm.EntityEvent.fireUpdate(entityTypeId, entityId, '');
@@ -4310,8 +4735,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "fireUpdateEvent",
 	    value: function fireUpdateEvent() {
-	      var entityTypeId = this._manager._ownerTypeId,
-	          entityId = this._manager._ownerId;
+	      const entityTypeId = this._manager._ownerTypeId,
+	            entityId = this._manager._ownerId;
 	      setTimeout(function () {
 	        console.log('fireUpdate', entityId, entityTypeId);
 	        BX.Crm.EntityEvent.fire(BX.Crm.EntityEvent.names.invalidate, entityTypeId, entityId, '');
@@ -4320,7 +4745,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Rest();
+	      const self = new Rest();
 	      self.initialize(id, settings);
 	      Rest.items[self.getId()] = self;
 	      return self;
@@ -4333,7 +4758,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Editors */
 
-	var Comment = /*#__PURE__*/function (_Editor) {
+	let Comment = /*#__PURE__*/function (_Editor) {
 	  babelHelpers.inherits(Comment, _Editor);
 
 	  function Comment() {
@@ -4371,7 +4796,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onLoadEditorSuccess",
 	    value: function onLoadEditorSuccess(result) {
-	      var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
+	      const html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
 	      BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor, this)).then(BX.delegate(this.addEvents, this));
 	    }
 	  }, {
@@ -4447,8 +4872,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "save",
 	    value: function save() {
-	      var text = "";
-	      var attachmentList = [];
+	      let text = "";
+	      const attachmentList = [];
 
 	      if (this._postForm) {
 	        text = this._postForm.oEditor.GetContent();
@@ -4522,18 +4947,18 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      this.cancel();
-	      var itemData = BX.prop.getObject(data, "HISTORY_ITEM");
+	      const itemData = BX.prop.getObject(data, "HISTORY_ITEM");
 
-	      var historyItem = this._history.createItem(itemData);
+	      const historyItem = this._history.createItem(itemData);
 
 	      this._history.addItem(historyItem, 0);
 
-	      var anchor = this._history.createAnchor();
+	      const anchor = this._history.createAnchor();
 
 	      historyItem.layout({
 	        anchor: anchor
 	      });
-	      var move = BX.CrmCommentAnimation.create(historyItem.getWrapper(), anchor, BX.pos(this._input), {
+	      const move = BX.CrmCommentAnimation.create(historyItem.getWrapper(), anchor, BX.pos(this._input), {
 	        start: BX.delegate(this.onAnimationStart, this),
 	        complete: BX.delegate(this.onAnimationComplete, this)
 	      });
@@ -4566,7 +4991,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Comment();
+	      const self = new Comment();
 	      self.initialize(id, settings);
 	      Comment.items[self.getId()] = self;
 	      return self;
@@ -4579,7 +5004,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Scheduled = /*#__PURE__*/function (_Item) {
+	let Scheduled = /*#__PURE__*/function (_Item) {
 	  babelHelpers.inherits(Scheduled, _Item);
 
 	  function Scheduled() {
@@ -4615,7 +5040,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "verifyPermissions",
 	    value: function verifyPermissions() {
-	      var userId = BX.prop.getInteger(this.getPermissions(), "USER_ID", 0);
+	      const userId = BX.prop.getInteger(this.getPermissions(), "USER_ID", 0);
 	      return userId <= 0 || userId === this._schedule.getUserId();
 	    }
 	  }, {
@@ -4636,7 +5061,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onPermissionsLoad",
 	    value: function onPermissionsLoad(result) {
-	      var permissions = BX.prop.getObject(result, "PERMISSIONS", null);
+	      const permissions = BX.prop.getObject(result, "PERMISSIONS", null);
 
 	      if (!permissions) {
 	        return;
@@ -4660,7 +5085,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isCounterEnabled",
 	    value: function isCounterEnabled() {
-	      var deadline = this.getDeadline();
+	      const deadline = this.getDeadline();
 	      return deadline && History.isCounterEnabled(deadline);
 	    }
 	  }, {
@@ -4721,7 +5146,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
-	      var perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
+	      const perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
 	      return BX.prop.getBoolean(perms, "POSTPONE", false);
 	    }
 	  }, {
@@ -4736,7 +5161,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
-	      var perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
+	      const perms = BX.prop.getObject(this.getAssociatedEntityData(), "PERMISSIONS", {});
 	      return BX.prop.getBoolean(perms, "COMPLETE", false);
 	    }
 	  }, {
@@ -4750,14 +5175,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareLayout",
 	    value: function prepareLayout(options) {
-	      var vueComponent = this.makeVueComponent(options, 'schedule');
+	      const vueComponent = this.makeVueComponent(options, 'schedule');
 	      this._wrapper = vueComponent ? vueComponent : this.prepareContent();
 
 	      if (this._wrapper) {
-	        var enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
+	        const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
 
 	        if (enableAdd) {
-	          var anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
+	          const anchor = BX.type.isPlainObject(options) && BX.type.isElementNode(options["anchor"]) ? options["anchor"] : null;
 
 	          if (anchor && anchor.nextSibling) {
 	            this._container.insertBefore(this._wrapper, anchor.nextSibling);
@@ -4790,13 +5215,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "isDone",
 	    value: function isDone(data) {
-	      var entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
+	      const entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
 	      return BX.CrmActivityStatus.isFinal(BX.prop.getInteger(entityData, "STATUS", 0));
 	    }
 	  }, {
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Scheduled();
+	      const self = new Scheduled();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -4805,7 +5230,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Item$1);
 
 	/** @memberof BX.Crm.Timeline */
-	var Action = /*#__PURE__*/function () {
+	let Action = /*#__PURE__*/function () {
 	  function Action() {
 	    babelHelpers.classCallCheck(this, Action);
 	    this._id = "";
@@ -4853,7 +5278,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Activity = /*#__PURE__*/function (_Action) {
+	let Activity = /*#__PURE__*/function (_Action) {
 	  babelHelpers.inherits(Activity, _Action);
 
 	  function Activity() {
@@ -4911,7 +5336,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Email = /*#__PURE__*/function (_Activity) {
+	let Email = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Email, _Activity);
 
 	  function Email() {
@@ -4927,7 +5352,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Email, [{
 	    key: "onClick",
 	    value: function onClick(e) {
-	      var settings = {
+	      const settings = {
 	        "ownerType": BX.CrmEntityType.resolveName(BX.prop.getInteger(this._entityData, "OWNER_TYPE_ID", 0)),
 	        "ownerID": BX.prop.getInteger(this._entityData, "OWNER_ID", 0),
 	        "ownerUrl": BX.prop.getString(this._entityData, "OWNER_URL", ""),
@@ -4937,7 +5362,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 
 	      if (BX.CrmActivityProvider && top.BX.Bitrix24 && top.BX.Bitrix24.Slider) {
-	        var activity = this._activityEditor.addEmail(settings);
+	        const activity = this._activityEditor.addEmail(settings);
 
 	        activity.addOnSave(this._saveHandler);
 	      } else {
@@ -4946,7 +5371,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          settings['communicationsLoaded'] = true;
 	          BX.CrmActivityEmail.prepareReply(settings);
 
-	          var activity = this._activityEditor.addEmail(settings);
+	          const activity = this._activityEditor.addEmail(settings);
 
 	          activity.addOnSave(this._saveHandler);
 	        }, this));
@@ -4966,7 +5391,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Activity);
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var HistoryEmail = /*#__PURE__*/function (_Email) {
+	let HistoryEmail = /*#__PURE__*/function (_Email) {
 	  babelHelpers.inherits(HistoryEmail, _Email);
 
 	  function HistoryEmail() {
@@ -4989,7 +5414,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new HistoryEmail();
+	      const self = new HistoryEmail();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -4998,7 +5423,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Email);
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var ScheduleEmail = /*#__PURE__*/function (_Email2) {
+	let ScheduleEmail = /*#__PURE__*/function (_Email2) {
 	  babelHelpers.inherits(ScheduleEmail, _Email2);
 
 	  function ScheduleEmail() {
@@ -5021,7 +5446,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new ScheduleEmail();
+	      const self = new ScheduleEmail();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -5031,7 +5456,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var HistoryActivity = /*#__PURE__*/function (_History) {
+	let HistoryActivity = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(HistoryActivity, _History);
 
 	  function HistoryActivity() {
@@ -5056,9 +5481,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
-	      var entityData = this.getAssociatedEntityData();
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      var typeCategoryId = this.getTypeCategoryId();
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const typeCategoryId = this.getTypeCategoryId();
 
 	      if (typeCategoryId === BX.CrmActivityType.email) {
 	        return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingEmail" : "outgoingEmail");
@@ -5069,7 +5494,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else if (typeCategoryId === BX.CrmActivityType.task) {
 	        return this.getMessage("task");
 	      } else if (typeCategoryId === BX.CrmActivityType.provider) {
-	        var providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
+	        const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
 
 	        if (providerId === "CRM_WEBFORM") {
 	          return this.getMessage("webform");
@@ -5117,14 +5542,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareMarkLayout",
 	    value: function prepareMarkLayout() {
-	      var entityData = this.getAssociatedEntityData();
-	      var markTypeId = BX.prop.getInteger(entityData, "MARK_TYPE_ID", 0);
+	      const entityData = this.getAssociatedEntityData();
+	      const markTypeId = BX.prop.getInteger(entityData, "MARK_TYPE_ID", 0);
 
 	      if (markTypeId <= 0) {
 	        return null;
 	      }
 
-	      var messageName = "";
+	      let messageName = "";
 
 	      if (markTypeId === Mark.success) {
 	        messageName = "SuccessMark";
@@ -5136,8 +5561,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return null;
 	      }
 
-	      var markText = "";
-	      var typeCategoryId = this.getTypeCategoryId();
+	      let markText = "";
+	      const typeCategoryId = this.getTypeCategoryId();
 
 	      if (typeCategoryId === BX.CrmActivityType.email) {
 	        markText = this.getMessage("email" + messageName);
@@ -5167,7 +5592,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var typeCategoryId = this.getTypeCategoryId();
+	      const typeCategoryId = this.getTypeCategoryId();
 
 	      if (typeCategoryId === BX.CrmActivityType.email) {
 	        this._actions.push(HistoryEmail.create("email", {
@@ -5185,7 +5610,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (!this.isReadOnly()) {
 	        if (this.isEditable()) {
@@ -5218,8 +5643,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "view",
 	    value: function view() {
 	      this.closeContextMenu();
-	      var entityData = this.getAssociatedEntityData();
-	      var id = BX.prop.getInteger(entityData, "ID", 0);
+	      const entityData = this.getAssociatedEntityData();
+	      const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	      if (id > 0) {
 	        this._activityEditor.viewActivity(id);
@@ -5229,11 +5654,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "edit",
 	    value: function edit() {
 	      this.closeContextMenu();
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityData = this.getAssociatedEntityData();
-	        var id = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	        if (id > 0) {
 	          this._activityEditor.editActivity(id);
@@ -5245,7 +5670,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processRemoval() {
 	      this.closeContextMenu();
 	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
-	      var dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
+	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
 
 	      if (!dlg) {
 	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
@@ -5276,20 +5701,20 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "remove",
 	    value: function remove() {
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityData = this.getAssociatedEntityData();
-	        var id = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	        if (id > 0) {
-	          var activityEditor = this._activityEditor;
-	          var item = activityEditor.getItemById(id);
+	          const activityEditor = this._activityEditor;
+	          const item = activityEditor.getItemById(id);
 
 	          if (item) {
 	            activityEditor.deleteActivity(id, true);
 	          } else {
-	            var serviceUrl = BX.util.add_url_param(activityEditor.getSetting('serviceUrl', ''), {
+	            const serviceUrl = BX.util.add_url_param(activityEditor.getSetting('serviceUrl', ''), {
 	              id: id,
 	              action: 'get_activity',
 	              ownertype: activityEditor.getSetting('ownerType', ''),
@@ -5312,7 +5737,7 @@ this.BX.Crm = this.BX.Crm || {};
 	                  window.setTimeout(BX.delegate(this.remove, this), 500);
 	                }
 	              }, this),
-	              onfailure: function onfailure(data) {}
+	              onfailure: function (data) {}
 	            });
 	          }
 	        }
@@ -5321,7 +5746,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new HistoryActivity();
+	      const self = new HistoryActivity();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -5333,7 +5758,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Document = /*#__PURE__*/function (_HistoryActivity) {
+	let Document = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Document, _HistoryActivity);
 
 	  function Document() {
@@ -5344,7 +5769,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Document, [{
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
 
 	      if (typeCategoryId === 3) {
 	        return BX.Loc.getMessage('CRM_TIMELINE_DOCUMENT_VIEWED');
@@ -5373,7 +5798,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareTitleStatusLayout",
 	    value: function prepareTitleStatusLayout() {
-	      var typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
 
 	      if (typeCategoryId === 3) {
 	        return BX.create("SPAN", {
@@ -5408,19 +5833,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isContextMenuEnabled",
 	    value: function isContextMenuEnabled() {
-	      var typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
+	      const typeCategoryId = BX.prop.getInteger(this._data, "TYPE_CATEGORY_ID", 0);
 	      return typeCategoryId !== 3;
 	    }
 	  }, {
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-	      var statusLayout = this.prepareTitleStatusLayout();
+	      const statusLayout = this.prepareTitleStatusLayout();
 
 	      if (statusLayout) {
 	        header.appendChild(statusLayout);
@@ -5432,8 +5857,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var text = this.getTextDataParam("COMMENT", "");
-	      var wrapper = BX.create("DIV", {
+	      const text = this.getTextDataParam("COMMENT", "");
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-document"
 	        }
@@ -5457,7 +5882,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        wrapper.appendChild(this.prepareFixedSwitcherLayout());
 	      }
 
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -5468,15 +5893,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        },
 	        html: text
 	      });
-	      var title = BX.findChildByClassName(detailWrapper, 'document-title-link');
+	      const title = BX.findChildByClassName(detailWrapper, 'document-title-link');
 
 	      if (title) {
 	        BX.bind(title, 'click', BX.proxy(this.editDocument, this));
@@ -5484,7 +5909,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      contentWrapper.appendChild(detailWrapper); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -5514,7 +5939,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (!this.isReadOnly()) {
 	        menuItems.push({
@@ -5550,7 +5975,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function confirmDelete() {
 	      this.closeContextMenu();
 	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
-	      var dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
+	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
 
 	      if (!dlg) {
 	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
@@ -5594,13 +6019,13 @@ this.BX.Crm = this.BX.Crm || {};
 	          if (BX.type.isNotEmptyString(result.ERROR)) {
 	            alert(result.ERROR);
 	          } else {
-	            var deleteItem = this._history.findItemById(this._id);
+	            const deleteItem = this._history.findItemById(this._id);
 
 	            if (deleteItem instanceof Document) {
 	              deleteItem.clearAnimate();
 	            }
 
-	            var deleteFixedItem = this._fixedHistory.findItemById(this._id);
+	            const deleteFixedItem = this._fixedHistory.findItemById(this._id);
 
 	            if (deleteFixedItem instanceof Document) {
 	              deleteFixedItem.clearAnimate();
@@ -5615,10 +6040,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "editDocument",
 	    value: function editDocument() {
-	      var documentId = this.getData().DOCUMENT_ID || 0;
+	      const documentId = this.getData().DOCUMENT_ID || 0;
 
 	      if (documentId > 0) {
-	        var url = '/bitrix/components/bitrix/crm.document.view/slider.php';
+	        let url = '/bitrix/components/bitrix/crm.document.view/slider.php';
 	        url = BX.util.add_url_param(url, {
 	          documentId: documentId
 	        });
@@ -5635,16 +6060,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "updateWrapper",
 	    value: function updateWrapper() {
-	      var wrapper = this.getWrapper();
+	      const wrapper = this.getWrapper();
 
 	      if (wrapper) {
-	        var detailWrapper = BX.findChildByClassName(wrapper, 'crm-entity-stream-content-detail');
+	        const detailWrapper = BX.findChildByClassName(wrapper, 'crm-entity-stream-content-detail');
 
 	        if (detailWrapper) {
 	          BX.adjust(detailWrapper, {
 	            html: this.getTextDataParam("COMMENT", "")
 	          });
-	          var title = BX.findChildByClassName(detailWrapper, 'document-title-link');
+	          const title = BX.findChildByClassName(detailWrapper, 'document-title-link');
 
 	          if (title) {
 	            BX.bind(title, 'click', BX.proxy(this.editDocument, this));
@@ -5655,7 +6080,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Document();
+	      const self = new Document();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -5665,7 +6090,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline */
 
-	var Steam = /*#__PURE__*/function () {
+	let Steam = /*#__PURE__*/function () {
 	  function Steam() {
 	    babelHelpers.classCallCheck(this, Steam);
 	    this._id = "";
@@ -5702,8 +6127,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //
 
 
-	      var datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
-	      var dateFormat = BX.message("FORMAT_DATE");
+	      const datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
+	      const dateFormat = BX.message("FORMAT_DATE");
 	      this._timeFormat = BX.date.convertBitrixFormat(BX.util.trim(datetimeFormat.replace(dateFormat, ""))); //
 
 	      this._year = new Date().getFullYear();
@@ -5766,8 +6191,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "reload",
 	    value: function reload() {
-	      var currentUrl = this.getSetting("currentUrl");
-	      var ajaxId = this.getSetting("ajaxId");
+	      const currentUrl = this.getSetting("currentUrl");
+	      const ajaxId = this.getSetting("ajaxId");
 
 	      if (ajaxId !== "") {
 	        BX.ajax.insertToNode(BX.util.add_url_param(currentUrl, {
@@ -5824,8 +6249,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return text;
 	      }
 
-	      var offset = length - 1;
-	      var whitespaceOffset = text.substring(offset).search(/\s/i);
+	      let offset = length - 1;
+	      const whitespaceOffset = text.substring(offset).search(/\s/i);
 
 	      if (whitespaceOffset > 0) {
 	        offset += whitespaceOffset;
@@ -5839,7 +6264,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Streams */
 
-	var EntityChat = /*#__PURE__*/function (_Stream) {
+	let EntityChat = /*#__PURE__*/function (_Stream) {
 	  babelHelpers.inherits(EntityChat, _Stream);
 
 	  function EntityChat() {
@@ -5899,7 +6324,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "applyLockScript",
 	    value: function applyLockScript() {
-	      var lockScript = BX.prop.getString(this._data, "LOCK_SCRIPT", null);
+	      const lockScript = BX.prop.getString(this._data, "LOCK_SCRIPT", null);
 
 	      if (BX.Type.isString(lockScript) && lockScript !== '') {
 	        eval(lockScript);
@@ -5913,7 +6338,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getUserId",
 	    value: function getUserId() {
-	      var userId = parseInt(top.BX.message("USER_ID"));
+	      const userId = parseInt(top.BX.message("USER_ID"));
 	      return !isNaN(userId) ? userId : 0;
 	    }
 	  }, {
@@ -5944,13 +6369,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getUserInfo",
 	    value: function getUserInfo(userId) {
-	      var userInfos = this.getUserInfoData();
+	      const userInfos = this.getUserInfoData();
 	      return userId > 0 && BX.type.isPlainObject(userInfos[userId]) ? userInfos[userId] : null;
 	    }
 	  }, {
 	    key: "removeUserInfo",
 	    value: function removeUserInfo(userId) {
-	      var userInfos = this.getUserInfoData();
+	      const userInfos = this.getUserInfoData();
 
 	      if (userId > 0 && BX.type.isPlainObject(userInfos[userId])) {
 	        delete userInfos[userId];
@@ -5959,7 +6384,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setUnreadMessageCounter",
 	    value: function setUnreadMessageCounter(userId, counter) {
-	      var userInfos = this.getUserInfoData();
+	      const userInfos = this.getUserInfoData();
 
 	      if (userId > 0 && BX.type.isPlainObject(userInfos[userId])) {
 	        userInfos[userId]["counter"] = counter;
@@ -6142,8 +6567,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "refreshUsers",
 	    value: function refreshUsers() {
 	      BX.cleanNode(this._userWrapper);
-	      var infos = this.getUserInfoData();
-	      var list = Object.values(infos);
+	      const infos = this.getUserInfoData();
+	      const list = Object.values(infos);
 
 	      if (list.length === 0) {
 	        this._userWrapper.appendChild(BX.create("span", {
@@ -6153,12 +6578,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          children: [BX.create("i")]
 	        }));
 	      } else {
-	        var count = list.length >= 3 ? 3 : list.length;
+	        const count = list.length >= 3 ? 3 : list.length;
 
-	        for (var i = 0; i < count; i++) {
-	          var info = list[i];
-	          var icon = BX.create("i");
-	          var imageUrl = BX.prop.getString(info, "avatar", "");
+	        for (let i = 0; i < count; i++) {
+	          const info = list[i];
+	          const icon = BX.create("i");
+	          const imageUrl = BX.prop.getString(info, "avatar", "");
 
 	          if (imageUrl !== "") {
 	            icon.style.backgroundImage = "url(" + imageUrl + ")";
@@ -6206,22 +6631,22 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var message = this.getMessageData(); //region Message Date
+	      const message = this.getMessageData(); //region Message Date
 
-	      var isoDate = BX.prop.getString(message, "date", "");
+	      const isoDate = BX.prop.getString(message, "date", "");
 
 	      if (isoDate === "") {
 	        this._messageDateNode.innerHTML = "";
 	      } else {
-	        var remoteDate = new Date(isoDate).getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
-	        var localTime = new Date().getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
+	        const remoteDate = new Date(isoDate).getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
+	        const localTime = new Date().getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 	        this._messageDateNode.innerHTML = this.formatTime(remoteDate, localTime, true);
 	      } //endregion
 	      //region Message Text
 
 
-	      var text = BX.prop.getString(message, "text", "");
-	      var params = BX.prop.getObject(message, "params", {});
+	      let text = BX.prop.getString(message, "text", "");
+	      const params = BX.prop.getObject(message, "params", {});
 
 	      if (text === "") {
 	        this._messageTextNode.innerHTML = "";
@@ -6235,8 +6660,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      //region Unread Message Counter
 
 
-	      var counter = 0;
-	      var userId = this.getUserId();
+	      let counter = 0;
+	      const userId = this.getUserId();
 
 	      if (userId > 0) {
 	        counter = BX.prop.getInteger(BX.prop.getObject(BX.prop.getObject(this._data, "USER_INFOS", {}), userId, null), "counter", 0);
@@ -6283,15 +6708,15 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var slug = "";
-	      var chatId = this.getChatId();
+	      let slug = "";
+	      const chatId = this.getChatId();
 
 	      if (chatId > 0 && this.hasUserInfo(this.getUserId())) {
 	        slug = "chat" + chatId.toString();
 	      } else {
-	        var ownerInfo = this.getOwnerInfo();
-	        var entityId = BX.prop.getInteger(ownerInfo, "ENTITY_ID", 0);
-	        var entityTypeName = BX.prop.getString(ownerInfo, "ENTITY_TYPE_NAME", "");
+	        const ownerInfo = this.getOwnerInfo();
+	        const entityId = BX.prop.getInteger(ownerInfo, "ENTITY_ID", 0);
+	        const entityTypeName = BX.prop.getString(ownerInfo, "ENTITY_TYPE_NAME", "");
 
 	        if (entityTypeName !== "" && entityId > 0) {
 	          slug = "crm|" + entityTypeName + "|" + entityId.toString();
@@ -6308,7 +6733,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onChatEvent",
 	    value: function onChatEvent(command, params, extras) {
-	      var chatId = this.getChatId();
+	      const chatId = this.getChatId();
 
 	      if (chatId <= 0 || chatId !== BX.prop.getInteger(params, "chatId", 0)) {
 	        return;
@@ -6332,7 +6757,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          delete params["date"];
 	        }
 
-	        var message = this.getMessageData();
+	        const message = this.getMessageData();
 
 	        if (BX.prop.getInteger(message, "id", 0) === BX.prop.getInteger(params, "id", 0)) {
 	          this.setMessageData(BX.mergeEx(message, params));
@@ -6354,7 +6779,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new EntityChat();
+	      const self = new EntityChat();
 	      self.initialize(id, settings);
 	      EntityChat.items[self.getId()] = self;
 	      return self;
@@ -6373,7 +6798,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Tools */
 
-	var MenuBar = /*#__PURE__*/function () {
+	let MenuBar = /*#__PURE__*/function () {
 	  function MenuBar() {
 	    babelHelpers.classCallCheck(this, MenuBar);
 	    this._id = "";
@@ -6422,11 +6847,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "reset",
 	    value: function reset() {
-	      var firstId = null;
+	      let firstId = null;
 
 	      this._menu.getAllItems().forEach(function (item) {
 	        if (firstId === null) {
-	          var id = item.dataset.id;
+	          const id = item.dataset.id;
 
 	          if (["comment", "wait", "sms", "zoom"].indexOf(id) >= 0 && this["_" + id + "Editor"]) {
 	            firstId = id;
@@ -6445,28 +6870,28 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setActiveItemById",
 	    value: function setActiveItemById(id) {
 	      if (this.processItemSelection(id) === true) {
-	        var currentDiv = this._menu.getItemById(id);
+	        const currentDiv = this._menu.getItemById(id);
 
 	        if (currentDiv && this._activeItem !== currentDiv) {
-	          var wasActiveInMoreMenu = this._menu.isActiveInMoreMenu();
+	          const wasActiveInMoreMenu = this._menu.isActiveInMoreMenu();
 
 	          BX.addClass(currentDiv, this._menu.classes.itemActive);
 
 	          if (this._menu.getItemData) {
-	            var currentDivData = this._menu.getItemData(currentDiv);
+	            const currentDivData = this._menu.getItemData(currentDiv);
 
 	            currentDivData['IS_ACTIVE'] = true;
 
 	            if (BX.type.isDomNode(this._activeItem)) {
 	              BX.removeClass(this._activeItem, this._menu.classes.itemActive);
 
-	              var activeItemData = this._menu.getItemData(this._activeItem);
+	              const activeItemData = this._menu.getItemData(this._activeItem);
 
 	              activeItemData['IS_ACTIVE'] = false;
 	            }
 	          } else {
 	            // Old approach
-	            var isActiveData = {};
+	            let isActiveData = {};
 
 	            try {
 	              isActiveData = JSON.parse(currentDiv.dataset.item);
@@ -6476,7 +6901,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	            isActiveData.IS_ACTIVE = true;
 	            currentDiv.dataset.item = JSON.stringify(isActiveData);
-	            var wasActiveData = {};
+	            let wasActiveData = {};
 
 	            if (BX.type.isDomNode(this._activeItem)) {
 	              BX.removeClass(this._activeItem, this._menu.classes.itemActive);
@@ -6492,14 +6917,14 @@ this.BX.Crm = this.BX.Crm || {};
 	            }
 	          }
 
-	          var isActiveInMoreMenu = this._menu.isActiveInMoreMenu();
+	          const isActiveInMoreMenu = this._menu.isActiveInMoreMenu();
 
 	          if (isActiveInMoreMenu || wasActiveInMoreMenu) {
-	            var submenu = this._menu["getSubmenu"] ? this._menu.getSubmenu() : BX.PopupMenu.getMenuById("main_buttons_popup_" + String(this._ownerInfo['ENTITY_TYPE_NAME']).toLowerCase() + "_menu");
+	            const submenu = this._menu["getSubmenu"] ? this._menu.getSubmenu() : BX.PopupMenu.getMenuById("main_buttons_popup_" + String(this._ownerInfo['ENTITY_TYPE_NAME']).toLowerCase() + "_menu");
 
 	            if (submenu) {
 	              submenu.getMenuItems().forEach(function (menuItem) {
-	                var container = menuItem.getContainer();
+	                const container = menuItem.getContainer();
 
 	                if (isActiveInMoreMenu && container.title === currentDiv.title) {
 	                  BX.addClass(container, this._menu.classes.itemActive);
@@ -6529,8 +6954,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
-	      var planner = null;
-	      var action = menuId;
+	      let planner = null;
+	      const action = menuId;
 
 	      if (action === "call") {
 	        planner = new BX.Crm.Activity.Planner();
@@ -6586,7 +7011,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        return true;
 	      } else if (action === "visit") {
-	        var visitParameters = this._manager.getSetting("visitParameters");
+	        const visitParameters = this._manager.getSetting("visitParameters");
 
 	        visitParameters['OWNER_TYPE'] = this._ownerInfo['ENTITY_TYPE_NAME'];
 	        visitParameters['OWNER_ID'] = this._ownerInfo['ENTITY_ID'];
@@ -6602,7 +7027,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new MenuBar();
+	      const self = new MenuBar();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -6611,7 +7036,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Tools */
-	var AudioPlaybackRateSelector = /*#__PURE__*/function () {
+	let AudioPlaybackRateSelector = /*#__PURE__*/function () {
 	  function AudioPlaybackRateSelector(params) {
 	    babelHelpers.classCallCheck(this, AudioPlaybackRateSelector);
 	    this.name = params.name || 'crm-timeline-audio-playback-rate-selector';
@@ -6638,8 +7063,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "normalizeRate",
 	    value: function normalizeRate(rate) {
 	      rate = parseFloat(rate);
-	      var i = 0;
-	      var length = this.availableRates.length;
+	      let i = 0;
+	      const length = this.availableRates.length;
 
 	      for (; i < length; i++) {
 	        if (this.isRateCurrent(this.availableRates[i], rate)) {
@@ -6652,7 +7077,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMenuItems",
 	    value: function getMenuItems() {
-	      var selectedRate = this.getRate();
+	      const selectedRate = this.getRate();
 	      return this.availableRates.map(function (item) {
 	        return {
 	          text: (item.text || item) + '',
@@ -6667,10 +7092,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getPopup",
 	    value: function getPopup(node) {
-	      var popupMenu = BX.Main.MenuManager.getMenuById(this.menuId);
+	      let popupMenu = BX.Main.MenuManager.getMenuById(this.menuId);
 
 	      if (popupMenu) {
-	        var popupWindow = popupMenu.getPopupWindow();
+	        const popupWindow = popupMenu.getPopupWindow();
 
 	        if (popupWindow) {
 	          popupWindow.setBindElement(node);
@@ -6704,22 +7129,22 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.currentRate = rate;
 	      BX.userOptions.save("crm", this.name, 'rate', rate);
 
-	      for (var i = 0, length = this.renderedItems.length; i < length; i++) {
-	        var textNode = this.renderedItems[i].querySelector('.crm-audio-cap-speed-text');
+	      for (let i = 0, length = this.renderedItems.length; i < length; i++) {
+	        const textNode = this.renderedItems[i].querySelector('.crm-audio-cap-speed-text');
 
 	        if (textNode) {
 	          textNode.innerHTML = this.getText();
 	        }
 	      }
 
-	      for (var _i = 0, _length = this.players.length; _i < _length; _i++) {
-	        this.players[_i].vjsPlayer.playbackRate(this.getRate());
+	      for (let i = 0, length = this.players.length; i < length; i++) {
+	        this.players[i].vjsPlayer.playbackRate(this.getRate());
 	      }
 	    }
 	  }, {
 	    key: "getText",
 	    value: function getText() {
-	      var text;
+	      let text;
 
 	      if (this.textMessageCode) {
 	        text = BX.Loc.getMessage(this.textMessageCode);
@@ -6734,7 +7159,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var item = BX.Dom.create('div', {
+	      const item = BX.Dom.create('div', {
 	        attrs: {
 	          className: 'crm-audio-cap-speed-wrapper'
 	        },
@@ -6771,7 +7196,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Tools */
-	var SchedulePostponeController = /*#__PURE__*/function () {
+	let SchedulePostponeController = /*#__PURE__*/function () {
 	  function SchedulePostponeController() {
 	    babelHelpers.classCallCheck(this, SchedulePostponeController);
 	    this._item = null;
@@ -6819,7 +7244,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
-	      var offset = 0;
+	      let offset = 0;
 
 	      if (command === "postpone_hour_1") {
 	        offset = 3600;
@@ -6844,13 +7269,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = SchedulePostponeController.messages;
+	      const m = SchedulePostponeController.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new SchedulePostponeController();
+	      const self = new SchedulePostponeController();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -6862,7 +7287,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Activity$1 = /*#__PURE__*/function (_Scheduled) {
+	let Activity$1 = /*#__PURE__*/function (_Scheduled) {
 	  babelHelpers.inherits(Activity, _Scheduled);
 
 	  function Activity() {
@@ -6882,7 +7307,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isDone",
 	    value: function isDone() {
-	      var status = BX.prop.getInteger(this.getAssociatedEntityData(), "STATUS");
+	      const status = BX.prop.getInteger(this.getAssociatedEntityData(), "STATUS");
 	      return status === BX.CrmActivityStatus.completed || status === BX.CrmActivityStatus.autoCompleted;
 	    }
 	  }, {
@@ -6894,7 +7319,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var id = BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);
+	      const id = BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);
 
 	      if (id > 0) {
 	        this._activityEditor.setActivityCompleted(id, isDone, BX.delegate(this.onSetAsDoneCompleted, this));
@@ -6903,7 +7328,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "postpone",
 	    value: function postpone(offset) {
-	      var id = this.getSourceId();
+	      const id = this.getSourceId();
 
 	      if (id > 0 && offset > 0) {
 	        this._activityEditor.postponeActivity(id, offset, BX.delegate(this.onPosponeCompleted, this));
@@ -6912,7 +7337,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "view",
 	    value: function view() {
-	      var id = BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);
+	      const id = BX.prop.getInteger(this.getAssociatedEntityData(), "ID", 0);
 
 	      if (id > 0) {
 	        this._activityEditor.viewActivity(id);
@@ -6922,11 +7347,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "edit",
 	    value: function edit() {
 	      this.closeContextMenu();
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityData = this.getAssociatedEntityData();
-	        var id = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	        if (id > 0) {
 	          this._activityEditor.editActivity(id);
@@ -6938,7 +7363,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processRemoval() {
 	      this.closeContextMenu();
 	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
-	      var dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
+	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
 
 	      if (!dlg) {
 	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
@@ -6969,22 +7394,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "remove",
 	    value: function remove() {
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityData = this.getAssociatedEntityData();
-	        var id = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	        if (id > 0) {
-	          var activityEditor = this._activityEditor;
-	          var item = activityEditor.getItemById(id);
+	          const activityEditor = this._activityEditor;
+	          const item = activityEditor.getItemById(id);
 
 	          if (item) {
 	            activityEditor.deleteActivity(id, true);
 	          } else {
-	            var activityType = activityEditor.getSetting('ownerType', '');
-	            var activityId = activityEditor.getSetting('ownerID', '');
-	            var serviceUrl = BX.util.add_url_param(activityEditor.getSetting('serviceUrl', ''), {
+	            const activityType = activityEditor.getSetting('ownerType', '');
+	            const activityId = activityEditor.getSetting('ownerID', '');
+	            const serviceUrl = BX.util.add_url_param(activityEditor.getSetting('serviceUrl', ''), {
 	              id: id,
 	              action: 'get_activity',
 	              ownertype: activityType,
@@ -7007,7 +7432,7 @@ this.BX.Crm = this.BX.Crm || {};
 	                  window.setTimeout(BX.delegate(this.remove, this), 500);
 	                }
 	              }, this),
-	              onfailure: function onfailure(data) {}
+	              onfailure: function (data) {}
 	            });
 	          }
 	        }
@@ -7016,8 +7441,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getDeadline",
 	    value: function getDeadline() {
-	      var entityData = this.getAssociatedEntityData();
-	      var time = BX.parseDate(entityData["DEADLINE_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	      const entityData = this.getAssociatedEntityData();
+	      const time = BX.parseDate(entityData["DEADLINE_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
 
 	      if (!time) {
 	        return null;
@@ -7049,18 +7474,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent(options) {
-	      var deadline = this.getDeadline();
-	      var timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
-	      var entityData = this.getAssociatedEntityData();
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      var isDone = this.isDone();
-	      var subject = BX.prop.getString(entityData, "SUBJECT", "");
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var title = BX.prop.getString(communication, "TITLE", "");
-	      var showUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var communicationValue = BX.prop.getString(communication, "TYPE", "") !== "" ? BX.prop.getString(communication, "VALUE", "") : "";
-	      var wrapperClassName = this.getWrapperClassName();
+	      const deadline = this.getDeadline();
+	      const timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const isDone = this.isDone();
+	      const subject = BX.prop.getString(entityData, "SUBJECT", "");
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const title = BX.prop.getString(communication, "TITLE", "");
+	      const showUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const communicationValue = BX.prop.getString(communication, "TYPE", "") !== "" ? BX.prop.getString(communication, "VALUE", "") : "";
+	      let wrapperClassName = this.getWrapperClassName();
 
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
@@ -7068,12 +7493,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
 	      }
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
-	      var iconClassName = this.getIconClassName();
+	      let iconClassName = this.getIconClassName();
 
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
@@ -7090,7 +7515,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //endregion
 
 
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
@@ -7102,7 +7527,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var contentInnerWrapper = BX.create("DIV", {
+	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -7114,7 +7539,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: timeText
 	      });
-	      var headerWrapper = BX.create("DIV", {
+	      const headerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -7125,7 +7550,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.getTypeDescription(direction)
 	      }));
-	      var statusNode = this.getStatusNode();
+	      const statusNode = this.getStatusNode();
 
 	      if (statusNode) {
 	        headerWrapper.appendChild(statusNode);
@@ -7133,7 +7558,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      headerWrapper.appendChild(this._deadlineNode);
 	      contentInnerWrapper.appendChild(headerWrapper);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -7159,18 +7584,18 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.cutOffText(description, 128)
 	      }));
-	      var additionalDetails = this.prepareDetailNodes();
+	      const additionalDetails = this.prepareDetailNodes();
 
 	      if (BX.type.isArray(additionalDetails)) {
-	        var i = 0;
-	        var length = additionalDetails.length;
+	        let i = 0;
+	        const length = additionalDetails.length;
 
 	        for (; i < length; i++) {
 	          detailWrapper.appendChild(additionalDetails[i]);
 	        }
 	      }
 
-	      var members = BX.create("DIV", {
+	      const members = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -7196,7 +7621,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (communicationValue !== '') {
-	        var communicationNode = this.prepareCommunicationNode(communicationValue);
+	        const communicationNode = this.prepareCommunicationNode(communicationValue);
 
 	        if (communicationNode) {
 	          members.appendChild(communicationNode);
@@ -7206,7 +7631,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      detailWrapper.appendChild(members); //endregion
 	      //region Set as Done Button
 
-	      var setAsDoneButton = BX.create("INPUT", {
+	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
 	          className: "crm-entity-stream-planned-apply-btn",
@@ -7221,7 +7646,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        setAsDoneButton.disabled = true;
 	      }
 
-	      var buttonContainer = BX.create("DIV", {
+	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
@@ -7230,7 +7655,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      contentInnerWrapper.appendChild(buttonContainer); //endregion
 	      //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
@@ -7267,7 +7692,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (!this.isReadOnly()) {
 	        if (this.isEditable()) {
@@ -7285,7 +7710,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }
 
-	      var handler = BX.delegate(this.onContextMenuItemSelect, this);
+	      const handler = BX.delegate(this.onContextMenuItemSelect, this);
 
 	      if (!this._postponeController) {
 	        this._postponeController = SchedulePostponeController.create("", {
@@ -7293,19 +7718,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }
 
-	      var postponeMenu = {
+	      const postponeMenu = {
 	        id: "postpone",
 	        text: this._postponeController.getTitle(),
 	        items: []
 	      };
 
-	      var commands = this._postponeController.getCommandList();
+	      const commands = this._postponeController.getCommandList();
 
-	      var i = 0;
-	      var length = commands.length;
+	      let i = 0;
+	      const length = commands.length;
 
 	      for (; i < length; i++) {
-	        var command = commands[i];
+	        const command = commands[i];
 	        postponeMenu.items.push({
 	          id: command["name"],
 	          text: command["title"],
@@ -7331,7 +7756,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Email$1 = /*#__PURE__*/function (_Activity) {
+	let Email$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Email, _Activity);
 
 	  function Email() {
@@ -7371,8 +7796,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "SUBJECT", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let title = BX.prop.getString(entityData, "SUBJECT", "");
 	      title = BX.util.htmlspecialchars(title);
 	      return this.getMessage('emailRemove').replace("#TITLE#", title);
 	    }
@@ -7384,7 +7809,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Email();
+	      const self = new Email();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7394,7 +7819,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Call = /*#__PURE__*/function (_Activity) {
+	let Call = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Call, _Activity);
 
 	  function Call() {
@@ -7430,9 +7855,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTypeDescription",
 	    value: function getTypeDescription(direction) {
-	      var entityData = this.getAssociatedEntityData();
-	      var callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
-	      var callTypeText = callInfo !== null ? BX.prop.getString(callInfo, "CALL_TYPE_TEXT", "") : "";
+	      const entityData = this.getAssociatedEntityData();
+	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
+	      const callTypeText = callInfo !== null ? BX.prop.getString(callInfo, "CALL_TYPE_TEXT", "") : "";
 
 	      if (callTypeText !== "") {
 	        return callTypeText;
@@ -7443,17 +7868,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var entityData = this.getAssociatedEntityData();
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      var title = BX.prop.getString(entityData, "SUBJECT", "");
-	      var messageName = direction === BX.CrmActivityDirection.incoming ? 'incomingCallRemove' : 'outgoingCallRemove';
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      let title = BX.prop.getString(entityData, "SUBJECT", "");
+	      const messageName = direction === BX.CrmActivityDirection.incoming ? 'incomingCallRemove' : 'outgoingCallRemove';
 	      title = BX.util.htmlspecialchars(title);
 	      return this.getMessage(messageName).replace("#TITLE#", title);
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Call();
+	      const self = new Call();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7463,7 +7888,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var CallTracker = /*#__PURE__*/function (_Call) {
+	let CallTracker = /*#__PURE__*/function (_Call) {
 	  babelHelpers.inherits(CallTracker, _Call);
 
 	  function CallTracker() {
@@ -7474,8 +7899,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(CallTracker, [{
 	    key: "getStatusNode",
 	    value: function getStatusNode() {
-	      var entityData = this.getAssociatedEntityData();
-	      var callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
+	      const entityData = this.getAssociatedEntityData();
+	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
 
 	      if (!callInfo) {
 	        return false;
@@ -7485,8 +7910,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return false;
 	      }
 
-	      var isSuccessfull = BX.prop.getBoolean(callInfo, "SUCCESSFUL", false);
-	      var statusText = BX.prop.getString(callInfo, "STATUS_TEXT", "");
+	      const isSuccessfull = BX.prop.getBoolean(callInfo, "SUCCESSFUL", false);
+	      const statusText = BX.prop.getString(callInfo, "STATUS_TEXT", "");
 	      return BX.create("DIV", {
 	        attrs: {
 	          className: isSuccessfull ? "crm-entity-stream-content-event-successful" : "crm-entity-stream-content-event-missing"
@@ -7497,7 +7922,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new CallTracker();
+	      const self = new CallTracker();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7507,7 +7932,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Meeting = /*#__PURE__*/function (_Activity) {
+	let Meeting = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Meeting, _Activity);
 
 	  function Meeting() {
@@ -7536,8 +7961,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "SUBJECT", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let title = BX.prop.getString(entityData, "SUBJECT", "");
 	      title = BX.util.htmlspecialchars(title);
 	      return this.getMessage('meetingRemove').replace("#TITLE#", title);
 	    }
@@ -7549,7 +7974,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Meeting();
+	      const self = new Meeting();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7559,7 +7984,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Task = /*#__PURE__*/function (_Activity) {
+	let Task = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Task, _Activity);
 
 	  function Task() {
@@ -7590,15 +8015,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "SUBJECT", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let title = BX.prop.getString(entityData, "SUBJECT", "");
 	      title = BX.util.htmlspecialchars(title);
 	      return this.getMessage('taskRemove').replace("#TITLE#", title);
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Task();
+	      const self = new Task();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7608,7 +8033,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var StoreDocument = /*#__PURE__*/function (_Activity) {
+	let StoreDocument = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(StoreDocument, _Activity);
 
 	  function StoreDocument() {
@@ -7639,8 +8064,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "SUBJECT", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let title = BX.prop.getString(entityData, "SUBJECT", "");
 	      title = BX.util.htmlspecialchars(title);
 	      return this.getMessage('taskRemove').replace("#TITLE#", title);
 	    }
@@ -7652,12 +8077,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent(options) {
-	      var deadline = this.getDeadline();
-	      var timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
-	      var entityData = this.getAssociatedEntityData();
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      var isDone = this.isDone();
-	      var wrapperClassName = this.getWrapperClassName();
+	      const deadline = this.getDeadline();
+	      const timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const isDone = this.isDone();
+	      let wrapperClassName = this.getWrapperClassName();
 
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
@@ -7665,12 +8090,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
 	      }
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
-	      var iconClassName = this.getIconClassName();
+	      let iconClassName = this.getIconClassName();
 
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
@@ -7687,14 +8112,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //endregion
 
 
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
 	      });
 	      wrapper.appendChild(contentWrapper); //region Details
 
-	      var contentInnerWrapper = BX.create("DIV", {
+	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -7706,7 +8131,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: timeText
 	      });
-	      var headerWrapper = BX.create("DIV", {
+	      const headerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -7717,7 +8142,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.getTypeDescription(direction)
 	      }));
-	      var statusNode = this.getStatusNode();
+	      const statusNode = this.getStatusNode();
 
 	      if (statusNode) {
 	        headerWrapper.appendChild(statusNode);
@@ -7725,7 +8150,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      headerWrapper.appendChild(this._deadlineNode);
 	      contentInnerWrapper.appendChild(headerWrapper);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -7751,11 +8176,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: " " + BX.message('CRM_TIMELINE_DETAILS')
 	        })]
 	      }));
-	      var additionalDetails = this.prepareDetailNodes();
+	      const additionalDetails = this.prepareDetailNodes();
 
 	      if (BX.type.isArray(additionalDetails)) {
-	        var i = 0;
-	        var length = additionalDetails.length;
+	        let i = 0;
+	        const length = additionalDetails.length;
 
 	        for (; i < length; i++) {
 	          detailWrapper.appendChild(additionalDetails[i]);
@@ -7764,7 +8189,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      //region Set as Done Button
 
 
-	      var setAsDoneButton = BX.create("INPUT", {
+	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
 	          className: "crm-entity-stream-planned-apply-btn",
@@ -7779,7 +8204,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        setAsDoneButton.disabled = true;
 	      }
 
-	      var buttonContainer = BX.create("DIV", {
+	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
@@ -7788,7 +8213,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      contentInnerWrapper.appendChild(buttonContainer); //endregion
 	      //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
@@ -7808,7 +8233,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new StoreDocument();
+	      const self = new StoreDocument();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7818,7 +8243,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var WebForm = /*#__PURE__*/function (_Activity) {
+	let WebForm = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(WebForm, _Activity);
 
 	  function WebForm() {
@@ -7852,7 +8277,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new WebForm();
+	      const self = new WebForm();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -7862,7 +8287,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Wait$1 = /*#__PURE__*/function (_Scheduled) {
+	let Wait$1 = /*#__PURE__*/function (_Scheduled) {
 	  babelHelpers.inherits(Wait, _Scheduled);
 
 	  function Wait() {
@@ -7900,8 +8325,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getDeadline",
 	    value: function getDeadline() {
-	      var entityData = this.getAssociatedEntityData();
-	      var time = BX.parseDate(entityData["DEADLINE_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	      const entityData = this.getAssociatedEntityData();
+	      const time = BX.parseDate(entityData["DEADLINE_SERVER"], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
 
 	      if (!time) {
 	        return null;
@@ -7923,10 +8348,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var id = this.getAssociatedEntityId();
+	      const id = this.getAssociatedEntityId();
 
 	      if (id > 0) {
-	        var editor = this._schedule.getManager().getWaitEditor();
+	        const editor = this._schedule.getManager().getWaitEditor();
 
 	        if (editor) {
 	          editor.complete(id, isDone, BX.delegate(this.onSetAsDoneCompleted, this));
@@ -7936,10 +8361,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "postpone",
 	    value: function postpone(offset) {
-	      var id = this.getAssociatedEntityId();
+	      const id = this.getAssociatedEntityId();
 
 	      if (id > 0 && offset > 0) {
-	        var editor = this._schedule.getManager().getWaitEditor();
+	        const editor = this._schedule.getManager().getWaitEditor();
 
 	        if (editor) {
 	          editor.postpone(id, offset, BX.delegate(this.onPosponeCompleted, this));
@@ -7954,12 +8379,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var deadline = this.getDeadline();
-	      var timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
-	      var entityData = this.getAssociatedEntityData();
-	      var isDone = this.isDone();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-	      var wrapperClassName = this.getWrapperClassName();
+	      const deadline = this.getDeadline();
+	      const timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+	      const entityData = this.getAssociatedEntityData();
+	      const isDone = this.isDone();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      let wrapperClassName = this.getWrapperClassName();
 
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
@@ -7967,12 +8392,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
 	      }
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
-	      var iconClassName = this.getIconClassName();
+	      let iconClassName = this.getIconClassName();
 
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
@@ -7989,7 +8414,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //endregion
 
 
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
@@ -8003,7 +8428,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        description = BX.util.nl2br(description);
 	      }
 
-	      var contentInnerWrapper = BX.create("DIV", {
+	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -8015,7 +8440,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: timeText
 	      });
-	      var headerWrapper = BX.create("DIV", {
+	      const headerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
@@ -8027,7 +8452,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }), this._deadlineNode]
 	      });
 	      contentInnerWrapper.appendChild(headerWrapper);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -8039,7 +8464,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        html: description
 	      }));
-	      var members = BX.create("DIV", {
+	      const members = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -8047,7 +8472,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      detailWrapper.appendChild(members); //endregion
 	      //region Set as Done Button
 
-	      var setAsDoneButton = BX.create("INPUT", {
+	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
 	          className: "crm-entity-stream-planned-apply-btn",
@@ -8062,7 +8487,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        setAsDoneButton.disabled = true;
 	      }
 
-	      var buttonContainer = BX.create("DIV", {
+	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
@@ -8071,7 +8496,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      contentInnerWrapper.appendChild(buttonContainer); //endregion
 	      //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
@@ -8091,8 +8516,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
-	      var menuItems = [];
-	      var handler = BX.delegate(this.onContextMenuItemSelect, this);
+	      const menuItems = [];
+	      const handler = BX.delegate(this.onContextMenuItemSelect, this);
 
 	      if (!this._postponeController) {
 	        this._postponeController = SchedulePostponeController.create("", {
@@ -8100,19 +8525,19 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }
 
-	      var postponeMenu = {
+	      const postponeMenu = {
 	        id: "postpone",
 	        text: this._postponeController.getTitle(),
 	        items: []
 	      };
 
-	      var commands = this._postponeController.getCommandList();
+	      const commands = this._postponeController.getCommandList();
 
-	      var i = 0;
-	      var length = commands.length;
+	      let i = 0;
+	      const length = commands.length;
 
 	      for (; i < length; i++) {
-	        var command = commands[i];
+	        const command = commands[i];
 	        postponeMenu.items.push({
 	          id: command["name"],
 	          text: command["title"],
@@ -8140,7 +8565,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Wait();
+	      const self = new Wait();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8150,7 +8575,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Request = /*#__PURE__*/function (_Activity) {
+	let Request = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Request, _Activity);
 
 	  function Request() {
@@ -8181,7 +8606,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Request();
+	      const self = new Request();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8191,7 +8616,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Rest$1 = /*#__PURE__*/function (_Activity) {
+	let Rest$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Rest, _Activity);
 
 	  function Rest() {
@@ -8212,11 +8637,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent(options) {
-	      var wrapper = babelHelpers.get(babelHelpers.getPrototypeOf(Rest.prototype), "prepareContent", this).call(this, options);
-	      var data = this.getAssociatedEntityData();
+	      const wrapper = babelHelpers.get(babelHelpers.getPrototypeOf(Rest.prototype), "prepareContent", this).call(this, options);
+	      const data = this.getAssociatedEntityData();
 
 	      if (data['APP_TYPE'] && data['APP_TYPE']['ICON_SRC']) {
-	        var iconNode = wrapper.querySelector('[class="' + this.getIconClassName() + '"]');
+	        const iconNode = wrapper.querySelector('[class="' + this.getIconClassName() + '"]');
 
 	        if (iconNode) {
 	          iconNode.style.backgroundImage = "url('" + data['APP_TYPE']['ICON_SRC'] + "')";
@@ -8229,7 +8654,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
-	      var entityData = this.getAssociatedEntityData();
+	      const entityData = this.getAssociatedEntityData();
 
 	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME']) {
 	        return entityData['APP_TYPE']['NAME'];
@@ -8240,7 +8665,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Rest();
+	      const self = new Rest();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8250,7 +8675,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var OpenLine = /*#__PURE__*/function (_Activity) {
+	let OpenLine = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(OpenLine, _Activity);
 
 	  function OpenLine() {
@@ -8276,8 +8701,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var slug = "";
-	      var communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
+	      let slug = "";
+	      const communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
 
 	      if (communication) {
 	        if (BX.prop.getString(communication, "TYPE") === "IM") {
@@ -8309,13 +8734,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = OpenLine.messages;
+	      const m = OpenLine.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new OpenLine();
+	      const self = new OpenLine();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8326,7 +8751,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var OpenLine$1 = /*#__PURE__*/function (_Activity) {
+	let OpenLine$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(OpenLine$$1, _Activity);
 
 	  function OpenLine$$1() {
@@ -8377,27 +8802,27 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareDetailNodes",
 	    value: function prepareDetailNodes() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-IM"
 	        }
 	      });
-	      var messageWrapper = BX.create("DIV", {
+	      const messageWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-IM-messages"
 	        }
 	      });
 	      wrapper.appendChild(messageWrapper);
-	      var openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
+	      const openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
 
 	      if (openLineData) {
-	        var messages = BX.prop.getArray(openLineData, "MESSAGES", []);
-	        var i = 0;
-	        var length = messages.length;
+	        const messages = BX.prop.getArray(openLineData, "MESSAGES", []);
+	        let i = 0;
+	        const length = messages.length;
 
 	        for (; i < length; i++) {
-	          var message = messages[i];
-	          var isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
+	          const message = messages[i];
+	          const isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
 	          messageWrapper.appendChild(BX.create("DIV", {
 	            attrs: {
 	              className: isExternal ? "crm-entity-stream-content-detail-IM-message-incoming" : "crm-entity-stream-content-detail-IM-message-outgoing"
@@ -8417,8 +8842,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var slug = "";
-	      var communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
+	      let slug = "";
+	      const communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
 
 	      if (communication) {
 	        if (BX.prop.getString(communication, "TYPE") === "IM") {
@@ -8436,7 +8861,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new OpenLine$$1();
+	      const self = new OpenLine$$1();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8446,7 +8871,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items.Scheduled */
 
-	var Zoom = /*#__PURE__*/function (_Activity) {
+	let Zoom = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Zoom, _Activity);
 
 	  function Zoom() {
@@ -8480,18 +8905,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent(options) {
-	      var deadline = this.getDeadline();
-	      var timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
-	      var entityData = this.getAssociatedEntityData();
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      var isDone = this.isDone();
-	      var subject = BX.prop.getString(entityData, "SUBJECT", "");
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var title = BX.prop.getString(communication, "TITLE", "");
-	      var showUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var communicationValue = BX.prop.getString(communication, "TYPE", "") !== "" ? BX.prop.getString(communication, "VALUE", "") : "";
-	      var wrapperClassName = this.getWrapperClassName();
+	      const deadline = this.getDeadline();
+	      const timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const isDone = this.isDone();
+	      const subject = BX.prop.getString(entityData, "SUBJECT", "");
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const title = BX.prop.getString(communication, "TITLE", "");
+	      const showUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const communicationValue = BX.prop.getString(communication, "TYPE", "") !== "" ? BX.prop.getString(communication, "VALUE", "") : "";
+	      let wrapperClassName = this.getWrapperClassName();
 
 	      if (wrapperClassName !== "") {
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
@@ -8499,12 +8924,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
 	      }
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
 	      });
-	      var iconClassName = this.getIconClassName();
+	      let iconClassName = this.getIconClassName();
 
 	      if (this.isCounterEnabled()) {
 	        iconClassName += " crm-entity-stream-section-counter";
@@ -8521,7 +8946,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //endregion
 
 
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
@@ -8533,7 +8958,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var contentInnerWrapper = BX.create("DIV", {
+	      const contentInnerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -8545,7 +8970,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: timeText
 	      });
-	      var headerWrapper = BX.create("DIV", {
+	      const headerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
@@ -8557,7 +8982,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }), this._deadlineNode]
 	      });
 	      contentInnerWrapper.appendChild(headerWrapper);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -8565,28 +8990,28 @@ this.BX.Crm = this.BX.Crm || {};
 	      contentInnerWrapper.appendChild(detailWrapper);
 
 	      if (entityData['ZOOM_INFO']) {
-	        var topic = entityData['ZOOM_INFO']['TOPIC'];
-	        var duration = entityData['ZOOM_INFO']['DURATION'];
-	        var startTimeStamp = BX.parseDate(entityData['ZOOM_INFO']['CONF_START_TIME'], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-	        var date = new Date(startTimeStamp.getTime() + 1000 * Item$1.getUserTimezoneOffset());
-	        var detailZoomMessage = BX.create("span", {
+	        const topic = entityData['ZOOM_INFO']['TOPIC'];
+	        const duration = entityData['ZOOM_INFO']['DURATION'];
+	        const startTimeStamp = BX.parseDate(entityData['ZOOM_INFO']['CONF_START_TIME'], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	        const date = new Date(startTimeStamp.getTime() + 1000 * Item$1.getUserTimezoneOffset());
+	        const detailZoomMessage = BX.create("span", {
 	          text: this.getMessage("zoomCreatedMessage").replace("#CONFERENCE_TITLE#", topic).replace("#DATE_TIME#", this.formatDateTime(date)).replace("#DURATION#", duration)
 	        });
-	        var detailZoomInfoLink = BX.create("A", {
+	        const detailZoomInfoLink = BX.create("A", {
 	          attrs: {
 	            href: entityData['ZOOM_INFO']['CONF_URL'],
 	            target: "_blank"
 	          },
 	          text: entityData['ZOOM_INFO']['CONF_URL']
 	        });
-	        var detailZoomInfo = BX.create("DIV", {
+	        const detailZoomInfo = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-zoom-info"
 	          },
 	          children: [detailZoomMessage, detailZoomInfoLink]
 	        });
 	        detailWrapper.appendChild(detailZoomInfo);
-	        var detailZoomCopyInviteLink = BX.create("A", {
+	        const detailZoomCopyInviteLink = BX.create("A", {
 	          attrs: {
 	            className: 'ui-link ui-link-dashed',
 	            "data-url": entityData['ZOOM_INFO']['CONF_URL']
@@ -8596,18 +9021,18 @@ this.BX.Crm = this.BX.Crm || {};
 	        BX.clipboard.bindCopyClick(detailZoomCopyInviteLink, {
 	          text: entityData['ZOOM_INFO']['CONF_URL']
 	        });
-	        var detailZoomStartConferenceButton = BX.create("BUTTON", {
+	        const detailZoomStartConferenceButton = BX.create("BUTTON", {
 	          attrs: {
 	            className: 'ui-btn ui-btn-sm ui-btn-primary'
 	          },
 	          text: this.getMessage("zoomCreatedStartConference"),
 	          events: {
-	            "click": function click() {
+	            "click": function () {
 	              window.open(entityData['ZOOM_INFO']['CONF_URL']);
 	            }
 	          }
 	        });
-	        var detailZoomCopyInviteLinkWrapper = BX.create("DIV", {
+	        const detailZoomCopyInviteLinkWrapper = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-zoom-link-wrapper"
 	          },
@@ -8617,11 +9042,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        detailWrapper.appendChild(detailZoomStartConferenceButton);
 	      }
 
-	      var additionalDetails = this.prepareDetailNodes();
+	      const additionalDetails = this.prepareDetailNodes();
 
 	      if (BX.type.isArray(additionalDetails)) {
-	        var i = 0;
-	        var length = additionalDetails.length;
+	        let i = 0;
+	        const length = additionalDetails.length;
 
 	        for (; i < length; i++) {
 	          detailWrapper.appendChild(additionalDetails[i]);
@@ -8630,7 +9055,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      //region Set as Done Button
 
 
-	      var setAsDoneButton = BX.create("INPUT", {
+	      const setAsDoneButton = BX.create("INPUT", {
 	        attrs: {
 	          type: "checkbox",
 	          className: "crm-entity-stream-planned-apply-btn",
@@ -8645,7 +9070,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        setAsDoneButton.disabled = true;
 	      }
 
-	      var buttonContainer = BX.create("DIV", {
+	      const buttonContainer = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-planned-action"
 	        },
@@ -8654,7 +9079,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      contentInnerWrapper.appendChild(buttonContainer); //endregion
 	      //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentInnerWrapper.appendChild(authorNode);
@@ -8677,7 +9102,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Zoom();
+	      const self = new Zoom();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8686,7 +9111,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}(Activity$1);
 
 	/** @memberof BX.Crm.Timeline.Animation */
-	var Item$2 = /*#__PURE__*/function () {
+	let Item$2 = /*#__PURE__*/function () {
 	  function Item() {
 	    babelHelpers.classCallCheck(this, Item);
 	    this._id = "";
@@ -8720,7 +9145,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "run",
 	    value: function run() {
 	      this._node = this._initialItem.getWrapper();
-	      var originalPosition = BX.pos(this._node);
+	      const originalPosition = BX.pos(this._node);
 	      this._initialYPosition = originalPosition.top;
 	      this._initialXPosition = originalPosition.left;
 	      this._initialWidth = this._node.offsetWidth;
@@ -8770,8 +9195,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "moveGhost",
 	    value: function moveGhost() {
-	      var node = this._ghostNode;
-	      var movingEvent = new BX.easing({
+	      const node = this._ghostNode;
+	      const movingEvent = new BX.easing({
 	        duration: 500,
 	        start: {
 	          top: this._initialYPosition
@@ -8788,7 +9213,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        movingEvent.animate();
 	        node.style.boxShadow = "";
 	      }, this), 500);
-	      var placeEventAnim = new BX.easing({
+	      const placeEventAnim = new BX.easing({
 	        duration: 500,
 	        start: {
 	          height: 0
@@ -8816,7 +9241,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addHistoryItem",
 	    value: function addHistoryItem() {
-	      var node = this._finalItem.getWrapper();
+	      const node = this._finalItem.getWrapper();
 
 	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
 
@@ -8827,12 +9252,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "removeGhost",
 	    value: function removeGhost() {
-	      var ghostNode = this._ghostNode;
+	      const ghostNode = this._ghostNode;
 
-	      var finalNode = this._finalItem.getWrapper();
+	      const finalNode = this._finalItem.getWrapper();
 
 	      ghostNode.style.overflow = "hidden";
-	      var hideCasperItem = new BX.easing({
+	      const hideCasperItem = new BX.easing({
 	        duration: 70,
 	        start: {
 	          opacity: 100,
@@ -8861,7 +9286,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "collapseStub",
 	    value: function collapseStub() {
-	      var removePlannedEvent = new BX.easing({
+	      const removePlannedEvent = new BX.easing({
 	        duration: 500,
 	        start: {
 	          opacity: 100,
@@ -8888,7 +9313,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Item();
+	      const self = new Item();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -8897,7 +9322,7 @@ this.BX.Crm = this.BX.Crm || {};
 	}();
 
 	/** @memberof BX.Crm.Timeline.Animation */
-	var Shift = /*#__PURE__*/function () {
+	let Shift = /*#__PURE__*/function () {
 	  function Shift() {
 	    babelHelpers.classCallCheck(this, Shift);
 	    this._node = null;
@@ -8924,7 +9349,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      setTimeout(BX.proxy(function () {
 	        BX.addClass(this._node, "crm-entity-stream-section-casper");
 	      }, this), 0);
-	      var movingEvent = new BX.easing({
+	      const movingEvent = new BX.easing({
 	        duration: 1500,
 	        start: {
 	          top: this._startPosition.top,
@@ -8957,7 +9382,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(node, anchor, startPosition, shadowNode, events) {
-	      var self = new Shift();
+	      const self = new Shift();
 	      self.initialize(node, anchor, startPosition, shadowNode, events);
 	      return self;
 	    }
@@ -8967,7 +9392,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Animation */
 
-	var ItemNew = /*#__PURE__*/function () {
+	let ItemNew = /*#__PURE__*/function () {
 	  function ItemNew() {
 	    babelHelpers.classCallCheck(this, ItemNew);
 	    this._id = "";
@@ -9000,7 +9425,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addHistoryItem",
 	    value: function addHistoryItem() {
-	      var node = this._finalItem.getWrapper();
+	      const node = this._finalItem.getWrapper();
 
 	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
 	    }
@@ -9018,7 +9443,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._node.style.left = this._startPosition.left + "px";
 	      this._node.style.zIndex = 960;
 	      document.body.appendChild(this._node);
-	      var shift = Shift.create(this._node, this._anchor, this._startPosition, this._stub, {
+	      const shift = Shift.create(this._node, this._anchor, this._startPosition, this._stub, {
 	        complete: BX.delegate(this.finish, this)
 	      });
 	      shift.run();
@@ -9049,7 +9474,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "finish",
 	    value: function finish() {
-	      var stubContainer = this._stub.querySelector('.crm-entity-stream-section-content');
+	      const stubContainer = this._stub.querySelector('.crm-entity-stream-section-content');
 
 	      this._anchor.style.height = 0; //this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
 
@@ -9076,7 +9501,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new ItemNew();
+	      const self = new ItemNew();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -9086,7 +9511,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Streams */
 
-	var Schedule = /*#__PURE__*/function (_Stream) {
+	let Schedule = /*#__PURE__*/function (_Stream) {
 	  babelHelpers.inherits(Schedule, _Stream);
 
 	  function Schedule() {
@@ -9106,19 +9531,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Schedule, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
-	      var datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
-	      var dateFormat = BX.message("FORMAT_DATE");
-	      var timeFormat = BX.util.trim(datetimeFormat.replace(dateFormat, ""));
+	      const datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
+	      const dateFormat = BX.message("FORMAT_DATE");
+	      const timeFormat = BX.util.trim(datetimeFormat.replace(dateFormat, ""));
 	      this._timeFormat = BX.date.convertBitrixFormat(timeFormat);
 
 	      if (!this.isStubMode()) {
-	        var itemData = this.getSetting("itemData");
+	        let itemData = this.getSetting("itemData");
 
 	        if (!BX.type.isArray(itemData)) {
 	          itemData = [];
 	        }
 
-	        var i, length, item;
+	        let i, length, item;
 
 	        for (i = 0, length = itemData.length; i < length; i++) {
 	          item = this.createItem(itemData[i]);
@@ -9136,13 +9561,13 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this._container.appendChild(this._wrapper);
 
-	      var label = BX.create("DIV", {
+	      const label = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-planned-label"
 	        },
 	        text: this.getMessage("planned")
 	      });
-	      var wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned-label";
+	      const wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned-label";
 
 	      this._wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -9159,13 +9584,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this.isStubMode()) {
 	        this.addStub();
 	      } else {
-	        var length = this._items.length;
+	        const length = this._items.length;
 
 	        if (length === 0) {
 	          this.addStub();
 	        } else {
-	          for (var i = 0; i < length; i++) {
-	            var item = this._items[i];
+	          for (let i = 0; i < length; i++) {
+	            const item = this._items[i];
 	            item.setContainer(this._wrapper);
 	            item.layout();
 	          }
@@ -9180,7 +9605,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "refreshLayout",
 	    value: function refreshLayout() {
 	      BX.onCustomEvent('Schedule:onBeforeRefreshLayout', [this]);
-	      var length = this._items.length;
+	      const length = this._items.length;
 
 	      if (length === 0) {
 	        this.addStub();
@@ -9191,7 +9616,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          BX.addClass(this._stub, "crm-entity-stream-section-last");
 	        }
 
-	        var stubIcon = this._stub.querySelector(".crm-entity-stream-section-icon");
+	        const stubIcon = this._stub.querySelector(".crm-entity-stream-section-icon");
 
 	        if (stubIcon) {
 	          if (this._manager.isStubCounterEnabled()) {
@@ -9204,7 +9629,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var i, item;
+	      let i, item;
 
 	      if (this._history && this._history.hasContent()) {
 	        for (i = 0; i < length; i++) {
@@ -9231,7 +9656,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "formatDateTime",
 	    value: function formatDateTime(time) {
-	      var now = new Date();
+	      const now = new Date();
 	      return BX.date.format([["today", "today, " + this._timeFormat], ["tommorow", "tommorow, " + this._timeFormat], ["yesterday", "yesterday, " + this._timeFormat], ["", (time.getFullYear() === now.getFullYear() ? "j F " : "j F Y ") + this._timeFormat]], time, now);
 	    }
 	  }, {
@@ -9251,13 +9676,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "calculateItemIndex",
 	    value: function calculateItemIndex(item) {
-	      var i, length;
-	      var time = item.getDeadline();
+	      let i, length;
+	      const time = item.getDeadline();
 
 	      if (time) {
 	        //Item has deadline
 	        for (i = 0, length = this._items.length; i < length; i++) {
-	          var curTime = this._items[i].getDeadline();
+	          const curTime = this._items[i].getDeadline();
 
 	          if (!curTime || time <= curTime) {
 	            return i;
@@ -9265,7 +9690,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      } else {
 	        //Item has't deadline
-	        var sourceId = item.getSourceId();
+	        const sourceId = item.getSourceId();
 
 	        for (i = 0, length = this._items.length; i < length; i++) {
 	          if (this._items[i].getDeadline()) {
@@ -9305,8 +9730,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return null;
 	      }
 
-	      for (var i = 0, length = this._items.length; i < length; i++) {
-	        var item = this._items[i];
+	      for (let i = 0, length = this._items.length; i < length; i++) {
+	        const item = this._items[i];
 
 	        if (item.getAssociatedEntityTypeId() === $entityTypeId && item.getAssociatedEntityId() === entityId) {
 	          return item;
@@ -9327,7 +9752,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getItemIndex",
 	    value: function getItemIndex(item) {
-	      for (var i = 0, l = this._items.length; i < l; i++) {
+	      for (let i = 0, l = this._items.length; i < l; i++) {
 	        if (this._items[i] === item) {
 	          return i;
 	        }
@@ -9350,10 +9775,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createItem",
 	    value: function createItem(data) {
-	      var entityTypeID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-	      var entityID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_ID", 0);
-	      var entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
-	      var itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
+	      const entityTypeID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+	      const entityID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_ID", 0);
+	      const entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
+	      const itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
 
 	      if (entityTypeID === BX.CrmEntityType.enumeration.wait) {
 	        return Wait$1.create(itemId, {
@@ -9364,8 +9789,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      } else // if(entityTypeID === BX.CrmEntityType.enumeration.activity)
 	        {
-	          var typeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
-	          var providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
+	          const typeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
+	          const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
 
 	          if (typeId === BX.CrmActivityType.email) {
 	            return Email$1.create(itemId, {
@@ -9507,7 +9932,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "deleteItem",
 	    value: function deleteItem(item) {
-	      var index = this.getItemIndex(item);
+	      const index = this.getItemIndex(item);
 
 	      if (index < 0) {
 	        return;
@@ -9522,15 +9947,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "refreshItem",
 	    value: function refreshItem(item) {
-	      var index = this.getItemIndex(item);
+	      const index = this.getItemIndex(item);
 
 	      if (index < 0) {
 	        return;
 	      }
 
 	      this.removeItemByIndex(index);
-	      var newItem = this.createItem(item.getData());
-	      var newIndex = this.calculateItemIndex(newItem);
+	      const newItem = this.createItem(item.getData());
+	      const newIndex = this.calculateItemIndex(newItem);
 
 	      if (newIndex === index) {
 	        this.addItem(item, newIndex);
@@ -9539,12 +9964,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var anchor = this.createAnchor(newIndex);
+	      const anchor = this.createAnchor(newIndex);
 	      this.addItem(newItem, newIndex);
 	      newItem.layout({
 	        add: false
 	      });
-	      var animation = Item$2.create("", {
+	      const animation = Item$2.create("", {
 	        initialItem: item,
 	        finalItem: newItem,
 	        anchor: anchor
@@ -9554,7 +9979,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "transferItemToHistory",
 	    value: function transferItemToHistory(item, historyItemData) {
-	      var index = this.getItemIndex(item);
+	      const index = this.getItemIndex(item);
 
 	      if (index < 0) {
 	        return;
@@ -9565,14 +9990,14 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this._manager.processSheduleLayoutChange();
 
-	      var historyItem = this._history.createItem(historyItemData);
+	      const historyItem = this._history.createItem(historyItemData);
 
 	      this._history.addItem(historyItem, 0);
 
 	      historyItem.layout({
 	        add: false
 	      });
-	      var animation = ItemNew.create("", {
+	      const animation = ItemNew.create("", {
 	        initialItem: item,
 	        finalItem: historyItem,
 	        anchor: this._history.createAnchor(),
@@ -9598,11 +10023,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "addStub",
 	    value: function addStub() {
 	      if (!this._stub) {
-	        var stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
-	        var stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
-	        var stubMessage = this.getMessage("stub");
+	        const stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
+	        let stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
+	        let stubMessage = this.getMessage("stub");
 
-	        var ownerTypeId = this._manager.getOwnerTypeId();
+	        const ownerTypeId = this._manager.getOwnerTypeId();
 
 	        if (ownerTypeId === BX.CrmEntityType.enumeration.lead) {
 	          stubMessage = this.getMessage("leadStub");
@@ -9659,13 +10084,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Schedule.messages;
+	      const m = Schedule.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Schedule();
+	      const self = new Schedule();
 	      self.initialize(id, settings);
 	      Schedule.items[self.getId()] = self;
 	      return self;
@@ -9679,7 +10104,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Modification = /*#__PURE__*/function (_History) {
+	let Modification = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Modification, _History);
 
 	  function Modification() {
@@ -9690,7 +10115,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Modification, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Modification.messages;
+	      const m = Modification.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }, {
@@ -9701,7 +10126,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-info"
 	        }
@@ -9711,13 +10136,13 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-info"
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = this.prepareHeaderLayout();
-	      var contentChildren = [];
+	      const header = this.prepareHeaderLayout();
+	      const contentChildren = [];
 
 	      if (BX.type.isNotEmptyString(this.getTextDataParam("START_NAME"))) {
 	        contentChildren.push(BX.create("SPAN", {
@@ -9755,7 +10180,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        })]
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -9773,7 +10198,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Modification();
+	      const self = new Modification();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -9785,7 +10210,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Conversion = /*#__PURE__*/function (_History) {
+	let Conversion = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Conversion, _History);
 
 	  function Conversion() {
@@ -9796,7 +10221,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Conversion, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Conversion.messages;
+	      const m = Conversion.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }, {
@@ -9807,7 +10232,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-convert crm-entity-stream-section-history"
 	        }
@@ -9817,21 +10242,21 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-convert"
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      content.appendChild(header);
-	      var entityNodes = [];
-	      var entityInfos = this.getArrayDataParam("ENTITIES");
-	      var i = 0;
-	      var length = entityInfos.length;
+	      const entityNodes = [];
+	      const entityInfos = this.getArrayDataParam("ENTITIES");
+	      let i = 0;
+	      const length = entityInfos.length;
 
 	      for (; i < length; i++) {
-	        var entityInfo = entityInfos[i];
-	        var entityNode = void 0;
+	        const entityInfo = entityInfos[i];
+	        let entityNode;
 
 	        if (BX.prop.getString(entityInfo, 'SHOW_URL', "") === "") {
 	          entityNode = BX.create("DIV", {
@@ -9894,7 +10319,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: entityNodes
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -9912,7 +10337,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Conversion();
+	      const self = new Conversion();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -9924,7 +10349,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Email$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let Email$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Email$$1, _HistoryActivity);
 
 	  function Email$$1() {
@@ -9935,17 +10360,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Email$$1, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-	      var entityData = this.getAssociatedEntityData();
-	      var emailInfo = BX.prop.getObject(entityData, "EMAIL_INFO", null);
-	      var statusText = emailInfo !== null ? BX.prop.getString(emailInfo, "STATUS_TEXT", "") : "";
-	      var error = emailInfo !== null ? BX.prop.getBoolean(emailInfo, "STATUS_ERROR", false) : false;
-	      var className = !error ? "crm-entity-stream-content-event-skipped" : "crm-entity-stream-content-event-missing";
+	      const entityData = this.getAssociatedEntityData();
+	      const emailInfo = BX.prop.getObject(entityData, "EMAIL_INFO", null);
+	      const statusText = emailInfo !== null ? BX.prop.getString(emailInfo, "STATUS_TEXT", "") : "";
+	      const error = emailInfo !== null ? BX.prop.getBoolean(emailInfo, "STATUS_ERROR", false) : false;
+	      const className = !error ? "crm-entity-stream-content-event-skipped" : "crm-entity-stream-content-event-missing";
 
 	      if (statusText !== "") {
 	        header.appendChild(BX.create("SPAN", {
@@ -9956,7 +10381,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }));
 	      }
 
-	      var markNode = this.prepareMarkLayout();
+	      const markNode = this.prepareMarkLayout();
 
 	      if (markNode) {
 	        header.appendChild(markNode);
@@ -9968,7 +10393,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (!this.isReadOnly()) {
 	        menuItems.push({
@@ -10006,25 +10431,25 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var title = BX.util.htmlspecialchars(this.getTitle());
+	      const title = BX.util.htmlspecialchars(this.getTitle());
 	      return this.getMessage('emailRemove').replace("#TITLE#", title);
 	    }
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var communicationValue = BX.prop.getString(communication, "VALUE", "");
-	      var outerWrapper = BX.create("DIV", {
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const communicationValue = BX.prop.getString(communication, "VALUE", "");
+	      const outerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-email"
 	        }
@@ -10035,7 +10460,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }));
 	      if (this.isFixed()) BX.addClass(outerWrapper, 'crm-entity-stream-section-top-fixed');
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -10047,7 +10472,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: [wrapper]
 	      })); //Header
 
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      wrapper.appendChild(header); //region Context Menu
 
 	      if (this.isContextMenuEnabled()) {
@@ -10056,7 +10481,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      //Details
 
 
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-email"
 	        }
@@ -10088,7 +10513,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          text: this.getTitle()
 	        })]
 	      }));
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-email-to"
 	        }
@@ -10133,7 +10558,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        wrapper.appendChild(authorNode);
@@ -10175,7 +10600,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Email$$1();
+	      const self = new Email$$1();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -10185,7 +10610,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Call$1 = /*#__PURE__*/function (_Activity) {
+	let Call$1 = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(Call, _Activity);
 
 	  function Call() {
@@ -10213,16 +10638,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var phone = "";
-	      var itemData = this.getItemData();
-	      var phones = BX.prop.getArray(itemData, "PHONE", []);
+	      let phone = "";
+	      const itemData = this.getItemData();
+	      const phones = BX.prop.getArray(itemData, "PHONE", []);
 
 	      if (phones.length === 1) {
 	        this.addCall(phones[0]['VALUE']);
 	      } else if (phones.length > 1) {
 	        this.showMenu();
 	      } else {
-	        var communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
+	        const communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
 
 	        if (communication) {
 	          if (BX.prop.getString(communication, "TYPE") === "PHONE") {
@@ -10280,23 +10705,23 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var itemData = this.getItemData();
-	      var phones = BX.prop.getArray(itemData, "PHONE", []);
-	      var handler = BX.delegate(this.onMenuItemClick, this);
+	      const itemData = this.getItemData();
+	      const phones = BX.prop.getArray(itemData, "PHONE", []);
+	      const handler = BX.delegate(this.onMenuItemClick, this);
 	      this._menuItems = [];
 
 	      if (phones.length === 0) {
 	        return;
 	      }
 
-	      var i = 0;
-	      var l = phones.length;
+	      let i = 0;
+	      const l = phones.length;
 
 	      for (; i < l; i++) {
-	        var value = BX.prop.getString(phones[i], "VALUE");
-	        var formattedValue = BX.prop.getString(phones[i], "VALUE_FORMATTED");
-	        var complexName = BX.prop.getString(phones[i], "COMPLEX_NAME");
-	        var itemText = (complexName ? complexName + ': ' : '') + (formattedValue ? formattedValue : value);
+	        const value = BX.prop.getString(phones[i], "VALUE");
+	        const formattedValue = BX.prop.getString(phones[i], "VALUE_FORMATTED");
+	        const complexName = BX.prop.getString(phones[i], "COMPLEX_NAME");
+	        const itemText = (complexName ? complexName + ': ' : '') + (formattedValue ? formattedValue : value);
 
 	        if (value !== "") {
 	          this._menuItems.push({
@@ -10333,22 +10758,22 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addCall",
 	    value: function addCall(phone) {
-	      var communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
-	      var entityTypeId = parseInt(BX.prop.getString(communication, "ENTITY_TYPE_ID", "0"));
+	      const communication = BX.prop.getObject(this._entityData, "COMMUNICATION", null);
+	      let entityTypeId = parseInt(BX.prop.getString(communication, "ENTITY_TYPE_ID", "0"));
 
 	      if (isNaN(entityTypeId)) {
 	        entityTypeId = 0;
 	      }
 
-	      var entityId = parseInt(BX.prop.getString(communication, "ENTITY_ID", "0"));
+	      let entityId = parseInt(BX.prop.getString(communication, "ENTITY_ID", "0"));
 
 	      if (isNaN(entityId)) {
 	        entityId = 0;
 	      }
 
-	      var ownerTypeId = 0;
-	      var ownerId = 0;
-	      var ownerInfo = BX.prop.getObject(this._settings, "ownerInfo");
+	      let ownerTypeId = 0;
+	      let ownerId = 0;
+	      const ownerInfo = BX.prop.getObject(this._settings, "ownerInfo");
 
 	      if (ownerInfo) {
 	        ownerTypeId = BX.prop.getInteger(ownerInfo, "ENTITY_TYPE_ID", 0);
@@ -10365,13 +10790,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        ownerId = entityId;
 	      }
 
-	      var activityId = parseInt(BX.prop.getString(this._entityData, "ID", "0"));
+	      let activityId = parseInt(BX.prop.getString(this._entityData, "ID", "0"));
 
 	      if (isNaN(activityId)) {
 	        activityId = 0;
 	      }
 
-	      var params = {
+	      const params = {
 	        "ENTITY_TYPE_NAME": BX.CrmEntityType.resolveName(entityTypeId),
 	        "ENTITY_ID": entityId,
 	        "AUTO_FOLD": true
@@ -10393,7 +10818,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Call.messages;
+	      const m = Call.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }]);
@@ -10402,7 +10827,7 @@ this.BX.Crm = this.BX.Crm || {};
 	/** @memberof BX.Crm.Timeline.Actions */
 
 	babelHelpers.defineProperty(Call$1, "messages", {});
-	var HistoryCall = /*#__PURE__*/function (_Call) {
+	let HistoryCall = /*#__PURE__*/function (_Call) {
 	  babelHelpers.inherits(HistoryCall, _Call);
 
 	  function HistoryCall() {
@@ -10436,14 +10861,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new HistoryCall();
+	      const self = new HistoryCall();
 	      self.initialize(id, settings);
 	      return self;
 	    }
 	  }]);
 	  return HistoryCall;
 	}(Call$1);
-	var ScheduleCall = /*#__PURE__*/function (_Call2) {
+	let ScheduleCall = /*#__PURE__*/function (_Call2) {
 	  babelHelpers.inherits(ScheduleCall, _Call2);
 
 	  function ScheduleCall() {
@@ -10466,7 +10891,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new ScheduleCall();
+	      const self = new ScheduleCall();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -10476,7 +10901,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Call$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let Call$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Call, _HistoryActivity);
 
 	  function Call() {
@@ -10494,32 +10919,32 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Call, [{
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
-	      var entityData = this.getAssociatedEntityData();
-	      var callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
-	      var callTypeText = callInfo !== null ? BX.prop.getString(callInfo, "CALL_TYPE_TEXT", "") : "";
+	      const entityData = this.getAssociatedEntityData();
+	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
+	      const callTypeText = callInfo !== null ? BX.prop.getString(callInfo, "CALL_TYPE_TEXT", "") : "";
 
 	      if (callTypeText !== "") {
 	        return callTypeText;
 	      }
 
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
 	      return this.getMessage(direction === BX.CrmActivityDirection.incoming ? "incomingCall" : "outgoingCall");
 	    }
 	  }, {
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout()); //Position is important
 
-	      var entityData = this.getAssociatedEntityData();
-	      var callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
-	      var hasCallInfo = callInfo !== null;
-	      var isSuccessfull = hasCallInfo ? BX.prop.getBoolean(callInfo, "SUCCESSFUL", false) : false;
-	      var statusText = hasCallInfo ? BX.prop.getString(callInfo, "STATUS_TEXT", "") : "";
+	      const entityData = this.getAssociatedEntityData();
+	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
+	      const hasCallInfo = callInfo !== null;
+	      const isSuccessfull = hasCallInfo ? BX.prop.getBoolean(callInfo, "SUCCESSFUL", false) : false;
+	      const statusText = hasCallInfo ? BX.prop.getString(callInfo, "STATUS_TEXT", "") : "";
 
 	      if (hasCallInfo && statusText.length) {
 	        header.appendChild(BX.create("DIV", {
@@ -10541,27 +10966,27 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var communicationValue = BX.prop.getString(communication, "VALUE", "");
-	      var communicationValueFormatted = BX.prop.getString(communication, "FORMATTED_VALUE", communicationValue);
-	      var callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
-	      var hasCallInfo = callInfo !== null;
-	      var durationText = hasCallInfo ? BX.prop.getString(callInfo, "DURATION_TEXT", "") : "";
-	      var hasTranscript = hasCallInfo ? BX.prop.getBoolean(callInfo, "HAS_TRANSCRIPT", "") : "";
-	      var isTranscriptPending = hasCallInfo ? BX.prop.getBoolean(callInfo, "TRANSCRIPT_PENDING", "") : "";
-	      var callId = hasCallInfo ? BX.prop.getString(callInfo, "CALL_ID", "") : "";
-	      var callComment = hasCallInfo ? BX.prop.getString(callInfo, "COMMENT", "") : "";
-	      var outerWrapper = BX.create("DIV", {
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const communicationValue = BX.prop.getString(communication, "VALUE", "");
+	      const communicationValueFormatted = BX.prop.getString(communication, "FORMATTED_VALUE", communicationValue);
+	      const callInfo = BX.prop.getObject(entityData, "CALL_INFO", null);
+	      const hasCallInfo = callInfo !== null;
+	      const durationText = hasCallInfo ? BX.prop.getString(callInfo, "DURATION_TEXT", "") : "";
+	      const hasTranscript = hasCallInfo ? BX.prop.getBoolean(callInfo, "HAS_TRANSCRIPT", "") : "";
+	      const isTranscriptPending = hasCallInfo ? BX.prop.getBoolean(callInfo, "TRANSCRIPT_PENDING", "") : "";
+	      const callId = hasCallInfo ? BX.prop.getString(callInfo, "CALL_ID", "") : "";
+	      const callComment = hasCallInfo ? BX.prop.getString(callInfo, "COMMENT", "") : "";
+	      const outerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-call"
 	        }
@@ -10572,7 +10997,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }));
 	      if (this.isFixed()) BX.addClass(outerWrapper, 'crm-entity-stream-section-top-fixed');
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -10584,7 +11009,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: [wrapper]
 	      })); //Header
 
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      wrapper.appendChild(header); //region Context Menu
 
 	      if (this.isContextMenuEnabled()) {
@@ -10593,7 +11018,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      //Details
 
 
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -10622,7 +11047,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }));
 
 	      if (hasCallInfo) {
-	        var callInfoWrapper = BX.create("DIV", {
+	        const callInfoWrapper = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline"
 	          }
@@ -10642,7 +11067,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              className: "crm-audio-transcript-wrap-container"
 	            },
 	            events: {
-	              click: function click(e) {
+	              click: function (e) {
 	                if (BX.Voximplant && BX.Voximplant.Transcript) {
 	                  BX.Voximplant.Transcript.create({
 	                    callId: callId
@@ -10692,7 +11117,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }
 
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -10730,7 +11155,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        wrapper.appendChild(authorNode);
@@ -10766,16 +11191,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var entityData = this.getAssociatedEntityData();
-	      var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	      var messageName = direction === BX.CrmActivityDirection.incoming ? 'incomingCallRemove' : 'outgoingCallRemove';
-	      var title = BX.util.htmlspecialchars(this.getTitle());
+	      const entityData = this.getAssociatedEntityData();
+	      const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	      const messageName = direction === BX.CrmActivityDirection.incoming ? 'incomingCallRemove' : 'outgoingCallRemove';
+	      const title = BX.util.htmlspecialchars(this.getTitle());
 	      return this.getMessage(messageName).replace("#TITLE#", title);
 	    }
 	  }, {
 	    key: "onPlayerDummyClick",
 	    value: function onPlayerDummyClick(e) {
-	      var stubNode = this._playerWrapper.querySelector(".crm-audio-cap-wrap");
+	      const stubNode = this._playerWrapper.querySelector(".crm-audio-cap-wrap");
 
 	      if (stubNode) {
 	        BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
@@ -10788,7 +11213,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Call();
+	      const self = new Call();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -10798,7 +11223,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Meeting$1 = /*#__PURE__*/function (_HistoryActivity) {
+	let Meeting$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Meeting, _HistoryActivity);
 
 	  function Meeting() {
@@ -10809,13 +11234,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Meeting, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-	      var markNode = this.prepareMarkLayout();
+	      const markNode = this.prepareMarkLayout();
 
 	      if (markNode) {
 	        header.appendChild(markNode);
@@ -10827,19 +11252,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var communicationValue = BX.prop.getString(communication, "VALUE", "");
-	      var wrapper = BX.create("DIV", {
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const communicationValue = BX.prop.getString(communication, "VALUE", "");
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-meeting"
 	        }
@@ -10855,7 +11280,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -10866,9 +11291,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -10895,7 +11320,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
 	      }));
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -10925,7 +11350,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: " " + communicationValue
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -10946,7 +11371,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var title = BX.util.htmlspecialchars(this.getTitle());
+	      const title = BX.util.htmlspecialchars(this.getTitle());
 	      return this.getMessage('meetingRemove').replace("#TITLE#", title);
 	    }
 	  }, {
@@ -10962,7 +11387,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Meeting();
+	      const self = new Meeting();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -10972,7 +11397,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Task$1 = /*#__PURE__*/function (_HistoryActivity) {
+	let Task$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Task, _HistoryActivity);
 
 	  function Task() {
@@ -10983,13 +11408,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Task, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-	      var markNode = this.prepareMarkLayout();
+	      const markNode = this.prepareMarkLayout();
 
 	      if (markNode) {
 	        header.appendChild(markNode);
@@ -11001,18 +11426,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var wrapper = BX.create("DIV", {
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-task"
 	        }
@@ -11028,7 +11453,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -11039,9 +11464,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -11068,7 +11493,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
 	      }));
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -11095,7 +11520,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -11119,7 +11544,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getRemoveMessage",
 	    value: function getRemoveMessage() {
-	      var title = BX.util.htmlspecialchars(this.getTitle());
+	      const title = BX.util.htmlspecialchars(this.getTitle());
 	      return this.getMessage('taskRemove').replace("#TITLE#", title);
 	    }
 	  }, {
@@ -11132,7 +11557,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Task();
+	      const self = new Task();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -11142,7 +11567,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var WebForm$1 = /*#__PURE__*/function (_HistoryActivity) {
+	let WebForm$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(WebForm, _HistoryActivity);
 
 	  function WebForm() {
@@ -11153,7 +11578,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(WebForm, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -11165,7 +11590,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-crmForm"
 	        }
@@ -11175,7 +11600,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-crmForm"
 	        }
 	      }));
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -11187,9 +11612,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: [contentWrapper]
 	      }));
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -11210,7 +11635,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        })]
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -11241,7 +11666,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new WebForm();
+	      const self = new WebForm();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -11251,7 +11676,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Sms$1 = /*#__PURE__*/function (_HistoryActivity) {
+	let Sms$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Sms, _HistoryActivity);
 
 	  function Sms() {
@@ -11262,7 +11687,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Sms, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -11280,14 +11705,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var communicationValue = BX.prop.getString(communication, "VALUE", "");
-	      var smsInfo = BX.prop.getObject(entityData, "SMS_INFO", {});
-	      var wrapperClassName = "crm-entity-stream-section-sms";
-	      var wrapper = BX.create("DIV", {
+	      const entityData = this.getAssociatedEntityData();
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const communicationValue = BX.prop.getString(communication, "VALUE", "");
+	      const smsInfo = BX.prop.getObject(entityData, "SMS_INFO", {});
+	      const wrapperClassName = "crm-entity-stream-section-sms";
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history" + " " + wrapperClassName
 	        }
@@ -11298,7 +11723,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }));
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -11309,29 +11734,29 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
 	      });
 	      contentWrapper.appendChild(detailWrapper);
-	      var messageWrapper = BX.create("DIV", {
+	      const messageWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-sms"
 	        }
 	      });
 
 	      if (smsInfo.senderId) {
-	        var senderId = smsInfo.senderId;
-	        var senderName = smsInfo.senderShortName;
+	        const senderId = smsInfo.senderId;
+	        let senderName = smsInfo.senderShortName;
 
 	        if (senderId === 'rest' && smsInfo.fromName) {
 	          senderName = smsInfo.fromName;
 	        }
 
-	        var messageSenderWrapper = BX.create("DIV", {
+	        const messageSenderWrapper = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-sms-status"
 	          },
@@ -11354,8 +11779,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.setMessageStatus(smsInfo.statusId, smsInfo.errorText);
 	      }
 
-	      var bodyText = BX.util.htmlspecialchars(entityData['DESCRIPTION_RAW']).replace(/\r\n|\r|\n/g, "<br/>");
-	      var messageBodyWrapper = BX.create("DIV", {
+	      const bodyText = BX.util.htmlspecialchars(entityData['DESCRIPTION_RAW']).replace(/\r\n|\r|\n/g, "<br/>");
+	      const messageBodyWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-sms-fragment"
 	        }
@@ -11365,7 +11790,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }));
 	      messageWrapper.appendChild(messageBodyWrapper);
 	      detailWrapper.appendChild(messageWrapper);
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        },
@@ -11392,7 +11817,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: " " + communicationValue
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -11425,26 +11850,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function setMessageStatus(status, errorText) {
 	      status = parseInt(status);
 	      if (isNaN(status) || !this._messageStatusNode) return;
-	      var statuses = this.getSetting('smsStatusDescriptions', {});
+	      const statuses = this.getSetting('smsStatusDescriptions', {});
 
 	      if (statuses.hasOwnProperty(status)) {
 	        this._messageStatusNode.textContent = statuses[status];
 	        this.setMessageStatusErrorText(errorText);
-	        var statusSemantic = this.getMessageStatusSemantic(status);
+	        const statusSemantic = this.getMessageStatusSemantic(status);
 	        this.setMessageStatusSemantic(statusSemantic);
 	      }
 	    }
 	  }, {
 	    key: "setMessageStatusSemantic",
 	    value: function setMessageStatusSemantic(semantic) {
-	      var classMap = {
+	      const classMap = {
 	        process: 'crm-entity-stream-content-event-process',
 	        success: 'crm-entity-stream-content-event-successful',
 	        failure: 'crm-entity-stream-content-event-missing'
 	      };
 
-	      for (var checkSemantic in classMap) {
-	        var fn = checkSemantic === semantic ? 'addClass' : 'removeClass';
+	      for (let checkSemantic in classMap) {
+	        const fn = checkSemantic === semantic ? 'addClass' : 'removeClass';
 	        BX[fn](this._messageStatusNode, classMap[checkSemantic]);
 	      }
 	    }
@@ -11464,15 +11889,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessageStatusSemantic",
 	    value: function getMessageStatusSemantic(status) {
-	      var semantics = this.getSetting('smsStatusSemantics', {});
+	      const semantics = this.getSetting('smsStatusSemantics', {});
 	      return semantics.hasOwnProperty(status) ? semantics[status] : 'failure';
 	    }
 	  }, {
 	    key: "subscribe",
 	    value: function subscribe() {
 	      if (!BX.CrmSmsWatcher) return;
-	      var entityData = this.getAssociatedEntityData();
-	      var smsInfo = BX.prop.getObject(entityData, "SMS_INFO", {});
+	      const entityData = this.getAssociatedEntityData();
+	      const smsInfo = BX.prop.getObject(entityData, "SMS_INFO", {});
 
 	      if (smsInfo.id) {
 	        BX.CrmSmsWatcher.subscribeOnMessageUpdate(smsInfo.id, this.onMessageUpdate.bind(this));
@@ -11488,7 +11913,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Sms();
+	      const self = new Sms();
 	      self.initialize(id, settings);
 	      self.subscribe();
 	      return self;
@@ -11499,7 +11924,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Request$1 = /*#__PURE__*/function (_HistoryActivity) {
+	let Request$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Request, _HistoryActivity);
 
 	  function Request() {
@@ -11510,7 +11935,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Request, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -11522,8 +11947,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
@@ -11531,7 +11956,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //var entityData = this.getAssociatedEntityData();
 
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-today crm-entity-stream-section-robot"
 	        }
@@ -11547,7 +11972,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -11558,9 +11983,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -11588,7 +12013,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -11624,7 +12049,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Request();
+	      const self = new Request();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -11634,7 +12059,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var OpenLine$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let OpenLine$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(OpenLine$$1, _HistoryActivity);
 
 	  function OpenLine$$1() {
@@ -11645,7 +12070,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(OpenLine$$1, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -11657,18 +12082,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
 	        description = description.replace(/^\s+/, '');
 	      }
 
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var wrapper = BX.create("DIV", {
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-IM"
 	        }
@@ -11684,7 +12109,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -11695,9 +12120,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -11718,28 +12143,28 @@ this.BX.Crm = this.BX.Crm || {};
 	        })]
 	      })); //Content
 
-	      var entityDetailWrapper = BX.create("DIV", {
+	      const entityDetailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-IM"
 	        }
 	      });
 	      detailWrapper.appendChild(entityDetailWrapper);
-	      var messageWrapper = BX.create("DIV", {
+	      const messageWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-IM-messages"
 	        }
 	      });
 	      entityDetailWrapper.appendChild(messageWrapper);
-	      var openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
+	      const openLineData = BX.prop.getObject(this.getAssociatedEntityData(), "OPENLINE_INFO", null);
 
 	      if (openLineData) {
-	        var messages = BX.prop.getArray(openLineData, "MESSAGES", []);
-	        var i = 0;
-	        var length = messages.length;
+	        const messages = BX.prop.getArray(openLineData, "MESSAGES", []);
+	        let i = 0;
+	        const length = messages.length;
 
 	        for (; i < length; i++) {
-	          var message = messages[i];
-	          var isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
+	          const message = messages[i];
+	          const isExternal = BX.prop.getBoolean(message, "IS_EXTERNAL", true);
 	          messageWrapper.appendChild(BX.create("DIV", {
 	            attrs: {
 	              className: isExternal ? "crm-entity-stream-content-detail-IM-message-incoming" : "crm-entity-stream-content-detail-IM-message-outgoing"
@@ -11749,7 +12174,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }
 
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -11776,7 +12201,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -11817,8 +12242,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var slug = "";
-	      var communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
+	      let slug = "";
+	      const communication = BX.prop.getObject(this.getAssociatedEntityData(), "COMMUNICATION", null);
 
 	      if (communication) {
 	        if (BX.prop.getString(communication, "TYPE") === "IM") {
@@ -11836,7 +12261,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new OpenLine$$1();
+	      const self = new OpenLine$$1();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -11846,7 +12271,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Rest$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let Rest$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Rest, _HistoryActivity);
 
 	  function Rest() {
@@ -11857,7 +12282,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Rest, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -11869,7 +12294,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTypeDescription",
 	    value: function getTypeDescription() {
-	      var entityData = this.getAssociatedEntityData();
+	      const entityData = this.getAssociatedEntityData();
 
 	      if (entityData['APP_TYPE'] && entityData['APP_TYPE']['NAME']) {
 	        return entityData['APP_TYPE']['NAME'];
@@ -11880,8 +12305,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        //trim leading spaces
@@ -11889,12 +12314,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //var entityData = this.getAssociatedEntityData();
 
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-today crm-entity-stream-section-rest"
 	        }
 	      });
-	      var iconNode = BX.create("DIV", {
+	      const iconNode = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-rest"
 	        }
@@ -11909,7 +12334,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -11920,9 +12345,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -11950,7 +12375,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.prepareCutOffElements(description, 128, this._headerClickHandler)
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -11981,7 +12406,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Rest();
+	      const self = new Rest();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -11991,7 +12416,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Visit = /*#__PURE__*/function (_HistoryActivity) {
+	let Visit = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Visit, _HistoryActivity);
 
 	  function Visit() {
@@ -12009,16 +12434,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Visit, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
-	      var entityData = this.getAssociatedEntityData();
-	      var visitInfo = BX.prop.getObject(entityData, "VISIT_INFO", {});
-	      var recordLength = BX.prop.getInteger(visitInfo, "RECORD_LENGTH", 0);
-	      var recordLengthFormatted = BX.prop.getString(visitInfo, "RECORD_LENGTH_FORMATTED_FULL", "");
+	      const entityData = this.getAssociatedEntityData();
+	      const visitInfo = BX.prop.getObject(entityData, "VISIT_INFO", {});
+	      const recordLength = BX.prop.getInteger(visitInfo, "RECORD_LENGTH", 0);
+	      const recordLengthFormatted = BX.prop.getString(visitInfo, "RECORD_LENGTH_FORMATTED_FULL", "");
 	      header.appendChild(BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-time"
@@ -12030,15 +12455,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
-	      var communicationTitle = BX.prop.getString(communication, "TITLE", "");
-	      var communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
-	      var visitInfo = BX.prop.getObject(entityData, "VISIT_INFO", {});
-	      var recordLength = BX.prop.getInteger(visitInfo, "RECORD_LENGTH", 0);
-	      var recordLengthFormatted = BX.prop.getString(visitInfo, "RECORD_LENGTH_FORMATTED_SHORT", "");
-	      var vkProfile = BX.prop.getString(visitInfo, "VK_PROFILE", "");
-	      var outerWrapper = BX.create("DIV", {
+	      const entityData = this.getAssociatedEntityData();
+	      const communication = BX.prop.getObject(entityData, "COMMUNICATION", {});
+	      const communicationTitle = BX.prop.getString(communication, "TITLE", "");
+	      const communicationShowUrl = BX.prop.getString(communication, "SHOW_URL", "");
+	      const visitInfo = BX.prop.getObject(entityData, "VISIT_INFO", {});
+	      const recordLength = BX.prop.getInteger(visitInfo, "RECORD_LENGTH", 0);
+	      const recordLengthFormatted = BX.prop.getString(visitInfo, "RECORD_LENGTH_FORMATTED_SHORT", "");
+	      const vkProfile = BX.prop.getString(visitInfo, "VK_PROFILE", "");
+	      const outerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-visit"
 	        }
@@ -12048,7 +12473,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-visit"
 	        }
 	      }));
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -12060,7 +12485,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: [wrapper]
 	      })); //Header
 
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      wrapper.appendChild(header); //region Context Menu
 
 	      if (this.isContextMenuEnabled()) {
@@ -12069,7 +12494,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      //Details
 
 
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail crm-entity-stream-content-detail-call-inline"
 	        }
@@ -12084,7 +12509,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        detailWrapper.appendChild(this._history.getManager().getAudioPlaybackRateSelector().render());
 	      }
 
-	      var communicationWrapper = BX.create("DIV", {
+	      const communicationWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-contact-info"
 	        }
@@ -12121,7 +12546,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        wrapper.appendChild(authorNode);
@@ -12133,7 +12558,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onPlayerDummyClick",
 	    value: function onPlayerDummyClick(e) {
-	      var stubNode = this._playerWrapper.querySelector(".crm-audio-cap-wrap");
+	      const stubNode = this._playerWrapper.querySelector(".crm-audio-cap-wrap");
 
 	      if (stubNode) {
 	        BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
@@ -12169,7 +12594,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Visit();
+	      const self = new Visit();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -12179,7 +12604,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Zoom$1 = /*#__PURE__*/function (_HistoryActivity) {
+	let Zoom$1 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Zoom, _HistoryActivity);
 
 	  function Zoom() {
@@ -12209,7 +12634,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Zoom, [{
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -12255,14 +12680,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history"
 	        }
 	      });
-	      var entityDetailWrapper;
-	      var zoomData = BX.prop.getObject(this.getAssociatedEntityData(), "ZOOM_INFO", null);
-	      var subject = BX.prop.getString(this.getAssociatedEntityData(), "SUBJECT", null);
+	      let entityDetailWrapper;
+	      const zoomData = BX.prop.getObject(this.getAssociatedEntityData(), "ZOOM_INFO", null);
+	      const subject = BX.prop.getString(this.getAssociatedEntityData(), "SUBJECT", null);
 	      this._recordings = BX.prop.getArray(zoomData, "RECORDINGS", []);
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -12270,7 +12695,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }));
 	      if (this.isFixed()) BX.addClass(wrapper, 'crm-entity-stream-section-top-fixed');
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -12281,9 +12706,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        }
@@ -12307,7 +12732,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        if (this._recordings.length > 0) {
 	          if (this._recordings.length > 1) {
 	            //render video parts header
-	            var tabs = this._recordings.map(function (recording, index) {
+	            const tabs = this._recordings.map(function (recording, index) {
 	              return {
 	                id: index,
 	                title: BX.message("CRM_TIMELINE_ZOOM_MEETING_RECORD_PART").replace("#NUMBER#", index + 1),
@@ -12316,7 +12741,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              };
 	            });
 
-	            var tabsComponent = new Zoom.TabsComponent({
+	            const tabsComponent = new Zoom.TabsComponent({
 	              tabs: tabs
 	            });
 	            tabsComponent.eventEmitter.subscribe("onTabChange", this._onTabChange.bind(this));
@@ -12361,10 +12786,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	          if (zoomData['RECORDINGS'][0]['VIDEO']) {
 	            //video download link with token valid for 24h
-	            var videoLinkExpireTS = zoomData['RECORDINGS'][0]['VIDEO']['END_DATE_TS'] * 1000 + 60 * 60 * 23 * 1000;
+	            const videoLinkExpireTS = zoomData['RECORDINGS'][0]['VIDEO']['END_DATE_TS'] * 1000 + 60 * 60 * 23 * 1000;
 
 	            if (videoLinkExpireTS < Date.now()) {
-	              var videoLinkContainer = BX.create("DIV", {
+	              const videoLinkContainer = BX.create("DIV", {
 	                props: {
 	                  className: "crm-entity-stream-content-detail-zoom-desc"
 	                }
@@ -12387,7 +12812,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 
 	          if (zoomData['RECORDINGS'][0]['AUDIO']) {
-	            var zoomAudioDetailWrapper = BX.create("DIV", {
+	            const zoomAudioDetailWrapper = BX.create("DIV", {
 	              attrs: {
 	                className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline"
 	              }
@@ -12491,7 +12916,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -12504,7 +12929,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "_onVideoDummyClick",
 	    value: function _onVideoDummyClick() {
 	      BX.UI.Hint.hide();
-	      var recording = this._recordings[this._currentRecordingIndex]["VIDEO"];
+	      const recording = this._recordings[this._currentRecordingIndex]["VIDEO"];
 
 	      if (!recording) {
 	        return;
@@ -12520,7 +12945,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "_onAudioDummyClick",
 	    value: function _onAudioDummyClick() {
-	      var recording = this._recordings[this._currentRecordingIndex]["AUDIO"];
+	      const recording = this._recordings[this._currentRecordingIndex]["AUDIO"];
 
 	      if (!recording) {
 	        return;
@@ -12539,8 +12964,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "setCurrentRecording",
 	    value: function setCurrentRecording(recordingIndex) {
 	      this._currentRecordingIndex = recordingIndex;
-	      var videoRecording = this._recordings[this._currentRecordingIndex]["VIDEO"];
-	      var audioRecording = this._recordings[this._currentRecordingIndex]["AUDIO"];
+	      const videoRecording = this._recordings[this._currentRecordingIndex]["VIDEO"];
+	      const audioRecording = this._recordings[this._currentRecordingIndex]["AUDIO"];
 
 	      if (videoRecording) {
 	        this._videoDummy.hidden = false;
@@ -12574,7 +12999,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      BX.clean(this._downloadWrapper);
 
 	      if (audioRecording || videoRecording) {
-	        var lengthHuman = audioRecording ? audioRecording["LENGTH_HUMAN"] : videoRecording["LENGTH_HUMAN"];
+	        const lengthHuman = audioRecording ? audioRecording["LENGTH_HUMAN"] : videoRecording["LENGTH_HUMAN"];
 
 	        this._downloadWrapper.appendChild(this._downloadSubject);
 
@@ -12616,7 +13041,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Zoom();
+	      const self = new Zoom();
 	      self.initialize(id, settings); //todo: remove debug
 
 	      if (!window['zoom']) {
@@ -12664,7 +13089,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "_renderTab",
 	    value: function _renderTab(tabDescription) {
-	      var tabId = tabDescription.id;
+	      const tabId = tabDescription.id;
 	      this.elements.tabs[tabId] = BX.create("DIV", {
 	        props: {
 	          className: "crm-entity-stream-content-detail-zoom-section" + (tabDescription.active ? " crm-entity-stream-content-detail-zoom-section-active" : "")
@@ -12700,7 +13125,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        throw new Error("Tab " + tabId + " is not found");
 	      }
 
-	      for (var id in this.elements.tabs) {
+	      for (let id in this.elements.tabs) {
 	        if (!this.elements.tabs.hasOwnProperty(id)) {
 	          continue;
 	        }
@@ -12724,7 +13149,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var OrderCreation = /*#__PURE__*/function (_History) {
+	let OrderCreation = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(OrderCreation, _History);
 
 	  function OrderCreation() {
@@ -12744,7 +13169,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var msg = this.getMessage(BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase());
+	      let msg = this.getMessage(BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase());
 
 	      if (!BX.type.isNotEmptyString(msg)) {
 	        msg = this.getTextDataParam("TITLE");
@@ -12760,9 +13185,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getHeaderChildren",
 	    value: function getHeaderChildren() {
-	      var statusMessage = '';
-	      var statusClass = '';
-	      var fields = this.getObjectDataParam('FIELDS');
+	      let statusMessage = '';
+	      let statusClass = '';
+	      const fields = this.getObjectDataParam('FIELDS');
 
 	      if (BX.prop.get(fields, 'DONE') === 'Y') {
 	        statusMessage = this.getMessage("done");
@@ -12803,18 +13228,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var entityTypeId = this.getAssociatedEntityTypeId();
-	      var entityId = this.getAssociatedEntityId();
-	      var title = BX.util.htmlspecialchars(BX.prop.getString(entityData, "TITLE", ""));
-	      var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-	      var legend = BX.prop.getString(entityData, "LEGEND", "");
+	      const entityData = this.getAssociatedEntityData();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityId = this.getAssociatedEntityId();
+	      let title = BX.util.htmlspecialchars(BX.prop.getString(entityData, "TITLE", ""));
+	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+	      const legend = BX.prop.getString(entityData, "LEGEND", "");
 
 	      if (legend !== "") {
 	        title += " " + legend;
 	      }
 
-	      var nodes = [];
+	      const nodes = [];
 
 	      if (title !== "") {
 	        if (showUrl === "" || entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
@@ -12850,8 +13275,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
-	      var wrapper = BX.create("DIV", {
+	      const wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history";
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
@@ -12861,7 +13286,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: this.getIconClassName()
 	        }
 	      }));
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -12872,7 +13297,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
@@ -12886,7 +13311,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.prepareContentDetails()
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -12898,13 +13323,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = OrderCreation.messages;
+	      const m = OrderCreation.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new OrderCreation();
+	      const self = new OrderCreation();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -12916,7 +13341,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var OrderModification = /*#__PURE__*/function (_History) {
+	let OrderModification = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(OrderModification, _History);
 
 	  function OrderModification() {
@@ -12927,7 +13352,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(OrderModification, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = OrderModification.messages;
+	      const m = OrderModification.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }, {
@@ -12938,12 +13363,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getStatusInfo",
 	    value: function getStatusInfo() {
-	      var statusInfo = {};
-	      var value = null;
-	      var classCode = null;
-	      var fieldName = this.getTextDataParam("CHANGED_ENTITY");
-	      var fields = this.getObjectDataParam('FIELDS');
-	      var entityData = this.getAssociatedEntityData();
+	      const statusInfo = {};
+	      let value = null;
+	      let classCode = null;
+	      const fieldName = this.getTextDataParam("CHANGED_ENTITY");
+	      const fields = this.getObjectDataParam('FIELDS');
+	      const entityData = this.getAssociatedEntityData();
 
 	      if (fieldName === BX.CrmEntityType.names.order) {
 	        if (BX.prop.get(fields, 'ORDER_CANCELED') === 'Y') {
@@ -12962,7 +13387,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      if (fieldName === BX.CrmEntityType.names.orderpayment) {
-	        var psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
+	        const psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
 
 	        if (psStatusCode) {
 	          if (psStatusCode === 'ERROR') {
@@ -12997,7 +13422,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getHeaderChildren",
 	    value: function getHeaderChildren() {
-	      var children = [BX.create("DIV", {
+	      const children = [BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-title"
 	        },
@@ -13006,7 +13431,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.getTitle()
 	      })];
-	      var statusInfo = this.getStatusInfo();
+	      const statusInfo = this.getStatusInfo();
 
 	      if (BX.type.isNotEmptyObject(statusInfo)) {
 	        children.push(BX.create("SPAN", {
@@ -13028,16 +13453,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var entityTypeId = this.getAssociatedEntityTypeId();
-	      var entityId = this.getAssociatedEntityId();
-	      var title = BX.prop.getString(entityData, "TITLE");
-	      var htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
-	      var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-	      var nodes = [];
+	      const entityData = this.getAssociatedEntityData();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityId = this.getAssociatedEntityId();
+	      const title = BX.prop.getString(entityData, "TITLE");
+	      const htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
+	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+	      const nodes = [];
 
 	      if (title !== "") {
-	        var descriptionNode = BX.create("DIV", {
+	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-description"
 	          }
@@ -13068,7 +13493,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }
 
-	        var legend = BX.prop.getString(entityData, "LEGEND");
+	        const legend = BX.prop.getString(entityData, "LEGEND");
 
 	        if (legend !== "") {
 	          descriptionNode.appendChild(BX.create("SPAN", {
@@ -13076,7 +13501,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 
-	        var sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
+	        const sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
 
 	        if (sublegend !== '') {
 	          descriptionNode.appendChild(BX.create("BR"));
@@ -13093,18 +13518,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareViewedContentDetails",
 	    value: function prepareViewedContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var entityTypeId = this.getAssociatedEntityTypeId();
-	      var entityId = this.getAssociatedEntityId();
-	      var title = BX.prop.getString(entityData, "TITLE");
-	      var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-	      var nodes = [];
+	      const entityData = this.getAssociatedEntityData();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityId = this.getAssociatedEntityId();
+	      const title = BX.prop.getString(entityData, "TITLE");
+	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+	      const nodes = [];
 
 	      if (title !== "") {
-	        var sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
+	        const sublegend = BX.prop.getString(entityData, "SUBLEGEND", '');
 
 	        if (sublegend !== "") {
-	          var descriptionNode = BX.create("DIV", {
+	          const descriptionNode = BX.create("DIV", {
 	            attrs: {
 	              className: "crm-entity-stream-content-detail-description"
 	            },
@@ -13126,7 +13551,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 
-	        var legend = BX.prop.getString(entityData, "LEGEND");
+	        const legend = BX.prop.getString(entityData, "LEGEND");
 
 	        if (legend !== "") {
 	          nodes.push(BX.create("SPAN", {
@@ -13140,16 +13565,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareSentContentDetails",
 	    value: function prepareSentContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var entityTypeId = this.getAssociatedEntityTypeId();
-	      var entityId = this.getAssociatedEntityId();
-	      var title = BX.prop.getString(entityData, "TITLE");
-	      var showUrl = BX.prop.getString(entityData, 'SHOW_URL', '');
-	      var destination = BX.prop.getString(entityData, 'DESTINATION_TITLE', '');
-	      var nodes = [];
+	      const entityData = this.getAssociatedEntityData();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityId = this.getAssociatedEntityId();
+	      const title = BX.prop.getString(entityData, "TITLE");
+	      const showUrl = BX.prop.getString(entityData, 'SHOW_URL', '');
+	      const destination = BX.prop.getString(entityData, 'DESTINATION_TITLE', '');
+	      const nodes = [];
 
 	      if (title !== "") {
-	        var detailNode = BX.create('DIV', {
+	        const detailNode = BX.create('DIV', {
 	          attrs: {
 	            className: 'crm-entity-stream-content-detail-description'
 	          }
@@ -13168,7 +13593,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 
-	        var legend = BX.prop.getString(entityData, "LEGEND");
+	        const legend = BX.prop.getString(entityData, "LEGEND");
 
 	        if (legend !== "") {
 	          detailNode.appendChild(BX.create("SPAN", {
@@ -13186,7 +13611,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 
 	        nodes.push(detailNode);
-	        var sliderLinkNode = BX.create('A', {
+	        const sliderLinkNode = BX.create('A', {
 	          attrs: {
 	            href: "#"
 	          },
@@ -13204,12 +13629,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "startSalescenterApplication",
 	    value: function startSalescenterApplication() {
 	      BX.loadExt('salescenter.manager').then(function () {
-	        var fields = this.getObjectDataParam('FIELDS'),
-	            ownerTypeId = BX.prop.get(fields, 'OWNER_TYPE_ID', BX.CrmEntityType.enumeration.deal);
-	        var ownerId = BX.prop.get(fields, 'OWNER_ID', 0);
-	        var paymentId = BX.prop.get(fields, 'PAYMENT_ID', 0),
-	            shipmentId = BX.prop.get(fields, 'SHIPMENT_ID', 0),
-	            orderId = BX.prop.get(fields, 'ORDER_ID', 0); // compatibility
+	        const fields = this.getObjectDataParam('FIELDS'),
+	              ownerTypeId = BX.prop.get(fields, 'OWNER_TYPE_ID', BX.CrmEntityType.enumeration.deal);
+	        let ownerId = BX.prop.get(fields, 'OWNER_ID', 0);
+	        const paymentId = BX.prop.get(fields, 'PAYMENT_ID', 0),
+	              shipmentId = BX.prop.get(fields, 'SHIPMENT_ID', 0),
+	              orderId = BX.prop.get(fields, 'ORDER_ID', 0); // compatibility
 
 	        if (!ownerId) {
 	          ownerId = BX.prop.get(fields, 'DEAL_ID', 0);
@@ -13231,16 +13656,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "preparePaidPaymentContentDetails",
 	    value: function preparePaidPaymentContentDetails() {
-	      var entityData = this.getAssociatedEntityData(),
-	          title = BX.prop.getString(entityData, "TITLE"),
-	          date = BX.prop.getString(entityData, "DATE", ""),
-	          paySystemName = BX.prop.getString(entityData, "PAY_SYSTEM_NAME", ""),
-	          sum = BX.prop.getString(entityData, 'SUM', ''),
-	          currency$$1 = BX.prop.getString(entityData, 'CURRENCY', ''),
-	          nodes = [];
+	      const entityData = this.getAssociatedEntityData(),
+	            title = BX.prop.getString(entityData, "TITLE"),
+	            date = BX.prop.getString(entityData, "DATE", ""),
+	            paySystemName = BX.prop.getString(entityData, "PAY_SYSTEM_NAME", ""),
+	            sum = BX.prop.getString(entityData, 'SUM', ''),
+	            currency$$1 = BX.prop.getString(entityData, 'CURRENCY', ''),
+	            nodes = [];
 
 	      if (title !== "") {
-	        var paymentDetail = BX.create("DIV", {
+	        const paymentDetail = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-payment"
 	          }
@@ -13261,7 +13686,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            html: currency$$1
 	          })]
 	        }));
-	        var logotip = BX.prop.getString(entityData, "LOGOTIP", null);
+	        const logotip = BX.prop.getString(entityData, "LOGOTIP", null);
 
 	        if (logotip) {
 	          paymentDetail.appendChild(BX.create("DIV", {
@@ -13275,7 +13700,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 
 	        nodes.push(paymentDetail);
-	        var descriptionNode = BX.create("DIV", {
+	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-description"
 	          },
@@ -13298,12 +13723,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var fields = this.getObjectDataParam('FIELDS'),
-	          isPaid = BX.prop.get(fields, 'ORDER_PAID') === 'Y',
-	          isClick = BX.prop.get(fields, 'PAY_SYSTEM_CLICK') === 'Y',
-	          isManualContinuePay = BX.prop.get(fields, 'MANUAL_CONTINUE_PAY') === 'Y',
-	          isManualAddCheck = BX.prop.get(fields, 'NEED_MANUAL_ADD_CHECK') === 'Y',
-	          entityId = this.getAssociatedEntityTypeId();
+	      const fields = this.getObjectDataParam('FIELDS'),
+	            isPaid = BX.prop.get(fields, 'ORDER_PAID') === 'Y',
+	            isClick = BX.prop.get(fields, 'PAY_SYSTEM_CLICK') === 'Y',
+	            isManualContinuePay = BX.prop.get(fields, 'MANUAL_CONTINUE_PAY') === 'Y',
+	            isManualAddCheck = BX.prop.get(fields, 'NEED_MANUAL_ADD_CHECK') === 'Y',
+	            entityId = this.getAssociatedEntityTypeId();
 
 	      if (entityId === BX.CrmEntityType.enumeration.orderpayment && isPaid) {
 	        return this.preparePaidPaymentContent();
@@ -13320,12 +13745,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareItemOrderContent",
 	    value: function prepareItemOrderContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var isViewed = BX.prop.getString(entityData, "VIEWED", '') === 'Y';
-	      var isSent = BX.prop.getString(entityData, "SENT", '') === 'Y';
-	      var fields = this.getObjectDataParam('FIELDS');
-	      var psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
-	      var wrapper = BX.create("DIV", {
+	      const entityData = this.getAssociatedEntityData();
+	      const isViewed = BX.prop.getString(entityData, "VIEWED", '') === 'Y';
+	      const isSent = BX.prop.getString(entityData, "SENT", '') === 'Y';
+	      const fields = this.getObjectDataParam('FIELDS');
+	      const psStatusCode = BX.prop.get(fields, 'STATUS_CODE', false);
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: 'crm-entity-stream-section crm-entity-stream-section-history'
 	        }
@@ -13335,18 +13760,18 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon ' + this.getIconClassName()
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
 	        children: this.getHeaderChildren()
 	      });
-	      var contentChildren = null;
+	      let contentChildren = null;
 
 	      if (isViewed) {
 	        contentChildren = this.prepareViewedContentDetails();
@@ -13366,7 +13791,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: contentChildren
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -13384,7 +13809,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "preparePaidPaymentContent",
 	    value: function preparePaidPaymentContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: 'crm-entity-stream-section'
 	        }
@@ -13394,7 +13819,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-wallet'
 	        }
 	      }));
-	      var header = [BX.create("DIV", {
+	      const header = [BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-title"
 	        },
@@ -13414,18 +13839,18 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.formatTime(this.getCreatedTime())
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var headerWrap = BX.create("DIV", {
+	      const headerWrap = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
 	        children: header
 	      });
-	      var contentChildren = this.preparePaidPaymentContentDetails();
+	      const contentChildren = this.preparePaidPaymentContentDetails();
 	      content.appendChild(headerWrap);
 	      content.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -13434,7 +13859,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: contentChildren
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -13452,13 +13877,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareErrorPaymentContentDetails",
 	    value: function prepareErrorPaymentContentDetails() {
-	      var entityData = this.getAssociatedEntityData(),
-	          date = BX.prop.getString(entityData, 'DATE', ''),
-	          fields = this.getObjectDataParam('FIELDS'),
-	          paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
-	          paySystemError = BX.prop.getString(fields, 'STATUS_DESCRIPTION', ''),
-	          nodes = [];
-	      var descriptionNode = BX.create('DIV', {
+	      const entityData = this.getAssociatedEntityData(),
+	            date = BX.prop.getString(entityData, 'DATE', ''),
+	            fields = this.getObjectDataParam('FIELDS'),
+	            paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
+	            paySystemError = BX.prop.getString(fields, 'STATUS_DESCRIPTION', ''),
+	            nodes = [];
+	      const descriptionNode = BX.create('DIV', {
 	        attrs: {
 	          className: 'crm-entity-stream-content-detail-description'
 	        },
@@ -13474,7 +13899,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        })]
 	      });
 	      nodes.push(descriptionNode);
-	      var errorDetailNode = BX.create('DIV', {
+	      const errorDetailNode = BX.create('DIV', {
 	        attrs: {
 	          className: 'crm-entity-stream-content-event-payment-initiate-pay-error'
 	        },
@@ -13486,7 +13911,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareClickedPaymentContent",
 	    value: function prepareClickedPaymentContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: 'crm-entity-stream-section crm-entity-stream-section-history'
 	        }
@@ -13496,7 +13921,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon ' + this.getIconClassName()
 	        }
 	      }));
-	      var header = [BX.create("DIV", {
+	      const header = [BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-title"
 	        },
@@ -13516,18 +13941,18 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.formatTime(this.getCreatedTime())
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var headerWrap = BX.create("DIV", {
+	      const headerWrap = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
 	        children: header
 	      });
-	      var contentChildren = this.prepareClickedPaymentContentDetails();
+	      const contentChildren = this.prepareClickedPaymentContentDetails();
 	      content.appendChild(headerWrap);
 	      content.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -13536,7 +13961,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: contentChildren
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -13554,12 +13979,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareClickedPaymentContentDetails",
 	    value: function prepareClickedPaymentContentDetails() {
-	      var fields = this.getObjectDataParam('FIELDS'),
-	          paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
-	          nodes = [];
+	      const fields = this.getObjectDataParam('FIELDS'),
+	            paySystemName = BX.prop.getString(fields, 'PAY_SYSTEM_NAME', ''),
+	            nodes = [];
 
 	      if (paySystemName !== '') {
-	        var descriptionNode = BX.create("DIV", {
+	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-description"
 	          }
@@ -13584,7 +14009,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareManualContinuePayContent",
 	    value: function prepareManualContinuePayContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: 'crm-entity-stream-section crm-entity-stream-section-advice'
 	        }
@@ -13594,7 +14019,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-advice'
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-advice-info"
 	        },
@@ -13611,9 +14036,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareManualAddCheck",
 	    value: function prepareManualAddCheck() {
-	      var entityData = this.getAssociatedEntityData();
-	      var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
-	      var wrapper = BX.create("DIV", {
+	      const entityData = this.getAssociatedEntityData();
+	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: 'crm-entity-stream-section crm-entity-stream-section-advice'
 	        }
@@ -13623,14 +14048,14 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-advice'
 	        }
 	      }));
-	      var htmlTitle = this.getMessage('orderManualAddCheck').replace("#HREF#", showUrl);
-	      var content = BX.create("DIV", {
+	      const htmlTitle = this.getMessage('orderManualAddCheck').replace("#HREF#", showUrl);
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-advice-info"
 	        },
 	        html: htmlTitle
 	      });
-	      var link = BX.create("DIV", {
+	      const link = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-advice-info"
 	        },
@@ -13664,7 +14089,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new OrderModification();
+	      const self = new OrderModification();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -13676,7 +14101,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var StoreDocumentCreation = /*#__PURE__*/function (_OrderCreation) {
+	let StoreDocumentCreation = /*#__PURE__*/function (_OrderCreation) {
 	  babelHelpers.inherits(StoreDocumentCreation, _OrderCreation);
 
 	  function StoreDocumentCreation() {
@@ -13701,8 +14126,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var entityData = this.getAssociatedEntityData();
-	      var docType = BX.prop.getString(entityData, "DOC_TYPE");
+	      const entityData = this.getAssociatedEntityData();
+	      const docType = BX.prop.getString(entityData, "DOC_TYPE");
 
 	      if (docType === 'A') {
 	        return this.getMessage('arrivalDocument');
@@ -13734,26 +14159,26 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "TITLE", "");
-	      var nodes = [];
+	      const entityData = this.getAssociatedEntityData();
+	      const title = BX.prop.getString(entityData, "TITLE", "");
+	      const nodes = [];
 
 	      if (title === '') {
 	        return nodes;
 	      }
 
-	      var titleNode = BX.create('span', {
+	      const titleNode = BX.create('span', {
 	        text: title
 	      });
-	      var titleTemplate = BX.prop.getString(this._data, 'TITLE_TEMPLATE', '');
+	      const titleTemplate = BX.prop.getString(this._data, 'TITLE_TEMPLATE', '');
 
 	      if (titleTemplate) {
-	        var docType = BX.prop.getString(entityData, "DOC_TYPE");
+	        const docType = BX.prop.getString(entityData, "DOC_TYPE");
 
 	        if (docType === 'W') {
 	          if (this.getOwnerTypeId() === BX.CrmEntityType.enumeration.deal) {
-	            var documentDetailUrl = BX.prop.getString(this._data, 'DETAIL_LINK', '');
-	            var documentLinkTag = '<a href="' + documentDetailUrl + '">' + title + '</a>';
+	            const documentDetailUrl = BX.prop.getString(this._data, 'DETAIL_LINK', '');
+	            const documentLinkTag = '<a href="' + documentDetailUrl + '">' + title + '</a>';
 	            titleNode.innerHTML = titleTemplate.replace('#TITLE#', documentLinkTag);
 	          } else {
 	            titleNode.innerHTML = titleTemplate.replace('#TITLE#', title);
@@ -13774,13 +14199,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = StoreDocumentCreation.messages;
+	      const m = StoreDocumentCreation.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new StoreDocumentCreation();
+	      const self = new StoreDocumentCreation();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -13792,7 +14217,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var StoreDocumentModification = /*#__PURE__*/function (_Modification) {
+	let StoreDocumentModification = /*#__PURE__*/function (_Modification) {
 	  babelHelpers.inherits(StoreDocumentModification, _Modification);
 
 	  function StoreDocumentModification() {
@@ -13817,15 +14242,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var error = this.getTextDataParam("ERROR");
+	      const error = this.getTextDataParam("ERROR");
 
 	      if (error === 'CONDUCT') {
 	        return this.getMessage('conductError');
 	      }
 
-	      var entityData = this.getAssociatedEntityData();
-	      var field = this.getTextDataParam("FIELD");
-	      var docType = BX.prop.getString(entityData, "DOC_TYPE");
+	      const entityData = this.getAssociatedEntityData();
+	      const field = this.getTextDataParam("FIELD");
+	      const docType = BX.prop.getString(entityData, "DOC_TYPE");
 
 	      if (docType === 'A') {
 	        if (field === 'STATUS') {
@@ -13872,9 +14297,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getStatusInfo",
 	    value: function getStatusInfo() {
-	      var statusInfo = {};
-	      var statusName = this.getTextDataParam('STATUS_TITLE');
-	      var classCode = this.getTextDataParam('STATUS_CLASS');
+	      const statusInfo = {};
+	      const statusName = this.getTextDataParam('STATUS_TITLE');
+	      const classCode = this.getTextDataParam('STATUS_CLASS');
 	      {
 	        statusInfo.message = statusName;
 	        statusInfo.className = "crm-entity-stream-content-event-" + classCode;
@@ -13884,7 +14309,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getHeaderChildren",
 	    value: function getHeaderChildren() {
-	      var children = [BX.create("DIV", {
+	      const children = [BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-title"
 	        },
@@ -13893,7 +14318,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        text: this.getTitle()
 	      })];
-	      var statusInfo = this.getStatusInfo();
+	      const statusInfo = this.getStatusInfo();
 
 	      if (BX.type.isNotEmptyObject(statusInfo)) {
 	        children.push(BX.create("SPAN", {
@@ -13915,7 +14340,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history"
 	        }
@@ -13925,24 +14350,24 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-info"
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
 	        children: this.getHeaderChildren()
 	      });
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "TITLE", "");
-	      var error = this.getTextDataParam("ERROR");
-	      var contentChildren = [];
+	      const entityData = this.getAssociatedEntityData();
+	      const title = BX.prop.getString(entityData, "TITLE", "");
+	      const error = this.getTextDataParam("ERROR");
+	      const contentChildren = [];
 
 	      if (error) {
-	        var errorMessage = this.getTextDataParam("ERROR_MESSAGE");
+	        const errorMessage = this.getTextDataParam("ERROR_MESSAGE");
 	        contentChildren.push(BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-description"
@@ -13950,18 +14375,18 @@ this.BX.Crm = this.BX.Crm || {};
 	          children: errorMessage
 	        }));
 	      } else if (title !== "") {
-	        var titleNode = BX.create('span', {
+	        const titleNode = BX.create('span', {
 	          text: title
 	        });
-	        var titleTemplate = BX.prop.getString(this._data, 'TITLE_TEMPLATE', '');
+	        const titleTemplate = BX.prop.getString(this._data, 'TITLE_TEMPLATE', '');
 
 	        if (titleTemplate) {
-	          var docType = BX.prop.getString(entityData, "DOC_TYPE");
+	          const docType = BX.prop.getString(entityData, "DOC_TYPE");
 
 	          if (docType === 'W') {
 	            if (this.getOwnerTypeId() === BX.CrmEntityType.enumeration.deal) {
-	              var documentDetailUrl = BX.prop.getString(this._data, 'DETAIL_LINK', '');
-	              var documentLinkTag = '<a href="' + documentDetailUrl + '">' + title + '</a>';
+	              const documentDetailUrl = BX.prop.getString(this._data, 'DETAIL_LINK', '');
+	              const documentLinkTag = '<a href="' + documentDetailUrl + '">' + title + '</a>';
 	              titleNode.innerHTML = titleTemplate.replace('#TITLE#', documentLinkTag);
 	            } else {
 	              titleNode.innerHTML = titleTemplate.replace('#TITLE#', title);
@@ -13992,7 +14417,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        })]
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -14010,13 +14435,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = StoreDocumentModification.messages;
+	      const m = StoreDocumentModification.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new StoreDocumentModification();
+	      const self = new StoreDocumentModification();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14028,7 +14453,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var ExternalNoticeModification = /*#__PURE__*/function (_OrderModification) {
+	let ExternalNoticeModification = /*#__PURE__*/function (_OrderModification) {
 	  babelHelpers.inherits(ExternalNoticeModification, _OrderModification);
 
 	  function ExternalNoticeModification() {
@@ -14044,7 +14469,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new ExternalNoticeModification();
+	      const self = new ExternalNoticeModification();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14054,7 +14479,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var ExternalNoticeStatusModification = /*#__PURE__*/function (_ExternalNoticeModifi) {
+	let ExternalNoticeStatusModification = /*#__PURE__*/function (_ExternalNoticeModifi) {
 	  babelHelpers.inherits(ExternalNoticeStatusModification, _ExternalNoticeModifi);
 
 	  function ExternalNoticeStatusModification() {
@@ -14065,8 +14490,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(ExternalNoticeStatusModification, [{
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var nodes = [];
-	      var contentChildren = [];
+	      const nodes = [];
+	      const contentChildren = [];
 
 	      if (BX.type.isNotEmptyString(this.getTextDataParam("START_NAME"))) {
 	        contentChildren.push(BX.create("SPAN", {
@@ -14102,7 +14527,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new ExternalNoticeStatusModification();
+	      const self = new ExternalNoticeStatusModification();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14112,7 +14537,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var OrderCheck = /*#__PURE__*/function (_History) {
+	let OrderCheck = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(OrderCheck, _History);
 
 	  function OrderCheck() {
@@ -14132,8 +14557,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var result = this.getMessage('orderCheck');
-	      var checkName = this.getTextDataParam('CHECK_NAME');
+	      let result = this.getMessage('orderCheck');
+	      const checkName = this.getTextDataParam('CHECK_NAME');
 
 	      if (checkName !== '') {
 	        result += ' "' + checkName + '"';
@@ -14149,9 +14574,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getHeaderChildren",
 	    value: function getHeaderChildren() {
-	      var statusMessage = '';
-	      var statusClass = '';
-	      var title = this.getTitle();
+	      let statusMessage = '';
+	      let statusClass = '';
+	      let title = this.getTitle();
 
 	      if (this.getTextDataParam("SENDED") !== '') {
 	        title = this.getMessage('sendedTitle');
@@ -14193,15 +14618,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = this.getTextDataParam("TITLE");
-	      var showUrl = BX.prop.getString(entityData, "SHOW_URL", '');
-	      var nodes = [];
+	      const entityData = this.getAssociatedEntityData();
+	      const title = this.getTextDataParam("TITLE");
+	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", '');
+	      const nodes = [];
 
 	      if (title !== "") {
-	        var isSended = this.getTextDataParam("SENDED") !== '';
-	        var className = isSended ? 'crm-entity-stream-content-detail-order' : 'crm-entity-stream-content-detail-description';
-	        var descriptionNode = BX.create("DIV", {
+	        const isSended = this.getTextDataParam("SENDED") !== '';
+	        const className = isSended ? 'crm-entity-stream-content-detail-order' : 'crm-entity-stream-content-detail-description';
+	        const descriptionNode = BX.create("DIV", {
 	          attrs: {
 	            className: className
 	          }
@@ -14224,8 +14649,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 
-	        var legend = this.getTextDataParam("LEGEND");
-	        var legendNode;
+	        const legend = this.getTextDataParam("LEGEND");
+	        let legendNode;
 
 	        if (legend !== "") {
 	          legendNode = BX.create("SPAN", {
@@ -14248,7 +14673,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }
 
-	      var checkUrl = this.getTextDataParam("CHECK_URL");
+	      const checkUrl = this.getTextDataParam("CHECK_URL");
 
 	      if (checkUrl) {
 	        nodes.push(BX.create("DIV", {
@@ -14270,8 +14695,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-createOrderEntity";
-	      var wrapper = BX.create("DIV", {
+	      const wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-createOrderEntity";
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: wrapperClassName
 	        }
@@ -14281,7 +14706,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: this.getIconClassName()
 	        }
 	      }));
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -14292,7 +14717,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
@@ -14306,7 +14731,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: this.prepareContentDetails()
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -14318,13 +14743,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = OrderCheck.messages;
+	      const m = OrderCheck.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new OrderCheck();
+	      const self = new OrderCheck();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14336,7 +14761,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var FinalSummaryDocuments = /*#__PURE__*/function (_History) {
+	let FinalSummaryDocuments = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(FinalSummaryDocuments, _History);
 
 	  function FinalSummaryDocuments() {
@@ -14347,7 +14772,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(FinalSummaryDocuments, [{
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = FinalSummaryDocuments.messages;
+	      const m = FinalSummaryDocuments.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }, {
@@ -14358,7 +14783,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getHeaderChildren",
 	    value: function getHeaderChildren() {
-	      var children = [BX.create("DIV", {
+	      const children = [BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-title"
 	        },
@@ -14383,7 +14808,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createCheckBlock",
 	    value: function createCheckBlock(check) {
-	      var blockNode = BX.create("DIV", {
+	      const blockNode = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail-notice"
 	        }
@@ -14400,7 +14825,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-payment"
 	        }
@@ -14410,37 +14835,37 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon ' + this.getIconClassName()
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
 	      });
-	      var contentItem = BX.create("DIV", {
+	      const contentItem = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
 	        children: this.getHeaderChildren()
 	      });
 	      contentItem.appendChild(header);
-	      var data = this.getData();
+	      const data = this.getData();
 
 	      if (data.RESULT) {
-	        var summaryOptions = {
+	        const summaryOptions = {
 	          'OWNER_ID': data.ASSOCIATED_ENTITY_ID,
 	          'OWNER_TYPE_ID': data.ASSOCIATED_ENTITY_TYPE_ID,
 	          'PARENT_CONTEXT': this,
 	          'CONTEXT': BX.CrmEntityType.resolveName(data.ASSOCIATED_ENTITY_TYPE_ID).toLowerCase(),
 	          'IS_WITH_ORDERS_MODE': false
 	        };
-	        var timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
-	        var options = data.RESULT.TIMELINE_SUMMARY_OPTIONS;
+	        const timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
+	        const options = data.RESULT.TIMELINE_SUMMARY_OPTIONS;
 	        timelineSummaryDocuments.setOptions(options);
-	        var nodes = [timelineSummaryDocuments.render()];
+	        const nodes = [timelineSummaryDocuments.render()];
 	        contentItem.appendChild(BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail"
@@ -14451,7 +14876,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -14485,7 +14910,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new FinalSummaryDocuments();
+	      const self = new FinalSummaryDocuments();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14497,7 +14922,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var FinalSummary = /*#__PURE__*/function (_FinalSummaryDocument) {
+	let FinalSummary = /*#__PURE__*/function (_FinalSummaryDocument) {
 	  babelHelpers.inherits(FinalSummary, _FinalSummaryDocument);
 
 	  function FinalSummary() {
@@ -14508,7 +14933,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(FinalSummary, [{
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-payment"
 	        }
@@ -14518,37 +14943,37 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: 'crm-entity-stream-section-icon ' + this.getIconClassName()
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section-content"
 	        }
 	      });
-	      var contentItem = BX.create("DIV", {
+	      const contentItem = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        },
 	        children: this.getHeaderChildren()
 	      });
 	      contentItem.appendChild(header);
-	      var data = this.getData();
+	      const data = this.getData();
 
 	      if (data.RESULT) {
-	        var summaryOptions = {
+	        const summaryOptions = {
 	          'OWNER_ID': data.ASSOCIATED_ENTITY_ID,
 	          'OWNER_TYPE_ID': data.ASSOCIATED_ENTITY_TYPE_ID,
 	          'PARENT_CONTEXT': this,
 	          'CONTEXT': BX.CrmEntityType.resolveName(data.ASSOCIATED_ENTITY_TYPE_ID).toLowerCase(),
 	          'IS_WITH_ORDERS_MODE': true
 	        };
-	        var timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
-	        var options = data.RESULT.TIMELINE_SUMMARY_OPTIONS;
+	        const timelineSummaryDocuments = new BX.Crm.TimelineSummaryDocuments(summaryOptions);
+	        const options = data.RESULT.TIMELINE_SUMMARY_OPTIONS;
 	        timelineSummaryDocuments.setOptions(options);
-	        var nodes = [timelineSummaryDocuments.render()];
+	        const nodes = [timelineSummaryDocuments.render()];
 	        contentItem.appendChild(BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail"
@@ -14559,7 +14984,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -14577,7 +15002,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new FinalSummary();
+	      const self = new FinalSummary();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14587,7 +15012,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Creation = /*#__PURE__*/function (_HistoryItem) {
+	let Creation = /*#__PURE__*/function (_HistoryItem) {
 	  babelHelpers.inherits(Creation, _HistoryItem);
 
 	  function Creation() {
@@ -14607,17 +15032,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var entityTypeId = this.getAssociatedEntityTypeId();
-	      var entityData = this.getAssociatedEntityData();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityData = this.getAssociatedEntityData();
 
 	      if (entityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var typeId = BX.prop.getInteger(entityData, "TYPE_ID");
-	        var title = this.getMessage(typeId === BX.CrmActivityType.task ? "task" : "activity");
+	        const typeId = BX.prop.getInteger(entityData, "TYPE_ID");
+	        const title = this.getMessage(typeId === BX.CrmActivityType.task ? "task" : "activity");
 	        return title.replace(/#TITLE#/gi, this.cutOffText(BX.prop.getString(entityData, "SUBJECT")), 64);
 	      }
 
 	      if (entityTypeId === BX.CrmEntityType.enumeration.storeDocument) {
-	        var docType = BX.prop.getString(entityData, "DOC_TYPE");
+	        const docType = BX.prop.getString(entityData, "DOC_TYPE");
 
 	        if (docType === 'A') {
 	          return this.getMessage('arrivalDocument');
@@ -14642,9 +15067,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        return '';
 	      }
 
-	      var entityTypeName = BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase();
-	      var msg = this.getMessage(entityTypeName);
-	      var isMessageNotFound = msg === entityTypeName;
+	      const entityTypeName = BX.CrmEntityType.resolveName(this.getAssociatedEntityTypeId()).toLowerCase();
+	      let msg = this.getMessage(entityTypeName);
+	      const isMessageNotFound = msg === entityTypeName;
 
 	      if (!BX.type.isNotEmptyString(msg) || isMessageNotFound) {
 	        msg = this.getTextDataParam("TITLE");
@@ -14660,17 +15085,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (entityTypeId === BX.CrmEntityType.enumeration.ordershipment || entityTypeId === BX.CrmEntityType.enumeration.orderpayment) {
-	        var data = this.getData();
+	        const data = this.getData();
 	        data.TYPE_CATEGORY_ID = Item.modification;
 
 	        if (data.hasOwnProperty('ASSOCIATED_ENTITY')) {
 	          data.ASSOCIATED_ENTITY.HTML_TITLE = '';
 	        }
 
-	        var createOrderEntityItem = this._history.createOrderEntityItem(data);
+	        const createOrderEntityItem = this._history.createOrderEntityItem(data);
 
 	        return createOrderEntityItem.prepareContent();
 	      }
@@ -14680,12 +15105,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityTypeId = this.getAssociatedEntityTypeId();
-	      var entityId = this.getAssociatedEntityId();
-	      var entityData = this.getAssociatedEntityData();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityId = this.getAssociatedEntityId();
+	      const entityData = this.getAssociatedEntityData();
 
 	      if (entityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var link = BX.create("A", {
+	        const link = BX.create("A", {
 	          attrs: {
 	            href: "#"
 	          },
@@ -14695,27 +15120,27 @@ this.BX.Crm = this.BX.Crm || {};
 	        return [link];
 	      }
 
-	      var title = BX.prop.getString(entityData, "TITLE", "");
-	      var htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
-	      var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+	      const title = BX.prop.getString(entityData, "TITLE", "");
+	      let htmlTitle = BX.prop.getString(entityData, "HTML_TITLE", "");
+	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 
 	      if (entityTypeId === BX.CrmEntityType.enumeration.deal && BX.prop.getObject(entityData, "ORDER", null)) {
-	        var orderData = BX.prop.getObject(entityData, "ORDER", null);
+	        const orderData = BX.prop.getObject(entityData, "ORDER", null);
 	        htmlTitle = this.getMessage('dealOrderTitle').replace("#ORDER_ID#", orderData.ID).replace("#DATE_TIME#", orderData.ORDER_DATE).replace("#HREF#", orderData.SHOW_URL).replace("#PRICE_WITH_CURRENCY#", orderData.SUM);
 	      }
 
 	      if (title !== "" || htmlTitle !== "") {
-	        var nodes = [];
+	        const nodes = [];
 
 	        if (showUrl === "" || entityTypeId === this.getOwnerTypeId() && entityId === this.getOwnerId()) {
-	          var spanAttrs = htmlTitle !== "" ? {
+	          const spanAttrs = htmlTitle !== "" ? {
 	            html: htmlTitle
 	          } : {
 	            text: title
 	          };
 	          nodes.push(BX.create("SPAN", spanAttrs));
 	        } else {
-	          var linkAttrs = {
+	          let linkAttrs = {
 	            attrs: {
 	              href: showUrl
 	            },
@@ -14734,7 +15159,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          nodes.push(BX.create("A", linkAttrs));
 	        }
 
-	        var legend = this.getTextDataParam("LEGEND");
+	        const legend = this.getTextDataParam("LEGEND");
 
 	        if (legend !== "") {
 	          nodes.push(BX.create("BR"));
@@ -14743,8 +15168,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          }));
 	        }
 
-	        var baseEntityData = this.getObjectDataParam("BASE");
-	        var baseEntityInfo = BX.prop.getObject(baseEntityData, "ENTITY_INFO");
+	        const baseEntityData = this.getObjectDataParam("BASE");
+	        const baseEntityInfo = BX.prop.getObject(baseEntityData, "ENTITY_INFO");
 
 	        if (baseEntityInfo) {
 	          nodes.push(BX.create("BR"));
@@ -14767,11 +15192,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "view",
 	    value: function view() {
-	      var entityTypeId = this.getAssociatedEntityTypeId();
+	      const entityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (entityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityData = this.getAssociatedEntityData();
-	        var id = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityData = this.getAssociatedEntityData();
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	        if (id > 0) {
 	          this._activityEditor.viewActivity(id);
@@ -14781,13 +15206,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Creation.messages;
+	      const m = Creation.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Creation();
+	      const self = new Creation();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14799,7 +15224,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Restoration = /*#__PURE__*/function (_History) {
+	let Restoration = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Restoration, _History);
 
 	  function Restoration() {
@@ -14820,8 +15245,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var title = BX.prop.getString(entityData, "TITLE");
+	      const entityData = this.getAssociatedEntityData();
+	      const title = BX.prop.getString(entityData, "TITLE");
 	      return title !== "" ? [BX.create("SPAN", {
 	        text: title
 	      })] : [];
@@ -14829,13 +15254,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Restoration.messages;
+	      const m = Restoration.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Restoration();
+	      const self = new Restoration();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14847,7 +15272,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Relation = /*#__PURE__*/function (_History) {
+	let Relation = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Relation, _History);
 
 	  function Relation() {
@@ -14868,15 +15293,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentDetails",
 	    value: function prepareContentDetails() {
-	      var entityData = this.getAssociatedEntityData();
-	      var link = BX.prop.getString(entityData, "SHOW_URL", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let link = BX.prop.getString(entityData, "SHOW_URL", "");
 
 	      if (link.indexOf('/') !== 0) {
 	        link = '#';
 	      }
 
-	      var content = this.getMessage('contentTemplate').replace('#ENTITY_TYPE_CAPTION#', BX.Text.encode(BX.prop.getString(entityData, 'ENTITY_TYPE_CAPTION', ''))).replace('#LEGEND#', '').replace('#LINK#', BX.Text.encode(link)).replace('#LINK_TITLE#', BX.Text.encode(BX.prop.getString(entityData, "TITLE", '')));
-	      var nodes = [];
+	      const content = this.getMessage('contentTemplate').replace('#ENTITY_TYPE_CAPTION#', BX.Text.encode(BX.prop.getString(entityData, 'ENTITY_TYPE_CAPTION', ''))).replace('#LEGEND#', '').replace('#LINK#', BX.Text.encode(link)).replace('#LINK_TITLE#', BX.Text.encode(BX.prop.getString(entityData, "TITLE", '')));
+	      const nodes = [];
 	      nodes.push(BX.create('SPAN', {
 	        html: content
 	      }));
@@ -14888,7 +15313,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Link = /*#__PURE__*/function (_Relation) {
+	let Link = /*#__PURE__*/function (_Relation) {
 	  babelHelpers.inherits(Link, _Relation);
 
 	  function Link() {
@@ -14904,13 +15329,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Link.messages;
+	      const m = Link.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Link();
+	      const self = new Link();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14922,7 +15347,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Unlink = /*#__PURE__*/function (_Relation) {
+	let Unlink = /*#__PURE__*/function (_Relation) {
 	  babelHelpers.inherits(Unlink, _Relation);
 
 	  function Unlink() {
@@ -14938,13 +15363,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Unlink.messages;
+	      const m = Unlink.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Unlink();
+	      const self = new Unlink();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -14956,7 +15381,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Mark$1 = /*#__PURE__*/function (_History) {
+	let Mark$1 = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Mark$$1, _History);
 
 	  function Mark$$1() {
@@ -14976,7 +15401,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Mark$$1.messages;
+	      const m = Mark$$1.messages;
 
 	      if (m.hasOwnProperty(name)) {
 	        return m[name];
@@ -14987,15 +15412,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getTitle",
 	    value: function getTitle() {
-	      var title = "";
-	      var entityData = this.getAssociatedEntityData();
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
-	      var typeCategoryId = this.getTypeCategoryId();
+	      let title = "";
+	      const entityData = this.getAssociatedEntityData();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const typeCategoryId = this.getTypeCategoryId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityTypeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
-	        var direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
-	        var activityProviderId = BX.prop.getString(entityData, "PROVIDER_ID", '');
+	        const entityTypeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
+	        const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+	        const activityProviderId = BX.prop.getString(entityData, "PROVIDER_ID", '');
 
 	        if (entityTypeId === BX.CrmActivityType.email) {
 	          if (typeCategoryId === Mark.success) {
@@ -15061,7 +15486,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareTitleLayout",
 	    value: function prepareTitleLayout() {
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.order) {
 	        return BX.create("SPAN", {
@@ -15086,9 +15511,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
-	      var wrapper = BX.create("DIV", {
+	      const entityData = this.getAssociatedEntityData();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-completed"
 	        }
@@ -15100,16 +15525,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //endregion
 
 
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var entityTypeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
-	        var iconClassName = "crm-entity-stream-section-icon";
+	        const entityTypeId = BX.prop.getInteger(entityData, "TYPE_ID", 0);
+	        let iconClassName = "crm-entity-stream-section-icon";
 
 	        if (entityTypeId === BX.CrmActivityType.email) {
 	          iconClassName += " crm-entity-stream-section-icon-email";
@@ -15120,7 +15545,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        } else if (entityTypeId === BX.CrmActivityType.task) {
 	          iconClassName += " crm-entity-stream-section-icon-task";
 	        } else if (entityTypeId === BX.CrmActivityType.provider) {
-	          var providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
+	          const providerId = BX.prop.getString(entityData, "PROVIDER_ID", "");
 
 	          if (providerId === "CRM_WEBFORM") {
 	            iconClassName += " crm-entity-stream-section-icon-crmForm";
@@ -15133,7 +15558,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }));
 	        content.appendChild(header);
-	        var detailWrapper = BX.create("DIV", {
+	        const detailWrapper = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail"
 	          }
@@ -15153,7 +15578,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            text: this.cutOffText(BX.prop.getString(entityData, "SUBJECT", ""), 128)
 	          })]
 	        }));
-	        var summary = this.getTextDataParam("SUMMARY");
+	        const summary = this.getTextDataParam("SUMMARY");
 
 	        if (summary !== "") {
 	          detailWrapper.appendChild(BX.create("DIV", {
@@ -15183,21 +15608,21 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        }));
 	        content.appendChild(header);
-	        var innerWrapper = BX.create("DIV", {
+	        const innerWrapper = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail"
 	          }
 	        });
-	        var associatedEntityTitle = this.cutOffText(BX.prop.getString(entityData, "TITLE", ""), 128);
+	        const associatedEntityTitle = this.cutOffText(BX.prop.getString(entityData, "TITLE", ""), 128);
 
 	        if (BX.CrmEntityType.isDefined(associatedEntityTypeId)) {
-	          var link = BX.prop.getString(entityData, 'SHOW_URL', '');
+	          let link = BX.prop.getString(entityData, 'SHOW_URL', '');
 
 	          if (link.indexOf('/') !== 0) {
 	            link = '#';
 	          }
 
-	          var contentTemplate = this.getMessage('entityContentTemplate').replace('#ENTITY_TYPE_CAPTION#', BX.Text.encode(BX.prop.getString(entityData, 'ENTITY_TYPE_CAPTION', ''))).replace('#LINK#', BX.Text.encode(link)).replace('#LINK_TITLE#', BX.Text.encode(associatedEntityTitle));
+	          const contentTemplate = this.getMessage('entityContentTemplate').replace('#ENTITY_TYPE_CAPTION#', BX.Text.encode(BX.prop.getString(entityData, 'ENTITY_TYPE_CAPTION', ''))).replace('#LINK#', BX.Text.encode(link)).replace('#LINK_TITLE#', BX.Text.encode(associatedEntityTitle));
 	          innerWrapper.appendChild(BX.create('SPAN', {
 	            html: contentTemplate
 	          }));
@@ -15209,7 +15634,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      } //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -15228,7 +15653,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContextMenuItems",
 	    value: function prepareContextMenuItems() {
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (!this.isReadOnly()) {
 	        if (this.isFixed() || this._fixedHistory.findItemById(this._id)) menuItems.push({
@@ -15247,17 +15672,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "view",
 	    value: function view() {
-	      var entityData = this.getAssociatedEntityData();
-	      var associatedEntityTypeId = this.getAssociatedEntityTypeId();
+	      const entityData = this.getAssociatedEntityData();
+	      const associatedEntityTypeId = this.getAssociatedEntityTypeId();
 
 	      if (associatedEntityTypeId === BX.CrmEntityType.enumeration.activity) {
-	        var id = BX.prop.getInteger(entityData, "ID", 0);
+	        const id = BX.prop.getInteger(entityData, "ID", 0);
 
 	        if (id > 0) {
 	          this._activityEditor.viewActivity(id);
 	        }
 	      } else {
-	        var showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
+	        const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 
 	        if (showUrl !== "") {
 	          BX.Crm.Page.open(showUrl);
@@ -15267,7 +15692,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Mark$$1();
+	      const self = new Mark$$1();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -15279,7 +15704,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Comment$1 = /*#__PURE__*/function (_History) {
+	let Comment$1 = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Comment, _History);
 
 	  function Comment() {
@@ -15315,8 +15740,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "onPlayerDummyClick",
 	    value: function onPlayerDummyClick(file) {
-	      var playerWrapper = this._playerWrappers[file.id];
-	      var stubNode = playerWrapper.querySelector(".crm-audio-cap-wrap");
+	      const playerWrapper = this._playerWrappers[file.id];
+	      const stubNode = playerWrapper.querySelector(".crm-audio-cap-wrap");
 
 	      if (stubNode) {
 	        BX.addClass(stubNode, "crm-audio-cap-wrap-loader");
@@ -15337,7 +15762,7 @@ this.BX.Crm = this.BX.Crm || {};
 	              return;
 	            }
 
-	            var callInfoWrapper = BX.create("DIV", {
+	            const callInfoWrapper = BX.create("DIV", {
 	              attrs: {
 	                className: "crm-entity-stream-content-detail-call crm-entity-stream-content-detail-call-inline"
 	              }
@@ -15358,7 +15783,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-comment"
 	        }
@@ -15385,12 +15810,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 
 	      this._streamContentEventBlock.appendChild(header);
 
 	      if (!this.isReadOnly()) wrapper.appendChild(this.prepareFixedSwitcherLayout());
-	      var detailChildren = [];
+	      const detailChildren = [];
 
 	      if (this._mode !== EditorMode.edit) {
 	        this._commentWrapper = BX.create("DIV", {
@@ -15412,7 +15837,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        });
 	        detailChildren.push(this._editorContainer);
-	        var buttons = BX.create("DIV", {
+	        const buttons = BX.create("DIV", {
 	          attrs: {
 	            className: "crm-entity-stream-content-detail-comment-edit-btn-container"
 	          },
@@ -15445,16 +15870,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      })); //region Author
 
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        this._streamContentEventBlock.appendChild(authorNode);
 	      } //endregion
 
 
-	      var cleanText = this.getTextDataParam("TEXT", "");
+	      const cleanText = this.getTextDataParam("TEXT", "");
 
-	      var _hasInlineAttachment = this.getTextDataParam("HAS_INLINE_ATTACHMENT", "") === 'Y';
+	      const _hasInlineAttachment = this.getTextDataParam("HAS_INLINE_ATTACHMENT", "") === 'Y';
 
 	      if (cleanText.length <= 128 && !_hasInlineAttachment || this._mode === EditorMode.edit) {
 	        this._isCollapsed = false;
@@ -15553,7 +15978,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 
 	          if (BX.type.isNotEmptyString(result.BLOCK)) {
-	            var promise = BX.html(node, result.BLOCK);
+	            const promise = BX.html(node, result.BLOCK);
 	            promise.then(BX.delegate(function () {
 	              this.registerImages(node);
 	              BX.LazyLoad.showImages();
@@ -15575,13 +16000,13 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var actionData = {
+	      const actionData = {
 	        data: {
 	          id: this._id,
 	          name: this._editorName
 	        }
 	      };
-	      BX.ajax.runAction("crm.api.timeline.loadEditor", actionData).then(this.onLoadEditorSuccess.bind(this))["catch"](this.switchToViewMode.bind(this));
+	      BX.ajax.runAction("crm.api.timeline.loadEditor", actionData).then(this.onLoadEditorSuccess.bind(this)).catch(this.switchToViewMode.bind(this));
 	    }
 	  }, {
 	    key: "onLoadEditorSuccess",
@@ -15591,7 +16016,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-comment-editor"
 	        }
 	      });
-	      var html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
+	      const html = BX.prop.getString(BX.prop.getObject(result, "data", {}), "html", '');
 	      BX.html(this._editorContainer, html).then(BX.delegate(this.showEditor, this));
 	    }
 	  }, {
@@ -15616,12 +16041,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "registerImages",
 	    value: function registerImages(node) {
-	      var commentImages = node.querySelectorAll('[data-bx-viewer="image"]');
-	      var commentImagesLength = commentImages.length;
-	      var idsList = [];
+	      const commentImages = node.querySelectorAll('[data-bx-viewer="image"]');
+	      const commentImagesLength = commentImages.length;
+	      const idsList = [];
 
 	      if (commentImagesLength > 0) {
-	        for (var i = 0; i < commentImagesLength; ++i) {
+	        for (let i = 0; i < commentImagesLength; ++i) {
 	          if (BX.type.isDomNode(commentImages[i])) {
 	            commentImages[i].id += BX.util.getRandomString(4);
 	            idsList.push(commentImages[i].id);
@@ -15653,7 +16078,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "switchToEditMode",
 	    value: function switchToEditMode(e) {
-	      var tagName = e.target.tagName.toLowerCase();
+	      const tagName = e.target.tagName.toLowerCase();
 
 	      if (tagName === 'a' || tagName === 'img' || BX.hasClass(e.target, "feed-con-file-changes-link-more") || BX.hasClass(e.target, "feed-com-file-inline") || BX.type.isNotEmptyString(document.getSelection().toString())) {
 	        return;
@@ -15671,7 +16096,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var menuItems = [];
+	      const menuItems = [];
 
 	      if (!this.isReadOnly()) {
 	        if (this._mode !== EditorMode.edit) {
@@ -15709,8 +16134,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "save",
 	    value: function save(e) {
-	      var attachmentList = [];
-	      var text = "";
+	      const attachmentList = [];
+	      let text = "";
 
 	      if (this._postForm) {
 	        text = this._postForm.oEditor.GetContent();
@@ -15769,7 +16194,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function processRemoval() {
 	      this.closeContextMenu();
 	      this._detetionConfirmDlgId = "entity_timeline_deletion_" + this.getId() + "_confirm";
-	      var dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
+	      let dlg = BX.Crm.ConfirmationDialog.get(this._detetionConfirmDlgId);
 
 	      if (!dlg) {
 	        dlg = BX.Crm.ConfirmationDialog.create(this._detetionConfirmDlgId, {
@@ -15799,14 +16224,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var history = this._history._manager.getHistory();
+	      const history = this._history._manager.getHistory();
 
-	      var deleteItem = history.findItemById(this._id);
+	      const deleteItem = history.findItemById(this._id);
 	      if (deleteItem instanceof Comment) deleteItem.clearAnimate();
 
-	      var fixedHistory = this._history._manager.getFixedHistory();
+	      const fixedHistory = this._history._manager.getFixedHistory();
 
-	      var deleteFixedItem = fixedHistory.findItemById(this._id);
+	      const deleteFixedItem = fixedHistory.findItemById(this._id);
 	      if (deleteFixedItem instanceof Comment) deleteFixedItem.clearAnimate();
 	      this._isRequestRunning = true;
 	      BX.ajax({
@@ -15827,9 +16252,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onSaveSuccess",
 	    value: function onSaveSuccess(data) {
 	      this._isRequestRunning = false;
-	      var itemData = BX.prop.getObject(data, "HISTORY_ITEM");
+	      const itemData = BX.prop.getObject(data, "HISTORY_ITEM");
 
-	      var updateFixedItem = this._fixedHistory.findItemById(this._id);
+	      const updateFixedItem = this._fixedHistory.findItemById(this._id);
 
 	      if (updateFixedItem instanceof Comment) {
 	        if (!BX.type.isNotEmptyString(itemData['IS_FIXED'])) itemData['IS_FIXED'] = 'Y';
@@ -15838,7 +16263,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        updateFixedItem.switchToViewMode();
 	      }
 
-	      var updateItem = this._history.findItemById(this._id);
+	      const updateItem = this._history.findItemById(this._id);
 
 	      if (updateItem instanceof Comment) {
 	        updateItem.setData(itemData);
@@ -15863,7 +16288,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return BX.PreventDefault(e);
 	      }
 
-	      var contentWrapper = this._wrapper.querySelector("div.crm-entity-stream-section-content");
+	      const contentWrapper = this._wrapper.querySelector("div.crm-entity-stream-section-content");
 
 	      if (!contentWrapper) {
 	        return BX.PreventDefault(e);
@@ -15874,7 +16299,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.loadContent(this._commentWrapper, "GET_TEXT");
 	      }
 
-	      var eventWrapper = contentWrapper.querySelector(".crm-entity-stream-content-event");
+	      const eventWrapper = contentWrapper.querySelector(".crm-entity-stream-content-event");
 
 	      if (this._isCollapsed) {
 	        eventWrapper.style.maxHeight = eventWrapper.scrollHeight + 130 + "px";
@@ -15893,7 +16318,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      this._isCollapsed = !this._isCollapsed;
-	      var button = contentWrapper.querySelector("a.crm-entity-stream-section-content-expand-btn");
+	      const button = contentWrapper.querySelector("a.crm-entity-stream-section-content-expand-btn");
 
 	      if (button) {
 	        button.innerHTML = this.getMessage(this._isCollapsed ? "expand" : "collapse");
@@ -15904,7 +16329,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Comment();
+	      const self = new Comment();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -15914,7 +16339,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Wait$2 = /*#__PURE__*/function (_HistoryActivity) {
+	let Wait$2 = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Wait, _HistoryActivity);
 
 	  function Wait() {
@@ -15958,7 +16383,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -15970,8 +16395,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var entityData = this.getAssociatedEntityData();
-	      var description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
+	      const entityData = this.getAssociatedEntityData();
+	      let description = BX.prop.getString(entityData, "DESCRIPTION_RAW", "");
 
 	      if (description !== "") {
 	        description = BX.util.trim(description);
@@ -15979,7 +16404,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        description = BX.util.nl2br(description);
 	      }
 
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-wait"
 	        }
@@ -15989,7 +16414,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-complete"
 	        }
 	      }));
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -16000,9 +16425,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        },
@@ -16010,7 +16435,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      contentWrapper.appendChild(detailWrapper); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -16040,7 +16465,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Wait();
+	      const self = new Wait();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -16050,7 +16475,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Sender = /*#__PURE__*/function (_HistoryActivity) {
+	let Sender = /*#__PURE__*/function (_HistoryActivity) {
 	  babelHelpers.inherits(Sender, _HistoryActivity);
 
 	  function Sender() {
@@ -16061,13 +16486,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Sender, [{
 	    key: "getDataSetting",
 	    value: function getDataSetting(name) {
-	      var settings = this.getObjectDataParam('SETTINGS') || {};
+	      const settings = this.getObjectDataParam('SETTINGS') || {};
 	      return settings[name] || null;
 	    }
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = Sender.messages;
+	      const m = Sender.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }, {
@@ -16078,7 +16503,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareTitleLayout",
 	    value: function prepareTitleLayout() {
-	      var self = this;
+	      const self = this;
 	      return BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-title"
@@ -16090,7 +16515,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            href: ""
 	          },
 	          events: {
-	            "click": function click(e) {
+	            "click": function (e) {
 	              if (BX.SidePanel) {
 	                BX.SidePanel.Instance.open(self.getDataSetting('path'));
 	              } else {
@@ -16118,7 +16543,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareStatusLayout",
 	    value: function prepareStatusLayout() {
-	      var layoutClassName, textCaption;
+	      let layoutClassName, textCaption;
 
 	      if (this.getDataSetting('isError')) {
 	        textCaption = this.getMessage('error');
@@ -16144,7 +16569,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareHeaderLayout",
 	    value: function prepareHeaderLayout() {
-	      var header = BX.create("DIV", {
+	      const header = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-header"
 	        }
@@ -16166,8 +16591,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var description = this.isRemoved() ? this.getMessage('removed') : this.getMessage('title') + ': ' + this.getDataSetting('letterTitle');
-	      var wrapper = BX.create("DIV", {
+	      const description = this.isRemoved() ? this.getMessage('removed') : this.getMessage('title') + ': ' + this.getDataSetting('letterTitle');
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-wait"
 	        }
@@ -16177,7 +16602,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-complete"
 	        }
 	      }));
-	      var contentWrapper = BX.create("DIV", {
+	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
@@ -16188,9 +16613,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        },
 	        children: [contentWrapper]
 	      }));
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      contentWrapper.appendChild(header);
-	      var detailWrapper = BX.create("DIV", {
+	      const detailWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-detail"
 	        },
@@ -16198,7 +16623,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      contentWrapper.appendChild(detailWrapper); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        contentWrapper.appendChild(authorNode);
@@ -16210,7 +16635,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Sender();
+	      const self = new Sender();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -16220,7 +16645,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	var Bizproc = /*#__PURE__*/function (_History) {
+	let Bizproc = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Bizproc, _History);
 
 	  function Bizproc() {
@@ -16236,7 +16661,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var wrapper = BX.create("DIV", {
+	      const wrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-bp"
 	        }
@@ -16246,12 +16671,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: "crm-entity-stream-section-icon crm-entity-stream-section-icon-bp"
 	        }
 	      }));
-	      var content = BX.create("DIV", {
+	      const content = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
 	        }
 	      });
-	      var header = this.prepareHeaderLayout();
+	      const header = this.prepareHeaderLayout();
 	      content.appendChild(header);
 	      content.appendChild(BX.create("DIV", {
 	        attrs: {
@@ -16265,7 +16690,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        })]
 	      })); //region Author
 
-	      var authorNode = this.prepareAuthorLayout();
+	      const authorNode = this.prepareAuthorLayout();
 
 	      if (authorNode) {
 	        content.appendChild(authorNode);
@@ -16283,20 +16708,20 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "prepareContentTextHtml",
 	    value: function prepareContentTextHtml() {
-	      var type = this.getTextDataParam("TYPE");
+	      const type = this.getTextDataParam("TYPE");
 
 	      if (type === 'ACTIVITY_ERROR') {
 	        return '<strong>#TITLE#</strong>: #ERROR_TEXT#'.replace('#TITLE#', BX.util.htmlspecialchars(this.getTextDataParam("ACTIVITY_TITLE"))).replace('#ERROR_TEXT#', BX.util.htmlspecialchars(this.getTextDataParam("ERROR_TEXT")));
 	      }
 
-	      var workflowName = this.getTextDataParam("WORKFLOW_TEMPLATE_NAME");
-	      var workflowStatus = this.getTextDataParam("WORKFLOW_STATUS_NAME");
+	      const workflowName = this.getTextDataParam("WORKFLOW_TEMPLATE_NAME");
+	      const workflowStatus = this.getTextDataParam("WORKFLOW_STATUS_NAME");
 
 	      if (!workflowName || workflowStatus !== 'Created' && workflowStatus !== 'Completed' && workflowStatus !== 'Terminated') {
 	        return BX.util.htmlspecialchars(this.getTextDataParam("COMMENT"));
 	      }
 
-	      var label = BX.message('CRM_TIMELINE_BIZPROC_CREATED');
+	      let label = BX.message('CRM_TIMELINE_BIZPROC_CREATED');
 
 	      if (workflowStatus === 'Completed') {
 	        label = BX.message('CRM_TIMELINE_BIZPROC_COMPLETED');
@@ -16309,7 +16734,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Bizproc();
+	      const self = new Bizproc();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -16319,7 +16744,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var Scoring = /*#__PURE__*/function (_History) {
+	let Scoring = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(Scoring, _History);
 
 	  function Scoring() {
@@ -16330,16 +16755,16 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Scoring, [{
 	    key: "prepareContent",
 	    value: function prepareContent() {
-	      var outerWrapper = BX.create("DIV", {
+	      const outerWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-scoring"
 	        },
 	        events: {
 	          click: function () {
-	            var url = "/crm/ml/#entity#/#id#/detail";
-	            var ownerTypeId = this.getOwnerTypeId();
-	            var ownerId = this.getOwnerId();
-	            var ownerType;
+	            let url = "/crm/ml/#entity#/#id#/detail";
+	            const ownerTypeId = this.getOwnerTypeId();
+	            const ownerId = this.getOwnerId();
+	            let ownerType;
 
 	            if (ownerTypeId === 1) {
 	              ownerType = "lead";
@@ -16362,23 +16787,23 @@ this.BX.Crm = this.BX.Crm || {};
 	          }.bind(this)
 	        }
 	      });
-	      var scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);
+	      const scoringInfo = BX.prop.getObject(this._data, "SCORING_INFO", null);
 
 	      if (!scoringInfo) {
 	        return outerWrapper;
 	      }
 
-	      var score = BX.prop.getNumber(scoringInfo, "SCORE", 0);
-	      var scoreDelta = BX.prop.getNumber(scoringInfo, "SCORE_DELTA", 0);
+	      let score = BX.prop.getNumber(scoringInfo, "SCORE", 0);
+	      let scoreDelta = BX.prop.getNumber(scoringInfo, "SCORE_DELTA", 0);
 	      score = Math.round(score * 100);
 	      scoreDelta = Math.round(scoreDelta * 100);
-	      var result = BX.create("DIV", {
+	      const result = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-scoring-total-result"
 	        },
 	        text: score + "%"
 	      });
-	      var iconClass = "crm-entity-stream-content-scoring-total-icon";
+	      let iconClass = "crm-entity-stream-content-scoring-total-icon";
 
 	      if (score < 50) {
 	        iconClass += " crm-entity-stream-content-scoring-total-icon-fail";
@@ -16388,7 +16813,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        iconClass += " crm-entity-stream-content-scoring-total-icon-success";
 	      }
 
-	      var icon = BX.create("DIV", {
+	      const icon = BX.create("DIV", {
 	        attrs: {
 	          className: iconClass
 	        }
@@ -16431,7 +16856,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Scoring();
+	      const self = new Scoring();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -16441,7 +16866,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Streams */
 
-	var History$1 = /*#__PURE__*/function (_Stream) {
+	let History$1 = /*#__PURE__*/function (_Stream) {
 	  babelHelpers.inherits(History$$1, _Stream);
 
 	  function History$$1() {
@@ -16481,13 +16906,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._serviceUrl = this.getSetting("serviceUrl", "");
 
 	      if (!this.isStubMode()) {
-	        var itemData = this.getSetting("itemData");
+	        let itemData = this.getSetting("itemData");
 
 	        if (!BX.type.isArray(itemData)) {
 	          itemData = [];
 	        }
 
-	        var i, length, item;
+	        let i, length, item;
 
 	        for (i = 0, length = itemData.length; i < length; i++) {
 	          item = this.createItem(itemData[i]);
@@ -16512,12 +16937,12 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this._container.appendChild(this._wrapper);
 
-	      var now = BX.prop.extractDate(new Date());
-	      var i, length, item;
+	      const now = BX.prop.extractDate(new Date());
+	      let i, length, item;
 
 	      if (!this.isStubMode()) {
 	        if (this._filterWrapper) {
-	          var closeFilterButton = this._filterWrapper.querySelector(".crm-entity-stream-filter-close");
+	          const closeFilterButton = this._filterWrapper.querySelector(".crm-entity-stream-filter-close");
 
 	          if (closeFilterButton) {
 	            BX.bind(closeFilterButton, "click", this.onFilterClose.bind(this));
@@ -16527,7 +16952,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        for (i = 0, length = this._items.length; i < length; i++) {
 	          item = this._items[i];
 	          item.setContainer(this._wrapper);
-	          var created = item.getCreatedDate();
+	          const created = item.getCreatedDate();
 
 	          if (this._lastDate === null || this._lastDate.getTime() !== created.getTime()) {
 	            this._lastDate = created;
@@ -16599,7 +17024,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      this.adjustFilterButton();
-	      var length = this._items.length;
+	      const length = this._items.length;
 
 	      if (length === 0 && this._isFilterApplied) {
 	        if (!this._filterEmptyResultSection) {
@@ -16619,8 +17044,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      for (var i = 0; i < length - 1; i++) {
-	        var item = this._items[i];
+	      for (let i = 0; i < length - 1; i++) {
+	        const item = this._items[i];
 
 	        if (item.isTerminated()) {
 	          item.markAsTerminated(false);
@@ -16669,7 +17094,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getItemIndex",
 	    value: function getItemIndex(item) {
-	      for (var i = 0, length = this._items.length; i < length; i++) {
+	      for (let i = 0, length = this._items.length; i < length; i++) {
 	        if (this._items[i] === item) {
 	          return i;
 	        }
@@ -16692,10 +17117,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        return [];
 	      }
 
-	      var results = [];
+	      const results = [];
 
-	      for (var i = 0, l = this._items.length; i < l; i++) {
-	        var item = this._items[i];
+	      for (let i = 0, l = this._items.length; i < l; i++) {
+	        const item = this._items[i];
 
 	        if (item.getAssociatedEntityTypeId() === $entityTypeId && item.getAssociatedEntityId() === entityId) {
 	          results.push(item);
@@ -16709,7 +17134,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function findItemById(id) {
 	      id = id.toString();
 
-	      for (var i = 0, l = this._items.length; i < l; i++) {
+	      for (let i = 0, l = this._items.length; i < l; i++) {
 	        if (this._items[i].getId() === id) {
 	          return this._items[i];
 	        }
@@ -16775,10 +17200,10 @@ this.BX.Crm = this.BX.Crm || {};
 	        }.bind(this));
 	      }
 
-	      var section = this._wrapper.querySelector(".crm-entity-stream-section-today-label, .crm-entity-stream-section-planned-label, .crm-entity-stream-section-history-label");
+	      const section = this._wrapper.querySelector(".crm-entity-stream-section-today-label, .crm-entity-stream-section-planned-label, .crm-entity-stream-section-history-label");
 
 	      if (section) {
-	        var sectionWrapper = section.querySelector(".crm-entity-stream-section-content");
+	        const sectionWrapper = section.querySelector(".crm-entity-stream-section-content");
 
 	        if (sectionWrapper) {
 	          if (this._filterButton.parentNode !== sectionWrapper) {
@@ -16828,7 +17253,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function onFilterClose(e) {
 	      this.hideFilter();
 	      window.setTimeout(function () {
-	        var filter = BX.Main.filterManager.getById(this._filterId);
+	        const filter = BX.Main.filterManager.getById(this._filterId);
 
 	        if (filter) {
 	          filter.resetFilter();
@@ -16925,12 +17350,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createActivityItem",
 	    value: function createActivityItem(data) {
-	      var typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
-	      var typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-	      var providerId = BX.prop.getString(BX.prop.getObject(data, "ASSOCIATED_ENTITY", {}), "PROVIDER_ID", "");
-	      var vueComponentId = 'TYPE_' + typeCategoryId + (providerId ? '_' + providerId : '');
-	      var vueComponentsMap = new Map([['TYPE_' + BX.CrmActivityType.provider + '_CRM_NOTIFICATION', BX.Crm.Timeline.Notification], ['TYPE_' + BX.CrmActivityType.provider + '_CRM_DELIVERY', BX.Crm.Timeline.DeliveryActivity]]);
-	      var vueComponent = vueComponentsMap.has(vueComponentId) ? vueComponentsMap.get(vueComponentId) : null;
+	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
+	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      const providerId = BX.prop.getString(BX.prop.getObject(data, "ASSOCIATED_ENTITY", {}), "PROVIDER_ID", "");
+	      const vueComponentId = 'TYPE_' + typeCategoryId + (providerId ? '_' + providerId : '');
+	      const vueComponentsMap = new Map([['TYPE_' + BX.CrmActivityType.provider + '_CRM_NOTIFICATION', BX.Crm.Timeline.Notification], ['TYPE_' + BX.CrmActivityType.provider + '_CRM_DELIVERY', BX.Crm.Timeline.DeliveryActivity]]);
+	      const vueComponent = vueComponentsMap.has(vueComponentId) ? vueComponentsMap.get(vueComponentId) : null;
 
 	      if (typeId !== Item.activity) {
 	        return null;
@@ -17061,14 +17486,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createOrderEntityItem",
 	    value: function createOrderEntityItem(data) {
-	      var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-	      var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      const entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
 	      if (entityId !== BX.CrmEntityType.enumeration.order && entityId !== BX.CrmEntityType.enumeration.orderpayment && entityId !== BX.CrmEntityType.enumeration.ordershipment) {
 	        return null;
 	      }
 
-	      var settings = {
+	      const settings = {
 	        history: this._history,
 	        fixedHistory: this._fixedHistory,
 	        container: this._wrapper,
@@ -17088,14 +17513,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createStoreDocumentItem",
 	    value: function createStoreDocumentItem(data) {
-	      var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
-	      var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      const entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
 	      if (entityId !== BX.CrmEntityType.enumeration.storeDocument && entityId !== BX.CrmEntityType.enumeration.shipmentDocument) {
 	        return null;
 	      }
 
-	      var settings = {
+	      const settings = {
 	        history: this._history,
 	        fixedHistory: this._fixedHistory,
 	        container: this._wrapper,
@@ -17112,8 +17537,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createExternalNotificationItem",
 	    value: function createExternalNotificationItem(data) {
-	      var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
-	      var changedFieldName = BX.prop.getString(data, 'CHANGED_FIELD_NAME', '');
+	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      const changedFieldName = BX.prop.getString(data, 'CHANGED_FIELD_NAME', '');
 
 	      if (typeId === Item.modification && changedFieldName === 'STATUS_ID') {
 	        return ExternalNoticeStatusModification.create(data["ID"], {
@@ -17134,14 +17559,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createDeliveryItem",
 	    value: function createDeliveryItem(data) {
-	      var typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
-	      var typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
+	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
 	      if (typeId !== Item.delivery) {
 	        return null;
 	      }
 
-	      var vueComponentsMap = new Map([[Delivery.taxiEstimationRequest, BX.Crm.Delivery.Taxi.EstimationRequest], [Delivery.taxiCallRequest, BX.Crm.Delivery.Taxi.CallRequest], [Delivery.taxiCancelledByManager, BX.Crm.Delivery.Taxi.CancelledByManager], [Delivery.taxiCancelledByDriver, BX.Crm.Delivery.Taxi.CancelledByDriver], [Delivery.taxiPerformerNotFound, BX.Crm.Delivery.Taxi.PerformerNotFound], [Delivery.taxiSmsProviderIssue, BX.Crm.Delivery.Taxi.SmsProviderIssue], [Delivery.taxiReturnedFinish, BX.Crm.Delivery.Taxi.ReturnedFinish], [Delivery.deliveryMessage, BX.Crm.Timeline.DeliveryMessage], [Delivery.deliveryCalculation, BX.Crm.Timeline.DeliveryCalculation]]);
+	      const vueComponentsMap = new Map([[Delivery.taxiEstimationRequest, BX.Crm.Delivery.Taxi.EstimationRequest], [Delivery.taxiCallRequest, BX.Crm.Delivery.Taxi.CallRequest], [Delivery.taxiCancelledByManager, BX.Crm.Delivery.Taxi.CancelledByManager], [Delivery.taxiCancelledByDriver, BX.Crm.Delivery.Taxi.CancelledByDriver], [Delivery.taxiPerformerNotFound, BX.Crm.Delivery.Taxi.PerformerNotFound], [Delivery.taxiSmsProviderIssue, BX.Crm.Delivery.Taxi.SmsProviderIssue], [Delivery.taxiReturnedFinish, BX.Crm.Delivery.Taxi.ReturnedFinish], [Delivery.deliveryMessage, BX.Crm.Timeline.DeliveryMessage], [Delivery.deliveryCalculation, BX.Crm.Timeline.DeliveryCalculation]]);
 
 	      if (vueComponentsMap.has(typeCategoryId)) {
 	        return History.create(data["ID"], {
@@ -17157,8 +17582,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createItem",
 	    value: function createItem(data) {
-	      var typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
-	      var typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
+	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
 	      if (typeId === Item.activity) {
 	        return this.createActivityItem(data);
@@ -17317,7 +17742,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "deleteItem",
 	    value: function deleteItem(item) {
-	      var index = this.getItemIndex(item);
+	      const index = this.getItemIndex(item);
 
 	      if (index < 0) {
 	        return;
@@ -17332,7 +17757,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "resetLayout",
 	    value: function resetLayout() {
-	      var i;
+	      let i;
 
 	      for (i = this._items.length - 1; i >= 0; i--) {
 	        this._items[i].clearLayout();
@@ -17343,8 +17768,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._anchor = null;
 	      this._lastDate = null; //Clean wrapper. Skip filter for prevent trembling.
 
-	      var children = [];
-	      var child;
+	      const children = [];
+	      let child;
 
 	      for (i = 0; child = this._wrapper.children[i]; i++) {
 	        if (child !== this._filterWrapper) {
@@ -17363,7 +17788,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var pos = this._loadingWaiter.getBoundingClientRect();
+	      const pos = this._loadingWaiter.getBoundingClientRect();
 
 	      if (pos.top <= document.documentElement.clientHeight) {
 	        this.loadItems();
@@ -17404,7 +17829,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "bulkCreateItems",
 	    value: function bulkCreateItems(itemData) {
-	      var length = itemData.length;
+	      const length = itemData.length;
 
 	      if (length === 0) {
 	        return;
@@ -17414,12 +17839,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        this._filterEmptyResultSection = BX.remove(this._filterEmptyResultSection);
 	      }
 
-	      var now = BX.prop.extractDate(new Date());
-	      var i, item;
-	      var lastItemTime = "";
+	      const now = BX.prop.extractDate(new Date());
+	      let i, item;
+	      let lastItemTime = "";
 
 	      for (i = 0; i < length; i++) {
-	        var itemId = BX.prop.getInteger(itemData[i], "ID", 0);
+	        const itemId = BX.prop.getInteger(itemData[i], "ID", 0);
 
 	        if (itemId <= 0) {
 	          continue;
@@ -17435,7 +17860,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        this._items.push(item);
 
-	        var created = item.getCreatedDate();
+	        const created = item.getCreatedDate();
 
 	        if (this._lastDate === null || this._lastDate.getTime() !== created.getTime()) {
 	          this._lastDate = created;
@@ -17531,13 +17956,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = History$$1.messages;
+	      const m = History$$1.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new History$$1();
+	      const self = new History$$1();
 	      self.initialize(id, settings);
 	      History$$1.instances[self.getId()] = self;
 	      return self;
@@ -17551,7 +17976,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Streams */
 
-	var FixedHistory = /*#__PURE__*/function (_History) {
+	let FixedHistory = /*#__PURE__*/function (_History) {
 	  babelHelpers.inherits(FixedHistory, _History);
 
 	  function FixedHistory() {
@@ -17570,15 +17995,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(FixedHistory, [{
 	    key: "doInitialize",
 	    value: function doInitialize() {
-	      var datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
+	      const datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
 	      this._timeFormat = BX.date.convertBitrixFormat(datetimeFormat);
-	      var itemData = this.getSetting("itemData");
+	      let itemData = this.getSetting("itemData");
 
 	      if (!BX.type.isArray(itemData)) {
 	        itemData = [];
 	      }
 
-	      var i, length, item;
+	      let i, length, item;
 
 	      for (i = 0, length = itemData.length; i < length; i++) {
 	        item = this.createItem(itemData[i]);
@@ -17605,7 +18030,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this._container.insertBefore(this._wrapper, this._editorContainer.nextElementSibling);
 
-	      for (var i = 0; i < this._items.length; i++) {
+	      for (let i = 0; i < this._items.length; i++) {
 	        this._items[i].setContainer(this._wrapper);
 
 	        this._items[i].layout();
@@ -17660,7 +18085,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new FixedHistory();
+	      let self = new FixedHistory();
 	      self.initialize(id, settings);
 	      this.instances[self.getId()] = self;
 	      return self;
@@ -17671,7 +18096,7 @@ this.BX.Crm = this.BX.Crm || {};
 	FixedHistory.instances = {};
 
 	/** @memberof BX.Crm.Timeline.Animation */
-	var Expand = /*#__PURE__*/function () {
+	let Expand = /*#__PURE__*/function () {
 	  function Expand() {
 	    babelHelpers.classCallCheck(this, Expand);
 	    this._node = null;
@@ -17687,7 +18112,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "run",
 	    value: function run() {
-	      var position = BX.pos(this._node);
+	      const position = BX.pos(this._node);
 	      this._node.style.height = 0;
 	      this._node.style.opacity = 0;
 	      this._node.style.overflow = "hidden";
@@ -17744,7 +18169,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(node, callback) {
-	      var self = new Expand();
+	      const self = new Expand();
 	      self.initialize(node, callback);
 	      return self;
 	    }
@@ -17754,7 +18179,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline */
 
-	var Manager = /*#__PURE__*/function () {
+	let Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
 	    this._id = "";
@@ -17790,7 +18215,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._progressSemantics = BX.prop.getString(this._settings, "progressSemantics", "");
 	      this._spotlightFastenShowed = this.getSetting("spotlightFastenShowed", true);
 	      this._audioPlaybackRate = parseFloat(this.getSetting("audioPlaybackRate", 1));
-	      var containerId = this.getSetting("containerId");
+	      const containerId = this.getSetting("containerId");
 
 	      if (!BX.type.isNotEmptyString(containerId)) {
 	        throw "Manager. A required parameter 'containerId' is missing.";
@@ -17805,7 +18230,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._editorContainer = BX(this.getSetting("editorContainer"));
 	      this._userId = BX.prop.getInteger(this._settings, "userId", 0);
 	      this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
-	      var activityEditorId = this.getSetting("activityEditorId");
+	      const activityEditorId = this.getSetting("activityEditorId");
 
 	      if (BX.type.isNotEmptyString(activityEditorId)) {
 	        this._activityEditor = BX.CrmActivityEditor.items[activityEditorId];
@@ -17815,9 +18240,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }
 
-	      var ajaxId = this.getSetting("ajaxId");
-	      var currentUrl = this.getSetting("currentUrl");
-	      var serviceUrl = this.getSetting("serviceUrl");
+	      const ajaxId = this.getSetting("ajaxId");
+	      const currentUrl = this.getSetting("currentUrl");
+	      const serviceUrl = this.getSetting("serviceUrl");
 	      this._chat = EntityChat.create(this._id, {
 	        manager: this,
 	        container: this._container,
@@ -18057,7 +18482,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processActivityExternalAdd",
 	    value: function processActivityExternalAdd(params) {
-	      var entityData, scheduleItemData, historyItemData, scheduleItem, historyItem;
+	      let entityData, scheduleItemData, historyItemData, scheduleItem, historyItem;
 	      entityData = BX.prop.getObject(params, "ENTITY", null);
 	      scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
@@ -18083,7 +18508,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processActivityExternalUpdate",
 	    value: function processActivityExternalUpdate(params) {
-	      var entityData, scheduleItemData, scheduleItem, historyItemData, historyItem, fixedHistoryItem;
+	      let entityData, scheduleItemData, scheduleItem, historyItemData, historyItem, fixedHistoryItem;
 	      entityData = BX.prop.getObject(params, "ENTITY", null);
 	      scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
@@ -18093,20 +18518,20 @@ this.BX.Crm = this.BX.Crm || {};
 	          historyItemData["ASSOCIATED_ENTITY"] = entityData;
 	        }
 
-	        var entityId = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityId = BX.prop.getInteger(entityData, "ID", 0);
 
-	        var historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
+	        const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
 
-	        for (var i = 0, length = historyItems.length; i < length; i++) {
+	        for (let i = 0, length = historyItems.length; i < length; i++) {
 	          historyItem = historyItems[i];
 	          historyItem.setAssociatedEntityData(entityData);
 	          historyItem.refreshLayout();
 	        }
 
-	        var fixedHistoryItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
+	        const fixedHistoryItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
 
-	        for (var _i = 0, _length = fixedHistoryItems.length; _i < _length; _i++) {
-	          fixedHistoryItem = fixedHistoryItems[_i];
+	        for (let i = 0, length = fixedHistoryItems.length; i < length; i++) {
+	          fixedHistoryItem = fixedHistoryItems[i];
 	          fixedHistoryItem.setAssociatedEntityData(entityData);
 	          fixedHistoryItem.refreshLayout();
 	        }
@@ -18157,21 +18582,21 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processActivityExternalDelete",
 	    value: function processActivityExternalDelete(params) {
-	      var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
+	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 
-	      var historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
+	      const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
 
-	      for (var i = 0, length = historyItems.length; i < length; i++) {
+	      for (let i = 0, length = historyItems.length; i < length; i++) {
 	        this._history.deleteItem(historyItems[i]);
 	      }
 
-	      var fixedHistoryItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
+	      const fixedHistoryItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
 
-	      for (var _i2 = 0, _length2 = fixedHistoryItems.length; _i2 < _length2; _i2++) {
-	        this._fixedHistory.deleteItem(fixedHistoryItems[_i2]);
+	      for (let i = 0, length = fixedHistoryItems.length; i < length; i++) {
+	        this._fixedHistory.deleteItem(fixedHistoryItems[i]);
 	      }
 
-	      var scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
+	      const scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.activity, entityId);
 
 	      if (scheduleItem) {
 	        this._schedule.deleteItem(scheduleItem);
@@ -18180,7 +18605,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processCommentExternalAdd",
 	    value: function processCommentExternalAdd(params) {
-	      var historyItemData, historyItem;
+	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 
 	      if (historyItemData !== null) {
@@ -18195,7 +18620,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processLinkExternalAdd",
 	    value: function processLinkExternalAdd(params) {
-	      var historyItemData, historyItem;
+	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 
 	      if (historyItemData !== null) {
@@ -18211,17 +18636,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processCommentExternalUpdate",
 	    value: function processCommentExternalUpdate(params) {
-	      var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-	      var historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
+	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 
-	      var updateItem = this._history.findItemById(entityId);
+	      const updateItem = this._history.findItemById(entityId);
 
 	      if (updateItem instanceof Comment && historyItemData !== null) {
 	        updateItem.setData(historyItemData);
 	        updateItem.switchToViewMode();
 	      }
 
-	      var updateFixedItem = this._fixedHistory.findItemById(entityId);
+	      const updateFixedItem = this._fixedHistory.findItemById(entityId);
 
 	      if (updateFixedItem instanceof Comment && historyItemData !== null) {
 	        updateFixedItem.setData(historyItemData);
@@ -18231,15 +18656,15 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processCommentExternalDelete",
 	    value: function processCommentExternalDelete(params) {
-	      var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
+	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 	      window.setTimeout(BX.delegate(function () {
-	        var deleteItem = this._history.findItemById(entityId);
+	        const deleteItem = this._history.findItemById(entityId);
 
 	        if (deleteItem instanceof Comment) {
 	          this._history.deleteItem(deleteItem);
 	        }
 
-	        var deleteFixedItem = this._fixedHistory.findItemById(entityId);
+	        const deleteFixedItem = this._fixedHistory.findItemById(entityId);
 
 	        if (deleteFixedItem instanceof Comment) {
 	          this._fixedHistory.deleteItem(deleteFixedItem);
@@ -18250,11 +18675,11 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "processDocumentExternalDelete",
 	    value: function processDocumentExternalDelete(params) {
 	      window.setTimeout(BX.delegate(function () {
-	        var historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-	        var i, length;
-	        var associatedEntityId = BX.prop.getInteger(historyItemData, "ASSOCIATED_ENTITY_ID", 0);
+	        const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+	        let i, length;
+	        const associatedEntityId = BX.prop.getInteger(historyItemData, "ASSOCIATED_ENTITY_ID", 0);
 
-	        var historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.document, associatedEntityId);
+	        let historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.document, associatedEntityId);
 
 	        for (i = 0, length = historyItems.length; i < length; i++) {
 	          if (historyItems[i] instanceof Document) {
@@ -18274,17 +18699,17 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processDocumentExternalUpdate",
 	    value: function processDocumentExternalUpdate(params) {
-	      var historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-	      var id = BX.prop.getInteger(historyItemData, "ID", 0);
+	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+	      const id = BX.prop.getInteger(historyItemData, "ID", 0);
 
-	      var updateItem = this._history.findItemById(id);
+	      const updateItem = this._history.findItemById(id);
 
 	      if (updateItem instanceof Document && historyItemData !== null) {
 	        updateItem.setData(historyItemData);
 	        updateItem.updateWrapper();
 	      }
 
-	      var updateFixedItem = this._fixedHistory.findItemById(id);
+	      const updateFixedItem = this._fixedHistory.findItemById(id);
 
 	      if (updateFixedItem instanceof Document && historyItemData !== null) {
 	        updateFixedItem.setData(historyItemData);
@@ -18294,23 +18719,23 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processChangeBinding",
 	    value: function processChangeBinding(params) {
-	      var entityId = BX.prop.getString(params, "OLD_ID", 0);
-	      var entityNewId = BX.prop.getString(params, "NEW_ID", 0);
+	      const entityId = BX.prop.getString(params, "OLD_ID", 0);
+	      const entityNewId = BX.prop.getString(params, "NEW_ID", 0);
 
-	      var item = this._history.findItemById(entityId);
+	      const item = this._history.findItemById(entityId);
 
 	      if (item instanceof Item$1) {
 	        item._id = entityNewId;
-	        var itemData = item.getData();
+	        const itemData = item.getData();
 	        itemData.ID = entityNewId;
 	        item.setData(itemData);
 	      }
 
-	      var fixedItem = this._fixedHistory.findItemById(entityId);
+	      const fixedItem = this._fixedHistory.findItemById(entityId);
 
 	      if (fixedItem instanceof Item$1) {
 	        fixedItem._id = entityNewId;
-	        var fixedItemData = fixedItem.getData();
+	        const fixedItemData = fixedItem.getData();
 	        fixedItemData.ID = entityNewId;
 	        fixedItem.setData(fixedItemData);
 	      }
@@ -18318,20 +18743,20 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processItemChangeFasten",
 	    value: function processItemChangeFasten(params) {
-	      var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-	      var historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
+	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 	      window.setTimeout(BX.delegate(function () {
-	        var fixedItem = this._fixedHistory.findItemById(entityId);
+	        const fixedItem = this._fixedHistory.findItemById(entityId);
 
 	        if (historyItemData['IS_FIXED'] === 'N' && fixedItem) {
 	          fixedItem.onSuccessUnfasten();
 	        } else if (historyItemData['IS_FIXED'] === 'Y' && !fixedItem) {
-	          var historyItem = this._history.findItemById(entityId);
+	          const historyItem = this._history.findItemById(entityId);
 
 	          if (historyItem) {
 	            historyItem.onSuccessFasten();
 	          } else {
-	            var newFixedItem = this._fixedHistory.createItem(this._data);
+	            const newFixedItem = this._fixedHistory.createItem(this._data);
 
 	            newFixedItem._isFixed = true;
 
@@ -18345,10 +18770,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processItemExternalUpdate",
 	    value: function processItemExternalUpdate(params) {
-	      var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-	      var historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
+	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
+	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 
-	      var historyItem = this._history.findItemById(entityId);
+	      const historyItem = this._history.findItemById(entityId);
 
 	      if (historyItem && historyItemData !== null) {
 	        historyItem.setData(historyItemData);
@@ -18363,7 +18788,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processWaitExternalAdd",
 	    value: function processWaitExternalAdd(params) {
-	      var scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
+	      const scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 
 	      if (scheduleItemData !== null) {
 	        this.addScheduleItem(scheduleItemData);
@@ -18372,7 +18797,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processWaitExternalUpdate",
 	    value: function processWaitExternalUpdate(params) {
-	      var entityData, scheduleItemData, scheduleItem, historyItemData, historyItem;
+	      let entityData, scheduleItemData, scheduleItem, historyItemData, historyItem;
 	      entityData = BX.prop.getObject(params, "ENTITY", null);
 	      scheduleItemData = BX.prop.getObject(params, "SCHEDULE_ITEM", null);
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
@@ -18382,12 +18807,12 @@ this.BX.Crm = this.BX.Crm || {};
 	          historyItemData["ASSOCIATED_ENTITY"] = entityData;
 	        }
 
-	        var entityId = BX.prop.getInteger(entityData, "ID", 0);
+	        const entityId = BX.prop.getInteger(entityData, "ID", 0);
 
-	        var historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
+	        const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
 
-	        var i = 0;
-	        var length = historyItems.length;
+	        let i = 0;
+	        const length = historyItems.length;
 
 	        for (; i < length; i++) {
 	          historyItem = historyItems[i];
@@ -18434,18 +18859,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processWaitExternalDelete",
 	    value: function processWaitExternalDelete(params) {
-	      var entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
+	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
 
-	      var historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
+	      const historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
 
-	      var i = 0;
-	      var length = historyItems.length;
+	      let i = 0;
+	      const length = historyItems.length;
 
 	      for (; i < length; i++) {
 	        this._history.deleteItem(historyItems[i]);
 	      }
 
-	      var scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
+	      const scheduleItem = this._schedule.getItemByAssociatedEntity(BX.CrmEntityType.enumeration.wait, entityId);
 
 	      if (scheduleItem) {
 	        this._schedule.deleteItem(scheduleItem);
@@ -18454,7 +18879,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processBizprocStatus",
 	    value: function processBizprocStatus(params) {
-	      var historyItemData, historyItem;
+	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 
 	      if (historyItemData !== null) {
@@ -18465,7 +18890,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "processScoringExternalAdd",
 	    value: function processScoringExternalAdd(params) {
-	      var historyItemData, historyItem;
+	      let historyItemData, historyItem;
 	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
 
 	      if (historyItemData !== null) {
@@ -18480,7 +18905,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var semantics = BX.prop.getString(eventArgs, "semantics", "");
+	      const semantics = BX.prop.getString(eventArgs, "semantics", "");
 
 	      if (semantics === this._progressSemantics) {
 	        return;
@@ -18598,11 +19023,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addScheduleItem",
 	    value: function addScheduleItem(data) {
-	      var item = this._schedule.createItem(data);
+	      const item = this._schedule.createItem(data);
 
-	      var index = this._schedule.calculateItemIndex(item);
+	      const index = this._schedule.calculateItemIndex(item);
 
-	      var anchor = this._schedule.createAnchor(index);
+	      const anchor = this._schedule.createAnchor(index);
 
 	      this._schedule.addItem(item, index);
 
@@ -18614,11 +19039,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "addHistoryItem",
 	    value: function addHistoryItem(data) {
-	      var item = this._history.createItem(data);
+	      const item = this._history.createItem(data);
 
-	      var index = this._history.calculateItemIndex(item);
+	      const index = this._history.calculateItemIndex(item);
 
-	      var historyAnchor = this._history.createAnchor(index);
+	      const historyAnchor = this._history.createAnchor(index);
 
 	      this._history.addItem(item, index);
 
@@ -18661,7 +19086,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        options = {};
 	      }
 
-	      var player = new BX.Fileman.Player(id, {
+	      const player = new BX.Fileman.Player(id, {
 	        sources: [{
 	          src: filePath,
 	          type: mediaType
@@ -18672,7 +19097,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        height: options.height || 30,
 	        duration: duration,
 	        playbackRate: options.playbackRate || null,
-	        onInit: function onInit(player) {
+	        onInit: function (player) {
 	          player.vjsPlayer.controlBar.removeChild('timeDivider');
 	          player.vjsPlayer.controlBar.removeChild('durationDisplay');
 	          player.vjsPlayer.controlBar.removeChild('fullscreenToggle');
@@ -18737,7 +19162,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new Manager();
+	      const self = new Manager();
 	      self.initialize(id, settings);
 	      Manager.instances[self.getId()] = self;
 	      return self;
@@ -18749,37 +19174,37 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(Manager, "instances", {});
 
 	/** @memberof BX.Crm.Timeline.Tools */
-	var SmsWatcher = {
+	const SmsWatcher = {
 	  _pullTagName: 'MESSAGESERVICE',
 	  _pullInited: false,
 	  _listeners: {},
-	  initPull: function initPull() {
+	  initPull: function () {
 	    if (this._pullInited) return;
 	    BX.addCustomEvent("onPullEvent-messageservice", this.onPullEvent.bind(this));
 	    this.extendWatch();
 	    this._pullInited = true;
 	  },
-	  subscribeOnMessageUpdate: function subscribeOnMessageUpdate(messageId, callback) {
+	  subscribeOnMessageUpdate: function (messageId, callback) {
 	    this.initPull();
 	    this._listeners[messageId] = callback;
 	  },
-	  fireExternalStatusUpdate: function fireExternalStatusUpdate(messageId, message) {
-	    var listener = this._listeners[messageId];
+	  fireExternalStatusUpdate: function (messageId, message) {
+	    const listener = this._listeners[messageId];
 
 	    if (listener) {
 	      listener(message);
 	    }
 	  },
-	  onPullEvent: function onPullEvent(command, params) {
+	  onPullEvent: function (command, params) {
 	    // console.log(command, params);
 	    if (command === 'message_update') {
-	      for (var i = 0; i < params.messages.length; ++i) {
-	        var message = params.messages[i];
+	      for (let i = 0; i < params.messages.length; ++i) {
+	        const message = params.messages[i];
 	        this.fireExternalStatusUpdate(message['ID'], message);
 	      }
 	    }
 	  },
-	  extendWatch: function extendWatch() {
+	  extendWatch: function () {
 	    if (BX.type.isFunction(BX.PULL)) {
 	      BX.PULL.extendWatch(this._pullTagName);
 	      window.setTimeout(this.extendWatch.bind(this), 60000);
@@ -18789,7 +19214,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Actions */
 
-	var SchedulePostpone = /*#__PURE__*/function (_Activity) {
+	let SchedulePostpone = /*#__PURE__*/function (_Activity) {
 	  babelHelpers.inherits(SchedulePostpone, _Activity);
 
 	  function SchedulePostpone() {
@@ -18827,8 +19252,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      var handler = BX.delegate(this.onMenuItemClick, this);
-	      var menuItems = [{
+	      const handler = BX.delegate(this.onMenuItemClick, this);
+	      const menuItems = [{
 	        id: "hour_1",
 	        text: this.getMessage("forOneHour"),
 	        onclick: handler
@@ -18892,7 +19317,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onMenuItemClick",
 	    value: function onMenuItemClick(e, item) {
 	      this.closeMenu();
-	      var offset = 0;
+	      let offset = 0;
 
 	      if (item.id === "hour_1") {
 	        offset = 3600;
@@ -18937,13 +19362,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      var m = SchedulePostpone.messages;
+	      const m = SchedulePostpone.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
-	      var self = new SchedulePostpone();
+	      const self = new SchedulePostpone();
 	      self.initialize(id, settings);
 	      return self;
 	    }
@@ -18955,7 +19380,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Animation */
 
-	var Comment$2 = /*#__PURE__*/function () {
+	let Comment$2 = /*#__PURE__*/function () {
 	  function Comment() {
 	    babelHelpers.classCallCheck(this, Comment);
 	    this._node = null;
@@ -18986,7 +19411,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._node.style.opacity = 0;
 	      this._node.style.zIndex = 960;
 	      document.body.appendChild(this._node);
-	      var nodeOpacityAnim = new BX.easing({
+	      const nodeOpacityAnim = new BX.easing({
 	        duration: 350,
 	        start: {
 	          opacity: 0
@@ -19003,7 +19428,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            this._events["start"]();
 	          }
 
-	          var shift = Shift.create(this._node, this._anchor, this._startPosition, false, {
+	          const shift = Shift.create(this._node, this._anchor, this._startPosition, false, {
 	            complete: BX.delegate(this.finish, this)
 	          });
 	          shift.run();
@@ -19037,7 +19462,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }], [{
 	    key: "create",
 	    value: function create(node, anchor, startPosition, events) {
-	      var self = new Comment();
+	      const self = new Comment();
 	      self.initialize(node, anchor, startPosition, events);
 	      return self;
 	    }
@@ -19045,41 +19470,41 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Comment;
 	}();
 
-	var Streams = {
+	const Streams = {
 	  History: History$1,
-	  FixedHistory: FixedHistory,
-	  EntityChat: EntityChat,
-	  Schedule: Schedule
+	  FixedHistory,
+	  EntityChat,
+	  Schedule
 	};
-	var Editors = {
-	  Comment: Comment,
-	  Wait: Wait,
-	  Rest: Rest,
-	  Sms: Sms
+	const Editors = {
+	  Comment,
+	  Wait,
+	  Rest,
+	  Sms
 	};
-	var Tools = {
-	  WaitConfigurationDialog: WaitConfigurationDialog,
-	  SchedulePostponeController: SchedulePostponeController,
-	  MenuBar: MenuBar,
-	  SmsWatcher: SmsWatcher,
-	  AudioPlaybackRateSelector: AudioPlaybackRateSelector
+	const Tools = {
+	  WaitConfigurationDialog,
+	  SchedulePostponeController,
+	  MenuBar,
+	  SmsWatcher,
+	  AudioPlaybackRateSelector
 	};
-	var Actions = {
-	  Activity: Activity,
+	const Actions = {
+	  Activity,
 	  Call: Call$1,
-	  HistoryCall: HistoryCall,
-	  ScheduleCall: ScheduleCall,
-	  Email: Email,
-	  HistoryEmail: HistoryEmail,
-	  ScheduleEmail: ScheduleEmail,
-	  OpenLine: OpenLine,
-	  SchedulePostpone: SchedulePostpone
+	  HistoryCall,
+	  ScheduleCall,
+	  Email,
+	  HistoryEmail,
+	  ScheduleEmail,
+	  OpenLine,
+	  SchedulePostpone
 	};
-	var ScheduledItems = {
+	const ScheduledItems = {
 	  Activity: Activity$1,
 	  Email: Email$1,
 	  Call: Call,
-	  CallTracker: CallTracker,
+	  CallTracker,
 	  Meeting: Meeting,
 	  Task: Task,
 	  StoreDocument: StoreDocument,
@@ -19090,53 +19515,53 @@ this.BX.Crm = this.BX.Crm || {};
 	  OpenLine: OpenLine$1,
 	  Zoom: Zoom
 	};
-	var Items = {
+	const Items = {
 	  History: History,
-	  HistoryActivity: HistoryActivity,
+	  HistoryActivity,
 	  Comment: Comment$1,
-	  Modification: Modification,
+	  Modification,
 	  Mark: Mark$1,
-	  Creation: Creation,
-	  Restoration: Restoration,
-	  Relation: Relation,
-	  Link: Link,
-	  Unlink: Unlink,
+	  Creation,
+	  Restoration,
+	  Relation,
+	  Link,
+	  Unlink,
 	  Email: Email$2,
 	  Call: Call$2,
 	  Meeting: Meeting$1,
 	  Task: Task$1,
 	  WebForm: WebForm$1,
 	  Wait: Wait$2,
-	  Document: Document,
-	  Sender: Sender,
-	  Bizproc: Bizproc,
+	  Document,
+	  Sender,
+	  Bizproc,
 	  Sms: Sms$1,
 	  Request: Request$1,
 	  Rest: Rest$2,
 	  OpenLine: OpenLine$2,
 	  Zoom: Zoom$1,
-	  Conversion: Conversion,
-	  Visit: Visit,
-	  Scoring: Scoring,
-	  OrderCreation: OrderCreation,
-	  OrderModification: OrderModification,
-	  StoreDocumentCreation: StoreDocumentCreation,
-	  StoreDocumentModification: StoreDocumentModification,
-	  FinalSummaryDocuments: FinalSummaryDocuments,
-	  FinalSummary: FinalSummary,
-	  ExternalNoticeModification: ExternalNoticeModification,
-	  ExternalNoticeStatusModification: ExternalNoticeStatusModification,
-	  OrderCheck: OrderCheck,
+	  Conversion,
+	  Visit,
+	  Scoring,
+	  OrderCreation,
+	  OrderModification,
+	  StoreDocumentCreation,
+	  StoreDocumentModification,
+	  FinalSummaryDocuments,
+	  FinalSummary,
+	  ExternalNoticeModification,
+	  ExternalNoticeStatusModification,
+	  OrderCheck,
 	  ScheduledBase: Scheduled,
 	  Scheduled: ScheduledItems
 	};
-	var Animations = {
+	const Animations = {
 	  Item: Item$2,
-	  ItemNew: ItemNew,
-	  Expand: Expand,
-	  Shift: Shift,
+	  ItemNew,
+	  Expand,
+	  Shift,
 	  Comment: Comment$2,
-	  Fasten: Fasten
+	  Fasten
 	};
 
 	exports.EncourageBuyProducts = component;

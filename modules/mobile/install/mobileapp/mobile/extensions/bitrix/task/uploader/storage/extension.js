@@ -7,11 +7,17 @@
 		constructor()
 		{
 			this.name = TaskUploaderStorageConstants.STORAGE_NAME;
+			this.files = null;
 		}
 
 		getFiles()
 		{
-			return Application.storage.getObject(this.name);
+			if (this.files === null)
+			{
+				this.files = Application.storage.getObject(this.name);
+			}
+
+			return this.files;
 		}
 
 		getArrayFiles()
@@ -22,11 +28,13 @@
 		setFiles(files)
 		{
 			Application.storage.setObject(this.name, files);
+			this.files = null;
 		}
 
 		addFiles(files)
 		{
 			files.forEach(file => Application.storage.updateObject(this.name, {[file.id]: file}));
+			this.files = null;
 		}
 
 		removeFiles(filesIds)

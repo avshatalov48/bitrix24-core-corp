@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class implements all further interactions with "rest" module considering userfields for "task item" entity.
  * 
@@ -10,7 +10,9 @@
 
 namespace Bitrix\Tasks\Integration\Rest\Task;
 
-use \Bitrix\Tasks\Util\UserField\Restriction;
+use Bitrix\Main\SystemException;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Tasks\Util\UserField\Restriction;
 
 final class UserField extends \Bitrix\Tasks\Integration\Rest\UserField
 {
@@ -21,36 +23,45 @@ final class UserField extends \Bitrix\Tasks\Integration\Rest\UserField
 
 	public static function runRestMethod($executiveUserId, $methodName, array $args)
 	{
-		if(!Restriction::canManage(static::getTargetEntityId(), $executiveUserId))
+		if (!Restriction::canManage(static::getTargetEntityId(), $executiveUserId))
 		{
 			// todo: raising an exception is bad, but still we got no error collection to return here
-			throw new \Bitrix\Main\SystemException('Action not allowed');
+			throw new SystemException('Action not allowed');
 		}
 
-		if ($methodName == 'getlist')
+		switch (mb_strtolower($methodName))
 		{
-			if (!is_array($args) || empty($args))
-			{
-				$args = array(array(), array());
-			}
-			else
-			{
-				if (!is_array($args[0]))
+			case 'getlist':
+				if (empty($args))
 				{
-					$args[0] = array();
+					$args = [[], []];
 				}
-				if (!is_array($args[1]))
+				else
 				{
-					$args[1] = array();
+					if (!is_array($args[0]))
+					{
+						$args[0] = [];
+					}
+					if (!is_array($args[1]))
+					{
+						$args[1] = [];
+					}
 				}
-			}
-		}
-		elseif ($methodName == 'add')
-		{
-			if (count($args) > 1 || !is_array($args[0]))
-			{
-				$args = array($args);
-			}
+				break;
+
+			case 'get':
+				if (empty($args))
+				{
+					throw new ArgumentException('No parameters found.');
+				}
+				break;
+
+			case 'add':
+				if (count($args) > 1 || !is_array($args[0]))
+				{
+					$args = [$args];
+				}
+				break;
 		}
 
 		return parent::runRestMethod($executiveUserId, $methodName, $args);

@@ -364,7 +364,7 @@ export class SprintStartForm extends EventEmitter
 	showCalendar(inputContainer: HTMLElement)
 	{
 		/* eslint-disable */
-		new top.BX.JCCalendar().Show({
+		new BX.JCCalendar().Show({
 			node: inputContainer,
 			field: inputContainer.querySelector('input'),
 			bTime: false,
@@ -393,8 +393,8 @@ export class SprintStartForm extends EventEmitter
 	initHints(node: HTMLElement)
 	{
 		// todo wtf hint
-		top.BX.UI.Hint.popup = null;
-		top.BX.UI.Hint.id = 'ui-hint-popup-' + (+new Date());
-		top.BX.UI.Hint.init(node);
+		BX.UI.Hint.popup = null;
+		BX.UI.Hint.id = 'ui-hint-popup-' + (+new Date());
+		BX.UI.Hint.init(node);
 	}
 }

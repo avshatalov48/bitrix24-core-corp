@@ -5,6 +5,55 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 
 	const imagePath = '/bitrix/mobileapp/immobile/extensions/im/chat/selector/providers/chat/images/';
 
+	const defaultChatOptions = {
+		itemOptions: {
+			CHANNEL: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE'),
+			},
+			ANNOUNCEMENT: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_ANNOUNCEMENT_SUBTITLE'),
+			},
+			GROUP: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE'),
+			},
+			VIDEOCONF: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_VIDEOCONF_SUBTITLE'),
+			},
+			CALL: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CALL_SUBTITLE'),
+			},
+			CRM: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CRM_SUBTITLE'),
+			},
+			SONET_GROUP: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SONET_GROUP_SUBTITLE'),
+			},
+			CALENDAR: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CALENDAR_SUBTITLE'),
+			},
+			TASKS: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_TASKS_SUBTITLE'),
+			},
+			SUPPORT24_NOTIFIER: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SUPPORT24_NOTIFIER_SUBTITLE'),
+				textColor: '#0165af',
+			},
+			SUPPORT24_QUESTION: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SUPPORT24_QUESTION_SUBTITLE'),
+				textColor: '#0165af',
+				imageUrl: imagePath + 'avatar_24_question_x3.png',
+			},
+			LINES: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_LINES_SUBTITLE'),
+				textColor:'#0a962f',
+			},
+			LIVECHAT: {
+				subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_LINES_SUBTITLE'),
+				textColor: '#0a962f',
+			},
+		},
+	};
+
 	const defaultOptions = {
 		entities: {
 			'user': {
@@ -18,54 +67,8 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 					}
 				}
 			},
-			'im-chat': {
-				itemOptions: {
-					CHANNEL: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CHANNEL_SUBTITLE'),
-					},
-					ANNOUNCEMENT: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_ANNOUNCEMENT_SUBTITLE'),
-					},
-					GROUP: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_GROUP_SUBTITLE'),
-					},
-					VIDEOCONF: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_VIDEOCONF_SUBTITLE'),
-					},
-					CALL: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CALL_SUBTITLE'),
-					},
-					CRM: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CRM_SUBTITLE'),
-					},
-					SONET_GROUP: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SONET_GROUP_SUBTITLE'),
-					},
-					CALENDAR: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_CALENDAR_SUBTITLE'),
-					},
-					TASKS: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_TASKS_SUBTITLE'),
-					},
-					SUPPORT24_NOTIFIER: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SUPPORT24_NOTIFIER_SUBTITLE'),
-						textColor: '#0165af',
-					},
-					SUPPORT24_QUESTION: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_SUPPORT24_QUESTION_SUBTITLE'),
-						textColor: '#0165af',
-						imageUrl: imagePath + 'avatar_24_question_x3.png',
-					},
-					LINES: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_LINES_SUBTITLE'),
-						textColor:'#0a962f',
-					},
-					LIVECHAT: {
-						subtitle: BX.message('MOBILE_EXT_CHAT_SELECTOR_LINES_SUBTITLE'),
-						textColor: '#0a962f',
-					},
-				},
-			},
+			'im-chat': defaultChatOptions,
+			'im-chat-user': defaultChatOptions,
 			'im-bot': {
 				itemOptions: {
 					default: {
@@ -76,6 +79,13 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 					},
 					support24: {
 						textColor: '#0165af',
+					},
+				},
+			},
+			'imbot-network': {
+				itemOptions: {
+					NETWORK: {
+						textColor: '#0a962f',
 					},
 				},
 			},
@@ -108,6 +118,7 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 			this.context = context;
 			this.options = options;
 			this.customItems = options.customItems || null;
+			this.minSearchSize = options.minSearchSize || 3;
 
 			this.emptyResults = [];
 			this.recentLoaded = false;
@@ -122,6 +133,7 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				'user': 100,
 				'im-chat': 80,
 				'im-bot': 70,
+				'im-chat-user': 60,
 			}
 			this.cache = new InstantPickerCache(this.cacheId());
 		}
@@ -197,6 +209,13 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 					let matchCount = 0;
 					let matchedWords = [];
 
+					if (item.params.type === 'im-chat-user')
+					{
+						item.sort = sort;
+
+						return item;
+					}
+
 					if (this.searchFields.length > 0 && query)
 					{
 						let reverse = this.searchFields.slice(0);
@@ -269,47 +288,66 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 		{
 			this.queryString = query.trim();
 
-			let items = this.cache.get('recent').concat(this.cache.get('items'));
+			let items =
+				this.cache.get('recent')
+					.concat(this.cache.get('items'))
+			;
 
-			let cachedItems = this.processResult(
-				query,
-				items
-			);
+			let cachedItems = this.processResult(query, items);
 
 			let result = cachedItems.filter((item, index, self) => {
 				return self.findIndex(item1 => item.id === item1.id) === index;
 			});
 
-			result.push(this.getSearchingItem());
-
-			this.listener.onFetchResult(result, true);
 			if (this.emptyResults.includes(query))
 			{
 				this.listener.onFetchResult([]);
 				return;
 			}
 
-			let queryWords = this.splitQueryByWords(query);
+			if (query.length < this.minSearchSize)//without search loader
+			{
+				this.listener.onFetchResult(result);
+				return;
+			}
 
+			result.push(this.getSearchingItem());
+			this.listener.onFetchResult(result, true);
+
+			const queryWords = this.splitQueryByWords(query);
+
+			ChatUtils.throttle(this.sendRequest(query, queryWords), 500, this);
+		}
+
+		sendRequest(query, queryWords)
+		{
 			BX.ajax.runAction('ui.entityselector.doSearch', {
-				json: {
-					dialog: this.getAjaxDialog(),
-					searchQuery: {
-						'queryWords': queryWords,
-						'query': query,
-						'dynamicSearchEntities': []
-					}
-				},
-				getParameters: {context: this.context}
-			})
+					json: {
+						dialog: this.getAjaxDialog(),
+						searchQuery: {
+							'queryWords': queryWords,
+							'query': query,
+							'dynamicSearchEntities': []
+						}
+					},
+					getParameters: {context: this.context}
+				})
 				.then(response => {
-					let items = this.prepareItems(response.data.dialog.items);
+					const items = this.prepareItems(response.data.dialog.items);
+
 					if (items.length === 0)
 					{
 						this.emptyResults.push(query);
 					}
 
-					this.cache.save(items, 'items', { unique: true });
+					const cachedItems = items.filter(item => {
+						return item.params.entityId === 'user'
+							|| item.params.entityId === 'im-chat'
+							|| item.params.entityId === 'im-bot'
+						;
+					});
+
+					this.cache.save(cachedItems, 'items', { unique: true });
 					if (query.trim() === this.queryString)
 					{
 						let sortedItems = this.processResult(query, items);
@@ -328,6 +366,7 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 			if (justLoad === false)
 			{
 				let recentItems = this.cache.get('recent', true);
+
 				const hasRecentCache = recentItems.length > 0;
 
 				if (this.customItems)
@@ -420,6 +459,31 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 			return {};
 		}
 
+		filterDuplicateChatUsersItems(itemList)
+		{
+			const uniqItemList = [];
+			const uniqItemIndexList = {};
+			if (Array.isArray(itemList))
+			{
+				itemList.forEach((item, index) => {
+					if (item.entityId && item.entityId !== 'im-chat-user')
+					{
+						uniqItemIndexList[item.id] = index;
+					}
+					else if (!(item.id in uniqItemIndexList))
+					{
+						uniqItemIndexList[item.id] = index;
+					}
+				});
+			}
+			for (let key in uniqItemIndexList) {
+				if(uniqItemIndexList.hasOwnProperty(key)){
+					uniqItemList.push(itemList[uniqItemIndexList[key]])
+				}
+			}
+
+			return uniqItemList;
+		}
 		prepareResult(items)
 		{
 			let recentItems = [];
@@ -430,7 +494,7 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				{
 					recentItems.push({id,entityId});
 
-					if (entityId === 'im-chat')
+					if (entityId === 'im-chat' || entityId === 'im-chat-user')
 					{
 						id = 'chat' + id;
 					}
@@ -440,6 +504,7 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 						name: item.title,
 						description: item.subtitle,
 						avatar: item.imageUrl,
+						color: item.color,
 						customData: item.params.customData || [],
 					});
 				}
@@ -575,12 +640,18 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				item.position = entity.customData.position;
 				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
 			}
-			else if (entity.entityId === 'im-chat')
+			else if (entity.entityId === 'im-chat' || entity.entityId === 'im-chat-user')
 			{
 				item.subtitle = this.getEntityOption(entity, 'subtitle', '');
 				item.shortTitle = entity.title;
 				item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
 				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imChat'].COLOR;
+
+				const generalChatId = Number(BX.componentParameters.get('IM_GENERAL_CHAT_ID', 0));
+				if (entity.id === generalChatId)
+				{
+					item.imageUrl = imagePath + 'avatar_general_x3.png';
+				}
 			}
 			else if (entity.entityId === 'im-bot')
 			{
@@ -588,6 +659,12 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 				item.shortTitle = entity.title;
 				item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
 				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.customData['imUser'].COLOR;
+			}
+			else if (entity.entityId === 'imbot-network')
+			{
+				item.color = entity.avatar && entity.avatar.indexOf('upload') !== -1 ? colorWhite : entity.avatarOptions.color;
+				item.styles.title.font.color = this.getEntityOption(entity, 'textColor', colorGray);
+				item.subtitle = entity.subtitle;
 			}
 
 			return item;
@@ -651,20 +728,20 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 
 		splitQueryByWords(query)
 		{
-			let clearedQuery =
+			const clearedQuery =
 				query
-					.replace('(', ' ')
-					.replace(')', ' ')
-					.replace('[', ' ')
-					.replace(']', ' ')
-					.replace('{', ' ')
-					.replace('}', ' ')
-					.replace('<', ' ')
-					.replace('>', ' ')
-					.replace('-', ' ')
-					.replace('#', ' ')
-					.replace('"', ' ')
-					.replace('\'', ' ')
+					.replace(/\(/g, ' ')
+					.replace(/\)/g, ' ')
+					.replace(/\[/g, ' ')
+					.replace(/]/g, ' ')
+					.replace(/\{/g, ' ')
+					.replace(/}/g, ' ')
+					.replace(/</g, ' ')
+					.replace(/>/g, ' ')
+					.replace(/-/g, ' ')
+					.replace(/#/g, ' ')
+					.replace(/"/g, ' ')
+					.replace(/'/g, ' ')
 					.replace('/\s\s+/', ' ')
 			;
 

@@ -50,9 +50,6 @@
 					external: true,
 					title: BX.message("QR_EXTERNAL_AUTH")
 				})
-				// qrauth.authorizeByUrl(url)
-				// 	.then( _ => Notify.showIndicatorSuccess({hideAfter: 2000}))
-				// 	.catch( error => Notify.showIndicatorError({text: error.message, hideAfter: 2000}));
 			};
 			let unhandled = Application.getUnhandledUniversalLink();
 			if (unhandled)

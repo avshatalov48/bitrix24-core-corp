@@ -2,7 +2,6 @@
 
 namespace Bitrix\Location\Entity;
 
-use Bitrix\Location\Common\IPoint;
 use Bitrix\Location\Entity\Location\Converter\ArrayConverter;
 use Bitrix\Location\Entity\Location\Field;
 use Bitrix\Location\Entity\Location\FieldCollection;
@@ -17,8 +16,7 @@ use Bitrix\Main\Web\Json;
  *
  * @package Bitrix\Location\Entity
  */
-final class Location
-	implements \Serializable, IPoint
+final class Location implements \Serializable
 {
 	/** @var int  */
 	protected $id = 0;

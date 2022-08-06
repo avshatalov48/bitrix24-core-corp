@@ -231,7 +231,7 @@ class DocumentGeneratorDocumentsComponent extends CBitrixComponent
 				if($viewUrl)
 				{
 					$viewUrl->addParams(['documentId' => $document['ID']])->deleteParams(['analyticsLabel']);
-					$onDocumentClick = 'BX.DocumentGenerator.Document.onBeforeCreate(\''.$viewUrl->getLocator().'\', {}, \''.$this->arParams['loaderPath'].'\', \''.$this->arParams['module'].'\')';
+					$onDocumentClick = 'BX.DocumentGenerator.Document.onBeforeCreate(\''.$viewUrl->getLocator().'\', {}, \''.htmlspecialcharsbx(CUtil::JSEscape($this->arParams['loaderPath'])).'\', \''.$this->arParams['module'].'\')';
 					$actions[] = [
 						'ICONCLASS' => 'edit',
 						'TEXT' => Loc::getMessage('DOCGEN_DOCUMENTS_VIEW_ACTION'),

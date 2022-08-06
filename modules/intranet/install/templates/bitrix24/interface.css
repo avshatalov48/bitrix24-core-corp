@@ -6,7 +6,8 @@ body div.bx-interface-form input.webform-button-text {
 	color: #7a818a;
 	display: inline;
 	height: auto;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	line-height: 47px;
 	text-shadow: none !important;
@@ -834,7 +835,8 @@ body div.bx-interface-form input.webform-button-text {
     line-height: 14px;
     font-size: 9px;
     color: #525c69;
-    font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     -moz-border-radius: 16px;
     -webkit-border-radius: 16px;
     border-radius: 16px;
@@ -1385,7 +1387,8 @@ body table.bx-edit-tab-title td.bx-form-title,
 	border-right: none;
 	border-left: none;
 	border-bottom: 1px solid rgba(82,92,105,.10);
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -3073,7 +3076,8 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 .webform-small-button.tm-webform-button-play .webform-small-button-text,
 .webform-small-button.tm-popup-main-button .webform-small-button-text {
 	position: relative;
-	font: 13px/40px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	display: inline-block;
 }
 
@@ -3566,7 +3570,8 @@ body div.bx-clock-div table.bxc-cus-sel-tbl td:first-child input,
 body div.bx-clock-div span.double-dot {
 	color: #b6b9bd;
 	margin: 0;
-	font: normal 18px/30px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: normal 18px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	padding: 0;
 	width: 23px;
 }
@@ -4280,7 +4285,8 @@ body .tm-report .tm-report-right-border {
 	border: none;
 	line-height: 39px;
 	color: #535c69;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 14px;
 }
 
@@ -4342,7 +4348,8 @@ body .tm-report .tm-report-right-border {
 
 .tm-info-bar-time {
 	height: 39px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	float: right;
 	padding: 0 0 0 20px;
 	position: relative;
@@ -4759,7 +4766,6 @@ body .tm-report .tm-report-right-border {
 .bx-lm-box .bx-finder-box-item-t7-selected:hover,
 .bx-lm-box-tab-content-department .bx-finder-company-department-employee-selected:hover {
 	background: #d6f1fb;
-	border-radius: 1px;
 }
 
 .bx-lm-box .bx-finder-box-item-t5-avatar,

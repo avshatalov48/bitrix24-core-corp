@@ -52,6 +52,7 @@ class StatusTable extends Entity\DataManager
 	public const DEFAULT_PROCESS_COLOR = '#ACE9FB';
 
 	// entityId => array of status data arrays
+	protected const CACHE_TTL = 3600;
 	/** @var array[][] */
 	protected static $statusesCache = [];
 
@@ -446,6 +447,7 @@ class StatusTable extends Entity\DataManager
 				'SORT' => 'ASC',
 				'ID' => 'ASC'
 			],
+			'cache' => ['ttl' => static::CACHE_TTL],
 		]);
 		while($status = $list->fetch())
 		{

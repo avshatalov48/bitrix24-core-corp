@@ -17,7 +17,7 @@ $canEdit = $arResult['CAN_EDIT'];
 			$items = [];
 			foreach ($arResult['VALUE'] as $tag)
 			{
-				$items[] = '<a data-slider-ignore-autobinding="true" target="_top" href="'.$arResult['PATH_TO_TASKS'] . '?apply_filter=Y&TAG=' . urlencode($tag).'">' . $tag . '</a>';
+				$items[] = '<a data-slider-ignore-autobinding="true" target="_top" href="'.$arResult['PATH_TO_TASKS'] . '?apply_filter=Y&TAG=' . urlencode(htmlspecialcharsback($tag)).'">' . $tag . '</a>';
 			}
 			echo implode(', ', $items);
 			unset($items);
@@ -54,9 +54,12 @@ $canEdit = $arResult['CAN_EDIT'];
 
 		var tasksTagsSelector = new BX.Tasks.TagsSelector(
 			<?= Json::encode([
-				'taskId' => (int)$arResult['TASK_ID'],
-				'templateId' => (int)$arResult['TEMPLATE_ID'],
+				'groupId' => (int) $arResult['GROUP_ID'],
+				'taskId' => (int) $arResult['TASK_ID'],
+				'isScrumTask' => $arResult['IS_SCRUM_TASK'] ? 'Y' : 'N',
+				'templateId' => (int) $arResult['TEMPLATE_ID'],
 				'tags' =>  $arResult['VALUE'],
+
 			])?>
 		);
 

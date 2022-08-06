@@ -11,10 +11,10 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 	{
 		parent::__construct($name);
 		$this->arProperties = [
-			"Title" => "",
+			'Title' => '',
 			'TaskId' => null,
-			"Fields" => null,
-			"FieldsMap" => null,
+			'Fields' => null,
+			'FieldsMap' => null,
 		];
 	}
 
@@ -40,8 +40,14 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		}
 
 		$taskId = $this->TaskId;
+		$logMap = static::getPropertiesMap($this->getDocumentType());
+		unset($logMap['Fields']);
+		$logMap = $this->getDebugInfo(['TaskId' => $taskId], $logMap);
+
 		if (!is_numeric($taskId))
 		{
+			$this->writeDebugInfo($logMap);
+
 			$this->WriteToTrackingService(
 				GetMessage('TASKS_GLDA_ERROR_EMPTY_DOCUMENT_1'),
 				0,
@@ -57,6 +63,8 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 
 		if (!$document || !is_array($map))
 		{
+			$this->writeDebugInfo($logMap);
+
 			$this->WriteToTrackingService(
 				GetMessage('TASKS_GLDA_ERROR_EMPTY_DOCUMENT_1'),
 				0,
@@ -72,6 +80,8 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		{
 			$this->arProperties[$id] = $document[$id];
 		}
+
+		$this->writeDebugInfo($this->getDebugInfo($document, array_merge($logMap, $map)));
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -122,22 +132,7 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 			]
 		);
 
-		$dialog->setMap([
-			'TaskId' => [
-				'Name' => GetMessage('TASKS_GLDA_ELEMENT_ID'),
-				'FieldName' => 'lists_element_id',
-				'Type' => 'string',
-				'Required' => true,
-			],
-			'Fields' => [
-				'Name' => GetMessage('TASKS_GLDA_FIELDS_LABEL'),
-				'FieldName' => 'fields',
-				'Type' => 'select',
-				'Required'  => true,
-				'Multiple' => true,
-				'Options' => self::getDocumentFieldsOptions(),
-			],
-		]);
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		$dialog->setRuntimeData(['isAdmin' => static::checkAdminPermission()]);
 
@@ -255,5 +250,25 @@ class CBPTasksGetDocumentActivity extends CBPActivity
 		$user = new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser);
 
 		return $user->isAdmin();
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'TaskId' => [
+				'Name' => GetMessage('TASKS_GLDA_ELEMENT_ID'),
+				'FieldName' => 'lists_element_id',
+				'Type' => 'string',
+				'Required' => true,
+			],
+			'Fields' => [
+				'Name' => GetMessage('TASKS_GLDA_FIELDS_LABEL'),
+				'FieldName' => 'fields',
+				'Type' => 'select',
+				'Required'  => true,
+				'Multiple' => true,
+				'Options' => self::getDocumentFieldsOptions(),
+			],
+		];
 	}
 }

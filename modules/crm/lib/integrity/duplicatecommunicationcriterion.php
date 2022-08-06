@@ -1,7 +1,6 @@
 <?php
 namespace Bitrix\Crm\Integrity;
 use Bitrix\Main;
-use Bitrix\Crm;
 use Bitrix\Crm\CommunicationType;
 
 class DuplicateCommunicationCriterion extends DuplicateCriterion
@@ -15,6 +14,8 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 
 	public function __construct($communicationType, $value)
 	{
+		parent::__construct();
+
 		$this->useStrictComparison = true;
 		$this->setCommunicationType($communicationType);
 		$this->setValue($value);
@@ -524,7 +525,7 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		}
 		return $results;
 	}
-	public static function prepareSortParams($entityTypeID, array &$entityIDs, $type = '')
+	public static function prepareSortParams($entityTypeID, array $entityIDs, $type = '')
 	{
 		if(empty($entityIDs))
 		{
@@ -733,7 +734,7 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 		}
 		else
 		{
-			$filter['%VALUE'] = new \CSQLWhereExpression('?s', $value.'%');
+			$filter['%VALUE'] = new Main\DB\SqlExpression('?s', $value.'%');
 		}
 
 		if(\CCrmOwnerType::IsDefined($entityTypeID))

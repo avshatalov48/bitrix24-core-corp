@@ -1,7 +1,6 @@
 <?php
-$MESS["CRM_MODULE_NOT_INSTALLED"] = "Das Modul CRM ist nicht installiert.";
-$MESS["SALESCENTER_MODULE_NOT_INSTALLED"] = "Das Modul \"Vertriebsstelle\" ist nicht installiert.";
 $MESS["CATALOG_MODULE_NOT_INSTALLED"] = "Das Modul \"Kommerzieller Katalog\" ist nicht installiert.";
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Das Modul CRM ist nicht installiert.";
 $MESS["CRM_STORE_DOCUMENT_EMPTY_USER_INPUT_VALUE"] = "Suchtext eingeben";
 $MESS["CRM_STORE_DOCUMENT_EMPTY_USER_INPUT_VALUE_WITH_CLIENT"] = "Geben Sie den Suchtext ein oder wählen Sie einen Kunden aus";
 $MESS["CRM_STORE_DOCUMENT_ERROR_SHIPMENT_SERVICE_RESTRICTED"] = "Lieferservice stimmt mit Einschränkungen nicht überein";
@@ -21,8 +20,10 @@ $MESS["CRM_STORE_DOCUMENT_SHIPMENT_ORDER_ID"] = "ID der Bestellung";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_PRICE_DELIVERY_CALCULATED_WITH_CURRENCY"] = "Kalkulierter Preis";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_PRICE_DELIVERY_WITH_CURRENCY"] = "Lieferpreis";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_SECTION_DELIVERY"] = "Lieferung";
+$MESS["CRM_STORE_DOCUMENT_SHIPMENT_SECTION_EXTRA"] = "Zusätzlich";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_SECTION_MAIN"] = "Allgemein";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_SECTION_PRODUCT"] = "Produkte";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_SECTION_PROPERTIES"] = "Liefereigenschaften";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_SUBTITLE_MASK"] = "##ID# - #DATE_INSERT#";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_TITLE"] = "Vertrieb ##ACCOUNT_NUMBER#";
+$MESS["SALESCENTER_MODULE_NOT_INSTALLED"] = "Das Modul \"Vertriebsstelle\" ist nicht installiert.";

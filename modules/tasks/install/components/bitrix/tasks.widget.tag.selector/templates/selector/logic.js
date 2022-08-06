@@ -24,7 +24,9 @@ BX.namespace('Tasks.Component');
 					return new this.constructor.Items({
 						scope: this.scope(),
 						data: this.option('data'),
+						groupId: this.option('groupId'),
 						taskId: this.option('taskId'),
+						isScrumTask: (this.option('isScrumTask') === 'Y'),
 						preRendered: true
 					});
 				});
@@ -176,12 +178,13 @@ BX.namespace('Tasks.Component');
 						multiple: true,
 						dropdownMode: true,
 						compactView: true,
-						context: 'TASKS_TAG',
+						context: this.option('isScrumTask') ? 'TASKS_SCRUM_TAG_' + this.option('groupId') : 'TASKS_TAG',
 						entities: [
 							{
 								id: 'task-tag',
 								options: {
-									taskId: this.option('taskId')
+									taskId: this.option('taskId'),
+									groupId: this.option('isScrumTask') ? this.option('groupId') : 0
 								}
 							}
 						],
@@ -203,7 +206,7 @@ BX.namespace('Tasks.Component');
 								setTimeout(function () {
 									var item = dialog.addItem({
 										id: searchQuery.getQuery(),
-										entityId: 'tag',
+										entityId: 'task-tag',
 										title: searchQuery.getQuery(),
 										tabs: 'all'
 									});

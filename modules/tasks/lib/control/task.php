@@ -2,6 +2,7 @@
 
 namespace Bitrix\Tasks\Control;
 
+use Bitrix\Disk\AttachedObject;
 use Bitrix\Main\Application;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Loader;
@@ -1966,7 +1967,10 @@ class Task
 	 */
 	private function addFiles(array $fields)
 	{
-		if (!isset($fields['FILES']))
+		if (
+			!isset($fields['FILES'])
+			|| !is_array($fields['FILES'])
+		)
 		{
 			return;
 		}
@@ -2079,7 +2083,7 @@ class Task
 				$message = array_shift($messages);
 			}
 
-			throw new TaskAddException($message);
+			throw new TaskUpdateException($message);
 		}
 
 		$task = TaskTable::getByPrimary($this->taskId)->fetchObject();
@@ -2221,7 +2225,7 @@ class Task
 				}
 
 				$fields['DURATION_PLAN_SECONDS'] = $shiftData['DURATION_PLAN_SECONDS'];
-				$this->legacyOperationResultData['SHIFT_RESULT'][$this->taskId] = $shiftData;
+				$this->legacyOperationResultData['SHIFT_RESULT'] = $this->shiftResult->getData();
 			}
 		}
 
@@ -2301,7 +2305,10 @@ class Task
 	 */
 	private function cloneDiskAttachments(array $fields): array
 	{
-		if (!$this->cloneAttachments)
+		if (
+			!$this->cloneAttachments
+			|| !Loader::includeModule('disk')
+		)
 		{
 			return $fields;
 		}
@@ -2309,10 +2316,56 @@ class Task
 		if (
 			array_key_exists('UF_TASK_WEBDAV_FILES', $fields)
 			&& is_array($fields['UF_TASK_WEBDAV_FILES'])
+			&& !empty($fields['UF_TASK_WEBDAV_FILES'])
 		)
 		{
+			$source = $fields['UF_TASK_WEBDAV_FILES'];
 			$fields['UF_TASK_WEBDAV_FILES'] = Disk::cloneFileAttachment($fields['UF_TASK_WEBDAV_FILES'], $this->userId);
+			$relations = array_combine($source, $fields['UF_TASK_WEBDAV_FILES']);
+
+			if ($relations)
+			{
+				$fields = $this->updateInlineFiles($fields, $relations);
+			}
 		}
+
+		return $fields;
+	}
+
+	/**
+	 * @param array $fields
+	 * @param array $relations
+	 * @return array
+	 */
+	private function updateInlineFiles(array $fields, array $relations): array
+	{
+		if (empty($relations))
+		{
+			return $fields;
+		}
+
+		$searchTpl = '[DISK FILE ID=%s]';
+
+		$search = [];
+		$replace = [];
+
+		foreach ($relations as $source => $destination)
+		{
+			$search[] = sprintf($searchTpl, $source);
+			$replace[] = sprintf($searchTpl, $destination);
+
+			if (!preg_match('/^'.\Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX.'/', $source))
+			{
+				$attachedObject = AttachedObject::loadById($source);
+				if($attachedObject)
+				{
+					$search[] = sprintf($searchTpl, \Bitrix\Disk\Uf\FileUserType::NEW_FILE_PREFIX.$attachedObject->getObjectId());
+					$replace[] = sprintf($searchTpl, $destination);
+				}
+			}
+		}
+
+		$fields['DESCRIPTION'] = str_replace($search, $replace, $fields['DESCRIPTION']);
 
 		return $fields;
 	}

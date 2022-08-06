@@ -1,9 +1,9 @@
 A.crmPermA {
-	display: block; 
-	float:left; 
-	width: 13px; 
-	height: 13px;  
-	cursor:pointer; 
+	display: block;
+	float:left;
+	width: 13px;
+	height: 13px;
+	cursor:pointer;
 	margin-left: 3px;
 	margin-top: 3px;
 }
@@ -26,7 +26,7 @@ A.crmPermAEdit:hover
 
 table.crmRoleTable
 {
-	width: 100%; 
+	width: 100%;
 	padding: 0;
 	margin: 0;
 }
@@ -39,6 +39,9 @@ table.crmRoleTable tr:first-child th
 	padding: 0.7em 1em;
 	color: #8a8877;
 	text-align: left;
+	border-radius: var(--ui-border-radius-md);
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 }
 
 table.crmRoleTable tr td
@@ -49,22 +52,41 @@ table.crmRoleTable tr td
 	border-right: 1px solid #e3e3e3;
 	border-left: 1px solid #e3e3e3;
 	border-bottom: 1px solid #e3e3e3;
+	border-radius: var(--ui-border-radius-md);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 table.crmRoleTable tr td div.crmRole
 {
 	height: 20px;
 }
 
-table.crmPermTable {	
-	width: 100%; 
+table.crmPermTable {
+	width: 100%;
 	padding: 0;
 	margin: 0;
 }
 table.crmPermTable tr:first-child th:first-child
 {
-	border: 1px solid #ece8cb;	
+	border: 1px solid #ece8cb;
 	border-right: 0;
+	border-top-left-radius: var(--ui-border-radius-md);
+
 }
+
+table.crmPermTable tr:first-child th:last-child
+{
+	border-top-right-radius: var(--ui-border-radius-md);
+}
+
+table.crmPermTable tr:nth-last-child(3) td:first-child {
+	border-bottom-left-radius: var(--ui-border-radius-md);
+}
+
+table.crmPermTable tr:nth-last-child(3) td:last-child {
+	border-bottom-right-radius: var(--ui-border-radius-md);
+}
+
 table.crmPermTable tr:first-child th.last-child
 {
 	border-right: 1px solid #ece8cb;
@@ -73,7 +95,7 @@ table.crmPermTable tr:first-child th
 {
 	padding: 0.7em 1em;
 	border-left: 0;
-	background-color: #f4f0d2;	
+	background-color: #f4f0d2;
 	border-bottom: 1px solid #ece8cb;
 	/*height: 30px;*/
 	/*line-height: 30px;*/
@@ -105,7 +127,7 @@ tr.crmPermTableTrRow td.crmPermTableTrA
 table.crmPermTable tr td
 {
 	padding: 0.4em 0.6em;
-	border-bottom: 1px solid #e3e3e3;	
+	border-bottom: 1px solid #e3e3e3;
 	border-left: 0;
 	border-top: 0;
 	vertical-align: middle;

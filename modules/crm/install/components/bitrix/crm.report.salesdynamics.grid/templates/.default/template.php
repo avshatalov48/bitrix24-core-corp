@@ -15,7 +15,7 @@ function getUserLayout($userName, $userIcon)
 	return
 		'<div class="crm-report-salesdynamics-grid-user">
 			<div class="ui-icon ui-icon-common-user crm-report-salesdynamics-grid-user-icon">
-				<i '. ($userIcon ? 'style="background-image: url('. $userIcon . ')" ' : ''). '></i>
+				<i '. ($userIcon ? 'style="background-image: url(\''. $userIcon . '\')" ' : ''). '></i>
 			</div>
 			<div class="crm-report-salesdynamics-grid-user-name">
 				' . $userName . '

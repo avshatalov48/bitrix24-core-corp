@@ -334,6 +334,8 @@ if($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
+	$salesGeneratorButton = null;
+
 	if ($bAdd)
 	{
 		$arResult['RC'] = [
@@ -343,118 +345,174 @@ if($arParams['TYPE'] === 'list')
 			'PATH_TO_ADD' => Rc\Service::getPathToAddDeal(),
 			'JS_AVAILABLE_POPUP_SHOWER' => Rc\Service::getJsAvailablePopupShower(),
 		];
+
 		if ($arResult['RC']['CAN_USE'] && !$arResult['RC']['IS_AVAILABLE'])
 		{
 			Rc\Service::initJsExtensions();
 		}
 
-		$categoryIDs = $arResult['CATEGORY_ID'] >= 0
-			? array($arResult['CATEGORY_ID'])
-			: CCrmDeal::GetPermittedToCreateCategoryIDs($CrmPerms);
+		$salesGeneratorButton = [
+			'TEXT' => $arResult['RC']['NAME'],
+			'ONCLICK' => $arResult['RC']['IS_AVAILABLE']
+				? 'BX.SidePanel.Instance.open("' . \CUtil::JSEscape($arResult['RC']['PATH_TO_ADD']) . '")'
+				: $arResult['RC']['JS_AVAILABLE_POPUP_SHOWER'],
+			'CLASS_NAME' => $arResult['RC']['IS_AVAILABLE'] ? '' : 'b24-tariff-lock'
+		];
+	}
 
-		$categoryCount = count($categoryIDs);
-		if($categoryCount > 1)
+	$baseCreateUrl = CComponentEngine::MakePathFromTemplate(
+		$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],
+		['deal_id' => 0]
+	);
+
+	$categoryIDs = $arResult['CATEGORY_ID'] >= 0
+		? [$arResult['CATEGORY_ID']]
+		: CCrmDeal::GetPermittedToCreateCategoryIDs($CrmPerms);
+
+	$categoryCount = count($categoryIDs);
+	if ($categoryCount > 1)
+	{
+		$categories = DealCategory::getJavaScriptInfos($categoryIDs);
+		$categoryButtons = [];
+		foreach ($categories as $row)
 		{
-			$categorySelectorID = 'deal_category';
-			$canCreateCategory = CCrmPerms::IsAdmin();
-			$categoryCreateUrl = '';
-			if($canCreateCategory)
-			{
-				$restriction = RestrictionManager::getDealCategoryLimitRestriction();
-				$limit = $restriction->getQuantityLimit();
-				$canCreateCategory = $limit <= 0 || ($limit > DealCategory::getCount());
-
-				if($canCreateCategory)
-				{
-					$categoryCreateUrl = CComponentEngine::MakePathFromTemplate(
-						$arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-						array('category_id' => 0)
-					);
-				}
-			}
-
-			$arResult['CATEGORY_SELECTOR'] = array(
-				'ID' => $categorySelectorID,
-				'CAN_CREATE_CATEGORY' => $canCreateCategory,
-				'CATEGORY_LIST_URL' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
-				'CATEGORY_CREATE_URL' => $categoryCreateUrl,
-				'INFOS' => DealCategory::getJavaScriptInfos($categoryIDs),
-				'MESSAGES' => array('CREATE' => GetMessage('DEAL_ADD_CATEGOTY'))
-			);
-
-
+			$link = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $row['id']]);
+			$categoryButton = [
+				'ID' => $row['id'],
+				'TITLE' => $row['name'],
+				'TEXT' => $row['name'],
+			];
 			if($isSliderEnabled)
 			{
-				$arResult['CATEGORY_SELECTOR']['CREATE_URL'] = CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_DEAL_DETAILS'], array('deal_id' => 0)
-				);
-				$arResult['CATEGORY_SELECTOR']['ENABLE_SLIDER'] = true;
+				$categoryButton['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
 			}
 			else
 			{
-				$arResult['CATEGORY_SELECTOR']['CREATE_URL'] = CComponentEngine::MakePathFromTemplate(
-					$arParams['PATH_TO_DEAL_EDIT'], array('deal_id' => 0)
-				);
+				$categoryButton['LINK'] = $link;
 			}
 
-			$arResult['BUTTONS'][] = array(
-				'TEXT' => GetMessage('DEAL_ADD'),
-				'TYPE' => 'crm-context-menu',
-				'ONCLICK' => "BX.CrmDealCategorySelector.items['{$categorySelectorID}'].openMenu(this)",
-				'HIGHLIGHT' => true
-			);
+			$categoryButtons[] = $categoryButton;
 		}
-		elseif($categoryCount === 1)
+
+		$categoryCreateUrl = '';
+		$categorySelectorID = 'deal_category';
+		$canCreateCategory = CCrmPerms::IsAdmin();
+		if($canCreateCategory)
 		{
-			$link = CCrmUrlUtil::AddUrlParams(
-				CComponentEngine::MakePathFromTemplate(
-					$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],
-					array('deal_id' => 0)
-				),
-				array('category_id' => $categoryIDs[0]
-				)
-			);
-
-			if (!$arResult['RC']['CAN_USE'])
+			$restriction = RestrictionManager::getDealCategoryLimitRestriction();
+			$limit = $restriction->getQuantityLimit();
+			$canCreateCategory = $limit <= 0 || ($limit > DealCategory::getCount());
+			if($canCreateCategory)
 			{
-				$arResult['BUTTONS'][] = array(
-						'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-						'TITLE' => GetMessage('DEAL_ADD_TITLE'),
-						'LINK' => $link,
-						'HIGHLIGHT' => true
+				$categoryCreateUrl = CComponentEngine::MakePathFromTemplate(
+					$arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
+					['category_id' => 0]
 				);
+			}
+		}
+
+		if (!empty($categoryCreateUrl))
+		{
+			$categoryButtons[] = [
+				'TITLE' => GetMessage('DEAL_ADD_CATEGOTY'),
+				'TEXT' => GetMessage('DEAL_ADD_CATEGOTY'),
+				'URL' => $categoryCreateUrl,
+			];
+		}
+
+		if (isset($salesGeneratorButton))
+		{
+			$categoryButtons[] = ["SEPARATOR" => true];
+			$categoryButtons[] = $salesGeneratorButton;
+		}
+
+		// TODO: is not used (need check components crm.automation + crm.item.automation) and will be removed
+		$arResult['CATEGORY_SELECTOR'] = [
+			'ID' => $categorySelectorID,
+			'CAN_CREATE_CATEGORY' => $canCreateCategory,
+			'CATEGORY_LIST_URL' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
+			'CATEGORY_CREATE_URL' => $categoryCreateUrl,
+			'CREATE_URL' => $baseCreateUrl,
+			'INFOS' => $categories,
+			'ENABLE_SLIDER' => $isSliderEnabled,
+			'MESSAGES' => ['CREATE' => GetMessage('DEAL_ADD_CATEGOTY')],
+		];
+
+		$btnCfg = [
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'TYPE' => 'crm-btn-double',
+			'HIGHLIGHT' => true,
+			'IS_DISABLED' => !$bAdd,
+			'HINT' => GetMessage('CRM_DEAL_ADD_HINT'),
+			'ITEMS' => $categoryButtons,
+
+			// TODO: CrmDealCategorySelector (see common.js) is not used and will be removed
+			//'ONCLICK' => "BX.CrmDealCategorySelector.items['{$categorySelectorID}'].openMenu(this)",
+		];
+
+		$mainButtonLink = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $categories[0]['id']]);
+		if($isSliderEnabled)
+		{
+			$btnCfg['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($mainButtonLink) . '")';
+		}
+		else
+		{
+			$btnCfg['LINK'] = $mainButtonLink;
+		}
+
+		$arResult['BUTTONS'][] = $btnCfg;
+	}
+	elseif($categoryCount === 1)
+	{
+		$link = CCrmUrlUtil::AddUrlParams($baseCreateUrl, ['category_id' => $categoryIDs[0]]);
+
+		if($arResult['RC']['CAN_USE'])
+		{
+			$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
+			if($isSliderEnabled)
+			{
+				$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
 			}
 			else
 			{
-				$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
-				if ($isSliderEnabled)
-				{
-					$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
-				}
-				else
-				{
-					$itemAdd['LINK'] = $link;
-				}
-				$arResult['BUTTONS'][] = [
-					'TYPE' => 'crm-btn-double',
-					'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-					'LINK' => $link,
-					'ITEMS' => [
-						$itemAdd,
-						[
-							'TEXT' => $arResult['RC']['NAME'],
-							'ONCLICK' => $arResult['RC']['IS_AVAILABLE']
-								?
-								'BX.SidePanel.Instance.open("' . CUtil::JSEscape($arResult['RC']['PATH_TO_ADD']) . '")'
-								:
-								$arResult['RC']['JS_AVAILABLE_POPUP_SHOWER'],
-							'CLASS_NAME' => $arResult['RC']['IS_AVAILABLE'] ? '' : 'b24-tariff-lock'
-						],
-					],
-					'HIGHLIGHT' => true
-				];
+				$itemAdd['LINK'] = $link;
 			}
+
+			$arResult['BUTTONS'][] = [
+				'TYPE' => 'crm-btn-double',
+				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+				'LINK' => $link,
+				'ITEMS' => [
+					$itemAdd,
+					$salesGeneratorButton
+				],
+				'HIGHLIGHT' => true,
+				'IS_DISABLED' => !$bAdd,
+				'HINT' => GetMessage('CRM_DEAL_ADD_HINT')
+			];
 		}
+		else
+		{
+			$arResult['BUTTONS'][] = [
+				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+				'TITLE' => GetMessage('CRM_COMMON_ACTION_ADD'),
+				'LINK' => $link,
+				'HIGHLIGHT' => true,
+				'IS_DISABLED' => !$bAdd,
+				'HINT' => GetMessage('CRM_DEAL_ADD_HINT')
+			];
+		}
+	}
+	else
+	{
+		$arResult['BUTTONS'][] = [
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'TITLE' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'LINK' => CCrmUrlUtil::AddUrlParams($baseCreateUrl, []),
+			'HIGHLIGHT' => true,
+			'IS_DISABLED' => !$bAdd,
+			'HINT' => GetMessage('CRM_DEAL_ADD_HINT')
+		];
 	}
 
 	if ($bImport && !$isInSlider)
@@ -663,10 +721,11 @@ if($arParams['TYPE'] === 'list')
 	if(count($arResult['BUTTONS']) > 0)
 	{
 		//Force start new bar after add deal button or from first button
-		array_splice($arResult['BUTTONS'], $bAdd ? 1 : 0, 0, array(array('NEWBAR' => true)));
+		array_splice($arResult['BUTTONS'], 1, 0, [['NEWBAR' => true]]);
 	}
 
 	$this->IncludeComponentTemplate();
+
 	return;
 }
 

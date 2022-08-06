@@ -641,7 +641,7 @@ class TasksProjectsComponent extends CBitrixComponent implements Controllerable
 		$this->initForAjaxCalls();
 
 		$select = $this->getSelect();
-		$groups = (empty($data) ? $this->getGroupsData($groupIds, $select) : $data);
+		$groups = $this->getGroupsData($groupIds, $select);
 		if (!empty($groups))
 		{
 			if (in_array('IMAGE_ID', $select, true))

@@ -593,8 +593,16 @@ class CCrmViewHelper
 			{
 				if($useGridExtension)
 				{
-					$result .= '<div class="crm-nearest-activity-plus" onclick="BX.CrmUIGridExtension.showContextMenu(\''.htmlspecialcharsbx($menuID).'\', this);"></div>
-					<script type="text/javascript">BX.CrmUIGridExtension.createContextMenu("'.$menuID.'", '.CUtil::PhpToJSObject($menuItems).');</script>';
+					$menuID = htmlspecialcharsbx($menuID);
+					$menuParams = "{offsetLeft: 30, autoHide: true, closeByEsc: true, angle: { position: 'top', offset: 10 }}";
+					$menuItems = array_map('array_change_key_case', $menuItems);
+					$menuItems = CUtil::PhpToJSObject($menuItems);
+					$jsOnClick = "BX.Main.MenuManager.show('{$menuID}', this, {$menuItems}, {$menuParams});";
+
+					$result .= '<div 
+									class="crm-nearest-activity-plus" 
+									onclick="'.$jsOnClick.' return false;"
+								></div>';
 				}
 				else
 				{
@@ -645,9 +653,18 @@ class CCrmViewHelper
 
 			if($useGridExtension)
 			{
+				$menuID = htmlspecialcharsbx($menuID);
+				$menuParams = "{offsetLeft: 30, autoHide: true, closeByEsc: true, angle: { position: 'top', offset: 10 }}";
+				$menuItems = array_map('array_change_key_case', $menuItems);
+				$menuItems = CUtil::PhpToJSObject($menuItems);
+				$jsOnClick = "BX.Main.MenuManager.show('{$menuID}', this, {$menuItems}, {$menuParams});";
+
 				return '<span class="crm-activity-add-hint">'.htmlspecialcharsbx($hintText).'</span>
-				<a class="crm-activity-add" onclick="BX.CrmUIGridExtension.showContextMenu(\''.htmlspecialcharsbx($menuID).'\', this); return false;">'.htmlspecialcharsbx(GetMessage('CRM_ENTITY_ADD_ACTIVITY')).'</a>
-				<script type="text/javascript">BX.CrmUIGridExtension.createContextMenu("'.$menuID.'", '.CUtil::PhpToJSObject($menuItems).');</script>';
+						<a 
+							class="crm-activity-add" 
+							onclick="'.$jsOnClick.' return false;"
+						>'.htmlspecialcharsbx(GetMessage('CRM_ENTITY_ADD_ACTIVITY')).'
+						</a>';
 			}
 			else
 			{
@@ -2384,6 +2401,17 @@ class CCrmViewHelper
 			elseif($entityTypeName === $orderShipmentTypeName)
 			{
 				$finalID = \Bitrix\Crm\Order\DeliveryStatus::getFinalStatus();
+			}
+			elseif ($infos)
+			{
+				foreach ($infos as $stageInfo)
+				{
+					if (\Bitrix\Crm\PhaseSemantics::isFinal($stageInfo['SEMANTICS']))
+					{
+						$finalID = $stageInfo['STATUS_ID'];
+						break;
+					}
+				}
 			}
 		}
 

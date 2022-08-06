@@ -13,8 +13,10 @@
 		this.isShiftplan = options.isShiftplan;
 		this.useEmployeesTimezone = options.useEmployeesTimezone;
 		this.editWorktimeBtn = this.selectOneByRole('edit-worktime-btn');
+		this.changeWorktimeBtn = this.selectOneByRole('change-worktime-btn');
 		this.workTimePickerContent = this.selectOneByRole('timeman-time-picker-content');
 		this.saveButton = this.selectOneByRole('tm-record-btn-save');
+		this.changeButton = this.selectOneByRole('tm-record-btn-change');
 		this.cancelBtn = this.selectOneByRole('tm-record-btn-cancel');
 		this.recordForm = this.selectOneByRole('worktime-record-form');
 
@@ -43,7 +45,9 @@
 		addEventHandlers: function ()
 		{
 			BX.bind(this.editWorktimeBtn, 'click', BX.delegate(this.onEditWorktimeClick, this));
+			BX.bind(this.changeWorktimeBtn, 'click', BX.delegate(this.onChangeWorktimeClick, this));
 			BX.bind(this.saveButton, 'click', BX.delegate(this.onSaveClick, this));
+			BX.bind(this.changeButton, 'click', BX.delegate(this.onChangeClick, this));
 			BX.bind(this.cancelBtn, 'click', BX.delegate(this.closeSlider, this));
 			BX.bind(document, 'keydown', BX.proxy(this.onKeyDown, this));
 			var navBtns = this.selectAllByRole('navigation-record', document);
@@ -119,6 +123,17 @@
 			this._workTimePickerPopup.show();
 		},
 
+		onChangeWorktimeClick: function (event)
+		{
+			if (!this._workTimePickerPopup)
+			{
+				this._workTimePickerPopup = this.buildWorkTimePopup(event);
+				this._workTimePickerPopup.setContent(this.workTimePickerContent);
+			}
+
+			this._workTimePickerPopup.show();
+		},
+
 		onSaveClick: function (event)
 		{
 			event.stopPropagation();
@@ -171,6 +186,69 @@
 					this.showErrors(response.errors);
 				}.bind(this));
 		},
+
+		onChangeClick: function (event)
+		{
+			event.stopPropagation();
+			event.preventDefault();
+
+			this.clearErrors();
+
+			if (
+				event.currentTarget.dataset
+				&& event.currentTarget.dataset.action === 'save'
+				&& !this.edited
+			)
+			{
+				return;
+			}
+
+			if (this.saving === true)
+			{
+				return;
+			}
+			this.saving = true;
+
+			this.changeButton.classList.add('ui-btn-wait');
+
+			var formData = new FormData(this.recordForm);
+			formData.append('isShiftplan', this.isShiftplan);
+			formData.append('useEmployeesTimezone', this.useEmployeesTimezone);
+			BX.ajax.runAction(
+				'timeman.worktime.changeRecord',
+				{
+					data: formData
+				}
+			).then(
+				function (response)
+				{
+					this.saving = false;
+					if (this.isSlider)
+					{
+						if (this.getSlider())
+						{
+							this.getSlider().postMessageAll(window,
+								'BX.Timeman.Record.Approve::Success',
+								{
+									record: response.data.record
+								}
+							);
+						}
+						this.closeSlider();
+					}
+					else
+					{
+						BX.reload();
+					}
+				}.bind(this),
+				function (response)
+				{
+					this.saving = false;
+					this.changeButton.classList.remove('ui-btn-wait');
+					this.showErrors(response.errors);
+				}.bind(this));
+		},
+
 		getSlider: function ()
 		{
 			if (window.top.BX.SidePanel && window.top.BX.SidePanel.Instance)
@@ -179,6 +257,7 @@
 			}
 			return null;
 		},
+
 		clearErrors: function ()
 		{
 			if (this.errorsBlock.childNodes)
@@ -246,7 +325,17 @@
 							click: BX.delegate(function ()
 							{
 								this.edited = true;
-								this.saveButton.classList.remove('ui-btn-disabled');
+
+								if (this.saveButton)
+								{
+									this.saveButton.classList.remove('ui-btn-disabled');
+								}
+
+								if (this.changeButton)
+								{
+									this.changeButton.classList.remove('ui-btn-disabled');
+								}
+
 								this._workTimePickerPopup.close();
 								this.onRecordedTimeUpdated();
 							}, this)

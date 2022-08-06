@@ -556,7 +556,9 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'name' => GetMessage('CRM_FIELD_LOCATION'),
 	'params' => array('size' => 50),
 	'type' => 'label',
-	'value' => $bTaxMode && isset($arResult['ELEMENT']['PR_LOCATION']) ? CCrmLocations::getLocationString($arResult['ELEMENT']['PR_LOCATION']) : '',
+	'value' => ($bTaxMode && isset($arResult['ELEMENT']['PR_LOCATION']))
+		? CCrmLocations::getLocationStringByCode($arResult['ELEMENT']['PR_LOCATION'])
+		: '',
 	'isTactile' => true,
 	'visible' => $bTaxMode
 );

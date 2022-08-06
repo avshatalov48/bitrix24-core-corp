@@ -28,9 +28,19 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2]);
 		$stages = $this->getStages($entityTypeName, $entityId);
 
+		if ($this->workflow->isDebug())
+		{
+			$this->logTargetStatus();
+		}
+
 		if ($stages && array_diff((array)$this->TargetStatus, $stages))
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CTA_INCORRECT_STAGE'));
+			$this->WriteToTrackingService(
+				Bitrix\Main\Localization\Loc::getMessage('CRM_CTA_INCORRECT_STAGE'),
+				0,
+				CBPTrackingType::Error
+			);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -91,29 +101,62 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		return $target->getEntityStatuses();
 	}
 
+	private function logTargetStatus(): void
+	{
+		$map = static::getPropertiesDialogMap(new PropertiesDialog('', [
+			'documentType' => $this->getDocumentType()
+		]));
+
+		$this->writeDebugInfo($this->getDebugInfo(['TargetStatus' => $this->TargetStatus], $map));
+	}
+
 	protected function completeTasks(string $ownerType, int $ownerId, string $ownerStage): void
 	{
 		$dbResult = \CCrmActivity::GetList(
 			[],
 			[
 				'TYPE_ID' => \CCrmActivityType::Task,
-				'COMPLETED' =>'N',
+				'COMPLETED' => 'N',
 				'CHECK_PERMISSIONS' => 'N',
 				'OWNER_ID' => $ownerId,
 				'OWNER_TYPE_ID' => CCrmOwnerType::ResolveID($ownerType)
 			],
 			false,
 			false,
-			['ID', 'SETTINGS']
+			['ID', 'ASSOCIATED_ENTITY_ID', 'SETTINGS']
 		);
 
+		$completedTasks = [];
 		for ($activity = $dbResult->Fetch(); $activity; $activity = $dbResult->Fetch())
 		{
 			if (is_array($activity['SETTINGS']) && $activity['SETTINGS']['OWNER_STAGE'] === $ownerStage)
 			{
-				CCrmActivity::Update($activity['ID'], ['COMPLETED' => true], false, true);
+				$isCompleted = CCrmActivity::Update($activity['ID'], ['COMPLETED' => true], false, true);
+				if ($isCompleted)
+				{
+					$completedTasks[] = $activity['ASSOCIATED_ENTITY_ID'];
+				}
 			}
 		}
+
+		if ($this->workflow->isDebug())
+		{
+			$this->logCompletedTasks($completedTasks);
+		}
+	}
+
+	private function logCompletedTasks(array $completedTaskIds): void
+	{
+		$map = [
+			'CompletedTasks' => [
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CTA_COMPLETED_TASKS'),
+				'Type' => \Bitrix\Bizproc\FieldType::INT,
+				'Multiple' => true,
+			]
+		];
+		$debugInfo = $this->getDebugInfo(['CompletedTasks' => $completedTaskIds], $map);
+
+		$this->writeDebugInfo($debugInfo);
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')
@@ -210,6 +253,15 @@ class CBPCrmCompleteTaskActivity extends CBPActivity
 		];
 
 		return $map;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$dialog = new PropertiesDialog('', [
+			'documentType' => $documentType,
+		]);
+
+		return static::getPropertiesDialogMap($dialog);
 	}
 
 	public static function getDocumentStatuses(string $documentType)

@@ -98,7 +98,7 @@ class Delete extends Operation
 			->getFactory($this->itemBeforeSave->getEntityTypeId())
 			->getTrackedObject($this->itemBeforeSave);
 
-		return Container::getInstance()->getEventHistory()->registerDelete($trackedObject);
+		return Container::getInstance()->getEventHistory()->registerDelete($trackedObject, $this->getContext());
 	}
 
 	protected function createTimelineRecord(): void

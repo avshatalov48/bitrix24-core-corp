@@ -88,12 +88,12 @@
 				&& (!draggableItem.getColumn().isFinishType())
 			)
 			{
-				BX.loadExt('tasks.scrum.dod').then(function() {
-					if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.Dod === 'undefined')
+				top.BX.loadExt('tasks.scrum.dod').then(function() {
+					if (typeof top.BX.Tasks.Scrum === 'undefined' || typeof top.BX.Tasks.Scrum.Dod === 'undefined')
 					{
 						taskCompletePromise.fulfill();
 					}
-					this.scrumDod = new BX.Tasks.Scrum.Dod({
+					this.scrumDod = new top.BX.Tasks.Scrum.Dod({
 						groupId: draggableItem.getData()['groupId'],
 						taskId: draggableItem.getId()
 					});
@@ -469,30 +469,14 @@
 		{
 			if (this.isScrumGrid())
 			{
-				var headerColumn = null;
-				var total = this.getTotal();
-
 				this.getGrid().getNeighborGrids()
 					.forEach(function(neighborGrid) {
 						if (neighborGrid.isScrumGridHeader())
 						{
-							headerColumn = neighborGrid.getColumn(this.getId());
-						}
-						else
-						{
-							if (neighborGrid.getColumn(this.getId()))
-							{
-								total += neighborGrid.getColumn(this.getId()).getTotal();
-							}
+							neighborGrid.updateTotals();
 						}
 					}.bind(this))
 				;
-
-				if (headerColumn)
-				{
-					headerColumn.setTotal(total);
-					headerColumn.render();
-				}
 			}
 		}
 	};

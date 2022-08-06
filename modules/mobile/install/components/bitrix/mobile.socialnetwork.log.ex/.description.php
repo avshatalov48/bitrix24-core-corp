@@ -1,8 +1,12 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $arComponentDescription = array(
-	"NAME" => GetMessage("SONET_SLM_TEMPLATE_NAME"),
+	"NAME" => GetMessage("SONET_SLM_TEMPLATE_NAME2"),
 	"DESCRIPTION" => GetMessage("SONET_SLM_TEMPLATE_DESCRIPTION"),
 	"ICON" => "/images/icon.gif",
 	"SORT" => 250,

@@ -5,6 +5,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Error;
+use Bitrix\Main\Errorable;
+use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
@@ -19,12 +23,13 @@ use Bitrix\Tasks\Scrum\Utility\BurnDownChart;
 use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Util;
 
-class TasksScrumBurnDownComponent extends \CBitrixComponent
+class TasksScrumBurnDownComponent extends \CBitrixComponent implements Controllerable, Errorable
 {
 	const ERROR_UNKNOWN_SYSTEM_ERROR = 'TASKS_TSBD_01';
 
 	private $application;
 	private $userId;
+	private $errorCollection;
 
 	public function __construct($component = null)
 	{
@@ -32,6 +37,8 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent
 
 		global $APPLICATION;
 		$this->application = $APPLICATION;
+
+		$this->errorCollection = new ErrorCollection();
 	}
 
 	public function onIncludeComponentLang()
@@ -75,6 +82,44 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent
 		{
 			$this->includeErrorTemplate($exception->getMessage());
 		}
+	}
+
+	public function configureActions()
+	{
+		return [];
+	}
+
+	public function getErrors()
+	{
+		return $this->errorCollection->toArray();
+	}
+
+	public function getErrorByCode($code)
+	{
+		return $this->errorCollection->getErrorByCode($code);
+	}
+
+	public function changeChartAction(int $groupId, int $sprintId)
+	{
+		$this->checkModules();
+
+		$this->init();
+
+		if (!$this->canReadGroupTasks($groupId))
+		{
+			$this->errorCollection->setError(
+				new Error(Loc::getMessage('TASKS_SCRUM_BURN_DOWN_ACCESS_DENIED'))
+			);
+
+			return null;
+		}
+
+		$chartData = $this->getChartData($sprintId);
+
+		return [
+			'sprint' => $chartData['sprint'],
+			'chart' => $chartData['chart']
+		];
 	}
 
 	/**
@@ -136,10 +181,11 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent
 		$calendar = new Util\Calendar();
 		$sprintRanges = $sprintService->getSprintRanges($sprint, $calendar);
 
+		$currentDateEnd = $sprint->getDateEnd();
+
 		if ($sprint->isActiveSprint())
 		{
 			$currentDateTime = new Datetime();
-			$currentDateEnd = $sprint->getDateEnd();
 			$sprint->setDateEnd(
 				$currentDateEnd->getTimestamp() > $currentDateTime->getTimestamp()
 					? $currentDateTime
@@ -173,8 +219,12 @@ class TasksScrumBurnDownComponent extends \CBitrixComponent
 			$completedStoryPointsMap
 		);
 
+		$sprintData = $sprint->toArray();
+		$sprintData['dateStartFormatted'] = $sprint->getDateStart()->format(Bitrix\Main\Type\Date::getFormat());
+		$sprintData['dateEndFormatted'] = $currentDateEnd->format(Bitrix\Main\Type\Date::getFormat());
+
 		return [
-			'sprint' => $sprint->toArray(),
+			'sprint' => $sprintData,
 			'chart' => array_merge($idealData, $remainingData),
 		];
 	}

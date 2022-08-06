@@ -41,7 +41,8 @@ $APPLICATION->IncludeComponent(
 			'PATH_TO_ACTIVITY_LIST' => $arResult['PATH_TO_ACTIVITY_LIST'],
 			'PATH_TO_ACTIVITY_WIDGET' => $arResult['PATH_TO_ACTIVITY_WIDGET'],
 			'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']
-		]
+		],
+		'USE_UI_TOOLBAR' => 'Y',
 	],
 	$component
 );

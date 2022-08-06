@@ -6,6 +6,7 @@ use Bitrix\Location\Entity\Source\Config;
 use Bitrix\Location\Repository\Location\IRepository;
 use Bitrix\Main\Context;
 use Bitrix\Main\IO\File;
+use Bitrix\Main\Localization\StreamConverter;
 
 /**
  * Class Source
@@ -115,7 +116,7 @@ abstract class Source
 
 			if (File::isFileExists($path))
 			{
-				$this->autocompleteReplacements = require $path;
+				$this->autocompleteReplacements = StreamConverter::include($path, $languageId);
 			}
 		}
 

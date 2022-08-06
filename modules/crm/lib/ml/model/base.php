@@ -241,9 +241,9 @@ abstract class Base implements \JsonSerializable
 			$daysToTrain = Scoring::RETRAIN_PERIOD;
 		}
 
-		if($row["DATE_START"] instanceof DateTime)
+		if($row["DATE_FINISH"] instanceof DateTime)
 		{
-			$nextDate = clone $row["DATE_START"];
+			$nextDate = clone $row["DATE_FINISH"];
 			$nextDate->add(Scoring::RETRAIN_PERIOD . " day");
 		}
 

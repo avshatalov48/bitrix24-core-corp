@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmResourceBookingCancel extends CBPActivity
 {
@@ -25,6 +29,8 @@ class CBPCrmResourceBookingCancel extends CBPActivity
 		$fieldId = $this->ResourceField;
 
 		$fieldValue[$fieldId] = ['empty'];
+
+		$this->writeDebugInfo($this->getDebugInfo(['ResourceField' => $fieldId]));
 
 		$documentService = $this->workflow->GetService("DocumentService");
 		$documentService->UpdateDocument($this->GetDocumentId(), $fieldValue);
@@ -62,15 +68,7 @@ class CBPCrmResourceBookingCancel extends CBPActivity
 			'siteId' => $siteId
 		));
 
-		$dialog->setMap(array(
-			'ResourceField' => array(
-				'Name' => GetMessage('CRM_RBC_RESOURCE_FIELD'),
-				'FieldName' => 'resource_field',
-				'Type' => 'select',
-				'Required' => true,
-				'Options' => self::getResourceFields($documentType)
-			),
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -92,6 +90,19 @@ class CBPCrmResourceBookingCancel extends CBPActivity
 		$currentActivity["Properties"] = $arProperties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'ResourceField' => [
+				'Name' => GetMessage('CRM_RBC_RESOURCE_FIELD'),
+				'FieldName' => 'resource_field',
+				'Type' => 'select',
+				'Required' => true,
+				'Options' => self::getResourceFields($documentType)
+			],
+		];
 	}
 
 	private static function getResourceFields(array $documentType)

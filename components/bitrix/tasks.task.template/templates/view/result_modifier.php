@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
@@ -12,7 +12,10 @@ use Bitrix\Tasks\Util\UserField;
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = new \Bitrix\Tasks\UI\Component\TemplateHelper(null, $this, array(
+	'RELATION' => array('tasks_util', /*etc*/),
+));
+
 $arParams =& $helper->getComponent()->arParams;
 
 /** @var \Bitrix\Tasks\Item\Task\Template $template */

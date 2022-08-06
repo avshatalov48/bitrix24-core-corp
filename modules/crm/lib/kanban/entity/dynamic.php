@@ -6,8 +6,6 @@ use Bitrix\Crm\Filter;
 use Bitrix\Crm\Filter\ItemDataProvider;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban;
-use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
@@ -322,45 +320,11 @@ class Dynamic extends Kanban\Entity
 
 	public function getFilterPresets(): array
 	{
-		$user = $this->getCurrentUserInfo();
-
-		$presets = [];
-
-		if($this->factory->isStagesEnabled())
-		{
-			$presets['in_work'] = [
-				'name' => Loc::getMessage('CRM_TYPE_FILTER_PRESET_IN_WORK'),
-				'default' => true,
-				'disallow_for_all' => false,
-				'fields' => [
-					ItemDataProvider::FIELD_STAGE_SEMANTIC => [PhaseSemantics::PROCESS],
-				],
-			];
-		}
-
-		$presets['my'] = [
-			'name' => Loc::getMessage('CRM_TYPE_FILTER_PRESET_MY'),
-			'default' => false,
-			'disallow_for_all' => true,
-			'fields' => [
-				'ASSIGNED_BY_ID' => $user['id'],
-				'ASSIGNED_BY_ID_label' => $user['name'],
-			],
-		];
-
-		if($this->factory->isStagesEnabled())
-		{
-			$presets['success'] = [
-				'name' => Loc::getMessage('CRM_TYPE_FILTER_PRESET_SUCCESS'),
-				'default' => false,
-				'disallow_for_all' => false,
-				'fields' => [
-					ItemDataProvider::FIELD_STAGE_SEMANTIC => [PhaseSemantics::SUCCESS],
-				],
-			];
-		}
-
-		return $presets;
+		return (new Filter\Preset\Dynamic())
+			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->setStagesEnabled($this->factory->isStagesEnabled())
+			->getDefaultPresets()
+		;
 	}
 
 	public function getItem(int $id): ?array

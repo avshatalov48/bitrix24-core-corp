@@ -4,45 +4,7 @@ this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {};
 (function (exports,ui_buttons,main_core) {
 	'use strict';
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t>\n\t\t\t"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t>\n\t\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\ttype=\"email\"\n\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
 
 	var Row = /*#__PURE__*/function () {
 	  function Row(rowOptions) {
@@ -121,63 +83,35 @@ this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {};
 	      var _this = this;
 
 	      return this.cache.remember('container', function () {
-	        return main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_FIELD_EMAIL'), _this.getEmailTextBox(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_FIELD_NAME'), _this.getNameTextBox(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_FIELD_LAST_NAME'), _this.getLastNameTextBox());
+	        return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-form-row\">\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"invite-form-col\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_FIELD_EMAIL'), _this.getEmailTextBox(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_FIELD_NAME'), _this.getNameTextBox(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_FIELD_LAST_NAME'), _this.getLastNameTextBox());
 	      });
 	    }
 	  }, {
 	    key: "getEmailTextBox",
 	    value: function getEmailTextBox() {
 	      return this.cache.remember('email', function () {
-	        return main_core.Tag.render(_templateObject2(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_ENTER_EMAIL'));
+	        return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\ttype=\"email\"\n\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_ENTER_EMAIL'));
 	      });
 	    }
 	  }, {
 	    key: "getNameTextBox",
 	    value: function getNameTextBox() {
 	      return this.cache.remember('name', function () {
-	        return main_core.Tag.render(_templateObject3());
+	        return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\" \n\t\t\t\t>\n\t\t\t"])));
 	      });
 	    }
 	  }, {
 	    key: "getLastNameTextBox",
 	    value: function getLastNameTextBox() {
 	      return this.cache.remember('last-name', function () {
-	        return main_core.Tag.render(_templateObject4());
+	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input \n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t>\n\t\t\t"])));
 	      });
 	    }
 	  }]);
 	  return Row;
 	}();
 
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-title-container\">\n\t\t\t\t\t<div class=\"invite-title-icon invite-title-icon-message\"></div>\n\t\t\t\t\t<div class=\"invite-title-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-form-container\"></div>\n\t\t\t"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-wrap\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"invite-content-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"invite-form-buttons\">\n\t\t\t\t\t\t<button \n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-add ui-btn-round\"\n\t\t\t\t\t\t\tonclick=\"", "\">", "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1, _templateObject2$1, _templateObject3$1;
 
 	var Form = /*#__PURE__*/function () {
 	  function Form(formOptions) {
@@ -307,21 +241,21 @@ this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {};
 	      var _this3 = this;
 
 	      return this.cache.remember('container', function () {
-	        return main_core.Tag.render(_templateObject$1(), _this3.getTitleContainer(), _this3.getRowsContainer(), _this3.handleAddMoreClick.bind(_this3), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_ADD_MORE'));
+	        return main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-wrap\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"invite-content-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"invite-form-buttons\">\n\t\t\t\t\t\t<button \n\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-sm ui-btn-light-border ui-btn-icon-add ui-btn-round\"\n\t\t\t\t\t\t\tonclick=\"", "\">", "\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), _this3.getTitleContainer(), _this3.getRowsContainer(), _this3.handleAddMoreClick.bind(_this3), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_ADD_MORE'));
 	      });
 	    }
 	  }, {
 	    key: "getRowsContainer",
 	    value: function getRowsContainer() {
 	      return this.cache.remember('rows-container', function () {
-	        return main_core.Tag.render(_templateObject2$1());
+	        return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-form-container\"></div>\n\t\t\t"])));
 	      });
 	    }
 	  }, {
 	    key: "getTitleContainer",
 	    value: function getTitleContainer() {
 	      return this.cache.remember('title-container', function () {
-	        return main_core.Tag.render(_templateObject3$1(), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_TITLE'));
+	        return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"invite-title-container\">\n\t\t\t\t\t<div class=\"invite-title-icon invite-title-icon-message\"></div>\n\t\t\t\t\t<div class=\"invite-title-text\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_INVITATION_GUEST_TITLE'));
 	      });
 	    }
 	  }, {
@@ -395,7 +329,7 @@ this.BX.Intranet.Invitation = this.BX.Intranet.Invitation || {};
 
 	        BX.SidePanel.Instance.postMessageAll(window, 'BX.Intranet.Invitation.Guest:onAdd', response.data);
 	        BX.SidePanel.Instance.close();
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        _this5.getSaveButton().setWaiting(false);
 
 	        _this5.showError(error.getMessage());

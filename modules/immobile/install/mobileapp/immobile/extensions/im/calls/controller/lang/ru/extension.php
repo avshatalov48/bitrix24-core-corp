@@ -16,6 +16,7 @@ $MESS["MOBILE_CALL_ALREADY_JOINED"] = "К звонку невозможно по
 $MESS["MOBILE_CALL_JOIN_GROUP_CALL"] = "Подключение к групповому звонку";
 $MESS["MOBILE_CALL_WITH_VIDEO"] = "С видео";
 $MESS["MOBILE_CALL_WITHOUT_VIDEO"] = "Без видео";
+$MESS["MOBILE_CALL_OPEN_CHAT"] = "Перейти в чат";
 $MESS["MOBILE_CALL_APP_REQUIRED"] = "Требуется установка приложения";
 $MESS["MOBILE_CALL_INSTALL_JITSI_MEET"] = "Для подключения к конференции требуется установить приложение Jitsi Meet";
 $MESS["MOBILE_CALL_OPEN_APP_STORE"] = "Перейти в App Store";

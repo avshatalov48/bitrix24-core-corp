@@ -7,10 +7,10 @@ use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\Service\Container;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 
@@ -28,6 +28,7 @@ class Deal extends ProductsDataProvider implements Filterable
 			parent::getFields();
 			$this->fields['STAGE'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_STAGE_TITLE'),
+				'VALUE' => [$this, 'getStage'],
 			];
 			$this->fields['CATEGORY'] = [
 				'TITLE' => GetMessage('CRM_DOCGEN_DATAPROVIDER_DEAL_CATEGORY_TITLE'),
@@ -155,6 +156,12 @@ class Deal extends ProductsDataProvider implements Filterable
 	public function getCategory()
 	{
 		return DealCategory::getName($this->getRawValue('CATEGORY_ID'));
+	}
+
+	public function getStage()
+	{
+		$stage = Container::getInstance()->getFactory(\CCrmOwnerType::Deal)->getStage($this->getRawValue('STAGE_ID'));
+		return $stage ? $stage->getName() : null;
 	}
 
 	protected function getTableClass()

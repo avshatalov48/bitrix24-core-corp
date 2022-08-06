@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BPSNMA_EMPTY_TASKASSIGNEDTO"] = "Свойство 'Ответственный' не указано.";
 $MESS["BPSNMA_EMPTY_TASKNAME"] = "Свойство 'Название задачи' не указано.";
 $MESS["TASK_EMPTY_GROUP"] = "Персональная задача";
@@ -16,6 +16,7 @@ $MESS["BPTA1A_TASKDETAILTEXT"] = "Описание задачи";
 $MESS["BPTA1A_TASKTRACKERS"] = "Наблюдатели";
 $MESS["BPTA1A_TASKACCOMPLICES"] = "Соисполнители";
 $MESS["BPTA1A_TASKPRIORITY_V2"] = "Важность";
+$MESS["BPTA1A_TASKPRIORITY_V3"] = "Важная задача";
 $MESS["BPTA1A_TASKFORUM"] = "Форум для комментариев";
 $MESS["BPTA1A_CHECK_RESULT"] = "Принять работу после завершения задачи";
 $MESS["BPTA1A_CHECK_RESULT_V2"] = "Проконтролировать задачу после завершения";
@@ -32,4 +33,5 @@ $MESS["BPTA1A_TIME_TRACKING_H"] = "Время выполнения, часов";
 $MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
 $MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не существует задачи с id \"#TASK_ID#\"";
 $MESS["BPTA1A_MAKE_SUBTASK"] = "Сделать подзадачей";
+$MESS['BPTA1A_HOLD_TO_CLOSE'] = 'Остановить процесс на время выполнения задачи';
 ?>

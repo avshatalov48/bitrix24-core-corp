@@ -3,6 +3,8 @@
  * @bxjs_lang_path component.php
  */
 
+var { EventType } = jn.require('im/messenger/const');
+
 /* Clean session variables after page restart */
 if (typeof clearInterval == 'undefined')
 {
@@ -63,6 +65,11 @@ ChatCreate.openDialog = function(dialogId, dialogTitleParams)
 		dialogId : dialogId,
 		dialogTitleParams : dialogTitleParams,
 	}, true], 'im.recent');
+
+	BX.postComponentEvent(EventType.messenger.openDialog, [{
+		dialogId,
+		dialogTitleParams,
+	}], 'im.messenger');
 
 	this.close();
 

@@ -21,17 +21,20 @@ final class DbFieldConverter
 	{
 		$locationId = 0;
 
-		if($location = $address->getLocation())
+		if ($location = $address->getLocation())
 		{
 			$locationId = $location->getId();
 		}
 
+		$latitude = $address->getLatitude();
+		$longitude = $address->getLongitude();
+
 		return [
-			'ID' => (int)$address->getId(),
-			'LOCATION_ID' => (int)$locationId,
-			'LANGUAGE_ID' => (string)$address->getLanguageId(),
-			'LATITUDE' => (string)$address->getLatitude(),
-			'LONGITUDE' => (string)$address->getLongitude()
+			'ID' => $address->getId(),
+			'LOCATION_ID' => $locationId,
+			'LANGUAGE_ID' => $address->getLanguageId(),
+			'LATITUDE' => $latitude === '' ? null : (float)$latitude,
+			'LONGITUDE' => $longitude === '' ? null : (float)$longitude,
 		];
 	}
 }

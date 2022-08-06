@@ -1,5 +1,6 @@
 import {ajax, Event, Loc, Tag, Uri, Type} from 'main.core';
 
+import {Manual} from 'ui.manual';
 import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
 
 import {RequestSender} from './request.sender';
@@ -35,7 +36,8 @@ type TeamSpeedResponse = {
 
 type TutorResponse = {
 	data: {
-		url: string
+		url: string,
+		urlParams: Object
 	}
 }
 
@@ -56,13 +58,15 @@ export class Methodology
 	{
 		this.groupId = parseInt(params.groupId, 10);
 
-		this.teamSpeedPath = params.teamSpeedPath ? params.teamSpeedPath : '';
-		this.burnDownPath = params.burnDownPath ? params.burnDownPath : '';
+		this.teamSpeedPath = Type.isString(params.teamSpeedPath) ? params.teamSpeedPath : '';
+		this.burnDownPath = Type.isString(params.burnDownPath) ? params.burnDownPath : '';
+		this.pathToTask = Type.isString(params.pathToTask) ? params.pathToTask : '';
 
 		this.requestSender = new RequestSender();
 		this.sidePanel = new SidePanel();
 
 		this.menu = null;
+		this.hintManager = null;
 	}
 
 	showMenu(targetNode: HTMLElement)
@@ -362,32 +366,14 @@ export class Methodology
 				const baseClasses = 'tasks-scrum__widget-methodology tasks-scrum__widget-methodology--scope';
 				const tutorClasses = 'tasks-scrum__widget-methodology--training tasks-scrum__widget-methodology--bg';
 
-				const url = response.data.url;
-				const existsTutor = (url !== '');
-
-				const iconClass = existsTutor
-					? 'ui-icon-service-tutorial'
-					: 'ui-icon-service-light-tutorial'
-				;
-
-				const blockClass = existsTutor
-					? '--active'
-					: ''
-				;
-
-				const labelClass = existsTutor
-					? '--hidden'
-					: ''
-				;
-
 				const node = Tag.render`
 					<div
-						class="${baseClasses} ${tutorClasses} ${blockClass}"
+						class="${baseClasses} ${tutorClasses} --active"
 						data-role="open-tutor"
 					>
 						<div class="tasks-scrum__widget-methodology--conteiner">
 							<div class="tasks-scrum__widget-methodology--conteiner">
-								<div class="ui-icon ${iconClass} tasks-scrum__widget-methodology--icon">
+								<div class="ui-icon ui-icon-service-tutorial tasks-scrum__widget-methodology--icon">
 									<i></i>
 								</div>
 								<div class="tasks-scrum__widget-methodology--content">
@@ -398,7 +384,7 @@ export class Methodology
 										${Loc.getMessage('TSF_TUTORIAL_TEXT')}
 									</div>
 								</div>
-								<div class="tasks-scrum__widget-methodology--label ${labelClass}">
+								<div class="tasks-scrum__widget-methodology--label --hidden">
 									${Loc.getMessage('TSF_TEAM_SPEED_LABEL')}
 								</div>
 							</div>
@@ -407,30 +393,14 @@ export class Methodology
 				`;
 
 				Event.bind(node, 'click', () => {
-					if (existsTutor)
-					{
-						ajax.runAction(
-							'bitrix:tasks.scrum.info.saveAnalyticsLabel',
-							{
-								data: {
-									groupId: this.groupId
-								},
-								analyticsLabel: {
-									scrum: 'Y',
-									action: 'guide_open',
-								}
-							}
-						)
-							.then(() => {
-								this.sidePanel.openSidePanel(url, {
-									width: 1000,
-									contentCallback: () => {
-										return this.createTutorFrame(url);
-									},
-								});
-							})
-						;
-					}
+					Manual.show(
+						'scrum',
+						response.data.urlParams,
+						{
+							scrum: 'Y',
+							action: 'guide_open'
+						}
+					);
 				});
 
 				return node;
@@ -479,23 +449,20 @@ export class Methodology
 		return node;
 	}
 
-	createTutorFrame(url: string)
-	{
-		const frameStyles = 'position: absolute; left: 0; top: 0; padding: 0;'
-			+ ' border: none; margin: 0; width: 100%; height: 100%;';
-
-		return new Promise((resolve) => resolve(Tag.render`<iframe style="${frameStyles}" src="${url}"></iframe>`));
-	}
-
 	showEpics()
 	{
 		this.sidePanel.showByExtension(
 			'Epic',
 			{
 				view: 'list',
-				groupId: this.groupId
+				groupId: this.groupId,
+				pathToTask: this.pathToTask
 			}
-		);
+		)
+			.then((extension) => {
+				BX.Tasks.Scrum.EpicInstance = extension;
+			})
+		;
 
 		this.menu.close();
 	}
@@ -578,6 +545,13 @@ export class Methodology
 
 	initHints(node: HTMLElement)
 	{
-		BX.UI.Hint.init(node);
+		this.hintManager = BX.UI.Hint.createInstance({
+			popupParameters: {
+				closeByEsc: true,
+				autoHide: true
+			}
+		});
+
+		this.hintManager.init(node);
 	}
 }

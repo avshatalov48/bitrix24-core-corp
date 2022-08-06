@@ -2,9 +2,12 @@
 
 namespace Bitrix\Crm\Deal;
 
-use Bitrix\Crm\Order\DeliveryStage;
-use Bitrix\Crm\Order\ShipmentCollection;
+use Bitrix\Crm\Binding;
+use Bitrix\Crm\Order;
+use Bitrix\Main\DB;
+use Bitrix\Main;
 use Bitrix\Sale\Delivery;
+use Bitrix\Main\Entity;
 
 /**
  * Class provides several methods to fetch shipments, related to deals
@@ -12,10 +15,17 @@ use Bitrix\Sale\Delivery;
  */
 final class ShipmentsRepository
 {
-	use OrdersMapMixin;
+	/**
+	 * @throws Main\LoaderException
+	 */
+	public function __construct()
+	{
+		Main\Loader::includeModule('sale');
+	}
 
 	/**
 	 * Returns map [dealId => stage of latest related shipment]
+
 	 * @param array $dealIds
 	 * @return array<int, string>
 	 */
@@ -26,44 +36,69 @@ final class ShipmentsRepository
 			return [];
 		}
 
-		$orderToDealMap = $this->getOrderToDealMap($dealIds);
-		$orderIds = array_keys($orderToDealMap);
+		static $result = [];
 
-		if (count($orderIds) === 0)
+		$dealIdsForLoadingStages = [];
+		foreach ($dealIds as $dealId)
 		{
-			return [];
+			if (!isset($result[$dealId]))
+			{
+				$dealIdsForLoadingStages[] = $dealId;
+			}
 		}
 
+		if ($dealIdsForLoadingStages)
+		{
+			$result += $this->loadShipmentStages($dealIdsForLoadingStages);
+		}
+
+		$dealIdsAsKey = array_fill_keys($dealIds, true);
+
+		return array_filter(
+			$result,
+			static function ($key) use ($dealIdsAsKey)
+			{
+				return isset($dealIdsAsKey[$key]);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+	}
+
+	protected function loadShipmentStages(array $dealIds) : array
+	{
 		$result = [];
 
-		$select = ['ID', 'ORDER_ID', 'DEDUCTED', 'DELIVERY_CLASS_NAME' => 'DELIVERY.CLASS_NAME'];
-		$where = ['=ORDER_ID' => $orderIds, '!SYSTEM' => 'Y'];
-		$orderBy = ['ORDER_ID' => 'desc', 'ID' => 'desc'];
-
-		$shipments = ShipmentCollection::getList([
-			'select' => $select,
-			'filter' => $where,
-			'order' => $orderBy,
+		$dbRes = Order\ShipmentCollection::getList([
+			'select' => ['DEDUCTED', 'DEAL_ID' => 'DEAL_BINDING.OWNER_ID'],
+			'filter' => [
+				'!SYSTEM' => 'Y',
+				'!DELIVERY_ID' => Delivery\Services\EmptyDeliveryService::getEmptyDeliveryServiceId(),
+				'@DEAL_ID' => $dealIds,
+			],
+			'order' => ['ORDER_ID' => 'desc', 'ID' => 'desc'],
+			'runtime' => [
+				new Entity\ReferenceField(
+					'DEAL_BINDING',
+					Binding\OrderEntityTable::class,
+					[
+						'=this.ORDER_ID' => 'ref.ORDER_ID',
+						'=ref.OWNER_TYPE_ID' => new DB\SqlExpression(\CCrmOwnerType::Deal)
+					],
+					['join_type' => 'inner']
+				)
+			]
 		]);
-		while ($shipment = $shipments->fetch())
+
+		while ($shipment = $dbRes->fetch())
 		{
-			$isEmptyDeliveryService = (
-				$shipment['DELIVERY_CLASS_NAME'] === '\\' . Delivery\Services\EmptyDeliveryService::class
-				|| is_subclass_of($shipment['DELIVERY_CLASS_NAME'], Delivery\Services\EmptyDeliveryService::class)
-			);
-			if ($isEmptyDeliveryService)
+			if (isset($result[$shipment['DEAL_ID']]))
 			{
 				continue;
 			}
 
-			$orderId = (int)$shipment['ORDER_ID'];
-			$dealId = $orderToDealMap[$orderId];
-			if ($dealId && !isset($result[$dealId]))
-			{
-				$result[$dealId] = ($shipment['DEDUCTED'] === 'Y')
-					? DeliveryStage::SHIPPED
-					: DeliveryStage::NO_SHIPPED;
-			}
+			$result[$shipment['DEAL_ID']] = ($shipment['DEDUCTED'] === 'Y')
+				? Order\DeliveryStage::SHIPPED
+				: Order\DeliveryStage::NO_SHIPPED;
 		}
 
 		return $result;

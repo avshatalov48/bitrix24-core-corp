@@ -76,6 +76,27 @@ final class LocationService extends BaseService
 	}
 
 	/**
+	 * @param array $params
+	 * @param int $searchScope
+	 * @return array
+	 */
+	public function autocomplete(array $params, int $searchScope = LOCATION_SEARCH_SCOPE_ALL)
+	{
+		$result = [];
+
+		try
+		{
+			$result = $this->repository->autocomplete($params, $searchScope);
+		}
+		catch (RuntimeException $exception)
+		{
+			$this->processException($exception);
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Find Location parents
 	 *
 	 * @param Entity\Location $location

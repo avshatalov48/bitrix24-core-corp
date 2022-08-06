@@ -1366,7 +1366,8 @@
 	color: #ffffff;
 	display: inline-block;
 	font-size: 12px;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	padding-left: 12px;
 	position: relative;
@@ -1395,7 +1396,8 @@
 	border-right: 1px solid #b4e5f5;
 	color: #535c69;
 	display: inline-block;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 16px;
 	height: 20px;
 	line-height: 19px;

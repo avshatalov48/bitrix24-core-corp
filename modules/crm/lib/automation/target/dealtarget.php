@@ -14,6 +14,11 @@ class DealTarget extends BaseTarget
 		return Factory::isAutomationAvailable(\CCrmOwnerType::Deal);
 	}
 
+	public function canTriggerSetExecuteBy(): bool
+	{
+		return true;
+	}
+
 	public function getEntityTypeId()
 	{
 		return \CCrmOwnerType::Deal;
@@ -62,16 +67,28 @@ class DealTarget extends BaseTarget
 		return isset($entity['STAGE_ID']) ? $entity['STAGE_ID'] : '';
 	}
 
-	public function setEntityStatus($statusId)
+	public function getDocumentCategory(): int
+	{
+		$entity = $this->getEntity();
+
+		return (int)$entity['CATEGORY_ID'];
+	}
+
+	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$id = $this->getEntityId();
 
-		$fields = array('STAGE_ID' => $statusId);
+		$fields = ['STAGE_ID' => $statusId];
+		if ($executeBy)
+		{
+			$fields['MODIFY_BY_ID'] = $executeBy;
+		}
+
 		$CCrmDeal = new \CCrmDeal(false);
 		$updateResult = $CCrmDeal->Update($id, $fields, true, true, array(
 			'DISABLE_USER_FIELD_CHECK' => true,
 			'REGISTER_SONET_EVENT' => true,
-			'CURRENT_USER' => 0 //System user
+			'CURRENT_USER' => $executeBy ?? 0 //System user
 		));
 
 		if ($updateResult)
@@ -120,5 +137,10 @@ class DealTarget extends BaseTarget
 			$statuses[$id]['COLOR'] = ($isSuccess ? $successColor : ($isFailure ? $failureColor : $processColor));
 		}
 		return $statuses;
+	}
+
+	public function getDocumentCategoryCode(): string
+	{
+		return 'CATEGORY_ID';
 	}
 }

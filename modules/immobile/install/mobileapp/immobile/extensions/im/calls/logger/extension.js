@@ -146,7 +146,7 @@
 			this.scheduleReconnect();
 		}
 
-		onSocketError()
+		onSocketError(e)
 		{
 			console.error("socket error", e);
 			this.socket = null;

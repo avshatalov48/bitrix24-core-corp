@@ -133,6 +133,10 @@ class BasketBuilder extends Helpers\Order\Builder\BasketBuilder
 					$product['BASKET_CODE'] = $index;
 					$product['BASKET_ID'] = $index;
 				}
+				else
+				{
+					$product['MANUALLY_EDITED'] = 'Y';
+				}
 			}
 
 			$result[$index] = $product;

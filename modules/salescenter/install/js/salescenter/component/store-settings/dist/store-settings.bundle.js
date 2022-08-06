@@ -178,7 +178,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
                 }
               }, 'salescenterContactsCompanyUpdate').then(function (response) {
                 _this6.$app.closeApplication();
-              }).catch(function (result) {
+              })["catch"](function (result) {
                 var errors = BX.prop.getArray(result, "errors", []);
 
                 if (BX.type.isArray(errors) && errors.length > 0) {
@@ -197,7 +197,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
                 }
               }, 'salescenterContactsCompanyAdd').then(function (response) {
                 _this7.$app.closeApplication();
-              }).catch(function (result) {
+              })["catch"](function (result) {
                 var errors = BX.prop.getArray(result, "errors", []);
 
                 if (BX.type.isArray(errors) && errors.length > 0) {

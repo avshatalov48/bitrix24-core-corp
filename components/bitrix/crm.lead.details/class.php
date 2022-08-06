@@ -1,7 +1,6 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Location\Entity\Address\AddressLinkCollection;
@@ -9,12 +8,12 @@ use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\Conversion\LeadConversionScheme;
 use Bitrix\Crm\Tracking;
 use Bitrix\Currency;
-use Bitrix\Catalog;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -1157,51 +1156,52 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 
 		//region Client
 
-		$this->entityFieldInfos[] = array(
+		$this->entityFieldInfos[] = [
 			'name' => 'CLIENT',
 			'title' => Loc::getMessage('CRM_LEAD_FIELD_CLIENT'),
 			'type' => 'client_light',
 			'editable' => true,
-			'data' => array(
-				'compound' => array(
-					array(
+			'data' => [
+				'compound' => [
+					[
 						'name' => 'COMPANY_ID',
 						'type' => 'company',
 						'entityTypeName' => \CCrmOwnerType::CompanyName,
 						'tagName' => \CCrmOwnerType::CompanyName
-					),
-					array(
+					],
+					[
 						'name' => 'CONTACT_IDS',
 						'type' => 'multiple_contact',
 						'entityTypeName' => \CCrmOwnerType::ContactName,
 						'tagName' => \CCrmOwnerType::ContactName
-					)
-				),
-				'map' => array('data' => 'CLIENT_DATA'),
+					]
+				],
+				'categoryParams' => CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::Lead),
+				'map' => ['data' => 'CLIENT_DATA'],
 				'info' => 'CLIENT_INFO',
 				'lastCompanyInfos' => 'LAST_COMPANY_INFOS',
 				'lastContactInfos' => 'LAST_CONTACT_INFOS',
-				'loaders' => array(
-					'primary' => array(
-						CCrmOwnerType::CompanyName => array(
+				'loaders' => [
+					'primary' => [
+						CCrmOwnerType::CompanyName => [
 							'action' => 'GET_CLIENT_INFO',
 							'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get()
-						),
-						CCrmOwnerType::ContactName => array(
+						],
+						CCrmOwnerType::ContactName => [
 							'action' => 'GET_CLIENT_INFO',
 							'url' => '/bitrix/components/bitrix/crm.contact.show/ajax.php?'.bitrix_sessid_get()
-						)
-					),
-					'secondary' => array(
-						CCrmOwnerType::CompanyName => array(
+						]
+					],
+					'secondary' => [
+						CCrmOwnerType::CompanyName => [
 							'action' => 'GET_SECONDARY_ENTITY_INFOS',
 							'url' => '/bitrix/components/bitrix/crm.lead.edit/ajax.php?'.bitrix_sessid_get()
-						)
-					)
-				),
-				'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams()
-			)
-		);
+						]
+					]
+				],
+				'clientEditorFieldsParams' => $this->prepareClientEditorFieldsParams(),
+			]
+		];
 		//endregion
 
 		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
@@ -2117,20 +2117,27 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
 
-		if($this->enableSearchHistory)
+		if ($this->enableSearchHistory)
 		{
-			$this->entityData['LAST_COMPANY_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::Lead);
+			$this->entityData['LAST_COMPANY_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.lead.details',
 					'company',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
+					]
 				)
 			);
-			$this->entityData['LAST_CONTACT_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.lead.details',
 					'contact',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
+					]
 				)
 			);
 		}

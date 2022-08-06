@@ -709,6 +709,11 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 				$this->rawRequisiteData['DATE_MODIFY'] = $curDateTime;
 				$this->rawRequisiteData['CREATED_BY_ID'] = $curUserId;
 				$this->rawRequisiteData['MODIFY_BY_ID'] = $curUserId;
+
+				foreach ($this->requisite->getFileFields() as $fileFieldName)
+				{ // file fields can't be copied
+					unset($this->rawRequisiteData[$fileFieldName]);
+				}
 			}
 
 			// bank details
@@ -880,11 +885,30 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 
 		// RQ fields
 		$rqFieldNames = $this->requisite->getRqFields();
+		$fileFields = $this->requisite->getFileFields();
 		foreach ($rqFieldNames as $rqFieldName)
 		{
 			if (isset($this->formData[$rqFieldName]))
 			{
-				if($rqFieldName === EntityRequisite::ADDRESS)
+				if (in_array($rqFieldName, $fileFields))
+				{
+					$fileFieldValue = $this->formData[$rqFieldName];
+					if ($fileFieldValue)
+					{
+						$allowedFileIds = \Bitrix\Main\UI\FileInputUtility::instance()->checkFiles(
+							mb_strtolower($rqFieldName) . '_uploader', [$fileFieldValue]
+						);
+						if (in_array($fileFieldValue, $allowedFileIds))
+						{
+							$this->rawRequisiteData[$rqFieldName] = $fileFieldValue;
+						}
+					}
+					if ($this->formData[$rqFieldName . '_del'])
+					{
+						$this->rawRequisiteData[$rqFieldName] = null;
+					}
+				}
+				elseif($rqFieldName === EntityRequisite::ADDRESS)
 				{
 					if ($this->isLocationModuleIncluded)
 					{
@@ -1428,6 +1452,9 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 								case 'checkbox':
 									$fieldType = 'boolean';
 									break;
+								case 'image':
+									$fieldType = 'crm_image';
+									break;
 								default:
 									$fieldType = 'text';
 							}
@@ -1778,6 +1805,7 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeId;
 		$this->arResult['ENTITY_ID'] = $this->entityId;
+		$this->arResult['REQUISITE_ID'] = $this->requisiteId;
 
 		if ($this->entityTypeId === CCrmOwnerType::Company)
 		{

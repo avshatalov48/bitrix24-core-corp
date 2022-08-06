@@ -28,6 +28,7 @@ if ($this->startResultCache(600))
 	$this->IncludeComponentTemplate();
 }
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/components/bitrix/intranet.ustat/style.css');
 
 return $arResult['STATUS_INFO'];

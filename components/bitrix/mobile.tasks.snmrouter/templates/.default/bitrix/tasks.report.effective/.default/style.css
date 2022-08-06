@@ -5,8 +5,8 @@
 .mobile-tasks-efficiency-wrap .ui-graph-circle-wrapper {
 	display: block;
 	margin: 0 auto 35px auto;
-	width: 148px;
-	height: 148px;
+	width: 150px;
+	height: 150px;
 }
 
 .mobile-tasks-efficiency-graph {
@@ -101,6 +101,12 @@
 }
 
 .mobile-tasks-efficiency-counter .ui-graph-circle-number {
-	font-size: 58px;
-	line-height: 58px;
+	font-size: 40px;
+	line-height: 40px;
+}
+
+.mobile-tasks-efficiency-counter .ui-graph-circle-number span {
+	right: -20px;
+	font-size: 25px;
+	line-height: 25px;
 }

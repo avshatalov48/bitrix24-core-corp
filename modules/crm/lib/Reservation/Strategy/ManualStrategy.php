@@ -39,11 +39,12 @@ class ManualStrategy implements Strategy
 		}
 
 		$deductedQuantity = $this->getDeductedQuantity($productRowId);
-		$quantity = min($quantity, $currentQuantity - $deductedQuantity);
+		$freeQuantity = $currentQuantity - $deductedQuantity;
 
 		$existReserve = ProductRowReservationTable::getRow([
 			'select' => [
 				'ID',
+				'RESERVE_QUANTITY',
 			],
 			'filter' => [
 				'=ROW_ID' => $productRowId,
@@ -51,12 +52,24 @@ class ManualStrategy implements Strategy
 		]);
 		if ($existReserve)
 		{
+			$existReserveQuantity = (float)$existReserve['RESERVE_QUANTITY'];
+			if ($quantity !== $existReserveQuantity)
+			{
+				$delta = $quantity - $existReserveQuantity;
+				if ($delta > $freeQuantity)
+				{
+					$quantity -= $delta - $freeQuantity;
+				}
+			}
+
 			return ProductRowReservationTable::update($existReserve['ID'], [
 				'RESERVE_QUANTITY' => $quantity,
 				'STORE_ID' => $storeId,
 				'DATE_RESERVE_END' => $dateReserveEnd,
 			]);
 		}
+
+		$quantity = min($quantity, $freeQuantity);
 
 		return ProductRowReservationTable::add([
 			'ROW_ID' => $productRowId,

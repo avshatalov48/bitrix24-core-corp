@@ -92,7 +92,8 @@ else
 				'GRID_ID_SUFFIX' => $categoryID >= 0 ? "C_{$categoryID}" : '',
 				'CATEGORY_ID' => $categoryID,
 				'HIDE_FILTER' => !$applyFilter
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

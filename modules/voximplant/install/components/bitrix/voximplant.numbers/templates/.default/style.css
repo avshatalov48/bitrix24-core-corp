@@ -55,7 +55,7 @@
 }
 .bx-vi-numbers-table>tr>td{
 	padding: 0 13px;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	border-bottom: 1px solid #EDEDED;
 	line-height: 52px;
@@ -120,7 +120,7 @@
 .bx-interface-grid td { vertical-align: middle !important; }
 
 .bx-vi-numbers-table > tr > td {
-	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 5px 13px 7px;
 
 }

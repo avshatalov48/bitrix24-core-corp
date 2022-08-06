@@ -14,6 +14,7 @@ Extension::load("ui.hint");
 Extension::load("ui.alerts");
 Extension::load("ui.buttons");
 Extension::load("ui.buttons.icons");
+Extension::load("ui.design-tokens");
 
 if(!$arResult['BUTTON']['BACKGROUND_COLOR'])
 {
@@ -62,7 +63,7 @@ if (\Bitrix\Main\Loader::includeModule('imconnector'))
 }
 $APPLICATION->SetPageProperty(
 	"BodyClass",
-	$APPLICATION->GetPageProperty("BodyClass") . " no-paddings"
+	$APPLICATION->GetPageProperty("BodyClass") . " no-all-paddings no-background"
 );
 
 

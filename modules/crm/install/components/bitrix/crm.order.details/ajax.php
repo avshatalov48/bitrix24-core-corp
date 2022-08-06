@@ -306,6 +306,13 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 								'ENTITY_ID' => $contactID,
 								'IS_PRIMARY' => $clientCollection->isPrimaryItemExists(\CCrmOwnerType::Contact) ? 'N' : 'Y'
 							]);
+
+							\CCrmBizProcHelper::AutoStartWorkflows(
+							    CCrmOwnerType::Contact,
+								$contactID,
+							    \CCrmBizProcEventType::Create,
+							    $arErrors
+							);
 						}
 					}
 					else
@@ -1862,6 +1869,14 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			'SITE_ID' => $order->getSiteId(),
 			'CURRENCY' => $order->getCurrency(),
 		);
+		
+		$options = [
+			'FILL_PRODUCT_PROPERTIES' => 'Y',
+		];
+		if (isset($this->request['USE_MERGE']))
+		{
+			$options['USE_MERGE'] = $this->request['USE_MERGE'] === 'Y' ? 'Y' : 'N';
+		}
 
 		if(!Loader::includeModule('catalog'))
 		{
@@ -1879,7 +1894,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			$basket,
 			$basketItemFields,
 			$context,
-			['FILL_PRODUCT_PROPERTIES' => 'Y']
+			$options
 		);
 
 		if($res->isSuccess())

@@ -589,7 +589,14 @@ abstract class BaseComponent extends Crm\Component\Base
 		{
 			return $result->addError(new Main\Error('field title is empty'));
 		}
-		if (!$userPermissions->checkAddPermissions($entityTypeID))
+		$isMyCompany = isset($entityData['isMyCompany']) && $entityData['isMyCompany'] === true;
+		if (
+			!$userPermissions->checkAddPermissions($entityTypeID)
+			|| (
+				$isMyCompany
+				&& !$userPermissions->canWriteConfig()
+			)
+		)
 		{
 			return $result->addError(new Main\Error(Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
 		}
@@ -598,9 +605,10 @@ abstract class BaseComponent extends Crm\Component\Base
 		{
 			$fields = [
 				'TITLE' => $title,
+				'CATEGORY_ID' => isset($entityData['categoryId']) ? (int)$entityData['categoryId'] : 0,
 			];
 			$fields['OPENED'] = \Bitrix\Crm\Settings\CompanySettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
-			if (isset($entityData['isMyCompany']) && $entityData['isMyCompany'] === true)
+			if ($isMyCompany)
 			{
 				$fields['IS_MY_COMPANY'] = 'Y';
 			}
@@ -620,6 +628,7 @@ abstract class BaseComponent extends Crm\Component\Base
 					$fields
 				);
 			}
+			$fields['CATEGORY_ID'] = isset($entityData['categoryId']) ? (int)$entityData['categoryId'] : 0;
 			$fields['OPENED'] = \Bitrix\Crm\Settings\ContactSettings::getCurrent()->getOpenedFlag() ? 'Y' : 'N';
 		}
 		else
@@ -729,7 +738,14 @@ abstract class BaseComponent extends Crm\Component\Base
 		$entityTypeID = $identifier->getEntityTypeId();
 		$entityID = $identifier->getEntityId();
 
-		if (!$userPermissions->checkUpdatePermissions($entityTypeID, $entityID))
+		$isMyCompany = isset($entityData['isMyCompany']) && $entityData['isMyCompany'] === true;
+		if (
+			!$userPermissions->checkUpdatePermissions($entityTypeID, $entityID)
+			|| (
+				$isMyCompany
+				&& !$userPermissions->canWriteConfig()
+			)
+		)
 		{
 			return $result->addError(new Main\Error(Main\Localization\Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED')));
 		}

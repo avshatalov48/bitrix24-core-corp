@@ -31,6 +31,10 @@ export class OrderCreationModel extends VuexBuilderModel
 				discount: null,
 				result: null,
 			},
+			/**
+			 * ID of selected pay systems available for order payment
+			 */
+			availablePaySystemsIds: [],
 		}
 	}
 
@@ -73,6 +77,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			setPersonTypeId: ({ commit }, payload) =>
 			{
 				commit('setPersonTypeId', payload);
+			},
+			setAvailablePaySystemsIds: ({ commit }, payload) =>
+			{
+				commit('setAvailablePaySystemsIds', payload);
 			},
 		}
 	}
@@ -119,6 +127,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			getPersonTypeId: state =>
 			{
 				return state.personTypeId;
+			},
+			getAvailablePaySystemsIds: state =>
+			{
+				return state.availablePaySystemsIds;
 			},
 		}
 	}
@@ -182,6 +194,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			setPersonTypeId: (state, payload) =>
 			{
 				state.personTypeId = payload;
+			},
+			setAvailablePaySystemsIds: (state, payload) =>
+			{
+				state.availablePaySystemsIds = payload;
 			},
 			enableSubmit: (state) =>
 			{

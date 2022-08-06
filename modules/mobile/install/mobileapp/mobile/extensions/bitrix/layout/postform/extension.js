@@ -1056,6 +1056,8 @@
 					let matches = null;
 					let realPosition = this.postTextCursorPosition;
 
+					let indices = [];
+
 					for (let key in recipients)
 					{
 						if (!recipients.hasOwnProperty(key))
@@ -1073,8 +1075,6 @@
 
 						regexList.forEach(regex =>
 						{
-							let indices = [];
-
 							while ((matches = regex.full.exec(this.postText)))
 							{
 								indices.push({
@@ -1083,16 +1083,20 @@
 									length: matches[0].length
 								});
 							}
+						});
 
-							indices.forEach((item) => {
-								if (
-									(item.type === 'end' && item.index <= realPosition)
-									|| (item.type === 'start' && item.index < realPosition)
-								)
-								{
-									realPosition += item.length;
-								}
-							});
+						indices.sort((a, b) => {
+							if (a.index === b.index) { return 0; } return (a.index < b.index) ? -1 : 1;
+						});
+
+						indices.forEach((item) => {
+							if (
+								(item.type === 'end' && item.index <= realPosition)
+								|| (item.type === 'start' && item.index < realPosition)
+							)
+							{
+								realPosition += item.length;
+							}
 						});
 
 						const before = this.postText.substr(0, (keyboard ? realPosition-1 : realPosition));

@@ -55,13 +55,16 @@ class OrderBuilderCrm extends OrderBuilder
 			$fields['SITE_ID'] = SITE_ID;
 		}
 
-		if (!empty($fields['CLIENT']['COMPANY_ID']))
+		if (empty($fields['PERSON_TYPE_ID']))
 		{
-			$fields['PERSON_TYPE_ID'] = PersonType::getCompanyPersonTypeId();
-		}
-		else
-		{
-			$fields['PERSON_TYPE_ID'] = PersonType::getContactPersonTypeId();
+			if (!empty($fields['CLIENT']['COMPANY_ID']))
+			{
+				$fields['PERSON_TYPE_ID'] = PersonType::getCompanyPersonTypeId();
+			}
+			else
+			{
+				$fields['PERSON_TYPE_ID'] = PersonType::getContactPersonTypeId();
+			}
 		}
 
 		if (!isset($fields['RESPONSIBLE_ID']))

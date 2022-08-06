@@ -195,6 +195,13 @@ if(typeof(BX.Crm.DedupeWizardConfigurationDialog) === "undefined")
 
 					this._criterionCheckBoxes.push(criterionCheckBox);
 
+					var labelClassName = "crm-dedupe-wizard-search-settings-list-item";
+
+					if (typeName.substr(0,9) === "VOLATILE_")
+					{
+						labelClassName += " volatile";
+					}
+
 					this._criterionList.appendChild(
 						BX.create("li",
 							{
@@ -204,7 +211,7 @@ if(typeof(BX.Crm.DedupeWizardConfigurationDialog) === "undefined")
 										BX.create("label",
 											{
 												attrs: { for: extendedId },
-												props: { className: "crm-dedupe-wizard-search-settings-label" },
+												props: { className: labelClassName },
 												children:
 													[
 														criterionCheckBox,

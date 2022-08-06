@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 $arActivityDescription = array(
@@ -23,11 +24,8 @@ $arActivityDescription = array(
 	),
 );
 
-if (CModule::IncludeModule('bitrix24'))
+$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
+if ($region !== null && !in_array($region, ['ru', 'kz', 'by']))
 {
-	$zone = \CBitrix24::getPortalZone();
-	if (!in_array($zone, ['ru', 'kz', 'by']))
-	{
-		$arActivityDescription['FILTER'] = ['EXCLUDE' => [\CBPHelper::DISTR_B24]];
-	}
+	$arActivityDescription['EXCLUDED'] = true;
 }

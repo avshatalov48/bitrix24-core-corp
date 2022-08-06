@@ -54,6 +54,7 @@
 	margin-bottom: 20px;
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .salescenter-app-chat-wrapper .salescenter-app-right-side {
@@ -767,11 +768,13 @@
 
 .salescenter-app-payment-by-sms-item {
 	display: block;
+	overflow: hidden;
 	position: relative;
 	min-height: 20px;
 	padding: 16px 30px 5px 59px;
 	margin-bottom: 5px;
 	background: #fff;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .salescenter-app-payment-by-sms-item-disabled {
@@ -1334,7 +1337,7 @@
 	background: #fff;
 	-webkit-box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .14);
 	        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .14);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-sm, 2px);
 	margin: 7px;
 	cursor: pointer;
 	-webkit-transition: 180ms;
@@ -1544,6 +1547,7 @@
 .salescenter-app-payment-by-sms-timeline {
 	background: #edf1f3;
 	padding: 21px 12px 21px 16px;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .salescenter-app-payment-by-sms-timeline .salescenter-app-payment-by-sms-item-counter:after {

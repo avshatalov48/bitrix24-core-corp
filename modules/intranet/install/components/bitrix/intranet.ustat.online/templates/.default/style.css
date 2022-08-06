@@ -4,7 +4,7 @@
 	align-items: center;
 	padding: 11px 13px 10px 13px;
 	margin-bottom: 15px;
-	width: 262px;
+	width: 263px;
 	height: 73px;
 	background-color: #fff;
 	box-sizing: border-box;
@@ -20,7 +20,9 @@
 	justify-content: center;
 	width: 28px;
 	height: 13px;
-	font: 9px 'OpenSans-Bold', serif;
+	font: 9px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
+	border-radius: var(--ui-border-radius-2xs);
 	color: #fff;
 	text-transform: uppercase;
 	background-color: #ff5752;
@@ -213,7 +215,8 @@
 
 .intranet-ustat-online-text {
 	display: inline-block;
-	font: 10px 'OpenSans-SemiBold', serif;
+	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: rgba(82,92,105,.5);
 	text-transform: uppercase;
 	white-space: nowrap;
@@ -224,13 +227,15 @@
 .intranet-ustat-online-value {
 	display: inline-block;
 	margin: 0 3px;
-	font: 10px 'OpenSans-SemiBold', serif;
+	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
 }
 
 .intranet-ustat-online-info-text-resize .intranet-ustat-online-text,
 .intranet-ustat-online-info-text-resize .intranet-ustat-online-value {
-	font: 9px 'OpenSans-SemiBold', serif;
+	font: 9px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .intranet-ustat-online-helper-wrap {

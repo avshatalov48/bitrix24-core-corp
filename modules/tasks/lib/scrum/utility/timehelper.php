@@ -6,7 +6,7 @@ class TimeHelper
 {
 	private $userId;
 
-	private $offsets = [];
+	private static $offsets = [];
 
 	public function __construct(int $userId)
 	{
@@ -20,11 +20,11 @@ class TimeHelper
 
 	private function getOffset($userId = false)
 	{
-		if (!isset($this->offsets[$userId]))
+		if (!isset(self::$offsets[$userId]))
 		{
-			$this->offsets[$userId] = \CTimeZone::getOffset($userId, true);
+			self::$offsets[$userId] = \CTimeZone::getOffset($userId, true);
 		}
 
-		return $this->offsets[$userId];
+		return self::$offsets[$userId];
 	}
 }

@@ -165,6 +165,7 @@ else
 				else
 					echo 'false';
 				?>,
+				isDragged: [],
                 events: {
                     onGutterResize: function (gutterOffset) {
                         BX.userOptions.save('tasks', 'gantt', 'gutter_offset', gutterOffset);
@@ -226,59 +227,99 @@ else
                     onTaskChange: function(updatedTasks) {
                         for (var i = 0; i < updatedTasks.length; i++)
 						{
-                            if (updatedTasks[i].changes.length)
+							if (!updatedTasks[i].changes.length)
 							{
-                                var delta = {};
+								continue;
+							}
 
-                                if (BX.util.in_array('dateDeadline', updatedTasks[i].changes))
-								{
-                                    delta['DEADLINE'] = tasksFormatDate(updatedTasks[i].dateDeadline);
-                                }
-                                if (BX.util.in_array('dateStart', updatedTasks[i].changes))
-								{
-                                    delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
-									if (updatedTasks[i].dateEnd)
-									{
-										delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
-									}
-                                }
-                                if (BX.util.in_array('dateEnd', updatedTasks[i].changes))
-								{
-                                    delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
-									if (updatedTasks[i].dateStart)
-									{
-										delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
-									}
-                                }
+							var delta = {};
 
-								BX.ajax.runComponentAction('bitrix:tasks.task', 'legacyUpdate', {
-									mode: 'class',
-									data: {
-										taskId: updatedTasks[i].task.id,
-										data: delta
-									}
-								}).then(function(response) {
-									if (
-										!response.status
-										|| response.status !== 'success'
-									)
-									{
-										BX.reload();
-										return;
-									}
+							if (BX.util.in_array('dateDeadline', updatedTasks[i].changes))
+							{
+								delta['DEADLINE'] = tasksFormatDate(updatedTasks[i].dateDeadline);
+							}
+							if (BX.util.in_array('dateStart', updatedTasks[i].changes))
+							{
+								delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
+								if (updatedTasks[i].dateEnd)
+								{
+									delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
+								}
+							}
+							if (BX.util.in_array('dateEnd', updatedTasks[i].changes))
+							{
+								delta['END_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateEnd);
+								if (updatedTasks[i].dateStart)
+								{
+									delta['START_DATE_PLAN'] = tasksFormatDate(updatedTasks[i].dateStart);
+								}
+							}
 
-									void BX.ajax.runAction('tasks.analytics.hit', {
-										analyticsLabel: {
-											gantt: 'Y',
-											action: 'taskChangeDates',
-											taskId: response.data.ID
-										}
-									});
+							BX.ajax.runComponentAction('bitrix:tasks.task', 'legacyUpdate', {
+								mode: 'class',
+								data: {
+									taskId: updatedTasks[i].task.id,
+									data: delta,
+									parameters: {
+										RETURN_OPERATION_RESULT_DATA: true,
+										THROTTLE_MESSAGES: true
+									}
+								}
+							}).then(function(response) {
+								if (
+									!response.status
+									|| response.status !== 'success'
+								)
+								{
+									BX.reload();
+									return;
+								}
+
+								void BX.ajax.runAction('tasks.analytics.hit', {
+									analyticsLabel: {
+										gantt: 'Y',
+										action: 'taskChangeDates',
+										taskId: response.data.ID
+									}
 								});
-                            }
+
+								var shifted = response.data.OPERATION_RESULT.SHIFT_RESULT;
+								this.settings.isDragged.push(parseInt(response.data.ID));
+
+								for (var taskId in shifted)
+								{
+									if (this.settings.isDragged.indexOf(parseInt(taskId)) !== -1)
+									{
+										continue;
+									}
+
+									var task = ganttChart.getTaskById(taskId);
+									if (task)
+									{
+										var s = shifted[taskId].START_DATE_PLAN_STRUCT;
+										var e = shifted[taskId].END_DATE_PLAN_STRUCT;
+
+										ganttChart.updateTask(taskId, {
+											dateStart: new Date(s.YEAR, s.MONTH - 1, s.DAY, s.HOUR, s.MINUTE, s.SECOND),
+											dateEnd: new Date(e.YEAR, e.MONTH - 1, e.DAY, e.HOUR, e.MINUTE, e.SECOND)
+										});
+
+										this.settings.isDragged.push(parseInt(taskId));
+									}
+								}
+							}.bind(this));
                         }
                         ganttAux.notificationRelease();
                     },
+					onTaskUpdate: function (task) {
+						var change = this
+							.settings
+							.events
+							.onTaskChange
+							.bind(this);
+
+						change([task.getEventObject(["dateStart", "dateEnd"])]);
+					},
                     onTaskMove: function (sourceId, targetId, before, newProjectId, newParentId) {
                         var data = {
                             sourceId: sourceId,
@@ -323,7 +364,6 @@ else
 							dep === null
 							|| !dep.from
 							|| !dep.to
-							|| dep.type <= 0
 						)
 						{
 							return;

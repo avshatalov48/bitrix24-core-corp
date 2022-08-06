@@ -1,18 +1,22 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 use Bitrix\Crm\Order;
 
-class CBPCrmOrderPayActivity
-	extends CBPActivity
+class CBPCrmOrderPayActivity extends CBPActivity
 {
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+
+		$this->arProperties = [
 			'Title' => '',
 			'OrderId' => null,
-		);
+		];
 	}
 
 	public function Execute()
@@ -27,6 +31,7 @@ class CBPCrmOrderPayActivity
 		{
 			$orderId = reset($orderId);
 		}
+		$this->writeDebugInfo($this->getDebugInfo());
 
 		if(!$orderId)
 		{
@@ -55,6 +60,14 @@ class CBPCrmOrderPayActivity
 				}
 			}
 		}
+		else
+		{
+			$this->writeToTrackingService(
+				GetMessage('CRM_BP_OPAY_ORDER_NOT_FOUND'),
+				0,
+				CBPTrackingType::Error,
+			);
+		}
 
 		return CBPActivityExecutionStatus::Closed;
 	}
@@ -75,15 +88,20 @@ class CBPCrmOrderPayActivity
 			'siteId' => $siteId
 		]);
 
-		$dialog->setMap([
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
 			'OrderId' => [
 				'Name' => GetMessage('CRM_BP_OPAY_ORDER_ID'),
 				'FieldName' => 'order_id',
 				'Type' => 'int'
 			],
-		]);
-
-		return $dialog;
+		];
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)

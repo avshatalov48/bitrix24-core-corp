@@ -122,8 +122,19 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		if (
-			!\CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $groupId, "tasks", "edit_tasks")
-			&& !\CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $groupId, "tasks", "create_tasks")
+			!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$groupId,
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
+			&&
+			!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$groupId,
+				'tasks',
+				'create_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return false;

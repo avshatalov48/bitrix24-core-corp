@@ -252,8 +252,9 @@ elseif($action === 'SAVE')
 		$clientData = array();
 	}
 
-	$createdEntities = array();
-	$updateEntityInfos = array();
+	$createdEntities = [];
+	$updateEntityInfos = [];
+	$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::Lead);
 
 	$companyID = 0;
 	$companyEntity = new \CCrmCompany(false);
@@ -264,6 +265,14 @@ elseif($action === 'SAVE')
 		{
 			$companyItem = $companyData[0];
 			$companyID = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
+			$categoryId = isset($companyItem['categoryId']) ? (int)$companyItem['categoryId'] : 0;
+
+			// unlikely situation but check in case of mismatch
+			if($categoryId !== $categoryParams[CCrmOwnerType::Company]['categoryId'])
+			{
+				__CrmLeadDetailsEndJsonResponse(['ERROR' => 'INVALID CLIENT COMPANY CATEGORY ID!']);
+			}
+
 			if($companyID <= 0)
 			{
 				$companyID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
@@ -299,12 +308,13 @@ elseif($action === 'SAVE')
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
 				'crm.lead.details',
 				'company',
-				array(
-					array(
+				[
+					[
 						'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-						'ENTITY_ID' => $fields['COMPANY_ID']
-					)
-				)
+						'ENTITY_ID' => $fields['COMPANY_ID'],
+						'CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
+					]
+				]
 			);
 		}
 	}
@@ -324,6 +334,14 @@ elseif($action === 'SAVE')
 			}
 
 			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
+			$categoryId = isset($contactItem['categoryId']) ? (int)$contactItem['categoryId'] : 0;
+
+			// unlikely situation but check in case of mismatch
+			if($categoryId !== $categoryParams[CCrmOwnerType::Contact]['categoryId'])
+			{
+				__CrmLeadDetailsEndJsonResponse(['ERROR' => 'INVALID CLIENT CONTACT CATEGORY ID!']);
+			}
+
 			if($contactID <= 0)
 			{
 				$contactID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
@@ -377,10 +395,14 @@ elseif($action === 'SAVE')
 		$fields['CONTACT_IDS'] = $contactIDs;
 		if(!empty($fields['CONTACT_IDS']))
 		{
-			$contactBindings = array();
+			$contactBindings = [];
 			foreach($fields['CONTACT_IDS'] as $contactID)
 			{
-				$contactBindings[] = array('ENTITY_TYPE_ID' => CCrmOwnerType::Contact, 'ENTITY_ID' => $contactID);
+				$contactBindings[] = [
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'ENTITY_ID' => $contactID,
+					'CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
+				];
 			}
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
 				'crm.lead.details',
@@ -515,6 +537,11 @@ elseif($action === 'SAVE')
 			}
 
 			Tracking\UI\Details::appendEntityFieldValue($fields, $_POST);
+
+			if ($enableProductRows)
+			{
+				$fields[\Bitrix\Crm\Item::FIELD_NAME_PRODUCTS] = $productRows;
+			}
 
 			$entity = new \CCrmLead(!CCrmPerms::IsAdmin());
 			if($isNew)
@@ -886,6 +913,10 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	if (!\CCrmLead::CheckReadPermission($ID))
 	{
 		__CrmLeadDetailsEndJsonResponse(['ERROR' => 'Access denied.']);
+	}
+	if($ID > 0 && !\CCrmLead::Exists($ID))
+	{
+		__CrmLeadDetailsEndJsonResponse(['ERROR' => Main\Localization\Loc::getMessage('CRM_LEAD_NOT_FOUND')]);
 	}
 
 	$enableConfigScopeToggle = !isset($_POST['ENABLE_CONFIG_SCOPE_TOGGLE'])

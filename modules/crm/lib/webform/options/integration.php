@@ -551,12 +551,10 @@ final class Integration
 		$form = $service->getForm($type);
 		$form->setAccountId($accountId);
 
-		if (!$form->register($formId))
+		$registerResult = $form->register($formId);
+		if (!$registerResult->isSuccess())
 		{
-			$result->addError(
-				new Error(Loc::getMessage('CRM_WEBFORM_OPTIONS_LINK_REGISTER_FAILED'))
-			);
-
+			$result->addErrors($registerResult->getErrors());
 			return $result;
 		}
 

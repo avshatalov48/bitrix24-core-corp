@@ -44,6 +44,9 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 		$currentResponsibleId = (int)$this->getCurrentResponsibleId($responsibleFieldName);
 
 		$newResponsibleId = $this->getTargetResponsibleId($currentResponsibleId);
+		$this->writeDebugInfo($this->getDebugInfo([
+			'NewResponsibleId' => isset($newResponsibleId) ? "user_{$newResponsibleId}" : null,
+		]));
 
 		if ($newResponsibleId)
 		{
@@ -188,6 +191,16 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
+		$dialog->setMap(static::getPropertiesDialogMap($documentType));
+		$dialog->setRuntimeData([
+			'CanUseAbsence' => self::canUseAbsence(),
+		]);
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesDialogMap(array $documentType): array
+	{
 		$map = [
 			'Responsible' => [
 				'Name' => GetMessage('CRM_CHANGE_RESPONSIBLE_NEW'),
@@ -236,12 +249,21 @@ class CBPCrmChangeResponsibleActivity extends CBPActivity
 			}
 		}
 
-		$dialog->setMap($map);
-		$dialog->setRuntimeData([
-			'CanUseAbsence' => self::canUseAbsence(),
-		]);
+		return $map;
+	}
 
-		return $dialog;
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$map = static::getPropertiesDialogMap($documentType);
+		unset($map['ModifiedBy']);
+
+		$map['NewResponsibleId'] = [
+			'Name' => Main\Localization\Loc::getMessage('CRM_CHANGE_NEW_RESPONSIBLE_ID'),
+			'FieldName' => 'new_responsible_id',
+			'Type' => \Bitrix\Bizproc\FieldType::USER,
+		];
+
+		return $map;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)

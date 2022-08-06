@@ -1,7 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Salescenter = this.BX.Salescenter || {};
 this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
-(function (exports,main_core,main_popup,salescenter_manager,ui_vue) {
+(function (exports,main_core_events,main_core,main_popup,salescenter_manager,ui_vue) {
 	'use strict';
 
 	var Error = {
@@ -16,11 +16,13 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      var _this = this;
 
 	      this.error.fixer().then(function () {
-	        return _this.onConfigure();
+	        return _this.onConfigure(_this.error);
 	      });
 	    },
-	    onConfigure: function onConfigure() {
-	      this.$emit('on-configure');
+	    onConfigure: function onConfigure(data) {
+	      this.$emit('on-configure', new main_core_events.BaseEvent({
+	        data: data
+	      }));
 	    }
 	  },
 	  template: "\n\t\t<div class=\"ui-alert ui-alert-warning ui-alert-xs ui-alert-icon-danger salescenter-app-payment-by-sms-item-container-alert\">\n\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t{{error.text}}\n\t\t\t</span>\n\t\t\t<span\n\t\t\t\tv-if=\"error.fixer && error.fixText\"\n\t\t\t\tclass=\"salescenter-app-payment-by-sms-item-container-alert-config\"\n\t\t\t\t@click=\"openSlider()\"\n\t\t\t>\n\t\t\t\t{{error.fixText}}\n\t\t\t</span>\n\t\t</div>\n\t"
@@ -394,5 +396,5 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	exports.SenderList = SenderList;
 	exports.UserAvatar = UserAvatar;
 
-}((this.BX.Salescenter.Component.StageBlock = this.BX.Salescenter.Component.StageBlock || {}),BX,BX.Main,BX.Salescenter,BX));
+}((this.BX.Salescenter.Component.StageBlock = this.BX.Salescenter.Component.StageBlock || {}),BX.Event,BX,BX.Main,BX.Salescenter,BX));
 //# sourceMappingURL=sms-message.bundle.js.map

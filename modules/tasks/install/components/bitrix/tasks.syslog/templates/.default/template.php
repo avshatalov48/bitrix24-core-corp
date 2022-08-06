@@ -45,7 +45,18 @@ $arParams =& $helper->getComponent()->arParams; // make $arParams the same varia
 						<?if(count($item['ERROR'])):?>
 							<ul class="task-log-errors">
 							<?foreach($item['ERROR'] as $error):?>
-								<li><?=htmlspecialcharsbx($error->getMessage())?></li>
+								<?php if ($error->getCode() === 'ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED'): ?>
+									<li>
+										<?php
+											$msg = htmlspecialcharsbx($error->getMessage());
+											$msg = str_replace('#LINK#', "<a href='". \Bitrix\UI\Util::getArticleUrlByCode('11705476') ."'>".Loc::getMessage('TASKS_RIGHTS_MORE_LINK')."</a>", $msg);
+										?>
+										<?= $msg; ?>
+									</li>
+								<?php else: ?>
+									<li><?=htmlspecialcharsbx($error->getMessage())?></li>
+								<?php endif; ?>
+
 							<?endforeach?>
 							</ul>
 						<?else:?>

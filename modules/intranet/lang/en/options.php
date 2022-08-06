@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["HRXML_DESC_PERSONAL_ID_SCHEME_NAME"] = "HRXML, SchemeName value for private person ID";
 $MESS["HRXML_PERSONAL_ID_SCHEME_NAME"] = "PrivatePerson";
 $MESS["INTR_CHOOSE_IBTYPE"] = "--- choose inf. block type ---";
@@ -62,6 +62,7 @@ $MESS["INTR_OPTION_SEARCH_CONVERTER_EXTENSION"] = "Extension";
 $MESS["INTR_OPTION_SEARCH_CONVERTER_PROGRAM"] = "Command";
 $MESS["INTR_OPTION_SEARCH_USER_URL"] = "Employee Profile Path Template";
 $MESS["INTR_OPTION_SEARCH_ZIP_EXTENTION_WARNING"] = "Note! The function \"zip_open\" was not found (\"zip\" extension is not enabled?)";
+$MESS["INTR_OPTION_STRESSLEVEL_AVAILABLE"] = "Allow to measure and show stress level in user profile";
 $MESS["INTR_OPTION_TZ"] = "Time Zone Settings";
 $MESS["INTR_OPTION_TZ_HINT"] = "See <a href=\"http://msdn.microsoft.com/en-us/library/cc313169.aspx\" target=\"_blank\">[MS-OUTSPS] 2.2.4.8 TransitionDate</a>";
 $MESS["INTR_OPTION_TZ_SERVER"] = "Server time";
@@ -75,9 +76,9 @@ $MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_arab"] = "First Friday of April (Arabic c
 $MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_cuba"] = "First Day of April (Cuba, Iraq, Syria)";
 $MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_other"] = "other --&gt;";
 $MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_pacific"] = "Last Sunday of October (Australia)";
-$MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_ru"] = "last Sunday in March (EU, Russia)";
+$MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_ru"] = "Last Sunday in March (EU, Russia)";
 $MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_southam"] = "First Sunday of October (South America)";
-$MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_usa"] = "second Sunday in March (USA, Canada)";
+$MESS["INTR_OPTION_TZ_TO_DAYLIGHT_DATE_usa"] = "Second Sunday in March (USA, Canada)";
 $MESS["INTR_OPTION_TZ_TO_STANDARD_DATE"] = "Daylight saving time (DST) ends";
 $MESS["INTR_OPTION_TZ_TO_STANDARD_DATE_north"] = "Last Sunday in October (Northern Hemisphere)";
 $MESS["INTR_OPTION_TZ_TO_STANDARD_DATE_other"] = "other --&gt;";
@@ -145,5 +146,3 @@ $MESS["MAIN_OPT_APPLY_TITLE"] = "Save changes and stay in the form";
 $MESS["MAIN_OPT_CANCEL"] = "Cancel";
 $MESS["MAIN_OPT_CANCEL_TITLE"] = "Do not save changes and return";
 $MESS["MAIN_OPT_SAVE_TITLE"] = "Save changed and return";
-$MESS["INTR_OPTION_STRESSLEVEL_AVAILABLE"] = "Allow to measure and show stress level in user profile";
-?>

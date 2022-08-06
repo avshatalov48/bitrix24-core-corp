@@ -11,7 +11,9 @@ return [
 		'main.core.events',
 		'ui.sidepanel.layout',
 		'ui.label',
+		'ui.notification',
 		'main.core',
+		'ui.dialogs.messagebox',
 	],
 	'skip_core' => false,
 ];

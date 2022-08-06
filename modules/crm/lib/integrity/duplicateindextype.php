@@ -3,6 +3,8 @@ namespace Bitrix\Crm\Integrity;
 use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityBankDetail;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
+use Bitrix\Crm\Integrity\Volatile\TypeInfo;
 use Bitrix\Main;
 use Bitrix\Crm\CommunicationType;
 
@@ -36,6 +38,15 @@ class DuplicateIndexType
 	const RQ_IBAN = 				0x200000;
 	const RQ_IIK = 					0x400000;
 
+	// Volatile types
+	public const VOLATILE_1 = 0x02000000;
+	public const VOLATILE_2 = 0x04000000;
+	public const VOLATILE_3 = 0x08000000;
+	public const VOLATILE_4 = 0x10000000;
+	public const VOLATILE_5 = 0x20000000;
+	public const VOLATILE_6 = 0x40000000;
+	public const VOLATILE_7 = 0x80000000;
+
 	const BANK_DETAIL = 			0x700000; 	/*  RQ_ACC_NUM|RQ_IBAN|RQ_IIK  */
 	const REQUISITE = 				0xFC00; 	/*  RQ_INN|RQ_OGRN|RQ_OGRNIP|RQ_BIN|RQ_EDRPOU|RQ_VAT_ID  */
 	const COMMUNICATION = 			0x18003FC; 	/*  COMMUNICATION_PHONE|COMMUNICATION_EMAIL|COMMUNICATION_FACEBOOK|COMMUNICATION_TELEGRAM|COMMUNICATION_VK|COMMUNICATION_SKYPE|COMMUNICATION_BITRIX24|COMMUNICATION_OPENLINE|COMMUNICATION_VIBER */
@@ -63,6 +74,14 @@ class DuplicateIndexType
 	const RQ_ACC_NUM_NAME = 'RQ_ACC_NUM';
 	const RQ_IBAN_NAME = 'RQ_IBAN';
 	const RQ_IIK_NAME = 'RQ_IIK';
+
+	public const VOLATILE_1_NAME = 'VOLATILE_1';
+	public const VOLATILE_2_NAME = 'VOLATILE_2';
+	public const VOLATILE_3_NAME = 'VOLATILE_3';
+	public const VOLATILE_4_NAME = 'VOLATILE_4';
+	public const VOLATILE_5_NAME = 'VOLATILE_5';
+	public const VOLATILE_6_NAME = 'VOLATILE_6';
+	public const VOLATILE_7_NAME = 'VOLATILE_7';
 
 	const DEFAULT_SCOPE = '';
 
@@ -102,6 +121,13 @@ class DuplicateIndexType
 			|| $typeID === self::RQ_ACC_NUM
 			|| $typeID === self::RQ_IBAN
 			|| $typeID === self::RQ_IIK
+			|| $typeID === self::VOLATILE_1
+			|| $typeID === self::VOLATILE_2
+			|| $typeID === self::VOLATILE_3
+			|| $typeID === self::VOLATILE_4
+			|| $typeID === self::VOLATILE_5
+			|| $typeID === self::VOLATILE_6
+			|| $typeID === self::VOLATILE_7
 			|| $typeID === self::DENOMINATION
 			|| $typeID === self::COMMUNICATION
 			|| $typeID === self::REQUISITE
@@ -126,7 +152,7 @@ class DuplicateIndexType
 			return '';
 		}
 
-		$results = array();
+		$results = [];
 		if(($typeID & self::PERSON) !== 0)
 		{
 			$results[] = self::PERSON_NAME;
@@ -210,6 +236,34 @@ class DuplicateIndexType
 		if(($typeID & self::RQ_IIK) !== 0)
 		{
 			$results[] = self::RQ_IIK_NAME;
+		}
+		if(($typeID & self::VOLATILE_1) !== 0)
+		{
+			$results[] = self::VOLATILE_1_NAME;
+		}
+		if(($typeID & self::VOLATILE_2) !== 0)
+		{
+			$results[] = self::VOLATILE_2_NAME;
+		}
+		if(($typeID & self::VOLATILE_3) !== 0)
+		{
+			$results[] = self::VOLATILE_3_NAME;
+		}
+		if(($typeID & self::VOLATILE_4) !== 0)
+		{
+			$results[] = self::VOLATILE_4_NAME;
+		}
+		if(($typeID & self::VOLATILE_5) !== 0)
+		{
+			$results[] = self::VOLATILE_5_NAME;
+		}
+		if(($typeID & self::VOLATILE_6) !== 0)
+		{
+			$results[] = self::VOLATILE_6_NAME;
+		}
+		if(($typeID & self::VOLATILE_7) !== 0)
+		{
+			$results[] = self::VOLATILE_7_NAME;
 		}
 		return implode('|', $results);
 	}
@@ -338,6 +392,34 @@ class DuplicateIndexType
 		{
 			return self::RQ_IIK;
 		}
+		if($typeName ===  self::VOLATILE_1_NAME)
+		{
+			return self::VOLATILE_1;
+		}
+		if($typeName ===  self::VOLATILE_2_NAME)
+		{
+			return self::VOLATILE_2;
+		}
+		if($typeName ===  self::VOLATILE_3_NAME)
+		{
+			return self::VOLATILE_3;
+		}
+		if($typeName ===  self::VOLATILE_4_NAME)
+		{
+			return self::VOLATILE_4;
+		}
+		if($typeName ===  self::VOLATILE_5_NAME)
+		{
+			return self::VOLATILE_5;
+		}
+		if($typeName ===  self::VOLATILE_6_NAME)
+		{
+			return self::VOLATILE_6;
+		}
+		if($typeName ===  self::VOLATILE_7_NAME)
+		{
+			return self::VOLATILE_7;
+		}
 
 		return self::UNDEFINED;
 	}
@@ -392,6 +474,31 @@ class DuplicateIndexType
 					self::$allDescriptions[LANGUAGE_ID][$indexType][$scope] = $description;
 				}
 			}
+
+			// Volatile types
+			$volatileTypeInfo = TypeInfo::getInstance()->get();
+			foreach ($volatileTypeInfo as $volatileTypeId => $info)
+			{
+				$scope = '';
+				if (
+					isset($info['CATEGORY_INFO']['params']['countryId'])
+					&& isset($info['CATEGORY_INFO']['categoryId'])
+				)
+				{
+					$countryId = $info['CATEGORY_INFO']['params']['countryId'];
+					$categoryId = $info['CATEGORY_INFO']['categoryId'];
+					switch ($categoryId)
+					{
+						case FieldCategory::REQUISITE:
+							$scope = EntityRequisite::formatDuplicateCriterionScope($countryId);
+							break;
+						case FieldCategory::BANK_DETAIL:
+							$scope = EntityBankDetail::formatDuplicateCriterionScope($countryId);
+							break;
+					}
+				}
+				self::$allDescriptions[LANGUAGE_ID][$volatileTypeId][$scope] = $info['DESCRIPTION'];
+			}
 		}
 
 		return self::$allDescriptions[LANGUAGE_ID];
@@ -430,6 +537,13 @@ class DuplicateIndexType
 			|| $typeID === self::RQ_ACC_NUM
 			|| $typeID === self::RQ_IBAN
 			|| $typeID === self::RQ_IIK
+			|| $typeID === self::VOLATILE_1
+			|| $typeID === self::VOLATILE_2
+			|| $typeID === self::VOLATILE_3
+			|| $typeID === self::VOLATILE_4
+			|| $typeID === self::VOLATILE_5
+			|| $typeID === self::VOLATILE_6
+			|| $typeID === self::VOLATILE_7
 		);
 	}
 	/**
@@ -540,6 +654,34 @@ class DuplicateIndexType
 		{
 			$result[] = self::RQ_IIK;
 		}
+		if(($typeID & self::VOLATILE_1) !== 0)
+		{
+			$result[] = self::VOLATILE_1;
+		}
+		if(($typeID & self::VOLATILE_2) !== 0)
+		{
+			$result[] = self::VOLATILE_2;
+		}
+		if(($typeID & self::VOLATILE_3) !== 0)
+		{
+			$result[] = self::VOLATILE_3;
+		}
+		if(($typeID & self::VOLATILE_4) !== 0)
+		{
+			$result[] = self::VOLATILE_4;
+		}
+		if(($typeID & self::VOLATILE_5) !== 0)
+		{
+			$result[] = self::VOLATILE_5;
+		}
+		if(($typeID & self::VOLATILE_6) !== 0)
+		{
+			$result[] = self::VOLATILE_6;
+		}
+		if(($typeID & self::VOLATILE_7) !== 0)
+		{
+			$result[] = self::VOLATILE_7;
+		}
 
 		return $result;
 	}
@@ -573,7 +715,7 @@ class DuplicateIndexType
 		foreach (EntityRequisite::getAllowedRqFieldCountries() as $countryId)
 		{
 			$scope = EntityRequisite::formatDuplicateCriterionScope($countryId);
-			$result[$scope] = isset($countryList[$countryId]) ? $countryList[$countryId] : $scope;
+			$result[$scope] = $countryList[$countryId] ?? $scope;
 		}
 
 		return $result;

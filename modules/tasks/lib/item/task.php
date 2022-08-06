@@ -22,6 +22,7 @@ use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
 use Bitrix\Tasks\Internals\Helper\Task\Dependence;
 use Bitrix\Tasks\Internals\UserOption;
+use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\User;
@@ -285,6 +286,11 @@ final class Task extends \Bitrix\Tasks\Item
 			$data = $this->prepareLegacyData();
 			$fullTaskData = $this->getData();
 
+			if ($taskId)
+			{
+				StagesTable::pinInStage($taskId);
+			}
+
 			$groupId = $data['GROUP_ID'];
 			$parentId = (int)$data['PARENT_ID'];
 
@@ -366,9 +372,14 @@ final class Task extends \Bitrix\Tasks\Item
 
 			Bizproc\Listener::onTaskAdd($taskId, $data);
 		}
-		elseif($state->isModeUpdate())
+		elseif ($state->isModeUpdate())
 		{
 			// todo: DO NOT remove template in case of REPLICATE falls to N
+			$taskId = $this->getId();
+			if ($taskId)
+			{
+				StagesTable::pinInStage($taskId);
+			}
 		}
 	}
 

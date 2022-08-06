@@ -243,6 +243,7 @@ class Options
 	{
 		$views = [];
 		$viewTypes = array_keys($this->getEmbedding()['scripts']);
+		$availableOptions = self::getViewOptions();
 		foreach ($options['embedding']['views'] as $viewType => $view)
 		{
 			if (!in_array($viewType, $viewTypes))
@@ -250,17 +251,16 @@ class Options
 				continue;
 			}
 
+			$typeOptions = $availableOptions[$viewType] ?? [];
+
 			foreach ($view as $viewKey => $viewValue)
 			{
-				if (!in_array($viewKey, ['type', 'position', 'delay', 'vertical']))
+				if (!self::checkViewOptions($viewKey, $viewValue, $typeOptions))
 				{
 					continue;
 				}
-				if (!is_string($viewValue) && !is_integer($viewValue))
-				{
-					$viewValue = null;
-				}
 
+				self::filterViewOptionValues($viewValue);
 				$views[$viewType][$viewKey] = $viewValue;
 			}
 		}
@@ -318,5 +318,70 @@ class Options
 			'CALL_FROM' => $options['callback']['from'],
 			'CALL_TEXT' => $options['callback']['text'],
 		];
+	}
+
+	public static function getViewOptions(): array
+	{
+		return [
+			'inline' => [],
+			'auto' => ['type', 'position', 'vertical', 'delay'],
+			'click' => [
+				'type', 'position', 'vertical',
+				'button' => [
+					'use', // 1|0
+					'text',
+					'font', // modern|classic|elegant
+					'align', // left|right|center|inline
+					'plain', // 1|0, link-mode
+					'rounded', // 1|0 border-radius
+					'outlined', // 1|0 without background
+					'decoration', // '', 'dotted', 'solid'
+					'color' => [ // hexA
+						'text',
+						'textHover',
+						'background',
+						'backgroundHover',
+					],
+				],
+			],
+		];
+	}
+
+	private static function checkViewOptions(string $key, $value, array $options): bool
+	{
+		if (is_array($value))
+		{
+			foreach ($value as $innerKey => $innerValue)
+			{
+				if (!is_array($options[$key]) || !self::checkViewOptions($innerKey, $innerValue, $options[$key]))
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return self::checkViewOption($key, $options);
+	}
+
+	private static function checkViewOption(string $key, array $options): bool
+	{
+		return in_array($key, $options, true);
+	}
+
+	private static function filterViewOptionValues(&$value): void
+	{
+		if (is_array($value))
+		{
+			foreach ($value as $innerValue)
+			{
+				self::filterViewOptionValues($innerValue);
+			}
+		}
+		elseif (!is_string($value) && !is_int($value))
+		{
+			$value = null;
+		}
 	}
 }

@@ -116,7 +116,7 @@ if ($arResult['ALLOW_QRCODE_AUTH'])
 	</div>
 	<div class="login-text login-item">
 		<?if ($arResult["STORE_PASSWORD"] == "Y"):?>
-			<input type="checkbox" id="USER_REMEMBER_QR" name="USER_REMEMBER_QR" value="Y" class="login-checkbox-user-remember" checked="checked" /><label class="login-item-checkbox-label" for="USER_REMEMBER_QR"><?=GetMessage("AUTH_REMEMBER_ME")?></label>
+			<input tabindex="-1" type="checkbox" id="USER_REMEMBER_QR" name="USER_REMEMBER_QR" value="Y" class="login-checkbox-user-remember" checked="checked" /><label class="login-item-checkbox-label" for="USER_REMEMBER_QR"><?=GetMessage("AUTH_REMEMBER_ME")?></label>
 		<?endif?>
 	</div>
 	<div class="log-popup-form-qr-buttons">

@@ -58,11 +58,12 @@ class ContactDataProvider extends EntityDataProvider
 	 */
 	public function prepareFields()
 	{
-		$result =  array(
+		$result = [
 			'ID' => $this->createField('ID'),
 			'NAME' => $this->createField(
 				'NAME',
 				[
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -85,6 +86,7 @@ class ContactDataProvider extends EntityDataProvider
 			'LAST_NAME' => $this->createField(
 				'LAST_NAME',
 				[
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -109,7 +111,6 @@ class ContactDataProvider extends EntityDataProvider
 				'DATE_CREATE',
 				[
 					'type' => 'date',
-					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -130,14 +131,6 @@ class ContactDataProvider extends EntityDataProvider
 					],
 				]
 			),
-			'ASSIGNED_BY_ID' => $this->createField(
-				'ASSIGNED_BY_ID',
-				[
-					'type' => 'entity_selector',
-					'default' => true,
-					'partial' => true,
-				]
-			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
 				[
@@ -154,23 +147,37 @@ class ContactDataProvider extends EntityDataProvider
 			),
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'TYPE_ID' => $this->createField(
 				'TYPE_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'EXPORT' => $this->createField(
 				'EXPORT',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'ACTIVITY_COUNTER' => $this->createField(
 				'ACTIVITY_COUNTER',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'COMPANY_TITLE' => $this->createField(
 				'COMPANY_TITLE',
@@ -207,21 +214,46 @@ class ContactDataProvider extends EntityDataProvider
 			),
 			'COMMUNICATION_TYPE' => $this->createField(
 				'COMMUNICATION_TYPE',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'HAS_PHONE' => $this->createField(
 				'HAS_PHONE',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
-			'PHONE' => $this->createField('PHONE'),
+			'PHONE' => $this->createField(
+				'PHONE',
+				[
+					'default' => true
+				]
+			),
 			'HAS_EMAIL' => $this->createField(
 				'HAS_EMAIL',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
-			'EMAIL' => $this->createField('EMAIL'),
+			'EMAIL' => $this->createField(
+				'EMAIL',
+				[
+					'default' => true
+				]
+			),
 			'WEB' => $this->createField('WEB'),
-			'IM' => $this->createField('IM')
-		);
+			'IM' => $this->createField('IM'),
+			'ASSIGNED_BY_ID' => $this->createField(
+				'ASSIGNED_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
+			),
+		];
 
 		if($this->settings->checkFlag(ContactSettings::FLAG_ENABLE_ADDRESS))
 		{

@@ -1,14 +1,18 @@
 this.BX = this.BX || {};
-(function (exports,main_core_events,crm_categoryList,crm_categoryModel,ui_buttons,ui_dialogs_messagebox,main_popup,ui_forms,main_core) {
+(function (exports,crm_categoryList,crm_categoryModel,ui_buttons,ui_dialogs_messagebox,main_popup,main_core_events,ui_forms,main_core) {
 	'use strict';
 
-	var _id = new WeakMap();
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 
-	var _name = new WeakMap();
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
-	var _entityTypeIds = new WeakMap();
+	var _id = /*#__PURE__*/new WeakMap();
 
-	var _phrase = new WeakMap();
+	var _name = /*#__PURE__*/new WeakMap();
+
+	var _entityTypeIds = /*#__PURE__*/new WeakMap();
+
+	var _phrase = /*#__PURE__*/new WeakMap();
 
 	/**
 	 * @memberOf BX.Crm.Conversion
@@ -19,22 +23,22 @@ this.BX = this.BX || {};
 
 	    babelHelpers.classCallCheck(this, SchemeItem);
 
-	    _id.set(this, {
+	    _classPrivateFieldInitSpec(this, _id, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _name.set(this, {
+	    _classPrivateFieldInitSpec(this, _name, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _entityTypeIds.set(this, {
+	    _classPrivateFieldInitSpec(this, _entityTypeIds, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _phrase.set(this, {
+	    _classPrivateFieldInitSpec(this, _phrase, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -75,15 +79,19 @@ this.BX = this.BX || {};
 	  return SchemeItem;
 	}();
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	var _currentItemId = new WeakMap();
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 
-	var _items = new WeakMap();
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	var _currentItemId = /*#__PURE__*/new WeakMap();
+
+	var _items = /*#__PURE__*/new WeakMap();
 
 	/**
 	 * @memberOf BX.Crm.Conversion
@@ -94,12 +102,12 @@ this.BX = this.BX || {};
 
 	    babelHelpers.classCallCheck(this, Scheme);
 
-	    _currentItemId.set(this, {
+	    _classPrivateFieldInitSpec$1(this, _currentItemId, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _items.set(this, {
+	    _classPrivateFieldInitSpec$1(this, _items, {
 	      writable: true,
 	      value: []
 	    });
@@ -111,7 +119,7 @@ this.BX = this.BX || {};
 	        if (item instanceof SchemeItem) {
 	          babelHelpers.classPrivateFieldGet(_this, _items).push(item);
 	        } else {
-	          console.error('SchemeItem is invalid in Scheme constructor. Expected instance of SchemeItem, got ' + babelHelpers.typeof(item));
+	          console.error('SchemeItem is invalid in Scheme constructor. Expected instance of SchemeItem, got ' + babelHelpers["typeof"](item));
 	        }
 	      });
 	    }
@@ -195,19 +203,25 @@ this.BX = this.BX || {};
 	  return Scheme;
 	}();
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	var _active = new WeakMap();
+	var _active = /*#__PURE__*/new WeakMap();
 
-	var _enableSync = new WeakMap();
+	var _enableSync = /*#__PURE__*/new WeakMap();
 
-	var _initData = new WeakMap();
+	var _initData = /*#__PURE__*/new WeakMap();
 
-	var _entityTypeId = new WeakMap();
+	var _entityTypeId = /*#__PURE__*/new WeakMap();
 
-	var _title = new WeakMap();
+	var _title = /*#__PURE__*/new WeakMap();
 
-	var _internalizeBooleanValue = new WeakSet();
+	var _internalizeBooleanValue = /*#__PURE__*/new WeakSet();
 
 	/**
 	 * @memberOf BX.Crm.Conversion
@@ -216,29 +230,29 @@ this.BX = this.BX || {};
 	  function ConfigItem(params) {
 	    babelHelpers.classCallCheck(this, ConfigItem);
 
-	    _internalizeBooleanValue.add(this);
+	    _classPrivateMethodInitSpec(this, _internalizeBooleanValue);
 
-	    _active.set(this, {
+	    _classPrivateFieldInitSpec$2(this, _active, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _enableSync.set(this, {
+	    _classPrivateFieldInitSpec$2(this, _enableSync, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _initData.set(this, {
+	    _classPrivateFieldInitSpec$2(this, _initData, {
 	      writable: true,
 	      value: {}
 	    });
 
-	    _entityTypeId.set(this, {
+	    _classPrivateFieldInitSpec$2(this, _entityTypeId, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _title.set(this, {
+	    _classPrivateFieldInitSpec$2(this, _title, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -318,7 +332,7 @@ this.BX = this.BX || {};
 	  return ConfigItem;
 	}();
 
-	var _internalizeBooleanValue2 = function _internalizeBooleanValue2(value) {
+	function _internalizeBooleanValue2(value) {
 	  if (main_core.Type.isBoolean(value)) {
 	    return value;
 	  }
@@ -328,22 +342,26 @@ this.BX = this.BX || {};
 	  }
 
 	  return Boolean(value);
-	};
+	}
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	/**
 	 * @memberOf BX.Crm.Conversion
 	 */
 
-	var _entityTypeId$1 = new WeakMap();
+	var _entityTypeId$1 = /*#__PURE__*/new WeakMap();
 
-	var _items$1 = new WeakMap();
+	var _items$1 = /*#__PURE__*/new WeakMap();
 
-	var _scheme = new WeakMap();
+	var _scheme = /*#__PURE__*/new WeakMap();
 
 	var Config = /*#__PURE__*/function () {
 	  function Config(entityTypeId, items, scheme) {
@@ -351,17 +369,17 @@ this.BX = this.BX || {};
 
 	    babelHelpers.classCallCheck(this, Config);
 
-	    _entityTypeId$1.set(this, {
+	    _classPrivateFieldInitSpec$3(this, _entityTypeId$1, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _items$1.set(this, {
+	    _classPrivateFieldInitSpec$3(this, _items$1, {
 	      writable: true,
 	      value: []
 	    });
 
-	    _scheme.set(this, {
+	    _classPrivateFieldInitSpec$3(this, _scheme, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -373,7 +391,7 @@ this.BX = this.BX || {};
 	        if (item instanceof ConfigItem) {
 	          babelHelpers.classPrivateFieldGet(_this, _items$1).push(item);
 	        } else {
-	          console.error('ConfigItem is invalid in Config constructor. Expected instance of ConfigItem, got ' + babelHelpers.typeof(item));
+	          console.error('ConfigItem is invalid in Config constructor. Expected instance of ConfigItem, got ' + babelHelpers["typeof"](item));
 	        }
 	      });
 	    }
@@ -381,7 +399,7 @@ this.BX = this.BX || {};
 	    if (scheme instanceof Scheme) {
 	      babelHelpers.classPrivateFieldSet(this, _scheme, scheme);
 	    } else {
-	      console.error('Scheme is invalid in Config constructor. Expected instance of Scheme, got ' + babelHelpers.typeof(scheme));
+	      console.error('Scheme is invalid in Config constructor. Expected instance of Scheme, got ' + babelHelpers["typeof"](scheme));
 	    }
 	  }
 
@@ -474,69 +492,57 @@ this.BX = this.BX || {};
 	  return Config;
 	}();
 
-	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	var _templateObject, _templateObject2;
+
+	function _createForOfIteratorHelper$2(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$2(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$2(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$2(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$2(o, minLen); }
 
 	function _arrayLikeToArray$2(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<option value=\"", "\">", "</option>"]);
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
 
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
+	function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
 
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-converter-category-selector ui-form ui-form-line\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"crm-converter-category-selector-label ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t<div class=\"crm-converter-category-selector-select ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\"></select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	var _entityTypeId$2 = new WeakMap();
+	var _entityTypeId$2 = /*#__PURE__*/new WeakMap();
 
-	var _entityId = new WeakMap();
+	var _entityId = /*#__PURE__*/new WeakMap();
 
-	var _config = new WeakMap();
+	var _config = /*#__PURE__*/new WeakMap();
 
-	var _params = new WeakMap();
+	var _params = /*#__PURE__*/new WeakMap();
 
-	var _isProgress = new WeakMap();
+	var _isProgress = /*#__PURE__*/new WeakMap();
 
-	var _isSynchronisationAllowed = new WeakMap();
+	var _isSynchronisationAllowed = /*#__PURE__*/new WeakMap();
 
-	var _fieldsSynchronizer = new WeakMap();
+	var _fieldsSynchronizer = /*#__PURE__*/new WeakMap();
 
-	var _request = new WeakSet();
+	var _request = /*#__PURE__*/new WeakSet();
 
-	var _onRequestSuccess = new WeakSet();
+	var _onRequestSuccess = /*#__PURE__*/new WeakSet();
 
-	var _onRequestError = new WeakSet();
+	var _onRequestError = /*#__PURE__*/new WeakSet();
 
-	var _collectAdditionalData = new WeakSet();
+	var _collectAdditionalData = /*#__PURE__*/new WeakSet();
 
-	var _getCategoryForEntityTypeId = new WeakSet();
+	var _getCategoryForEntityTypeId = /*#__PURE__*/new WeakSet();
 
-	var _isNeedToLoadCategories = new WeakSet();
+	var _isNeedToLoadCategories = /*#__PURE__*/new WeakSet();
 
-	var _showCategorySelector = new WeakSet();
+	var _showCategorySelector = /*#__PURE__*/new WeakSet();
 
-	var _processRequiredAction = new WeakSet();
+	var _processRequiredAction = /*#__PURE__*/new WeakSet();
 
-	var _getFieldsSynchronizer = new WeakSet();
+	var _getFieldsSynchronizer = /*#__PURE__*/new WeakSet();
 
-	var _getMessage = new WeakSet();
+	var _getMessage = /*#__PURE__*/new WeakSet();
 
-	var _emitConvertedEvent = new WeakSet();
+	var _emitConvertedEvent = /*#__PURE__*/new WeakSet();
 
 	/**
 	 * @memberOf BX.Crm.Conversion
@@ -545,59 +551,59 @@ this.BX = this.BX || {};
 	  function Converter(_entityTypeId2, _config2, params) {
 	    babelHelpers.classCallCheck(this, Converter);
 
-	    _emitConvertedEvent.add(this);
+	    _classPrivateMethodInitSpec$1(this, _emitConvertedEvent);
 
-	    _getMessage.add(this);
+	    _classPrivateMethodInitSpec$1(this, _getMessage);
 
-	    _getFieldsSynchronizer.add(this);
+	    _classPrivateMethodInitSpec$1(this, _getFieldsSynchronizer);
 
-	    _processRequiredAction.add(this);
+	    _classPrivateMethodInitSpec$1(this, _processRequiredAction);
 
-	    _showCategorySelector.add(this);
+	    _classPrivateMethodInitSpec$1(this, _showCategorySelector);
 
-	    _isNeedToLoadCategories.add(this);
+	    _classPrivateMethodInitSpec$1(this, _isNeedToLoadCategories);
 
-	    _getCategoryForEntityTypeId.add(this);
+	    _classPrivateMethodInitSpec$1(this, _getCategoryForEntityTypeId);
 
-	    _collectAdditionalData.add(this);
+	    _classPrivateMethodInitSpec$1(this, _collectAdditionalData);
 
-	    _onRequestError.add(this);
+	    _classPrivateMethodInitSpec$1(this, _onRequestError);
 
-	    _onRequestSuccess.add(this);
+	    _classPrivateMethodInitSpec$1(this, _onRequestSuccess);
 
-	    _request.add(this);
+	    _classPrivateMethodInitSpec$1(this, _request);
 
-	    _entityTypeId$2.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _entityTypeId$2, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _entityId.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _entityId, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _config.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _config, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _params.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _params, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _isProgress.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _isProgress, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _isSynchronisationAllowed.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _isSynchronisationAllowed, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _fieldsSynchronizer.set(this, {
+	    _classPrivateFieldInitSpec$4(this, _fieldsSynchronizer, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -607,7 +613,7 @@ this.BX = this.BX || {};
 	    if (_config2 instanceof Config) {
 	      babelHelpers.classPrivateFieldSet(this, _config, _config2);
 	    } else {
-	      console.error('Config is invalid in Converter constructor. Expected instance of Config, got ' + babelHelpers.typeof(_config2));
+	      console.error('Config is invalid in Converter constructor. Expected instance of Config, got ' + babelHelpers["typeof"](_config2));
 	    }
 
 	    babelHelpers.classPrivateFieldSet(this, _params, params !== null && params !== void 0 ? params : {});
@@ -681,7 +687,7 @@ this.BX = this.BX || {};
 	        }
 
 	        _classPrivateMethodGet$1(_this, _request, _request2).call(_this);
-	      }).catch(function (error) {
+	      })["catch"](function (error) {
 	        if (error) {
 	          console.error(error);
 	        }
@@ -691,7 +697,7 @@ this.BX = this.BX || {};
 	  return Converter;
 	}();
 
-	var _request2 = function _request2() {
+	function _request2() {
 	  var serviceUrl = this.getServiceUrl();
 
 	  if (!serviceUrl) {
@@ -721,9 +727,9 @@ this.BX = this.BX || {};
 	    onsuccess: _classPrivateMethodGet$1(this, _onRequestSuccess, _onRequestSuccess2).bind(this),
 	    onfailure: _classPrivateMethodGet$1(this, _onRequestError, _onRequestError2).bind(this)
 	  });
-	};
+	}
 
-	var _onRequestSuccess2 = function _onRequestSuccess2(response) {
+	function _onRequestSuccess2(response) {
 	  // todo return promise
 	  babelHelpers.classPrivateFieldSet(this, _isProgress, false);
 
@@ -753,14 +759,14 @@ this.BX = this.BX || {};
 	  if (redirectUrl !== "" && !isRedirected) {
 	    BX.Crm.Page.open(redirectUrl);
 	  } else if (!(isRedirected && window.top === window)) ;
-	};
+	}
 
-	var _onRequestError2 = function _onRequestError2(error) {
+	function _onRequestError2(error) {
 	  babelHelpers.classPrivateFieldSet(this, _isProgress, false);
 	  ui_dialogs_messagebox.MessageBox.alert(error);
-	};
+	}
 
-	var _collectAdditionalData2 = function _collectAdditionalData2(schemeItem) {
+	function _collectAdditionalData2(schemeItem) {
 	  var _this2 = this;
 
 	  var config = this.getConfig();
@@ -805,9 +811,9 @@ this.BX = this.BX || {};
 	  };
 
 	  return promiseIterator(promises);
-	};
+	}
 
-	var _getCategoryForEntityTypeId2 = function _getCategoryForEntityTypeId2(entityTypeId) {
+	function _getCategoryForEntityTypeId2(entityTypeId) {
 	  var _this3 = this;
 
 	  return new Promise(function (resolve, reject) {
@@ -821,14 +827,14 @@ this.BX = this.BX || {};
 	    if (_classPrivateMethodGet$1(_this3, _isNeedToLoadCategories, _isNeedToLoadCategories2).call(_this3, entityTypeId)) {
 	      crm_categoryList.CategoryList.Instance.getItems(entityTypeId).then(function (categories) {
 	        if (categories.length > 1) {
-	          _classPrivateMethodGet$1(_this3, _showCategorySelector, _showCategorySelector2).call(_this3, categories, configItem.getTitle()).then(resolve).catch(reject);
+	          _classPrivateMethodGet$1(_this3, _showCategorySelector, _showCategorySelector2).call(_this3, categories, configItem.getTitle()).then(resolve)["catch"](reject);
 	        } else {
 	          resolve({
 	            isCanceled: false,
 	            category: categories[0]
 	          });
 	        }
-	      }).catch(reject);
+	      })["catch"](reject);
 	    } else {
 	      resolve({
 	        isCanceled: false,
@@ -836,19 +842,19 @@ this.BX = this.BX || {};
 	      });
 	    }
 	  });
-	};
+	}
 
-	var _isNeedToLoadCategories2 = function _isNeedToLoadCategories2(entityTypeId) {
+	function _isNeedToLoadCategories2(entityTypeId) {
 	  // todo pass isCategoriesEnabled from backend
 	  return entityTypeId === BX.CrmEntityType.enumeration.deal || BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId);
-	};
+	}
 
-	var _showCategorySelector2 = function _showCategorySelector2(categories, title) {
+	function _showCategorySelector2(categories, title) {
 	  return new Promise(function (resolve) {
-	    var categorySelectorContent = main_core.Tag.render(_templateObject(), main_core.Loc.getMessage("CRM_COMMON_CATEGORY"));
+	    var categorySelectorContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-converter-category-selector ui-form ui-form-line\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"crm-converter-category-selector-label ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t<div class=\"crm-converter-category-selector-select ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\"></select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage("CRM_COMMON_CATEGORY"));
 	    var select = categorySelectorContent.querySelector('select');
 	    categories.forEach(function (category) {
-	      select.appendChild(main_core.Tag.render(_templateObject2(), category.getId(), main_core.Text.encode(category.getName())));
+	      select.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<option value=\"", "\">", "</option>"])), category.getId(), main_core.Text.encode(category.getName())));
 	    });
 	    var popup = new main_popup.Popup({
 	      titleBar: main_core.Loc.getMessage("CRM_CONVERSION_CATEGORY_SELECTOR_TITLE", {
@@ -911,9 +917,9 @@ this.BX = this.BX || {};
 	    });
 	    popup.show();
 	  });
-	};
+	}
 
-	var _processRequiredAction2 = function _processRequiredAction2(action) {
+	function _processRequiredAction2(action) {
 	  var name = String(action.NAME);
 	  var data = main_core.Type.isPlainObject(action.DATA) ? action.DATA : {};
 
@@ -950,9 +956,9 @@ this.BX = this.BX || {};
 	      return;
 	    }
 	  }
-	};
+	}
 
-	var _getFieldsSynchronizer2 = function _getFieldsSynchronizer2(fieldNames) {
+	function _getFieldsSynchronizer2(fieldNames) {
 	  var _this4 = this;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer)) {
@@ -982,17 +988,17 @@ this.BX = this.BX || {};
 	    _classPrivateMethodGet$1(_this4, _request, _request2).call(_this4);
 	  });
 	  return babelHelpers.classPrivateFieldGet(this, _fieldsSynchronizer);
-	};
+	}
 
-	var _getMessage2 = function _getMessage2(phraseId) {
+	function _getMessage2(phraseId) {
 	  if (!babelHelpers.classPrivateFieldGet(this, _params).messages) {
 	    babelHelpers.classPrivateFieldGet(this, _params).messages = {};
 	  }
 
 	  return babelHelpers.classPrivateFieldGet(this, _params).messages[phraseId] || phraseId;
-	};
+	}
 
-	var _emitConvertedEvent2 = function _emitConvertedEvent2(redirectUrl) {
+	function _emitConvertedEvent2(redirectUrl) {
 	  var entityTypeId = this.getEntityTypeId();
 	  var eventArgs = {
 	    entityTypeId: entityTypeId,
@@ -1009,8 +1015,21 @@ this.BX = this.BX || {};
 
 	  BX.onCustomEvent(window, "Crm.EntityConverter.Converted", [this, eventArgs]);
 	  BX.localStorage.set("onCrmEntityConvert", eventArgs, 10);
+	  this.getConfig().getItems().forEach(function (item) {
+	    if (item.isActive()) {
+	      main_core_events.EventEmitter.emit('Crm.EntityConverter.SingleConverted', {
+	        entityTypeName: BX.CrmEntityType.resolveName(item.getEntityTypeId())
+	      });
+	    }
+	  });
 	  return eventArgs["isRedirected"];
-	};
+	}
+
+	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	/**
@@ -1018,97 +1037,92 @@ this.BX = this.BX || {};
 	 * @mixes EventEmitter
 	 */
 
-	var _entityId$1 = new WeakMap();
+	var _entityId$1 = /*#__PURE__*/new WeakMap();
 
-	var _container = new WeakMap();
+	var _container = /*#__PURE__*/new WeakMap();
 
-	var _menuButton = new WeakMap();
+	var _menuButton = /*#__PURE__*/new WeakMap();
 
-	var _label = new WeakMap();
+	var _label = /*#__PURE__*/new WeakMap();
 
-	var _converter = new WeakMap();
+	var _converter = /*#__PURE__*/new WeakMap();
 
-	var _menuId = new WeakMap();
+	var _menuId = /*#__PURE__*/new WeakMap();
 
-	var _isAutoConversionEnabled = new WeakMap();
+	var _isAutoConversionEnabled = /*#__PURE__*/new WeakMap();
 
-	var _initUI = new WeakSet();
+	var _initUI = /*#__PURE__*/new WeakSet();
 
-	var _bindEvents = new WeakSet();
+	var _bindEvents = /*#__PURE__*/new WeakSet();
 
-	var _handleContainerClick = new WeakSet();
+	var _handleContainerClick = /*#__PURE__*/new WeakSet();
 
-	var _handleMenuButtonClick = new WeakSet();
+	var _handleMenuButtonClick = /*#__PURE__*/new WeakSet();
 
-	var _showMenu = new WeakSet();
+	var _showMenu = /*#__PURE__*/new WeakSet();
 
-	var _closeMenu = new WeakSet();
+	var _closeMenu = /*#__PURE__*/new WeakSet();
 
-	var _getMenuItems = new WeakSet();
+	var _getMenuItems = /*#__PURE__*/new WeakSet();
 
-	var _handleItemClick = new WeakSet();
+	var _handleItemClick = /*#__PURE__*/new WeakSet();
 
 	var SchemeSelector = /*#__PURE__*/function () {
 	  function SchemeSelector(converter, params) {
 	    babelHelpers.classCallCheck(this, SchemeSelector);
 
-	    _handleItemClick.add(this);
+	    _classPrivateMethodInitSpec$2(this, _handleItemClick);
 
-	    _getMenuItems.add(this);
+	    _classPrivateMethodInitSpec$2(this, _getMenuItems);
 
-	    _closeMenu.add(this);
+	    _classPrivateMethodInitSpec$2(this, _closeMenu);
 
-	    _showMenu.add(this);
+	    _classPrivateMethodInitSpec$2(this, _showMenu);
 
-	    _handleMenuButtonClick.add(this);
+	    _classPrivateMethodInitSpec$2(this, _handleMenuButtonClick);
 
-	    _handleContainerClick.add(this);
+	    _classPrivateMethodInitSpec$2(this, _handleContainerClick);
 
-	    _bindEvents.add(this);
+	    _classPrivateMethodInitSpec$2(this, _bindEvents);
 
-	    _initUI.add(this);
+	    _classPrivateMethodInitSpec$2(this, _initUI);
 
-	    _entityId$1.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _entityId$1, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _container.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _container, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _menuButton.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _menuButton, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _label.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _label, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _converter.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _converter, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _menuId.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _menuId, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _isAutoConversionEnabled.set(this, {
+	    _classPrivateFieldInitSpec$5(this, _isAutoConversionEnabled, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    if (converter instanceof Converter) {
-	      babelHelpers.classPrivateFieldSet(this, _converter, converter);
-	    } else {
-	      console.error('Converter is invalid in SchemeSelector constructor. Expected instance of Converter, got ' + babelHelpers.typeof(converter));
-	    }
-
+	    babelHelpers.classPrivateFieldSet(this, _converter, converter);
 	    babelHelpers.classPrivateFieldSet(this, _entityId$1, Number(params.entityId));
 	    babelHelpers.classPrivateFieldSet(this, _container, document.getElementById(params.containerId));
 	    babelHelpers.classPrivateFieldSet(this, _menuButton, document.getElementById(params.buttonId));
@@ -1141,20 +1155,20 @@ this.BX = this.BX || {};
 	  return SchemeSelector;
 	}();
 
-	var _initUI2 = function _initUI2() {
+	function _initUI2() {
 	  var currentSchemeItem = babelHelpers.classPrivateFieldGet(this, _converter).getConfig().getScheme().getCurrentItem();
 
 	  if (currentSchemeItem) {
 	    babelHelpers.classPrivateFieldGet(this, _label).innerText = currentSchemeItem.getPhrase();
 	  }
-	};
+	}
 
-	var _bindEvents2 = function _bindEvents2() {
+	function _bindEvents2() {
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _container), "click", _classPrivateMethodGet$2(this, _handleContainerClick, _handleContainerClick2).bind(this));
 	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _menuButton), "click", _classPrivateMethodGet$2(this, _handleMenuButtonClick, _handleMenuButtonClick2).bind(this));
-	};
+	}
 
-	var _handleContainerClick2 = function _handleContainerClick2() {
+	function _handleContainerClick2() {
 	  var event = new main_core_events.BaseEvent({
 	    data: {
 	      isCanceled: false
@@ -1166,13 +1180,13 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _isAutoConversionEnabled) && !event.getData().isCanceled) {
 	    babelHelpers.classPrivateFieldGet(this, _converter).convert(babelHelpers.classPrivateFieldGet(this, _entityId$1));
 	  }
-	};
+	}
 
-	var _handleMenuButtonClick2 = function _handleMenuButtonClick2() {
+	function _handleMenuButtonClick2() {
 	  _classPrivateMethodGet$2(this, _showMenu, _showMenu2).call(this);
-	};
+	}
 
-	var _showMenu2 = function _showMenu2() {
+	function _showMenu2() {
 	  var anchorPos = BX.pos(babelHelpers.classPrivateFieldGet(this, _container));
 	  main_popup.MenuManager.show({
 	    id: babelHelpers.classPrivateFieldGet(this, _menuId),
@@ -1182,13 +1196,13 @@ this.BX = this.BX || {};
 	    cacheable: false,
 	    offsetLeft: -anchorPos['width']
 	  });
-	};
+	}
 
-	var _closeMenu2 = function _closeMenu2() {
+	function _closeMenu2() {
 	  main_popup.MenuManager.destroy(babelHelpers.classPrivateFieldGet(this, _menuId));
-	};
+	}
 
-	var _getMenuItems2 = function _getMenuItems2() {
+	function _getMenuItems2() {
 	  var _this = this;
 
 	  var items = [];
@@ -1201,9 +1215,9 @@ this.BX = this.BX || {};
 	    });
 	  });
 	  return items;
-	};
+	}
 
-	var _handleItemClick2 = function _handleItemClick2(item) {
+	function _handleItemClick2(item) {
 	  _classPrivateMethodGet$2(this, _closeMenu, _closeMenu2).call(this);
 
 	  babelHelpers.classPrivateFieldGet(this, _label).innerText = item.getPhrase();
@@ -1218,20 +1232,23 @@ this.BX = this.BX || {};
 	  if (babelHelpers.classPrivateFieldGet(this, _isAutoConversionEnabled) && !event.getData().isCanceled) {
 	    babelHelpers.classPrivateFieldGet(this, _converter).convert(babelHelpers.classPrivateFieldGet(this, _entityId$1));
 	  }
-	};
+	}
 
+	function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var instance = null;
 	/**
 	 * @memberOf BX.Crm.Conversion
 	 */
 
-	var _converters = new WeakMap();
+	var _converters = /*#__PURE__*/new WeakMap();
 
 	var Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
 
-	    _converters.set(this, {
+	    _classPrivateFieldInitSpec$6(this, _converters, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -1282,5 +1299,5 @@ this.BX = this.BX || {};
 
 	exports.Conversion = Conversion;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX.Event,BX.Crm,BX.Crm.Models,BX.UI,BX.UI.Dialogs,BX.Main,BX,BX));
+}((this.BX.Crm = this.BX.Crm || {}),BX.Crm,BX.Crm.Models,BX.UI,BX.UI.Dialogs,BX.Main,BX.Event,BX,BX));
 //# sourceMappingURL=conversion.bundle.js.map

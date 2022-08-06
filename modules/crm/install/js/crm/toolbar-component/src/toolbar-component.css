@@ -1,0 +1,8 @@
+.ui-btn.ui-btn-disabled-ex,
+.ui-btn.ui-btn-disabled-ex:hover,
+.ui-btn.ui-btn-disabled-ex:active {
+	opacity: .4;
+	cursor: not-allowed;
+	background-color: var(--ui-btn-background);
+	border-color: var(--ui-btn-border-color);
+}

@@ -26,7 +26,7 @@ class ControllerBased extends QueryBuilder
 		Options $options
 	): string
 	{
-		$restrictionMap = $this->getRestrictionsByAttributes($attributes);
+		$restrictionMap = $this->getRestrictionsByAttributes($attributes, $options);
 		$dataSourceTable = $this->controller->getTableName();
 		$prefix = $options->getAliasPrefix();
 		$finalSqlConditions = [];
@@ -158,7 +158,7 @@ class ControllerBased extends QueryBuilder
 		return "{$prefix}.{$identity} IN (SELECT {$prefix}P.ENTITY_ID FROM {$dataSourceTable} {$prefix}P WHERE {$querySqlCondition})";
 	}
 
-	protected function getRestrictionsByAttributes(Collection $attributesCollection): array
+	protected function getRestrictionsByAttributes(Collection $attributesCollection, Options $options): array
 	{
 		$restrictionData = [];
 		$userDepartmentIDs = $this->getUserDepartmentIDs($attributesCollection->getUserId());
@@ -324,6 +324,23 @@ class ControllerBased extends QueryBuilder
 			}
 		}
 
+		$canSkipCategoryRestrictions = false;
+		if ($options->canSkipCheckOtherEntityTypes())
+		{
+			$canSkipCategoryRestrictions = $attributesCollection->areAllEntityTypesAllowed();
+			if ($canSkipCategoryRestrictions)
+			{
+				foreach ($restrictionData as $restrictions)
+				{
+					if (!empty($restrictions))
+					{
+						$canSkipCategoryRestrictions = false;
+						break;
+					}
+				}
+			}
+		}
+
 		$restrictionMap = [];
 		foreach ($restrictionData as $permissionEntityType => $restrictions)
 		{
@@ -335,7 +352,8 @@ class ControllerBased extends QueryBuilder
 				}
 				$this->addTypeAndCategoryToRestrictionMap(
 					$restrictionMap['-'],
-					$permissionEntityType
+					$permissionEntityType,
+					$canSkipCategoryRestrictions
 				);
 
 				continue;
@@ -546,7 +564,8 @@ class ControllerBased extends QueryBuilder
 
 	private function addTypeAndCategoryToRestrictionMap(
 		array &$restrictionMap,
-		string $permissionEntityType
+		string $permissionEntityType,
+		bool $canSkipCategoryRestrictions = false
 	)
 	{
 		if (!isset($restrictionMap['ENTITY_TYPES']))
@@ -560,7 +579,7 @@ class ControllerBased extends QueryBuilder
 			$restrictionMap['CATEGORY_ID'] = [];
 		}
 
-		if ($this->controller->hasCategories())
+		if ($this->controller->hasCategories() && !$canSkipCategoryRestrictions)
 		{
 			$restrictionMap['CATEGORY_ID'][] = $this->controller->extractCategoryId($permissionEntityType);
 		}

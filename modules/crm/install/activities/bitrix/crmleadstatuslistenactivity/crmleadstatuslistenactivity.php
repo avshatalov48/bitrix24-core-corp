@@ -107,18 +107,6 @@ class CBPCrmLeadStatusListenActivity
 		}
 	}
 
-	public function HandleFault(Exception $exception)
-	{
-		if ($exception == null)
-			throw new Exception("exception");
-
-		$status = $this->Cancel();
-		if ($status == CBPActivityExecutionStatus::Canceling)
-			return CBPActivityExecutionStatus::Faulting;
-
-		return $status;
-	}
-
 	public static function ValidateProperties($arTestProperties = array(), CBPWorkflowTemplateUser $user = null)
 	{
 		$arErrors = array();

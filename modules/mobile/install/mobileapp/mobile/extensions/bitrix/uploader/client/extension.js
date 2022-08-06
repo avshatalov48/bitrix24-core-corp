@@ -47,6 +47,11 @@ jn.define("uploader/client", (require, exports, module) => {
 			BX.postComponentEvent("onFileUploadTaskReceived", [{files: [task]}], this.context)
 		}
 
+		cancelTask(taskId){
+			taskId = this.clientContext + "-" +taskId
+			BX.postComponentEvent("onFileUploadTaskCancel", [{taskIds: [taskId]}], this.context)
+		}
+
 		destroy() {
 			BX.removeCustomEvent("onFileUploadTaskReceived", this.eventHandler)
 		}

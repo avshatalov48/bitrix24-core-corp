@@ -645,7 +645,9 @@ if ($bTaxMode)
 		'name' => GetMessage('CRM_QUOTE_FIELD_LOCATION_ID'),
 		'params' => array('size' => 50),
 		'type' => 'label',
-		'value' => isset($arResult['ELEMENT']['LOCATION_ID']) ? CCrmLocations::getLocationString($arResult['ELEMENT']['LOCATION_ID']) : '',
+		'value' => isset($arResult['ELEMENT']['LOCATION_ID'])
+			? CCrmLocations::getLocationStringByCode($arResult['ELEMENT']['LOCATION_ID'])
+			: '',
 		'isTactile' => true
 	);
 }

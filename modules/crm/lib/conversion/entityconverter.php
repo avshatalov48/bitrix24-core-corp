@@ -239,6 +239,8 @@ class EntityConverter
 			return;
 		}
 
+		$destinationItem->set(Crm\Service\ParentFieldManager::getParentFieldName($this->sourceItem->getEntityTypeId()), $this->sourceItem->getId());
+
 		$map = Container::getInstance()->getConversionMapper()->getMap(
 			new Crm\RelationIdentifier($this->sourceFactory->getEntityTypeId(), $destinationItem->getEntityTypeId()),
 		);

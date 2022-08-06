@@ -389,9 +389,10 @@ class TaskProvider
 
 	private function buildAccessSql(): self
 	{
+		$userModel = UserModel::createFromId($this->executorId);
+
 		// admin can see all tasks
-		$ar = \CUser::GetUserGroup($this->executorId);
-		if (in_array(1, $ar))
+		if ($userModel->isAdmin())
 		{
 			return $this;
 		}
@@ -405,7 +406,7 @@ class TaskProvider
 		$query[] = 'TMACCESS.USER_ID = '. $this->executorId;
 
 		// user can view subordinate tasks
-		$subordinate = (UserModel::createFromId($this->executorId))->getAllSubordinates();
+		$subordinate = $userModel->getAllSubordinates();
 		if (!empty($subordinate))
 		{
 			$query[] = 'TMACCESS.user_id IN ('. implode(',', $subordinate) .')';
@@ -674,6 +675,9 @@ class TaskProvider
 				case 'is_pinned_in_group':
 					$this->arSqlOrder[] = " IS_PINNED_IN_GROUP " . $order . " ";
 					$needle = 'IS_PINNED_IN_GROUP';
+					break;
+				case 'scrum_items_sort':
+					$this->arSqlOrder[] = " BTSI.SORT " . $order . " ";
 					break;
 
 				default:

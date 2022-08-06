@@ -406,7 +406,7 @@
 				return text.replace('%COUNT%', count) ;
 			}
 
-			return this.pull.notificationUpdateText ?? BX.message('SIMPLELIST_PULL_NOTIFICATION_UPDATE');
+			return this.pull.notificationUpdateText || BX.message('SIMPLELIST_PULL_NOTIFICATION_UPDATE');
 		}
 
 		loadMore()

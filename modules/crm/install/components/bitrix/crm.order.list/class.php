@@ -2596,7 +2596,7 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			}
 
 			$item['PRICE'] = SaleFormatCurrency($item['PRICE'], $item['CURRENCY']);
-			$measure = isset($arItem["MEASURE_NAME"]) ? $item["MEASURE_NAME"] : Loc::getMessage("CRM_ORDER_LIST_DEFAULT_MEASURE");
+			$measure = $item["MEASURE_NAME"] ?? Loc::getMessage("CRM_ORDER_LIST_DEFAULT_MEASURE");
 			$item['WEIGHT'] = $this->getReadableWeight((float)$item['WEIGHT'], (float)$item['QUANTITY'], $item['ORDER_SITE_ID']);
 			$item["QUANTITY"] = htmlspecialcharsbx(Order\BasketItem::formatQuantity($item["QUANTITY"])) . " " . htmlspecialcharsbx($measure);
 			$item["PROPS"] = [];

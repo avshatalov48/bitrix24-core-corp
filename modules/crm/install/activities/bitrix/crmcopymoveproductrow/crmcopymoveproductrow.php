@@ -35,12 +35,15 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		$dstEntity = $this->resolveDstEntityId();
 		if (!$dstEntity)
 		{
+			$this->logDebug($this->DstEntityId);
 			$this->WriteToTrackingService(GetMessage('CRM_CMPR_NO_DST_ENTITY'), 0, CBPTrackingType::Error);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
 
 		[$dstEntityTypeId, $dstEntityId] = $dstEntity;
+
+		$this->logDebug($dstEntityId);
 
 		if ($entityTypeId === $dstEntityTypeId && $entityId === $dstEntityId)
 		{
@@ -90,6 +93,8 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 
 			return CBPActivityExecutionStatus::Closed;
 		}
+
+		$this->logDebugRows($this->Operation, array_column($sourceRows, 'ID'));
 
 		foreach ($sourceRows as $i => $product)
 		{
@@ -179,40 +184,7 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
-		$dialog->setMap([
-			'DstEntityType' => [
-				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_TYPE'),
-				'FieldName' => 'dst_entity_type',
-				'Type' => 'select',
-				'Default' => \CCrmOwnerTypeAbbr::Deal,
-				'Options' => [
-					\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
-					\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
-					//\CCrmOwnerTypeAbbr::Order => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order),
-					//\CCrmOwnerTypeAbbr::Invoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice),
-				],
-				'Required' => true,
-			],
-			'DstEntityId' => [
-				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_ID'),
-				'FieldName' => 'dst_entity_id',
-				'Type' => 'int',
-				'Required' => true,
-				'AllowSelection' => true,
-			],
-			'Operation' => [
-				'Name' => GetMessage('CRM_CMPR_OPERATION'),
-				'FieldName' => 'operation',
-				'Type' => 'select',
-				'Default' => self::OP_COPY,
-				'Options' => [
-					self::OP_COPY => GetMessage('CRM_CMPR_OPERATION_CP'),
-					self::OP_MOVE => GetMessage('CRM_CMPR_OPERATION_MV'),
-				],
-				'Required' => true,
-			],
-
-		]);
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -242,5 +214,70 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 		$activity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'DstEntityType' => [
+				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_TYPE'),
+				'FieldName' => 'dst_entity_type',
+				'Type' => 'select',
+				'Default' => \CCrmOwnerTypeAbbr::Deal,
+				'Options' => [
+					\CCrmOwnerTypeAbbr::Deal => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
+					\CCrmOwnerTypeAbbr::SmartInvoice => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
+				],
+				'Required' => true,
+			],
+			'DstEntityId' => [
+				'Name' => GetMessage('CRM_CMPR_DST_ENTITY_ID'),
+				'FieldName' => 'dst_entity_id',
+				'Type' => 'int',
+				'Required' => true,
+				'AllowSelection' => true,
+			],
+			'Operation' => [
+				'Name' => GetMessage('CRM_CMPR_OPERATION'),
+				'FieldName' => 'operation',
+				'Type' => 'select',
+				'Default' => self::OP_COPY,
+				'Options' => [
+					self::OP_COPY => GetMessage('CRM_CMPR_OPERATION_CP'),
+					self::OP_MOVE => GetMessage('CRM_CMPR_OPERATION_MV'),
+				],
+				'Required' => true,
+			],
+		];
+	}
+
+	private function logDebug($id)
+	{
+		$debugInfo = $this->getDebugInfo([
+			'DstEntityId' => $id,
+		]);
+
+		$this->writeDebugInfo($debugInfo);
+	}
+
+	private function logDebugRows($operation, array $rowIds)
+	{
+		$title = $operation === static::OP_COPY
+			? GetMessage('CRM_CMPR_COPIED_ROWS')
+			: GetMessage('CRM_CMPR_MOVED_ROWS')
+		;
+
+		$debugInfo = $this->getDebugInfo(
+			['ProductRowId' => $rowIds],
+			[
+				'ProductRowId' => [
+					'Name' => $title,
+					'Type' => 'string',
+					'Multiple' => true,
+				]
+			],
+		);
+
+		$this->writeDebugInfo($debugInfo);
 	}
 }

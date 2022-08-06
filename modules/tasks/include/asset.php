@@ -21,6 +21,7 @@ $assets = array(
 			$assetRoot.'css/media.css',
 		),
 		'lang' => $langRoot.'include.php',
+		'rel' =>  array('ui.design-tokens'),
 		'bundle_js' => 'tasks'
 	),
 	// util asset, contains fx functions, helper functions and so on
@@ -40,7 +41,7 @@ $assets = array(
 		'css'  => array(
 			$assetRoot.'css/media.css',
 		),
-		'rel' =>  array('core'),
+		'rel' =>  array('core', 'ui.design-tokens'),
 		'lang' => $langRoot.'include.php',
 	),
 	// widget asset, allows to create widget-based js-controls

@@ -6,7 +6,7 @@
  * @var $APPLICATION CMain
  * @var $USER CUser
  */
-CJSCore::Init(['voximplant.common']);
+CJSCore::Init(['voximplant.common', 'ui.design-tokens']);
 $numbersC = CVoxImplantConfig::GetPortalNumbers(true, true);
 $portalNumber = CVoxImplantConfig::GetPortalNumber();
 $numbers = array('' => GetMessage("VI_NUMBERS_DEFAULT")) + $numbersC;

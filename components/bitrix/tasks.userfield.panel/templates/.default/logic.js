@@ -943,16 +943,21 @@ BX.namespace('Tasks.Component');
 			{
 				this.vars.actionInProgress = way;
 
-				if(!this.vars.loading)
+				if (!this.vars.loading)
 				{
-					this.vars.loading = BX.Tasks.Util.delay(function(){
-						BX.addClass(this.control('save'), 'webform-small-button-wait');
-					}, function(){
-						BX.removeClass(this.control('save'), 'webform-small-button-wait');
-					}, 300, this);
+					this.vars.loading = BX.Tasks.Util.delay(
+						function() {
+							BX.addClass(this.control('save'), 'ui-btn-clock');
+						},
+						function() {
+							BX.removeClass(this.control('save'), 'ui-btn-clock');
+						},
+						100,
+						this
+					);
 				}
 
-				if(way)
+				if (way)
 				{
 					this.vars.loading.call(this);
 				}

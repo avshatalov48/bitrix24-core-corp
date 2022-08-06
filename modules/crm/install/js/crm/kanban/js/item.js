@@ -692,11 +692,11 @@ BX.CRM.Kanban.Item.prototype = {
 											},
 											props: {
 												className: "crm-kanban-sidepanel crm-kanban-item-contact-center-action-item " +
-															"crm-kanban-item-contact-center-action-item-facebook"
+															"crm-kanban-item-contact-center-action-item-telegram"
 											},
-											text: "Facebook",
+											text: "Telegram",
 											dataset: {
-												url: "ol_facebook"
+												url: "ol_telegram"
 											}
 										})
 									]

@@ -58,6 +58,11 @@ export class Input extends EventEmitter
 	{
 		this.nodeId = Text.getRandom();
 
+		if (!Type.isNull(this.node))
+		{
+			Dom.remove(this.node);
+		}
+
 		this.node = Tag.render`
 			<div id="${Text.encode(this.nodeId)}" class="tasks-scrum__input --add-block">
 				<textarea

@@ -14,12 +14,22 @@ use Bitrix\Main\UI\Extension;
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
+
 Extension::load([
-	"sidepanel",
-	"ui.buttons", "ui.buttons.icons", "ui.hint", "ui.progressbar",
-	"ui.icons", "popup", "ui.forms", "crm.tracking.connector", "ui.sidepanel-content"
+	'clipboard',
+	'promise',
+	'sidepanel',
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.hint',
+	'ui.progressbar',
+	'ui.icons',
+	'popup',
+	'ui.forms',
+	'crm.tracking.connector',
+	'ui.sidepanel-content',
+	'ui.design-tokens',
 ]);
-\CUtil::InitJSCore(['clipboard', 'promise']);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.analytics.channel.phone/templates/.default/style.css');
 

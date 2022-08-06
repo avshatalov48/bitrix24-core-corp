@@ -174,19 +174,17 @@ if($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
-	if ($bAdd)
-	{
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-			'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
-				array(
-					'quote_id' => 0
-				)
-			),
-			//'ICON' => 'btn-new',
-			'HIGHLIGHT' => true
-		);
-	}
+	$arResult['BUTTONS'][] = [
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
+			[
+				'quote_id' => 0
+			]
+		),
+		'HIGHLIGHT' => true,
+		'IS_DISABLED' => !$bAdd,
+		'HINT' => GetMessage('CRM_QUOTE_ADD_HINT')
+	];
 
 	if (!$isInSlider)
 	{

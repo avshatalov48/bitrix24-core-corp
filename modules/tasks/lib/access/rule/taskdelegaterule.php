@@ -29,11 +29,13 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if ($task->isClosed())
 		{
+			$this->controller->addError(static::class, 'Task already completed');
 			return false;
 		}
 
@@ -51,6 +53,7 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (!$this->canDelegate())
 		{
+			$this->controller->addError(static::class, 'Access to delegate denied');
 			return false;
 		}
 
@@ -58,6 +61,7 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $member, $this->newTask))
 			{
+				$this->controller->addError(static::class, 'Access to assign responsible denied');
 				return false;
 			}
 		}
@@ -88,7 +92,12 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$this->oldTask->getGroupId()
 			&& Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $this->oldTask->getGroupId(), "tasks", "edit_tasks")
+			&& \Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				$this->oldTask->getGroupId(),
+				'tasks',
+				'edit_tasks',
+				$this->user->getUserId()
+			)
 		)
 		{
 			return true;

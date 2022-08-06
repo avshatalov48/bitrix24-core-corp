@@ -10,6 +10,7 @@ use Bitrix\Crm\Reservation\Strategy\ManualStrategy;
 use Bitrix\Crm\Reservation\Strategy\ReservePaidProductsStrategy;
 use Bitrix\Crm\Reservation\Strategy\ReserveQuantityEqualProductQuantityStrategy;
 use Bitrix\Crm\Reservation\Strategy\Strategy;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main\Loader;
 use CCrmSaleHelper;
 
@@ -34,6 +35,7 @@ class OptionStrategyFactory
 			Loader::includeModule('catalog')
 			&& State::isUsedInventoryManagement()
 			&& !CCrmSaleHelper::isWithOrdersMode()
+			&& RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
 		;
 	}
 

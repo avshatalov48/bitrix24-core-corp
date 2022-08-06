@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","RestManager"],"mappings":"AAGAA,GAAGC,OAAO,iCAAiC,CAACC,EAASC,EAASC,KAE7D,MAAMC,YAAEA,GAAgBL,GAAGE,QAAQ,8CAEnCE,EAAOD,QAAU,CAChBE,YAAa,IAAIA","file":"extension.map.js"}

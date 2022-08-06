@@ -1,8 +1,11 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-class CBPCrmTimelineCommentAdd
-	extends CBPActivity
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+class CBPCrmTimelineCommentAdd extends CBPActivity
 {
 	public function __construct($name)
 	{
@@ -22,23 +25,36 @@ class CBPCrmTimelineCommentAdd
 		}
 
 		$documentId = $this->GetDocumentId();
-		list($ownerTypeName, $ownerId) = mb_split('_(?=[^_]*$)', $documentId[2]);
+		[$ownerTypeName, $ownerId] = mb_split('_(?=[^_]*$)', $documentId[2]);
 		$ownerTypeId = \CCrmOwnerType::ResolveID($ownerTypeName);
 
 		$authorId = CBPHelper::ExtractUsers($this->CommentUser, $documentId, true);
 		$text = $this->getCommentText();
 
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo(['CommentText' => $text]));
+		}
+
+		if (empty($text))
+		{
+			$this->WriteToTrackingService(GetMessage('BPCTLCA_NO_COMMENT'), 0, CBPTrackingType::Error);
+
+			return CBPActivityExecutionStatus::Closed;
+		}
+
 		$entryID = \Bitrix\Crm\Timeline\CommentEntry::create(
-			array(
+			[
 				'TEXT' => $text,
 				'AUTHOR_ID' => $authorId ?: 0,
 				'BINDINGS' => [['ENTITY_TYPE_ID' => $ownerTypeId, 'ENTITY_ID' => $ownerId]]
-			)
+			]
 		);
 
 		if($entryID <= 0)
 		{
 			$this->WriteToTrackingService(GetMessage('BPCTLCA_CREATION_ERROR'), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -94,22 +110,7 @@ class CBPCrmTimelineCommentAdd
 			'siteId' => $siteId
 		));
 
-		$dialog->setMap(array(
-			'CommentText' => array(
-				'Name' => GetMessage('BPCTLCA_COMMENT_TEXT'),
-				'Description' => GetMessage('BPCTLCA_COMMENT_TEXT'),
-				'FieldName' => 'comment_text',
-				'Type' => 'text',
-				'Required' => true,
-			),
-			'CommentUser' => [
-				'Name' => GetMessage('BPCTLCA_COMMENT_USER'),
-				'FieldName' => 'comment_user',
-				'Type' => 'user',
-				'Required' => true,
-				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType)
-			]
-		));
+		$dialog->setMap(static::getPropertiesMap($documentType));
 
 		return $dialog;
 	}
@@ -138,5 +139,25 @@ class CBPCrmTimelineCommentAdd
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
+			'CommentText' => array(
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPCTLCA_COMMENT_TEXT'),
+				'Description' => \Bitrix\Main\Localization\Loc::getMessage('BPCTLCA_COMMENT_TEXT'),
+				'FieldName' => 'comment_text',
+				'Type' => 'text',
+				'Required' => true,
+			),
+			'CommentUser' => [
+				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPCTLCA_COMMENT_USER'),
+				'FieldName' => 'comment_user',
+				'Type' => 'user',
+				'Required' => true,
+				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType),
+			]
+		];
 	}
 }

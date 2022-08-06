@@ -223,6 +223,15 @@ class Deal
 					'JOIN' => 'INNER JOIN b_crm_product_row P ON P.OWNER_TYPE = \'D\' AND P.OWNER_ID = D.ID',
 					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'D\' AND P.OWNER_ID = D.ID',
 				],
+				'CRM_PRODUCT_COUNT' => [
+					'CONCAT_GROUP_BY' => ', ',
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'TRIM(TRAILING \'.\' FROM (TRIM(TRAILING \'0\' FROM P.QUANTITY)))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'P',
+					'JOIN' => 'INNER JOIN b_crm_product_row P ON P.OWNER_TYPE = \'D\' AND P.OWNER_ID = D.ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'D\' AND P.OWNER_ID = D.ID',
+				],
 				//CATEGORY_ID INT (18) UNSIGNED NULL,
 				'CATEGORY_ID' => [
 					'IS_METRIC' => 'N', // 'Y'

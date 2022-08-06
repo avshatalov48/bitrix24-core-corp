@@ -16,6 +16,7 @@ use Bitrix\Main\Type\RandomSequence;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Scrum\Form\EpicForm;
 use Bitrix\Tasks\Scrum\Service\EpicService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
@@ -108,7 +109,13 @@ class Epic extends Controller
 
 		$epic->setDescription($post['description']);
 		$epic->setCreatedBy($post['createdBy'] ?? $userId);
-		$epic->setColor($post['color']);
+
+		$colorList = [
+			'#aae9fc', '#bbecf1', '#98e1dc', '#e3f299', '#ffee95', '#ffdd93', '#dfd3b6', '#e3c6bb',
+			'#ffad97', '#ffbdbb', '#ffcbd8', '#ffc4e4', '#c4baed', '#dbdde0', '#bfc5cd', '#a2a8b0'
+		];
+		$color = $post['color'] ? $post['color'] : array_rand(array_flip($colorList));
+		$epic->setColor($color);
 
 		$files = (is_array($post['files']) ? $post['files'] : []);
 
@@ -285,6 +292,7 @@ class Epic extends Controller
 			$usersInfo = $userService->getInfoAboutUsers([$epic->getCreatedBy()]);
 
 			$epicExtensionParams = '"'.$epic->getGroupId().'", "'.$epic->getId().'"';
+			$epicExtensionRemoveParams = $epicExtensionParams . ', "'.$gridId.'"';
 
 			$taskIds = $itemService->getTaskIdsByEpicId($epic->getId());
 
@@ -299,15 +307,15 @@ class Epic extends Controller
 			}
 			if (in_array('TASKS_TOTAL', $gridVisibleColumns))
 			{
-				$columns['TASKS_TOTAL'] = $this->getEpicGridColumnTasksTotal($taskIds);
+				$columns['TASKS_TOTAL'] = $this->getEpicGridColumnTasksTotal($epic, $taskIds);
 			}
 			if (in_array('TASKS_COMPLETED', $gridVisibleColumns))
 			{
-				$columns['TASKS_COMPLETED'] = $this->getEpicGridColumnTasksCompleted($taskIds);
+				$columns['TASKS_COMPLETED'] = $this->getEpicGridColumnTasksCompleted($epic, $taskIds);
 			}
 			if (in_array('USER', $gridVisibleColumns))
 			{
-				$columns['USER'] = $this->getEpicGridColumnUser($usersInfo);
+				$columns['USER'] = $this->getUserColumn($usersInfo);
 			}
 
 			$rows[] = [
@@ -324,7 +332,7 @@ class Epic extends Controller
 					],
 					[
 						'text' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_ACTION_REMOVE'),
-						'onclick' => 'BX.Tasks.Scrum.Epic.removeEpic('. $epicExtensionParams .');',
+						'onclick' => 'BX.Tasks.Scrum.Epic.removeEpic('. $epicExtensionRemoveParams .');',
 					]
 				]
 			];
@@ -347,6 +355,143 @@ class Epic extends Controller
 		$component = new Component('bitrix:main.ui.grid', '', [
 			'GRID_ID' => $gridId,
 			'COLUMNS' => $this->getUiGridColumns(),
+			'ROWS' => $rows,
+			'NAV_OBJECT' => $nav,
+			'NAV_PARAMS' => ['SHOW_ALWAYS' => false],
+			'SHOW_PAGINATION' => true,
+			'SHOW_TOTAL_COUNTER' => false,
+			'SHOW_CHECK_ALL_CHECKBOXES' => false,
+			'SHOW_ROW_CHECKBOXES' => false,
+			'SHOW_SELECTED_COUNTER' => false,
+			'ALLOW_COLUMNS_SORT' => true,
+			'ALLOW_COLUMNS_RESIZE' => false,
+			'ALLOW_INLINE_EDIT' => false,
+			'AJAX_MODE' => 'N',
+			'AJAX_OPTION_JUMP' => 'N',
+			'AJAX_OPTION_STYLE' => 'N',
+			'AJAX_OPTION_HISTORY' => 'N'
+		]);
+
+		if ($isGridRequest)
+		{
+			$response = new HttpResponse();
+			$content = Json::decode($component->getContent());
+			$response->setContent($content['data']['html']);
+
+			return $response;
+		}
+
+		return $component;
+	}
+
+	/**
+	 * Returns a component with a list of tasks and processes requests for that component.
+	 *
+	 * @return Component|HttpResponse|string|null
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ArgumentTypeException
+	 */
+	public function getTasksListAction()
+	{
+		$post = $this->request->getPostList()->toArray();
+
+		$groupId = (is_numeric($post['groupId']) ? (int) $post['groupId'] : 0);
+		$epicId = (is_numeric($post['epicId']) ? (int) $post['epicId'] : 0);
+
+		$userId = Util\User::getId();
+
+		$gridId = (is_string($post['gridId'] ) ? $post['gridId'] : '');
+		$completed = ($post['completed'] === 'Y');
+
+		$isGridRequest = ($this->request->get('grid_id') != null);
+
+		$nav = new PageNavigation('tasks-lists-navigation');
+		$nav->setPageSize(10)->initFromUri();
+
+		$gridOptions = new Grid\Options($gridId);
+
+		$gridVisibleColumns = $gridOptions->getVisibleColumns();
+		if (empty($gridVisibleColumns))
+		{
+			$gridVisibleColumns = ['NAME', 'STORY_POINTS', 'RESPONSIBLE'];
+		}
+
+		$epicService = new EpicService($userId);
+		$taskService = new TaskService($userId);
+		$itemService = new ItemService();
+		$userService = new UserService();
+
+		$epic = $epicService->getEpic($epicId);
+		if (!$epic->getId())
+		{
+			$this->errorCollection->add(
+				[
+					new Error(Loc::getMessage('TASKS_EC_ERROR_COULD_NOT_READ_EPIC'))
+				]
+			);
+
+			return null;
+		}
+
+		$filter = [
+			'GROUP_ID' => $groupId,
+			'::SUBFILTER-EPIC' => ['EPIC' => $epic->getId()],
+			'CHECK_PERMISSIONS' => 'Y',
+			'ONLY_ROOT_TASKS' => 'N',
+			'SCRUM_TASKS' => 'Y',
+		];
+		if ($completed)
+		{
+			$filter['=STATUS'] = \CTasks::STATE_COMPLETED;
+		}
+
+		$taskIds = $taskService->getTaskIdsByFilter($filter, $nav);
+
+		(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload($userId, $taskIds);
+
+		$itemsStoryPoints = $itemService->getItemsStoryPointsBySourceId($taskIds);
+
+		$randomGenerator = new RandomSequence(rand());
+
+		$rows = [];
+
+		foreach ($taskIds as $taskId)
+		{
+			$task = TaskRegistry::getInstance()->get($taskId);
+			if (!$task)
+			{
+				continue;
+			}
+
+			$columns = [];
+			if (in_array('NAME', $gridVisibleColumns))
+			{
+				$columns['NAME'] = $this->getTaskNameColumn($taskId, $task['TITLE']);
+			}
+			if (in_array('STORY_POINTS', $gridVisibleColumns))
+			{
+				$columns['STORY_POINTS'] = $itemsStoryPoints[$taskId] ?? '';
+			}
+			if (in_array('RESPONSIBLE', $gridVisibleColumns))
+			{
+				$usersInfo = $userService->getInfoAboutUsers([$task['RESPONSIBLE_ID']]);
+				$columns['RESPONSIBLE'] = $this->getUserColumn($usersInfo);
+			}
+
+			$rows[] = [
+				'id' => $taskId . $randomGenerator->randString(2),
+				'columns' => $columns,
+			];
+		}
+
+		if (empty($rows))
+		{
+			return '';
+		}
+
+		$component = new Component('bitrix:main.ui.grid', '', [
+			'GRID_ID' => $gridId,
+			'COLUMNS' => $this->getUiTasksGridColumns(),
 			'ROWS' => $rows,
 			'NAV_OBJECT' => $nav,
 			'NAV_PARAMS' => ['SHOW_ALWAYS' => false],
@@ -667,23 +812,44 @@ class Epic extends Controller
 			[
 				'id' => 'TAGS',
 				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_TAGS'),
-				'default' => true
+				'default' => true,
 			],
 			[
 				'id' => 'TASKS_TOTAL',
 				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_TASKS_TOTAL'),
-				'default' => true
+				'default' => true,
 			],
 			[
 				'id' => 'TASKS_COMPLETED',
 				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_TASKS_COMPLETED'),
-				'default' => true
+				'default' => true,
 			],
 			[
 				'id' => 'USER',
 				'name' => Loc::getMessage('TASKS_SCRUM_EPIC_GRID_USER_SHORT'),
-				'default' => true
+				'default' => true,
 			]
+		];
+	}
+
+	private function getUiTasksGridColumns(): array
+	{
+		return [
+			[
+				'id' => 'NAME',
+				'name' => Loc::getMessage('TASKS_SCRUM_TASKS_GRID_NAME'),
+				'default' => true,
+			],
+			[
+				'id' => 'STORY_POINTS',
+				'name' => Loc::getMessage('TASKS_SCRUM_TASKS_GRID_STORY_POINTS'),
+				'default' => true,
+			],
+			[
+				'id' => 'RESPONSIBLE',
+				'name' => Loc::getMessage('TASKS_SCRUM_TASKS_GRID_RESPONSIBLE'),
+				'default' => true,
+			],
 		];
 	}
 
@@ -717,29 +883,63 @@ class Epic extends Controller
 		return '<div class="tasks-scrum-epic-grid-tags">'.implode('', $tagsNodes).'</div>';
 	}
 
-	private function getEpicGridColumnTasksTotal(array $taskIds): string
+	private function getEpicGridColumnTasksTotal(EpicForm $epic, array $taskIds): string
 	{
-		return '<div class="tasks-scrum-epic-grid-tasks-total">'.count($taskIds).'</div>';
+		$count = count($taskIds);
+
+		if ($count === 0)
+		{
+			return '<div class="tasks-scrum-epic-grid-empty-count">0</div>';
+		}
+
+		return '
+			<div
+				class="tasks-scrum-epic-grid-tasks-total"
+				onclick="BX.Tasks.Scrum.Epic.showTasks(\''.$epic->getGroupId().'\', \''.$epic->getId().'\')"
+			>'.$count.'</div>
+		';
 	}
 
-	private function getEpicGridColumnTasksCompleted(array $taskIds): string
+	private function getEpicGridColumnTasksCompleted(EpicForm $epic, array $taskIds): string
 	{
 		$kanbanService = new KanbanService();
 
 		$finishedTaskIds = $kanbanService->extractFinishedTaskIds($taskIds);
 
+		$count = count($finishedTaskIds);
+
+		if ($count === 0)
+		{
+			return '<div class="tasks-scrum-epic-grid-empty-count">0</div>';
+		}
+
 		return '
-			<div class="tasks-scrum-epic-grid-tasks-completed">
-				'.count($finishedTaskIds).'
+			<div
+				class="tasks-scrum-epic-grid-tasks-completed"
+				onclick="BX.Tasks.Scrum.Epic.showCompletedTasks(\''.$epic->getGroupId().'\', \''.$epic->getId().'\')"
+			>
+				'.$count.'
 			</div>
 		';
 	}
 
-	private function getEpicGridColumnUser(array $usersInfo): string
+	private function getUserColumn(array $usersInfo): string
 	{
 		return '
 			<div>
 				<a href="'.$usersInfo['pathToUser'].'">'.HtmlFilter::encode($usersInfo['name']).'</a>
+			</div>
+		';
+	}
+
+	private function getTaskNameColumn(int $taskId, string $name): string
+	{
+		return '
+			<div
+				class="tasks-scrum-epic-grid-tasks-completed"
+				onclick="BX.Tasks.Scrum.Epic.showTask(\'' . $taskId . '\')"
+			>
+				' . HtmlFilter::encode($name) . '
 			</div>
 		';
 	}

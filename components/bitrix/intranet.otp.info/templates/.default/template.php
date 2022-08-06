@@ -1,6 +1,6 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-CJSCore::Init("popup");
+CJSCore::Init(["popup", "ui.fonts.opensans"]);
 ?>
 <div class="bx-otp-info-popup-container" id="otp_mandatory_info" style="display: none">
 	<div class="bx-otp-info-popup-content" style="">

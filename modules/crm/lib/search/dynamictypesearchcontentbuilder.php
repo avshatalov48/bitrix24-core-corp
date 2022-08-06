@@ -58,7 +58,7 @@ class DynamicTypeSearchContentBuilder extends SearchContentBuilder
 		$fieldsWithUsers = [];
 		foreach ($this->getFactory()->getFieldsCollection() as $field)
 		{
-			if ($field->getType() === Field::TYPE_USER)
+			if ($field->getType() === Field::TYPE_USER && !$field->isMultiple())
 			{
 				$fieldsWithUsers[] = $field->getName();
 			}

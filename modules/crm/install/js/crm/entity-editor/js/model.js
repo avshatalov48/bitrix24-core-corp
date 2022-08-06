@@ -364,7 +364,7 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 	 */
 	BX.Crm.QuoteModel.prototype.isCaptionEditable = function()
 	{
-		return false;
+		return true;
 	};
 
 	/**
@@ -374,13 +374,36 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 	 */
 	BX.Crm.QuoteModel.prototype.getCaption = function()
 	{
-		var caption = BX.Loc.getMessage(
-			'CRM_QUOTE_TITLE',
+		var title = this.getField("TITLE");
+		if (BX.Type.isString(title) && title.length > 0)
+		{
+			return title;
+		}
+		var caption = null;
+		if (this.getField('IS_USE_NUMBER_IN_TITLE_PLACEHOLDER'))
+		{
+			caption = BX.Loc.getMessage(
+				'CRM_QUOTE_TITLE',
+				{
+					'#QUOTE_NUMBER#': this.getField('QUOTE_NUMBER'),
+					'#BEGINDATE#': this.getField('BEGINDATE')
+				}
+			);
+		}
+		else
+		{
+			var id = Number(this.getField('ID'));
+			if (id <= 0)
 			{
-				'#QUOTE_NUMBER#': this.getField('QUOTE_NUMBER'),
-				'#BEGINDATE#': this.getField('BEGINDATE')
+				id = '';
 			}
-		);
+			caption = BX.Loc.getMessage(
+				'CRM_QUOTE_TITLE_PLACEHOLDER',
+				{
+					'#ID#': id,
+				}
+			);
+		}
 
 		return BX.Type.isString(caption) ? caption : '';
 	};
@@ -392,6 +415,7 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 	 */
 	BX.Crm.QuoteModel.prototype.setCaption = function(caption)
 	{
+		this.setField("TITLE", caption);
 	};
 
 	/**
@@ -401,6 +425,7 @@ if(typeof BX.Crm.QuoteModel === "undefined")
 	 */
 	BX.Crm.QuoteModel.prototype.prepareCaptionData = function(data)
 	{
+		data["TITLE"] = this.getField("TITLE", "");
 	};
 
 	/**
@@ -435,23 +460,46 @@ if(typeof BX.Crm.SmartInvoiceModel === "undefined")
 	 */
 	BX.Crm.SmartInvoiceModel.prototype.isCaptionEditable = function()
 	{
-		return false;
+		return true;
 	};
 
 	/**
-	 * Quote caption and quote TITLE field are separate entities and should not be confused
+	 * SmartInvoice caption and SmartInvoice TITLE field are separate entities and should not be confused
 	 *
 	 * @return {string}
 	 */
 	BX.Crm.SmartInvoiceModel.prototype.getCaption = function()
 	{
-		var caption = BX.Loc.getMessage(
-			'CRM_SMART_INVOICE_TITLE',
+		var title = this.getField("TITLE");
+		if (BX.Type.isString(title) && title.length > 0)
+		{
+			return title;
+		}
+		var caption = null;
+		if (this.getField('IS_USE_NUMBER_IN_TITLE_PLACEHOLDER'))
+		{
+			caption = BX.Loc.getMessage(
+				'CRM_SMART_INVOICE_TITLE',
+				{
+					'#NUMBER#': this.getField('ACCOUNT_NUMBER'),
+					'#BEGINDATE#': this.getField('BEGINDATE')
+				}
+			);
+		}
+		else
+		{
+			var id = Number(this.getField('ID'));
+			if (id <= 0)
 			{
-				'#NUMBER#': this.getField('ACCOUNT_NUMBER'),
-				'#BEGINDATE#': this.getField('BEGINDATE')
+				id = '';
 			}
-		);
+			caption = BX.Loc.getMessage(
+				'CRM_SMART_INVOICE_TITLE_PLACEHOLDER',
+				{
+					'#ID#': id,
+				}
+			);
+		}
 
 		return BX.Type.isString(caption) ? caption : '';
 	};
@@ -463,6 +511,7 @@ if(typeof BX.Crm.SmartInvoiceModel === "undefined")
 	 */
 	BX.Crm.SmartInvoiceModel.prototype.setCaption = function(caption)
 	{
+		this.setField("TITLE", caption);
 	};
 
 	/**
@@ -472,12 +521,13 @@ if(typeof BX.Crm.SmartInvoiceModel === "undefined")
 	 */
 	BX.Crm.SmartInvoiceModel.prototype.prepareCaptionData = function(data)
 	{
+		data["TITLE"] = this.getField("TITLE", "");
 	};
 
 	/**
 	 * @param {string} id
 	 * @param {Object} settings
-	 * @return {BX.Crm.QuoteModel}
+	 * @return {BX.Crm.SmartInvoiceModel}
 	 */
 	BX.Crm.SmartInvoiceModel.create = function(id, settings)
 	{

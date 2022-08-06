@@ -4,7 +4,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI\Extension;
 
-Extension::load('seo.ads.login');
+Extension::load(['seo.ads.login', 'ui.design-tokens']);
 /** @var array $arParams */
 
 $containerNodeId = $arParams['CONTAINER_NODE_ID'];

@@ -12,6 +12,9 @@ use Bitrix\Main\Localization\Loc;
 	]
 );
 
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
+
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-hidden no-background");
 if($this->getComponent()->getErrors())

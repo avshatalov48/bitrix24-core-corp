@@ -2,12 +2,13 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Filter;
+use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Settings\LeadSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
-use Bitrix\Crm\Kanban\Entity;
-use Bitrix\Crm\Settings\LeadSettings;
 
 class Lead extends Entity
 {
@@ -59,56 +60,10 @@ class Lead extends Entity
 
 	public function getFilterPresets(): array
 	{
-		$user = $this->getCurrentUserInfo();
-
-		$defaultFilter = [
-			'SOURCE_ID' => [],
-			'STATUS_ID' => [],
-			'COMMUNICATION_TYPE' => [],
-			'DATE_CREATE' => '',
-			'ASSIGNED_BY_ID' => ''
-		];
-
-		return [
-			'filter_my_in_work' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_LPR_MY_WORK'),
-				'disallow_for_all' => true,
-				'fields' => array_merge(
-					$defaultFilter,
-					[
-						'ASSIGNED_BY_ID_name' => $user['name'],
-						'ASSIGNED_BY_ID' => $user['id'],
-						'STATUS_SEMANTIC_ID' => [
-							\Bitrix\Crm\PhaseSemantics::PROCESS
-						]
-					]
-				),
-			],
-			'filter_in_work' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_LPR_WORK'),
-				'default' => true,
-				'fields' => array_merge(
-					$defaultFilter,
-					[
-						'STATUS_SEMANTIC_ID' => [
-							\Bitrix\Crm\PhaseSemantics::PROCESS
-						]
-					]
-				)
-			],
-			'filter_closed' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_LPR_CLOSED'),
-				'fields' => array_merge(
-					$defaultFilter,
-					[
-						'STATUS_SEMANTIC_ID' => [
-							\Bitrix\Crm\PhaseSemantics::SUCCESS,
-							\Bitrix\Crm\PhaseSemantics::FAILURE
-						]
-					]
-				)
-			],
-		];
+		return (new Filter\Preset\Lead())
+			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->getDefaultPresets()
+		;
 	}
 
 	public function isRestPlacementSupported(): bool

@@ -176,6 +176,7 @@
 	flex: 1;
 	padding: 0 15px;
 	background: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .task-report-container-title {
@@ -261,6 +262,7 @@
 	flex: 1;
 	position: relative;
 	color: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .task-report-widget-container-content {

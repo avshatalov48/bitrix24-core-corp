@@ -89,7 +89,7 @@
 
 .tel-phones-list-notice {
 	background-color: #fbeeee;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #d31212;
 	padding: 13px 20px;
 	border-radius: 4px;
@@ -136,7 +136,7 @@
 
 .tel-phones-list-th {
 	padding-left: 14px;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #41474f;
 	/*border-bottom: 1px solid #d9e9a4;*/
 	line-height: 38px;
@@ -153,7 +153,7 @@
 }
 
 .tel-phones-list-td {
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #41474f;
 	padding: 10px 29px 10px 14px;
 	border-bottom: 4px solid rgba(237,238,240,.5);
@@ -829,7 +829,7 @@
 	border: 1px solid;
 	border-color: #b9bcbe #bcc0c2 #c1c5c8;
 	border-radius: 2px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #555;
 	height: 37px;
@@ -933,7 +933,7 @@
 	-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, .15);
 	box-shadow: inset 0 1px 2px rgba(0, 0, 0, .15);
 	color: #555;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	height: 27px;
 	padding: 2px;
@@ -1134,7 +1134,7 @@
 	display: block;
 	margin: 0 0 8px 0;
 	max-width: 100%;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	opacity: .5;
 	text-overflow: ellipsis;
@@ -1150,8 +1150,8 @@
 	min-width: 180px;
 	height: 39px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-field-border-radius, 2px);
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2012%208%22%3E%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.122%204.55L10.558.113l1.414%201.414-4.436%204.436-1.478%201.478L.401%201.785%201.88.307l4.242%204.242z%22/%3E%3C/svg%3E');
 	background-color: #fff;
@@ -1208,7 +1208,7 @@
 .tel-set-item-alert {
 	background: #fdfae1;
 	color: #525c69;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-bottom: 14px;
 	padding: 11px 16px 12px;
 }
@@ -1217,8 +1217,7 @@
 	background-color: #ffffff;
 	border: 1px solid;
 	border-color: #E3E4E5 #E4E6E7 #E6E8E9;
-	-webkit-box-shadow: inset 0 1px 2px #e8e8e8;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	margin-bottom: 24px;
 	padding: 8px 10px 3px;
 	min-height: 31px;
@@ -1302,7 +1301,7 @@
 	border: medium none;
 	color: #555;
 	display: inline-block;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	height: 20px;
 	margin: 0 0;
@@ -1679,8 +1678,8 @@
 	min-width: 180px;
 	height: 39px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-field-border-radius, 2px);
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	vertical-align: middle;
 	-webkit-appearance: none;
@@ -1829,7 +1828,7 @@
 	vertical-align: middle;
 	border: 1px solid #c6cdd3;
 	border-radius: 2px;
-	font: 14px/37px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/37px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tel-set-inp-upload-document {
@@ -2045,7 +2044,7 @@
 }
 
 .tel-set-list-special-header {
-	font: 13px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	/*text-shadow: 0 1px #fff;*/
 	margin-bottom: 26px;
 	background-color: #fdfae1;
@@ -2061,7 +2060,7 @@
 	display: inline-block;
 	margin: 15px 0 5px 0;
 	border-bottom: 1px solid transparent;
-	font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066b0;
 	transition: border-bottom .3s;
 }
@@ -2074,9 +2073,11 @@
 .tel-set-frame-title {
 	display: flex;
 	padding: 9px 15px;
-	border-radius: 2px 2px 0 0;
+	border-radius: var(--tel-set-list-border-radius, var(--ui-border-radius-sm, 2px));
+	border-bottom-right-radius: 0;
+	border-bottom-left-radius: 0;
 	background: #d5f4fd;
-	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -2108,7 +2109,9 @@
 	border-left: 1px solid rgba(151,151,151,.24);
 	border-right: 1px solid rgba(151,151,151,.24);
 	border-bottom: 1px solid rgba(151,151,151,.24);
-	border-radius: 0 0 2px 2px;
+	border-radius: var(--tel-set-list-border-radius, var(--ui-border-radius-sm, 2px));
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tel-set-amount-content {
@@ -2128,7 +2131,7 @@
 
 .tel-set-amount-subtitle {
 	margin: 0 0 15px 0;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
@@ -2137,7 +2140,8 @@
 	display: inline-block;
 	margin: 0 30px 0 0;
 	padding: 0 17px 0 0;
-	font: 43px/43px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 43px/43px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
@@ -2165,7 +2169,8 @@
 }
 
 .tel-set-amount-value-md .tel-set-amount-number {
-	font: 33px/33px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 33px/33px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .tel-set-amount-value-md .tel-set-amount-number:after {
@@ -2184,7 +2189,7 @@
 
 .tel-set-amount-text {
 	align-self: center;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -2193,7 +2198,7 @@
 	align-items: center;
 	margin: 0 0 16px 0;
 	padding: 0 0 0 6px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tel-set-amount-warning-text {
@@ -2226,7 +2231,9 @@
 	border-left: 1px solid rgba(151,151,151,.24);
 	border-right: 1px solid rgba(151,151,151,.24);
 	border-bottom: 1px solid rgba(151,151,151,.24);
-	border-radius: 0 0 2px 2px;
+	border-radius: var(--tel-set-list-border-radius, var(--ui-border-radius-sm, 2px));
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tel-set-list-item {
@@ -2235,7 +2242,8 @@
 	/*padding-left: 30px;*/
 	position: relative;
 	vertical-align: top;
-	font: 16px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 }
 
@@ -2282,7 +2290,7 @@
 	margin: 14px 0 11px;
 	padding: 12px 16px 18px 16px;
 	background: #fdfae1;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	line-height: 1.4;
 }
@@ -2756,7 +2764,7 @@
 
 .tel-set-item-desc {
 	margin: 0 0 23px 0;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -2771,7 +2779,7 @@
 }
 
 .tel-set-frame-radio-name {
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
@@ -2790,13 +2798,15 @@
 	max-height: 67px;
 	background: rgba(47,198,248,.09);
 	box-sizing: border-box;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .voximplant-connected-ats-name {
 	display: inline-block;
 	margin: 0 10px 0;
 	max-width: 100%;
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -2814,10 +2824,6 @@
 
 .voximplant-ats .ui-alert {
 	margin-bottom: 24px;
-}
-
-.voximplant-container.voximplant-options-popup {
-	margin: 20px;
 }
 
 .voximplant-grid-icon {
@@ -2906,12 +2912,12 @@
 }
 
 .voximplant-status-panel-text {
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
 .voximplant-status-panel-badge {
-	font: bold 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
 }
 
@@ -2935,12 +2941,13 @@
 .voximplant-status-table {
 	padding: 14px 18px 25px 18px;
 	background: rgba(237,238,240,.5);
+	border-radius: var(--voximplant-status-table-border-radius, var(--ui-border-radius-md));
 }
 
 .voximplant-doc-label {
 	display: block;
 	margin: 0 0 10px 0;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
@@ -2959,7 +2966,7 @@
 .voximplant-control-title-editable .voximplant-control-input {
 	padding: 0;
 	border: none;
-	font: 18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-control-btn-edit {
@@ -2983,13 +2990,13 @@
 .voximplant-control-title-grey-sm {
 	display: block;
 	margin: 0 0 14px 0;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
 .voximplant-group-create .tel-set-list-item {
 	margin: 0 0 10px 0;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
@@ -3012,7 +3019,7 @@
 	padding: 9px 15px;
 	border-radius: 2px 2px 0 0;
 	background: #d5f4fd;
-	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 

@@ -94,32 +94,43 @@ class GoogleDataStudio extends Service
 		return 'STRING';
 	}
 
-	protected function applyDateFilter(&$sqlWhere, $tableFields, $dateRange)
+	protected function applyDateFilter(&$sqlWhere, $tableFields, $dateRange, $timeFilterColumn = '')
 	{
 		$startDate = MakeTimeStamp($dateRange['startDate'], 'YYYY-MM-DD');
-		if ($startDate)
+
+		$filterColumnName = false;
+		if (
+			$timeFilterColumn
+			&& array_key_exists($timeFilterColumn, $tableFields)
+			&& $tableFields[$timeFilterColumn]['FIELD_TYPE'] === 'datetime'
+		)
+		{
+			$filterColumnName = $timeFilterColumn;
+		}
+		else
 		{
 			foreach ($tableFields as $fieldName => $fieldInfo)
 			{
 				if ($fieldInfo['FIELD_TYPE'] === 'datetime')
 				{
-					$sqlWhere['>=' . $fieldName] = ConvertTimeStamp($startDate, 'SHORT');
+					$filterColumnName = $fieldName;
 					break;
 				}
 			}
 		}
 
-		$endDate = MakeTimeStamp($dateRange['endDate'], 'YYYY-MM-DD');
-		if ($endDate)
+		if ($filterColumnName)
 		{
-			$endDate += 23*3600 + 59*60 + 59;
-			foreach ($tableFields as $fieldName => $fieldInfo)
+			if ($startDate)
 			{
-				if ($fieldInfo['FIELD_TYPE'] === 'datetime')
-				{
-					$sqlWhere['<=' . $fieldName] = ConvertTimeStamp($endDate, 'FULL');
-					break;
-				}
+				$sqlWhere['>=' . $filterColumnName] = ConvertTimeStamp($startDate, 'SHORT');
+			}
+
+			$endDate = MakeTimeStamp($dateRange['endDate'], 'YYYY-MM-DD');
+			if ($endDate)
+			{
+				$endDate += 23 * 3600 + 59 * 60 + 59;
+				$sqlWhere['<=' . $filterColumnName] = ConvertTimeStamp($endDate, 'FULL');
 			}
 		}
 	}
@@ -217,7 +228,7 @@ class GoogleDataStudio extends Service
 		$sqlWhere = $tableInfo['FILTER'] ?: [];
 		if (isset($parameters['dateRange']) && is_array($parameters['dateRange']))
 		{
-			$this->applyDateFilter($sqlWhere, $tableFields, $parameters['dateRange']);
+			$this->applyDateFilter($sqlWhere, $tableFields, $parameters['dateRange'], $parameters['configParams']['timeFilterColumn']);
 		}
 
 		// https://developers.google.com/datastudio/connector/filters?hl=ru

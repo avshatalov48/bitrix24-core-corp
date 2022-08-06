@@ -158,6 +158,24 @@ class Dictionary
 				['id' => 'bottom', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_VERT_BOTTOM')],
 				['id' => 'top', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_VERT_TOP')],
 			],
+
+			'button' => [
+				'fonts' => [
+					['id' => 'modern', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_FONT_MODERN')],
+					['id' => 'classic', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_FONT_CLASSIC')],
+					['id' => 'elegant', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_FONT_ELEGANT')],
+				],
+				'aligns' => [
+					['id' => 'inline', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_POS_INLINE')],
+					['id' => 'left', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_POS_LEFT')],
+					['id' => 'center', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_POS_CENTER')],
+					['id' => 'right', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_POS_RIGHT')],
+				],
+				'plains' => [
+					['id' => '0', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_BUTTON_TYPE_BUTTON')],
+					['id' => '1', 'name' => Loc::getMessage('CRM_WEBFORM_OPTIONS_DICT_VIEW_BUTTON_TYPE_LINK')],
+				],
+			],
 		];
 	}
 

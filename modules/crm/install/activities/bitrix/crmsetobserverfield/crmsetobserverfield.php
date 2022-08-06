@@ -1,8 +1,11 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-class CBPCrmSetObserverField
-	extends CBPActivity
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+class CBPCrmSetObserverField extends CBPActivity
 {
 	const ACTION_ADD_OBSERVERS = 'add';
 	const ACTION_REMOVE_OBSERVERS = 'remove';
@@ -11,14 +14,14 @@ class CBPCrmSetObserverField
 	public function __construct($name)
 	{
 		parent::__construct($name);
-		$this->arProperties = array(
+		$this->arProperties = [
 			'Title' => '',
 			'ActionOnObservers' => null,
 			'Observers' => null,
-		);
+		];
 	}
 
-	public function Execute()
+	public function execute()
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -28,6 +31,11 @@ class CBPCrmSetObserverField
 		$documentType = $this->GetDocumentType()[2];
 		$documentId = mb_split('_(?=[^_]*$)', $this->GetDocumentId()[2])[1];
 		$observerIds = CBPHelper::ExtractUsers($this->Observers, $this->GetDocumentId());
+
+		$this->writeDebugInfo($this->getDebugInfo([
+			'ActionOnObservers' => $this->ActionOnObservers,
+			'Observers' => $this->Observers,
+		]));
 
 		if ($documentType === CCrmOwnerType::LeadName || $documentType === CCrmOwnerType::DealName)
 		{
@@ -111,14 +119,14 @@ class CBPCrmSetObserverField
 		$factory->getUpdateOperation($item)->launch();
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')
+	public static function getPropertiesDialog($documentType, $activityName, $workflowTemplate, $workflowParameters, $workflowVariables, $currentValues = null, $formName = '', $popupWindow = null, $siteId = '')
 	{
 		if(!CModule::IncludeModule('crm'))
 		{
 			return '';
 		}
 
-		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, array(
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
 			'documentType' => $documentType,
 			'activityName' => $activityName,
 			'workflowTemplate' => $workflowTemplate,
@@ -127,44 +135,49 @@ class CBPCrmSetObserverField
 			'currentValues' => $currentValues,
 			'formName' => $formName,
 			'siteId' => $siteId
-		));
+		]);
 
-		$dialog->setMap(self::GetPropertiesDialogMap());
+		$dialog->setMap(self::getPropertiesDialogMap());
 
 		return $dialog;
 	}
 
-	protected static function GetPropertiesDialogMap()
+	protected static function getPropertiesDialogMap(): array
 	{
-		return array(
-			'ActionOnObservers' => array(
+		return [
+			'ActionOnObservers' => [
 				'Name' => GetMessage("CRM_SOF_ACTION_ON_OBSERVERS"),
 				'FieldName' => 'action_on_observers',
 				'Type' => \Bitrix\Bizproc\FieldType::SELECT,
 				'Required' => true,
 				'Options' => self::getActionsOnObservers(),
 				'Default' => self::ACTION_ADD_OBSERVERS,
-			),
-			'Observers' => array(
+			],
+			'Observers' => [
 				'Name' => GetMessage("CRM_SOF_OBSERVERS"),
 				'FieldName' => 'observers',
 				'Type' => \Bitrix\Bizproc\FieldType::USER,
 				'Required' => true,
 				'Multiple' => true,
-			)
-		);
+			],
+		];
 	}
 
-	protected static function getActionsOnObservers()
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
-		return array(
+		return static::getPropertiesDialogMap();
+	}
+
+	protected static function getActionsOnObservers(): array
+	{
+		return [
 			self::ACTION_ADD_OBSERVERS => getMessage('CRM_SOF_ACTION_ADD_OBSERVERS'),
 			self::ACTION_REMOVE_OBSERVERS => getMessage('CRM_SOF_ACTION_REMOVE_OBSERVERS'),
 			self::ACTION_REPLACE_OBSERVERS => GetMessage('CRM_SOF_ACTION_REPLACE_OBSERVERS'),
-		);
+		];
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$workflowTemplate, &$workflowParameters, &$workflowVariables, $currentValues, &$errors)
+	public static function getPropertiesDialogValues($documentType, $activityName, &$workflowTemplate, &$workflowParameters, &$workflowVariables, $currentValues, &$errors)
 	{
 		$runtime = CBPRuntime::GetRuntime();
 		$runtime->StartRuntime();
@@ -172,20 +185,20 @@ class CBPCrmSetObserverField
 		$properties = [];
 		$documentService = $runtime->GetService('DocumentService');
 
-		foreach (self::GetPropertiesDialogMap() as $propertyKey => $fieldProperties)
+		foreach (self::getPropertiesDialogMap() as $propertyKey => $fieldProperties)
 		{
 			$field = $documentService->getFieldTypeObject($documentType, $fieldProperties);
 			if(!$field)
 				continue;
 
 			$properties[$propertyKey] = $field->extractValue(
-				array('Field' => $fieldProperties['FieldName']),
+				['Field' => $fieldProperties['FieldName']],
 				$currentValues,
 				$errors
 			);
 		}
 
-		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
+		$errors = self::validateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
 		if(count($errors) > 0)
 		{
 			return false;
@@ -197,25 +210,25 @@ class CBPCrmSetObserverField
 		return true;
 	}
 
-	public static function ValidateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)
+	public static function validateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
 		$errors = [];
 
-		foreach (self::GetPropertiesDialogMap() as $propertyKey => $fieldProperties)
+		foreach (self::getPropertiesDialogMap() as $propertyKey => $fieldProperties)
 		{
 			if(
 				CBPHelper::getBool($fieldProperties['Required'])
 				&& CBPHelper::isEmptyValue($testProperties[$propertyKey])
 			)
 			{
-				$errors[] = array(
+				$errors[] = [
 					'code' => 'NotExist',
 					'parameter' => 'FieldValue',
-					'message' => GetMessage("CRM_SOF_EMPTY_PROP", array('#PROPERTY#' => $fieldProperties['Name']))
-				);
+					'message' => GetMessage("CRM_SOF_EMPTY_PROP", ['#PROPERTY#' => $fieldProperties['Name']])
+				];
 			}
 		}
 
-		return array_merge($errors, parent::ValidateProperties($testProperties, $user));
+		return array_merge($errors, parent::validateProperties($testProperties, $user));
 	}
 }

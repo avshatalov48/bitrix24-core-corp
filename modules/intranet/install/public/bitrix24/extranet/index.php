@@ -1,13 +1,23 @@
-<?
+<?php
+
+/**
+ * @global  \CMain $APPLICATION
+ * @global  \CUser $USER
+ */
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/extranet/index.php");
+
 $APPLICATION->SetTitle(GetMessage("TITLE"));
+
 GetGlobalID();
+
 $componentDateTimeFormat = CIntranetUtils::getCurrentDateTimeFormat();
 
 $APPLICATION->IncludeComponent(
-	"bitrix:socialnetwork.log.ex", 
-	"", 
+	"bitrix:socialnetwork.log.ex",
+	"",
 	Array(
 		"PATH_TO_LOG_ENTRY" => "/extranet/contacts/personal/log/#log_id#/",
 		"PATH_TO_USER" => "/extranet/contacts/personal/user/#user_id#/",
@@ -27,7 +37,7 @@ $APPLICATION->IncludeComponent(
 		"PATH_TO_GROUP_PHOTO" => "/extranet/workgroups/group/#group_id#/photo/",
 		"PATH_TO_USER_PHOTO_SECTION" => "/extranet/contacts/personal/user/#user_id#/photo/album/#section_id#/",
 		"PATH_TO_GROUP_PHOTO_SECTION" => "/extranet/workgroups/group/#group_id#/photo/album/#section_id#/",
-		"PATH_TO_USER_PHOTO_ELEMENT" => "/extranet/contacts/personal/user/#user_id#/photo/photo/#section_id#/#element_id#/",		
+		"PATH_TO_USER_PHOTO_ELEMENT" => "/extranet/contacts/personal/user/#user_id#/photo/photo/#section_id#/#element_id#/",
 		"PATH_TO_GROUP_PHOTO_ELEMENT" => "/extranet/workgroups/group/#group_id#/photo/#section_id#/#element_id#/",
 		"PATH_TO_SEARCH_TAG" => "/extranet/search/?tags=#tag#",
 		"SET_NAV_CHAIN" => "Y",
@@ -66,14 +76,16 @@ $APPLICATION->IncludeComponent(
 		"AVATAR_SIZE_COMMENT" => 100,
 		"AUTH" => "Y",
 	)
-);?>
-<?if ($GLOBALS["USER"]->IsAuthorized()){
+);
+
+if ($GLOBALS["USER"]->IsAuthorized())
+{
 	$APPLICATION->IncludeComponent(
 		"bitrix:socialnetwork.blog.blog",
 		"important",
 		Array(
 			"BLOG_URL" => "",
-			"FILTER" => array(">UF_BLOG_POST_IMPRTNT" => 0, "!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $GLOBALS["USER"]->GetId(), "VALUE" => "Y")),
+			"FILTER" => array("=UF_BLOG_POST_IMPRTNT" => 1, "!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $GLOBALS["USER"]->GetId(), "VALUE" => "Y")),
 			"FILTER_NAME" => "",
 			"YEAR" => "",
 			"MONTH" => "",
@@ -121,7 +133,8 @@ $APPLICATION->IncludeComponent(
 		null
 	);
 }?>
-<?$APPLICATION->IncludeComponent(
+<?php
+$APPLICATION->IncludeComponent(
 	"bitrix:tasks.widget.rolesfilter",
 	"",
 	[
@@ -131,5 +144,7 @@ $APPLICATION->IncludeComponent(
 	],
 	null,
 	["HIDE_ICONS" => "N"]
-);?>
-<?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");?>
+);
+?>
+<?php
+require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php");

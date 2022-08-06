@@ -425,11 +425,12 @@ class DocxXml extends Xml
 					$values,
 					false,
 				);
-				$innerXml = new DocxXml($blockContent);
-				$innerXml->initDomDocument();
 				$nodeToLoad = $block['nodes'][count($block['nodes']) - 1];
-				$blockDocument = $innerXml->getDomDocument();
-				foreach($blockDocument->childNodes as $blockNode)
+				$blockDocument = new \DOMDocument();
+				$blockContentWithoutXmlDeclaration = str_replace('<?xml version="1.0"?>' . PHP_EOL, '', $blockContent);
+				$validXmlWithContent = Xml::getValidXmlWithContent($blockContentWithoutXmlDeclaration, 'w', static::getNamespaces());
+				$blockDocument->loadXML($validXmlWithContent);
+				foreach(Xml::getDocumentContentNodes($blockDocument, 'w') as $blockNode)
 				{
 					$blockNode = $this->document->importNode($blockNode, true);
 					$nodeToLoad->parentNode->insertBefore($blockNode, $nodeToLoad);

@@ -2,7 +2,7 @@
 
 namespace Bitrix\Location\Infrastructure;
 
-use Bitrix\Location\Common\Point;
+use Bitrix\Location\Geometry\Type\Point;
 use Bitrix\Main\Loader;
 
 /**

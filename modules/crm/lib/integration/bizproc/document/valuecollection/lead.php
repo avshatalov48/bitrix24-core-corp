@@ -56,6 +56,11 @@ class Lead extends Base
 		$this->appendDefaultUserPrefixes();
 		$this->appendCustomerFields();
 
+		if ($this->document['COMPANY_ID'] > 0)
+		{
+			unset($this->document['COMPANY_TITLE']);
+		}
+
 		$this->document['FULL_ADDRESS'] = Crm\Format\AddressFormatter::getSingleInstance()->formatTextComma(
 			Crm\LeadAddress::mapEntityFields($this->document)
 		);

@@ -35,7 +35,7 @@ class Item
 		{
 			$data['CONTRACTOR_PERSON_NAME'] = $document['CONTRACTOR_PERSON_NAME'];
 		}
-		if (isset($document['CONTRACTOR_PERSON_NAME']))
+		if (isset($document['CONTRACTOR_COMPANY']))
 		{
 			$data['CONTRACTOR_COMPANY'] = $document['CONTRACTOR_COMPANY'];
 		}

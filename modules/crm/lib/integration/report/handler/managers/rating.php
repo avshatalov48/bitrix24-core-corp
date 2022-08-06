@@ -91,7 +91,7 @@ abstract class Rating extends Deal
 			}
 
 			$query->where("DATE_CREATE", '<=', $toDateValue);
-			$query->where(Query::filter()->logic('or')->where('CLOSEDATE', '>=', $fromDateValue)->whereNull('CLOSEDATE'));
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 	}
 

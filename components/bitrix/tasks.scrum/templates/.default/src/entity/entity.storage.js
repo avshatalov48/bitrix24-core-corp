@@ -10,6 +10,7 @@ export class EntityStorage
 	{
 		this.backlog = null;
 		this.sprints = new Map();
+		this.filteredCompletedSprints = new Map();
 	}
 
 	addBacklog(backlog: Backlog)
@@ -25,6 +26,16 @@ export class EntityStorage
 	addSprint(sprint: Sprint)
 	{
 		this.sprints.set(sprint.getId(), sprint);
+	}
+
+	addFilteredCompletedSprint(sprint: Sprint)
+	{
+		this.filteredCompletedSprints.set(sprint.getId(), sprint);
+	}
+
+	clearFilteredCompletedSprints()
+	{
+		this.filteredCompletedSprints.clear();
 	}
 
 	removeSprint(sprintId: number)
@@ -47,6 +58,11 @@ export class EntityStorage
 		return this.sprints;
 	}
 
+	getFilteredCompletedSprints(): Map<number, Sprint>
+	{
+		return this.filteredCompletedSprints;
+	}
+
 	getActiveSprint(): ?Sprint
 	{
 		return [...this.sprints.values()].find((sprint: Sprint) => sprint.isActive());
@@ -58,6 +74,20 @@ export class EntityStorage
 
 		this.sprints.forEach((sprint: Sprint) => {
 			if (sprint.isPlanned())
+			{
+				sprints.add(sprint);
+			}
+		});
+
+		return sprints;
+	}
+
+	getFilteredCompletedSprints(): Set<Sprint>
+	{
+		const sprints = new Set();
+
+		this.sprints.forEach((sprint: Sprint) => {
+			if (sprint.isCompleted() && !sprint.isEmpty())
 			{
 				sprints.add(sprint);
 			}
@@ -114,14 +144,12 @@ export class EntityStorage
 
 	existsAtLeastOneItem(): boolean
 	{
-		const backlogItems = new Map(this.backlog.getItems());
-
-		if (backlogItems.size > 0)
+		if (this.backlog.getNumberTasks() > 0)
 		{
 			return true;
 		}
 
-		const filledSprint = [...this.sprints.values()].find((sprint: Sprint) => sprint.getItems().size > 0);
+		const filledSprint = [...this.sprints.values()].find((sprint: Sprint) => sprint.getNumberTasks() > 0);
 
 		return !Type.isUndefined(filledSprint);
 	}
@@ -132,7 +160,7 @@ export class EntityStorage
 		this.sprints.forEach((sprint) => sprint.recalculateItemsSort());
 	}
 
-	findEntityByEntityId(entityId: number): Backlog|Sprint
+	findEntityByEntityId(entityId: number): ?Entity
 	{
 		entityId = parseInt(entityId, 10);
 
@@ -170,6 +198,15 @@ export class EntityStorage
 		let items = new Map(this.backlog.getItems());
 
 		[...this.sprints.values()].map((sprint) => items = new Map([...items, ...sprint.getItems()]));
+
+		return [...items.values()].find((item: Item) => item.getSourceId() === sourceId);
+	}
+
+	findItemBySourceInFilteredCompletedSprints(sourceId: number): ?Item
+	{
+		let items = new Map();
+
+		[...this.filteredCompletedSprints.values()].map((sprint) => items = new Map([...items, ...sprint.getItems()]));
 
 		return [...items.values()].find((item: Item) => item.getSourceId() === sourceId);
 	}

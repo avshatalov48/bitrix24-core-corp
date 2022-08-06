@@ -225,7 +225,7 @@ class BaseGraph extends Handler\Deal implements IReportMultipleGroupedData
 			$toDateValue = new DateTime($timePeriodValue['to']);
 			$fromDateValue = new DateTime($timePeriodValue['from']);
 
-			$query->whereBetween("CLOSEDATE", $fromDateValue, $toDateValue);
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 	}
 

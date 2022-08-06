@@ -161,6 +161,8 @@ if(!empty($arResult["Post"]))
 			 class="<?=implode(' ', $itemClassList)?>"
 			 data-livefeed-id="<?=(int)$arParams['LOG_ID']?>"
 			 data-livefeed-post-pinned="<?=($pinned ? 'Y' : 'N')?>"
+			 data-security-entity-pin="<?= (int)$arParams['LOG_ID'] ?>"
+			 data-security-token-pin="<?= htmlspecialcharsbx($arResult['LOG_ID_TOKEN']) ?>"
 			 data-livefeed-post-entry-type="blog"
 			 data-livefeed-post-use-follow="<?=($arParams['USE_FOLLOW'] === 'N' ? 'N' : 'Y')?>"
 			 data-livefeed-post-use-tasks="<?=($arResult['bTasksAvailable'] ? 'Y' : 'N')?>"
@@ -529,7 +531,8 @@ if(!empty($arResult["Post"]))
 				 class="<?=implode(' ', $postItemClassList)?>"
 				 id="post_block_check_cont_<?=$arParams["LOG_ID"]?>"
 				 bx-data-has-title="<?=$arResult['Post']['MICRO'] !== 'Y' ? 'Y' : 'N'?>"
-				 bx-content-view-xml-id="BLOG_POST-<?=(int)$arResult["Post"]["ID"]?>"><?php
+				 bx-content-view-xml-id="<?= $arResult['CONTENT_ID'] ?>"
+				 bx-content-view-key-signed="<?= htmlspecialcharsbx($arResult['CONTENT_VIEW_KEY_SIGNED']) ?>"><?php
 
 					$importantIcon = ($arParams['EVENT_ID'] === 'blog_post_important' ? '<div class="info-block-important-icon"></div>' : '');
 
@@ -911,8 +914,7 @@ if(!empty($arResult["Post"]))
 							"ATTACHED_IMAGE_MAX_HEIGHT_FULL" => 832,
 							"CAN_USER_COMMENT" => (!isset($arResult["CanComment"]) || $arResult["CanComment"] ? 'Y' : 'N'),
 							"NAV_TYPE_NEW" => "Y",
-//							"MARK_NEW_COMMENTS" => "Y", // show new comments in the list
-							"SITE_TEMPLATE_ID" => (!empty($arParams["SITE_TEMPLATE_ID"]) ? $arParams["SITE_TEMPLATE_ID"] : '')
+							"SITE_TEMPLATE_ID" => (!empty($arParams["SITE_TEMPLATE_ID"]) ? $arParams["SITE_TEMPLATE_ID"] : ''),
 						),
 						$component,
 						array("HIDE_ICONS" => "Y")

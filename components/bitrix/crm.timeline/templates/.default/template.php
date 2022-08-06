@@ -30,6 +30,7 @@ Bitrix\Main\UI\Extension::load(
 		'sidepanel',
 		'crm.restriction.bitrix24',
 		'ui.hint',
+		'ui.design-tokens',
 	]
 );
 

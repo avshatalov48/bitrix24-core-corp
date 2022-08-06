@@ -19,7 +19,6 @@ use Bitrix\Catalog\v2\Helpers\PropertyValue;
 use Bitrix\Catalog\StoreTable;
 use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Main\Loader;
-use CCrmOwnerType;
 
 class OrderSynchronizer
 {
@@ -119,11 +118,7 @@ class OrderSynchronizer
 
 		self::disableContactAutoCreationModeByOrder($order);
 
-		$result = $order->save();
-		if ($result->isSuccess())
-		{
-			ReservationService::getInstance()->mappingReservations(CCrmOwnerType::Deal, $this->dealId, $order);
-		}
+		$order->save();
 
 		if ($wasAutomaticReservationEnabled)
 		{
@@ -157,6 +152,7 @@ class OrderSynchronizer
 		$counter = 0;
 		$isNewOrder = empty($orderProducts);
 
+		$foundProducts = [];
 		foreach ($dealProducts as $product)
 		{
 			if ($isNewOrder)
@@ -166,7 +162,7 @@ class OrderSynchronizer
 			}
 			else
 			{
-				$index = self::searchProduct($product, $orderProducts);
+				$index = self::searchProduct($product, $orderProducts, $foundProducts);
 				if ($index === false)
 				{
 					$product['BASKET_CODE'] = 'n' . (++$counter);
@@ -370,16 +366,16 @@ class OrderSynchronizer
 	/**
 	 * @param array $searchableProduct
 	 * @param array $productList
+	 * @param array $foundProducts
+	 *
 	 * @return false|int|string
 	 */
-	private static function searchProduct(array $searchableProduct, array $productList)
+	private static function searchProduct(array $searchableProduct, array $productList, array & $foundProducts)
 	{
 		if ((int)$searchableProduct['PRODUCT_ID'] === 0)
 		{
 			return false;
 		}
-
-		static $foundProducts = [];
 
 		foreach ($productList as $index => $item)
 		{

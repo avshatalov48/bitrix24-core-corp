@@ -1960,7 +1960,7 @@
 
 		log()
 		{
-			this.call.log.apply(this.call, arguments);
+			this.call && this.call.log.apply(this.call, arguments);
 		}
 
 		destroy()

@@ -11,7 +11,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(['ui.icons', 'ui.sidepanel-content']);
+Extension::load([
+	'ui.icons',
+	'ui.sidepanel-content',
+	'ui.design-tokens'
+]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $iconClass = htmlspecialcharsbx($arResult['ROW']['ICON_CLASS']);

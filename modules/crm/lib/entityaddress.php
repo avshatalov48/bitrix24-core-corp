@@ -1,12 +1,15 @@
 <?php
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Location\Entity\Address\AddressLinkCollection;
 use Bitrix\Location\Service\AddressService;
 use Bitrix\Main;
 use Bitrix\Main\Text\Encoding;
 use \Bitrix\Sale;
 use Bitrix\Location\Entity\Address;
+use CCrmOwnerType;
 
 class EntityAddress
 {
@@ -196,7 +199,7 @@ class EntityAddress
 	protected static function getLocationAddressLinkIndentifier($typeID, $entityTypeID, $entityID)
 	{
 		return [
-			'entityType' => 'CRM_'.\CCrmOwnerType::ResolveName($entityTypeID).'_ADDRESS',
+			'entityType' => 'CRM_'. CCrmOwnerType::ResolveName($entityTypeID).'_ADDRESS',
 			'entityId' => $typeID.'.'.$entityTypeID.'.'.$entityID
 		];
 	}
@@ -331,8 +334,8 @@ class EntityAddress
 		$locationAddressessLinksModified = false;
 
 		$isContactCompanyCompatibility = (
-			$entityTypeId === \CCrmOwnerType::Company
-			|| $entityTypeId === \CCrmOwnerType::Contact
+			$entityTypeId === CCrmOwnerType::Company
+			|| $entityTypeId === CCrmOwnerType::Contact
 		);
 
 		$requisite = EntityRequisite::getSingleInstance();
@@ -346,9 +349,9 @@ class EntityAddress
 			{
 				$removeLink = false;
 				$linkEntityTypeName = $matches[1];
-				$linkEntityTypeId = \CCrmOwnerType::ResolveID($linkEntityTypeName);
-				if ($linkEntityTypeId === \CCrmOwnerType::Lead
-					|| $linkEntityTypeId === \CCrmOwnerType::Requisite)
+				$linkEntityTypeId = CCrmOwnerType::ResolveID($linkEntityTypeName);
+				if ($linkEntityTypeId === CCrmOwnerType::Lead
+					|| $linkEntityTypeId === CCrmOwnerType::Requisite)
 				{
 					$matches = [];
 					if (preg_match('/(\d+)\.(\d+)\.(\d+)/', $link->getAddressLinkEntityId(), $matches))
@@ -360,7 +363,7 @@ class EntityAddress
 						$linkEntityId = 0;
 						if ($isContactCompanyCompatibility)
 						{
-							if ($linkAddrEntityTypeId === \CCrmOwnerType::Requisite && $linkAddrEntityId > 0)
+							if ($linkAddrEntityTypeId === CCrmOwnerType::Requisite && $linkAddrEntityId > 0)
 							{
 								$res = $requisite->getList(
 									array(
@@ -384,10 +387,10 @@ class EntityAddress
 							}
 						}
 						if (EntityAddressType::isDefined($linkAddrTypeId)
-							&& \CCrmOwnerType::IsDefined($linkAddrEntityTypeId)
+							&& CCrmOwnerType::IsDefined($linkAddrEntityTypeId)
 							&& $linkAddrEntityId > 0
-							&& ($linkEntityTypeId === \CCrmOwnerType::Undefined
-								|| \CCrmOwnerType::IsDefined($linkEntityTypeId))
+							&& ($linkEntityTypeId === CCrmOwnerType::Undefined
+								|| CCrmOwnerType::IsDefined($linkEntityTypeId))
 							&& $linkEntityId >= 0)
 						{
 							if (!$removeLink
@@ -416,7 +419,7 @@ class EntityAddress
 								}
 								else
 								{
-									if ($checkEntityTypeId === \CCrmOwnerType::Requisite)
+									if ($checkEntityTypeId === CCrmOwnerType::Requisite)
 									{
 										if (!$requisite->exists($checkEntityId))
 										{
@@ -425,7 +428,7 @@ class EntityAddress
 									}
 									else
 									{
-										if (!\CCrmOwnerType::TryGetInfo($checkEntityTypeId, $checkEntityId, $info))
+										if (!CCrmOwnerType::TryGetInfo($checkEntityTypeId, $checkEntityId, $info))
 										{
 											$removeLink = true;
 										}
@@ -477,11 +480,11 @@ class EntityAddress
 			$entityTypeId = (int)$entityTypeId;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeId))
+		if(!CCrmOwnerType::IsDefined($entityTypeId))
 		{
 			throw new Main\ArgumentOutOfRangeException('entityTypeId',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
+				CCrmOwnerType::FirstOwnerType,
+				CCrmOwnerType::LastOwnerType
 			);
 		}
 
@@ -853,6 +856,14 @@ class EntityAddress
 
 					AddressTable::upsert($fields);
 
+					//region Register volatile duplicate criterion fields
+					DuplicateVolatileCriterion::register(
+						(int)$row['ENTITY_TYPE_ID'],
+						(int)$row['ENTITY_ID'],
+						[FieldCategory::ADDRESS]
+					);
+					//endregion Register volatile duplicate criterion fields
+
 					//region Send event
 					$event = new Main\Event('crm', 'OnAfterAddressRegister', array('fields' => $fields));
 					$event->send();
@@ -969,14 +980,14 @@ class EntityAddress
 		$result = false;
 
 		$address = new self();
-		if ($addressFields['ENTITY_TYPE_ID'] === \CCrmOwnerType::Company
-			|| $addressFields['ENTITY_TYPE_ID'] === \CCrmOwnerType::Contact)
+		if ($addressFields['ENTITY_TYPE_ID'] === CCrmOwnerType::Company
+			|| $addressFields['ENTITY_TYPE_ID'] === CCrmOwnerType::Contact)
 		{
 			$res = $address->getList(
 				[
 					'filter' => [
 						'TYPE_ID' => $addressFields['TYPE_ID'],
-						'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+						'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 						'ANCHOR_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
 						'ANCHOR_ID' => $addressFields['ENTITY_ID'],
 						'IS_DEF' => 1
@@ -1018,7 +1029,7 @@ class EntityAddress
 			[
 				'filter' => [
 					'TYPE_ID' => $addressFields['TYPE_ID'],
-					'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 					'ANCHOR_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
 					'ANCHOR_ID' => $addressFields['ENTITY_ID'],
 					'IS_DEF' => 1
@@ -1079,7 +1090,7 @@ class EntityAddress
 					'ENTITY_TYPE_ID' => $addressFields['ENTITY_TYPE_ID'],
 					'ENTITY_ID' => $addressFields['ENTITY_ID'],
 					'PRESET_ID' => $presetId,
-					'NAME' => \CCrmOwnerType::GetCaption(
+					'NAME' => CCrmOwnerType::GetCaption(
 						$addressFields['ENTITY_TYPE_ID'],
 						$addressFields['ENTITY_ID'],
 						false
@@ -1096,7 +1107,7 @@ class EntityAddress
 			else
 			{
 				throw new Main\SystemException(
-					'Cannot create a '.mb_strtolower(\CCrmOwnerType::ResolveName($addressFields['ENTITY_TYPE_ID'])).
+					'Cannot create a '.mb_strtolower(CCrmOwnerType::ResolveName($addressFields['ENTITY_TYPE_ID'])).
 					' details item (ID: '.$addressFields['ENTITY_ID'].'})'
 				);
 			}
@@ -1111,7 +1122,7 @@ class EntityAddress
 				true
 			);
 		}
-		$result['ENTITY_TYPE_ID'] = \CCrmOwnerType::Requisite;
+		$result['ENTITY_TYPE_ID'] = CCrmOwnerType::Requisite;
 		$result['ENTITY_ID'] = $requisiteId;
 		$result['ANCHOR_TYPE_ID'] = $addressFields['ENTITY_TYPE_ID'];
 		$result['ANCHOR_ID'] = $addressFields['ENTITY_ID'];
@@ -1164,11 +1175,11 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
+				CCrmOwnerType::FirstOwnerType,
+				CCrmOwnerType::LastOwnerType
 			);
 		}
 
@@ -1188,7 +1199,7 @@ class EntityAddress
 		}
 
 		$anchorTypeID = isset($data['ANCHOR_TYPE_ID']) ? (int)$data['ANCHOR_TYPE_ID'] : 0;
-		if(!\CCrmOwnerType::IsDefined($anchorTypeID))
+		if(!CCrmOwnerType::IsDefined($anchorTypeID))
 		{
 			$anchorTypeID = $entityTypeID;
 		}
@@ -1199,8 +1210,8 @@ class EntityAddress
 			$anchorID = $entityID;
 		}
 
-		$isContactCompanyCompatibility = ($entityTypeID === \CCrmOwnerType::Company
-			|| $entityTypeID === \CCrmOwnerType::Contact);
+		$isContactCompanyCompatibility = ($entityTypeID === CCrmOwnerType::Company
+			|| $entityTypeID === CCrmOwnerType::Contact);
 
 		if (isset($data['LANGUAGE_ID']) && is_string($data['LANGUAGE_ID']) && mb_strlen($data['LANGUAGE_ID']) === 2)
 		{
@@ -1220,7 +1231,7 @@ class EntityAddress
 				[
 					'filter' => [
 						'=TYPE_ID' => $typeID,
-						'=ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+						'=ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 						'=ANCHOR_TYPE_ID' => $entityTypeID,
 						'=ANCHOR_ID' => $entityID,
 						'=IS_DEF' => 1
@@ -1251,7 +1262,7 @@ class EntityAddress
 
 		$isDef = (
 			$prevIsDef || $isContactCompanyCompatibility
-			|| ($entityTypeID === \CCrmOwnerType::Requisite && isset($data['IS_DEF'])
+			|| ($entityTypeID === CCrmOwnerType::Requisite && isset($data['IS_DEF'])
 				&& ($data['IS_DEF'] === true || $data['IS_DEF'] === 'Y' || $data['IS_DEF'] === '1'))
 		);
 		unset($prevIsDef);
@@ -1358,6 +1369,10 @@ class EntityAddress
 				AddressTable::setDef($fields);
 			}
 
+			//region Register volatile duplicate criterion fields
+			DuplicateVolatileCriterion::register($entityTypeID, $entityID, [FieldCategory::ADDRESS]);
+			//endregion Register volatile duplicate criterion fields
+
 			//region Send event
 			$event = new Main\Event('crm', 'OnAfterAddressRegister', array('fields' => $fields));
 			$event->send();
@@ -1375,11 +1390,11 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
+				CCrmOwnerType::FirstOwnerType,
+				CCrmOwnerType::LastOwnerType
 			);
 		}
 
@@ -1425,6 +1440,14 @@ class EntityAddress
 
 		$result = AddressTable::delete($primaryFields);
 
+		//region Register volatile duplicate criterion fields
+		DuplicateVolatileCriterion::register(
+			$entityTypeID,
+			$entityID,
+			[FieldCategory::ADDRESS]
+		);
+		//endregion Register volatile duplicate criterion fields
+
 		//region Send event
 		if ($result->isSuccess())
 		{
@@ -1447,11 +1470,11 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
+				CCrmOwnerType::FirstOwnerType,
+				CCrmOwnerType::LastOwnerType
 			);
 		}
 
@@ -1513,11 +1536,11 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentOutOfRangeException('entityTypeID',
-				\CCrmOwnerType::FirstOwnerType,
-				\CCrmOwnerType::LastOwnerType
+				CCrmOwnerType::FirstOwnerType,
+				CCrmOwnerType::LastOwnerType
 			);
 		}
 
@@ -2170,19 +2193,19 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite ||
-				$entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact ||
-				$entityTypeID === \CCrmOwnerType::Lead
+		if ($entityTypeID === CCrmOwnerType::Requisite ||
+				$entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact ||
+				$entityTypeID === CCrmOwnerType::Lead
 		)
 		{
-			if ($entityTypeID === \CCrmOwnerType::Requisite)
+			if ($entityTypeID === CCrmOwnerType::Requisite)
 			{
 				$r = EntityRequisite::getOwnerEntityById($entityID);
 				$entityTypeID = intval($r['ENTITY_TYPE_ID']);
 			}
 
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckCreatePermission($entityType);
 		}
 
@@ -2196,20 +2219,20 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite ||
-				$entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact ||
-				$entityTypeID === \CCrmOwnerType::Lead
+		if ($entityTypeID === CCrmOwnerType::Requisite ||
+				$entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact ||
+				$entityTypeID === CCrmOwnerType::Lead
 		)
 		{
-			if ($entityTypeID === \CCrmOwnerType::Requisite)
+			if ($entityTypeID === CCrmOwnerType::Requisite)
 			{
 				$r = EntityRequisite::getOwnerEntityById($entityID);
 				$entityTypeID = intval($r['ENTITY_TYPE_ID']);
 				$entityID = intval($r['ENTITY_ID']);
 			}
 
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckUpdatePermission($entityType, $entityID);
 		}
 
@@ -2223,20 +2246,20 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite ||
-				$entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact ||
-				$entityTypeID === \CCrmOwnerType::Lead
+		if ($entityTypeID === CCrmOwnerType::Requisite ||
+				$entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact ||
+				$entityTypeID === CCrmOwnerType::Lead
 		)
 		{
-			if ($entityTypeID === \CCrmOwnerType::Requisite)
+			if ($entityTypeID === CCrmOwnerType::Requisite)
 			{
 				$r = EntityRequisite::getOwnerEntityById($entityID);
 				$entityTypeID = intval($r['ENTITY_TYPE_ID']);
 				$entityID = intval($r['ENTITY_ID']);
 			}
 
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckDeletePermission($entityType, $entityID);
 		}
 
@@ -2258,20 +2281,20 @@ class EntityAddress
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite ||
-				$entityTypeID === \CCrmOwnerType::Company ||
-				$entityTypeID === \CCrmOwnerType::Contact ||
-				$entityTypeID === \CCrmOwnerType::Lead
+		if ($entityTypeID === CCrmOwnerType::Requisite ||
+				$entityTypeID === CCrmOwnerType::Company ||
+				$entityTypeID === CCrmOwnerType::Contact ||
+				$entityTypeID === CCrmOwnerType::Lead
 		)
 		{
-			if ($entityTypeID === \CCrmOwnerType::Requisite)
+			if ($entityTypeID === CCrmOwnerType::Requisite)
 			{
 				$r = EntityRequisite::getOwnerEntityById($entityID);
 				$entityTypeID = $r['ENTITY_TYPE_ID'];
 				$entityID = $r['ENTITY_ID'];
 			}
 
-			$entityType = \CCrmOwnerType::ResolveName($entityTypeID);
+			$entityType = CCrmOwnerType::ResolveName($entityTypeID);
 			return \CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityID);
 		}
 

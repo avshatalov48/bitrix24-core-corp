@@ -243,6 +243,9 @@ class KanbanService implements Errorable
 					'TASK_ID' => $taskId,
 					'STAGE_ID' => $finishStageId
 				]);
+
+				$taskObject = new \CTasks;
+				$taskObject->update($taskId, ['STAGE_ID' => $finishStageId]);
 			}
 		}
 		catch (\Exception $exception)
@@ -619,6 +622,11 @@ class KanbanService implements Errorable
 		while ($taskStage = $queryObject->fetch())
 		{
 			$taskIds[$taskStage['TASK_ID']] = $taskStage['TASK_ID'];
+		}
+
+		if (empty($taskIds))
+		{
+			return [];
 		}
 
 		foreach ($this->isTasksInBasket($taskIds) as $taskId => $result)

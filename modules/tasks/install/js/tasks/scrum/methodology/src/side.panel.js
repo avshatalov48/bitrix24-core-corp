@@ -1,5 +1,4 @@
-import {Runtime} from 'main.core';
-import {EventEmitter, BaseEvent} from 'main.core.events';
+import {EventEmitter} from 'main.core.events';
 
 export class SidePanel extends EventEmitter
 {
@@ -28,7 +27,7 @@ export class SidePanel extends EventEmitter
 	{
 		const extensionName = 'tasks.scrum.' + name.toLowerCase();
 
-		return Runtime.loadExtension(extensionName)
+		return top.BX.Runtime.loadExtension(extensionName)
 			.then((exports) => {
 
 				name = name.replaceAll('-', '');

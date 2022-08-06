@@ -115,7 +115,7 @@ class Call
 					'CALLBACK' => function($value, $dateFormats) use ($viHistoryMessages)
 					{
 						$messageId = 'VI_STATUS_' . $value;
-						return '[' . $value . ']' . (array_key_exists($messageId, $viHistoryMessages)? ' ' . $viHistoryMessages[$messageId] : '');
+						return '[' . $value . ']' . (array_key_exists($messageId, $viHistoryMessages) ? ' ' . $viHistoryMessages[$messageId] : '');
 					}
 				],
 				//CALL_FAILED_REASON varchar(255) NULL,

@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -59,6 +61,14 @@ trait RequisiteControllerMixin
 
 		Crm\Integrity\DuplicateRequisiteCriterion::unregister($this->getEntityTypeID(), $entityID);
 		Crm\Integrity\DuplicateBankDetailCriterion::unregister($this->getEntityTypeID(), $entityID);
+
+		//region Register volatile duplicate criterion fields
+		DuplicateVolatileCriterion::register(
+			$this->getEntityTypeID(),
+			$entityID,
+			[FieldCategory::REQUISITE, FieldCategory::BANK_DETAIL]
+		);
+		//endregion Register volatile duplicate criterion fields
 	}
 
 	/**
@@ -115,6 +125,14 @@ trait RequisiteControllerMixin
 
 		Crm\Integrity\DuplicateRequisiteCriterion::registerByEntity($this->getEntityTypeID(), $newEntityID);
 		Crm\Integrity\DuplicateBankDetailCriterion::registerByEntity($this->getEntityTypeID(), $newEntityID);
+
+		//region Register volatile duplicate criterion fields
+		DuplicateVolatileCriterion::register(
+			$this->getEntityTypeID(),
+			$newEntityID,
+			[FieldCategory::REQUISITE, FieldCategory::BANK_DETAIL]
+		);
+		//endregion Register volatile duplicate criterion fields
 	}
 
 	/**

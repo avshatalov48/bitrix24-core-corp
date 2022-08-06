@@ -8,7 +8,25 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	  template: "\n\t\t\t<span class=\"salescenter-app-payment-by-sms-item-container-select-arrow\" /> \n"
 	};
 
-	var _templateObject, _templateObject2;
+	function _templateObject2() {
+	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div data-item-value=\"", "\" class=\"salescenter-app-payment-by-sms-select-popup-option\" style=\"background-color:", ";\" onclick=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"]);
+
+	  _templateObject2 = function _templateObject2() {
+	    return data;
+	  };
+
+	  return data;
+	}
+
+	function _templateObject() {
+	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-app-payment-by-sms-select-popup\"></div>"]);
+
+	  _templateObject = function _templateObject() {
+	    return data;
+	  };
+
+	  return data;
+	}
 	var StageList = {
 	  props: {
 	    stages: {
@@ -61,14 +79,14 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      var _this2 = this;
 
 	      if (!this.selectPopupContent) {
-	        this.selectPopupContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-app-payment-by-sms-select-popup\"></div>"])));
+	        this.selectPopupContent = main_core.Tag.render(_templateObject());
 
 	        var onClickOptionHandler = function onClickOptionHandler(event) {
 	          _this2.onChooseSelectOption(event);
 	        };
 
 	        for (var i = 0; i < options.length; i++) {
-	          var option = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div data-item-value=\"", "\" class=\"salescenter-app-payment-by-sms-select-popup-option\" style=\"background-color:", ";\" onclick=\"", "\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), options[i].id, options[i].color ? options[i].color : '', onClickOptionHandler.bind(this), main_core.Text.encode(options[i].name));
+	          var option = main_core.Tag.render(_templateObject2(), options[i].id, options[i].color ? options[i].color : '', onClickOptionHandler.bind(this), main_core.Text.encode(options[i].name));
 
 	          if (options[i].colorText === 'light') {
 	            option.style.color = '#fff';

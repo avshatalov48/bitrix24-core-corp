@@ -51,4 +51,3 @@ $MESS["CRM_COLUMN_IS_DEF_MYCOMPANY"] = "Основной продавец";
 $MESS["CRM_COLUMN_WEBFORM"] = "Создана CRM-формой";
 $MESS["CRM_COLUMN_COMMUNICATION_TYPE"] = "Способ связи";
 $MESS["CRM_COLUMN_ACTIVITY_COUNTER_V2"] = "Дела";
-?>

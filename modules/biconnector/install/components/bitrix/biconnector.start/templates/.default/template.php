@@ -6,7 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons','ui.notification']);
+\Bitrix\Main\UI\Extension::load(['ui.buttons','ui.notification', 'ui.fonts.opensans']);
 
 $hideCoverOption = CUserOptions::GetOption('biconnector', 'biconnector.start');
 $hideCover = is_array($hideCoverOption) && isset($hideCoverOption['hide_cover']) && $hideCoverOption['hide_cover'] === 'Y';
@@ -177,5 +177,5 @@ $hideCover = is_array($hideCoverOption) && isset($hideCoverOption['hide_cover'])
 <?php
 if (!\Bitrix\BIConnector\LimitManager::getInstance()->checkLimitWarning())
 {
-	$APPLICATION->IncludeComponent("bitrix:biconnector.limit.lock", "");
+	$APPLICATION->IncludeComponent('bitrix:biconnector.limit.lock', '');
 }

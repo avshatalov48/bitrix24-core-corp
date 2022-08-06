@@ -230,6 +230,38 @@ const Render = {
 	}
 };
 
+const fontsLoaded = [];
+
+const Font = {
+	load(font)
+	{
+		if (fontsLoaded.includes(font)) {
+			return;
+		}
+
+		let fontUrl = null;
+		switch (font)
+		{
+			case 'lobster':
+				fontUrl = 'https://fonts.googleapis.com/css2?family=Lobster:wght@100;200;300;400;500;600;700;800;900&subset=cyrillic-ext,latin-ext';
+				break;
+			default:
+			case 'opensans':
+				fontUrl = 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;200;300;400;500;600;700;800;900&subset=cyrillic';
+				break;
+		}
+
+		if (fontUrl)
+		{
+			const link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.href = fontUrl;
+			document.getElementsByTagName('head')[0].appendChild(link);
+			fontsLoaded.push(font);
+		}
+	}
+}
+
 export {
 	Type,
 	Conv,
@@ -238,4 +270,5 @@ export {
 	Scroll,
 	Browser,
 	MoveObserver,
+	Font,
 }

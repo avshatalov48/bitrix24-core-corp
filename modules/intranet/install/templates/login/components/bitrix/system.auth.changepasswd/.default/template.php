@@ -1,6 +1,6 @@
 <?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 
-<div class="login-inner">
+<div class="login-inner --full-width">
 	<div class="log-popup-header"><?=$APPLICATION->GetTitle();?></div>
 	<hr class="b_line_gray">
 	<?

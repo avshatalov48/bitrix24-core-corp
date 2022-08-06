@@ -1,4 +1,5 @@
 <?php
+$MESS["CRM_ACTIVITY_EDITOR_MAIL_MODULE_NOT_INSTALLED"] = "Модуль Mail не установлен.";
 $MESS['CRM_ACTION_DEFAULT_SUBJECT'] = 'Новое дело (#DATE#)';
 $MESS['CRM_CALL_ACTION_DEFAULT_SUBJECT'] = 'Новый звонок (#DATE#)';
 $MESS['CRM_MEETING_ACTION_DEFAULT_SUBJECT'] = 'Новая встреча (#DATE#)';
@@ -29,4 +30,5 @@ $MESS["CRM_ACTIVITY_COULD_NOT_SAVE_POSTING_FILE"] = "Не удалось при�
 $MESS["CRM_ACTIVITY_EMAIL_CREATION_CANCELED"] = "Операция создания письма отменена.";
 $MESS["CRM_ACTIVITY_EMAIL_MESSAGE_TO_MANY_RECIPIENTS"] = "Получателей не может быть больше 10";
 $MESS["CRM_ACTIVITY_EMAIL_BLACKLISTED"] = "Мы не отправили ваше письмо, так как эти адреса находятся в %link_start% черном списке %link_end%: %emails%";
+$MESS["CRM_MESSAGE_NEW_TARIFF_RESTRICTION"] = "На вашем тарифном плане действуют ограничения:<br/>\"Кому\", \"Копия\", \"Скрытая копия\" - #COUNT# Email (получатель)";
 ?>

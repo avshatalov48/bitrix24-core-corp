@@ -43,6 +43,7 @@
 	padding: 25px 13px 30px 30px;
 	border: 1px solid #F0EED0;
 	background: #FFFFFC;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-config-automation-desc-head {

@@ -20,7 +20,8 @@ $APPLICATION->IncludeComponent(
 	'',
 	[
 		'POPUP_COMPONENT_NAME' => 'bitrix:salescenter.company.contacts',
-		'POPUP_COMPONENT_TEMPLATE_NAME' => ''
+		'POPUP_COMPONENT_TEMPLATE_NAME' => '',
+		'USE_PADDING' => false,
 	]
 );
 

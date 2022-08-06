@@ -50,7 +50,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 
 				$currencyLangProps['CURRENCY'] = $currencyId;
 				$currencyLangProps['HIDE_ZERO'] = $lastValues['ADD'][$upperLanguageId]['HIDE_ZERO'];
-				$currencyLangProps['FORMAT_STRING'] = str_replace('#VALUE#', '#', $currencyLangProps['FORMAT_STRING']);
+				$currencyLangProps['FORMAT_STRING'] = strip_tags(str_replace('#VALUE#', '#', $currencyLangProps['FORMAT_STRING']));
 
 				$fields['LANG'][$languageId] = $currencyLangProps;
 			}
@@ -82,6 +82,8 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 					}
 
 					$currencyLangProps = $values;
+					$currencyLangProps['FULL_NAME'] = strip_tags($currencyLangProps['FULL_NAME']);
+					$currencyLangProps['FORMAT_STRING'] = strip_tags($currencyLangProps['FORMAT_STRING']);
 					$currencyLangProps['CURRENCY'] = $currencyId;
 
 					$lowerType = mb_strtolower($type);
@@ -324,7 +326,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 			foreach ($this->arResult['LANGUAGE_IDS'] as $languageId)
 			{
 				$formatTemplate = $request->get('edit_format_template_' . $languageId);
-				$sign = $request->get('edit_sign_' . $languageId);
+				$sign = strip_tags($request->get('edit_sign_' . $languageId));
 				$signPosition = $request->get('edit_sign_position_' . $languageId);
 				$decPoint = $request->get('edit_dec_point_' . $languageId);
 
@@ -337,7 +339,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				$langSettings['DEC_POINT'] = $decPoint ? $decPoint : '.';
 				$langSettings['DECIMALS'] = $request->get('edit_decimals_' . $languageId);
 				$langSettings['HIDE_ZERO'] = $request->get('edit_hide_zero_' . $languageId) ? 'Y' : 'N';
-				$langSettings['SIGN'] = $request->get('edit_sign_' . $languageId);
+				$langSettings['SIGN'] = $sign;
 				$langSettings['SIGN_POSITION'] = $request->get('edit_sign_position_' . $languageId);
 				$langSettings['CONTENT_EXPANDED'] = ($this->arResult['PRIMARY_FORM_MODE'] == 'EDIT' && $formatTemplate == '-') ? 'Y' : $request->get('expandable_content_hidden_input_' . $languageId);
 
@@ -379,7 +381,7 @@ class CCurrencyClassifierComponent extends \CBitrixComponent
 				}
 
 				$langSettings['THOUSANDS_VARIANT'] = $thousandsVariant;
-				$langSettings['FORMAT_STRING'] = $formatString;
+				$langSettings['FORMAT_STRING'] = strip_tags($formatString);
 				$langSettings['SIGN'] = trim(str_replace('&#', '[*]', $formatString));
 				$langSettings['SIGN'] = trim(str_replace('#', '', $langSettings['SIGN']));
 				$langSettings['SIGN'] = trim(str_replace('[*]', '&#', $langSettings['SIGN']));

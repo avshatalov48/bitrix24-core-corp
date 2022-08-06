@@ -2,7 +2,7 @@
 <?
 global $USER;
 CJSCore::Init(array('finder'));
-\Bitrix\Main\UI\Extension::load('intranet.search_title');
+\Bitrix\Main\UI\Extension::load(['intranet.search_title', 'ui.fonts.opensans']);
 
 $this->setFrameMode(true);
 

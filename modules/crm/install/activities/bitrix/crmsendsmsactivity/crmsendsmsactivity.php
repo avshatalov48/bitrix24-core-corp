@@ -33,6 +33,8 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$this->logDebug();
+
 		$messageText = $this->MessageText;
 		if ($messageText === '' || !is_scalar($messageText))
 		{
@@ -111,13 +113,15 @@ class CBPCrmSendSmsActivity extends CBPActivity
 					'recipient_user_id' => $recipientUserId,
 				],
 				'BINDINGS' => $bindings,
-				'COMMUNICATIONS' => [[
-					'ENTITY_ID' => $comEntityId,
-					'ENTITY_TYPE_ID' => $comEntityTypeId,
-					'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($comEntityTypeId),
-					'TYPE' => \CCrmFieldMulti::PHONE,
-					'VALUE' => $phoneNumber,
-				]],
+				'COMMUNICATIONS' => [
+					[
+						'ENTITY_ID' => $comEntityId,
+						'ENTITY_TYPE_ID' => $comEntityTypeId,
+						'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($comEntityTypeId),
+						'TYPE' => \CCrmFieldMulti::PHONE,
+						'VALUE' => $phoneNumber,
+					],
+				],
 			], false);
 		}
 
@@ -130,18 +134,27 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 		if (empty($arTestProperties["ProviderId"]))
 		{
-			$errors[] = ["code" => "NotExist", "parameter" => "ProviderId", "message" => GetMessage("CRM_SSMSA_EMPTY_PROVIDER")];
+			$errors[] = [
+				"code" => "NotExist",
+				"parameter" => "ProviderId",
+				"message" => GetMessage("CRM_SSMSA_EMPTY_PROVIDER"),
+			];
 		}
 
 		if ($arTestProperties["MessageText"] === "")
 		{
-			$errors[] = ["code" => "NotExist", "parameter" => "MessageText", "message" => GetMessage("CRM_SSMSA_EMPTY_TEXT")];
+			$errors[] = [
+				"code" => "NotExist",
+				"parameter" => "MessageText",
+				"message" => GetMessage("CRM_SSMSA_EMPTY_TEXT"),
+			];
 		}
 
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
 	}
 
-	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $siteId = '')
+	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters,
+		$arWorkflowVariables, $arCurrentValues = null, $formName = "", $popupWindow = null, $siteId = '')
 	{
 		if (!CModule::IncludeModule('crm'))
 		{
@@ -159,6 +172,13 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
 		$map = [
 			'MessageText' => [
 				'Name' => GetMessage('CRM_SSMSA_MESSAGE_TEXT'),
@@ -214,12 +234,11 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			];
 		}
 
-		$dialog->setMap($map);
-
-		return $dialog;
+		return $map;
 	}
 
-	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
+	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate,
+		&$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
 		$errors = [];
 
@@ -227,7 +246,8 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			'MessageText' => (string)$arCurrentValues["message_text"],
 			'ProviderId' => (string)$arCurrentValues["provider_id"],
 			'RecipientType' => (string)$arCurrentValues["recipient_type"],
-			'RecipientUser' => CBPHelper::UsersStringToArray($arCurrentValues["recipient_user"], $documentType, $errors),
+			'RecipientUser' => CBPHelper::UsersStringToArray($arCurrentValues["recipient_user"], $documentType,
+				$errors),
 			'PhoneType' => (string)$arCurrentValues["phone_type"],
 		];
 
@@ -241,7 +261,8 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			return false;
 		}
 
-		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
+		$errors = self::ValidateProperties($properties,
+			new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
 
 		if ($errors)
 		{
@@ -495,7 +516,9 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		while ($row = $iterator->fetch())
 		{
 			if (empty($row['VALUE']))
+			{
 				continue;
+			}
 
 			$communications[] = [
 				'ENTITY_ID' => $entityId,
@@ -553,10 +576,6 @@ class CBPCrmSendSmsActivity extends CBPActivity
 				'workflow_id' => $this->getWorkflowInstanceId(),
 				'document_id' => $documentId,
 				'document_type' => $this->GetDocumentType(),
-				'properties' => [
-					'phone_number' => $phoneNumber,
-					'message_text' => $messageText,
-				],
 			],
 		]);
 
@@ -585,7 +604,14 @@ class CBPCrmSendSmsActivity extends CBPActivity
 
 		$documentId = $this->GetDocumentId();
 		[$typeName, $id] = mb_split('_(?=[^_]*$)', $documentId[2]);
-		$authorId = \CCrmOwnerType::loadResponsibleId(\CCrmOwnerType::ResolveID($typeName), $id, false);
+		$typeId = \CCrmOwnerType::ResolveID($typeName);
+
+		if ($typeId === \CCrmOwnerType::Undefined || !$id)
+		{
+			return false;
+		}
+
+		$authorId = \CCrmOwnerType::loadResponsibleId($typeId, $id, false);
 
 		$result = SmsManager::sendMessage([
 			'SENDER_ID' => $senderId,
@@ -645,7 +671,9 @@ class CBPCrmSendSmsActivity extends CBPActivity
 	private function sendByRestOld($providerId, $phoneNumber, $messageText)
 	{
 		if (!CModule::includeModule('rest') || !\Bitrix\Rest\OAuthService::getEngine()->isRegistered())
+		{
 			return false;
+		}
 
 		[$appId, $providerCode] = explode('|', $providerId);
 		$provider = null;
@@ -655,8 +683,8 @@ class CBPCrmSendSmsActivity extends CBPActivity
 			$provider = \Bitrix\Bizproc\RestProviderTable::getList([
 				'filter' => [
 					'=APP_ID' => $appId,
-					'=CODE' => $providerCode
-				]
+					'=CODE' => $providerCode,
+				],
 			])->fetch();
 		}
 
@@ -735,5 +763,22 @@ class CBPCrmSendSmsActivity extends CBPActivity
 		$this->WriteToTrackingService($errorText, 0, CBPTrackingType::Error);
 		$timelineText = GetMessage('CRM_SSMSA_TIMELINE_ERROR', ['#ERROR_TEXT#' => $errorText]);
 		\Bitrix\Crm\Timeline\BizprocController::getInstance()->onActivityError($this, $userId, $timelineText);
+	}
+
+	private function logDebug()
+	{
+		$debugInfo = $this->getDebugInfo();
+
+		if ($debugInfo['RecipientType']['TrackValue'] !== static::RECIPIENT_TYPE_USER)
+		{
+			unset($debugInfo['RecipientUser']);
+		}
+		else
+		{
+			unset($debugInfo['PhoneType']);
+		}
+		unset($debugInfo['RecipientType']);
+
+		$this->writeDebugInfo($debugInfo);
 	}
 }

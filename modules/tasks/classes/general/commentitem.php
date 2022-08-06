@@ -500,7 +500,7 @@ final class CTaskCommentItem extends CTaskSubItemAbstract
 	 */
 	public static function getManifest()
 	{
-		$arWritableKeys = array('POST_MESSAGE', 'AUTHOR_ID', 'POST_DATE');
+		$arWritableKeys = array('POST_MESSAGE', 'AUTHOR_ID', 'POST_DATE', 'UF_FORUM_MESSAGE_DOC');
 		$arDateKeys = array('POST_DATE');
 		$arSortableKeys = array('ID', 'AUTHOR_ID', 'AUTHOR_NAME', 'AUTHOR_EMAIL', /*'EDITOR_ID',*/ 'POST_DATE');
 		$arReadableKeys = array_merge(

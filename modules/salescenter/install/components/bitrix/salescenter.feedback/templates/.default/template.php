@@ -7,7 +7,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 \CJSCore::init("sidepanel");
 
-\Bitrix\Main\UI\Extension::load("popup");
+\Bitrix\Main\UI\Extension::load(["popup", "ui.design-tokens"]);
 
 Loc::loadLanguageFile(__FILE__);
 

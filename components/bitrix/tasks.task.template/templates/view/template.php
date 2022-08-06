@@ -20,6 +20,8 @@ $templateSubtaskLimitExceeded = $arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EX
 $templateTaskRecurrentLimitExceeded = $arResult['AUX_DATA']['TASK_RECURRENT_RESTRICT'];
 
 $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER_TASKS_TEMPLATES"]);
+
+$APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 ?>
 
 <?if($arParams["ENABLE_MENU_TOOLBAR"]):?>
@@ -431,21 +433,21 @@ $toList = str_replace("#user_id#", $arParams["USER_ID"], $arParams["PATH_TO_USER
 				<?if($template["DEADLINE_AFTER"]):?>
 					<div class="task-detail-sidebar-item task-detail-sidebar-item-deadline">
 						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_DEADLINE_AFTER")?>:</div>
-						<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["DEADLINE_AFTER"])?></div>
+						<div class="task-detail-sidebar-item-value"><?=Bitrix\Tasks\UI\Component\TemplateHelper::formatDateAfter($matchWorkTime, $template["DEADLINE_AFTER"])?></div>
 					</div>
 				<?endif?>
 
 				<?if($template["START_DATE_PLAN_AFTER"]):?>
 					<div class="task-detail-sidebar-item">
 						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_START_DATE_PLAN_AFTER")?>:</div>
-						<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["START_DATE_PLAN_AFTER"])?></div>
+						<div class="task-detail-sidebar-item-value"><?=Bitrix\Tasks\UI\Component\TemplateHelper::formatDateAfter($matchWorkTime, $template["START_DATE_PLAN_AFTER"])?></div>
 					</div>
 				<?endif?>
 
 				<?if($template["END_DATE_PLAN_AFTER"]):?>
 					<div class="task-detail-sidebar-item">
 						<div class="task-detail-sidebar-item-title"><?=Loc::getMessage("TASKS_FIELD_END_DATE_PLAN_AFTER")?>:</div>
-						<div class="task-detail-sidebar-item-value"><?=$helper->formatDateAfter($matchWorkTime, $template["END_DATE_PLAN_AFTER"])?></div>
+						<div class="task-detail-sidebar-item-value"><?=Bitrix\Tasks\UI\Component\TemplateHelper::formatDateAfter($matchWorkTime, $template["END_DATE_PLAN_AFTER"])?></div>
 					</div>
 				<?endif?>
 

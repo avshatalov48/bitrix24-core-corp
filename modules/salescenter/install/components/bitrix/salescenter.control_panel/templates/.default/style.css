@@ -18,7 +18,7 @@
 
 .salescenter-item {
 	background-color: #fff;
-	border-radius:2px;
+	border-radius: var(--ui-grid-tile-border-radius, var(--ui-border-radius-sm, 2px));
 	position: absolute;
 	top: 0;
 	right: 0;

@@ -6,6 +6,7 @@ if (isset($_REQUEST['AJAX']))
 }
 else
 {
+	\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 	$GLOBALS['APPLICATION']->SetAdditionalCSS('/bitrix/components/bitrix/intranet.ustat/style.css');
 	$GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/main/amcharts/3.0/amcharts.js');
 	$GLOBALS['APPLICATION']->AddHeadScript('/bitrix/js/main/amcharts/3.0/serial.js');

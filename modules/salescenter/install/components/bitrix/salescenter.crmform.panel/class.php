@@ -17,8 +17,6 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 {
 	const HELPDESK_SLIDER_URL = 'redirect=detail&code=13774372';
 
-	const HELPDESK_PAGE_URL = 'https://helpdesk.bitrix24.ru/open/13774372/';
-
 	private $requiredModules = ['salescenter', 'sale', 'crm'];
 
 	/**
@@ -92,9 +90,32 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 		return true;
 	}
 
+	/**
+	 * Helpdesk pages for need language.
+	 *
+	 * @param mixed $lang
+	 *
+	 * @return string
+	 */
+	private function getHelpdeskPageUrl($lang): string
+	{
+		$pages = [
+			'ru' => 'https://helpdesk.bitrix24.ru/open/13774372/',
+			'en' => 'https://helpdesk.bitrix24.com/open/13796854/',
+			'de' => 'https://helpdesk.bitrix24.de/open/13790640/',
+			'pl' => 'https://helpdesk.bitrix24.pl/open/13796424/',
+			'ua' => 'https://helpdesk.bitrix24.ua/open/13794655/',
+		];
+		
+		// links
+		$pages['by'] = $pages['kz'] = $pages['ru'];
+		
+		return $pages[$lang] ?? $pages['en'];
+	}
+
 	public function prepareResult()
 	{
-		$this->arResult['HELPDESK_PAGE_URL'] = self::HELPDESK_PAGE_URL;
+		$this->arResult['HELPDESK_PAGE_URL'] = $this->getHelpdeskPageUrl(LANGUAGE_ID);
 		$this->arResult['crmFormsPanelParams'] = [
 			'id' => 'crm-forms-panel',
 			'items' => $this->getTiles(),

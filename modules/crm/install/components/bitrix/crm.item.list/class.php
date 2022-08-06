@@ -350,8 +350,18 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		if ($this->parentEntityId && $this->parentEntityTypeId)
 		{
 			$relationManager = Container::getInstance()->getRelationManager();
+			$relation = $relationManager->getRelation(
+				new \Bitrix\Crm\RelationIdentifier(
+					$this->parentEntityTypeId,
+					$this->entityTypeId,
+				)
+			);
+			if (!$relation)
+			{
+				return null;
+			}
 			$parentItemIdentifier = $this->getParentItemIdentifier();
-			$childElements = array_unique($relationManager->getChildElements($parentItemIdentifier));
+			$childElements = array_unique($relation->getChildElements($parentItemIdentifier));
 
 			$ids = [];
 			foreach($childElements as $element)
@@ -413,12 +423,13 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$this->setTemplateName($this->exportType);
 		$grid = $this->prepareGrid($listFilter, $pageNavigation);
 
-		$visibleColumns = array_flip($this->getVisibleColumns());
-		foreach ($grid['COLUMNS'] as $column)
+		$this->arResult['HEADERS'] = [];
+		$columns = array_flip(array_column($grid['COLUMNS'], 'id'));
+		foreach ($this->getVisibleColumns() as $columnId)
 		{
-			if (isset($visibleColumns[$column['id']]))
+			if (isset($columns[$columnId]))
 			{
-				$this->arResult['HEADERS'][] = $column;
+				$this->arResult['HEADERS'][] = $grid['COLUMNS'][$columns[$columnId]];
 			}
 		}
 		$items = array_column($grid['ROWS'], 'columns');
@@ -907,10 +918,17 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function getToolbarSettingsItems(): array
 	{
 		$settingsItems = parent::getToolbarSettingsItems();
+
+		$categoryId = $this->getCategoryId();
+		if (is_null($categoryId) && $this->factory->isCategoriesSupported())
+		{
+			$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
+		}
+
 		if (Container::getInstance()->getUserPermissions()->canExportTypeInCategory(
 			$this->entityTypeId,
-			(int)$this->getCategoryId())
-		)
+			(int)$categoryId
+		))
 		{
 			$settingsItems[] = ['delimiter' => true];
 			$settingsItems[] = [

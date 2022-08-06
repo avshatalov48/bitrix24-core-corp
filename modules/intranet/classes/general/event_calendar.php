@@ -103,9 +103,6 @@ class CEventCalendar
 		$this->reinviteParamsList = $arParams['reinviteParamsList'];
 
 		$this->bExtranet = CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite();
-
-		if (!class_exists('CUserOptions'))
-			include_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".$GLOBALS['DBType']."/favorites.php");
 	}
 
 	function GetPermissions($arParams = array())

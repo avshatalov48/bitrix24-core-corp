@@ -49,6 +49,7 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 		}
 
 		$rowId = (int)$rowId;
+		$this->writeDebugInfo($this->getDebugInfo(['RowId' => $rowId]));
 
 		$row = Crm\ProductRowTable::getList([
 			'select' => [
@@ -93,8 +94,24 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 		$this->RowTaxIncluded = $row['TAX_INCLUDED'];
 		$this->RowSumAccount = $row['SUM_ACCOUNT'];
 		$this->RowSumAccountMoney = \CCrmCurrency::MoneyToString($row['SUM_ACCOUNT'], $currencyId);
+		$this->logReturnProperties();
 
 		return CBPActivityExecutionStatus::Closed;
+	}
+
+	private function logReturnProperties()
+	{
+		if ($this->workflow->isDebug())
+		{
+			$runtime = CBPRuntime::GetRuntime();
+
+			$this->writeDebugInfo($this->getDebugInfo([], $runtime->getActivityReturnProperties($this->getCode())));
+		}
+	}
+
+	private function getCode(): string
+	{
+		return 'CrmGetProductRowActivity';
 	}
 
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $arCurrentValues = null, $formName = '', $popupWindow = null, $siteId = '')
@@ -115,15 +132,20 @@ class CBPCrmGetProductRowActivity extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
-		$dialog->setMap([
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return [
 			'RowId' => [
 				'Name' => GetMessage('CRM_BP_GPR_ROW_ID'),
 				'FieldName' => 'row_id',
 				'Type' => 'int',
 			],
-		]);
-
-		return $dialog;
+		];
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)

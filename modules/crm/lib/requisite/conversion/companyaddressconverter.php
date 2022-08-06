@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Requisite\Conversion;
 
 class CompanyAddressConverter extends EntityAddressConverter

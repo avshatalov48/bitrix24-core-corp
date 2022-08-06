@@ -168,9 +168,26 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setRealizationListAction(array $ids, string $value)
 	{
+		$result = new Main\Result();
+
 		foreach ($ids as $id)
 		{
 			$this->setRealizationAction($id, $value);
+
+			if (!$this->errorCollection->isEmpty())
+			{
+				foreach ($this->errorCollection as $error)
+				{
+					$result->addError($error);
+				}
+
+				$this->errorCollection->clear();
+			}
+		}
+
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
 		}
 	}
 
@@ -344,9 +361,26 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setShippedListAction(array $ids, string $value): void
 	{
+		$result = new Main\Result();
+
 		foreach ($ids as $id)
 		{
 			$this->setShippedAction($id, $value);
+
+			if (!$this->errorCollection->isEmpty())
+			{
+				foreach ($this->errorCollection as $error)
+				{
+					$result->addError($error);
+				}
+
+				$this->errorCollection->clear();
+			}
+		}
+
+		if (!$result->isSuccess())
+		{
+			$this->addErrors($result->getErrors());
 		}
 	}
 

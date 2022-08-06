@@ -64,7 +64,7 @@ class PermissionEntityTypeHelper
 		$result = [];
 
 		$factory = Container::getInstance()->getFactory($this->entityTypeId);
-		if ($factory && $factory->isCategoriesEnabled())
+		if ($factory && $factory->isCategoriesSupported())
 		{
 			$categories = $factory->getCategories();
 			foreach ($categories as $category)
@@ -144,5 +144,14 @@ class PermissionEntityTypeHelper
 		}
 
 		return $permissionEntityTypes;
+	}
+
+	public function getAllowSkipOtherEntityTypesFromOptions(array $options): bool
+	{
+		return (
+			isset($options['RESTRICT_BY_ENTITY_TYPES'])
+			&& is_array($options['RESTRICT_BY_ENTITY_TYPES'])
+			&& !empty($options['RESTRICT_BY_ENTITY_TYPES'])
+		);
 	}
 }

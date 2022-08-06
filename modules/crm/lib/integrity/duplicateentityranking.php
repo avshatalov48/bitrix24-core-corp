@@ -101,7 +101,7 @@ class DuplicateEntityRanking
 		}
 		return $result;
 	}
-	public static function compareReversed(DuplicateEntityRanking &$a, DuplicateEntityRanking &$b)
+	public static function compareReversed(DuplicateEntityRanking $a, DuplicateEntityRanking $b)
 	{
 		return (-1 * self::compare($a, $b));
 	}

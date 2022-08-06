@@ -1,16 +1,24 @@
 import {Dom, Event, Loc, Tag, Text, Type} from 'main.core';
 import {EventEmitter} from 'main.core.events';
+import {Tool} from '../../utility/tool';
+
+type Params = {
+	name: string,
+	isCompleted: boolean,
+	isImportant: boolean,
+}
 
 export class Name extends EventEmitter
 {
-	constructor(name: string, completed: boolean)
+	constructor(params: Params)
 	{
-		super(name);
+		super(params);
 
 		this.setEventNamespace('BX.Tasks.Scrum.Item.Name');
 
-		this.value = ((Type.isString(name) && name) ? name.trim() : '');
-		this.completed = completed;
+		this.value = ((Type.isString(params.name) && params.name) ? params.name.trim() : '');
+		this.important = params.isImportant;
+		this.completed = params.isCompleted;
 
 		if (!this.value)
 		{
@@ -22,9 +30,20 @@ export class Name extends EventEmitter
 
 	render(): HTMLElement
 	{
+		let visualClasses = this.completed ? '--completed' : '';
+		visualClasses += this.important ? '--important' : '';
+
+		let value = Text.encode(this.value);
+		if (this.important)
+		{
+			const words = this.value.split(' ');
+			const lastWord = words[words.length - 1];
+			value = value.replace(new RegExp(Tool.escapeRegex(lastWord) + '$'), `<span>${lastWord}</span>`);
+		}
+
 		this.node = Tag.render`
-			<div class="tasks-scrum__item--title ${this.completed ? '--completed' : ''}">
-				${Text.encode(this.value)}
+			<div class="tasks-scrum__item--title ${visualClasses}">
+				${value}
 			</div>
 		`;
 

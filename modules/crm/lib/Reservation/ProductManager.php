@@ -11,7 +11,7 @@ class ProductManager extends Crm\Order\ProductManager
 	/**
 	 * Adds entity products to order shipment
 	 *
-	 * @param array $entityProducts
+	 * @param array $entityProducts in format `[basketXmlId => entityProductRow]`
 	 * @return Main\Result
 	 */
 	public function addEntityProductsToOrderForShip(array $entityProducts): Main\Result
@@ -31,25 +31,29 @@ class ProductManager extends Crm\Order\ProductManager
 			return $result;
 		}
 
-		foreach ($entityProducts as $productId => $entityProduct)
+		foreach ($entityProducts as $basketXmlId => $entityProduct)
 		{
-			$entityProducts[$productId]['PRODUCT'] = $this->convertToSaleBasketFormat($entityProduct['PRODUCT']);
+			$entityProducts[$basketXmlId]['PRODUCT'] = $this->convertToSaleBasketFormat($entityProduct['PRODUCT']);
 		}
 
 		if ($entityProducts)
 		{
+			$defaultStoreId = Catalog\StoreTable::getDefaultStoreId();
 			$currency = $this->getOrder()->getCurrency();
 
 			/** @var Crm\Order\BasketItem[] $basketItems */
 			$basketItems = [];
+			$foundProducts = [];
+
 			foreach ($entityProducts as $product)
 			{
 				$productData = $product['PRODUCT'];
 
-				$shipmentItem = $this->getBasketItemByEntityProduct($productData);
+				$shipmentItem = $this->getBasketItemByEntityProduct($productData, $foundProducts, true);
 				if (!$shipmentItem)
 				{
 					$shipmentItem = $basket->createItem('catalog', $productData['PRODUCT_ID']);
+					$foundProducts[] = $shipmentItem->getBasketCode();
 				}
 
 				$setFieldsResult = $shipmentItem->setFields([
@@ -105,7 +109,14 @@ class ProductManager extends Crm\Order\ProductManager
 
 			foreach ($basketItems as $basketItem)
 			{
-				$storeList = $entityProducts[$basketItem->getProductId()]['STORE_LIST'] ?? [];
+				// it can be empty if there are no reserves for the product
+				$storeList = $entityProducts[$basketItem->getField('XML_ID')]['STORE_LIST'] ?? [];
+				if (empty($storeList))
+				{
+					$storeList = [
+						$defaultStoreId => $basketItem->getQuantity(),
+					];
+				}
 
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
 				$shipmentItem = $newShipmentItemCollection->createItem($basketItem);

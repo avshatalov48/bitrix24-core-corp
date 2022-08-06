@@ -159,6 +159,14 @@ foreach ($visibleFields as $fieldId)
 </span>
 <div class="tasks-task2activity-additional-content">
 <?
+	$holdToCloseField = [
+		'Name' => \Bitrix\Main\Localization\Loc::getMessage('TASKS_BP_RPD_HOLD_TO_CLOSE'),
+		'BaseType' => \Bitrix\Bizproc\FieldType::BOOL,
+		'Required' => true,
+		'Default' => 'N',
+	];
+	$renderField('HOLD_TO_CLOSE', $holdToCloseField, $arCurrentValues['HOLD_TO_CLOSE'] ?? 'N');
+
 	foreach ($arDocumentFields as $fieldId => $field)
 	{
 		if (!in_array($fieldId, $allowedTaskFields))
@@ -223,5 +231,4 @@ foreach ($visibleFields as $fieldId)
 		<?endif;?>
 	</div>
 </div>
-<input type="hidden" name="HOLD_TO_CLOSE" value="N">
 <input type="hidden" name="AUTO_LINK_TO_CRM_ENTITY" value="Y">

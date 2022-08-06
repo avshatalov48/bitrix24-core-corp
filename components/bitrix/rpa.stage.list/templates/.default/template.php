@@ -13,6 +13,7 @@ use Bitrix\Main\Localization\Loc;
 	'rpa.component',
 	'color_picker',
 	'ui.alerts',
+	'ui.design-tokens',
 ]);
 
 if($this->getComponent()->getErrors())

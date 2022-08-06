@@ -41,6 +41,11 @@ body {
 /*}*/
 
 /* timeman */
+.timeman-background {
+	top: 0;
+	bottom: 0;
+	border-radius: 0;
+}
 
 .timeman-block-active .timeman-background {
 	background-color: rgba(255,255,255,.3) !important;
@@ -72,13 +77,16 @@ body {
 	border-color: rgba(196, 114, 118, .6);
 }
 
-.user-block:hover,
-.user-block.--hover,
-.user-block.--wait {
+.user-block:hover:after,
+.user-block.--hover:after,
+.user-block.--wait:after {
 	background-color: rgba(120, 128, 139, .5);
+	top: 0;
+	bottom: 0;
+	border-radius: 0;
 }
 
-.user-block-active {
+.user-block-active:after {
 	background: rgba(61, 70, 83, .6) !important;
 }
 

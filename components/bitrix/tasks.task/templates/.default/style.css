@@ -402,7 +402,7 @@
 .task-options-destination-wrap {
 	position: relative;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--task-options-destination-border-radius, var(--ui-border-radius-2xs, 2px));
 	padding: 5px 5px 0;
 	background: #fff;
 	max-width: 786px;
@@ -1485,6 +1485,10 @@ select.task-options-inp {
 	height: 0;
 	opacity: 0;
 	overflow: hidden;
+}
+
+.task-edit-block-place.hidden {
+	display: none;
 }
 
 .task-inline-selector-item {

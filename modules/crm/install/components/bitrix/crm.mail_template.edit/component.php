@@ -107,7 +107,16 @@ if(check_bitrix_sessid())
 			$sanitizer = new \CBXSanitizer();
 			$sanitizer->setLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
 			$sanitizer->applyDoubleEncode(false);
-			$sanitizer->addTags(array('style' => array()));
+
+			if (\Bitrix\Main\Loader::includeModule('mail'))
+			{
+				// @TODO: since it is used in several modules, it is worth moving to main
+				$sanitizer->addTags(\Bitrix\Mail\Helper\Message::getWhitelistTagAttributes());
+			}
+			else
+			{
+				$sanitizer->addTags(array('style' => array()));
+			}
 
 			$element['BODY'] = $sanitizer->sanitizeHtml($element['BODY']);
 			$element['BODY'] = preg_replace('/https?:\/\/bxacid:(n?\d+)/i', 'bxacid:\1', $element['BODY']);

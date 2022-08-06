@@ -2,17 +2,17 @@
 
 use Bitrix\Bizproc\WorkflowInstanceTable;
 use Bitrix\Crm;
+use Bitrix\Main\Localization\Loc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
-class CBPCrmChangeDealCategoryActivity
-	extends CBPActivity
+class CBPCrmChangeDealCategoryActivity extends CBPActivity
 {
 	private static $cycleCounter = [];
-	const CYCLE_LIMIT = 150;
+	const CYCLE_LIMIT = 3;
 
 	public function __construct($name)
 	{
@@ -30,6 +30,8 @@ class CBPCrmChangeDealCategoryActivity
 		{
 			return CBPActivityExecutionStatus::Closed;
 		}
+
+		$this->logDebug();
 
 		$documentId = $this->GetDocumentId();
 		$this->checkCycling($documentId);
@@ -51,7 +53,7 @@ class CBPCrmChangeDealCategoryActivity
 
 		if (!$sourceFields)
 		{
-			$this->WriteToTrackingService(GetMessage('CRM_CDCA_NO_SOURCE_FIELDS'), 0, CBPTrackingType::Error);
+			$this->WriteToTrackingService(Loc::getMessage('CRM_CDCA_NO_SOURCE_FIELDS'), 0, CBPTrackingType::Error);
 
 			return CBPActivityExecutionStatus::Closed;
 		}
@@ -80,7 +82,7 @@ class CBPCrmChangeDealCategoryActivity
 					$instanceId,
 					$documentId,
 					$errors,
-					GetMessage('CRM_CDCA_MOVE_TERMINATION_TITLE')
+					Loc::getMessage('CRM_CDCA_MOVE_TERMINATION_TITLE')
 				);
 			}
 
@@ -122,6 +124,13 @@ class CBPCrmChangeDealCategoryActivity
 		return CBPActivityExecutionStatus::Closed;
 	}
 
+	private function logDebug()
+	{
+		$this->writeDebugInfo($this->getDebugInfo([
+			'StageId' => Crm\Category\DealCategory::getStageName($this->StageId),
+		]));
+	}
+
 	private function checkCycling(array $documentId)
 	{
 		//check deal only.
@@ -131,18 +140,26 @@ class CBPCrmChangeDealCategoryActivity
 		}
 
 		$key = $this->GetName();
+		$documentIdKey = implode('@', $documentId);
 
-		if (!isset(self::$cycleCounter[$key]))
+		if (!isset(self::$cycleCounter[$key][$documentIdKey]))
 		{
-			self::$cycleCounter[$key] = 0;
+			self::$cycleCounter[$key][$documentIdKey] = 0;
 		}
 
-		self::$cycleCounter[$key]++;
-		if (self::$cycleCounter[$key] > self::CYCLE_LIMIT)
+		self::$cycleCounter[$key][$documentIdKey]++;
+		if (self::$cycleCounter[$key][$documentIdKey] > self::CYCLE_LIMIT)
 		{
-			$this->WriteToTrackingService(GetMessage("CRM_CDCA_CYCLING_ERROR"), 0, CBPTrackingType::Error);
-			throw new Exception();
+			$this->WriteToTrackingService(
+				Loc::getMessage("CRM_CDCA_CYCLING_ERROR"),
+				0,
+				CBPTrackingType::Error
+			);
+
+			throw new Exception(Loc::getMessage('CRM_CDCA_CYCLING_EXCEPTION_MESSAGE'));
 		}
+
+		return true;
 	}
 
 	public static function ValidateProperties($arTestProperties = [], CBPWorkflowTemplateUser $user = null)
@@ -151,7 +168,7 @@ class CBPCrmChangeDealCategoryActivity
 
 		if ($arTestProperties["CategoryId"] === null || $arTestProperties["CategoryId"] === '')
 		{
-			$errors[] = ["code" => "NotExist", "parameter" => "CategoryId", "message" => GetMessage("CRM_CDCA_EMPTY_CATEGORY")];
+			$errors[] = ["code" => "NotExist", "parameter" => "CategoryId", "message" => Loc::getMessage("CRM_CDCA_EMPTY_CATEGORY")];
 		}
 
 		return array_merge($errors, parent::ValidateProperties($arTestProperties, $user));
@@ -216,16 +233,24 @@ class CBPCrmChangeDealCategoryActivity
 	{
 		return [
 			'CategoryId' => [
-				'Name' => GetMessage('CRM_CDCA_CATEGORY'),
+				'Name' => Loc::getMessage('CRM_CDCA_CATEGORY'),
 				'FieldName' => 'category_id',
 				'Type' => 'deal_category',
 			],
 			'StageId' => [
-				'Name' => GetMessage('CRM_CDCA_STAGE'),
+				'Name' => Loc::getMessage('CRM_CDCA_STAGE'),
 				'FieldName' => 'stage_id',
 				'Type' => 'deal_stage',
 			],
 		];
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$map = static::getPropertiesDialogMap();
+		$map['StageId']['Type'] = \Bitrix\Bizproc\FieldType::STRING;
+
+		return $map;
 	}
 
 	private function resolveMoveCategoryErrorText($errorCode)
@@ -234,22 +259,22 @@ class CBPCrmChangeDealCategoryActivity
 		{
 			case Crm\Category\DealCategoryChangeError::CATEGORY_NOT_FOUND:
 			{
-				$text = GetMessage('CRM_CDCA_MOVE_ERROR_CATEGORY_NOT_FOUND');
+				$text = Loc::getMessage('CRM_CDCA_MOVE_ERROR_CATEGORY_NOT_FOUND');
 				break;
 			}
 			case Crm\Category\DealCategoryChangeError::CATEGORY_NOT_CHANGED:
 			{
-				$text = GetMessage('CRM_CDCA_MOVE_ERROR_CATEGORY_NOT_CHANGED');
+				$text = Loc::getMessage('CRM_CDCA_MOVE_ERROR_CATEGORY_NOT_CHANGED');
 				break;
 			}
 			case Crm\Category\DealCategoryChangeError::RESPONSIBLE_NOT_FOUND:
 			{
-				$text = GetMessage('CRM_CDCA_MOVE_ERROR_RESPONSIBLE_NOT_FOUND');
+				$text = Loc::getMessage('CRM_CDCA_MOVE_ERROR_RESPONSIBLE_NOT_FOUND');
 				break;
 			}
 			case Crm\Category\DealCategoryChangeError::STAGE_NOT_FOUND:
 			{
-				$text = GetMessage('CRM_CDCA_MOVE_ERROR_STAGE_NOT_FOUND');
+				$text = Loc::getMessage('CRM_CDCA_MOVE_ERROR_STAGE_NOT_FOUND');
 				break;
 			}
 			case Crm\Category\DealCategoryChangeError::RESTRICTION_APPLIED:
@@ -260,7 +285,7 @@ class CBPCrmChangeDealCategoryActivity
 
 			default:
 			{
-				$text = GetMessage('CRM_CDCA_MOVE_ERROR', ['#ERROR_CODE#' => $errorCode]);
+				$text = Loc::getMessage('CRM_CDCA_MOVE_ERROR', ['#ERROR_CODE#' => $errorCode]);
 			}
 		}
 

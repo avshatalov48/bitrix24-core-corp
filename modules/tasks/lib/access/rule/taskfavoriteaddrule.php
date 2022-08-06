@@ -19,11 +19,13 @@ class TaskFavoriteAddRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task || !($task instanceof TaskModel))
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if (!$this->controller->check(ActionDictionary::ACTION_TASK_READ, $task))
 		{
+			$this->controller->addError(static::class, 'Access to read task denied');
 			return false;
 		}
 

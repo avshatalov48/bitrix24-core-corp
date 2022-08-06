@@ -1,0 +1,584 @@
+<?php
+
+namespace Bitrix\Crm\Item\FieldImplementation;
+
+use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Item\FieldImplementation;
+use Bitrix\Crm\Service\Broker;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentOutOfRangeException;
+use Bitrix\Main\InvalidOperationException;
+use Bitrix\Main\ObjectNotFoundException;
+use Bitrix\Main\ORM\Entity;
+use Bitrix\Main\ORM\Objectify\Collection;
+use Bitrix\Main\ORM\Objectify\EntityObject;
+use Bitrix\Main\ORM\Objectify\Values;
+use Bitrix\Main\Result;
+
+final class Binding implements FieldImplementation
+{
+	/** @var EntityObject */
+	private $entityObject;
+
+	/** @var int */
+	private $boundEntityTypeId;
+	/** @var string */
+	private $boundEntityIdFieldName;
+	/** @var Binding\FieldNameMap */
+	private $fieldNameMap;
+	/** @var Entity */
+	private $bindingEntity;
+
+	/** @var Array<string, mixed> */
+	private $defaultValuesForBindingObject = [];
+
+	/** @var Broker */
+	private $broker;
+
+	public function __construct(
+		EntityObject $entityObject,
+		int $boundEntityTypeId,
+		Binding\FieldNameMap $fieldNameMap,
+		Entity $bindingEntity,
+		Broker $boundEntitiesBroker
+	)
+	{
+		$this->entityObject = $entityObject;
+
+		$this->boundEntityTypeId = $boundEntityTypeId;
+		$this->boundEntityIdFieldName = EntityBinding::resolveEntityFieldName($boundEntityTypeId);
+		if (!$fieldNameMap->isBindingsFilled())
+		{
+			throw new ArgumentException('bindings field is fieldNameMap should be filled', 'fieldNameMap');
+		}
+		$this->fieldNameMap = $fieldNameMap;
+		$this->bindingEntity = $bindingEntity;
+
+		$this->broker = $boundEntitiesBroker;
+	}
+
+	/**
+	 * @param Array<string, mixed> $defaultValuesForFields
+	 * @return $this
+	 */
+	public function setBindingObjectDefaultValues(array $defaultValuesForFields): self
+	{
+		$this->defaultValuesForBindingObject = $defaultValuesForFields;
+
+		return $this;
+	}
+
+	//region Interface implementation
+	public function getHandledFieldNames(): array
+	{
+		return $this->fieldNameMap->getAllFilled();
+	}
+
+	public function get(string $commonFieldName)
+	{
+		return $this->getValue($commonFieldName, Values::ALL);
+	}
+
+	public function set(string $commonFieldName, $value): void
+	{
+		if ($this->fieldNameMap->isSingleIdFilled() && $commonFieldName === $this->fieldNameMap->getSingleId())
+		{
+			$bindings = EntityBinding::prepareEntityBindings($this->boundEntityTypeId, [(int)$value]);
+		}
+		elseif ($this->fieldNameMap->isMultipleIdsFilled() && $commonFieldName === $this->fieldNameMap->getMultipleIds())
+		{
+			$bindings = EntityBinding::prepareEntityBindings($this->boundEntityTypeId, (array)$value);
+		}
+		elseif ($commonFieldName === $this->fieldNameMap->getBindings())
+		{
+			$bindings = (array)$value;
+		}
+		elseif ($this->fieldNameMap->isBoundEntitiesFilled() && $commonFieldName === $this->fieldNameMap->getBoundEntities())
+		{
+			$ids = [];
+			foreach ((array)$value as $entityToBind)
+			{
+				if (!($entityToBind instanceof EntityObject))
+				{
+					throw new ArgumentException(
+						'value should an array of ' . EntityObject::class . ', got this as part of the array: '. gettype($entityToBind),
+					);
+				}
+
+				$ids[] = $entityToBind->getId();
+			}
+
+			$bindings = EntityBinding::prepareEntityBindings($this->boundEntityTypeId, $ids);
+		}
+		else
+		{
+			throw new ArgumentOutOfRangeException('commonFieldName', $this->getHandledFieldNames());
+		}
+
+		$this->setBindings($bindings);
+	}
+
+	public function isChanged(string $commonFieldName): bool
+	{
+		$bindingsCollection = $this->getBindingsCollection();
+		if (!$bindingsCollection)
+		{
+			return false;
+		}
+
+		if ($bindingsCollection->sysIsChanged())
+		{
+			return true;
+		}
+
+		$scalarFields = $this->bindingEntity->getScalarFields();
+		foreach ($bindingsCollection as $bindingObject)
+		{
+			foreach ($scalarFields as $singleScalarField)
+			{
+				if ($bindingObject->isChanged($singleScalarField->getName()))
+				{
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
+	public function remindActual(string $commonFieldName)
+	{
+		return $this->getValue($commonFieldName, Values::ACTUAL);
+	}
+
+	public function reset(string $commonFieldName): void
+	{
+		$this->entityObject->reset($this->fieldNameMap->getBindings());
+
+		$bindingsCollection = $this->getBindingsCollection();
+		if (!$bindingsCollection)
+		{
+			return;
+		}
+
+		self::resetAllEntityObjects($bindingsCollection);
+	}
+
+	public function unset(string $commonFieldName): void
+	{
+		$this->entityObject->unset($this->fieldNameMap->getBindings());
+	}
+
+	public function afterSuccessfulItemSave(Item $item, EntityObject $entityObject): void
+	{
+	}
+
+	public function save(): Result
+	{
+		// everything was saved at entityObject save
+		return new Result();
+	}
+
+	public function getExternalizableFieldNames(): array
+	{
+		// fields are sorted by priority - more information, higher priority
+		$externalizableList = [
+			$this->fieldNameMap->getBindings(),
+		];
+
+		if ($this->fieldNameMap->isMultipleIdsFilled())
+		{
+			$externalizableList[] = $this->fieldNameMap->getMultipleIds();
+		}
+		if ($this->fieldNameMap->isSingleIdFilled())
+		{
+			$externalizableList[] = $this->fieldNameMap->getSingleId();
+		}
+
+		return $externalizableList;
+	}
+
+	public function transformToExternalValue(string $commonFieldName, $value, int $valuesType)
+	{
+		return $value;
+	}
+
+	public function setFromExternalValues(array $externalValues): void
+	{
+		// Only first not empty field is processed
+		foreach ($this->getExternalizableFieldNames() as $commonFieldName)
+		{
+			if (isset($externalValues[$commonFieldName]))
+			{
+				$this->set($commonFieldName, $externalValues[$commonFieldName]);
+
+				return;
+			}
+		}
+	}
+
+	public function afterItemClone(Item $item, EntityObject $entityObject): void
+	{
+		$this->entityObject = $entityObject;
+	}
+	//endregion
+
+	//region Get helpers
+	private function getValue(string $commonFieldName, int $valuesType)
+	{
+		if ($this->fieldNameMap->isSingleIdFilled() && $commonFieldName === $this->fieldNameMap->getSingleId())
+		{
+			if ($valuesType === Values::ACTUAL)
+			{
+				return $this->entityObject->remindActual($this->fieldNameMap->getSingleId());
+			}
+
+			return $this->entityObject->get($this->fieldNameMap->getSingleId());
+		}
+
+		if ($valuesType === Values::ACTUAL)
+		{
+			$bindingsCollection = $this->getActualBindingsCollection();
+		}
+		else
+		{
+			$bindingsCollection = $this->getBindingsCollection();
+		}
+
+		if (!$bindingsCollection)
+		{
+			return [];
+		}
+
+		$bindings = $this->bindingsCollectionToArray($bindingsCollection);
+
+		if ($this->fieldNameMap->isMultipleIdsFilled() && $commonFieldName === $this->fieldNameMap->getMultipleIds())
+		{
+			return EntityBinding::prepareEntityIDs($this->boundEntityTypeId, $bindings);
+		}
+		if ($commonFieldName === $this->fieldNameMap->getBindings())
+		{
+			return $bindings;
+		}
+		if ($this->fieldNameMap->isBoundEntitiesFilled() && $commonFieldName === $this->fieldNameMap->getBoundEntities())
+		{
+			return $this->getBoundEntities($bindings);
+		}
+
+		throw new ArgumentOutOfRangeException('commonFieldName', $this->getHandledFieldNames());
+	}
+
+	/**
+	 * Mostly redundant method, but is used for type hinting
+	 *
+	 * @return Collection|null
+	 */
+	private function getBindingsCollection(): ?Collection
+	{
+		return $this->entityObject->get($this->fieldNameMap->getBindings());
+	}
+
+	private function getActualBindingsCollection(): ?Collection
+	{
+		$collection = $this->getBindingsCollection();
+		if (!$collection)
+		{
+			return null;
+		}
+
+		$collection = clone $collection;
+		if ($collection->sysIsChanged())
+		{
+			$collection->sysResetChanges(true);
+		}
+
+		self::resetAllEntityObjects($collection);
+
+		return $collection;
+	}
+
+	private static function resetAllEntityObjects(Collection $collection): void
+	{
+		$scalarFields = $collection->entity->getScalarFields();
+		foreach ($collection as $object)
+		{
+			foreach ($scalarFields as $singleScalarField)
+			{
+				$object->reset($singleScalarField->getName());
+			}
+		}
+	}
+
+	private function bindingsCollectionToArray(Collection $bindingsCollection): array
+	{
+		$bindings = [];
+		foreach ($bindingsCollection as $bindingObject)
+		{
+			$bindings[] = [
+				$this->boundEntityIdFieldName => $bindingObject->get($this->boundEntityIdFieldName),
+				'SORT' => $bindingObject->get('SORT'),
+				'ROLE_ID' => $bindingObject->get('ROLE_ID'),
+			];
+		}
+
+		foreach ($bindingsCollection as $bindingObject)
+		{
+			if ($bindingObject->get('IS_PRIMARY'))
+			{
+				$primary = $bindingObject;
+			}
+		}
+
+		if (isset($primary))
+		{
+			EntityBinding::markAsPrimary(
+				$bindings,
+				$this->boundEntityTypeId,
+				$primary->get($this->boundEntityIdFieldName)
+			);
+		}
+
+		sortByColumn($bindings, ['SORT' => SORT_ASC]);
+
+		return $bindings;
+	}
+
+	private function getBoundEntities(array $bindings): array
+	{
+		$ids = EntityBinding::prepareEntityIDs($this->boundEntityTypeId, $bindings);
+		$entities = $this->broker->getBunchByIds($ids);
+
+		$sorts = [];
+		foreach ($bindings as $singleBinding)
+		{
+			$entityId = EntityBinding::prepareEntityID($this->boundEntityTypeId, $singleBinding);
+			$sorts[$entityId] = (int)($singleBinding['SORT'] ?? 0);
+		}
+
+		usort(
+			$entities,
+			static function (EntityObject $left, EntityObject $right) use ($sorts): int {
+				$sortLeft = (int)($sorts[$left->getId()] ?? 0);
+				$sortRight = (int)($sorts[$right->getId()] ?? 0);
+
+				return ($sortLeft - $sortRight);
+			}
+		);
+
+		return $entities;
+	}
+	//endregion
+
+	//region Set helpers
+	private function setBindings(array $bindings): void
+	{
+		EntityBinding::normalizeEntityBindings($this->boundEntityTypeId, $bindings);
+		EntityBinding::removeBindingsWithDuplicatingEntityIDs($this->boundEntityTypeId, $bindings);
+
+		$bindingsCollection = $this->getBindingsCollection();
+		$currentBindings = $bindingsCollection ? $this->bindingsCollectionToArray($bindingsCollection) : [];
+
+		[$add, $update, $delete] = $this->separateBindingsByOperation($currentBindings, $bindings);
+
+		$this->addBindings($add);
+
+		// may be bindings collection was created in entityObject while we were adding new bindings to it
+		$bindingsCollection = $bindingsCollection ? $bindingsCollection : $this->getBindingsCollection();
+		if ($bindingsCollection)
+		{
+			$this->updateBindings($bindingsCollection, $update);
+			$this->deleteBindings($bindingsCollection, $delete);
+		}
+
+		if (!$bindingsCollection || count($bindingsCollection) <= 0)
+		{
+			if ($this->fieldNameMap->isSingleIdFilled())
+			{
+				$this->entityObject->set($this->fieldNameMap->getSingleId(), 0);
+			}
+
+			return;
+		}
+
+		$idOfPrimaryBoundEntity = $this->ensureExactlyOnePrimaryBoundEntityExists($bindingsCollection, $bindings);
+
+		if ($this->fieldNameMap->isSingleIdFilled())
+		{
+			$this->entityObject->set($this->fieldNameMap->getSingleId(), $idOfPrimaryBoundEntity);
+		}
+	}
+
+	/**
+	 * @param array $currentBindings
+	 * @param array $providedBindings
+	 * @return Array<mixed, Array<int, Array<string, mixed>>>
+	 */
+	private function separateBindingsByOperation(array $currentBindings, array $providedBindings): array
+	{
+		$add = [];
+		$update = [];
+		$delete = [];
+
+		foreach ($providedBindings as $singleProvidedBinding)
+		{
+			$entityId = EntityBinding::prepareEntityID($this->boundEntityTypeId, $singleProvidedBinding);
+
+			$isSimilarCurrentBindingExists =
+				EntityBinding::findBindingByEntityID($this->boundEntityTypeId, $entityId, $currentBindings)
+			;
+			if ($isSimilarCurrentBindingExists)
+			{
+				$update[$entityId] = $singleProvidedBinding;
+			}
+			else
+			{
+				$add[$entityId] = $singleProvidedBinding;
+			}
+		}
+
+		foreach ($currentBindings as $singleCurrentBinding)
+		{
+			$entityId = EntityBinding::prepareEntityID($this->boundEntityTypeId, $singleCurrentBinding);
+			if (!isset($add[$entityId]) && !isset($update[$entityId]))
+			{
+				$delete[$entityId] = $singleCurrentBinding;
+			}
+		}
+
+		return [$add, $update, $delete];
+	}
+
+	private function addBindings(array $bindingsToAdd): void
+	{
+		foreach ($bindingsToAdd as $singleBindingToAdd)
+		{
+			/** @var EntityObject $bindingObject */
+			$bindingObject = $this->bindingEntity->createObject();
+			foreach (($singleBindingToAdd + $this->defaultValuesForBindingObject) as $fieldName => $value)
+			{
+				if ($this->bindingEntity->hasField($fieldName))
+				{
+					$bindingObject->set($fieldName, $value);
+				}
+			}
+
+			$this->entityObject->addTo($this->fieldNameMap->getBindings(), $bindingObject);
+		}
+	}
+
+	private function updateBindings(Collection $bindingsCollection, array $bindingsToUpdate): void
+	{
+		foreach ($bindingsToUpdate as $singleBindingToUpdate)
+		{
+			$bindingObject = $this->findBindingObject($bindingsCollection, $singleBindingToUpdate);
+			if (!$bindingObject)
+			{
+				throw new ObjectNotFoundException('Could not find binding to update');
+			}
+
+			foreach ($singleBindingToUpdate as $fieldName => $value)
+			{
+				if ($this->bindingEntity->hasField($fieldName) && !$this->bindingEntity->getField($fieldName)->isPrimary())
+				{
+					$bindingObject->set($fieldName, $value);
+				}
+			}
+		}
+	}
+
+	private function deleteBindings(Collection $bindingsCollection, array $bindingsToDelete): void
+	{
+		foreach ($bindingsToDelete as $singleBindingToDelete)
+		{
+			$bindingObject = $this->findBindingObject($bindingsCollection, $singleBindingToDelete);
+			if (!$bindingObject)
+			{
+				throw new ObjectNotFoundException('Could not find binding to delete');
+			}
+
+			$this->entityObject->removeFrom($this->fieldNameMap->getBindings(), $bindingObject);
+		}
+	}
+
+	private function findBindingObject(Collection $bindingsCollection, array $bindingToFind): ?EntityObject
+	{
+		$boundEntityId = EntityBinding::prepareEntityID($this->boundEntityTypeId, $bindingToFind);
+
+		foreach ($bindingsCollection as $bindingObject)
+		{
+			if ($bindingObject->get($this->boundEntityIdFieldName) === $boundEntityId)
+			{
+				return $bindingObject;
+			}
+		}
+
+		return null;
+	}
+
+	private function ensureExactlyOnePrimaryBoundEntityExists(Collection $bindingsCollection, array $providedBindings): int
+	{
+		$idOfPrimaryBoundEntity = $this->selectPrimaryBoundEntity($bindingsCollection, $providedBindings);
+
+		foreach ($bindingsCollection as $bindingObject)
+		{
+			if ($bindingObject->get($this->boundEntityIdFieldName) === $idOfPrimaryBoundEntity)
+			{
+				$bindingObject->set('IS_PRIMARY', true);
+			}
+			else
+			{
+				$bindingObject->set('IS_PRIMARY', false);
+			}
+		}
+
+		return $idOfPrimaryBoundEntity;
+	}
+
+	private function selectPrimaryBoundEntity(Collection $bindingsCollection, array $providedBindings): int
+	{
+		$idOfPrimaryBoundEntity = null;
+
+		$primaryBinding = EntityBinding::findPrimaryBinding($providedBindings);
+		if ($primaryBinding)
+		{
+			$idOfPrimaryBoundEntity = EntityBinding::prepareEntityID($this->boundEntityTypeId, $primaryBinding);
+			// prioritize explicitly set primary binding
+			if ($idOfPrimaryBoundEntity > 0)
+			{
+				return $idOfPrimaryBoundEntity;
+			}
+		}
+
+		$firstBindingObject = null;
+		// let the current primary binding to remain primary
+		foreach ($bindingsCollection as $bindingObject)
+		{
+			if (!$firstBindingObject)
+			{
+				$firstBindingObject = $bindingObject;
+			}
+
+			if ($bindingObject->get('IS_PRIMARY'))
+			{
+				$idOfPrimaryBoundEntity = $bindingObject->get($this->boundEntityIdFieldName);
+
+				break;
+			}
+		}
+
+		if ($idOfPrimaryBoundEntity <= 0)
+		{
+			// if no primary found, simply make the first binding primary
+			$idOfPrimaryBoundEntity = $firstBindingObject->get($this->boundEntityIdFieldName);
+		}
+
+		if ($idOfPrimaryBoundEntity <= 0)
+		{
+			throw new InvalidOperationException('Could not select a primary bound entity, which should be an impossible case');
+		}
+
+		return $idOfPrimaryBoundEntity;
+	}
+	//endregion
+}

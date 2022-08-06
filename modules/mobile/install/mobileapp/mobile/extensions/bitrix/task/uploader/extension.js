@@ -1,4 +1,70 @@
 (() => {
+	class UnattachedFilesStorage
+	{
+		constructor()
+		{
+			this.queueKey = 'unattachedFiles';
+			this.storage = Application.sharedStorage('TaskUploader');
+		}
+
+		get()
+		{
+			const unattachedFiles = this.storage.get(this.queueKey);
+
+			if (typeof unattachedFiles === 'string')
+			{
+				return JSON.parse(unattachedFiles);
+			}
+
+			return {};
+		}
+
+		set(files)
+		{
+			this.storage.set(this.queueKey, JSON.stringify(files));
+		}
+
+		add(fileId, fileData)
+		{
+			this.update(fileId, fileData);
+		}
+
+		update(key, value)
+		{
+			const unattachedFiles = this.get();
+			unattachedFiles[key] = value;
+			this.set(unattachedFiles);
+		}
+
+		remove(key)
+		{
+			if (this.has(key))
+			{
+				const unattachedFiles = this.get();
+				delete unattachedFiles[key];
+				this.set(unattachedFiles);
+			}
+		}
+
+		has(key)
+		{
+			const unattachedFiles = this.get();
+			const has = Object.prototype.hasOwnProperty;
+
+			return has.call(unattachedFiles, key);
+		}
+
+		isEmpty()
+		{
+			return (Object.keys(this.get()).length <= 0);
+		}
+
+		clear()
+		{
+			this.set({});
+		}
+	}
+
 	const TaskUploader = {};
 
 	TaskUploader.init = function()
@@ -7,6 +73,12 @@
 
 		this.filesStorage = new TaskUploadFilesStorage();
 		this.filesStorage.clear();
+
+		this.unattachedFilesStorage = new UnattachedFilesStorage();
+		this.unattachedFilesStorage.clear();
+
+		this.isAttaching = false;
+		this.releaseUnattachedFilesQueue();
 
 		BX.addCustomEvent('onFileUploadStatusChanged', this.listener.bind(this));
 	};
@@ -32,6 +104,16 @@
 	TaskUploader.attachFile = function(taskId, fileData)
 	{
 		console.info('TaskUploader.attachFile:', [taskId, fileData]);
+
+		if (this.isAttaching)
+		{
+			if (!this.unattachedFilesStorage.has(taskId))
+			{
+				this.unattachedFilesStorage.add(taskId, fileData);
+			}
+			return;
+		}
+		this.isAttaching = true;
 
 		const config = {
 			data: {
@@ -66,7 +148,9 @@
 		};
 
 		this.filesStorage.removeFiles([taskId]);
+		this.unattachedFilesStorage.remove(taskId);
 		FileUploadAgent.postFileEvent(eventName, eventData, taskId);
+		this.isAttaching = false;
 	};
 
 	TaskUploader.onAjaxError = function(response, fileData, taskId)
@@ -78,7 +162,19 @@
 		};
 
 		this.filesStorage.removeFiles([taskId]);
+		this.unattachedFilesStorage.remove(taskId);
 		FileUploadAgent.postFileEvent(eventName, eventData, taskId);
+		this.isAttaching = false;
+	};
+
+	TaskUploader.releaseUnattachedFilesQueue = function()
+	{
+		if (!this.unattachedFilesStorage.isEmpty())
+		{
+			const unattachedFiles = this.unattachedFilesStorage.get();
+			Object.entries(unattachedFiles).forEach(([taskId, fileData]) => this.attachFile(taskId, fileData));
+		}
+		setTimeout(() => this.releaseUnattachedFilesQueue(), 5000);
 	};
 
 	TaskUploader.init();

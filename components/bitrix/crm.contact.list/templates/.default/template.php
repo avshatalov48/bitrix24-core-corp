@@ -50,6 +50,9 @@ endif;
 if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS']):
 	?><div id="backgroundContactMergeWrapper"></div><?
 endif;
+if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE']):
+	?><div id="backgroundContactDupVolDataPrepareWrapper"></div><?
+endif;
 
 if($arResult['NEED_FOR_REBUILD_DUP_INDEX']):
 	?><div id="rebuildContactDupIndexMsg" class="crm-view-message">
@@ -892,7 +895,7 @@ $APPLICATION->IncludeComponent(
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => array(
 			'LAZY_LOAD' => array(
-				'GET_LIST' => '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+				'GET_LIST' => '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.contact.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			),
 			'ENABLE_FIELDS_SEARCH' => 'Y',
@@ -1398,6 +1401,32 @@ if($arResult['NEED_TO_SHOW_DUP_MERGE_PROCESS'])
 					serviceUrl: "<?='/bitrix/components/bitrix/crm.contact.list/list.ajax.php?'.bitrix_sessid_get()?>",
 					actionName: "BACKGROUND_MERGE",
 					container: "backgroundContactMergeWrapper",
+					enableLayout: true
+				}
+			);
+			manager.runAfter(100);
+		});
+	</script><?
+}
+if($arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'])
+{?>
+	<script type="text/javascript">
+		BX.ready(function () {
+			if (BX.AutorunProcessPanel.isExists("backgroundContactIndexRebuild"))
+			{
+				return;
+			}
+			BX.AutorunProcessManager.messages =
+				{
+					title: "<?=GetMessageJS('CRM_CONTACT_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_TITLE')?>",
+					stateTemplate: "<?=GetMessageJS('CRM_CONTACT_BACKGROUND_DUPLICATE_VOL_DATA_PREPARE_STATE')?>"
+				};
+			var manager = BX.AutorunProcessManager.create(
+				"backgroundContactDupVolDataPrepare",
+				{
+					serviceUrl: "<?='/bitrix/components/bitrix/crm.contact.list/list.ajax.php?'.bitrix_sessid_get()?>",
+					actionName: "BACKGROUND_DUP_VOL_DATA_PREPARE",
+					container: "backgroundContactDupVolDataPrepareWrapper",
 					enableLayout: true
 				}
 			);

@@ -213,7 +213,8 @@ td.user-profile-img-block {
 }
 
 .user-profile-otp-on {
-	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	display: inline-block;
 	background-color: transparent;
 	box-sizing: border-box;
@@ -226,12 +227,12 @@ td.user-profile-img-block {
 	height: 20px;
 	font-size: 13px;
 	padding-bottom: 2px;
-	font-weight: normal;
 	margin-right: 10px;
 }
 
 .user-profile-otp-off {
-	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	display: inline-block;
 	background-color: transparent;
 	box-sizing: border-box;
@@ -245,7 +246,6 @@ td.user-profile-img-block {
 	height: 20px;
 	font-size: 13px;
 	padding-bottom: 2px;
-	font-weight: normal;
 	margin-right: 10px;
 }
 
@@ -253,7 +253,8 @@ td.user-profile-img-block {
 	display: inline-block;
 	color:#818791;
 	border-bottom:1px solid #818791;
-	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: border .2s ease,  color .2s ease;
 	font-size: 14px;
 	padding-bottom: 1px;
@@ -268,7 +269,8 @@ td.user-profile-img-block {
 .user-profile-otp-days {
 	display: inline-block;
 	color:#939394;
-	font-family: 'Open Sans', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 12px;
 	margin-right: 10px;
 }

@@ -17,6 +17,7 @@ class TaskExportRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -25,6 +26,11 @@ class TaskExportRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
-		return (bool) $this->user->getPermission(PermissionDictionary::TASK_EXPORT);
+		$res = (bool) $this->user->getPermission(PermissionDictionary::TASK_EXPORT);
+		if (!$res)
+		{
+			$this->controller->addError(static::class, 'Access to export denied');
+		}
+		return $res;
 	}
 }

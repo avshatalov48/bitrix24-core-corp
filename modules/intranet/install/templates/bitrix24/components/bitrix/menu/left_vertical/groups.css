@@ -34,7 +34,8 @@
 }
 
 .group-panel-header {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	border-bottom: 1px solid #e5edf3;
 	margin: 20px 26px 0;
 }
@@ -85,7 +86,8 @@
 	display: inline-block;
 	width: 50%;
 	font-size: 14px;
-	font-family: "OpenSans-Regular", "Helvetica New", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #535c69;
 	padding: 0 13px 0 13px;
 	overflow: hidden;

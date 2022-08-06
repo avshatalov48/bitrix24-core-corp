@@ -4,11 +4,10 @@ namespace Bitrix\Location\Source;
 
 use Bitrix\Location\Entity\Source\Factory;
 use Bitrix\Location\Entity\Source\OrmConverter;
+use Bitrix\Location\Infrastructure\SourceCodePicker;
 use Bitrix\Location\Repository\SourceRepository;
 use Bitrix\Location\Source\Google;
 use Bitrix\Location\Source\Osm;
-use Bitrix\Main\Config\Option;
-use Bitrix\Main\Error;
 use Bitrix\Main\Result;
 
 class SourceSelector
@@ -20,30 +19,9 @@ class SourceSelector
 		$this->sourceRepository = $sourceRepository ?: new SourceRepository(new OrmConverter());
 	}
 
-	protected function isConstantDefinesOtherSource(string $sourceCode): bool
-	{
-		$result = false;
-
-		if (defined('LOCATION_DEFAULT_SOURCE_CODE') && $sourceCode !== LOCATION_DEFAULT_SOURCE_CODE)
-		{
-			$result = true;
-		}
-
-		return $result;
-	}
-
 	public function setSource(string $sourceCode, IConfigFactory $configFactory): Result
 	{
 		$result = new Result();
-
-		if($this->isConstantDefinesOtherSource($sourceCode))
-		{
-			$result->addError(
-				new Error('Defined constant "LOCATION_DEFAULT_SOURCE_CODE" with other source')
-			);
-
-			return $result;
-		}
 
 		$source = $this->sourceRepository->findByCode($sourceCode);
 
@@ -64,7 +42,7 @@ class SourceSelector
 			$result->addErrors($res->getErrors());
 		}
 
-		Option::set('location', 'location_default_source_code', $sourceCode);
+		SourceCodePicker::setSourceCode($sourceCode);
 
 		return $result;
 	}

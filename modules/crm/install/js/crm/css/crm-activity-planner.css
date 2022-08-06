@@ -40,6 +40,7 @@
 .crm-activity-popup-info-person-detail-deal {
 	margin: 6px 0 0;
 	background: #fff;
+	border-radius: var(--ui-field-border-radius);
 }
 
 .crm-activity-popup-info-person,
@@ -62,6 +63,7 @@
 .crm-activity-popup-calendar-planner-wrap {
 	padding: 10px;
 	background: #f9fafa;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .crm-activity-popup-calendar-planner-wrap-shown { }
@@ -109,7 +111,10 @@
 	z-index: 1;
 	overflow: hidden;
 	box-sizing: border-box;
-	background: #eef2f4;
+	background: #fff;
+	padding: 15px 15px 0 20px;
+	border-radius: var(--ui-border-radius-md);
+	margin-bottom: 20px;
 	color: #80868e;
 	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
 }
@@ -164,6 +169,18 @@
 }
 
 .crm-activity-popup-recall-select-date:hover { background: rgba(155, 155, 155, .1); }
+
+.crm-activity-popup-recall-select-date:first-child {
+	border-radius: var(--ui-border-radius-xs);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
+}
+
+.crm-activity-popup-recall-select-date:last-child {
+	border-radius: var(--ui-border-radius-xs);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
+}
 
 .select-date-active {
 	height: 35px;
@@ -895,7 +912,7 @@
 	max-width: 80px;
 	height: 38px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	color: #535c69;
 	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
 	transition: border-color ease-out .5s;
@@ -946,7 +963,7 @@
 	box-sizing: border-box;
 	padding: 10px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
 	transition: border-color ease-out .5s;
 }
@@ -1179,6 +1196,7 @@
 .crm-task-list-inner {
 	margin: 18px 0 0;
 	background: #fff;
+	border-radius: var(--ui-border-radius-md, 2px);
 }
 
 /* Mail */
@@ -1188,7 +1206,7 @@
 	overflow-y: auto;
 	max-height: 480px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-md, 2px);
 	background: rgb(237, 248, 253);
 }
 
@@ -1308,6 +1326,7 @@
 	height: 111px;
 	background: #fff;
 	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	border-radius: var(--ui-space-stack-xs);
 }
 
 .crm-task-list-person-slides {
@@ -1866,7 +1885,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-live-feed,
 .crm-task-list-meet {
 	border: 1px solid rgba(150, 150, 150, .21);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	background: #f9fafa;
 }
 
@@ -2355,7 +2374,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	overflow-y: hidden;
 	max-height: 100%;
 	border: none;
-	border-radius: 0;
+	border-radius: var(--ui-border-radius-md);
 	background: rgb(251, 252, 253);
 }
 
@@ -2654,6 +2673,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-mail-additionally-info {
 	padding: 10px 20px;
 	background: rgb(251, 252, 253);
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .crm-task-list-mail-additionally-info-title {
@@ -2707,7 +2727,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	height: auto;
 	outline: none;
 	border: 1px solid rgba(83, 92, 105, .2);
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	background: #fff;
 	white-space: normal;
 	-moz-appearance: none;

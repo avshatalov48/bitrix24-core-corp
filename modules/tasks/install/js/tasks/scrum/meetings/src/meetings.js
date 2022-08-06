@@ -1,5 +1,5 @@
 import {Event, Loc, Tag, Text, Type, Dom, ajax} from 'main.core';
-import {BaseEvent} from 'main.core.events';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 import {Menu} from 'main.popup';
 
@@ -590,7 +590,7 @@ export class Meetings
 			}
 		).show();
 
-		top.BX.Event.EventEmitter.subscribeOnce(
+		EventEmitter.subscribeOnce(
 			'BX.Calendar:onEntrySave',
 			(baseEvent: BaseEvent) => {
 				const data = baseEvent.getData();

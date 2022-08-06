@@ -13,7 +13,8 @@
 
 .intranet-license-restriction-title-item {
 	margin: -25px 0 65px;
-	font: 36px/49px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 36px/49px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .intranet-license-restriction-logo {
@@ -27,12 +28,14 @@
 
 .intranet-license-restriction-desc {
 	color: #535c69;
-	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-license-restriction-info {
 	color: #333;
-	font: 15px/15px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-license-restriction-info:first-child { margin: 0 0 17px; }
@@ -45,7 +48,8 @@
 	background: rgba(247, 204, 0, .1);
 	color: #333;
 	text-align: center;
-	font: 16px/30px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-license-restriction-warning-text {
@@ -62,10 +66,12 @@
 
 .intranet-license-restriction-text-bold {
 	display: inline-block;
-	font: 15px/15px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .intranet-license-restriction-count {
 	color: #d0011b;
-	font: 15px/15px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }

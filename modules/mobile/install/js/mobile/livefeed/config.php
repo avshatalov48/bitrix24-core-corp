@@ -1,4 +1,5 @@
-<?
+<?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -7,9 +8,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Engine\ActionFilter\Service\Token;
 
 Loader::includeModule('socialnetwork');
 Loader::includeModule('mobileapp');
+
 global $USER;
 
 $allowToAll = \Bitrix\Socialnetwork\ComponentHelper::getAllowToAllDestination();
@@ -76,7 +79,9 @@ $langAdditional = [
 	'MOBILE_EXT_LIVEFEED_DEVICE_WIDTH' => (int)\CMobile::getInstance()->getDevicewidth(),
 	'MOBILE_EXT_LIVEFEED_DEVICE_HEIGHT' => (int)\CMobile::getInstance()->getDeviceheight(),
 	'MOBILE_EXT_LIVEFEED_DEVICE_RATIO' => \CMobile::getInstance()->getPixelRatio(),
-	'MOBILE_EXT_LIVEFEED_COLLAPSED_PINNED_PANEL_ITEMS_LIMIT' => \Bitrix\Mobile\Component\LogList\Util::getCollapsedPinnedPanelItemsLimit()
+	'MOBILE_EXT_LIVEFEED_COLLAPSED_PINNED_PANEL_ITEMS_LIMIT' => \Bitrix\Mobile\Component\LogList\Util::getCollapsedPinnedPanelItemsLimit(),
+	'MOBILE_EXT_LIVEFEED_AJAX_ENTITY_HEADER_NAME' => Token::getEntityHeader(),
+	'MOBILE_EXT_LIVEFEED_AJAX_TOKEN_HEADER_NAME' => Token::getTokenHeader(),
 ];
 
 return [

@@ -4,6 +4,7 @@ import {BaseEvent} from 'main.core.events';
 import {Header} from './header';
 import {Blank} from '../blank';
 import {Dropzone} from '../dropzone';
+import {EmptySearchStub} from '../empty.search.stub';
 
 import {Entity} from '../entity';
 import {Item, ItemParams} from '../../item/item';
@@ -44,6 +45,7 @@ export class Backlog extends Entity
 		backlog.setHeader(backlog);
 		backlog.setBlank(backlog);
 		backlog.setDropzone(backlog);
+		backlog.setEmptySearchStub(backlog);
 		backlog.setListItems(backlog);
 
 		return backlog;
@@ -91,6 +93,11 @@ export class Backlog extends Entity
 		});
 	}
 
+	setEmptySearchStub(backlog: Backlog)
+	{
+		this.emptySearchStub = new EmptySearchStub(backlog);
+	}
+
 	setNumberTasks(numberTasks: number)
 	{
 		super.setNumberTasks(numberTasks);
@@ -101,12 +108,12 @@ export class Backlog extends Entity
 		}
 	}
 
-	getEntityType()
+	getEntityType(): string
 	{
 		return 'backlog';
 	}
 
-	isDisabled()
+	isDisabled(): boolean
 	{
 		return false;
 	}
@@ -119,6 +126,7 @@ export class Backlog extends Entity
 					${this.header ? this.header.render() : ''}
 					${this.blank ? this.blank.render() : ''}
 					${this.dropzone ? this.dropzone.render() : ''}
+					${this.emptySearchStub ? this.emptySearchStub.render() : ''}
 					${this.listItems ? this.listItems.render() : ''}
 				</div>
 			</div>

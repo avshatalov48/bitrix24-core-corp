@@ -5,12 +5,11 @@ namespace Bitrix\Location\Repository\Location\Strategy;
 use Bitrix\Location\Entity\Location;
 use Bitrix\Location\Entity\Generic\Collection;
 use Bitrix\Location\Entity\Location\Parents;
-use Bitrix\Location\Common\Point;
 use Bitrix\Location\Repository\Location\Capability\IFindByExternalId;
 use Bitrix\Location\Repository\Location\Capability\IFindById;
-use Bitrix\Location\Repository\Location\Capability\IFindByPoint;
 use Bitrix\Location\Repository\Location\Capability\IFindByText;
 use Bitrix\Location\Repository\Location\Capability\IFindParents;
+use Bitrix\Location\Repository\Location\Capability\ISupportAutocomplete;
 use Bitrix\Location\Repository\Location\IScope;
 use Bitrix\Location\Repository\Location\IRepository;
 use Bitrix\Location\Repository\Location\ICache;
@@ -35,15 +34,14 @@ class Find	extends Base
 	}
 
 	/** @inheritDoc */
-	public function findByPoint(Point $point, string $languageId, int $searchScope)
-	{
-		return $this->find(IFindByPoint::class, 'findByPoint', [$point, $languageId], $searchScope) ?? new Location\Collection();
-	}
-
-	/** @inheritDoc */
 	public function findByText(string $text, string $languageId, int $searchScope)
 	{
 		return $this->find(IFindByText::class, 'findByText', [$text, $languageId], $searchScope) ?? new Location\Collection();
+	}
+	
+	public function autocomplete(array $params, int $searchScope)
+	{
+		return $this->find(ISupportAutocomplete::class, 'autocomplete', [$params], $searchScope) ?? [];
 	}
 
 	public function findParents(Location $location, string $languageId, int $searchScope)
@@ -60,7 +58,6 @@ class Find	extends Base
 		{
 			if($repository instanceof IFindById
 				|| $repository instanceof IFindByExternalId
-				|| $repository instanceof IFindByPoint
 				|| $repository instanceof IFindByText
 				|| $repository instanceof IFindParents
 			)

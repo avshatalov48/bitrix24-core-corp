@@ -9,7 +9,7 @@ use \Bitrix\Main\Localization\Loc;
 
 $this->addExternalCss('/bitrix/js/crm/entity-editor/css/style.css');
 
-\Bitrix\Main\UI\Extension::load('ui.buttons');
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens']);
 ?>
 
 <form class='crm-order-buyer-group-edit-wrapper' id="crm-order-buyer-group-edit-wrapper">

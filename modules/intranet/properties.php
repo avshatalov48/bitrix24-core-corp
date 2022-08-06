@@ -666,7 +666,6 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		$container_hidden_id = $params['FIELD_NAME'] . '_container_hidden';
 
 		return <<<HTML
-			<input type="hidden" name="{$params['FIELD_NAME']}[]" value="0" />
 			<div id="{$container_id}" name="{$container_id}"></div>
 			<div id ="{$container_hidden_id}" name="{$container_hidden_id}"></div>
 			<script>
@@ -701,17 +700,26 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 					function setSelectedInputs(eventName, event)
 					{
 						var dialog = event.getData().item.getDialog();
-						dialog.hide();
+						if (!dialog.isMultiple())
+						{
+							dialog.hide();
+						}
 						var selectedItems = dialog.getSelectedItems();
 						if (Array.isArray(selectedItems))
 						{
-							var selectedItemsId = [];
 							var htmlInputs = '';
-							selectedItems.forEach(function(item, index, array)
+							selectedItems.forEach(function(item)
 							{
-								htmlInputs += '<input type="hidden" name="{$params['FIELD_NAME']}[]" value="' + item['id'] + '" />';
-								selectedItemsId.push(item['id']);
+								htmlInputs +=
+									'<input type="hidden" name="{$params['FIELD_NAME']}[]" value="' + item['id'] + '" />'
+								;
 							});
+							if (htmlInputs === '')
+							{
+								htmlInputs =
+									'<input type="hidden" name="{$params['FIELD_NAME']}[]" value="0" />'
+								;
+							}
 							document.getElementById('{$container_hidden_id}').innerHTML = htmlInputs;
 							BX.Event.EventEmitter.emit('onChangeEmployee');
 						}

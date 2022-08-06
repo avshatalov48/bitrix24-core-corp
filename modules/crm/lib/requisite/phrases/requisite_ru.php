@@ -37,6 +37,8 @@ $phrasesConfig = [
 		'CRM_REQUISITE_ENTITY_RQ_OKVED_RU_FIELD' => 'ОКВЭД',
 		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_SER_RU_FIELD' => 'Серия св. о гос. регистрации',
 		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_NUM_RU_FIELD' => 'Номер св. о гос. регистрации',
-		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_DATE_RU_FIELD' => 'Дата св. о гос. регистрации'
+		'CRM_REQUISITE_ENTITY_RQ_ST_CERT_DATE_RU_FIELD' => 'Дата св. о гос. регистрации',
+		'CRM_REQUISITE_ENTITY_RQ_SIGNATURE_RU_FIELD' => 'Подпись',
+		'CRM_REQUISITE_ENTITY_RQ_STAMP_RU_FIELD' => 'Печать',
 	]
 ];

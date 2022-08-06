@@ -140,6 +140,12 @@ class TasksTagsSelector extends \CBitrixComponent
 
 		$this->arResult['CAN_EDIT'] = ($this->arParams['CAN_EDIT'] ?? false);
 
+		$this->arResult['GROUP_ID'] = 0;
+		if (array_key_exists('GROUP_ID', $this->arParams))
+		{
+			$this->arResult['GROUP_ID'] = (int) $this->arParams['GROUP_ID'];
+		}
+
 		$this->arResult['TASK_ID'] = 0;
 		if (array_key_exists('TASK_ID', $this->arParams))
 		{
@@ -151,6 +157,8 @@ class TasksTagsSelector extends \CBitrixComponent
 		{
 			$this->arResult['TEMPLATE_ID'] = (int)$this->arParams['TEMPLATE_ID'];
 		}
+
+		$this->arResult['IS_SCRUM_TASK'] = ($this->arParams['IS_SCRUM_TASK'] ?? false);
 	}
 
 	private function updateTask(int $taskId, array $data)

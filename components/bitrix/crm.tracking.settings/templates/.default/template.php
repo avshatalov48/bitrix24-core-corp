@@ -11,7 +11,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(['ui.icons', 'ui.forms', 'ui.hint', 'ui.common']);
+Extension::load([
+	'ui.icons',
+	'ui.forms',
+	'ui.hint',
+	'ui.common',
+	'ui.design-tokens',
+]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);
 $iconClass = htmlspecialcharsbx($arResult['ROW']['ICON_CLASS']);
@@ -36,7 +42,7 @@ $containerId = 'crm-tracking-channel-pool';
 				<div class="ui-ctl ui-ctl-inline">
 					<span style="padding-bottom: 0;" class="ui-ctl-label-text"><?=Loc::getMessage('CRM_TRACKING_SETTINGS_ATTR_WINDOW_SITE')?></span>
 				</div>
-				<div class="ui-ctl ui-ctl-textbox ui-ctl-inline ui-ctl-w25">
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-inline" style="width: 80px;">
 					<input name="ATTR_WINDOW" type="number" class="ui-ctl-element"
 						min="1" max="180" step="1"
 						value="<?=htmlspecialcharsbx($arResult['DATA']['ATTR_WINDOW'])?>"

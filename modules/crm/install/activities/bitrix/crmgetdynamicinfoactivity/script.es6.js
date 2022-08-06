@@ -1,10 +1,19 @@
 import {Reflection, Type, Event, Dom} from 'main.core';
+import {
+	AutomationContext,
+	ConditionGroup,
+	ConditionGroupSelector,
+	Document,
+	getGlobalContext,
+	setGlobalContext,
+} from 'bizproc.automation';
 
 const namespace = Reflection.namespace('BX.Crm.Activity');
 
 class CrmGetDynamicInfoActivity
 {
 	documentType: Array<string>;
+	document: Document;
 	isRobot: boolean;
 	entityTypeIdSelect: HTMLSelectElement;
 
@@ -16,7 +25,7 @@ class CrmGetDynamicInfoActivity
 	filterFieldsContainer: HTMLDivElement | null;
 	filteringFieldsPrefix: string;
 	filterFieldsMap: Map<number, object>;
-	conditionGroup: BX.Bizproc.Automation.ConditionGroup | undefined;
+	conditionGroup: ConditionGroup | undefined;
 
 	currentEntityTypeId: number;
 
@@ -27,6 +36,12 @@ class CrmGetDynamicInfoActivity
 			this.documentType = options.documentType;
 			this.isRobot = options.isRobot;
 			const form = document.forms[options.formName];
+
+			this.document = new Document({
+				rawDocumentType: this.documentType,
+				documentFields: options.returnFieldsMap,
+				title: options.documentName,
+			});
 
 			if (!Type.isNil(form))
 			{
@@ -53,14 +68,8 @@ class CrmGetDynamicInfoActivity
 			Object.entries(options.filterFieldsMap)
 				.map(([entityTypeId, fieldsMap]) => [Number(entityTypeId), fieldsMap]),
 		);
-		if (!Type.isNil(options.documentName))
-		{
-			BX.Bizproc.Automation.API.documentName = options.documentName;
-		}
-		if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup)
-		{
-			this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup(options.conditions);
-		}
+
+		this.conditionGroup = new ConditionGroup(options.conditions);
 	}
 
 	initReturnFields(options)
@@ -75,6 +84,18 @@ class CrmGetDynamicInfoActivity
 		});
 	}
 
+	initAutomationContext()
+	{
+		try
+		{
+			getGlobalContext();
+		}
+		catch(error)
+		{
+			setGlobalContext(new AutomationContext({document: this.document}));
+		}
+	}
+
 	init(): void
 	{
 		if (this.entityTypeIdSelect)
@@ -87,10 +108,7 @@ class CrmGetDynamicInfoActivity
 	{
 		this.currentEntityTypeId = Number(this.entityTypeIdSelect.value);
 
-		if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup)
-		{
-			this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup();
-		}
+		this.conditionGroup = new ConditionGroup();
 
 		this.returnFieldsIds = [];
 
@@ -118,7 +136,7 @@ class CrmGetDynamicInfoActivity
 			&& this.currentEntityTypeId !== 0
 		)
 		{
-			const selector = new BX.Bizproc.Automation.ConditionGroupSelector(this.conditionGroup, {
+			const selector = new ConditionGroupSelector(this.conditionGroup, {
 				fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 				fieldPrefix: this.filteringFieldsPrefix,
 			});

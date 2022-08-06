@@ -64,6 +64,19 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 
 	      this.callback = callback;
 	      main_core_events.EventEmitter.emit(this.eventName);
+
+	      if (this.checkCurrentConsent()) {
+	        callback();
+	      }
+	    }
+	  }, {
+	    key: "checkCurrentConsent",
+	    value: function checkCurrentConsent() {
+	      if (!BX.UserConsent || !BX.UserConsent.current) {
+	        return false;
+	      }
+
+	      return BX.UserConsent.check(BX.UserConsent.current);
 	    }
 	    /**
 	     * @private

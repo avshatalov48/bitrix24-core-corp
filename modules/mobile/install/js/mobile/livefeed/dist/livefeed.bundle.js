@@ -805,7 +805,8 @@ this.BX = this.BX || {};
 	        var newValue = oldValue === 'Y' ? 'N' : 'Y';
 	        menuNode.setAttribute('data-pinned', newValue);
 	        BXMobileApp.onCustomEvent('Livefeed::showLoader', {}, true, true);
-	        mobile_ajax.Ajax.runAction('socialnetwork.api.livefeed.logentry.' + (newValue === 'Y' ? 'pin' : 'unpin'), {
+	        var action = newValue === 'Y' ? 'socialnetwork.api.livefeed.logentry.pin' : 'socialnetwork.api.livefeed.logentry.unpin';
+	        mobile_ajax.Ajax.runAction(action, {
 	          data: {
 	            params: {
 	              logId: this.logId
@@ -2614,7 +2615,14 @@ this.BX = this.BX || {};
 	            params: {
 	              logId: logId
 	            }
-	          }
+	          },
+	          headers: [{
+	            name: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_AJAX_ENTITY_HEADER_NAME'),
+	            value: params.entityValue || ''
+	          }, {
+	            name: main_core.Loc.getMessage('MOBILE_EXT_LIVEFEED_AJAX_TOKEN_HEADER_NAME'),
+	            value: params.tokenValue || ''
+	          }]
 	        }).then(function (response) {
 	          if (response.status === 'success') {
 	            resolve(response.data);
@@ -3836,7 +3844,7 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      if (Instance.getOption('preventNextPage', false) === true) {
+	      if (Instance.getOption('refreshFrameCacheNeeded', false) === true) {
 	        return;
 	      }
 
@@ -3850,35 +3858,37 @@ this.BX = this.BX || {};
 	        callback: function callback(data) {
 	          _this.nextPageXhr = null;
 
-	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT) && (main_core.Type.isUndefined(data.LAST_TS) || parseInt(data.LAST_TS) <= 0 || parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) <= 0 || parseInt(data.LAST_TS) < parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')))) {
-	            _this.processAjaxBlock(data.PROPS, {
-	              type: 'next',
-	              callback: function callback() {
-	                Instance.recalcMaxScroll();
-	                oMSL.registerBlocksToCheck();
-	                setTimeout(oMSL.checkNodesHeight.bind(oMSL), 100);
-	                main_core_events.EventEmitter.emit('BX.UserContentView.onRegisterViewAreaListCall', new main_core_events.BaseEvent({
-	                  compatData: [{
-	                    containerId: 'lenta_wrapper',
-	                    className: 'post-item-contentview',
-	                    fullContentClassName: 'post-item-full-content'
-	                  }]
-	                }));
+	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT)) {
+	            if (main_core.Type.isUndefined(data.LAST_TS) || parseInt(data.LAST_TS) <= 0 || parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) <= 0 || parseInt(data.LAST_TS) < parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) || parseInt(data.LAST_TS) === parseInt(main_core.Loc.getMessage('MSLFirstPageLastTS')) && (parseInt(data.LAST_ID) <= 0 || parseInt(main_core.Loc.getMessage('MSLFirstPageLastId')) <= 0 || parseInt(data.LAST_ID) !== parseInt(main_core.Loc.getMessage('MSLFirstPageLastId')))) {
+	              _this.processAjaxBlock(data.PROPS, {
+	                type: 'next',
+	                callback: function callback() {
+	                  Instance.recalcMaxScroll();
+	                  oMSL.registerBlocksToCheck();
+	                  setTimeout(oMSL.checkNodesHeight.bind(oMSL), 100);
+	                  main_core_events.EventEmitter.emit('BX.UserContentView.onRegisterViewAreaListCall', new main_core_events.BaseEvent({
+	                    compatData: [{
+	                      containerId: 'lenta_wrapper',
+	                      className: 'post-item-contentview',
+	                      fullContentClassName: 'post-item-full-content'
+	                    }]
+	                  }));
+	                }
+	              });
+
+	              var pageNumber = _this.getPageNumber();
+
+	              if (parseInt(main_core.Loc.getMessage('MSLPageNavNum')) > 0 && pageNumber > 0) {
+	                _this.setPageNumber(pageNumber + 1);
+
+	                var nextUrl = main_core.Uri.removeParam(_this.getNextPageUrl(), ['PAGEN_' + main_core.Loc.getMessage('MSLPageNavNum')]);
+	                nextUrl = main_core.Uri.addParam(nextUrl, babelHelpers.defineProperty({}, "PAGEN_".concat(parseInt(main_core.Loc.getMessage('MSLPageNavNum'))), _this.getPageNumber() + 1));
+
+	                _this.setNextPageUrl(nextUrl);
 	              }
-	            });
 
-	            var pageNumber = _this.getPageNumber();
-
-	            if (parseInt(main_core.Loc.getMessage('MSLPageNavNum')) > 0 && pageNumber > 0) {
-	              _this.setPageNumber(pageNumber + 1);
-
-	              var nextUrl = main_core.Uri.removeParam(_this.getNextPageUrl(), ['PAGEN_' + main_core.Loc.getMessage('MSLPageNavNum')]);
-	              nextUrl = main_core.Uri.addParam(nextUrl, babelHelpers.defineProperty({}, "PAGEN_".concat(parseInt(main_core.Loc.getMessage('MSLPageNavNum'))), _this.getPageNumber() + 1));
-
-	              _this.setNextPageUrl(nextUrl);
+	              document.addEventListener('scroll', _this.onScroll);
 	            }
-
-	            document.addEventListener('scroll', _this.onScroll);
 	          } else {
 	            _this.requestError('nextPage', true);
 	          }
@@ -3967,7 +3977,7 @@ this.BX = this.BX || {};
 	          app.exec('hideSearchBarProgress');
 
 	          if (main_core.Type.isPlainObject(data) && main_core.Type.isPlainObject(data.PROPS) && main_core.Type.isStringFilled(data.PROPS.CONTENT)) {
-	            _this2.setPreventNextPage(false);
+	            _this2.setRefreshFrameCacheNeeded(false);
 
 	            BitrixMobile.LazyLoad.clearImages();
 	            app.hidePopupLoader();
@@ -4191,10 +4201,10 @@ this.BX = this.BX || {};
 	      return this.nextUrl;
 	    }
 	  }, {
-	    key: "setPreventNextPage",
-	    value: function setPreventNextPage(status) {
+	    key: "setRefreshFrameCacheNeeded",
+	    value: function setRefreshFrameCacheNeeded(status) {
 	      Instance.setOptions({
-	        preventNextPage: !!status
+	        refreshFrameCacheNeeded: !!status
 	      });
 	      var refreshNeededNode = document.getElementById('next_page_refresh_needed');
 	      var nextPageCurtainNode = document.getElementById('next_post_more');
@@ -4203,6 +4213,10 @@ this.BX = this.BX || {};
 	        refreshNeededNode.style.display = !!status ? 'block' : 'none';
 	        nextPageCurtainNode.style.display = !!status ? 'none' : 'block';
 	      }
+
+	      main_core_events.EventEmitter.emit('BX.UserContentView.onSetPreventNextPage', new main_core_events.BaseEvent({
+	        compatData: [!!status]
+	      }));
 	    }
 	  }]);
 	  return Page;
@@ -4323,7 +4337,7 @@ this.BX = this.BX || {};
 	        BitrixMobile.LazyLoad.showImages(true);
 
 	        if (!!bFromCache) {
-	          PageInstance.setPreventNextPage(true);
+	          PageInstance.setRefreshFrameCacheNeeded(true);
 	        }
 	      });
 	      main_core_events.EventEmitter.subscribe('onCacheDataRequestStart', function () {
@@ -4911,7 +4925,6 @@ this.BX = this.BX || {};
 	    value: function onPinnedPanelChange(params) {
 	      var logId = params.logId ? parseInt(params.logId) : 0;
 	      var value = ['Y', 'N'].indexOf(params.value) !== -1 ? params.value : null;
-	      var pinActionContext = main_core.Type.isStringFilled(params.pinActionContext) ? params.pinActionContext : 'list';
 
 	      if (!logId || !value || !PinnedPanelInstance.getPinnedPanelNode()) {
 	        return;
@@ -4934,24 +4947,31 @@ this.BX = this.BX || {};
 	          postNode: postNode,
 	          containerNode: document.getElementById(this.nodeId.feedContainer)
 	        });
-	      } else if (value === 'Y') {
-	        if (main_core.Type.isDomNode(params.postNode)) {
-	          app.showPopupLoader({
-	            text: ""
-	          });
-	          PinnedPanelInstance.getPinnedData({
-	            logId: logId
-	          }).then(function (pinnedData) {
-	            app.hidePopupLoader();
-	            PinnedPanelInstance.insertEntry({
-	              logId: logId,
-	              postNode: params.postNode,
-	              pinnedContent: pinnedData
-	            });
-	          }, function (response) {
-	            app.hidePopupLoader();
-	          });
+	      } else if (value === 'Y' && main_core.Type.isDomNode(params.postNode)) {
+	        app.showPopupLoader({
+	          text: ""
+	        });
+
+	        if (this.getOption('refreshFrameCacheNeeded', false) === true) {
+	          return;
 	        }
+
+	        var entityValue = postNode.getAttribute('data-security-entity-pin');
+	        var tokenValue = postNode.getAttribute('data-security-token-pin');
+	        PinnedPanelInstance.getPinnedData({
+	          logId: logId,
+	          entityValue: entityValue,
+	          tokenValue: tokenValue
+	        }).then(function (pinnedData) {
+	          app.hidePopupLoader();
+	          PinnedPanelInstance.insertEntry({
+	            logId: logId,
+	            postNode: params.postNode,
+	            pinnedContent: pinnedData
+	          });
+	        }, function (response) {
+	          app.hidePopupLoader();
+	        });
 	      }
 	    }
 	  }, {

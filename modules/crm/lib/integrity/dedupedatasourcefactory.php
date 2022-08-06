@@ -30,7 +30,16 @@ class DedupeDataSourceFactory
 		}
 		else
 		{
-			throw new Main\NotSupportedException("Type: '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context");
+			$volatileTypeIds = DuplicateVolatileCriterion::getAllSupportedDedupeTypes();
+			foreach ($volatileTypeIds as $volatileTypeId)
+			{
+				if (($typeID & $volatileTypeId) === $typeID)
+				{
+					return new VolatileDedupeDataSource($typeID, $params);
+				}
+			}
 		}
+
+		throw new Main\NotSupportedException("Type: '".DuplicateIndexType::resolveName($typeID)."' is not supported in current context");
 	}
 }

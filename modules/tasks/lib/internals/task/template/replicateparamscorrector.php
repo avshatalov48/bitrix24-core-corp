@@ -14,32 +14,47 @@ use \Bitrix\Tasks\Util\Replicator\Task\FromTemplate;
  */
 final class ReplicateParamsCorrector
 {
+	private $userId;
+
+	public function __construct(int $userId = 0)
+	{
+		$this->userId = $userId;
+	}
+
 	/**
 	 * Corrects replicate parameters (time, start date, end date) if replicate == 'Y'
 	 *
 	 * @param $templateData
 	 * @return mixed replicateParams
 	 */
-	public static function correctReplicateParamsByTemplateData($templateData)
+	public function correctReplicateParamsByTemplateData($templateData)
 	{
 		$replicateParams = $templateData['REPLICATE_PARAMS'];
 
-		if ($templateData['REPLICATE'] == 'Y')
+		if ($templateData['REPLICATE'] !== 'Y')
 		{
-			$userTime = $replicateParams['TIME'];
-			$userOffset = User::getTimeZoneOffset($templateData['CREATED_BY']);
-			$userStartDate = MakeTimeStamp($replicateParams['START_DATE']);
-			$userEndDate = MakeTimeStamp($replicateParams['END_DATE']);
-
-			$replicateParams['TIME'] = static::correctTime($userTime, $userOffset);
-			$replicateParams['START_DATE'] = static::correctStartDate($userTime, $userStartDate, $userOffset);
-			$replicateParams['END_DATE'] = static::correctEndDate($userTime, $userEndDate, $userOffset);
-
-			$replicateParams['NEXT_EXECUTION_TIME'] = static::getNextExecutionTime(array(
-				'CREATED_BY' => $templateData['CREATED_BY'],
-				'REPLICATE_PARAMS' => $replicateParams
-			));
+			return $replicateParams;
 		}
+
+		$userId = $this->userId;
+		if (!$userId)
+		{
+			$userId = $templateData['CREATED_BY'];
+		}
+
+		$userTime = $replicateParams['TIME'];
+		$userOffset = User::getTimeZoneOffset($userId);
+		$userStartDate = MakeTimeStamp($replicateParams['START_DATE']);
+		$userEndDate = MakeTimeStamp($replicateParams['END_DATE']);
+
+		$replicateParams['TIME'] = static::correctTime($userTime, $userOffset);
+		$replicateParams['START_DATE'] = static::correctStartDate($userTime, $userStartDate, $userOffset);
+		$replicateParams['END_DATE'] = static::correctEndDate($userTime, $userEndDate, $userOffset);
+
+		$replicateParams['NEXT_EXECUTION_TIME'] = static::getNextExecutionTime(array(
+			'CREATED_BY' => $templateData['CREATED_BY'],
+			'REPLICATE_PARAMS' => $replicateParams
+		));
 
 		return $replicateParams;
 	}

@@ -12,15 +12,22 @@ use Bitrix\Main\Localization\Loc;
 	"ui.forms",
 	"ui.alerts",
 	"ui.hint",
+	"ui.dialogs.messagebox",
 	"voximplant.callerid",
 	"voximplant.numberrent",
 	"voximplant.common",
-	"currency"
+	"currency",
 ]);
 
 $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 $bodyClass = $APPLICATION->getPageProperty("BodyClass");
 $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."no-all-paddings no-background no-hidden");
+$voxStartRentOrLink =
+	\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'ua'
+	|| \Bitrix\Main\Application::getInstance()->getContext()->getLanguage() === 'ua'
+		? GetMessageJS("VOX_START_LINK_NUMBER")
+		: GetMessageJS("VOX_START_RENT_OR_LINK_NUMBER")
+;
 ?>
 
 <? if ($arResult['ERROR_MESSAGE']): ?>
@@ -29,91 +36,93 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 	</div>
 <? else: ?>
 	<div class="voximplant-start-wrap">
-		<div class="voximplant-start-head-box-container">
-			<div class="voximplant-start-head-box">
-				<div class="voximplant-start-head-box-title">
-					<select id="balance-type" class="voximplant-control-select" name="BALANCE_TYPE">
-						<option value="balance" <?= $arResult["BALANCE_TYPE"] === "balance" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_BALANCE")?></option>
-						<option value="sip" <?= $arResult["BALANCE_TYPE"] === "sip" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_SIP_CONNECTOR")?></option>
-					</select>
-					<? if($arResult['HAS_BALANCE'] && $arResult["SHOW_PAY_BUTTON"]): ?>
-						<div style="display:none" data-for-balance-type="balance">
-							<div class="ui-btn-split ui-btn-primary ui-btn-sm">
-								<button id="balance-top-up" class="ui-btn-main  "><?= Loc::getMessage("VOX_START_TOP_UP") ?></button>
-								<button id="balance-menu" class="ui-btn-menu"></button>
-							</div>
-						</div>
-					<? endif ?>
-					<? if(isset($arResult['SIP'])): ?>
-						<div style="display:none" data-for-balance-type="sip">
-							<button id="sip-buy" class="ui-btn ui-btn-sm ui-btn-primary">
-								<? if($arResult['SIP']['PAID']): ?>
-									<?= Loc::getMessage("VOX_START_SIP_PROLONG") ?>
-								<? else: ?>
-									<?= Loc::getMessage("VOX_START_SIP_BUY") ?>
-								<? endif ?>
-							</button>
-						</div>
-					<? endif ?>
-				</div>
-				<div class="voximplant-start-head-box-content">
-					<div class="voximplant-start-head-box-inner">
-						<? if(isset($arResult['SIP'])): ?>
-							<div class="voximplant-start-head-box-row-amount" data-for-balance-type="sip" style="display: none;">
-								<div class="voximplant-start-head-info">
-									<? if($arResult['SIP']['PAID']): ?>
-										<div class="voximplant-start-head-info-item voximplant-start-head-entity">
-											<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_PAID_UNTIL", [
-													"#DATE#" => "<strong>" . $arResult["SIP"]["PAID_UNTIL"] . "</strong>"
-											])?>
-											<p class="voximplant-start-head-entity">
-												<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_PAID_NOTICE")?>
-											</p>
-										</div>
-									<? else: ?>
-										<div class="voximplant-start-head-info-item voximplant-start-head-entity">
-											<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_FREE_MINUTES", [
-												"#MINUTES#" => "<strong>" . $arResult["SIP"]["FREE_MINUTES"] . "</strong>"
-											]) ?>
-										</div>
-										<p class="voximplant-start-head-entity">
-											<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_FREE_MINUTES_NOTICE") ?>
-										</p>
-									<? endif ?>
+		<? if ($arResult['SHOW_VOXIMPLANT']): ?>
+			<div class="voximplant-start-head-box-container">
+				<div class="voximplant-start-head-box">
+					<div class="voximplant-start-head-box-title">
+						<select id="balance-type" class="voximplant-control-select" name="BALANCE_TYPE">
+							<option value="balance" <?= $arResult["BALANCE_TYPE"] === "balance" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_BALANCE")?></option>
+							<option value="sip" <?= $arResult["BALANCE_TYPE"] === "sip" ? "selected": ""?>><?= Loc::getMessage("VOX_START_ACCOUNT_SIP_CONNECTOR")?></option>
+						</select>
+						<? if($arResult['HAS_BALANCE'] && $arResult["SHOW_PAY_BUTTON"]): ?>
+							<div style="display:none" data-for-balance-type="balance">
+								<div class="ui-btn-split ui-btn-primary ui-btn-sm">
+									<button id="balance-top-up" class="ui-btn-main  "><?= Loc::getMessage("VOX_START_TOP_UP") ?></button>
+									<button id="balance-menu" class="ui-btn-menu"></button>
 								</div>
 							</div>
 						<? endif ?>
-						<div class="voximplant-start-head-box-row-amount right" data-for-balance-type="balance" style="display:none;">
-							<div class="voximplant-start-head-box-info-sum">
-								<? if($arResult['HAS_BALANCE']): ?>
-									<div class="voximplant-start-head-subtitle"><?= Loc::getMessage("VOX_START_CURRENT_BALANCE") ?></div>
-									<div id="voximplant-balance" class="voximplant-start-head-box-amount currency-<?=$arResult["BALANCE_CURRENCY"]?>" title="<?=$arResult['ACCOUNT_BALANCE_FORMATTED']?>">
-										<?= $arResult['ACCOUNT_BALANCE_FORMATTED']?>
+						<? if(isset($arResult['SIP'])): ?>
+							<div style="display:none" data-for-balance-type="sip">
+								<button id="sip-buy" class="ui-btn ui-btn-sm ui-btn-primary">
+									<? if($arResult['SIP']['PAID']): ?>
+										<?= Loc::getMessage("VOX_START_SIP_PROLONG") ?>
+									<? else: ?>
+										<?= Loc::getMessage("VOX_START_SIP_BUY") ?>
+									<? endif ?>
+								</button>
+							</div>
+						<? endif ?>
+					</div>
+					<div class="voximplant-start-head-box-content">
+						<div class="voximplant-start-head-box-inner">
+							<? if(isset($arResult['SIP'])): ?>
+								<div class="voximplant-start-head-box-row-amount" data-for-balance-type="sip" style="display: none;">
+									<div class="voximplant-start-head-info">
+										<? if($arResult['SIP']['PAID']): ?>
+											<div class="voximplant-start-head-info-item voximplant-start-head-entity">
+												<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_PAID_UNTIL", [
+														"#DATE#" => "<strong>" . $arResult["SIP"]["PAID_UNTIL"] . "</strong>"
+												])?>
+												<p class="voximplant-start-head-entity">
+													<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_PAID_NOTICE")?>
+												</p>
+											</div>
+										<? else: ?>
+											<div class="voximplant-start-head-info-item voximplant-start-head-entity">
+												<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_FREE_MINUTES", [
+													"#MINUTES#" => "<strong>" . $arResult["SIP"]["FREE_MINUTES"] . "</strong>"
+												]) ?>
+											</div>
+											<p class="voximplant-start-head-entity">
+												<?= Loc::getMessage("VOX_START_SIP_CONNECTOR_FREE_MINUTES_NOTICE") ?>
+											</p>
+										<? endif ?>
 									</div>
-								<? else: ?>
-									<div class="voximplant-start-head-box-no-balance"><?= GetMessage("VOX_START_NO_BALANCE")?></div>
-								<? endif ?>
+								</div>
+							<? endif ?>
+							<div class="voximplant-start-head-box-row-amount right" data-for-balance-type="balance" style="display:none;">
+								<div class="voximplant-start-head-box-info-sum">
+									<? if($arResult['HAS_BALANCE']): ?>
+										<div class="voximplant-start-head-subtitle"><?= Loc::getMessage("VOX_START_CURRENT_BALANCE") ?></div>
+										<div id="voximplant-balance" class="voximplant-start-head-box-amount currency-<?=$arResult["BALANCE_CURRENCY"]?>" title="<?=$arResult['ACCOUNT_BALANCE_FORMATTED']?>">
+											<?= $arResult['ACCOUNT_BALANCE_FORMATTED']?>
+										</div>
+									<? else: ?>
+										<div class="voximplant-start-head-box-no-balance"><?= GetMessage("VOX_START_NO_BALANCE")?></div>
+									<? endif ?>
+								</div>
 							</div>
 						</div>
 					</div>
+					<? if($arResult['RECORD_LIMIT']['ENABLE']): ?>
+						<div class="voximplant-start-record-limit-info">
+							<?= Loc::getMessage("VOX_START_RECORD_LIMIT", [
+								"#STRONG_START#" => "<strong>",
+								"#STRONG_END#" => "</strong>",
+								"#RECORDS_REMAINING#" => $arResult['RECORD_LIMIT']['USED'],
+								"#RECORDS_TOTAL#" => $arResult['RECORD_LIMIT']['LIMIT'],
+							])?>
+
+						</div>
+					<? endif; ?>
 				</div>
-				<? if($arResult['RECORD_LIMIT']['ENABLE']): ?>
-					<div class="voximplant-start-record-limit-info">
-						<?= Loc::getMessage("VOX_START_RECORD_LIMIT", [
-							"#STRONG_START#" => "<strong>",
-							"#STRONG_END#" => "</strong>",
-							"#RECORDS_REMAINING#" => $arResult['RECORD_LIMIT']['USED'],
-							"#RECORDS_TOTAL#" => $arResult['RECORD_LIMIT']['LIMIT'],
-						])?>
 
-					</div>
-				<? endif; ?>
+				<? if($arResult["SHOW_LINES"]): ?>
+					<div id="my-numbers-list" class="voximplant-start-head-box voximplant-start-head-payment-box"></div>
+				<? endif ?>
 			</div>
-
-			<? if($arResult["SHOW_LINES"]): ?>
-				<div id="my-numbers-list" class="voximplant-start-head-box voximplant-start-head-payment-box"></div>
-			<? endif ?>
-		</div>
+		<? endif ?>
 
 		<? if(!empty($arResult['MENU']['MAIN']) && is_array($arResult['MENU']['MAIN'])): ?>
 			<div class="voximplant-title-light"><?= Loc::getMessage("VOX_START_TELEPHONY") ?></div>
@@ -154,12 +163,15 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			"VOX_START_CONFIGURE_BLACK_LIST": '<?=GetMessageJS("VOX_START_CONFIGURE_BLACK_LIST")?>',
 			"VOX_START_TARIFFS": '<?=GetMessageJS("VOX_START_TARIFFS")?>',
 			"VOX_START_MY_NUMBERS": '<?=GetMessageJS("VOX_START_MY_NUMBERS")?>',
-			"VOX_START_RENT_OR_LINK_NUMBER": '<?=GetMessageJS("VOX_START_RENT_OR_LINK_NUMBER")?>',
+			"VOX_START_RENT_OR_LINK_NUMBER": '<?=$voxStartRentOrLink?>',
 			"VOX_START_SET_UP": '<?=GetMessageJS("VOX_START_SET_UP")?>',
 			"VOX_START_AUTO_PROLONG": '<?=GetMessageJS("VOX_START_AUTO_PROLONG")?>',
 			"VOX_START_CRM_INTEGRATION_FORM_CREATE": '<?=GetMessageJS("VOX_START_CRM_INTEGRATION_FORM_CREATE")?>',
 			"VOX_START_CRM_INTEGRATION_FORM_LIST": '<?=GetMessageJS("VOX_START_CRM_INTEGRATION_FORM_LIST")?>',
 			"VOX_START_CRM_INTEGRATION_FORM_HELP": '<?=GetMessageJS("VOX_START_CRM_INTEGRATION_FORM_HELP")?>',
+			"VOX_START_SIP_BUY_POPUP_TEXT": '<?=GetMessageJS("VOX_START_SIP_BUY_POPUP_TEXT")?>',
+			"VOX_START_POPUP_BUTTON_I_AGREE": '<?=GetMessageJS("VOX_START_POPUP_BUTTON_I_AGREE")?>',
+			"VOX_START_POPUP_BUTTON_CANCEL": '<?=GetMessageJS("VOX_START_POPUP_BUTTON_CANCEL")?>',
 		});
 		BX.Voximplant.Start.init({
 			lines: <?= CUtil::PhpToJSObject($arResult['NUMBERS_LIST'])?>,
@@ -174,6 +186,7 @@ $APPLICATION->setPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."n
 			linkToBuySip: '<?= CUtil::JSEscape($arResult["LINK_TO_BUY_SIP"]) ?>',
 			isRestOnly: '<?= $arResult['IS_REST_ONLY'] ? 'Y' : 'N' ?>',
 			isTelephonyAvailable: '<?= $arResult['TELEPHONY_AVAILABLE'] ? 'Y' : 'N' ?>',
+			isShownPrivacyPolicy: '<?= $arResult['IS_SHOWN_PRIVACY_POLICY'] ? 'Y' : 'N' ?>',
 		});
 	</script>
 <? endif ?>

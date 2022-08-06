@@ -368,7 +368,6 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 	/**
 	 * @param array $taskIds
-	 * @param array $data
 	 * @param array $arParams
 	 * @return array
 	 * @throws Main\ArgumentException
@@ -376,8 +375,13 @@ class TasksTaskListComponent extends TasksBaseComponent
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function getGridRowsAction(array $taskIds, array $arParams = []): array
+	public function getGridRowsAction(array $taskIds = [], array $arParams = []): array
 	{
+		if (empty($taskIds))
+		{
+			return [];
+		}
+
 		static::tryParseIntegerParameter($arParams['USER_ID'], User::getId());
 
 		$arParams['CAN_SEE_COUNTERS'] = self::canSeeCounters((int)$arParams['USER_ID']);
@@ -1548,7 +1552,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 		}
 
 		$query = new Query(\Bitrix\Socialnetwork\WorkgroupTable::getEntity());
-		$query->setSelect(['ID', 'IMAGE_ID', 'AVATAR_TYPE', 'NAME']);
+		$query->setSelect(['ID', 'IMAGE_ID', 'AVATAR_TYPE', 'NAME', 'SCRUM_MASTER_ID']);
 		$query->setFilter(['ID' => $groupIds]);
 
 		$res = $query->exec();
@@ -1564,6 +1568,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 			$list[$id]['GROUP_NAME'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['NAME'] : '';
 			$list[$id]['GROUP_IMAGE_ID'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['IMAGE_ID'] : 0;
 			$list[$id]['GROUP_AVATAR_TYPE'] = (isset($groupData[$row['GROUP_ID']])) ? $groupData[$row['GROUP_ID']]['AVATAR_TYPE'] : '';
+			$list[$id]['IS_SCRUM_PROJECT'] = (
+				isset($groupData[$row['GROUP_ID']])
+				&& !empty($groupData[$row['GROUP_ID']]['SCRUM_MASTER_ID'])
+			);
 		}
 
 		return $list;

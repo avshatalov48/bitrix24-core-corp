@@ -78,7 +78,6 @@ class CheckListTable extends Main\Entity\DataManager
 			),
 			'TITLE' => array(
 				'data_type' => 'string',
-				'validation' => array(__CLASS__, 'validateTitle'),
 				'save_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getSaveModificator'],
 				'fetch_data_modification' => ['\Bitrix\Main\Text\Emoji', 'getFetchModificator'],
 			),
@@ -94,19 +93,6 @@ class CheckListTable extends Main\Entity\DataManager
 				'data_type' => 'integer',
 				'required' => true,
 			),
-		);
-	}
-
-	/**
-	 * Returns validators for TITLE field.
-	 *
-	 * @return array
-	 * @throws Main\ArgumentTypeException
-	 */
-	public static function validateTitle()
-	{
-		return array(
-			new Main\Entity\Validator\Length(null, 255),
 		);
 	}
 

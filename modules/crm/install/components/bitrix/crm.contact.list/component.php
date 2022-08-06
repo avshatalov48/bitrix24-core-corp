@@ -110,17 +110,19 @@ if ($isErrorOccured)
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
 use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Tracking;
+use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Settings\ContactSettings;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -312,7 +314,7 @@ if($fromAnalytics)
 
 $arResult['IS_EXTERNAL_FILTER'] = ($enableWidgetFilter || $enableCounterFilter || $enableReportFilter);
 
-$CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmContact::$sUFEntityID);
+$CCrmUserType = new CCrmUserType($USER_FIELD_MANAGER, CCrmContact::$sUFEntityID, ['categoryId' => $arResult['CATEGORY_ID']]);
 $CCrmFieldMulti = new CCrmFieldMulti();
 
 $arResult['GRID_ID'] = (new Crm\Component\EntityList\GridId(CCrmOwnerType::Contact))
@@ -347,12 +349,20 @@ $requisite = new \Bitrix\Crm\EntityRequisite();
 //region Filter Presets Initialization
 if (!$bInternal)
 {
-	$currentUserID = $arResult['CURRENT_USER_ID'];
-	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
-	$arResult['FILTER_PRESETS'] = array(
-		'filter_my' => array('name' => GetMessage('CRM_PRESET_MY'), 'disallow_for_all' => true, 'fields' => array('ASSIGNED_BY_ID_name' => $currentUserName, 'ASSIGNED_BY_ID' => $currentUserID)),
-		'filter_change_my' => array('name' => GetMessage('CRM_PRESET_CHANGE_MY'), 'disallow_for_all' => true, 'fields' => array('MODIFY_BY_ID_name' => $currentUserName, 'MODIFY_BY_ID' => $currentUserID))
+	$filterFlags = Crm\Filter\ContactSettings::FLAG_NONE;
+	if($enableOutmodedFields)
+	{
+		$filterFlags |= Crm\Filter\ContactSettings::FLAG_ENABLE_ADDRESS;
+	}
+	$entityFilter = Crm\Filter\Factory::createEntityFilter(
+		new Crm\Filter\ContactSettings(['ID' => $arResult['GRID_ID'], 'flags' => $filterFlags])
 	);
+	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Contact())
+		->setUserId((int) $arResult['CURRENT_USER_ID'])
+		->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
+		->setDefaultValues($entityFilter->getDefaultFieldIDs())
+		->getDefaultPresets()
+	;
 }
 //endregion
 
@@ -376,17 +386,7 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 if (!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = ['TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS'];
-	$filterFlags = Crm\Filter\ContactSettings::FLAG_NONE;
-	if($enableOutmodedFields)
-	{
-		$filterFlags |= Crm\Filter\ContactSettings::FLAG_ENABLE_ADDRESS;
-	}
 
-	$entityFilter = Crm\Filter\Factory::createEntityFilter(
-		new Crm\Filter\ContactSettings(
-			array('ID' => $arResult['GRID_ID'], 'flags' => $filterFlags)
-		)
-	);
 	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 	if(empty($effectiveFilterFieldIDs))
 	{
@@ -2716,6 +2716,29 @@ if (!$isInExportMode)
 		unset($isNeedToShowDupMergeProcess, $agent);
 		//endregion Show the process of merge duplicates
 	}
+
+	//region Show the progress of data preparing for volatile duplicate types
+	$isNeedToShowDupVolDataPrepare = false;
+	$typeInfo = Volatile\TypeInfo::getInstance()->getIdsByEntityTypes([CCrmOwnerType::Contact]);
+	if (isset($typeInfo[CCrmOwnerType::Contact]))
+	{
+		foreach ($typeInfo[CCrmOwnerType::Contact] as $id)
+		{
+			$agent = IndexRebuild::getInstance($id);
+			if ($agent->isActive())
+			{
+				$state = $agent->state()->getData();
+				/** @noinspection PhpClassConstantAccessedViaChildClassInspection */
+				if (isset($state['STATUS']) && $state['STATUS'] === IndexRebuild::STATUS_RUNNING)
+				{
+					$isNeedToShowDupVolDataPrepare = true;
+				}
+			}
+		}
+	}
+	$arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'] = $isNeedToShowDupVolDataPrepare;
+	unset($isNeedToShowDupVolDataPrepare, $typeInfo, $id, $agent, $state);
+	//endregion Show the progress of data preparing for volatile duplicate types
 
 	$this->IncludeComponentTemplate();
 	include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.contact/include/nav.php');

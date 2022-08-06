@@ -9,8 +9,12 @@ use Bitrix\Main\UI\Extension;
 /** @var array $arParams */
 /** @var array $arResult */
 
-Extension::load('ui.buttons');
-CJSCore::Init(array('clipboard'));
+Extension::load([
+	'clipboard',
+	'ui.buttons',
+	'ui.design-tokens'
+]);
+
 ?>
 
 <div class="intranet-button-list-wrapper">

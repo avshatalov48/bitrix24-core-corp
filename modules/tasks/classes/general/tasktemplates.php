@@ -10,17 +10,7 @@
  */
 global $APPLICATION, $DB;
 
-use Bitrix\Main\Loader;
-use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\NotImplementedException;
-use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
-use Bitrix\Tasks\Item\Access;
-use Bitrix\Tasks\Item\SystemLog;
-use Bitrix\Tasks\Integration;
-use Bitrix\Tasks\Internals\DataBase\Tree\TargetNodeNotFoundException;
-use Bitrix\Tasks\Internals\Task\TemplateTable;
-use Bitrix\Tasks\Internals\Task\Template\DependenceTable;
 use Bitrix\Tasks\Template;
 
 Loc::loadMessages(__FILE__);
@@ -258,7 +248,10 @@ class CTaskTemplates
 		////////////////////////////////////
 		// deal with RESPONSIBLES
 
-		if(($ID === false && $arFields['TPARAM_TYPE'] != CTaskTemplates::TYPE_FOR_NEW_USER) || ($ID !== false && $this->currentData['TPARAM_TYPE'] != CTaskTemplates::TYPE_FOR_NEW_USER))
+		if(
+			($ID === false && $arFields['TPARAM_TYPE'] != CTaskTemplates::TYPE_FOR_NEW_USER)
+			|| ($ID !== false && $this->currentData['TPARAM_TYPE'] != CTaskTemplates::TYPE_FOR_NEW_USER)
+		)
 		{
 			if(isset($arFields["RESPONSIBLE_ID"]))
 			{
@@ -438,23 +431,23 @@ class CTaskTemplates
 		return true;
 	}
 
-	private static function removeAgents($templateId)
+	/**
+	 * @param $arFields
+	 * @param $arParams
+	 * @return false|int
+	 *
+	 * @deprecated since tasks 22.900.0 use Tasks\Control\Template instead
+	 */
+	function Add($arFields, $arParams = [])
 	{
+		$userId = 0;
+		if (array_key_exists('USER_ID', $arParams))
+		{
+			$userId = (int) $arParams['USER_ID'];
+		}
 
-		CAgent::RemoveAgent('CTasks::RepeatTaskByTemplateId('.$templateId.');', 'tasks');
+		$manager = new Bitrix\Tasks\Control\Template($userId);
 
-
-		CAgent::RemoveAgent('CTasks::RepeatTaskByTemplateId('.$templateId.', 0);', 'tasks');
-
-
-		CAgent::RemoveAgent('CTasks::RepeatTaskByTemplateId('.$templateId.', 1);', 'tasks');
-	}
-
-	function Add($arFields, $arParams = array())
-	{
-		global $DB, $USER_FIELD_MANAGER;
-
-		$bCheckFilesPermissions = false;
 		if (
 			isset($arParams['CHECK_RIGHTS_ON_FILES'])
 			&& (
@@ -463,273 +456,98 @@ class CTaskTemplates
 			)
 		)
 		{
-			CTaskAssert::assert(
-				isset($arParams['USER_ID'])
-				&& CTaskAssert::isLaxIntegers($arParams['USER_ID'])
-				&& ($arParams['USER_ID'] > 0)
-			);
-
-			$bCheckFilesPermissions = true;
+			$manager->withCheckFileRights();
 		}
 
-		$arParamsForCheckFields = array(
-			'CHECK_RIGHTS_ON_FILES' => $bCheckFilesPermissions
-		);
-
-		if (isset($arParams['USER_ID']))
-			$arParamsForCheckFields['USER_ID'] = $arParams['USER_ID'];
-
-		// Use of BB code by default, HTML is deprecated
-		if (!isset($arFields['DESCRIPTION_IN_BBCODE']))
+		try
 		{
-			$arFields['DESCRIPTION_IN_BBCODE'] = 'Y';
+			$template = $manager->add($arFields);
 		}
-
-		if ($this->CheckFields($arFields, false, $arParamsForCheckFields))
+		catch (\Bitrix\Tasks\Control\Exception\TemplateAddException $e)
 		{
-			if ($USER_FIELD_MANAGER->CheckFields("TASKS_TASK_TEMPLATE", 0, $arFields, $arParamsForCheckFields['USER_ID']))
-			{
-				$arBinds = Array(
-					"DESCRIPTION",
-					"REPLICATE_PARAMS",
-					"ACCOMPLICES",
-					"AUDITORS",
-					"FILES",
-					"TAGS",
-					"DEPENDS_ON",
-					"RESPONSIBLES"
-				);
-
-				// fix for absent SITE_ID
-				if((string) $arFields['SITE_ID'] == '' || $arFields['SITE_ID'] == static::CURRENT_SITE_ID)
-				{
-					$arFields['SITE_ID'] = SITE_ID;
-				}
-
-				$ID = $DB->Add("b_tasks_template", $arFields, $arBinds, "tasks");
-				if (isset($arFields['FILES']))
-					CTaskFiles::removeTemporaryStatusForFiles(unserialize($arFields['FILES'], ['allowed_classes' => false]), $arParams['USER_ID']);
-
-				$USER_FIELD_MANAGER->Update("TASKS_TASK_TEMPLATE", $ID, $arFields, $arParamsForCheckFields['USER_ID']);
-
-				// periodic tasks
-				// todo: use \Bitrix\Tasks\Util\Replicator\Task\FromTemplate::reInstallAgent() here
-				if ($arFields["REPLICATE"] == "Y")
-				{
-					$name = 'CTasks::RepeatTaskByTemplateId('.$ID.');';
-
-					// First, remove all agents for this template
-					self::removeAgents($ID);
-
-					// Set up new agent
-					if ($arFields['REPLICATE'] === 'Y')
-					{
-						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS'], ['allowed_classes' => false]), $ID); // localtime
-						if ($nextTime)
-						{
-
-							CAgent::AddAgent(
-								$name,
-								'tasks',
-								'N', 		// is periodic?
-								86400, 		// interval (24 hours)
-								$nextTime, 	// datecheck
-								'Y', 		// is active?
-								$nextTime	// next_exec
-							);
-						}
-					}
-				}
-
-				// template tree
-				if (intval($arFields['BASE_TEMPLATE_ID']))
-				{
-					try
-					{
-						Template\DependencyTable::createLink($ID, intval($arFields['BASE_TEMPLATE_ID']));
-					}
-					catch(\Bitrix\Tasks\DB\Tree\LinkExistsException $e)
-					{
-					}
-				}
-
-				// need to create rights...
-				\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel($ID, 'U'.$arFields['CREATED_BY'], 'full', array(
-					'CHECK_RIGHTS' => false,
-				));
-
-				return $ID;
-			}
-			else
-			{
-				$e = $GLOBALS['APPLICATION']->GetException();
-				foreach($e->messages as $msg)
-				{
-					$this->_errors[] = $msg;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	function Update($ID, $arFields, $arParams = array())
-	{
-		global $DB, $USER_FIELD_MANAGER;
-
-		$ID = intval($ID);
-		if ($ID < 1)
+			$this->_errors[] = $e->getMessage();
 			return false;
-
-		$bCheckFilesPermissions = false;
-		if (
-			isset($arParams['CHECK_RIGHTS_ON_FILES'])
-			&& (
-				($arParams['CHECK_RIGHTS_ON_FILES'] === true)
-				|| ($arParams['CHECK_RIGHTS_ON_FILES'] === 'Y')
-			)
-		)
+		}
+		catch (\Exception $e)
 		{
-			CTaskAssert::assert(
-				isset($arParams['USER_ID'])
-				&& CTaskAssert::isLaxIntegers($arParams['USER_ID'])
-				&& ($arParams['USER_ID'] > 0)
-			);
-
-			$bCheckFilesPermissions = true;
+			$this->_errors[] = $e->getMessage();
+			return false;
 		}
 
-		$arParamsForCheckFields = array(
-			'CHECK_RIGHTS_ON_FILES' => $bCheckFilesPermissions
-		);
+		return $template->getId();
+	}
+
+	/**
+	 * @param $id
+	 * @param $arFields
+	 * @param $arParams
+	 * @return bool
+	 *
+	 * @deprecated since tasks 22.900.0 use Tasks\Control\Template instead
+	 */
+	function Update($id, $arFields, $arParams = [])
+	{
+		$id = (int) $id;
+		if ($id < 1)
+		{
+			return false;
+		}
 
 		if (isset($arParams['USER_ID']))
-        {
-            $userID = $arParams['USER_ID'];
-        }
-        else
-        {
-            $userID = \Bitrix\Tasks\Util\User::getId();
-	        if(!$userID)
-	        {
-		        $userID = \Bitrix\Tasks\Util\User::getAdminId(); // compatibility
-	        }
-        }
-
-        $arParamsForCheckFields['USER_ID'] = $userID;
-
-        // We need understand, does REPLICATE_PARAMS changed
-		$rsCurData = self::GetByID($ID);
-		$arCurData = $rsCurData->Fetch();
-		$this->currentData = $arCurData;
-
-		if(intval($arCurData['BASE_TEMPLATE_ID']) > 0) // for sub-template ...
 		{
-			unset($arFields['REPLICATE']); // ... you cannot set replicate params
-			unset($arFields['PARENT_ID']); // ... and base task
-			$isReplicateParamsChanged = false;
+			$userId = (int) $arParams['USER_ID'];
 		}
 		else
 		{
-			$isReplicateParamsChanged =
-				(
-					isset($arFields['REPLICATE'])
-					&&
-					($arCurData['REPLICATE'] !== $arFields['REPLICATE'])
-				)
-				||
-				(
-					isset($arFields['REPLICATE_PARAMS'])
-					&&
-					($arCurData['REPLICATE_PARAMS'] !== $arFields['REPLICATE_PARAMS'])
-				);
+			$userId = \Bitrix\Tasks\Util\User::getId();
+			if(!$userId)
+			{
+				$userId = \Bitrix\Tasks\Util\User::getAdminId(); // compatibility
+			}
 		}
 
-		if ($this->CheckFields($arFields, $ID, $arParamsForCheckFields))
+		$manager = new \Bitrix\Tasks\Control\Template($userId);
+
+		if (isset($arParams['SKIP_AGENT_PROCESSING']))
 		{
-			if ($USER_FIELD_MANAGER->CheckFields("TASKS_TASK_TEMPLATE", $ID, $arFields))
-			{
-				unset($arFields['ID']);
-
-				$arBinds = Array(
-					'DESCRIPTION'      => $arFields['DESCRIPTION'],
-					'REPLICATE_PARAMS' => $arFields['REPLICATE_PARAMS'],
-					'ACCOMPLICES'      => $arFields['ACCOMPLICES'],
-					'AUDITORS'         => $arFields['AUDITORS'],
-					'FILES'            => $arFields['FILES'],
-					'TAGS'             => $arFields['TAGS'],
-					'DEPENDS_ON'       => $arFields['DEPENDS_ON']
-				);
-
-				$strUpdate = $DB->PrepareUpdate('b_tasks_template', $arFields, 'tasks');
-				if((string) $strUpdate !== '')
-				{
-					$strSql = "UPDATE b_tasks_template SET " . $strUpdate . " WHERE ID=" . $ID;
-					$DB->QueryBind($strSql, $arBinds, false, "File: ".__FILE__."<br>Line: ".__LINE__);
-				}
-
-				if (isset($arFields['FILES']))
-					CTaskFiles::removeTemporaryStatusForFiles(unserialize($arFields['FILES'], ['allowed_classes' => false]), $arParams['USER_ID']);
-
-				$USER_FIELD_MANAGER->Update("TASKS_TASK_TEMPLATE", $ID, $arFields, $userID);
-
-				// update template tree, if required
-				if (isset($arFields['BASE_TEMPLATE_ID']))
-				{
-					try
-					{
-						Template\DependencyTable::link($ID, intval($arFields['BASE_TEMPLATE_ID']), array('CREATE_PARENT_NODE_ON_NOTFOUND' => true));
-					}
-					catch(\Bitrix\Tasks\DB\Tree\LinkExistsException $e)
-					{
-					}
-				}
-
-				$skipAgentProcessing = (isset($arParams['SKIP_AGENT_PROCESSING'])? $arParams['SKIP_AGENT_PROCESSING'] : false);
-
-				if ($isReplicateParamsChanged && !$skipAgentProcessing)
-				{
-					$name = 'CTasks::RepeatTaskByTemplateId('.$ID.');';
-
-					// First, remove all agents for this template
-
-					self::removeAgents($ID);
-
-					// Set up new agent
-					if ($arFields['REPLICATE'] === 'Y')
-					{
-						$nextTime = CTasks::getNextTime(unserialize($arFields['REPLICATE_PARAMS'], ['allowed_classes' => false]), $ID);
-						if ($nextTime)
-						{
-
-							$ares = CAgent::AddAgent(
-								$name,
-								'tasks',
-								'N', 		// is periodic?
-								86400, 		// interval
-								$nextTime, 	// datecheck
-								'Y', 		// is active?
-								$nextTime	// next_exec
-							);
-						}
-					}
-				}
-
-				return true;
-			}
-			else
-			{
-				$e = $GLOBALS['APPLICATION']->GetException();
-				foreach($e->messages as $msg)
-				{
-					$this->_errors[] = $msg;
-				}
-			}
+			$manager->withSkipAgent();
+		}
+		if (
+			isset($arParams['CHECK_RIGHTS_ON_FILES'])
+			&& (
+				($arParams['CHECK_RIGHTS_ON_FILES'] === true)
+				|| ($arParams['CHECK_RIGHTS_ON_FILES'] === 'Y')
+			)
+		)
+		{
+			$manager->withCheckFileRights();
 		}
 
-		return false;
+		try
+		{
+			$template = $manager->update($id, $arFields);
+		}
+		catch(\Bitrix\Tasks\Control\Exception\TemplateUpdateException $e)
+		{
+			$this->_errors[] = $e->getMessage();
+			return false;
+		}
+		catch (\Exception $e)
+		{
+			$this->_errors[] = $e->getMessage();
+			return false;
+		}
+
+		return true;
 	}
 
+	/**
+	 * @param $id
+	 * @param array $params
+	 * @return bool
+	 *
+	 * @deprecated since tasks 22.900.0 use Tasks\Control\Template instead
+	 */
 	public static function Delete($id, array $params = [])
 	{
 		$id = (int)$id;
@@ -739,65 +557,30 @@ class CTaskTemplates
 			return false;
 		}
 
+		$userId = \Bitrix\Tasks\Util\User::getId();
+		if(!$userId)
+		{
+			$userId = \Bitrix\Tasks\Util\User::getAdminId(); // compatibility
+		}
+
+		$manager = new \Bitrix\Tasks\Control\Template($userId);
+
+		if (
+			isset($params['UNSAFE_DELETE_ONLY'])
+			&& ($params['UNSAFE_DELETE_ONLY'] !== false && $params['UNSAFE_DELETE_ONLY'] !== 'N')
+		)
+		{
+			$manager->withUnsafeDelete();
+		}
+
 		try
 		{
-			$connection = Application::getConnection();
-			$template = $connection->query('SELECT * FROM b_tasks_template WHERE ID = ' . $id)->fetch();
-
-			if (!$template)
-			{
-				return false;
-			}
-
-			// remove from recycle bin
-			$unsafeDeleteOnly = $params['UNSAFE_DELETE_ONLY'];
-			if (isset($unsafeDeleteOnly) && ($unsafeDeleteOnly !== false && $unsafeDeleteOnly !== 'N'))
-			{
-				static::doUnsafeDelete($template, $params);
-				return true;
-			}
-
-			$safeDelete = false;
-			if (Loader::includeModule('recyclebin'))
-			{
-				$result = Integration\Recyclebin\Template::OnBeforeDelete($id, $template);
-				if (!$result->isSuccess())
-				{
-					return false;
-				}
-
-				$safeDelete = true;
-			}
-
-			foreach (GetModuleEvents('tasks', 'OnBeforeTaskTemplateDelete', true) as $arEvent)
-			{
-				if (ExecuteModuleEventEx($arEvent, array($id, $template)) === false)
-				{
-					return false;
-				}
-			}
-
-			static::doSafeDelete($id);
-
-			if (!$safeDelete)
-			{
-				static::doUnsafeDelete($template, $params);
-			}
-
-			foreach (GetModuleEvents('tasks', 'OnTaskTemplateDelete', true) as $arEvent)
-			{
-				if (ExecuteModuleEventEx($arEvent, array($id, $template)) === false)
-				{
-					return false;
-				}
-			}
+			return $manager->delete($id);
 		}
 		catch (\Exception $e)
 		{
 			return false;
 		}
-
-		return true;
 	}
 
 	// may be in a future.... may be...
@@ -817,139 +600,6 @@ class CTaskTemplates
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Set zombie field to 'Y' and deletes first part of template data.
-	 * This data shouldn't exists while the template is in recycle bin.
-	 *
-	 * @param $templateId
-	 * @throws Exception
-	 * @throws TargetNodeNotFoundException
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Tasks\Internals\DataBase\Tree\Exception
-	 * @throws \Bitrix\Tasks\Internals\DataBase\Tree\LinkExistsException
-	 * @throws \Bitrix\Tasks\Internals\DataBase\Tree\ParentNodeNotFoundException
-	 */
-	private static function doSafeDelete($templateId)
-	{
-		$connection = Application::getConnection();
-		$connection->queryExecute('UPDATE b_tasks_template SET ZOMBIE = \'Y\' WHERE ID = ' . $templateId);
-
-		// delete replication agents
-		self::removeAgents($templateId);
-
-		$parent = DependenceTable::getParentId($templateId)->fetch();
-		$parentId = $parent['PARENT_TEMPLATE_ID'];
-		$subTree = DependenceTable::getSubTree($templateId, [], ['INCLUDE_SELF' => false])->fetchAll();
-
-		// delete link to parent
-		DependenceTable::unlink($templateId);
-
-		// reattach sub templates
-		if ($parentId)
-		{
-			foreach ($subTree as $element)
-			{
-				if ($element['DIRECT'] == 1)
-				{
-					DependenceTable::moveLink($element['TEMPLATE_ID'], $parentId);
-				}
-			}
-		}
-		else
-		{
-			foreach ($subTree as $element)
-			{
-				if ($element['DIRECT'] == 1)
-				{
-					DependenceTable::unlink($element['TEMPLATE_ID']);
-				}
-			}
-		}
-
-		// delete item itself
-		$select = ['TEMPLATE_ID', 'PARENT_TEMPLATE_ID'];
-		$filter = [
-			'=TEMPLATE_ID' => $templateId,
-			'=PARENT_TEMPLATE_ID' => $templateId
-		];
-
-		$item = DependenceTable::getList(['select' => $select, 'filter' => $filter])->fetch();
-		DependenceTable::delete($item);
-	}
-
-	/**
-	 * Deletes other template data.
-	 * Occurs when recycle bin module is not included and we have to delete the entire template or
-	 * when we delete template from recycle bin.
-	 *
-	 * @param $template
-	 * @param $params
-	 * @throws NotImplementedException
-	 * @throws Exception
-	 */
-	private static function doUnsafeDelete($template, $params)
-	{
-		global $USER_FIELD_MANAGER;
-
-		$id = $template['ID'];
-
-		// delete syslog records
-		SystemLog::deleteByEntity($id, 1);
-
-		// delete files
-		if ($template["FILES"])
-		{
-			$files = unserialize($template["FILES"], ['allowed_classes' => false]);
-			if (is_array($files))
-			{
-				$filesToDelete = array();
-				foreach ($files as $file)
-				{
-					$rsFile = CTaskFiles::GetList(array(), array("FILE_ID" => $file));
-					if (!$arFile = $rsFile->Fetch())
-					{
-						$filesToDelete[] = $file;
-					}
-				}
-				foreach ($filesToDelete as $file)
-				{
-					CFile::Delete($file);
-				}
-			}
-		}
-
-		// delete checklist
-		TemplateCheckListFacade::deleteByEntityIdOnLowLevel($id);
-
-		// delete access rights
-		Access\Task\Template::revokeAll($id, array('CHECK_RIGHTS' => false));
-
-		// delete sub templates
-		if (isset($params['DELETE_SUB_TEMPLATES']) && $params['DELETE_SUB_TEMPLATES'] !== false)
-		{
-			$subTemplatesBdResult = DependenceTable::getSubTree($id, ['select' => ['ID' => 'TEMPLATE_ID']], ['INCLUDE_SELF' => false]);
-			while ($subTemplateItem = $subTemplatesBdResult->fetch())
-			{
-				static::Delete($subTemplateItem['ID'], $params);
-			}
-
-			try
-			{
-				DependenceTable::deleteSubtree($id);
-			}
-			catch (TargetNodeNotFoundException $e)
-			{
-				// had no children, actually don't care
-			}
-		}
-
-		// delete user fields
-		$USER_FIELD_MANAGER->Delete("TASKS_TASK_TEMPLATE", $id);
-
-		TemplateTable::delete($id);
 	}
 
 	/**

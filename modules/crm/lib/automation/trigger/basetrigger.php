@@ -189,10 +189,29 @@ class BaseTrigger extends \Bitrix\Bizproc\Automation\Trigger\BaseTrigger
 			$trigger['RETURN'] = $this->getReturnValues();
 		}
 
+		$executeBy = null;
+
+		if (isset($trigger['APPLY_RULES']['ExecuteBy']))
+		{
+			$docId = $target->getDocumentType();
+			$docId[2] = $target->getDocumentId();
+			$executeBy = \CBPHelper::ExtractUsers($trigger['APPLY_RULES']['ExecuteBy'], $docId, true);
+		}
+
 		$target->setAppliedTrigger($trigger);
-		$result = $target->setEntityStatus($statusId);
+		$result = $target->setEntityStatus($statusId, $executeBy);
+
+		//Fake document update for clearing document cache
+		$ds = \CBPRuntime::GetRuntime(true)->getDocumentService();
+		$ds->UpdateDocument($target->getComplexDocumentId(), []);
+
 		if ($result !== false)
 		{
+			Factory::onFieldsChanged(
+				$target->getEntityTypeId(),
+				$target->getEntityId(),
+				[$target->getEntityTypeId() === \CCrmOwnerType::Lead ? 'STATUS_ID' : 'STAGE_ID']
+			);
 			Factory::runOnStatusChanged($target->getEntityTypeId(), $target->getEntityId());
 		}
 

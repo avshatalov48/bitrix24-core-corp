@@ -19,6 +19,7 @@ $MESS["VI_TOS_RU"] = "<p>You will be redirected to <a href=\"https://billing.vox
 	</li>
 </ol>";
 $MESS["VI_TOS_EN"] = "You are about to leave Bitrix24 website and will be forwarded to Voximplant website. By continuing to this service you accept Voximplant data processing agreement <a href=\"https://voximplant.com/assets/uploads/data-processing-addendum.pdf\" target=\"_blank\">https://voximplant.com/assets/uploads/data-processing-addendum.pdf</a>";
+$MESS["VI_TOS_EN_2"] = "You are about to leave Bitrix24 website and will be forwarded to Voximplant website. By continuing to this service you accept Voximplant #LINK1START#Data Processing Addendum#LINK1END# and Voximplant #LINK2START#Privacy Policy#LINK2END#.";
 $MESS["VI_TRIAL_CALL_INTERCEPT_TEXT"] = "Use call interception to take an inbound call that cannot be served by other employees. The employees involved must be members of the same queue group responsible for inbound calls.";
 $MESS["VI_TRIAL_CALL_INTERCEPT_TITLE"] = "Call interception is available in selected commercial plans";
 $MESS["VI_TRIAL_FEATURES_1"] = "Record all calls (over 100 monthly)";

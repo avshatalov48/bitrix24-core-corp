@@ -58,6 +58,8 @@ class EntityBinding
 
 		$fieldName = self::resolveEntityFieldName($entityTypeID);
 
+		$bindings = array_values($bindings);
+
 		$effectiveBindings = array();
 		$primaryBindingIndex = -1;
 		for($i = 0, $l = count($bindings); $i < $l; $i++)
@@ -678,6 +680,15 @@ class EntityBinding
 
 		return $binding;
 	}
+
+	/**
+	 * Returns entity id from primary binding. If no primary binding is found, returns entity id from the first binding,
+	 * like @see EntityBinding::getPrimaryOrDefault()
+	 *
+	 * @param int $entityTypeID
+	 * @param array $bindings
+	 * @return int
+	 */
 	public static function getPrimaryEntityID($entityTypeID, array $bindings)
 	{
 		$primaryBinding = self::getPrimaryOrDefault($bindings);

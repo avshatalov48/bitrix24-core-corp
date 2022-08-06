@@ -18,6 +18,7 @@ final class TasksTaskFormState
 {
 	const O_CHOSEN = 'C';
 	const O_OPENED = 'O';
+	const O_HIDDEN = 'H';
 
 	const OPT_NAME = 'task_edit_form_state';
 
@@ -204,6 +205,10 @@ final class TasksTaskFormState
 				Task::SE_PREFIX.'TAG' => array(
 					self::O_CHOSEN => false,
 				),
+				'EPIC' => [
+					self::O_CHOSEN => false,
+					self::O_HIDDEN => true,
+				],
 				'USER_FIELDS' => array(
 					self::O_CHOSEN => false,
 				),

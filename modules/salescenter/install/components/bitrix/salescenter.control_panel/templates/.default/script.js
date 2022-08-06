@@ -1,55 +1,7 @@
 (function (exports,main_core,main_popup,salescenter_manager) {
 	'use strict';
 
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\">", "</div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"><div class=\"", "\">", "</div></div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-item-status-selected\"></div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" style=\"background-image:url(", ")\"></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-item ", "\" onclick=\"", "\" style=\"", "\">\n\t\t\t<div class=\"salescenter-item-content\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 	var namespace = main_core.Reflection.namespace('BX.Salescenter');
 
 	var ControlPanel = /*#__PURE__*/function () {
@@ -68,7 +20,7 @@
 
 	      main_core.Event.ready(function () {
 	        if (BX.SidePanel.Instance) {
-	          BX.SidePanel.Instance.bindAnchors({
+	          BX.SidePanel.Instance.bindAnchors(top.BX.clone({
 	            rules: [{
 	              condition: [_this.constructor.shopRoot + "sale_delivery_service_edit/", _this.constructor.shopRoot + "sale_pay_system_edit/"],
 	              handler: _this.constructor.adjustSidePanelOpener
@@ -77,7 +29,7 @@
 	            }, {
 	              condition: ["/crm/configs/sale/"]
 	            }]
-	          });
+	          }));
 	        }
 
 	        var adminSidePanel = top.BX.adminSidePanel || BX.adminSidePanel;
@@ -216,7 +168,7 @@
 	  }, {
 	    key: "getContent",
 	    value: function getContent() {
-	      this.layout.innerContent = main_core.Tag.render(_templateObject(), this.getAdditionalContentClass(), this.onClick.bind(this), this.getContentStyles(), this.getImage(), this.getTitle(), this.isActive() ? this.getStatus() : '', this.getLabel());
+	      this.layout.innerContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-item ", "\" onclick=\"", "\" style=\"", "\">\n\t\t\t<div class=\"salescenter-item-content\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>"])), this.getAdditionalContentClass(), this.onClick.bind(this), this.getContentStyles(), this.getImage(), this.getTitle(), this.isActive() ? this.getStatus() : '', this.getLabel());
 	      return this.layout.innerContent;
 	    }
 	  }, {
@@ -305,12 +257,12 @@
 	        className = 'salescenter-marketplace-item-image';
 	      }
 
-	      return main_core.Tag.render(_templateObject2(), className, path);
+	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\" style=\"background-image:url(", ")\"></div>"])), className, path);
 	    }
 	  }, {
 	    key: "getStatus",
 	    value: function getStatus() {
-	      return main_core.Tag.render(_templateObject3());
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"salescenter-item-status-selected\"></div>"])));
 	    }
 	  }, {
 	    key: "getLabel",
@@ -324,7 +276,7 @@
 	          classNameText = 'salescenter-item-label-new-text-active';
 	        }
 
-	        return main_core.Tag.render(_templateObject4(), className, classNameText, BX.message('SALESCENTER_CONTROL_PANEL_ITEM_LABEL_NEW'));
+	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"><div class=\"", "\">", "</div></div>"])), className, classNameText, BX.message('SALESCENTER_CONTROL_PANEL_ITEM_LABEL_NEW'));
 	      }
 
 	      return '';
@@ -333,7 +285,7 @@
 	    key: "getTitle",
 	    value: function getTitle() {
 	      var className = this.isMarketplaceAll() ? 'salescenter-marketplace-item-title' : 'salescenter-item-title';
-	      return main_core.Tag.render(_templateObject5(), className, this.title);
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\">", "</div>"])), className, this.title);
 	    }
 	  }, {
 	    key: "getMenuItems",
@@ -439,7 +391,7 @@
 	        } else {
 	          BX.rest.AppLayout.openApplication(applicationId);
 	        }
-	      }.bind(this)).catch(function (response) {
+	      }.bind(this))["catch"](function (response) {
 	        this.restAppErrorPopup(" ", response.errors.pop().message);
 	      }.bind(this));
 	    }

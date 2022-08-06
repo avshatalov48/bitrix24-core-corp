@@ -1,4 +1,11 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
 
 class CrmKanbanFilterComponent extends \CBitrixComponent
 {
@@ -76,12 +83,20 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 	protected function getFilterSections(): array
 	{
 		$result = [];
-		switch ($this->arParams['ENTITY_TYPE'])
+
+		if ($this->arParams['ENTITY_TYPE'] === CCrmOwnerType::DealName)
 		{
-			case CCrmOwnerType::DealName:
-				$result =\Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider::getHeadersSections();
-				break;
+			return \Bitrix\Crm\Component\EntityList\ClientDataProvider\KanbanDataProvider::getHeadersSections();
 		}
-		return $result;
+
+		\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+		return [
+			[
+				'id' => $this->arParams['ENTITY_TYPE'],
+				'name' => Loc::getMessage('CRM_COMMON_' . $this->arParams['ENTITY_TYPE']),
+				'default' => true,
+				'selected' => true,
+			],
+		];
 	}
 }

@@ -375,7 +375,6 @@ abstract class Operation
 		if (
 			$this->isCheckRequiredUserFields()
 			&& $this->fieldAttributeManager::isPhaseDependent()
-			&& $this->item->isStagesEnabled()
 		)
 		{
 			$requiredFields = array_merge($requiredFields, $this->getStageDependantRequiredFields($factory));
@@ -396,6 +395,13 @@ abstract class Operation
 		}
 
 		$requiredFields = array_diff($requiredFields, $notDisplayedFields);
+		$filteredFields = $this->getItem()->getFilteredUserFields();
+		if (isset($filteredFields))
+		{
+			$requiredFields = array_filter($requiredFields, static function ($fieldName) use ($filteredFields) {
+				return mb_substr($fieldName, 0, 3) !== 'UF_' || in_array($fieldName, $filteredFields);
+			});
+		}
 
 		$result = $this->checkRequiredFields($requiredFields, $factory);
 
@@ -1118,6 +1124,13 @@ abstract class Operation
 		return new Result();
 	}
 
+	/**
+	 * Returns a list of names of fields that are required by FieldAttributeManager configs.
+	 * Some fields can be required for a specified range of stages. Some are always required regardless of an item stage.
+	 *
+	 * @param Factory $factory
+	 * @return string[]
+	 */
 	public function getStageDependantRequiredFields(Factory $factory): array
 	{
 		$fieldsData = $this->fieldAttributeManager::getList(
@@ -1125,13 +1138,20 @@ abstract class Operation
 			$this->fieldAttributeManager::getItemConfigScope($this->item)
 		);
 
-		$categoryId = $this->item->getCategoryId();
-		$stages = $factory->getStages($categoryId);
-		$requiredFields = $this->fieldAttributeManager::processFieldsForStages(
-			$fieldsData,
-			$stages,
-			$this->item->getStageId()
-		);
+		if ($this->item->isStagesEnabled())
+		{
+			$categoryId = $this->item->isCategoriesSupported() ? $this->item->getCategoryId() : null;
+			$stages = $factory->getStages($categoryId);
+			$requiredFields = $this->fieldAttributeManager::processFieldsForStages(
+				$fieldsData,
+				$stages,
+				$this->item->getStageId(),
+			);
+		}
+		else
+		{
+			$requiredFields = $this->fieldAttributeManager::extractNamesOfAlwaysRequiredFields($fieldsData);
+		}
 
 		return VisibilityManager::filterNotAccessibleFields($this->item->getEntityTypeId(), $requiredFields);
 	}

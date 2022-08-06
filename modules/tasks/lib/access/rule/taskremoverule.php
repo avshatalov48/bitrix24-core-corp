@@ -19,6 +19,7 @@ class TaskRemoveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -61,11 +62,28 @@ class TaskRemoveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		// task not in group
 		if (!$task->getGroupId())
 		{
+			$this->controller->addError(static::class, 'Unable to load group info');
 			return false;
 		}
 
 		// task in group
-		return Loader::includeModule("socialnetwork")
-			&& \CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "delete_tasks");
+		if (!Loader::includeModule("socialnetwork"))
+		{
+			$this->controller->addError(static::class, 'Unable to load socialnetwork');
+			return false;
+		}
+
+		if (!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+			$task->getGroupId(),
+			'tasks',
+			'delete_tasks',
+			$this->user->getUserId()
+		))
+		{
+			$this->controller->addError(static::class, 'Access to remove denied by group');
+			return false;
+		}
+
+		return true;
 	}
 }

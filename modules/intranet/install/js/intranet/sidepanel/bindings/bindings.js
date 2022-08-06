@@ -615,10 +615,19 @@
 			},
 			{
 				condition: [
-					'^' + siteDir + 'mail/(blacklist|signature|config|message|addressbook)'
+					'^' + siteDir + 'mail/(config|message)'
 				],
 				options: {
 					width: 1080
+				}
+			},
+			{
+				condition: [
+					'^' + siteDir + 'mail/(blacklist|signature|addressbook)'
+				],
+				options: {
+					width: 1080,
+					cacheable: false
 				}
 			},
 			{

@@ -9,8 +9,10 @@ return [
 	'js' => 'dist/dod.bundle.js',
 	'rel' => [
 		'ui.sidepanel.layout',
+		'ui.notification',
 		'ui.layout-form',
 		'ui.forms',
+		'ui.entity-selector',
 		'main.core',
 		'main.core.events',
 		'main.loader',

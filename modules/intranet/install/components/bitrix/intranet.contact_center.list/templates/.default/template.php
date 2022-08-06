@@ -8,7 +8,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main;
 
-Main\UI\Extension::load(['ui.textcrop', 'ui.design-tokens']);
+Main\UI\Extension::load(['ui.textcrop', 'ui.design-tokens', 'ui.fonts.opensans']);
 
 $this->setFrameMode(true);
 

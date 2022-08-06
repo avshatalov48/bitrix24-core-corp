@@ -851,17 +851,17 @@ class CVoximplantStatisticDetailComponent extends \CBitrixComponent implements \
 			$userHtml = '<span class="tel-stat-user-name-container">';
 			if ($this->userData[$userId]["PHOTO"])
 			{
-				$userHtml .= '<span class="tel-stat-user-img user-avatar" style="background: url(\'' . $this->userData[$userId]["PHOTO"] . '\') no-repeat center;\"></span>';
+				$userHtml .= '<span class="ui-icon ui-icon-sm"><i style="background: url(\'' . $this->userData[$userId]["PHOTO"] . '\') no-repeat center;\"></i></span>';
 			}
 			else
 			{
-				$userHtml .= '<div class="ui-icon ui-icon-common-user tel-stat-user-img user-avatar"><i></i></div>';
+				$userHtml .= '<span class="ui-icon ui-icon-common-user ui-icon-sm"><i></i></span>';
 			}
 			$userHtml .= '<span class="tel-stat-user-name">' . htmlspecialcharsbx($this->userData[$userId]["FIO"]) . '</span></span>';
 		}
 		else
 		{
-			$userHtml = "<span class='tel-stat-user-img user-avatar'></span> &mdash;";
+			$userHtml = "<span class='ui-icon ui-icon-common-user ui-icon-sm'><i></i></span> &mdash;";
 		}
 
 		if ($phoneNumber == '')

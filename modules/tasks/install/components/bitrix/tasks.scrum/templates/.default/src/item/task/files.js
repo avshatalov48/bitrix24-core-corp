@@ -7,6 +7,8 @@ export class Files extends EventEmitter
 	{
 		super(count);
 
+		this.setEventNamespace('BX.Tasks.Scrum.Item.Files');
+
 		this.value = (Type.isInteger(count) ? parseInt(count, 10) : 0);
 
 		this.node = null;

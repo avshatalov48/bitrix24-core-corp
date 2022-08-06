@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
@@ -344,6 +344,20 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 		$formSubmitted = $this->formData !== false;
 		$id = $this->template->getId();
+
+		if ($id)
+		{
+			$template = \Bitrix\Tasks\Internals\Task\TemplateTable::getByPrimary($id)->fetch();
+			if (!$template)
+			{
+				$this->errors->add('ACCESS_DENIED', Loc::getMessage('TASKS_TTTC_NOT_FOUND_OR_NOT_ACCESSIBLE'));
+				return;
+			}
+		}
+		else
+		{
+			$this->getDataDefaults();
+		}
 
 		$this->arResult['CHECKLIST_CONVERTED'] = ($id? TemplateCheckListConverterHelper::checkEntityConverted($id) : true);
 

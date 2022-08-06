@@ -470,6 +470,7 @@ class TemplateProvider
 			'FILES' 					=> ['FIELD' => 'TT.FILES', 'DEFAULT' => true],
 			'TAGS' 						=> ['FIELD' => 'TT.TAGS', 'DEFAULT' => true],
 			'DEPENDS_ON' 				=> ['FIELD' => 'TT.DEPENDS_ON', 'DEFAULT' => true],
+			'MATCH_WORK_TIME' 			=> ['FIELD' => 'TT.MATCH_WORK_TIME', 'DEFAULT' => true],
 
 			// template parameters
 			'TASK_ID' 					=> ['FIELD' => 'TT.TASK_ID', 'DEFAULT' => true],

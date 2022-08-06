@@ -38,7 +38,7 @@ CModule::AddAutoloadClasses(
 		'CCrmReportHelper' => 'classes/general/crm_report_helper.php',
 		'\Bitrix\Crm\DealTable' => 'lib/deal.php',
 		'\Bitrix\Crm\LeadTable' => 'lib/lead.php',
-		'\Bitrix\Crm\CompanyTable' => 'lib/company.php',
+		'\Bitrix\Crm\CompanyTable' => 'lib/companytable.php',
 		'\Bitrix\Crm\QuoteTable' => 'lib/quote.php',
 		'CCrmExternalSale' => 'classes/general/crm_external_sale.php',
 		'CCrmExternalSaleProxy' => 'classes/general/crm_external_sale_proxy.php',

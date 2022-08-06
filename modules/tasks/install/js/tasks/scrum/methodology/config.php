@@ -8,8 +8,10 @@ return [
 	'css' => 'dist/methodology.bundle.css',
 	'js' => 'dist/methodology.bundle.js',
 	'rel' => [
+		'ui.manual',
 		'ui.popupcomponentsmaker',
 		'main.core',
+		'ui.dialogs.messagebox',
 		'main.core.events',
 		'ui.hint',
 	],

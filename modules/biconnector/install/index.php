@@ -36,7 +36,7 @@ class BIConnector extends \CModule
 		$this->MODULE_DESCRIPTION = Loc::getMessage('BICONNECTOR_INSTALL_DESCRIPTION');
 	}
 
-	function installFiles($params = array())
+	function installFiles($params = [])
 	{
 		CopyDirFiles(
 			$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/install/public/bitrix/tools',
@@ -54,7 +54,7 @@ class BIConnector extends \CModule
 			{
 				CopyDirFiles(
 					$_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/biconnector/install/public/biconnector',
-					$site['ABS_DOC_ROOT'] . $site['DIR'] . '/' . $params["public_dir"], $params['public_rewrite']
+					$site['ABS_DOC_ROOT'] . $site['DIR'] . '/' . $params['public_dir'], $params['public_rewrite']
 				);
 			}
 		}
@@ -98,6 +98,7 @@ class BIConnector extends \CModule
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\DealUserField', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Company', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Contact', 'onBIConnectorDataSources');
+			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Activity', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Voximplant\Call', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Socialnetwork\Group', 'onBIConnectorDataSources');
 			$eventManager->registerEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
@@ -145,6 +146,7 @@ class BIConnector extends \CModule
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\DealUserField', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Company', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Contact', 'onBIConnectorDataSources');
+		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Crm\Activity', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Voximplant\Call', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('biconnector', 'OnBIConnectorDataSources', 'biconnector', '\Bitrix\BIConnector\Integration\Socialnetwork\Group', 'onBIConnectorDataSources');
 		$eventManager->unRegisterEventHandler('main', 'OnAfterSetOption_~controller_group_name', 'biconnector', '\Bitrix\BIConnector\LimitManager', 'onBitrix24LicenseChange');
@@ -193,10 +195,10 @@ class BIConnector extends \CModule
 			{
 				if ($this->installDB())
 				{
-					$this->installFiles(array(
+					$this->installFiles([
 						'public_dir' => $_REQUEST['install_public'] == 'Y' ? 'biconnector' : '',
 						'public_rewrite' => $_REQUEST['public_rewrite'] == 'Y',
-					));
+					]);
 				}
 				$GLOBALS['errors'] = $this->errors;
 				$APPLICATION->includeAdminFile(GetMessage('BICONNECTOR_INSTALL_TITLE'), $_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/' . $this->MODULE_ID . '/install/step2.php');

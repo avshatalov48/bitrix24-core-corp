@@ -1,5 +1,8 @@
 <?php
 
+use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Main;
 use Bitrix\Crm\Multifield;
 
@@ -290,10 +293,16 @@ class CCrmFieldMulti
 
 		if(is_array($options) && (!isset($options['ENABLE_NOTIFICATION']) || $options['ENABLE_NOTIFICATION']))
 		{
-			\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-				\CCrmOwnerType::ResolveID($arFields_i['ENTITY_ID']),
-				$arFields_i['ELEMENT_ID']
+			$entityTypeId = CCrmOwnerType::ResolveID($arFields_i['ENTITY_ID']);
+
+			//region Register volatile duplicate criterion fields
+			DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $arFields_i['ELEMENT_ID']);
+			DuplicateVolatileCriterion::register(
+				$entityTypeId,
+				$arFields_i['ELEMENT_ID'],
+				[FieldCategory::MULTI]
 			);
+			//endregion Register volatile duplicate criterion fields
 		}
 
 		return $ID;
@@ -332,10 +341,17 @@ class CCrmFieldMulti
 			$info = $this->GetOwerInfo($ID);
 			if(is_array($info) && isset($info['ENTITY_ID']) && isset($info['ELEMENT_ID']))
 			{
-				\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-					\CCrmOwnerType::ResolveID($info['ENTITY_ID']),
-					$info['ELEMENT_ID']
+				$entityTypeId = CCrmOwnerType::ResolveID($info['ENTITY_ID']);
+				$entityId = (int)$info['ELEMENT_ID'];
+
+				//region Register volatile duplicate criterion fields
+				DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $entityId);
+				DuplicateVolatileCriterion::register(
+					$entityTypeId,
+					$entityId,
+					[FieldCategory::MULTI]
 				);
+				//endregion Register volatile duplicate criterion fields
 			}
 		}
 
@@ -361,10 +377,13 @@ class CCrmFieldMulti
 		$result = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ID={$ID}", false, $err_mess.__LINE__);
 		if(is_array($info) && isset($info['ENTITY_ID']) && isset($info['ELEMENT_ID']))
 		{
-			\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-				\CCrmOwnerType::ResolveID($info['ENTITY_ID']),
-				$info['ELEMENT_ID']
-			);
+			$entityTypeId = CCrmOwnerType::ResolveID($info['ENTITY_ID']);
+			$entityId = (int)$info['ELEMENT_ID'];
+
+			//region Register volatile duplicate criterion fields
+			DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $entityId);
+			DuplicateVolatileCriterion::register($entityTypeId, $entityId, [FieldCategory::MULTI]);
+			//endregion Register volatile duplicate criterion fields
 		}
 		return $result;
 	}
@@ -378,12 +397,19 @@ class CCrmFieldMulti
 		if ($entityId == '' || $elementId == 0)
 			return false;
 
-		$res = $this->cdb->Query("DELETE FROM b_crm_field_multi WHERE ENTITY_ID = '".$this->cdb->ForSql($entityId)."' AND ELEMENT_ID = '".$elementId."'", false, $err_mess.__LINE__);
-
-		\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-			\CCrmOwnerType::ResolveID($entityId),
-			$elementId
+		$res = $this->cdb->Query(
+			"DELETE FROM b_crm_field_multi "
+			. "WHERE ENTITY_ID = '" . $this->cdb->ForSql($entityId) . "' AND ELEMENT_ID = '" . $elementId . "'",
+			false,
+			$err_mess . __LINE__
 		);
+
+		$entityTypeId = CCrmOwnerType::ResolveID($entityId);
+
+		//region Register volatile duplicate criterion fields
+		DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $elementId);
+		DuplicateVolatileCriterion::register($entityTypeId, $elementId, [FieldCategory::MULTI]);
+		//endregion Register volatile duplicate criterion fields
 
 		return $res;
 	}
@@ -391,7 +417,14 @@ class CCrmFieldMulti
 	protected function GetOwerInfo($ID)
 	{
 		$result = null;
-		$dbResult = $this->cdb->Query("SELECT ENTITY_ID, ELEMENT_ID FROM b_crm_field_multi WHERE ID={$ID}", false, $err_mess.__LINE__);
+
+		$err_mess = (self::err_mess()).'<br>Function: GetOwerInfo<br>Line: ';
+
+		$dbResult = $this->cdb->Query(
+			"SELECT ENTITY_ID, ELEMENT_ID FROM b_crm_field_multi WHERE ID={$ID}",
+			false,
+			$err_mess . __LINE__
+		);
 		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
 		if(is_array($fields))
 		{
@@ -549,12 +582,18 @@ class CCrmFieldMulti
 			$isChanged = true;
 		}
 
-		if($isChanged)
+		if ($isChanged)
 		{
-			\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-				\CCrmOwnerType::ResolveID($entityId),
-				$elementId
+			$entityTypeId = CCrmOwnerType::ResolveID($entityId);
+
+			//region Register volatile duplicate criterion fields
+			DuplicateCommunicationCriterion::processMultifieldsChange($entityTypeId, $elementId);
+			DuplicateVolatileCriterion::register(
+				$entityTypeId,
+				(int)$elementId,
+				[FieldCategory::MULTI]
 			);
+			//endregion Register volatile duplicate criterion fields
 		}
 
 		return true;
@@ -731,7 +770,15 @@ class CCrmFieldMulti
 					$arSqlSearch[] = GetFilterQuery('CFM.ID', $val, 'N');
 					break;
 				case 'ENTITY_ID':
-					$arSqlSearch[] = GetFilterQuery('CFM.ENTITY_ID', $val, $isLikeOperation);
+					if ($operation !== '=' || is_array($val))
+					{
+						$arSqlSearch[] = GetFilterQuery('CFM.ENTITY_ID', $val, $isLikeOperation);
+					}
+					else
+					{
+						$arSqlSearch[] = 'CFM.ENTITY_ID = "' . $DB->ForSql((string)$val) . '"';
+					}
+
 					break;
 				case 'ELEMENT_ID':
 					if (is_array($val))
@@ -1580,13 +1627,13 @@ class CCrmFieldMulti
 				WHERE ENTITY_ID = '{$srcEntityID}' AND ELEMENT_ID = {$srcElementID}
 		");
 
-		\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-			\CCrmOwnerType::ResolveID($srcEntityID),
+		DuplicateCommunicationCriterion::processMultifieldsChange(
+			CCrmOwnerType::ResolveID($srcEntityID),
 			$srcElementID
 		);
 
-		\Bitrix\Crm\Integrity\DuplicateCommunicationCriterion::processMultifieldsChange(
-			\CCrmOwnerType::ResolveID($dstEntityID),
+		DuplicateCommunicationCriterion::processMultifieldsChange(
+			CCrmOwnerType::ResolveID($dstEntityID),
 			$dstElementID
 		);
 	}

@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Main\UI\Extension;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 /**
@@ -789,14 +792,15 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		}
 		else
 		{
+			Extension::load(['crm.config.catalog']);
+
 			$result[] = [
 				"parent_menu" => "menu_sale_settings",
 				"sort" => 710.07,
 				"text" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
 				"title" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
 				"additional" => "Y",
-				"url" => "/crm/configs/catalog/",
-				"url_constant" => true,
+				'on_click' => 'BX.Crm.Config.Catalog.Slider.open(); return false;',
 				"items_id" => "csc_catalog_settings",
 			];
 		}

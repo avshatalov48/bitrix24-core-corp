@@ -273,14 +273,18 @@ class Order extends Sale\Order
 		}
 
 		$binding = $this->getEntityBinding();
-		if (
-			$binding
-			&& $binding->getOwnerTypeId() === \CCrmOwnerType::Deal
-			&& $binding->isChanged()
-			&& !$this->enableAutomaticDealCreation()
-		)
+		if ($binding && $binding->getOwnerTypeId() === \CCrmOwnerType::Deal)
 		{
-			$this->addTimelineEntryOnBindingDealChanged();
+			if ($binding->isChanged() && !$this->enableAutomaticDealCreation())
+			{
+				$this->addTimelineEntryOnBindingDealChanged();
+			}
+
+			if ($binding->isNewEntity() && $this->enableAutomaticDealCreation())
+			{
+				$dealCreator = new DealCreator($this);
+				$dealCreator->addProductsToDeal($binding->getOwnerId());
+			}
 		}
 
 		if($this->fields->isChanged('RESPONSIBLE_ID'))

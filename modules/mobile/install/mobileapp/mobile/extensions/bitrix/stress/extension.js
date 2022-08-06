@@ -223,7 +223,6 @@
 					BX.postComponentEvent("onStressMeasureChanged", [params]);
 					this.currentState = params;
 					this.ui.setData(StateUtils.exitingMeasure(params));
-					setTimeout(() => this.showAccessHint(), 1000);
 				},
 				false, false,
 				"stressLevelAdd"
@@ -370,22 +369,6 @@
 					}
 					console.log(event, item);
 				});
-		}
-
-		showAccessHint()
-		{
-			let seen = Application.storage.getBoolean("seen_access_hint", false);
-			if (!seen)
-			{
-				if (PageManager.getNavigator().isVisible() && PageManager.getNavigator().isActiveTab())
-				{
-					let spotlight = dialogs.createSpotlight();
-					spotlight.setTarget("access_more");
-					spotlight.setHint({text: BX.message("STRESS_HINT_ACCESS"), icon: "access_eye"});
-					spotlight.show();
-					Application.storage.setBoolean("seen_access_hint", true);
-				}
-			}
 		}
 
 		static open(initData = null, shouldLoad = true)

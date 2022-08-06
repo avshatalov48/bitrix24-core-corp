@@ -289,14 +289,7 @@ HTML;
 					</div>
 HTML;
 		}
-		$videoUrl = GetMessageJS("CRM_MANAGER_CNTR_VIDEO", array("#VOLUME#" => ""));
-		if (!(($res = \CUserOptions::GetOption("crm.widget", "managerCounters")) && is_array($res) && $res["firstSeen"] === "N"))
-		{
-			$videoUrl = GetMessageJS("CRM_MANAGER_CNTR_VIDEO", array("#VOLUME#" => "&volume=0"));
-		}
-		$icon = mb_strpos(GetMessage("CRM_MANAGER_CNTR_VIDEO"), "#VOLUME#") === false ? "info" : "video";
 		$id = randString(10);
-		$title = GetMessage("CRM_MANAGER_CNTR_TITLE");
 		$innerHTML .= <<<HTML
 <script>
 BX.ready(function() {
@@ -334,53 +327,6 @@ BX.ready(function() {
 		showChanelButton = node.querySelectorAll('[data-role="open-chanel"]'), i;
 	for (i = 0; i < showChanelButton.length; i++)
 		BX.bind(showChanelButton[i], "click", openChanelDeeper);
-	var f = function(firstTime) {
-		var obj;
-		(obj = new BX.PopupWindow('crm-start-{$icon}-window', null, BX.merge({
-			className: "crm-start-{$icon}-window",
-			autoHide: false,
-			zIndex: 200,
-			overlay: {opacity: 50, backgroundColor: "#000000"},
-			closeByEsc: true,
-			closeIcon : true,
-			contentColor : "white",
-			content : '{$videoUrl}',
-			events : {
-				onPopupClose : function() {
-					this.destroy();
-					BX.onCustomEvent(window, "crm.widget", ["managerCounters", "close", BX("custom_widget_{$id}_click_node")]);
-				}
-			}
-		},
-		('{$icon}' == 'info' ? {
-			titleBar : '{$title}',
-			buttons : [
-				new BX.PopupWindowButton({
-					className: 'popup-window-button-accept',
-					text: 'Ok',
-					events: {
-						click: function() {
-							obj.close();
-						}
-					}
-				})
-			]
-		} : {
-		})))).show();
-	};
-	node = BX.findParent(BX('custom_widget_{$id}'), {className : "crm-widget-container"});
-	if (node && (node = BX.findChild(node, {className : "crm-widget-settings"}, true)) && node)
-	{
-		var vNode = node.cloneNode(true);
-		BX.addClass(vNode, "crm-start-title-icons-item-{$icon}");
-		vNode.setAttribute("id", "custom_widget_{$id}_click_node");
-		BX.bind(vNode, "click", f);
-		if (node.nextSibling)
-			node.parentNode.insertBefore(vNode, node.nextSibling);
-		else
-			node.parentNode.appendChild(vNode);
-		BX.onCustomEvent(window, "crm.widget", ["managerCounters", "append", vNode]);
-	}
 });
 </script>
 HTML;

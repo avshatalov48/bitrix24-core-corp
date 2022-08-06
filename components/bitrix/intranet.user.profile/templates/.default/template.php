@@ -27,6 +27,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.hint',
 	'ui.icons.b24',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 CJSCore::Init("loader");

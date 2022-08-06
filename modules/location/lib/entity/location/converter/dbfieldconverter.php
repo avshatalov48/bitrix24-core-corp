@@ -22,17 +22,20 @@ final class DbFieldConverter
 	{
 		$result = [];
 
-		if(($location->getId() > 0))
+		if (($location->getId() > 0))
 		{
 			$result['ID'] = $location->getId();
 		}
+
+		$latitude = $location->getLatitude();
+		$longitude = $location->getLongitude();
 
 		$result['CODE'] = $location->getCode();
 		$result['EXTERNAL_ID'] = $location->getExternalId();
 		$result['SOURCE_CODE'] = $location->getSourceCode();
 		$result['TYPE'] = $location->getType();
-		$result['LATITUDE'] = $location->getLatitude();
-		$result['LONGITUDE'] = $location->getLongitude();
+		$result['LATITUDE'] = $latitude === '' ? null : (float)$latitude;
+		$result['LONGITUDE'] = $longitude === '' ? null : (float)$longitude;
 
 		return $result;
 	}

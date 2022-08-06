@@ -5,9 +5,12 @@ use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetTitle(Loc::getMessage('INTRANET_STRESSLEVEL_TEMPLATE_PAGETITLE'));
 
-\Bitrix\Main\UI\Extension::load("ui.forms");
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.common");
+\Bitrix\Main\UI\Extension::load([
+	"ui.forms",
+	"ui.buttons",
+	"ui.common",
+	"ui.fonts.opensans"
+]);
 
 ?>
 <div class="intranet-stresslevel-instruction-wrapper">

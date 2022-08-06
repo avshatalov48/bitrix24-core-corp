@@ -19,13 +19,17 @@ use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\SalesCenter\Integration\SaleManager;
 use Bitrix\Salescenter;
 use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\Conversion\LeadConverter;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\RequisiteAddress;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Sale\Delivery;
 use Bitrix\ImOpenLines;
+use Bitrix\Sale\PaySystem\PaymentAvailablesPaySystems;
 use Bitrix\SalesCenter\Builder\Converter;
-
-define('SALESCENTER_RECEIVE_PAYMENT_APP_AREA', true);
+use CCrmLead;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
@@ -547,7 +551,7 @@ class Order extends Base
 			if ($isSent === false)
 			{
 				$this->addError(
-					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_SEND_SMS_ERROR'))
+					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_SEND_SMS_ERROR'), 20)
 				);
 			}
 			else
@@ -607,6 +611,70 @@ class Order extends Base
 
 		return $result;
 	}
+	
+	/**
+	 * Move lead to finish status, and linked with deal
+	 * 
+	 * @param int $leadId
+	 * @param int $dealId
+	 * 
+	 * @return void
+	 */
+	private function convertionLeadWithExistDeal(int $leadId, int $dealId): void
+	{
+		$lead = new CCrmLead(false);
+		$lead->Update($leadId, $fields = [
+			'STATUS_ID' => 'CONVERTED',
+		]);
+		if ($lead->LAST_ERROR)
+		{
+			// as can't change status, that no point in converting.
+			return;
+		}
+
+		$converter = new LeadConverter();
+		$converter->setEntityID($leadId);
+
+		$contextData = [
+			CCrmOwnerType::DealName => $dealId,
+		];
+		
+		// load deal relations
+		$dealIdentifier = new ItemIdentifier(CCrmOwnerType::Deal, $dealId);
+		$dealRelations = Container::getInstance()->getRelationManager()->getParentRelations($dealIdentifier->getEntityTypeId());
+		foreach ($dealRelations as $relation)
+		{
+			if (isset($contextData[$relation->getParentEntityTypeId()]))
+			{
+				continue;
+			}
+			
+			$parentIds = $relation->getParentElements($dealIdentifier);
+			foreach ($parentIds as $parentId)
+			{
+				$entityTypeName = CCrmOwnerType::ResolveName($parentId->getEntityTypeId());
+				if ($entityTypeName)
+				{
+					$contextData[$entityTypeName] = $parentId->getEntityId();
+				}
+			}
+		}
+		unset($contextData[CCrmOwnerType::LeadName]);
+
+		$converter->setContextData($contextData);
+		foreach ($contextData as $entityTypeName => $entityId)
+		{
+			$entityTypeId = CCrmOwnerType::ResolveID($entityTypeName);
+			$item = $converter->getConfig()->getItem($entityTypeId);
+			if ($item)
+			{
+				$item->setActive(true);
+				$item->enableSynchronization(false);
+			}
+		}
+
+		$converter->convert();
+	}
 
 	/**
 	 * @param array $basketItems
@@ -633,6 +701,10 @@ class Order extends Base
 			return [];
 		}
 
+		// if pay from chat - find lead id
+		$crmInfo = ImOpenLinesManager::getInstance()->setSessionId($options['sessionId'])->getCrmInfo();
+		$dialogLeadId = $crmInfo ? (int)$crmInfo['LEAD'] : null;
+
 		$basketItems = $this->processBasketItems($basketItems);
 
 		$options['basketItems'] = $basketItems;
@@ -649,12 +721,20 @@ class Order extends Base
 			[
 				'orderErrorsFilter' => [
 					'SALE_BASKET_AVAILABLE_QUANTITY',
-					'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY'
+					'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY',
 				],
 			]
 		);
 		if ($order === null)
 		{
+			// if throw error not in 'orderErrorsFilter'
+			if ($this->errorCollection->count() === 0)
+			{
+				$this->addError(
+					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_CANT_BUILD_ORDER'))
+				);
+			}
+			
 			return [];
 		}
 
@@ -709,6 +789,11 @@ class Order extends Base
 
 			if ($entityTypeId === \CCrmOwnerType::Deal)
 			{
+				if ($dialogLeadId)
+				{
+					$this->convertionLeadWithExistDeal($dialogLeadId, $entityId);
+				}
+				
 				if (!empty($options['sessionId']) && (int)$options['ownerId'] <= 0)
 				{
 					$this->onAfterDealAdd($entityId, $options['sessionId']);
@@ -749,9 +834,15 @@ class Order extends Base
 					if (!$isSent)
 					{
 						$this->addError(
-							new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_SEND_SMS_ERROR'))
+							new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_SEND_SMS_ERROR'), 10)
 						);
 					}
+				}
+				else
+				{
+					$this->addError(
+						new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_CANT_SEND_SMS_PAYMENT_NOT_CREATED'))
+					);
 				}
 			}
 			elseif ($options['dialogId'])
@@ -829,7 +920,7 @@ class Order extends Base
 				{
 					$publicUrl = ImOpenLinesManager::getInstance()->getPublicUrlInfoForPayment($payment);
 
-					if ($options['context'] === 'sms')
+					if ($options['context'] === SalesCenter\Component\ContextDictionary::SMS)
 					{
 						$smsTemplate = CrmManager::getInstance()->getSmsTemplate();
 						$smsTitle = str_replace('#LINK#', $publicUrl['url'], $smsTemplate);
@@ -850,6 +941,17 @@ class Order extends Base
 
 				$data['order']['title'] = $previewData['title'];
 				$data['order']['url'] = $publicUrl['url'];
+			}
+
+			// save restriction pay systems for order payment
+			$availablePaySystemIds = (array) ($options['availablePaySystemsIds'] ?? []);
+			if ($payment && $availablePaySystemIds)
+			{
+				$result = PaymentAvailablesPaySystems::setBindings($payment->getId(), $availablePaySystemIds);
+				if (!$result->isSuccess())
+				{
+					$this->addErrors($result->getErrors());
+				}
 			}
 
 			return $data;
@@ -902,6 +1004,14 @@ class Order extends Base
 		);
 		if ($order === null)
 		{
+			// if throw error not in 'orderErrorsFilter'
+			if ($this->errorCollection->count() === 0)
+			{
+				$this->addError(
+					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_CANT_BUILD_ORDER'))
+				);
+			}
+			
 			return [];
 		}
 
@@ -1003,7 +1113,7 @@ class Order extends Base
 		if (isset($clientInfo['OWNER_ID']) && isset($clientInfo['OWNER_TYPE_ID']))
 		{
 			if (
-				$options['context'] !== 'chat'
+				$options['context'] !== SalesCenter\Component\ContextDictionary::CHAT
 				|| !CrmManager::getInstance()->isOwnerEntityInFinalStage($clientInfo['OWNER_ID'], $clientInfo['OWNER_TYPE_ID'])
 			)
 			{
@@ -1034,32 +1144,33 @@ class Order extends Base
 
 		$result['CLIENT'] = $clientInfo;
 
-		if ($result['ID'] === 0)
+		if ($result['ID'] === 0 && isset($options['context']))
 		{
-			if (isset($options['context']))
+			$platform = null;
+
+			if ($options['context'] === SalesCenter\Component\ContextDictionary::DEAL)
 			{
-				$platformCode = '';
+				$platform = Crm\Order\TradingPlatform\DynamicEntity::getInstanceByCode(
+					Crm\Order\TradingPlatform\DynamicEntity::getCodeByEntityTypeId($options['ownerTypeId'])
+				);
+			}
+			elseif ($options['context'] === SalesCenter\Component\ContextDictionary::SMS)
+			{
+				$platform = Crm\Order\TradingPlatform\Activity::getInstanceByCode(
+					Crm\Order\TradingPlatform\Activity::TRADING_PLATFORM_CODE
+				);
+			}
 
-				if ($options['context'] === 'deal')
+			if ($platform)
+			{
+				if (!$platform->isInstalled())
 				{
-					$platformCode = Crm\Order\TradingPlatform\Deal::TRADING_PLATFORM_CODE;
-				}
-				elseif ($options['context'] === 'sms')
-				{
-					$platformCode = Crm\Order\TradingPlatform\Activity::TRADING_PLATFORM_CODE;
-				}
-				elseif ($options['context'] === 'dynamic')
-				{
-					$platformCode = Crm\Order\TradingPlatform\DynamicEntity::getCodeByEntityTypeId($options['ownerTypeId']);
+					$platform->install();
 				}
 
-				if ($platformCode)
+				if ($platform->isInstalled())
 				{
-					$platform = Crm\Order\TradingPlatform\Deal::getInstanceByCode($platformCode);
-					if ($platform->isInstalled())
-					{
-						$result['TRADING_PLATFORM'] = $platform->getId();
-					}
+					$result['TRADING_PLATFORM'] = $platform->getId();
 				}
 			}
 		}
@@ -1310,7 +1421,7 @@ class Order extends Base
 
 		$context = $options['context'] ?? '';
 
-		if ($context === 'chat')
+		if ($context === SalesCenter\Component\ContextDictionary::CHAT)
 		{
 			if(isset($options['sessionId']))
 			{
@@ -1348,7 +1459,7 @@ class Order extends Base
 					return ['orders' => $sentOrders];
 				}
 
-				if ($context === 'chat')
+				if ($context === SalesCenter\Component\ContextDictionary::CHAT)
 				{
 					$sendResult = $this->sendOrderByIm($order, $dialogId);
 					if ($sendResult->isSuccess())
@@ -1360,7 +1471,7 @@ class Order extends Base
 						$this->addErrors($sendResult->getErrors());
 					}
 				}
-				elseif ($context === 'sms')
+				elseif ($context === SalesCenter\Component\ContextDictionary::SMS)
 				{
 					$sendResult = $this->sendOrderBySms($order);
 					if ($sendResult->isSuccess())
@@ -1460,7 +1571,7 @@ class Order extends Base
 
 		$context = $options['context'] ?? '';
 
-		if ($context === 'chat')
+		if ($context === SalesCenter\Component\ContextDictionary::CHAT)
 		{
 			if (isset($options['sessionId']))
 			{
@@ -1516,7 +1627,7 @@ class Order extends Base
 
 				$payment = $order->getPaymentCollection()->getItemById($paymentId);
 
-				if ($context === 'chat')
+				if ($context === SalesCenter\Component\ContextDictionary::CHAT)
 				{
 					$sendResult = $this->sendPaymentByIm($payment, $dialogId);
 					if ($sendResult->isSuccess())
@@ -1528,7 +1639,7 @@ class Order extends Base
 						$this->addErrors($sendResult->getErrors());
 					}
 				}
-				elseif ($context === 'sms')
+				elseif ($context === SalesCenter\Component\ContextDictionary::SMS)
 				{
 					$sendResult = $this->sendPaymentBySms($payment);
 					if ($sendResult->isSuccess())

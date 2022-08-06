@@ -10,7 +10,9 @@ return [
 	'rel' => [
 		'main.core.events',
 		'ui.sidepanel.layout',
+		'ui.confetti',
 		'main.core',
+		'ui.dialogs.messagebox',
 		'ui.hint',
 	],
 	'skip_core' => false,

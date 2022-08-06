@@ -1,6 +1,7 @@
 <?
 $MESS["CRM_ACT_EMAIL_AUTH"] = "Authentication error";
 $MESS["CRM_ACT_EMAIL_NOCRM"] = "The CRM module is not installed.";
+$MESS["CRM_ACT_EMAIL_NO_MAIL"] = "The Mail module is not installed.";
 $MESS["CRM_ACT_EMAIL_AJAX_ERROR"] = "Error processing the request.";
 $MESS["CRM_ACT_EMAIL_RCPT"] = "To";
 $MESS["CRM_ACT_EMAIL_RCPT_CC"] = "Copy";

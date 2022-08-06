@@ -18,9 +18,10 @@ final class Field implements IField
 	/** @var string  */
 	private $value = '';
 
-	public function __construct(int $type)
+	public function __construct(int $type, string $value = '')
 	{
 		$this->type = $type;
+		$this->value = $value;
 	}
 
 	/**

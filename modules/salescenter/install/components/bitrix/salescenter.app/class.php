@@ -30,10 +30,9 @@ use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\Catalog\v2\Integration\JS\ProductForm;
 use Bitrix\Catalog;
+use Bitrix\Sale\PaySystem\ClientType;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
-const SALESCENTER_RECEIVE_PAYMENT_APP_AREA = true;
 
 Main\Loader::includeModule('sale');
 
@@ -49,10 +48,6 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	private const PAYMENT_DELIVERY_MODE = 'payment_delivery';
 	private const PAYMENT_MODE = 'payment';
 	private const DELIVERY_MODE = 'delivery';
-
-	private const CONTEXT_DEAL = 'deal';
-	private const CONTEXT_CHAT = 'chat';
-	private const CONTEXT_SMS = 'sms';
 
 	/** @var Crm\Order\Order $order */
 	private $order;
@@ -161,7 +156,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			}
 		}
 
-		if ($arParams['context'] === self::CONTEXT_CHAT)
+		if ($arParams['context'] === SalesCenter\Component\ContextDictionary::CHAT)
 		{
 			if (CrmManager::getInstance()->isOwnerEntityInFinalStage($arParams['ownerId'], CCrmOwnerType::Deal))
 			{
@@ -196,7 +191,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->fillComponentResult();
 
 		if (
-			$this->arParams['context'] === self::CONTEXT_DEAL
+			$this->arParams['context'] === SalesCenter\Component\ContextDictionary::DEAL
 			&& !$this->item
 		)
 		{
@@ -235,7 +230,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		if (
-			$arParams['context'] === self::CONTEXT_CHAT
+			$arParams['context'] === SalesCenter\Component\ContextDictionary::CHAT
 			&& CrmManager::getInstance()->isOwnerEntityInFinalStage($arParams['ownerId'], $arParams['ownerTypeId'])
 		)
 		{
@@ -243,7 +238,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		if (
-			$arParams['context'] === self::CONTEXT_SMS
+			$arParams['context'] === SalesCenter\Component\ContextDictionary::SMS
 			&& (
 				(int)$arParams['ownerTypeId'] === CCrmOwnerType::Contact
 				|| (int)$arParams['ownerTypeId'] === CCrmOwnerType::Company
@@ -260,7 +255,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		);
 
 		$isSms = (
-			$arParams['context'] === self::CONTEXT_SMS
+			$arParams['context'] === SalesCenter\Component\ContextDictionary::SMS
 			&& !empty($arParams['ownerId'])
 			&& !empty($arParams['ownerTypeId'])
 		);
@@ -298,6 +293,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$this->arResult['assignedById'] = $assignedById;
 			$this->arResult['entityResponsible'] = $this->getManagerInfo($assignedById);
 			$this->arResult['contactPhone'] = CrmManager::getInstance()->getItemContactPhoneFormatted($this->item);
+			$this->arResult['contactEditorUrl'] = CrmManager::getInstance()->getItemContactEditorUrl($this->item);
 		}
 		else
 		{
@@ -477,16 +473,16 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		$this->arResult['sendingMethod'] = '';
-		if ($this->arResult['context'] === self::CONTEXT_DEAL)
+		if ($this->arResult['context'] === SalesCenter\Component\ContextDictionary::DEAL)
 		{
 			$this->arResult['sendingMethod'] = 'sms';
 		}
-		elseif ($this->arResult['context'] === self::CONTEXT_CHAT)
+		elseif ($this->arResult['context'] === SalesCenter\Component\ContextDictionary::CHAT)
 		{
 			$this->arResult['sendingMethod'] = 'chat';
 		}
 
-		if (!$this->arResult['sendingMethod'] && $this->arResult['context'] === self::CONTEXT_SMS)
+		if (!$this->arResult['sendingMethod'] && $this->arResult['context'] === SalesCenter\Component\ContextDictionary::SMS)
 		{
 			$this->arResult['sendingMethodDesc'] = $this->getSendingMethodDescByType('sms');
 		}
@@ -525,7 +521,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			)
 			&&
 			!(
-				$this->arParams['context'] === self::CONTEXT_CHAT
+				$this->arParams['context'] === SalesCenter\Component\ContextDictionary::CHAT
 				&& CrmManager::getInstance()->isOwnerEntityInFinalStage($ownerId, $ownerTypeId)
 			)
 		)
@@ -609,7 +605,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function makeTitle(): string
 	{
-		if ($this->arParams['context'] === self::CONTEXT_DEAL)
+		if ($this->arParams['context'] === SalesCenter\Component\ContextDictionary::DEAL)
 		{
 			if ($this->arResult['templateMode'] === self::TEMPLATE_VIEW_MODE)
 			{
@@ -1181,6 +1177,20 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	private function getPaySystemList(): array
 	{
 		$result = [];
+		
+		$result['groups'] = [
+			[
+				'id' => ClientType::B2C,
+				'name' => Loc::getMessage('SALESCENTER_APP_CLIENT_TYPE_B2C'),
+			],
+			[
+				'id' => ClientType::B2B,
+				'name' => Loc::getMessage('SALESCENTER_APP_CLIENT_TYPE_B2B'),
+			],
+			[
+				'id' => 'other',
+			],
+		];
 
 		$paySystemPath = $this->getComponentSliderPath('bitrix:salescenter.paysystem');
 		$queryParams = [
@@ -1201,10 +1211,12 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				$paySystemPath->addParams($queryParams);
 
 				$result['items'][] = [
+					'id' => $paySystem['ID'],
 					'name' => $paySystem['NAME'],
 					'link' => $paySystemPath->getLocator(),
 					'type' => 'paysystem',
 					'sort' => $paySystem['SORT'],
+					'group' => $paySystem['PS_CLIENT_TYPE'],
 				];
 			}
 
@@ -1214,6 +1226,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'name' => Loc::getMessage('SALESCENTER_APP_ADD_TITLE'),
 				'link' => $this->getComponentSliderPath('bitrix:salescenter.paysystem.panel')->getLocator(),
 				'type' => 'more',
+				'group' => 'other',
 			];
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
@@ -1230,6 +1243,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					'link' => $feedbackPath->getLocator(),
 					'width' => 735,
 					'type' => 'offer',
+					'group' => 'other',
 				];
 			}
 		}
@@ -1346,6 +1360,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'name' => Loc::getMessage('SALESCENTER_APP_PAYSYSTEM_ITEM_EXTRA'),
 				'link' => $this->getComponentSliderPath('bitrix:salescenter.paysystem.panel')->getLocator(),
 				'type' => 'more',
+				'group' => 'other',
 			];
 
 			if (Bitrix24Manager::getInstance()->isEnabled())
@@ -1362,6 +1377,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 					'link' => $feedbackPath->getLocator(),
 					'width' => 735,
 					'type' => 'offer',
+					'group' => 'other',
 				];
 			}
 		}
@@ -2363,7 +2379,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'isAvailable' => $sender::isAvailable(),
 				'isConnected' => $sender::isConnected(),
 				'connectUrl' => $sender::getConnectUrl(),
-				'usageErrors' =>  $sender::getUsageErrors(),
+				'usageErrors' =>  $sender::getUsageErrors()
 			];
 			if ($sender::getSenderCode() === Crm\Integration\SmsManager::getSenderCode())
 			{
@@ -2426,6 +2442,39 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$result = [];
 
 		$this->fillSendersData($result);
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	public function refreshContactPhoneAction($fields): array
+	{
+		$result = [];
+
+		$ownerId = (int)($fields['ownerId'] ?? 0);
+		$ownerTypeId = (int)($fields['ownerTypeId'] ?? 0);
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
+		if ($factory && $factory->isPaymentsEnabled())
+		{
+			$this->item = $factory->getItem($ownerId);
+		}
+		else
+		{
+			$this->item = null;
+		}
+
+		if ($this->item)
+		{
+			$result['contactPhone'] = CrmManager::getInstance()->getItemContactPhoneFormatted($this->item);
+		}
+
+		$this->item->getContactId();
+
+		$contact = CrmManager::getInstance()->getItemContactFields($this->item);
+		$result['title'] = is_array($contact)?  $contact['FULL_NAME']: '';
 
 		return $result;
 	}

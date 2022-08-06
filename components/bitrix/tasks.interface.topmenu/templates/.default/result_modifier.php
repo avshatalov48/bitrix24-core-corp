@@ -138,12 +138,15 @@ $scrumUri->addParams([
 	]
 ]);
 
+$scrumSubClick = '';
+$scrumSubLink = '';
+
 $isScrumLimited = ScrumLimit::isLimitExceeded();
 if ($isScrumLimited)
 {
 	$sidePanelId = ScrumLimit::getSidePanelId();
 
-	$scrumSubLink = 'javascript:BX.UI.InfoHelper.show("'. $sidePanelId .'", {isLimit: true, limitAnalyticsLabels: {module: "tasks", source: "topMenu"}});';
+	$scrumSubClick = 'BX.UI.InfoHelper.show("'. $sidePanelId .'", {isLimit: true, limitAnalyticsLabels: {module: "tasks", source: "topMenu"}});';
 }
 else
 {
@@ -155,7 +158,11 @@ $arResult['ITEMS'][] = [
 	"URL" => $tasksLink.'scrum/'.$strIframe,
 	"ID" => "view_scrum",
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_SCRUM_LIST"] === "Y"),
-	'SUB_LINK' => ['CLASS' => '', 'URL' => $scrumSubLink],
+	'SUB_LINK' => [
+		'CLASS' => '',
+		'ON_CLICK' => $scrumSubClick,
+		'URL' => $scrumSubLink,
+	],
 	'COUNTER' => $arResult['SCRUM_COUNTER'],
 	'COUNTER_ID' => 'tasks_scrum_counter',
 	'IS_NEW' => true,

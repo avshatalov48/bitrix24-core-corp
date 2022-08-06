@@ -23,6 +23,7 @@ CJSCore::Init([
 	'ui.progressbar',
 	'ui.notification',
 	'ui.icons.b24',
+	'ui.icons',
 	'ui.hint',
 	'ui.stepprocessing'
 ]);

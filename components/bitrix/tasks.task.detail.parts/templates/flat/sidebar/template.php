@@ -317,6 +317,34 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 			<?endif?>
 		<?endif?>
 
+		<?php if (!$arParams["PUBLIC_MODE"]): ?>
+			<div
+				id="tasksEpicTitle"
+				class="task-detail-sidebar-info-title <?= $arParams["IS_SCRUM_TASK"] ? '' : 'hide' ?>"
+			><?=Loc::getMessage("TASKS_TASK_EPIC")?></div>
+			<div
+				id="tasksEpicContainer"
+				class="task-detail-sidebar-info <?= $arParams["IS_SCRUM_TASK"] ? '' : 'hide' ?>"
+			>
+				<div class="task-detail-sidebar-info-tag">
+					<?php
+					$APPLICATION->IncludeComponent(
+						'bitrix:tasks.scrum.epic.selector',
+						'',
+						[
+							'epic' => $arParams['TEMPLATE_DATA']['EPIC'],
+							'canEdit' => $can['EDIT'],
+							'groupId' => $taskData['GROUP_ID'],
+							'taskId' => $taskData['ID'],
+						],
+						null,
+						['HIDE_ICONS' => 'Y']
+					);
+					?>
+				</div>
+			</div>
+		<? endif ?>
+
 		<? if (!$arParams["PUBLIC_MODE"] && ($can["EDIT"] || $arParams["TEMPLATE_DATA"]["TAGS"] !== "")):?>
 			<div class="task-detail-sidebar-info-title"><?=Loc::getMessage("TASKS_TASK_TAGS")?></div>
 			<div class="task-detail-sidebar-info">
@@ -330,7 +358,9 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 							'VALUE' => $arParams['TEMPLATE_DATA']['TAGS'],
 							'PATH_TO_TASKS' => $arParams['PATH_TO_TASKS'],
 							'CAN_EDIT' => $can['EDIT'],
-							'TASK_ID' => $taskData["ID"],
+							'GROUP_ID' => $taskData['GROUP_ID'],
+							'TASK_ID' => $taskData['ID'],
+							'IS_SCRUM_TASK' => $arParams['IS_SCRUM_TASK'],
 						],
 						null,
 						['HIDE_ICONS' => 'Y']
@@ -380,6 +410,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 <script>
 	new BX.Tasks.Component.TaskViewSidebar({
 		taskId: <?=$taskData["ID"]?>,
+		groupId: <?= (array_key_exists('GROUP_ID', $taskData)) ? $taskData['GROUP_ID'] : 0 ?>,
 		deadline: "<?=CUtil::JSEscape($taskData["DEADLINE"])?>",
 		mark: "<?=CUtil::JSEscape($taskData["MARK"])?>",
 		workingTime: {
@@ -404,6 +435,8 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 		stageId: <?=$taskData["STAGE_ID"]?>,
 		stages: <?= \CUtil::PhpToJSObject(array_values($stages), false, false, true)?>,
 		taskLimitExceeded: <?=CUtil::PhpToJSObject($taskLimitExceeded)?>,
-		calendarSettings: <?=CUtil::PhpToJSObject($arResult['CALENDAR_SETTINGS'])?>
+		calendarSettings: <?=CUtil::PhpToJSObject($arResult['CALENDAR_SETTINGS'])?>,
+		isScrumTask: '<?= $arParams['IS_SCRUM_TASK'] ? 'Y' : 'N' ?>',
+		parentId: <?= (int) $taskData['PARENT_ID'] ?>
 	});
 </script>

@@ -287,8 +287,12 @@ elseif($action === 'SAVE')
 		$clientData = array();
 	}
 
-	$createdEntities = array();
-	$updateEntityInfos = array();
+	$createdEntities = [];
+	$updateEntityInfos = [];
+	$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+		CCrmOwnerType::Deal,
+		$categoryID
+	);
 
 	$companyID = 0;
 	$companyEntity = new \CCrmCompany(false);
@@ -299,6 +303,14 @@ elseif($action === 'SAVE')
 		{
 			$companyItem = $companyData[0];
 			$companyID = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
+			$categoryId = isset($companyItem['categoryId']) ? (int)$companyItem['categoryId'] : 0;
+
+			// unlikely situation but check in case of mismatch
+			if($categoryId !== $categoryParams[CCrmOwnerType::Company]['categoryId'])
+			{
+				__CrmDealDetailsEndJsonResonse(['ERROR' => 'INVALID CLIENT COMPANY CATEGORY ID']);
+			}
+
 			if($companyID <= 0)
 			{
 				$companyID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
@@ -334,12 +346,13 @@ elseif($action === 'SAVE')
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
 				'crm.deal.details',
 				'company',
-				array(
-					array(
+				[
+					[
 						'ENTITY_TYPE_ID' => CCrmOwnerType::Company,
-						'ENTITY_ID' => $fields['COMPANY_ID']
-					)
-				)
+						'ENTITY_ID' => $fields['COMPANY_ID'],
+						'CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
+					]
+				]
 			);
 		}
 	}
@@ -360,6 +373,14 @@ elseif($action === 'SAVE')
 			}
 
 			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
+			$categoryId = isset($contactItem['categoryId']) ? (int)$contactItem['categoryId'] : 0;
+
+			// unlikely situation but check in case of mismatch
+			if($categoryId !== $categoryParams[CCrmOwnerType::Contact]['categoryId'])
+			{
+				__CrmDealDetailsEndJsonResonse(['ERROR' => 'INVALID CLIENT CONTACT CATEGORY ID!']);
+			}
+
 			if($contactID <= 0)
 			{
 				$contactID = \Bitrix\Crm\Component\EntityDetails\BaseComponent::createEntity(
@@ -413,10 +434,14 @@ elseif($action === 'SAVE')
 		$fields['CONTACT_IDS'] = $contactIDs;
 		if(!empty($fields['CONTACT_IDS']))
 		{
-			$contactBindings = array();
+			$contactBindings = [];
 			foreach($fields['CONTACT_IDS'] as $contactID)
 			{
-				$contactBindings[] = array('ENTITY_TYPE_ID' => CCrmOwnerType::Contact, 'ENTITY_ID' => $contactID);
+				$contactBindings[] = [
+					'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+					'ENTITY_ID' => $contactID,
+					'CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
+				];
 			}
 			Crm\Controller\Entity::addLastRecentlyUsedItems(
 				'crm.deal.details',
@@ -945,53 +970,57 @@ elseif($action === 'SAVE')
 			__CrmDealDetailsEndJsonResonse($responseData);
 		}
 
-		$isSaveSupplementReserveData =
-			Bitrix\Main\Loader::includeModule('catalog')
-			&& Bitrix\Main\Loader::includeModule('salescenter')
-			&& Bitrix\Catalog\Component\UseStore::isUsed()
-			&& !\CCrmSaleHelper::isWithOrdersMode()
-			&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
-		;
-
-		Crm\Reservation\DealProductsHitDataSupplement::getInstance()->setProductRows((int)$ID, $productRows);
-		$productRowsSaveTookPlace = false;
-		if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
+		// save and synchronize products has already been done in \Bitrix\Crm\Entity\Compatibility\Adapter::performUpdate
+		if (!Bitrix\Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled())
 		{
-			if ($isSaveSupplementReserveData)
+			$isSaveSupplementReserveData =
+				Bitrix\Main\Loader::includeModule('catalog')
+				&& Bitrix\Main\Loader::includeModule('salescenter')
+				&& Bitrix\Catalog\Component\UseStore::isUsed()
+				&& !\CCrmSaleHelper::isWithOrdersMode()
+				&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+			;
+
+			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->setProductRows((int)$ID, $productRows);
+			$productRowsSaveTookPlace = false;
+			if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 			{
-				\Bitrix\Crm\Reservation\EventsHandler\Deal::disableReservationAfterCrmDealProductRowsSave();
+				if ($isSaveSupplementReserveData)
+				{
+					\Bitrix\Crm\Reservation\EventsHandler\Deal::disableReservationAfterCrmDealProductRowsSave();
+				}
+
+				CCrmProductRow::setPerRowInsert(true);
+				$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
+				$productRowsSaveTookPlace = true;
+				CCrmProductRow::setPerRowInsert(false);
+				Crm\Reservation\DealProductsHitDataSupplement::getInstance()->readDealSaveData((int)$ID);
+
+				if ($isSaveSupplementReserveData)
+				{
+					\Bitrix\Crm\Reservation\EventsHandler\Deal::enableReservationAfterCrmDealProductRowsSave();
+				}
+
+				if(!$saveProductRowsResult)
+				{
+					__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')));
+				}
 			}
 
-			CCrmProductRow::setPerRowInsert(true);
-			$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
-			$productRowsSaveTookPlace = true;
-			CCrmProductRow::setPerRowInsert(false);
-			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->readDealSaveData((int)$ID);
-
-			if ($isSaveSupplementReserveData)
-			{
-				\Bitrix\Crm\Reservation\EventsHandler\Deal::enableReservationAfterCrmDealProductRowsSave();
-			}
-
-			if(!$saveProductRowsResult)
-			{
-				__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')));
-			}
-		}
-
-		if (
-			(
-				$productRowsSaveTookPlace
-				|| !empty($productRows)
+			if (
+				(
+					$productRowsSaveTookPlace
+					|| !empty($productRows)
+				)
+				&& $isSaveSupplementReserveData
 			)
-			&& $isSaveSupplementReserveData
-		)
-		{
-			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->saveSupplementReserveData((int)$ID);
-			$enrichedProductRows = Crm\Reservation\DealProductsHitDataSupplement::getInstance()->getSupplementedProductRows((int)$ID);
-			if ($enrichedProductRows)
 			{
-				Crm\Service\Sale\Reservation\ReservationService::getInstance()->synchronizeOrderForDeal($ID, $enrichedProductRows);
+				Crm\Reservation\DealProductsHitDataSupplement::getInstance()->saveSupplementReserveData((int)$ID);
+				$enrichedProductRows = Crm\Reservation\DealProductsHitDataSupplement::getInstance()->getSupplementedProductRows((int)$ID);
+				if ($enrichedProductRows)
+				{
+					Crm\Service\Sale\Reservation\ReservationService::getInstance()->synchronizeOrderForDeal($ID, $enrichedProductRows);
+				}
 			}
 		}
 
@@ -1620,6 +1649,11 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 
 	CBitrixComponent::includeComponentClass('bitrix:crm.deal.details');
 	$component = new CCrmDealDetailsComponent();
+
+	if($ID > 0 && !\CCrmDeal::Exists($ID))
+	{
+		__CrmDealDetailsEndJsonResonse(['ERROR' => Main\Localization\Loc::getMessage('CRM_DEAL_NOT_FOUND')]);
+	}
 
 	if(!isset($params['NAME_TEMPLATE']))
 	{

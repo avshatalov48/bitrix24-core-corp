@@ -25,7 +25,8 @@ Extension::load([
 	'ui.alerts',
 	'ui.switcher',
 	'salescenter.manager',
-	'ui.sidepanel-content'
+	'ui.sidepanel-content',
+	'ui.design-tokens',
 ]);
 ?>
 
@@ -144,7 +145,7 @@ Extension::load([
 			</div>
 		</div>
 
-		<div data-bx-salescenter-block="form" style="display: none;" class="salescenter-main-settings ui-bg-color-white">
+		<div data-bx-salescenter-block="form" style="display: none;" class="salescenter-main-settings">
 			<div class="ui-alert ui-alert-danger" style="display: none;">
 				<span class="ui-alert-message" id="salescenter-paysystem-error"></span>
 			</div>

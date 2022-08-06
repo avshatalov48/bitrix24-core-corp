@@ -103,6 +103,7 @@
 	padding: 30px 50px;
 	border: 1px dashed rgba(82, 92, 105, 0.5);
 	margin: 0 15px 0 0;
+	border-radius: var(--ui-field-border-radius);
 }
 
 .salescneter-editor-img-load {
@@ -570,6 +571,7 @@
 	padding: 20px 17px 23px 20px;
 	background: #ebf9fe;
 	transition: background .2s linear;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .salescenter-paysystem-cashbox-block--disabled {

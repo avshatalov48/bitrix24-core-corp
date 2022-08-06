@@ -384,7 +384,7 @@
 
 /*other*/
 
-@media screen and (max-width: 1640px) {
+@media screen and (max-width: 1740px) {
 	.bx-layout-table:not(.menu-collapsed-mode) .task-interface-toolbar--item--3 .intranet-binding-menu-btn {
 		width: 37px;
 		height: 24px;

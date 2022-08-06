@@ -14,6 +14,9 @@ CJSCore::Init(['clipboard', 'ui.alerts']);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_form.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/entity_event.js');
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings no-background');
+
 $guid = $arResult['GUID'];
 $entityTypeID = $arResult['ENTITY_TYPE_ID'];
 $entityTypeName = CCrmOwnerType::ResolveName($entityTypeID);

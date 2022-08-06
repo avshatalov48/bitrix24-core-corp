@@ -28,6 +28,7 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 	'ui.tilegrid',
 	'ui.icons',
 	'ui.progressbar',
+	'ui.design-tokens',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.order.import.instagram.edit/templates/.default/style.css');

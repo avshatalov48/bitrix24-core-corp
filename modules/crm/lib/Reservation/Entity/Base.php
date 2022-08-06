@@ -121,48 +121,6 @@ abstract class Base
 		return $this->products;
 	}
 
-	/**
-	 * @return array
-	 */
-	public function getProductsByProductId(): array
-	{
-		$products = [];
-
-		foreach ($this->products as $product)
-		{
-			$entityProduct = $this->entityProducts[$product->getId()];
-			$productId = $entityProduct['PRODUCT_ID'];
-
-			$storeId = $entityProduct['STORE_ID'] ? (int)$entityProduct['STORE_ID'] : $this->defaultStore;
-
-			if (isset($products[$productId]))
-			{
-				$products[$productId]['QUANTITY'] += $entityProduct['QUANTITY'];
-
-				if (isset($products[$productId]['STORE_LIST'][$storeId]))
-				{
-					$products[$productId]['STORE_LIST'][$storeId] += $entityProduct['QUANTITY'];
-				}
-				else
-				{
-					$products[$productId]['STORE_LIST'][$storeId] = $entityProduct['QUANTITY'];
-				}
-			}
-			else
-			{
-				$products[$productId] = [
-					'QUANTITY' => $entityProduct['QUANTITY'],
-					'PRODUCT' => $entityProduct,
-					'STORE_LIST' => [
-						$storeId => $entityProduct['QUANTITY'],
-					],
-				];
-			}
-		}
-
-		return $products;
-	}
-
 	public function getOwnerTypeId(): int
 	{
 		return $this->ownerTypeId;

@@ -2,7 +2,6 @@
     display: -webkit-box;
     display: -ms-flexbox;
     display: flex;
-    margin: -15px -15px -20px;
 	height: calc(100vh - 74px);
 }
 
@@ -14,6 +13,7 @@
     /*overflow: hidden;*/
     padding: 23px;
     background: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .salescenter-company-contacts-item--gray {
@@ -113,6 +113,7 @@
     cursor: pointer;
     opacity: .4;
     -webkit-transition: .2s;
+    -o-transition: .2s;
     transition: .2s;
 }
 
@@ -126,7 +127,7 @@
 
 .salescenter-company-contacts-panel {
     position: absolute;
-    left: -24px;
+    left: 0;
     right: 0;
     bottom: 0;
     -webkit-box-shadow: 0 -2px 4px 0 #c6c9cb;

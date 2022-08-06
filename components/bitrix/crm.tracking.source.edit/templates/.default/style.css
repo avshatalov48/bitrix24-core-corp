@@ -18,6 +18,7 @@
 .crm-analytics-source-block {
 	background: #fff;
 	padding: 23px 22px 29px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-analytics-source-block + .crm-analytics-source-block {
@@ -82,6 +83,7 @@
 	position: relative;
 	padding: 15px;
 	background: rgba(241,245,246,.8);
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .crm-analytics-source-connect-btn-icon {
@@ -244,7 +246,7 @@
 .crm-analytics-utm-editor-field-input {
 	border: 1px solid #c6cdd3;
 	outline: none;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	color: #333;
 	padding: 7px 9px 9px;
 	width: 100%;
@@ -259,7 +261,7 @@
 }
 
 .crm-analytics-utm-editor-field-input-decs {
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	background: #d3f3fd;
 	font: 15px/21px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
 	color: #535c69;
@@ -396,7 +398,7 @@
 	min-height: 33px !important;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	font: 13px/29px "Helvetica Neue", Arial, Helvetica, sans-serif;
 }
 

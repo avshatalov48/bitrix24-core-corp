@@ -123,9 +123,11 @@ if (Loader::includeModule('recyclebin'))
 		 * Removes entity from recycle bin
 		 *
 		 * @param Entity $entity
+		 * @param array $params
+		 *
 		 * @return Result
 		 */
-		public static function removeFromRecyclebin(Entity $entity)
+		public static function removeFromRecyclebin(Entity $entity, array $params = [])
 		{
 			$result = new Result;
 

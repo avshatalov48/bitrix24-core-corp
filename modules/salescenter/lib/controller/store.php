@@ -26,7 +26,7 @@ class Store extends JsonController
 		if (!StoreV3Master::hasStore())
 		{
 			$result = StoreV3Master::addNewStore();
-			if (!$result)
+			if (!$result->isSuccess())
 			{
 				$this->addErrors($result->getErrors());
 

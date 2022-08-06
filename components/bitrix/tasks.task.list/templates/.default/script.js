@@ -42,7 +42,7 @@ BX.Tasks.GridActions = {
 		}, this));
 	},
 
-	onTagUpdateClick: function(taskId, event)
+	onTagUpdateClick: function(taskId, groupId, event)
 	{
 		var onRowUpdate = function(event) {
 			var id = event.getData().id;
@@ -77,12 +77,13 @@ BX.Tasks.GridActions = {
 			multiple: true,
 			dropdownMode: true,
 			compactView: true,
-			context: 'TASKS_TAG',
+			context: groupId ? 'TASKS_SCRUM_TAG_' + groupId : 'TASKS_TAG',
 			entities: [
 				{
 					id: 'task-tag',
 					options: {
-						taskId: taskId
+						taskId: taskId,
+						groupId: groupId
 					}
 				}
 			],
@@ -110,7 +111,7 @@ BX.Tasks.GridActions = {
 					setTimeout(function() {
 						var item = dialog.addItem({
 							id: searchQuery.getQuery(),
-							entityId: 'tag',
+							entityId: 'task-tag',
 							title: searchQuery.getQuery(),
 							tabs: 'all'
 						});
@@ -152,7 +153,7 @@ BX.Tasks.GridActions = {
 		dialog.show();
 	},
 
-	toggleFilter: function (options, selected)
+	toggleFilter: function (options, selected, extendable)
 	{
 		var filterManager = BX.Main.filterManager.getById(this.gridId);
 		if (!filterManager)
@@ -161,7 +162,42 @@ BX.Tasks.GridActions = {
 			return;
 		}
 
-		if (!selected)
+		if (selected)
+		{
+			this.reduceFilter(filterManager, options, extendable);
+		}
+		else
+		{
+			this.extendFilter(filterManager, options, extendable);
+		}
+	},
+
+	extendFilter: function(filterManager, options, extendable)
+	{
+		if (extendable)
+		{
+			options = this.extendCurrentFieldsValues(filterManager, options);
+		}
+		filterManager.getApi().extendFilter(options);
+	},
+
+	reduceFilter: function(filterManager, options, extendable)
+	{
+		var clearFilterFields = !extendable;
+
+		if (extendable)
+		{
+			options = this.reduceCurrentFieldsValues(filterManager, options);
+
+			Object.values(options).forEach(function(values) {
+				if (BX.Type.isArray(values) && values.length <= 0)
+				{
+					clearFilterFields = true;
+				}
+			});
+		}
+
+		if (!clearFilterFields)
 		{
 			filterManager.getApi().extendFilter(options);
 			return;
@@ -179,6 +215,52 @@ BX.Tasks.GridActions = {
 		});
 
 		filterManager.getSearch().apply();
+	},
+
+	 extendCurrentFieldsValues: function(filterManager, options)
+	 {
+		 var extendedOptions = options;
+		 var filterFieldsValues = filterManager.getFilterFieldsValues();
+
+		 Object.entries(options).forEach(function([key, values]) {
+			 var currentValues = filterFieldsValues[key];
+
+			 if (BX.Type.isArray(currentValues) && BX.Type.isArray(values))
+			 {
+				 values.forEach(function(value) {
+					 if (!currentValues.includes(value))
+					 {
+						 currentValues.push(value);
+						 extendedOptions[key] = currentValues;
+					 }
+				 });
+			 }
+		 });
+
+		 return extendedOptions;
+	 },
+
+	reduceCurrentFieldsValues: function(filterManager, options)
+	{
+		var reducedOptions = options;
+		var filterFieldsValues = filterManager.getFilterFieldsValues();
+
+		Object.entries(options).forEach(function([key, values]) {
+			var currentValues = filterFieldsValues[key];
+
+			if (BX.Type.isArray(currentValues) && BX.Type.isArray(values))
+			{
+				values.forEach(function(value) {
+					if (currentValues.includes(value))
+					{
+						currentValues.splice(currentValues.indexOf(value), 1);
+						reducedOptions[key] = currentValues;
+					}
+				});
+			}
+		});
+
+		return reducedOptions;
 	},
 
 	filter: function(options)
@@ -1180,7 +1262,9 @@ BX(function() {
 		{
 			parameters = parameters || {};
 
-			var ajaxActionParams = {RETURN_ACCESS: 'Y'};
+			var ajaxActionParams = {
+				RETURN_ACCESS: 'Y'
+			};
 			if (parameters.isCompleteComment === false || parameters.userId === this.userId)
 			{
 				ajaxActionParams.SIFT_THROUGH_FILTER = {
@@ -1189,10 +1273,13 @@ BX(function() {
 				};
 			}
 
-			BX.ajax.runAction('tasks.task.list', {data: {
-				filter: {ID: taskId},
-				params: ajaxActionParams
-			}}).then(function(response) {
+			BX.ajax.runAction('tasks.task.list', {
+				data: {
+					filter: {ID: taskId},
+					params: ajaxActionParams,
+					start: -1
+				}
+			}).then(function(response) {
 				this.onCheckTaskSuccess(response, taskId, parameters);
 			}.bind(this));
 		},

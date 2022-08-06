@@ -492,17 +492,6 @@ class CBPRpaApproveActivity
 		return $users;
 	}
 
-	public function HandleFault(Exception $exception)
-	{
-		$status = $this->Cancel();
-		if ($status == CBPActivityExecutionStatus::Canceling)
-		{
-			return CBPActivityExecutionStatus::Faulting;
-		}
-
-		return $status;
-	}
-
 	public function Cancel()
 	{
 		if ($this->taskId > 0)

@@ -219,7 +219,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		$this->arResult['HIDE_DESC'] = ($userViewTypes['hide-desc'] ?? 'N') == 'Y';
 
 		$this->arResult['HIDE_DESC_FZ152'] = true;
-		if (Context::getCurrent()->getLanguage() == 'ru' && !(ModuleManager::isModuleInstalled('bitrix24') && \CBitrix24::getPortalZone() == 'ua'))
+		if (in_array(Main\Application::getInstance()->getLicense()->getRegion(), ['ru', 'by']))
 		{
 			$notifyOptions = \CUserOptions::GetOption('crm', 'notify_webform', array());
 			$this->arResult['HIDE_DESC_FZ152'] = (is_array($notifyOptions) && $notifyOptions['ru_fz_152'] == 'Y');

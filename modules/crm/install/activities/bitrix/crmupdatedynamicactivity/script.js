@@ -1,4 +1,4 @@
-(function (exports,main_core,main_popup) {
+(function (exports,main_core,main_popup,bizproc_automation) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
@@ -20,6 +20,12 @@
 	        this.entityTypeDependentElements = document.querySelectorAll('[data-role="bca-cuda-entity-type-id-dependent"]');
 	      }
 
+	      this.document = new bizproc_automation.Document({
+	        rawDocumentType: this.documentType,
+	        documentFields: options.fieldsMap,
+	        title: options.documentName
+	      });
+
 	      if (this.isRobot) {
 	        this.fieldsListSelect = document.querySelector('[data-role="bca-cuda-fields-list"]');
 	      } else {
@@ -32,15 +38,7 @@
 	      this.filterFieldsContainer = document.querySelector('[data-role="bca-cuda-filter-fields-container"]');
 	      this.filteringFieldsPrefix = options.filteringFieldsPrefix;
 	      this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap));
-
-	      if (!main_core.Type.isNil(options.documentName)) {
-	        BX.Bizproc.Automation.API.documentName = options.documentName;
-	      }
-
-	      if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup) {
-	        this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup(options.conditions);
-	      }
-
+	      this.conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
 	      this.currentValues = new Map();
 	      Array.from(this.fieldsMap.keys()).forEach(function (entityTypeId) {
 	        return _this.currentValues.set(entityTypeId, {});
@@ -66,17 +64,26 @@
 	      } else if (!this.isRobot && this.addConditionButton) {
 	        main_core.Event.bind(this.addConditionButton, 'click', this.onAddConditionButtonClick.bind(this));
 	      }
+
+	      this.initAutomationContext();
+	    }
+	  }, {
+	    key: "initAutomationContext",
+	    value: function initAutomationContext() {
+	      try {
+	        bizproc_automation.getGlobalContext();
+	      } catch (error) {
+	        bizproc_automation.setGlobalContext(new bizproc_automation.AutomationContext({
+	          document: this.document
+	        }));
+	      }
 	    }
 	  }, {
 	    key: "onEntityTypeIdChange",
 	    value: function onEntityTypeIdChange() {
 	      this.currentEntityTypeId = this.entityTypeIdSelect.value;
 	      main_core.Dom.clean(this.filterFieldsContainer);
-
-	      if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup) {
-	        this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup();
-	      }
-
+	      this.conditionGroup = new bizproc_automation.ConditionGroup();
 	      Array.from(this.entitiesFieldsContainers.children).forEach(function (elem) {
 	        return main_core.Dom.remove(elem);
 	      });
@@ -101,7 +108,7 @@
 	    key: "renderFilterFields",
 	    value: function renderFilterFields() {
 	      if (!main_core.Type.isNil(this.conditionGroup) && !main_core.Type.isNil(this.currentEntityTypeId)) {
-	        var selector = new BX.Bizproc.Automation.ConditionGroupSelector(this.conditionGroup, {
+	        var selector = new bizproc_automation.ConditionGroupSelector(this.conditionGroup, {
 	          fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 	          fieldPrefix: this.filteringFieldsPrefix
 	        });
@@ -293,5 +300,5 @@
 
 	namespace.CrmUpdateDynamicActivity = CrmUpdateDynamicActivity;
 
-}((this.window = this.window || {}),BX,BX.Main));
+}((this.window = this.window || {}),BX,BX.Main,BX.Bizproc));
 //# sourceMappingURL=script.js.map

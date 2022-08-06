@@ -11,7 +11,7 @@ CJSCore::RegisterExt('voximplant_config_edit', array(
 
 CJSCore::Init([
 	"voximplant.common", "voximplant_config_edit", "voximplant.numberrent", "ui.tilegrid", "ui.buttons",
-	"ui.forms", "ui.alerts", "ui.hint", "player", "sidepanel", "phone_number"
+	"ui.forms", "ui.alerts", "ui.hint", "player", "sidepanel", "phone_number", "ui.design-tokens",
 ]);
 
 $melodiesToLoad = [];
@@ -397,7 +397,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.info.helper", "", array());
 							   class="voximplant-number-settings-label"><?= Loc::getMessage("VI_CONFIG_EDIT_RECORD") ?></label>
 
 						<?if ($arResult['RECORD_LIMIT']['ENABLE']):?>
-							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_RECORD_ALT", Array("#LIMIT#" => $arResult['RECORD_LIMIT']['LIMIT'], '#REMAINING#' => $arResult['RECORD_LIMIT']['REMAINING']))?>"><div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_records')"  class="tel-lock tel-lock-half <?=(CVoxImplantAccount::IsDemo()? 'tel-lock-demo': '')?>"></div></div>
+							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_RECORD_ALT", Array("#LIMIT#" => $arResult['RECORD_LIMIT']['LIMIT'], '#REMAINING#' => $arResult['RECORD_LIMIT']['REMAINING']))?>"><div onclick="BX.UI.InfoHelper.show('limit_record_100_call_month')"  class="tel-lock tel-lock-half <?=(CVoxImplantAccount::IsDemo()? 'tel-lock-demo': '')?>"></div></div>
 						<?elseif (!$arResult['RECORD_LIMIT']['ENABLE'] && $arResult['RECORD_LIMIT']['DEMO']):?>
 							<div class="tel-lock-holder-title" title="<?=GetMessage("VI_CONFIG_LOCK_ALT")?>"><div onclick="BX.UI.InfoHelper.show('limit_contact_center_telephony_records')"  class="tel-lock tel-lock-demo"></div></div>
 						<?endif;?>

@@ -282,6 +282,7 @@ class EpicService implements Errorable
 
 			$queryObject = EpicTable::getList([
 				'filter' => ['GROUP_ID'=> $groupId],
+				'order' => ['ID' => 'DESC'],
 			]);
 			foreach ($queryObject->fetchAll() as $data)
 			{

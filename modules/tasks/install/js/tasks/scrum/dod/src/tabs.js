@@ -1,6 +1,8 @@
 import {Dom, Event, Loc, Tag, Text} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 
+import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
+
 import {ItemType} from './item.type';
 import {TypeStorage} from './type.storage';
 
@@ -11,6 +13,8 @@ export class Tabs extends EventEmitter
 		super();
 
 		this.setEventNamespace('BX.Tasks.Scrum.Dod.Tabs');
+
+		this.sidePanelManager = BX.SidePanel.Instance;
 
 		this.tabNodes = new Map();
 
@@ -75,8 +79,8 @@ export class Tabs extends EventEmitter
 			this.tabNodes.set(type.getId(), tabNode);
 
 			Event.bind(tabNode, 'click', (event) => {
-				const edit = event.target.classList.contains('tasks-scrum-dod-settings-type-edit');
-				const remove = event.target.classList.contains('tasks-scrum-dod-settings-type-remove');
+				const edit = Dom.hasClass(event.target, 'tasks-scrum-dod-settings-type-edit');
+				const remove = Dom.hasClass(event.target, 'tasks-scrum-dod-settings-type-remove');
 				if (!this.isActiveType(type))
 				{
 					this.switchType(type, tabNode);
@@ -211,9 +215,19 @@ export class Tabs extends EventEmitter
 
 	removeType(type: ItemType, typeNode: HTMLElement)
 	{
-		top.BX.UI.Dialogs.MessageBox.confirm(
-			Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE'),
-			(messageBox) => {
+		const popupOptions = {};
+		const currentSlider = this.sidePanelManager.getTopSlider();
+		if (currentSlider)
+		{
+			popupOptions.targetContainer = currentSlider.getContainer();
+		}
+
+		(new MessageBox({
+			message: Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE'),
+			popupOptions: popupOptions,
+			okCaption: Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
+			buttons: MessageBoxButtons.OK_CANCEL,
+			onOk: (messageBox) => {
 				this.tabNodes.delete(type.getId());
 				if (this.isActiveType(type))
 				{
@@ -223,9 +237,8 @@ export class Tabs extends EventEmitter
 				Dom.remove(typeNode);
 				this.emit('removeType', type);
 				messageBox.close();
-			},
-			Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
-		);
+			}
+		})).show();
 	}
 
 	setActiveType(type: ?ItemType)

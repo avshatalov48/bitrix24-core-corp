@@ -10,21 +10,38 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Web\Json;
 
-\Bitrix\Main\UI\Extension::load(
-	['ui.buttons', 'ui.hint', 'ui.notification', 'ui.alerts', 'ui.dialogs.messagebox', 'ui.entity-selector']
-);
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.hint',
+	'ui.notification',
+	'ui.alerts',
+	'ui.dialogs.messagebox',
+	'ui.entity-selector',
+	'ui.design-tokens',
+]);
 
 $messages = Loc::loadLanguageFile(
 	\Bitrix\Main\Application::getDocumentRoot()
 	. Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/template.php')
 );
 Asset::getInstance()->addJs(Path::normalize('/bitrix/activities/bitrix/crmupdatedynamicactivity/script.js'));
-Asset::getInstance()->addJs(
-	Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/script.js')
-);
+
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 $map = $dialog->getMap();
 ?>
+
+<?php
+global $APPLICATION;
+$APPLICATION->IncludeComponent(
+	'bitrix:bizproc.automation',
+	'',
+	[
+		'API_MODE' => 'Y',
+		'DOCUMENT_TYPE' => $dialog->getDocumentType(),
+	]
+);
+?>
+
 <?php foreach ($map as $field): ?>
 	<?php if (isset($field['Name'], $field['Type'])): ?>
 		<tr>

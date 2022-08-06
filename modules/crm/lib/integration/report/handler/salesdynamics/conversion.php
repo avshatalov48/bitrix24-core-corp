@@ -65,7 +65,7 @@ class Conversion extends Handler\Deal implements IReportMultipleData
 			$toDateValue = ($timePeriodValue['to'] instanceof DateTime) ? $timePeriodValue['to'] : new DateTime($timePeriodValue['to']);
 			$fromDateValue = ($timePeriodValue['from'] instanceof DateTime) ? $timePeriodValue['from'] : new DateTime($timePeriodValue['from']);
 
-			$query->whereBetween("CLOSEDATE", $fromDateValue, $toDateValue);
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 	}
 
@@ -90,11 +90,7 @@ class Conversion extends Handler\Deal implements IReportMultipleData
 			$fromDateValue = ($timePeriodValue['from'] instanceof DateTime) ? $timePeriodValue['from'] : new DateTime($timePeriodValue['from']);
 
 			$query->where('DATE_CREATE', '<=', $toDateValue);
-			$query->where(Query::filter()
-				->logic('or')
-				->whereNull('CLOSEDATE')
-				->where('CLOSEDATE', '>=', $fromDateValue )
-			);
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 	}
 

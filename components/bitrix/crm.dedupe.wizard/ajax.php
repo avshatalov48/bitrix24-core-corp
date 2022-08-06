@@ -1,13 +1,16 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
 
-use Bitrix\Crm\Agent\Duplicate\Background\Helper;
-use Bitrix\Crm\Agent\Duplicate\Background\IndexRebuild;
-use Bitrix\Crm\Agent\Duplicate\Background\Merge;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
 use Bitrix\Crm;
+use Bitrix\Crm\Integrity\DuplicateIndexBuilder;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main;
 use Bitrix\Main\HttpResponse;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
@@ -17,13 +20,26 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 	protected $currentUserID = 0;
 	protected $currentUserPermissions = null;
 
+	protected function getHelper(): CCrmDedupeWizardComponentHelper
+	{
+		static $helper = null;
+
+		if ($helper === null)
+		{
+			include_once(Main\IO\Path::normalize('helper.php'));
+			$helper = CCrmDedupeWizardComponentHelper::getInstance();
+		}
+
+		return $helper;
+	}
+
 	protected function processBeforeAction(\Bitrix\Main\Engine\Action $action)
 	{
 		CModule::IncludeModule('crm');
 
-		$this->currentUser = \CCrmSecurityHelper::GetCurrentUser();
+		$this->currentUser = CCrmSecurityHelper::GetCurrentUser();
 		$this->currentUserID = (int)$this->currentUser->GetID();
-		$this->currentUserPermissions = \CCrmPerms::GetUserPermissions($this->currentUserID);
+		$this->currentUserPermissions = CCrmPerms::GetUserPermissions($this->currentUserID);
 
 		return parent::processBeforeAction($action);
 	}
@@ -72,7 +88,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			return false;
 		}
 
-		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
+		$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
 		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			$this->addError(new \Bitrix\Main\Error('Entity Type Name is not defined or invalid.'));
@@ -126,7 +142,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 					$typeID,
 					$entityTypeID,
 					$this->currentUserID,
-					$enablePermissionCheck = !CCrmPerms::IsAdmin($this->currentUserID),
+					!Container::getInstance()->getUserPermissions($this->currentUserID)->isAdmin(),
 					array('SCOPE' => $effectiveScope)
 				);
 				$totalItemQty += $builder->getTotalCount();
@@ -137,16 +153,13 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 		}
 		else
 		{
-			$effectiveTypeIDs = isset($progressData['TYPE_IDS'])
-				? $progressData['TYPE_IDS'] : null;
+			$effectiveTypeIDs = $progressData['TYPE_IDS'] ?? null;
 			if(!is_array($effectiveTypeIDs) || empty($effectiveTypeIDs))
 			{
 				$effectiveTypeIDs = $typeIDs;
 			}
-			$effectiveScope = isset($progressData['CURRENT_SCOPE'])
-				? $progressData['CURRENT_SCOPE'] : Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE;
-			$currentTypeIndex = isset($progressData['CURRENT_TYPE_INDEX'])
-				? (int)$progressData['CURRENT_TYPE_INDEX'] : 0;
+			$effectiveScope = $progressData['CURRENT_SCOPE'] ?? Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE;
+			$currentTypeIndex = (int)($progressData['CURRENT_TYPE_INDEX'] ?? 0);
 		}
 
 		$effectiveTypeQty = count($effectiveTypeIDs);
@@ -159,11 +172,11 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			$effectiveTypeIDs[$currentTypeIndex],
 			$entityTypeID,
 			$this->currentUserID,
-			$enablePermissionCheck = !CCrmPerms::IsAdmin($this->currentUserID),
+			!Container::getInstance()->getUserPermissions($this->currentUserID)->isAdmin(),
 			array('SCOPE' => $effectiveScope)
 		);
 
-		$buildData = isset($progressData['BUILD_DATA']) ? $progressData['BUILD_DATA'] : array();
+		$buildData = $progressData['BUILD_DATA'] ?? [];
 
 		$offset = isset($buildData['OFFSET']) ? (int)$buildData['OFFSET'] : 0;
 		if($offset === 0)
@@ -231,81 +244,28 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 		);
 	}
 
-	protected function getIndexAgentClassName(string $entityTypeName): string
+	public function rebuildIndexBackgroundAction($entityTypeName, array $types, string $scope, string $tryStart): array
 	{
-		return Helper::getInstance()->getAgentClassName($entityTypeName, 'IndexRebuild');
-	}
-
-	protected function getMergeAgentClassName(string $entityTypeName): string
-	{
-		return Helper::getInstance()->getAgentClassName($entityTypeName, 'Merge');
-	}
-
-	protected function getIndexAgentState(string $entityTypeName)
-	{
-		return Helper::getInstance()->getAgentState($this->currentUserID, $entityTypeName, 'IndexRebuild');
-	}
-
-	protected function getMergeAgentState(string $entityTypeName)
-	{
-		return Helper::getInstance()->getAgentState($this->currentUserID, $entityTypeName, 'Merge');
-	}
-
-	/**
-	 * @param string $entityTypeName
-	 * @param string $agentName
-	 * @return IndexRebuild|Merge|null
-	 */
-	protected function getAgent(string $entityTypeName, string $agentName)
-	{
-		/** @var IndexRebuild|Merge $agentClassName */
-		$agentClassName = Helper::getInstance()->getAgentClassName($entityTypeName, $agentName);
-
-		return $agentClassName::getInstance($this->currentUserID);
-	}
-
-	protected function getIndexAgent(string $entityTypeName): IndexRebuild
-	{
-		return $this->getAgent($entityTypeName, 'IndexRebuild');
-	}
-
-	protected function getMergeAgent(string $entityTypeName): Merge
-	{
-		return $this->getAgent($entityTypeName, 'Merge');
-	}
-
-	public function rebuildIndexBackgroundAction($entityTypeName, array $types, $scope, string $tryStart): array
-	{
-		/** @var IndexRebuild $agentClassName */
-		$agentClassName = $this->getIndexAgentClassName($entityTypeName);
-
-		if ($tryStart === 'Y')
-		{
-			$agent = $agentClassName::getInstance($this->currentUserID);
-			$agent->start($types, $scope);
-		}
-
-		return $this->getIndexAgentState($entityTypeName);
+		$types = ($tryStart === 'Y') ? $types : [];
+		return $this->getHelper()->getDuplicateIndexState($this->currentUserID, $entityTypeName, $types, $scope);
 	}
 
 	public function stopRebuildIndexBackgroundAction($entityTypeName): array
 	{
-		$this->getIndexAgent($entityTypeName)->stop();
-
-		return $this->getIndexAgentState($entityTypeName);
+		return $this->getHelper()->stopDuplicateIndex($this->currentUserID, $entityTypeName);
 	}
 
 	public function deleteRebuildIndexBackgroundAction($entityTypeName): bool
 	{
-		$this->getIndexAgent($entityTypeName)->delete();
+		$this->getHelper()->getIndexAgent($this->currentUserID, $entityTypeName)->delete();
 
 		return true;
 	}
 
 	public function mergeAction($entityTypeName, array $types, $scope, $mode = '')
 	{
-		$entityTypeID = \CCrmOwnerType::ResolveID($entityTypeName);
-		if(!\CCrmOwnerType::IsDefined($entityTypeID))
+		$entityTypeID = CCrmOwnerType::ResolveID($entityTypeName);
+		if(!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			$this->addError(new Main\Error('Entity Type Name is not defined or invalid.'));
 			return false;
@@ -342,7 +302,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			return false;
 		}
 
-		$enablePermissionCheck = !\CCrmPerms::IsAdmin($this->currentUserID);
+		$enablePermissionCheck = !Container::getInstance()->getUserPermissions($this->currentUserID)->isAdmin();
 		$list = new Crm\Integrity\DuplicateList(
 			Crm\Integrity\DuplicateIndexType::joinType($typeIDs),
 			$entityTypeID,
@@ -357,7 +317,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 		$list->setScope($scope);
 		$list->setStatusIDs([ Crm\Integrity\DuplicateStatus::PENDING ]);
 
-		$list->setSortTypeID($entityTypeID === \CCrmOwnerType::Company
+		$list->setSortTypeID($entityTypeID === CCrmOwnerType::Company
 			? Crm\Integrity\DuplicateIndexType::ORGANIZATION
 			: Crm\Integrity\DuplicateIndexType::PERSON
 		);
@@ -410,7 +370,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 			{
 				$result['STATUS'] = 'CONFLICT';
 
-				\Bitrix\Crm\Integrity\DuplicateIndexBuilder::setStatusID(
+				DuplicateIndexBuilder::setStatusID(
 					$this->currentUserID,
 					$entityTypeID,
 					$criterion->getIndexTypeID(),
@@ -424,7 +384,7 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 				$result['STATUS'] = 'ERROR';
 				$result['MESSAGE'] = $e->getLocalizedMessage();
 
-				\Bitrix\Crm\Integrity\DuplicateIndexBuilder::setStatusID(
+				DuplicateIndexBuilder::setStatusID(
 					$this->currentUserID,
 					$entityTypeID,
 					$criterion->getIndexTypeID(),
@@ -446,28 +406,24 @@ class CCrmDedupeWizardComponentAjaxController extends Main\Engine\Controller
 
 	public function mergeBackgroundAction($entityTypeName, array $types, $scope, string $tryStart): array
 	{
-		/** @var Merge $agentClassName */
-		$agentClassName = $this->getMergeAgentClassName($entityTypeName);
-
 		if ($tryStart === 'Y')
 		{
-			$agent = $agentClassName::getInstance($this->currentUserID);
-			$agent->start($types, $scope);
+			$this->getHelper()->getMergeAgent($this->currentUserID, $entityTypeName)->start($types, $scope);
 		}
 
-		return $this->getMergeAgentState($entityTypeName);
+		return $this->getHelper()->getMergeAgentState($this->currentUserID, $entityTypeName);
 	}
 
 	public function stopMergeBackgroundAction($entityTypeName): array
 	{
-		$this->getMergeAgent($entityTypeName)->stop();
+		$this->getHelper()->getMergeAgent($this->currentUserID, $entityTypeName)->stop();
 
-		return $this->getMergeAgentState($entityTypeName);
+		return $this->getHelper()->getMergeAgentState($this->currentUserID, $entityTypeName);
 	}
 
 	public function deleteMergeBackgroundAction($entityTypeName): bool
 	{
-		$this->getMergeAgent($entityTypeName)->delete();
+		$this->getHelper()->getMergeAgent($this->currentUserID, $entityTypeName)->delete();
 
 		return true;
 	}

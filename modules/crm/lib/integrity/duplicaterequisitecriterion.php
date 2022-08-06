@@ -18,6 +18,8 @@ class DuplicateRequisiteCriterion extends DuplicateCriterion
 
 	public function __construct($countryId, $fieldName, $value)
 	{
+		parent::__construct();
+
 		$this->useStrictComparison = true;
 		$this->setCountryId($countryId);
 		$this->setFieldName($fieldName);
@@ -484,7 +486,7 @@ class DuplicateRequisiteCriterion extends DuplicateCriterion
 		}
 		return $results;
 	}
-	public static function prepareSortParams($entityTypeID, array &$entityIDs, $countryId = 0, $fieldName = '')
+	public static function prepareSortParams($entityTypeID, array $entityIDs, $countryId = 0, $fieldName = '')
 	{
 		if(empty($entityIDs))
 		{
@@ -688,7 +690,7 @@ class DuplicateRequisiteCriterion extends DuplicateCriterion
 		}
 		else
 		{
-			$filter['%VALUE'] = new \CSQLWhereExpression('?s', $value.'%');
+			$filter['%VALUE'] = new Main\DB\SqlExpression('?s', $value.'%');
 		}
 
 		if(\CCrmOwnerType::IsDefined($entityTypeID))

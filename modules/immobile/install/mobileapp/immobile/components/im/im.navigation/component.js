@@ -3,10 +3,15 @@
 
 	console.log('Navigation is loaded.');
 
+	const { EntityReady } = jn.require('entity-ready');
+
 	class NavigationManager
 	{
 		constructor()
 		{
+			this.isReady = false;
+			EntityReady.addCondition('im.navigation', () => this.isReady);
+
 			this.firstSetBadge = true;
 			this.counters = {};
 
@@ -14,7 +19,7 @@
 			this.previousTab = 'none';
 
 			this.tabMapping = {
-				'chats': 'im.recent',
+				'chats': 'im.messenger',
 				'openlines': 'im.openlines.recent',
 				'notifications': 'im.notify',
 			};
@@ -28,6 +33,10 @@
 			BX.addCustomEvent("ImRecent::counter::list", this.onUpdateCounters.bind(this));
 			BX.addCustomEvent("onUpdateCounters", this.onUpdateCounters.bind(this));
 			BX.postComponentEvent("requestCounters", [{component: 'im.navigation'}], "communication");
+
+
+			EntityReady.ready('im.navigation');
+			this.isReady = true;
 		}
 
 		onTabChange(id)

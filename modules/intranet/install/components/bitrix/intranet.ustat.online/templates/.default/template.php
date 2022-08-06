@@ -5,7 +5,8 @@
 	"ui.icons.b24",
 	"ui.fonts.opensans",
 	"ui.hint",
-	"ui.design-tokens"
+	"ui.design-tokens",
+	"ui.fonts.opensans",
 ]);
 CJSCore::Init("finder");
 

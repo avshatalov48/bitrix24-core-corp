@@ -1,6 +1,9 @@
 (function (exports,main_core,main_core_events,ui_dialogs_messagebox,crm_router) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var namespace = main_core.Reflection.namespace('BX.Crm');
 
 	var ItemListComponent = /*#__PURE__*/function () {
@@ -33,7 +36,7 @@
 
 	            if (currentUrl.getPath() !== backendUrl.getPath()) {
 	              currentUrl.setPath(backendUrl.getPath());
-	              currentUrl.setQueryParams(babelHelpers.objectSpread({}, currentUrl.getQueryParams(), backendUrl.getQueryParams()));
+	              currentUrl.setQueryParams(_objectSpread(_objectSpread({}, currentUrl.getQueryParams()), backendUrl.getQueryParams()));
 	            }
 
 	            requestParams.url = currentUrl.toString();
@@ -87,6 +90,21 @@
 	        }
 	      }
 
+	      main_core_events.EventEmitter.subscribe('Crm.EntityConverter.Converted', function (event) {
+	        var parameters = event.data;
+
+	        if (!main_core.Type.isArray(parameters) || !parameters[1]) {
+	          return;
+	        }
+
+	        var eventData = parameters[1];
+
+	        if (!_this2.entityTypeName || !eventData.entityTypeName) {
+	          return;
+	        }
+
+	        _this2.reloadGridAfterTimeout();
+	      });
 	      main_core_events.EventEmitter.subscribe("onLocalStorageSet", function (event) {
 	        var parameters = event.data;
 
@@ -107,7 +125,7 @@
 	          return;
 	        }
 
-	        if (!_this2.entityTypeName || !eventData.entityTypeName || _this2.entityTypeName !== eventData.entityTypeName) {
+	        if (!_this2.entityTypeName || !eventData.entityTypeName) {
 	          return;
 	        }
 
@@ -217,7 +235,7 @@
 	            });
 
 	            _this4.reloadGridAfterTimeout();
-	          }).catch(_this4.showErrorsFromResponse.bind(_this4));
+	          })["catch"](_this4.showErrorsFromResponse.bind(_this4));
 	          messageBox.close();
 	        }
 	      });

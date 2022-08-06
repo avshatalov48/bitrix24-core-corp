@@ -3,9 +3,12 @@ namespace Bitrix\Crm\Integration\Main;
 
 use Bitrix\Crm\Activity\Provider\Email;
 use Bitrix\Crm\ActivityTable;
-use Bitrix\Main\Application;
-use Bitrix\Main\Event;
+use Bitrix\Crm\Integrity;
+use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\WebForm;
+use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Mail\Callback\Result;
@@ -49,7 +52,17 @@ class EventHandler
 	 */
 	public static function onAfterUserTypeDelete(array $field, $id)
 	{
+		$crmEntityPrefix = ServiceLocator::getInstance()->get('crm.type.factory')->getUserFieldEntityPrefix();
+		if(strpos($field['ENTITY_ID'], $crmEntityPrefix) === 0)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveIDByUFEntityID($field['ENTITY_ID']);
+			if(isset($field['FIELD_NAME']))
+			{
+				(new ItemCategoryUserField($entityTypeId))->deleteByName($field['FIELD_NAME']);
+			}
+		}
 
+		Integrity\Volatile\EventHandler::onUserFieldDelete($field, (int)$id);
 	}
 
 	private const ACTIVITY_QUERY_TTL = 600;

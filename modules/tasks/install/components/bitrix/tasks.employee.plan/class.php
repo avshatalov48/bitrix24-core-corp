@@ -568,7 +568,7 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 				$tasks[] = $task;
 			}
 
-			TaskRegistry::getInstance()->load(array_keys($taskIds), true);
+			(new \Bitrix\Tasks\Access\AccessCacheLoader())->preload(User::getId(), array_keys($taskIds));
 
 			foreach ($tasks as &$task)
 			{

@@ -2,12 +2,15 @@
 
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Translation;
 use Bitrix\Main\Text\Encoding;
-use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
@@ -337,7 +340,7 @@ class EntityBankDetail
 		$countryId = 0;
 		$entityId = (int)$entityId;
 
-		if ($entityTypeId === \CCrmOwnerType::Requisite && $entityId > 0)
+		if ($entityTypeId === CCrmOwnerType::Requisite && $entityId > 0)
 		{
 			$requisite = EntityRequisite::getSingleInstance();
 			$countryId = $requisite->getCountryIdByRequisiteId($entityId);
@@ -376,7 +379,7 @@ class EntityBankDetail
 
 		$countryId = 0;
 		$bankDetailId = (int)$bankDetailId;
-		$entityTypeId = \CCrmOwnerType::Undefined;
+		$entityTypeId = CCrmOwnerType::Undefined;
 		$entityId = 0;
 		$isUpdate = ($bankDetailId > 0);
 
@@ -601,9 +604,23 @@ class EntityBankDetail
 		$id = $result->isSuccess() ? (int)$result->getId() : 0;
 		if ($id > 0)
 		{
-			$entityTypeId = isset($fields['ENTITY_TYPE_ID']) ? (int)$fields['ENTITY_TYPE_ID'] : \CCrmOwnerType::Undefined;
+			$entityTypeId =
+				isset($fields['ENTITY_TYPE_ID'])
+					? (int)$fields['ENTITY_TYPE_ID']
+					: CCrmOwnerType::Undefined
+			;
 			$entityId = isset($fields['ENTITY_ID']) ? (int)$fields['ENTITY_ID'] : 0;
 			DuplicateBankDetailCriterion::registerByParent($entityTypeId, $entityId);
+			if ($entityTypeId === CCrmOwnerType::Requisite)
+			{
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					CCrmOwnerType::Requisite,
+					$entityId,
+					[FieldCategory::BANK_DETAIL]
+				);
+				//endregion Register volatile duplicate criterion fields
+			}
 		}
 
 		//region Send event
@@ -801,11 +818,11 @@ class EntityBankDetail
 		$fields['MODIFY_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
 
 		$parentInfoAfterUpdate = $entityBeforeUpdate = array(
-			'ENTITY_TYPE_ID' => \CCrmOwnerType::Undefined,
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Undefined,
 			'ENTITY_ID' => 0
 		);
 		$parentInfoBeforeUpdate = self::getOwnerEntityById($id);
-		if ($parentInfoBeforeUpdate['ENTITY_TYPE_ID'] === \CCrmOwnerType::Requisite
+		if ($parentInfoBeforeUpdate['ENTITY_TYPE_ID'] === CCrmOwnerType::Requisite
 			&& $parentInfoBeforeUpdate['ENTITY_ID'] > 0)
 		{
 			$parentInfoAfterUpdate = $parentInfoBeforeUpdate;
@@ -815,9 +832,9 @@ class EntityBankDetail
 			$parentInfoAfterUpdate['ENTITY_TYPE_ID'] = (int)$fields['ENTITY_TYPE_ID'];
 		if (isset($fields['ENTITY_ID']))
 			$parentInfoAfterUpdate['ENTITY_ID'] = (int)$fields['ENTITY_ID'];
-		if ($parentInfoBeforeUpdate['ENTITY_TYPE_ID'] === \CCrmOwnerType::Requisite
+		if ($parentInfoBeforeUpdate['ENTITY_TYPE_ID'] === CCrmOwnerType::Requisite
 			&& $parentInfoBeforeUpdate['ENTITY_ID'] > 0
-			&& $parentInfoAfterUpdate['ENTITY_TYPE_ID'] === \CCrmOwnerType::Requisite
+			&& $parentInfoAfterUpdate['ENTITY_TYPE_ID'] === CCrmOwnerType::Requisite
 			&& $parentInfoAfterUpdate['ENTITY_ID'] > 0
 			&& $parentInfoBeforeUpdate['ENTITY_TYPE_ID'] === $parentInfoAfterUpdate['ENTITY_TYPE_ID']
 			&& $parentInfoBeforeUpdate['ENTITY_ID'] === $parentInfoAfterUpdate['ENTITY_ID'])
@@ -827,10 +844,10 @@ class EntityBankDetail
 		else
 		{
 			$entityAfterUpdate = array(
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::Undefined,
+				'ENTITY_TYPE_ID' => CCrmOwnerType::Undefined,
 				'ENTITY_ID' => 0
 			);
-			if ($parentInfoAfterUpdate['ENTITY_TYPE_ID'] === \CCrmOwnerType::Requisite
+			if ($parentInfoAfterUpdate['ENTITY_TYPE_ID'] === CCrmOwnerType::Requisite
 				&& $parentInfoAfterUpdate['ENTITY_ID'] > 0)
 			{
 				$entityAfterUpdate = EntityRequisite::getOwnerEntityById($parentInfoAfterUpdate['ENTITY_ID']);
@@ -839,8 +856,9 @@ class EntityBankDetail
 		unset($parentInfoBeforeUpdate, $parentInfoAfterUpdate);
 		$entityTypeIdModified = $entityIdModified = false;
 		$entityTypeId = $entityAfterUpdate['ENTITY_TYPE_ID'];
-		if (\CCrmOwnerType::IsDefined($entityTypeId)
-			&& \CCrmOwnerType::IsDefined($entityBeforeUpdate['ENTITY_TYPE_ID'])
+		if (
+			CCrmOwnerType::IsDefined($entityTypeId)
+			&& CCrmOwnerType::IsDefined($entityBeforeUpdate['ENTITY_TYPE_ID'])
 			&& $entityTypeId !== $entityBeforeUpdate['ENTITY_TYPE_ID'])
 		{
 			$entityTypeIdModified = true;
@@ -878,22 +896,53 @@ class EntityBankDetail
 			if ($entityTypeIdModified || $entityIdModified)
 			{
 				DuplicateBankDetailCriterion::registerByEntity(
-					$entityBeforeUpdate['ENTITY_TYPE_ID'], $entityBeforeUpdate['ENTITY_ID']
+					$entityBeforeUpdate['ENTITY_TYPE_ID'],
+					$entityBeforeUpdate['ENTITY_ID']
 				);
-
 				DuplicateBankDetailCriterion::unregister($entityTypeId, $entityId);
+
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					$entityBeforeUpdate['ENTITY_TYPE_ID'],
+					$entityBeforeUpdate['ENTITY_ID'],
+					[FieldCategory::BANK_DETAIL]
+				);
+				DuplicateVolatileCriterion::register(
+					$entityTypeId,
+					$entityId,
+					[FieldCategory::BANK_DETAIL]
+				);
+				//endregion Register volatile duplicate criterion fields
 			}
 
 			if (isset($fields['ENTITY_TYPE_ID']) && isset($fields['ENTITY_ID']))
 			{
 				$entityTypeId = (int)$fields['ENTITY_TYPE_ID'];
 				$entityId = (int)$fields['ENTITY_ID'];
-				if ($entityTypeId === \CCrmOwnerType::Requisite && $entityId > 0)
+				if ($entityTypeId === CCrmOwnerType::Requisite && $entityId > 0)
+				{
 					DuplicateBankDetailCriterion::registerByParent($entityTypeId, $entityId);
+
+					//region Register volatile duplicate criterion fields
+					DuplicateVolatileCriterion::register(
+						CCrmOwnerType::Requisite,
+						$entityId,
+						[FieldCategory::BANK_DETAIL]
+					);
+					//endregion Register volatile duplicate criterion fields
+				}
 			}
 			else
 			{
 				DuplicateBankDetailCriterion::registerByBankDetail($id);
+
+				//region Register volatile duplicate criterion fields
+				DuplicateVolatileCriterion::register(
+					CCrmOwnerType::BankDetail,
+					$id,
+					[FieldCategory::BANK_DETAIL]
+				);
+				//endregion Register volatile duplicate criterion fields
 			}
 		}
 
@@ -911,19 +960,27 @@ class EntityBankDetail
 	public function delete($id, $options = array())
 	{
 		$entityInfo = array(
-			'ENTITY_TYPE_ID' => \CCrmOwnerType::Undefined,
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Undefined,
 			'ENTITY_ID' => 0
 		);
 		$parentInfo = self::getOwnerEntityById($id);
-		if ($parentInfo['ENTITY_TYPE_ID'] === \CCrmOwnerType::Requisite)
+		if ($parentInfo['ENTITY_TYPE_ID'] === CCrmOwnerType::Requisite)
 			$entityInfo = EntityRequisite::getOwnerEntityById($parentInfo['ENTITY_ID']);
 		unset($parentInfo);
 
 		$result = BankDetailTable::delete($id);
 		if ($result->isSuccess()
-			&& \CCrmOwnerType::IsDefined($entityInfo['ENTITY_TYPE_ID']) && $entityInfo['ENTITY_ID'] > 0)
+			&& CCrmOwnerType::IsDefined($entityInfo['ENTITY_TYPE_ID']) && $entityInfo['ENTITY_ID'] > 0)
 		{
 			DuplicateBankDetailCriterion::registerByEntity($entityInfo['ENTITY_TYPE_ID'], $entityInfo['ENTITY_ID']);
+
+			//region Register volatile duplicate criterion fields
+			DuplicateVolatileCriterion::register(
+				$entityInfo['ENTITY_TYPE_ID'],
+				$entityInfo['ENTITY_ID'],
+				[FieldCategory::BANK_DETAIL]
+			);
+			//endregion Register volatile duplicate criterion fields
 		}
 
 		//region Send event
@@ -1286,7 +1343,7 @@ class EntityBankDetail
 	{
 		$entityTypeId = intval($entityTypeId);
 
-		if ($entityTypeId !== \CCrmOwnerType::Requisite)
+		if ($entityTypeId !== CCrmOwnerType::Requisite)
 			return false;
 
 		return true;
@@ -1297,7 +1354,7 @@ class EntityBankDetail
 		$entityTypeId = intval($entityTypeId);
 		$entityId = intval($entityId);
 
-		if ($entityTypeId === \CCrmOwnerType::Requisite)
+		if ($entityTypeId === CCrmOwnerType::Requisite)
 		{
 			$requisite = $this->getRequisite();
 			if (!$requisite->exists($entityId))
@@ -1319,7 +1376,7 @@ class EntityBankDetail
 		if ($entityId <= 0)
 			return false;
 
-		if ($entityTypeId === \CCrmOwnerType::Requisite)
+		if ($entityTypeId === CCrmOwnerType::Requisite)
 		{
 			$requisite = $this->getRequisite();
 			if (!$requisite->checkReadPermission($entityId))
@@ -1341,7 +1398,7 @@ class EntityBankDetail
 		if ($entityId <= 0)
 			return false;
 
-		if ($entityTypeId === \CCrmOwnerType::Requisite)
+		if ($entityTypeId === CCrmOwnerType::Requisite)
 		{
 			$requisite = $this->getRequisite();
 			if (!$requisite->checkUpdatePermission($entityId))
@@ -1432,7 +1489,7 @@ class EntityBankDetail
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite)
+		if ($entityTypeID === CCrmOwnerType::Requisite)
 		{
 			$r = EntityRequisite::getOwnerEntityById($entityID);
 
@@ -1449,7 +1506,7 @@ class EntityBankDetail
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite)
+		if ($entityTypeID === CCrmOwnerType::Requisite)
 		{
 			$r = EntityRequisite::getOwnerEntityById($entityID);
 
@@ -1466,7 +1523,7 @@ class EntityBankDetail
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite)
+		if ($entityTypeID === CCrmOwnerType::Requisite)
 		{
 			$r = EntityRequisite::getOwnerEntityById($entityID);
 
@@ -1488,7 +1545,7 @@ class EntityBankDetail
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if ($entityTypeID === \CCrmOwnerType::Requisite)
+		if ($entityTypeID === CCrmOwnerType::Requisite)
 		{
 			$r = EntityRequisite::getOwnerEntityById($entityID);
 
@@ -1659,7 +1716,7 @@ class EntityBankDetail
 	}
 	public static function prepareEntityInfoBatch($entityTypeId, &$entityInfos, $scope, $typeName, $options = null)
 	{
-		if (!($entityTypeId === \CCrmOwnerType::Company || $entityTypeId === \CCrmOwnerType::Contact))
+		if (!($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact))
 		{
 			return;
 		}
@@ -1678,7 +1735,7 @@ class EntityBankDetail
 		$connection = Main\Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
 		$typeNameSql = $sqlHelper->forSql($typeName, 32);
-		$rqEntityTypeId = \CCrmOwnerType::Requisite;
+		$rqEntityTypeId = CCrmOwnerType::Requisite;
 
 		$Ids = array_keys($entityInfos);
 		$IdsSql = implode(',', $Ids);
@@ -1779,7 +1836,7 @@ class EntityBankDetail
 					if (!isset($result[$ownerId][$bankDetailId]))
 						$result[$ownerId][$bankDetailId] = array(
 							'ID' => $bankDetailId,
-							'ENTITY_TYPE_ID' => \CCrmOwnerType::Requisite,
+							'ENTITY_TYPE_ID' => CCrmOwnerType::Requisite,
 							'ENTITY_ID' => $ownerId,
 							'COUNTRY_ID' => $countryId
 						);

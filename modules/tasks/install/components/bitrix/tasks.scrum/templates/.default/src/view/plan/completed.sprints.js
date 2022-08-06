@@ -46,7 +46,10 @@ export class CompletedSprints extends EventEmitter
 		this.isActiveLoad = false;
 
 		this.node = null;
+		this.header = null;
+		this.filteredSprintsNode = null;
 		this.listNode = null;
+		this.emptySearchStub = null;
 	}
 
 	render(): HTMLElement
@@ -59,13 +62,20 @@ export class CompletedSprints extends EventEmitter
 							${Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINTS_TITLE')}
 						</span>
 					</div>
+					<div class="tasks-scrum__content-empty --no-results">
+						${Loc.getMessage('TASKS_SCRUM_EMPTY_SEARCH_STUB_COMPLETED')}
+					</div>
+					<div class="tasks-scrum__sprints--filtered-sprints"></div>
 					${this.renderHeader()}
 					${this.renderList()}
 				</div>
 			</div>
 		`;
 
+		this.filteredSprintsNode = this.node.querySelector('.tasks-scrum__sprints--filtered-sprints');
 		this.listNode = this.node.querySelector('.tasks-scrum__sprints--completed-list');
+
+		this.emptySearchStub = this.node.querySelector('.tasks-scrum__content-empty');
 
 		Event.bind(this.listNode, 'transitionend', this.onTransitionEnd.bind(this));
 
@@ -76,11 +86,25 @@ export class CompletedSprints extends EventEmitter
 		return this.node;
 	}
 
+	showEmptySearchStub(): void
+	{
+		Dom.addClass(this.emptySearchStub, '--open');
+
+		this.hideFilteredHeader();
+	}
+
+	hideEmptySearchStub(): void
+	{
+		Dom.removeClass(this.emptySearchStub, '--open');
+
+		this.showHeader();
+	}
+
 	renderHeader(): HTMLElement
 	{
 		const btnStyles = 'tasks-scrum__sprint--btn-dropdown ui-btn ui-btn-sm ui-btn-icon-angle-down';
 
-		const header = Tag.render`
+		this.header = Tag.render`
 			<div class="tasks-scrum__sprints--completed-header">
 				<div class="tasks-scrum__sprints--completed-name">
 					${Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINTS_NAME')}
@@ -90,10 +114,10 @@ export class CompletedSprints extends EventEmitter
 			</div>
 		`;
 
-		const btnNode = header.querySelector('.tasks-scrum__sprints--completed-btn');
+		const btnNode = this.header.querySelector('.tasks-scrum__sprints--completed-btn');
 		Event.bind(btnNode, 'click', this.onBtnClick.bind(this));
 
-		return header;
+		return this.header;
 	}
 
 	onBtnClick(event)
@@ -305,6 +329,65 @@ export class CompletedSprints extends EventEmitter
 		sprint.onAfterAppend();
 
 		this.emit('createSprint', sprint);
+	}
+
+	showFilteredSprints(completedSprints: Map<Sprint>)
+	{
+		if (Type.isNull(this.filteredSprintsNode))
+		{
+			return;
+		}
+
+		Dom.clean(this.filteredSprintsNode);
+
+		completedSprints
+			.forEach((sprint: Sprint) => {
+				Dom.append(sprint.render(), this.filteredSprintsNode);
+				sprint.onAfterAppend();
+				this.emit('createSprint', sprint);
+				this.entityStorage.addFilteredCompletedSprint(sprint);
+				setTimeout(() => sprint.toggleVisibilityContent(sprint.getContentContainer()), 100);
+			})
+		;
+
+		this.hideFilteredHeader();
+	}
+
+	hideFilteredSprints()
+	{
+		Dom.clean(this.filteredSprintsNode);
+
+		this.entityStorage.clearFilteredCompletedSprints();
+
+		this.showHeader();
+	}
+
+	hideFilteredHeader()
+	{
+		this.hideHeader();
+		this.hideList();
+
+		Dom.removeClass(this.header.querySelector('.tasks-scrum__sprints--completed-btn'), '--up');
+	}
+
+	showHeader()
+	{
+		if (Type.isNull(this.header))
+		{
+			return;
+		}
+
+		Dom.removeClass(this.header, '--hide');
+	}
+
+	hideHeader()
+	{
+		if (Type.isNull(this.header))
+		{
+			return;
+		}
+
+		Dom.addClass(this.header, '--hide');
 	}
 
 	showList()

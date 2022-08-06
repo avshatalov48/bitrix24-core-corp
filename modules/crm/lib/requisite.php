@@ -5,6 +5,7 @@ namespace Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
@@ -73,7 +74,7 @@ class RequisiteTable extends Entity\DataManager
 				'data_type' => 'Address',
 				'reference' => [
 					'=this.ID' => 'ref.ENTITY_ID',
-					'=ref.ENTITY_TYPE_ID' => ['?', \CCrmOwnerType::Requisite],
+					'=ref.ENTITY_TYPE_ID' => ['?', CCrmOwnerType::Requisite],
 					'=ref.TYPE_ID' => ['?', EntityAddressType::Primary]
 				]
 			],
@@ -116,6 +117,8 @@ class RequisiteTable extends Entity\DataManager
 			'RQ_REGON' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField9']],
 			'RQ_KRS' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField10']],
 			'RQ_PESEL' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField11']],
+			'RQ_SIGNATURE' => ['data_type' => 'integer'],
+			'RQ_STAMP' => ['data_type' => 'integer'],
 		];
 	}
 
@@ -365,5 +368,29 @@ class RequisiteTable extends Entity\DataManager
 		$res = static::getList($params)->fetch();
 
 		return intval($res['CNT']);
+	}
+
+	public static function getUsedCountries(): array
+	{
+		$result = [];
+
+		$entityTypeId = CCrmOwnerType::Requisite;
+		$connection = Main\Application::getConnection();
+		$sql =
+			"SELECT DISTINCT P.COUNTRY_ID "
+			. "FROM b_crm_requisite R "
+			. "INNER JOIN b_crm_preset P "
+			. "ON R.PRESET_ID = P.ID AND P.ENTITY_TYPE_ID = $entityTypeId"
+		;
+		$res = $connection->query($sql);
+		if (is_object($res))
+		{
+			while($fields = $res->fetch())
+			{
+				$result[] = (int)$fields['COUNTRY_ID'];
+			}
+		}
+
+		return $result;
 	}
 }

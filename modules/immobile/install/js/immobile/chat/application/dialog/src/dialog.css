@@ -84,7 +84,8 @@ body
 .bx-mobilechat-help-title {
 	display: block;
 	margin: 0 0 29px 0;
-	font: 300 26px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	text-align: center;
 	opacity: .6;
@@ -95,19 +96,23 @@ body
 }
 
 .bx-mobilechat-help-title-lg {
-	font: 200 26px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.27px;
 }
 .bx-mobilechat-help-title-md {
-	font: 200 24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.25px;
 }
 .bx-mobilechat-help-title-sm {
-	font: 200 20px/27px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.21px;
 }
 .bx-mobilechat-help-subtitle {
-	font: 14px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .bx-mobilechat-chat-start .bx-mobilechat-body {
 	flex-direction: column;

@@ -1,5 +1,6 @@
 import {B24Options} from './type';
-import {Conv} from './util/registry';
+import {Conv, Type} from './util/registry';
+import {Button} from './util/button';
 import * as Form from './form/registry';
 import * as Compatibility from './compatibility';
 
@@ -8,7 +9,7 @@ class Application
 	#forms: Array<Form.Controller> = [];
 	#userProviderPromise: Promise;
 
-	list() : Array<Form.Controller>
+	list(): Array<Form.Controller>
 	{
 		return this.#forms;
 	}
@@ -22,7 +23,7 @@ class Application
 
 	create(options: Form.Options): Form.Controller
 	{
-		let form = new Form.Controller(options);
+		const form = new Form.Controller(options);
 		this.#forms.push(form);
 		return form;
 	}
@@ -309,6 +310,13 @@ class Application
 					break;
 				case 'click':
 					let clickElement = node.nextElementSibling;
+					const buttonUseMode = b24options?.views?.click?.button?.use === '1';
+					if (buttonUseMode)
+					{
+						const newButton = Button.create(b24options);
+						node.after(newButton);
+						clickElement = newButton.querySelector('.b24-form-click-btn');
+					}
 					if (clickElement)
 					{
 						let form;
@@ -339,6 +347,11 @@ class Application
 					break;
 			}
 		});
+	}
+
+	static #createButton(b24options: B24Options): HTMLElement
+	{
+		
 	}
 
 	getAnalyticsSender(b24options)

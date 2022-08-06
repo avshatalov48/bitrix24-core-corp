@@ -109,8 +109,9 @@ $efficiencyData = $arResult['JS_DATA']['efficiencyData'];
 	BX.ready(function() {
 		var circle = new BX.UI.Graph.Circle(
 			document.querySelector('.mobile-tasks-efficiency-counter'),
-			148,
+			150,
 			<?= (int)$efficiencyData['EFFICIENCY'] ?>,
+			null,
 		);
 		circle.show();
 	});

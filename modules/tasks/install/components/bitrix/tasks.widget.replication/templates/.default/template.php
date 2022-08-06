@@ -211,9 +211,9 @@ $tzOffset = intval($arResult['AUX_DATA']['UTC_TIME_ZONE_OFFSET']);
 			</div>
 		</div>
 
-		<?if(LANGUAGE_ID == 'ru'):?>
+		<?php if(LANGUAGE_ID == 'ru'):?>
 			<div class="task-options-field-fn task-options-field-ok"><span class="js-id-replication-hint"></span></div>
-		<?endif?>
+		<?php endif?>
 
 	</div>
 

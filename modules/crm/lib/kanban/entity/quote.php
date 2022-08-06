@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Kanban\Entity;
 
+use Bitrix\Crm\Filter;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Kanban\Entity;
-use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\QuoteSettings;
@@ -21,7 +21,7 @@ class Quote extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'CLOSEDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
+		return ['ID', 'STATUS_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'CLOSEDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY', 'QUOTE_NUMBER'];
 	}
 
 	protected function getDetailComponentName(): ?string
@@ -42,45 +42,10 @@ class Quote extends Entity
 
 	public function getFilterPresets(): array
 	{
-		$processStatusIDs = [];
-		foreach (\CCrmStatus::GetStatus($this->getStatusEntityId()) as $status)
-		{
-			if(empty($status['SEMANTICS']) || $status['SEMANTICS'] === PhaseSemantics::PROCESS)
-			{
-				$processStatusIDs[] = $status['STATUS_ID'];
-			}
-		}
-
-		$user = $this->getCurrentUserInfo();
-
-		return [
-			'filter_new' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_NEW'),
-				'fields' => [
-					'STATUS_ID' => [
-						'selDRAFT' => 'DRAFT',
-					],
-				],
-			],
-			'filter_my' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_MY'),
-				'disallow_for_all' => true,
-				'fields' => [
-					'ASSIGNED_BY_ID_name' => $user['name'],
-					'ASSIGNED_BY_ID' => $user['id'],
-				]
-			],
-			'filter_my_in_work' => [
-				'name' => Loc::getMessage('CRM_KANBAN_HELPER_QT_MY_WORK'),
-				'disallow_for_all' => true,
-				'default' => true,
-				'fields' => [
-					'ASSIGNED_BY_ID_name' => $user['name'],
-					'ASSIGNED_BY_ID' => $user['id'],
-					'STATUS_ID' => $processStatusIDs,
-				]
-			],
-		];
+		return (new Filter\Preset\Quote())
+			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->getDefaultPresets()
+		;
 	}
 
 	public function isCustomPriceFieldsSupported(): bool
@@ -137,6 +102,11 @@ class Quote extends Entity
 		else
 		{
 			$item['DATE'] = $item['DATE_CREATE'];
+		}
+
+		if (empty($item['TITLE']))
+		{
+			$item['TITLE'] = Item\Quote::getTitlePlaceholderFromData($item);
 		}
 
 		$item = parent::prepareItemCommonFields($item);

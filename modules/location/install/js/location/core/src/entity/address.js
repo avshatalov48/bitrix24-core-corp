@@ -32,8 +32,8 @@ export default class Address
 		this.#languageId = props.languageId;
 
 		this.#id = props.id || 0;
-		this.#latitude = props.latitude || 0;
-		this.#longitude = props.longitude || 0;
+		this.#latitude = props.latitude || '';
+		this.#longitude = props.longitude || '';
 		this.#fieldCollection = new AddressFieldCollection();
 
 		if(Type.isObject(props.fieldCollection))

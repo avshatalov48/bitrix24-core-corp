@@ -11,6 +11,7 @@ use Bitrix\Tasks\Util\User;
 /** @var array $arResult */
 
 $taskData = $arParams['TEMPLATE_DATA']['DATA']['TASK'];
+$scrumData = $arParams['TEMPLATE_DATA']['DATA']['SCRUM'];
 
 $arParams['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE'] = UI\Task\Template::makeActionUrl(
 	$arParams['PATH_TO_TEMPLATES_TEMPLATE'],
@@ -22,6 +23,9 @@ $arParams['TEMPLATE_DATA']['PATH_TO_TEMPLATES_TEMPLATE_SOURCE'] = UI\Task\Templa
 	$taskData['SE_TEMPLATE.SOURCE']['ID'],
 	'view'
 );
+
+$arParams['TEMPLATE_DATA']['EPIC'] = $scrumData['EPIC'];
+
 $arParams['TEMPLATE_DATA']['TAGS'] = UI\Task\Tag::formatTagString($taskData['SE_TAG']);
 
 //Dates

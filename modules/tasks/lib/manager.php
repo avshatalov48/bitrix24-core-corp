@@ -4,7 +4,7 @@
  * @package bitrix
  * @subpackage sale
  * @copyright 2001-2015 Bitrix
- * 
+ *
  * @access private
  *
  * THIS IS AN EXPERIMENTAL CLASS, DONT EXTEND
@@ -23,6 +23,8 @@ Loc::loadMessages(__FILE__);
 
 abstract class Manager
 {
+	const LIMIT_PAGE_SIZE = 50;
+
 	const SE_PREFIX = 		'SE_'; // sub-entity prefix
     const ACT_KEY =         'ACTION'; // reserved key to keep allowed action map
 

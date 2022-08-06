@@ -46,10 +46,6 @@ export class Header extends EventEmitter
 		Event.bind(buttons.item(0), 'click', this.onEpicClick.bind(this, buttons.item(0)));
 		Event.bind(buttons.item(1), 'click', this.onTaskClick.bind(this));
 
-		//todo use it from project scrum button
-		//this.emit('openListEpicGrid');
-		//this.emit('openDefinitionOfDone');
-
 		return this.node;
 	}
 

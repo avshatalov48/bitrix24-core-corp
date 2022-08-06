@@ -19,6 +19,7 @@ class TemplateRemoveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$template)
 		{
+			$this->controller->addError(static::class, 'Incorrect template');
 			return false;
 		}
 
@@ -29,6 +30,7 @@ class TemplateRemoveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (!$this->controller->check(ActionDictionary::ACTION_TEMPLATE_READ, $template, $params))
 		{
+			$this->controller->addError(static::class, 'Access to template denied');
 			return false;
 		}
 

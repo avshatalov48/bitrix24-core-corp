@@ -15,7 +15,7 @@ $APPLICATION->IncludeComponent(
 		'FILTER_INFO' => $arResult['FILTER_INFO'],
 		'RENDER_FILTER_INTO_VIEW' => $arParams['~RENDER_FILTER_INTO_VIEW'] ?? '',
 		'HIDE_FILTER'=> $arParams['~HIDE_FILTER'] ?? false,
-		'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+		'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
 	),
 	$component,
 	array('HIDE_ICONS'=>true)

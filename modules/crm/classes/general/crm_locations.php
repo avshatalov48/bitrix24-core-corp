@@ -1,8 +1,9 @@
-<?
+<?php
 
 IncludeModuleLangFile(__FILE__);
 
 use Bitrix\Sale\Location;
+use Bitrix\Sale\Location\Admin\LocationHelper;
 
 class CCrmLocations
 {
@@ -88,6 +89,12 @@ class CCrmLocations
 		return false;
 	}
 
+	/**
+	 * @param mixed $locID
+	 * @return string
+	 * @deprecated
+	 * @see \CCrmLocations::getLocationStringByCode
+	 */
 	public static function getLocationString($locID)
 	{
 		if(CSaleLocation::isLocationProMigrated())
@@ -116,6 +123,23 @@ class CCrmLocations
 			return $entity->GetLocationString($locID);
 		}
 	}
-}
 
-?>
+	/**
+	 * @param string|null $locationCode
+	 * @return string
+	 */
+	public static function getLocationStringByCode(?string $locationCode): string
+	{
+		if (!CSaleLocation::isLocationProMigrated())
+		{
+			return '';
+		}
+
+		if (!$locationCode)
+		{
+			return '';
+		}
+
+		return LocationHelper::getLocationStringByCode($locationCode);
+	}
+}

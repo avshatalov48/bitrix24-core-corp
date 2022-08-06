@@ -7,10 +7,9 @@ use Bitrix\Crm\History;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Statistics;
-use Bitrix\Crm\Statistics\OperationFacade;
 use Bitrix\Main\Result;
 
-final class Lead extends OperationFacade
+final class Lead extends Statistics\OperationFacade
 {
 	/** @var string */
 	private $successfulStageId;
@@ -32,12 +31,14 @@ final class Lead extends OperationFacade
 
 	private function registerStatistics(Item $item, bool $isNew): Result
 	{
-		Statistics\LeadSumStatisticEntry::register($item->getId(), $item->getCompatibleData());
-		History\LeadStatusHistoryEntry::register($item->getId(), $item->getCompatibleData(), ['IS_NEW' => $isNew]);
+		$compatibleData = $item->getCompatibleData();
+
+		Statistics\LeadSumStatisticEntry::register($item->getId(), $compatibleData);
+		History\LeadStatusHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => $isNew]);
 
 		if ($item->getStageId() === $this->successfulStageId)
 		{
-			Statistics\LeadConversionStatisticsEntry::register($item->getId(), $item->getCompatibleData(), ['IS_NEW' => $isNew]);
+			Statistics\LeadConversionStatisticsEntry::register($item->getId(), $compatibleData, ['IS_NEW' => $isNew]);
 		}
 
 		return new Result();
@@ -45,16 +46,18 @@ final class Lead extends OperationFacade
 
 	public function update(Item $itemBeforeSave, Item $item): Result
 	{
-		Statistics\LeadSumStatisticEntry::register($item->getId(), $item->getCompatibleData());
-		History\LeadStatusHistoryEntry::synchronize($item->getId(), $item->getCompatibleData());
-		Integration\Channel\LeadChannelBinding::synchronize($item->getId(), $item->getCompatibleData());
+		$compatibleData = $item->getCompatibleData();
+
+		Statistics\LeadSumStatisticEntry::register($item->getId(), $compatibleData);
+		History\LeadStatusHistoryEntry::synchronize($item->getId(), $compatibleData);
+		Integration\Channel\LeadChannelBinding::synchronize($item->getId(), $compatibleData);
 
 		$previousStageId = $itemBeforeSave->remindActual(Item::FIELD_NAME_STAGE_ID);
 		$currentStageId = $item->getStageId();
 
 		if ($previousStageId !== $currentStageId)
 		{
-			History\LeadStatusHistoryEntry::register($item->getId(), $item->getCompatibleData(), ['IS_NEW' => false]);
+			History\LeadStatusHistoryEntry::register($item->getId(), $compatibleData, ['IS_NEW' => false]);
 
 			$wasMovedToSuccessfulStage =
 				$currentStageId === $this->successfulStageId
@@ -77,7 +80,7 @@ final class Lead extends OperationFacade
 
 			if ($wasMovedToSuccessfulStage || $wasMovedFromSuccessfulStage)
 			{
-				Statistics\LeadConversionStatisticsEntry::register($item->getId(), $item->getCompatibleData(), ['IS_NEW' => false]);
+				Statistics\LeadConversionStatisticsEntry::register($item->getId(), $compatibleData, ['IS_NEW' => false]);
 			}
 		}
 

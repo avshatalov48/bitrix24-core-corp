@@ -1,3 +1,7 @@
+.calendar-pagetitle-view .pagetitle-below {
+	padding: 0 5px 0 0;
+}
+
 /* VIEW SWITCHER */
 .crm-view-switcher {
 	display: -webkit-box;
@@ -7,7 +11,7 @@
 	-ms-flex-align: center;
 	align-items: center;
 	height: 53px;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/normal 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #545c6a;
 }
 

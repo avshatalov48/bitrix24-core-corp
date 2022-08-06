@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\Merger;
+use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Recovery;
@@ -1875,6 +1876,92 @@ abstract class EntityMerger
 					}
 				}
 			}
+			elseif ($typeID === 'address') // sorry
+			{
+				if (!$isMultiple)
+				{
+					if (!isset($targ[$fieldID]) && isset($seed[$fieldID]))
+					{
+						$targ[$fieldID] = static::getAddressFields($seed[$fieldID]);
+					}
+					elseif (isset($targ[$fieldID]))
+					{
+						$targ[$fieldID] = static::getAddressFields($targ[$fieldID]);
+					}
+				}
+				else
+				{
+					if (!$skipMultipleFields)
+					{
+						if(isset($seed[$fieldID]) && is_array($seed[$fieldID]))
+						{
+							$previousAddresses = [];
+							if (isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+							{
+								foreach($targ[$fieldID] as $data)
+								{
+									$previousAddresses[] = $data;
+								}
+							}
+
+							$targ[$fieldID] = [];
+							if (!empty($previousAddresses))
+							{
+								foreach ($previousAddresses as $address)
+								{
+									$targ[$fieldID][] = static::getAddressFields($address);
+								}
+							}
+
+							foreach ($seed[$fieldID] as $data)
+							{
+								if(in_array($data, $previousAddresses, true))
+								{
+									continue;
+								}
+
+								if(\CCrmFileProxy::TryResolveFile($fileID, $file, $fileOptions))
+								{
+									$targ[$fieldID][] = static::getAddressFields($data);
+								}
+							}
+						}
+						elseif (isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+						{
+							$addresses = $targ[$fieldID];
+							$targ[$fieldID] = array();
+							if(!empty($addresses))
+							{
+								foreach($addresses as $address)
+								{
+									$targ[$fieldID][] = static::getAddressFields($address);
+								}
+							}
+						}
+					}
+					else
+					{
+						$addresses = null;
+						if(isset($targ[$fieldID]) && is_array($targ[$fieldID]))
+						{
+							$addresses = $targ[$fieldID];
+						}
+						elseif(isset($seed[$fieldID]) && is_array($seed[$fieldID]))
+						{
+							$addresses = $seed[$fieldID];
+						}
+
+						$targ[$fieldID] = array();
+						if(!empty($addresses))
+						{
+							foreach($addresses as $address)
+							{
+								$targ[$fieldID][] = static::getAddressFields($address);
+							}
+						}
+					}
+				}
+			}
 			else
 			{
 				if(!$isMultiple && !isset($targ[$fieldID]) && isset($seed[$fieldID]))
@@ -1927,6 +2014,34 @@ abstract class EntityMerger
 		}
 		return $results;
 	}
+
+	protected static function getAddressFields($value)
+	{
+		if (!Main\Loader::includeModule('fileman') || !$value)
+		{
+			return null;
+		}
+
+		if (!AddressType::isRawValue($value))
+		{
+			return $value;
+		}
+
+		$addressFields = AddressType::getAddressFieldsByValue($value);
+		unset($addressFields['id']);
+
+		try
+		{
+			$addressFields = Main\Web\Json::encode($addressFields);
+		}
+		catch (Main\ArgumentException $exception)
+		{
+			return null;
+		}
+
+		return $addressFields;
+	}
+
 	protected static function mergeUserFieldsBatch(array &$seeds, array &$targ, array &$fieldInfos, array $options = array())
 	{
 		if(empty($seeds))

@@ -48,7 +48,11 @@ export class PullCounters
 			return;
 		}
 
-		const item = this.entityStorage.findItemBySourceId(inputTaskId);
+		let item = this.entityStorage.findItemBySourceId(inputTaskId);
+		if (!item)
+		{
+			item = this.entityStorage.findItemBySourceInFilteredCompletedSprints(inputTaskId);
+		}
 
 		if (item)
 		{

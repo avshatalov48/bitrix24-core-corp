@@ -109,7 +109,7 @@ abstract class FinancialRating extends Deal
 			$toDateValue = new DateTime($timePeriodValue['to']);
 			$fromDateValue = new DateTime($timePeriodValue['from']);
 
-			$query->whereBetween("CLOSEDATE", $fromDateValue, $toDateValue);
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 	}
 
@@ -122,7 +122,7 @@ abstract class FinancialRating extends Deal
 
 			[$newFrom, $newTo] = static::getPreviousPeriod($fromDateValue, $toDateValue);
 
-			$query->whereBetween("CLOSEDATE", $newFrom, $newTo);
+			$query->whereBetween("MOVED_TIME", $newFrom, $newTo);
 		}
 	}
 
@@ -179,7 +179,7 @@ abstract class FinancialRating extends Deal
 			$fromDateValue = new DateTime($filterParameters['TIME_PERIOD']['from']);
 
 			$query->where("DATE_CREATE", '<=', $toDateValue);
-			$query->where(Query::filter()->logic('or')->where('CLOSEDATE', '>=', $fromDateValue)->whereNull('CLOSEDATE'));
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 
 		$query->addSelect(Query::expr()->count("ID"), "TOTAL_DEAL_COUNT");

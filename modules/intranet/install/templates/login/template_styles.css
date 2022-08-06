@@ -1,34 +1,42 @@
 @font-face {
 	font-family: 'Montserrat-regular';
 	src: url('font/montserrat-regular.eot');
-	src: url('font/montserrat-regular.eot?#iefix') format('embedded-opentype'),
-	url('font/montserrat-regular.woff2') format('woff2'),
-	url('font/montserrat-regular.woff') format('woff'),
-	url('font/montserrat-regular.ttf') format('truetype');
+	src:
+		url('font/montserrat-regular.eot?#iefix') format('embedded-opentype'),
+		url('font/montserrat-regular.woff2') format('woff2'),
+		url('font/montserrat-regular.woff') format('woff'),
+		url('font/montserrat-regular.ttf') format('truetype');
 	font-weight: normal;
 	font-style: normal;
 }
 
 @font-face {
-	font-family: 'Montserrat-medium';
+	font-family: 'Montserrat-regular';
 	src: url('font/montserrat-medium.eot');
-	src: url('font/montserrat-medium.eot?#iefix') format('embedded-opentype'),
-	url('font/montserrat-medium.woff2') format('woff2'),
-	url('font/montserrat-medium.woff') format('woff'),
-	url('font/montserrat-medium.ttf') format('truetype');
-	font-weight: normal;
+	src:
+		url('font/montserrat-medium.eot?#iefix') format('embedded-opentype'),
+		url('font/montserrat-medium.woff2') format('woff2'),
+		url('font/montserrat-medium.woff') format('woff'),
+		url('font/montserrat-medium.ttf') format('truetype');
+	font-weight: 500;
 	font-style: normal;
 }
 
 @font-face {
-	font-family: 'Montserrat-semibold';
+	font-family: 'Montserrat-regular';
 	src: url('font/montserrat-semibold.eot');
-	src: url('font/montserrat-semibold.eot?#iefix') format('embedded-opentype'),
-	url('font/montserrat-semibold.woff2') format('woff2'),
-	url('font/montserrat-semibold.woff') format('woff'),
-	url('font/montserrat-semibold.ttf') format('truetype');
-	font-weight: normal;
+	src:
+		url('font/montserrat-semibold.eot?#iefix') format('embedded-opentype'),
+		url('font/montserrat-semibold.woff2') format('woff2'),
+		url('font/montserrat-semibold.woff') format('woff'),
+		url('font/montserrat-semibold.ttf') format('truetype');
+	font-weight: 600;
 	font-style: normal;
+}
+
+:root {
+	--intranet-pub-font-family-montserrat: 'Montserrat-regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--intranet-pub-font-family-primary: var(--ui-font-family-montserrat, var(--intranet-pub-font-family-montserrat));
 }
 
 html {
@@ -39,7 +47,8 @@ body {
 	background: #2fc6f7;
 	box-sizing: border-box;
 	height: 100%;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	min-height: 650px;
 	margin: 0;
 	/*min-width: 1024px;*/
@@ -163,7 +172,8 @@ body {
 	font-size: 27px;
 	line-height: 33px;
 	color: #333;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 }
 
 .log-popup-content {
@@ -208,7 +218,8 @@ body {
 	color: #7d9199;
 	vertical-align: middle;
 	font-size: 19px;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 }
 
 .login-item .login-label {
@@ -219,7 +230,7 @@ body {
 .login-email-text {
 	color: #555;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: 600;
 	font-size: 19px;
 	height: 40px;
 	line-height: 37px;
@@ -229,7 +240,7 @@ body {
 
 .login-label-thin {
 	font-size: 13px;
-	font-weight: normal;
+	font-weight: 400;
 }
 
 .login-captcha-img {
@@ -317,7 +328,7 @@ body {
 	color: #555;
 	height: 36px;
 	margin-left: -1px;
-	font-weight: bold;
+	font-weight: 600;
 	font-size: 17px;
 	line-height: 35px;
 	text-shadow: 0 1px #fff;
@@ -354,7 +365,7 @@ body {
 	color: #fff;
 	font-family: Arial, sans-serif;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: 600;
 	text-align: center;
 	position: absolute;
 	width: 100%;
@@ -375,7 +386,8 @@ a.login-item-link {
 	color: #2fc6f7;
 	vertical-align: bottom;
 	text-decoration: none;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	line-height: 20px;
 	position: relative;
 	bottom: 3px;
@@ -411,7 +423,7 @@ a.login-item-link:hover {
 .login-intranet-logo-rev-text {
 	color: #4f5866;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: 500;
 	vertical-align: middle;
 	white-space: nowrap;
 }
@@ -419,7 +431,7 @@ a.login-item-link:hover {
 .login-intranet-logo-rev-logo {
 	background: url(images/bx24-login-sprite5.png) 0 -597px repeat-x;
 	font-size: 30px;
-	font-weight: bold;
+	font-weight: 600;
 	vertical-align: top;
 	padding: 0 10px;
 	text-align: center;
@@ -489,7 +501,7 @@ a.login-item-link:hover {
 	cursor: pointer;
 	display: inline-block;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: 600;
 	height: 39px;
 	line-height: 39px;
 	min-width: 70px;
@@ -584,7 +596,8 @@ a.login-item-link:hover {
 	border-bottom: 2px solid #cdf0ff;
 	color: #0097c7;
 	text-decoration: none;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	line-height: 20px;
 	position: relative;
 	margin-left: 15px;
@@ -819,7 +832,7 @@ a.login-create-promo-cod-link {
 	display: inline-block;
 	color: #2067b0;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: 600;
 	border-bottom: 1px dashed #2067b0;
 	text-decoration: none;
 }
@@ -907,7 +920,8 @@ a.login-create-promo-cod-link {
 	vertical-align: middle;
 	text-decoration: none;
 	cursor: pointer;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	border-radius: 20px;
 	padding: 0 30px;
 	height: 42px;
@@ -1052,7 +1066,7 @@ a.login-btn {
 	border: 1px solid;
 	border-color: #d5c1b4 #e6d2cd #f2dedf;
 	border-radius: 6px;
-	font-weight: bold;
+	font-weight: 600;
 	color: #bb404c;
 	font-size: 14px;
 	min-height: 16px;
@@ -1084,7 +1098,7 @@ a.login-btn {
 	color: #505a6a;
 	border-bottom: 1px solid #ecedee;
 	font-size: 24px;
-	font-weight: bold;
+	font-weight: 600;
 	line-height: 30px;
 	margin-bottom: 25px;
 	text-align: center;
@@ -1219,7 +1233,8 @@ a.login-btn {
 	color: #2fc6f7;
 	vertical-align: bottom;
 	text-decoration: none;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	line-height: 20px;
 	position: relative;
 	bottom: 3px;
@@ -1236,7 +1251,8 @@ a.login-btn {
 	vertical-align: middle;
 	text-decoration: none;
 	cursor: pointer;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	border-radius: 20px;
 	padding: 0 30px;
 	height: 40px;
@@ -1286,7 +1302,8 @@ a.login-btn {
 .login-wrapper-qr-text {
 	padding: 0 15px;
 	font-size: 11px;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	color: #545c68;
 }
 
@@ -1457,7 +1474,8 @@ a.login-btn {
 .log-popup-form-qr-header {
 	margin-bottom: 15px;
 	text-align: center;
-	font-family: 'Montserrat-medium', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
 	color: #333;
 }
 
@@ -1488,4 +1506,8 @@ a.login-btn {
 
 .log-popup-form-qr-remember {
 	margin-bottom: 15px;
+}
+
+.login-inner.--full-width {
+	width: 100%;
 }

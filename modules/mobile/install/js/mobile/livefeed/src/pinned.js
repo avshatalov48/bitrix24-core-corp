@@ -174,7 +174,17 @@ class PinnedPanel
 					params: {
 						logId: logId
 					}
-				}
+				},
+				headers: [
+					{
+						name: Loc.getMessage('MOBILE_EXT_LIVEFEED_AJAX_ENTITY_HEADER_NAME'),
+						value: params.entityValue || '',
+					},
+					{
+						name: Loc.getMessage('MOBILE_EXT_LIVEFEED_AJAX_TOKEN_HEADER_NAME'),
+						value: params.tokenValue || '',
+					}
+				],
 			}).then((response) => {
 				if (response.status === 'success')
 				{

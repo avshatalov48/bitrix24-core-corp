@@ -7,14 +7,17 @@ use Bitrix\Crm\Field;
 class Collection implements \Iterator, \ArrayAccess, \Countable
 {
 	/** @var Field[] */
-	protected $fields;
+	protected $fields = [];
 
 	/**
 	 * @param Field[] $fields
 	 */
 	public function __construct(array $fields)
 	{
-		$this->fields = $fields;
+		foreach ($fields as $field)
+		{
+			$this->fields[$field->getName()] = $field;
+		}
 	}
 
 	public function toArray(): array
@@ -47,6 +50,23 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		}
 
 		return $names;
+	}
+
+	/**
+	 * Returns a new collection, that contains all fields of this collection with specific type
+	 */
+	final public function getFieldsByType(string $fieldType): self
+	{
+		$fields = [];
+		foreach ($this->fields as $field)
+		{
+			if ($field->getType() === $fieldType)
+			{
+				$fields[] = $field;
+			}
+		}
+
+		return new self($fields);
 	}
 
 	public function current(): ?Field

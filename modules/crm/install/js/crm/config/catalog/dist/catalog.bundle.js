@@ -314,6 +314,10 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	  template: "\n\t\t<div >\n\t\t\t<div class=\"ui-progressbar ui-progressbar-column\">\n\t\t\t\t<div style=\"font-weight: bold;\" class=\"ui-progressbar-text-before\">\n\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_UPDATE_TITLE}}\t\t\t\t\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-progressbar-track\">\n\t\t\t\t\t<div :style=\"progressStyles\" class=\"ui-progressbar-bar\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-progressbar-text-after\">\n\t\t\t\t\t{{doneCnt}} {{loc.CRM_CFG_C_SETTINGS_OUT_OF}} {{allCnt}}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div style=\"color: rgb(83, 92, 105); font-size: 12px;\">\n\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_UPDATE_WAIT}}\n\t\t\t\t<div\n\t\t\t\t\tv-show=\"currentIblockName\"\n\t\t\t\t\tstyle=\"padding-top: 10px;\"\n\t\t\t\t>\n\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_CURRENT_CATALOG}}: {{currentIblockName}}\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
+	var Const = Object.freeze({
+	  url: '/crm/configs/catalog/'
+	});
+
 	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
@@ -339,10 +343,6 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	    initData: {
 	      type: Object,
 	      required: true
-	    },
-	    stateChangeCallbackFn: {
-	      type: String,
-	      required: false
 	    }
 	  },
 	  data: function data() {
@@ -387,7 +387,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	    this.initialize(this.initData);
 	    this.productUpdaterPopup = null;
 	    this.settingsMenu = null;
-	    this.slider = BX.SidePanel.Instance.getSlider('/crm/configs/catalog/');
+	    this.slider = BX.SidePanel.Instance.getSlider(Const.url);
 	  },
 	  computed: {
 	    isReservationUsed: function isReservationUsed() {
@@ -464,7 +464,7 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      var _this = this;
 
 	      var mode = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      new catalog_storeUse.Slider().open('/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode, {}).then(function () {
+	      new catalog_storeUse.Slider().open('/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode, {}).then(function (slider) {
 	        main_core.ajax.runAction('catalog.config.isUsedInventoryManagement', {}).then(function (response) {
 	          if (_this.isStoreControlUsed !== response.data) {
 	            if (response.data === true) {
@@ -472,10 +472,10 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	            } else {
 	              _this.refresh();
 	            }
+	          }
 
-	            if (_this.stateChangeCallbackFn) {
-	              window.top[_this.stateChangeCallbackFn]();
-	            }
+	          if (slider === null || slider === void 0 ? void 0 : slider.getData().get('isPresetApplied')) {
+	            _this.showMessage(main_core.Loc.getMessage('CRM_CFG_C_SETTINGS_SAVED_SUCCESSFULLY'));
 	          }
 	        });
 	      });
@@ -511,8 +511,10 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	      }).join(', '));
 	    },
 	    showMessage: function showMessage(message) {
-	      BX.UI.Notification.Center.notify({
-	        content: message
+	      top.BX.loadExt("ui.notification").then(function () {
+	        top.BX.UI.Notification.Center.notify({
+	          content: message
+	        });
 	      });
 	    },
 	    initialize: function initialize(data) {
@@ -695,7 +697,29 @@ this.BX.Crm.Config = this.BX.Crm.Config || {};
 	  template: "\n\t\t<div class=\"catalog-settings-wrapper\">\n\t\t\t<form>\n\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tstyle=\"display: flex; align-items: center\"\n\t\t\t\t\t\t\tclass=\"ui-slider-heading-4\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_TITLE}}\t\t\n\t\t\t\t\t\t\t<div v-if=\"isStoreControlUsed\" class=\"catalog-settings-main-header-feedback-container\">\n\t\t\t\t\t\t\t\t<div\n\t\t\t\t\t\t\t\t\t@click.prevent=\"showSettingsMenu\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-toolbar-right-buttons\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<button class=\"ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes\"></button>\n\t\t\t\t\t\t\t\t</div>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-slider-inner-box\">\n\t\t\t\t\t\t\t<p class=\"ui-slider-paragraph-2\">\n\t\t\t\t\t\t\t\t{{description}}\n\t\t\t\t\t\t\t</p>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-button-container\">\n\t\t\t\t\t\t\t<template v-if=\"isStoreControlUsed\">\n\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t@click=\"openStoreControlMaster('edit')\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-md ui-btn-light-border ui-btn-width\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_OPEN_SETTINGS}}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t@click=\"openStoreControlMaster()\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-success\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_TURN_INVENTORY_CONTROL_ON}}\n\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t</template>\t\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"catalog-settings-main-settings\">\n\t\t\t\t\t<div\n\t\t\t\t\t\tv-if=\"isReservationUsed\"\n\t\t\t\t\t\tclass=\"ui-slider-section\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">\n\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_RESERVATION_SETTINGS}}\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t:data-hint=\"getReservationSettingsHint()\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-editor-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t<label>{{loc.CRM_CFG_C_SETTINGS_RESERVATION_ENTITY}}</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-disabled ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<!--<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>-->\n\t\t\t\t\t\t\t\t<select\n\t\t\t\t\t\t\t\t\tv-model=\"currentReservationEntityCode\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<option\n\t\t\t\t\t\t\t\t\t\tv-for=\"reservationEntity in reservationEntities\"\n\t\t\t\t\t\t\t\t\t\t:value=\"reservationEntity.code\"\n\t\t\t\t\t\t\t\t\t\t:disabled=\"reservationEntity.code !== 'deal'\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t{{reservationEntity.name}}\n\t\t\t\t\t\t\t\t\t</option>\t\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<reservation\n\t\t\t\t\t\t\tv-for=\"(reservationEntity, index) in reservationEntities\"\n\t\t\t\t\t\t\tv-show=\"reservationEntity.code === currentReservationEntityCode\"\n\t\t\t\t\t\t\t:key=\"reservationEntity.code\"\n\t\t\t\t\t\t\t:settings=\"reservationEntity.settings\"\n\t\t\t\t\t\t\t@change=\"onReservationSettingsValuesChanged($event, index)\"\n\t\t\t\t\t\t></reservation>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">\n\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS}}\n\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t:data-hint=\"getProductsSettingsHint()\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isCommonProductProcessingEnabled\"\n\t\t\t\t\t\t\tclass=\"catalog-settings-editor-checkbox-content-block\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"productCardSliderEnabled\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"product_card_slider_enabled\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"product_card_slider_enabled\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-editor-checkbox-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultSubscribe\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_subscribe\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_subscribe\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_SUBSCRIBE}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"catalog-settings-editor-checkbox-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultProductVatIncluded\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_product_vat_included\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_product_vat_included\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isDefaultQuantityTraceVisible\"\n\t\t\t\t\t\t\tclass=\"catalog-settings-editor-checkbox-content-block\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultQuantityTrace\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_quantity_trace\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_quantity_trace\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_DEFAULT_QUANTITY_TRACE}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div v-if=\"isCanBuyZeroInDocsVisible\" class=\"catalog-settings-editor-checkbox-content-block\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\t:checked=\"defaultCanBuyZero\"\n\t\t\t\t\t\t\t\t\tdisabled=\"disabled\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_IN_DOCS}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t\t:data-hint=\"getCanBuyZeroInDocsHint()\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div\n\t\t\t\t\t\t\tv-if=\"isReservationUsed\"\n\t\t\t\t\t\t\tclass=\"catalog-settings-editor-checkbox-content-block\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-checkbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t<input\n\t\t\t\t\t\t\t\t\tv-model=\"defaultCanBuyZero\"\n\t\t\t\t\t\t\t\t\t@click=\"markAsChanged\"\n\t\t\t\t\t\t\t\t\tid=\"default_can_buy_zero\"\n\t\t\t\t\t\t\t\t\ttype=\"checkbox\"\n\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<label for=\"default_can_buy_zero\" class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_V2}}\n\t\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t\t\t<span\n\t\t\t\t\t\t\t\t\tclass=\"ui-hint\"\n\t\t\t\t\t\t\t\t\tdata-hint-html=\"\"\n\t\t\t\t\t\t\t\t\tdata-hint-interactivity=\"\"\n\t\t\t\t\t\t\t\t\t:data-hint=\"getCanBuyZeroHint()\"\n\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t<span class=\"ui-hint-icon\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</form>\n\t\t\t<div\n\t\t\t\t:class=\"buttonsPanelClass\"\n\t\t\t>\n\t\t\t\t<div class=\"ui-button-panel ui-button-panel-align-center \">\n\t\t\t\t\t<button\n\t\t\t\t\t\t@click=\"save\"\n\t\t\t\t\t\t:class=\"saveButtonClasses\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_SAVE_BUTTON}}\t\t\t\t\t\n\t\t\t\t\t</button>\n\t\t\t\t\t<a\n\t\t\t\t\t\t@click=\"cancel\"\n\t\t\t\t\t\tclass=\"ui-btn ui-btn-link\"\n\t\t\t\t\t>\n\t\t\t\t\t\t{{loc.CRM_CFG_C_SETTINGS_CANCEL_BUTTON}}\t\t\t\t\t\n\t\t\t\t\t</a>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div style=\"height: 65px;\"></div>\n\t\t</div>\n\t"
 	});
 
+	var Slider = /*#__PURE__*/function () {
+	  function Slider() {
+	    babelHelpers.classCallCheck(this, Slider);
+	  }
+
+	  babelHelpers.createClass(Slider, null, [{
+	    key: "open",
+	    value: function open() {
+	      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	      return new Promise(function (resolve) {
+	        return BX.SidePanel.Instance.open(Const.url, babelHelpers.objectSpread({
+	          width: 1000,
+	          allowChangeHistory: false,
+	          cacheable: false
+	        }, options));
+	      });
+	    }
+	  }]);
+	  return Slider;
+	}();
+
 	exports.App = app;
+	exports.Slider = Slider;
 
 }((this.BX.Crm.Config.Catalog = this.BX.Crm.Config.Catalog || {}),BX,BX.Main,BX.UI,BX.Catalog.StoreUse,BX));
 //# sourceMappingURL=catalog.bundle.js.map

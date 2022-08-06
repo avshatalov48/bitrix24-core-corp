@@ -566,7 +566,8 @@
 				Application.registerPushNotifications(
 					function (data)
 					{
-						console.log("registerPushNotifications", data)
+						console.log("registerPushNotifications");
+						console.log(data);
 
 						var dt = (Application.getPlatform() === "ios"
 								? "APPLE"
@@ -577,10 +578,15 @@
 
 						if (typeof data == "object")
 						{
+
 							if (data.voipToken)
 							{
 								token = data.voipToken;
 								dt = "APPLE/VOIP"
+							}
+							else if(data.type && data.type === 'huawei') {
+								token = data.token;
+								dt = "HUAWEI"
 							}
 							else if (data.token)
 							{

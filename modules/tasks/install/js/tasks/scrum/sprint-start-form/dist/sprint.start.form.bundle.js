@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_core_events,ui_sidepanel_layout,main_core) {
+(function (exports,main_core_events,ui_sidepanel_layout,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var RequestSender = /*#__PURE__*/function () {
@@ -14,7 +14,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      var analyticsLabel = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 	      return new Promise(function (resolve, reject) {
-	        top.BX.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
 	          data: data,
 	          analyticsLabel: analyticsLabel
 	        }).then(resolve, reject);
@@ -37,7 +37,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showErrorAlert",
 	    value: function showErrorAlert(response, alertTitle) {
 	      if (main_core.Type.isUndefined(response.errors)) {
-	        console.log(response);
+	        console.error(response);
 	        return;
 	      }
 
@@ -48,7 +48,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
 	          var title = alertTitle ? alertTitle : main_core.Loc.getMessage('TASKS_SCRUM_ERROR_TITLE_POPUP');
-	          top.BX.UI.Dialogs.MessageBox.alert(message, title);
+	          ui_dialogs_messagebox.MessageBox.alert(message, title);
 	        }
 	      }
 	    }
@@ -129,7 +129,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        _this3.sidePanelManager.close(false, function () {
 	          _this3.emit('afterStart');
 	        });
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        _this3.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
 	      });
 	    }
@@ -144,7 +144,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          sprintId: _this4.sprintId
 	        }).then(function (response) {
 	          resolve(_this4.render(response.data));
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject();
 
 	          _this4.sidePanelManager.close(false, function () {
@@ -220,7 +220,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showCalendar",
 	    value: function showCalendar(inputContainer) {
 	      /* eslint-disable */
-	      new top.BX.JCCalendar().Show({
+	      new BX.JCCalendar().Show({
 	        node: inputContainer,
 	        field: inputContainer.querySelector('input'),
 	        bTime: false,
@@ -247,9 +247,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "initHints",
 	    value: function initHints(node) {
 	      // todo wtf hint
-	      top.BX.UI.Hint.popup = null;
-	      top.BX.UI.Hint.id = 'ui-hint-popup-' + +new Date();
-	      top.BX.UI.Hint.init(node);
+	      BX.UI.Hint.popup = null;
+	      BX.UI.Hint.id = 'ui-hint-popup-' + +new Date();
+	      BX.UI.Hint.init(node);
 	    }
 	  }]);
 	  return SprintStartForm;
@@ -257,5 +257,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.SprintStartForm = SprintStartForm;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX.UI.SidePanel,BX));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX.UI.SidePanel,BX,BX.UI.Dialogs));
 //# sourceMappingURL=sprint.start.form.bundle.js.map

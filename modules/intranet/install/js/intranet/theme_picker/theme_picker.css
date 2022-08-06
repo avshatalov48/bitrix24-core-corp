@@ -55,7 +55,8 @@
 	background: rgba(29,181,229,.5);
 	color: #fff;
 	font-size: 12px;
-	font-family: 'OpenSans-Semibold', serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	border-radius: var(--theme-dialog-item-border-radius, var(--ui-border-radius-md));
 	-webkit-transition: .2s;
 	-o-transition: .2s;
@@ -111,7 +112,8 @@
 	line-height: 31px;
 	font-size: 12px;
 	color: #fff;
-	font-family: "OpenSans-Semibold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-overflow: ellipsis;
 	background: rgba(0,0,0,.2);
 	-webkit-transition: .1s;
@@ -371,7 +373,8 @@
 	display: inline-block;
 	padding: 0 25px;
 	line-height: 35px;
-	font-family: 'OpenSans-Bold', serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	text-transform: uppercase;
 	text-align: center;

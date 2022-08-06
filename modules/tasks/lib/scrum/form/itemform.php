@@ -138,6 +138,7 @@ class ItemForm
 			'MODIFIED_BY' => $this->createdBy,
 			'STORY_POINTS' => $this->storyPoints,
 			'SOURCE_ID' => $this->sourceId,
+			'EPIC_ID' => $this->epicId,
 		];
 	}
 

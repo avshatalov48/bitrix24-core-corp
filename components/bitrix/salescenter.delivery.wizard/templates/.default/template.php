@@ -15,6 +15,7 @@ Loc::loadLanguageFile(__FILE__);
 	'ui.alerts',
 	'ui.switcher',
 	'salescenter.manager',
+	'ui.design-tokens',
 ]);
 
 $formId = 'salescenter-delivery-service-installation-form';
@@ -49,13 +50,14 @@ if (in_array($arResult['code'], $arResult['knownHandlerCodes']) && Bitrix\Main\I
 		<?endif;?>
 		<div class="salescenter-delivery-installation-wrap">
 			<?include($dirPath . '/header.php');?>
-			<div class="ui-alert ui-alert-danger" style="display: none;">
-				<span id="salescenter-delivery-error" class="ui-alert-message"></span>
-			</div>
-			<?include($dirPath . '/fields.php');?>
+		</div>
+
+		<div class="ui-alert ui-alert-danger" style="display: none;">
+			<span id="salescenter-delivery-error" class="ui-alert-message"></span>
 		</div>
 
 		<div class="salescenter-delivery-installation-wrap">
+			<?include($dirPath . '/fields.php');?>
 			<div class="salescenter-delivery-install-section" style="padding-bottom: 68px">
 				<div class="salescenter-delivery-install-content-block">
 					<label for="" class="ui-ctl-label-text">

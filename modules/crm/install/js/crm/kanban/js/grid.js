@@ -1748,11 +1748,18 @@ BX.CRM.Kanban.Grid.prototype = {
 
 	/**
 	 * Show or hide contact center.
+	 *
+	 * @param {BX.Main.Menu} menu
+	 *
 	 * @return {void}
 	 */
-	toggleCC: function()
+	toggleCC: function(menu)
 	{
-		var menu = BX.PopupMenu.getCurrentMenu();
+		if (menu === undefined)
+		{
+			menu = BX.PopupMenu.getCurrentMenu();
+		}
+
 		if (menu)
 		{
 			menu.close();
@@ -1761,7 +1768,6 @@ BX.CRM.Kanban.Grid.prototype = {
 		if (this.ccItem)
 		{
 			var gridData = this.getData();
-
 			if (gridData.contactCenterShow)
 			{
 				this.hideItem(this.ccItem);
@@ -1771,6 +1777,8 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.unhideItem(this.ccItem);
 			}
 			gridData.contactCenterShow = !gridData.contactCenterShow;
+			menu.removeMenuItem('crm_kanban_cc_delimiter');
+			menu.removeMenuItem('crm_kanban_cc');
 		}
 
 		this.ajax({
@@ -2441,6 +2449,11 @@ BX.CRM.Kanban.Grid.prototype = {
 			'menu-popup-toolbar_order_kanban_menu',
 			'menu-popup-toolbar_quote_list_menu'
 		];
+		var newKanbanSettingsClasses = [
+			'toolbar_lead_list_settings_menu',
+			'toolbar_deal_list_settings_menu'
+		];
+
 		// add some menu item
 		if (kanbanSettingsClasses.indexOf(popupWindow.uniquePopupId) !== -1)
 		{
@@ -2449,6 +2462,26 @@ BX.CRM.Kanban.Grid.prototype = {
 			if (notCsClasses.indexOf(popupWindow.uniquePopupId) === -1)
 			{
 				this.addMenuToggleCS(popupId);
+			}
+		}
+		else if (newKanbanSettingsClasses.indexOf(popupWindow.uniquePopupId) !== -1)
+		{
+			var settingsButtonMenu = this.getSettingsButtonMenu();
+			if (settingsButtonMenu !== null)
+			{
+				var gridData = this.getData();
+				settingsButtonMenu.addMenuItem({
+					id: 'crm_kanban_cc_delimiter',
+					delimiter: true
+				}, null);
+				settingsButtonMenu.addMenuItem({
+					id: 'crm_kanban_cc',
+					text: gridData.contactCenterShow? BX.message("CRM_KANBAN_HIDE_CC") : BX.message("CRM_KANBAN_SHOW_CC"),
+					onclick: function(event)
+					{
+						this.toggleCC(settingsButtonMenu);
+					}.bind(this)
+				}, null);
 			}
 		}
 	},
@@ -3017,6 +3050,26 @@ BX.CRM.Kanban.Grid.prototype = {
 	getTypeInfo: function()
 	{
 		return this.getData().typeInfo;
+	},
+
+	getSettingsButtonMenu: function()
+	{
+		var toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
+		if (!toolbar)
+		{
+			return;
+		}
+		var settingsButtonMenu = null;
+		for (const [key, button] of Object.entries(toolbar.buttons)) {
+			if (button.icon == 'ui-btn-icon-setting')
+			{
+				settingsButtonMenu = button.menuWindow;
+
+				break;
+			}
+		}
+
+		return settingsButtonMenu;
 	}
 };
 

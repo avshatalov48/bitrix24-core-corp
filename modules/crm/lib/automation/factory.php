@@ -66,11 +66,13 @@ class Factory
 	public static function isAutomationAvailable($entityTypeId, $ignoreLicense = false)
 	{
 		if (!Helper::isBizprocEnabled() || !static::isSupported($entityTypeId))
+		{
 			return false;
+		}
 
 		if (!$ignoreLicense && Loader::includeModule('bitrix24'))
 		{
-			$feature = 'crm_automation_'.mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+			$feature = 'crm_automation_' . mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 			$is = Feature::isFeatureEnabled($feature);
 
 			if (!$is && self::isLimitationSupported() && in_array($entityTypeId, self::$limitedEntityTypes))
@@ -241,6 +243,7 @@ class Factory
 		if (empty($entityId) || !static::isAutomationRunnable($entityTypeId))
 		{
 			$result->addError(new Error('not available'));
+
 			return $result;
 		}
 
@@ -278,6 +281,19 @@ class Factory
 		}
 
 		return $result;
+	}
+
+	public static function onFieldsChanged($entityTypeId, $entityId, array $changedFields)
+	{
+		if (empty($entityId) || !static::isAutomationRunnable($entityTypeId))
+		{
+			return;
+		}
+
+		$automationTarget = static::getTarget($entityTypeId, $entityId);
+		//refresh target entity fields
+		$automationTarget->setEntityById($entityId);
+		$automationTarget->getRuntime()->onFieldsChanged($changedFields);
 	}
 
 	/**
@@ -498,7 +514,7 @@ class Factory
 	 */
 	private static function shiftConversionResult($entityTypeId, $entityId)
 	{
-		$key = $entityTypeId.'_'.$entityId;
+		$key = $entityTypeId. '_' .$entityId;
 		$result = isset(self::$conversionResults[$key]) ? self::$conversionResults[$key] : null;
 		unset(self::$conversionResults[$key]);
 

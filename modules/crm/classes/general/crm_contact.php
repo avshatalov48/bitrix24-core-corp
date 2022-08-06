@@ -1,26 +1,27 @@
 <?php
 IncludeModuleLangFile(__FILE__);
 
-use Bitrix\Crm\Category\PermissionEntityTypeHelper;
-use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Main;
 use Bitrix\Crm;
-use Bitrix\Crm\UtmTable;
-use Bitrix\Crm\Tracking;
+use Bitrix\Crm\Binding\ContactCompanyTable;
+use Bitrix\Crm\Binding\EntityBinding;
+use Bitrix\Crm\Category\PermissionEntityTypeHelper;
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\Counter\EntityCounterManager;
+use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
-use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
-use Bitrix\Crm\Integrity\DuplicatePersonCriterion;
-use Bitrix\Crm\Integrity\DuplicateEntityRanking;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
-use Bitrix\Crm\Counter\EntityCounterType;
-use Bitrix\Crm\Counter\EntityCounterManager;
+use Bitrix\Crm\Integrity\DuplicateManager;
+use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UtmTable;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'] . BX_ROOT . '/modules/crm/lib/webform/entity.php');
@@ -46,10 +47,86 @@ class CAllCrmContact
 	private static $FIELD_INFOS = null;
 	const DEFAULT_FORM_ID = 'CRM_CONTACT_SHOW_V12';
 
+	/** @var Crm\Entity\Compatibility\Adapter */
+	private $compatibilityAdapter;
+
 	function __construct($bCheckPermission = true)
 	{
 		$this->bCheckPermission = $bCheckPermission;
 		$this->cPerms = CCrmPerms::GetCurrentUserPermissions();
+	}
+
+	/**
+	 * Returns true if this class should invoke Service\Operation instead old API.
+	 * For a start it will return false by default. Please use this period to test your customization on compatibility with new API.
+	 * Later it will return true by default.
+	 * In several months this class will be declared as deprecated and old code will be deleted completely.
+	 *
+	 * @return bool
+	 */
+	public function isUseOperation(): bool
+	{
+		return static::isFactoryEnabled();
+	}
+
+	private static function isFactoryEnabled(): bool
+	{
+		return Crm\Settings\ContactSettings::getCurrent()->isFactoryEnabled();
+	}
+
+	private function getCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!$this->compatibilityAdapter)
+		{
+			$this->compatibilityAdapter = static::createCompatibilityAdapter();
+
+			if ($this->compatibilityAdapter instanceof Crm\Entity\Compatibility\Adapter\Operation)
+			{
+				$this->compatibilityAdapter
+					//bind newly created adapter to this instance
+					->setCheckPermissions((bool)$this->bCheckPermission)
+					->setErrorMessageContainer($this->LAST_ERROR)
+					->setCheckExceptionsContainer($this->checkExceptions)
+				;
+			}
+		}
+
+		return $this->compatibilityAdapter;
+	}
+
+	private static function createCompatibilityAdapter(): Bitrix\Crm\Entity\Compatibility\Adapter
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+		if (!$factory)
+		{
+			throw new Error('No factory for contact');
+		}
+
+		$compatibilityAdapter =
+			(new Crm\Entity\Compatibility\Adapter\Operation($factory))
+				->setRunBizProc(false)
+				->setRunAutomation(false)
+				->setAlwaysExposedFields([
+					'ID',
+					'MODIFY_BY_ID',
+					'FULL_NAME',
+				])
+				->setExposedOnlyAfterAddFields([
+					'CREATED_BY_ID',
+					'ASSIGNED_BY_ID',
+					'LAST_NAME',
+					'CATEGORY_ID',
+					'BIRTHDAY_SORT',
+					'HAS_IMOL',
+					'HAS_PHONE',
+					'HAS_EMAIL',
+				])
+		;
+
+		$addressAdapter = new Crm\Entity\Compatibility\Adapter\Address(\CCrmOwnerType::Contact, EntityAddressType::Primary);
+		$compatibilityAdapter->addChild($addressAdapter);
+
+		return $compatibilityAdapter;
 	}
 
 	// Service -->
@@ -83,6 +160,10 @@ class CAllCrmContact
 			if (Crm\ContactTable::getEntity()->hasField($fieldName))
 			{
 				$result = Crm\ContactTable::getEntity()->getField($fieldName)->getTitle();
+				if($result === $fieldName) // to avoid $result = 'UF_CRM_xxx' for user fields
+				{
+					$result = '';
+				}
 			}
 		}
 
@@ -91,7 +172,16 @@ class CAllCrmContact
 	// Get Fields Metadata
 	public static function GetFieldsInfo()
 	{
-		if(!self::$FIELD_INFOS)
+		if (self::$FIELD_INFOS)
+		{
+			return self::$FIELD_INFOS;
+		}
+
+		if (static::isFactoryEnabled())
+		{
+			self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
+		}
+		else
 		{
 			self::$FIELD_INFOS = array(
 				'ID' => array(
@@ -1050,7 +1140,9 @@ class CAllCrmContact
 
 	public static function BuildPermSql($sAliasPrefix = 'L', $mPermType = 'READ', $arOptions = [])
 	{
-		$permissionEntityTypes = (new PermissionEntityTypeHelper(CCrmOwnerType::Contact))->getPermissionEntityTypesFromOptions((array)$arOptions);
+		$arOptions = (array)$arOptions;
+		$permissionTypeHelper = new PermissionEntityTypeHelper(CCrmOwnerType::Contact);
+		$permissionEntityTypes = $permissionTypeHelper->getPermissionEntityTypesFromOptions($arOptions);
 
 		$userId = null;
 		if (isset($arOptions['PERMS']) && is_object($arOptions['PERMS']))
@@ -1059,9 +1151,10 @@ class CAllCrmContact
 			$userId = $arOptions['PERMS']->GetUserID();
 		}
 		$builderOptions =
-			Crm\Security\QueryBuilder\Options::createFromArray((array)$arOptions)
+			Crm\Security\QueryBuilder\Options::createFromArray($arOptions)
 				->setOperations((array)$mPermType)
 				->setAliasPrefix((string)$sAliasPrefix)
+				->setSkipCheckOtherEntityTypes($permissionTypeHelper->getAllowSkipOtherEntityTypesFromOptions($arOptions))
 		;
 
 		$queryBuilder = Crm\Service\Container::getInstance()
@@ -1177,6 +1270,11 @@ class CAllCrmContact
 		if(!is_array($options))
 		{
 			$options = array();
+		}
+
+		if ($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performAdd($arFields, $options);
 		}
 
 		$this->LAST_ERROR = '';
@@ -1526,17 +1624,13 @@ class CAllCrmContact
 			}
 			//endregion
 
-			//endregion
-
-			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
-
+			$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
 			$data =
 				(new Crm\Integrity\CriterionRegistrar\Data())
 					->setEntityTypeId(\CCrmOwnerType::Contact)
 					->setEntityId($ID)
 					->setCurrentFields($arFields)
 			;
-
 			$duplicateCriterionRegistrar->register($data);
 
 			// tracking of entity
@@ -1605,17 +1699,25 @@ class CAllCrmContact
 				}
 				//endregion
 
-				CCrmSonetSubscription::RegisterSubscription(
-					CCrmOwnerType::Contact,
-					$ID,
-					CCrmSonetSubscriptionType::Responsibility,
-					$assignedByID
-				);
-				$logEventID = CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, array('CURRENT_USER' => $userID));
+				$isUntypedCategory = (int)$arFields['CATEGORY_ID'] === 0;
+				if ($isUntypedCategory)
+				{
+					CCrmSonetSubscription::RegisterSubscription(
+						CCrmOwnerType::Contact,
+						$ID,
+						CCrmSonetSubscriptionType::Responsibility,
+						$assignedByID
+					);
+				}
+
+				$logEventID = $isUntypedCategory
+					? CCrmLiveFeed::CreateLogEvent($liveFeedFields, CCrmLiveFeedEvent::Add, ['CURRENT_USER' => $userID])
+					: false;
 
 				if (
 					$logEventID
 					&& $assignedByID != $createdByID
+					&& (int)$arFields['CATEGORY_ID'] === 0
 					&& CModule::IncludeModule("im")
 				)
 				{
@@ -1753,6 +1855,14 @@ class CAllCrmContact
 		{
 			$arOptions = array();
 		}
+
+		$arOptions['IS_COMPARE_ENABLED'] = $bCompare;
+
+		if ($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performUpdate($ID, $arFields, $arOptions);
+		}
+
 		$isSystemAction = isset($arOptions['IS_SYSTEM_ACTION']) && $arOptions['IS_SYSTEM_ACTION'];
 
 		$arFilterTmp = array('ID' => $ID);
@@ -2245,7 +2355,7 @@ class CAllCrmContact
 				? (bool)$arOptions['ENABLE_DUP_INDEX_INVALIDATION'] : true;
 			if(!$isSystemAction && $enableDupIndexInvalidation)
 			{
-				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsDirty(CCrmOwnerType::Contact, $ID);
+				DuplicateManager::markDuplicateIndexAsDirty(CCrmOwnerType::Contact, $ID);
 			}
 
 			if($bResult)
@@ -2281,7 +2391,7 @@ class CAllCrmContact
 				}
 				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
 				{
-					\Bitrix\Crm\Integrity\DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Contact, $ID);
+					DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Contact, $ID);
 				}
 			}
 
@@ -2317,14 +2427,18 @@ class CAllCrmContact
 				$hasPhone = CCrmFieldMulti::HasValues($multifields, CCrmFieldMulti::PHONE) ? 'Y' : 'N';
 				$hasImol = CCrmFieldMulti::HasImolValues($multifields) ? 'Y' : 'N';
 				if(
-					$hasEmail !== (isset($arRow['HAS_EMAIL']) ? $arRow['HAS_EMAIL'] : 'N')
-					||
-					$hasPhone !== (isset($arRow['HAS_PHONE']) ? $arRow['HAS_PHONE'] : 'N')
-					||
-					$hasImol !== (isset($arRow['HAS_IMOL']) ? $arRow['HAS_IMOL'] : 'N')
+					$hasEmail !== ($arRow['HAS_EMAIL'] ?? 'N')
+					|| $hasPhone !== ($arRow['HAS_PHONE'] ?? 'N')
+					|| $hasImol !== ($arRow['HAS_IMOL'] ?? 'N')
 				)
 				{
-					$DB->Query("UPDATE b_crm_contact SET HAS_EMAIL = '{$hasEmail}', HAS_PHONE = '{$hasPhone}', HAS_IMOL = '{$hasImol}' WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+					$DB->Query(
+						"UPDATE b_crm_contact "
+							. "SET HAS_EMAIL = '$hasEmail', HAS_PHONE = '$hasPhone', HAS_IMOL = '$hasImol' "
+							. "WHERE ID = $ID",
+						false,
+						'FILE: '.__FILE__.'<br /> LINE: '.__LINE__
+					);
 
 					$arFields['HAS_EMAIL'] = $hasEmail;
 					$arFields['HAS_PHONE'] = $hasPhone;
@@ -2332,8 +2446,7 @@ class CAllCrmContact
 				}
 			}
 
-			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
-
+			$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
 			$data =
 				(new Crm\Integrity\CriterionRegistrar\Data())
 					->setEntityTypeId(\CCrmOwnerType::Contact)
@@ -2341,7 +2454,6 @@ class CAllCrmContact
 					->setCurrentFields($arFields)
 					->setPreviousFields($arRow)
 			;
-
 			$duplicateCriterionRegistrar->update($data);
 
 			// update utm fields
@@ -2398,8 +2510,9 @@ class CAllCrmContact
 			$arFields['ID'] = $ID;
 
 			$registerSonetEvent = isset($arOptions['REGISTER_SONET_EVENT']) && $arOptions['REGISTER_SONET_EVENT'] === true;
+			$isUntypedCategory = $categoryId === 0;
 
-			if($bResult && isset($arFields['ASSIGNED_BY_ID']))
+			if ($bResult && isset($arFields['ASSIGNED_BY_ID']) && $isUntypedCategory)
 			{
 				CCrmSonetSubscription::ReplaceSubscriptionByEntity(
 					CCrmOwnerType::Contact,
@@ -2451,11 +2564,14 @@ class CAllCrmContact
 						$sonetEventFields['PARENTS'] = array_values($parents);
 					}
 
-					$logEventID = CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEventType, array('CURRENT_USER' => $iUserId));
+					$logEventID = $isUntypedCategory
+						? CCrmLiveFeed::CreateLogEvent($sonetEventFields, $sonetEventType, ['CURRENT_USER' => $iUserId])
+						: false;
 
 					if (
 						$logEventID
 						&& $sonetEvent['TYPE'] == CCrmLiveFeedEvent::Responsible
+						&& $categoryId === 0
 						&& CModule::IncludeModule("im")
 					)
 					{
@@ -2525,6 +2641,11 @@ class CAllCrmContact
 		if(!is_array($arOptions))
 		{
 			$arOptions = array();
+		}
+
+		if ($this->isUseOperation())
+		{
+			return $this->getCompatibilityAdapter()->performDelete($ID, $arOptions);
 		}
 
 		if(isset($arOptions['CURRENT_USER']))
@@ -2651,17 +2772,15 @@ class CAllCrmContact
 
 			if($enableDupIndexInvalidation)
 			{
-				\Bitrix\Crm\Integrity\DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Contact, $ID);
+				DuplicateManager::markDuplicateIndexAsJunk(CCrmOwnerType::Contact, $ID);
 			}
 
-			$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
-
+			$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
 			$data =
 				(new Crm\Integrity\CriterionRegistrar\Data())
 					->setEntityTypeId(\CCrmOwnerType::Contact)
 					->setEntityId($ID)
 			;
-
 			$duplicateCriterionRegistrar->unregister($data);
 
 			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Contact, $ID);
@@ -2742,7 +2861,8 @@ class CAllCrmContact
 				ExecuteModuleEventEx($arEvent, array($ID));
 			}
 
-			CCrmLiveFeed::DeleteUserCrmConnection('C_'.$ID);
+			$identifier = new Crm\ItemIdentifier(\CCrmOwnerType::Contact, (int)$ID);
+			CCrmLiveFeed::DeleteUserCrmConnection(\Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier($identifier));
 		}
 		return true;
 	}
@@ -2910,15 +3030,29 @@ class CAllCrmContact
 			}
 
 			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] : array();
+				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM]
+				: [];
 
-			if (!$USER_FIELD_MANAGER->CheckFields(
+			if (isset($arFields['CATEGORY_ID']))
+			{
+				// category specified user fields
+				$filteredUserFields = (new CCrmUserType($USER_FIELD_MANAGER, self::$sUFEntityID))
+					->setOption(['categoryId' => $arFields['CATEGORY_ID']])
+					->GetEntityFields($ID)
+				;
+			}
+
+			if (
+				!$USER_FIELD_MANAGER->CheckFields(
 					self::$sUFEntityID,
 					$ID,
 					$fieldsToCheck,
 					false,
 					$enableRequiredUserFieldCheck,
-					$requiredUserFields))
+					$requiredUserFields,
+					isset($filteredUserFields) ? array_keys($filteredUserFields) : null
+				)
+			)
 			{
 				$e = $APPLICATION->GetException();
 				$this->checkExceptions[] = $e;
@@ -3496,16 +3630,12 @@ class CAllCrmContact
 			$IDs
 		);
 
-		$duplicateCriterionRegistrar = Crm\Integrity\DuplicateManager::getCriterionRegistrar(\CCrmOwnerType::Contact);
+		$duplicateCriterionRegistrar = DuplicateManager::getCriterionRegistrarForReindex(\CCrmOwnerType::Contact);
 
 		while($fields = $dbResult->Fetch())
 		{
 			$ID = (int)$fields['ID'];
 			$fields['FM'] = $entityMultifields[$ID] ?? null;
-
-			DuplicateRequisiteCriterion::registerByEntity(CCrmOwnerType::Contact, $ID);
-
-			DuplicateBankDetailCriterion::registerByEntity(CCrmOwnerType::Contact, $ID);
 
 			$data =
 				(new Crm\Integrity\CriterionRegistrar\Data())
@@ -3513,8 +3643,11 @@ class CAllCrmContact
 					->setEntityId($ID)
 					->setCurrentFields($fields)
 			;
-
 			$duplicateCriterionRegistrar->register($data);
+
+			DuplicateRequisiteCriterion::registerByEntity(CCrmOwnerType::Contact, $ID);
+
+			DuplicateBankDetailCriterion::registerByEntity(CCrmOwnerType::Contact, $ID);
 		}
 	}
 

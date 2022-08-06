@@ -1,131 +1,86 @@
-import {Reflection, Event} from 'main.core';
+import {Reflection, Loc} from 'main.core';
 import { EventEmitter } from 'main.core.events'
 import {Vue} from 'ui.vue';
-import {Popup} from "main.popup";
+import {BitrixVue} from 'ui.vue3';
 import {PopupWrapperComponent} from "./components/popup-wrapper";
+import {getExpirationLevel, ExpirationLevel} from "./expiration-options";
 
 const namespace = Reflection.namespace('BX.Intranet');
 
 class LicenseWidget
 {
-	#vue: Vue;
+	#vue;
 
 	constructor(params)
 	{
-		this.isFreeLicense = params.isFreeLicense === "Y";
-		this.isDemoLicense = params.isDemoLicense === "Y";
-		this.isAutoPay = params.isAutoPay === "Y";
-		this.isLicenseAlmostExpired = params.isLicenseAlmostExpired === "Y";
-		this.isLicenseExpired = params.isLicenseExpired === "Y";
-		this.isAlmostLocked = params.isAlmostLocked === "Y";
-		this.isExperimentalTemplate = params.isExperimentalTemplate === "Y";
-		this.licenseType = params.licenseType;
+		this.isDemo = params.isDemo === "Y";
+		this.expirationLevel = params.expirationLevel;
 		this.node = params.wrapper;
 
 		this.renderButton();
+
+		setTimeout(() => {
+			this.initPopup(document.querySelector('[data-bx-id="liswdgt"]'));
+		}, 100);
 	}
 
 	renderButton()
 	{
-		const LicenceWidgetInstance = this;
-
-		this.#vue = Vue.create({
-			el: this.node,
-			data()
-			{
+		this.#vue = BitrixVue.createApp({
+			name: 'LicenseWidget:Button',
+			data: () => {
 				return {
-					isFreeLicense: LicenceWidgetInstance.isFreeLicense,
-					isAutoPay: LicenceWidgetInstance.isAutoPay,
-					isDemoLicense: LicenceWidgetInstance.isDemoLicense,
-					isLicenseAlmostExpired: LicenceWidgetInstance.isLicenseAlmostExpired,
-					isLicenseExpired: LicenceWidgetInstance.isLicenseExpired,
-					isAlmostLocked: LicenceWidgetInstance.isAlmostLocked,
-					isExperimentalTemplate: LicenceWidgetInstance.isExperimentalTemplate,
+					isDemo: this.isDemo,
+					expirationLevel: this.expirationLevel,
 				};
 			},
-			computed:
-				{
-					localize(state)
-					{
-						return Vue.getFilteredPhrases("INTRANET_LICENSE_WIDGET_");
-					},
-					buttonClass()
-					{
-						let className = "";
-
-						if (this.isFreeLicense && !this.isAlmostLocked)
+			computed: {
+					buttonClass: () => {
+						const classNames = [];
+						if (this.expirationLevel <= ExpirationLevel.soonExpired)
 						{
-							className = "ui-btn-icon-tariff license-btn-orange";
+							classNames.push(this.isDemo ? 'ui-btn-icon-demo' : 'ui-btn-icon-tariff');
+							classNames.push((this.expirationLevel & ExpirationLevel.soonExpired)
+								? 'license-btn-orange' : 'license-btn-blue-border');
 						}
 						else
 						{
-							if (this.isLicenseAlmostExpired)
-							{
-								className = "license-btn-alert-border ui-btn-icon-low-battery";
-							}
-							else if (this.isLicenseExpired)
-							{
-								/*if (this.isAutoPay)
-								{
-
-								}
-								else
-								{*/
-									className = "license-btn-alert-border license-btn-animate license-btn-animate-forward";
-								//}
-							}
-							else if (this.isAlmostLocked)
-							{
-								className = "license-btn-alert-border ui-btn-icon-low-battery";
-							}
-							else
-							{
-								className = "ui-btn-icon-tariff license-btn-blue-border";
-
-								if (this.isDemoLicense)
-								{
-									className = "ui-btn-icon-demo license-btn-blue-border";
-								}
-							}
+							classNames.push('license-btn-alert-border');
+							classNames.push(
+								(this.expirationLevel & ExpirationLevel.expired) ?
+									'license-btn-animate license-btn-animate-forward' : 'ui-btn-icon-low-battery'
+							);
 						}
-
-						return className;
+						return classNames.join(' ');
 					},
 					buttonName()
 					{
-						let buttonName = BX.message("INTRANET_LICENSE_WIDGET_MY_TARIFF");
-
-						if (this.isFreeLicense)
+						if (this.expirationLevel > 1)
 						{
-							buttonName = (this.isExperimentalTemplate ?
-								BX.message("INTRANET_LICENSE_WIDGET_START_FREE_TRIAL") :
-								BX.message("INTRANET_LICENSE_WIDGET_BUY_TARIFF"));
+							return this.isDemo ? Loc.getMessage('INTRANET_LICENSE_WIDGET_BUY')
+								: Loc.getMessage('INTRANET_LICENSE_WIDGET_PROLONG');
 						}
-						else if (this.isDemoLicense)
-						{
-							buttonName = BX.message("INTRANET_LICENSE_WIDGET_DEMO");
-						}
-
-						return buttonName;
+						return this.isDemo ? Loc.getMessage('INTRANET_LICENSE_WIDGET_TITLE_DEMO') :
+							Loc.getMessage('INTRANET_LICENSE_WIDGET_TITLE');
 					},
 				},
 			methods: {
-				togglePopup(e)
-				{
-					if (LicenceWidgetInstance.popup && LicenceWidgetInstance.popup.isShown())
+				togglePopup: (e) => {
+					if (this.popup && this.popup.isShown())
 					{
-						return LicenceWidgetInstance.closePopup();
+						return this.closePopup();
 					}
-					LicenceWidgetInstance.initPopup(e.target);
+					this.initPopup(e.target);
 				},
 			},
 			template: `
 				<button
+					data-bx-id="liswdgt"
 					class="ui-btn ui-btn-round ui-btn-themes license-btn"
 					:class="buttonClass"
 					@click="togglePopup"
 				>
-					<span v-if="isLicenseExpired || isAlmostLocked" class="license-btn-icon-battery">
+					<span v-if="expirationLevel > 1" class="license-btn-icon-battery">
 						<span class="license-btn-icon-battery-full">
 							<span class="license-btn-icon-battery-inner">
 								<span></span>
@@ -141,6 +96,7 @@ class LicenseWidget
 				</button>
 			`,
 		});
+		this.#vue.mount(this.node);
 	}
 
 	initPopup(bindElement)
@@ -184,32 +140,20 @@ class LicenseWidget
 
 	renderPopupContent()
 	{
-		const LicenceWidgetInstance = this;
+		const node = document.createElement('div');
 
-		let content = Vue.create({
-			el: document.createElement("div"),
+		(BitrixVue.createApp({
+			name: 'LicenseWidget:PopupWrapper',
 			components: {PopupWrapperComponent},
-			data()
-			{
+			data: () => {
 				return {
-					licenseType: LicenceWidgetInstance.licenseType,
-					isExperimentalTemplate: LicenceWidgetInstance.isExperimentalTemplate,
+					isDemo: this.isDemo,
+					expirationLevel: this.expirationLevel,
 				};
 			},
-			computed: {
-				localize(state)
-				{
-					return Vue.getFilteredPhrases('INTRANET_LICENSE_WIDGET_');
-				}
-			},
-			template: `
-				<PopupWrapperComponent
-					:licenseType="licenseType"
-					:isExperimentalTemplate="isExperimentalTemplate"
-				/>`,
-		});
-
-		return content.$el;
+			template: `<PopupWrapperComponent/>`,
+		})).mount(node);
+		return node;
 	}
 
 	closePopup()

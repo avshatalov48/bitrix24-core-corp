@@ -363,7 +363,8 @@ class EntityFieldProvider
 
 	protected static function prepareUserFieldsInfo(&$fieldsInfo, $entityTypeID)
 	{
-		$userType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], $entityTypeID);
+		// get user fields to default category only [ID: 0]
+		$userType = new \CCrmUserType($GLOBALS['USER_FIELD_MANAGER'], $entityTypeID, ['categoryId' => 0]);
 		$userType->PrepareFieldsInfo($fieldsInfo);
 	}
 

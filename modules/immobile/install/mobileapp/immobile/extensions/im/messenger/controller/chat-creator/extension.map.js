@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","ChatCreator"],"mappings":"AAGAA,GAAGC,OAAO,wCAAwC,CAACC,EAASC,EAASC,KAEpE,MAAMC,YAAEA,GAAgBL,GAAGE,QAAQ,qDAEnCE,EAAOD,QAAU,CAChBE,YAAAA","file":"extension.map.js"}

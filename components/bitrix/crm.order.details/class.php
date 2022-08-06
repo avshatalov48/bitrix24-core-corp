@@ -1,8 +1,6 @@
 <?php
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-const CRM_ORDER_DETAILS_AREA = true;
-
 use Bitrix\Crm;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;

@@ -1,6 +1,6 @@
 import './css/check-list-item.css';
 
-import {Dom, Loc, Runtime, Tag, Text} from 'main.core';
+import {Dom, Event, Loc, Runtime, Tag, Text} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {CompositeTreeItem} from './composite-tree-item';
@@ -36,7 +36,7 @@ class CheckListItem extends CompositeTreeItem
 		],
 	};
 
-	static makeDangerElement(element)
+	static addDangerToElement(element)
 	{
 		const dangerClass = 'ui-ctl-danger';
 
@@ -310,6 +310,7 @@ class CheckListItem extends CompositeTreeItem
 			tab: 9,
 			up: 38,
 			down: 40,
+			backspace: 8,
 		};
 	}
 
@@ -788,7 +789,7 @@ class CheckListItem extends CompositeTreeItem
 			this.runForEachSelectedItem((selectedItem) => {
 				const title = selectedItem.fields.getTitle();
 				const space = (title.slice(-1) === ' ' ? '' : ' ');
-				const newTitle = `${title}${space}${member.nameFormatted}`.substring(0, 255);
+				const newTitle = `${title}${space}${member.nameFormatted}`;
 
 				selectedItem.fields.addMember(member);
 				selectedItem.updateTitle(Text.decode(newTitle));
@@ -1306,7 +1307,6 @@ class CheckListItem extends CompositeTreeItem
 								tasks-checklist-header-name-editor">
 						<input class="ui-ctl-element" type="text" id="text_${nodeId}"
 							   value="${this.fields.getTitle()}"
-							   onkeypress="${this.onInputKeyPressed.bind(this)}"
 							   onkeydown="${this.onInputKeyDown.bind(this)}"
 							   onblur="${this.rememberInputState.bind(this)}"/>
 						<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.clearInput.bind(this)}"/>
@@ -1341,7 +1341,6 @@ class CheckListItem extends CompositeTreeItem
 						<input class="ui-ctl-element" type="text" id="text_${nodeId}"
 							   placeholder="${Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER')}"
 							   value="${this.fields.getTitle()}"
-							   onkeypress="${this.onInputKeyPressed.bind(this)}"
 							   onkeydown="${this.onInputKeyDown.bind(this)}"
 							   onblur="${this.rememberInputState.bind(this)}"/>
 						<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.clearInput.bind(this)}"/>
@@ -1406,6 +1405,8 @@ class CheckListItem extends CompositeTreeItem
 		this.input.setSelectionRange(this.input.value.length, this.input.value.length);
 		this.inputCursorPosition = CheckListItem.getInputSelection(this.input);
 
+		Event.bind(this.input, 'beforeinput', this.onInputBeforeInput.bind(this));
+
 		if (this.input.value === '' || this.input.value.length === 0)
 		{
 			setTimeout(() => {
@@ -1426,7 +1427,7 @@ class CheckListItem extends CompositeTreeItem
 	disableUpdateMode()
 	{
 		const currentInner = this.getInnerContainer();
-		const text = currentInner.querySelector(`#text_${this.getNodeId()}`).value.trim().substring(0, 255);
+		const text = currentInner.querySelector(`#text_${this.getNodeId()}`).value.trim();
 
 		this.updateTitle(text);
 		this.processMembersFromText();
@@ -1464,7 +1465,8 @@ class CheckListItem extends CompositeTreeItem
 			}
 			else
 			{
-				CheckListItem.makeDangerElement(input.parentElement);
+				CheckListItem.addDangerToElement(input.parentElement);
+
 				if (this.input !== null)
 				{
 					this.getRootNode().showEditorPanel(this, this.input);
@@ -1515,30 +1517,6 @@ class CheckListItem extends CompositeTreeItem
 		}
 	}
 
-	onInputKeyPressed(e)
-	{
-		if (this.isSelectorLoading)
-		{
-			e.preventDefault();
-			return;
-		}
-
-		if (e.keyCode === CheckListItem.keyCodes.enter)
-		{
-			this.toggleUpdateMode(e);
-			e.preventDefault();
-		}
-		else if (
-			e.keyCode === CheckListItem.keyCodes.plus
-			|| (e.shiftKey && e.keyCode === CheckListItem.keyCodes.atsign)
-		)
-		{
-			this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
-		}
-
-		EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {action: 'inputKeyPressed'});
-	}
-
 	onInputKeyDown(e)
 	{
 		if (this.isSelectorLoading)
@@ -1549,12 +1527,10 @@ class CheckListItem extends CompositeTreeItem
 
 		switch (e.keyCode)
 		{
-			default:
-				// do nothing
-				break;
-
 			case CheckListItem.keyCodes.esc:
+			case CheckListItem.keyCodes.enter:
 			{
+				e.preventDefault();
 				setTimeout(() => this.toggleUpdateMode(e));
 				break;
 			}
@@ -1588,6 +1564,25 @@ class CheckListItem extends CompositeTreeItem
 				}
 				break;
 			}
+
+			default:
+				// do nothing
+				break;
+		}
+	}
+
+	onInputBeforeInput(e)
+	{
+		if (this.isSelectorLoading)
+		{
+			e.preventDefault();
+			return;
+		}
+
+		if (['+', '@'].includes(e.data))
+		{
+			this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
+			e.preventDefault();
 		}
 	}
 
@@ -2929,7 +2924,7 @@ class MobileCheckListItem extends CheckListItem
 		],
 	};
 
-	static makeDangerElement(element)
+	static addDangerToElement(element)
 	{
 		const dangerClass = 'mobile-task-checklist-error';
 
@@ -3234,7 +3229,7 @@ class MobileCheckListItem extends CheckListItem
 		else
 		{
 			const space = (title.slice(-1) === ' ' ? '' : ' ');
-			newTitle = `${title}${space}${member.nameFormatted}`.substring(0, 255);
+			newTitle = `${title}${space}${member.nameFormatted}`;
 		}
 
 		node.fields.addMember(member);
@@ -3559,7 +3554,7 @@ class MobileCheckListItem extends CheckListItem
 			}
 			else
 			{
-				MobileCheckListItem.makeDangerElement(input.parentElement);
+				MobileCheckListItem.addDangerToElement(input.parentElement);
 			}
 		}
 		else if (createNewItem)
@@ -3591,7 +3586,7 @@ class MobileCheckListItem extends CheckListItem
 		}
 	}
 
-	onInput(e)
+	onInputBeforeInput(e)
 	{
 		const memberSelectorCallKeys = ['@', '+'];
 		const position = CheckListItem.getInputSelection(this.input).start;
@@ -3602,7 +3597,12 @@ class MobileCheckListItem extends CheckListItem
 				position,
 				nodeId: this.getNodeId(),
 			};
-			BXMobileApp.Events.postToComponent('onChecklistInputMemberSelectorCall', params, this.getNativeComponentName());
+			BXMobileApp.Events.postToComponent(
+				'onChecklistInputMemberSelectorCall',
+				params,
+				this.getNativeComponentName()
+			);
+			e.preventDefault();
 		}
 	}
 
@@ -3678,7 +3678,6 @@ class MobileCheckListItem extends CheckListItem
 				<div class="mobile-task-checklist-head-title mobile-task-checklist-item-edit-mode">
 					<input class="mobile-task-checklist-item-input" type="text" id="text_${nodeId}"
 						   value="${this.fields.getTitle()}"
-						   oninput="${this.onInput.bind(this)}"
 						   onkeypress="${this.onInputKeyPressed.bind(this)}"
 						   onblur="${this.rememberInputState.bind(this)}"/>
 				</div>
@@ -3704,7 +3703,6 @@ class MobileCheckListItem extends CheckListItem
 					<input class="mobile-task-checklist-item-input" type="text" id="text_${nodeId}"
 						   placeholder="${Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER')}"
 						   value="${this.fields.getTitle()}"
-						   oninput="${this.onInput.bind(this)}"
 						   onkeypress="${this.onInputKeyPressed.bind(this)}"
 						   onblur="${this.rememberInputState.bind(this)}"/>
 				</div>

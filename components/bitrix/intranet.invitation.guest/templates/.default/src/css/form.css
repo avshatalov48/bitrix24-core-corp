@@ -26,7 +26,8 @@
 .invite-title-text {
 	padding-left: 17px;
 	/*flex: 1;*/
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 18px;
 	color: #333;
 	letter-spacing: 0;

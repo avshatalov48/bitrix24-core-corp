@@ -6,7 +6,8 @@
 	margin: 0 0 15px 0;
 	max-width: 100%;
 	border-bottom: 1px solid rgba(82,92,105,.10);
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -29,7 +30,7 @@
 .voximplant-subtitle {
 	display: block;
 	margin: 0 0 5px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	opacity: .5;
 }
@@ -37,7 +38,7 @@
 .sender-campaign-selector-title {
 	display: block;
 	margin: 0 0 6px 0;
-	font: 13px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 }
 /* END OF TITLE */
@@ -60,6 +61,11 @@
 	padding: 20px;
 	background: #fff;
 	/*margin: 0 20px;*/
+	border-radius: var(--voximplant-container-border-radius, var(--ui-border-radius-md));
+}
+
+.side-panel-content-container .voximplant-container {
+	margin: 0 20px;
 }
 
 .voximplant-container-split.voximplant-container {
@@ -94,7 +100,7 @@
 .voximplant-start-label {
 	display: block;
 	margin: 0 0 6px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(83,91,106,.52);
 }
 
@@ -106,22 +112,22 @@
 /* TEXT */
 .voximplant-start-text-dark-bold {
 	display: inline-block;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
 .voximplant-start-text-darkgrey {
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
 .voximplant-start-head-entity {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
 .voximplant-start-head-entity-bold {
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
@@ -133,7 +139,7 @@
 /* HEAD INFO */
 .voximplant-start-head-subtitle {
 	display: block;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 	opacity: .5;
 }
@@ -157,7 +163,7 @@
 }
 /*.voximplant-start-payment-btn {*/
 	/*display: inline-block;*/
-	/*font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;*/
+	/*font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));*/
 	/*color: #177CE2;*/
 	/*border-bottom: 1px solid transparent;*/
 	/*transition: border-bottom .3s;*/
@@ -224,7 +230,7 @@
 	display: none;
 	height: 15px;
 	border-bottom: 1px dashed transparent;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066b0;
 	transition: border-bottom .3s;
 }
@@ -257,6 +263,7 @@
 	background: #fff;
 	box-shadow: 0 1px 2px rgba(0,0,0,.15);
 	box-sizing: border-box;
+	border-radius: var(--voximplant-start-head-box-border-radius, var(--ui-border-radius-md));
 }
 
 .voximplant-start-head-box:last-child {
@@ -322,7 +329,8 @@
 }
 .voximplant-start-head-box-no-balance {
 	position: relative;
-	font: 21px/28px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 21px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	text-overflow: ellipsis;
 	text-align: end;
@@ -333,7 +341,8 @@
 	padding: 0 25px 0 0;
 	max-width: 100%;
 	/*max-width: calc(100% - 25px);*/
-	font: 52px/42px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 52px/42px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -354,7 +363,8 @@
 
 @media (max-width: 1300px) {
 	.voximplant-start-head-box-amount {
-		font: 32px/32px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+		font: 32px/32px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+		font-weight: var(--ui-font-weight-light, 300);
 	}
 
 	.voximplant-start-head-box-amount:after {
@@ -378,7 +388,8 @@
 	display: block;
 	margin: 24px auto 0 auto;
 	max-width: 190px;
-	font: 16px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	text-align: center;
 	opacity: .5;
@@ -388,7 +399,7 @@
 	border-top: 1px solid rgba(82,92,105,.10);
 	padding-top: 10px;
 	margin-top: 15px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	text-align: right;
 }
@@ -403,6 +414,7 @@
 	transition: box-shadow .3s, transform .3s;
 	box-shadow: 0 1px 2px rgba(0,0,0,.15);
 	cursor: pointer;
+	border-radius: var(--voximplant-tile-item-border-radius, var(--ui-border-radius-sm));
 }
 
 .voximplant-tile-item:hover {
@@ -429,7 +441,8 @@
 	margin: 0 auto;
 	padding: 0 11px 0 12px;
 	max-width: 160px;
-	font: 13px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525C69;
 	text-align: center;
 	text-overflow: ellipsis;
@@ -477,7 +490,7 @@
 
 .voximplant-tile-item-selected {
 	border: none;
-	border-radius: 3px;
+	border-radius: var(--voximplant-tile-item-border-radius, var(--ui-border-radius-sm, 3px));
 }
 
 .voximplant-tile-item-selected:before {
@@ -514,8 +527,9 @@
 }
 
 .voximplant-start-logo-package-of-numbers-5 .voximplant-tile-img {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2020%2019%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M8.237%204.928c.323%200%20.596.248.57.57v2.33c0%20.323-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.322.247-.57.57-.57h2.33zm5.083%200c.323%200%20.57.248.57.57v2.33c0%20.323-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.297.247-.57.57-.57h2.33zM.848%2013.482c-.322%200-.595-.248-.57-.57v-2.33c0-.323.247-.571.57-.571h2.33c.323%200%20.57.248.57.57v2.33c0%20.323-.247.571-.57.571H.848zm7.39-3.497c.322%200%20.595.273.57.57v2.331c0%20.323-.248.57-.57.57H5.906a.561.561%200%200%201-.57-.57v-2.33c0-.323.247-.57.57-.57h2.33zm5.082%200c.323%200%20.57.273.57.57v2.331c0%20.323-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.323.247-.57.57-.57h2.33zM.848%2018.565c-.322%200-.595-.273-.57-.57v-2.33c0-.298.247-.571.57-.571h2.33c.323%200%20.57.248.57.57v2.33c0%20.298-.247.571-.57.571H.848zm7.39-3.497c.322%200%20.595.248.57.57v2.331c0%20.298-.248.57-.57.57H5.906a.561.561%200%200%201-.57-.57v-2.33c0-.297.247-.57.57-.57h2.33zm5.082%200c.323%200%20.57.248.57.57v2.331c0%20.298-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.297.247-.57.57-.57h2.33zM3.178%208.424H.848c-.322%200-.595-.273-.57-.595v-2.33c0-.298.248-.571.57-.571H3.18c.323%200%20.57.248.57.57v2.356c0%20.322-.248.57-.57.57z%22/%3E%3Cpath%20fill%3D%22%23FFA900%22%20d%3D%22M9.871.309h10v14h-10z%22/%3E%3Ctext%20fill%3D%22%23FFF%22%20font-family%3D%22OpenSans-Bold%2C%20Open%20Sans%22%20font-size%3D%2217%22%20font-weight%3D%22bold%22%20transform%3D%22translate%28-.129%20-6.691%29%22%3E%3Ctspan%20x%3D%2210.558%22%20y%3D%2218.867%22%3E5%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E');
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M18.899 8.618c-.426-.433-1-.65-1.72-.65-.307 0-.564.025-.771.076l-.179.038.138-1.569h2.665V5.08h-4.049l-.28 4.074.628.361c.136-.044.313-.084.53-.12.218-.04.417-.06.598-.06.997 0 1.495.403 1.495 1.208 0 .846-.481 1.269-1.444 1.269-.32 0-.659-.047-1.016-.142a4.085 4.085 0 0 1-.94-.377v1.46c.511.288 1.182.432 2.012.432.956 0 1.691-.241 2.205-.722s.77-1.169.77-2.062c0-.755-.213-1.349-.642-1.783ZM6.534 7.574a.706.706 0 0 0-.706.706v1.082c0 .39.316.706.706.706h1.082c.39 0 .706-.316.706-.706V8.28a.706.706 0 0 0-.706-.706H6.534Zm3.74 0a.706.706 0 0 0-.706.706v1.082c0 .39.316.706.706.706h1.082c.39 0 .706-.316.706-.706V8.28a.706.706 0 0 0-.706-.706h-1.082ZM5.828 12.02c0-.39.316-.705.706-.705h1.082c.39 0 .706.316.706.705v1.082c0 .39-.316.706-.706.706H6.534a.706.706 0 0 1-.706-.706V12.02Zm4.446-.705a.706.706 0 0 0-.706.705v1.082c0 .39.316.706.706.706h1.082c.39 0 .706-.316.706-.706V12.02a.706.706 0 0 0-.706-.705h-1.082ZM5.828 15.76c0-.39.316-.706.706-.706h1.082c.39 0 .706.316.706.706v1.081c0 .39-.316.706-.706.706H6.534a.706.706 0 0 1-.706-.706v-1.081Zm4.446-.706a.706.706 0 0 0-.706.706v1.081c0 .39.316.706.706.706h1.082c.39 0 .706-.316.706-.706v-1.081a.706.706 0 0 0-.706-.706h-1.082Zm3.035.706c0-.39.316-.706.706-.706h1.081c.39 0 .706.316.706.706v1.081c0 .39-.316.706-.706.706h-1.082a.706.706 0 0 1-.705-.706v-1.081Z' fill='%23fff'/%3E%3C/svg%3E");
 	background-color: #9dcf00;
+	background-size: 90% auto;
 }
 
 .voximplant-tile-item-selected.voximplant-start-logo-package-of-numbers-5 {
@@ -523,8 +537,9 @@
 }
 
 .voximplant-start-logo-package-of-numbers-10 .voximplant-tile-img {
-	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2028%2021%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M8.237%206.928c.323%200%20.596.248.57.57v2.33c0%20.323-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.322.247-.57.57-.57h2.33zm5.083%200c.323%200%20.57.248.57.57v2.33c0%20.323-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.297.247-.57.57-.57h2.33zM.848%2015.482c-.322%200-.595-.248-.57-.57v-2.33c0-.323.247-.571.57-.571h2.33c.323%200%20.57.248.57.57v2.33c0%20.323-.247.571-.57.571H.848zm7.39-3.497c.322%200%20.595.273.57.57v2.331c0%20.323-.248.57-.57.57H5.906a.561.561%200%200%201-.57-.57v-2.33c0-.323.247-.57.57-.57h2.33zm5.082%200c.323%200%20.57.273.57.57v2.331c0%20.323-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.323.247-.57.57-.57h2.33zM.848%2020.565c-.322%200-.595-.273-.57-.57v-2.33c0-.298.247-.571.57-.571h2.33c.323%200%20.57.248.57.57v2.33c0%20.298-.247.571-.57.571H.848zm7.39-3.497c.322%200%20.595.248.57.57v2.331c0%20.298-.248.57-.57.57H5.906a.561.561%200%200%201-.57-.57v-2.33c0-.297.247-.57.57-.57h2.33zm5.082%200c.323%200%20.57.248.57.57v2.331c0%20.298-.247.57-.57.57h-2.33a.561.561%200%200%201-.57-.57v-2.33c0-.297.247-.57.57-.57h2.33zM3.178%2010.424H.848c-.322%200-.595-.273-.57-.595v-2.33c0-.298.248-.571.57-.571H3.18c.323%200%20.57.248.57.57v2.356c0%20.322-.248.57-.57.57z%22/%3E%3Cpath%20fill%3D%22%2355D0E0%22%20d%3D%22M9.871%202.309h10v14h-10z%22/%3E%3Ctext%20fill%3D%22%23FFF%22%20font-family%3D%22OpenSans-Bold%2C%20Open%20Sans%22%20font-size%3D%2217%22%20font-weight%3D%22bold%22%20letter-spacing%3D%22-1.05%22%20transform%3D%22translate%28-.129%20-4.691%29%22%3E%3Ctspan%20x%3D%229.54%22%20y%3D%2218.448%22%3E1%3C/tspan%3E%20%3Ctspan%20x%3D%2218.194%22%20y%3D%2218.448%22%3E0%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E');
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M21.79 12.87c.443-.653.665-1.66.665-3.022 0-1.315-.229-2.314-.686-2.996-.454-.682-1.126-1.023-2.017-1.023-.915 0-1.592.327-2.032.98-.44.65-.66 1.664-.66 3.039 0 1.318.226 2.315.676 2.99.454.676 1.126 1.013 2.016 1.013.919 0 1.598-.327 2.038-.98Zm-2.866-.964c-.162-.416-.243-1.102-.243-2.058 0-.956.082-1.642.248-2.058.165-.419.44-.629.823-.629.377 0 .65.21.819.63.172.415.258 1.101.258 2.057 0 .945-.084 1.628-.253 2.047-.169.42-.444.629-.824.629-.387 0-.663-.206-.828-.618Zm-4.764 1.839h1.63V5.95h-1.34l-2.486 2 .786.99.887-.719c.106-.085.294-.265.565-.538l-.026.81-.016.741v4.51ZM4.647 8.297a.706.706 0 0 0-.706.706v1.057c0 .39.316.706.706.706h1.057c.39 0 .706-.316.706-.706V9.003a.706.706 0 0 0-.706-.706H4.647Zm3.703 0a.706.706 0 0 0-.705.706v1.057c0 .39.316.706.705.706h1.057c.39 0 .706-.316.706-.706V9.003a.706.706 0 0 0-.706-.706H8.35Zm-4.409 4.409c0-.39.316-.706.706-.706h1.057c.39 0 .706.316.706.706v1.057c0 .39-.316.706-.706.706H4.647a.706.706 0 0 1-.706-.706v-1.057ZM8.351 12a.706.706 0 0 0-.706.706v1.057c0 .39.316.706.705.706h1.057c.39 0 .706-.316.706-.706v-1.057A.706.706 0 0 0 9.407 12H8.35Zm-4.41 4.409c0-.39.316-.706.706-.706h1.057c.39 0 .706.316.706.706v1.056c0 .39-.316.706-.706.706H4.647a.706.706 0 0 1-.706-.706V16.41Zm4.41-.706a.706.706 0 0 0-.706.706v1.056c0 .39.316.706.705.706h1.057c.39 0 .706-.316.706-.706V16.41a.706.706 0 0 0-.706-.706H8.35Zm2.997.706c0-.39.316-.706.705-.706h1.057c.39 0 .706.316.706.706v1.056c0 .39-.316.706-.706.706h-1.056a.706.706 0 0 1-.706-.706V16.41Z' fill='%23fff'/%3E%3C/svg%3E");
 	background-color: #55d0e0;
+	background-size: 90% auto;
 }
 
 .voximplant-tile-item-selected.voximplant-start-logo-package-of-numbers-10 {
@@ -676,12 +691,14 @@
 .voximplant-license-banner-title {
 	color: #fff;
 	font-size: 27px;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	pointer-events: none;
 }
 
 .voximplant-license-banner-title span {
-	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .voximplant-license-banner-icon {
@@ -765,7 +782,7 @@
 .voximplant-blacklist-popup-title {
 	display: block;
 	margin: 0 0 18px 0;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-blacklist-input-box {
@@ -788,7 +805,7 @@
 }
 
 .voximplant-blacklist-label {
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-blacklist-popup-row .voximplant-control-row {
@@ -816,8 +833,8 @@
 	height: 100%;
 	max-height: 367px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	border-radius: var(--ui-field-border-radius, 2px);
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	resize: none;
 	box-sizing: border-box;
@@ -912,7 +929,7 @@
 	position: relative;
 	margin: 0 0 3px 0;
 	height: 32px;
-	font: 13px/33px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/33px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C6A;
 	transition: background .3s;
 	cursor: pointer;
@@ -963,7 +980,7 @@
 	display: block;
 	margin: 0 0 8px 0;
 	max-width: 100%;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	opacity: .5;
 	text-overflow: ellipsis;
@@ -980,10 +997,10 @@
 	min-width: 180px;
 	height: 39px;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2012%208%22%3E%3Cpath%20fill%3D%22%23828B95%22%20fill-rule%3D%22evenodd%22%20d%3D%22M6.122%204.55L10.558.113l1.414%201.414-4.436%204.436-1.478%201.478L.401%201.785%201.88.307l4.242%204.242z%22/%3E%3C/svg%3E') center right 10px no-repeat;
 	background-size: 12px 8px;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-color .3s;
 	outline: none;
 	vertical-align: middle;
@@ -1030,13 +1047,14 @@
 	min-width: auto;
 	height: 32px;
 	border: none;
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Arial;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	cursor: pointer;
 }
 
 .voximplant-number-settings-wrap {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-number-settings-row {
@@ -1082,7 +1100,7 @@
 .voximplant-link {
 	display: inline-block;
 	border-bottom: 1px dashed rgba(155,155,155,.4);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #9b9b9b;
 	transition: border-bottom .3s;
 	cursor: pointer;
@@ -1112,7 +1130,7 @@
 
 .voximplant-number-settings-label {
 	padding: 0 0 0 24px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -1150,12 +1168,12 @@
 
 .voximplant-control-description {
 	margin: 5px 0 0 0;
-	font: italic 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: italic 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 }
 
 .voximplant-control-description .voximplant-control-subtitle {
-	font: italic 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: italic 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-control-missed-call .voximplant-control-row:nth-child(1) .voximplant-control-select {
@@ -1193,7 +1211,7 @@
 
 .voximplant-audio-player-control .voximplant-control-description {
 	margin: 3px 0 0 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-audio-player-btn {
@@ -1223,7 +1241,8 @@
 	height: 32px;
 	border: none;
 	outline: none;
-	font: 18px/24px 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .voximplant-edit-title-input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
@@ -1284,7 +1303,7 @@
 	margin: 0 12px 0 0;
 	width: 62px;
 	min-width: 62px;
-	font: 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	text-align: right;
 	text-overflow: ellipsis;
@@ -1294,7 +1313,7 @@
 
 .voximplant-control-settings-value-box {
 	position: relative;
-	font: bold 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	word-break: break-word;
 }
@@ -1302,7 +1321,7 @@
 .voximplant-control-settings-input {
 	display: none;
 	margin: 0;
-	font: bold 14px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -1366,6 +1385,7 @@
 	box-shadow: 0 1px 2px rgba(0,0,0,.15);
 	box-sizing: border-box;
 	cursor: pointer;
+	border-radius: var(--voximplant-tile-item-border-radius, var(--ui-border-radius-sm));
 }
 
 .voximplant-marketplace-tile-item:hover {
@@ -1386,7 +1406,8 @@
 	height: 14px;
 	border-radius: 12px;
 	background: #2FC6F6;
-	font: 8px/14px 'OpenSans-Bold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 	text-transform: uppercase;
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,.14);
@@ -1419,7 +1440,8 @@
 	display: block;
 	margin: 0 0 7px 0;
 	max-width: 100%;
-	font: 14px 'OpenSans-SemiBold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -1432,7 +1454,7 @@
 	margin: 0 auto;
 	width: 200px;
 	height: 31px;
-	font: 13px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #828b95;
 	overflow: hidden;
 }
@@ -1448,7 +1470,8 @@
 
 .voximplant-marketplace-tile-counter-name {
 	display: block;
-	font: 10px 'OpenSans-SemiBold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	opacity: .8;
 }
@@ -1457,7 +1480,8 @@
 	display: block;
 	/*margin: 0 0 9px 0;*/
 	max-width: 100%;
-	font: 34px 'OpenSans-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 34px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
@@ -1519,7 +1543,8 @@
 .voximplant-marketplace-tile-integration-text {
 	display: block;
 	max-width: 100%;
-	font: 16px 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -1552,11 +1577,13 @@
 }
 
 .voximplant-slider-pagetitle {
-	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
-	margin: 0;
-	padding: 21px 0 21px 5px;
+	font: 24px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+	padding: 21px 0 21px 0;
+	margin-left: var(--ui-space-stack-sm, 5px);
 	display: block;
 	word-wrap: break-word;
+	color: #333;
 }
 
 .voximplant-number-group-numbers {
@@ -1578,10 +1605,6 @@
 
 .voximplant-loader-overlay.active {
 	display: block;
-}
-
-.voximplant-container.voximplant-options-popup {
-	margin: 20px;
 }
 
 .voximplant-marketplace-default-icon .voximplant-marketplace-tile-img-item {

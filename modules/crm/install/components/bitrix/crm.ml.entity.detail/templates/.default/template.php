@@ -5,7 +5,16 @@ use Bitrix\Main\Localization\Loc;
 
 /** @var CBitrixComponentTemplate $this */
 
-CJSCore::Init(["amcharts", "amcharts_serial", "crm_activity_planner", "date", "ui.buttons", "ui.hint", "ui.feedback.form"]);
+CJSCore::Init([
+	"amcharts",
+	"amcharts_serial",
+	"crm_activity_planner",
+	"date",
+	"ui.buttons",
+	"ui.hint",
+	"ui.feedback.form",
+	"ui.design-tokens",
+]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background pagetitle-toolbar-field-view");
@@ -97,8 +106,8 @@ if(!$arResult["SCORING_ENABLED"] && \Bitrix\Main\Loader::includeModule("bitrix24
 		"CRM_ML_SCORING_DESCRIPTION_TITLE_2": '<?= GetMessageJS("CRM_ML_SCORING_DESCRIPTION_TITLE_2")?>',
 		"CRM_ML_SCORING_DESCRIPTION_P1": '<?= GetMessageJS("CRM_ML_SCORING_DESCRIPTION_P1")?>',
 		"CRM_ML_SCORING_DESCRIPTION_P2_2": '<?= GetMessageJS("CRM_ML_SCORING_DESCRIPTION_P2_2")?>',
-		"CRM_SCORING_LICENSE_TITLE": '<?= \Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle()?>',
-		"CRM_SCORING_LICENSE_TEXT": '<?= \Bitrix\Crm\Ml\Scoring::getLicenseInfoText()?>',
+		"CRM_SCORING_LICENSE_TITLE": '<?= \CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoTitle())?>',
+		"CRM_SCORING_LICENSE_TEXT": '<?= \CUtil::JSEscape(\Bitrix\Crm\Ml\Scoring::getLicenseInfoText())?>',
 		"CRM_ML_SCORING_PREDICTION_HINT": '<?= GetMessageJS("CRM_ML_SCORING_PREDICTION_HINT")?>',
 		"CRM_ML_SCORING_MODEL_QUALITY_HINT": '<?= GetMessageJS("CRM_ML_SCORING_MODEL_QUALITY_HINT")?>',
 	});

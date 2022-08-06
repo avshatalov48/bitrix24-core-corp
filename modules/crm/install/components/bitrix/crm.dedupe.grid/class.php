@@ -580,8 +580,6 @@ class CCrmDedupeGridComponent extends CBitrixComponent
 				$typeID = $criterion->getIndexTypeID();
 				$matchHash = $criterion->getMatchHash();
 
-				$criterion->getTextTotals(1);
-
 				$rowID = $this->prepareIdentifier($rootEntityID, $typeID, $matchHash);
 				$this->arResult['ROW_DATA'][] = [
 					'ID' => $rowID,

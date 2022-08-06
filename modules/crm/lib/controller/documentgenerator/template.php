@@ -97,7 +97,7 @@ class Template extends Base
 		{
 			$filter = [];
 		}
-		$filter['moduleId'] = static::MODULE_ID;
+		$filter['=moduleId'] = static::MODULE_ID;
 
 		if(in_array('entityTypeId', $select))
 		{
@@ -110,9 +110,26 @@ class Template extends Base
 		{
 			$filterMap = array_map(function($item)
 			{
-				return str_replace('\\', '\\\\', mb_strtolower($item));
+				return mb_strtolower($item);
 			}, $providersMap);
-			$filter['provider.provider'] = str_ireplace(array_keys($providersMap), $filterMap, $filter['entityTypeId']);
+			$typeIds = (array)$filter['entityTypeId'];
+			$providers = [];
+			foreach ($typeIds as $typeId)
+			{
+				if (is_numeric($typeId))
+				{
+					$providers[] = $filterMap[$typeId];
+				}
+				else
+				{
+					[$entityTypeId, ] = explode('_', (string)$typeId);
+					if ($entityTypeId > 0)
+					{
+						$providers[] = $filterMap[$entityTypeId]. mb_substr((string)$typeId, mb_strlen($entityTypeId));
+					}
+				}
+			}
+			$filter['=provider.provider'] = $providers;
 			unset($filter['entityTypeId']);
 		}
 		/** @var Page $result */

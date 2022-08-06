@@ -63,6 +63,8 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			return CBPActivityExecutionStatus::Closed;
 		}
 
+		$this->logDebug();
+
 		$documentId = $this->GetDocumentId();
 		if ($documentId[0] !== 'crm')
 		{
@@ -151,6 +153,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			if ($key)
 			{
 				$this->__set($key, $boundEntity->getId());
+				$this->logDebugResult($key, $boundEntity->getTypeId(), $boundEntity->getId());
 			}
 		}
 	}
@@ -256,6 +259,13 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
+		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		return $dialog;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
 		$map = [
 			'Responsible' => [
 				'Name' => GetMessage("CRM_CVTDA_RESPONSIBLE"),
@@ -290,9 +300,7 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 			];
 		}
 
-		$dialog->setMap($map);
-
-		return $dialog;
+		return $map;
 	}
 
 	private static function getItemsList($documentType)
@@ -379,5 +387,20 @@ class CBPCrmConvertDocumentActivity extends CBPActivity
 		}
 
 		return false;
+	}
+
+	private function logDebug()
+	{
+		$debugInfo = $this->getDebugInfo();
+		$this->writeDebugInfo($debugInfo);
+	}
+
+	private function logDebugResult($fieldId, $entityTypeId, $entityId)
+	{
+		$debugInfo = $this->getDebugInfo(
+			[$fieldId => $entityId],
+			[$fieldId => \CCrmOwnerType::GetDescription($entityTypeId)]
+		);
+		$this->writeDebugInfo($debugInfo);
 	}
 }

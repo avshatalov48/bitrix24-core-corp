@@ -3,6 +3,7 @@ import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {Layout} from 'ui.sidepanel.layout';
 import {Label} from 'ui.label';
+import {UI} from 'ui.notification';
 
 import {RequestSender} from './request.sender';
 
@@ -11,7 +12,8 @@ import '../css/base.css';
 type Params = {
 	view: 'list' | 'add' | 'view' | 'edit',
 	groupId: number,
-	epicId?: number
+	epicId?: number,
+	gridId?: string
 }
 
 type ResponseAfter = {
@@ -30,16 +32,19 @@ type EpicType = {
 
 export class Epic extends EventEmitter
 {
-	constructor(params: Params)
+	constructor(params: Params = {})
 	{
 		super(params);
 
 		this.setEventNamespace('BX.Tasks.Scrum.Epic');
 
-		this.view = params.view ? params.view : '';
+		this.view = Type.isString(params.view) ? params.view : '';
 
 		this.groupId = parseInt(params.groupId, 10);
-		this.epicId = parseInt(params.epicId, 10);
+		this.epicId = Type.isUndefined(params.epicId) ? 0 : parseInt(params.epicId, 10);
+		this.gridId = Type.isUndefined(params.gridId) ? '' : params.gridId;
+
+		this.pathToTask = Type.isString(params.pathToTask) ? params.pathToTask : '';
 
 		this.requestSender = new RequestSender();
 
@@ -78,6 +83,12 @@ export class Epic extends EventEmitter
 			case 'edit':
 				this.showEditForm();
 				break;
+			case 'tasks':
+				this.showTasksList();
+				break;
+			case 'completedTasks':
+				this.showTasksList(true);
+				break;
 		}
 	}
 
@@ -103,17 +114,58 @@ export class Epic extends EventEmitter
 		epic.show();
 	}
 
-	static removeEpic(groupId: number, epicId: number)
+	static removeEpic(groupId: number, epicId: number, gridId?: string)
 	{
 		const epic = new Epic({
 			view: 'edit',
 			groupId: groupId,
+			gridId: gridId,
 			epicId: epicId
 		});
 
 		epic.removeEpic()
 			.then(() => {
-				epic.reloadSidePanel();
+				epic.reloadGrid();
+			})
+		;
+	}
+
+	static showTasks(groupId: number, epicId: number)
+	{
+		const epic = new Epic({
+			view: 'tasks',
+			groupId: groupId,
+			epicId: epicId
+		});
+
+		epic.show();
+	}
+
+	static showCompletedTasks(groupId: number, epicId: number)
+	{
+		const epic = new Epic({
+			view: 'completedTasks',
+			groupId: groupId,
+			epicId: epicId
+		});
+
+		epic.show();
+	}
+
+	static showTask(taskId: number)
+	{
+		const sidePanelManager = BX.SidePanel.Instance;
+
+		sidePanelManager.getOpenSliders()
+			.forEach((openSlider) => {
+				const frameWindow = openSlider.getWindow();
+				if (
+					!Type.isNil(frameWindow)
+					&& !Type.isNil(frameWindow.BX.Tasks.Scrum.EpicInstance)
+				)
+				{
+					frameWindow.BX.Tasks.Scrum.EpicInstance.showTask(taskId);
+				}
 			})
 		;
 	}
@@ -186,6 +238,35 @@ export class Epic extends EventEmitter
 				},
 				events: {
 					onLoad: this.onLoadList.bind(this)
+				}
+			}
+		);
+	}
+
+	showTasksList(completed: boolean = false)
+	{
+		this.gridId = 'EpicTasksGrid_' + this.groupId;
+
+		this.sidePanelManager.open(
+			'tasks-scrum-epic-tasks-list-side-panel',
+			{
+				cacheable: false,
+				contentCallback: () => {
+					return Layout.createContent({
+						extensions: ['tasks.scrum.epic'],
+						title: completed ?
+							Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_COMPLETED_TASKS_LIST_TITLE')
+							: Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_TASKS_LIST_TITLE')
+						,
+						content: this.createTasksListContent.bind(this, completed),
+						design: {
+							section: false
+						},
+						buttons: []
+					});
+				},
+				events: {
+					onLoad: this.onLoadTasksList.bind(this)
 				}
 			}
 		);
@@ -292,19 +373,27 @@ export class Epic extends EventEmitter
 		;
 	}
 
+	showTask(taskId: number)
+	{
+		if (this.pathToTask)
+		{
+			this.sidePanelManager.open(
+				this.pathToTask
+					.replace('#action#', 'view')
+					.replace('#task_id#', parseInt(taskId, 10))
+			);
+		}
+	}
+
 	subscribeListToEvents(sidePanelId: string)
 	{
 		EventEmitter.subscribe(
 			this.getEventNamespace() + ':' + 'afterAdd',
-			() => {
-				this.reloadSidePanel(sidePanelId);
-			})
+			() => this.reloadGrid())
 		;
-		top.BX.Event.EventEmitter.subscribe(
+		EventEmitter.subscribe(
 			this.getEventNamespace() + ':' + 'afterEdit',
-			() => {
-				this.reloadSidePanel(sidePanelId);
-			})
+			() => this.reloadGrid())
 		;
 	}
 
@@ -342,7 +431,7 @@ export class Epic extends EventEmitter
 	createAddContent(): Promise
 	{
 		return new Promise((resolve, reject) => {
-			top.BX.ajax.runAction(
+			ajax.runAction(
 				'bitrix:tasks.scrum.epic.getDescriptionEditor',
 				{
 					data: {
@@ -365,7 +454,7 @@ export class Epic extends EventEmitter
 	createListContent(): Promise
 	{
 		return new Promise((resolve, reject) => {
-			top.BX.ajax.runAction(
+			ajax.runAction(
 				'bitrix:tasks.scrum.epic.getList',
 				{
 					data: {
@@ -385,10 +474,35 @@ export class Epic extends EventEmitter
 		});
 	}
 
-	createViewContent(epic: EpicType)
+	createTasksListContent(completed: boolean): Promise
 	{
 		return new Promise((resolve, reject) => {
-			top.BX.ajax.runAction(
+			ajax.runAction(
+				'bitrix:tasks.scrum.epic.getTasksList',
+				{
+					data: {
+						groupId: this.groupId,
+						epicId: this.epicId,
+						gridId: this.gridId,
+						completed: completed ? 'Y' : 'N'
+					}
+				}
+			)
+				.then((response) => {
+					this.listData = response.data;
+					resolve(this.renderTasksList());
+				})
+				.catch((response) => {
+					this.requestSender.showErrorAlert(response);
+				})
+			;
+		});
+	}
+
+	createViewContent(epic: EpicType): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
 				'bitrix:tasks.scrum.epic.getEpicFiles',
 				{
 					data: {
@@ -408,12 +522,12 @@ export class Epic extends EventEmitter
 		});
 	}
 
-	createEditContent()
+	createEditContent(): Promise
 	{
 		return new Promise((resolve, reject) => {
 			this.getEpic().then((response) => {
 				const epic: EpicType = response.data;
-				top.BX.ajax.runAction(
+				ajax.runAction(
 					'bitrix:tasks.scrum.epic.getDescriptionEditor',
 					{
 						data: {
@@ -479,6 +593,9 @@ export class Epic extends EventEmitter
 			.then((response: ResponseAfter) => {
 				this.sidePanel.close(false, () => {
 					EventEmitter.emit(this.getEventNamespace() + ':' + 'afterAdd', response.data);
+					UI.Notification.Center.notify({
+						content: Loc.getMessage('TASKS_SCRUM_ADD_EPIC_NOTIFY')
+					});
 				});
 			})
 			.catch((response) => {
@@ -505,16 +622,26 @@ export class Epic extends EventEmitter
 		}
 		else
 		{
-			top.BX.Runtime.html(listContainer, this.listData.html)
+			Runtime.html(listContainer, this.listData.html)
 				.then(() => {
-					top.BX.addCustomEvent(
-						'Grid::beforeRequest',
-						this.onBeforeGridRequest.bind(this)
-					);
+					EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
 					this.prepareTagsList(listContainer);
 				})
 			;
 		}
+	}
+
+	onLoadTasksList(event)
+	{
+		this.sidePanel = event.getSlider();
+
+		const listContainer = this.sidePanel.getContainer().querySelector('.tasks-scrum-epic-tasks-list');
+
+		Runtime.html(listContainer, this.listData.html)
+			.then(() => {
+				EventEmitter.subscribe('Grid::beforeRequest', this.onBeforeGridRequest.bind(this));
+			})
+		;
 	}
 
 	onLoadViewForm(event)
@@ -555,7 +682,7 @@ export class Epic extends EventEmitter
 		)
 			.then((response: ResponseAfter) => {
 				this.sidePanel.close(false, () => {
-					top.BX.Event.EventEmitter.emit(this.getEventNamespace() + ':' + 'afterEdit', response.data);
+					EventEmitter.emit(this.getEventNamespace() + ':' + 'afterEdit', response.data);
 				});
 			})
 			.catch((response) => {
@@ -564,8 +691,10 @@ export class Epic extends EventEmitter
 		;
 	}
 
-	onBeforeGridRequest(gridObject, eventArgs)
+	onBeforeGridRequest(event: BaseEvent)
 	{
+		const [gridObject, eventArgs] = event.getCompatData();
+
 		/* eslint-disable */
 		eventArgs.sessid = BX.bitrix_sessid();
 		/* eslint-enable */
@@ -580,7 +709,8 @@ export class Epic extends EventEmitter
 		eventArgs.data = {
 			...eventArgs.data,
 			groupId: this.groupId,
-			gridId: this.gridId
+			gridId: this.gridId,
+			epicId: this.epicId
 		};
 	}
 
@@ -604,6 +734,11 @@ export class Epic extends EventEmitter
 	renderList(): HTMLElement
 	{
 		return Tag.render`<div class="tasks-scrum-epic-list"></div>`;
+	}
+
+	renderTasksList(): HTMLElement
+	{
+		return Tag.render`<div class="tasks-scrum-epic-tasks-list"></div>`;
 	}
 
 	renderViewForm(epic: EpicType): HTMLElement
@@ -692,15 +827,13 @@ export class Epic extends EventEmitter
 	renderEditor(container: HTMLElement)
 	{
 		setTimeout(() => {
-			top.BX.Runtime.html(container, this.formData.html)
+			Runtime.html(container, this.formData.html)
 				.then(() => {
-					if (window.top.LHEPostForm)
+					if (window.LHEPostForm)
 					{
-						this.editorHandler = window.top.LHEPostForm.getHandler(this.id);
+						this.editorHandler = window.LHEPostForm.getHandler(this.id);
 
 						EventEmitter.emit(this.editorHandler.eventNode, 'OnShowLHE', [true]);
-
-						const descriptionContainer = this.form.querySelector('.tasks-scrum-epic-form-description');
 					}
 					this.focusToName();
 				})
@@ -737,13 +870,21 @@ export class Epic extends EventEmitter
 	getGrid()
 	{
 		/* eslint-disable */
-		if (top.BX && top.BX.Main && top.BX.Main.gridManager)
+		if (BX && BX.Main && BX.Main.gridManager)
 		{
-			return top.BX.Main.gridManager.getById(this.gridId);
+			return BX.Main.gridManager.getById(this.gridId);
 		}
 		/* eslint-enable */
 
 		return null;
+	}
+
+	reloadGrid()
+	{
+		if (BX && BX.Main && BX.Main.gridManager)
+		{
+			BX.Main.gridManager.reload(this.gridId);
+		}
 	}
 
 	prepareTagsList(container: HTMLElement)
@@ -779,15 +920,8 @@ export class Epic extends EventEmitter
 			size: Label.Size.SM,
 			customClass: ''
 		});
-		const container = tagLabel.getContainer();
 
-		Event.bind(container, 'click', () => {
-			this.sidePanel.close(false, () => {
-				EventEmitter.emit(this.getEventNamespace() + ':' + 'filterByTag', tag);
-			});
-		});
-
-		return container;
+		return tagLabel.getContainer();
 	}
 
 	getColorPicker(colorNode): Object
@@ -797,7 +931,7 @@ export class Epic extends EventEmitter
 		if (!this.colorPickers.has(epicId))
 		{
 			/* eslint-disable */
-			const picker =  new top.BX.ColorPicker({
+			const picker =  new BX.ColorPicker({
 				bindElement: colorNode,
 				defaultColor: this.defaultColor,
 				selectedColor: this.selectedColor ? this.selectedColor : this.defaultColor,

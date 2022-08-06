@@ -38,11 +38,13 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	        main_core.ajax.runComponentAction('bitrix:salescenter.payment.pay', 'initiatePay', {
 	          mode: 'ajax',
 	          data: {
-	            paysystemId: _this2.paySystemId,
-	            returnUrl: _this2.returnUrl,
-	            orderId: _this2.orderId,
-	            paymentId: _this2.paymentId,
-	            access: _this2.accessCode
+	            fields: {
+	              paySystemId: _this2.paySystemId,
+	              returnUrl: _this2.returnUrl,
+	              orderId: _this2.orderId,
+	              paymentId: _this2.paymentId,
+	              accessCode: _this2.accessCode
+	            }
 	          }
 	        }).then(function (response) {
 	          _this2.response = response;

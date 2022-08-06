@@ -7,12 +7,24 @@
  */
 namespace Bitrix\Crm;
 
+use Bitrix\Crm\Multifield;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Entity\IntegerField;
+use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM;
+use Bitrix\Main\ORM\EntityError;
+use Bitrix\Main\ORM\Fields\BooleanField;
+use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\IntegerField;
+use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\StringField;
+use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\ORM\Objectify\State;
+use Bitrix\Main\UserTable;
 
 Loc::loadMessages(Path::combine(__DIR__, 'contact.php'));
 
@@ -55,294 +67,230 @@ class ContactTable extends ORM\Data\DataManager
 	{
 		Container::getInstance()->getLocalization()->loadMessages();
 
-		global $DB;
+		$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		return array(
-			'ID' => array(
-				'data_type' => 'integer',
-				'primary' => true,
-				'autocomplete' => true,
-			),
-			'NAME' => array(
-				'data_type' => 'string'
-			),
-			'LAST_NAME' => array(
-				'data_type' => 'string'
-			),
-			'SECOND_NAME' => array(
-				'data_type' => 'string'
-			),
-			'SHORT_NAME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					$DB->concat("%s","' '", "UPPER(".$DB->substr("%s", 1, 1).")", "'.'"),
-					'LAST_NAME', 'NAME'
-				)
-			),
-			'LOGIN' => array(
-				'data_type' => 'string',
-				'expression' => array('NULL')
-			),
-			'POST' => array(
-				'data_type' => 'string'
-			),
-			'ADDRESS' => array(
-				'data_type' => 'string'
-			),
-			'COMMENTS' => array(
-				'data_type' => 'string'
-			),
-			'OPENED' => array(
-				'data_type' => 'boolean',
-				'values' => array('N', 'Y')
-			),
-			'TYPE_ID' => array(
-				'data_type' => 'string'
-			),
-			'TYPE_BY' => array(
-				'data_type' => 'Status',
-				'reference' => array(
-					'=this.TYPE_ID' => 'ref.STATUS_ID',
-					'=ref.ENTITY_ID' => array('?', 'CONTACT_TYPE')
-				)
-			),
-			'SOURCE_ID' => array(
-				'data_type' => 'string'
-			),
-			'SOURCE_BY' => array(
-				'data_type' => 'Status',
-				'reference' => array(
-					'=this.SOURCE_ID' => 'ref.STATUS_ID',
-					'=ref.ENTITY_ID' => array('?', 'SOURCE')
-				)
-			),
-			'SOURCE_DESCRIPTION' => array(
-				'data_type' => 'string'
-			),
-			'DATE_CREATE' => array(
-				'data_type' => 'datetime'
-			),
-			'DATE_MODIFY' => array(
-				'data_type' => 'datetime'
-			),
-			'ASSIGNED_BY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'ASSIGNED_BY' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.ASSIGNED_BY_ID' => 'ref.ID')
-			),
-			'CREATED_BY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'CREATED_BY' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.CREATED_BY_ID' => 'ref.ID')
-			),
-			'MODIFY_BY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'MODIFY_BY' => array(
-				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.MODIFY_BY_ID' => 'ref.ID')
-			),
-			'BIRTHDATE' => array(
-				'data_type' => 'date'
-			),
-			'EVENT_RELATION' => array(
-				'data_type' => 'EventRelations',
-				'reference' => array('=this.ID' => 'ref.ENTITY_ID')
-			),
-			'LEAD_ID' => array(
-				'data_type' => 'integer'
-			),
-			'COMPANY_ID' => array(
-				'data_type' => 'integer'
-			),
-			'COMPANY' => array(
-				'data_type' => '\Bitrix\Crm\Company',
-				'reference' => array('=this.COMPANY_ID' => 'ref.ID')
-			),
-			'SEARCH_CONTENT' => array(
-				'data_type' => 'string'
-			),
-			'HONORIFIC' => array(
-				'data_type' => 'string'
-			),
-			'FULL_NAME' => array(
-				'data_type' => 'string'
-			),
-			'FACE_ID' => array(
-				'data_type' => 'integer'
-			),
-			'HAS_EMAIL' => array(
-				'data_type' => 'boolean',
-				'default_value' => 'N',
-				'values' => array('N', 'Y')
-			),
-			'HAS_PHONE' => array(
-				'data_type' => 'boolean',
-				'default_value' => 'N',
-				'values' => array('N', 'Y')
-			),
-			'HAS_IMOL' => array(
-				'data_type' => 'boolean',
-				'default_value' => 'N',
-				'values' => array('N', 'Y')
-			),
-			'EMAIL_HOME' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'AND FM.VALUE_TYPE = \'HOME\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL_WORK' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'AND FM.VALUE_TYPE = \'WORK\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL_MAILING' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'AND FM.VALUE_TYPE = \'MAILING\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE_MOBILE' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'MOBILE\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE_WORK' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'WORK\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE_MAILING' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'AND FM.VALUE_TYPE = \'MAILING\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'IMOL' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'IM\' '.
-						'AND FM.VALUE LIKE \'imol|%%\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'EMAIL' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'EMAIL\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			'PHONE' => array(
-				'data_type' => 'string',
-				'expression' => array(
-					'('.$DB->TopSql(
-						'SELECT FM.VALUE '.
-						'FROM b_crm_field_multi FM '.
-						'WHERE FM.ENTITY_ID = \'CONTACT\' '.
-						'AND FM.ELEMENT_ID = %s '.
-						'AND FM.TYPE_ID = \'PHONE\' '.
-						'ORDER BY FM.ID', 1
-					).')',
-					'ID'
-				)
-			),
-			new StringField('PHOTO'),
-			(new IntegerField('CATEGORY_ID'))
-				->configureDefaultValue([static::class, 'getDefaultCategoryId'])
+		return [
+			//fields here are sorted by b_crm_contact columns order in install.sql. Please, keep it that way
+
+			$fieldRepository->getId(),
+
+			$fieldRepository->getCreatedTime('DATE_CREATE'),
+
+			$fieldRepository->getUpdatedTime('DATE_MODIFY'),
+
+			$fieldRepository->getCreatedBy('CREATED_BY_ID'),
+
+			(new Reference(
+				'CREATED_BY',
+				UserTable::class,
+				Join::on('this.CREATED_BY_ID', 'ref.ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_CREATED_BY_FIELD'))
+			,
+
+			$fieldRepository->getUpdatedBy('MODIFY_BY_ID'),
+
+			(new Reference(
+				'MODIFY_BY',
+				UserTable::class,
+				Join::on('this.MODIFY_BY_ID', 'ref.ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_MODIFY_BY_FIELD'))
+			,
+
+			$fieldRepository->getAssigned(),
+
+			(new Reference(
+				'ASSIGNED_BY',
+				UserTable::class,
+				Join::on('this.ASSIGNED_BY_ID', 'ref.ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_ASSIGNED_BY_FIELD'))
+			,
+
+			$fieldRepository->getOpened()
+				->configureDefaultValue(static function (): bool {
+					return ContactSettings::getCurrent()->getOpenedFlag();
+				})
+			,
+
+			$fieldRepository->getCompanyId(),
+
+			(new Reference(
+				'COMPANY',
+				CompanyTable::class,
+				Join::on('this.COMPANY_ID', 'ref.ID'),
+			))
+				->configureTitle(\CCrmOwnerType::GetDescription(\CCrmOwnerType::Company))
+			,
+
+			$fieldRepository->getSourceId(),
+
+			$fieldRepository->getSourceBy(),
+
+			$fieldRepository->getSourceDescription(),
+
+			$fieldRepository->getFullName(),
+
+			$fieldRepository->getName(),
+
+			$fieldRepository->getLastName(),
+
+			$fieldRepository->getSecondName(),
+
+			$fieldRepository->getShortName()
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_SHORT_NAME_FIELD'))
+			,
+
+			(new IntegerField('PHOTO'))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_PHOTO_FIELD'))
+			,
+
+			$fieldRepository->getPost(),
+
+			$fieldRepository->getAddress(),
+
+			$fieldRepository->getComments(),
+
+			$fieldRepository->getLeadId(),
+
+			(new BooleanField('EXPORT'))
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(true)
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_EXPORT_FIELD'))
+			,
+
+			$fieldRepository->getTypeId(Item::FIELD_NAME_TYPE_ID, StatusTable::ENTITY_ID_CONTACT_TYPE)
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_TYPE_BY_FIELD'))
+			,
+
+			(new Reference(
+				'TYPE_BY',
+				StatusTable::class,
+				Join::on('this.TYPE_ID', 'ref.STATUS_ID')
+					->where('ref.ENTITY_ID', '=', StatusTable::ENTITY_ID_CONTACT_TYPE)
+				,
+			))
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_TYPE_BY_FIELD'))
+			,
+
+			$fieldRepository->getWebformId(),
+
+			$fieldRepository->getOriginatorId(),
+
+			$fieldRepository->getOriginId(),
+
+			$fieldRepository->getOriginVersion(),
+
+			$fieldRepository->getBirthdate(),
+
+			$fieldRepository->getBirthdaySort(),
+
+			$fieldRepository->getHonorific(),
+
+			$fieldRepository->getHasPhone(),
+
+			$fieldRepository->getHasEmail(),
+
+			$fieldRepository->getHasImol(),
+
+			$fieldRepository->getFaceId(),
+
+			$fieldRepository->getSearchContent(),
+
+			$fieldRepository->getCategoryId(Item::FIELD_NAME_CATEGORY_ID, \CCrmOwnerType::Contact)
 				->configureTitle(Loc::getMessage('CRM_COMMON_CLIENT_CATEGORY'))
 			,
-		);
-	}
 
-	public static function getDefaultCategoryId(): ?int
-	{
-		$factory = static::getFactory();
+			(new OneToMany(
+				'COMPANY_BINDINGS',
+				Binding\ContactCompanyTable::class,
+				'CONTACT'
+			))
+				->configureCascadeDeletePolicy(CascadePolicy::FOLLOW)
+			,
 
-		if($factory)
-		{
-			$category = static::getFactory()->getDefaultCategory();
+			(new ExpressionField(
+				'LOGIN',
+				'NULL'
+			))
+				->configureValueType(StringField::class)
+			,
 
-			return $category ? $category->getId() : null;
-		}
+			(new Reference(
+				'EVENT_RELATION',
+				EventRelationsTable::class,
+				Join::on('this.ID', 'ref.ENTITY_ID'),
+			))
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_EVENT_RELATION_FIELD'))
+			,
 
-		return null;
+			$fieldRepository->getMultifieldValue(
+				'EMAIL_HOME',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Email::VALUE_TYPE_HOME,
+			),
+
+			$fieldRepository->getMultifieldValue(
+				'EMAIL_WORK',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Email::VALUE_TYPE_WORK,
+			),
+
+			$fieldRepository->getMultifieldValue(
+				'EMAIL_MAILING',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Email::ID,
+				Multifield\Type\Email::VALUE_TYPE_MAILING,
+			),
+
+			$fieldRepository->getMultifieldValue(
+				'PHONE_MOBILE',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Phone::VALUE_TYPE_MOBILE,
+			),
+
+			$fieldRepository->getMultifieldValue(
+				'PHONE_WORK',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Phone::VALUE_TYPE_WORK,
+			),
+
+			$fieldRepository->getMultifieldValue(
+				'PHONE_MAILING',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Phone::ID,
+				Multifield\Type\Phone::VALUE_TYPE_MAILING,
+			),
+
+			$fieldRepository->getMultifieldValueLike(
+				'IMOL',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Im::ID,
+				'imol|%%'
+			),
+
+			$fieldRepository->getMultifieldValue(
+				'EMAIL',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Email::ID,
+			)
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_EMAIL_FIELD'))
+			,
+
+			$fieldRepository->getMultifieldValue(
+				'PHONE',
+				\CCrmOwnerType::Contact,
+				Multifield\Type\Phone::ID,
+			)
+				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_PHONE_FIELD'))
+			,
+		];
 	}
 
 	public static function disableUserFieldsCheck(): void
@@ -355,19 +303,38 @@ class ContactTable extends ORM\Data\DataManager
 		if (!static::$isCheckUserFields)
 		{
 			static::$isCheckUserFields = true;
+
 			return;
 		}
 
-		parent::checkUfFields($object, $ufdata, $result);
-	}
+		global $USER_FIELD_MANAGER, $APPLICATION;
 
-	protected static function getEntityTypeId(): int
-	{
-		return \CCrmOwnerType::Contact;
-	}
-
-	protected static function getFactory(): \Bitrix\Crm\Service\Factory
-	{
-		return Container::getInstance()->getFactory(static::getEntityTypeId());
+		$userId = ($object->authContext && $object->authContext->getUserId())
+			? $object->authContext->getUserId()
+			: false;
+		$ufPrimary = ($object->sysGetState() === State::RAW) ? false : end($object->primary);
+		if (
+			!$USER_FIELD_MANAGER->CheckFields(
+				$object->entity->getUfId(),
+				$ufPrimary,
+				$ufdata,
+				$userId,
+				true,
+				null,
+				$object->getFilteredUserFields()
+			)
+		)
+		{
+			if (is_object($APPLICATION) && $APPLICATION->getException())
+			{
+				$e = $APPLICATION->getException();
+				$result->addError(new EntityError($e->getString()));
+				$APPLICATION->resetException();
+			}
+			else
+			{
+				$result->addError(new EntityError("Unknown error while checking userfields"));
+			}
+		}
 	}
 }

@@ -1097,3 +1097,9 @@ a.crm-webform-bottom-link:hover, a.crm-webform-bottom-link:focus {
 		font: normal 26px "OpenSans-Regular", Arial, Helvetica, sans-serif;
 	}
 }
+
+body.crm-webform-preview {
+	background-image: url("images/preview_bg.svg");
+	background-attachment: fixed;
+    background-size: cover;
+}

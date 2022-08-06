@@ -1,11 +1,12 @@
-.salescenter-delivery-installation-wrap {}
+.salescenter-delivery-installation-wrap {
+	background: #fff;
+	border-radius: var(--salescenter-delivery-install-section-border-radius, var(--ui-border-radius-md));
+}
 
 .salescenter-delivery-install-section {
-	background: #fff;
 	padding: 17px 25px;
 }
 .salescenter-delivery-install-section-no-bottom-margin {
-	background: #fff;
 	padding: 17px 25px;
 }
 

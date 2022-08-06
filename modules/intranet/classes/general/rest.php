@@ -34,6 +34,7 @@ class CIntranetRestService extends IRestService
 				\CRestUtil::PLACEMENTS => [
 					self::PAGE_BACKGROUND_WORKER_PLACEMENT => [
 						'max_count' => 1,
+						'user_mode' => true,
 						'options' => [
 							'errorHandlerUrl' => 'string',
 						],

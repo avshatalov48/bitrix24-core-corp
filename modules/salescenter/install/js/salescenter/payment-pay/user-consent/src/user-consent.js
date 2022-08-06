@@ -59,6 +59,21 @@ export class UserConsent
 
 		this.callback = callback;
 		EventEmitter.emit(this.eventName);
+
+		if (this.checkCurrentConsent())
+		{
+			callback();
+		}
+	}
+
+	checkCurrentConsent()
+	{
+		if (!BX.UserConsent || !BX.UserConsent.current)
+		{
+			return false;
+		}
+
+		return BX.UserConsent.check(BX.UserConsent.current);
 	}
 
 	/**

@@ -25,6 +25,8 @@ $phrasesConfig = [
 		'CRM_REQUISITE_ENTITY_RQ_VAT_CERT_SER_KZ_FIELD' => 'Серия свидетельства по НДС ',
 		'CRM_REQUISITE_ENTITY_RQ_VAT_CERT_NUM_KZ_FIELD' => 'Номер свидетельства по НДС',
 		'CRM_REQUISITE_ENTITY_RQ_VAT_CERT_DATE_KZ_FIELD' => 'Дата свидетельства по НДС',
-		'CRM_REQUISITE_ENTITY_RQ_RESIDENCE_COUNTRY_KZ_FIELD' => 'Страна резиденства'
+		'CRM_REQUISITE_ENTITY_RQ_RESIDENCE_COUNTRY_KZ_FIELD' => 'Страна резиденства',
+		'CRM_REQUISITE_ENTITY_RQ_SIGNATURE_KZ_FIELD' => 'Подпись',
+		'CRM_REQUISITE_ENTITY_RQ_STAMP_KZ_FIELD' => 'Печать',
 	]
 ];

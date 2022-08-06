@@ -77,10 +77,10 @@ class BIConnectorStartComponent extends CBitrixComponent
 
 		if (\Bitrix\Main\Loader::includeModule('rest'))
 		{
-			$this->arResult['GDS_MARKET_LINK'] =  \Bitrix\Rest\Marketplace\Url::getBookletUrl('bi_data_studio');
+			$this->arResult['GDS_MARKET_LINK'] = \Bitrix\Rest\Marketplace\Url::getBookletUrl('bi_data_studio');
 			if ($this->arResult['ACCESS_KEY'])
 			{
-				$this->arResult['PBI_MARKET_LINK'] =  \Bitrix\Rest\Marketplace\Url::getBookletUrl('bi_powerbi');
+				$this->arResult['PBI_MARKET_LINK'] = \Bitrix\Rest\Marketplace\Url::getBookletUrl('bi_powerbi');
 			}
 		}
 

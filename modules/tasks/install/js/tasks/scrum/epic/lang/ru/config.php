@@ -9,3 +9,6 @@ $MESS["TASKS_SCRUM_EPICS_EMPTY_FIRST_TITLE"] = "Здесь будут все в�
 $MESS["TASKS_SCRUM_EPICS_EMPTY_SECOND_TITLE"] = "Создайте первый эпик";
 $MESS["TASKS_SCRUM_EPIC_EDIT_BUTTON"] = "Изменить";
 $MESS["TSE_ERROR_POPUP_TITLE"] = "Произошла ошибка";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_TASKS_LIST_TITLE"] = "Список задач";
+$MESS["TASKS_SCRUM_SPRINT_ADD_EPIC_COMPLETED_TASKS_LIST_TITLE"] = "Список выполненных задач";
+$MESS["TASKS_SCRUM_ADD_EPIC_NOTIFY"] = "Эпик создан";

@@ -1626,8 +1626,8 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classPrivateFieldSet(this, _languageId, props.languageId);
 	    babelHelpers.classPrivateFieldSet(this, _id, props.id || 0);
-	    babelHelpers.classPrivateFieldSet(this, _latitude, props.latitude || 0);
-	    babelHelpers.classPrivateFieldSet(this, _longitude, props.longitude || 0);
+	    babelHelpers.classPrivateFieldSet(this, _latitude, props.latitude || '');
+	    babelHelpers.classPrivateFieldSet(this, _longitude, props.longitude || '');
 	    babelHelpers.classPrivateFieldSet(this, _fieldCollection, new AddressFieldCollection());
 
 	    if (main_core.Type.isObject(props.fieldCollection)) {
@@ -2967,20 +2967,6 @@ this.BX.Location = this.BX.Location || {};
 	  value: null
 	};
 
-	var Limit = /*#__PURE__*/function () {
-	  function Limit() {
-	    babelHelpers.classCallCheck(this, Limit);
-	  }
-
-	  babelHelpers.createClass(Limit, null, [{
-	    key: "isAddressLimitReached",
-	    value: function isAddressLimitReached() {
-	      return BX.message('LOCATION_IS_ADDRESS_LIMIT_REACHED');
-	    }
-	  }]);
-	  return Limit;
-	}();
-
 	var _latitude$2 = new WeakMap();
 
 	var _longitude$2 = new WeakMap();
@@ -3096,7 +3082,6 @@ this.BX.Location = this.BX.Location || {};
 	exports.MethodNotImplemented = MethodNotImplemented;
 	exports.ErrorPublisher = ErrorPublisher;
 	exports.Storage = Storage;
-	exports.Limit = Limit;
 	exports.Point = Point;
 	exports.DistanceCalculator = DistanceCalculator;
 

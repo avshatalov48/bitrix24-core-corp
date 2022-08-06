@@ -13,3 +13,6 @@ $MESS['STEP_SCAN'] = 'Сканируйте QR-код';
 $MESS['SCAN_QR_BUTTON'] = 'Сканировать QR-код';
 $MESS['STEP_CAMERA_TITLE'] = 'Наведите камеру на QR-код';
 $MESS['QR_SCANNER_HINT'] = 'Эта возможность доступна только в полной версии';
+$MESS['ACCEPT_QR_AUTH'] = 'Да, войти';
+$MESS['DECLINE_QR_AUTH'] = 'Не входить';
+$MESS['QR_WARNING'] = 'Вы входите по QR-коду в Битрикс24 на [B]#DOMAIN#[/B]. Продолжить? ';

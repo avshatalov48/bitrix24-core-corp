@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","MessagesCache","RecentCache","UsersCache"],"mappings":"AAGAA,GAAGC,OAAO,sBAAsB,CAACC,EAASC,EAASC,KAGlD,MAAMC,cAAEA,GAAkBL,GAAGE,QAAQ,+BACrC,MAAMI,YAAEA,GAAgBN,GAAGE,QAAQ,6BACnC,MAAMK,WAAEA,GAAeP,GAAGE,QAAQ,4BAElCE,EAAOD,QAAU,CAChBE,cAAAA,EACAC,YAAAA,EACAC,WAAAA","file":"extension.map.js"}

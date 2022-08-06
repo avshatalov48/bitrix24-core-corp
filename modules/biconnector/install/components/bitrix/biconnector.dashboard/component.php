@@ -36,7 +36,7 @@ $arResult = \Bitrix\BIConnector\DashboardTable::getList([
 
 if ($arResult && $arParams['SET_TITLE'] == 'Y')
 {
-	$APPLICATION->SetTitle($arResult['NAME']);
+	$APPLICATION->SetTitle(htmlspecialcharsEx($arResult['NAME']));
 }
 
 $this->IncludeComponentTemplate();

@@ -1,36 +1,42 @@
 <?php
+
 namespace Bitrix\Crm\Settings;
+
 use Bitrix\Main;
+
 class ContactSettings
 {
-	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
+	use Traits\EnableFactory;
+
+	public const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 
 	/** @var ContactSettings  */
-	private static $current = null;
+	private static $current;
 	/** @var bool */
 	private static $messagesLoaded = false;
 	/** @var array */
-	private static $descriptions = null;
+	private static $descriptions;
 	/** @var IntegerSetting */
-	private $defaultListView = null;
+	private $defaultListView;
 	/** @var EntityViewSettings */
-	private $entityListView = null;
+	private $entityListView;
 	/** @var BooleanSetting  */
-	private $isOpened = null;
+	private $isOpened;
 	/** @var BooleanSetting  */
-	private $enableOutmodedRequisites = null;
+	private $enableOutmodedRequisites;
 	/** @var BooleanSetting  */
-	private $enableDeferredCleaning = null;
+	private $enableDeferredCleaning;
 	/** @var BooleanSetting  */
-	private $enableRecycleBin = null;
+	private $enableRecycleBin;
 
-	function __construct()
+	public function __construct()
 	{
 		$this->defaultListView = new IntegerSetting('contact_default_list_view', self::VIEW_LIST);
 		$this->isOpened = new BooleanSetting('contact_opened_flag', true);
 		$this->enableOutmodedRequisites = new BooleanSetting('~CRM_ENABLE_CONTACT_OUTMODED_FIELDS', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_contact_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_contact_recycle_bin', true);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Contact, false);
 	}
 	/**
 	 * Get current instance
@@ -157,9 +163,9 @@ class ContactSettings
 		{
 			self::includeModuleFile();
 
-			self::$descriptions= array(
+			self::$descriptions= [
 				self::VIEW_LIST => GetMessage('CRM_CONTACT_SETTINGS_VIEW_LIST'),
-			);
+			];
 		}
 		return self::$descriptions;
 	}
@@ -169,7 +175,9 @@ class ContactSettings
 	 */
 	public static function prepareViewListItems()
 	{
-		return \CCrmEnumeration::PrepareListItems(self::getViewDescriptions());
+		$viewDescriptions = self::getViewDescriptions();
+
+		return \CCrmEnumeration::PrepareListItems($viewDescriptions);
 	}
 	/**
 	 * Include language file

@@ -4005,6 +4005,7 @@ if(typeof(BX.CrmDupController) === "undefined")
 
 			this._entityTypeName = this.getSetting("entityTypeName", "");
 			this._entityId = this.getSetting("entityId", 0);
+			this._ignoredItems = BX.prop.getArray(this._settings, 'ignoredItems', []);
 			var groups = this.getSetting("groups", null);
 			var group = null;
 			if(groups)
@@ -4323,6 +4324,11 @@ if(typeof(BX.CrmDupController) === "undefined")
 			}
 			params["ENTITY_TYPE_NAME"] = this._entityTypeName;
 			params["ENTITY_ID"] = this._entityId;
+			if (this._ignoredItems && this._ignoredItems.length)
+			{
+				params["IGNORED_ITEMS"] = this._ignoredItems;
+			}
+
 			this._startSearchRequest(params);
 		},
 		_startSearchRequest: function(params)
@@ -12936,7 +12942,7 @@ BX.Crm.Page =
 		factoryBased: { condition: new RegExp("/type/[0-9]+/details/[0-9]+/", "i") },
 		dynamicAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['id', 'grid_action', 'page'], options: { customLeftBoundary: 0 } },
 		dynamicElementAutomation: { condition: new RegExp("/crm/type/[0-9]+/automation/[0-9]+/", "i"), stopParameters: ['grid_action', 'page']},
-		configsCatalog: { condition: new RegExp("/crm/configs/catalog/", "i"), options: { width: 1000, allowChangeHistory: false, cacheable: false, } }
+		activity: { condition: new RegExp("/bitrix/components/bitrix/crm.activity.planner/slider.php", "i"), options: { allowChangeHistory: false, width: 1080 }},
 	},
 	items: [],
 	initialized: false,

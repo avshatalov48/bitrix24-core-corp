@@ -43,6 +43,7 @@ import 'pull.component.status';
 
 // dialog files
 import "./dialog.css";
+import 'ui.fonts.opensans';
 
 // widget components
 import "./component/dialog";
@@ -431,6 +432,10 @@ export class MobileDialogApplication
 		BXMobileApp.Events.postToComponent("chatdialog::init::complete", [{
 			dialogId: this.controller.application.getDialogId()
 		}, true], 'im.recent');
+
+		BXMobileApp.Events.postToComponent("chatdialog::init::complete", [{
+			dialogId: this.controller.application.getDialogId()
+		}, true], 'im.messenger');
 
 		return this.requestData();
 	}
@@ -984,7 +989,7 @@ export class MobileDialogApplication
 		if (dialog.entityType === 'GENERAL')
 		{
 			result.avatar = encodeURI(
-				this.controller.getHost() + "/bitrix/mobileapp/mobile/components/bitrix/im.recent/images/avatar_general_x3.png"
+				this.controller.getHost() + "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_general_x3.png"
 			);
 		}
 
@@ -1004,10 +1009,12 @@ export class MobileDialogApplication
 		if (dialog.entityType === 'SUPPORT24_QUESTION')
 		{
 			result.avatar = encodeURI(
-				this.controller.getHost() + "/bitrix/mobileapp/mobile/components/bitrix/im.recent/images/avatar_24_question_x3.png"
+				this.controller.getHost() + "/bitrix/mobileapp/immobile/components/im/messenger/images/avatar_24_question_x3.png"
 			);
 			result.desc = '';
 		}
+
+		console.warn(result);
 
 		return result;
 	}
@@ -1518,6 +1525,11 @@ export class MobileDialogApplication
 					dialogId: data.payload.dialogId,
 					counter: data.payload.fields.counter,
 				}, true], 'im.recent');
+
+				BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+					dialogId: data.payload.dialogId,
+					counter: data.payload.fields.counter,
+				}, true], 'im.messenger');
 			}
 		}
 		else if (data.type === 'dialogues/set')
@@ -1532,6 +1544,11 @@ export class MobileDialogApplication
 					dialogId: dialog.dialogId,
 					counter: dialog.counter,
 				}, true], 'im.recent');
+
+				BXMobileApp.Events.postToComponent("chatdialog::counter::change", [{
+					dialogId: dialog.dialogId,
+					counter: dialog.counter,
+				}, true], 'im.messenger');
 			});
 		}
 	}
@@ -2320,6 +2337,7 @@ export class MobileDialogApplication
 	openDialog(dialogId)
 	{
 		BXMobileApp.Events.postToComponent("onOpenDialog", [{dialogId}, true], 'im.recent');
+		BXMobileApp.Events.postToComponent('ImMobile.Messenger.Dialog:open', [{dialogId}], 'im.messenger');
 	}
 
 	openPhoneMenu(number)
@@ -2348,6 +2366,7 @@ export class MobileDialogApplication
 
 		this.messageMenuInstance = BackdropMenu
 			.create('im.dialog.menu.mess|'+this.controller.application.getDialogId())
+			.setTestId('im-dialog-menu-mess')
 			.setItems([
 				BackdropMenuItem.create('reply')
 					.setTitle(this.getLocalize('MOBILE_MESSAGE_MENU_REPLY'))
@@ -2490,6 +2509,7 @@ export class MobileDialogApplication
 					let dialog = this.controller.application.getDialogData();
 					let subMenu = BackdropMenu
 						.create('im.dialog.menu.mess.submenu|'+this.controller.application.getDialogId())
+						.setTestId('im-dialog-menu-mess-submenu-share')
 						.setItems([
 							BackdropMenuItem.create('share_task')
 								.setIcon(BackdropMenuIcon.task)

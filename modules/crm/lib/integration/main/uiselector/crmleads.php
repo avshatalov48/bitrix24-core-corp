@@ -2,6 +2,7 @@
 namespace Bitrix\Crm\Integration\Main\UISelector;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Text\Emoji;
 
 class CrmLeads extends CrmEntity
 {
@@ -41,7 +42,7 @@ class CrmLeads extends CrmEntity
 			'id' => $prefix.$data['ID'],
 			'entityType' => 'leads',
 			'entityId' => $data['ID'],
-			'name' => htmlspecialcharsbx($data['TITLE']),
+			'name' => htmlspecialcharsbx(Emoji::decode($data['TITLE'])),
 			'desc' => htmlspecialcharsbx(
 				\CCrmLead::prepareFormattedName(
 					[

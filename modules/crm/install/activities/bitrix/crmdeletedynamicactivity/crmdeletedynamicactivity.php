@@ -27,6 +27,13 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		]);
 	}
 
+	protected function prepareProperties(): void
+	{
+		parent::prepareProperties();
+
+		$this->writeDebugInfo($this->getDebugInfo());
+	}
+
 	protected function checkProperties(): \Bitrix\Main\ErrorCollection
 	{
 		$errors = parent::checkProperties();
@@ -102,5 +109,10 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				'Required' => true,
 			],
 		];
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return static::getPropertiesDialogMap();
 	}
 }

@@ -25,6 +25,7 @@ class ChecklistToggleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -38,9 +39,15 @@ class ChecklistToggleRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return $this->controller->check(ActionDictionary::ACTION_CHECKLIST_EDIT, $task, $params);
 		}
 
+		if (!$this->controller->check(ActionDictionary::ACTION_TASK_READ, $task, $params))
+		{
+			return false;
+		}
+
 		$checklist = $this->getModelFromParams($params);
 		if ($checklist->getEntityId() !== $task->getId())
 		{
+			$this->controller->addError(static::class, 'Incorrect checklist');
 			return false;
 		}
 

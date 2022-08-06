@@ -489,7 +489,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "removeMember",
 	    value: function removeMember(id) {
-	      this.members.delete(id);
+	      this.members["delete"](id);
 	    }
 	  }, {
 	    key: "getAttachments",
@@ -521,11 +521,15 @@ this.BX = this.BX || {};
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24, _templateObject25, _templateObject26, _templateObject27, _templateObject28, _templateObject29, _templateObject30, _templateObject31, _templateObject32, _templateObject33, _templateObject34, _templateObject35, _templateObject36, _templateObject37, _templateObject38, _templateObject39, _templateObject40, _templateObject41, _templateObject42, _templateObject43, _templateObject44;
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
 	var CheckListItem = /*#__PURE__*/function (_CompositeTreeItem) {
 	  babelHelpers.inherits(CheckListItem, _CompositeTreeItem);
 	  babelHelpers.createClass(CheckListItem, null, [{
-	    key: "makeDangerElement",
-	    value: function makeDangerElement(element) {
+	    key: "addDangerToElement",
+	    value: function addDangerToElement(element) {
 	      var dangerClass = 'ui-ctl-danger';
 
 	      if (!main_core.Dom.hasClass(element, dangerClass)) {
@@ -764,7 +768,8 @@ this.BX = this.BX || {};
 	        atsign: 64,
 	        tab: 9,
 	        up: 38,
-	        down: 40
+	        down: 40,
+	        backspace: 8
 	      };
 	    }
 	  }]);
@@ -981,7 +986,7 @@ this.BX = this.BX || {};
 	    value: function deleteAction() {
 	      var showBalloon = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 	      var title = this.fields.getTitle();
-	      this.delete();
+	      this["delete"]();
 
 	      if (showBalloon && title.length > 0 && title !== '') {
 	        var action = 'DELETE';
@@ -1218,7 +1223,7 @@ this.BX = this.BX || {};
 	        this.runForEachSelectedItem(function (selectedItem) {
 	          var title = selectedItem.fields.getTitle();
 	          var space = title.slice(-1) === ' ' ? '' : ' ';
-	          var newTitle = "".concat(title).concat(space).concat(member.nameFormatted).substring(0, 255);
+	          var newTitle = "".concat(title).concat(space).concat(member.nameFormatted);
 	          selectedItem.fields.addMember(member);
 	          selectedItem.updateTitle(main_core.Text.decode(newTitle));
 	          selectedItem.updateTitleNode();
@@ -1244,9 +1249,11 @@ this.BX = this.BX || {};
 	    value: function onSocNetSelectorAuditorSelected(auditor) {
 	      var type = 'auditor';
 	      var userData = this.prepareUserData(auditor);
-	      var resultAuditor = babelHelpers.objectSpread({}, userData, {
+
+	      var resultAuditor = _objectSpread(_objectSpread({}, userData), {}, {
 	        type: type
 	      });
+
 	      var notificationAction = "".concat(type.toUpperCase(), "_ADDED");
 	      var notificationData = {
 	        avatar: auditor.avatar
@@ -1263,9 +1270,11 @@ this.BX = this.BX || {};
 	    value: function onSocNetSelectorAccompliceSelected(accomplice) {
 	      var type = 'accomplice';
 	      var userData = this.prepareUserData(accomplice);
-	      var resultAccomplice = babelHelpers.objectSpread({}, userData, {
+
+	      var resultAccomplice = _objectSpread(_objectSpread({}, userData), {}, {
 	        type: type
 	      });
+
 	      var notificationAction = "".concat(type.toUpperCase(), "_ADDED");
 	      var notificationData = {
 	        avatar: accomplice.avatar
@@ -1319,7 +1328,6 @@ this.BX = this.BX || {};
 	      var typeFunction = typeFunctionMap[memberType] || typeFunctionMap.auditor;
 	      this.isSelectorLoading = true;
 	      main_core.Runtime.loadExtension('ui.entity-selector').then(function (exports) {
-	        console.log(_this6.optionManager.isNetworkEnabled);
 	        var Dialog = exports.Dialog;
 	        var dialog = new Dialog({
 	          targetNode: e.target,
@@ -1655,7 +1663,7 @@ this.BX = this.BX || {};
 	      var nodeId = this.getNodeId();
 
 	      if (this.isCheckList()) {
-	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	      }
 
 	      var progressBarLayout = new BX.UI.ProgressRound({
@@ -1666,7 +1674,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-inner tasks-checklist-item-new ", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onCompleteButtonClick.bind(this), progressBarLayout.getContainer(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-inner tasks-checklist-item-new ", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onCompleteButtonClick.bind(this), progressBarLayout.getContainer(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	    }
 	  }, {
 	    key: "showEditorPanel",
@@ -1709,6 +1717,7 @@ this.BX = this.BX || {};
 	      this.input.focus();
 	      this.input.setSelectionRange(this.input.value.length, this.input.value.length);
 	      this.inputCursorPosition = CheckListItem.getInputSelection(this.input);
+	      main_core.Event.bind(this.input, 'beforeinput', this.onInputBeforeInput.bind(this));
 
 	      if (this.input.value === '' || this.input.value.length === 0) {
 	        setTimeout(function () {
@@ -1726,7 +1735,7 @@ this.BX = this.BX || {};
 	    key: "disableUpdateMode",
 	    value: function disableUpdateMode() {
 	      var currentInner = this.getInnerContainer();
-	      var text = currentInner.querySelector("#text_".concat(this.getNodeId())).value.trim().substring(0, 255);
+	      var text = currentInner.querySelector("#text_".concat(this.getNodeId())).value.trim();
 	      this.updateTitle(text);
 	      this.processMembersFromText();
 	      this.updateTitleNode();
@@ -1755,7 +1764,7 @@ this.BX = this.BX || {};
 	          this.handleCheckListIsEmpty();
 	          main_core.Dom.hide(this.getRootNode().panel);
 	        } else {
-	          CheckListItem.makeDangerElement(input.parentElement);
+	          CheckListItem.addDangerToElement(input.parentElement);
 
 	          if (this.input !== null) {
 	            this.getRootNode().showEditorPanel(this, this.input);
@@ -1795,25 +1804,6 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "onInputKeyPressed",
-	    value: function onInputKeyPressed(e) {
-	      if (this.isSelectorLoading) {
-	        e.preventDefault();
-	        return;
-	      }
-
-	      if (e.keyCode === CheckListItem.keyCodes.enter) {
-	        this.toggleUpdateMode(e);
-	        e.preventDefault();
-	      } else if (e.keyCode === CheckListItem.keyCodes.plus || e.shiftKey && e.keyCode === CheckListItem.keyCodes.atsign) {
-	        this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
-	      }
-
-	      main_core_events.EventEmitter.emit('BX.Tasks.CheckListItem:CheckListChanged', {
-	        action: 'inputKeyPressed'
-	      });
-	    }
-	  }, {
 	    key: "onInputKeyDown",
 	    value: function onInputKeyDown(e) {
 	      var _this10 = this;
@@ -1824,12 +1814,10 @@ this.BX = this.BX || {};
 	      }
 
 	      switch (e.keyCode) {
-	        default:
-	          // do nothing
-	          break;
-
 	        case CheckListItem.keyCodes.esc:
+	        case CheckListItem.keyCodes.enter:
 	          {
+	            e.preventDefault();
 	            setTimeout(function () {
 	              return _this10.toggleUpdateMode(e);
 	            });
@@ -1867,6 +1855,23 @@ this.BX = this.BX || {};
 
 	            break;
 	          }
+
+	        default:
+	          // do nothing
+	          break;
+	      }
+	    }
+	  }, {
+	    key: "onInputBeforeInput",
+	    value: function onInputBeforeInput(e) {
+	      if (this.isSelectorLoading) {
+	        e.preventDefault();
+	        return;
+	      }
+
+	      if (['+', '@'].includes(e.data)) {
+	        this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
+	        e.preventDefault();
 	      }
 	    }
 	  }, {
@@ -2451,12 +2456,12 @@ this.BX = this.BX || {};
 	      var item = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 	      var dependsOn = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 	      var position = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 'after';
-	      var itemGet = item instanceof this.class;
+	      var itemGet = item instanceof this["class"];
 	      return new Promise(function (resolve) {
-	        var newCheckListItem = item || new _this15.class();
+	        var newCheckListItem = item || new _this15["class"]();
 	        var newCheckListItemLayout;
 
-	        if (dependsOn instanceof _this15.class) {
+	        if (dependsOn instanceof _this15["class"]) {
 	          if (position === 'before') {
 	            _this15.addBefore(newCheckListItem, dependsOn);
 
@@ -2509,7 +2514,7 @@ this.BX = this.BX || {};
 	          main_core.Dom.removeClass(newCheckListItemLayout, _this15.showClass);
 
 	          if (!_this15.isTaskRoot() && !itemGet && newCheckListItem.input !== null) {
-	            _this15.class.smoothScroll(newCheckListItem.getContainer());
+	            _this15["class"].smoothScroll(newCheckListItem.getContainer());
 	          }
 
 	          resolve(newCheckListItem);
@@ -2768,7 +2773,7 @@ this.BX = this.BX || {};
 	        ext: uploaderFile.ext
 	      };
 	      this.fields.addAttachments(babelHelpers.defineProperty({}, attachmentId, attachmentId));
-	      this.filesLoaderProgressBars.delete(uploaderFile.id);
+	      this.filesLoaderProgressBars["delete"](uploaderFile.id);
 	      var attachmentProgress = this.getAttachmentsContainer().querySelector("#disk-attach-".concat(uploaderFile.id));
 	      var attachmentLayout = this.getLoadedAttachmentLayout(attachment);
 
@@ -2982,7 +2987,7 @@ this.BX = this.BX || {};
 
 	            reject();
 	          }
-	        }).catch(function () {
+	        })["catch"](function () {
 	          _this20.onChecklistAjaxError();
 
 	          reject();
@@ -3004,7 +3009,7 @@ this.BX = this.BX || {};
 	        if (response.status !== 'success') {
 	          onFailFunction();
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return onFailFunction();
 	      });
 	    }
@@ -3022,7 +3027,7 @@ this.BX = this.BX || {};
 	        if (response.status !== 'success') {
 	          _this21.onChecklistAjaxError();
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return _this21.onChecklistAjaxError();
 	      });
 	    }
@@ -3066,7 +3071,7 @@ this.BX = this.BX || {};
 	        } else {
 	          _this22.fields.removeMember(member.id);
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return _this22.fields.removeMember(member.id);
 	      });
 	    }
@@ -3085,7 +3090,7 @@ this.BX = this.BX || {};
 	        if (response.status !== 'success') {
 	          _this23.onChecklistAjaxError();
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        return _this23.onChecklistAjaxError();
 	      });
 	    }
@@ -3236,7 +3241,7 @@ this.BX = this.BX || {};
 	        newTitle = "".concat(newInputText).concat(title.slice(start));
 	      } else {
 	        var space = title.slice(-1) === ' ' ? '' : ' ';
-	        newTitle = "".concat(title).concat(space).concat(member.nameFormatted).substring(0, 255);
+	        newTitle = "".concat(title).concat(space).concat(member.nameFormatted);
 	      }
 
 	      node.fields.addMember(member);
@@ -3553,7 +3558,7 @@ this.BX = this.BX || {};
 	          this.getParent().updateIndexes();
 	          this.handleCheckListIsEmpty();
 	        } else {
-	          MobileCheckListItem.makeDangerElement(input.parentElement);
+	          MobileCheckListItem.addDangerToElement(input.parentElement);
 	        }
 	      } else if (createNewItem) {
 	        this.getParent().addCheckListItem(null, this);
@@ -3576,8 +3581,8 @@ this.BX = this.BX || {};
 	      }
 	    }
 	  }, {
-	    key: "onInput",
-	    value: function onInput(e) {
+	    key: "onInputBeforeInput",
+	    value: function onInputBeforeInput(e) {
 	      var memberSelectorCallKeys = ['@', '+'];
 	      var position = CheckListItem.getInputSelection(this.input).start;
 
@@ -3587,6 +3592,7 @@ this.BX = this.BX || {};
 	          nodeId: this.getNodeId()
 	        };
 	        BXMobileApp.Events.postToComponent('onChecklistInputMemberSelectorCall', params, this.getNativeComponentName());
+	        e.preventDefault();
 	      }
 	    }
 	  }, {
@@ -3640,7 +3646,7 @@ this.BX = this.BX || {};
 	        };
 	      }
 
-	      return babelHelpers.objectSpread({}, defaultParams, localParams);
+	      return _objectSpread(_objectSpread({}, defaultParams), localParams);
 	    }
 	  }, {
 	    key: "onAttachmentsLayoutClick",
@@ -3660,7 +3666,7 @@ this.BX = this.BX || {};
 	      var nodeId = this.getNodeId();
 
 	      if (this.isCheckList()) {
-	        return main_core.Tag.render(_templateObject37 || (_templateObject37 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"mobile-task-checklist-head-title mobile-task-checklist-item-edit-mode\">\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   oninput=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInput.bind(this), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
+	        return main_core.Tag.render(_templateObject37 || (_templateObject37 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"mobile-task-checklist-head-title mobile-task-checklist-item-edit-mode\">\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
 	      }
 
 	      var progressBarLayout = new BX.Mobile.Tasks.CheckList.ProgressRound({
@@ -3671,7 +3677,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      return main_core.Tag.render(_templateObject38 || (_templateObject38 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item mobile-task-checklist-item-edit-mode ", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-item-checker\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist-item-title\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-number\" style=\"display: none\">", "</div>\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   oninput=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? this.checkedClass : '', progressBarLayout.getContainer(), this.fields.getDisplaySortIndex(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInput.bind(this), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
+	      return main_core.Tag.render(_templateObject38 || (_templateObject38 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"mobile-task-checklist-item mobile-task-checklist-item-edit-mode ", "\">\n\t\t\t\t<div class=\"mobile-task-checklist-item-checker\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"mobile-task-checklist-item-title\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-number\" style=\"display: none\">", "</div>\n\t\t\t\t\t<input class=\"mobile-task-checklist-item-input\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t   onkeypress=\"", "\"\n\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? this.checkedClass : '', progressBarLayout.getContainer(), this.fields.getDisplaySortIndex(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyPressed.bind(this), this.rememberInputState.bind(this));
 	    }
 	  }, {
 	    key: "getAttachmentsLayout",
@@ -3713,8 +3719,8 @@ this.BX = this.BX || {};
 	      return this.container;
 	    }
 	  }], [{
-	    key: "makeDangerElement",
-	    value: function makeDangerElement(element) {
+	    key: "addDangerToElement",
+	    value: function addDangerToElement(element) {
 	      var dangerClass = 'mobile-task-checklist-error';
 
 	      if (!main_core.Dom.hasClass(element, dangerClass)) {

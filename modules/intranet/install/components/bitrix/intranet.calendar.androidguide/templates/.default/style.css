@@ -2,7 +2,8 @@
 	display: block;
 	padding: 25px 35px 14px 35px;
 	margin: 0;
-	font: 15px/18px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #769320;
 }
 
@@ -16,7 +17,8 @@
 }
 
 .android-guide-header-title {
-	font: 25px/34px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 25px/34px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	margin-bottom: 11px;
 }
@@ -93,12 +95,14 @@
 	text-align: center;
 	color: #FFF;
 	display: block;
-	font: 500 17px/28px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 17px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .android-guide-section-content {
 	flex:1;
-	font: 16px/22px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	margin: 4px 0 0;
 	padding-bottom: 22px;
@@ -111,7 +115,8 @@
 }
 
 .android-guide-link {
-	font: 16px/22px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .android-guide-section-image {

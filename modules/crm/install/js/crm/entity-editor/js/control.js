@@ -672,41 +672,6 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 	};
 }
 
-if(typeof BX.Crm.EntityEditorImage === "undefined")
-{
-	/**
-	 * @extends BX.UI.EntityEditorImage
-	 * @constructor
-	 */
-	BX.Crm.EntityEditorImage = function()
-	{
-		BX.Crm.EntityEditorImage.superclass.constructor.apply(this);
-	};
-	BX.extend(BX.Crm.EntityEditorImage, BX.UI.EntityEditorImage);
-	BX.Crm.EntityEditorImage.prototype.loadInput = function()
-	{
-		this._editor.loadCustomHtml("RENDER_IMAGE_INPUT", { "FIELD_NAME": this.getDataKey() }, BX.delegate(this.onEditorHtmlLoad, this));
-	};
-	BX.Crm.EntityEditorImage.prototype.onEditorHtmlLoad = function(html)
-	{
-		if(this._mode === BX.UI.EntityEditorMode.edit && this._innerWrapper)
-		{
-			this._innerWrapper.innerHTML = html;
-
-			BX.addCustomEvent(window, "onAfterPopupShow", this._dialogShowHandler);
-			BX.addCustomEvent(window, "onPopupClose", this._dialogCloseHandler);
-
-			window.setTimeout(BX.delegate(this.bindFileEvents, this), 500)
-		}
-	};
-	BX.Crm.EntityEditorImage.create = function(id, settings)
-	{
-		var self = new BX.Crm.EntityEditorImage();
-		self.initialize(id, settings);
-		return self;
-	};
-}
-
 if(typeof BX.Crm.EntityEditorUser === "undefined")
 {
 	BX.Crm.EntityEditorUser = function()
@@ -7856,12 +7821,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			);
 		}
 
+		var categoryParams = BX.prop.getObject(
+			this._schemeElement.getDataObjectParam('categoryParams', {}),
+			BX.CrmEntityType.enumeration.company,
+			{}
+		);
+
 		return(
 			BX.Crm.EntityEditorClientSearchBox.create(
 				this._id,
 				{
 					entityTypeId: BX.CrmEntityType.enumeration.company,
 					entityTypeName: BX.CrmEntityType.names.company,
+					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
 					enableDeletion: false,
@@ -7978,12 +7950,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 			)
 		;
 
+		var categoryParams = BX.prop.getObject(
+			this._schemeElement.getDataObjectParam('categoryParams', {}),
+			BX.CrmEntityType.enumeration.contact,
+			{}
+		);
+
 		return(
 			BX.Crm.EntityEditorClientSearchBox.create(
 				this._id,
 				{
 					entityTypeId: BX.CrmEntityType.enumeration.contact,
 					entityTypeName: BX.CrmEntityType.names.contact,
+					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
 					enableDeletion: BX.prop.getBoolean(params, "enableDeletion", true),
@@ -8521,6 +8500,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 				data["title"] = entity.getTitle();
 				data["multifields"] = entity.getMultifields();
 				data["requisites"] = entity.getRequisitesForSave();
+				data["categoryId"] = entity.getCategoryId();
 			}
 
 			results.push(data);

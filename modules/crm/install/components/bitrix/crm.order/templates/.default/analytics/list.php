@@ -51,7 +51,8 @@
 					'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 					'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
 					'DISABLE_NAVIGATION_BAR' => 'Y',
-				]
+				],
+				'USE_UI_TOOLBAR' => 'Y',
 			]
 		);
 	}

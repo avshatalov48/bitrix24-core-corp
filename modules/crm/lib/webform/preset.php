@@ -19,7 +19,7 @@ Loc::loadMessages(__FILE__);
 class Preset
 {
 	protected $errors = [];
-	protected static $version = 3;
+	protected static $version = 4;
 	protected static $versionOptionName = 'webform_preset_version';
 
 	protected static function getVersion(): int
@@ -105,6 +105,7 @@ class Preset
 			call_user_func_array($callback, []);
 		}
 
+		UserConsent::getDefaultAgreementId();
 		return $this->hasErrors();
 	}
 
@@ -368,7 +369,7 @@ class Preset
 
 		if (Callback::canUse())
 		{
-			$callbackNumbers = array_slice(Callback::getPhoneNumbers(), 0, 10);
+			$callbackNumbers = array_slice(Callback::getPhoneNumbers(), 0, 5);
 			foreach($callbackNumbers as $number)
 			{
 				$list[] = self::getCallback($number['CODE'], $number['NAME']);

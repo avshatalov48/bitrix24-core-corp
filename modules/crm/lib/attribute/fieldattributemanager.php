@@ -13,13 +13,17 @@ class FieldAttributeManager
 {
 	protected const CACHE_TTL = 86400;
 
+	/** @var Crm\Restriction\RestrictionManager */
+	private static $restrictionManager = Crm\Restriction\RestrictionManager::class;
+
 	public static function isEnabled()
 	{
 		return true;
 	}
+
 	public static function isPhaseDependent()
 	{
-		return Crm\Restriction\RestrictionManager::getAttributeConfigRestriction()->hasPermission();
+		return self::$restrictionManager::getAttributeConfigRestriction()->hasPermission();
 	}
 
 	public static function isEntitySupported(int $entityTypeId): bool
@@ -572,12 +576,12 @@ class FieldAttributeManager
 		array $options = null
 	)
 	{
-		if(!is_int($entityTypeID))
+		if (!is_int($entityTypeID))
 		{
 			$entityTypeID = (int)$entityTypeID;
 		}
 
-		if(!CCrmOwnerType::IsDefined($entityTypeID))
+		if (!CCrmOwnerType::IsDefined($entityTypeID))
 		{
 			throw new Main\ArgumentException(
 				'The argument must be valid CCrmOwnerType.',
@@ -590,43 +594,46 @@ class FieldAttributeManager
 			return [];
 		}
 
-		if(!is_array($options))
+		if (!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
 		$entityScope = '';
-		if($entityTypeID === CCrmOwnerType::Deal)
+		if ($entityTypeID === CCrmOwnerType::Deal)
 		{
 			$categoryID = isset($entityData['CATEGORY_ID']) ? (int)$entityData['CATEGORY_ID'] : -1;
 			$stageID = isset($entityData['STAGE_ID']) ? $entityData['STAGE_ID'] : '';
-			if($categoryID < 0 || $stageID === '')
+			if ($categoryID < 0 || $stageID === '')
 			{
-				if($stageID === '')
+				if ($stageID === '')
 				{
-					if($entityID > 0)
+					if ($entityID > 0)
 					{
 						$dbResult = \CCrmDeal::GetListEx(
-							array(),
-							array('=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'),
+							[],
+							['=ID' => $entityID, 'CHECK_PERMISSIONS' => 'N'],
 							false,
 							false,
-							array('ID', 'CATEGORY_ID', 'STAGE_ID')
+							['ID', 'CATEGORY_ID', 'STAGE_ID']
 						);
+
 						$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
-						if(!$fields)
+						if (!$fields)
 						{
-							return array();
+							return [];
 						}
+
 						$categoryID = isset($fields['CATEGORY_ID']) ? (int)$fields['CATEGORY_ID'] : 0;
 						$stageID = isset($fields['STAGE_ID']) ? $fields['STAGE_ID'] : '';
 					}
-					if($stageID === '')
+
+					if ($stageID === '')
 					{
 						$stageID = \CCrmDeal::GetStartStageID($categoryID);
 					}
 				}
-				elseif($categoryID < 0)
+				elseif ($categoryID < 0)
 				{
 					$categoryID = Crm\Category\DealCategory::resolveFromStageID($stageID);
 				}
@@ -638,39 +645,54 @@ class FieldAttributeManager
 			$entityScope = self::resolveEntityScope(
 				CCrmOwnerType::Deal,
 				$entityID,
-				array('CATEGORY_ID' => $categoryID)
+				['CATEGORY_ID' => $categoryID]
 			);
 
-			if(!isset($options['CATEGORY_ID']))
+			if (!isset($options['CATEGORY_ID']))
 			{
 				$options['CATEGORY_ID'] = $categoryID;
 			}
 		}
+		elseif (in_array($entityTypeID, [CCrmOwnerType::Company, CCrmOwnerType::Contact]))
+		{
+			if (isset($options['CATEGORY_ID']))
+			{
+				$categoryID = $options['CATEGORY_ID'];
+			}
+			else
+			{
+				$categoryID = (int)$entityData['CATEGORY_ID'];
+				$options['CATEGORY_ID'] = $categoryID;
+			}
+
+			$entityScope = self::resolveEntityScope($entityTypeID, $entityID, ['CATEGORY_ID' => $categoryID]);
+		}
 
 		$fieldsData = static::getList($entityTypeID, $entityScope, $fieldOrigin);
-
 		$result = [];
 		foreach ($fieldsData as $fields)
 		{
-			if (!self::checkPhaseCondition(
-				$entityTypeID,
-				$entityData,
-				$fields['START_PHASE'],
-				$fields['FINISH_PHASE'],
-				$options
-			))
+			if (
+				!self::checkPhaseCondition(
+					$entityTypeID,
+					$entityData,
+					$fields['START_PHASE'],
+					$fields['FINISH_PHASE'],
+					$options
+				)
+			)
 			{
 				continue;
 			}
 
-			if($fieldOrigin !== FieldOrigin::UNDEFINED)
+			if ($fieldOrigin !== FieldOrigin::UNDEFINED)
 			{
 				$result[] = $fields['FIELD_NAME'];
 			}
 			else
 			{
 				$key = $fields['IS_CUSTOM_FIELD'] === 'Y' ? FieldOrigin::CUSTOM : FieldOrigin::SYSTEM;
-				if(!isset($result[$key]))
+				if (!isset($result[$key]))
 				{
 					$result[$key] = array();
 				}
@@ -814,38 +836,48 @@ class FieldAttributeManager
 	 */
 	public static function getCaptionsForEntityWithStages(int $entityTypeId = CCrmOwnerType::Undefined): array
 	{
-		if ($entityTypeId === CCrmOwnerType::Lead)
-		{
-			return [
-				'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
-				'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_FULL'),
-				'GROUP_TYPE_GENERAL' => Loc::getMessage(
-					'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_GENERAL'
-				),
-				'GROUP_TYPE_PIPELINE' => Loc::getMessage(
-					'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_PIPELINE'
-				),
-				'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_JUNK'),
-			];
-		}
-		elseif ($entityTypeId === CCrmOwnerType::Company || $entityTypeId === CCrmOwnerType::Contact)
-		{
-			return [
-				'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
-				'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
-				'GROUP_TYPE_GENERAL' => '',
-				'GROUP_TYPE_PIPELINE' => '',
-				'GROUP_TYPE_JUNK' => '',
-			];
-		}
-
-		return [
+		// for stages and categories by default
+		$captions = [
 			'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_SHORT'),
 			'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_REQUIRED_FULL_1'),
 			'GROUP_TYPE_GENERAL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_GENERAL'),
 			'GROUP_TYPE_PIPELINE' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_PIPELINE'),
 			'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STAGE_CAPTION_GROUP_TYPE_JUNK'),
 		];
+
+		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		if ($factory)
+		{
+			if ($factory->isStagesEnabled())
+			{
+				if (!$factory->isCategoriesEnabled())
+				{
+					$captions = [
+						'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+						'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_FULL'),
+						'GROUP_TYPE_GENERAL' => Loc::getMessage(
+							'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_GENERAL'
+						),
+						'GROUP_TYPE_PIPELINE' => Loc::getMessage(
+							'CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_PIPELINE'
+						),
+						'GROUP_TYPE_JUNK' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_GROUP_TYPE_JUNK'),
+					];
+				}
+			}
+			else
+			{
+				$captions = [
+					'REQUIRED_SHORT' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+					'REQUIRED_FULL' => Loc::getMessage('CRM_FIELD_ATTRIBUTE_MANAGER_STATUS_CAPTION_REQUIRED_SHORT'),
+					'GROUP_TYPE_GENERAL' => '',
+					'GROUP_TYPE_PIPELINE' => '',
+					'GROUP_TYPE_JUNK' => '',
+				];
+			}
+		}
+
+		return $captions;
 	}
 
 	/**
@@ -988,18 +1020,12 @@ class FieldAttributeManager
 	}
 
 	/**
-	 * Return list of field names that matches specified configs and stages.
+	 * Returns a flat list of field names that are always required, on any stage
 	 *
 	 * @param array $fieldsData - Data that returns by self::getList() method.
-	 * @param Crm\EO_Status_Collection $collection - Stages collection for which settings should be processed.
-	 * @param string $currentStageId - Current stage identifier.
-	 * @return string[]
+	 * @return string[] - Flat list of required field names
 	 */
-	public static function processFieldsForStages(
-		array $fieldsData,
-		Crm\EO_Status_Collection $collection,
-		string $currentStageId
-	): array
+	final public static function extractNamesOfAlwaysRequiredFields(array $fieldsData): array
 	{
 		$result = [];
 
@@ -1007,22 +1033,59 @@ class FieldAttributeManager
 		{
 			return $result;
 		}
-		if(empty($fieldsData))
+		if (empty($fieldsData))
 		{
 			return $result;
 		}
-		$stages = [];
-		foreach ($collection as $stage)
-		{
-			$stages[$stage->getStatusId()] = $stage;
-		}
-		$currentStageSort = isset($stages[$currentStageId]) ? $stages[$currentStageId]->getSort() : -1;
+
 		foreach ($fieldsData as $fieldConfig)
 		{
 			//If Start Phase and Finish Phase are empty, then field is required always.
 			if (empty($fieldConfig['START_PHASE']) && empty($fieldConfig['FINISH_PHASE']))
 			{
 				$result[] = $fieldConfig['FIELD_NAME'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Return list of field names that matches specified configs and stages.
+	 *
+	 * @param array $fieldsData - Data that returns by self::getList() method.
+	 * @param Crm\EO_Status_Collection $collection - Stages collection for which settings should be processed.
+	 * @param string $currentStageId - Current stage identifier.
+	 * @return string[] - Flat array of required field names
+	 */
+	public static function processFieldsForStages(
+		array $fieldsData,
+		Crm\EO_Status_Collection $collection,
+		string $currentStageId
+	): array
+	{
+		if (!static::isPhaseDependent())
+		{
+			return [];
+		}
+		if(empty($fieldsData))
+		{
+			return [];
+		}
+
+		$stages = [];
+		foreach ($collection as $stage)
+		{
+			$stages[$stage->getStatusId()] = $stage;
+		}
+		$currentStageSort = isset($stages[$currentStageId]) ? $stages[$currentStageId]->getSort() : -1;
+
+		$result = static::extractNamesOfAlwaysRequiredFields($fieldsData);
+
+		foreach ($fieldsData as $fieldConfig)
+		{
+			if (empty($fieldConfig['START_PHASE']) && empty($fieldConfig['FINISH_PHASE']))
+			{
 				continue;
 			}
 
@@ -1043,7 +1106,7 @@ class FieldAttributeManager
 			}
 		}
 
-		return $result;
+		return array_unique($result);
 	}
 
 	public static function deleteByOwnerType(int $entityTypeId)

@@ -145,6 +145,18 @@ class ContactToFactory extends \Bitrix\Crm\Relation\StorageStrategy
 			],
 		]);
 
+		if (!empty($childItems))
+		{
+			$childItems = $this->childFactory->getItems([
+				'select' => [Item::FIELD_NAME_ID, Item::FIELD_NAME_CONTACT_BINDINGS],
+				'filter' => [
+					'@ID' => array_map(function(Item $item) {
+						return $item->getId();
+					}, $childItems),
+				],
+			]);
+		}
+
 		$result = new Result();
 
 		foreach ($childItems as $childItem)

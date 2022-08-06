@@ -72,7 +72,7 @@ class LayoutSettings
 
 	public function isFullCatalogEnabled(): bool
 	{
-		return $this->enableFullCatalog->get();
+		return Loader::includeModule('bitrix24') ? true : $this->enableFullCatalog->get();
 	}
 
 	public function enableFullCatalog(bool $enabled): void

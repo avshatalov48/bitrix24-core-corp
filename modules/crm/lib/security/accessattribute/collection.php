@@ -48,4 +48,17 @@ class Collection
 
 		return $allowedPermissionEntityTypes;
 	}
+
+	public function areAllEntityTypesAllowed(): bool
+	{
+		foreach ($this->attributesByEntityType as $entityUserAttributes)
+		{
+			if (empty($entityUserAttributes))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
 }

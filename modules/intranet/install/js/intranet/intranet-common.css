@@ -519,7 +519,8 @@ span.webform-field-textbox-inner { display: inline-block; }
 	text-transform: uppercase;
 	text-shadow: none;
 	white-space: nowrap;
-	font: normal 12px/47px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: normal 12px/47px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: background-color 0.2s linear, color 0.2s linear;
 	-webkit-font-smoothing: antialiased;
@@ -553,9 +554,9 @@ span.webform-field-textbox-inner { display: inline-block; }
 	color: #7a818a;
 	text-transform: uppercase;
 	text-shadow: none !important;
-	font-weight: normal;
 	font-size: 12px;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	line-height: 47px;
 	transition: color 0.25s linear;
 }
@@ -665,7 +666,8 @@ span.webform-field-textbox-inner { display: inline-block; }
 	text-decoration: none !important;
 	text-transform: uppercase;
 	text-shadow: none !important;
-	font: normal 12px/47px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: normal 12px/47px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: color 0.25s linear;
 }
@@ -679,7 +681,8 @@ span.webform-field-textbox-inner { display: inline-block; }
 	display: inline-block;
 	height: auto;
 	vertical-align: top;
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 }
 
@@ -1109,9 +1112,9 @@ span.webform-field-textbox-inner { display: inline-block; }
 	color: #fff;
 	content: '_';
 	text-align: right;
-	font-weight: normal;
 	font-size: 10px;
-	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	line-height: 10px;
 }
 

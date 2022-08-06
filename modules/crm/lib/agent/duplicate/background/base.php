@@ -117,7 +117,7 @@ abstract class Base
 			|| !$this->isActive()
 		);
 	}
-	public function start(array $types, string $scope): Result
+	public function start(array $types, string $scope, array $initialParams = []): Result
 	{
 		$filteredTypes = [];
 		foreach($types as $typeName)
@@ -131,7 +131,7 @@ abstract class Base
 
 		$filteredScope = DuplicateIndexType::checkScopeValue($scope) ? $scope : '';
 
-		return $this->tryStart($filteredTypes, $filteredScope);
+		return $this->tryStart($filteredTypes, $filteredScope, $initialParams);
 	}
 	public function state(): Result
 	{
@@ -304,6 +304,7 @@ abstract class Base
 			'ERROR_INFO' => [
 				//'MESSAGE' => 'Error message'
 			],
+			'INITIAL_PARAMS' => [],
 			'TYPES' => [],
 			'SCOPE' => '',
 			'TYPE_INDEX' => 0,
@@ -457,8 +458,7 @@ abstract class Base
 		// Enough time has passed since the previous step
 		return true;
 	}
-	protected function
-	activate(/*int $delay = 0*/)
+	protected function activate(/*int $delay = 0*/)
 	{
 		/*if($delay < 0)
 		{
@@ -521,7 +521,7 @@ abstract class Base
 
 		return $continuePlay;
 	}
-	protected function tryStart(array $types, string $scope): Result
+	protected function tryStart(array $types, string $scope, array $initialParams): Result
 	{
 		$result = new Result();
 
@@ -533,6 +533,7 @@ abstract class Base
 		}
 
 		$progressData = $this->getDefaultProgressData();
+		$progressData['INITIAL_PARAMS'] = $initialParams;
 		$progressData['TYPES'] = $types;
 		$progressData['SCOPE'] = $scope;
 		$progressData['NEXT_STATUS'] = static::STATUS_PENDING_START;

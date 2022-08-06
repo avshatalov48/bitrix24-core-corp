@@ -160,6 +160,14 @@ class Schedule extends Controller
 			$this->addError(new Main\Error('Schedule not found', 'TIMEMAN_SCHEDULE_GET_SCHEDULE_NOT_FOUND'));
 			return [];
 		}
+
+		if (!$this->userPermissionsManager->canReadSchedule($id))
+		{
+			$this->addError(new Main\Error('Access denied', 'TIMEMAN_SCHEDULE_GET_SCHEDULE_ACCESS_DENIED'));
+
+			return [];
+		}
+
 		$result = $schedule->collectRawValues();
 		foreach ($schedule->obtainShifts() as $shift)
 		{

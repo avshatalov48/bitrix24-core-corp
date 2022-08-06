@@ -269,8 +269,8 @@ class CCrmEntitySelectorHelper
 			$arImages = array();
 			$arLargeImages = array();
 
-			$arCompanyTypeList = CCrmStatus::GetStatusListEx('COMPANY_TYPE');
-			$arCompanyIndustryList = CCrmStatus::GetStatusListEx('INDUSTRY');
+			$arCompanyTypeList = CCrmStatus::GetStatusList('COMPANY_TYPE');
+			$arCompanyIndustryList = CCrmStatus::GetStatusList('INDUSTRY');
 
 			$obRes = CCrmCompany::GetListEx(
 				array(),

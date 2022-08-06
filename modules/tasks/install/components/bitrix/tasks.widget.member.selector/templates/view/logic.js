@@ -64,7 +64,7 @@ BX.namespace('Tasks.Component');
 						function(data)
 						{
 							self.getManager().onSelectorItemDeselected(data.data);
-console.log(data.data);
+
 							if (
 								self.option('context') === 'template'
 								|| self.option('role') === 'AUDITORS'
@@ -361,7 +361,14 @@ console.log(data.data);
 
 						if ((userType === 'ACCOMPLICES' || userType === 'AUDITORS') && taskLimitExceeded)
 						{
-							BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+							BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+								isLimit: true,
+								limitAnalyticsLabels: {
+									module: 'tasks',
+									source: 'sidebar',
+									subject: (userType === 'AUDITORS' ? 'auditor' : 'accomplice')
+								}
+							});
 							return;
 						}
 
@@ -523,7 +530,14 @@ console.log(data.data);
 
 				if ((userType === 'ACCOMPLICES' || userType === 'AUDITORS') && taskLimitExceeded)
 				{
-					BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+					BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+						isLimit: true,
+						limitAnalyticsLabels: {
+							module: 'tasks',
+							source: 'sidebar',
+							subject: (userType === 'AUDITORS' ? 'auditor' : 'accomplice')
+						}
+					});
 					return;
 				}
 

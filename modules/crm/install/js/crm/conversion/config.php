@@ -8,12 +8,12 @@ return [
 	'js' => '/bitrix/js/crm/conversion/dist/conversion.bundle.js',
 	'skip_core' => false,
 	'rel' => [
-		'main.core.events',
 		'crm.category-list',
 		'crm.category-model',
 		'ui.buttons',
 		'ui.dialogs.messagebox',
 		'main.popup',
+		'main.core.events',
 		'ui.forms',
 		'main.core',
 	],

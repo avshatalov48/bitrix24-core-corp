@@ -422,7 +422,7 @@ class WebFormList
 
 	showSiteCode(id)
 	{
-		BX.Crm.Form.Embed.open(id);
+		BX.Crm.Form.Embed.openSlider(id);
 	}
 
 	activateList(mode: boolean = true)

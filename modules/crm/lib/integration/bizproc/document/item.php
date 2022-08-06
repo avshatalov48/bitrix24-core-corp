@@ -190,12 +190,16 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		return $result->isSuccess() ? $result->getId() : end($errorMessages);
 	}
 
-	public static function UpdateDocument($documentId, $fields)
+	public static function UpdateDocument($documentId, $fields, $modifiedBy = null)
 	{
 		$documentInfo = static::GetDocumentInfo($documentId);
 		if (!$documentInfo)
 		{
 			throw new ArgumentNullException('documentId');
+		}
+		if (!is_int($modifiedBy))
+		{
+			$modifiedBy = 0;
 		}
 		[$entityTypeId, $entityId] = [$documentInfo['TYPE_ID'], $documentInfo['ID']];
 
@@ -242,7 +246,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 		$item->setFromCompatibleData($documentFieldValues);
 
-		$updateOperation = $factory->getUpdateOperation($item, static::getContext());
+		$updateOperation = $factory->getUpdateOperation($item, static::getContext($modifiedBy));
 
 		$result = static::launchOperation($updateOperation);
 		$errorMessages = $result->getErrorMessages();
@@ -501,20 +505,36 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		}
 		static::fitEntityFieldsToInterface($entityFields);
 
-		$entityFields += static::getAssignedByFields();
-		$entityFields += static::getCommunicationFields();
+		$entityFields += array_merge(
+			static::getAssignedByFields(),
+			static::getCommunicationFields(),
+			static::getUserFieldsMap($factory),
+			static::getUtmFields(),
+			static::getSiteFormFields($factory->getEntityTypeId()),
+		);
+
+		return $entityFields;
+	}
+
+	private static function getUserFieldsMap(Crm\Service\Factory $factory): array
+	{
+		$userFields = [];
 
 		$CCrmUserType = new \CCrmUserType(Application::getUserTypeManager(), $factory->getUserFieldEntityId());
 		$CCrmUserType->AddBPFields(
-			$entityFields,
+			$userFields,
 			['PRINTABLE_SUFFIX' => Loc::getMessage('CRM_FIELD_BP_TEXT')]
 		);
 
-		$entityFields += static::getUtmFields();
+		foreach ($userFields as &$field)
+		{
+			if ($field['Type'] === 'UF:date')
+			{
+				$field['Type'] = 'date';
+			}
+		}
 
-		$entityFields += static::getSiteFormFields($factory->getEntityTypeId());
-
-		return $entityFields;
+		return $userFields;
 	}
 
 	protected static function isEditableField(array $field): bool

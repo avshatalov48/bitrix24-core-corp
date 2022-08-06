@@ -856,16 +856,18 @@ final class CTaskRestService extends IRestService
 			$outArgs[] = $paramValue;
 		}
 
-		if (count($inArgs) > count($arAllowedParams))
-		{
-			throw new TasksException(
-				'Too much params(' . count($inArgs) . ') given for method ' . $className . '::' . $methodName . '()'
-				. ', but expected not more than ' . count($arAllowedParams) . '.',
-				TasksException::TE_WRONG_ARGUMENTS
-			);
-		}
+		// $inArgsCount = count($inArgs);
+		// $allowedArgsCount = count($arAllowedParams);
+		//
+		// if ($inArgsCount > $allowedArgsCount)
+		// {
+		// 	throw new TasksException(
+		// 		"Too much params({$inArgsCount}) given for method {$className}::{$methodName}(), but expected not more than {$allowedArgsCount}.",
+		// 		TasksException::TE_WRONG_ARGUMENTS
+		// 	);
+		// }
 
-		return ($outArgs);
+		return $outArgs;
 	}
 }
 

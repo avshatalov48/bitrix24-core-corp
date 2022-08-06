@@ -20,6 +20,7 @@ class TaskDeclineRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
 	public function execute(AccessibleItem $task = null, $params = null): bool
 	{
+		$this->controller->addError(static::class, 'Rule is deprecated');
 		return false;
 	}
 }

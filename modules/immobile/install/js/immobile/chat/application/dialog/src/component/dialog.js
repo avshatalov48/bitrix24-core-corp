@@ -233,6 +233,7 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 			EventEmitter.subscribe(EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
 			EventEmitter.subscribe(EventType.dialog.clickOnReadList, this.onClickOnReadList);
 			EventEmitter.subscribe(EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+			EventEmitter.subscribe(EventType.dialog.doubleClickOnMessage, this.onDoubleClickOnMessage);
 			EventEmitter.subscribe(EventType.dialog.clickOnUserName, this.onClickOnUserName);
 			EventEmitter.subscribe(EventType.dialog.clickOnMention, this.onClickOnMention);
 			EventEmitter.subscribe(EventType.dialog.clickOnCommand, this.onClickOnCommand);
@@ -249,6 +250,7 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 			EventEmitter.unsubscribe(EventType.dialog.clickOnKeyboardButton, this.onClickOnKeyboardButton);
 			EventEmitter.unsubscribe(EventType.dialog.clickOnReadList, this.onClickOnReadList);
 			EventEmitter.unsubscribe(EventType.dialog.clickOnMessageMenu, this.onClickOnMessageMenu);
+			EventEmitter.unsubscribe(EventType.dialog.doubleClickOnMessage, this.onDoubleClickOnMessage);
 			EventEmitter.unsubscribe(EventType.dialog.clickOnUserName, this.onClickOnUserName);
 			EventEmitter.unsubscribe(EventType.dialog.clickOnMention, this.onClickOnMention);
 			EventEmitter.unsubscribe(EventType.dialog.clickOnCommand, this.onClickOnCommand);
@@ -316,6 +318,11 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 		{
 			Logger.warn('Message retry:', event);
 			this.getApplication().retrySendMessage(event.message);
+		},
+		onDoubleClickOnMessage({data: event})
+		{
+			Logger.warn('Message double click:', event);
+			EventEmitter.emit('ui:reaction:press', {id: 'message'+event.message.id})
 		},
 		onClickOnReadList({data: event})
 		{

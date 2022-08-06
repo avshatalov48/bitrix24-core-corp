@@ -24,11 +24,6 @@ final class Order extends Service\Factory
 		return false;
 	}
 
-	public function isRecyclebinEnabled(): bool
-	{
-		return false;
-	}
-
 	public function isNewRoutingForAutomationEnabled(): bool
 	{
 		return false;
@@ -39,22 +34,7 @@ final class Order extends Service\Factory
 		return false;
 	}
 
-	public function isCrmTrackingEnabled(): bool
-	{
-		return false;
-	}
-
 	public function isNewRoutingForListEnabled(): bool
-	{
-		return false;
-	}
-
-	public function isBizProcEnabled(): bool
-	{
-		return false;
-	}
-
-	public function isMultiFieldsEnabled(): bool
 	{
 		return false;
 	}
@@ -67,6 +47,11 @@ final class Order extends Service\Factory
 	public function isClientEnabled(): bool
 	{
 		return true;
+	}
+
+	public function isDeferredCleaningEnabled(): bool
+	{
+		return false;
 	}
 
 	public function getDataClass(): string
@@ -113,16 +98,6 @@ final class Order extends Service\Factory
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Returns true if this entity supports categories.
-	 *
-	 * @return bool
-	 */
-	public function isCategoriesSupported(): bool
-	{
-		return false;
 	}
 
 	public function getStagesEntityId(?int $categoryId = null): ?string

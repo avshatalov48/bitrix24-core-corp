@@ -29,26 +29,6 @@ $APPLICATION->IncludeComponent(
 	$component
 );
 
-//region Counter
-$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-if($isBitrix24Template)
-{
-	$this->SetViewTarget('below_pagetitle', 1000);
-}
-
-
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.entity.counter.panel',
-	'',
-	array('SHOW_STUB' => 'Y')
-);
-
-if($isBitrix24Template)
-{
-	$this->EndViewTarget();
-}
-//endregion
-
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $isSupervisor = CCrmPerms::IsAdmin($currentUserID)
 	|| Bitrix\Crm\Integration\IntranetManager::isSupervisor($currentUserID);

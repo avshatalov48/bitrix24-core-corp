@@ -101,8 +101,10 @@ class UserPermissionsManager
 	{
 		$userIds = $this->getUserIdsAccessibleToWrite();
 
-		return in_array('*', $userIds, true) ||
-			   $this->userOperationChecker->canDoOperation(static::OP_UPDATE_WORKTIME_ALL);
+		return (
+			in_array('*', $userIds, true)
+			|| $this->userOperationChecker->canDoOperation(static::OP_UPDATE_WORKTIME_ALL)
+		);
 	}
 
 	public function canUpdateWorktime($recordOwnerUserId)
@@ -111,7 +113,9 @@ class UserPermissionsManager
 		{
 			return true;
 		}
+
 		$userIds = $this->getUserIdsAccessibleToWrite();
+
 		return count($userIds) && in_array((int)$recordOwnerUserId, $userIds, true);
 	}
 
@@ -158,8 +162,10 @@ class UserPermissionsManager
 	{
 		$userIds = $this->getUserIdsAccessibleToRead();
 
-		return in_array('*', $userIds, true) ||
-			   $this->userOperationChecker->canDoOperation(static::OP_READ_WORKTIME_ALL);
+		return (
+			in_array('*', $userIds, true)
+			|| $this->userOperationChecker->canDoOperation(static::OP_READ_WORKTIME_ALL)
+		);
 	}
 
 	public function canReadWorktime($recordOwnerUserId)

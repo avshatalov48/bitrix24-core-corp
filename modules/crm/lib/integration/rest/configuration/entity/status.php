@@ -695,6 +695,12 @@ class Status
 					}
 					catch (Exception $e)
 					{
+						$result['ERROR_EXCEPTION'] = Loc::getMessage(
+							'CRM_ERROR_CONFIGURATION_IMPORT_EXCEPTION_DEAL_STAGE_ADD',
+							[
+								'#NAME#' => $itemList['ENTITY']['NAME'],
+							]
+						);
 					}
 				}
 				//end region custom deal funnel

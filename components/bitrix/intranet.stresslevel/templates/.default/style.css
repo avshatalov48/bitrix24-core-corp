@@ -146,7 +146,8 @@
 	display: flex;
 	position: relative;
 	height: 175px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-stresslevel-instruction-graph:after {
@@ -294,7 +295,8 @@
 .intranet-stresslevel-instruction-img-title {
 	top: 84px;
 	opacity: .7;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 16px;
 	color: #525C69;
 	letter-spacing: 0;
@@ -303,7 +305,8 @@
 
 .intranet-stresslevel-instruction-img-value {
 	top: 97px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 46px;
 	color: #525C69;
 	letter-spacing: -0.45px;
@@ -316,7 +319,8 @@
 	top: 19px;
 	right: -21px;
 	opacity: .54;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 24px;
 	color: #525C69;
 	text-align: center;
@@ -330,7 +334,8 @@
 	border-radius: 15px;
 	color: #fff;
 	white-space: nowrap;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 17px;
 	text-align: center;
 }

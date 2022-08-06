@@ -1,6 +1,14 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
+/** @var array $arParams */
+/** @var array $arResult */
 
 use Bitrix\Main\Loader;
 
@@ -33,20 +41,24 @@ if (
 	&& !empty($arResult["Post"]["SPERMX"])
 )
 {
-	foreach($arResult["Post"]["SPERMX"] as $groupKey => $group)
+	foreach ($arResult["Post"]["SPERMX"] as $groupKey => $group)
 	{
-		if (!empty($group))
+		if (empty($group))
 		{
-			foreach($group as $destKey => $destination)
+			continue;
+		}
+
+		foreach ($group as $destKey => $destination)
+		{
+			if (
+				empty($destination)
+				|| empty($destination["NAME"])
+			)
 			{
-				if (
-					!empty($destination)
-					&& !empty($destination["NAME"])
-				)
-				{
-					$arResult["Post"]["SPERMX"][$groupKey][$destKey]["NAME"] = htmlspecialcharsEx($destination["NAME"]);
-				}
+				continue;
 			}
+
+			$arResult["Post"]["SPERMX"][$groupKey][$destKey]["NAME"] = htmlspecialcharsEx($destination["NAME"]);
 		}
 	}
 }
@@ -73,7 +85,7 @@ elseif (!empty($arParams["LOG_ID"]))
 
 $arResult['MOBILE_API_VERSION'] = (
 	Loader::includeModule('mobileapp')
-		? \CMobile::getApiVersion()
+		? CMobile::getApiVersion()
 		: (int)$APPLICATION->getPageProperty('api_version')
 );
 
@@ -84,9 +96,8 @@ if (
 {
 	$backgroundData = \Bitrix\Mobile\Livefeed\Helper::getBackgroundData();
 	if (
-		!is_array($backgroundData)
-		|| !isset($backgroundData['images'])
-		|| !isset($backgroundData['images'][$arResult['Post']['BACKGROUND_CODE']])
+		!isset($backgroundData['images'][$arResult['Post']['BACKGROUND_CODE']])
+		|| !is_array($backgroundData)
 	)
 	{
 		$arResult['Post']['BACKGROUND_CODE'] = '';
@@ -96,4 +107,3 @@ else
 {
 	$arResult['Post']['BACKGROUND_CODE'] = '';
 }
-?>

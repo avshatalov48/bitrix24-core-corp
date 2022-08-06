@@ -877,10 +877,18 @@ class TasksTaskComponent extends TasksBaseComponent
 
 			if ($this->errorCollection->checkNoFatals())
 			{
-				if ($parameters[ 'RETURN_OPERATION_RESULT_DATA' ])
+				if ($parameters['RETURN_OPERATION_RESULT_DATA'])
 				{
-					$task = $mgrResult[ 'TASK' ];
-					$result['OPERATION_RESULT' ] = $task->getLastOperationResultData('UPDATE');
+					$task = $mgrResult['TASK'];
+
+					$lastOperation = $task->getLastOperationResultData('UPDATE');
+					$shiftResult = $lastOperation['SHIFT_RESULT'] ?? [];
+
+					$result['OPERATION_RESULT']['SHIFT_RESULT'] = [];
+					foreach ($shiftResult as $shift)
+					{
+						$result['OPERATION_RESULT']['SHIFT_RESULT'][$shift->getId()] = $shift->exportUpdatedData();
+					}
 				}
 			}
 		}
@@ -1014,6 +1022,18 @@ class TasksTaskComponent extends TasksBaseComponent
 		}
 
 		return [];
+	}
+
+	public function isScrumProjectAction(int $groupId): ?bool
+	{
+		if (!\Bitrix\Main\Loader::includeModule('socialnetwork'))
+		{
+			return null;
+		}
+
+		$group = Bitrix\Socialnetwork\Item\Workgroup::getById($groupId);
+
+		return ($group && $group->isScrumProject());
 	}
 
 	public function approveAction($taskId)
@@ -1504,10 +1524,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			return $result;
 		}
 
-		if (
-			ResultManager::requireResult($taskId)
-			&& !ResultManager::hasResult($taskId)
-		)
+		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_COMPLETE_RESULT, $taskId))
 		{
 			$this->errorCollection->add('RESULT_REQUIRED', Loc::getMessage('TASKS_ACTION_RESULT_REQUIRED'), false, ['ui' => 'notification']);
 			return $result;
@@ -2239,6 +2256,24 @@ class TasksTaskComponent extends TasksBaseComponent
 			// merge errors
 			if (!empty($actionResult['ERRORS']))
 			{
+				$errorCreate = false;
+				foreach ($this->errors as $error)
+				{
+					if ($error->getCode() === 'ERROR_TASK_CREATE_ACCESS_DENIED')
+					{
+						$errorCreate = true;
+					}
+				}
+				if ($errorCreate)
+				{
+					foreach ($actionResult['ERRORS'] as $k => $error)
+					{
+						if ($error['CODE'] === 'ACTION_NOT_ALLOWED.RESTRICTED')
+						{
+							unset($actionResult['ERRORS'][$k]);
+						}
+					}
+				}
 				$this->errors->addForeignErrors($actionResult['ERRORS'], ['CHANGE_TYPE_TO' => Util\Error::TYPE_ERROR]);
 			}
 			$this->formData = Task::normalizeData($actionResult['ARGUMENTS']['data']);
@@ -2871,6 +2906,11 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		$formSubmitted = $this->formData !== false;
 
+		$this->arParams['IS_SCRUM_TASK'] = false;
+
+		$this->arResult['DATA']['SCRUM'] = [];
+		$this->arResult['DATA']['SCRUM']['EPIC'] = [];
+
 		if($this->task != null) // editing an existing task, get THIS task data
 		{
 			$data = Task::get($this->userId, $this->task->getId(), array(
@@ -2893,6 +2933,22 @@ class TasksTaskComponent extends TasksBaseComponent
 
 			$group = Bitrix\Socialnetwork\Item\Workgroup::getById($data['DATA']['GROUP_ID']);
 			$this->arParams['IS_SCRUM_TASK'] = ($group && $group->isScrumProject());
+
+			if ($this->arParams['IS_SCRUM_TASK'])
+			{
+				$itemService = new Tasks\Scrum\Service\ItemService();
+				$epicService = new Tasks\Scrum\Service\EpicService();
+
+				$scrumItem = $itemService->getItemBySourceId($this->task->getId());
+				if ($scrumItem->getId())
+				{
+					$epic = $epicService->getEpic($scrumItem->getEpicId());
+					if ($epic->getId())
+					{
+						$this->arResult['DATA']['SCRUM']['EPIC'] = $epic->toArray();
+					}
+				}
+			}
 		}
 		else // get from other sources: default task data, or other task data, or template data
 		{
@@ -3139,6 +3195,7 @@ class TasksTaskComponent extends TasksBaseComponent
 			foreach (array_keys($checkListItems) as $id)
 			{
 				$checkListItems[$id]['COPIED_ID'] = $id;
+				$checkListItems[$id]['IS_COMPLETE'] = 'N';
 				unset($checkListItems[$id]['ID']);
 			}
 			$data['SE_CHECKLIST'] = $checkListItems;

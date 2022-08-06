@@ -156,18 +156,6 @@ class CBPVoximplantCallActivity extends CBPActivity
 		$this->workflow->CloseActivity($this);
 	}
 
-	public function HandleFault(Exception $exception)
-	{
-		if ($exception == null)
-			throw new Exception("exception");
-
-		$status = $this->Cancel();
-		if ($status == CBPActivityExecutionStatus::Canceling)
-			return CBPActivityExecutionStatus::Faulting;
-
-		return $status;
-	}
-
 	public static function GetPropertiesDialog($documentType, $activityName, $arWorkflowTemplate, $arWorkflowParameters, $arWorkflowVariables, $currentValues = null, $formName = "", $popupWindow = null, $currentSiteId = null)
 	{
 		if (!CModule::IncludeModule("voximplant"))

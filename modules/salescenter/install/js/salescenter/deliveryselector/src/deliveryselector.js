@@ -1014,9 +1014,7 @@ export default {
 			<div v-show="!selectedNoDelivery">
 				<template v-if="calculateErrors">
 					<div v-for="(error, index) in calculateErrors" class="ui-alert ui-alert-danger ui-alert-icon-danger salescenter-delivery-errors-container-alert">
-						<span  class="ui-alert-message">
-							<span v-html="error"></span>
-						</span>
+						<span class="ui-alert-message">{{error}}</span>
 					</div>
 				</template>
 				<div class="salescenter-delivery-bottom">

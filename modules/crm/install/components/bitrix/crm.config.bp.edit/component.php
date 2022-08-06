@@ -109,6 +109,13 @@ $arResult['BP_ID'] = isset($_REQUEST['bp_id']) ? $_REQUEST['bp_id']: $arParams['
 $arResult['ENTITY_NAME'] = $arTypes[$arResult['ENTITY_ID']]['NAME'];
 $arResult['DOCUMENT_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['TYPE'];
 $arResult['ENTITY_TYPE'] = $arTypes[$arResult['ENTITY_ID']]['DOCUMENT'];
+
+if (!$arResult['DOCUMENT_TYPE'] || !$arResult['ENTITY_TYPE'])
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
+}
+
 define('CRM_ENTITY', $arResult['ENTITY_TYPE']);
 
 $arResult['IS_BIZPROC_DESIGNER_ENABLED'] = \Bitrix\Crm\Automation\Factory::isBizprocDesignerEnabled(

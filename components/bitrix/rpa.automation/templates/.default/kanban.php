@@ -24,7 +24,7 @@ Bitrix\Main\UI\Extension::load('sidepanel');
 <script>
 	BX.ready(function()
 	{
-		var a = document.querySelector('a[href^="/rpa/automation/"]');
+		var a = document.querySelector('a.rpa-toolbar-btn[href^="/rpa/automation/"]');
 		if (a && BX.SidePanel)
 		{
 			BX.SidePanel.Instance.open(a.href);

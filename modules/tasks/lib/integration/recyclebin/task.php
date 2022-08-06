@@ -78,7 +78,14 @@ if (Loader::includeModule('recyclebin'))
 		{
 			$data = [];
 
-			$res = TaskTable::getByPrimary($taskId)->fetchObject();
+			$task = TaskTable::getByPrimary(
+				$taskId,
+				[
+					'select' => ['*', 'UF_*']
+				]
+			);
+
+			$res = $task->fetchObject();
 			if ($res)
 			{
 				$data['TASK'] = $res->toArray();
@@ -173,7 +180,6 @@ if (Loader::includeModule('recyclebin'))
 					$data['ACTIVITIES'][] = $activity;
 				}
 			}
-
 			return $data;
 		}
 
@@ -404,9 +410,11 @@ if (Loader::includeModule('recyclebin'))
 		 * Removes entity from recycle bin
 		 *
 		 * @param Entity $entity
+		 * @param array $params
+		 *
 		 * @return Result
 		 */
-		public static function removeFromRecyclebin(Entity $entity)
+		public static function removeFromRecyclebin(Entity $entity, array $params = [])
 		{
 			global $USER_FIELD_MANAGER;
 

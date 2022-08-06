@@ -102,7 +102,7 @@ class FinancialRatingGrid extends FinancialRating
 			$fromDateValue = ($timePeriodValue['from'] instanceof DateTime) ? $timePeriodValue['from'] : new DateTime($timePeriodValue['from']);
 
 			$query->where("DATE_CREATE", '<=', $toDateValue);
-			$query->where(Query::filter()->logic('or')->where('CLOSEDATE', '>=', $fromDateValue)->whereNull('CLOSEDATE'));
+			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
 		}
 	}
 

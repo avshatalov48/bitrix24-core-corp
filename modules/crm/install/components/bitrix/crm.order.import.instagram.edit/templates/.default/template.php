@@ -39,6 +39,7 @@ $this->addExternalCss($templateFolder.'/style_settings.css');
 	'ui.buttons',
 	'ui.hint',
 	'ui.icons',
+	'ui.design-tokens',
 ]);
 
 $this->setViewTarget('pagetitle', 10);

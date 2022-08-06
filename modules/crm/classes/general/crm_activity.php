@@ -2106,24 +2106,25 @@ class CAllCrmActivity
 			CCrmPerms::BuildSql(CCrmOwnerType::OrderName, $aliasPrefix, $permType, $permOptions);
 		$entitiesSql[(string)CCrmOwnerType::Quote] =
 			CCrmPerms::BuildSql(CCrmOwnerType::QuoteName, $aliasPrefix, $permType, $permOptions);
+
 		$userPermissions = Crm\Service\Container::getInstance()->getUserPermissions($userID);
-		$dynamicTypesMap = Crm\Service\Container::getInstance()->getDynamicTypesMap()->load([
-			'isLoadStages' => false,
-			'isLoadCategories' => true,
-		]);
-		foreach ($dynamicTypesMap->getTypes() as $type)
+		$typesMap = Crm\Service\Container::getInstance()->getTypesMap();
+
+		foreach ($typesMap->getFactories() as $factory)
 		{
-			if (!$userPermissions->canReadType($type->getEntityTypeId()))
+			if (array_key_exists((string)$factory->getEntityTypeId(), $entitiesSql))
 			{
 				continue;
 			}
-			$entityTypes = [];
-			foreach ($dynamicTypesMap->getCategories($type->getEntityTypeId()) as $category)
+
+			if (!$userPermissions->canReadType($factory->getEntityTypeId()))
 			{
-				$entityTypes[] = $userPermissions::getPermissionEntityType($type->getEntityTypeId(), $category->getId());
+				continue;
 			}
-			$entitiesSql[(string)$type->getEntityTypeId()] = CCrmPerms::BuildSqlForEntitySet(
-				$entityTypes,
+
+			$entityTypesHelper = new Crm\Category\PermissionEntityTypeHelper($factory->getEntityTypeId());
+			$entitiesSql[(string)$factory->getEntityTypeId()] = CCrmPerms::BuildSqlForEntitySet(
+				$entityTypesHelper->getAllPermissionEntityTypesForEntity(),
 				$aliasPrefix,
 				$permType,
 				$permOptions
@@ -6132,7 +6133,7 @@ class CAllCrmActivity
 
 		if (method_exists('CCalendar', 'GetCrmSection'))
 		{
-			$arCalEventFields['SECTIONS'] = CCalendar::GetCrmSection($responsibleID, true);
+			$arCalEventFields['SECTIONS'] = [CCalendar::GetCrmSection($responsibleID, true)];
 		}
 
 		$calendarEventId = isset($arFields['CALENDAR_EVENT_ID']) ? (int)$arFields['CALENDAR_EVENT_ID'] : 0;

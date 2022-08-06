@@ -1153,7 +1153,7 @@ B24.showPartnerOrderForm = function (params)
 				'(function(w,d,u){'+
 					'var s=d.createElement("script");s.async=true;s.src=u+"?"+(Date.now()/180000|0);'+
 					'var h=d.getElementsByTagName("script")[0];h.parentNode.insertBefore(s,h);'+
-				'})(window,document,"https://cp.bitrix.ru/upload/crm/form/loader_${params.id}_${params.sec}.js");'+
+				'})(window,document,"https://bitrix24.team/upload/crm/form/loader_${params.id}_${params.sec}.js");'+
 			'</script>',
 		events: {
 			onPopupFirstShow: function()
@@ -1161,7 +1161,7 @@ B24.showPartnerOrderForm = function (params)
 				(function(w,d,u){
 					var s=d.createElement('script');s.async=true;s.src=u+'?'+(Date.now()/180000|0);
 					var h=d.getElementsByTagName('script')[0];h.parentNode.insertBefore(s,h);
-				})(window,document,'https://cp.bitrix.ru/upload/crm/form/loader_'+params.id+'_'+params.sec+'.js')
+				})(window,document,'https://bitrix24.team/upload/crm/form/loader_'+params.id+'_'+params.sec+'.js')
 			}
 		}
 	}).show();

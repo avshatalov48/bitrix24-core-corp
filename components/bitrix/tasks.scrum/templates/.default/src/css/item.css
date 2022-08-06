@@ -118,13 +118,17 @@
 }
 
 .tasks-scrum__item.--subtasks {
-	margin-top: 1px;
 	z-index: 0;
 	transition: .3s;
 }
 
 .tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--full-view {
+	margin-top: 1px;
 	margin-left: 37px;
+}
+
+.tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--short-view {
+	margin-top: 1px;
 }
 
 .tasks-scrum__item.--subtasks .tasks-scrum__item--info {
@@ -219,6 +223,31 @@
 
 .tasks-scrum__item--title.--completed {
 	text-decoration: line-through;
+}
+
+.tasks-scrum__item--title.--important {
+	position: relative;
+}
+
+.tasks-scrum__item--title.--important span::after {
+	content: '';
+	display: inline-block;
+	vertical-align: baseline;
+	width: 9px;
+	height: 12px;
+	margin: 0 0 0 6px;
+	background: url("data:image/svg+xml,%3Csvg width='10' height='12' viewBox='0 0 10 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M5.75 12C6.69242 11.2903 7.24765 10.1798 7.25 9C7.25 7.39868 6.17627 7.59726 5.09829 5.45222C5.04459 5.34539 4.91053 5.30503 4.81196 5.37271C3.60827 6.19917 2.84506 7.53475 2.75 9C2.82225 10.1621 3.36367 11.2449 4.25 12H3.7175C1.82116 11.305 0.544278 9.51919 0.5 7.5C0.5 4.44979 3.20229 1.57593 5.11866 0.356173C5.38455 0.186936 5.71158 0.412951 5.74651 0.726192C6.03343 3.29922 9.5 4.29961 9.5 8.0625C9.5 10.9703 6.2825 12 6.2825 12H5.75Z' fill='%23FF5752'/%3E%3C/svg%3E%0A") top center no-repeat;
+}
+
+.tasks-scrum__item.--short-view .tasks-scrum__item--title.--important span::after {
+	position: absolute;
+	right: 0;
+	top: 2px;
+}
+
+.tasks-scrum__item.--short-view .tasks-scrum__item--title.--important {
+	padding-right: 15px;
+	box-sizing: border-box;
 }
 
 .tasks-scrum__item--entity-content {
@@ -425,7 +454,7 @@
 	background: var(--tasks_scrum-blue_alpha_20);
 	border-radius: 9.5px;
 	padding: 2px 5px;
-	min-width: 32px;
+	min-width: 26px;
 	box-sizing: border-box;
 	font-size: 13px;
 	color: var(--tasks_scrum-dark-grey);
@@ -535,7 +564,8 @@
 }
 
 .tasks-scrum__item.--item-backlog {
-	padding: 12px 10px 12px 12px;
+	/*padding: 12px 10px 12px 12px;*/
+	padding: 17px 10px 15px 12px;
 	border-left: 3px solid var(--tasks_scrum-grey-3);
 }
 
@@ -563,11 +593,17 @@
 	left: -3px;
 }
 
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--story-points {
+	display: block;
+	position: absolute;
+	bottom: 9px;
+	right: -13px;
+}
+
 .tasks-scrum__item.--item-backlog.--parent-tasks .tasks-scrum__item--substrate,
 .tasks-scrum__item.--item-backlog .tasks-scrum__item--btn-toggle-tasks,
 .tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--counter-container,
-.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--responsible,
-.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--story-points {
+.tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--responsible {
 	display: none;
 }
 
@@ -580,12 +616,13 @@
 }
 
 .tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--entity-content {
-	margin: 0 0 auto 5px;
+	/*margin: 0 0 auto 5px;*/
+	margin: -4px 0 auto 5px;
 	width: 7%;
 }
 
 .tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--main-info {
-	max-width: calc(100% - 36px);
+	max-width: calc(100% - 50px);
 }
 
 .tasks-scrum__item.--linked-mode-current .tasks-scrum__item--substrate::before,

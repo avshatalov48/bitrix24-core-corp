@@ -96,8 +96,8 @@ class ProductManager
 
 		return
 			(new ProductManager\MergeStrategy\Selling($this->getOrder()))
-				->mergeProducts($orderProducts, $entityProducts)
-			;
+			->mergeProducts($orderProducts, $entityProducts)
+		;
 	}
 
 	/**
@@ -110,8 +110,8 @@ class ProductManager
 
 		return
 			(new ProductManager\MergeStrategy\Selling($this->getOrder()))
-				->mergeProducts($unPayableProductList, $entityProducts)
-			;
+			->mergeProducts($unPayableProductList, $entityProducts)
+		;
 	}
 
 	/**
@@ -124,8 +124,8 @@ class ProductManager
 
 		return
 			(new ProductManager\MergeStrategy\Realization($this->getOrder()))
-				->mergeProducts($orderProducts, $entityProducts)
-			;
+			->mergeProducts($orderProducts, $entityProducts)
+		;
 	}
 
 	/**

@@ -2,13 +2,12 @@
 
 namespace Bitrix\Crm\Item;
 
-use Bitrix\Crm\Binding\EntityBinding;
-use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\EO_Deal;
 use Bitrix\Crm\EO_Lead;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\QuoteTable;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Objectify\Values;
 use Bitrix\Main\Type\Date;
@@ -46,19 +45,6 @@ class Quote extends Item
 	public const FIELD_NAME_STORAGE_ELEMENTS = 'STORAGE_ELEMENT_IDS';
 	public const FIELD_NAME_PERSON_TYPE_ID = 'PERSON_TYPE_ID';
 
-	protected function getContactBindingTableClassName(): string
-	{
-		return QuoteContactTable::class;
-	}
-
-	protected function compilePrimaryForBinding(array $contactBinding): array
-	{
-		return [
-			'QUOTE_ID' => $this->getId(),
-			'CONTACT_ID' => EntityBinding::prepareEntityID(\CCrmOwnerType::Contact, $contactBinding),
-		];
-	}
-
 	protected function getItemReferenceFieldNameInProduct(): string
 	{
 		return 'QUOTE_OWNER';
@@ -94,6 +80,15 @@ class Quote extends Item
 
 	public static function getTitlePlaceholderFromData(array $data): ?string
 	{
+		if (!QuoteSettings::getCurrent()->isUseNumberInTitlePlaceholder())
+		{
+			$id = (int)($data[static::FIELD_NAME_ID] ?? 0);
+
+			return Loc::getMessage('CRM_QUOTE_TITLE_PLACEHOLDER', [
+				'#ID#' => ($id > 0) ? $id : '',
+			]);
+		}
+
 		Container::getInstance()->getLocalization()->loadMessages();
 		$beginDate = $data['BEGINDATE'] ?? null;
 		if ($beginDate)

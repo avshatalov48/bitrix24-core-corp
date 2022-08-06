@@ -1,0 +1,4 @@
+<?php
+
+$MESS['CRM_AUTOMATION_DEBUGGER_FILTER_SHOW'] = 'Показать';
+

@@ -10,7 +10,6 @@ import 'ui.dropdown';
 import {ajax} from "main.core.ajax";
 import {Loader} from "main.loader";
 import { LoginFactory } from 'seo.ads.login';
-import { ClientSelector } from 'seo.ads.client_selector';
 
 type Options = {
 	type: String;

@@ -37,14 +37,24 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 
 		//check recursion
 		if (!isset(static::$counter[$documentId[2]]))
+		{
 			static::$counter[$documentId[2]] = [];
+		}
 		if (!isset(static::$counter[$documentId[2]][$targetStatus]))
+		{
 			static::$counter[$documentId[2]][$targetStatus] = 0;
+		}
 
 		++static::$counter[$documentId[2]][$targetStatus];
 
 		if (static::$counter[$documentId[2]][$targetStatus] > 2)
 		{
+			$this->WriteToTrackingService(
+				\Bitrix\Main\Localization\Loc::getMessage('CRM_CHANGE_STATUS_RECURSION'),
+				0,
+				CBPTrackingType::Error
+			);
+
 			CBPDocument::TerminateWorkflow(
 				$this->GetWorkflowInstanceId(),
 				$documentId,
@@ -90,6 +100,12 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 					break;
 				}
 		}
+
+		$debugFields = [
+			'TargetStatus' => $this->TargetStatus,
+			'ModifiedBy' => $this->ModifiedBy,
+		];
+		$this->writeDebugInfo($this->getDebugInfo($debugFields));
 
 		if ($stages && !in_array($targetStatus, $stages, true))
 		{
@@ -234,6 +250,14 @@ class CBPCrmChangeStatusActivity extends CBPActivity
 				'Type' => 'user',
 			],
 		];
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		$dialog = new \Bitrix\Bizproc\Activity\PropertiesDialog(__FILE__, [
+			'documentType' => $documentType
+		]);
+		return static::getPropertiesDialogMap($dialog);
 	}
 
 	protected static function getTargetStatusOptionsByFactory(Crm\Service\Factory $factory, ?int $categoryId): array

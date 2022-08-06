@@ -155,6 +155,7 @@ class TaskRegistry
 			->addSelect('DEADLINE')
 			->addSelect('FORUM_TOPIC_ID')
 			->addSelect('RESPONSIBLE_ID')
+			->addSelect('CREATED_BY')
 			->whereIn('ID', $taskIds)
 			->exec();
 
@@ -282,6 +283,11 @@ class TaskRegistry
 
 		foreach ($this->storage as $taskId => $data)
 		{
+			if (!$data)
+			{
+				continue;
+			}
+
 			if (!$data['GROUP_ID'])
 			{
 				$this->storage[$taskId]['GROUP_INFO'] = null;

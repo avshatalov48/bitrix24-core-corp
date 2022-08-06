@@ -193,22 +193,23 @@ if($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
-	if($bAdd)
+	$addEntityUrl = CComponentEngine::MakePathFromTemplate(
+		$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
+		['contact_id' => 0]
+	);
+
+	if($arResult['CATEGORY_ID'] > 0)
 	{
-		$addEntityUrl = CComponentEngine::MakePathFromTemplate(
-			$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
-			['contact_id' => 0]
-		);
-		if ($arResult['CATEGORY_ID'] > 0)
-		{
-			$addEntityUrl = CCrmUrlUtil::AddUrlParams($addEntityUrl, ['category_id' => $arResult['CATEGORY_ID']]);
-		}
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-			'LINK' => $addEntityUrl,
-			'HIGHLIGHT' => true
-		);
+		$addEntityUrl = CCrmUrlUtil::AddUrlParams($addEntityUrl, ['category_id' => $arResult['CATEGORY_ID']]);
 	}
+
+	$arResult['BUTTONS'][] = [
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'LINK' => $addEntityUrl,
+		'HIGHLIGHT' => true,
+		'IS_DISABLED' => !$bAdd,
+		'HINT' => GetMessage('CRM_CONTACT_ADD_HINT')
+	];
 
 	if ($bImport && !$isInSlider)
 	{

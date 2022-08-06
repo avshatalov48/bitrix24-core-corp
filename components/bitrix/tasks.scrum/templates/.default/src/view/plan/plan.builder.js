@@ -16,7 +16,8 @@ type Params = {
 	pageNumberToCompletedSprints: number,
 	displayPriority: string,
 	isShortView: 'Y' | 'N',
-	mandatoryExists: 'Y' | 'N'
+	mandatoryExists: 'Y' | 'N',
+	isExactSearchApplied: 'Y' | 'N'
 }
 
 export class PlanBuilder extends EventEmitter
@@ -34,6 +35,7 @@ export class PlanBuilder extends EventEmitter
 		this.displayPriority = params.displayPriority;
 		this.isShortView = params.isShortView;
 		this.mandatoryExists = params.mandatoryExists;
+		this.isExactSearchApplied = params.isExactSearchApplied === 'Y';
 
 		this.scroller = new Scroller({
 			planBuilder: this,
@@ -94,6 +96,19 @@ export class PlanBuilder extends EventEmitter
 
 		this.updatePlannedSprints(plannedSprints, !Type.isUndefined(activeSprint));
 
+		if (this.isExactSearchApplied)
+		{
+			const filteredCompletedSprints = this.entityStorage.getFilteredCompletedSprints();
+			if (filteredCompletedSprints.size)
+			{
+				this.showFilteredCompletedSprints(filteredCompletedSprints);
+			}
+			else
+			{
+				this.showEmptySearchStub();
+			}
+		}
+
 		Event.bind(this.sprintsNode, 'scroll', this.onSprintsScroll.bind(this));
 
 		return this.sprintsNode;
@@ -145,7 +160,7 @@ export class PlanBuilder extends EventEmitter
 	{
 		if (container.firstElementChild)
 		{
-			return container.firstElementChild.classList.contains('tasks-scrum__sprints--new-sprint');
+			return Dom.hasClass(container.firstElementChild, 'tasks-scrum__sprints--new-sprint');
 		}
 		else
 		{
@@ -173,6 +188,8 @@ export class PlanBuilder extends EventEmitter
 				const sprintParams: SprintParams = response.data;
 				sprintParams.isShortView = this.isShortView;
 				sprintParams.mandatoryExists = this.mandatoryExists;
+				sprintParams.isExactSearchApplied = this.isExactSearchApplied ? 'Y' : 'N';
+
 				const sprint = Sprint.buildSprint(sprintParams);
 
 				this.entityStorage.addSprint(sprint);
@@ -333,5 +350,37 @@ export class PlanBuilder extends EventEmitter
 		setTimeout(() => {
 			Dom.removeClass(this.scrumContainer, '--select-none');
 		}, 500);
+	}
+
+	showEmptySearchStub()
+	{
+		if (this.entityStorage.existCompletedSprint())
+		{
+			this.completedSprints.showEmptySearchStub();
+		}
+	}
+
+	hideEmptySearchStub()
+	{
+		if (this.entityStorage.existCompletedSprint())
+		{
+			this.completedSprints.hideEmptySearchStub();
+		}
+	}
+
+	showFilteredCompletedSprints(completedSprints: Map<Sprint>)
+	{
+		if (this.entityStorage.existCompletedSprint())
+		{
+			this.completedSprints.showFilteredSprints(completedSprints);
+		}
+	}
+
+	hideFilteredCompletedSprints()
+	{
+		if (this.entityStorage.existCompletedSprint())
+		{
+			this.completedSprints.hideFilteredSprints();
+		}
 	}
 }

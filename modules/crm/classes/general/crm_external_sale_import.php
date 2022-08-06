@@ -1550,7 +1550,10 @@ class CCrmExternalSaleImport
 
 			CSocNetLog::Update($logId, array("TMP_ID" => $logId));
 			CSocNetLogRights::Add($logId, $arPerms);
-			CSocNetLog::SendEvent($logId, "SONET_NEW_EVENT", $logId);
+			if (COption::GetOptionString('crm', 'enable_livefeed_merge', 'N') === 'Y')
+			{
+				CSocNetLog::SendEvent($logId, 'SONET_NEW_EVENT', $logId);
+			}
 
 			return $logId;
 		}

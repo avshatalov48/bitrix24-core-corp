@@ -104,6 +104,21 @@ class ItemListComponent
 			}
 		}
 
+		EventEmitter.subscribe('Crm.EntityConverter.Converted', (event) => {
+			const parameters = event.data;
+			if (!Type.isArray(parameters) || !parameters[1])
+			{
+				return;
+			}
+			const eventData = parameters[1];
+			if (!this.entityTypeName || !eventData.entityTypeName)
+			{
+				return;
+			}
+
+			this.reloadGridAfterTimeout();
+		});
+
 		EventEmitter.subscribe("onLocalStorageSet", (event) => {
 			const parameters = event.data;
 			if (!Type.isArray(parameters) || !parameters[0])
@@ -112,7 +127,7 @@ class ItemListComponent
 			}
 			const params = parameters[0];
 			const key = params.key || '';
-			if(key !== "onCrmEntityCreate" && key !== "onCrmEntityUpdate" && key !== "onCrmEntityDelete" && key !== "onCrmEntityConvert")
+			if (key !== "onCrmEntityCreate" && key !== "onCrmEntityUpdate" && key !== "onCrmEntityDelete" && key !== "onCrmEntityConvert")
 			{
 				return;
 			}
@@ -121,7 +136,7 @@ class ItemListComponent
 			{
 				return;
 			}
-			if (!this.entityTypeName || !eventData.entityTypeName || this.entityTypeName !== eventData.entityTypeName)
+			if (!this.entityTypeName || !eventData.entityTypeName)
 			{
 				return;
 			}

@@ -64,7 +64,12 @@ class TaskCreateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		if (!\CSocNetFeaturesPerms::CanPerformOperation($this->user->getUserId(), SONET_ENTITY_GROUP, $task->getGroupId(), "tasks", "create_tasks"))
+		if (!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+			$task->getGroupId(),
+			'tasks',
+			'create_tasks',
+			$this->user->getUserId()
+		))
 		{
 			$this->controller->addError(static::class, 'Access to create task denied by group permissions');
 			return false;

@@ -180,7 +180,7 @@ if ($isBitrix24Template)
 		</div>
 	<?php endif; ?>
 </div>
-</div>
+
 <?php
 if ($arResult['SHOW_COUNTERS'])
 {

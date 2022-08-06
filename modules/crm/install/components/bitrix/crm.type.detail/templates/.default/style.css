@@ -104,7 +104,7 @@
 	height: 95px;
 	padding: 10px;
 	box-sizing: border-box;
-	border-radius: 1px;
+	border-radius: var(--ui-border-radius-md, 1px);
 	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .09);
 	transition: 200ms box-shadow ease;
 	margin-bottom: 10px;
@@ -238,7 +238,7 @@ body.crm-type-settings-presets #workarea-content {
     position: relative;
 	padding: 23px 40px 15px 24px;
 	margin: 0 0 35px 0;
-    border-radius: 4px;
+    border-radius: var(--ui-border-radius-sm, 4px);
     background: #eefafe;
 }
 

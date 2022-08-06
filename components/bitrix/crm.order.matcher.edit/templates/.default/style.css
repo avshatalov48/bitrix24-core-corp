@@ -8,7 +8,7 @@
 }
 
 .crm-orderform-edit-wrapper {
-	padding: 0 15px 20px;
+	padding: 15px 20px;
 }
 
 .crm-orderform-edit-left-field-description-container {
@@ -169,6 +169,8 @@ select {
 .crm-orderform-edit-wrapper {
 	font: 13px/14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
 	color: #535c69;
+	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .task-info-panel {
@@ -313,6 +315,7 @@ select {
 .crm-orderform-edit-constructor-left-container {
 	height: 100%;
 	border: 1px solid rgba(59,200,245, .5);
+	border-radius: var(--ui-border-radius-sm);
 	overflow: hidden;
 }
 
@@ -796,9 +799,7 @@ select {
 	margin: 0 13px 0 0;
 	height: 100%;
 	border: 1px solid #c6cdd3;
-	-webkit-border-radius: 2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	background: #fff;
 	font: bold 12px/17px 'OpenSans', Helvetica, Arial, sans-serif;
 	color: #535c69;
@@ -973,6 +974,7 @@ select {
 	height: 38px;
 	width: 100%;
 	border: 1px solid #caced7;
+	border-radius: var(--ui-field-border-radius);
 	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
@@ -993,7 +995,7 @@ select {
 	/*height: 38px;*/
 	width: 100%;
 	border: 1px solid #caced7;
-	border-radius: 0;
+	border-radius: var(--ui-field-border-radius);
 	background: url(images/crm-orderform-edit-arrow-down.svg) right center #fff no-repeat;
 	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
 	-webkit-box-sizing: border-box;
@@ -1047,7 +1049,26 @@ select {
 	position: relative;
 	padding: 0 5px;
 	background: #f8f9fa;
+	border-radius: var(--ui-border-radius-sm);
 }
+
+/* It hides .crm-orderform-edit-task-options-item border-bottom */
+.crm-orderform-edit-task-options:after {
+	content: '';
+	left: 15px;
+	right: 15px;
+	bottom: 0;
+	background-color: #f8f9fa;
+	position: absolute;
+	height: 1px;
+	display: none;
+}
+
+.crm-orderform-edit-task-options:after,
+.crm-orderform-edit-open .crm-orderform-edit-task-options:after {
+	display: block;
+}
+
 
 .crm-orderform-edit-task-edit-block-place {
 	transition: all .3s ease-in-out;
@@ -1221,7 +1242,6 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	margin: 31px 0 0 0;
 	cursor: pointer;
 	padding-bottom: 15px;
-	border-bottom: 1px solid #f0f1f3;
 	-webkit-transition: all .5s ease;
 	-moz-transition: all .5s ease;
 	transition: all .5s ease;
@@ -1453,9 +1473,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	position: relative;
 	padding: 8px 14px 8px 10px;
 	margin: 15px 0 10px 0;
-	-webkit-border-radius: 2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	background: rgba(83,92,105, .06);
 }
 
@@ -1858,6 +1876,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	padding: 9px 15px 12px 15px;
 	margin: 16px 0 17px 0;
 	background: #fffde0;
+	border-radius: var(--ui-border-radius-2xs);
 	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
 	color: #8b7b61;
 }
@@ -2267,6 +2286,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	padding: 20px;
 	margin: 52px 0 0 0;
 	border: 2px dashed rgba(170,175,181, .5);
+	border-radius: var(--ui-space-stack-xs);
 	-webkit-transition: border .3s ease;
 	-moz-transition: border .3s ease;
 	transition: border .3s ease;
@@ -2739,7 +2759,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	display: block;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	min-height: 36px;
 	padding: 1px;
 	-webkit-box-sizing: border-box;
@@ -2757,7 +2777,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	line-height: 32px;
 	margin: 1px;
 	font-weight: bold;
-	border-radius: 1px;
+	border-radius: var(--ui-field-border-radius, 1px);
 	background: #a1e7f7;
 	white-space: nowrap;
 }

@@ -20,10 +20,6 @@
 	animation: pagetitle-opacity-show .5s linear forwards;
 }
 
-.grid-mode .workarea-content-paddings {
-	padding: 15px 15px 20px;
-}
-
 @keyframes pagetitle-opacity-show {
 	from {
 		opacity: 0;
@@ -65,10 +61,6 @@
 
 /*endtodo*/
 
-#workarea-content {
-	background-color: transparent !important;
-}
-
 .crm-entity-wrap {
 	position: relative;
 	padding-bottom: 60px;
@@ -80,7 +72,7 @@
 }
 /*region tabs*/
 .crm-entity-section-tabs {
-	margin: 0 0 27px 0;
+	margin: 0 0 23px 0;
 }
 
 .crm-entity-section-tab-content-show,

@@ -1,13 +1,16 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Category\ItemCategoryUserField;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\UserField\Types\ElementType;
+use Bitrix\Main\Filter\EntityUFDataProvider;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
-class UserFieldDataProvider extends \Bitrix\Main\Filter\EntityUFDataProvider
+class UserFieldDataProvider extends EntityUFDataProvider
 {
 	/**
 	 * Prepare field list.
@@ -16,7 +19,19 @@ class UserFieldDataProvider extends \Bitrix\Main\Filter\EntityUFDataProvider
 	public function prepareFields(): array
 	{
 		$userFields = $this->getUserFields();
+
 		$result = parent::prepareFields();
+		if(!empty($result))
+		{
+			$settings = $this->getSettings();
+			if(method_exists($settings, 'getCategoryId'))
+			{
+				$categoryId = $settings->getCategoryId() ?? 0;
+				$entityTypeId = $settings->getEntityTypeID();
+				$result = (new ItemCategoryUserField($entityTypeId))->filter($categoryId, $result);
+			}
+		}
+
 		foreach($result as $fieldName => $field)
 		{
 			if($userFields[$fieldName]['USER_TYPE_ID'] === 'resourcebooking')
@@ -75,5 +90,4 @@ class UserFieldDataProvider extends \Bitrix\Main\Filter\EntityUFDataProvider
 
 		return $filterValue;
 	}
-
 }

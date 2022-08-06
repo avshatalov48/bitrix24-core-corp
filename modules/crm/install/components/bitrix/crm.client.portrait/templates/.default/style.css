@@ -39,12 +39,12 @@
 
 .crm-fake-widget {
 	border: 1px solid #b3b8be;
-	border-radius: 3px 3px 2px 2px;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
 	overflow: hidden;
 	height: 378px;
+	border-radius: var(--ui-border-radius-md, 3px);
 }
 
 .crm-fake-widget.crm-fake-widget-number {
@@ -475,9 +475,7 @@ a.crm-fake-widget-content-text {
 	vertical-align: middle;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	-webkit-border-radius :2px;
-	-moz-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	width: 49px;
 	height: 35px;
 	text-align: center;

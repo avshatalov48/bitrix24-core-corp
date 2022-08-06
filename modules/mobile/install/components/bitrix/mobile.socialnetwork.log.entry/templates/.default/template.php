@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 /** @var CBitrixComponentTemplate $this */
+/** @var CBitrixComponent $component */
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CDatabase $DB */
@@ -19,13 +20,13 @@ $targetHtml = '';
 
 if ($arResult["FatalError"] <> '')
 {
-	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?
+	?><span class='errortext'><?=$arResult["FatalError"]?></span><br /><br /><?php
 }
 else
 {
 	if ($arResult["ErrorMessage"] <> '')
 	{
-		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?
+		?><span class='errortext'><?=$arResult["ErrorMessage"]?></span><br /><br /><?php
 	}
 
 	if (
@@ -45,7 +46,7 @@ else
 		)
 		{
 			if (
-				array_key_exists("TITLE_24", $arEvent["EVENT_FORMATTED"])
+				isset($arEvent['EVENT_FORMATTED']['TITLE_24'])
 				&& $arEvent["EVENT_FORMATTED"]["TITLE_24"] <> ''
 			)
 			{
@@ -74,9 +75,9 @@ else
 				$i++;
 			}
 
-			if (intval($arEvent["EVENT_FORMATTED"]["DESTINATION_MORE"]) > 0)
+			if ((int)$arEvent["EVENT_FORMATTED"]["DESTINATION_MORE"] > 0)
 			{
-				$more_cnt = intval($arEvent["EVENT_FORMATTED"]["DESTINATION_MORE"]);
+				$more_cnt = (int)$arEvent["EVENT_FORMATTED"]["DESTINATION_MORE"];
 				$suffix = (
 					($more_cnt % 100) > 10
 					&& ($more_cnt % 100) < 20
@@ -100,19 +101,19 @@ else
 
 		$strCreatedBy = "";
 		if (
-			array_key_exists("CREATED_BY", $arEvent)
+			isset($arEvent['CREATED_BY'])
 			&& is_array($arEvent["CREATED_BY"])
 		)
 		{
 			if (
-				array_key_exists("TOOLTIP_FIELDS", $arEvent["CREATED_BY"])
+				isset($arEvent['CREATED_BY']['TOOLTIP_FIELDS'])
 				&& is_array($arEvent["CREATED_BY"]["TOOLTIP_FIELDS"])
 			)
 			{
-				$strCreatedBy .= '<a class="post-item-top-title" href="'.str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
+				$strCreatedBy .= '<a class="post-item-top-title" href="'.str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["CREATED_BY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] !== "N" ? true : false)).'</a>';
 			}
 			elseif (
-				array_key_exists("FORMATTED", $arEvent["CREATED_BY"])
+				isset($arEvent['CREATED_BY']['FORMATTED'])
 				&& $arEvent["CREATED_BY"]["FORMATTED"] <> ''
 			)
 			{
@@ -120,21 +121,20 @@ else
 			}
 		}
 		elseif (
-			in_array($arEvent["EVENT"]["EVENT_ID"], array("data", "news", "system"))
-			&& array_key_exists("ENTITY", $arEvent)
+			isset($arEvent['ENTITY'])
+			&& in_array($arEvent["EVENT"]["EVENT_ID"], array("data", "news", "system"), true)
 		)
 		{
 			if (
-				array_key_exists("TOOLTIP_FIELDS", $arEvent["ENTITY"])
+				isset($arEvent['ENTITY']['TOOLTIP_FIELDS'])
 				&& is_array($arEvent["ENTITY"]["TOOLTIP_FIELDS"])
 			)
 			{
-				$strCreatedBy .= '<a class="post-item-top-title" href="'.str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">'.CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"], ($arParams["SHOW_LOGIN"] != "N" ? true : false)).'</a>';
+				$strCreatedBy .= '<a class="post-item-top-title" href="' . str_replace(array("#user_id#", "#USER_ID#", "#id#", "#ID#"), $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["ID"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"]["PATH_TO_SONET_USER_PROFILE"]).'">' .
+					CUser::FormatName($arParams["NAME_TEMPLATE"], $arEvent["ENTITY"]["TOOLTIP_FIELDS"], $arParams["SHOW_LOGIN"] !== "N") .
+				'</a>';
 			}
-			elseif (
-				array_key_exists("FORMATTED", $arEvent["ENTITY"])
-				&& array_key_exists("NAME", $arEvent["ENTITY"]["FORMATTED"])
-			)
+			elseif (isset($arEvent['ENTITY']['FORMATTED']['NAME']))
 			{
 				$strCreatedBy .= '<div class="post-item-top-title">'.$arEvent["ENTITY"]["FORMATTED"]["NAME"].'</div>';
 			}
@@ -142,10 +142,16 @@ else
 
 		$strDescription = "";
 		if (
-			array_key_exists("DESCRIPTION", $arEvent["EVENT_FORMATTED"])
+			isset($arEvent['EVENT_FORMATTED']['DESCRIPTION'])
 			&& (
-				(!is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) && $arEvent["EVENT_FORMATTED"]["DESCRIPTION"] <> '')
-				|| (is_array($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) && count($arEvent["EVENT_FORMATTED"]["DESCRIPTION"]) > 0)
+				(
+					!is_array($arEvent['EVENT_FORMATTED']['DESCRIPTION'])
+					&& $arEvent['EVENT_FORMATTED']['DESCRIPTION'] <> ''
+				)
+				|| (
+					is_array($arEvent['EVENT_FORMATTED']['DESCRIPTION'])
+					&& !empty($arEvent['EVENT_FORMATTED']['DESCRIPTION'])
+				)
 			)
 		)
 		{
@@ -161,9 +167,9 @@ else
 
 		if ($arParams["IS_LIST"])
 		{
-			?><script type="text/javascript">
-				arLogTs.entry_<?=intval($arEvent["EVENT"]["ID"])?> = <?=intval($arResult["LAST_LOG_TS"])?>;
-			</script><?
+			?><script>
+				arLogTs.entry_<?= (int)$arEvent["EVENT"]["ID"] ?> = <?= (int)$arResult["LAST_LOG_TS"] ?>;
+			</script><?php
 		}
 
 		$taskId = false;
@@ -172,29 +178,28 @@ else
 		$calendarEventId = false;
 
 		if (
-			$arParams["IS_LIST"]
-			&& isset($arEvent["EVENT"])
-			&& isset($arEvent["EVENT"]["EVENT_ID"])
+			isset($arEvent["EVENT"]["EVENT_ID"])
+			&& $arParams["IS_LIST"]
 		)
 		{
 			if (
-				isset($arEvent["EVENT"]["MODULE_ID"])
+				isset($arEvent["EVENT"]["MODULE_ID"], $arEvent["EVENT"]["SOURCE_ID"])
 				&& ($arEvent["EVENT"]["MODULE_ID"] === "tasks")
 				&& ($arEvent["EVENT"]["EVENT_ID"] === "tasks")
-				&& isset($arEvent["EVENT"]["SOURCE_ID"])
 				&& ($arEvent["EVENT"]["SOURCE_ID"] > 0)
 			)
 			{
 				$taskId = (int)$arEvent["EVENT"]["SOURCE_ID"];
 			}
 			elseif (
-				isset($arEvent["EVENT"]["MODULE_ID"])
+				isset(
+					$arEvent["EVENT"]["MODULE_ID"],
+					$arEvent["EVENT"]["ENTITY_ID"],
+					$arParams["CRM_ACTIVITY2TASK"][$arEvent["EVENT"]["ENTITY_ID"]]
+				)
 				&& ($arEvent["EVENT"]["MODULE_ID"] === "crm_shared")
 				&& ($arEvent["EVENT"]["EVENT_ID"] === "crm_activity_add")
-				&& isset($arEvent["EVENT"]["ENTITY_ID"])
 				&& ($arEvent["EVENT"]["ENTITY_ID"] > 0)
-				&& isset($arParams["CRM_ACTIVITY2TASK"])
-				&& isset($arParams["CRM_ACTIVITY2TASK"][$arEvent["EVENT"]["ENTITY_ID"]])
 			)
 			{
 				$taskId = (int)$arParams["CRM_ACTIVITY2TASK"][$arEvent["EVENT"]["ENTITY_ID"]];
@@ -215,9 +220,9 @@ else
 			{
 					try
 					{
-						$taskData = \CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
+						$taskData = CTaskItem::getInstanceFromPool($taskId, \Bitrix\Tasks\Util\User::getId())->getData(false);
 					}
-					catch(TasksException $exception)
+					catch (TasksException $exception)
 					{
 					}
 			}
@@ -225,7 +230,7 @@ else
 
 		$bHasNoCommentsOrLikes = (
 			(
-				!array_key_exists("HAS_COMMENTS", $arEvent)
+				!isset($arEvent['HAS_COMMENTS'])
 				|| $arEvent["HAS_COMMENTS"] !== "Y"
 			)
 			&& (
@@ -272,10 +277,12 @@ else
 		}
 
 		?><div
-			 id="lenta_item_<?=$arEvent["EVENT"]["ID"]?>"
+			 id="lenta_item_<?= $arEvent["EVENT"]["ID"] ?>"
 			 class="<?=implode(' ', $itemClassList)?>"
 			 data-livefeed-id="<?=(int)$arEvent["EVENT"]["ID"]?>"
 			 data-livefeed-post-pinned="<?=($pinned ? 'Y' : 'N')?>"
+			 data-security-entity-pin="<?= (int)$arParams['LOG_ID'] ?>"
+			 data-security-token-pin="<?= htmlspecialcharsbx($arResult['LOG_ID_TOKEN']) ?>"
 			 data-livefeed-post-entry-type="non-blog"
 			 data-livefeed-post-use-follow="<?=($arParams['USE_FOLLOW'] === 'N' ? 'N' : 'Y')?>"
 			 data-livefeed-post-use-tasks="<?=($arResult['bTasksAvailable'] && $arResult['canGetPostContent'] ? 'Y' : 'N')?>"
@@ -285,14 +292,14 @@ else
 			 data-livefeed-post-show-full="<?=(in_array($arEvent['EVENT']['EVENT_ID'], [ 'timeman_entry', 'report', 'calendar' ]) ? 'Y' : 'N')?>"
 
 			 data-livefeed-task-id="<?=(int)$taskId?>"
-			 data-livefeed-task-data="<?=($taskData ? htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode([
+			 data-livefeed-task-data="<?=($taskData ? htmlspecialcharsbx(Json::encode([
 				 'creatorIcon' => \Bitrix\Tasks\UI\Avatar::getPerson($taskData['CREATED_BY_PHOTO']),
 				 'responsibleIcon' => \Bitrix\Tasks\UI\Avatar::getPerson($taskData['RESPONSIBLE_PHOTO']),
 				 'title' => addslashes(htmlspecialcharsbx($taskData['TITLE']))
 			 ])) : '')?>"
 
 			 data-livefeed-calendar-event-id="<?=(int)$calendarEventId?>"
-		><?
+		><?php
 			$topWrapClassList = [
 				'post-item-top-wrap',
 				'post-item-copyable'
@@ -305,8 +312,8 @@ else
 				$topWrapClassList[] = 'post-item-follow';
 			}
 
-			?><div id="post_item_top_wrap_<?=$arEvent["EVENT"]["ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?
-				?><div class="post-item-top" id="post_item_top_<?=$arEvent["EVENT"]["ID"]?>"><?
+			?><div id="post_item_top_wrap_<?=$arEvent["EVENT"]["ID"]?>" class="<?=implode(' ', $topWrapClassList)?>"><?php
+				?><div class="post-item-top" id="post_item_top_<?=$arEvent["EVENT"]["ID"]?>"><?php
 
 					$avatarClassList = [ 'avatar' ];
 					if ($arEvent['EVENT_FORMATTED']['AVATAR_STYLE'] <> '')
@@ -320,40 +327,40 @@ else
 							: ''
 					);
 
-					?><div class="<?= implode(' ', $avatarClassList) ?>" style="<?= $style ?>"></div><?
+					?><div class="<?= implode(' ', $avatarClassList) ?>" style="<?= $style ?>"></div><?php
 
-					?><div class="post-item-pinned-block"><?
+					?><div class="post-item-pinned-block"><?php
 
 						if (
 							!empty($arParams['PINNED_PANEL_DATA'])
 							&& $arParams['PINNED_PANEL_DATA']['TITLE'] <> ''
 						)
 						{
-							?><div class="post-item-pinned-title"><?=$arParams['PINNED_PANEL_DATA']['TITLE']?></div><?
+							?><div class="post-item-pinned-title"><?=$arParams['PINNED_PANEL_DATA']['TITLE']?></div><?php
 						}
-						?><div class="post-item-pinned-text-box"><?
-							?><div class="post-item-pinned-desc"><?
+						?><div class="post-item-pinned-text-box"><?php
+							?><div class="post-item-pinned-desc"><?php
 								if (
 									!empty($arParams['PINNED_PANEL_DATA'])
 									&& $arParams['PINNED_PANEL_DATA']['DESCRIPTION'] <> ''
 								)
 								{
-									?><?=$arParams['PINNED_PANEL_DATA']['DESCRIPTION']?><?
+									?><?=$arParams['PINNED_PANEL_DATA']['DESCRIPTION']?><?php
 								}
-							?></div><?
-						?></div><?
-					?></div><?
+							?></div><?php
+						?></div><?php
+					?></div><?php
 
-					?><div class="post-item-top-cont"><?
-						?><?=$strCreatedBy?><?
-						?><div class="post-item-top-topic"><?=$strTopic ?></div><?
-						?><div class="lenta-item-time" id="datetime_block_detail_<?=$arEvent["EVENT"]["ID"]?>" ><?
-							echo \CComponentUtil::getDateTimeFormatted([
+					?><div class="post-item-top-cont"><?php
+						?><?=$strCreatedBy?><?php
+						?><div class="post-item-top-topic"><?=$strTopic ?></div><?php
+						?><div class="lenta-item-time" id="datetime_block_detail_<?=$arEvent["EVENT"]["ID"]?>" ><?php
+							echo CComponentUtil::getDateTimeFormatted([
 								'TIMESTAMP' => $arEvent["LOG_DATE_TS"],
 								'TZ_OFFSET' => $arResult["TZ_OFFSET"]
 							]);
-						?></div><?
-					?></div><?
+						?></div><?php
+					?></div><?php
 
 					$rightCornerNodeClassesList = [ 'lenta-item-right-corner' ];
 					if ($arResult['MOBILE_API_VERSION'] >= 34)
@@ -361,7 +368,7 @@ else
 						$rightCornerNodeClassesList[] = 'lenta-item-right-corner-menu';
 					}
 
-					?><div class="<?=implode(' ', $rightCornerNodeClassesList)?>"><?
+					?><div class="<?=implode(' ', $rightCornerNodeClassesList)?>"><?php
 
 						$useFavorites = (
 							!isset($arParams["USE_FAVORITES"])
@@ -372,7 +379,7 @@ else
 
 						$favoritesValue = (
 							$useFavorites
-							&& array_key_exists("FAVORITES", $arParams["EVENT"])
+							&& isset($arParams['EVENT']['FAVORITES'])
 							&& $arParams["EVENT"]["FAVORITES"] === "Y"
 						);
 
@@ -409,48 +416,49 @@ else
 								 onclick="oMSL.showPostMenu(event)"
 							>
 								<div class="lenta-menu-item"></div>
-							</div><?
+							</div><?php
 
-							?><div class="lenta-item-pin"></div><?
+							?><div class="lenta-item-pin"></div><?php
+						}
+						elseif ($useFavorites)
+						{
+							?><div
+							 id="log_entry_favorites_<?=$arEvent["EVENT"]["ID"]?>"
+							 data-favorites="<?=($favoritesValue ? "Y" : "N")?>"
+							 class="lenta-item-fav<?=($favoritesValue ? " lenta-item-fav-active" : "")?>"
+							 onclick="__MSLSetFavorites(<?=$arEvent["EVENT"]["ID"]?>, this, event);"></div><?php
 						}
 						else
 						{
-							if ($useFavorites)
-							{
-								?><div id="log_entry_favorites_<?=$arEvent["EVENT"]["ID"]?>" data-favorites="<?=($favoritesValue ? "Y" : "N")?>"  class="lenta-item-fav<?=($favoritesValue ? " lenta-item-fav-active" : "")?>" onclick="__MSLSetFavorites(<?=$arEvent["EVENT"]["ID"]?>, this, event);"></div><?
-							}
-							else
-							{
-								?><div class="lenta-item-fav-placeholder"></div><?
-							}
+							?><div class="lenta-item-fav-placeholder"></div><?php
 						}
 
-					?></div><?
+					?></div><?php
 
 					if ($strDescription <> '')
 					{
 						echo $strDescription;
 					}
-				?></div><?
+				?></div><?php
 
 				ob_start();
 
-				?><div class="post-item-inform-wrap-left"><?
+				?><div class="post-item-inform-wrap-left"><?php
 
 				if (
 					$arEvent["EVENT"]["RATING_TYPE_ID"] <> ''
 					&& $arEvent["EVENT"]["RATING_ENTITY_ID"] > 0
-					&& $arParams["SHOW_RATING"] == "Y"
+					&& $arParams["SHOW_RATING"] === "Y"
 				)
 				{
-					$voteId = $arEvent["EVENT"]["RATING_TYPE_ID"].'_'.$arEvent["EVENT"]["RATING_ENTITY_ID"].'-'.(time()+rand(0, 1000));
+					$voteId = $arEvent["EVENT"]["RATING_TYPE_ID"] . '_'.$arEvent["EVENT"]["RATING_ENTITY_ID"] . '-' . (time() + random_int(0, 1000));
 					$emotion = (!empty($arEvent["RATING"]["USER_REACTION"])? mb_strtoupper($arEvent["RATING"]["USER_REACTION"]) : 'LIKE');
 
 					?><span
 					 class="post-item-informers bx-ilike-block"
 					 id="rating_block_<?= (int)$arEvent['EVENT']['ID'] ?>"
 					 data-counter="<?= (int)$arEvent['RATING']['TOTAL_VOTES'] ?>"
-					><?
+					><?php
 						?><span
 						 data-rating-vote-id="<?= htmlspecialcharsbx($voteId) ?>"
 						 data-rating-entity-type-id="<?= htmlspecialcharsbx($arEvent['EVENT']['RATING_TYPE_ID']) ?>"
@@ -466,16 +474,16 @@ else
 								$likeClassList[] = 'bx-you-like-button';
 								$likeClassList[] = 'bx-you-like-button-'.mb_strtolower($emotion);
 							}
-							?><span class="<?=implode(' ', $likeClassList)?>"><?
-								?><span class="bx-ilike-icon-new"></span><?
-								?><span class="bx-ilike-text"><?=\CRatingsComponentsMain::getRatingLikeMessage($emotion)?></span><?
-							?></span><?
-						?></span><?
-					?></span><?
+							?><span class="<?=implode(' ', $likeClassList)?>"><?php
+								?><span class="bx-ilike-icon-new"></span><?php
+								?><span class="bx-ilike-text"><?= CRatingsComponentsMain::getRatingLikeMessage($emotion) ?></span><?php
+							?></span><?php
+						?></span><?php
+					?></span><?php
 				}
 
 				if (
-					array_key_exists("HAS_COMMENTS", $arEvent)
+					isset($arEvent['HAS_COMMENTS'])
 					&& $arEvent["HAS_COMMENTS"] === "Y"
 				)
 				{
@@ -483,10 +491,10 @@ else
 
 					$showNewComments = (
 						(
-							$arParams["USE_FOLLOW"] != "Y"
-							|| $arEvent["EVENT"]["FOLLOW"] == "Y"
+							$arParams["USE_FOLLOW"] !== "Y"
+							|| $arEvent["EVENT"]["FOLLOW"] === "Y"
 						)
-						&& intval($arResult["NEW_COMMENTS"]) > 0
+						&& (int)$arResult["NEW_COMMENTS"] > 0
 					);
 
 					$commentsBlockClassList = [
@@ -498,40 +506,40 @@ else
 						$commentsBlockClassList[] = 'post-item-inform-likes-active';
 					}
 
-					?><div id="comments_control_<?=intval($arEvent["EVENT"]["ID"])?>" class="<?=implode(' ', $commentsBlockClassList)?>"><?
-						?><div class="post-item-inform-comments-box"><?
-							?><span class="post-item-inform-icon"></span><?
+					?><div id="comments_control_<?= (int)$arEvent["EVENT"]["ID"] ?>" class="<?= implode(' ', $commentsBlockClassList) ?>"><?php
+						?><div class="post-item-inform-comments-box"><?php
+							?><span class="post-item-inform-icon"></span><?php
 
-							$num_comments = intval($arParams["EVENT"]["COMMENTS_COUNT"]);
-							?><div class="post-item-inform-left" id="informer_comments_text2_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments > 0 ? "inline-block" : "none")?>;"><?
-								?><?=Loc::getMessage('MOBILE_LOG_COMMENTS')?><? // MOBILE_LOG_COMMENTS_2
-							?></div><?
-							?><div class="post-item-inform-left" id="informer_comments_text_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments <= 0 ? "inline-block" : "none")?>;"><?
-								?><?=Loc::getMessage('MOBILE_LOG_COMMENTS')?><?
-							?></div><?
+							$num_comments = (int)$arParams["EVENT"]["COMMENTS_COUNT"];
+							?><div class="post-item-inform-left" id="informer_comments_text2_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments > 0 ? "inline-block" : "none")?>;"><?php
+								?><?=Loc::getMessage('MOBILE_LOG_COMMENTS')?><?php // MOBILE_LOG_COMMENTS_2
+							?></div><?php
+							?><div class="post-item-inform-left" id="informer_comments_text_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments <= 0 ? "inline-block" : "none")?>;"><?php
+								?><?=Loc::getMessage('MOBILE_LOG_COMMENTS')?><?php
+							?></div><?php
 
-							?><div class="post-item-inform-right" id="informer_comments_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments > 0 ? 'inline-block' : 'none')?>;"><?
+							?><div class="post-item-inform-right" id="informer_comments_<?=$arEvent["EVENT"]["ID"]?>" style="display: <?=($num_comments > 0 ? 'inline-block' : 'none')?>;"><?php
 								if (
-									($arParams["USE_FOLLOW"] != "Y" || $arEvent["EVENT"]["FOLLOW"] == "Y")
-									&& intval($arResult["NEW_COMMENTS"]) > 0
+									($arParams["USE_FOLLOW"] !== "Y" || $arEvent["EVENT"]["FOLLOW"] === "Y")
+									&& (int)$arResult["NEW_COMMENTS"] > 0
 								)
 								{
-									?><span id="informer_comments_all_<?=$arEvent["EVENT"]["ID"]?>"><?
-										$old_comments = intval(abs($num_comments - intval($arResult["NEW_COMMENTS"])));
-										?><?=($old_comments > 0 ? $old_comments : '')?><?
-									?></span><?
-									?><span id="informer_comments_new_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-inform-right-new"><?
-										?><span class="post-item-inform-right-new-sign">+</span><?
-										?><span class="post-item-inform-right-new-value"><?=intval($arResult["NEW_COMMENTS"])?></span><?
-									?></span><?
+									?><span id="informer_comments_all_<?=$arEvent["EVENT"]["ID"]?>"><?php
+										$old_comments = (int)abs($num_comments - (int)$arResult["NEW_COMMENTS"]);
+										?><?=($old_comments > 0 ? $old_comments : '')?><?php
+									?></span><?php
+									?><span id="informer_comments_new_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-inform-right-new"><?php
+										?><span class="post-item-inform-right-new-sign">+</span><?php
+										?><span class="post-item-inform-right-new-value"><?= (int)$arResult["NEW_COMMENTS"] ?></span><?php
+									?></span><?php
 								}
 								else
 								{
-									?><?=$num_comments?><?
+									?><?=$num_comments?><?php
 								}
-							?></div><?
-						?></div><?
-					?></div><?
+							?></div><?php
+						?></div><?php
+					?></div><?php
 				}
 				else
 				{
@@ -540,10 +548,10 @@ else
 
 				if ($bHasComments)
 				{
-					?><div id="log_entry_follow_<?=intval($arEvent["EVENT"]["ID"])?>" data-follow="<?=($arEvent["EVENT"]["FOLLOW"] == "Y" ? "Y" : "N")?>" style="display: none;"></div><?
+					?><div id="log_entry_follow_<?= (int)$arEvent["EVENT"]["ID"] ?>" data-follow="<?=($arEvent["EVENT"]["FOLLOW"] === "Y" ? "Y" : "N")?>" style="display: none;"></div><?php
 				}
 
-				?></div><? // class="post-item-inform-wrap-left"
+				?></div><?php // class="post-item-inform-wrap-left"
 
 				if (
 					!in_array(
@@ -552,15 +560,19 @@ else
 					)
 				)
 				{
-					?><div class="post-item-inform-wrap-right"><?
-						?><a id="post_more_limiter_<?=(int)$arEvent["EVENT"]["ID"]?>" class="post-item-more" ontouchstart="this.classList.toggle('post-item-more-pressed')" ontouchend="this.classList.toggle('post-item-more-pressed')" style="visibility: hidden;"><?
-							?><?=GetMessage("MOBILE_LOG_EXPAND")?><?
-						?></a><?
-					?></div><?
+					?><div class="post-item-inform-wrap-right"><?php
+						?><a
+						 id="post_more_limiter_<?=(int)$arEvent["EVENT"]["ID"]?>"
+						 class="post-item-more"
+						 ontouchstart="this.classList.toggle('post-item-more-pressed')"
+						 ontouchend="this.classList.toggle('post-item-more-pressed')"
+						 style="visibility: hidden;"><?php
+							?><?=GetMessage("MOBILE_LOG_EXPAND")?><?php
+						?></a><?php
+					?></div><?php
 				}
 
-				$strBottomBlock = ob_get_contents();
-				ob_end_clean();
+				$strBottomBlock = ob_get_clean();
 
 				$postMoreBlockStyle = (
 					isset($arParams['TARGET'])
@@ -577,9 +589,10 @@ else
 				{
 					// body
 
+					$contentXmlId = (!empty($arResult['CONTENT_ID']) ? $arResult['CONTENT_ID'] : '');
+
 					if (
-						array_key_exists("EVENT_FORMATTED", $arEvent)
-						&& array_key_exists("IS_IMPORTANT", $arEvent["EVENT_FORMATTED"])
+						isset($arEvent['EVENT_FORMATTED']['IS_IMPORTANT'])
 						&& $arEvent["EVENT_FORMATTED"]["IS_IMPORTANT"]
 					)
 					{
@@ -599,7 +612,11 @@ else
 							$postItemClassList[] = 'post-item-contentview';
 						}
 
-						?><div class="<?=implode(' ', $postItemClassList)?>" id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+						?><div
+						 class="<?=implode(' ', $postItemClassList)?>"
+						 id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>"
+						 bx-content-view-xml-id="<?= htmlspecialcharsBx($contentXmlId) ?>"
+						 bx-content-view-key-signed="<?= htmlspecialcharsbx($arResult['CONTENT_VIEW_KEY_SIGNED']) ?>"><?php
 
 							if (
 								isset($arParams['TARGET'])
@@ -610,7 +627,18 @@ else
 								ob_start();
 							}
 
-							?><div class="post-item-full-content post-item-copytext lenta-info-block <?=(in_array($arEvent["EVENT"]["EVENT_ID"], array("intranet_new_user", "bitrix24_new_user")) ? "lenta-block-new-employee" : "info-block-important")?>"><?
+							$classList = [
+								'post-item-full-content',
+								'post-item-copytext',
+								'lenta-info-block',
+								(
+									in_array($arEvent["EVENT"]["EVENT_ID"], array("intranet_new_user", "bitrix24_new_user"))
+										? 'lenta-block-new-employee'
+										: 'info-block-important'
+								),
+							];
+
+							?><div class="<?= implode(' ', $classList) ?>"><?php
 								if (in_array($arEvent["EVENT"]["EVENT_ID"], array("intranet_new_user", "bitrix24_new_user")))
 								{
 									echo CSocNetTextParser::closetags($arEvent["EVENT_FORMATTED"]["MESSAGE"]);
@@ -618,23 +646,22 @@ else
 								else
 								{
 									if (
-										array_key_exists("IS_IMPORTANT", $arEvent["EVENT_FORMATTED"])
+										isset($arEvent['EVENT_FORMATTED']['IS_IMPORTANT'], $arEvent['EVENT_FORMATTED']['TITLE_24_2'])
 										&& $arEvent["EVENT_FORMATTED"]["IS_IMPORTANT"]
-										&& array_key_exists("TITLE_24_2", $arEvent["EVENT_FORMATTED"])
 										&& $arEvent["EVENT_FORMATTED"]["TITLE_24_2"] <> ''
 									)
 									{
-										?><div class="lenta-important-block-title" id="post_block_check_title_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?
+										?><div class="lenta-important-block-title" id="post_block_check_title_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?php
 									}
 
-									?><div class="lenta-important-block-text" id="post_block_check_<?=$arEvent["EVENT"]["ID"]?>"><?
-										?><?=CSocNetTextParser::closetags($arEvent["EVENT_FORMATTED"]["MESSAGE"])?><?
-										?><span class="lenta-block-angle"></span><?
-									?></div><?
+									?><div class="lenta-important-block-text" id="post_block_check_<?=$arEvent["EVENT"]["ID"]?>"><?php
+										?><?=CSocNetTextParser::closetags($arEvent["EVENT_FORMATTED"]["MESSAGE"])?><?php
+										?><span class="lenta-block-angle"></span><?php
+									?></div><?php
 								}
-							?></div><?
+							?></div><?php
 
-							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?
+							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?php
 
 							if (
 								isset($arParams['TARGET'])
@@ -644,15 +671,15 @@ else
 								$targetHtml = ob_get_contents();
 							}
 
-						?></div><?
+						?></div><?php
 					}
 					elseif (in_array($arEvent["EVENT"]["EVENT_ID"], array("files", "commondocs")))
 					{
 						?><div class="post-item-post-block-full">
 							<div class="post-item-attached-file-wrap">
 								<div class="post-item-attached-file"><span><?=$arEvent["EVENT"]["TITLE"]?></span></div>
-							</div><?
-						?></div><?
+							</div><?php
+						?></div><?php
 					}
 					elseif (in_array($arEvent["EVENT"]["EVENT_ID"], array("tasks", "timeman_entry", "report", "calendar", "crm_activity_add")))
 					{
@@ -662,7 +689,11 @@ else
 							'post-item-contentview'
 						];
 
-						?><div id="post_block_check_cont_<?=(int)$arEvent["EVENT"]["ID"]?>" class="<?=implode(' ', $postItemClassList)?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+						?><div
+						 id="post_block_check_cont_<?=(int)$arEvent["EVENT"]["ID"]?>"
+						 class="<?= implode(' ', $postItemClassList) ?>"
+						 bx-content-view-xml-id="<?= htmlspecialcharsBx($contentXmlId) ?>"
+						 bx-content-view-key-signed="<?= htmlspecialcharsbx($arResult['CONTENT_VIEW_KEY_SIGNED']) ?>"><?php
 
 							if (
 								isset($arParams['TARGET'])
@@ -673,10 +704,10 @@ else
 							}
 							else
 							{
-								?><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?><?
+								?><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?><?php
 							}
 
-						?></div><?
+						?></div><?php
 					}
 					elseif ($arEvent["EVENT_FORMATTED"]["MESSAGE"] <> '') // all other events
 					{
@@ -694,7 +725,11 @@ else
 							$postItemClassList[] = 'post-item-contentview';
 						}
 
-						?><div class="<?=implode(' ', $postItemClassList)?>" id="post_block_check_cont_<?=$arEvent["EVENT"]["ID"]?>" bx-content-view-xml-id="<?=(!empty($arResult["CONTENT_ID"]) ? htmlspecialcharsBx($arResult["CONTENT_ID"]) : "")?>"><?
+						?><div
+						 class="<?= implode(' ', $postItemClassList) ?>"
+						 id="post_block_check_cont_<?= $arEvent["EVENT"]["ID"] ?>"
+						 bx-content-view-xml-id="<?= htmlspecialcharsBx($contentXmlId) ?>"
+						 bx-content-view-key-signed="<?= htmlspecialcharsbx($arResult['CONTENT_VIEW_KEY_SIGNED']) ?>"><?php
 
 							if (
 								isset($arParams['TARGET'])
@@ -706,22 +741,22 @@ else
 							}
 
 							if (
-								array_key_exists("TITLE_24_2", $arEvent["EVENT_FORMATTED"])
+								isset($arEvent['EVENT_FORMATTED']['TITLE_24_2'])
 								&& $arEvent["EVENT_FORMATTED"]["TITLE_24_2"] <> ''
 							)
 							{
-								?><div class="post-text-title" id="post_text_title_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?
+								?><div class="post-text-title" id="post_text_title_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["TITLE_24_2"]?></div><?php
 							}
 
-							?><div class="post-item-text post-item-copytext" id="post_block_check_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?></div><?
+							?><div class="post-item-text post-item-copytext" id="post_block_check_<?=$arEvent["EVENT"]["ID"]?>"><?=$arEvent["EVENT_FORMATTED"]["MESSAGE"]?></div><?php
 
 							if (
-								array_key_exists("EVENT_FORMATTED", $arEvent)
+								isset($arEvent["EVENT_FORMATTED"])
 								&& is_array($arEvent["EVENT_FORMATTED"]["UF"])
-								&& count($arEvent["EVENT_FORMATTED"]["UF"]) > 0
+								&& !empty($arEvent['EVENT_FORMATTED']['UF'])
 							)
 							{
-								?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arEvent["EVENT"]["ID"]?>"><?
+								?><div class="post-item-attached-file-wrap" id="post_block_check_files_<?=$arEvent["EVENT"]["ID"]?>"><?php
 
 									$eventHandlerID = AddEventHandler("main", "system.field.view.file", "__logUFfileShowMobile");
 									foreach ($arEvent["EVENT_FORMATTED"]["UF"] as $FIELD_NAME => $arUserField)
@@ -742,74 +777,81 @@ else
 										}
 									}
 
-									if ((int)$eventHandlerID > 0)
+									if ($eventHandlerID > 0)
 									{
 										RemoveEventHandler('main', 'system.field.view.file', $eventHandlerID);
 									}
-								?></div><?
+								?></div><?php
 							}
 
-							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?
+							?><div class="post-more-block" id="post_more_block_<?=$arEvent["EVENT"]["ID"]?>"<?=$postMoreBlockStyle?>></div><?php
 
 							if (
 								isset($arParams['TARGET'])
 								&& $arParams['TARGET'] === 'postContent'
 							)
 							{
-								$targetHtml = ob_get_contents();;
+								$targetHtml = ob_get_contents();
 							}
 
-						?></div><?
+						?></div><?php
 					}
 
 					if(!empty($arResult['UF_FILE']))
 					{
-						?><div id="post_block_files_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-attached-file-wrap post-item-attached-disk-file-wrap"><?
+						?><div id="post_block_files_<?=$arEvent["EVENT"]["ID"]?>" class="post-item-attached-file-wrap post-item-attached-disk-file-wrap"><?php
 
 							$eventHandlerID = AddEventHandler('main', 'system.field.view.file', '__logUFfileShowMobile');
 							$arPostField = $arResult['UF_FILE'];
 
 							if(!empty($arPostField["VALUE"]))
 							{
-								?><?$APPLICATION->IncludeComponent(
-								"bitrix:system.field.view",
-								$arPostField["USER_TYPE"]["USER_TYPE_ID"],
-								[
-									"arUserField" => $arPostField,
-									"ACTION_PAGE" => str_replace("#log_id#", $arEvent["EVENT"]["ID"], $arParams["PATH_TO_LOG_ENTRY"]),
-									"MOBILE" => "Y",
-									"GRID" => "Y",
-									"USE_TOGGLE_VIEW" => ($arResult["isCurrentUserEventOwner"] ? 'Y' : 'N'),
-								],
-								null,
-								[ 'HIDE_ICONS' => 'Y' ]
-							);?><?
+								?><?php
+									$APPLICATION->IncludeComponent(
+									"bitrix:system.field.view",
+									$arPostField["USER_TYPE"]["USER_TYPE_ID"],
+									[
+										"arUserField" => $arPostField,
+										"ACTION_PAGE" => str_replace("#log_id#", $arEvent["EVENT"]["ID"], $arParams["PATH_TO_LOG_ENTRY"]),
+										"MOBILE" => "Y",
+										"GRID" => "Y",
+										"USE_TOGGLE_VIEW" => ($arResult["isCurrentUserEventOwner"] ? 'Y' : 'N'),
+									],
+									null,
+									[ 'HIDE_ICONS' => 'Y' ]
+								);?><?php
 							}
 
-							if (
-								$eventHandlerID !== false
-								&& (intval($eventHandlerID) > 0)
-							)
+							if ($eventHandlerID > 0)
 							{
 								RemoveEventHandler('main', 'system.field.view.file', $eventHandlerID);
 							}
 
-						?></div><?
+						?></div><?php
 					}
 				}
 
 				if (
-					$arParams["SHOW_RATING"] == "Y"
+					$arParams["SHOW_RATING"] === "Y"
 					&& (
 						!isset($arParams['TARGET'])
-						|| !in_array($arParams["TARGET"], [ 'postContent' ])
+						|| $arParams["TARGET"] !== 'postContent'
 					)
 					&& !empty($voteId)
 				)
 				{
-					?><div class="post-item-inform-wrap-tree" id="<?=(!$arParams["IS_LIST"] ? 'rating-footer-wrap' : 'rating-footer-wrap_'.intval($arEvent["EVENT"]["ID"]))?>"><?
-						?><div class="feed-post-emoji-top-panel-outer"><?
-							?><div id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>" class="feed-post-emoji-top-panel-box <?=(intval($arEvent["RATING"]["TOTAL_POSITIVE_VOTES"]) > 0 ? 'feed-post-emoji-top-panel-container-active' : '')?>"><?
+					?><div class="post-item-inform-wrap-tree" id="<?=(!$arParams["IS_LIST"] ? 'rating-footer-wrap' : 'rating-footer-wrap_'. (int)$arEvent["EVENT"]["ID"])?>"><?php
+						?><div class="feed-post-emoji-top-panel-outer"><?php
+
+							$classList = [ 'feed-post-emoji-top-panel-box' ];
+							if ((int)$arEvent["RATING"]["TOTAL_POSITIVE_VOTES"] > 0)
+							{
+								$classList[] = 'feed-post-emoji-top-panel-container-active';
+							}
+
+							?><div
+							 id="feed-post-emoji-top-panel-container-<?=htmlspecialcharsbx($voteId)?>"
+							 class="<?= implode(' ', $classList) ?>"><?php
 								$APPLICATION->IncludeComponent(
 									"bitrix:rating.vote",
 									"like_react",
@@ -835,22 +877,22 @@ else
 									array("HIDE_ICONS" => "Y")
 								);
 
-							?></div><?
-						?></div><?
-					?></div><?
+							?></div><?php
+						?></div><?php
+					?></div><?php
 				}
 
 				if ($strBottomBlock <> '')
 				{
-					?><div id="post_item_inform_wrap" class="post-item-inform-wrap"><?
-						?><?=$strBottomBlock;?><?
-					?></div><?
+					?><div id="post_item_inform_wrap" class="post-item-inform-wrap"><?php
+						?><?= $strBottomBlock ?><?php
+					?></div><?php
 				}
 
-			?></div><? // post-item-top-wrap
+			?></div><?php // post-item-top-wrap
 
 			?><script>
-				<?
+				<?php
 				if (!$arParams["IS_LIST"])
 				{
 					$arEntityXMLID = array(
@@ -861,7 +903,7 @@ else
 					);
 
 					$entity_xml_id = (
-						array_key_exists($arEvent["EVENT"]["EVENT_ID"], $arEntityXMLID)
+						isset($arEntityXMLID[$arEvent['EVENT']['EVENT_ID']])
 						&& $arEvent["EVENT"]["SOURCE_ID"] > 0
 							? $arEntityXMLID[$arEvent["EVENT"]["EVENT_ID"]]."_".$arEvent["EVENT"]["SOURCE_ID"]
 							: mb_strtoupper($arEvent["EVENT"]["EVENT_ID"])."_".$arEvent["EVENT"]["ID"]
@@ -882,15 +924,15 @@ else
 							},
 						});
 					});
-					<?
+					<?php
 				}
-			?></script><?
+			?></script><?php
 
 			if (
 				!$arParams["IS_LIST"] // not in list
 				&& (
 					!isset($arParams['TARGET'])
-					|| !in_array($arParams["TARGET"], [ 'postContent' ])
+					|| $arParams["TARGET"] !== 'postContent'
 				)
 			)
 			{
@@ -909,8 +951,8 @@ else
 					"delete_id=#ID#";
 
 				$commentsList = (
-					intval($arParams["EVENT"]["COMMENTS_COUNT"]) > 0
-						? array_fill(0, intval($arParams["EVENT"]["COMMENTS_COUNT"]), null)
+					(int)$arParams["EVENT"]["COMMENTS_COUNT"] > 0
+						? array_fill(0, (int)$arParams["EVENT"]["COMMENTS_COUNT"], null)
 						: array()
 				);
 
@@ -925,7 +967,7 @@ else
 					array(
 						"TEMPLATE_ID" => '',
 						"RATING_TYPE_ID" => (
-							$arParams["SHOW_RATING"] == "Y"
+							$arParams["SHOW_RATING"] === "Y"
 								? CSocNetLogComponent::getCommentRatingType($arEvent["EVENT"]["EVENT_ID"], $arEvent["EVENT"]["ID"])
 								: ""
 						),
@@ -1023,25 +1065,25 @@ else
 
 					?><script>
 						app.setPageID('LOG_ENTRY_<?=$arEvent["EVENT"]["ID"]?>');
-						tmp_log_id = <?=intval($arEvent["EVENT"]["ID"])?>;
+						tmp_log_id = <?= (int)$arEvent["EVENT"]["ID"] ?>;
 
 						var arEntryCommentID = [];
 						BXMobileApp.onCustomEvent('onPullExtendWatch', {'id': 'UNICOMMENT<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>'}, true);
 
 						BXMobileApp.onCustomEvent('onCommentsGet', { log_id: <?=$arEvent["EVENT"]["ID"]?>, ts: '<?=time()?>'}, true);
-					</script><?
+					</script><?php
 
-					if ($arEvent["CAN_ADD_COMMENTS"] == "Y")
+					if ($arEvent["CAN_ADD_COMMENTS"] === "Y")
 					{
-						?><form action="/<?=SITE_DIR.(SITE_DIR == '' ? '' : '/')?>mobile/ajax.php" <?
-								?>id="<?=$this->__component->__name?>" <?
-								?>name="<?=$this->__component->__name?>" <?
+						?><form action="/<?=SITE_DIR.(SITE_DIR == '' ? '' : '/')?>mobile/ajax.php" <?php
+								?>id="<?=$this->__component->__name?>" <?php
+								?>name="<?=$this->__component->__name?>" <?php
 								?>method="POST" enctype="multipart/form-data" class="comments-form">
 							<input type="hidden" name="action" value="add_comment" />
 							<input type="hidden" name="mobile_action" value="add_comment" />
 							<input type="hidden" name="site" value="<?=htmlspecialcharsbx(SITE_ID)?>" />
 							<input type="hidden" name="lang" value="<?=htmlspecialcharsbx(LANGUAGE_ID)?>" />
-						</form><?
+						</form><?php
 						$arPostFields = $GLOBALS["USER_FIELD_MANAGER"]->GetUserFields("SONET_COMMENT", 0, LANGUAGE_ID);
 						$APPLICATION->IncludeComponent("bitrix:main.post.form",
 							".default",
@@ -1077,8 +1119,8 @@ else
 				if ($_REQUEST['empty_get_comments'] === 'Y')
 				{
 					$APPLICATION->RestartBuffer();
-					while(ob_get_clean());
-					\CMain::FinalActions(CUtil::PhpToJSObject([
+					while (ob_get_clean()) {}
+					CMain::FinalActions(CUtil::PhpToJSObject([
 						'TEXT' => $arResult['OUTPUT_LIST']['HTML'],
 						'POST_NUM_COMMENTS' => (int)$arParams['EVENT']['COMMENTS_COUNT'],
 						'TS' => time(),
@@ -1086,16 +1128,16 @@ else
 					die();
 				}
 
-				?><div class="post-comments-wrap" id="post-comments-wrap"><?
-					?><?=$arResult["OUTPUT_LIST"]["HTML"]?><?
-					?><span id="post-comment-last-after"></span><?
-				?></div><? // post-comments-wrap
+				?><div class="post-comments-wrap" id="post-comments-wrap"><?php
+					?><?=$arResult["OUTPUT_LIST"]["HTML"]?><?php
+					?><span id="post-comment-last-after"></span><?php
+				?></div><?php // post-comments-wrap
 			}
 			else
 			{
 				?><script>
 					app.setPageID('LOG_ENTRY_<?=$arEvent["EVENT"]["ID"]?>');
-				</script><?
+				</script><?php
 
 				if ($_REQUEST["empty_get_comments"] === "Y")
 				{
@@ -1103,16 +1145,16 @@ else
 					ob_start();
 					?><script>
 						app.setPageID('LOG_ENTRY_<?=$arEvent["EVENT"]["ID"]?>');
-					</script><?
+					</script><?php
 					$strCommentsText = ob_get_contents();
-					\CMain::finalActions(Json::encode(array(
+					CMain::finalActions(Json::encode(array(
 						"TEXT" => $strCommentsText
 					)));
 					die();
 				}
 			}
 
-		?></div><? // post-wrap / lenta-item
+		?></div><?php // post-wrap / lenta-item
 	}
 }
 

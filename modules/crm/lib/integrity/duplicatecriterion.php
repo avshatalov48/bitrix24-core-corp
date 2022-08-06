@@ -24,6 +24,26 @@ abstract class DuplicateCriterion
 		$this->useStrictComparison = $useStrictComparison;
 	}
 
+	public static function checkIndex(array $params)
+	{
+		return false;
+	}
+
+	public static function getRegisteredEntityMatches(int $entityTypeID, int $entityID)
+	{
+		return [];
+	}
+
+	public static function getSupportedDedupeTypes()
+	{
+		return [];
+	}
+
+	public static function prepareSortParams(int $entityTypeID, array $entityIDs)
+	{
+		return [];
+	}
+
 	abstract public function find($entityTypeID = \CCrmOwnerType::Undefined, $limit = 50);
 	abstract public function equals(DuplicateCriterion $item);
 	abstract public function getTypeName();
@@ -32,6 +52,27 @@ abstract class DuplicateCriterion
 	abstract public function getMatchDescription();
 	abstract public function getIndexTypeID();
 	abstract public function getTextTotals($count, $limit = 0);
+
+	public static function getHiddenSupportedDedupeTypes()
+	{
+		return [];
+	}
+
+	public static function getAllSupportedDedupeTypes(): array
+	{
+		static $result = null;
+
+		if ($result === null)
+		{
+			$result = array_merge(static::getSupportedDedupeTypes(), static::getHiddenSupportedDedupeTypes());
+		}
+
+		return $result;
+	}
+
+	protected function __construct()
+	{
+	}
 
 	public function getSummary()
 	{
@@ -126,13 +167,26 @@ abstract class DuplicateCriterion
 	/**
 	* @return Duplicate
 	*/
-	public function createDuplicate($entityTypeID, $rootEntityID, $userID, $enablePermissionCheck, $enableRanking, $limit = 0)
+	public function createDuplicate(
+		$entityTypeID,
+		$rootEntityID,
+		$userID,
+		$enablePermissionCheck,
+		$enableRanking,
+		$limit = 0
+	)
 	{
-		if($entityTypeID !== \CCrmOwnerType::Lead
+		if (
+			$entityTypeID !== \CCrmOwnerType::Lead
 			&& $entityTypeID !== \CCrmOwnerType::Contact
-			&& $entityTypeID !== \CCrmOwnerType::Company)
+			&& $entityTypeID !== \CCrmOwnerType::Company
+		)
 		{
-			throw new Main\NotSupportedException("Entity type: '".\CCrmOwnerType::ResolveName($entityTypeID)."' is not supported in current context");
+			throw new Main\NotSupportedException(
+				"Entity type: '"
+				. \CCrmOwnerType::ResolveName($entityTypeID)
+				. "' is not supported in current context"
+			);
 		}
 
 		/** @var Duplicate $dup **/

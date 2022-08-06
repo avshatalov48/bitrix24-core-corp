@@ -60,53 +60,6 @@ BX.ready(
 </script><?
 endif;
 
-if(isset($arResult['CATEGORY_SELECTOR']) && is_array($arResult['CATEGORY_SELECTOR'])):
-	$categorySelector = $arResult['CATEGORY_SELECTOR'];
-?><script type="text/javascript">
-	BX.ready(
-		function()
-		{
-			BX.CrmDealCategory.infos = <?=CUtil::PhpToJSObject($categorySelector['INFOS'])?>;
-			BX.CrmDealCategorySelector.messages =
-			{
-				"create": "<?=CUtil::JSEscape($categorySelector['MESSAGES']['CREATE'])?>"
-			};
-
-			var selector = BX.CrmDealCategorySelector.create(
-				"<?=CUtil::JSEscape($categorySelector['ID'])?>",
-				{
-					"createUrl": "<?=CUtil::JSEscape($categorySelector['CREATE_URL'])?>",
-					"categoryListUrl": "<?=CUtil::JSEscape($categorySelector['CATEGORY_LIST_URL'])?>",
-					"categoryCreateUrl": "<?=CUtil::JSEscape($categorySelector['CATEGORY_CREATE_URL'])?>",
-					"canCreateCategory": <?=$categorySelector['CAN_CREATE_CATEGORY'] ? 'true' : 'false'?>
-				}
-			);
-
-			<?if ($arResult['RC']['CAN_USE']):?>
-				selector.getSelectorMenu().getItems().push(BX.CmrSelectorMenuItem.create({'delimiter': true}));
-				selector.getSelectorMenu().getItems().push(
-					BX.CmrSelectorMenuItem.create({
-						'text': '<?=CUtil::JSEscape($arResult['RC']['NAME'])?>',
-						'className': '<?=($arResult['RC']['IS_AVAILABLE'] ? '' : 'b24-tariff-lock')?>',
-						'events': {
-							'select': function (){
-								<?if ($arResult['RC']['IS_AVAILABLE']):?>
-									BX.SidePanel.Instance.open("<?=CUtil::JSEscape($arResult['RC']['PATH_TO_ADD'])?>");
-								<?else:?>
-									<?=$arResult['RC']['JS_AVAILABLE_POPUP_SHOWER']?>
-								<?endif;?>
-								selector.getSelectorMenu().close();
-							}
-						}
-					})
-				);
-			<?endif;?>
-
-		}
-	);
-</script><?
-endif;
-
 if(isset($arResult['CATEGORY_CHANGER'])):
 	$categoryChanger = $arResult['CATEGORY_CHANGER'];
 ?><script type="text/javascript">

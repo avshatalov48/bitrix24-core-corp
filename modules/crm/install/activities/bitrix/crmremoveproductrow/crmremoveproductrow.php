@@ -24,6 +24,8 @@ class CBPCrmRemoveProductRow extends CBPActivity
 
 		[$entityTypeId, $entityId] = \CCrmBizProcHelper::resolveEntityId($this->GetDocumentId());
 
+		$currentIds = $this->workflow->isDebug() ? $this->getCurrentIds($entityTypeId, $entityId) : [];
+
 		if (!$this->deleteRows($entityTypeId, $entityId))
 		{
 			$this->WriteToTrackingService(
@@ -31,6 +33,10 @@ class CBPCrmRemoveProductRow extends CBPActivity
 				0,
 				CBPTrackingType::Error
 			);
+		}
+		elseif ($currentIds)
+		{
+			$this->logDebug($currentIds);
 		}
 
 		return CBPActivityExecutionStatus::Closed;
@@ -89,5 +95,33 @@ class CBPCrmRemoveProductRow extends CBPActivity
 		$activity['Properties'] = $properties;
 
 		return true;
+	}
+
+	private function getCurrentIds($entityTypeId, $entityId)
+	{
+		return array_column(
+			\CCrmProductRow::LoadRows(
+				\CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId),
+				$entityId,
+				true
+			),
+			'ID'
+		);
+	}
+
+	private function logDebug(array $ids)
+	{
+		$this->writeDebugInfo(
+			$this->getDebugInfo(
+				['DeletedId' => $ids],
+				[
+					'DeletedId' => [
+						'Name' => GetMessage('CRM_RMPR_DELETED_IDS'),
+						'Type' => 'string',
+						'Multiple' => true,
+					],
+				]
+			)
+		);
 	}
 }

@@ -81,10 +81,20 @@ class DuplicateIndexBuilder
 		{
 			return DuplicateBankDetailCriterion::checkIndex($params);
 		}
-		else
+
+		foreach (DuplicateVolatileCriterion::getSupportedDedupeTypes() as $currentTypeId)
 		{
-			throw new Main\NotSupportedException("Criterion type(s): '".DuplicateIndexType::resolveName($this->typeID)."' is not supported in current context");
+			if ((($this->typeID & $currentTypeId) === $currentTypeId))
+			{
+				return DuplicateVolatileCriterion::checkIndex($params);
+			}
 		}
+
+		throw new Main\NotSupportedException(
+			"Criterion type(s): '"
+			. DuplicateIndexType::resolveName($this->typeID)
+			. "' is not supported in current context"
+		);
 	}
 	public function remove()
 	{
@@ -552,13 +562,14 @@ class DuplicateIndexBuilder
 	}
 	protected function prepareSortParams(array $entityIDs)
 	{
-		$resut = array(
-			'PERS' => array(),
-			'ORG' => array(),
-			'COMM' => array(),
-			'RQ' => array(),
-			'BD' => array()
-		);
+		$resut = [
+			'PERS' => [],
+			'ORG' => [],
+			'COMM' => [],
+			'RQ' => [],
+			'BD' => [],
+			'VOL' => [],
+		];
 		if(!empty($entityIDs))
 		{
 			$entityTypeID = $this->getEntityTypeID();
@@ -586,6 +597,7 @@ class DuplicateIndexBuilder
 					$resut['BD'] = DuplicateBankDetailCriterion::prepareSortParams($entityTypeID, $entityIDs, $countryId);
 				}
 			}
+			$resut['VOL'] = DuplicateVolatileCriterion::prepareSortParams($entityTypeID, $entityIDs);
 		}
 		return $resut;
 	}

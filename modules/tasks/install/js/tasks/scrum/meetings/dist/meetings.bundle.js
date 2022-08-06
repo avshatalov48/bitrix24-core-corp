@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_loader,main_popup,ui_popupcomponentsmaker,main_core_events,main_core) {
+(function (exports,main_loader,main_popup,ui_popupcomponentsmaker,main_core_events,main_core,ui_dialogs_messagebox) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3;
@@ -235,7 +235,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function sendRequest(controller, action) {
 	      var data = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 	      return new Promise(function (resolve, reject) {
-	        top.BX.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.' + controller + '.' + action, {
 	          data: data
 	        }).then(resolve, reject);
 	      });
@@ -264,7 +264,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "showErrorAlert",
 	    value: function showErrorAlert(response, alertTitle) {
 	      if (main_core.Type.isUndefined(response.errors)) {
-	        console.log(response);
+	        console.error(response);
 	        return;
 	      }
 
@@ -275,7 +275,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          var errorCode = firstError.code ? firstError.code : '';
 	          var message = firstError.message + ' ' + errorCode;
 	          var title = alertTitle ? alertTitle : main_core.Loc.getMessage('TSM_MEETINGS_ERROR_POPUP_TITLE');
-	          top.BX.UI.Dialogs.MessageBox.alert(message, title);
+	          ui_dialogs_messagebox.MessageBox.alert(message, title);
 	        }
 	      }
 	    }
@@ -560,7 +560,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        type: 'group',
 	        ownerId: this.groupId
 	      }).show();
-	      top.BX.Event.EventEmitter.subscribeOnce('BX.Calendar:onEntrySave', function (baseEvent) {
+	      main_core_events.EventEmitter.subscribeOnce('BX.Calendar:onEntrySave', function (baseEvent) {
 	        var data = baseEvent.getData();
 
 	        if (sliderId === data.sliderId) {
@@ -737,5 +737,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Meetings = Meetings;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX,BX.Main,BX.UI,BX.Event,BX));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX,BX.Main,BX.UI,BX.Event,BX,BX.UI.Dialogs));
 //# sourceMappingURL=meetings.bundle.js.map

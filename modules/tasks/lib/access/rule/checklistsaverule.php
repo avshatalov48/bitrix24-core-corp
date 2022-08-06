@@ -32,12 +32,18 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if ($this->user->isAdmin())
 		{
 			return true;
+		}
+
+		if (!$this->controller->check(ActionDictionary::ACTION_TASK_READ, $task, $params))
+		{
+			return false;
 		}
 
 		// user can edit all checklist's items
@@ -48,6 +54,7 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if ($task instanceof TemplateModel)
 		{
+			$this->controller->addError(static::class, 'Unable to works with template');
 			return false;
 		}
 
@@ -78,6 +85,7 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!$this->controller->check(ActionDictionary::ACTION_CHECKLIST_EDIT, $task, $row))
 			{
+				$this->controller->addError(static::class, 'Access to checklist edit denied');
 				return false;
 			}
 		}
@@ -86,6 +94,7 @@ class ChecklistSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!$this->controller->check(ActionDictionary::ACTION_CHECKLIST_TOGGLE, $task, $row))
 			{
+				$this->controller->addError(static::class, 'Access to checklist toggle denied');
 				return false;
 			}
 		}

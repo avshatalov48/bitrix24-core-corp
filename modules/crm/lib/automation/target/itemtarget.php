@@ -20,6 +20,11 @@ class ItemTarget extends BaseTarget
 		return Automation\Factory::isAutomationAvailable($this->getEntityTypeId());
 	}
 
+	public function canTriggerSetExecuteBy(): bool
+	{
+		return true;
+	}
+
 	public function getEntityTypeId()
 	{
 		return $this->factory->getEntityTypeId();
@@ -53,10 +58,10 @@ class ItemTarget extends BaseTarget
 		return $this->getEntity()->getStageId();
 	}
 
-	public function setEntityStatus($statusId)
+	public function setEntityStatus($statusId, $executeBy = null)
 	{
 		$context = clone Container::getInstance()->getContext();
-		$context->setUserId(0);
+		$context->setUserId($executeBy ?? 0);
 		$context->setScope(Context::SCOPE_AUTOMATION);
 		$operation = $this->factory->getUpdateOperation(
 			$this->getEntity()->setStageId($statusId),

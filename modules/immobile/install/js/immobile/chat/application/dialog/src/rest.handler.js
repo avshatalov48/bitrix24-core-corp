@@ -52,6 +52,12 @@ export class MobileRestAnswerHandler extends BaseRestHandler
 	{
 		if (error.ex.error === 'ACCESS_ERROR')
 		{
+			BXMobileApp.Events.postToComponent(
+				'chatdialog::access::error',
+				[],
+				'im.messenger',
+			);
+
 			app.closeController();
 		}
 	}

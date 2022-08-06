@@ -439,13 +439,9 @@ function prepareTaskTemplateRow($row, $arParams)
 		'TASKS_TEMPLATE_TITLE' => prepareTaskTemplateRowTitle($row, $arParams),
 
 		'TASKS_TEMPLATE_DEADLINE_AFTER' => $row['DEADLINE_AFTER'] > 0 ? GetMessage(
-			'TASKS_TEMPLATE_DEADLINE_AFTER',
+			'TASKS_TEMPLATE_DEADLINE_AFTER2',
 			[
-				'#DATE#' => getDateAfter(new DateTime(), $row['DEADLINE_AFTER']),
-				'#AFTER#' => FormatDate(
-					array('i' => 'idiff', 'H' => 'Hdiff', 'd' => 'ddiff', 'm' => 'mdiff', 'Y' => 'Ydiff'),
-					time() - $row['DEADLINE_AFTER']
-				)
+				'#AFTER#' => Bitrix\Tasks\UI\Component\TemplateHelper::formatDateAfter($row['MATCH_WORK_TIME'] === 'Y', $row["DEADLINE_AFTER"])
 			]
 		) : GetMessage('TASKS_TEMPLATES_NO'),
 

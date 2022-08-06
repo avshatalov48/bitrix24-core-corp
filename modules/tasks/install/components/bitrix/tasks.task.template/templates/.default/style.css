@@ -1,12 +1,9 @@
 .task-form {
   font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
+
 .workarea-content-paddings .template-bitrix24 .task-info {
   margin: 0 -15px;
-}
-
-.template-bitrix24 .task-info .task-info-panel {
-  padding-top:12px;
 }
 
 .workarea-content-paddings .template-bitrix24 .task-info .task-info-panel {

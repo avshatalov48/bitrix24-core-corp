@@ -89,7 +89,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	          var node = main_core.Loc.getMessage('USER_ID') === userId ? _this.showEmpty(data) : document.createElement('DIV');
 	          return resolve(node);
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          resolve(_this.showData({
 	            id: undefined,
 	            value: undefined,
@@ -303,7 +303,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          var data = _ref2.data;
 	          var ustat = new _this(data);
 	          resolve(isNarrow ? ustat.showData() : ustat.showWideData());
-	        }).catch(function (errors) {
+	        })["catch"](function (errors) {
 	          errors = main_core.Type.isArray(errors) ? errors : [errors];
 	          var node = document.createElement('ul');
 	          errors.forEach(function (_ref3) {
@@ -777,7 +777,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this8, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
 	    });
 	  });
-	  babelHelpers.classPrivateFieldGet(this, _cache).delete('componentParams');
+	  babelHelpers.classPrivateFieldGet(this, _cache)["delete"]('componentParams');
 	  return result;
 	}
 

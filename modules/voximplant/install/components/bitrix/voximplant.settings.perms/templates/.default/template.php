@@ -3,10 +3,20 @@
  * @var array $arResult
  * @var CMain $APPLICATION
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-CUtil::InitJSCore(Array('voximplant.common', 'access', 'sidepanel', 'ui.dialogs.messagebox'));
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'voximplant.common',
+	'access',
+	'sidepanel',
+	'ui.dialogs.messagebox',
+]);
+
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 ?>
 
 <div id="vi-permissions-edit">

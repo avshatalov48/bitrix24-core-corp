@@ -158,54 +158,69 @@
 			{
 				return View(
 					{
+						resizableByKeyboard: true,
 						style: {
 							flex: 1,
 							backgroundColor: '#eef2f4',
 						},
 					},
-					View(
+					ScrollView(
 						{
 							style: {
-								backgroundColor: '#ffffff',
+								flex: 1,
 								borderRadius: 12,
-								paddingVertical: 5,
-								paddingHorizontal: 15,
+								marginBottom: 15,
 							},
+							bounces: false,
+							showsVerticalScrollIndicator: true,
 						},
-						FieldsWrapper({
-							fields: [
-								new ProjectNameField({
-									value: this.state.name,
-									focus: true,
-									onChange: text => this.setState({name: text}),
-								}),
-								new ProjectAvatarField({
-									userId: this.state.userId,
-									guid: this.state.guid,
-									value: this.state.avatarSelected,
-									loaded: this.state.avatarPreview,
-									isLoading: this.state.avatarIsLoading,
-									defaultImages: this.state.avatarDefaultTypes,
-									userUploadedFilesFolder: this.state.userUploadedFilesFolder,
-									onChange: (selected, loaded, isLoading, diskFileId) => {
-										this.setState({
-											avatarPreview: (loaded || this.state.avatarPreview),
-											avatarSelected: selected,
-											avatarIsLoading: (typeof isLoading === 'boolean' ? isLoading : this.state.avatarIsLoading),
-											avatarFileId: diskFileId,
-										});
+						View(
+							{},
+							View(
+								{
+									style: {
+										backgroundColor: '#ffffff',
+										borderRadius: 12,
+										paddingVertical: 5,
+										paddingHorizontal: 15,
 									},
+								},
+								FieldsWrapper({
+									fields: [
+										new ProjectNameField({
+											value: this.state.name,
+											focus: true,
+											onChange: text => this.setState({name: text}),
+										}),
+										new ProjectAvatarField({
+											userId: this.state.userId,
+											guid: this.state.guid,
+											value: this.state.avatarSelected,
+											loaded: this.state.avatarPreview,
+											isLoading: this.state.avatarIsLoading,
+											defaultImages: this.state.avatarDefaultTypes,
+											userUploadedFilesFolder: this.state.userUploadedFilesFolder,
+											onChange: (selected, loaded, isLoading, diskFileId) => {
+												this.setState({
+													avatarPreview: (loaded || this.state.avatarPreview),
+													avatarSelected: selected,
+													avatarIsLoading: (typeof isLoading === 'boolean' ? isLoading : this.state.avatarIsLoading),
+													avatarFileId: diskFileId,
+												});
+											},
+										}),
+										new ProjectTypeField({
+											value: this.state.type,
+											parentWidget: this.layoutWidget,
+											onChange: (id, title) => this.setState({type: id}),
+										}),
+									],
 								}),
-								new ProjectTypeField({
-									value: this.state.type,
-									parentWidget: this.layoutWidget,
-									onChange: (id, title) => this.setState({type: id}),
-								}),
-							],
-						}),
+							),
+							this.renderAdvancedSettingsButton(),
+							this.renderAdvancedSettingsFilledFields(),
+						),
 					),
-					this.renderAdvancedSettingsButton(),
-					this.renderAdvancedSettingsFilledFields(),
 				);
 			}
 		}

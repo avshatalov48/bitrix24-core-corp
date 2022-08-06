@@ -10,6 +10,17 @@ use Bitrix\Main\Localization\Loc;
 class Binding extends Base
 {
 	/**
+	 * @var \CCrmActivity
+	 */
+	protected $activityEntity;
+
+	protected function init(): void
+	{
+		parent::init();
+		$this->activityEntity = new \CCrmActivity();
+	}
+
+	/**
 	 * Get list of activity bindings.
 	 *
 	 * @param int $activityId
@@ -17,11 +28,11 @@ class Binding extends Base
 	 */
 	public function listAction(int $activityId): ?array
 	{
-		if (!$this->doesActivityExists($activityId))
+		if (!$this->doesActivityExist($activityId))
 		{
 			return null;
 		}
-		$bindings = $this->getExistedBindings($activityId);
+		$bindings = $this->getExistingBindings($activityId);
 		if (is_null($bindings))
 		{
 			return null;
@@ -54,21 +65,18 @@ class Binding extends Base
 	 */
 	public function addAction(int $activityId, int $entityTypeId, int $entityId): ?bool
 	{
-		if (!$this->doesActivityExists($activityId))
+		if (!$this->doesActivityExist($activityId))
 		{
 			return null;
 		}
 
 		if (!$this->canEdit($entityTypeId, $entityId))
 		{
-			$this->addError(new Error(
-				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				ErrorCode::ACCESS_DENIED
-			));
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
 			return null;
 		}
-		$bindings = $this->getExistedBindings($activityId);
+		$bindings = $this->getExistingBindings($activityId);
 		if (is_null($bindings))
 		{
 			return null;
@@ -82,7 +90,8 @@ class Binding extends Base
 			)
 			{
 				$this->addError(new Error(
-					'Activity is already bound to this entity'
+					Loc::getMessage('CRM_ACTIVITY_BINDING_ALREADY_BOUND_ERROR'),
+					'ACTIVITY_IS_ALREADY_BOUND'
 				));
 
 				return null;
@@ -93,7 +102,7 @@ class Binding extends Base
 			'OWNER_ID' => $entityId,
 		];
 
-		return $this->setBindings($activityId, $bindings);
+		return $this->updateBindings($activityId, $bindings);
 	}
 
 	/**
@@ -106,22 +115,19 @@ class Binding extends Base
 	 */
 	public function deleteAction(int $activityId, int $entityTypeId, int $entityId): ?bool
 	{
-		if (!$this->doesActivityExists($activityId))
+		if (!$this->doesActivityExist($activityId))
 		{
 			return null;
 		}
 
 		if (!$this->canEdit($entityTypeId, $entityId))
 		{
-			$this->addError(new Error(
-				Loc::getMessage('CRM_COMMON_ERROR_ACCESS_DENIED'),
-				ErrorCode::ACCESS_DENIED
-			));
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
 
 			return null;
 		}
 
-		$bindings = $this->getExistedBindings($activityId);
+		$bindings = $this->getExistingBindings($activityId);
 		if (is_null($bindings))
 		{
 			return null;
@@ -144,7 +150,8 @@ class Binding extends Base
 		if (!$bindingFound)
 		{
 			$this->addError(new Error(
-				'Activity is not bound to this entity'
+				Loc::getMessage('CRM_ACTIVITY_BINDING_NOT_BOUND_ERROR'),
+				'BINDING_NOT_FOUND'
 			));
 
 			return null;
@@ -152,18 +159,19 @@ class Binding extends Base
 		if (!count($bindings))
 		{
 			$this->addError(new Error(
-				'Last binding cannot be deleted'
+				Loc::getMessage('CRM_ACTIVITY_BINDING_LAST_BINDING_ERROR'),
+				'LAST_BINDING_CANNOT_BE_DELETED'
 			));
 
 			return null;
 		}
 
-		return $this->setBindings($activityId, $bindings);
+		return $this->updateBindings($activityId, $bindings);
 	}
 
-	protected function doesActivityExists(int $activityId): bool
+	protected function doesActivityExist(int $activityId): bool
 	{
-		$activity = \CCrmActivity::GetList(
+		$activity = $this->activityEntity::GetList(
 			[],
 			[
 				'ID' => $activityId,
@@ -179,8 +187,8 @@ class Binding extends Base
 		{
 			$this->addError(new Error(
 					Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND'),
-					ErrorCode::NOT_FOUND)
-			);
+					ErrorCode::NOT_FOUND
+			));
 		}
 
 		return !!$activity;
@@ -199,13 +207,13 @@ class Binding extends Base
 	protected function addLastActivityError(): void
 	{
 		$this->addError(new Error(
-			\CCrmActivity::GetLastErrorMessage()
+			$this->activityEntity::GetLastErrorMessage(),
 		));
 	}
 
-	protected function setBindings(int $activityId, array $bindings): ?bool
+	protected function updateBindings(int $activityId, array $bindings): ?bool
 	{
-		$result = \CCrmActivity::Update(
+		$result = $this->activityEntity::Update(
 			$activityId,
 			[
 				'BINDINGS' => $bindings,
@@ -227,14 +235,14 @@ class Binding extends Base
 		return true;
 	}
 
-	protected function getExistedBindings(int $activityId): ?array
+	protected function getExistingBindings(int $activityId): ?array
 	{
 
-		$bindings = \CCrmActivity::GetBindings($activityId);
-		if (\CCrmActivity::GetErrorCount())
+		$bindings = $this->activityEntity::GetBindings($activityId);
+		if ($this->activityEntity::GetErrorCount())
 		{
 			$this->addError(new Error(
-				\CCrmActivity::GetLastErrorMessage()
+				$this->activityEntity::GetLastErrorMessage()
 			));
 
 			return null;

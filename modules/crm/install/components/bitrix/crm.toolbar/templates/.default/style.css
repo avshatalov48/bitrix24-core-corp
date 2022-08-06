@@ -1,7 +1,7 @@
 .pagetitle-below {
 	display: flex;
 	align-items: center;
-	padding: 0 5px 0 13px;
+	padding: 0 5px 0 0;
 	border-top: 1px solid #dce2e6;
 	box-sizing: border-box;
 }
@@ -50,7 +50,7 @@
 	-ms-flex-align: center;
 	align-items: center;
 	height: 53px;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/normal 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #545c6a;
 	flex: 1;
 }

@@ -1,5 +1,7 @@
 <?php
+
 namespace Bitrix\Crm\Controller;
+
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
@@ -27,6 +29,9 @@ class Entity extends Main\Engine\Controller
 				'class' => Crm\Controller\Action\Entity\FetchPaymentDocumentsAction::class,
 				'+prefilters' => [new Main\Engine\ActionFilter\Authentication()]
 			),
+			'renderImageInput' => [
+				'class' =>  Crm\Controller\Action\Entity\RenderImageInputAction::class,
+			],
 		);
 	}
 
@@ -39,21 +44,22 @@ class Entity extends Main\Engine\Controller
 	 */
 	public static function addLastRecentlyUsedItems($category, $code, array $items)
 	{
-		$values = array();
+		$values = [];
 		foreach($items as $item)
 		{
-			$entityTypeID = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
-			$entityID = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
+			$entityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
+			$entityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
+			$categoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
 
-			if(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0)
+			if(\CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
 			{
-				$values[] = "{$entityTypeID}:{$entityID}";
+				$values[] = "{$entityTypeId}:{$entityId}:{$categoryId}";
 			}
 		}
 
 		$values = array_unique(
 			array_merge(
-				self::getRecentlyUsedItems($category, $code, array('RAW_FORMAT' => true)),
+				self::getRecentlyUsedItems($category, $code, ['RAW_FORMAT' => true]),
 				array_values($values)
 			)
 		);
@@ -69,93 +75,139 @@ class Entity extends Main\Engine\Controller
 
 	/**
 	 * Get LRU items.
+	 *
 	 * @param string $category Category name (it's used for saving user option).
 	 * @param string $code Code (it's used for saving user option).
 	 * @param array|null $options Options.
+	 *
 	 * @return array|bool
 	 */
 	public static function getRecentlyUsedItems($category, $code, array $options = null)
 	{
-		if(!is_array($options))
+		if (!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
-		$values = \CUserOptions::GetOption($category, $code, array());
-		if(!is_array($values))
+		$values = \CUserOptions::GetOption($category, $code, []);
+		if (!is_array($values))
 		{
-			$values = array();
+			$values = [];
 		}
 
-		if(isset($options['RAW_FORMAT']) && $options['RAW_FORMAT'] === true)
+		if (isset($options['RAW_FORMAT']) && $options['RAW_FORMAT'] === true)
 		{
 			return $values;
 		}
 
-		$items = array();
-		foreach($values as $value)
+		$actualEntityTypeId = isset($options['EXPAND_ENTITY_TYPE_ID'])
+			? (int)$options['EXPAND_ENTITY_TYPE_ID']
+			: 0;
+		$actualCategoryId = isset($options['EXPAND_CATEGORY_ID'])
+			? (int)$options['EXPAND_CATEGORY_ID']
+			: 0;
+
+		$items = [];
+		foreach ($values as $value)
 		{
-			if(!is_string($value))
+			if (!is_string($value))
 			{
 				continue;
 			}
 
 			$parts = explode(':', $value);
-			if(count($parts) > 1)
-			{
-				$items[] = array('ENTITY_TYPE_ID' => (int)$parts[0], 'ENTITY_ID' => (int)$parts[1]);
-			}
-		}
-
-		$qty = count($items);
-		if($qty < static::ITEMS_LIMIT && isset($options['EXPAND_ENTITY_TYPE_ID']))
-		{
-			self::expandItems($items, $options['EXPAND_ENTITY_TYPE_ID'], static::ITEMS_LIMIT - $qty);
-		}
-
-		return $items;
-	}
-	/**
-	 * Expand source items by recently created items of specified entity type.
-	 * @param array $items Source items.
-	 * @param int $entityTypeID Entity Type ID.
-	 * @param int $limit Limit of new items.
-	 */
-	protected static function expandItems(array &$items, $entityTypeID, $limit = self::ITEMS_LIMIT)
-	{
-		$map = array();
-		foreach($items as $item)
-		{
-			$entityTypeID = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
-			$entityID = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
-
-			if(!\CCrmOwnerType::IsDefined($entityTypeID) || $entityID <= 0)
+			if (count($parts) <= 1)
 			{
 				continue;
 			}
 
-			$map["{$entityTypeID}:{$entityID}"] = $item;
+			$storedEntityTypeId = (int)$parts[0];
+			$storedCategoryId = isset($parts[2]) ? (int)$parts[2] : 0;
+
+			if (
+				$actualEntityTypeId !== $storedEntityTypeId
+				|| $actualCategoryId !== $storedCategoryId
+			)
+			{
+				continue;
+			}
+
+			$items[] = [
+				'ENTITY_TYPE_ID' => $storedEntityTypeId,
+				'ENTITY_ID' => (int)$parts[1],
+				'CATEGORY_ID' => $storedCategoryId,
+			];
+		}
+
+		$qty = count($items);
+		if ($qty < static::ITEMS_LIMIT && isset($options['EXPAND_ENTITY_TYPE_ID']))
+		{
+
+			self::expandItems(
+				$items,
+				(int)$options['EXPAND_ENTITY_TYPE_ID'],
+				$actualCategoryId,
+				static::ITEMS_LIMIT - $qty
+			);
+		}
+
+		return $items;
+	}
+
+	/**
+	 * Expand source items by recently created items of specified entity type.
+	 *
+	 * @param array $items Source items.
+	 * @param int $entityTypeId Entity Type ID.
+	 * @param int $categoryId Entity Type ID.
+	 * @param int $limit Limit of new items.
+	 */
+	protected static function expandItems(
+		array &$items,
+		int $entityTypeId,
+		int $categoryId,
+		int $limit = self::ITEMS_LIMIT
+	): void
+	{
+		$map = [];
+		foreach ($items as $item)
+		{
+			$storedEntityTypeId = isset($item['ENTITY_TYPE_ID']) ? (int)$item['ENTITY_TYPE_ID'] : 0;
+			$storedEntityId = isset($item['ENTITY_ID']) ? (int)$item['ENTITY_ID'] : 0;
+			$storedCategoryId = isset($item['CATEGORY_ID']) ? (int)$item['CATEGORY_ID'] : 0;
+
+			if (
+				 $storedEntityId <= 0
+				|| $entityTypeId !== $storedEntityTypeId
+				|| $categoryId !== $storedCategoryId
+				|| !\CCrmOwnerType::IsDefined($storedEntityTypeId)
+			)
+			{
+				continue;
+			}
+
+			$map["{$storedEntityTypeId}:{$storedEntityId}:{$storedCategoryId}"] = $item;
 		}
 
 		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
 		$entityIDs = null;
-		if($entityTypeID === \CCrmOwnerType::Lead)
+		if($entityTypeId === \CCrmOwnerType::Lead)
 		{
 			$entityIDs = \CCrmLead::GetTopIDs($limit, 'DESC', $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Contact)
+		elseif($entityTypeId === \CCrmOwnerType::Contact)
 		{
-			$entityIDs = \CCrmContact::GetTopIDsInCategory(0, $limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmContact::GetTopIDsInCategory($categoryId, $limit, 'DESC', $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Company)
+		elseif($entityTypeId === \CCrmOwnerType::Company)
 		{
-			$entityIDs = \CCrmCompany::GetTopIDsInCategory(0, $limit, 'DESC', $userPermissions);
+			$entityIDs = \CCrmCompany::GetTopIDsInCategory($categoryId, $limit, 'DESC', $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Deal)
+		elseif($entityTypeId === \CCrmOwnerType::Deal)
 		{
 			$entityIDs = \CCrmDeal::GetTopIDs($limit, 'DESC', $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::Order)
+		elseif($entityTypeId === \CCrmOwnerType::Order)
 		{
 			$orders = Order::getList([
 				'select' => ['ID'],
@@ -164,9 +216,9 @@ class Entity extends Main\Engine\Controller
 
 			$entityIDs = $orders->getIdList();
 		}
-		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
+		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeId))
 		{
-			$factory = Container::getInstance()->getFactory($entityTypeID);
+			$factory = Container::getInstance()->getFactory($entityTypeId);
 			if ($factory)
 			{
 				$list = $factory->getItemsFilteredByPermissions([
@@ -186,15 +238,18 @@ class Entity extends Main\Engine\Controller
 			return;
 		}
 
-		foreach($entityIDs as $entityID)
+		foreach($entityIDs as $entityId)
 		{
-			$key = "{$entityTypeID}:{$entityID}";
+			$key = "{$entityTypeId}:{$entityId}:{$categoryId}";
 			if(isset($map[$key]))
 			{
 				continue;
 			}
 
-			$map[$key] = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => (int)$entityID);
+			$map[$key] = [
+				'ENTITY_TYPE_ID' => $entityTypeId,
+				'ENTITY_ID' => (int)$entityId,
+			];
 		}
 
 		$items = array_values($map);

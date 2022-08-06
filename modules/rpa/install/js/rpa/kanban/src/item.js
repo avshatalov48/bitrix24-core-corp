@@ -595,8 +595,7 @@ export default class Item extends Kanban.Item
 		return Tag.render`
 			<a class="rpa-kanban-column-task-responsible-item ${isMore? 'rpa-kanban-column-task-responsible-item-more':''}" 
 			 href="${Text.encode(link)}" title="${Text.encode(fullName)}">
-				<span class="rpa-kanban-column-task-responsible-img">
-					${photo? `<img src="${Text.encode(photo)}" alt="">` : ''}
+				<span class="rpa-kanban-column-task-responsible-img" ${photo ? 'style="background-image: url(' + Text.encode(photo) + '"' : ''}>	
 				</span>
 			</a>
 		`;

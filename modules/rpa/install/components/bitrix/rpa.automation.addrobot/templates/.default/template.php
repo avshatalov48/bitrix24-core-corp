@@ -8,7 +8,7 @@ $urlMan = \Bitrix\Rpa\Driver::getInstance()->getUrlManager();
 $editRobotUrl = $urlMan->getAutomationEditRobotUrl($arParams["typeId"]);
 $stageId = $arParams["stage"];
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-background no-hidden");
-\Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
+\Bitrix\Main\UI\Extension::load(["ui.fonts.opensans", "ui.design-tokens"]);
 
 $icons = [
 	'RpaRequestActivity' => 'rpa-add-robot-item-request',

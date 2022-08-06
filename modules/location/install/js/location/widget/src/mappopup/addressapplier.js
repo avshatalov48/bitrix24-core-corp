@@ -30,7 +30,7 @@ export default Vue.extend({
 				return '';
 			}
 
-			return this.address.toString(this.addressFormat, AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA);
+			return this.address.toString(this.addressFormat, AddressStringConverter.STRATEGY_TYPE_TEMPLATE_COMMA, AddressStringConverter.CONTENT_TYPE_TEXT);
 		},
 		containerStyles()
 		{

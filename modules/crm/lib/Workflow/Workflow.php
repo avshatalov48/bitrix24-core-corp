@@ -47,7 +47,7 @@ abstract class Workflow
 	 */
 	public function getStage(): string
 	{
-		$currentStage = EntityStageTable::getStage($this->getEntityId(), $this->getWorkflowCode());
+		$currentStage = EntityStageTable::getStage($this->getEntityId(), static::getWorkflowCode());
 		return $currentStage ?? $this->getInitialStage();
 	}
 
@@ -67,7 +67,7 @@ abstract class Workflow
 
 	/**
 	 * Check if transition from current stage to next stage allowed.
-	 * By default all transitions allowed, override it if needed.
+	 * By default, all transitions allowed, override it if needed.
 	 * 
 	 * @param string $nextStage
 	 * @return bool
@@ -89,11 +89,11 @@ abstract class Workflow
 	/**
 	 * Stores stage in database
 	 * @param string $nextStage
-	 * @return bool true if operation successfull, false otherwise
+	 * @return bool true if operation successful, false otherwise
 	 */
 	protected function persist(string $nextStage): bool
 	{
-		$result = EntityStageTable::setStage($this->getEntityId(), $this->getWorkflowCode(), $nextStage);
+		$result = EntityStageTable::setStage($this->getEntityId(), static::getWorkflowCode(), $nextStage);
 		return $result->isSuccess();
 	}
 
@@ -109,22 +109,21 @@ abstract class Workflow
 	}
 
 	/**
-	 * Removes stage record for current entity, so entity forces to initial state
+	 * Removes stage record for current entity, so entity forces initialing state
 	 * @return bool true if record removed or already not exists, false otherwise
 	 */
 	public function resetStage(): bool
 	{
 		$queryParams = [
 			'select' => ['ID'],
-			'filter' => ['=ENTITY_ID' => $this->getEntityId(), '=WORKFLOW_CODE' => $this->getWorkflowCode()],
+			'filter' => ['=ENTITY_ID' => $this->getEntityId(), '=WORKFLOW_CODE' => static::getWorkflowCode()],
 			'order' => ['ID' => 'DESC'],
 		];
 
 		$row = EntityStageTable::getList($queryParams)->fetch();
 		if ($row)
 		{
-			$result = EntityStageTable::delete($row['ID']);
-			return $result->isSuccess();
+			return EntityStageTable::delete($row['ID'])->isSuccess();
 		}
 
 		return true;

@@ -29,6 +29,8 @@ final class Api
 	 */
 	private const API_SEARCH_LIMIT = 10;
 
+	private const API_AUTOCOMPLETE_LIMIT = 7;
+
 	/** @var OsmSource */
 	private $source;
 
@@ -52,6 +54,7 @@ final class Api
 
 		$body = $client->get(
 			$this->buildUrl(
+				'location',
 				'search',
 				$this->wrapQueryData(
 					[
@@ -71,6 +74,39 @@ final class Api
 	/**
 	 * @param array $options
 	 * @return array
+	 */
+	public function autocomplete(array $options): array
+	{
+		$client = $this->makeHttpClient();
+
+		$queryData = [
+			'q' =>  Encoding::convertEncoding($options['q'], SITE_CHARSET, 'UTF-8'),
+			'limit' => isset($options['limit']) ? (int)$options['limit'] : self::API_AUTOCOMPLETE_LIMIT,
+			'lang' => $options['lang'] ?? '',
+			'version' => 2,
+		];
+		if (isset($options['lat']) && isset($options['lon']))
+		{
+			$queryData['lat'] = $options['lat'];
+			$queryData['lon'] = $options['lon'];
+		}
+
+		$body = $client->get(
+			$this->buildUrl(
+				'autocomplete',
+				'autocomplete',
+				$this->wrapQueryData(
+					$queryData
+				)
+			)
+		);
+
+		return $this->getResponse($client, $body);
+	}
+
+	/**
+	 * @param array $options
+	 * @return array
 	 * @throws RuntimeException
 	 */
 	public function lookup(array $options): array
@@ -79,6 +115,7 @@ final class Api
 
 		$body = $client->get(
 			$this->buildUrl(
+				'location',
 				'lookup',
 				$this->wrapQueryData(
 					[
@@ -105,6 +142,7 @@ final class Api
 
 		$body = $client->get(
 			$this->buildUrl(
+				'location',
 				'details',
 				$this->wrapQueryData(
 					[
@@ -197,11 +235,12 @@ final class Api
 	}
 
 	/**
+	 * @param string $controller
 	 * @param string $action
 	 * @param array $queryData
 	 * @return string
 	 */
-	private function buildUrl(string $action, array $queryData): string
+	private function buildUrl(string $controller, string $action, array $queryData): string
 	{
 		$serviceUrl = $this->source->getOsmApiUrl();
 
@@ -217,7 +256,7 @@ final class Api
 				array_merge(
 					$queryData,
 					[
-						'action' => sprintf('osmgateway.location.%s', $action)
+						'action' => sprintf('osmgateway.%s.%s', $controller, $action)
 					]
 				)
 			)

@@ -1,4 +1,5 @@
-import {Loc, Type} from 'main.core';
+import {Loc, Type, ajax} from 'main.core';
+import {MessageBox} from 'ui.dialogs.messagebox';
 
 type ErrorResponse = {
 	data: string,
@@ -11,7 +12,7 @@ export class RequestSender
 	sendRequest(controller: string, action: string, data = {}): Promise
 	{
 		return new Promise((resolve, reject) => {
-			top.BX.ajax.runAction(
+			ajax.runAction(
 				'bitrix:tasks.scrum.' + controller + '.' + action,
 				{
 					data: data
@@ -24,7 +25,7 @@ export class RequestSender
 	{
 		if (Type.isUndefined(response.errors))
 		{
-			console.log(response);
+			console.error(response);
 
 			return;
 		}
@@ -39,7 +40,7 @@ export class RequestSender
 				const message = firstError.message + ' ' + errorCode;
 				const title = (alertTitle ? alertTitle : Loc.getMessage('TSE_ERROR_POPUP_TITLE'));
 
-				top.BX.UI.Dialogs.MessageBox.alert(message, title);
+				MessageBox.alert(message, title);
 			}
 		}
 	}

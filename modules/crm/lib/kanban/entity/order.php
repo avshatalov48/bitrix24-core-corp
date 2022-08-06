@@ -148,6 +148,11 @@ class Order extends Entity
 
 	protected function getDataToCalculateTotalSums(string $fieldSum, array $filter, array $runtime): array
 	{
+		if (!$this->checkReadPermissions())
+		{
+			return [];
+		}
+
 		$queryParameters = [
 			'filter' => $filter,
 			'select' => [

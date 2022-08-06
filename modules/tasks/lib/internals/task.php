@@ -407,7 +407,14 @@ class TaskTable extends TaskDataManager
 		{
 			$taskObject->set($field, $value);
 		}
-		$taskObject->save();
 
+		try
+		{
+			$res = $taskObject->save();
+		}
+		catch (\Exception $e)
+		{
+
+		}
 	}
 }

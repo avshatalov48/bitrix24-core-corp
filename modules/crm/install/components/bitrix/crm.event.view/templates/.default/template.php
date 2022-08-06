@@ -140,7 +140,11 @@ $prefix = $arResult['GRID_ID'];
 		array('HIDE_ICONS' => 'Y')
 	);
 
-	if($arResult['INTERNAL'])
+	if (
+		$arResult['INTERNAL']
+		&& $arResult['ENTITY_TYPE'] !== CCrmOwnerType::OrderPaymentName
+		&& $arResult['ENTITY_TYPE'] !== CCrmOwnerType::OrderShipmentName
+	)
 	{
 		// Render toolbar in internal mode
 		$toolbarButtons = array();

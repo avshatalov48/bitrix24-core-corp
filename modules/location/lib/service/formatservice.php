@@ -109,6 +109,16 @@ final class FormatService extends BaseService
 	}
 
 	/**
+	 * @param string $defaultFormatCode
+	 * @return FormatService
+	 */
+	public function setDefaultFormatCode($defaultFormatCode)
+	{
+		$this->defaultFormatCode = $defaultFormatCode;
+		return $this;
+	}
+
+	/**
 	 * FormatService constructor.
 	 * @param Container $config
 	 */

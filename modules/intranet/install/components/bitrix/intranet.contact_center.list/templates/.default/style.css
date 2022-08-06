@@ -62,7 +62,8 @@
 	max-width: 185px;
 	display: inline-block;
 	vertical-align: middle;
-	font: 13px/14px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-align: center;
 }
 
@@ -197,12 +198,14 @@
 .intranet-contact-app-banner-title {
 	color: #fff;
 	font-size: 27px;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	pointer-events: none;
 }
 
 .intranet-contact-app-banner-title span {
-	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .intranet-contact-app-banner-icon {
@@ -280,7 +283,8 @@
 
 .intranet-contact-center-title {
 	color: #000;
-	font: 18px/24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 19px;
 	margin-top: 35px;
 }
@@ -388,7 +392,8 @@
 	text-transform: uppercase;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 8px/14px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .intranet-contact-center-item-label-new-text-active {

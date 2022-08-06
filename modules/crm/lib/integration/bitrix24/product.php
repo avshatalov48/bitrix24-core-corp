@@ -16,6 +16,8 @@ use Bitrix\Main;
  */
 class Product
 {
+	private static $region = '';
+
 	/**
 	 * Return true if portal is cloud.
 	 *
@@ -36,7 +38,13 @@ class Product
 	{
 		$regions = $onlyRu ? ['ru'] : ['ru', 'kz', 'by'];
 		$region = Main\Application::getInstance()->getLicense()->getRegion() ?: 'ru';
+		$region = self::$region ?: $region;
 
 		return in_array($region, $regions);
+	}
+
+	public static function setTestRegion(string $region = ''): void
+	{
+		self::$region = $region;
 	}
 }

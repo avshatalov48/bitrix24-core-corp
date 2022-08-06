@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmCreateRequestActivity extends CBPActivity
 {
@@ -32,7 +36,9 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 	public function Execute()
 	{
 		if (!CModule::IncludeModule("crm"))
+		{
 			return CBPActivityExecutionStatus::Closed;
+		}
 
 		$start = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
@@ -58,6 +64,11 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 			'BINDINGS' => $this->getBindings()
 		);
 
+		if ($this->workflow->isDebug())
+		{
+			$this->writeDebugInfo($this->getDebugInfo(['Responsible' => $this->Responsible ?? 'user_' . $responsibleId]));
+		}
+
 		if(!($id = CCrmActivity::Add($activityFields, false, true, array('REGISTER_SONET_EVENT' => true))))
 		{
 			$this->WriteToTrackingService(CCrmActivity::GetLastErrorMessage(), 0, CBPTrackingType::Error);
@@ -80,7 +91,7 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 		if (!$id)
 		{
 			$documentId = $this->GetDocumentId();
-			list($typeName, $ownerID) = explode('_', $documentId[2]);
+			[$typeName, $ownerID] = explode('_', $documentId[2]);
 			$ownerTypeID = \CCrmOwnerType::ResolveID($typeName);
 
 			return CCrmOwnerType::GetResponsibleID($ownerTypeID, $ownerID, false);
@@ -92,7 +103,7 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 	private function getBindings()
 	{
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		[$typeName, $id] = explode('_', $documentId[2]);
 
 		return array(
 			array(
@@ -105,7 +116,7 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 	private function getCommunications()
 	{
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		[$typeName, $id] = explode('_', $documentId[2]);
 		$communications = array();
 
 		if ($typeName !== CCrmOwnerType::DealName && $typeName !== CCrmOwnerType::OrderName)
@@ -236,5 +247,10 @@ class CBPCrmCreateRequestActivity extends CBPActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected static function getPropertiesMap(array $documentType, array $context = []): array
+	{
+		return static::getPropertiesDialogMap($documentType);
 	}
 }

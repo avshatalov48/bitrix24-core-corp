@@ -5,4 +5,4 @@ $MESS["CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y"] = "Включи�
 $MESS["CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_Y"] = "Включить складской учёт";
 $MESS["CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_N"] = "Выключить складской учёт";
 $MESS["CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_N"] = "Выключить складской учёт";
-$MESS["CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_SETTINGS"] = "Настройка";
+$MESS["CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_INVENTORY_MANAGEMENT_AND_PRODUCTS"] = "Складской учёт и товары";

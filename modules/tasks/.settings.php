@@ -37,6 +37,20 @@ return array(
 						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\TaskTemplateProvider',
 					],
 				],
+				[
+					'entityId' => 'scrum-user',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\ScrumUserProvider',
+					],
+				],
+				[
+					'entityId' => 'sprint-selector',
+					'provider' => [
+						'moduleId' => 'tasks',
+						'className' => '\\Bitrix\\Tasks\\Integration\\UI\\EntitySelector\\SprintSelectorProvider',
+					],
+				],
 			],
 			'extensions' => ['tasks.entity-selector'],
 		],

@@ -48,19 +48,37 @@ class TimemanSettingsPermissionsComponent extends \Bitrix\Timeman\Component\Base
 		$tasks = \CTask::getList(['ID' => 'asc'], ['MODULE_ID' => 'timeman']);
 		$this->arResult['tasks'] = [];
 
+		$convertedRoles = [
+			'timeman_denied_converted_editable',
+			'timeman_subordinate_converted_editable',
+			'timeman_read_converted_editable',
+			'timeman_write_converted_editable',
+			'timeman_full_access_converted_editable',
+		];
+
+		$taskIds = [];
 		while ($task = $tasks->fetch())
 		{
+			if (in_array($task['NAME'], $convertedRoles))
+			{
+				continue;
+			}
+
 			$name = Loc::getMessage('TASK_NAME_'.mb_strtoupper($task['NAME']).'_CONVERTED_EDITABLE') ?: $task['NAME'];
 			$this->arResult['tasks'][] = [
 				'ID' => $task['ID'],
 				'NAME' => $name,
+				'CAN_BE_EDIT' => $task['SYS'] !== 'Y',
 				'CAN_BE_DELETED' => $task['SYS'] !== 'Y',
 				'SYS' => $task['SYS'],
 			];
+
+			$taskIds[] = $task['ID'];
 		}
 
 		$taskAccessCodes = \Bitrix\Timeman\Model\Security\TaskAccessCodeTable::query()
 			->addSelect('*')
+			->whereIn('TASK_ID', $taskIds)
 			->exec()
 			->fetchAll();
 

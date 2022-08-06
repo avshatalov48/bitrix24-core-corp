@@ -52,11 +52,11 @@ $can["CHECKLIST_ADD_ITEMS"] = false;
 
 $taskId = $task['ID'];
 $statuses = CTaskItem::getStatusMap();
-$status = Loc::getMessage("TASKS_STATUS_".$statuses[$task["REAL_STATUS"]]);
+$status = Loc::getMessage("TASKS_STATUS_{$statuses[$task['REAL_STATUS']]}");
 
-$task["~STATUS"] = $task["STATUS"];
-$task["STATUS"] = (empty($status) ? Loc::getMessage("TASKS_STATUS_STATE_UNKNOWN") : $status);
-$task["PRIORITY"] = ((int)$task["PRIORITY"] === CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
+$task['~STATUS'] = $task['STATUS'];
+$task['STATUS'] = (empty($status) ? Loc::getMessage('TASKS_STATUS_STATE_UNKNOWN') : $status);
+$task['PRIORITY'] = ((int)$task["PRIORITY"] === CTasks::PRIORITY_HIGH ? CTasks::PRIORITY_HIGH : CTasks::PRIORITY_LOW);
 
 $timerTask = ($task["ALLOW_TIME_TRACKING"] === "Y" ? CTaskTimerManager::getInstance($USER->getId())->getRunningTask(false) : []);
 $timerTask = is_array($timerTask) ? $timerTask : [];
@@ -132,6 +132,23 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 	<div style="display: none;"><input type="text" name="AJAX_POST" value="Y" /></div><?//hack to not submit form?>
 
 	<?php
+	$favoriteButton = '';
+	if ($can['FAVORITE.ADD'] || $can['FAVORITE.DELETE'])
+	{
+		$isActive = ($can['FAVORITE.DELETE'] ? 'active' : '');
+		$favoriteButton = "<div id=\"favorites{$taskId}\" class=\"favorites {$isActive}\"></div>";
+	}
+	$title = htmlspecialcharsbx($task['TITLE']);
+	$subtitle = GetMessage('MB_TASKS_BASE_SETTINGS_TITLE_TASK', ["#TASK_ID#" => $taskId]);
+	$hiddenTitle = '';
+	$titleLabel = "$title ({$subtitle})";
+	if ($can['EDIT'])
+	{
+		$hiddenTitle = "<input id='title{$taskId}' type='hidden' data-bx-type='text' name='data[TITLE]' value='{$title}' />";
+		$titleLabel = "<span id='title{$taskId}Container'>{$titleLabel}</span>";
+	}
+	$titleLabel = "<label>{$titleLabel}</label>";
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:main.interface.form',
 		'mobile',
@@ -144,40 +161,33 @@ $url = CComponentEngine::MakePathFromTemplate($arParams["~PATH_TO_USER_TASKS_EDI
 				array(
 					"id" => "task_base",
 					"fields" => array(
-						array(
-							"class" => "bx-tasks-title",
-							"type" => "label",
-							"id" => "data[TITLE]",
-							"value" =>
-								($can["FAVORITE.ADD"] || $can["FAVORITE.DELETE"] ? "<div id=\"favorites".$taskId."\" class=\"favorites".($can["FAVORITE.DELETE"] ? " active" : "")."\"></div>" : "")
-								.($can["EDIT"] ? "<input id=\"title".$taskId."\" type=\"hidden\" data-bx-type=\"text\" name=\"data[TITLE]\" value=\"".htmlspecialcharsbx($task["TITLE"])."\" />" : "")
-								."<label>".($can["EDIT"] ? "<span id=\"title".$taskId."Container\">" : "").htmlspecialcharsbx($task["TITLE"]).($can["EDIT"] ? "</span>" : "")." (".GetMessage("MB_TASKS_BASE_SETTINGS_TITLE_TASK", array("#TASK_ID#" => $taskId)).")</label>",
+						[
+							'class' => 'bx-tasks-title',
+							'type' => 'label',
+							'id' => 'data[TITLE]',
+							'value' => $favoriteButton . $hiddenTitle . $titleLabel,
+						],
+						(
+							empty($task['DESCRIPTION'])
+								? null
+								: [
+									'type' => 'label',
+									'id' => 'data[DESCRIPTION]',
+									'value' => $task['DESCRIPTION'],
+								]
 						),
-						(!empty($task["DESCRIPTION"]) ? ($can["EDIT"] && false ?
-							array(
-								"type" => "texteditor",
-								"text-type" => $task['DESCRIPTION_IN_BBCODE'] == 'Y' ? "bbcode" : "html",
-								"id" => "data[DESCRIPTION]",
-								"name" => GetMessage("MB_TASKS_BASE_SETTINGS_DESCRIPTION"),
-								"placeholder" => GetMessage("MB_TASKS_BASE_SETTINGS_DESCRIPTION_PLACEHOLDER"),
-								"value" => $task["~DESCRIPTION"]
-							) : array(
-								"type" => "label",
-								"id" => "data[DESCRIPTION]",
-								"value" => $task["DESCRIPTION"]
-							)) : null),
 						[
 							"type" => 'custom',
 							"id" => 'checklist',
 							"class" => '',
 							"value" => $checklistHtml,
 						],
-						array(
-							"type" => "label",
-							"id" => "data[STATUS]",
-							"name" => GetMessage("MB_TASKS_TASK_SETTINGS_STATUS"),
-							"value" => '<span id="bx-task-status-'.$taskId.'">'.$task["STATUS"]."</span>"
-						),
+						[
+							'type' => 'label',
+							'id' => 'data[STATUS]',
+							'name' => GetMessage('MB_TASKS_TASK_SETTINGS_STATUS'),
+							'value' => "<span id='bx-task-status-{$taskId}'>{$task['STATUS']}</span>",
+						],
 						($can["EDIT"] ? array(
 							"type" => "checkbox",
 							"id" => "data[PRIORITY]",
@@ -553,31 +563,32 @@ $APPLICATION->IncludeComponent(
 	BX.ready(function()
 	{
 		new BX.Mobile.Tasks.detail({
-			taskData: <?=CUtil::PhpToJSObject([
-				"ID" => $taskId,
-				"TITLE" => $task['TITLE'],
-				"DESCRIPTION" => $task['DESCRIPTION'],
-				"RESPONSIBLE_ID" => $task['RESPONSIBLE_ID'],
-				"CREATED_BY" => $task['CREATED_BY'],
-				"PRIORITY" => $task['PRIORITY'],
-				"STATUS" => $task['STATUS'],
-				"REAL_STATUS" => $task['REAL_STATUS'],
-				"GROUP_ID" => $task["GROUP_ID"],
-				"DEADLINE" => $task['DEADLINE'],
-				"ACCOMPLICES" => $task['ACCOMPLICES'],
-				"AUDITORS" => $task['AUDITORS'],
-				"CHECKLIST" => $task["CHECKLIST"],
-				"ACTION" => $task['ACTION'],
-				"LOG_ID" => (isset($templateData["LOG_ID"]) ? (int)$templateData["LOG_ID"] : 0),
-			])?>,
-			formId: '<?=CUtil::JSEscape($arResult["FORM_ID"])?>',
-			currentTs: <?=(isset($templateData["CURRENT_TS"]) ? (int)$templateData["CURRENT_TS"] : 0)?>,
-			guid: '<?=CUtil::JSEscape($arParams["GUID"])?>'
+			taskData: <?= CUtil::PhpToJSObject([
+				'ID' => $taskId,
+				'TITLE' => $task['TITLE'],
+				'DESCRIPTION' => $task['DESCRIPTION'],
+				'RESPONSIBLE_ID' => $task['RESPONSIBLE_ID'],
+				'CREATED_BY' => $task['CREATED_BY'],
+				'PRIORITY' => $task['PRIORITY'],
+				'STATUS' => $task['STATUS'],
+				'REAL_STATUS' => $task['REAL_STATUS'],
+				'GROUP_ID' => $task['GROUP_ID'],
+				'DEADLINE' => $task['DEADLINE'],
+				'ACCOMPLICES' => $task['ACCOMPLICES'],
+				'AUDITORS' => $task['AUDITORS'],
+				'CHECKLIST' => $task['CHECKLIST'],
+				'ACTION' => $task['ACTION'],
+				'LOG_ID' => (isset($templateData['LOG_ID']) ? (int)$templateData['LOG_ID'] : 0),
+			]) ?>,
+			formId: '<?= CUtil::JSEscape($arResult['FORM_ID']) ?>',
+			currentTs: <?= (isset($templateData['CURRENT_TS']) ? (int)$templateData['CURRENT_TS'] : 0) ?>,
+			guid: '<?= CUtil::JSEscape($arParams['GUID']) ?>',
+			statuses: <?= CUtil::PhpToJSObject($statuses) ?>,
 		});
 	});
 
-	if(typeof BX.MSL != 'undefined')
+	if (typeof BX.MSL != 'undefined')
 	{
-		BX.MSL.viewImageBind('tasks-detail-card-container-over', { tag: 'IMG', attr: 'data-bx-image' });
+		BX.MSL.viewImageBind('tasks-detail-card-container-over', {tag: 'IMG', attr: 'data-bx-image'});
 	}
 </script>

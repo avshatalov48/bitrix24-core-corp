@@ -3,7 +3,7 @@ import {BaseEvent} from 'main.core.events';
 
 import {EntityStorage} from '../entity/entity.storage';
 
-import {Item} from '../item/item';
+import {Item, ItemParams} from '../item/item';
 import {ItemMover, ItemsSortInfo} from '../item/item.mover';
 
 import {EntityCounters} from '../counters/entity.counters';
@@ -80,10 +80,13 @@ export class PullItem
 			.finally(() => this.cleanDelayedAdd(params.id))
 			.then(() => {
 				this.requestSender.getItemData({
-					itemId: params.id
+					itemIds: [params.id]
 				})
 					.then((response) => {
-						const item = Item.buildItem(response.data);
+						const itemData = response.data
+							.find((itemData: ItemParams) => itemData.id === params.id)
+						;
+						const item = Item.buildItem(itemData);
 						this.addItemToEntity(item);
 					})
 					.catch((response) => {})
@@ -101,10 +104,13 @@ export class PullItem
 		}
 
 		this.requestSender.getItemData({
-			itemId: params.id
+			itemIds: [params.id]
 		})
 			.then((response) => {
-				const item = Item.buildItem(response.data);
+				const itemData = response.data
+					.find((itemData: ItemParams) => itemData.id === params.id)
+				;
+				const item = Item.buildItem(itemData);
 
 				if (this.isDelayedAdd(item.getId()))
 				{
@@ -162,46 +168,69 @@ export class PullItem
 
 	onItemSortUpdated(itemsSortInfo: ItemsSortInfo)
 	{
-		const itemsToSort = new Map();
 		const itemsInfoToSort = new Map();
 
 		Object.entries(itemsSortInfo).forEach(([itemId, info]) => {
-			const item = this.entityStorage.findItemByItemId(itemId);
-			if (item)
+			if (!this.needSkipSort(info.tmpId))
 			{
-				if (!this.needSkipSort(info.tmpId))
-				{
-					itemsToSort.set(item.getId(), item);
-					itemsInfoToSort.set(item.getId(), info);
-				}
-				this.cleanSkipRemove(info.tmpId);
+				itemsInfoToSort.set(parseInt(itemId, 10), info);
 			}
+			this.cleanSkipRemove(info.tmpId);
 		});
 
-		itemsToSort.forEach((item: Item) => {
-			const itemInfoToSort = itemsInfoToSort.get(item.getId());
-			if (item.isParentTask() && item.isShownSubTasks())
-			{
-				item.hideSubTasks();
-			}
-			item.setSort(itemInfoToSort.sort);
-			const sourceEntity = this.entityStorage.findEntityByEntityId(item.getEntityId());
-			if (sourceEntity)
-			{
-				const targetEntityId = (
-					Type.isUndefined(itemInfoToSort.entityId)
-						? item.getEntityId()
-						: itemInfoToSort.entityId
-				);
-				let targetEntity = this.entityStorage.findEntityByEntityId(targetEntityId);
-				if (!targetEntity || sourceEntity.getId() === targetEntity.getId())
-				{
-					targetEntity = sourceEntity;
-				}
-				this.itemMover.moveToPosition(sourceEntity, targetEntity, item);
-				this.entityStorage.recalculateItemsSort();
-			}
-		});
+		if (itemsInfoToSort.size === 0)
+		{
+			return;
+		}
+
+		this.requestSender.getItemData({
+			itemIds: [...itemsInfoToSort.keys()]
+		})
+			.then((response) => {
+				const itemsToSort = new Map();
+				const newItems = new Set();
+				response.data
+					.forEach((itemData: ItemParams) => {
+						let item = this.entityStorage.findItemByItemId(itemData.id);
+						if (!item)
+						{
+							item = Item.buildItem(itemData);
+							newItems.add(item.getId());
+						}
+						itemsToSort.set(item.getId(), item);
+					})
+				;
+				itemsToSort.forEach((item: Item) => {
+					const itemInfoToSort = itemsInfoToSort.get(item.getId());
+					if (item.isParentTask() && item.isShownSubTasks())
+					{
+						item.hideSubTasks();
+					}
+					item.setSort(itemInfoToSort.sort);
+					if (newItems.has(item.getId()))
+					{
+						item.setPreviousSort(0);
+					}
+					const sourceEntity = this.entityStorage.findEntityByEntityId(item.getEntityId());
+					if (sourceEntity)
+					{
+						const targetEntityId = (
+							Type.isUndefined(itemInfoToSort.entityId)
+								? item.getEntityId()
+								: itemInfoToSort.entityId
+						);
+						let targetEntity = this.entityStorage.findEntityByEntityId(targetEntityId);
+						if (!targetEntity || sourceEntity.getId() === targetEntity.getId())
+						{
+							targetEntity = sourceEntity;
+						}
+						this.itemMover.moveToPosition(sourceEntity, targetEntity, item);
+						this.entityStorage.recalculateItemsSort();
+					}
+				});
+			})
+			.catch((response) => {})
+		;
 	}
 
 	onCommentAdd(params)
@@ -237,7 +266,7 @@ export class PullItem
 		{
 			const parentItem = this.entityStorage.findItemBySourceId(item.getParentTaskId());
 
-			if (parentItem)
+			if (parentItem && !parentItem.isDecompositionMode())
 			{
 				parentItem.hideSubTasks();
 				parentItem.cleanSubTasks();
@@ -260,12 +289,14 @@ export class PullItem
 				return;
 			}
 
+			const existingItem = this.entityStorage.findItemBySourceId(item.getSourceId());
+			if (existingItem)
+			{
+				return;
+			}
+
 			this.itemMover.moveToPosition(entity, entity, item);
 			this.entityStorage.recalculateItemsSort();
-
-			item.getTags().getValue().forEach((tag) => {
-				this.tagSearcher.addTagToSearcher(tag);
-			});
 		}).catch((response) => {
 			this.requestSender.showErrorAlert(response);
 		});

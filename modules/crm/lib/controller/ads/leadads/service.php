@@ -97,10 +97,13 @@ class Service extends AbstractController
 			return $this->errorResponse();
 		}
 
-		$authAdapter = $service::getAuthAdapter($type);
-		$authAdapter->removeAuth();
+		$groupAuthAdapter = $service->getGroupAuth($type);
+		if ($groupAuthAdapter)
+		{
+			$groupAuthAdapter->removeAuth();
+		}
 
+		$service::getAuthAdapter($type)->removeAuth();
 		return $this->successResponse();
-
 	}
 }

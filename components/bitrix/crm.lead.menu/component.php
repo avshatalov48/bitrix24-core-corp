@@ -263,53 +263,60 @@ if($arParams['TYPE'] === 'list')
 			'PATH_TO_ADD' => Rc\Service::getPathToAddLead(),
 			'JS_AVAILABLE_POPUP_SHOWER' => Rc\Service::getJsAvailablePopupShower(),
 		];
-		if ($arResult['RC']['CAN_USE'] && !$arResult['RC']['IS_AVAILABLE'])
+
+		if($arResult['RC']['CAN_USE'] && !$arResult['RC']['IS_AVAILABLE'])
 		{
 			Rc\Service::initJsExtensions();
 		}
+	}
 
-		$link = CComponentEngine::MakePathFromTemplate(
-			$arParams[$isSliderEnabled ? 'PATH_TO_LEAD_DETAILS' : 'PATH_TO_LEAD_EDIT'],
-			array('lead_id' => 0)
-		);
-		if (!$arResult['RC']['CAN_USE'])
+	$link = CComponentEngine::MakePathFromTemplate(
+		$arParams[$isSliderEnabled ? 'PATH_TO_LEAD_DETAILS' : 'PATH_TO_LEAD_EDIT'],
+		['lead_id' => 0]
+	);
+
+	if($arResult['RC']['CAN_USE'])
+	{
+		$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
+		if($isSliderEnabled)
 		{
-			$arResult['BUTTONS'][] = array(
-				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-				'LINK' => $link,
-				'HIGHLIGHT' => true
-			);
+			$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
 		}
 		else
 		{
-			$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
-			if ($isSliderEnabled)
-			{
-				$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
-			}
-			else
-			{
-				$itemAdd['LINK'] = $link;
-			}
-			$arResult['BUTTONS'][] = [
-				'TYPE' => 'crm-btn-double',
-				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-				'LINK' => $link,
-				'ITEMS' => [
-					$itemAdd,
-					[
-						'TEXT' => $arResult['RC']['NAME'],
-						'ONCLICK' => $arResult['RC']['IS_AVAILABLE']
-							?
-							'BX.SidePanel.Instance.open("' . CUtil::JSEscape($arResult['RC']['PATH_TO_ADD']) . '")'
-							:
-							$arResult['RC']['JS_AVAILABLE_POPUP_SHOWER'],
-						'CLASS_NAME' => $arResult['RC']['IS_AVAILABLE'] ? '' : 'b24-tariff-lock'
-					],
-				],
-				'HIGHLIGHT' => true
-			];
+			$itemAdd['LINK'] = $link;
 		}
+
+		$arResult['BUTTONS'][] = [
+			'TYPE' => 'crm-btn-double',
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'LINK' => $link,
+			'ITEMS' => [
+				$itemAdd,
+				[
+					'TEXT' => $arResult['RC']['NAME'],
+					'ONCLICK' => $arResult['RC']['IS_AVAILABLE']
+						?
+						'BX.SidePanel.Instance.open("' . CUtil::JSEscape($arResult['RC']['PATH_TO_ADD']) . '")'
+						:
+						$arResult['RC']['JS_AVAILABLE_POPUP_SHOWER'],
+					'CLASS_NAME' => $arResult['RC']['IS_AVAILABLE'] ? '' : 'b24-tariff-lock'
+				],
+			],
+			'HIGHLIGHT' => true,
+			'IS_DISABLED' => !$bAdd,
+			'HINT' => GetMessage('CRM_LEAD_ADD_HINT')
+		];
+	}
+	else
+	{
+		$arResult['BUTTONS'][] = [
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'LINK' => $link,
+			'HIGHLIGHT' => true,
+			'IS_DISABLED' => !$bAdd,
+			'HINT' => GetMessage('CRM_LEAD_ADD_HINT')
+		];
 	}
 
 	if ($bImport && !$isInSlider)
@@ -529,10 +536,11 @@ if($arParams['TYPE'] === 'list')
 	if(count($arResult['BUTTONS']) > 1)
 	{
 		//Force start new bar after first button
-		array_splice($arResult['BUTTONS'], 1, 0, array(array('NEWBAR' => true)));
+		array_splice($arResult['BUTTONS'], 1, 0, [['NEWBAR' => true]]);
 	}
 
 	$this->IncludeComponentTemplate();
+
 	return;
 }
 

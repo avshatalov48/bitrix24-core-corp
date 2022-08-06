@@ -3,7 +3,9 @@
 namespace Bitrix\Location\Infrastructure\Service\Config;
 
 use Bitrix\Location\Entity\Source;
+use Bitrix\Location\Infrastructure\Service\DisputedAreaService;
 use Bitrix\Location\Infrastructure\Service\LoggerService;
+use Bitrix\Location\Infrastructure\Service\CurrentRegionFinderService;
 use Bitrix\Location\Infrastructure\SourceCodePicker;
 use Bitrix\Location\Repository\AddressRepository;
 use	Bitrix\Location\Exception\ErrorCodes;
@@ -62,6 +64,8 @@ class Factory implements IFactory
 
 	protected static function getServiceConfig(string $serviceType)
 	{
+		$result = [];
+
 		switch ($serviceType)
 		{
 			case LoggerService::class:
@@ -110,6 +114,10 @@ class Factory implements IFactory
 						)
 					)
 				];
+				break;
+
+			case CurrentRegionFinderService::class:
+			case DisputedAreaService::class:
 				break;
 
 			default:

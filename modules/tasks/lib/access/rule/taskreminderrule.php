@@ -21,6 +21,7 @@ class TaskReminderRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -31,6 +32,7 @@ class TaskReminderRule extends \Bitrix\Main\Access\Rule\AbstractRule
 
 		if (!$this->controller->check(ActionDictionary::ACTION_TASK_READ, $task))
 		{
+			$this->controller->addError(static::class, 'Access to read task denied');
 			return false;
 		}
 
@@ -38,6 +40,7 @@ class TaskReminderRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		{
 			if (!array_key_exists('RECEPIENT_TYPE', $reminder))
 			{
+				$this->controller->addError(static::class, 'Incorrect recipient type');
 				return false;
 			}
 			$target = $reminder['RECEPIENT_TYPE'];
@@ -60,6 +63,7 @@ class TaskReminderRule extends \Bitrix\Main\Access\Rule\AbstractRule
 				continue;
 			}
 
+			$this->controller->addError(static::class, 'Access to remind task denied');
 			return false;
 		}
 

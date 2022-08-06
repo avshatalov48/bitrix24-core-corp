@@ -530,13 +530,16 @@ $arResult['FIELDS']['tab_main'][] = array(
 	'required' => false
 );
 
-$arResult['FIELDS']['tab_main'][] = array(
-	'id' => 'ENABLE_FULL_CATALOG',
-	'name' => GetMessage('CRM_FIELD_ENABLE_FULL_CATALOG'),
-	'type' => 'checkbox',
-	'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled(),
-	'required' => false,
-);
+if (!\Bitrix\Main\Loader::includeModule('bitrix24'))
+{
+	$arResult['FIELDS']['tab_main'][] = array(
+		'id' => 'ENABLE_FULL_CATALOG',
+		'name' => GetMessage('CRM_FIELD_ENABLE_FULL_CATALOG'),
+		'type' => 'checkbox',
+		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isFullCatalogEnabled(),
+		'required' => false,
+	);
+}
 
 $arResult['FIELDS']['tab_main'][] = array(
 	'id' => 'ENABLE_USER_NAME_SORTING',

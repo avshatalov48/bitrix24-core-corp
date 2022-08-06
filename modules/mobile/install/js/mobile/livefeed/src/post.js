@@ -217,7 +217,13 @@ class Post
 
 			BXMobileApp.onCustomEvent('Livefeed::showLoader', {}, true, true);
 
-			Ajax.runAction('socialnetwork.api.livefeed.logentry.' + (newValue === 'Y' ? 'pin' : 'unpin'), {
+			const action = (
+				newValue === 'Y'
+					? 'socialnetwork.api.livefeed.logentry.pin'
+					: 'socialnetwork.api.livefeed.logentry.unpin'
+			);
+
+			Ajax.runAction(action, {
 				data: {
 					params: {
 						logId: this.logId

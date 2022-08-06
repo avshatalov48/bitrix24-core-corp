@@ -25,6 +25,8 @@ class Form extends Main\Engine\JsonController
 	// check for modify permission if set to false
 	private const EMBED_OPENLINES_SHOW_ALL = true;
 
+	private const EMBED_HELP_CENTER_ID = 13003062;
+
 	/**
 	 * List forms action.
 	 *
@@ -210,9 +212,17 @@ class Form extends Main\Engine\JsonController
 
 		$views = $formData['FORM_SETTINGS']['VIEWS'];
 		$dict = $this->getDictForEmbed();
-		$viewOptions = $this->buildViewOptions($this->getAvailableViewOptions(), $dict);
+		$viewOptions = $this->buildViewOptions(WebForm\Options::getViewOptions(), $dict);
 		$scripts = WebForm\Script::getListContext($formData, []); // embed codes
 		$pubLink = WebForm\Script::getUrlContext($formData); // public form link
+		
+		$previewLink = strtr(WebForm\Script::getPublicFormPath(), [
+			'#id#' => $formData['ID'],
+			'#form_id#' => $formData['ID'],
+			'#form_code#' => $formData['CODE'],
+			'#form_sec#' => $formData['SECURITY_CODE'],
+		]);
+		$previewLink = WebForm\Script::getDomain() . $previewLink . '?view=preview&preview=#preview#';
 
 		return [
 			'dict' => [
@@ -221,13 +231,16 @@ class Form extends Main\Engine\JsonController
 			'embed' => [
 				'scripts' => array_change_key_case($scripts, CASE_LOWER),
 				'pubLink' => $pubLink,
+				'previewLink' => $previewLink,
 				'viewValues' => array_change_key_case($views, CASE_LOWER),
 				'viewOptions' => array_change_key_case($viewOptions, CASE_LOWER),
+				'helpCenterUrl' => self::getHelpCenterUrl(self::EMBED_HELP_CENTER_ID),
+				'helpCenterId' => self::EMBED_HELP_CENTER_ID,
 			],
 		];
 	}
 
-	public function setViewOptionAction(int $formId, string $type, string $key, $value)
+	public function saveEmbedAction(int $formId, array $data)
 	{
 		if (!$this->getFormAccess(true))
 		{
@@ -235,18 +248,13 @@ class Form extends Main\Engine\JsonController
 			return ['error' => ['status' => 'access denied', 'code' => self::ERROR_CODE_FORM_WRITE_ACCESS_DENIED]];
 		}
 
-		$rules = $this->getAvailableViewOptions();
-		if (!in_array($key, $rules[$type], true))
-		{
-			$this->addError(new Main\Error('bad key/value'));
-			return [];
-		}
-		$value = filter_var($value, FILTER_SANITIZE_STRING);
-
 		$options = WebForm\Options::create($formId);
-		$data = $options->getArray();
-		$data['embedding']['views'][$type][$key] = $value;
-		$options->merge($data);
+		$aOptions = $options->getArray();
+		foreach ($data as $type => $values)
+		{
+			$aOptions['embedding']['views'][$type] = $values;
+		}
+		$options->merge($aOptions);
 		$result = $options->save();
 		$this->addErrors($result->getErrors());
 
@@ -255,9 +263,6 @@ class Form extends Main\Engine\JsonController
 
 		return [
 			'formId' => $formId,
-			'type' => $type,
-			'key' => $key,
-			'value' => $value,
 		];
 	}
 
@@ -281,6 +286,7 @@ class Form extends Main\Engine\JsonController
 		}
 
 		$form = new WebForm\Form($formId);
+		$formData = $form->get();
 		$formType = self::getFormType($form);
 
 		$widgets = $this->loadWidgetsDataForEmbed($formId, $count + 1, $formType); // +1 to check for additional widgets
@@ -292,14 +298,34 @@ class Form extends Main\Engine\JsonController
 			array_pop($widgets); // +1 to check for additional widgets
 		}
 
+		$buttonForPreview = $previewLink = null;
+		foreach ($widgets as $widget)
+		{
+			if (count($widget['relatedFormIds']))
+			{
+				$buttonForPreview = $widget['id'];
+			}
+		}
+
+		$previewLink = strtr(WebForm\Script::getPublicFormPath(), [
+			'#id#' => $formData['ID'],
+			'#form_id#' => $formData['ID'],
+			'#form_code#' => $formData['CODE'],
+			'#form_sec#' => $formData['SECURITY_CODE'],
+		]);
+		$previewLink = WebForm\Script::getDomain() . $previewLink . '?view=preview&preview=button&preview_id='.$buttonForPreview;
+
 		return [
 			'widgets' => $widgets,
 			'url' => [
 				'allWidgets' => \CCrmUrlUtil::ToAbsoluteUrl(Crm\SiteButton\Manager::getUrl()),
 			],
 			'showMoreLink' => $showMoreLink,
+			'previewLink' => $previewLink,
 			'formName' => $form->getName(),
 			'formType' => $formType,
+			'helpCenterUrl' => self::getHelpCenterUrl(self::EMBED_HELP_CENTER_ID),
+			'helpCenterId' => self::EMBED_HELP_CENTER_ID,
 		];
 	}
 
@@ -378,6 +404,7 @@ class Form extends Main\Engine\JsonController
 		);
 
 		$form = new WebForm\Form($formId);
+		$formData = $form->get();
 
 		$showMoreLink = false;
 		if (count($openlines) > $count)
@@ -388,17 +415,43 @@ class Form extends Main\Engine\JsonController
 
 		$openlines = $this->prepareOpenlinesDataForEmbed($formId, $openlines);
 
-		$openlinesUrl = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
-			? '/contact_center/openlines'
-			: '/services/contact_center/openlines';
+		$buttonForPreview = $previewLink = null;
+		foreach ($openlines as $line)
+		{
+			$buttons = Crm\SiteButton\Manager::getWidgetsByOpenlineId($line['id']);
+			/** @var Crm\SiteButton\Button $button */
+			foreach ($buttons as $button)
+			{
+				$data = $button->getData();
+				if ($data['ACTIVE'] === 'Y')
+				{
+					$buttonForPreview = $button->getId();
+					break 2;
+				}
+			}
+		}
+
+		if ($buttonForPreview)
+		{
+			$previewLink = strtr(WebForm\Script::getPublicFormPath(), [
+				'#id#' => $formData['ID'],
+				'#form_id#' => $formData['ID'],
+				'#form_code#' => $formData['CODE'],
+				'#form_sec#' => $formData['SECURITY_CODE'],
+			]);
+			$previewLink = WebForm\Script::getDomain() . $previewLink . '?view=preview&preview=ol&preview_id='.$buttonForPreview;
+		}
 
 		return [
 			'formName' => $form->getName(),
 			'lines' => $openlines,
 			'url' => [
-				'allLines' => \CCrmUrlUtil::ToAbsoluteUrl($openlinesUrl),
+				'allLines' => $this->getOpenlinesUrl(),
 			],
 			'showMoreLink' => $showMoreLink,
+			'previewLink' => $previewLink,
+			'helpCenterUrl' => self::getHelpCenterUrl(self::EMBED_HELP_CENTER_ID),
+			'helpCenterId' => self::EMBED_HELP_CENTER_ID,
 		];
 	}
 
@@ -708,7 +761,7 @@ class Form extends Main\Engine\JsonController
 			'sync' => [
 				'errors' => $syncErrors,
 				'fields' => $syncFields,
-			]
+			],
 		];
 	}
 
@@ -943,30 +996,29 @@ class Form extends Main\Engine\JsonController
 		$result = [];
 		foreach ($rules as $typeName => $typeData)
 		{
-			foreach ($typeData as $option)
-			{
-				$dictValues = $dict[$option . 's'] ?? [];
-				foreach ($dictValues as $value)
-				{
-					$result[$typeName][$option][] = $value['id'];
-				}
-			}
+			$result[$typeName] = self::buildOptionValues($typeData, $dict);
 		}
 		return $result;
 	}
 
-	/**
-	 * Form embed option rules
-	 *
-	 * @return array
-	 */
-	private function getAvailableViewOptions(): array
+	private static function buildOptionValues($data, array $dict): array
 	{
-		return [
-			'inline' => [],
-			'click' => ['type', 'position', 'vertical'],
-			'auto' => ['type', 'position', 'vertical', 'delay'],
-		];
+		$result = [];
+		foreach ($data as $key => $option)
+		{
+			if (is_array($option))
+			{
+				// TODO
+				$result[$key] = self::buildOptionValues($option, $dict[$key] ?? []);
+			}
+
+			$values = $dict[$option . 's'] ?? [];
+			foreach ($values as $value)
+			{
+				$result[$option][] = $value['id'];
+			}
+		}
+		return $result;
 	}
 
 	/**
@@ -984,6 +1036,7 @@ class Form extends Main\Engine\JsonController
 			$secondsLoc = Main\Localization\Loc::getMessage('CRM_WEBFORM_SCRIPT_SEC');
 			$dict['delays'] = array_map(
 				static function ($val) use ($secondsLoc) {
+					// FormatDate('sdiff', 0, $val)
 					return ['id' => (string)$val, 'name' => $val.' '.$secondsLoc];
 				},
 				[3,5,7,10,15,20,25,30,40,60,120]
@@ -1017,5 +1070,26 @@ class Form extends Main\Engine\JsonController
 		}
 
 		return $newData;
+	}
+
+	private function getOpenlinesUrl(): string
+	{
+		if (\Bitrix\Main\Loader::includeModule('imopenlines'))
+		{
+			return \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder();
+		}
+
+		$openlinesUrl = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			? '/contact_center'
+			: '/services/contact_center';
+		return \CCrmUrlUtil::ToAbsoluteUrl($openlinesUrl);
+	}
+
+	private static function getHelpCenterUrl(int $helpCenterId): string
+	{
+		return Main\Loader::includeModule('ui')
+			? \Bitrix\UI\Util::getArticleUrlByCode($helpCenterId)
+			: 'https://helpdesk.bitrix24.ru/open/'.$helpCenterId
+		;
 	}
 }

@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
+use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
+use Bitrix\Crm\Integrity\Volatile\FieldCategory;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -27,6 +29,14 @@ trait MultiFieldControllerMixin
 			$this->getEntityTypeID(),
 			$entityID
 		);
+
+		//region Register volatile duplicate criterion fields
+		DuplicateVolatileCriterion::register(
+			$this->getEntityTypeID(),
+			$entityID,
+			[FieldCategory::MULTI]
+		);
+		//endregion Register volatile duplicate criterion fields
 	}
 
 	/**

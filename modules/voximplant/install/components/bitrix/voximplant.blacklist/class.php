@@ -145,13 +145,9 @@ class VoximplantBlackListComponent extends \CBitrixComponent implements \Bitrix\
 				continue;
 			}
 
-			$parsedNumber = \Bitrix\Main\PhoneNumber\Parser::getInstance()->parse($number);
-			if($parsedNumber->isValid())
-			{
-				Bitrix\Voximplant\BlacklistTable::add(array(
-					"PHONE_NUMBER" => $number
-				));
-			}
+			Bitrix\Voximplant\BlacklistTable::add(array(
+				"PHONE_NUMBER" => $number
+			));
 		}
 
 		return true;

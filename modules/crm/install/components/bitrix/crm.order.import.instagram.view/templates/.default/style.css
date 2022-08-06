@@ -236,7 +236,7 @@
 	cursor: pointer;
 	border: 1px solid transparent;
 	padding: 16px 39px 13px 15px;
-	border-radius: 2px;
+	border-radius: var(--ui-space-stack-sm, 2px);
 	transition: border-color .15s linear;
 }
 

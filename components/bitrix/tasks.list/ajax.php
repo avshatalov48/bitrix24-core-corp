@@ -311,8 +311,7 @@ if (check_bitrix_sessid())
 					$taskId = (int) filter_input(INPUT_POST, 'id');
 					if (
 						$_POST['mode'] === 'close'
-						&& \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult($taskId)
-						&& !\Bitrix\Tasks\Internals\Task\Result\ResultManager::hasResult($taskId)
+						&& !\Bitrix\Tasks\Access\TaskAccessController::can(\Bitrix\Tasks\Util\User::getId(), ActionDictionary::ACTION_TASK_COMPLETE_RESULT, $taskId)
 					)
 					{
 						$jsonReply = [

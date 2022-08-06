@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Model;
 
 use Bitrix\Crm\Currency;
+use Bitrix\Crm\FieldMultiTable;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Observer\Entity\ObserverTable;
 use Bitrix\Crm\ProductRowTable;
@@ -11,6 +12,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlHelper;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\DateField;
@@ -31,12 +33,19 @@ use Bitrix\Main\Type\DateTime;
 
 /**
  * Contains descriptions for common fields in CRM ORM entities
+ * @internal This is not a part of module public API. For internal system usage only.
+ * Is not covered by backwards compatibility
  */
 final class FieldRepository
 {
+	/** @var SqlHelper */
+	private $sqlHelper;
+
 	public function __construct()
 	{
 		Container::getInstance()->getLocalization()->loadMessages();
+
+		$this->sqlHelper = Application::getConnection()->getSqlHelper();
 	}
 
 	public function getId(string $fieldName = Item::FIELD_NAME_ID): ScalarField
@@ -219,11 +228,16 @@ final class FieldRepository
 		int $entityTypeId = \CCrmOwnerType::Undefined
 	): ScalarField
 	{
+		$title = Loc::getMessage($entityTypeId === \CCrmOwnerType::Quote
+			? 'CRM_TYPE_QUOTE_FIELD_STATUS'
+			: 'CRM_TYPE_ITEM_FIELD_STAGE_ID'
+		);
+
 		return
 			(new StringField($fieldName))
 				->configureSize(50)
 				->configureDefaultValue($this->getDefaultStageIdResolver($entityTypeId))
-				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_STAGE_ID'))
+				->configureTitle($title)
 		;
 	}
 
@@ -376,13 +390,41 @@ final class FieldRepository
 		;
 	}
 
+	/**
+	 * @deprecated This field is not used anymore
+	 *
+	 * @param string $fieldName
+	 * @return ScalarField
+	 */
+	public function getAddress(string $fieldName = 'ADDRESS'): ScalarField
+	{
+		return
+			(new TextField($fieldName))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_COMMON_ADDRESS'))
+		;
+	}
+
 	public function getComments(string $fieldName = Item::FIELD_NAME_COMMENTS): ScalarField
 	{
 		return
 			(new TextField($fieldName))
 				->configureNullable()
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
+				->addSaveDataModifier($this->getHtmlNormalizer())
 		;
+	}
+
+	/**
+	 * Returns save data modifier that normalizes value for html field
+	 *
+	 * @return callable
+	 */
+	public function getHtmlNormalizer(): callable
+	{
+		return static function ($value): string {
+			return \Bitrix\Crm\Format\TextHelper::sanitizeHtml($value);
+		};
 	}
 
 	public function getBeginDate(string $fieldName = Item::FIELD_NAME_BEGIN_DATE): ScalarField
@@ -441,12 +483,38 @@ final class FieldRepository
 		;
 	}
 
+	public function getTypeId(string $fieldName = Item::FIELD_NAME_TYPE_ID, ?string $statusEntityId = null): ScalarField
+	{
+		$typeId =
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(50)
+		;
+
+		if (!empty($statusEntityId))
+		{
+			$typeId->configureDefaultValue($this->getDefaultStatusIdResolver($statusEntityId));
+		}
+
+		return $typeId;
+	}
+
+	private function getDefaultStatusIdResolver(string $statusEntityId): callable
+	{
+		return static function () use ($statusEntityId) {
+			$statusIds = StatusTable::getStatusesIds($statusEntityId);
+
+			return reset($statusIds);
+		};
+	}
+
 	public function getSourceId(string $fieldName = Item::FIELD_NAME_SOURCE_ID): ScalarField
 	{
 		return
 			(new StringField($fieldName))
 				->configureSize(50)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_ID'))
+				->configureDefaultValue($this->getDefaultStatusIdResolver(StatusTable::ENTITY_ID_SOURCE))
 		;
 	}
 
@@ -464,6 +532,7 @@ final class FieldRepository
 					->where('ref.ENTITY_ID', '=', 'SOURCE')
 				,
 			))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SOURCE_ID'))
 		;
 	}
 
@@ -492,6 +561,16 @@ final class FieldRepository
 				->configureNullable()
 				->configureSize(255)
 				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ORIGIN_ID'))
+		;
+	}
+
+	public function getOriginVersion(string $fieldName = Item::FIELD_NAME_ORIGIN_VERSION): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(255)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ORIGIN_VERSION'))
 		;
 	}
 
@@ -589,10 +668,214 @@ final class FieldRepository
 		return
 			(new ExpressionField(
 				$fieldName,
-				Application::getConnection()->getSqlHelper()->getDatetimeToDateFunction('%s'),
+				$this->sqlHelper->getDatetimeToDateFunction('%s'),
 				$buildFrom,
 			))
 				->configureValueType(DatetimeField::class)
+		;
+	}
+
+	public function getFullName(string $fieldName = Item::FIELD_NAME_FULL_NAME): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(100)
+		;
+	}
+
+	public function getName(string $fieldName = Item::FIELD_NAME_NAME): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(50)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_NAME'))
+		;
+	}
+
+	public function getSecondName(string $fieldName = Item::FIELD_NAME_SECOND_NAME): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(50)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_SECOND_NAME'))
+		;
+	}
+
+	public function getLastName(string $fieldName = Item::FIELD_NAME_LAST_NAME): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(50)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LAST_NAME'))
+		;
+	}
+
+	public function getShortName(): ExpressionField
+	{
+		return
+			(new ExpressionField(
+				'SHORT_NAME',
+				$this->sqlHelper->getConcatFunction(
+					'%s',
+					"' '",
+					'UPPER(' . $this->sqlHelper->getSubstrFunction('%s', 1, 1) . ')',
+					"'.'",
+				),
+				['LAST_NAME', 'NAME'],
+			))
+				->configureValueType(StringField::class)
+		;
+	}
+
+	public function getHonorific(string $fieldName = Item::FIELD_NAME_HONORIFIC): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(128)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_HONORIFIC'))
+		;
+	}
+
+	public function getPost(string $fieldName = Item::FIELD_NAME_POST): ScalarField
+	{
+		return
+			(new StringField($fieldName))
+				->configureNullable()
+				->configureSize(255)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_POST'))
+		;
+	}
+
+	public function getBirthdate(string $fieldName = Item::FIELD_NAME_BIRTHDATE): ScalarField
+	{
+		return
+			(new DateField($fieldName))
+				->configureNullable()
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_BIRTHDATE'))
+		;
+	}
+
+	public function getBirthdaySort(string $fieldName = Item::FIELD_NAME_BIRTHDAY_SORT): ScalarField
+	{
+		return
+			(new IntegerField($fieldName))
+				->configureRequired()
+				->configureDefaultValue(1024)
+		;
+	}
+
+	public function getHasPhone(string $fieldName = Item::FIELD_NAME_HAS_PHONE): ScalarField
+	{
+		return
+			(new BooleanField($fieldName))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(false)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_HAS_PHONE'))
+		;
+	}
+
+	public function getHasEmail(string $fieldName = Item::FIELD_NAME_HAS_EMAIL): ScalarField
+	{
+		return
+			(new BooleanField($fieldName))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(false)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_HAS_EMAIL'))
+		;
+	}
+
+	public function getHasImol(string $fieldName = Item::FIELD_NAME_HAS_IMOL): ScalarField
+	{
+		return
+			(new BooleanField($fieldName))
+				->configureRequired()
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue(false)
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_HAS_IMOL'))
+		;
+	}
+
+	public function getMultifieldValue(
+		string $fieldName,
+		int $entityTypeId,
+		string $typeId,
+		?string $valueType = null
+	): ExpressionField
+	{
+		return $this->getMultifieldValueExpression(
+			$fieldName,
+			$entityTypeId,
+			$typeId,
+			$valueType,
+		);
+	}
+
+	public function getMultifieldValueLike(
+		string $fieldName,
+		int $entityTypeId,
+		string $typeId,
+		string $valueLike
+	): ExpressionField
+	{
+		return $this->getMultifieldValueExpression(
+			$fieldName,
+			$entityTypeId,
+			$typeId,
+			null,
+			$valueLike,
+		);
+	}
+
+	private function getMultifieldValueExpression(
+		string $fieldName,
+		int $entityTypeId,
+		string $typeId,
+		?string $valueType = null,
+		?string $valueLike = null
+	): ExpressionField
+	{
+		$fmTableName = $this->sqlHelper->quote(FieldMultiTable::getTableName());
+		$entityId = $this->sqlHelper->convertToDbString(\CCrmOwnerType::ResolveName($entityTypeId));
+		$typeId = $this->sqlHelper->convertToDbString($typeId);
+
+		$sql = "SELECT FM.VALUE FROM {$fmTableName} FM WHERE FM.ENTITY_ID = {$entityId}"
+			. " AND FM.ELEMENT_ID = %s AND FM.TYPE_ID = {$typeId}"
+		;
+
+		if (!empty($valueType))
+		{
+			$sql .= ' AND FM.VALUE_TYPE = ' . $this->sqlHelper->convertToDbString($valueType);
+		}
+
+		if (!empty($valueLike))
+		{
+			$sql .= ' AND FM.VALUE LIKE ' . $this->sqlHelper->convertToDbString($valueLike);
+		}
+
+		$sql .= ' ORDER BY FM.ID';
+
+		return
+			(new ExpressionField(
+				$fieldName,
+				'(' . $this->sqlHelper->getTopSql($sql, 1) . ')',
+				['ID'],
+			))
+				->configureValueType(StringField::class)
+		;
+	}
+
+	public function getFaceId(string $fieldName = Item::FIELD_NAME_FACE_ID): ScalarField
+	{
+		return
+			(new IntegerField($fieldName))
+				->configureNullable()
 		;
 	}
 }

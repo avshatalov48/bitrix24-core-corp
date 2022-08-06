@@ -26,11 +26,15 @@ use Bitrix\Crm\WebForm\Internals\ResultEntityTable;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Activity\BindingSelector;
 use Bitrix\Crm\Integration\Channel\WebFormTracker;
+use Bitrix\Crm\Order\OrderCreator;
 use Bitrix\Main\UserConsent\Consent;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
+use Bitrix\Sale;
+use Bitrix\Sale\Delivery\Services\EmptyDeliveryService;
 use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
 use Bitrix\SalesCenter;
+use Bitrix\Sale\Shipment;
 
 Loc::loadMessages(__FILE__);
 
@@ -73,6 +77,7 @@ class ResultEntity
 	protected $quoteId = null;
 	protected $invoiceId = null;
 	protected $orderId = null;
+	protected $paymentId = null;
 	protected $dynamicTypeId = null;
 	protected $dynamicId = null;
 
@@ -339,6 +344,15 @@ class ResultEntity
 	}
 
 	/*
+	 * Return ID of order
+	 * @return int|null
+	 */
+	public function getPaymentId()
+	{
+		return $this->paymentId;
+	}
+
+	/*
 	 * Return ID of activity
 	 * @return int|null
 	 */
@@ -526,6 +540,36 @@ class ResultEntity
 			return $entityFields;
 		}
 
+		$fields = [];
+		foreach ($this->fields as $fieldEntityName => $fieldValues)
+		{
+			foreach ($fieldValues as $fieldName => $fieldValue)
+			{
+				if ($fieldName === 'FM' && is_array($fieldValue))
+				{
+					foreach ($fieldValue as $fieldMultiKey => $fieldMultiValue)
+					{
+						$fieldMultiValue = $fieldMultiValue['n0']['VALUE'] ?? '';
+						$key = "{$fieldEntityName}_{$fieldMultiKey}";
+						$key = mb_strtolower($key);
+						$fields[$key] = $fieldMultiValue;
+					}
+				}
+				elseif (!is_array($fieldValue))
+				{
+					$key = "{$fieldEntityName}_{$fieldName}";
+					$key = mb_strtolower($key);
+					$fields[$key] = $fieldValue;
+				}
+			}
+		}
+
+		$placeholders = $this->placeholders;
+		$placeholders['crm_form_id'] = $this->formId;
+		$placeholders['crm_form_name'] = $this->formData['NAME'];
+		$placeholders['crm_result_id'] = $this->resultId;
+		$placeholders += $fields;
+
 		foreach($this->presetFields as $presetField)
 		{
 			if($presetField['ENTITY_NAME'] != $entityName)
@@ -534,10 +578,6 @@ class ResultEntity
 			}
 
 			$value = $presetField['VALUE'];
-			$placeholders = $this->placeholders;
-			$placeholders['crm_form_id'] = $this->formId;
-			$placeholders['crm_form_name'] = $this->formData['NAME'];
-			$placeholders['crm_result_id'] = $this->resultId;
 			$fromList = $toList = array();
 			foreach ($placeholders as $key => $val)
 			{
@@ -968,6 +1008,21 @@ class ResultEntity
 			return;
 		}
 
+		// if created automatically - fill it!
+		if ($this->dealId)
+		{
+			$orderId = OrderCreator::getCreatedOrderId((int)$this->dealId);
+			if ($orderId)
+			{
+				$order = Crm\Order\Order::load($orderId);
+				if ($order)
+				{
+					$this->fillOrderPaymentsAndDeliveries($order, $formData);
+					return;
+				}
+			}
+		}
+
 		$builder = SalesCenter\Builder\Manager::getBuilder();
 		try
 		{
@@ -978,11 +1033,14 @@ class ResultEntity
 			return;
 		}
 
+		/** @var Crm\Order\Order $order */
 		$order = $builder->getOrder();
 		if (!$order)
 		{
 			return;
 		}
+
+		$payment = $this->findNewPayment($order);
 
 		$r = $order->save();
 		if (!$r->isSuccess())
@@ -991,6 +1049,10 @@ class ResultEntity
 		}
 
 		$this->orderId = $order->getId();
+		if ($payment)
+		{
+			$this->paymentId = $payment->getId();
+		}
 
 		$this->resultEntityPack[] = [
 			'RESULT_ID' => $this->resultId,
@@ -999,6 +1061,87 @@ class ResultEntity
 			'IS_DUPLICATE' => false,
 			'IS_AUTOMATION_RUN' => false,
 		];
+	}
+
+	/**
+	 * Create if not exists payments and deliveries.
+	 *
+	 * @param Crm\Order\Order $order
+	 * @param array $formData
+	 *
+	 * @return void
+	 */
+	private function fillOrderPaymentsAndDeliveries(Crm\Order\Order $order, array $formData): void
+	{
+		$paymentCollection = $order->getPaymentCollection();
+		$payment = $paymentCollection->current();
+		if (!$payment)
+		{
+			$innerPaySystem = Sale\PaySystem\Manager::getObjectById(
+				Sale\PaySystem\Manager::getInnerPaySystemId()
+			);
+			$payment = $paymentCollection->createItem($innerPaySystem);
+			$payment->setField('SUM', $order->getPrice());
+		}
+
+		$shipmentCollection = $order->getShipmentCollection();
+		$shipment = $shipmentCollection->getNotSystemItems()->current();
+		if (!$shipment)
+		{
+			$delivery = Sale\Delivery\Services\Manager::getObjectById(
+				$formData['SHIPMENT']['DELIVERY_ID'] ?? EmptyDeliveryService::getEmptyDeliveryServiceId()
+			);
+
+			/**
+			 * @var Shipment $shipment
+			 */
+			$shipment = $shipmentCollection->createItem($delivery);
+			$shipment->setField('ALLOW_DELIVERY', 'Y');
+
+			$shipmentItems = $shipment->getShipmentItemCollection();
+			foreach ($order->getBasket() as $basketItem)
+			{
+				$shipmentItem = $shipmentItems->createItem($basketItem);
+				$shipmentItem->setQuantity($basketItem->getQuantity());
+			}
+		}
+
+		if ($order->isChanged())
+		{
+			$result = $order->save();
+			if (!$result->isSuccess())
+			{
+				return;
+			}
+		}
+
+		$this->orderId = $order->getId();
+		$this->paymentId = $payment->getId();
+
+		$this->resultEntityPack[] = [
+			'RESULT_ID' => $this->resultId,
+			'ENTITY_NAME' => \CCrmOwnerType::OrderName,
+			'ITEM_ID' => $this->orderId,
+			'IS_DUPLICATE' => false,
+			'IS_AUTOMATION_RUN' => false,
+		];
+	}
+
+	/**
+	 * @param Crm\Order\Order $order
+	 * @return Crm\Order\Payment|null
+	 */
+	private function findNewPayment(Crm\Order\Order $order): ?Crm\Order\Payment
+	{
+		foreach ($order->getPaymentCollection() as $payment)
+		{
+			if ($payment->getId() === 0)
+			{
+				return $payment;
+			}
+		}
+
+		return null;
 	}
 
 	protected function getDataForOrderBuilder()

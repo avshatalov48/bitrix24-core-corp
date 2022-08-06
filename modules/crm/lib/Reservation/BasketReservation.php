@@ -29,7 +29,10 @@ class BasketReservation
 	{
 		foreach ($products as $product)
 		{
-			$this->addProduct($product);
+			if (is_array($product))
+			{
+				$this->addProduct($product);
+			}
 		}
 	}
 
@@ -54,9 +57,9 @@ class BasketReservation
 				if ($productRowId)
 				{
 					$result[$productRowId] = [
-						'RESERVE_ID' => $basketReservation['ID'],
-						'STORE_ID' => $basketReservation['STORE_ID'],
-						'RESERVE_QUANTITY' => $basketReservation['QUANTITY'],
+						'RESERVE_ID' => (int)$basketReservation['ID'],
+						'STORE_ID' => (int)$basketReservation['STORE_ID'],
+						'RESERVE_QUANTITY' => (float)$basketReservation['QUANTITY'],
 					];
 					if ($basketReservation['DATE_RESERVE_END'] instanceof Main\Type\Date)
 					{

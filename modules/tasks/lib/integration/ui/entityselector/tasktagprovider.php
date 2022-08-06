@@ -27,6 +27,7 @@ class TaskTagProvider extends BaseProvider
 		parent::__construct();
 
 		$this->options['taskId'] = $options['taskId'];
+		$this->options['groupId'] = $options['groupId'];
 	}
 
 	public function isAvailable(): bool
@@ -36,7 +37,18 @@ class TaskTagProvider extends BaseProvider
 
 	public function getItems(array $ids): array
 	{
-		return [];
+		return array_map(
+			static function ($tag) {
+				return new Item([
+					'id' => $tag,
+					'entityId' => self::$entityId,
+					'title' => $tag,
+					'selected' => false,
+					'tabs' => ['all'],
+				]);
+			},
+			$ids
+		);
 	}
 
 	public function getSelectedItems(array $ids): array
@@ -73,6 +85,10 @@ class TaskTagProvider extends BaseProvider
 		if ($options['selected'])
 		{
 			$query->where('TASK_ID', $options['taskId']);
+		}
+		else if ($options['groupContext'])
+		{
+			$query->where('TASK.GROUP_ID', $options['groupId']);
 		}
 		else
 		{
@@ -136,6 +152,8 @@ class TaskTagProvider extends BaseProvider
 
 	public function fillDialog(Dialog $dialog): void
 	{
+		$options = $this->getOptions();
+
 		$dialog->addTab(
 			new Tab([
 				'id' => 'all',
@@ -144,20 +162,33 @@ class TaskTagProvider extends BaseProvider
 			])
 		);
 
-		$dialog->addItems(
-			$this->getTagItems(['selected' => true])
-		);
+		$dialog->addItems($this->getTagItems(['selected' => true]));
 
-		if ($dialog->getItemCollection()->count() < self::$maxCount)
+		if ($options['groupId'])
 		{
-			$this->fillWithRecentTags($dialog);
+			$recentItems = $dialog->getRecentItems()->getAll();
+			$this->fillWithRecentTags($dialog, $recentItems);
+
+			$dialog->addItems($this->getTagItems(['groupContext' => true]));
+
+			if ($dialog->getItemCollection()->count() < self::$maxCount)
+			{
+				$globalRecentItems = $dialog->getGlobalRecentItems()->getAll();
+				$this->fillWithRecentTags($dialog, $globalRecentItems);
+			}
+		}
+		else
+		{
+			if ($dialog->getItemCollection()->count() < self::$maxCount)
+			{
+				$recentItems = $dialog->getRecentItems()->getAll();
+				$this->fillWithRecentTags($dialog, $recentItems);
+			}
 		}
 
 		if ($dialog->getItemCollection()->count() < self::$maxCount)
 		{
-			$dialog->addItems(
-				$this->getTagItems(['excludeSelected' => true])
-			);
+			$dialog->addItems($this->getTagItems(['excludeSelected' => true]));
 		}
 	}
 
@@ -166,9 +197,8 @@ class TaskTagProvider extends BaseProvider
 
 	}
 
-	private function fillWithRecentTags(Dialog $dialog): void
+	private function fillWithRecentTags(Dialog $dialog, array $recentItems): void
 	{
-		$recentItems = $dialog->getRecentItems()->getAll();
 		foreach ($recentItems as $item)
 		{
 			/** @var RecentItem $item */

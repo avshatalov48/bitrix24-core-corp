@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","RecentRenderer"],"mappings":"AAMAA,GAAGC,OAAO,6BAA6B,CAACC,EAASC,EAASC,KAEzD,MAAMC,eAAEA,GAAmBL,GAAGE,QAAQ,oCAEtCE,EAAOD,QAAU,CAChBE,eAAAA","file":"extension.map.js"}

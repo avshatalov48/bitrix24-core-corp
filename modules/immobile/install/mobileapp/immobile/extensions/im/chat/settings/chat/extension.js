@@ -40,7 +40,8 @@
 				quoteFromRight: Application.getApiVersion() < 31,
 				historyShow: true,
 				autoplayVideo: ChatPerformance.isAutoPlayVideoSupported(),
-				backgroundType: SettingsChat.BackgroundType.lightGray
+				backgroundType: SettingsChat.BackgroundType.lightGray,
+				nativeDialogEnable: false,
 			});
 
 			const backgroundItems = [];
@@ -61,6 +62,14 @@
 				])
 			}
 
+			let nativeDialogOption = null;
+			if (Application.getPlatform() === 'ios' && Application.getApiVersion() >= 43 && Application.isBeta())
+			{
+				nativeDialogOption = FormSection.create('nativeDialog', BX.message("SE_CHAT_NATIVE_DIALOG_TITLE")).addItems([
+					FormItem.create("nativeDialogEnable", FormItemType.SWITCH, BX.message("SE_CHAT_NATIVE_DIALOG_ENABLE_TITLE")).setValue(this.values.nativeDialogEnable),
+				]);
+			}
+
 			return Form.create(this.providerId, this.providerTitle).addSections([
 				FormSection.create("history", BX.message("SE_CHAT_HISTORY_TITLE")).addItems([
 					FormItem.create("historyShow", FormItemType.SWITCH, BX.message("SE_CHAT_HISTORY_SHOW_TITLE")).setValue(this.values.historyShow),
@@ -72,6 +81,7 @@
 				FormSection.create("background", BX.message("SE_CHAT_BACKGROUND_TITLE"), BX.message('SE_CHAT_DESC')).addItems([
 					FormItem.create("backgroundType", FormItemType.SELECTOR, BX.message("SE_CHAT_BACKGROUND_COLOR_TITLE")).setSelectorItems(backgroundItems).setValue(this.values.backgroundType),
 				]),
+				nativeDialogOption,
 			]);
 		}
 

@@ -139,7 +139,8 @@ else
 				'PATH_TO_LEAD_MERGE' => $arResult['PATH_TO_LEAD_MERGE'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

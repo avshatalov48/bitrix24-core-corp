@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","Logger","MessengerLogger"],"mappings":"AAGAA,GAAGC,OAAO,2BAA2B,CAACC,EAASC,EAASC,KAEvD,MAAMC,OAAEA,GAAWL,GAAGE,QAAQ,gBAK9B,MAAMI,UAAwBD,GAK9BD,EAAOD,QAAU,CAChBE,OAAQ,IAAIC","file":"extension.map.js"}

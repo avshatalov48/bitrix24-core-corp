@@ -609,6 +609,7 @@
 .crm-entity-total-wrapper {
 	padding: 20px;
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-entity-total-discounts {
@@ -783,6 +784,7 @@
 	-webkit-box-pack: justify;
 	    -ms-flex-pack: justify;
 	        justify-content: space-between;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-entity-product-list-add-block .ui-btn + .ui-btn {
@@ -791,6 +793,15 @@
 
 .crm-entity-product-list-add-block-bottom {
 	margin-top: 4px;
+}
+
+.crm-entity-product-list-add-block-top.crm-entity-product-list-add-block-active ~ .crm-entity-total-wrapper {
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
+}
+
+.crm-entity-product-list-add-block-top.crm-entity-product-list-add-block-active ~ .main-grid {
+	--main-grid-bottom-border-radius: 0;
 }
 
 .crm-entity-product-list-add-block-hidden {
@@ -897,6 +908,14 @@ select.crm-entity-product-control-select-field:hover {
 	cursor: pointer;
 	padding-left: 13px;
 	padding-top: 5px;
+}
+
+.main-grid-cell-head-locked {
+	cursor: pointer;
+}
+
+.main-grid-cell-head-locked:hover {
+	background-color: #f6f8f9;
 }
 
 .crm-entity-product-list-locked-field {
@@ -1038,3 +1057,15 @@ select.crm-entity-product-control-select-field:hover {
 	padding-left: 5px
 }
 
+
+.store-available-popup-container
+{
+	padding: 20px;
+}
+.store-available-popup-link,
+.store-available-popup-reserves-slider-link
+{
+	border-bottom: 1px dashed #2067b0;
+	cursor: pointer;
+	text-decoration: none !important;
+}

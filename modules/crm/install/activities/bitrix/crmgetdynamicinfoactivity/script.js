@@ -1,4 +1,4 @@
-(function (exports,main_core) {
+(function (exports,main_core,bizproc_automation) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
@@ -11,6 +11,11 @@
 	      this.documentType = options.documentType;
 	      this.isRobot = options.isRobot;
 	      var form = document.forms[options.formName];
+	      this.document = new bizproc_automation.Document({
+	        rawDocumentType: this.documentType,
+	        documentFields: options.returnFieldsMap,
+	        title: options.documentName
+	      });
 
 	      if (!main_core.Type.isNil(form)) {
 	        this.entityTypeIdSelect = form.dynamic_type_id;
@@ -37,14 +42,7 @@
 
 	        return [Number(entityTypeId), fieldsMap];
 	      }));
-
-	      if (!main_core.Type.isNil(options.documentName)) {
-	        BX.Bizproc.Automation.API.documentName = options.documentName;
-	      }
-
-	      if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup) {
-	        this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup(options.conditions);
-	      }
+	      this.conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
 	    }
 	  }, {
 	    key: "initReturnFields",
@@ -64,6 +62,17 @@
 	      });
 	    }
 	  }, {
+	    key: "initAutomationContext",
+	    value: function initAutomationContext() {
+	      try {
+	        bizproc_automation.getGlobalContext();
+	      } catch (error) {
+	        bizproc_automation.setGlobalContext(new bizproc_automation.AutomationContext({
+	          document: this.document
+	        }));
+	      }
+	    }
+	  }, {
 	    key: "init",
 	    value: function init() {
 	      if (this.entityTypeIdSelect) {
@@ -74,11 +83,7 @@
 	    key: "onEntityTypeIdChange",
 	    value: function onEntityTypeIdChange() {
 	      this.currentEntityTypeId = Number(this.entityTypeIdSelect.value);
-
-	      if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup) {
-	        this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup();
-	      }
-
+	      this.conditionGroup = new bizproc_automation.ConditionGroup();
 	      this.returnFieldsIds = [];
 	      this.render();
 	    }
@@ -101,7 +106,7 @@
 	    key: "renderFilterFields",
 	    value: function renderFilterFields() {
 	      if (!main_core.Type.isNil(this.conditionGroup) && this.currentEntityTypeId !== 0) {
-	        var selector = new BX.Bizproc.Automation.ConditionGroupSelector(this.conditionGroup, {
+	        var selector = new bizproc_automation.ConditionGroupSelector(this.conditionGroup, {
 	          fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 	          fieldPrefix: this.filteringFieldsPrefix
 	        });
@@ -131,5 +136,5 @@
 
 	namespace.CrmGetDynamicInfoActivity = CrmGetDynamicInfoActivity;
 
-}((this.window = this.window || {}),BX));
+}((this.window = this.window || {}),BX,BX.Bizproc));
 //# sourceMappingURL=script.js.map

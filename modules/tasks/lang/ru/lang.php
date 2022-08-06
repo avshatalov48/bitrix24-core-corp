@@ -38,3 +38,8 @@ $MESS['TASKS_IS_LINKED_END_DATE_PLAN_REMOVE'] = 'Невозможно удали
 $MESS['TASKS_DESCRIPTION_IN_BBCODE_NO_NOT_ALLOWED'] = 'Создание новых задач с описанием в HTML формате запрещено';
 $MESS['TASKS_IS_LINKED_SET_PARENT'] = 'Невозможно назначить родительскую задачу: задача имеет зависимость от данной задачи';
 $MESS['TASKS_INCORRECT_STATUS'] = 'Некорректный статус';
+
+$MESS["TASKS_TEMPLATE_MEMBER_CONVERT_TITLE"] = "Подождите немного,#BR#шаблоны скоро появятся";
+$MESS["TASKS_TEMPLATE_MEMBER_CONVERT"] = "Прямо сейчас мы обновляем шаблоны, чтобы они стали ещё удобнее. Вы можете продолжить работу в других разделах Битрикс24 и вернуться чуть позже, обновление не займёт много времени";
+
+$MESS['TASKS_RIGHTS_MORE_LINK'] = 'Подробнее о правах доступа.';

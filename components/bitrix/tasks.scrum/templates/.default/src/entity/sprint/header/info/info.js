@@ -1,6 +1,5 @@
 import {Tag} from 'main.core';
-import {BaseEvent} from 'main.core.events';
-import {EventEmitter} from 'main.core.events';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {Sprint} from '../../sprint';
 

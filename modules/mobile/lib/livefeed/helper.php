@@ -15,7 +15,7 @@ use Bitrix\Main\IO;
 
 class Helper
 {
-	public static function getBlogPostFullData(array $params = [])
+	public static function getBlogPostFullData(array $params = []): array
 	{
 		global $USER, $USER_FIELD_MANAGER;
 
@@ -30,9 +30,9 @@ class Helper
 			return $result;
 		}
 
-		$postId = (isset($params['postId']) ? (int)$params['postId'] : 0);
-		$siteId = (isset($params['siteId']) ? $params['siteId'] : SITE_ID);
-		$nameTemplate = (isset($params['nameTemplate']) ? $params['nameTemplate'] : \CSite::getNameFormat(false, $siteId));
+		$postId = (int)($params['postId'] ?? 0);
+		$siteId = ($params['siteId'] ?? SITE_ID);
+		$nameTemplate = ($params['nameTemplate'] ?? \CSite::getNameFormat(false, $siteId));
 		$showLogin = (isset($params['showLogin']) && $params['showLogin'] === 'Y');
 		$htmlEncode = (!isset($params['htmlEncode']) || $params['htmlEncode'] !== 'N');
 		$previewImageSize = (isset($params['previewImageSize']) && (int)$params['previewImageSize'] > 0 ? (int)$params['previewImageSize'] : 144);
@@ -100,13 +100,13 @@ class Helper
 
 		if (count($destinationsAvailable) > 1) // not only author, so delete author
 		{
-			foreach($destinationsAvailable as $key => $destination)
+			foreach ($destinationsAvailable as $key => $destination)
 			{
 				if (
 					!empty($destination['TYPE'])
 					&& $destination['TYPE'] === 'U'
 					&& !empty($destination['ID'])
-					&& $destination['ID'] == $blogPostFields['AUTHOR_ID']
+					&& (int)$destination['ID'] === (int)$blogPostFields['AUTHOR_ID']
 				)
 				{
 					unset($destinationsAvailable[$key]);
@@ -116,7 +116,7 @@ class Helper
 		}
 
 		$destinationCodesList = [];
-		foreach($destinationsAvailable as $key => $destination)
+		foreach($destinationsAvailable as $destination)
 		{
 			if (
 				!empty($destination['TYPE'])
@@ -130,7 +130,7 @@ class Helper
 		$result['PostDestination'] = [];
 		$result['PostDestinationHidden'] = [];
 
-		foreach($destinationsAll as $key => $destination)
+		foreach ($destinationsAll as $destination)
 		{
 			if (
 				!empty($destination['TYPE'])
@@ -138,7 +138,7 @@ class Helper
 			)
 			{
 				$destCode = $destination['TYPE'].$destination['ID'];
-				if (in_array($destCode, $destinationCodesList))
+				if (in_array($destCode, $destinationCodesList, true))
 				{
 					$result['PostDestination'][] = $destination;
 				}
@@ -176,7 +176,7 @@ class Helper
 			'PREVIEW_IMAGE_SIZE' => $previewImageSize
 		]);
 
-		$result['PostBackgroundCode'] = (isset($blogPostFields['BACKGROUND_CODE']) ? $blogPostFields['BACKGROUND_CODE'] : '');
+		$result['PostBackgroundCode'] = ($blogPostFields['BACKGROUND_CODE'] ?? '');
 
 		if ($getAdditionalData)
 		{
@@ -194,8 +194,7 @@ class Helper
 
 			$result['PostGratitudeData'] = [];
 			if (
-				isset($blogPostUserFields['UF_GRATITUDE'])
-				&& isset($blogPostUserFields['UF_GRATITUDE']['VALUE'])
+				isset($blogPostUserFields['UF_GRATITUDE']['VALUE'])
 				&& (int)$blogPostUserFields['UF_GRATITUDE']['VALUE'] > 0
 				&& Loader::includeModule('iblock')
 			)
@@ -211,7 +210,7 @@ class Helper
 						'runtime' => [
 							new ReferenceField(
 								'PROPERTY',
-								'\Bitrix\Iblock\PropertyTable',
+								\Bitrix\Iblock\PropertyTable::class,
 								[ '=this.IBLOCK_PROPERTY_ID' => 'ref.ID' ],
 								[ 'join_type' => 'INNER' ]
 							)
@@ -256,7 +255,9 @@ class Helper
 						$userData = [];
 						$res = UserTable::getList([
 							'filter' => [
-								'=ID' => array_map(function($item) { return $item['id']; }, $result['PostGratitudeData']['employees'])
+								'=ID' => array_map(static function($item) {
+									return $item['id'];
+								}, $result['PostGratitudeData']['employees'])
 							],
 							'select' => [ 'ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'WORK_POSITION', 'PERSONAL_PHOTO', 'PERSONAL_GENDER' ]
 						]);
@@ -313,36 +314,31 @@ class Helper
 
 			$result['PostVoteData'] = [];
 			if (
-				isset($blogPostUserFields['UF_BLOG_POST_VOTE'])
-				&& isset($blogPostUserFields['UF_BLOG_POST_VOTE']['VALUE'])
+				isset($blogPostUserFields['UF_BLOG_POST_VOTE']['VALUE'])
 				&& (int)$blogPostUserFields['UF_BLOG_POST_VOTE']['VALUE'] > 0
 				&& Loader::includeModule('vote')
+				&& ($userFieldManager = \Bitrix\Vote\Uf\Manager::getInstance($blogPostUserFields['UF_BLOG_POST_VOTE']))
+				&& ($attach = $userFieldManager->loadFromAttachId((int)$blogPostUserFields['UF_BLOG_POST_VOTE']['VALUE']))
 			)
 			{
-				if (
-					($userFieldManager = \Bitrix\Vote\Uf\Manager::getInstance($blogPostUserFields['UF_BLOG_POST_VOTE']))
-					&& ($attach = $userFieldManager->loadFromAttachId((int)$blogPostUserFields['UF_BLOG_POST_VOTE']['VALUE']))
-				)
+				$result['PostVoteData']['questions'] = [];
+
+				foreach ($attach['QUESTIONS'] as $question)
 				{
-					$result['PostVoteData']['questions'] = [];
+					$answers = [];
 
-					foreach ($attach['QUESTIONS'] as $question)
+					foreach ($question['ANSWERS'] as $answer)
 					{
-						$answers = [];
-
-						foreach ($question['ANSWERS'] as $answer)
-						{
-							$answers[] = [
-								'value' => $answer['MESSAGE']
-							];
-						}
-
-						$result['PostVoteData']['questions'][] = [
-							'value' => $question['QUESTION'],
-							'allowMultiSelect' => ($question['FIELD_TYPE'] === '1' ? 'Y' : 'N'),
-							'answers' => $answers
+						$answers[] = [
+							'value' => $answer['MESSAGE']
 						];
 					}
+
+					$result['PostVoteData']['questions'][] = [
+						'value' => $question['QUESTION'],
+						'allowMultiSelect' => ($question['FIELD_TYPE'] === '1' ? 'Y' : 'N'),
+						'answers' => $answers
+					];
 				}
 			}
 		}
@@ -350,12 +346,12 @@ class Helper
 		return $result;
 	}
 
-	public static function getSiteName()
+	public static function getSiteName(): string
 	{
 		return (Context::getCurrent()->getRequest()->isHttps() ? 'https' : 'http') . '://' . ((defined("SITE_SERVER_NAME") && strlen(SITE_SERVER_NAME) > 0) ? SITE_SERVER_NAME : Option::get('main', 'server_name', $_SERVER['SERVER_NAME']));
 	}
 
-	public static function getMedalsData()
+	public static function getMedalsData(): array
 	{
 		$result = [];
 
@@ -416,7 +412,7 @@ class Helper
 		return $result;
 	}
 
-	public static function getBackgroundData()
+	public static function getBackgroundData(): array
 	{
 		$result = [];
 
@@ -466,12 +462,12 @@ class Helper
 
 			if (preg_match_all("#\\[disk file id=(n\\d+)\\]#is" . BX_UTF_PCRE_MODIFIER, $text, $matches))
 			{
-				$commentObjectId = array_map(function($a) { return intval(mb_substr($a, 1)); }, $matches[1]);
+				$commentObjectId = array_map(static function($a) { return (int)mb_substr($a, 1); }, $matches[1]);
 			}
 
 			if (preg_match_all("#\\[disk file id=(\\d+)\\]#is" . BX_UTF_PCRE_MODIFIER, $text, $matches))
 			{
-				$commentAttachedObjectId = array_map(function($a) { return intval($a); }, $matches[1]);
+				$commentAttachedObjectId = array_map(static function($a) { return (int)$a; }, $matches[1]);
 			}
 
 			if (

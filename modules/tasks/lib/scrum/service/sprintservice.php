@@ -14,6 +14,7 @@ use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
 use Bitrix\Tasks\Scrum\Internal\EntityTable;
 use Bitrix\Tasks\Scrum\Utility\SprintRanges;
+use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Scrum\Utility\TimeHelper;
 use Bitrix\Tasks\Util;
 
@@ -25,11 +26,8 @@ class SprintService implements Errorable
 	const ERROR_COULD_NOT_REMOVE_SPRINT = 'TASKS_SS_04';
 	const ERROR_COULD_NOT_START_SPRINT = 'TASKS_SS_05';
 	const ERROR_COULD_NOT_COMPLETE_SPRINT = 'TASKS_SS_06';
-	const ERROR_COULD_NOT_READ_ACTIVE_SPRINT = 'TASKS_SS_07';
 	const ERROR_COULD_NOT_CHANGE_SORT = 'TASKS_SS_09';
 	const ERROR_COULD_NOT_READ_SPRINT_BY_GROUP = 'TASKS_SS_10';
-	const ERROR_COULD_NOT_READ_COMPLETED_SPRINTS = 'TASKS_SS_11';
-	const ERROR_COULD_NOT_READ_UNCOMPLETED_SPRINTS = 'TASKS_SS_12';
 	const ERROR_COULD_NOT_READ_PLANNED_SPRINTS = 'TASKS_SS_13';
 	const ERROR_COULD_NOT_READ_LAST_COMPLETED_SPRINT = 'TASKS_SS_14';
 	const ERROR_COULD_NOT_READ_SPRINT_BY_ID = 'TASKS_SS_15';
@@ -168,7 +166,7 @@ class SprintService implements Errorable
 			}
 			$completedTaskIds = array_merge($completedTaskIds, $completedSubTaskIds);
 
-			$itemIds = $itemService->getItemIdsBySourceIds($completedTaskIds, $sprint->getId());
+			$itemIds = $itemService->getItemIdsBySourceIds($completedTaskIds, [$sprint->getId()]);
 			if (!$itemService->getErrors())
 			{
 				$itemService->moveItemsToEntity($itemIds, $backlog->getId(), $pushService);
@@ -352,7 +350,7 @@ class SprintService implements Errorable
 				}
 			}
 
-			$itemIds = $itemService->getItemIdsBySourceIds($unFinishedTaskIds, $sprint->getId());
+			$itemIds = $itemService->getItemIdsBySourceIds($unFinishedTaskIds, [$sprint->getId()]);
 
 			if (!$itemService->getErrors() && !$this->getErrors())
 			{
@@ -377,6 +375,8 @@ class SprintService implements Errorable
 			{
 				$this->setErrors($result, self::ERROR_COULD_NOT_COMPLETE_SPRINT);
 			}
+
+			(new CacheService($sprint->getGroupId(), CacheService::STATS))->clean();
 		}
 		catch (\Exception $exception)
 		{
@@ -392,41 +392,21 @@ class SprintService implements Errorable
 	 * Gets active sprint by group id.
 	 *
 	 * @param int $groupId Group id.
-	 * @param ItemService|null $itemService Item Service.
-	 * @param array $filteredSourceIds If you need to get filtered items.
 	 * @return EntityForm
 	 */
-	public function getActiveSprintByGroupId(
-		int $groupId,
-		ItemService $itemService = null,
-		array $filteredSourceIds = []
-	): EntityForm
+	public function getActiveSprintByGroupId(int $groupId): EntityForm
 	{
 		$sprint = new EntityForm();
 
-		try
+		$queryObject = EntityTable::getList([
+			'filter' => [
+				'GROUP_ID' => (int) $groupId,
+				'=STATUS' => EntityForm::SPRINT_ACTIVE
+			],
+		]);
+		if ($sprintData = $queryObject->fetch())
 		{
-			$queryObject = EntityTable::getList([
-				'filter' => [
-					'GROUP_ID' => (int) $groupId,
-					'=STATUS' => EntityForm::SPRINT_ACTIVE
-				],
-			]);
-			if ($sprintData = $queryObject->fetch())
-			{
-				$sprint->fillFromDatabase($sprintData);
-
-				if ($itemService)
-				{
-					$sprint->setChildren($itemService->getHierarchyChildItems($sprint, null, $filteredSourceIds));
-				}
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_ACTIVE_SPRINT)
-			);
+			$sprint->fillFromDatabase($sprintData);
 		}
 
 		return $sprint;
@@ -473,120 +453,76 @@ class SprintService implements Errorable
 		return $sprints;
 	}
 
-	public function getUncompletedSprints(
-		int $groupId,
-		PageNavigation $itemNav = null,
-		ItemService $itemService = null,
-		array $filteredSourceIds = []
-	): array
+	public function getUncompletedSprints(int $groupId): array
 	{
 		$sprints = [];
 
-		try
+		$queryObject = EntityTable::getList([
+			'filter' => [
+				'GROUP_ID'=> $groupId,
+				'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
+				'!=STATUS' => EntityForm::SPRINT_COMPLETED,
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'DATE_END' => 'DESC',
+			]
+		]);
+		while ($sprintData = $queryObject->fetch())
 		{
-			$queryObject = EntityTable::getList([
-				'filter' => [
-					'GROUP_ID'=> $groupId,
-					'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
-					'!=STATUS' => EntityForm::SPRINT_COMPLETED,
-				],
-				'order' => [
-					'SORT' => 'ASC',
-					'DATE_END' => 'DESC',
-				]
-			]);
-			while ($sprintData = $queryObject->fetch())
-			{
-				$sprint = new EntityForm();
+			$sprint = new EntityForm();
 
-				$sprint->fillFromDatabase($sprintData);
+			$sprint->fillFromDatabase($sprintData);
 
-				if ($itemService)
-				{
-					$sprint->setChildren(
-						$itemService->getHierarchyChildItems($sprint, $itemNav, $filteredSourceIds)
-					);
-				}
-
-				$sprints[] = $sprint;
-			}
-		}
-		catch (\Exception $exception)
-		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_UNCOMPLETED_SPRINTS)
-			);
+			$sprints[] = $sprint;
 		}
 
 		return $sprints;
 	}
 
-	public function getCompletedSprints(
-		int $groupId,
-		PageNavigation $sprintNav = null,
-		ItemService $itemService = null,
-		$filterInstance = null
-	): array
+	public function getCompletedSprints(int $groupId, PageNavigation $sprintNav = null): array
 	{
 		$sprints = [];
 
-		try
+		$query = new Query(EntityTable::getEntity());
+
+		$query->setSelect(['*']);
+		$query->setFilter([
+			'GROUP_ID'=> $groupId,
+			'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
+			'=STATUS' => EntityForm::SPRINT_COMPLETED,
+		]);
+		$query->setOrder([
+			'DATE_END' => 'DESC',
+		]);
+
+		if ($sprintNav)
 		{
-			$query = new Query(EntityTable::getEntity());
-
-			$query->setSelect(['*']);
-			$query->setFilter([
-				'GROUP_ID'=> $groupId,
-				'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
-				'=STATUS' => EntityForm::SPRINT_COMPLETED,
-			]);
-			$query->setOrder([
-				'DATE_END' => 'DESC',
-			]);
-
-			$skipNavigation = ($filterInstance && $filterInstance->isSearchFieldApplied());
-
-			if ($sprintNav && !$skipNavigation)
-			{
-				$query->setOffset($sprintNav->getOffset());
-				$query->setLimit($sprintNav->getLimit() + 1);
-			}
-
-			$queryObject = $query->exec();
-
-			$n = 0;
-			while ($sprintData = $queryObject->fetch())
-			{
-				$n++;
-				if ($sprintNav && !$skipNavigation && ($n > $sprintNav->getPageSize()))
-				{
-					break;
-				}
-
-				$sprint = new EntityForm();
-
-				$sprint->fillFromDatabase($sprintData);
-
-				$shouldGetItems = (!$filterInstance || $filterInstance->isSearchFieldApplied());
-
-				if ($itemService && $shouldGetItems)
-				{
-					$sprint->setChildren($itemService->getHierarchyChildItems($sprint));
-				}
-
-				$sprints[] = $sprint;
-			}
-
-			if ($sprintNav)
-			{
-				$sprintNav->setRecordCount($sprintNav->getOffset() + $n);
-			}
+			$query->setOffset($sprintNav->getOffset());
+			$query->setLimit($sprintNav->getLimit() + 1);
 		}
-		catch (\Exception $exception)
+
+		$queryObject = $query->exec();
+
+		$n = 0;
+		while ($sprintData = $queryObject->fetch())
 		{
-			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_COMPLETED_SPRINTS)
-			);
+			$n++;
+			if ($sprintNav && ($n > $sprintNav->getPageSize()))
+			{
+				break;
+			}
+
+			$sprint = new EntityForm();
+
+			$sprint->fillFromDatabase($sprintData);
+
+			$sprints[] = $sprint;
+		}
+
+		if ($sprintNav)
+		{
+			$sprintNav->setRecordCount($sprintNav->getOffset() + $n);
 		}
 
 		return $sprints;
@@ -689,7 +625,10 @@ class SprintService implements Errorable
 		catch (\Exception $exception)
 		{
 			$this->errorCollection->setError(
-				new Error($exception->getMessage(), self::ERROR_COULD_NOT_READ_SPRINT_BY_ID)
+				new Error(
+					$exception->getMessage(),
+					self::ERROR_COULD_NOT_READ_SPRINT_BY_ID
+				)
 			);
 		}
 
@@ -771,6 +710,11 @@ class SprintService implements Errorable
 	{
 		$finishedTaskIds = $kanbanService->getFinishedTaskIdsInSprint($sprint->getId());
 
+		if (empty($finishedTaskIds))
+		{
+			return 0;
+		}
+
 		return $itemService->getSumStoryPointsBySourceIds($finishedTaskIds);
 	}
 
@@ -781,6 +725,11 @@ class SprintService implements Errorable
 	): float
 	{
 		$unfinishedTaskIds = $kanbanService->getUnfinishedTaskIdsInSprint($sprint->getId());
+
+		if (empty($unfinishedTaskIds))
+		{
+			return 0;
+		}
 
 		return $itemService->getSumStoryPointsBySourceIds($unfinishedTaskIds);
 	}
@@ -943,6 +892,16 @@ class SprintService implements Errorable
 		$dateStartTs = $sprint->getDateStart()->getTimestamp() + $timeHelper->getCurrentOffsetUTC();
 		$dateEndTs = $sprint->getDateEnd()->getTimestamp() + $timeHelper->getCurrentOffsetUTC();
 
+		$averageNumberStoryPoints = 0;
+		if ($sprint->isPlannedSprint())
+		{
+			$storyPoints = new StoryPoints();
+
+			$averageNumberStoryPoints = $storyPoints
+				->calculateAverageNumberCompletedStoryPoints($sprint->getGroupId())
+			;
+		}
+
 		return [
 			'id' => $sprint->getId(),
 			'tmpId' => $sprint->getTmpId(),
@@ -960,6 +919,7 @@ class SprintService implements Errorable
 			'uncompletedTasks' => 0,
 			'status' => $sprint->getStatus(),
 			'numberTasks' => 0,
+			'averageNumberStoryPoints' => $averageNumberStoryPoints,
 			'items' => [],
 			'views' => [],
 			'info' => $info->getInfoData(),

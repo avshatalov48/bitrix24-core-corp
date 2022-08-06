@@ -17,6 +17,7 @@ class TaskImportRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
@@ -25,6 +26,12 @@ class TaskImportRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
-		return (bool) $this->user->getPermission(PermissionDictionary::TASK_IMPORT);
+		$res = (bool) $this->user->getPermission(PermissionDictionary::TASK_IMPORT);
+		if (!$res)
+		{
+			$this->controller->addError(static::class, 'Access to import task denied');
+		}
+
+		return $res;
 	}
 }

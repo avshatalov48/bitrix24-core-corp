@@ -106,15 +106,12 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE_NEW');
 		}
 
-		return Loc::getMessage('CRM_QUOTE_DETAILS_TITLE', [
-			'#QUOTE_NUMBER#' => $this->item->getQuoteNumber(),
-			'#BEGINDATE#' => $this->item->getBegindate(),
-		]);
+		return (string)$this->item->getHeading();
 	}
 
 	protected function isPageTitleEditable(): bool
 	{
-		return false;
+		return true;
 	}
 
 	protected function getEntityEditorMessages(): array
@@ -691,7 +688,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 			$this->editorAdapter->addEntityData($name, $value);
 		}
 		$this->editorAdapter->addEntityData('UTM_VIEW_HTML', EditorAdapter::getUtmEntityData($this->item));
-		$locationString = CCrmLocations::getLocationString($this->item->getLocationId());
+		$locationString = CCrmLocations::getLocationStringByCode($this->item->getLocationId());
 		if (empty($locationString))
 		{
 			$locationString = '';
@@ -703,6 +700,10 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				$this->item,
 				Item\Quote::FIELD_NAME_LOCATION_ID
 			)
+		);
+		$this->editorAdapter->addEntityData(
+			'IS_USE_NUMBER_IN_TITLE_PLACEHOLDER',
+			\Bitrix\Crm\Settings\QuoteSettings::getCurrent()->isUseNumberInTitlePlaceholder(),
 		);
 
 		$this->editorAdapter

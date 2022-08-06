@@ -3,6 +3,7 @@ namespace Bitrix\Timeman\Controller;
 
 use Bitrix\Main\Engine\ActionFilter\Scope;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
@@ -142,6 +143,52 @@ class Worktime extends Controller
 			return [];
 		}
 		$this->addError($worktimeForm->getFirstError());
+		return [];
+	}
+
+	public function changeRecordAction()
+	{
+		$worktimeForm = WorktimeRecordForm::createWithEventForm(WorktimeEventTable::EVENT_TYPE_EDIT_WORKTIME);
+		$worktimeForm->load($this->getRequest());
+
+		if ($worktimeForm->validate())
+		{
+			$oldRecord = WorktimeRecordTable::query()
+				->addSelect('*')
+				->where('ID', $worktimeForm->id)
+				->exec()
+				->fetchObject()
+			;
+
+			$timemanUserInstance = \CTimeManUser::instance();
+
+			$timemanUserInstance->editDay([
+				'REPORT' => Loc::getMessage('TIMEMAN_EXPIRED_REPORT_MESSAGE'),
+				'TIME_START' => $worktimeForm->recordedStartSeconds,
+				'DATE_START' => $worktimeForm->recordedStartDateFormatted ?: null,
+				'TIME_FINISH' => $worktimeForm->recordedStopSeconds,
+				'DATE_FINISH' => $worktimeForm->recordedStopDateFormatted ?: null,
+				'TIME_LEAKS' => $worktimeForm->recordedBreakLength,
+				'LAT_CLOSE' => $worktimeForm->latitudeClose,
+				'LON_CLOSE' => $worktimeForm->longitudeClose,
+				'DEVICE' => $worktimeForm->device,
+			]);
+
+			$actualRecord = WorktimeRecordTable::query()
+				->addSelect('*')
+				->where('ID', $worktimeForm->id)
+				->exec()
+				->fetchObject()
+			;
+
+			$result = new WorktimeServiceResult();
+			$result->setWorktimeRecord($actualRecord);
+			if (WorktimeServiceResult::isSuccessResult($result))
+			{
+				return $this->makeAjaxResult($result, $worktimeForm, $oldRecord);
+			}
+		}
+
 		return [];
 	}
 

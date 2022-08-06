@@ -24,6 +24,7 @@ $APPLICATION->SetAdditionalCSS("/bitrix/css/main/font-awesome.css");
 	'ui.alerts',
 	'ajax',
 	'ui.dialogs.messagebox',
+	'ui.design-tokens',
 ]);
 
 $this->getComponent()->addToolbar($this);

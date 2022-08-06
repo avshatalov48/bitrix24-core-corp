@@ -70,6 +70,19 @@ class EntityContactTable extends DataManager
 		));
 	}
 
+	final public static function deleteByContact(int $contactId): void
+	{
+		$connection = Application::getConnection();
+		$helper = $connection->getSqlHelper();
+
+		/** @noinspection SqlResolve */
+		$connection->query(sprintf(
+			'DELETE FROM %s WHERE CONTACT_ID = %d',
+			$helper->quote(static::getTableName()),
+			$helper->convertToDbInteger($contactId),
+		));
+	}
+
 	public static function getContactIds(int $entityTypeId, int $entityId): array
 	{
 		return static::getList([

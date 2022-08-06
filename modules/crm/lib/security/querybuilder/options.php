@@ -18,6 +18,7 @@ class Options
 	private $rawQueryOrder = 'ASC';
 	private $useDistinctUnion = false;
 	private $useJoin = false;
+	private $skipCheckOtherEntityTypes = false;
 
 	public static function createFromArray(array $options): Options
 	{
@@ -200,5 +201,17 @@ class Options
 		$this->useJoin = $useJoin;
 
 		return $this;
+	}
+
+	public function setSkipCheckOtherEntityTypes(bool $skipCheckOtherEntityTypes): Options
+	{
+		$this->skipCheckOtherEntityTypes = $skipCheckOtherEntityTypes;
+
+		return $this;
+	}
+
+	public function canSkipCheckOtherEntityTypes(): bool
+	{
+		return $this->skipCheckOtherEntityTypes;
 	}
 }

@@ -1,7 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Crm\Agent\Duplicate\Background\Helper;
+use Bitrix\Crm\Integrity\DedupeConfig;
+use Bitrix\Crm\Integrity\DuplicateIndexBuilder;
 use Bitrix\Main;
 use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
@@ -28,6 +29,19 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 	protected $entityTypeName = '';
 	/** @var  CCrmPerms|null */
 	private $userPermissions = null;
+
+	protected function getHelper(): CCrmDedupeWizardComponentHelper
+	{
+		static $helper = null;
+
+		if ($helper === null)
+		{
+			include_once(Main\IO\Path::normalize('helper.php'));
+			$helper = CCrmDedupeWizardComponentHelper::getInstance();
+		}
+
+		return $helper;
+	}
 
 	protected function initUser(): void
 	{
@@ -70,18 +84,18 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 
 	protected function initGuid(): void
 	{
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID']) ? $this->arParams['GUID'] : 'entity_merger';
+		$this->guid = $this->arResult['GUID'] = $this->arParams['GUID'] ?? 'entity_merger';
 	}
 
 	protected function initTypesAndScopes(): void
 	{
 		$indexedTypeScopeMap = array();
-		foreach(Crm\Integrity\DuplicateIndexBuilder::getExistedTypeScopeMap($this->entityTypeID, $this->userID) as
-				$typeID => $scopes
-		)
+		$existedTypeScopeMap = DuplicateIndexBuilder::getExistedTypeScopeMap($this->entityTypeID, $this->userID);
+		foreach($existedTypeScopeMap as $typeID => $scopes)
 		{
 			$indexedTypeScopeMap[$typeID] = array_fill_keys($scopes, true);
 		}
+		unset($existedTypeScopeMap);
 		$this->arResult['INDEXED_TYPE_SCOPE_MAP'] = $indexedTypeScopeMap;
 		$this->arResult['TYPES'] = array_keys($indexedTypeScopeMap);
 
@@ -95,7 +109,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			$typeScopeMap[$typeID] = array_fill_keys($scopes, true);
 		}
 		$registeredScopes = array();
-		foreach($typeScopeMap as $typeID => $scopes)
+		foreach($typeScopeMap as $scopes)
 		{
 			foreach(array_keys($scopes) as $scope)
 			{
@@ -114,7 +128,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			}
 		}
 
-		$this->arResult['CONFIG'] = (new \Bitrix\Crm\Integrity\DedupeConfig())->get($this->guid, $this->entityTypeID);
+		$this->arResult['CONFIG'] = (new DedupeConfig())->get($this->guid, $this->entityTypeID);
 
 		$this->arResult['DEFAULT_SCOPE'] = Crm\Integrity\DuplicateIndexType::DEFAULT_SCOPE;
 		$this->arResult['CURRENT_SCOPE'] = $this->arResult['CONFIG']['scope'];
@@ -136,14 +150,14 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		{
 			foreach(array_keys($scopes) as $scope)
 			{
-				$typeLayoutID = \CCrmOwnerType::Undefined;
+				$typeLayoutID = CCrmOwnerType::Undefined;
 				if($typeID === Crm\Integrity\DuplicateIndexType::ORGANIZATION)
 				{
-					$typeLayoutID = \CCrmOwnerType::Company;
+					$typeLayoutID = CCrmOwnerType::Company;
 				}
 				elseif($typeID === Crm\Integrity\DuplicateIndexType::PERSON)
 				{
-					$typeLayoutID = \CCrmOwnerType::Contact;
+					$typeLayoutID = CCrmOwnerType::Contact;
 				}
 
 				$groupName = '';
@@ -197,7 +211,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		}
 
 		//LAYOUT_ID [CONTACT | COMPANY]
-		if($this->entityTypeID !== \CCrmOwnerType::Lead)
+		if($this->entityTypeID !== CCrmOwnerType::Lead)
 		{
 			$enableLayout = false;
 			$layoutID = $this->entityTypeID;
@@ -211,10 +225,10 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 			$isPersonIndexed = $typeInfos[Crm\Integrity\DuplicateIndexType::PERSON]['IS_INDEXED'];
 
 			$layoutID = !$isPersonSelected && ($isOrganizationSelected || !$isPersonIndexed)
-				? \CCrmOwnerType::Company : \CCrmOwnerType::Contact;
+				? CCrmOwnerType::Company : CCrmOwnerType::Contact;
 
 			//REMOVING OF UNUSED INDEXED TYPES
-			if($layoutID === \CCrmOwnerType::Contact)
+			if($layoutID === CCrmOwnerType::Contact)
 			{
 				unset($selectedTypes[Crm\Integrity\DuplicateIndexType::ORGANIZATION]);
 				$typeInfos[Crm\Integrity\DuplicateIndexType::ORGANIZATION]['IS_SELECTED'] = false;
@@ -223,7 +237,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 					$typeInfos[Crm\Integrity\DuplicateIndexType::ORGANIZATION]['IS_UNDERSTATED'] = true;
 				}
 			}
-			elseif($layoutID === \CCrmOwnerType::Company)
+			elseif($layoutID === CCrmOwnerType::Company)
 			{
 				unset($selectedTypes[Crm\Integrity\DuplicateIndexType::PERSON]);
 				$typeInfos[Crm\Integrity\DuplicateIndexType::PERSON]['IS_SELECTED'] = false;
@@ -241,7 +255,7 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 
 	protected function initAgentState()
 	{
-		$this->arResult['INDEX_AGENT_STATE'] = $this->getIndexAgentState();
+		$this->arResult['INDEX_AGENT_STATE'] = $this->getDuplicateIndexState();
 		$this->arResult['MERGE_AGENT_STATE'] = $this->getMergeAgentState();
 	}
 
@@ -264,19 +278,20 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 
 		$this->initGuid();
 
-		$this->arResult['CONTEXT_ID'] = isset($this->arParams['CONTEXT_ID']) ? $this->arParams['CONTEXT_ID'] : $this->entityTypeName;
+		$this->arResult['CONTEXT_ID'] = $this->arParams['CONTEXT_ID'] ?? $this->entityTypeName;
 
-		$this->arResult['PATH_TO_MERGER'] = isset($this->arParams['PATH_TO_MERGER']) ? $this->arParams['PATH_TO_MERGER'] : '';
+		$this->arResult['PATH_TO_MERGER'] = $this->arParams['PATH_TO_MERGER'] ?? '';
 		if($this->arResult['PATH_TO_MERGER'] !== '')
 		{
-			$this->arResult['PATH_TO_MERGER'] = \CHTTP::urlAddParams($this->arResult['PATH_TO_MERGER'], array('queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue'));
+			$this->arResult['PATH_TO_MERGER'] = CHTTP::urlAddParams(
+				$this->arResult['PATH_TO_MERGER'],
+				['queue' => mb_strtolower($this->entityTypeName).'_dedupe_queue'],
+			);
 		}
 
-		$this->arResult['PATH_TO_DEDUPE_LIST'] = isset($this->arParams['PATH_TO_DEDUPE_LIST'])
-			? $this->arParams['PATH_TO_DEDUPE_LIST'] : '';
+		$this->arResult['PATH_TO_DEDUPE_LIST'] = $this->arParams['PATH_TO_DEDUPE_LIST'] ?? '';
 
-		$this->arResult['PATH_TO_ENTITY_LIST'] = isset($this->arParams['PATH_TO_ENTITY_LIST'])
-			? $this->arParams['PATH_TO_ENTITY_LIST'] : '';
+		$this->arResult['PATH_TO_ENTITY_LIST'] = $this->arParams['PATH_TO_ENTITY_LIST'] ?? '';
 
 		$this->arResult['PATH_TO_DEDUPE_SETTINGS'] =
 			UrlManager::getInstance()->create('getSettingsSliderContent', [
@@ -297,24 +312,16 @@ class CCrmDedupeWizardComponent extends CBitrixComponent
 		{
 			return $typeID;
 		}
-		return "{$typeID}|{$scope}";
+		return "$typeID|$scope";
 	}
 
-	protected function getIndexAgentState()
+	protected function getDuplicateIndexState(): array
 	{
-		return Helper::getInstance()->getAgentState(
-			$this->userID,
-			CCrmOwnerType::ResolveName($this->entityTypeID),
-			'IndexRebuild'
-		);
+		return $this->getHelper()->getDuplicateIndexState($this->userID, $this->entityTypeName);
 	}
 
-	protected function getMergeAgentState()
+	protected function getMergeAgentState(): array
 	{
-		return Helper::getInstance()->getAgentState(
-			$this->userID,
-			CCrmOwnerType::ResolveName($this->entityTypeID),
-			'Merge'
-		);
+		return $this->getHelper()->getMergeAgentState($this->userID, $this->entityTypeName);
 	}
 }

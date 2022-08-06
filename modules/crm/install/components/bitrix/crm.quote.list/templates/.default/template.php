@@ -186,11 +186,11 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 				'QUOTE_NUMBER' => '<a target="_top" href="'.$arQuote['PATH_TO_QUOTE_SHOW'].'">'.$arQuote['QUOTE_NUMBER'].'</a>',
 				'QUOTE_SUMMARY' => CCrmViewHelper::RenderInfo1(
 					$arQuote['PATH_TO_QUOTE_SHOW'],
-					isset($arQuote['QUOTE_NUMBER']) ? $arQuote['QUOTE_NUMBER'] : ('['.$arQuote['ID'].']'),
+					$arQuote['ID'],
 					Tracking\UI\Grid::enrichSourceName(
 						\CCrmOwnerType::Quote,
 						$arQuote['ID'],
-						$arQuote['TITLE']
+						$arQuote['TITLE'] ? $arQuote['TITLE'] : \Bitrix\Crm\Item\Quote::getTitlePlaceholderFromData($arQuote)
 					),
 					'_top'
 				),

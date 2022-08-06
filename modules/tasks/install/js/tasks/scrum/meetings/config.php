@@ -13,6 +13,7 @@ return [
 		'ui.popupcomponentsmaker',
 		'main.core.events',
 		'main.core',
+		'ui.dialogs.messagebox',
 		'ui.hint',
 		'ui.icons.b24',
 		'ui.icons.service',

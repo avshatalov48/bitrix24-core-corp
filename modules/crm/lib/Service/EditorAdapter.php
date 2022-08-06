@@ -33,6 +33,7 @@ use Bitrix\Main\Request;
 use Bitrix\Main\Result;
 use Bitrix\Main\UserField\Dispatcher;
 use Bitrix\Main\Web\Json;
+use CCrmComponentHelper;
 
 class EditorAdapter
 {
@@ -215,6 +216,18 @@ class EditorAdapter
 					$this->additionalFields,
 					$this->entityData
 				)
+			);
+		}
+		elseif ($conversionWizard)
+		{
+			$this->addParentFieldsEntityData([
+					new ItemIdentifier(
+						$conversionWizard->getEntityTypeID(),
+						$conversionWizard->getEntityID(),
+					)
+				],
+				$this->entityFields,
+				$this->entityData,
 			);
 		}
 
@@ -581,6 +594,12 @@ class EditorAdapter
 				'context' => $entitySelectorContext,
 			];
 		}
+		elseif ($type === Field::TYPE_CRM_ENTITY && ParentFieldManager::isParentFieldName($name))
+		{
+			$field['data'] = [
+				'typeId' => ParentFieldManager::getEntityTypeIdFromFieldName($name),
+			];
+		}
 		elseif ($type === Field::TYPE_CRM_STATUS)
 		{
 			$fakeValue = '';
@@ -759,6 +778,23 @@ class EditorAdapter
 		$showAlways = (bool)($options['showAlways'] ?? true);
 		$enableTooltip = !isset($options['enableTooltip']) || (bool)$options['enableTooltip'];
 
+		// TODO: need to detect category ID when will implement real category params feature
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams((int)$options['entityTypeId']);
+
+		$clientEditorFieldsParams = [
+			\CCrmOwnerType::ContactName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact, 'requisite'),
+			],
+			\CCrmOwnerType::CompanyName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
+			],
+		];
+		if (Loader::includeModule('location'))
+		{
+			$clientEditorFieldsParams[\CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact, 'requisite_address');
+			$clientEditorFieldsParams[\CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite_address');
+		}
+
 		return [
 			'name' => $fieldName,
 			'title' => $title,
@@ -780,6 +816,7 @@ class EditorAdapter
 						'tagName' => \CCrmOwnerType::ContactName,
 					],
 				],
+				'categoryParams' => $categoryParams,
 				'map' => ['data' => $fieldDataName],
 				'info' => $fieldName . '_INFO',
 				'lastCompanyInfos' => static::LAST_COMPANY_INFOS,
@@ -796,16 +833,7 @@ class EditorAdapter
 						],
 					],
 				],
-				'clientEditorFieldsParams' => [
-					\CCrmOwnerType::ContactName => [
-						'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact, 'requisite'),
-						'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Contact,'requisite_address'),
-					],
-					\CCrmOwnerType::CompanyName => [
-						'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
-						'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company,'requisite_address'),
-					],
-				],
+				'clientEditorFieldsParams' => $clientEditorFieldsParams,
 				'useExternalRequisiteBinding' => true,
 				'enableRequisiteSelection' => true,
 				'enableTooltip' => $enableTooltip,
@@ -1429,7 +1457,13 @@ class EditorAdapter
 
 		foreach($entityFields as $field)
 		{
-			if($field['type'] !== 'crm_entity_tag' || !isset($field['data']['typeId']))
+			if (
+				(
+					$field['type'] !== 'crm_entity_tag'
+					&& $field['type'] !== 'crm_entity'
+				)
+				|| !isset($field['data']['typeId'])
+			)
 			{
 				continue;
 			}
@@ -1728,11 +1762,17 @@ class EditorAdapter
 
 	protected function getRecentlyUsedItems(int $entityTypeId, string $componentName): array
 	{
+		// TODO: need to detect category ID when will implement real category params feature
+		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams($entityTypeId);
+
 		return SearchAction::prepareSearchResultsJson(
 			Entity::getRecentlyUsedItems(
 				$componentName,
 				mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId)),
-				['EXPAND_ENTITY_TYPE_ID' => $entityTypeId]
+				[
+					'EXPAND_ENTITY_TYPE_ID' => $entityTypeId,
+					'EXPAND_CATEGORY_ID' => $categoryParams[$entityTypeId]['categoryId'],
+				]
 			)
 		);
 	}
@@ -1888,7 +1928,7 @@ class EditorAdapter
 			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
 			$entityResultData = $entityResult->getData();
 			$companyId = (int)($entityResultData['id'] ?? 0);
-			if ($companyId > 0 && $entityResult->isSuccess())
+			if ($companyId > 0)
 			{
 				$resultData[Item::FIELD_NAME_COMPANY_ID] = $companyId;
 				$processedEntities[] = new ItemIdentifier(\CCrmOwnerType::Company, $companyId);
@@ -1911,10 +1951,6 @@ class EditorAdapter
 			foreach ($contactData as $contactIndex => &$contact)
 			{
 				$entityResult = $this->saveClientEntity(\CCrmOwnerType::Contact, $contact);
-				if (!$entityResult->isSuccess())
-				{
-					continue;
-				}
 				$entityResultData = $entityResult->getData();
 				$contactId = (int)($entityResultData['id'] ?? 0);
 				if ($contactId > 0)
@@ -2166,6 +2202,16 @@ class EditorAdapter
 		$showAlways = !isset($description['showAlways']) || (bool)$description['showAlways'];
 		$enableTooltip = !isset($description['enableTooltip']) || (bool)$description['enableTooltip'];
 
+		$clientEditorFieldsParams = [
+			\CCrmOwnerType::CompanyName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
+			],
+		];
+		if (Loader::includeModule('location'))
+		{
+			$clientEditorFieldsParams[\CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite_address');
+		}
+
 		return [
 			'name' => $name,
 			'title' => $title,
@@ -2198,12 +2244,7 @@ class EditorAdapter
 						]
 					]
 				],
-				'clientEditorFieldsParams' => [
-					\CCrmOwnerType::CompanyName => [
-						'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company, 'requisite'),
-						'ADDRESS' => \CCrmComponentHelper::getFieldInfoData(\CCrmOwnerType::Company,'requisite_address'),
-					],
-				],
+				'clientEditorFieldsParams' => $clientEditorFieldsParams,
 				'useExternalRequisiteBinding' => true,
 				'enableTooltip' => $enableTooltip,
 			],
@@ -2331,7 +2372,7 @@ class EditorAdapter
 			$entityResult = $this->saveClientEntity(\CCrmOwnerType::Company, $companyData);
 			$entityData = $entityResult->getData();
 			$companyId = (int)($entityData['id'] ?? 0);
-			if ($companyId > 0 && $entityResult->isSuccess())
+			if ($companyId > 0)
 			{
 				$resultData[Item::FIELD_NAME_MYCOMPANY_ID] = $companyId;
 				$requisiteBinding = $this->extractRequisiteBinding(

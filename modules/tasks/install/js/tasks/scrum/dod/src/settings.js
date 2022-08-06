@@ -1,6 +1,8 @@
-import {Dom, Tag, Type, Loc, Event} from 'main.core';
-import {BaseEvent} from 'main.core.events';
+import {Dom, Tag, Type, Loc, Event, Runtime} from 'main.core';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
+
+import {TagSelector} from 'ui.entity-selector';
 
 import {ItemType, ItemTypeParams} from './item.type';
 import {TypeStorage} from './type.storage';
@@ -30,11 +32,29 @@ export class Settings
 		this.tabs.subscribe('createType', this.onCreateType.bind(this));
 		this.tabs.subscribe('changeTypeName', this.onChangeTypeName.bind(this));
 		this.tabs.subscribe('removeType', this.onRemoveType.bind(this));
+
+		this.changed = false;
+		EventEmitter.subscribe(
+			'BX.Tasks.CheckListItem:CheckListChanged',
+			() => {
+				this.setChanged();
+			}
+		);
 	}
 
 	isEmpty(): boolean
 	{
 		return this.tabs.isEmpty();
+	}
+
+	isChanged(): boolean
+	{
+		return this.changed;
+	}
+
+	setChanged(): void
+	{
+		this.changed = true;
 	}
 
 	renderContent(): Promise
@@ -157,6 +177,7 @@ export class Settings
 		checkbox.checked = type.isDodRequired();
 
 		Event.bind(checkbox, 'click', () => {
+			this.setChanged();
 			this.updateActiveType();
 		});
 
@@ -192,7 +213,8 @@ export class Settings
 
 		const selectorId = 'tasks-scrum-dod-settings-participants-selector-' + type.getId();
 
-		this.participantsSelector = new top.BX.UI.EntitySelector.TagSelector({
+		// todo change to scrum-user provider
+		this.participantsSelector = new TagSelector({
 			id: selectorId,
 			dialogOptions: {
 				id: selectorId,
@@ -237,7 +259,7 @@ export class Settings
 		})
 		.then((response) => {
 			loader.hide();
-			top.BX.Runtime.html(listContainer, response.data.html);
+			Runtime.html(listContainer, response.data.html);
 		})
 		.catch((response) => {
 			loader.hide();
@@ -290,6 +312,7 @@ export class Settings
 			sort: tmpType.getSort()
 		})
 		.then((response) => {
+			this.setChanged();
 			loader.hide();
 			const createdType = new ItemType(response.data);
 			this.typeStorage.addType(createdType);
@@ -310,9 +333,13 @@ export class Settings
 			id: type.getId(),
 			name: type.getName()
 		})
-		.catch((response) => {
-			this.requestSender.showErrorAlert(response);
-		});
+			.then(() => {
+				this.setChanged();
+			})
+			.catch((response) => {
+				this.requestSender.showErrorAlert(response);
+			})
+		;
 	}
 
 	onRemoveType(baseEvent: BaseEvent)
@@ -324,6 +351,7 @@ export class Settings
 			id: type.getId()
 		})
 		.then(() => {
+			this.setChanged();
 			this.typeStorage.removeType(type);
 			if (this.tabs.isEmpty())
 			{
@@ -371,12 +399,12 @@ export class Settings
 	getChecklistItems(): Array
 	{
 		/* eslint-disable */
-		if (typeof top.BX.Tasks.CheckListInstance === 'undefined')
+		if (typeof BX.Tasks.CheckListInstance === 'undefined')
 		{
 			return [];
 		}
 
-		const treeStructure = top.BX.Tasks.CheckListInstance.getTreeStructure();
+		const treeStructure = BX.Tasks.CheckListInstance.getTreeStructure();
 
 		return treeStructure.getRequestData();
 		/* eslint-enable */

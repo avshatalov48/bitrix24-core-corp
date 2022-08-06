@@ -182,8 +182,13 @@ class AdsForm extends AdsService
 	 * @param array|null $types Types.
 	 * @return array
 	 */
-	public static function getProviders(array $types = null)
+	public static function getProviders(array $types = null): array
 	{
+		if (!self::canUse())
+		{
+			return [];
+		}
+
 		$providerIcons = static::getAdsIconMap();
 		$providers = static::getServiceProviders($types);
 

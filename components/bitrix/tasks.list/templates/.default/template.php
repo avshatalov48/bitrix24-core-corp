@@ -335,7 +335,7 @@ if (
 								{
 									?>
 									onclick="SortTable(
-										'<?php echo $urlSort;?>',
+										'<?php echo htmlspecialchars(CUtil::JSEscape($urlSort));?>',
 										event
 									)"
 									<?php

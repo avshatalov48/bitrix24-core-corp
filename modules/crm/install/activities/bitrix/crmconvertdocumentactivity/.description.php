@@ -26,6 +26,28 @@ $arActivityDescription = [
 		'CATEGORY' => 'employee',
 		'RESPONSIBLE_PROPERTY' => 'Responsible',
 	],
+	'RETURN' => [
+		'InvoiceId' => [
+			'NAME' =>  \Bitrix\Main\Localization\Loc::getMessage('CRM_CVTDA_RETURN_INVOICE_ID'),
+			'TYPE' => 'int',
+		],
+		'QuoteId' => [
+			'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CVTDA_RETURN_QUOTE_ID'),
+			'TYPE' => 'int',
+		],
+		'DealId' => [
+			'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CVTDA_RETURN_DEAL_ID'),
+			'TYPE' => 'int',
+		],
+		'ContactId' => [
+			'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CVTDA_RETURN_CONTACT_ID'),
+			'TYPE' => 'int',
+		],
+		'CompanyId' => [
+			'NAME' => \Bitrix\Main\Localization\Loc::getMessage('CRM_CVTDA_RETURN_COMPANY_ID'),
+			'TYPE' => 'int',
+		],
+	],
 ];
 
 if (isset($documentType) && $documentType[2] === 'DEAL')

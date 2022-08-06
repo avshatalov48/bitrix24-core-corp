@@ -823,13 +823,7 @@ this.BX = this.BX || {};
 	        _this7.reloadModel();
 	      };
 
-	      var actionName = 'sale.payment.setpaid';
-
-	      if (this._isUsedInventoryManagement) {
-	        actionName = 'crm.order.payment.setPaid';
-	      }
-
-	      main_core.ajax.runAction(actionName, {
+	      main_core.ajax.runAction('crm.order.payment.setPaid', {
 	        data: {
 	          id: payment.ID,
 	          value: strPaid
@@ -845,8 +839,7 @@ this.BX = this.BX || {};
 
 	      if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped) {
 	        return;
-	      } // positive approach - render success first, then do actual query
-
+	      }
 
 	      this._docs().forEach(function (doc) {
 	        if (doc.TYPE === 'SHIPMENT' && doc.ID === shipment.ID) {
@@ -869,7 +862,7 @@ this.BX = this.BX || {};
 	        _this8.reloadModel();
 	      };
 
-	      var actionName = 'sale.shipment.setshipped';
+	      var actionName = 'crm.order.shipment.setShipped';
 
 	      if (this._isUsedInventoryManagement) {
 	        actionName = 'crm.api.realizationdocument.setShipped';
@@ -891,8 +884,7 @@ this.BX = this.BX || {};
 
 	      if (shipment.DEDUCTED && shipment.DEDUCTED === strShipped) {
 	        return;
-	      } // positive approach - render success first, then do actual query
-
+	      }
 
 	      this._docs().forEach(function (doc) {
 	        if (doc.TYPE === 'SHIPMENT_DOCUMENT' && doc.ID === shipment.ID) {
@@ -964,18 +956,12 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_resolveRemoveDocumentActionName",
 	    value: function _resolveRemoveDocumentActionName(type) {
-	      var actionBaseName = 'sale';
-
-	      if (this._isUsedInventoryManagement) {
-	        actionBaseName = 'crm.order';
-	      }
-
 	      var action = '';
 
 	      if (type === 'PAYMENT') {
-	        action = actionBaseName + '.payment.delete';
+	        action = 'crm.order.payment.delete';
 	      } else if (type === 'SHIPMENT') {
-	        action = actionBaseName + '.shipment.delete';
+	        action = 'crm.order.shipment.delete';
 	      } else if (type === 'SHIPMENT_DOCUMENT') {
 	        action = 'crm.api.realizationdocument.setRealization';
 	      }

@@ -187,6 +187,11 @@ if(isset($_GET['id']))
 	$arResult['VARIABLES']['contact_ids'] = array_map('intval', $entityIDs);
 }
 
+\CCrmEntityHelper::setEnabledFactoryFlagByRequest(
+	Crm\Settings\ContactSettings::getCurrent(),
+	\Bitrix\Main\Application::getInstance()->getContext()->getRequest(),
+);
+
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 	&& ($componentPage === 'edit' || $componentPage === 'show')
 )

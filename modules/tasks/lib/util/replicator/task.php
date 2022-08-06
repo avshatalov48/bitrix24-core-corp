@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -8,6 +8,8 @@
 
 namespace Bitrix\Tasks\Util\Replicator;
 
+use Bitrix\Main\Loader;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
@@ -18,6 +20,8 @@ use Bitrix\Tasks\Util\Error;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item;
 use Bitrix\Main\NotImplementedException;
+
+Loc::loadMessages(__FILE__);
 
 abstract class Task
 {
@@ -113,6 +117,11 @@ abstract class Task
 	 */
 	public function produce($source, $userId = 0, array $parameters = array())
 	{
+		if (Loader::includeModule('disk'))
+		{
+			\Bitrix\Disk\Uf\FileUserType::setValueForAllowEdit('TASKS_TASK', true);
+		}
+
 		$result = new Result();
 
 		Item\Task::enterBatchState();
@@ -271,7 +280,7 @@ abstract class Task
 			$taskModel = TaskModel::createFromTaskItem($dstInstance);
 			if (!TaskAccessController::can($userId, ActionDictionary::ACTION_TASK_SAVE, null, $taskModel))
 			{
-				$creationResult->getErrors()->add('ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED');
+				$creationResult->getErrors()->add('ACCESS_DENIED.RESPONSIBLE_AND_ORIGINATOR_NOT_ALLOWED', Loc::getMessage('TASKS_REPLICATOR_ACCESS_DENIED'));
 				return $creationResult;
 			}
 
@@ -302,7 +311,10 @@ abstract class Task
 					$checkListItems
 				);
 
-				$checkListRoots = $toCheckListFacade::getObjectStructuredRoots($checkListItems, $resultId, $userId);
+				$occurUserId = Util\User::getOccurAsId();
+				$checklistUserId = $occurUserId ?? $userId;
+
+				$checkListRoots = $toCheckListFacade::getObjectStructuredRoots($checkListItems, $resultId, $checklistUserId);
 				foreach ($checkListRoots as $root)
 				{
 					/** @var CheckList $root */

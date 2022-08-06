@@ -11,10 +11,14 @@ BX.namespace("Tasks.Component");
 	{
 		this.layout = {
 			stagesWrap: BX("tasksStagesWrap"),
-			stages: BX("tasksStages")
+			stages: BX("tasksStages"),
+			epicTitle: BX("tasksEpicTitle"),
+			epicContainer: BX("tasksEpicContainer")
 		};
 		this.parameters = parameters || {};
 		this.taskId = this.parameters.taskId;
+		this.parentId = this.parameters.parentId;
+		this.groupId = parseInt(this.parameters.groupId, 10);
 		this.messages = this.parameters.messages || {};
 		this.workingTime = this.parameters.workingTime || { start : { hours: 0, minutes: 0 }, end : { hours: 0, minutes: 0 }};
 		this.can = this.parameters.can || {};
@@ -27,8 +31,8 @@ BX.namespace("Tasks.Component");
 		this.stageId = parseInt(this.parameters.stageId);
 		this.stages = this.parameters.stages || {};
 		this.taskLimitExceeded = this.parameters.taskLimitExceeded;
-
 		this.calendarSettings = (this.parameters.calendarSettings ? this.parameters.calendarSettings : {});
+		this.isScrumTask = this.parameters.isScrumTask === 'Y';
 
 		this.initDeadline();
 		this.initReminder();
@@ -133,6 +137,34 @@ BX.namespace("Tasks.Component");
 		}
 	};
 
+	BX.Tasks.Component.TaskViewSidebar.prototype.hideEpicSelector = function()
+	{
+		if (
+			!this.layout.epicTitle
+			|| !this.layout.epicContainer
+		)
+		{
+			return;
+		}
+
+		BX.hide(this.layout.epicTitle);
+		BX.hide(this.layout.epicContainer);
+	};
+
+	BX.Tasks.Component.TaskViewSidebar.prototype.showEpicSelector = function()
+	{
+		if (
+			!this.layout.epicTitle
+			|| !this.layout.epicContainer
+		)
+		{
+			return;
+		}
+
+		BX.show(this.layout.epicTitle);
+		BX.show(this.layout.epicContainer);
+	};
+
 	/**
 	 * Handler on change task group.
 	 * @param {int} groupId
@@ -151,8 +183,29 @@ BX.namespace("Tasks.Component");
 		{
 			this.stages = [];
 			this.initStages();
+			this.hideEpicSelector();
+
 			return;
 		}
+
+		BX.ajax.runComponentAction(
+			'bitrix:tasks.task',
+			'isScrumProject',
+			{
+				mode: 'class',
+				data: {
+					groupId: groupId
+				}
+			}
+		).then(
+			function(response)
+			{
+				if (response.data && response.data === true)
+				{
+					this.showEpicSelector();
+				}
+			}.bind(this)
+		);
 
 		BX.ajax.runComponentAction('bitrix:tasks.task', 'canMoveStage', {
 			mode: 'class',
@@ -220,26 +273,124 @@ BX.namespace("Tasks.Component");
 	 */
 	BX.Tasks.Component.TaskViewSidebar.prototype.setStageHadnler = function()
 	{
-		var stageId = BX.data(BX.proxy_context, "stageId");
-		this.setStage(stageId);
-		this.saveStage(stageId);
+		var promise = new BX.Promise();
+
+		var stageId = parseInt(BX.data(BX.proxy_context, 'stageId'), 10);
+		if (stageId === this.stageId)
+		{
+			return;
+		}
+
+		var taskStatus = null;
+		var isParentScrumTask = false;
+
+		if (this.isScrumTask && BX.type.isArray(this.stages))
+		{
+			var previousStageId = this.stageId;
+
+			var isFinishStage = false;
+			var isPreviousFinishStage = false;
+			for (var k in this.stages)
+			{
+				var stage = this.stages[k];
+				if (
+					parseInt(stage.ID) === stageId
+					&& stage.SYSTEM_TYPE === 'FINISH'
+				)
+				{
+					isFinishStage = true;
+				}
+				else if (
+					parseInt(stage.ID) === previousStageId
+					&& stage.SYSTEM_TYPE === 'FINISH'
+				)
+				{
+					isPreviousFinishStage = true;
+				}
+			}
+
+			if (isFinishStage || isPreviousFinishStage)
+			{
+				top.BX.loadExt('tasks.scrum.task-status').then(function() {
+					if (
+						!BX.type.isUndefined(top.BX.Tasks.Scrum)
+						&& !BX.type.isUndefined(top.BX.Tasks.Scrum.TaskStatus)
+					)
+					{
+						taskStatus = new top.BX.Tasks.Scrum.TaskStatus({
+							groupId: this.groupId,
+							parentTaskId: this.parentId,
+							taskId: this.taskId,
+							action: isFinishStage ? 'complete': 'renew',
+							performActionOnParentTask: true
+						});
+						taskStatus.isParentScrumTask(this.parentId)
+							.then(function(result) {
+								isParentScrumTask = result;
+								if (isParentScrumTask)
+								{
+									promise.fulfill();
+								}
+								else
+								{
+									if (isFinishStage)
+									{
+										taskStatus.showDod(this.taskId)
+											.then(function() {
+												promise.fulfill();
+											}.bind(this))
+											.catch(function() {
+												promise.reject();
+											}.bind(this))
+										;
+									}
+									else
+									{
+										promise.fulfill();
+									}
+								}
+							}.bind(this))
+						;
+					}
+					else
+					{
+						promise.fulfill();
+					}
+				}.bind(this));
+			}
+			else
+			{
+				promise.fulfill();
+			}
+		}
+		else
+		{
+			promise.fulfill();
+		}
+
+		promise.then(function() {
+			this.setStage(stageId);
+			this.saveStage(stageId)
+				.then(function() {
+					if (taskStatus && isParentScrumTask)
+					{
+						taskStatus.update();
+					}
+				}.bind(this))
+			;
+		}.bind(this));
 	};
 
 	/**
 	 * Server-side set stage of task.
 	 * @param {int} stageId
-	 * @returns {void}
+	 * @returns {BX.Promise}
 	 */
 	BX.Tasks.Component.TaskViewSidebar.prototype.saveStage = function(stageId)
 	{
-		stageId = parseInt(stageId);
-		if (stageId === this.stageId)
-		{
-			return;
-		}
 		this.stageId = stageId;
 
-		BX.ajax.runComponentAction('bitrix:tasks.task', 'moveStage', {
+		return BX.ajax.runComponentAction('bitrix:tasks.task', 'moveStage', {
 			mode: 'class',
 			data: {
 				taskId: this.taskId,
@@ -260,7 +411,11 @@ BX.namespace("Tasks.Component");
 						{STAY_AT_PAGE: true},
 						{id: this.taskId}
 					);
+
+					return true;
 				}
+
+				return false;
 			}.bind(this)
 		);
 	};
@@ -350,7 +505,14 @@ BX.namespace("Tasks.Component");
 		}
 		else if (this.taskLimitExceeded)
 		{
-			BX.UI.InfoHelper.show('limit_tasks_observers_participants');
+			BX.UI.InfoHelper.show('limit_tasks_observers_participants', {
+				isLimit: true,
+				limitAnalyticsLabels: {
+					module: 'tasks',
+					source: 'sidebar',
+					subject: 'auditor'
+				}
+			});
 		}
 		else
 		{

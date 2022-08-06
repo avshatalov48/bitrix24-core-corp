@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Requisite\Conversion;
 
 use Bitrix\Main\Localization\Loc;

@@ -1073,23 +1073,84 @@ class RestrictionManager
 		return new Bitrix24AccessRestriction('', true);
 	}
 
-	public static function getUpdateOperationRestriction(ItemIdentifier $identifier): Bitrix24AccessRestriction
+	public static function getAddOperationRestriction(int $entityTypeId): Bitrix24AccessRestriction
 	{
-		$entityTypeId = $identifier->getEntityTypeId();
+		$commonRestriction = static::getCommonOperationRestriction($entityTypeId);
+		if (!$commonRestriction->hasPermission())
+		{
+			return $commonRestriction;
+		}
+
+		$dynamicTypesRestriction = static::getDynamicTypesLimitRestriction();
+		if ($dynamicTypesRestriction->isCreateItemRestricted($entityTypeId))
+		{
+			$restriction = new Bitrix24AccessRestriction(
+				$dynamicTypesRestriction::FEATURE_NAME,
+				false,
+			);
+			$error = $dynamicTypesRestriction->getCreateItemRestrictedError();
+			$restriction->setErrorMessage($error->getMessage());
+			$restriction->setErrorCode($error->getCode());
+
+			return $restriction;
+		}
+
+		return new Bitrix24AccessRestriction('', true);
+	}
+
+	private static function getCommonOperationRestriction(int $entityTypeId): Bitrix24AccessRestriction
+	{
+		$diskQuotaRestriction = static::getDiskQuotaRestriction();
+		if (!$diskQuotaRestriction->hasPermission())
+		{
+			return $diskQuotaRestriction;
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Lead)
+		{
+			return static::getLeadsRestriction();
+		}
 		if ($entityTypeId === \CCrmOwnerType::Quote)
 		{
 			return static::getQuotesRestriction();
 		}
-		if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+		if ($entityTypeId === \CCrmOwnerType::Invoice || $entityTypeId === \CCrmOwnerType::SmartInvoice)
 		{
 			return static::getInvoicesRestriction();
 		}
-		if (!static::isWebFormResultsRestrictionCanBeAppliedTo($entityTypeId))
+
+		return new Bitrix24AccessRestriction('', true);
+	}
+
+	public static function getUpdateOperationRestriction(ItemIdentifier $identifier): Bitrix24AccessRestriction
+	{
+		$entityTypeId = $identifier->getEntityTypeId();
+
+		$commonRestriction = static::getCommonOperationRestriction($entityTypeId);
+		if (!$commonRestriction->hasPermission())
 		{
-			return new Bitrix24AccessRestriction('', true);
+			return $commonRestriction;
 		}
+
+		$dynamicTypesRestriction = static::getDynamicTypesLimitRestriction();
+		if ($dynamicTypesRestriction->isUpdateItemRestricted($entityTypeId))
+		{
+			$restriction = new Bitrix24AccessRestriction(
+				$dynamicTypesRestriction::FEATURE_NAME,
+				false,
+			);
+			$error = $dynamicTypesRestriction->getUpdateItemRestrictedError();
+			$restriction->setErrorMessage($error->getMessage());
+			$restriction->setErrorCode($error->getCode());
+
+			return $restriction;
+		}
+
 		$webForResultsRestriction = static::getWebFormResultsRestriction();
-		if ($webForResultsRestriction->isItemRestricted($identifier))
+		if (
+			static::isWebFormResultsRestrictionCanBeAppliedTo($entityTypeId)
+			&& $webForResultsRestriction->isItemRestricted($identifier)
+		)
 		{
 			$restriction = new Bitrix24AccessRestriction(
 				$webForResultsRestriction->getName(),

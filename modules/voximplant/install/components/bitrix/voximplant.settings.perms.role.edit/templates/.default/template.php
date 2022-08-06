@@ -3,8 +3,17 @@
  * @var array $arResult
  * @var CMain $APPLICATION
  */
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-CJSCore::Init(['voximplant.common']);
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'voximplant.common',
+	'ui.forms',
+]);
+
 $this->addExternalCss('/bitrix/css/main/table/style.css');
 
 if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorCollection)
@@ -20,9 +29,11 @@ if($arResult['ERRORS'] && $arResult['ERRORS'] instanceof \Bitrix\Main\ErrorColle
 	<input type="hidden" name="act" value="save">
 	<input type="hidden" name="ID" value="<?=htmlspecialcharsbx($arResult['ID'])?>">
 	<?echo bitrix_sessid_post()?>
-	<div style="display: flex; align-items:center; margin-left: 20px; height: 40px;">
-		<label for="form-input-name"><?=GetMessage('VOXIMPLANT_ROLE_LABEL')?>:</label>
-		<input id="form-input-name" name="NAME" value="<?=htmlspecialcharsbx($arResult['NAME'])?>">
+	<div style="display: flex; align-items:center; margin: 0 0 20px 10px;">
+		<label for="form-input-name"><?=GetMessage('VOXIMPLANT_ROLE_LABEL')?>:&nbsp;</label>
+		<div class="ui-ctl ui-ctl-textbox">
+			<input class="ui-ctl-element" id="form-input-name" name="NAME" value="<?=htmlspecialcharsbx($arResult['NAME'])?>">
+		</div>
 	</div>
 	<table class="table-blue-wrapper">
 		<tr>

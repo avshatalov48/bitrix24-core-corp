@@ -142,14 +142,3 @@
 .feed-add-destination-link:hover {
 	border-bottom: 1px solid;
 }
-
-.rpa-item-detail .ui-entity-editor-header-title-text {
-	white-space: nowrap;
-	overflow: hidden;
-	width: 100%;
-	text-overflow: ellipsis;
-}
-
-.rpa-item-detail .ui-entity-editor-header-title {
-	width: calc(100% - 65px);
-}

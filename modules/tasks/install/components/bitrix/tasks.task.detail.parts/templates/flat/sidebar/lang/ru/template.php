@@ -39,3 +39,4 @@ $MESS["TASKS_SIDEBAR_ROBOTS_1"] = "Роботы";
 
 $MESS['TASK_RESULT_SIDEBAR_HINT'] = 'Требуется отчет о работе';
 
+$MESS["TASKS_TASK_EPIC"] = "Эпик";

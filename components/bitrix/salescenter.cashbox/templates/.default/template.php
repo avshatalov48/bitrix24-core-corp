@@ -19,6 +19,7 @@ Extension::load([
 	'sidepanel',
 	'loader',
 	'ui.switcher',
+	'ui.design-tokens',
 ]);
 ?>
 
@@ -58,7 +59,7 @@ Extension::load([
 					if($id === 'cashbox_params')
 					{
 						?>
-						<div style="padding: 15px; margin-bottom: 15px;" class="ui-bg-color-white">
+						<div style="padding: 15px; margin-bottom: 15px;" class="salescenter-form-settings-section ui-bg-color-white">
 							<div class="salescenter-main-header">
 								<div class="salescenter-main-header-left-block">
 									<div class="salescenter-logo-container">

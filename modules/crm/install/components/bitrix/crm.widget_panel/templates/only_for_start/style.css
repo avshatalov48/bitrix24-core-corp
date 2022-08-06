@@ -83,7 +83,7 @@
 }
 
 .crm-widget {
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-md, 2px);
 	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
 	overflow: hidden;
 	height: 378px;
@@ -166,7 +166,7 @@
 
 .crm-widget.crm-widget-total {
 	border: 1px solid #fff;
-	border-radius: 0;
+	border-radius: var(--ui-border-radius-md, 0);
 }
 
 .crm-widget-total-top .crm-widget-head {
@@ -1204,6 +1204,7 @@ span.crm-widget-rating-result {
 	font-weight: bold;
 	color: #fff;
 	margin: 0 -10px 0;
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .field-container:first-child .field-container-title {
@@ -1499,6 +1500,7 @@ div.field-container-period {
 	background: #fff;
 	vertical-align: middle;
 	width: 240px;
+	border-radius: var(--ui-field-border-radius, 3px);
 }
 
 .select-container select {
@@ -1517,7 +1519,7 @@ div.field-container-period {
 	z-index: 2;
 	background: transparent;
 	font-size: 14px;
-	border-radius: 3px;
+	border-radius: var(--ui-field-border-radius, 3px);
 	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 
@@ -1968,6 +1970,7 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 	height: 106px;
 	background: #fff;
 	border: 1px solid #dde1e3;
+	border-radius: var(--ui-border-radius-xs);
 	text-align: center;
 	transition: all .25s linear;
 }

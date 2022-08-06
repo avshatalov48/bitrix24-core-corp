@@ -5,7 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\UI;
 
-UI\Extension::load("ui.tooltip");
+UI\Extension::load(["ui.tooltip", "ui.design-tokens"]);
 
 /* @global CMain $APPLICATION */
 /* @var array $arResult */

@@ -83,7 +83,7 @@ class ItemDataProvider extends EntityDataProvider
 				'displayGrid' => true,
 				'displayFilter' => true,
 				'defaultGrid' => true,
-				'defaultFilter' => false,
+				'defaultFilter' => !$isSmartInvoice,
 			],
 		];
 		if ($isSmartInvoice)
@@ -94,6 +94,82 @@ class ItemDataProvider extends EntityDataProvider
 				'displayFilter' => true,
 				'defaultGrid' => true,
 				'defaultFilter' => true,
+			];
+		}
+
+		if ($this->factory->isLinkWithProductsEnabled())
+		{
+			$fields[Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'] = [
+				'type' => static::TYPE_ENTITY_SELECTOR,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
+				'customCaption' => Loc::getMessage('CRM_COMMON_PRODUCTS'),
+			];
+			$fields['OPPORTUNITY_WITH_CURRENCY'] = [
+				'type' => static::TYPE_STRING,
+				'displayGrid' => true,
+				'displayFilter' => false,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_OPPORTUNITY_WITH_CURRENCY'),
+				'sortField' => Item::FIELD_NAME_OPPORTUNITY,
+			];
+			$fields[Item::FIELD_NAME_OPPORTUNITY] = [
+				'type' => static::TYPE_NUMBER,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => true,
+			];
+			$fields[Item::FIELD_NAME_CURRENCY_ID] = [
+				'type' => static::TYPE_LIST,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
+				'filterOptionPreset' => static::PRESET_LIST,
+			];
+		}
+
+		if ($this->factory->isClientEnabled())
+		{
+			$fields[Item::FIELD_NAME_COMPANY_ID] = [
+				'type' => static::TYPE_CRM_ENTITY,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => $isSmartInvoice,
+				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+			];
+			$fields[Item::FIELD_NAME_CONTACT_ID] = [
+				'type' => static::TYPE_CRM_ENTITY,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => false,
+				'defaultFilter' => $isSmartInvoice,
+				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
+			];
+			$fields['CLIENT_INFO'] = [
+				'displayGrid' => true,
+				'displayFilter' => false,
+				'defaultGrid' => false,
+				'customCaption' => Loc::getMessage('CRM_COMMON_CLIENT'),
+				'sortField' => null,
+			];
+			$fields['CONTACT.FULL_NAME'] = [
+				'type' => static::TYPE_STRING,
+				'displayGrid' => false,
+				'displayFilter' => true,
+				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_CONTACTS_FULL_NAME'),
+			];
+			$fields['COMPANY.TITLE'] = [
+				'type' => static::TYPE_STRING,
+				'displayGrid' => false,
+				'displayFilter' => true,
+				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_COMPANY_TITLE'),
 			];
 		}
 
@@ -109,8 +185,8 @@ class ItemDataProvider extends EntityDataProvider
 			'type' => static::TYPE_DATE,
 			'displayGrid' => true,
 			'displayFilter' => true,
-			'defaultGrid' => !$isSmartInvoice,
-			'defaultFilter' => !$isSmartInvoice,
+			'defaultGrid' => false,
+			'defaultFilter' => false,
 			'filterOptionPreset' => static::PRESET_DATETIME,
 		];
 		$fields[Item::FIELD_NAME_UPDATED_BY] = [
@@ -154,6 +230,26 @@ class ItemDataProvider extends EntityDataProvider
 			'filterOptionPreset' => static::PRESET_LIST,
 		];
 
+		if ($this->factory->isBeginCloseDatesEnabled())
+		{
+			$fields[Item::FIELD_NAME_BEGIN_DATE] = [
+				'type' => static::TYPE_DATE,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => $isSmartInvoice,
+				'defaultFilter' => $isSmartInvoice,
+				'filterOptionPreset' => static::PRESET_DATE,
+			];
+			$fields[Item::FIELD_NAME_CLOSE_DATE] = [
+				'type' => static::TYPE_DATE,
+				'displayGrid' => true,
+				'displayFilter' => true,
+				'defaultGrid' => $isSmartInvoice,
+				'defaultFilter' => $isSmartInvoice,
+				'filterOptionPreset' => static::PRESET_DATE,
+			];
+		}
+
 		if($this->factory->isStagesEnabled())
 		{
 			$fields = array_merge(
@@ -195,7 +291,7 @@ class ItemDataProvider extends EntityDataProvider
 						'displayGrid' => true,
 						'displayFilter' => $this->settings->getCategoryId() > 0,
 						'defaultGrid' => true,
-						'defaultFilter' => true,
+						'defaultFilter' => false,
 						'filterOptionPreset' => static::PRESET_LIST,
 					],
 				]
@@ -205,102 +301,6 @@ class ItemDataProvider extends EntityDataProvider
 				'type' => static::TYPE_LIST,
 				'displayGrid' => true,
 				'displayFilter' => $this->settings->getCategoryId() > 0,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_LIST,
-			];
-		}
-
-		if ($this->factory->isBeginCloseDatesEnabled())
-		{
-			$fields[Item::FIELD_NAME_BEGIN_DATE] = [
-				'type' => static::TYPE_DATE,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => $isSmartInvoice,
-				'defaultFilter' => $isSmartInvoice,
-				'filterOptionPreset' => static::PRESET_DATE,
-			];
-			$fields[Item::FIELD_NAME_CLOSE_DATE] = [
-				'type' => static::TYPE_DATE,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => $isSmartInvoice,
-				'defaultFilter' => $isSmartInvoice,
-				'filterOptionPreset' => static::PRESET_DATE,
-			];
-		}
-
-		if ($this->factory->isClientEnabled())
-		{
-			$fields[Item::FIELD_NAME_COMPANY_ID] = [
-				'type' => static::TYPE_CRM_ENTITY,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
-			];
-			$fields[Item::FIELD_NAME_CONTACT_ID] = [
-				'type' => static::TYPE_CRM_ENTITY,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
-			];
-			$fields['CLIENT_INFO'] = [
-				'displayGrid' => true,
-				'displayFilter' => false,
-				'defaultGrid' => false,
-				'customCaption' => Loc::getMessage('CRM_COMMON_CLIENT'),
-				'sortField' => null,
-			];
-			$fields['CONTACT.FULL_NAME'] = [
-				'type' => static::TYPE_STRING,
-				'displayGrid' => false,
-				'displayFilter' => true,
-				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_CONTACTS_FULL_NAME'),
-			];
-			$fields['COMPANY.TITLE'] = [
-				'type' => static::TYPE_STRING,
-				'displayGrid' => false,
-				'displayFilter' => true,
-				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_COMPANY_TITLE'),
-			];
-		}
-
-		if ($this->factory->isLinkWithProductsEnabled())
-		{
-			$fields[Item::FIELD_NAME_PRODUCTS.'.PRODUCT_ID'] = [
-				'type' => static::TYPE_ENTITY_SELECTOR,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'filterOptionPreset' => static::PRESET_ENTITY_SELECTOR,
-				'customCaption' => Loc::getMessage('CRM_COMMON_PRODUCTS'),
-			];
-			$fields['OPPORTUNITY_WITH_CURRENCY'] = [
-				'type' => static::TYPE_STRING,
-				'displayGrid' => true,
-				'displayFilter' => false,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-				'customCaption' => Loc::getMessage('CRM_FILTER_ITEMDATAPROVIDER_OPPORTUNITY_WITH_CURRENCY'),
-				'sortField' => Item::FIELD_NAME_OPPORTUNITY,
-			];
-			$fields[Item::FIELD_NAME_OPPORTUNITY] = [
-				'type' => static::TYPE_NUMBER,
-				'displayGrid' => true,
-				'displayFilter' => true,
-				'defaultGrid' => false,
-				'defaultFilter' => false,
-			];
-			$fields[Item::FIELD_NAME_CURRENCY_ID] = [
-				'type' => static::TYPE_LIST,
-				'displayGrid' => true,
-				'displayFilter' => true,
 				'defaultGrid' => false,
 				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_LIST,
@@ -329,8 +329,8 @@ class ItemDataProvider extends EntityDataProvider
 				'type' => self::TYPE_CRM_ENTITY,
 				'displayGrid' => true,
 				'displayFilter' => true,
-				'defaultGrid' => $isSmartInvoice,
-				'defaultFilter' => $isSmartInvoice,
+				'defaultGrid' => false,
+				'defaultFilter' => false,
 				'filterOptionPreset' => static::PRESET_DEST_SELECTOR,
 			];
 			$fields[Item::FIELD_NAME_MYCOMPANY.'.TITLE'] = [

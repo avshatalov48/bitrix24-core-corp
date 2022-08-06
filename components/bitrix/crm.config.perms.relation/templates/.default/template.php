@@ -2,7 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 CUtil::InitJSCore();
 
-\Bitrix\Main\UI\Extension::load('ui.alerts');
+\Bitrix\Main\UI\Extension::load(['ui.alerts', 'ui.design-tokens']);
 
 ?>
 <form action="<?=POST_FORM_ACTION_URI?>" name="crmPermForm" method="POST">

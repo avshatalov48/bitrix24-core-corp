@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -1357,7 +1358,7 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 			array(
 				'name' => 'OPPORTUNITY_WITH_CURRENCY',
 				'title' => Loc::getMessage('CRM_DEAL_FIELD_OPPORTUNITY_WITH_CURRENCY'),
-				'type' => (Main\Loader::includeModule('salescenter')) ? 'moneyPay' : 'money',
+				'type' => (($this->entityData['IS_RECURRING'] !== 'Y') && Main\Loader::includeModule('salescenter')) ? 'moneyPay' : 'money',
 				'editable' => true,
 				'mergeable' => false,
 				'data' => array(
@@ -1432,6 +1433,10 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 							'entityTypeName' => \CCrmOwnerType::ContactName,
 							'tagName' => \CCrmOwnerType::ContactName
 						)
+					),
+					'categoryParams' => CCrmComponentHelper::getEntityClientFieldCategoryParams(
+						CCrmOwnerType::Deal,
+						$this->categoryID
 					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
@@ -2322,20 +2327,30 @@ class CCrmDealDetailsComponent extends CBitrixComponent
 		}
 		$this->entityData['CLIENT_INFO'] = $clientInfo;
 
-		if($this->enableSearchHistory)
+		if ($this->enableSearchHistory)
 		{
-			$this->entityData['LAST_COMPANY_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+				CCrmOwnerType::Deal,
+				$this->categoryID
+			);
+			$this->entityData['LAST_COMPANY_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.deal.details',
 					'company',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Company]['categoryId'],
+					]
 				)
 			);
-			$this->entityData['LAST_CONTACT_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.deal.details',
 					'contact',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
+					]
 				)
 			);
 		}

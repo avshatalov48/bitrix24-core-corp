@@ -480,7 +480,7 @@
 	}
 }
 
-@media screen and (max-width: 1470px) {
+@media screen and (max-width: 1770px) {
 	.tasks-counters--item.--other .tasks-counters--item-head {
 		display: none;
 	}

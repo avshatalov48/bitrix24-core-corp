@@ -11,7 +11,7 @@ use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI\Extension;
 
 Loc::loadMessages(__DIR__ . '/template.php');
-Extension::load(['marketplace']);
+Extension::load(['marketplace', 'ui.fonts.opensans']);
 
 $id = 'intranet_binding_menu_' . $arParams['SECTION_CODE'];
 $frequency = $arResult['FREQUENCY_MENU_ITEM'];

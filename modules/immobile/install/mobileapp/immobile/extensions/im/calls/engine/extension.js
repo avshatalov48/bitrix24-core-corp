@@ -375,6 +375,7 @@
 					}
 
 					BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
+					BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.messenger");
 
 					resolve({
 						call: call,
@@ -409,6 +410,7 @@
 					if (data.call.END_DATE)
 					{
 						BX.postComponentEvent("CallEvents::inactive", [id], "im.recent");
+						BX.postComponentEvent("CallEvents::inactive", [id], "im.messenger");
 						return reject({
 							code: "ALREADY_FINISHED"
 						});
@@ -595,6 +597,7 @@
 				this.calls[callId] = call;
 
 				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
+				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.messenger");
 			}
 
 			console.log(call);
@@ -608,8 +611,8 @@
 					userData: params.userData || null,
 					autoAnswer: this.shouldCallBeAutoAnswered(callId),
 				}], "calls");
+				call.log("Incoming call " + call.id);
 			}
-			call.log("Incoming call " + call.id);
 		}
 
 		_onUnknownCallPing(callId, serverTimeAgo, ttl)
@@ -679,6 +682,7 @@
 			this.calls[callFields['ID']] = call;
 
 			BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
+			BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.messenger");
 
 			return call;
 		}
@@ -713,6 +717,7 @@
 			{
 				console.warn("CallEvents::active", e.callId, call.joinStatus);
 				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
+				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.messenger");
 			}
 		}
 
@@ -723,6 +728,7 @@
 			{
 				console.warn("CallEvents::active", e.callId, call.joinStatus);
 				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
+				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.messenger");
 			}
 		}
 
@@ -730,6 +736,7 @@
 		{
 			console.warn("CallEvents::inactive", callId);
 			BX.postComponentEvent("CallEvents::inactive", [callId], "im.recent");
+			BX.postComponentEvent("CallEvents::inactive", [callId], "im.messenger");
 		}
 
 		_onCallActive(callId)
@@ -739,6 +746,7 @@
 			{
 				console.warn("CallEvents::active", callId, call.joinStatus);
 				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.recent");
+				BX.postComponentEvent("CallEvents::active", [this._getCallFields(call), call.joinStatus], "im.messenger");
 			}
 		}
 
@@ -769,6 +777,7 @@
 
 			console.warn("CallEvents::inactive", [e.call.id]);
 			BX.postComponentEvent("CallEvents::inactive", [e.call.id], "im.recent");
+			BX.postComponentEvent("CallEvents::inactive", [e.call.id], "im.messenger");
 		}
 
 		destroy()
@@ -922,7 +931,7 @@
 		{
 			var d = new Date();
 
-			return d.getFullYear() + "-" + this.lpad(d.getMonth(), 2, '0') + "-" + this.lpad(d.getDate(), 2, '0') + " " + this.lpad(d.getHours(), 2, '0') + ":" + this.lpad(d.getMinutes(), 2, '0') + ":" + this.lpad(d.getSeconds(), 2, '0') + "." + d.getMilliseconds();
+			return d.getFullYear() + "-" + this.lpad(d.getMonth() + 1, 2, '0') + "-" + this.lpad(d.getDate(), 2, '0') + " " + this.lpad(d.getHours(), 2, '0') + ":" + this.lpad(d.getMinutes(), 2, '0') + ":" + this.lpad(d.getSeconds(), 2, '0') + "." + d.getMilliseconds();
 		}
 
 		getTimeForLog()
@@ -1210,5 +1219,6 @@
 	window.CallJoinedElseWhereError = CallJoinedElseWhereError;
 	window.CallEngine = CallEngine;
 	window.CCallUtil = CCallUtil;
+	window.CallStub = CallStub;
 })
 ();

@@ -1,11 +1,20 @@
 import {Reflection, Type, Event, Dom, Loc} from 'main.core';
 import {MenuManager} from 'main.popup';
+import {
+	AutomationContext,
+	ConditionGroup,
+	ConditionGroupSelector,
+	Document,
+	getGlobalContext,
+	setGlobalContext,
+} from 'bizproc.automation';
 
 const namespace = Reflection.namespace('BX.Crm.Activity');
 
 class CrmUpdateDynamicActivity
 {
 	documentType: Array<string>;
+	document: Document;
 	isRobot: boolean;
 	entityTypeIdSelect: HTMLSelectElement;
 	fieldsListSelect: HTMLSelectElement;
@@ -14,7 +23,7 @@ class CrmUpdateDynamicActivity
 	filterFieldsContainer: HTMLDivElement | null;
 	filteringFieldsPrefix: string;
 	filterFieldsMap: Map<string, object>;
-	conditionGroup: BX.Bizproc.Automation.ConditionGroup | undefined;
+	conditionGroup: ConditionGroup | undefined;
 
 	currentEntityTypeId: number;
 	fieldsMap: Map<string, object>;
@@ -37,6 +46,11 @@ class CrmUpdateDynamicActivity
 				);
 			}
 
+			this.document = new Document({
+				rawDocumentType: this.documentType,
+				documentFields: options.fieldsMap,
+				title: options.documentName,
+			});
 			if (this.isRobot)
 			{
 				this.fieldsListSelect = document.querySelector('[data-role="bca-cuda-fields-list"]');
@@ -53,14 +67,7 @@ class CrmUpdateDynamicActivity
 			this.filterFieldsContainer = document.querySelector('[data-role="bca-cuda-filter-fields-container"]');
 			this.filteringFieldsPrefix = options.filteringFieldsPrefix;
 			this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap));
-			if (!Type.isNil(options.documentName))
-			{
-				BX.Bizproc.Automation.API.documentName = options.documentName;
-			}
-			if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup)
-			{
-				this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup(options.conditions);
-			}
+			this.conditionGroup = new ConditionGroup(options.conditions);
 
 			this.currentValues = new Map();
 			Array
@@ -94,6 +101,20 @@ class CrmUpdateDynamicActivity
 		{
 			Event.bind(this.addConditionButton, 'click', this.onAddConditionButtonClick.bind(this));
 		}
+
+		this.initAutomationContext();
+	}
+
+	initAutomationContext()
+	{
+		try
+		{
+			getGlobalContext();
+		}
+		catch(error)
+		{
+			setGlobalContext(new AutomationContext({document: this.document}));
+		}
 	}
 
 	onEntityTypeIdChange(): void
@@ -101,10 +122,7 @@ class CrmUpdateDynamicActivity
 		this.currentEntityTypeId = this.entityTypeIdSelect.value;
 
 		Dom.clean(this.filterFieldsContainer);
-		if (BX.Bizproc.Automation && BX.Bizproc.Automation.ConditionGroup)
-		{
-			this.conditionGroup = new BX.Bizproc.Automation.ConditionGroup();
-		}
+		this.conditionGroup = new ConditionGroup();
 
 		Array
 			.from(this.entitiesFieldsContainers.children)
@@ -134,7 +152,7 @@ class CrmUpdateDynamicActivity
 			&& !Type.isNil(this.currentEntityTypeId)
 		)
 		{
-			const selector = new BX.Bizproc.Automation.ConditionGroupSelector(this.conditionGroup, {
+			const selector = new ConditionGroupSelector(this.conditionGroup, {
 				fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 				fieldPrefix: this.filteringFieldsPrefix,
 			});

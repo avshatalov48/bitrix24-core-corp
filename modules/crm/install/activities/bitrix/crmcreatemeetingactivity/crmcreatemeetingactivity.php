@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmCreateMeetingActivity extends CBPActivity
 {
@@ -32,16 +36,22 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 	public function Execute()
 	{
 		if (!CModule::IncludeModule("crm"))
+		{
 			return CBPActivityExecutionStatus::Closed;
+		}
 
 		$start = (string)$this->StartTime;
 		$end = (string)$this->EndTime;
 
 		if ($start === '')
+		{
 			$start = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
+		}
 
 		if ($end === '')
+		{
 			$end = $start;
+		}
 
 		$responsibleId = $this->getResponsibleId();
 		/** @var \Bitrix\Crm\Activity\Provider\Base $provider */
@@ -109,9 +119,18 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 			);
 		}
 
+		$this->writeDebugInfo($this->getDebugInfo(
+			[
+				'Responsible' => $this->Responsible ?? 'user_' . $responsibleId,
+				'StartTime' => $start,
+				'EndTime' => $end,
+			]
+		));
+
 		if(!($id = CCrmActivity::Add($activityFields, false, true, array('REGISTER_SONET_EVENT' => true))))
 		{
 			$this->WriteToTrackingService(CCrmActivity::GetLastErrorMessage(), 0, CBPTrackingType::Error);
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -131,7 +150,7 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 		if (!$id)
 		{
 			$documentId = $this->GetDocumentId();
-			list($typeName, $ownerID) = explode('_', $documentId[2]);
+			[$typeName, $ownerID] = explode('_', $documentId[2]);
 			$ownerTypeID = \CCrmOwnerType::ResolveID($typeName);
 
 			return CCrmOwnerType::GetResponsibleID($ownerTypeID, $ownerID, false);
@@ -142,7 +161,7 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 
 	private function getBindings(array $communications)
 	{
-		list($typeName, $id) = explode('_', $this->GetDocumentId()[2]);
+		[$typeName, $id] = explode('_', $this->GetDocumentId()[2]);
 		$typeId = CCrmOwnerType::ResolveID($typeName);
 		$id = (int) $id;
 
@@ -165,7 +184,7 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 	private function getCommunications()
 	{
 		$documentId = $this->GetDocumentId();
-		list($typeName, $id) = explode('_', $documentId[2]);
+		[$typeName, $id] = explode('_', $documentId[2]);
 
 		if ($typeName === CCrmOwnerType::DealName)
 		{
@@ -485,5 +504,23 @@ class CBPCrmCreateMeetingActivity extends CBPActivity
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected function getDebugInfo(array $values = [], array $map = []): array
+	{
+		$onlyDesignerFields = ['EndTime', 'NotifyValue', 'NotifyType'];
+
+		if (count($map) <= 0)
+		{
+			$map = static::getPropertiesDialogMap($this->getDocumentType());
+		}
+
+		// temporary
+		foreach ($onlyDesignerFields as $key)
+		{
+			unset($map[$key]);
+		}
+
+		return parent::getDebugInfo($values, $map);
 	}
 }

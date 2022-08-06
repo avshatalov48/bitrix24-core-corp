@@ -47,8 +47,10 @@ class CCrmOwnerType
 	public const StoreDocument = 33;
 	public const ShipmentDocument = 34;
 
+	public const BankDetail = 35;
+
 	public const FirstOwnerType = 1;
-	public const LastOwnerType = 34;
+	public const LastOwnerType = 35;
 
 	public const DynamicTypeStart = 128;
 	public const DynamicTypeEnd = 192;
@@ -94,6 +96,8 @@ class CCrmOwnerType
 
 	public const StoreDocumentName = 'STORE_DOCUMENT';
 	public const ShipmentDocumentName = 'SHIPMENT_DOCUMENT';
+
+	public const BankDetailName = 'BANK_DETAIL';
 
 	public const ScoringName = 'SCORING';
 
@@ -1129,21 +1133,23 @@ class CCrmOwnerType
 				return '';
 		}
 	}
+
+	/**
+	 *
+	 * @param int $entityID
+	 * @param int $fieldID
+	 *
+	 * @return string
+	 *
+	 * @deprecated Use Bitrix\Crm\UserField\Router::getEditUrl($entityID, $fieldID)
+	 * @see Bitrix\Crm\UserField\Router::getEditUrl
+	 */
 	public static function GetUserFieldEditUrl($entityID, $fieldID)
 	{
-		$fieldID = intval($fieldID);
-		if($fieldID <= 0)
-		{
-			$fieldID = 0;
-		}
+		$entityID = (string) $entityID;
+		$fieldID = (int) $fieldID;
 
-		return CComponentEngine::MakePathFromTemplate(
-			COption::GetOptionString('crm', 'path_to_user_field_edit'),
-			array(
-				'entity_id' => $entityID,
-				'field_id' => $fieldID
-			)
-		);
+		return (new Bitrix\Crm\UserField\Router($entityID))->getEditUrl($fieldID);
 	}
 
 	public static function IsSliderEnabled($typeID)
@@ -3371,6 +3377,7 @@ class CCrmOwnerType
 			self::isUseDynamicTypeBasedApproach($entityTypeId)
 			|| $entityTypeId === self::Lead
 			|| $entityTypeId === self::Deal
+			|| $entityTypeId === self::Contact
 			|| $entityTypeId === self::Quote
 		);
 	}

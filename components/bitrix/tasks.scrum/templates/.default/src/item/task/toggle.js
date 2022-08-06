@@ -57,11 +57,15 @@ export class Toggle extends EventEmitter
 	show()
 	{
 		this.shown = true;
+
+		this.unDisable();
 	}
 
 	hide()
 	{
 		this.shown = false;
+
+		this.unDisable();
 	}
 
 	isShown(): boolean

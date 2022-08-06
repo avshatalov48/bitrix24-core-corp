@@ -84,6 +84,7 @@ class DealDataProvider extends EntityDataProvider
 			'TITLE' => $this->createField(
 				'TITLE',
 				[
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -104,6 +105,7 @@ class DealDataProvider extends EntityDataProvider
 				'OPPORTUNITY',
 				[
 					'type' => 'number',
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -114,7 +116,10 @@ class DealDataProvider extends EntityDataProvider
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'PROBABILITY' => $this->createField(
 				'PROBABILITY',
@@ -130,57 +135,117 @@ class DealDataProvider extends EntityDataProvider
 			),
 			'IS_NEW' => $this->createField(
 				'IS_NEW',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'IS_RETURN_CUSTOMER' => $this->createField(
 				'IS_RETURN_CUSTOMER',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'IS_REPEATED_APPROACH' => $this->createField(
 				'IS_REPEATED_APPROACH',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
 			'SOURCE_ID' => $this->createField(
 				'SOURCE_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			)
 		);
 
+		if(!$this->settings->checkFlag(DealSettings::FLAG_RECURRING))
+		{
+			$result['CLOSEDATE'] = $this->createField(
+				'CLOSEDATE',
+				[
+					'type' => 'date',
+					'default' => true,
+					'data' => [
+						'additionalFilter' => [
+							'isEmpty',
+							'hasAnyValue',
+						],
+					],
+				]
+			);
+
+			$result['CLOSED'] = $this->createField(
+				'CLOSED',
+				[
+					'type' => 'checkbox'
+				]
+			);
+
+			$result['ACTIVITY_COUNTER'] = $this->createField(
+				'ACTIVITY_COUNTER',
+				[
+					'type' => 'list',
+					'partial' => true
+				]
+			);
+		}
+
 		$result['STAGE_SEMANTIC_ID'] = $this->createField(
 			'STAGE_SEMANTIC_ID',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'default' => true,
+				'partial' => true
+			]
 		);
 
 		if($this->getCategoryID() >= 0)
 		{
 			$result['STAGE_ID'] = $this->createField(
-			'STAGE_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				'STAGE_ID',
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			);
 		}
 		elseif(\Bitrix\Crm\Category\DealCategory::isCustomized())
 		{
 			$result['CATEGORY_ID'] = $this->createField(
 				'CATEGORY_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			);
 		}
 		else
 		{
 			$result['STAGE_ID'] = $this->createField(
 				'STAGE_ID',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			);
 		}
 
 		$result['DELIVERY_STAGE'] = $this->createField(
 			'DELIVERY_STAGE',
-			array('type' => 'list', 'default' => false, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		$result['PAYMENT_STAGE'] = $this->createField(
 			'PAYMENT_STAGE',
-			array('type' => 'list', 'default' => false, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		$result['PAYMENT_PAID'] = $this->createField(
@@ -209,33 +274,6 @@ class DealDataProvider extends EntityDataProvider
 			]
 		);
 
-		if(!$this->settings->checkFlag(DealSettings::FLAG_RECURRING))
-		{
-			$result['CLOSEDATE'] = $this->createField(
-				'CLOSEDATE',
-				[
-					'type' => 'date',
-					'default' => true,
-					'data' => [
-						'additionalFilter' => [
-							'isEmpty',
-							'hasAnyValue',
-						],
-					],
-				]
-			);
-
-			$result['CLOSED'] = $this->createField(
-				'CLOSED',
-				array('type' => 'checkbox')
-			);
-
-			$result['ACTIVITY_COUNTER'] = $this->createField(
-				'ACTIVITY_COUNTER',
-				array('type' => 'list', 'default' => true, 'partial' => true)
-			);
-		}
-
 		//region OUTDATED EVENT FIELDS
 		$result['EVENT_DATE'] = $this->createField(
 			'EVENT_DATE',
@@ -252,16 +290,22 @@ class DealDataProvider extends EntityDataProvider
 
 		$result['EVENT_ID'] = $this->createField(
 			'EVENT_ID',
-			array('type' => 'list', 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 		//endregion
 
 		//endregion
 
-		$result += array(
+		$result += [
 			'CONTACT_ID' => $this->createField(
 				'CONTACT_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'CONTACT_FULL_NAME' => $this->createField(
 				'CONTACT_FULL_NAME',
@@ -276,7 +320,10 @@ class DealDataProvider extends EntityDataProvider
 			),
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
-				array('type' => 'dest_selector', 'default' => true, 'partial' => true)
+				[
+					'type' => 'dest_selector',
+					'partial' => true
+				]
 			),
 			'COMMENTS' => $this->createField(
 				'COMMENTS',
@@ -291,7 +338,10 @@ class DealDataProvider extends EntityDataProvider
 			),
 			'TYPE_ID' => $this->createField(
 				'TYPE_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'DATE_CREATE' => $this->createField(
 				'DATE_CREATE',
@@ -331,7 +381,7 @@ class DealDataProvider extends EntityDataProvider
 					'partial' => true,
 				]
 			)
-		);
+		];
 
 		if(!$this->settings->checkFlag(DealSettings::FLAG_RECURRING))
 		{
@@ -355,12 +405,18 @@ class DealDataProvider extends EntityDataProvider
 
 			$result['ORIGINATOR_ID'] = $this->createField(
 				'ORIGINATOR_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			);
 
 			$result['WEBFORM_ID'] = $this->createField(
 				'WEBFORM_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			);
 
 			Crm\Tracking\UI\Filter::appendFields($result, $this);
@@ -387,19 +443,17 @@ class DealDataProvider extends EntityDataProvider
 		{
 			$result['CRM_DEAL_RECURRING_ACTIVE'] = $this->createField(
 				'CRM_DEAL_RECURRING_ACTIVE',
-				array(
+				[
 					'name' => Loc::getMessage('CRM_DEAL_FILTER_RECURRING_ACTIVE'),
-					'default' => true,
 					'type' => 'checkbox'
-				)
+				]
 			);
 			$result['CRM_DEAL_RECURRING_NEXT_EXECUTION'] = $this->createField(
 				'CRM_DEAL_RECURRING_NEXT_EXECUTION',
-				array(
+				[
 					'name' => Loc::getMessage('CRM_DEAL_FILTER_RECURRING_NEXT_EXECUTION'),
-					'default' => true,
 					'type' => 'date'
-				)
+				]
 			);
 			$result['CRM_DEAL_RECURRING_LIMIT_DATE'] = $this->createField(
 				'CRM_DEAL_RECURRING_LIMIT_DATE',
@@ -445,22 +499,42 @@ class DealDataProvider extends EntityDataProvider
 
 		$result['STAGE_ID_FROM_HISTORY'] = $this->createField(
 			'STAGE_ID_FROM_HISTORY',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		$result['STAGE_ID_FROM_SUPPOSED_HISTORY'] = $this->createField(
 			'STAGE_ID_FROM_SUPPOSED_HISTORY',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		$result['STAGE_SEMANTIC_ID_FROM_HISTORY'] = $this->createField(
 			'STAGE_SEMANTIC_ID_FROM_HISTORY',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
 		);
 
 		$result['ORDER_SOURCE'] = $this->createField(
 			'ORDER_SOURCE',
-			array('type' => 'list', 'default' => true, 'partial' => true)
+			[
+				'type' => 'list',
+				'partial' => true
+			]
+		);
+
+		$result['ROBOT_DEBUGGER'] = $this->createField(
+			'ROBOT_DEBUGGER',
+			[
+				'type' => 'list',
+				'partial' => true,
+			]
 		);
 
 		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
@@ -667,6 +741,15 @@ class DealDataProvider extends EntityDataProvider
 				'params' => ['multiple' => 'Y'],
 				'items' => $orderSourceItems,
 			);
+		}
+		elseif ($fieldID === 'ROBOT_DEBUGGER')
+		{
+			return [
+				'params' => [
+					'multiple' => 'N',
+				],
+				'items' => \Bitrix\Crm\Automation\Debugger\DebuggerFilter::getFilterItems(),
+			];
 		}
 		elseif (ParentFieldManager::isParentFieldName($fieldID))
 		{

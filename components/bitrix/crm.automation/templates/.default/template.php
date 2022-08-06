@@ -66,7 +66,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		var DocumentTriggerDialogHandler = function(trigger, form)
 		{
-			var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+			var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 
 			if (triggerData && triggerData['TEMPLATE_LIST'])
 			{
@@ -90,9 +90,9 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 						text: item['NAME']
 					}));
 				}
-				if (BX.type.isPlainObject(trigger.data['APPLY_RULES']) && trigger.data['APPLY_RULES']['TEMPLATE_ID'])
+				if (BX.type.isPlainObject(trigger.getApplyRules()) && trigger.getApplyRules()['TEMPLATE_ID'])
 				{
-					select.value = trigger.data['APPLY_RULES']['TEMPLATE_ID'];
+					select.value = trigger.getApplyRules()['TEMPLATE_ID'];
 				}
 
 				var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
@@ -109,9 +109,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		var DocumentTriggerSaveHandler = function(trigger, formData)
 		{
-			trigger.data['APPLY_RULES'] = {
-				TEMPLATE_ID:  formData['data']['TEMPLATE_ID']
-			}
+			trigger.setApplyRules({TEMPLATE_ID: formData['data']['TEMPLATE_ID']});
 		};
 
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-DOCUMENT_VIEW', DocumentTriggerSaveHandler);
@@ -119,7 +117,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-MISSED_CALL', function(trigger, form)
 			{
-				var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+				var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 				if (triggerData && triggerData['LINES'])
 				{
 					var select = BX.create('select', {
@@ -142,9 +140,9 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 							text: item['SHORT_NAME']
 						}));
 					}
-					if (trigger.data['APPLY_RULES']['LINE_NUMBER'])
+					if (trigger.getApplyRules()['LINE_NUMBER'])
 					{
-						select.value = trigger.data['APPLY_RULES']['LINE_NUMBER'];
+						select.value = trigger.getApplyRules()['LINE_NUMBER'];
 					}
 
 					var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
@@ -159,9 +157,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-MISSED_CALL', function(trigger, formData)
 		{
-			trigger.data['APPLY_RULES'] = {
-				LINE_NUMBER:  formData['data']['LINE_NUMBER']
-			}
+			trigger.setApplyRules({LINE_NUMBER: formData['data']['LINE_NUMBER']});
 		});
 
 		var OLTriggerDialogHandler = function(trigger, form)
@@ -177,7 +173,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					attrs: {
 						className: "bizproc-automation-popup-input",
 						name: 'msg_text',
-						value: trigger.data['APPLY_RULES']['msg_text'] || ''
+						value: trigger.getApplyRules()['msg_text'] || ''
 					}
 				})]
 			}));
@@ -185,10 +181,10 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		var OLTriggerSaveHandler = function(trigger, formData)
 		{
-			trigger.data['APPLY_RULES'] = {
-				msg_text:  formData['data']['msg_text'],
-				config_id:  formData['data']['config_id']
-			}
+			trigger.setApplyRules({
+				msg_text: formData['data']['msg_text'],
+				config_id: formData['data']['config_id']
+			});
 		};
 
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_MSG', OLTriggerDialogHandler);
@@ -198,7 +194,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			var triggerDialogHandler = function(trigger, form)
 			{
-				var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+				var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 
 				if (triggerData && triggerData['CONFIG_LIST'])
 				{
@@ -222,9 +218,9 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 							text: item['NAME']
 						}));
 					}
-					if (BX.type.isPlainObject(trigger.data['APPLY_RULES']) && trigger.data['APPLY_RULES']['config_id'])
+					if (BX.type.isPlainObject(trigger.getApplyRules()) && trigger.getApplyRules()['config_id'])
 					{
-						select.value = trigger.data['APPLY_RULES']['config_id'];
+						select.value = trigger.getApplyRules()['config_id'];
 					}
 
 					var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
@@ -238,9 +234,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 			var triggerSaveHandler = function(trigger, formData)
 			{
-				trigger.data['APPLY_RULES'] = {
-					config_id:  formData['data']['config_id']
-				}
+				trigger.setApplyRules({config_id: formData['data']['config_id']});
 			};
 
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_ANSWER', triggerDialogHandler);
@@ -298,7 +292,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 				var menuItems = [];
 
-				trigger.component.data['DOCUMENT_FIELDS'].forEach(function(field)
+				BX.Bizproc.getGlobalContext().document.getFields().forEach(function(field)
 				{
 					var fieldId = field['Id'];
 
@@ -396,8 +390,8 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					})]
 				}));
 
-				var fields = trigger.data['APPLY_RULES']['fields'] || [];
-				trigger.component.data['DOCUMENT_FIELDS'].forEach(function(field)
+				var fields = trigger.getApplyRules()['fields'] || [];
+				BX.Bizproc.getGlobalContext().document.getFields().forEach(function(field)
 				{
 					if (fields.includes((field['Id'])))
 					{
@@ -408,9 +402,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 			var save = function(trigger, formData)
 			{
-				trigger.data['APPLY_RULES'] = {
-					fields:  formData['data']['fields']
-				}
+				trigger.setApplyRules({fields: formData['data']['fields']});
 			};
 
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-'+code, show);
@@ -421,7 +413,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-FILL_TRACKNUM', function(trigger, form)
 				{
-					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['DELIVERY_LIST'])
 					{
 						var select = BX.create('select', {
@@ -444,9 +436,9 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 								text: item['name']
 							}));
 						}
-						if (trigger.data['APPLY_RULES']['DELIVERY_ID'])
+						if (trigger.getApplyRules()['DELIVERY_ID'])
 						{
-							select.value = trigger.data['APPLY_RULES']['DELIVERY_ID'];
+							select.value = trigger.getApplyRules()['DELIVERY_ID'];
 						}
 
 						var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
@@ -461,9 +453,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-FILL_TRACKNUM', function(trigger, formData)
 			{
-				trigger.data['APPLY_RULES'] = {
-					DELIVERY_ID:  formData['data']['DELIVERY_ID']
-				}
+				trigger.setApplyRules({DELIVERY_ID: formData['data']['DELIVERY_ID']})
 			});
 
 		})();
@@ -472,7 +462,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-WEBHOOK', function(trigger, form)
 				{
-					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 
 					if (triggerData && triggerData['HANDLER'] && triggerData['HANDLER'].indexOf('{{PASSWORD}}') > 0)
 					{
@@ -542,11 +532,11 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-SHIPMENT_CHANGED', function(trigger, form)
 				{
-					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['FIELDS'])
 					{
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
-							trigger.data['APPLY_RULES']['shipmentCondition']
+							trigger.getApplyRules()['shipmentCondition']
 						);
 						selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
 							fields: triggerData['FIELDS'],
@@ -581,9 +571,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					'shipping_condition_'
 				);
 
-				trigger.data['APPLY_RULES'] = {
-					shipmentCondition:  conditionGroup.serialize()
-				}
+				trigger.setApplyRules({shipmentCondition: conditionGroup.serialize()});
 
 				if (selector && BX.type.isFunction(selector.destroy))
 				{
@@ -597,11 +585,11 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_ANSWER_CTRL', function(trigger, form)
 				{
-					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['FIELDS'])
 					{
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
-							trigger.data['APPLY_RULES']['imolCondition']
+							trigger.getApplyRules()['imolCondition']
 						);
 						selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
 							fields: triggerData['FIELDS'],
@@ -636,9 +624,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					'imol_condition_'
 				);
 
-				trigger.data['APPLY_RULES'] = {
-					imolCondition:  conditionGroup.serialize()
-				}
+				trigger.setApplyRules({imolCondition: conditionGroup.serialize()});
 
 				if (selector && BX.type.isFunction(selector.destroy))
 				{
@@ -652,7 +638,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-TASK_STATUS', function(trigger, form)
 				{
-					var triggerData = trigger.manager.getAvailableTrigger(trigger.data['CODE']);
+					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['STATUS_LIST'])
 					{
 						var select = BX.create('select', {
@@ -675,9 +661,9 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 								text: item['name']
 							}));
 						}
-						if (trigger.data['APPLY_RULES']['taskStatus'])
+						if (trigger.getApplyRules()['taskStatus'])
 						{
-							select.value = trigger.data['APPLY_RULES']['taskStatus'];
+							select.value = trigger.getApplyRules()['taskStatus'];
 						}
 
 						var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
@@ -690,7 +676,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					if (triggerData && triggerData['FIELDS'])
 					{
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
-							trigger.data['APPLY_RULES']['taskCondition']
+							trigger.getApplyRules()['taskCondition']
 						);
 						selector = new BX.Bizproc.Automation.ConditionGroupSelector(conditionGroup, {
 							fields: triggerData['FIELDS'],
@@ -725,10 +711,11 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					'task_condition_'
 				);
 
-				trigger.data['APPLY_RULES'] = {
+				trigger.setApplyRules({
 					taskStatus: formData['data']['STATUS_ID'],
-					taskCondition:  conditionGroup.serialize()
-				}
+					taskCondition: conditionGroup.serialize()
+				});
+
 				if (selector && BX.type.isFunction(selector.destroy))
 				{
 					selector.destroy();

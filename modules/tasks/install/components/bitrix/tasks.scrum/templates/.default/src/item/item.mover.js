@@ -21,6 +21,7 @@ export type ItemsSortInfo = {
 	[id: number]: {
 		sort: number,
 		entityId?: number,
+		tmpId?: string,
 		updatedItemId?: number
 	}
 }
@@ -96,8 +97,8 @@ export class ItemMover extends EventEmitter
 			dropzone: dropZones,
 			draggable: '.tasks-scrum__item--drag',
 			dragElement: '.tasks-scrum__item',
-			type: Draggable.DROP_PREVIEW,
-			delay: 260
+			type: Draggable.CLONE,
+			delay: 200
 		});
 
 		this.draggableItems.subscribe('beforeStart', this.onBeforeDragStart.bind(this));
@@ -107,10 +108,6 @@ export class ItemMover extends EventEmitter
 		this.draggableItems.subscribe('drop', this.onDropEnd.bind(this));
 		this.draggableItems.subscribe('dropzone:enter', this.onDropZoneEnter.bind(this));
 		this.draggableItems.subscribe('dropzone:out', this.onDropZoneOut.bind(this));
-
-		this.draggableItems.subscribe('container:enter', this.onDragContainerEnter.bind(this));
-		this.draggableItems.subscribe('container:out', this.onDragContainerOut.bind(this));
-		this.draggableItems.subscribe('out', this.onDragOut.bind(this));
 	}
 
 	onBeforeDragStart(baseEvent: BaseEvent)
@@ -193,15 +190,20 @@ export class ItemMover extends EventEmitter
 
 		const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
 
-		if (!sourceEntity.isBacklog())
-		{
-			const backlog = this.entityStorage.getBacklog();
-			if (backlog.isEmpty())
-			{
-				backlog.showDropzone();
-				backlog.hideBlank();
-			}
-		}
+		this.entityStorage
+			.getAllEntities()
+			.forEach((entity: Entity) => {
+				if (!entity.isCompleted() && sourceEntity.getId() !== entity.getId())
+				{
+					if (entity.isEmpty())
+					{
+						entity.showDropzone();
+						entity.hideEmptySearchStub();
+						entity.hideBlank();
+					}
+				}
+			})
+		;
 	}
 
 	onDragEnd(baseEvent: BaseEvent)
@@ -271,13 +273,29 @@ export class ItemMover extends EventEmitter
 			endEntity.adjustListItemsWidth();
 		}
 
-		if (sourceEntity && !sourceEntity.isBacklog())
+		if (sourceEntity)
 		{
-			const backlog = this.entityStorage.getBacklog();
-			if (backlog.isEmpty())
-			{
-				backlog.showDropzone();
-			}
+			this.entityStorage
+				.getAllEntities()
+				.forEach((entity: Entity) => {
+					if (!entity.isCompleted() && sourceEntity.getId() !== entity.getId())
+					{
+						if (entity.isEmpty())
+						{
+							if (entity.getNumberTasks() > 0 && entity.isExactSearchApplied())
+							{
+								entity.showEmptySearchStub();
+								entity.hideDropzone();
+							}
+							else
+							{
+								entity.showDropzone();
+								entity.hideEmptySearchStub();
+							}
+						}
+					}
+				})
+			;
 		}
 
 		this.planBuilder.adjustSprintListWidth();
@@ -344,14 +362,27 @@ export class ItemMover extends EventEmitter
 			}
 		}
 
-		if (!sourceEntity.isBacklog())
-		{
-			const backlog = this.entityStorage.getBacklog();
-			if (backlog.isEmpty())
-			{
-				backlog.showDropzone();
-			}
-		}
+		this.entityStorage
+			.getAllEntities()
+			.forEach((entity: Entity) => {
+				if (!entity.isCompleted() && sourceEntity.getId() !== entity.getId())
+				{
+					if (entity.isEmpty())
+					{
+						if (entity.getNumberTasks() > 0 && entity.isExactSearchApplied())
+						{
+							entity.showEmptySearchStub();
+							entity.hideDropzone();
+						}
+						else
+						{
+							entity.showDropzone();
+							entity.hideEmptySearchStub();
+						}
+					}
+				}
+			})
+		;
 	}
 
 	onDropZoneEnter()
@@ -362,52 +393,6 @@ export class ItemMover extends EventEmitter
 	onDropZoneOut()
 	{
 		this.isDropToZone = false;
-	}
-
-	onDragContainerEnter(baseEvent: BaseEvent)
-	{
-		const dragEnterContainerEvent = baseEvent.getData();
-
-		const sourceContainer = dragEnterContainerEvent.sourceContainer;
-		const enterContainer = dragEnterContainerEvent.enter;
-
-		const dropPreview = this.draggableItems.getDropPreview();
-
-
-		const width = sourceContainer.isEqualNode(enterContainer)
-			? parseInt(Dom.style(dropPreview, 'width'), 10)
-			: enterContainer.clientWidth
-		;
-
-		Dom.style(dropPreview, {
-			width: `${width}px`,
-			top: `${parseInt(Dom.style(dropPreview, 'top'), 10) + enterContainer.scrollTop}px`
-		});
-	}
-
-	onDragContainerOut(baseEvent: BaseEvent)
-	{
-		const dragOutContainerEvent = baseEvent.getData();
-
-		this.lastOutContainer = dragOutContainerEvent.out;
-	}
-
-	onDragOut(baseEvent: BaseEvent)
-	{
-		const dragOutEvent = baseEvent.getData();
-
-		if (Type.isUndefined(dragOutEvent.outContainer))
-		{
-			return;
-		}
-
-		const dropPreview = this.draggableItems.getDropPreview();
-
-		Dom.style(dropPreview, {
-			width: `${dragOutEvent.out.offsetWidth}px`,
-			height: `${dragOutEvent.out.offsetHeight}px`,
-			top: `${parseInt(Dom.style(dropPreview, 'top'), 10) + dragOutEvent.outContainer.scrollTop}px`
-		});
 	}
 
 	onItemMove(item: Item, sourceEntity: Entity, endEntity: Entity, insertDom: false): Promise
@@ -795,11 +780,11 @@ export class ItemMover extends EventEmitter
 		}
 	}
 
-	moveToWithGroupMode(entityFrom: Entity, entityTo: Entity, item: Item, after = true, update = true)
+	moveToWithGroupMode(entityFrom: Entity, entityTo: Entity, item?: Item, after = true, update = true)
 	{
 		const groupModeItems = entityFrom.getGroupModeItems();
 
-		if (!groupModeItems.has(item.getId()))
+		if (item && !groupModeItems.has(item.getId()))
 		{
 			groupModeItems.set(item.getId(), item);
 		}
@@ -956,7 +941,9 @@ export class ItemMover extends EventEmitter
 
 		if (this.moveToSprintMenu)
 		{
-			this.moveToSprintMenu.getPopupWindow().destroy();
+			this.moveToSprintMenu.getPopupWindow().close();
+
+			return;
 		}
 
 		this.moveToSprintMenu = new Menu({
@@ -1009,7 +996,9 @@ export class ItemMover extends EventEmitter
 
 		if (this.moveItemMenu)
 		{
-			this.moveItemMenu.getPopupWindow().destroy();
+			this.moveItemMenu.getPopupWindow().close();
+
+			return;
 		}
 
 		this.moveItemMenu = new Menu({
@@ -1035,5 +1024,18 @@ export class ItemMover extends EventEmitter
 	hasActionPanelDialog(): boolean
 	{
 		return (this.moveItemMenu || this.moveToSprintMenu)
+	}
+
+	closeActionPanelDialogs()
+	{
+		if (this.moveItemMenu)
+		{
+			this.moveItemMenu.getPopupWindow().close();
+		}
+
+		if (this.moveToSprintMenu)
+		{
+			this.moveToSprintMenu.getPopupWindow().close();
+		}
 	}
 }

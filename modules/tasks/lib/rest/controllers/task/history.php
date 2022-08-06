@@ -3,6 +3,7 @@ namespace Bitrix\Tasks\Rest\Controllers\Task;
 
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Main\Error;
 use Bitrix\Tasks\Rest\Controllers\Base;
 
 class History extends Base
@@ -33,7 +34,8 @@ class History extends Base
 		$filter['TASK_ID'] = $task->getId();
 		if(!$task->checkCanRead())
         {
-            throw new \TasksException('Access denied or task not found');
+			$this->errorCollection->add([new Error('Access denied.')]);
+			return null;
         }
 
 		$res = \CTaskLog::GetList($order, $filter);

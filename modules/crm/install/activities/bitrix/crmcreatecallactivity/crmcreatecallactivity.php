@@ -1,5 +1,9 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 class CBPCrmCreateCallActivity extends CBPActivity
 {
@@ -31,16 +35,22 @@ class CBPCrmCreateCallActivity extends CBPActivity
 	public function Execute()
 	{
 		if (!CModule::IncludeModule("crm"))
+		{
 			return CBPActivityExecutionStatus::Closed;
+		}
 
 		$start = (string)$this->StartTime;
 		$end = (string)$this->EndTime;
 
 		if ($start === '')
+		{
 			$start = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
+		}
 
 		if ($end === '')
+		{
 			$end = $start;
+		}
 
 		$responsibleId = $this->getResponsibleId();
 		/** @var \Bitrix\Crm\Activity\Provider\Base $provider */
@@ -108,9 +118,12 @@ class CBPCrmCreateCallActivity extends CBPActivity
 			);
 		}
 
+		$this->writeDebugInfo($this->getDebugInfo(['Responsible' => $this->Responsible ?? 'user_' . $responsibleId]));
+
 		if(!($id = CCrmActivity::Add($activityFields, false, true, array('REGISTER_SONET_EVENT' => true))))
 		{
 			$this->WriteToTrackingService(CCrmActivity::GetLastErrorMessage());
+
 			return CBPActivityExecutionStatus::Closed;
 		}
 
@@ -424,7 +437,9 @@ class CBPCrmCreateCallActivity extends CBPActivity
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $currentValues, &$errors)
 	{
 		if (!CModule::IncludeModule("crm"))
+		{
 			return false;
+		}
 
 		$runtime = CBPRuntime::GetRuntime();
 		$runtime->StartRuntime();
@@ -438,7 +453,9 @@ class CBPCrmCreateCallActivity extends CBPActivity
 		{
 			$field = $documentService->getFieldTypeObject($documentType, $fieldProperties);
 			if (!$field)
+			{
 				continue;
+			}
 
 			$properties[$propertyKey] = $field->extractValue(
 				array('Field' => $fieldProperties['FieldName']),
@@ -462,11 +479,31 @@ class CBPCrmCreateCallActivity extends CBPActivity
 
 		$errors = self::ValidateProperties($properties, new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser));
 		if (count($errors) > 0)
+		{
 			return false;
+		}
 
 		$currentActivity = &CBPWorkflowTemplateLoader::FindActivityByName($arWorkflowTemplate, $activityName);
 		$currentActivity['Properties'] = $properties;
 
 		return true;
+	}
+
+	protected function getDebugInfo(array $values = [], array $map = []): array
+	{
+		$onlyDesignerFields = ['EndTime', 'NotifyValue', 'NotifyType'];
+
+		if (count($map) <= 0)
+		{
+			$map = static::getPropertiesDialogMap($this->getDocumentType());
+		}
+
+		// temporary
+		foreach ($onlyDesignerFields as $key)
+		{
+			unset($map[$key]);
+		}
+
+		return parent::getDebugInfo($values, $map);
 	}
 }

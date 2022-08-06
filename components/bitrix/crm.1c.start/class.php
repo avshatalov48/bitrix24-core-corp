@@ -364,7 +364,7 @@ class OnecStartComponent extends CBitrixComponent
 	{
 		if (Loader::includeModule('bitrix24'))
 		{
-			if (\CBitrix24::getLicensePrefix() === 'ru')
+			if (in_array(\CBitrix24::getLicensePrefix(), ['ru', 'by']))
 			{
 				return true;
 			}

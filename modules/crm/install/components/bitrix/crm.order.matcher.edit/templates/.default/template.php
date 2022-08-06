@@ -40,7 +40,7 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 }
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/core/core_dragdrop.js');
-\Bitrix\Main\UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.design-tokens"]);
 
 $APPLICATION->SetPageProperty(
 	'BodyClass',

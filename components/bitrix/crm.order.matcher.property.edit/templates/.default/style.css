@@ -51,7 +51,7 @@
 	white-space: nowrap;
 	outline: none;
 	border: 1px solid #c4c7cc;
-	border-radius: 1px;
+	border-radius: var(--ui-field-border-radius, 1px);
 	background: #fff no-repeat calc(100% - 6px) center url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%227%22%20viewBox%3D%220%200%2011%207%22%3E%20%20%3Cpath%20fill%3D%22%23979797%22%20fill-rule%3D%22evenodd%22%20d%3D%22M349.545942%2C95.4246212%20L349.545942%2C89.6066017%20L347.606602%2C89.6066017%20L347.606602%2C96.3942911%20L347.606602%2C97.363961%20L355.363961%2C97.363961%20L355.363961%2C95.4246212%20L349.545942%2C95.4246212%20Z%22%20transform%3D%22rotate%28-45%2067.431%20465.144%29%22/%3E%3C/svg%3E);
 	color: #424956;
 	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;

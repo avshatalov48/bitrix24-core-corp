@@ -13,6 +13,7 @@ class Options
 	private $restrictedFieldsToShow = [];
 	private $restrictedValueTextReplacer;
 	private $restrictedValueHtmlReplacer;
+	private $showOnlyText = false;
 
 	public static function createFromArray(array $options)
 	{
@@ -152,6 +153,24 @@ class Options
 	{
 		$this->restrictedValueHtmlReplacer = $restrictedValueHtmlReplacer;
 
+		return $this;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isShowOnlyText(): bool
+	{
+		return $this->showOnlyText;
+	}
+
+	/**
+	 * @param bool $showOnlyText
+	 * @return Options
+	 */
+	public function setShowOnlyText(bool $showOnlyText): Options
+	{
+		$this->showOnlyText = $showOnlyText;
 		return $this;
 	}
 }

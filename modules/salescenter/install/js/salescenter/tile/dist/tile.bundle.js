@@ -6,10 +6,12 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	var Base = /*#__PURE__*/function () {
 	  function Base(props) {
 	    babelHelpers.classCallCheck(this, Base);
+	    this.id = +props.id || null;
 	    this.img = main_core.Type.isString(props.img) && props.img.length > 0 ? props.img : '';
 	    this.link = main_core.Type.isString(props.link) && props.link.length > 0 ? props.link : '';
 	    this.name = main_core.Type.isString(props.name) && props.name.length > 0 ? props.name : '';
 	    this.showTitle = main_core.Type.isBoolean(props.showTitle) ? props.showTitle : false;
+	    this.group = main_core.Type.isString(props.group) ? props.group : '';
 	  }
 
 	  babelHelpers.createClass(Base, [{
@@ -211,6 +213,62 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	  return Factory;
 	}();
 
+	/**
+	 * Group of tiles
+	 */
+
+	var Group = /*#__PURE__*/function () {
+	  function Group(props) {
+	    babelHelpers.classCallCheck(this, Group);
+
+	    /**
+	     * Group id
+	     * @type {string}
+	     */
+	    this.id = props.id;
+
+	    if (!main_core.Type.isString(props.id)) {
+	      throw new Error("Property 'id' is required for Group");
+	    }
+	    /**
+	     * Group name
+	     * @type {string}
+	     */
+
+
+	    this.name = main_core.Type.isString(props.name) ? props.name : '';
+	    /**
+	     * Tiles included in the group
+	     * @type {Base[]}
+	     */
+
+	    this.tiles = [];
+	  }
+	  /**
+	   * Filling group tiles from array
+	   * 
+	   * @param {Base[]} tiles
+	   */
+
+
+	  babelHelpers.createClass(Group, [{
+	    key: "fillTiles",
+	    value: function fillTiles(tiles) {
+	      var _this = this;
+
+	      if (main_core.Type.isArray(tiles)) {
+	        tiles.forEach(function (item) {
+	          if (item instanceof Base && item.group == _this.id) {
+	            _this.tiles.push(item);
+	          }
+	        });
+	      }
+	    }
+	  }]);
+	  return Group;
+	}();
+
+	exports.Group = Group;
 	exports.Offer = Offer;
 	exports.More = More;
 	exports.Cashbox = Cashbox;

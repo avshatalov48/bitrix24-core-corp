@@ -336,6 +336,27 @@ BX.namespace('Tasks.Component');
 				}.bind(this));
 
 				BX.Tasks.Util.hintManager.bindHelp(this.control('options'));
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Tasks.MemberSelector:projectSelected',
+					BX.delegate(this.onProjectSelected, this)
+				);
+
+				BX.Event.EventEmitter.subscribe(
+					'BX.Tasks.MemberSelector:projectDeselected',
+					BX.delegate(this.onProjectDeselected, this)
+				);
+
+				var instance = BX.Tasks.Component.TasksWidgetMemberSelector.getInstance(this.sys.id + '-project');
+				var preselectedGroup = instance.getSelector().getDialog().getPreselectedItems();
+				if (preselectedGroup.length)
+				{
+					var groupId = parseInt(preselectedGroup[0][1], 10);
+
+					this.showScrumFields(groupId);
+
+					BX.Event.EventEmitter.emit('BX.Tasks.Component.Task:projectPreselected', { groupId: groupId });
+				}
 			},
 
 			bindNestedControls: function()
@@ -552,6 +573,92 @@ BX.namespace('Tasks.Component');
 				BX.addClass(node, 'ui-btn-clock');
 
 				this.vars.submitting = true;
+			},
+
+			onProjectSelected: function(event)
+			{
+				this.showScrumFields(event.data.ID);
+			},
+
+			onProjectDeselected: function(event)
+			{
+				var unChosenContainer = this.control('unchosen-blocks');
+				if (!BX.type.isElementNode(unChosenContainer))
+				{
+					return;
+				}
+
+				var scrumFields = ['EPIC'];
+
+				scrumFields
+					.forEach(function (scrumField) {
+						var scrumControl = unChosenContainer
+							.querySelector('[data-block-name=' + scrumField + ']')
+						;
+						setTimeout(function () {
+							if (parseInt(scrumControl.dataset.groupId, 10) === parseInt(event.data.ID, 10))
+							{
+								scrumControl.dataset.groupId = 0;
+								BX.addClass(scrumControl, 'hidden');
+							}
+						}, 100)
+					})
+				;
+			},
+
+			showScrumFields: function(groupId)
+			{
+				BX.ajax.runComponentAction(
+					'bitrix:tasks.task',
+					'isScrumProject',
+					{
+						mode: 'class',
+						data: {
+							groupId: groupId
+						}
+					}
+				)
+					.then(
+						function(response)
+						{
+							var isScrumProject = response.data;
+
+							var unChosenContainer = this.control('unchosen-blocks');
+							if (!BX.type.isElementNode(unChosenContainer))
+							{
+								return;
+							}
+
+							var scrumFields = ['EPIC'];
+
+							if (isScrumProject)
+							{
+								scrumFields
+									.forEach(function (scrumField) {
+										var scrumControl = unChosenContainer
+											.querySelector('[data-block-name=' + scrumField + ']')
+										;
+										scrumControl.dataset.groupId = groupId;
+										BX.removeClass(scrumControl, 'hidden');
+									})
+								;
+							}
+							else
+							{
+								scrumFields
+									.forEach(function (scrumField) {
+										var scrumControl = unChosenContainer
+											.querySelector('[data-block-name=' + scrumField + ']')
+										;
+										scrumControl.dataset.groupId = groupId;
+										BX.addClass(scrumControl, 'hidden');
+									})
+								;
+							}
+						}.bind(this)
+					)
+					.catch(function(response) {}.bind(this))
+				;
 			},
 
 			submit: function()
@@ -949,12 +1056,36 @@ BX.namespace('Tasks.Component');
 				}
 			},
 
-			showToCheckListHint: function()
+			showToCheckListHintNoItems: function()
 			{
 				var hintPopup = new BX.PopupWindow({
 					bindElement: this.control('to-checklist'),
 					content: BX.message('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST_HINT'),
 					className: "tasks-to-checklist-popup",
+					darkMode: true,
+					autoHide: true,
+					closeByEsc: true,
+					angle: true,
+					offsetLeft: this.control('to-checklist').offsetWidth / 2,
+					events: {
+						onPopupClose: function()
+						{
+							this.destroy();
+						}
+					}
+				});
+				hintPopup.show();
+				setTimeout(function() {
+					hintPopup.close();
+				}, 2000);
+			},
+
+			showToCheckListHintCreated: function()
+			{
+				var hintPopup = new BX.PopupWindow({
+					bindElement: this.control('to-checklist'),
+					content: BX.message('TASKS_TASK_COMPONENT_TEMPLATE_TO_CHECKLIST_HINT_CREATED'),
+					className: 'tasks-to-checklist-popup',
 					darkMode: true,
 					autoHide: true,
 					closeByEsc: true,
@@ -1020,7 +1151,7 @@ BX.namespace('Tasks.Component');
 
 				if (titles.length <= 0)
 				{
-					this.showToCheckListHint();
+					this.showToCheckListHintNoItems();
 					return;
 				}
 
@@ -1035,7 +1166,8 @@ BX.namespace('Tasks.Component');
 						});
 						newCheckList.handleTaskOptions();
 						BX('checklistFromDescription').value = 'fromDescription';
-					});
+						this.showToCheckListHintCreated();
+					}.bind(this));
 
 					if (BX.hasClass(this.control('checklist'), 'invisible'))
 					{
@@ -1073,6 +1205,7 @@ BX.namespace('Tasks.Component');
 								newCheckList.handleTaskOptions();
 
 								BX('checklistFromDescription').value = 'fromDescription';
+								self.showToCheckListHintCreated();
 							});
 
 							if (BX.hasClass(self.control('checklist'), 'invisible'))
@@ -1081,7 +1214,7 @@ BX.namespace('Tasks.Component');
 							}
 						}
 					},
-					{ delimiter: true }
+					{delimiter: true}
 				];
 
 				treeStructure.getDescendants().forEach(function(descendant) {
@@ -1099,6 +1232,7 @@ BX.namespace('Tasks.Component');
 							items[0].handleTaskOptions();
 
 							BX('checklistFromDescription').value = 'fromDescription';
+							self.showToCheckListHintCreated();
 
 							if (BX.hasClass(self.control('checklist'), 'invisible'))
 							{

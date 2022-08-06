@@ -138,6 +138,7 @@ else
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID']
 			],
+			'USE_UI_TOOLBAR' => 'Y',
 		],
 		$component
 	);

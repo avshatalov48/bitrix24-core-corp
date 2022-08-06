@@ -189,36 +189,59 @@ BX.namespace('Tasks.Component');
 					});
 					this.doDynamicTaskAction(code, args);
 				}
-				else if(code == 'COMPLETE')
+				else if(code === 'COMPLETE' || code === 'RENEW')
 				{
 					var taskCompletePromise = new BX.Promise();
+					var taskStatus = null;
+					var isParentScrumTask = false;
 
 					if (this.option('isScrumTask'))
 					{
-						BX.loadExt('tasks.scrum.dod').then(function() {
-							if (typeof BX.Tasks.Scrum === 'undefined' || typeof BX.Tasks.Scrum.Dod === 'undefined')
+						top.BX.loadExt('tasks.scrum.task-status').then(function() {
+							if (
+								!BX.type.isUndefined(top.BX.Tasks.Scrum)
+								&& !BX.type.isUndefined(top.BX.Tasks.Scrum.TaskStatus)
+							)
+							{
+								taskStatus = new top.BX.Tasks.Scrum.TaskStatus({
+									groupId: this.option('groupId'),
+									parentTaskId: this.option('parentId'),
+									taskId: this.option('taskId'),
+									action: code === 'COMPLETE' ? 'complete': 'renew',
+									performActionOnParentTask: true
+								});
+								taskStatus.isParentScrumTask(this.option('parentId'))
+									.then(function(result) {
+										isParentScrumTask = result;
+										if (isParentScrumTask)
+										{
+											taskCompletePromise.fulfill();
+										}
+										else
+										{
+											if (code === 'COMPLETE')
+											{
+												taskStatus.showDod(this.option('taskId'))
+													.then(function() {
+														taskCompletePromise.fulfill();
+													}.bind(this))
+													.catch(function() {
+														taskCompletePromise.reject();
+													}.bind(this))
+												;
+											}
+											else
+											{
+												taskCompletePromise.fulfill();
+											}
+										}
+									}.bind(this))
+								;
+							}
+							else
 							{
 								taskCompletePromise.fulfill();
 							}
-
-							this.scrumDod = new BX.Tasks.Scrum.Dod({
-								groupId: this.option('groupId'),
-								taskId: this.option('taskId')
-							});
-							this.scrumDod.subscribe('resolve', function() { taskCompletePromise.fulfill() });
-							this.scrumDod.subscribe('reject', function() { taskCompletePromise.reject() });
-							this.scrumDod.isNecessary()
-								.then(function(isNecessary) {
-									if (isNecessary)
-									{
-										this.scrumDod.showList();
-									}
-									else
-									{
-										taskCompletePromise.fulfill();
-									}
-								}.bind(this))
-							;
 						}.bind(this));
 					}
 					else
@@ -227,7 +250,14 @@ BX.namespace('Tasks.Component');
 					}
 
 					taskCompletePromise.then(function() {
-						this.doDynamicTaskAction(code, args);
+						this.doDynamicTaskAction(code, args)
+							.then(function() {
+								if (taskStatus && isParentScrumTask)
+								{
+									taskStatus.update();
+								}
+							}.bind(this))
+						;
 					}.bind(this));
 				}
 				else
@@ -248,7 +278,7 @@ BX.namespace('Tasks.Component');
 				args = args || {};
 				args['id'] = taskId;
 
-				BX.ajax.runComponentAction('bitrix:tasks.task', action, {
+				return BX.ajax.runComponentAction('bitrix:tasks.task', action, {
 					mode: 'class',
 					data: {
 						taskId: taskId,
@@ -270,6 +300,8 @@ BX.namespace('Tasks.Component');
 						{
 							this.reFetchTaskData(code);
 						}
+
+						return true;
 					}.bind(this)
 				).catch(
 					function(response)

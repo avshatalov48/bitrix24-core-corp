@@ -62,6 +62,12 @@ body {
 	color: #e3ebed;
 }
 
+.timeman-background {
+	top: 0;
+	bottom: 0;
+	border-radius: 0;
+}
+
 .timeman-block-active .timeman-background {
 	background-color: #3d4653 !important;
 	border-color: #838b93 !important;
@@ -117,13 +123,16 @@ body {
 }
 
 /* userblock styles */
-.user-block:hover,
-.user-block.--hover,
-.user-block.--wait {
+.user-block:hover:after,
+.user-block.--hover:after,
+.user-block.--wait:after {
 	background-color: #78808b;
+	top: 0;
+	bottom: 0;
+	border-radius: 0;
 }
 
-.user-block-active {
+.user-block-active:after {
 	background: #3d4653 !important;
 }
 

@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Field;
+use Bitrix\Main\Error;
+use Bitrix\Main\Result;
 use Bitrix\Main\UI\FileInputUtility;
 
 class FileUploader
@@ -22,6 +24,30 @@ class FileUploader
 	protected function registerShutdownFunction(): void
 	{
 		register_shutdown_function([$this, 'deleteTemporaryFiles']);
+	}
+
+	/**
+	 * Check whether is $fileData is a valid file description for $field
+	 *
+	 * @param Field $field
+	 * @param array $fileData
+	 * @return Result
+	 */
+	final public function checkFile(Field $field, array $fileData): Result
+	{
+		$result = new Result();
+
+		if ($field->getValueType() === Field::VALUE_TYPE_IMAGE)
+		{
+			$errors = $this->cfile::CheckImageFile($fileData);
+
+			if (!empty($errors))
+			{
+				$result->addError(new Error($errors));
+			}
+		}
+
+		return $result;
 	}
 
 	/**
@@ -108,14 +134,31 @@ class FileUploader
 	{
 		foreach ($this->files as $fileId)
 		{
-			if ($fileId > 0)
-			{
-				$this->cfile::Delete($fileId);
-			}
+			$this->deleteFilePersistently($fileId);
 		}
 
 		$this->files = [];
 
 		return $this;
+	}
+
+	final public function deleteFilePersistently(int $fileId): self
+	{
+		$this->cfile::Delete($fileId);
+
+		return $this;
+	}
+
+	/**
+	 * Returns site-relative path to a file with id $fileId. If file not found, returns null.
+	 *
+	 * @param int $fileId
+	 * @return string|null
+	 */
+	final public function getFilePath(int $fileId): ?string
+	{
+		$path = $this->cfile::GetPath($fileId);
+
+		return is_string($path) ? $path : null;
 	}
 }

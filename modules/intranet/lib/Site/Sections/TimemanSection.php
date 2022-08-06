@@ -100,6 +100,7 @@ class TimemanSection
 			$last = \Bitrix\Faceid\TrackingWorkdayTable::query()
 				->addSelect('DATE')
 				->addOrder('ID', 'DESC')
+				->setCacheTtl(3600)
 				->setLimit(1)
 				->fetch();
 
@@ -246,7 +247,7 @@ class TimemanSection
 		if (static::isBitrix24())
 		{
 			$available = static::isMeetingAvailable();
-			if (!static::isTimemanInstalled())
+			if (!static::isMeetingInstalled())
 			{
 				$locked = true;
 				$meetingUrl = '';

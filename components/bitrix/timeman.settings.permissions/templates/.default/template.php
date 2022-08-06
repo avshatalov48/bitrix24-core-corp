@@ -8,14 +8,16 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadLanguageFile(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load([
+	'access',
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.alerts',
+	'ui.design-tokens',
+]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
-
-CJSCore::Init(['access']);
 ?>
 <div class="tm-config-wrap" id="tm-permissions">
 	<form data-role="access-table-form">
@@ -80,9 +82,11 @@ CJSCore::Init(['access']);
 										<?= htmlspecialcharsbx($task['NAME']) ?>
 									</td>
 									<td class="table-blue-td-action">
+										<? if ($task['CAN_BE_EDIT']): ?>
 											<a class="tm-edit-task table-blue-edit" title=
 											"<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>" href=
 											"<?= $this->__component->getEditTaskUrl($task) ?>"></a>
+										<? endif; ?>
 										<? if ($task['CAN_BE_DELETED']): ?>
 											<span class="table-blue-delete tm-delete-role"
 												title="<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_DELETE')) ?>"

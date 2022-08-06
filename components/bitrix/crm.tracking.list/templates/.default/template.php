@@ -114,7 +114,7 @@ $channelTileManagerId = 'crm-analytics-channels';
                                 {zones: ['ru'], id: 973, lang: 'ru', sec: 'w6vllg'},
                                 ],
                                 id:'crm-tracking-configuration-help',
-                                portalUri: 'https://cp.bitrix.ru'
+                                portalUri: 'https://bitrix24.team'
                                 }
                                 );"
                 >

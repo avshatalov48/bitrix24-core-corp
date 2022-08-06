@@ -110,7 +110,7 @@ li.bx-crm-section-container.bx-crm-open>div .bx-crm-wf-arrow span{
 	box-sizing:border-box;
 	max-width:500px;
 	padding-left:5px;
-	white-space:nowrap;
+	white-space:nowrap !important;
 	text-overflow:ellipsis;
 	-ms-text-overflow:ellipsis;
 }

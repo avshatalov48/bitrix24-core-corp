@@ -93,6 +93,10 @@ abstract class EntityBase
 			$builderOptions = (new Options())
 				->setNeedReturnRawQuery(true)
 			;
+			if ($categories)
+			{
+				$builderOptions->setSkipCheckOtherEntityTypes(true);
+			}
 			$builderResult = $this->buildPermissionSqlForCategories(
 				$userPermissions->GetUserID(),
 				$builderOptions,

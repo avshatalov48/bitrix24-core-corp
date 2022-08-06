@@ -3,7 +3,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
-\Bitrix\Main\UI\Extension::load("ui.fonts.opensans");
+\Bitrix\Main\UI\Extension::load(["ui.fonts.opensans", "ui.design-tokens"]);
 ?>
 
 <input type="hidden" value="<?=htmlspecialcharsbx($arResult['ENTITY']['VK_PROFILE'])?>" data-role="crm-card-vk-profile">
@@ -160,7 +160,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 							<div class="crm-card-show-detail-info-title crm-card-show-title-main">
 								<div class="crm-card-show-detail-info-title-item">
 									<a href="<?=htmlspecialcharsbx($arResult['ENTITY']['INVOICE_LIST_URL'])?>" target="_blank">
-										<?=GetMessage('CRM_CARD_INVOICES')?>
+										<?=\CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::Invoice);?>
 									</a>
 								</div>
 							</div>
@@ -187,6 +187,48 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 												'CURRENT_ID' => $invoice['STATUS_ID'],
 												'READ_ONLY' => true
 											)) ?>
+									</div><!--crm-card-show-detail-info-main-status-->
+								</div><!--crm-card-show-detail-info-main-inner-->
+							<? endforeach ?>
+						</div>
+					<? endif ?>
+
+					<? if(is_array($arResult['ENTITY']['SMART_INVOICES']) && count($arResult['ENTITY']['SMART_INVOICES']) > 0): ?>
+						<?echo \CCrmViewHelper::RenderItemStatusSettings(\CCrmOwnerType::SmartInvoice, null);?>
+						<div class="crm-card-show-detail-info-wrap">
+							<div class="crm-card-show-detail-info-title crm-card-show-title-main">
+								<div class="crm-card-show-detail-info-title-item">
+									<a href="<?=htmlspecialcharsbx($arResult['ENTITY']['SHOW_URL'])?>" target="_blank">
+										<?=\CCrmOwnerType::GetCategoryCaption(\CCrmOwnerType::SmartInvoice);?>
+									</a>
+								</div>
+							</div>
+							<? foreach ($arResult['ENTITY']['SMART_INVOICES'] as $invoice): ?>
+								<div class="crm-card-show-detail-info-main-inner">
+									<div class="crm-card-show-detail-info-main-content">
+										<div class="crm-card-show-detail-info-block">
+											<div class="crm-card-show-detail-info-name">
+												<div class="crm-card-show-detail-info-name-item">
+													<a href="<?=htmlspecialcharsbx($invoice['SHOW_URL'])?>" target="_blank" data-use-slider="Y">
+														<?=htmlspecialcharsbx($invoice['HEADING'])?>
+													</a>
+												</div>
+											</div>
+											<div class="crm-card-show-detail-info-desc">
+												<div class="crm-card-show-detail-info-desc-item"><?= $invoice['PRICE_FORMATTED']?></div>
+											</div>
+										</div>
+									</div><!--crm-card-show-detail-info-main-content-->
+									<div class="crm-card-show-detail-info-main-status">
+										<?= CCrmViewHelper::RenderProgressControl(
+											[
+												'ENTITY_TYPE_NAME' => \CCrmOwnerType::SmartInvoiceName,
+												'ENTITY_TYPE_ID' => \CCrmOwnerType::SmartInvoice,
+												'ENTITY_ID' => $invoice['ID'],
+												'CURRENT_ID' => $invoice['STAGE_ID'],
+												'READ_ONLY' => true,
+												'CATEGORY_ID' => $invoice['CATEGORY_ID'],
+											]) ?>
 									</div><!--crm-card-show-detail-info-main-status-->
 								</div><!--crm-card-show-detail-info-main-inner-->
 							<? endforeach ?>

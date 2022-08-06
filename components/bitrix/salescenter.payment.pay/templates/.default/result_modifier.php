@@ -16,7 +16,7 @@ use Bitrix\Main\Localization\Loc;
 $arResult['JS_DATA'] = [
 	'app' => [
 		'paySystems' => $arResult['PAYSYSTEMS_LIST'],
-		'template' => $arParams['VIEW_MODE'] === 'Y' ? 'paySystemInfo' : 'paySystemList',
+		'template' => 'paySystemList',
 		'title' => Loc::getMessage('SPP_SELECT_PAYMENT_TITLE_NEW_NEW'),
 	],
 	'consent' => [

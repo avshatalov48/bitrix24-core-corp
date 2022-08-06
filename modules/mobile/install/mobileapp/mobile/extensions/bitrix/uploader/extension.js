@@ -223,7 +223,8 @@
 		{
 			if (this.fileData.name)
 			{
-				return this.fileData.name;
+				//replacing file extension by the real file extension
+				return this.fileData.name.replace(/\.(\w+)$/gi, "." + this.fileEntry.getExtension());
 			}
 
 			return this.fileEntry.getName();
@@ -647,7 +648,10 @@
 		},
 		cancelTasks: function (data)
 		{
-			data.taskIds.forEach(taskId => this.FileUploader.cancelTask(taskId))
+			data.taskIds.forEach(taskId => {
+				FileProcessing.cancel(taskId)
+				this.FileUploader.cancelTask(taskId)
+			})
 		}
 	};
 

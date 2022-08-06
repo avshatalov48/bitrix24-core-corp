@@ -21,6 +21,8 @@ use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Control\Exception\TemplateAddException;
+use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Integration;
 use Bitrix\Tasks\Integration\SocialServices\User;
@@ -131,13 +133,34 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			unset($data['SE_TEMPLATE_ACCESS']);
 		}
 
-		$template = new Item\Task\Template($data);
-		$saveResult = $template->save();
+		$manager = new \Bitrix\Tasks\Control\Template($this->userId);
+		$manager->withCheckFileRights();
 
-		$this->errors->load($saveResult->getErrors());
+		$saveResult = new Item\Result();
+
+		try
+		{
+			$template = $manager->add($data);
+		}
+		catch (TemplateAddException $e)
+		{
+			$saveResult->addError('TASKS_ADD_TEMPLATE', htmlspecialcharsback($e->getMessage()));
+			$this->errors->load($saveResult->getErrors());
+			return $result;
+		}
+		catch (\Exception $e)
+		{
+			$saveResult->addError('TASKS_ADD_TEMPLATE', $e->getMessage());
+			$this->errors->load($saveResult->getErrors());
+			return $result;
+		}
+
+		// $template = new Item\Task\Template($data);
+		// $saveResult = $template->save();
+
+		// $this->errors->load($saveResult->getErrors());
 
 		$templateId = $template->getId();
-
 		if (!$templateId)
 		{
 			return $result;
@@ -165,6 +188,8 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 				$saveResult->loadErrors($res->getErrors());
 			}
 		}
+
+		$this->errors->load($saveResult->getErrors());
 
 		return $result;
 	}
@@ -217,9 +242,29 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 				unset($data['SE_TEMPLATE_ACCESS']);
 			}
 
-			$template = new Item\Task\Template($id);
-			$template->setData($data);
-			$saveResult = $template->save();
+			$manager = new \Bitrix\Tasks\Control\Template($this->userId);
+			$saveResult = new Item\Result();
+
+			try
+			{
+				$template = $manager->update($id, $data);
+			}
+			catch (TemplateUpdateException $e)
+			{
+				$saveResult->addError('TASKS_UPDATE_TEMPLATE', $e->getMessage());
+				$this->errors->load($saveResult->getErrors());
+				return $result;
+			}
+			catch (\Exception $e)
+			{
+				$saveResult->addError('TASKS_UPDATE_TEMPLATE', $e->getMessage());
+				$this->errors->load($saveResult->getErrors());
+				return $result;
+			}
+
+			// $template = new Item\Task\Template($id);
+			// $template->setData($data);
+			// $saveResult = $template->save();
 
 			if ($saveResult->isSuccess() && $checkListItems)
 			{
@@ -392,7 +437,7 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	{
 		if ($data['REPLICATE_PARAMS'])
 		{
-			$data['REPLICATE_PARAMS'] = ReplicateParamsCorrector::correctReplicateParamsByTemplateData($data);
+			$data['REPLICATE_PARAMS'] = (new ReplicateParamsCorrector($this->userId))->correctReplicateParamsByTemplateData($data);
 		}
 	}
 

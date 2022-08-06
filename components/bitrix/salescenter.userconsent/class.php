@@ -2,10 +2,12 @@
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\Loader,
-	Bitrix\Main\Localization\Loc,
-	Bitrix\Main\Config\Option,
-	Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Main\Loader;
+use Bitrix\Main\Application;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
+use Bitrix\Main\Engine\Contract\Controllerable;
+use Bitrix\Crm\Integration\UserConsent;
 
 /**
  * Class SalesCenterUserConsent
@@ -90,6 +92,15 @@ class SalesCenterUserConsent extends CBitrixComponent implements Controllerable
 				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_ID, $agreementId);
 				Option::set('salescenter', self::SALESCENTER_USER_CONSENT_CHECKED, 'Y');
 			}
+		}
+
+		if (
+			!$agreementId
+			&& Application::getInstance()->getLicense()->getRegion() === 'by'
+			&& Loader::includeModule('crm')
+		)
+		{
+			$agreementId = UserConsent::getDefaultAgreementId();
 		}
 
 		return $agreementId;

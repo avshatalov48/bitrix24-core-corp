@@ -17,16 +17,22 @@
 		on(eventName, eventHandler)
 		{
 			this.list.on(eventName, eventHandler);
+
+			return this;
 		}
 
 		once(eventName, eventHandler)
 		{
 			this.list.once(eventName, eventHandler);
+
+			return this;
 		}
 
 		off(eventName, eventHandler)
 		{
 			this.list.off(eventName, eventHandler);
+
+			return this;
 		}
 
 		onScopeSelected(data)

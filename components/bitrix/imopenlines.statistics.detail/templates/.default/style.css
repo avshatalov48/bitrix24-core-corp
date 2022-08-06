@@ -5,7 +5,8 @@
 	height: 30px;
 	margin-right: 11px;
 	vertical-align: middle;
-	width: 30px;
+	max-width: 30px;
+	min-width: 30px;
 	float:none;
 }
 .ol-stat-rating { display: inline-block; width: 20px; height: 20px; background: url(./images/rating.png); }

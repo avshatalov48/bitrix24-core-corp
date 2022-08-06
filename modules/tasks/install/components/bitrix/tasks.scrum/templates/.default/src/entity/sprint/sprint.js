@@ -4,6 +4,7 @@ import {BaseEvent} from 'main.core.events';
 import {Entity} from '../entity';
 import {Blank} from '../blank';
 import {Dropzone} from '../dropzone';
+import {EmptySearchStub} from '../empty.search.stub';
 
 import {Item, ItemParams} from '../../item/item';
 import {SubTasks} from '../../item/task/sub.tasks';
@@ -31,6 +32,7 @@ export type SprintParams = {
 	dateEndFormatted?: string,
 	weekendDaysTime?: number,
 	defaultSprintDuration: number,
+	averageNumberStoryPoints?: number,
 	storyPoints?: string,
 	completedStoryPoints?: string,
 	uncompletedStoryPoints?: string,
@@ -76,6 +78,7 @@ export class Sprint extends Entity
 		this.setDateEndFormatted(params.dateEndFormatted);
 		this.setWeekendDaysTime(params.weekendDaysTime);
 		this.setDefaultSprintDuration(params.defaultSprintDuration);
+		this.setAverageNumberStoryPoints(params.averageNumberStoryPoints);
 		this.setStatus(params.status);
 		this.setCompletedStoryPoints(params.completedStoryPoints);
 		this.setUncompletedStoryPoints(params.uncompletedStoryPoints);
@@ -96,6 +99,7 @@ export class Sprint extends Entity
 			sprint.setBlank(sprint);
 		}
 		sprint.setDropzone(sprint);
+		sprint.setEmptySearchStub(sprint);
 		sprint.setListItems(sprint);
 
 		return sprint;
@@ -153,6 +157,14 @@ export class Sprint extends Entity
 		this.dropzone.subscribe('createTask', () => this.emit('showInput'));
 	}
 
+	setEmptySearchStub(sprint: Sprint)
+	{
+		if (!this.isCompleted())
+		{
+			this.emptySearchStub = new EmptySearchStub(sprint);
+		}
+	}
+
 	isActive(): boolean
 	{
 		return (this.getStatus() === 'active');
@@ -179,7 +191,7 @@ export class Sprint extends Entity
 		return (this.isActive() && (sprintEnd.getTime() < (new Date()).getTime()));
 	}
 
-	getEntityType()
+	getEntityType(): string
 	{
 		return 'sprint';
 	}
@@ -202,7 +214,7 @@ export class Sprint extends Entity
 
 		if (this.isEmpty())
 		{
-			this.showDropzone();
+			this.emit('showDropzone');
 		}
 	}
 
@@ -414,14 +426,30 @@ export class Sprint extends Entity
 		return this.uncompletedTasks;
 	}
 
-	setDefaultSprintDuration(defaultSprintDuration)
+	setDefaultSprintDuration(defaultSprintDuration: number)
 	{
-		this.defaultSprintDuration = (Type.isInteger(defaultSprintDuration) ? parseInt(defaultSprintDuration, 10) : 0);
+		this.defaultSprintDuration = (Type.isInteger(defaultSprintDuration)
+			? parseInt(defaultSprintDuration, 10)
+			: 0
+		);
 	}
 
-	getDefaultSprintDuration()
+	getDefaultSprintDuration(): number
 	{
 		return this.defaultSprintDuration;
+	}
+
+	setAverageNumberStoryPoints(averageNumberStoryPoints: number)
+	{
+		this.averageNumberStoryPoints = (Type.isNumber(averageNumberStoryPoints)
+			? parseFloat(averageNumberStoryPoints)
+			: 0
+		);
+	}
+
+	getAverageNumberStoryPoints(): number
+	{
+		return this.averageNumberStoryPoints;
 	}
 
 	getInfo(): SprintInfo
@@ -550,6 +578,7 @@ export class Sprint extends Entity
 				<div class="tasks-scrum__content-container">
 					${this.blank ? this.blank.render() : ''}
 					${this.dropzone ? this.dropzone.render() : ''}
+					${this.emptySearchStub ? this.emptySearchStub.render() : ''}
 					${this.listItems ? this.listItems.render() : ''}
 				</div>
 			</div>
@@ -570,7 +599,14 @@ export class Sprint extends Entity
 
 		if (this.isEmpty() && !this.isCompleted())
 		{
-			this.showDropzone();
+			if (this.getNumberTasks() > 0 && this.isExactSearchApplied())
+			{
+				this.showEmptySearchStub();
+			}
+			else
+			{
+				this.showDropzone();
+			}
 		}
 	}
 
@@ -582,7 +618,12 @@ export class Sprint extends Entity
 			const parentItem: Item = baseEvent.getTarget();
 			const subTasks: SubTasks = baseEvent.getData();
 
-			if (!this.isSubTaskLoadingActive() && subTasks.isEmpty())
+			if (this.isSubTaskLoadingActive())
+			{
+				return;
+			}
+
+			if (subTasks.isEmpty())
 			{
 				this.subTaskLoadingActive = true;
 
@@ -590,12 +631,10 @@ export class Sprint extends Entity
 			}
 			else
 			{
-				parentItem.unDisableToggle();
+				this.appendNodeAfterItem(subTasks.render(), parentItem.getNode());
+
+				parentItem.showSubTasks();
 			}
-
-			this.appendNodeAfterItem(subTasks.render(), parentItem.getNode());
-
-			subTasks.show();
 		});
 
 		item.subscribe('updateCompletedStatus', (baseEvent: BaseEvent) => {

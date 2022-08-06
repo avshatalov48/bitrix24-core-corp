@@ -269,11 +269,10 @@ endif;
 
 							if (!singlePopup)
 							{
-								// компонент не создает попап, он только генерирует для него контент - скрытый div с id = $arParams["NAME"]."_selector_content"
 								singlePopup = new BX.PopupWindow("single-employee-popup", this, {
 									offsetTop : 1,
 									autoHide : true,
-									content : BX("<?=CUtil::JSEscape($controlName)?>_selector_content"), // div с контентом для попапа
+									content : BX("<?=CUtil::JSEscape($controlName)?>_selector_content"),
 									zIndex: 3000
 								});
 							}

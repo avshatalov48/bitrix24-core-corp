@@ -39,44 +39,22 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Invoi
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
-	if ($arResult['IS_RECURRING'] !== 'Y')
-	{
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.entity.counter.panel',
-			'',
-			array('ENTITY_TYPE_NAME' => CCrmOwnerType::InvoiceName)
-		);
-	}
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
-
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
-	$this->SetViewTarget('pagetitle');
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.invoice.menu',
-			'',
-			array(
-				'PATH_TO_INVOICE_LIST' => $arResult['PATH_TO_INVOICE_LIST'],
-				'PATH_TO_INVOICE_SHOW' => $arResult['PATH_TO_INVOICE_SHOW'],
-				'PATH_TO_INVOICE_EDIT' => $arResult['PATH_TO_INVOICE_EDIT'],
-				'PATH_TO_INVOICE_RECUR' => $arResult['PATH_TO_INVOICE_RECUR'],
-				'ELEMENT_ID' => $arResult['VARIABLES']['invoice_id'],
-				'IS_RECURRING' => $arResult['IS_RECURRING'],
-				'TYPE' => 'list'
-			),
-			$component
-		);
-	$this->EndViewTarget();
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.invoice.menu',
+		'',
+		array(
+			'PATH_TO_INVOICE_LIST' => $arResult['PATH_TO_INVOICE_LIST'],
+			'PATH_TO_INVOICE_SHOW' => $arResult['PATH_TO_INVOICE_SHOW'],
+			'PATH_TO_INVOICE_EDIT' => $arResult['PATH_TO_INVOICE_EDIT'],
+			'PATH_TO_INVOICE_RECUR' => $arResult['PATH_TO_INVOICE_RECUR'],
+			'ELEMENT_ID' => $arResult['VARIABLES']['invoice_id'],
+			'IS_RECURRING' => $arResult['IS_RECURRING'],
+			'TYPE' => 'list'
+		),
+		$component
+	);
 
 	if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 	{
@@ -115,7 +93,8 @@ else
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
 				'DISABLE_NAVIGATION_BAR' => ($arResult['IS_RECURRING'] === 'Y' && $isSlider) ? 'Y' : 'N',
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

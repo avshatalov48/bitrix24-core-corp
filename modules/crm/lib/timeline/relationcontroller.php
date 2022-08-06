@@ -26,13 +26,15 @@ class RelationController extends Controller
 	 * @param mixed[] $previousFields
 	 * @param mixed[] $currentFields
 	 * @param ItemIdentifier[] $itemsToIgnore
+	 * @param int|null $authorId
 	 */
 	public function registerEventsByFieldsChange(
 		ItemIdentifier $child,
 		array $fieldsInfo,
 		array $previousFields,
 		array $currentFields,
-		array $itemsToIgnore = []
+		array $itemsToIgnore = [],
+		?int $authorId = null
 	): void
 	{
 		$difference = ComparerBase::compareEntityFields($previousFields, $currentFields);
@@ -50,25 +52,27 @@ class RelationController extends Controller
 				continue;
 			}
 
-			if ($difference->getPreviousValue($fieldName) > 0)
+			$previousValue = (int)$difference->getPreviousValue($fieldName);
+			if ($previousValue > 0)
 			{
-				$oldParent = new ItemIdentifier($parentEntityTypeId, (int)$difference->getPreviousValue($fieldName));
+				$oldParent = new ItemIdentifier($parentEntityTypeId, $previousValue);
 
 				// intentional not strict comparison. it doesn't matter here if objects are the same instance
-				if (!in_array($oldParent, $itemsToIgnore))
+				if (!in_array($oldParent, $itemsToIgnore, false))
 				{
-					$this->onItemsUnbind($oldParent, $child);
+					$this->onItemsUnbind($oldParent, $child, $authorId);
 				}
 			}
 
-			if ($difference->getCurrentValue($fieldName) > 0)
+			$currentValue = (int)$difference->getCurrentValue($fieldName);
+			if ($currentValue > 0)
 			{
-				$newParent = new ItemIdentifier($parentEntityTypeId, (int)$difference->getCurrentValue($fieldName));
+				$newParent = new ItemIdentifier($parentEntityTypeId, $currentValue);
 
 				// intentional not strict comparison. it doesn't matter here if objects are the same instance
-				if (!in_array($newParent, $itemsToIgnore))
+				if (!in_array($newParent, $itemsToIgnore, false))
 				{
-					$this->onItemsBind($newParent, $child);
+					$this->onItemsBind($newParent, $child, $authorId);
 				}
 			}
 		}
@@ -80,13 +84,15 @@ class RelationController extends Controller
 	 * @param array[] $previousBindings
 	 * @param array[] $currentBindings
 	 * @param ItemIdentifier[] $itemsToIgnore
+	 * @param int|null $authorId
 	 */
 	public function registerEventsByBindingsChange(
 		ItemIdentifier $child,
 		int $parentEntityTypeId,
 		array $previousBindings,
 		array $currentBindings,
-		array $itemsToIgnore = []
+		array $itemsToIgnore = [],
+		?int $authorId = null
 	): void
 	{
 		[$bound, $unbound] = EntityBinding::prepareBoundAndUnboundEntities(
@@ -100,9 +106,9 @@ class RelationController extends Controller
 			$oldParent = new ItemIdentifier($parentEntityTypeId, $removedParentId);
 
 			// intentional not strict comparison. it doesn't matter here if objects are the same instance
-			if (!in_array($oldParent, $itemsToIgnore))
+			if (!in_array($oldParent, $itemsToIgnore, false))
 			{
-				$this->onItemsUnbind($oldParent, $child);
+				$this->onItemsUnbind($oldParent, $child, $authorId);
 			}
 		}
 
@@ -111,9 +117,9 @@ class RelationController extends Controller
 			$newParent = new ItemIdentifier($parentEntityTypeId, $addedParentId);
 
 			// intentional not strict comparison. it doesn't matter here if objects are the same instance
-			if (!in_array($newParent, $itemsToIgnore))
+			if (!in_array($newParent, $itemsToIgnore, false))
 			{
-				$this->onItemsBind($newParent, $child);
+				$this->onItemsBind($newParent, $child, $authorId);
 			}
 		}
 	}
@@ -187,7 +193,7 @@ class RelationController extends Controller
 			[
 				'ENTITY_TYPE_ID' => $boundEntity->getEntityTypeId(),
 				'ENTITY_ID' => $boundEntity->getEntityId(),
-				'AUTHOR_ID' => $authorId ?? static::getCurrentOrDefaultAuthorId(),
+				'AUTHOR_ID' => ($authorId > 0) ? $authorId : static::getCurrentOrDefaultAuthorId(),
 				'SETTINGS' => [],
 				'BINDINGS' => [
 					[

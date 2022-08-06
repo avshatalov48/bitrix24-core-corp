@@ -68,7 +68,7 @@ class Proxy implements \ICrmRestProxy
 	{
 		if (isset($params['target']))
 		{
-			$pairs = explode('_', $params['target']);
+			$pairs = mb_split('_(?=[^_]*$)', $params['target']);
 			if (count($pairs) > 1)
 			{
 				$entityTypeId = \CCrmOwnerType::ResolveID($pairs[0]);

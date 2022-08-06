@@ -12,13 +12,14 @@ class Selling extends Base
 		$result = [];
 
 		$counter = 0;
+		$foundProducts = [];
 
 		foreach ($dealProducts as $product)
 		{
 			$index = static::searchProduct($product, $orderProducts);
 			if ($index === false)
 			{
-				$basketItem = $this->getBasketItemByEntityProduct($product, true);
+				$basketItem = $this->getBasketItemByEntityProduct($product, $foundProducts, true);
 				if ($basketItem)
 				{
 					if ($product['QUANTITY'] <= $basketItem->getQuantity())

@@ -21,6 +21,7 @@ Extension::load([
 	'ui.notification',
 	'catalog.product-calculator',
 	'catalog.store-use',
+	'ui.design-tokens',
 ]);
 
 /** @var array $grid */
@@ -497,7 +498,7 @@ foreach ($grid['ROWS'] as $product)
 		'RESERVE_INFO' => "<span data-name='INPUT_RESERVE_QUANTITY'>{$reserveInfo}</span>",
 		'DEDUCTED_INFO' => "<span data-name='DEDUCTED_QUANTITY'>{$deductedInfo}</span>",
 		'ROW_RESERVED' => "<span data-name='ROW_RESERVED'>{$rowReserved}</span>",
-		'STORE_AVAILABLE' => "<span data-name='STORE_AVAILABLE'>{$storeAvailable}</span>",
+		'STORE_AVAILABLE' => "<a href='#' data-name='STORE_AVAILABLE'>{$storeAvailable}</a>",
 		'PRICE' => $priceColumn,
 		'QUANTITY' => $quantityColumn,
 		'SUM' => $sumColumn,

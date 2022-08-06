@@ -45,6 +45,7 @@
 	padding: 15px 15px 20px;
 	background-color: #fff;
 	margin-bottom: 68px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .task-iframe-popup-side-slider{

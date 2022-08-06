@@ -41,6 +41,7 @@
   min-height: 33px;
   border: 1px solid #c6cdd3;
   padding: 5px 5px 0 5px;
+  border-radius: var(--task-form-field-border-radius, var(--ui-border-radius-2xs));
 }
 .task-form-field.inline {
   display: inline-block;
@@ -182,6 +183,7 @@
   line-height: 30px;
   margin: 0 5px 5px 0;
   background: #bcedfc;
+  border-radius: var(--task-form-field-item-border-radius, var(--ui-border-radius-3xs));
 }
 .task-form-field .task-form-field-item a[href="javascript:void(0);"] {
   cursor: default;

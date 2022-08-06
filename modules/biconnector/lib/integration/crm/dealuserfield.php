@@ -62,7 +62,7 @@ class DealUserField
 			$dbType = '';
 			if ($userField['USER_TYPE'] && is_callable([$userField['USER_TYPE']['CLASS_NAME'], 'getdbcolumntype']))
 			{
-				$dbType = call_user_func_array([$userField['USER_TYPE']['CLASS_NAME'], 'getdbcolumntype'], array($userField));
+				$dbType = call_user_func_array([$userField['USER_TYPE']['CLASS_NAME'], 'getdbcolumntype'], [$userField]);
 			}
 
 			if ($dbType === 'date' && $userField['MULTIPLE'] == 'N')

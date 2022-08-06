@@ -9,7 +9,6 @@ if(empty($arResult))
 
 $this->SetViewTarget("sidebar", 250);
 ?>
-
 <div class="sidebar-widget sidebar-widget-popular">
 	<div class="sidebar-widget-top">
 		<div class="sidebar-widget-top-title"><?=GetMessage("BLOG_WIDGET_TITLE")?></div>
@@ -19,7 +18,7 @@ $this->SetViewTarget("sidebar", 250);
 	$i = 0;
 	foreach($arResult as $arPost):
 	?>
-	<a href="<?=$arPost["urlToPost"]?>" class="sidebar-widget-item<?if(++$i == count($arResult)):?> widget-last-item<?endif?>">
+	<a href="<?=$arPost["urlToPost"]?>" class="sidebar-widget-item --row <?if(++$i == count($arResult)):?> widget-last-item<?endif?>">
 		<span class="user-avatar user-default-avatar"
 			<?if (isset($arPost["AVATAR_file"]["src"])):?>
 				style="background:url('<?=$arPost["AVATAR_file"]["src"]?>') no-repeat center; background-size: cover;"

@@ -113,6 +113,10 @@
 	border-radius: 0 0 3px 3px;
 }
 
+.tasks-scrum__content .ui-draggable--drop-preview-clone {
+	display: none !important;
+}
+
 
 .bitrix24-default-theme .tasks-scrum__content,
 .bitrix24-dark-theme .tasks-scrum__content {
@@ -167,6 +171,10 @@
 	margin-right: 4px;
 }
 
+.tasks-scrum__backlog .tasks-scrum__title {
+	min-width: 100px;
+}
+
 .tasks-scrum__content-empty {
 	display: none;
 	flex-direction: column;
@@ -182,7 +190,7 @@
 	transition: .2s;
 }
 
-.tasks-scrum__content-empty:hover {
+.tasks-scrum__content-empty:not(.--no-results):hover {
 	background: var(--tasks_scrum-white_alpha_30);
 	border: 2px dashed var(--tasks_scrum-white_alpha_90);
 }
@@ -202,6 +210,11 @@
 
 .tasks-scrum__content-empty.--open {
 	display: flex;
+}
+
+.tasks-scrum__content-empty.--no-results {
+	font-size: 20px;
+	padding: 30px 10px 28px;
 }
 
 .tasks-scrum__content-empty--title {

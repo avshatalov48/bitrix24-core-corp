@@ -231,7 +231,7 @@ class EntityService implements Errorable
 				'filter' => [
 					'ID' => $entityId,
 					'GROUP_ID' => $groupId,
-					'ITEMS.ACTIVE' => 'Y',
+					'=ITEMS.ACTIVE' => 'Y',
 				],
 			]);
 

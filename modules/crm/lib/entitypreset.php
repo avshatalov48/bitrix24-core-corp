@@ -814,6 +814,7 @@ class EntityPreset
 			{
 				$requisite = new EntityRequisite();
 				$fieldsAllowed = array_merge($requisite->getRqFields(), $requisite->getUserFields());
+				$fieldsAllowed = array_diff($fieldsAllowed, EntityRequisite::getFileFields());
 				unset($requisite);
 			}
 

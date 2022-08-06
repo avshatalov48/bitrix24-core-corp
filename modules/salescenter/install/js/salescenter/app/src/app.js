@@ -3,10 +3,11 @@ import {VuexBuilder} from 'ui.vue.vuex';
 import {rest as Rest} from 'rest.client';
 import {Manager} from 'salescenter.manager';
 import {Loader} from 'main.loader';
-import {Type, Loc, ajax as Ajax, Event} from 'main.core';
+import {Type, Text, Loc, ajax as Ajax, Event} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {MenuManager} from 'main.popup';
 import 'ui.notification';
+import 'ui.design-tokens';
 import {ApplicationModel} from './models/application';
 import {OrderCreationModel} from './models/ordercreation';
 import {DocumentSelectorModel} from './models/document-selector';
@@ -697,6 +698,7 @@ export class App
 			personTypeId: this.store.getters['orderCreation/getPersonTypeId'],
 			shipmentPropValues: this.store.getters['orderCreation/getPropertyValues'],
 			deliveryExtraServicesValues: this.store.getters['orderCreation/getDeliveryExtraServicesValues'],
+			availablePaySystemsIds: this.store.getters['orderCreation/getAvailablePaySystemsIds'],
 			connector: this.connector,
 			context: this.context,
 			currency: this.currencyCode,
@@ -775,12 +777,29 @@ export class App
 			this.emitGlobalEvent('salescenter.app:onpaymentcreated');
 		}).catch((data) =>
 		{
+
 			data.errors.forEach((error) => {
-				alert(error.message);
+				top.BX.UI.Notification.Center.notify({
+					content: Text.encode(error.message)
+				});
 			});
 			this.stopProgress(buttonEvent);
 			App.showError(data);
+
+			if(this.needCloseApplication(data.errors))
+			{
+				this.closeApplication();
+			}
 		});
+	}
+
+	needCloseApplication(errors)
+	{
+		let alwaysOpen = errors.filter(error => {
+			return error.code < 1 || error.code > 100
+		}).length >= 1
+
+		return alwaysOpen === false
 	}
 
 	resendPayment(buttonEvent)

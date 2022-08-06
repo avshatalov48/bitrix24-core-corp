@@ -153,6 +153,12 @@ final class Assembler
 
 				if (!$value)
 				{
+					if (mb_strpos($id, 'n') === 0)
+					{
+						// Key is like 'n0', it's an entirely new value, ignore ID. For compatibility reasons.
+						unset($compatibleValue['ID']);
+					}
+
 					$newValue = self::valueByArray($compatibleValue);
 					$newValue->setTypeId((string)$typeId);
 

@@ -63,6 +63,7 @@
 			PageManager.openWidget("list",
 			{
 				title: params.title || '',
+				testId: params.testId || '',
 				onReady: widget =>
 				{
 					new BackdropMenuComponent({

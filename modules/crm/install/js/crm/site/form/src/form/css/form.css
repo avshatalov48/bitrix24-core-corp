@@ -26,6 +26,7 @@
 	margin: 0 auto;
 	transition: min-height 180ms ease;
 	word-break: break-word;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .b24-form-wrapper.b24-from-state-on {min-height: 390px;}

@@ -1,6 +1,10 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true){
+	die();
+}
+
+use Bitrix\Crm\Controller\Action\Entity\SearchAction;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Main;
@@ -12,6 +16,7 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\Category\EditorHelper;
+use Bitrix\Crm\UserField\Router;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -159,13 +164,6 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			$APPLICATION->GetCurPage().'?company_id=#company_id#&edit'
 		);
 
-		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
-		$this->arResult['ENABLE_USER_FIELD_CREATION'] = $enableUfCreation;
-		$this->arResult['USER_FIELD_ENTITY_ID'] = $this->userFieldEntityID;
-		$this->arResult['USER_FIELD_CREATE_PAGE_URL'] = \CCrmOwnerType::GetUserFieldEditUrl($this->userFieldEntityID, 0);
-		$this->arResult['USER_FIELD_CREATE_SIGNATURE'] = $enableUfCreation
-			? $this->userFieldDispatcher->getCreateSignature(array('ENTITY_ID' => $this->userFieldEntityID))
-			: '';
 		$this->arResult['ENABLE_TASK'] = IsModuleInstalled('tasks');
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
 
@@ -271,6 +269,28 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 			if($leadID > 0)
 			{
 				$this->leadID = $this->arResult['LEAD_ID'] = (int)$leadID;
+				if(!$this->entityID)
+				{
+					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'] = [];
+					$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
+						'ENTITY_TYPE_ID' => CCrmOwnerType::Lead,
+						'ENTITY_ID' => $this->leadID,
+					];
+					$leadContact = Crm\ContactTable::query()
+							->where('LEAD_ID', $this->leadID)
+							->setSelect(['ID'])
+							->setOrder(['ID' => 'desc'])
+							->setLimit(1)
+							->exec()
+							->fetch()['ID'] ?? null;
+					if ($leadContact)
+					{
+						$this->arResult['DUPLICATE_CONTROL']['ignoredItems'][] = [
+							'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+							'ENTITY_ID' => $leadContact,
+						];
+					}
+				}
 			}
 		}
 
@@ -288,6 +308,14 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		//endregion
 
 		$this->arResult['CATEGORY_ID'] = $this->getCategoryId();
+		$enableUfCreation = \CCrmAuthorizationHelper::CheckConfigurationUpdatePermission();
+		$this->arResult['ENABLE_USER_FIELD_CREATION'] = $enableUfCreation;
+		$this->arResult['USER_FIELD_ENTITY_ID'] = $this->userFieldEntityID;
+		$this->arResult['USER_FIELD_CREATE_PAGE_URL'] = (new Router($this->userFieldEntityID))
+			->getEditUrlByCategory($this->arResult['CATEGORY_ID']);
+		$this->arResult['USER_FIELD_CREATE_SIGNATURE'] = $enableUfCreation
+			? $this->userFieldDispatcher->getCreateSignature(['ENTITY_ID' => $this->userFieldEntityID])
+			: '';
 
 		if(!isset($this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID']))
 		{
@@ -1000,6 +1028,10 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 							'tagName' => \CCrmOwnerType::ContactName
 						)
 					),
+					'categoryParams' => CCrmComponentHelper::getEntityClientFieldCategoryParams(
+						CCrmOwnerType::Company,
+						$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+					),
 					'map' => array('data' => 'CLIENT_DATA'),
 					'info' => 'CLIENT_INFO',
 					'fixedLayoutType' => 'CONTACT',
@@ -1151,10 +1183,16 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		{
 			if($this->isMyCompany())
 			{
-				$this->userType->setOptions(['isMyCompany' => true]);
+				$this->userType->setOption(['isMyCompany' => true]);
 			}
-			$this->userFields = $this->userType->GetEntityFields($this->entityID);
+
+			$categoryId = $this->arResult['CATEGORY_ID'] ?? $this->getCategoryId();
+			$this->userFields = $this->userType
+				->setOption(['categoryId' => $categoryId])
+				->GetEntityFields($this->entityID)
+			;
 		}
+
 		return $this->userFields;
 	}
 
@@ -1501,7 +1539,8 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 					CCrmOwnerType::Company,
 					$this->entityID,
 					['COMPANY_TYPE', 'INDUSTRY', 'EMPLOYEES', Tracking\UI\Details::SourceId],
-					Crm\Attribute\FieldOrigin::SYSTEM
+					Crm\Attribute\FieldOrigin::SYSTEM,
+					['CATEGORY_ID' => $this->arResult['CATEGORY_ID']]
 				)
 				: [];
 			$isTrackingFieldRequired = in_array(Tracking\UI\Details::SourceId, $requiredFields, true);
@@ -1887,13 +1926,20 @@ class CCrmCompanyDetailsComponent extends CBitrixComponent
 		}
 		$this->entityData['CLIENT_INFO'] = array('CONTACT_DATA' => $contactData);
 
-		if($this->enableSearchHistory)
+		if ($this->enableSearchHistory)
 		{
-			$this->entityData['LAST_CONTACT_INFOS'] = Crm\Controller\Action\Entity\SearchAction::prepareSearchResultsJson(
+			$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(
+				CCrmOwnerType::Company,
+				$this->arResult['CATEGORY_ID'] ?? $this->getCategoryId()
+			);
+			$this->entityData['LAST_CONTACT_INFOS'] = SearchAction::prepareSearchResultsJson(
 				Crm\Controller\Entity::getRecentlyUsedItems(
 					'crm.company.details',
 					'contact',
-					array('EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact)
+					[
+						'EXPAND_ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+						'EXPAND_CATEGORY_ID' => $categoryParams[CCrmOwnerType::Contact]['categoryId'],
+					]
 				)
 			);
 		}

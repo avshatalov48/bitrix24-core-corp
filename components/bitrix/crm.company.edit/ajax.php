@@ -336,6 +336,7 @@ elseif($action === 'FIND_DUPLICATES')
 		$adapter = \Bitrix\Crm\EntityAdapterFactory::create($fields, CCrmOwnerType::Company);
 		$dups = $checker->findDuplicates($adapter, new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames));
 
+		$ignoredEntities = (array)($params['IGNORED_ITEMS'] ?? []);
 		$entityInfoByType = array();
 		foreach($dups as &$dup)
 		{
@@ -352,6 +353,23 @@ elseif($action === 'FIND_DUPLICATES')
 				/** @var \Bitrix\Crm\Integrity\DuplicateEntity $entity */
 				$entityTypeID = $entity->getEntityTypeID();
 				$entityID = $entity->getEntityID();
+
+				$isIgnoredEntity = false;
+				foreach ($ignoredEntities as $ignoredEntity)
+				{
+					if (
+						$ignoredEntity['ENTITY_TYPE_ID'] == $entityTypeID
+						&& $ignoredEntity['ENTITY_ID'] == $entityID
+					)
+					{
+						$dup->removeEntity($entity);
+						$isIgnoredEntity = true;
+					}
+				}
+				if ($isIgnoredEntity)
+				{
+					continue;
+				}
 
 				if(!isset($entityInfoByType[$entityTypeID]))
 				{

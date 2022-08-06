@@ -50,10 +50,21 @@ $userHelper = $arResult['userHelper'];
 				<div class="timeman-report-title">
 					<div class="timeman-report-title-text"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_WORKTIME')) ?></div>
 					<? if ($arResult['worktimeInfoHint']): ?>
-						<span class="timeman-report-title-info-icon" data-hint-html data-hint="<?php echo htmlspecialcharsbx($arResult['worktimeInfoHint']); ?>"></span>
+						<span
+							class="timeman-report-title-info-icon"
+							data-hint-html
+							data-hint="<?php echo htmlspecialcharsbx($arResult['worktimeInfoHint']); ?>"
+						></span>
 					<? endif; ?>
 					<? if ($arResult['canUpdateWorktime']): ?>
-						<div class="timeman-report-title-change" data-role="edit-worktime-btn"><?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_EDIT')) ?></div>
+						<div class="timeman-report-title-change" data-role="edit-worktime-btn">
+							<?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_EDIT')) ?>
+						</div>
+					<? endif; ?>
+					<? if ($arResult['canChangeWorktime']): ?>
+						<div class="timeman-report-title-change" data-role="change-worktime-btn">
+							<?= htmlspecialcharsbx(Loc::getMessage('JS_CORE_TMR_EDIT')) ?>
+						</div>
 					<? endif; ?>
 				</div>
 				<?
@@ -209,6 +220,13 @@ $userHelper = $arResult['userHelper'];
 									data-action="<?php echo $btnAction; ?>"><?=
 								htmlspecialcharsbx($btnText)
 								?></button>
+						<? endif; ?>
+						<? if ($arResult['canChangeWorktime']): ?>
+							<button
+								class="ui-btn ui-btn-md <?= $btnClass ?>"
+								data-role="tm-record-btn-change"
+								data-action="<?php echo $btnAction; ?>"
+							><?= htmlspecialcharsbx($btnText) ?></button>
 						<? endif; ?>
 						<button class="ui-btn ui-btn-md ui-btn-light" data-role="tm-record-btn-cancel"><?=
 							htmlspecialcharsbx(Loc::getMessage('TIMEMAN_BTN_CANCEL_TITLE'))

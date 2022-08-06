@@ -17,6 +17,7 @@
 	box-shadow: 0 1px 2px 0 rgba(0,0,0,.14);
 	transition: all .2s linear;
 	cursor: pointer;
+	border-radius: var(--rpa-tile-item-border-radius, var(--ui-border-radius-md));
 }
 
 .rpa-tile-item:hover {
@@ -169,6 +170,9 @@
 	text-overflow: ellipsis;
 	padding: 12px;
 	font: 8px/14px 'OpenSans-Bold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	border-radius: var(--rpa-tile-item-border-radius, var(--ui-border-radius-md));
+	border-top-left-radius: 0;
+	border-top-right-radius: 0;
 }
 
 .rpa-tile-item-text {

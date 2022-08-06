@@ -175,10 +175,10 @@ if($arParams['TYPE'] === 'details')
 
 $sites = array();
 $sitesTmp = array();
-$res = \Bitrix\Main\SiteTable::getList(array(
-	'filter' => array('=ACTIVE' => 'Y'),
-	'order' => array('SORT' => 'ASC', 'LID' => 'ASC')
-));
+$res = \Bitrix\Main\SiteTable::getList([
+	'filter' => ['=ACTIVE' => 'Y', '!LID' => 'ex'],
+	'order' => ['SORT' => 'ASC', 'LID' => 'ASC']	
+]);
 
 while($site = $res->fetch())
 {

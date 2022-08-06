@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * This class contains ui helper for a component template
  *
@@ -13,6 +13,7 @@ use Bitrix\Main\Localization\Loc;
 
 use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util\Error;
+use Bitrix\Tasks\Util\Calendar;
 
 final class TemplateHelper
 {
@@ -21,6 +22,42 @@ final class TemplateHelper
 	private $name = 'ComponentTemplate';
 	private $methods = array();
 	private $runtimeActions = array();
+
+	public static function formatDateAfter($matchWorkTime, $value)
+	{
+		$dayDuration = 86400;
+
+		if ($matchWorkTime)
+		{
+			$calendarSettings = Calendar::getSettings();
+
+			$start = $calendarSettings['HOURS']['START'];
+			$end = $calendarSettings['HOURS']['END'];
+
+			$dayDuration = ($end['H'] - $start['H']) * 3600 + ($end['M'] - $start['M']) * 60 + ($end['S'] - $start['S']);
+			$dayDuration = ($dayDuration > 0? $dayDuration : 86400);
+		}
+
+		$value = intval($value); // in seconds
+
+		if(!($value % $dayDuration))
+		{
+			$unit = 'DAY';
+			$value = floor($value / $dayDuration);
+		}
+		elseif(!($value % 3600))
+		{
+			$unit = 'HOUR';
+			$value = floor($value / 3600);
+		}
+		else
+		{
+			$unit = 'MINUTE';
+			$value = floor($value / 60);
+		}
+
+		return $value.' '.Loc::getMessagePlural('TASKS_COMMON_' . $unit, $value);
+	}
 
 	public function __construct($name, $template, array $parameters = array())
 	{
@@ -177,6 +214,19 @@ final class TemplateHelper
 				continue;
 			}
 
+			$message = $error->getMessage();
+			if (
+				is_array($message)
+				&& array_key_exists($message['text'])
+			)
+			{
+				$message = $message['text'];
+			}
+			if (!is_scalar($message))
+			{
+				$message = '';
+			}
+
 			?>
 			<div class="task-message-label error"><?=htmlspecialcharsbx($error->getMessage())?></div>
 			<?
@@ -196,8 +246,21 @@ final class TemplateHelper
 				continue;
 			}
 
+			$message = $error->getMessage();
+			if (
+				is_array($message)
+				&& array_key_exists($message['text'])
+			)
+			{
+				$message = $message['text'];
+			}
+			if (!is_scalar($message))
+			{
+				$message = '';
+			}
+
 			?>
-			<div class="task-message-label warning"><?=htmlspecialcharsbx($error->getMessage())?></div>
+			<div class="task-message-label warning"><?=htmlspecialcharsbx($message)?></div>
 			<?
 		}
 	}

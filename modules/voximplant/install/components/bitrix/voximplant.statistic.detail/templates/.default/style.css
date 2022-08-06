@@ -1,16 +1,6 @@
 audio.vjs-tech {display: none;}
 
 .tel-stat-grid-wrap .bx-interface-grid td{vertical-align: middle;}
-.tel-stat-user-img.user-avatar {
-	background-position: 0 -1312px;
-	display: inline-block;
-	height: 30px;
-	margin-right: 11px;
-	vertical-align: middle;
-	width: 30px;
-	float:none;
-	flex-shrink: 0;
-}
 .tel-stat-icon {
 	background: url("./images/sprite.png") no-repeat scroll 2px -16px;
 	width: 20px;
@@ -110,13 +100,16 @@ audio.vjs-tech {display: none;}
 
 .tel-stat-user-name-container {
 	display: flex;
-	flex-direction: row;
 	align-items: center;
 }
 
 .tel-stat-user-name {
-	display: inline-block;
-	flex-shrink: 1;
+	flex: 1;
+	margin-left: unset;
+}
+
+.ui-icon + .tel-stat-user-name {
+	margin-left: 11px;
 }
 
 .tel-stat-grid-panel-content {

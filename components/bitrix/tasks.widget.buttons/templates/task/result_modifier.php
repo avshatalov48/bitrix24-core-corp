@@ -194,5 +194,6 @@ $arResult['JS_DATA'] = [
 	'additional_tabs'    => $this->arResult['ADDITIONAL_TABS'],
 	'taskLimitExceeded' => $arResult['TASK_LIMIT_EXCEEDED'],
 	'groupId' => $arParams['TASK']['GROUP_ID'],
-	'isScrumTask' => $arParams['IS_SCRUM_TASK'],
+	'parentId' => (int) $arParams['TASK']['PARENT_ID'],
+	'isScrumTask' => (bool) $arParams['IS_SCRUM_TASK'],
 ];

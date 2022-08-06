@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Cleaning;
 use Bitrix\Crm\Cleaning\Cleaner\Options;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main;
 use Bitrix\Main\Result;
 
@@ -94,7 +95,7 @@ class CleaningManager
 		)
 		{
 			$cleaner->addJob(
-				new class extends  Cleaner\Job {
+				new class extends Cleaner\Job {
 					public function run(Options $options): Result
 					{
 						EntityAddress::unregister(
@@ -112,7 +113,7 @@ class CleaningManager
 		if ($entityTypeId === \CCrmOwnerType::Company)
 		{
 			$cleaner->addJob(
-				new class extends  Cleaner\Job {
+				new class extends Cleaner\Job {
 					public function run(Options $options): Result
 					{
 						EntityAddress::unregister(
@@ -120,6 +121,58 @@ class CleaningManager
 							$options->getEntityId(),
 							EntityAddressType::Registered,
 						);
+
+						return new Result();
+					}
+				}
+			);
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$cleaner
+				->addJob(
+					new class extends Cleaner\Job {
+						public function run(Options $options): Result
+						{
+							\Bitrix\Crm\Binding\LeadContactTable::unbindAllLeads($options->getEntityId());
+							\Bitrix\Crm\Binding\DealContactTable::unbindAllDeals($options->getEntityId());
+							\Bitrix\Crm\Binding\ContactCompanyTable::unbindAllCompanies($options->getEntityId());
+							\Bitrix\Crm\Binding\QuoteContactTable::unbindAllQuotes($options->getEntityId());
+							\Bitrix\Crm\Binding\EntityContactTable::deleteByContact($options->getEntityId());
+
+							return new Result();
+						}
+					}
+				)
+				->addJob(
+					new class extends Cleaner\Job {
+						public function run(Options $options): Result
+						{
+							$identifier = new ItemIdentifier($options->getEntityTypeId(), $options->getEntityId());
+
+							\CCrmLiveFeed::deleteUserCrmConnection(
+								\Bitrix\Crm\UserField\Types\ElementType::getValueByIdentifier($identifier),
+							);
+
+							return new Result();
+						}
+					}
+				)
+			;
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Company || $entityTypeId === \CCrmOwnerType::Contact)
+		{
+			$cleaner->addJob(
+				new class extends Cleaner\Job {
+					public function run(Options $options): Result
+					{
+						if (Main\Loader::includeModule('sale'))
+						{
+							$binding = new \Bitrix\Crm\Order\ContactCompanyBinding($options->getEntityTypeId());
+							$binding->unbind($options->getEntityId());
+						}
 
 						return new Result();
 					}

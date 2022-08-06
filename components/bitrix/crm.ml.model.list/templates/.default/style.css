@@ -57,6 +57,7 @@
 .crm-ml-entity-content {
 	background: #fff;
 	padding: 20px 20px 100px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .crm-ml-entity-content-img-block {
@@ -467,7 +468,7 @@
 
 .crm-ml-model-block {
 	border: 1px solid #2fc6f6;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-sm, 3px);
 	padding: 14px 20px 18px 20px;
 	text-align: left;
 }

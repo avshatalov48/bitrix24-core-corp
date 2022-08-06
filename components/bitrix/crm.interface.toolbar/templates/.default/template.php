@@ -3,6 +3,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens']);
+
 $toolbarID =  $arParams['TOOLBAR_ID'];
 
 ?><div class="crm-list-top-bar" id="<?=htmlspecialcharsbx($toolbarID)?>"><?
@@ -74,22 +76,11 @@ foreach($arParams["BUTTONS"] as $item):
 	}
 	elseif($type === 'crm-context-menu')
 	{
-		$iconClassName = 'crm-menu-bar-btn';
-		if(isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'])
+		$iconClassName = 'ui-btn ui-btn-xs ui-btn-round ui-btn-dropdown';
+		$iconClassName .= isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'] ? ' ui-btn-primary' : ' ui-btn-light-border';
+		if (isset($item['ICON']))
 		{
-			if($iconClassName !== '')
-			{
-				$iconClassName = 'crm-menu-bar-btn crm-menu-bar-btn-green';
-			}
-			else
-			{
-				$iconClassName = 'crm-menu-bar-btn crm-menu-bar-btn-green';
-			}
-		}
-
-		if(isset($item['ICON']))
-		{
-			$iconClassName .= ' '.$item['ICON'];
+			$iconClassName .= $item['ICON'] === 'btn-new' ? ' ui-btn-icon-add' : ' ' . $item['ICON'];
 		}
 
 		if($alignment !== '')
@@ -97,7 +88,7 @@ foreach($arParams["BUTTONS"] as $item):
 			?><span class="crm-toolbar-alignment-<?=htmlspecialcharsbx($alignment)?>"><?
 		}
 		$onclick = isset($item['ONCLICK']) ? $item['ONCLICK'] : '';
-		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?>><span><?=htmlspecialcharsbx($text)?></span><span class="crm-btn-menu-arrow"></span></a><?
+		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?>><span class="ui-btn-text"><?=htmlspecialcharsbx($text)?></span></a><?
 		if($alignment !== '')
 		{
 			?></span><?
@@ -120,22 +111,11 @@ foreach($arParams["BUTTONS"] as $item):
 	}
 	else
 	{
-		$iconClassName = 'crm-menu-bar-btn';
-		if(isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'])
-		{
-			if($iconClassName !== '')
-			{
-				$iconClassName = 'crm-menu-bar-btn crm-menu-bar-btn-green';
-			}
-			else
-			{
-				$iconClassName = 'crm-menu-bar-btn crm-menu-bar-btn-green';
-			}
-		}
-
+		$iconClassName = 'ui-btn ui-btn-xs ui-btn-round';
+		$iconClassName .= isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'] ? ' ui-btn-primary' : ' ui-btn-light-border';
 		if(isset($item['ICON']))
 		{
-			$iconClassName .= ' '.$item['ICON'];
+			$iconClassName .= $item['ICON'] === 'btn-new' ? ' ui-btn-icon-add' : ' ' . $item['ICON'];
 		}
 
 		if($alignment !== '')
@@ -152,7 +132,7 @@ foreach($arParams["BUTTONS"] as $item):
 			}
 
 		}
-		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?><?=$dataAttrs;?>><span class="crm-toolbar-btn-icon"></span><span><?=htmlspecialcharsbx($text)?></span></a><?
+		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?><?=$dataAttrs;?>><span class="ui-btn-text"><?=htmlspecialcharsbx($text)?></span></a><?
 		if($alignment !== '')
 		{
 			?></span><?

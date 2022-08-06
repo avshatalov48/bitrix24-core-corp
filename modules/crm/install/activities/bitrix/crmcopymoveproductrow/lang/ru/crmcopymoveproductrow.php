@@ -10,3 +10,5 @@ $MESS['CRM_CMPR_NO_DST_ENTITY'] = 'Не удалось найти целевой
 $MESS['CRM_CMPR_COPY_PRODUCTS_ERROR'] = 'Не удалось скопировать товары';
 $MESS['CRM_CMPR_MOVE_PRODUCTS_ERROR'] = 'Не удалось переместить товары';
 $MESS['CRM_CMPR_SAME_ENTITY_ERROR'] = 'Текущий и целевой документы не должны быть равны';
+$MESS['CRM_CMPR_COPIED_ROWS'] = 'Скопированы товары';
+$MESS['CRM_CMPR_MOVED_ROWS'] = 'Перемещены товары';

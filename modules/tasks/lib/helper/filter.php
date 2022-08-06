@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Helper;
 use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Filter\Options;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Scrum\Form\EntityForm;
@@ -89,7 +90,7 @@ class Filter extends Common
 	}
 
 	/**
-	 * @return \Bitrix\Main\UI\Filter\Options
+	 * @return Options
 	 */
 	public function getOptions()
 	{
@@ -97,7 +98,7 @@ class Filter extends Common
 
 		if (empty(static::$options[$filterId]))
 		{
-			static::$options[$filterId] = new \Bitrix\Main\UI\Filter\Options(
+			static::$options[$filterId] = new Options(
 				$filterId,
 				$this->getAllPresets(),
 			);
@@ -114,7 +115,7 @@ class Filter extends Common
 		{
 			$registryId = FilterRegistry::getId($name, $this->getGroupId());
 
-			$options = new \Bitrix\Main\UI\Filter\Options(
+			$options = new Options(
 				$registryId,
 				static::getPresets($this),
 			);
@@ -415,6 +416,10 @@ class Filter extends Common
 
 				case 'dest_selector':
 					$rawFilter = $this->getDestSelectorFilterFieldData($filterRow);
+					break;
+
+				case 'entity_selector':
+					$rawFilter = $this->getEntitySelectorFilterFieldData($filterRow);
 					break;
 
 				case 'string':
@@ -797,12 +802,32 @@ class Filter extends Common
 
 		if (in_array('TAG', $fields))
 		{
-			$filter['TAG'] = array(
+			$filter['TAG'] = [
 				'id' => 'TAG',
 				'name' => Loc::getMessage('TASKS_FILTER_TAG'),
-				'type' => 'string',
-				'default' => $isScrumProject
-			);
+				'type' => 'entity_selector',
+				'default' => $isScrumProject,
+				'params' => [
+					'multiple' => 'Y',
+					'dialogOptions' => [
+						'context' => $isScrumProject
+							? 'TASKS_SCRUM_TAG_' . $this->getGroupId()
+							: 'TASKS_TAG'
+						,
+						'entities' => [
+							[
+								'id' => 'task-tag',
+								'options' => $isScrumProject
+									? ['groupId' => $this->getGroupId()]
+									: []
+								,
+							],
+						],
+						'dropdownMode' => true,
+						'compactView' => true,
+					],
+				],
+			];
 		}
 
 		if ($isScrumProject)
@@ -1030,9 +1055,44 @@ class Filter extends Common
 		return $list;
 	}
 
-	public function isSearchFieldApplied(): bool
+	/**
+	 * The method checks if the current filter is more accurate than presets.
+	 *
+	 * @return bool
+	 */
+	public function isExactSearchApplied(): bool
 	{
-		return (!$this->isFilterEmpty() && $this->getFilterFieldData('FIND', ''));
+		$options = $this->getOptions();
+
+		$currentPresetId = $options->getCurrentFilterId();
+
+		$additionalPresetFields = $options->getAdditionalPresetFields($currentPresetId);
+
+		$filledTmpPreset = false;
+		if ($currentPresetId === Options::TMP_FILTER)
+		{
+			$ignoreValues = ['', 'undefined', 'tmp_filter'];
+			$filterData = $this->getFilterData();
+			foreach($filterData as $field => $fieldValue)
+			{
+				if (is_array($fieldValue) && !empty($fieldValue))
+				{
+					$filledTmpPreset = true;
+				}
+				elseif (is_string($fieldValue) && !in_array($fieldValue, $ignoreValues, true))
+				{
+					$filledTmpPreset = true;
+				}
+			}
+		}
+
+		return (
+			!$this->isFilterEmpty()
+			&& (
+				$this->getFilterFieldData('FIND', '')
+				|| (!empty($additionalPresetFields) || $filledTmpPreset)
+			)
+		);
 	}
 
 	private function isFilterEmpty()
@@ -1300,6 +1360,13 @@ class Filter extends Common
 		}
 
 		return $arrFilter;
+	}
+
+	private function getEntitySelectorFilterFieldData($row): array
+	{
+		$rowId = $row['id'];
+
+		return [$rowId => $this->getFilterFieldData($rowId)];
 	}
 
 	public function getDefaultPresetKey()

@@ -32,11 +32,16 @@ class User extends Broker
 		return $this->getById($id)['WORK_POSITION'] ?? null;
 	}
 
+	public function isRealUser(int $id): bool
+	{
+		return ($this->getById($id)['IS_REAL_USER'] ?? 'N') === 'Y';
+	}
+
 	protected function loadEntry(int $id): ?array
 	{
 		$userRaw = UserTable::getList([
 			'select' => [
-				'ID', 'LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'PERSONAL_PHOTO', 'WORK_POSITION'
+				'ID', 'LOGIN', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'PERSONAL_PHOTO', 'WORK_POSITION', 'IS_REAL_USER',
 			],
 			'filter' => ['=ID' => $id]
 		])->fetch();
@@ -56,7 +61,7 @@ class User extends Broker
 	{
 		$userList = UserTable::getList([
 			'select' => [
-				'ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'PERSONAL_PHOTO', 'WORK_POSITION'
+				'ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'TITLE', 'PERSONAL_PHOTO', 'WORK_POSITION', 'IS_REAL_USER',
 			], 'filter' => [
 				'=ID' => $ids,
 			],

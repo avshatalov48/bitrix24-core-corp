@@ -134,7 +134,12 @@ if (count($events) > 0)
 	$menu = $arResult["menu"];
 	foreach ($events as $event)
 	{
-		$menu = ExecuteModuleEventEx($event, [$menu, $this]);
+		$modifiedMenu = ExecuteModuleEventEx($event, [$menu, $this]);
+		if ($modifiedMenu != null)
+		{
+			$menu = $modifiedMenu;
+		}
+
 	}
 
 	$arResult["menu"] = $menu;

@@ -21,6 +21,8 @@ export class SubTasks extends EventEmitter
 
 	render(): HTMLElement
 	{
+		this.removeYourself();
+
 		this.node = Tag.render`<div class="tasks-scrum__item-sub-tasks"></div>`;
 
 		Event.bind(this.node, 'transitionend', this.onTransitionEnd.bind(this, this.node));
@@ -35,6 +37,11 @@ export class SubTasks extends EventEmitter
 
 	removeYourself()
 	{
+		if (Type.isNull(this.getNode()))
+		{
+			return;
+		}
+
 		Dom.remove(this.node);
 
 		this.node = null;
@@ -69,41 +76,55 @@ export class SubTasks extends EventEmitter
 		this.list.clear();
 	}
 
-	show()
+	show(): Promise
 	{
-		if (Type.isNull(this.getNode()))
-		{
-			return;
-		}
+		return new Promise(
+			(resolve) => {
+				this.resolve = resolve;
 
-		if (this.list.size)
-		{
-			this.hideLoader();
+				if (Type.isNull(this.getNode()))
+				{
+					return;
+				}
 
-			this.renderSubTasks();
-		}
-		else
-		{
-			this.showLoader();
-		}
+				if (this.list.size)
+				{
+					this.hideLoader();
 
-		Dom.style(this.getNode(), 'height', `${ this.getNode().scrollHeight }px`);
+					this.renderSubTasks();
+				}
+				else
+				{
+					this.showLoader();
+				}
+
+				Dom.style(this.getNode(), 'height', `${ this.getNode().scrollHeight }px`);
+			})
+		;
 	}
 
-	hide()
+	hide(): Promise
 	{
-		if (Type.isNull(this.getNode()))
-		{
-			return;
-		}
+		return new Promise(
+			(resolve) => {
+				this.resolve = resolve;
 
-		this.hideLoader();
+				if (Type.isNull(this.getNode()))
+				{
+					this.resolve();
 
-		/* eslint-disable */
-		this.getNode().style.height = `${ this.getNode().scrollHeight }px`;
-		this.getNode().clientHeight;
-		this.getNode().style.height = '0';
-		/* eslint-enable */
+					return null;
+				}
+
+				this.hideLoader();
+
+				/* eslint-disable */
+				this.getNode().style.height = `${ this.getNode().scrollHeight }px`;
+				this.getNode().clientHeight;
+				this.getNode().style.height = '0';
+				/* eslint-enable */
+			})
+		;
 	}
 
 	isShown(): boolean
@@ -165,5 +186,7 @@ export class SubTasks extends EventEmitter
 		{
 			Dom.style(node, 'height', 'auto');
 		}
+
+		this.resolve();
 	}
 }

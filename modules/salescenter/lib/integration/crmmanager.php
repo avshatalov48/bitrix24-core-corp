@@ -32,6 +32,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Crm\Workflow\PaymentStage;
+use Bitrix\Crm\Item\Deal;
+use CCrmOwnerType;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -425,6 +427,38 @@ class CrmManager extends Base
 		}
 
 		return false;
+	}
+
+	/**
+	 * Get active (not finished) deal that has been converted from the lead.
+	 *
+	 * @param int $leadId
+	 * @return Deal|null
+	 */
+	public function getLeadActiveDeal(int $leadId): ?Deal
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::Deal);
+		if ($factory)
+		{
+			$items = $factory->getItems([
+				'filter' => [
+					'=LEAD_ID' => $leadId,
+				],
+				'order' => [
+					'ID' => 'desc',
+				],
+			]);
+			foreach ($items as $item)
+			{
+				$stage = $factory->getStage($item->getStageId());
+				if (!$stage || !Crm\PhaseSemantics::isFinal($stage->getSemantics()))
+				{
+					return $item;
+				}
+			}
+		}
+
+		return null;
 	}
 
 	/**
@@ -1121,11 +1155,7 @@ class CrmManager extends Base
 		return $this->getContactPhoneFormat($contact['CONTACT_ID']);
 	}
 
-	/**
-	 * @param Crm\Item $item
-	 * @return mixed|string
-	 */
-	public function getItemContactPhoneFormatted(Crm\Item $item)
+	public function getItemContactFields(Crm\Item $item)
 	{
 		$contactId = $item->getContactId();
 		if (!$contactId)
@@ -1133,7 +1163,39 @@ class CrmManager extends Base
 			return '';
 		}
 
+		return \CCrmContact::GetByID($contactId);
+	}
+
+	/**
+	 * @param Crm\Item $item
+	 * @return mixed|string
+	 */
+	public function getItemContactPhoneFormatted(Crm\Item $item)
+	{
+
+		$contactId = $item->getContactId();
+		if (!$contactId)
+		{
+			return '';
+		}
+
 		return $this->getContactPhoneFormat($contactId);
+	}
+	/**
+	 * @param Crm\Item $item
+	 * @return mixed|string
+	 */
+	public function getItemContactEditorUrl(Crm\Item $item)
+	{
+		$contactId = $item->getContactId();
+		if (!$contactId)
+		{
+			return '';
+		}
+		else
+		{
+			return \CCrmOwnerType::GetEditUrl(\CCrmOwnerType::Contact, $contactId, false).'?init_mode=edit';
+		}
 	}
 
 	private function getContactPhoneFormat(int $contactId)

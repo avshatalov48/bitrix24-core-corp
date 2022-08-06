@@ -45,7 +45,7 @@ final class OrganizationCriterion extends CriterionRegistrar\Decorator
 			DuplicateOrganizationCriterion::register(
 				$data->getEntityTypeId(),
 				$data->getEntityId(),
-				$difference->getCurrentValue($this->companyTitleFieldName),
+				(string)$difference->getCurrentValue($this->companyTitleFieldName),
 			);
 		}
 

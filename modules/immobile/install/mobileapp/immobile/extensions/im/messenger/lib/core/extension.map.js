@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","Type","Loc","Runtime"],"mappings":"AAGAA,GAAGC,OAAO,yBAAyB,CAACC,EAASC,EAASC,KAErD,MAAMC,KAAEA,GAASL,GAAGE,QAAQ,8BAC5B,MAAMI,IAAEA,GAAQN,GAAGE,QAAQ,6BAC3B,MAAMK,QAAEA,GAAYP,GAAGE,QAAQ,iCAE/BE,EAAOD,QAAU,CAChBE,KAAAA,EACAC,IAAAA,EACAC,QAAAA","file":"extension.map.js"}

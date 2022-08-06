@@ -12,6 +12,7 @@ use Bitrix\Crm\EO_Status_Collection;
 use Bitrix\Crm\Field;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\RelationIdentifier;
 use Bitrix\Crm\Service\EventHistory\TrackedObject;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Statistics;
@@ -160,12 +161,30 @@ abstract class Factory
 			$disabledFieldNames[] = Item::FIELD_NAME_STAGE_ID;
 		}
 
-		return new $this->itemClassName(
+		$item = new $this->itemClassName(
 			$this->getEntityTypeId(),
 			$object,
 			$this->getFieldsMap(),
 			$disabledFieldNames
 		);
+
+		$this->configureItem($item, $object);
+
+		return $item;
+	}
+
+	protected function configureItem(Item $item, EntityObject $entityObject): void
+	{
+		if ($this->isMultiFieldsEnabled())
+		{
+			$item->addImplementation(new Item\FieldImplementation\Multifield($this->getEntityTypeId(), $item->getId()));
+		}
+
+		$fileFields = $this->getFieldsCollection()->getFieldsByType(Field::TYPE_FILE);
+		if (count($fileFields) > 0)
+		{
+			$item->addImplementation(new Item\FieldImplementation\File($entityObject, $fileFields));
+		}
 	}
 
 	/**
@@ -221,13 +240,23 @@ abstract class Factory
 
 	public function isFieldExists(string $commonFieldName): bool
 	{
-		if ($commonFieldName === Item::FIELD_NAME_CONTACTS)
+		if ($commonFieldName === Item::FIELD_NAME_CONTACTS || $commonFieldName === Item::FIELD_NAME_CONTACT_IDS)
 		{
 			$entityFieldName = 'CONTACT_BINDINGS';
 		}
 		else
 		{
 			$entityFieldName = $this->getEntityFieldNameByMap($commonFieldName);
+		}
+
+		if (ParentFieldManager::isParentFieldName($entityFieldName))
+		{
+			return Container::getInstance()->getRelationManager()->getRelation(
+				new RelationIdentifier(
+					ParentFieldManager::getEntityTypeIdFromFieldName($entityFieldName),
+					$this->getEntityTypeId(),
+				)
+			) !== null;
 		}
 
 		return $this->getDataClass()::getEntity()->hasField($entityFieldName);
@@ -319,7 +348,7 @@ abstract class Factory
 		}
 		if ($field->getType() === Field::TYPE_LOCATION)
 		{
-			return \CCrmLocations::getLocationString($fieldValue);
+			return \CCrmLocations::getLocationStringByCode($fieldValue);
 		}
 
 		return (string)$fieldValue;
@@ -465,24 +494,36 @@ abstract class Factory
 	public function getItem(int $id): ?Item
 	{
 		$parameters = [
-			'select' => ['*'],
-			'filter' => ['=ID' => $id]
+			'select' => $this->getSelectForGetItem(),
+			'filter' => ['=ID' => $id],
+			// Do not set limit here! 'limit' limits number of DB rows, not items.
+			// If sql contains joins, there are multiple rows for each item. Some data will not be fetched
+			// 'limit' => 1,
 		];
+
+		$items = $this->getItems($parameters);
+
+		return array_shift($items);
+	}
+
+	protected function getSelectForGetItem(): array
+	{
+		$select = ['*'];
 
 		if ($this->isFieldExists(Item::FIELD_NAME_CONTACTS))
 		{
-			$parameters['select'][] = Item::FIELD_NAME_CONTACTS;
+			$select[] = Item::FIELD_NAME_CONTACTS;
 		}
 		if ($this->isFieldExists(Item::FIELD_NAME_PRODUCTS))
 		{
-			$parameters['select'][] = Item::FIELD_NAME_PRODUCTS;
+			$select[] = Item::FIELD_NAME_PRODUCTS;
 		}
 		if ($this->isFieldExists(Item::FIELD_NAME_OBSERVERS))
 		{
-			$parameters['select'][] = Item::FIELD_NAME_OBSERVERS;
+			$select[] = Item::FIELD_NAME_OBSERVERS;
 		}
 
-		return $this->getItems($parameters)[0] ?? null;
+		return $select;
 	}
 
 	/**
@@ -539,29 +580,8 @@ abstract class Factory
 	{
 		$this->addParentFieldsReferences();
 
-		$parameters['select'] = !empty($parameters['select']) ? $parameters['select'] : ['*'];
-
-		if (in_array('*', $parameters['select'], true))
-		{
-			$parameters['select'][] = 'UF_*';
-			$parameters['select'][] = 'PARENT_ID_*';
-		}
-
-		$selectWithoutContacts = array_diff($parameters['select'], [Item::FIELD_NAME_CONTACTS, Item::FIELD_NAME_CONTACT_IDS]);
-		$isContactsInSelect = ($parameters['select'] !== $selectWithoutContacts);
-
-		$parameters['select'] = $selectWithoutContacts;
-
-		if ($isContactsInSelect && $this->isClientEnabled())
-		{
-			$parameters['select'][] = Item::FIELD_NAME_CONTACT_BINDINGS;
-			$parameters['select'][] = Item::FIELD_NAME_CONTACT_ID;
-		}
-
-		if (in_array(Item::FIELD_NAME_PRODUCTS, $parameters['select'], true) && $this->isLinkWithProductsEnabled())
-		{
-			$parameters['select'][] = Item::FIELD_NAME_PRODUCTS.'.IBLOCK_ELEMENT';
-		}
+		$rawSelect = empty($parameters['select']) ? ['*'] : $parameters['select'];
+		$parameters['select'] = $this->prepareSelect($rawSelect);
 
 		return $this->replaceCommonFieldNames($parameters);
 	}
@@ -577,6 +597,36 @@ abstract class Factory
 				$this->getEntityTypeId()
 			);
 		}
+	}
+
+	protected function prepareSelect(array $select): array
+	{
+		if (in_array('*', $select, true))
+		{
+			$select[] = 'UF_*';
+			$select[] = 'PARENT_ID_*';
+		}
+
+		$selectWithoutContacts = array_diff($select, [Item::FIELD_NAME_CONTACTS, Item::FIELD_NAME_CONTACT_IDS]);
+		$isContactsInSelect = ($select !== $selectWithoutContacts);
+
+		$select = $selectWithoutContacts;
+
+		if ($isContactsInSelect)
+		{
+			$select[] = Item::FIELD_NAME_CONTACT_BINDINGS;
+			if ($this->isFieldExists(Item::FIELD_NAME_CONTACT_ID))
+			{
+				$select[] = Item::FIELD_NAME_CONTACT_ID;
+			}
+		}
+
+		if (in_array(Item::FIELD_NAME_PRODUCTS, $select, true))
+		{
+			$select[] = Item::FIELD_NAME_PRODUCTS.'.IBLOCK_ELEMENT';
+		}
+
+		return $select;
 	}
 
 	/**
@@ -1122,6 +1172,13 @@ abstract class Factory
 				new Operation\Action\MoveToBin(),
 			);
 		}
+		else
+		{
+			$operation->addAction(
+				Operation::ACTION_AFTER_SAVE,
+				new Operation\Action\DeleteFiles($this->getFieldsCollection()->getFieldsByType(Field::TYPE_FILE)),
+			);
+		}
 
 		if (!HistorySettings::getCurrent()->isDeletionEventEnabled($this->getEntityTypeId()))
 		{
@@ -1549,6 +1606,30 @@ abstract class Factory
 		return true;
 	}
 
+	/**
+	 * Returns true if this entity supports counters.
+	 *
+	 * @return bool
+	 */
+	public function isCountersEnabled(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Return actual counters settings.
+	 *
+	 * @return EntityCounterSettings
+	 */
+	public function getCountersSettings(): EntityCounterSettings
+	{
+		return
+			$this->isCountersEnabled()
+				? EntityCounterSettings::createDefault($this->isStagesSupported())
+				: new EntityCounterSettings()
+			;
+	}
+
 	public function getEditorAdapter(): EditorAdapter
 	{
 		if (!$this->editorAdapter)
@@ -1559,7 +1640,10 @@ abstract class Factory
 			{
 				$this->editorAdapter->addEntityField(
 					EditorAdapter::getClientField(
-						$this->getFieldCaption(EditorAdapter::FIELD_CLIENT)
+						$this->getFieldCaption(EditorAdapter::FIELD_CLIENT),
+						EditorAdapter::FIELD_CLIENT,
+						EditorAdapter::FIELD_CLIENT_DATA_NAME,
+						['entityTypeId' => $this->getEntityTypeId()]
 					)
 				);
 			}
@@ -1614,9 +1698,13 @@ abstract class Factory
 	 */
 	public function getItemCategoryId(int $id): ?int
 	{
+		if ($id === 0)
+		{
+			return null;
+		}
 		if (!$this->isCategoriesSupported())
 		{
-			return 0;
+			return null;
 		}
 
 		if (array_key_exists($id, $this->itemsCategoryCache))
@@ -1645,29 +1733,5 @@ abstract class Factory
 		{
 			unset($this->itemsCategoryCache[$id]);
 		}
-	}
-
-	/**
-	 * Returns true if this entity supports counters.
-	 *
-	 * @return bool
-	 */
-	public function isCountersEnabled(): bool
-	{
-		return false;
-	}
-
-	/**
-	 * Return actual counters settings.
-	 *
-	 * @return EntityCounterSettings
-	 */
-	public function getCountersSettings(): EntityCounterSettings
-	{
-		return
-			$this->isCountersEnabled()
-			? EntityCounterSettings::createDefault($this->isStagesSupported())
-			: new EntityCounterSettings()
-		;
 	}
 }

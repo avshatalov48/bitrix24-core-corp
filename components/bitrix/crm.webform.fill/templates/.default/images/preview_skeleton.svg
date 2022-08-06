@@ -1,0 +1,123 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" id="svg_wrapper" class="defs-only" xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 1200px">
+	<svg height="1200px">
+		<rect fill="#EBF1F4" width="100%" height="1200"/>
+		<rect fill="#FFFFFF" width="100%" height="1200" x="20" y="26"/>
+		<g id="bg-xl" transform="translate(20.000000, 341.000000)">
+			<rect stroke="#E3E3E3" fill="#FBFBFB" x="57.5" y="0.5" width="631" height="135" rx="10"></rect>
+			<g id="like" transform="translate(665.000000, 126.000000)" fill="#FFFFFF" stroke="#565A5F" stroke-opacity="0.160154543">
+				<g>
+					<circle cx="8.5" cy="8.5" r="8"></circle>
+				</g>
+			</g>
+		</g>
+		<g id="bg-l" transform="translate(20.000000, 221.000000)">
+			<rect id="Rectangle" stroke="#E3E3E3" fill="#FBFBFB" x="57.5" y="0.5" width="631" height="97" rx="10"></rect>
+			<g id="like" transform="translate(665.000000, 88.000000)" fill="#FFFFFF" stroke="#565A5F" stroke-opacity="0.160154543">
+				<g>
+					<circle cx="8.5" cy="8.5" r="8"></circle>
+				</g>
+			</g>
+		</g>
+		<g id="bg-m" transform="translate(20.000000, 121.000000)">
+			<rect id="Rectangle" stroke="#E3E3E3" fill="#FBFBFB" x="57.5" y="0.5" width="631" height="78" rx="10"></rect>
+			<g id="like" transform="translate(665.000000, 69.000000)" fill="#FFFFFF" stroke="#565A5F" stroke-opacity="0.160154543">
+				<g>
+					<circle cx="8.5" cy="8.5" r="8"></circle>
+				</g>
+			</g>
+		</g>
+		<g id="bg-sm" transform="translate(20.000000, 41.000000)">
+			<rect id="Rectangle" stroke="#E3E3E3" fill="#FBFBFB" x="57.5" y="0.5" width="483" height="55" rx="10"></rect>
+			<g id="like" transform="translate(517.000000, 46.000000)" fill="#FFFFFF" stroke="#565A5F" stroke-opacity="0.160154543">
+				<g>
+					<circle cx="8.5" cy="8.5" r="8"></circle>
+				</g>
+			</g>
+		</g>
+		<g id="bg-sm" transform="translate(20.000000, 496.000000)">
+			<rect id="Rectangle" stroke="#E3E3E3" fill="#FBFBFB" x="57.5" y="0.5" width="483" height="55" rx="10"></rect>
+			<g id="like" transform="translate(517.000000, 46.000000)" fill="#FFFFFF" stroke="#565A5F" stroke-opacity="0.160154543">
+				<g>
+					<circle cx="8.5" cy="8.5" r="8"></circle>
+				</g>
+			</g>
+		</g>
+		<g id="bg-l" transform="translate(20.000000, 571.000000)">
+			<rect id="Rectangle" stroke="#E3E3E3" fill="#FBFBFB" x="57.5" y="0.5" width="631" height="97" rx="10"></rect>
+			<g id="like" transform="translate(665.000000, 88.000000)" fill="#FFFFFF" stroke="#565A5F" stroke-opacity="0.160154543">
+				<g>
+					<circle cx="8.5" cy="8.5" r="8"></circle>
+				</g>
+			</g>
+		</g>
+	</svg>
+
+	<svg height="1200px" id="header">
+		<defs>
+			<g id="posts">
+				<circle fill="#DEE2E6" r="25" cx="45" cy="45"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="156"  height="8" x="87" y="28"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="282"  height="5" x="87" y="52"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="282"  height="5" x="87" y="74"/>
+				<rect fill="#DEE2E6" rx="2" ry="2" width="172"  height="5" x="87" y="100"/>
+			</g>
+			<g id="post-xl" transform="translate(0.000000, 0.000000)">
+				<rect fill="#ecedef" transform="translate(355.500000, 36.500000) scale(1, -1) translate(-355.500000, -36.500000) " x="71" y="32" width="569" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(355.500000, 55.500000) scale(1, -1) translate(-355.500000, -55.500000) " x="71" y="51" width="569" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(355.500000, 74.500000) scale(1, -1) translate(-355.500000, -74.500000) " x="71" y="70" width="569" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(175.500000, 93.500000) scale(1, -1) translate(-175.500000, -93.500000) " x="71" y="89" width="209" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(660.000000, 118.500000) scale(1, -1) translate(-660.000000, -118.500000) " x="647" y="115" width="26" height="7" rx="2"></rect>
+				<circle fill="#DEE2E6" cx="29.5" cy="28.5" r="17.5"></circle>
+				<rect fill="#ecedef" transform="translate(114.500000, 17.500000) scale(1, -1) translate(-114.500000, -17.500000) " x="71" y="13" width="87" height="9" rx="2"></rect>
+			</g>
+			<g id="post-l" transform="translate(0.000000, 0.000000)">
+				<rect fill="#ecedef" transform="translate(355.500000, 36.500000) scale(1, -1) translate(-355.500000, -36.500000) " x="71" y="32" width="569" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(114.500000, 17.500000) scale(1, -1) translate(-114.500000, -17.500000) " x="71" y="13" width="87" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(239.500000, 55.500000) scale(1, -1) translate(-239.500000, -55.500000) " x="71" y="51" width="337" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(660.000000, 80.500000) scale(1, -1) translate(-660.000000, -80.500000) " x="647" y="77" width="26" height="7" rx="2"></rect>
+				<circle fill="#DEE2E6" cx="29.5" cy="28.5" r="17.5"></circle>
+			</g>
+			<g id="post-m" transform="translate(0.000000, 0.000000)">
+				<rect fill="#ecedef" transform="translate(355.500000, 36.500000) scale(1, -1) translate(-355.500000, -36.500000) " x="71" y="32" width="569" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(114.500000, 17.500000) scale(1, -1) translate(-114.500000, -17.500000) " x="71" y="13" width="87" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(174.000000, 55.500000) scale(1, -1) translate(-174.000000, -55.500000) " x="71" y="51" width="206" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(660.000000, 61.500000) scale(1, -1) translate(-660.000000, -61.500000) " x="647" y="58" width="26" height="7" rx="2"></rect>
+				<circle fill="#DEE2E6" cx="29.5" cy="28.5" r="17.5"></circle>
+
+			</g>
+			<g id="post-sm" transform="translate(0.000000, 0.000000)">
+				<rect fill="#ecedef" transform="translate(114.500000, 18.500000) scale(1, -1) translate(-114.500000, -18.500000) " x="71" y="14" width="87" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(215.500000, 37.500000) scale(1, -1) translate(-215.500000, -37.500000) " x="71" y="33" width="289" height="9" rx="2"></rect>
+				<rect fill="#ecedef" transform="translate(503.000000, 38.500000) scale(1, -1) translate(-503.000000, -38.500000) " x="490" y="35" width="26" height="7" rx="2"></rect>
+				<circle fill="#DEE2E6" cx="29.5" cy="28.5" r="17.5"></circle>
+			</g>
+		</defs>
+
+		<use xlink:href="#post-sm" y="40" x="20" width="100%" height="100"/>
+		<use xlink:href="#post-m" y="120" x="20" width="100%" height="100"/>
+		<use xlink:href="#post-l" y="220" x="20" width="100%" height="100"/>
+		<use xlink:href="#post-xl" y="340" x="20" width="100%" height="100"/>
+		<use xlink:href="#post-sm" y="495" x="20" width="100%" height="100"/>
+		<use xlink:href="#post-l" y="570" x="20" width="100%" height="100"/>
+	</svg>
+
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1200"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#header"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg viewBox="0 0 100% 1200" height="1200px">
+		<rect fill="#EBF1F4" width="20"   height="1200" x="100%" y="0"   transform="translate(-20, 0)"/>
+	</svg>
+
+</svg>

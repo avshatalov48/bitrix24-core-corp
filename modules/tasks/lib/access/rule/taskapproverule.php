@@ -18,11 +18,13 @@ class TaskApproveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	{
 		if (!$task)
 		{
+			$this->controller->addError(static::class, 'Incorrect task');
 			return false;
 		}
 
 		if ($task->getStatus() !== \CTasks::STATE_SUPPOSEDLY_COMPLETED)
 		{
+			$this->controller->addError(static::class, 'Task is already completed');
 			return false;
 		}
 
@@ -41,6 +43,7 @@ class TaskApproveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$this->controller->addError(static::class, 'Access to approve task denied');
 		return false;
 	}
 }

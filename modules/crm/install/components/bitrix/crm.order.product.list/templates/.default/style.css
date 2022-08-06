@@ -376,6 +376,8 @@
 .crm-order-total-wrapper {
 	padding: 20px;
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
+	margin-top: var(--ui-space-stack-2xs);
 }
 
 .crm-order-total-discounts {

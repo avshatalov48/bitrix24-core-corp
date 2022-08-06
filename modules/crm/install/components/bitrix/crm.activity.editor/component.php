@@ -41,7 +41,7 @@ if ($arResult['ENABLE_EMAIL_ADD'])
 	{
 		$res = \Bitrix\Mail\MailboxTable::getList(array(
 			'select' => array('NAME', 'LOGIN', 'SERVER_TYPE', 'OPTIONS'),
-			'filter' => array('LID' => SITE_ID, 'ACTIVE' => 'Y', 'USER_ID' => array($USER->getId(), 0)),
+			'filter' => array('=LID' => SITE_ID, '=ACTIVE' => 'Y', '@USER_ID' => [$USER->getId(), 0]),
 			'order'  => array('TIMESTAMP_X' => 'DESC'),
 		));
 

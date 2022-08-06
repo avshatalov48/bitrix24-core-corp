@@ -42,6 +42,9 @@ export default {
 				selectedSmsSender: this.$root.$app.sendingMethodDesc.provider,
 				manager: this.$root.$app.options.entityResponsible,
 				phone: this.$root.$app.options.contactPhone,
+				ownerId: this.$root.$app.options.ownerId,
+				ownerTypeId: this.$root.$app.options.ownerTypeId,
+				contactEditorUrl: this.$root.$app.options.contactEditorUrl,
 				titleTemplate: this.$root.$app.sendingMethodDesc.sent
 					? Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2_PAST_TIME')
 					: Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
@@ -111,6 +114,14 @@ export default {
 				items: this.getTimelineCollection(this.$root.$app.options.timeline)
 			}
 		}
+		
+		if (this.$root.$app.options.paySystemList.groups)
+		{
+			stages.paysystem.groups = this.getTileGroupsCollection(
+				this.$root.$app.options.paySystemList.groups,
+				stages.paysystem.tiles
+			);
+		}
 
 		return {
 			stages: stages,
@@ -164,6 +175,21 @@ export default {
 
 			return tiles;
 		},
+		getTileGroupsCollection(groups, tiles)
+		{
+			const ret = [];
+			
+			if (groups instanceof Array)
+			{
+				Object.values(groups).forEach((item) => {
+					const group = new Tile.Group(item);
+					group.fillTiles(tiles);
+					ret.push(group);
+				});
+			}
+
+			return ret;
+		},
 		getTitleItems(items)
 		{
 			let result = [];
@@ -207,6 +233,7 @@ export default {
 					? Status.complete
 					: Status.disabled;
 				this.stages.paysystem.tiles = this.getTileCollection(data.items);
+				this.stages.paysystem.groups = this.getTileGroupsCollection(data.groups, this.stages.paysystem.tiles);
 				this.stages.paysystem.installed = data.isSet;
 			}
 			else if(type === 'CASHBOX')
@@ -236,6 +263,10 @@ export default {
 			this.$root.$app.sendingMethodDesc.provider = value;
 			BX.userOptions.save('salescenter', 'payment_sms_provider_options', 'latest_selected_provider', value);
 		},
+		changeContactPhone(event)
+		{
+			this.$emit('stage-block-on-reload', event)
+		},
 		saveCollapsedOption(type, value)
 		{
 			BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
@@ -256,10 +287,12 @@ export default {
 	{
 		this.initCounter();
 	},
+	//language=Vue
 	template: `
 		<div>
 			<sms-message-block
 				@stage-block-sms-send-on-change-provider="changeProvider"
+				@stage-block-sms-message-on-change-contact-phone="changeContactPhone"
 				:counter="counter++"
 				:status="stages.message.status"
 				:initSenders="stages.message.initSenders"
@@ -268,6 +301,9 @@ export default {
 				:selectedSmsSender="stages.message.selectedSmsSender"
 				:manager="stages.message.manager"
 				:phone="stages.message.phone"
+				:contactEditorUrl="stages.message.contactEditorUrl"
+				:ownerId="stages.message.ownerId"
+				:ownerTypeId="stages.message.ownerTypeId"
 				:titleTemplate="stages.message.titleTemplate"
 				:showHint="stages.message.showHint"
 				:editorTemplate="stages.message.editorTemplate"

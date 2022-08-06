@@ -292,7 +292,7 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Payment::checkUpdatePermission($entityID, $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::OrderShipment)
+		elseif($entityTypeID === \CCrmOwnerType::OrderShipment || $entityTypeID === \CCrmOwnerType::ShipmentDocument)
 		{
 			return Order\Permissions\Shipment::checkUpdatePermission($entityID, $userPermissions);
 		}

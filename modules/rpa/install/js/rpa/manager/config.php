@@ -12,6 +12,7 @@ return [
 	'rel' => [
 		'main.core',
 		'sidepanel',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

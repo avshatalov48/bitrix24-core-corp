@@ -58,11 +58,12 @@ class CompanyDataProvider extends EntityDataProvider
 	 */
 	public function prepareFields()
 	{
-		$result =  array(
+		$result = [
 			'ID' => $this->createField('ID'),
 			'TITLE' => $this->createField(
 				'TITLE',
 				[
+					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -75,7 +76,6 @@ class CompanyDataProvider extends EntityDataProvider
 				'DATE_CREATE',
 				[
 					'type' => 'date',
-					'default' => true,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -96,14 +96,6 @@ class CompanyDataProvider extends EntityDataProvider
 					],
 				]
 			),
-			'ASSIGNED_BY_ID' => $this->createField(
-				'ASSIGNED_BY_ID',
-				[
-					'type' => 'entity_selector',
-					'default' => true,
-					'partial' => true,
-				]
-			),
 			'CREATED_BY_ID' => $this->createField(
 				'CREATED_BY_ID',
 				[
@@ -120,31 +112,57 @@ class CompanyDataProvider extends EntityDataProvider
 			),
 			'ACTIVITY_COUNTER' => $this->createField(
 				'ACTIVITY_COUNTER',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'COMMUNICATION_TYPE' => $this->createField(
 				'COMMUNICATION_TYPE',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'HAS_PHONE' => $this->createField(
 				'HAS_PHONE',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
-			'PHONE' => $this->createField('PHONE'),
+			'PHONE' => $this->createField(
+				'PHONE',
+				[
+					'default' => true
+				]
+			),
 			'HAS_EMAIL' => $this->createField(
 				'HAS_EMAIL',
-				array('type' => 'checkbox')
+				[
+					'type' => 'checkbox'
+				]
 			),
-			'EMAIL' => $this->createField('EMAIL'),
+			'EMAIL' => $this->createField(
+				'EMAIL',
+				[
+					'default' => true
+				]
+			),
 			'WEB' => $this->createField('WEB'),
 			'IM' => $this->createField('IM'),
 			'COMPANY_TYPE' => $this->createField(
 				'COMPANY_TYPE',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'INDUSTRY' => $this->createField(
 				'INDUSTRY',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'REVENUE' => $this->createField(
 				'REVENUE',
@@ -160,11 +178,17 @@ class CompanyDataProvider extends EntityDataProvider
 			),
 			'CURRENCY_ID' => $this->createField(
 				'CURRENCY_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'EMPLOYEES' => $this->createField(
 				'EMPLOYEES',
-				array('type' => 'list', 'default' => true, 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'COMMENTS' => $this->createField(
 				'COMMENTS',
@@ -176,86 +200,128 @@ class CompanyDataProvider extends EntityDataProvider
 						],
 					],
 				]
+			),
+			'ASSIGNED_BY_ID' => $this->createField(
+				'ASSIGNED_BY_ID',
+				[
+					'type' => 'entity_selector',
+					'default' => true,
+					'partial' => true,
+				]
 			)
-		);
+		];
 
 		if($this->settings->checkFlag(CompanySettings::FLAG_ENABLE_ADDRESS))
 		{
 			$addressLabels = EntityAddress::getShortLabels();
-			$result += array(
+			$result += [
 				'ADDRESS' => $this->createField(
 					'ADDRESS',
-					array('name' => $addressLabels['ADDRESS'])
+					[
+						'name' => $addressLabels['ADDRESS']
+					]
 				),
 				'ADDRESS_2' => $this->createField(
 					'ADDRESS_2',
-					array('name' => $addressLabels['ADDRESS_2'])
+					[
+						'name' => $addressLabels['ADDRESS_2']
+					]
 				),
 				'ADDRESS_CITY' => $this->createField(
 					'ADDRESS_CITY',
-					array('name' => $addressLabels['CITY'])
+					[
+						'name' => $addressLabels['CITY']
+					]
 				),
 				'ADDRESS_REGION' => $this->createField(
 					'ADDRESS_REGION',
-					array('name' => $addressLabels['REGION'])
+					[
+						'name' => $addressLabels['REGION']
+					]
 				),
 				'ADDRESS_PROVINCE' => $this->createField(
 					'ADDRESS_PROVINCE',
-					array('name' => $addressLabels['PROVINCE'])
+					[
+						'name' => $addressLabels['PROVINCE']
+					]
 				),
 				'ADDRESS_POSTAL_CODE' => $this->createField(
 					'ADDRESS_POSTAL_CODE',
-					array('name' => $addressLabels['POSTAL_CODE'])
+					[
+						'name' => $addressLabels['POSTAL_CODE']
+					]
 				),
 				'ADDRESS_COUNTRY' => $this->createField(
 					'ADDRESS_COUNTRY',
-					array('name' => $addressLabels['COUNTRY'])
+					[
+						'name' => $addressLabels['COUNTRY']
+					]
 				)
-			);
+			];
 
 			$regAddressLabels = EntityAddress::getShortLabels(Crm\EntityAddressType::Registered);
-			$result += array(
+			$result += [
 				'ADDRESS_LEGAL' => $this->createField(
 					'ADDRESS_LEGAL',
-					array('name' => $regAddressLabels['ADDRESS'])
+					[
+						'name' => $regAddressLabels['ADDRESS']
+					]
 				),
 				'REG_ADDRESS_2' => $this->createField(
 					'REG_ADDRESS_2',
-					array('name' => $regAddressLabels['ADDRESS_2'])
+					[
+						'name' => $regAddressLabels['ADDRESS_2']
+					]
 				),
 				'REG_ADDRESS_CITY' => $this->createField(
 					'REG_ADDRESS_CITY',
-					array('name' => $regAddressLabels['CITY'])
+					[
+						'name' => $regAddressLabels['CITY']
+					]
 				),
 				'REG_ADDRESS_REGION' => $this->createField(
 					'REG_ADDRESS_REGION',
-					array('name' => $regAddressLabels['REGION'])
+					[
+						'name' => $regAddressLabels['REGION']
+					]
 				),
 				'REG_ADDRESS_PROVINCE' => $this->createField(
 					'REG_ADDRESS_PROVINCE',
-					array('name' => $regAddressLabels['PROVINCE'])
+					[
+						'name' => $regAddressLabels['PROVINCE']
+					]
 				),
 				'REG_ADDRESS_POSTAL_CODE' => $this->createField(
 					'REG_ADDRESS_POSTAL_CODE',
-					array('name' => $regAddressLabels['POSTAL_CODE'])
+					[
+						'name' => $regAddressLabels['POSTAL_CODE']
+					]
 				),
 				'REG_ADDRESS_COUNTRY' => $this->createField(
 					'REG_ADDRESS_COUNTRY',
-					array('name' => $regAddressLabels['COUNTRY'])
+					[
+						'name' => $regAddressLabels['COUNTRY']
+					]
 				)
-			);
+			];
 		}
 
-		$result += array(
+		$result += [
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
 			'ORIGINATOR_ID' => $this->createField(
 				'ORIGINATOR_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'list',
+					'partial' => true
+				]
 			),
-		);
+		];
 
 		Crm\Tracking\UI\Filter::appendFields($result, $this);
 
@@ -277,9 +343,10 @@ class CompanyDataProvider extends EntityDataProvider
 		}
 		//endregion
 
-		$parentFields = Container::getInstance()->getParentFieldManager()->getParentFieldsOptionsForFilterProvider(
-			\CCrmOwnerType::Company
-		);
+		$parentFields = Container::getInstance()
+			->getParentFieldManager()
+			->getParentFieldsOptionsForFilterProvider(\CCrmOwnerType::Company)
+		;
 		foreach ($parentFields as $code => $parentField)
 		{
 			$result[$code] = $this->createField($code, $parentField);

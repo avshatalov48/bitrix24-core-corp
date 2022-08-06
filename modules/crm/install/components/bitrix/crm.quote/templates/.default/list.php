@@ -43,23 +43,6 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Quot
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
-	$APPLICATION->IncludeComponent(
-		'bitrix:crm.entity.counter.panel',
-		'',
-		array('ENTITY_TYPE_NAME' => CCrmOwnerType::QuoteName)
-	);
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
-
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 
 	$APPLICATION->IncludeComponent(
@@ -110,7 +93,8 @@ else
 				'PATH_TO_QUOTE_KANBAN' => $arResult['PATH_TO_QUOTE_KANBAN'],
 				'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
 				'NAVIGATION_CONTEXT_ID' => $arResult['NAVIGATION_CONTEXT_ID'],
-			]
+			],
+			'USE_UI_TOOLBAR' => 'Y',
 		]
 	);
 }

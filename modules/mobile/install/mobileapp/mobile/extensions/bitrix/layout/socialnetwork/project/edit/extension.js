@@ -14,6 +14,12 @@
 		{
 			super(props);
 
+			let avatarPreview = null;
+			if (props.avatar)
+			{
+				avatarPreview = (props.avatar.indexOf('http') !== 0 ? `${currentDomain}${props.avatar}` : props.avatar);
+			}
+
 			this.layoutWidget = null;
 			this.state = {
 				userId: props.userId,
@@ -24,7 +30,7 @@
 				description: props.description,
 				avatarId: props.avatarId,
 				avatarFileId: null,
-				avatarPreview: (props.avatar ? `${currentDomain}${props.avatar}` : null),
+				avatarPreview: avatarPreview,
 				avatarSelected: (props.avatar ? 'loaded' : (props.avatarType || 'folder')),
 				avatarIsLoading: false,
 				avatarDefaultTypes: props.avatarTypes,

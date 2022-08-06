@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Product\Url;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
 use Bitrix\Catalog;
 use Bitrix\Crm;
 
@@ -49,33 +50,41 @@ if (Loader::includeModule('catalog'))
 
 			$result = [];
 
-			if (!\CCrmSaleHelper::isWithOrdersMode()
-			)
+			if (!\CCrmSaleHelper::isWithOrdersMode())
 			{
+				Extension::load(['crm.config.catalog']);
+
 				$result[] = [
-					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_SETTINGS'),
-					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_SETTINGS'),
-					'ONCLICK' => "openConfigSlider('/crm/configs/catalog/')"
+					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_INVENTORY_MANAGEMENT_AND_PRODUCTS'),
+					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_INVENTORY_MANAGEMENT_AND_PRODUCTS'),
+					'ONCLICK' => "BX.Crm.Config.Catalog.Slider.open()"
 				];
 			}
 
-			$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
-			$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
-
-			if (!Catalog\Component\UseStore::isUsed())
+			if (
+				Catalog\Config\Feature::isInventoryManagementEnabled()
+				&& !Catalog\Component\UseStore::isUsed()
+			)
 			{
+				Extension::load(['catalog.store-use']);
+
+				$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
+				$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
+
 				$result[] = [
 					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y'),
 					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_Y'),
-					'ONCLICK' => "openWarehousePanel('".$sliderPath."')"
+					'ONCLICK' => "BX.Catalog.StoreUse.ProductGridMenu.openWarehousePanel('" . $sliderPath . "')"
 				];
+
+				unset($sliderPath);
 			}
 
 			$importUrl = $this->fillUrlTemplate(
 				$this->getUrlTemplate(self::PAGE_CSV_IMPORT),
 				$this->templateVariables
 			);
-			if ($importUrl !== null)
+			if ($importUrl !== '')
 			{
 				$result[] = [
 					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_CSV_IMPORT_NAME'),

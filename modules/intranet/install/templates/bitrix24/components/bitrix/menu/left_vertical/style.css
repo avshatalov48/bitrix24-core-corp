@@ -33,7 +33,8 @@
 .menu-items-title {
 	color: #535c69;
 	cursor: pointer;
-	font: 12px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	overflow: hidden;
 	padding: 4px 0 11px 23px;
 	position: relative;
@@ -127,7 +128,8 @@
 	right: 0;
 	bottom: 0;
 	color: #fff;
-	font: 15px/63px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/63px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -393,7 +395,8 @@
 	display: inline-block;
 	max-width: 185px;
 	padding: 0;
-	font: 15px/25px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	vertical-align: middle;
@@ -501,7 +504,8 @@
 	border-radius: 13px;
 	color: #fff;
 	height: 25px;
-	/*font: 15px/23px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;*/
+	/*font: 15px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);*/
 }
 
 .menu-animation-opening-mode .menu-item-active .menu-item-link-text {
@@ -511,7 +515,8 @@
 	margin-left: -17px;
 	border-radius: 13px;
 	height: 25px;
-	/*font: 15px/23px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;*/
+	/*font: 15px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);*/
 }
 
 .menu-animation-opening-mode .menu-item-active .menu-item-link-beta.menu-item-link-text {
@@ -665,10 +670,10 @@
 	display: inline-block;
 	min-width: 18px;
 	height: 18px;
-	font: 11px/17px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	padding: 0 3px;
 	text-align: center;
-	font-weight: normal;
 	background-color: #f54819;
 	color: #fff;
 }
@@ -687,7 +692,8 @@
 	min-width: 10px;
 	height: 13px;
 	border-radius: 100px;
-	font: 10px/12px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .menu-animation-closing-mode .menu-item-index {
@@ -699,7 +705,8 @@
 	height: 13px;
 	border-radius: 100px;
 	background: rgba(255,255,255,.2);
-	font: 10px/12px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	opacity: 0;
 }
 
@@ -713,7 +720,8 @@
 	min-width: 18px;
 	border-radius: 10px;
 	height: 18px;
-	font: 11px/17px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .menu-animation-opening-mode .menu-item-group .menu-item-index {
@@ -727,7 +735,8 @@
 	left: 0;
 	min-width: 18px;
 	height: 18px;
-	font: 11px/17px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	padding: 0 3px;
 }
 
@@ -787,7 +796,8 @@
 	right: 0;
 	height: 100%;
 	padding: 0 13px 0 15px;
-	font: 9px/36px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 9px/36px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	cursor: pointer;
 }
@@ -1057,7 +1067,8 @@
 	padding: 3px 12px 4px 34px;
 	margin: 0;
 	height: 29px;
-	font: 15px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	white-space: nowrap;
 	transition: background .3s;
 	cursor: pointer;
@@ -1170,7 +1181,8 @@
 	position: relative;
 	padding-left: 23px;
 	height: 20px;
-	font: 10px/20px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	vertical-align: middle;
 	-webkit-transition: color .3s ease;
@@ -1261,7 +1273,8 @@
 	border-radius: 13px;
 	display: none;
 	font-size: 10px;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	height: 18px;
 	margin-left: 22px;
 	line-height: 18px;
@@ -1297,7 +1310,8 @@
 .menu-license-all,
 .menu-collapsed-mode.menu-sliding-mode .menu-license-all {
 	text-transform: uppercase;
-	font: 11px/19px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	padding: 9px 0 9px 23px;
 	margin-top: 0;
 	width: 100%;
@@ -1681,7 +1695,8 @@
 .left-menu-popup-header {
 	margin: 0 auto 15px auto;
 	max-width: 600px;
-	font: 30px/38px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 30px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	text-align: center;
 }
@@ -1696,7 +1711,8 @@
 .left-menu-popup-description {
 	margin: 0 auto 35px auto;
 	max-width: 613px;
-	font: 13px/17px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #000;
 	text-align: center;
 }
@@ -1735,7 +1751,8 @@
 
 .left-menu-popup-card-item-title {
 	margin: 0 0 25px 0;
-	font: 22px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .left-menu-popup-card-item-icon-box {
@@ -1782,12 +1799,14 @@
 .left-menu-popup-card-item-info {
 	padding: 0 30px;
 	margin: 0 0 14px 0;
-	font: 17px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .left-menu-popup-card-item-description {
 	padding: 0 20px;
-	font: 12px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #535b68;
 	transition: color .3s;
 }
@@ -1992,7 +2011,8 @@
 	padding: 0 0 16px 0;
 	max-width: 46px;
 	border-bottom: 1px solid rgba(255,255,255,.45);
-	font: 11px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -2175,7 +2195,8 @@
 	height: 23px;
 	background-image: none;
 	text-align: center;
-	font: 14px/23px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .bitrix24-light-theme .menu-item-no-icon-state .menu-item-icon {
@@ -2402,20 +2423,23 @@
 	padding-right: 5px;
 	margin-right: 0;
 	border-radius: 13px 0 0 13px;
-	font: 15px/25px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .menu-collapsed-mode.menu-sliding-mode .menu-item-active.menu-item-group .menu-item-link-text {
 	padding-right: 5px;
 	margin-right: 0;
 	border-radius: 0;
-	font: 15px/27px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .menu-collapsed-mode.menu-sliding-mode .menu-item-group.menu-item-active:hover .menu-item-link-text {
 	padding-right: 5px;
 	border-radius: 0;
-	font: 15px/27px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .menu-items-view-mode .menu-item-active.menu-item-group .menu-item-link-arrow {
@@ -2929,7 +2953,8 @@
 	height: 27px;
 	border-radius: 0 100px 100px 0;
 	background: rgba(255,255,255,.35);
-	font: 15px/27px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: border-radius 100ms;
 }
 
@@ -2939,7 +2964,8 @@
 
 .bitrix24-default-theme .menu-collapsed-mode.menu-sliding-mode .menu-item-active .menu-item-link-text,
 .bitrix24-dark-theme .menu-collapsed-mode.menu-sliding-mode .menu-item-active .menu-item-link-text {
-	font: 15px/27px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525C69;
 }
 
@@ -3480,7 +3506,8 @@ li.menu-item-group-more {
 	padding: 0;
 	margin-right: 5px;
 	height: 25px;
-	font: 15px/25px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	background: transparent;
 }
 
@@ -3490,7 +3517,8 @@ li.menu-item-group-more {
 	height: 27px;
 	border-radius: 0 100px 100px 0;
 	background: rgba(255,255,255,.35);
-	font: 15px/27px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: border-radius 100ms;
 }
 

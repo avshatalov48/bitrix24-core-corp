@@ -14,6 +14,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 global $USER_FIELD_MANAGER, $USER, $APPLICATION, $DB;
 
+use Bitrix\Crm\PhaseSemantics;
+
 $isErrorOccured = false;
 $errorMessage = '';
 
@@ -125,15 +127,17 @@ if ($isErrorOccured)
 use Bitrix\Crm;
 use Bitrix\Crm\Agent\Duplicate\Background\LeadIndexRebuild;
 use Bitrix\Crm\Agent\Duplicate\Background\LeadMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
 use Bitrix\Crm\Context\GridContext;
-use Bitrix\Crm\LeadAddress;
+use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
+use Bitrix\Crm\LeadAddress;
 use Bitrix\Crm\Settings\HistorySettings;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Crm\Conversion\LeadConversionDispatcher;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -406,39 +410,29 @@ foreach ($arResult['~STATUS_LIST_WRITE'] as $sStatusId => $sStatusTitle)
 //region Filter Presets Initialization
 if(!$bInternal)
 {
-	$defaultFilter = array('SOURCE_ID' => array(), 'STATUS_ID' => array(), 'COMMUNICATION_TYPE' => array(), 'DATE_CREATE' => '', 'ASSIGNED_BY_ID' => '');
-
-	$currentUserID = $arResult['CURRENT_USER_ID'];;
-	$currentUserName = CCrmViewHelper::GetFormattedUserName($currentUserID, $arParams['NAME_TEMPLATE']);
-	$arResult['FILTER_PRESETS'] = array(
-		'filter_my_in_work' => array(
-			'name' => GetMessage('CRM_PRESET_MY_IN_WORK'),
-			'disallow_for_all' => true,
-			'fields' => array_merge(
-				$defaultFilter,
-				array(
-					'ASSIGNED_BY_ID_name' => $currentUserName,
-					'ASSIGNED_BY_ID' => $currentUserID,
-					'STATUS_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::PROCESS)
-				)
-			)
-		),
-		'filter_in_work' => array(
-			'name' => GetMessage('CRM_PRESET_ALL_IN_WORK'),
-			'default' => true,
-			'fields' => array_merge(
-				$defaultFilter,
-				array('STATUS_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::PROCESS))
-			)
-		),
-		'filter_closed' => array(
-			'name' => GetMessage('CRM_PRESET_ALL_CLOSED'),
-			'fields' => array_merge(
-				$defaultFilter,
-				array('STATUS_SEMANTIC_ID' => array(Bitrix\Crm\PhaseSemantics::SUCCESS, Bitrix\Crm\PhaseSemantics::FAILURE))
-			)
-		)
+	$entityFilter = Crm\Filter\Factory::createEntityFilter(
+		new Crm\Filter\LeadSettings(['ID' => $arResult['GRID_ID']])
 	);
+
+	if($externalFilterId)
+	{
+		$fields = $entityFilter->getFields();
+		foreach ($fields as $field)
+		{
+			$arResult['FILTER'][] = $field->toArray();
+		}
+
+		$arResult['FILTER_PRESETS'] = [];
+	}
+	else
+	{
+		$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Lead())
+			->setUserId($arResult['CURRENT_USER_ID'])
+			->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
+			->setDefaultValues($entityFilter->getDefaultFieldIDs())
+			->getDefaultPresets()
+		;
+	}
 }
 //endregion
 
@@ -454,7 +448,6 @@ else
 }
 
 $gridOptions = new \Bitrix\Main\Grid\Options($arResult['GRID_ID'], $arResult['FILTER_PRESETS']);
-
 //region Navigation Params
 if ($arParams['LEAD_COUNT'] <= 0)
 {
@@ -472,28 +465,6 @@ if(isset($arNavParams['nPageSize']) && $arNavParams['nPageSize'] > 100)
 if(!$bInternal)
 {
 	$arResult['FILTER2LOGIC'] = array('TITLE', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'POST', 'COMMENTS', 'COMPANY_TITLE');
-	if ($externalFilterId)
-	{
-		$entityFilter = Crm\Filter\Factory::createEntityFilter(
-			new Crm\Filter\LeadSettings(array('ID' => $arResult['GRID_ID']))
-		);
-
-		$fields = $entityFilter->getFields();
-
-		foreach ($fields as $field)
-		{
-			$arResult['FILTER'][] = $field->toArray();
-		}
-
-		$arResult['FILTER_PRESETS'] = [];
-	}
-	else
-	{
-		$entityFilter = Crm\Filter\Factory::createEntityFilter(
-			new Crm\Filter\LeadSettings(array('ID' => $arResult['GRID_ID']))
-		);
-	}
-
 
 	$effectiveFilterFieldIDs = $filterOptions->getUsedFields();
 	if(empty($effectiveFilterFieldIDs))
@@ -2310,10 +2281,7 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['FORMATTED_OPPORTUNITY'] = CCrmCurrency::MoneyToString($arLead['~OPPORTUNITY'], $currencyID);
 
 	$statusID = isset($arLead['STATUS_ID']) ? $arLead['STATUS_ID'] : '';
-	$arLead['LEAD_STATUS_NAME'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : $statusID;
-
-	$sourceID = isset($arLead['SOURCE_ID']) ? $arLead['SOURCE_ID'] : '';
-	$arLead['LEAD_SOURCE_NAME'] = isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : $sourceID;
+	$arLead['LEAD_STATUS_NAME'] = isset($arResult['STATUS_LIST'][$statusID]) ? $arResult['STATUS_LIST'][$statusID] : htmlspecialcharsbx($statusID);
 
 	$arLead['DELETE'] = $arLead['EDIT'] = !$arResult['INTERNAL'];
 
@@ -2441,7 +2409,7 @@ foreach($arResult['LEAD'] as &$arLead)
 	$arLead['MODIFY_BY_FORMATTED_NAME'] = htmlspecialcharsbx($arLead['~MODIFY_BY_FORMATTED_NAME']);
 
 	$sourceID = isset($arLead['~SOURCE_ID']) ? $arLead['~SOURCE_ID'] : '';
-	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== '' ? (isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : $sourceID) : '';
+	$arLead['LEAD_SOURCE_NAME'] = $sourceID !== '' ? (isset($arResult['SOURCE_LIST'][$sourceID]) ? $arResult['SOURCE_LIST'][$sourceID] : htmlspecialcharsbx($sourceID)) : '';
 	$arLead['~LEAD_SOURCE_NAME'] = htmlspecialcharsback($arLead['~LEAD_SOURCE_NAME']);
 
 	$arLead['~LEAD_FORMATTED_NAME'] = CCrmLead::PrepareFormattedName(
@@ -2926,6 +2894,29 @@ if (!$isInExportMode)
 		unset($isNeedToShowDupMergeProcess, $agent);
 		//endregion Show the process of merge duplicates
 	}
+
+	//region Show the progress of data preparing for volatile duplicate types
+	$isNeedToShowDupVolDataPrepare = false;
+	$typeInfo = Volatile\TypeInfo::getInstance()->getIdsByEntityTypes([CCrmOwnerType::Lead]);
+	if (isset($typeInfo[CCrmOwnerType::Lead]))
+	{
+		foreach ($typeInfo[CCrmOwnerType::Lead] as $id)
+		{
+			$agent = IndexRebuild::getInstance($id);
+			if ($agent->isActive())
+			{
+				$state = $agent->state()->getData();
+				/** @noinspection PhpClassConstantAccessedViaChildClassInspection */
+				if (isset($state['STATUS']) && $state['STATUS'] === IndexRebuild::STATUS_RUNNING)
+				{
+					$isNeedToShowDupVolDataPrepare = true;
+				}
+			}
+		}
+	}
+	$arResult['NEED_TO_SHOW_DUP_VOL_DATA_PREPARE'] = $isNeedToShowDupVolDataPrepare;
+	unset($isNeedToShowDupVolDataPrepare, $typeInfo, $id, $agent, $state);
+	//endregion Show the progress of data preparing for volatile duplicate types
 
 	$this->IncludeComponentTemplate();
 	include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead/include/nav.php');
