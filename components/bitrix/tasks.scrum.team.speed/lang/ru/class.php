@@ -8,3 +8,5 @@ $MESS['TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_3'] = 'Последние 3 с�
 $MESS['TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_10'] = 'Последние 10 спринтов';
 $MESS['TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_15'] = 'Последние 15 спринтов';
 $MESS['TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_30'] = 'Последние 30 дней';
+$MESS['TASKS_SCRUM_TEAM_SPEED_FILTER_LAST_LABEL'] = 'Спринты';
+$MESS['TASKS_SCRUM_TEAM_SPEED_FILTER_LAST_FIELD_LABEL'] = 'Последние N';

@@ -3,7 +3,7 @@
 	white-space: nowrap;
 	position: relative;
 	background: #e8e8e8;
-	font: normal normal normal 12px/23px Arial, Helvetica, sans-serif;
+	font: normal normal normal 12px/23px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-radius: var(--ui-border-radius-2xs, 2px);
 }
 .tm-popup-section-left, .tm-popup-section-text, .tm-popup-section-right { display: inline-block; height:23px; vertical-align: top;}

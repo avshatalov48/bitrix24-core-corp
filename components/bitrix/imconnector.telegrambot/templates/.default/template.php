@@ -23,6 +23,8 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
@@ -112,7 +114,10 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CONNECT_ID')])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+							'#LINK_START#' => '<a id="imconnector-telegrambot-link-help" href="#">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 
 					<div class="imconnector-field-box-content-btn">
@@ -151,7 +156,10 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_INFO_CONNECT_ID')])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP_NEW', [
+							'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-telegrambot-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 				<?else:?>
 					<div class="imconnector-field-main-subtitle">

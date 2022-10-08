@@ -35,7 +35,8 @@ class TimelineEntryCategory
 		WAITING = 'waiting',
 		APPLICATION = 'application',
 		ORDER = 'order',
-		ORDER_CHECK = 'check';
+		ORDER_CHECK = 'check',
+		LOG_MESSAGE = 'log-message';
 
 	/**
 	 * Get Category descriptions
@@ -67,6 +68,7 @@ class TimelineEntryCategory
 			self::APPLICATION => Loc::getMessage('CRM_TIMELINE_CATEGORY_APPLICATION'),
 			self::ORDER => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER'),
 			self::ORDER_CHECK => Loc::getMessage('CRM_TIMELINE_CATEGORY_ORDER_CHECK'),
+			self::LOG_MESSAGE => Loc::getMessage('CRM_TIMELINE_CATEGORY_LOG_MESSAGE'),
 		];
 
 		if (Main\Config\Option::get('mobile', 'crm_call_tracker_enabled', 'N') === 'Y')
@@ -248,6 +250,13 @@ class TimelineEntryCategory
 					$categoryFilter->where(
 						Main\Entity\Query::filter()
 							->where('TYPE_ID', Crm\Timeline\TimelineType::ORDER_CHECK)
+					);
+				}
+				elseif($entryCategoryID === self::LOG_MESSAGE)
+				{
+					$categoryFilter->where(
+						Main\Entity\Query::filter()
+							->where('TYPE_ID', Crm\Timeline\TimelineType::LOG_MESSAGE)
 					);
 				}
 			}

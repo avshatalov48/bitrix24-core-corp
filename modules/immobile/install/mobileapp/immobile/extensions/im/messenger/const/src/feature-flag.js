@@ -7,6 +7,7 @@ jn.define('im/messenger/const/feature-flag', (require, exports, module) => {
 		isBetaVersion: Application.getApiVersion() >= 44 && Application.isBeta(),
 		native: {
 			imUtilsModuleSupported: Application.getApiVersion() >= 43,
+			openWebComponentParentWidgetSupported: Application.getApiVersion() >= 45,
 		},
 		list: {
 			itemWillDisplaySupported: Application.getApiVersion() >= 43,

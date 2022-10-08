@@ -191,8 +191,9 @@ try
 							'id' => $inData['elementId'],
 							'width' => '100%',
 							'arSmiles' => array(),
-							'iframeCss' => 'body{font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; font-size: 13px;}'.
-								'.bx-spoiler {border:1px solid #C0C0C0;background-color:#fff4ca;padding: 4px 4px 4px 24px;color:#373737;border-radius:2px;min-height:1em;margin: 0;}'
+							'fontSize' => '14px',
+							'iframeCss' =>
+								'.bx-spoiler {border:1px solid #cecece;background-color:#f6f6f6;padding: 8px 8px 8px 24px;color:#373737;border-radius:var(--ui-border-radius-sm, 2px);min-height:1em;margin: 0;}'
 								/*.(is_array($arParams["LHE"]) && isset($arParams["LHE"]["iframeCss"]) ? $arParams["LHE"]["iframeCss"] : ""),*/
 						)
 					);
@@ -206,7 +207,7 @@ try
 			case 'system.field.edit::CRM':
 				CTaskAssert::assert(
 					isset(
-						$inData['taskId'], $inData['userFieldName'], 
+						$inData['taskId'], $inData['userFieldName'],
 						$inData['nameContainerId'], $inData['dataContainerId']
 					)
 					&& CTaskAssert::isLaxIntegers($inData['taskId'])
@@ -269,10 +270,10 @@ try
 catch (Exception $e)
 {
 	CTaskAssert::log(
-		'Exception. Current file: ' . __FILE__ 
+		'Exception. Current file: ' . __FILE__
 			. '; exception file: ' . $e->GetFile()
 			. '; line: ' . $e->GetLine()
-			. '; message: ' . $e->GetMessage(), 
+			. '; message: ' . $e->GetMessage(),
 		CTaskAssert::ELL_ERROR
 	);
 }

@@ -21,9 +21,10 @@ class CompanyDuplicateChecker extends DuplicateChecker
 		if($title !== '')
 		{
 			$criterion = new DuplicateOrganizationCriterion($title);
+			$criterion->setCategoryId($params->getCategoryId());
 			$criterion->setStrictComparison($this->useStrictComparison);
 
-			$duplicate = $criterion->find();
+			$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined);
 			if($duplicate !== null)
 			{
 				$result[] = $duplicate;

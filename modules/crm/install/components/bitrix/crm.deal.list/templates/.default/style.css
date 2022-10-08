@@ -39,3 +39,7 @@ a.bizproc_status_attention {
 a.bizproc_status_inprogress {
 	background: url("images/bizproc/bizproc_attention.gif") no-repeat right center;
 }
+
+.crm-debug-item-label {
+	color: #FFA900;
+}

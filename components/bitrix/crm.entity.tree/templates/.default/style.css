@@ -1,7 +1,7 @@
 .crm-doc {
 	display: block;
 	overflow: hidden;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #49515a;
 }
 

@@ -20,7 +20,7 @@
 }
 
 .crm-button-list-createbutton-element {
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -36,7 +36,7 @@
 .intranet-button-list-wrapper {
 	padding: 7px 11px 0 11px;
 	line-height: 17px;
-	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -44,7 +44,7 @@
 
 .intranet-button-list-header {
 	margin: 33px 0 0 0;
-	font: normal 23px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 23px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -52,7 +52,7 @@
 
 .intranet-button-list-info {
 	position: relative;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	max-height: 2000px;
 	-webkit-transition: all .5s ease;
@@ -142,7 +142,7 @@
 	margin: 0 0 17px 0;
 	width: -webkit-calc(100% - 30px);
 	width: calc(100% - 30px);
-	font: 22px/26px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #31c2f3;
 }
 
@@ -155,11 +155,11 @@
 .intranet-button-list-info-slogan {
 	display: block;
 	margin: 0 0 38px 0;
-	font: 16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .intranet-button-list-info-list-item-title {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 
@@ -187,7 +187,7 @@
 }
 
 .intranet-button-list-createform-element {
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -295,7 +295,7 @@
 	display: inline-block;
 	width: 100%;
 	height: 100%;
-	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: top;
 }
 
@@ -425,7 +425,8 @@
 	overflow: hidden;
 	white-space: nowrap;
 	display: block;
-	font: bold 12px/40px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 12px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	max-width: 100%;
 	-webkit-transition: color .3s ease;
@@ -456,7 +457,8 @@ div.intranet-button-list-widget-content {
 
 .intranet-button-list-widget-content-amt {
 	color: #fff;
-	font: 13px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-button-list-widget-content-inner {
@@ -526,7 +528,7 @@ div.intranet-button-list-widget-content {
 	width: 130px;
 	height: 36px;
 	background: #4fc3f7;
-	font: bold 12px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: center;
 	overflow: hidden;
 	opacity: .5;
@@ -559,16 +561,18 @@ div.intranet-button-list-widget-content {
 }
 
 .crm-intranet-button-list-widget-content-title {
-	font: 21px/15px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 21px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .intranet-button-list-widget-content-number {
-	font: bold 38px/46px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 38px/46px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 @media (max-width: 1199px) {
 	.intranet-button-list-widget-content-attempt {
-		font: normal 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+		font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 }
 
@@ -583,7 +587,8 @@ div.intranet-button-list-widget-content {
 
 .intranet-button-list-widget-content-attempt-total-number,
 .intranet-button-list-widget-content-attempt-success-number {
-	font: bold 16px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 /* Right block */
@@ -910,7 +915,7 @@ div.intranet-button-list-widget-content {
 .intranet-button-list-activate-comments {
 	position: relative;
 	width: 100%;
-	font: normal 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	overflow: hidden;
 	white-space: nowrap;
@@ -940,7 +945,7 @@ div.intranet-button-list-widget-content {
 .intranet-button-list-activate-user-element {
 	display: inline-block;
 	width: 100%;
-	font: bold 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #29619b;
 	vertical-align: middle;
 	overflow: hidden;
@@ -1029,7 +1034,7 @@ div.intranet-button-list-widget-content {
 	background: #fff;
 	border: 1px solid #caced7;
 	border-radius: var(--ui-field-border-radius, 2px);
-	font: 14px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	box-sizing: border-box;
 	word-wrap: break-word;
@@ -1044,7 +1049,7 @@ div.intranet-button-list-widget-content {
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
-	font: 16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #eb314b;
 	text-align: center;
 	min-width: 400px;
@@ -1112,7 +1117,7 @@ div.intranet-button-list-widget-content {
 	display: inline-block;
 	margin: auto;
 	border-bottom: 1px solid #4990E2;
-	font: 18px/21px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/21px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #4990E2;
 	-webkit-transition: border-bottom .2s linear;
 	transition: border-bottom .2s linear;
@@ -1159,7 +1164,7 @@ div.intranet-button-list-widget-content {
 }
 
 .intranet-button-list-widget-plugin-description-item {
-	font: 13px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #8B572A;
 }
 
@@ -1170,7 +1175,7 @@ div.intranet-button-list-widget-content {
 	display: inline-block;
 	padding: 10px 0;
 	max-width: 600px;
-	font: bold 13px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 

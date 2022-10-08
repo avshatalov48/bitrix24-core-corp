@@ -110,15 +110,26 @@ foreach ($arResult["ITEMS"] as $index => $data)
 	$convColor = $convColor ? '--' . $convColor : '';
 	$data['SUMMARY_CONVERSION'] = '
 		<div class="crm-webform-grid-conversion ' . $convColor . '">
-			' . ($convVal ? '<div class="crm-webform-grid-conversion-value">' . $convVal .'</div>' : '') . '
-			<div class="crm-webform-grid-conversion-text">' . $convText . '</div>
-			<div 
-				class="crm-webform-grid-conversion-icon-status"
-				title="' . Loc::getMessage('CRM_WEBFORM_LIST_ITEM_CONV_CHANGE') . '"
-			></div>
+			' . ($convVal !== null ? '<div class="crm-webform-grid-conversion-value">' . $convVal .'</div>' : '') . '
+			' . ($convVal !== null ? '<div class="crm-webform-grid-conversion-text">' . $convText .'</div>' : '') . '
 		</div>'
 	;
 
+	$submitsVal = $data['SUMMARY_SUBMITS']['value'];
+	$submitsText = $data['SUMMARY_SUBMITS']['text'];
+	$submitsTitle = $data['SUMMARY_SUBMITS']['hint'];
+	$submitsColor = $data['SUMMARY_SUBMITS']['color'];
+	$submitsColor = $submitsColor ? '--' . $submitsColor : '';
+	$titleAttr = !empty($submitsTitle) ? ('title="' . $submitsTitle . '"') : '';
+	$data['SUMMARY_SUBMITS'] = '
+		<div class="crm-webform-grid-conversion ' . $submitsColor . '">
+			' . (!empty($submitsText) ? '<div class="crm-webform-grid-conversion-text" '.$titleAttr.'>'.$submitsText.'</div>' : '') . '
+			<div 
+				class="crm-webform-grid-conversion-icon-status"
+				' . $titleAttr . '
+			></div>
+		</div>'
+	;
 
 	$userIconPath = empty($data['ACTIVE_CHANGE_BY']['ICON']) ? '' : $data['ACTIVE_CHANGE_BY']['ICON'];
 	$userClass = empty($data['ACTIVE_CHANGE_BY']['ICON']) ? 'ui-icon ui-icon-common-user' : '';

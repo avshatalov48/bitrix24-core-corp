@@ -55,27 +55,7 @@ class ScenarioSelection extends CBitrixComponent implements Bitrix\Main\Engine\C
 
 		if ($selectedScenario === self::SCENARIO_ORDER_DEAL)
 		{
-			\CCrmSaleHelper::setOrdersMode(true);
-
-			$eventManager = Main\EventManager::getInstance();
-
-			$eventManager->unRegisterEventHandler(
-				'sale',
-				Cashbox\CheckManager::EVENT_ON_CHECK_COLLATE_DOCUMENTS,
-				'crm',
-				'\Bitrix\Crm\Order\EventsHandler\Check',
-				'OnCheckCollateDocuments'
-			);
-
-			$eventManager->unRegisterEventHandler(
-				'sale',
-				'OnSaleShipmentEntitySaved',
-				'crm',
-				'\Bitrix\Crm\Order\EventsHandler\Shipment',
-				'OnSaleShipmentEntitySaved'
-			);
-
-			Crm\Automation\Demo\Wizard::installOrderPresets();
+			\CCrmSaleHelper::activateModeOrders();
 		}
 		elseif ($selectedScenario === self::SCENARIO_DEAL)
 		{
@@ -84,30 +64,7 @@ class ScenarioSelection extends CBitrixComponent implements Bitrix\Main\Engine\C
 				Crm\Update\Order\DealGenerator::bind(10);
 			}
 
-			\CCrmSaleHelper::setOrdersMode(false);
-
-			$eventManager = Main\EventManager::getInstance();
-
-			$eventManager->registerEventHandler(
-				'sale',
-				Cashbox\CheckManager::EVENT_ON_CHECK_COLLATE_DOCUMENTS,
-				'crm',
-				'\Bitrix\Crm\Order\EventsHandler\Check',
-				'OnCheckCollateDocuments'
-			);
-
-			$eventManager->registerEventHandler(
-				'sale',
-				'OnSaleShipmentEntitySaved',
-				'crm',
-				'\Bitrix\Crm\Order\EventsHandler\Shipment',
-				'OnSaleShipmentEntitySaved'
-			);
-		}
-
-		if (defined('BX_COMP_MANAGED_CACHE'))
-		{
-			$GLOBALS['CACHE_MANAGER']->ClearByTag('bitrix24_left_menu');
+			\CCrmSaleHelper::deactivateModeOrders();
 		}
 
 		return ['success' => true];

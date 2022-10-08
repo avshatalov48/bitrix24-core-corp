@@ -13,6 +13,8 @@ if (!isset($arResult['HAS_AGREEMENT']))
     return;
 }
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/faceid/WebPhotoMaker/WebPhotoMaker.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/faceid/WebPhotoMaker/smoother.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/faceid/WebPhotoMaker/fpsmeter.min.js');

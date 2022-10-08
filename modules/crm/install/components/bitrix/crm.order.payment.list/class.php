@@ -7,6 +7,7 @@ use Bitrix\Crm\Order\Manager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
 
@@ -21,7 +22,6 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 	{
 		global $APPLICATION;
 
-		$arParams['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_DETAILS', $arParams['PATH_TO_ORDER_PAYMENT_DETAILS'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&details');
 		$arParams['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_SHOW', $arParams['PATH_TO_ORDER_PAYMENT_SHOW'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&show');
 		$arParams['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_EDIT', $arParams['PATH_TO_ORDER_PAYMENT_EDIT'], $APPLICATION->GetCurPage().'?payment_id=#payment_id#&edit');
 		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
@@ -720,11 +720,11 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 			$currencyID =  isset($payment['CURRENCY']) ? $payment['CURRENCY'] : CCrmCurrency::GetBaseCurrencyID();
 			$payment['CURRENCY'] = htmlspecialcharsbx($currencyID);
 			$payment['PAY_SYSTEM_NAME'] = htmlspecialcharsbx($payment['PAY_SYSTEM_NAME']);
-			$payment['PATH_TO_ORDER_PAYMENT_DETAILS'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_ORDER_PAYMENT_DETAILS'],
-				array('payment_id' => $entityID)
-			);
-
+			$payment['PATH_TO_ORDER_PAYMENT_DETAILS'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+				->getPaymentDetailsLink(
+					$entityID,
+					Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
+				);
 			$payment['PATH_TO_ORDER_PAYMENT_SHOW'] = $payment['PATH_TO_ORDER_PAYMENT_DETAILS'];
 			$payment['PATH_TO_ORDER_PAYMENT_EDIT'] = CCrmUrlUtil::AddUrlParams(
 				$payment['PATH_TO_ORDER_PAYMENT_DETAILS'],
@@ -795,10 +795,11 @@ class CCrmOrderPaymentListComponent extends \CBitrixComponent
 
 		if($this->arResult['ENABLE_TOOLBAR'])
 		{
-			$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_ORDER_PAYMENT_DETAILS'],
-				array('payment_id' => 0)
-			);
+			$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+				->getPaymentDetailsLink(
+					0,
+					Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
+				);
 
 			$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'] = CHTTP::urlAddParams(
 				$this->arResult['PATH_TO_ORDER_PAYMENT_ADD'],

@@ -2,15 +2,7 @@ this.BX = this.BX || {};
 (function (exports,crm_entityEditor_field_fieldset,main_core_events,main_core) {
 	'use strict';
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-container-actions\">\n\t\t\t<span>", "</span>\n\t\t\t<span class=\"ui-entity-editor-content-create-lnk\" onclick=\"", "\">", "</span>\n\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject;
 	var EntityEditorBankDetailsField = /*#__PURE__*/function (_EntityEditorFieldset) {
 	  babelHelpers.inherits(EntityEditorBankDetailsField, _EntityEditorFieldset);
 
@@ -22,7 +14,7 @@ this.BX = this.BX || {};
 	  babelHelpers.createClass(EntityEditorBankDetailsField, [{
 	    key: "getAddButton",
 	    value: function getAddButton() {
-	      return main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LABEL'), this.onAddButtonClick.bind(this), main_core.Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LINK_TEXT'));
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-entity-editor-container-actions\">\n\t\t\t<span>", "</span>\n\t\t\t<span class=\"ui-entity-editor-content-create-lnk\" onclick=\"", "\">", "</span>\n\t\t</div>"])), main_core.Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LABEL'), this.onAddButtonClick.bind(this), main_core.Loc.getMessage('CRM_EDITOR_REQUISITE_BANK_DETAILS_ADD_LINK_TEXT'));
 	    }
 	  }, {
 	    key: "onAddButtonClick",

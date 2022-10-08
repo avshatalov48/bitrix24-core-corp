@@ -11,8 +11,9 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var string $templateFolder */
 /** @var string $componentPath */
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
-?>
-<?php
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 array_unshift($arResult['BREADCRUMBS'], $arResult['BREADCRUMBS_ROOT']);
 $showedItems = array_splice($arResult['BREADCRUMBS'], -$arParams['MAX_BREADCRUMBS_TO_SHOW'], $arParams['MAX_BREADCRUMBS_TO_SHOW']);
 $collapsedItems = $arResult['BREADCRUMBS'];

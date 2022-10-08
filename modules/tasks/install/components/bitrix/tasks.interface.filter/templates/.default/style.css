@@ -140,7 +140,8 @@
 	overflow: hidden;
 	max-width: 240px;
 	text-overflow: ellipsis;
-	font-family: "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 21px;
 }
 
@@ -155,8 +156,8 @@
 	border-radius: 7px;
 	height: 14px;
 	line-height: 14px;
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	font-size: 8px;
 	color: #2FC6F6;

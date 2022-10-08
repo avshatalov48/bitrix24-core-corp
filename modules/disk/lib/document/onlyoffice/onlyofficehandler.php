@@ -67,15 +67,17 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 			'pptx',
 			'pptm',
 			'xodt',
+			'odt',
+			'odp',
+			'odt',
+			'otp',
+			'ots',
+			'ott',
+			'dot',
+			'pot',
+			'potx',
+			'potm',
 		];
-	}
-
-	public static function isEditable($extension): bool
-	{
-		return
-			in_array($extension, static::listEditableExtensions(), true)
-			|| in_array(ltrim($extension, '.'), static::listEditableExtensions(), true)
-		;
 	}
 
 	/**

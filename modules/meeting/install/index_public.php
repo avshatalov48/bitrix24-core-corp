@@ -56,7 +56,7 @@ if ($io->CreateDirectory($absPath))
 	$c = str_replace(
 		array_keys($arReplace),
 		array_values($arReplace),
-		file_get_contents(dirname(__FILE__)."/public/index.php")
+		file_get_contents(__DIR__."/public/index.php")
 	);
 
 	if ($f = $io->GetFile($absFile))

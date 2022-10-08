@@ -95,10 +95,11 @@ final class Manager
 	}
 
 	/**
+	 * @deprecated
+	 * @see \Bitrix\Sale\Repository\PaymentRepository
+	 *
 	 * @param $id
 	 * @return Payment|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
 	 */
 	public static function getPaymentObject($id)
 	{
@@ -107,31 +108,15 @@ final class Manager
 			return null;
 		}
 
-		$res = Payment::getList(array(
-			'filter' => array('=ID' => $id)
-		));
-
-		$paymentData = $res->fetch();
-
-		if(!$paymentData || intval($paymentData['ORDER_ID']) <= 0)
-			return null;
-
-		$order = Order::load($paymentData['ORDER_ID']);
-
-		if(!$order)
-			return null;
-
-		$collection = $order->getPaymentCollection();
-		/** @var Payment $payment */
-		$payment = $collection->getItemById($id);
-		return $payment;
+		return \Bitrix\Sale\Repository\PaymentRepository::getInstance()->getById($id);
 	}
 
 	/**
+	 * @deprecated
+	 * @see \Bitrix\Sale\Repository\ShipmentRepository
+	 *
 	 * @param $id
-	 * @return Shipment | null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
+	 * @return Shipment|null
 	 */
 	public static function getShipmentObject($id)
 	{
@@ -140,22 +125,7 @@ final class Manager
 			return null;
 		}
 
-		$res = Shipment::getList(array(
-			'filter' => array('=ID' => $id)
-		));
-
-		$shp = $res->fetch();
-
-		if(!$shp || intval($shp['ORDER_ID']) <= 0)
-			return null;
-
-		$order = Order::load($shp['ORDER_ID']);
-
-		if(!$order)
-			return null;
-
-		$collection = $order->getShipmentCollection();
-		return $collection->getItemById($id);
+		return \Bitrix\Sale\Repository\ShipmentRepository::getInstance()->getById($id);
 	}
 
 	/**
@@ -550,89 +520,6 @@ final class Manager
 		return '';
 	}
 
-	/**
-	 * @param int $dealId
-	 * @return Order|null
-	 */
-	public static function createOrderWithoutProductByDeal(int $dealId): ?Order
-	{
-		$deal = \CCrmDeal::GetByID($dealId, false);
-
-		$currency = $deal['CURRENCY_ID'];
-
-		$personTypeId = PersonType::getContactPersonTypeId();
-		if ($deal['COMPANY_ID'])
-		{
-			$personTypeId = PersonType::getCompanyPersonTypeId();
-		}
-
-		$fields = [
-			'SITE_ID' => SITE_ID,
-			'USER_ID' => $deal['ASSIGNED_BY_ID'],
-			'RESPONSIBLE_ID' => $deal['ASSIGNED_BY_ID'],
-			'PERSON_TYPE_ID' => $personTypeId,
-			'CURRENCY' => $currency,
-			'OWNER_ID' => $deal['ID'],
-			'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
-			'COMPANY_ID' => $deal['COMPANY_ID'],
-			'CONTACT_IDS' => [$deal['CONTACT_ID']],
-		];
-
-		$orderBuilder = new Crm\Order\Builder\OrderBuilderCrm(
-			new Sale\Helpers\Order\Builder\SettingsContainer([
-				'createDefaultPaymentIfNeed' => false,
-				'createDefaultShipmentIfNeed' => false,
-			])
-		);
-
-		$director = new Sale\Helpers\Order\Builder\Director();
-		return $director->createOrder($orderBuilder, $fields);
-	}
-
-	public static function createOrderWithoutProductByDynamicEntity(int $ownerTypeId, int $ownerId): ?Order
-	{
-		$item = null;
-
-		$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
-		if ($factory)
-		{
-			$item = $factory->getItem($ownerId);
-		}
-
-		if (!$item)
-		{
-			return null;
-		}
-
-		$personTypeId = PersonType::getContactPersonTypeId();
-		if ($item->getCompanyId())
-		{
-			$personTypeId = PersonType::getCompanyPersonTypeId();
-		}
-
-		$fields = [
-			'SITE_ID' => SITE_ID,
-			'USER_ID' => $item->getAssignedById(),
-			'RESPONSIBLE_ID' => $item->getAssignedById(),
-			'PERSON_TYPE_ID' => $personTypeId,
-			'CURRENCY' => $item->getCurrencyId(),
-			'OWNER_ID' => $ownerId,
-			'OWNER_TYPE_ID' => $ownerTypeId,
-			'COMPANY_ID' => $item->getCompanyId(),
-			'CONTACT_IDS' => [$item->getContactId()],
-		];
-
-		$orderBuilder = new Crm\Order\Builder\OrderBuilderCrm(
-			new Sale\Helpers\Order\Builder\SettingsContainer([
-				'createDefaultPaymentIfNeed' => false,
-				'createDefaultShipmentIfNeed' => false,
-			])
-		);
-
-		$director = new Sale\Helpers\Order\Builder\Director();
-		return $director->createOrder($orderBuilder, $fields);
-	}
-
 	public static function getCheckData(array $orderIds): array
 	{
 		$culture = Context::getCurrent()->getCulture();
@@ -669,5 +556,64 @@ final class Manager
 		}
 
 		return $result;
+	}
+
+	public static function copyOrderProductsToDeal(Order $order, $dealId)
+	{
+		$result = [];
+
+		$sort = 0;
+
+		/** @var BasketItem $basketItem */
+		foreach ($order->getBasket() as $basketItem)
+		{
+			$basePriceWithoutVat = $basketItem->getBasePrice();
+			if ($basketItem->isVatInPrice())
+			{
+				$basePriceWithoutVat -= $basketItem->getVat();
+			}
+
+			$taxValue = $basketItem->getVatRate();
+			if ($taxValue !== null)
+			{
+				$taxValue *= 100;
+			}
+			$item = [
+				'PRODUCT_ID' => $basketItem->getField('PRODUCT_ID'),
+				'PRODUCT_NAME' => $basketItem->getField('NAME'),
+				'PRICE' => $basketItem->getBasePrice(),
+				'PRICE_ACCOUNT' => $basketItem->getBasePrice(),
+				'PRICE_EXCLUSIVE' => $basePriceWithoutVat,
+				'PRICE_NETTO' => $basePriceWithoutVat,
+				'PRICE_BRUTTO' => $basketItem->getBasePrice(),
+				'QUANTITY' => $basketItem->getQuantity(),
+				'MEASURE_CODE' => $basketItem->getField('MEASURE_CODE'),
+				'MEASURE_NAME' => $basketItem->getField('MEASURE_NAME'),
+				'TAX_RATE' => $taxValue,
+				'DISCOUNT_SUM' => 0,
+				'TAX_INCLUDED' => $basketItem->isVatInPrice() ? 'Y' : 'N',
+				'SORT' => $sort,
+			];
+
+			if ($basketItem->getDiscountPrice() !== 0)
+			{
+				$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
+				$item['DISCOUNT_SUM'] = $basketItem->getDiscountPrice();
+			}
+
+			$item['PRICE'] -= $item['DISCOUNT_SUM'];
+			$item['PRICE_ACCOUNT'] -= $item['DISCOUNT_SUM'];
+			$item['PRICE_EXCLUSIVE'] -= $item['DISCOUNT_SUM'];
+
+			$result[] = $item;
+
+			$sort += 10;
+		}
+
+
+		if ($result)
+		{
+			\CCrmDeal::SaveProductRows($dealId, $result, false);
+		}
 	}
 }

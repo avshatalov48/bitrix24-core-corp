@@ -8,6 +8,7 @@ return [
 	'css' => '/bitrix/js/tasks/checklist/dist/check-list-item.bundle.css',
 	'js' => '/bitrix/js/tasks/checklist/dist/check-list-item.bundle.js',
 	'rel' => [
+		'ui.design-tokens',
 		'main.core.events',
 		'main.core',
 	],

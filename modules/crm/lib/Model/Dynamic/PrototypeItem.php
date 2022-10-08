@@ -441,6 +441,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS;
 		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER;
 		$names[\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID;
+		$names[\Bitrix\Crm\Item\SmartDocument::FIELD_NAME_NUMBER] = \Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_LOCATION_ID;
 
 		return $names;
 	}

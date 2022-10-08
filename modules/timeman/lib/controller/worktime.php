@@ -6,9 +6,11 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Timeman\Form\Worktime\WorktimeRecordForm;
 use Bitrix\Timeman\Helper\TimeHelper;
+use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEvent;
 use Bitrix\Timeman\Model\Worktime\EventLog\WorktimeEventTable;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecord;
 use Bitrix\Timeman\Model\Worktime\Record\WorktimeRecordTable;
+use Bitrix\Timeman\Repository\Worktime\WorktimeRepository;
 use Bitrix\Timeman\UseCase\Worktime\Manage;
 use Bitrix\Timeman\Service\Worktime\Result\WorktimeServiceResult;
 use Bitrix\Main\Engine\Controller;
@@ -153,30 +155,39 @@ class Worktime extends Controller
 
 		if ($worktimeForm->validate())
 		{
-			$oldRecord = WorktimeRecordTable::query()
-				->addSelect('*')
-				->where('ID', $worktimeForm->id)
-				->exec()
-				->fetchObject()
-			;
+			$workTimeRepository = new WorktimeRepository();
 
-			$timemanUserInstance = \CTimeManUser::instance();
+			$record = $workTimeRepository->findById($worktimeForm->id);
 
-			$timemanUserInstance->editDay([
-				'REPORT' => Loc::getMessage('TIMEMAN_EXPIRED_REPORT_MESSAGE'),
-				'TIME_START' => $worktimeForm->recordedStartSeconds,
-				'DATE_START' => $worktimeForm->recordedStartDateFormatted ?: null,
-				'TIME_FINISH' => $worktimeForm->recordedStopSeconds,
-				'DATE_FINISH' => $worktimeForm->recordedStopDateFormatted ?: null,
-				'TIME_LEAKS' => $worktimeForm->recordedBreakLength,
-				'LAT_CLOSE' => $worktimeForm->latitudeClose,
-				'LON_CLOSE' => $worktimeForm->longitudeClose,
-				'DEVICE' => $worktimeForm->device,
-			]);
+			if ($record)
+			{
+				$worktimeForm->editedBy = $this->getCurrentUser()->getId();
+
+				$record->updateByForm($worktimeForm);
+
+				$result = $workTimeRepository->save($record);
+				if (!$result->isSuccess())
+				{
+					$this->addErrors($result->getErrors());
+
+					return [];
+				}
+
+				$workTimeRepository->save(
+					WorktimeEvent::create(
+						WorktimeEventTable::EVENT_TYPE_STOP_WITH_ANOTHER_TIME,
+						$record->getUserId(),
+						$record->getId(),
+						null,
+						Loc::getMessage('TIMEMAN_EXPIRED_REPORT_MESSAGE'),
+						$worktimeForm->device
+					)
+				);
+			}
 
 			$actualRecord = WorktimeRecordTable::query()
 				->addSelect('*')
-				->where('ID', $worktimeForm->id)
+				->where('ID', $record->getId())
 				->exec()
 				->fetchObject()
 			;
@@ -185,9 +196,15 @@ class Worktime extends Controller
 			$result->setWorktimeRecord($actualRecord);
 			if (WorktimeServiceResult::isSuccessResult($result))
 			{
-				return $this->makeAjaxResult($result, $worktimeForm, $oldRecord);
+				return $this->makeAjaxResult($result, $worktimeForm, $record);
 			}
+
+			$this->addErrors($result->getErrors());
+
+			return [];
 		}
+
+		$this->addError($worktimeForm->getFirstError());
 
 		return [];
 	}

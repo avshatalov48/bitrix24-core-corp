@@ -3,6 +3,7 @@ $MESS['CRM_GEDA_EMPTY_TEMPLATE_ID'] = "Не указан шаблон докум
 $MESS['CRM_GEDA_NAME_TEMPLATE_ID'] = "Шаблон";
 $MESS['CRM_GEDA_NAME_USE_SUBSCRIPTION'] = "Ожидать конвертации PDF файла";
 $MESS['CRM_GEDA_NAME_WITH_STAMPS'] = "С подписью и печатью";
+$MESS['CRM_GEDA_NAME_CREATE_ACTIVITY'] = "Добавить дело";
 $MESS['CRM_GEDA_NAME_PUBLIC_URL'] = "Создать публичную ссылку";
 $MESS['CRM_GEDA_NAME_MY_COMPANY_ID'] = "Моя компания";
 $MESS['CRM_GEDA_NAME_MY_COMPANY_REQUISITE_ID'] = "Реквизиты моей компании";

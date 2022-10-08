@@ -11,9 +11,13 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 	const { Worker } = jn.require('im/messenger/lib/helper');
 	const { PageNavigation } = jn.require('im/messenger/lib/page-navigation');
 	const { RecentConverter } = jn.require('im/messenger/lib/converter');
-	const { EventType, RestMethod, FeatureFlag } = jn.require('im/messenger/const');
 	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
 	const { RecentRenderer } = jn.require('im/messenger/controller/recent/renderer');
+	const { ShareDialogCache } = jn.require('im/messenger/cache/share-dialog');
+	const {
+		EventType,
+		RestMethod,
+	} = jn.require('im/messenger/const');
 	const {
 		RecentService,
 		DialogService,
@@ -513,29 +517,17 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 					MessengerStore.dispatch('recentModel/delete', { id });
 				});
 
-				this.saveRecentCacheForSharingDialog(modelData.recent)
+				ShareDialogCache.saveRecentItemList(modelData.recent)
 					.then((cache) => {
-						Logger.log('Recent.saveRecentCacheForSharingDialog', cache);
+						Logger.log('Recent: Saving recent items for the share dialog is successful.', cache);
+					})
+					.catch((cache) => {
+						Logger.log('Recent: Saving recent items for share dialog failed.', modelData.recent, cache);
 					})
 				;
 			}
 
 			return Promise.all([usersPromise, dialoguesPromise, recentPromise]);
-		}
-
-		saveRecentCacheForSharingDialog(recentItems)
-		{
-			if (!FeatureFlag.native.imUtilsModuleSupported)
-			{
-				return Promise.reject(new Error('imUtilsModule not supported by the current app version'));
-			}
-
-			return new Promise((resolve) => {
-				const firstPageCache = RecentConverter.toCacheItems(recentItems);
-
-				jn.require('native/im').utils.setRecentUsers(firstPageCache);
-				resolve(firstPageCache);
-			});
 		}
 
 		handleDepartmentColleaguesGet(response)

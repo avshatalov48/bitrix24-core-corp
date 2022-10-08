@@ -49,7 +49,7 @@ if (!empty($arResult["errorMessage"]))
 else
 {
 	Asset::getInstance()->addJs("/bitrix/js/main/utils.js");
-	\CJSCore::init(["loader", "documentpreview", "popup"]);
+	\CJSCore::init(["loader", "documentpreview", "popup", "ui.fonts.opensans"]);
 	?>
 	<div id="crm-invoice-payment-client-wrapper" class="crm-invoice-payment-client-wrapper <?=(!isset($arResult['PAY_SYSTEM_PAID_ARRAY']) && !array_key_exists('PAY_SYSTEM_TEMPLATE', $arResult))?"crm-invoice-payment-deliver":""?>">
 		<div class="crm-invoice-payment-client-template">

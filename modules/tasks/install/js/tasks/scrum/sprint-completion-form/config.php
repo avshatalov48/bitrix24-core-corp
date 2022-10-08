@@ -13,6 +13,8 @@ return [
 		'ui.confetti',
 		'main.core',
 		'ui.dialogs.messagebox',
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'ui.hint',
 	],
 	'skip_core' => false,

@@ -1002,7 +1002,7 @@ class CustomSectionsController
 	{
 		if (!this.sectionsListContainer)
 		{
-			this.sectionsListContainer = Tag.render`<div class="crm-type-custom-sections-list-container"></div>"`;
+			this.sectionsListContainer = Tag.render`<div class="crm-type-custom-sections-list-container"></div>`;
 			this.settingsContainer.append(this.sectionsListContainer);
 		}
 

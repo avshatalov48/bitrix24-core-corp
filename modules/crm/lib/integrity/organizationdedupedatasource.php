@@ -9,8 +9,8 @@ class OrganizationDedupeDataSource extends MatchHashDedupeDataSource
 		parent::__construct(DuplicateIndexType::ORGANIZATION, $params);
 	}
 	/**
-	* @return Array
-	*/
+	 * @return Array
+	 */
 	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash)
 	{
 		$matches = DuplicateOrganizationCriterion::loadEntityMatches($entityTypeID, $entityID);
@@ -18,8 +18,8 @@ class OrganizationDedupeDataSource extends MatchHashDedupeDataSource
 			? $matches : null;
 	}
 	/**
-	* @return DuplicateCriterion
-	*/
+	 * @return DuplicateCriterion
+	 */
 	protected function createCriterionFromMatches(array $matches)
 	{
 		return DuplicateOrganizationCriterion::createFromMatches($matches);
@@ -99,10 +99,8 @@ class OrganizationDedupeDataSource extends MatchHashDedupeDataSource
 				DuplicateIndexMismatch::prepareQueryField($criterion, $entityTypeID, $rootEntityID, $userID)
 			);
 		}
-		if ($this->getParams()->limitByAssignedUser())
-		{
-			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
-		}
+
+		$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $this->getParams());
 
 		$limit = 0;
 		if(is_array($options) && isset($options['LIMIT']))

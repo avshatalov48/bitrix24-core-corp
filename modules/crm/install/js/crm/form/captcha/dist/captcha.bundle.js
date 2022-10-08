@@ -3,44 +3,33 @@ this.BX.Crm = this.BX.Crm || {};
 (function (exports,main_core,ui_sidepanel_layout) {
 	'use strict';
 
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\t\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"ui-slider-section\" ", ">\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-alert ui-alert-success\">\n\t\t\t\t\t\t\t<span class=\"ui-alert-message\">", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">", "</div>\n\t\t\t\t\t\t<p class=\"ui-slider-paragraph-2\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t<a href=\"https://www.google.com/recaptcha/about/\" target=\"_blank\">", "</a>\n\t\t\t\t\t\t</p>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">Key</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\t\t\t\tname=\"key\"\n\t\t\t\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t\t\tonfocus=\"this.parentElement.classList.remove('ui-ctl-danger')\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">Secret</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\t\t\t\tname=\"secret\"\n\t\t\t\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t\t\tonfocus=\"this.parentElement.classList.remove('ui-ctl-danger')\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	var _templateObject, _templateObject2, _templateObject3;
 
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	  return data;
-	}
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _data = /*#__PURE__*/new WeakMap();
+
+	var _container = /*#__PURE__*/new WeakMap();
+
+	var _render = /*#__PURE__*/new WeakSet();
+
 	var Captcha = /*#__PURE__*/function () {
 	  function Captcha() {
 	    babelHelpers.classCallCheck(this, Captcha);
 
-	    _render.add(this);
+	    _classPrivateMethodInitSpec(this, _render);
 
-	    _data.set(this, {
+	    _classPrivateFieldInitSpec(this, _data, {
 	      writable: true,
 	      value: {
 	        key: null,
@@ -50,7 +39,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    });
 
-	    _container.set(this, {
+	    _classPrivateFieldInitSpec(this, _container, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -131,7 +120,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        cacheable: false,
 	        events: {
 	          onCloseComplete: function onCloseComplete() {
-	            resolver(babelHelpers.objectSpread({}, instance.getValue()));
+	            resolver(_objectSpread({}, instance.getValue()));
 	          }
 	        },
 	        contentCallback: function contentCallback() {
@@ -161,7 +150,7 @@ this.BX.Crm = this.BX.Crm || {};
 	                  instance.save().then(function () {
 	                    btn.setWaiting(false);
 	                    BX.SidePanel.Instance.close();
-	                  }).catch(function () {
+	                  })["catch"](function () {
 	                    btn.setWaiting(false);
 	                  });
 	                }
@@ -176,18 +165,12 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Captcha;
 	}();
 
-	var _data = new WeakMap();
-
-	var _container = new WeakMap();
-
-	var _render = new WeakSet();
-
-	var _render2 = function _render2() {
-	  var key = main_core.Tag.safe(_templateObject(), babelHelpers.classPrivateFieldGet(this, _data).key);
-	  var secret = main_core.Tag.safe(_templateObject2(), babelHelpers.classPrivateFieldGet(this, _data).secret);
-	  babelHelpers.classPrivateFieldSet(this, _container, main_core.Tag.render(_templateObject3(), babelHelpers.classPrivateFieldGet(this, _data).hasDefaults ? '' : 'hidden', main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_STD_TITLE'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_STD_TEXT'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TITLE'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TEXT'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_HOWTO'), key, secret));
+	function _render2() {
+	  var key = main_core.Tag.safe(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["", ""])), babelHelpers.classPrivateFieldGet(this, _data).key);
+	  var secret = main_core.Tag.safe(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["", ""])), babelHelpers.classPrivateFieldGet(this, _data).secret);
+	  babelHelpers.classPrivateFieldSet(this, _container, main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\t\t\t\t\n\t\t\t<div>\n\t\t\t\t<div class=\"ui-slider-section\" ", ">\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">", "</div>\n\t\t\t\t\t\t<div class=\"ui-alert ui-alert-success\">\n\t\t\t\t\t\t\t<span class=\"ui-alert-message\">", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t\n\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div class=\"ui-slider-heading-4\">", "</div>\n\t\t\t\t\t\t<p class=\"ui-slider-paragraph-2\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<br>\n\t\t\t\t\t\t\t<a href=\"https://www.google.com/recaptcha/about/\" target=\"_blank\">", "</a>\n\t\t\t\t\t\t</p>\n\t\t\t\t\t</div>\n\t\t\t\t\t\n\t\t\t\t\t<div>\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">Key</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\t\t\t\tname=\"key\"\n\t\t\t\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t\t\tonfocus=\"this.parentElement.classList.remove('ui-ctl-danger')\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-row\" style=\"margin: 20px 0 0;\">\n\t\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">Secret</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t\t\t\t\t<input \n\t\t\t\t\t\t\t\t\t\ttype=\"text\" \n\t\t\t\t\t\t\t\t\t\tname=\"secret\"\n\t\t\t\t\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\t\t\t\t\tonfocus=\"this.parentElement.classList.remove('ui-ctl-danger')\"\n\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), babelHelpers.classPrivateFieldGet(this, _data).hasDefaults ? '' : 'hidden', main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_STD_TITLE'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_STD_TEXT'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TITLE'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_TEXT'), main_core.Loc.getMessage('CRM_FORM_CAPTCHA_JS_CUSTOM_HOWTO'), key, secret));
 	  return babelHelpers.classPrivateFieldGet(this, _container);
-	};
+	}
 
 	exports.Captcha = Captcha;
 

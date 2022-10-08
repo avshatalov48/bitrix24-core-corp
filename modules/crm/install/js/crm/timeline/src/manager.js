@@ -3,7 +3,7 @@ import Sms from "./editors/sms";
 import Rest from "./editors/rest";
 import Comment from "./editors/comment";
 import Scheduled from "./items/scheduled";
-import Item from "./item";
+import {Item} from "crm.timeline.item";
 import Document from "./items/document";
 import EntityChat from "./streams/entitychat";
 import MenuBar from "./tools/menubar";
@@ -12,10 +12,13 @@ import Schedule from "./streams/schedule";
 import FixedHistory from "./streams/fixedhistory";
 import History from "./streams/history";
 import Expand from "./animations/expand";
+import PullActionProcessor from './pull-action-processor'
 
 /** @memberof BX.Crm.Timeline */
 export default class Manager
 {
+	#itemPullActionProcessor: PullActionProcessor = null;
+
 	constructor()
 	{
 		this._id = "";
@@ -101,6 +104,7 @@ export default class Manager
 				container: this._container,
 				activityEditor: this._activityEditor,
 				itemData: this.getSetting("scheduleData"),
+				templates: this.getSetting("templates"),
 				isStubMode: this._ownerId <= 0,
 				ajaxId: ajaxId,
 				serviceUrl: serviceUrl,
@@ -118,6 +122,7 @@ export default class Manager
 				editorContainer: this._editorContainer,
 				activityEditor: this._activityEditor,
 				itemData: this.getSetting("fixedData"),
+				templates: this.getSetting("templates"),
 				isStubMode: this._ownerId <= 0,
 				ajaxId: ajaxId,
 				serviceUrl: serviceUrl,
@@ -135,6 +140,7 @@ export default class Manager
 				fixedHistory: this._fixedHistory,
 				activityEditor: this._activityEditor,
 				itemData: this.getSetting("historyData"),
+				templates: this.getSetting("templates"),
 				navigation: this.getSetting("historyNavigation", {}),
 				filterId: BX.prop.getString(this._settings, "historyFilterId", this._id),
 				isFilterApplied: BX.prop.getBoolean(this._settings, "isHistoryFilterApplied", false),
@@ -250,6 +256,11 @@ export default class Manager
 		{
 			BX.addCustomEvent("onPullEvent-crm", BX.delegate(this.onPullEvent, this));
 			this.extendWatch();
+			this.#itemPullActionProcessor = new PullActionProcessor({
+				scheduleStream: this._schedule,
+				fixedHistoryStream: this._fixedHistory,
+				historyStream: this._history,
+			});
 		}
 		this._menuBar = MenuBar.create(
 			this._id,
@@ -297,6 +308,13 @@ export default class Manager
 			return;
 		}
 
+		if (command === 'timeline_item_action')
+		{
+			this.#itemPullActionProcessor.processAction(params);
+
+			return;
+		}
+
 		if (command === "timeline_chat_create")
 		{
 			this.processChatCreate(params);
@@ -317,26 +335,6 @@ export default class Manager
 		{
 			this.processCommentExternalAdd(params);
 		}
-		else if (command === "timeline_link_add")
-		{
-			this.processLinkExternalAdd(params);
-		}
-		else if (command === "timeline_link_delete")
-		{
-			this.processLinkExternalDelete(params);
-		}
-		else if (command === "timeline_document_add")
-		{
-			this.processLinkExternalAdd(params);
-		}
-		else if (command === "timeline_document_update")
-		{
-			this.processDocumentExternalUpdate(params);
-		}
-		else if (command === "timeline_document_delete")
-		{
-			this.processDocumentExternalDelete(params);
-		}
 		else if (command === "timeline_comment_update")
 		{
 			this.processCommentExternalUpdate(params);
@@ -348,10 +346,6 @@ export default class Manager
 		else if (command === "timeline_changed_binding")
 		{
 			this.processChangeBinding(params);
-		}
-		else if (command === "timeline_item_change_fasten")
-		{
-			this.processItemChangeFasten(params);
 		}
 		else if (command === "timeline_item_update")
 		{
@@ -552,22 +546,6 @@ export default class Manager
 		}
 	}
 
-	processLinkExternalAdd(params)
-	{
-		let historyItemData, historyItem;
-		historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-		if (historyItemData !== null)
-		{
-			historyItem = this.addHistoryItem(historyItemData);
-			Expand.create(historyItem.getWrapper(), null).run();
-		}
-	}
-
-	processLinkExternalDelete(params)
-	{
-		this.processLinkExternalAdd(params);
-	}
-
 	processCommentExternalUpdate(params)
 	{
 		const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
@@ -606,58 +584,6 @@ export default class Manager
 		);
 	}
 
-	processDocumentExternalDelete(params)
-	{
-		window.setTimeout(
-			BX.delegate(function () {
-				const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-				let i, length;
-				const associatedEntityId = BX.prop.getInteger(historyItemData, "ASSOCIATED_ENTITY_ID", 0);
-				let historyItems = this._history.getItemsByAssociatedEntity(
-					BX.CrmEntityType.enumeration.document,
-					associatedEntityId
-				);
-				for (i = 0, length = historyItems.length; i < length; i++)
-				{
-					if (historyItems[i] instanceof Document)
-					{
-						this._history.deleteItem(historyItems[i]);
-					}
-				}
-				historyItems = this._fixedHistory.getItemsByAssociatedEntity(
-					BX.CrmEntityType.enumeration.document,
-					associatedEntityId
-				);
-				for (i = 0, length = historyItems.length; i < length; i++)
-				{
-					if (historyItems[i] instanceof Document)
-					{
-						this._fixedHistory.deleteItem(historyItems[i]);
-					}
-				}
-			}, this),
-			100
-		);
-	}
-
-	processDocumentExternalUpdate(params)
-	{
-		const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-		const id = BX.prop.getInteger(historyItemData, "ID", 0);
-		const updateItem = this._history.findItemById(id);
-		if (updateItem instanceof Document && historyItemData !== null)
-		{
-			updateItem.setData(historyItemData);
-			updateItem.updateWrapper();
-		}
-		const updateFixedItem = this._fixedHistory.findItemById(id);
-		if (updateFixedItem instanceof Document && historyItemData !== null)
-		{
-			updateFixedItem.setData(historyItemData);
-			updateFixedItem.updateWrapper();
-		}
-	}
-
 	processChangeBinding(params)
 	{
 		const entityId = BX.prop.getString(params, "OLD_ID", 0);
@@ -679,37 +605,6 @@ export default class Manager
 			fixedItemData.ID = entityNewId;
 			fixedItem.setData(fixedItemData);
 		}
-	}
-
-	processItemChangeFasten(params)
-	{
-		const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-		const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-		window.setTimeout(
-			BX.delegate(function () {
-				const fixedItem = this._fixedHistory.findItemById(entityId);
-				if (historyItemData['IS_FIXED'] === 'N' && fixedItem)
-				{
-					fixedItem.onSuccessUnfasten();
-				}
-				else if (historyItemData['IS_FIXED'] === 'Y' && !fixedItem)
-				{
-					const historyItem = this._history.findItemById(entityId);
-					if (historyItem)
-					{
-						historyItem.onSuccessFasten();
-					}
-					else
-					{
-						const newFixedItem = this._fixedHistory.createItem(this._data);
-						newFixedItem._isFixed = true;
-						this._fixedHistory.addItem(newFixedItem, 0);
-						newFixedItem.layout();
-					}
-				}
-			}, this),
-			1200
-		);
 	}
 
 	processItemExternalUpdate(params)

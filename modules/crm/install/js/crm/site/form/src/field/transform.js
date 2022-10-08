@@ -35,6 +35,12 @@ const Normalizer = {
 	Money: value => {
 		return Filter.Money(value).replace(/,/g, '.');
 	},
+	makeStringLengthNormalizer: (max: number = 0) => {
+		return value => {
+			value = value + '';
+			return (value.length > max) ? value.substring(0, max) : value;
+		};
+	},
 };
 
 const Validator = {
@@ -63,6 +69,14 @@ const Validator = {
 	},
 	Money: value => {
 		return Validator.Double(value);
+	},
+	makeStringLengthValidator: (min: number = 0, max: number = 0) => {
+		return value => {
+			const len = (value + '').length;
+			return (!min || len >= min)
+				&& (!max || len <= max)
+				;
+		};
 	},
 };
 
@@ -126,4 +140,14 @@ const Formatter = {
 	},
 };
 
-export {Normalizer, Validator, Filter, Formatter};
+const StringLength = {
+
+};
+
+
+export {
+	Normalizer,
+	Validator,
+	Filter,
+	Formatter,
+};

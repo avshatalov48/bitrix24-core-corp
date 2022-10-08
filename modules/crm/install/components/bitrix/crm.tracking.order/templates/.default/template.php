@@ -22,6 +22,7 @@ Extension::load([
 	'sidepanel',
 	'ui.sidepanel-content',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);

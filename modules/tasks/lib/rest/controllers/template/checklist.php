@@ -11,9 +11,10 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Tasks\CheckList\Internals\CheckList as CheckListItem;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
-use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Rest\Controllers\Base;
 use Bitrix\Tasks\Util\Result;
 
@@ -54,8 +55,7 @@ class Checklist extends Base
 	 */
 	public function getAction($templateId, CheckListItem $checkListItem)
 	{
-		$template = new Template($templateId, CurrentUser::get()->getId());
-		if (!$template->canRead())
+		if (!TemplateAccessController::can((int) CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_READ, (int) $templateId))
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TEMPLATE_CHECKLIST_ACCESS_DENIED'))]);
 			return null;
@@ -76,8 +76,7 @@ class Checklist extends Base
 	 */
 	public function listAction($templateId, array $filter = [], array $select = [], array $order = [])
 	{
-		$template = new Template($templateId, CurrentUser::get()->getId());
-		if (!$template->canRead())
+		if (!TemplateAccessController::can((int) CurrentUser::get()->getId(), ActionDictionary::ACTION_TEMPLATE_READ, (int) $templateId))
 		{
 			$this->errorCollection->add([new Error(Loc::getMessage('TASKS_REST_TEMPLATE_CHECKLIST_ACCESS_DENIED'))]);
 			return null;

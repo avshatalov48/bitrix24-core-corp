@@ -8,6 +8,7 @@ import {Vue} from 'ui.vue';
 import ProductUpdater from './product-updater/template';
 import {Const} from './const';
 import 'ui.notification';
+import 'ui.design-tokens';
 import '../css/app.css';
 
 const HELP_ARTICLE_ID = 15706692;

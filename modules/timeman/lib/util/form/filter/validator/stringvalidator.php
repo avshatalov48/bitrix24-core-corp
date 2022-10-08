@@ -50,7 +50,7 @@ class StringValidator extends BaseFormFilter
 			return [$this->defaultErrorMessage, []];
 		}
 
-		$length = CUtil::binStrlen($value);
+		$length = strlen($value);
 
 		if ($this->min !== null && $length < $this->min)
 		{

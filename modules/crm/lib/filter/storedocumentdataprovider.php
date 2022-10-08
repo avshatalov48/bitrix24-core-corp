@@ -111,9 +111,6 @@ class StoreDocumentDataProvider extends \Bitrix\Main\Filter\EntityDataProvider
 			'ID' => $this->createField('ID', [
 				'type' => 'number',
 			]),
-			'TITLE' => $this->createField('TITLE', [
-				'default' => true,
-			]),
 			'DATE_UPDATE' => $this->createField('DATE_UPDATE', [
 				'default' => true,
 				'type' => 'date',

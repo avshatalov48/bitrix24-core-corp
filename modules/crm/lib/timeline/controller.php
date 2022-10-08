@@ -1,7 +1,9 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Type\DateTime;
@@ -118,6 +120,10 @@ class Controller
 		}
 	}
 
+	/**
+	 * @deprecated
+	 * @see Controller::sendPullEventOnAdd(), Controller::sendPullEventOnUpdate(), Controller::sendPullEventOnDelete()
+	 */
 	protected static function pushHistoryEntry($entryID, $tagName, $command)
 	{
 		if(!Main\Loader::includeModule('pull'))
@@ -165,5 +171,151 @@ class Controller
 		$currentUserId = Container::getInstance()->getContext()->getUserId();
 
 		return ($currentUserId > 0) ? $currentUserId : (int)static::getDefaultAuthorId();
+	}
+
+	/**
+	 * Create timeline Item object by timeline db item id
+	 *
+	 * @param Context $context
+	 * @param int $timelineEntryId
+	 * @return \Bitrix\Crm\Service\Timeline\Item|null
+	 */
+	protected function createItemByTimelineEntryId(Context $context, int $timelineEntryId):
+		?\Bitrix\Crm\Service\Timeline\Item
+	{
+		if ($timelineEntryId <= 0)
+		{
+			return null;
+		}
+
+		$timelineEntry = Container::getInstance()->getTimelineEntryFacade()->getById($timelineEntryId);
+		if (!$timelineEntry)
+		{
+			return null;
+		}
+		$timelineEntry['IS_FIXED'] = \Bitrix\Crm\Timeline\TimelineEntry::isFixed(
+			$timelineEntryId, $context->getEntityTypeId(), $context->getEntityId()
+		)  ? 'Y' : 'N';
+
+		$timelineEntryArray = [$timelineEntry];
+
+		TimelineManager::prepareDisplayData(
+			$timelineEntryArray,
+			$context->getUserId(),
+			$context->getUserPermissions()->getCrmPermissions(),
+			$context->getType() !== Context::PULL
+		);
+
+		$timelineEntry = $timelineEntryArray[0] ?? null; // $timelineEntryArray can be modified in case of insufficient permissions
+		if (!$timelineEntry)
+		{
+			return null;
+		}
+
+		return Container::getInstance()->getTimelineHistoryItemFactory()::createItem(
+			$context,
+			$timelineEntry
+		);
+	}
+
+	/**
+	 * Send pull event about timeline item creation
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param int $timelineEntryId
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public function sendPullEventOnAdd(ItemIdentifier $itemIdentifier, int $timelineEntryId, int $userId = null): void
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$item = $this->createItemByTimelineEntryId(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$timelineEntryId
+		);
+		if ($item)
+		{
+			(new \Bitrix\Crm\Service\Timeline\Item\Pusher($item))->sendAddEvent();
+		}
+	}
+
+	/**
+	 * Send pull event about timeline item modification
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param int $timelineEntryId
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public function sendPullEventOnUpdate(ItemIdentifier $itemIdentifier, int $timelineEntryId, int $userId = null): void
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$item = $this->createItemByTimelineEntryId(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$timelineEntryId
+		);
+		if ($item)
+		{
+			(new \Bitrix\Crm\Service\Timeline\Item\Pusher($item))->sendUpdateEvent();
+		}
+	}
+
+	/**
+	 * Send pull event about timeline item deletion
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param int $timelineEntryId
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public function sendPullEventOnDelete(ItemIdentifier $itemIdentifier, int $timelineEntryId, int $userId = null): void
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$item = \Bitrix\Crm\Service\Timeline\Item\Factory\HistoryItem::createEmptyItem(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$timelineEntryId
+		);
+
+		(new \Bitrix\Crm\Service\Timeline\Item\Pusher($item))->sendDeleteEvent();
+	}
+
+	public function sendPullEventOnPin(
+		ItemIdentifier $itemIdentifier,
+		int $timelineEntryId,
+		bool $isPinned,
+		int $userId = null
+	)
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$itemTo = $this->createItemByTimelineEntryId(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$timelineEntryId
+		);
+		if ($itemTo)
+		{
+			(new \Bitrix\Crm\Service\Timeline\Item\Pusher($itemTo))->sendChangePinnedEvent(
+				$isPinned
+					? \Bitrix\Crm\Service\Timeline\Item\Pusher::STREAM_HISTORY
+					: \Bitrix\Crm\Service\Timeline\Item\Pusher::STREAM_FIXED_HISTORY
+				,
+				$timelineEntryId
+			);
+		}
 	}
 }

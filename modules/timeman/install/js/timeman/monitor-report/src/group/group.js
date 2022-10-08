@@ -8,7 +8,10 @@ import {MessageBox} from 'ui.dialogs.messagebox';
 
 import "ui.icons";
 
+import "ui.design-tokens";
+import "ui.fonts.opensans";
 import "./group.css";
+
 
 export const Group = BitrixVue.localComponent('bx-timeman-monitor-report-group', {
 	components:

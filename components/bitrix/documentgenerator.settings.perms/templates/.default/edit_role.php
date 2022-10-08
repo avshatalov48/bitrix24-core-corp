@@ -10,12 +10,12 @@ use Bitrix\DocumentGenerator\UserPermissions;
 Loc::loadLanguageFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
 	'sidepanel',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.alerts',
 	'ui.info-helper',
-	'ui.design-tokens',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');

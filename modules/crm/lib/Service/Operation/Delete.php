@@ -145,6 +145,7 @@ class Delete extends Operation
 
 		$deleteErrors = [];
 		\CBPDocument::OnDocumentDelete($documentId, $deleteErrors);
+		\Bitrix\Crm\Automation\QR\QrTable::deleteByEntity($entityTypeId, $entityId);
 
 		$result = new Result();
 		foreach ($deleteErrors as $error)

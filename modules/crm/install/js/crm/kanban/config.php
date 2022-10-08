@@ -19,6 +19,8 @@ return [
 	],
 	'lang' => '/bitrix/modules/crm/kanban.php',
 	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'kanban',
 		'ajax',
 		'color_picker',

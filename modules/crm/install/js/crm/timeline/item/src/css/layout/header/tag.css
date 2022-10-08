@@ -1,0 +1,23 @@
+.crm-timeline__card-status {
+	margin-right: 6px;
+	margin-bottom: 8px;
+}
+
+.crm-timeline__card-status .ui-label {
+	margin: 0;
+}
+
+.crm-timeline__card-status .ui-label-inner {
+	margin: 0;
+	font-size: var(--ui-font-size-5xs, 9px);
+	font-family: var(--ui-font-family-helvetica, 'Helvetica Neue');
+	font-weight: var(--ui-font-weight-bold, bold);
+}
+
+.crm-timeline__card-status:last-child {
+	margin-right: unset;
+}
+
+.crm-timeline__card-status.--clickable {
+	cursor: pointer;
+}

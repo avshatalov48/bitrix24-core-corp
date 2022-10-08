@@ -368,6 +368,7 @@
 					type: this.data.paySystemType,
 				});
 				var sliderOptions = {
+					cacheable: false,
 					allowChangeHistory: false,
 					width: 1000,
 					events: {

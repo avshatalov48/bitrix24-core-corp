@@ -1,7 +1,8 @@
 .feed-add-post-micro {
 	color: #80868e;
 	font-size: 18px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin: 0;
 	height: 18px;
 	padding: 19px 2px 27px 22px;

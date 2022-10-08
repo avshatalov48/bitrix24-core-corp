@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_popup,main_polyfill_intersectionobserver,main_core_events,main_loader) {
+(function (exports,ui_designTokens,main_core,main_popup,main_polyfill_intersectionobserver,main_core_events,main_loader) {
 	'use strict';
 
 	var intersectionObserver;
@@ -278,8 +278,8 @@ this.BX = this.BX || {};
 	      });
 	      this.popup.subscribeOnce('onAfterClose', function () {
 	        delete this.popup;
-	        this.cache.delete('popupUsers');
-	        this.cache.delete('popupUsersEndBlock');
+	        this.cache["delete"]('popupUsers');
+	        this.cache["delete"]('popupUsersEndBlock');
 	      }.bind(this));
 	      return this.popup;
 	    }
@@ -402,12 +402,12 @@ this.BX = this.BX || {};
 	      }
 
 	      var user = this.items.get(userId);
-	      this.items.delete(userId);
+	      this.items["delete"](userId);
 
 	      if (this.cache.has('userContainer' + user['id'])) {
 	        var usersContainer = this.getUserListContainer();
 	        var userNode = this.cache.get('userContainer' + userId);
-	        this.cache.delete('userContainer' + userId);
+	        this.cache["delete"]('userContainer' + userId);
 
 	        if (usersContainer.contains(userNode)) {
 	          usersContainer.removeChild(userNode);
@@ -422,5 +422,5 @@ this.BX = this.BX || {};
 
 	exports.Users = Users;
 
-}((this.BX.Disk = this.BX.Disk || {}),BX,BX.Main,BX,BX.Event,BX));
+}((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX.Main,BX,BX.Event,BX));
 //# sourceMappingURL=users.bundle.js.map

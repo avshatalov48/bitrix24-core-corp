@@ -5,7 +5,7 @@ body table.bx-interface-grid-double {
 }
 body table.bx-interface-grid-double td {
 	color: #555555;
-	font: 13px/20px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 10px !important;
 	border-left: 0 none;
 	border-right: 0 none;
@@ -39,7 +39,7 @@ body table.bx-interface-grid-double tr.bx-grid-head td.bx-left,
 body table.bx-interface-grid-double tr.bx-grid-head td.bx-right,
 body table.bx-interface-grid-double tr.bx-grid-head td.bx-sorted{
 	border: 0 none;
-	font: 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 12px/40px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 0 10px !important;
 	vertical-align: middle;
 	white-space: nowrap;
@@ -80,7 +80,7 @@ body table.bx-interface-grid-double tr.bx-grid-footer td td {
 	background: none repeat scroll 0 0 transparent;
 	border: 0 none;
 	color: #555555;
-	font: 12px/38px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 12px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 38px;
 	padding: 0 15px !important;
 }

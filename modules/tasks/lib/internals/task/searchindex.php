@@ -3,10 +3,7 @@ namespace Bitrix\Tasks\Internals\Task;
 
 use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\ArgumentNullException;
-use Bitrix\Main\ArgumentOutOfRangeException;
-use Bitrix\Main\Db\SqlQueryException;
-use Bitrix\Main\Entity\DataManager;
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Internals\TaskDataManager;
@@ -56,39 +53,38 @@ class SearchIndexTable extends TaskDataManager
 			'ID' => [
 				'data_type' => 'integer',
 				'primary' => true,
-				'autocomplete' => true
+				'autocomplete' => true,
 			],
-
 			'TASK_ID' => [
 				'data_type' => 'integer',
-				'required' => true
+				'required' => true,
 			],
-
 			'MESSAGE_ID' => [
 				'data_type' => 'integer',
 				'required' => false,
-				'default' => 0
+				'default' => 0,
 			],
-
 			'SEARCH_INDEX' => [
 				'data_type' => 'text',
-				'required' => false
-			]
+				'required' => false,
+			],
 		];
 	}
 
 	/**
-	 * @param $taskId
-	 * @param $messageId
-	 * @param $searchIndex
+	 * @param int $taskId
+	 * @param int $messageId
+	 * @param string $searchIndex
 	 * @return bool
-	 * @throws SqlQueryException
+	 * @throws ArgumentException
+	 * @throws ObjectPropertyException
+	 * @throws SystemException
+	 * @throws \Exception
 	 */
-	public static function set($taskId, $messageId, $searchIndex)
+	public static function set(int $taskId, int $messageId, string $searchIndex): bool
 	{
-		$taskId = ($taskId? intval($taskId) : 0);
-		$messageId = ($messageId? intval($messageId) : 0);
-		$searchIndex = ($searchIndex? trim($searchIndex) : '');
+		$messageId = ($messageId ?: 0);
+		$searchIndex = trim($searchIndex);
 
 		if ($taskId <= 0 || empty($searchIndex))
 		{
@@ -97,54 +93,61 @@ class SearchIndexTable extends TaskDataManager
 
 		$connection = Application::getConnection();
 		$sqlHelper = $connection->getSqlHelper();
+		$searchIndex = $sqlHelper->forSql($searchIndex);
 
-		$insertFields = [
-			"TASK_ID" => $taskId,
-			"MESSAGE_ID" => $messageId,
-			"SEARCH_INDEX" => $sqlHelper->forSql($searchIndex)
-		];
+		$row = static::getList([
+			'select' => ['ID', 'SEARCH_INDEX'],
+			'filter' => [
+				'TASK_ID' => $taskId,
+				'MESSAGE_ID' => $messageId,
+			],
+		])->fetch();
 
-		$updateFields = [
-			"SEARCH_INDEX" => $sqlHelper->forSql($searchIndex)
-		];
+		if (!$row)
+		{
+			static::add([
+				'TASK_ID' => $taskId,
+				'MESSAGE_ID' => $messageId,
+				'SEARCH_INDEX' => $searchIndex,
+			]);
 
-		$merge = $sqlHelper->prepareMerge(static::getTableName(), ["ID"], $insertFields, $updateFields);
+			return true;
+		}
 
-		$connection->query($merge[0]);
+		if ($searchIndex === $row['SEARCH_INDEX'])
+		{
+			return true;
+		}
+
+		static::update(
+			['ID' => $row['ID']],
+			['SEARCH_INDEX' => $searchIndex],
+		);
 
 		return true;
 	}
 
 	/**
-	 * @param $taskId
-	 * @param $messageId
+	 * @param int $taskId
+	 * @param int $messageId
 	 * @throws ArgumentException
 	 * @throws ObjectPropertyException
 	 * @throws SystemException
 	 * @throws \Exception
 	 */
-	public static function deleteByTaskAndMessageIds($taskId, $messageId)
+	public static function deleteByTaskAndMessageIds(int $taskId, int $messageId): void
 	{
 		$index = static::getList([
 			'select' => ['ID'],
-			'filter' => ['TASK_ID' => $taskId, 'MESSAGE_ID' => $messageId]
+			'filter' => [
+				'TASK_ID' => $taskId,
+				'MESSAGE_ID' => $messageId,
+			],
 		])->fetch();
 
 		if ($index)
 		{
 			static::delete($index);
 		}
-	}
-
-	/**
-	 * @return bool
-	 * @throws ArgumentException
-	 * @throws SystemException
-	 * @throws ArgumentNullException
-	 * @throws ArgumentOutOfRangeException
-	 */
-	public static function isFullTextIndexEnabled()
-	{
-		return static::getEntity()->fullTextIndexEnabled("SEARCH_INDEX");
 	}
 }

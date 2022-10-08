@@ -132,7 +132,7 @@ class Invoice extends Entity
 		return $filter;
 	}
 
-	public function getCurrency(): string
+	public function getCurrency(): ?string
 	{
 		return \CCrmCurrency::getInvoiceDefault();
 	}

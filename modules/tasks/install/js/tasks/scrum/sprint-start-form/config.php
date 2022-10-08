@@ -13,6 +13,7 @@ return [
 		'main.core',
 		'ui.dialogs.messagebox',
 		'ui.hint',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

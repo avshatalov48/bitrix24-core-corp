@@ -540,6 +540,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 				['name' => Item\Quote::FIELD_NAME_LEAD_ID],
 				['name' => Item\Quote::FIELD_NAME_DEAL_ID],
 				['name' => Item\Quote::FIELD_NAME_BEGIN_DATE],
+				['name' => Item\Quote::FIELD_NAME_ACTUAL_DATE],
 				['name' => Item\Quote::FIELD_NAME_CLOSE_DATE],
 				['name' => Item\Quote::FIELD_NAME_OPENED],
 				['name' => Item\Quote::FIELD_NAME_ASSIGNED],
@@ -597,7 +598,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 					'serviceUrl' => '/bitrix/components/bitrix/crm.deal.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
-						'params' => [
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'DEAL_COUNT' => static::MAX_ENTITIES_IN_TAB,
 							'INTERNAL_FILTER' => [$this->getEntityName().'_ID' => $this->item->getId()],
 							'GRID_ID_SUFFIX' => $this->getGuid(),
@@ -606,7 +607,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 							'PRESERVE_HISTORY' => true,
 							// compatible entity-specific event name
 							'ADD_EVENT_NAME' => 'CrmCreateDealFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE)
-						],
+						], 'crm.deal.list')
 					],
 				],
 				'enabled' => !$this->item->isNew(),
@@ -622,7 +623,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 					'serviceUrl' => '/bitrix/components/bitrix/crm.invoice.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
-						'params' => [
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'INVOICE_COUNT' => static::MAX_ENTITIES_IN_TAB,
 							'INTERNAL_FILTER' => ['UF_'.$this->getEntityName().'_ID' => $this->item->getId()],
 							'SUM_PAID_CURRENCY' => $this->item->getCurrencyId(),
@@ -632,7 +633,7 @@ class CrmQuoteDetailsComponent extends FactoryBased
 							'PRESERVE_HISTORY' => true,
 							// compatible entity-specific event name
 							'ADD_EVENT_NAME' => 'CrmCreateInvoiceFrom'.mb_convert_case($this->getEntityName(), MB_CASE_TITLE)
-						],
+						], 'crm.invoice.list')
 					],
 				],
 				'enabled' => !$this->item->isNew(),

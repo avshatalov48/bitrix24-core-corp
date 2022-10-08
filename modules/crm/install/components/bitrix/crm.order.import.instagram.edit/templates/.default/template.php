@@ -30,17 +30,19 @@ foreach (array_keys(Loc::loadLanguageFile(__FILE__)) as $code)
 	$jsMessages[$code] = $component->getLocalizationMessage($code);
 }
 
-$this->addExternalCss($templateFolder.'/style_settings.css');
-
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'sidepanel',
 	'ui.alerts',
 	'ui.notification',
 	'ui.buttons',
 	'ui.hint',
 	'ui.icons',
-	'ui.design-tokens',
 ]);
+
+$this->addExternalCss($templateFolder.'/style_settings.css');
+
 
 $this->setViewTarget('pagetitle', 10);
 

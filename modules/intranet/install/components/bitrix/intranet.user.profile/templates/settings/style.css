@@ -39,7 +39,7 @@
 	border-radius: var(--ui-border-radius-2xs);
 	color: #d0011b;
 	box-sizing: border-box;
-	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /*endregion */

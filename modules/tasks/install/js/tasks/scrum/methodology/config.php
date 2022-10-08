@@ -14,6 +14,7 @@ return [
 		'ui.dialogs.messagebox',
 		'main.core.events',
 		'ui.hint',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

@@ -72,7 +72,7 @@ $arResult['FIELDS']['tab_1'][] = array(
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'RATE',
 	'name' =>  GetMessage('CRM_VAT_FIELD_RATE'),
-	'value' => $arVat['RATE'],
+	'value' => $arVat['EXCLUDE_VAT'] === 'Y' ? GetMessage('CRM_VAT_EMPTY') : $arVat['RATE'],
 	'type' =>  'label'
 );
 

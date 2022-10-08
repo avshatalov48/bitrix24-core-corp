@@ -23,6 +23,8 @@ $APPLICATION->IncludeComponent(
 		'POPUP_COMPONENT_PARAMS' => [
 		],
 		'USE_UI_TOOLBAR' => 'Y',
+		'USE_UI_TOOLBAR_MARGIN' => false,
+		'USE_PADDING' => false,
 	]
 );
 

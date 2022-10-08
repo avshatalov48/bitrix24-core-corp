@@ -12,7 +12,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 /** @var CBitrixComponentTemplate $this */
 /** @var CBitrixComponent $component */
 
-UI\Extension::load('tasks.comment-action-controller');
+UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'tasks.comment-action-controller']);
 
 if ($arResult["LIKE_TEMPLATE"] == 'like_react')
 {
@@ -488,7 +488,7 @@ if (
 
 	<?php
 		$hasRestPlacement = false;
-		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+		// получить список встроенных приложений
 		if(\Bitrix\Main\Loader::includeModule('rest'))
 		{
 			$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_TAB);
@@ -818,6 +818,7 @@ $this->EndViewTarget();
 
 			tasksAjaxEmpty: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_AJAX_EMPTY_TEMPLATES'))?>",
 			tasksAjaxErrorLoad: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_AJAX_ERROR_LOAD_TEMPLATES'))?>",
+			tasksAjaxLoadTemplates: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_AJAX_LOAD_TEMPLATES'))?>",
 
 			TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER'))?>",
 			TASKS_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT: "<?=CUtil::JSEscape(Loc::getMessage('TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_CONTENT'))?>",
@@ -837,6 +838,7 @@ $this->EndViewTarget();
 		taskId: <?=$taskData["ID"]?>,
 		userId: <?=$arParams["USER_ID"]?>,
 		project: <?=CUtil::PhpToJSObject($taskData["SE_PROJECT"])?>,
+		groupId: <?= (int)$arParams['GROUP_ID'] ?>,
 		eventTaskUgly: eventTaskUgly,
 		componentData: {
 			EVENT_TYPE: "<?=CUtil::JSEscape($arResult["COMPONENT_DATA"]["EVENT_TYPE"])?>",

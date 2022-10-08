@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Context;
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 $headerLogoClass = '';
 if (Context::getCurrent()->getLanguage() !== 'ru')
 {

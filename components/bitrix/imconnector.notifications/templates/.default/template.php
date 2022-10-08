@@ -14,6 +14,7 @@ use Bitrix\ImConnector\Connector;
 
 Loader::requireModule('ui');
 Extension::load([
+	'ui.design-tokens',
 	'ui.dialogs.messagebox',
 	'ui.buttons',
 ]);

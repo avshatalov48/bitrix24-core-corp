@@ -4,6 +4,9 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
+use Bitrix\Crm;
+use Bitrix\Main;
+use Bitrix\Sale;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ObjectPropertyException;
@@ -1257,15 +1260,77 @@ class CCrmSaleHelper
 		return Option::get('crm', 'enable_order_deal_create', 'N') === 'N';
 	}
 
-	/**
-	 * @param bool $withOrders
-	 */
-	public static function setOrdersMode(bool $withOrders): void
+	public static function deactivateModeOrders() : bool
 	{
-		Option::set(
+		if (!Loader::includeModule('sale'))
+		{
+			return false;
+		}
+
+		Option::set('crm', 'enable_order_deal_create', 'Y');
+
+		$eventManager = Main\EventManager::getInstance();
+
+		$eventManager->registerEventHandler(
+			'sale',
+			Sale\Cashbox\CheckManager::EVENT_ON_CHECK_COLLATE_DOCUMENTS,
 			'crm',
-			'enable_order_deal_create',
-			$withOrders ? 'N' : 'Y'
+			'\Bitrix\Crm\Order\EventsHandler\Check',
+			'OnCheckCollateDocuments'
 		);
+
+		$eventManager->registerEventHandler(
+			'sale',
+			'OnSaleShipmentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Shipment',
+			'OnSaleShipmentEntitySaved'
+		);
+
+		self::clearCacheMenu();
+
+		return true;
+	}
+
+	public static function activateModeOrders() : bool
+	{
+		if (!Loader::includeModule('sale'))
+		{
+			return false;
+		}
+
+		Option::set('crm', 'enable_order_deal_create', 'N');
+
+		$eventManager = Main\EventManager::getInstance();
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			Sale\Cashbox\CheckManager::EVENT_ON_CHECK_COLLATE_DOCUMENTS,
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Check',
+			'OnCheckCollateDocuments'
+		);
+
+		$eventManager->unRegisterEventHandler(
+			'sale',
+			'OnSaleShipmentEntitySaved',
+			'crm',
+			'\Bitrix\Crm\Order\EventsHandler\Shipment',
+			'OnSaleShipmentEntitySaved'
+		);
+
+		Crm\Automation\Demo\Wizard::installOrderPresets();
+
+		self::clearCacheMenu();
+
+		return true;
+	}
+
+	private static function clearCacheMenu()
+	{
+		if (defined('BX_COMP_MANAGED_CACHE'))
+		{
+			$GLOBALS['CACHE_MANAGER']->ClearByTag('bitrix24_left_menu');
+		}
 	}
 }

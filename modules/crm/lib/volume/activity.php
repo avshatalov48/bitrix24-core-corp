@@ -184,10 +184,14 @@ class Activity
 			$indicator == Volume\Company::class
 		)
 		{
+			$categoryId = Volume\Company::getCategoryId();
 			$companyRelation = new ORM\Fields\Relations\Reference(
 				'COMPANY',
 				Crm\CompanyTable::class,
-				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Company),
+				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')
+					->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Company)
+					->where('ref.CATEGORY_ID', $categoryId)
+					->where('ref.IS_MY_COMPANY', 'N'),
 				array('join_type' => 'INNER')
 			);
 			$query->registerRuntimeField($companyRelation);
@@ -196,10 +200,13 @@ class Activity
 			$indicator == Volume\Contact::class
 		)
 		{
+			$categoryId = Volume\Contact::getCategoryId();
 			$contactRelation = new ORM\Fields\Relations\Reference(
 				'CONTACT',
 				Crm\ContactTable::class,
-				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Contact),
+				ORM\Query\Join::on('this.BINDINGS.OWNER_ID', 'ref.ID')
+					->where('this.BINDINGS.OWNER_TYPE_ID', \CCrmOwnerType::Contact)
+					->where('ref.CATEGORY_ID', $categoryId),
 				array('join_type' => 'INNER')
 			);
 			$query->registerRuntimeField($contactRelation);
@@ -301,10 +308,14 @@ class Activity
 			$indicator == Volume\Company::class
 		)
 		{
+			$categoryId = Volume\Company::getCategoryId();
 			$companyRelation = new ORM\Fields\Relations\Reference(
 				'COMPANY',
 				Crm\CompanyTable::class,
-				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Company),
+				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')
+					->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Company)
+					->where('ref.CATEGORY_ID', $categoryId)
+					->where('ref.IS_MY_COMPANY', 'N'),
 				array('join_type' => 'INNER')
 			);
 			$queryBindings->registerRuntimeField($companyRelation);
@@ -313,10 +324,13 @@ class Activity
 			$indicator == Volume\Contact::class
 		)
 		{
+			$categoryId = Volume\Contact::getCategoryId();
 			$contactRelation = new ORM\Fields\Relations\Reference(
 				'CONTACT',
 				Crm\ContactTable::class,
-				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Contact),
+				ORM\Query\Join::on('this.OWNER_ID', 'ref.ID')
+					->where('this.OWNER_TYPE_ID', \CCrmOwnerType::Contact)
+					->where('ref.CATEGORY_ID', $categoryId),
 				array('join_type' => 'INNER')
 			);
 			$queryBindings->registerRuntimeField($contactRelation);

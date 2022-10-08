@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Bizproc;
+
 class CCrmBizProcHelper
 {
 	public static function ResolveDocumentName($ownerTypeID)
@@ -307,6 +310,31 @@ class CCrmBizProcHelper
 		[$entityTypeName, $entityId] = mb_split('_(?=[^_]*$)', $documentId[2]);
 
 		return [\CCrmOwnerType::ResolveID($entityTypeName), (int)$entityId];
+	}
+
+	public static function getActiveDebugEntityIds(int $entityTypeId): array
+	{
+		if (!\Bitrix\Main\Loader::includeModule('bizproc'))
+		{
+			return [];
+		}
+
+		$session = Bizproc\Debugger\Session\Manager::getActiveSession();
+		if (!$session || !$session->isStartedInDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId)))
+		{
+			return [];
+		}
+
+		$documents = $session->getDocuments();
+		$ids = [];
+
+		foreach ($documents as $document)
+		{
+			[$entityTypeId, $entityId] = static::resolveEntityId($document->getParameterDocumentId());
+			$ids[] = $entityId;
+		}
+
+		return $ids;
 	}
 }
 

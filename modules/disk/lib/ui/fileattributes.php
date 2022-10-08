@@ -4,6 +4,7 @@ namespace Bitrix\Disk\Ui;
 
 use Bitrix\Disk\Configuration;
 use Bitrix\Disk\Document\BitrixHandler;
+use Bitrix\Disk\Document\DocumentHandler;
 use Bitrix\Disk\Document\GoogleViewerHandler;
 use Bitrix\Disk\Document\OnlyOffice\OnlyOfficeHandler;
 use Bitrix\Disk\Driver;
@@ -72,7 +73,7 @@ final class FileAttributes extends ItemAttributes
 
 		if (self::isSetViewDocumentInClouds() && self::isAllowedUseClouds($this->fileData['CONTENT_TYPE']))
 		{
-			$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+			$documentHandler = self::getDefaultHandlerForView();
 			if ($documentHandler instanceof OnlyOfficeHandler)
 			{
 				$this
@@ -116,14 +117,9 @@ final class FileAttributes extends ItemAttributes
 			return $type;
 		}
 
-		if ($type === Renderer\Pdf::getJsType())
+		if ($type === Renderer\Pdf::getJsType() || self::isAllowedUseClouds($fileArray['CONTENT_TYPE']))
 		{
-			if (self::isAllowedUseClouds($fileArray['CONTENT_TYPE']))
-			{
-				return self::JS_TYPE;
-			}
-
-			return Renderer\Stub::getJsType();
+			return self::JS_TYPE;
 		}
 
 		return $type;
@@ -145,7 +141,7 @@ final class FileAttributes extends ItemAttributes
 
 	protected static function isSetViewDocumentInClouds()
 	{
-		$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+		$documentHandler = self::getDefaultHandlerForView();
 
 		return !($documentHandler instanceof BitrixHandler);
 	}
@@ -157,7 +153,7 @@ final class FileAttributes extends ItemAttributes
 			return false;
 		}
 
-		$documentHandler = Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
+		$documentHandler = self::getDefaultHandlerForView();
 		if ($documentHandler instanceof GoogleViewerHandler && !Configuration::isEnabledAutoExternalLink())
 		{
 			return false;
@@ -174,13 +170,25 @@ final class FileAttributes extends ItemAttributes
 			'application/vnd.ms-powerpoint',
 		];
 
-		$editableExtensions = OnlyOfficeHandler::listEditableExtensions();
+		$documentHandler = self::getDefaultHandlerForView();
+		$editableExtensions = $documentHandler::listEditableExtensions();
 		foreach ($editableExtensions as $extension)
 		{
-			$types[] = MimeType::getByFileExtension($extension);
+			$type = MimeType::getByFileExtension($extension);
+			if ($type === 'application/octet-stream')
+			{
+				continue;
+			}
+
+			$types[] = $type;
 		}
 
 		return $types;
+	}
+
+	protected static function getDefaultHandlerForView(): DocumentHandler
+	{
+		return Driver::getInstance()->getDocumentHandlersManager()->getDefaultHandlerForView();
 	}
 
 	public function __toString()

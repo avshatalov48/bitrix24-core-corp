@@ -16,7 +16,8 @@
 
 .crm-sms-send-title {
 	color: #555c6d;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-sms-send-block-option {
@@ -84,7 +85,8 @@
 
 .crm-sms-send-symbol-text {
 	color: #b0b7bd;
-	font: 12px/20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-sms-send-symbol-sum {
@@ -95,3 +97,13 @@
 }
 
 .sms-symbol-counter-number-overhead { color: #d0011b; }
+
+.crm-sms-send-subtitle {
+	margin-bottom: 30px;
+	margin-top: -10px;
+	color: #b0b7bd;
+	margin-left: 6px;
+}
+.crm-sms-send-subtitle-sender {
+	color: #333;
+}

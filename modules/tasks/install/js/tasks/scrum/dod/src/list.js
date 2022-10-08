@@ -3,11 +3,11 @@ import {EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 
 import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
-import {Button} from 'ui.buttons';
+import {Button, CancelButton} from 'ui.buttons';
+import {Layout} from 'ui.sidepanel.layout';
 
 import {RequestSender} from './request.sender';
 import {TypeStorage} from './type.storage';
-import {Tabs} from './tabs';
 import {ItemType, ItemTypeParams} from './item.type';
 
 type Params = {
@@ -42,11 +42,102 @@ export class List extends EventEmitter
 		this.skipNotifications = Type.isBoolean(params.skipNotifications) ? params.skipNotifications : false;
 
 		this.typeStorage = new TypeStorage();
-		this.tabs = new Tabs();
 
 		this.empty = true;
 
 		this.node = null;
+	}
+
+	show()
+	{
+		this.sidePanelManager.open(
+			'tasks-scrum-dod-list-side-panel',
+			{
+				cacheable: false,
+				width: 800,
+				contentCallback: () => {
+					return Layout.createContent({
+						extensions: ['tasks.scrum.dod', 'tasks'],
+						title: Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
+						content: this.renderContent.bind(this),
+						design: {
+							section: false
+						},
+						toolbar: ({Button}) => {
+							return [
+								new Button({
+									color: Button.Color.LIGHT_BORDER,
+									text: Loc.getMessage('TASKS_SCRUM_DOD_TOOLBAR_SETTINGS'),
+									onclick: () => this.emit('showSettings', false),
+								}),
+							];
+						},
+						buttons: ({cancelButton, SaveButton}) => {
+							return [
+								new SaveButton({
+									text: this.getListButtonText(),
+									onclick: this.onSaveList.bind(this)
+								}),
+								new CancelButton({
+									onclick: () => {
+										this.emit('reject')
+										this.sidePanelManager.close(false);
+									}
+								}),
+							];
+						}
+					});
+				},
+				events: {
+					onLoad: this.onLoadList.bind(this)
+				}
+			}
+		);
+	}
+
+	onLoadList()
+	{
+		if (this.isEmpty())
+		{
+			return;
+		}
+
+		this.renderList();
+	}
+
+	onSaveList()
+	{
+		if (this.isEmpty())
+		{
+			return;
+		}
+
+		this.save()
+			.then((decision: string) => {
+				if (decision === 'resolve')
+				{
+					this.emit('resolve');
+					this.sidePanelManager.close(false);
+				}
+				else if (decision === 'reject')
+				{
+					this.emit('reject');
+					this.sidePanelManager.close(false);
+				}
+			})
+		;
+	}
+
+	getListButtonText(): string
+	{
+		if (this.isSkipNotifications())
+		{
+			return Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_SAVE_BUTTON_TEXT')
+		}
+		else
+		{
+			return Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_COMPLETE_BUTTON_TEXT')
+		}
 	}
 
 	renderContent(): Promise
@@ -75,17 +166,7 @@ export class List extends EventEmitter
 
 				this.typeStorage.setTypes(itemTypes);
 
-				this.tabs.setTypeStorage(this.typeStorage);
-
-				const activeType = itemTypes.get(activeTypeId);
-				if (Type.isUndefined(activeType))
-				{
-					this.tabs.setActiveType(this.typeStorage.getNextType());
-				}
-				else
-				{
-					this.tabs.setActiveType(activeType);
-				}
+				this.typeStorage.setActiveType(itemTypes.get(activeTypeId));
 
 				if (this.isEmpty())
 				{
@@ -142,7 +223,7 @@ export class List extends EventEmitter
 				</div>
 			`;
 
-		Event.bind(node.querySelector('span'), 'click', () => this.emit('showSettings'));
+		Event.bind(node.querySelector('span'), 'click', () => this.emit('showSettings', true));
 
 		return node;
 	}
@@ -187,7 +268,7 @@ export class List extends EventEmitter
 
 		Event.bind(typeSelector, 'change', (event) => {
 			const typeId = parseInt(event.target.value, 10);
-			this.tabs.setActiveType(this.typeStorage.getType(typeId));
+			this.typeStorage.setActiveType(this.typeStorage.getType(typeId));
 			this.renderList();
 		});
 
@@ -257,7 +338,7 @@ export class List extends EventEmitter
 
 	getActiveType(): ?ItemType
 	{
-		return this.tabs.getActiveType();
+		return this.typeStorage.getActiveType();
 	}
 
 	isListRequired(type: ItemType): boolean

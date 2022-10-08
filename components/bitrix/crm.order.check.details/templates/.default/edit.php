@@ -10,7 +10,7 @@ Loc::loadMessages(__FILE__);
 //\Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/crm.entity.editor/templates/.default/script.js');
 
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.design-tokens', 'ui.fonts.opensans']);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/entity-editor/css/style.css');
 

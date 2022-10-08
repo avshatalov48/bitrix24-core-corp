@@ -24,7 +24,10 @@ foreach ($jsMessagesCodes as $code)
 	$jsMessages[$code] = Loc::getMessage($code);
 }
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.buttons",
+]);
 ?>
 
 <div class="ftr-set-main-wrap" id="ftr-set-main-wrap">

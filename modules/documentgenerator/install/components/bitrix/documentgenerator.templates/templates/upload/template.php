@@ -11,6 +11,7 @@ $this->IncludeLangFile();
 
 \Bitrix\Main\UI\Extension::load([
 	'core',
+	'ui.design-tokens',
 	'sidepanel',
 	'uploader',
 	'popup',
@@ -18,7 +19,6 @@ $this->IncludeLangFile();
 	'documentpreview',
 	'ui.buttons',
 	'ui.buttons.icons',
-	'ui.design-tokens',
 ]);
 
 if($arResult['IS_SLIDER'])

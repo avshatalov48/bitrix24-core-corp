@@ -17,13 +17,16 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\UI\Filter\Options;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access;
 use Bitrix\Tasks\Helper\Filter;
 use Bitrix\Tasks\Helper\Grid;
+use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Task\TagTable;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Manager;
 use Bitrix\Tasks\Grid\Task;
@@ -73,38 +76,32 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		return [
 			'getTotalCount' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getGridRows' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getNearTasks' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'sortTask' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'pin' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'unpin' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
@@ -747,6 +744,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 			SocialNetwork::setLogDestinationLast(['SG' => [$this->arParams['GROUP_ID']]]);
 		}
 
+		$this->arResult['LAST_GROUP_ID'] = 0;
+		if (
+			$this->arResult['GROUP_BY_PROJECT']
+			&& $this->request->get('grid_action') === 'more'
+		)
+		{
+			$this->arResult['LAST_GROUP_ID'] = (int)($this->request->get('lastGroupId') ?: 0);
+		}
+
 		return true;
 	}
 
@@ -841,21 +847,55 @@ class TasksTaskListComponent extends TasksBaseComponent
 				break;
 		}
 
+		$errorsList = array();
+
+		$ignoreIds = [];
+		if ($action === 'complete')
+		{
+			$taskIdToComplete = [];
+			foreach ($rows as $rowId)
+			{
+				$taskIdToComplete[] = $rowId;
+			}
+
+			if ($taskIdToComplete)
+			{
+				$queryObject = TaskTable::getList([
+					'filter' => [
+						'ID' => $taskIdToComplete,
+					],
+					'select' => ['ID', 'GROUP_ID'],
+				]);
+				while ($taskData = $queryObject->fetch())
+				{
+					$group = Workgroup::getById($taskData['GROUP_ID']);
+
+					if ($group && $group->isScrumProject())
+					{
+						$ignoreIds[] = $taskData['ID'];
+
+						$errorsList[GetMessage('TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK')][] = $taskData['ID'];
+					}
+				}
+			}
+		}
+
 		foreach ($rows as $rowId)
 		{
-			$arguments['id'] = $rowId;
+			if (!in_array($rowId, $ignoreIds))
+			{
+				$arguments['id'] = $rowId;
 
-			$todo[] = array(
-				'OPERATION'  => 'task.'.$action,
-				'ARGUMENTS'  => $arguments,
-				'PARAMETERS' => $arParams
-			);
+				$todo[] = array(
+					'OPERATION'  => 'task.'.$action,
+					'ARGUMENTS'  => $arguments,
+					'PARAMETERS' => $arParams
+				);
+			}
 		}
 		$plan->import($todo);
 
 		static::dispatch($plan, $errors, $auxParams, $arParams);
-
-		$errorsList = array();
 
 		/** @var Bitrix\Tasks\Dispatcher\ToDo $item */
 		foreach ($plan as $item)
@@ -907,6 +947,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		$this->arParams['COLUMNS'] = $this->getSelect();
 		$this->arParams['UF'] = $this->getUF();
+
+		if (
+			array_key_exists('IS_CRM_COLUMN_ADDED', $this->arParams)
+			&& $this->arParams['IS_CRM_COLUMN_ADDED']
+		)
+		{
+			$index = array_search(CRM\UserField::getMainSysUFCode(), $this->arParams['COLUMNS'], true);
+			unset($this->arParams['COLUMNS'][$index]);
+		}
 
 		$listState = \CTaskListState::getInstance($this->arParams['USER_ID']);
 		$this->arParams['VIEW_STATE'] = $listState->getState();
@@ -1047,6 +1096,15 @@ class TasksTaskListComponent extends TasksBaseComponent
 			];
 
 			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
+		}
+		elseif (
+			($crmColumn = CRM\UserField::getMainSysUFCode())
+			&& !in_array($crmColumn, $columns, true)
+			&& mb_strpos(implode(',', $columns), $crmColumn) !== false
+		)
+		{
+			$columns[] = $crmColumn;
+			$this->arParams['IS_CRM_COLUMN_ADDED'] = true;
 		}
 
 		return array_unique($columns);

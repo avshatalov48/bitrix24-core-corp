@@ -7,6 +7,10 @@ export default class EntityCounterFilterManager
 	static COUNTER_TYPE_FIELD = 'ACTIVITY_COUNTER';
 	static COUNTER_USER_FIELD = 'ASSIGNED_BY_ID';
 
+	static EXCLUDED_FIELDS = [
+		'FIND'
+	];
+
 	#filterManager: BX.Main.Filter;
 	#fields: Object;
 	#isActive = true;
@@ -114,16 +118,34 @@ export default class EntityCounterFilterManager
 			: this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_USER_FIELD)
 				&& Type.isArray(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD])
 				&& this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD].length === 1
-				&& parseInt(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0], 10) === userId;
+				&& parseInt(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0], 10) === userId
+		;
 
-		const isFilteredByType = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD)
+		const hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD)
 			&& Type.isObject(this.#fields[EntityCounterFilterManager.COUNTER_TYPE_FIELD])
-			&& Object.values(this.#fields[EntityCounterFilterManager.COUNTER_TYPE_FIELD]).length === 1
-			&& parseInt(Object.values(this.#fields[EntityCounterFilterManager.COUNTER_TYPE_FIELD])[0], 10) === typeId;
+		;
 
-		const counterFields = [
+		const filteredTypeValues = hasFilteredByTypeValue
+			? Object.values(this.#fields[EntityCounterFilterManager.COUNTER_TYPE_FIELD])
+				.map((item) => parseInt(item, 10))
+				.sort()
+			: []
+		;
+
+		const isFilteredByType =
+			(filteredTypeValues.length === 1 && filteredTypeValues[0] === typeId)
+			|| (
+				filteredTypeValues.length === 2
+				&& typeId === EntityCounterType.CURRENT
+				&& filteredTypeValues[0] === EntityCounterType.PENDING
+				&& filteredTypeValues[1] === EntityCounterType.OVERDUE
+			)
+		;
+
+		let counterFields = [
 			EntityCounterFilterManager.COUNTER_USER_FIELD,
-			EntityCounterFilterManager.COUNTER_TYPE_FIELD
+			EntityCounterFilterManager.COUNTER_TYPE_FIELD,
+			... EntityCounterFilterManager.EXCLUDED_FIELDS
 		];
 
 		const keysFields = Object.keys(this.#fields);

@@ -14,7 +14,7 @@ use Bitrix\Tasks\Util\Type;
 use Bitrix\Tasks\Util\User;
 use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
-Loc::loadMessages(dirname(__FILE__).'/template.php');
+Loc::loadMessages(__DIR__.'/template.php');
 
 // js extension to be registered instead of script.js
 
@@ -166,8 +166,7 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 
 		"id" => $arResult['TEMPLATE_DATA']['ID'],
 		"iframeCss" => "body { padding-left: 10px !important; }",
-		"fontFamily" => "'Helvetica Neue', Helvetica, Arial, sans-serif",
-		"fontSize" => "13px",
+		"fontSize" => "14px",
 		"bInitByJS" => false,
 		"height" => 100,
 		"lazyLoad" => 'N',

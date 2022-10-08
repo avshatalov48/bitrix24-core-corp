@@ -20,6 +20,7 @@ Extension::load([
 	'amcharts4_theme_animated',
 	'ui.entity-selector',
 	'ui.buttons',
+	'ui.fonts.opensans',
 ]);
 
 $messages = Loc::loadLanguageFile(__FILE__);

@@ -19,6 +19,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\FieldAdapter;
 use Bitrix\Crm\Service\Display\Field;
+use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
 
@@ -445,21 +446,19 @@ class Order extends Entity
 		{
 			if ($fieldId === 'PAYMENT')
 			{
-				$pathSubItem = \CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_order_payment_details'),
-					[
-						'payment_id' => $rowCodeItem['ID'],
-					]
-				);
+				$pathSubItem = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+					->getPaymentDetailsLink(
+						$rowCodeItem['ID'],
+						Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
+					);
 			}
 			else
 			{
-				$pathSubItem = \CComponentEngine::MakePathFromTemplate(
-					\COption::GetOptionString('crm', 'path_to_order_shipment_details'),
-					[
-						'shipment_id' => $rowCodeItem['ID'],
-					]
-				);
+				$pathSubItem = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+					->getShipmentDetailsLink(
+						$rowCodeItem['ID'],
+						Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
+					);
 			}
 
 			$price = ($fieldId === 'PAYMENT') ? $rowCodeItem['SUM'] : $rowCodeItem['PRICE_DELIVERY'];

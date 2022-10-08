@@ -94,7 +94,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  props: {
 	    paySystems: {
 	      type: Array,
-	      default: [],
+	      "default": [],
 	      required: false
 	    }
 	  },
@@ -219,7 +219,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  props: {
 	    loading: {
 	      type: Boolean,
-	      default: false,
+	      "default": false,
 	      required: false
 	    }
 	  },
@@ -251,7 +251,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  props: {
 	    loading: {
 	      type: Boolean,
-	      default: false,
+	      "default": false,
 	      required: false
 	    }
 	  },
@@ -276,12 +276,12 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  props: {
 	    status: {
 	      type: String,
-	      default: '',
+	      "default": '',
 	      required: false
 	    },
 	    link: {
 	      type: String,
-	      default: '',
+	      "default": '',
 	      required: false
 	    },
 	    title: {
@@ -311,22 +311,22 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  props: {
 	    paySystems: {
 	      type: Array,
-	      default: [],
+	      "default": [],
 	      required: false
 	    },
 	    selectedPaySystem: {
 	      type: Number,
-	      default: null,
+	      "default": null,
 	      required: false
 	    },
 	    loading: {
 	      type: Boolean,
-	      default: false,
+	      "default": false,
 	      required: false
 	    },
 	    title: {
 	      type: String,
-	      default: null,
+	      "default": null,
 	      required: false
 	    }
 	  },
@@ -339,12 +339,12 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	  props: {
 	    html: {
 	      type: String,
-	      default: null,
+	      "default": null,
 	      required: false
 	    },
 	    fields: {
 	      type: Object,
-	      default: null,
+	      "default": null,
 	      required: false
 	    }
 	  },
@@ -429,7 +429,7 @@ this.BX.Salescenter.PaymentPay = this.BX.Salescenter.PaymentPay || {};
 	    },
 	    checked: {
 	      type: Boolean,
-	      default: false,
+	      "default": false,
 	      required: false
 	    }
 	  },

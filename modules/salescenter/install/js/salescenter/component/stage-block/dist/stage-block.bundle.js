@@ -31,7 +31,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	  props: {
 	    collapsible: {
 	      type: Boolean,
-	      default: false
+	      "default": false
 	    }
 	  },
 	  methods: {

@@ -322,7 +322,10 @@
 			node.style.opacity = '0';
 
 			BX.bind(node, 'transitionend', function() {
-				node.parentNode.removeChild(node);
+				if (node.parentNode)
+				{
+					node.parentNode.removeChild(node);
+				}
 				this.checkEmptyTagsList();
 			}.bind(this));
 		},

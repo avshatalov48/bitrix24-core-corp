@@ -57,7 +57,23 @@ abstract class Base extends ValueCollection
 		}
 		elseif ($fieldId === 'CRM_ID')
 		{
-			$this->document['CRM_ID'] = \CCrmOwnerTypeAbbr::ResolveByTypeID($this->typeId) . '_' . $this->id;
+			$this->document[$fieldId] = \CCrmOwnerTypeAbbr::ResolveByTypeID($this->typeId) . '_' . $this->id;
+		}
+		elseif ($fieldId === 'URL')
+		{
+			/** @var \CCrmDocument $entity */
+			[, $entity, $documentId] = \CCrmBizProcHelper::ResolveDocumentId($this->typeId, $this->id);
+			$this->document[$fieldId] = call_user_func([$entity, 'GetDocumentAdminPage'], $documentId);
+		}
+		elseif ($fieldId === 'URL_BB')
+		{
+			$url = $this['URL'];
+			$title = \CCrmOwnerType::GetCaption($this->typeId, $this->id, false);
+			$this->document[$fieldId] = sprintf(
+				'[url=%s]%s[/url]',
+				$url,
+				$title
+			);
 		}
 		elseif ($fieldId === 'CREATED_BY_PRINTABLE')
 		{

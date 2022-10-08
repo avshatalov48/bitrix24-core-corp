@@ -32,6 +32,7 @@ Main\UI\Extension::load([
 	'ui.ears',
 	'popup',
 	'ui.draganddrop.draggable',
+	'ui.fonts.opensans',
 ]);
 Main\Page\Asset::getInstance()->addCss('/bitrix/js/disk/css/legacy_uf_common.css');
 //Main\Page\Asset::getInstance()->addJs($templateFolder.'/edit.js');

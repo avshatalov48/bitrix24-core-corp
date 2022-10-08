@@ -15,7 +15,12 @@ CJSCore::RegisterExt(
 	)
 );
 
-\CJSCore::Init(array('recurringLang'));
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'recurringLang',
+]);
+
 
 $templateId = $arParams['TEMPLATE_ID'];
 $data = $arParams['DATA'];
@@ -32,7 +37,7 @@ $data = $arParams['DATA'];
 			   	value="Y"
 				<?= $arResult['RESTRICTED_LICENCE'] !== 'Y' ?: "disabled"?>
 				<?= ($data['RECURRING_SWITCHER'] == 'Y' && $arResult['RESTRICTED_LICENCE'] !== 'Y') ? 'checked' : ''?>>
-		<span class="crm-recur-custom-checkbox 
+		<span class="crm-recur-custom-checkbox
 				<?=($data['RECURRING_SWITCHER'] == 'Y' && $arResult['RESTRICTED_LICENCE'] !== 'Y') ? 'crm-recur-checkbox-checked' : ''?>
 				<?=($arResult['RESTRICTED_LICENCE'] == 'Y') ? 'crm-recur-checkbox-blocked' : ''?>"
 		></span>
@@ -414,21 +419,21 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 			<div id="crm-recur-end-block"  class="crm-recur-options-field crm-recur-options-field-nol">
 				<label for="" class="crm-recur-field-label crm-recur-field-label-br"><?=Loc::getMessage('CRM_RECURRING_FILTER_REPEAT_END')?>:</label>
 				<div class="crm-recur-options-field crm-recur-options-field-left">
-					<input data-bx-id="replication-repeat-till" 
-							name="RECUR_PARAM[REPEAT_TILL]" 
+					<input data-bx-id="replication-repeat-till"
+							name="RECUR_PARAM[REPEAT_TILL]"
 							value="<?=$data['REPEAT_TILL'] == Base::NO_LIMITED?>"
-							class="crm-recur-options-radio selected-end" 
-							id="replication-repeat-constraint-none" 
-							type="radio" 
+							class="crm-recur-options-radio selected-end"
+							id="replication-repeat-constraint-none"
+							type="radio"
 						<?=($data['REPEAT_TILL'] == 'endless' || empty($data['REPEAT_TILL']) || $data['REPEAT_TILL'] == Base::NO_LIMITED)? 'checked' : ''?> />
 					<span class="crm-recur-option-fn"><label for="replication-repeat-constraint-none" class="crm-recur-field-label"><?=Loc::getMessage('CRM_RECURRING_FILTER_REPEAT_END_C_NONE')?></label></span>
 				</div>
 				<div class="crm-recur-options-field crm-recur-options-field-left">
-					<input data-bx-id="replication-repeat-till" 
-							name="RECUR_PARAM[REPEAT_TILL]" 
+					<input data-bx-id="replication-repeat-till"
+							name="RECUR_PARAM[REPEAT_TILL]"
 							value="<?=Base::LIMITED_BY_DATE?>"
-							class="crm-recur-options-radio selected-end" 
-							id="replication-repeat-constraint-date" 
+							class="crm-recur-options-radio selected-end"
+							id="replication-repeat-constraint-date"
 							type="radio" <?=($data['REPEAT_TILL'] == 'date' || $data['REPEAT_TILL'] == Base::LIMITED_BY_DATE) ? 'checked' : ''?> />
 					<span class="crm-recur-option-fn"><label for="replication-repeat-constraint-date" class="crm-recur-field-label"><?=Loc::getMessage('CRM_RECURRING_FILTER_REPEAT_END_C_DATE')?></label></span>
 					<label data-bx-id="replication-end-date-datepicker" class="crm-recur-options-inp-container crm-recur-options-date">
@@ -441,18 +446,18 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 					</label>
 				</div>
 				<div class="crm-recur-options-field crm-recur-options-field-left">
-					<input data-bx-id="replication-repeat-till" 
+					<input data-bx-id="replication-repeat-till"
 							name="RECUR_PARAM[REPEAT_TILL]"
 							value="<?=Base::LIMITED_BY_TIMES?>"
-							class="crm-recur-options-radio selected-end" 
-							id="replication-repeat-constraint-times" 
+							class="crm-recur-options-radio selected-end"
+							id="replication-repeat-constraint-times"
 							type="radio" <?=($data['REPEAT_TILL'] == 'times' || $data['REPEAT_TILL'] == Base::LIMITED_BY_TIMES) ? 'checked' : ''?> />
 					<span class="crm-recur-option-fn"><label for="replication-repeat-constraint-times" class="crm-recur-field-label"><?=Loc::getMessage('CRM_RECURRING_FILTER_REPEAT_END_C_TIMES')?></label></span>
 					<label class="crm-recur-options-inp-container crm-recur-options-inp-int">
 						<input id="end-times"
-								type="text" 
-								name="RECUR_PARAM[LIMIT_REPEAT]" 
-								class="crm-recur-options-inp" 
+								type="text"
+								name="RECUR_PARAM[LIMIT_REPEAT]"
+								class="crm-recur-options-inp"
 								value="<?=(int)($data['LIMIT_REPEAT']) ? (int)($data['LIMIT_REPEAT']) : 0?>">
 					</label>
 					<span class="crm-recur-option-fn"><label class="crm-recur-field-label"><?=Loc::getMessage('CRM_RECURRING_FILTER_REPEATS')?></label></span>
@@ -637,9 +642,9 @@ if ($arResult['RESTRICTED_LICENCE'] == 'Y')
 
 <?
 $jsData = array(
-	"EMAILS" => $arResult['EMAIL_LIST'], 
-	"CONTEXT" => $data['CONTEXT'], 
-	"ALLOW_SEND_BILL" => $arResult['ALLOW_SEND_BILL'], 
+	"EMAILS" => $arResult['EMAIL_LIST'],
+	"CONTEXT" => $data['CONTEXT'],
+	"ALLOW_SEND_BILL" => $arResult['ALLOW_SEND_BILL'],
 	"TEMPLATE_URL" => $arResult['PATH_TO_EMAIL_TEMPLATE_ADD'],
 	"AJAX_URL" => $arResult['AJAX_URL'],
 	"LAST_EXECUTION" => $data['LAST_EXECUTION'],

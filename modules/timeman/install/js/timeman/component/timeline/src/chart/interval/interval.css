@@ -88,5 +88,5 @@
 
 .bx-timeman-component-timeline-chart-interval-marker-title {
     user-select: none;
-    font: 12px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }

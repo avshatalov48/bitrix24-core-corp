@@ -1,4 +1,4 @@
-(function (exports,main_core,main_popup,bizproc_automation) {
+(function (exports,main_core,main_popup,main_core_events,bizproc_automation) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
@@ -22,7 +22,7 @@
 
 	      this.document = new bizproc_automation.Document({
 	        rawDocumentType: this.documentType,
-	        documentFields: options.fieldsMap,
+	        documentFields: options.documentFields,
 	        title: options.documentName
 	      });
 
@@ -37,7 +37,12 @@
 	      this.fieldsMap = new Map(Object.entries(options.fieldsMap));
 	      this.filterFieldsContainer = document.querySelector('[data-role="bca-cuda-filter-fields-container"]');
 	      this.filteringFieldsPrefix = options.filteringFieldsPrefix;
-	      this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap));
+	      this.filterFieldsMap = new Map(Object.entries(options.filterFieldsMap)); // issue 0158608
+
+	      if (!main_core.Type.isNil(options.documentType) && !this.isRobot) {
+	        BX.Bizproc.Automation.API.documentType = options.documentType;
+	      }
+
 	      this.conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
 	      this.currentValues = new Map();
 	      Array.from(this.fieldsMap.keys()).forEach(function (entityTypeId) {
@@ -73,10 +78,139 @@
 	      try {
 	        bizproc_automation.getGlobalContext();
 	      } catch (error) {
-	        bizproc_automation.setGlobalContext(new bizproc_automation.AutomationContext({
+	        bizproc_automation.setGlobalContext(new bizproc_automation.Context({
 	          document: this.document
 	        }));
+	        this.initSelectors();
 	      }
+	    }
+	  }, {
+	    key: "initSelectors",
+	    value: function initSelectors() {
+	      var getSelectorProperties = function getSelectorProperties(_ref) {
+	        var properties = _ref.properties,
+	            objectName = _ref.objectName,
+	            expressionPrefix = _ref.expressionPrefix;
+
+	        if (main_core.Type.isObject(properties)) {
+	          return Object.entries(properties).map(function (_ref2) {
+	            var _ref3 = babelHelpers.slicedToArray(_ref2, 2),
+	                id = _ref3[0],
+	                property = _ref3[1];
+
+	            return {
+	              id: id,
+	              title: property.Name,
+	              customData: {
+	                field: {
+	                  Id: id,
+	                  Type: property.Type,
+	                  Name: property.Name,
+	                  ObjectName: objectName,
+	                  SystemExpression: "{=".concat(objectName, ":").concat(id, "}"),
+	                  Expression: expressionPrefix ? "{{".concat(expressionPrefix, ":").concat(id, "}}") : "{=".concat(objectName, ":").concat(id, "}")
+	                }
+	              }
+	            };
+	          });
+	        }
+
+	        return [];
+	      };
+
+	      var getGlobalSelectorProperties = function getGlobalSelectorProperties(_ref4) {
+	        var properties = _ref4.properties,
+	            visibilityNames = _ref4.visibilityNames,
+	            objectName = _ref4.objectName;
+
+	        if (main_core.Type.isObject(properties)) {
+	          return Object.entries(properties).map(function (_ref5) {
+	            var _ref6 = babelHelpers.slicedToArray(_ref5, 2),
+	                id = _ref6[0],
+	                property = _ref6[1];
+
+	            var field = {
+	              id: id,
+	              Type: property.Type,
+	              title: property.Name,
+	              ObjectName: objectName,
+	              SystemExpression: "{=".concat(objectName, ":").concat(id, "}"),
+	              Expression: "{=".concat(objectName, ":").concat(id, "}")
+	            };
+
+	            if (property.Visibility && visibilityNames[property.Visibility]) {
+	              field.Expression = "{{".concat(visibilityNames[property.Visibility], ":").concat(property.Name, "}}");
+	            }
+
+	            return {
+	              id: id,
+	              title: property.Name,
+	              supertitle: visibilityNames[property.Visibility],
+	              customData: {
+	                field: field
+	              }
+	            };
+	          });
+	        }
+
+	        return [];
+	      };
+
+	      main_core_events.EventEmitter.subscribe('BX.Bizproc.Automation.Selector:onOpenMenu', function (event) {
+	        var selector = event.getData().selector;
+	        selector.addGroup('workflowParameters', {
+	          id: 'workflowParameters',
+	          title: main_core.Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
+	          children: [{
+	            id: 'parameters',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+	            children: getSelectorProperties({
+	              properties: window.arWorkflowParameters || {},
+	              objectName: 'Template',
+	              expressionPrefix: '~*'
+	            })
+	          }, {
+	            id: 'variables',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+	            children: getSelectorProperties({
+	              properties: window.arWorkflowVariables || {},
+	              objectName: 'Variable'
+	            })
+	          }, {
+	            id: 'constants',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+	            children: getSelectorProperties({
+	              properties: window.arWorkflowConstants || {},
+	              objectName: 'Constant',
+	              expressionPrefix: '~&'
+	            })
+	          }]
+	        });
+
+	        if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames) {
+	          selector.addGroup('globalVariables', {
+	            id: 'globalVariables',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
+	            children: getGlobalSelectorProperties({
+	              properties: window.arWorkflowGlobalVariables || {},
+	              visibilityNames: window.wfGVarVisibilityNames || {},
+	              objectName: 'GlobalVar'
+	            })
+	          });
+	        }
+
+	        if (window.arWorkflowGlobalConstants && window.wfGConstVisibilityNames) {
+	          selector.addGroup('globalConstants', {
+	            id: 'globalConstants',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
+	            children: getGlobalSelectorProperties({
+	              properties: window.arWorkflowGlobalConstants || {},
+	              visibilityNames: window.wfGConstVisibilityNames || {},
+	              objectName: 'GlobalConst'
+	            })
+	          });
+	        }
+	      });
 	    }
 	  }, {
 	    key: "onEntityTypeIdChange",
@@ -134,10 +268,10 @@
 	      }
 
 	      var activity = this;
-	      var menuItems = Object.entries(fields).map(function (_ref) {
-	        var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-	            fieldId = _ref2[0],
-	            field = _ref2[1];
+	      var menuItems = Object.entries(fields).map(function (_ref7) {
+	        var _ref8 = babelHelpers.slicedToArray(_ref7, 2),
+	            fieldId = _ref8[0],
+	            field = _ref8[1];
 
 	        return {
 	          fieldId: fieldId,
@@ -267,10 +401,10 @@
 	  }, {
 	    key: "getCurrentFieldsOptions",
 	    value: function getCurrentFieldsOptions(selectedFieldId) {
-	      return Object.entries(this.fieldsMap.get(this.currentEntityTypeId)).map(function (_ref3) {
-	        var _ref4 = babelHelpers.slicedToArray(_ref3, 2),
-	            fieldId = _ref4[0],
-	            field = _ref4[1];
+	      return Object.entries(this.fieldsMap.get(this.currentEntityTypeId)).map(function (_ref9) {
+	        var _ref10 = babelHelpers.slicedToArray(_ref9, 2),
+	            fieldId = _ref10[0],
+	            field = _ref10[1];
 
 	        return main_core.Dom.create('option', {
 	          props: {
@@ -300,5 +434,5 @@
 
 	namespace.CrmUpdateDynamicActivity = CrmUpdateDynamicActivity;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.Bizproc));
+}((this.window = this.window || {}),BX,BX.Main,BX.Event,BX.Bizproc.Automation));
 //# sourceMappingURL=script.js.map

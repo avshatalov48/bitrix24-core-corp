@@ -1,0 +1,2 @@
+<?php
+$MESS["CRM_AUTOMATION_TRIGGER_QR_NAME"] = "Scan QR code";

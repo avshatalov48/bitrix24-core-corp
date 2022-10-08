@@ -285,7 +285,7 @@ export default class Document extends HistoryActivity
 			url = BX.util.add_url_param(url, {documentId: documentId});
 			if(BX.SidePanel)
 			{
-				BX.SidePanel.Instance.open(url, {width: 980});
+				BX.SidePanel.Instance.open(url, {width: 1060});
 			}
 			else
 			{

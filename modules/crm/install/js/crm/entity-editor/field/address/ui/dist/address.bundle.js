@@ -2,37 +2,9 @@ this.BX = this.BX || {};
 (function (exports,crm_entityEditor_field_address_base,main_core,main_core_events) {
 	'use strict';
 
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral([" <span class=\"tariff-lock\"></span>"]);
+	var _templateObject, _templateObject2, _templateObject3;
 
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span></span>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\">"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -152,7 +124,7 @@ this.BX = this.BX || {};
 	          value = 'Y';
 	        }
 
-	        var node = main_core.Tag.render(_templateObject());
+	        var node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\">"])));
 	        node.name = name;
 	        node.value = value;
 	        main_core.Dom.append(node, this._valueNode);
@@ -194,7 +166,7 @@ this.BX = this.BX || {};
 
 	      this._wrapper.appendChild(fieldContainer);
 
-	      this._valueNode = main_core.Tag.render(_templateObject2());
+	      this._valueNode = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
 
 	      this._wrapper.appendChild(this._valueNode);
 
@@ -217,7 +189,7 @@ this.BX = this.BX || {};
 	      }
 
 	      if (this._restrictionsCallback && this._restrictionsCallback.length) {
-	        var lockIcon = main_core.Tag.render(_templateObject3());
+	        var lockIcon = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral([" <span class=\"tariff-lock\"></span>"])));
 	        lockIcon.setAttribute('onclick', this._restrictionsCallback);
 	        return lockIcon;
 	      }

@@ -416,7 +416,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 .crm-main-wrap {
 	color:#000;
 	font-size:14px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -424,7 +424,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 	background-color: #ffffff;
 	color:#000;
 	font-size:14px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 	height:107px;
 	position:relative;
@@ -482,7 +482,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 	color:#000;
 	height:19px;
 	font-size:14px;
-	font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline:none;
 	padding:0;
 	width:100%;
@@ -558,7 +558,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 .crm-list-wrap {
 	color:#000;
 	font-size:14px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -720,7 +720,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.btn-copy { background
 	width:100%;
 }
 
-.bx-crm-interface-grid {font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+.bx-crm-interface-grid {font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .crm-list-header-cel {
 	background:#e9e9e9;
@@ -892,7 +892,7 @@ table.crm-list-stage-bar-table td.crm-list-stage-bar-part div.crm-list-stage-bar
 .crm-list-bar-popup-text {
 	display:inline-block;
 	font-size:11px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 	font-weight:bold;
 	padding:5px;
@@ -1302,7 +1302,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 .bx-ie8 .adm-filter-setting {border:1px solid #8b999d;}
 
 .bx-crm-view-menu {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	min-height: 32px;
 	-webkit-font-smoothing: antialiased;
 	text-align:right;
@@ -1459,7 +1459,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 	box-shadow:0 1px 2px rgba(88,112,118,.2);
 	color:#000;
 	font-size:14px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 	margin-bottom:25px;
 	overflow:hidden;
@@ -1771,7 +1771,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 	display:none;
 	font-size:13px;
 	line-height:17px;
-	font-family:"Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height:17px;
 	margin:-1px 3px 0 -5px;
 	max-width: 530px;
@@ -2430,7 +2430,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 
 .crm-list-fail-deal-block,
 .crm-list-end-deal-block {
-	font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:12px;
 }
 
@@ -2445,7 +2445,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 	width: 380px;
 }
 
-.crm-list-end-deal-block .webform-button-text {font-size:14px; font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+.crm-list-end-deal-block .webform-button-text {font-size:14px; font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .crm-list-end-deal-text {
 	color:#555;
@@ -2561,7 +2561,7 @@ div.crm-list-stage-end-bad table.crm-list-stage-bar-table td.crm-list-stage-bar-
 }
 
 .crm-tel-popup {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: 5px 6px 5px;
 	width: 270px;
 }
@@ -2972,12 +2972,12 @@ div.crm-invoice-term-dialog-params tr {height: 36px;}
 div.crm-invoice-term-dialog-params td:first-child {
 	width: 30%;
 	color: #555555;
-	font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: left;
 }
 div.crm-invoice-term-dialog-params span.comment-header {
 	color: #555555;
-	font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: left;
 }
 div.crm-invoice-term-dialog-params div.separator {height: 16px;}
@@ -2997,7 +2997,7 @@ div.crm-invoice-term-dialog-params textarea.bx-crm-dialog-invoice-textarea {widt
 	color: #000;
 	margin-left: -2px;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	padding: 0 5px;
 	height: 27px;
@@ -3053,7 +3053,7 @@ div.crm-invoice-term-dialog-params textarea.bx-crm-dialog-invoice-textarea {widt
 	color: #000;
 	margin-left: -2px;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: left;
 	outline: none;
 	padding: 5px 3px 5px 0;
@@ -3845,7 +3845,8 @@ tr.crm-offer-row[draggable="true"]
 	display: inline-block;
 	max-width: 100%;
 	font-size: 18px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 20px;
 	max-height: 43px;
 	vertical-align: middle;
@@ -3925,7 +3926,7 @@ tr.crm-offer-row[draggable="true"]
 	color: #000;
 	margin: 11px 0 0 -6px;
 	font-size: 18px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	padding: 0 5px;
 	vertical-align: top;
@@ -4263,7 +4264,7 @@ tr.crm-offer-row[draggable="true"]
 	border: 1px solid #bcc0c2;
 	color: #535c69;
 	display: block;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: bold;
 	font-size: 13px;
 	margin: -6px -3px -6px -6px;
@@ -4308,7 +4309,7 @@ tr.crm-lead-header-inner-editable:hover .crm-lead-header-inner-edit-btn {
 	display: block;
 	border-radius: 0;
 	color: #535c69;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: bold;
 	font-size: 13px;
 	margin: -6px -3px -6px -6px;
@@ -4354,7 +4355,7 @@ tr.crm-lead-header-inner-editable:hover .crm-lead-header-inner-edit-btn {
 .crm-lead-fly-item {
 	background-color: rgba(227, 232, 234, 0.9);
 	cursor: move;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	min-height: 50px;
 	min-width: 380px;
 	padding: 0 0 0 3px;
@@ -5070,7 +5071,9 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	text-decoration: none;
 	display: block;
 	margin-right: 13px;
-	border-radius: 2px 0 0 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 	min-height: 40px;
 	box-sizing: border-box;
 	-webkit-transition: all 250ms ease;
@@ -5280,7 +5283,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	position: relative;
 	padding: 15px 19px 15px 13px;
 	border: 1px solid #e1e2e3;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-md, 3px);
 	margin: 10px auto;
 }
 
@@ -5312,6 +5315,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 	line-height: 15px;
 	background: #ace9fb;
 	margin-bottom: 5px;
+	border-radius: var(--ui-border-radius-xs);
 	font-size: 15px;
 	font-weight: bold;
 	color: #545c69;
@@ -5359,6 +5363,7 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 .transaction-stage-phase-title input {
 	outline: none;
 	border: 1px solid #bcbcbc;
+	border-radius: var(--ui-field-border-radius);
 	line-height: 28px;
 	color: #535c69;
 	font-size: 14px;
@@ -5570,7 +5575,8 @@ div.bx-crm-dialog-activity-webdav-container table.files-list td.files-del-btn .d
 }
 
 .transaction-stage-addphase span {
-	font-family: 'Open Sans', sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 12px;
 }
 
@@ -6432,7 +6438,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 .crm-conv-info {
 	border: 1px solid;
 	border-color: #ede7d9 #eae4d2 #e5dfc9;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	-webkit-box-shadow: inset 0 1px 0 #fff;
 	box-shadow: inset 0 1px 0 #fff;
 	background-image: -webkit-linear-gradient(top, #fdfbed, #faf6d9);
@@ -6451,7 +6457,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 .crm-conv-info {
 	border: 1px solid;
 	border-color: #ede7d9 #eae4d2 #e5dfc9;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	-webkit-box-shadow: inset 0 1px 0 #fff;
 	box-shadow: inset 0 1px 0 #fff;
 	background-image: -webkit-linear-gradient(top, #fdfbed, #faf6d9);
@@ -7052,7 +7058,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	background: transparent;
 	font-size: 14px;
 	border-radius: 3px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-ie .bx-requisite-dialog .select-container select {
@@ -7076,7 +7082,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 }
 
 .bx-crm-view {
-	font: 13px/19px "Helvetica Neue",Helvetica,Arial,sans-serif
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 }
 
 .crm-portrait {
@@ -7413,7 +7419,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 .crm-client-selector-type-item-select,
 .crm-client-selector-type-item-create{
 	display: inline-block;
-	font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:13px;
 	color:#80868e;
 	line-height:14px;
@@ -7737,7 +7743,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 		max-width: 400px;
 	}
 	.crm-client-selector-table-list-title-name {
-		font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
+		font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 		font-size:13px;
 		color:#535c69;
 		line-height:14px;
@@ -7888,7 +7894,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 	max-width: 400px;
 }
 .crm-deal-client-selector-table-list-title-name {
-	font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height:14px;
 	text-align:left;
 	display: inline-block;
@@ -7905,7 +7911,7 @@ div.crm-client-summary-wrapper .crm-client-info-wrapper {
 
 }
 .crm-deal-client-selector-table-list-title-descript {
-	font-family:Arial, "Helvetica Neue", Helvetica, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height:14px;
 	min-height:14px;
 	text-align:left;
@@ -8260,7 +8266,8 @@ a.crm-client-contacts-block-text-mail:hover{
 	display: inline-block;
 	padding: 0 13px 0 0;
 	border: none;
-	font: 12px/38px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #7a818a;
 	text-shadow: none !important;
 	text-transform: uppercase;
@@ -8307,7 +8314,8 @@ a.crm-client-contacts-block-text-mail:hover{
 	display: inline-block;
 	padding: 0 13px 0 0;
 	border: none;
-	font: 12px/38px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #7a818a;
 	text-shadow: none !important;
 	text-transform: uppercase;
@@ -8412,7 +8420,7 @@ a.crm-client-contacts-block-text-mail:hover{
 	display: inline-block;
 	margin: 0 0 1px 0;
 	border-bottom: 1px solid transparent;
-	font: 20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066B0;
 	transition: border-bottom .3s;
 	cursor: pointer;

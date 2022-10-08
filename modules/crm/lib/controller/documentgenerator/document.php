@@ -266,6 +266,17 @@ class Document extends Base
 			return null;
 		}
 
+		if (!\CCrmOwnerType::isCorrectEntityTypeId((int)$fields['entityTypeId']))
+		{
+			$this->errorCollection[] = new Error('Wrong "entityTypeId" field value');
+			return null;
+		}
+		if ($fields['entityId'] <= 0)
+		{
+			$this->errorCollection[] = new Error('Wrong "entityId" field value');
+			return null;
+		}
+
 		$providersMap = DocumentGeneratorManager::getInstance()->getCrmOwnerTypeProvidersMap();
 		if(!isset($providersMap[$fields['entityTypeId']]))
 		{

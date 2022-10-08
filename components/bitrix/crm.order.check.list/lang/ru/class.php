@@ -19,3 +19,4 @@ $MESS['CRM_ORDER_CASHBOX_STATUS_E'] = "Ошибка";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["CRM_ERROR_WRONG_ORDER_ID"] = "Неверный идентификатор заказа";
 $MESS["CRM_ERROR_WRONG_ORDER"] = "Заказ не найден";
+$MESS["CRM_ORDER_CHECK_LIST_TITLE"] = "Чеки по оплате №#ACCOUNT_NUMBER# от #DATE_BILL# (#PAY_SYSTEM_NAME#)";

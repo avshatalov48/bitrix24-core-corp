@@ -8,7 +8,6 @@
  */
 jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 
-	const { EventType } = jn.require('im/messenger/const');
 	const { PullHandler } = jn.require('im/messenger/pull-handler/base');
 	const { DialogConverter } = jn.require('im/messenger/lib/converter');
 	const { MessengerParams } = jn.require('im/messenger/lib/params');
@@ -16,6 +15,7 @@ jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 	const { Counters } = jn.require('im/messenger/lib/counters');
 	const { RecentConverter } = jn.require('im/messenger/lib/converter');
 	const { Notifier } = jn.require('im/messenger/lib/notifier');
+	const { ShareDialogCache } = jn.require('im/messenger/cache/share-dialog');
 
 	/**
 	 * @class MessagePullHandler
@@ -45,7 +45,11 @@ jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 			});
 
 			MessengerStore.dispatch('recentModel/set', [ recentItem ])
-				.then(() => Counters.updateDelayed())
+				.then(() => {
+					Counters.updateDelayed();
+
+					this.saveShareDialogCache();
+				})
 			;
 
 			MessengerStore.dispatch('messagesModel/push', {
@@ -99,7 +103,11 @@ jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 			MessengerStore.dispatch('dialoguesModel/set', [{ id: dialogId, ...params }]);
 
 			MessengerStore.dispatch('recentModel/set', [ recentItem ])
-				.then(() => Counters.updateDelayed())
+				.then(() => {
+					Counters.updateDelayed();
+
+					this.saveShareDialogCache();
+				})
 			;
 
 			const message = DialogConverter.fromPushToMessage(params);
@@ -350,6 +358,19 @@ jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 			MessengerStore.dispatch('recentModel/set', [ recentItem ]);
 
 			return true;
+		}
+
+		saveShareDialogCache()
+		{
+			const firstPage = MessengerStore.getters['recentModel/getRecentPage'](1, 50);
+			ShareDialogCache.saveRecentItemList(firstPage)
+				.then((cache) => {
+					Logger.log('MessagePullHandler: Saving recent items for the share dialog is successful.', cache);
+				})
+				.catch((cache) => {
+					Logger.log('MessagePullHandler: Saving recent items for share dialog failed.', firstPage, cache);
+				})
+			;
 		}
 	}
 

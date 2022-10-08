@@ -20,7 +20,7 @@
 
 .crm-webform-list-header {
 	margin: 33px 0 0 0;
-	font: normal 23px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 23px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -75,7 +75,7 @@
 .crm-webform-list-active-popup-item {
 	flex: 1;
 	overflow: hidden;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-active-popup-item-caption {
@@ -157,7 +157,7 @@ a.crm-webform-list-entity-link {
 }
 
 .crm-webform-list-createform-element {
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -172,7 +172,7 @@ a.crm-webform-list-entity-link {
 .crm-webform-list-info {
 	position: relative;
 	max-height: 2000px;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	-webkit-transition: all .5s ease;
 	-moz-transition: all .5s ease;
@@ -253,7 +253,7 @@ a.crm-webform-list-entity-link {
 	margin: 0 0 17px 0;
 	width: -webkit-calc(100% - 30px);
 	width: calc(100% - 30px);
-	font: 22px/26px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #31c2f3;
 }
 
@@ -266,11 +266,11 @@ a.crm-webform-list-entity-link {
 .crm-webform-list-info-slogan {
 	display: block;
 	margin: 0 0 38px 0;
-	font: 16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-list-info-list-item-title {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* Buttons */
@@ -382,7 +382,7 @@ a.crm-webform-list-entity-link {
 	display: inline-block;
 	width: 100%;
 	height: 100%;
-	font: normal 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: normal 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: top;
 }
 
@@ -521,7 +521,8 @@ a.crm-webform-list-entity-link {
 	overflow: hidden;
 	white-space: nowrap;
 	display: block;
-	font: bold 12px/40px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 12px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	max-width: 100%;
 	-webkit-transition: color .3s ease;
@@ -577,7 +578,8 @@ div.crm-webform-list-widget-content {
 
 .crm-webform-list-widget-content-amt {
 	color: #fff;
-	font: 13px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-webform-list-widget-content-image {
@@ -590,16 +592,18 @@ div.crm-webform-list-widget-content {
 }
 
 .crm-crm-webform-list-widget-content-title {
-	font: 21px/15px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 21px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-webform-list-widget-content-number {
-	font: bold 38px/46px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 38px/46px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 @media (max-width: 1199px) {
 	.crm-webform-list-widget-content-attempt {
-		font: normal 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+		font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 }
 
@@ -614,7 +618,8 @@ div.crm-webform-list-widget-content {
 
 .crm-webform-list-widget-content-attempt-total-number,
 .crm-webform-list-widget-content-attempt-success-number {
-	font: bold 16px "OpenSans", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 /* Right block */
@@ -787,7 +792,7 @@ div.crm-webform-list-widget-content {
 .crm-webform-grid-conversion {
 	display: flex;
 	align-items: center;
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-grid-conversion-icon {
@@ -807,11 +812,17 @@ div.crm-webform-list-widget-content {
 	margin-right: 5px;
 }
 
-.crm-webform-grid-conversion.--down .crm-webform-grid-conversion-text {
+.crm-webform-grid-conversion.--down .crm-webform-grid-conversion-text,
+.crm-webform-grid-conversion.--down2 .crm-webform-grid-conversion-text,
+.crm-webform-grid-conversion.--down3 .crm-webform-grid-conversion-text,
+.crm-webform-grid-conversion.--normal-red .crm-webform-grid-conversion-text {
 	color: #ff5752;
 }
 
-.crm-webform-grid-conversion.--up .crm-webform-grid-conversion-text {
+.crm-webform-grid-conversion.--up .crm-webform-grid-conversion-text,
+.crm-webform-grid-conversion.--up2 .crm-webform-grid-conversion-text,
+.crm-webform-grid-conversion.--up3 .crm-webform-grid-conversion-text,
+.crm-webform-grid-conversion.--normal-green .crm-webform-grid-conversion-text {
 	color: #8dba00;
 }
 
@@ -827,6 +838,7 @@ div.crm-webform-list-widget-content {
 	text-align: right;
 }
 
+/*
 .crm-webform-grid-conversion-value:after {
 	content: '';
 	position: absolute;
@@ -837,12 +849,24 @@ div.crm-webform-list-widget-content {
 	margin-top: -5px;
 	background: #bdc1c6;
 }
+*/
 
 .crm-webform-grid-conversion-icon-status {
 	display: none;
-	width: 27px;
-	height: 18px;
+	width: 54px;
+	height: 36px;
 	background: center no-repeat;
+	background-size: 100% 100%;
+}
+
+.crm-webform-grid-conversion.--normal-green .crm-webform-grid-conversion-icon-status {
+	display: block;
+	background-image: url(images/crm-webform--icon-graph-normal-green.svg);
+}
+
+.crm-webform-grid-conversion.--normal-red .crm-webform-grid-conversion-icon-status {
+	display: block;
+	background-image: url(images/crm-webform--icon-graph-normal-red.svg);
 }
 
 .crm-webform-grid-conversion.--up .crm-webform-grid-conversion-icon-status {
@@ -850,9 +874,29 @@ div.crm-webform-list-widget-content {
 	background-image: url(images/crm-webform--icon-graph-up.svg);
 }
 
+.crm-webform-grid-conversion.--up2 .crm-webform-grid-conversion-icon-status {
+	display: block;
+	background-image: url(images/crm-webform--icon-graph-up2.svg);
+}
+
+.crm-webform-grid-conversion.--up3 .crm-webform-grid-conversion-icon-status {
+	display: block;
+	background-image: url(images/crm-webform--icon-graph-up3.svg);
+}
+
 .crm-webform-grid-conversion.--down .crm-webform-grid-conversion-icon-status {
 	display: block;
 	background-image: url(images/crm-webform--icon-graph-down.svg);
+}
+
+.crm-webform-grid-conversion.--down2 .crm-webform-grid-conversion-icon-status {
+	display: block;
+	background-image: url(images/crm-webform--icon-graph-down2.svg);
+}
+
+.crm-webform-grid-conversion.--down3 .crm-webform-grid-conversion-icon-status {
+	display: block;
+	background-image: url(images/crm-webform--icon-graph-down3.svg);
 }
 
 .crm-webform-item-btn {

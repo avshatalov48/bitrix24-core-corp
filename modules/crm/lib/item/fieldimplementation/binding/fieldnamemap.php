@@ -7,14 +7,14 @@ namespace Bitrix\Crm\Item\FieldImplementation\Binding;
  */
 final class FieldNameMap
 {
-	/** @var string|null like CONTACT_ID */
-	private $singleId;
-	/** @var string like CONTACT_IDS */
-	private $multipleIds;
-	/** @var string like CONTACT_BINDINGS */
-	private $bindings;
-	/** @var string like CONTACTS */
-	private $boundEntities;
+	// like CONTACT_ID
+	private ?string $singleId = null;
+	// like CONTACT_IDS
+	private ?string $multipleIds = null;
+	// like CONTACT_BINDINGS
+	private ?string $bindings = null;
+	// like CONTACTS
+	private ?string $boundEntities = null;
 
 	public function getAllFilled(): array
 	{
@@ -25,9 +25,7 @@ final class FieldNameMap
 				$this->bindings,
 				$this->boundEntities,
 			],
-			static function ($value): bool {
-				return !is_null($value);
-			}
+			fn($value): bool => !is_null($value),
 		);
 	}
 
@@ -81,7 +79,7 @@ final class FieldNameMap
 
 	public function isBoundEntitiesFilled(): bool
 	{
-		return !is_null($this->singleId);
+		return !is_null($this->boundEntities);
 	}
 
 	public function getBoundEntities(): string

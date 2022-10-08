@@ -194,11 +194,19 @@ class EntityAuthorization
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Contact)
 		{
-			return \CCrmContact::CheckReadPermission($entityID, $userPermissions);
+			return \CCrmContact::CheckReadPermission(
+				$entityID,
+				$userPermissions,
+				$params['CATEGORY_ID'] ?? null
+			);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Company)
 		{
-			return \CCrmCompany::CheckReadPermission($entityID, $userPermissions);
+			return \CCrmCompany::CheckReadPermission(
+				$entityID,
+				$userPermissions,
+				$params['CATEGORY_ID'] ?? null
+			);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::Order)
 		{

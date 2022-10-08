@@ -7,7 +7,7 @@ if (!CModule::IncludeModule('bizproc'))
 	return;
 }
 
-IncludeModuleLangFile(dirname(__FILE__) . '/crm_document.php');
+IncludeModuleLangFile(__DIR__ . '/crm_document.php');
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Main;
@@ -74,17 +74,13 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 
 		$printableFieldNameSuffix = ' (' . GetMessage('CRM_FIELD_BP_TEXT') . ')';
 
-		$arResult = [
+		$arResult = static::getVirtualFields() + [
 			'ID' => [
 				'Name' => GetMessage('CRM_FIELD_ID'),
 				'Type' => 'int',
 				'Filterable' => true,
 				'Editable' => false,
 				'Required' => false,
-			],
-			'CRM_ID' => [
-				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CRM_ID'),
-				'Type' => 'string',
 			],
 			'TITLE' =>[
 				'Name' => GetMessage('CRM_FIELD_TITLE_DEAL'),

@@ -26,7 +26,7 @@ import {Call, HistoryCall, ScheduleCall} from "./actions/call";
 import {Email, HistoryEmail, ScheduleEmail} from "./actions/email";
 import {OpenLine} from "./actions/openline";
 import SchedulePostpone from "./actions/schedule-postpone";
-import Item from "./item";
+import CompatibleItem from "./items/compatible-item";
 import HistoryItem from "./items/history";
 import HistoryActivity from "./items/history-activity";
 import CommentItem from "./items/comment";
@@ -83,6 +83,10 @@ import Expand from "./animations/expand";
 import Shift from "./animations/shift";
 import AnimationComment from "./animations/comment";
 import Fasten from "./animations/fasten";
+import ProductCompilationList from './product-compilation/compilation-product-list/component';
+import CompilationOrderNotice from './product-compilation/order-notice/component';
+import ProductCompilationViewed from './product-compilation/compilation-viewed/component';
+import NewDealCreated from './product-compilation/deal-created/component';
 
 const Streams = {
 	History,
@@ -199,7 +203,11 @@ export {
 	Types,
 	Action,
 	Actions,
-	Item,
 	Items,
 	Animations,
+	CompatibleItem,
+	ProductCompilationList,
+	CompilationOrderNotice,
+	ProductCompilationViewed,
+	NewDealCreated,
 };

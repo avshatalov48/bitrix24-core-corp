@@ -211,18 +211,6 @@ namespace Bitrix\Transformer\Entity {
 }
 namespace Bitrix\Transformer\Entity {
 	/**
-	 * @method static EO_Command_Query query()
-	 * @method static EO_Command_Result getByPrimary($primary, array $parameters = array())
-	 * @method static EO_Command_Result getById($id)
-	 * @method static EO_Command_Result getList(array $parameters = array())
-	 * @method static EO_Command_Entity getEntity()
-	 * @method static \Bitrix\Transformer\Entity\EO_Command createObject($setDefaultValues = true)
-	 * @method static \Bitrix\Transformer\Entity\EO_Command_Collection createCollection()
-	 * @method static \Bitrix\Transformer\Entity\EO_Command wakeUpObject($row)
-	 * @method static \Bitrix\Transformer\Entity\EO_Command_Collection wakeUpCollection($rows)
-	 */
-	class CommandTable extends \Bitrix\Main\ORM\Data\DataManager {}
-	/**
 	 * Common methods:
 	 * ---------------
 	 *

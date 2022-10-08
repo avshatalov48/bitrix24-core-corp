@@ -21,8 +21,6 @@ if (!CModule::IncludeModule('crm'))
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE))
-	return;
 
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arParams['PATH_TO_CONTACT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $arParams['PATH_TO_CONTACT_DETAILS'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&details');
@@ -47,6 +45,15 @@ if($arParams['ELEMENT_ID'] > 0)
 else
 {
 	$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+}
+
+if ($CrmPerms->HavePerm(
+	(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Contact))
+		->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
+	BX_CRM_PERM_NONE)
+)
+{
+	return;
 }
 
 if (!isset($arParams['TYPE']))
@@ -211,7 +218,7 @@ if($arParams['TYPE'] === 'list')
 		'HINT' => GetMessage('CRM_CONTACT_ADD_HINT')
 	];
 
-	if ($bImport && !$isInSlider)
+	if ($bImport && !$isInSlider && $arResult['CATEGORY_ID'] === 0)
 	{
 		$importFromVCardUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_CONTACT_IMPORTVCARD'], []);
 		if ($arResult['CATEGORY_ID'] > 0)
@@ -303,9 +310,9 @@ if($arParams['TYPE'] === 'list')
 
 	if ($bExport && !$isInSlider)
 	{
-		if($bImport)
+		if (!empty($arResult['BUTTONS']))
 		{
-			$arResult['BUTTONS'][] = array('SEPARATOR' => true);
+			$arResult['BUTTONS'][] = ['SEPARATOR' => true];
 		}
 
 		$entityType = \CCrmOwnerType::ContactName;
@@ -430,7 +437,7 @@ if($arParams['TYPE'] === 'list')
 		}
 	}
 
-	if ($bDedupe && !$isInSlider)
+	if ($bDedupe && !$isInSlider && $arResult['CATEGORY_ID'] === 0)
 	{
 		$restriction = RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
@@ -440,6 +447,11 @@ if($arParams['TYPE'] === 'list')
 					? $arParams['PATH_TO_CONTACT_DEDUPEWIZARD']
 					: $arParams['PATH_TO_CONTACT_DEDUPE']
 			);
+
+			if ($arResult['CATEGORY_ID'] > 0)
+			{
+				$dedupePath = CHTTP::urlAddParams($dedupePath, ['category_id' => $arResult['CATEGORY_ID']]);
+			}
 
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('CONTACT_DEDUPE'),
@@ -485,6 +497,7 @@ if($arParams['TYPE'] === 'list')
 		&& is_callable('\Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl')
 		&& $bAdd
 		&& !$isInSlider
+		&& $arResult['CATEGORY_ID'] === 0
 	)
 	{
 		$url = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl('crm_contact', 'setting_list');

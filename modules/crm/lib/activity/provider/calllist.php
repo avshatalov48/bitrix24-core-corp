@@ -143,7 +143,7 @@ class CallList extends Base
 				'WEBFORM_ID' => 0
 			);
 
-		$forms = FormTable::getList(array(
+		$forms = FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'filter' => array('ACTIVE' => 'Y')
 		));

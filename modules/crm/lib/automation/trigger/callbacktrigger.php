@@ -45,7 +45,7 @@ class CallBackTrigger extends BaseTrigger
 		$result = parent::toArray();
 		if (static::isEnabled())
 		{
-			$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getList(array(
+			$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList(array(
 				'select' => ['ID', 'NAME'],
 				'order' => ['NAME' => 'ASC', 'ID' => 'ASC'],
 				'filter' => ['=IS_CALLBACK_FORM' => 'Y']

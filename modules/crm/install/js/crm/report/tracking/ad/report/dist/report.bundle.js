@@ -2,18 +2,14 @@ this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Report = this.BX.Crm.Report || {};
 this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
-(function (exports,sidepanel,ui_progressbar,main_core,main_core_events,main_popup) {
+(function (exports,sidepanel,ui_progressbar,ui_fonts_opensans,main_core,main_core_events,main_popup) {
 	'use strict';
 
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-report-tracking-panel\">\n\t\t\t\t<div class=\"crm-report-tracking-panel-title\">\n\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-name\">\n\t\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-line\">\n\t\t\t\t\t\t\t<div data-role=\"title\"></div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div data-role=\"selector\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-report-tracking-panel-body\">\n\t\t\t\t\t<div data-role=\"loader\" class=\"crm-report-tracking-panel-loader\">\n\t\t\t\t\t\t<div data-role=\"loader/text\" class=\"crm-report-tracking-panel-loader-text\"></div>\n\t\t\t\t\t\t<div data-role=\"loader/bar\" class=\"crm-report-tracking-panel-loader-bar\">\n\t\t\t\t\t\t\t<div data-role=\"error\" class=\"ui-alert ui-alert-danger\" style=\"display: none;\">\n\t\t\t\t\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t\t<strong>", ":</strong>\n\t\t\t\t\t\t\t\t\t<span data-role=\"error/text\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div style=\"text-align: center;\">\n\t\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\t\tdata-role=\"error/close\" \n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\t\t\tstyle=\"display: none;\"\n\t\t\t\t\t\t\t\t>", "</button>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"grid\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
+	var _templateObject;
 
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
-	  return data;
-	}
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 
 	var Report = /*#__PURE__*/function () {
 	  function Report(options) {
@@ -80,7 +76,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	      }
 
 	      BX.ajax.runAction('crm.api.tracking.ad.report.build', {
-	        json: babelHelpers.objectSpread({}, this.filter)
+	        json: _objectSpread({}, this.filter)
 	      }).then(function (_ref2) {
 	        var data = _ref2.data;
 
@@ -93,7 +89,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        } else {
 	          _this2.build();
 	        }
-	      }).catch(function (_ref3) {
+	      })["catch"](function (_ref3) {
 	        var errors = _ref3.errors;
 
 	        _this2.showError(errors[0]);
@@ -112,7 +108,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        }
 	      }).then(function () {
 	        _this3.loadGrid();
-	      }).catch(function (_ref4) {
+	      })["catch"](function (_ref4) {
 	        var errors = _ref4.errors;
 
 	        _this3.showError(errors[0]);
@@ -124,7 +120,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	      var _this4 = this;
 
 	      BX.ajax.runAction('crm.api.tracking.ad.report.getGrid', {
-	        data: babelHelpers.objectSpread({}, this.filter)
+	        data: _objectSpread({}, this.filter)
 	      }).then(function (_ref5) {
 	        var data = _ref5.data;
 	        //container.innerHTML = data.html;
@@ -196,7 +192,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        }
 
 	        main_core.Event.bind(node, 'click', function () {
-	          new Report(babelHelpers.objectSpread({}, _this5.filter, {
+	          new Report(_objectSpread(_objectSpread({}, _this5.filter), {}, {
 	            level: options.level,
 	            parentId: options.parentId,
 	            gridId: _this5.filter.gridId + '-lvl' + options.level
@@ -248,7 +244,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	    value: function createUiContainer(level) {
 	      var _this6 = this;
 
-	      var container = main_core.Tag.render(_templateObject(), level ? '' : '<div data-role="hint" class="ui-hint-icon crm-report-tracking-panel-hint"></div>', main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_ERROR_TITLE'), main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_CLOSE'));
+	      var container = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-report-tracking-panel\">\n\t\t\t\t<div class=\"crm-report-tracking-panel-title\">\n\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-name\">\n\t\t\t\t\t\t<div class=\"crm-report-tracking-panel-title-line\">\n\t\t\t\t\t\t\t<div data-role=\"title\"></div>\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div data-role=\"selector\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"crm-report-tracking-panel-body\">\n\t\t\t\t\t<div data-role=\"loader\" class=\"crm-report-tracking-panel-loader\">\n\t\t\t\t\t\t<div data-role=\"loader/text\" class=\"crm-report-tracking-panel-loader-text\"></div>\n\t\t\t\t\t\t<div data-role=\"loader/bar\" class=\"crm-report-tracking-panel-loader-bar\">\n\t\t\t\t\t\t\t<div data-role=\"error\" class=\"ui-alert ui-alert-danger\" style=\"display: none;\">\n\t\t\t\t\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t\t\t\t\t<strong>", ":</strong>\n\t\t\t\t\t\t\t\t\t<span data-role=\"error/text\"></span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div style=\"text-align: center;\">\n\t\t\t\t\t\t\t\t<button \n\t\t\t\t\t\t\t\t\tdata-role=\"error/close\" \n\t\t\t\t\t\t\t\t\tclass=\"ui-btn ui-btn-light-border\"\n\t\t\t\t\t\t\t\t\tstyle=\"display: none;\"\n\t\t\t\t\t\t\t\t>", "</button>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"grid\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), level ? '' : '<div data-role="hint" class="ui-hint-icon crm-report-tracking-panel-hint"></div>', main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_ERROR_TITLE'), main_core.Loc.getMessage('CRM_REPORT_TRACKING_AD_REPORT_CLOSE'));
 	      this.ui.container = container;
 	      this.ui.title = this.getNode('title');
 	      this.ui.hint = this.getNode('hint');
@@ -386,7 +382,7 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 	        eventArgs.url = '/bitrix/services/main/ajax.php?action=crm.api.tracking.ad.grid.report.get&' + parameters;
 	      }
 
-	      eventArgs.data = babelHelpers.objectSpread({}, eventArgs.data);
+	      eventArgs.data = _objectSpread({}, eventArgs.data);
 	    }
 	  }], [{
 	    key: "open",
@@ -405,5 +401,5 @@ this.BX.Crm.Report.Tracking = this.BX.Crm.Report.Tracking || {};
 
 	exports.Report = Report;
 
-}((this.BX.Crm.Report.Tracking.Ad = this.BX.Crm.Report.Tracking.Ad || {}),BX,BX.UI,BX,BX.Event,BX.Main));
+}((this.BX.Crm.Report.Tracking.Ad = this.BX.Crm.Report.Tracking.Ad || {}),BX,BX.UI,BX,BX,BX.Event,BX.Main));
 //# sourceMappingURL=report.bundle.js.map

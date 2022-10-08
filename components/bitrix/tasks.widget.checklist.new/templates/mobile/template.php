@@ -20,6 +20,7 @@ Extension::load([
 	'ui.forms',
 	'ui.progressbar',
 	'ui.progressround',
+	'ui.fonts.opensans',
 ]);
 
 Loc::loadMessages(__FILE__);

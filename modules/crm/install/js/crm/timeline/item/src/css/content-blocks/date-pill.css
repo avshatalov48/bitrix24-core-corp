@@ -1,0 +1,34 @@
+.crm-timeline__date-pill {
+	position: relative;
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+	min-height: 21px;
+	padding-left: 9px;
+	padding-right: 21px;
+	font-family: var(--ui-font-family-secondary, --ui-font-family-open-sans, 'Open Sans', sans-serif);
+	font-size: var(--ui-font-size-xs, 12px);
+	font-weight: var(--ui-font-weight-semi-bold, 600);
+	line-height: var(--ui-font-line-height-xl, 1.62);
+	text-transform: lowercase;
+	border-radius: 64px;
+	background-color: var(--ui-color-primary, #2fc6f6);
+	color: var(--ui-color-on-primary, #fff);
+	cursor: pointer;
+}
+
+.crm-timeline__date-pill_caret {
+	pointer-events: none;
+	position: absolute;
+	width: 14px;
+	height: 14px;
+	right: 5px;
+	top: 50%;
+	transform: translateY(-50%);
+	mask-image: url("../../images/common/crm-timeline__bottom-caret.svg");
+	mask-size: contain;
+	mask-position: center center;
+	--crm-timeline__date-pill_caret-white: 255, 255, 255;
+	background-color: rgba(var(--ui-color-on-primary-rgb, var(--crm-timeline__date-pill_caret-white)), 0.54);
+}
+

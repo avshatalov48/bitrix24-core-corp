@@ -238,7 +238,7 @@ abstract class EntityBase
 	 * @param bool $enablePermissionCheck
 	 * @return array
 	 */
-	public function getNewIDs($offsetID, $order = 'DESC', $limit = 100, $userID = 0, $enablePermissionCheck = true)
+	public function getNewIDs($offsetID, $order = 'DESC', $limit = 100, $userID = 0, $enablePermissionCheck = true, ?int $categoryId = null)
 	{
 		if ($userID <= 0)
 		{
@@ -257,6 +257,11 @@ abstract class EntityBase
 		{
 			$filter = ['>ID' => $offsetID];
 		}
+		if (!is_null($categoryId))
+		{
+			$filter['@CATEGORY_ID'] = $categoryId;
+		}
+
 		$topIds = $this->getTopIDs([
 			'enablePermissionCheck' => false,
 			'order' => ['ID' => $order],

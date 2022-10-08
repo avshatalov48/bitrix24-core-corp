@@ -259,8 +259,17 @@ final class TemplateHelper
 				$message = '';
 			}
 
+			$message = htmlspecialcharsbx($message);
+			$message = str_replace('#BR#', '<br>', $message);
+
+			if ($error->getCode() === 'SAVE_ERROR.TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE')
+			{
+				$message = str_replace('#LINK_START#', '<a href="'.\Bitrix\UI\Util::getArticleUrlByCode('11705476').'" class="tasks-permission-header-link">', $message);
+				$message = str_replace('#LINK_END#', '</a>', $message);
+			}
+
 			?>
-			<div class="task-message-label warning"><?=htmlspecialcharsbx($message)?></div>
+			<div class="task-message-label warning"><?= $message; ?></div>
 			<?
 		}
 	}

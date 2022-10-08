@@ -144,6 +144,7 @@ class Kanban extends Base
 		}
 
 		$entityService = new EntityService();
+		$kanbanService = new KanbanService();
 
 		$sprint = $entityService->getEntityById($sprintId);
 		if (!$sprint->getId() || $sprint->getEntityType() !== EntityForm::SPRINT_TYPE)
@@ -164,7 +165,7 @@ class Kanban extends Base
 
 		$stages = [];
 
-		foreach (StagesTable::getStages($sprintId, true) as $stage)
+		foreach ($kanbanService->getStages($sprintId) as $stage)
 		{
 			$stages[] = [
 				'id' => $stage['ID'],

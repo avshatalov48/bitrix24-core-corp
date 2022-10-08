@@ -1,0 +1,1 @@
+{"version":3,"sources":["component.js"],"names":["mode","BX","componentParameters","get","userId","TaskCardEdit","taskcard","TaskCardView"],"mappings":"AAKA,MACC,MAAMA,EAAOC,GAAGC,oBAAoBC,IAAI,OAAQ,QAChD,MAAMC,EAASH,GAAGC,oBAAoBC,IAAI,UAAW,KAErD,GAAIH,IAAS,OACb,CACC,IAAIK,aAAaC,SAAUF,GAC3B,OAGD,IAAIG,aAAaD,SAAUF,IAV5B","file":"component.map.js"}

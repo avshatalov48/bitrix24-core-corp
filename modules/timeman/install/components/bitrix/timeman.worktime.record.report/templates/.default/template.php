@@ -6,10 +6,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.alerts', 'ui.hint']);
+\Bitrix\Main\UI\Extension::load([
+	'sidepanel',
+	'ui.buttons',
+	'ui.alerts',
+	'ui.hint',
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
-\CJSCore::init("sidepanel");
+
 /** @var \Bitrix\Timeman\Form\Worktime\WorktimeRecordForm $recordForm */
 $recordForm = $arResult['recordForm'];
 /** @var \Bitrix\Timeman\Helper\UserHelper $userHelper */

@@ -22,8 +22,25 @@ if (!CModule::IncludeModule('crm') || !CCrmSecurityHelper::IsAuthorized() || !ch
 	die();
 }
 
-$componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
-$componentParams = isset($componentData['params']) && is_array($componentData['params']) ? $componentData['params'] : array();
+$componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : [];
+$componentParams = [];
+if (isset($componentData['signedParameters']))
+{
+	$componentParams = \CCrmInstantEditorHelper::unsignComponentParams(
+		(string)$componentData['signedParameters'],
+		'crm.order.check.list'
+	);
+	if (is_null($componentParams))
+	{
+		ShowError('Wrong component signed parameters');
+		die();
+	}
+}
+elseif (isset($componentData['params']) && is_array($componentData['params']))
+{
+	ShowError('Component params must be signed');
+	die();
+}
 
 //For custom reload with params
 $ajaxLoaderParams = array(
@@ -70,8 +87,11 @@ $componentParams['EXTERNAL_ERRORS'] = $errors;
 //Fix boolean params
 if(isset($componentParams['ENABLE_TOOLBAR']))
 {
-	$componentParams['ENABLE_TOOLBAR'] = $componentParams['ENABLE_TOOLBAR'] === 'Y'
-		|| $componentParams['ENABLE_TOOLBAR'] === 'true';
+	$componentParams['ENABLE_TOOLBAR'] =
+		$componentParams['ENABLE_TOOLBAR'] === 'Y'
+		|| $componentParams['ENABLE_TOOLBAR'] === 'true'
+		|| $componentParams['ENABLE_TOOLBAR'] === true
+	;
 }
 
 $APPLICATION->IncludeComponent('bitrix:crm.order.check.list',

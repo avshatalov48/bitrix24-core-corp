@@ -177,6 +177,18 @@ class Epic extends Controller
 			return null;
 		}
 
+		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_EC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
+
 		$inputEpic = new EpicForm();
 
 		$inputEpic->setId($epicId);
@@ -543,6 +555,18 @@ class Epic extends Controller
 			return null;
 		}
 
+		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_EC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
+
 		$description = (new \CBXSanitizer)->sanitizeHtml($epic->getDescription());
 
 		$userFields = $epicService->getFilesUserField($this->userFieldManager, $epicId);
@@ -576,6 +600,8 @@ class Epic extends Controller
 	 */
 	public function removeEpicAction(int $epicId): ?array
 	{
+		$userId = Util\User::getId();
+
 		$epicService = new EpicService();
 		$pushService = (Loader::includeModule('pull') ? new PushService() : null);
 
@@ -584,6 +610,18 @@ class Epic extends Controller
 		{
 			$this->errorCollection->setError(
 				new Error(Loc::getMessage('TASKS_EC_ERROR_COULD_NOT_READ_EPIC'))
+			);
+
+			return null;
+		}
+
+		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_EC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
 			);
 
 			return null;
@@ -677,8 +715,7 @@ class Epic extends Controller
 			'LHE' => [
 				'id' => $editorId,
 				'iframeCss' => 'body { padding-left: 10px !important; }',
-				'fontFamily' => "'Helvetica Neue', Helvetica, Arial, sans-serif",
-				'fontSize' => '13px',
+				'fontSize' => '14px',
 				'bInitByJS' => false,
 				'height' => 100,
 				'lazyLoad' => 'N',
@@ -710,7 +747,31 @@ class Epic extends Controller
 			return null;
 		}
 
+		$userId = Util\User::getId();
+
 		$epicService = new EpicService();
+
+		$epic = $epicService->getEpic($epicId);
+		if (!$epic->getId())
+		{
+			$this->errorCollection->setError(
+				new Error(Loc::getMessage('TASKS_EC_ERROR_COULD_NOT_READ_EPIC'))
+			);
+
+			return null;
+		}
+
+		if (!Group::canReadGroupTasks($userId, $epic->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_EC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
 
 		$userFields = $epicService->getFilesUserField($this->userFieldManager, $epicId);
 		if ($epicService->getErrors())

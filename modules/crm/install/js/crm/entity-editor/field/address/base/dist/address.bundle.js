@@ -2,247 +2,9 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_core_events,main_popup) {
 	'use strict';
 
-	function _templateObject24() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs\">\n\t\t\t\t\t<label>\n\t\t\t\t\t<input onclick=\"", "\" type=\"checkbox\" value=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-ctl-label-text\">", "</span>\n\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t"]);
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24;
 
-	  _templateObject24 = function _templateObject24() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject23() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"ui-title-7\">", "</div>\n\t\t\t\t<div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject23 = function _templateObject23() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject22() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ", "\"></span>"]);
-
-	  _templateObject22 = function _templateObject22() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject21() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"]);
-
-	  _templateObject21 = function _templateObject21() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject20() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ui-ctl-icon-loader\"></span>"]);
-
-	  _templateObject20 = function _templateObject20() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject19() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject19 = function _templateObject19() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject18() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary\">", ":</span>"]);
-
-	  _templateObject18 = function _templateObject18() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject17() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block-text\">\n\t\t\t\t<span class=\"ui-link ui-link-dark ui-link-dotted\">", "</span>\n\t\t\t</div>"]);
-
-	  _templateObject17 = function _templateObject17() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject16() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t<div class=\"crm-address-control-mode-switch\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject16 = function _templateObject16() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject15() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\">", "</span>"]);
-
-	  _templateObject15 = function _templateObject15() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject14() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\"></span>"]);
-
-	  _templateObject14 = function _templateObject14() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"location-fields-control-block crm-address-type-block\">\n\t\t\t\t\t\t<div class=\"ui-entity-editor-content-block ui-entity-editor-field-text\">\n\t\t\t\t\t\t\t<div class=\"ui-entity-editor-block-title\">\n\t\t\t\t\t\t\t\t<label class=\"ui-entity-editor-block-title-text\">", "</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>"]);
-
-	  _templateObject13 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
-
-	  _templateObject12 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl-inline ui-ctl-w100\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject11 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-inline ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w25\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-fields-control-block\"></div>"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-address-search-control-block\">\n\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span></span>"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" value=\"", "\" ", ">"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-element\"></div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>Location module is not installed</div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary ui-link-dotted\" onmouseup=\"", "\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"", "\"><span class=\"", "\" onclick=\"", "\">", "</span></div>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-address-control-wrap ", "\"></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -589,7 +351,7 @@ this.BX = this.BX || {};
 	    key: "layout",
 	    value: function layout(isEditMode) {
 	      this._isEditMode = isEditMode;
-	      this._wrapper = main_core.Tag.render(_templateObject(), this._isEditMode ? 'crm-address-control-wrap-edit' : '');
+	      this._wrapper = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-address-control-wrap ", "\"></div>"])), this._isEditMode ? 'crm-address-control-wrap-edit' : '');
 	      this.refreshLayout();
 	      return this._wrapper;
 	    }
@@ -608,7 +370,7 @@ this.BX = this.BX || {};
 	          addressItem.setEditMode(this._isEditMode);
 
 	          if (!this._isEditMode && this._showFirstItemOnly && addrCounter > 1) {
-	            var showMore = main_core.Tag.render(_templateObject3(), this.onShowMoreMouseUp.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_SHOW_ALL'));
+	            var showMore = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary ui-link-dotted\" onmouseup=\"", "\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>"])), this.onShowMoreMouseUp.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_SHOW_ALL'));
 	            main_core.Dom.append(showMore, this._wrapper);
 	            break;
 	          } else {
@@ -627,7 +389,7 @@ this.BX = this.BX || {};
 	        var crmCompatibilityMode = BX.prop.getBoolean(this._settings, 'crmCompatibilityMode', false);
 	        var addButtonWrapClass = crmCompatibilityMode ? 'crm-entity-widget-content-block-add-field' : 'ui-entity-widget-content-block-add-field';
 	        var addButtonClass = crmCompatibilityMode ? 'crm-entity-widget-content-add-field' : 'ui-entity-editor-content-add-lnk';
-	        main_core.Dom.append(main_core.Tag.render(_templateObject2(), addButtonWrapClass, addButtonClass, this.onAddNewAddress.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_ADD')), this._wrapper);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"", "\"><span class=\"", "\" onclick=\"", "\">", "</span></div>\n\t\t\t"])), addButtonWrapClass, addButtonClass, this.onAddNewAddress.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_ADD')), this._wrapper);
 	      }
 	    }
 	  }, {
@@ -1099,7 +861,7 @@ this.BX = this.BX || {};
 	    key: "layout",
 	    value: function layout() {
 	      if (main_core.Type.isNull(this._addressWidget)) {
-	        this._wrapper = main_core.Tag.render(_templateObject4());
+	        this._wrapper = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div>Location module is not installed</div>"])));
 	        return this._wrapper;
 	      }
 
@@ -1202,36 +964,36 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getEditHtml",
 	    value: function getEditHtml(addressString) {
-	      this._domNodes.typeName = main_core.Tag.render(_templateObject5());
-	      this._domNodes.searchInput = main_core.Tag.render(_templateObject6(), addressString, this._isAutocompleteEnabled ? '' : 'readonly');
-	      this._domNodes.icon = main_core.Tag.render(_templateObject7());
-	      this._domNodes.addressContainer = main_core.Tag.render(_templateObject8(), this._domNodes.icon, this._domNodes.searchInput);
-	      this._domNodes.detailsContainer = main_core.Tag.render(_templateObject9());
+	      this._domNodes.typeName = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-element\"></div>"])));
+	      this._domNodes.searchInput = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" class=\"ui-ctl-element ui-ctl-textbox\" value=\"", "\" ", ">"])), addressString, this._isAutocompleteEnabled ? '' : 'readonly');
+	      this._domNodes.icon = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<span></span>"])));
+	      this._domNodes.addressContainer = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"crm-address-search-control-block\">\n\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>\n\t\t</div>"])), this._domNodes.icon, this._domNodes.searchInput);
+	      this._domNodes.detailsContainer = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"location-fields-control-block\"></div>"])));
 
 	      if (this._canChangeType) {
 	        if (this._isTypeSelectorVisible) {
-	          this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject10(), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
+	          this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-inline ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w25\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
 	          this._domNodes.addressTypeContainer = null;
 	          main_core.Dom.addClass(this._domNodes.addressContainer, ['ui-ctl-inline', 'ui-ctl-w75']);
-	          this._domNodes.addressContainer = main_core.Tag.render(_templateObject11(), this._domNodes.addressTypeSelector, this._domNodes.addressContainer);
+	          this._domNodes.addressContainer = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl-inline ui-ctl-w100\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), this._domNodes.addressTypeSelector, this._domNodes.addressContainer);
 	        } else {
-	          this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject12(), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
-	          this._domNodes.addressTypeContainer = main_core.Tag.render(_templateObject13(), main_core.Loc.getMessage('CRM_ADDRESS_TYPE'), this._domNodes.addressTypeSelector);
+	          this._domNodes.addressTypeSelector = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), this.onToggleTypesMenu.bind(this), this._domNodes.typeName);
+	          this._domNodes.addressTypeContainer = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"location-fields-control-block crm-address-type-block\">\n\t\t\t\t\t\t<div class=\"ui-entity-editor-content-block ui-entity-editor-field-text\">\n\t\t\t\t\t\t\t<div class=\"ui-entity-editor-block-title\">\n\t\t\t\t\t\t\t\t<label class=\"ui-entity-editor-block-title-text\">", "</label>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>"])), main_core.Loc.getMessage('CRM_ADDRESS_TYPE'), this._domNodes.addressTypeSelector);
 	        }
 
 	        this.refreshTypeName();
 	      }
 
 	      this.refreshIcon();
-	      this._domNodes.detailsToggler = main_core.Tag.render(_templateObject14(), this.onToggleDetailsVisibility.bind(this));
+	      this._domNodes.detailsToggler = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\"></span>"])), this.onToggleDetailsVisibility.bind(this));
 
 	      if (this._canChangeType) {
-	        this._domNodes.copyButton = main_core.Tag.render(_templateObject15(), this.onCopyButtonClick.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_COPY1'));
+	        this._domNodes.copyButton = main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\" onclick=\"", "\">", "</span>"])), this.onCopyButtonClick.bind(this), main_core.Loc.getMessage('CRM_ADDRESS_COPY1'));
 	      }
 
 	      this.refreshCopyButtonVisibility();
 	      this.setDetailsVisibility(this._showDetails);
-	      var result = main_core.Tag.render(_templateObject16(), this._domNodes.copyButton ? this._domNodes.copyButton : '', this._domNodes.detailsToggler, this._domNodes.addressContainer, this._domNodes.detailsContainer);
+	      var result = main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t<div class=\"crm-address-control-mode-switch\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"])), this._domNodes.copyButton ? this._domNodes.copyButton : '', this._domNodes.detailsToggler, this._domNodes.addressContainer, this._domNodes.detailsContainer);
 
 	      if (this._canChangeType && main_core.Type.isDomNode(this._domNodes.addressTypeContainer)) {
 	        main_core.Dom.append(this._domNodes.addressTypeContainer, result);
@@ -1244,7 +1006,7 @@ this.BX = this.BX || {};
 	    value: function getViewHtml(addressString) {
 	      var _this4 = this;
 
-	      this._domNodes.addressContainer = main_core.Tag.render(_templateObject17(), addressString);
+	      this._domNodes.addressContainer = main_core.Tag.render(_templateObject17 || (_templateObject17 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-entity-editor-content-block-text\">\n\t\t\t\t<span class=\"ui-link ui-link-dark ui-link-dotted\">", "</span>\n\t\t\t</div>"])), addressString);
 	      var addressType = '';
 
 	      if (this._showAddressTypeInViewMode) {
@@ -1254,10 +1016,10 @@ this.BX = this.BX || {};
 	          return item.name;
 	        }).join('');
 
-	        addressType = main_core.Tag.render(_templateObject18(), main_core.Text.encode(typeName));
+	        addressType = main_core.Tag.render(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-link ui-link-secondary\">", ":</span>"])), main_core.Text.encode(typeName));
 	      }
 
-	      return main_core.Tag.render(_templateObject19(), addressType, this._domNodes.addressContainer);
+	      return main_core.Tag.render(_templateObject19 || (_templateObject19 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-address-control-item\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"])), addressType, this._domNodes.addressContainer);
 	    }
 	  }, {
 	    key: "refreshTypeName",
@@ -1287,12 +1049,12 @@ this.BX = this.BX || {};
 	          var newNode;
 
 	          if (newIcon === 'loading') {
-	            newNode = main_core.Tag.render(_templateObject20());
+	            newNode = main_core.Tag.render(_templateObject20 || (_templateObject20 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ui-ctl-icon-loader\"></span>"])));
 	          } else {
 	            if (newIcon === 'clear') {
-	              newNode = main_core.Tag.render(_templateObject21(), this.onDelete.bind(this));
+	              newNode = main_core.Tag.render(_templateObject21 || (_templateObject21 = babelHelpers.taggedTemplateLiteral(["<button type=\"button\" class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"])), this.onDelete.bind(this));
 	            } else if (newIcon === 'search') {
-	              newNode = main_core.Tag.render(_templateObject22(), this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : '');
+	              newNode = main_core.Tag.render(_templateObject22 || (_templateObject22 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-ctl-after ", "\"></span>"])), this._isAutocompleteEnabled ? 'ui-ctl-icon-search' : '');
 	            }
 	          }
 
@@ -1424,8 +1186,8 @@ this.BX = this.BX || {};
 	      var types = this.getTypeListByIds(this._allowedTypesIds).filter(function (item) {
 	        return item.value !== _this7._type;
 	      });
-	      return main_core.Tag.render(_templateObject23(), main_core.Loc.getMessage('CRM_ADDRESS_COPY_TO'), types.map(function (item) {
-	        return main_core.Tag.render(_templateObject24(), _this7.onChangeCopyDestination.bind(_this7), item.value, main_core.Text.encode(item.name));
+	      return main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t<div class=\"ui-title-7\">", "</div>\n\t\t\t\t<div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('CRM_ADDRESS_COPY_TO'), types.map(function (item) {
+	        return main_core.Tag.render(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-checkbox ui-ctl-xs\">\n\t\t\t\t\t<label>\n\t\t\t\t\t<input onclick=\"", "\" type=\"checkbox\" value=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-ctl-label-text\">", "</span>\n\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t\t"])), _this7.onChangeCopyDestination.bind(_this7), item.value, main_core.Text.encode(item.name));
 	      }));
 	    }
 	  }, {

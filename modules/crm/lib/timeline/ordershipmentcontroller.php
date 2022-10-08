@@ -132,13 +132,13 @@ class OrderShipmentController extends EntityController
 		{
 			if ($orderId > 0)
 			{
-				$tag = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Order, $orderId);
+				$itemIdentifier = new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Order, $orderId);
 			}
 			else
 			{
-				$tag = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::OrderShipment, $ownerID);
+				$itemIdentifier = new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::OrderShipment, $ownerID);
 			}
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
+			$this->sendPullEventOnAdd($itemIdentifier, $historyEntryID);
 		}
 	}
 
@@ -174,8 +174,10 @@ class OrderShipmentController extends EntityController
 			{
 				foreach($bindings as $binding)
 				{
-					$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-					self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
+					$this->sendPullEventOnAdd(
+						new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+						$historyEntryID
+					);
 				}
 			}
 		}
@@ -363,6 +365,7 @@ class OrderShipmentController extends EntityController
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
 			}
+			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
 		}
 		elseif($typeID === TimelineType::ORDER)

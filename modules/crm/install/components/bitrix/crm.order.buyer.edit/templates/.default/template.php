@@ -9,9 +9,12 @@ use Bitrix\Main\Localization\Loc;
  * @var array $arResult
  */
 
-$this->addExternalCss('/bitrix/js/crm/entity-editor/css/style.css');
+\Bitrix\Main\UI\Extension::load([
+	'ui.buttons',
+	'ui.design-tokens'
+]);
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens']);
+$this->addExternalCss('/bitrix/js/crm/entity-editor/css/style.css');
 
 if (!empty($arResult['ERRORS']))
 {

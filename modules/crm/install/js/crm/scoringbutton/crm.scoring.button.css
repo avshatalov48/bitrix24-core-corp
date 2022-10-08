@@ -56,7 +56,8 @@
 }
 
 .crm-entity-widget-scoring-text {
-	font: 11px/11px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
 	padding-left: 19px;
 	white-space: nowrap;

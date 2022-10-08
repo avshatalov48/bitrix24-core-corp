@@ -12,6 +12,7 @@ class SmartInvoice extends Dynamic
 		$fields = [];
 		$fields[Item::FIELD_NAME_TITLE] = '';
 		$fields[Item::FIELD_NAME_BEGIN_DATE] = '';
+		$fields[Item::FIELD_NAME_CLOSE_DATE] = '';
 		$fields[Item::FIELD_NAME_OPPORTUNITY] = '';
 		$fields['CLIENT'] = '';
 

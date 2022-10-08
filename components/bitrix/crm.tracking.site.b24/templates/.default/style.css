@@ -5,7 +5,8 @@
 }
 
 .crm-analytics-source-header {
-	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	margin: 27px 0 15px;
 }
@@ -48,7 +49,8 @@
 .crm-analytics-source-empty-text {
 	color: #333;
 	opacity: .4;
-	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-analytics-source-empty-img {
@@ -113,7 +115,8 @@
 }
 
 .crm-analytics-source-subject-text {
-	font: 16px/22px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 

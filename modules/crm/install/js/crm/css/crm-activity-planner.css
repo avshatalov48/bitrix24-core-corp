@@ -16,7 +16,7 @@
 .crm-activity-popup-info-person-link-triangle {
 	border-bottom: 1px dashed #8f949c;
 	color: #80868e;
-	font: bold 12px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s ease-in-out;
 	-webkit-font-smoothing: antialiased;
@@ -50,7 +50,7 @@
 	padding: 10px;
 	background: #c0eefd;
 	color: #1968b8;
-	font: bold 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: background .2s linear;
 	-webkit-font-smoothing: antialiased;
 }
@@ -116,7 +116,7 @@
 	border-radius: var(--ui-border-radius-md);
 	margin-bottom: 20px;
 	color: #80868e;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-popup-container {
@@ -141,7 +141,7 @@
 
 .crm-activity-popup-title {
 	color: #80868e;
-	font: bold 14px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -185,7 +185,7 @@
 .select-date-active {
 	height: 35px;
 	background: #bceefc;
-	font: bold 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -380,7 +380,7 @@
 
 .crm-event-time {
 	color: #0b66c3;
-	font: bold 10px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -416,14 +416,14 @@
 	border-radius: 2px;
 	background: rgba(4, 180, 171, .7);
 	color: #fff;
-	font: bold 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
 .crm-activity-popup-timeline-events-time {
 	display: inline-block;
 	color: rgba(83, 92, 105, .5);
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-popup-timeline-events-line,
@@ -453,7 +453,7 @@
 
 .crm-activity-popup-timeline-sidebar-date {
 	color: #535c69;
-	font: bold 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -504,7 +504,7 @@
 	display: inline-block;
 	margin: 10px;
 	color: #1968b8;
-	font: bold 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -559,7 +559,7 @@
 .crm-activity-popup-timeline-detail-info-duration-number {
 	margin: 6px 0 0;
 	color: #000;
-	font: 14px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-popup-timeline-detail-info-date-calendar-container { position: relative; }
@@ -649,14 +649,14 @@
 .crm-activity-popup-info-person-detail-file-name {
 	margin: 0 0 5px;
 	color: #80868e;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-popup-info-person-detail-file-input {
 	max-width: 95px;
 	border-bottom: 1px dashed #1968b8;
 	color: #1968b8;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s ease-in-out;
 }
@@ -699,7 +699,7 @@
 .crm-activity-popup-info-person-detail-repeat-date-week-number,
 .crm-activity-popup-info-person-detail-repeat-date-calendar,
 .crm-activity-popup-info-person-detail-repeat-date,
-.crm-activity-popup-info-person-detail-repeat-name { font: 14px "HelveticaNeue", Arial, Helvetica, sans-serif; }
+.crm-activity-popup-info-person-detail-repeat-name { font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 .crm-activity-popup-info-person-detail-repeat-name { color: #000; }
 
@@ -829,7 +829,7 @@
 	color: #555;
 	vertical-align: middle;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* buttons */
@@ -853,7 +853,8 @@
 .crm-activity-popup-timeline-cancel-button {
 	color: #535c69;
 	text-transform: uppercase;
-	font: 12px "OpenSans-Bold", Arial, Helvetica, sans-serif !important;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -869,7 +870,7 @@
 .crm-activity-popup-timeline-checkbox-text {
 	display: inline-block;
 	color: #80868e;
-	font: 12px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 18px;
 }
 
@@ -897,7 +898,7 @@
 	display: inline-block;
 	margin: 0 0 10px;
 	color: #80868e;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-inner-remind-popup-block {
@@ -914,7 +915,7 @@
 	border: 1px solid #c6cdd3;
 	border-radius: var(--ui-field-border-radius, 2px);
 	color: #535c69;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-color ease-out .5s;
 }
 
@@ -964,7 +965,7 @@
 	padding: 10px;
 	border: 1px solid #c6cdd3;
 	border-radius: var(--ui-field-border-radius, 2px);
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-color ease-out .5s;
 }
 
@@ -983,7 +984,7 @@
 	margin: 0 auto;
 	width: 655px;
 	height: 100%;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* Head */
@@ -995,7 +996,7 @@
 	max-width: 410px;
 	color: #80868e;
 	vertical-align: middle;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1178,7 +1179,7 @@
 	color: #535c69;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1189,7 +1190,7 @@
 
 .crm-task-list-header-description-item { margin: 0 4px 0 0; }
 
-.crm-task-list-header-description-date { font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+.crm-task-list-header-description-date { font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 /* Order */
 
@@ -1230,7 +1231,7 @@
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1261,7 +1262,7 @@
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	opacity: .69;
 }
 
@@ -1325,7 +1326,7 @@
 	width: 269px;
 	height: 111px;
 	background: #fff;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-radius: var(--ui-space-stack-xs);
 }
 
@@ -1372,7 +1373,7 @@
 	text-decoration: none;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-bottom .3s ease;
 	-webkit-font-smoothing: antialiased;
 }
@@ -1461,7 +1462,7 @@
 	height: 16px;
 	background: rgba(59, 200, 245, .14);
 	color: #535c69;
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-person-slide-left,
@@ -1596,7 +1597,7 @@
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 13px "ArialMT", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-item-name {
@@ -1619,7 +1620,7 @@
 	float: right;
 	padding: 5px 0 0;
 	color: #424956;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 }
 
@@ -1703,12 +1704,12 @@
 .crm-task-list-mail-item-inner-user-info {
 	display: block;
 	color: #80868e;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-item-inner-user-title {
 	color: #000;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1799,7 +1800,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-receiver-item {
 	margin: 22px 0 5px;
 	color: #80868e;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-docs-link-item,
@@ -1808,7 +1809,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-bottom: 1px solid rgba(11, 102, 195, .3);
 	color: #0b66c3;
 	text-decoration: none;
-	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 20px;
 	transition: border-bottom .3s ease;
 }
@@ -1829,7 +1830,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-extra {
 	margin: 18px 0 0;
 	color: #535c69;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-extra-button {
@@ -1910,13 +1911,13 @@ table.quote td { padding: 0.95em 1.5em; }
 
 .crm-task-list-1c-info-title {
 	padding: 0 0 15px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-1c-info-item { margin: 13px 0 0; }
 
 .crm-task-list-1c-info-order {
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1948,7 +1949,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-bottom: 1px solid #0b66c3;
 	color: #0b66c3;
 	text-decoration: none;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-bottom .3s ease;
 	-webkit-font-smoothing: antialiased;
 }
@@ -1957,7 +1958,7 @@ table.quote td { padding: 0.95em 1.5em; }
 
 .crm-task-list-1c-person-user-description {
 	color: #80868e;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-1c-order-link-item { margin: 23px 0 0; }
@@ -1981,7 +1982,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	display: inline-block;
 	margin: 0 5px 0 0;
 	width: 150px;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -1991,13 +1992,13 @@ table.quote td { padding: 0.95em 1.5em; }
 	display: inline-block;
 	outline: 0;
 	border: 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-form-adress {
 	display: inline-block;
 	margin: 16px 0 0;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2047,7 +2048,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-call-info {
 	margin: 14px 0 0;
 	color: #535c69;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-call-info-container { margin: 0 0 10px; }
@@ -2061,7 +2062,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	min-width: 140px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2071,7 +2072,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	padding: 20px;
 	background: #fff;
 	color: #535c69;
-	font: 15px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-live-feed-title {
@@ -2126,7 +2127,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-live-comment-inner-user-title {
 	color: #0b66c3;
 	text-decoration: none;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-live-comment-inner-body {
@@ -2142,7 +2143,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-bottom: 1px solid #0b66c3;
 	color: #0b66c3;
 	text-decoration: none;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-bottom .3s ease;
 }
 
@@ -2155,7 +2156,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-meet {
 	padding: 22px;
 	background: #fff;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-meet-inner { margin: 0 0 17px; }
@@ -2163,7 +2164,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-meet-item { color: #80868e; }
 
 .crm-task-list-meet-topic {
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2281,7 +2282,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	color: #000;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 24px/33px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px/33px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
@@ -2295,7 +2297,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	-ms-flex-align: center;
 	height: 24px;
 	color: #525c69;
-	font: 13px/24px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-align: center;
 	align-items: center;
 }
@@ -2454,7 +2456,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	-ms-flex-pack: justify;
 	-ms-flex-align: end;
 	color: #80868e;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-pack: justify;
 	justify-content: space-between;
 	-webkit-box-align: end;
@@ -2482,7 +2484,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-bottom: 1px solid transparent;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 17px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 17px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-item-inner-description-name { color: #333; }
@@ -2509,7 +2511,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	position: relative;
 	padding-right: 16px;
 	color: #80868e;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-email-item-date-short,
@@ -2557,7 +2559,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	margin: 0 20px 16px 20px;
 	color: #828b95;
 	text-transform: uppercase;
-	font: bold 11px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	-webkit-box-pack: center;
 	justify-content: center;
 }
@@ -2647,7 +2650,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-mail-message-panel-text {
 	border-bottom: 1px dashed transparent;
 	color: #828b95;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
 }
@@ -2681,7 +2684,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	padding: 0 0 10px 0;
 	border-bottom: 1px solid rgba(82, 92, 105, .13);
 	color: #525c69;
-	font: 15px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-task-list-mail-additionally-info-inner {
@@ -2697,7 +2701,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-mail-additionally-info-content {
 	width: calc(100% - 70px - 70px);
 	color: #525c69;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-additionally-info-name {
@@ -2705,7 +2709,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	color: #80868e;
 	text-align: right;
 	white-space: nowrap;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-additionally-info-text-bold {
@@ -2760,7 +2764,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-radius: 2px;
 	background: #bcedfc;
 	vertical-align: middle;
-	font: bold 13px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: background 0.2s linear;
 }
 
@@ -2793,7 +2797,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	top: 0;
 	padding: 0 30px 0 13px;
 	background: #f2f3f4;
-	font: 13px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-square-grey .crm-task-list-mail-square-item { color: #535c6a; }
@@ -2808,7 +2812,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	height: 30px;
 	outline: none;
 	border: none;
-	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-transition: none;
 	transition: none;
 	-webkit-box-flex: 1;
@@ -2832,7 +2836,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	color: rgba(128, 134, 142, .5);
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 	-webkit-transform: translate(0, -50%);
@@ -2860,7 +2864,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	display: flex;
 	padding: 20px 22px 15px;
 	color: #828b95;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-file-inner {
@@ -3027,7 +3031,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	margin: 0 10px 0 0;
 	color: #80868e;
 	text-align: right;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-reply-main-text span {
@@ -3054,7 +3058,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	border: none;
 	color: #535b69;
 	text-transform: uppercase;
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	transition: color .25s ease;
 }
 
@@ -3073,7 +3078,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-mail-reply-link {
 	display: block;
 	color: #80868e;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-transition: color .3s;
 	transition: color .3s;
 }
@@ -3230,7 +3235,7 @@ table.quote td { padding: 0.95em 1.5em; }
 /*MAIL CREATE  */
 .crm-activity-email-create-inner {
 	padding: 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-email-block { padding: 0 23px; }
@@ -3374,7 +3379,8 @@ table.quote td { padding: 0.95em 1.5em; }
 	vertical-align: middle;
 	text-align: center;
 	text-transform: uppercase;
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	transition: color .25s ease;
 }
 
@@ -3395,7 +3401,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	width: 100%;
 	background-color: #fae5e8;
 	color: #d0011b;
-	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* region LOADER */

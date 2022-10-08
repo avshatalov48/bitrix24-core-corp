@@ -27,7 +27,7 @@
 	-moz-border-radius: 2px;
 	border-radius: 2px;
 	background: transparent;
-	font: 14px/38px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
@@ -89,7 +89,7 @@
 
 .crm-config-ps-list-task-options-payment-method-block-name {
 	float: left;
-	font: bold 14px/38px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 14px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-config-ps-list-task-options-payment-method-block-element {
@@ -140,7 +140,7 @@
 
 .crm-config-ps-list-task-options-payment-method-active-name {
 	float: left;
-	font: bold 13px/24px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #29ad49;
 }
 
@@ -149,12 +149,12 @@
 }
 
 .crm-config-ps-list-task-options-active-date {
-	font: 12px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 }
 
 .crm-config-ps-list-task-options-payment-off {
-	font: 11px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #9b9b9b;
 	text-align: right;
 	-webkit-transition: color .3s ease;

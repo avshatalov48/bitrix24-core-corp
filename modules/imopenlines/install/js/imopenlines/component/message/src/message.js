@@ -11,6 +11,7 @@ import { BitrixVue } from "ui.vue";
 import { Vuex } from "ui.vue.vuex";
 import './message.css';
 import 'im.view.message';
+import 'ui.fonts.opensans';
 import { EventEmitter } from "main.core.events";
 import { WidgetEventType } from "../../widget/src/const";
 

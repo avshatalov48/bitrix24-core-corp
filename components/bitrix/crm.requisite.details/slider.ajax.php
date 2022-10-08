@@ -9,6 +9,9 @@ require($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.ph
 
 Loc::loadMessages(__FILE__);
 
+/** @global \CMain */
+global $APPLICATION;
+
 if(!Loader::includeModule('crm'))
 {
 	ShowError(Loc::getMessage('CRM_MODULE_NOT_INSTALLED'));

@@ -282,7 +282,7 @@ class CheckList extends CompositeTreeItem
 		}
 
 		$attachments = $this->fields->getAttachments();
-		$clone = \Bitrix\Tasks\Integration\Disk::cloneFileAttachment(array_keys($attachments));
+		$clone = \Bitrix\Tasks\Integration\Disk::cloneFileAttachment(array_keys($attachments), $this->userId);
 		$this->fields->setAttachments($clone);
 	}
 

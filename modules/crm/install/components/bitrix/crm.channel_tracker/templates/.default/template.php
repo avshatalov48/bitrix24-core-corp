@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 * @var CBitrixComponent $component
 * @var
 */
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',

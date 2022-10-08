@@ -1,0 +1,1 @@
+{"version":3,"sources":["type.bundle.js"],"names":["this","BX","Crm","exports","Form"],"mappings":"AAAAA,KAAKC,GAAKD,KAAKC,IAAM,GACrBD,KAAKC,GAAGC,IAAMF,KAAKC,GAAGC,KAAO,IAC5B,SAAUC,GACV,cADD,CAKGH,KAAKC,GAAGC,IAAIE,KAAOJ,KAAKC,GAAGC,IAAIE,MAAQ","file":"type.bundle.map.js"}

@@ -144,6 +144,7 @@ export default Vue.extend({
 			return this.isStatusError ? this.status.description : '';
 		},
 	},
+	// language=Vue
 	template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-sms"></div>

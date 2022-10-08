@@ -192,7 +192,7 @@ $assets = array(
 			$assetRoot.'css/gantt.css',
 			$assetRoot.'scheduler/css/print-settings.css',
 		),
-		'rel' => array('task_date', 'task_calendar', 'date', 'ui.alerts'),
+		'rel' => array('ui.design-tokens', 'task_date', 'task_calendar', 'date', 'ui.alerts'),
 		'bundle_js' => 'tasks_timeline',
 		'bundle_css' => 'tasks_gantt'
 	),
@@ -205,7 +205,7 @@ $assets = array(
 		'css' => array(
 			$assetRoot.'scheduler/css/scheduler.css',
 		),
-		'rel' => array('task_timeline'),
+		'rel' => array('ui.design-tokens', 'task_timeline'),
 		'bundle_js' => 'tasks_scheduler',
 		'bundle_css' => 'tasks_scheduler'
 	),
@@ -217,7 +217,16 @@ $assets = array(
 		'css' => array(
 			$assetRoot.'css/gantt.css',
 		),
-		'rel' => array('popup', 'date', 'task_info_popup', 'task_calendar', 'task_date', 'dnd', 'task_scheduler'),
+		'rel' => array(
+			'ui.design-tokens',
+			'popup',
+			'date',
+			'task_info_popup',
+			'task_calendar',
+			'task_date',
+			'dnd',
+			'task_scheduler',
+		),
 		'lang' => $langRoot.'gantt.php',
 		'bundle_js' => 'tasks_gantt',
 		'bundle_css' => 'tasks_gantt'
@@ -234,7 +243,15 @@ $assets = array(
 		'css' => array(
 			$assetRoot.'kanban/css/kanban.css',
 		),
-		'rel' => array('kanban', 'ajax', 'color_picker', 'date', 'tasks_integration_socialnetwork'),
+		'rel' => array(
+			'ui.design-tokens',
+			'ui.fonts.opensans',
+			'kanban',
+			'ajax',
+			'color_picker',
+			'date',
+			'tasks_integration_socialnetwork',
+		),
 		'lang' => $langRoot.'kanban.php',
 		'bundle_js' => 'tasks_kanban',
 		'bundle_css' => 'tasks_kanban'
@@ -267,7 +284,7 @@ $assets = array(
 		'css' => array(
 			$assetRoot.'css/task-info-popup.css',
 		),
-		'rel' => array('popup', 'tasks_util'),
+		'rel' => array('ui.design-tokens', 'popup', 'tasks_util'),
 		'lang' => $langRoot.'task-info-popup.php',
 	),
 	array(
@@ -278,7 +295,7 @@ $assets = array(
 		'css' => array(
 			$assetRoot.'css/task-popups.css',
 		),
-		'rel' => array('popup'),
+		'rel' => array('ui.design-tokens', 'popup'),
 		'lang' => $langRoot.'task-popups.php',
 	),
 	array(
@@ -301,6 +318,7 @@ $assets = array(
 		'css'  => array(
 			$assetRoot.'css/tasks.css',
 		),
+		'rel' => ['ui.design-tokens'],
 	),
 );
 

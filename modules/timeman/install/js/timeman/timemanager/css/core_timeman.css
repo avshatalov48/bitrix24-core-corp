@@ -6,7 +6,7 @@
 .tm-status-bar-inner { position: absolute; top: 0; right: 293px;  height:20px; z-index: 1; }
 
 .tm-dashboard {display: inline-block;}
-.tm-dashboard-inner { display: inline-block; height: 20px; cursor: pointer; color: #3e3e3e; font:normal 11px/normal Arial, Helvetica, sans-serif; padding: 0 0 0 9px; }
+.tm-dashboard-inner { display: inline-block; height: 20px; cursor: pointer; color: #3e3e3e; font:normal 11px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica)); padding: 0 0 0 9px; }
 
 .tm-dashboard:hover { background: #cfcfcf;}
 .tm-dashboard:hover .tm-dashboard-title, .tm-dashboard:hover .tm-dashboard-arrow { visibility: visible; }
@@ -47,7 +47,7 @@
 .tm-popup-layout-right-corner { width: 11px; height:11px; background: url(../images/timeman-sprite.2.1.png) no-repeat -8px -138px; padding:0;}
 
 .tm-popup-content { width: 450px;}
-.tm-popup-dashboard { display:block; margin-right:-4px; height: 20px;  font:normal 11px/normal Arial, Helvetica, sans-serif; cursor: pointer; text-align: right; overflow: hidden;}
+.tm-popup-dashboard { display:block; margin-right:-4px; height: 20px;  font:normal 11px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica)); cursor: pointer; text-align: right; overflow: hidden;}
 
 
 .tm-popup-dashboard .tm-dashboard-title, .tm-popup-dashboard .tm-dashboard-arrow { visibility: visible; float: left; }
@@ -60,8 +60,8 @@
 .tm-popup-notice-left { width: 3px; position:absolute; top:0; left:0; background: url(../images/timeman-sprite.2.1.png) no-repeat 0 -17px; }
 .tm-popup-notice-pencil { width: 23px; position:absolute; top:0; right:0; background: url(../images/timeman-sprite.2.1.png) no-repeat 4px -54px; cursor: pointer; border-left: 2px solid #fff;}
 .tm-popup-notice-right { width: 3px; position:absolute; top:0; right:0; background: url(../images/timeman-sprite.2.1.png) no-repeat -3px -17px; }
-.tm-popup-notice-text { padding: 0 8px;  font: normal normal normal 12px/23px Arial, Helvetica, sans-serif; vertical-align: middle;}
-.tm-popup-notice-time { font-size: 14px; font-family: Arial, Helvetica, sans-serif; vertical-align: middle; display:inline-block;}
+.tm-popup-notice-text { padding: 0 8px;  font: normal normal normal 12px/23px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); vertical-align: middle;}
+.tm-popup-notice-time { font-size: 14px; font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); vertical-align: middle; display:inline-block;}
 
 .tm-popup-notice-time-hours, .tm-popup-notice-time-minutes, .tm-popup-notice-time-seconds,
 .tm-popup-notice-time-number, .tm-popup-notice-time-unit { display: inline-block;}
@@ -77,7 +77,7 @@
 .tm-popup-timeman-layout-time {  padding: 0; text-align: center; vertical-align: middle;}
 .tm-popup-timeman-layout-button {  width:50%; padding: 2px 0 0 0; text-align: center; vertical-align: middle; }
 
-.tm-popup-time-box { font-family: Arial, Helvetica, sans-serif; }
+.tm-popup-time-box { font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 .tm-popup-time-label { color: #4c4c4c; font-size: 12px; vertical-align: middle; }
 .tm-popup-time-now {  color: #000;  font-size: 24px; vertical-align: middle; margin: 0 0 0 4px; }
 
@@ -85,8 +85,8 @@
 .tm-popup-timeman-pause span {zoom: 1; display: inline-block;}
 .tm-popup-timeman-paused-mode .tm-popup-timeman-pause {display: block; text-align: center; margin-bottom: 15px;}
 
-.tm-popup-timeman-pause-timer-caption { padding: 0 8px;  font: normal normal normal 12px/23px Arial, Helvetica, sans-serif; vertical-align: middle;}
-.tm-popup-timeman-pause-time { font-size: 14px; font-family: Arial, Helvetica, sans-serif; vertical-align: middle; display:inline-block;}
+.tm-popup-timeman-pause-timer-caption { padding: 0 8px;  font: normal normal normal 12px/23px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); vertical-align: middle;}
+.tm-popup-timeman-pause-time { font-size: 14px; font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); vertical-align: middle; display:inline-block;}
 
 .tm-popup-timeman-button-mode
 {
@@ -152,7 +152,7 @@
 .tm-popup-change-time-link {
 	display:none;
 	white-space: nowrap;
-	font: normal 11px/normal Arial, Helvetica, sans-serif;
+	font: normal 11px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #999;
 	text-decoration: underline;
 	margin: 2px 0 0 0;
@@ -191,7 +191,7 @@
 	color: #747474;
 	display: inline-block;
 	height: 22px;
-	font: normal normal normal 12px/20px Arial, Helvetica, sans-serif;
+	font: normal normal normal 12px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: bottom;
 	margin: 0 3px 0 0;
 	padding: 0 12px;
@@ -218,7 +218,7 @@
 .tm-popup-section-box { margin: 5px auto 0; text-align: center; }
 
 .tm-popup-section-title { position: relative; }
-.tm-popup-section-title-text { font-weight: bold; margin: 8px 0 6px 3px;display:inline-block;font-size:13px;}
+.tm-popup-section-title-text { font-weight: var(--ui-font-weight-bold); margin: 8px 0 6px 3px;display:inline-block;font-size:13px;}
 .tm-popup-section-title-link {  color: #949494; cursor: pointer; font-size: 11px; position: absolute; right: 11px; top: 0; text-decoration: underline; }
 .tm-popup-section-title-link-weekly {top:8px;}
 .tm-popup-section-title-line { height: 1px; font-size: 1px; background: #e5e5e5 url(../images/timeman-sprite.2.1.png) no-repeat right -227px; }
@@ -227,7 +227,17 @@
 
 .tm-popup-report {  text-align: center; }
 .tm-popup-report-text {}
-.tm-popup-report-textarea { width:100%; height:200px; padding:0; margin:0; color: #444; border: 1px solid #adadad; resize:none; font: normal 12px Verdana, Tahoma, sans-serif}
+
+.tm-popup-report-textarea {
+	width: 100%;
+	height: 200px;
+	padding: 0;
+	margin: 0;
+	color: #444;
+	border: 1px solid #adadad;
+	resize: none;
+	font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
 .tm-popup-report-buttons { padding: 10px 0 0 0; text-align: center;}
 
 .tm-popup-report-editmode .tm-popup-report-textarea { color: #000; }
@@ -238,7 +248,7 @@
 .tm-popup-title .tm-popup-title-link { color: #0069C4; text-decoration: underline;  font-size: 14px;}
 
 /* Task Info Popup */
-.tm-task-popup { width: 320px;  font: normal 12px/normal Arial, Helvetica, sans-serif; overflow: hidden;}
+.tm-task-popup { width: 320px;  font: normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica)); overflow: hidden;}
 .tm-task-popup-description { margin: 13px 10px; color: #222222; }
 .tm-task-popup-project { margin: 13px 10px; font-size: 11px;}
 .tm-task-popup .tm-task-popup-project a { color: black; }
@@ -253,7 +263,7 @@
 .tm-task-popup-comments .tm-task-popup-comments-number { color: #0069c4; text-decoration: underline; }
 .tm-task-popup-comments .tm-task-popup-comments-number:hover { color: #1c91e7; }
 
-.tm-task-popup-file .tm-task-popup-file-name { font:normal normal normal 12px/normal Arial, Helvetica, sans-serif; color: #0069c4; text-decoration: underline; vertical-align: top; }
+.tm-task-popup-file .tm-task-popup-file-name { font:normal normal normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica)); color: #0069c4; text-decoration: underline; vertical-align: top; }
 .tm-task-popup-file .tm-task-popup-file-name:hover { color: #1c91e7; }
 .tm-task-popup-file-size { color: #919191; margin: 0 0 0 6px; font-size:11px; vertical-align: top; }
 
@@ -268,11 +278,14 @@
 .tm-task-popup-link-delay a { background: url(../images/timeman-sprite.png) no-repeat -89px 3px; color: #333 !important; padding: 0 0 0 15px; text-decoration: underline !important;}
 .tm-task-popup-link-delay a { color: #000 !important; }*/
 
-.tm-report-popup { width: 680px; font: normal 12px/normal Arial,Verdana, Helvetica, sans-serif;}
+.tm-report-popup {
+	width: 680px;
+	font: normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
 .tm-report-popup.ui-form { padding: 0; }
 .tm-report-popup-titlebar { position: relative; text-align: center; height: 49px;}
-.tm-report-popup-title { position: absolute; top: 9px; left: 9px; font:  normal 15px/31px Arial, Helvetica, sans-serif; }
-.tm-report-popup-title-date { display: inline-block; vertical-align: bottom; font:  bold 15px/31px Arial, Helvetica, sans-serif; margin-top: 9px; }
+.tm-report-popup-title { position: absolute; top: 9px; left: 9px; font:  normal 15px/31px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
+.tm-report-popup-title-date { display: inline-block; vertical-align: bottom; font:  var(--ui-font-weight-bold) 15px/31px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); margin-top: 9px; }
 .tm-report-popup-title-additional {display: inline-block; width:13px; height:13px; margin: 0 0 0 5px; background: url(../images/timeman-sprite.2.1.png) no-repeat -52px -136px; cursor: pointer;}
 .tm-report-popup-titlebar-hint {white-space: nowrap;}
 .tm-report-popup-title-left, .tm-report-popup-title-right { display: inline-block; vertical-align: middle; width: 22px; height: 20px; cursor: pointer; }
@@ -353,7 +366,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 
 .tm-report-popup-desc { margin-top:5px;margin-bottom:5px;}
 .tm-report-popup-desc-title { position:  relative; margin:  0 0 3px 0; }
-.tm-report-popup-desc-label { font-size: 13px; font-weight: bold; }
+.tm-report-popup-desc-label { font-size: 13px; font-weight: var(--ui-font-weight-bold); }
 .tm-report-popup-desc-templates { position: absolute; right: 0; top: 0; color: #808080;  cursor: pointer; }
 .tm-report-popup-desc-templates-label { display: inline-block; vertical-align: middle; border-bottom: 1px dashed #fff;}
 .tm-report-popup-desc-templates-arrow { display: inline-block; vertical-align: middle; width: 12px; height: 3px; background: url(../images/timeman-sprite.2.1.png) no-repeat -76px -4px; }
@@ -368,7 +381,12 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 .tm-report-popup-inlude-arrow { display: block; vertical-align: top; width: 7px; height: 10px; background: url(../images/timeman-sprite.2.1.png) no-repeat -68px -138px; }
 .tm-report-popup-inlude-hint { display: block; vertical-align: top; font-size: 11px; height: 10px; color: #999; margin: 0 0 0 6px; position: absolute; top: -6px; left:5px;}
 
-.tm-report-popup-items { table-layout: fixed; width: 100%; position:relative;}
+.tm-report-popup-items {
+	table-layout: fixed;
+	width: 100%;
+	position: relative;
+	margin-bottom: var(--ui-space-stack-xs);
+}
 .tm-report-popup-tasks { width: 60%; vertical-align: top; padding: 0 5px 0 0px; border-right: 1px solid #ededed; }
 .tm-report-popup-events { width: 40%; vertical-align: top; padding: 0 10px 0 10px; }
 
@@ -462,20 +480,28 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 }
 
 .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea{
-	height: 135px; width: 240px; resize: none; padding:0; margin:0; color: #444; border: 1px solid #adadad; resize:none; font: normal 12px Verdana, Tahoma, sans-serif
+	height: 135px;
+	width: 240px;
+	resize: none;
+	padding: 0;
+	margin: 0;
+	color: #444;
+	border: 1px solid #adadad;
+	resize: none;
+	font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report .bx-tm-popup-clock-wnd-report-error{
 	border: solid 1px red;
 }
 
 .bx-tm-popup-clock-wnd .bx-tm-clock-wnd-error {
-	text-align: center; font-weight: bold; color: #D00000; padding: 0 0 3px 0;
+	text-align: center; font-weight: var(--ui-font-weight-bold); color: #D00000; padding: 0 0 3px 0;
 }
 
 .bx-tm-popup-clock-wnd-title {
 	padding-bottom: 10px;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .bx-tm-popup-clock-wnd-custom-date-link-wrapper {
@@ -495,7 +521,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 	color: #80868e;
 	text-decoration: none;
 	white-space: nowrap;
-	font: 13px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: 220ms all ease;
 }
@@ -508,7 +534,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 	color: #6b727b;
 	box-shadow: none;
 	border-radius: var(--ui-border-radius-2xs, 0);
-	font: bold 17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 32px;
 	padding: 0 18px 0 8px!important;
 	outline: medium none;
@@ -539,14 +565,14 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 }
 
 .bx-tm-calendar-current {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 
 .bx-tm-edit-popup {padding: 10px; width: 300px;}
 .bx-tm-edit-popup .bx-tm-edit-popup-title {padding-bottom: 10px;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 .bx-tm-edit-popup .bx-tm-report-worktime div {margin: 2px; padding: 2px; clear: both; border-radius: 3px; -moz-border-radius: 3px; -webkit-border-radius: 3px; }
 .bx-tm-edit-popup .bx-tm-report-worktime div.bx-tm-report-approve {background-color: #E4FFE4; }
@@ -574,20 +600,28 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 	display: block; margin-left: 140px; border: none; padding: 0px;
 }
 .bx-tm-popup-edit-clock-wnd-clock  {text-align: center; padding: 0; width: 330px;}
-.bx-tm-popup-edit-clock-wnd-clock .bx-tm-clock-caption {margin: 0; padding: 0 0 5px; display: inline-block; width: 130px; font-weight: bold;}
+.bx-tm-popup-edit-clock-wnd-clock .bx-tm-clock-caption {margin: 0; padding: 0 0 5px; display: inline-block; width: 130px; font-weight: var(--ui-font-weight-bold);}
 .bx-tm-popup-edit-clock-wnd-clock .bx-clock-div-inline {margin: 0 8px; text-align: center;}
 
 .bx-tm-popup-edit-clock-wnd-clock .tm-double-clock-table {}
 .bx-tm-popup-edit-clock-wnd-clock .tm-double-clock-table-row {height: 140px; width: 50%; text-align: center; vertical-align: middle;}
-.bx-tm-popup-edit-clock-wnd .bx-tm-popup-clock-wnd-subtitle {text-align: left; font-weight: bold;}
+.bx-tm-popup-edit-clock-wnd .bx-tm-popup-clock-wnd-subtitle {text-align: left; font-weight: var(--ui-font-weight-bold);}
 .bx-tm-popup-edit-clock-wnd .bx-tm-popup-clock-wnd-report{float: none; text-align: center;}
 .bx-tm-popup-edit-clock-wnd .bx-tm-popup-clock-wnd-report textarea{
-	height: 100px; width: 280px; resize: none; padding:0; margin:0; color: #444; border: 1px solid #adadad; resize:none; font: normal 12px Verdana, Tahoma, sans-serif
+	height: 100px;
+	width: 280px;
+	resize: none;
+	padding: 0;
+	margin: 0;
+	color: #444;
+	border: 1px solid #adadad;
+	resize: none;
+	font: normal 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-tm-popup-edit-clock-wnd .bx-tm-field {font-size: 11px; color: #666666;margin: 5px;}
 .bx-tm-popup-edit-clock-wnd .bx-tm-report-caption {display: inline-block; width: 60%; text-align: right;}
-.bx-tm-popup-edit-clock-wnd .bx-tm-report-field {display: inline-block; font-weight: bold; margin-left: 5px;}
+.bx-tm-popup-edit-clock-wnd .bx-tm-report-field {display: inline-block; font-weight: var(--ui-font-weight-bold); margin-left: 5px;}
 
 .bx-tm-report-edit {display: inline-block; background-color: white; border: solid 1px #B2B2B2; padding: 2px 5px; margin: 0px 10px; font-size: 0.85em;}
 .bx-tm-edit-section {margin-bottom: 8px;}
@@ -595,7 +629,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 .bx-tm-popup-report-error{
 	border: solid 1px red;
 }
-.bx-tm-report-tpl {font: 12px Arial,Helvetica,sans-serif}
+.bx-tm-report-tpl {font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica))}
 .bx-tm-report-tpl-item {
 	color: #000000;
 	cursor: pointer;
@@ -654,7 +688,7 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 	max-height:150px;
 	overflow:auto;
 }
-.mark-clean {display: inline-block;text-align: center;border-radius: 4px;width: 190px;padding: 4px 8px 7px 7px;font: normal 15px/14px Arial, Helvetica, sans-serif;border: 2px solid white;margin-top: 31px;}
+.mark-clean {display: inline-block;text-align: center;border-radius: 4px;width: 190px;padding: 4px 8px 7px 7px;font: normal 15px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));border: 2px solid white;margin-top: 31px;}
 .report-mark-N-clean { color: #4d4d4d; background-color:#f8c557;}
 .report-mark-X-clean { color: #4d4d4d; background-color:#C3C3C3;}
 .report-mark-G-clean { color: #FFF; background-color:#87C477;}
@@ -694,7 +728,14 @@ padding: 4px 4px 4px 25px;
 border-radius: 2px;bottom:0px;display: inline-block;}
 .tm-link-div{right: 14px; position: absolute; z-index:1000;height: 24px}
 .tm-edit-link:hover{color:#0069C4;text-decoration:underline}
-.timeman-comment { background-color: #F2F2F2;margin-bottom: 2px;padding:5px;font-size:11px;font-family:Verdana;}
+
+.timeman-comment {
+	background-color: #f2f2f2;
+	margin-bottom: 2px;
+	padding: 5px;
+	font-size: 11px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
 .timeman-comment-body {display: inline-block;vertical-align: top;overflow: hidden;width: 81%;}
 .timeman-comment-avatar { display: inline-block; vertical-align: top; width: 30px; height: 30px; background: url(../images/timeman-sprite.2.1.png) no-repeat -69px -56px; border: 1px solid #D3D7D8; }
 .timeman-comment-body { display: inline-block; vertical-align: top; overflow: hidden; width: 81%; }
@@ -702,12 +743,35 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .timeman-comment-createdby { vertical-align: middle; padding-right: 5px; }
 .timeman-comment-content { overflow: hidden; padding-left: 10px; }
 .timeman-comment-time { color:#929292; padding-right: 15px; vertical-align: middle; display: inline-block; }
-.tm-item-comments-add a { text-decoration: underline !important; font-family: Verdana,Arial,Helvetica,sans-serif; font-size: 11px; }
+.tm-item-comments-add a { text-decoration: underline !important; font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); font-size: 11px; }
 .tm-item-comments-add a:link, .tm-item-comments-add a:visited, .tm-item-comments-add a:active { color: #929292; }
 .tm-item-comments-add a:hover { color: #727272; }
-.tm_comment_text {overflow: auto;height: auto;width: 99%;border: 1px solid #DFDFDF;font: 11px Verdana,Arial,Helvetica,sans-serif;margin-bottom: 5px;resize: none;margin-top: 5px;}
+
+.tm_comment_text {
+	overflow: auto;
+	height: auto;
+	width: 99%;
+	border: 1px solid #dfdfdf;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	margin-bottom: 5px;
+	resize: none;
+	margin-top: 5px;
+	border-radius: var(--ui-field-border-radius);
+}
 .tm-comment-link-div{padding:5px}
-.wr-call-lable{padding: 4px 0px 1px 0px;cursor:pointer;position: absolute;right:0px;top:0px; font-family: Arial; padding-bottom: 0;border-bottom: 1px dashed #0069C4; color: #0069C4; font-size: 12px;}
+
+.wr-call-lable {
+	padding: 4px 0px 1px 0px;
+	cursor: pointer;
+	position: absolute;
+	right: 0px;
+	top: 0px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	padding-bottom: 0;
+	border-bottom: 1px dashed #0069c4;
+	color: #0069c4;
+	font-size: 12px;
+}
 
 .tm-ag-buttons-save{cursor:pointer;margin-top: 1px;margin-right: 4px;}
 .tm-ag-buttons-left {background:url("../images/timeman-sprite-report.png") no-repeat -67px -156px; display:inline-block; height:23px; vertical-align:top; width:4px;}
@@ -716,7 +780,15 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .tm-ag-buttons-save .tm-ag-buttons-icon {background:url("../images/timeman-sprite-report.png") no-repeat 0 -73px; height:15px; left:0; top:3px; position:absolute; width:15px;}
 
 
-.tm-popup-estimate-but {font-size:12px; line-height:12px; color:#808080; cursor:pointer; margin-top:4px;font-family:Arial;text-align:left;}
+.tm-popup-estimate-but {
+	font-size: 12px;
+	line-height: 12px;
+	color: #808080;
+	cursor: pointer;
+	margin-top: 4px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	text-align: left;
+}
 .tm-popup-estimate-but-l {display:inline-block; height:19px; vertical-align:top; width:3px;}
 .tm-popup-estimate-but-c {display:inline-block;  height:16px; vertical-align:top; padding:3px 0 0 3px; width:189px;}
 .tm-popup-estimate-but-r {display:inline-block; height:19px; vertical-align:top; width:3px;}
@@ -780,7 +852,7 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .tm-reject-r{cursor: pointer; display: inline-block; height: 27px; line-height: 27px; vertical-align: top;}
 
 .tm-reject-l {background: url("/bitrix/js/main/core/images/controls-sprite.png") no-repeat -15px -493px; width:4px;}
-.tm-reject-c { background: url("/bitrix/js/main/core/images/controls-sprite.png") repeat-x 0 -551px;font: normal normal normal 15px/25px Arial, Helvetica, sans-serif; padding:0 8px;color: #4f4f4f;}
+.tm-reject-c { background: url("/bitrix/js/main/core/images/controls-sprite.png") repeat-x 0 -551px;font: normal normal normal 15px/25px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); padding:0 8px;color: #4f4f4f;}
 .tm-reject-icon {background:url("../images/timeman-sprite.3.png") no-repeat -22px -352px; display:inline-block; height:16px; position:relative; width:8px;margin-right: 6px;top:2px;}
 .tm-reject-r {background: url("/bitrix/js/main/core/images/controls-sprite.png") no-repeat -22px -493px; width: 6px;}
 .webform-button-upload .tm-reject-l {background-position: -15px -927px;}
@@ -798,7 +870,12 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .report-webform-field-upload-list a.delete-file:hover { background: url(/bitrix/js/main/core/images/controls-sprite.png) no-repeat -17px -281px; cursor:pointer; }
 .report-webform-field-upload-list i { vertical-align:top; display: none; width:15px; height: 15px; background: url(/bitrix/js/timeman/timemanager/images/waiter-small-white.gif) no-repeat 0 2px; margin: 0 0 0 8px; }
 .report-webform-field-upload-list li.uploading i {  display: inline-block; }
-.report-file-list{padding-left: 20px;font-size: 12px;font-family:Arial}
+
+.report-file-list {
+	padding-left: 20px;
+	font-size: 12px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica))
+}
 
 .report-webform-field-upload
 {
@@ -845,7 +922,8 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 	text-transform: uppercase;
 	text-shadow: none;
 	white-space: nowrap;
-	font: normal 12px/47px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: normal 12px/47px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: background-color 0.2s linear, color 0.2s linear;
 	-webkit-font-smoothing: antialiased;
@@ -910,7 +988,7 @@ div.bx-tm-dialog-overlay {top:0; left:0; width:100%; height:100%; position: abso
 	border-radius: 4px;
 	border: 1px solid;
 	height: 31px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: 0 14px 9px;
 	position: relative;
 }

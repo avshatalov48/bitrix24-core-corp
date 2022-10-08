@@ -38,8 +38,7 @@ class TasksReportEffectiveComponent extends TasksBaseComponent
 
 		return [
 			'getEfficiencyData' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],

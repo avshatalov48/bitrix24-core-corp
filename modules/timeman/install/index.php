@@ -278,41 +278,62 @@ class timeman extends CModule
 
 	function GetModuleTasks()
 	{
-		return array(
-			'timeman_denied' => array(
-				"LETTER" => "D",
-				"BINDING" => "module",
-				"OPERATIONS" => array(),
-			),
-			'timeman_subordinate' => array(
-				"LETTER" => "N",
-				"BINDING" => "module",
-				"OPERATIONS" => array(
-					'tm_manage', 'tm_read_subordinate', 'tm_write_subordinate', 'tm_read_schedules_all', 'tm_read_shift_plans_all'
-				),
-			),
-			'timeman_read' => array(
-				"LETTER" => "R",
-				"BINDING" => "module",
-				"OPERATIONS" => array(
-					'tm_read', 'tm_write_subordinate', 'tm_read_schedules_all', 'tm_read_shift_plans_all', 'tm_update_schedules_all', 'tm_update_shift_plans_all'
-				),
-			),
-			'timeman_write' => array(
-				"LETTER" => "T",
-				"BINDING" => "module",
-				"OPERATIONS" => array(
-					'tm_read', 'tm_write'
-				),
-			),
-			'timeman_full_access' => array(
-				"LETTER" => "W",
-				"BINDING" => "module",
-				"OPERATIONS" => array(
-					'tm_manage', 'tm_manage_all', 'tm_read', 'tm_write', 'tm_settings', 'tm_read_schedules_all', 'tm_read_shift_plans_all', 'tm_update_schedules_all', 'tm_update_shift_plans_all'
-				),
-			),
-		);
+		return [
+			'timeman_denied' => [
+				'LETTER' => 'D',
+				'BINDING' => 'module',
+				'OPERATIONS' => [
+					'tm_manage',
+				],
+			],
+			'timeman_subordinate' => [
+				'LETTER' => 'N',
+				'BINDING' => 'module',
+				'OPERATIONS' => [
+					'tm_manage',
+					'tm_read_subordinate',
+					'tm_write_subordinate',
+					'tm_read_schedules_all',
+					'tm_read_shift_plans_all',
+				],
+			],
+			'timeman_read' => [
+				'LETTER' => 'R',
+				'BINDING' => 'module',
+				'OPERATIONS' => [
+					'tm_manage',
+					'tm_read',
+					'tm_write_subordinate',
+					'tm_read_schedules_all',
+					'tm_read_shift_plans_all',
+					'tm_update_schedules_all',
+					'tm_update_shift_plans_all',
+				],
+			],
+			'timeman_write' => [
+				'LETTER' => 'T',
+				'BINDING' => 'module',
+				'OPERATIONS' => [
+					'tm_manage',
+					'tm_read',
+					'tm_write',
+				],
+			],
+			'timeman_full_access' => [
+				'LETTER' => 'W',
+				'BINDING' => 'module',
+				'OPERATIONS' => [
+					'tm_manage',
+					'tm_manage_all',
+					'tm_read',
+					'tm_write',
+					'tm_settings',
+					'tm_read_schedules_all',
+					'tm_read_shift_plans_all',
+					'tm_update_schedules_all',
+					'tm_update_shift_plans_all',
+				],
+			],
+		];
 	}
 }
-?>

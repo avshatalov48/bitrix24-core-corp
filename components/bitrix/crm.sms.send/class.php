@@ -22,6 +22,8 @@ class CCrmSmsSendComponent extends CBitrixComponent
 
 	public function executeComponent()
 	{
+		\Bitrix\Main\Loader::includeModule('crm');
+
 		Loc::loadLanguageFile(__FILE__);
 		if(!SmsManager::canUse())
 		{
@@ -35,6 +37,11 @@ class CCrmSmsSendComponent extends CBitrixComponent
 		$this->arResult['serviceUrl'] = "/bitrix/components/bitrix/crm.timeline/ajax.php?&site=".SITE_ID."&".bitrix_sessid_get();
 		$this->arResult['ownerTypeId'] = $this->entityTypeId;
 		$this->arResult['ownerId'] = $this->entityId;
+		$this->arResult['providerId'] = $this->arParams['PROVIDER_ID'] ?? null;
+		$this->arResult['isProviderFixed'] = (string)($this->arParams['IS_PROVIDER_FIXED'] ?? null) === 'Y';
+
+		global $APPLICATION;
+		$APPLICATION->SetTitle(Loc::getMessage('CRM_SMS_SEND_COMPONENT_TITLE'));
 
 		$this->includeComponentTemplate();
 	}

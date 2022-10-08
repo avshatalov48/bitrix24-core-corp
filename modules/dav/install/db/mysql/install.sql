@@ -30,6 +30,8 @@ CREATE TABLE b_dav_connections (
 	MODIFIED datetime NOT NULL,
 	SYNCHRONIZED datetime NULL,
 	LAST_RESULT varchar(128) NULL,
+	IS_DELETED varchar(1) DEFAULT 'N' NOT NULL,
+	NEXT_SYNC_TRY datetime DEFAULT CURRENT_TIMESTAMP,
 	primary key (ID),
 	index ix_b_dav_conns_at(ACCOUNT_TYPE),
 	index ix_b_dav_conns_ent(ENTITY_TYPE, ENTITY_ID, ACCOUNT_TYPE)

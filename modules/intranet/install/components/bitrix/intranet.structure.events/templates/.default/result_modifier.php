@@ -27,7 +27,7 @@ if ($arParams['bAdmin']):
 
 	global $INTRANET_TOOLBAR;
 	
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$INTRANET_TOOLBAR->AddButton(array(
 		'ONCLICK' => $APPLICATION->GetPopupLink(array(

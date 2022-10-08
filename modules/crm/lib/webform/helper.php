@@ -156,4 +156,39 @@ class Helper
 			),
 		);
 	}
+
+	/**
+	 * Get web-forms entity selector field default settings.
+	 *
+	 * @param int $entityTypeId
+	 * @param string $fieldId
+	 * @param string $multiple
+	 *
+	 * @return array[]
+	 */
+	public static function getEntitySelectorParams(int $entityTypeId, string $fieldId = 'WEBFORM_ID', string $multiple = 'Y'): array
+	{
+		$tabId = sprintf('tab-%d-%s', $entityTypeId, mb_strtolower($fieldId));
+
+		return [
+			'params' => [
+				'multiple' => $multiple,
+				'dialogOptions' => [
+					'items' => Manager::getListForEntitySelector($fieldId, $tabId),
+					'height' => 200,
+					'dropdownMode' => false,
+					'showAvatars' => false,
+					'tabs' => [
+						[
+							'id' => $tabId,
+							'title' => Loc::getMessage('CRM_WEBFORM_HELPER_ENTITY_SELECTOR_TAB_NAME'),
+						]
+					],
+					'recentTabOptions' => [
+						'visible' => false,
+					],
+				],
+			],
+		];
+	}
 }

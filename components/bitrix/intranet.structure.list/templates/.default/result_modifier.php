@@ -51,7 +51,7 @@ if (!CModule::IncludeModule('extranet') || !CExtranet::IsExtranetSite())
 	if ($arResult['bAdmin']):
 		global $INTRANET_TOOLBAR;
 		
-		__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+		__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 		$current_dep = (intval($_REQUEST['structure_UF_DEPARTMENT']) > 0? '&def_UF_DEPARTMENT='.intval($_REQUEST['structure_UF_DEPARTMENT']) : '');
 

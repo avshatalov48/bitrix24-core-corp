@@ -2,50 +2,26 @@
 
 namespace Bitrix\Salescenter\Builder;
 
-use Bitrix\Main;
-use Bitrix\Sale;
-use Bitrix\Crm\Order;
-use Bitrix\SalesCenter\Integration;
+use Bitrix\Crm\Order\Builder\OrderBuilderCrm;
+use Bitrix\Sale\PaySystem\ApplePay;
+use Bitrix\Sale\PaySystem\Manager;
+use Bitrix\Sale\PriceMaths;
+use Bitrix\Sale\TradingPlatform\Landing\Landing;
+use Bitrix\SalesCenter\Integration\LandingManager;
 
-class OrderBuilder extends Order\Builder\OrderBuilderCrm
+class OrderBuilder extends OrderBuilderCrm
 {
-	protected function prepareFields(array $fields)
-	{
-		$fields = parent::prepareFields($fields);
-
-		if (empty($fields['SITE_ID']))
-		{
-			$fields['SITE_ID'] = SITE_ID;
-		}
-
-		if (!empty($fields['CLIENT']['COMPANY_ID']))
-		{
-			$fields['PERSON_TYPE_ID'] = Order\PersonType::getCompanyPersonTypeId();
-		}
-		else
-		{
-			$fields['PERSON_TYPE_ID'] = Order\PersonType::getContactPersonTypeId();
-		}
-
-		if (!isset($fields['RESPONSIBLE_ID']))
-		{
-			$fields['RESPONSIBLE_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
-		}
-
-		return $fields;
-	}
-
 	public function buildTradeBindings()
 	{
 		if (
 			!isset($this->formData["TRADING_PLATFORM"])
 			&& (!$this->order || $this->order->getId() === 0)
-			&& Integration\LandingManager::getInstance()->isSiteExists()
+			&& LandingManager::getInstance()->isSiteExists()
 		)
 		{
-			$connectedSiteId = Integration\LandingManager::getInstance()->getConnectedSiteId();
-			$code = Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($connectedSiteId);
-			$platform = Sale\TradingPlatform\Landing\Landing::getInstanceByCode($code);
+			$connectedSiteId = LandingManager::getInstance()->getConnectedSiteId();
+			$code = Landing::getCodeBySiteId($connectedSiteId);
+			$platform = Landing::getInstanceByCode($code);
 
 			$this->formData['TRADING_PLATFORM'] = $platform->getId();
 		}
@@ -71,7 +47,7 @@ class OrderBuilder extends Order\Builder\OrderBuilderCrm
 
 			foreach ($this->formData['PRODUCT'] as $index => $item)
 			{
-				$fields['SUM'] += Sale\PriceMaths::roundPrecision($item['QUANTITY'] * $item['PRICE']);
+				$fields['SUM'] += PriceMaths::roundPrecision($item['QUANTITY'] * $item['PRICE']);
 
 				$fields['PRODUCT'][] = [
 					'BASKET_CODE' => $index,
@@ -105,13 +81,13 @@ class OrderBuilder extends Order\Builder\OrderBuilderCrm
 	{
 		$paySystem = [];
 
-		$paySystemList = Sale\PaySystem\Manager::getListWithRestrictionsByOrder($this->order);
+		$paySystemList = Manager::getListWithRestrictionsByOrder($this->order);
 
 		if ($this->isIMessageConnector())
 		{
 			foreach ($paySystemList as $item)
 			{
-				if (Integration\SaleManager::getInstance()->isApplePayPayment($item))
+				if (ApplePay::isApplePaySystem($item))
 				{
 					$paySystem = $item;
 				}
@@ -154,33 +130,5 @@ class OrderBuilder extends Order\Builder\OrderBuilderCrm
 	private function isIMessageConnector(): bool
 	{
 		return isset($this->formData['CONNECTOR']) && $this->formData['CONNECTOR'] === 'imessage';
-	}
-
-	public function buildShipments()
-	{
-		$this->prepareShipmentProducts();
-
-		return parent::buildShipments();
-	}
-
-	private function prepareShipmentProducts(): void
-	{
-		$basketFormData = $this->getBasketBuilder()->getFormData();
-
-		if (isset($this->formData['PRODUCT'], $basketFormData['PRODUCT']))
-		{
-			$this->formData['PRODUCT'] = $basketFormData['PRODUCT'];
-		}
-
-		if (isset($this->formData['SHIPMENT'], $basketFormData['SHIPMENT']))
-		{
-			foreach ($basketFormData['SHIPMENT'] as $index => $shipment)
-			{
-				if (isset($this->formData['SHIPMENT'][$index], $shipment['PRODUCT']))
-				{
-					$this->formData['SHIPMENT'][$index]['PRODUCT'] = $shipment['PRODUCT'];
-				}
-			}
-		}
 	}
 }

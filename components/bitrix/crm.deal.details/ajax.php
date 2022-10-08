@@ -975,7 +975,6 @@ elseif($action === 'SAVE')
 		{
 			$isSaveSupplementReserveData =
 				Bitrix\Main\Loader::includeModule('catalog')
-				&& Bitrix\Main\Loader::includeModule('salescenter')
 				&& Bitrix\Catalog\Component\UseStore::isUsed()
 				&& !\CCrmSaleHelper::isWithOrdersMode()
 				&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
@@ -1003,7 +1002,11 @@ elseif($action === 'SAVE')
 
 				if(!$saveProductRowsResult)
 				{
-					__CrmDealDetailsEndJsonResonse(array('ERROR' => GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')));
+					/** @var CApplicationException $ex */
+					$ex = $APPLICATION->GetException();
+					__CrmDealDetailsEndJsonResonse(array(
+						'ERROR' => $ex ? $ex->GetString() : GetMessage('CRM_DEAL_PRODUCT_ROWS_SAVING_ERROR')
+					));
 				}
 			}
 
@@ -1016,11 +1019,6 @@ elseif($action === 'SAVE')
 			)
 			{
 				Crm\Reservation\DealProductsHitDataSupplement::getInstance()->saveSupplementReserveData((int)$ID);
-				$enrichedProductRows = Crm\Reservation\DealProductsHitDataSupplement::getInstance()->getSupplementedProductRows((int)$ID);
-				if ($enrichedProductRows)
-				{
-					Crm\Service\Sale\Reservation\ReservationService::getInstance()->synchronizeOrderForDeal($ID, $enrichedProductRows);
-				}
 			}
 		}
 
@@ -1786,4 +1784,14 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 	}
 	require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');
 	die();
+}
+elseif($action === 'FIX_FIRST_ONBOARD_CHAIN_VIEW')
+{
+	$warehouseOnboarding = new Crm\Integration\Catalog\WarehouseOnboarding($currentUserID);
+	$warehouseOnboarding->setChainStep(2);
+
+	$secondChainTimestamp = time() + (3600*24);
+	$warehouseOnboarding->endFirstChain($secondChainTimestamp);
+
+	__CrmDealDetailsEndJsonResonse(array('SECOND_CHAIN_TIMESTAMP'=>$secondChainTimestamp));
 }

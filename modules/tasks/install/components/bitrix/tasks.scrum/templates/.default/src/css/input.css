@@ -1,7 +1,7 @@
 .tasks-scrum__input {
 	box-sizing: border-box;
 	padding: 12px 0;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	margin-top: 10px;
 	color: var(--tasks_scrum-light-grey);
 	position: relative;
@@ -22,7 +22,7 @@
 .tasks-scrum__input--textarea {
 	height: 60px;
 	grid-column: 1 / 6;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: var(--tasks_scrum-light-grey);
 	letter-spacing: 0;
@@ -40,8 +40,9 @@
 }
 
 .tasks-scrum__input--textarea-help {
-	font-family: "OpenSans-Italic", "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-size: 13px;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	font-style: italic;
 	color: var(--tasks_scrum-dark-grey_alpha_60);
 	grid-column: 1 / 6;
 }

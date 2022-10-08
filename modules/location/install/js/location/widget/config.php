@@ -16,6 +16,7 @@ return [
 	'lang' => BX_ROOT.'/modules/location/js/widget.php',
 	'rel' => [
 		'main.core',
+		'ui.design-tokens',
 		'main.popup',
 		'main.core.events',
 		'ui.entity-editor',

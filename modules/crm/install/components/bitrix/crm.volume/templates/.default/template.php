@@ -18,7 +18,7 @@ Loc::loadMessages(__FILE__);
 
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
-
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 
 if($arResult['ENABLE_CONTROL_PANEL'])
 {

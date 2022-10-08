@@ -12,10 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
-use Bitrix\Main\Type\Date;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter;
-use Bitrix\Main\UI\Filter\DateType;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Component\Scrum\TeamSpeed\BaseActionFilter;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -24,6 +21,7 @@ use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\KanbanService;
 use Bitrix\Tasks\Scrum\Service\SprintService;
+use Bitrix\Tasks\Scrum\Utility\StoryPoints;
 use Bitrix\Tasks\Util;
 
 require_once __DIR__ . '/baseactionfilter.php';
@@ -81,18 +79,17 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 			$this->arResult['filterFields'] = $this->getFilterFields();
 			$this->arResult['filterPresets'] = $this->getFilterPresets();
 
-			$filterData = [];
-			if (false) // todo remove later
-			{
-				$filterOptions = new Filter\Options(
-					self::FILTER_ID . $this->arResult['groupId'],
-					$this->getFilterPresets()
-				);
+			$filterOptions = new Filter\Options(
+				self::FILTER_ID . $this->arResult['groupId'],
+				$this->getFilterPresets()
+			);
 
-				$filterData = $filterOptions->getFilter($this->getFilterFields());
-			}
+			$filterData = $filterOptions->getFilter($this->getFilterFields());
 
-			$this->arResult['chartData'] = $this->getChartData($this->arResult['groupId'], $filterData);
+			$data = $this->getData($this->arResult['groupId'], $filterData);
+
+			$this->arResult['chartData'] = $data['chartData'];
+			$this->arResult['statsData'] = $data['statsData'];
 
 			$this->includeComponentTemplate();
 		}
@@ -132,7 +129,12 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 
 		$filterData = $filterOptions->getFilter($this->getFilterFields());
 
-		return $this->getChartData($groupId, $filterData);
+		$data = $this->getData($groupId, $filterData);
+
+		return [
+			'chartData' => $data['chartData'],
+			'statsData' => $data['statsData'],
+		];
 	}
 
 	public function getErrors()
@@ -187,16 +189,16 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 	 * @return array
 	 * @throws \Bitrix\Main\ObjectException
 	 */
-	private function getChartData(int $groupId, array $filterData): array
+	private function getData(int $groupId, array $filterData): array
 	{
 		$chartData = [];
 
 		$sprintService = new SprintService();
 		$itemService = new ItemService();
 		$kanbanService = new KanbanService();
+		$storyPoints = new StoryPoints();
 
-		$last = (array_key_exists('last', $filterData) ? $filterData['last'] : '');
-		$period = (array_key_exists('period_from', $filterData) ? $filterData['period_from'] : '');
+		$last = (int) (array_key_exists('last_to', $filterData) ? $filterData['last_to'] : 0);
 
 		$nav = $last ? $this->getNav($last) : null;
 
@@ -210,20 +212,17 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 			'=ENTITY_TYPE' => EntityForm::SPRINT_TYPE,
 			'=STATUS' => EntityForm::SPRINT_COMPLETED,
 		];
-		if ($period)
-		{
-			$filter['>=DATE_END'] = new DateTime($period, Date::convertFormatToPhp(FORMAT_DATETIME));
-		}
 
 		$order = ['DATE_END' => 'DESC'];
 
 		$queryResult = (new EntityService())->getList($nav, $filter, $select, $order);
 
+		$sprints = [];
+
 		$n = 0;
 		while ($sprintData = $queryResult->fetch())
 		{
-			$n++;
-			if ($nav && $n > $nav->getPageSize())
+			if ($nav && (++$n > $nav->getPageSize()))
 			{
 				break;
 			}
@@ -231,6 +230,8 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 			$sprint = new EntityForm();
 
 			$sprint->fillFromDatabase($sprintData);
+
+			$sprints[] = $sprint;
 
 			$completedPoints = $sprintService->getCompletedStoryPoints(
 				$sprint,
@@ -245,13 +246,16 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 			);
 
 			$chartData[] = [
-				'sprintName' => $sprint->getName(),
+				'sprintName' => $sprint->getName() . " ({$sprint->getId()})",
 				'plan' => round(($completedPoints + $uncompletedPoints), 2),
 				'done' => $completedPoints,
 			];
 		}
 
-		return array_reverse($chartData);
+		return [
+			'chartData' => array_reverse($chartData),
+			'statsData' => $storyPoints->calculateStoryPointsStats($groupId, $sprints),
+		];
 	}
 
 	private function getFilterFields(): array
@@ -259,36 +263,25 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 		return [
 			'last' => [
 				'id' => 'last',
-				'name' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_LAST'),
-				'type' => 'list',
-				'items' => $this->getAvailablePeriods(),
+				'name' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_LAST_LABEL'),
+				'type' => 'number',
 				'default' => true,
 				'required' => true,
 				'valueRequired' => true,
-			],
-			'period' => [
-				'id' => 'period',
-				'name' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD'),
-				'type' => 'date',
+				'include' => [
+					Filter\AdditionalNumberType::BEFORE_N,
+				],
 				'exclude' => [
-					DateType::CURRENT_DAY,
-					DateType::CURRENT_WEEK,
-					DateType::CURRENT_MONTH,
-					DateType::CURRENT_QUARTER,
-					DateType::YESTERDAY,
-					DateType::TOMORROW,
-					DateType::NEXT_DAYS,
-					DateType::LAST_7_DAYS,
-					DateType::LAST_WEEK,
-					DateType::LAST_MONTH,
-					DateType::RANGE,
-					DateType::NEXT_WEEK,
-					DateType::NEXT_MONTH,
-					DateType::MONTH,
-					DateType::QUARTER,
-					DateType::YEAR,
-					DateType::EXACT,
-				]
+					Filter\NumberType::SINGLE,
+					Filter\NumberType::RANGE,
+					Filter\NumberType::MORE,
+					Filter\NumberType::LESS,
+				],
+				'messages' => [
+					'MAIN_UI_FILTER__NUMBER_BEFORE_N' => Loc::getMessage(
+						'TASKS_SCRUM_TEAM_SPEED_FILTER_LAST_FIELD_LABEL'
+					),
+				],
 			],
 		];
 	}
@@ -299,31 +292,22 @@ class TasksScrumTeamSpeedComponent extends \CBitrixComponent implements Controll
 			'filter_last' => [
 				'name' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_PRESET_LAST'),
 				'fields' => [
-					'last' => 'last_10',
+					'last_numsel' => Filter\AdditionalNumberType::BEFORE_N,
+					'last_from' => '',
+					'last_to' => '5',
 				],
 				'default' => true,
 			],
 		];
 	}
 
-	private function getAvailablePeriods(): array
-	{
-		return [
-			'last_3' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_3'),
-			'last_10' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_10'),
-			'last_15' => Loc::getMessage('TASKS_SCRUM_TEAM_SPEED_FILTER_PERIOD_LAST_15'),
-		];
-	}
-
-	private function getNav(string $last): PageNavigation
+	private function getNav(int $pageSize): PageNavigation
 	{
 		$nav = new PageNavigation('team-speed-sprints');
 
 		$nav->setCurrentPage(1);
 
-		$pageSize = (int) mb_substr($last, 5, 2);
-
-		$nav->setPageSize($pageSize);
+		$nav->setPageSize($pageSize ?: 1);
 
 		return $nav;
 	}

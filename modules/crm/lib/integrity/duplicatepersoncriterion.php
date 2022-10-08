@@ -463,6 +463,8 @@ class DuplicatePersonCriterion extends DuplicateCriterion
 			$listParams['limit'] = $limit;
 		}
 
+		$listParams = $this->applyEntityCategoryFilter($entityTypeID, $listParams);
+
 		$dbResult = DuplicatePersonMatchCodeTable::getList($listParams);
 		$entities = array();
 		while($fields = $dbResult->fetch())

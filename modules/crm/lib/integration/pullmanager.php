@@ -359,6 +359,23 @@ class PullManager
 		);
 	}
 
+	public static function isPullChannelActiveByTag(string $tag): bool
+	{
+		if (Loader::includeModule('pull'))
+		{
+			$query = \Bitrix\Pull\Model\WatchTable::query();
+			$query
+				->addSelect('ID')
+				->where('TAG', $tag)
+				->setLimit(1)
+			;
+
+			return !!$query->fetch();
+		}
+
+		return false;
+	}
+
 	protected function subscribeOnEvent(string $tag, bool $immediate = true): ?string
 	{
 		if($this->isEnabled && !empty($tag))

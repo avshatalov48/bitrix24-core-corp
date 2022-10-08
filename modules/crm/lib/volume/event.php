@@ -209,11 +209,15 @@ class Event
 			$indicatorType == Crm\Volume\Company::class
 		)
 		{
+			$categoryId = Crm\Volume\Company::getCategoryId();
 			$companyRelation = new ORM\Fields\Relations\Reference(
 				'COMPANY',
 				Crm\CompanyTable::class,
-				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::CompanyName),
-				array('join_type' => ($indicatorType == Crm\Volume\Company::class ? 'INNER' : 'LEFT'))
+				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE', \CCrmOwnerType::CompanyName)
+					->where('ref.CATEGORY_ID', $categoryId)
+					->where('ref.IS_MY_COMPANY', 'N'),
+				['join_type' => ($indicatorType == Crm\Volume\Company::class ? 'INNER' : 'LEFT')]
 			);
 			$query->registerRuntimeField($companyRelation);
 		}
@@ -221,11 +225,14 @@ class Event
 			$indicatorType == Crm\Volume\Contact::class
 		)
 		{
+			$categoryId = Crm\Volume\Contact::getCategoryId();
 			$leadRelation = new ORM\Fields\Relations\Reference(
 				'CONTACT',
 				Crm\ContactTable::class,
-				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')->where('this.ENTITY_TYPE', \CCrmOwnerType::ContactName),
-				array('join_type' => ($indicatorType == Crm\Volume\Contact::class ? 'INNER' : 'LEFT'))
+				ORM\Query\Join::on('this.ENTITY_ID', 'ref.ID')
+					->where('this.ENTITY_TYPE', \CCrmOwnerType::ContactName)
+					->where('ref.CATEGORY_ID', $categoryId),
+				['join_type' => ($indicatorType == Crm\Volume\Contact::class ? 'INNER' : 'LEFT')]
 			);
 			$query->registerRuntimeField($leadRelation);
 		}

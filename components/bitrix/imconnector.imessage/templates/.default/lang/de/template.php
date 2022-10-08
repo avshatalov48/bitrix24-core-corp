@@ -7,9 +7,11 @@ $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_HELP"] = "<div class=\"imconnector
 				<div class=\"imconnector-field-button-name\">Business-Chat <span class=\"imconnector-field-box-text-bold\">verbinden</span></div>";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP"] = "Vor der Verbindung müssen Sie <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">einen Business-Chat erstellen</a>
  oder <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">einen bereits existierenden verbinden</a>.";
+$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP_NEW"] = "Vor der Verbindung müssen Sie #LINK1_START#einen Business-Chat erstellen#LINK1_END# oder #LINK2_START#einen existierenden verbinden#LINK2_END#.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE"] = "Business-Chat mit dem Kommunikationskanal verbinden";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_FINAL_FORM_DESCRIPTION"] = "Business-Chat wurde mit Ihrem Kommunikationskanal verbunden. Alle Nachrichten aus Ihrem Business-Chat werden an Ihr Bitrix24 weitergeleitet.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION"] = "Sie müssen <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">einen Business Chat mit Apple Messages for Business erstellen</a> oder <a href=\"#\"  onclick\"top.BX.Helper.show(\'#ID#\'); return false;\">den verbinden, den Sie bereits haben.</a>. Nur die verifizierten Apple Business Chat ID's können verbunden werden. Verbinden oder manuell konfigurieren";
+$MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Vor der Verbindung müssen Sie #LINK1_START#einen Business-Chat erstellen#LINK1_END# oder #LINK2_START#einen existierenden verbinden#LINK2_END#. Nur die verifizierte Apple Business Chat ID kann verbunden werden. Verbinden oder manuell konfigurieren.";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_1"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_2"] = "Begleiten Sie Ihre Kunden durch den Sales Funnel im CRM";
 $MESS["IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_3"] = "Antworten Sie Ihren Kunden dann und dort, wann und wo sie dies bevorzugen";

@@ -73,6 +73,7 @@ export default Vue.extend({
 			};
 		},
 	},
+	// language=Vue
 	template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>

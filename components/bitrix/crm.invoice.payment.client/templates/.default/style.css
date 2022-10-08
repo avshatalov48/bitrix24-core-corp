@@ -149,7 +149,8 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 .crm-invoice-payment-button-download,
 .crm-invoice-payment-button-print {
 	display: inline-block;
-	font-family: "OpenSans-Bold", Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	height: 35px;
 	line-height: 35px;
 	padding: 0 20px 0 15px;
@@ -281,7 +282,8 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 
 .crm-invoice-payment-system-return-list{
 	display: none;
-	font-family: "OpenSans-Bold", Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	line-height: 35px;
 	color: #ACCEFF;
 	font-size: 12px;

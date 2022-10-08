@@ -80,9 +80,16 @@ class KanbanAjaxController extends \Bitrix\Main\Engine\Controller
 		}
 
 		$entityTypeId = $entity->getTypeId();
-		foreach ($ids as $id)
+		try
 		{
-			Manager::excludeEntity($entityTypeId, $id);
+			foreach ($ids as $id)
+			{
+				Manager::excludeEntity($entityTypeId, $id);
+			}
+		}
+		catch (\Bitrix\Main\SystemException $exception)
+		{
+			$this->addError(new \Bitrix\Main\Error($exception->getMessage()));
 		}
 	}
 }

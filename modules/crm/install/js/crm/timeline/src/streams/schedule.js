@@ -12,8 +12,9 @@ import Request from "../items/scheduled/request";
 import Rest from "../items/scheduled/rest";
 import OpenLine from "../items/scheduled/openline";
 import Zoom from "../items/scheduled/zoom";
-import Item from "../animations/item";
 import ItemNew from "../animations/item-new";
+import {ConfigurableItem} from "crm.timeline.item";
+import {StreamType} from 'crm.timeline.item';
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class Schedule extends Stream
@@ -196,9 +197,14 @@ export default class Schedule extends Stream
 		return this.getLastItem() === item;
 	}
 
-	getLastItem()
+	getItems(): Array
 	{
-		return this._items.length > 0 ? this._items[this._items.length - 1] : null;
+		return this._items;
+	}
+
+	setItems(items: Array): void
+	{
+		this._items = items;
 	}
 
 	calculateItemIndex(item)
@@ -242,11 +248,6 @@ export default class Schedule extends Stream
 		return this._items.length;
 	}
 
-	getItems()
-	{
-		return this._items;
-	}
-
 	getItemByAssociatedEntity($entityTypeId, entityId)
 	{
 		if(!BX.type.isNumber($entityTypeId))
@@ -288,29 +289,10 @@ export default class Schedule extends Stream
 		);
 	}
 
-	getItemIndex(item)
-	{
-		for(let i = 0, l = this._items.length; i < l; i++)
-		{
-			if(this._items[i] === item)
-			{
-				return i;
-			}
-		}
-		return -1;
-	}
 
 	getItemByIndex(index)
 	{
 		return index < this._items.length ? this._items[index] : null;
-	}
-
-	removeItemByIndex(index)
-	{
-		if(index < this._items.length)
-		{
-			this._items.splice(index, 1);
-		}
 	}
 
 	createItem(data)
@@ -318,7 +300,21 @@ export default class Schedule extends Stream
 		const entityTypeID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
 		const entityID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_ID", 0);
 		const entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
-		const itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
+		let itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
+
+		if (data.hasOwnProperty('type'))
+		{
+			itemId = data.id;
+
+			return ConfigurableItem.create(itemId, {
+				timelineId: this.getId(),
+				container: this.getWrapper(),
+				itemClassName: this.getItemClassName(),
+				isReadOnly: this.isReadOnly(),
+				streamType: this.getStreamType(),
+				data: data,
+			})
+		}
 
 		if(entityTypeID === BX.CrmEntityType.enumeration.wait)
 		{
@@ -491,6 +487,21 @@ export default class Schedule extends Stream
 		return null;
 	}
 
+	getWrapper()
+	{
+		return this._wrapper;
+	}
+
+	getItemClassName()
+	{
+		return 'crm-entity-stream-section crm-entity-stream-section-planned';
+	}
+
+	getStreamType(): number
+	{
+		return StreamType.scheduled;
+	}
+
 	addItem(item, index)
 	{
 		if(!BX.type.isNumber(index) || index < 0)
@@ -550,41 +561,6 @@ export default class Schedule extends Stream
 
 		this.refreshLayout();
 		this._manager.processSheduleLayoutChange();
-	}
-
-	refreshItem(item)
-	{
-		const index = this.getItemIndex(item);
-		if(index < 0)
-		{
-			return;
-		}
-
-		this.removeItemByIndex(index);
-
-		const newItem = this.createItem(item.getData());
-		const newIndex = this.calculateItemIndex(newItem);
-		if(newIndex === index)
-		{
-			this.addItem(item, newIndex);
-			item.refreshLayout();
-			item.addWrapperClass("crm-entity-stream-section-updated", 1000);
-			return;
-		}
-
-		const anchor = this.createAnchor(newIndex);
-		this.addItem(newItem, newIndex);
-		newItem.layout({ add: false });
-
-		const animation = Item.create(
-			"",
-			{
-				initialItem: item,
-				finalItem: newItem,
-				anchor: anchor
-			}
-		);
-		animation.run();
 	}
 
 	transferItemToHistory(item, historyItemData)
@@ -711,6 +687,12 @@ export default class Schedule extends Stream
 	{
 		const m = Schedule.messages;
 		return m.hasOwnProperty(name) ? m[name] : name;
+	}
+
+	animateItemAdding(item): Promise
+	{
+		item.addWrapperClass('crm-entity-stream-section-updated', 1000);
+		return Promise.resolve();
 	}
 
 	static create(id, settings)

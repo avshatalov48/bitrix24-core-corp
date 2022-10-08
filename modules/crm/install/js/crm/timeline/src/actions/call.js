@@ -1,4 +1,4 @@
-import Activity from ".//activity";
+import Activity from "./activity";
 
 /** @memberof BX.Crm.Timeline.Actions */
 export class Call extends Activity

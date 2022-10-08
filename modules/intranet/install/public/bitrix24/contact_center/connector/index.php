@@ -30,6 +30,14 @@ if (!$showConnector)
 		->deleteParams(['showConnectorInNewSlider'])
 		->getUri())
 	;
+	$width = 700;
+	if(
+		!empty($_REQUEST['ID'])
+		&& $_REQUEST['ID'] === 'facebook'
+	)
+	{
+		$width = 1000;
+	}
 	$APPLICATION->addViewContent('below_pagetitle', <<<HTML
 <script>
 	BX.ready(function () {
@@ -38,7 +46,7 @@ if (!$showConnector)
 			{
 				cacheable: false,
 				allowChangeHistory: true,
-				width: 700,
+				width: {$width},
 				events: {
 					onCloseComplete: function(event) {
 						setTimeout(function() {

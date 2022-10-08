@@ -54,7 +54,7 @@ class CTaskPlannerMaintance
 			],
 			'css' => '/bitrix/js/tasks/css/tasks.css',
 			'lang' => BX_ROOT.'/modules/tasks/lang/'.LANGUAGE_ID.'/core_planner_handler.php',
-			'rel' => ['popup', 'tooltip'],
+			'rel' => ['ui.design-tokens', 'ui.fonts.opensans', 'popup', 'tooltip'],
 		]);
 
 		if (self::$USER_ID > 0)

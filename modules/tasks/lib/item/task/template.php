@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Bitrix Framework
  * @package bitrix
@@ -8,8 +8,14 @@
 
 namespace Bitrix\Tasks\Item\Task;
 
+use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
+use Bitrix\Tasks\Control\Exception\TemplateAddException;
+use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
+use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Item\Field\Collection;
 use Bitrix\Tasks\Item\Result;
@@ -21,6 +27,7 @@ use Bitrix\Tasks\Item\Access;
 
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTemplate as TemplateToTemplate;
 use Bitrix\Tasks\Item\Converter\Task\Template\ToTask as TemplateToTask;
+use Bitrix\Tasks\Util\Type\Structure;
 
 Loc::loadMessages(__FILE__);
 
@@ -110,17 +117,6 @@ final class Template extends \Bitrix\Tasks\Item
 				'DB_WRITABLE' => true,
 			)),
 
-			// todo:
-//			'TAGS' => new Field\Legacy\Tag(array(
-//				'NAME' => 'TAGS',
-//
-//				'SOURCE' => Scalar::SOURCE_TABLET,
-//				'DB_READABLE' => false,
-//				'DB_WRITABLE' => false,
-//
-//				'OFFSET_GET_CACHEABLE' => false,
-//			)),
-
 			// sub-entity
 			'SE_CHECKLIST' => new Field\CheckList(array(
 				'NAME' => 'SE_CHECKLIST',
@@ -156,6 +152,201 @@ final class Template extends \Bitrix\Tasks\Item
 	public static function getFieldsDescription()
 	{
 		return static::generateMap();
+	}
+
+	public static function find(array $parameters = [], $settings = null)
+	{
+		$result = parent::find($parameters, $settings);
+
+		$ids = [];
+		foreach ($result as $template)
+		{
+			$ids[] = $template['ID'];
+		}
+
+		if (empty($ids))
+		{
+			return $result;
+		}
+
+		$members = static::findMembers($parameters, $ids);
+		$tags = static::findTags($parameters, $ids);
+		$depends = static::findDepends($parameters, $ids);
+
+		if (
+			empty($members)
+			&& empty($tags)
+			&& empty($depends)
+		)
+		{
+			return $result;
+		}
+
+		foreach ($result as &$template)
+		{
+			$templateId = $template['ID'];
+			if (isset($members[$templateId]['RESPONSIBLES']))
+			{
+				$template['RESPONSIBLES'] = $members[$templateId]['RESPONSIBLES'];
+			}
+			if (isset($members[$templateId]['ACCOMPLICES']))
+			{
+				$template['ACCOMPLICES'] = $members[$templateId]['ACCOMPLICES'];
+			}
+			if (isset($members[$templateId]['ACCOMPLICES']))
+			{
+				$template['ACCOMPLICES'] = $members[$templateId]['ACCOMPLICES'];
+			}
+
+			if (isset($tags[$templateId]))
+			{
+				$template['TAGS'] = $tags[$templateId];
+			}
+			if (isset($depends[$templateId]))
+			{
+				$template['DEPENDS_ON'] = $template[$templateId];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param array $parameters
+	 * @param array $ids
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function findDepends(array $parameters, array $ids): array
+	{
+		if (
+			array_key_exists('select', $parameters)
+			&& is_array($parameters['select'])
+			&& !empty($parameters['select'])
+			&& !in_array('DEPENDS_ON', $parameters['select'])
+			&& $parameters['select'][0] !== '*'
+		)
+		{
+			return [];
+		}
+
+		$res = TemplateDependenceTable::getList([
+			'filter' => [
+				'@TEMPLATE_ID' => $ids,
+			]
+		]);
+
+		$deps = [];
+		while ($row = $res->fetch())
+		{
+			$deps[$row['TEMPLATE_ID']][] = $row['DEPENDS_ON_ID'];
+		}
+
+		foreach ($deps as $templateId => $taskIds)
+		{
+			$deps[$templateId] = serialize($taskIds);
+		}
+
+		return $deps;
+	}
+
+	/**
+	 * @param array $parameters
+	 * @param array $ids
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function findTags(array $parameters, array $ids): array
+	{
+		if (
+			array_key_exists('select', $parameters)
+			&& is_array($parameters['select'])
+			&& !empty($parameters['select'])
+			&& !in_array('TAGS', $parameters['select'])
+			&& $parameters['select'][0] !== '*'
+		)
+		{
+			return [];
+		}
+
+		$res = TemplateTagTable::getList([
+			'filter' => [
+				'@TEMPLATE_ID' => $ids,
+			]
+		]);
+
+		$tags = [];
+		while ($row = $res->fetch())
+		{
+			$tags[$row['TEMPLATE_ID']][] = $row['NAME'];
+		}
+
+		foreach ($tags as $templateId => $names)
+		{
+			$tags[$templateId] = serialize($names);
+		}
+
+		return $tags;
+	}
+
+	/**
+	 * @param array $parameters
+	 * @param array $ids
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private static function findMembers(array $parameters, array $ids): array
+	{
+		if (
+			array_key_exists('select', $parameters)
+			&& is_array($parameters['select'])
+			&& !empty($parameters['select'])
+			&& !in_array('RESPONSIBLES', $parameters['select'])
+			&& !in_array('ACCOMPLICES', $parameters['select'])
+			&& !in_array('AUDITORS', $parameters['select'])
+			&& $parameters['select'][0] !== '*'
+		)
+		{
+			return [];
+		}
+
+		$res = TemplateMemberTable::getList([
+			'filter' => [
+				'@TEMPLATE_ID' => $ids,
+			]
+		]);
+
+		$memberTypes = [
+			TemplateMemberTable::MEMBER_TYPE_RESPONSIBLE => 'RESPONSIBLES',
+			TemplateMemberTable::MEMBER_TYPE_ACCOMPLICE => 'ACCOMPLICES',
+			TemplateMemberTable::MEMBER_TYPE_AUDITOR => 'AUDITORS',
+		];
+
+		$members = [];
+		while ($row = $res->fetch())
+		{
+			if (!array_key_exists($row['TYPE'], $memberTypes))
+			{
+				continue;
+			}
+			$members[$row['TEMPLATE_ID']][$memberTypes[$row['TYPE']]][] = (int) $row['USER_ID'];
+		}
+
+		foreach ($members as $templateId => $templateMembers)
+		{
+			foreach ($templateMembers as $type => $users)
+			{
+				$members[$templateId][$type] = serialize($users);
+			}
+		}
+
+		return $members;
 	}
 
 	/**
@@ -197,6 +388,76 @@ final class Template extends \Bitrix\Tasks\Item
 		return $result->isSuccess();
 	}
 
+	public function save($settings = [])
+	{
+		$arFields = $this->getFieldsToSave($this->values);
+		$id = $this->id;
+		if (
+			!$id
+			&& array_key_exists('ID', $arFields)
+		)
+		{
+			$id = (int) $arFields['ID'];
+		}
+		unset($arFields['ID']);
+
+		$result = new Result();
+		$manager = new \Bitrix\Tasks\Control\Template($this->userId);
+
+		try
+		{
+			if ($id)
+			{
+				$template = $manager->update($id, $arFields);
+			}
+			else
+			{
+				$template = $manager->add($arFields);
+				$this->setId($template->getId());
+			}
+		}
+		catch(TemplateUpdateException | TemplateAddException $e)
+		{
+			$result->getErrors()->add('TEMPLATE_SAVE', $e->getMessage());
+		}
+		catch (\Exception $e)
+		{
+			$result->getErrors()->add('TEMPLATE_SAVE', $e->getMessage());
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getFieldsToSave(array $fields): array
+	{
+		$arFields = [];
+		foreach ($fields as $k => $v)
+		{
+			if (is_scalar($v) || is_array($v))
+			{
+				$arFields[$k] = $v;
+				continue;
+			}
+
+			if (is_a($v, \Bitrix\Tasks\Util\Collection::class))
+			{
+				$arFields[$k] = $this->getFieldsToSave($v->toArray());
+				continue;
+			}
+
+			if (is_a($v, Structure::class))
+			{
+				$arFields[$k] = $this->getFieldsToSave($v->toArray());
+				continue;
+			}
+		}
+
+		return $arFields;
+	}
+
 	public function checkData($result)
 	{
 		if(parent::checkData($result))
@@ -208,16 +469,6 @@ final class Template extends \Bitrix\Tasks\Item
 			$this->checkDataBaseItem($result);
 
 			$this->checkFieldCombinations($result);
-
-			// todo: ???
-//			if(array_key_exists('TPARAM_REPLICATION_COUNT', $arFields))
-//			{
-//				$arFields['TPARAM_REPLICATION_COUNT'] = intval($arFields['TPARAM_REPLICATION_COUNT']);
-//			}
-//			elseif(!$ID)
-//			{
-//				$arFields['TPARAM_REPLICATION_COUNT'] = 1;
-//			}
 		}
 
 		return $result->isSuccess();
@@ -242,6 +493,90 @@ final class Template extends \Bitrix\Tasks\Item
 			}
 		}
 		return $this->permissions;
+	}
+
+	protected function fetchBaseData($fetchBase = true, $fetchUFs = false)
+	{
+		$result = parent::fetchBaseData($fetchBase, $fetchUFs);
+
+		$result['TAGS'] = serialize($this->loadTags());
+		$result['DEPENDS_ON'] = serialize($this->loadDependTasks());
+
+		$members = $this->loadMembers();
+		$result['RESPONSIBLES'] = serialize($members[TemplateMemberTable::MEMBER_TYPE_RESPONSIBLE]);
+		$result['ACCOMPLICES'] = serialize($members[TemplateMemberTable::MEMBER_TYPE_ACCOMPLICE]);
+		$result['AUDITORS'] = serialize($members[TemplateMemberTable::MEMBER_TYPE_AUDITOR]);
+
+		return $result;
+	}
+
+	private function loadDependTasks(): array
+	{
+		$depends = [];
+
+		$dependList = TemplateDependenceTable::getList([
+			'filter' => [
+				'=TEMPLATE_ID' => $this->id,
+			],
+		])->fetchCollection();
+
+		foreach ($dependList as $depend)
+		{
+			$depends[] = $depend->getDependsOnId();
+		}
+
+		return $depends;
+	}
+
+	/**
+	 * @return array|array[]
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function loadMembers(): array
+	{
+		$members = [
+			TemplateMemberTable::MEMBER_TYPE_RESPONSIBLE => [],
+			TemplateMemberTable::MEMBER_TYPE_ACCOMPLICE => [],
+			TemplateMemberTable::MEMBER_TYPE_AUDITOR => [],
+		];
+
+		$memberList = TemplateMemberTable::getList([
+			'filter' => [
+				'=TEMPLATE_ID' => $this->id,
+			],
+		])->fetchCollection();
+
+		foreach ($memberList as $member)
+		{
+			$members[$member->getType()][] = $member->getUserId();
+		}
+
+		return $members;
+	}
+
+	/**
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function loadTags(): array
+	{
+		$tagList = TemplateTagTable::getList([
+			'filter' => [
+				'=TEMPLATE_ID' => $this->id,
+			],
+		])->fetchCollection();
+
+		$tags = [];
+		foreach ($tagList as $tag)
+		{
+			$tags[] = $tag->getName();
+		}
+
+		return $tags;
 	}
 
 	protected function modifyTabletDataBeforeSave($data)

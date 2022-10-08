@@ -1,7 +1,7 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 
 $this->__component->tryParseEnumerationParameter($arParams['DISPLAY'], array('inline', 'block'), 'block');
 $this->__component->tryParseIntegerParameter($arParams['MAX_WIDTH'], 0);

@@ -226,8 +226,10 @@ class OrderPaymentController extends EntityController
 			{
 				foreach ($bindings as $binding)
 				{
-					$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-					self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
+					$this->sendPullEventOnAdd(
+						new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+						$historyEntryID
+					);
 				}
 			}
 		}

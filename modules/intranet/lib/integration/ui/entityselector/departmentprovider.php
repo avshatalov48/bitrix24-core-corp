@@ -39,6 +39,9 @@ class DepartmentProvider extends BaseProvider
 			isset($options['allowFlatDepartments']) && $options['allowFlatDepartments'] === true
 		);
 
+		$this->options['allowOnlyUserDepartments'] = (
+			isset($options['allowOnlyUserDepartments']) && $options['allowOnlyUserDepartments'] === true
+		);
 
 		$this->options['allowSelectRootDepartment'] = $this->getSelectMode() === self::MODE_DEPARTMENTS_ONLY;
 		if (isset($options['allowSelectRootDepartment']) && is_bool($options['allowSelectRootDepartment']))
@@ -167,20 +170,56 @@ class DepartmentProvider extends BaseProvider
 		]));
 	}
 
+	private function getAllowOnlyUserDepartment(): ?array
+	{
+		$result = null;
+		if ($this->options['allowOnlyUserDepartments'] === true)
+		{
+			$result = [];
+			global $USER;
+			if ($USER->isAuthorized())
+			{
+				$res = \CUser::getById($USER->getId());
+				if (($user = $res->fetch()) && !empty($user['UF_DEPARTMENT']))
+				{
+					$result = $user['UF_DEPARTMENT'];
+				}
+			}
+		}
+
+		return $result;
+	}
+
 	private function fillDepartments(Dialog $dialog, EO_Section_Collection $departments, ?bool $forceDynamic = null)
 	{
+		$allowDepartment = $this->getAllowOnlyUserDepartment();
 		$parents = [];
+		$parentIdList = [];
 		foreach ($departments as $department)
 		{
 			$isRootDepartment =
 				$department->getDepthLevel() === 1 || $department->getId() === self::getRootDepartmentId()
 			;
 			$hideRootDepartment = $isRootDepartment && !$this->options['allowSelectRootDepartment'];
+			$parentIdList[$department->getId()] = $department->getIblockSectionId();
 
 			$availableInRecentTab = true;
 			if ($this->getSelectMode() === self::MODE_USERS_ONLY || $hideRootDepartment)
 			{
 				$availableInRecentTab = false;
+			}
+
+			if (
+				is_array($allowDepartment)
+				&& !$this->isAllowDepartment(
+					$department->getId(),
+					$department->getIblockSectionId(),
+					$allowDepartment,
+					$parentIdList
+				)
+			)
+			{
+				continue;
 			}
 
 			$item = new Item([
@@ -255,6 +294,31 @@ class DepartmentProvider extends BaseProvider
 
 			$parents[$department->getId()] = $item;
 		}
+	}
+
+	private function isAllowDepartment($departmentId, $parentId, $allowDepartment, $parentList): bool
+	{
+		$result = false;
+		if (
+			in_array($departmentId, $allowDepartment, true)
+			|| in_array($parentId, $allowDepartment, true)
+		)
+		{
+			$result = true;
+		}
+		elseif ($parentList[$parentId] > 0)
+		{
+			$departmentId = $parentList[$parentId];
+			$parentId = 0;
+			if ($parentList[$departmentId] > 0)
+			{
+				$parentId = $parentList[$departmentId];
+			}
+
+			$result = $this->isAllowDepartment($departmentId, $parentId, $allowDepartment, $parentList);
+		}
+
+		return $result;
 	}
 
 	public function getChildren(Item $parentItem, Dialog $dialog): void

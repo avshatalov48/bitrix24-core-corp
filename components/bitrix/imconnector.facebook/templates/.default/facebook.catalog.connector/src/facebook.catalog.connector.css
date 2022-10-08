@@ -1,0 +1,8 @@
+.imconnector-facebook-catalog-popup {
+	padding: 20px 20px 10px;
+}
+
+.imconnector-facebook-catalog-popup-text {
+	color: #535c69;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}

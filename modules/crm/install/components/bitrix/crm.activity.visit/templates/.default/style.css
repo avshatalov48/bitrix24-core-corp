@@ -106,7 +106,7 @@
 	width: 100%;
 	color: rgba(255, 255, 255, .6);
 	text-align: center;
-	font: 11px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-ordinal-group: 3;
 	order: 2;
 }
@@ -174,7 +174,7 @@
 .crm-activity-visit-user-settings-title {
 	margin: 0 5px 0;
 	color: rgba(255, 255, 255, .63);
-	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-user-settings:first-child { margin: 0 44px 0; }
@@ -183,7 +183,7 @@
 	margin: 0 10px 0;
 	border-bottom: 1px solid #3bc8f5;
 	color: #3bc8f5;
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -204,7 +204,8 @@
 	height: 62px;
 	color: #fff;
 	text-transform: uppercase;
-	font: 10px/12px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	-webkit-box-pack: center;
 	justify-content: center;
 	-webkit-box-align: center;
@@ -258,7 +259,8 @@
 	background: rgba(59, 200, 245, .7);
 	color: #fff;
 	text-transform: uppercase;
-	font: 12px/36px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/36px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: background .3s;
 }
@@ -331,7 +333,7 @@
 
 .crm-activity-visit-sidebar-photo-settings-inner-title-item {
 	color: rgba(66, 73, 86, .5);
-	font: 13px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-sidebar-photo-settings-inner-list { margin: 16px 0 0; }
@@ -345,7 +347,7 @@
 	color: #80868e;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 14px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: color .3s;
 }
@@ -394,7 +396,8 @@
 	color: #fff;
 	text-align: center;
 	text-transform: uppercase;
-	font: 12px/50px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/50px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	transition: background .3s;
 }
@@ -486,7 +489,7 @@
 
 .crm-activity-visit-main-user-info-control-social-name {
 	color: #535c69;
-	font: 13px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-main-user-info-control-social-name:before {
@@ -504,7 +507,7 @@
 	display: inline-block;
 	border-bottom: 1px solid transparent;
 	color: #0b66c3;
-	font: 13px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -774,7 +777,7 @@
 	background: #ebeef2;
 	color: #0b66c3;
 	text-transform: uppercase;
-	font: bold 9px/11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 9px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-main-user-photo-count {
@@ -793,7 +796,7 @@
 	background: #7ed321;
 	color: #fff;
 	text-align: center;
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-main-user-photo-count-info {
@@ -829,7 +832,7 @@
 	margin: 0 0 10px;
 	color: #535c69;
 	text-align: center;
-	font: 9px/11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 9px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-main-user-photo-count-info-desc .crm-activity-visit-facesearch-main-user-photo-item { margin: 0 auto; }
@@ -848,10 +851,10 @@
 
 .crm-activity-visit-facesearch-main-user-info-description-item {
 	color: #a5aeba;
-	font: 11px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
-.crm-activity-visit-facesearch-main-user-info-name { font: 15px/17px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+.crm-activity-visit-facesearch-main-user-info-name { font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 .crm-activity-visit-facesearch-main-user-info-name-item { padding: 0 10px 0; }
 
@@ -917,7 +920,7 @@
 .crm-activity-visit-facesearch-main-user-info-control-social-name {
 	display: none;
 	color: #535c69;
-	font: 13px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-main-user-info-control-social-name:before {
@@ -938,7 +941,7 @@
 	display: inline-block;
 	border-bottom: 1px solid transparent;
 	color: #0b66c3;
-	font: 13px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -955,7 +958,7 @@
 	border-bottom: 1px dashed rgba(11, 102, 195, .5);
 	color: #0b66c3;
 	vertical-align: middle;
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -1006,7 +1009,7 @@
 
 .crm-activity-visit-facesearch-profile-search-item {
 	color: #80868e;
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-profile-search-main {
@@ -1028,13 +1031,13 @@
 
 .crm-activity-visit-facesearch-main-user-date { margin: 6px 0 0; }
 
-.crm-activity-visit-facesearch-main-user-date-item { font: 13px/15px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+.crm-activity-visit-facesearch-main-user-date-item { font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 .crm-activity-visit-facesearch-main-user-social-link { margin: 9px 0 0; }
 
 .crm-activity-visit-facesearch-main-user-social-link-item {
 	color: #80868e;
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 }
 
@@ -1062,12 +1065,12 @@
 .crm-activity-visit-facesearch-profile-search-found-more-item {
 	color: #424956;
 	text-transform: uppercase;
-	font: bold 10px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-profile-search-found-more-count {
 	color: #a9b1bd;
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-profile-search-found-container {
@@ -1122,7 +1125,7 @@
 	bottom: 128px;
 	left: 50%;
 	color: #535c69;
-	font: 20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-transform: translate(-50%, 0);
 	transform: translate(-50%, 0);
 }
@@ -1183,7 +1186,7 @@
 
 .crm-activity-visit-popup-settings-inner-title-item {
 	color: rgba(66, 73, 86, .5);
-	font: 13px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-popup-settings-inner-list { margin: 16px 0 0; }
@@ -1198,7 +1201,7 @@
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 14px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: color .3s;
 }
@@ -1272,7 +1275,8 @@
 	margin: 0 5px 0;
 	height: 30px;
 	color: #525c68;
-	font: 14px/19px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	transition: color .3s;
 }
@@ -1309,7 +1313,8 @@
 	color: #fff;
 	text-align: center;
 	text-transform: uppercase;
-	font: bold 10px/26px 'Open Sans', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	transition: background .4s, color .4s;
 }

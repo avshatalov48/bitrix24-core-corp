@@ -13,6 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
@@ -24,7 +25,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager']);
+Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.fonts.opensans']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -370,7 +371,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 		'columns' => array(
 			'DEAL_SUMMARY' => CCrmViewHelper::RenderInfo(
 				$arDeal['PATH_TO_DEAL_SHOW'],
-				isset($arDeal['TITLE']) ? $arDeal['TITLE'] : ('['.$arDeal['ID'].']'),
+				($arDeal['TITLE_PREFIX'] ?? '') . ($arDeal['TITLE'] ?? ('[' . $arDeal['ID'] . ']')),
 				Tracking\UI\Grid::enrichSourceName(
 					\CCrmOwnerType::Deal,
 					$arDeal['ID'],
@@ -983,18 +984,19 @@ if(!$isInternal
 
 	if($callListUpdateMode)
 	{
-		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = [
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
 			"TEXT" => GetMessage("CRM_DEAL_UPDATE_CALL_LIST"),
 			"ID" => "update_call_list",
 			"NAME" => "update_call_list",
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$arResult['CALL_LIST_CONTEXT']}')"))
-				)
-			)
-		);
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$callListContext}')"]]
+				]
+			]
+		];
 	}
 	else
 	{
@@ -1089,7 +1091,8 @@ $APPLICATION->IncludeComponent(
 	'',
 	array(
 		'ENTITY_TYPE_NAME' => CCrmOwnerType::DealName,
-		'GRID_ID' => $arResult['GRID_ID']
+		'GRID_ID' => $arResult['GRID_ID'],
+		'CATEGORY_ID' => $arResult['CATEGORY_ID'] >=0 ? $arResult['CATEGORY_ID'] : null,
 	),
 	$component
 );
@@ -1137,50 +1140,15 @@ $APPLICATION->IncludeComponent(
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
-		'NAVIGATION_BAR' => array(
-			'ITEMS' => array_merge(
-				\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Deal, $arResult['CATEGORY_ID']),
-				array(
-					array(
-						//'icon' => 'kanban',
-						'id' => 'kanban',
-						'name' => GetMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_KANBAN'),
-						'active' => false,
-						'url' => isset($arResult['PATH_TO_DEAL_KANBANCATEGORY'])
-							? $arResult['PATH_TO_DEAL_KANBANCATEGORY']
-							: $arResult['PATH_TO_DEAL_KANBAN']
-					),
-					array(
-						//'icon' => 'table',
-						'id' => 'list',
-						'name' => GetMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_LIST'),
-						'active' => true,
-						'url' => isset($arResult['PATH_TO_DEAL_CATEGORY'])
-							? $arResult['PATH_TO_DEAL_CATEGORY']
-							: $arResult['PATH_TO_DEAL_LIST']
-					)
-				),
-				(\Bitrix\Crm\Integration\Calendar::isResourceBookingEnabled()
-					?
-					array(
-						array(
-							'id' => 'calendar',
-							'name' => GetMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_CALENDAR'),
-							'active' => false,
-							'url' => isset($arResult['PATH_TO_DEAL_CALENDARCATEGORY'])
-								? $arResult['PATH_TO_DEAL_CALENDARCATEGORY']
-								: $arResult['PATH_TO_DEAL_CALENDAR']
-						)
-					)
-					: array()
-				)
-			),
-			'BINDING' => array(
-				'category' => 'crm.navigation',
-				'name' => 'index',
-				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-			)
-		),
+		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
+			->setItems([
+				NavigationBarPanel::ID_AUTOMATION,
+				NavigationBarPanel::ID_KANBAN,
+				NavigationBarPanel::ID_LIST,
+				NavigationBarPanel::ID_CALENDAR
+			], NavigationBarPanel::ID_LIST)
+			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+			->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,

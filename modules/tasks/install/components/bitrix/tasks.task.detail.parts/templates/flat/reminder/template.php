@@ -105,20 +105,26 @@ $prefix = htmlspecialcharsbx($arResult['TEMPLATE_DATA']['INPUT_PREFIX']);
 </div>
 
 <script>
-	new BX.Tasks.Component.TaskDetailPartsReminder(<?=CUtil::PhpToJSObject(array(
-		'id' => $templateId,
-		'registerDispatcher' => true,
-		'auxData' => array( // currently no more, no less
-			'COMPANY_WORKTIME' => array(
-				'HOURS' => $arResult['TEMPLATE_DATA']['COMPANY_WORKTIME']['HOURS']
-			)
-		),
-        'data' => $arResult['TEMPLATE_DATA']['ITEMS']['DATA'],
-        'can' => $arResult['TEMPLATE_DATA']['ITEMS']['CAN'],
-        'taskId' => $arResult['TEMPLATE_DATA']['TASK_ID'],
-        'taskDeadline' => $arResult['TEMPLATE_DATA']['TASK_DEADLINE'],
-        'autoSync' => !!$arResult['TEMPLATE_DATA']['AUTO_SYNC'],
-        'itemFx' => $arResult['TEMPLATE_DATA']['ITEM_FX'] == 'horizontal' ? 'horizontal' : 'vertical',
-        'itemFxHoverDelete' => true
-	), false, false, true)?>);
+	new BX.Tasks.Component.TaskDetailPartsReminder(<?= CUtil::PhpToJSObject(
+		[
+			'id' => $templateId,
+			'registerDispatcher' => true,
+			'auxData' => [
+				'COMPANY_WORKTIME' => [
+					'HOURS' => $arResult['TEMPLATE_DATA']['COMPANY_WORKTIME']['HOURS'],
+				],
+				'CALENDAR_SETTINGS' => $arResult['CALENDAR_SETTINGS'],
+			],
+			'data' => $arResult['TEMPLATE_DATA']['ITEMS']['DATA'],
+			'can' => $arResult['TEMPLATE_DATA']['ITEMS']['CAN'],
+			'taskId' => $arResult['TEMPLATE_DATA']['TASK_ID'],
+			'taskDeadline' => $arResult['TEMPLATE_DATA']['TASK_DEADLINE'],
+			'autoSync' => (bool)$arResult['TEMPLATE_DATA']['AUTO_SYNC'],
+			'itemFx' => ($arResult['TEMPLATE_DATA']['ITEM_FX'] === 'horizontal' ? 'horizontal' : 'vertical'),
+			'itemFxHoverDelete' => true,
+		],
+		false,
+		false,
+		true
+	) ?>);
 </script>

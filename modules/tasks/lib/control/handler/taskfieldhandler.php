@@ -5,6 +5,8 @@ namespace Bitrix\Tasks\Control\Handler;
 use Bitrix\Main\Entity\DatetimeField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Text\Emoji;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Control\Handler\Exception\TaskFieldValidateException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\Intranet\Department;
@@ -442,7 +444,7 @@ class TaskFieldHandler
 			return $this;
 		}
 
-		$parentId = (int) $this->fields['PARENT_ID'];
+		$parentId = (int)$this->fields['PARENT_ID'];
 		if (!$parentId)
 		{
 			$this->fields['PARENT_ID'] = false;
@@ -455,6 +457,7 @@ class TaskFieldHandler
 		if (
 			!$parentTask
 			|| $parentTask->isDeleted()
+			|| !TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, $parentId)
 		)
 		{
 			throw new TaskFieldValidateException(Loc::getMessage('TASKS_BAD_PARENT_ID'));

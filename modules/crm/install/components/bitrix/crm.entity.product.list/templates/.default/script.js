@@ -1,7 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Entity = this.BX.Crm.Entity || {};
-(function (exports,ui_hint,ui_notification,catalog_storeSelector,catalog_productCalculator,main_popup,main_core,main_core_events,catalog_storeUse,currency_currencyCore,catalog_productSelector,catalog_productModel,pull_client) {
+(function (exports,ui_designTokens,ui_hint,ui_notification,catalog_storeSelector,catalog_productCalculator,main_popup,main_core_events,catalog_storeUse,currency_currencyCore,catalog_productSelector,catalog_productModel,pull_client,main_core,spotlight,ui_tour) {
 	'use strict';
 
 	var _templateObject;
@@ -46,13 +46,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  return HintPopup;
 	}();
 
-	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
-
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-
-	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	var _templateObject$1, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
 
 	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
 
@@ -74,18 +68,18 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  function ReserveControl(options) {
 	    babelHelpers.classCallCheck(this, ReserveControl);
 
-	    _classPrivateMethodInitSpec(this, _layoutDateReservation);
+	    _layoutDateReservation.add(this);
 
-	    _classPrivateMethodInitSpec(this, _getReserveInputNode);
+	    _getReserveInputNode.add(this);
 
-	    _classPrivateMethodInitSpec(this, _getDateNode);
+	    _getDateNode.add(this);
 
-	    _classPrivateFieldInitSpec(this, _model, {
+	    _model.set(this, {
 	      writable: true,
 	      value: null
 	    });
 
-	    _classPrivateFieldInitSpec(this, _cache, {
+	    _cache.set(this, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
@@ -112,7 +106,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        _classPrivateMethodGet(this, _layoutDateReservation, _layoutDateReservation2).call(this, this.getDateReservation());
 	      }
 
-	      node.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["", ""])), _classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this)));
+	      node.appendChild(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this));
 	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this), 'click', _classStaticPrivateMethodGet(ReserveControl, ReserveControl, _onDateInputClick).bind(this));
 	      main_core.Event.bind(_classPrivateMethodGet(this, _getDateNode, _getDateNode2).call(this).querySelector('input'), 'change', this.onDateChange.bind(this));
 	    }
@@ -172,7 +166,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            id: errorNotifyId,
 	            closeButton: true,
 	            autoHideDelay: 3000,
-	            content: main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED'))
+	            content: main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_IS_LESS_QUANTITY_WITH_DEDUCTED_THEN_RESERVED'))
 	          };
 	          notify = BX.UI.Notification.Center.notify(notificationOptions);
 	        }
@@ -201,8 +195,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "clearCache",
 	    value: function clearCache() {
-	      babelHelpers.classPrivateFieldGet(this, _cache)["delete"]('dateInput');
-	      babelHelpers.classPrivateFieldGet(this, _cache)["delete"]('reserveInput');
+	      babelHelpers.classPrivateFieldGet(this, _cache).delete('dateInput');
+	      babelHelpers.classPrivateFieldGet(this, _cache).delete('reserveInput');
 	    }
 	  }, {
 	    key: "isInputDisabled",
@@ -228,7 +222,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            id: errorNotifyId,
 	            closeButton: true,
 	            autoHideDelay: 3000,
-	            content: main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_DATE_IN_PAST'))
+	            content: main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_ENTITY_PL_DATE_IN_PAST'))
 	          };
 	          notify = BX.UI.Notification.Center.notify(notificationOptions);
 	        }
@@ -265,7 +259,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  var _this = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('dateInput', function () {
-	    return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<a class=\"crm-entity-product-list-reserve-date\"></a>\n\t\t\t\t\t<input\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t"])), _this.dateFieldName, _this.dateFieldName, _this.getDateReservation());
+	    return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<a class=\"crm-entity-product-list-reserve-date\"></a>\n\t\t\t\t\t<input\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\ttype=\"hidden\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t"])), _this.dateFieldName, _this.dateFieldName, _this.getDateReservation());
 	  });
 	}
 
@@ -273,11 +267,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  var _this2 = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('reserveInput', function () {
-	    var tag = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<input type=\"text\"\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\"\n\t\t\t\t\t\tautoComplete=\"off\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled() ? "crm-entity-product-list-locked-field" : "", _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled() ? "disabled" : "");
+	    var tag = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div>\n\t\t\t\t\t<input type=\"text\"\n\t\t\t\t\t\tdata-name=\"", "\"\n\t\t\t\t\t\tname=\"", "\"\n\t\t\t\t\t\tclass=\"ui-ctl-element ui-ctl-textbox ", "\"\n\t\t\t\t\t\tautoComplete=\"off\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t\tplaceholder=\"0\"\n\t\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t\t", "\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t"])), _this2.inputFieldName, _this2.inputFieldName, _this2.isInputDisabled() ? "crm-entity-product-list-locked-field" : "", _this2.getReservedQuantity(), _this2.getReservedQuantity(), _this2.isInputDisabled() ? "disabled" : "");
 
 	    if (_this2.isBlocked) {
 	      tag.onclick = function () {
-	        return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	        return main_core_events.EventEmitter.emit(_this2, 'onNodeClick');
 	      };
 	    }
 
@@ -311,12 +305,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	var _templateObject$2;
 
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
-
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _rowId = /*#__PURE__*/new WeakMap();
@@ -333,24 +321,24 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  function StoreAvailablePopup(options) {
 	    babelHelpers.classCallCheck(this, StoreAvailablePopup);
 
-	    _classPrivateMethodInitSpec$1(this, _createPopup);
+	    _createPopup.add(this);
 
-	    _classPrivateFieldInitSpec$1(this, _rowId, {
+	    _rowId.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$1(this, _model$1, {
+	    _model$1.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$1(this, _node, {
+	    _node.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$1(this, _popup, {
+	    _popup.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -469,17 +457,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }
 	}
 
-	var _templateObject$3, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8;
+	var _templateObject$3, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8;
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var MODE_EDIT = 'EDIT';
@@ -529,45 +513,45 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  function Row(_id, fields, settings, editor) {
 	    babelHelpers.classCallCheck(this, Row);
 
-	    _classPrivateMethodInitSpec$2(this, _onGridUpdated);
+	    _onGridUpdated.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _getNodeChildByDataName);
+	    _getNodeChildByDataName.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _isReserveEqualProductQuantity);
+	    _isReserveEqualProductQuantity.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _togglePriceHintPopup);
+	    _togglePriceHintPopup.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _shouldShowSmallPriceHint);
+	    _shouldShowSmallPriceHint.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _onProductErrorsChange);
+	    _onProductErrorsChange.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _onChangeStoreData);
+	    _onChangeStoreData.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _showPriceNotifier);
+	    _showPriceNotifier.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _onStoreFieldClear);
+	    _onStoreFieldClear.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _onStoreFieldChange);
+	    _onStoreFieldChange.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _initReservedControl);
+	    _initReservedControl.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _applyStoreSelectorRestrictionTweaks);
+	    _applyStoreSelectorRestrictionTweaks.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _initStoreAvailablePopup);
+	    _initStoreAvailablePopup.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _initStoreSelector);
+	    _initStoreSelector.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _onMainSelectorClear);
+	    _onMainSelectorClear.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _initSelector);
+	    _initSelector.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _isSaveableCatalogPrice);
+	    _isSaveableCatalogPrice.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _isEditableCatalogPrice);
+	    _isEditableCatalogPrice.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _showChangePriceNotify);
+	    _showChangePriceNotify.add(this);
 
-	    _classPrivateMethodInitSpec$2(this, _initActions);
+	    _initActions.add(this);
 
 	    babelHelpers.defineProperty(this, "fields", {});
 	    babelHelpers.defineProperty(this, "externalActions", []);
@@ -854,6 +838,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      for (var name in fields) {
 	        if (fields.hasOwnProperty(name)) {
 	          this.setField(name, fields[name]);
+	          this.getModel().setField(name, fields[name]);
 	        }
 	      }
 	    }
@@ -1016,7 +1001,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function updateFieldByEvent(fieldCode, event) {
 	      var target = event.target;
 	      var value = target.type === 'checkbox' ? target.checked : target.value;
-	      var mode = event.type === 'input' ? MODE_EDIT : MODE_SET;
+	      var mode = event.type === 'input' || event.type === 'change' ? MODE_EDIT : MODE_SET;
 	      this.updateField(fieldCode, value, mode);
 	    }
 	  }, {
@@ -1264,15 +1249,21 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          return parseInt(item.ID) === parseInt(value);
 	        });
 
+	        if (!taxRate) {
+	          taxRate = taxList.find(function (item) {
+	            return main_core.Type.isNil(item.VALUE);
+	          });
+	        }
+
 	        if (taxRate) {
-	          this.changeTaxRate(this.parseFloat(taxRate.VALUE));
+	          this.changeTaxRate(taxRate.VALUE);
 	        }
 	      }
 	    }
 	  }, {
 	    key: "changeTaxRate",
 	    value: function changeTaxRate(value) {
-	      var preparedValue = this.parseFloat(value, this.getCommonPrecision());
+	      var preparedValue = main_core.Type.isNil(value) || value === '' ? null : this.parseFloat(value, this.getCommonPrecision());
 	      this.setTaxRate(preparedValue);
 	    }
 	  }, {
@@ -1552,6 +1543,20 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.executeExternalActions();
 
 	      _classPrivateMethodGet$2(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice < 0 && originalPrice !== value);
+	    }
+	  }, {
+	    key: "setBasePrice",
+	    value: function setBasePrice(value) {
+	      var originalPrice = value; // price can't be less than zero
+
+	      value = Math.max(value, 0);
+	      var calculatedFields = this.getCalculator().setFields(this.getCalculator().calculateBasePrice(this.getCatalogPrice())).calculatePrice(value);
+	      this.setFields(calculatedFields);
+	      this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
+	      this.addActionProductChange();
+	      this.addActionUpdateTotal();
+
+	      _classPrivateMethodGet$2(this, _togglePriceHintPopup, _togglePriceHintPopup2).call(this, originalPrice !== value);
 	    }
 	  }, {
 	    key: "setBasePrice",
@@ -1917,8 +1922,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        case 'input':
 	          if (field === 'QUANTITY') {
 	            value = this.parseFloat(value, this.getQuantityPrecision());
-	          } else if (field === 'DISCOUNT_RATE' || field === 'TAX_RATE') {
+	          } else if (field === 'DISCOUNT_RATE') {
 	            value = this.parseFloat(value, this.getCommonPrecision());
+	          } else if (field === 'TAX_RATE') {
+	            value = main_core.Type.isNil(value) || value === '' ? '' : this.parseFloat(value, this.getCommonPrecision());
 	          } else if (value === 0) {
 	            value = '';
 	          } else if (main_core.Type.isNumber(value)) {
@@ -1965,7 +1972,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          result = field;
 	          break;
 
-	        case 'ENTERED_PRICE':
+	        case 'PRICE_NETTO':
+	        case 'PRICE_BRUTTO':
 	          result = 'PRICE';
 	          break;
 
@@ -2278,7 +2286,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    var numberSelector = mainInfoNode.querySelector('.main-grid-row-number');
 
 	    if (!main_core.Type.isDomNode(numberSelector)) {
-	      mainInfoNode.appendChild(main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-grid-row-number\"></div>"]))));
+	      mainInfoNode.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"main-grid-row-number\"></div>"]))));
 	    }
 
 	    var selectorWrapper = mainInfoNode.querySelector('.main-grid-row-product-selector');
@@ -2348,6 +2356,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _applyStoreSelectorRestrictionTweaks2() {
+	  var _this9 = this;
+
 	  var storeSearchInput = this.storeSelector.searchInput;
 
 	  if (!storeSearchInput || !storeSearchInput.getNameInput()) {
@@ -2360,13 +2370,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	  if (this.storeSelector.getWrapper()) {
 	    this.storeSelector.getWrapper().onclick = function () {
-	      return top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	      return _this9.editor.openIntegrationLimitSlider();
 	    };
 	  }
 	}
 
 	function _initReservedControl2() {
-	  var _this9 = this;
+	  var _this10 = this;
 
 	  var storeWrapper = _classPrivateMethodGet$2(this, _getNodeChildByDataName, _getNodeChildByDataName2).call(this, 'RESERVE_INFO');
 
@@ -2380,7 +2390,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    main_core_events.EventEmitter.subscribe(this.reserveControl, 'onChange', function (event) {
 	      var item = event.getData();
 
-	      _this9.updateField(item.NAME, item.VALUE);
+	      _this10.updateField(item.NAME, item.VALUE);
+	    });
+	    main_core_events.EventEmitter.subscribe(this.reserveControl, 'onNodeClick', function () {
+	      _this10.editor.openIntegrationLimitSlider();
 	    });
 	    this.layoutReserveControl();
 	  }
@@ -2389,12 +2402,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	  if (quantityInput) {
 	    main_core.Event.bind(quantityInput, 'change', function (event) {
-	      var _this9$reserveControl;
+	      var _this10$reserveContro;
 
-	      var isReserveEqualProductQuantity = _classPrivateMethodGet$2(_this9, _isReserveEqualProductQuantity, _isReserveEqualProductQuantity2).call(_this9) && ((_this9$reserveControl = _this9.reserveControl) === null || _this9$reserveControl === void 0 ? void 0 : _this9$reserveControl.isReserveEqualProductQuantity);
+	      var isReserveEqualProductQuantity = _classPrivateMethodGet$2(_this10, _isReserveEqualProductQuantity, _isReserveEqualProductQuantity2).call(_this10) && ((_this10$reserveContro = _this10.reserveControl) === null || _this10$reserveContro === void 0 ? void 0 : _this10$reserveContro.isReserveEqualProductQuantity);
 
 	      if (isReserveEqualProductQuantity) {
-	        _this9.setReserveQuantity(_this9.getField('QUANTITY'));
+	        _this10.setReserveQuantity(_this10.getField('QUANTITY'));
 
 	        return;
 	      }
@@ -2403,7 +2416,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var errorNotifyId = 'quantityReservedCountError';
 	      var notify = BX.UI.Notification.Center.getBalloonById(errorNotifyId);
 
-	      if (value < _this9.getField('INPUT_RESERVE_QUANTITY')) {
+	      if (value < _this10.getField('INPUT_RESERVE_QUANTITY')) {
 	        if (!notify) {
 	          var notificationOptions = {
 	            id: errorNotifyId,
@@ -2414,7 +2427,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          notify = BX.UI.Notification.Center.notify(notificationOptions);
 	        }
 
-	        _this9.setReserveQuantity(_this9.getField('QUANTITY'));
+	        _this10.setReserveQuantity(_this10.getField('QUANTITY'));
 
 	        notify.show();
 	      }
@@ -2423,11 +2436,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _onStoreFieldChange2(event) {
-	  var _this10 = this;
+	  var _this11 = this;
 
 	  var data = event.getData();
 	  data.fields.forEach(function (item) {
-	    _this10.updateField(item.NAME, item.VALUE);
+	    _this11.updateField(item.NAME, item.VALUE);
 	  });
 	  this.initHandlersForSelectors();
 	}
@@ -2437,7 +2450,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	}
 
 	function _showPriceNotifier2(enteredPrice) {
-	  var _this11 = this;
+	  var _this12 = this;
 
 	  var disabledPriceNotify = BX.UI.Notification.Center.getBalloonByCategory(Row.CATALOG_PRICE_CHANGING_DISABLED);
 
@@ -2449,16 +2462,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    title: main_core.Loc.getMessage('CATALOG_PRODUCT_MODEL_SAVING_NOTIFICATION_PRICE_CHANGED_QUERY'),
 	    events: {
 	      onCancel: function onCancel() {
-	        if (_this11.getBasePrice() > _this11.getEnteredPrice()) {
-	          _this11.setField('ENTERED_PRICE', _this11.getBasePrice());
+	        if (_this12.getBasePrice() > _this12.getEnteredPrice()) {
+	          _this12.setField('ENTERED_PRICE', _this12.getBasePrice());
 
-	          _this11.updateUiInputField('PRICE', _this11.getBasePrice());
+	          _this12.updateUiInputField('PRICE', _this12.getBasePrice());
 	        }
 
-	        _this11.setPrice(enteredPrice);
+	        _this12.setPrice(enteredPrice);
 
-	        if (_this11.getField('DISCOUNT_SUM') > 0) {
-	          var settingPopup = _this11.getEditor().getSettingsPopup();
+	        if (_this12.getField('DISCOUNT_SUM') > 0) {
+	          var settingPopup = _this12.getEditor().getSettingsPopup();
 
 	          var setting = settingPopup === null || settingPopup === void 0 ? void 0 : settingPopup.getSetting('DISCOUNTS');
 
@@ -2468,21 +2481,21 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        }
 	      },
 	      onSave: function onSave() {
-	        _this11.setField('ENTERED_PRICE', enteredPrice);
+	        _this12.setField('ENTERED_PRICE', enteredPrice);
 
-	        _this11.setField('PRICE', enteredPrice);
+	        _this12.setField('PRICE', enteredPrice);
 
-	        _this11.changeCatalogPrice('CATALOG_PRICE', enteredPrice);
+	        _this12.changeCatalogPrice('CATALOG_PRICE', enteredPrice);
 
-	        _this11.setBasePrice(enteredPrice);
+	        _this12.setBasePrice(enteredPrice);
 
-	        _this11.getModel().save(['BASE_PRICE', 'CURRENCY']);
+	        _this12.getModel().save(['BASE_PRICE', 'CURRENCY']);
 
-	        _this11.refreshFieldsLayout();
+	        _this12.refreshFieldsLayout();
 
-	        _this11.addActionUpdateTotal();
+	        _this12.addActionUpdateTotal();
 
-	        _this11.executeExternalActions();
+	        _this12.executeExternalActions();
 	      }
 	    }
 	  });
@@ -2580,12 +2593,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	var _templateObject$4, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2;
 
-	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
-
-	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-
-	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
 	function _classPrivateMethodGet$3(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
 	var _target = /*#__PURE__*/new WeakMap();
@@ -2610,30 +2617,30 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    var editor = arguments.length > 2 ? arguments[2] : undefined;
 	    babelHelpers.classCallCheck(this, SettingsPopup);
 
-	    _classPrivateMethodInitSpec$3(this, _showNotification);
+	    _showNotification.add(this);
 
-	    _classPrivateMethodInitSpec$3(this, _setSetting);
+	    _setSetting.add(this);
 
-	    _classPrivateMethodInitSpec$3(this, _getSettingItem);
+	    _getSettingItem.add(this);
 
-	    _classPrivateMethodInitSpec$3(this, _prepareSettingsContent);
+	    _prepareSettingsContent.add(this);
 
-	    _classPrivateFieldInitSpec$2(this, _target, {
+	    _target.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$2(this, _settings, {
+	    _settings.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$2(this, _editor, {
+	    _editor.set(this, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$2(this, _cache$1, {
+	    _cache$1.set(this, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
@@ -2814,29 +2821,315 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  });
 	}
 
+	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _gridGetter = /*#__PURE__*/new WeakMap();
+
+	var _contentContainer = /*#__PURE__*/new WeakMap();
+
+	var _bindGridNodeVisionChange = /*#__PURE__*/new WeakSet();
+
+	var _getPossibleToValidateFieldNodes = /*#__PURE__*/new WeakSet();
+
+	var _fieldNodeIsInGridVision = /*#__PURE__*/new WeakSet();
+
+	var _bindSpotlightToNode = /*#__PURE__*/new WeakSet();
+
+	var _freezeGridContainer = /*#__PURE__*/new WeakSet();
+
+	var _tieTourToNode = /*#__PURE__*/new WeakSet();
+
+	var FieldHintManager = /*#__PURE__*/function () {
+	  function FieldHintManager(contentContainer, gridGetter) {
+	    babelHelpers.classCallCheck(this, FieldHintManager);
+
+	    _tieTourToNode.add(this);
+
+	    _freezeGridContainer.add(this);
+
+	    _bindSpotlightToNode.add(this);
+
+	    _fieldNodeIsInGridVision.add(this);
+
+	    _getPossibleToValidateFieldNodes.add(this);
+
+	    _bindGridNodeVisionChange.add(this);
+
+	    babelHelpers.defineProperty(this, "fieldHintIsBusy", false);
+	    babelHelpers.defineProperty(this, "activeHintGuide", null);
+
+	    _gridGetter.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _contentContainer.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _contentContainer, contentContainer);
+	    babelHelpers.classPrivateFieldSet(this, _gridGetter, gridGetter);
+	  }
+
+	  babelHelpers.createClass(FieldHintManager, [{
+	    key: "processFieldTour",
+	    value: function processFieldTour(fieldNode, tourData, endTourHandler) {
+	      var _this = this;
+
+	      var addictedFieldNodes = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+	      if (this.fieldHintIsBusy) {
+	        return;
+	      }
+
+	      this.fieldHintIsBusy = true; // When click action in progress tour will be closed -> 'onClose' tour method will be executed
+
+	      tourData.events = {
+	        onClose: function onClose() {
+	          endTourHandler();
+	          _this.fieldHintIsBusy = false;
+	          _this.activeHintGuide = null;
+	        }
+	      };
+
+	      if (_classPrivateMethodGet$4(this, _fieldNodeIsInGridVision, _fieldNodeIsInGridVision2).call(this, fieldNode)) {
+	        var tourObject = _classPrivateMethodGet$4(this, _tieTourToNode, _tieTourToNode2).call(this, fieldNode, tourData);
+
+	        _classPrivateMethodGet$4(this, _freezeGridContainer, _freezeGridContainer2).call(this, function () {
+	          tourObject.close();
+	        });
+	      } else {
+	        var gridContainer = babelHelpers.classPrivateFieldGet(this, _gridGetter).call(this).getContainer();
+	        var leftArrow = gridContainer.querySelector('.main-grid-ear-left');
+	        var rightArrow = gridContainer.querySelector('.main-grid-ear-right');
+	        var fieldPos = fieldNode.getClientRects()[0].x;
+	        var gridPos = gridContainer.getClientRects()[0].x;
+	        var spotlight$$1 = null;
+
+	        if (fieldPos > gridPos) {
+	          spotlight$$1 = _classPrivateMethodGet$4(this, _bindSpotlightToNode, _bindSpotlightToNode2).call(this, rightArrow);
+	        } else {
+	          spotlight$$1 = _classPrivateMethodGet$4(this, _bindSpotlightToNode, _bindSpotlightToNode2).call(this, leftArrow);
+	        }
+
+	        _classPrivateMethodGet$4(this, _bindGridNodeVisionChange, _bindGridNodeVisionChange2).call(this, fieldNode, function () {
+	          spotlight$$1.close();
+
+	          var tourObject = _classPrivateMethodGet$4(_this, _tieTourToNode, _tieTourToNode2).call(_this, fieldNode, tourData);
+
+	          _classPrivateMethodGet$4(_this, _freezeGridContainer, _freezeGridContainer2).call(_this, function () {
+	            tourObject.close();
+	          });
+	        }, [], addictedFieldNodes);
+	      }
+	    }
+	  }, {
+	    key: "getActiveHint",
+	    value: function getActiveHint() {
+	      if (!this.fieldHintIsBusy) {
+	        return null;
+	      } else if (this.activeHintGuide instanceof ui_tour.Guide) {
+	        return this.activeHintGuide;
+	      }
+
+	      return null;
+	    }
+	  }]);
+	  return FieldHintManager;
+	}();
+
+	function _bindGridNodeVisionChange2(observedNode, onSuccessVisionCallback) {
+	  var _classPrivateMethodGe,
+	      _this2 = this;
+
+	  var callbackParams = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
+	  var addictedNodes = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+	  var observedNodes = (_classPrivateMethodGe = _classPrivateMethodGet$4(this, _getPossibleToValidateFieldNodes, _getPossibleToValidateFieldNodes2)).call.apply(_classPrivateMethodGe, [this, observedNode].concat(babelHelpers.toConsumableArray(addictedNodes)));
+
+	  var observer = function observer(event) {
+	    var _classPrivateMethodGe2;
+
+	    if ((_classPrivateMethodGe2 = _classPrivateMethodGet$4(_this2, _fieldNodeIsInGridVision, _fieldNodeIsInGridVision2)).call.apply(_classPrivateMethodGe2, [_this2].concat(babelHelpers.toConsumableArray(observedNodes)))) {
+	      main_core.Event.unbind(babelHelpers.classPrivateFieldGet(_this2, _gridGetter).call(_this2).getScrollContainer(), 'scroll', observer);
+	      main_core.Event.unbind(window, 'resize', observer);
+	      onSuccessVisionCallback.apply(void 0, babelHelpers.toConsumableArray(callbackParams));
+	    }
+	  };
+
+	  main_core.Event.bind(babelHelpers.classPrivateFieldGet(this, _gridGetter).call(this).getScrollContainer(), 'scroll', observer);
+	  main_core.Event.bind(window, 'resize', observer);
+	}
+
+	function _getPossibleToValidateFieldNodes2(mainNode) {
+	  var _babelHelpers$classPr, _babelHelpers$classPr2;
+
+	  var nodesTuple = [];
+
+	  for (var _len = arguments.length, addictedNodes = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+	    addictedNodes[_key - 1] = arguments[_key];
+	  }
+
+	  for (var _i = 0, _addictedNodes = addictedNodes; _i < _addictedNodes.length; _i++) {
+	    var addictedNode = _addictedNodes[_i];
+	    nodesTuple.push({
+	      node: addictedNode,
+	      nodeRect: addictedNode.getClientRects()[0]
+	    });
+	  }
+
+	  var mainNodeTupleEl = {
+	    node: mainNode,
+	    nodeRect: mainNode.getClientRects()[0]
+	  };
+	  nodesTuple.push(mainNodeTupleEl);
+	  nodesTuple.sort(function (firstEl, secondEl) {
+	    var firstX = firstEl.nodeRect.x;
+	    var secondX = secondEl.nodeRect.x;
+
+	    if (firstX < secondX) {
+	      return -1;
+	    } else if (firstX > secondX) {
+	      return 1;
+	    } else {
+	      return 0;
+	    }
+	  });
+	  var gridRect = (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(this, _gridGetter).call(this)) === null || _babelHelpers$classPr === void 0 ? void 0 : (_babelHelpers$classPr2 = _babelHelpers$classPr.getContainer().getClientRects()) === null || _babelHelpers$classPr2 === void 0 ? void 0 : _babelHelpers$classPr2[0];
+
+	  function widthIsValid(leftPos, rightPos) {
+	    return Math.abs(leftPos - rightPos) < gridRect.width;
+	  }
+
+	  while (nodesTuple.length > 1 && !widthIsValid(nodesTuple[0].nodeRect.x, nodesTuple[nodesTuple.length - 1].nodeRect.x)) {
+	    var firstEl = nodesTuple[0];
+	    var lastEl = nodesTuple[nodesTuple.length - 1];
+
+	    if (firstEl === mainNodeTupleEl) {
+	      nodesTuple.pop();
+	    } else if (lastEl === mainNodeTupleEl) {
+	      nodesTuple.shift();
+	    } else {
+	      var firstElDistance = mainNodeTupleEl.nodeRect.x - firstEl.nodeRect.x;
+	      var lastElDistance = lastEl.nodeRect.x - mainNodeTupleEl.nodeRect.x;
+
+	      if (firstElDistance >= lastElDistance) {
+	        nodesTuple.shift();
+	      } else {
+	        nodesTuple.pop();
+	      }
+	    }
+	  }
+
+	  return nodesTuple.map(function (el) {
+	    return el.node;
+	  });
+	}
+
+	function _fieldNodeIsInGridVision2() {
+	  var _babelHelpers$classPr3, _babelHelpers$classPr4;
+
+	  var gridRect = (_babelHelpers$classPr3 = babelHelpers.classPrivateFieldGet(this, _gridGetter).call(this)) === null || _babelHelpers$classPr3 === void 0 ? void 0 : (_babelHelpers$classPr4 = _babelHelpers$classPr3.getContainer().getClientRects()) === null || _babelHelpers$classPr4 === void 0 ? void 0 : _babelHelpers$classPr4[0];
+
+	  if (gridRect === undefined) {
+	    return false;
+	  }
+
+	  var gridLeftEdge = gridRect.x;
+	  var gridRightEdge = gridRect.x + gridRect.width;
+
+	  for (var _len2 = arguments.length, fieldNodes = new Array(_len2), _key2 = 0; _key2 < _len2; _key2++) {
+	    fieldNodes[_key2] = arguments[_key2];
+	  }
+
+	  for (var _i2 = 0, _fieldNodes = fieldNodes; _i2 < _fieldNodes.length; _i2++) {
+	    var _fieldNode$getClientR;
+
+	    var fieldNode = _fieldNodes[_i2];
+	    var fieldRect = (_fieldNode$getClientR = fieldNode.getClientRects()) === null || _fieldNode$getClientR === void 0 ? void 0 : _fieldNode$getClientR[0];
+
+	    if (fieldRect === undefined) {
+	      return false;
+	    }
+
+	    var fieldLeftEdge = fieldRect.x;
+	    var fieldRightEdge = fieldRect.x + fieldRect.width;
+
+	    if (fieldLeftEdge < gridLeftEdge || fieldRightEdge > gridRightEdge) {
+	      return false;
+	    }
+	  }
+
+	  return true;
+	}
+
+	function _bindSpotlightToNode2(targetNode) {
+	  var spotlight$$1 = new BX.SpotLight({
+	    id: 'arrow_spotlight',
+	    targetElement: targetNode,
+	    autoSave: true,
+	    targetVertex: "middle-center",
+	    zIndex: 200
+	  });
+	  spotlight$$1.show();
+	  spotlight$$1.container.style.pointerEvents = "none";
+	  return spotlight$$1;
+	}
+
+	function _freezeGridContainer2(onCloseCallback) {
+	  var _this3 = this;
+
+	  var callbackParams = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+	  var gridContainer = babelHelpers.classPrivateFieldGet(this, _gridGetter).call(this).getContainer();
+	  var leftArrow = gridContainer.querySelector('.main-grid-ear-left');
+	  var rightArrow = gridContainer.querySelector('.main-grid-ear-right');
+	  gridContainer.style.pointerEvents = "none";
+	  leftArrow.style.pointerEvents = "none";
+	  rightArrow.style.pointerEvents = "none";
+
+	  var clickObserver = function clickObserver(event) {
+	    gridContainer.style.pointerEvents = "auto";
+	    leftArrow.style.pointerEvents = "auto";
+	    rightArrow.style.pointerEvents = "auto";
+	    main_core.Event.unbind(babelHelpers.classPrivateFieldGet(_this3, _contentContainer), 'click', clickObserver);
+	    onCloseCallback.apply(void 0, babelHelpers.toConsumableArray(callbackParams));
+	  };
+
+	  setTimeout(function () {
+	    main_core.Event.bind(babelHelpers.classPrivateFieldGet(_this3, _contentContainer), 'click', clickObserver);
+	  }, 500);
+	}
+
+	function _tieTourToNode2(tourTarget, tourData) {
+	  var guide = new ui_tour.Guide({
+	    steps: [Object.assign({
+	      target: tourTarget
+	    }, tourData)],
+	    onEvents: true
+	  });
+	  this.activeHintGuide = guide;
+	  guide.showNextStep();
+	  return guide;
+	}
+
 	var _templateObject$5;
 
-	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
 
 	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-	function _classPrivateMethodInitSpec$4(obj, privateSet) { _checkPrivateRedeclaration$4(obj, privateSet); privateSet.add(obj); }
-
-	function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
 	function _classStaticPrivateMethodGet$1(receiver, classConstructor, method) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); return method; }
 
 	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 
-	function _classPrivateMethodGet$4(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	function _classPrivateMethodGet$5(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var GRID_TEMPLATE_ROW = 'template_0';
 	var DEFAULT_PRECISION = 2;
+
+	var _fieldHintManager = /*#__PURE__*/new WeakMap();
 
 	var _initSupportCustomRowActions = /*#__PURE__*/new WeakSet();
 
@@ -2848,17 +3141,23 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  function Editor(id) {
 	    babelHelpers.classCallCheck(this, Editor);
 
-	    _classPrivateMethodInitSpec$4(this, _childrenHasErrors);
+	    _childrenHasErrors.add(this);
 
-	    _classPrivateMethodInitSpec$4(this, _getCalculatePriceFieldNames);
+	    _getCalculatePriceFieldNames.add(this);
 
-	    _classPrivateMethodInitSpec$4(this, _initSupportCustomRowActions);
+	    _initSupportCustomRowActions.add(this);
 
 	    babelHelpers.defineProperty(this, "ajaxPool", new Map());
 	    babelHelpers.defineProperty(this, "products", []);
 	    babelHelpers.defineProperty(this, "productsWasInitiated", false);
 	    babelHelpers.defineProperty(this, "isChangedGrid", false);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
+
+	    _fieldHintManager.set(this, {
+	      writable: true,
+	      value: void 0
+	    });
+
 	    babelHelpers.defineProperty(this, "actions", {
 	      disableSaveButton: 'disableSaveButton',
 	      productChange: 'productChange',
@@ -2899,6 +3198,8 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  babelHelpers.createClass(Editor, [{
 	    key: "init",
 	    value: function init() {
+	      var _this = this;
+
 	      var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 	      this.setSettings(config);
 
@@ -2910,9 +3211,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      this.initForm();
 	      this.initProducts();
 	      this.initGridData();
+	      babelHelpers.classPrivateFieldSet(this, _fieldHintManager, new FieldHintManager(this.getContainer(), this.getGrid.bind(this)));
 	      main_core_events.EventEmitter.emit(window, 'EntityProductListController', [this]);
 
-	      _classPrivateMethodGet$4(this, _initSupportCustomRowActions, _initSupportCustomRowActions2).call(this);
+	      _classPrivateMethodGet$5(this, _initSupportCustomRowActions, _initSupportCustomRowActions2).call(this);
 
 	      this.subscribeDomEvents();
 	      this.subscribeCustomEvents();
@@ -2931,7 +3233,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	                return;
 	              }
 
-	              top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	              _this.openIntegrationLimitSlider();
 	            };
 
 	            var lock = main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-entity-product-list-locked-header\"></span>"])));
@@ -2943,46 +3245,46 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "subscribeDomEvents",
 	    value: function subscribeDomEvents() {
-	      var _this = this;
+	      var _this2 = this;
 
 	      this.unsubscribeDomEvents();
 	      var container = this.getContainer();
 
 	      if (main_core.Type.isElementNode(container)) {
 	        container.querySelectorAll('[data-role="product-list-select-button"]').forEach(function (selectButton) {
-	          main_core.Event.bind(selectButton, 'click', _this.productSelectionPopupHandler);
+	          main_core.Event.bind(selectButton, 'click', _this2.productSelectionPopupHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-add-button"]').forEach(function (addButton) {
-	          main_core.Event.bind(addButton, 'click', _this.productRowAddHandler);
+	          main_core.Event.bind(addButton, 'click', _this2.productRowAddHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-settings-button"]').forEach(function (configButton) {
-	          main_core.Event.bind(configButton, 'click', _this.showSettingsPopupHandler);
+	          main_core.Event.bind(configButton, 'click', _this2.showSettingsPopupHandler);
 	        });
 	      }
 	    }
 	  }, {
 	    key: "unsubscribeDomEvents",
 	    value: function unsubscribeDomEvents() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      var container = this.getContainer();
 
 	      if (main_core.Type.isElementNode(container)) {
 	        container.querySelectorAll('[data-role="product-list-select-button"]').forEach(function (selectButton) {
-	          main_core.Event.unbind(selectButton, 'click', _this2.productSelectionPopupHandler);
+	          main_core.Event.unbind(selectButton, 'click', _this3.productSelectionPopupHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-add-button"]').forEach(function (addButton) {
-	          main_core.Event.unbind(addButton, 'click', _this2.productRowAddHandler);
+	          main_core.Event.unbind(addButton, 'click', _this3.productRowAddHandler);
 	        });
 	        container.querySelectorAll('[data-role="product-list-settings-button"]').forEach(function (configButton) {
-	          main_core.Event.unbind(configButton, 'click', _this2.showSettingsPopupHandler);
+	          main_core.Event.unbind(configButton, 'click', _this3.showSettingsPopupHandler);
 	        });
 	      }
 	    }
 	  }, {
 	    key: "subscribeCustomEvents",
 	    value: function subscribeCustomEvents() {
-	      var _this3 = this;
+	      var _this4 = this;
 
 	      this.unsubscribeCustomEvents();
 	      main_core_events.EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
@@ -3003,7 +3305,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          moduleId: 'crm',
 	          callback: function callback(data) {
 	            if (data.command === 'onCatalogInventoryManagementEnabled' || data.command === 'onCatalogInventoryManagementDisabled') {
-	              _this3.reloadGrid(false);
+	              _this4.reloadGrid(false);
 	            }
 	          }
 	        }).bind(this);
@@ -3053,16 +3355,16 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "selectProductInRow",
 	    value: function selectProductInRow(id, productId) {
-	      var _this4 = this;
+	      var _this5 = this;
 
 	      if (!main_core.Type.isStringFilled(id) || main_core.Text.toNumber(productId) <= 0) {
 	        return;
 	      }
 
 	      requestAnimationFrame(function () {
-	        var _this4$getProductSele;
+	        var _this5$getProductSele;
 
-	        (_this4$getProductSele = _this4.getProductSelector(id)) === null || _this4$getProductSele === void 0 ? void 0 : _this4$getProductSele.onProductSelect(productId);
+	        (_this5$getProductSele = _this5.getProductSelector(id)) === null || _this5$getProductSele === void 0 ? void 0 : _this5$getProductSele.onProductSelect(productId);
 	      });
 	    }
 	  }, {
@@ -3071,7 +3373,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var items = [];
 	      this.products.forEach(function (product) {
 	        var item = {
-	          fields: _objectSpread({}, product.fields),
+	          fields: babelHelpers.objectSpread({}, product.fields),
 	          rowId: product.fields.ROW_ID
 	        };
 	        items.push(item);
@@ -3111,7 +3413,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnInnerCancel",
 	    value: function handleOnInnerCancel(event) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      if (this.controller) {
 	        this.controller.rollback();
@@ -3119,7 +3421,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      this.setGridChanged(false);
 	      main_core_events.EventEmitter.subscribeOnce(this, 'onGridReloaded', function () {
-	        return _this5.actionUpdateTotalData({
+	        return _this6.actionUpdateTotalData({
 	          isInternalChanging: true
 	        });
 	      });
@@ -3149,14 +3451,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "reloadGrid",
 	    value: function reloadGrid() {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var useProductsFromRequest = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
 
 	      this.getGrid().reloadTable('POST', {
 	        useProductsFromRequest: useProductsFromRequest
 	      }, function () {
-	        return main_core_events.EventEmitter.emit(_this6, 'onGridReloaded');
+	        return main_core_events.EventEmitter.emit(_this7, 'onGridReloaded');
 	      });
 	    }
 	    /*
@@ -3171,7 +3473,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnBeforeGridRequest",
 	    value: function handleOnBeforeGridRequest(event) {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      var _event$getCompatData3 = event.getCompatData(),
 	          _event$getCompatData4 = babelHelpers.slicedToArray(_event$getCompatData3, 2),
@@ -3188,7 +3490,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      eventArgs.url = this.getReloadUrl();
 	      eventArgs.method = 'POST';
 	      eventArgs.sessid = BX.bitrix_sessid();
-	      eventArgs.data = _objectSpread(_objectSpread({}, eventArgs.data), {}, {
+	      eventArgs.data = babelHelpers.objectSpread({}, eventArgs.data, {
 	        signedParameters: this.getSignedParameters(),
 	        products: useProductsFromRequest ? this.getProductsFields(_classStaticPrivateMethodGet$1(Editor, Editor, _getAjaxFields).call(Editor)) : null,
 	        locationId: this.getLocationId(),
@@ -3198,7 +3500,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	      if (isNativeAction && this.isChanged()) {
 	        main_core_events.EventEmitter.subscribeOnce('Grid::updated', function () {
-	          return _this7.actionUpdateTotalData({
+	          return _this8.actionUpdateTotalData({
 	            isInternalChanging: false
 	          });
 	        });
@@ -3285,11 +3587,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "addFirstRowIfEmpty",
 	    value: function addFirstRowIfEmpty() {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      if (this.getGrid().getRows().getCountDisplayed() === 0) {
 	        requestAnimationFrame(function () {
-	          return _this8.addProductRow();
+	          return _this9.addProductRow();
 	        });
 	      }
 	    }
@@ -3456,14 +3758,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "changeCurrencyId",
 	    value: function changeCurrencyId(currencyId) {
-	      var _this9 = this;
+	      var _this10 = this;
 
 	      this.setCurrencyId(currencyId);
 	      var products = [];
 	      this.products.forEach(function (product) {
 	        var priceFields = {};
 
-	        _classPrivateMethodGet$4(_this9, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this9).forEach(function (name) {
+	        _classPrivateMethodGet$5(_this10, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this10).forEach(function (name) {
 	          priceFields[name] = product.getField(name);
 	        });
 
@@ -3485,7 +3787,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      templateRow['CURRENCY'] = this.getCurrencyId();
 	      var templateFieldNames = ['DISCOUNT_ROW', 'SUM', 'PRICE'];
 	      templateFieldNames.forEach(function (field) {
-	        templateRow[field]['CURRENCY']['VALUE'] = _this9.getCurrencyId();
+	        templateRow[field]['CURRENCY']['VALUE'] = _this10.getCurrencyId();
 	      });
 	      this.setGridEditData(editData);
 	    }
@@ -3506,13 +3808,13 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "updateTotalUiCurrency",
 	    value: function updateTotalUiCurrency() {
-	      var _this10 = this;
+	      var _this11 = this;
 
 	      var totalBlock = BX(this.getSettingValue('totalBlockContainerId', null));
 
 	      if (main_core.Type.isElementNode(totalBlock)) {
 	        totalBlock.querySelectorAll('[data-role="currency-wrapper"]').forEach(function (row) {
-	          row.innerHTML = _this10.getCurrencyText();
+	          row.innerHTML = _this11.getCurrencyText();
 	        });
 	      }
 	    }
@@ -3771,10 +4073,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getContainer",
 	    value: function getContainer() {
-	      var _this11 = this;
+	      var _this12 = this;
 
 	      return this.cache.remember('container', function () {
-	        return document.getElementById(_this11.getContainerId());
+	        return document.getElementById(_this12.getContainerId());
 	      });
 	    }
 	  }, {
@@ -3900,9 +4202,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      try {
 	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
 	          var item = _step.value;
-
-	          var fields = _objectSpread({}, item.fields);
-
+	          var fields = babelHelpers.objectSpread({}, item.fields);
 	          var settings = {
 	            selectorId: item.selectorId,
 	            isReserveBlocked: isReserveBlocked
@@ -3928,10 +4228,10 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "getGrid",
 	    value: function getGrid() {
-	      var _this12 = this;
+	      var _this13 = this;
 
 	      return this.cache.remember('grid', function () {
-	        var gridId = _this12.getGridId();
+	        var gridId = _this13.getGridId();
 
 	        if (!main_core.Reflection.getClass('BX.Main.gridManager.getInstanceById')) {
 	          throw Error("Cannot find grid with '".concat(gridId, "' id."));
@@ -3967,7 +4267,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleProductErrorsChange",
 	    value: function handleProductErrorsChange() {
-	      if (_classPrivateMethodGet$4(this, _childrenHasErrors, _childrenHasErrors2).call(this)) {
+	      if (_classPrivateMethodGet$5(this, _childrenHasErrors, _childrenHasErrors2).call(this)) {
 	        this.controller.disableSaveButton();
 	      }
 	    }
@@ -4060,7 +4360,6 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      main_core_events.EventEmitter.subscribeOnce(popup, 'onWindowRegister', BX.defer(function () {
 	        popup.Get().style.position = 'fixed';
 	        popup.Get().style.top = parseInt(popup.Get().style.top) - BX.GetWindowScrollPos().scrollTop + 'px';
-	        popup.OVERLAY.style.zIndex = 798;
 	      }));
 	      main_core_events.EventEmitter.subscribeOnce(window, 'EntityProductListController:onInnerCancel', BX.defer(function () {
 	        popup.Close();
@@ -4113,25 +4412,25 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	    value: function destroySettingsPopup() {
 	      if (this.cache.has('settings-popup')) {
 	        this.cache.get('settings-popup').getPopup().destroy();
-	        this.cache["delete"]('settings-popup');
+	        this.cache.delete('settings-popup');
 	      }
 	    }
 	  }, {
 	    key: "getSettingsPopup",
 	    value: function getSettingsPopup() {
-	      var _this13 = this;
+	      var _this14 = this;
 
 	      return this.cache.remember('settings-popup', function () {
-	        return new SettingsPopup(_this13.getContainer().querySelector('.crm-entity-product-list-add-block-active [data-role="product-list-settings-button"]'), _this13.getSettingValue('popupSettings', []), _this13);
+	        return new SettingsPopup(_this14.getContainer().querySelector('.crm-entity-product-list-add-block-active [data-role="product-list-settings-button"]'), _this14.getSettingValue('popupSettings', []), _this14);
 	      });
 	    }
 	  }, {
 	    key: "getHintPopup",
 	    value: function getHintPopup() {
-	      var _this14 = this;
+	      var _this15 = this;
 
 	      return this.cache.remember('hint-popup', function () {
-	        return new HintPopup(_this14);
+	        return new HintPopup(_this15);
 	      });
 	    }
 	  }, {
@@ -4177,7 +4476,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var data = this.getGridEditData();
 	      var originalTemplateData = data[GRID_TEMPLATE_ROW];
 	      var customEditData = this.prepareCustomEditData(originalTemplateData, newId);
-	      this.setOriginalTemplateEditData(_objectSpread(_objectSpread({}, originalTemplateData), customEditData));
+	      this.setOriginalTemplateEditData(babelHelpers.objectSpread({}, originalTemplateData, customEditData));
 	      return originalTemplateData;
 	    }
 	  }, {
@@ -4207,7 +4506,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	      var fields = anchorProduct === null || anchorProduct === void 0 ? void 0 : anchorProduct.getFields();
 
 	      if (main_core.Type.isNil(fields)) {
-	        fields = _objectSpread(_objectSpread({}, this.getSettingValue('templateItemFields', {})), {
+	        fields = babelHelpers.objectSpread({}, this.getSettingValue('templateItemFields', {}), {
 	          CURRENCY: this.getCurrencyId()
 	        });
 	        var lastItem = this.products[this.products.length - 1];
@@ -4265,12 +4564,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "focusProductSelector",
 	    value: function focusProductSelector(newId) {
-	      var _this15 = this;
+	      var _this16 = this;
 
 	      requestAnimationFrame(function () {
-	        var _this15$getProductSel;
+	        var _this16$getProductSel;
 
-	        (_this15$getProductSel = _this15.getProductSelector(newId)) === null || _this15$getProductSel === void 0 ? void 0 : _this15$getProductSel.searchInDialog().focusName();
+	        (_this16$getProductSel = _this16.getProductSelector(newId)) === null || _this16$getProductSel === void 0 ? void 0 : _this16$getProductSel.searchInDialog().focusName();
 	      });
 	    }
 	  }, {
@@ -4287,7 +4586,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnProductChange",
 	    value: function handleOnProductChange(event) {
-	      var _this16 = this;
+	      var _this17 = this;
 
 	      var data = event.getData();
 	      var productRow = this.getProductByRowId(data.rowId);
@@ -4300,11 +4599,11 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	            fields['IMAGE_INFO'] = JSON.stringify(fields['IMAGE_INFO']);
 	          }
 
-	          if (_this16.getCurrencyId() !== fields['CURRENCY_ID']) {
+	          if (_this17.getCurrencyId() !== fields['CURRENCY_ID']) {
 	            fields['CURRENCY'] = fields['CURRENCY_ID'];
 	            var priceFields = {};
 
-	            _classPrivateMethodGet$4(_this16, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this16).forEach(function (name) {
+	            _classPrivateMethodGet$5(_this17, _getCalculatePriceFieldNames, _getCalculatePriceFieldNames2).call(_this17).forEach(function (name) {
 	              priceFields[name] = data.fields[name];
 	            });
 
@@ -4312,12 +4611,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	              fields: priceFields,
 	              id: productRow.getId()
 	            }];
-	            main_core.ajax.runComponentAction(_this16.getComponentName(), 'calculateProductPrices', {
+	            main_core.ajax.runComponentAction(_this17.getComponentName(), 'calculateProductPrices', {
 	              mode: 'class',
-	              signedParameters: _this16.getSignedParameters(),
+	              signedParameters: _this17.getSignedParameters(),
 	              data: {
 	                products: products,
-	                currencyId: _this16.getCurrencyId(),
+	                currencyId: _this17.getCurrencyId(),
 	                options: {
 	                  ACTION: 'calculateProductPrices'
 	                }
@@ -4337,14 +4636,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          }
 	        });
 	        promise.then(function (fields) {
-	          if (_this16.products.length > 1) {
+	          if (_this17.products.length > 1) {
 	            var taxId = fields['VAT_ID'] || fields['TAX_ID'];
 	            var taxIncluded = fields['VAT_INCLUDED'] || fields['TAX_INCLUDED'];
 
 	            if (taxId > 0 && taxIncluded !== productRow.getTaxIncluded()) {
-	              var _this16$getTaxList;
+	              var _this17$getTaxList;
 
-	              var taxRate = (_this16$getTaxList = _this16.getTaxList()) === null || _this16$getTaxList === void 0 ? void 0 : _this16$getTaxList.find(function (item) {
+	              var taxRate = (_this17$getTaxList = _this17.getTaxList()) === null || _this17$getTaxList === void 0 ? void 0 : _this17$getTaxList.find(function (item) {
 	                return parseInt(item.ID) === taxId;
 	              });
 
@@ -4381,7 +4680,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	          productRow.modifyBasePriceInput();
 	          productRow.executeExternalActions();
 
-	          _this16.getGrid().tableUnfade();
+	          _this17.getGrid().tableUnfade();
 	        });
 	      } else {
 	        this.getGrid().tableUnfade();
@@ -4452,14 +4751,14 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 
 	    /* actions */
 	    value: function executeActions(actions) {
-	      var _this17 = this;
+	      var _this18 = this;
 
 	      if (!main_core.Type.isArrayFilled(actions)) {
 	        return;
 	      }
 
 	      var disableSaveButton = actions.filter(function (action) {
-	        return action.type === _this17.actions.updateTotal || action.type === _this17.actions.disableSaveButton;
+	        return action.type === _this18.actions.updateTotal || action.type === _this18.actions.disableSaveButton;
 	      }).length > 0;
 
 	      var _iterator2 = _createForOfIteratorHelper$1(actions),
@@ -4698,7 +4997,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "sendTotalData",
 	    value: function sendTotalData(data, options) {
-	      var _this18 = this;
+	      var _this19 = this;
 
 	      if (this.controller) {
 	        var needMarkAsChanged = true;
@@ -4708,7 +5007,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        }
 
 	        setTimeout(function () {
-	          _this18.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$4(_this18, _childrenHasErrors, _childrenHasErrors2).call(_this18));
+	          _this19.controller.changeSumTotal(data, needMarkAsChanged, !_classPrivateMethodGet$5(_this19, _childrenHasErrors, _childrenHasErrors2).call(_this19));
 	        }, 500);
 	      }
 	    }
@@ -4719,7 +5018,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "ajaxRequest",
 	    value: function ajaxRequest(action, data) {
-	      var _this19 = this;
+	      var _this20 = this;
 
 	      var requestKey = main_core.Text.getRandom();
 	      this.ajaxPool.set(action, requestKey);
@@ -4735,9 +5034,9 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        signedParameters: this.getSignedParameters(),
 	        data: data
 	      }).then(function (response) {
-	        return _this19.ajaxResultSuccess(response, data.options);
+	        return _this20.ajaxResultSuccess(response, data.options);
 	      }, function (response) {
-	        return _this19.ajaxResultFailure(response, data.options);
+	        return _this20.ajaxResultFailure(response, data.options);
 	      });
 	    }
 	  }, {
@@ -4747,7 +5046,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	        return;
 	      }
 
-	      this.ajaxPool["delete"](response.data.action);
+	      this.ajaxPool.delete(response.data.action);
 	      main_core_events.EventEmitter.emit(this, 'onAjaxSuccess', response.data.action);
 
 	      switch (response.data.action) {
@@ -4785,7 +5084,7 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "ajaxResultFailure",
 	    value: function ajaxResultFailure(response, requestOptions) {
-	      this.ajaxPool["delete"](requestOptions.ACTION);
+	      this.ajaxPool.delete(requestOptions.ACTION);
 	    }
 	  }, {
 	    key: "ajaxResultCommonCheck",
@@ -4872,12 +5171,12 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "cleanProductRows",
 	    value: function cleanProductRows() {
-	      var _this20 = this;
+	      var _this21 = this;
 
 	      this.products.filter(function (item) {
 	        return item.isEmpty();
 	      }).forEach(function (row) {
-	        return _this20.deleteRow(row.getField('ID'), true);
+	        return _this21.deleteRow(row.getField('ID'), true);
 	      });
 	    }
 	  }, {
@@ -4908,7 +5207,64 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	  }, {
 	    key: "handleOnTabShow",
 	    value: function handleOnTabShow() {
-	      main_core_events.EventEmitter.emit('onDemandRecalculateWrapper');
+	      main_core_events.EventEmitter.emit('onDemandRecalculateWrapper', [this]);
+	    }
+	  }, {
+	    key: "showFieldTourHint",
+	    value: function showFieldTourHint(fieldName, tourData, endTourHandler) {
+	      var addictedFields = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : [];
+
+	      if (this.products.length > 0) {
+	        var firstProductRowNode = this.products[0].getNode();
+	        var addictedNodes = [];
+
+	        var _iterator5 = _createForOfIteratorHelper$1(addictedFields),
+	            _step5;
+
+	        try {
+	          for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+	            var _fieldName = _step5.value;
+
+	            var _fieldNode = firstProductRowNode.querySelector("[data-name=\"".concat(_fieldName, "\"]"));
+
+	            if (_fieldNode !== null) {
+	              addictedNodes.push(_fieldNode);
+	            }
+	          }
+	        } catch (err) {
+	          _iterator5.e(err);
+	        } finally {
+	          _iterator5.f();
+	        }
+
+	        var fieldNode = firstProductRowNode.querySelector("[data-name=\"".concat(fieldName, "\"]"));
+
+	        if (fieldNode !== null) {
+	          babelHelpers.classPrivateFieldGet(this, _fieldHintManager).processFieldTour(fieldNode, tourData, endTourHandler, addictedNodes);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "getActiveHint",
+	    value: function getActiveHint() {
+	      return babelHelpers.classPrivateFieldGet(this, _fieldHintManager).getActiveHint();
+	    }
+	  }, {
+	    key: "openIntegrationLimitSlider",
+	    value: function openIntegrationLimitSlider() {
+	      top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+	      var helperSlider = top.BX.UI.InfoHelper.getSlider();
+	      top.BX.Event.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', function (event) {
+	        var _event$getData$;
+
+	        var slider = (_event$getData$ = event.getData()[0]) === null || _event$getData$ === void 0 ? void 0 : _event$getData$.getSlider();
+
+	        if (slider !== helperSlider) {
+	          return;
+	        }
+
+	        window.location.search += '&active_tab=tab_products';
+	      });
 	    }
 	  }]);
 	  return Editor;
@@ -4935,5 +5291,5 @@ this.BX.Crm.Entity = this.BX.Crm.Entity || {};
 	exports.Editor = Editor;
 	exports.PageEventsManager = PageEventsManager;
 
-}((this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}),BX,BX,BX.Catalog,BX.Catalog,BX.Main,BX,BX.Event,BX.Catalog.StoreUse,BX.Currency,BX.Catalog,BX.Catalog,BX));
+}((this.BX.Crm.Entity.ProductList = this.BX.Crm.Entity.ProductList || {}),BX,BX,BX,BX.Catalog,BX.Catalog,BX.Main,BX.Event,BX.Catalog.StoreUse,BX.Currency,BX.Catalog,BX.Catalog,BX,BX,BX,BX.UI.Tour));
 //# sourceMappingURL=script.js.map

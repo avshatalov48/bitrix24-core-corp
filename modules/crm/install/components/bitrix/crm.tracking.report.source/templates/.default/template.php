@@ -10,7 +10,12 @@ use Bitrix\Main\Localization\Loc;
 /** @var array $arParams */
 /** @var array $arResult */
 
-Extension::load(['crm.report.tracking.ad.report', 'ui.info-helper']);
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'crm.report.tracking.ad.report',
+	'ui.info-helper',
+]);
 
 $rows = [];
 $columnIds = array_column($arResult['COLUMNS'], 'id');
@@ -50,7 +55,7 @@ foreach ($arResult['ROWS'] as $item)
 			{
 				$value = '';
 			}
-			
+
 			$roiClass = '';
 			switch ($item['roiScale'])
 			{
@@ -71,7 +76,7 @@ foreach ($arResult['ROWS'] as $item)
 					$roiText = Loc::getMessage('CRM_TRACKING_REPORT_SOURCE_GRID_ROI_GOOD');
 					break;
 			}
-			
+
 			$value = '
 				<div class="crm-tracking-report-source-rating ' . $roiClass . '">
 					<div class="crm-tracking-report-source-rating-icon"></div>

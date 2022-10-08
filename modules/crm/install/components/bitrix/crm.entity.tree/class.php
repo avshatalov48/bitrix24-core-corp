@@ -179,6 +179,7 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				&& mb_strpos($status['ENTITY_ID'], 'DEAL_STAGE') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'DYNAMIC_') !== 0
 				&& mb_strpos($status['ENTITY_ID'], 'SMART_INVOICE_') !== 0
+				&& mb_strpos($status['ENTITY_ID'], 'SMART_DOCUMENT_') !== 0
 			)
 			{
 				continue;
@@ -363,6 +364,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			foreach ($parentIds as $parentId)
 			{
 				$parentEntityTypeId = $parentId->getEntityTypeId();
+				if ($parentEntityTypeId === \CCrmOwnerType::Order && !\CCrmSaleHelper::isWithOrdersMode())
+				{
+					continue;
+				}
 				$parents[$parentEntityTypeId] = $this->loadElementById($parentEntityTypeId, $parentId->getEntityId());
 			}
 		}
@@ -577,6 +582,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 				foreach ($childRelations as $childRelation)
 				{
 					$childEntityTypeId = $childRelation->getChildEntityTypeId();
+					if ($childEntityTypeId === \CCrmOwnerType::Order && !\CCrmSaleHelper::isWithOrdersMode())
+					{
+						continue;
+					}
 					$childIds = [];
 					$childItems = $childRelation->getChildElements($parentIdentifier);
 					foreach ($childItems as $childItem)

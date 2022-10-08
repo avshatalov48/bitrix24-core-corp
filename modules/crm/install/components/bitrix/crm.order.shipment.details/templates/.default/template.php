@@ -85,7 +85,7 @@ if($arResult['ENTITY_DATA']['TRACKING_NUMBER'] <> '')
 	$trackingNumber  = CUtil::JSEscape($arResult['ENTITY_DATA']['TRACKING_NUMBER']);
 	$onClick = "crmOrderShipment_{$jsGuid}.trackingStatusUpdate({$arResult['ENTITY_DATA']['ID']}, \"{$trackingNumber}\"); return false;";
 
-	$statusViewTemplate = 
+	$statusViewTemplate =
 		'<span id="crm-order-shipment-tracking-status-name">#STATUS_NAME#</span> '
 		."<button class='ui-btn ui-btn-xs ui-btn-primary ui-btn-icon-business' onclick='{$onClick}'>"
 			.\Bitrix\Main\Localization\Loc::getMessage('CRM_ORDER_SHIPMENT_TRACKING_STATUS_UPDATE')
@@ -141,7 +141,8 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 			'GUID' => "{$guid}_timeline",
 			'ENABLE_WAIT' => true,
-			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
+			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
+			'ENABLE_SALESCENTER' => false,
 		),
 		'ENABLE_PROGRESS_BAR' => true,
 		'ENABLE_PROGRESS_CHANGE' => $arResult['ENABLE_PROGRESS_CHANGE'],

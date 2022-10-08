@@ -2,6 +2,10 @@ this.BX = this.BX || {};
 (function (exports,main_core) {
     'use strict';
 
+    function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+    function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+
     /**
      * @abstract
      * @memberOf BX.Crm
@@ -21,7 +25,7 @@ this.BX = this.BX || {};
           add: {},
           get: {},
           update: {},
-          delete: {}
+          "delete": {}
         };
 
         if (main_core.Type.isPlainObject(params)) {
@@ -78,9 +82,9 @@ this.BX = this.BX || {};
       }, {
         key: "getGetParameters",
         value: function getGetParameters(action) {
-          return babelHelpers.objectSpread({}, {
+          return _objectSpread(_objectSpread({}, {
             analyticsLabel: 'crmModel' + this.getModelName() + action
-          }, this.getParameters[action]);
+          }), this.getParameters[action]);
         }
         /**
          * @abstract
@@ -136,7 +140,7 @@ this.BX = this.BX || {};
               _this.setDataFromResponse(response);
 
               resolve(response);
-            }).catch(function (response) {
+            })["catch"](function (response) {
               _this.progress = false;
               response.errors.forEach(function (_ref) {
                 var message = _ref.message;
@@ -195,7 +199,7 @@ this.BX = this.BX || {};
               _this2.setDataFromResponse(response);
 
               resolve(response);
-            }).catch(function (response) {
+            })["catch"](function (response) {
               _this2.progress = false;
               errors = [].concat(babelHelpers.toConsumableArray(errors), babelHelpers.toConsumableArray(_this2.extractErrorMessages(response)));
               reject(errors);
@@ -243,7 +247,7 @@ this.BX = this.BX || {};
               return;
             }
 
-            var action = _this3.actions.delete;
+            var action = _this3.actions["delete"];
 
             if (!main_core.Type.isString(action) || action.length <= 0) {
               errors.push('Delete action is not specified');
@@ -261,7 +265,7 @@ this.BX = this.BX || {};
               _this3.deleted = true;
               _this3.progress = false;
               resolve(response);
-            }).catch(function (response) {
+            })["catch"](function (response) {
               _this3.progress = false;
               response.errors.forEach(function (_ref4) {
                 var message = _ref4.message;
@@ -278,7 +282,7 @@ this.BX = this.BX || {};
             get: this.compileActionString('get'),
             add: this.compileActionString('add'),
             update: this.compileActionString('update'),
-            delete: this.compileActionString('delete')
+            "delete": this.compileActionString('delete')
           };
         }
       }]);

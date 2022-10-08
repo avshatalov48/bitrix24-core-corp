@@ -18,10 +18,10 @@ class EntityFieldProvider
 {
 	protected static $statusTypes = null;
 
-	public static function getFields()
+	public static function getFields(array $hiddenTypes = [])
 	{
 		$plainFields = array();
-		$fieldsByEntity = static::getFieldsTree();
+		$fieldsByEntity = static::getFieldsTree($hiddenTypes);
 		foreach($fieldsByEntity as $entityName => $entity)
 		{
 			foreach($entity['FIELDS'] as $field)
@@ -94,7 +94,7 @@ class EntityFieldProvider
 		return $fieldsTree;
 	}
 
-	public static function getFieldsTree()
+	public static function getFieldsTree(array $hiddenTypes = [])
 	{
 		$fields = array();
 
@@ -142,12 +142,19 @@ class EntityFieldProvider
 			)
 		);
 
+		$hideRequisites = in_array(\CCrmOwnerType::Requisite, $hiddenTypes);
 		$map = Entity::getMap();
 		foreach($map as $entityName => $entity)
 		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($entityName);
+			if (!empty($entity['HIDDEN']) && !in_array($entityTypeId, $hiddenTypes))
+			{
+				continue;
+			}
+
 			$fields[$entityName] = array(
-				'CAPTION' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::ResolveID($entityName)),
-				'FIELDS' => self::getFieldsInternal($entityName, $entity)
+				'CAPTION' => \CCrmOwnerType::GetDescription($entityTypeId),
+				'FIELDS' => self::getFieldsInternal($entityName, $entity, ['hideRequisites' => $hideRequisites])
 			);
 		}
 
@@ -157,7 +164,12 @@ class EntityFieldProvider
 	public static function getAllFieldsDescription()
 	{
 		$result = [];
-		$availableFields = EntityFieldProvider::getFields();
+
+		$hiddenTypes = [
+			\CCrmOwnerType::SmartDocument,
+		];
+
+		$availableFields = EntityFieldProvider::getFields($hiddenTypes);
 		foreach($availableFields as $fieldAvailable)
 		{
 			$result[] = self::getFieldDescription($fieldAvailable);
@@ -168,14 +180,17 @@ class EntityFieldProvider
 
 	public static function getFieldsDescription(array $fields)
 	{
-		$availableFields = EntityFieldProvider::getFields();
-
 		$fieldCodeList = array();
 		foreach($fields as $field)
 		{
 			$fieldCodeList[] = $field['CODE'];
 		}
 
+		$hiddenTypes = [
+			\CCrmOwnerType::SmartDocument,
+		];
+
+		$availableFields = EntityFieldProvider::getFields($hiddenTypes);
 		foreach($availableFields as $fieldAvailable)
 		{
 			if(!in_array($fieldAvailable['name'], $fieldCodeList))
@@ -228,6 +243,7 @@ class EntityFieldProvider
 		$field['ENTITY_FIELD_NAME'] = $fieldAvailable['entity_field_name'];
 		$field['ENTITY_CAPTION'] = $fieldAvailable['entity_caption'];
 		$field['ENTITY_FIELD_CAPTION'] = $fieldAvailable['caption'];
+		$field['SIZE'] = $fieldAvailable['size'] ?? null;
 
 
 
@@ -279,13 +295,9 @@ class EntityFieldProvider
 		);
 	}
 
-	public static function getFieldsInternal($entityName, $entity)
+	public static function getFieldsInternal($entityName, $entity, array $options = []): array
 	{
-		$fieldInfoMethodName = isset($entity['GET_FIELDS_CALL'])
-			? $entity['GET_FIELDS_CALL']
-			: Entity::getDefaultFieldsInfoMethod()
-		;
-
+		$fieldInfoMethodName = $entity['GET_FIELDS_CALL'] ?? Entity::getDefaultFieldsInfoMethod();
 		if(is_array($fieldInfoMethodName) || is_callable($fieldInfoMethodName))
 		{
 			$fieldsFunction = $fieldInfoMethodName;
@@ -326,10 +338,11 @@ class EntityFieldProvider
 			$fieldsInfo = $fieldsInfo + $userFieldsInfo;
 		}
 
-		if ($entity['HAS_MULTI_FIELDS'])
+		if (!empty($entity['HAS_MULTI_FIELDS']))
 		{
 			self::prepareMultiFieldsInfo($fieldsInfo);
 		}
+
 		$fieldsInfo = self::prepareFields($fieldsInfo);
 		$fieldsMap =  self::prepareWebFormFields($entityName, $fieldsInfo);
 		//Add delivery address to company/contact/lead fields
@@ -344,6 +357,40 @@ class EntityFieldProvider
 				'multiple' => false,
 				'required' => false,
 			];
+
+			/*
+			$fieldsMap[] = [
+				'type' => 'rq',
+				'entity_field_name' => "RQ",
+				'entity_name' => $entityName,
+				'name' => "{$entityName}_RQ",
+				'caption' => Loc::getMessage("CRM_WEBFORM_FIELD_PROVIDER_RQ_CAPTION"),
+				'multiple' => false,
+				'required' => false,
+				'ui' => [
+					'setup' => 'crm.field.requisite.setup',
+				],
+			];
+			*/
+
+			if (empty($options['hideRequisites']))
+			{
+				$entityTypeId = \CCrmOwnerType::Company; //\CCrmOwnerType::resolveID($entityName);
+				$preset = Requisite::instance()->getDefaultPreset($entityTypeId);
+				foreach (($preset['fields'] ?? []) as $field)
+				{
+					$fieldsMap[] = [
+						'type' => $field['type'],
+						'entity_field_name' => $field['name'],
+						'entity_name' => $entityName,
+						'name' => "{$entityName}_{$field['name']}",
+						'caption' => $field['label'],
+						'multiple' => $field['multiple'],
+						'required' => $field['required'],
+						'size' => $field['size'] ?? null,
+					];
+				}
+			}
 		}
 
 		return $fieldsMap;

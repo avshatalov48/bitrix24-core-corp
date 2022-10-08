@@ -11,11 +11,13 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_HELP"] = "<div class=\"imconnec
 				<div class=\"imconnector-field-button-name\">einen Telegram-Bot <span class=\"imconnector-field-box-text-bold\">verbinden</span></div>";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP"] = "Vor der Verbindung müssen Sie <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">einen Telegram-Bot erstellen</a>,
  oder einen Existierenden verbinden. Wir können Ihnen helfen, einen öffentlichen Account zu erstellen und ihn mit Ihrem Bitrix24 zu verbinden.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_STEP_NEW"] = "Sie müssen #LINK_START#einen Telegram-Bot erstellen#LINK_END# oder einen existierenden nutzen. Wenn Sie noch keinen Bot haben, werden wir Ihnen helfen, ihn zu erstellen und mit Ihrem Bitrix24 zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CONNECT_TITLE"] = "Verbinden Sie Telegram mit Ihrem Kommunikationskanal";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_CREATE_BOT"] = "<span class=\"imconnector-field-box-text-bold\">Einen Telegram-Bot erstellen</span>";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_ESHOP_LINK"] = "Link zum Onlineshop";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_FINAL_FORM_DESCRIPTION"] = "Telegram wurde nun mit Ihrem Kommunikationskanal erfolgreich verbunden. Alle Anfragen, die an Ihren Bot geschickt werden, werden an Ihr Bitrix24 weitergeleitet.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION"] = "Sie müssen <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">einen Telegrambot erstellen</a> oder den nutzen, den Sie bereits haben. Haben Sie noch keinen Bot, können wir Ihnen dabei helfen, einen zu erstellen und ihn mit Ihrem Bitrix24 zu verbinden.";
+$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Sie müssen #LINK_START#einen Telegram-Bot erstellen#LINK_END# oder einen existierenden nutzen. Wenn Sie noch keinen Account haben, werden wir Ihnen helfen, ihn zu erstellen und mit Ihrem Bitrix24 zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_1"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_2"] = "Begleiten Sie Ihre Kunden durch den Sales Funnel im CRM";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_INDEX_LIST_ITEM_3"] = "Antworten Sie Ihren Kunden dann und dort, wann und wo sie dies bevorzugen";

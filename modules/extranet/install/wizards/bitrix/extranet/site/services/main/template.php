@@ -1,24 +1,14 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
 	die();
+}
 
-//echo "WIZARD_SITE_ID=".WIZARD_SITE_ID." | ";
-//echo "WIZARD_SITE_PATH=".WIZARD_SITE_PATH." | ";
-//echo "WIZARD_RELATIVE_PATH=".WIZARD_RELATIVE_PATH." | ";
-//echo "WIZARD_ABSOLUTE_PATH=".WIZARD_ABSOLUTE_PATH." | ";
-//echo "WIZARD_TEMPLATE_ID=".WIZARD_TEMPLATE_ID." | ";
-//echo "WIZARD_TEMPLATE_RELATIVE_PATH=".WIZARD_TEMPLATE_RELATIVE_PATH." | ";
-//echo "WIZARD_TEMPLATE_ABSOLUTE_PATH=".WIZARD_TEMPLATE_ABSOLUTE_PATH." | ";
-//echo "WIZARD_THEME_ID=".WIZARD_THEME_ID." | ";
-//echo "WIZARD_THEME_RELATIVE_PATH=".WIZARD_THEME_RELATIVE_PATH." | ";
-//echo "WIZARD_THEME_ABSOLUTE_PATH=".WIZARD_THEME_ABSOLUTE_PATH." | ";
-//echo "WIZARD_SERVICE_RELATIVE_PATH=".WIZARD_SERVICE_RELATIVE_PATH." | ";
-//echo "WIZARD_SERVICE_ABSOLUTE_PATH=".WIZARD_SERVICE_ABSOLUTE_PATH." | ";
-//echo "WIZARD_IS_RERUN=".WIZARD_IS_RERUN." | ";
-//die();
-
-if (!defined("WIZARD_TEMPLATE_ID"))
+if (!defined('WIZARD_TEMPLATE_ID'))
+{
 	return;
+}
 
 function ___writeToAreasFile($fn, $text)
 {
@@ -206,7 +196,7 @@ if ($arSite = $obSite->Fetch())
 			$sonet_replace = $matches[0];
 
 			CopyDirFiles(
-				WIZARD_ABSOLUTE_PATH."/site/public/".LANGUAGE_ID."/index_b24.php",
+				WIZARD_ABSOLUTE_PATH."/site/public/index_b24.php",
 				WIZARD_SITE_PATH."index.php",
 				$rewrite = true,
 				$recursive = true,
@@ -242,7 +232,7 @@ if ($arSite = $obSite->Fetch())
 		}
 
 		CopyDirFiles(
-			WIZARD_ABSOLUTE_PATH."/site/public/".LANGUAGE_ID."/.top.menu_ext.php",
+			WIZARD_ABSOLUTE_PATH."/site/public/.top.menu_ext.php",
 			WIZARD_SITE_PATH.".top.menu_ext.php",
 			$rewrite = true,
 			$recursive = true,
@@ -252,7 +242,7 @@ if ($arSite = $obSite->Fetch())
 		if (!file_exists(WIZARD_SITE_PATH.".left.menu.php"))
 		{
 			CopyDirFiles(
-				WIZARD_ABSOLUTE_PATH."/site/public/".LANGUAGE_ID."/.left.menu.php",
+				WIZARD_ABSOLUTE_PATH."/site/public/.left.menu.php",
 				WIZARD_SITE_PATH.".left.menu.php",
 				$rewrite = true,
 				$recursive = true,
@@ -263,7 +253,7 @@ if ($arSite = $obSite->Fetch())
 		if (!file_exists(WIZARD_SITE_PATH.".left.menu_ext.php"))
 		{
 			CopyDirFiles(
-				WIZARD_ABSOLUTE_PATH."/site/public/".LANGUAGE_ID."/.left.menu_ext.php",
+				WIZARD_ABSOLUTE_PATH."/site/public/.left.menu_ext.php",
 				WIZARD_SITE_PATH.".left.menu_ext.php",
 				$rewrite = true,
 				$recursive = true,
@@ -272,7 +262,7 @@ if ($arSite = $obSite->Fetch())
 		}
 
 		CopyDirFiles(
-			WIZARD_ABSOLUTE_PATH."/site/public/".LANGUAGE_ID."/workgroups/.left.menu_ext.php",
+			WIZARD_ABSOLUTE_PATH."/site/public/workgroups/.left.menu_ext.php",
 			WIZARD_SITE_PATH."workgroups/.left.menu_ext.php",
 			$rewrite = true,
 			$recursive = true,

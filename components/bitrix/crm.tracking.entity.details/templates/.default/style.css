@@ -5,9 +5,9 @@
 
 .crm-tracking-entity-details-inner {
 	background: #38C5F3;
-	border-radius: 1px;
 	padding: 15px 15px 18px;
 	position: relative;
+	border-radius: var(--ui-entity-editor-section-border-radius, var(--ui-border-radius-md, 1px));
 }
 
 .crm-tracking-entity-details-close {
@@ -55,7 +55,8 @@
 
 .crm-tracking-entity-details-title {
 	color: #fff;
-	font: 14px/24px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 14px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	padding-bottom: 12px;
 	border-bottom: 1px solid rgba(255, 255, 255, .4);
@@ -129,7 +130,7 @@
 
 .crm-tracking-entity-details-path-block-title-text {
 	color: #a3a9b1;
-	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-tracking-entity-details-path-block-inner {

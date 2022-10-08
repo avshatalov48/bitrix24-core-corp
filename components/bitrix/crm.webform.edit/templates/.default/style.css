@@ -102,7 +102,7 @@
 }
 
 .crm-webform-edit-wrapper select {
-	font: 15px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -158,7 +158,7 @@ select {
 
 
 .crm-webform-edit-wrapper {
-	font: 13px/14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -179,7 +179,8 @@ select {
 	height: 32px;
 	border: none;
 	outline: none;
-	font: 19px/32px 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 19px/32px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-webform-edit-about-container {
@@ -189,13 +190,13 @@ select {
 }
 
 .crm-webform-edit-about-info {
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-about-tune-container {
 	float: right;
 	border-bottom: 1px solid rgba(128,134,142, .3);
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	-webkit-transition: border-bottom .3s ease;
 	-moz-transition: border-bottom .3s ease;
@@ -243,7 +244,7 @@ select {
 	border: 1px solid #caced7;
 	height: 28px;
 	width: 220px;
-	font: 11px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
@@ -254,7 +255,7 @@ select {
 .crm-webform-edit-right-search-item,
 .crm-webform-edit-right-add-element-item {
 	display: inline-block;
-	font: 12px/16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	-webkit-transition: opacity .4s ease-in-out;
 	-moz-transition: opacity .4s ease-in-out;
@@ -314,7 +315,7 @@ select {
 .crm-webform-edit-right-list {
 	padding: 0;
 	margin: 0;
-	font: bold 11px/16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	text-transform: uppercase;
 }
@@ -425,7 +426,7 @@ select {
 	padding: 10px 25px 10px 15px;
 	min-width: 200px;
 	max-width: 200px;
-	font: 13px/14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	list-style: none;
 	text-transform: none;
@@ -673,7 +674,7 @@ select {
 .crm-webform-edit-left-inner-field-title-item,
 .crm-webform-edit-left-field-header-title,
 .crm-webform-edit-left-inner-section-title-item  {
-	font: bold 18px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 }
 
@@ -702,7 +703,7 @@ select {
 	width: 100%;
 	border: 0;
 	border-bottom: 1px solid rgba(170,175,181, .2);
-	font: bold 18px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-left-inner-field-title-field-item::-webkit-input-placeholder {color: rgba(0,0,0, .3);}
@@ -714,7 +715,7 @@ select {
 	display: inline-block;
 	padding: 5px 0 20px 0;
 	border: 0;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(0,0,0, .3);
 }
 
@@ -775,7 +776,8 @@ select {
 	-moz-border-radius: 2px;
 	border-radius: 2px;
 	background: #fff;
-	font: bold 12px/17px 'OpenSans', Helvetica, Arial, sans-serif;
+	font: 12px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #535c69;
 	text-transform: uppercase;
 	-webkit-transition: background .3s ease;
@@ -949,7 +951,7 @@ select {
 	height: 38px;
 	width: 100%;
 	border: 1px solid #caced7;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
@@ -971,7 +973,7 @@ select {
 	border: 1px solid #caced7;
 	border-radius: 0;
 	background: url(images/crm-webform-edit-arrow-down.svg) right center #fff no-repeat;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
@@ -996,7 +998,7 @@ select {
 
 .crm-webform-element-br {
 	height: 38px;
-	font: bold 14px/39px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 14px/39px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-left-inner-field-add {
@@ -1501,7 +1503,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-task-edit-deal-sent-options-input,
 .crm-webform-edit-task-edit-deal-sent-redirect-input {
 	padding: 9px 17px 9px 17px;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-task-edit-add-deal-input-container {
@@ -1517,7 +1519,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-task-edit-deal-stage-macros {
 	display: inline-block;
 	margin: 0 0 0 13px;
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	-webkit-transition: border-bottom-color 0.2s linear;
 	transition: border-bottom-color 0.2s linear;
@@ -1555,7 +1557,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-edit-system-warning-text {
-	font: 13px/19px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #4a4a4a;
 }
 
@@ -1575,7 +1577,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-edit-task-edit-deal-license-text {
-	font: 13px/19px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #4a4a4a;
 }
 
@@ -1684,7 +1686,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .task-sent-redirect-checkbox-item {
 	display: inline-block;
 	width: auto;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	vertical-align: middle;
@@ -1721,7 +1723,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-edit-task-options-rule-select-item {
-	font: bold 14px/19px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 14px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /*.rule-select-item-equally {*/
@@ -1746,7 +1748,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	width: 100%;
 	border: 1px solid #caced7;
 	border-radius: 0;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
@@ -1811,7 +1813,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-edit-form-type-upload-text {
-	font: bold 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -1819,7 +1821,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .crm-webform-edit-task-options-settings-title {
 	margin: 0 0 15px 0;
-	font: bold 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-task-options-document-settings-radio-element {
@@ -1830,7 +1832,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	padding: 9px 15px 12px 15px;
 	margin: 16px 0 17px 0;
 	background: #fffde0;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #8b7b61;
 }
 
@@ -1921,7 +1923,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-task-options-account-setup-new-goods-name,
 .crm-webform-edit-task-options-account-setup-new-goods-price {
 	margin: 0 10px 9px 0;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-flex: 2;
 	-moz-box-flex: 2;
 	-webkit-flex: 2;
@@ -1952,7 +1954,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .crm-webform-edit-task-options-account-setup-new-goods-add {
 	display: inline-block;
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	vertical-align: middle;
 	border-bottom: 1px solid transparent;
@@ -1976,7 +1978,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-task-options-account-setup-new-goods-separator {
 	display: inline-block;
 	vertical-align: middle;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-task-options-account-setup-goods > .crm-webform-edit-task-edit-deal-stage-close,
@@ -1997,7 +1999,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .bx-interface-grid .crm-webform-edit-metric-col {
 	padding: 0 10px;
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	text-align: center;
 	background: rgba(83,92,105, .07);
@@ -2038,7 +2040,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	margin: 0 3px 0 0;
 	max-width: 120px;
 	border: 1px solid transparent;
-	font: 16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #131313;
 	background: transparent;
 	-webkit-transition: all .3s ease;
@@ -2051,7 +2053,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 .crm-webform-edit-task-options-metric-show-event-button span {
 	display: inline-block;
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	-webkit-transition: border-bottom-color 0.2s linear;
 	transition: border-bottom-color 0.2s linear;
@@ -2113,7 +2115,8 @@ span.crm-webform-edit-task-options-destination-wrap {
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
-	font: bold 10px/25px 'OpenSans', Helvetica, Arial, sans-serif;
+	font: 10px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #535c69;
 	-webkit-transition: background .3s ease;
 	-moz-transition: background .3s ease;
@@ -2134,7 +2137,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-edit-task-options-metric-create-title {
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	margin: 0 0 12px 0;
 }
@@ -2147,7 +2150,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	padding: 8px 14px;
 	margin: 0 12px 6px 0;
 	max-width: 210px;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a4a8ae;
 }
 
@@ -2179,7 +2182,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	-webkit-border-radius: 2px 2px 0 0;
 	-moz-border-radius: 2px 2px 0 0;
 	border-radius: 2px 2px 0 0;
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: rgba(83,92,105, .09);
 	text-align: center;
 	cursor: pointer;
@@ -2211,7 +2214,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	margin: 0 0 7px 0;
 	border: 1px solid #caced7;
 	background: #fff;
-	font: 13px/18px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2a2a2a;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
@@ -2318,7 +2321,8 @@ span.crm-webform-edit-task-options-destination-wrap {
 	border-radius: 2px;
 	color: #fff;
 	background: #3bc8f5;
-	font: 12px/47px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/47px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	cursor: pointer;
 	outline: none;
 	text-align: center;
@@ -2433,7 +2437,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	-moz-border-radius: 2px;
 	border-radius: 2px;
 	background: #eef2f4;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 }
 
@@ -2461,7 +2465,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 
 .crm-webform-edit-popup-input {
 	margin: 0 0 0 0;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-flex: 1;
 	-moz-box-flex: 1;
 	-webkit-flex: 1;
@@ -2472,7 +2476,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-popup-select {
 	margin: 0 0 0 5px;
 	max-width: 145px;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -2483,27 +2487,27 @@ span.crm-webform-edit-task-options-destination-wrap {
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .popup-input-placeholder {
 	margin: 0;
-	font: 14px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #9b9b9b;
 }
 
 .crm-webform-edit-popup-tooltip {
 	margin: 5px 0 0 2px;
-	font: 11px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-popup-tooltip-element:last-child {
-	font: bold 11px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-popup-tooltip-edit {
 	padding: 0 0 0 5px;
-	font: normal 11px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: normal 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-edit-popup-list-input {
@@ -2597,7 +2601,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
-	font: 16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #eb314b;
 	text-align: center;
 }
@@ -2626,7 +2630,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	bottom: -10px;
 	right: 0;
 	color: #a3a3a3;
-	font: 11px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 	z-index: 31;
 }
@@ -2646,8 +2650,8 @@ span.crm-webform-edit-task-options-destination-wrap {
 	position: relative;
 	font-size: 12px;
 	color: #535c69;
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	margin-right: 20px;
 	padding-left: 18px;
@@ -2697,7 +2701,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 .crm-webform-edit-task-edit-deal-stage-macros-presets-item {
 	display: inline-block;
 	margin: 5px 0;
-	font: 14px/15px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	border-bottom: 1px solid transparent;
 	-webkit-transition: border-bottom .3s ease;
@@ -2834,7 +2838,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	min-height: 81px;
 	width: 100%;
 	border: 1px solid #caced7;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	box-sizing: border-box;
 	outline: none;
 }
@@ -2845,7 +2849,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 	height: 38px;
 	width: 100%;
 	border: 1px solid #caced7;
-	font: 13px/38px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	box-sizing: border-box;
 	outline: none;
 }
@@ -2856,7 +2860,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-edit-license-control-desc {
-	font: 12px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #9aa0a8;
 }
 
@@ -2970,25 +2974,26 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 .crm-webform-ed-choise-header1 {
 	margin: 10px 0 10px 0;
-	font: 22px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 .crm-webform-ed-choise-header2 {
 	margin: 0 0 10px 0;
 	padding: 0 30px;
 	color: #3c3c3c;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-webform-ed-choise-header3 {
 	margin: 0 0 15px 0;
 	padding: 0 50px;
 	color: #7d7d7d;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-webform-ed-choise-notice {
 	padding: 15px 0;
 	color: #7d7d7d;
 	border-bottom: 1px solid #eaeaea;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-webform-ed-choise-body {
 	display: flex;
@@ -3028,7 +3033,7 @@ span.crm-webform-edit-task-options-destination-wrap {
 }
 
 .crm-webform-ed-choise-item-title {
-	font: 16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #3c3c3c;
 	font-weight: bold;
 	margin: 0 0 15px 0;

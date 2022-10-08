@@ -693,9 +693,15 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			}
 		}
 
+		$dataWithCommonFieldNames = [];
+		foreach ($data as $entityFieldName => $value)
+		{
+			$dataWithCommonFieldNames[$this->getCommonFieldNameByMap($entityFieldName)] = $value;
+		}
+
 		foreach ($this->getAllImplementations() as $implementation)
 		{
-			$implementation->setFromExternalValues($data);
+			$implementation->setFromExternalValues($dataWithCommonFieldNames);
 		}
 
 		return $this;
@@ -1529,9 +1535,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			static::FIELD_NAME_PRODUCTS,
 		];
 
+		$namesFromImplementations = array_map(
+			[$this, 'getEntityFieldNameByMap'],
+			$this->getExternalizableFieldNamesFromImplementations(),
+		);
+
 		$names = array_merge(
 			$names,
-			$this->getExternalizableFieldNamesFromImplementations(),
+			$namesFromImplementations,
 			$this->utmTableClassName::getCodeList(),
 			$this->getEntityFieldNames(
 				FieldTypeMask::SCALAR
@@ -1545,7 +1556,11 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 
 	protected function getInternalizableFieldNames(): array
 	{
-		$fieldsToExclude = $this->getExternalizableFieldNamesFromImplementations();
+		$fieldsToExclude = array_map(
+			[$this, 'getEntityFieldNameByMap'],
+			$this->getExternalizableFieldNamesFromImplementations(),
+		);
+
 		// can not change primary key
 		$fieldsToExclude[] = static::FIELD_NAME_ID;
 
@@ -1560,12 +1575,7 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 			$arraysOfNames[] = $implementation->getExternalizableFieldNames();
 		}
 
-		if (!empty($arraysOfNames))
-		{
-			return array_merge(...$arraysOfNames);
-		}
-
-		return [];
+		return array_merge(...$arraysOfNames);
 	}
 
 	/**
@@ -1707,7 +1717,14 @@ abstract class Item implements \JsonSerializable, \ArrayAccess, Arrayable
 		{
 			if (ParentFieldManager::isParentFieldName($name))
 			{
-				$this->actualValues[$name] = (int)$value;
+				if ((int)$value > 0)
+				{
+					$this->actualValues[$name] = (int)$value;
+				}
+				else
+				{
+					$this->actualValues[$name] = null;
+				}
 			}
 		}
 	}

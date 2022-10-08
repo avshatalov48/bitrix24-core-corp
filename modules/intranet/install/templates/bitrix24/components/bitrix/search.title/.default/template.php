@@ -1,8 +1,8 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 global $USER;
-CJSCore::Init(array('finder'));
-\Bitrix\Main\UI\Extension::load('intranet.search_title');
+
+\Bitrix\Main\UI\Extension::load(['finder', 'intranet.search_title', 'ui.design-tokens']);
 
 $this->setFrameMode(true);
 

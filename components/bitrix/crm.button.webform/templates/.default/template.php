@@ -7,7 +7,7 @@ use Bitrix\Main\Localization\Loc;
 /** @var array $arParams */
 /** @var array $arResult */
 
-
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 <div class="bx-crm-widget-form-config-wrapper <?=($arResult['REMOVE_COPYRIGHT'] == 'Y' ? 'bx-crm-widget-form-copyright-disabled' : '')?>">
 	<div id="bx24_form_container_<?=htmlspecialcharsbx($arResult['FORM_ID'])?>" class="bx-crm-widget-form-config-sidebar">

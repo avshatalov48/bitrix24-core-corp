@@ -10,9 +10,16 @@ use Bitrix\Tasks\UI\ScopeDictionary;
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
 Loc::loadMessages(__FILE__);
-CUtil::InitJSCore(array('popup', 'tooltip', 'tasks_util_query', 'task_info_popup', 'task-popups', 'CJSTask'));
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'popup',
+	'tooltip',
+	'tasks_util_query',
+	'task_info_popup',
+	'task-popups',
+	'CJSTask',
 	'ui.counter',
 ]);
 

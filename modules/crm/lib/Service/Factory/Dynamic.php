@@ -540,4 +540,14 @@ class Dynamic extends Service\Factory
 			)
 		;
 	}
+
+	/**
+	 * Return list of additional fields for corresponding data manager.
+	 *
+	 * @return \Bitrix\Main\ORM\Fields\Field[]
+	 */
+	public function getAdditionalTableFields(): array
+	{
+		return [];
+	}
 }

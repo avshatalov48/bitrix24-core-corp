@@ -36,6 +36,8 @@ export default class Sms extends Editor
 		this._paymentId = null;
 		this._shipmentId = null;
 
+		this._compilationProductIds = [];
+
 		this._templateId = null;
 		this._templatesContainer = null;
 		this._templateFieldHintNode = null;
@@ -610,6 +612,7 @@ export default class Sms extends Editor
 						"TO_ENTITY_ID": this._commEntityId,
 						"PAYMENT_ID": this._paymentId,
 						"SHIPMENT_ID": this._shipmentId,
+						"COMPILATION_PRODUCT_IDS": this._compilationProductIds,
 					},
 				onsuccess: BX.delegate(this.onSaveSuccess, this),
 				onfailure: BX.delegate(this.onSaveFailure, this)
@@ -681,6 +684,14 @@ export default class Sms extends Editor
 						this._source = 'order';
 						this._paymentId = result.get('order').paymentId;
 						this._shipmentId = result.get('order').shipmentId;
+					}
+					else if(result.get('action') === 'sendCompilation' && result.get('compilation'))
+					{
+						this._input.focus();
+						this._input.value = this._input.value + result.get('compilation').title;
+						this.setMessageLengthCounter();
+						this._source = 'deal';
+						this._compilationProductIds = result.get('compilation').productIds;
 					}
 				}
 			}.bind(this));

@@ -17,13 +17,13 @@
 .tasks-result-list-container {
 	transition: .2s;
 	overflow: hidden;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .tasks-widget-result {
 	position: relative;
 	color: var(--tasks_widget_result-grey);
 	padding-bottom: 20px;
-	background: var(--tasks_widget_result-grey-2);
 }
 
 .tasks-widget-result--content {
@@ -51,6 +51,9 @@
 	background: var(--tasks_widget_result-white);
 	box-shadow: 0 1px 2px var(--tasks_widget_result-grey_alpha_07);
 	z-index: -1;
+	border-radius: var(--ui-border-radius-md);
+	border-top-right-radius: 0;
+	border-top-left-radius: 0;
 }
 
 .tasks-widget-result--content.--many-results > .tasks-widget-result__item::after {
@@ -72,6 +75,7 @@
 	margin-bottom: 15px;
 	transition: .2s;
 	position: relative;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .tasks-widget-result__item-more {
@@ -94,7 +98,8 @@
 }
 
 .tasks-widget-result__item--header-title {
-	font: 16px/22px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_widget_result-grey);
 }
 
@@ -110,7 +115,8 @@
 	bottom: 17px;
 	transform: translate(-50%, 0%);
 	padding: 5px 10px;
-	font: 13px/18px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	background: var(--tasks_widget_result-white);
 	box-shadow: 0 1px 2px var(--tasks_widget_result-black_alpha_15);
 	border-radius: 13.5px;
@@ -154,14 +160,14 @@
 
 .tasks-widget-result__item-header--name.ui-link {
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-right: 9px;
 	line-height: 15px;
 	border-bottom: 1px solid transparent;
 }
 
 .tasks-widget-result__item-header--name.ui-link:hover {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	border-bottom: 1px solid;
 }
 
@@ -185,7 +191,7 @@
 }
 
 .tasks-widget-result__item-header--time.ui-link {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 11px;
 	line-height: 13px;
 }

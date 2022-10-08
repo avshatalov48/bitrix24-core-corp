@@ -3,7 +3,6 @@
 namespace Bitrix\Crm\Reservation\Strategy;
 
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
-use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
 
 /**
@@ -30,7 +29,7 @@ interface Strategy
 	 * @param int $storeId
 	 * @param Date|null $dateReserveEnd
 	 *
-	 * @return Result
+	 * @return ReservationResult
 	 */
-	public function reservationProductRow(int $productRowId, float $quantity, int $storeId, ?Date $dateReserveEnd): Result;
+	public function reservationProductRow(int $productRowId, float $quantity, int $storeId, ?Date $dateReserveEnd): ReservationResult;
 }

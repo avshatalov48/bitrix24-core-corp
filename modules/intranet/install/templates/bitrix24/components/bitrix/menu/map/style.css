@@ -37,7 +37,7 @@
 .sitemap-section-item-title {
 	display: block;
 	font-size: 14px;
-	font-family: "Helvetica New", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	padding: 6px 11px 6px 11px;
 	overflow: hidden;

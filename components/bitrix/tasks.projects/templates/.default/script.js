@@ -47,7 +47,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return resolve();
 	        }, function () {
 	          return reject();
-	        }).catch(function () {
+	        })["catch"](function () {
 	          return reject();
 	        });
 	        ActionsController.hideActionsPanel();
@@ -701,6 +701,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ScrumMembersPopup;
 	}(MembersPopup);
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Grid = /*#__PURE__*/function () {
 	  babelHelpers.createClass(Grid, null, [{
 	    key: "classes",
@@ -752,7 +755,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return id !== 'template_0';
 	      });
 	      var flipped = newItems.reduce(function (obj, value) {
-	        return babelHelpers.objectSpread({}, obj, babelHelpers.defineProperty({}, value, null));
+	        return _objectSpread(_objectSpread({}, obj), {}, babelHelpers.defineProperty({}, value, null));
 	      }, {});
 	      this.clearItems();
 	      this.fillItems(flipped);
@@ -979,7 +982,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "removeItem",
 	    value: function removeItem(id) {
-	      this.items.delete(parseInt(id, 10));
+	      this.items["delete"](parseInt(id, 10));
 	    }
 	  }, {
 	    key: "fillItems",
@@ -1057,6 +1060,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  function PullController(options) {
 	    babelHelpers.classCallCheck(this, PullController);
 	    this.signedParameters = options.signedParameters;
+	    this.isScrumList = options.isScrumList === 'Y';
+	    this.createProjectUrl = options.createProjectUrl;
+	    this.scrumLimitSidePanelId = options.scrumLimitSidePanelId;
 	    this.grid = new Grid(options);
 	    this.timer = null;
 	    this.counterData = new Map();
@@ -1102,6 +1108,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }, function (response) {
 	        return console.error(response);
 	      });
+
+	      if (this.isScrumList) {
+	        this.checkScrumLimit().then(function (isLimitExceeded) {
+	          return _this.onCheckScrumLimit(isLimitExceeded);
+	        }, function (response) {
+	          return console.error(response);
+	        });
+	      }
 	    }
 	  }, {
 	    key: "onProjectUpdate",
@@ -1120,29 +1134,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onProjectRemove",
 	    value: function onProjectRemove(data) {
+	      var _this3 = this;
+
 	      this.removeRow(data.ID);
+
+	      if (this.isScrumList) {
+	        this.checkScrumLimit().then(function (isLimitExceeded) {
+	          return _this3.onCheckScrumLimit(isLimitExceeded);
+	        }, function (response) {
+	          return console.error(response);
+	        });
+	      }
 	    }
 	  }, {
 	    key: "onProjectUserAdd",
 	    value: function onProjectUserAdd(data) {
-	      var _this3 = this;
-
-	      var params = {
-	        event: PullController.events.userAdd
-	      };
-	      this.checkExistence(data.GROUP_ID).then(function (response) {
-	        return _this3.onCheckExistenceSuccess(response, data.GROUP_ID, params);
-	      }, function (response) {
-	        return console.error(response);
-	      });
-	    }
-	  }, {
-	    key: "onProjectUserUpdate",
-	    value: function onProjectUserUpdate(data) {
 	      var _this4 = this;
 
 	      var params = {
-	        event: PullController.events.userUpdate
+	        event: PullController.events.userAdd
 	      };
 	      this.checkExistence(data.GROUP_ID).then(function (response) {
 	        return _this4.onCheckExistenceSuccess(response, data.GROUP_ID, params);
@@ -1151,15 +1161,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      });
 	    }
 	  }, {
+	    key: "onProjectUserUpdate",
+	    value: function onProjectUserUpdate(data) {
+	      var _this5 = this;
+
+	      var params = {
+	        event: PullController.events.userUpdate
+	      };
+	      this.checkExistence(data.GROUP_ID).then(function (response) {
+	        return _this5.onCheckExistenceSuccess(response, data.GROUP_ID, params);
+	      }, function (response) {
+	        return console.error(response);
+	      });
+	    }
+	  }, {
 	    key: "onProjectUserRemove",
 	    value: function onProjectUserRemove(data) {
-	      var _this5 = this;
+	      var _this6 = this;
 
 	      var params = {
 	        event: PullController.events.userRemove
 	      };
 	      this.checkExistence(data.GROUP_ID).then(function (response) {
-	        return _this5.onCheckExistenceSuccess(response, data.GROUP_ID, params);
+	        return _this6.onCheckExistenceSuccess(response, data.GROUP_ID, params);
 	      }, function (response) {
 	        return console.error(response);
 	      });
@@ -1187,7 +1211,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onProjectCounter",
 	    value: function onProjectCounter(data) {
-	      var _this6 = this;
+	      var _this7 = this;
 
 	      var groupId = data.GROUP_ID;
 	      var event = data.EVENT;
@@ -1198,7 +1222,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      if (!this.timer) {
 	        this.timer = setTimeout(function () {
-	          _this6.freeCounterQueue();
+	          _this7.freeCounterQueue();
 	        }, 1000);
 	      }
 
@@ -1209,7 +1233,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "freeCounterQueue",
 	    value: function freeCounterQueue() {
-	      var _this7 = this;
+	      var _this8 = this;
 
 	      this.counterData.forEach(function (event, groupId) {
 	        var params = {
@@ -1221,16 +1245,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        if (PullController.movingProjectEvents.includes(event)) {
 	          params.moveParams = {
-	            rowBefore: _this7.grid.getIsPinned(groupId) ? 0 : _this7.grid.getLastPinnedRowId(),
-	            rowAfter: _this7.grid.getFirstRowId()
+	            rowBefore: _this8.grid.getIsPinned(groupId) ? 0 : _this8.grid.getLastPinnedRowId(),
+	            rowAfter: _this8.grid.getFirstRowId()
 	          };
 	          params.highlightParams = {
 	            skip: false
 	          };
 	        }
 
-	        _this7.checkExistence(groupId).then(function (response) {
-	          return _this7.onCheckExistenceSuccess(response, groupId, params);
+	        _this8.checkExistence(groupId).then(function (response) {
+	          return _this8.onCheckExistenceSuccess(response, groupId, params);
 	        }, function (response) {
 	          return console.error(response);
 	        });
@@ -1254,7 +1278,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "checkExistence",
 	    value: function checkExistence(groupId) {
-	      var _this8 = this;
+	      var _this9 = this;
 
 	      return new Promise(function (resolve, reject) {
 	        BX.ajax.runComponentAction('bitrix:tasks.projects', 'checkExistence', {
@@ -1262,9 +1286,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          data: {
 	            groupIds: [groupId]
 	          },
-	          signedParameters: _this8.signedParameters
+	          signedParameters: _this9.signedParameters
 	        }).then(function (response) {
 	          return resolve(response);
+	        }, function (response) {
+	          return reject(response);
+	        });
+	      });
+	    }
+	  }, {
+	    key: "checkScrumLimit",
+	    value: function checkScrumLimit() {
+	      var _this10 = this;
+
+	      return new Promise(function (resolve, reject) {
+	        main_core.ajax.runAction('bitrix:tasks.scrum.info.checkScrumLimit', {
+	          data: {},
+	          signedParameters: _this10.signedParameters
+	        }).then(function (response) {
+	          return resolve(response.data);
 	        }, function (response) {
 	          return reject(response);
 	        });
@@ -1293,6 +1333,21 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }
 	    }
 	  }, {
+	    key: "onCheckScrumLimit",
+	    value: function onCheckScrumLimit(isLimitExceeded) {
+	      this.projectAddButton = document.getElementById('projectAddButton');
+
+	      if (!main_core.Type.isDomNode(this.projectAddButton)) {
+	        return;
+	      }
+
+	      if (isLimitExceeded) {
+	        this.projectAddButton.href = "javascript:BX.UI.InfoHelper.show('".concat(this.scrumLimitSidePanelId, "', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'scrumList'}})");
+	      } else {
+	        this.projectAddButton.href = this.createProjectUrl;
+	      }
+	    }
+	  }, {
 	    key: "updateItem",
 	    value: function updateItem(rowId, rowData, params) {
 	      if (!this.grid.hasItem(rowId)) {
@@ -1305,7 +1360,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "addRow",
 	    value: function addRow(rowId, rowData, params) {
-	      var _this9 = this;
+	      var _this11 = this;
 
 	      if (this.grid.isRowExist(rowId)) {
 	        return;
@@ -1320,14 +1375,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
 	        if (!main_core.Type.isUndefined(response.data[rowId])) {
-	          _this9.grid.addRow(rowId, response.data[rowId], params);
+	          _this11.grid.addRow(rowId, response.data[rowId], params);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "updateRow",
 	    value: function updateRow(rowId, rowData, params) {
-	      var _this10 = this;
+	      var _this12 = this;
 
 	      if (!this.grid.isRowExist(rowId)) {
 	        return;
@@ -1342,7 +1397,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        signedParameters: this.signedParameters
 	      }).then(function (response) {
 	        if (!main_core.Type.isUndefined(response.data[rowId])) {
-	          _this10.grid.updateRow(rowId, response.data[rowId], params);
+	          _this12.grid.updateRow(rowId, response.data[rowId], params);
 	        }
 	      });
 	    }
@@ -1355,7 +1410,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "moveToDirectPlace",
 	    value: function moveToDirectPlace(groupId, data, params) {
-	      var _this11 = this;
+	      var _this13 = this;
 
 	      params = params || {};
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'findProjectPlace', {
@@ -1375,9 +1430,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            projectAfter = _response$data.projectAfter;
 
 	        if (projectBefore === false && projectAfter === false) {
-	          _this11.removeRow(groupId);
+	          _this13.removeRow(groupId);
 	        } else {
-	          if (projectBefore && _this11.grid.isRowExist(projectBefore) || projectAfter && _this11.grid.isRowExist(projectAfter)) {
+	          if (projectBefore && _this13.grid.isRowExist(projectBefore) || projectAfter && _this13.grid.isRowExist(projectAfter)) {
 	            params.moveParams = {
 	              rowBefore: projectBefore,
 	              rowAfter: projectAfter
@@ -1388,14 +1443,14 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            };
 	          }
 
-	          _this11.updateItem(groupId, data, params);
+	          _this13.updateItem(groupId, data, params);
 	        }
 	      });
 	    }
 	  }, {
 	    key: "updateCounter",
 	    value: function updateCounter(rowIds) {
-	      var _this12 = this;
+	      var _this14 = this;
 
 	      BX.ajax.runComponentAction('bitrix:tasks.projects', 'prepareGridRows', {
 	        mode: 'class',
@@ -1409,8 +1464,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        if (projects) {
 	          Object.keys(projects).forEach(function (projectId) {
-	            if (_this12.grid.isRowExist(projectId)) {
-	              _this12.grid.getRowById(projectId).setCounters(projects[projectId].counters);
+	            if (_this14.grid.isRowExist(projectId)) {
+	              _this14.grid.getRowById(projectId).setCounters(projects[projectId].counters);
 	            }
 	          });
 	        }

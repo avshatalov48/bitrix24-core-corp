@@ -35,13 +35,14 @@
 }
 
 .rpa-automation-title-text {
-	font: 11px/17px 'OpenSans-SemiBold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 11px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
 	text-transform: uppercase;
 }
 
 .rpa-automation-label {
-	font: 13px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82, 92, 105, .5);
 	margin-bottom: 5px;
 	display: inline-block;
@@ -158,7 +159,7 @@
 }
 
 .rpa-edit-robot-head-item-text, .rpa-edit-robot-btn-add {
-	font: 13px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #9b9b9b;
 	border-bottom: 1px dashed rgba(155, 155, 155, .4);
 	transition: border-color .2s linear;
@@ -205,7 +206,7 @@
 }
 
 .rpa-edit-robot-link {
-	font: 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066b0;
 	border-bottom: 1px dashed rgba(39, 107, 179, .4);
 	transition: border-color .2s linear;
@@ -231,7 +232,7 @@
 }
 
 .rpa-edit-robot-btn-header-item {
-	font: 13px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82, 92, 105, .5);
 }
 
@@ -354,7 +355,8 @@
 	padding: 0 20px;
 	color: #fff;
 	box-sizing: border-box;
-	font: 12px/39px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .rpa-edit-robot-btn-block-primary, .rpa-edit-robot-btn-color-item-primary {
@@ -462,13 +464,13 @@
 
 .rpa-edit-robot-menu-title {
 	color: #858c96;
-	font: 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-right: 3px;
 }
 
 .rpa-edit-robot-menu-link {
 	position: relative;
-	font: 13px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066b0;
 	border-bottom: 1px dashed rgba(39, 107, 179, .4);
 	transition: border-color .2s linear;
@@ -511,7 +513,7 @@
 }
 
 .rpa-automation-field-text {
-	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -525,7 +527,8 @@
 	border-radius: var(--ui-field-border-radius);
 	height: 23px;
 	padding: 0 6px;
-	font-family: "OpenSans-Bold", 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	color: #525c68;
 }
@@ -614,7 +617,8 @@
 	padding: 0 6px;
 	background: #f54819;
 	color: #fff;
-	font: 9px/14px 'OpenSans-Semibold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 9px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	border-radius: 16px;
 }
 
@@ -631,7 +635,8 @@
 
 .rpa-automation-header-text {
 	margin-bottom: 18px;
-	font: 18px/24px 'OpenSans-Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .rpa-automation-header-desc {
@@ -640,7 +645,7 @@
 }
 
 .rpa-automation-value {
-	font: 15px/15px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 15px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 

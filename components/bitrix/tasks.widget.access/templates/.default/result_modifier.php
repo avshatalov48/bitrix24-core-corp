@@ -8,7 +8,7 @@ use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Item\Task\Template\Access;
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 
 if ($helper->checkHasFatals())
 {

@@ -10,11 +10,14 @@ use \Bitrix\Main\UI\Extension;
 /** @var array $arResult */
 /** @var array $arParams */
 
-Extension::load("ui.hint");
-Extension::load("ui.alerts");
-Extension::load("ui.buttons");
-Extension::load("ui.buttons.icons");
-Extension::load("ui.design-tokens");
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.hint',
+	'ui.alerts',
+	'ui.buttons',
+	'ui.buttons.icons',
+]);
 
 if(!$arResult['BUTTON']['BACKGROUND_COLOR'])
 {

@@ -178,7 +178,7 @@ class FormCounterTable extends Entity\DataManager
 		foreach($counters as $counterName)
 		{
 			$counterName = $map[$counterName] ?? $counterName;
-			if (\CCrmOwnerType::isPossibleDynamicTypeId(\CCrmOwnerType::resolveID($counterName)))
+			if (\CCrmOwnerType::isUseDynamicTypeBasedApproach(\CCrmOwnerType::resolveID($counterName)))
 			{
 				$counterName = 'DYNAMIC';
 			}

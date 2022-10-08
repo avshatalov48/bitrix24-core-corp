@@ -5,6 +5,7 @@ import { PopupManager } from 'main.popup';
 
 type CreateLineOptions = {
 	path: string;
+	sliderWidth: number;
 };
 
 export class CreateLine
@@ -16,6 +17,7 @@ export class CreateLine
 	constructor(options: CreateLineOptions)
 	{
 		this.path = options.path;
+		this.sliderWidth = options.sliderWidth ;
 
 		if (this.path)
 		{
@@ -61,7 +63,7 @@ export class CreateLine
 	{
 		BX.SidePanel.Instance.open(
 			this.path.replace('#LINE#', data.config_id),
-			{ width: 700, cacheable: false }
+			{ width: this.sliderWidth, cacheable: false }
 		);
 	}
 

@@ -510,7 +510,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 						'componentData' => [
 							'template' => '',
 							'contextId' => $entityName."_{$entityId}_EVENT",
-							'params' => [
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'AJAX_OPTION_ADDITIONAL' => $entityName."_{$entityId}_EVENT",
 								'ENTITY_TYPE' => $entityName,
 								'ENTITY_ID' => $entityId,
@@ -518,7 +518,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 								'INTERNAL' => 'Y',
 								'SHOW_INTERNAL_FILTER' => 'Y',
 								'PRESERVE_HISTORY' => true,
-							],
+							], 'crm.event.view')
 						],
 					];
 				}
@@ -543,10 +543,10 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '.default',
-						'params' => [
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'ENTITY_ID' => $this->getEntityID(),
 							'ENTITY_TYPE_NAME' => $this->getEntityName(),
-						]
+						], 'crm.entity.tree')
 					]
 				],
 				'enabled' => !$this->item->isNew(),
@@ -592,7 +592,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 					'serviceUrl' => '/bitrix/components/bitrix/crm.order.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => [
 						'template' => '',
-						'params' => [
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'INTERNAL_FILTER' => [
 								'ASSOCIATED_ENTITY_ID' => $this->item->getId(),
 								'ASSOCIATED_ENTITY_TYPE_ID' => $this->factory->getEntityTypeId(),
@@ -602,7 +602,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 							'TAB_ID' => static::TAB_NAME_ORDERS,
 							'PRESERVE_HISTORY' => true,
 							'BUILDER_CONTEXT' => ProductBuilder::TYPE_ID
-						]
+						], 'crm.order.list')
 					]
 				],
 				'enabled' => !$this->item->isNew(),
@@ -1569,7 +1569,7 @@ abstract class FactoryBased extends BaseComponent implements Controllerable
 			'MODE' => $this->mode,
 		];
 
-		if ($this->isConversionMode())
+		if ($this->isConversionMode() && $this->getConversionWizard())
 		{
 			$context = array_merge(
 				$context,

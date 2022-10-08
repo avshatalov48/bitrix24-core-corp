@@ -4,14 +4,14 @@
 
 .rpa-fields-controller-field-subtitle {
 	color: #a3a9b1;
-	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-bottom: 3px;
 }
 
 .rpa-fields-controller-field-title {
 	color: #424956;
 	word-break: break-word;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .rpa-fields-controller-footer {
@@ -26,7 +26,7 @@
 	color: #80868e;
 	text-decoration: none;
 	white-space: nowrap;
-	font: 13px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: 220ms all ease;
 }

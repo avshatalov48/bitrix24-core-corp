@@ -4,13 +4,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use \Bitrix\Main\Web\Json,
 	\Bitrix\Main\Localization\Loc;
 use \Bitrix\Imopenlines\Limit;
-\Bitrix\Main\UI\Extension::load( "ui.fonts.opensans");
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'clipboard',
+]);
 
 /** @var CBitrixComponentTemplate $this */
 /** @var array $arParams */
 /** @var array $arResult */
 
-CJSCore::Init(array('clipboard'));
 \Bitrix\ImConnector\Connector::initIconCss();
 if(\Bitrix\Main\Loader::includeModule("bitrix24"))
 {

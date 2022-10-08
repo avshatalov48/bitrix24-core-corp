@@ -160,7 +160,7 @@ $grid['ROWS']['template_0'] = [
 	'PRICE_NETTO' => 0,
 	'PRICE_BRUTTO' => 0,
 	'CURRENCY' => $arResult['CURRENCY']['ID'],
-	'TAX_RATE' => 0,
+	'TAX_RATE' => null,
 	'TAX_INCLUDED' => 'N',
 	'TAX_SUM' => 0,
 	'SUM' => 0,
@@ -400,8 +400,16 @@ foreach ($grid['ROWS'] as $product)
 	if ($arResult['ALLOW_TAX'])
 	{
 		// region TAX_RATE
-		$taxRateSelected = round((float)$rawProduct['TAX_RATE'], $commonPrecision);
-		$taxRateColumn = htmlspecialcharsbx($taxRateSelected).' %';
+		if (isset($rawProduct['TAX_RATE']))
+		{
+			$taxRateSelected = round((float)$rawProduct['TAX_RATE'], $commonPrecision);
+			$taxRateColumn = htmlspecialcharsbx($taxRateSelected).' %';
+		}
+		else
+		{
+			$taxRateSelected = null;
+			$taxRateColumn = \CCrmTax::GetVatRateNameByValue($rawProduct['TAX_RATE']);
+		}
 
 		$taxRates = $arResult['PRODUCT_VAT_LIST'];
 
@@ -420,10 +428,19 @@ foreach ($grid['ROWS'] as $product)
 
 		foreach ($taxRates as $taxId => $taxRate)
 		{
-			$taxRateHtml .= '<option value="'.htmlspecialcharsbx($taxRate).'" '
-				.'data-tax-id="'.$taxId.'"'
-				.($taxRateSelected == $taxRate ? 'selected' : '')
-				.'>'.htmlspecialcharsbx($taxRate).' %</option>';
+			if (isset($taxRate))
+			{
+				$taxRate = (float)$taxRate;
+				$name = $taxRate.' %';
+			}
+			else
+			{
+				$name = \CCrmTax::GetVatRateNameByValue($taxRate);
+			}
+
+			$selected = ($taxRateSelected === $taxRate) ? 'selected' : '';
+			$taxRate = htmlspecialcharsbx($taxRate);
+			$taxRateHtml .= "<option value='{$taxRate}' data-tax-id='{$taxId}' {$selected}>{$name}</option>";
 		}
 
 		$taxRateHtml .= '</select>';
@@ -454,7 +471,7 @@ foreach ($grid['ROWS'] as $product)
 	// end region TAX
 
 	// region SUM
-	$sum = $rawProduct['PRICE'] * $rawProduct['QUANTITY'];
+	$sum = $rawProduct['PRICE_EXCLUSIVE'] * $rawProduct['QUANTITY'] + $rawProduct['TAX_SUM'];
 	$sum = number_format($sum, $pricePrecision, '.', '');
 	$sumColumn = CCrmCurrency::MoneyToString($sum, $currency['ID']);
 

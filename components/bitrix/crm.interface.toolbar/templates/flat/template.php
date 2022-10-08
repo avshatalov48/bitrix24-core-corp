@@ -7,6 +7,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 $toolbarId = $arParams['TOOLBAR_ID'];
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $moreItems = array();
 $enableMoreButton = false;
 $labelText = '';

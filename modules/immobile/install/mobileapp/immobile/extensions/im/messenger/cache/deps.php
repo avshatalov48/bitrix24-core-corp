@@ -1,8 +1,9 @@
 <?php
 
 return [
-	'extension' => [
+	'extensions' => [
 		'type',
+		'im:messenger/const',
 		'im:messenger/lib/params',
 		'im:chat/utils',
 	],
@@ -11,5 +12,6 @@ return [
 		'./src/shared-storage/recent',
 		'./src/shared-storage/messages',
 		'./src/shared-storage/users',
+		'./src/native/share-dialog',
 	],
 ];

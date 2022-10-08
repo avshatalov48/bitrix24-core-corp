@@ -4,6 +4,9 @@ namespace Bitrix\Crm\Timeline;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -13,6 +16,7 @@ Loc::loadMessages(__FILE__);
 
 class ActivityController extends EntityController
 {
+	private const MAX_SIMULTANEOUS_PULL_EVENT_COUNT = 10;
 	/** @var \CTextParser|null  */
 	private static $parser = null;
 	/** @var int|null  */
@@ -148,46 +152,38 @@ class ActivityController extends EntityController
 		$enableHistoryPush = $historyEntryID > 0;
 		$enableSchedulePush = self::isActivitySupported($fields) && $status === \CCrmActivityStatus::Waiting;
 
-		if(($enableHistoryPush || $enableSchedulePush) && Main\Loader::includeModule('pull'))
+		$pullEventData = [$ownerID => $fields];
+
+		if ($enableSchedulePush)
 		{
-			$modelData = self::prepareEntityDataModel($ownerID, $fields);
-			$pushParams = array('ENTITY' => $modelData);
-			if($enableHistoryPush)
+			\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
+				$pullEventData,
+				Crm\Service\Container::getInstance()
+					->getUserPermissions($params['CURRENT_USER'] ?? null)
+					->getCrmPermissions(),
+				[
+					'ENABLE_PERMISSION_CHECK' => false,
+				]
+			);
+		}
+
+		foreach($bindings as $binding)
+		{
+			$entityItemIdentifier = new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
+			if ($enableSchedulePush)
 			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
-				if(is_array($historyFields))
-				{
-					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-						$historyFields,
-						[
-							'ENABLE_USER_INFO' => true,
-							'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
-						]
-					);
-				}
-			}
-			if($enableSchedulePush)
-			{
-				$pushParams['SCHEDULE_ITEM'] = self::prepareScheduleDataModel(
-					$fields,
-					[
-						'ENABLE_USER_INFO' => true,
-						'ENABLE_MULTIFIELD_INFO' => true,
-						'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
-					]
+				$this->sendPullEventOnAddScheduled(
+					$entityItemIdentifier,
+					$pullEventData[$ownerID],
+					$params['CURRENT_USER'] ?? null
 				);
 			}
-
-			foreach($bindings as $binding)
+			if ($enableHistoryPush)
 			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
-				\CPullWatch::AddToStack(
-					$tag,
-					array(
-						'module_id' => 'crm',
-						'command' => 'timeline_activity_add',
-						'params' => array_merge($pushParams, array('TAG' => $tag)),
-					)
+				$this->sendPullEventOnAdd(
+					$entityItemIdentifier,
+					$historyEntryID,
+					$params['CURRENT_USER'] ?? null
 				);
 			}
 		}
@@ -219,10 +215,6 @@ class ActivityController extends EntityController
 		$authorID = self::resolveAuthorID($currentFields);
 
 		$historyEntryID = 0;
-		if (isset($params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL']) && $params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'] === true)
-		{
-			$created = DateTime::createFromUserTime($params['CURRENT_FIELDS']['CREATED']);
-		}
 		if(!$prevCompleted && $curCompleted)
 		{
 			if($typeID == \CCrmActivityType::Email)
@@ -258,16 +250,24 @@ class ActivityController extends EntityController
 			}
 			else
 			{
-				$historyEntryID = ActivityEntry::create(
-					array(
-						'ACTIVITY_TYPE_ID' => $typeID,
-						'ACTIVITY_PROVIDER_ID' => $providerID,
-						'ENTITY_ID' => $ownerID,
-						'AUTHOR_ID' => $authorID,
-						'BINDINGS' => self::mapBindings($currentBindings),
-						'CREATED' => $created
-					)
-				);
+				$historyData = [
+					'ACTIVITY_TYPE_ID' => $typeID,
+					'ACTIVITY_PROVIDER_ID' => $providerID,
+					'ENTITY_ID' => $ownerID,
+					'AUTHOR_ID' => $authorID,
+					'BINDINGS' => self::mapBindings($currentBindings),
+				];
+
+				if (
+					isset($params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'])
+					&& $params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'] === true
+					&& !Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+				)
+				{
+					$historyData['CREATED'] = DateTime::createFromUserTime($params['CURRENT_FIELDS']['CREATED']);
+				}
+
+				$historyEntryID = ActivityEntry::create($historyData);
 			}
 		}
 		elseif($prevCompleted && !$curCompleted)
@@ -293,52 +293,77 @@ class ActivityController extends EntityController
 		}
 
 		$enableHistoryPush = $historyEntryID > 0;
-		$enableSchedulePush = self::isActivitySupported($currentFields);
-		$enableEntityPush = TimelineEntry::isAssociatedEntityExist(\CCrmOwnerType::Activity, $ownerID);
+		$enableActivityPush = self::isActivitySupported($currentFields);
 
-		if(($enableHistoryPush || $enableSchedulePush || $enableEntityPush)
-			&& Main\Loader::includeModule('pull')
-		)
+		$pullEventData = [$ownerID => $currentFields];
+
+		if ($enableActivityPush)
 		{
-			$modelData = self::prepareEntityDataModel($ownerID, $currentFields);
-			$pushParams = array('ENTITY' => $modelData);
-			if($enableHistoryPush)
+			\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
+				$pullEventData,
+				Crm\Service\Container::getInstance()
+					->getUserPermissions($params['CURRENT_USER'] ?? null)
+					->getCrmPermissions(),
+				[
+					'ENABLE_PERMISSION_CHECK' => false,
+				]
+			);
+		}
+
+		foreach($currentBindings as $binding)
+		{
+			$entityItemIdentifier = new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
+			if (!$prevCompleted && $curCompleted && $enableHistoryPush && $enableActivityPush)
+			// if activity has been completed and timeline history item has been produced,
+			// need actually move one to another on the timeline instead of separate remove and add events:
 			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
-				if(is_array($historyFields))
+				$this->sendPullEventOnMove(
+					$entityItemIdentifier,
+					$ownerID,
+					$historyEntryID,
+					$params['CURRENT_USER'] ?? null
+				);
+			}
+			elseif (!$prevCompleted && $curCompleted && $enableActivityPush)
+				// if activity has been completed and timeline history item has not been produced,
+				// need remove completed activity from timeline:
+			{
+				$this->sendPullEventOnDeleteScheduled($entityItemIdentifier, $ownerID);
+			}
+			else
+			{
+				if ($enableActivityPush)
 				{
-					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-						$historyFields,
-						[
-							'ENABLE_USER_INFO' => true,
-							'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
-						]
+					if ($prevCompleted && !$curCompleted)
+						// if activity has been marked as not completed
+						// need to create new scheduled activity instead of update existed:
+					{
+						$this->sendPullEventOnAddScheduled(
+							$entityItemIdentifier,
+							$pullEventData[$ownerID],
+							$params['CURRENT_USER'] ?? null
+						);
+					}
+					else
+					{
+						// just send pull update event with new data
+						$this->notifyTimelinesAboutActivityUpdateForBindings(
+							$pullEventData[$ownerID],
+							[
+								$binding,
+							],
+							$params['CURRENT_USER'] ?? null
+						);
+					}
+				}
+				if ($enableHistoryPush)
+				{
+					$this->sendPullEventOnAdd(
+						$entityItemIdentifier,
+						$historyEntryID,
+						$params['CURRENT_USER'] ?? null
 					);
 				}
-			}
-			if($enableSchedulePush)
-			{
-				$pushParams['SCHEDULE_ITEM'] = self::prepareScheduleDataModel(
-					$currentFields,
-					[
-						'ENABLE_USER_INFO' => true,
-						'ENABLE_MULTIFIELD_INFO' => true,
-						'CURRENT_USER' => $params['CURRENT_USER'] ?? null,
-					]
-				);
-			}
-
-			foreach($currentBindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
-				\CPullWatch::AddToStack(
-					$tag,
-					array(
-						'module_id' => 'crm',
-						'command' => 'timeline_activity_update',
-						'params' => array_merge($pushParams, array('TAG' => $tag)),
-					)
-				);
 			}
 		}
 	}
@@ -353,27 +378,44 @@ class ActivityController extends EntityController
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
+		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : [];
+		foreach($bindings as $binding)
+		{
+			$this->sendPullEventOnDeleteScheduled(
+				new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']),
+				$ownerID
+			);
+		}
+
 		$movedToRecycleBin = isset($params['MOVED_TO_RECYCLE_BIN']) && $params['MOVED_TO_RECYCLE_BIN'];
+		$associatedEntityId = $ownerID;
+		if ($movedToRecycleBin)
+		{
+			$associatedEntityId = $params['RECYCLE_BIN_ENTITY_ID'] ?? null;
+		}
+
+		if ($associatedEntityId)
+		{
+			$timelineEntriesIds = TimelineEntry::getEntriesIdsByAssociatedEntity(
+				$movedToRecycleBin ? \CCrmOwnerType::SuspendedActivity : \CCrmOwnerType::Activity,
+				$associatedEntityId,
+				self::MAX_SIMULTANEOUS_PULL_EVENT_COUNT
+			);
+			foreach ($timelineEntriesIds as $timelineEntryId)
+			{
+				foreach ($bindings as $binding)
+				{
+					$this->sendPullEventOnDelete(
+						new Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']),
+						$timelineEntryId
+					);
+				}
+			}
+		}
+
 		if(!$movedToRecycleBin)
 		{
 			TimelineEntry::deleteByAssociatedEntity(\CCrmOwnerType::Activity, $ownerID);
-		}
-
-		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
-		if(!empty($bindings) && Main\Loader::includeModule('pull'))
-		{
-			foreach($bindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
-				\CPullWatch::AddToStack(
-					$tag,
-					array(
-						'module_id' => 'crm',
-						'command' => 'timeline_activity_delete',
-						'params' => array('ENTITY_ID' => $ownerID, 'TAG' => $tag),
-					)
-				);
-			}
 		}
 	}
 
@@ -528,6 +570,8 @@ class ActivityController extends EntityController
 			Activity\Provider\Zoom::getId(),
 			Activity\Provider\CallTracker::getId(),
 			Activity\Provider\StoreDocument::getId(),
+			Activity\Provider\Document::getId(),
+			Activity\Provider\SignDocument::getId(),
 		];
 	}
 
@@ -543,6 +587,8 @@ class ActivityController extends EntityController
 			|| $providerID === Activity\Provider\RestApp::getId()
 			|| $providerID === Activity\Provider\Visit::getId()
 			|| $providerID === Activity\Provider\Zoom::getId()
+			|| $providerID === Activity\Provider\Document::getId()
+			|| $providerID === Activity\Provider\SignDocument::getId()
 		);
 	}
 
@@ -951,5 +997,188 @@ class ActivityController extends EntityController
 			},
 			$bindings
 		);
+	}
+
+	/**
+	 * Send pull event if item needs to be moved from one stream to another
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param int $fromActivityId
+	 * @param int $toTimelineEntryId
+	 * @param int|null $userId
+	 * @return void
+	 */
+	protected function sendPullEventOnMove(
+		ItemIdentifier $itemIdentifier,
+		int $fromActivityId,
+		int $toTimelineEntryId,
+		int $userId = null
+	)
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$itemTo = $this->createItemByTimelineEntryId(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$toTimelineEntryId
+		);
+		if ($itemTo)
+		{
+			(new Crm\Service\Timeline\Item\Pusher($itemTo))->sendMoveEvent(
+				Crm\Service\Timeline\Item\Pusher::STREAM_SCHEDULED,
+				Crm\Service\Timeline\Item\Model::getScheduledActivityModelId($fromActivityId)
+			);
+		}
+	}
+
+	/**
+	 * Send pull event about scheduled item creation
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param array $scheduledData
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public function sendPullEventOnAddScheduled(ItemIdentifier $itemIdentifier, array $scheduledData, int $userId = null): void
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$item = $this->createItemByScheduledData(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$scheduledData
+		);
+		if ($item)
+		{
+			(new Crm\Service\Timeline\Item\Pusher($item))->sendAddEvent();
+		}
+	}
+
+	/**
+	 * Send pull event about scheduled item modification
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param array $scheduledData
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public function sendPullEventOnUpdateScheduled(ItemIdentifier $itemIdentifier, array $scheduledData, int $userId = null): void
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$item = $this->createItemByScheduledData(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$scheduledData
+		);
+		if ($item)
+		{
+			(new Crm\Service\Timeline\Item\Pusher($item))->sendUpdateEvent();
+		}
+	}
+
+	/**
+	 * Send pull event about scheduled item deletion
+	 *
+	 * @param ItemIdentifier $itemIdentifier
+	 * @param int $scheduledActivityId
+	 * @param int|null $userId
+	 * @return void
+	 */
+	public function sendPullEventOnDeleteScheduled(ItemIdentifier $itemIdentifier, int $scheduledActivityId, int $userId = null): void
+	{
+		if (!Container::getInstance()->getTimelinePusher()->isDetailsPageChannelActive($itemIdentifier))
+		{
+			return;
+		}
+
+		$item = Container::getInstance()->getTimelineScheduledItemFactory()::createEmptyItem(
+			new Context($itemIdentifier, Context::PULL, $userId),
+			$scheduledActivityId
+		);
+
+		(new \Bitrix\Crm\Service\Timeline\Item\Pusher($item))->sendDeleteEvent();
+	}
+
+	/**
+	 * Create timeline Item object by array with activity data
+	 *
+	 * @param Context $context
+	 * @param int $timelineEntryId
+	 * @return \Bitrix\Crm\Service\Timeline\Item|null
+	 */
+	protected function createItemByScheduledData(Context $context, array $scheduledData):
+		?\Bitrix\Crm\Service\Timeline\Item
+	{
+		if (empty($scheduledData))
+		{
+			return null;
+		}
+
+		return Container::getInstance()->getTimelineScheduledItemFactory()::createItem(
+			$context,
+			$scheduledData
+		);
+	}
+
+	final public function notifyTimelinesAboutActivityUpdate(array $activity, ?int $userId = null): void
+	{
+		$bindings = \CCrmActivity::GetBindings($activity['ID']);
+		$this->notifyTimelinesAboutActivityUpdateForBindings($activity, $bindings, $userId);
+	}
+
+	protected function notifyTimelinesAboutActivityUpdateForBindings(array $activity, array $bindings, ?int $userId = null, bool $forceUpdateHistoryItems = false): void
+	{
+		$identifiers = array_map(
+			fn(array $binding) => new ItemIdentifier((int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID']),
+			$bindings,
+		);
+
+		if (empty($identifiers))
+		{
+			return;
+		}
+
+		$isCompleted = ($activity['COMPLETED'] ?? 'N') === 'Y';
+		if ($isCompleted)
+		{
+			$timelineEntryIds = TimelineEntry::getEntriesIdsByAssociatedEntity(
+				\CCrmOwnerType::Activity,
+				(int)$activity['ID'],
+				self::MAX_SIMULTANEOUS_PULL_EVENT_COUNT,
+			);
+
+			foreach ($timelineEntryIds as $timelineEntryId)
+			{
+				foreach ($identifiers as $identifier)
+				{
+					$this->sendPullEventOnUpdate($identifier, $timelineEntryId, $userId);
+				}
+			}
+		}
+		else
+		{
+			$scheduledData = $activity;
+			$items = [$activity['ID'] => &$scheduledData];
+
+			self::loadCommunicationsAndMultifields(
+				$items,
+				Crm\Service\Container::getInstance()->getUserPermissions($userId)->getCrmPermissions(),
+				[
+					'ENABLE_PERMISSION_CHECK' => false,
+				]
+			);
+
+			foreach ($identifiers as $identifier)
+			{
+				$this->sendPullEventOnUpdateScheduled($identifier, $scheduledData, $userId);
+			}
+		}
 	}
 }

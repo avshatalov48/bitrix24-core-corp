@@ -47,6 +47,8 @@ class EntityRequisite
 	const CONFIG_TABLE_NAME = 'b_crm_requisite_cfg';
 
 	const INN = 'RQ_INN'; //Individual Taxpayer Identification Number
+	const IIN = 'RQ_IIN';
+	const VAT_ID = 'RQ_VAT_ID';
 	const KPP = 'RQ_KPP';
 	const OGRN = 'RQ_OGRN';
 	const OGRNIP = 'RQ_OGRNIP';
@@ -575,8 +577,13 @@ class EntityRequisite
 	public function add($fields, $options = array())
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
-		$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
-		$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+
+		$allowSetSystemFields = $options['ALLOW_SET_SYSTEM_FIELDS'] ?? false;
+		if (!$allowSetSystemFields)
+		{
+			$fields['DATE_CREATE'] = new \Bitrix\Main\Type\DateTime();
+			$fields['CREATED_BY_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+		}
 
 		$addresses = null;
 		if (isset($fields[self::ADDRESS]))

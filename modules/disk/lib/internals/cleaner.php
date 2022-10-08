@@ -199,6 +199,7 @@ final class Cleaner
 				atta.OBJECT_ID IS NULL AND
 				v.CREATE_TIME < {$ttlTime} AND
 				v.FILE_ID <> obj.FILE_ID
+			ORDER BY v.ID ASC
 			LIMIT {$portion}
 		");
 

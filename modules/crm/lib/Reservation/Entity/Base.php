@@ -9,22 +9,19 @@ use Bitrix\Catalog;
 abstract class Base
 {
 	/** @var int $ownerTypeId */
-	protected $ownerTypeId;
+	protected int $ownerTypeId;
 
 	/** @var int $ownerId */
-	protected $ownerId;
+	protected int $ownerId;
 
 	/** @var array $entityProducts */
-	protected $entityProducts = [];
+	protected array $entityProducts = [];
 
 	/** @var Crm\Reservation\Product[] $products */
 	protected $products = [];
 
-	/** @var Crm\Order\Order */
-	private $order;
-
-	/** @var int|null */
-	private $defaultStore;
+	/** @var Crm\Order\Order|null */
+	private ?Crm\Order\Order $order = null;
 
 	/**
 	 * @param int $ownerId
@@ -42,8 +39,6 @@ abstract class Base
 		}
 
 		$this->entityProducts = $this->loadEntityProducts();
-
-		$this->defaultStore = Catalog\StoreTable::getDefaultStoreId();
 	}
 
 	abstract protected function checkLoadedEntity(): Main\Result;
@@ -71,7 +66,10 @@ abstract class Base
 		return $this->order;
 	}
 
-	abstract public function createOrderByEntity(): ?Crm\Order\Order;
+	public function createOrderByEntity(): ?Crm\Order\Order
+	{
+		return (new Crm\Order\OrderCreator($this->ownerId, $this->ownerTypeId))->create();
+	}
 
 	/**
 	 * @return array

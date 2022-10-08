@@ -3,7 +3,7 @@
 	border-radius: 2px;
 	color: #555;
 	margin-top: 4px;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 110px;
 	overflow: auto;
 	padding: 6px 8px;
@@ -14,7 +14,7 @@
 
 .bx-tm-popup-clock-wnd-subtitle {
 	text-align: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .bx-tm-popup-clock-wnd-report {
@@ -36,7 +36,7 @@
 	display: inline-block;
 	margin: 0;
 	padding: 0 0 5px;
-	font: normal 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #545c68;
 }
 
@@ -49,7 +49,7 @@
 	border: 1px solid #bcc0c5 !important;
 	color: #6b727b;
 	box-shadow: none;
-	font: bold 17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 32px;
 	padding: 0 18px 0 8px!important;
 	outline: medium none;
@@ -70,7 +70,7 @@
 	color: #80868e;
 	text-decoration: none;
 	white-space: nowrap;
-	font: 13px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: 220ms all ease;
 }

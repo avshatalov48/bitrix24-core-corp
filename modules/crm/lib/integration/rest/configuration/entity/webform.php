@@ -49,7 +49,7 @@ class WebForm
 		}
 
 		$content = ['list' => []];
-		$list = Crm\WebForm\Internals\FormTable::getList([
+		$list = Crm\WebForm\Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID'],
 			'filter' => [
 				'=ACTIVE' => 'Y',
@@ -84,7 +84,7 @@ class WebForm
 		$result = [];
 		if ($option['CLEAR_FULL'])
 		{
-			$list = Crm\WebForm\Internals\FormTable::getList([
+			$list = Crm\WebForm\Internals\FormTable::getDefaultTypeList([
 				'select' => ['ID'],
 				'filter' => [
 					'=IS_SYSTEM' => 'N',

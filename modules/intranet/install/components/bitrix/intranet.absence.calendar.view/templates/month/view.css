@@ -13,7 +13,15 @@ table.bx-calendar-month-main-table{border-top: solid 1px #C9C9C9; border-left: s
 .bx-calendar-month-main-table td.bx-calendar-empty {width: 170px; height: 20px; background-color:#FFFFFF;}
 table.bx-calendar-month-control-table {border-collapse: collapse; border: none;}
 table.bx-calendar-month-control-table td {border-collapse: collapse; border: none; padding: 7px 10px 7px 10px;}
-table.bx-calendar-month-control-table td.bx-calendar-month-control-text {text-align: center; vertical-align: center; font-weight: bold; font-size: 16px; color: #0C283D; white-space: nowrap;}
+
+table.bx-calendar-month-control-table td.bx-calendar-month-control-text {
+	text-align: center;
+	vertical-align: center;
+	font-weight: var(--ui-font-weight-bold);
+	font-size: 16px;
+	color: #0c283d;
+	white-space: nowrap;
+}
 table.bx-calendar-month-control-table td.bx-calendar-month-control-text a {text-decoration: none;}
 table.bx-calendar-month-control-table td.bx-calendar-month-control-text a:hover {text-decoration: underline;}
 table.bx-calendar-month-control-table td.bx-calendar-month-control-text a.bx-calendar-month-change1 {color: #879699; font-size: 14px;}

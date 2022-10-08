@@ -28,14 +28,6 @@ class FieldAttributeManager
 
 	public static function isEntitySupported(int $entityTypeId): bool
 	{
-		if (
-			$entityTypeId === CCrmOwnerType::Contact
-			|| $entityTypeId === CCrmOwnerType::Company
-		)
-		{
-			return false;
-		}
-
 		$factory = Crm\Service\Container::getInstance()->getFactory($entityTypeId);
 		if($factory)
 		{
@@ -589,11 +581,6 @@ class FieldAttributeManager
 			);
 		}
 
-		if (!self::isPhaseDependent())
-		{
-			return [];
-		}
-
 		if (!is_array($options))
 		{
 			$options = [];
@@ -1029,10 +1016,6 @@ class FieldAttributeManager
 	{
 		$result = [];
 
-		if (!static::isPhaseDependent())
-		{
-			return $result;
-		}
 		if (empty($fieldsData))
 		{
 			return $result;

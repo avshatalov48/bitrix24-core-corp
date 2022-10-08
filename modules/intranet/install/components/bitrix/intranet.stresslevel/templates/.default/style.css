@@ -19,7 +19,7 @@
 	text-align: center;
 	line-height: 25px;
 	border: 2px solid #3bc8f5;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: 500;
 	font-size: 14px;
 	color: #000;
@@ -39,7 +39,7 @@
 	display: inline-block;
 	position: relative;
 	vertical-align: top;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 16px;
 	color: #333;
 	line-height: 35px;
@@ -71,7 +71,7 @@
 .intranet-stresslevel-instruction-apps-link {
 	clear: both;
 	display: inline-block;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #2066b0;
 	margin: 15px 0 15px 0;

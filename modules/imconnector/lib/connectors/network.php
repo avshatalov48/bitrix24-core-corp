@@ -6,6 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\UserTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Im;
 use Bitrix\Im\User;
 
 use Bitrix\ImConnector\Error;
@@ -356,7 +357,6 @@ class Network extends Base
 	public function processingInputCommandKeyboard($params, $line): Result
 	{
 		$result = new Result();
-		$userId = 0;
 
 		if (
 			!isset($params['USER'])
@@ -371,6 +371,7 @@ class Network extends Base
 			));
 		}
 
+		$userId = 0;
 		if ($result->isSuccess())
 		{
 			$userId = $this->getUserId($params['USER']);
@@ -386,14 +387,48 @@ class Network extends Base
 			}
 		}
 
+		// Interactive Message
 		if ($result->isSuccess())
 		{
+			/** @var InteractiveMessage\Connectors\Network\Input $interactiveMessage */
 			$interactiveMessage = InteractiveMessage\Input::init('network');
+
 			$resultProcessing = $interactiveMessage->processingCommandKeyboard($params['COMMAND'], $params['COMMAND_PARAMS']);
 
 			if (!$resultProcessing->isSuccess())
 			{
 				$result->addErrors($resultProcessing->getErrors());
+			}
+		}
+
+		// IM commands
+		if ($result->isSuccess())
+		{
+			$messageId = (int)$params['MESSAGE_ID'];
+
+			$message = Im\Model\MessageTable::getById($messageId)->fetch();
+			if ($message)
+			{
+				$relations = \CIMChat::getRelationById($message['CHAT_ID']);
+				if (isset($relations[$userId]))
+				{
+					$chat = Im\Model\ChatTable::getById($message['CHAT_ID'])->fetch();
+
+					$messageFields = $params;
+
+					$messageFields['FROM_USER_ID'] = $userId;
+					$messageFields['TO_CHAT_ID'] = $message['CHAT_ID'];
+					$messageFields['MESSAGE'] =  '/'.$params['COMMAND'].' '.$params['COMMAND_PARAMS'];
+
+					$messageFields['MESSAGE_TYPE'] = $relations[$userId]['MESSAGE_TYPE'];
+					$messageFields['AUTHOR_ID'] = $userId;
+
+					$messageFields['COMMAND_CONTEXT'] = $params['COMMAND_CONTEXT'] ?? 'KEYBOARD';
+					$messageFields['CHAT_ENTITY_TYPE'] = $chat['ENTITY_TYPE'];
+					$messageFields['CHAT_ENTITY_ID'] = $chat['ENTITY_ID'];
+
+					Im\Command::onCommandAdd($messageId, $messageFields);
+				}
 			}
 		}
 
@@ -490,20 +525,6 @@ class Network extends Base
 	 */
 	public function sendMessageProcessing(array $message, $line): array
 	{
-		$isActiveKeyboard = false;
-
-		if (
-			!empty($message['im']['chat_id']) &&
-			$message['im']['chat_id'] > 0
-		)
-		{
-			//Processing for native messages
-			$interactiveMessage = InteractiveMessage\Output::getInstance($message['im']['chat_id'], ['connectorId' => 'network']);
-			$message['message'] = $interactiveMessage->nativeMessageProcessing($message['message']);
-
-			$isActiveKeyboard = $interactiveMessage->isLoadedKeyboard();
-		}
-
 		$result = [
 			'LINE_ID' => $line,
 			'GUID' => $message['chat']['id'],
@@ -514,9 +535,18 @@ class Network extends Base
 			'PARAMS' => $message['message']['params']
 		];
 
-		if ($isActiveKeyboard === true)
+		if (
+			!empty($message['im']['chat_id']) &&
+			$message['im']['chat_id'] > 0
+		)
 		{
-			$result['KEYBOARD'] = $message['message']['keyboardData'];
+			$interactiveMessage = InteractiveMessage\Output::getInstance($message['im']['chat_id'], ['connectorId' => 'network']);
+			$message['message'] = $interactiveMessage->nativeMessageProcessing($message['message']);
+
+			if ($interactiveMessage->isLoadedKeyboard())
+			{
+				$result['KEYBOARD'] = $message['message']['keyboardData'];
+			}
 		}
 
 		if (!empty($message['user']))
@@ -713,5 +743,6 @@ class Network extends Base
 
 		return $userId;
 	}
+
 	//endregion
 }

@@ -43,10 +43,87 @@ class CAllCrmCompany
 	private static $FIELD_INFOS = null;
 	const DEFAULT_FORM_ID = 'CRM_COMPANY_SHOW_V12';
 
+	private ?Crm\Entity\Compatibility\Adapter $compatibilityAdapter = null;
+
 	function __construct($bCheckPermission = true)
 	{
 		$this->bCheckPermission = $bCheckPermission;
 		$this->cPerms = CCrmPerms::GetCurrentUserPermissions();
+	}
+
+	/**
+	 * Returns true if this class should invoke Service\Operation instead old API.
+	 * For a start it will return false by default. Please use this period to test your customization on compatibility with new API.
+	 * Later it will return true by default.
+	 * In several months this class will be declared as deprecated and old code will be deleted completely.
+	 *
+	 * @return bool
+	 */
+	public function isUseOperation(): bool
+	{
+		return static::isFactoryEnabled();
+	}
+
+	private static function isFactoryEnabled(): bool
+	{
+		return Crm\Settings\CompanySettings::getCurrent()->isFactoryEnabled();
+	}
+
+	private function getCompatibilityAdapter(): Crm\Entity\Compatibility\Adapter
+	{
+		if (!$this->compatibilityAdapter)
+		{
+			$this->compatibilityAdapter = static::createCompatibilityAdapter();
+
+			if ($this->compatibilityAdapter instanceof Crm\Entity\Compatibility\Adapter\Operation)
+			{
+				$this->compatibilityAdapter
+					//bind newly created adapter to this instance
+					->setCheckPermissions((bool)$this->bCheckPermission)
+					->setErrorMessageContainer($this->LAST_ERROR)
+					->setCheckExceptionsContainer($this->checkExceptions)
+				;
+			}
+		}
+
+		return $this->compatibilityAdapter;
+	}
+
+	private static function createCompatibilityAdapter(): Bitrix\Crm\Entity\Compatibility\Adapter
+	{
+		$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Company);
+		if (!$factory)
+		{
+			throw new Error('No factory for company');
+		}
+
+		$compatibilityAdapter =
+			(new Crm\Entity\Compatibility\Adapter\Operation($factory))
+				->setRunBizProc(false)
+				->setRunAutomation(false)
+				->setAlwaysExposedFields([
+					'ID',
+					'MODIFY_BY_ID',
+				])
+				->setExposedOnlyAfterAddFields([
+					'CREATED_BY_ID',
+					'ASSIGNED_BY_ID',
+					'IS_MY_COMPANY',
+					'TITLE',
+					'CATEGORY_ID',
+					'HAS_IMOL',
+					'HAS_PHONE',
+					'HAS_EMAIL',
+				])
+		;
+
+		$primaryAddressAdapter = new Crm\Entity\Compatibility\Adapter\Address(\CCrmOwnerType::Company, EntityAddressType::Primary);
+		$compatibilityAdapter->addChild($primaryAddressAdapter);
+
+		$registeredAddressAdapter = new Crm\Entity\Compatibility\Adapter\Address(\CCrmOwnerType::Company, EntityAddressType::Registered);
+		$compatibilityAdapter->addChild($registeredAddressAdapter);
+
+		return $compatibilityAdapter;
 	}
 
 	// Service -->
@@ -93,7 +170,16 @@ class CAllCrmCompany
 	// Get Fields Metadata
 	public static function GetFieldsInfo()
 	{
-		if(!self::$FIELD_INFOS)
+		if (self::$FIELD_INFOS)
+		{
+			return self::$FIELD_INFOS;
+		}
+
+		if (static::isFactoryEnabled())
+		{
+			self::$FIELD_INFOS = static::createCompatibilityAdapter()->getFieldsInfo();
+		}
+		else
 		{
 			self::$FIELD_INFOS = array(
 				'ID' => array(
@@ -1100,6 +1186,20 @@ class CAllCrmCompany
 		$this->LAST_ERROR = '';
 		$this->checkExceptions = [];
 
+		if (isset($arFields['IS_MY_COMPANY']) && $arFields['IS_MY_COMPANY'] === 'Y')
+		{
+			$arFields['IS_MY_COMPANY'] = 'Y';
+		}
+		else
+		{
+			$arFields['IS_MY_COMPANY'] = 'N';
+		}
+
+		if ($this->isUseOperation() && ($arFields['IS_MY_COMPANY'] !== 'Y'))
+		{
+			return $this->getCompatibilityAdapter()->performAdd($arFields, $options);
+		}
+
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
 
 		// ALLOW_SET_SYSTEM_FIELDS is deprecated temporary option. It will be removed soon! Do not use it!
@@ -1148,9 +1248,6 @@ class CAllCrmCompany
 
 		if (isset($arFields['REVENUE']))
 			$arFields['REVENUE'] = floatval($arFields['REVENUE']);
-
-		$arFields['IS_MY_COMPANY'] = (isset($arFields['IS_MY_COMPANY']) && $arFields['IS_MY_COMPANY'] === 'Y') ?
-			'Y' : 'N';
 
 		if(!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 		{
@@ -1397,9 +1494,6 @@ class CAllCrmCompany
 				\Bitrix\Crm\Binding\ContactCompanyTable::bindContactIDs($arFields['ID'], $arFields['CONTACT_ID']);
 				if (isset($GLOBALS["USER"]))
 				{
-					if (!class_exists('CUserOptions'))
-						include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 					CUserOptions::SetOption('crm', 'crm_contact_search', array('last_selected' => implode(',', $arFields['CONTACT_ID'])));
 				}
 			}
@@ -1564,6 +1658,9 @@ class CAllCrmCompany
 		{
 			$arOptions = array();
 		}
+
+		$arOptions['IS_COMPARE_ENABLED'] = $bCompare;
+
 		$isSystemAction = isset($arOptions['IS_SYSTEM_ACTION']) && $arOptions['IS_SYSTEM_ACTION'];
 
 		$arFilterTmp = Array('ID' => $ID);
@@ -1576,6 +1673,29 @@ class CAllCrmCompany
 		if (!($arRow = $obRes->Fetch()))
 		{
 			return false;
+		}
+
+		if(isset($arFields['IS_MY_COMPANY']))
+		{
+			$arFields['IS_MY_COMPANY'] = $arFields['IS_MY_COMPANY'] === 'Y' ? 'Y' : 'N';
+		}
+
+		if (isset($arFields['IS_MY_COMPANY']) && $arFields['IS_MY_COMPANY'] === 'Y')
+		{
+			$isMyCompany = true;
+		}
+		elseif ($arRow['IS_MY_COMPANY'] === 'Y')
+		{
+			$isMyCompany = true;
+		}
+		else
+		{
+			$isMyCompany = false;
+		}
+
+		if ($this->isUseOperation() && !$isMyCompany)
+		{
+			return $this->getCompatibilityAdapter()->performUpdate($ID, $arFields, $arOptions);
 		}
 
 		if(isset($arOptions['CURRENT_USER']))
@@ -1615,11 +1735,6 @@ class CAllCrmCompany
 		if (isset($arFields['REVENUE']))
 		{
 			$arFields['REVENUE'] = floatval($arFields['REVENUE']);
-		}
-
-		if(isset($arFields['IS_MY_COMPANY']))
-		{
-			$arFields['IS_MY_COMPANY'] = $arFields['IS_MY_COMPANY'] === 'Y' ?'Y' : 'N';
 		}
 
 		$assignedByID = (int)(isset($arFields['ASSIGNED_BY_ID']) ? $arFields['ASSIGNED_BY_ID'] : $arRow['ASSIGNED_BY_ID']);
@@ -1921,9 +2036,6 @@ class CAllCrmCompany
 				);
 			}
 
-			CCrmEntityHelper::NormalizeUserFields($arFields, self::$sUFEntityID, $GLOBALS['USER_FIELD_MANAGER'], array('IS_NEW' => false));
-			$GLOBALS['USER_FIELD_MANAGER']->Update(self::$sUFEntityID, $ID, $arFields);
-
 			//Statistics & History -->
 			$oldLeadID = isset($arRow['LEAD_ID']) ? (int)$arRow['LEAD_ID'] : 0;
 			$curLeadID = isset($arFields['LEAD_ID']) ? (int)$arFields['LEAD_ID'] : $oldLeadID;
@@ -2069,9 +2181,6 @@ class CAllCrmCompany
 
 					if (isset($GLOBALS["USER"]))
 					{
-						if (!class_exists('CUserOptions'))
-							include_once($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/main/classes/".$GLOBALS['DBType']."/favorites.php");
-
 						CUserOptions::SetOption("crm", "crm_contact_search", array('last_selected' => implode(',', $arAdd)));
 					}
 				}
@@ -2284,6 +2393,12 @@ class CAllCrmCompany
 		if(!is_array($arFields))
 		{
 			return false;
+		}
+
+		$isMyCompanyFlag = $arFields['IS_MY_COMPANY'] ?? 'N';
+		if ($this->isUseOperation() && ($isMyCompanyFlag !== 'Y'))
+		{
+			return $this->getCompatibilityAdapter()->performDelete($ID, $arOptions);
 		}
 
 		$assignedByID = isset($arFields['ASSIGNED_BY_ID']) ? (int)$arFields['ASSIGNED_BY_ID'] : 0;
@@ -2503,7 +2618,14 @@ class CAllCrmCompany
 		$this->checkExceptions = [];
 
 		if (($ID == false || isset($arFields['TITLE'])) && empty($arFields['TITLE']))
-			$this->LAST_ERROR .= GetMessage('CRM_ERROR_FIELD_IS_MISSING', array('%FIELD_NAME%' => GetMessage('CRM_COMPANY_FIELD_TITLE')))."<br />";
+		{
+			$this->LAST_ERROR .=
+				GetMessage(
+					'CRM_ERROR_FIELD_IS_MISSING',
+					['%FIELD_NAME%' => GetMessage('CRM_COMPANY_FIELD_TITLE')]
+				) . "<br />"
+			;
+		}
 
 		if (isset($arFields['FM']) && is_array($arFields['FM']))
 		{
@@ -2520,13 +2642,13 @@ class CAllCrmCompany
 				$this->LAST_ERROR .= $strError."<br />";
 		}
 
-		if(!is_array($options))
+		if (!is_array($options))
 		{
 			$options = array();
 		}
 
 		$isRestoration = isset($options['IS_RESTORATION']) && $options['IS_RESTORATION'];
-		if($isRestoration)
+		if ($isRestoration)
 		{
 			$enableUserFieldCheck = false;
 		}
@@ -2537,7 +2659,7 @@ class CAllCrmCompany
 		}
 
 		$factory = Container::getInstance()->getFactory(CCrmOwnerType::Company);
-		if(isset($arFields['CATEGORY_ID']))
+		if (isset($arFields['CATEGORY_ID']))
 		{
 			if (!$factory->isCategoryAvailable($arFields['CATEGORY_ID']))
 			{
@@ -2568,63 +2690,16 @@ class CAllCrmCompany
 				$arFields,
 				self::$sUFEntityID,
 				$USER_FIELD_MANAGER,
-				array('IS_NEW' => ($ID == false))
+				['IS_NEW' => ($ID == false)]
 			);
 
 			$enableRequiredUserFieldCheck = !(isset($options['DISABLE_REQUIRED_USER_FIELD_CHECK'])
 				&& $options['DISABLE_REQUIRED_USER_FIELD_CHECK'] === true);
 
+			$isUpdate = ($ID > 0);
 			$fieldsToCheck = $arFields;
-			$requiredFields = null;
-			if($enableRequiredUserFieldCheck)
+			if ($enableRequiredUserFieldCheck)
 			{
-				/* Comment before status support
-				$currentFields = null;
-				if($ID > 0)
-				{
-					if(isset($options['CURRENT_FIELDS']) && is_array($options['CURRENT_FIELDS']))
-					{
-						$currentFields = $options['CURRENT_FIELDS'];
-					}
-					else
-					{
-						$dbResult = self::GetListEx(
-							array(),
-							array('ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
-							false,
-							false,
-							array('*', 'UF_*')
-						);
-						$currentFields = $dbResult->Fetch();
-					}
-				}
-
-				if(is_array($currentFields))
-				{
-					CCrmEntityHelper::NormalizeUserFields(
-						$currentFields,
-						self::$sUFEntityID,
-						$USER_FIELD_MANAGER,
-						array('IS_NEW' => ($ID == false))
-					);
-
-					//If Status ID is changed we must perform check of all fields.
-					if(isset($arFields['STATUS_ID']) && $arFields['STATUS_ID'] !== $currentFields['STATUS_ID'])
-					{
-						$fieldsToCheck = array_merge($currentFields, $arFields);
-						if(self::GetSemanticID($arFields['STATUS_ID'], $currentFields['CATEGORY_ID']) ===
-							Bitrix\Crm\PhaseSemantics::FAILURE)
-						{
-							//Disable required fields check for failure status due to backward compatibility.
-							$enableRequiredUserFieldCheck = false;
-						}
-					}
-					elseif(!isset($arFields['STATUS_ID']) && isset($currentFields['STATUS_ID']))
-					{
-						$fieldsToCheck = array_merge($arFields, array('STATUS_ID' => $currentFields['STATUS_ID']));
-					}
-				}*/
-
 				$requiredFields = Crm\Attribute\FieldAttributeManager::getRequiredFields(
 					CCrmOwnerType::Company,
 					$ID,
@@ -2633,18 +2708,28 @@ class CAllCrmCompany
 					is_array($options['FIELD_CHECK_OPTIONS']) ? $options['FIELD_CHECK_OPTIONS'] : array()
 				);
 
-				$requiredSystemFields = isset($requiredFields[Crm\Attribute\FieldOrigin::SYSTEM])
-					? $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] : array();
-				if(!empty($requiredSystemFields))
+				$requiredSystemFields = $requiredFields[Crm\Attribute\FieldOrigin::SYSTEM] ?? [];
+
+				if (!empty($requiredSystemFields))
 				{
 					$validator = new Crm\Entity\CompanyValidator($ID, $fieldsToCheck);
 					$validationErrors = array();
 					foreach($requiredSystemFields as $fieldName)
 					{
-						$validator->checkFieldPresence($fieldName, $validationErrors);
+						if (
+							!$isUpdate
+							|| array_key_exists($fieldName, $fieldsToCheck)
+							|| (
+								is_array($fieldsToCheck['FM'])
+								&& array_key_exists($fieldName, $fieldsToCheck['FM'])
+							)
+						)
+						{
+							$validator->checkFieldPresence($fieldName, $validationErrors);
+						}
 					}
 
-					if(!empty($validationErrors))
+					if (!empty($validationErrors))
 					{
 						$e = new CAdminException($validationErrors);
 						$this->checkExceptions[] = $e;
@@ -2652,10 +2737,6 @@ class CAllCrmCompany
 					}
 				}
 			}
-
-			$requiredUserFields = is_array($requiredFields) && isset($requiredFields[Crm\Attribute\FieldOrigin::CUSTOM])
-				? $requiredFields[Crm\Attribute\FieldOrigin::CUSTOM]
-				: [];
 
 			if (isset($arFields['CATEGORY_ID']))
 			{
@@ -2673,7 +2754,7 @@ class CAllCrmCompany
 					$fieldsToCheck,
 					false,
 					$enableRequiredUserFieldCheck,
-					$requiredUserFields,
+					$requiredFields[Crm\Attribute\FieldOrigin::CUSTOM] ?? null,
 					isset($filteredUserFields) ? array_keys($filteredUserFields) : null
 				)
 			)

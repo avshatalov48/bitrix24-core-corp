@@ -43,9 +43,7 @@ export default class ReserveControl
 			this.#layoutDateReservation(this.getDateReservation());
 		}
 
-		node.appendChild(
-			Tag.render`${this.#getDateNode()}`
-		);
+		node.appendChild(this.#getDateNode());
 
 		Event.bind(this.#getDateNode(), 'click', ReserveControl.#onDateInputClick.bind(this));
 		Event.bind(this.#getDateNode().querySelector('input'), 'change', this.onDateChange.bind(this));
@@ -231,7 +229,7 @@ export default class ReserveControl
 			`;
 			if (this.isBlocked)
 			{
-				tag.onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+				tag.onclick = () => EventEmitter.emit(this, 'onNodeClick');
 			}
 			return tag;
 		});

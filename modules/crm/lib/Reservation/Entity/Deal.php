@@ -50,9 +50,4 @@ class Deal extends Base
 
 		return $dealProducts;
 	}
-
-	public function createOrderByEntity(): ?Crm\Order\Order
-	{
-		return Crm\Order\Manager::createOrderWithoutProductByDeal($this->ownerId);
-	}
 }

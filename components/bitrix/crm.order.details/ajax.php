@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\Error;
 use \Bitrix\Crm\Order\Permissions;
+use Bitrix\Main\SystemException;
 use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Basket;
 use Bitrix\Sale\DiscountCouponsManager;
@@ -1869,7 +1870,7 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 			'SITE_ID' => $order->getSiteId(),
 			'CURRENCY' => $order->getCurrency(),
 		);
-		
+
 		$options = [
 			'FILL_PRODUCT_PROPERTIES' => 'Y',
 		];
@@ -1976,6 +1977,12 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 		$_SESSION['ORDER_BASKET'][$order->getId()]['ITEMS'] = $sessionBasket;
 		$ajaxParams = $componentParams;
 		$ajaxParams['params']['SESSION_BASKET'] = 'Y';
+		$ajaxParams['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+			(array)$ajaxParams['params'],
+			'crm.order.product.list'
+		);
+		unset($ajaxParams['params']);
+
 		$template = $componentParams['template'] ?? '';
 		$params = $componentParams['params'] ?? [];
 

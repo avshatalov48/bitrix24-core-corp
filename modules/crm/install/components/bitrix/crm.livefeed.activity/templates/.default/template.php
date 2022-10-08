@@ -1,6 +1,7 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
@@ -18,7 +19,7 @@ $ind = RandString(8);
 		foreach($arResult["FIELDS_FORMATTED"] as $key => $value)
 		{
 			if (
-				$key == "CLIENT_ID" 
+				$key == "CLIENT_ID"
 				&& intval($arResult["COMMUNICATION_MORE_CNT"]) > 0
 				&& !empty($arResult["CLIENTS_FOR_JS"])
 			)
@@ -45,12 +46,12 @@ $ind = RandString(8);
 			{
 				unset($strClientsMoreLink);
 			}
-			
+
 			if ($arResult["FORMAT"] == "table")
 			{
 				echo str_replace(
 					array(
-						"#row_begin#", 
+						"#row_begin#",
 						"#row_end#",
 						"#cell_begin_left#",
 						"#cell_begin_right#",
@@ -59,7 +60,7 @@ $ind = RandString(8);
 						"#clients_more_link#"
 					),
 					array(
-						"<tr>", 
+						"<tr>",
 						"</tr>",
 						'<td class="crm-feed-info-left-cell">',
 						'<td class="crm-feed-info-right-cell">',
@@ -75,7 +76,7 @@ $ind = RandString(8);
 		if ($arResult["FORMAT"] == "table")
 		{
 			?></table><?
-		}	
+		}
 	}
 	?><div class="feed-calendar-view-icon feed-crm-view-icon crm-feed-calendar-icon">
 		<div class="feed-calendar-view-icon-fake-link"><img src="/bitrix/images/1.gif"></div>
@@ -144,7 +145,7 @@ $ind = RandString(8);
 					false,
 					Array("HIDE_ICONS" => "Y")
 				);?></div><?
-				$cnt++;				
+				$cnt++;
 			}
 			?></div>
 		</div><?
@@ -155,7 +156,7 @@ $ind = RandString(8);
 			<div class="crm-feed-deal-descr-title"><?=GetMessage("C_T_CRM_LFA_DESCRIPTION")?>:</div>
 			<div class="crm-feed-deal-descr-text"><?=$arResult["DESCRIPTION"]?></div>
 		</div><?
-	}	
+	}
 ?></div><?
 
 /*
@@ -170,16 +171,16 @@ if ($arResult["IS_COMPLETED"])
 			function()
 			{
 				var activityNode = BX('crm_feed_activity_<?=$ind?>');
-				var logEntryNode = BX.findParent(activityNode, {'className': 'feed-post-cont-wrap'});				
+				var logEntryNode = BX.findParent(activityNode, {'className': 'feed-post-cont-wrap'});
 
 				if (logEntryNode)
 				{
-					var oActivity = BX.CrmLiveFeedActivity.create(<?=$arParams["~ACTIVITY"]["ID"]?>, { 
+					var oActivity = BX.CrmLiveFeedActivity.create(<?=$arParams["~ACTIVITY"]["ID"]?>, {
 						editorId: 'livefeed',
 						logId: <?=intval($arParams["~PARAMS"]["LOG_ID"])?>,
 						node: logEntryNode
 					});
-					
+
 					<?
 					if (!empty($arResult['CLIENTS_FOR_JS']))
 					{

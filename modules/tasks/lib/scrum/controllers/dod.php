@@ -20,6 +20,7 @@ use Bitrix\Tasks\Scrum\Checklist\TypeChecklistFacade;
 use Bitrix\Tasks\Scrum\Form\TypeForm;
 use Bitrix\Tasks\Scrum\Service\BacklogService;
 use Bitrix\Tasks\Scrum\Service\DefinitionOfDoneService;
+use Bitrix\Tasks\Scrum\Service\EntityService;
 use Bitrix\Tasks\Scrum\Service\ItemService;
 use Bitrix\Tasks\Scrum\Service\TaskService;
 use Bitrix\Tasks\Scrum\Service\TypeService;
@@ -178,10 +179,6 @@ class DoD extends Controller
 	 */
 	public function getSettingsAction(int $groupId, int $taskId = 0, string $saveRequest = 'Y'): array
 	{
-		$userId = User::getId();
-
-		$isSaveRequest = $saveRequest === 'Y';
-
 		$typeService = new TypeService();
 		$backlogService = new BacklogService();
 
@@ -214,9 +211,38 @@ class DoD extends Controller
 	 * @param int $typeId Type id.
 	 * @return Component
 	 */
-	public function getChecklistAction(int $typeId): Component
+	public function getChecklistAction(int $typeId): ?Component
 	{
 		$userId = User::getId();
+
+		$typeService = new TypeService();
+		$entityService = new EntityService();
+
+		$type = $typeService->getType($typeId);
+		if ($type->isEmpty())
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_TYPE_NOT_FOUND'),
+					self::ERROR_COULD_NOT_SAVE_SETTINGS
+				)
+			);
+
+			return null;
+		}
+
+		$entity = $entityService->getEntityById($type->getEntityId());
+		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
 
 		$definitionOfDoneService = new DefinitionOfDoneService($userId);
 
@@ -244,6 +270,7 @@ class DoD extends Controller
 		$userId = User::getId();
 
 		$typeService = new TypeService();
+		$entityService = new EntityService();
 
 		$type = $typeService->getType($typeId);
 		if ($type->isEmpty())
@@ -254,6 +281,21 @@ class DoD extends Controller
 					self::ERROR_COULD_NOT_SAVE_SETTINGS
 				)
 			);
+
+			return null;
+		}
+
+		$entity = $entityService->getEntityById($type->getEntityId());
+		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
 		}
 
 		$definitionOfDoneService = new DefinitionOfDoneService($userId);
@@ -312,6 +354,35 @@ class DoD extends Controller
 
 		$backlogService = new BacklogService();
 		$itemService = new ItemService();
+		$typeService = new TypeService();
+		$entityService = new EntityService();
+
+		$type = $typeService->getType($typeId);
+		if ($type->isEmpty())
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_TYPE_NOT_FOUND'),
+					self::ERROR_COULD_NOT_SAVE_SETTINGS
+				)
+			);
+
+			return null;
+		}
+
+		$entity = $entityService->getEntityById($type->getEntityId());
+		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
+
 		$definitionOfDoneService = new DefinitionOfDoneService($userId);
 
 		$backlog = $backlogService->getBacklogByGroupId($groupId);
@@ -352,13 +423,37 @@ class DoD extends Controller
 
 		$itemService = new ItemService();
 		$typeService = new TypeService();
+		$entityService = new EntityService();
 		$definitionOfDoneService = new DefinitionOfDoneService($userId);
 
 		$type = $typeService->getType($typeId);
+		if ($type->isEmpty())
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_TYPE_NOT_FOUND'),
+					self::ERROR_COULD_NOT_SAVE_SETTINGS
+				)
+			);
+
+			return null;
+		}
+
+		$entity = $entityService->getEntityById($type->getEntityId());
+		if (!Group::canReadGroupTasks($userId, $entity->getGroupId()))
+		{
+			$this->errorCollection->setError(
+				new Error(
+					Loc::getMessage('TASKS_SDC_ERROR_ACCESS_DENIED'),
+					self::ERROR_ACCESS_DENIED
+				)
+			);
+
+			return null;
+		}
 
 		$scrumItem = $itemService->getItemBySourceId($taskId);
-
-		if ($scrumItem->isEmpty() || $type->isEmpty())
+		if ($scrumItem->isEmpty())
 		{
 			$this->errorCollection->setError(
 				new Error(

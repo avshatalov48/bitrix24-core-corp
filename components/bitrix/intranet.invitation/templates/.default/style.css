@@ -115,7 +115,7 @@
 /*}*/
 
 .invite-form-ctl-description {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #858c96;
 	line-height: 18px;
@@ -163,17 +163,17 @@
 
 /*region content*/
 .invite-content {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 	line-height: 20px;
 }
 
 .invite-content-title {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 20px;
 }
 
@@ -188,7 +188,7 @@
 .invite-content-list li {
 	margin-bottom: 17px;
 	line-height: 17px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 }
@@ -198,8 +198,8 @@
 	content: counter(section);
 	margin-right: 10px;
 	height: 17px;
-	font-weight: bold;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: var(--ui-font-weight-bold);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	min-width: 17px;
 	line-height: 17px;
 	vertical-align: middle;
@@ -228,7 +228,7 @@
 
 .invite-form-ctl-title {
 	opacity: 0.9;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-bottom: 5px;
 	font-size: 13px;
 	color: #525c69;
@@ -262,7 +262,7 @@
 }
 
 .invite-dialog-fast-reg-control-label {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #333;
 	line-height: 20px;
@@ -294,7 +294,7 @@
 .invite-dialog-fast-reg-control-switcher-on,
 .invite-dialog-fast-reg-control-switcher-off {
 	opacity: 0.43;
-	font-family: "Helvetica", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 8px;
 	text-transform: uppercase;
 	color: #fff;
@@ -351,25 +351,25 @@
 .invite-limit-counters-block-name {
 	opacity: 0.81;
 	flex:1;
-	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
 .invite-limit-counters-block-value {
-	font: 16px/16px "Helvetica", Helvetica, Arial, sans-serif;
+	font: 16px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	padding-left: 20px;
 }
 
 .invite-limit-counters-block-value-current {
-	font: 16px/16px "Helvetica", Helvetica, Arial, sans-serif;
+	font: 16px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 20px;
 	color: #009cce;
 }
 
 
 .invite-limit-counters-block-value-unlimited {
-	font: 16px/16px "Helvetica", Helvetica, Arial, sans-serif;
+	font: 16px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 20px;
 	color: #009cce;
 	text-align: right;
@@ -378,7 +378,7 @@
 
 
 .invite-limit-counters-block-value-overflow {
-	font: 16px/16px "Helvetica", Helvetica, Arial, sans-serif;
+	font: 16px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 20px;
 	color: #ee7d76;
 }
@@ -388,7 +388,7 @@
 .invite-btn {
 	background: rgba(255, 255, 255, 0.46);
 	border: 2px dashed rgba(166, 166, 166, 0.41);
-	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	padding: 12px 20px 13px;
 	text-align: center;
@@ -413,7 +413,7 @@
 	color: #2fc6f6;
 	position: relative;
 	top: -2px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .invite-send-success-wrap {

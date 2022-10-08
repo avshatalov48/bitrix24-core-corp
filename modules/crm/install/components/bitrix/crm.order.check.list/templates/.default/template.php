@@ -1,6 +1,7 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service;
 
 /** @var \CBitrixComponent $component */
 
@@ -127,12 +128,9 @@ foreach($arResult['ROWS'] as $key => $check)
 			"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($paymentData['ACCOUNT_NUMBER']),
 			"#DATE_BILL#" =>   FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($paymentData['DATE_BILL'])),
 		));
-		$link = CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_ORDER_PAYMENT_DETAILS'],
-			array('payment_id' => $paymentId)
-		);
 		$paymentValue .= CCrmViewHelper::RenderInfo(
-			$link,
+			Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+				->getPaymentDetailsLink($paymentId),
 			$paymentTitle,
 			htmlspecialcharsbx($paymentData['PAY_SYSTEM_NAME']),
 			array('TARGET' => '_self')
@@ -156,12 +154,9 @@ foreach($arResult['ROWS'] as $key => $check)
 			"#ACCOUNT_NUMBER#" => htmlspecialcharsbx($shipmentData['ACCOUNT_NUMBER']),
 			"#DATE_INSERT#" =>  FormatDate($arResult['DATE_FORMAT'], MakeTimeStamp($shipmentData['DATE_INSERT'])),
 		));
-		$link = CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-			array('shipment_id' => $shipmentId)
-		);
 		$shipmentValue .= CCrmViewHelper::RenderInfo(
-			$link,
+			Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+				->getShipmentDetailsLink($shipmentId),
 			$shipmentTitle,
 			htmlspecialcharsbx($shipmentData['DELIVERY_NAME']),
 			array('TARGET' => '_self')

@@ -240,7 +240,8 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	{
 		$dialog = parent::GetPropertiesDialog(...func_get_args());
 		$dialog->setRuntimeData([
-			'DocumentName' => static::getDocumentService()->getEntityName('crm', Document\Dynamic::class),
+			'DocumentName' => static::getDocumentService()->getEntityName('crm', $documentType[1]),
+			'DocumentFields' => array_values(Crm\Automation\Helper::getDocumentFields($documentType)),
 		]);
 
 		$entityTypeId = (int)$dialog->getCurrentValue('dynamic_type_id', 0);
@@ -342,7 +343,7 @@ class CBPCrmUpdateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return $result;
 	}
 
-	protected static function extractFieldsConditions(PropertiesDialog $dialog, array $fieldsMap)
+	protected static function extractFieldsConditions(PropertiesDialog $dialog, array $fieldsMap): Result
 	{
 		$currentValues = $dialog->getCurrentValues();
 		$prefix = $fieldsMap['DynamicFilterFields']['FieldName'] . '_';

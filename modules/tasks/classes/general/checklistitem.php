@@ -266,7 +266,7 @@ final class CTaskCheckListItem extends CTaskSubItemAbstract
 		);
 		$sortIndexes = array_column($neighbours, 'SORT_INDEX');
 
-		return (int)max($sortIndexes) + 1;
+		return (empty($sortIndexes) ? 0 : (int)max($sortIndexes)) + 1;
 	}
 
 	/**

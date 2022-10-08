@@ -28,6 +28,15 @@ use Bitrix\Main\ORM\Query\Join;
 // load language file that was created before this file renaming
 Loc::loadMessages(Path::combine(__DIR__, 'productrow.php'));
 
+/**
+ * Base prices:
+ * PRICE_EXCLUSIVE - base price with discount;
+ * PRICE_NETTO - base price.
+ *
+ * Prices with tax/vat:
+ * PRICE - base price with discount and vat.
+ * PRICE_BRUTTO - base price with vat.
+ */
 class ProductRowTable extends DataManager
 {
 	public static function getTableName(): string
@@ -138,7 +147,7 @@ class ProductRowTable extends DataManager
 				->configureDefaultValue(0.00),
 			(new FloatField('TAX_RATE'))
 				->configureScale(2)
-				->configureDefaultValue(0.0),
+				->configureNullable(),
 			(new BooleanField('TAX_INCLUDED'))
 				->configureStorageValues('N', 'Y')
 				->configureDefaultValue(false),
@@ -152,6 +161,7 @@ class ProductRowTable extends DataManager
 				->configureDefaultValue(''),
 			(new IntegerField('SORT'))
 				->configureDefaultValue(0),
+			(new StringField('XML_ID')),
 			(new Reference(
 				'RESERVATION',
 				ProductRowReservationTable::class,

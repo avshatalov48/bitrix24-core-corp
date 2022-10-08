@@ -2502,6 +2502,8 @@ $parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager
 	$arResult['DEAL']
 );
 
+$debugItemIds = \CCrmBizProcHelper::getActiveDebugEntityIds(\CCrmOwnerType::Deal);
+
 foreach($arResult['DEAL'] as &$arDeal)
 {
 	$entityID = $arDeal['ID'];
@@ -2899,6 +2901,14 @@ foreach($arResult['DEAL'] as &$arDeal)
 						: '<br /><span class=\'bizproc-item-title\'>'.GetMessage('CRM_TASKS').': <a href=\''.$arDeal['PATH_TO_USER_BP'].'\' title=\''.GetMessage('CRM_TASKS_TITLE').'\'>'.$totalTaskQty.($totalTaskQty > 5 ? '+' : '').'</a></span>');
 			}
 		}
+	}
+
+	if (in_array($arDeal['ID'], $debugItemIds))
+	{
+		$arDeal['TITLE_PREFIX'] = sprintf(
+			'<span class="crm-debug-item-label">%s</span> ',
+			GetMessage('CRM_DEAL_LIST_ITEM_DEBUG_TITLE')
+		);
 	}
 
 	if (!isset($arDeal['ASSIGNED_BY_ID']))

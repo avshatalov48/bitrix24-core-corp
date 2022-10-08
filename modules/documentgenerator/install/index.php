@@ -59,6 +59,16 @@ class documentgenerator extends CModule
 			 */
 			CAgent::AddAgent('\Bitrix\DocumentGenerator\Driver::installDefaultRoles();', 'documentgenerator', "N", 150, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+150, "FULL"));
 
+			/**
+			 * @see \Bitrix\DocumentGenerator\Service\ActualizeQueue::process()
+			 */
+			CAgent::AddAgent(
+				'\\Bitrix\\DocumentGenerator\\Service\\ActualizeQueue::process(5);',
+				'documentgenerator',
+				"N",
+				300,
+			);
+
 			$APPLICATION->IncludeAdminFile(GetMessage("DOCUMENTGENERATOR_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/".$this->MODULE_ID."/install/step2.php");
 		}
 		return true;

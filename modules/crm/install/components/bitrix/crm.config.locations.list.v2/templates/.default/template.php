@@ -20,6 +20,7 @@ Loc::loadMessages(__FILE__);
 
 	<?
 	global $APPLICATION;
+	\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 	$APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 
 	$arResult['GRID_DATA'] = $arColumns = array();

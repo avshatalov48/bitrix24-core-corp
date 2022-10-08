@@ -147,6 +147,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this3.emit('afterComplete');
 	        }
 	      })["catch"](function (response) {
+	        _this3.completeButton.setWaiting(false);
+
 	        _this3.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP'));
 	      });
 	    }

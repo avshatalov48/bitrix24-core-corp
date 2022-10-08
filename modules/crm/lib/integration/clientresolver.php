@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Integration;
 
+use Bitrix\Crm\Integration\Rest\AppPlacement;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Main;
@@ -11,6 +12,7 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Crm;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Rest\PlacementTable;
 use Bitrix\Socialservices;
 
 class ClientResolver
@@ -44,7 +46,7 @@ class ClientResolver
 	{
 		$result = $value;
 
-		$result = preg_replace('/^( |\t|-)+/'.BX_UTF_PCRE_MODIFIER, '', $result);
+		$result = preg_replace('/^[ \t\-]+/'.BX_UTF_PCRE_MODIFIER, '', $result);
 		$result = preg_replace('/ {2,}/'.BX_UTF_PCRE_MODIFIER, ' ', $result);
 		$result = trim($result);
 
@@ -487,7 +489,9 @@ class ClientResolver
 			$titles = $requisiteEntity->getFieldsTitles($countryId);
 			return [
 				'VALUE' => self::PROP_ITIN,
-				'TITLE' => $titles[EntityRequisite::INN]
+				'TITLE' => $titles[EntityRequisite::INN],
+				'IS_PLACEMENT' => 'N',
+				'COUNTRY_ID' => $countryId,
 			];
 		}
 		if ($countryId === 14 && // ua
@@ -497,7 +501,9 @@ class ClientResolver
 			$titles = $requisiteEntity->getFieldsTitles($countryId);
 			return [
 				'VALUE' => self::PROP_SRO,
-				'TITLE' => $titles[EntityRequisite::EDRPOU]
+				'TITLE' => $titles[EntityRequisite::EDRPOU],
+				'IS_PLACEMENT' => 'N',
+				'COUNTRY_ID' => $countryId,
 			];
 		}
 
@@ -534,5 +540,133 @@ class ClientResolver
 	{
 		$instance = new self();
 		return $instance->resolveClient((string)$propertyTypeID, (string)$propertyValue, (int)$countryID);
+	}
+
+	public static function getDetailSearchHandlersByCountry(bool $noStaticCache = false): array
+	{
+		static $result = null;
+
+
+		if ($result === null || $noStaticCache)
+		{
+			$result = [];
+			if (Loader::includeModule('rest'))
+			{
+				$allowedCountriesMap = array_fill_keys(EntityRequisite::getAllowedRqFieldCountries(), true);
+				$handlers = PlacementTable::getHandlersList(AppPlacement::REQUISITE_AUTOCOMPLETE);
+				foreach ($handlers as $hadnlerInfo)
+				{
+					$filteredHandlerInfo = [
+						'ID' => $hadnlerInfo['ID'],
+						'TITLE' => $hadnlerInfo['TITLE'],
+						'OPTIONS' => $hadnlerInfo['OPTIONS'],
+					];
+					$countries = [];
+					if (
+						isset($filteredHandlerInfo['OPTIONS']['countries'])
+						&& is_string($filteredHandlerInfo['OPTIONS']['countries'])
+						&& $filteredHandlerInfo['OPTIONS']['countries'] !== ''
+					)
+					{
+						$optionValue = $filteredHandlerInfo['OPTIONS']['countries'];
+						if (preg_match('/^[1-9][0-9]*(,[1-9][0-9]*)*$/', $optionValue))
+						{
+							$countryList = explode(',', $filteredHandlerInfo['OPTIONS']['countries']);
+							if (is_array($countryList))
+							{
+								foreach ($countryList as $countryId)
+								{
+									$countryId = (int)$countryId;
+									if (isset($allowedCountriesMap[$countryId]))
+									{
+										$countries[$countryId] = true;
+									}
+								}
+								$countries = array_keys($countries);
+							}
+						}
+					}
+					if (empty($countries))
+					{
+						$countries = EntityRequisite::getAllowedRqFieldCountries();
+					}
+					foreach ($countries as $countryId)
+					{
+						if (!is_array($result[$countryId]))
+						{
+							$result[$countryId] = [];
+						}
+						$result[$countryId][] = $filteredHandlerInfo;
+					}
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param int $countryId
+	 * @return array|null
+	 */
+	public static function getClientResolverPropertyWithPlacements(int $countryId)
+	{
+		$result = ClientResolver::getPropertyTypeByCountry($countryId);
+
+		$detailSearchHandlersByCountry = static::getDetailSearchHandlersByCountry();
+		if (isset($detailSearchHandlersByCountry[$countryId]))
+		{
+			if (!is_array($result))
+			{
+				$result = [
+					'VALUE' => 'PLACEMENT_' . $detailSearchHandlersByCountry[$countryId][0]['ID'],
+					'TITLE' => $detailSearchHandlersByCountry[$countryId][0]['TITLE'],
+					'IS_PLACEMENT' => 'Y',
+					'COUNTRY_ID' => $countryId,
+				];
+			}
+			$result['PLACEMENTS'] = $detailSearchHandlersByCountry[$countryId];
+		}
+
+		return $result;
+	}
+
+	public static function getClientResolverPlacementParams(int $countryId): ?array
+	{
+		$clientResolverPropertyType = static::getClientResolverPropertyWithPlacements($countryId);
+
+		return (
+		$clientResolverPropertyType
+			? [
+			'isPlacement' => (
+				isset($clientResolverPropertyType['IS_PLACEMENT'])
+				&& $clientResolverPropertyType['IS_PLACEMENT'] === 'Y'
+			),
+			'numberOfPlacements' =>
+				is_array($clientResolverPropertyType['PLACEMENTS'])
+					? count($clientResolverPropertyType['PLACEMENTS'])
+					: 0
+			,
+			'countryId' => $countryId,
+		]
+			: null
+		);
+	}
+
+	public static function getClientResolverPlaceholderText(int $countryId): string
+	{
+		$clientResolverPropertyType = static::getClientResolverPropertyWithPlacements($countryId);
+		$title = is_array($clientResolverPropertyType) ? $clientResolverPropertyType['TITLE'] : '';
+		if (is_string($title) && $title !== '' && $clientResolverPropertyType['IS_PLACEMENT'] !== 'Y')
+		{
+			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN');
+			if (is_string($template) && $template !== '')
+			{
+				$template = mb_strtolower($template);
+				$title = strtr($template, ['#field_name#' => $title]);
+			}
+		}
+
+		return $title;
 	}
 }

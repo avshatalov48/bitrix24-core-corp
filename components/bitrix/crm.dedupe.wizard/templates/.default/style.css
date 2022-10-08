@@ -99,7 +99,7 @@ body table.bx-interface-grid-double {
 }
 body table.bx-interface-grid-double td {
 	color: #555555;
-	font: 13px/20px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 10px !important;
 	border-left: 0 none;
 	border-right: 0 none;
@@ -133,7 +133,7 @@ body table.bx-interface-grid-double tr.bx-grid-head td.bx-left,
 body table.bx-interface-grid-double tr.bx-grid-head td.bx-right,
 body table.bx-interface-grid-double tr.bx-grid-head td.bx-sorted{
 	border: 0 none;
-	font: 12px/40px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 12px/40px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 0 10px !important;
 	vertical-align: middle;
 	white-space: nowrap;
@@ -188,7 +188,7 @@ body table.bx-interface-grid-double tr.bx-grid-footer td td {
 	background: none repeat scroll 0 0 transparent;
 	border: 0 none;
 	color: #555555;
-	font: 12px/38px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 12px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 38px;
 	padding: 0 15px !important;
 }
@@ -410,7 +410,8 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 	min-height: 61px;
 	border: 2px solid rgba(130,139,149,.2);
 	border-radius: 68px;
-	font: 16px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	box-sizing: border-box;
 }
 
@@ -442,13 +443,15 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 	flex-grow: 0;
 	flex-shrink: 0;
 	border-bottom: 1px dashed rgba(82,92,105,.43);
-	font: 16px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #525C69;
 }
 
 .crm-dedupe-wizard-start-link-light-grey {
 	border-bottom: 1px dashed rgba(155,155,155,.4);
-	font: 14px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #9B9B9B;
 }
 
@@ -646,7 +649,7 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 }
 
 .crm-dedupe-wizard-start-description {
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.7);
 }
 
@@ -709,7 +712,8 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 }
 
 .crm-dedupe-wizard-start-label-text {
-	font: 16px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #0B66C3;
 }
 
@@ -746,7 +750,7 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 
 .crm-dedupe-wizard-start-helper-text {
 	align-self: center;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.52);
 }
 
@@ -890,12 +894,13 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 	width: 100%;
 	/*table-layout: fixed;*/
 	border-collapse: collapse;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
 .crm-dedupe-wizard-grid-th {
-	font: 11px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 }
 
@@ -1058,7 +1063,8 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 	width: 100%;
 	border-collapse: collapse;
 	border-top: 2px solid #eee;
-	font: 11px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #828B95;
 	text-transform: uppercase;
 }
@@ -1152,7 +1158,7 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 .crm-dedupe-wizard-flex-table-container {
 	display: block;
 	width: 100%;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 
@@ -1204,7 +1210,8 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 }
 
 .crm-dedupe-wizard-flex-table-header {
-	font: 11px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 }
 

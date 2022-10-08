@@ -4,6 +4,8 @@ require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/tools/clock.php');
 
 global $APPLICATION, $USER;
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
+
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 

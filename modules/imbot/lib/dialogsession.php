@@ -22,6 +22,12 @@ class DialogSession
 	/** @var int */
 	protected $sessionId;
 
+	/** @var int */
+	protected $closeTerm;
+
+	/** @var array */
+	protected $data = [];
+
 	/**
 	 * @param int|null $botId
 	 * @param string|null $dialogId
@@ -44,6 +50,8 @@ class DialogSession
 	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
 	 * 	(int) BOT_ID
+	 * 	(int) CLOSE_TERM
+	 * 	(string) GREETING_SHOWN
 	 * ]
 	 * </pre>
 	 *
@@ -51,6 +59,8 @@ class DialogSession
 	 */
 	private function init(array $params): self
 	{
+		$this->data = array_merge($this->data, $params);
+
 		if ($params['ID'])
 		{
 			$this->primaryId = (int)$params['ID'];
@@ -66,6 +76,10 @@ class DialogSession
 		if ($params['SESSION_ID'])
 		{
 			$this->sessionId = (int)$params['SESSION_ID'];
+		}
+		if ($params['CLOSE_TERM'])
+		{
+			$this->closeTerm = (int)$params['CLOSE_TERM'];
 		}
 
 		return $this;
@@ -90,6 +104,19 @@ class DialogSession
 		if (!empty($filter))
 		{
 			$res = NetworkSessionTable::getList([
+				'select' => [
+					'ID',
+					'BOT_ID',
+					'DIALOG_ID',
+					'SESSION_ID',
+					'GREETING_SHOWN',
+					'MENU_STATE',
+					'DATE_CREATE',
+					'DATE_FINISH',
+					'DATE_LAST_ACTIVITY',
+					'CLOSE_TERM',
+					'CLOSED',
+				],
 				'filter' => $filter
 			]);
 			if ($sessData = $res->fetch())
@@ -101,6 +128,14 @@ class DialogSession
 		}
 
 		return null;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getParam(string $param)
+	{
+		return isset($this->data, $this->data[$param]) ? $this->data[$param] : null;
 	}
 
 	/**
@@ -181,6 +216,7 @@ class DialogSession
 	 * 	(int) SESSION_ID Current session Id.
 	 * 	(string) GREETING_SHOWN - Y|N
 	 * 	(array) MENU_STATE
+	 * 	(int) CLOSE_TERM Delay time (minutes) to close session.
 	 * ]
 	 * </pre>
 	 *
@@ -195,7 +231,8 @@ class DialogSession
 		}
 
 		$newData = [
-			'DATE_LAST_ACTIVITY' => new DateTime
+			'DATE_LAST_ACTIVITY' => new DateTime,
+			'DATE_FINISH' => null,
 		];
 
 		if (!empty($params['GREETING_SHOWN']))
@@ -213,6 +250,7 @@ class DialogSession
 				$newData['MENU_STATE'] = $params['MENU_STATE'];
 			}
 		}
+
 		if (!empty($params['SESSION_ID']))
 		{
 			$newData['SESSION_ID'] = (int)$params['SESSION_ID'];
@@ -220,6 +258,15 @@ class DialogSession
 		elseif (!empty($this->sessionId))
 		{
 			$newData['SESSION_ID'] = $this->sessionId;
+		}
+
+		if (!empty($params['CLOSE_TERM']))
+		{
+			$newData['CLOSE_TERM'] = (int)$params['CLOSE_TERM'];
+		}
+		elseif (!empty($this->closeTerm))
+		{
+			$newData['CLOSE_TERM'] = $this->closeTerm;
 		}
 
 		if ($this->primaryId)
@@ -231,7 +278,19 @@ class DialogSession
 			$filter = $this->initFilter();
 		}
 		$res = NetworkSessionTable::getList([
-			'select' => ['*'],
+			'select' => [
+				'ID',
+				'BOT_ID',
+				'DIALOG_ID',
+				'SESSION_ID',
+				'GREETING_SHOWN',
+				'MENU_STATE',
+				'DATE_CREATE',
+				'DATE_FINISH',
+				'DATE_LAST_ACTIVITY',
+				'CLOSE_TERM',
+				'CLOSED',
+			],
 			'filter' => $filter
 		]);
 		if ($sessData = $res->fetch())
@@ -300,12 +359,7 @@ class DialogSession
 		{
 			$this->load($params);
 		}
-		$this->update([
-			'SESSION_ID' => 0,
-			'MENU_STATE' => null,
-			'DATE_FINISH' => new DateTime(),
-		]);
-		$this->sessionId = null;
+		$this->update(['DATE_FINISH' => new DateTime()]);
 
 		return true;
 	}
@@ -367,6 +421,7 @@ class DialogSession
 	 * [
 	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
+	 * 	(int) SESSION_ID
 	 * ]
 	 * </pre>
 	 *
@@ -397,16 +452,40 @@ class DialogSession
 
 		foreach ($params as $key => $value)
 		{
+			$key = trim($key, '<>!=@~%*');
 			if (
 				!empty($value)
-				&& NetworkSessionTable::getEntity()->hasField(trim($key, '<>!=@~%*'))
+				&& NetworkSessionTable::getEntity()->hasField($key)
 			)
 			{
-				$filter[$key] = $value;
+				$filter["={$key}"] = $value;
 			}
 		}
 
 		return $filter;
+	}
+
+	/**
+	 * Deletes closed sessions in after term minutes operator finished.
+	 *
+	 * @return string
+	 */
+	public static function clearClosedSessions(): string
+	{
+		$res = NetworkSessionTable::getList([
+			'select' => ['ID', 'CLOSED'],
+			'filter' => [
+				'!DATE_FINISH' => null,
+				'>CLOSE_TERM' => 0,
+				'=CLOSED' => 1,
+			],
+		]);
+		while ($sess = $res->fetch())
+		{
+			NetworkSessionTable::delete($sess['ID']);
+		}
+
+		return __METHOD__. '();';
 	}
 
 	/**

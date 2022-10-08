@@ -1588,7 +1588,7 @@ class FieldSynchronizer
 	 * Normalization includes:
 	 * 1. merge an fields with short and full field codes.
 	 * Example: in request exists fields `ORDER_PROPERTY_IDCODE` and `PROPERTY_IDCODE`,
-	 * then the values of these fields will be combined into one element `ORDER_PROPERTY_IDCODE`.
+	 * then the values of these fields will be combined into one element `PROPERTY_IDCODE` (not normal field name).
 	 *
 	 * @param array $fields
 	 *
@@ -1598,6 +1598,7 @@ class FieldSynchronizer
 	{
 		$result = [];
 
+		$doubles = [];
 		foreach ($fields as $fieldCode => $field)
 		{
 			$normalizedName = self::getOrderPropertyName($fieldCode, $field['ID']);
@@ -1616,6 +1617,18 @@ class FieldSynchronizer
 			{
 				$result[$normalizedName] = $field;
 			}
+
+			if ($normalizedName !== $fieldCode)
+			{
+				$doubles[$fieldCode] = $normalizedName;
+			}
+		}
+
+		// replace original names
+		foreach ($doubles as $originalName => $normalizedName)
+		{
+			$result[$originalName] = $result[$normalizedName];
+			unset($result[$normalizedName]);
 		}
 
 		return $result;

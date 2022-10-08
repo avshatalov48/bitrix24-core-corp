@@ -35,6 +35,25 @@ $MESS['IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_2'] = 'CRM помогае�
 $MESS['IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
 $MESS['IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
 $MESS['IMCONNECTOR_COMPONENT_FACEBOOK_INDEX_ADDITIONAL_DESCRIPTION'] = 'Для подключения необходимо создать публичную страницу Facebook или подключить уже существующую. Подключить страницу Facebook может только ее администратор.';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_USER_RELOGIN'] = 'Подключить';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_USER_RELOGIN_SUCCESS'] = 'Доступ получен';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_USER_RELOGIN_WRONG_USER'] = 'Ошибка запроса прав доступа к каталогу. Запрос на разрешение
+прав нужно выполнять от пользователя, который изначально подключал facebook.';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_TAB_TITLE'] = 'Каталог товаров Facebook';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_MENU_TITLE'] = 'Facebook';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_CATALOG_TAB_SETUP_FIRST_WARNING'] = 'Для работы с каталогом товаров в чатах подключите Facebook к Открытой линии.';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_PERMISSION_TITLE'] = 'Разрешите Битрикс24 отправлять подборки товаров в стиле Facebook';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_PERMISSION_TEXT'] = 'Нажмите кнопку &laquo;#BUTTON#&raquo;. Во всплывающем окне отметьте #A_START#разрешение на использование каталога#A_END#';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_TITLE'] = 'Подключите каталог товаров к Facebook';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_CONNECT_HELP'] = 'Нажмите кнопку «#BUTTON#». Следуйте инструкции во всплывающем окне.';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_DESCRIPTION'] = 'Все товары автоматически синхронизируются с вашим каталогом Facebook.';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_ALERT'] = 'Для подключения каталога сначала разрешите подключение товаров к Открытым линиям';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_CONNECT'] = 'Подключить';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_DISCONNECT'] = 'Отключить';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_CANCEL'] = 'Отмена';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_DIFFERENT_IDS'] = 'Для правильной работы с товарами нужно указать ту же страницу Facebook, которую вы подключили к Открытым линиям.';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_REMOVE'] = 'Вы действительно хотите отключить каталог?';
+$MESS['IMCONNECTOR_COMPONENT_FACEBOOK_OPENLINES_CATALOG_SUCCESS'] = 'Каталог подключен';
 
 $MESS['IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT'] = 'Расширить "окно переписки" с 24 часов до 7 дней';
 $MESS['IMCONNECTOR_COMPONENT_FACEBOOK_TO_CONNECT_HUMAN_AGENT_DESCRIPTION'] = 'Обратите внимание, по правилам Facebook после 24 часов нельзя отправлять клиентам рекламу, в том числе предлагать скидки, купоны или отправлять автосообщения, иначе ваш аккаунт будет автоматически заблокирован. #START_HELP_DESC#Подробнее#END_HELP_DESC#';

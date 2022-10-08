@@ -183,7 +183,7 @@ abstract class Factory
 		$fileFields = $this->getFieldsCollection()->getFieldsByType(Field::TYPE_FILE);
 		if (count($fileFields) > 0)
 		{
-			$item->addImplementation(new Item\FieldImplementation\File($entityObject, $fileFields));
+			$item->addImplementation(new Item\FieldImplementation\File($entityObject, $fileFields, $this->getFieldsMap()));
 		}
 	}
 
@@ -918,6 +918,14 @@ abstract class Factory
 			'IS_DEFAULT' => [
 				'TYPE' => Field::TYPE_BOOLEAN,
 			],
+			'IS_SYSTEM' => [
+				'TYPE' => Field::TYPE_BOOLEAN,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+			],
+			'CODE' => [
+				'TYPE' => Field::TYPE_STRING,
+				'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly],
+			],
 		];
 	}
 
@@ -955,6 +963,32 @@ abstract class Factory
 		foreach($this->getCategories() as $category)
 		{
 			if($category->getId() === $id)
+			{
+				return $category;
+			}
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns category by specified unique code.
+	 *
+	 * @param string $code
+	 *
+	 * @return Category|null
+	 */
+	public function getCategoryByCode(string $code): ?Category
+	{
+		$code = trim($code);
+		if (empty(trim($code)))
+		{
+			return null;
+		}
+
+		foreach($this->getCategories() as $category)
+		{
+			if ($category->getCode() === $code)
 			{
 				return $category;
 			}

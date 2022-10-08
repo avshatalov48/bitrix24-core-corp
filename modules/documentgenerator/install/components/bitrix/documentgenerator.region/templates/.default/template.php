@@ -7,10 +7,13 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 $this->IncludeLangFile();
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-\Bitrix\Main\UI\Extension::load("ui.notification");
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.notification',
+	'ui.alerts',
+]);
 
 CJSCore::Init(['sidepanel', 'loader']);
 ?>

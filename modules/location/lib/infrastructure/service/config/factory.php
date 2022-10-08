@@ -100,18 +100,14 @@ class Factory implements IFactory
 
 			case SourceService::class:
 				$result = [
-					'source' => self::obtainSource(
-						SourceCodePicker::getSourceCode()
-					)
+					'source' => self::obtainSource()
 				];
 				break;
 
 			case LocationService::class:
 				$result = [
 					'repository' => static::createLocationRepository(
-						self::obtainSource(
-							SourceCodePicker::getSourceCode()
-						)
+						self::obtainSource()
 					)
 				];
 				break;
@@ -130,7 +126,6 @@ class Factory implements IFactory
 	/**
 	 * @param Source|null $source
 	 * @return LocationRepository
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	private static function createLocationRepository(Source $source = null): LocationRepository
 	{
@@ -164,16 +159,22 @@ class Factory implements IFactory
 	}
 
 	/**
-	 * @param string $code
 	 * @return Source|null
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	private static function obtainSource(string $code): ?Source
+	private static function obtainSource(): ?Source
 	{
-		return (new Repository\SourceRepository(
+		static $result;
+		if (!is_null($result))
+		{
+			return $result;
+		}
+
+		$result = (new Repository\SourceRepository(
 			new Source\OrmConverter()
-		))->findByCode($code);
+		))->findByCode(
+			SourceCodePicker::getSourceCode()
+		);
+
+		return $result;
 	}
 }

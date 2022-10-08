@@ -566,15 +566,18 @@ class Common
 	{
 		$result = [];
 
-		$bindings = self::getActivityBindings($activityId);
-
-		foreach ($bindings as $typeEntity => $idEntity)
+		if ((int)$activityId > 0)
 		{
-			$entityCaption = self::getEntityCaption($typeEntity, $idEntity);
+			$bindings = self::getActivityBindings($activityId);
 
-			if(!empty($entityCaption))
+			foreach ($bindings as $typeEntity => $idEntity)
 			{
-				$result[] = $entityCaption;
+				$entityCaption = self::getEntityCaption($typeEntity, $idEntity);
+
+				if (!empty($entityCaption))
+				{
+					$result[] = $entityCaption;
+				}
 			}
 		}
 
@@ -692,8 +695,8 @@ class Common
 				{
 					$entityId = str_replace('imol|', '',  $activity['ASSOCIATED_ENTITY']['COMMUNICATION']['VALUE']);
 					$filter = [
-						'ENTITY_TYPE' => 'LINES',
-						'ENTITY_ID' => $entityId
+						'=ENTITY_TYPE' => 'LINES',
+						'=ENTITY_ID' => $entityId
 					];
 
 					$chatData = \Bitrix\Im\Model\ChatTable::getList(['select' => ['ID'], 'filter' => $filter])->fetch();

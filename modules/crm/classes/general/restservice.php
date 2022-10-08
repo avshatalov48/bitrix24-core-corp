@@ -447,7 +447,14 @@ final class CCrmRestService extends IRestService
 			$bindings[\CRestUtil::PLACEMENTS] = array();
 			foreach(\Bitrix\Crm\Integration\Rest\AppPlacement::getAll() as $name)
 			{
-				$bindings[\CRestUtil::PLACEMENTS][$name] = array();
+				if ($name === 'CRM_REQUISITE_AUTOCOMPLETE')
+				{
+					$bindings[\CRestUtil::PLACEMENTS][$name] = ['options' => ['countries' => 'string']];
+				}
+				else
+				{
+					$bindings[\CRestUtil::PLACEMENTS][$name] = [];
+				}
 			}
 
 			CCrmLeadRestProxy::registerEventBindings($bindings);
@@ -4022,6 +4029,9 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			$propertiesSelect[] = 'PROPERTY_*';
 		}
 
+		$fieldsInfo = $this->getFieldsInfo();
+		$this->internalizeFilterFields($filter, $fieldsInfo);
+
 		$filter['CATALOG_ID'] = $catalogID;
 		$dbResult = CCrmProduct::GetList($order, $filter, $select, $navigation);
 		if(!$enableCatalogData)
@@ -5003,10 +5013,6 @@ class CCrmProductPropertyRestProxy extends CCrmRestProxyBase
 						throw new RestException("Could not find IBLOCK_ID in fields of event \"{$eventName}\"");
 					}
 
-					if($iblockId !== CCrmCatalog::GetDefaultID())
-					{
-						throw new RestException("Outside CRM product property event is detected");
-					}
 					return array('FIELDS' => array('ID' => $id));
 				}
 				break;
@@ -9068,14 +9074,14 @@ class CCrmActivityRestProxy extends CCrmRestProxyBase
 				$bindingOwnerTypeName = "[{$binding['OWNER_TYPE_ID']}]";
 			}
 
-			$entity = \Bitrix\Crm\Entity\EntityManager::resolveByTypeID($binding['OWNER_TYPE_ID']);
-			if($entity === null)
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($binding['OWNER_TYPE_ID']);
+			if($factory === null)
 			{
 				$errors[] = "Entity type '{$bindingOwnerTypeName}' is not supported in current context";
 				return false;
 			}
 
-			if(!$entity->isExists($binding['OWNER_ID']))
+			if(!$factory->getItem($binding['OWNER_ID']))
 			{
 				$errors[] = "Could not find '{$bindingOwnerTypeName}' with ID: {$binding['OWNER_ID']}";
 				return false;

@@ -6,3 +6,5 @@ $MESS["CRM_COUNTER_TYPE_OVERDUE"] = "<span class=\"crm-counter-inner\"><span cla
 $MESS["NEW_CRM_COUNTER_TYPE_IDLE"] = "Без дел";
 $MESS["NEW_CRM_COUNTER_TYPE_OVERDUE"] = "Просрочены";
 $MESS["NEW_CRM_COUNTER_TYPE_PENDING"] = "На сегодня";
+$MESS["NEW_CRM_COUNTER_TYPE_CURRENT"] = "Дела";
+$MESS["NEW_CRM_COUNTER_TYPE_INCOMINGCHANNEL"] = "Входящие";

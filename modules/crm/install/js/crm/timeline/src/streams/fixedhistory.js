@@ -1,4 +1,7 @@
 import History from "./history";
+import {Item} from 'crm.timeline.item';
+import CompatibleItem from "../items/compatible-item";
+import {StreamType} from 'crm.timeline.item';
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class FixedHistory extends History
@@ -106,6 +109,26 @@ export default class FixedHistory extends History
 					}
 			}
 		).load(BX.delegate(this.onItemsLoad, this));
+	}
+
+	addItem(item: Item, index): void
+	{
+		super.addItem(item, index);
+
+		if (item instanceof CompatibleItem)
+		{
+			item._isFixed = true;
+		}
+	}
+
+	getItemClassName()
+	{
+		return 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-top-fixed';
+	}
+
+	getStreamType(): number
+	{
+		return StreamType.pinned;
 	}
 
 	static create(id, settings)

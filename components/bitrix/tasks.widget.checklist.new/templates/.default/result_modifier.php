@@ -5,7 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 $arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
 if($helper->checkHasFatals())

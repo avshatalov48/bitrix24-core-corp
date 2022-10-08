@@ -10,4 +10,4 @@ $MESS["CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_FIELD"] = "Заполнено по�
 $MESS["CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_VIEW"] = "Просмотр формы";
 $MESS["CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_START"] = "Начато заполнение формы";
 $MESS["CRM_WEBFORM_HELPER_EXTERNAL_ANALYTICS_END"] = "Успешно заполнена форма";
-?>
+$MESS["CRM_WEBFORM_HELPER_ENTITY_SELECTOR_TAB_NAME"] = "CRM-формы";

@@ -2750,7 +2750,25 @@ export class MobileDialogApplication
 				HeaderMenuItem.create('profile')
 					.setTitle(this.getLocalize('MOBILE_HEADER_MENU_PROFILE'))
 					.setIcon('user')
-					.skip(Utils.dialog.isChatId(this.controller.application.getDialogId()))
+					.skip(() => {
+						if(Utils.dialog.isChatId(this.controller.application.getDialogId()))
+						{
+							return true;
+						}
+
+						const userData =
+							this.controller
+								.getStore()
+								.getters['users/get'](this.controller.application.getDialogId(), true)
+						;
+
+						if (userData.bot)
+						{
+							return true;
+						}
+
+						return false;
+					})
 				,
 				HeaderMenuItem.create('user_add')
 					.setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD'))

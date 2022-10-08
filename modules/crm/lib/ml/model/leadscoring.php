@@ -98,6 +98,12 @@ class LeadScoring extends Base
 	 */
 	public function getTrainingSetSize()
 	{
+		static $cachedResult = null;
+		if ($cachedResult != null)
+		{
+			return $cachedResult;
+		}
+
 		$cursor = LeadTable::getList([
 			"select" => [
 				"STATUS_SEMANTIC_ID",
@@ -123,7 +129,8 @@ class LeadScoring extends Base
 			$rows[$row["STATUS_SEMANTIC_ID"]] = (int)$row["CNT"];
 		}
 
-		return [$rows["S"], $rows["F"]];
+		$cachedResult = [$rows["S"], $rows["F"]];
+		return $cachedResult;
 	}
 
 	public function getTrainingSet($fromId, $limit)

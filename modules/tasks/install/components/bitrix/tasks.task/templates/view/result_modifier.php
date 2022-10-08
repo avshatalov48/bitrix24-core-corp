@@ -16,11 +16,11 @@ use \Bitrix\Tasks\Util\Type;
 /** @var CBitrixComponentTemplate $this */
 /** @var TasksBaseComponent $component */
 
-Loc::loadMessages(dirname(__FILE__).'/template.php');
+Loc::loadMessages(__DIR__.'/template.php');
 $taskData = $arResult["DATA"]["TASK"];
 $can = $arResult["CAN"]["TASK"]["ACTION"];
 
-\Bitrix\Main\UI\Extension::load("ui.notification");
+\Bitrix\Main\UI\Extension::load(["ui.notification", "ui.design-tokens"]);
 
 if (!intval($arParams['ID']))
 {
@@ -60,12 +60,14 @@ CJSCore::RegisterExt(
 	array(
 		"js"  => $folder."/logic.js",
 		"rel" =>  array(
+			'ui.design-tokens',
+			'ui.fonts.opensans',
 			'tasks_util',
 			'tasks_util_widget',
 			'tasks_util_itemset',
 			'tasks_util_query',
 			"tasks_itemsetpicker",
-			'tasks'
+			'tasks',
 		),
 	)
 );
@@ -227,7 +229,7 @@ $component->tryParseBooleanParameter($arParams["ENABLE_MENU_TOOLBAR"], true);
 $arResult["TEMPLATE_DATA"]["RATING"] = CRatings::GetRatingVoteResult("TASK", $taskData["ID"]);
 
 //Body Class
-$ownClass = "no-paddings task-detail-page";
+$ownClass = "no-paddings task-detail-page no-background";
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $bodyClass = $bodyClass ? $bodyClass." ".$ownClass : $ownClass;
 $APPLICATION->SetPageProperty("BodyClass", $bodyClass);

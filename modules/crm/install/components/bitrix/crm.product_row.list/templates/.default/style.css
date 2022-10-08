@@ -300,7 +300,7 @@ body table.bx-edit-table td.bx-field-value input.crm-item-name-inp[type="text"],
 	-moz-border-radius:0;-webkit-border-radius:0;-khtml-border-radius:0;border-radius:0;
 	-webkit-box-shadow: none;-moz-box-shadow: none;box-shadow:none;
 	color: #000 !important;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	font-size: 12px !important;
 	height: 21px;
 	outline: none;
@@ -311,7 +311,7 @@ body table.bx-edit-table td.bx-field-value input.crm-item-name-inp[type="text"],
 .crm-item-name-txt {
 	border: none;
 	color: #000;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	margin-top: 3px;
 	outline: none;
@@ -404,7 +404,7 @@ body table.bx-edit-table td.bx-field-value input.crm-item-table-inp[type="text"]
 	color: #000 !important;
 	margin-left: -2px;
 	font-size: 12px !important;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	outline: none;
 	padding: 0 5px;
 	text-align: right;
@@ -419,7 +419,7 @@ body table.bx-edit-table td.bx-field-value input.crm-item-table-inp[type="text"]
 	color: #000;
 	display: inline-block;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	padding: 5px 7px 0 0;
 	text-align: right;
@@ -433,7 +433,7 @@ body table.bx-edit-table td.bx-field-value input.crm-item-table-inp[type="text"]
 	box-sizing: border-box;
 	color: #000;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: none;
 	padding: 5px 0 0 5px;
 	text-align: left;
@@ -453,7 +453,7 @@ body table.bx-edit-table td.bx-field-value select.crm-item-table-select,
 	color: #000;
 	margin-left: -2px;
 	font-size: 12px !important;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	text-align: left;
 	outline: none;
 	padding: 5px 3px 5px 0;
@@ -595,7 +595,7 @@ table.bx-crm-view-fieldset-content-table .crm-items-table-bar-r .webform-small-b
 
 body div.bx-interface-form .crm-item-table-txt,
 body div.bx-interface-form .crm-item-table-txtl {
-	font: 12px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-view-table-total {

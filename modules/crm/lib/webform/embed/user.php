@@ -17,6 +17,7 @@ use Bitrix\Crm\Entity\Identificator;
  */
 class User
 {
+	private static array $fieldsByType = []; 
 	/**
 	 * Get user data from entities.
 	 *
@@ -29,9 +30,56 @@ class User
 			'fields' => [],
 			'entities' => [],
 		];
+
+		$fieldsByType = [];
+		$formId = (int)$entities->getIdByTypeId(-1);
+		if ($formId > 0)
+		{
+			$form = new Crm\WebForm\Form($formId);
+			if ($form->getId() && $form->isActive())
+			{
+				foreach ($form->getFieldsMap() as $field)
+				{
+					$typeId = \CCrmOwnerType::resolveID($field['entity_name']);
+					if (!isset($fieldsByType[$typeId]))
+					{
+						$fieldsByType[$typeId] = [
+							'fields' => [],
+							'reqs' => [],
+							'map' => [],
+						];	
+					}
+					
+					$name = $field['entity_field_name'];
+					if ($name === 'RQ')
+					{
+						continue;
+					}
+
+					if (mb_substr($name, 0, 3) === 'RQ_')
+					{
+						$fieldsByType[$typeId]['reqs'][] = $name;
+						continue;
+					}
+					else
+					{
+						$fieldsByType[$typeId]['fields'][] = $name;
+					}
+
+					$fieldsByType[$typeId]['map'][$name] = $field['name'];
+				}
+			}
+		}
+		self::$fieldsByType = $fieldsByType;
+		
 		foreach ($entities as $entity)
 		{
 			/** @var Identificator\Complex $entity */
+			if ($entity->getTypeId() <= 0)
+			{
+				continue;
+			}
+
 			$data['entities'][] = [
 				'typeId' => $entity->getTypeId(),
 				'id' => $entity->getId(),
@@ -39,7 +87,14 @@ class User
 			$data['fields'] = $data['fields'] + self::getEntityFields($entity);
 		}
 
+		self::$fieldsByType = [];
+
 		return $data;
+	}
+	
+	protected static function richMap($typeId, array $map = []): array
+	{
+		return $map + (self::$fieldsByType[$typeId]['map'] ?? []);
 	}
 
 	protected static function getEntityFields(Identificator\Complex $entity): array
@@ -74,30 +129,32 @@ class User
 				);
 
 			case \CCrmOwnerType::Company:
-				$map = [
-					'TITLE' => 'company-name',
-				];
-				$fields = Crm\CompanyTable::getRow([
-					'select' => array_keys($map),
-					'filter' => ['=ID' => $entity->getId()]
-				]) ?: [];
-				return self::getDataByFieldsMap($fields, $map);
+				$map = self::richMap(
+					$entity->getTypeId(),
+					[
+						'TITLE' => 'company-name'
+					]
+				);
+				return self::getDataByFieldsMap(self::loadEntityData($entity), $map);
 
 			case \CCrmOwnerType::Lead:
-				$map = [
-					'NAME' => 'name',
-					'LAST_NAME' => 'last-name',
-					'SECOND_NAME' => 'second-name',
-					'EMAIL_WORK' => 'email',
-					'EMAIL_MAILING' => 'email',
-					'EMAIL_HOME' => 'email',
-					'PHONE_WORK' => 'phone',
-					'PHONE_MAILING' => 'phone',
-					'PHONE_MOBILE' => 'phone',
-					'COMPANY_TITLE' => 'company-name',
-					'COMPANY_ID' => '',
-					'CONTACT_ID' => '',
-				];
+				$map = self::richMap(
+					$entity->getTypeId(),
+					[
+						'NAME' => 'name',
+						'LAST_NAME' => 'last-name',
+						'SECOND_NAME' => 'second-name',
+						'EMAIL_WORK' => 'email',
+						'EMAIL_MAILING' => 'email',
+						'EMAIL_HOME' => 'email',
+						'PHONE_WORK' => 'phone',
+						'PHONE_MAILING' => 'phone',
+						'PHONE_MOBILE' => 'phone',
+						'COMPANY_TITLE' => 'company-name',
+						'COMPANY_ID' => '',
+						'CONTACT_ID' => '',
+					]
+				);
 				$fields = Crm\LeadTable::getRow([
 					'select' => array_keys($map),
 					'filter' => ['=ID' => $entity->getId()]
@@ -105,26 +162,27 @@ class User
 				return self::getClientDataByFields($fields) + self::getDataByFieldsMap($fields, $map);
 
 			case \CCrmOwnerType::Contact:
-				$map = [
-					'NAME' => 'name',
-					'LAST_NAME' => 'last-name',
-					'SECOND_NAME' => 'second-name',
-					'EMAIL_WORK' => 'email',
-					'EMAIL_MAILING' => 'email',
-					'EMAIL_HOME' => 'email',
-					'PHONE_WORK' => 'phone',
-					'PHONE_MAILING' => 'phone',
-					'PHONE_MOBILE' => 'phone',
-					'COMPANY_ID' => '',
-				];
-				$fields = Crm\ContactTable::getRow([
-					'select' => array_keys($map),
-					'filter' => ['=ID' => $entity->getId()]
-				]);
+				$map = self::richMap(
+					$entity->getTypeId(),
+					[
+						'NAME' => 'name',
+						'LAST_NAME' => 'last-name',
+						'SECOND_NAME' => 'second-name',
+						'EMAIL_WORK' => 'email',
+						'EMAIL_MAILING' => 'email',
+						'EMAIL_HOME' => 'email',
+						'PHONE_WORK' => 'phone',
+						'PHONE_MAILING' => 'phone',
+						'PHONE_MOBILE' => 'phone',
+						'COMPANY_ID' => '',
+					]
+				);
+
+				$fields = self::loadEntityData($entity);
 				return self::getDataByFieldsMap($fields, $map) + self::getClientDataByFields($fields);
 
 			default:
-				if (!\CCrmOwnerType::isPossibleDynamicTypeId($entity->getTypeId()))
+				if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($entity->getTypeId()))
 				{
 					break;
 				}
@@ -136,12 +194,16 @@ class User
 					break;
 				}
 
+				$data += self::getDataByFieldsMap(
+					$dynamicItem->getData(),
+					self::richMap($entity->getTypeId(), [])
+				);
 				if (!$dynamicItem->getContactId() && !$dynamicItem->getCompanyId())
 				{
 					break;
 				}
 
-				return self::getClientDataByFields([
+				$data += self::getClientDataByFields([
 					'CONTACT_ID' => $dynamicItem->getContactId(),
 					'COMPANY_ID' => $dynamicItem->getCompanyId(),
 				]);
@@ -166,6 +228,11 @@ class User
 				'name' => $templatedData['CONTACT']['FIELD_AUTO_FILL_TEMPLATE']['NAME']['TEMPLATE'],
 				'company-name' => $templatedData['COMPANY']['FIELD_AUTO_FILL_TEMPLATE']['TITLE']['TEMPLATE']
 			];
+		}
+
+		if (!is_array_assoc($map))
+		{
+			$map = array_combine($map, $map);
 		}
 
 		foreach ($map as $fieldKey => $dataKey)
@@ -196,23 +263,95 @@ class User
 
 	protected static function getClientDataByFields($fields): array
 	{
+		$result = [];
 		if (!is_array($fields))
+		{
+			return $result;
+		}
+
+		if ($fields['CONTACT_ID'])
+		{
+			$typeId = \CCrmOwnerType::Contact;
+			$entityId = $fields['CONTACT_ID'];
+			$result += self::getEntityFields(new Identificator\Complex(
+				$typeId,
+				$entityId
+			));
+
+			$result += self::loadReqData($typeId, $entityId);
+		}
+
+		if ($fields['COMPANY_ID'])
+		{
+			$typeId = \CCrmOwnerType::Company;
+			$entityId = $fields['COMPANY_ID'];
+			$result += self::getEntityFields(new Identificator\Complex(
+				$typeId,
+				$entityId
+			));
+
+			$result += self::loadReqData($typeId, $entityId);
+		}
+
+		return $result;
+	}
+
+	private static function loadReqData($typeId, $entityId): array
+	{
+		$typeName = \CCrmOwnerType::ResolveName($typeId);
+		$reqs = self::$fieldsByType[$typeId]['reqs'] ?? [];
+		if (!$reqs)
 		{
 			return [];
 		}
 
-		$contactFields = $fields['CONTACT_ID']
-			? self::getEntityFields(new Identificator\Complex(
-				\CCrmOwnerType::Contact,
-				$fields['CONTACT_ID']
-			))
-			: [];
-		$companyFields = $fields['COMPANY_ID']
-			? self::getEntityFields(new Identificator\Complex(
-				\CCrmOwnerType::Company,
-				$fields['COMPANY_ID']
-			))
-			: [];
-		return $contactFields + $companyFields;
+		$reqData = Crm\WebForm\Requisite::instance()->load($typeId, $entityId);
+		if (!$reqData->isSuccess())
+		{
+			return [];
+		}
+
+		return self::getDataByFieldsMap(
+			$reqData->getData() ?: [],
+			array_combine(
+				$reqs,
+				array_map(
+					static function (string $key) use ($typeName): string
+					{
+						return "{$typeName}_{$key}";
+					},
+					$reqs
+				)
+			)
+		);
+	}
+
+	private static function loadEntityData(Crm\Entity\Identificator\Complex $entity): array
+	{
+		$container = Crm\Service\Container::getInstance();
+		$factory = $container->getFactory($entity->getTypeId());
+		if (!$factory)
+		{
+			return [];
+		}
+
+		$item = $factory->getItem($entity->getId());
+		if (!$item)
+		{
+			return [];
+		}
+
+		$values = $item->getData();
+		foreach ($item->getFm()->getAll() as $fmItem)
+		{
+			$type = $fmItem->getTypeId();
+			$value = $fmItem->getValue();
+			if ($value && empty($values[$type]))
+			{
+				$values[$type] = $value;
+			}
+		}
+
+		return $values;
 	}
 }

@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Order\ProductManager;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 
 trait ProductFinder
 {
@@ -108,7 +109,7 @@ trait ProductFinder
 			return false;
 		}
 
-		$usedIndexes[$productId] = $usedIndexes[$productId] ?? [];
+		$usedIndexes[$productId] ??= [];
 		foreach ($productList as $index => $item)
 		{
 			if (in_array($index, $usedIndexes[$productId], true))
@@ -117,6 +118,43 @@ trait ProductFinder
 			}
 
 			if ($productId === (int)$item['PRODUCT_ID'])
+			{
+				$usedIndexes[$productId][] = $index;
+				return $index;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Search entity product by basket item id.
+	 *
+	 * @param array $productList
+	 * @param int $basketId
+	 * @param array $usedIndexes accumulates used basket items in the format ['productID' => ['basketId1', 'basketId2', ...]].
+	 * In general, you can send a variable with an empty array, as the method is used, it will be filled in.
+	 *
+	 * @return false|int
+	 */
+	protected function searchProductByBasketId(array $productList, int $basketId, array & $usedIndexes)
+	{
+		if ($basketId === 0)
+		{
+			return false;
+		}
+
+		$xmlId = ProductRowXmlId::getXmlIdFromBasketId($basketId);
+		foreach ($productList as $index => $item)
+		{
+			$productId = (int)($item['PRODUCT_ID'] ?? 0);
+			$usedIndexes[$productId] ??= [];
+			if (in_array($index, $usedIndexes[$productId], true))
+			{
+				continue;
+			}
+
+			if ($xmlId === (string)$item['XML_ID'])
 			{
 				$usedIndexes[$productId][] = $index;
 				return $index;

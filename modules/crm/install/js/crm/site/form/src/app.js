@@ -144,6 +144,18 @@ class Application
 			}
 		}
 
+		const eventData = {sign};
+		dispatchEvent(new CustomEvent(
+			'b24:form:app:user:init',
+			{
+				detail: {
+					object: this,
+					data: eventData,
+				}
+			}
+		));
+		sign = eventData.sign;
+
 		let ttl = 3600 * 24 * 28;
 		if (!sign)
 		{
@@ -213,6 +225,17 @@ class Application
 			;
 
 			b24form.util.ls.setItem('b24-form-user', data, ttl);
+
+			dispatchEvent(new CustomEvent(
+				'b24:form:app:user:loaded',
+				{
+					detail: {
+						object: this,
+						data: {},
+					}
+				}
+			));
+
 			return data.fields;
 		});
 
@@ -347,11 +370,6 @@ class Application
 					break;
 			}
 		});
-	}
-
-	static #createButton(b24options: B24Options): HTMLElement
-	{
-		
 	}
 
 	getAnalyticsSender(b24options)

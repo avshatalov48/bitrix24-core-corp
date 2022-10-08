@@ -5,9 +5,11 @@ $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECTED"] = "Viber verbunden";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Ich möchte</div><div class=\"imconnector-field-button-name\">einen Account <span class=\"imconnector-field-box-text-bold\">verbinden</span></div>";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP"] = "Vor der Verbindung müssen Sie <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">einen öffentlichen Viber-Account erstellen</a>
  oder einen existierenden verbinden. Wir können Ihnen helfen, einen öffentlichen Account zu erstellen und ihn mit Ihrem Bitrix24 Account zu verbinden.";
+$MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP_NEW"] = "Sie müssen #LINK_START#einen öffentlichen Viber Account erstellen#LINK_END# oder einen existierenden nutzen. Wenn Sie noch keinen Account haben, werden wir Ihnen helfen, ihn zu erstellen und mit Ihrem Bitrix24 zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_CONNECT_TITLE"] = "Verbinden Sie Viber mit Ihrem Kommunikationskanal";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_FINAL_FORM_DESCRIPTION"] = "Viber wurde mit Ihrem Kommunikationskanal verbunden. Alle Nachrichten, die jetzt in Ihrem öffentlichen Account erscheinen, werden an Ihr Bitrix24 weitergeleitet.";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION"] = "Sie müssen <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">einen öffentlichen Viber Account erstellen</a> oder den nutzen, den Sie bereits haben. Wenn Sie noch keinen Account haben, können wir Ihnen dabei helfen, ihn zu erstellen und mit Bitrix24 zu verbinden.";
+$MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Sie müssen #LINK_START#einen öffentlichen Viber Account erstellen#LINK_END# oder einen existierenden nutzen. Wenn Sie noch keinen Account haben, werden wir Ihnen helfen, ihn zu erstellen und mit Ihrem Bitrix24 zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_1"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_2"] = "Begleiten Sie Ihre Kunden durch den Sales Funnel im CRM";
 $MESS["IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_3"] = "Antworten Sie Ihren Kunden dann und dort, wann und wo sie dies bevorzugen";

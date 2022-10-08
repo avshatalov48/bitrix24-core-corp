@@ -58,7 +58,7 @@ class CheckReadPermission extends ActionFilter\Base
 			}
 			elseif ($argument instanceof TrackedObject)
 			{
-				if (!$argument->canRead($this->currentUser->getId()))
+				if (!$this->currentUser->getId() || !$argument->canRead($this->currentUser->getId()))
 				{
 					$this->addReadError();
 

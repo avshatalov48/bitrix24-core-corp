@@ -40,7 +40,7 @@ export default class ItemNew
 			this.container = Tag.render`
 		<div class="disk-file-thumb disk-file-thumb-file disk-file-thumb--${extension} disk-file-thumb--active">
 			<div class="ui-icon ui-icon-file-${extension} disk-file-thumb-icon"><i></i></div>
-			<div class="disk-file-thumb-text">${this.object.name}</div>
+			<div class="disk-file-thumb-text">${Text.encode(this.object.name)}</div>
 			<div class="disk-file-thumb-loader">
 				${this.progress.getContainer()}
 				<div class="disk-file-thumb-loader-btn" onclick="${this.onClickDelete.bind(this)}"></div>

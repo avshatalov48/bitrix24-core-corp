@@ -10,5 +10,6 @@ return array(
 	'rel' => [
 		'disk.model.item',
 		'disk.model.external-link.settings',
+		'ui.design-tokens',
 	],
 );

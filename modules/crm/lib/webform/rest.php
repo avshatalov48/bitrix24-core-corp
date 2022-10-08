@@ -51,7 +51,7 @@ class Rest
 			unset($filter['ACTIVE']);
 		}
 
-		$res = Internals\FormTable::getList([
+		$res = Internals\FormTable::getDefaultTypeList([
 			'select' => [
 				'ID', 'NAME', 'SECURITY_CODE', 'IS_CALLBACK_FORM', 'ACTIVE', 'XML_ID'
 			],

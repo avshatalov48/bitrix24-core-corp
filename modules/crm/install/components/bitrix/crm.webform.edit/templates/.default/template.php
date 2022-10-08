@@ -28,8 +28,16 @@ if(!$arResult['FORM']['LICENCE_BUTTON_CAPTION'])
 
 $isAvailableDesign = $arResult['IS_AVAILABLE_EMBEDDING'] && $arResult['FORM']['ID'];
 
-Extension::load(['ui.alerts', 'ui.buttons', 'color_picker',]);
-CUtil::InitJSCore(['date', 'sidepanel']);
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.alerts',
+	'ui.buttons',
+	'color_picker',
+	'date',
+	'sidepanel',
+]);
+
 if(\Bitrix\Main\Loader::includeModule("socialnetwork"))
 {
 	CUtil::InitJSCore(array("socnetlogdest"));
@@ -331,7 +339,8 @@ if (!empty($arResult['ERRORS']))
 						'arSmilesSet' => array(),
 						'arSmiles' => array(),
 						'content' => htmlspecialcharsBack($arResult['FORM']['DESCRIPTION']),
-						'iframeCss' => 'body{font-family: "Helvetica Neue",Helvetica,Arial,sans-serif; font-size: 13px;}'.
+						'fontSize' => '14px',
+						'iframeCss' =>
 							'.bx-spoiler {border:1px solid #C0C0C0;background-color:#fff4ca;padding: 4px 4px 4px 24px;color:#373737;border-radius:2px;min-height:1em;margin: 0;}',
 					)
 				);

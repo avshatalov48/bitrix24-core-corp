@@ -105,11 +105,6 @@ class CVoximplantPermsComponent extends CBitrixComponent
 			return false;
 		}
 
-		if(\Bitrix\Voximplant\Limits::isRestOnly())
-		{
-			return false;
-		}
-
 		if($this->saveMode)
 		{
 			if(\Bitrix\Voximplant\Security\Helper::canUse())

@@ -10,8 +10,10 @@ return [
 	],
 	'js' => '/bitrix/js/rpa/kanban/dist/kanban.bundle.js',
 	'rel' => [
+		'ui.design-tokens',
 		'ui.buttons',
 		'ui.notification',
+		'ui.fonts.opensans',
 		'main.kanban',
 		'rpa.kanban',
 		'main.core',

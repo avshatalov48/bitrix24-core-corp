@@ -113,3 +113,9 @@ DROP TABLE IF EXISTS b_tasks_scrum_chat;
 DROP TABLE IF EXISTS b_tasks_scrum_type_participants;
 
 DROP TABLE IF EXISTS b_tasks_marketing;
+
+DROP TABLE IF EXISTS b_tasks_template_member;
+
+DROP TABLE IF EXISTS b_tasks_template_tag;
+
+DROP TABLE IF EXISTS b_tasks_template_dependence;

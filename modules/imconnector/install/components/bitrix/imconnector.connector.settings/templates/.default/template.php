@@ -39,18 +39,20 @@ if (Loader::includeModule('bitrix24'))
 	CBitrix24::initLicenseInfoPopupJS();
 }
 
-$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
-$this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.default/script.js');
 UI\Extension::load([
 		'ui.buttons',
 		'ui.hint',
-
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'ui.entity-selector',
 		'ui.forms',
-		'ui.design-tokens',
+		'loader',
 	]
 );
-\CJSCore::Init('loader');
+
+$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
+$this->addExternalJs('/bitrix/components/bitrix/imconnector.settings/templates/.default/script.js');
+
 Connector::initIconCss();
 ?>
 <?

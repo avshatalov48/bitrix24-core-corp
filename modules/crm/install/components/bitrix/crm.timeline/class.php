@@ -4,7 +4,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\Zoom;
 use Bitrix\Crm\Integration;
-use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\TimelineEntry;
@@ -49,6 +48,9 @@ class CCrmTimelineComponent extends CBitrixComponent
 	/** @var array */
 	protected $historyFilter = array();
 
+	/** @var \Bitrix\Crm\Service\Timeline\Repository */
+	protected $repository;
+
 	public function getGuid()
 	{
 		return $this->guid;
@@ -78,6 +80,28 @@ class CCrmTimelineComponent extends CBitrixComponent
 	public function setEntityID($entityID)
 	{
 		$this->entityID = $entityID;
+	}
+
+	public function getRepository(): \Bitrix\Crm\Service\Timeline\Repository
+	{
+		if (!$this->repository)
+		{
+			if ($this->entityID > 0)
+			{
+				$this->repository = new \Bitrix\Crm\Service\Timeline\Repository(
+					new Crm\Service\Timeline\Context(
+						new Crm\ItemIdentifier($this->entityTypeID, $this->entityID),
+						Crm\Service\Timeline\Context::DESKTOP,
+					)
+				);
+			}
+			else
+			{
+				$this->repository = new Crm\Service\Timeline\Repository\NullRepository();
+			}
+		}
+
+		return $this->repository;
 	}
 
 	public function executeComponent()
@@ -128,7 +152,12 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->extras = isset($this->arParams['~EXTRAS']) && is_array($this->arParams['~EXTRAS'])
 			? $this->arParams['~EXTRAS'] : [];
 
-		if($this->entityID > 0 && !\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission($this->entityTypeID, $this->entityID))
+		if($this->entityID > 0 && !\Bitrix\Crm\Security\EntityAuthorization::checkReadPermission(
+			$this->entityTypeID,
+			$this->entityID,
+			$this->userPermissions,
+			$this->extras
+		))
 		{
 			$this->errors[] = GetMessage('CRM_PERMISSION_DENIED');
 			return;
@@ -442,6 +471,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 						Crm\Filter\TimelineEntryCategory::CONVERSION,
 						Crm\Filter\TimelineEntryCategory::LINK,
 						Crm\Filter\TimelineEntryCategory::UNLINK,
+						Crm\Filter\TimelineEntryCategory::LOG_MESSAGE,
 					)
 				)
 			),
@@ -483,163 +513,45 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 		return $this->historyFilter;
 	}
-	public function getHistoryTimestamp(DateTime $time = null)
+	public function getHistoryTimestamp(?DateTime $time = null)
 	{
 		return $time !== null ? $time->format('Y-m-d H:i:s') : '';
 	}
 	public function prepareScheduleItems()
 	{
-		if($this->entityID <= 0)
-		{
-			return ($this->arResult['SCHEDULE_ITEMS'] = array());
-		}
-
-		$filter = array('STATUS' => CCrmActivityStatus::Waiting);
-		$filter['BINDINGS'] = array(
-			array('OWNER_TYPE_ID' => $this->entityTypeID, 'OWNER_ID' => $this->entityID)
-		);
-
-		$dbResult = \CCrmActivity::GetList(
-			array('DEADLINE' => 'ASC'),
-			$filter,
-			false,
-			false,
-			array(
-				'ID', 'OWNER_ID', 'OWNER_TYPE_ID',
-				'TYPE_ID', 'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'ASSOCIATED_ENTITY_ID', 'DIRECTION',
-				'SUBJECT', 'STATUS', 'DESCRIPTION', 'DESCRIPTION_TYPE',
-				'DEADLINE', 'RESPONSIBLE_ID', 'PROVIDER_PARAMS', 'SETTINGS'
-			),
-			array('QUERY_OPTIONS' => array('LIMIT' => 100, 'OFFSET' => 0))
-		);
-
-		$items = array();
-		while($fields = $dbResult->Fetch())
-		{
-			$items[$fields['ID']] = ActivityController::prepareScheduleDataModel($fields);
-		}
-
-		\Bitrix\Crm\Timeline\EntityController::prepareAuthorInfoBulk($items);
-
-		$communications = \CCrmActivity::PrepareCommunicationInfos(
-			array_keys($items),
-			array(
-				'ENABLE_PERMISSION_CHECK' => true,
-				'USER_PERMISSIONS' => $this->userPermissions
-			)
-		);
-		foreach($communications as $ID => $info)
-		{
-			$items[$ID]['ASSOCIATED_ENTITY']['COMMUNICATION'] = $info;
-		}
-
-		\Bitrix\Crm\Timeline\EntityController::prepareMultiFieldInfoBulk($items);
-
-		$fields = \Bitrix\Crm\Pseudoactivity\WaitEntry::getRecentByOwner($this->entityTypeID, $this->entityID);
-		if(is_array($fields))
-		{
-			$items[$fields['ID']] = \Bitrix\Crm\Timeline\WaitController::prepareScheduleDataModel(
-				$fields,
-				array('ENABLE_USER_INFO' => true)
-			);
-		}
-
-		return ($this->arResult['SCHEDULE_ITEMS'] = array_values($items));
+		$this->arResult['SCHEDULE_ITEMS'] = $this->getRepository()->getScheduledItems()->getItems();
 	}
+
 	public function prepareHistoryItems($offsetTime = null, $offsetID = 0)
 	{
-		$this->arResult['HISTORY_ITEMS'] = [];
+		$filter = $this->historyFilter;
+		$entityFilter = $this->getHistoryFilter();
+		$entityFilter->prepareListFilterParams($filter);
 
-		$nextOffsetTime = null;
-		$nextOffsetID = 0;
+		$result = $this->getRepository()->getHistoryItemsPage(
+			(new Crm\Service\Timeline\Repository\Query())
+				->setOffsetId((int)$offsetID)
+				->setOffsetTime($offsetTime ? DateTime::createFromUserTime($offsetTime) : null)
+				->setFilter($filter)
+				->setLimit(10)
+		);
 
-		do
-		{
-			if($nextOffsetTime !== null)
-			{
-				$offsetTime = $nextOffsetTime;
-			}
-
-			if($nextOffsetID > 0)
-			{
-				$offsetID = $nextOffsetID;
-			}
-
-			$this->arResult['HISTORY_ITEMS'] = array_merge(
-				$this->arResult['HISTORY_ITEMS'],
-				$this->loadHistoryItems(
-					$offsetTime,
-					$nextOffsetTime,
-					$offsetID,
-					$nextOffsetID,
-					['limit' => 10, 'filter' => $this->historyFilter]
-				)
-			);
-		} while(count($this->arResult['HISTORY_ITEMS']) < 10 && $nextOffsetTime !== null);
+		$this->arResult['HISTORY_ITEMS'] = $result->getItems();
 
 		$this->arResult['HISTORY_NAVIGATION'] = [
-			'OFFSET_TIMESTAMP' => $this->getHistoryTimestamp($nextOffsetTime),
-			'OFFSET_ID' => $nextOffsetID
+			'OFFSET_TIMESTAMP' => $this->getHistoryTimestamp($result->getOffsetTime()),
+			'OFFSET_ID' => $result->getOffsetId(),
 		];
-
-		return $this->arResult['HISTORY_ITEMS'];
 	}
 	public function prepareHistoryFixedItems()
 	{
-		return(
-			$this->arResult['FIXED_ITEMS'] = $this->loadHistoryItems(
-				null,
-				$offsetTime,
-				0,
-				$offsetID,
-				array('limit' => 3, 'onlyFixed' => true)
-			)
+		$result = $this->getRepository()->getHistoryItemsPage(
+			(new Crm\Service\Timeline\Repository\Query())
+				->setSearchForFixedItems(true)
+				->setLimit(3)
 		);
-	}
 
-	public function loadHistoryItems($offsetTime, &$nextOffsetTime, $offsetID, &$nextOffsetID, array $params = [])
-	{
-		if($this->entityID <= 0)
-		{
-			return [];
-		}
-
-		$onlyFixed = isset($params['onlyFixed']) && $params['onlyFixed'] == true;
-		$limit = isset($params['limit']) ? (int)$params['limit'] : 0;
-		$filter = isset($params['filter']) && is_array($params['filter']) ? $params['filter'] : [];
-		$isOffsetExist = isset($offsetTime) && $offsetID > 0;
-
-		$bindingQuery = $this->prepareLoadHistoryBindingQuery($onlyFixed);
-		$query = $this->prepareLoadHistoryQuery($limit, false, $bindingQuery, $filter, $offsetTime, $offsetID);
-
-		$items = $this->fetchHistoryItems($offsetID, $query);
-
-		$fetchDiff = $limit - count($items);
-		if ($fetchDiff > 0 && $isOffsetExist)
-		{
-			$query = $this->prepareLoadHistoryQuery($fetchDiff, true, $bindingQuery, $filter, $offsetTime, $offsetID);
-
-			$extraItems = $this->fetchHistoryItems($offsetID, $query);
-			$items = array_merge($items, $extraItems);
-		}
-
-		$nextOffsetTime = null;
-		if(!empty($items))
-		{
-			$item = $items[count($items) - 1];
-			if(isset($item['CREATED']) && $item['CREATED'] instanceof DateTime)
-			{
-				$nextOffsetTime = $item['CREATED'];
-				$nextOffsetID = (int)$item['ID'];
-			}
-		}
-
-		$itemIDs = array_column($items, 'ID');
-		$itemsMap = array_combine($itemIDs, $items);
-
-		TimelineManager::prepareDisplayData($itemsMap, $this->userID, $this->userPermissions);
-
-		return array_values($itemsMap);
+		$this->arResult['FIXED_ITEMS'] = $result->getItems();
 	}
 
 	public function prepareChatData()
@@ -723,139 +635,5 @@ class CCrmTimelineComponent extends CBitrixComponent
 		}
 
 		return $chatData;
-	}
-
-	private function getExcludingOrderFilter(int $ownerId, int $ownerTypeId)
-	{
-		$orderFilter = Query::filter();
-
-		$orderList = Crm\Binding\OrderEntityTable::getOrderIdsByOwner($ownerId, $ownerTypeId);
-		if ($orderList)
-		{
-			$orderFilter->whereIn('ASSOCIATED_ENTITY_ID', $orderList);
-			$orderFilter->where('ASSOCIATED_ENTITY_TYPE_ID', TimelineType::ORDER);
-			$orderFilter->whereIn('TYPE_ID', [TimelineType::MODIFICATION, TimelineType::ORDER]);
-			$orderFilter->whereNot('TYPE_CATEGORY_ID', Crm\Timeline\OrderCategoryType::ENCOURAGE_BUY_PRODUCTS);
-			$orderFilter->whereNotIn('TYPE_CATEGORY_ID', [
-				Crm\Timeline\OrderCategoryType::ENCOURAGE_BUY_PRODUCTS,
-				TimelineType::MODIFICATION
-			]);
-		}
-
-		return $orderFilter;
-	}
-
-	private function fetchHistoryItems(int $offsetID, Query $query): array
-	{
-		$items = [];
-		$offsetIndex = -1;
-		$dbResult = $query->exec();
-		while($fields = $dbResult->fetch())
-		{
-			$itemID = (int)$fields['ID'];
-			$items[] = $fields;
-			if($offsetID > 0 && $itemID === $offsetID)
-			{
-				$offsetIndex = count($items) - 1;
-			}
-		}
-
-		if($offsetIndex >= 0)
-		{
-			$items = array_splice($items, $offsetIndex + 1);
-		}
-
-		return $items;
-	}
-
-	private function prepareLoadHistoryQuery(int $limit, bool $isExtraFetch, Query $bindingQuery, array $filter, $offsetTime, $offsetID): Query
-	{
-		//Permissions are already checked
-		$query = new Query(TimelineTable::getEntity());
-		$query->addSelect('*');
-		$query->addSelect('bind.IS_FIXED', 'IS_FIXED');
-		$query->registerRuntimeField('',
-			new ReferenceField('bind',
-				Base::getInstanceByQuery($bindingQuery),
-				['=this.ID' => 'ref.OWNER_ID'],
-				['join_type' => 'INNER']
-			)
-		);
-
-		if(isset($filter['CREATED_to']))
-		{
-			$filter['CREATED_to'] = DateTime::tryParse($filter['CREATED_to']);
-		}
-
-		if(isset($filter['CREATED_from']))
-		{
-			$filter['CREATED_from'] = DateTime::tryParse($filter['CREATED_from']);
-		}
-
-		if(
-			$offsetTime instanceof DateTime
-			&& (!isset($filter['CREATED_to']) || $offsetTime->getTimestamp() < $filter['CREATED_to']->getTimestamp())
-		)
-		{
-			if($isExtraFetch)
-			{
-				$query->addFilter('<CREATED', $offsetTime);
-			}
-			else
-			{
-				$query->addFilter('=CREATED', $offsetTime);
-				$query->addFilter('<ID', $offsetID);
-			}
-		}
-
-		if(!empty($filter))
-		{
-			$entityFilter = $this->getHistoryFilter();
-			$entityFilter->prepareListFilterParams($filter);
-			Crm\Filter\TimelineDataProvider::prepareQuery($query, $filter);
-		}
-
-		$query->whereNotIn(
-			'ASSOCIATED_ENTITY_TYPE_ID',
-			TimelineManager::getIgnoredEntityTypeIDs()
-		);
-
-		if (
-			!\CCrmSaleHelper::isWithOrdersMode()
-			&& (
-				$this->entityTypeID === \CCrmOwnerType::Deal
-				|| \CCrmOwnerType::isPossibleDynamicTypeId($this->entityTypeID)
-			)
-		)
-		{
-			$orderFilter = $this->getExcludingOrderFilter($this->entityID, $this->entityTypeID);
-			$query->whereNot($orderFilter);
-		}
-
-		$query->setOrder(['CREATED' => 'DESC', 'ID' => 'DESC']);
-
-		if($limit > 0)
-		{
-			$query->setLimit($limit);
-		}
-
-		return $query;
-	}
-
-	private function prepareLoadHistoryBindingQuery(bool $onlyFixed): Query
-	{
-		$bindingQuery = new Query(TimelineBindingTable::getEntity());
-		$bindingQuery->addSelect('OWNER_ID');
-		$bindingQuery->addFilter('=ENTITY_TYPE_ID', $this->entityTypeID);
-		$bindingQuery->addFilter('=ENTITY_ID', $this->entityID);
-
-		if($onlyFixed)
-		{
-			$bindingQuery->addFilter('=IS_FIXED', 'Y');
-		}
-
-		$bindingQuery->addSelect('IS_FIXED');
-
-		return $bindingQuery;
 	}
 }

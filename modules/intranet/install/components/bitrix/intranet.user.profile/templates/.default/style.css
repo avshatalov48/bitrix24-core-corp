@@ -137,8 +137,8 @@
 .intranet-user-profile-status:before {
 	content: '';
 	display: inline-block;
-	vertical-align: top;
-	margin: 2.8px 4px 0 0;
+	margin: -1px 4px 0 0;
+	vertical-align: middle;
 	overflow: hidden;
 	width: 9px;
 	height: 9px;
@@ -172,7 +172,7 @@
 	text-align: right;
 	padding-top: 2px;
 	color: rgba(130,139,148,.6);
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	line-height: 14px;
 }
@@ -474,7 +474,7 @@
 	float: left;
 	padding: 0 10px 0 15px;
 	box-sizing: border-box;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	line-height: 15px;
 	color: #858c96;
@@ -748,7 +748,7 @@
 	letter-spacing: 0;
 	text-align: center;
 	font-size: 15px;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .intranet-user-profile-thanks-user {
@@ -820,7 +820,7 @@
 	width: calc(100% - 65px);
 	box-sizing: border-box;
 	padding-left: 9px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .intranet-user-profile-thanks-user-content-title {
@@ -938,7 +938,7 @@
 	clear: both;
 	float: left;
 	margin: 17px 0;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #80868e;
 	padding-bottom: 1px;
@@ -1067,7 +1067,7 @@
 	margin-bottom: 6px;
 	color: rgba(82,92,105,.7);
 	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .intranet-user-profile-container-body {
@@ -1135,7 +1135,7 @@
 	clear: both;
 	float: left;
 	margin: 17px 0 0 0;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #80868e;
 	padding-bottom: 1px;
@@ -1167,7 +1167,7 @@
 	position: relative;
 	overflow: hidden;
 	line-height: 20px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -1322,7 +1322,7 @@
 	vertical-align: top;
 	height: 28px;
 	color: #333;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 }
 
@@ -1429,7 +1429,7 @@
 	height: 32px;
 	border: none;
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2211px%22%20height%3D%2213px%22%20viewBox%3D%220%200%2011%2013%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20opacity%3D%220.5%22%20fill%3D%22%23828B95%22%20d%3D%22M7%2C3%20L7%2C0%20L9%2C0%20L9%2C3%20L11%2C3%20L11%2C5%20L9%2C5%20L9%2C8%20L11%2C8%20L11%2C10%20L9%2C10%20L9%2C13%20L7%2C13%20L7%2C10%20L4%2C10%20L4%2C13%20L2%2C13%20L2%2C10%20L0%2C10%20L0%2C8%20L2%2C8%20L2%2C5%20L0%2C5%20L0%2C3%20L2%2C3%20L2%2C0%20L4%2C0%20L4%2C3%20L7%2C3%20Z%20M7%2C5%20L4%2C5%20L4%2C8%20L7%2C8%20L7%2C5%20Z%22%3E%3C/path%3E%3C/svg%3E') 9px center no-repeat;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #333;
 	box-sizing: border-box;
@@ -1499,7 +1499,7 @@
 .intranet-user-profile-tags-popup-empty-text {
 	display: block;
 	overflow: hidden;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 }
@@ -1539,7 +1539,7 @@
 	height: 39px;
 	line-height: 39px;
 	padding: 0 30px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 	cursor: pointer;
@@ -1635,7 +1635,7 @@
 .iup-tags-item-users-popup .iup-tags-item-users-popup-name-new {
 	cursor: pointer;
 	display: inline-block;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 6px;
 	height: 15px;
 	text-decoration: underline;
@@ -1683,7 +1683,7 @@ form.profile-post-form {
 	margin: 0;
 	padding: 0;
 	line-height: 20px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -1911,7 +1911,7 @@ form.profile-post-form {
 .intranet-user-profile-stresslevel-status-copy {
 	clear: both;
 	display: inline-block;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #9b9b9b;
 	margin-top: 2px;

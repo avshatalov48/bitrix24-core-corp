@@ -228,11 +228,15 @@ this.BX = this.BX || {};
 	babelHelpers.defineProperty(EntityCounterType, "PENDING", 2);
 	babelHelpers.defineProperty(EntityCounterType, "OVERDUE", 4);
 	babelHelpers.defineProperty(EntityCounterType, "CURRENT", 6);
-	babelHelpers.defineProperty(EntityCounterType, "ALL", 7);
+	babelHelpers.defineProperty(EntityCounterType, "ALL_DEADLINE_BASED", 7);
+	babelHelpers.defineProperty(EntityCounterType, "INCOMING_CHANNEL", 8);
+	babelHelpers.defineProperty(EntityCounterType, "ALL", 15);
 	babelHelpers.defineProperty(EntityCounterType, "IDLE_NAME", 'IDLE');
 	babelHelpers.defineProperty(EntityCounterType, "PENDING_NAME", 'PENDING');
 	babelHelpers.defineProperty(EntityCounterType, "OVERDUE_NAME", 'OVERDUE');
 	babelHelpers.defineProperty(EntityCounterType, "CURRENT_NAME", 'CURRENT');
+	babelHelpers.defineProperty(EntityCounterType, "INCOMING_CHANNEL_NAME", 'INCOMINGCHANNEL');
+	babelHelpers.defineProperty(EntityCounterType, "ALL_DEADLINE_BASED_NAME", 'ALLDEADLINEBASED');
 	babelHelpers.defineProperty(EntityCounterType, "ALL_NAME", 'ALL');
 
 	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
@@ -353,8 +357,12 @@ this.BX = this.BX || {};
 	      }
 
 	      var isFilteredByUser = entityTypeId === BX.CrmEntityType.enumeration.order ? true : this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_USER_FIELD) && main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_USER_FIELD]) && babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_USER_FIELD].length === 1 && parseInt(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_USER_FIELD][0], 10) === userId;
-	      var isFilteredByType = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD) && main_core.Type.isObject(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]) && Object.values(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]).length === 1 && parseInt(Object.values(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD])[0], 10) === typeId;
-	      var counterFields = [EntityCounterFilterManager.COUNTER_USER_FIELD, EntityCounterFilterManager.COUNTER_TYPE_FIELD];
+	      var hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD) && main_core.Type.isObject(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]);
+	      var filteredTypeValues = hasFilteredByTypeValue ? Object.values(babelHelpers.classPrivateFieldGet(this, _fields)[EntityCounterFilterManager.COUNTER_TYPE_FIELD]).map(function (item) {
+	        return parseInt(item, 10);
+	      }).sort() : [];
+	      var isFilteredByType = filteredTypeValues.length === 1 && filteredTypeValues[0] === typeId || filteredTypeValues.length === 2 && typeId === EntityCounterType.CURRENT && filteredTypeValues[0] === EntityCounterType.PENDING && filteredTypeValues[1] === EntityCounterType.OVERDUE;
+	      var counterFields = [EntityCounterFilterManager.COUNTER_USER_FIELD, EntityCounterFilterManager.COUNTER_TYPE_FIELD].concat(babelHelpers.toConsumableArray(EntityCounterFilterManager.EXCLUDED_FIELDS));
 	      var keysFields = Object.keys(babelHelpers.classPrivateFieldGet(this, _fields));
 	      var otherFields = counterFields.filter(function (item) {
 	        return !keysFields.includes(item);
@@ -393,6 +401,7 @@ this.BX = this.BX || {};
 
 	babelHelpers.defineProperty(EntityCounterFilterManager, "COUNTER_TYPE_FIELD", 'ACTIVITY_COUNTER');
 	babelHelpers.defineProperty(EntityCounterFilterManager, "COUNTER_USER_FIELD", 'ASSIGNED_BY_ID');
+	babelHelpers.defineProperty(EntityCounterFilterManager, "EXCLUDED_FIELDS", ['FIND']);
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
 
@@ -433,6 +442,8 @@ this.BX = this.BX || {};
 
 	var _processItemSelection = /*#__PURE__*/new WeakSet();
 
+	var _prepareFilterTypeId = /*#__PURE__*/new WeakSet();
+
 	var _markCounters = /*#__PURE__*/new WeakSet();
 
 	var _isAllDeactivated = /*#__PURE__*/new WeakSet();
@@ -461,6 +472,8 @@ this.BX = this.BX || {};
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _isAllDeactivated);
 
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _markCounters);
+
+	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _prepareFilterTypeId);
 
 	    _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _processItemSelection);
 
@@ -578,7 +591,9 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "detectCounterItemColor",
 	    value: function detectCounterItemColor(type, value) {
-	      return [EntityCounterType.IDLE_NAME, EntityCounterType.OVERDUE_NAME].includes(type) && value > 0 ? 'DANGER' : 'THEME';
+	      var isRedCounter = [EntityCounterType.IDLE_NAME, EntityCounterType.OVERDUE_NAME, EntityCounterType.CURRENT_NAME].includes(type);
+	      var isGreenCounter = [EntityCounterType.INCOMING_CHANNEL_NAME].includes(type);
+	      return value > 0 ? isRedCounter ? 'DANGER' : isGreenCounter ? 'SUCCESS' : 'THEME' : 'THEME';
 	    }
 	  }]);
 	  return EntityCounterPanel;
@@ -645,7 +660,7 @@ this.BX = this.BX || {};
 	    var eventArgs = {
 	      userId: babelHelpers.classPrivateFieldGet(this, _userId).toString(),
 	      userName: babelHelpers.classPrivateFieldGet(this, _userName),
-	      counterTypeId: typeId.toString(),
+	      counterTypeId: _classPrivateMethodGet$2(this, _prepareFilterTypeId, _prepareFilterTypeId2).call(this, typeId),
 	      cancel: false
 	    };
 
@@ -673,6 +688,17 @@ this.BX = this.BX || {};
 	  }
 
 	  return true;
+	}
+
+	function _prepareFilterTypeId2(typeId) {
+	  if (typeId === EntityCounterType.CURRENT) {
+	    return {
+	      0: EntityCounterType.OVERDUE.toString(),
+	      1: EntityCounterType.PENDING.toString()
+	    };
+	  }
+
+	  return typeId.toString();
 	}
 
 	function _markCounters2() {

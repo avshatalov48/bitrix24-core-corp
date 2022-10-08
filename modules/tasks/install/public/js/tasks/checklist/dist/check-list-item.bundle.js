@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,main_core_events,main_core) {
+(function (exports,ui_designTokens,main_core_events,main_core) {
 	'use strict';
 
 	var TreeItem = /*#__PURE__*/function () {
@@ -751,7 +751,7 @@ this.BX = this.BX || {};
 	    key: "getMemberLinkLayout",
 	    value: function getMemberLinkLayout(type, name, url) {
 	      var messageId = "TASKS_CHECKLIST_".concat(type.toUpperCase(), "_ICON_HINT");
-	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link\">").concat(name, "</a>\n\t\t\t</span>\n\t\t");
+	      return "\n\t\t\t<span class=\"tasks-checklist-item-auditor\">\n\t\t\t\t<a class=\"tasks-checklist-item-".concat(type, "-icon\" title=\"").concat(main_core.Loc.getMessage(messageId), "\"></a>\n\t\t\t\t<a href=\"").concat(url, "\" class=\"tasks-checklist-item-").concat(type, "-link\">").concat(name, "</a>\n\t\t\t</span> \n\t\t");
 	    }
 	  }, {
 	    key: "getLinkLayout",
@@ -1448,6 +1448,7 @@ this.BX = this.BX || {};
 	      };
 
 	      var title = this.fields.getTitle();
+	      console.log('title', title);
 	      title = this.isCheckList() ? CheckListItem.getDefaultCheckListTitle(title) : title;
 	      this.fields.getMembers().forEach(function (_ref) {
 	        var id = _ref.id,
@@ -1663,7 +1664,7 @@ this.BX = this.BX || {};
 	      var nodeId = this.getNodeId();
 
 	      if (this.isCheckList()) {
-	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	        return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-checklist-header-name tasks-checklist-header-name-edit-mode\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-textbox ui-ctl-after-icon ui-ctl-xs ui-ctl-no-padding ui-ctl-underline \n\t\t\t\t\t\t\t\ttasks-checklist-header-name-editor\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), nodeId, this.fields.getTitle(), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	      }
 
 	      var progressBarLayout = new BX.UI.ProgressRound({
@@ -1674,7 +1675,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-inner tasks-checklist-item-new ", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onCompleteButtonClick.bind(this), progressBarLayout.getContainer(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
+	      return main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item-inner tasks-checklist-item-new ", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"></span>\n\t\t\t\t\t\t</label>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-after-icon ui-ctl-w100\">\n\t\t\t\t\t\t<input class=\"ui-ctl-element\" type=\"text\" id=\"text_", "\"\n\t\t\t\t\t\t\t   placeholder=\"", "\"\n\t\t\t\t\t\t\t   value=\"", "\"\n\t\t\t\t\t\t\t   onkeydown=\"", "\"\n\t\t\t\t\t\t\t   onblur=\"", "\"/>\n\t\t\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onCompleteButtonClick.bind(this), progressBarLayout.getContainer(), nodeId, main_core.Loc.getMessage('TASKS_CHECKLIST_NEW_ITEM_PLACEHOLDER'), this.fields.getTitle(), this.onInputKeyDown.bind(this), this.rememberInputState.bind(this), this.clearInput.bind(this));
 	    }
 	  }, {
 	    key: "showEditorPanel",
@@ -1871,7 +1872,6 @@ this.BX = this.BX || {};
 
 	      if (['+', '@'].includes(e.data)) {
 	        this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
-	        e.preventDefault();
 	      }
 	    }
 	  }, {
@@ -2851,7 +2851,7 @@ this.BX = this.BX || {};
 	    value: function getCheckListItemLayout(children) {
 	      var nodeId = this.getNodeId();
 	      var layouts = {
-	        deleteButton: main_core.Tag.render(_templateObject32 || (_templateObject32 = babelHelpers.taggedTemplateLiteral(["<button class=\"tasks-checklist-item-remove\" onclick=\"", "\"/>"])), this.onDeleteClick.bind(this)),
+	        deleteButton: main_core.Tag.render(_templateObject32 || (_templateObject32 = babelHelpers.taggedTemplateLiteral(["<button class=\"tasks-checklist-item-remove\" onclick=\"", "\"></button>"])), this.onDeleteClick.bind(this)),
 	        dndButton: main_core.Tag.render(_templateObject33 || (_templateObject33 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-checklist-item-dragndrop\"></div>"]))),
 	        attachments: this.getAttachmentsLayout()
 	      };
@@ -2873,7 +2873,7 @@ this.BX = this.BX || {};
 	        fill: false,
 	        color: BX.UI.ProgressRound.Color.PRIMARY
 	      });
-	      this.container = main_core.Tag.render(_templateObject34 || (_templateObject34 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-inner droppable ", "\"\n\t\t\t\t\t onmousedown=\"", "\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"/>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-additional-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-actions-block\">\n\t\t\t\t\t\t<input class=\"tasks-checklist-item-group-checkbox\" id=\"select_", "\" type=\"checkbox\"\n\t\t\t\t\t\t\t   onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-list\" id=\"attachments_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-sublist-items-wrapper\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onInnerContainerMouseDown.bind(this), this.onInnerContainerMouseUp.bind(this), layouts.dndButton, this.onCompleteButtonClick.bind(this), nodeId, this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.fields.getIsImportant() ? this.getImportantLayout() : '', this.getTitleLayout(), layouts.deleteButton, nodeId, this.onSelectCheckboxClick.bind(this), nodeId, layouts.attachments, nodeId, children);
+	      this.container = main_core.Tag.render(_templateObject34 || (_templateObject34 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-checklist-item\" id=\"", "\">\n\t\t\t\t<div class=\"tasks-checklist-item-inner droppable ", "\"\n\t\t\t\t\t onmousedown=\"", "\" onmouseup=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-checklist-item-flag-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-flag\">\n\t\t\t\t\t\t\t<label class=\"tasks-checklist-item-flag-element\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-sub-checklist-progress\" id=\"progress_", "\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t<span class=\"tasks-checklist-item-flag-element-decorate\"></span>\n\t\t\t\t\t\t\t</label>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-content-block\">\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-number\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-checklist-item-description\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-additional-block\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-checklist-item-actions-block\">\n\t\t\t\t\t\t<input class=\"tasks-checklist-item-group-checkbox\" id=\"select_", "\" type=\"checkbox\"\n\t\t\t\t\t\t\t   onclick=\"", "\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-item-attachment\">\n\t\t\t\t\t<div class=\"tasks-checklist-item-attachment-list\" id=\"attachments_", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-checklist-sublist-items-wrapper\" id=\"subItems_", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), nodeId, this.fields.getIsComplete() ? 'tasks-checklist-item-solved' : '', this.onInnerContainerMouseDown.bind(this), this.onInnerContainerMouseUp.bind(this), layouts.dndButton, this.onCompleteButtonClick.bind(this), nodeId, this.progress.getContainer(), this.fields.getDisplaySortIndex(), this.fields.getIsImportant() ? this.getImportantLayout() : '', this.getTitleLayout(), layouts.deleteButton, nodeId, this.onSelectCheckboxClick.bind(this), nodeId, layouts.attachments, nodeId, children);
 	      return this.container;
 	    }
 	  }, {
@@ -3734,5 +3734,5 @@ this.BX = this.BX || {};
 	exports.CheckListItem = CheckListItem;
 	exports.MobileCheckListItem = MobileCheckListItem;
 
-}((this.BX.Tasks = this.BX.Tasks || {}),BX.Event,BX));
+}((this.BX.Tasks = this.BX.Tasks || {}),BX,BX.Event,BX));
 //# sourceMappingURL=check-list-item.bundle.js.map

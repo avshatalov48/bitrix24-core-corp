@@ -3551,7 +3551,7 @@ class SmartMigrationWebdav
 		$defaultUserStorageRights = Option::get("disk", "default_user_storage_rights", array());
 		if(is_string($defaultUserStorageRights))
 		{
-			$defaultUserStorageRights = unserialize($defaultUserStorageRights);
+			$defaultUserStorageRights = unserialize($defaultUserStorageRights, ['allowed_classes' => false]);
 		}
 		foreach($tasks as $row)
 		{
@@ -3805,7 +3805,7 @@ class SmartMigrationWebdav
 		}
 		else
 		{
-			$this->useGZipCompression = (function_exists("gzcompress") && ($GLOBALS["DB"]->type != "ORACLE" || !defined('BX_UTF')));
+			$this->useGZipCompression = (function_exists("gzcompress") && !defined('BX_UTF'));
 		}
 		$sqlHelper = $this->connection->getSqlHelper();
 
@@ -3837,7 +3837,7 @@ class SmartMigrationWebdav
 					$version['VERSION_DOC'] = gzuncompress($version['VERSION_DOC']);
 				}
 
-				$version['VERSION_DOC'] = unserialize($version['VERSION_DOC']);
+				$version['VERSION_DOC'] = unserialize($version['VERSION_DOC'], ['allowed_classes' => false]);
 				if(!is_array($version['VERSION_DOC']))
 				{
 					$version['VERSION_DOC'] = array();
@@ -4447,7 +4447,7 @@ class SmartMigrationWebdav
 		{
 			return false;
 		}
-		$props = @unserialize($section["DESCRIPTION"]);
+		$props = @unserialize($section["DESCRIPTION"], ['allowed_classes' => false]);
 		if(empty($props['PROPS']['BX:']['UNDELETE']) || !is_string($props['PROPS']['BX:']['UNDELETE']))
 		{
 			return false;
@@ -4461,7 +4461,7 @@ class SmartMigrationWebdav
 		{
 			return false;
 		}
-		$props = @unserialize($element["WEBDAV_INFO"]);
+		$props = @unserialize($element["WEBDAV_INFO"], ['allowed_classes' => false]);
 		if(empty($props['PROPS']['BX:']['UNDELETE']) || !is_string($props['PROPS']['BX:']['UNDELETE']))
 		{
 			return false;

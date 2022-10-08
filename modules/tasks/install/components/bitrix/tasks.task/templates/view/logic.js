@@ -282,32 +282,36 @@ BX.namespace('Tasks.Component');
 
 	BX.Tasks.Component.TaskView.prototype.initCreateButton = function()
 	{
-		BX.bind(this.layout.createButton, "click", this.onCreateButtonClick.bind(this));
+		BX.bind(this.layout.createButton, 'click', this.onCreateButtonClick.bind(this));
 
 		var paths = this.paths;
-		var self = this;
+		var groupId = this.parameters.groupId;
+		var messages = this.messages;
 
 		this.createButtonMenu = [
 			{
-				text : this.messages.addTask,
-				className : "menu-popup-item menu-popup-no-icon",
-				href: this.paths.newTask
+				text : messages.addTask,
+				className : 'menu-popup-item menu-popup-no-icon',
+				href: paths.newTask
 			},
 			{
-				text : this.messages.addTaskByTemplate,
-				className : "menu-popup-item menu-popup-no-icon menu-popup-item-submenu",
+				text : messages.addTaskByTemplate,
+				className : 'menu-popup-item menu-popup-no-icon menu-popup-item-submenu',
 				cacheable: true,
+				items: [
+					{
+						id: 'loading',
+						text: messages.tasksAjaxLoadTemplates
+					}
+				],
 				events:
 				{
 					onSubMenuShow: function()
 					{
-						if (this.subMenuLoaded)
+						if (this.isSubMenuLoaded)
 						{
 							return;
 						}
-
-						var submenu = this.getSubMenu();
-						submenu.removeMenuItem("loading");
 
 						BX.ajax.runComponentAction('bitrix:tasks.templates.list', 'getList', {
 							mode: 'class',
@@ -319,66 +323,57 @@ BX.namespace('Tasks.Component');
 						}).then(
 							function(response)
 							{
-								this.subMenuLoaded = true;
-
-								var tasksTemplateUrlTemplate = paths.newTask + (paths.newTask.indexOf('?') !== -1? '&' : '?') + 'TEMPLATE=';
-
+								this.isSubMenuLoaded = true;
+								this.getSubMenu().removeMenuItem('loading');
 								var subMenu = [];
 								if (response.data.length > 0)
 								{
-									BX.Tasks.each(response.data, function(item, k)
-									{
+									var tasksTemplateUrlTemplate =
+										paths.newTask
+										+ (paths.newTask.indexOf('?') !== -1 ? '&' : '?')
+										+ (groupId > 0 ? 'GROUP_ID=' + groupId + '&' : '')
+										+ 'TEMPLATE='
+									;
+									BX.Tasks.each(response.data, function(item, k) {
 										subMenu.push({
 											text: BX.util.htmlspecialchars(item.TITLE),
 											href: tasksTemplateUrlTemplate + item.ID
 										});
-									}.bind(this));
+									});
 								}
 								else
 								{
-									subMenu.push({text: self.messages.tasksAjaxEmpty});
+									subMenu.push({text: messages.tasksAjaxEmpty});
 								}
 								this.addSubMenu(subMenu);
 								this.showSubMenu();
 							}.bind(this),
-							function(response)
+							function()
 							{
-								this.subMenuLoaded = true;
-
-								this.addSubMenu([
-									{text: self.messages.tasksAjaxErrorLoad}
-								]);
-
+								this.isSubMenuLoaded = true;
+								this.getSubMenu().removeMenuItem('loading');
+								this.addSubMenu([{text: messages.tasksAjaxErrorLoad}]);
 								this.showSubMenu();
 							}.bind(this)
 						);
 					}
-				},
-				items: [
-					{
-						id: "loading",
-						text: "TASKS_AJAX_LOAD_TEMPLATES"
-					}
-				]
-			},
-
-
-			{
-				delimiter:true
-			},
-
-			{
-				text : this.messages.addSubTask,
-				className : "menu-popup-item menu-popup-no-icon",
-				href: this.paths.newSubTask
+				}
 			},
 			{
 				delimiter:true
 			},
 			{
-				text : this.messages.listTaskTemplates,
-				className : "menu-popup-item menu-popup-no-icon",
-				href: this.paths.taskTemplates,
+				text : messages.addSubTask,
+				className : 'menu-popup-item menu-popup-no-icon',
+				href: paths.newSubTask
+			},
+			{
+				delimiter:true
+			},
+			{
+				text : messages.listTaskTemplates,
+				className : 'menu-popup-item menu-popup-no-icon',
+				href: paths.taskTemplates,
 				target: '_top'
 			}
 		];

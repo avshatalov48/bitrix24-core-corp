@@ -2,6 +2,9 @@ this.BX = this.BX || {};
 (function (exports,main_core) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var instance = null;
 
 	var ListViewTypes = function ListViewTypes() {
@@ -195,6 +198,28 @@ this.BX = this.BX || {};
 	      return null;
 	    }
 	  }, {
+	    key: "openDocumentSlider",
+	    value: function openDocumentSlider(documentId) {
+	      return Router.openSlider('/bitrix/components/bitrix/crm.document.view/slider.php?documentId=' + documentId, {
+	        width: 1060,
+	        loader: '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
+	      });
+	    }
+	  }, {
+	    key: "openSignDocumentSlider",
+	    value: function openSignDocumentSlider(documentId, memberHash) {
+	      // todo make a url template
+	      return Router.openSlider('/bitrix/components/bitrix/crm.signdocument.view/slider.php?documentId=' + documentId + '&memberHash=' + memberHash, {
+	        width: 1060,
+	        loader: '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
+	      });
+	    }
+	  }, {
+	    key: "openSignDocumentModifySlider",
+	    value: function openSignDocumentModifySlider(documentId) {
+	      return Router.openSlider('/sign/doc/0/?docId=' + documentId);
+	    }
+	  }, {
 	    key: "closeSettingsMenu",
 	    value: function closeSettingsMenu(event, item) {
 	      if (item && main_core.Type.isFunction(item.getMenuWindow)) {
@@ -220,11 +245,11 @@ this.BX = this.BX || {};
 	        options = {};
 	      }
 
-	      options = babelHelpers.objectSpread({}, {
+	      options = _objectSpread(_objectSpread({}, {
 	        cacheable: false,
 	        allowChangeHistory: true,
 	        events: {}
-	      }, options);
+	      }), options);
 	      return new Promise(function (resolve) {
 	        if (main_core.Type.isString(url) && url.length > 1) {
 	          options.events.onClose = function (event) {

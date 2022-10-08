@@ -43,7 +43,7 @@
 	font-size: 13px;
 	line-height: 21px;
 	color: #525c69;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-bottom: 6px;
 	margin: 6px 0 13px;
 	border-bottom: 1px solid #eeeff0;

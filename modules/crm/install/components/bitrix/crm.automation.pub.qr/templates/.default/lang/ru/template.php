@@ -1,0 +1,5 @@
+<?php
+
+$MESS['CRM_AUTOMATION_QR_LOGO'] = 'Заряжено';
+$MESS["CRM_AUTOMATION_QR_DEFAULT_ACTION_LABEL"] = "Подтвердить";
+$MESS["CRM_AUTOMATION_QR_SUCCESS"] = "Успешно!";

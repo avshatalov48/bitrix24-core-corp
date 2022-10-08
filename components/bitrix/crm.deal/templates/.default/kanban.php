@@ -9,7 +9,9 @@ $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
 use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\UI\NavigationBarPanel;
 use Bitrix\Main\Localization\Loc;
+
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal.list/templates/.default/template.php');
 
@@ -219,64 +221,20 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
-			'NAVIGATION_BAR' => array(
-				'ITEMS' => array_merge(
-					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Deal, $categoryID),
-					array(
-						array(
-							//'icon' => 'kanban',
-							'id' => 'kanban',
-							'name' => Loc::getMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_KANBAN'),
-							'active' => 1,
-							'url' => $categoryID < 0
-								? $arResult['PATH_TO_DEAL_KANBAN']
-								: CComponentEngine::makePathFromTemplate(
-									$arResult['PATH_TO_DEAL_KANBANCATEGORY'],
-									array('category_id' => $categoryID)
-								)
-						),
-						array(
-							//'icon' => 'table',
-							'id' => 'list',
-							'name' => Loc::getMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_LIST'),
-							'active' => 0,
-							'url' => $categoryID < 0
-								? $arResult['PATH_TO_DEAL_LIST']
-								: CComponentEngine::makePathFromTemplate(
-									$arResult['PATH_TO_DEAL_CATEGORY'],
-									array('category_id' => $categoryID)
-								)
-						)
-					),
-					(\Bitrix\Crm\Integration\Calendar::isResourceBookingEnabled()
-						?
-						array(
-							array(
-								'id' => 'calendar',
-								'name' => GetMessage('CRM_DEAL_LIST_FILTER_NAV_BUTTON_CALENDAR'),
-								'active' => 0,
-								'url' => $categoryID < 0
-									? $arResult['PATH_TO_DEAL_CALENDAR']
-									: CComponentEngine::makePathFromTemplate(
-										$arResult['PATH_TO_DEAL_CALENDARCATEGORY'],
-										array('category_id' => $categoryID)
-									)
-							)
-						)
-						: array()
-					)
-				),
-				'BINDING' => array(
-					'category' => 'crm.navigation',
-					'name' => 'index',
-					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				)
-			)
-		),
+			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $categoryID))
+				->setItems([
+					NavigationBarPanel::ID_AUTOMATION,
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_CALENDAR
+				], NavigationBarPanel::ID_KANBAN)
+				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+				->get()
+		],
 		$component,
-		array('HIDE_ICONS' => true)
+		['HIDE_ICONS' => true]
 	);
 
 	/*

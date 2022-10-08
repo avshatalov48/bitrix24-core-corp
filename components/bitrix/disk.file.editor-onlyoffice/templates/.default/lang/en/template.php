@@ -9,7 +9,6 @@ $MESS["DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_TITLE"] = "Editor is 
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_FILE_TITLE"] = "Cannot open file";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_DESCR"] = "Unfortunately the file is too large and cannot be opened. You can download the document, edit and upload the modified version to the Drive if required.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_LARGE_FILE_TITLE"] = "Cannot open file";
-$MESS["DISK_FILE_EDITOR_ONLYOFFICE_CUSTOM_ERROR_RIGHTS_OR_NOT_FOUND_DESCR"] = "File was not found or access was denied. Please contact the file owner or account administrator";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_DISCARD_CHANGES"] = "The changes you have made may be lost.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_ERROR_WITH_TABLE_NOTICE"] = "Unfortunately, creating and editing tables via Bitrix24 is temporarily unavailable. You can download the document or edit it using third-party software.";
 $MESS["DISK_FILE_EDITOR_ONLYOFFICE_HEADER_BTN_DOWNLOAD"] = "Download";

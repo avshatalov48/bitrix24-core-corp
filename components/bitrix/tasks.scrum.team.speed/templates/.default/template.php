@@ -23,9 +23,7 @@ $messages = Loc::loadLanguageFile(__FILE__);
 
 ?>
 
-
 <div class="tasks-scrum-sprint-team-speed">
-	<?php if (false): ?>
 	<div class="tasks-scrum-sprint-team-speed-filter">
 		<div class="pagetitle-container pagetitle-flexible-space">
 			<?php
@@ -46,8 +44,8 @@ $messages = Loc::loadLanguageFile(__FILE__);
 			?>
 		</div>
 	</div>
-	<?php endif; ?>
 	<div id="tasks-scrum-sprint-team-speed-chart" class="tasks-scrum-sprint-team-speed-chart"></div>
+	<div id="tasks-scrum-sprint-team-speed-stats" class="tasks-scrum-sprint-team-speed-stats"></div>
 </div>
 
 <script>
@@ -55,13 +53,15 @@ $messages = Loc::loadLanguageFile(__FILE__);
 	{
 		BX.message(<?= Json::encode($messages) ?>);
 
-		(new BX.Tasks.Scrum.TeamSpeedChart({
+		(new BX.Tasks.Scrum.TeamSpeed({
 			filterId: '<?=$arResult['filterId']?>',
-			signedParameters: '<?= $this->getComponent()->getSignedParameters() ?>'
+			signedParameters: '<?= $this->getComponent()->getSignedParameters() ?>',
+			chartData: <?= Json::encode($arResult['chartData']) ?>,
+			statsData: <?= Json::encode($arResult['statsData']) ?>
 		}))
-			.render(
+			.renderTo(
 				document.getElementById('tasks-scrum-sprint-team-speed-chart'),
-				<?= Json::encode($arResult['chartData']) ?>
+				document.getElementById('tasks-scrum-sprint-team-speed-stats')
 			)
 		;
 	});

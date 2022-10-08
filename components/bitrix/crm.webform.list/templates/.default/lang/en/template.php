@@ -42,7 +42,6 @@ $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON"] = "on";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON_NOW"] = "activated";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON_STATUS"] = "The form is active";
 $MESS["CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT"] = "Get link or code";
-$MESS["CRM_WEBFORM_LIST_ITEM_CONV_CHANGE"] = "Shows conversion for the last two weeks";
 $MESS["CRM_WEBFORM_LIST_ITEM_DATE_CREATE"] = "Created on";
 $MESS["CRM_WEBFORM_LIST_ITEM_FILL_END"] = "successfully completed";
 $MESS["CRM_WEBFORM_LIST_ITEM_FILL_START"] = "total attempts";

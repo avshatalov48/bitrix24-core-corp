@@ -43,12 +43,13 @@
 }
 
 .rpa-task-title-user {
-	font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .rpa-task-title-stage {
 	color: #889099;
-	font-family: 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .rpa-task-block .ui-entity-editor-section {
@@ -56,7 +57,8 @@
 }
 
 .rpa-task-block .ui-entity-editor-header-title-text {
-	font: 11px/17px 'OpenSans-SemiBold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 11px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
 	text-transform: uppercase;
 	height: auto;

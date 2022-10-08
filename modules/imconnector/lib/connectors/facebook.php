@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\ImConnector\Connectors;
 
+use Bitrix\ImConnector\Result;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -19,7 +20,38 @@ Loc::loadMessages(__FILE__);
 class Facebook extends Base
 {
 	//Input
+	public function processingInputNewMessage($message, $line): Result
+	{
+		$catalogProducts = $message['message']['attachments']['catalog'];
+		if (is_array($catalogProducts) && count($catalogProducts) > 0)
+		{
+			$message['message']['text'] = Loc::getMessage('IMCONNECTOR_FACEBOOK_ADDITIONAL_DATA');
 
+			$blocks = [];
+			foreach ($catalogProducts as $catalogProduct)
+			{
+				if ($catalogProduct['image_url'])
+				{
+					$blocks[] = ["IMAGE" => ['LINK' => $catalogProduct['image_url']]];
+				}
+				if ($catalogProduct['title'])
+				{
+					$blocks[] = ["MESSAGE" => $catalogProduct['title']];
+				}
+				if ($catalogProduct['subtitle'])
+				{
+					$blocks[] = ["MESSAGE" => $catalogProduct['subtitle']];
+				}
+			}
+
+			if (count($blocks) > 0)
+			{
+				$message['message']['attach'] = \Bitrix\Main\Web\Json::encode(['BLOCKS' => $blocks]);
+			}
+		}
+
+		return parent::processingInputNewMessage($message, $line);
+	}
 	//END Input
 
 	//Output

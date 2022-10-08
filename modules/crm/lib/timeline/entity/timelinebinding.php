@@ -3,8 +3,8 @@ namespace Bitrix\Crm\Timeline\Entity;
 
 use Bitrix\Main;
 use Bitrix\Main\Entity;
-use Bitrix\Main\Entity\Query;
 use \Bitrix\Crm\Timeline\TimelineType;
+use Bitrix\Main\ORM\Data\UpdateResult;
 
 /**
  * Class TimelineBindingTable
@@ -387,5 +387,51 @@ class TimelineBindingTable  extends Entity\DataManager
 			);
 		}
 
+	}
+
+	public static function checkBindingExists(int $id, int $ownerTypeId, int $ownerId): bool
+	{
+		$items = TimelineTable::getList(
+			array(
+				'select' => array('ID'),
+				'filter' => array(
+					'=ID' => $id,
+					'=BINDING.ENTITY_ID' => $ownerId ,
+					'=BINDING.ENTITY_TYPE_ID' => $ownerTypeId
+				),
+				'runtime' => array(
+					new Entity\ReferenceField(
+						'BINDING',
+						'\Bitrix\Crm\Timeline\Entity\TimelineBindingTable',
+						array('=ref.OWNER_ID' => 'this.ID'),
+						array('join_type'=>"INNER")
+					)
+				),
+				'limit' => 1
+			)
+		);
+
+		return !!$items->fetch();
+	}
+
+	public static function isFixed(int $id, int $ownerTypeId, int $ownerId): bool
+	{
+		$binding = TimelineBindingTable::query()
+			->where('OWNER_ID', $id)
+			->where('ENTITY_TYPE_ID', $ownerTypeId)
+			->where('ENTITY_ID', $ownerId)
+			->setSelect(['IS_FIXED'])
+			->exec()
+			->fetch();
+
+		return $binding['IS_FIXED'] === 'Y';
+	}
+
+	public static function setIsFixed(int $id, int $ownerTypeId, int $ownerId, bool $isFixed): UpdateResult
+	{
+		return TimelineBindingTable::update(
+			['OWNER_ID' => $id, 'ENTITY_ID' => $ownerId , 'ENTITY_TYPE_ID' => $ownerTypeId],
+			['IS_FIXED' => $isFixed ?  'Y' : 'N']
+		);
 	}
 }

@@ -2,7 +2,11 @@
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-\CJSCore::init(["sidepanel", "ui.design-tokens", "ui.fonts.opensans"]);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'sidepanel',
+]);
 
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 if(isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y")

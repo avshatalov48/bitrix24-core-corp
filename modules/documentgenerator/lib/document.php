@@ -28,6 +28,7 @@ use Bitrix\Main\Web\Uri;
  * @property-read int FILE_ID
  * @property-read int IMAGE_ID
  * @property-read int PDF_ID
+ * @property-read DateTime UPDATE_TIME
  */
 class Document
 {
@@ -376,6 +377,11 @@ class Document
 					if($transformResult->isSuccess())
 					{
 						$data['isTransformationError'] = false;
+						$cancelReason = $transformResult->getData()['cancelReason'] ?? null;
+						if ($cancelReason)
+						{
+							$data['transformationCancelReason'] = $cancelReason;
+						}
 					}
 					else
 					{
@@ -699,7 +705,6 @@ class Document
 	 */
 	public function setUserId(int $userId): Document
 	{
-		$userId = (int)$userId;
 		$this->userId = $userId;
 
 		return $this;
@@ -1369,6 +1374,31 @@ class Document
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Recreate document using the same external values.
+	 *
+	 * @param bool $sendToTransformation
+	 * @param bool $skipTransformationError
+	 * @return Result
+	 */
+	public function actualize(
+		?int $userId = null,
+		bool $sendToTransformation = true,
+		bool $skipTransformationError = false
+	): Result
+	{
+		if ($userId > 0)
+		{
+			$this->setUserId($userId);
+		}
+		// todo only if changed
+		return $this->update(
+			$this->getExternalValues(true),
+			$sendToTransformation,
+			$skipTransformationError
+		);
 	}
 
 	/**

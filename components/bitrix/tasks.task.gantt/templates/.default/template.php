@@ -9,9 +9,16 @@ use Bitrix\Tasks\UI\ScopeDictionary;
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 
 Loc::loadMessages(__FILE__);
-CUtil::InitJSCore(array('popup', 'tooltip', 'gantt', 'task_info_popup', 'task-popups', 'CJSTask'));
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.fonts.opensans',
+	'ui.fonts.opensans',
+	'popup',
+	'tooltip',
+	'gantt',
+	'task_info_popup',
+	'task-popups',
+	'CJSTask',
 	'ui.counter',
 ]);
 
@@ -312,13 +319,7 @@ else
                         ganttAux.notificationRelease();
                     },
 					onTaskUpdate: function (task) {
-						var change = this
-							.settings
-							.events
-							.onTaskChange
-							.bind(this);
 
-						change([task.getEventObject(["dateStart", "dateEnd"])]);
 					},
                     onTaskMove: function (sourceId, targetId, before, newProjectId, newParentId) {
                         var data = {
@@ -350,7 +351,6 @@ else
 								)
 								{
 									BX.reload();
-									return;
 								}
 							}.bind(this),
 							function(response)
@@ -398,7 +398,22 @@ else
 								});
 							},
 							function(response) {
-								BX.Tasks.alert(response.errors, function(){ BX.reload(); });
+								if (response.errors.length < 1)
+								{
+									return;
+								}
+								if (response.errors[0].code === 'TRIAL_EXPIRED')
+								{
+									if (dep !== null)
+									{
+										ganttChart.removeDependency(dep);
+									}
+									BX.UI.InfoHelper.show('limit_tasks_gantt');
+								}
+								else
+								{
+									BX.Tasks.alert(response.errors, function() { BX.reload(); });
+								}
 							}
 						);
                     },

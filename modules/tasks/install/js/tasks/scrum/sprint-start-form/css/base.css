@@ -30,6 +30,7 @@
 	box-sizing: border-box;
 	background: var(--tasks_scrum_start-white);
 	padding: 20px;
+	border-radius: var(--ui-border-radius-md, 0px);
 }
 
 .tasks-scrum__side-panel-start--info-basic-block {
@@ -37,7 +38,8 @@
 	border-bottom: 1px solid var(--tasks_scrum_start-dark-grey_alpha_10);
 	margin-bottom: 15px;
 	padding: 3px 2px 20px;
-	font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_start-light-grey);
 }
 
@@ -46,7 +48,8 @@
 	width: 100%;
 	margin: 0;
 	padding: 0;
-	font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_start-light-grey);
 	box-sizing: border-box;
 	border: none;
@@ -68,6 +71,7 @@
 	background: var(--tasks_scrum_start-grey-3);
 	box-sizing: border-box;
 	padding: 20px 20px 28px 20px;
+	border-radius: var(--ui-border-radius-md, 0px);
 }
 
 .tasks-scrum__side-panel-start--info-row {
@@ -97,8 +101,9 @@
 
 .tasks-scrum__epic-label {
 	display: block;
-	font: 12px/18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
-	border-radius: 14px;
+	font: 12px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	border-radius: var(--ui-border-radius-xl, 14px);
 	padding: 0 7px 1px;
 	margin: 1px 9px 10px 0;
 	color: var(--tasks_scrum_start-light-grey);
@@ -148,19 +153,20 @@
 	box-sizing: border-box;
 	min-width: 76%;
 	padding: 28px 26px 20px;
-	border-radius: 12px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 	background: var(--tasks_scrum_start-white);
 	margin-top: 4px;
 }
 
 .tasks-scrum__side-panel-start--plan-block-number {
-	font: 24px/15px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 24px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_start-light-grey);
 	text-align: center;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	width: 58px;
 	height: 58px;
 	background: var(--tasks_scrum_start-blue_alpha_10);
@@ -182,20 +188,22 @@
 	position: absolute;
 	top: -2px;
 	left: 94%;
-	font: 10px/15px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 10px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--tasks_scrum_start-white);
 	text-align: center;
 	padding: 0 4px 0 5px;
 	white-space: nowrap;
 	background: var(--tasks_scrum_start-blue);
 	box-shadow: 0 1px 2px 0 var(--tasks_scrum_start-black_alpha_14);
-	border-radius: 7.5px;
+	border-radius: var(--ui-border-radius-pill, 7.5px);
 	transform: translate(-50%, 0px);
 }
 
 .tasks-scrum__side-panel-start--progress-percent {
 	display: none;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .tasks-scrum__side-panel-start--progress-number {
@@ -260,7 +268,8 @@
 .tasks-scrum__side-panel-start--plan-block-name {
 	display: flex;
 	align-items: center;
-	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	position: relative;
 }
 

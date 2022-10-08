@@ -92,7 +92,7 @@ td.user-profile-img-block {
 	vertical-align: top;
 }
 .user-profile-block-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 28px 14px 10px 0 !important;
 }
 
@@ -129,7 +129,7 @@ td.user-profile-img-block {
 
 .user-profile-events-title {
 	color: #555555;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 0 10px 12px;
 }
 
@@ -170,7 +170,7 @@ td.user-profile-img-block {
 .user-profile-item-active {
 	background: none repeat 0 0 #dbe3e6 !important;
 	color: #2466a0 !important;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-shadow: 0 1px 0 #ffffff;
 }
 
@@ -309,7 +309,7 @@ td.user-profile-mail-link {
 	border: 1px solid #d9dbde;
 	height: 40px;
 	font-size: 14px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 40px;
 	margin-left: -10px;
 	max-width: 220px;
@@ -333,7 +333,7 @@ td.user-profile-mail-link {
 	border-radius: 2px;
 	display: inline-block;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 19px;
 	margin-top: 3px;
 	min-width: 93px;

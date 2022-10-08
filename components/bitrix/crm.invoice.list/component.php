@@ -96,6 +96,8 @@ use Bitrix\Crm\Settings\LayoutSettings;
 
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 

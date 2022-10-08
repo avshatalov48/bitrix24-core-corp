@@ -1,6 +1,9 @@
 import {Reflection, Type, Uri} from 'main.core';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import 'sidepanel';
+
 
 let instance = null;
 

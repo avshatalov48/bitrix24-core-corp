@@ -40,26 +40,22 @@ class TasksWidgetResult extends \CBitrixComponent
 
 		return [
 			'createFromComment' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'deleteFromComment' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getResults' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'disableTutorial' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			]

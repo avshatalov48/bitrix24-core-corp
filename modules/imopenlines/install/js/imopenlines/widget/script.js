@@ -4247,6 +4247,131 @@
 	});
 	isPure || MATCH_ALL in RegExpPrototype || redefine(RegExpPrototype, MATCH_ALL, $matchAll);
 
+	var floor$2 = Math.floor;
+	var charAt$3 = functionUncurryThis(''.charAt);
+	var replace$2 = functionUncurryThis(''.replace);
+	var stringSlice$3 = functionUncurryThis(''.slice);
+	var SUBSTITUTION_SYMBOLS = /\$([$&'`]|\d{1,2}|<[^>]*>)/g;
+	var SUBSTITUTION_SYMBOLS_NO_NAMED = /\$([$&'`]|\d{1,2})/g; // `GetSubstitution` abstract operation
+	// https://tc39.es/ecma262/#sec-getsubstitution
+
+	var getSubstitution = function (matched, str, position, captures, namedCaptures, replacement) {
+	  var tailPos = position + matched.length;
+	  var m = captures.length;
+	  var symbols = SUBSTITUTION_SYMBOLS_NO_NAMED;
+
+	  if (namedCaptures !== undefined) {
+	    namedCaptures = toObject(namedCaptures);
+	    symbols = SUBSTITUTION_SYMBOLS;
+	  }
+
+	  return replace$2(replacement, symbols, function (match, ch) {
+	    var capture;
+
+	    switch (charAt$3(ch, 0)) {
+	      case '$':
+	        return '$';
+
+	      case '&':
+	        return matched;
+
+	      case '`':
+	        return stringSlice$3(str, 0, position);
+
+	      case "'":
+	        return stringSlice$3(str, tailPos);
+
+	      case '<':
+	        capture = namedCaptures[stringSlice$3(ch, 1, -1)];
+	        break;
+
+	      default:
+	        // \d\d?
+	        var n = +ch;
+	        if (n === 0) return match;
+
+	        if (n > m) {
+	          var f = floor$2(n / 10);
+	          if (f === 0) return match;
+	          if (f <= m) return captures[f - 1] === undefined ? charAt$3(ch, 1) : captures[f - 1] + charAt$3(ch, 1);
+	          return match;
+	        }
+
+	        capture = captures[n - 1];
+	    }
+
+	    return capture === undefined ? '' : capture;
+	  });
+	};
+
+	var REPLACE = wellKnownSymbol('replace');
+	var RegExpPrototype$1 = RegExp.prototype;
+	var TypeError$f = global_1.TypeError;
+	var getFlags$1 = functionUncurryThis(regexpFlags);
+	var indexOf$2 = functionUncurryThis(''.indexOf);
+	var replace$3 = functionUncurryThis(''.replace);
+	var stringSlice$4 = functionUncurryThis(''.slice);
+	var max$2 = Math.max;
+
+	var stringIndexOf$1 = function (string, searchValue, fromIndex) {
+	  if (fromIndex > string.length) return -1;
+	  if (searchValue === '') return fromIndex;
+	  return indexOf$2(string, searchValue, fromIndex);
+	}; // `String.prototype.replaceAll` method
+	// https://tc39.es/ecma262/#sec-string.prototype.replaceall
+
+
+	_export({
+	  target: 'String',
+	  proto: true
+	}, {
+	  replaceAll: function replaceAll(searchValue, replaceValue) {
+	    var O = requireObjectCoercible(this);
+	    var IS_REG_EXP, flags, replacer, string, searchString, functionalReplace, searchLength, advanceBy, replacement;
+	    var position = 0;
+	    var endOfLastMatch = 0;
+	    var result = '';
+
+	    if (searchValue != null) {
+	      IS_REG_EXP = isRegexp(searchValue);
+
+	      if (IS_REG_EXP) {
+	        flags = toString_1(requireObjectCoercible('flags' in RegExpPrototype$1 ? searchValue.flags : getFlags$1(searchValue)));
+	        if (!~indexOf$2(flags, 'g')) throw TypeError$f('`.replaceAll` does not allow non-global regexes');
+	      }
+
+	      replacer = getMethod(searchValue, REPLACE);
+
+	      if (replacer) {
+	        return functionCall(replacer, searchValue, O, replaceValue);
+	      } else if (isPure && IS_REG_EXP) {
+	        return replace$3(toString_1(O), searchValue, replaceValue);
+	      }
+	    }
+
+	    string = toString_1(O);
+	    searchString = toString_1(searchValue);
+	    functionalReplace = isCallable(replaceValue);
+	    if (!functionalReplace) replaceValue = toString_1(replaceValue);
+	    searchLength = searchString.length;
+	    advanceBy = max$2(1, searchLength);
+	    position = stringIndexOf$1(string, searchString, 0);
+
+	    while (position !== -1) {
+	      replacement = functionalReplace ? toString_1(replaceValue(searchString, position, string)) : getSubstitution(searchString, string, position, [], undefined, replaceValue);
+	      result += stringSlice$4(string, endOfLastMatch, position) + replacement;
+	      endOfLastMatch = position + searchLength;
+	      position = stringIndexOf$1(string, searchString, position + advanceBy);
+	    }
+
+	    if (endOfLastMatch < string.length) {
+	      result += stringSlice$4(string, endOfLastMatch);
+	    }
+
+	    return result;
+	  }
+	});
+
 	var ITERATOR$3 = wellKnownSymbol('iterator');
 	var SAFE_CLOSING = false;
 
@@ -4294,7 +4419,7 @@
 	var TypedArray = Int8Array && objectGetPrototypeOf(Int8Array);
 	var TypedArrayPrototype = Int8ArrayPrototype && objectGetPrototypeOf(Int8ArrayPrototype);
 	var ObjectPrototype$2 = Object.prototype;
-	var TypeError$f = global_1.TypeError;
+	var TypeError$g = global_1.TypeError;
 	var TO_STRING_TAG$4 = wellKnownSymbol('toStringTag');
 	var TYPED_ARRAY_TAG = uid('TYPED_ARRAY_TAG');
 	var TYPED_ARRAY_CONSTRUCTOR = uid('TYPED_ARRAY_CONSTRUCTOR'); // Fixing native typed arrays in Opera Presto crashes the browser, see #595
@@ -4332,12 +4457,12 @@
 
 	var aTypedArray = function (it) {
 	  if (isTypedArray(it)) return it;
-	  throw TypeError$f('Target is not a typed array');
+	  throw TypeError$g('Target is not a typed array');
 	};
 
 	var aTypedArrayConstructor = function (C) {
 	  if (isCallable(C) && (!objectSetPrototypeOf || objectIsPrototypeOf(TypedArray, C))) return C;
-	  throw TypeError$f(tryToString(C) + ' is not a typed array constructor');
+	  throw TypeError$g(tryToString(C) + ' is not a typed array constructor');
 	};
 
 	var exportTypedArrayMethod = function (KEY, property, forced) {
@@ -4405,7 +4530,7 @@
 	if (!NATIVE_ARRAY_BUFFER_VIEWS || !isCallable(TypedArray) || TypedArray === Function.prototype) {
 	  // eslint-disable-next-line no-shadow -- safe
 	  TypedArray = function TypedArray() {
-	    throw TypeError$f('Incorrect invocation');
+	    throw TypeError$g('Incorrect invocation');
 	  };
 
 	  if (NATIVE_ARRAY_BUFFER_VIEWS) for (NAME in TypedArrayConstructorsList) {
@@ -4477,12 +4602,12 @@
 	  return new Int8Array$1(new ArrayBuffer$2(2), 1, undefined).length !== 1;
 	});
 
-	var floor$2 = Math.floor; // `IsIntegralNumber` abstract operation
+	var floor$3 = Math.floor; // `IsIntegralNumber` abstract operation
 	// https://tc39.es/ecma262/#sec-isintegralnumber
 	// eslint-disable-next-line es/no-number-isinteger -- safe
 
 	var isIntegralNumber = Number.isInteger || function isInteger(it) {
-	  return !isObject(it) && isFinite(it) && floor$2(it) === it;
+	  return !isObject(it) && isFinite(it) && floor$3(it) === it;
 	};
 
 	var RangeError$2 = global_1.RangeError;
@@ -5076,11 +5201,11 @@
 	  return result;
 	}, typedArrayConstructorsRequireWrappers);
 
-	var floor$3 = Math.floor;
+	var floor$4 = Math.floor;
 
 	var mergeSort = function (array, comparefn) {
 	  var length = array.length;
-	  var middle = floor$3(length / 2);
+	  var middle = floor$4(length / 2);
 	  return length < 8 ? insertionSort(array, comparefn) : merge(array, mergeSort(arraySliceSimple(array, 0, middle), comparefn), mergeSort(arraySliceSimple(array, middle), comparefn), comparefn);
 	};
 
@@ -8916,13 +9041,25 @@ window._main_polyfill_core = true;
 	          }
 
 	          if (Type.isNull(value) || value === '' || value === 'null') {
-	            // eslint-disable-next-line
+	            if (String(prop).startsWith('--')) {
+	              // eslint-disable-next-line
+	              element.style.removeProperty(prop);
+	              return element;
+	            } // eslint-disable-next-line
+
+
 	            element.style[prop] = '';
 	            return element;
 	          }
 
 	          if (Type.isString(value) || Type.isNumber(value)) {
-	            // eslint-disable-next-line
+	            if (String(prop).startsWith('--')) {
+	              // eslint-disable-next-line
+	              element.style.setProperty(prop, value);
+	              return element;
+	            } // eslint-disable-next-line
+
+
 	            element.style[prop] = value;
 	            return element;
 	          }
@@ -9365,6 +9502,8 @@ window._main_polyfill_core = true;
 
 	      if (Browser.isIOS()) {
 	        globalClass += ' bx-ios';
+	      } else if (Browser.isWin()) {
+	        globalClass += ' bx-win';
 	      } else if (Browser.isMac()) {
 	        globalClass += ' bx-mac';
 	      } else if (Browser.isAndroid()) {
@@ -9900,139 +10039,349 @@ window._main_polyfill_core = true;
 	  return Loc;
 	}();
 
-	var handlers = new Map();
-	var children = new Map();
-
-	var getUid = function () {
-	  var incremental = 0;
-	  return function () {
-	    incremental += 1;
-	    return incremental;
-	  };
-	}();
-
-	function bindAll(element, handlersMap) {
-	  handlersMap.forEach(function (handler, key) {
-	    var currentElement = element.querySelector("[".concat(key, "]"));
-
-	    if (currentElement) {
-	      currentElement.removeAttribute(key);
-	      var event = key.replace(/-(.*)/, '');
-	      Event.bind(currentElement, event, handler);
-	      handlers["delete"](key);
-	    }
-	  });
+	var voidElements = ['area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+	function isVoidElement(element) {
+	  return voidElements.includes(element);
 	}
 
-	function replaceChild(element, childrenMap) {
-	  childrenMap.forEach(function (item, id) {
-	    var currentElement = element.getElementById(id);
+	var matchers = {
+	  tag: /<[a-zA-Z0-9\-\!\/](?:"[^"]*"|'[^']*'|[^'">])*>|{{uid[0-9]+}}/g,
+	  comment: /<!--(?!<!)[^\[>].*?-->/g,
+	  tagName: /<\/?([^\s]+?)[/\s>]/,
+	  attributes: /\s([\w\-_:.]+)\s?\n?=\s?\n?"([^"]+)?"|\s([\w\-_:.]+)\s?\n?=\s?\n?'([^']+)?'|\s([\w\-_:.]+)/g,
+	  placeholder: /{{uid[0-9]+}}/g
+	};
 
-	    if (currentElement) {
-	      Dom.replace(currentElement, item);
-	      children["delete"](id);
+	function parseTag(tag) {
+	  var tagResult = {
+	    type: 'tag',
+	    name: '',
+	    svg: false,
+	    attrs: {},
+	    children: [],
+	    voidElement: false
+	  };
+
+	  if (tag.startsWith('<!--')) {
+	    var endIndex = tag.indexOf('-->');
+	    var openTagLength = '<!--'.length;
+	    return {
+	      type: 'comment',
+	      content: endIndex !== -1 ? tag.slice(openTagLength, endIndex) : ''
+	    };
+	  }
+
+	  var tagNameMatch = tag.match(matchers.tagName);
+
+	  if (Type.isArrayFilled(tagNameMatch)) {
+	    var _tagNameMatch = babelHelpers.slicedToArray(tagNameMatch, 2),
+	        tagName = _tagNameMatch[1];
+
+	    tagResult.name = tagName;
+	    tagResult.svg = tagName === 'svg';
+	    tagResult.voidElement = isVoidElement(tagName) || tag.trim().endsWith('/>');
+	  }
+
+	  var reg = new RegExp(matchers.attributes);
+
+	  for (;;) {
+	    var result = reg.exec(tag);
+
+	    if (!Type.isNil(result)) {
+	      // Attributes with double quotes
+	      var _result = babelHelpers.slicedToArray(result, 3),
+	          attrName = _result[1],
+	          attrValue = _result[2];
+
+	      if (!Type.isNil(attrName)) {
+	        tagResult.attrs[attrName] = Type.isStringFilled(attrValue) ? attrValue : '';
+	      } else {
+	        // Attributes with single quotes
+	        var _result2 = babelHelpers.slicedToArray(result, 5),
+	            _attrName = _result2[3],
+	            _attrValue = _result2[4];
+
+	        if (!Type.isNil(_attrName)) {
+	          tagResult.attrs[_attrName] = Type.isStringFilled(_attrValue) ? _attrValue : '';
+	        } else {
+	          // Attributes without value
+	          var _result3 = babelHelpers.slicedToArray(result, 6),
+	              _attrName2 = _result3[5];
+
+	          tagResult.attrs[_attrName2] = '';
+	        }
+	      }
+	    } else {
+	      break;
+	    }
+	  }
+
+	  return tagResult;
+	}
+
+	function parseText(input) {
+	  var preparedText = input.replace(/[\n\r\t]$/, '');
+	  var placeholders = preparedText.match(matchers.placeholder);
+	  return preparedText.split(matchers.placeholder).reduce(function (acc, item, index) {
+	    if (Type.isStringFilled(item)) {
+	      acc.push.apply(acc, babelHelpers.toConsumableArray(item.split(/\n/).reduce(function (textAcc, text) {
+	        var preparedItemText = text.replace(/[\t\r]/g, '');
+
+	        if (Type.isStringFilled(preparedItemText)) {
+	          textAcc.push({
+	            type: 'text',
+	            content: preparedItemText
+	          });
+	        }
+
+	        return textAcc;
+	      }, [])));
+	    }
+
+	    if (placeholders && placeholders[index]) {
+	      acc.push({
+	        type: 'placeholder',
+	        uid: parseInt(placeholders[index].replace(/{{uid|}}/, ''))
+	      });
+	    }
+
+	    return acc;
+	  }, []);
+	}
+
+	function parse(html, substitutions) {
+	  var result = [];
+
+	  if (html.indexOf('<') !== 0 && !html.startsWith('{{')) {
+	    var end = html.indexOf('<');
+	    result.push.apply(result, babelHelpers.toConsumableArray(parseText(end === -1 ? html : html.slice(0, end))));
+	  }
+
+	  var commentsContent = [];
+	  var commentIndex = -1;
+	  html = html.replace(matchers.comment, function (tag) {
+	    commentIndex += 1;
+	    commentsContent.push(tag.replace(/^<!--|-->$/g, ''));
+	    return "<!--{{cUid".concat(commentIndex, "}}-->");
+	  });
+	  var arr = [];
+	  var level = -1;
+	  var current;
+	  html.replace(matchers.tag, function (tag, index) {
+	    var start = index + tag.length;
+	    var nextChar = html.charAt(start);
+	    var parent;
+
+	    if (tag.startsWith('<!--')) {
+	      var comment = parseTag(tag, substitutions);
+	      comment.content = commentsContent[tag.replace(/<!--{{cUid|}}-->/g, '')];
+
+	      if (level < 0) {
+	        result.push(comment);
+	        return result;
+	      }
+
+	      parent = arr[level];
+	      parent.children.push(comment);
+	      return result;
+	    }
+
+	    if (tag.startsWith('{{')) {
+	      var _parseText = parseText(tag),
+	          _parseText2 = babelHelpers.slicedToArray(_parseText, 1),
+	          placeholder = _parseText2[0];
+
+	      if (level < 0) {
+	        result.push(placeholder);
+	        return result;
+	      }
+
+	      parent = arr[level];
+	      parent.children.push(placeholder);
+	      return result;
+	    }
+
+	    if (!tag.startsWith('</')) {
+	      level++;
+	      current = parseTag(tag, substitutions);
+
+	      if (!current.voidElement && nextChar && nextChar !== '<') {
+	        var _current$children;
+
+	        (_current$children = current.children).push.apply(_current$children, babelHelpers.toConsumableArray(parseText(html.slice(start, html.indexOf('<', start)))));
+	      }
+
+	      if (level === 0) {
+	        result.push(current);
+	      }
+
+	      parent = arr[level - 1];
+
+	      if (parent) {
+	        if (!current.svg) {
+	          current.svg = parent.svg;
+	        }
+
+	        parent.children.push(current);
+	      }
+
+	      arr[level] = current;
+	    }
+
+	    if (tag.startsWith('</') || current.voidElement) {
+	      if (level > -1 && (current.voidElement || current.name === tag.slice(2, -1))) {
+	        level--;
+	        current = level === -1 ? result : arr[level];
+	      }
+
+	      if (nextChar && nextChar !== '<') {
+	        parent = level === -1 ? result : arr[level].children;
+
+	        var _end = html.indexOf('<', start);
+
+	        var content = html.slice(start, _end === -1 ? undefined : _end);
+
+	        if (_end > -1 && level + parent.length >= 0 || content !== ' ') {
+	          var _parent;
+
+	          (_parent = parent).push.apply(_parent, babelHelpers.toConsumableArray(parseText(content)));
+	        }
+	      }
 	    }
 	  });
+	  return result;
+	}
+
+	var appendElement = function appendElement(current, target) {
+	  if (Type.isDomNode(current) && Type.isDomNode(target)) {
+	    if (target.nodeName !== 'TEMPLATE') {
+	      Dom.append(current, target);
+	    } else {
+	      // eslint-disable-next-line bitrix-rules/no-native-dom-methods
+	      target.content.append(current);
+	    }
+	  }
+	};
+
+	function renderNode(options) {
+	  var node = options.node,
+	      parentElement = options.parentElement,
+	      substitutions = options.substitutions;
+
+	  if (node.type === 'tag') {
+	    var element = function () {
+	      if (node.svg) {
+	        return document.createElementNS('http://www.w3.org/2000/svg', node.name);
+	      }
+
+	      return document.createElement(node.name);
+	    }();
+
+	    Object.entries(node.attrs).forEach(function (_ref) {
+	      var _ref2 = babelHelpers.slicedToArray(_ref, 2),
+	          key = _ref2[0],
+	          value = _ref2[1];
+
+	      if (key.startsWith('on') && new RegExp(matchers.placeholder).test(value)) {
+	        var substitution = substitutions[parseInt(value.replace(/{{uid|}}/, '')) - 1];
+
+	        if (Type.isFunction(substitution)) {
+	          var bindFunctionName = key.endsWith('once') ? 'bindOnce' : 'bind';
+	          Event[bindFunctionName](element, key.replace(/^on|once$/g, ''), substitution);
+	        } else {
+	          element.setAttribute(key, substitution);
+	        }
+	      } else {
+	        if (new RegExp(matchers.placeholder).test(value)) {
+	          var preparedValue = value.split(/{{|}}/).reduce(function (acc, item) {
+	            if (item.startsWith('uid')) {
+	              var _substitution = substitutions[parseInt(item.replace('uid', '')) - 1];
+	              return "".concat(acc).concat(_substitution);
+	            }
+
+	            return "".concat(acc).concat(item);
+	          }, '');
+	          element.setAttribute(key, preparedValue);
+	        } else {
+	          element.setAttribute(key, Text.decode(value));
+	        }
+	      }
+	    });
+	    node.children.forEach(function (childNode) {
+	      var result = renderNode({
+	        node: childNode,
+	        parentElement: element,
+	        substitutions: substitutions
+	      });
+
+	      if (Type.isArray(result)) {
+	        result.forEach(function (subChildElement) {
+	          appendElement(subChildElement, element);
+	        });
+	      } else {
+	        appendElement(result, element);
+	      }
+	    });
+	    return element;
+	  }
+
+	  if (node.type === 'comment') {
+	    return document.createComment(node.content);
+	  }
+
+	  if (node.type === 'text') {
+	    if (parentElement) {
+	      if (parentElement.nodeName !== 'TEMPLATE') {
+	        parentElement.insertAdjacentHTML('beforeend', node.content);
+	      } else {
+	        parentElement.content.append(node.content);
+	      }
+
+	      return;
+	    }
+
+	    return document.createTextNode(node.content);
+	  }
+
+	  if (node.type === 'placeholder') {
+	    return substitutions[node.uid - 1];
+	  }
 	}
 
 	function render(sections) {
-	  var eventAttrRe = /[ |\t]on(\w+)="$/;
-	  var uselessSymbolsRe = /[\r\n\t]/g;
-
 	  for (var _len = arguments.length, substitutions = new Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
 	    substitutions[_key - 1] = arguments[_key];
 	  }
 
-	  var html = substitutions.reduce(function (acc, item, index) {
-	    var preparedAcc = acc; // Process event handlers
+	  var html = sections.reduce(function (acc, item, index) {
+	    if (index > 0) {
+	      var substitution = substitutions[index - 1];
 
-	    var matches = acc.match(eventAttrRe);
+	      if (Type.isString(substitution) || Type.isNumber(substitution)) {
+	        return "".concat(acc).concat(substitution).concat(item);
+	      }
 
-	    if (matches && Type.isFunction(item)) {
-	      var eventName = matches[1].replace(/=['|"]/, '');
-	      var attrName = "".concat(eventName, "-").concat(getUid());
-	      var attribute = "".concat(attrName, "=\"");
-	      preparedAcc = preparedAcc.replace(eventAttrRe, " ".concat(attribute));
-	      handlers.set(attrName, item);
-	      preparedAcc += sections[index + 1].replace(uselessSymbolsRe, ' ').replace(/  +/g, ' ');
-	      return preparedAcc;
-	    } // Process element
-
-
-	    if (Type.isDomNode(item)) {
-	      var childKey = "tmp___".concat(getUid());
-	      children.set(childKey, item);
-	      preparedAcc += "<span id=\"".concat(childKey, "\"> </span>");
-	      preparedAcc += sections[index + 1];
-	      return preparedAcc;
-	    } // Process array
-
-
-	    if (Type.isArray(item)) {
-	      babelHelpers.toConsumableArray(item).forEach(function (currentElement) {
-	        if (Type.isDomNode(currentElement)) {
-	          var _childKey = "tmp___".concat(getUid());
-
-	          children.set(_childKey, currentElement);
-	          preparedAcc += "<span id=\"".concat(_childKey, "\"> </span>");
-	        }
-	      });
-	      preparedAcc += sections[index + 1];
-	      return preparedAcc;
+	      return "".concat(acc, "{{uid").concat(index, "}}").concat(item);
 	    }
 
-	    return preparedAcc + item + sections[index + 1];
-	  }, sections[0]);
-	  var lowercaseHtml = html.trim().toLowerCase();
+	    return acc;
+	  }, sections[0]).replace(/^[\r\n\t\s]+/gm, '').replace(/>[\n]+/g, '>').replace(/[}][\n]+/g, '}');
+	  var ast = parse(html);
 
-	  if (lowercaseHtml.startsWith('<!doctype') || lowercaseHtml.startsWith('<html')) {
-	    var doc = document.implementation.createHTMLDocument('');
-	    doc.documentElement.innerHTML = html;
-	    replaceChild(doc, children);
-	    bindAll(doc, handlers);
-	    handlers.clear();
-	    return doc;
-	  }
-
-	  var parser = new DOMParser();
-	  var parsedDocument = parser.parseFromString(html, 'text/html');
-	  replaceChild(parsedDocument, children);
-	  bindAll(parsedDocument, handlers);
-
-	  if (parsedDocument.head.children.length && parsedDocument.body.children.length) {
-	    return parsedDocument;
-	  }
-
-	  if (parsedDocument.body.children.length === 1) {
-	    var _parsedDocument$body$ = babelHelpers.slicedToArray(parsedDocument.body.children, 1),
-	        el = _parsedDocument$body$[0];
-
-	    Dom.remove(el);
-	    return el;
-	  }
-
-	  if (parsedDocument.body.children.length > 1) {
-	    return babelHelpers.toConsumableArray(parsedDocument.body.children).map(function (item) {
-	      Dom.remove(item);
-	      return item;
+	  if (ast.length === 1) {
+	    return renderNode({
+	      node: ast[0],
+	      substitutions: substitutions
 	    });
 	  }
 
-	  if (parsedDocument.body.children.length === 0) {
-	    if (parsedDocument.head.children.length === 1) {
-	      var _parsedDocument$head$ = babelHelpers.slicedToArray(parsedDocument.head.children, 1),
-	          _el = _parsedDocument$head$[0];
-
-	      Dom.remove(_el);
-	      return _el;
-	    }
-
-	    if (parsedDocument.head.children.length > 1) {
-	      return babelHelpers.toConsumableArray(parsedDocument.head.children).map(function (item) {
-	        Dom.remove(item);
-	        return item;
+	  if (ast.length > 1) {
+	    return ast.map(function (node) {
+	      return renderNode({
+	        node: node,
+	        substitutions: substitutions
 	      });
-	    }
+	    });
 	  }
 
 	  return false;
@@ -29832,7 +30181,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 
 // file: /bitrix/js/pull/client/pull.client.js
-;(function()
+;(function ()
 {
 	/**
 	 * Bitrix Push & Pull
@@ -29846,7 +30195,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	/****************** ATTENTION *******************************
 	 * Please do not use Bitrix CoreJS in this class.
 	 * This class can be called on a page without Bitrix Framework
-	*************************************************************/
+	 *************************************************************/
 
 	if (!window.BX)
 	{
@@ -29861,37 +30210,37 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		return;
 	}
 
-	var BX = window.BX;
-	var protobuf = window.protobuf;
+	const BX = window.BX;
+	const protobuf = window.protobuf;
 
-	var REVISION = 19; // api revision - check module/pull/include.php
-	var LONG_POLLING_TIMEOUT = 60;
-	var RESTORE_WEBSOCKET_TIMEOUT = 30 * 60;
-	var CONFIG_TTL = 24 * 60 * 60;
-	var CONFIG_CHECK_INTERVAL = 60000;
-	var MAX_IDS_TO_STORE = 10;
+	const REVISION = 19; // api revision - check module/pull/include.php
+	const LONG_POLLING_TIMEOUT = 60;
+	const RESTORE_WEBSOCKET_TIMEOUT = 30 * 60;
+	const CONFIG_TTL = 24 * 60 * 60;
+	const CONFIG_CHECK_INTERVAL = 60000;
+	const MAX_IDS_TO_STORE = 10;
 
-	var LS_SESSION = "bx-pull-session";
-	var LS_SESSION_CACHE_TIME = 20;
+	const LS_SESSION = "bx-pull-session";
+	const LS_SESSION_CACHE_TIME = 20;
 
-	var ConnectionType = {
+	const ConnectionType = {
 		WebSocket: 'webSocket',
 		LongPolling: 'longPolling'
 	};
 
-	var PullStatus = {
+	const PullStatus = {
 		Online: 'online',
 		Offline: 'offline',
 		Connecting: 'connect'
 	};
 
-	var SenderType = {
+	const SenderType = {
 		Unknown: 0,
 		Client: 1,
 		Backend: 2
 	};
 
-	var SubscriptionType = {
+	const SubscriptionType = {
 		Server: 'server',
 		Client: 'client',
 		Online: 'online',
@@ -29899,1286 +30248,1509 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		Revision: 'revision'
 	};
 
-	var CloseReasons = {
-		NORMAL_CLOSURE : 1000,
-		SERVER_DIE : 1001,
-		CONFIG_REPLACED : 3000,
-		CHANNEL_EXPIRED : 3001,
-		SERVER_RESTARTED : 3002,
-		CONFIG_EXPIRED : 3003,
-		MANUAL : 3004,
+	const CloseReasons = {
+		NORMAL_CLOSURE: 1000,
+		SERVER_DIE: 1001,
+		CONFIG_REPLACED: 3000,
+		CHANNEL_EXPIRED: 3001,
+		SERVER_RESTARTED: 3002,
+		CONFIG_EXPIRED: 3003,
+		MANUAL: 3004,
+		WRONG_CHANNEL_ID: 4010,
 	};
 
-	var SystemCommands = {
+	const SystemCommands = {
 		CHANNEL_EXPIRE: 'CHANNEL_EXPIRE',
 		CONFIG_EXPIRE: 'CONFIG_EXPIRE',
-		SERVER_RESTART:'SERVER_RESTART'
+		SERVER_RESTART: 'SERVER_RESTART'
 	};
 
-	var ServerMode = {
+	const ServerMode = {
 		Shared: 'shared',
 		Personal: 'personal'
 	};
 
-	// Protobuf message models
-	var Response = protobuf.roots['push-server']['Response'];
-	var ResponseBatch = protobuf.roots['push-server']['ResponseBatch'];
-	var Request = protobuf.roots['push-server']['Request'];
-	var RequestBatch = protobuf.roots['push-server']['RequestBatch'];
-	var IncomingMessagesRequest = protobuf.roots['push-server']['IncomingMessagesRequest'];
-	var IncomingMessage = protobuf.roots['push-server']['IncomingMessage'];
-	var Receiver = protobuf.roots['push-server']['Receiver'];
-
-	var Pull = function (params)
-	{
-		params = params || {};
-
-		if (params.restApplication)
-		{
-			if (typeof params.configGetMethod === 'undefined')
-			{
-				params.configGetMethod = 'pull.application.config.get';
-			}
-			if (typeof params.skipCheckRevision === 'undefined')
-			{
-				params.skipCheckRevision = true;
-			}
-			if (typeof params.restApplication === 'string')
-			{
-				params.siteId = params.restApplication;
-			}
-
-			params.serverEnabled = true;
-		}
-
-		var self = this;
-
-		this.context = 'master';
-
-		this.guestMode = params.guestMode? params.guestMode: (typeof BX.message !== 'undefined' && BX.message.pull_guest_mode? BX.message.pull_guest_mode === 'Y': false);
-		this.guestUserId = params.guestUserId? params.guestUserId: (typeof BX.message !== 'undefined' && BX.message.pull_guest_user_id? parseInt(BX.message.pull_guest_user_id, 10): 0);
-		if(this.guestMode && this.guestUserId)
-		{
-			this.userId = this.guestUserId;
-		}
-		else
-		{
-			this.userId = params.userId? params.userId: (typeof BX.message !== 'undefined' && BX.message.USER_ID? BX.message.USER_ID: 0);
-		}
-
-		this.siteId = params.siteId? params.siteId: (typeof BX.message !== 'undefined' && BX.message.SITE_ID? BX.message.SITE_ID: 'none');
-		this.restClient = typeof params.restClient !== "undefined"? params.restClient: new BX.RestClient(this.getRestClientOptions());
-
-		this.enabled = typeof params.serverEnabled !== 'undefined'? (params.serverEnabled === 'Y' || params.serverEnabled === true): (typeof BX.message !== 'undefined' && BX.message.pull_server_enabled === 'Y');
-		this.unloading = false;
-		this.starting = false;
-		this.debug = false;
-		this.connectionAttempt = 0;
-		this.connectionType = '';
-		this.reconnectTimeout = null;
-		this.restoreWebSocketTimeout = null;
-
-		this.configGetMethod = typeof params.configGetMethod !== 'string'? 'pull.config.get': params.configGetMethod;
-		this.getPublicListMethod = typeof params.getPublicListMethod !== 'string'? 'pull.channel.public.list': params.getPublicListMethod;
-
-		this.skipStorageInit = params.skipStorageInit === true;
-
-		this.skipCheckRevision = params.skipCheckRevision === true;
-
-		this._subscribers = {};
-
-		this.watchTagsQueue = {};
-		this.watchUpdateInterval = 1740000;
-		this.watchForceUpdateInterval = 5000;
-
-		if (typeof params.configTimestamp !== 'undefined')
-		{
-			this.configTimestamp = params.configTimestamp;
-		}
-		else if (typeof BX.message !== 'undefined' && BX.message.pull_config_timestamp)
-		{
-			this.configTimestamp = BX.message.pull_config_timestamp;
-		}
-		else
-		{
-			this.configTimestamp = 0;
-		}
-
-		this.session = {
-			mid : null,
-			tag : null,
-			time : null,
-			history: {},
-			lastMessageIds: [],
-			messageCount: 0
-		};
-
-		this._connectors = {
-			webSocket: null,
-			longPolling: null
-		};
-
-		Object.defineProperty(this, "connector", {
-			get: function()
-			{
-				return self._connectors[self.connectionType];
-			}
-		});
-
-		this.isSecure = document.location.href.indexOf('https') === 0;
-		this.config = null;
-
-		this.storage = null;
-
-		if(this.userId && !this.skipStorageInit)
-		{
-			this.storage = new StorageManager({
-				userId: this.userId,
-				siteId: this.siteId
-			});
-		}
-
-		this.sharedConfig = new SharedConfig({
-			onWebSocketBlockChanged: this.onWebSocketBlockChanged.bind(this),
-			storage: this.storage
-		});
-		this.channelManager = new ChannelManager({
-			restClient: this.restClient,
-			getPublicListMethod: this.getPublicListMethod
-		});
-
-		this.notificationPopup = null;
-
-		// timers
-		this.checkInterval = null;
-		this.offlineTimeout = null;
-
-		// manual stop workaround
-		this.isManualDisconnect = false;
-
-		this.loggingEnabled = this.sharedConfig.isLoggingEnabled();
+	const EmptyConfig = {
+		api: {},
+		channels: {},
+		publicChannels: {},
+		server: {timeShift: 0},
+		clientId: null,
+		jwt: null,
 	};
 
-	/**
-	 * Creates a subscription to incoming messages.
-	 *
-	 * @param {Object} params
-	 * @param {string} [params.type] Subscription type (for possible values see SubscriptionType).
-	 * @param {string} [params.moduleId] Name of the module.
-	 * @param {Function} params.callback Function, that will be called for incoming messages.
-	 * @returns {Function} - Unsubscribe callback function
-	 */
-	Pull.prototype.subscribe = function(params)
+	// Protobuf message models
+	const Response = protobuf.roots['push-server']['Response'];
+	const ResponseBatch = protobuf.roots['push-server']['ResponseBatch'];
+	const Request = protobuf.roots['push-server']['Request'];
+	const RequestBatch = protobuf.roots['push-server']['RequestBatch'];
+	const IncomingMessagesRequest = protobuf.roots['push-server']['IncomingMessagesRequest'];
+	const IncomingMessage = protobuf.roots['push-server']['IncomingMessage'];
+	const Receiver = protobuf.roots['push-server']['Receiver'];
+
+	const JSON_RPC_VERSION = "2.0"
+	const JSON_RPC_PING = "ping"
+	const JSON_RPC_PONG = "pong"
+
+	const PING_TIMEOUT = 5;
+
+	const RpcError = {
+		Parse: {code: -32700, message: "Parse error"},
+		InvalidRequest: {code: -32600, message: "Invalid Request"},
+		MethodNotFound: {code: -32601, message: "Method not found"},
+		InvalidParams: {code: -32602, message: "Invalid params"},
+		Internal: {code: -32603, message: "Internal error"},
+	};
+
+	const RpcMethod = {
+		Publish: "publish",
+		Subscribe: "subscribe",
+	}
+
+	const InternalChannel = {
+		StatusChange: "internal:user_status",
+	}
+
+	class PullClient
 	{
-		/**
-		 * After modify this method, copy to follow scripts:
-		 * mobile/install/mobileapp/mobile/extensions/bitrix/pull/client/events/extension.js
-		 * mobile/install/js/mobile/pull/client/src/client.js
-		 */
-
-		if (!params)
+		constructor(params)
 		{
-			console.error(Utils.getDateForLog() + ': Pull.subscribe: params for subscribe function is invalid. ');
-			return function(){}
-		}
+			params = params || {};
 
-		if (!Utils.isPlainObject(params))
-		{
-			return this.attachCommandHandler(params);
-		}
-
-		params = params || {};
-		params.type = params.type || SubscriptionType.Server;
-		params.command = params.command || null;
-
-		if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client)
-		{
-			if (typeof (this._subscribers[params.type]) === 'undefined')
+			if (params.restApplication)
 			{
-				this._subscribers[params.type] = {};
-			}
-			if (typeof (this._subscribers[params.type][params.moduleId]) === 'undefined')
-			{
-				this._subscribers[params.type][params.moduleId] = {
-					'callbacks': [],
-					'commands': {},
-				};
-			}
-
-			if (params.command)
-			{
-				if (typeof (this._subscribers[params.type][params.moduleId]['commands'][params.command]) === 'undefined')
+				if (typeof params.configGetMethod === 'undefined')
 				{
-					this._subscribers[params.type][params.moduleId]['commands'][params.command] = [];
+					params.configGetMethod = 'pull.application.config.get';
+				}
+				if (typeof params.skipCheckRevision === 'undefined')
+				{
+					params.skipCheckRevision = true;
+				}
+				if (typeof params.restApplication === 'string')
+				{
+					params.siteId = params.restApplication;
 				}
 
-				this._subscribers[params.type][params.moduleId]['commands'][params.command].push(params.callback);
+				params.serverEnabled = true;
+			}
 
-				return function () {
-					this._subscribers[params.type][params.moduleId]['commands'][params.command] = this._subscribers[params.type][params.moduleId]['commands'][params.command].filter(function(element) {
-						return element !== params.callback;
-					});
-				}.bind(this);
+			this.context = 'master';
+
+			this.guestMode = params.guestMode ? params.guestMode : (typeof BX.message !== 'undefined' && BX.message.pull_guest_mode ? BX.message.pull_guest_mode === 'Y' : false);
+			this.guestUserId = params.guestUserId ? params.guestUserId : (typeof BX.message !== 'undefined' && BX.message.pull_guest_user_id ? parseInt(BX.message.pull_guest_user_id, 10) : 0);
+			if (this.guestMode && this.guestUserId)
+			{
+				this.userId = this.guestUserId;
 			}
 			else
 			{
-				this._subscribers[params.type][params.moduleId]['callbacks'].push(params.callback);
-
-				return function () {
-					this._subscribers[params.type][params.moduleId]['callbacks'] = this._subscribers[params.type][params.moduleId]['callbacks'].filter(function(element) {
-						return element !== params.callback;
-					});
-				}.bind(this);
-			}
-		}
-		else
-		{
-			if (typeof (this._subscribers[params.type]) === 'undefined')
-			{
-				this._subscribers[params.type] = [];
+				this.userId = params.userId ? params.userId : (typeof BX.message !== 'undefined' && BX.message.USER_ID ? BX.message.USER_ID : 0);
 			}
 
-			this._subscribers[params.type].push(params.callback);
+			this.siteId = params.siteId ? params.siteId : (typeof BX.message !== 'undefined' && BX.message.SITE_ID ? BX.message.SITE_ID : 'none');
+			this.restClient = typeof params.restClient !== "undefined" ? params.restClient : new BX.RestClient(this.getRestClientOptions());
 
-			return function () {
-				this._subscribers[params.type] = this._subscribers[params.type].filter(function(element) {
-					return element !== params.callback;
-				});
-			}.bind(this);
-		}
-	};
+			this.enabled = typeof params.serverEnabled !== 'undefined' ? (params.serverEnabled === 'Y' || params.serverEnabled === true) : (typeof BX.message !== 'undefined' && BX.message.pull_server_enabled === 'Y');
+			this.unloading = false;
+			this.starting = false;
+			this.debug = false;
+			this.connectionAttempt = 0;
+			this.connectionType = ConnectionType.WebSocket;
+			this.reconnectTimeout = null;
+			this.restartTimeout = null;
+			this.restoreWebSocketTimeout = null;
 
-	Pull.prototype.attachCommandHandler = function(handler)
-	{
-		/**
-		 * After modify this method, copy to follow scripts:
-		 * mobile/install/mobileapp/mobile/extensions/bitrix/pull/client/extension.js
-		 */
-		if (typeof handler.getModuleId !== 'function' || typeof handler.getModuleId() !== 'string')
-		{
-			console.error(Utils.getDateForLog() + ': Pull.attachCommandHandler: result of handler.getModuleId() is not a string.');
-			return function(){}
-		}
+			this.configGetMethod = typeof params.configGetMethod !== 'string' ? 'pull.config.get' : params.configGetMethod;
+			this.getPublicListMethod = typeof params.getPublicListMethod !== 'string' ? 'pull.channel.public.list' : params.getPublicListMethod;
 
-		var type = SubscriptionType.Server;
-		if (typeof handler.getSubscriptionType === 'function')
-		{
-			type = handler.getSubscriptionType();
-		}
+			this.skipStorageInit = params.skipStorageInit === true;
 
-		this.subscribe({
-			type: type,
-			moduleId: handler.getModuleId(),
-			callback: function(data)
+			this.skipCheckRevision = params.skipCheckRevision === true;
+
+			this._subscribers = {};
+
+			this.watchTagsQueue = {};
+			this.watchUpdateInterval = 1740000;
+			this.watchForceUpdateInterval = 5000;
+
+			if (typeof params.configTimestamp !== 'undefined')
 			{
-				var method = null;
-
-				if (typeof handler.getMap === 'function')
-				{
-					var mapping = handler.getMap();
-					if (mapping && typeof mapping === 'object')
-					{
-						if (typeof mapping[data.command] === 'function')
-						{
-							method = mapping[data.command].bind(handler)
-						}
-						else if (typeof mapping[data.command] === 'string' && typeof handler[mapping[data.command]] === 'function')
-						{
-							method = handler[mapping[data.command]].bind(handler);
-						}
-					}
-				}
-
-				if (!method)
-				{
-					var methodName = 'handle'+data.command.charAt(0).toUpperCase() + data.command.slice(1);
-					if (typeof handler[methodName] === 'function')
-					{
-						method = handler[methodName].bind(handler);
-					}
-				}
-
-				if (method)
-				{
-					if (this.debug && this.context !== 'master')
-					{
-						console.warn(Utils.getDateForLog() + ': Pull.attachCommandHandler: receive command', data);
-					}
-					method(data.params, data.extra, data.command);
-				}
-			}.bind(this)
-		});
-	};
-
-	/**
-	 *
-	 * @param params {Object}
-	 * @returns {boolean}
-	 */
-	Pull.prototype.emit = function(params)
-	{
-		/**
-		 * After modify this method, copy to follow scripts:
-		 * mobile/install/mobileapp/mobile/extensions/bitrix/pull/client/events/extension.js
-		 * mobile/install/js/mobile/pull/client/src/client.js
-		 */
-		params = params || {};
-
-		if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client)
-		{
-			if (typeof (this._subscribers[params.type]) === 'undefined')
-			{
-				this._subscribers[params.type] = {};
+				this.configTimestamp = params.configTimestamp;
 			}
-			if (typeof (this._subscribers[params.type][params.moduleId]) === 'undefined')
+			else if (typeof BX.message !== 'undefined' && BX.message.pull_config_timestamp)
 			{
-				this._subscribers[params.type][params.moduleId] = {
-					'callbacks': [],
-					'commands': {},
-				};
+				this.configTimestamp = BX.message.pull_config_timestamp;
+			}
+			else
+			{
+				this.configTimestamp = 0;
 			}
 
-			if (this._subscribers[params.type][params.moduleId]['callbacks'].length > 0)
-			{
-				this._subscribers[params.type][params.moduleId]['callbacks'].forEach(function(callback){
-					callback(params.data, {type: params.type, moduleId: params.moduleId});
-				});
-			}
+			this.session = {
+				mid: null,
+				tag: null,
+				time: null,
+				history: {},
+				lastMessageIds: [],
+				messageCount: 0
+			};
 
-			if (
-				this._subscribers[params.type][params.moduleId]['commands'][params.data.command]
-				&& this._subscribers[params.type][params.moduleId]['commands'][params.data.command].length > 0)
-			{
-				this._subscribers[params.type][params.moduleId]['commands'][params.data.command].forEach(function(callback){
-					callback(params.data.params, params.data.extra, params.data.command, {type: params.type, moduleId: params.moduleId});
-				});
-			}
+			this._connectors = {
+				webSocket: null,
+				longPolling: null
+			};
 
-			return true;
-		}
-		else
-		{
-			if (typeof (this._subscribers[params.type]) === 'undefined')
-			{
-				this._subscribers[params.type] = [];
-			}
+			this.isSecure = document.location.href.indexOf('https') === 0;
+			this.config = null;
 
-			if (this._subscribers[params.type].length <= 0)
-			{
-				return true;
-			}
+			this.storage = null;
 
-			this._subscribers[params.type].forEach(function(callback){
-				callback(params.data, {type: params.type});
-			});
-
-			return true;
-		}
-	};
-
-	Pull.prototype.init = function()
-	{
-		this._connectors.webSocket = new WebSocketConnector({
-			parent: this,
-			onOpen: this.onWebSocketOpen.bind(this),
-			onMessage: this.parseResponse.bind(this),
-			onDisconnect: this.onWebSocketDisconnect.bind(this),
-			onError: this.onWebSocketError.bind(this)
-		});
-
-		this._connectors.longPolling = new LongPollingConnector({
-			parent: this,
-			onOpen: this.onLongPollingOpen.bind(this),
-			onMessage: this.parseResponse.bind(this),
-			onDisconnect: this.onLongPollingDisconnect.bind(this),
-			onError: this.onLongPollingError.bind(this)
-		});
-
-		this.connectionType = this.isWebSocketAllowed() ? ConnectionType.WebSocket : ConnectionType.LongPolling;
-
-		window.addEventListener("beforeunload", this.onBeforeUnload.bind(this));
-		window.addEventListener("offline", this.onOffline.bind(this));
-		window.addEventListener("online", this.onOnline.bind(this));
-
-		if(BX && BX.addCustomEvent)
-		{
-			BX.addCustomEvent("BXLinkOpened", this.connect.bind(this));
-		}
-
-		if (BX && BX.desktop)
-		{
-			BX.addCustomEvent("onDesktopReload", function() {
-				this.session.mid = null;
-				this.session.tag = null;
-				this.session.time = null;
-			}.bind(this));
-
-			BX.desktop.addCustomEvent("BXLoginSuccess", function() {
-				this.restart(1000, "Desktop login");
-			}.bind(this));
-		}
-	};
-
-	Pull.prototype.start = function(config)
-	{
-		var allowConfigCaching = true;
-
-		if(this.starting || this.isConnected())
-		{
-			return;
-		}
-
-		if(!this.userId && typeof(BX.message) !== 'undefined' && BX.message.USER_ID)
-		{
-			this.userId = BX.message.USER_ID;
-			if(!this.storage)
+			if (this.userId && !this.skipStorageInit)
 			{
 				this.storage = new StorageManager({
 					userId: this.userId,
 					siteId: this.siteId
 				});
 			}
-		}
-		if(this.siteId === 'none' && typeof(BX.message) !== 'undefined' && BX.message.SITE_ID)
-		{
-			this.siteId = BX.message.SITE_ID;
-		}
 
-		var result = new BX.Promise();
-
-		var skipReconnectToLastSession = false;
-		if (Utils.isPlainObject(config))
-		{
-			if (typeof config.skipReconnectToLastSession !== 'undefined')
-			{
-				skipReconnectToLastSession = !!config.skipReconnectToLastSession;
-				delete config.skipReconnectToLastSession;
-			}
-			this.config = config;
-			allowConfigCaching = false;
-		}
-
-		if (!this.enabled)
-		{
-			result.reject({
-				ex: { error: 'PULL_DISABLED', error_description: 'Push & Pull server is disabled'}
+			this.sharedConfig = new SharedConfig({
+				onWebSocketBlockChanged: this.onWebSocketBlockChanged.bind(this),
+				storage: this.storage
 			});
-			return result;
+			this.channelManager = new ChannelManager({
+				restClient: this.restClient,
+				getPublicListMethod: this.getPublicListMethod
+			});
+
+			this.notificationPopup = null;
+
+			// timers
+			this.checkInterval = null;
+			this.offlineTimeout = null;
+
+			this.pingWaitTimeout = null;
+
+			// manual stop workaround
+			this.isManualDisconnect = false;
+
+			this.loggingEnabled = this.sharedConfig.isLoggingEnabled();
+
+			// bound event handlers
+			this.onPingTimeoutHandler = this.onPingTimeout.bind(this);
 		}
 
-		var self = this;
-		var now = (new Date()).getTime();
-		var oldSession;
-		if(!skipReconnectToLastSession && this.storage)
+		get connector()
 		{
-			oldSession = this.storage.get(LS_SESSION);
-		}
-		if(Utils.isPlainObject(oldSession) && oldSession.hasOwnProperty('ttl') && oldSession.ttl >= now)
-		{
-			this.session.mid = oldSession.mid;
+			return this._connectors[this.connectionType];
 		}
 
-		this.starting = true;
-		this.loadConfig().catch(function(error)
+		/**
+		 * Creates a subscription to incoming messages.
+		 *
+		 * @param {Object} params
+		 * @param {string} [params.type] Subscription type (for possible values see SubscriptionType).
+		 * @param {string} [params.moduleId] Name of the module.
+		 * @param {Function} params.callback Function, that will be called for incoming messages.
+		 * @returns {Function} - Unsubscribe callback function
+		 */
+		subscribe(params)
 		{
-			self.starting = false;
-			self.sendPullStatus(PullStatus.Offline);
-			self.stopCheckConfig();
-			console.error(Utils.getDateForLog() + ': Pull: could not read push-server config. ', error);
-			result.reject(error);
-		}).then(function(config)
-		{
-			self.setConfig(config, allowConfigCaching);
-			self.init();
-			self.connect();
-			self.updateWatch();
-			self.startCheckConfig();
-			result.resolve(true);
-		});
+			/**
+			 * After modify this method, copy to follow scripts:
+			 * mobile/install/mobileapp/mobile/extensions/bitrix/pull/client/events/extension.js
+			 * mobile/install/js/mobile/pull/client/src/client.js
+			 */
 
-		return result;
-	};
-
-	Pull.prototype.getRestClientOptions = function()
-	{
-		var result = {};
-
-		if(this.guestMode && this.guestUserId !== 0)
-		{
-			result.queryParams = {
-				pull_guest_id: this.guestUserId
-			}
-		}
-		return result;
-	};
-
-	Pull.prototype.setLastMessageId = function(lastMessageId)
-	{
-		this.session.mid = lastMessageId;
-	};
-
-	/**
-	 *
-	 * @param {object[]} publicIds
-	 * @param {integer} publicIds.user_id
-	 * @param {string} publicIds.public_id
-	 * @param {string} publicIds.signature
-	 * @param {Date} publicIds.start
-	 * @param {Date} publicIds.end
-	 */
-	Pull.prototype.setPublicIds = function(publicIds)
-	{
-		return this.channelManager.setPublicIds(publicIds);
-	};
-
-	/**
-	 * Send single message to the specified users.
-	 *
-	 * @param {integer[]} users User ids of the message receivers.
-	 * @param {string} moduleId Name of the module to receive message,
-	 * @param {string} command Command name.
-	 * @param {object} params Command parameters.
-	 * @param {integer} [expiry] Message expiry time in seconds.
-	 * @return void
-	 */
-	Pull.prototype.sendMessage = function(users, moduleId, command, params, expiry)
-	{
-		return this.sendMessageBatch([{
-			users: users,
-			moduleId: moduleId,
-			command: command,
-			params: params,
-			expiry: expiry
-		}]);
-	};
-
-	/**
-	 * Send single message to the specified public channels.
-	 *
-	 * @param {string[]} publicChannels Public ids of the channels to receive message.
-	 * @param {string} moduleId Name of the module to receive message,
-	 * @param {string} command Command name.
-	 * @param {object} params Command parameters.
-	 * @param {integer} [expiry] Message expiry time in seconds.
-	 * @return void
-	 */
-	Pull.prototype.sendMessageToChannels = function(publicChannels, moduleId, command, params, expiry)
-	{
-		return this.sendMessageBatch([{
-			publicChannels: publicChannels,
-			moduleId: moduleId,
-			command: command,
-			params: params,
-			expiry: expiry
-		}]);
-	}
-
-	/**
-	 * Sends batch of messages to the multiple public channels.
-	 *
-	 * @param {object[]} messageBatch Array of messages to send.
-	 * @param  {int[]} messageBatch.users User ids the message receivers.
-	 * @param  {string[]|object[]} messageBatch.publicChannels Public ids of the channels to send messages.
-	 * @param {string} messageBatch.moduleId Name of the module to receive message,
-	 * @param {string} messageBatch.command Command name.
-	 * @param {object} messageBatch.params Command parameters.
-	 * @param {integer} [messageBatch.expiry] Message expiry time in seconds.
-	 * @return void
-	 */
-	Pull.prototype.sendMessageBatch = function(messageBatch)
-	{
-		if(!this.isPublishingEnabled())
-		{
-			console.error('Client publishing is not supported or is disabled');
-			return false;
-		}
-
-		var userIds = {};
-		for(var i = 0; i < messageBatch.length; i++)
-		{
-			if (messageBatch[i].users)
+			if (!params)
 			{
-				for(var j = 0; j < messageBatch[i].users.length; j++)
+				console.error(Utils.getDateForLog() + ': Pull.subscribe: params for subscribe function is invalid. ');
+				return function () {}
+			}
+
+			if (!Utils.isPlainObject(params))
+			{
+				return this.attachCommandHandler(params);
+			}
+
+			params = params || {};
+			params.type = params.type || SubscriptionType.Server;
+			params.command = params.command || null;
+
+			if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client)
+			{
+				if (typeof (this._subscribers[params.type]) === 'undefined')
 				{
-					userIds[messageBatch[i].users[j]] = true;
+					this._subscribers[params.type] = {};
 				}
-			}
-		}
+				if (typeof (this._subscribers[params.type][params.moduleId]) === 'undefined')
+				{
+					this._subscribers[params.type][params.moduleId] = {
+						'callbacks': [],
+						'commands': {},
+					};
+				}
 
-		this.channelManager.getPublicIds(Object.keys(userIds)).then(function(publicIds)
-		{
-			return this.connector.send(this.encodeMessageBatch(messageBatch, publicIds));
-		}.bind(this))
-	};
+				if (params.command)
+				{
+					if (typeof (this._subscribers[params.type][params.moduleId]['commands'][params.command]) === 'undefined')
+					{
+						this._subscribers[params.type][params.moduleId]['commands'][params.command] = [];
+					}
 
-	Pull.prototype.encodeMessageBatch = function(messageBatch, publicIds)
-	{
-		var messages = [];
-		messageBatch.forEach(function(messageFields)
-		{
-			var messageBody = {
-				module_id: messageFields.moduleId,
-				command: messageFields.command,
-				params: messageFields.params
-			};
+					this._subscribers[params.type][params.moduleId]['commands'][params.command].push(params.callback);
 
-			var receivers;
-			if (messageFields.users)
-			{
-				receivers = this.createMessageReceivers(messageFields.users, publicIds);
+					return function ()
+					{
+						this._subscribers[params.type][params.moduleId]['commands'][params.command] = this._subscribers[params.type][params.moduleId]['commands'][params.command].filter((element) =>
+						{
+							return element !== params.callback;
+						});
+					}.bind(this);
+				}
+				else
+				{
+					this._subscribers[params.type][params.moduleId]['callbacks'].push(params.callback);
+
+					return function ()
+					{
+						this._subscribers[params.type][params.moduleId]['callbacks'] = this._subscribers[params.type][params.moduleId]['callbacks'].filter((element) =>
+						{
+							return element !== params.callback;
+						});
+					}.bind(this);
+				}
 			}
 			else
 			{
-				receivers = [];
-			}
-
-			if (messageFields.publicChannels)
-			{
-				if (!BX.type.isArray(messageFields.publicChannels))
+				if (typeof (this._subscribers[params.type]) === 'undefined')
 				{
-					throw new Error('messageFields.publicChannels must be an array');
+					this._subscribers[params.type] = [];
 				}
-				messageFields.publicChannels.forEach(function(publicChannel)
-				{
-					var publicId;
-					var signature;
-					if (typeof(publicChannel) === 'string' && publicChannel.includes('.'))
-					{
-						var fields = publicChannel.toString().split('.');
-						publicId = fields[0];
-						signature = fields[1];
-					}
-					else if (typeof(publicChannel) === 'object' && ('publicId' in publicChannel) && ('signature' in publicChannel))
-					{
-						publicId = publicChannel.publicId;
-						signature = publicChannel.signature;
-					}
-					else
-					{
-						throw new Error('Public channel MUST be either a string, formatted like "{publicId}.{signature}" or an object with fields \'publicId\' and \'signature\'');
-					}
 
-					receivers.push(Receiver.create({
-						id: this.encodeId(publicId),
-						signature: this.encodeId(signature)
-					}))
-				}.bind(this))
+				this._subscribers[params.type].push(params.callback);
+
+				return function ()
+				{
+					this._subscribers[params.type] = this._subscribers[params.type].filter((element) =>
+					{
+						return element !== params.callback;
+					});
+				}.bind(this);
+			}
+		}
+
+		attachCommandHandler(handler)
+		{
+			/**
+			 * After modify this method, copy to follow scripts:
+			 * mobile/install/mobileapp/mobile/extensions/bitrix/pull/client/events/extension.js
+			 */
+			if (typeof handler.getModuleId !== 'function' || typeof handler.getModuleId() !== 'string')
+			{
+				console.error(Utils.getDateForLog() + ': Pull.attachCommandHandler: result of handler.getModuleId() is not a string.');
+				return function () {}
 			}
 
-			var message = IncomingMessage.create({
-				receivers: receivers,
-				body: JSON.stringify(messageBody),
-				expiry: messageFields.expiry || 0
+			let type = SubscriptionType.Server;
+			if (typeof handler.getSubscriptionType === 'function')
+			{
+				type = handler.getSubscriptionType();
+			}
+
+			return this.subscribe({
+				type: type,
+				moduleId: handler.getModuleId(),
+				callback: function (data)
+				{
+					let method = null;
+
+					if (typeof handler.getMap === 'function')
+					{
+						const mapping = handler.getMap();
+						if (mapping && typeof mapping === 'object')
+						{
+							if (typeof mapping[data.command] === 'function')
+							{
+								method = mapping[data.command].bind(handler)
+							}
+							else if (typeof mapping[data.command] === 'string' && typeof handler[mapping[data.command]] === 'function')
+							{
+								method = handler[mapping[data.command]].bind(handler);
+							}
+						}
+					}
+
+					if (!method)
+					{
+						const methodName = 'handle' + data.command.charAt(0).toUpperCase() + data.command.slice(1);
+						if (typeof handler[methodName] === 'function')
+						{
+							method = handler[methodName].bind(handler);
+						}
+					}
+
+					if (method)
+					{
+						if (this.debug && this.context !== 'master')
+						{
+							console.warn(Utils.getDateForLog() + ': Pull.attachCommandHandler: receive command', data);
+						}
+						method(data.params, data.extra, data.command);
+					}
+				}.bind(this)
 			});
-			messages.push(message);
-		}, this);
-
-		var requestBatch = RequestBatch.create({
-			requests: [{
-				incomingMessages: {
-					messages: messages
-				}
-			}]
-		});
-
-		return RequestBatch.encode(requestBatch).finish();
-	};
-
-	Pull.prototype.createMessageReceivers = function(users, publicIds)
-	{
-		var result = [];
-		for(var i = 0; i < users.length; i++)
-		{
-			var userId = users[i];
-			if(!publicIds[userId] || !publicIds[userId].publicId)
-			{
-				throw new Error('Could not determine public id for user ' + userId);
-			}
-
-			result.push(Receiver.create({
-				id: this.encodeId(publicIds[userId].publicId),
-				signature: this.encodeId(publicIds[userId].signature)
-			}))
 		}
-		return result;
-	};
 
-	Pull.prototype.restart = function(disconnectCode, disconnectReason)
-	{
-		var self = this;
-		this.disconnect(disconnectCode, disconnectReason);
-		if(this.storage)
+		/**
+		 *
+		 * @param params {Object}
+		 * @returns {boolean}
+		 */
+		emit(params)
 		{
-			this.storage.remove('bx-pull-config');
-		}
-		this.config = null;
+			/**
+			 * After modify this method, copy to follow scripts:
+			 * mobile/install/mobileapp/mobile/extensions/bitrix/pull/client/events/extension.js
+			 * mobile/install/js/mobile/pull/client/src/client.js
+			 */
+			params = params || {};
 
-		this.loadConfig().catch(function(error)
-		{
-			console.error(Utils.getDateForLog() + ': Pull: could not read push-server config', error);
-			self.sendPullStatus(PullStatus.Offline);
-
-			clearTimeout(self.reconnectTimeout);
-			if(error.status == 401 || error.status == 403)
+			if (params.type == SubscriptionType.Server || params.type == SubscriptionType.Client)
 			{
-				self.stopCheckConfig();
-
-				if(BX && BX.onCustomEvent)
+				if (typeof (this._subscribers[params.type]) === 'undefined')
 				{
-					BX.onCustomEvent(window, 'onPullError', ['AUTHORIZE_ERROR']);
+					this._subscribers[params.type] = {};
 				}
-			}
-		}).then(function(config)
-		{
-			self.setConfig(config, true);
-			self.connect();
-			self.updateWatch();
-			self.startCheckConfig();
-		});
-	};
-
-	Pull.prototype.loadConfig = function ()
-	{
-		var result = new BX.Promise();
-		if (!this.config)
-		{
-			this.config = {
-				api: {},
-				channels: {},
-				publicChannels: {},
-				server: { timeShift: 0 },
-				clientId: null
-			};
-
-			var config;
-			if(this.storage)
-			{
-				config = this.storage.get('bx-pull-config');
-			}
-			if(this.isConfigActual(config) && this.checkRevision(config.api.revision_web))
-			{
-				result.resolve(config);
-				return result;
-			}
-			else if (this.storage)
-			{
-				this.storage.remove('bx-pull-config')
-			}
-		}
-		else if(this.isConfigActual(this.config) && this.checkRevision(this.config.api.revision_web))
-		{
-			result.resolve(this.config);
-			return result;
-		}
-		else
-		{
-			this.config = {
-				api: {},
-				channels: {},
-				publicChannels: {},
-				server: { timeShift: 0 },
-				clientId: null
-			};
-		}
-
-		this.restClient.callMethod(this.configGetMethod, {'CACHE': 'N'}).then(function(response) {
-			var timeShift = 0;
-			var data = response.data();
-			timeShift = Math.floor((Utils.getTimestamp() - new Date(data.serverTime).getTime())/1000);
-			delete data.serverTime;
-
-			var config = Object.assign({}, data);
-			config.server.timeShift = timeShift;
-
-			result.resolve(config)
-		}).catch(function(response)
-		{
-				var error = response.error();
-				if(error.getError().error == "AUTHORIZE_ERROR" || error.getError().error == "WRONG_AUTH_TYPE")
+				if (typeof (this._subscribers[params.type][params.moduleId]) === 'undefined')
 				{
-					error.status = 403;
+					this._subscribers[params.type][params.moduleId] = {
+						'callbacks': [],
+						'commands': {},
+					};
 				}
-				result.reject(error);
-		});
 
-		return result;
-	};
-
-	Pull.prototype.isConfigActual = function(config)
-	{
-		if(!Utils.isPlainObject(config))
-		{
-			return false;
-		}
-
-		if(config.server.config_timestamp < this.configTimestamp)
-		{
-			return false;
-		}
-
-		var now = new Date();
-
-		var channelCount = Object.keys(config.channels).length;
-		if(channelCount === 0)
-		{
-			return false;
-		}
-
-		for(var channelType in config.channels)
-		{
-			if (!config.channels.hasOwnProperty(channelType))
-			{
-				continue;
-			}
-
-			var channel = config.channels[channelType];
-			var channelEnd = new Date(channel.end);
-
-			if(channelEnd < now)
-			{
-				return false;
-			}
-		}
-
-		return true;
-	};
-
-	Pull.prototype.startCheckConfig = function()
-	{
-		if(this.checkInterval)
-		{
-			clearInterval(this.checkInterval);
-		}
-
-		this.checkInterval = setInterval(this.checkConfig.bind(this), CONFIG_CHECK_INTERVAL)
-	};
-
-	Pull.prototype.stopCheckConfig = function()
-	{
-		if(this.checkInterval)
-		{
-			clearInterval(this.checkInterval);
-		}
-		this.checkInterval = null;
-	};
-
-	Pull.prototype.checkConfig = function()
-	{
-		if(this.isConfigActual(this.config))
-		{
-			if(!this.checkRevision(this.config.api.revision_web))
-			{
-				return false;
-			}
-		}
-		else
-		{
-			this.logToConsole("Stale config detected. Restarting");
-			this.restart(CloseReasons.CONFIG_EXPIRED, "Config update required");
-		}
-	};
-
-	Pull.prototype.setConfig = function(config, allowCaching)
-	{
-		for (var key in config)
-		{
-			if(config.hasOwnProperty(key) && this.config.hasOwnProperty(key))
-			{
-				this.config[key] = config[key];
-			}
-		}
-
-		if (config.publicChannels)
-		{
-			this.setPublicIds(Utils.objectValues(config.publicChannels));
-		}
-
-		if(this.storage && allowCaching)
-		{
-			try
-			{
-				this.storage.set('bx-pull-config', config);
-			}
-			catch (e)
-			{
-				// try to delete the key "history" (landing site change history, see http://jabber.bx/view.php?id=136492)
-				if (localStorage && localStorage.removeItem)
+				if (this._subscribers[params.type][params.moduleId]['callbacks'].length > 0)
 				{
-					localStorage.removeItem('history');
+					this._subscribers[params.type][params.moduleId]['callbacks'].forEach(function (callback)
+					{
+						callback(params.data, {type: params.type, moduleId: params.moduleId});
+					});
 				}
-				console.error(Utils.getDateForLog() + " Pull: Could not cache config in local storage. Error: ", e);
-			}
-		}
-	};
 
-	Pull.prototype.isWebSocketSupported = function()
-	{
-		return typeof(window.WebSocket) !== "undefined";
-	};
+				if (
+					this._subscribers[params.type][params.moduleId]['commands'][params.data.command]
+					&& this._subscribers[params.type][params.moduleId]['commands'][params.data.command].length > 0)
+				{
+					this._subscribers[params.type][params.moduleId]['commands'][params.data.command].forEach(function (callback)
+					{
+						callback(params.data.params, params.data.extra, params.data.command, {
+							type: params.type,
+							moduleId: params.moduleId
+						});
+					});
+				}
 
-	Pull.prototype.isWebSocketAllowed = function()
-	{
-		if(this.sharedConfig.isWebSocketBlocked())
-		{
-			return false;
-		}
-
-		return this.isWebSocketEnabled();
-	};
-
-	Pull.prototype.isWebSocketEnabled = function()
-	{
-		if(!this.isWebSocketSupported())
-		{
-			return false;
-		}
-
-		return (this.config && this.config.server && this.config.server.websocket_enabled === true);
-	};
-
-	Pull.prototype.isPublishingSupported = function ()
-	{
-		return this.getServerVersion() > 3;
-	};
-
-	Pull.prototype.isPublishingEnabled = function ()
-	{
-		if(!this.isPublishingSupported())
-		{
-			return false;
-		}
-
-		return (this.config && this.config.server && this.config.server.publish_enabled === true);
-	};
-
-	Pull.prototype.isProtobufSupported = function()
-	{
-		return (this.getServerVersion() > 3 && !Utils.browser.IsIe());
-	};
-
-	Pull.prototype.isSharedMode = function()
-	{
-		return (this.getServerMode() == ServerMode.Shared)
-	};
-
-	Pull.prototype.disconnect = function(disconnectCode, disconnectReason)
-	{
-		if(this.connector)
-		{
-			this.isManualDisconnect = true;
-			this.connector.disconnect(disconnectCode, disconnectReason);
-		}
-	};
-
-	Pull.prototype.stop = function(disconnectCode, disconnectReason)
-	{
-		this.disconnect(disconnectCode, disconnectReason);
-		this.stopCheckConfig();
-	};
-
-	Pull.prototype.reconnect = function(disconnectCode, disconnectReason, delay)
-	{
-		this.disconnect(disconnectCode, disconnectReason);
-
-		delay = delay || 1;
-		this.scheduleReconnect(delay);
-	};
-
-	Pull.prototype.restoreWebSocketConnection = function()
-	{
-		if(this.connectionType == ConnectionType.WebSocket)
-		{
-			return true;
-		}
-
-		this._connectors.webSocket.connect();
-	};
-
-	Pull.prototype.scheduleReconnect = function(connectionDelay)
-	{
-		if(!this.enabled)
-			return false;
-
-		if(!connectionDelay)
-		{
-			if(this.connectionAttempt > 3 && this.connectionType === ConnectionType.WebSocket && !this.sharedConfig.isLongPollingBlocked())
-			{
-				// Websocket seems to be closed by network filter. Trying to fallback to long polling
-				this.sharedConfig.setWebSocketBlocked(true);
-				this.connectionType = ConnectionType.LongPolling;
-				this.connectionAttempt = 1;
-				connectionDelay = 1;
+				return true;
 			}
 			else
 			{
-				connectionDelay = this.getConnectionAttemptDelay(this.connectionAttempt);
+				if (typeof (this._subscribers[params.type]) === 'undefined')
+				{
+					this._subscribers[params.type] = [];
+				}
+
+				if (this._subscribers[params.type].length <= 0)
+				{
+					return true;
+				}
+
+				this._subscribers[params.type].forEach(function (callback)
+				{
+					callback(params.data, {type: params.type});
+				});
+
+				return true;
 			}
 		}
-		if(this.reconnectTimeout)
+
+		init()
 		{
-			clearTimeout(this.reconnectTimeout);
-		}
+			this._connectors.webSocket = new WebSocketConnector({
+				parent: this,
+				onOpen: this.onWebSocketOpen.bind(this),
+				onMessage: this.onIncomingMessage.bind(this),
+				onDisconnect: this.onWebSocketDisconnect.bind(this),
+				onError: this.onWebSocketError.bind(this)
+			});
 
-		this.logToConsole('Pull: scheduling reconnection in ' + connectionDelay + ' seconds; attempt # ' + this.connectionAttempt);
+			this._connectors.longPolling = new LongPollingConnector({
+				parent: this,
+				onOpen: this.onLongPollingOpen.bind(this),
+				onMessage: this.onIncomingMessage.bind(this),
+				onDisconnect: this.onLongPollingDisconnect.bind(this),
+				onError: this.onLongPollingError.bind(this)
+			});
 
-		this.reconnectTimeout = setTimeout(this.connect.bind(this), connectionDelay * 1000);
-	};
+			this.connectionType = this.isWebSocketAllowed() ? ConnectionType.WebSocket : ConnectionType.LongPolling;
 
-	Pull.prototype.scheduleRestoreWebSocketConnection = function()
-	{
-		this.logToConsole('Pull: scheduling restoration of websocket connection in ' + RESTORE_WEBSOCKET_TIMEOUT + ' seconds');
+			window.addEventListener("beforeunload", this.onBeforeUnload.bind(this));
+			window.addEventListener("offline", this.onOffline.bind(this));
+			window.addEventListener("online", this.onOnline.bind(this));
 
-		var self = this;
-		if(this.restoreWebSocketTimeout)
-		{
-			return;
-		}
-
-		this.restoreWebSocketTimeout = setTimeout(function()
-		{
-			self.restoreWebSocketTimeout = 0;
-			self.restoreWebSocketConnection();
-		}, RESTORE_WEBSOCKET_TIMEOUT * 1000);
-	};
-
-	Pull.prototype.connect = function()
-	{
-		if(!this.enabled || this.connector.connected)
-		{
-			return false;
-		}
-
-		if(this.reconnectTimeout)
-		{
-			clearTimeout(this.reconnectTimeout);
-		}
-
-		this.sendPullStatus(PullStatus.Connecting);
-		this.connectionAttempt++;
-		this.connector.connect();
-	};
-
-	Pull.prototype.parseResponse = function (response)
-	{
-		var events = this.extractMessages(response);
-		var messages = [];
-		if (events.length === 0)
-		{
-			this.session.mid = null;
-			return;
-		}
-
-		for (var i = 0; i < events.length; i++)
-		{
-			var event = events[i];
-			if (event.mid && this.session.lastMessageIds.includes(event.mid))
+			if (BX && BX.addCustomEvent)
 			{
-				console.warn("Duplicate message " + event.mid + " skipped");
-				continue;
+				BX.addCustomEvent("BXLinkOpened", this.connect.bind(this));
 			}
 
-			this.session.mid = event.mid || null;
-			this.session.tag = event.tag || null;
-			this.session.time = event.time || null;
-			if (event.mid)
+			if (BX && BX.desktop)
 			{
-				this.session.lastMessageIds.push(event.mid);
+				BX.addCustomEvent("onDesktopReload", () =>
+				{
+					this.session.mid = null;
+					this.session.tag = null;
+					this.session.time = null;
+				});
+
+				BX.desktop.addCustomEvent("BXLoginSuccess", () => this.restart(1000, "Desktop login"));
 			}
-			messages.push(event.text);
 
-			if (!this.session.history[event.text.module_id])
+			this.jsonRpcAdapter = new JsonRpc({
+				connector: this._connectors.webSocket,
+				handlers: {
+					"incoming.message": this.handleRpcIncomingMessage.bind(this),
+				}
+			});
+		}
+
+		start(config)
+		{
+			let allowConfigCaching = true;
+
+			if (this.isConnected())
 			{
-				this.session.history[event.text.module_id] = {};
+				return Promise.resolve(true);
 			}
-			if (!this.session.history[event.text.module_id][event.text.command])
+
+			if (this.starting && this._startingPromise)
 			{
-				this.session.history[event.text.module_id][event.text.command] = 0;
+				return this._startingPromise;
 			}
-			this.session.history[event.text.module_id][event.text.command]++;
-			this.session.messageCount++;
-		}
 
-		if (this.session.lastMessageIds.length > MAX_IDS_TO_STORE)
-		{
-			this.session.lastMessageIds = this.session.lastMessageIds.slice( - MAX_IDS_TO_STORE);
-		}
-		this.broadcastMessages(messages);
-	};
-
-	Pull.prototype.extractMessages = function (pullEvent)
-	{
-		if(pullEvent instanceof ArrayBuffer)
-		{
-			return this.extractProtobufMessages(pullEvent);
-		}
-		else if(Utils.isNotEmptyString(pullEvent))
-		{
-			return this.extractPlainTextMessages(pullEvent)
-		}
-	};
-
-	Pull.prototype.extractProtobufMessages = function(pullEvent)
-	{
-		var result = [];
-		try
-		{
-			var responseBatch = ResponseBatch.decode(new Uint8Array(pullEvent));
-			for (var i = 0; i < responseBatch.responses.length; i++)
+			if (!this.userId && typeof (BX.message) !== 'undefined' && BX.message.USER_ID)
 			{
-				var response = responseBatch.responses[i];
-				if (response.command != "outgoingMessages")
+				this.userId = BX.message.USER_ID;
+				if (!this.storage)
+				{
+					this.storage = new StorageManager({
+						userId: this.userId,
+						siteId: this.siteId
+					});
+				}
+			}
+			if (this.siteId === 'none' && typeof (BX.message) !== 'undefined' && BX.message.SITE_ID)
+			{
+				this.siteId = BX.message.SITE_ID;
+			}
+
+			let skipReconnectToLastSession = false;
+			if (Utils.isPlainObject(config))
+			{
+				if (typeof config.skipReconnectToLastSession !== 'undefined')
+				{
+					skipReconnectToLastSession = !!config.skipReconnectToLastSession;
+					delete config.skipReconnectToLastSession;
+				}
+				this.config = config;
+				allowConfigCaching = false;
+			}
+
+			if (!this.enabled)
+			{
+				return Promise.reject({
+					ex: {error: 'PULL_DISABLED', error_description: 'Push & Pull server is disabled'}
+				});
+			}
+
+			const now = (new Date()).getTime();
+			let oldSession;
+			if (!skipReconnectToLastSession && this.storage)
+			{
+				oldSession = this.storage.get(LS_SESSION);
+			}
+			if (Utils.isPlainObject(oldSession) && oldSession.hasOwnProperty('ttl') && oldSession.ttl >= now)
+			{
+				this.session.mid = oldSession.mid;
+			}
+
+			this.starting = true;
+			return new Promise((resolve, reject) =>
+			{
+				this._startingPromise = {resolve, reject};
+				this.loadConfig().then(
+					(config) =>
+					{
+						this.setConfig(config, allowConfigCaching);
+						this.init();
+						this.updateWatch();
+						this.startCheckConfig();
+						this.connect().then(
+							() => resolve(true),
+							error => reject(error)
+						);
+					},
+					(error) =>
+					{
+						this.starting = false;
+						this.sendPullStatus(PullStatus.Offline);
+						this.stopCheckConfig();
+						console.error(Utils.getDateForLog() + ': Pull: could not read push-server config. ', error);
+						reject(error);
+					}
+				);
+			})
+		}
+
+		getRestClientOptions()
+		{
+			let result = {};
+
+			if (this.guestMode && this.guestUserId !== 0)
+			{
+				result.queryParams = {
+					pull_guest_id: this.guestUserId
+				}
+			}
+			return result;
+		}
+
+		setLastMessageId(lastMessageId)
+		{
+			this.session.mid = lastMessageId;
+		}
+
+		/**
+		 *
+		 * @param {object[]} publicIds
+		 * @param {integer} publicIds.user_id
+		 * @param {string} publicIds.public_id
+		 * @param {string} publicIds.signature
+		 * @param {Date} publicIds.start
+		 * @param {Date} publicIds.end
+		 */
+		setPublicIds(publicIds)
+		{
+			return this.channelManager.setPublicIds(publicIds);
+		}
+
+		/**
+		 * Send single message to the specified users.
+		 *
+		 * @param {integer[]} users User ids of the message receivers.
+		 * @param {string} moduleId Name of the module to receive message,
+		 * @param {string} command Command name.
+		 * @param {object} params Command parameters.
+		 * @param {integer} [expiry] Message expiry time in seconds.
+		 * @return {Promise}
+		 */
+		sendMessage(users, moduleId, command, params, expiry)
+		{
+			const message = {
+				userList: users,
+				body: {
+					module_id: moduleId,
+					command: command,
+					params: params,
+				},
+				expiry: expiry
+			};
+
+			if (this.isJsonRpc())
+			{
+				return this.jsonRpcAdapter.executeOutgoingRpcCommand(RpcMethod.Publish, message)
+			}
+			else
+			{
+				return this.sendMessageBatch([message]);
+			}
+		}
+
+		/**
+		 * Send single message to the specified public channels.
+		 *
+		 * @param {string[]} publicChannels Public ids of the channels to receive message.
+		 * @param {string} moduleId Name of the module to receive message,
+		 * @param {string} command Command name.
+		 * @param {object} params Command parameters.
+		 * @param {integer} [expiry] Message expiry time in seconds.
+		 * @return {Promise}
+		 */
+		sendMessageToChannels(publicChannels, moduleId, command, params, expiry)
+		{
+			const message = {
+				channelList: publicChannels,
+				body: {
+					module_id: moduleId,
+					command: command,
+					params: params,
+				},
+				expiry: expiry
+			};
+
+			if (this.isJsonRpc())
+			{
+				return this.jsonRpcAdapter.executeOutgoingRpcCommand("publish", message)
+			}
+			else
+			{
+				return this.sendMessageBatch([message]);
+			}
+		}
+
+		/**
+		 * Sends batch of messages to the multiple public channels.
+		 *
+		 * @param {object[]} messageBatch Array of messages to send.
+		 * @param  {int[]} messageBatch.userList User ids the message receivers.
+		 * @param  {string[]|object[]} messageBatch.channelList Public ids of the channels to send messages.
+		 * @param {string} messageBatch.moduleId Name of the module to receive message,
+		 * @param {string} messageBatch.command Command name.
+		 * @param {object} messageBatch.params Command parameters.
+		 * @param {integer} [messageBatch.expiry] Message expiry time in seconds.
+		 * @return void
+		 */
+		sendMessageBatch(messageBatch)
+		{
+			if (!this.isPublishingEnabled())
+			{
+				console.error('Client publishing is not supported or is disabled');
+				return false;
+			}
+
+			if (this.isJsonRpc())
+			{
+				let rpcRequest = this.jsonRpcAdapter.createPublishRequest(messageBatch);
+				return this.connector.send(JSON.stringify(rpcRequest));
+			}
+			else
+			{
+				let userIds = {};
+				for (let i = 0; i < messageBatch.length; i++)
+				{
+					if (messageBatch[i].users)
+					{
+						for (let j = 0; j < messageBatch[i].users.length; j++)
+						{
+							userIds[messageBatch[i].users[j]] = true;
+						}
+					}
+				}
+				this.channelManager.getPublicIds(Object.keys(userIds)).then((publicIds) =>
+				{
+					return this.connector.send(this.encodeMessageBatch(messageBatch, publicIds));
+				})
+			}
+		}
+
+		encodeMessageBatch(messageBatch, publicIds)
+		{
+			let messages = [];
+			messageBatch.forEach(function (messageFields)
+			{
+				const messageBody = messageFields.body;
+
+				let receivers;
+				if (messageFields.userList)
+				{
+					receivers = this.createMessageReceivers(messageFields.userList, publicIds);
+				}
+				else
+				{
+					receivers = [];
+				}
+
+				if (messageFields.channelList)
+				{
+					if (!BX.type.isArray(messageFields.channelList))
+					{
+						throw new Error('messageFields.publicChannels must be an array');
+					}
+					messageFields.channelList.forEach(function (publicChannel)
+					{
+						let publicId;
+						let signature;
+						if (typeof (publicChannel) === 'string' && publicChannel.includes('.'))
+						{
+							const fields = publicChannel.toString().split('.');
+							publicId = fields[0];
+							signature = fields[1];
+						}
+						else if (typeof (publicChannel) === 'object' && ('publicId' in publicChannel) && ('signature' in publicChannel))
+						{
+							publicId = publicChannel.publicId;
+							signature = publicChannel.signature;
+						}
+						else
+						{
+							throw new Error('Public channel MUST be either a string, formatted like "{publicId}.{signature}" or an object with fields \'publicId\' and \'signature\'');
+						}
+
+						receivers.push(Receiver.create({
+							id: this.encodeId(publicId),
+							signature: this.encodeId(signature)
+						}))
+					}.bind(this))
+				}
+
+				const message = IncomingMessage.create({
+					receivers: receivers,
+					body: JSON.stringify(messageBody),
+					expiry: messageFields.expiry || 0
+				});
+				messages.push(message);
+			}, this);
+
+			const requestBatch = RequestBatch.create({
+				requests: [{
+					incomingMessages: {
+						messages: messages
+					}
+				}]
+			});
+
+			return RequestBatch.encode(requestBatch).finish();
+		}
+
+		createMessageReceivers(users, publicIds)
+		{
+			let result = [];
+			for (let i = 0; i < users.length; i++)
+			{
+				let userId = users[i];
+				if (!publicIds[userId] || !publicIds[userId].publicId)
+				{
+					throw new Error('Could not determine public id for user ' + userId);
+				}
+
+				result.push(Receiver.create({
+					id: this.encodeId(publicIds[userId].publicId),
+					signature: this.encodeId(publicIds[userId].signature)
+				}))
+			}
+			return result;
+		}
+
+		subscribeUserStatusChange()
+		{
+			return this.executeSubscribeCommand([InternalChannel.StatusChange]);
+		}
+
+		executeSubscribeCommand(channelList)
+		{
+			return this.jsonRpcAdapter.executeOutgoingRpcCommand(RpcMethod.Subscribe, {channelList});
+		}
+
+		/**
+		 * Returns "last seen" time in seconds for the users. Result format: Object{userId: int}
+		 * If the user is currently connected - will return 0.
+		 * If the user if offline - will return diff between current timestamp and last seen timestamp in seconds.
+		 * If the user was never online - the record for user will be missing from the result object.
+		 *
+		 * @param {integer[]} userList Optional. If empty - returns all known to the server host users.
+		 * @returns {Promise}
+		 */
+		getUsersLastSeen(userList)
+		{
+			return this.jsonRpcAdapter.executeOutgoingRpcCommand("getUsersLastSeen", {
+				userList: userList
+			});
+		}
+
+		scheduleRestart(disconnectCode, disconnectReason, restartDelay)
+		{
+			clearTimeout(this.restartTimeout);
+			if (!restartDelay || restartDelay < 1)
+			{
+				restartDelay = Math.ceil(Math.random() * 30) + 5;
+			}
+
+			this.restartTimeout = setTimeout(
+				() => this.restart(disconnectCode, disconnectReason),
+				restartDelay
+			);
+		}
+
+		restart(disconnectCode, disconnectReason)
+		{
+			if (!disconnectCode)
+			{
+				disconnectCode = CloseReasons.NORMAL_CLOSURE;
+			}
+			clearTimeout(this.restartTimeout);
+			console.warn(Utils.getDateForLog() + ': Pull: restarting with code ' + disconnectCode)
+			this.disconnect(disconnectCode, disconnectReason);
+			if (this.storage)
+			{
+				this.storage.remove('bx-pull-config');
+			}
+			this.config = null;
+
+			this.loadConfig().catch((error) =>
+			{
+				console.error(Utils.getDateForLog() + ': Pull: could not read push-server config', error);
+				this.sendPullStatus(PullStatus.Offline);
+
+				clearTimeout(this.reconnectTimeout);
+				if (error.status == 401 || error.status == 403)
+				{
+					this.stopCheckConfig();
+
+					if (BX && BX.onCustomEvent)
+					{
+						BX.onCustomEvent(window, 'onPullError', ['AUTHORIZE_ERROR']);
+					}
+				}
+			}).then((config) =>
+			{
+				this.setConfig(config, true);
+				this.updateWatch();
+				this.startCheckConfig();
+				return this.connect();
+			}).catch((error) =>
+			{
+				console.error(error);
+			});
+		}
+
+		loadConfig()
+		{
+			if (!this.config)
+			{
+				this.config = Object.assign({}, EmptyConfig);
+
+				let config;
+				if (this.storage)
+				{
+					config = this.storage.get('bx-pull-config');
+				}
+				if (this.isConfigActual(config) && this.checkRevision(config.api.revision_web))
+				{
+					return Promise.resolve(config);
+				}
+				else if (this.storage)
+				{
+					this.storage.remove('bx-pull-config')
+				}
+			}
+			else if (this.isConfigActual(this.config) && this.checkRevision(this.config.api.revision_web))
+			{
+				return Promise.resolve(this.config);
+			}
+			else
+			{
+				this.config = Object.assign({}, EmptyConfig);
+			}
+
+			return new Promise((resolve, reject) =>
+			{
+				this.restClient.callMethod(this.configGetMethod, {'CACHE': 'N'}).then((response) =>
+				{
+					const data = response.data();
+					let timeShift;
+
+					timeShift = Math.floor((Utils.getTimestamp() - new Date(data.serverTime).getTime()) / 1000);
+					delete data.serverTime;
+
+					let config = Object.assign({}, data);
+					config.server.timeShift = timeShift;
+
+					resolve(config);
+				}).catch((response) =>
+				{
+					const error = response.error();
+					if (error.getError().error == "AUTHORIZE_ERROR" || error.getError().error == "WRONG_AUTH_TYPE")
+					{
+						error.status = 403;
+					}
+					reject(error);
+				});
+			})
+		}
+
+		isConfigActual(config)
+		{
+			if (!Utils.isPlainObject(config))
+			{
+				return false;
+			}
+
+			if (config.server.config_timestamp < this.configTimestamp)
+			{
+				return false;
+			}
+
+			const now = new Date();
+
+			const channelCount = Object.keys(config.channels).length;
+			if (channelCount === 0)
+			{
+				return false;
+			}
+
+			for (let channelType in config.channels)
+			{
+				if (!config.channels.hasOwnProperty(channelType))
 				{
 					continue;
 				}
 
-				var messages = responseBatch.responses[i].outgoingMessages.messages;
-				for (var m = 0; m < messages.length; m++)
+				const channel = config.channels[channelType];
+				const channelEnd = new Date(channel.end);
+
+				if (channelEnd < now)
 				{
-					var message = messages[m];
-					var messageFields;
-					try
-					{
-						messageFields = JSON.parse(message.body)
-					}
-					catch (e)
-					{
-						console.error(Utils.getDateForLog() + ": Pull: Could not parse message body", e);
-						continue;
-					}
+					return false;
+				}
+			}
 
-					if(!messageFields.extra)
+			return true;
+		}
+
+		startCheckConfig()
+		{
+			if (this.checkInterval)
+			{
+				clearInterval(this.checkInterval);
+			}
+
+			this.checkInterval = setInterval(this.checkConfig.bind(this), CONFIG_CHECK_INTERVAL)
+		}
+
+		stopCheckConfig()
+		{
+			if (this.checkInterval)
+			{
+				clearInterval(this.checkInterval);
+			}
+			this.checkInterval = null;
+		}
+
+		checkConfig()
+		{
+			if (this.isConfigActual(this.config))
+			{
+				if (!this.checkRevision(this.config.api.revision_web))
+				{
+					return false;
+				}
+			}
+			else
+			{
+				this.logToConsole("Stale config detected. Restarting");
+				this.restart(CloseReasons.CONFIG_EXPIRED, "Config update required");
+			}
+		}
+
+		setConfig(config, allowCaching)
+		{
+			for (let key in config)
+			{
+				if (config.hasOwnProperty(key) && this.config.hasOwnProperty(key))
+				{
+					this.config[key] = config[key];
+				}
+			}
+
+			if (config.publicChannels)
+			{
+				this.setPublicIds(Utils.objectValues(config.publicChannels));
+			}
+
+			if (this.storage && allowCaching)
+			{
+				try
+				{
+					this.storage.set('bx-pull-config', config);
+				} catch (e)
+				{
+					// try to delete the key "history" (landing site change history, see http://jabber.bx/view.php?id=136492)
+					if (localStorage && localStorage.removeItem)
 					{
-						messageFields.extra = {}
+						localStorage.removeItem('history');
 					}
-					messageFields.extra.sender = {
-						type: message.sender.type
-					};
-
-					if(message.sender.id instanceof Uint8Array)
-					{
-						messageFields.extra.sender.id = this.decodeId(message.sender.id)
-					}
-
-					var compatibleMessage = {
-						mid: this.decodeId(message.id),
-						text: messageFields
-					};
-
-					result.push(compatibleMessage);
+					console.error(Utils.getDateForLog() + " Pull: Could not cache config in local storage. Error: ", e);
 				}
 			}
 		}
-		catch(e)
-		{
-			console.error(Utils.getDateForLog() + ": Pull: Could not parse message", e)
-		}
-		return result;
-	};
 
-	Pull.prototype.extractPlainTextMessages = function(pullEvent)
-	{
-		var result = [];
-		var dataArray = pullEvent.match(/#!NGINXNMS!#(.*?)#!NGINXNME!#/gm);
-		if (dataArray === null)
+		isWebSocketSupported()
 		{
-			text = "\n========= PULL ERROR ===========\n"+
-				"Error type: parseResponse error parsing message\n"+
-				"\n"+
-				"Data string: " + pullEvent + "\n"+
-				"================================\n\n";
-			console.warn(text);
-			return result;
+			return typeof (window.WebSocket) !== "undefined";
 		}
-		for (var i = 0; i < dataArray.length; i++)
+
+		isWebSocketAllowed()
 		{
-			dataArray[i] = dataArray[i].substring(12, dataArray[i].length - 12);
-			if (dataArray[i].length <= 0)
+			if (this.sharedConfig.isWebSocketBlocked())
 			{
-				continue;
+				return false;
 			}
 
+			return this.isWebSocketEnabled();
+		}
+
+		isWebSocketEnabled()
+		{
+			if (!this.isWebSocketSupported())
+			{
+				return false;
+			}
+
+			return (this.config && this.config.server && this.config.server.websocket_enabled === true);
+		}
+
+		isPublishingSupported()
+		{
+			return this.getServerVersion() > 3;
+		}
+
+		isPublishingEnabled()
+		{
+			if (!this.isPublishingSupported())
+			{
+				return false;
+			}
+
+			return (this.config && this.config.server && this.config.server.publish_enabled === true);
+		}
+
+		isProtobufSupported()
+		{
+			return (this.getServerVersion() == 4 && !Utils.browser.IsIe());
+		}
+
+		isJsonRpc()
+		{
+			return (this.getServerVersion() >= 5);
+		}
+
+		isSharedMode()
+		{
+			return (this.getServerMode() == ServerMode.Shared)
+		}
+
+		disconnect(disconnectCode, disconnectReason)
+		{
+			if (this.connector)
+			{
+				this.isManualDisconnect = true;
+				this.connector.disconnect(disconnectCode, disconnectReason);
+			}
+		}
+
+		stop(disconnectCode, disconnectReason)
+		{
+			this.disconnect(disconnectCode, disconnectReason);
+			this.stopCheckConfig();
+		}
+
+		reconnect(disconnectCode, disconnectReason, delay)
+		{
+			this.disconnect(disconnectCode, disconnectReason);
+
+			delay = delay || 1;
+			this.scheduleReconnect(delay);
+		}
+
+		restoreWebSocketConnection()
+		{
+			if (this.connectionType == ConnectionType.WebSocket)
+			{
+				return true;
+			}
+
+			this._connectors.webSocket.connect();
+		}
+
+		scheduleReconnect(connectionDelay)
+		{
+			if (!this.enabled)
+			{
+				return false;
+			}
+
+			if (!connectionDelay)
+			{
+				if (this.connectionAttempt > 3 && this.connectionType === ConnectionType.WebSocket && !this.sharedConfig.isLongPollingBlocked())
+				{
+					// Websocket seems to be closed by network filter. Trying to fallback to long polling
+					this.sharedConfig.setWebSocketBlocked(true);
+					this.connectionType = ConnectionType.LongPolling;
+					this.connectionAttempt = 1;
+					connectionDelay = 1;
+				}
+				else
+				{
+					connectionDelay = this.getConnectionAttemptDelay(this.connectionAttempt);
+				}
+			}
+			if (this.reconnectTimeout)
+			{
+				clearTimeout(this.reconnectTimeout);
+			}
+
+			this.logToConsole('Pull: scheduling reconnection in ' + connectionDelay + ' seconds; attempt # ' + this.connectionAttempt);
+
+			this.reconnectTimeout = setTimeout(
+				() =>
+				{
+					this.connect().catch(error =>
+					{
+						console.error(error)
+					})
+				},
+				connectionDelay * 1000);
+		}
+
+		scheduleRestoreWebSocketConnection()
+		{
+			this.logToConsole('Pull: scheduling restoration of websocket connection in ' + RESTORE_WEBSOCKET_TIMEOUT + ' seconds');
+
+			if (this.restoreWebSocketTimeout)
+			{
+				return;
+			}
+
+			this.restoreWebSocketTimeout = setTimeout(() =>
+			{
+				this.restoreWebSocketTimeout = 0;
+				this.restoreWebSocketConnection();
+			}, RESTORE_WEBSOCKET_TIMEOUT * 1000);
+		}
+
+		/**
+		 * @returns {Promise}
+		 */
+		connect()
+		{
+			if (!this.enabled)
+			{
+				return Promise.reject();
+			}
+			if (this.connector.connected)
+			{
+				return Promise.resolve();
+			}
+
+			if (this.reconnectTimeout)
+			{
+				clearTimeout(this.reconnectTimeout);
+			}
+
+			this.sendPullStatus(PullStatus.Connecting);
+			this.connectionAttempt++;
+			return new Promise((resolve, reject) =>
+			{
+				this._connectPromise = {resolve, reject}
+				this.connector.connect();
+			})
+		}
+
+		onIncomingMessage(message)
+		{
+			if (this.isJsonRpc())
+			{
+				(message === JSON_RPC_PING) ? this.onJsonRpcPing() : this.jsonRpcAdapter.parseJsonRpcMessage(message);
+			}
+			else
+			{
+				const events = this.extractMessages(message);
+				this.handleIncomingEvents(events);
+			}
+		}
+
+		handleRpcIncomingMessage(messageFields)
+		{
+			this.session.mid = messageFields.mid;
+			let body = messageFields.body;
+
+			if (!messageFields.body.extra)
+			{
+				body.extra = {};
+			}
+			body.extra.sender = messageFields.sender;
+
+			if ("user_params" in messageFields && Utils.isPlainObject(messageFields.user_params))
+			{
+				Object.assign(body.params, messageFields.user_params)
+			}
+
+			if ("dictionary" in messageFields && Utils.isPlainObject(messageFields.dictionary))
+			{
+				Object.assign(body.params, messageFields.dictionary)
+			}
+
+			if (this.checkDuplicate(messageFields.mid))
+			{
+				this.addMessageToStat(body);
+				this.trimDuplicates();
+				this.broadcastMessage(body)
+			}
+
+			this.connector.send(`mack:${messageFields.mid}`)
+
+			return {};
+		}
+
+		onJsonRpcPing()
+		{
+			this.updatePingWaitTimeout();
+			this.connector.send(JSON_RPC_PONG)
+		}
+
+		handleIncomingEvents(events)
+		{
+			let messages = [];
+			if (events.length === 0)
+			{
+				this.session.mid = null;
+				return;
+			}
+
+			for (let i = 0; i < events.length; i++)
+			{
+				let event = events[i];
+				this.updateSessionFromEvent(event);
+				if (event.mid && !this.checkDuplicate(event.mid))
+				{
+					continue;
+				}
+
+				this.addMessageToStat(event.text);
+				messages.push(event.text);
+			}
+			this.trimDuplicates();
+			this.broadcastMessages(messages);
+		}
+
+		updateSessionFromEvent(event)
+		{
+			this.session.mid = event.mid || null;
+			this.session.tag = event.tag || null;
+			this.session.time = event.time || null;
+		}
+
+		checkDuplicate(mid)
+		{
+			if (this.session.lastMessageIds.includes(mid))
+			{
+				console.warn("Duplicate message " + mid + " skipped");
+				return false;
+			}
+			else
+			{
+				this.session.lastMessageIds.push(mid);
+				return true;
+			}
+		}
+
+		trimDuplicates()
+		{
+			if (this.session.lastMessageIds.length > MAX_IDS_TO_STORE)
+			{
+				this.session.lastMessageIds = this.session.lastMessageIds.slice(-MAX_IDS_TO_STORE);
+			}
+		}
+
+		addMessageToStat(message)
+		{
+			if (!this.session.history[message.module_id])
+			{
+				this.session.history[message.module_id] = {};
+			}
+			if (!this.session.history[message.module_id][message.command])
+			{
+				this.session.history[message.module_id][message.command] = 0;
+			}
+			this.session.history[message.module_id][message.command]++;
+
+			this.session.messageCount++;
+		}
+
+		extractMessages(pullEvent)
+		{
+			if (pullEvent instanceof ArrayBuffer)
+			{
+				return this.extractProtobufMessages(pullEvent);
+			}
+			else if (Utils.isNotEmptyString(pullEvent))
+			{
+				return this.extractPlainTextMessages(pullEvent)
+			}
+		}
+
+		extractProtobufMessages(pullEvent)
+		{
+			let result = [];
 			try
 			{
-				var data = JSON.parse(dataArray[i])
-			}
-			catch(e)
+				let responseBatch = ResponseBatch.decode(new Uint8Array(pullEvent));
+				for (let i = 0; i < responseBatch.responses.length; i++)
+				{
+					let response = responseBatch.responses[i];
+					if (response.command != "outgoingMessages")
+					{
+						continue;
+					}
+
+					let messages = response.outgoingMessages.messages;
+					for (let m = 0; m < messages.length; m++)
+					{
+						const message = messages[m];
+						let messageFields;
+						try
+						{
+							messageFields = JSON.parse(message.body)
+						} catch (e)
+						{
+							console.error(Utils.getDateForLog() + ": Pull: Could not parse message body", e);
+							continue;
+						}
+
+						if (!messageFields.extra)
+						{
+							messageFields.extra = {}
+						}
+						messageFields.extra.sender = {
+							type: message.sender.type
+						};
+
+						if (message.sender.id instanceof Uint8Array)
+						{
+							messageFields.extra.sender.id = this.decodeId(message.sender.id)
+						}
+
+						const compatibleMessage = {
+							mid: this.decodeId(message.id),
+							text: messageFields
+						};
+
+						result.push(compatibleMessage);
+					}
+				}
+			} catch (e)
 			{
-				continue;
+				console.error(Utils.getDateForLog() + ": Pull: Could not parse message", e)
 			}
-
-			result.push(data);
-		}
-		return result;
-	};
-
-	/**
-	 * Converts message id from byte[] to string
-	 * @param {Uint8Array} encodedId
-	 * @return {string}
-	 */
-	Pull.prototype.decodeId = function(encodedId)
-	{
-		if(!(encodedId instanceof Uint8Array))
-		{
-			throw new Error("encodedId should be an instance of Uint8Array");
+			return result;
 		}
 
-		var result = "";
-		for (var i = 0; i < encodedId.length; i++)
+		extractPlainTextMessages(pullEvent)
 		{
-			var hexByte = encodedId[i].toString(16);
-			if (hexByte.length === 1)
+			let result = [];
+			const dataArray = pullEvent.match(/#!NGINXNMS!#(.*?)#!NGINXNME!#/gm);
+			if (dataArray === null)
 			{
-				result += '0';
+				text = "\n========= PULL ERROR ===========\n" +
+					"Error type: parseResponse error parsing message\n" +
+					"\n" +
+					"Data string: " + pullEvent + "\n" +
+					"================================\n\n";
+				console.warn(text);
+				return result;
 			}
-			result += hexByte;
+			for (let i = 0; i < dataArray.length; i++)
+			{
+				dataArray[i] = dataArray[i].substring(12, dataArray[i].length - 12);
+				if (dataArray[i].length <= 0)
+				{
+					continue;
+				}
+
+				let data
+				try
+				{
+					data = JSON.parse(dataArray[i])
+				} catch (e)
+				{
+					continue;
+				}
+
+				result.push(data);
+			}
+			return result;
 		}
-		return result;
-	};
 
-	/**
-	 * Converts message id from hex-encoded string to byte[]
-	 * @param {string} id Hex-encoded string.
-	 * @return {Uint8Array}
-	 */
-	Pull.prototype.encodeId = function(id)
-	{
-		if (!id)
+		/**
+		 * Converts message id from byte[] to string
+		 * @param {Uint8Array} encodedId
+		 * @return {string}
+		 */
+		decodeId(encodedId)
 		{
-			return new Uint8Array();
+			if (!(encodedId instanceof Uint8Array))
+			{
+				throw new Error("encodedId should be an instance of Uint8Array");
+			}
+
+			let result = "";
+			for (let i = 0; i < encodedId.length; i++)
+			{
+				const hexByte = encodedId[i].toString(16);
+				if (hexByte.length === 1)
+				{
+					result += '0';
+				}
+				result += hexByte;
+			}
+			return result;
 		}
 
-		var result = [];
-		for (var i = 0; i < id.length; i += 2)
+		/**
+		 * Converts message id from hex-encoded string to byte[]
+		 * @param {string} id Hex-encoded string.
+		 * @return {Uint8Array}
+		 */
+		encodeId(id)
 		{
-			result.push(parseInt(id.substr(i, 2), 16));
+			if (!id)
+			{
+				return new Uint8Array();
+			}
+
+			let result = [];
+			for (let i = 0; i < id.length; i += 2)
+			{
+				result.push(parseInt(id.substr(i, 2), 16));
+			}
+
+			return new Uint8Array(result);
 		}
 
-		return new Uint8Array(result);
-	};
-
-	Pull.prototype.broadcastMessages = function (messages)
-	{
-		messages.forEach(function (message)
+		broadcastMessages(messages)
 		{
-			var moduleId = message.module_id = message.module_id.toLowerCase();
-			var command = message.command;
+			messages.forEach(message => this.broadcastMessage(message));
+		}
 
-			if(!message.extra)
+		broadcastMessage(message)
+		{
+			const moduleId = message.module_id = message.module_id.toLowerCase();
+			const command = message.command;
+
+			if (!message.extra)
 			{
 				message.extra = {};
 			}
 
-			if(message.extra.server_time_unix)
+			if (message.extra.server_time_unix)
 			{
-				message.extra.server_time_ago = ((Utils.getTimestamp() - (message.extra.server_time_unix * 1000)) / 1000)-(this.config.server.timeShift? this.config.server.timeShift: 0);
+				message.extra.server_time_ago = ((Utils.getTimestamp() - (message.extra.server_time_unix * 1000)) / 1000) - (this.config.server.timeShift ? this.config.server.timeShift : 0);
 				message.extra.server_time_ago = message.extra.server_time_ago > 0 ? message.extra.server_time_ago : 0;
 			}
 
 			this.logMessage(message);
 			try
 			{
-				if(message.extra.sender && message.extra.sender.type === SenderType.Client)
+				if (message.extra.sender && message.extra.sender.type === SenderType.Client)
 				{
 					if (typeof BX.onCustomEvent !== 'undefined')
 					{
@@ -31237,16 +31809,15 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 						}
 					});
 				}
-			}
-			catch(e)
+			} catch (e)
 			{
-				if (typeof(console) == 'object')
+				if (typeof (console) == 'object')
 				{
 					console.warn(
-						"\n========= PULL ERROR ===========\n"+
-						"Error type: broadcastMessages execute error\n"+
-						"Error event: ", e, "\n"+
-						"Message: ", message, "\n"+
+						"\n========= PULL ERROR ===========\n" +
+						"Error type: broadcastMessages execute error\n" +
+						"Error event: ", e, "\n" +
+						"Message: ", message, "\n" +
 						"================================\n"
 					);
 					if (typeof BX.debug !== 'undefined')
@@ -31256,1295 +31827,1573 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				}
 			}
 
-			if(message.extra && message.extra.revision_web)
+			if (message.extra && message.extra.revision_web)
 			{
 				this.checkRevision(message.extra.revision_web);
 			}
-		}, this);
-	};
-
-	Pull.prototype.logToConsole = function(message)
-	{
-		if(this.loggingEnabled)
-		{
-			console.log(Utils.getDateForLog() + ': ' + message);
-		}
-	};
-
-	Pull.prototype.logMessage = function(message)
-	{
-		if(!this.debug)
-		{
-			return;
 		}
 
-		if(message.extra.sender && message.extra.sender.type === SenderType.Client)
+		logToConsole(message)
 		{
-			console.info('onPullClientEvent-' + message.module_id, message.command, message.params, message.extra);
-		}
-		else if (message.moduleId == 'online')
-		{
-			console.info('onPullOnlineEvent', message.command, message.params, message.extra);
-		}
-		else
-		{
-			console.info('onPullEvent', message.module_id, message.command, message.params, message.extra);
-		}
-	};
-
-	Pull.prototype.onLongPollingOpen = function()
-	{
-		this.unloading = false;
-		this.starting = false;
-		this.connectionAttempt = 0;
-		this.isManualDisconnect = false;
-		this.sendPullStatus(PullStatus.Online);
-
-		if(this.offlineTimeout)
-		{
-			clearTimeout(this.offlineTimeout);
-			this.offlineTimeout = null;
-		}
-
-		this.logToConsole('Pull: Long polling connection with push-server opened');
-		if(this.isWebSocketEnabled())
-		{
-			this.scheduleRestoreWebSocketConnection();
-		}
-	};
-
-	Pull.prototype.onWebSocketBlockChanged = function(e)
-	{
-		var isWebSocketBlocked = e.isWebSocketBlocked;
-
-		if(isWebSocketBlocked && this.connectionType === ConnectionType.WebSocket && !this.isConnected())
-		{
-			clearTimeout(this.reconnectTimeout);
-
-			this.connectionAttempt = 0;
-			this.connectionType = ConnectionType.LongPolling;
-			this.scheduleReconnect(1);
-		}
-		else if(!isWebSocketBlocked && this.connectionType === ConnectionType.LongPolling)
-		{
-			clearTimeout(this.reconnectTimeout);
-			clearTimeout(this.restoreWebSocketTimeout);
-
-			this.connectionAttempt = 0;
-			this.connectionType = ConnectionType.WebSocket;
-			this.scheduleReconnect(1);
-		}
-	};
-
-	Pull.prototype.onWebSocketOpen = function()
-	{
-		this.unloading = false;
-		this.starting = false;
-		this.connectionAttempt = 0;
-		this.isManualDisconnect = false;
-		this.sendPullStatus(PullStatus.Online);
-		this.sharedConfig.setWebSocketBlocked(false);
-
-		// to prevent fallback to long polling in case of networking problems
-		this.sharedConfig.setLongPollingBlocked(true);
-
-		if(this.connectionType == ConnectionType.LongPolling)
-		{
-			this.connectionType = ConnectionType.WebSocket;
-			this._connectors.longPolling.disconnect();
-		}
-
-		if(this.offlineTimeout)
-		{
-			clearTimeout(this.offlineTimeout);
-			this.offlineTimeout = null;
-		}
-		if (this.restoreWebSocketTimeout)
-		{
-			clearTimeout(this.restoreWebSocketTimeout);
-			this.restoreWebSocketTimeout = null;
-		}
-		this.logToConsole('Pull: Websocket connection with push-server opened');
-	};
-
-	Pull.prototype.onWebSocketDisconnect = function(e)
-	{
-		if(this.connectionType === ConnectionType.WebSocket)
-		{
-			if(e.code != CloseReasons.CONFIG_EXPIRED && e.code != CloseReasons.CHANNEL_EXPIRED && e.code != CloseReasons.CONFIG_REPLACED)
+			if (this.loggingEnabled)
 			{
-				this.sendPullStatus(PullStatus.Offline);
+				console.log(Utils.getDateForLog() + ': ' + message);
+			}
+		}
+
+		logMessage(message)
+		{
+			if (!this.debug)
+			{
+				return;
+			}
+
+			if (message.extra.sender && message.extra.sender.type === SenderType.Client)
+			{
+				console.info('onPullClientEvent-' + message.module_id, message.command, message.params, message.extra);
+			}
+			else if (message.moduleId == 'online')
+			{
+				console.info('onPullOnlineEvent', message.command, message.params, message.extra);
 			}
 			else
 			{
-				this.offlineTimeout = setTimeout(function()
+				console.info('onPullEvent', message.module_id, message.command, message.params, message.extra);
+			}
+		}
+
+		onLongPollingOpen()
+		{
+			this.unloading = false;
+			this.starting = false;
+			this.connectionAttempt = 0;
+			this.isManualDisconnect = false;
+			this.sendPullStatus(PullStatus.Online);
+
+			if (this.offlineTimeout)
+			{
+				clearTimeout(this.offlineTimeout);
+				this.offlineTimeout = null;
+			}
+
+			this.logToConsole('Pull: Long polling connection with push-server opened');
+			if (this.isWebSocketEnabled())
+			{
+				this.scheduleRestoreWebSocketConnection();
+			}
+			if (this._connectPromise)
+			{
+				this._connectPromise.resolve();
+			}
+		}
+
+		onWebSocketBlockChanged(e)
+		{
+			const isWebSocketBlocked = e.isWebSocketBlocked;
+
+			if (isWebSocketBlocked && this.connectionType === ConnectionType.WebSocket && !this.isConnected())
+			{
+				clearTimeout(this.reconnectTimeout);
+
+				this.connectionAttempt = 0;
+				this.connectionType = ConnectionType.LongPolling;
+				this.scheduleReconnect(1);
+			}
+			else if (!isWebSocketBlocked && this.connectionType === ConnectionType.LongPolling)
+			{
+				clearTimeout(this.reconnectTimeout);
+				clearTimeout(this.restoreWebSocketTimeout);
+
+				this.connectionAttempt = 0;
+				this.connectionType = ConnectionType.WebSocket;
+				this.scheduleReconnect(1);
+			}
+		}
+
+		onWebSocketOpen()
+		{
+			this.unloading = false;
+			this.starting = false;
+			this.connectionAttempt = 0;
+			this.isManualDisconnect = false;
+			this.sendPullStatus(PullStatus.Online);
+			this.sharedConfig.setWebSocketBlocked(false);
+
+			// to prevent fallback to long polling in case of networking problems
+			this.sharedConfig.setLongPollingBlocked(true);
+
+			if (this.connectionType == ConnectionType.LongPolling)
+			{
+				this.connectionType = ConnectionType.WebSocket;
+				this._connectors.longPolling.disconnect();
+			}
+
+			if (this.offlineTimeout)
+			{
+				clearTimeout(this.offlineTimeout);
+				this.offlineTimeout = null;
+			}
+			if (this.restoreWebSocketTimeout)
+			{
+				clearTimeout(this.restoreWebSocketTimeout);
+				this.restoreWebSocketTimeout = null;
+			}
+			this.logToConsole('Pull: Websocket connection with push-server opened');
+			if (this._connectPromise)
+			{
+				this._connectPromise.resolve();
+			}
+		}
+
+		onWebSocketDisconnect(e)
+		{
+			if (this.connectionType === ConnectionType.WebSocket)
+			{
+				if (e.code != CloseReasons.CONFIG_EXPIRED && e.code != CloseReasons.CHANNEL_EXPIRED && e.code != CloseReasons.CONFIG_REPLACED)
 				{
 					this.sendPullStatus(PullStatus.Offline);
-				}.bind(this), 5000)
-			}
-		}
-
-		if(!e)
-		{
-			e = {};
-		}
-
-		this.logToConsole('Pull: Websocket connection with push-server closed. Code: ' + e.code + ', reason: ' + e.reason);
-		if(!this.isManualDisconnect)
-		{
-			this.scheduleReconnect();
-		}
-
-		// to prevent fallback to long polling in case of networking problems
-		this.sharedConfig.setLongPollingBlocked(true);
-		this.isManualDisconnect = false;
-	};
-
-	Pull.prototype.onWebSocketError = function(e)
-	{
-		this.starting = false;
-		if(this.connectionType === ConnectionType.WebSocket)
-		{
-			this.sendPullStatus(PullStatus.Offline);
-		}
-
-		console.error(Utils.getDateForLog() + ": Pull: WebSocket connection error", e);
-		this.scheduleReconnect();
-	};
-
-	Pull.prototype.onLongPollingDisconnect = function(e)
-	{
-		if(this.connectionType === ConnectionType.LongPolling)
-		{
-			if(e.code != CloseReasons.CONFIG_EXPIRED && e.code != CloseReasons.CHANNEL_EXPIRED && e.code != CloseReasons.CONFIG_REPLACED)
-			{
-				this.sendPullStatus(PullStatus.Offline);
-			}
-			else
-			{
-				this.offlineTimeout = setTimeout(function()
-				{
-					this.sendPullStatus(PullStatus.Offline);
-				}.bind(this), 5500)
-			}
-		}
-
-		if(!e)
-		{
-			e = {};
-		}
-
-		this.logToConsole('Pull: Long polling connection with push-server closed. Code: ' + e.code + ', reason: ' + e.reason);
-		if(!this.isManualDisconnect)
-		{
-			this.scheduleReconnect();
-		}
-		this.isManualDisconnect = false;
-	};
-
-	Pull.prototype.onLongPollingError = function(e)
-	{
-		this.starting = false;
-		if(this.connectionType === ConnectionType.LongPolling)
-		{
-			this.sendPullStatus(PullStatus.Offline);
-		}
-		console.error(Utils.getDateForLog() + ': Pull: Long polling connection error', e);
-		this.scheduleReconnect();
-	};
-
-	Pull.prototype.isConnected = function()
-	{
-		return this.connector ? this.connector.connected : false;
-	};
-
-	Pull.prototype.onBeforeUnload = function()
-	{
-		this.unloading = true;
-
-		var session = Utils.clone(this.session);
-		session.ttl = (new Date()).getTime() + LS_SESSION_CACHE_TIME * 1000;
-		if(this.storage)
-		{
-			try
-			{
-				this.storage.set(LS_SESSION, JSON.stringify(session), LS_SESSION_CACHE_TIME);
-			}
-			catch (e)
-			{
-				console.error(Utils.getDateForLog() + " Pull: Could not save session info in local storage. Error: ", e);
-			}
-		}
-
-		this.scheduleReconnect(15);
-	};
-
-	Pull.prototype.onOffline = function()
-	{
-		this.disconnect("1000", "offline");
-	};
-
-	Pull.prototype.onOnline = function()
-	{
-		this.connect();
-	};
-
-	Pull.prototype.handleInternalPullEvent = function(command, message)
-	{
-		switch (command.toUpperCase())
-		{
-			case SystemCommands.CHANNEL_EXPIRE:
-			{
-				if (message.params.action == 'reconnect')
-				{
-					this.config.channels[message.params.channel.type] = message.params.new_channel;
-					this.logToConsole("Pull: new config for " + message.params.channel.type + " channel set:\n", this.config.channels[message.params.channel.type]);
-
-					this.reconnect(CloseReasons.CONFIG_REPLACED, "config was replaced");
 				}
 				else
 				{
-					this.restart(CloseReasons.CHANNEL_EXPIRED, "channel expired");
+					this.offlineTimeout = setTimeout(() => this.sendPullStatus(PullStatus.Offline), 5000)
 				}
-				break;
 			}
-			case SystemCommands.CONFIG_EXPIRE:
-			{
-				this.restart(CloseReasons.CONFIG_EXPIRED, "config expired");
-				break;
-			}
-			case SystemCommands.SERVER_RESTART:
-			{
-				this.reconnect(CloseReasons.SERVER_RESTARTED, "server was restarted", 15);
-				break;
-			}
-			default://
-		}
-	};
 
-	Pull.prototype.checkRevision = function(serverRevision)
-	{
-		if (this.skipCheckRevision)
+			if (!e)
+			{
+				e = {};
+			}
+
+			this.logToConsole('Pull: Websocket connection with push-server closed. Code: ' + e.code + ', reason: ' + e.reason);
+			if (!this.isManualDisconnect)
+			{
+				if (e.code == CloseReasons.WRONG_CHANNEL_ID)
+				{
+					this.scheduleRestart(CloseReasons.WRONG_CHANNEL_ID, "restarting to reload config");
+				}
+				else
+				{
+					this.scheduleReconnect();
+				}
+			}
+
+			// to prevent fallback to long polling in case of networking problems
+			this.sharedConfig.setLongPollingBlocked(true);
+			this.isManualDisconnect = false;
+
+			this.clearPingWaitTimeout();
+		}
+
+		onWebSocketError(e)
 		{
+			this.starting = false;
+			if (this.connectionType === ConnectionType.WebSocket)
+			{
+				this.sendPullStatus(PullStatus.Offline);
+			}
+
+			console.error(Utils.getDateForLog() + ": Pull: WebSocket connection error", e);
+			this.scheduleReconnect();
+			if (this._connectPromise)
+			{
+				this._connectPromise.reject();
+			}
+
+			this.clearPingWaitTimeout();
+		}
+
+		onLongPollingDisconnect(e)
+		{
+			if (this.connectionType === ConnectionType.LongPolling)
+			{
+				if (e.code != CloseReasons.CONFIG_EXPIRED && e.code != CloseReasons.CHANNEL_EXPIRED && e.code != CloseReasons.CONFIG_REPLACED)
+				{
+					this.sendPullStatus(PullStatus.Offline);
+				}
+				else
+				{
+					this.offlineTimeout = setTimeout(() => this.sendPullStatus(PullStatus.Offline), 5500)
+				}
+			}
+
+			if (!e)
+			{
+				e = {};
+			}
+
+			this.logToConsole('Pull: Long polling connection with push-server closed. Code: ' + e.code + ', reason: ' + e.reason);
+			if (!this.isManualDisconnect)
+			{
+				this.scheduleReconnect();
+			}
+			this.isManualDisconnect = false;
+			this.clearPingWaitTimeout();
+		}
+
+		onLongPollingError(e)
+		{
+			this.starting = false;
+			if (this.connectionType === ConnectionType.LongPolling)
+			{
+				this.sendPullStatus(PullStatus.Offline);
+			}
+			console.error(Utils.getDateForLog() + ': Pull: Long polling connection error', e);
+			this.scheduleReconnect();
+			if (this._connectPromise)
+			{
+				this._connectPromise.reject();
+			}
+			this.clearPingWaitTimeout();
+		}
+
+		isConnected()
+		{
+			return this.connector ? this.connector.connected : false;
+		}
+
+		onBeforeUnload()
+		{
+			this.unloading = true;
+
+			const session = Utils.clone(this.session);
+			session.ttl = (new Date()).getTime() + LS_SESSION_CACHE_TIME * 1000;
+			if (this.storage)
+			{
+				try
+				{
+					this.storage.set(LS_SESSION, JSON.stringify(session), LS_SESSION_CACHE_TIME);
+				} catch (e)
+				{
+					console.error(Utils.getDateForLog() + " Pull: Could not save session info in local storage. Error: ", e);
+				}
+			}
+
+			this.scheduleReconnect(15);
+		}
+
+		onOffline()
+		{
+			this.disconnect("1000", "offline");
+		}
+
+		onOnline()
+		{
+			this.connect();
+		}
+
+		handleInternalPullEvent(command, message)
+		{
+			switch (command.toUpperCase())
+			{
+				case SystemCommands.CHANNEL_EXPIRE:
+				{
+					if (message.params.action == 'reconnect')
+					{
+						this.config.channels[message.params.channel.type] = message.params.new_channel;
+						this.logToConsole("Pull: new config for " + message.params.channel.type + " channel set:\n", this.config.channels[message.params.channel.type]);
+
+						this.reconnect(CloseReasons.CONFIG_REPLACED, "config was replaced");
+					}
+					else
+					{
+						this.restart(CloseReasons.CHANNEL_EXPIRED, "channel expired");
+					}
+					break;
+				}
+				case SystemCommands.CONFIG_EXPIRE:
+				{
+					this.restart(CloseReasons.CONFIG_EXPIRED, "config expired");
+					break;
+				}
+				case SystemCommands.SERVER_RESTART:
+				{
+					this.reconnect(CloseReasons.SERVER_RESTARTED, "server was restarted", 15);
+					break;
+				}
+				default://
+			}
+		}
+
+		checkRevision(serverRevision)
+		{
+			if (this.skipCheckRevision)
+			{
+				return true;
+			}
+
+			serverRevision = parseInt(serverRevision);
+			if (serverRevision > 0 && serverRevision != REVISION)
+			{
+				this.enabled = false;
+				if (typeof BX.message !== 'undefined')
+				{
+					this.showNotification(BX.message('PULL_OLD_REVISION'));
+				}
+				this.disconnect(CloseReasons.NORMAL_CLOSURE, 'check_revision');
+
+				if (typeof BX.onCustomEvent !== 'undefined')
+				{
+					BX.onCustomEvent(window, 'onPullRevisionUp', [serverRevision, REVISION]);
+				}
+
+				this.emit({
+					type: SubscriptionType.Revision,
+					data: {
+						server: serverRevision,
+						client: REVISION
+					}
+				});
+
+				this.logToConsole("Pull revision changed from " + REVISION + " to " + serverRevision + ". Reload required");
+
+				return false;
+			}
 			return true;
 		}
 
-		serverRevision = parseInt(serverRevision);
-		if (serverRevision > 0 && serverRevision != REVISION)
+		showNotification(text)
 		{
-			this.enabled = false;
-			if (typeof BX.message !== 'undefined')
+			if (this.notificationPopup || typeof BX.PopupWindow === 'undefined')
 			{
-				this.showNotification(BX.message('PULL_OLD_REVISION'));
+				return;
 			}
-			this.disconnect(CloseReasons.NORMAL_CLOSURE, 'check_revision');
+
+			this.notificationPopup = new BX.PopupWindow('bx-notifier-popup-confirm', null, {
+				zIndex: 200,
+				autoHide: false,
+				closeByEsc: false,
+				overlay: true,
+				content: BX.create("div", {
+					props: {className: "bx-messenger-confirm"},
+					html: text
+				}),
+				buttons: [
+					new BX.PopupWindowButton({
+						text: BX.message('JS_CORE_WINDOW_CLOSE'),
+						className: "popup-window-button-decline",
+						events: {
+							click: () =>
+							{
+								this.notificationPopup.close();
+							}
+						}
+					})
+				],
+				events: {
+					onPopupClose: function () //not arrow function; this should come from popup
+					{
+						this.destroy()
+					},
+					onPopupDestroy: () =>
+					{
+						this.notificationPopup = null;
+					}
+				}
+			});
+			this.notificationPopup.show();
+		}
+
+		getRevision()
+		{
+			return (this.config && this.config.api) ? this.config.api.revision_web : null;
+		}
+
+		getServerVersion()
+		{
+			return (this.config && this.config.server) ? this.config.server.version : 0;
+		}
+
+		getServerMode()
+		{
+			return (this.config && this.config.server) ? this.config.server.mode : null;
+		}
+
+		getConfig()
+		{
+			return this.config;
+		}
+
+		getDebugInfo()
+		{
+			if (!console || !console.info || !JSON || !JSON.stringify)
+			{
+				return false;
+			}
+
+			let configDump;
+
+			if (this.config && this.config.channels && this.config.channels.private)
+			{
+				configDump = "ChannelID: " + this.config.channels.private.id + "\n" +
+					"ChannelDie: " + this.config.channels.private.end + "\n" +
+					("shared" in this.config.channels ? "ChannelDieShared: " + this.config.channels.shared.end : "");
+			}
+			else
+			{
+				configDump = "Config error: config is not loaded";
+			}
+
+			const watchTagsDump = JSON.stringify(this.watchTagsQueue);
+			const text = "\n========= PULL DEBUG ===========\n" +
+				"UserId: " + this.userId + " " + (this.userId > 0 ? '' : '(guest)') + "\n" +
+				(this.guestMode && this.guestUserId !== 0 ? "Guest userId: " + this.guestUserId + "\n" : "") +
+				"Browser online: " + (navigator.onLine ? 'Y' : 'N') + "\n" +
+				"Connect: " + (this.isConnected() ? 'Y' : 'N') + "\n" +
+				"Server type: " + (this.isSharedMode() ? 'cloud' : 'local') + "\n" +
+				"WebSocket support: " + (this.isWebSocketSupported() ? 'Y' : 'N') + "\n" +
+				"WebSocket connect: " + (this._connectors.webSocket && this._connectors.webSocket.connected ? 'Y' : 'N') + "\n" +
+				"WebSocket mode: " + (this._connectors.webSocket && this._connectors.webSocket.socket ? (this._connectors.webSocket.socket.url.search("binaryMode=true") != -1 ? "protobuf" : "text") : '-') + "\n" +
+
+				"Try connect: " + (this.reconnectTimeout ? 'Y' : 'N') + "\n" +
+				"Try number: " + (this.connectionAttempt) + "\n" +
+				"\n" +
+				"Path: " + (this.connector ? this.connector.path : '-') + "\n" +
+				configDump + "\n" +
+				"\n" +
+				"Last message: " + (this.session.mid > 0 ? this.session.mid : '-') + "\n" +
+				"Session history: " + JSON.stringify(this.session.history) + "\n" +
+				"Watch tags: " + (watchTagsDump == '{}' ? '-' : watchTagsDump) + "\n" +
+				"================================\n";
+
+			return console.info(text);
+		}
+
+		enableLogging(loggingFlag)
+		{
+			if (loggingFlag === undefined)
+			{
+				loggingFlag = true;
+			}
+			loggingFlag = loggingFlag === true;
+
+			this.sharedConfig.setLoggingEnabled(loggingFlag);
+			this.loggingEnabled = loggingFlag;
+		}
+
+		capturePullEvent(debugFlag)
+		{
+			if (debugFlag === undefined)
+			{
+				debugFlag = true;
+			}
+
+			this.debug = debugFlag;
+		}
+
+		getConnectionPath(connectionType)
+		{
+			let path;
+			let params = {};
+
+			switch (connectionType)
+			{
+				case ConnectionType.WebSocket:
+					path = this.isSecure ? this.config.server.websocket_secure : this.config.server.websocket;
+					break;
+				case ConnectionType.LongPolling:
+					path = this.isSecure ? this.config.server.long_pooling_secure : this.config.server.long_polling;
+					break;
+				default:
+					throw new Error("Unknown connection type " + connectionType);
+			}
+
+			if (!Utils.isNotEmptyString(path))
+			{
+				return false;
+			}
+
+			if (typeof (this.config.jwt) == 'string' && this.config.jwt !== '')
+			{
+				params['token'] = this.config.jwt;
+			}
+			else
+			{
+				let channels = [];
+				['private', 'shared'].forEach((type) =>
+				{
+					if (typeof this.config.channels[type] !== 'undefined')
+					{
+						channels.push(this.config.channels[type].id);
+					}
+				});
+				if (channels.length === 0)
+				{
+					return false;
+				}
+
+				params['CHANNEL_ID'] = channels.join('/');
+			}
+
+			if (this.isJsonRpc())
+			{
+				params.jsonRpc = 'true';
+			}
+			else if (this.isProtobufSupported())
+			{
+				params.binaryMode = 'true';
+			}
+
+			if (this.isSharedMode())
+			{
+				if (!this.config.clientId)
+				{
+					throw new Error("Push-server is in shared mode, but clientId is not set");
+				}
+				params.clientId = this.config.clientId;
+			}
+			if (this.session.mid)
+			{
+				params.mid = this.session.mid;
+			}
+			if (this.session.tag)
+			{
+				params.tag = this.session.tag;
+			}
+			if (this.session.time)
+			{
+				params.time = this.session.time;
+			}
+			params.revision = REVISION;
+
+			return path + '?' + Utils.buildQueryString(params);
+		}
+
+		getPublicationPath()
+		{
+			const path = this.isSecure ? this.config.server.publish_secure : this.config.server.publish;
+			if (!path)
+			{
+				return '';
+			}
+
+			let channels = [];
+			for (let type in this.config.channels)
+			{
+				if (!this.config.channels.hasOwnProperty(type))
+				{
+					continue;
+				}
+				channels.push(this.config.channels[type].id);
+			}
+
+			const params = {
+				CHANNEL_ID: channels.join('/')
+			};
+
+			return path + '?' + Utils.buildQueryString(params);
+		}
+
+		/**
+		 * Returns reconnect delay in seconds
+		 * @param attemptNumber
+		 * @return {number}
+		 */
+		getConnectionAttemptDelay(attemptNumber)
+		{
+			let result;
+			if (attemptNumber < 1)
+			{
+				result = 0.5;
+			}
+			else if (attemptNumber < 3)
+			{
+				result = 15;
+			}
+			else if (attemptNumber < 5)
+			{
+				result = 45;
+			}
+			else if (attemptNumber < 10)
+			{
+				result = 600;
+			}
+			else
+			{
+				result = 3600;
+			}
+
+			return result + (result * Math.random() * 0.2);
+		}
+
+		sendPullStatus(status)
+		{
+			if (this.unloading)
+			{
+				return;
+			}
 
 			if (typeof BX.onCustomEvent !== 'undefined')
 			{
-				BX.onCustomEvent(window, 'onPullRevisionUp', [serverRevision, REVISION]);
+				BX.onCustomEvent(window, 'onPullStatus', [status]);
 			}
 
 			this.emit({
-				type: SubscriptionType.Revision,
+				type: SubscriptionType.Status,
 				data: {
-					server: serverRevision,
-					client: REVISION
+					status: status
 				}
 			});
-
-			this.logToConsole("Pull revision changed from " + REVISION + " to " + serverRevision + ". Reload required");
-
-			return false;
 		}
-		return true;
-	};
 
-	Pull.prototype.showNotification = function(text)
-	{
-		var self = this;
-		if (this.notificationPopup || typeof BX.PopupWindow === 'undefined')
-			return;
+		extendWatch(tag, force)
+		{
+			if (!tag || this.watchTagsQueue[tag])
+			{
+				return false;
+			}
 
-		this.notificationPopup = new BX.PopupWindow('bx-notifier-popup-confirm', null, {
-			zIndex: 200,
-			autoHide: false,
-			closeByEsc: false,
-			overlay: true,
-			content : BX.create("div", {
-				props: {className: "bx-messenger-confirm"},
-				html: text
-			}),
-			buttons: [
-				new BX.PopupWindowButton({
-					text: BX.message('JS_CORE_WINDOW_CLOSE'),
-					className: "popup-window-button-decline",
-					events: {
-						click: function(e)
-						{
-							self.notificationPopup.close();
-						}
-					}
-				})
-			],
-			events: {
-				onPopupClose: function()
+			this.watchTagsQueue[tag] = true;
+			if (force)
+			{
+				this.updateWatch(force);
+			}
+		}
+
+		updateWatch(force)
+		{
+			clearTimeout(this.watchUpdateTimeout);
+			this.watchUpdateTimeout = setTimeout(() =>
+			{
+				const watchTags = Object.keys(this.watchTagsQueue);
+				if (watchTags.length > 0)
 				{
-					this.destroy()
-				},
-				onPopupDestroy: function()
-				{
-					self.notificationPopup = null;
-				}
-			}
-		});
-		this.notificationPopup.show();
-	};
-
-	Pull.prototype.getRevision = function()
-	{
-		return (this.config && this.config.api) ? this.config.api.revision_web : null;
-	};
-
-	Pull.prototype.getServerVersion = function()
-	{
-		return (this.config && this.config.server) ? this.config.server.version : 0;
-	};
-
-	Pull.prototype.getServerMode = function()
-	{
-		return (this.config && this.config.server) ? this.config.server.mode : null;
-	};
-
-	Pull.prototype.getConfig = function()
-	{
-		return this.config;
-	};
-
-	Pull.prototype.getDebugInfo = function()
-	{
-		if (!console || !console.info || !JSON || !JSON.stringify)
-			return false;
-
-		var configDump;
-
-		if(this.config && this.config.channels && this.config.channels.private)
-		{
-			configDump = "ChannelID: " + this.config.channels.private.id + "\n" +
-				"ChannelDie: " + this.config.channels.private.end + "\n" +
-				("shared" in this.config.channels ? "ChannelDieShared: " + this.config.channels.shared.end : "");
-		}
-		else
-		{
-			configDump = "Config error: config is not loaded";
-		}
-
-		var watchTagsDump = JSON.stringify(this.watchTagsQueue);
-		var text = "\n========= PULL DEBUG ===========\n"+
-			"UserId: " + this.userId + " " + (this.userId > 0 ?  '': '(guest)') + "\n" +
-			(this.guestMode && this.guestUserId !== 0? "Guest userId: " + this.guestUserId + "\n":"") +
-			"Browser online: " + (navigator.onLine ? 'Y' : 'N') + "\n" +
-			"Connect: " + (this.isConnected() ? 'Y': 'N') + "\n" +
-			"Server type: " + (this.isSharedMode() ? 'cloud' : 'local') + "\n" +
-			"WebSocket support: " + (this.isWebSocketSupported() ? 'Y': 'N') + "\n" +
-			"WebSocket connect: " + (this._connectors.webSocket && this._connectors.webSocket.connected ? 'Y': 'N') + "\n"+
-			"WebSocket mode: " + (this._connectors.webSocket && this._connectors.webSocket.socket ? (this._connectors.webSocket.socket.url.search("binaryMode=true") != -1 ? "protobuf" : "text") : '-') + "\n"+
-
-			"Try connect: " + (this.reconnectTimeout? 'Y': 'N') + "\n" +
-			"Try number: " + (this.connectionAttempt) + "\n" +
-			"\n"+
-			"Path: " + (this.connector ? this.connector.path : '-') + "\n" +
-			configDump + "\n" +
-			"\n"+
-			"Last message: " + (this.session.mid > 0? this.session.mid : '-') + "\n" +
-			"Session history: " + JSON.stringify(this.session.history) + "\n" +
-			"Watch tags: " + (watchTagsDump == '{}'? '-' : watchTagsDump) + "\n"+
-			"================================\n";
-
-		return console.info(text);
-	};
-
-	Pull.prototype.enableLogging = function(loggingFlag)
-	{
-		if(loggingFlag === undefined)
-		{
-			loggingFlag = true;
-		}
-		loggingFlag = loggingFlag === true;
-
-		this.sharedConfig.setLoggingEnabled(loggingFlag);
-		this.loggingEnabled = loggingFlag;
-	};
-
-	Pull.prototype.capturePullEvent = function(debugFlag)
-	{
-		if(debugFlag === undefined)
-		{
-			debugFlag = true;
-		}
-
-		this.debug = debugFlag;
-	};
-
-	Pull.prototype.getConnectionPath = function(connectionType)
-	{
-		var path;
-
-		switch(connectionType)
-		{
-			case ConnectionType.WebSocket:
-				path = this.isSecure? this.config.server.websocket_secure: this.config.server.websocket;
-				break;
-			case ConnectionType.LongPolling:
-				path = this.isSecure? this.config.server.long_pooling_secure: this.config.server.long_polling;
-				break;
-			default:
-				throw new Error("Unknown connection type " + connectionType);
-		}
-
-		if(!Utils.isNotEmptyString(path))
-		{
-			return false;
-		}
-
-		var channels = [];
-		['private', 'shared'].forEach(function(type)
-		{
-			if (typeof this.config.channels[type] !== 'undefined')
-			{
-				channels.push(this.config.channels[type].id);
-			}
-		}, this);
-
-		if(channels.length === 0)
-		{
-			 return false;
-		}
-
-		var params = {
-			CHANNEL_ID: channels.join('/')
-		};
-
-		if(this.isProtobufSupported())
-		{
-			params.binaryMode = 'true';
-		}
-		if (this.isSharedMode())
-		{
-			if(!this.config.clientId)
-			{
-				throw new Error("Push-server is in shared mode, but clientId is not set");
-			}
-			params.clientId = this.config.clientId;
-		}
-		if (this.session.mid)
-		{
-			params.mid = this.session.mid;
-		}
-		if (this.session.tag)
-		{
-			params.tag = this.session.tag;
-		}
-		if (this.session.time)
-		{
-			params.time = this.session.time;
-		}
-		params.revision = REVISION;
-
-		return path + '?' + Utils.buildQueryString(params);
-	};
-
-	Pull.prototype.getPublicationPath = function()
-	{
-		var path = this.isSecure? this.config.server.publish_secure: this.config.server.publish;
-		if(!path)
-		{
-			return '';
-		}
-
-		var channels = [];
-		for (var type in this.config.channels)
-		{
-			if (!this.config.channels.hasOwnProperty(type))
-			{
-				continue;
-			}
-			channels.push(this.config.channels[type].id);
-		}
-
-		var params = {
-			CHANNEL_ID: channels.join('/')
-		};
-
-		return path + '?' + Utils.buildQueryString(params);
-	};
-
-	/**
-	 * Returns reconnect delay in seconds
-	 * @param attemptNumber
-	 * @return {number}
-	 */
-	Pull.prototype.getConnectionAttemptDelay = function(attemptNumber)
-	{
-		var result;
-		if(attemptNumber < 1)
-		{
-			result = 0.5;
-		}
-		else if(attemptNumber < 3)
-		{
-			result = 15;
-		}
-		else if(attemptNumber < 5)
-		{
-			result = 45;
-		}
-		else if (attemptNumber < 10)
-		{
-			result = 600;
-		}
-		else
-		{
-			result = 3600;
-		}
-
-		return result + (result * Math.random() * 0.2);
-	};
-
-	Pull.prototype.sendPullStatus = function(status)
-	{
-		if(this.unloading)
-		{
-			return;
-		}
-
-		if (typeof BX.onCustomEvent !== 'undefined')
-		{
-			BX.onCustomEvent(window, 'onPullStatus', [status]);
-		}
-
-		this.emit({
-			type: SubscriptionType.Status,
-			data: {
-				status: status
-			}
-		});
-	};
-
-	Pull.prototype.extendWatch = function (tag, force)
-	{
-		if (!tag || this.watchTagsQueue[tag])
-		{
-			return false;
-		}
-
-		this.watchTagsQueue[tag] = true;
-		if (force)
-		{
-			this.updateWatch(force);
-		}
-	};
-
-	Pull.prototype.updateWatch = function (force)
-	{
-		clearTimeout(this.watchUpdateTimeout);
-		this.watchUpdateTimeout = setTimeout(function ()
-		{
-			var watchTags = Object.keys(this.watchTagsQueue);
-			if (watchTags.length > 0)
-			{
-				this.restClient.callMethod('pull.watch.extend', {tags: watchTags}, function(result)
-				{
-					if(result.error())
+					this.restClient.callMethod('pull.watch.extend', {tags: watchTags}, (result) =>
 					{
+						if (result.error())
+						{
+							this.updateWatch();
+
+							return false;
+						}
+
+						const updatedTags = result.data();
+
+						for (let tagId in updatedTags)
+						{
+							if (updatedTags.hasOwnProperty(tagId) && !updatedTags[tagId])
+							{
+								this.clearWatch(tagId);
+							}
+						}
 						this.updateWatch();
-
-						return false;
-					}
-
-					var updatedTags = result.data();
-
-					for (var tagId in updatedTags)
-					{
-						if (updatedTags.hasOwnProperty(tagId) && !updatedTags[tagId])
-						{
-							this.clearWatch(tagId);
-						}
-					}
-					this.updateWatch();
-
-				}.bind(this))
-			}
-			else
-			{
-				this.updateWatch();
-			}
-		}.bind(this), force ? this.watchForceUpdateInterval : this.watchUpdateInterval);
-	};
-
-	Pull.prototype.clearWatch = function (tagId)
-	{
-		delete this.watchTagsQueue[tagId];
-	};
-
-	// old functions, not used anymore.
-	Pull.prototype.setPrivateVar = function(){};
-	Pull.prototype.returnPrivateVar = function(){};
-	Pull.prototype.expireConfig = function(){};
-	Pull.prototype.updateChannelID = function(){};
-	Pull.prototype.tryConnect = function(){};
-	Pull.prototype.tryConnectDelay = function(){};
-	Pull.prototype.tryConnectSet = function(){};
-	Pull.prototype.updateState = function(){};
-	Pull.prototype.setUpdateStateStepCount = function(){};
-	Pull.prototype.supportWebSocket = function()
-	{
-		return this.isWebSocketSupported();
-	};
-	Pull.prototype.isWebSoketConnected = function()
-	{
-		return this.isConnected() && this.connectionType == ConnectionType.WebSocket;
-	};
-	Pull.prototype.getPullServerStatus = function(){return this.isConnected()};
-	Pull.prototype.closeConfirm = function()
-	{
-		if (this.notificationPopup)
-		{
-			this.notificationPopup.destroy();
-		}
-	};
-
-	var SharedConfig = function(params)
-	{
-		params = params || {};
-		this.storage = params.storage || new StorageManager();
-
-		this.ttl = 24 * 60 * 60;
-
-		this.lsKeys = {
-			websocketBlocked: 'bx-pull-websocket-blocked',
-			longPollingBlocked: 'bx-pull-longpolling-blocked',
-			loggingEnabled: 'bx-pull-logging-enabled'
-		};
-
-		this.callbacks = {
-			onWebSocketBlockChanged: (Utils.isFunction(params.onWebSocketBlockChanged) ? params.onWebSocketBlockChanged : function(){})
-		};
-
-		if (this.storage)
-		{
-			window.addEventListener('storage', this.onLocalStorageSet.bind(this));
-		}
-	};
-
-	SharedConfig.prototype.onLocalStorageSet = function(params)
-	{
-		if(
-			this.storage.compareKey(params.key, this.lsKeys.websocketBlocked)
-			&& params.newValue != params.oldValue
-		)
-		{
-			this.callbacks.onWebSocketBlockChanged({
-				isWebSocketBlocked: this.isWebSocketBlocked()
-			})
-		}
-	};
-
-	SharedConfig.prototype.isWebSocketBlocked = function()
-	{
-		if (!this.storage)
-		{
-			return false;
-		}
-
-		return this.storage.get(this.lsKeys.websocketBlocked, 0) > Utils.getTimestamp();
-	};
-
-	SharedConfig.prototype.setWebSocketBlocked = function(isWebSocketBlocked)
-	{
-		if (!this.storage)
-		{
-			return false;
-		}
-
-		try
-		{
-			this.storage.set(this.lsKeys.websocketBlocked, (isWebSocketBlocked ? Utils.getTimestamp()+this.ttl : 0));
-		}
-		catch (e)
-		{
-			console.error(Utils.getDateForLog() + " Pull: Could not save WS_blocked flag in local storage. Error: ", e);
-		}
-	};
-
-	SharedConfig.prototype.isLongPollingBlocked = function()
-	{
-		if (!this.storage)
-		{
-			return false;
-		}
-
-		return this.storage.get(this.lsKeys.longPollingBlocked, 0) > Utils.getTimestamp();
-	};
-
-	SharedConfig.prototype.setLongPollingBlocked = function(isLongPollingBlocked)
-	{
-		if (!this.storage)
-		{
-			return false;
-		}
-
-		try
-		{
-			this.storage.set(this.lsKeys.longPollingBlocked, (isLongPollingBlocked ? Utils.getTimestamp()+this.ttl : 0));
-		}
-		catch (e)
-		{
-			console.error(Utils.getDateForLog() + " Pull: Could not save LP_blocked flag in local storage. Error: ", e);
-		}
-	};
-
-	SharedConfig.prototype.isLoggingEnabled = function()
-	{
-		if (!this.storage)
-		{
-			return false;
-		}
-
-		return this.storage.get(this.lsKeys.loggingEnabled, 0) > Utils.getTimestamp();
-	};
-
-	SharedConfig.prototype.setLoggingEnabled = function(isLoggingEnabled)
-	{
-		if (!this.storage)
-		{
-			return false;
-		}
-
-		try
-		{
-			this.storage.set(this.lsKeys.loggingEnabled, (isLoggingEnabled ? Utils.getTimestamp()+this.ttl : 0));
-		}
-		catch (e)
-		{
-			console.error("LocalStorage error: ", e);
-			return false;
-		}
-	};
-
-	var ObjectExtend = function(child, parent)
-	{
-		var f = function() {};
-		f.prototype = parent.prototype;
-
-		child.prototype = new f();
-		child.prototype.constructor = child;
-
-		child.superclass = parent.prototype;
-		if(parent.prototype.constructor == Object.prototype.constructor)
-		{
-			parent.prototype.constructor = parent;
-		}
-	};
-
-	var AbstractConnector = function(config)
-	{
-		this.parent = config.parent;
-		this.callbacks = {
-			onOpen: Utils.isFunction(config.onOpen) ? config.onOpen : function() {},
-			onDisconnect: Utils.isFunction(config.onDisconnect) ? config.onDisconnect : function() {},
-			onError: Utils.isFunction(config.onError) ? config.onError : function() {},
-			onMessage: Utils.isFunction(config.onMessage) ? config.onMessage : function() {}
-		};
-
-		this._connected = false;
-		this.connectionType = "";
-
-		this.disconnectCode = '';
-		this.disconnectReason = '';
-
-		Object.defineProperty(this, "connected", {
-			get: function()
-			{
-				return this._connected
-			},
-			set: function(connected)
-			{
-				if(connected == this._connected)
-					return;
-
-				this._connected = connected;
-
-				if(this._connected)
-				{
-					this.callbacks.onOpen();
+					})
 				}
 				else
 				{
-					this.callbacks.onDisconnect({
-						code: this.disconnectCode,
-						reason: this.disconnectReason
-					});
+					this.updateWatch();
 				}
-			}
-		});
+			}, force ? this.watchForceUpdateInterval : this.watchUpdateInterval);
+		}
 
-		Object.defineProperty(this, "path", {
-			get: function()
-			{
-				return this.parent.getConnectionPath(this.connectionType);
-			}
-		})
-	};
-
-	var WebSocketConnector = function(config)
-	{
-		WebSocketConnector.superclass.constructor.apply(this, arguments);
-		this.connectionType = ConnectionType.WebSocket;
-		this.socket = null;
-
-		this.onSocketOpenHandler = this.onSocketOpen.bind(this);
-		this.onSocketCloseHandler = this.onSocketClose.bind(this);
-		this.onSocketErrorHandler = this.onSocketError.bind(this);
-		this.onSocketMessageHandler = this.onSocketMessage.bind(this);
-	};
-
-	ObjectExtend(WebSocketConnector, AbstractConnector);
-
-	WebSocketConnector.prototype.connect = function()
-	{
-		if(this.socket)
+		clearWatch(tagId)
 		{
-			if(this.socket.readyState === 1)
+			delete this.watchTagsQueue[tagId];
+		}
+
+		updatePingWaitTimeout()
+		{
+			clearTimeout(this.pingWaitTimeout);
+			this.pingWaitTimeout = setTimeout(this.onPingTimeoutHandler, PING_TIMEOUT * 2 * 1000)
+		}
+
+		clearPingWaitTimeout()
+		{
+			clearTimeout(this.pingWaitTimeout);
+			this.pingWaitTimeout = null;
+		}
+
+		onPingTimeout()
+		{
+			this.pingWaitTimeout = null;
+			if (!this.enabled || !this.isConnected())
 			{
-				// already connected
-				return true;
+				return;
+			}
+
+			console.warn("No pings are received in " + PING_TIMEOUT * 2 + " seconds. Reconnecting")
+			this.disconnect("1000", "connection stuck");
+			this.scheduleReconnect();
+		}
+
+		// old functions, not used anymore.
+		setPrivateVar() {}
+
+		returnPrivateVar() {}
+
+		expireConfig() {}
+
+		updateChannelID() {}
+
+		tryConnect() {}
+
+		tryConnectDelay() {}
+
+		tryConnectSet() {}
+
+		updateState() {}
+
+		setUpdateStateStepCount() {}
+
+		supportWebSocket()
+		{
+			return this.isWebSocketSupported();
+		}
+
+		isWebSoketConnected()
+		{
+			return this.isConnected() && this.connectionType == ConnectionType.WebSocket;
+		}
+
+		getPullServerStatus() {return this.isConnected()}
+
+		closeConfirm()
+		{
+			if (this.notificationPopup)
+			{
+				this.notificationPopup.destroy();
+			}
+		}
+	}
+
+	class SharedConfig
+	{
+		constructor(params)
+		{
+			params = params || {};
+			this.storage = params.storage || new StorageManager();
+
+			this.ttl = 24 * 60 * 60;
+
+			this.lsKeys = {
+				websocketBlocked: 'bx-pull-websocket-blocked',
+				longPollingBlocked: 'bx-pull-longpolling-blocked',
+				loggingEnabled: 'bx-pull-logging-enabled'
+			};
+
+			this.callbacks = {
+				onWebSocketBlockChanged: (Utils.isFunction(params.onWebSocketBlockChanged) ? params.onWebSocketBlockChanged : function () {})
+			};
+
+			if (this.storage)
+			{
+				window.addEventListener('storage', this.onLocalStorageSet.bind(this));
+			}
+		}
+
+		onLocalStorageSet(params)
+		{
+			if (
+				this.storage.compareKey(params.key, this.lsKeys.websocketBlocked)
+				&& params.newValue != params.oldValue
+			)
+			{
+				this.callbacks.onWebSocketBlockChanged({
+					isWebSocketBlocked: this.isWebSocketBlocked()
+				})
+			}
+		}
+
+		isWebSocketBlocked()
+		{
+			if (!this.storage)
+			{
+				return false;
+			}
+
+			return this.storage.get(this.lsKeys.websocketBlocked, 0) > Utils.getTimestamp();
+		}
+
+		setWebSocketBlocked(isWebSocketBlocked)
+		{
+			if (!this.storage)
+			{
+				return false;
+			}
+
+			try
+			{
+				this.storage.set(this.lsKeys.websocketBlocked, (isWebSocketBlocked ? Utils.getTimestamp() + this.ttl : 0));
+			} catch (e)
+			{
+				console.error(Utils.getDateForLog() + " Pull: Could not save WS_blocked flag in local storage. Error: ", e);
+			}
+		}
+
+		isLongPollingBlocked()
+		{
+			if (!this.storage)
+			{
+				return false;
+			}
+
+			return this.storage.get(this.lsKeys.longPollingBlocked, 0) > Utils.getTimestamp();
+		}
+
+		setLongPollingBlocked(isLongPollingBlocked)
+		{
+			if (!this.storage)
+			{
+				return false;
+			}
+
+			try
+			{
+				this.storage.set(this.lsKeys.longPollingBlocked, (isLongPollingBlocked ? Utils.getTimestamp() + this.ttl : 0));
+			} catch (e)
+			{
+				console.error(Utils.getDateForLog() + " Pull: Could not save LP_blocked flag in local storage. Error: ", e);
+			}
+		}
+
+		isLoggingEnabled()
+		{
+			if (!this.storage)
+			{
+				return false;
+			}
+
+			return this.storage.get(this.lsKeys.loggingEnabled, 0) > Utils.getTimestamp();
+		}
+
+		setLoggingEnabled(isLoggingEnabled)
+		{
+			if (!this.storage)
+			{
+				return false;
+			}
+
+			try
+			{
+				this.storage.set(this.lsKeys.loggingEnabled, (isLoggingEnabled ? Utils.getTimestamp() + this.ttl : 0));
+			} catch (e)
+			{
+				console.error("LocalStorage error: ", e);
+				return false;
+			}
+		}
+	}
+
+	class AbstractConnector
+	{
+		_connected = false;
+		connectionType = "";
+
+		disconnectCode = '';
+		disconnectReason = '';
+
+		constructor(config)
+		{
+			this.parent = config.parent;
+			this.callbacks = {
+				onOpen: Utils.isFunction(config.onOpen) ? config.onOpen : function () {},
+				onDisconnect: Utils.isFunction(config.onDisconnect) ? config.onDisconnect : function () {},
+				onError: Utils.isFunction(config.onError) ? config.onError : function () {},
+				onMessage: Utils.isFunction(config.onMessage) ? config.onMessage : function () {}
+			};
+		}
+
+		get connected()
+		{
+			return this._connected
+		}
+
+		set connected(value)
+		{
+			if (value == this._connected)
+			{
+				return;
+			}
+
+			this._connected = value;
+
+			if (this._connected)
+			{
+				this.callbacks.onOpen();
 			}
 			else
+			{
+				this.callbacks.onDisconnect({
+					code: this.disconnectCode,
+					reason: this.disconnectReason
+				});
+			}
+		}
+
+		get path()
+		{
+			return this.parent.getConnectionPath(this.connectionType);
+		}
+	}
+
+	class WebSocketConnector extends AbstractConnector
+	{
+		constructor(config)
+		{
+			super(config)
+			this.connectionType = ConnectionType.WebSocket;
+			this.socket = null;
+
+			this.onSocketOpenHandler = this.onSocketOpen.bind(this);
+			this.onSocketCloseHandler = this.onSocketClose.bind(this);
+			this.onSocketErrorHandler = this.onSocketError.bind(this);
+			this.onSocketMessageHandler = this.onSocketMessage.bind(this);
+		}
+
+		connect()
+		{
+			if (this.socket)
+			{
+				if (this.socket.readyState === 1)
+				{
+					// already connected
+					return true;
+				}
+				else
+				{
+					this.socket.removeEventListener('open', this.onSocketOpenHandler);
+					this.socket.removeEventListener('close', this.onSocketCloseHandler);
+					this.socket.removeEventListener('error', this.onSocketErrorHandler);
+					this.socket.removeEventListener('message', this.onSocketMessageHandler);
+
+					this.socket.close();
+					this.socket = null;
+				}
+			}
+
+			this.createSocket();
+		}
+
+		disconnect(code, message)
+		{
+			if (this.socket !== null)
 			{
 				this.socket.removeEventListener('open', this.onSocketOpenHandler);
 				this.socket.removeEventListener('close', this.onSocketCloseHandler);
 				this.socket.removeEventListener('error', this.onSocketErrorHandler);
 				this.socket.removeEventListener('message', this.onSocketMessageHandler);
 
+				this.socket.close(code, message);
+			}
+			this.socket = null;
+			this.disconnectCode = code;
+			this.disconnectReason = message;
+			this.connected = false;
+		}
+
+		createSocket()
+		{
+			if (this.socket)
+			{
+				throw new Error("Socket already exists");
+			}
+
+			if (!this.path)
+			{
+				throw new Error("Websocket connection path is not defined");
+			}
+
+			this.socket = new WebSocket(this.path);
+			this.socket.binaryType = 'arraybuffer';
+
+			this.socket.addEventListener('open', this.onSocketOpenHandler);
+			this.socket.addEventListener('close', this.onSocketCloseHandler);
+			this.socket.addEventListener('error', this.onSocketErrorHandler);
+			this.socket.addEventListener('message', this.onSocketMessageHandler);
+		}
+
+		/**
+		 * Sends some data to the server via websocket connection.
+		 * @param {ArrayBuffer} buffer Data to send.
+		 * @return {boolean}
+		 */
+		send(buffer)
+		{
+			if (!this.socket || this.socket.readyState !== 1)
+			{
+				console.error(Utils.getDateForLog() + ": Pull: WebSocket is not connected");
+				return false;
+			}
+
+			this.socket.send(buffer);
+			return true;
+		}
+
+		onSocketOpen()
+		{
+			this.connected = true;
+		}
+
+		onSocketClose(e)
+		{
+			this.socket = null;
+			this.disconnectCode = e.code;
+			this.disconnectReason = e.reason;
+			this.connected = false;
+		}
+
+		onSocketError(e)
+		{
+			this.callbacks.onError(e);
+		}
+
+		onSocketMessage(e)
+		{
+			this.callbacks.onMessage(e.data);
+		}
+
+		destroy()
+		{
+			if (this.socket)
+			{
 				this.socket.close();
 				this.socket = null;
 			}
 		}
+	}
 
-		this.createSocket();
-	};
-
-	WebSocketConnector.prototype.disconnect = function(code, message)
+	class LongPollingConnector extends AbstractConnector
 	{
-		if (this.socket !== null)
+		constructor(config)
 		{
-			this.socket.removeEventListener('open', this.onSocketOpenHandler);
-			this.socket.removeEventListener('close', this.onSocketCloseHandler);
-			this.socket.removeEventListener('error', this.onSocketErrorHandler);
-			this.socket.removeEventListener('message', this.onSocketMessageHandler);
+			super(config);
 
-			this.socket.close(code, message);
-		}
-		this.socket = null;
-		this.disconnectCode = code;
-		this.disconnectReason = message;
-		this.connected = false;
-	};
-
-	WebSocketConnector.prototype.createSocket = function()
-	{
-		if(this.socket)
-		{
-			throw new Error("Socket already exists");
-		}
-
-		if(!this.path)
-		{
-			throw new Error("Websocket connection path is not defined");
-		}
-
-		this.socket = new WebSocket(this.path);
-		this.socket.binaryType = 'arraybuffer';
-
-		this.socket.addEventListener('open', this.onSocketOpenHandler);
-		this.socket.addEventListener('close', this.onSocketCloseHandler);
-		this.socket.addEventListener('error', this.onSocketErrorHandler);
-		this.socket.addEventListener('message', this.onSocketMessageHandler);
-	};
-
-	/**
-	 * Sends some data to the server via websocket connection.
-	 * @param {ArrayBuffer} buffer Data to send.
-	 * @return {boolean}
-	 */
-	WebSocketConnector.prototype.send = function(buffer)
-	{
-		if(!this.socket || this.socket.readyState !== 1)
-		{
-			console.error(Utils.getDateForLog() + ": Pull: WebSocket is not connected");
-			return false;
-		}
-
-		this.socket.send(buffer);
-	};
-
-	WebSocketConnector.prototype.onSocketOpen = function()
-	{
-		this.connected = true;
-	};
-
-	WebSocketConnector.prototype.onSocketClose = function(e)
-	{
-		this.socket = null;
-		this.disconnectCode = e.code;
-		this.disconnectReason = e.reason;
-		this.connected = false;
-	};
-
-	WebSocketConnector.prototype.onSocketError = function(e)
-	{
-		this.callbacks.onError(e);
-	};
-
-	WebSocketConnector.prototype.onSocketMessage = function(e)
-	{
-		this.callbacks.onMessage(e.data);
-	};
-
-	WebSocketConnector.prototype.destroy = function()
-	{
-		if(this.socket)
-		{
-			this.socket.close();
-			this.socket = null;
-		}
-	};
-
-	var LongPollingConnector = function(config)
-	{
-		LongPollingConnector.superclass.constructor.apply(this, arguments);
-
-		this.active = false;
-		this.connectionType = ConnectionType.LongPolling;
-		this.requestTimeout = null;
-		this.failureTimeout = null;
-		this.xhr = this.createXhr();
-		this.requestAborted = false;
-	};
-
-	ObjectExtend(LongPollingConnector, AbstractConnector);
-
-	LongPollingConnector.prototype.createXhr = function()
-	{
-		var result = new XMLHttpRequest();
-		if(this.parent.isProtobufSupported())
-		{
-			result.responseType = "arraybuffer";
-		}
-		result.addEventListener("readystatechange", this.onXhrReadyStateChange.bind(this));
-		return result;
-	};
-
-	LongPollingConnector.prototype.connect = function()
-	{
-		this.active = true;
-		this.performRequest();
-	};
-
-	LongPollingConnector.prototype.disconnect = function(code, reason)
-	{
-		this.active = false;
-
-		if(this.failureTimeout)
-		{
-			clearTimeout(this.failureTimeout);
-			this.failureTimeout = null;
-		}
-		if(this.requestTimeout)
-		{
-			clearTimeout(this.requestTimeout);
+			this.active = false;
+			this.connectionType = ConnectionType.LongPolling;
 			this.requestTimeout = null;
+			this.failureTimeout = null;
+			this.xhr = this.createXhr();
+			this.requestAborted = false;
 		}
 
-		if(this.xhr)
+		createXhr()
+		{
+			const result = new XMLHttpRequest();
+			if (this.parent.isProtobufSupported() && !this.parent.isJsonRpc())
+			{
+				result.responseType = "arraybuffer";
+			}
+			result.addEventListener("readystatechange", this.onXhrReadyStateChange.bind(this));
+			return result;
+		}
+
+		connect()
+		{
+			this.active = true;
+			this.performRequest();
+		}
+
+		disconnect(code, reason)
+		{
+			this.active = false;
+
+			if (this.failureTimeout)
+			{
+				clearTimeout(this.failureTimeout);
+				this.failureTimeout = null;
+			}
+			if (this.requestTimeout)
+			{
+				clearTimeout(this.requestTimeout);
+				this.requestTimeout = null;
+			}
+
+			if (this.xhr)
+			{
+				this.requestAborted = true;
+				this.xhr.abort();
+			}
+
+			this.disconnectCode = code;
+			this.disconnectReason = reason;
+			this.connected = false;
+		}
+
+		performRequest()
+		{
+			if (!this.active)
+			{
+				return;
+			}
+
+			if (!this.path)
+			{
+				throw new Error("Long polling connection path is not defined");
+			}
+			if (this.xhr.readyState !== 0 && this.xhr.readyState !== 4)
+			{
+				return;
+			}
+
+			clearTimeout(this.failureTimeout);
+			clearTimeout(this.requestTimeout);
+
+			this.failureTimeout = setTimeout(() => { this.connected = true }, 5000);
+			this.requestTimeout = setTimeout(this.onRequestTimeout.bind(this), LONG_POLLING_TIMEOUT * 1000);
+
+			this.xhr.open("GET", this.path);
+			this.xhr.send();
+		}
+
+		onRequestTimeout()
 		{
 			this.requestAborted = true;
 			this.xhr.abort();
+			this.performRequest();
 		}
 
-		this.disconnectCode = code;
-		this.disconnectReason = reason;
-		this.connected = false;
-	};
-
-	LongPollingConnector.prototype.performRequest = function()
-	{
-		var self = this;
-		if(!this.active)
-			return;
-
-		if(!this.path)
+		onXhrReadyStateChange()
 		{
-			throw new Error("Long polling connection path is not defined");
-		}
-		if(this.xhr.readyState !== 0 && this.xhr.readyState !== 4)
-		{
-			return;
-		}
-
-		clearTimeout(this.failureTimeout);
-		clearTimeout(this.requestTimeout);
-
-		this.failureTimeout = setTimeout(function()
-		{
-			self.connected = true;
-		}, 5000);
-
-		this.requestTimeout = setTimeout(this.onRequestTimeout.bind(this), LONG_POLLING_TIMEOUT * 1000);
-
-		this.xhr.open("GET", this.path);
-		this.xhr.send();
-	};
-
-	LongPollingConnector.prototype.onRequestTimeout = function()
-	{
-		this.requestAborted = true;
-		this.xhr.abort();
-		this.performRequest();
-	};
-
-	LongPollingConnector.prototype.onXhrReadyStateChange = function (e)
-	{
-		if (this.xhr.readyState === 4)
-		{
-			if(!this.requestAborted || this.xhr.status == 200)
+			if (this.xhr.readyState === 4)
 			{
-				this.onResponse(this.xhr.response);
+				if (!this.requestAborted || this.xhr.status == 200)
+				{
+					this.onResponse(this.xhr.response);
+				}
+				this.requestAborted = false;
 			}
-			this.requestAborted = false;
-		}
-	};
-
-	/**
-	 * Sends some data to the server via http request.
-	 * @param {ArrayBuffer} buffer Data to send.
-	 * @return {bool}
-	 */
-	LongPollingConnector.prototype.send = function(buffer)
-	{
-		var path = this.parent.getPublicationPath();
-		if(!path)
-		{
-			console.error(Utils.getDateForLog() + ": Pull: publication path is empty");
-			return false;
 		}
 
-		var xhr = new XMLHttpRequest();
-		xhr.open("POST", path);
-		xhr.send(buffer);
-	};
-
-	LongPollingConnector.prototype.onResponse = function(response)
-	{
-		if(this.failureTimeout)
+		/**
+		 * Sends some data to the server via http request.
+		 * @param {ArrayBuffer} buffer Data to send.
+		 * @return {bool}
+		 */
+		send(buffer)
 		{
-			clearTimeout(this.failureTimeout);
-			this.failureTimeout = 0;
-		}
-		if(this.requestTimeout)
-		{
-			clearTimeout(this.requestTimeout);
-			this.requestTimeout = 0;
-		}
-
-		if(this.xhr.status == 200)
-		{
-			this.connected = true;
-			if(Utils.isNotEmptyString(response) || (response instanceof ArrayBuffer))
+			const path = this.parent.getPublicationPath();
+			if (!path)
 			{
-				this.callbacks.onMessage(response);
+				console.error(Utils.getDateForLog() + ": Pull: publication path is empty");
+				return false;
+			}
+
+			let xhr = new XMLHttpRequest();
+			xhr.open("POST", path);
+			xhr.send(buffer);
+		}
+
+		onResponse(response)
+		{
+			if (this.failureTimeout)
+			{
+				clearTimeout(this.failureTimeout);
+				this.failureTimeout = 0;
+			}
+			if (this.requestTimeout)
+			{
+				clearTimeout(this.requestTimeout);
+				this.requestTimeout = 0;
+			}
+
+			if (this.xhr.status == 200)
+			{
+				this.connected = true;
+				if (Utils.isNotEmptyString(response) || (response instanceof ArrayBuffer))
+				{
+					this.callbacks.onMessage(response);
+				}
+				else
+				{
+					this.parent.session.mid = null;
+				}
+				this.performRequest();
+			}
+			else if (this.xhr.status == 304)
+			{
+				this.connected = true;
+				if (this.xhr.getResponseHeader("Expires") === "Thu, 01 Jan 1973 11:11:01 GMT")
+				{
+					const lastMessageId = this.xhr.getResponseHeader("Last-Message-Id");
+					if (Utils.isNotEmptyString(lastMessageId))
+					{
+						this.parent.setLastMessageId(lastMessageId);
+					}
+				}
+				this.performRequest();
 			}
 			else
 			{
-				this.parent.session.mid = null;
+				this.callbacks.onError('Could not connect to the server');
+				this.connected = false;
 			}
-			this.performRequest();
 		}
-		else if(this.xhr.status == 304)
+	}
+
+	class ChannelManager
+	{
+		constructor(params)
 		{
-			this.connected = true;
-			if (this.xhr.getResponseHeader("Expires") === "Thu, 01 Jan 1973 11:11:01 GMT")
+			this.publicIds = {};
+
+			this.restClient = typeof params.restClient !== "undefined" ? params.restClient : BX.rest;
+
+			this.getPublicListMethod = params.getPublicListMethod;
+		}
+
+		/**
+		 *
+		 * @param {Array} users Array of user ids.
+		 * @return {Promise}
+		 */
+		getPublicIds(users)
+		{
+			const now = new Date();
+			let result = {};
+			let unknownUsers = [];
+
+			for (let i = 0; i < users.length; i++)
 			{
-				var lastMessageId = this.xhr.getResponseHeader("Last-Message-Id");
-				if (Utils.isNotEmptyString(lastMessageId))
+				const userId = users[i];
+				if (this.publicIds[userId] && this.publicIds[userId]['end'] > now)
 				{
-					this.parent.setLastMessageId(lastMessageId);
+					result[userId] = this.publicIds[userId];
+				}
+				else
+				{
+					unknownUsers.push(userId);
 				}
 			}
-			this.performRequest();
-		}
-		else
-		{
-			this.callbacks.onError('Could not connect to the server');
-			this.connected = false;
-		}
-	};
 
-	var ChannelManager = function (params)
-	{
-		this.publicIds = {};
-
-		this.restClient = typeof params.restClient !== "undefined"? params.restClient: BX.rest;
-
-		this.getPublicListMethod = params.getPublicListMethod;
-	};
-
-	/**
-	 *
-	 * @param {Array} users Array of user ids.
-	 * @return {BX.Promise}
-	 */
-	ChannelManager.prototype.getPublicIds = function(users)
-	{
-		var promise = new BX.Promise();
-		var result = {};
-		var now = new Date();
-		var unknownUsers = [];
-
-		for(var i = 0; i < users.length; i++)
-		{
-			var userId = users[i];
-			if(this.publicIds[userId] && this.publicIds[userId]['end'] > now)
+			if (unknownUsers.length === 0)
 			{
-				result[userId] = this.publicIds[userId];
+				return Promise.resolve(result);
+			}
+
+			return new Promise((resolve) =>
+			{
+				this.restClient.callMethod(this.getPublicListMethod, {users: unknownUsers}).then((response) =>
+				{
+					if (response.error())
+					{
+						return resolve({});
+					}
+
+					const data = response.data();
+					this.setPublicIds(Utils.objectValues(data));
+					unknownUsers.forEach((userId) =>
+					{
+						result[userId] = this.publicIds[userId];
+					});
+
+					resolve(result);
+				});
+			})
+		}
+
+		/**
+		 *
+		 * @param {object[]} publicIds
+		 * @param {integer} publicIds.user_id
+		 * @param {string} publicIds.public_id
+		 * @param {string} publicIds.signature
+		 * @param {Date} publicIds.start
+		 * @param {Date} publicIds.end
+		 */
+		setPublicIds(publicIds)
+		{
+			for (let i = 0; i < publicIds.length; i++)
+			{
+				const publicIdDescriptor = publicIds[i];
+				const userId = publicIdDescriptor.user_id;
+				this.publicIds[userId] = {
+					userId: userId,
+					publicId: publicIdDescriptor.public_id,
+					signature: publicIdDescriptor.signature,
+					start: new Date(publicIdDescriptor.start),
+					end: new Date(publicIdDescriptor.end)
+				}
+			}
+		};
+	}
+
+	class StorageManager
+	{
+		constuctor(params)
+		{
+			params = params || {};
+
+			this.userId = params.userId ? params.userId : (typeof BX.message !== 'undefined' && BX.message.USER_ID ? BX.message.USER_ID : 0);
+			this.siteId = params.siteId ? params.siteId : (typeof BX.message !== 'undefined' && BX.message.SITE_ID ? BX.message.SITE_ID : 'none');
+		}
+
+		set(name, value)
+		{
+			if (typeof window.localStorage === 'undefined')
+			{
+				return false;
+			}
+			if (typeof value != 'string')
+			{
+				if (value)
+				{
+					value = JSON.stringify(value);
+				}
+			}
+			return window.localStorage.setItem(this.getKey(name), value)
+		}
+
+		get(name, defaultValue)
+		{
+			if (typeof window.localStorage === 'undefined')
+			{
+				return defaultValue || null;
+			}
+
+			const result = window.localStorage.getItem(this.getKey(name));
+			if (result === null)
+			{
+				return defaultValue || null;
+			}
+
+			return JSON.parse(result);
+		}
+
+		remove(name)
+		{
+			if (typeof window.localStorage === 'undefined')
+			{
+				return false;
+			}
+			return window.localStorage.removeItem(this.getKey(name));
+		}
+
+		getKey(name)
+		{
+			return 'bx-pull-' + this.userId + '-' + this.siteId + '-' + name;
+		}
+
+		compareKey(eventKey, userKey)
+		{
+			return eventKey === this.getKey(userKey);
+		}
+	}
+
+	class JsonRpc
+	{
+		idCounter = 0;
+
+		handlers = {};
+		rpcResponseAwaiters = new Map();
+
+		constructor(options)
+		{
+			this.connector = options.connector;
+			if (Utils.isPlainObject(options.handlers))
+			{
+				for (let method in options.handlers)
+				{
+					this.handle(method, options.handlers[method]);
+				}
+			}
+		}
+
+		/**
+		 * @param {string} method
+		 * @param {function} handler
+		 */
+		handle(method, handler)
+		{
+			this.handlers[method] = handler;
+		}
+
+		executeOutgoingRpcCommand(method, params, id)
+		{
+			return new Promise((resolve, reject) =>
+			{
+				const request = this.createRequest(method, params, id);
+				if (this.connector.send(JSON.stringify(request)))
+				{
+					this.rpcResponseAwaiters.set(request.id, {resolve, reject});
+				}
+				else
+				{
+					reject(new ErrorNotConnected('websocket is not connected'));
+				}
+			})
+		}
+
+		/**
+		 * Executes array or rpc commands. Returns array of promises, each promise will be resolved individually.
+		 *
+		 * @param {JsonRpcRequest[]} batch
+		 * @returns {Promise[]}
+		 */
+		executeOutgoingRpcBatch(batch)
+		{
+			let requests = [];
+			let promises = [];
+			batch.forEach(({method, params, id}) =>
+			{
+				const request = this.createRequest(method, params, id);
+				requests.push(request);
+				promises.push(new Promise((resolve, reject) => this.rpcResponseAwaiters.set(request.id, {
+					resolve,
+					reject
+				})));
+			});
+
+			this.connector.send(JSON.stringify(requests));
+			return promises;
+		}
+
+		processRpcResponse(response)
+		{
+			if ("id" in response && this.rpcResponseAwaiters.has(response.id))
+			{
+				if ("result" in response)
+				{
+					this.rpcResponseAwaiters.get(response.id).resolve(response.result)
+				}
+				else if ("error" in response)
+				{
+					this.rpcResponseAwaiters.get(response.id).reject(response.error)
+				}
+				else
+				{
+					this.rpcResponseAwaiters.get(response.id).reject(new Error("wrong response structure"))
+				}
+
+				this.rpcResponseAwaiters.delete(response.id)
 			}
 			else
 			{
-				unknownUsers.push(userId);
+				console.error("Received rpc response with unknown id", response)
 			}
 		}
 
-		if(unknownUsers.length === 0)
+		parseJsonRpcMessage(message)
 		{
-			promise.resolve(result);
-			return promise;
-		}
-
-		this.restClient.callMethod(this.getPublicListMethod, {users: unknownUsers}).then(function(response)
-		{
-			if(response.error())
+			let decoded
+			try
 			{
-				promise.resolve({});
-				return promise;
-			}
-
-			var data = response.data();
-
-			this.setPublicIds(Utils.objectValues(data));
-			unknownUsers.forEach(function(userId) {
-				result[userId] = this.publicIds[userId];
-			}, this);
-
-			promise.resolve(result);
-
-		}.bind(this));
-
-		return promise;
-	};
-
-	/**
-	 *
-	 * @param {object[]} publicIds
-	 * @param {integer} publicIds.user_id
-	 * @param {string} publicIds.public_id
-	 * @param {string} publicIds.signature
-	 * @param {Date} publicIds.start
-	 * @param {Date} publicIds.end
-	 */
-	ChannelManager.prototype.setPublicIds = function(publicIds)
-	{
-		for(var i = 0; i < publicIds.length; i++)
-		{
-			var publicIdDescriptor = publicIds[i];
-			var userId = publicIdDescriptor.user_id;
-			this.publicIds[userId] = {
-				userId: userId,
-				publicId: publicIdDescriptor.public_id,
-				signature: publicIdDescriptor.signature,
-				start: new Date(publicIdDescriptor.start),
-				end: new Date(publicIdDescriptor.end)
-			}
-		}
-	};
-
-
-	var StorageManager = function (params)
-	{
-		params = params || {};
-
-		this.userId = params.userId? params.userId: (typeof BX.message !== 'undefined' && BX.message.USER_ID? BX.message.USER_ID: 0);
-		this.siteId = params.siteId? params.siteId: (typeof BX.message !== 'undefined' && BX.message.SITE_ID? BX.message.SITE_ID: 'none');
-	};
-
-	StorageManager.prototype.set = function(name, value)
-	{
-		if (typeof window.localStorage === 'undefined')
-		{
-			return false;
-		}
-		if (typeof value != 'string')
-		{
-			if (value)
+				decoded = JSON.parse(message);
+			} catch (e)
 			{
-				value = JSON.stringify(value);
+				console.error(Utils.getDateForLog() + ": Pull: Could not decode json rpc message", e);
+			}
+
+			if (Utils.isArray(decoded))
+			{
+				return this.executeIncomingRpcBatch(decoded);
+			}
+			else if (Utils.isJsonRpcRequest(decoded))
+			{
+				return this.executeIncomingRpcCommand(decoded);
+			}
+			else if (Utils.isJsonRpcResponse(decoded))
+			{
+				return this.processRpcResponse(decoded);
+			}
+			else
+			{
+				console.error(Utils.getDateForLog() + ": Pull: unknown rpc packet", decoded);
 			}
 		}
-		return window.localStorage.setItem(this.getKey(name), value)
-	};
 
-
-	StorageManager.prototype.get = function(name, defaultValue)
-	{
-		if (typeof window.localStorage === 'undefined')
+		/**
+		 * Executes RPC command, received from the server
+		 *
+		 * @param {string} method
+		 * @param {object} params
+		 * @returns {object}
+		 */
+		executeIncomingRpcCommand({method, params})
 		{
-			return defaultValue || null;
+			if (method in this.handlers)
+			{
+				return this.handlers[method].call(this, params)
+			}
+
+			return {
+				"error": RpcError.MethodNotFound
+			}
 		}
 
-		var result = window.localStorage.getItem(this.getKey(name));
-		if (result === null)
+		executeIncomingRpcBatch(batch)
 		{
-			return defaultValue || null;
+			let result = [];
+			for (let command of batch)
+			{
+				if ("jsonrpc" in command)
+				{
+					if ("method" in command)
+					{
+						let commandResult = this.executeIncomingRpcCommand(command)
+						if (commandResult)
+						{
+							commandResult["jsonrpc"] = JSON_RPC_VERSION;
+							commandResult["id"] = command["id"];
+
+							result.push(commandResult)
+						}
+					}
+					else
+					{
+						this.processRpcResponse(command)
+					}
+				}
+				else
+				{
+					console.error(Utils.getDateForLog() + ": Pull: unknown rpc command in batch", command);
+					result.push({
+						"jsonrpc": "2.0",
+						"error": RpcError.InvalidRequest,
+					})
+				}
+			}
+
+			return result;
 		}
 
-		return JSON.parse(result);
-	};
-
-	StorageManager.prototype.remove = function(name)
-	{
-		if (typeof window.localStorage === 'undefined')
+		nextId()
 		{
-			return false;
+			return ++this.idCounter;
 		}
-		return window.localStorage.removeItem(this.getKey(name));
-	};
 
-	StorageManager.prototype.getKey = function (name)
+		createPublishRequest(messageBatch)
+		{
+			let result = messageBatch.map(message => this.createRequest('publish', message));
+
+			if (result.length === 0)
+			{
+				return result[0]
+			}
+
+			return result;
+		}
+
+		createRequest(method, params, id)
+		{
+			if (!id)
+			{
+				id = this.nextId()
+			}
+
+			return {
+				jsonrpc: JSON_RPC_VERSION,
+				method: method,
+				params: params,
+				id: id
+			}
+		}
+	}
+
+	class ErrorNotConnected extends Error
 	{
-		return 'bx-pull-' + this.userId + '-' + this.siteId + '-' + name;
-	};
+		constructor(message)
+		{
+			super(message);
+			this.name = 'ErrorNotConnected';
+		}
+	}
 
-	StorageManager.prototype.compareKey = function (eventKey, userKey)
-	{
-		return eventKey === this.getKey(userKey);
-	};
-
-	var Utils = {
+	const Utils = {
 		browser: {
-			IsChrome: function()
+			IsChrome: function ()
 			{
 				return navigator.userAgent.toLowerCase().indexOf('chrome') != -1;
 			},
-			IsFirefox: function()
+			IsFirefox: function ()
 			{
 				return navigator.userAgent.toLowerCase().indexOf('firefox') != -1;
 			},
@@ -32553,7 +33402,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				return navigator.userAgent.match(/(Trident\/|MSIE\/)/) !== null;
 			}
 		},
-		getTimestamp: function()
+		getTimestamp: function ()
 		{
 			return (new Date()).getTime();
 		},
@@ -32562,17 +33411,17 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 		 * @param {array} errors
 		 * @return {string}
 		 */
-		errorsToString: function(errors)
+		errorsToString: function (errors)
 		{
-			if(!this.isArray(errors))
+			if (!this.isArray(errors))
 			{
 				return "";
 			}
 			else
 			{
-				return errors.reduce(function(result, currentValue)
+				return errors.reduce(function (result, currentValue)
 				{
-					if(result != "")
+					if (result != "")
 					{
 						result += "; ";
 					}
@@ -32580,63 +33429,94 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				}, "");
 			}
 		},
-		isString: function(item) {
+		isString: function (item)
+		{
 			return item === '' ? true : (item ? (typeof (item) == "string" || item instanceof String) : false);
 		},
-		isArray: function(item) {
+		isArray: function (item)
+		{
 			return item && Object.prototype.toString.call(item) == "[object Array]";
 		},
-		isFunction: function(item) {
+		isFunction: function (item)
+		{
 			return item === null ? false : (typeof (item) == "function" || item instanceof Function);
 		},
-		isDomNode: function(item) {
+		isDomNode: function (item)
+		{
 			return item && typeof (item) == "object" && "nodeType" in item;
 		},
-		isDate: function(item) {
+		isDate: function (item)
+		{
 			return item && Object.prototype.toString.call(item) == "[object Date]";
 		},
-		isPlainObject: function(item)
+		isPlainObject: function (item)
 		{
-			if(!item || typeof(item) !== "object" || item.nodeType)
+			if (!item || typeof (item) !== "object" || item.nodeType)
 			{
 				return false;
 			}
 
-			var hasProp = Object.prototype.hasOwnProperty;
+			const hasProp = Object.prototype.hasOwnProperty;
 			try
 			{
-				if (item.constructor && !hasProp.call(item, "constructor") && !hasProp.call(item.constructor.prototype, "isPrototypeOf") )
+				if (item.constructor && !hasProp.call(item, "constructor") && !hasProp.call(item.constructor.prototype, "isPrototypeOf"))
 				{
 					return false;
 				}
-			}
-			catch (e)
+			} catch (e)
 			{
 				return false;
 			}
 
-			var key;
+			let key;
 			for (key in item)
 			{
 			}
-			return typeof(key) === "undefined" || hasProp.call(item, key);
+			return typeof (key) === "undefined" || hasProp.call(item, key);
 		},
-		isNotEmptyString: function(item) {
+		isNotEmptyString: function (item)
+		{
 			return this.isString(item) ? item.length > 0 : false;
 		},
-		buildQueryString: function(params)
+		isJsonRpcRequest: function (item)
 		{
-			var result = '';
-			for (var key in params)
+			return (
+				typeof (item) === "object"
+				&& item
+				&& "jsonrpc" in item
+				&& Utils.isNotEmptyString(item.jsonrpc)
+				&& "method" in item
+				&& Utils.isNotEmptyString(item.method)
+			);
+		},
+		isJsonRpcResponse: function (item)
+		{
+			return (
+				typeof (item) === "object"
+				&& item
+				&& "jsonrpc" in item
+				&& Utils.isNotEmptyString(item.jsonrpc)
+				&& "id" in item
+				&& (
+					"result" in item
+					|| "error" in item
+				)
+			);
+
+		},
+		buildQueryString: function (params)
+		{
+			let result = '';
+			for (let key in params)
 			{
 				if (!params.hasOwnProperty(key))
 				{
 					continue;
 				}
-				var value = params[key];
-				if(Utils.isArray(value))
+				const value = params[key];
+				if (Utils.isArray(value))
 				{
-					value.forEach(function(valueElement, index)
+					value.forEach((valueElement, index) =>
 					{
 						result += encodeURIComponent(key + "[" + index + "]") + "=" + encodeURIComponent(valueElement) + "&";
 					});
@@ -32647,32 +33527,37 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				}
 			}
 
-			if(result.length > 0)
+			if (result.length > 0)
 			{
 				result = result.substr(0, result.length - 1);
 			}
+
 			return result;
 		},
 		objectValues: function values(obj)
 		{
-			var result = [];
-			for (var key in obj)
+			let result = [];
+			for (let key in obj)
 			{
-				if(obj.hasOwnProperty(key) && obj.propertyIsEnumerable(key))
+				if (obj.hasOwnProperty(key) && obj.propertyIsEnumerable(key))
 				{
 					result.push(obj[key]);
 				}
 			}
 			return result;
 		},
-		clone: function(obj, bCopyObj)
+		clone: function (obj, bCopyObj)
 		{
-			var _obj, i, l;
+			let _obj, i, l;
 			if (bCopyObj !== false)
+			{
 				bCopyObj = true;
+			}
 
 			if (obj === null)
+			{
 				return null;
+			}
 
 			if (this.isDomNode(obj))
 			{
@@ -32683,23 +33568,31 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 				if (this.isArray(obj))
 				{
 					_obj = [];
-					for (i=0,l=obj.length;i<l;i++)
+					for (i = 0, l = obj.length; i < l; i++)
 					{
 						if (typeof obj[i] == "object" && bCopyObj)
+						{
 							_obj[i] = this.clone(obj[i], bCopyObj);
+						}
 						else
+						{
 							_obj[i] = obj[i];
+						}
 					}
 				}
 				else
 				{
-					_obj =  {};
+					_obj = {};
 					if (obj.constructor)
 					{
 						if (this.isDate(obj))
+						{
 							_obj = new Date(obj);
+						}
 						else
+						{
 							_obj = new obj.constructor();
+						}
 					}
 
 					for (i in obj)
@@ -32709,9 +33602,13 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 							continue;
 						}
 						if (typeof obj[i] == "object" && bCopyObj)
+						{
 							_obj[i] = this.clone(obj[i], bCopyObj);
+						}
 						else
+						{
 							_obj[i] = obj[i];
+						}
 					}
 				}
 
@@ -32724,42 +33621,42 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 			return _obj;
 		},
 
-		getDateForLog: function()
+		getDateForLog: function ()
 		{
-			var d = new Date();
+			const d = new Date();
 
 			return d.getFullYear() + "-" + Utils.lpad(d.getMonth(), 2, '0') + "-" + Utils.lpad(d.getDate(), 2, '0') + " " + Utils.lpad(d.getHours(), 2, '0') + ":" + Utils.lpad(d.getMinutes(), 2, '0');
 		},
 
-		lpad: function(str, length, chr)
+		lpad: function (str, length, chr)
 		{
 			str = str.toString();
 			chr = chr || ' ';
 
-			if(str.length > length)
+			if (str.length > length)
 			{
 				return str;
 			}
 
-			var result = '';
-			for(var i = 0; i < length - str.length; i++)
+			let result = '';
+			for (let i = 0; i < length - str.length; i++)
 			{
 				result += chr;
 			}
 
 			return result + str;
 		}
-	};
+	}
 
 	if (
 		typeof BX.namespace !== 'undefined'
 		&& typeof BX.PULL === 'undefined'
 	)
 	{
-		BX.PULL = new Pull();
+		BX.PULL = new PullClient();
 	}
 
-	BX.PullClient = Pull;
+	BX.PullClient = PullClient;
 	BX.PullClient.PullStatus = PullStatus;
 	BX.PullClient.SubscriptionType = SubscriptionType;
 	BX.PullClient.CloseReasons = CloseReasons;
@@ -32769,7 +33666,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 
 // file: /bitrix/js/pull/component/status/dist/status.bundle.js
-(function (exports,ui_vue,pull_client) {
+(function (exports,ui_designTokens,ui_vue,pull_client) {
 	'use strict';
 
 	/**
@@ -32938,7 +33835,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	  template: "\n\t\t<div v-if=\"!isMobile()\" :class=\"['bx-pull-status', connectionClass]\">\n\t\t\t<div class=\"bx-pull-status-wrap\">\n\t\t\t\t<span class=\"bx-pull-status-text\">{{connectionText}}</span>\n\t\t\t\t<span class=\"bx-pull-status-button\" @click=\"reconnect\">\n\t\t\t\t\t<span class=\"bx-pull-status-button-title\">{{button.title}}</span>\n\t\t\t\t\t<span class=\"bx-pull-status-button-key\" v-html=\"button.key\"></span>\n\t\t\t\t</span>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX));
+}((this.window = this.window || {}),BX,BX,BX));
  
 
 
@@ -33951,5019 +34848,6151 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 
 
 
-// file: /bitrix/js/ui/dexie/dist/dexie.bitrix.bundle.js
+// file: /bitrix/js/ui/dexie/dist/dexie3.bundle.js
+this.BX = this.BX || {};
 (function (exports) {
-   'use strict';
-
-   /*
-    * Dexie.js - a minimalistic wrapper for IndexedDB
-    * ===============================================
-    *
-    * By David Fahlander, david.fahlander@gmail.com
-    *
-    * Version 2.0.4, Fri May 25 2018
-    *
-    * http://dexie.org
-    *
-    * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/
-    */
-
-   /**
-    * Modify list for integration with Bitrix Framework:
-    * - removed integration with third-party package builders;
-    * - add check variables before using them, see tags: 28122018;
-    * - add alternative Promise check for Bitrix Cli, see tags: 02032020;
-    * - add export for work in Bitrix CoreJS extensions;
-    */
-   var keys = Object.keys;
-   var isArray = Array.isArray;
-
-   var _global = typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
-
-   function extend(obj, extension) {
-     if (babelHelpers["typeof"](extension) !== 'object') return obj;
-     keys(extension).forEach(function (key) {
-       obj[key] = extension[key];
-     });
-     return obj;
-   }
-
-   var getProto = Object.getPrototypeOf;
-   var _hasOwn = {}.hasOwnProperty;
-
-   function hasOwn(obj, prop) {
-     return _hasOwn.call(obj, prop);
-   }
-
-   function props(proto, extension) {
-     if (typeof extension === 'function') extension = extension(getProto(proto)); // tag start 28122018
-
-     if (babelHelpers["typeof"](extension) !== 'object') return; // tag end 28122018
-
-     keys(extension).forEach(function (key) {
-       setProp(proto, key, extension[key]);
-     });
-   }
-
-   var defineProperty = Object.defineProperty;
-
-   function setProp(obj, prop, functionOrGetSet, options) {
-     defineProperty(obj, prop, extend(functionOrGetSet && hasOwn(functionOrGetSet, "get") && typeof functionOrGetSet.get === 'function' ? {
-       get: functionOrGetSet.get,
-       set: functionOrGetSet.set,
-       configurable: true
-     } : {
-       value: functionOrGetSet,
-       configurable: true,
-       writable: true
-     }, options));
-   }
-
-   function derive(Child) {
-     return {
-       from: function from(Parent) {
-         Child.prototype = Object.create(Parent.prototype);
-         setProp(Child.prototype, "constructor", Child);
-         return {
-           extend: props.bind(null, Child.prototype)
-         };
-       }
-     };
-   }
-
-   var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
-
-   function getPropertyDescriptor(obj, prop) {
-     var pd = getOwnPropertyDescriptor(obj, prop),
-         proto;
-     return pd || (proto = getProto(obj)) && getPropertyDescriptor(proto, prop);
-   }
-
-   var _slice = [].slice;
-
-   function slice(args, start, end) {
-     return _slice.call(args, start, end);
-   }
-
-   function override(origFunc, overridedFactory) {
-     return overridedFactory(origFunc);
-   }
-
-   function assert(b) {
-     if (!b) throw new Error("Assertion Failed");
-   }
-
-   function asap(fn) {
-     if (_global.setImmediate) setImmediate(fn);else setTimeout(fn, 0);
-   }
-   /** Generate an object (hash map) based on given array.
-    * @param extractor Function taking an array item and its index and returning an array of 2 items ([key, value]) to
-    *        instert on the resulting object for each item in the array. If this function returns a falsy value, the
-    *        current item wont affect the resulting object.
-    */
-
-
-   function arrayToObject(array, extractor) {
-     return array.reduce(function (result, item, i) {
-       var nameAndValue = extractor(item, i);
-       if (nameAndValue) result[nameAndValue[0]] = nameAndValue[1];
-       return result;
-     }, {});
-   }
-
-   function trycatcher(fn, reject) {
-     return function () {
-       try {
-         fn.apply(this, arguments);
-       } catch (e) {
-         reject(e);
-       }
-     };
-   }
-
-   function tryCatch(fn, onerror, args) {
-     try {
-       fn.apply(null, args);
-     } catch (ex) {
-       onerror && onerror(ex);
-     }
-   }
-
-   function getByKeyPath(obj, keyPath) {
-     // http://www.w3.org/TR/IndexedDB/#steps-for-extracting-a-key-from-a-value-using-a-key-path
-     if (hasOwn(obj, keyPath)) return obj[keyPath]; // This line is moved from last to first for optimization purpose.
-
-     if (!keyPath) return obj;
-
-     if (typeof keyPath !== 'string') {
-       var rv = [];
-
-       for (var i = 0, l = keyPath.length; i < l; ++i) {
-         var val = getByKeyPath(obj, keyPath[i]);
-         rv.push(val);
-       }
-
-       return rv;
-     }
-
-     var period = keyPath.indexOf('.');
-
-     if (period !== -1) {
-       var innerObj = obj[keyPath.substr(0, period)];
-       return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
-     }
-
-     return undefined;
-   }
-
-   function setByKeyPath(obj, keyPath, value) {
-     if (!obj || keyPath === undefined) return;
-     if ('isFrozen' in Object && Object.isFrozen(obj)) return;
-
-     if (typeof keyPath !== 'string' && 'length' in keyPath) {
-       assert(typeof value !== 'string' && 'length' in value);
-
-       for (var i = 0, l = keyPath.length; i < l; ++i) {
-         setByKeyPath(obj, keyPath[i], value[i]);
-       }
-     } else {
-       var period = keyPath.indexOf('.');
-
-       if (period !== -1) {
-         var currentKeyPath = keyPath.substr(0, period);
-         var remainingKeyPath = keyPath.substr(period + 1);
-         if (remainingKeyPath === "") {
-           if (value === undefined) delete obj[currentKeyPath];else obj[currentKeyPath] = value;
-         } else {
-           var innerObj = obj[currentKeyPath];
-           if (!innerObj) innerObj = obj[currentKeyPath] = {};
-           setByKeyPath(innerObj, remainingKeyPath, value);
-         }
-       } else {
-         if (value === undefined) delete obj[keyPath];else obj[keyPath] = value;
-       }
-     }
-   }
-
-   function delByKeyPath(obj, keyPath) {
-     if (typeof keyPath === 'string') setByKeyPath(obj, keyPath, undefined);else if ('length' in keyPath) [].map.call(keyPath, function (kp) {
-       setByKeyPath(obj, kp, undefined);
-     });
-   }
-
-   function shallowClone(obj) {
-     var rv = {};
-
-     for (var m in obj) {
-       if (hasOwn(obj, m)) rv[m] = obj[m];
-     }
-
-     return rv;
-   }
-
-   var concat = [].concat;
-
-   function flatten(a) {
-     return concat.apply([], a);
-   } //https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm
-
-
-   var intrinsicTypes = "Boolean,String,Date,RegExp,Blob,File,FileList,ArrayBuffer,DataView,Uint8ClampedArray,ImageData,Map,Set".split(',').concat(flatten([8, 16, 32, 64].map(function (num) {
-     return ["Int", "Uint", "Float"].map(function (t) {
-       return t + num + "Array";
-     });
-   }))).filter(function (t) {
-     return _global[t];
-   }).map(function (t) {
-     return _global[t];
-   });
-
-   function deepClone(any) {
-     if (!any || babelHelpers["typeof"](any) !== 'object') return any;
-     var rv;
-
-     if (isArray(any)) {
-       rv = [];
-
-       for (var i = 0, l = any.length; i < l; ++i) {
-         rv.push(deepClone(any[i]));
-       }
-     } else if (intrinsicTypes.indexOf(any.constructor) >= 0) {
-       rv = any;
-     } else {
-       rv = any.constructor ? Object.create(any.constructor.prototype) : {};
-
-       for (var prop in any) {
-         if (hasOwn(any, prop)) {
-           rv[prop] = deepClone(any[prop]);
-         }
-       }
-     }
-
-     return rv;
-   }
-
-   function getObjectDiff(a, b, rv, prfx) {
-     // Compares objects a and b and produces a diff object.
-     rv = rv || {};
-     prfx = prfx || '';
-     keys(a).forEach(function (prop) {
-       if (!hasOwn(b, prop)) rv[prfx + prop] = undefined; // Property removed
-       else {
-         var ap = a[prop],
-             bp = b[prop];
-         if (babelHelpers["typeof"](ap) === 'object' && babelHelpers["typeof"](bp) === 'object' && ap && bp && // Now compare constructors are same (not equal because wont work in Safari)
-         '' + ap.constructor === '' + bp.constructor) // Same type of object but its properties may have changed
-           getObjectDiff(ap, bp, rv, prfx + prop + ".");else if (ap !== bp) rv[prfx + prop] = b[prop]; // Primitive value changed
-       }
-     });
-     keys(b).forEach(function (prop) {
-       if (!hasOwn(a, prop)) {
-         rv[prfx + prop] = b[prop]; // Property added
-       }
-     });
-     return rv;
-   } // If first argument is iterable or array-like, return it as an array
-
-
-   var iteratorSymbol = typeof Symbol !== 'undefined' && Symbol.iterator;
-   var getIteratorOf = iteratorSymbol ? function (x) {
-     var i;
-     return x != null && (i = x[iteratorSymbol]) && i.apply(x);
-   } : function () {
-     return null;
-   };
-   var NO_CHAR_ARRAY = {}; // Takes one or several arguments and returns an array based on the following criteras:
-   // * If several arguments provided, return arguments converted to an array in a way that
-   //   still allows javascript engine to optimize the code.
-   // * If single argument is an array, return a clone of it.
-   // * If this-pointer equals NO_CHAR_ARRAY, don't accept strings as valid iterables as a special
-   //   case to the two bullets below.
-   // * If single argument is an iterable, convert it to an array and return the resulting array.
-   // * If single argument is array-like (has length of type number), convert it to an array.
-
-   function getArrayOf(arrayLike) {
-     var i, a, x, it;
-
-     if (arguments.length === 1) {
-       if (isArray(arrayLike)) return arrayLike.slice();
-       if (this === NO_CHAR_ARRAY && typeof arrayLike === 'string') return [arrayLike];
-
-       if (it = getIteratorOf(arrayLike)) {
-         a = [];
-
-         while (x = it.next(), !x.done) {
-           a.push(x.value);
-         }
-
-         return a;
-       }
-
-       if (arrayLike == null) return [arrayLike];
-       i = arrayLike.length;
-
-       if (typeof i === 'number') {
-         a = new Array(i);
-
-         while (i--) {
-           a[i] = arrayLike[i];
-         }
-
-         return a;
-       }
-
-       return [arrayLike];
-     }
-
-     i = arguments.length;
-     a = new Array(i);
-
-     while (i--) {
-       a[i] = arguments[i];
-     }
-
-     return a;
-   } // By default, debug will be true only if platform is a web platform and its page is served from localhost.
-   // When debug = true, error's stacks will contain asyncronic long stacks.
-
-
-   var debug = typeof location !== 'undefined' && // By default, use debug mode if served from localhost.
-   /^(http|https):\/\/(localhost|127\.0\.0\.1)/.test(location.href);
-
-   function setDebug(value, filter) {
-     debug = value;
-     libraryFilter = filter;
-   }
-
-   var libraryFilter = function libraryFilter() {
-     return true;
-   };
-
-   var NEEDS_THROW_FOR_STACK = !new Error("").stack;
-
-   function getErrorWithStack() {
-
-     if (NEEDS_THROW_FOR_STACK) try {
-       throw new Error(); // Fallback if above line don't throw.
-     } catch (e) {
-       return e;
-     }
-     return new Error();
-   }
-
-   function prettyStack(exception, numIgnoredFrames) {
-     var stack = exception.stack;
-     if (!stack) return "";
-     numIgnoredFrames = numIgnoredFrames || 0;
-     if (stack.indexOf(exception.name) === 0) numIgnoredFrames += (exception.name + exception.message).split('\n').length;
-     return stack.split('\n').slice(numIgnoredFrames).filter(libraryFilter).map(function (frame) {
-       return "\n" + frame;
-     }).join('');
-   }
-
-   function deprecated(what, fn) {
-     return function () {
-       console.warn(what + " is deprecated. See https://github.com/dfahlander/Dexie.js/wiki/Deprecations. " + prettyStack(getErrorWithStack(), 1));
-       return fn.apply(this, arguments);
-     };
-   }
-
-   var dexieErrorNames = ['Modify', 'Bulk', 'OpenFailed', 'VersionChange', 'Schema', 'Upgrade', 'InvalidTable', 'MissingAPI', 'NoSuchDatabase', 'InvalidArgument', 'SubTransaction', 'Unsupported', 'Internal', 'DatabaseClosed', 'PrematureCommit', 'ForeignAwait'];
-   var idbDomErrorNames = ['Unknown', 'Constraint', 'Data', 'TransactionInactive', 'ReadOnly', 'Version', 'NotFound', 'InvalidState', 'InvalidAccess', 'Abort', 'Timeout', 'QuotaExceeded', 'Syntax', 'DataClone'];
-   var errorList = dexieErrorNames.concat(idbDomErrorNames);
-   var defaultTexts = {
-     VersionChanged: "Database version changed by other database connection",
-     DatabaseClosed: "Database has been closed",
-     Abort: "Transaction aborted",
-     TransactionInactive: "Transaction has already completed or failed"
-   }; //
-   // DexieError - base class of all out exceptions.
-   //
-
-   function DexieError(name, msg) {
-     // Reason we don't use ES6 classes is because:
-     // 1. It bloats transpiled code and increases size of minified code.
-     // 2. It doesn't give us much in this case.
-     // 3. It would require sub classes to call super(), which
-     //    is not needed when deriving from Error.
-     this._e = getErrorWithStack();
-     this.name = name;
-     this.message = msg;
-   }
-
-   derive(DexieError).from(Error).extend({
-     stack: {
-       get: function get() {
-         return this._stack || (this._stack = this.name + ": " + this.message + prettyStack(this._e, 2));
-       }
-     },
-     toString: function toString() {
-       return this.name + ": " + this.message;
-     }
-   });
-
-   function getMultiErrorMessage(msg, failures) {
-     return msg + ". Errors: " + failures.map(function (f) {
-       return f.toString();
-     }).filter(function (v, i, s) {
-       return s.indexOf(v) === i;
-     }) // Only unique error strings
-     .join('\n');
-   } //
-   // ModifyError - thrown in Collection.modify()
-   // Specific constructor because it contains members failures and failedKeys.
-   //
-
-
-   function ModifyError(msg, failures, successCount, failedKeys) {
-     this._e = getErrorWithStack();
-     this.failures = failures;
-     this.failedKeys = failedKeys;
-     this.successCount = successCount;
-   }
-
-   derive(ModifyError).from(DexieError);
-
-   function BulkError(msg, failures) {
-     this._e = getErrorWithStack();
-     this.name = "BulkError";
-     this.failures = failures;
-     this.message = getMultiErrorMessage(msg, failures);
-   }
-
-   derive(BulkError).from(DexieError); //
-   //
-   // Dynamically generate error names and exception classes based
-   // on the names in errorList.
-   //
-   //
-   // Map of {ErrorName -> ErrorName + "Error"}
-
-   var errnames = errorList.reduce(function (obj, name) {
-     return obj[name] = name + "Error", obj;
-   }, {}); // Need an alias for DexieError because we're gonna create subclasses with the same name.
-
-   var BaseException = DexieError; // Map of {ErrorName -> exception constructor}
-
-   var exceptions = errorList.reduce(function (obj, name) {
-     // Let the name be "DexieError" because this name may
-     // be shown in call stack and when debugging. DexieError is
-     // the most true name because it derives from DexieError,
-     // and we cannot change Function.name programatically without
-     // dynamically create a Function object, which would be considered
-     // 'eval-evil'.
-     var fullName = name + "Error";
-
-     function DexieError(msgOrInner, inner) {
-       this._e = getErrorWithStack();
-       this.name = fullName;
-
-       if (!msgOrInner) {
-         this.message = defaultTexts[name] || fullName;
-         this.inner = null;
-       } else if (typeof msgOrInner === 'string') {
-         this.message = msgOrInner;
-         this.inner = inner || null;
-       } else if (babelHelpers["typeof"](msgOrInner) === 'object') {
-         this.message = msgOrInner.name + " " + msgOrInner.message;
-         this.inner = msgOrInner;
-       }
-     }
-
-     derive(DexieError).from(BaseException);
-     obj[name] = DexieError;
-     return obj;
-   }, {}); // Use ECMASCRIPT standard exceptions where applicable:
-
-   exceptions.Syntax = SyntaxError;
-   exceptions.Type = TypeError;
-   exceptions.Range = RangeError;
-   var exceptionMap = idbDomErrorNames.reduce(function (obj, name) {
-     obj[name + "Error"] = exceptions[name];
-     return obj;
-   }, {});
-
-   function mapError(domError, message) {
-     if (!domError || domError instanceof DexieError || domError instanceof TypeError || domError instanceof SyntaxError || !domError.name || !exceptionMap[domError.name]) return domError;
-     var rv = new exceptionMap[domError.name](message || domError.message, domError);
-
-     if ("stack" in domError) {
-       // Derive stack from inner exception if it has a stack
-       setProp(rv, "stack", {
-         get: function get() {
-           return this.inner.stack;
-         }
-       });
-     }
-
-     return rv;
-   }
-
-   var fullNameExceptions = errorList.reduce(function (obj, name) {
-     if (["Syntax", "Type", "Range"].indexOf(name) === -1) obj[name + "Error"] = exceptions[name];
-     return obj;
-   }, {});
-   fullNameExceptions.ModifyError = ModifyError;
-   fullNameExceptions.DexieError = DexieError;
-   fullNameExceptions.BulkError = BulkError;
-
-   function nop() {}
-
-   function mirror(val) {
-     return val;
-   }
-
-   function pureFunctionChain(f1, f2) {
-     // Enables chained events that takes ONE argument and returns it to the next function in chain.
-     // This pattern is used in the hook("reading") event.
-     if (f1 == null || f1 === mirror) return f2;
-     return function (val) {
-       return f2(f1(val));
-     };
-   }
-
-   function callBoth(on1, on2) {
-     return function () {
-       on1.apply(this, arguments);
-       on2.apply(this, arguments);
-     };
-   }
-
-   function hookCreatingChain(f1, f2) {
-     // Enables chained events that takes several arguments and may modify first argument by making a modification and then returning the same instance.
-     // This pattern is used in the hook("creating") event.
-     if (f1 === nop) return f2;
-     return function () {
-       var res = f1.apply(this, arguments);
-       if (res !== undefined) arguments[0] = res;
-       var onsuccess = this.onsuccess,
-           // In case event listener has set this.onsuccess
-       onerror = this.onerror; // In case event listener has set this.onerror
-
-       this.onsuccess = null;
-       this.onerror = null;
-       var res2 = f2.apply(this, arguments);
-       if (onsuccess) this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
-       if (onerror) this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
-       return res2 !== undefined ? res2 : res;
-     };
-   }
-
-   function hookDeletingChain(f1, f2) {
-     if (f1 === nop) return f2;
-     return function () {
-       f1.apply(this, arguments);
-       var onsuccess = this.onsuccess,
-           // In case event listener has set this.onsuccess
-       onerror = this.onerror; // In case event listener has set this.onerror
-
-       this.onsuccess = this.onerror = null;
-       f2.apply(this, arguments);
-       if (onsuccess) this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
-       if (onerror) this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
-     };
-   }
-
-   function hookUpdatingChain(f1, f2) {
-     if (f1 === nop) return f2;
-     return function (modifications) {
-       var res = f1.apply(this, arguments);
-       extend(modifications, res); // If f1 returns new modifications, extend caller's modifications with the result before calling next in chain.
-
-       var onsuccess = this.onsuccess,
-           // In case event listener has set this.onsuccess
-       onerror = this.onerror; // In case event listener has set this.onerror
-
-       this.onsuccess = null;
-       this.onerror = null;
-       var res2 = f2.apply(this, arguments);
-       if (onsuccess) this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
-       if (onerror) this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
-       return res === undefined ? res2 === undefined ? undefined : res2 : extend(res, res2);
-     };
-   }
-
-   function reverseStoppableEventChain(f1, f2) {
-     if (f1 === nop) return f2;
-     return function () {
-       if (f2.apply(this, arguments) === false) return false;
-       return f1.apply(this, arguments);
-     };
-   }
-
-   function promisableChain(f1, f2) {
-     if (f1 === nop) return f2;
-     return function () {
-       var res = f1.apply(this, arguments);
-
-       if (res && typeof res.then === 'function') {
-         var thiz = this,
-             i = arguments.length,
-             args = new Array(i);
-
-         while (i--) {
-           args[i] = arguments[i];
-         }
-
-         return res.then(function () {
-           return f2.apply(thiz, args);
-         });
-       }
-
-       return f2.apply(this, arguments);
-     };
-   }
-   /*
-    * Copyright (c) 2014-2017 David Fahlander
-    * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/LICENSE-2.0
-    */
-   //
-   // Promise and Zone (PSD) for Dexie library
-   //
-   // I started out writing this Promise class by copying promise-light (https://github.com/taylorhakes/promise-light) by
-   // https://github.com/taylorhakes - an A+ and ECMASCRIPT 6 compliant Promise implementation.
-   //
-   // In previous versions this was fixed by not calling setTimeout when knowing that the resolve() or reject() came from another
-   // tick. In Dexie v1.4.0, I've rewritten the Promise class entirely. Just some fragments of promise-light is left. I use
-   // another strategy now that simplifies everything a lot: to always execute callbacks in a new micro-task, but have an own micro-task
-   // engine that is indexedDB compliant across all browsers.
-   // Promise class has also been optimized a lot with inspiration from bluebird - to avoid closures as much as possible.
-   // Also with inspiration from bluebird, asyncronic stacks in debug mode.
-   //
-   // Specific non-standard features of this Promise class:
-   // * Custom zone support (a.k.a. PSD) with ability to keep zones also when using native promises as well as
-   //   native async / await.
-   // * Promise.follow() method built upon the custom zone engine, that allows user to track all promises created from current stack frame
-   //   and below + all promises that those promises creates or awaits.
-   // * Detect any unhandled promise in a PSD-scope (PSD.onunhandled).
-   //
-   // David Fahlander, https://github.com/dfahlander
-   //
-   // Just a pointer that only this module knows about.
-   // Used in Promise constructor to emulate a private constructor.
-
-
-   var INTERNAL = {}; // Async stacks (long stacks) must not grow infinitely.
-
-   var LONG_STACKS_CLIP_LIMIT = 100;
-   var MAX_LONG_STACKS = 20;
-   var ZONE_ECHO_LIMIT = 7;
-
-   var nativePromiseInstanceAndProto = function () {
-     try {
-       // Be able to patch native async functions
-       return new Function("let F=async ()=>{},p=F();return [p,Object.getPrototypeOf(p),Promise.resolve(),F.constructor];")();
-     } catch (e) {
-       var P = _global.Promise;
-       return P ? [P.resolve(), P.prototype, P.resolve()] : [];
-     }
-   }();
-
-   var resolvedNativePromise = nativePromiseInstanceAndProto[0];
-   var nativePromiseProto = nativePromiseInstanceAndProto[1];
-   var resolvedGlobalPromise = nativePromiseInstanceAndProto[2];
-   var nativePromiseThen = nativePromiseProto && nativePromiseProto.then;
-   var NativePromise = resolvedNativePromise && resolvedNativePromise.constructor;
-   var AsyncFunction = nativePromiseInstanceAndProto[3];
-   var patchGlobalPromise = !!resolvedGlobalPromise;
-   var stack_being_generated = false;
-   /* The default function used only for the very first promise in a promise chain.
-      As soon as then promise is resolved or rejected, all next tasks will be executed in micro ticks
-      emulated in this module. For indexedDB compatibility, this means that every method needs to
-      execute at least one promise before doing an indexedDB operation. Dexie will always call
-      db.ready().then() for every operation to make sure the indexedDB event is started in an
-      indexedDB-compatible emulated micro task loop.
-   */
-
-   var schedulePhysicalTick = resolvedGlobalPromise ? function () {
-     resolvedGlobalPromise.then(physicalTick);
-   } : _global.setImmediate ? // setImmediate supported. Those modern platforms also supports Function.bind().
-   setImmediate.bind(null, physicalTick) : _global.MutationObserver ? // MutationObserver supported
-   function () {
-     var hiddenDiv = document.createElement("div");
-     new MutationObserver(function () {
-       physicalTick();
-       hiddenDiv = null;
-     }).observe(hiddenDiv, {
-       attributes: true
-     });
-     hiddenDiv.setAttribute('i', '1');
-   } : // No support for setImmediate or MutationObserver. No worry, setTimeout is only called
-   // once time. Every tick that follows will be our emulated micro tick.
-   // Could have uses setTimeout.bind(null, 0, physicalTick) if it wasnt for that FF13 and below has a bug
-   function () {
-     setTimeout(physicalTick, 0);
-   }; // Configurable through Promise.scheduler.
-   // Don't export because it would be unsafe to let unknown
-   // code call it unless they do try..catch within their callback.
-   // This function can be retrieved through getter of Promise.scheduler though,
-   // but users must not do Promise.scheduler = myFuncThatThrowsException
-
-   var asap$1 = function asap$1(callback, args) {
-     microtickQueue.push([callback, args]);
-
-     if (needsNewPhysicalTick) {
-       schedulePhysicalTick();
-       needsNewPhysicalTick = false;
-     }
-   };
-
-   var isOutsideMicroTick = true;
-   var needsNewPhysicalTick = true;
-   var unhandledErrors = [];
-   var rejectingErrors = [];
-   var currentFulfiller = null;
-   var rejectionMapper = mirror; // Remove in next major when removing error mapping of DOMErrors and DOMExceptions
-
-   var globalPSD = {
-     id: 'global',
-     global: true,
-     ref: 0,
-     unhandleds: [],
-     onunhandled: globalError,
-     pgp: false,
-     env: {},
-     finalize: function finalize() {
-       this.unhandleds.forEach(function (uh) {
-         try {
-           globalError(uh[0], uh[1]);
-         } catch (e) {}
-       });
-     }
-   };
-   var PSD = globalPSD;
-   var microtickQueue = []; // Callbacks to call in this or next physical tick.
-
-   var numScheduledCalls = 0; // Number of listener-calls left to do in this physical tick.
-
-   var tickFinalizers = []; // Finalizers to call when there are no more async calls scheduled within current physical tick.
-
-   function Promise(fn) {
-     if (babelHelpers["typeof"](this) !== 'object') throw new TypeError('Promises must be constructed via new');
-     this._listeners = [];
-     this.onuncatched = nop; // Deprecate in next major. Not needed. Better to use global error handler.
-     // A library may set `promise._lib = true;` after promise is created to make resolve() or reject()
-     // execute the microtask engine implicitely within the call to resolve() or reject().
-     // To remain A+ compliant, a library must only set `_lib=true` if it can guarantee that the stack
-     // only contains library code when calling resolve() or reject().
-     // RULE OF THUMB: ONLY set _lib = true for promises explicitely resolving/rejecting directly from
-     // global scope (event handler, timer etc)!
-
-     this._lib = false; // Current async scope
-
-     var psd = this._PSD = PSD;
-
-     if (debug) {
-       this._stackHolder = getErrorWithStack();
-       this._prev = null;
-       this._numPrev = 0; // Number of previous promises (for long stacks)
-     }
-
-     if (typeof fn !== 'function') {
-       if (fn !== INTERNAL) throw new TypeError('Not a function'); // Private constructor (INTERNAL, state, value).
-       // Used internally by Promise.resolve() and Promise.reject().
-
-       this._state = arguments[1];
-       this._value = arguments[2];
-       if (this._state === false) handleRejection(this, this._value); // Map error, set stack and addPossiblyUnhandledError().
-
-       return;
-     }
-
-     this._state = null; // null (=pending), false (=rejected) or true (=resolved)
-
-     this._value = null; // error or result
-
-     ++psd.ref; // Refcounting current scope
-
-     executePromiseTask(this, fn);
-   } // Prepare a property descriptor to put onto Promise.prototype.then
-
-
-   var thenProp = {
-     get: function get() {
-       var psd = PSD,
-           microTaskId = totalEchoes;
-
-       function then(onFulfilled, onRejected) {
-         var _this = this;
-
-         var possibleAwait = !psd.global && (psd !== PSD || microTaskId !== totalEchoes);
-         if (possibleAwait) decrementExpectedAwaits();
-         var rv = new Promise(function (resolve, reject) {
-           propagateToListener(_this, new Listener(nativeAwaitCompatibleWrap(onFulfilled, psd, possibleAwait), nativeAwaitCompatibleWrap(onRejected, psd, possibleAwait), resolve, reject, psd));
-         });
-         debug && linkToPreviousPromise(rv, this);
-         return rv;
-       }
-
-       then.prototype = INTERNAL; // For idempotense, see setter below.
-
-       return then;
-     },
-     // Be idempotent and allow another framework (such as zone.js or another instance of a Dexie.Promise module) to replace Promise.prototype.then
-     // and when that framework wants to restore the original property, we must identify that and restore the original property descriptor.
-     set: function set(value) {
-       setProp(this, 'then', value && value.prototype === INTERNAL ? thenProp : // Restore to original property descriptor.
-       {
-         get: function get() {
-           return value; // Getter returning provided value (behaves like value is just changed)
-         },
-         set: thenProp.set // Keep a setter that is prepared to restore original.
-
-       });
-     }
-   };
-   props(Promise.prototype, {
-     then: thenProp,
-     _then: function _then(onFulfilled, onRejected) {
-       // A little tinier version of then() that don't have to create a resulting promise.
-       propagateToListener(this, new Listener(null, null, onFulfilled, onRejected, PSD));
-     },
-     "catch": function _catch(onRejected) {
-       if (arguments.length === 1) return this.then(null, onRejected); // First argument is the Error type to catch
-
-       var type = arguments[0],
-           handler = arguments[1];
-       return typeof type === 'function' ? this.then(null, function (err) {
-         // Catching errors by its constructor type (similar to java / c++ / c#)
-         // Sample: promise.catch(TypeError, function (e) { ... });
-         return err instanceof type ? handler(err) : PromiseReject(err);
-       }) : this.then(null, function (err) {
-         // Catching errors by the error.name property. Makes sense for indexedDB where error type
-         // is always DOMError but where e.name tells the actual error type.
-         // Sample: promise.catch('ConstraintError', function (e) { ... });
-         return err && err.name === type ? handler(err) : PromiseReject(err);
-       });
-     },
-     "finally": function _finally(onFinally) {
-       return this.then(function (value) {
-         onFinally();
-         return value;
-       }, function (err) {
-         onFinally();
-         return PromiseReject(err);
-       });
-     },
-     stack: {
-       get: function get() {
-         if (this._stack) return this._stack;
-
-         try {
-           stack_being_generated = true;
-           var stacks = getStack(this, [], MAX_LONG_STACKS);
-           var stack = stacks.join("\nFrom previous: ");
-           if (this._state !== null) this._stack = stack; // Stack may be updated on reject.
-
-           return stack;
-         } finally {
-           stack_being_generated = false;
-         }
-       }
-     },
-     timeout: function timeout(ms, msg) {
-       var _this = this;
-
-       return ms < Infinity ? new Promise(function (resolve, reject) {
-         var handle = setTimeout(function () {
-           return reject(new exceptions.Timeout(msg));
-         }, ms);
-
-         _this.then(resolve, reject)["finally"](clearTimeout.bind(null, handle));
-       }) : this;
-     }
-   });
-   if (typeof Symbol !== 'undefined' && Symbol.toStringTag) setProp(Promise.prototype, Symbol.toStringTag, 'Promise'); // Now that Promise.prototype is defined, we have all it takes to set globalPSD.env.
-   // Environment globals snapshotted on leaving global zone
-
-   globalPSD.env = snapShot();
-
-   function Listener(onFulfilled, onRejected, resolve, reject, zone) {
-     this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
-     this.onRejected = typeof onRejected === 'function' ? onRejected : null;
-     this.resolve = resolve;
-     this.reject = reject;
-     this.psd = zone;
-   } // Promise Static Properties
-
-
-   props(Promise, {
-     all: function all() {
-       var values = getArrayOf.apply(null, arguments) // Supports iterables, implicit arguments and array-like.
-       .map(onPossibleParallellAsync); // Handle parallell async/awaits
-
-       return new Promise(function (resolve, reject) {
-         if (values.length === 0) resolve([]);
-         var remaining = values.length;
-         values.forEach(function (a, i) {
-           return Promise.resolve(a).then(function (x) {
-             values[i] = x;
-             if (! --remaining) resolve(values);
-           }, reject);
-         });
-       });
-     },
-     resolve: function resolve(value) {
-       if (value instanceof Promise) return value;
-       if (value && typeof value.then === 'function') return new Promise(function (resolve, reject) {
-         value.then(resolve, reject);
-       });
-       var rv = new Promise(INTERNAL, true, value);
-       linkToPreviousPromise(rv, currentFulfiller);
-       return rv;
-     },
-     reject: PromiseReject,
-     race: function race() {
-       var values = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
-       return new Promise(function (resolve, reject) {
-         values.map(function (value) {
-           return Promise.resolve(value).then(resolve, reject);
-         });
-       });
-     },
-     PSD: {
-       get: function get() {
-         return PSD;
-       },
-       set: function set(value) {
-         return PSD = value;
-       }
-     },
-     //totalEchoes: {get: ()=>totalEchoes},
-     //task: {get: ()=>task},
-     newPSD: newScope,
-     usePSD: usePSD,
-     scheduler: {
-       get: function get() {
-         return asap$1;
-       },
-       set: function set(value) {
-         asap$1 = value;
-       }
-     },
-     rejectionMapper: {
-       get: function get() {
-         return rejectionMapper;
-       },
-       set: function set(value) {
-         rejectionMapper = value;
-       } // Map reject failures
-
-     },
-     follow: function follow(fn, zoneProps) {
-       return new Promise(function (resolve, reject) {
-         return newScope(function (resolve, reject) {
-           var psd = PSD;
-           psd.unhandleds = []; // For unhandled standard- or 3rd party Promises. Checked at psd.finalize()
-
-           psd.onunhandled = reject; // Triggered directly on unhandled promises of this library.
-
-           psd.finalize = callBoth(function () {
-             var _this = this; // Unhandled standard or 3rd part promises are put in PSD.unhandleds and
-             // examined upon scope completion while unhandled rejections in this Promise
-             // will trigger directly through psd.onunhandled
-
-
-             run_at_end_of_this_or_next_physical_tick(function () {
-               _this.unhandleds.length === 0 ? resolve() : reject(_this.unhandleds[0]);
-             });
-           }, psd.finalize);
-           fn();
-         }, zoneProps, resolve, reject);
-       });
-     }
-   });
-   /**
-   * Take a potentially misbehaving resolver function and make sure
-   * onFulfilled and onRejected are only called once.
-   *
-   * Makes no guarantees about asynchrony.
-   */
-
-   function executePromiseTask(promise, fn) {
-     // Promise Resolution Procedure:
-     // https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
-     try {
-       fn(function (value) {
-         if (promise._state !== null) return; // Already settled
-
-         if (value === promise) throw new TypeError('A promise cannot be resolved with itself.');
-         var shouldExecuteTick = promise._lib && beginMicroTickScope();
-
-         if (value && typeof value.then === 'function') {
-           executePromiseTask(promise, function (resolve, reject) {
-             value instanceof Promise ? value._then(resolve, reject) : value.then(resolve, reject);
-           });
-         } else {
-           promise._state = true;
-           promise._value = value;
-           propagateAllListeners(promise);
-         }
-
-         if (shouldExecuteTick) endMicroTickScope();
-       }, handleRejection.bind(null, promise)); // If Function.bind is not supported. Exception is handled in catch below
-     } catch (ex) {
-       handleRejection(promise, ex);
-     }
-   }
-
-   function handleRejection(promise, reason) {
-     rejectingErrors.push(reason);
-     if (!promise || promise._state !== null) // tag 28122018
-       return;
-     var shouldExecuteTick = promise._lib && beginMicroTickScope();
-     reason = rejectionMapper(reason);
-     promise._state = false;
-     promise._value = reason;
-     debug && reason !== null && babelHelpers["typeof"](reason) === 'object' && !reason._promise && tryCatch(function () {
-       var origProp = getPropertyDescriptor(reason, "stack");
-       reason._promise = promise;
-       setProp(reason, "stack", {
-         get: function get() {
-           return stack_being_generated ? origProp && (origProp.get ? origProp.get.apply(reason) : origProp.value) : promise.stack;
-         }
-       });
-     }); // Add the failure to a list of possibly uncaught errors
-
-     addPossiblyUnhandledError(promise);
-     propagateAllListeners(promise);
-     if (shouldExecuteTick) endMicroTickScope();
-   }
-
-   function propagateAllListeners(promise) {
-     //debug && linkToPreviousPromise(promise);
-     var listeners = promise._listeners;
-     promise._listeners = [];
-
-     for (var i = 0, len = listeners.length; i < len; ++i) {
-       propagateToListener(promise, listeners[i]);
-     }
-
-     var psd = promise._PSD;
-     --psd.ref || psd.finalize(); // if psd.ref reaches zero, call psd.finalize();
-
-     if (numScheduledCalls === 0) {
-       // If numScheduledCalls is 0, it means that our stack is not in a callback of a scheduled call,
-       // and that no deferreds where listening to this rejection or success.
-       // Since there is a risk that our stack can contain application code that may
-       // do stuff after this code is finished that may generate new calls, we cannot
-       // call finalizers here.
-       ++numScheduledCalls;
-       asap$1(function () {
-         if (--numScheduledCalls === 0) finalizePhysicalTick(); // Will detect unhandled errors
-       }, []);
-     }
-   }
-
-   function propagateToListener(promise, listener) {
-     if (promise._state === null) {
-       promise._listeners.push(listener);
-
-       return;
-     }
-
-     var cb = promise._state ? listener.onFulfilled : listener.onRejected;
-
-     if (cb === null) {
-       // This Listener doesnt have a listener for the event being triggered (onFulfilled or onReject) so lets forward the event to any eventual listeners on the Promise instance returned by then() or catch()
-       return (promise._state ? listener.resolve : listener.reject)(promise._value);
-     }
-
-     ++listener.psd.ref;
-     ++numScheduledCalls;
-     asap$1(callListener, [cb, promise, listener]);
-   }
-
-   function callListener(cb, promise, listener) {
-     try {
-       // Set static variable currentFulfiller to the promise that is being fullfilled,
-       // so that we connect the chain of promises (for long stacks support)
-       currentFulfiller = promise; // Call callback and resolve our listener with it's return value.
-
-       var ret,
-           value = promise._value;
-
-       if (promise._state) {
-         // cb is onResolved
-         ret = cb(value);
-       } else {
-         // cb is onRejected
-         if (rejectingErrors.length) rejectingErrors = [];
-         ret = cb(value);
-         if (rejectingErrors.indexOf(value) === -1) markErrorAsHandled(promise); // Callback didnt do Promise.reject(err) nor reject(err) onto another promise.
-       }
-
-       listener.resolve(ret);
-     } catch (e) {
-       // Exception thrown in callback. Reject our listener.
-       listener.reject(e);
-     } finally {
-       // Restore env and currentFulfiller.
-       currentFulfiller = null;
-       if (--numScheduledCalls === 0) finalizePhysicalTick();
-       --listener.psd.ref || listener.psd.finalize();
-     }
-   }
-
-   function getStack(promise, stacks, limit) {
-     if (stacks.length === limit) return stacks;
-     var stack = "";
-
-     if (promise._state === false) {
-       var failure = promise._value,
-           errorName,
-           message;
-
-       if (failure != null) {
-         errorName = failure.name || "Error";
-         message = failure.message || failure;
-         stack = prettyStack(failure, 0);
-       } else {
-         errorName = failure; // If error is undefined or null, show that.
-
-         message = "";
-       }
-
-       stacks.push(errorName + (message ? ": " + message : "") + stack);
-     }
-
-     if (debug) {
-       stack = prettyStack(promise._stackHolder, 2);
-       if (stack && stacks.indexOf(stack) === -1) stacks.push(stack);
-       if (promise._prev) getStack(promise._prev, stacks, limit);
-     }
-
-     return stacks;
-   }
-
-   function linkToPreviousPromise(promise, prev) {
-     // Support long stacks by linking to previous completed promise.
-     var numPrev = prev ? prev._numPrev + 1 : 0;
-
-     if (numPrev < LONG_STACKS_CLIP_LIMIT) {
-       promise._prev = prev;
-       promise._numPrev = numPrev;
-     }
-   }
-   /* The callback to schedule with setImmediate() or setTimeout().
-      It runs a virtual microtick and executes any callback registered in microtickQueue.
-    */
-
-
-   function physicalTick() {
-     beginMicroTickScope() && endMicroTickScope();
-   }
-
-   function beginMicroTickScope() {
-     var wasRootExec = isOutsideMicroTick;
-     isOutsideMicroTick = false;
-     needsNewPhysicalTick = false;
-     return wasRootExec;
-   }
-   /* Executes micro-ticks without doing try..catch.
-      This can be possible because we only use this internally and
-      the registered functions are exception-safe (they do try..catch
-      internally before calling any external method). If registering
-      functions in the microtickQueue that are not exception-safe, this
-      would destroy the framework and make it instable. So we don't export
-      our asap method.
-   */
-
-
-   function endMicroTickScope() {
-     var callbacks, i, l;
-
-     do {
-       while (microtickQueue.length > 0) {
-         callbacks = microtickQueue;
-         microtickQueue = [];
-         l = callbacks.length;
-
-         for (i = 0; i < l; ++i) {
-           var item = callbacks[i];
-           item[0].apply(null, item[1]);
-         }
-       }
-     } while (microtickQueue.length > 0);
-
-     isOutsideMicroTick = true;
-     needsNewPhysicalTick = true;
-   }
-
-   function finalizePhysicalTick() {
-     var unhandledErrs = unhandledErrors;
-     unhandledErrors = [];
-     unhandledErrs.forEach(function (p) {
-       p._PSD.onunhandled.call(null, p._value, p);
-     });
-     var finalizers = tickFinalizers.slice(0); // Clone first because finalizer may remove itself from list.
-
-     var i = finalizers.length;
-
-     while (i) {
-       finalizers[--i]();
-     }
-   }
-
-   function run_at_end_of_this_or_next_physical_tick(fn) {
-     function finalizer() {
-       fn();
-       tickFinalizers.splice(tickFinalizers.indexOf(finalizer), 1);
-     }
-
-     tickFinalizers.push(finalizer);
-     ++numScheduledCalls;
-     asap$1(function () {
-       if (--numScheduledCalls === 0) finalizePhysicalTick();
-     }, []);
-   }
-
-   function addPossiblyUnhandledError(promise) {
-     // Only add to unhandledErrors if not already there. The first one to add to this list
-     // will be upon the first rejection so that the root cause (first promise in the
-     // rejection chain) is the one listed.
-     if (!unhandledErrors.some(function (p) {
-       return p._value === promise._value;
-     })) unhandledErrors.push(promise);
-   }
-
-   function markErrorAsHandled(promise) {
-     // Called when a reject handled is actually being called.
-     // Search in unhandledErrors for any promise whos _value is this promise_value (list
-     // contains only rejected promises, and only one item per error)
-     var i = unhandledErrors.length;
-
-     while (i) {
-       if (unhandledErrors[--i]._value === promise._value) {
-         // Found a promise that failed with this same error object pointer,
-         // Remove that since there is a listener that actually takes care of it.
-         unhandledErrors.splice(i, 1);
-         return;
-       }
-     }
-   }
-
-   function PromiseReject(reason) {
-     return new Promise(INTERNAL, false, reason);
-   }
-
-   function wrap(fn, errorCatcher) {
-     var psd = PSD;
-     return function () {
-       var wasRootExec = beginMicroTickScope(),
-           outerScope = PSD;
-
-       try {
-         switchToZone(psd, true);
-         return fn.apply(this, arguments);
-       } catch (e) {
-         errorCatcher && errorCatcher(e);
-       } finally {
-         switchToZone(outerScope, false);
-         if (wasRootExec) endMicroTickScope();
-       }
-     };
-   } //
-   // variables used for native await support
-   //
-
-
-   var task = {
-     awaits: 0,
-     echoes: 0,
-     id: 0
-   }; // The ongoing macro-task when using zone-echoing.
-
-   var taskCounter = 0; // ID counter for macro tasks.
-
-   var zoneStack = []; // Stack of left zones to restore asynchronically.
-
-   var zoneEchoes = 0; // zoneEchoes is a must in order to persist zones between native await expressions.
-
-   var totalEchoes = 0; // ID counter for micro-tasks. Used to detect possible native await in our Promise.prototype.then.
-
-   var zone_id_counter = 0;
-
-   function newScope(fn, props$$1, a1, a2) {
-     var parent = PSD,
-         psd = Object.create(parent);
-     psd.parent = parent;
-     psd.ref = 0;
-     psd.global = false;
-     psd.id = ++zone_id_counter; // Prepare for promise patching (done in usePSD):
-
-     var globalEnv = globalPSD.env;
-     psd.env = patchGlobalPromise ? {
-       Promise: Promise,
-       PromiseProp: {
-         value: Promise,
-         configurable: true,
-         writable: true
-       },
-       all: Promise.all,
-       race: Promise.race,
-       resolve: Promise.resolve,
-       reject: Promise.reject,
-       nthen: getPatchedPromiseThen(globalEnv.nthen, psd),
-       gthen: getPatchedPromiseThen(globalEnv.gthen, psd) // global then
-
-     } : {};
-     if (props$$1) extend(psd, props$$1); // unhandleds and onunhandled should not be specifically set here.
-     // Leave them on parent prototype.
-     // unhandleds.push(err) will push to parent's prototype
-     // onunhandled() will call parents onunhandled (with this scope's this-pointer though!)
-
-     ++parent.ref;
-
-     psd.finalize = function () {
-       --this.parent.ref || this.parent.finalize();
-     };
-
-     var rv = usePSD(psd, fn, a1, a2);
-     if (psd.ref === 0) psd.finalize();
-     return rv;
-   } // Function to call if scopeFunc returns NativePromise
-   // Also for each NativePromise in the arguments to Promise.all()
-
-
-   function incrementExpectedAwaits() {
-     if (!task.id) task.id = ++taskCounter;
-     ++task.awaits;
-     task.echoes += ZONE_ECHO_LIMIT;
-     return task.id;
-   } // Function to call when 'then' calls back on a native promise where onAwaitExpected() had been called.
-   // Also call this when a native await calls then method on a promise. In that case, don't supply
-   // sourceTaskId because we already know it refers to current task.
-
-
-   function decrementExpectedAwaits(sourceTaskId) {
-     if (!task.awaits || sourceTaskId && sourceTaskId !== task.id) return;
-     if (--task.awaits === 0) task.id = 0;
-     task.echoes = task.awaits * ZONE_ECHO_LIMIT; // Will reset echoes to 0 if awaits is 0.
-   } // Call from Promise.all() and Promise.race()
-
-
-   function onPossibleParallellAsync(possiblePromise) {
-     if (task.echoes && possiblePromise && possiblePromise.constructor === NativePromise) {
-       incrementExpectedAwaits();
-       return possiblePromise.then(function (x) {
-         decrementExpectedAwaits();
-         return x;
-       }, function (e) {
-         decrementExpectedAwaits();
-         return rejection(e);
-       });
-     }
-
-     return possiblePromise;
-   }
-
-   function zoneEnterEcho(targetZone) {
-     ++totalEchoes;
-
-     if (!task.echoes || --task.echoes === 0) {
-       task.echoes = task.id = 0; // Cancel zone echoing.
-     }
-
-     zoneStack.push(PSD);
-     switchToZone(targetZone, true);
-   }
-
-   function zoneLeaveEcho() {
-     var zone = zoneStack[zoneStack.length - 1];
-     zoneStack.pop();
-     switchToZone(zone, false);
-   }
-
-   function switchToZone(targetZone, bEnteringZone) {
-     var currentZone = PSD;
-
-     if (bEnteringZone ? task.echoes && (!zoneEchoes++ || targetZone !== PSD) : zoneEchoes && (! --zoneEchoes || targetZone !== PSD)) {
-       // Enter or leave zone asynchronically as well, so that tasks initiated during current tick
-       // will be surrounded by the zone when they are invoked.
-       enqueueNativeMicroTask(bEnteringZone ? zoneEnterEcho.bind(null, targetZone) : zoneLeaveEcho);
-     }
-
-     if (targetZone === PSD) return;
-     PSD = targetZone; // The actual zone switch occurs at this line.
-     // Snapshot on every leave from global zone.
-
-     if (currentZone === globalPSD) globalPSD.env = snapShot();
-
-     if (patchGlobalPromise) {
-       // Let's patch the global and native Promises (may be same or may be different)
-       var GlobalPromise = globalPSD.env.Promise; // Swich environments (may be PSD-zone or the global zone. Both apply.)
-
-       var targetEnv = targetZone.env; // Change Promise.prototype.then for native and global Promise (they MAY differ on polyfilled environments, but both can be accessed)
-       // Must be done on each zone change because the patched method contains targetZone in its closure.
-
-       nativePromiseProto.then = targetEnv.nthen;
-       GlobalPromise.prototype.then = targetEnv.gthen;
-
-       if (currentZone.global || targetZone.global) {
-         // Leaving or entering global zone. It's time to patch / restore global Promise.
-         // Set this Promise to window.Promise so that transiled async functions will work on Firefox, Safari and IE, as well as with Zonejs and angular.
-         Object.defineProperty(_global, 'Promise', targetEnv.PromiseProp); // Support Promise.all() etc to work indexedDB-safe also when people are including es6-promise as a module (they might
-         // not be accessing global.Promise but a local reference to it)
-
-         GlobalPromise.all = targetEnv.all;
-         GlobalPromise.race = targetEnv.race;
-         GlobalPromise.resolve = targetEnv.resolve;
-         GlobalPromise.reject = targetEnv.reject;
-       }
-     }
-   }
-
-   function snapShot() {
-     var GlobalPromise = _global.Promise || Promise; // tag 02032020
-
-     return patchGlobalPromise ? {
-       Promise: GlobalPromise,
-       PromiseProp: Object.getOwnPropertyDescriptor(_global, "Promise"),
-       all: GlobalPromise.all,
-       race: GlobalPromise.race,
-       resolve: GlobalPromise.resolve,
-       reject: GlobalPromise.reject,
-       nthen: nativePromiseProto.then,
-       gthen: GlobalPromise.prototype.then
-     } : {};
-   }
-
-   function usePSD(psd, fn, a1, a2, a3) {
-     var outerScope = PSD;
-
-     try {
-       switchToZone(psd, true);
-       return fn(a1, a2, a3);
-     } finally {
-       switchToZone(outerScope, false);
-     }
-   }
-
-   function enqueueNativeMicroTask(job) {
-     //
-     // Precondition: nativePromiseThen !== undefined
-     //
-     nativePromiseThen.call(resolvedNativePromise, job);
-   }
-
-   function nativeAwaitCompatibleWrap(fn, zone, possibleAwait) {
-     return typeof fn !== 'function' ? fn : function () {
-       var outerZone = PSD;
-       if (possibleAwait) incrementExpectedAwaits();
-       switchToZone(zone, true);
-
-       try {
-         return fn.apply(this, arguments);
-       } finally {
-         switchToZone(outerZone, false);
-       }
-     };
-   }
-
-   function getPatchedPromiseThen(origThen, zone) {
-     return function (onResolved, onRejected) {
-       return origThen.call(this, nativeAwaitCompatibleWrap(onResolved, zone, false), nativeAwaitCompatibleWrap(onRejected, zone, false));
-     };
-   }
-
-   var UNHANDLEDREJECTION = "unhandledrejection";
-
-   function globalError(err, promise) {
-     var rv;
-
-     try {
-       rv = promise.onuncatched(err);
-     } catch (e) {}
-
-     if (rv !== false) try {
-       var event,
-           eventData = {
-         promise: promise,
-         reason: err
-       };
-
-       if (_global.document && document.createEvent) {
-         event = document.createEvent('Event');
-         event.initEvent(UNHANDLEDREJECTION, true, true);
-         extend(event, eventData);
-       } else if (_global.CustomEvent) {
-         event = new CustomEvent(UNHANDLEDREJECTION, {
-           detail: eventData
-         });
-         extend(event, eventData);
-       }
-
-       if (event && _global.dispatchEvent) {
-         dispatchEvent(event);
-         if (!_global.PromiseRejectionEvent && _global.onunhandledrejection) // No native support for PromiseRejectionEvent but user has set window.onunhandledrejection. Manually call it.
-           try {
-             _global.onunhandledrejection(event);
-           } catch (_) {}
-       }
-
-       if (!event.defaultPrevented) {
-         console.warn("Unhandled rejection: " + (err.stack || err));
-       }
-     } catch (e) {}
-   }
-
-   var rejection = Promise.reject;
-
-   function Events(ctx) {
-     var evs = {};
-
-     var rv = function rv(eventName, subscriber) {
-       if (subscriber) {
-         // Subscribe. If additional arguments than just the subscriber was provided, forward them as well.
-         var i = arguments.length,
-             args = new Array(i - 1);
-
-         while (--i) {
-           args[i - 1] = arguments[i];
-         }
-
-         evs[eventName].subscribe.apply(null, args);
-         return ctx;
-       } else if (typeof eventName === 'string') {
-         // Return interface allowing to fire or unsubscribe from event
-         return evs[eventName];
-       }
-     };
-
-     rv.addEventType = add;
-
-     for (var i = 1, l = arguments.length; i < l; ++i) {
-       add(arguments[i]);
-     }
-
-     return rv;
-
-     function add(eventName, chainFunction, defaultFunction) {
-       if (babelHelpers["typeof"](eventName) === 'object') return addConfiguredEvents(eventName);
-       if (!chainFunction) chainFunction = reverseStoppableEventChain;
-       if (!defaultFunction) defaultFunction = nop;
-       var context = {
-         subscribers: [],
-         fire: defaultFunction,
-         subscribe: function subscribe(cb) {
-           if (context.subscribers.indexOf(cb) === -1) {
-             context.subscribers.push(cb);
-             context.fire = chainFunction(context.fire, cb);
-           }
-         },
-         unsubscribe: function unsubscribe(cb) {
-           context.subscribers = context.subscribers.filter(function (fn) {
-             return fn !== cb;
-           });
-           context.fire = context.subscribers.reduce(chainFunction, defaultFunction);
-         }
-       };
-       evs[eventName] = rv[eventName] = context;
-       return context;
-     }
-
-     function addConfiguredEvents(cfg) {
-       // events(this, {reading: [functionChain, nop]});
-       keys(cfg).forEach(function (eventName) {
-         var args = cfg[eventName];
-
-         if (isArray(args)) {
-           add(eventName, cfg[eventName][0], cfg[eventName][1]);
-         } else if (args === 'asap') {
-           // Rather than approaching event subscription using a functional approach, we here do it in a for-loop where subscriber is executed in its own stack
-           // enabling that any exception that occur wont disturb the initiator and also not nescessary be catched and forgotten.
-           var context = add(eventName, mirror, function fire() {
-             // Optimazation-safe cloning of arguments into args.
-             var i = arguments.length,
-                 args = new Array(i);
-
-             while (i--) {
-               args[i] = arguments[i];
-             } // All each subscriber:
-
-
-             context.subscribers.forEach(function (fn) {
-               asap(function fireEvent() {
-                 fn.apply(null, args);
-               });
-             });
-           });
-         } else throw new exceptions.InvalidArgument("Invalid event config");
-       });
-     }
-   }
-   /*
-    * Dexie.js - a minimalistic wrapper for IndexedDB
-    * ===============================================
-    *
-    * Copyright (c) 2014-2017 David Fahlander
-    *
-    * Version 2.0.4, Fri May 25 2018
-    *
-    * http://dexie.org
-    *
-    * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/LICENSE-2.0
-    *
-    */
-
-
-   var DEXIE_VERSION = '2.0.4';
-   var maxString = String.fromCharCode(65535);
-
-   var maxKey = function () {
-     try {
-       IDBKeyRange.only([[]]);
-       return [[]];
-     } catch (e) {
-       return maxString;
-     }
-   }();
-
-   var minKey = -Infinity;
-   var INVALID_KEY_ARGUMENT = "Invalid key provided. Keys must be of type string, number, Date or Array<string | number | Date>.";
-   var STRING_EXPECTED = "String expected.";
-   var connections = [];
-   var isIEOrEdge = typeof navigator !== 'undefined' && /(MSIE|Trident|Edge)/.test(navigator.userAgent);
-   var hasIEDeleteObjectStoreBug = isIEOrEdge;
-   var hangsOnDeleteLargeKeyRange = isIEOrEdge;
-
-   var dexieStackFrameFilter = function dexieStackFrameFilter(frame) {
-     return !/(dexie\.js|dexie\.min\.js)/.test(frame);
-   };
-
-   var dbNamesDB; // Global database for backing Dexie.getDatabaseNames() on browser without indexedDB.webkitGetDatabaseNames()
-   // Init debug
-
-   setDebug(debug, dexieStackFrameFilter);
-
-   function Dexie(dbName, options) {
-     /// <param name="options" type="Object" optional="true">Specify only if you wich to control which addons that should run on this instance</param>
-     var deps = Dexie.dependencies;
-     var opts = extend({
-       // Default Options
-       addons: Dexie.addons,
-       autoOpen: true,
-       indexedDB: deps.indexedDB,
-       IDBKeyRange: deps.IDBKeyRange // Backend IDBKeyRange api. Default to browser env.
-
-     }, options);
-     var addons = opts.addons,
-         autoOpen = opts.autoOpen,
-         indexedDB = opts.indexedDB,
-         IDBKeyRange = opts.IDBKeyRange;
-     var globalSchema = this._dbSchema = {};
-     var versions = [];
-     var dbStoreNames = [];
-     var allTables = {}; ///<var type="IDBDatabase" />
-
-     var idbdb = null; // Instance of IDBDatabase
-
-     var dbOpenError = null;
-     var isBeingOpened = false;
-     var onReadyBeingFired = null;
-     var openComplete = false;
-     var READONLY = "readonly",
-         READWRITE = "readwrite";
-     var db = this;
-     var dbReadyResolve,
-         dbReadyPromise = new Promise(function (resolve) {
-       dbReadyResolve = resolve;
-     }),
-         cancelOpen,
-         openCanceller = new Promise(function (_, reject) {
-       cancelOpen = reject;
-     });
-     var autoSchema = true;
-     var hasNativeGetDatabaseNames = !!getNativeGetDatabaseNamesFn(indexedDB),
-         hasGetAll;
-
-     function init() {
-       // Default subscribers to "versionchange" and "blocked".
-       // Can be overridden by custom handlers. If custom handlers return false, these default
-       // behaviours will be prevented.
-       db.on("versionchange", function (ev) {
-         // Default behavior for versionchange event is to close database connection.
-         // Caller can override this behavior by doing db.on("versionchange", function(){ return false; });
-         // Let's not block the other window from making it's delete() or open() call.
-         // NOTE! This event is never fired in IE,Edge or Safari.
-         if (ev.newVersion > 0) console.warn("Another connection wants to upgrade database '" + db.name + "'. Closing db now to resume the upgrade.");else console.warn("Another connection wants to delete database '" + db.name + "'. Closing db now to resume the delete request.");
-         db.close(); // In many web applications, it would be recommended to force window.reload()
-         // when this event occurs. To do that, subscribe to the versionchange event
-         // and call window.location.reload(true) if ev.newVersion > 0 (not a deletion)
-         // The reason for this is that your current web app obviously has old schema code that needs
-         // to be updated. Another window got a newer version of the app and needs to upgrade DB but
-         // your window is blocking it unless we close it here.
-       });
-       db.on("blocked", function (ev) {
-         if (!ev.newVersion || ev.newVersion < ev.oldVersion) console.warn("Dexie.delete('" + db.name + "') was blocked");else console.warn("Upgrade '" + db.name + "' blocked by other connection holding version " + ev.oldVersion / 10);
-       });
-     } //
-     //
-     //
-     // ------------------------- Versioning Framework---------------------------
-     //
-     //
-     //
-
-
-     this.version = function (versionNumber) {
-       /// <param name="versionNumber" type="Number"></param>
-       /// <returns type="Version"></returns>
-       if (idbdb || isBeingOpened) throw new exceptions.Schema("Cannot add version when database is open");
-       this.verno = Math.max(this.verno, versionNumber);
-       var versionInstance = versions.filter(function (v) {
-         return v._cfg.version === versionNumber;
-       })[0];
-       if (versionInstance) return versionInstance;
-       versionInstance = new Version(versionNumber);
-       versions.push(versionInstance);
-       versions.sort(lowerVersionFirst); // Disable autoschema mode, as at least one version is specified.
-
-       autoSchema = false;
-       return versionInstance;
-     };
-
-     function Version(versionNumber) {
-       this._cfg = {
-         version: versionNumber,
-         storesSource: null,
-         dbschema: {},
-         tables: {},
-         contentUpgrade: null
-       };
-       this.stores({}); // Derive earlier schemas by default.
-     }
-
-     extend(Version.prototype, {
-       stores: function stores(_stores) {
-         /// <summary>
-         ///   Defines the schema for a particular version
-         /// </summary>
-         /// <param name="stores" type="Object">
-         /// Example: <br/>
-         ///   {users: "id++,first,last,&amp;username,*email", <br/>
-         ///   passwords: "id++,&amp;username"}<br/>
-         /// <br/>
-         /// Syntax: {Table: "[primaryKey][++],[&amp;][*]index1,[&amp;][*]index2,..."}<br/><br/>
-         /// Special characters:<br/>
-         ///  "&amp;"  means unique key, <br/>
-         ///  "*"  means value is multiEntry, <br/>
-         ///  "++" means auto-increment and only applicable for primary key <br/>
-         /// </param>
-         this._cfg.storesSource = this._cfg.storesSource ? extend(this._cfg.storesSource, _stores) : _stores; // Derive stores from earlier versions if they are not explicitely specified as null or a new syntax.
-
-         var storesSpec = {};
-         versions.forEach(function (version) {
-           extend(storesSpec, version._cfg.storesSource);
-         });
-         var dbschema = this._cfg.dbschema = {};
-
-         this._parseStoresSpec(storesSpec, dbschema); // Update the latest schema to this version
-         // Update API
-
-
-         globalSchema = db._dbSchema = dbschema;
-         removeTablesApi([allTables, db, Transaction.prototype]); // Keep Transaction.prototype even though it should be depr.
-
-         setApiOnPlace([allTables, db, Transaction.prototype, this._cfg.tables], keys(dbschema), dbschema);
-         dbStoreNames = keys(dbschema);
-         return this;
-       },
-       upgrade: function upgrade(upgradeFunction) {
-         this._cfg.contentUpgrade = upgradeFunction;
-         return this;
-       },
-       _parseStoresSpec: function _parseStoresSpec(stores, outSchema) {
-         keys(stores).forEach(function (tableName) {
-           if (stores[tableName] !== null) {
-             var instanceTemplate = {};
-             var indexes = parseIndexSyntax(stores[tableName]);
-             var primKey = indexes.shift();
-             if (primKey.multi) throw new exceptions.Schema("Primary key cannot be multi-valued");
-             if (primKey.keyPath) setByKeyPath(instanceTemplate, primKey.keyPath, primKey.auto ? 0 : primKey.keyPath);
-             indexes.forEach(function (idx) {
-               if (idx.auto) throw new exceptions.Schema("Only primary key can be marked as autoIncrement (++)");
-               if (!idx.keyPath) throw new exceptions.Schema("Index must have a name and cannot be an empty string");
-               setByKeyPath(instanceTemplate, idx.keyPath, idx.compound ? idx.keyPath.map(function () {
-                 return "";
-               }) : "");
-             });
-             outSchema[tableName] = new TableSchema(tableName, primKey, indexes, instanceTemplate);
-           }
-         });
-       }
-     });
-
-     function runUpgraders(oldVersion, idbtrans, reject) {
-       var trans = db._createTransaction(READWRITE, dbStoreNames, globalSchema);
-
-       trans.create(idbtrans);
-
-       trans._completion["catch"](reject);
-
-       var rejectTransaction = trans._reject.bind(trans);
-
-       newScope(function () {
-         PSD.trans = trans;
-
-         if (oldVersion === 0) {
-           // Create tables:
-           keys(globalSchema).forEach(function (tableName) {
-             createTable(idbtrans, tableName, globalSchema[tableName].primKey, globalSchema[tableName].indexes);
-           });
-           Promise.follow(function () {
-             return db.on.populate.fire(trans);
-           })["catch"](rejectTransaction);
-         } else updateTablesAndIndexes(oldVersion, trans, idbtrans)["catch"](rejectTransaction);
-       });
-     }
-
-     function updateTablesAndIndexes(oldVersion, trans, idbtrans) {
-       // Upgrade version to version, step-by-step from oldest to newest version.
-       // Each transaction object will contain the table set that was current in that version (but also not-yet-deleted tables from its previous version)
-       var queue = [];
-       var oldVersionStruct = versions.filter(function (version) {
-         return version._cfg.version === oldVersion;
-       })[0];
-       if (!oldVersionStruct) throw new exceptions.Upgrade("Dexie specification of currently installed DB version is missing");
-       globalSchema = db._dbSchema = oldVersionStruct._cfg.dbschema;
-       var anyContentUpgraderHasRun = false;
-       var versToRun = versions.filter(function (v) {
-         return v._cfg.version > oldVersion;
-       });
-       versToRun.forEach(function (version) {
-         /// <param name="version" type="Version"></param>
-         queue.push(function () {
-           var oldSchema = globalSchema;
-           var newSchema = version._cfg.dbschema;
-           adjustToExistingIndexNames(oldSchema, idbtrans);
-           adjustToExistingIndexNames(newSchema, idbtrans);
-           globalSchema = db._dbSchema = newSchema;
-           var diff = getSchemaDiff(oldSchema, newSchema); // Add tables
-
-           diff.add.forEach(function (tuple) {
-             createTable(idbtrans, tuple[0], tuple[1].primKey, tuple[1].indexes);
-           }); // Change tables
-
-           diff.change.forEach(function (change) {
-             if (change.recreate) {
-               throw new exceptions.Upgrade("Not yet support for changing primary key");
-             } else {
-               var store = idbtrans.objectStore(change.name); // Add indexes
-
-               change.add.forEach(function (idx) {
-                 addIndex(store, idx);
-               }); // Update indexes
-
-               change.change.forEach(function (idx) {
-                 store.deleteIndex(idx.name);
-                 addIndex(store, idx);
-               }); // Delete indexes
-
-               change.del.forEach(function (idxName) {
-                 store.deleteIndex(idxName);
-               });
-             }
-           });
-
-           if (version._cfg.contentUpgrade) {
-             anyContentUpgraderHasRun = true;
-             return Promise.follow(function () {
-               version._cfg.contentUpgrade(trans);
-             });
-           }
-         });
-         queue.push(function (idbtrans) {
-           if (!anyContentUpgraderHasRun || !hasIEDeleteObjectStoreBug) {
-             var newSchema = version._cfg.dbschema; // Delete old tables
-
-             deleteRemovedTables(newSchema, idbtrans);
-           }
-         });
-       }); // Now, create a queue execution engine
-
-       function runQueue() {
-         return queue.length ? Promise.resolve(queue.shift()(trans.idbtrans)).then(runQueue) : Promise.resolve();
-       }
-
-       return runQueue().then(function () {
-         createMissingTables(globalSchema, idbtrans); // At last, make sure to create any missing tables. (Needed by addons that add stores to DB without specifying version)
-       });
-     }
-
-     function getSchemaDiff(oldSchema, newSchema) {
-       var diff = {
-         del: [],
-         add: [],
-         change: [] // Array of {name: tableName, recreate: newDefinition, del: delIndexNames, add: newIndexDefs, change: changedIndexDefs}
-
-       };
-
-       for (var table in oldSchema) {
-         if (!newSchema[table]) diff.del.push(table);
-       }
-
-       for (table in newSchema) {
-         var oldDef = oldSchema[table],
-             newDef = newSchema[table];
-
-         if (!oldDef) {
-           diff.add.push([table, newDef]);
-         } else {
-           var change = {
-             name: table,
-             def: newDef,
-             recreate: false,
-             del: [],
-             add: [],
-             change: []
-           };
-
-           if (oldDef.primKey.src !== newDef.primKey.src) {
-             // Primary key has changed. Remove and re-add table.
-             change.recreate = true;
-             diff.change.push(change);
-           } else {
-             // Same primary key. Just find out what differs:
-             var oldIndexes = oldDef.idxByName;
-             var newIndexes = newDef.idxByName;
-
-             for (var idxName in oldIndexes) {
-               if (!newIndexes[idxName]) change.del.push(idxName);
-             }
-
-             for (idxName in newIndexes) {
-               var oldIdx = oldIndexes[idxName],
-                   newIdx = newIndexes[idxName];
-               if (!oldIdx) change.add.push(newIdx);else if (oldIdx.src !== newIdx.src) change.change.push(newIdx);
-             }
-
-             if (change.del.length > 0 || change.add.length > 0 || change.change.length > 0) {
-               diff.change.push(change);
-             }
-           }
-         }
-       }
-
-       return diff;
-     }
-
-     function createTable(idbtrans, tableName, primKey, indexes) {
-       /// <param name="idbtrans" type="IDBTransaction"></param>
-       var store = idbtrans.db.createObjectStore(tableName, primKey.keyPath ? {
-         keyPath: primKey.keyPath,
-         autoIncrement: primKey.auto
-       } : {
-         autoIncrement: primKey.auto
-       });
-       indexes.forEach(function (idx) {
-         addIndex(store, idx);
-       });
-       return store;
-     }
-
-     function createMissingTables(newSchema, idbtrans) {
-       keys(newSchema).forEach(function (tableName) {
-         if (!idbtrans.db.objectStoreNames.contains(tableName)) {
-           createTable(idbtrans, tableName, newSchema[tableName].primKey, newSchema[tableName].indexes);
-         }
-       });
-     }
-
-     function deleteRemovedTables(newSchema, idbtrans) {
-       for (var i = 0; i < idbtrans.db.objectStoreNames.length; ++i) {
-         var storeName = idbtrans.db.objectStoreNames[i];
-
-         if (newSchema[storeName] == null) {
-           idbtrans.db.deleteObjectStore(storeName);
-         }
-       }
-     }
-
-     function addIndex(store, idx) {
-       store.createIndex(idx.name, idx.keyPath, {
-         unique: idx.unique,
-         multiEntry: idx.multi
-       });
-     } //
-     //
-     //      Dexie Protected API
-     //
-     //
-
-
-     this._allTables = allTables;
-
-     this._createTransaction = function (mode, storeNames, dbschema, parentTransaction) {
-       return new Transaction(mode, storeNames, dbschema, parentTransaction);
-     };
-     /* Generate a temporary transaction when db operations are done outside a transaction scope.
-     */
-
-
-     function tempTransaction(mode, storeNames, fn) {
-       if (!openComplete && !PSD.letThrough) {
-         if (!isBeingOpened) {
-           if (!autoOpen) return rejection(new exceptions.DatabaseClosed());
-           db.open()["catch"](nop); // Open in background. If if fails, it will be catched by the final promise anyway.
-         }
-
-         return dbReadyPromise.then(function () {
-           return tempTransaction(mode, storeNames, fn);
-         });
-       } else {
-         var trans = db._createTransaction(mode, storeNames, globalSchema);
-
-         try {
-           trans.create();
-         } catch (ex) {
-           return rejection(ex);
-         }
-
-         return trans._promise(mode, function (resolve, reject) {
-           return newScope(function () {
-             PSD.trans = trans;
-             return fn(resolve, reject, trans);
-           });
-         }).then(function (result) {
-           // Instead of resolving value directly, wait with resolving it until transaction has completed.
-           // Otherwise the data would not be in the DB if requesting it in the then() operation.
-           // Specifically, to ensure that the following expression will work:
-           //
-           //   db.friends.put({name: "Arne"}).then(function () {
-           //       db.friends.where("name").equals("Arne").count(function(count) {
-           //           assert (count === 1);
-           //       });
-           //   });
-           //
-           return trans._completion.then(function () {
-             return result;
-           });
-         });
-         /*.catch(err => { // Don't do this as of now. If would affect bulk- and modify methods in a way that could be more intuitive. But wait! Maybe change in next major.
-         trans._reject(err);
-         return rejection(err);
-         });*/
-       }
-     }
-
-     this._whenReady = function (fn) {
-       return openComplete || PSD.letThrough ? fn() : new Promise(function (resolve, reject) {
-         if (!isBeingOpened) {
-           if (!autoOpen) {
-             reject(new exceptions.DatabaseClosed());
-             return;
-           }
-
-           db.open()["catch"](nop); // Open in background. If if fails, it will be catched by the final promise anyway.
-         }
-
-         dbReadyPromise.then(resolve, reject);
-       }).then(fn);
-     }; //
-     //
-     //
-     //
-     //      Dexie API
-     //
-     //
-     //
-
-
-     this.verno = 0;
-
-     this.open = function () {
-       if (isBeingOpened || idbdb) return dbReadyPromise.then(function () {
-         return dbOpenError ? rejection(dbOpenError) : db;
-       });
-       debug && (openCanceller._stackHolder = getErrorWithStack()); // Let stacks point to when open() was called rather than where new Dexie() was called.
-
-       isBeingOpened = true;
-       dbOpenError = null;
-       openComplete = false; // Function pointers to call when the core opening process completes.
-
-       var resolveDbReady = dbReadyResolve,
-           // upgradeTransaction to abort on failure.
-       upgradeTransaction = null;
-       return Promise.race([openCanceller, new Promise(function (resolve, reject) {
-         // Multiply db.verno with 10 will be needed to workaround upgrading bug in IE:
-         // IE fails when deleting objectStore after reading from it.
-         // A future version of Dexie.js will stopover an intermediate version to workaround this.
-         // At that point, we want to be backward compatible. Could have been multiplied with 2, but by using 10, it is easier to map the number to the real version number.
-         // If no API, throw!
-         if (!indexedDB) throw new exceptions.MissingAPI("indexedDB API not found. If using IE10+, make sure to run your code on a server URL " + "(not locally). If using old Safari versions, make sure to include indexedDB polyfill.");
-         var req = autoSchema ? indexedDB.open(dbName) : indexedDB.open(dbName, Math.round(db.verno * 10));
-         if (!req) throw new exceptions.MissingAPI("IndexedDB API not available"); // May happen in Safari private mode, see https://github.com/dfahlander/Dexie.js/issues/134
-
-         req.onerror = eventRejectHandler(reject);
-         req.onblocked = wrap(fireOnBlocked);
-         req.onupgradeneeded = wrap(function (e) {
-           upgradeTransaction = req.transaction;
-
-           if (autoSchema && !db._allowEmptyDB) {
-             // Caller did not specify a version or schema. Doing that is only acceptable for opening alread existing databases.
-             // If onupgradeneeded is called it means database did not exist. Reject the open() promise and make sure that we
-             // do not create a new database by accident here.
-             req.onerror = preventDefault; // Prohibit onabort error from firing before we're done!
-
-             upgradeTransaction.abort(); // Abort transaction (would hope that this would make DB disappear but it doesnt.)
-             // Close database and delete it.
-
-             req.result.close();
-             var delreq = indexedDB.deleteDatabase(dbName); // The upgrade transaction is atomic, and javascript is single threaded - meaning that there is no risk that we delete someone elses database here!
-
-             delreq.onsuccess = delreq.onerror = wrap(function () {
-               reject(new exceptions.NoSuchDatabase("Database " + dbName + " doesnt exist"));
-             });
-           } else {
-             upgradeTransaction.onerror = eventRejectHandler(reject);
-             var oldVer = e.oldVersion > Math.pow(2, 62) ? 0 : e.oldVersion; // Safari 8 fix.
-
-             runUpgraders(oldVer / 10, upgradeTransaction, reject, req);
-           }
-         }, reject);
-         req.onsuccess = wrap(function () {
-           // Core opening procedure complete. Now let's just record some stuff.
-           upgradeTransaction = null;
-           idbdb = req.result;
-           connections.push(db); // Used for emulating versionchange event on IE/Edge/Safari.
-
-           if (autoSchema) readGlobalSchema();else if (idbdb.objectStoreNames.length > 0) {
-             try {
-               adjustToExistingIndexNames(globalSchema, idbdb.transaction(safariMultiStoreFix(idbdb.objectStoreNames), READONLY));
-             } catch (e) {// Safari may bail out if > 1 store names. However, this shouldnt be a showstopper. Issue #120.
-             }
-           }
-           idbdb.onversionchange = wrap(function (ev) {
-             db._vcFired = true; // detect implementations that not support versionchange (IE/Edge/Safari)
-
-             db.on("versionchange").fire(ev);
-           });
-
-           if (!hasNativeGetDatabaseNames && dbName !== '__dbnames') {
-             dbNamesDB.dbnames.put({
-               name: dbName
-             })["catch"](nop);
-           }
-
-           resolve();
-         }, reject);
-       })]).then(function () {
-         // Before finally resolving the dbReadyPromise and this promise,
-         // call and await all on('ready') subscribers:
-         // Dexie.vip() makes subscribers able to use the database while being opened.
-         // This is a must since these subscribers take part of the opening procedure.
-         onReadyBeingFired = [];
-         return Promise.resolve(Dexie.vip(db.on.ready.fire)).then(function fireRemainders() {
-           if (onReadyBeingFired.length > 0) {
-             // In case additional subscribers to db.on('ready') were added during the time db.on.ready.fire was executed.
-             var remainders = onReadyBeingFired.reduce(promisableChain, nop);
-             onReadyBeingFired = [];
-             return Promise.resolve(Dexie.vip(remainders)).then(fireRemainders);
-           }
-         });
-       })["finally"](function () {
-         onReadyBeingFired = null;
-       }).then(function () {
-         // Resolve the db.open() with the db instance.
-         isBeingOpened = false;
-         return db;
-       })["catch"](function (err) {
-         try {
-           // Did we fail within onupgradeneeded? Make sure to abort the upgrade transaction so it doesnt commit.
-           upgradeTransaction && upgradeTransaction.abort();
-         } catch (e) {}
-
-         isBeingOpened = false; // Set before calling db.close() so that it doesnt reject openCanceller again (leads to unhandled rejection event).
-
-         db.close(); // Closes and resets idbdb, removes connections, resets dbReadyPromise and openCanceller so that a later db.open() is fresh.
-         // A call to db.close() may have made on-ready subscribers fail. Use dbOpenError if set, since err could be a follow-up error on that.
-
-         dbOpenError = err; // Record the error. It will be used to reject further promises of db operations.
-
-         return rejection(dbOpenError);
-       })["finally"](function () {
-         openComplete = true;
-         resolveDbReady(); // dbReadyPromise is resolved no matter if open() rejects or resolved. It's just to wake up waiters.
-       });
-     };
-
-     this.close = function () {
-       var idx = connections.indexOf(db);
-       if (idx >= 0) connections.splice(idx, 1);
-
-       if (idbdb) {
-         try {
-           idbdb.close();
-         } catch (e) {}
-
-         idbdb = null;
-       }
-
-       autoOpen = false;
-       dbOpenError = new exceptions.DatabaseClosed();
-       if (isBeingOpened) cancelOpen(dbOpenError); // Reset dbReadyPromise promise:
-
-       dbReadyPromise = new Promise(function (resolve) {
-         dbReadyResolve = resolve;
-       });
-       openCanceller = new Promise(function (_, reject) {
-         cancelOpen = reject;
-       });
-     };
-
-     this["delete"] = function () {
-       var hasArguments = arguments.length > 0;
-       return new Promise(function (resolve, reject) {
-         if (hasArguments) throw new exceptions.InvalidArgument("Arguments not allowed in db.delete()");
-
-         if (isBeingOpened) {
-           dbReadyPromise.then(doDelete);
-         } else {
-           doDelete();
-         }
-
-         function doDelete() {
-           db.close();
-           var req = indexedDB.deleteDatabase(dbName);
-           req.onsuccess = wrap(function () {
-             if (!hasNativeGetDatabaseNames) {
-               dbNamesDB.dbnames["delete"](dbName)["catch"](nop);
-             }
-
-             resolve();
-           });
-           req.onerror = eventRejectHandler(reject);
-           req.onblocked = fireOnBlocked;
-         }
-       });
-     };
-
-     this.backendDB = function () {
-       return idbdb;
-     };
-
-     this.isOpen = function () {
-       return idbdb !== null;
-     };
-
-     this.hasBeenClosed = function () {
-       return dbOpenError && dbOpenError instanceof exceptions.DatabaseClosed;
-     };
-
-     this.hasFailed = function () {
-       return dbOpenError !== null;
-     };
-
-     this.dynamicallyOpened = function () {
-       return autoSchema;
-     }; //
-     // Properties
-     //
-
-
-     this.name = dbName; // db.tables - an array of all Table instances.
-
-     props(this, {
-       tables: {
-         get: function get() {
-           /// <returns type="Array" elementType="Table" />
-           return keys(allTables).map(function (name) {
-             return allTables[name];
-           });
-         }
-       }
-     }); //
-     // Events
-     //
-
-     this.on = Events(this, "populate", "blocked", "versionchange", {
-       ready: [promisableChain, nop]
-     });
-     this.on.ready.subscribe = override(this.on.ready.subscribe, function (subscribe) {
-       return function (subscriber, bSticky) {
-         Dexie.vip(function () {
-           if (openComplete) {
-             // Database already open. Call subscriber asap.
-             if (!dbOpenError) Promise.resolve().then(subscriber); // bSticky: Also subscribe to future open sucesses (after close / reopen)
-
-             if (bSticky) subscribe(subscriber);
-           } else if (onReadyBeingFired) {
-             // db.on('ready') subscribers are currently being executed and have not yet resolved or rejected
-             onReadyBeingFired.push(subscriber);
-             if (bSticky) subscribe(subscriber);
-           } else {
-             // Database not yet open. Subscribe to it.
-             subscribe(subscriber); // If bSticky is falsy, make sure to unsubscribe subscriber when fired once.
-
-             if (!bSticky) subscribe(function unsubscribe() {
-               db.on.ready.unsubscribe(subscriber);
-               db.on.ready.unsubscribe(unsubscribe);
-             });
-           }
-         });
-       };
-     });
-
-     this.transaction = function () {
-       /// <summary>
-       ///
-       /// </summary>
-       /// <param name="mode" type="String">"r" for readonly, or "rw" for readwrite</param>
-       /// <param name="tableInstances">Table instance, Array of Table instances, String or String Array of object stores to include in the transaction</param>
-       /// <param name="scopeFunc" type="Function">Function to execute with transaction</param>
-       var args = extractTransactionArgs.apply(this, arguments);
-       return this._transaction.apply(this, args);
-     };
-
-     function extractTransactionArgs(mode, _tableArgs_, scopeFunc) {
-       // Let table arguments be all arguments between mode and last argument.
-       var i = arguments.length;
-       if (i < 2) throw new exceptions.InvalidArgument("Too few arguments"); // Prevent optimzation killer (https://github.com/petkaantonov/bluebird/wiki/Optimization-killers#32-leaking-arguments)
-       // and clone arguments except the first one into local var 'args'.
-
-       var args = new Array(i - 1);
-
-       while (--i) {
-         args[i - 1] = arguments[i];
-       } // Let scopeFunc be the last argument and pop it so that args now only contain the table arguments.
-
-
-       scopeFunc = args.pop();
-       var tables = flatten(args); // Support using array as middle argument, or a mix of arrays and non-arrays.
-
-       return [mode, tables, scopeFunc];
-     }
-
-     this._transaction = function (mode, tables, scopeFunc) {
-       var parentTransaction = PSD.trans; // Check if parent transactions is bound to this db instance, and if caller wants to reuse it
-
-       if (!parentTransaction || parentTransaction.db !== db || mode.indexOf('!') !== -1) parentTransaction = null;
-       var onlyIfCompatible = mode.indexOf('?') !== -1;
-       mode = mode.replace('!', '').replace('?', ''); // Ok. Will change arguments[0] as well but we wont touch arguments henceforth.
-
-       try {
-         //
-         // Get storeNames from arguments. Either through given table instances, or through given table names.
-         //
-         var storeNames = tables.map(function (table) {
-           var storeName = table instanceof Table ? table.name : table;
-           if (typeof storeName !== 'string') throw new TypeError("Invalid table argument to Dexie.transaction(). Only Table or String are allowed");
-           return storeName;
-         }); //
-         // Resolve mode. Allow shortcuts "r" and "rw".
-         //
-
-         if (mode == "r" || mode == READONLY) mode = READONLY;else if (mode == "rw" || mode == READWRITE) mode = READWRITE;else throw new exceptions.InvalidArgument("Invalid transaction mode: " + mode);
-
-         if (parentTransaction) {
-           // Basic checks
-           if (parentTransaction.mode === READONLY && mode === READWRITE) {
-             if (onlyIfCompatible) {
-               // Spawn new transaction instead.
-               parentTransaction = null;
-             } else throw new exceptions.SubTransaction("Cannot enter a sub-transaction with READWRITE mode when parent transaction is READONLY");
-           }
-
-           if (parentTransaction) {
-             storeNames.forEach(function (storeName) {
-               if (parentTransaction && parentTransaction.storeNames.indexOf(storeName) === -1) {
-                 if (onlyIfCompatible) {
-                   // Spawn new transaction instead.
-                   parentTransaction = null;
-                 } else throw new exceptions.SubTransaction("Table " + storeName + " not included in parent transaction.");
-               }
-             });
-           }
-
-           if (onlyIfCompatible && parentTransaction && !parentTransaction.active) {
-             // '?' mode should not keep using an inactive transaction.
-             parentTransaction = null;
-           }
-         }
-       } catch (e) {
-         return parentTransaction ? parentTransaction._promise(null, function (_, reject) {
-           reject(e);
-         }) : rejection(e);
-       } // If this is a sub-transaction, lock the parent and then launch the sub-transaction.
-
-
-       return parentTransaction ? parentTransaction._promise(mode, enterTransactionScope, "lock") : PSD.trans ? // no parent transaction despite PSD.trans exists. Make sure also
-       // that the zone we create is not a sub-zone of current, because
-       // Promise.follow() should not wait for it if so.
-       usePSD(PSD.transless, function () {
-         return db._whenReady(enterTransactionScope);
-       }) : db._whenReady(enterTransactionScope);
-
-       function enterTransactionScope() {
-         return Promise.resolve().then(function () {
-           // Keep a pointer to last non-transactional PSD to use if someone calls Dexie.ignoreTransaction().
-           var transless = PSD.transless || PSD; // Our transaction.
-           //return new Promise((resolve, reject) => {
-
-           var trans = db._createTransaction(mode, storeNames, globalSchema, parentTransaction); // Let the transaction instance be part of a Promise-specific data (PSD) value.
-
-
-           var zoneProps = {
-             trans: trans,
-             transless: transless
-           };
-
-           if (parentTransaction) {
-             // Emulate transaction commit awareness for inner transaction (must 'commit' when the inner transaction has no more operations ongoing)
-             trans.idbtrans = parentTransaction.idbtrans;
-           } else {
-             trans.create(); // Create the backend transaction so that complete() or error() will trigger even if no operation is made upon it.
-           } // Support for native async await.
-
-
-           if (scopeFunc.constructor === AsyncFunction) {
-             incrementExpectedAwaits();
-           }
-
-           var returnValue;
-           var promiseFollowed = Promise.follow(function () {
-             // Finally, call the scope function with our table and transaction arguments.
-             returnValue = scopeFunc.call(trans, trans);
-
-             if (returnValue) {
-               if (returnValue.constructor === NativePromise) {
-                 var decrementor = decrementExpectedAwaits.bind(null, null);
-                 returnValue.then(decrementor, decrementor);
-               } else if (typeof returnValue.next === 'function' && typeof returnValue["throw"] === 'function') {
-                 // scopeFunc returned an iterator with throw-support. Handle yield as await.
-                 returnValue = awaitIterator(returnValue);
-               }
-             }
-           }, zoneProps);
-           return (returnValue && typeof returnValue.then === 'function' ? // Promise returned. User uses promise-style transactions.
-           Promise.resolve(returnValue).then(function (x) {
-             return trans.active ? x // Transaction still active. Continue.
-             : rejection(new exceptions.PrematureCommit("Transaction committed too early. See http://bit.ly/2kdckMn"));
-           }) // No promise returned. Wait for all outstanding promises before continuing.
-           : promiseFollowed.then(function () {
-             return returnValue;
-           })).then(function (x) {
-             // sub transactions don't react to idbtrans.oncomplete. We must trigger a completion:
-             if (parentTransaction) trans._resolve(); // wait for trans._completion
-             // (if root transaction, this means 'complete' event. If sub-transaction, we've just fired it ourselves)
-
-             return trans._completion.then(function () {
-               return x;
-             });
-           })["catch"](function (e) {
-             trans._reject(e); // Yes, above then-handler were maybe not called because of an unhandled rejection in scopeFunc!
-
-
-             return rejection(e);
-           });
-         });
-       }
-     };
-
-     this.table = function (tableName) {
-       /// <returns type="Table"></returns>
-       if (!hasOwn(allTables, tableName)) {
-         throw new exceptions.InvalidTable("Table " + tableName + " does not exist");
-       }
-
-       return allTables[tableName];
-     }; //
-     //
-     //
-     // Table Class
-     //
-     //
-     //
-
-
-     function Table(name, tableSchema, optionalTrans) {
-       /// <param name="name" type="String"></param>
-       this.name = name;
-       this.schema = tableSchema;
-       this._tx = optionalTrans;
-       this.hook = allTables[name] ? allTables[name].hook : Events(null, {
-         "creating": [hookCreatingChain, nop],
-         "reading": [pureFunctionChain, mirror],
-         "updating": [hookUpdatingChain, nop],
-         "deleting": [hookDeletingChain, nop]
-       });
-     }
-
-     function BulkErrorHandlerCatchAll(errorList, done, supportHooks) {
-       return (supportHooks ? hookedEventRejectHandler : eventRejectHandler)(function (e) {
-         errorList.push(e);
-         done && done();
-       });
-     }
-
-     function _bulkDelete(idbstore, trans, keysOrTuples, hasDeleteHook, deletingHook) {
-       // If hasDeleteHook, keysOrTuples must be an array of tuples: [[key1, value2],[key2,value2],...],
-       // else keysOrTuples must be just an array of keys: [key1, key2, ...].
-       return new Promise(function (resolve, reject) {
-         var len = keysOrTuples.length,
-             lastItem = len - 1;
-         if (len === 0) return resolve();
-
-         if (!hasDeleteHook) {
-           for (var i = 0; i < len; ++i) {
-             var req = idbstore["delete"](keysOrTuples[i]);
-             req.onerror = eventRejectHandler(reject);
-             if (i === lastItem) req.onsuccess = wrap(function () {
-               return resolve();
-             });
-           }
-         } else {
-           var hookCtx,
-               errorHandler = hookedEventRejectHandler(reject),
-               successHandler = hookedEventSuccessHandler(null);
-           tryCatch(function () {
-             for (var i = 0; i < len; ++i) {
-               hookCtx = {
-                 onsuccess: null,
-                 onerror: null
-               };
-               var tuple = keysOrTuples[i];
-               deletingHook.call(hookCtx, tuple[0], tuple[1], trans);
-               var req = idbstore["delete"](tuple[0]);
-               req._hookCtx = hookCtx;
-               req.onerror = errorHandler;
-               if (i === lastItem) req.onsuccess = hookedEventSuccessHandler(resolve);else req.onsuccess = successHandler;
-             }
-           }, function (err) {
-             hookCtx.onerror && hookCtx.onerror(err);
-             throw err;
-           });
-         }
-       });
-     }
-
-     props(Table.prototype, {
-       //
-       // Table Protected Methods
-       //
-       _trans: function getTransaction(mode, fn, writeLocked) {
-         var trans = this._tx || PSD.trans;
-         return trans && trans.db === db ? trans === PSD.trans ? trans._promise(mode, fn, writeLocked) : newScope(function () {
-           return trans._promise(mode, fn, writeLocked);
-         }, {
-           trans: trans,
-           transless: PSD.transless || PSD
-         }) : tempTransaction(mode, [this.name], fn);
-       },
-       _idbstore: function getIDBObjectStore(mode, fn, writeLocked) {
-         var tableName = this.name;
-
-         function supplyIdbStore(resolve, reject, trans) {
-           if (trans.storeNames.indexOf(tableName) === -1) throw new exceptions.NotFound("Table" + tableName + " not part of transaction");
-           return fn(resolve, reject, trans.idbtrans.objectStore(tableName), trans);
-         }
-
-         return this._trans(mode, supplyIdbStore, writeLocked);
-       },
-       //
-       // Table Public Methods
-       //
-       get: function get(keyOrCrit, cb) {
-         if (keyOrCrit && keyOrCrit.constructor === Object) return this.where(keyOrCrit).first(cb);
-         var self = this;
-         return this._idbstore(READONLY, function (resolve, reject, idbstore) {
-           var req = idbstore.get(keyOrCrit);
-           req.onerror = eventRejectHandler(reject);
-           req.onsuccess = wrap(function () {
-             resolve(self.hook.reading.fire(req.result));
-           }, reject);
-         }).then(cb);
-       },
-       where: function where(indexOrCrit) {
-         if (typeof indexOrCrit === 'string') return new WhereClause(this, indexOrCrit);
-         if (isArray(indexOrCrit)) return new WhereClause(this, "[" + indexOrCrit.join('+') + "]"); // indexOrCrit is an object map of {[keyPath]:value}
-
-         var keyPaths = keys(indexOrCrit);
-         if (keyPaths.length === 1) // Only one critera. This was the easy case:
-           return this.where(keyPaths[0]).equals(indexOrCrit[keyPaths[0]]); // Multiple criterias.
-         // Let's try finding a compound index that matches all keyPaths in
-         // arbritary order:
-
-         var compoundIndex = this.schema.indexes.concat(this.schema.primKey).filter(function (ix) {
-           return ix.compound && keyPaths.every(function (keyPath) {
-             return ix.keyPath.indexOf(keyPath) >= 0;
-           }) && ix.keyPath.every(function (keyPath) {
-             return keyPaths.indexOf(keyPath) >= 0;
-           });
-         })[0];
-         if (compoundIndex && maxKey !== maxString) // Cool! We found such compound index
-           // and this browser supports compound indexes (maxKey !== maxString)!
-           return this.where(compoundIndex.name).equals(compoundIndex.keyPath.map(function (kp) {
-             return indexOrCrit[kp];
-           }));
-         if (!compoundIndex) console.warn("The query " + JSON.stringify(indexOrCrit) + " on " + this.name + " would benefit of a " + ("compound index [" + keyPaths.join('+') + "]")); // Ok, now let's fallback to finding at least one matching index
-         // and filter the rest.
-
-         var idxByName = this.schema.idxByName;
-         var simpleIndex = keyPaths.reduce(function (r, keyPath) {
-           return [r[0] || idxByName[keyPath], r[0] || !idxByName[keyPath] ? combine(r[1], function (x) {
-             return '' + getByKeyPath(x, keyPath) == '' + indexOrCrit[keyPath];
-           }) : r[1]];
-         }, [null, null]);
-         var idx = simpleIndex[0];
-         return idx ? this.where(idx.name).equals(indexOrCrit[idx.keyPath]).filter(simpleIndex[1]) : compoundIndex ? this.filter(simpleIndex[1]) : // Has compound but browser bad. Allow filter.
-         this.where(keyPaths).equals(''); // No index at all. Fail lazily.
-       },
-       count: function count(cb) {
-         return this.toCollection().count(cb);
-       },
-       offset: function offset(_offset) {
-         return this.toCollection().offset(_offset);
-       },
-       limit: function limit(numRows) {
-         return this.toCollection().limit(numRows);
-       },
-       reverse: function reverse() {
-         return this.toCollection().reverse();
-       },
-       filter: function filter(filterFunction) {
-         return this.toCollection().and(filterFunction);
-       },
-       each: function each(fn) {
-         return this.toCollection().each(fn);
-       },
-       toArray: function toArray(cb) {
-         return this.toCollection().toArray(cb);
-       },
-       orderBy: function orderBy(index) {
-         return new Collection(new WhereClause(this, isArray(index) ? "[" + index.join('+') + "]" : index));
-       },
-       toCollection: function toCollection() {
-         return new Collection(new WhereClause(this));
-       },
-       mapToClass: function mapToClass(constructor, structure) {
-         /// <summary>
-         ///     Map table to a javascript constructor function. Objects returned from the database will be instances of this class, making
-         ///     it possible to the instanceOf operator as well as extending the class using constructor.prototype.method = function(){...}.
-         /// </summary>
-         /// <param name="constructor">Constructor function representing the class.</param>
-         /// <param name="structure" optional="true">Helps IDE code completion by knowing the members that objects contain and not just the indexes. Also
-         /// know what type each member has. Example: {name: String, emailAddresses: [String], password}</param>
-         this.schema.mappedClass = constructor;
-         var instanceTemplate = Object.create(constructor.prototype);
-
-         if (structure) {
-           // structure and instanceTemplate is for IDE code competion only while constructor.prototype is for actual inheritance.
-           applyStructure(instanceTemplate, structure);
-         }
-
-         this.schema.instanceTemplate = instanceTemplate; // Now, subscribe to the when("reading") event to make all objects that come out from this table inherit from given class
-         // no matter which method to use for reading (Table.get() or Table.where(...)... )
-
-         var readHook = function readHook(obj) {
-           if (!obj) return obj; // No valid object. (Value is null). Return as is.
-           // Create a new object that derives from constructor:
-
-           var res = Object.create(constructor.prototype); // Clone members:
-
-           for (var m in obj) {
-             if (hasOwn(obj, m)) try {
-               res[m] = obj[m];
-             } catch (_) {}
-           }
-
-           return res;
-         };
-
-         if (this.schema.readHook) {
-           this.hook.reading.unsubscribe(this.schema.readHook);
-         }
-
-         this.schema.readHook = readHook;
-         this.hook("reading", readHook);
-         return constructor;
-       },
-       defineClass: function defineClass(structure) {
-         /// <summary>
-         ///     Define all members of the class that represents the table. This will help code completion of when objects are read from the database
-         ///     as well as making it possible to extend the prototype of the returned constructor function.
-         /// </summary>
-         /// <param name="structure">Helps IDE code completion by knowing the members that objects contain and not just the indexes. Also
-         /// know what type each member has. Example: {name: String, emailAddresses: [String], properties: {shoeSize: Number}}</param>
-         return this.mapToClass(Dexie.defineClass(structure), structure);
-       },
-       bulkDelete: function bulkDelete(keys$$1) {
-         if (this.hook.deleting.fire === nop) {
-           return this._idbstore(READWRITE, function (resolve, reject, idbstore, trans) {
-             resolve(_bulkDelete(idbstore, trans, keys$$1, false, nop));
-           });
-         } else {
-           return this.where(':id').anyOf(keys$$1)["delete"]().then(function () {}); // Resolve with undefined.
-         }
-       },
-       bulkPut: function bulkPut(objects, keys$$1) {
-         var _this = this;
-
-         return this._idbstore(READWRITE, function (resolve, reject, idbstore) {
-           if (!idbstore.keyPath && !_this.schema.primKey.auto && !keys$$1) throw new exceptions.InvalidArgument("bulkPut() with non-inbound keys requires keys array in second argument");
-           if (idbstore.keyPath && keys$$1) throw new exceptions.InvalidArgument("bulkPut(): keys argument invalid on tables with inbound keys");
-           if (keys$$1 && keys$$1.length !== objects.length) throw new exceptions.InvalidArgument("Arguments objects and keys must have the same length");
-           if (objects.length === 0) return resolve(); // Caller provided empty list.
-
-           var done = function done(result) {
-             if (errorList.length === 0) resolve(result);else reject(new BulkError(_this.name + ".bulkPut(): " + errorList.length + " of " + numObjs + " operations failed", errorList));
-           };
-
-           var req,
-               errorList = [],
-               errorHandler,
-               numObjs = objects.length,
-               table = _this;
-
-           if (_this.hook.creating.fire === nop && _this.hook.updating.fire === nop) {
-             //
-             // Standard Bulk (no 'creating' or 'updating' hooks to care about)
-             //
-             errorHandler = BulkErrorHandlerCatchAll(errorList);
-
-             for (var i = 0, l = objects.length; i < l; ++i) {
-               req = keys$$1 ? idbstore.put(objects[i], keys$$1[i]) : idbstore.put(objects[i]);
-               req.onerror = errorHandler;
-             } // Only need to catch success or error on the last operation
-             // according to the IDB spec.
-
-
-             req.onerror = BulkErrorHandlerCatchAll(errorList, done);
-             req.onsuccess = eventSuccessHandler(done);
-           } else {
-             var effectiveKeys = keys$$1 || idbstore.keyPath && objects.map(function (o) {
-               return getByKeyPath(o, idbstore.keyPath);
-             }); // Generate map of {[key]: object}
-
-             var objectLookup = effectiveKeys && arrayToObject(effectiveKeys, function (key, i) {
-               return key != null && [key, objects[i]];
-             });
-             var promise = !effectiveKeys ? // Auto-incremented key-less objects only without any keys argument.
-             table.bulkAdd(objects) : // Keys provided. Either as inbound in provided objects, or as a keys argument.
-             // Begin with updating those that exists in DB:
-             table.where(':id').anyOf(effectiveKeys.filter(function (key) {
-               return key != null;
-             })).modify(function () {
-               this.value = objectLookup[this.primKey];
-               objectLookup[this.primKey] = null; // Mark as "don't add this"
-             })["catch"](ModifyError, function (e) {
-               errorList = e.failures; // No need to concat here. These are the first errors added.
-             }).then(function () {
-               // Now, let's examine which items didnt exist so we can add them:
-               var objsToAdd = [],
-                   keysToAdd = keys$$1 && []; // Iterate backwards. Why? Because if same key was used twice, just add the last one.
-
-               for (var i = effectiveKeys.length - 1; i >= 0; --i) {
-                 var key = effectiveKeys[i];
-
-                 if (key == null || objectLookup[key]) {
-                   objsToAdd.push(objects[i]);
-                   keys$$1 && keysToAdd.push(key);
-                   if (key != null) objectLookup[key] = null; // Mark as "dont add again"
-                 }
-               } // The items are in reverse order so reverse them before adding.
-               // Could be important in order to get auto-incremented keys the way the caller
-               // would expect. Could have used unshift instead of push()/reverse(),
-               // but: http://jsperf.com/unshift-vs-reverse
-
-
-               objsToAdd.reverse();
-               keys$$1 && keysToAdd.reverse();
-               return table.bulkAdd(objsToAdd, keysToAdd);
-             }).then(function (lastAddedKey) {
-               // Resolve with key of the last object in given arguments to bulkPut():
-               var lastEffectiveKey = effectiveKeys[effectiveKeys.length - 1]; // Key was provided.
-
-               return lastEffectiveKey != null ? lastEffectiveKey : lastAddedKey;
-             });
-             promise.then(done)["catch"](BulkError, function (e) {
-               // Concat failure from ModifyError and reject using our 'done' method.
-               errorList = errorList.concat(e.failures);
-               done();
-             })["catch"](reject);
-           }
-         }, "locked"); // If called from transaction scope, lock transaction til all steps are done.
-       },
-       bulkAdd: function bulkAdd(objects, keys$$1) {
-         var self = this,
-             creatingHook = this.hook.creating.fire;
-         return this._idbstore(READWRITE, function (resolve, reject, idbstore, trans) {
-           if (!idbstore.keyPath && !self.schema.primKey.auto && !keys$$1) throw new exceptions.InvalidArgument("bulkAdd() with non-inbound keys requires keys array in second argument");
-           if (idbstore.keyPath && keys$$1) throw new exceptions.InvalidArgument("bulkAdd(): keys argument invalid on tables with inbound keys");
-           if (keys$$1 && keys$$1.length !== objects.length) throw new exceptions.InvalidArgument("Arguments objects and keys must have the same length");
-           if (objects.length === 0) return resolve(); // Caller provided empty list.
-
-           function done(result) {
-             if (errorList.length === 0) resolve(result);else reject(new BulkError(self.name + ".bulkAdd(): " + errorList.length + " of " + numObjs + " operations failed", errorList));
-           }
-
-           var req,
-               errorList = [],
-               errorHandler,
-               successHandler,
-               numObjs = objects.length;
-
-           if (creatingHook !== nop) {
-             //
-             // There are subscribers to hook('creating')
-             // Must behave as documented.
-             //
-             var keyPath = idbstore.keyPath,
-                 hookCtx;
-             errorHandler = BulkErrorHandlerCatchAll(errorList, null, true);
-             successHandler = hookedEventSuccessHandler(null);
-             tryCatch(function () {
-               for (var i = 0, l = objects.length; i < l; ++i) {
-                 hookCtx = {
-                   onerror: null,
-                   onsuccess: null
-                 };
-                 var key = keys$$1 && keys$$1[i];
-                 var obj = objects[i],
-                     effectiveKey = keys$$1 ? key : keyPath ? getByKeyPath(obj, keyPath) : undefined,
-                     keyToUse = creatingHook.call(hookCtx, effectiveKey, obj, trans);
-
-                 if (effectiveKey == null && keyToUse != null) {
-                   if (keyPath) {
-                     obj = deepClone(obj);
-                     setByKeyPath(obj, keyPath, keyToUse);
-                   } else {
-                     key = keyToUse;
-                   }
-                 }
-
-                 req = key != null ? idbstore.add(obj, key) : idbstore.add(obj);
-                 req._hookCtx = hookCtx;
-
-                 if (i < l - 1) {
-                   req.onerror = errorHandler;
-                   if (hookCtx.onsuccess) req.onsuccess = successHandler;
-                 }
-               }
-             }, function (err) {
-               hookCtx.onerror && hookCtx.onerror(err);
-               throw err;
-             });
-             req.onerror = BulkErrorHandlerCatchAll(errorList, done, true);
-             req.onsuccess = hookedEventSuccessHandler(done);
-           } else {
-             //
-             // Standard Bulk (no 'creating' hook to care about)
-             //
-             errorHandler = BulkErrorHandlerCatchAll(errorList);
-
-             for (var i = 0, l = objects.length; i < l; ++i) {
-               req = keys$$1 ? idbstore.add(objects[i], keys$$1[i]) : idbstore.add(objects[i]);
-               req.onerror = errorHandler;
-             } // Only need to catch success or error on the last operation
-             // according to the IDB spec.
-
-
-             req.onerror = BulkErrorHandlerCatchAll(errorList, done);
-             req.onsuccess = eventSuccessHandler(done);
-           }
-         });
-       },
-       add: function add(obj, key) {
-         /// <summary>
-         ///   Add an object to the database. In case an object with same primary key already exists, the object will not be added.
-         /// </summary>
-         /// <param name="obj" type="Object">A javascript object to insert</param>
-         /// <param name="key" optional="true">Primary key</param>
-         var creatingHook = this.hook.creating.fire;
-         return this._idbstore(READWRITE, function (resolve, reject, idbstore, trans) {
-           var hookCtx = {
-             onsuccess: null,
-             onerror: null
-           };
-
-           if (creatingHook !== nop) {
-             var effectiveKey = key != null ? key : idbstore.keyPath ? getByKeyPath(obj, idbstore.keyPath) : undefined;
-             var keyToUse = creatingHook.call(hookCtx, effectiveKey, obj, trans); // Allow subscribers to when("creating") to generate the key.
-
-             if (effectiveKey == null && keyToUse != null) {
-               if (idbstore.keyPath) setByKeyPath(obj, idbstore.keyPath, keyToUse);else key = keyToUse;
-             }
-           }
-
-           try {
-             var req = key != null ? idbstore.add(obj, key) : idbstore.add(obj);
-             req._hookCtx = hookCtx;
-             req.onerror = hookedEventRejectHandler(reject);
-             req.onsuccess = hookedEventSuccessHandler(function (result) {
-               // TODO: Remove these two lines in next major release (2.0?)
-               // It's no good practice to have side effects on provided parameters
-               var keyPath = idbstore.keyPath;
-               if (keyPath) setByKeyPath(obj, keyPath, result);
-               resolve(result);
-             });
-           } catch (e) {
-             if (hookCtx.onerror) hookCtx.onerror(e);
-             throw e;
-           }
-         });
-       },
-       put: function put(obj, key) {
-         var _this = this; /// <summary>
-         ///   Add an object to the database but in case an object with same primary key alread exists, the existing one will get updated.
-         /// </summary>
-         /// <param name="obj" type="Object">A javascript object to insert or update</param>
-         /// <param name="key" optional="true">Primary key</param>
-
-
-         var creatingHook = this.hook.creating.fire,
-             updatingHook = this.hook.updating.fire;
-
-         if (creatingHook !== nop || updatingHook !== nop) {
-           //
-           // People listens to when("creating") or when("updating") events!
-           // We must know whether the put operation results in an CREATE or UPDATE.
-           //
-           var keyPath = this.schema.primKey.keyPath;
-           var effectiveKey = key !== undefined ? key : keyPath && getByKeyPath(obj, keyPath);
-           if (effectiveKey == null) return this.add(obj); // Since key is optional, make sure we get it from obj if not provided
-           // Primary key exist. Lock transaction and try modifying existing. If nothing modified, call add().
-           // clone obj before this async call. If caller modifies obj the line after put(), the IDB spec requires that it should not affect operation.
-
-           obj = deepClone(obj);
-           return this._trans(READWRITE, function () {
-             return _this.where(":id").equals(effectiveKey).modify(function () {
-               // Replace extisting value with our object
-               // CRUD event firing handled in Collection.modify()
-               this.value = obj;
-             }).then(function (count) {
-               return count === 0 ? _this.add(obj, key) : effectiveKey;
-             });
-           }, "locked"); // Lock needed because operation is splitted into modify() and add().
-         } else {
-           // Use the standard IDB put() method.
-           return this._idbstore(READWRITE, function (resolve, reject, idbstore) {
-             var req = key !== undefined ? idbstore.put(obj, key) : idbstore.put(obj);
-             req.onerror = eventRejectHandler(reject);
-             req.onsuccess = wrap(function (ev) {
-               var keyPath = idbstore.keyPath;
-               if (keyPath) setByKeyPath(obj, keyPath, ev.target.result);
-               resolve(req.result);
-             });
-           });
-         }
-       },
-       'delete': function _delete(key) {
-         /// <param name="key">Primary key of the object to delete</param>
-         if (this.hook.deleting.subscribers.length) {
-           // People listens to when("deleting") event. Must implement delete using Collection.delete() that will
-           // call the CRUD event. Only Collection.delete() will know whether an object was actually deleted.
-           return this.where(":id").equals(key)["delete"]();
-         } else {
-           // No one listens. Use standard IDB delete() method.
-           return this._idbstore(READWRITE, function (resolve, reject, idbstore) {
-             var req = idbstore["delete"](key);
-             req.onerror = eventRejectHandler(reject);
-             req.onsuccess = wrap(function () {
-               resolve(req.result);
-             });
-           });
-         }
-       },
-       clear: function clear() {
-         if (this.hook.deleting.subscribers.length) {
-           // People listens to when("deleting") event. Must implement delete using Collection.delete() that will
-           // call the CRUD event. Only Collection.delete() will knows which objects that are actually deleted.
-           return this.toCollection()["delete"]();
-         } else {
-           return this._idbstore(READWRITE, function (resolve, reject, idbstore) {
-             var req = idbstore.clear();
-             req.onerror = eventRejectHandler(reject);
-             req.onsuccess = wrap(function () {
-               resolve(req.result);
-             });
-           });
-         }
-       },
-       update: function update(keyOrObject, modifications) {
-         if (babelHelpers["typeof"](modifications) !== 'object' || isArray(modifications)) throw new exceptions.InvalidArgument("Modifications must be an object.");
-
-         if (babelHelpers["typeof"](keyOrObject) === 'object' && !isArray(keyOrObject)) {
-           // object to modify. Also modify given object with the modifications:
-           keys(modifications).forEach(function (keyPath) {
-             setByKeyPath(keyOrObject, keyPath, modifications[keyPath]);
-           });
-           var key = getByKeyPath(keyOrObject, this.schema.primKey.keyPath);
-           if (key === undefined) return rejection(new exceptions.InvalidArgument("Given object does not contain its primary key"));
-           return this.where(":id").equals(key).modify(modifications);
-         } else {
-           // key to modify
-           return this.where(":id").equals(keyOrObject).modify(modifications);
-         }
-       }
-     }); //
-     //
-     //
-     // Transaction Class
-     //
-     //
-     //
-
-     function Transaction(mode, storeNames, dbschema, parent) {
-       var _this = this; /// <summary>
-       ///    Transaction class. Represents a database transaction. All operations on db goes through a Transaction.
-       /// </summary>
-       /// <param name="mode" type="String">Any of "readwrite" or "readonly"</param>
-       /// <param name="storeNames" type="Array">Array of table names to operate on</param>
-
-
-       this.db = db;
-       this.mode = mode;
-       this.storeNames = storeNames;
-       this.idbtrans = null;
-       this.on = Events(this, "complete", "error", "abort");
-       this.parent = parent || null;
-       this.active = true;
-       this._reculock = 0;
-       this._blockedFuncs = [];
-       this._resolve = null;
-       this._reject = null;
-       this._waitingFor = null;
-       this._waitingQueue = null;
-       this._spinCount = 0; // Just for debugging waitFor()
-
-       this._completion = new Promise(function (resolve, reject) {
-         _this._resolve = resolve;
-         _this._reject = reject;
-       });
-
-       this._completion.then(function () {
-         _this.active = false;
-
-         _this.on.complete.fire();
-       }, function (e) {
-         var wasActive = _this.active;
-         _this.active = false;
-
-         _this.on.error.fire(e);
-
-         _this.parent ? _this.parent._reject(e) : wasActive && _this.idbtrans && _this.idbtrans.abort();
-         return rejection(e); // Indicate we actually DO NOT catch this error.
-       });
-     }
-
-     props(Transaction.prototype, {
-       //
-       // Transaction Protected Methods (not required by API users, but needed internally and eventually by dexie extensions)
-       //
-       _lock: function _lock() {
-         assert(!PSD.global); // Locking and unlocking reuires to be within a PSD scope.
-         // Temporary set all requests into a pending queue if they are called before database is ready.
-
-         ++this._reculock; // Recursive read/write lock pattern using PSD (Promise Specific Data) instead of TLS (Thread Local Storage)
-
-         if (this._reculock === 1 && !PSD.global) PSD.lockOwnerFor = this;
-         return this;
-       },
-       _unlock: function _unlock() {
-         assert(!PSD.global); // Locking and unlocking reuires to be within a PSD scope.
-
-         if (--this._reculock === 0) {
-           if (!PSD.global) PSD.lockOwnerFor = null;
-
-           while (this._blockedFuncs.length > 0 && !this._locked()) {
-             var fnAndPSD = this._blockedFuncs.shift();
-
-             try {
-               usePSD(fnAndPSD[1], fnAndPSD[0]);
-             } catch (e) {}
-           }
-         }
-
-         return this;
-       },
-       _locked: function _locked() {
-         // Checks if any write-lock is applied on this transaction.
-         // To simplify the Dexie API for extension implementations, we support recursive locks.
-         // This is accomplished by using "Promise Specific Data" (PSD).
-         // PSD data is bound to a Promise and any child Promise emitted through then() or resolve( new Promise() ).
-         // PSD is local to code executing on top of the call stacks of any of any code executed by Promise():
-         //         * callback given to the Promise() constructor  (function (resolve, reject){...})
-         //         * callbacks given to then()/catch()/finally() methods (function (value){...})
-         // If creating a new independant Promise instance from within a Promise call stack, the new Promise will derive the PSD from the call stack of the parent Promise.
-         // Derivation is done so that the inner PSD __proto__ points to the outer PSD.
-         // PSD.lockOwnerFor will point to current transaction object if the currently executing PSD scope owns the lock.
-         return this._reculock && PSD.lockOwnerFor !== this;
-       },
-       create: function create(idbtrans) {
-         var _this = this;
-
-         if (!this.mode) return this;
-         assert(!this.idbtrans);
-
-         if (!idbtrans && !idbdb) {
-           switch (dbOpenError && dbOpenError.name) {
-             case "DatabaseClosedError":
-               // Errors where it is no difference whether it was caused by the user operation or an earlier call to db.open()
-               throw new exceptions.DatabaseClosed(dbOpenError);
-
-             case "MissingAPIError":
-               // Errors where it is no difference whether it was caused by the user operation or an earlier call to db.open()
-               throw new exceptions.MissingAPI(dbOpenError.message, dbOpenError);
-
-             default:
-               // Make it clear that the user operation was not what caused the error - the error had occurred earlier on db.open()!
-               throw new exceptions.OpenFailed(dbOpenError);
-           }
-         }
-
-         if (!this.active) throw new exceptions.TransactionInactive();
-         assert(this._completion._state === null);
-         idbtrans = this.idbtrans = idbtrans || idbdb.transaction(safariMultiStoreFix(this.storeNames), this.mode);
-         idbtrans.onerror = wrap(function (ev) {
-           preventDefault(ev); // Prohibit default bubbling to window.error
-
-           _this._reject(idbtrans.error);
-         });
-         idbtrans.onabort = wrap(function (ev) {
-           preventDefault(ev);
-           _this.active && _this._reject(new exceptions.Abort(idbtrans.error));
-           _this.active = false;
-
-           _this.on("abort").fire(ev);
-         });
-         idbtrans.oncomplete = wrap(function () {
-           _this.active = false;
-
-           _this._resolve();
-         });
-         return this;
-       },
-       _promise: function _promise(mode, fn, bWriteLock) {
-         var _this = this;
-
-         if (mode === READWRITE && this.mode !== READWRITE) return rejection(new exceptions.ReadOnly("Transaction is readonly"));
-         if (!this.active) return rejection(new exceptions.TransactionInactive());
-
-         if (this._locked()) {
-           return new Promise(function (resolve, reject) {
-             _this._blockedFuncs.push([function () {
-               _this._promise(mode, fn, bWriteLock).then(resolve, reject);
-             }, PSD]);
-           });
-         } else if (bWriteLock) {
-           return newScope(function () {
-             var p = new Promise(function (resolve, reject) {
-               _this._lock();
-
-               var rv = fn(resolve, reject, _this);
-               if (rv && rv.then) rv.then(resolve, reject);
-             });
-             p["finally"](function () {
-               return _this._unlock();
-             });
-             p._lib = true;
-             return p;
-           });
-         } else {
-           var p = new Promise(function (resolve, reject) {
-             var rv = fn(resolve, reject, _this);
-             if (rv && rv.then) rv.then(resolve, reject);
-           });
-           p._lib = true;
-           return p;
-         }
-       },
-       _root: function _root() {
-         return this.parent ? this.parent._root() : this;
-       },
-       waitFor: function waitFor(promise) {
-         // Always operate on the root transaction (in case this is a sub stransaction)
-         var root = this._root(); // For stability reasons, convert parameter to promise no matter what type is passed to waitFor().
-         // (We must be able to call .then() on it.)
-
-
-         promise = Promise.resolve(promise);
-
-         if (root._waitingFor) {
-           // Already called waitFor(). Wait for both to complete.
-           root._waitingFor = root._waitingFor.then(function () {
-             return promise;
-           });
-         } else {
-           // We're not in waiting state. Start waiting state.
-           root._waitingFor = promise;
-           root._waitingQueue = []; // Start interacting with indexedDB until promise completes:
-
-           var store = root.idbtrans.objectStore(root.storeNames[0]);
-
-           (function spin() {
-             ++root._spinCount; // For debugging only
-
-             while (root._waitingQueue.length) {
-               root._waitingQueue.shift()();
-             }
-
-             if (root._waitingFor) store.get(-Infinity).onsuccess = spin;
-           })();
-         }
-
-         var currentWaitPromise = root._waitingFor;
-         return new Promise(function (resolve, reject) {
-           promise.then(function (res) {
-             return root._waitingQueue.push(wrap(resolve.bind(null, res)));
-           }, function (err) {
-             return root._waitingQueue.push(wrap(reject.bind(null, err)));
-           })["finally"](function () {
-             if (root._waitingFor === currentWaitPromise) {
-               // No one added a wait after us. Safe to stop the spinning.
-               root._waitingFor = null;
-             }
-           });
-         });
-       },
-       //
-       // Transaction Public Properties and Methods
-       //
-       abort: function abort() {
-         this.active && this._reject(new exceptions.Abort());
-         this.active = false;
-       },
-       tables: {
-         get: deprecated("Transaction.tables", function () {
-           return allTables;
-         })
-       },
-       table: function table(name) {
-         var table = db.table(name); // Don't check that table is part of transaction. It must fail lazily!
-
-         return new Table(name, table.schema, this);
-       }
-     }); //
-     //
-     //
-     // WhereClause
-     //
-     //
-     //
-
-     function WhereClause(table, index, orCollection) {
-       /// <param name="table" type="Table"></param>
-       /// <param name="index" type="String" optional="true"></param>
-       /// <param name="orCollection" type="Collection" optional="true"></param>
-       this._ctx = {
-         table: table,
-         index: index === ":id" ? null : index,
-         or: orCollection
-       };
-     }
-
-     props(WhereClause.prototype, function () {
-       // WhereClause private methods
-       function fail(collectionOrWhereClause, err, T) {
-         var collection = collectionOrWhereClause instanceof WhereClause ? new Collection(collectionOrWhereClause) : collectionOrWhereClause;
-         collection._ctx.error = T ? new T(err) : new TypeError(err);
-         return collection;
-       }
-
-       function emptyCollection(whereClause) {
-         return new Collection(whereClause, function () {
-           return IDBKeyRange.only("");
-         }).limit(0);
-       }
-
-       function upperFactory(dir) {
-         return dir === "next" ? function (s) {
-           return s.toUpperCase();
-         } : function (s) {
-           return s.toLowerCase();
-         };
-       }
-
-       function lowerFactory(dir) {
-         return dir === "next" ? function (s) {
-           return s.toLowerCase();
-         } : function (s) {
-           return s.toUpperCase();
-         };
-       }
-
-       function nextCasing(key, lowerKey, upperNeedle, lowerNeedle, cmp, dir) {
-         var length = Math.min(key.length, lowerNeedle.length);
-         var llp = -1;
-
-         for (var i = 0; i < length; ++i) {
-           var lwrKeyChar = lowerKey[i];
-
-           if (lwrKeyChar !== lowerNeedle[i]) {
-             if (cmp(key[i], upperNeedle[i]) < 0) return key.substr(0, i) + upperNeedle[i] + upperNeedle.substr(i + 1);
-             if (cmp(key[i], lowerNeedle[i]) < 0) return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
-             if (llp >= 0) return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
-             return null;
-           }
-
-           if (cmp(key[i], lwrKeyChar) < 0) llp = i;
-         }
-
-         if (length < lowerNeedle.length && dir === "next") return key + upperNeedle.substr(key.length);
-         if (length < key.length && dir === "prev") return key.substr(0, upperNeedle.length);
-         return llp < 0 ? null : key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1);
-       }
-
-       function addIgnoreCaseAlgorithm(whereClause, match, needles, suffix) {
-         /// <param name="needles" type="Array" elementType="String"></param>
-         var upper,
-             lower,
-             compare,
-             upperNeedles,
-             lowerNeedles,
-             direction,
-             nextKeySuffix,
-             needlesLen = needles.length;
-
-         if (!needles.every(function (s) {
-           return typeof s === 'string';
-         })) {
-           return fail(whereClause, STRING_EXPECTED);
-         }
-
-         function initDirection(dir) {
-           upper = upperFactory(dir);
-           lower = lowerFactory(dir);
-           compare = dir === "next" ? simpleCompare : simpleCompareReverse;
-           var needleBounds = needles.map(function (needle) {
-             return {
-               lower: lower(needle),
-               upper: upper(needle)
-             };
-           }).sort(function (a, b) {
-             return compare(a.lower, b.lower);
-           });
-           upperNeedles = needleBounds.map(function (nb) {
-             return nb.upper;
-           });
-           lowerNeedles = needleBounds.map(function (nb) {
-             return nb.lower;
-           });
-           direction = dir;
-           nextKeySuffix = dir === "next" ? "" : suffix;
-         }
-
-         initDirection("next");
-         var c = new Collection(whereClause, function () {
-           return IDBKeyRange.bound(upperNeedles[0], lowerNeedles[needlesLen - 1] + suffix);
-         });
-
-         c._ondirectionchange = function (direction) {
-           // This event onlys occur before filter is called the first time.
-           initDirection(direction);
-         };
-
-         var firstPossibleNeedle = 0;
-
-         c._addAlgorithm(function (cursor, advance, resolve) {
-           /// <param name="cursor" type="IDBCursor"></param>
-           /// <param name="advance" type="Function"></param>
-           /// <param name="resolve" type="Function"></param>
-           var key = cursor.key;
-           if (typeof key !== 'string') return false;
-           var lowerKey = lower(key);
-
-           if (match(lowerKey, lowerNeedles, firstPossibleNeedle)) {
-             return true;
-           } else {
-             var lowestPossibleCasing = null;
-
-             for (var i = firstPossibleNeedle; i < needlesLen; ++i) {
-               var casing = nextCasing(key, lowerKey, upperNeedles[i], lowerNeedles[i], compare, direction);
-               if (casing === null && lowestPossibleCasing === null) firstPossibleNeedle = i + 1;else if (lowestPossibleCasing === null || compare(lowestPossibleCasing, casing) > 0) {
-                 lowestPossibleCasing = casing;
-               }
-             }
-
-             if (lowestPossibleCasing !== null) {
-               advance(function () {
-                 cursor["continue"](lowestPossibleCasing + nextKeySuffix);
-               });
-             } else {
-               advance(resolve);
-             }
-
-             return false;
-           }
-         });
-
-         return c;
-       } //
-       // WhereClause public methods
-       //
-
-
-       return {
-         between: function between(lower, upper, includeLower, includeUpper) {
-           /// <summary>
-           ///     Filter out records whose where-field lays between given lower and upper values. Applies to Strings, Numbers and Dates.
-           /// </summary>
-           /// <param name="lower"></param>
-           /// <param name="upper"></param>
-           /// <param name="includeLower" optional="true">Whether items that equals lower should be included. Default true.</param>
-           /// <param name="includeUpper" optional="true">Whether items that equals upper should be included. Default false.</param>
-           /// <returns type="Collection"></returns>
-           includeLower = includeLower !== false; // Default to true
-
-           includeUpper = includeUpper === true; // Default to false
-
-           try {
-             if (cmp(lower, upper) > 0 || cmp(lower, upper) === 0 && (includeLower || includeUpper) && !(includeLower && includeUpper)) return emptyCollection(this); // Workaround for idiotic W3C Specification that DataError must be thrown if lower > upper. The natural result would be to return an empty collection.
-
-             return new Collection(this, function () {
-               return IDBKeyRange.bound(lower, upper, !includeLower, !includeUpper);
-             });
-           } catch (e) {
-             return fail(this, INVALID_KEY_ARGUMENT);
-           }
-         },
-         equals: function equals(value) {
-           return new Collection(this, function () {
-             return IDBKeyRange.only(value);
-           });
-         },
-         above: function above(value) {
-           return new Collection(this, function () {
-             return IDBKeyRange.lowerBound(value, true);
-           });
-         },
-         aboveOrEqual: function aboveOrEqual(value) {
-           return new Collection(this, function () {
-             return IDBKeyRange.lowerBound(value);
-           });
-         },
-         below: function below(value) {
-           return new Collection(this, function () {
-             return IDBKeyRange.upperBound(value, true);
-           });
-         },
-         belowOrEqual: function belowOrEqual(value) {
-           return new Collection(this, function () {
-             return IDBKeyRange.upperBound(value);
-           });
-         },
-         startsWith: function startsWith(str) {
-           /// <param name="str" type="String"></param>
-           if (typeof str !== 'string') return fail(this, STRING_EXPECTED);
-           return this.between(str, str + maxString, true, true);
-         },
-         startsWithIgnoreCase: function startsWithIgnoreCase(str) {
-           /// <param name="str" type="String"></param>
-           if (str === "") return this.startsWith(str);
-           return addIgnoreCaseAlgorithm(this, function (x, a) {
-             return x.indexOf(a[0]) === 0;
-           }, [str], maxString);
-         },
-         equalsIgnoreCase: function equalsIgnoreCase(str) {
-           /// <param name="str" type="String"></param>
-           return addIgnoreCaseAlgorithm(this, function (x, a) {
-             return x === a[0];
-           }, [str], "");
-         },
-         anyOfIgnoreCase: function anyOfIgnoreCase() {
-           var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
-           if (set.length === 0) return emptyCollection(this);
-           return addIgnoreCaseAlgorithm(this, function (x, a) {
-             return a.indexOf(x) !== -1;
-           }, set, "");
-         },
-         startsWithAnyOfIgnoreCase: function startsWithAnyOfIgnoreCase() {
-           var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
-           if (set.length === 0) return emptyCollection(this);
-           return addIgnoreCaseAlgorithm(this, function (x, a) {
-             return a.some(function (n) {
-               return x.indexOf(n) === 0;
-             });
-           }, set, maxString);
-         },
-         anyOf: function anyOf() {
-           var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
-           var compare = ascending;
-
-           try {
-             set.sort(compare);
-           } catch (e) {
-             return fail(this, INVALID_KEY_ARGUMENT);
-           }
-
-           if (set.length === 0) return emptyCollection(this);
-           var c = new Collection(this, function () {
-             return IDBKeyRange.bound(set[0], set[set.length - 1]);
-           });
-
-           c._ondirectionchange = function (direction) {
-             compare = direction === "next" ? ascending : descending;
-             set.sort(compare);
-           };
-
-           var i = 0;
-
-           c._addAlgorithm(function (cursor, advance, resolve) {
-             var key = cursor.key;
-
-             while (compare(key, set[i]) > 0) {
-               // The cursor has passed beyond this key. Check next.
-               ++i;
-
-               if (i === set.length) {
-                 // There is no next. Stop searching.
-                 advance(resolve);
-                 return false;
-               }
-             }
-
-             if (compare(key, set[i]) === 0) {
-               // The current cursor value should be included and we should continue a single step in case next item has the same key or possibly our next key in set.
-               return true;
-             } else {
-               // cursor.key not yet at set[i]. Forward cursor to the next key to hunt for.
-               advance(function () {
-                 cursor["continue"](set[i]);
-               });
-               return false;
-             }
-           });
-
-           return c;
-         },
-         notEqual: function notEqual(value) {
-           return this.inAnyRange([[minKey, value], [value, maxKey]], {
-             includeLowers: false,
-             includeUppers: false
-           });
-         },
-         noneOf: function noneOf() {
-           var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
-           if (set.length === 0) return new Collection(this); // Return entire collection.
-
-           try {
-             set.sort(ascending);
-           } catch (e) {
-             return fail(this, INVALID_KEY_ARGUMENT);
-           } // Transform ["a","b","c"] to a set of ranges for between/above/below: [[minKey,"a"], ["a","b"], ["b","c"], ["c",maxKey]]
-
-
-           var ranges = set.reduce(function (res, val) {
-             return res ? res.concat([[res[res.length - 1][1], val]]) : [[minKey, val]];
-           }, null);
-           ranges.push([set[set.length - 1], maxKey]);
-           return this.inAnyRange(ranges, {
-             includeLowers: false,
-             includeUppers: false
-           });
-         },
-
-         /** Filter out values withing given set of ranges.
-         * Example, give children and elders a rebate of 50%:
-         *
-         *   db.friends.where('age').inAnyRange([[0,18],[65,Infinity]]).modify({Rebate: 1/2});
-         *
-         * @param {(string|number|Date|Array)[][]} ranges
-         * @param {{includeLowers: boolean, includeUppers: boolean}} options
-         */
-         inAnyRange: function inAnyRange(ranges, options) {
-           if (ranges.length === 0) return emptyCollection(this);
-
-           if (!ranges.every(function (range) {
-             return range[0] !== undefined && range[1] !== undefined && ascending(range[0], range[1]) <= 0;
-           })) {
-             return fail(this, "First argument to inAnyRange() must be an Array of two-value Arrays [lower,upper] where upper must not be lower than lower", exceptions.InvalidArgument);
-           }
-
-           var includeLowers = !options || options.includeLowers !== false; // Default to true
-
-           var includeUppers = options && options.includeUppers === true; // Default to false
-
-           function addRange(ranges, newRange) {
-             for (var i = 0, l = ranges.length; i < l; ++i) {
-               var range = ranges[i];
-
-               if (cmp(newRange[0], range[1]) < 0 && cmp(newRange[1], range[0]) > 0) {
-                 range[0] = min(range[0], newRange[0]);
-                 range[1] = max(range[1], newRange[1]);
-                 break;
-               }
-             }
-
-             if (i === l) ranges.push(newRange);
-             return ranges;
-           }
-
-           var sortDirection = ascending;
-
-           function rangeSorter(a, b) {
-             return sortDirection(a[0], b[0]);
-           } // Join overlapping ranges
-
-
-           var set;
-
-           try {
-             set = ranges.reduce(addRange, []);
-             set.sort(rangeSorter);
-           } catch (ex) {
-             return fail(this, INVALID_KEY_ARGUMENT);
-           }
-
-           var i = 0;
-           var keyIsBeyondCurrentEntry = includeUppers ? function (key) {
-             return ascending(key, set[i][1]) > 0;
-           } : function (key) {
-             return ascending(key, set[i][1]) >= 0;
-           };
-           var keyIsBeforeCurrentEntry = includeLowers ? function (key) {
-             return descending(key, set[i][0]) > 0;
-           } : function (key) {
-             return descending(key, set[i][0]) >= 0;
-           };
-
-           function keyWithinCurrentRange(key) {
-             return !keyIsBeyondCurrentEntry(key) && !keyIsBeforeCurrentEntry(key);
-           }
-
-           var checkKey = keyIsBeyondCurrentEntry;
-           var c = new Collection(this, function () {
-             return IDBKeyRange.bound(set[0][0], set[set.length - 1][1], !includeLowers, !includeUppers);
-           });
-
-           c._ondirectionchange = function (direction) {
-             if (direction === "next") {
-               checkKey = keyIsBeyondCurrentEntry;
-               sortDirection = ascending;
-             } else {
-               checkKey = keyIsBeforeCurrentEntry;
-               sortDirection = descending;
-             }
-
-             set.sort(rangeSorter);
-           };
-
-           c._addAlgorithm(function (cursor, advance, resolve) {
-             var key = cursor.key;
-
-             while (checkKey(key)) {
-               // The cursor has passed beyond this key. Check next.
-               ++i;
-
-               if (i === set.length) {
-                 // There is no next. Stop searching.
-                 advance(resolve);
-                 return false;
-               }
-             }
-
-             if (keyWithinCurrentRange(key)) {
-               // The current cursor value should be included and we should continue a single step in case next item has the same key or possibly our next key in set.
-               return true;
-             } else if (cmp(key, set[i][1]) === 0 || cmp(key, set[i][0]) === 0) {
-               // includeUpper or includeLower is false so keyWithinCurrentRange() returns false even though we are at range border.
-               // Continue to next key but don't include this one.
-               return false;
-             } else {
-               // cursor.key not yet at set[i]. Forward cursor to the next key to hunt for.
-               advance(function () {
-                 if (sortDirection === ascending) cursor["continue"](set[i][0]);else cursor["continue"](set[i][1]);
-               });
-               return false;
-             }
-           });
-
-           return c;
-         },
-         startsWithAnyOf: function startsWithAnyOf() {
-           var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
-
-           if (!set.every(function (s) {
-             return typeof s === 'string';
-           })) {
-             return fail(this, "startsWithAnyOf() only works with strings");
-           }
-
-           if (set.length === 0) return emptyCollection(this);
-           return this.inAnyRange(set.map(function (str) {
-             return [str, str + maxString];
-           }));
-         }
-       };
-     }); //
-     //
-     //
-     // Collection Class
-     //
-     //
-     //
-
-     function Collection(whereClause, keyRangeGenerator) {
-       /// <summary>
-       ///
-       /// </summary>
-       /// <param name="whereClause" type="WhereClause">Where clause instance</param>
-       /// <param name="keyRangeGenerator" value="function(){ return IDBKeyRange.bound(0,1);}" optional="true"></param>
-       var keyRange = null,
-           error = null;
-       if (keyRangeGenerator) try {
-         keyRange = keyRangeGenerator();
-       } catch (ex) {
-         error = ex;
-       }
-       var whereCtx = whereClause._ctx,
-           table = whereCtx.table;
-       this._ctx = {
-         table: table,
-         index: whereCtx.index,
-         isPrimKey: !whereCtx.index || table.schema.primKey.keyPath && whereCtx.index === table.schema.primKey.name,
-         range: keyRange,
-         keysOnly: false,
-         dir: "next",
-         unique: "",
-         algorithm: null,
-         filter: null,
-         replayFilter: null,
-         justLimit: true,
-         isMatch: null,
-         offset: 0,
-         limit: Infinity,
-         error: error,
-         or: whereCtx.or,
-         valueMapper: table.hook.reading.fire
-       };
-     }
-
-     function isPlainKeyRange(ctx, ignoreLimitFilter) {
-       return !(ctx.filter || ctx.algorithm || ctx.or) && (ignoreLimitFilter ? ctx.justLimit : !ctx.replayFilter);
-     }
-
-     props(Collection.prototype, function () {
-       //
-       // Collection Private Functions
-       //
-       function addFilter(ctx, fn) {
-         ctx.filter = combine(ctx.filter, fn);
-       }
-
-       function addReplayFilter(ctx, factory, isLimitFilter) {
-         var curr = ctx.replayFilter;
-         ctx.replayFilter = curr ? function () {
-           return combine(curr(), factory());
-         } : factory;
-         ctx.justLimit = isLimitFilter && !curr;
-       }
-
-       function addMatchFilter(ctx, fn) {
-         ctx.isMatch = combine(ctx.isMatch, fn);
-       }
-       /** @param ctx {
-        *      isPrimKey: boolean,
-        *      table: Table,
-        *      index: string
-        * }
-        * @param store IDBObjectStore
-        **/
-
-
-       function getIndexOrStore(ctx, store) {
-         if (ctx.isPrimKey) return store;
-         var indexSpec = ctx.table.schema.idxByName[ctx.index];
-         if (!indexSpec) throw new exceptions.Schema("KeyPath " + ctx.index + " on object store " + store.name + " is not indexed");
-         return store.index(indexSpec.name);
-       }
-       /** @param ctx {
-        *      isPrimKey: boolean,
-        *      table: Table,
-        *      index: string,
-        *      keysOnly: boolean,
-        *      range?: IDBKeyRange,
-        *      dir: "next" | "prev"
-        * }
-        */
-
-
-       function openCursor(ctx, store) {
-         var idxOrStore = getIndexOrStore(ctx, store);
-         return ctx.keysOnly && 'openKeyCursor' in idxOrStore ? idxOrStore.openKeyCursor(ctx.range || null, ctx.dir + ctx.unique) : idxOrStore.openCursor(ctx.range || null, ctx.dir + ctx.unique);
-       }
-
-       function iter(ctx, fn, resolve, reject, idbstore) {
-         var filter = ctx.replayFilter ? combine(ctx.filter, ctx.replayFilter()) : ctx.filter;
-
-         if (!ctx.or) {
-           iterate(openCursor(ctx, idbstore), combine(ctx.algorithm, filter), fn, resolve, reject, !ctx.keysOnly && ctx.valueMapper);
-         } else (function () {
-           var set = {};
-           var resolved = 0;
-
-           function resolveboth() {
-             if (++resolved === 2) resolve(); // Seems like we just support or btwn max 2 expressions, but there are no limit because we do recursion.
-           }
-
-           function union(item, cursor, advance) {
-             if (!filter || filter(cursor, advance, resolveboth, reject)) {
-               var primaryKey = cursor.primaryKey;
-               var key = '' + primaryKey;
-               if (key === '[object ArrayBuffer]') key = '' + new Uint8Array(primaryKey);
-
-               if (!hasOwn(set, key)) {
-                 set[key] = true;
-                 fn(item, cursor, advance);
-               }
-             }
-           }
-
-           ctx.or._iterate(union, resolveboth, reject, idbstore);
-
-           iterate(openCursor(ctx, idbstore), ctx.algorithm, union, resolveboth, reject, !ctx.keysOnly && ctx.valueMapper);
-         })();
-       }
-
-       return {
-         //
-         // Collection Protected Functions
-         //
-         _read: function _read(fn, cb) {
-           var ctx = this._ctx;
-           return ctx.error ? ctx.table._trans(null, rejection.bind(null, ctx.error)) : ctx.table._idbstore(READONLY, fn).then(cb);
-         },
-         _write: function _write(fn) {
-           var ctx = this._ctx;
-           return ctx.error ? ctx.table._trans(null, rejection.bind(null, ctx.error)) : ctx.table._idbstore(READWRITE, fn, "locked"); // When doing write operations on collections, always lock the operation so that upcoming operations gets queued.
-         },
-         _addAlgorithm: function _addAlgorithm(fn) {
-           var ctx = this._ctx;
-           ctx.algorithm = combine(ctx.algorithm, fn);
-         },
-         _iterate: function _iterate(fn, resolve, reject, idbstore) {
-           return iter(this._ctx, fn, resolve, reject, idbstore);
-         },
-         clone: function clone(props$$1) {
-           var rv = Object.create(this.constructor.prototype),
-               ctx = Object.create(this._ctx);
-           if (props$$1) extend(ctx, props$$1);
-           rv._ctx = ctx;
-           return rv;
-         },
-         raw: function raw() {
-           this._ctx.valueMapper = null;
-           return this;
-         },
-         //
-         // Collection Public methods
-         //
-         each: function each(fn) {
-           var ctx = this._ctx;
-           return this._read(function (resolve, reject, idbstore) {
-             iter(ctx, fn, resolve, reject, idbstore);
-           });
-         },
-         count: function count(cb) {
-           var ctx = this._ctx;
-
-           if (isPlainKeyRange(ctx, true)) {
-             // This is a plain key range. We can use the count() method if the index.
-             return this._read(function (resolve, reject, idbstore) {
-               var idx = getIndexOrStore(ctx, idbstore);
-               var req = ctx.range ? idx.count(ctx.range) : idx.count();
-               req.onerror = eventRejectHandler(reject);
-
-               req.onsuccess = function (e) {
-                 resolve(Math.min(e.target.result, ctx.limit));
-               };
-             }, cb);
-           } else {
-             // Algorithms, filters or expressions are applied. Need to count manually.
-             var count = 0;
-             return this._read(function (resolve, reject, idbstore) {
-               iter(ctx, function () {
-                 ++count;
-                 return false;
-               }, function () {
-                 resolve(count);
-               }, reject, idbstore);
-             }, cb);
-           }
-         },
-         sortBy: function sortBy(keyPath, cb) {
-           /// <param name="keyPath" type="String"></param>
-           var parts = keyPath.split('.').reverse(),
-               lastPart = parts[0],
-               lastIndex = parts.length - 1;
-
-           function getval(obj, i) {
-             if (i) return getval(obj[parts[i]], i - 1);
-             return obj[lastPart];
-           }
-
-           var order = this._ctx.dir === "next" ? 1 : -1;
-
-           function sorter(a, b) {
-             var aVal = getval(a, lastIndex),
-                 bVal = getval(b, lastIndex);
-             return aVal < bVal ? -order : aVal > bVal ? order : 0;
-           }
-
-           return this.toArray(function (a) {
-             return a.sort(sorter);
-           }).then(cb);
-         },
-         toArray: function toArray(cb) {
-           var ctx = this._ctx;
-           return this._read(function (resolve, reject, idbstore) {
-             if (hasGetAll && ctx.dir === 'next' && isPlainKeyRange(ctx, true) && ctx.limit > 0) {
-               // Special optimation if we could use IDBObjectStore.getAll() or
-               // IDBKeyRange.getAll():
-               var readingHook = ctx.table.hook.reading.fire;
-               var idxOrStore = getIndexOrStore(ctx, idbstore);
-               var req = ctx.limit < Infinity ? idxOrStore.getAll(ctx.range, ctx.limit) : idxOrStore.getAll(ctx.range);
-               req.onerror = eventRejectHandler(reject);
-               req.onsuccess = readingHook === mirror ? eventSuccessHandler(resolve) : eventSuccessHandler(function (res) {
-                 try {
-                   resolve(res.map(readingHook));
-                 } catch (e) {
-                   reject(e);
-                 }
-               });
-             } else {
-               // Getting array through a cursor.
-               var a = [];
-               iter(ctx, function (item) {
-                 a.push(item);
-               }, function arrayComplete() {
-                 resolve(a);
-               }, reject, idbstore);
-             }
-           }, cb);
-         },
-         offset: function offset(_offset2) {
-           var ctx = this._ctx;
-           if (_offset2 <= 0) return this;
-           ctx.offset += _offset2; // For count()
-
-           if (isPlainKeyRange(ctx)) {
-             addReplayFilter(ctx, function () {
-               var offsetLeft = _offset2;
-               return function (cursor, advance) {
-                 if (offsetLeft === 0) return true;
-
-                 if (offsetLeft === 1) {
-                   --offsetLeft;
-                   return false;
-                 }
-
-                 advance(function () {
-                   cursor.advance(offsetLeft);
-                   offsetLeft = 0;
-                 });
-                 return false;
-               };
-             });
-           } else {
-             addReplayFilter(ctx, function () {
-               var offsetLeft = _offset2;
-               return function () {
-                 return --offsetLeft < 0;
-               };
-             });
-           }
-
-           return this;
-         },
-         limit: function limit(numRows) {
-           this._ctx.limit = Math.min(this._ctx.limit, numRows); // For count()
-
-           addReplayFilter(this._ctx, function () {
-             var rowsLeft = numRows;
-             return function (cursor, advance, resolve) {
-               if (--rowsLeft <= 0) advance(resolve); // Stop after this item has been included
-
-               return rowsLeft >= 0; // If numRows is already below 0, return false because then 0 was passed to numRows initially. Otherwise we wouldnt come here.
-             };
-           }, true);
-           return this;
-         },
-         until: function until(filterFunction, bIncludeStopEntry) {
-           addFilter(this._ctx, function (cursor, advance, resolve) {
-             if (filterFunction(cursor.value)) {
-               advance(resolve);
-               return bIncludeStopEntry;
-             } else {
-               return true;
-             }
-           });
-           return this;
-         },
-         first: function first(cb) {
-           return this.limit(1).toArray(function (a) {
-             return a[0];
-           }).then(cb);
-         },
-         last: function last(cb) {
-           return this.reverse().first(cb);
-         },
-         filter: function filter(filterFunction) {
-           /// <param name="jsFunctionFilter" type="Function">function(val){return true/false}</param>
-           addFilter(this._ctx, function (cursor) {
-             return filterFunction(cursor.value);
-           }); // match filters not used in Dexie.js but can be used by 3rd part libraries to test a
-           // collection for a match without querying DB. Used by Dexie.Observable.
-
-           addMatchFilter(this._ctx, filterFunction);
-           return this;
-         },
-         and: function and(filterFunction) {
-           return this.filter(filterFunction);
-         },
-         or: function or(indexName) {
-           return new WhereClause(this._ctx.table, indexName, this);
-         },
-         reverse: function reverse() {
-           this._ctx.dir = this._ctx.dir === "prev" ? "next" : "prev";
-           if (this._ondirectionchange) this._ondirectionchange(this._ctx.dir);
-           return this;
-         },
-         desc: function desc() {
-           return this.reverse();
-         },
-         eachKey: function eachKey(cb) {
-           var ctx = this._ctx;
-           ctx.keysOnly = !ctx.isMatch;
-           return this.each(function (val, cursor) {
-             cb(cursor.key, cursor);
-           });
-         },
-         eachUniqueKey: function eachUniqueKey(cb) {
-           this._ctx.unique = "unique";
-           return this.eachKey(cb);
-         },
-         eachPrimaryKey: function eachPrimaryKey(cb) {
-           var ctx = this._ctx;
-           ctx.keysOnly = !ctx.isMatch;
-           return this.each(function (val, cursor) {
-             cb(cursor.primaryKey, cursor);
-           });
-         },
-         keys: function keys(cb) {
-           var ctx = this._ctx;
-           ctx.keysOnly = !ctx.isMatch;
-           var a = [];
-           return this.each(function (item, cursor) {
-             a.push(cursor.key);
-           }).then(function () {
-             return a;
-           }).then(cb);
-         },
-         primaryKeys: function primaryKeys(cb) {
-           var ctx = this._ctx;
-
-           if (hasGetAll && ctx.dir === 'next' && isPlainKeyRange(ctx, true) && ctx.limit > 0) {
-             // Special optimation if we could use IDBObjectStore.getAllKeys() or
-             // IDBKeyRange.getAllKeys():
-             return this._read(function (resolve, reject, idbstore) {
-               var idxOrStore = getIndexOrStore(ctx, idbstore);
-               var req = ctx.limit < Infinity ? idxOrStore.getAllKeys(ctx.range, ctx.limit) : idxOrStore.getAllKeys(ctx.range);
-               req.onerror = eventRejectHandler(reject);
-               req.onsuccess = eventSuccessHandler(resolve);
-             }).then(cb);
-           }
-
-           ctx.keysOnly = !ctx.isMatch;
-           var a = [];
-           return this.each(function (item, cursor) {
-             a.push(cursor.primaryKey);
-           }).then(function () {
-             return a;
-           }).then(cb);
-         },
-         uniqueKeys: function uniqueKeys(cb) {
-           this._ctx.unique = "unique";
-           return this.keys(cb);
-         },
-         firstKey: function firstKey(cb) {
-           return this.limit(1).keys(function (a) {
-             return a[0];
-           }).then(cb);
-         },
-         lastKey: function lastKey(cb) {
-           return this.reverse().firstKey(cb);
-         },
-         distinct: function distinct() {
-           var ctx = this._ctx,
-               idx = ctx.index && ctx.table.schema.idxByName[ctx.index];
-           if (!idx || !idx.multi) return this; // distinct() only makes differencies on multiEntry indexes.
-
-           var set = {};
-           addFilter(this._ctx, function (cursor) {
-             var strKey = cursor.primaryKey.toString(); // Converts any Date to String, String to String, Number to String and Array to comma-separated string
-
-             var found = hasOwn(set, strKey);
-             set[strKey] = true;
-             return !found;
-           });
-           return this;
-         },
-         //
-         // Methods that mutate storage
-         //
-         modify: function modify(changes) {
-           var self = this,
-               ctx = this._ctx,
-               hook = ctx.table.hook,
-               updatingHook = hook.updating.fire,
-               deletingHook = hook.deleting.fire;
-           return this._write(function (resolve, reject, idbstore, trans) {
-             var modifyer;
-
-             if (typeof changes === 'function') {
-               // Changes is a function that may update, add or delete propterties or even require a deletion the object itself (delete this.item)
-               if (updatingHook === nop && deletingHook === nop) {
-                 // Noone cares about what is being changed. Just let the modifier function be the given argument as is.
-                 modifyer = changes;
-               } else {
-                 // People want to know exactly what is being modified or deleted.
-                 // Let modifyer be a proxy function that finds out what changes the caller is actually doing
-                 // and call the hooks accordingly!
-                 modifyer = function modifyer(item) {
-                   var origItem = deepClone(item); // Clone the item first so we can compare laters.
-
-                   if (changes.call(this, item, this) === false) return false; // Call the real modifyer function (If it returns false explicitely, it means it dont want to modify anyting on this object)
-
-                   if (!hasOwn(this, "value")) {
-                     // The real modifyer function requests a deletion of the object. Inform the deletingHook that a deletion is taking place.
-                     deletingHook.call(this, this.primKey, item, trans);
-                   } else {
-                     // No deletion. Check what was changed
-                     var objectDiff = getObjectDiff(origItem, this.value);
-                     var additionalChanges = updatingHook.call(this, objectDiff, this.primKey, origItem, trans);
-
-                     if (additionalChanges) {
-                       // Hook want to apply additional modifications. Make sure to fullfill the will of the hook.
-                       item = this.value;
-                       keys(additionalChanges).forEach(function (keyPath) {
-                         setByKeyPath(item, keyPath, additionalChanges[keyPath]); // Adding {keyPath: undefined} means that the keyPath should be deleted. Handled by setByKeyPath
-                       });
-                     }
-                   }
-                 };
-               }
-             } else if (updatingHook === nop) {
-               // changes is a set of {keyPath: value} and no one is listening to the updating hook.
-               var keyPaths = keys(changes);
-               var numKeys = keyPaths.length;
-
-               modifyer = function modifyer(item) {
-                 var anythingModified = false;
-
-                 for (var i = 0; i < numKeys; ++i) {
-                   var keyPath = keyPaths[i],
-                       val = changes[keyPath];
-
-                   if (getByKeyPath(item, keyPath) !== val) {
-                     setByKeyPath(item, keyPath, val); // Adding {keyPath: undefined} means that the keyPath should be deleted. Handled by setByKeyPath
-
-                     anythingModified = true;
-                   }
-                 }
-
-                 return anythingModified;
-               };
-             } else {
-               // changes is a set of {keyPath: value} and people are listening to the updating hook so we need to call it and
-               // allow it to add additional modifications to make.
-               var origChanges = changes;
-               changes = shallowClone(origChanges); // Let's work with a clone of the changes keyPath/value set so that we can restore it in case a hook extends it.
-
-               modifyer = function modifyer(item) {
-                 var anythingModified = false;
-                 var additionalChanges = updatingHook.call(this, changes, this.primKey, deepClone(item), trans);
-                 if (additionalChanges) extend(changes, additionalChanges);
-                 keys(changes).forEach(function (keyPath) {
-                   var val = changes[keyPath];
-
-                   if (getByKeyPath(item, keyPath) !== val) {
-                     setByKeyPath(item, keyPath, val);
-                     anythingModified = true;
-                   }
-                 });
-                 if (additionalChanges) changes = shallowClone(origChanges); // Restore original changes for next iteration
-
-                 return anythingModified;
-               };
-             }
-
-             var count = 0;
-             var successCount = 0;
-             var iterationComplete = false;
-             var failures = [];
-             var failKeys = [];
-             var currentKey = null;
-
-             function modifyItem(item, cursor) {
-               currentKey = cursor.primaryKey;
-               var thisContext = {
-                 primKey: cursor.primaryKey,
-                 value: item,
-                 onsuccess: null,
-                 onerror: null
-               };
-
-               function onerror(e) {
-                 failures.push(e);
-                 failKeys.push(thisContext.primKey);
-                 checkFinished();
-                 return true; // Catch these errors and let a final rejection decide whether or not to abort entire transaction
-               }
-
-               if (modifyer.call(thisContext, item, thisContext) !== false) {
-                 var bDelete = !hasOwn(thisContext, "value");
-                 ++count;
-                 tryCatch(function () {
-                   var req = bDelete ? cursor["delete"]() : cursor.update(thisContext.value);
-                   req._hookCtx = thisContext;
-                   req.onerror = hookedEventRejectHandler(onerror);
-                   req.onsuccess = hookedEventSuccessHandler(function () {
-                     ++successCount;
-                     checkFinished();
-                   });
-                 }, onerror);
-               } else if (thisContext.onsuccess) {
-                 // Hook will expect either onerror or onsuccess to always be called!
-                 thisContext.onsuccess(thisContext.value);
-               }
-             }
-
-             function doReject(e) {
-               if (e) {
-                 failures.push(e);
-                 failKeys.push(currentKey);
-               }
-
-               return reject(new ModifyError("Error modifying one or more objects", failures, successCount, failKeys));
-             }
-
-             function checkFinished() {
-               if (iterationComplete && successCount + failures.length === count) {
-                 if (failures.length > 0) doReject();else resolve(successCount);
-               }
-             }
-
-             self.clone().raw()._iterate(modifyItem, function () {
-               iterationComplete = true;
-               checkFinished();
-             }, doReject, idbstore);
-           });
-         },
-         'delete': function _delete() {
-           var _this = this;
-
-           var ctx = this._ctx,
-               range = ctx.range,
-               deletingHook = ctx.table.hook.deleting.fire,
-               hasDeleteHook = deletingHook !== nop;
-
-           if (!hasDeleteHook && isPlainKeyRange(ctx) && (ctx.isPrimKey && !hangsOnDeleteLargeKeyRange || !range)) {
-             // May use IDBObjectStore.delete(IDBKeyRange) in this case (Issue #208)
-             // For chromium, this is the way most optimized version.
-             // For IE/Edge, this could hang the indexedDB engine and make operating system instable
-             // (https://gist.github.com/dfahlander/5a39328f029de18222cf2125d56c38f7)
-             return this._write(function (resolve, reject, idbstore) {
-               // Our API contract is to return a count of deleted items, so we have to count() before delete().
-               var onerror = eventRejectHandler(reject),
-                   countReq = range ? idbstore.count(range) : idbstore.count();
-               countReq.onerror = onerror;
-
-               countReq.onsuccess = function () {
-                 var count = countReq.result;
-                 tryCatch(function () {
-                   var delReq = range ? idbstore["delete"](range) : idbstore.clear();
-                   delReq.onerror = onerror;
-
-                   delReq.onsuccess = function () {
-                     return resolve(count);
-                   };
-                 }, function (err) {
-                   return reject(err);
-                 });
-               };
-             });
-           } // Default version to use when collection is not a vanilla IDBKeyRange on the primary key.
-           // Divide into chunks to not starve RAM.
-           // If has delete hook, we will have to collect not just keys but also objects, so it will use
-           // more memory and need lower chunk size.
-
-
-           var CHUNKSIZE = hasDeleteHook ? 2000 : 10000;
-           return this._write(function (resolve, reject, idbstore, trans) {
-             var totalCount = 0; // Clone collection and change its table and set a limit of CHUNKSIZE on the cloned Collection instance.
-
-             var collection = _this.clone({
-               keysOnly: !ctx.isMatch && !hasDeleteHook
-             }) // load just keys (unless filter() or and() or deleteHook has subscribers)
-             .distinct() // In case multiEntry is used, never delete same key twice because resulting count
-             .limit(CHUNKSIZE).raw(); // Don't filter through reading-hooks (like mapped classes etc)
-
-
-             var keysOrTuples = []; // We're gonna do things on as many chunks that are needed.
-             // Use recursion of nextChunk function:
-
-             var nextChunk = function nextChunk() {
-               return collection.each(hasDeleteHook ? function (val, cursor) {
-                 // Somebody subscribes to hook('deleting'). Collect all primary keys and their values,
-                 // so that the hook can be called with its values in bulkDelete().
-                 keysOrTuples.push([cursor.primaryKey, cursor.value]);
-               } : function (val, cursor) {
-                 // No one subscribes to hook('deleting'). Collect only primary keys:
-                 keysOrTuples.push(cursor.primaryKey);
-               }).then(function () {
-                 // Chromium deletes faster when doing it in sort order.
-                 hasDeleteHook ? keysOrTuples.sort(function (a, b) {
-                   return ascending(a[0], b[0]);
-                 }) : keysOrTuples.sort(ascending);
-                 return _bulkDelete(idbstore, trans, keysOrTuples, hasDeleteHook, deletingHook);
-               }).then(function () {
-                 var count = keysOrTuples.length;
-                 totalCount += count;
-                 keysOrTuples = [];
-                 return count < CHUNKSIZE ? totalCount : nextChunk();
-               });
-             };
-
-             resolve(nextChunk());
-           });
-         }
-       };
-     }); //
-     //
-     //
-     // ------------------------- Help functions ---------------------------
-     //
-     //
-     //
-
-     function lowerVersionFirst(a, b) {
-       return a._cfg.version - b._cfg.version;
-     }
-
-     function setApiOnPlace(objs, tableNames, dbschema) {
-       tableNames.forEach(function (tableName) {
-         var schema = dbschema[tableName];
-         objs.forEach(function (obj) {
-           if (!(tableName in obj)) {
-             if (obj === Transaction.prototype || obj instanceof Transaction) {
-               // obj is a Transaction prototype (or prototype of a subclass to Transaction)
-               // Make the API a getter that returns this.table(tableName)
-               setProp(obj, tableName, {
-                 get: function get() {
-                   return this.table(tableName);
-                 }
-               });
-             } else {
-               // Table will not be bound to a transaction (will use Dexie.currentTransaction)
-               obj[tableName] = new Table(tableName, schema);
-             }
-           }
-         });
-       });
-     }
-
-     function removeTablesApi(objs) {
-       objs.forEach(function (obj) {
-         for (var key in obj) {
-           if (obj[key] instanceof Table) delete obj[key];
-         }
-       });
-     }
-
-     function iterate(req, filter, fn, resolve, reject, valueMapper) {
-       // Apply valueMapper (hook('reading') or mappped class)
-       var mappedFn = valueMapper ? function (x, c, a) {
-         return fn(valueMapper(x), c, a);
-       } : fn; // Wrap fn with PSD and microtick stuff from Promise.
-
-       var wrappedFn = wrap(mappedFn, reject);
-       if (!req.onerror) req.onerror = eventRejectHandler(reject);
-
-       if (filter) {
-         req.onsuccess = trycatcher(function filter_record() {
-           var cursor = req.result;
-
-           if (cursor) {
-             var c = function c() {
-               cursor["continue"]();
-             };
-
-             if (filter(cursor, function (advancer) {
-               c = advancer;
-             }, resolve, reject)) wrappedFn(cursor.value, cursor, function (advancer) {
-               c = advancer;
-             });
-             c();
-           } else {
-             resolve();
-           }
-         }, reject);
-       } else {
-         req.onsuccess = trycatcher(function filter_record() {
-           var cursor = req.result;
-
-           if (cursor) {
-             var c = function c() {
-               cursor["continue"]();
-             };
-
-             wrappedFn(cursor.value, cursor, function (advancer) {
-               c = advancer;
-             });
-             c();
-           } else {
-             resolve();
-           }
-         }, reject);
-       }
-     }
-
-     function parseIndexSyntax(indexes) {
-       /// <param name="indexes" type="String"></param>
-       /// <returns type="Array" elementType="IndexSpec"></returns>
-       var rv = [];
-       indexes.split(',').forEach(function (index) {
-         index = index.trim();
-         var name = index.replace(/([&*]|\+\+)/g, ""); // Remove "&", "++" and "*"
-         // Let keyPath of "[a+b]" be ["a","b"]:
-
-         var keyPath = /^\[/.test(name) ? name.match(/^\[(.*)\]$/)[1].split('+') : name;
-         rv.push(new IndexSpec(name, keyPath || null, /\&/.test(index), /\*/.test(index), /\+\+/.test(index), isArray(keyPath), /\./.test(index)));
-       });
-       return rv;
-     }
-
-     function cmp(key1, key2) {
-       return indexedDB.cmp(key1, key2);
-     }
-
-     function min(a, b) {
-       return cmp(a, b) < 0 ? a : b;
-     }
-
-     function max(a, b) {
-       return cmp(a, b) > 0 ? a : b;
-     }
-
-     function ascending(a, b) {
-       return indexedDB.cmp(a, b);
-     }
-
-     function descending(a, b) {
-       return indexedDB.cmp(b, a);
-     }
-
-     function simpleCompare(a, b) {
-       return a < b ? -1 : a === b ? 0 : 1;
-     }
-
-     function simpleCompareReverse(a, b) {
-       return a > b ? -1 : a === b ? 0 : 1;
-     }
-
-     function combine(filter1, filter2) {
-       return filter1 ? filter2 ? function () {
-         return filter1.apply(this, arguments) && filter2.apply(this, arguments);
-       } : filter1 : filter2;
-     }
-
-     function readGlobalSchema() {
-       db.verno = idbdb.version / 10;
-       db._dbSchema = globalSchema = {};
-       dbStoreNames = slice(idbdb.objectStoreNames, 0);
-       if (dbStoreNames.length === 0) return; // Database contains no stores.
-
-       var trans = idbdb.transaction(safariMultiStoreFix(dbStoreNames), 'readonly');
-       dbStoreNames.forEach(function (storeName) {
-         var store = trans.objectStore(storeName),
-             keyPath = store.keyPath,
-             dotted = keyPath && typeof keyPath === 'string' && keyPath.indexOf('.') !== -1;
-         var primKey = new IndexSpec(keyPath, keyPath || "", false, false, !!store.autoIncrement, keyPath && typeof keyPath !== 'string', dotted);
-         var indexes = [];
-
-         for (var j = 0; j < store.indexNames.length; ++j) {
-           var idbindex = store.index(store.indexNames[j]);
-           keyPath = idbindex.keyPath;
-           dotted = keyPath && typeof keyPath === 'string' && keyPath.indexOf('.') !== -1;
-           var index = new IndexSpec(idbindex.name, keyPath, !!idbindex.unique, !!idbindex.multiEntry, false, keyPath && typeof keyPath !== 'string', dotted);
-           indexes.push(index);
-         }
-
-         globalSchema[storeName] = new TableSchema(storeName, primKey, indexes, {});
-       });
-       setApiOnPlace([allTables], keys(globalSchema), globalSchema);
-     }
-
-     function adjustToExistingIndexNames(schema, idbtrans) {
-       /// <summary>
-       /// Issue #30 Problem with existing db - adjust to existing index names when migrating from non-dexie db
-       /// </summary>
-       /// <param name="schema" type="Object">Map between name and TableSchema</param>
-       /// <param name="idbtrans" type="IDBTransaction"></param>
-       var storeNames = idbtrans.db.objectStoreNames;
-
-       for (var i = 0; i < storeNames.length; ++i) {
-         var storeName = storeNames[i];
-         var store = idbtrans.objectStore(storeName);
-         hasGetAll = 'getAll' in store;
-
-         for (var j = 0; j < store.indexNames.length; ++j) {
-           var indexName = store.indexNames[j];
-           var keyPath = store.index(indexName).keyPath;
-           var dexieName = typeof keyPath === 'string' ? keyPath : "[" + slice(keyPath).join('+') + "]";
-
-           if (schema[storeName]) {
-             var indexSpec = schema[storeName].idxByName[dexieName];
-             if (indexSpec) indexSpec.name = indexName;
-           }
-         }
-       } // Bug with getAll() on Safari ver<604 on Workers only, see discussion following PR #579
-
-
-       if (/Safari/.test(navigator.userAgent) && !/(Chrome\/|Edge\/)/.test(navigator.userAgent) && _global.WorkerGlobalScope && _global instanceof _global.WorkerGlobalScope && [].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1] < 604) {
-         hasGetAll = false;
-       }
-     }
-
-     function fireOnBlocked(ev) {
-       db.on("blocked").fire(ev); // Workaround (not fully*) for missing "versionchange" event in IE,Edge and Safari:
-
-       connections.filter(function (c) {
-         return c.name === db.name && c !== db && !c._vcFired;
-       }).map(function (c) {
-         return c.on("versionchange").fire(ev);
-       });
-     }
-
-     extend(this, {
-       Collection: Collection,
-       Table: Table,
-       Transaction: Transaction,
-       Version: Version,
-       WhereClause: WhereClause
-     });
-     init();
-     addons.forEach(function (fn) {
-       fn(db);
-     });
-   }
-
-   function parseType(type) {
-     if (typeof type === 'function') {
-       return new type();
-     } else if (isArray(type)) {
-       return [parseType(type[0])];
-     } else if (type && babelHelpers["typeof"](type) === 'object') {
-       var rv = {};
-       applyStructure(rv, type);
-       return rv;
-     } else {
-       return type;
-     }
-   }
-
-   function applyStructure(obj, structure) {
-     keys(structure).forEach(function (member) {
-       var value = parseType(structure[member]);
-       obj[member] = value;
-     });
-     return obj;
-   }
-
-   function hookedEventSuccessHandler(resolve) {
-     // wrap() is needed when calling hooks because the rare scenario of:
-     //  * hook does a db operation that fails immediately (IDB throws exception)
-     //    For calling db operations on correct transaction, wrap makes sure to set PSD correctly.
-     //    wrap() will also execute in a virtual tick.
-     //  * If not wrapped in a virtual tick, direct exception will launch a new physical tick.
-     //  * If this was the last event in the bulk, the promise will resolve after a physical tick
-     //    and the transaction will have committed already.
-     // If no hook, the virtual tick will be executed in the reject()/resolve of the final promise,
-     // because it is always marked with _lib = true when created using Transaction._promise().
-     return wrap(function (event) {
-       var req = event.target,
-           ctx = req._hookCtx,
-           // Contains the hook error handler. Put here instead of closure to boost performance.
-       result = ctx.value || req.result,
-           // Pass the object value on updates. The result from IDB is the primary key.
-       hookSuccessHandler = ctx && ctx.onsuccess;
-       hookSuccessHandler && hookSuccessHandler(result);
-       resolve && resolve(result);
-     }, resolve);
-   }
-
-   function eventRejectHandler(reject) {
-     return wrap(function (event) {
-       preventDefault(event);
-       reject(event.target.error);
-       return false;
-     });
-   }
-
-   function eventSuccessHandler(resolve) {
-     return wrap(function (event) {
-       resolve(event.target.result);
-     });
-   }
-
-   function hookedEventRejectHandler(reject) {
-     return wrap(function (event) {
-       // See comment on hookedEventSuccessHandler() why wrap() is needed only when supporting hooks.
-       var req = event.target,
-           err = req.error,
-           ctx = req._hookCtx,
-           // Contains the hook error handler. Put here instead of closure to boost performance.
-       hookErrorHandler = ctx && ctx.onerror;
-       hookErrorHandler && hookErrorHandler(err);
-       preventDefault(event);
-       reject(err);
-       return false;
-     });
-   }
-
-   function preventDefault(event) {
-     if (event.stopPropagation) event.stopPropagation();
-     if (event.preventDefault) event.preventDefault();
-   }
-
-   function awaitIterator(iterator) {
-     var callNext = function callNext(result) {
-       return iterator.next(result);
-     },
-         doThrow = function doThrow(error) {
-       return iterator["throw"](error);
-     },
-         onSuccess = step(callNext),
-         onError = step(doThrow);
-
-     function step(getNext) {
-       return function (val) {
-         var next = getNext(val),
-             value = next.value;
-         return next.done ? value : !value || typeof value.then !== 'function' ? isArray(value) ? Promise.all(value).then(onSuccess, onError) : onSuccess(value) : value.then(onSuccess, onError);
-       };
-     }
-
-     return step(callNext)();
-   } //
-   // IndexSpec struct
-   //
-
-
-   function IndexSpec(name, keyPath, unique, multi, auto, compound, dotted) {
-     /// <param name="name" type="String"></param>
-     /// <param name="keyPath" type="String"></param>
-     /// <param name="unique" type="Boolean"></param>
-     /// <param name="multi" type="Boolean"></param>
-     /// <param name="auto" type="Boolean"></param>
-     /// <param name="compound" type="Boolean"></param>
-     /// <param name="dotted" type="Boolean"></param>
-     this.name = name;
-     this.keyPath = keyPath;
-     this.unique = unique;
-     this.multi = multi;
-     this.auto = auto;
-     this.compound = compound;
-     this.dotted = dotted;
-     var keyPathSrc = typeof keyPath === 'string' ? keyPath : keyPath && '[' + [].join.call(keyPath, '+') + ']';
-     this.src = (unique ? '&' : '') + (multi ? '*' : '') + (auto ? "++" : "") + keyPathSrc;
-   } //
-   // TableSchema struct
-   //
-
-
-   function TableSchema(name, primKey, indexes, instanceTemplate) {
-     /// <param name="name" type="String"></param>
-     /// <param name="primKey" type="IndexSpec"></param>
-     /// <param name="indexes" type="Array" elementType="IndexSpec"></param>
-     /// <param name="instanceTemplate" type="Object"></param>
-     this.name = name;
-     this.primKey = primKey || new IndexSpec();
-     this.indexes = indexes || [new IndexSpec()];
-     this.instanceTemplate = instanceTemplate;
-     this.mappedClass = null;
-     this.idxByName = arrayToObject(indexes, function (index) {
-       return [index.name, index];
-     });
-   }
-
-   function safariMultiStoreFix(storeNames) {
-     return storeNames.length === 1 ? storeNames[0] : storeNames;
-   }
-
-   function getNativeGetDatabaseNamesFn(indexedDB) {
-     var fn = indexedDB && (indexedDB.getDatabaseNames || indexedDB.webkitGetDatabaseNames);
-     return fn && fn.bind(indexedDB);
-   } // Export Error classes
-
-
-   props(Dexie, fullNameExceptions); // Dexie.XXXError = class XXXError {...};
-   //
-   // Static methods and properties
-   //
-
-   props(Dexie, {
-     //
-     // Static delete() method.
-     //
-     "delete": function _delete(databaseName) {
-       var db = new Dexie(databaseName),
-           promise = db["delete"]();
-
-       promise.onblocked = function (fn) {
-         db.on("blocked", fn);
-         return this;
-       };
-
-       return promise;
-     },
-     //
-     // Static exists() method.
-     //
-     exists: function exists(name) {
-       return new Dexie(name).open().then(function (db) {
-         db.close();
-         return true;
-       })["catch"](Dexie.NoSuchDatabaseError, function () {
-         return false;
-       });
-     },
-     //
-     // Static method for retrieving a list of all existing databases at current host.
-     //
-     getDatabaseNames: function getDatabaseNames(cb) {
-       var getDatabaseNames = getNativeGetDatabaseNamesFn(Dexie.dependencies.indexedDB);
-       return getDatabaseNames ? new Promise(function (resolve, reject) {
-         var req = getDatabaseNames();
-
-         req.onsuccess = function (event) {
-           resolve(slice(event.target.result, 0)); // Converst DOMStringList to Array<String>
-         };
-
-         req.onerror = eventRejectHandler(reject);
-       }).then(cb) : dbNamesDB.dbnames.toCollection().primaryKeys(cb);
-     },
-     defineClass: function defineClass() {
-       // Default constructor able to copy given properties into this object.
-       function Class(properties) {
-         /// <param name="properties" type="Object" optional="true">Properties to initialize object with.
-         /// </param>
-         if (properties) extend(this, properties);
-       }
-
-       return Class;
-     },
-     applyStructure: applyStructure,
-     ignoreTransaction: function ignoreTransaction(scopeFunc) {
-       // In case caller is within a transaction but needs to create a separate transaction.
-       // Example of usage:
-       //
-       // Let's say we have a logger function in our app. Other application-logic should be unaware of the
-       // logger function and not need to include the 'logentries' table in all transaction it performs.
-       // The logging should always be done in a separate transaction and not be dependant on the current
-       // running transaction context. Then you could use Dexie.ignoreTransaction() to run code that starts a new transaction.
-       //
-       //     Dexie.ignoreTransaction(function() {
-       //         db.logentries.add(newLogEntry);
-       //     });
-       //
-       // Unless using Dexie.ignoreTransaction(), the above example would try to reuse the current transaction
-       // in current Promise-scope.
-       //
-       // An alternative to Dexie.ignoreTransaction() would be setImmediate() or setTimeout(). The reason we still provide an
-       // API for this because
-       //  1) The intention of writing the statement could be unclear if using setImmediate() or setTimeout().
-       //  2) setTimeout() would wait unnescessary until firing. This is however not the case with setImmediate().
-       //  3) setImmediate() is not supported in the ES standard.
-       //  4) You might want to keep other PSD state that was set in a parent PSD, such as PSD.letThrough.
-       return PSD.trans ? usePSD(PSD.transless, scopeFunc) : // Use the closest parent that was non-transactional.
-       scopeFunc(); // No need to change scope because there is no ongoing transaction.
-     },
-     vip: function vip(fn) {
-       // To be used by subscribers to the on('ready') event.
-       // This will let caller through to access DB even when it is blocked while the db.ready() subscribers are firing.
-       // This would have worked automatically if we were certain that the Provider was using Dexie.Promise for all asyncronic operations. The promise PSD
-       // from the provider.connect() call would then be derived all the way to when provider would call localDatabase.applyChanges(). But since
-       // the provider more likely is using non-promise async APIs or other thenable implementations, we cannot assume that.
-       // Note that this method is only useful for on('ready') subscribers that is returning a Promise from the event. If not using vip()
-       // the database could deadlock since it wont open until the returned Promise is resolved, and any non-VIPed operation started by
-       // the caller will not resolve until database is opened.
-       return newScope(function () {
-         PSD.letThrough = true; // Make sure we are let through if still blocking db due to onready is firing.
-
-         return fn();
-       });
-     },
-     async: function async(generatorFn) {
-       return function () {
-         try {
-           var rv = awaitIterator(generatorFn.apply(this, arguments));
-           if (!rv || typeof rv.then !== 'function') return Promise.resolve(rv);
-           return rv;
-         } catch (e) {
-           return rejection(e);
-         }
-       };
-     },
-     spawn: function spawn(generatorFn, args, thiz) {
-       try {
-         var rv = awaitIterator(generatorFn.apply(thiz, args || []));
-         if (!rv || typeof rv.then !== 'function') return Promise.resolve(rv);
-         return rv;
-       } catch (e) {
-         return rejection(e);
-       }
-     },
-     // Dexie.currentTransaction property
-     currentTransaction: {
-       get: function get() {
-         return PSD.trans || null;
-       }
-     },
-     waitFor: function waitFor(promiseOrFunction, optionalTimeout) {
-       // If a function is provided, invoke it and pass the returning value to Transaction.waitFor()
-       var promise = Promise.resolve(typeof promiseOrFunction === 'function' ? Dexie.ignoreTransaction(promiseOrFunction) : promiseOrFunction).timeout(optionalTimeout || 60000); // Default the timeout to one minute. Caller may specify Infinity if required.
-       // Run given promise on current transaction. If no current transaction, just return a Dexie promise based
-       // on given value.
-
-       return PSD.trans ? PSD.trans.waitFor(promise) : promise;
-     },
-     // Export our Promise implementation since it can be handy as a standalone Promise implementation
-     Promise: Promise,
-     // Dexie.debug proptery:
-     // Dexie.debug = false
-     // Dexie.debug = true
-     // Dexie.debug = "dexie" - don't hide dexie's stack frames.
-     debug: {
-       get: function get() {
-         return debug;
-       },
-       set: function set(value) {
-         setDebug(value, value === 'dexie' ? function () {
-           return true;
-         } : dexieStackFrameFilter);
-       }
-     },
-     // Export our derive/extend/override methodology
-     derive: derive,
-     extend: extend,
-     props: props,
-     override: override,
-     // Export our Events() function - can be handy as a toolkit
-     Events: Events,
-     // Utilities
-     getByKeyPath: getByKeyPath,
-     setByKeyPath: setByKeyPath,
-     delByKeyPath: delByKeyPath,
-     shallowClone: shallowClone,
-     deepClone: deepClone,
-     getObjectDiff: getObjectDiff,
-     asap: asap,
-     maxKey: maxKey,
-     minKey: minKey,
-     // Addon registry
-     addons: [],
-     // Global DB connection list
-     connections: connections,
-     MultiModifyError: exceptions.Modify,
-     errnames: errnames,
-     // Export other static classes
-     IndexSpec: IndexSpec,
-     TableSchema: TableSchema,
-     //
-     // Dependencies
-     //
-     // These will automatically work in browsers with indexedDB support, or where an indexedDB polyfill has been included.
-     //
-     // In node.js, however, these properties must be set "manually" before instansiating a new Dexie().
-     // For node.js, you need to require indexeddb-js or similar and then set these deps.
-     //
-     dependencies: function () {
-       try {
-         return {
-           // Required:
-           indexedDB: _global.indexedDB || _global.mozIndexedDB || _global.webkitIndexedDB || _global.msIndexedDB,
-           IDBKeyRange: _global.IDBKeyRange || _global.webkitIDBKeyRange
-         };
-       } catch (e) {
-         return {
-           indexedDB: null,
-           IDBKeyRange: null
-         };
-       }
-     }(),
-     // API Version Number: Type Number, make sure to always set a version number that can be comparable correctly. Example: 0.9, 0.91, 0.92, 1.0, 1.01, 1.1, 1.2, 1.21, etc.
-     semVer: DEXIE_VERSION,
-     version: DEXIE_VERSION.split('.').map(function (n) {
-       return parseInt(n);
-     }).reduce(function (p, c, i) {
-       return p + c / Math.pow(10, i * 2);
-     }),
-     // https://github.com/dfahlander/Dexie.js/issues/186
-     // typescript compiler tsc in mode ts-->es5 & commonJS, will expect require() to return
-     // x.default. Workaround: Set Dexie.default = Dexie.
-     "default": Dexie,
-     // Make it possible to import {Dexie} (non-default import)
-     // Reason 1: May switch to that in future.
-     // Reason 2: We declare it both default and named exported in d.ts to make it possible
-     // to let addons extend the Dexie interface with Typescript 2.1 (works only when explicitely
-     // exporting the symbol, not just default exporting)
-     Dexie: Dexie
-   }); // Map DOMErrors and DOMExceptions to corresponding Dexie errors. May change in Dexie v2.0.
-
-   Promise.rejectionMapper = mapError; // Initialize dbNamesDB (won't ever be opened on chromium browsers')
-
-   dbNamesDB = new Dexie('__dbnames');
-   dbNamesDB.version(1).stores({
-     dbnames: 'name'
-   });
-
-   (function () {
-     // Migrate from Dexie 1.x database names stored in localStorage:
-     var DBNAMES = 'Dexie.DatabaseNames';
-
-     try {
-       if ((typeof localStorage === "undefined" ? "undefined" : babelHelpers["typeof"](localStorage)) !== undefined && _global.document !== undefined) {
-         // Have localStorage and is not executing in a worker. Lets migrate from Dexie 1.x.
-         JSON.parse(localStorage.getItem(DBNAMES) || "[]").forEach(function (name) {
-           return dbNamesDB.dbnames.put({
-             name: name
-           })["catch"](nop);
-         });
-         localStorage.removeItem(DBNAMES);
-       }
-     } catch (_e) {}
-   })();
-
-   /**
-    * Bitrix UI
-    * IndexedDB manager (integration with Dexie.js)
-    *
-    * @package bitrix
-    * @subpackage ui
-    * @copyright 2001-2019 Bitrix
-    *
-    * @see	https://dexie.org/docs/Tutorial/Getting-started
-    */
-
-   var Dexie$1 = function Dexie$$1(database) {
-     babelHelpers.classCallCheck(this, Dexie$$1);
-     return new Dexie(database);
-   };
-
-   Dexie$1["delete"] = Dexie["delete"];
-   Dexie$1.exists = Dexie.exists;
-   Dexie$1.getDatabaseNames = Dexie.getDatabaseNames;
-   Dexie$1.defineClass = Dexie.defineClass;
-   Dexie$1.applyStructure = Dexie.applyStructure;
-   Dexie$1.ignoreTransaction = Dexie.ignoreTransaction;
-   Dexie$1.vip = Dexie.vip;
-   Dexie$1.async = Dexie.async;
-   Dexie$1.spawn = Dexie.spawn;
-   Dexie$1.currentTransaction = Dexie.currentTransaction;
-   Dexie$1.waitFor = Dexie.waitFor;
-   Dexie$1.Promise = Dexie.Promise;
-   Dexie$1.debug = Dexie.debug;
-   Dexie$1.derive = Dexie.derive;
-   Dexie$1.extend = Dexie.extend;
-   Dexie$1.props = Dexie.props;
-   Dexie$1.override = Dexie.override;
-   Dexie$1.Events = Dexie.Events;
-   Dexie$1.getByKeyPath = Dexie.getByKeyPath;
-   Dexie$1.setByKeyPath = Dexie.setByKeyPath;
-   Dexie$1.delByKeyPath = Dexie.delByKeyPath;
-   Dexie$1.shallowClone = Dexie.shallowClone;
-   Dexie$1.deepClone = Dexie.deepClone;
-   Dexie$1.getObjectDiff = Dexie.getObjectDiff;
-   Dexie$1.asap = Dexie.asap;
-   Dexie$1.maxKey = Dexie.maxKey;
-   Dexie$1.minKey = Dexie.minKey;
-   Dexie$1.addons = Dexie.addons;
-   Dexie$1.connections = Dexie.connections;
-   Dexie$1.MultiModifyError = Dexie.MultiModifyError;
-   Dexie$1.errnames = Dexie.errnames;
-   Dexie$1.IndexSpec = Dexie.IndexSpec;
-   Dexie$1.TableSchema = Dexie.TableSchema;
-   Dexie$1.dependencies = Dexie.dependencies;
-   Dexie$1.semVer = Dexie.semVer;
-   Dexie$1.version = Dexie.version;
-   Dexie$1["default"] = Dexie["default"];
-   Dexie$1.Dexie = Dexie.Dexie;
-
-   exports.Dexie = Dexie$1;
-
-}((this.BX = this.BX || {})));
+	'use strict';
+
+	/*
+	 * Dexie.js - a minimalistic wrapper for IndexedDB
+	 * ===============================================
+	 *
+	 * By David Fahlander, david.fahlander@gmail.com
+	 *
+	 * Version 3.2.2, Wed Apr 27 2022
+	 *
+	 * https://dexie.org
+	 *
+	 * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/
+	 */
+
+	/**
+	 * Modify list for integration with Bitrix Framework:
+	 * - removed integration with third-party package builders;
+	 * - add check variables before using them, see tags: 28122018;
+	 * - add alternative Promise check for Bitrix Cli, see tags: 02032020;
+	 * - add export for work in Bitrix CoreJS extensions;
+	 * - add export BX.Dexie for backward compatibility;
+	 */
+
+	/*! *****************************************************************************
+	Copyright (c) Microsoft Corporation.
+	Permission to use, copy, modify, and/or distribute this software for any
+	purpose with or without fee is hereby granted.
+	THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+	REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+	AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+	INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+	LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+	OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+	PERFORMANCE OF THIS SOFTWARE.
+	***************************************************************************** */
+	var _assign = function __assign() {
+	  _assign = Object.assign || function __assign(t) {
+	    for (var s, i = 1, n = arguments.length; i < n; i++) {
+	      s = arguments[i];
+
+	      for (var p in s) {
+	        if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+	      }
+	    }
+
+	    return t;
+	  };
+
+	  return _assign.apply(this, arguments);
+	};
+
+	function __spreadArray(to, from, pack) {
+	  if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+	    if (ar || !(i in from)) {
+	      if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+	      ar[i] = from[i];
+	    }
+	  }
+	  return to.concat(ar || Array.prototype.slice.call(from));
+	}
+
+	var _global = typeof globalThis !== 'undefined' ? globalThis : typeof self !== 'undefined' ? self : typeof window !== 'undefined' ? window : global;
+
+	var keys = Object.keys;
+	var isArray = Array.isArray;
+
+	if (typeof Promise !== 'undefined' && !_global.Promise) {
+	  _global.Promise = Promise;
+	}
+
+	function extend(obj, extension) {
+	  if (babelHelpers["typeof"](extension) !== 'object') return obj;
+	  keys(extension).forEach(function (key) {
+	    obj[key] = extension[key];
+	  });
+	  return obj;
+	}
+
+	var getProto = Object.getPrototypeOf;
+	var _hasOwn = {}.hasOwnProperty;
+
+	function hasOwn(obj, prop) {
+	  return _hasOwn.call(obj, prop);
+	}
+
+	function props(proto, extension) {
+	  if (typeof extension === 'function') extension = extension(getProto(proto)); // tag start 28122018
+
+	  if (babelHelpers["typeof"](extension) !== 'object') return; // tag end 28122018
+
+	  (typeof Reflect === "undefined" ? keys : Reflect.ownKeys)(extension).forEach(function (key) {
+	    setProp(proto, key, extension[key]);
+	  });
+	}
+
+	var defineProperty = Object.defineProperty;
+
+	function setProp(obj, prop, functionOrGetSet, options) {
+	  defineProperty(obj, prop, extend(functionOrGetSet && hasOwn(functionOrGetSet, "get") && typeof functionOrGetSet.get === 'function' ? {
+	    get: functionOrGetSet.get,
+	    set: functionOrGetSet.set,
+	    configurable: true
+	  } : {
+	    value: functionOrGetSet,
+	    configurable: true,
+	    writable: true
+	  }, options));
+	}
+
+	function derive(Child) {
+	  return {
+	    from: function from(Parent) {
+	      Child.prototype = Object.create(Parent.prototype);
+	      setProp(Child.prototype, "constructor", Child);
+	      return {
+	        extend: props.bind(null, Child.prototype)
+	      };
+	    }
+	  };
+	}
+
+	var getOwnPropertyDescriptor = Object.getOwnPropertyDescriptor;
+
+	function getPropertyDescriptor(obj, prop) {
+	  var pd = getOwnPropertyDescriptor(obj, prop);
+	  var proto;
+	  return pd || (proto = getProto(obj)) && getPropertyDescriptor(proto, prop);
+	}
+
+	var _slice = [].slice;
+
+	function slice(args, start, end) {
+	  return _slice.call(args, start, end);
+	}
+
+	function override(origFunc, overridedFactory) {
+	  return overridedFactory(origFunc);
+	}
+
+	function assert(b) {
+	  if (!b) throw new Error("Assertion Failed");
+	}
+
+	function asap$1(fn) {
+	  if (_global.setImmediate) setImmediate(fn);else setTimeout(fn, 0);
+	}
+
+	function arrayToObject(array, extractor) {
+	  return array.reduce(function (result, item, i) {
+	    var nameAndValue = extractor(item, i);
+	    if (nameAndValue) result[nameAndValue[0]] = nameAndValue[1];
+	    return result;
+	  }, {});
+	}
+
+	function tryCatch(fn, onerror, args) {
+	  try {
+	    fn.apply(null, args);
+	  } catch (ex) {
+	    onerror && onerror(ex);
+	  }
+	}
+
+	function getByKeyPath(obj, keyPath) {
+	  if (hasOwn(obj, keyPath)) return obj[keyPath];
+	  if (!keyPath) return obj;
+
+	  if (typeof keyPath !== 'string') {
+	    var rv = [];
+
+	    for (var i = 0, l = keyPath.length; i < l; ++i) {
+	      var val = getByKeyPath(obj, keyPath[i]);
+	      rv.push(val);
+	    }
+
+	    return rv;
+	  }
+
+	  var period = keyPath.indexOf('.');
+
+	  if (period !== -1) {
+	    var innerObj = obj[keyPath.substr(0, period)];
+	    return innerObj === undefined ? undefined : getByKeyPath(innerObj, keyPath.substr(period + 1));
+	  }
+
+	  return undefined;
+	}
+
+	function setByKeyPath(obj, keyPath, value) {
+	  if (!obj || keyPath === undefined) return;
+	  if ('isFrozen' in Object && Object.isFrozen(obj)) return;
+
+	  if (typeof keyPath !== 'string' && 'length' in keyPath) {
+	    assert(typeof value !== 'string' && 'length' in value);
+
+	    for (var i = 0, l = keyPath.length; i < l; ++i) {
+	      setByKeyPath(obj, keyPath[i], value[i]);
+	    }
+	  } else {
+	    var period = keyPath.indexOf('.');
+
+	    if (period !== -1) {
+	      var currentKeyPath = keyPath.substr(0, period);
+	      var remainingKeyPath = keyPath.substr(period + 1);
+	      if (remainingKeyPath === "") {
+	        if (value === undefined) {
+	          if (isArray(obj) && !isNaN(parseInt(currentKeyPath))) obj.splice(currentKeyPath, 1);else delete obj[currentKeyPath];
+	        } else obj[currentKeyPath] = value;
+	      } else {
+	        var innerObj = obj[currentKeyPath];
+	        if (!innerObj || !hasOwn(obj, currentKeyPath)) innerObj = obj[currentKeyPath] = {};
+	        setByKeyPath(innerObj, remainingKeyPath, value);
+	      }
+	    } else {
+	      if (value === undefined) {
+	        if (isArray(obj) && !isNaN(parseInt(keyPath))) obj.splice(keyPath, 1);else delete obj[keyPath];
+	      } else obj[keyPath] = value;
+	    }
+	  }
+	}
+
+	function delByKeyPath(obj, keyPath) {
+	  if (typeof keyPath === 'string') setByKeyPath(obj, keyPath, undefined);else if ('length' in keyPath) [].map.call(keyPath, function (kp) {
+	    setByKeyPath(obj, kp, undefined);
+	  });
+	}
+
+	function shallowClone(obj) {
+	  var rv = {};
+
+	  for (var m in obj) {
+	    if (hasOwn(obj, m)) rv[m] = obj[m];
+	  }
+
+	  return rv;
+	}
+
+	var concat = [].concat;
+
+	function flatten(a) {
+	  return concat.apply([], a);
+	}
+
+	var intrinsicTypeNames = "Boolean,String,Date,RegExp,Blob,File,FileList,FileSystemFileHandle,ArrayBuffer,DataView,Uint8ClampedArray,ImageBitmap,ImageData,Map,Set,CryptoKey".split(',').concat(flatten([8, 16, 32, 64].map(function (num) {
+	  return ["Int", "Uint", "Float"].map(function (t) {
+	    return t + num + "Array";
+	  });
+	}))).filter(function (t) {
+	  return _global[t];
+	});
+	var intrinsicTypes = intrinsicTypeNames.map(function (t) {
+	  return _global[t];
+	});
+	arrayToObject(intrinsicTypeNames, function (x) {
+	  return [x, true];
+	});
+	var circularRefs = null;
+
+	function deepClone(any) {
+	  circularRefs = typeof WeakMap !== 'undefined' && new WeakMap();
+	  var rv = innerDeepClone(any);
+	  circularRefs = null;
+	  return rv;
+	}
+
+	function innerDeepClone(any) {
+	  if (!any || babelHelpers["typeof"](any) !== 'object') return any;
+	  var rv = circularRefs && circularRefs.get(any);
+	  if (rv) return rv;
+
+	  if (isArray(any)) {
+	    rv = [];
+	    circularRefs && circularRefs.set(any, rv);
+
+	    for (var i = 0, l = any.length; i < l; ++i) {
+	      rv.push(innerDeepClone(any[i]));
+	    }
+	  } else if (intrinsicTypes.indexOf(any.constructor) >= 0) {
+	    rv = any;
+	  } else {
+	    var proto = getProto(any);
+	    rv = proto === Object.prototype ? {} : Object.create(proto);
+	    circularRefs && circularRefs.set(any, rv);
+
+	    for (var prop in any) {
+	      if (hasOwn(any, prop)) {
+	        rv[prop] = innerDeepClone(any[prop]);
+	      }
+	    }
+	  }
+
+	  return rv;
+	}
+
+	var toString = {}.toString;
+
+	function toStringTag(o) {
+	  return toString.call(o).slice(8, -1);
+	}
+
+	var iteratorSymbol = typeof Symbol !== 'undefined' ? Symbol.iterator : '@@iterator';
+	var getIteratorOf = babelHelpers["typeof"](iteratorSymbol) === "symbol" ? function (x) {
+	  var i;
+	  return x != null && (i = x[iteratorSymbol]) && i.apply(x);
+	} : function () {
+	  return null;
+	};
+	var NO_CHAR_ARRAY = {};
+
+	function getArrayOf(arrayLike) {
+	  var i, a, x, it;
+
+	  if (arguments.length === 1) {
+	    if (isArray(arrayLike)) return arrayLike.slice();
+	    if (this === NO_CHAR_ARRAY && typeof arrayLike === 'string') return [arrayLike];
+
+	    if (it = getIteratorOf(arrayLike)) {
+	      a = [];
+
+	      while (x = it.next(), !x.done) {
+	        a.push(x.value);
+	      }
+
+	      return a;
+	    }
+
+	    if (arrayLike == null) return [arrayLike];
+	    i = arrayLike.length;
+
+	    if (typeof i === 'number') {
+	      a = new Array(i);
+
+	      while (i--) {
+	        a[i] = arrayLike[i];
+	      }
+
+	      return a;
+	    }
+
+	    return [arrayLike];
+	  }
+
+	  i = arguments.length;
+	  a = new Array(i);
+
+	  while (i--) {
+	    a[i] = arguments[i];
+	  }
+
+	  return a;
+	}
+
+	var isAsyncFunction = typeof Symbol !== 'undefined' ? function (fn) {
+	  return fn[Symbol.toStringTag] === 'AsyncFunction';
+	} : function () {
+	  return false;
+	};
+	var debug = typeof location !== 'undefined' && /^(http|https):\/\/(localhost|127\.0\.0\.1)/.test(location.href);
+
+	function setDebug(value, filter) {
+	  debug = value;
+	  libraryFilter = filter;
+	}
+
+	var libraryFilter = function libraryFilter() {
+	  return true;
+	};
+
+	var NEEDS_THROW_FOR_STACK = !new Error("").stack;
+
+	function getErrorWithStack() {
+	  if (NEEDS_THROW_FOR_STACK) try {
+	    throw new Error();
+	  } catch (e) {
+	    return e;
+	  }
+	  return new Error();
+	}
+
+	function prettyStack(exception, numIgnoredFrames) {
+	  var stack = exception.stack;
+	  if (!stack) return "";
+	  numIgnoredFrames = numIgnoredFrames || 0;
+	  if (stack.indexOf(exception.name) === 0) numIgnoredFrames += (exception.name + exception.message).split('\n').length;
+	  return stack.split('\n').slice(numIgnoredFrames).filter(libraryFilter).map(function (frame) {
+	    return "\n" + frame;
+	  }).join('');
+	}
+
+	var dexieErrorNames = ['Modify', 'Bulk', 'OpenFailed', 'VersionChange', 'Schema', 'Upgrade', 'InvalidTable', 'MissingAPI', 'NoSuchDatabase', 'InvalidArgument', 'SubTransaction', 'Unsupported', 'Internal', 'DatabaseClosed', 'PrematureCommit', 'ForeignAwait'];
+	var idbDomErrorNames = ['Unknown', 'Constraint', 'Data', 'TransactionInactive', 'ReadOnly', 'Version', 'NotFound', 'InvalidState', 'InvalidAccess', 'Abort', 'Timeout', 'QuotaExceeded', 'Syntax', 'DataClone'];
+	var errorList = dexieErrorNames.concat(idbDomErrorNames);
+	var defaultTexts = {
+	  VersionChanged: "Database version changed by other database connection",
+	  DatabaseClosed: "Database has been closed",
+	  Abort: "Transaction aborted",
+	  TransactionInactive: "Transaction has already completed or failed",
+	  MissingAPI: "IndexedDB API missing. Please visit https://tinyurl.com/y2uuvskb"
+	};
+
+	function DexieError(name, msg) {
+	  this._e = getErrorWithStack();
+	  this.name = name;
+	  this.message = msg;
+	}
+
+	derive(DexieError).from(Error).extend({
+	  stack: {
+	    get: function get() {
+	      return this._stack || (this._stack = this.name + ": " + this.message + prettyStack(this._e, 2));
+	    }
+	  },
+	  toString: function toString() {
+	    return this.name + ": " + this.message;
+	  }
+	});
+
+	function getMultiErrorMessage(msg, failures) {
+	  return msg + ". Errors: " + Object.keys(failures).map(function (key) {
+	    return failures[key].toString();
+	  }).filter(function (v, i, s) {
+	    return s.indexOf(v) === i;
+	  }).join('\n');
+	}
+
+	function ModifyError(msg, failures, successCount, failedKeys) {
+	  this._e = getErrorWithStack();
+	  this.failures = failures;
+	  this.failedKeys = failedKeys;
+	  this.successCount = successCount;
+	  this.message = getMultiErrorMessage(msg, failures);
+	}
+
+	derive(ModifyError).from(DexieError);
+
+	function BulkError(msg, failures) {
+	  this._e = getErrorWithStack();
+	  this.name = "BulkError";
+	  this.failures = Object.keys(failures).map(function (pos) {
+	    return failures[pos];
+	  });
+	  this.failuresByPos = failures;
+	  this.message = getMultiErrorMessage(msg, failures);
+	}
+
+	derive(BulkError).from(DexieError);
+	var errnames = errorList.reduce(function (obj, name) {
+	  return obj[name] = name + "Error", obj;
+	}, {});
+	var BaseException = DexieError;
+	var exceptions = errorList.reduce(function (obj, name) {
+	  var fullName = name + "Error";
+
+	  function DexieError(msgOrInner, inner) {
+	    this._e = getErrorWithStack();
+	    this.name = fullName;
+
+	    if (!msgOrInner) {
+	      this.message = defaultTexts[name] || fullName;
+	      this.inner = null;
+	    } else if (typeof msgOrInner === 'string') {
+	      this.message = "" + msgOrInner + (!inner ? '' : '\n ' + inner);
+	      this.inner = inner || null;
+	    } else if (babelHelpers["typeof"](msgOrInner) === 'object') {
+	      this.message = msgOrInner.name + " " + msgOrInner.message;
+	      this.inner = msgOrInner;
+	    }
+	  }
+
+	  derive(DexieError).from(BaseException);
+	  obj[name] = DexieError;
+	  return obj;
+	}, {});
+	exceptions.Syntax = SyntaxError;
+	exceptions.Type = TypeError;
+	exceptions.Range = RangeError;
+	var exceptionMap = idbDomErrorNames.reduce(function (obj, name) {
+	  obj[name + "Error"] = exceptions[name];
+	  return obj;
+	}, {});
+
+	function mapError(domError, message) {
+	  if (!domError || domError instanceof DexieError || domError instanceof TypeError || domError instanceof SyntaxError || !domError.name || !exceptionMap[domError.name]) return domError;
+	  var rv = new exceptionMap[domError.name](message || domError.message, domError);
+
+	  if ("stack" in domError) {
+	    setProp(rv, "stack", {
+	      get: function get() {
+	        return this.inner.stack;
+	      }
+	    });
+	  }
+
+	  return rv;
+	}
+
+	var fullNameExceptions = errorList.reduce(function (obj, name) {
+	  if (["Syntax", "Type", "Range"].indexOf(name) === -1) obj[name + "Error"] = exceptions[name];
+	  return obj;
+	}, {});
+	fullNameExceptions.ModifyError = ModifyError;
+	fullNameExceptions.DexieError = DexieError;
+	fullNameExceptions.BulkError = BulkError;
+
+	function nop() {}
+
+	function mirror(val) {
+	  return val;
+	}
+
+	function pureFunctionChain(f1, f2) {
+	  if (f1 == null || f1 === mirror) return f2;
+	  return function (val) {
+	    return f2(f1(val));
+	  };
+	}
+
+	function callBoth(on1, on2) {
+	  return function () {
+	    on1.apply(this, arguments);
+	    on2.apply(this, arguments);
+	  };
+	}
+
+	function hookCreatingChain(f1, f2) {
+	  if (f1 === nop) return f2;
+	  return function () {
+	    var res = f1.apply(this, arguments);
+	    if (res !== undefined) arguments[0] = res;
+	    var onsuccess = this.onsuccess,
+	        onerror = this.onerror;
+	    this.onsuccess = null;
+	    this.onerror = null;
+	    var res2 = f2.apply(this, arguments);
+	    if (onsuccess) this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
+	    if (onerror) this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
+	    return res2 !== undefined ? res2 : res;
+	  };
+	}
+
+	function hookDeletingChain(f1, f2) {
+	  if (f1 === nop) return f2;
+	  return function () {
+	    f1.apply(this, arguments);
+	    var onsuccess = this.onsuccess,
+	        onerror = this.onerror;
+	    this.onsuccess = this.onerror = null;
+	    f2.apply(this, arguments);
+	    if (onsuccess) this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
+	    if (onerror) this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
+	  };
+	}
+
+	function hookUpdatingChain(f1, f2) {
+	  if (f1 === nop) return f2;
+	  return function (modifications) {
+	    var res = f1.apply(this, arguments);
+	    extend(modifications, res);
+	    var onsuccess = this.onsuccess,
+	        onerror = this.onerror;
+	    this.onsuccess = null;
+	    this.onerror = null;
+	    var res2 = f2.apply(this, arguments);
+	    if (onsuccess) this.onsuccess = this.onsuccess ? callBoth(onsuccess, this.onsuccess) : onsuccess;
+	    if (onerror) this.onerror = this.onerror ? callBoth(onerror, this.onerror) : onerror;
+	    return res === undefined ? res2 === undefined ? undefined : res2 : extend(res, res2);
+	  };
+	}
+
+	function reverseStoppableEventChain(f1, f2) {
+	  if (f1 === nop) return f2;
+	  return function () {
+	    if (f2.apply(this, arguments) === false) return false;
+	    return f1.apply(this, arguments);
+	  };
+	}
+
+	function promisableChain(f1, f2) {
+	  if (f1 === nop) return f2;
+	  return function () {
+	    var res = f1.apply(this, arguments);
+
+	    if (res && typeof res.then === 'function') {
+	      var thiz = this,
+	          i = arguments.length,
+	          args = new Array(i);
+
+	      while (i--) {
+	        args[i] = arguments[i];
+	      }
+
+	      return res.then(function () {
+	        return f2.apply(thiz, args);
+	      });
+	    }
+
+	    return f2.apply(this, arguments);
+	  };
+	}
+
+	var INTERNAL = {};
+
+	var LONG_STACKS_CLIP_LIMIT = 100,
+	    MAX_LONG_STACKS = 20,
+	    ZONE_ECHO_LIMIT = 100,
+	    _a$1 = typeof Promise === 'undefined' ? [] : function () {
+	  var globalP = Promise.resolve();
+	  if (typeof crypto === 'undefined' || !crypto.subtle) return [globalP, getProto(globalP), globalP];
+	  var nativeP = crypto.subtle.digest("SHA-512", new Uint8Array([0]));
+	  return [nativeP, getProto(nativeP), globalP];
+	}(),
+	    resolvedNativePromise = _a$1[0],
+	    nativePromiseProto = _a$1[1],
+	    resolvedGlobalPromise = _a$1[2],
+	    nativePromiseThen = nativePromiseProto && nativePromiseProto.then;
+
+	var NativePromise = resolvedNativePromise && resolvedNativePromise.constructor;
+	var patchGlobalPromise = !!resolvedGlobalPromise;
+	var stack_being_generated = false;
+	var schedulePhysicalTick = resolvedGlobalPromise ? function () {
+	  resolvedGlobalPromise.then(physicalTick);
+	} : _global.setImmediate ? setImmediate.bind(null, physicalTick) : _global.MutationObserver ? function () {
+	  var hiddenDiv = document.createElement("div");
+	  new MutationObserver(function () {
+	    physicalTick();
+	    hiddenDiv = null;
+	  }).observe(hiddenDiv, {
+	    attributes: true
+	  });
+	  hiddenDiv.setAttribute('i', '1');
+	} : function () {
+	  setTimeout(physicalTick, 0);
+	};
+
+	var asap = function asap(callback, args) {
+	  microtickQueue.push([callback, args]);
+
+	  if (needsNewPhysicalTick) {
+	    schedulePhysicalTick();
+	    needsNewPhysicalTick = false;
+	  }
+	};
+
+	var isOutsideMicroTick = true,
+	    needsNewPhysicalTick = true,
+	    unhandledErrors = [],
+	    rejectingErrors = [],
+	    currentFulfiller = null,
+	    rejectionMapper = mirror;
+	var globalPSD = {
+	  id: 'global',
+	  global: true,
+	  ref: 0,
+	  unhandleds: [],
+	  onunhandled: globalError,
+	  pgp: false,
+	  env: {},
+	  finalize: function finalize() {
+	    this.unhandleds.forEach(function (uh) {
+	      try {
+	        globalError(uh[0], uh[1]);
+	      } catch (e) {}
+	    });
+	  }
+	};
+	var PSD = globalPSD;
+	var microtickQueue = [];
+	var numScheduledCalls = 0;
+	var tickFinalizers = [];
+
+	function DexiePromise(fn) {
+	  if (babelHelpers["typeof"](this) !== 'object') throw new TypeError('Promises must be constructed via new');
+	  this._listeners = [];
+	  this.onuncatched = nop;
+	  this._lib = false;
+	  var psd = this._PSD = PSD;
+
+	  if (debug) {
+	    this._stackHolder = getErrorWithStack();
+	    this._prev = null;
+	    this._numPrev = 0;
+	  }
+
+	  if (typeof fn !== 'function') {
+	    if (fn !== INTERNAL) throw new TypeError('Not a function');
+	    this._state = arguments[1];
+	    this._value = arguments[2];
+	    if (this._state === false) handleRejection(this, this._value);
+	    return;
+	  }
+
+	  this._state = null;
+	  this._value = null;
+	  ++psd.ref;
+	  executePromiseTask(this, fn);
+	}
+
+	var thenProp = {
+	  get: function get() {
+	    var psd = PSD,
+	        microTaskId = totalEchoes;
+
+	    function then(onFulfilled, onRejected) {
+	      var _this = this;
+
+	      var possibleAwait = !psd.global && (psd !== PSD || microTaskId !== totalEchoes);
+	      var cleanup = possibleAwait && !decrementExpectedAwaits();
+	      var rv = new DexiePromise(function (resolve, reject) {
+	        propagateToListener(_this, new Listener(nativeAwaitCompatibleWrap(onFulfilled, psd, possibleAwait, cleanup), nativeAwaitCompatibleWrap(onRejected, psd, possibleAwait, cleanup), resolve, reject, psd));
+	      });
+	      debug && linkToPreviousPromise(rv, this);
+	      return rv;
+	    }
+
+	    then.prototype = INTERNAL;
+	    return then;
+	  },
+	  set: function set(value) {
+	    setProp(this, 'then', value && value.prototype === INTERNAL ? thenProp : {
+	      get: function get() {
+	        return value;
+	      },
+	      set: thenProp.set
+	    });
+	  }
+	};
+	props(DexiePromise.prototype, {
+	  then: thenProp,
+	  _then: function _then(onFulfilled, onRejected) {
+	    propagateToListener(this, new Listener(null, null, onFulfilled, onRejected, PSD));
+	  },
+	  "catch": function _catch(onRejected) {
+	    if (arguments.length === 1) return this.then(null, onRejected);
+	    var type = arguments[0],
+	        handler = arguments[1];
+	    return typeof type === 'function' ? this.then(null, function (err) {
+	      return err instanceof type ? handler(err) : PromiseReject(err);
+	    }) : this.then(null, function (err) {
+	      return err && err.name === type ? handler(err) : PromiseReject(err);
+	    });
+	  },
+	  "finally": function _finally(onFinally) {
+	    return this.then(function (value) {
+	      onFinally();
+	      return value;
+	    }, function (err) {
+	      onFinally();
+	      return PromiseReject(err);
+	    });
+	  },
+	  stack: {
+	    get: function get() {
+	      if (this._stack) return this._stack;
+
+	      try {
+	        stack_being_generated = true;
+	        var stacks = getStack(this, [], MAX_LONG_STACKS);
+	        var stack = stacks.join("\nFrom previous: ");
+	        if (this._state !== null) this._stack = stack;
+	        return stack;
+	      } finally {
+	        stack_being_generated = false;
+	      }
+	    }
+	  },
+	  timeout: function timeout(ms, msg) {
+	    var _this = this;
+
+	    return ms < Infinity ? new DexiePromise(function (resolve, reject) {
+	      var handle = setTimeout(function () {
+	        return reject(new exceptions.Timeout(msg));
+	      }, ms);
+
+	      _this.then(resolve, reject)["finally"](clearTimeout.bind(null, handle));
+	    }) : this;
+	  }
+	});
+	if (typeof Symbol !== 'undefined' && Symbol.toStringTag) setProp(DexiePromise.prototype, Symbol.toStringTag, 'Dexie.Promise');
+	globalPSD.env = snapShot();
+
+	function Listener(onFulfilled, onRejected, resolve, reject, zone) {
+	  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+	  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+	  this.resolve = resolve;
+	  this.reject = reject;
+	  this.psd = zone;
+	}
+
+	props(DexiePromise, {
+	  all: function all() {
+	    var values = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+	    return new DexiePromise(function (resolve, reject) {
+	      if (values.length === 0) resolve([]);
+	      var remaining = values.length;
+	      values.forEach(function (a, i) {
+	        return DexiePromise.resolve(a).then(function (x) {
+	          values[i] = x;
+	          if (! --remaining) resolve(values);
+	        }, reject);
+	      });
+	    });
+	  },
+	  resolve: function resolve(value) {
+	    if (value instanceof DexiePromise) return value;
+	    if (value && typeof value.then === 'function') return new DexiePromise(function (resolve, reject) {
+	      value.then(resolve, reject);
+	    });
+	    var rv = new DexiePromise(INTERNAL, true, value);
+	    linkToPreviousPromise(rv, currentFulfiller);
+	    return rv;
+	  },
+	  reject: PromiseReject,
+	  race: function race() {
+	    var values = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+	    return new DexiePromise(function (resolve, reject) {
+	      values.map(function (value) {
+	        return DexiePromise.resolve(value).then(resolve, reject);
+	      });
+	    });
+	  },
+	  PSD: {
+	    get: function get() {
+	      return PSD;
+	    },
+	    set: function set(value) {
+	      return PSD = value;
+	    }
+	  },
+	  totalEchoes: {
+	    get: function get() {
+	      return totalEchoes;
+	    }
+	  },
+	  newPSD: newScope,
+	  usePSD: usePSD,
+	  scheduler: {
+	    get: function get() {
+	      return asap;
+	    },
+	    set: function set(value) {
+	      asap = value;
+	    }
+	  },
+	  rejectionMapper: {
+	    get: function get() {
+	      return rejectionMapper;
+	    },
+	    set: function set(value) {
+	      rejectionMapper = value;
+	    }
+	  },
+	  follow: function follow(fn, zoneProps) {
+	    return new DexiePromise(function (resolve, reject) {
+	      return newScope(function (resolve, reject) {
+	        var psd = PSD;
+	        psd.unhandleds = [];
+	        psd.onunhandled = reject;
+	        psd.finalize = callBoth(function () {
+	          var _this = this;
+
+	          run_at_end_of_this_or_next_physical_tick(function () {
+	            _this.unhandleds.length === 0 ? resolve() : reject(_this.unhandleds[0]);
+	          });
+	        }, psd.finalize);
+	        fn();
+	      }, zoneProps, resolve, reject);
+	    });
+	  }
+	});
+
+	if (NativePromise) {
+	  if (NativePromise.allSettled) setProp(DexiePromise, "allSettled", function () {
+	    var possiblePromises = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+	    return new DexiePromise(function (resolve) {
+	      if (possiblePromises.length === 0) resolve([]);
+	      var remaining = possiblePromises.length;
+	      var results = new Array(remaining);
+	      possiblePromises.forEach(function (p, i) {
+	        return DexiePromise.resolve(p).then(function (value) {
+	          return results[i] = {
+	            status: "fulfilled",
+	            value: value
+	          };
+	        }, function (reason) {
+	          return results[i] = {
+	            status: "rejected",
+	            reason: reason
+	          };
+	        }).then(function () {
+	          return --remaining || resolve(results);
+	        });
+	      });
+	    });
+	  });
+	  if (NativePromise.any && typeof AggregateError !== 'undefined') setProp(DexiePromise, "any", function () {
+	    var possiblePromises = getArrayOf.apply(null, arguments).map(onPossibleParallellAsync);
+	    return new DexiePromise(function (resolve, reject) {
+	      if (possiblePromises.length === 0) reject(new AggregateError([]));
+	      var remaining = possiblePromises.length;
+	      var failures = new Array(remaining);
+	      possiblePromises.forEach(function (p, i) {
+	        return DexiePromise.resolve(p).then(function (value) {
+	          return resolve(value);
+	        }, function (failure) {
+	          failures[i] = failure;
+	          if (! --remaining) reject(new AggregateError(failures));
+	        });
+	      });
+	    });
+	  });
+	}
+
+	function executePromiseTask(promise, fn) {
+	  try {
+	    fn(function (value) {
+	      if (promise._state !== null) return;
+	      if (value === promise) throw new TypeError('A promise cannot be resolved with itself.');
+	      var shouldExecuteTick = promise._lib && beginMicroTickScope();
+
+	      if (value && typeof value.then === 'function') {
+	        executePromiseTask(promise, function (resolve, reject) {
+	          value instanceof DexiePromise ? value._then(resolve, reject) : value.then(resolve, reject);
+	        });
+	      } else {
+	        promise._state = true;
+	        promise._value = value;
+	        propagateAllListeners(promise);
+	      }
+
+	      if (shouldExecuteTick) endMicroTickScope();
+	    }, handleRejection.bind(null, promise));
+	  } catch (ex) {
+	    handleRejection(promise, ex);
+	  }
+	}
+
+	function handleRejection(promise, reason) {
+	  rejectingErrors.push(reason);
+	  if (promise._state !== null) return;
+	  var shouldExecuteTick = promise._lib && beginMicroTickScope();
+	  reason = rejectionMapper(reason);
+	  promise._state = false;
+	  promise._value = reason;
+	  debug && reason !== null && babelHelpers["typeof"](reason) === 'object' && !reason._promise && tryCatch(function () {
+	    var origProp = getPropertyDescriptor(reason, "stack");
+	    reason._promise = promise;
+	    setProp(reason, "stack", {
+	      get: function get() {
+	        return stack_being_generated ? origProp && (origProp.get ? origProp.get.apply(reason) : origProp.value) : promise.stack;
+	      }
+	    });
+	  });
+	  addPossiblyUnhandledError(promise);
+	  propagateAllListeners(promise);
+	  if (shouldExecuteTick) endMicroTickScope();
+	}
+
+	function propagateAllListeners(promise) {
+	  var listeners = promise._listeners;
+	  promise._listeners = [];
+
+	  for (var i = 0, len = listeners.length; i < len; ++i) {
+	    propagateToListener(promise, listeners[i]);
+	  }
+
+	  var psd = promise._PSD;
+	  --psd.ref || psd.finalize();
+
+	  if (numScheduledCalls === 0) {
+	    ++numScheduledCalls;
+	    asap(function () {
+	      if (--numScheduledCalls === 0) finalizePhysicalTick();
+	    }, []);
+	  }
+	}
+
+	function propagateToListener(promise, listener) {
+	  if (promise._state === null) {
+	    promise._listeners.push(listener);
+
+	    return;
+	  }
+
+	  var cb = promise._state ? listener.onFulfilled : listener.onRejected;
+
+	  if (cb === null) {
+	    return (promise._state ? listener.resolve : listener.reject)(promise._value);
+	  }
+
+	  ++listener.psd.ref;
+	  ++numScheduledCalls;
+	  asap(callListener, [cb, promise, listener]);
+	}
+
+	function callListener(cb, promise, listener) {
+	  try {
+	    currentFulfiller = promise;
+	    var ret,
+	        value = promise._value;
+
+	    if (promise._state) {
+	      ret = cb(value);
+	    } else {
+	      if (rejectingErrors.length) rejectingErrors = [];
+	      ret = cb(value);
+	      if (rejectingErrors.indexOf(value) === -1) markErrorAsHandled(promise);
+	    }
+
+	    listener.resolve(ret);
+	  } catch (e) {
+	    listener.reject(e);
+	  } finally {
+	    currentFulfiller = null;
+	    if (--numScheduledCalls === 0) finalizePhysicalTick();
+	    --listener.psd.ref || listener.psd.finalize();
+	  }
+	}
+
+	function getStack(promise, stacks, limit) {
+	  if (stacks.length === limit) return stacks;
+	  var stack = "";
+
+	  if (promise._state === false) {
+	    var failure = promise._value,
+	        errorName,
+	        message;
+
+	    if (failure != null) {
+	      errorName = failure.name || "Error";
+	      message = failure.message || failure;
+	      stack = prettyStack(failure, 0);
+	    } else {
+	      errorName = failure;
+	      message = "";
+	    }
+
+	    stacks.push(errorName + (message ? ": " + message : "") + stack);
+	  }
+
+	  if (debug) {
+	    stack = prettyStack(promise._stackHolder, 2);
+	    if (stack && stacks.indexOf(stack) === -1) stacks.push(stack);
+	    if (promise._prev) getStack(promise._prev, stacks, limit);
+	  }
+
+	  return stacks;
+	}
+
+	function linkToPreviousPromise(promise, prev) {
+	  var numPrev = prev ? prev._numPrev + 1 : 0;
+
+	  if (numPrev < LONG_STACKS_CLIP_LIMIT) {
+	    promise._prev = prev;
+	    promise._numPrev = numPrev;
+	  }
+	}
+
+	function physicalTick() {
+	  beginMicroTickScope() && endMicroTickScope();
+	}
+
+	function beginMicroTickScope() {
+	  var wasRootExec = isOutsideMicroTick;
+	  isOutsideMicroTick = false;
+	  needsNewPhysicalTick = false;
+	  return wasRootExec;
+	}
+
+	function endMicroTickScope() {
+	  var callbacks, i, l;
+
+	  do {
+	    while (microtickQueue.length > 0) {
+	      callbacks = microtickQueue;
+	      microtickQueue = [];
+	      l = callbacks.length;
+
+	      for (i = 0; i < l; ++i) {
+	        var item = callbacks[i];
+	        item[0].apply(null, item[1]);
+	      }
+	    }
+	  } while (microtickQueue.length > 0);
+
+	  isOutsideMicroTick = true;
+	  needsNewPhysicalTick = true;
+	}
+
+	function finalizePhysicalTick() {
+	  var unhandledErrs = unhandledErrors;
+	  unhandledErrors = [];
+	  unhandledErrs.forEach(function (p) {
+	    p._PSD.onunhandled.call(null, p._value, p);
+	  });
+	  var finalizers = tickFinalizers.slice(0);
+	  var i = finalizers.length;
+
+	  while (i) {
+	    finalizers[--i]();
+	  }
+	}
+
+	function run_at_end_of_this_or_next_physical_tick(fn) {
+	  function finalizer() {
+	    fn();
+	    tickFinalizers.splice(tickFinalizers.indexOf(finalizer), 1);
+	  }
+
+	  tickFinalizers.push(finalizer);
+	  ++numScheduledCalls;
+	  asap(function () {
+	    if (--numScheduledCalls === 0) finalizePhysicalTick();
+	  }, []);
+	}
+
+	function addPossiblyUnhandledError(promise) {
+	  if (!unhandledErrors.some(function (p) {
+	    return p._value === promise._value;
+	  })) unhandledErrors.push(promise);
+	}
+
+	function markErrorAsHandled(promise) {
+	  var i = unhandledErrors.length;
+
+	  while (i) {
+	    if (unhandledErrors[--i]._value === promise._value) {
+	      unhandledErrors.splice(i, 1);
+	      return;
+	    }
+	  }
+	}
+
+	function PromiseReject(reason) {
+	  return new DexiePromise(INTERNAL, false, reason);
+	}
+
+	function wrap(fn, errorCatcher) {
+	  var psd = PSD;
+	  return function () {
+	    var wasRootExec = beginMicroTickScope(),
+	        outerScope = PSD;
+
+	    try {
+	      switchToZone(psd, true);
+	      return fn.apply(this, arguments);
+	    } catch (e) {
+	      errorCatcher && errorCatcher(e);
+	    } finally {
+	      switchToZone(outerScope, false);
+	      if (wasRootExec) endMicroTickScope();
+	    }
+	  };
+	}
+
+	var task = {
+	  awaits: 0,
+	  echoes: 0,
+	  id: 0
+	};
+	var taskCounter = 0;
+	var zoneStack = [];
+	var zoneEchoes = 0;
+	var totalEchoes = 0;
+	var zone_id_counter = 0;
+
+	function newScope(fn, props, a1, a2) {
+	  var parent = PSD,
+	      psd = Object.create(parent);
+	  psd.parent = parent;
+	  psd.ref = 0;
+	  psd.global = false;
+	  psd.id = ++zone_id_counter;
+	  var globalEnv = globalPSD.env;
+	  psd.env = patchGlobalPromise ? {
+	    Promise: DexiePromise,
+	    PromiseProp: {
+	      value: DexiePromise,
+	      configurable: true,
+	      writable: true
+	    },
+	    all: DexiePromise.all,
+	    race: DexiePromise.race,
+	    allSettled: DexiePromise.allSettled,
+	    any: DexiePromise.any,
+	    resolve: DexiePromise.resolve,
+	    reject: DexiePromise.reject,
+	    nthen: getPatchedPromiseThen(globalEnv.nthen, psd),
+	    gthen: getPatchedPromiseThen(globalEnv.gthen, psd)
+	  } : {};
+	  if (props) extend(psd, props);
+	  ++parent.ref;
+
+	  psd.finalize = function () {
+	    --this.parent.ref || this.parent.finalize();
+	  };
+
+	  var rv = usePSD(psd, fn, a1, a2);
+	  if (psd.ref === 0) psd.finalize();
+	  return rv;
+	}
+
+	function incrementExpectedAwaits() {
+	  if (!task.id) task.id = ++taskCounter;
+	  ++task.awaits;
+	  task.echoes += ZONE_ECHO_LIMIT;
+	  return task.id;
+	}
+
+	function decrementExpectedAwaits() {
+	  if (!task.awaits) return false;
+	  if (--task.awaits === 0) task.id = 0;
+	  task.echoes = task.awaits * ZONE_ECHO_LIMIT;
+	  return true;
+	}
+
+	if (('' + nativePromiseThen).indexOf('[native code]') === -1) {
+	  incrementExpectedAwaits = decrementExpectedAwaits = nop;
+	}
+
+	function onPossibleParallellAsync(possiblePromise) {
+	  if (task.echoes && possiblePromise && possiblePromise.constructor === NativePromise) {
+	    incrementExpectedAwaits();
+	    return possiblePromise.then(function (x) {
+	      decrementExpectedAwaits();
+	      return x;
+	    }, function (e) {
+	      decrementExpectedAwaits();
+	      return rejection(e);
+	    });
+	  }
+
+	  return possiblePromise;
+	}
+
+	function zoneEnterEcho(targetZone) {
+	  ++totalEchoes;
+
+	  if (!task.echoes || --task.echoes === 0) {
+	    task.echoes = task.id = 0;
+	  }
+
+	  zoneStack.push(PSD);
+	  switchToZone(targetZone, true);
+	}
+
+	function zoneLeaveEcho() {
+	  var zone = zoneStack[zoneStack.length - 1];
+	  zoneStack.pop();
+	  switchToZone(zone, false);
+	}
+
+	function switchToZone(targetZone, bEnteringZone) {
+	  var currentZone = PSD;
+
+	  if (bEnteringZone ? task.echoes && (!zoneEchoes++ || targetZone !== PSD) : zoneEchoes && (! --zoneEchoes || targetZone !== PSD)) {
+	    enqueueNativeMicroTask(bEnteringZone ? zoneEnterEcho.bind(null, targetZone) : zoneLeaveEcho);
+	  }
+
+	  if (targetZone === PSD) return;
+	  PSD = targetZone;
+	  if (currentZone === globalPSD) globalPSD.env = snapShot();
+
+	  if (patchGlobalPromise) {
+	    var GlobalPromise_1 = globalPSD.env.Promise;
+	    var targetEnv = targetZone.env;
+	    nativePromiseProto.then = targetEnv.nthen;
+	    GlobalPromise_1.prototype.then = targetEnv.gthen;
+
+	    if (currentZone.global || targetZone.global) {
+	      Object.defineProperty(_global, 'Promise', targetEnv.PromiseProp);
+	      GlobalPromise_1.all = targetEnv.all;
+	      GlobalPromise_1.race = targetEnv.race;
+	      GlobalPromise_1.resolve = targetEnv.resolve;
+	      GlobalPromise_1.reject = targetEnv.reject;
+	      if (targetEnv.allSettled) GlobalPromise_1.allSettled = targetEnv.allSettled;
+	      if (targetEnv.any) GlobalPromise_1.any = targetEnv.any;
+	    }
+	  }
+	}
+
+	function snapShot() {
+	  var GlobalPromise = _global.Promise || Promise; // tag 02032020
+
+	  return patchGlobalPromise ? {
+	    Promise: GlobalPromise,
+	    PromiseProp: Object.getOwnPropertyDescriptor(_global, "Promise"),
+	    all: GlobalPromise.all,
+	    race: GlobalPromise.race,
+	    allSettled: GlobalPromise.allSettled,
+	    any: GlobalPromise.any,
+	    resolve: GlobalPromise.resolve,
+	    reject: GlobalPromise.reject,
+	    nthen: nativePromiseProto.then,
+	    gthen: GlobalPromise.prototype.then
+	  } : {};
+	}
+
+	function usePSD(psd, fn, a1, a2, a3) {
+	  var outerScope = PSD;
+
+	  try {
+	    switchToZone(psd, true);
+	    return fn(a1, a2, a3);
+	  } finally {
+	    switchToZone(outerScope, false);
+	  }
+	}
+
+	function enqueueNativeMicroTask(job) {
+	  nativePromiseThen.call(resolvedNativePromise, job);
+	}
+
+	function nativeAwaitCompatibleWrap(fn, zone, possibleAwait, cleanup) {
+	  return typeof fn !== 'function' ? fn : function () {
+	    var outerZone = PSD;
+	    if (possibleAwait) incrementExpectedAwaits();
+	    switchToZone(zone, true);
+
+	    try {
+	      return fn.apply(this, arguments);
+	    } finally {
+	      switchToZone(outerZone, false);
+	      if (cleanup) enqueueNativeMicroTask(decrementExpectedAwaits);
+	    }
+	  };
+	}
+
+	function getPatchedPromiseThen(origThen, zone) {
+	  return function (onResolved, onRejected) {
+	    return origThen.call(this, nativeAwaitCompatibleWrap(onResolved, zone), nativeAwaitCompatibleWrap(onRejected, zone));
+	  };
+	}
+
+	var UNHANDLEDREJECTION = "unhandledrejection";
+
+	function globalError(err, promise) {
+	  var rv;
+
+	  try {
+	    rv = promise.onuncatched(err);
+	  } catch (e) {}
+
+	  if (rv !== false) try {
+	    var event,
+	        eventData = {
+	      promise: promise,
+	      reason: err
+	    };
+
+	    if (_global.document && document.createEvent) {
+	      event = document.createEvent('Event');
+	      event.initEvent(UNHANDLEDREJECTION, true, true);
+	      extend(event, eventData);
+	    } else if (_global.CustomEvent) {
+	      event = new CustomEvent(UNHANDLEDREJECTION, {
+	        detail: eventData
+	      });
+	      extend(event, eventData);
+	    }
+
+	    if (event && _global.dispatchEvent) {
+	      dispatchEvent(event);
+	      if (!_global.PromiseRejectionEvent && _global.onunhandledrejection) try {
+	        _global.onunhandledrejection(event);
+	      } catch (_) {}
+	    }
+
+	    if (debug && event && !event.defaultPrevented) {
+	      console.warn("Unhandled rejection: " + (err.stack || err));
+	    }
+	  } catch (e) {}
+	}
+
+	var rejection = DexiePromise.reject;
+
+	function tempTransaction(db, mode, storeNames, fn) {
+	  if (!db.idbdb || !db._state.openComplete && !PSD.letThrough && !db._vip) {
+	    if (db._state.openComplete) {
+	      return rejection(new exceptions.DatabaseClosed(db._state.dbOpenError));
+	    }
+
+	    if (!db._state.isBeingOpened) {
+	      if (!db._options.autoOpen) return rejection(new exceptions.DatabaseClosed());
+	      db.open()["catch"](nop);
+	    }
+
+	    return db._state.dbReadyPromise.then(function () {
+	      return tempTransaction(db, mode, storeNames, fn);
+	    });
+	  } else {
+	    var trans = db._createTransaction(mode, storeNames, db._dbSchema);
+
+	    try {
+	      trans.create();
+	      db._state.PR1398_maxLoop = 3;
+	    } catch (ex) {
+	      if (ex.name === errnames.InvalidState && db.isOpen() && --db._state.PR1398_maxLoop > 0) {
+	        console.warn('Dexie: Need to reopen db');
+
+	        db._close();
+
+	        return db.open().then(function () {
+	          return tempTransaction(db, mode, storeNames, fn);
+	        });
+	      }
+
+	      return rejection(ex);
+	    }
+
+	    return trans._promise(mode, function (resolve, reject) {
+	      return newScope(function () {
+	        PSD.trans = trans;
+	        return fn(resolve, reject, trans);
+	      });
+	    }).then(function (result) {
+	      return trans._completion.then(function () {
+	        return result;
+	      });
+	    });
+	  }
+	}
+
+	var DEXIE_VERSION = '3.2.2';
+	var maxString = String.fromCharCode(65535);
+	var minKey = -Infinity;
+	var INVALID_KEY_ARGUMENT = "Invalid key provided. Keys must be of type string, number, Date or Array<string | number | Date>.";
+	var STRING_EXPECTED = "String expected.";
+	var connections = [];
+	var isIEOrEdge = typeof navigator !== 'undefined' && /(MSIE|Trident|Edge)/.test(navigator.userAgent);
+	var hasIEDeleteObjectStoreBug = isIEOrEdge;
+	var hangsOnDeleteLargeKeyRange = isIEOrEdge;
+
+	var dexieStackFrameFilter = function dexieStackFrameFilter(frame) {
+	  return !/(dexie\.js|dexie\.min\.js)/.test(frame);
+	};
+
+	var DBNAMES_DB = '__dbnames';
+	var READONLY = 'readonly';
+	var READWRITE = 'readwrite';
+
+	function combine(filter1, filter2) {
+	  return filter1 ? filter2 ? function () {
+	    return filter1.apply(this, arguments) && filter2.apply(this, arguments);
+	  } : filter1 : filter2;
+	}
+
+	var AnyRange = {
+	  type: 3,
+	  lower: -Infinity,
+	  lowerOpen: false,
+	  upper: [[]],
+	  upperOpen: false
+	};
+
+	function workaroundForUndefinedPrimKey(keyPath) {
+	  return typeof keyPath === "string" && !/\./.test(keyPath) ? function (obj) {
+	    if (obj[keyPath] === undefined && keyPath in obj) {
+	      obj = deepClone(obj);
+	      delete obj[keyPath];
+	    }
+
+	    return obj;
+	  } : function (obj) {
+	    return obj;
+	  };
+	}
+
+	var Table = function () {
+	  function Table() {}
+
+	  Table.prototype._trans = function (mode, fn, writeLocked) {
+	    var trans = this._tx || PSD.trans;
+	    var tableName = this.name;
+
+	    function checkTableInTransaction(resolve, reject, trans) {
+	      if (!trans.schema[tableName]) throw new exceptions.NotFound("Table " + tableName + " not part of transaction");
+	      return fn(trans.idbtrans, trans);
+	    }
+
+	    var wasRootExec = beginMicroTickScope();
+
+	    try {
+	      return trans && trans.db === this.db ? trans === PSD.trans ? trans._promise(mode, checkTableInTransaction, writeLocked) : newScope(function () {
+	        return trans._promise(mode, checkTableInTransaction, writeLocked);
+	      }, {
+	        trans: trans,
+	        transless: PSD.transless || PSD
+	      }) : tempTransaction(this.db, mode, [this.name], checkTableInTransaction);
+	    } finally {
+	      if (wasRootExec) endMicroTickScope();
+	    }
+	  };
+
+	  Table.prototype.get = function (keyOrCrit, cb) {
+	    var _this = this;
+
+	    if (keyOrCrit && keyOrCrit.constructor === Object) return this.where(keyOrCrit).first(cb);
+	    return this._trans('readonly', function (trans) {
+	      return _this.core.get({
+	        trans: trans,
+	        key: keyOrCrit
+	      }).then(function (res) {
+	        return _this.hook.reading.fire(res);
+	      });
+	    }).then(cb);
+	  };
+
+	  Table.prototype.where = function (indexOrCrit) {
+	    if (typeof indexOrCrit === 'string') return new this.db.WhereClause(this, indexOrCrit);
+	    if (isArray(indexOrCrit)) return new this.db.WhereClause(this, "[" + indexOrCrit.join('+') + "]");
+	    var keyPaths = keys(indexOrCrit);
+	    if (keyPaths.length === 1) return this.where(keyPaths[0]).equals(indexOrCrit[keyPaths[0]]);
+	    var compoundIndex = this.schema.indexes.concat(this.schema.primKey).filter(function (ix) {
+	      return ix.compound && keyPaths.every(function (keyPath) {
+	        return ix.keyPath.indexOf(keyPath) >= 0;
+	      }) && ix.keyPath.every(function (keyPath) {
+	        return keyPaths.indexOf(keyPath) >= 0;
+	      });
+	    })[0];
+	    if (compoundIndex && this.db._maxKey !== maxString) return this.where(compoundIndex.name).equals(compoundIndex.keyPath.map(function (kp) {
+	      return indexOrCrit[kp];
+	    }));
+	    if (!compoundIndex && debug) console.warn("The query " + JSON.stringify(indexOrCrit) + " on " + this.name + " would benefit of a " + ("compound index [" + keyPaths.join('+') + "]"));
+	    var idxByName = this.schema.idxByName;
+	    var idb = this.db._deps.indexedDB;
+
+	    function equals(a, b) {
+	      try {
+	        return idb.cmp(a, b) === 0;
+	      } catch (e) {
+	        return false;
+	      }
+	    }
+
+	    var _a = keyPaths.reduce(function (_a, keyPath) {
+	      var prevIndex = _a[0],
+	          prevFilterFn = _a[1];
+	      var index = idxByName[keyPath];
+	      var value = indexOrCrit[keyPath];
+	      return [prevIndex || index, prevIndex || !index ? combine(prevFilterFn, index && index.multi ? function (x) {
+	        var prop = getByKeyPath(x, keyPath);
+	        return isArray(prop) && prop.some(function (item) {
+	          return equals(value, item);
+	        });
+	      } : function (x) {
+	        return equals(value, getByKeyPath(x, keyPath));
+	      }) : prevFilterFn];
+	    }, [null, null]),
+	        idx = _a[0],
+	        filterFunction = _a[1];
+
+	    return idx ? this.where(idx.name).equals(indexOrCrit[idx.keyPath]).filter(filterFunction) : compoundIndex ? this.filter(filterFunction) : this.where(keyPaths).equals('');
+	  };
+
+	  Table.prototype.filter = function (filterFunction) {
+	    return this.toCollection().and(filterFunction);
+	  };
+
+	  Table.prototype.count = function (thenShortcut) {
+	    return this.toCollection().count(thenShortcut);
+	  };
+
+	  Table.prototype.offset = function (offset) {
+	    return this.toCollection().offset(offset);
+	  };
+
+	  Table.prototype.limit = function (numRows) {
+	    return this.toCollection().limit(numRows);
+	  };
+
+	  Table.prototype.each = function (callback) {
+	    return this.toCollection().each(callback);
+	  };
+
+	  Table.prototype.toArray = function (thenShortcut) {
+	    return this.toCollection().toArray(thenShortcut);
+	  };
+
+	  Table.prototype.toCollection = function () {
+	    return new this.db.Collection(new this.db.WhereClause(this));
+	  };
+
+	  Table.prototype.orderBy = function (index) {
+	    return new this.db.Collection(new this.db.WhereClause(this, isArray(index) ? "[" + index.join('+') + "]" : index));
+	  };
+
+	  Table.prototype.reverse = function () {
+	    return this.toCollection().reverse();
+	  };
+
+	  Table.prototype.mapToClass = function (constructor) {
+	    this.schema.mappedClass = constructor;
+
+	    var readHook = function readHook(obj) {
+	      if (!obj) return obj;
+	      var res = Object.create(constructor.prototype);
+
+	      for (var m in obj) {
+	        if (hasOwn(obj, m)) try {
+	          res[m] = obj[m];
+	        } catch (_) {}
+	      }
+
+	      return res;
+	    };
+
+	    if (this.schema.readHook) {
+	      this.hook.reading.unsubscribe(this.schema.readHook);
+	    }
+
+	    this.schema.readHook = readHook;
+	    this.hook("reading", readHook);
+	    return constructor;
+	  };
+
+	  Table.prototype.defineClass = function () {
+	    function Class(content) {
+	      extend(this, content);
+	    }
+
+	    return this.mapToClass(Class);
+	  };
+
+	  Table.prototype.add = function (obj, key) {
+	    var _this = this;
+
+	    var _a = this.schema.primKey,
+	        auto = _a.auto,
+	        keyPath = _a.keyPath;
+	    var objToAdd = obj;
+
+	    if (keyPath && auto) {
+	      objToAdd = workaroundForUndefinedPrimKey(keyPath)(obj);
+	    }
+
+	    return this._trans('readwrite', function (trans) {
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'add',
+	        keys: key != null ? [key] : null,
+	        values: [objToAdd]
+	      });
+	    }).then(function (res) {
+	      return res.numFailures ? DexiePromise.reject(res.failures[0]) : res.lastResult;
+	    }).then(function (lastResult) {
+	      if (keyPath) {
+	        try {
+	          setByKeyPath(obj, keyPath, lastResult);
+	        } catch (_) {}
+	      }
+
+	      return lastResult;
+	    });
+	  };
+
+	  Table.prototype.update = function (keyOrObject, modifications) {
+	    if (babelHelpers["typeof"](keyOrObject) === 'object' && !isArray(keyOrObject)) {
+	      var key = getByKeyPath(keyOrObject, this.schema.primKey.keyPath);
+	      if (key === undefined) return rejection(new exceptions.InvalidArgument("Given object does not contain its primary key"));
+
+	      try {
+	        if (typeof modifications !== "function") {
+	          keys(modifications).forEach(function (keyPath) {
+	            setByKeyPath(keyOrObject, keyPath, modifications[keyPath]);
+	          });
+	        } else {
+	          modifications(keyOrObject, {
+	            value: keyOrObject,
+	            primKey: key
+	          });
+	        }
+	      } catch (_a) {}
+
+	      return this.where(":id").equals(key).modify(modifications);
+	    } else {
+	      return this.where(":id").equals(keyOrObject).modify(modifications);
+	    }
+	  };
+
+	  Table.prototype.put = function (obj, key) {
+	    var _this = this;
+
+	    var _a = this.schema.primKey,
+	        auto = _a.auto,
+	        keyPath = _a.keyPath;
+	    var objToAdd = obj;
+
+	    if (keyPath && auto) {
+	      objToAdd = workaroundForUndefinedPrimKey(keyPath)(obj);
+	    }
+
+	    return this._trans('readwrite', function (trans) {
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'put',
+	        values: [objToAdd],
+	        keys: key != null ? [key] : null
+	      });
+	    }).then(function (res) {
+	      return res.numFailures ? DexiePromise.reject(res.failures[0]) : res.lastResult;
+	    }).then(function (lastResult) {
+	      if (keyPath) {
+	        try {
+	          setByKeyPath(obj, keyPath, lastResult);
+	        } catch (_) {}
+	      }
+
+	      return lastResult;
+	    });
+	  };
+
+	  Table.prototype["delete"] = function (key) {
+	    var _this = this;
+
+	    return this._trans('readwrite', function (trans) {
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'delete',
+	        keys: [key]
+	      });
+	    }).then(function (res) {
+	      return res.numFailures ? DexiePromise.reject(res.failures[0]) : undefined;
+	    });
+	  };
+
+	  Table.prototype.clear = function () {
+	    var _this = this;
+
+	    return this._trans('readwrite', function (trans) {
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'deleteRange',
+	        range: AnyRange
+	      });
+	    }).then(function (res) {
+	      return res.numFailures ? DexiePromise.reject(res.failures[0]) : undefined;
+	    });
+	  };
+
+	  Table.prototype.bulkGet = function (keys) {
+	    var _this = this;
+
+	    return this._trans('readonly', function (trans) {
+	      return _this.core.getMany({
+	        keys: keys,
+	        trans: trans
+	      }).then(function (result) {
+	        return result.map(function (res) {
+	          return _this.hook.reading.fire(res);
+	        });
+	      });
+	    });
+	  };
+
+	  Table.prototype.bulkAdd = function (objects, keysOrOptions, options) {
+	    var _this = this;
+
+	    var keys = Array.isArray(keysOrOptions) ? keysOrOptions : undefined;
+	    options = options || (keys ? undefined : keysOrOptions);
+	    var wantResults = options ? options.allKeys : undefined;
+	    return this._trans('readwrite', function (trans) {
+	      var _a = _this.schema.primKey,
+	          auto = _a.auto,
+	          keyPath = _a.keyPath;
+	      if (keyPath && keys) throw new exceptions.InvalidArgument("bulkAdd(): keys argument invalid on tables with inbound keys");
+	      if (keys && keys.length !== objects.length) throw new exceptions.InvalidArgument("Arguments objects and keys must have the same length");
+	      var numObjects = objects.length;
+	      var objectsToAdd = keyPath && auto ? objects.map(workaroundForUndefinedPrimKey(keyPath)) : objects;
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'add',
+	        keys: keys,
+	        values: objectsToAdd,
+	        wantResults: wantResults
+	      }).then(function (_a) {
+	        var numFailures = _a.numFailures,
+	            results = _a.results,
+	            lastResult = _a.lastResult,
+	            failures = _a.failures;
+	        var result = wantResults ? results : lastResult;
+	        if (numFailures === 0) return result;
+	        throw new BulkError(_this.name + ".bulkAdd(): " + numFailures + " of " + numObjects + " operations failed", failures);
+	      });
+	    });
+	  };
+
+	  Table.prototype.bulkPut = function (objects, keysOrOptions, options) {
+	    var _this = this;
+
+	    var keys = Array.isArray(keysOrOptions) ? keysOrOptions : undefined;
+	    options = options || (keys ? undefined : keysOrOptions);
+	    var wantResults = options ? options.allKeys : undefined;
+	    return this._trans('readwrite', function (trans) {
+	      var _a = _this.schema.primKey,
+	          auto = _a.auto,
+	          keyPath = _a.keyPath;
+	      if (keyPath && keys) throw new exceptions.InvalidArgument("bulkPut(): keys argument invalid on tables with inbound keys");
+	      if (keys && keys.length !== objects.length) throw new exceptions.InvalidArgument("Arguments objects and keys must have the same length");
+	      var numObjects = objects.length;
+	      var objectsToPut = keyPath && auto ? objects.map(workaroundForUndefinedPrimKey(keyPath)) : objects;
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'put',
+	        keys: keys,
+	        values: objectsToPut,
+	        wantResults: wantResults
+	      }).then(function (_a) {
+	        var numFailures = _a.numFailures,
+	            results = _a.results,
+	            lastResult = _a.lastResult,
+	            failures = _a.failures;
+	        var result = wantResults ? results : lastResult;
+	        if (numFailures === 0) return result;
+	        throw new BulkError(_this.name + ".bulkPut(): " + numFailures + " of " + numObjects + " operations failed", failures);
+	      });
+	    });
+	  };
+
+	  Table.prototype.bulkDelete = function (keys) {
+	    var _this = this;
+
+	    var numKeys = keys.length;
+	    return this._trans('readwrite', function (trans) {
+	      return _this.core.mutate({
+	        trans: trans,
+	        type: 'delete',
+	        keys: keys
+	      });
+	    }).then(function (_a) {
+	      var numFailures = _a.numFailures,
+	          lastResult = _a.lastResult,
+	          failures = _a.failures;
+	      if (numFailures === 0) return lastResult;
+	      throw new BulkError(_this.name + ".bulkDelete(): " + numFailures + " of " + numKeys + " operations failed", failures);
+	    });
+	  };
+
+	  return Table;
+	}();
+
+	function Events(ctx) {
+	  var evs = {};
+
+	  var rv = function rv(eventName, subscriber) {
+	    if (subscriber) {
+	      var i = arguments.length,
+	          args = new Array(i - 1);
+
+	      while (--i) {
+	        args[i - 1] = arguments[i];
+	      }
+
+	      evs[eventName].subscribe.apply(null, args);
+	      return ctx;
+	    } else if (typeof eventName === 'string') {
+	      return evs[eventName];
+	    }
+	  };
+
+	  rv.addEventType = add;
+
+	  for (var i = 1, l = arguments.length; i < l; ++i) {
+	    add(arguments[i]);
+	  }
+
+	  return rv;
+
+	  function add(eventName, chainFunction, defaultFunction) {
+	    if (babelHelpers["typeof"](eventName) === 'object') return addConfiguredEvents(eventName);
+	    if (!chainFunction) chainFunction = reverseStoppableEventChain;
+	    if (!defaultFunction) defaultFunction = nop;
+	    var context = {
+	      subscribers: [],
+	      fire: defaultFunction,
+	      subscribe: function subscribe(cb) {
+	        if (context.subscribers.indexOf(cb) === -1) {
+	          context.subscribers.push(cb);
+	          context.fire = chainFunction(context.fire, cb);
+	        }
+	      },
+	      unsubscribe: function unsubscribe(cb) {
+	        context.subscribers = context.subscribers.filter(function (fn) {
+	          return fn !== cb;
+	        });
+	        context.fire = context.subscribers.reduce(chainFunction, defaultFunction);
+	      }
+	    };
+	    evs[eventName] = rv[eventName] = context;
+	    return context;
+	  }
+
+	  function addConfiguredEvents(cfg) {
+	    keys(cfg).forEach(function (eventName) {
+	      var args = cfg[eventName];
+
+	      if (isArray(args)) {
+	        add(eventName, cfg[eventName][0], cfg[eventName][1]);
+	      } else if (args === 'asap') {
+	        var context = add(eventName, mirror, function fire() {
+	          var i = arguments.length,
+	              args = new Array(i);
+
+	          while (i--) {
+	            args[i] = arguments[i];
+	          }
+
+	          context.subscribers.forEach(function (fn) {
+	            asap$1(function fireEvent() {
+	              fn.apply(null, args);
+	            });
+	          });
+	        });
+	      } else throw new exceptions.InvalidArgument("Invalid event config");
+	    });
+	  }
+	}
+
+	function makeClassConstructor(prototype, constructor) {
+	  derive(constructor).from({
+	    prototype: prototype
+	  });
+	  return constructor;
+	}
+
+	function createTableConstructor(db) {
+	  return makeClassConstructor(Table.prototype, function Table(name, tableSchema, trans) {
+	    this.db = db;
+	    this._tx = trans;
+	    this.name = name;
+	    this.schema = tableSchema;
+	    this.hook = db._allTables[name] ? db._allTables[name].hook : Events(null, {
+	      "creating": [hookCreatingChain, nop],
+	      "reading": [pureFunctionChain, mirror],
+	      "updating": [hookUpdatingChain, nop],
+	      "deleting": [hookDeletingChain, nop]
+	    });
+	  });
+	}
+
+	function isPlainKeyRange(ctx, ignoreLimitFilter) {
+	  return !(ctx.filter || ctx.algorithm || ctx.or) && (ignoreLimitFilter ? ctx.justLimit : !ctx.replayFilter);
+	}
+
+	function addFilter(ctx, fn) {
+	  ctx.filter = combine(ctx.filter, fn);
+	}
+
+	function addReplayFilter(ctx, factory, isLimitFilter) {
+	  var curr = ctx.replayFilter;
+	  ctx.replayFilter = curr ? function () {
+	    return combine(curr(), factory());
+	  } : factory;
+	  ctx.justLimit = isLimitFilter && !curr;
+	}
+
+	function addMatchFilter(ctx, fn) {
+	  ctx.isMatch = combine(ctx.isMatch, fn);
+	}
+
+	function getIndexOrStore(ctx, coreSchema) {
+	  if (ctx.isPrimKey) return coreSchema.primaryKey;
+	  var index = coreSchema.getIndexByKeyPath(ctx.index);
+	  if (!index) throw new exceptions.Schema("KeyPath " + ctx.index + " on object store " + coreSchema.name + " is not indexed");
+	  return index;
+	}
+
+	function openCursor(ctx, coreTable, trans) {
+	  var index = getIndexOrStore(ctx, coreTable.schema);
+	  return coreTable.openCursor({
+	    trans: trans,
+	    values: !ctx.keysOnly,
+	    reverse: ctx.dir === 'prev',
+	    unique: !!ctx.unique,
+	    query: {
+	      index: index,
+	      range: ctx.range
+	    }
+	  });
+	}
+
+	function iter(ctx, fn, coreTrans, coreTable) {
+	  var filter = ctx.replayFilter ? combine(ctx.filter, ctx.replayFilter()) : ctx.filter;
+
+	  if (!ctx.or) {
+	    return iterate(openCursor(ctx, coreTable, coreTrans), combine(ctx.algorithm, filter), fn, !ctx.keysOnly && ctx.valueMapper);
+	  } else {
+	    var set_1 = {};
+
+	    var union = function union(item, cursor, advance) {
+	      if (!filter || filter(cursor, advance, function (result) {
+	        return cursor.stop(result);
+	      }, function (err) {
+	        return cursor.fail(err);
+	      })) {
+	        var primaryKey = cursor.primaryKey;
+	        var key = '' + primaryKey;
+	        if (key === '[object ArrayBuffer]') key = '' + new Uint8Array(primaryKey);
+
+	        if (!hasOwn(set_1, key)) {
+	          set_1[key] = true;
+	          fn(item, cursor, advance);
+	        }
+	      }
+	    };
+
+	    return Promise.all([ctx.or._iterate(union, coreTrans), iterate(openCursor(ctx, coreTable, coreTrans), ctx.algorithm, union, !ctx.keysOnly && ctx.valueMapper)]);
+	  }
+	}
+
+	function iterate(cursorPromise, filter, fn, valueMapper) {
+	  var mappedFn = valueMapper ? function (x, c, a) {
+	    return fn(valueMapper(x), c, a);
+	  } : fn;
+	  var wrappedFn = wrap(mappedFn);
+	  return cursorPromise.then(function (cursor) {
+	    if (cursor) {
+	      return cursor.start(function () {
+	        var c = function c() {
+	          return cursor["continue"]();
+	        };
+
+	        if (!filter || filter(cursor, function (advancer) {
+	          return c = advancer;
+	        }, function (val) {
+	          cursor.stop(val);
+	          c = nop;
+	        }, function (e) {
+	          cursor.fail(e);
+	          c = nop;
+	        })) wrappedFn(cursor.value, cursor, function (advancer) {
+	          return c = advancer;
+	        });
+	        c();
+	      });
+	    }
+	  });
+	}
+
+	function cmp(a, b) {
+	  try {
+	    var ta = type(a);
+	    var tb = type(b);
+
+	    if (ta !== tb) {
+	      if (ta === 'Array') return 1;
+	      if (tb === 'Array') return -1;
+	      if (ta === 'binary') return 1;
+	      if (tb === 'binary') return -1;
+	      if (ta === 'string') return 1;
+	      if (tb === 'string') return -1;
+	      if (ta === 'Date') return 1;
+	      if (tb !== 'Date') return NaN;
+	      return -1;
+	    }
+
+	    switch (ta) {
+	      case 'number':
+	      case 'Date':
+	      case 'string':
+	        return a > b ? 1 : a < b ? -1 : 0;
+
+	      case 'binary':
+	        {
+	          return compareUint8Arrays(getUint8Array(a), getUint8Array(b));
+	        }
+
+	      case 'Array':
+	        return compareArrays(a, b);
+	    }
+	  } catch (_a) {}
+
+	  return NaN;
+	}
+
+	function compareArrays(a, b) {
+	  var al = a.length;
+	  var bl = b.length;
+	  var l = al < bl ? al : bl;
+
+	  for (var i = 0; i < l; ++i) {
+	    var res = cmp(a[i], b[i]);
+	    if (res !== 0) return res;
+	  }
+
+	  return al === bl ? 0 : al < bl ? -1 : 1;
+	}
+
+	function compareUint8Arrays(a, b) {
+	  var al = a.length;
+	  var bl = b.length;
+	  var l = al < bl ? al : bl;
+
+	  for (var i = 0; i < l; ++i) {
+	    if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+	  }
+
+	  return al === bl ? 0 : al < bl ? -1 : 1;
+	}
+
+	function type(x) {
+	  var t = babelHelpers["typeof"](x);
+	  if (t !== 'object') return t;
+	  if (ArrayBuffer.isView(x)) return 'binary';
+	  var tsTag = toStringTag(x);
+	  return tsTag === 'ArrayBuffer' ? 'binary' : tsTag;
+	}
+
+	function getUint8Array(a) {
+	  if (a instanceof Uint8Array) return a;
+	  if (ArrayBuffer.isView(a)) return new Uint8Array(a.buffer, a.byteOffset, a.byteLength);
+	  return new Uint8Array(a);
+	}
+
+	var Collection = function () {
+	  function Collection() {}
+
+	  Collection.prototype._read = function (fn, cb) {
+	    var ctx = this._ctx;
+	    return ctx.error ? ctx.table._trans(null, rejection.bind(null, ctx.error)) : ctx.table._trans('readonly', fn).then(cb);
+	  };
+
+	  Collection.prototype._write = function (fn) {
+	    var ctx = this._ctx;
+	    return ctx.error ? ctx.table._trans(null, rejection.bind(null, ctx.error)) : ctx.table._trans('readwrite', fn, "locked");
+	  };
+
+	  Collection.prototype._addAlgorithm = function (fn) {
+	    var ctx = this._ctx;
+	    ctx.algorithm = combine(ctx.algorithm, fn);
+	  };
+
+	  Collection.prototype._iterate = function (fn, coreTrans) {
+	    return iter(this._ctx, fn, coreTrans, this._ctx.table.core);
+	  };
+
+	  Collection.prototype.clone = function (props) {
+	    var rv = Object.create(this.constructor.prototype),
+	        ctx = Object.create(this._ctx);
+	    if (props) extend(ctx, props);
+	    rv._ctx = ctx;
+	    return rv;
+	  };
+
+	  Collection.prototype.raw = function () {
+	    this._ctx.valueMapper = null;
+	    return this;
+	  };
+
+	  Collection.prototype.each = function (fn) {
+	    var ctx = this._ctx;
+	    return this._read(function (trans) {
+	      return iter(ctx, fn, trans, ctx.table.core);
+	    });
+	  };
+
+	  Collection.prototype.count = function (cb) {
+	    var _this = this;
+
+	    return this._read(function (trans) {
+	      var ctx = _this._ctx;
+	      var coreTable = ctx.table.core;
+
+	      if (isPlainKeyRange(ctx, true)) {
+	        return coreTable.count({
+	          trans: trans,
+	          query: {
+	            index: getIndexOrStore(ctx, coreTable.schema),
+	            range: ctx.range
+	          }
+	        }).then(function (count) {
+	          return Math.min(count, ctx.limit);
+	        });
+	      } else {
+	        var count = 0;
+	        return iter(ctx, function () {
+	          ++count;
+	          return false;
+	        }, trans, coreTable).then(function () {
+	          return count;
+	        });
+	      }
+	    }).then(cb);
+	  };
+
+	  Collection.prototype.sortBy = function (keyPath, cb) {
+	    var parts = keyPath.split('.').reverse(),
+	        lastPart = parts[0],
+	        lastIndex = parts.length - 1;
+
+	    function getval(obj, i) {
+	      if (i) return getval(obj[parts[i]], i - 1);
+	      return obj[lastPart];
+	    }
+
+	    var order = this._ctx.dir === "next" ? 1 : -1;
+
+	    function sorter(a, b) {
+	      var aVal = getval(a, lastIndex),
+	          bVal = getval(b, lastIndex);
+	      return aVal < bVal ? -order : aVal > bVal ? order : 0;
+	    }
+
+	    return this.toArray(function (a) {
+	      return a.sort(sorter);
+	    }).then(cb);
+	  };
+
+	  Collection.prototype.toArray = function (cb) {
+	    var _this = this;
+
+	    return this._read(function (trans) {
+	      var ctx = _this._ctx;
+
+	      if (ctx.dir === 'next' && isPlainKeyRange(ctx, true) && ctx.limit > 0) {
+	        var valueMapper_1 = ctx.valueMapper;
+	        var index = getIndexOrStore(ctx, ctx.table.core.schema);
+	        return ctx.table.core.query({
+	          trans: trans,
+	          limit: ctx.limit,
+	          values: true,
+	          query: {
+	            index: index,
+	            range: ctx.range
+	          }
+	        }).then(function (_a) {
+	          var result = _a.result;
+	          return valueMapper_1 ? result.map(valueMapper_1) : result;
+	        });
+	      } else {
+	        var a_1 = [];
+	        return iter(ctx, function (item) {
+	          return a_1.push(item);
+	        }, trans, ctx.table.core).then(function () {
+	          return a_1;
+	        });
+	      }
+	    }, cb);
+	  };
+
+	  Collection.prototype.offset = function (offset) {
+	    var ctx = this._ctx;
+	    if (offset <= 0) return this;
+	    ctx.offset += offset;
+
+	    if (isPlainKeyRange(ctx)) {
+	      addReplayFilter(ctx, function () {
+	        var offsetLeft = offset;
+	        return function (cursor, advance) {
+	          if (offsetLeft === 0) return true;
+
+	          if (offsetLeft === 1) {
+	            --offsetLeft;
+	            return false;
+	          }
+
+	          advance(function () {
+	            cursor.advance(offsetLeft);
+	            offsetLeft = 0;
+	          });
+	          return false;
+	        };
+	      });
+	    } else {
+	      addReplayFilter(ctx, function () {
+	        var offsetLeft = offset;
+	        return function () {
+	          return --offsetLeft < 0;
+	        };
+	      });
+	    }
+
+	    return this;
+	  };
+
+	  Collection.prototype.limit = function (numRows) {
+	    this._ctx.limit = Math.min(this._ctx.limit, numRows);
+	    addReplayFilter(this._ctx, function () {
+	      var rowsLeft = numRows;
+	      return function (cursor, advance, resolve) {
+	        if (--rowsLeft <= 0) advance(resolve);
+	        return rowsLeft >= 0;
+	      };
+	    }, true);
+	    return this;
+	  };
+
+	  Collection.prototype.until = function (filterFunction, bIncludeStopEntry) {
+	    addFilter(this._ctx, function (cursor, advance, resolve) {
+	      if (filterFunction(cursor.value)) {
+	        advance(resolve);
+	        return bIncludeStopEntry;
+	      } else {
+	        return true;
+	      }
+	    });
+	    return this;
+	  };
+
+	  Collection.prototype.first = function (cb) {
+	    return this.limit(1).toArray(function (a) {
+	      return a[0];
+	    }).then(cb);
+	  };
+
+	  Collection.prototype.last = function (cb) {
+	    return this.reverse().first(cb);
+	  };
+
+	  Collection.prototype.filter = function (filterFunction) {
+	    addFilter(this._ctx, function (cursor) {
+	      return filterFunction(cursor.value);
+	    });
+	    addMatchFilter(this._ctx, filterFunction);
+	    return this;
+	  };
+
+	  Collection.prototype.and = function (filter) {
+	    return this.filter(filter);
+	  };
+
+	  Collection.prototype.or = function (indexName) {
+	    return new this.db.WhereClause(this._ctx.table, indexName, this);
+	  };
+
+	  Collection.prototype.reverse = function () {
+	    this._ctx.dir = this._ctx.dir === "prev" ? "next" : "prev";
+	    if (this._ondirectionchange) this._ondirectionchange(this._ctx.dir);
+	    return this;
+	  };
+
+	  Collection.prototype.desc = function () {
+	    return this.reverse();
+	  };
+
+	  Collection.prototype.eachKey = function (cb) {
+	    var ctx = this._ctx;
+	    ctx.keysOnly = !ctx.isMatch;
+	    return this.each(function (val, cursor) {
+	      cb(cursor.key, cursor);
+	    });
+	  };
+
+	  Collection.prototype.eachUniqueKey = function (cb) {
+	    this._ctx.unique = "unique";
+	    return this.eachKey(cb);
+	  };
+
+	  Collection.prototype.eachPrimaryKey = function (cb) {
+	    var ctx = this._ctx;
+	    ctx.keysOnly = !ctx.isMatch;
+	    return this.each(function (val, cursor) {
+	      cb(cursor.primaryKey, cursor);
+	    });
+	  };
+
+	  Collection.prototype.keys = function (cb) {
+	    var ctx = this._ctx;
+	    ctx.keysOnly = !ctx.isMatch;
+	    var a = [];
+	    return this.each(function (item, cursor) {
+	      a.push(cursor.key);
+	    }).then(function () {
+	      return a;
+	    }).then(cb);
+	  };
+
+	  Collection.prototype.primaryKeys = function (cb) {
+	    var ctx = this._ctx;
+
+	    if (ctx.dir === 'next' && isPlainKeyRange(ctx, true) && ctx.limit > 0) {
+	      return this._read(function (trans) {
+	        var index = getIndexOrStore(ctx, ctx.table.core.schema);
+	        return ctx.table.core.query({
+	          trans: trans,
+	          values: false,
+	          limit: ctx.limit,
+	          query: {
+	            index: index,
+	            range: ctx.range
+	          }
+	        });
+	      }).then(function (_a) {
+	        var result = _a.result;
+	        return result;
+	      }).then(cb);
+	    }
+
+	    ctx.keysOnly = !ctx.isMatch;
+	    var a = [];
+	    return this.each(function (item, cursor) {
+	      a.push(cursor.primaryKey);
+	    }).then(function () {
+	      return a;
+	    }).then(cb);
+	  };
+
+	  Collection.prototype.uniqueKeys = function (cb) {
+	    this._ctx.unique = "unique";
+	    return this.keys(cb);
+	  };
+
+	  Collection.prototype.firstKey = function (cb) {
+	    return this.limit(1).keys(function (a) {
+	      return a[0];
+	    }).then(cb);
+	  };
+
+	  Collection.prototype.lastKey = function (cb) {
+	    return this.reverse().firstKey(cb);
+	  };
+
+	  Collection.prototype.distinct = function () {
+	    var ctx = this._ctx,
+	        idx = ctx.index && ctx.table.schema.idxByName[ctx.index];
+	    if (!idx || !idx.multi) return this;
+	    var set = {};
+	    addFilter(this._ctx, function (cursor) {
+	      var strKey = cursor.primaryKey.toString();
+	      var found = hasOwn(set, strKey);
+	      set[strKey] = true;
+	      return !found;
+	    });
+	    return this;
+	  };
+
+	  Collection.prototype.modify = function (changes) {
+	    var _this = this;
+
+	    var ctx = this._ctx;
+	    return this._write(function (trans) {
+	      var modifyer;
+
+	      if (typeof changes === 'function') {
+	        modifyer = changes;
+	      } else {
+	        var keyPaths = keys(changes);
+	        var numKeys = keyPaths.length;
+
+	        modifyer = function modifyer(item) {
+	          var anythingModified = false;
+
+	          for (var i = 0; i < numKeys; ++i) {
+	            var keyPath = keyPaths[i],
+	                val = changes[keyPath];
+
+	            if (getByKeyPath(item, keyPath) !== val) {
+	              setByKeyPath(item, keyPath, val);
+	              anythingModified = true;
+	            }
+	          }
+
+	          return anythingModified;
+	        };
+	      }
+
+	      var coreTable = ctx.table.core;
+	      var _a = coreTable.schema.primaryKey,
+	          outbound = _a.outbound,
+	          extractKey = _a.extractKey;
+	      var limit = _this.db._options.modifyChunkSize || 200;
+	      var totalFailures = [];
+	      var successCount = 0;
+	      var failedKeys = [];
+
+	      var applyMutateResult = function applyMutateResult(expectedCount, res) {
+	        var failures = res.failures,
+	            numFailures = res.numFailures;
+	        successCount += expectedCount - numFailures;
+
+	        for (var _i = 0, _a = keys(failures); _i < _a.length; _i++) {
+	          var pos = _a[_i];
+	          totalFailures.push(failures[pos]);
+	        }
+	      };
+
+	      return _this.clone().primaryKeys().then(function (keys) {
+	        var nextChunk = function nextChunk(offset) {
+	          var count = Math.min(limit, keys.length - offset);
+	          return coreTable.getMany({
+	            trans: trans,
+	            keys: keys.slice(offset, offset + count),
+	            cache: "immutable"
+	          }).then(function (values) {
+	            var addValues = [];
+	            var putValues = [];
+	            var putKeys = outbound ? [] : null;
+	            var deleteKeys = [];
+
+	            for (var i = 0; i < count; ++i) {
+	              var origValue = values[i];
+	              var ctx_1 = {
+	                value: deepClone(origValue),
+	                primKey: keys[offset + i]
+	              };
+
+	              if (modifyer.call(ctx_1, ctx_1.value, ctx_1) !== false) {
+	                if (ctx_1.value == null) {
+	                  deleteKeys.push(keys[offset + i]);
+	                } else if (!outbound && cmp(extractKey(origValue), extractKey(ctx_1.value)) !== 0) {
+	                  deleteKeys.push(keys[offset + i]);
+	                  addValues.push(ctx_1.value);
+	                } else {
+	                  putValues.push(ctx_1.value);
+	                  if (outbound) putKeys.push(keys[offset + i]);
+	                }
+	              }
+	            }
+
+	            var criteria = isPlainKeyRange(ctx) && ctx.limit === Infinity && (typeof changes !== 'function' || changes === deleteCallback) && {
+	              index: ctx.index,
+	              range: ctx.range
+	            };
+	            return Promise.resolve(addValues.length > 0 && coreTable.mutate({
+	              trans: trans,
+	              type: 'add',
+	              values: addValues
+	            }).then(function (res) {
+	              for (var pos in res.failures) {
+	                deleteKeys.splice(parseInt(pos), 1);
+	              }
+
+	              applyMutateResult(addValues.length, res);
+	            })).then(function () {
+	              return (putValues.length > 0 || criteria && babelHelpers["typeof"](changes) === 'object') && coreTable.mutate({
+	                trans: trans,
+	                type: 'put',
+	                keys: putKeys,
+	                values: putValues,
+	                criteria: criteria,
+	                changeSpec: typeof changes !== 'function' && changes
+	              }).then(function (res) {
+	                return applyMutateResult(putValues.length, res);
+	              });
+	            }).then(function () {
+	              return (deleteKeys.length > 0 || criteria && changes === deleteCallback) && coreTable.mutate({
+	                trans: trans,
+	                type: 'delete',
+	                keys: deleteKeys,
+	                criteria: criteria
+	              }).then(function (res) {
+	                return applyMutateResult(deleteKeys.length, res);
+	              });
+	            }).then(function () {
+	              return keys.length > offset + count && nextChunk(offset + limit);
+	            });
+	          });
+	        };
+
+	        return nextChunk(0).then(function () {
+	          if (totalFailures.length > 0) throw new ModifyError("Error modifying one or more objects", totalFailures, successCount, failedKeys);
+	          return keys.length;
+	        });
+	      });
+	    });
+	  };
+
+	  Collection.prototype["delete"] = function () {
+	    var ctx = this._ctx,
+	        range = ctx.range;
+
+	    if (isPlainKeyRange(ctx) && (ctx.isPrimKey && !hangsOnDeleteLargeKeyRange || range.type === 3)) {
+	      return this._write(function (trans) {
+	        var primaryKey = ctx.table.core.schema.primaryKey;
+	        var coreRange = range;
+	        return ctx.table.core.count({
+	          trans: trans,
+	          query: {
+	            index: primaryKey,
+	            range: coreRange
+	          }
+	        }).then(function (count) {
+	          return ctx.table.core.mutate({
+	            trans: trans,
+	            type: 'deleteRange',
+	            range: coreRange
+	          }).then(function (_a) {
+	            var failures = _a.failures;
+	            _a.lastResult;
+	            _a.results;
+	            var numFailures = _a.numFailures;
+	            if (numFailures) throw new ModifyError("Could not delete some values", Object.keys(failures).map(function (pos) {
+	              return failures[pos];
+	            }), count - numFailures);
+	            return count - numFailures;
+	          });
+	        });
+	      });
+	    }
+
+	    return this.modify(deleteCallback);
+	  };
+
+	  return Collection;
+	}();
+
+	var deleteCallback = function deleteCallback(value, ctx) {
+	  return ctx.value = null;
+	};
+
+	function createCollectionConstructor(db) {
+	  return makeClassConstructor(Collection.prototype, function Collection(whereClause, keyRangeGenerator) {
+	    this.db = db;
+	    var keyRange = AnyRange,
+	        error = null;
+	    if (keyRangeGenerator) try {
+	      keyRange = keyRangeGenerator();
+	    } catch (ex) {
+	      error = ex;
+	    }
+	    var whereCtx = whereClause._ctx;
+	    var table = whereCtx.table;
+	    var readingHook = table.hook.reading.fire;
+	    this._ctx = {
+	      table: table,
+	      index: whereCtx.index,
+	      isPrimKey: !whereCtx.index || table.schema.primKey.keyPath && whereCtx.index === table.schema.primKey.name,
+	      range: keyRange,
+	      keysOnly: false,
+	      dir: "next",
+	      unique: "",
+	      algorithm: null,
+	      filter: null,
+	      replayFilter: null,
+	      justLimit: true,
+	      isMatch: null,
+	      offset: 0,
+	      limit: Infinity,
+	      error: error,
+	      or: whereCtx.or,
+	      valueMapper: readingHook !== mirror ? readingHook : null
+	    };
+	  });
+	}
+
+	function simpleCompare(a, b) {
+	  return a < b ? -1 : a === b ? 0 : 1;
+	}
+
+	function simpleCompareReverse(a, b) {
+	  return a > b ? -1 : a === b ? 0 : 1;
+	}
+
+	function fail(collectionOrWhereClause, err, T) {
+	  var collection = collectionOrWhereClause instanceof WhereClause ? new collectionOrWhereClause.Collection(collectionOrWhereClause) : collectionOrWhereClause;
+	  collection._ctx.error = T ? new T(err) : new TypeError(err);
+	  return collection;
+	}
+
+	function emptyCollection(whereClause) {
+	  return new whereClause.Collection(whereClause, function () {
+	    return rangeEqual("");
+	  }).limit(0);
+	}
+
+	function upperFactory(dir) {
+	  return dir === "next" ? function (s) {
+	    return s.toUpperCase();
+	  } : function (s) {
+	    return s.toLowerCase();
+	  };
+	}
+
+	function lowerFactory(dir) {
+	  return dir === "next" ? function (s) {
+	    return s.toLowerCase();
+	  } : function (s) {
+	    return s.toUpperCase();
+	  };
+	}
+
+	function nextCasing(key, lowerKey, upperNeedle, lowerNeedle, cmp, dir) {
+	  var length = Math.min(key.length, lowerNeedle.length);
+	  var llp = -1;
+
+	  for (var i = 0; i < length; ++i) {
+	    var lwrKeyChar = lowerKey[i];
+
+	    if (lwrKeyChar !== lowerNeedle[i]) {
+	      if (cmp(key[i], upperNeedle[i]) < 0) return key.substr(0, i) + upperNeedle[i] + upperNeedle.substr(i + 1);
+	      if (cmp(key[i], lowerNeedle[i]) < 0) return key.substr(0, i) + lowerNeedle[i] + upperNeedle.substr(i + 1);
+	      if (llp >= 0) return key.substr(0, llp) + lowerKey[llp] + upperNeedle.substr(llp + 1);
+	      return null;
+	    }
+
+	    if (cmp(key[i], lwrKeyChar) < 0) llp = i;
+	  }
+
+	  if (length < lowerNeedle.length && dir === "next") return key + upperNeedle.substr(key.length);
+	  if (length < key.length && dir === "prev") return key.substr(0, upperNeedle.length);
+	  return llp < 0 ? null : key.substr(0, llp) + lowerNeedle[llp] + upperNeedle.substr(llp + 1);
+	}
+
+	function addIgnoreCaseAlgorithm(whereClause, match, needles, suffix) {
+	  var upper,
+	      lower,
+	      compare,
+	      upperNeedles,
+	      lowerNeedles,
+	      direction,
+	      nextKeySuffix,
+	      needlesLen = needles.length;
+
+	  if (!needles.every(function (s) {
+	    return typeof s === 'string';
+	  })) {
+	    return fail(whereClause, STRING_EXPECTED);
+	  }
+
+	  function initDirection(dir) {
+	    upper = upperFactory(dir);
+	    lower = lowerFactory(dir);
+	    compare = dir === "next" ? simpleCompare : simpleCompareReverse;
+	    var needleBounds = needles.map(function (needle) {
+	      return {
+	        lower: lower(needle),
+	        upper: upper(needle)
+	      };
+	    }).sort(function (a, b) {
+	      return compare(a.lower, b.lower);
+	    });
+	    upperNeedles = needleBounds.map(function (nb) {
+	      return nb.upper;
+	    });
+	    lowerNeedles = needleBounds.map(function (nb) {
+	      return nb.lower;
+	    });
+	    direction = dir;
+	    nextKeySuffix = dir === "next" ? "" : suffix;
+	  }
+
+	  initDirection("next");
+	  var c = new whereClause.Collection(whereClause, function () {
+	    return createRange(upperNeedles[0], lowerNeedles[needlesLen - 1] + suffix);
+	  });
+
+	  c._ondirectionchange = function (direction) {
+	    initDirection(direction);
+	  };
+
+	  var firstPossibleNeedle = 0;
+
+	  c._addAlgorithm(function (cursor, advance, resolve) {
+	    var key = cursor.key;
+	    if (typeof key !== 'string') return false;
+	    var lowerKey = lower(key);
+
+	    if (match(lowerKey, lowerNeedles, firstPossibleNeedle)) {
+	      return true;
+	    } else {
+	      var lowestPossibleCasing = null;
+
+	      for (var i = firstPossibleNeedle; i < needlesLen; ++i) {
+	        var casing = nextCasing(key, lowerKey, upperNeedles[i], lowerNeedles[i], compare, direction);
+	        if (casing === null && lowestPossibleCasing === null) firstPossibleNeedle = i + 1;else if (lowestPossibleCasing === null || compare(lowestPossibleCasing, casing) > 0) {
+	          lowestPossibleCasing = casing;
+	        }
+	      }
+
+	      if (lowestPossibleCasing !== null) {
+	        advance(function () {
+	          cursor["continue"](lowestPossibleCasing + nextKeySuffix);
+	        });
+	      } else {
+	        advance(resolve);
+	      }
+
+	      return false;
+	    }
+	  });
+
+	  return c;
+	}
+
+	function createRange(lower, upper, lowerOpen, upperOpen) {
+	  return {
+	    type: 2,
+	    lower: lower,
+	    upper: upper,
+	    lowerOpen: lowerOpen,
+	    upperOpen: upperOpen
+	  };
+	}
+
+	function rangeEqual(value) {
+	  return {
+	    type: 1,
+	    lower: value,
+	    upper: value
+	  };
+	}
+
+	var WhereClause = function () {
+	  function WhereClause() {}
+
+	  Object.defineProperty(WhereClause.prototype, "Collection", {
+	    get: function get() {
+	      return this._ctx.table.db.Collection;
+	    },
+	    enumerable: false,
+	    configurable: true
+	  });
+
+	  WhereClause.prototype.between = function (lower, upper, includeLower, includeUpper) {
+	    includeLower = includeLower !== false;
+	    includeUpper = includeUpper === true;
+
+	    try {
+	      if (this._cmp(lower, upper) > 0 || this._cmp(lower, upper) === 0 && (includeLower || includeUpper) && !(includeLower && includeUpper)) return emptyCollection(this);
+	      return new this.Collection(this, function () {
+	        return createRange(lower, upper, !includeLower, !includeUpper);
+	      });
+	    } catch (e) {
+	      return fail(this, INVALID_KEY_ARGUMENT);
+	    }
+	  };
+
+	  WhereClause.prototype.equals = function (value) {
+	    if (value == null) return fail(this, INVALID_KEY_ARGUMENT);
+	    return new this.Collection(this, function () {
+	      return rangeEqual(value);
+	    });
+	  };
+
+	  WhereClause.prototype.above = function (value) {
+	    if (value == null) return fail(this, INVALID_KEY_ARGUMENT);
+	    return new this.Collection(this, function () {
+	      return createRange(value, undefined, true);
+	    });
+	  };
+
+	  WhereClause.prototype.aboveOrEqual = function (value) {
+	    if (value == null) return fail(this, INVALID_KEY_ARGUMENT);
+	    return new this.Collection(this, function () {
+	      return createRange(value, undefined, false);
+	    });
+	  };
+
+	  WhereClause.prototype.below = function (value) {
+	    if (value == null) return fail(this, INVALID_KEY_ARGUMENT);
+	    return new this.Collection(this, function () {
+	      return createRange(undefined, value, false, true);
+	    });
+	  };
+
+	  WhereClause.prototype.belowOrEqual = function (value) {
+	    if (value == null) return fail(this, INVALID_KEY_ARGUMENT);
+	    return new this.Collection(this, function () {
+	      return createRange(undefined, value);
+	    });
+	  };
+
+	  WhereClause.prototype.startsWith = function (str) {
+	    if (typeof str !== 'string') return fail(this, STRING_EXPECTED);
+	    return this.between(str, str + maxString, true, true);
+	  };
+
+	  WhereClause.prototype.startsWithIgnoreCase = function (str) {
+	    if (str === "") return this.startsWith(str);
+	    return addIgnoreCaseAlgorithm(this, function (x, a) {
+	      return x.indexOf(a[0]) === 0;
+	    }, [str], maxString);
+	  };
+
+	  WhereClause.prototype.equalsIgnoreCase = function (str) {
+	    return addIgnoreCaseAlgorithm(this, function (x, a) {
+	      return x === a[0];
+	    }, [str], "");
+	  };
+
+	  WhereClause.prototype.anyOfIgnoreCase = function () {
+	    var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+	    if (set.length === 0) return emptyCollection(this);
+	    return addIgnoreCaseAlgorithm(this, function (x, a) {
+	      return a.indexOf(x) !== -1;
+	    }, set, "");
+	  };
+
+	  WhereClause.prototype.startsWithAnyOfIgnoreCase = function () {
+	    var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+	    if (set.length === 0) return emptyCollection(this);
+	    return addIgnoreCaseAlgorithm(this, function (x, a) {
+	      return a.some(function (n) {
+	        return x.indexOf(n) === 0;
+	      });
+	    }, set, maxString);
+	  };
+
+	  WhereClause.prototype.anyOf = function () {
+	    var _this = this;
+
+	    var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+	    var compare = this._cmp;
+
+	    try {
+	      set.sort(compare);
+	    } catch (e) {
+	      return fail(this, INVALID_KEY_ARGUMENT);
+	    }
+
+	    if (set.length === 0) return emptyCollection(this);
+	    var c = new this.Collection(this, function () {
+	      return createRange(set[0], set[set.length - 1]);
+	    });
+
+	    c._ondirectionchange = function (direction) {
+	      compare = direction === "next" ? _this._ascending : _this._descending;
+	      set.sort(compare);
+	    };
+
+	    var i = 0;
+
+	    c._addAlgorithm(function (cursor, advance, resolve) {
+	      var key = cursor.key;
+
+	      while (compare(key, set[i]) > 0) {
+	        ++i;
+
+	        if (i === set.length) {
+	          advance(resolve);
+	          return false;
+	        }
+	      }
+
+	      if (compare(key, set[i]) === 0) {
+	        return true;
+	      } else {
+	        advance(function () {
+	          cursor["continue"](set[i]);
+	        });
+	        return false;
+	      }
+	    });
+
+	    return c;
+	  };
+
+	  WhereClause.prototype.notEqual = function (value) {
+	    return this.inAnyRange([[minKey, value], [value, this.db._maxKey]], {
+	      includeLowers: false,
+	      includeUppers: false
+	    });
+	  };
+
+	  WhereClause.prototype.noneOf = function () {
+	    var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+	    if (set.length === 0) return new this.Collection(this);
+
+	    try {
+	      set.sort(this._ascending);
+	    } catch (e) {
+	      return fail(this, INVALID_KEY_ARGUMENT);
+	    }
+
+	    var ranges = set.reduce(function (res, val) {
+	      return res ? res.concat([[res[res.length - 1][1], val]]) : [[minKey, val]];
+	    }, null);
+	    ranges.push([set[set.length - 1], this.db._maxKey]);
+	    return this.inAnyRange(ranges, {
+	      includeLowers: false,
+	      includeUppers: false
+	    });
+	  };
+
+	  WhereClause.prototype.inAnyRange = function (ranges, options) {
+	    var _this = this;
+
+	    var cmp = this._cmp,
+	        ascending = this._ascending,
+	        descending = this._descending,
+	        min = this._min,
+	        max = this._max;
+	    if (ranges.length === 0) return emptyCollection(this);
+
+	    if (!ranges.every(function (range) {
+	      return range[0] !== undefined && range[1] !== undefined && ascending(range[0], range[1]) <= 0;
+	    })) {
+	      return fail(this, "First argument to inAnyRange() must be an Array of two-value Arrays [lower,upper] where upper must not be lower than lower", exceptions.InvalidArgument);
+	    }
+
+	    var includeLowers = !options || options.includeLowers !== false;
+	    var includeUppers = options && options.includeUppers === true;
+
+	    function addRange(ranges, newRange) {
+	      var i = 0,
+	          l = ranges.length;
+
+	      for (; i < l; ++i) {
+	        var range = ranges[i];
+
+	        if (cmp(newRange[0], range[1]) < 0 && cmp(newRange[1], range[0]) > 0) {
+	          range[0] = min(range[0], newRange[0]);
+	          range[1] = max(range[1], newRange[1]);
+	          break;
+	        }
+	      }
+
+	      if (i === l) ranges.push(newRange);
+	      return ranges;
+	    }
+
+	    var sortDirection = ascending;
+
+	    function rangeSorter(a, b) {
+	      return sortDirection(a[0], b[0]);
+	    }
+
+	    var set;
+
+	    try {
+	      set = ranges.reduce(addRange, []);
+	      set.sort(rangeSorter);
+	    } catch (ex) {
+	      return fail(this, INVALID_KEY_ARGUMENT);
+	    }
+
+	    var rangePos = 0;
+	    var keyIsBeyondCurrentEntry = includeUppers ? function (key) {
+	      return ascending(key, set[rangePos][1]) > 0;
+	    } : function (key) {
+	      return ascending(key, set[rangePos][1]) >= 0;
+	    };
+	    var keyIsBeforeCurrentEntry = includeLowers ? function (key) {
+	      return descending(key, set[rangePos][0]) > 0;
+	    } : function (key) {
+	      return descending(key, set[rangePos][0]) >= 0;
+	    };
+
+	    function keyWithinCurrentRange(key) {
+	      return !keyIsBeyondCurrentEntry(key) && !keyIsBeforeCurrentEntry(key);
+	    }
+
+	    var checkKey = keyIsBeyondCurrentEntry;
+	    var c = new this.Collection(this, function () {
+	      return createRange(set[0][0], set[set.length - 1][1], !includeLowers, !includeUppers);
+	    });
+
+	    c._ondirectionchange = function (direction) {
+	      if (direction === "next") {
+	        checkKey = keyIsBeyondCurrentEntry;
+	        sortDirection = ascending;
+	      } else {
+	        checkKey = keyIsBeforeCurrentEntry;
+	        sortDirection = descending;
+	      }
+
+	      set.sort(rangeSorter);
+	    };
+
+	    c._addAlgorithm(function (cursor, advance, resolve) {
+	      var key = cursor.key;
+
+	      while (checkKey(key)) {
+	        ++rangePos;
+
+	        if (rangePos === set.length) {
+	          advance(resolve);
+	          return false;
+	        }
+	      }
+
+	      if (keyWithinCurrentRange(key)) {
+	        return true;
+	      } else if (_this._cmp(key, set[rangePos][1]) === 0 || _this._cmp(key, set[rangePos][0]) === 0) {
+	        return false;
+	      } else {
+	        advance(function () {
+	          if (sortDirection === ascending) cursor["continue"](set[rangePos][0]);else cursor["continue"](set[rangePos][1]);
+	        });
+	        return false;
+	      }
+	    });
+
+	    return c;
+	  };
+
+	  WhereClause.prototype.startsWithAnyOf = function () {
+	    var set = getArrayOf.apply(NO_CHAR_ARRAY, arguments);
+
+	    if (!set.every(function (s) {
+	      return typeof s === 'string';
+	    })) {
+	      return fail(this, "startsWithAnyOf() only works with strings");
+	    }
+
+	    if (set.length === 0) return emptyCollection(this);
+	    return this.inAnyRange(set.map(function (str) {
+	      return [str, str + maxString];
+	    }));
+	  };
+
+	  return WhereClause;
+	}();
+
+	function createWhereClauseConstructor(db) {
+	  return makeClassConstructor(WhereClause.prototype, function WhereClause(table, index, orCollection) {
+	    this.db = db;
+	    this._ctx = {
+	      table: table,
+	      index: index === ":id" ? null : index,
+	      or: orCollection
+	    };
+	    var indexedDB = db._deps.indexedDB;
+	    if (!indexedDB) throw new exceptions.MissingAPI();
+	    this._cmp = this._ascending = indexedDB.cmp.bind(indexedDB);
+
+	    this._descending = function (a, b) {
+	      return indexedDB.cmp(b, a);
+	    };
+
+	    this._max = function (a, b) {
+	      return indexedDB.cmp(a, b) > 0 ? a : b;
+	    };
+
+	    this._min = function (a, b) {
+	      return indexedDB.cmp(a, b) < 0 ? a : b;
+	    };
+
+	    this._IDBKeyRange = db._deps.IDBKeyRange;
+	  });
+	}
+
+	function eventRejectHandler(reject) {
+	  return wrap(function (event) {
+	    preventDefault(event);
+	    reject(event.target.error);
+	    return false;
+	  });
+	}
+
+	function preventDefault(event) {
+	  if (event.stopPropagation) event.stopPropagation();
+	  if (event.preventDefault) event.preventDefault();
+	}
+
+	var DEXIE_STORAGE_MUTATED_EVENT_NAME = 'storagemutated';
+	var STORAGE_MUTATED_DOM_EVENT_NAME = 'x-storagemutated-1';
+	var globalEvents = Events(null, DEXIE_STORAGE_MUTATED_EVENT_NAME);
+
+	var Transaction = function () {
+	  function Transaction() {}
+
+	  Transaction.prototype._lock = function () {
+	    assert(!PSD.global);
+	    ++this._reculock;
+	    if (this._reculock === 1 && !PSD.global) PSD.lockOwnerFor = this;
+	    return this;
+	  };
+
+	  Transaction.prototype._unlock = function () {
+	    assert(!PSD.global);
+
+	    if (--this._reculock === 0) {
+	      if (!PSD.global) PSD.lockOwnerFor = null;
+
+	      while (this._blockedFuncs.length > 0 && !this._locked()) {
+	        var fnAndPSD = this._blockedFuncs.shift();
+
+	        try {
+	          usePSD(fnAndPSD[1], fnAndPSD[0]);
+	        } catch (e) {}
+	      }
+	    }
+
+	    return this;
+	  };
+
+	  Transaction.prototype._locked = function () {
+	    return this._reculock && PSD.lockOwnerFor !== this;
+	  };
+
+	  Transaction.prototype.create = function (idbtrans) {
+	    var _this = this;
+
+	    if (!this.mode) return this;
+	    var idbdb = this.db.idbdb;
+	    var dbOpenError = this.db._state.dbOpenError;
+	    assert(!this.idbtrans);
+
+	    if (!idbtrans && !idbdb) {
+	      switch (dbOpenError && dbOpenError.name) {
+	        case "DatabaseClosedError":
+	          throw new exceptions.DatabaseClosed(dbOpenError);
+
+	        case "MissingAPIError":
+	          throw new exceptions.MissingAPI(dbOpenError.message, dbOpenError);
+
+	        default:
+	          throw new exceptions.OpenFailed(dbOpenError);
+	      }
+	    }
+
+	    if (!this.active) throw new exceptions.TransactionInactive();
+	    assert(this._completion._state === null);
+	    idbtrans = this.idbtrans = idbtrans || (this.db.core ? this.db.core.transaction(this.storeNames, this.mode, {
+	      durability: this.chromeTransactionDurability
+	    }) : idbdb.transaction(this.storeNames, this.mode, {
+	      durability: this.chromeTransactionDurability
+	    }));
+	    idbtrans.onerror = wrap(function (ev) {
+	      preventDefault(ev);
+
+	      _this._reject(idbtrans.error);
+	    });
+	    idbtrans.onabort = wrap(function (ev) {
+	      preventDefault(ev);
+	      _this.active && _this._reject(new exceptions.Abort(idbtrans.error));
+	      _this.active = false;
+
+	      _this.on("abort").fire(ev);
+	    });
+	    idbtrans.oncomplete = wrap(function () {
+	      _this.active = false;
+
+	      _this._resolve();
+
+	      if ('mutatedParts' in idbtrans) {
+	        globalEvents.storagemutated.fire(idbtrans["mutatedParts"]);
+	      }
+	    });
+	    return this;
+	  };
+
+	  Transaction.prototype._promise = function (mode, fn, bWriteLock) {
+	    var _this = this;
+
+	    if (mode === 'readwrite' && this.mode !== 'readwrite') return rejection(new exceptions.ReadOnly("Transaction is readonly"));
+	    if (!this.active) return rejection(new exceptions.TransactionInactive());
+
+	    if (this._locked()) {
+	      return new DexiePromise(function (resolve, reject) {
+	        _this._blockedFuncs.push([function () {
+	          _this._promise(mode, fn, bWriteLock).then(resolve, reject);
+	        }, PSD]);
+	      });
+	    } else if (bWriteLock) {
+	      return newScope(function () {
+	        var p = new DexiePromise(function (resolve, reject) {
+	          _this._lock();
+
+	          var rv = fn(resolve, reject, _this);
+	          if (rv && rv.then) rv.then(resolve, reject);
+	        });
+	        p["finally"](function () {
+	          return _this._unlock();
+	        });
+	        p._lib = true;
+	        return p;
+	      });
+	    } else {
+	      var p = new DexiePromise(function (resolve, reject) {
+	        var rv = fn(resolve, reject, _this);
+	        if (rv && rv.then) rv.then(resolve, reject);
+	      });
+	      p._lib = true;
+	      return p;
+	    }
+	  };
+
+	  Transaction.prototype._root = function () {
+	    return this.parent ? this.parent._root() : this;
+	  };
+
+	  Transaction.prototype.waitFor = function (promiseLike) {
+	    var root = this._root();
+
+	    var promise = DexiePromise.resolve(promiseLike);
+
+	    if (root._waitingFor) {
+	      root._waitingFor = root._waitingFor.then(function () {
+	        return promise;
+	      });
+	    } else {
+	      root._waitingFor = promise;
+	      root._waitingQueue = [];
+	      var store = root.idbtrans.objectStore(root.storeNames[0]);
+
+	      (function spin() {
+	        ++root._spinCount;
+
+	        while (root._waitingQueue.length) {
+	          root._waitingQueue.shift()();
+	        }
+
+	        if (root._waitingFor) store.get(-Infinity).onsuccess = spin;
+	      })();
+	    }
+
+	    var currentWaitPromise = root._waitingFor;
+	    return new DexiePromise(function (resolve, reject) {
+	      promise.then(function (res) {
+	        return root._waitingQueue.push(wrap(resolve.bind(null, res)));
+	      }, function (err) {
+	        return root._waitingQueue.push(wrap(reject.bind(null, err)));
+	      })["finally"](function () {
+	        if (root._waitingFor === currentWaitPromise) {
+	          root._waitingFor = null;
+	        }
+	      });
+	    });
+	  };
+
+	  Transaction.prototype.abort = function () {
+	    if (this.active) {
+	      this.active = false;
+	      if (this.idbtrans) this.idbtrans.abort();
+
+	      this._reject(new exceptions.Abort());
+	    }
+	  };
+
+	  Transaction.prototype.table = function (tableName) {
+	    var memoizedTables = this._memoizedTables || (this._memoizedTables = {});
+	    if (hasOwn(memoizedTables, tableName)) return memoizedTables[tableName];
+	    var tableSchema = this.schema[tableName];
+
+	    if (!tableSchema) {
+	      throw new exceptions.NotFound("Table " + tableName + " not part of transaction");
+	    }
+
+	    var transactionBoundTable = new this.db.Table(tableName, tableSchema, this);
+	    transactionBoundTable.core = this.db.core.table(tableName);
+	    memoizedTables[tableName] = transactionBoundTable;
+	    return transactionBoundTable;
+	  };
+
+	  return Transaction;
+	}();
+
+	function createTransactionConstructor(db) {
+	  return makeClassConstructor(Transaction.prototype, function Transaction(mode, storeNames, dbschema, chromeTransactionDurability, parent) {
+	    var _this = this;
+
+	    this.db = db;
+	    this.mode = mode;
+	    this.storeNames = storeNames;
+	    this.schema = dbschema;
+	    this.chromeTransactionDurability = chromeTransactionDurability;
+	    this.idbtrans = null;
+	    this.on = Events(this, "complete", "error", "abort");
+	    this.parent = parent || null;
+	    this.active = true;
+	    this._reculock = 0;
+	    this._blockedFuncs = [];
+	    this._resolve = null;
+	    this._reject = null;
+	    this._waitingFor = null;
+	    this._waitingQueue = null;
+	    this._spinCount = 0;
+	    this._completion = new DexiePromise(function (resolve, reject) {
+	      _this._resolve = resolve;
+	      _this._reject = reject;
+	    });
+
+	    this._completion.then(function () {
+	      _this.active = false;
+
+	      _this.on.complete.fire();
+	    }, function (e) {
+	      var wasActive = _this.active;
+	      _this.active = false;
+
+	      _this.on.error.fire(e);
+
+	      _this.parent ? _this.parent._reject(e) : wasActive && _this.idbtrans && _this.idbtrans.abort();
+	      return rejection(e);
+	    });
+	  });
+	}
+
+	function createIndexSpec(name, keyPath, unique, multi, auto, compound, isPrimKey) {
+	  return {
+	    name: name,
+	    keyPath: keyPath,
+	    unique: unique,
+	    multi: multi,
+	    auto: auto,
+	    compound: compound,
+	    src: (unique && !isPrimKey ? '&' : '') + (multi ? '*' : '') + (auto ? "++" : "") + nameFromKeyPath(keyPath)
+	  };
+	}
+
+	function nameFromKeyPath(keyPath) {
+	  return typeof keyPath === 'string' ? keyPath : keyPath ? '[' + [].join.call(keyPath, '+') + ']' : "";
+	}
+
+	function createTableSchema(name, primKey, indexes) {
+	  return {
+	    name: name,
+	    primKey: primKey,
+	    indexes: indexes,
+	    mappedClass: null,
+	    idxByName: arrayToObject(indexes, function (index) {
+	      return [index.name, index];
+	    })
+	  };
+	}
+
+	function safariMultiStoreFix(storeNames) {
+	  return storeNames.length === 1 ? storeNames[0] : storeNames;
+	}
+
+	var _getMaxKey = function getMaxKey(IdbKeyRange) {
+	  try {
+	    IdbKeyRange.only([[]]);
+
+	    _getMaxKey = function getMaxKey() {
+	      return [[]];
+	    };
+
+	    return [[]];
+	  } catch (e) {
+	    _getMaxKey = function getMaxKey() {
+	      return maxString;
+	    };
+
+	    return maxString;
+	  }
+	};
+
+	function getKeyExtractor(keyPath) {
+	  if (keyPath == null) {
+	    return function () {
+	      return undefined;
+	    };
+	  } else if (typeof keyPath === 'string') {
+	    return getSinglePathKeyExtractor(keyPath);
+	  } else {
+	    return function (obj) {
+	      return getByKeyPath(obj, keyPath);
+	    };
+	  }
+	}
+
+	function getSinglePathKeyExtractor(keyPath) {
+	  var split = keyPath.split('.');
+
+	  if (split.length === 1) {
+	    return function (obj) {
+	      return obj[keyPath];
+	    };
+	  } else {
+	    return function (obj) {
+	      return getByKeyPath(obj, keyPath);
+	    };
+	  }
+	}
+
+	function arrayify(arrayLike) {
+	  return [].slice.call(arrayLike);
+	}
+
+	var _id_counter = 0;
+
+	function getKeyPathAlias(keyPath) {
+	  return keyPath == null ? ":id" : typeof keyPath === 'string' ? keyPath : "[" + keyPath.join('+') + "]";
+	}
+
+	function createDBCore(db, IdbKeyRange, tmpTrans) {
+	  function extractSchema(db, trans) {
+	    var tables = arrayify(db.objectStoreNames);
+	    return {
+	      schema: {
+	        name: db.name,
+	        tables: tables.map(function (table) {
+	          return trans.objectStore(table);
+	        }).map(function (store) {
+	          var keyPath = store.keyPath,
+	              autoIncrement = store.autoIncrement;
+	          var compound = isArray(keyPath);
+	          var outbound = keyPath == null;
+	          var indexByKeyPath = {};
+	          var result = {
+	            name: store.name,
+	            primaryKey: {
+	              name: null,
+	              isPrimaryKey: true,
+	              outbound: outbound,
+	              compound: compound,
+	              keyPath: keyPath,
+	              autoIncrement: autoIncrement,
+	              unique: true,
+	              extractKey: getKeyExtractor(keyPath)
+	            },
+	            indexes: arrayify(store.indexNames).map(function (indexName) {
+	              return store.index(indexName);
+	            }).map(function (index) {
+	              var name = index.name,
+	                  unique = index.unique,
+	                  multiEntry = index.multiEntry,
+	                  keyPath = index.keyPath;
+	              var compound = isArray(keyPath);
+	              var result = {
+	                name: name,
+	                compound: compound,
+	                keyPath: keyPath,
+	                unique: unique,
+	                multiEntry: multiEntry,
+	                extractKey: getKeyExtractor(keyPath)
+	              };
+	              indexByKeyPath[getKeyPathAlias(keyPath)] = result;
+	              return result;
+	            }),
+	            getIndexByKeyPath: function getIndexByKeyPath(keyPath) {
+	              return indexByKeyPath[getKeyPathAlias(keyPath)];
+	            }
+	          };
+	          indexByKeyPath[":id"] = result.primaryKey;
+
+	          if (keyPath != null) {
+	            indexByKeyPath[getKeyPathAlias(keyPath)] = result.primaryKey;
+	          }
+
+	          return result;
+	        })
+	      },
+	      hasGetAll: tables.length > 0 && 'getAll' in trans.objectStore(tables[0]) && !(typeof navigator !== 'undefined' && /Safari/.test(navigator.userAgent) && !/(Chrome\/|Edge\/)/.test(navigator.userAgent) && [].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1] < 604)
+	    };
+	  }
+
+	  function makeIDBKeyRange(range) {
+	    if (range.type === 3) return null;
+	    if (range.type === 4) throw new Error("Cannot convert never type to IDBKeyRange");
+	    var lower = range.lower,
+	        upper = range.upper,
+	        lowerOpen = range.lowerOpen,
+	        upperOpen = range.upperOpen;
+	    var idbRange = lower === undefined ? upper === undefined ? null : IdbKeyRange.upperBound(upper, !!upperOpen) : upper === undefined ? IdbKeyRange.lowerBound(lower, !!lowerOpen) : IdbKeyRange.bound(lower, upper, !!lowerOpen, !!upperOpen);
+	    return idbRange;
+	  }
+
+	  function createDbCoreTable(tableSchema) {
+	    var tableName = tableSchema.name;
+
+	    function mutate(_a) {
+	      var trans = _a.trans,
+	          type = _a.type,
+	          keys = _a.keys,
+	          values = _a.values,
+	          range = _a.range;
+	      return new Promise(function (resolve, reject) {
+	        resolve = wrap(resolve);
+	        var store = trans.objectStore(tableName);
+	        var outbound = store.keyPath == null;
+	        var isAddOrPut = type === "put" || type === "add";
+	        if (!isAddOrPut && type !== 'delete' && type !== 'deleteRange') throw new Error("Invalid operation type: " + type);
+	        var length = (keys || values || {
+	          length: 1
+	        }).length;
+
+	        if (keys && values && keys.length !== values.length) {
+	          throw new Error("Given keys array must have same length as given values array.");
+	        }
+
+	        if (length === 0) return resolve({
+	          numFailures: 0,
+	          failures: {},
+	          results: [],
+	          lastResult: undefined
+	        });
+	        var req;
+	        var reqs = [];
+	        var failures = [];
+	        var numFailures = 0;
+
+	        var errorHandler = function errorHandler(event) {
+	          ++numFailures;
+	          preventDefault(event);
+	        };
+
+	        if (type === 'deleteRange') {
+	          if (range.type === 4) return resolve({
+	            numFailures: numFailures,
+	            failures: failures,
+	            results: [],
+	            lastResult: undefined
+	          });
+	          if (range.type === 3) reqs.push(req = store.clear());else reqs.push(req = store["delete"](makeIDBKeyRange(range)));
+	        } else {
+	          var _a = isAddOrPut ? outbound ? [values, keys] : [values, null] : [keys, null],
+	              args1 = _a[0],
+	              args2 = _a[1];
+
+	          if (isAddOrPut) {
+	            for (var i = 0; i < length; ++i) {
+	              reqs.push(req = args2 && args2[i] !== undefined ? store[type](args1[i], args2[i]) : store[type](args1[i]));
+	              req.onerror = errorHandler;
+	            }
+	          } else {
+	            for (var i = 0; i < length; ++i) {
+	              reqs.push(req = store[type](args1[i]));
+	              req.onerror = errorHandler;
+	            }
+	          }
+	        }
+
+	        var done = function done(event) {
+	          var lastResult = event.target.result;
+	          reqs.forEach(function (req, i) {
+	            return req.error != null && (failures[i] = req.error);
+	          });
+	          resolve({
+	            numFailures: numFailures,
+	            failures: failures,
+	            results: type === "delete" ? keys : reqs.map(function (req) {
+	              return req.result;
+	            }),
+	            lastResult: lastResult
+	          });
+	        };
+
+	        req.onerror = function (event) {
+	          errorHandler(event);
+	          done(event);
+	        };
+
+	        req.onsuccess = done;
+	      });
+	    }
+
+	    function openCursor(_a) {
+	      var trans = _a.trans,
+	          values = _a.values,
+	          query = _a.query,
+	          reverse = _a.reverse,
+	          unique = _a.unique;
+	      return new Promise(function (resolve, reject) {
+	        resolve = wrap(resolve);
+	        var index = query.index,
+	            range = query.range;
+	        var store = trans.objectStore(tableName);
+	        var source = index.isPrimaryKey ? store : store.index(index.name);
+	        var direction = reverse ? unique ? "prevunique" : "prev" : unique ? "nextunique" : "next";
+	        var req = values || !('openKeyCursor' in source) ? source.openCursor(makeIDBKeyRange(range), direction) : source.openKeyCursor(makeIDBKeyRange(range), direction);
+	        req.onerror = eventRejectHandler(reject);
+	        req.onsuccess = wrap(function (ev) {
+	          var cursor = req.result;
+
+	          if (!cursor) {
+	            resolve(null);
+	            return;
+	          }
+
+	          cursor.___id = ++_id_counter;
+	          cursor.done = false;
+
+	          var _cursorContinue = cursor["continue"].bind(cursor);
+
+	          var _cursorContinuePrimaryKey = cursor.continuePrimaryKey;
+	          if (_cursorContinuePrimaryKey) _cursorContinuePrimaryKey = _cursorContinuePrimaryKey.bind(cursor);
+
+	          var _cursorAdvance = cursor.advance.bind(cursor);
+
+	          var doThrowCursorIsNotStarted = function doThrowCursorIsNotStarted() {
+	            throw new Error("Cursor not started");
+	          };
+
+	          var doThrowCursorIsStopped = function doThrowCursorIsStopped() {
+	            throw new Error("Cursor not stopped");
+	          };
+
+	          cursor.trans = trans;
+	          cursor.stop = cursor["continue"] = cursor.continuePrimaryKey = cursor.advance = doThrowCursorIsNotStarted;
+	          cursor.fail = wrap(reject);
+
+	          cursor.next = function () {
+	            var _this = this;
+
+	            var gotOne = 1;
+	            return this.start(function () {
+	              return gotOne-- ? _this["continue"]() : _this.stop();
+	            }).then(function () {
+	              return _this;
+	            });
+	          };
+
+	          cursor.start = function (callback) {
+	            var iterationPromise = new Promise(function (resolveIteration, rejectIteration) {
+	              resolveIteration = wrap(resolveIteration);
+	              req.onerror = eventRejectHandler(rejectIteration);
+	              cursor.fail = rejectIteration;
+
+	              cursor.stop = function (value) {
+	                cursor.stop = cursor["continue"] = cursor.continuePrimaryKey = cursor.advance = doThrowCursorIsStopped;
+	                resolveIteration(value);
+	              };
+	            });
+
+	            var guardedCallback = function guardedCallback() {
+	              if (req.result) {
+	                try {
+	                  callback();
+	                } catch (err) {
+	                  cursor.fail(err);
+	                }
+	              } else {
+	                cursor.done = true;
+
+	                cursor.start = function () {
+	                  throw new Error("Cursor behind last entry");
+	                };
+
+	                cursor.stop();
+	              }
+	            };
+
+	            req.onsuccess = wrap(function (ev) {
+	              req.onsuccess = guardedCallback;
+	              guardedCallback();
+	            });
+	            cursor["continue"] = _cursorContinue;
+	            cursor.continuePrimaryKey = _cursorContinuePrimaryKey;
+	            cursor.advance = _cursorAdvance;
+	            guardedCallback();
+	            return iterationPromise;
+	          };
+
+	          resolve(cursor);
+	        }, reject);
+	      });
+	    }
+
+	    function query(hasGetAll) {
+	      return function (request) {
+	        return new Promise(function (resolve, reject) {
+	          resolve = wrap(resolve);
+	          var trans = request.trans,
+	              values = request.values,
+	              limit = request.limit,
+	              query = request.query;
+	          var nonInfinitLimit = limit === Infinity ? undefined : limit;
+	          var index = query.index,
+	              range = query.range;
+	          var store = trans.objectStore(tableName);
+	          var source = index.isPrimaryKey ? store : store.index(index.name);
+	          var idbKeyRange = makeIDBKeyRange(range);
+	          if (limit === 0) return resolve({
+	            result: []
+	          });
+
+	          if (hasGetAll) {
+	            var req = values ? source.getAll(idbKeyRange, nonInfinitLimit) : source.getAllKeys(idbKeyRange, nonInfinitLimit);
+
+	            req.onsuccess = function (event) {
+	              return resolve({
+	                result: event.target.result
+	              });
+	            };
+
+	            req.onerror = eventRejectHandler(reject);
+	          } else {
+	            var count_1 = 0;
+	            var req_1 = values || !('openKeyCursor' in source) ? source.openCursor(idbKeyRange) : source.openKeyCursor(idbKeyRange);
+	            var result_1 = [];
+
+	            req_1.onsuccess = function (event) {
+	              var cursor = req_1.result;
+	              if (!cursor) return resolve({
+	                result: result_1
+	              });
+	              result_1.push(values ? cursor.value : cursor.primaryKey);
+	              if (++count_1 === limit) return resolve({
+	                result: result_1
+	              });
+	              cursor["continue"]();
+	            };
+
+	            req_1.onerror = eventRejectHandler(reject);
+	          }
+	        });
+	      };
+	    }
+
+	    return {
+	      name: tableName,
+	      schema: tableSchema,
+	      mutate: mutate,
+	      getMany: function getMany(_a) {
+	        var trans = _a.trans,
+	            keys = _a.keys;
+	        return new Promise(function (resolve, reject) {
+	          resolve = wrap(resolve);
+	          var store = trans.objectStore(tableName);
+	          var length = keys.length;
+	          var result = new Array(length);
+	          var keyCount = 0;
+	          var callbackCount = 0;
+	          var req;
+
+	          var successHandler = function successHandler(event) {
+	            var req = event.target;
+	            if ((result[req._pos] = req.result) != null) ;
+	            if (++callbackCount === keyCount) resolve(result);
+	          };
+
+	          var errorHandler = eventRejectHandler(reject);
+
+	          for (var i = 0; i < length; ++i) {
+	            var key = keys[i];
+
+	            if (key != null) {
+	              req = store.get(keys[i]);
+	              req._pos = i;
+	              req.onsuccess = successHandler;
+	              req.onerror = errorHandler;
+	              ++keyCount;
+	            }
+	          }
+
+	          if (keyCount === 0) resolve(result);
+	        });
+	      },
+	      get: function get(_a) {
+	        var trans = _a.trans,
+	            key = _a.key;
+	        return new Promise(function (resolve, reject) {
+	          resolve = wrap(resolve);
+	          var store = trans.objectStore(tableName);
+	          var req = store.get(key);
+
+	          req.onsuccess = function (event) {
+	            return resolve(event.target.result);
+	          };
+
+	          req.onerror = eventRejectHandler(reject);
+	        });
+	      },
+	      query: query(hasGetAll),
+	      openCursor: openCursor,
+	      count: function count(_a) {
+	        var query = _a.query,
+	            trans = _a.trans;
+	        var index = query.index,
+	            range = query.range;
+	        return new Promise(function (resolve, reject) {
+	          var store = trans.objectStore(tableName);
+	          var source = index.isPrimaryKey ? store : store.index(index.name);
+	          var idbKeyRange = makeIDBKeyRange(range);
+	          var req = idbKeyRange ? source.count(idbKeyRange) : source.count();
+	          req.onsuccess = wrap(function (ev) {
+	            return resolve(ev.target.result);
+	          });
+	          req.onerror = eventRejectHandler(reject);
+	        });
+	      }
+	    };
+	  }
+
+	  var _a = extractSchema(db, tmpTrans),
+	      schema = _a.schema,
+	      hasGetAll = _a.hasGetAll;
+
+	  var tables = schema.tables.map(function (tableSchema) {
+	    return createDbCoreTable(tableSchema);
+	  });
+	  var tableMap = {};
+	  tables.forEach(function (table) {
+	    return tableMap[table.name] = table;
+	  });
+	  return {
+	    stack: "dbcore",
+	    transaction: db.transaction.bind(db),
+	    table: function table(name) {
+	      var result = tableMap[name];
+	      if (!result) throw new Error("Table '" + name + "' not found");
+	      return tableMap[name];
+	    },
+	    MIN_KEY: -Infinity,
+	    MAX_KEY: _getMaxKey(IdbKeyRange),
+	    schema: schema
+	  };
+	}
+
+	function createMiddlewareStack(stackImpl, middlewares) {
+	  return middlewares.reduce(function (down, _a) {
+	    var create = _a.create;
+	    return _assign(_assign({}, down), create(down));
+	  }, stackImpl);
+	}
+
+	function createMiddlewareStacks(middlewares, idbdb, _a, tmpTrans) {
+	  var IDBKeyRange = _a.IDBKeyRange;
+	  _a.indexedDB;
+	  var dbcore = createMiddlewareStack(createDBCore(idbdb, IDBKeyRange, tmpTrans), middlewares.dbcore);
+	  return {
+	    dbcore: dbcore
+	  };
+	}
+
+	function generateMiddlewareStacks(_a, tmpTrans) {
+	  var db = _a._novip;
+	  var idbdb = tmpTrans.db;
+	  var stacks = createMiddlewareStacks(db._middlewares, idbdb, db._deps, tmpTrans);
+	  db.core = stacks.dbcore;
+	  db.tables.forEach(function (table) {
+	    var tableName = table.name;
+
+	    if (db.core.schema.tables.some(function (tbl) {
+	      return tbl.name === tableName;
+	    })) {
+	      table.core = db.core.table(tableName);
+
+	      if (db[tableName] instanceof db.Table) {
+	        db[tableName].core = table.core;
+	      }
+	    }
+	  });
+	}
+
+	function setApiOnPlace(_a, objs, tableNames, dbschema) {
+	  var db = _a._novip;
+	  tableNames.forEach(function (tableName) {
+	    var schema = dbschema[tableName];
+	    objs.forEach(function (obj) {
+	      var propDesc = getPropertyDescriptor(obj, tableName);
+
+	      if (!propDesc || "value" in propDesc && propDesc.value === undefined) {
+	        if (obj === db.Transaction.prototype || obj instanceof db.Transaction) {
+	          setProp(obj, tableName, {
+	            get: function get() {
+	              return this.table(tableName);
+	            },
+	            set: function set(value) {
+	              defineProperty(this, tableName, {
+	                value: value,
+	                writable: true,
+	                configurable: true,
+	                enumerable: true
+	              });
+	            }
+	          });
+	        } else {
+	          obj[tableName] = new db.Table(tableName, schema);
+	        }
+	      }
+	    });
+	  });
+	}
+
+	function removeTablesApi(_a, objs) {
+	  var db = _a._novip;
+	  objs.forEach(function (obj) {
+	    for (var key in obj) {
+	      if (obj[key] instanceof db.Table) delete obj[key];
+	    }
+	  });
+	}
+
+	function lowerVersionFirst(a, b) {
+	  return a._cfg.version - b._cfg.version;
+	}
+
+	function runUpgraders(db, oldVersion, idbUpgradeTrans, reject) {
+	  var globalSchema = db._dbSchema;
+
+	  var trans = db._createTransaction('readwrite', db._storeNames, globalSchema);
+
+	  trans.create(idbUpgradeTrans);
+
+	  trans._completion["catch"](reject);
+
+	  var rejectTransaction = trans._reject.bind(trans);
+
+	  var transless = PSD.transless || PSD;
+	  newScope(function () {
+	    PSD.trans = trans;
+	    PSD.transless = transless;
+
+	    if (oldVersion === 0) {
+	      keys(globalSchema).forEach(function (tableName) {
+	        createTable(idbUpgradeTrans, tableName, globalSchema[tableName].primKey, globalSchema[tableName].indexes);
+	      });
+	      generateMiddlewareStacks(db, idbUpgradeTrans);
+	      DexiePromise.follow(function () {
+	        return db.on.populate.fire(trans);
+	      })["catch"](rejectTransaction);
+	    } else updateTablesAndIndexes(db, oldVersion, trans, idbUpgradeTrans)["catch"](rejectTransaction);
+	  });
+	}
+
+	function updateTablesAndIndexes(_a, oldVersion, trans, idbUpgradeTrans) {
+	  var db = _a._novip;
+	  var queue = [];
+	  var versions = db._versions;
+	  var globalSchema = db._dbSchema = buildGlobalSchema(db, db.idbdb, idbUpgradeTrans);
+	  var anyContentUpgraderHasRun = false;
+	  var versToRun = versions.filter(function (v) {
+	    return v._cfg.version >= oldVersion;
+	  });
+	  versToRun.forEach(function (version) {
+	    queue.push(function () {
+	      var oldSchema = globalSchema;
+	      var newSchema = version._cfg.dbschema;
+	      adjustToExistingIndexNames(db, oldSchema, idbUpgradeTrans);
+	      adjustToExistingIndexNames(db, newSchema, idbUpgradeTrans);
+	      globalSchema = db._dbSchema = newSchema;
+	      var diff = getSchemaDiff(oldSchema, newSchema);
+	      diff.add.forEach(function (tuple) {
+	        createTable(idbUpgradeTrans, tuple[0], tuple[1].primKey, tuple[1].indexes);
+	      });
+	      diff.change.forEach(function (change) {
+	        if (change.recreate) {
+	          throw new exceptions.Upgrade("Not yet support for changing primary key");
+	        } else {
+	          var store_1 = idbUpgradeTrans.objectStore(change.name);
+	          change.add.forEach(function (idx) {
+	            return addIndex(store_1, idx);
+	          });
+	          change.change.forEach(function (idx) {
+	            store_1.deleteIndex(idx.name);
+	            addIndex(store_1, idx);
+	          });
+	          change.del.forEach(function (idxName) {
+	            return store_1.deleteIndex(idxName);
+	          });
+	        }
+	      });
+	      var contentUpgrade = version._cfg.contentUpgrade;
+
+	      if (contentUpgrade && version._cfg.version > oldVersion) {
+	        generateMiddlewareStacks(db, idbUpgradeTrans);
+	        trans._memoizedTables = {};
+	        anyContentUpgraderHasRun = true;
+	        var upgradeSchema_1 = shallowClone(newSchema);
+	        diff.del.forEach(function (table) {
+	          upgradeSchema_1[table] = oldSchema[table];
+	        });
+	        removeTablesApi(db, [db.Transaction.prototype]);
+	        setApiOnPlace(db, [db.Transaction.prototype], keys(upgradeSchema_1), upgradeSchema_1);
+	        trans.schema = upgradeSchema_1;
+	        var contentUpgradeIsAsync_1 = isAsyncFunction(contentUpgrade);
+
+	        if (contentUpgradeIsAsync_1) {
+	          incrementExpectedAwaits();
+	        }
+
+	        var returnValue_1;
+	        var promiseFollowed = DexiePromise.follow(function () {
+	          returnValue_1 = contentUpgrade(trans);
+
+	          if (returnValue_1) {
+	            if (contentUpgradeIsAsync_1) {
+	              var decrementor = decrementExpectedAwaits.bind(null, null);
+	              returnValue_1.then(decrementor, decrementor);
+	            }
+	          }
+	        });
+	        return returnValue_1 && typeof returnValue_1.then === 'function' ? DexiePromise.resolve(returnValue_1) : promiseFollowed.then(function () {
+	          return returnValue_1;
+	        });
+	      }
+	    });
+	    queue.push(function (idbtrans) {
+	      if (!anyContentUpgraderHasRun || !hasIEDeleteObjectStoreBug) {
+	        var newSchema = version._cfg.dbschema;
+	        deleteRemovedTables(newSchema, idbtrans);
+	      }
+
+	      removeTablesApi(db, [db.Transaction.prototype]);
+	      setApiOnPlace(db, [db.Transaction.prototype], db._storeNames, db._dbSchema);
+	      trans.schema = db._dbSchema;
+	    });
+	  });
+
+	  function runQueue() {
+	    return queue.length ? DexiePromise.resolve(queue.shift()(trans.idbtrans)).then(runQueue) : DexiePromise.resolve();
+	  }
+
+	  return runQueue().then(function () {
+	    createMissingTables(globalSchema, idbUpgradeTrans);
+	  });
+	}
+
+	function getSchemaDiff(oldSchema, newSchema) {
+	  var diff = {
+	    del: [],
+	    add: [],
+	    change: []
+	  };
+	  var table;
+
+	  for (table in oldSchema) {
+	    if (!newSchema[table]) diff.del.push(table);
+	  }
+
+	  for (table in newSchema) {
+	    var oldDef = oldSchema[table],
+	        newDef = newSchema[table];
+
+	    if (!oldDef) {
+	      diff.add.push([table, newDef]);
+	    } else {
+	      var change = {
+	        name: table,
+	        def: newDef,
+	        recreate: false,
+	        del: [],
+	        add: [],
+	        change: []
+	      };
+
+	      if ('' + (oldDef.primKey.keyPath || '') !== '' + (newDef.primKey.keyPath || '') || oldDef.primKey.auto !== newDef.primKey.auto && !isIEOrEdge) {
+	        change.recreate = true;
+	        diff.change.push(change);
+	      } else {
+	        var oldIndexes = oldDef.idxByName;
+	        var newIndexes = newDef.idxByName;
+	        var idxName = void 0;
+
+	        for (idxName in oldIndexes) {
+	          if (!newIndexes[idxName]) change.del.push(idxName);
+	        }
+
+	        for (idxName in newIndexes) {
+	          var oldIdx = oldIndexes[idxName],
+	              newIdx = newIndexes[idxName];
+	          if (!oldIdx) change.add.push(newIdx);else if (oldIdx.src !== newIdx.src) change.change.push(newIdx);
+	        }
+
+	        if (change.del.length > 0 || change.add.length > 0 || change.change.length > 0) {
+	          diff.change.push(change);
+	        }
+	      }
+	    }
+	  }
+
+	  return diff;
+	}
+
+	function createTable(idbtrans, tableName, primKey, indexes) {
+	  var store = idbtrans.db.createObjectStore(tableName, primKey.keyPath ? {
+	    keyPath: primKey.keyPath,
+	    autoIncrement: primKey.auto
+	  } : {
+	    autoIncrement: primKey.auto
+	  });
+	  indexes.forEach(function (idx) {
+	    return addIndex(store, idx);
+	  });
+	  return store;
+	}
+
+	function createMissingTables(newSchema, idbtrans) {
+	  keys(newSchema).forEach(function (tableName) {
+	    if (!idbtrans.db.objectStoreNames.contains(tableName)) {
+	      createTable(idbtrans, tableName, newSchema[tableName].primKey, newSchema[tableName].indexes);
+	    }
+	  });
+	}
+
+	function deleteRemovedTables(newSchema, idbtrans) {
+	  [].slice.call(idbtrans.db.objectStoreNames).forEach(function (storeName) {
+	    return newSchema[storeName] == null && idbtrans.db.deleteObjectStore(storeName);
+	  });
+	}
+
+	function addIndex(store, idx) {
+	  store.createIndex(idx.name, idx.keyPath, {
+	    unique: idx.unique,
+	    multiEntry: idx.multi
+	  });
+	}
+
+	function buildGlobalSchema(db, idbdb, tmpTrans) {
+	  var globalSchema = {};
+	  var dbStoreNames = slice(idbdb.objectStoreNames, 0);
+	  dbStoreNames.forEach(function (storeName) {
+	    var store = tmpTrans.objectStore(storeName);
+	    var keyPath = store.keyPath;
+	    var primKey = createIndexSpec(nameFromKeyPath(keyPath), keyPath || "", false, false, !!store.autoIncrement, keyPath && typeof keyPath !== "string", true);
+	    var indexes = [];
+
+	    for (var j = 0; j < store.indexNames.length; ++j) {
+	      var idbindex = store.index(store.indexNames[j]);
+	      keyPath = idbindex.keyPath;
+	      var index = createIndexSpec(idbindex.name, keyPath, !!idbindex.unique, !!idbindex.multiEntry, false, keyPath && typeof keyPath !== "string", false);
+	      indexes.push(index);
+	    }
+
+	    globalSchema[storeName] = createTableSchema(storeName, primKey, indexes);
+	  });
+	  return globalSchema;
+	}
+
+	function readGlobalSchema(_a, idbdb, tmpTrans) {
+	  var db = _a._novip;
+	  db.verno = idbdb.version / 10;
+	  var globalSchema = db._dbSchema = buildGlobalSchema(db, idbdb, tmpTrans);
+	  db._storeNames = slice(idbdb.objectStoreNames, 0);
+	  setApiOnPlace(db, [db._allTables], keys(globalSchema), globalSchema);
+	}
+
+	function verifyInstalledSchema(db, tmpTrans) {
+	  var installedSchema = buildGlobalSchema(db, db.idbdb, tmpTrans);
+	  var diff = getSchemaDiff(installedSchema, db._dbSchema);
+	  return !(diff.add.length || diff.change.some(function (ch) {
+	    return ch.add.length || ch.change.length;
+	  }));
+	}
+
+	function adjustToExistingIndexNames(_a, schema, idbtrans) {
+	  var db = _a._novip;
+	  var storeNames = idbtrans.db.objectStoreNames;
+
+	  for (var i = 0; i < storeNames.length; ++i) {
+	    var storeName = storeNames[i];
+	    var store = idbtrans.objectStore(storeName);
+	    db._hasGetAll = 'getAll' in store;
+
+	    for (var j = 0; j < store.indexNames.length; ++j) {
+	      var indexName = store.indexNames[j];
+	      var keyPath = store.index(indexName).keyPath;
+	      var dexieName = typeof keyPath === 'string' ? keyPath : "[" + slice(keyPath).join('+') + "]";
+
+	      if (schema[storeName]) {
+	        var indexSpec = schema[storeName].idxByName[dexieName];
+
+	        if (indexSpec) {
+	          indexSpec.name = indexName;
+	          delete schema[storeName].idxByName[dexieName];
+	          schema[storeName].idxByName[indexName] = indexSpec;
+	        }
+	      }
+	    }
+	  }
+
+	  if (typeof navigator !== 'undefined' && /Safari/.test(navigator.userAgent) && !/(Chrome\/|Edge\/)/.test(navigator.userAgent) && _global.WorkerGlobalScope && _global instanceof _global.WorkerGlobalScope && [].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1] < 604) {
+	    db._hasGetAll = false;
+	  }
+	}
+
+	function parseIndexSyntax(primKeyAndIndexes) {
+	  return primKeyAndIndexes.split(',').map(function (index, indexNum) {
+	    index = index.trim();
+	    var name = index.replace(/([&*]|\+\+)/g, "");
+	    var keyPath = /^\[/.test(name) ? name.match(/^\[(.*)\]$/)[1].split('+') : name;
+	    return createIndexSpec(name, keyPath || null, /\&/.test(index), /\*/.test(index), /\+\+/.test(index), isArray(keyPath), indexNum === 0);
+	  });
+	}
+
+	var Version = function () {
+	  function Version() {}
+
+	  Version.prototype._parseStoresSpec = function (stores, outSchema) {
+	    keys(stores).forEach(function (tableName) {
+	      if (stores[tableName] !== null) {
+	        var indexes = parseIndexSyntax(stores[tableName]);
+	        var primKey = indexes.shift();
+	        if (primKey.multi) throw new exceptions.Schema("Primary key cannot be multi-valued");
+	        indexes.forEach(function (idx) {
+	          if (idx.auto) throw new exceptions.Schema("Only primary key can be marked as autoIncrement (++)");
+	          if (!idx.keyPath) throw new exceptions.Schema("Index must have a name and cannot be an empty string");
+	        });
+	        outSchema[tableName] = createTableSchema(tableName, primKey, indexes);
+	      }
+	    });
+	  };
+
+	  Version.prototype.stores = function (stores) {
+	    var db = this.db;
+	    this._cfg.storesSource = this._cfg.storesSource ? extend(this._cfg.storesSource, stores) : stores;
+	    var versions = db._versions;
+	    var storesSpec = {};
+	    var dbschema = {};
+	    versions.forEach(function (version) {
+	      extend(storesSpec, version._cfg.storesSource);
+	      dbschema = version._cfg.dbschema = {};
+
+	      version._parseStoresSpec(storesSpec, dbschema);
+	    });
+	    db._dbSchema = dbschema;
+	    removeTablesApi(db, [db._allTables, db, db.Transaction.prototype]);
+	    setApiOnPlace(db, [db._allTables, db, db.Transaction.prototype, this._cfg.tables], keys(dbschema), dbschema);
+	    db._storeNames = keys(dbschema);
+	    return this;
+	  };
+
+	  Version.prototype.upgrade = function (upgradeFunction) {
+	    this._cfg.contentUpgrade = promisableChain(this._cfg.contentUpgrade || nop, upgradeFunction);
+	    return this;
+	  };
+
+	  return Version;
+	}();
+
+	function createVersionConstructor(db) {
+	  return makeClassConstructor(Version.prototype, function Version(versionNumber) {
+	    this.db = db;
+	    this._cfg = {
+	      version: versionNumber,
+	      storesSource: null,
+	      dbschema: {},
+	      tables: {},
+	      contentUpgrade: null
+	    };
+	  });
+	}
+
+	function getDbNamesTable(indexedDB, IDBKeyRange) {
+	  var dbNamesDB = indexedDB["_dbNamesDB"];
+
+	  if (!dbNamesDB) {
+	    dbNamesDB = indexedDB["_dbNamesDB"] = new Dexie$1(DBNAMES_DB, {
+	      addons: [],
+	      indexedDB: indexedDB,
+	      IDBKeyRange: IDBKeyRange
+	    });
+	    dbNamesDB.version(1).stores({
+	      dbnames: "name"
+	    });
+	  }
+
+	  return dbNamesDB.table("dbnames");
+	}
+
+	function hasDatabasesNative(indexedDB) {
+	  return indexedDB && typeof indexedDB.databases === "function";
+	}
+
+	function _getDatabaseNames(_a) {
+	  var indexedDB = _a.indexedDB,
+	      IDBKeyRange = _a.IDBKeyRange;
+	  return hasDatabasesNative(indexedDB) ? Promise.resolve(indexedDB.databases()).then(function (infos) {
+	    return infos.map(function (info) {
+	      return info.name;
+	    }).filter(function (name) {
+	      return name !== DBNAMES_DB;
+	    });
+	  }) : getDbNamesTable(indexedDB, IDBKeyRange).toCollection().primaryKeys();
+	}
+
+	function _onDatabaseCreated(_a, name) {
+	  var indexedDB = _a.indexedDB,
+	      IDBKeyRange = _a.IDBKeyRange;
+	  !hasDatabasesNative(indexedDB) && name !== DBNAMES_DB && getDbNamesTable(indexedDB, IDBKeyRange).put({
+	    name: name
+	  })["catch"](nop);
+	}
+
+	function _onDatabaseDeleted(_a, name) {
+	  var indexedDB = _a.indexedDB,
+	      IDBKeyRange = _a.IDBKeyRange;
+	  !hasDatabasesNative(indexedDB) && name !== DBNAMES_DB && getDbNamesTable(indexedDB, IDBKeyRange)["delete"](name)["catch"](nop);
+	}
+
+	function vip(fn) {
+	  return newScope(function () {
+	    PSD.letThrough = true;
+	    return fn();
+	  });
+	}
+
+	function idbReady() {
+	  var isSafari = !navigator.userAgentData && /Safari\//.test(navigator.userAgent) && !/Chrom(e|ium)\//.test(navigator.userAgent);
+	  if (!isSafari || !indexedDB.databases) return Promise.resolve();
+	  var intervalId;
+	  return new Promise(function (resolve) {
+	    var tryIdb = function tryIdb() {
+	      return indexedDB.databases()["finally"](resolve);
+	    };
+
+	    intervalId = setInterval(tryIdb, 100);
+	    tryIdb();
+	  })["finally"](function () {
+	    return clearInterval(intervalId);
+	  });
+	}
+
+	function dexieOpen(db) {
+	  var state = db._state;
+	  var indexedDB = db._deps.indexedDB;
+	  if (state.isBeingOpened || db.idbdb) return state.dbReadyPromise.then(function () {
+	    return state.dbOpenError ? rejection(state.dbOpenError) : db;
+	  });
+	  debug && (state.openCanceller._stackHolder = getErrorWithStack());
+	  state.isBeingOpened = true;
+	  state.dbOpenError = null;
+	  state.openComplete = false;
+	  var openCanceller = state.openCanceller;
+
+	  function throwIfCancelled() {
+	    if (state.openCanceller !== openCanceller) throw new exceptions.DatabaseClosed('db.open() was cancelled');
+	  }
+
+	  var resolveDbReady = state.dbReadyResolve,
+	      upgradeTransaction = null,
+	      wasCreated = false;
+	  return DexiePromise.race([openCanceller, (typeof navigator === 'undefined' ? DexiePromise.resolve() : idbReady()).then(function () {
+	    return new DexiePromise(function (resolve, reject) {
+	      throwIfCancelled();
+	      if (!indexedDB) throw new exceptions.MissingAPI();
+	      var dbName = db.name;
+	      var req = state.autoSchema ? indexedDB.open(dbName) : indexedDB.open(dbName, Math.round(db.verno * 10));
+	      if (!req) throw new exceptions.MissingAPI();
+	      req.onerror = eventRejectHandler(reject);
+	      req.onblocked = wrap(db._fireOnBlocked);
+	      req.onupgradeneeded = wrap(function (e) {
+	        upgradeTransaction = req.transaction;
+
+	        if (state.autoSchema && !db._options.allowEmptyDB) {
+	          req.onerror = preventDefault;
+	          upgradeTransaction.abort();
+	          req.result.close();
+	          var delreq = indexedDB.deleteDatabase(dbName);
+	          delreq.onsuccess = delreq.onerror = wrap(function () {
+	            reject(new exceptions.NoSuchDatabase("Database " + dbName + " doesnt exist"));
+	          });
+	        } else {
+	          upgradeTransaction.onerror = eventRejectHandler(reject);
+	          var oldVer = e.oldVersion > Math.pow(2, 62) ? 0 : e.oldVersion;
+	          wasCreated = oldVer < 1;
+	          db._novip.idbdb = req.result;
+	          runUpgraders(db, oldVer / 10, upgradeTransaction, reject);
+	        }
+	      }, reject);
+	      req.onsuccess = wrap(function () {
+	        upgradeTransaction = null;
+	        var idbdb = db._novip.idbdb = req.result;
+	        var objectStoreNames = slice(idbdb.objectStoreNames);
+	        if (objectStoreNames.length > 0) try {
+	          var tmpTrans = idbdb.transaction(safariMultiStoreFix(objectStoreNames), 'readonly');
+	          if (state.autoSchema) readGlobalSchema(db, idbdb, tmpTrans);else {
+	            adjustToExistingIndexNames(db, db._dbSchema, tmpTrans);
+
+	            if (!verifyInstalledSchema(db, tmpTrans)) {
+	              console.warn("Dexie SchemaDiff: Schema was extended without increasing the number passed to db.version(). Some queries may fail.");
+	            }
+	          }
+	          generateMiddlewareStacks(db, tmpTrans);
+	        } catch (e) {}
+	        connections.push(db);
+	        idbdb.onversionchange = wrap(function (ev) {
+	          state.vcFired = true;
+	          db.on("versionchange").fire(ev);
+	        });
+	        idbdb.onclose = wrap(function (ev) {
+	          db.on("close").fire(ev);
+	        });
+	        if (wasCreated) _onDatabaseCreated(db._deps, dbName);
+	        resolve();
+	      }, reject);
+	    });
+	  })]).then(function () {
+	    throwIfCancelled();
+	    state.onReadyBeingFired = [];
+	    return DexiePromise.resolve(vip(function () {
+	      return db.on.ready.fire(db.vip);
+	    })).then(function fireRemainders() {
+	      if (state.onReadyBeingFired.length > 0) {
+	        var remainders_1 = state.onReadyBeingFired.reduce(promisableChain, nop);
+	        state.onReadyBeingFired = [];
+	        return DexiePromise.resolve(vip(function () {
+	          return remainders_1(db.vip);
+	        })).then(fireRemainders);
+	      }
+	    });
+	  })["finally"](function () {
+	    state.onReadyBeingFired = null;
+	    state.isBeingOpened = false;
+	  }).then(function () {
+	    return db;
+	  })["catch"](function (err) {
+	    state.dbOpenError = err;
+
+	    try {
+	      upgradeTransaction && upgradeTransaction.abort();
+	    } catch (_a) {}
+
+	    if (openCanceller === state.openCanceller) {
+	      db._close();
+	    }
+
+	    return rejection(err);
+	  })["finally"](function () {
+	    state.openComplete = true;
+	    resolveDbReady();
+	  });
+	}
+
+	function awaitIterator(iterator) {
+	  var callNext = function callNext(result) {
+	    return iterator.next(result);
+	  },
+	      doThrow = function doThrow(error) {
+	    return iterator["throw"](error);
+	  },
+	      onSuccess = step(callNext),
+	      onError = step(doThrow);
+
+	  function step(getNext) {
+	    return function (val) {
+	      var next = getNext(val),
+	          value = next.value;
+	      return next.done ? value : !value || typeof value.then !== 'function' ? isArray(value) ? Promise.all(value).then(onSuccess, onError) : onSuccess(value) : value.then(onSuccess, onError);
+	    };
+	  }
+
+	  return step(callNext)();
+	}
+
+	function extractTransactionArgs(mode, _tableArgs_, scopeFunc) {
+	  var i = arguments.length;
+	  if (i < 2) throw new exceptions.InvalidArgument("Too few arguments");
+	  var args = new Array(i - 1);
+
+	  while (--i) {
+	    args[i - 1] = arguments[i];
+	  }
+
+	  scopeFunc = args.pop();
+	  var tables = flatten(args);
+	  return [mode, tables, scopeFunc];
+	}
+
+	function enterTransactionScope(db, mode, storeNames, parentTransaction, scopeFunc) {
+	  return DexiePromise.resolve().then(function () {
+	    var transless = PSD.transless || PSD;
+
+	    var trans = db._createTransaction(mode, storeNames, db._dbSchema, parentTransaction);
+
+	    var zoneProps = {
+	      trans: trans,
+	      transless: transless
+	    };
+
+	    if (parentTransaction) {
+	      trans.idbtrans = parentTransaction.idbtrans;
+	    } else {
+	      try {
+	        trans.create();
+	        db._state.PR1398_maxLoop = 3;
+	      } catch (ex) {
+	        if (ex.name === errnames.InvalidState && db.isOpen() && --db._state.PR1398_maxLoop > 0) {
+	          console.warn('Dexie: Need to reopen db');
+
+	          db._close();
+
+	          return db.open().then(function () {
+	            return enterTransactionScope(db, mode, storeNames, null, scopeFunc);
+	          });
+	        }
+
+	        return rejection(ex);
+	      }
+	    }
+
+	    var scopeFuncIsAsync = isAsyncFunction(scopeFunc);
+
+	    if (scopeFuncIsAsync) {
+	      incrementExpectedAwaits();
+	    }
+
+	    var returnValue;
+	    var promiseFollowed = DexiePromise.follow(function () {
+	      returnValue = scopeFunc.call(trans, trans);
+
+	      if (returnValue) {
+	        if (scopeFuncIsAsync) {
+	          var decrementor = decrementExpectedAwaits.bind(null, null);
+	          returnValue.then(decrementor, decrementor);
+	        } else if (typeof returnValue.next === 'function' && typeof returnValue["throw"] === 'function') {
+	          returnValue = awaitIterator(returnValue);
+	        }
+	      }
+	    }, zoneProps);
+	    return (returnValue && typeof returnValue.then === 'function' ? DexiePromise.resolve(returnValue).then(function (x) {
+	      return trans.active ? x : rejection(new exceptions.PrematureCommit("Transaction committed too early. See http://bit.ly/2kdckMn"));
+	    }) : promiseFollowed.then(function () {
+	      return returnValue;
+	    })).then(function (x) {
+	      if (parentTransaction) trans._resolve();
+	      return trans._completion.then(function () {
+	        return x;
+	      });
+	    })["catch"](function (e) {
+	      trans._reject(e);
+
+	      return rejection(e);
+	    });
+	  });
+	}
+
+	function pad(a, value, count) {
+	  var result = isArray(a) ? a.slice() : [a];
+
+	  for (var i = 0; i < count; ++i) {
+	    result.push(value);
+	  }
+
+	  return result;
+	}
+
+	function createVirtualIndexMiddleware(down) {
+	  return _assign(_assign({}, down), {
+	    table: function table(tableName) {
+	      var table = down.table(tableName);
+	      var schema = table.schema;
+	      var indexLookup = {};
+	      var allVirtualIndexes = [];
+
+	      function addVirtualIndexes(keyPath, keyTail, lowLevelIndex) {
+	        var keyPathAlias = getKeyPathAlias(keyPath);
+	        var indexList = indexLookup[keyPathAlias] = indexLookup[keyPathAlias] || [];
+	        var keyLength = keyPath == null ? 0 : typeof keyPath === 'string' ? 1 : keyPath.length;
+	        var isVirtual = keyTail > 0;
+
+	        var virtualIndex = _assign(_assign({}, lowLevelIndex), {
+	          isVirtual: isVirtual,
+	          keyTail: keyTail,
+	          keyLength: keyLength,
+	          extractKey: getKeyExtractor(keyPath),
+	          unique: !isVirtual && lowLevelIndex.unique
+	        });
+
+	        indexList.push(virtualIndex);
+
+	        if (!virtualIndex.isPrimaryKey) {
+	          allVirtualIndexes.push(virtualIndex);
+	        }
+
+	        if (keyLength > 1) {
+	          var virtualKeyPath = keyLength === 2 ? keyPath[0] : keyPath.slice(0, keyLength - 1);
+	          addVirtualIndexes(virtualKeyPath, keyTail + 1, lowLevelIndex);
+	        }
+
+	        indexList.sort(function (a, b) {
+	          return a.keyTail - b.keyTail;
+	        });
+	        return virtualIndex;
+	      }
+
+	      var primaryKey = addVirtualIndexes(schema.primaryKey.keyPath, 0, schema.primaryKey);
+	      indexLookup[":id"] = [primaryKey];
+
+	      for (var _i = 0, _a = schema.indexes; _i < _a.length; _i++) {
+	        var index = _a[_i];
+	        addVirtualIndexes(index.keyPath, 0, index);
+	      }
+
+	      function findBestIndex(keyPath) {
+	        var result = indexLookup[getKeyPathAlias(keyPath)];
+	        return result && result[0];
+	      }
+
+	      function translateRange(range, keyTail) {
+	        return {
+	          type: range.type === 1 ? 2 : range.type,
+	          lower: pad(range.lower, range.lowerOpen ? down.MAX_KEY : down.MIN_KEY, keyTail),
+	          lowerOpen: true,
+	          upper: pad(range.upper, range.upperOpen ? down.MIN_KEY : down.MAX_KEY, keyTail),
+	          upperOpen: true
+	        };
+	      }
+
+	      function translateRequest(req) {
+	        var index = req.query.index;
+	        return index.isVirtual ? _assign(_assign({}, req), {
+	          query: {
+	            index: index,
+	            range: translateRange(req.query.range, index.keyTail)
+	          }
+	        }) : req;
+	      }
+
+	      var result = _assign(_assign({}, table), {
+	        schema: _assign(_assign({}, schema), {
+	          primaryKey: primaryKey,
+	          indexes: allVirtualIndexes,
+	          getIndexByKeyPath: findBestIndex
+	        }),
+	        count: function count(req) {
+	          return table.count(translateRequest(req));
+	        },
+	        query: function query(req) {
+	          return table.query(translateRequest(req));
+	        },
+	        openCursor: function openCursor(req) {
+	          var _a = req.query.index,
+	              keyTail = _a.keyTail,
+	              isVirtual = _a.isVirtual,
+	              keyLength = _a.keyLength;
+	          if (!isVirtual) return table.openCursor(req);
+
+	          function createVirtualCursor(cursor) {
+	            function _continue(key) {
+	              key != null ? cursor["continue"](pad(key, req.reverse ? down.MAX_KEY : down.MIN_KEY, keyTail)) : req.unique ? cursor["continue"](cursor.key.slice(0, keyLength).concat(req.reverse ? down.MIN_KEY : down.MAX_KEY, keyTail)) : cursor["continue"]();
+	            }
+
+	            var virtualCursor = Object.create(cursor, {
+	              "continue": {
+	                value: _continue
+	              },
+	              continuePrimaryKey: {
+	                value: function value(key, primaryKey) {
+	                  cursor.continuePrimaryKey(pad(key, down.MAX_KEY, keyTail), primaryKey);
+	                }
+	              },
+	              primaryKey: {
+	                get: function get() {
+	                  return cursor.primaryKey;
+	                }
+	              },
+	              key: {
+	                get: function get() {
+	                  var key = cursor.key;
+	                  return keyLength === 1 ? key[0] : key.slice(0, keyLength);
+	                }
+	              },
+	              value: {
+	                get: function get() {
+	                  return cursor.value;
+	                }
+	              }
+	            });
+	            return virtualCursor;
+	          }
+
+	          return table.openCursor(translateRequest(req)).then(function (cursor) {
+	            return cursor && createVirtualCursor(cursor);
+	          });
+	        }
+	      });
+
+	      return result;
+	    }
+	  });
+	}
+
+	var virtualIndexMiddleware = {
+	  stack: "dbcore",
+	  name: "VirtualIndexMiddleware",
+	  level: 1,
+	  create: createVirtualIndexMiddleware
+	};
+
+	function getObjectDiff(a, b, rv, prfx) {
+	  rv = rv || {};
+	  prfx = prfx || '';
+	  keys(a).forEach(function (prop) {
+	    if (!hasOwn(b, prop)) {
+	      rv[prfx + prop] = undefined;
+	    } else {
+	      var ap = a[prop],
+	          bp = b[prop];
+
+	      if (babelHelpers["typeof"](ap) === 'object' && babelHelpers["typeof"](bp) === 'object' && ap && bp) {
+	        var apTypeName = toStringTag(ap);
+	        var bpTypeName = toStringTag(bp);
+
+	        if (apTypeName !== bpTypeName) {
+	          rv[prfx + prop] = b[prop];
+	        } else if (apTypeName === 'Object') {
+	          getObjectDiff(ap, bp, rv, prfx + prop + '.');
+	        } else if (ap !== bp) {
+	          rv[prfx + prop] = b[prop];
+	        }
+	      } else if (ap !== bp) rv[prfx + prop] = b[prop];
+	    }
+	  });
+	  keys(b).forEach(function (prop) {
+	    if (!hasOwn(a, prop)) {
+	      rv[prfx + prop] = b[prop];
+	    }
+	  });
+	  return rv;
+	}
+
+	function getEffectiveKeys(primaryKey, req) {
+	  if (req.type === 'delete') return req.keys;
+	  return req.keys || req.values.map(primaryKey.extractKey);
+	}
+
+	var hooksMiddleware = {
+	  stack: "dbcore",
+	  name: "HooksMiddleware",
+	  level: 2,
+	  create: function create(downCore) {
+	    return _assign(_assign({}, downCore), {
+	      table: function table(tableName) {
+	        var downTable = downCore.table(tableName);
+	        var primaryKey = downTable.schema.primaryKey;
+
+	        var tableMiddleware = _assign(_assign({}, downTable), {
+	          mutate: function mutate(req) {
+	            var dxTrans = PSD.trans;
+	            var _a = dxTrans.table(tableName).hook,
+	                deleting = _a.deleting,
+	                creating = _a.creating,
+	                updating = _a.updating;
+
+	            switch (req.type) {
+	              case 'add':
+	                if (creating.fire === nop) break;
+	                return dxTrans._promise('readwrite', function () {
+	                  return addPutOrDelete(req);
+	                }, true);
+
+	              case 'put':
+	                if (creating.fire === nop && updating.fire === nop) break;
+	                return dxTrans._promise('readwrite', function () {
+	                  return addPutOrDelete(req);
+	                }, true);
+
+	              case 'delete':
+	                if (deleting.fire === nop) break;
+	                return dxTrans._promise('readwrite', function () {
+	                  return addPutOrDelete(req);
+	                }, true);
+
+	              case 'deleteRange':
+	                if (deleting.fire === nop) break;
+	                return dxTrans._promise('readwrite', function () {
+	                  return deleteRange(req);
+	                }, true);
+	            }
+
+	            return downTable.mutate(req);
+
+	            function addPutOrDelete(req) {
+	              var dxTrans = PSD.trans;
+	              var keys = req.keys || getEffectiveKeys(primaryKey, req);
+	              if (!keys) throw new Error("Keys missing");
+	              req = req.type === 'add' || req.type === 'put' ? _assign(_assign({}, req), {
+	                keys: keys
+	              }) : _assign({}, req);
+	              if (req.type !== 'delete') req.values = __spreadArray([], req.values, true);
+	              if (req.keys) req.keys = __spreadArray([], req.keys, true);
+	              return getExistingValues(downTable, req, keys).then(function (existingValues) {
+	                var contexts = keys.map(function (key, i) {
+	                  var existingValue = existingValues[i];
+	                  var ctx = {
+	                    onerror: null,
+	                    onsuccess: null
+	                  };
+
+	                  if (req.type === 'delete') {
+	                    deleting.fire.call(ctx, key, existingValue, dxTrans);
+	                  } else if (req.type === 'add' || existingValue === undefined) {
+	                    var generatedPrimaryKey = creating.fire.call(ctx, key, req.values[i], dxTrans);
+
+	                    if (key == null && generatedPrimaryKey != null) {
+	                      key = generatedPrimaryKey;
+	                      req.keys[i] = key;
+
+	                      if (!primaryKey.outbound) {
+	                        setByKeyPath(req.values[i], primaryKey.keyPath, key);
+	                      }
+	                    }
+	                  } else {
+	                    var objectDiff = getObjectDiff(existingValue, req.values[i]);
+	                    var additionalChanges_1 = updating.fire.call(ctx, objectDiff, key, existingValue, dxTrans);
+
+	                    if (additionalChanges_1) {
+	                      var requestedValue_1 = req.values[i];
+	                      Object.keys(additionalChanges_1).forEach(function (keyPath) {
+	                        if (hasOwn(requestedValue_1, keyPath)) {
+	                          requestedValue_1[keyPath] = additionalChanges_1[keyPath];
+	                        } else {
+	                          setByKeyPath(requestedValue_1, keyPath, additionalChanges_1[keyPath]);
+	                        }
+	                      });
+	                    }
+	                  }
+
+	                  return ctx;
+	                });
+	                return downTable.mutate(req).then(function (_a) {
+	                  var failures = _a.failures,
+	                      results = _a.results,
+	                      numFailures = _a.numFailures,
+	                      lastResult = _a.lastResult;
+
+	                  for (var i = 0; i < keys.length; ++i) {
+	                    var primKey = results ? results[i] : keys[i];
+	                    var ctx = contexts[i];
+
+	                    if (primKey == null) {
+	                      ctx.onerror && ctx.onerror(failures[i]);
+	                    } else {
+	                      ctx.onsuccess && ctx.onsuccess(req.type === 'put' && existingValues[i] ? req.values[i] : primKey);
+	                    }
+	                  }
+
+	                  return {
+	                    failures: failures,
+	                    results: results,
+	                    numFailures: numFailures,
+	                    lastResult: lastResult
+	                  };
+	                })["catch"](function (error) {
+	                  contexts.forEach(function (ctx) {
+	                    return ctx.onerror && ctx.onerror(error);
+	                  });
+	                  return Promise.reject(error);
+	                });
+	              });
+	            }
+
+	            function deleteRange(req) {
+	              return deleteNextChunk(req.trans, req.range, 10000);
+	            }
+
+	            function deleteNextChunk(trans, range, limit) {
+	              return downTable.query({
+	                trans: trans,
+	                values: false,
+	                query: {
+	                  index: primaryKey,
+	                  range: range
+	                },
+	                limit: limit
+	              }).then(function (_a) {
+	                var result = _a.result;
+	                return addPutOrDelete({
+	                  type: 'delete',
+	                  keys: result,
+	                  trans: trans
+	                }).then(function (res) {
+	                  if (res.numFailures > 0) return Promise.reject(res.failures[0]);
+
+	                  if (result.length < limit) {
+	                    return {
+	                      failures: [],
+	                      numFailures: 0,
+	                      lastResult: undefined
+	                    };
+	                  } else {
+	                    return deleteNextChunk(trans, _assign(_assign({}, range), {
+	                      lower: result[result.length - 1],
+	                      lowerOpen: true
+	                    }), limit);
+	                  }
+	                });
+	              });
+	            }
+	          }
+	        });
+
+	        return tableMiddleware;
+	      }
+	    });
+	  }
+	};
+
+	function getExistingValues(table, req, effectiveKeys) {
+	  return req.type === "add" ? Promise.resolve([]) : table.getMany({
+	    trans: req.trans,
+	    keys: effectiveKeys,
+	    cache: "immutable"
+	  });
+	}
+
+	function getFromTransactionCache(keys, cache, clone) {
+	  try {
+	    if (!cache) return null;
+	    if (cache.keys.length < keys.length) return null;
+	    var result = [];
+
+	    for (var i = 0, j = 0; i < cache.keys.length && j < keys.length; ++i) {
+	      if (cmp(cache.keys[i], keys[j]) !== 0) continue;
+	      result.push(clone ? deepClone(cache.values[i]) : cache.values[i]);
+	      ++j;
+	    }
+
+	    return result.length === keys.length ? result : null;
+	  } catch (_a) {
+	    return null;
+	  }
+	}
+
+	var cacheExistingValuesMiddleware = {
+	  stack: "dbcore",
+	  level: -1,
+	  create: function create(core) {
+	    return {
+	      table: function table(tableName) {
+	        var table = core.table(tableName);
+	        return _assign(_assign({}, table), {
+	          getMany: function getMany(req) {
+	            if (!req.cache) {
+	              return table.getMany(req);
+	            }
+
+	            var cachedResult = getFromTransactionCache(req.keys, req.trans["_cache"], req.cache === "clone");
+
+	            if (cachedResult) {
+	              return DexiePromise.resolve(cachedResult);
+	            }
+
+	            return table.getMany(req).then(function (res) {
+	              req.trans["_cache"] = {
+	                keys: req.keys,
+	                values: req.cache === "clone" ? deepClone(res) : res
+	              };
+	              return res;
+	            });
+	          },
+	          mutate: function mutate(req) {
+	            if (req.type !== "add") req.trans["_cache"] = null;
+	            return table.mutate(req);
+	          }
+	        });
+	      }
+	    };
+	  }
+	};
+
+	var _a;
+
+	function isEmptyRange(node) {
+	  return !("from" in node);
+	}
+
+	var RangeSet = function RangeSet(fromOrTree, to) {
+	  if (this) {
+	    extend(this, arguments.length ? {
+	      d: 1,
+	      from: fromOrTree,
+	      to: arguments.length > 1 ? to : fromOrTree
+	    } : {
+	      d: 0
+	    });
+	  } else {
+	    var rv = new RangeSet();
+
+	    if (fromOrTree && "d" in fromOrTree) {
+	      extend(rv, fromOrTree);
+	    }
+
+	    return rv;
+	  }
+	};
+
+	props(RangeSet.prototype, (_a = {
+	  add: function add(rangeSet) {
+	    mergeRanges(this, rangeSet);
+	    return this;
+	  },
+	  addKey: function addKey(key) {
+	    addRange(this, key, key);
+	    return this;
+	  },
+	  addKeys: function addKeys(keys) {
+	    var _this = this;
+
+	    keys.forEach(function (key) {
+	      return addRange(_this, key, key);
+	    });
+	    return this;
+	  }
+	}, _a[iteratorSymbol] = function () {
+	  return getRangeSetIterator(this);
+	}, _a));
+
+	function addRange(target, from, to) {
+	  var diff = cmp(from, to);
+	  if (isNaN(diff)) return;
+	  if (diff > 0) throw RangeError();
+	  if (isEmptyRange(target)) return extend(target, {
+	    from: from,
+	    to: to,
+	    d: 1
+	  });
+	  var left = target.l;
+	  var right = target.r;
+
+	  if (cmp(to, target.from) < 0) {
+	    left ? addRange(left, from, to) : target.l = {
+	      from: from,
+	      to: to,
+	      d: 1,
+	      l: null,
+	      r: null
+	    };
+	    return rebalance(target);
+	  }
+
+	  if (cmp(from, target.to) > 0) {
+	    right ? addRange(right, from, to) : target.r = {
+	      from: from,
+	      to: to,
+	      d: 1,
+	      l: null,
+	      r: null
+	    };
+	    return rebalance(target);
+	  }
+
+	  if (cmp(from, target.from) < 0) {
+	    target.from = from;
+	    target.l = null;
+	    target.d = right ? right.d + 1 : 1;
+	  }
+
+	  if (cmp(to, target.to) > 0) {
+	    target.to = to;
+	    target.r = null;
+	    target.d = target.l ? target.l.d + 1 : 1;
+	  }
+
+	  var rightWasCutOff = !target.r;
+
+	  if (left && !target.l) {
+	    mergeRanges(target, left);
+	  }
+
+	  if (right && rightWasCutOff) {
+	    mergeRanges(target, right);
+	  }
+	}
+
+	function mergeRanges(target, newSet) {
+	  function _addRangeSet(target, _a) {
+	    var from = _a.from,
+	        to = _a.to,
+	        l = _a.l,
+	        r = _a.r;
+	    addRange(target, from, to);
+	    if (l) _addRangeSet(target, l);
+	    if (r) _addRangeSet(target, r);
+	  }
+
+	  if (!isEmptyRange(newSet)) _addRangeSet(target, newSet);
+	}
+
+	function rangesOverlap(rangeSet1, rangeSet2) {
+	  var i1 = getRangeSetIterator(rangeSet2);
+	  var nextResult1 = i1.next();
+	  if (nextResult1.done) return false;
+	  var a = nextResult1.value;
+	  var i2 = getRangeSetIterator(rangeSet1);
+	  var nextResult2 = i2.next(a.from);
+	  var b = nextResult2.value;
+
+	  while (!nextResult1.done && !nextResult2.done) {
+	    if (cmp(b.from, a.to) <= 0 && cmp(b.to, a.from) >= 0) return true;
+	    cmp(a.from, b.from) < 0 ? a = (nextResult1 = i1.next(b.from)).value : b = (nextResult2 = i2.next(a.from)).value;
+	  }
+
+	  return false;
+	}
+
+	function getRangeSetIterator(node) {
+	  var state = isEmptyRange(node) ? null : {
+	    s: 0,
+	    n: node
+	  };
+	  return {
+	    next: function next(key) {
+	      var keyProvided = arguments.length > 0;
+
+	      while (state) {
+	        switch (state.s) {
+	          case 0:
+	            state.s = 1;
+
+	            if (keyProvided) {
+	              while (state.n.l && cmp(key, state.n.from) < 0) {
+	                state = {
+	                  up: state,
+	                  n: state.n.l,
+	                  s: 1
+	                };
+	              }
+	            } else {
+	              while (state.n.l) {
+	                state = {
+	                  up: state,
+	                  n: state.n.l,
+	                  s: 1
+	                };
+	              }
+	            }
+
+	          case 1:
+	            state.s = 2;
+	            if (!keyProvided || cmp(key, state.n.to) <= 0) return {
+	              value: state.n,
+	              done: false
+	            };
+
+	          case 2:
+	            if (state.n.r) {
+	              state.s = 3;
+	              state = {
+	                up: state,
+	                n: state.n.r,
+	                s: 0
+	              };
+	              continue;
+	            }
+
+	          case 3:
+	            state = state.up;
+	        }
+	      }
+
+	      return {
+	        done: true
+	      };
+	    }
+	  };
+	}
+
+	function rebalance(target) {
+	  var _a, _b;
+
+	  var diff = (((_a = target.r) === null || _a === void 0 ? void 0 : _a.d) || 0) - (((_b = target.l) === null || _b === void 0 ? void 0 : _b.d) || 0);
+	  var r = diff > 1 ? "r" : diff < -1 ? "l" : "";
+
+	  if (r) {
+	    var l = r === "r" ? "l" : "r";
+
+	    var rootClone = _assign({}, target);
+
+	    var oldRootRight = target[r];
+	    target.from = oldRootRight.from;
+	    target.to = oldRootRight.to;
+	    target[r] = oldRootRight[r];
+	    rootClone[r] = oldRootRight[l];
+	    target[l] = rootClone;
+	    rootClone.d = computeDepth(rootClone);
+	  }
+
+	  target.d = computeDepth(target);
+	}
+
+	function computeDepth(_a) {
+	  var r = _a.r,
+	      l = _a.l;
+	  return (r ? l ? Math.max(r.d, l.d) : r.d : l ? l.d : 0) + 1;
+	}
+
+	var observabilityMiddleware = {
+	  stack: "dbcore",
+	  level: 0,
+	  create: function create(core) {
+	    var dbName = core.schema.name;
+	    var FULL_RANGE = new RangeSet(core.MIN_KEY, core.MAX_KEY);
+	    return _assign(_assign({}, core), {
+	      table: function table(tableName) {
+	        var table = core.table(tableName);
+	        var schema = table.schema;
+	        var primaryKey = schema.primaryKey;
+	        var extractKey = primaryKey.extractKey,
+	            outbound = primaryKey.outbound;
+
+	        var tableClone = _assign(_assign({}, table), {
+	          mutate: function mutate(req) {
+	            var trans = req.trans;
+	            var mutatedParts = trans.mutatedParts || (trans.mutatedParts = {});
+
+	            var getRangeSet = function getRangeSet(indexName) {
+	              var part = "idb://" + dbName + "/" + tableName + "/" + indexName;
+	              return mutatedParts[part] || (mutatedParts[part] = new RangeSet());
+	            };
+
+	            var pkRangeSet = getRangeSet("");
+	            var delsRangeSet = getRangeSet(":dels");
+	            var type = req.type;
+
+	            var _a = req.type === "deleteRange" ? [req.range] : req.type === "delete" ? [req.keys] : req.values.length < 50 ? [[], req.values] : [],
+	                keys = _a[0],
+	                newObjs = _a[1];
+
+	            var oldCache = req.trans["_cache"];
+	            return table.mutate(req).then(function (res) {
+	              if (isArray(keys)) {
+	                if (type !== "delete") keys = res.results;
+	                pkRangeSet.addKeys(keys);
+	                var oldObjs = getFromTransactionCache(keys, oldCache);
+
+	                if (!oldObjs && type !== "add") {
+	                  delsRangeSet.addKeys(keys);
+	                }
+
+	                if (oldObjs || newObjs) {
+	                  trackAffectedIndexes(getRangeSet, schema, oldObjs, newObjs);
+	                }
+	              } else if (keys) {
+	                var range = {
+	                  from: keys.lower,
+	                  to: keys.upper
+	                };
+	                delsRangeSet.add(range);
+	                pkRangeSet.add(range);
+	              } else {
+	                pkRangeSet.add(FULL_RANGE);
+	                delsRangeSet.add(FULL_RANGE);
+	                schema.indexes.forEach(function (idx) {
+	                  return getRangeSet(idx.name).add(FULL_RANGE);
+	                });
+	              }
+
+	              return res;
+	            });
+	          }
+	        });
+
+	        var getRange = function getRange(_a) {
+	          var _b, _c;
+
+	          var _d = _a.query,
+	              index = _d.index,
+	              range = _d.range;
+	          return [index, new RangeSet((_b = range.lower) !== null && _b !== void 0 ? _b : core.MIN_KEY, (_c = range.upper) !== null && _c !== void 0 ? _c : core.MAX_KEY)];
+	        };
+
+	        var readSubscribers = {
+	          get: function get(req) {
+	            return [primaryKey, new RangeSet(req.key)];
+	          },
+	          getMany: function getMany(req) {
+	            return [primaryKey, new RangeSet().addKeys(req.keys)];
+	          },
+	          count: getRange,
+	          query: getRange,
+	          openCursor: getRange
+	        };
+	        keys(readSubscribers).forEach(function (method) {
+	          tableClone[method] = function (req) {
+	            var subscr = PSD.subscr;
+
+	            if (subscr) {
+	              var getRangeSet = function getRangeSet(indexName) {
+	                var part = "idb://" + dbName + "/" + tableName + "/" + indexName;
+	                return subscr[part] || (subscr[part] = new RangeSet());
+	              };
+
+	              var pkRangeSet_1 = getRangeSet("");
+	              var delsRangeSet_1 = getRangeSet(":dels");
+
+	              var _a = readSubscribers[method](req),
+	                  queriedIndex = _a[0],
+	                  queriedRanges = _a[1];
+
+	              getRangeSet(queriedIndex.name || "").add(queriedRanges);
+
+	              if (!queriedIndex.isPrimaryKey) {
+	                if (method === "count") {
+	                  delsRangeSet_1.add(FULL_RANGE);
+	                } else {
+	                  var keysPromise_1 = method === "query" && outbound && req.values && table.query(_assign(_assign({}, req), {
+	                    values: false
+	                  }));
+	                  return table[method].apply(this, arguments).then(function (res) {
+	                    if (method === "query") {
+	                      if (outbound && req.values) {
+	                        return keysPromise_1.then(function (_a) {
+	                          var resultingKeys = _a.result;
+	                          pkRangeSet_1.addKeys(resultingKeys);
+	                          return res;
+	                        });
+	                      }
+
+	                      var pKeys = req.values ? res.result.map(extractKey) : res.result;
+
+	                      if (req.values) {
+	                        pkRangeSet_1.addKeys(pKeys);
+	                      } else {
+	                        delsRangeSet_1.addKeys(pKeys);
+	                      }
+	                    } else if (method === "openCursor") {
+	                      var cursor_1 = res;
+	                      var wantValues_1 = req.values;
+	                      return cursor_1 && Object.create(cursor_1, {
+	                        key: {
+	                          get: function get() {
+	                            delsRangeSet_1.addKey(cursor_1.primaryKey);
+	                            return cursor_1.key;
+	                          }
+	                        },
+	                        primaryKey: {
+	                          get: function get() {
+	                            var pkey = cursor_1.primaryKey;
+	                            delsRangeSet_1.addKey(pkey);
+	                            return pkey;
+	                          }
+	                        },
+	                        value: {
+	                          get: function get() {
+	                            wantValues_1 && pkRangeSet_1.addKey(cursor_1.primaryKey);
+	                            return cursor_1.value;
+	                          }
+	                        }
+	                      });
+	                    }
+
+	                    return res;
+	                  });
+	                }
+	              }
+	            }
+
+	            return table[method].apply(this, arguments);
+	          };
+	        });
+	        return tableClone;
+	      }
+	    });
+	  }
+	};
+
+	function trackAffectedIndexes(getRangeSet, schema, oldObjs, newObjs) {
+	  function addAffectedIndex(ix) {
+	    var rangeSet = getRangeSet(ix.name || "");
+
+	    function extractKey(obj) {
+	      return obj != null ? ix.extractKey(obj) : null;
+	    }
+
+	    var addKeyOrKeys = function addKeyOrKeys(key) {
+	      return ix.multiEntry && isArray(key) ? key.forEach(function (key) {
+	        return rangeSet.addKey(key);
+	      }) : rangeSet.addKey(key);
+	    };
+
+	    (oldObjs || newObjs).forEach(function (_, i) {
+	      var oldKey = oldObjs && extractKey(oldObjs[i]);
+	      var newKey = newObjs && extractKey(newObjs[i]);
+
+	      if (cmp(oldKey, newKey) !== 0) {
+	        if (oldKey != null) addKeyOrKeys(oldKey);
+	        if (newKey != null) addKeyOrKeys(newKey);
+	      }
+	    });
+	  }
+
+	  schema.indexes.forEach(addAffectedIndex);
+	}
+
+	var Dexie$1 = function () {
+	  function Dexie(name, options) {
+	    var _this = this;
+
+	    this._middlewares = {};
+	    this.verno = 0;
+	    var deps = Dexie.dependencies;
+	    this._options = options = _assign({
+	      addons: Dexie.addons,
+	      autoOpen: true,
+	      indexedDB: deps.indexedDB,
+	      IDBKeyRange: deps.IDBKeyRange
+	    }, options);
+	    this._deps = {
+	      indexedDB: options.indexedDB,
+	      IDBKeyRange: options.IDBKeyRange
+	    };
+	    var addons = options.addons;
+	    this._dbSchema = {};
+	    this._versions = [];
+	    this._storeNames = [];
+	    this._allTables = {};
+	    this.idbdb = null;
+	    this._novip = this;
+	    var state = {
+	      dbOpenError: null,
+	      isBeingOpened: false,
+	      onReadyBeingFired: null,
+	      openComplete: false,
+	      dbReadyResolve: nop,
+	      dbReadyPromise: null,
+	      cancelOpen: nop,
+	      openCanceller: null,
+	      autoSchema: true,
+	      PR1398_maxLoop: 3
+	    };
+	    state.dbReadyPromise = new DexiePromise(function (resolve) {
+	      state.dbReadyResolve = resolve;
+	    });
+	    state.openCanceller = new DexiePromise(function (_, reject) {
+	      state.cancelOpen = reject;
+	    });
+	    this._state = state;
+	    this.name = name;
+	    this.on = Events(this, "populate", "blocked", "versionchange", "close", {
+	      ready: [promisableChain, nop]
+	    });
+	    this.on.ready.subscribe = override(this.on.ready.subscribe, function (subscribe) {
+	      return function (subscriber, bSticky) {
+	        Dexie.vip(function () {
+	          var state = _this._state;
+
+	          if (state.openComplete) {
+	            if (!state.dbOpenError) DexiePromise.resolve().then(subscriber);
+	            if (bSticky) subscribe(subscriber);
+	          } else if (state.onReadyBeingFired) {
+	            state.onReadyBeingFired.push(subscriber);
+	            if (bSticky) subscribe(subscriber);
+	          } else {
+	            subscribe(subscriber);
+	            var db_1 = _this;
+	            if (!bSticky) subscribe(function unsubscribe() {
+	              db_1.on.ready.unsubscribe(subscriber);
+	              db_1.on.ready.unsubscribe(unsubscribe);
+	            });
+	          }
+	        });
+	      };
+	    });
+	    this.Collection = createCollectionConstructor(this);
+	    this.Table = createTableConstructor(this);
+	    this.Transaction = createTransactionConstructor(this);
+	    this.Version = createVersionConstructor(this);
+	    this.WhereClause = createWhereClauseConstructor(this);
+	    this.on("versionchange", function (ev) {
+	      if (ev.newVersion > 0) console.warn("Another connection wants to upgrade database '" + _this.name + "'. Closing db now to resume the upgrade.");else console.warn("Another connection wants to delete database '" + _this.name + "'. Closing db now to resume the delete request.");
+
+	      _this.close();
+	    });
+	    this.on("blocked", function (ev) {
+	      if (!ev.newVersion || ev.newVersion < ev.oldVersion) console.warn("Dexie.delete('" + _this.name + "') was blocked");else console.warn("Upgrade '" + _this.name + "' blocked by other connection holding version " + ev.oldVersion / 10);
+	    });
+	    this._maxKey = _getMaxKey(options.IDBKeyRange);
+
+	    this._createTransaction = function (mode, storeNames, dbschema, parentTransaction) {
+	      return new _this.Transaction(mode, storeNames, dbschema, _this._options.chromeTransactionDurability, parentTransaction);
+	    };
+
+	    this._fireOnBlocked = function (ev) {
+	      _this.on("blocked").fire(ev);
+
+	      connections.filter(function (c) {
+	        return c.name === _this.name && c !== _this && !c._state.vcFired;
+	      }).map(function (c) {
+	        return c.on("versionchange").fire(ev);
+	      });
+	    };
+
+	    this.use(virtualIndexMiddleware);
+	    this.use(hooksMiddleware);
+	    this.use(observabilityMiddleware);
+	    this.use(cacheExistingValuesMiddleware);
+	    this.vip = Object.create(this, {
+	      _vip: {
+	        value: true
+	      }
+	    });
+	    addons.forEach(function (addon) {
+	      return addon(_this);
+	    });
+	  }
+
+	  Dexie.prototype.version = function (versionNumber) {
+	    if (isNaN(versionNumber) || versionNumber < 0.1) throw new exceptions.Type("Given version is not a positive number");
+	    versionNumber = Math.round(versionNumber * 10) / 10;
+	    if (this.idbdb || this._state.isBeingOpened) throw new exceptions.Schema("Cannot add version when database is open");
+	    this.verno = Math.max(this.verno, versionNumber);
+	    var versions = this._versions;
+	    var versionInstance = versions.filter(function (v) {
+	      return v._cfg.version === versionNumber;
+	    })[0];
+	    if (versionInstance) return versionInstance;
+	    versionInstance = new this.Version(versionNumber);
+	    versions.push(versionInstance);
+	    versions.sort(lowerVersionFirst);
+	    versionInstance.stores({});
+	    this._state.autoSchema = false;
+	    return versionInstance;
+	  };
+
+	  Dexie.prototype._whenReady = function (fn) {
+	    var _this = this;
+
+	    return this.idbdb && (this._state.openComplete || PSD.letThrough || this._vip) ? fn() : new DexiePromise(function (resolve, reject) {
+	      if (_this._state.openComplete) {
+	        return reject(new exceptions.DatabaseClosed(_this._state.dbOpenError));
+	      }
+
+	      if (!_this._state.isBeingOpened) {
+	        if (!_this._options.autoOpen) {
+	          reject(new exceptions.DatabaseClosed());
+	          return;
+	        }
+
+	        _this.open()["catch"](nop);
+	      }
+
+	      _this._state.dbReadyPromise.then(resolve, reject);
+	    }).then(fn);
+	  };
+
+	  Dexie.prototype.use = function (_a) {
+	    var stack = _a.stack,
+	        create = _a.create,
+	        level = _a.level,
+	        name = _a.name;
+	    if (name) this.unuse({
+	      stack: stack,
+	      name: name
+	    });
+	    var middlewares = this._middlewares[stack] || (this._middlewares[stack] = []);
+	    middlewares.push({
+	      stack: stack,
+	      create: create,
+	      level: level == null ? 10 : level,
+	      name: name
+	    });
+	    middlewares.sort(function (a, b) {
+	      return a.level - b.level;
+	    });
+	    return this;
+	  };
+
+	  Dexie.prototype.unuse = function (_a) {
+	    var stack = _a.stack,
+	        name = _a.name,
+	        create = _a.create;
+
+	    if (stack && this._middlewares[stack]) {
+	      this._middlewares[stack] = this._middlewares[stack].filter(function (mw) {
+	        return create ? mw.create !== create : name ? mw.name !== name : false;
+	      });
+	    }
+
+	    return this;
+	  };
+
+	  Dexie.prototype.open = function () {
+	    return dexieOpen(this);
+	  };
+
+	  Dexie.prototype._close = function () {
+	    var state = this._state;
+	    var idx = connections.indexOf(this);
+	    if (idx >= 0) connections.splice(idx, 1);
+
+	    if (this.idbdb) {
+	      try {
+	        this.idbdb.close();
+	      } catch (e) {}
+
+	      this._novip.idbdb = null;
+	    }
+
+	    state.dbReadyPromise = new DexiePromise(function (resolve) {
+	      state.dbReadyResolve = resolve;
+	    });
+	    state.openCanceller = new DexiePromise(function (_, reject) {
+	      state.cancelOpen = reject;
+	    });
+	  };
+
+	  Dexie.prototype.close = function () {
+	    this._close();
+
+	    var state = this._state;
+	    this._options.autoOpen = false;
+	    state.dbOpenError = new exceptions.DatabaseClosed();
+	    if (state.isBeingOpened) state.cancelOpen(state.dbOpenError);
+	  };
+
+	  Dexie.prototype["delete"] = function () {
+	    var _this = this;
+
+	    var hasArguments = arguments.length > 0;
+	    var state = this._state;
+	    return new DexiePromise(function (resolve, reject) {
+	      var doDelete = function doDelete() {
+	        _this.close();
+
+	        var req = _this._deps.indexedDB.deleteDatabase(_this.name);
+
+	        req.onsuccess = wrap(function () {
+	          _onDatabaseDeleted(_this._deps, _this.name);
+
+	          resolve();
+	        });
+	        req.onerror = eventRejectHandler(reject);
+	        req.onblocked = _this._fireOnBlocked;
+	      };
+
+	      if (hasArguments) throw new exceptions.InvalidArgument("Arguments not allowed in db.delete()");
+
+	      if (state.isBeingOpened) {
+	        state.dbReadyPromise.then(doDelete);
+	      } else {
+	        doDelete();
+	      }
+	    });
+	  };
+
+	  Dexie.prototype.backendDB = function () {
+	    return this.idbdb;
+	  };
+
+	  Dexie.prototype.isOpen = function () {
+	    return this.idbdb !== null;
+	  };
+
+	  Dexie.prototype.hasBeenClosed = function () {
+	    var dbOpenError = this._state.dbOpenError;
+	    return dbOpenError && dbOpenError.name === 'DatabaseClosed';
+	  };
+
+	  Dexie.prototype.hasFailed = function () {
+	    return this._state.dbOpenError !== null;
+	  };
+
+	  Dexie.prototype.dynamicallyOpened = function () {
+	    return this._state.autoSchema;
+	  };
+
+	  Object.defineProperty(Dexie.prototype, "tables", {
+	    get: function get() {
+	      var _this = this;
+
+	      return keys(this._allTables).map(function (name) {
+	        return _this._allTables[name];
+	      });
+	    },
+	    enumerable: false,
+	    configurable: true
+	  });
+
+	  Dexie.prototype.transaction = function () {
+	    var args = extractTransactionArgs.apply(this, arguments);
+	    return this._transaction.apply(this, args);
+	  };
+
+	  Dexie.prototype._transaction = function (mode, tables, scopeFunc) {
+	    var _this = this;
+
+	    var parentTransaction = PSD.trans;
+	    if (!parentTransaction || parentTransaction.db !== this || mode.indexOf('!') !== -1) parentTransaction = null;
+	    var onlyIfCompatible = mode.indexOf('?') !== -1;
+	    mode = mode.replace('!', '').replace('?', '');
+	    var idbMode, storeNames;
+
+	    try {
+	      storeNames = tables.map(function (table) {
+	        var storeName = table instanceof _this.Table ? table.name : table;
+	        if (typeof storeName !== 'string') throw new TypeError("Invalid table argument to Dexie.transaction(). Only Table or String are allowed");
+	        return storeName;
+	      });
+	      if (mode == "r" || mode === READONLY) idbMode = READONLY;else if (mode == "rw" || mode == READWRITE) idbMode = READWRITE;else throw new exceptions.InvalidArgument("Invalid transaction mode: " + mode);
+
+	      if (parentTransaction) {
+	        if (parentTransaction.mode === READONLY && idbMode === READWRITE) {
+	          if (onlyIfCompatible) {
+	            parentTransaction = null;
+	          } else throw new exceptions.SubTransaction("Cannot enter a sub-transaction with READWRITE mode when parent transaction is READONLY");
+	        }
+
+	        if (parentTransaction) {
+	          storeNames.forEach(function (storeName) {
+	            if (parentTransaction && parentTransaction.storeNames.indexOf(storeName) === -1) {
+	              if (onlyIfCompatible) {
+	                parentTransaction = null;
+	              } else throw new exceptions.SubTransaction("Table " + storeName + " not included in parent transaction.");
+	            }
+	          });
+	        }
+
+	        if (onlyIfCompatible && parentTransaction && !parentTransaction.active) {
+	          parentTransaction = null;
+	        }
+	      }
+	    } catch (e) {
+	      return parentTransaction ? parentTransaction._promise(null, function (_, reject) {
+	        reject(e);
+	      }) : rejection(e);
+	    }
+
+	    var enterTransaction = enterTransactionScope.bind(null, this, idbMode, storeNames, parentTransaction, scopeFunc);
+	    return parentTransaction ? parentTransaction._promise(idbMode, enterTransaction, "lock") : PSD.trans ? usePSD(PSD.transless, function () {
+	      return _this._whenReady(enterTransaction);
+	    }) : this._whenReady(enterTransaction);
+	  };
+
+	  Dexie.prototype.table = function (tableName) {
+	    if (!hasOwn(this._allTables, tableName)) {
+	      throw new exceptions.InvalidTable("Table " + tableName + " does not exist");
+	    }
+
+	    return this._allTables[tableName];
+	  };
+
+	  return Dexie;
+	}();
+
+	var symbolObservable = typeof Symbol !== "undefined" && "observable" in Symbol ? Symbol.observable : "@@observable";
+
+	var Observable = function () {
+	  function Observable(subscribe) {
+	    this._subscribe = subscribe;
+	  }
+
+	  Observable.prototype.subscribe = function (x, error, complete) {
+	    return this._subscribe(!x || typeof x === "function" ? {
+	      next: x,
+	      error: error,
+	      complete: complete
+	    } : x);
+	  };
+
+	  Observable.prototype[symbolObservable] = function () {
+	    return this;
+	  };
+
+	  return Observable;
+	}();
+
+	function extendObservabilitySet(target, newSet) {
+	  keys(newSet).forEach(function (part) {
+	    var rangeSet = target[part] || (target[part] = new RangeSet());
+	    mergeRanges(rangeSet, newSet[part]);
+	  });
+	  return target;
+	}
+
+	function liveQuery(querier) {
+	  return new Observable(function (observer) {
+	    var scopeFuncIsAsync = isAsyncFunction(querier);
+
+	    function execute(subscr) {
+	      if (scopeFuncIsAsync) {
+	        incrementExpectedAwaits();
+	      }
+
+	      var exec = function exec() {
+	        return newScope(querier, {
+	          subscr: subscr,
+	          trans: null
+	        });
+	      };
+
+	      var rv = PSD.trans ? usePSD(PSD.transless, exec) : exec();
+
+	      if (scopeFuncIsAsync) {
+	        rv.then(decrementExpectedAwaits, decrementExpectedAwaits);
+	      }
+
+	      return rv;
+	    }
+
+	    var closed = false;
+	    var accumMuts = {};
+	    var currentObs = {};
+	    var subscription = {
+	      get closed() {
+	        return closed;
+	      },
+
+	      unsubscribe: function unsubscribe() {
+	        closed = true;
+	        globalEvents.storagemutated.unsubscribe(mutationListener);
+	      }
+	    };
+	    observer.start && observer.start(subscription);
+	    var querying = false,
+	        startedListening = false;
+
+	    function shouldNotify() {
+	      return keys(currentObs).some(function (key) {
+	        return accumMuts[key] && rangesOverlap(accumMuts[key], currentObs[key]);
+	      });
+	    }
+
+	    var mutationListener = function mutationListener(parts) {
+	      extendObservabilitySet(accumMuts, parts);
+
+	      if (shouldNotify()) {
+	        doQuery();
+	      }
+	    };
+
+	    var doQuery = function doQuery() {
+	      if (querying || closed) return;
+	      accumMuts = {};
+	      var subscr = {};
+	      var ret = execute(subscr);
+
+	      if (!startedListening) {
+	        globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, mutationListener);
+	        startedListening = true;
+	      }
+
+	      querying = true;
+	      Promise.resolve(ret).then(function (result) {
+	        querying = false;
+	        if (closed) return;
+
+	        if (shouldNotify()) {
+	          doQuery();
+	        } else {
+	          accumMuts = {};
+	          currentObs = subscr;
+	          observer.next && observer.next(result);
+	        }
+	      }, function (err) {
+	        querying = false;
+	        observer.error && observer.error(err);
+	        subscription.unsubscribe();
+	      });
+	    };
+
+	    doQuery();
+	    return subscription;
+	  });
+	}
+
+	var domDeps;
+
+	try {
+	  domDeps = {
+	    indexedDB: _global.indexedDB || _global.mozIndexedDB || _global.webkitIndexedDB || _global.msIndexedDB,
+	    IDBKeyRange: _global.IDBKeyRange || _global.webkitIDBKeyRange
+	  };
+	} catch (e) {
+	  domDeps = {
+	    indexedDB: null,
+	    IDBKeyRange: null
+	  };
+	}
+
+	var Dexie = Dexie$1;
+	props(Dexie, _assign(_assign({}, fullNameExceptions), {
+	  "delete": function _delete(databaseName) {
+	    var db = new Dexie(databaseName, {
+	      addons: []
+	    });
+	    return db["delete"]();
+	  },
+	  exists: function exists(name) {
+	    return new Dexie(name, {
+	      addons: []
+	    }).open().then(function (db) {
+	      db.close();
+	      return true;
+	    })["catch"]('NoSuchDatabaseError', function () {
+	      return false;
+	    });
+	  },
+	  getDatabaseNames: function getDatabaseNames(cb) {
+	    try {
+	      return _getDatabaseNames(Dexie.dependencies).then(cb);
+	    } catch (_a) {
+	      return rejection(new exceptions.MissingAPI());
+	    }
+	  },
+	  defineClass: function defineClass() {
+	    function Class(content) {
+	      extend(this, content);
+	    }
+
+	    return Class;
+	  },
+	  ignoreTransaction: function ignoreTransaction(scopeFunc) {
+	    return PSD.trans ? usePSD(PSD.transless, scopeFunc) : scopeFunc();
+	  },
+	  vip: vip,
+	  async: function async(generatorFn) {
+	    return function () {
+	      try {
+	        var rv = awaitIterator(generatorFn.apply(this, arguments));
+	        if (!rv || typeof rv.then !== 'function') return DexiePromise.resolve(rv);
+	        return rv;
+	      } catch (e) {
+	        return rejection(e);
+	      }
+	    };
+	  },
+	  spawn: function spawn(generatorFn, args, thiz) {
+	    try {
+	      var rv = awaitIterator(generatorFn.apply(thiz, args || []));
+	      if (!rv || typeof rv.then !== 'function') return DexiePromise.resolve(rv);
+	      return rv;
+	    } catch (e) {
+	      return rejection(e);
+	    }
+	  },
+	  currentTransaction: {
+	    get: function get() {
+	      return PSD.trans || null;
+	    }
+	  },
+	  waitFor: function waitFor(promiseOrFunction, optionalTimeout) {
+	    var promise = DexiePromise.resolve(typeof promiseOrFunction === 'function' ? Dexie.ignoreTransaction(promiseOrFunction) : promiseOrFunction).timeout(optionalTimeout || 60000);
+	    return PSD.trans ? PSD.trans.waitFor(promise) : promise;
+	  },
+	  Promise: DexiePromise,
+	  debug: {
+	    get: function get() {
+	      return debug;
+	    },
+	    set: function set(value) {
+	      setDebug(value, value === 'dexie' ? function () {
+	        return true;
+	      } : dexieStackFrameFilter);
+	    }
+	  },
+	  derive: derive,
+	  extend: extend,
+	  props: props,
+	  override: override,
+	  Events: Events,
+	  on: globalEvents,
+	  liveQuery: liveQuery,
+	  extendObservabilitySet: extendObservabilitySet,
+	  getByKeyPath: getByKeyPath,
+	  setByKeyPath: setByKeyPath,
+	  delByKeyPath: delByKeyPath,
+	  shallowClone: shallowClone,
+	  deepClone: deepClone,
+	  getObjectDiff: getObjectDiff,
+	  cmp: cmp,
+	  asap: asap$1,
+	  minKey: minKey,
+	  addons: [],
+	  connections: connections,
+	  errnames: errnames,
+	  dependencies: domDeps,
+	  semVer: DEXIE_VERSION,
+	  version: DEXIE_VERSION.split('.').map(function (n) {
+	    return parseInt(n);
+	  }).reduce(function (p, c, i) {
+	    return p + c / Math.pow(10, i * 2);
+	  })
+	}));
+	Dexie.maxKey = _getMaxKey(Dexie.dependencies.IDBKeyRange);
+
+	if (typeof dispatchEvent !== 'undefined' && typeof addEventListener !== 'undefined') {
+	  globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, function (updatedParts) {
+	    if (!propagatingLocally) {
+	      var event_1;
+
+	      if (isIEOrEdge) {
+	        event_1 = document.createEvent('CustomEvent');
+	        event_1.initCustomEvent(STORAGE_MUTATED_DOM_EVENT_NAME, true, true, updatedParts);
+	      } else {
+	        event_1 = new CustomEvent(STORAGE_MUTATED_DOM_EVENT_NAME, {
+	          detail: updatedParts
+	        });
+	      }
+
+	      propagatingLocally = true;
+	      dispatchEvent(event_1);
+	      propagatingLocally = false;
+	    }
+	  });
+	  addEventListener(STORAGE_MUTATED_DOM_EVENT_NAME, function (_a) {
+	    var detail = _a.detail;
+
+	    if (!propagatingLocally) {
+	      propagateLocally(detail);
+	    }
+	  });
+	}
+
+	function propagateLocally(updateParts) {
+	  var wasMe = propagatingLocally;
+
+	  try {
+	    propagatingLocally = true;
+	    globalEvents.storagemutated.fire(updateParts);
+	  } finally {
+	    propagatingLocally = wasMe;
+	  }
+	}
+
+	var propagatingLocally = false;
+
+	if (typeof BroadcastChannel !== 'undefined') {
+	  var bc_1 = new BroadcastChannel(STORAGE_MUTATED_DOM_EVENT_NAME);
+	  globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, function (changedParts) {
+	    if (!propagatingLocally) {
+	      bc_1.postMessage(changedParts);
+	    }
+	  });
+
+	  bc_1.onmessage = function (ev) {
+	    if (ev.data) propagateLocally(ev.data);
+	  };
+	} else if (typeof self !== 'undefined' && typeof navigator !== 'undefined') {
+	  globalEvents(DEXIE_STORAGE_MUTATED_EVENT_NAME, function (changedParts) {
+	    try {
+	      if (!propagatingLocally) {
+	        if (typeof localStorage !== 'undefined') {
+	          localStorage.setItem(STORAGE_MUTATED_DOM_EVENT_NAME, JSON.stringify({
+	            trig: Math.random(),
+	            changedParts: changedParts
+	          }));
+	        }
+
+	        if (babelHelpers["typeof"](self['clients']) === 'object') {
+	          __spreadArray([], self['clients'].matchAll({
+	            includeUncontrolled: true
+	          }), true).forEach(function (client) {
+	            return client.postMessage({
+	              type: STORAGE_MUTATED_DOM_EVENT_NAME,
+	              changedParts: changedParts
+	            });
+	          });
+	        }
+	      }
+	    } catch (_a) {}
+	  });
+
+	  if (typeof addEventListener !== 'undefined') {
+	    addEventListener('storage', function (ev) {
+	      if (ev.key === STORAGE_MUTATED_DOM_EVENT_NAME) {
+	        var data = JSON.parse(ev.newValue);
+	        if (data) propagateLocally(data.changedParts);
+	      }
+	    });
+	  }
+
+	  var swContainer = self.document && navigator.serviceWorker;
+
+	  if (swContainer) {
+	    swContainer.addEventListener('message', propagateMessageLocally);
+	  }
+	}
+
+	function propagateMessageLocally(_a) {
+	  var data = _a.data;
+
+	  if (data && data.type === STORAGE_MUTATED_DOM_EVENT_NAME) {
+	    propagateLocally(data.changedParts);
+	  }
+	}
+
+	DexiePromise.rejectionMapper = mapError;
+	setDebug(debug, dexieStackFrameFilter); // backward compatibility with Dexie 2 usages
+
+	window.BX.Dexie = Dexie$1;
+
+	exports.Dexie = Dexie$1;
+	exports.liveQuery = liveQuery;
+	exports.RangeSet = RangeSet;
+	exports.mergeRanges = mergeRanges;
+	exports.rangesOverlap = rangesOverlap;
+
+}((this.BX.Dexie3 = this.BX.Dexie3 || {})));
  
 
 
 
 
 // file: /bitrix/js/ui/vue/components/smiles/dist/smiles.bundle.js
-(function (exports,ui_vue_directives_lazyload,ui_vue,ui_dexie) {
+(function (exports,ui_fonts_opensans,ui_vue_directives_lazyload,ui_vue,ui_dexie) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -42184,7 +44213,7 @@ BufferWriter.prototype.string = function write_string_buffer(value) {
 	  template: "\n\t\t<div class=\"bx-ui-smiles-box\">\n\t\t\t<div class=\"bx-ui-smiles-elements-wrap\" ref=\"elements\">\n\t\t\t\t<template v-if=\"!smiles.length\">\n\t\t\t\t\t<svg class=\"bx-ui-smiles-loading-circular\" viewBox=\"25 25 50 50\">\n\t\t\t\t\t\t<circle class=\"bx-ui-smiles-loading-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t\t\t<circle class=\"bx-ui-smiles-loading-inner-path\" cx=\"50\" cy=\"50\" r=\"20\" fill=\"none\" stroke-miterlimit=\"10\"/>\n\t\t\t\t\t</svg>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"isSmileMode\">\n\t\t\t\t\t<template v-for=\"smile in smiles\">\n\t\t\t\t\t\t<div class=\"bx-ui-smiles-smile\">\n\t\t\t\t\t\t\t<img v-bx-lazyload :key=\"smile.id\"\n\t\t\t\t\t\t\t\tclass=\"bx-ui-smiles-smile-icon\"\n\t\t\t\t\t\t\t\t:data-lazyload-src=\"smile.image\"\n\t\t\t\t\t\t\t\tdata-lazyload-error-class=\"bx-ui-smiles-smile-icon-error\"\n\t\t\t\t\t\t\t\t:title=\"smile.name\"\n\t\t\t\t\t\t\t\t:style=\"{height: (smile.originalHeight*0.5)+'px', width: (smile.originalWidth*0.5)+'px'}\"\n\t\t\t\t\t\t\t\t@click=\"selectSmile(smile.typing)\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t</template>\n\t\t\t\t<template v-else-if=\"isEmojiMode\">\n\t\t\t\t\t<div v-for=\"category in emoji\" class=\"bx-ui-smiles-emoji-wrap\">\n\t\t\t\t\t\t<template v-if=\"showCategory(category)\">\n\t\t\t\t\t\t\t<div class=\"bx-ui-smiles-category\">\n\t\t\t\t\t\t\t\t{{ $Bitrix.Loc.getMessage('UI_VUE_SMILES_EMOJI_CATEGORY_' + category.code) }}\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<template v-for=\"element in category.emoji\">\n\t\t\t\t\t\t\t\t<div class=\"bx-ui-smiles-smile\" style=\"font-size: 28px;\">\n\t\t\t\t\t\t\t\t\t<div class=\"bx-ui-smiles-smile-icon\" @click=\"selectSmile(element.symbol)\">\n\t\t\t\t\t\t\t\t\t\t{{ element.symbol }}\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t\t<template v-if=\"sets.length > 1 || emoji && showEmoji\">\n\t\t\t\t<div class=\"bx-ui-smiles-sets\">\n\t\t\t\t\t<template v-for=\"set in sets\">\n\t\t\t\t\t\t<div :class=\"['bx-ui-smiles-set', {'bx-ui-smiles-set-selected': set.selected}]\">\n\t\t\t\t\t\t\t<img v-bx-lazyload\n\t\t\t\t\t\t\t\t:key=\"set.id\"\n\t\t\t\t\t\t\t\tclass=\"bx-ui-smiles-set-icon\"\n\t\t\t\t\t\t\t\t:data-lazyload-src=\"set.image\"\n\t\t\t\t\t\t\t\tdata-lazyload-error-class=\"bx-ui-smiles-set-icon-error\"\n\t\t\t\t\t\t\t\t:title=\"set.name\"\n\t\t\t\t\t\t\t\t@click=\"selectSet(set.id)\"\n\t\t\t\t\t\t\t/>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<div v-if=\"emoji && showEmoji\" :class=\"['bx-ui-smiles-set', {'bx-ui-smiles-set-selected': isEmojiMode}]\">\n\t\t\t\t\t\t<div :class=\"['bx-ui-smiles-set-icon', emojiIconStyle]\" @click=\"switchToEmoji\">\n\t\t\t\t\t\t \t{{ emojiIcon }}\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),window,BX,BX));
+}((this.window = this.window || {}),BX,window,BX,BX.Dexie3));
  
 
 
@@ -46926,7 +48955,7 @@ this.BX = this.BX || {};
 	exports.WidgetVuexVendorV3 = index;
 	exports.WidgetVuexVendor = index;
 
-}((this.BX = this.BX || {}),BX,BX,BX));
+}((this.BX = this.BX || {}),BX,BX.Dexie3,BX));
 
 
 
@@ -47339,6 +49368,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    clickOnUserName: 'IM.Dialog:clickOnUserName',
 	    clickOnMessageMenu: 'IM.Dialog:clickOnMessageMenu',
 	    clickOnMessageRetry: 'IM.Dialog:clickOnMessageRetry',
+	    doubleClickOnMessage: 'IM.Dialog:doubleClickOnMessage',
 	    clickOnUploadCancel: 'IM.Dialog:clickOnUploadCancel',
 	    clickOnReadList: 'IM.Dialog:clickOnReadList',
 	    setMessageReaction: 'IM.Dialog:setMessageReaction',
@@ -49073,7 +51103,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      text = text.replace(/\[CHAT=([0-9]{1,})](.*?)\[\/CHAT]/ig, '$2');
 	      text = text.replace(/\[SEND(?:=(?:.+?))?\](.+?)?\[\/SEND]/ig, '$1');
 	      text = text.replace(/\[PUT(?:=(?:.+?))?\](.+?)?\[\/PUT]/ig, '$1');
-	      text = text.replace(/\[CALL=([0-9]{1,})](.*?)\[\/CALL]/ig, '$2');
+	      text = text.replace(/\[CALL=(.*?)](.*?)\[\/CALL\]/ig, '$2');
 	      text = text.replace(/\[PCH=([0-9]{1,})](.*?)\[\/PCH]/ig, '$2');
 	      text = text.replace(/<img.*?data-code="([^"]*)".*?>/ig, '$1');
 	      text = text.replace(/<span.*?title="([^"]*)".*?>.*?<\/span>/ig, '($1)');
@@ -55410,7 +57440,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/ui/vue/components/audioplayer/dist/audioplayer.bundle.js
-(function (exports,main_polyfill_intersectionobserver,ui_vue,main_core_events) {
+(function (exports,ui_fonts_opensans,main_polyfill_intersectionobserver,ui_vue,main_core_events) {
 	'use strict';
 
 	/**
@@ -55809,14 +57839,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div :class=\"['ui-vue-audioplayer-container', {\n\t\t\t\t'ui-vue-audioplayer-container-dark': isDark,\n\t\t\t\t'ui-vue-audioplayer-container-mobile': isMobile,\n\t\t\t}]\" ref=\"body\">\n\t\t\t<div class=\"ui-vue-audioplayer-controls-container\">\n\t\t\t\t<button :class=\"['ui-vue-audioplayer-control', {\n\t\t\t\t\t'ui-vue-audioplayer-control-loader': loading,\n\t\t\t\t\t'ui-vue-audioplayer-control-play': !loading && state !== State.play,\n\t\t\t\t\t'ui-vue-audioplayer-control-pause': !loading && state === State.play,\n\t\t\t\t}]\" @click=\"clickToButton\"></button>\n\t\t\t</div>\n\t\t\t<div class=\"ui-vue-audioplayer-timeline-container\">\n\t\t\t\t<div class=\"ui-vue-audioplayer-track-container\" @click=\"setPosition\" ref=\"track\">\n\t\t\t\t\t<div class=\"ui-vue-audioplayer-track-mask\"></div>\n\t\t\t\t\t<div class=\"ui-vue-audioplayer-track\" :style=\"progressPosition\"></div>\n\t\t\t\t\t<div class=\"ui-vue-audioplayer-track-seek\" :style=\"seekPosition\"></div>\n\t\t\t\t\t<div class=\"ui-vue-audioplayer-track-event\" @mousemove=\"seeking\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-vue-audioplayer-timers-container\">\n\t\t\t\t\t<div class=\"ui-vue-audioplayer-time-current\">{{labelTime}}</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<audio v-if=\"src\" :src=\"src\" class=\"ui-vue-audioplayer-source\" ref=\"source\" :preload=\"preload\"\n\t\t\t\t@abort=\"audioEventRouter('abort', $event)\"\n\t\t\t\t@error=\"audioEventRouter('error', $event)\"\n\t\t\t\t@suspend=\"audioEventRouter('suspend', $event)\"\n\t\t\t\t@canplay=\"audioEventRouter('canplay', $event)\"\n\t\t\t\t@canplaythrough=\"audioEventRouter('canplaythrough', $event)\"\n\t\t\t\t@durationchange=\"audioEventRouter('durationchange', $event)\"\n\t\t\t\t@loadeddata=\"audioEventRouter('loadeddata', $event)\"\n\t\t\t\t@loadedmetadata=\"audioEventRouter('loadedmetadata', $event)\"\n\t\t\t\t@timeupdate=\"audioEventRouter('timeupdate', $event)\"\n\t\t\t\t@play=\"audioEventRouter('play', $event)\"\n\t\t\t\t@playing=\"audioEventRouter('playing', $event)\"\n\t\t\t\t@pause=\"audioEventRouter('pause', $event)\"\n\t\t\t></audio>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX,BX.Event));
+}((this.window = this.window || {}),BX,BX,BX,BX.Event));
  
 
 
 
 
 // file: /bitrix/js/ui/vue/components/socialvideo/dist/socialvideo.bundle.js
-(function (exports,ui_vue_directives_lazyload,main_polyfill_intersectionobserver,ui_vue,main_core_events) {
+(function (exports,ui_fonts_opensans,ui_vue_directives_lazyload,main_polyfill_intersectionobserver,ui_vue,main_core_events) {
 	'use strict';
 
 	/**
@@ -56193,14 +58223,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div :class=\"['ui-vue-socialvideo', containerClass, {\n\t\t\t\t'ui-vue-socialvideo-mobile': isMobile,\n\t\t\t}]\" :style=\"containerStyle\" @click=\"click\">\n\t\t\t<transition name=\"ui-vue-socialvideo-animation-fade\">\n\t\t\t\t<div v-if=\"showStartButton && showControls\" class=\"ui-vue-socialvideo-button-start\">\n\t\t\t\t\t<span class=\"ui-vue-socialvideo-button-start-icon\"></span>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<transition name=\"ui-vue-socialvideo-animation-fade\">\n\t\t\t\t<div v-if=\"showInterface && showControls\" class=\"ui-vue-socialvideo-overlay-container\">\n\t\t\t\t\t<div class=\"ui-vue-socialvideo-controls-container\" @click=\"clickToButton\">\n\t\t\t\t\t\t<button :class=\"['ui-vue-socialvideo-control', {\n\t\t\t\t\t\t\t'ui-vue-socialvideo-control-loader': loading,\n\t\t\t\t\t\t\t'ui-vue-socialvideo-control-play': !loading && state !== State.play,\n\t\t\t\t\t\t\t'ui-vue-socialvideo-control-pause': !loading && state === State.play,\n\t\t\t\t\t\t}]\"></button>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-vue-socialvideo-info-container\" @click=\"clickToMute\">\n\t\t\t\t\t\t<span class=\"ui-vue-socialvideo-time-current\">{{labelTime}}</span>\n\t\t\t\t\t\t<span :class=\"['ui-vue-socialvideo-sound', {\n\t\t\t\t\t\t\t'ui-vue-socialvideo-sound-on': state !== State.none && !muteFlag,\n\t\t\t\t\t\t\t'ui-vue-socialvideo-sound-off': state !== State.none && muteFlag\n\t\t\t\t\t\t}]\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<div v-if=\"!preview\" class=\"ui-vue-socialvideo-background\" :style=\"{position: (src? 'absolute': 'relative')}\"></div>\n\t\t\t<div class=\"ui-vue-socialvideo-container\" ref=\"body\">\n\t\t\t\t<img \n\t\t\t\t\tv-bx-lazyload=\"{callback: lazyLoadCallback}\"\n\t\t\t\t\tdata-lazyload-dont-hide\n\t\t\t\t\tv-if=\"preview\"\n\t\t\t\t\tclass=\"ui-vue-socialvideo-image-source\"\n\t\t\t\t\t:data-lazyload-src=\"preview\"\n\t\t\t\t\t:style=\"{position: (src? 'absolute': 'relative'), ...elementStyle}\"\n\t\t\t\t/>\n\t\t\t\t<video \n\t\t\t\t\tv-if=\"src\" :src=\"src\" \n\t\t\t\t\tclass=\"ui-vue-socialvideo-source\" \n\t\t\t\t\tref=\"source\"\n\t\t\t\t\t:preload=\"preload\" \n\t\t\t\t\tplaysinline\n\t\t\t\t\tloop \n\t\t\t\t\tmuted\n\t\t\t\t\t:style=\"{opacity: (loaded? 1: 0), ...elementStyle}\"\n\t\t\t\t\t@abort=\"videoEventRouter('abort', $event)\"\n\t\t\t\t\t@error=\"videoEventRouter('error', $event)\"\n\t\t\t\t\t@suspend=\"videoEventRouter('suspend', $event)\"\n\t\t\t\t\t@canplay=\"videoEventRouter('canplay', $event)\"\n\t\t\t\t\t@canplaythrough=\"videoEventRouter('canplaythrough', $event)\"\n\t\t\t\t\t@durationchange=\"videoEventRouter('durationchange', $event)\"\n\t\t\t\t\t@loadeddata=\"videoEventRouter('loadeddata', $event)\"\n\t\t\t\t\t@loadedmetadata=\"videoEventRouter('loadedmetadata', $event)\"\n\t\t\t\t\t@volumechange=\"videoEventRouter('volumechange', $event)\"\n\t\t\t\t\t@timeupdate=\"videoEventRouter('timeupdate', $event)\"\n\t\t\t\t\t@play=\"videoEventRouter('play', $event)\"\n\t\t\t\t\t@playing=\"videoEventRouter('playing', $event)\"\n\t\t\t\t\t@pause=\"videoEventRouter('pause', $event)\"\n\t\t\t\t></video>\n\t\t\t</div>\n\t\t</div>\t\n\t"
 	});
 
-}((this.window = this.window || {}),window,BX,BX,BX.Event));
+}((this.window = this.window || {}),BX,window,BX,BX,BX.Event));
  
 
 
 
 
 // file: /bitrix/js/im/view/element/media/dist/media.bundle.js
-(function (exports,ui_progressbarjs_uploader,ui_vue_vuex,im_model,main_core_events,im_const,ui_vue_components_audioplayer,ui_vue_directives_lazyload,ui_icons,ui_vue_components_socialvideo,im_lib_utils,ui_vue) {
+(function (exports,ui_progressbarjs_uploader,ui_vue_vuex,im_model,main_core_events,im_const,ui_vue_components_audioplayer,ui_designTokens,ui_vue_directives_lazyload,ui_icons,ui_vue_components_socialvideo,im_lib_utils,ui_vue) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -56563,14 +58593,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div :class=\"['bx-im-element-file-video', {'bx-im-element-file-video-safari': isSafari}]\" :style=\"styleBoxSizes\" ref=\"container\">\n\t\t\t<bx-socialvideo \n\t\t\t\t:id=\"file.id\" \n\t\t\t\t:src=\"file.urlShow\" \n\t\t\t\t:preview=\"file.urlPreview\" \n\t\t\t\t:containerStyle=\"styleBoxSizes\"\n\t\t\t\t:elementStyle=\"styleVideoSizes\"\n\t\t\t\t:autoplay=\"autoplay\"\n\t\t\t\t:showControls=\"!file.viewerAttrs.viewerType\"\n\t\t\t\t:data-viewer=\"file.viewerAttrs.viewer === null\"\n\t\t\t\t:data-viewer-type=\"file.viewerAttrs.viewerType? file.viewerAttrs.viewerType: false\"\n\t\t\t\t:data-src=\"file.viewerAttrs.src? file.viewerAttrs.src: false\"\n\t\t\t\t:data-viewer-group-by=\"file.viewerAttrs.viewerGroupBy? file.viewerAttrs.viewerGroupBy: false\"\n\t\t\t\t:data-title=\"file.viewerAttrs.title? file.viewerAttrs.title: false\"\n\t\t\t\t:data-actions=\"file.viewerAttrs.action? file.viewerAttrs.actions: false\"\n\t\t\t\t@click=\"download(file, $event)\"\n\t\t\t/>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX.ProgressBarJs,BX,BX.Messenger.Model,BX.Event,BX.Messenger.Const,window,window,BX,window,BX.Messenger.Lib,BX));
+}((this.window = this.window || {}),BX.ProgressBarJs,BX,BX.Messenger.Model,BX.Event,BX.Messenger.Const,window,BX,window,BX,window,BX.Messenger.Lib,BX));
  
 
 
 
 
 // file: /bitrix/js/im/view/element/attach/dist/attach.bundle.js
-(function (exports,ui_icons_disk,ui_vue_directives_lazyload,im_model,im_lib_utils,ui_vue) {
+(function (exports,ui_designTokens,ui_icons_disk,ui_vue_directives_lazyload,im_model,im_lib_utils,ui_vue) {
 	'use strict';
 
 	/**
@@ -57194,14 +59224,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div class=\"bx-im-element-attach\">\n\t\t\t<div v-if=\"color\" class=\"bx-im-element-attach-border\" :style=\"{borderColor: color}\"></div>\n\t\t\t<div class=\"bx-im-element-attach-content\">\n\t\t\t\t<template v-for=\"(block, index) in config.BLOCKS\">\n\t\t\t\t\t<component :is=\"getComponentForBlock(block)\" :config=\"block\" :color=\"color\" :key=\"index\" />\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,window,BX.Messenger.Model,BX.Messenger.Lib,BX));
+}((this.window = this.window || {}),BX,BX,window,BX.Messenger.Model,BX.Messenger.Lib,BX));
  
 
 
 
 
 // file: /bitrix/js/im/view/element/keyboard/dist/keyboard.bundle.js
-(function (exports,ui_vue,im_lib_utils,im_lib_logger) {
+(function (exports,ui_designTokens,ui_vue,im_lib_utils,im_lib_logger) {
 	'use strict';
 
 	/**
@@ -57364,14 +59394,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div :class=\"['bx-im-element-keyboard', {'bx-im-element-keyboard-mobile': isMobile}]\">\n\t\t\t<template v-for=\"(button, index) in localButtons\">\n\t\t\t\t<div v-if=\"button.TYPE === ButtonType.newline\" class=\"bx-im-element-keyboard-button-separator\"></div>\n\t\t\t\t<span v-else-if=\"button.TYPE === ButtonType.button\" :class=\"[\n\t\t\t\t\t'bx-im-element-keyboard-button', \n\t\t\t\t\t'bx-im-element-keyboard-button-'+button.DISPLAY.toLowerCase(), \n\t\t\t\t\t{\n\t\t\t\t\t\t'bx-im-element-keyboard-button-disabled': isBlocked || button.DISABLED === 'Y',\n\t\t\t\t\t\t'bx-im-element-keyboard-button-progress': button.WAIT === 'Y',\n\t\t\t\t\t}\n\t\t\t\t]\" @click=\"click(button)\">\n\t\t\t\t\t<span class=\"bx-im-element-keyboard-button-text\" :style=\"getStyles(button)\">{{button.TEXT}}</span>\n\t\t\t\t</span>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX.Messenger.Lib,BX.Messenger.Lib));
+}((this.window = this.window || {}),BX,BX,BX.Messenger.Lib,BX.Messenger.Lib));
  
 
 
 
 
 // file: /bitrix/js/im/view/element/chatteaser/dist/chatteaser.bundle.js
-(function (exports,ui_vue,im_lib_utils) {
+(function (exports,ui_designTokens,ui_vue,im_lib_utils) {
 	'use strict';
 
 	/**
@@ -57408,14 +59438,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div class=\"bx-im-element-chat-teaser\" @click=\"$emit('click', $event)\">\n\t\t\t<span class=\"bx-im-element-chat-teaser-join\">{{$Bitrix.Loc.getMessage('IM_MESSENGER_COMMENT_OPEN')}}</span>\n\t\t\t<span class=\"bx-im-element-chat-teaser-comment\">\n\t\t\t\t<span class=\"bx-im-element-chat-teaser-counter\">{{formattedCounter}}</span>, {{formattedDate}}\n\t\t\t</span>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX.Messenger.Lib));
+}((this.window = this.window || {}),BX,BX,BX.Messenger.Lib));
  
 
 
 
 
 // file: /bitrix/js/ui/vue/components/reaction/dist/reaction.bundle.js
-(function (exports,ui_vue) {
+(function (exports,ui_fonts_opensans,ui_vue,main_core_events) {
 	'use strict';
 
 	/**
@@ -57442,6 +59472,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	   * @emits 'list' {action: string, type: string}
 	   */
 	  props: {
+	    id: {
+	      "default": ''
+	    },
 	    values: {
 	      "default": {}
 	    },
@@ -57461,6 +59494,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  },
 	  created: function created() {
 	    this.localValues = Object.assign({}, this.values);
+	    main_core_events.EventEmitter.subscribe('ui:reaction:press', this.onPress);
+	  },
+	  destroy: function destroy() {
+	    main_core_events.EventEmitter.unsubscribe('ui:reaction:press', this.onPress);
 	  },
 	  watch: {
 	    values: function values(_values) {
@@ -57475,14 +59512,12 @@ this.BX.Messenger = this.BX.Messenger || {};
 	        values: this.localValues
 	      });
 	    },
-	    likeIt: function likeIt(event) {
+	    press: function press() {
 	      var _this = this;
 
-	      var emotion = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : ReactionType.like;
+	      var emotion = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : ReactionType.like;
 
 	      if (this.userReaction === ReactionType.none) {
-	        emotion = ReactionType.like;
-
 	        if (!this.localValues[emotion]) {
 	          this.localValues = Object.assign({}, this.localValues, babelHelpers.defineProperty({}, emotion, []));
 	        }
@@ -57508,11 +59543,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          type: this.userReaction
 	        });
 	      }
-
-	      event.preventDefault();
 	    },
-	    preventDefault: function preventDefault(event) {
-	      event.preventDefault();
+	    onPress: function onPress(event) {
+	      var data = event.getData();
+
+	      if (!this.id || data.id !== this.id) {
+	        return false;
+	      }
+
+	      if (!data.emotion) {
+	        data.emotion = ReactionType.like;
+	      }
+
+	      this.press(data.emotion);
 	    }
 	  },
 	  computed: {
@@ -57560,17 +59603,17 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return UA.includes('android') || UA.includes('iphone') || UA.includes('ipad') || UA.includes('bitrixmobile');
 	    }
 	  },
-	  template: "\n\t\t<div :class=\"['ui-vue-reaction', {'ui-vue-reaction-mobile': isMobile}]\">\n\t\t\t<transition name=\"ui-vue-reaction-result-animation\">\n\t\t\t\t<div v-if=\"isTypesShowed\" class=\"ui-vue-reaction-result\" @click=\"list\">\n\t\t\t\t\t<transition-group tag=\"div\" class=\"ui-vue-reaction-result-types\" name=\"ui-vue-reaction-result-type-animation\" >\n\t\t\t\t\t\t<span v-for=\"element in types\" :class=\"['ui-vue-reaction-result-type', 'ui-vue-reaction-icon-'+element.type]\" :key=\"element.type\"></span>\n\t\t\t\t\t</transition-group>\t\n\t\t\t\t\t<div class=\"ui-vue-reaction-result-counter\">{{counter}}</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<div v-if=\"userId > 0\"  class=\"ui-vue-reaction-button\" @click=\"likeIt\">\n\t\t\t\t<div class=\"ui-vue-reaction-button-container\">\n\t\t\t\t\t<div :class=\"['ui-vue-reaction-button-icon', 'ui-vue-reaction-icon-'+userReaction, {'ui-vue-reaction-button-pressed': buttonAnimate}]\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div :class=\"['ui-vue-reaction', {'ui-vue-reaction-mobile': isMobile}]\">\n\t\t\t<transition name=\"ui-vue-reaction-result-animation\">\n\t\t\t\t<div v-if=\"isTypesShowed\" class=\"ui-vue-reaction-result\" @click=\"list\">\n\t\t\t\t\t<transition-group tag=\"div\" class=\"ui-vue-reaction-result-types\" name=\"ui-vue-reaction-result-type-animation\" >\n\t\t\t\t\t\t<span v-for=\"element in types\" :class=\"['ui-vue-reaction-result-type', 'ui-vue-reaction-icon-'+element.type]\" :key=\"element.type\"></span>\n\t\t\t\t\t</transition-group>\t\n\t\t\t\t\t<div class=\"ui-vue-reaction-result-counter\">{{counter}}</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t\t<div v-if=\"userId > 0\"  class=\"ui-vue-reaction-button\" @click.prevent=\"press()\">\n\t\t\t\t<div class=\"ui-vue-reaction-button-container\">\n\t\t\t\t\t<div :class=\"['ui-vue-reaction-button-icon', 'ui-vue-reaction-icon-'+userReaction, {'ui-vue-reaction-button-pressed': buttonAnimate}]\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX));
+}((this.window = this.window || {}),BX,BX,BX.Event));
  
 
 
 
 
 // file: /bitrix/js/im/view/message/body/dist/body.bundle.js
-(function (exports,im_view_element_media,im_view_element_attach,im_view_element_keyboard,im_view_element_chatteaser,ui_vue_components_reaction,ui_vue,ui_vue_vuex,im_model,im_const,im_lib_utils,main_core,main_core_events) {
+(function (exports,ui_designTokens,im_view_element_media,im_view_element_attach,im_view_element_keyboard,im_view_element_chatteaser,ui_vue_components_reaction,ui_vue,ui_vue_vuex,im_model,im_const,im_lib_utils,main_core,main_core_events) {
 	'use strict';
 
 	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
@@ -57909,10 +59952,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }
 	  })),
 	  // language=Vue
-	  template: "\n\t\t<div class=\"bx-im-message-content-wrap\">\n\t\t\t<template v-if=\"contentType == ContentType.default || contentType == ContentType.audio || contentType == ContentType.progress || (contentType !== ContentType.image && isDesktop() && getDesktopVersion() < 47)\">\n\t\t\t\t<div class=\"bx-im-message-content\">\n\t\t\t\t\t<span class=\"bx-im-message-content-box\">\n\t\t\t\t\t\t<div class=\"bx-im-message-content-name-wrap\">\n\t\t\t\t\t\t\t<template v-if=\"showName && user.extranet && messageType == MessageType.opponent\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-message-extranet-icon\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-if=\"showName && messageType == MessageType.opponent\">\n\t\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-name', referenceContentNameClassName]\" :style=\"{color: userColor}\" @click=\"clickByUserName({user: user, event: $event})\">{{userName}}</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body', referenceContentBodyClassName]\">\n\t\t\t\t\t\t\t<template v-if=\"(contentType == ContentType.audio) && (!isDesktop() || (isDesktop() && getDesktopVersion() > 43))\">\n\t\t\t\t\t\t\t\t<bx-im-view-element-file-audio v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<bx-im-view-element-file v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body-wrap', {\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-with-text': messageText.length > 0,\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-without-text': messageText.length <= 0,\n\t\t\t\t\t\t\t}]\">\n\t\t\t\t\t\t\t\t<template v-if=\"messageText\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-text\" v-html=\"messageText\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-for=\"(config, id) in messageAttach\">\n\t\t\t\t\t\t\t\t\t<bx-im-view-element-attach :baseColor=\"chatColor\" :config=\"config\" :key=\"id\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-params\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-date\">{{formattedDate}}</span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</span>\n\t\t\t\t\t<div v-if=\"!message.push && enableReactions && message.authorId\" class=\"bx-im-message-content-reaction\">\n\t\t\t\t\t\t<bx-reaction :values=\"messageReactions\" :userId=\"userId\" :openList=\"false\" @set=\"setReaction({message: message, reaction: $event})\" @list=\"openReactionList({message: message, values: $event.values})\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"contentType == ContentType.richLink\">\n\t\t\t\t<!-- richLink type markup -->\n\t\t\t</template>\n\t\t\t<template v-else-if=\"contentType == ContentType.image || contentType == ContentType.video\">\n\t\t\t\t<div class=\"bx-im-message-content bx-im-message-content-fit\">\n\t\t\t\t\t<span class=\"bx-im-message-content-box\">\n\t\t\t\t\t\t<template v-if=\"showName && messageType == MessageType.opponent\">\n\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-name', referenceContentNameClassName]\" :style=\"{color: user.color}\" @click=\"clickByUserName({user: user, event: $event})\">{{!showAvatar? user.name: (user.firstName? user.firstName: user.name)}}</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body', referenceContentBodyClassName]\">\n\t\t\t\t\t\t\t<template v-if=\"contentType == ContentType.image\">\n\t\t\t\t\t\t\t\t<bx-im-view-element-file-image v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"contentType == ContentType.video\">\n\t\t\t\t\t\t\t\t<bx-im-view-element-file-video v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body-wrap', {\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-with-text': messageText.length > 0,\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-without-text': messageText.length <= 0,\n\t\t\t\t\t\t\t}]\">\n\t\t\t\t\t\t\t\t<template v-if=\"messageText\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-text\" v-html=\"messageText\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-params\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-date\">{{formattedDate}}</span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</span>\n\t\t\t\t\t<div v-if=\"!message.push && enableReactions && message.authorId\" class=\"bx-im-message-content-reaction\">\n\t\t\t\t\t\t<bx-reaction :values=\"messageReactions\" :userId=\"userId\" :openList=\"false\" @set=\"setReaction({message: message, reaction: $event})\" @list=\"openReactionList({message: message, values: $event.values})\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"keyboardButtons\">\n\t\t\t\t<bx-im-view-element-keyboard :buttons=\"keyboardButtons\" :messageId=\"message.id\" :userId=\"userId\" :dialogId=\"dialogId\" @click=\"clickByKeyboardButton({message: message, event: $event})\"/>\n\t\t\t</template>\n\t\t\t<template v-if=\"chatTeaser\">\n\t\t\t\t<bx-im-view-element-chat-teaser :messageCounter=\"chatTeaser.messageCounter\" :messageLastDate=\"chatTeaser.messageLastDate\" :languageId=\"chatTeaser.languageId\" @click=\"clickByChatTeaser({message: message, event: $event})\"/>\n\t\t\t</template>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"bx-im-message-content-wrap\">\n\t\t\t<template v-if=\"contentType == ContentType.default || contentType == ContentType.audio || contentType == ContentType.progress || (contentType !== ContentType.image && isDesktop() && getDesktopVersion() < 47)\">\n\t\t\t\t<div class=\"bx-im-message-content\">\n\t\t\t\t\t<span class=\"bx-im-message-content-box\">\n\t\t\t\t\t\t<div class=\"bx-im-message-content-name-wrap\">\n\t\t\t\t\t\t\t<template v-if=\"showName && user.extranet && messageType == MessageType.opponent\">\n\t\t\t\t\t\t\t\t<div class=\"bx-im-message-extranet-icon\"></div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-if=\"showName && messageType == MessageType.opponent\">\n\t\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-name', referenceContentNameClassName]\" :style=\"{color: userColor}\" @click=\"clickByUserName({user: user, event: $event})\">{{userName}}</div>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body', referenceContentBodyClassName]\">\n\t\t\t\t\t\t\t<template v-if=\"(contentType == ContentType.audio) && (!isDesktop() || (isDesktop() && getDesktopVersion() > 43))\">\n\t\t\t\t\t\t\t\t<bx-im-view-element-file-audio v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t\t<bx-im-view-element-file v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body-wrap', {\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-with-text': messageText.length > 0,\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-without-text': messageText.length <= 0,\n\t\t\t\t\t\t\t}]\">\n\t\t\t\t\t\t\t\t<template v-if=\"messageText\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-text\" v-html=\"messageText\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<template v-for=\"(config, id) in messageAttach\">\n\t\t\t\t\t\t\t\t\t<bx-im-view-element-attach :baseColor=\"chatColor\" :config=\"config\" :key=\"id\"/>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-params\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-date\">{{formattedDate}}</span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</span>\n\t\t\t\t\t<div v-if=\"!message.push && enableReactions && message.authorId\" class=\"bx-im-message-content-reaction\">\n\t\t\t\t\t\t<bx-reaction :id=\"'message'+message.id\" :values=\"messageReactions\" :userId=\"userId\" :openList=\"false\" @set=\"setReaction({message: message, reaction: $event})\" @list=\"openReactionList({message: message, values: $event.values})\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-else-if=\"contentType == ContentType.richLink\">\n\t\t\t\t<!-- richLink type markup -->\n\t\t\t</template>\n\t\t\t<template v-else-if=\"contentType == ContentType.image || contentType == ContentType.video\">\n\t\t\t\t<div class=\"bx-im-message-content bx-im-message-content-fit\">\n\t\t\t\t\t<span class=\"bx-im-message-content-box\">\n\t\t\t\t\t\t<template v-if=\"showName && messageType == MessageType.opponent\">\n\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-name', referenceContentNameClassName]\" :style=\"{color: user.color}\" @click=\"clickByUserName({user: user, event: $event})\">{{!showAvatar? user.name: (user.firstName? user.firstName: user.name)}}</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body', referenceContentBodyClassName]\">\n\t\t\t\t\t\t\t<template v-if=\"contentType == ContentType.image\">\n\t\t\t\t\t\t\t\t<bx-im-view-element-file-image v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<template v-else-if=\"contentType == ContentType.video\">\n\t\t\t\t\t\t\t\t<bx-im-view-element-file-video v-for=\"file in filesData\" :messageType=\"messageType\" :file=\"file\" :key=\"file.templateId\"/>\n\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t<div :class=\"['bx-im-message-content-body-wrap', {\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-with-text': messageText.length > 0,\n\t\t\t\t\t\t\t\t'bx-im-message-content-body-without-text': messageText.length <= 0,\n\t\t\t\t\t\t\t}]\">\n\t\t\t\t\t\t\t\t<template v-if=\"messageText\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-text\" v-html=\"messageText\"></span>\n\t\t\t\t\t\t\t\t</template>\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-params\">\n\t\t\t\t\t\t\t\t\t<span class=\"bx-im-message-content-date\">{{formattedDate}}</span>\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</span>\n\t\t\t\t\t<div v-if=\"!message.push && enableReactions && message.authorId\" class=\"bx-im-message-content-reaction\">\n\t\t\t\t\t\t<bx-reaction :id=\"'message'+message.id\" :values=\"messageReactions\" :userId=\"userId\" :openList=\"false\" @set=\"setReaction({message: message, reaction: $event})\" @list=\"openReactionList({message: message, values: $event.values})\"/>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</template>\n\t\t\t<template v-if=\"keyboardButtons\">\n\t\t\t\t<bx-im-view-element-keyboard :buttons=\"keyboardButtons\" :messageId=\"message.id\" :userId=\"userId\" :dialogId=\"dialogId\" @click=\"clickByKeyboardButton({message: message, event: $event})\"/>\n\t\t\t</template>\n\t\t\t<template v-if=\"chatTeaser\">\n\t\t\t\t<bx-im-view-element-chat-teaser :messageCounter=\"chatTeaser.messageCounter\" :messageLastDate=\"chatTeaser.messageLastDate\" :languageId=\"chatTeaser.languageId\" @click=\"clickByChatTeaser({message: message, event: $event})\"/>\n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),window,window,window,window,window,BX,BX,BX.Messenger.Model,BX.Messenger.Const,BX.Messenger.Lib,BX,BX.Event));
+}((this.window = this.window || {}),BX,window,window,window,window,window,BX,BX,BX.Messenger.Model,BX.Messenger.Const,BX.Messenger.Lib,BX,BX.Event));
  
 
 
@@ -58123,6 +60166,9 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    },
 	    clickByMessageRetry: function clickByMessageRetry(event) {
 	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.clickOnMessageRetry, event);
+	    },
+	    doubleClickByMessage: function doubleClickByMessage(event) {
+	      main_core_events.EventEmitter.emit(im_const.EventType.dialog.doubleClickOnMessage, event);
 	    },
 	    gestureRouter: function gestureRouter(eventName, event) {
 	      this.gestureQuote(eventName, event);
@@ -58378,7 +60424,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      return this.showLargeFont && this.message.params.LARGE_FONT === 'Y';
 	    }
 	  },
-	  template: "\n\t\t<div :class=\"['bx-im-message', {\n\t\t\t\t'bx-im-message-without-menu': !showMenu,\n\t\t\t\t'bx-im-message-without-avatar': !showAvatar,\n\t\t\t\t'bx-im-message-type-system': type === MessageType.system,\n\t\t\t\t'bx-im-message-type-self': type === MessageType.self,\n\t\t\t\t'bx-im-message-type-other': type !== MessageType.self,\n\t\t\t\t'bx-im-message-type-opponent': type === MessageType.opponent,\n\t\t\t\t'bx-im-message-status-error': message.error,\n\t\t\t\t'bx-im-message-status-unread': message.unread,\n\t\t\t\t'bx-im-message-status-blink': message.blink,\n\t\t\t\t'bx-im-message-status-edited': isEdited,\n\t\t\t\t'bx-im-message-status-deleted': isDeleted,\n\t\t\t\t'bx-im-message-large-font': isLargeFont,\n\t\t\t}]\" \n\t\t\t@touchstart=\"gestureRouter('touchstart', $event)\"\n\t\t\t@touchmove=\"gestureRouter('touchmove', $event)\"\n\t\t\t@touchend=\"gestureRouter('touchend', $event)\"\n\t\t\tref=\"body\"\n\t\t\t:style=\"{\n\t\t\t\twidth: dragWidth > 0? dragWidth+'px': '', \n\t\t\t\tmarginLeft: (enableGestureQuoteFromRight && dragPosition < 0) || (!enableGestureQuoteFromRight && dragPosition > 0)? dragPosition+'px': '',\n\t\t\t}\"\n\t\t>\n\t\t\t<template v-if=\"type === MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-message-box-status\">\n\t\t\t\t\t<template v-if=\"message.sending\">\n\t\t\t\t\t\t<div class=\"bx-im-message-sending\"></div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<transition name=\"bx-im-message-status-retry\">\n\t\t\t\t\t\t<template v-if=\"!message.sending && message.error && message.retry\">\n\t\t\t\t\t\t\t<div class=\"bx-im-message-status-retry\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_RETRY_TITLE')\" @click=\"clickByMessageRetry({message: message, event: $event})\">\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-retry-icon\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</transition>\n\t\t\t\t\t<template v-if=\"showMenu && !message.sending && !message.error\">\n\t\t\t\t\t\t<div class=\"bx-im-message-status-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template> \n\t\t\t\t</div>\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t\t<template v-else-if=\"type !== MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<template v-if=\"type === MessageType.opponent\">\n\t\t\t\t\t<div v-if=\"showAvatar\" class=\"bx-im-message-avatar\" @click=\"clickByAvatar({user: userData, event: $event})\">\n\t\t\t\t\t\t<div :class=\"['bx-im-message-avatar-image', {\n\t\t\t\t\t\t\t\t'bx-im-message-avatar-image-default': !userData.avatar\n\t\t\t\t\t\t\t}]\"\n\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\tbackgroundColor: !userData.avatar? userData.color: '', \n\t\t\t\t\t\t\t\tbackgroundImage: userAvatar\n\t\t\t\t\t\t\t}\" \n\t\t\t\t\t\t\t:title=\"userData.name\"\n\t\t\t\t\t\t></div>\t\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:files=\"filesData\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"showMenu\"  class=\"bx-im-message-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t</div>\t\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t</div>\n\t"
+	  // language=vue
+	  template: "\n\t\t<div :class=\"['bx-im-message', {\n\t\t\t\t'bx-im-message-without-menu': !showMenu,\n\t\t\t\t'bx-im-message-without-avatar': !showAvatar,\n\t\t\t\t'bx-im-message-type-system': type === MessageType.system,\n\t\t\t\t'bx-im-message-type-self': type === MessageType.self,\n\t\t\t\t'bx-im-message-type-other': type !== MessageType.self,\n\t\t\t\t'bx-im-message-type-opponent': type === MessageType.opponent,\n\t\t\t\t'bx-im-message-status-error': message.error,\n\t\t\t\t'bx-im-message-status-unread': message.unread,\n\t\t\t\t'bx-im-message-status-blink': message.blink,\n\t\t\t\t'bx-im-message-status-edited': isEdited,\n\t\t\t\t'bx-im-message-status-deleted': isDeleted,\n\t\t\t\t'bx-im-message-large-font': isLargeFont,\n\t\t\t}]\" \n\t\t\t@touchstart=\"gestureRouter('touchstart', $event)\"\n\t\t\t@touchmove=\"gestureRouter('touchmove', $event)\"\n\t\t\t@touchend=\"gestureRouter('touchend', $event)\"\n\t\t\t@dblclick=\"doubleClickByMessage({message: message, event: $event})\"\n\t\t\tref=\"body\"\n\t\t\t:style=\"{\n\t\t\t\twidth: dragWidth > 0? dragWidth+'px': '', \n\t\t\t\tmarginLeft: (enableGestureQuoteFromRight && dragPosition < 0) || (!enableGestureQuoteFromRight && dragPosition > 0)? dragPosition+'px': '',\n\t\t\t}\"\n\t\t>\n\t\t\t<template v-if=\"type === MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"bx-im-message-box-status\">\n\t\t\t\t\t<template v-if=\"message.sending\">\n\t\t\t\t\t\t<div class=\"bx-im-message-sending\"></div>\n\t\t\t\t\t</template>\n\t\t\t\t\t<transition name=\"bx-im-message-status-retry\">\n\t\t\t\t\t\t<template v-if=\"!message.sending && message.error && message.retry\">\n\t\t\t\t\t\t\t<div class=\"bx-im-message-status-retry\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_RETRY_TITLE')\" @click=\"clickByMessageRetry({message: message, event: $event})\">\n\t\t\t\t\t\t\t\t<span class=\"bx-im-message-retry-icon\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</transition>\n\t\t\t\t\t<template v-if=\"showMenu && !message.sending && !message.error\">\n\t\t\t\t\t\t<div class=\"bx-im-message-status-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</template> \n\t\t\t\t</div>\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t\t<template v-else-if=\"type !== MessageType.self\">\n\t\t\t\t<template v-if=\"dragIconShowLeft\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-left\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t\t<template v-if=\"type === MessageType.opponent\">\n\t\t\t\t\t<div v-if=\"showAvatar\" class=\"bx-im-message-avatar\" @click=\"clickByAvatar({user: userData, event: $event})\">\n\t\t\t\t\t\t<div :class=\"['bx-im-message-avatar-image', {\n\t\t\t\t\t\t\t\t'bx-im-message-avatar-image-default': !userData.avatar\n\t\t\t\t\t\t\t}]\"\n\t\t\t\t\t\t\t:style=\"{\n\t\t\t\t\t\t\t\tbackgroundColor: !userData.avatar? userData.color: '', \n\t\t\t\t\t\t\t\tbackgroundImage: userAvatar\n\t\t\t\t\t\t\t}\" \n\t\t\t\t\t\t\t:title=\"userData.name\"\n\t\t\t\t\t\t></div>\t\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t\t<div class=\"bx-im-message-box\">\n\t\t\t\t\t<component :is=\"componentBodyId\"\n\t\t\t\t\t\t:message=\"message\"\n\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t:chatId=\"chatId\"\n\t\t\t\t\t\t:messageType=\"type\"\n\t\t\t\t\t\t:files=\"filesData\"\n\t\t\t\t\t\t:showAvatar=\"showAvatar\"\n\t\t\t\t\t\t:showName=\"showName\"\n\t\t\t\t\t\t:enableReactions=\"enableReactions\"\n\t\t\t\t\t\t:referenceContentBodyClassName=\"referenceContentBodyClassName\"\n\t\t\t\t\t\t:referenceContentNameClassName=\"referenceContentNameClassName\"\n\t\t\t\t\t/>\n\t\t\t\t</div>\n\t\t\t\t<div v-if=\"showMenu\"  class=\"bx-im-message-menu\" :title=\"$Bitrix.Loc.getMessage('IM_MESSENGER_MESSAGE_MENU_TITLE')\" @click=\"clickByMessageMenu({message: message, event: $event})\">\n\t\t\t\t\t<span class=\"bx-im-message-menu-icon\"></span>\n\t\t\t\t</div>\t\n\t\t\t\t<template v-if=\"dragIconShowRight\">\n\t\t\t\t\t<div class=\"bx-im-message-reply bx-im-message-reply-right\">\n\t\t\t\t\t\t<div class=\"bx-im-message-reply-icon\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</template> \n\t\t\t</template>\n\t\t</div>\n\t"
 	});
 
 }((this.window = this.window || {}),window,BX.Messenger.Model,BX,BX.Messenger.Const,BX.Messenger.Lib,BX.Messenger.Lib,BX.Event));
@@ -58389,7 +60436,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 // file: /bitrix/js/im/component/dialog/dist/dialog.bundle.js
 this.BX = this.BX || {};
-(function (exports,im_view_message,im_lib_utils,im_lib_animation,im_lib_logger,main_polyfill_intersectionobserver,ui_vue,im_const,main_core,main_core_events,ui_vue_vuex) {
+(function (exports,ui_fonts_opensans,ui_designTokens,im_view_message,im_lib_utils,im_lib_animation,im_lib_logger,main_polyfill_intersectionobserver,ui_vue,im_const,main_core,main_core_events,ui_vue_vuex) {
 	'use strict';
 
 	var ObserverType = Object.freeze({
@@ -60436,7 +62483,7 @@ this.BX = this.BX || {};
 	  template: "\n\t\t<div :class=\"dialogWrapClasses\">\n\t\t\t<div :class=\"dialogBoxClasses\" ref=\"chatBox\">\n\t\t\t\t<!-- Error state -->\n\t\t\t\t<ErrorState v-if=\"application.error.active\" />\n\t\t\t\t<template v-else>\n\t\t\t\t\t<div :class=\"dialogBodyClasses\" key=\"with-message\">\n\t\t\t\t\t\t<!-- Loading state -->\n\t\t\t\t\t  \t<LoadingState v-if=\"isLoading\" />\n\t\t\t\t\t\t<!-- Empty state -->\n\t\t\t\t\t  \t<EmptyState v-else-if=\"isEmpty\" />\n\t\t\t\t\t\t<!-- Message list state -->\n\t\t\t\t\t\t<template v-else>\n\t\t\t\t\t\t\t<div class=\"bx-mobilechat-dialog\">\n\t\t\t\t\t\t\t\t<MessageList\n\t\t\t\t\t\t\t\t\t:userId=\"userId\" \n\t\t\t\t\t\t\t\t\t:dialogId=\"dialogId\"\n\t\t\t\t\t\t\t\t\t:messageLimit=\"application.dialog.messageLimit\"\n\t\t\t\t\t\t\t\t\t:enableReadMessages=\"application.dialog.enableReadMessages\"\n\t\t\t\t\t\t\t\t\t:enableReactions=\"true\"\n\t\t\t\t\t\t\t\t\t:enableDateActions=\"false\"\n\t\t\t\t\t\t\t\t\t:enableCreateContent=\"false\"\n\t\t\t\t\t\t\t\t\t:enableGestureQuote=\"enableGestureQuote\"\n\t\t\t\t\t\t\t\t\t:enableGestureQuoteFromRight=\"enableGestureQuoteFromRight\"\n\t\t\t\t\t\t\t\t\t:enableGestureMenu=\"enableGestureMenu\"\n\t\t\t\t\t\t\t\t\t:showMessageUserName=\"showMessageUserName\"\n\t\t\t\t\t\t\t\t\t:showMessageAvatar=\"showMessageAvatar\"\n\t\t\t\t\t\t\t\t\t:showMessageMenu=\"false\"\n\t\t\t\t\t\t\t\t />\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<!-- Quote panel -->\n\t\t\t\t\t\t\t<QuotePanel :quotePanelData=\"quotePanelData\" />\n\t\t\t\t\t\t</template>\n\t\t\t\t\t</div>\n\t\t\t\t</template>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.BX.Messenger = this.BX.Messenger || {}),window,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Messenger.Const,BX,BX.Event,BX));
+}((this.BX.Messenger = this.BX.Messenger || {}),BX,BX,window,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Messenger.Const,BX,BX.Event,BX));
  
 
 
@@ -60633,7 +62680,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 // file: /bitrix/js/im/component/textarea/dist/textarea.bundle.js
-(function (exports,ui_vue,im_lib_localstorage,im_lib_utils,main_core,ui_vue_vuex,main_core_events,im_const) {
+(function (exports,ui_designTokens,ui_vue,im_lib_localstorage,im_lib_utils,main_core,ui_vue_vuex,main_core_events,im_const) {
 	'use strict';
 
 	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
@@ -61073,14 +63120,14 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div :class=\"textareaClassName\">\n\t\t\t<div class=\"bx-im-textarea-box\">\n\t\t\t\t<textarea ref=\"textarea\" class=\"bx-im-textarea-input\" @keydown=\"onKeyDown\" @keyup=\"onKeyUp\" @paste=\"onPaste\" @input=\"onInput\" @focus=\"onFocus\" @blur=\"onBlur\" v-bx-im-focus=\"autoFocus\" :placeholder=\"localize.BX_MESSENGER_TEXTAREA_PLACEHOLDER\">{{placeholderMessage}}</textarea>\n\t\t\t\t<transition enter-active-class=\"bx-im-textarea-send-button-show\" leave-active-class=\"bx-im-textarea-send-button-hide\">\n\t\t\t\t\t<button \n\t\t\t\t\t\tv-if=\"currentMessage\" \n\t\t\t\t\t\t:class=\"buttonStyle.button.className\" \n\t\t\t\t\t\t:style=\"buttonStyle.button.style\" \n\t\t\t\t\t\t:title=\"localize.BX_MESSENGER_TEXTAREA_BUTTON_SEND\"\n\t\t\t\t\t\t@click=\"sendMessage\" \n\t\t\t\t\t\t@touchend=\"sendMessage\" \n\t\t\t\t\t\t@mousedown=\"preventDefault\" \n\t\t\t\t\t\t@touchstart=\"preventDefault\" \n\t\t\t\t\t/>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t\t<div class=\"bx-im-textarea-app-box\">\n\t\t\t\t<label v-if=\"enableFile && !isIE11\" class=\"bx-im-textarea-app-button bx-im-textarea-app-file\" :title=\"localize.BX_MESSENGER_TEXTAREA_FILE\">\n\t\t\t\t\t<input type=\"file\" @click=\"onFileClick($event)\" @change=\"onFileSelect($event)\" multiple>\n\t\t\t\t</label>\n\t\t\t\t<button class=\"bx-im-textarea-app-button bx-im-textarea-app-smile\" :title=\"localize.BX_MESSENGER_TEXTAREA_SMILE\" @click=\"onAppButtonClick('smile', $event)\"></button>\n\t\t\t\t<button v-if=\"false\" class=\"bx-im-textarea-app-button bx-im-textarea-app-gif\" :title=\"localize.BX_MESSENGER_TEXTAREA_GIPHY\" @click=\"onAppButtonClick('giphy', $event)\"></button>\n\t\t\t</div>\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Event,BX.Messenger.Const));
+}((this.window = this.window || {}),BX,BX,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Event,BX.Messenger.Const));
  
 
 
 
 
 // file: /bitrix/js/imopenlines/component/message/dist/message.bundle.js
-(function (exports,ui_vue,ui_vue_vuex,im_view_message,main_core_events) {
+(function (exports,ui_vue,ui_vue_vuex,im_view_message,ui_fonts_opensans,main_core_events) {
 	'use strict';
 
 	/**
@@ -61274,7 +63321,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  template: "\n\t\t<div v-if=\"showMessage\" class=\"bx-imopenlines-message\">\n\t\t\t<div v-if=\"dialogNumber\" class=\"bx-imopenlines-message-dialog-number\">{{dialogNumber}}</div>\n\t\t\t#PARENT_TEMPLATE#\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX,window,BX.Event));
+}((this.window = this.window || {}),BX,BX,window,BX,BX.Event));
  
 
 
@@ -62509,10 +64556,9 @@ this.BX.Messenger.Provider = this.BX.Messenger.Provider || {};
 	      this.controller.application.stopOpponentWriting({
 	        dialogId: params.dialogId,
 	        userId: params.message.senderId
-	      }); //if we sent message and there are no unloaded unread pages - read all messages on server and client, set counter to 0
-	      //TODO: to think about it during new chat development
+	      }); // if we sent message - read all messages on server and client, set counter to 0
 
-	      if (params.message.senderId === this.controller.application.getUserId() && this.controller.application.isUnreadMessagesLoaded()) {
+	      if (params.message.senderId === this.controller.application.getUserId()) {
 	        if (this.store.state.dialogues.collection[params.dialogId] && this.store.state.dialogues.collection[params.dialogId].counter !== 0) {
 	          this.controller.restClient.callMethod('im.dialog.read', {
 	            dialog_id: params.dialogId
@@ -64699,86 +66745,10 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 
 
-// file: /bitrix/js/im/lib/clipboard/dist/clipboard.bundle.js
-this.BX = this.BX || {};
-this.BX.Messenger = this.BX.Messenger || {};
-(function (exports) {
-	'use strict';
-
-	/**
-	 * Bitrix Messenger
-	 * Clipboard manager
-	 *
-	 * @package bitrix
-	 * @subpackage im
-	 * @copyright 2001-2020 Bitrix
-	 */
-	var Clipboard = /*#__PURE__*/function () {
-	  function Clipboard() {
-	    babelHelpers.classCallCheck(this, Clipboard);
-	  }
-
-	  babelHelpers.createClass(Clipboard, null, [{
-	    key: "copy",
-	    value: function copy() {
-	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
-	      var store = Clipboard.getStore();
-
-	      if (text) {
-	        store.focus();
-	        store.value = text;
-	        store.selectionStart = 0;
-	        document.execCommand("copy");
-	      } else {
-	        document.execCommand("copy");
-	        store.focus();
-	        document.execCommand("paste");
-	        text = store.value;
-	      }
-
-	      Clipboard.removeStore();
-	      return text;
-	    }
-	  }, {
-	    key: "getStore",
-	    value: function getStore() {
-	      if (Clipboard.store) {
-	        return Clipboard.store;
-	      }
-
-	      Clipboard.store = document.createElement('textarea');
-	      Clipboard.store.style = "position: absolute; opacity: 0; top: -1000px; left: -1000px;";
-	      document.body.insertBefore(Clipboard.store, document.body.firstChild);
-	      return Clipboard.store;
-	    }
-	  }, {
-	    key: "removeStore",
-	    value: function removeStore() {
-	      if (!Clipboard.store) {
-	        return true;
-	      }
-
-	      document.body.removeChild(Clipboard.store);
-	      Clipboard.store = null;
-	      return true;
-	    }
-	  }]);
-	  return Clipboard;
-	}();
-	Clipboard.store = null;
-
-	exports.Clipboard = Clipboard;
-
-}((this.BX.Messenger.Lib = this.BX.Messenger.Lib || {})));
- 
-
-
-
-
 // file: /bitrix/js/im/lib/uploader/dist/uploader.bundle.js
 this.BX = this.BX || {};
 this.BX.Messenger = this.BX.Messenger || {};
-(function (exports,main_core_events) {
+(function (exports,main_core_events,main_core_minimal) {
 	'use strict';
 
 	var FileSender = /*#__PURE__*/function () {
@@ -65228,6 +67198,11 @@ this.BX.Messenger = this.BX.Messenger || {};
 	  }, {
 	    key: "calculateChunkSize",
 	    value: function calculateChunkSize(taskChunkSize) {
+	      if (main_core_minimal.Type.isUndefined(this.isCloud)) // widget case
+	        {
+	          return taskChunkSize;
+	        }
+
 	      var chunk = 0;
 
 	      if (taskChunkSize) {
@@ -65415,7 +67390,83 @@ this.BX.Messenger = this.BX.Messenger || {};
 
 	exports.Uploader = Uploader;
 
-}((this.BX.Messenger.Lib = this.BX.Messenger.Lib || {}),BX.Event));
+}((this.BX.Messenger.Lib = this.BX.Messenger.Lib || {}),BX.Event,BX));
+ 
+
+
+
+
+// file: /bitrix/js/im/lib/clipboard/dist/clipboard.bundle.js
+this.BX = this.BX || {};
+this.BX.Messenger = this.BX.Messenger || {};
+(function (exports) {
+	'use strict';
+
+	/**
+	 * Bitrix Messenger
+	 * Clipboard manager
+	 *
+	 * @package bitrix
+	 * @subpackage im
+	 * @copyright 2001-2020 Bitrix
+	 */
+	var Clipboard = /*#__PURE__*/function () {
+	  function Clipboard() {
+	    babelHelpers.classCallCheck(this, Clipboard);
+	  }
+
+	  babelHelpers.createClass(Clipboard, null, [{
+	    key: "copy",
+	    value: function copy() {
+	      var text = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+	      var store = Clipboard.getStore();
+
+	      if (text) {
+	        store.focus();
+	        store.value = text;
+	        store.selectionStart = 0;
+	        document.execCommand("copy");
+	      } else {
+	        document.execCommand("copy");
+	        store.focus();
+	        document.execCommand("paste");
+	        text = store.value;
+	      }
+
+	      Clipboard.removeStore();
+	      return text;
+	    }
+	  }, {
+	    key: "getStore",
+	    value: function getStore() {
+	      if (Clipboard.store) {
+	        return Clipboard.store;
+	      }
+
+	      Clipboard.store = document.createElement('textarea');
+	      Clipboard.store.style = "position: absolute; opacity: 0; top: -1000px; left: -1000px;";
+	      document.body.insertBefore(Clipboard.store, document.body.firstChild);
+	      return Clipboard.store;
+	    }
+	  }, {
+	    key: "removeStore",
+	    value: function removeStore() {
+	      if (!Clipboard.store) {
+	        return true;
+	      }
+
+	      document.body.removeChild(Clipboard.store);
+	      Clipboard.store = null;
+	      return true;
+	    }
+	  }]);
+	  return Clipboard;
+	}();
+	Clipboard.store = null;
+
+	exports.Clipboard = Clipboard;
+
+}((this.BX.Messenger.Lib = this.BX.Messenger.Lib || {})));
  
 
 
@@ -66833,7 +68884,7 @@ this.BX = this.BX || {};
 
 
 // file: /bitrix/js/imopenlines/component/widget/dist/widget.bundle.js
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_utils,main_md5,main_core,im_lib_logger,im_eventHandler,im_const,main_core_minimal,ui_vue_vuex,ui_vue,main_core_events) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_utils,main_md5,im_lib_uploader,main_core,im_lib_logger,im_eventHandler,im_const,main_core_minimal,ui_vue_vuex,ui_vue,main_core_events) {
 	'use strict';
 
 	/**
@@ -68671,7 +70722,7 @@ this.BX = this.BX || {};
 	        _this9.pullClient.userId = _this9.getUserId();
 	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
 	        _this9.pullClient.skipStorageInit = false;
-	        _this9.pullClient.storage = pull_client.PullClient.StorageManager({
+	        _this9.pullClient.storage = new pull_client.PullClient.StorageManager({
 	          userId: _this9.getUserId(),
 	          siteId: _this9.getSiteId()
 	        });
@@ -70115,6 +72166,8 @@ this.BX = this.BX || {};
 	    babelHelpers.classCallCheck(this, WidgetTextareaUploadHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaUploadHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storedFile", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "widgetApplication", null);
+	    _this.widgetApplication = $Bitrix.Application.get();
 	    _this.onConsentAcceptedHandler = _this.onConsentAccepted.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.onConsentDeclinedHandler = _this.onConsentDeclined.bind(babelHelpers.assertThisInitialized(_this));
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentAccepted, _this.onConsentAcceptedHandler);
@@ -70169,7 +72222,8 @@ this.BX = this.BX || {};
 	        fileName: message.file.source.file.name,
 	        generateUniqueName: true,
 	        diskFolderId: this.getDiskFolderId(),
-	        previewBlob: message.file.previewBlob
+	        previewBlob: message.file.previewBlob,
+	        chunkSize: this.widgetApplication.getLocalize('isCloud') ? im_lib_uploader.Uploader.CLOUD_MAX_CHUNK_SIZE : im_lib_uploader.Uploader.BOX_MIN_CHUNK_SIZE
 	      });
 	    }
 	  }, {
@@ -71722,7 +73776,7 @@ this.BX = this.BX || {};
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX.Main,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Messenger.Lib,BX.Messenger,BX.Messenger.Const,BX,BX,BX,BX.Event));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX.Main,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX.Messenger,BX.Messenger.Const,BX,BX,BX,BX.Event));
  
 
 

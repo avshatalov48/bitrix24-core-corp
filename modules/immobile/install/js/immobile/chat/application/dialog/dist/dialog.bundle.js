@@ -627,7 +627,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	      var event = _ref4.data;
 
 	      if (event.type === 'USER') {
-	        this.getApplication().openProfile(event.value);
+	        this.getApplication().openDialog(event.value);
 	      } else if (event.type === 'CHAT') {
 	        this.getApplication().openDialog(event.value);
 	      } else if (event.type === 'CALL') {
@@ -3123,7 +3123,19 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          shouldSkipUserAdd = true;
 	        }
 
-	        this.headerMenu.setItems([HeaderMenuItem.create('profile').setTitle(this.getLocalize('MOBILE_HEADER_MENU_PROFILE')).setIcon('user').skip(im_lib_utils.Utils.dialog.isChatId(this.controller.application.getDialogId())), HeaderMenuItem.create('user_add').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD')).setIcon(HeaderMenuIcon.user_plus).skip(shouldSkipUserAdd), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)]);
+	        this.headerMenu.setItems([HeaderMenuItem.create('profile').setTitle(this.getLocalize('MOBILE_HEADER_MENU_PROFILE')).setIcon('user').skip(function () {
+	          if (im_lib_utils.Utils.dialog.isChatId(_this27.controller.application.getDialogId())) {
+	            return true;
+	          }
+
+	          var userData = _this27.controller.getStore().getters['users/get'](_this27.controller.application.getDialogId(), true);
+
+	          if (userData.bot) {
+	            return true;
+	          }
+
+	          return false;
+	        }), HeaderMenuItem.create('user_add').setTitle(this.getLocalize('MOBILE_HEADER_MENU_USER_ADD')).setIcon(HeaderMenuIcon.user_plus).skip(shouldSkipUserAdd), HeaderMenuItem.create('reload').setTitle(this.getLocalize('MOBILE_HEADER_MENU_RELOAD')).setIcon(HeaderMenuIcon.reload)]);
 	      }
 
 	      this.headerMenu.show(true);

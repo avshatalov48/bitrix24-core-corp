@@ -206,6 +206,11 @@ export class Entity extends EventEmitter
 		this.pageNumberItems++;
 	}
 
+	decrementPageNumberItems()
+	{
+		this.pageNumberItems--;
+	}
+
 	recalculateItemsSort()
 	{
 		const listItemsNode = this.getListItemsNode();
@@ -473,6 +478,7 @@ export class Entity extends EventEmitter
 		});
 		this.groupModeItems.clear();
 
+		this.emit('deactivateGroupMode');
 	}
 
 	isGroupMode(): boolean

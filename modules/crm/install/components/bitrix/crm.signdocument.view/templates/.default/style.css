@@ -1,0 +1,15 @@
+.sign-document-container {
+	display: flex;
+}
+
+.sign-document-container .sign-document-description-container {
+	margin-left: 20px;
+}
+
+.sign-document-description-container .sign-document-channels {
+	background: #fff;
+	border-radius: 5px;
+	height: 300px;
+	min-width: 300px;
+	text-align: center;
+}

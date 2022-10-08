@@ -1457,10 +1457,14 @@ elseif (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 			$dups = [];
 			if (!empty($fieldNames))
 			{
+				$dupParams = new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames);
+				$dupParams->setEntityTypeId(CCrmOwnerType::Contact);
+				$dupParams->setCategoryId(0);
+
 				$adapter = \Bitrix\Crm\EntityAdapterFactory::create($arContact, CCrmOwnerType::Contact);
 				$dups = $dupChecker->findDuplicates(
 					$adapter,
-					new \Bitrix\Crm\Integrity\DuplicateSearchParams($fieldNames)
+					$dupParams
 				);
 			}
 

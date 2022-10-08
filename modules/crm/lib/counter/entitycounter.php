@@ -1,22 +1,17 @@
 <?php
+
 namespace Bitrix\Crm\Counter;
-use Bitrix\Crm\CompanyTable;
-use Bitrix\Crm\ContactTable;
+
+use Bitrix\Crm\Counter\QueryBuilder\DeadlineBased;
+use Bitrix\Crm\Counter\QueryBuilder\IncomingChannel;
+use Bitrix\Crm\Counter\QueryBuilder\Idle;
 use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ExpressionField;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\DealTable;
-use Bitrix\Crm\LeadTable;
-use Bitrix\Crm\ActivityTable;
-use Bitrix\Crm\ActivityBindingTable;
-use Bitrix\Crm\UserActivityTable;
-use Bitrix\Crm\Pseudoactivity\Entity\WaitTable;
+use Bitrix\Main\Type\Date;
 
 class EntityCounter extends CounterBase
 {
@@ -30,15 +25,11 @@ class EntityCounter extends CounterBase
 	protected $currentValue = null;
 	/** @var string  */
 	protected $code = '';
-	/** @var string */
-	protected $lastCalculateOptionName = '';
 	/** @var int|null  */
 	protected $lastCalculatedTime = null;
 
 	/** @var bool */
 	protected $sendPullEvent = false;
-
-	private static $userTimes = [];
 
 	/**
 	 * @param int $entityTypeID Entity Type ID (see \CCrmOwnerType).
@@ -54,7 +45,6 @@ class EntityCounter extends CounterBase
 		$this->setUserID($userID > 0 ? $userID : \CCrmSecurityHelper::GetCurrentUserID());
 		$this->setExtras($extras !== null ? $extras : array());
 		$this->code = $this->resolveCode();
-		$this->lastCalculateOptionName = $this->resolveLastCalculateOptionName();
 	}
 	/**
 	 * @return int
@@ -164,7 +154,15 @@ class EntityCounter extends CounterBase
 			$userID = \CCrmSecurityHelper::GetCurrentUserID();
 		}
 
-		\CUserCounter::Set($userID, $code, -1, '**', '', false);
+		// reset only really existed counters:
+		$counterValues = \CUserCounter::GetValues($userID, '**');
+		if (
+			array_key_exists($code, $counterValues)
+			&& $counterValues[$code] != -1
+		)
+		{
+			\CUserCounter::Set($userID, $code, -1, '**', '', false);
+		}
 	}
 
 	public static function resetByCodeForAll($code)
@@ -203,10 +201,6 @@ class EntityCounter extends CounterBase
 	{
 		return static::prepareCode($this->entityTypeID, $this->typeID, $this->extras);
 	}
-	protected function resolveLastCalculateOptionName()
-	{
-		return $this->code !== '' ? "{$this->code}_last_calc" : '';
-	}
 	public static function prepareCodes($entityTypeID, $typeIDs, array $extras = null)
 	{
 		return EntityCounterManager::prepareCodes($entityTypeID, $typeIDs, $extras);
@@ -217,7 +211,7 @@ class EntityCounter extends CounterBase
 	}
 	protected function checkLastCalculatedTime()
 	{
-		if($this->lastCalculateOptionName === '')
+		if($this->code === '')
 		{
 			return false;
 		}
@@ -225,13 +219,17 @@ class EntityCounter extends CounterBase
 		$current = mktime(0, 0, 0, date('n'), date('j'), date('Y'));
 		if($this->lastCalculatedTime === null)
 		{
-			$this->lastCalculatedTime = (int)\CUserOptions::GetOption('crm', $this->lastCalculateOptionName, 0, $this->userID);
+			$this->lastCalculatedTime = CounterCalculatedTimeTable::getCalculatedAT(
+				$this->userID,
+				$this->code,
+			);
 		}
+
 		return $this->lastCalculatedTime >= $current;
 	}
 	protected function refreshLastCalculatedTime()
 	{
-		if($this->lastCalculateOptionName === '')
+		if($this->code === '')
 		{
 			return;
 		}
@@ -240,45 +238,12 @@ class EntityCounter extends CounterBase
 		if($this->lastCalculatedTime !== $current)
 		{
 			$this->lastCalculatedTime = $current;
-			\CUserOptions::SetOption('crm', $this->lastCalculateOptionName, $this->lastCalculatedTime, false, $this->userID);
+			CounterCalculatedTimeTable::setCalculatedAt(
+				$this->userID,
+				$this->code,
+				$this->lastCalculatedTime
+			);
 		}
-	}
-
-	/**
-	 * @param $userID
-	 * @return DateTime
-	 */
-	protected static function getUserTime($userID): DateTime
-	{
-		$currentUser = (int)\CCrmSecurityHelper::GetCurrentUserID();
-		if (is_array($userID))
-		{
-			if (empty($userID))
-			{
-				$userID = $currentUser;
-			}
-			else
-			{
-				$userID = (int)array_shift($userID);
-			}
-		}
-		else
-		{
-			$userID = (int)$userID;
-		}
-
-		if (empty(self::$userTimes[$userID]))
-		{
-			$time = new DateTime();
-			$offset = (int) ($userID > 0 ? \CTimeZone::GetOffset($currentUser === $userID ? null : $userID) : 0);
-			if ($offset)
-			{
-				$time->add(($offset < 0 ? '-' : '') . 'PT' . abs($offset) . 'S');
-			}
-			self::$userTimes[$userID] = $time;
-		}
-
-		return clone self::$userTimes[$userID];
 	}
 
 	public function getValue($recalculate = false)
@@ -323,24 +288,24 @@ class EntityCounter extends CounterBase
 	 * @return array
 	 * @throws Main\NotSupportedException
 	 */
-	public static function prepareEntityQueries($entityTypeID, $entityCounterTypeID, $userID, array $options = null)
+	public function prepareEntityQueries($entityTypeID, $entityCounterTypeID, $userID, array $options = null)
 	{
 		$entityTypeID = (int)$entityTypeID;
 		if(!is_array($options))
 		{
-			$options = array();
+			$options = [];
 		}
 
 		$select = isset($options['SELECT']) ? $options['SELECT'] : '';
-		if($select !== 'QTY' && $select !== 'ENTY')
+		if($select !== QueryBuilder::SELECT_TYPE_QUANTITY && $select !== QueryBuilder::SELECT_TYPE_ENTITIES)
 		{
-			$select = 'QTY';
+			$select = QueryBuilder::SELECT_TYPE_QUANTITY;
 		}
 
 		$distinct = true;
-		if($select === 'ENTY' && isset($options['DISTINCT']))
+		if($select === QueryBuilder::SELECT_TYPE_ENTITIES && isset($options['DISTINCT']))
 		{
-			$distinct = $options['DISTINCT'];
+			$distinct = (bool)$options['DISTINCT'];
 		}
 
 		$results = [];
@@ -350,19 +315,36 @@ class EntityCounter extends CounterBase
 		{
 			return $results;
 		}
-
 		$countersSettings = $factory->getCountersSettings();
-		foreach(EntityCounterType::splitType($entityCounterTypeID) as $typeID)
+
+		$typeIDs = EntityCounterType::splitType($entityCounterTypeID);
+		$isCurrentCounter = in_array(EntityCounterType::PENDING, $typeIDs) && in_array(EntityCounterType::OVERDUE, $typeIDs);
+		foreach($typeIDs as $typeID)
 		{
-			if (!$countersSettings->isCounterTypeEnabled($typeID))
+			if ($select === QueryBuilder::SELECT_TYPE_QUANTITY && !$countersSettings->isCounterTypeEnabled($typeID))
 			{
 				continue;
 			}
-			$query = new Query($factory->getDataClass()::getEntity());
+			$forceSkipMinDeadline =
+				($select === QueryBuilder::SELECT_TYPE_ENTITIES)
+				&& is_array($userID)
+				&& count($userID) > 1
+			;
+			$query = $factory->getDataClass()::query();
 
+			$stageSemanticId = isset($options['STAGE_SEMANTIC_ID']) && $options['STAGE_SEMANTIC_ID']
+				? $options['STAGE_SEMANTIC_ID']
+				: PhaseSemantics::PROCESS
+			;
 			if($entityTypeID === \CCrmOwnerType::Deal)
 			{
-				$query->addFilter('=STAGE_SEMANTIC_ID', PhaseSemantics::PROCESS);
+				$query->addFilter('=STAGE_SEMANTIC_ID', $stageSemanticId);
+				$query->addFilter('=IS_RECURRING', 'N');
+
+				if(isset($options['CATEGORY_ID']) && $options['CATEGORY_ID'] >= 0)
+				{
+					$query->addFilter('=CATEGORY_ID', new SqlExpression('?i', $options['CATEGORY_ID']));
+				}
 			}
 			else if($entityTypeID === \CCrmOwnerType::Contact)
 			{
@@ -390,7 +372,7 @@ class EntityCounter extends CounterBase
 			}
 			elseif($entityTypeID === \CCrmOwnerType::Lead)
 			{
-				$query->addFilter('=STATUS_SEMANTIC_ID', PhaseSemantics::PROCESS);
+				$query->addFilter('=STATUS_SEMANTIC_ID', $stageSemanticId);
 			}
 			elseif(\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeID) && isset($options['CATEGORY_ID']))
 			{
@@ -399,170 +381,69 @@ class EntityCounter extends CounterBase
 
 			if($typeID === EntityCounterType::IDLE)
 			{
-				if($select === 'ENTY')
-				{
-					$query->addSelect('ID', 'ENTY');
-				}
-				else
-				{
-					$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(%s)', 'ID'));
-					$query->addSelect('QTY');
-				}
-
-				$query->registerRuntimeField(
-					'',
-					new ReferenceField('UA',
-						UserActivityTable::getEntity(),
-						array(
-							'=ref.OWNER_ID' => 'this.ID',
-							'=ref.OWNER_TYPE_ID' => new SqlExpression($entityTypeID),
-							'=ref.USER_ID' => new SqlExpression(0)
-						),
-						array('join_type' => 'LEFT')
-					)
-				);
-				$query->addFilter('==UA.OWNER_ID', null);
-
-				$query->registerRuntimeField(
-					'',
-					new ReferenceField('W',
-						WaitTable::getEntity(),
-						array(
-							'=ref.OWNER_ID' => 'this.ID',
-							'=ref.OWNER_TYPE_ID' => new SqlExpression($entityTypeID),
-							'=ref.COMPLETED' => new SqlExpression('?s', 'N')
-						),
-						array('join_type' => 'LEFT')
-					)
-				);
-				$query->addFilter('==W.OWNER_ID', null);
-
-				if($entityTypeID !== \CCrmOwnerType::Order)
-					$assignedColumn = 'ASSIGNED_BY_ID';
-				else
-					$assignedColumn = 'RESPONSIBLE_ID';
-
-				if(is_array($userID))
-				{
-					$userCount = count($userID);
-					if($userCount > 1)
-					{
-						$query->addFilter('@'.$assignedColumn, $userID);
-					}
-					elseif($userCount === 1)
-					{
-						$query->addFilter('='.$assignedColumn, $userID[0]);
-					}
-				}
-				elseif($userID > 0)
-				{
-					//Strongly required for counter design. We manage counters in user-oriented manner.
-					$query->addFilter('='.$assignedColumn, $userID);
-				}
-
-				$results[] = $query;
+				$results[] = (new Idle($entityTypeID, $userID))
+					->setUseDistinct($distinct)
+					->setSelectType($select)
+					->build($query)
+				;
 			}
-			else if($typeID === EntityCounterType::PENDING || $typeID === EntityCounterType::OVERDUE)
+			elseif ($typeID === EntityCounterType::PENDING)
 			{
-				$query->registerRuntimeField(
-					'',
-					new ReferenceField('B',
-						ActivityBindingTable::getEntity(),
-						array(
-							'=ref.OWNER_ID' => 'this.ID',
-							'=ref.OWNER_TYPE_ID' => new SqlExpression($entityTypeID)
-						),
-						array('join_type' => 'INNER')
-					)
-				);
-
-				//region Activity (inner join with correlated query for fix issue #109347)
-				$activityQuery = new Main\Entity\Query(ActivityTable::getEntity());
-
-				if(is_array($userID))
+				if ($isCurrentCounter)
 				{
-					$userCount = count($userID);
-					if($userCount > 1)
+					$periodFrom = null;
+					$periodTo = \CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID); // today (time 23:59:59 will applied by counter itself)
+					if (array_key_exists('PERIOD_FROM', $this->extras))
 					{
-						$activityQuery->addFilter('@RESPONSIBLE_ID', $userID);
+						$periodFrom = $this->extras['PERIOD_FROM'];
 					}
-					elseif($userCount === 1)
+					if (array_key_exists('PERIOD_TO', $this->extras))
 					{
-						$activityQuery->addFilter('=RESPONSIBLE_ID', $userID[0]);
+						$periodTo = $this->extras['PERIOD_TO'];
 					}
-				}
-				elseif($userID > 0)
-				{
-					$activityQuery->addFilter('=RESPONSIBLE_ID', $userID);
-				}
-
-				if($typeID === EntityCounterType::PENDING)
-				{
-					$lowBound = self::getUserTime($userID);
-					$lowBound->setTime(0, 0, 0);
-					$activityQuery->addFilter('>=DEADLINE', $lowBound);
-
-					$highBound = self::getUserTime($userID);
-					$highBound->setTime(23, 59, 59);
-					$activityQuery->addFilter('<=DEADLINE', $highBound);
-				}
-				elseif($typeID === EntityCounterType::OVERDUE)
-				{
-					$highBound = self::getUserTime($userID);
-					$highBound->setTime(0, 0, 0);
-					$activityQuery->addFilter('<DEADLINE', $highBound);
-				}
-				if (isset($options['PROVIDER_ID']))
-				{
-					if (is_array($options['PROVIDER_ID']))
-					{
-						$activityQuery->whereIn('PROVIDER_ID', $options['PROVIDER_ID']);
-					}
-					else
-					{
-						$activityQuery->where('PROVIDER_ID', (string)$options['PROVIDER_ID']);
-					}
-				}
-				if (isset($options['PROVIDER_TYPE_ID']))
-				{
-					if (is_array($options['PROVIDER_TYPE_ID']))
-					{
-						$activityQuery->whereIn('PROVIDER_TYPE_ID', $options['PROVIDER_TYPE_ID']);
-					}
-					else
-					{
-						$activityQuery->where('PROVIDER_TYPE_ID', (string)$options['PROVIDER_TYPE_ID']);
-					}
-				}
-
-				$activityQuery->addFilter('=COMPLETED', 'N');
-				$activityQuery->addSelect('ID');
-
-				$query->registerRuntimeField(
-					'',
-					new ReferenceField('A',
-						Main\Entity\Base::getInstanceByQuery($activityQuery),
-						array('=ref.ID' => 'this.B.ACTIVITY_ID'),
-						array('join_type' => 'INNER')
-					)
-				);
-				//endregion
-
-				if($select === 'ENTY')
-				{
-					$query->addSelect('B.OWNER_ID', 'ENTY');
-					if($distinct)
-					{
-						$query->addGroup('B.OWNER_ID');
-					}
+					$results[] = (new DeadlineBased($entityTypeID, $userID))
+						->setUseDistinct($distinct)
+						->setSelectType($select)
+						->setPeriodFrom($periodFrom)
+						->setPeriodTo($periodTo)
+						->setUseOnlyMinDeadline(!$forceSkipMinDeadline)
+						->build($query)
+					;
 				}
 				else
 				{
-					$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(DISTINCT %s)', 'ID'));
-					$query->addSelect('QTY');
+					$useOnlyMinDeadline = $this->getExtraParam('ONLY_MIN_DEADLINE', false) && !$forceSkipMinDeadline;
+					$results[] = (new DeadlineBased($entityTypeID, $userID))
+						->setUseDistinct($distinct)
+						->setSelectType($select)
+						->setPeriodFrom(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)) // today (time 00:00:00 will applied by counter itself)
+						->setPeriodTo(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)) // today (time 23:59:59 will applied by counter itself)
+						->setUseOnlyMinDeadline($useOnlyMinDeadline)
+						->build($query)
+					;
 				}
-
-				$results[] = $query;
+			}
+			elseif ($typeID === EntityCounterType::OVERDUE)
+			{
+				if ($isCurrentCounter)
+				{
+					continue;
+				}
+				$results[] = (new DeadlineBased($entityTypeID, $userID))
+					->setUseDistinct($distinct)
+					->setSelectType($select)
+					->setPeriodTo(\CCrmDateTimeHelper::getUserDate(new Main\Type\DateTime(), $this->userID)->add('-1 day')) // yesterday (time 23:59:59 will applied by counter itself)
+					->setUseOnlyMinDeadline(true)
+					->build($query)
+				;
+			}
+			else if($typeID === EntityCounterType::INCOMING_CHANNEL)
+			{
+				$results[] = (new IncomingChannel($entityTypeID, $userID))
+					->setUseDistinct($distinct)
+					->setSelectType($select)
+					->build($query)
+				;
 			}
 			else
 			{
@@ -588,13 +469,16 @@ class EntityCounter extends CounterBase
 		{
 			$userIDs = array($this->userID);
 		}
-		$categoryId = $this->getIntegerExtraParam('CATEGORY_ID', null);
+		$categoryId = $this->getIntegerExtraParam(
+			'DEAL_CATEGORY_ID',
+			$this->getIntegerExtraParam('CATEGORY_ID', null)
+		);
 		if (!is_null($categoryId) && $categoryId >= 0)
 		{
 			$options['CATEGORY_ID'] = $categoryId;
 		}
 
-		return self::prepareEntityQueries($this->entityTypeID, $this->typeID, $userIDs, $options);
+		return $this->prepareEntityQueries($this->entityTypeID, $this->typeID, $userIDs, $options);
 	}
 	/**
 	 * Evaluate counter value
@@ -738,14 +622,6 @@ class EntityCounter extends CounterBase
 		if(isset($params['STAGE_SEMANTIC_ID']))
 		{
 			$queryParams['STAGE_SEMANTIC_ID'] = $params['STAGE_SEMANTIC_ID'];
-		}
-		if(isset($params['PROVIDER_ID']))
-		{
-			$queryParams['PROVIDER_ID'] = $params['PROVIDER_ID'];
-		}
-		if(isset($params['PROVIDER_TYPE_ID']))
-		{
-			$queryParams['PROVIDER_TYPE_ID'] = $params['PROVIDER_TYPE_ID'];
 		}
 
 		$queries = $this->prepareQueries($queryParams);

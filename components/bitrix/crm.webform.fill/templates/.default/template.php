@@ -15,6 +15,8 @@ if ($arParams['VIEW_TYPE'] !== 'frame' && $arResult['IS_EMBEDDING_AVAILABLE'])
 	return;
 }
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 if (Loader::includeModule('calendar'))
 {
 	\Bitrix\Crm\Integration\Calendar::loadResourcebookingExtention();

@@ -1,51 +1,31 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,main_core,main_core_events) {
+(function (exports,main_core_events,main_core) {
 	'use strict';
 
-	var TeamSpeedChart = /*#__PURE__*/function () {
-	  function TeamSpeedChart(params) {
-	    babelHelpers.classCallCheck(this, TeamSpeedChart);
-	    this.filterId = params.filterId;
-	    this.signedParameters = params.signedParameters;
-	    /* eslint-disable */
-
-	    this.sidePanelManager = BX.SidePanel.Instance;
-	    /* eslint-enable */
-
+	var Chart = /*#__PURE__*/function () {
+	  function Chart(data) {
+	    babelHelpers.classCallCheck(this, Chart);
+	    this.data = data;
 	    this.chart = null;
-	    this.chartData = null;
-	    this.loader = null; //this.initUiFilterManager(); // todo return later
-	    //this.bindEvents(); // todo return later
+	    this.loader = null;
 	  }
 
-	  babelHelpers.createClass(TeamSpeedChart, [{
-	    key: "initUiFilterManager",
-	    value: function initUiFilterManager() {
-	      /* eslint-disable */
-	      this.filterManager = BX.Main.filterManager.getById(this.filterId);
-	      /* eslint-enable */
-	    }
-	  }, {
-	    key: "bindEvents",
-	    value: function bindEvents() {
-	      main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', this.onFilterApply.bind(this));
-	    }
-	  }, {
-	    key: "render",
-	    value: function render(chartDiv, data) {
+	  babelHelpers.createClass(Chart, [{
+	    key: "renderTo",
+	    value: function renderTo(chartDiv) {
 	      var _this = this;
 
 	      setTimeout(function () {
-	        return _this.create(chartDiv, data);
+	        return _this.create(chartDiv);
 	      }, 300);
 	    }
 	  }, {
 	    key: "create",
-	    value: function create(chartDiv, data) {
+	    value: function create(chartDiv) {
 	      am4core.useTheme(am4themes_animated);
 	      this.chart = am4core.create(chartDiv, am4charts.XYChart);
-	      this.chart.data = data;
+	      this.chart.data = this.data;
 	      this.chart.paddingRight = 40;
 	      this.chart.responsive.enabled = true;
 	      this.createAxises();
@@ -53,8 +33,24 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.createColumn('done', main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_DONE_COLUMN'), '#9c1f1f');
 	      this.createLegend();
 
-	      if (data.length === 0) {
-	        this.showLoader(main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_NOT_DATA_LABEL'));
+	      if (this.data.length === 0) {
+	        this.showLoader(true);
+	      }
+	    }
+	  }, {
+	    key: "render",
+	    value: function render(data) {
+	      if (!this.chart) {
+	        return;
+	      }
+
+	      this.data = data;
+	      this.chart.data = this.data;
+
+	      if (this.data.length > 0) {
+	        this.removeLoader();
+	      } else {
+	        this.showLoader(true);
 	      }
 	    }
 	  }, {
@@ -63,6 +59,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var xAxis = this.chart.xAxes.push(new am4charts.CategoryAxis());
 	      xAxis.dataFields.category = 'sprintName';
 	      xAxis.renderer.grid.template.location = 0;
+	      xAxis.renderer.labels.template.adapter.add('textOutput', function (text) {
+	        return main_core.Type.isNil(text) ? text : text.replace(/ \(.*/, '');
+	      });
 	      var label = xAxis.renderer.labels.template;
 	      label.wrap = true;
 	      label.maxWidth = 120;
@@ -77,11 +76,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      series.dataFields.categoryX = 'sprintName';
 	      series.name = name;
 	      series.stroke = am4core.color(color);
-	      series.fill = am4core.color(color); // const bullet = series.bullets.push(new am4charts.LabelBullet())
-	      // bullet.dy = 10;
-	      // bullet.label.text = '{valueY}';
-	      // bullet.label.fill = am4core.color('#ffffff');
-
+	      series.fill = am4core.color(color);
+	      series.columns.template.tooltipText = '{name}: [bold]{valueY}[/]';
 	      return series;
 	    }
 	  }, {
@@ -94,7 +90,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    }
 	  }, {
 	    key: "showLoader",
-	    value: function showLoader(labelMessage) {
+	    value: function showLoader() {
+	      var notData = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 	      this.removeLoader();
 	      this.loader = this.chart.tooltipContainer.createChild(am4core.Container);
 	      this.loader.background.fill = am4core.color('#fff');
@@ -102,9 +99,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.loader.width = am4core.percent(100);
 	      this.loader.height = am4core.percent(100);
 
-	      if (!main_core.Type.isUndefined(labelMessage)) {
+	      if (notData) {
 	        var loaderLabel = this.loader.createChild(am4core.Label);
-	        loaderLabel.text = labelMessage;
+	        loaderLabel.text = main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_NOT_DATA_LABEL');
 	        loaderLabel.align = 'center';
 	        loaderLabel.valign = 'middle';
 	        loaderLabel.fontSize = 20;
@@ -117,10 +114,145 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        this.loader.dispose();
 	      }
 	    }
+	  }]);
+	  return Chart;
+	}();
+
+	var _templateObject;
+	var Stats = /*#__PURE__*/function () {
+	  function Stats(data) {
+	    babelHelpers.classCallCheck(this, Stats);
+	    this.data = data;
+	    this.node = null;
+	  }
+
+	  babelHelpers.createClass(Stats, [{
+	    key: "renderTo",
+	    value: function renderTo(rootNode) {
+	      this.node = this.build();
+	      main_core.Dom.append(this.node, rootNode);
+	    }
+	  }, {
+	    key: "render",
+	    value: function render(data) {
+	      if (!main_core.Type.isUndefined(data)) {
+	        this.data = data;
+	      }
+
+	      if (this.node) {
+	        this.sync(this.build(), this.node);
+	      } else {
+	        this.node = this.build();
+	      }
+
+	      return this.node;
+	    }
+	  }, {
+	    key: "build",
+	    value: function build() {
+	      return main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-sprint-team-speed-stats-container\">\n\t\t\t\t<div class=\"tasks-scrum-sprint-team-speed-stats-row\">\n\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t<div>", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-team-speed-stats-row\">\n\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t<div>", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum-sprint-team-speed-stats-row\">\n\t\t\t\t\t<div>", "</div>\n\t\t\t\t\t<div>", "</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_STATS_AVERAGE_LABEL'), main_core.Text.encode(this.data.average), main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_STATS_MAX_LABEL'), main_core.Text.encode(this.data.maximum), main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_STATS_MIN_LABEL'), main_core.Text.encode(this.data.minimum));
+	    }
+	  }, {
+	    key: "showLoader",
+	    value: function showLoader() {
+	      if (this.node) {
+	        main_core.Dom.addClass(this.node, '--loader');
+	      }
+	    } // todo move it to Dom library
+
+	  }, {
+	    key: "sync",
+	    value: function sync(virtualNode, realNode) {
+	      if (virtualNode.attributes) {
+	        Array.from(virtualNode.attributes).forEach(function (attr) {
+	          if (realNode.getAttribute(attr.name) !== attr.value) {
+	            realNode.setAttribute(attr.name, attr.value);
+	          }
+	        });
+	      }
+
+	      if (virtualNode.nodeValue !== realNode.nodeValue) {
+	        realNode.nodeValue = virtualNode.nodeValue;
+	      } // Sync child nodes
+
+
+	      var virtualChildren = virtualNode.childNodes;
+	      var realChildren = realNode.childNodes;
+
+	      for (var k = 0; k < virtualChildren.length || k < realChildren.length; k++) {
+	        var virtual = virtualChildren[k];
+	        var real = realChildren[k]; // Remove
+
+	        if (virtual === undefined && real !== undefined) {
+	          realNode.remove(real);
+	        } // Update
+
+
+	        if (virtual !== undefined && real !== undefined && virtual.tagName === real.tagName) {
+	          this.sync(virtual, real);
+	        } // Replace
+
+
+	        if (virtual !== undefined && real !== undefined && virtual.tagName !== real.tagName) {
+	          var newReal = this.createRealNodeByVirtual(virtual);
+	          this.sync(virtual, newReal);
+	          main_core.Dom.replace(real, newReal);
+	        } // Add
+
+
+	        if (virtual !== undefined && real === undefined) {
+	          var _newReal = this.createRealNodeByVirtual(virtual);
+
+	          this.sync(virtual, _newReal);
+	          main_core.Dom.append(_newReal, realNode);
+	        }
+	      }
+	    } // todo move it to Dom library
+
+	  }, {
+	    key: "createRealNodeByVirtual",
+	    value: function createRealNodeByVirtual(virtual) {
+	      if (virtual.nodeType === Node.TEXT_NODE) {
+	        return document.createTextNode('');
+	      }
+
+	      return document.createElement(virtual.tagName);
+	    }
+	  }]);
+	  return Stats;
+	}();
+
+	var TeamSpeed = /*#__PURE__*/function () {
+	  function TeamSpeed(params) {
+	    babelHelpers.classCallCheck(this, TeamSpeed);
+	    this.filterId = params.filterId;
+	    this.signedParameters = params.signedParameters;
+	    this.chart = new Chart(params.chartData);
+	    this.stats = new Stats(params.statsData);
+	    /* eslint-disable */
+
+	    this.filterManager = BX.Main.filterManager.getById(this.filterId);
+	    this.sidePanelManager = BX.SidePanel.Instance;
+	    /* eslint-enable */
+
+	    this.bindEvents();
+	  }
+
+	  babelHelpers.createClass(TeamSpeed, [{
+	    key: "bindEvents",
+	    value: function bindEvents() {
+	      main_core_events.EventEmitter.subscribe('BX.Main.Filter:apply', this.onFilterApply.bind(this));
+	    }
+	  }, {
+	    key: "renderTo",
+	    value: function renderTo(chartRoot, statsRoot) {
+	      this.chart.renderTo(chartRoot);
+	      this.stats.renderTo(statsRoot);
+	    }
 	  }, {
 	    key: "onFilterApply",
 	    value: function onFilterApply(event) {
-	      var _this2 = this;
+	      var _this = this;
 
 	      var _event$getCompatData = event.getCompatData(),
 	          _event$getCompatData2 = babelHelpers.slicedToArray(_event$getCompatData, 5),
@@ -134,32 +266,26 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return;
 	      }
 
-	      if (this.chart) {
-	        this.showLoader();
-	      }
-
+	      this.chart.showLoader();
+	      this.stats.showLoader();
 	      main_core.ajax.runComponentAction('bitrix:tasks.scrum.team.speed', 'applyFilter', {
 	        mode: 'class',
 	        signedParameters: this.signedParameters,
 	        data: {}
 	      }).then(function (response) {
-	        if (_this2.chart) {
-	          var data = response.data;
-	          _this2.chart.data = data;
+	        var chartData = response.data.chartData;
+	        var statsData = response.data.statsData;
 
-	          if (data.length > 0) {
-	            _this2.removeLoader();
-	          } else {
-	            _this2.showLoader(main_core.Loc.getMessage('TASKS_SCRUM_TEAM_SPEED_CHART_NOT_DATA_LABEL'));
-	          }
-	        }
+	        _this.chart.render(chartData);
+
+	        _this.stats.render(statsData);
 	      });
 	    }
 	  }]);
-	  return TeamSpeedChart;
+	  return TeamSpeed;
 	}();
 
-	exports.TeamSpeedChart = TeamSpeedChart;
+	exports.TeamSpeed = TeamSpeed;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX,BX.Event));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.Event,BX));
 //# sourceMappingURL=script.js.map

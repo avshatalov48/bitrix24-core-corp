@@ -24,7 +24,8 @@ CJSCore::Init([
 	'ui.buttons',
 	'viewer',
 	'socnetlogdest',
-	'bp_starter'
+	'bp_starter',
+	'ui.design-tokens',
 ]);
 
 Loc::loadMessages(__DIR__ . '/template.php');

@@ -508,6 +508,7 @@ class LiveChatManager
 			return "";
 		}
 
+		define('UI_DESIGN_TOKENS_SKIP_CUSTOM_EXTENSION', true);
 		// Note: temporarily remove this constant if you need check on developer version Vue
 		define('VUEJS_DEBUG_DISABLE', true);
 

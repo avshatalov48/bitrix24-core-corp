@@ -1,3 +1,4 @@
+import 'ui.design-tokens';
 import { BitrixVue } from 'ui.vue';
 import { Text } from 'main.core';
 import { Theme } from '../../../mixin/theme';

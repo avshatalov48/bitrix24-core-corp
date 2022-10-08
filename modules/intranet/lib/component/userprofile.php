@@ -313,7 +313,7 @@ class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contr
 		)
 		{
 			$user["SHOW_SONET_ADMIN"] = true;
-			$user["IS_SESSION_ADMIN"] = isset($_SESSION["SONET_ADMIN"]);
+			$user["IS_SESSION_ADMIN"] = \CSocNetUser::IsEnabledModuleAdmin();
 		}
 
 		$this->setUserStatus($user);

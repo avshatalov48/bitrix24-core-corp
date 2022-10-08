@@ -47,7 +47,7 @@ class ChannelWebForm implements iProvider
 			return array();
 		}
 
-		return FormTable::getList(array(
+		return FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'filter' => array(
 				'=ACTIVE' => 'Y',
@@ -72,7 +72,7 @@ class ChannelWebForm implements iProvider
 
 		$providerFields = EntityFieldProvider::getFields();
 		$enumList = array();
-		$enumListDb = FormTable::getList(array(
+		$enumListDb = FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'filter' => array(
 				'=ACTIVE' => 'Y',

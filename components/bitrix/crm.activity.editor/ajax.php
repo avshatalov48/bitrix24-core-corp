@@ -1663,16 +1663,8 @@ elseif($action == 'SAVE_EMAIL')
 		}
 	}
 
-	$emailsLimitToSendMessage = (
-		\CModule::includeModule('bitrix24')
-		&& (
-			\CBitrix24::IsDemoLicense()
-			|| !(bool)\Bitrix\Bitrix24\Feature::isFeatureEnabled('mail_mailbox_sync')
-		)
-	)
-		? 1
-		: -1
-	;
+	$emailsLimitToSendMessage = Helper\LicenseManager::getEmailsLimitToSendMessage();
+
 	if($emailsLimitToSendMessage !== -1 && ($countTo > $emailsLimitToSendMessage || $countCc > $emailsLimitToSendMessage || $countBcc > $emailsLimitToSendMessage))
 	{
 		__CrmActivityEditorEndResponse([
@@ -2588,9 +2580,38 @@ elseif($action == 'SAVE_EMAIL')
 	{
 		if ($isNew)
 		{
+			if (\CModule::includeModule('bitrix24'))
+			{
+				if (
+					method_exists(\Bitrix\Bitrix24\MailCounter::class, 'isLimited')
+					&& \Bitrix\Bitrix24\MailCounter::isLimited()
+				)
+				{
+					$arErrors[] = getMessage('CRM_ACTIVITY_EMAIL_CREATION_LIMITED',
+						[
+							'%link_start%' => "<a href=\"javascript:top.BX.Helper.show('redirect=detail&code=9252877')\">",
+							'%link_end%' => '</a>',
+						]);
+					\CCrmActivity::delete($ID);
+					__CrmActivityEditorEndResponse(array('ERROR_HTML' => $arErrors));
+				}
+				elseif (
+					method_exists(\Bitrix\Bitrix24\MailCounter::class, 'isCustomLimited')
+					&& \Bitrix\Bitrix24\MailCounter::isCustomLimited())
+				{
+					$arErrors[] = getMessage('CRM_ACTIVITY_EMAIL_CUSTOM_LIMITED',
+						[
+							'%link_start%' => "<a href=\"javascript:top.BX.Helper.show('redirect=detail&code=2099711')\">",
+							'%link_end%' => '</a>',
+						]);
+					\CCrmActivity::delete($ID);
+					__CrmActivityEditorEndResponse(array('ERROR_HTML' => $arErrors));
+				}
+			}
 			$arErrors[] = getMessage('CRM_ACTIVITY_EMAIL_CREATION_CANCELED');
-			\CCrmActivity::delete($ID);
 		}
+
+		\CCrmActivity::delete($ID);
 		__CrmActivityEditorEndResponse(array('ERROR' => $arErrors));
 	}
 

@@ -3,7 +3,9 @@
 namespace Bitrix\Crm\Order\EventsHandler;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 class Deal
 {
@@ -37,6 +39,28 @@ class Deal
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param int $id
+	 * @param array $rows
+	 *
+	 * @return Result
+	 */
+	public static function OnBeforeCrmDealProductRowsSave(int $id, array $rows): Result
+	{
+		return (new OrderDealSynchronizer)->verifyDealProducts($id, $rows);
+	}
+
+	/**
+	 * @param int $id
+	 * @param array $rows
+	 *
+	 * @return void
+	 */
+	public static function OnAfterCrmDealProductRowsSave(int $id, array $rows)
+	{
+		(new OrderDealSynchronizer)->updateOrderFromDeal($id);
 	}
 
 	/**

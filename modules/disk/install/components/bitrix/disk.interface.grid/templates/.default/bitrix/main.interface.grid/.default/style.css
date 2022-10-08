@@ -19,7 +19,7 @@ td.bx-disk-content{
 	padding:0 20px 13px 0;
 }
 .bx-disk-interface-filelist td{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	vertical-align:middle !important;
 }
@@ -308,7 +308,8 @@ input.bx-disk-folder-title{
 	padding-bottom:30px;
 	text-align:center;
 	border-bottom:1px solid #edeef0;
-	font-family: OpenSans-Light;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .bx-disk-info-panel-relative{
@@ -348,9 +349,9 @@ input.bx-disk-folder-title{
 	margin-left:45px;
 }
 .bx-disk-info-panel-name{
-	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size:20px;
-	font-weight:300;
 	overflow:hidden;
 	max-width:135px;
 	white-space:nowrap;
@@ -360,7 +361,8 @@ input.bx-disk-folder-title{
 	text-align: left;
 }
 .bx-disk-info-panel-date{
-	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size:12px;
 	overflow:hidden;
 	max-width:135px;
@@ -389,7 +391,8 @@ input.bx-disk-folder-title{
 }
 /*- SideBar SharedLink-*/
 .bx-disk-sidebar-shared-title{
-	font-family:'OpenSans', sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size:12px;
 	padding-bottom:5px;
 	text-decoration:none;
@@ -426,7 +429,8 @@ input.bx-disk-folder-title{
 
 .bx-disk-sidebar-shared-outlink-param{
 	color: #535b69;
-	font-family: 'OpenSans', sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 12px;
 }
 
@@ -443,7 +447,8 @@ input.bx-disk-folder-title{
 .bx-disk-sidebar-shared-outlink-switcher-track {
 	position: absolute;
 	font-size: 10px;
-	font-family: 'OpenSans', sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 22px;
 	top:6px;
 	right:6px;
@@ -511,7 +516,7 @@ input.bx-disk-folder-title{
 
 /*Buttons*/
 .bx-disk-dc-button-gray{
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	line-height:30px;
 	display:block;
 	height:30px;
@@ -533,7 +538,7 @@ input.bx-disk-folder-title{
 	border:1px solid #555;
 }
 .bx-disk-dc-button-darkgray{
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	line-height:30px;
 	display:block;
 	height:32px;
@@ -800,7 +805,7 @@ li.bx-disk-folder-container.bx-disk-open>div .bx-disk-wf-arrow span{
 	background:transparent url(/bitrix/images/disk/icons-files2.png) no-repeat -72px 0;
 }
 .bx-disk-wf-folder-name{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:13px;
 	cursor:pointer;
 	text-align:left;
@@ -851,9 +856,9 @@ hr.bx-disk-delimiter{
 	min-height:20px;
 }
 .bx-disk-search-container{
-	font-family:'Helvetica Neue', Helvetica,Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:12px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	line-height:30px;
 	position:relative;
 	width:115px;
@@ -931,7 +936,7 @@ hr.bx-disk-delimiter{
 }
 
 /* Drag-n-Drop*/
-div.bx-drag-object {padding:5px; border:1px solid #CDCDCD; color:black; font-weight:bold; background-color:#D9D9D9; background-image:url(images/listhead.png); background-repeat:repeat-x; background-position:top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
+div.bx-drag-object {padding:5px; border:1px solid #CDCDCD; color:black; font-weight:var(--ui-font-weight-bold); background-color:#D9D9D9; background-image:url(images/listhead.png); background-repeat:repeat-x; background-position:top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
 div.bx-drag-arrow {width:11px; height:6px; background-image:url(images/drag_arrow.gif); background-repeat:no-repeat; background-position:left top; box-sizing:border-box; -moz-box-sizing:border-box; -webkit-box-sizing:border-box;}
 
 .bx-disk-grid-left{

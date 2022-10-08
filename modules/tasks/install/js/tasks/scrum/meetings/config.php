@@ -14,6 +14,8 @@ return [
 		'main.core.events',
 		'main.core',
 		'ui.dialogs.messagebox',
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'ui.hint',
 		'ui.icons.b24',
 		'ui.icons.service',

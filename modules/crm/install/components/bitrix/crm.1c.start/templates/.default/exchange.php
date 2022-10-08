@@ -5,7 +5,14 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load(array("ui.fonts.opensans", "ui.buttons", "ui.icons", "ui.sidepanel-content"));
+
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.buttons",
+	"ui.icons",
+	"ui.sidepanel-content",
+]);
 
 /**
  * Bitrix vars

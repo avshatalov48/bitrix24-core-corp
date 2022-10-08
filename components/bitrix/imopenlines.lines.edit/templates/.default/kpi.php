@@ -4,7 +4,12 @@ use \Bitrix\Main\Localization\Loc;
 use \Bitrix\Main\UI\Extension;
 use \Bitrix\Imopenlines\Limit;
 
-Extension::load('ui.forms');
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.forms',
+]);
+
 
 $arResult['KPI_MENU']['kpiFirstAnswer']['element'] = 'imol_kpi_first_answer_time_menu';
 $arResult['KPI_MENU']['kpiFirstAnswer']['bindElement'] = 'imol_kpi_first_answer_time_menu';

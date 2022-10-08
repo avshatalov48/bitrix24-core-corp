@@ -3,6 +3,7 @@
 namespace Bitrix\Voximplant\Controller;
 
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Error;
 use Bitrix\Main\Type\DateTime;
@@ -13,6 +14,12 @@ class Subscription extends Controller
 {
 	public function getWithNumberAction($number)
 	{
+		if (!Permissions::createWithCurrentUser()->canModifyLines())
+		{
+			$this->addError(new Error("Permission denied", "permission_denied"));
+			return null;
+		}
+
 		$row = NumberTable::getRow([
 			"select" => ["SUBSCRIPTION_ID"],
 			"filter" => [

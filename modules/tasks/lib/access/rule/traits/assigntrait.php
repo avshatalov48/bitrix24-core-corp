@@ -2,28 +2,77 @@
 
 namespace Bitrix\Tasks\Access\Rule\Traits;
 
+use Bitrix\Main\Access\User\AccessibleUser;
 use Bitrix\Main\Access\User\UserSubordinate;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\AccessibleTask;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
+use Bitrix\Tasks\Access\Role\RoleDictionary;
+use Bitrix\Tasks\Integration\SocialNetwork\Group;
 
 trait AssignTrait
 {
-	private function canAssignTask(AccessibleTask $oldTask, string $role, $responsibleId, AccessibleTask $newTask = null): bool
+	/**
+	 * @param AccessibleTask $oldTask
+	 * @param string $role
+	 * @param $responsibleId
+	 * @param AccessibleTask|null $newTask
+	 * @return bool
+	 */
+	private function canAssignTask(AccessibleTask $oldTask, string $role, $responsibleId, AccessibleTask $newTask): bool
 	{
 		$responsibleId = (int) $responsibleId;
+		$members = $oldTask->getMembers($role);
+		$groupId = $newTask->getGroupId();
 
+		$directors = $newTask->getMembers(RoleDictionary::ROLE_DIRECTOR);
+
+		foreach ($directors as $directorId)
+		{
+			$director = UserModel::createFromId((int) $directorId);
+			if (!$this->canAssign($director, $responsibleId, $members, $groupId))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * @param AccessibleUser $director
+	 * @param int $responsibleId
+	 * @param array $members
+	 * @param int $groupId
+	 * @return bool
+	 */
+	private function canAssign(AccessibleUser $director, int $responsibleId, array $members, int $groupId = 0): bool
+	{
 		if (!$responsibleId)
 		{
 			return true;
 		}
 
-		$members = $oldTask->getMembers($role);
+		$responsible = UserModel::createFromId($responsibleId);
+
+		// always can assign to email users
+		if ($responsible->isEmail())
+		{
+			return true;
+		}
+
+		if (
+			$responsible->isExtranet()
+			&& !$this->isMemberOfUserGroups($director->getUserId(), $responsibleId)
+		)
+		{
+			return false;
+		}
 
 		// can assign to himself or responsible is not changed
 		if (
-			$responsibleId === $this->user->getUserId()
+			$responsibleId === $director->getUserId()
 			|| in_array($responsibleId, $members)
 		)
 		{
@@ -31,31 +80,24 @@ trait AssignTrait
 		}
 
 		// can assign task to group members
-		$groupId = $newTask ? $newTask->getGroupId() : 0;
 		if (
 			$groupId
-			&& $this->isInGroup($groupId, $responsibleId)
+			&& $this->isInGroup($director->getUserId(), $groupId, $responsibleId)
 		)
-		{
-			return true;
-		}
-
-		// always can assign to email users
-		if ((UserModel::createFromId($responsibleId))->isEmail())
 		{
 			return true;
 		}
 
 		// extranet user can assign tasks to any member of group which contains both users
 		if (
-			$this->user->isExtranet()
-			&& $this->isMemberOfUserGroups($responsibleId)
+			$director->isExtranet()
+			&& $this->isMemberOfUserGroups($director->getUserId(), $responsibleId)
 		)
 		{
 			return true;
 		}
 
-		$relation = $this->user->getSubordinate($responsibleId);
+		$relation = $director->getSubordinate($responsibleId);
 
 		// can assign task to subordinate
 		if ($relation === UserSubordinate::RELATION_SUBORDINATE)
@@ -66,7 +108,7 @@ trait AssignTrait
 		// can assign task to department's manager
 		if (
 			$relation === UserSubordinate::RELATION_DIRECTOR
-			&& $this->user->getPermission(PermissionDictionary::TASK_DEPARTMENT_MANAGER_DIRECT)
+			&& $director->getPermission(PermissionDictionary::TASK_DEPARTMENT_MANAGER_DIRECT)
 		)
 		{
 			return true;
@@ -75,7 +117,7 @@ trait AssignTrait
 		// can assign task to department
 		if (
 			$relation === UserSubordinate::RELATION_DEPARTMENT
-			&& $this->user->getPermission(PermissionDictionary::TASK_DEPARTMENT_DIRECT)
+			&& $director->getPermission(PermissionDictionary::TASK_DEPARTMENT_DIRECT)
 		)
 		{
 			return true;
@@ -84,7 +126,7 @@ trait AssignTrait
 		// can assign task to non department's manager
 		if (
 			$relation === UserSubordinate::RELATION_OTHER_DIRECTOR
-			&& $this->user->getPermission(PermissionDictionary::TASK_NON_DEPARTMENT_MANAGER_DIRECT)
+			&& $director->getPermission(PermissionDictionary::TASK_NON_DEPARTMENT_MANAGER_DIRECT)
 		)
 		{
 			return true;
@@ -93,7 +135,7 @@ trait AssignTrait
 		// can assign task to non department users
 		if (
 			$relation === UserSubordinate::RELATION_OTHER
-			&& $this->user->getPermission(PermissionDictionary::TASK_NON_DEPARTMENT_DIRECT)
+			&& $director->getPermission(PermissionDictionary::TASK_NON_DEPARTMENT_DIRECT)
 		)
 		{
 			return true;
@@ -102,38 +144,12 @@ trait AssignTrait
 		return false;
 	}
 
-	private function isMemberOfUserGroups(int $responsibleId): bool
+	private function isMemberOfUserGroups(int $userId, int $responsibleId): bool
 	{
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			return false;
-		}
-
-		global $DB;
-
-		$sql = '
-			SELECT count(*) as cnt
-			FROM b_sonet_user2group ug
-			INNER JOIN b_sonet_user2group ug2
-				ON ug.GROUP_ID = ug2.GROUP_ID 
-				AND ug2.USER_ID = '. $responsibleId .'
-				AND ug2.ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
-			WHERE 
-				ug.USER_ID = '. $this->user->getUserId() .'
-				AND ug.ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
-		';
-
-		$res = $DB->query($sql);
-		$row = $res->fetch();
-		if ($row && (int) $row['cnt'] > 0)
-		{
-			return true;
-		}
-
-		return false;
+		return Group::usersHasCommonGroup($userId, $responsibleId);
 	}
 
-	private function isInGroup(int $groupId, int $responsibleId): bool
+	private function isInGroup(int $userId, int $groupId, int $responsibleId): bool
 	{
 		if (!Loader::includeModule('socialnetwork'))
 		{
@@ -147,7 +163,7 @@ trait AssignTrait
 			FROM b_sonet_user2group
 			WHERE
 				GROUP_ID = '. $groupId .'
-				AND USER_ID IN ('. $this->user->getUserId() .', '. $responsibleId .')
+				AND USER_ID IN ('. $userId .', '. $responsibleId .')
 				AND ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
 		';
 

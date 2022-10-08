@@ -74,7 +74,7 @@ class WebForm extends Base
 	public static function getTypes()
 	{
 		$types = array();
-		$formDb = FormTable::getList(array(
+		$formDb = FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'order' => array('NAME' => 'ASC', 'ID' => 'ASC'),
 		));

@@ -3,9 +3,7 @@ namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Main;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
 class EntityController extends Controller
@@ -115,30 +113,10 @@ class EntityController extends Controller
 			]
 		);
 
-		$enableHistoryPush = $historyEntryID > 0;
-		if ($enableHistoryPush && Loader::includeModule('pull'))
-		{
-			$pushParams = [];
-			$historyFields = TimelineEntry::getByID($historyEntryID);
-			if (is_array($historyFields))
-			{
-				$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-					$historyFields,
-					['ENABLE_USER_INFO' => true]
-				);
-			}
-
-			$tag = TimelineEntry::prepareEntityPushTag($this->getEntityTypeID(), $ownerID);
-			$pushParams['TAG'] = $tag;
-			\CPullWatch::AddToStack(
-				$tag,
-				[
-					'module_id' => 'crm',
-					'command' => 'timeline_activity_add',
-					'params' => $pushParams,
-				]
-			);
-		}
+		$this->sendPullEventOnAdd(
+			new \Bitrix\Crm\ItemIdentifier($this->getEntityTypeID(), $ownerID),
+			$historyEntryID
+		);
 	}
 
 	/**
@@ -168,6 +146,29 @@ class EntityController extends Controller
 	public function register($ownerID, array $options = null)
 	{
 	}
+
+	public static function loadCommunicationsAndMultifields(array &$items, \CCrmPerms $userPermissions = null, array $options = []): void
+	{
+		if (!isset($options['ENABLE_PERMISSION_CHECK']))
+		{
+			$options['ENABLE_PERMISSION_CHECK'] = true;
+		}
+		if (!isset($options['USER_PERMISSIONS']))
+		{
+			$options['USER_PERMISSIONS'] = $userPermissions;
+		}
+		$communications = \CCrmActivity::PrepareCommunicationInfos(
+			array_keys($items),
+			$options
+		);
+		foreach ($communications as $ID => $info)
+		{
+			$items[$ID]['COMMUNICATION'] = $info;
+		}
+
+		\Bitrix\Crm\Timeline\EntityController::prepareMultiFieldInfoBulk($items);
+	}
+
 	public static function prepareMultiFieldInfo(array &$item)
 	{
 		$items = array($item);
@@ -339,29 +340,6 @@ class EntityController extends Controller
 				]
 			]
 		);
-
-		$enableHistoryPush = $historyEntryID > 0;
-		if (($enableHistoryPush) && Main\Loader::includeModule('pull'))
-		{
-			$pushParams = [];
-			$historyFields = TimelineEntry::getByID($historyEntryID);
-			if (is_array($historyFields))
-			{
-				$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-					$historyFields,
-					['ENABLE_USER_INFO' => true]
-				);
-			}
-			$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag($this->getEntityTypeID(), $ownerId);
-
-			\CPullWatch::AddToStack(
-				$tag,
-				[
-					'module_id' => 'crm',
-					'command' => 'timeline_activity_add',
-					'params' => $pushParams,
-				]
-			);
-		}
+		$this->sendPullEventOnAdd(new \Bitrix\Crm\ItemIdentifier($this->getEntityTypeID(), $ownerId), $historyEntryID);
 	}
 }

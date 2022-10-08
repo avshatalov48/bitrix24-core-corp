@@ -12,20 +12,20 @@ use Bitrix\Main\Result;
 
 final class File implements FieldImplementation
 {
-	/** @var EntityObject */
-	private $entityObject;
-	/** @var Field\Collection */
-	private $fileFields;
-	/** @var FileUploader */
-	private $fileUploader;
+	private EntityObject $entityObject;
+	private Field\Collection $fileFields;
+	/** @var Array<string, string> [$commonFieldName => $entityFieldName] */
+	private array $fieldsMap;
+	private FileUploader $fileUploader;
 
 	/** @var Array<string, int[]> */
-	private $previousFileIds = [];
+	private array $previousFileIds = [];
 
-	public function __construct(EntityObject $entityObject, Field\Collection $fileFields)
+	public function __construct(EntityObject $entityObject, Field\Collection $fileFields, array $fieldsMap)
 	{
 		$this->entityObject = $entityObject;
 		$this->fileFields = $fileFields;
+		$this->fieldsMap = $fieldsMap;
 		$this->fileUploader = Container::getInstance()->getFileUploader();
 	}
 
@@ -134,7 +134,8 @@ final class File implements FieldImplementation
 				}
 			}
 
-			$deleteKey = $field->getName() . '_del';
+			$entityFieldName = $this->fieldsMap[$field->getName()] ?? $field->getName();
+			$deleteKey = $entityFieldName . '_del';
 			if (array_key_exists($deleteKey, $externalValues))
 			{
 				$fileIdToDelete = $externalValues[$deleteKey];

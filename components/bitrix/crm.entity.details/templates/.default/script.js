@@ -108,6 +108,10 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 		{
 			return BX.CrmEntityManager.getCurrent().getEntityCreateUrl(entityTypeName);
 		},
+		getTabManager: function()
+		{
+			return this._tabManager;
+		},
 		prepareCreationUrlParams: function(urlParams)
 		{
 		},
@@ -144,6 +148,41 @@ if(typeof BX.Crm.EntityDetailManager === "undefined")
 			{
 				this._tabManager.selectItem(item);
 			}
+		},
+		isTabButtonVisible: function(tabName)
+		{
+			const item = this._tabManager.findItemById(tabName);
+			if (item)
+			{
+				return this._tabManager.isVisibleItemMenu(item);
+			}
+
+			return false;
+		},
+		getTabMenuItemContainer: function(tabName)
+		{
+			const item = this._tabManager.findItemById(tabName);
+			if (item)
+			{
+				return item.getMenuContainer();
+			}
+
+			return null;
+		},
+		getTabFromMoreMenu: function(tabName)
+		{
+			const moreMenu = this._tabManager.getMoreMenu();
+			if (moreMenu)
+			{
+				const menuItem = moreMenu.getMenuItem(tabName);
+				const menuItemContainer = menuItem && menuItem.getContainer();
+				if (BX.Type.isDomNode(menuItemContainer))
+				{
+					return menuItemContainer;
+				}
+			}
+
+			return null;
 		},
 		processRemoval: function()
 		{
@@ -918,6 +957,7 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 		this._id = "";
 		this._container = null;
 		this._items = null;
+		this._menuManager = null;
 	};
 	BX.Crm.EntityDetailTabManager.prototype =
 	{
@@ -936,12 +976,12 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 				}
 			}.bind(this));
 
-			var menuManager = BX.Main.interfaceButtonsManager.getById(
+			this._menuManager = BX.Main.interfaceButtonsManager.getById(
 				BX.prop.getString(settings, "menuId")
 			);
 			var firstItem = null;
 			this._items = [];
-			menuManager.getAllItems().forEach(function(item) {
+			this._menuManager.getAllItems().forEach(function(item) {
 				if (firstItem === null)
 				{
 					firstItem = item;
@@ -964,10 +1004,10 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 				))
 			}.bind(this));
 
-			var activeItem = menuManager.getActive();
+			var activeItem = this._menuManager.getActive();
 			if (activeItem['DATA_ID'] === 'main' && firstItem.dataset.id !== activeItem['DATA_ID'])
 			{
-				const firstItemData = menuManager.getItemData(firstItem);
+				const firstItemData = this._menuManager.getItemData(firstItem);
 				const script = firstItemData['ON_CLICK'];
 				if (BX.type.isNotEmptyString(script))
 				{
@@ -1002,6 +1042,30 @@ if(typeof BX.Crm.EntityDetailTabManager === "undefined")
 		processItemSelect: function(item)
 		{
 			this.selectItem(item);
+		},
+		isVisibleItemMenu: function(item)
+		{
+			const itemMenuContainer = item.getMenuContainer();
+			if (itemMenuContainer)
+			{
+				return !this._menuManager.isDisabled(itemMenuContainer)
+					&& this._menuManager.isVisibleItem(itemMenuContainer);
+			}
+			return false;
+		},
+		getTabMenuContainer: function()
+		{
+			return this._menuManager.itemsContainer;
+		},
+		getMoreButton: function()
+		{
+			return this._menuManager.getMoreButton();
+		},
+		getMoreMenu: function()
+		{
+			const moreMenu = this._menuManager.getMoreMenu();
+
+			return moreMenu ? moreMenu : null;
 		}
 	};
 	BX.Crm.EntityDetailTabManager.items = {};
@@ -1062,6 +1126,10 @@ if(typeof BX.Crm.EntityDetailTab === "undefined")
 		getId: function()
 		{
 			return this._id;
+		},
+		getMenuContainer: function()
+		{
+			return this._menuContainer;
 		},
 		isEnabled: function()
 		{

@@ -519,6 +519,7 @@ class Item implements \IBPWorkflowDocument
 			case 'datetime':
 			case 'date':
 			case 'double':
+			case 'file':
 				$bpType = $type;
 				break;
 			case 'integer':
@@ -537,7 +538,6 @@ class Item implements \IBPWorkflowDocument
 			case 'url':
 			case 'address':
 			case 'resourcebooking':
-			case 'file':
 			case 'crm_status':
 			case 'iblock_section':
 			case 'iblock_element':

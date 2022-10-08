@@ -4,14 +4,14 @@
 }
 
 .crm-kanban-item {
-	padding: 10px 30px 8px 12px;
+	padding: 10px 30px 8px 15px;
 	overflow: hidden;
 	background: #fff;
 	position: relative;
 	min-height: 77px;
-	-webkit-border-radius: 2px;
-	border-radius: 2px;
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-border-radius-md, 2px);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	-moz-user-select: -moz-none;
 	-moz-user-select: none;
 	user-select: none;
@@ -39,6 +39,16 @@
 
 .main-kanban-item-drag .crm-kanban-item {
 	padding: 10px 12px 10px 12px;
+}
+
+.crm-kanban-item-line {
+	display: block;
+	width: 3px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	background-color: var(--crm-kanban-item-color);
 }
 
 .crm-kanban-item:after {
@@ -100,7 +110,8 @@
 	word-wrap: break-word;
 	max-width: 100%;
 	margin: 0 0 4px 0;
-	font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	font-size: 13px;
 	line-height: 15px;
@@ -111,7 +122,8 @@
 	float: left;
 	font-size: 11px;
 	color: #828B95;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-kanban-item-title:hover {
@@ -194,7 +206,8 @@
 	padding: 0 7px;
 	border-radius: 30px;
 	background: #f54819;
-	font: bold 11px/16px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 }
 
@@ -445,7 +458,7 @@
 	width: 100%;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
 	border-radius: 2px;
@@ -460,7 +473,7 @@
 	display: block;
 	width: 100%;
 	resize: none;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
 	line-height: 20px;
@@ -482,7 +495,8 @@
 	display: block;
 	overflow: hidden;
 	height: 50px;
-	font-family: 'OpenSans-Light', serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	line-height: 50px;
 	color: #525c68;
 	text-align: center;
@@ -499,7 +513,8 @@
 	cursor: pointer;
 	background: transparent;
 	color: #6d7984 !important;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 12px;
 	transition: .3s;
 }
@@ -521,7 +536,7 @@
 .main-kanban-column:first-child .crm-kanban-column-add-item-button,
 .main-kanban-column:hover .crm-kanban-column-add-item-button {
 	background: rgba(255,255,255,.5);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-2xs, 2px);
 	color: #6d7984;
 }
 
@@ -659,10 +674,11 @@
 	margin: 0 0 7px 0;
 	background: rgba(255,255,255,.9);
 	border: 1px dashed rgba(195,200,205,.9);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-md, 2px);
 	color: rgba(109,121,132,.7);
 	font-size: 13px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-align: center;
 }
 
@@ -990,7 +1006,7 @@ a.crm-kanban-sidepanel:hover {
 	line-height: 33px;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #535c69;
 	cursor: pointer;
@@ -1020,7 +1036,7 @@ a.crm-kanban-sidepanel:hover {
 	overflow: hidden;
 	padding: 9px 0;
 	color: #535c69;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	line-height: 17px;
 	border-bottom: 1px solid rgba(82,92,105,.1);
@@ -1090,11 +1106,12 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-qiuck-form-buttons {
 	margin: 0;
-	margin-top: var(--ui-space-stack-sm-neg, -15px);
+	margin-top: var(--ui-space-stack-md-neg, -16px);
 	padding: 15px;
 	background: #fff;
 	position: relative;
-	border-radius: var(--ui-border-radius-md, 0 0 2px 2px);
+	border-bottom-left-radius: var(--ui-border-radius-md, 2px);
+	border-bottom-right-radius: var(--ui-border-radius-md, 2px);
 }
 
 .crm-kanban-quick-form-container {
@@ -1170,7 +1187,7 @@ a.crm-kanban-sidepanel:hover {
 }
 
 .crm-kanban-item-fields-item-title {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	color: #868d96;
 	margin-bottom: 3px;
@@ -1194,7 +1211,8 @@ a.crm-kanban-sidepanel:hover {
 }
 
 .crm-kanban-item-fields-item-value {
-	font-family: "OpenSans-SemiBold", Arial, "Helvetica Neue", sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
 	font-size: 12px;
 	white-space: normal;
@@ -1292,13 +1310,14 @@ a.crm-kanban-sidepanel:hover {
 	padding: 17px 18px 20px 18px;
 	text-align: center;
 	background: rgba(255,255,255,.87);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-md, 2px);
 }
 
 .crm-kanban-item-industry-title {
 	display: block;
 	margin-bottom: 8px;
-	font-family: "OpenSans-SemiBold", Arial, "Helvetica Neue", sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #333;
 	text-align: left;
@@ -1323,7 +1342,8 @@ a.crm-kanban-sidepanel:hover {
 	display: inline-block;
 	vertical-align: middle;
 	opacity: .8;
-	font-family: "OpenSans-SemiBold", Arial, "Helvetica Neue", sans-serif;;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 13px;
 	line-height: 19px;
 	color: #333;
@@ -1404,7 +1424,7 @@ a.crm-kanban-sidepanel:hover {
 	text-transform: uppercase;
 	transition: 250ms all ease;
 	margin-top: 2px;
-	font: 700 10px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 700 10px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-kanban-item-status-seen {
@@ -1495,6 +1515,10 @@ a.crm-kanban-sidepanel:hover {
 
 .crm-kanban-popup-field-search-list-item-hidden{
 	animation: hideKanbanPopupSearchSectionItem 300ms both;
+}
+
+.crm-kanban-debug-item-label {
+	color: #FFA900;
 }
 
 @keyframes hideKanbanPopupSearchSectionItem {

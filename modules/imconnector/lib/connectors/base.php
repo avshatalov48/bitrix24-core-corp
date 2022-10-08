@@ -47,7 +47,8 @@ class Base
 		$this->userPrefix = $idConnector;
 	}
 
-	//Input
+	//region Input
+
 	/**
 	 * @param $message
 	 * @param $line
@@ -61,9 +62,8 @@ class Base
 		$message = $interactiveMessage
 			->setMessage($message)
 			->processing();
-		$isSendMessage = $interactiveMessage->isSendMessage();
 
-		if($isSendMessage)
+		if ($interactiveMessage->isSendMessage())
 		{
 			$result = $this->processingInputNewAndUpdateMessage($message);
 		}
@@ -190,6 +190,16 @@ class Base
 	protected function processingInputNewAndUpdateMessage($message): Result
 	{
 		$result = new Result();
+
+		if (
+			isset($message['user'], $message['user']['skip_phone_validate'])
+			&& $message['user']['skip_phone_validate'] === 'Y'
+		)
+		{
+			$message['extra']['skip_phone_validate'] = 'Y';
+			unset($message['user']['skip_phone_validate']);
+		}
+
 
 		$resultProcessingUserAndChat = $this->processingUserAndChat($message);
 		if ($resultProcessingUserAndChat->isSuccess())
@@ -374,7 +384,7 @@ class Base
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$result->setResult($message);
 		}
@@ -419,24 +429,24 @@ class Base
 	{
 		$returnText = '';
 
-		if(!Library::isEmpty($attachment['user']))
+		if (!Library::isEmpty($attachment['user']))
 		{
-			if(
+			if (
 				!Library::isEmpty($attachment['user']['last_name'])
 				|| !Library::isEmpty($attachment['user']['name'])
 			)
 			{
 				//TODO: it does not work correctly, if the URL for the user
-				/*if(!empty($attachment['user']['url']))
+				/*if (!empty($attachment['user']['url']))
 				{
 					$returnText .= "[URL=" . $attachment['user']['url'] . "]";
 				}*/
 
-				if(!Library::isEmpty($attachment['user']['last_name']))
+				if (!Library::isEmpty($attachment['user']['last_name']))
 				{
 					$returnText .= $attachment['user']['last_name'];
 				}
-				if(
+				if (
 					!Library::isEmpty($attachment['user']['last_name'])
 					&& !empty($attachment['user']['name'])
 				)
@@ -444,18 +454,18 @@ class Base
 					$returnText .= ' ';
 				}
 
-				if(!Library::isEmpty($attachment['user']['name']))
+				if (!Library::isEmpty($attachment['user']['name']))
 				{
 					$returnText .= $attachment['user']['name'];
 				}
 
-				/*if(!empty($attachment['user']['url']))
+				/*if (!empty($attachment['user']['url']))
 				{
 					$returnText .= "[/URL]  ";
 				}*/
 			}
 
-			if(!Library::isEmpty($attachment['date']))
+			if (!Library::isEmpty($attachment['date']))
 			{
 				$returnText .= "[" . DateTime::createFromTimestamp($attachment['date'])->toString() . "]";
 			}
@@ -472,7 +482,7 @@ class Base
 	{
 		$result = new Result();
 
-		if(
+		if (
 			!empty($message['user'])
 			&& !empty($message['chat'])
 		)
@@ -532,7 +542,10 @@ class Base
 		return $chat;
 	}
 
-	//User
+	//endregion
+
+	//region User
+
 	/**
 	 * Parse full name into first name and surname.
 	 *
@@ -601,38 +614,66 @@ class Base
 
 	/**
 	 * @param array $userFields
-	 * @return int
+	 * @return Result
 	 */
-	protected function addUser(array $userFields)
+	protected function addUser(array $userFields): Result
 	{
-		$cUser = new \CUser;
+		$result = new Result();
+		$user = new \CUser;
 
 		$fields = $this->preparationNewUserFields($userFields);
 
-		return $cUser->Add($fields);
+		static::getApplication()->resetException();
+
+		$userId = $user->add($fields);
+		if ($userId > 0)
+		{
+			$result->setResult($userId);
+		}
+		else
+		{
+			$error = static::getApplication()->getException();
+			if ($error instanceof \CApplicationException)
+			{
+				$result->addError(new Error($error->getString()));
+			}
+		}
+
+		return $result;
 	}
 
 	/**
 	 * @param array $oldUserFields
 	 * @param array $userFields
-	 * @return int
+	 * @return Result
 	 */
-	protected function updateUser(array $oldUserFields, array $userFields)
+	protected function updateUser(array $oldUserFields, array $userFields): Result
 	{
-		$cUser = new \CUser;
+		$result = new Result();
+		$user = new \CUser;
 
 		$userId = $userFields['ID'];
+		$result->setResult($userId);
 
 		if ($userFields['MD5'] !== md5(serialize($oldUserFields)))
 		{
 			$fields = $this->preparationUserFields($oldUserFields, $userId);
-			if(!empty($fields))
+			if (!empty($fields))
 			{
-				$cUser->Update($userId, $fields);
+				static::getApplication()->resetException();
+
+				if (!$user->update($userId, $fields))
+				{
+					$error = static::getApplication()->getException();
+					if ($error instanceof \CApplicationException)
+					{
+						$result->addError(new Error($error->getString()));
+					}
+				}
 			}
 		}
 
-		return $userId;
+		return $result;
 	}
 
 	/**
@@ -656,12 +697,28 @@ class Base
 
 			if (is_array($userFields))
 			{
-				$userId = $this->updateUser($user, $userFields);
+				$updateResult = $this->updateUser($user, $userFields);
+				if ($updateResult->isSuccess())
+				{
+					$userId = $updateResult->getResult();
+				}
+				else
+				{
+					$result->addErrors($updateResult->getErrors());
+				}
 			}
 		}
 		else
 		{
-			$userId = $this->addUser($user);
+			$addResult = $this->addUser($user);
+			if ($addResult->isSuccess())
+			{
+				$userId = $addResult->getResult();
+			}
+			else
+			{
+				$result->addErrors($addResult->getErrors());
+			}
 		}
 
 		if (empty($userId))
@@ -724,10 +781,10 @@ class Base
 		];
 
 		//TODO: Hack to bypass the option of deleting the comment
-		if(isset($user['name']))
+		if (isset($user['name']))
 		{
 			//Name
-			if(Library::isEmpty($user['name']))
+			if (Library::isEmpty($user['name']))
 			{
 				$fields['NAME'] = '';
 			}
@@ -737,7 +794,7 @@ class Base
 			}
 		}
 		//Surname
-		if(Library::isEmpty($user['last_name']))
+		if (Library::isEmpty($user['last_name']))
 		{
 			$fields['LAST_NAME'] = '';
 		}
@@ -746,12 +803,12 @@ class Base
 			$fields['LAST_NAME'] = $user['last_name'];
 		}
 
-		if(
+		if (
 			Library::isEmpty($fields['NAME'])
 			&& Library::isEmpty($fields['LAST_NAME'])
 		)
 		{
-			if(Library::isEmpty($user['title']))
+			if (Library::isEmpty($user['title']))
 			{
 				$fields['NAME'] = Loc::getMessage("IMCONNECTOR_GUEST_USER");
 			}
@@ -762,7 +819,7 @@ class Base
 		}
 
 		//The link to the profile
-		if(empty($user['url']))
+		if (empty($user['url']))
 		{
 			$fields['PERSONAL_WWW'] = '';
 		}
@@ -772,13 +829,13 @@ class Base
 		}
 
 		//Sex
-		if(empty($user['gender']))
+		if (empty($user['gender']))
 		{
 			$fields['PERSONAL_GENDER'] = '';
 		}
 		else
 		{
-			if($user['gender'] == 'male')
+			if ($user['gender'] == 'male')
 			{
 				$fields['PERSONAL_GENDER'] = 'M';
 			}
@@ -788,14 +845,14 @@ class Base
 			}
 		}
 		//Personal photo
-		if(
+		if (
 			!empty($user['picture'])
 			&& is_array($user['picture'])
 		)
 		{
 			$fields['PERSONAL_PHOTO'] = Library::downloadFile($user['picture']);
 
-			if(
+			if (
 				!empty($fields['PERSONAL_PHOTO'])
 				&& !empty($userId)
 			)
@@ -807,7 +864,7 @@ class Base
 					]
 				)->fetch();
 
-				if(!empty($rowUser['PERSONAL_PHOTO']))
+				if (!empty($rowUser['PERSONAL_PHOTO']))
 				{
 					$fields['PERSONAL_PHOTO']['del'] = 'Y';
 					$fields['PERSONAL_PHOTO']['old_file'] = $rowUser['PERSONAL_PHOTO'];
@@ -815,7 +872,7 @@ class Base
 			}
 		}
 
-		if(!Library::isEmpty($user['title']))
+		if (!Library::isEmpty($user['title']))
 		{
 			$fields['TITLE'] = $user['title'];
 		}
@@ -833,7 +890,10 @@ class Base
 		return $fields;
 	}
 
-	//File
+	//endregion
+
+	//region File
+
 	/**
 	 * Saving files.
 	 *
@@ -847,10 +907,10 @@ class Base
 
 		foreach ($files as $cell => $file)
 		{
-			if(!empty($file))
+			if (!empty($file))
 			{
 				$resultSaveFile = $this->saveFile($file);
-				if(!empty($resultSaveFile))
+				if (!empty($resultSaveFile))
 				{
 					$resultSaveFiles[$cell] = $resultSaveFile;
 				}
@@ -872,7 +932,7 @@ class Base
 	{
 		$result = false;
 
-		if(
+		if (
 			!empty($file)
 			&& is_array($file)
 		)
@@ -884,7 +944,7 @@ class Base
 			$file = false;
 		}
 
-		if($file)
+		if ($file)
 		{
 			$result = \CFile::SaveFile(
 				$file,
@@ -894,6 +954,10 @@ class Base
 
 		return $result;
 	}
+
+	//endregion
+
+	//region Error
 
 	/**
 	 * @param $paramsError
@@ -925,19 +989,19 @@ class Base
 	{
 		$result = false;
 
-		if(
+		if (
 			!empty($paramsError['chatId'])
 			&& $paramsError['chatId'] > 0
 			&& Loader::includeModule('imopenlines')
 		)
 		{
 			$messageExternalError = '';
-			if(!empty($paramsError['messageConnector']))
+			if (!empty($paramsError['messageConnector']))
 			{
 				$messageExternalError = $paramsError['messageConnector'];
 			}
 
-			if(empty($message))
+			if (empty($message))
 			{
 				$message = Loc::getMessage('IMCONNECTOR_MESSAGE_ERROR_NOT_DELETE_CHAT');
 			}
@@ -959,14 +1023,14 @@ class Base
 	{
 		$result = false;
 
-		if(
+		if (
 			!empty($paramsError['chatId'])
 			&& $paramsError['chatId'] > 0
 			&& Loader::includeModule('imopenlines')
 		)
 		{
 			$messageExternalError = '';
-			if(!empty($paramsError['messageConnector']))
+			if (!empty($paramsError['messageConnector']))
 			{
 				$messageExternalError = $paramsError['messageConnector'];
 			}
@@ -981,7 +1045,7 @@ class Base
 				\CIMMessageParam::SendPull((int)$paramsError['messageId'], ['SENDING_TS']);
 			}
 
-			if(empty($message))
+			if (empty($message))
 			{
 				$message = Loc::getMessage('IMCONNECTOR_MESSAGE_ERROR_NOT_SEND_CHAT');
 			}
@@ -993,9 +1057,11 @@ class Base
 
 		return $result;
 	}
-	//END Input
 
-	//Output
+	//endregion
+
+	//region Output
+
 	/**
 	 * @param array $message
 	 * @param $line
@@ -1004,9 +1070,9 @@ class Base
 	public function sendMessageProcessing(array $message, $line): array
 	{
 		//Processing for native messages
-		$message = InteractiveMessage\Output::sendMessageProcessing($message, $this->idConnector);
+		$message = InteractiveMessage\Output::processSendingMessage($message, $this->idConnector);
 		//Processing rich links
-		$message = $this->processingMessageForRich($message);
+		$message = $this->processMessageForRich($message);
 		//Delete data user
 		unset($message['user']);
 
@@ -1041,16 +1107,18 @@ class Base
 	{
 		return true;
 	}
-	//END Output
 
-	//Tools
+	//endregion
+
+	//region Tools
+
 	/**
 	 * Prepares attachments data to send.
 	 *
 	 * @param array $message
 	 * @return array
 	 */
-	protected function processingMessageForRich(array $message): array
+	protected function processMessageForRich(array $message): array
 	{
 		$richData = [];
 		if (
@@ -1134,14 +1202,14 @@ class Base
 	 */
 	protected function processingMessageForOperatorData(array $message): array
 	{
-		if(!empty($message['user']))
+		if (!empty($message['user']))
 		{
 			$oldUserData = $message['user'];
 			unset($message['user']);
 
 			$message['user']['name'] = $oldUserData['NAME'];
 			$message['user']['picture']['url'] = '';
-			if(!empty($oldUserData['AVATAR']))
+			if (!empty($oldUserData['AVATAR']))
 			{
 				$message['user']['picture']['url'] = $oldUserData['AVATAR'];
 			}
@@ -1170,4 +1238,16 @@ class Base
 
 		return $result;
 	}
+
+	/**
+	 * @return \CMain
+	 */
+	protected static function getApplication(): \CMain
+	{
+		/** @global \CMain $APPLICATION */
+		global $APPLICATION;
+		return $APPLICATION;
+	}
+
+	//endregion
 }

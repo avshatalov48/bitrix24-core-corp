@@ -1,10 +1,10 @@
 .bx-disk-popup-title {padding-top:10px; padding-left:10px;}
 .bx-disk-form-bizproc-start-table {width:100%;}
 .bx-disk-form-bizproc-start-div {padding:10px;width: 550px;}
-.bx-disk-form-bizproc-start-td-title {text-align:center;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:14px;font-weight:bold;color:#7f858d;}
-.bx-disk-form-bizproc-start-td-error {text-align:left;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:13px;font-weight:bold;color:red;}
-.bx-disk-form-bizproc-start-td-name-bizproc {font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size: 13px;font-weight: bold;height: 30px;color: #4f5359;}
-.field-name {font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:12px;font-weight:bold;color:#abaeaf;}
+.bx-disk-form-bizproc-start-td-title {text-align:center;font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size:14px;font-weight:var(--ui-font-weight-bold);color:#7f858d;}
+.bx-disk-form-bizproc-start-td-error {text-align:left;font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size:13px;font-weight:var(--ui-font-weight-bold);color:red;}
+.bx-disk-form-bizproc-start-td-name-bizproc {font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size: 13px;font-weight: var(--ui-font-weight-bold);height: 30px;color: #4f5359;}
+.field-name {font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size:12px;font-weight:var(--ui-font-weight-bold);color:#abaeaf;}
 .bx-disk-form-bizproc-start-td-button-bizproc {text-align:right;}
 div.bizproc-status-inprogress{background-image:url('images/bizproc/bizproc_inprogress.gif');float: right;}
 div.bizproc-status-attention{background-image:url('images/bizproc/bizproc_attention.gif') !important;float: right;}
@@ -43,12 +43,17 @@ div.bizproc-statuses{width:22px;height:18px;margin-right:6px;float: right;backgr
 	border-color: #dce2e6;
 }
 
+.ui-action-panel-shown .disk-folder-list-toolbar {
+	border-color: transparent;
+}
+
 .disk-folder-list-config {
 	display: block;
 	overflow: hidden;
 	height: 54px;
 	font-size: 0;
-	font-family: 'OpenSans-Regular', "Helvetica Neue", Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .disk-folder-list-config:before {
@@ -346,6 +351,7 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 	box-sizing: border-box;
 	background: #fff;
 	box-shadow: 0 1px 2px rgba(0,0,0,.15);
+	border-radius: var(--disk-folder-list-item-border-radius, var(--ui-border-radius-md));
 	opacity: 0;
 	animation: disk-folder-list-item-show .15s linear forwards;
 	animation-delay: .5s;
@@ -425,6 +431,7 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 	background: rgba(47,198,246,.35);
 	z-index: 9;
 	pointer-events: none;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .ui-grid-tile-item-draggable,
@@ -484,7 +491,8 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 	max-width: 100%;
 	white-space: nowrap;
 	text-overflow: ellipsis;
-	font-family: 'OpenSans-Semibold', Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #000;
 	font-size: 12px;
 	text-decoration: none;
@@ -511,10 +519,11 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 	opacity: 0;
 	border: 1px solid rgba(130,139,149,.67);
 	pointer-events: none;
-	font-family: 'OpenSans-Semibold', Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #000;
 	font-size: 12px;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	box-sizing: border-box;
 	z-index: 99;
 	transition: .2s;
@@ -599,7 +608,8 @@ html:not(.bx-ie) .disk-folder-list-context-menu-item-accept-animate.menu-popup-i
 	transform: translate(-50%, -50%);
 	animation: disk-folder-list-no-data-inner-show .1s linear forwards;
 	animation-delay: .4s;
-	font-family: 'OpenSans-Light', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #535c69;
 }
 
@@ -766,7 +776,8 @@ div.disk-folder-list-search-progress {
 	padding: 0 12px 0 16px;
 	height: 0;
 	background: #ddf5fd;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #716e62;
 	box-sizing: border-box;
 	margin-bottom: 4px;

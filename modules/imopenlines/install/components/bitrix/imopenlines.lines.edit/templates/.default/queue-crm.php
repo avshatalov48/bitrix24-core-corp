@@ -4,6 +4,11 @@ use \Bitrix\Imopenlines\Limit,
 	\Bitrix\Main\Localization\Loc;
 
 use \Bitrix\ImOpenLines\Config;
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
 ?>
 <script type="text/javascript">
 	BX.ready(function(){

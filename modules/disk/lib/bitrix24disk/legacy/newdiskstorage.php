@@ -190,7 +190,7 @@ class NewDiskStorage extends DiskStorage
 		$cursor = $pageState->getCursor()?: $internalVersion;
 
 		$query = new Internals\Entity\Query(ObjectTable::getEntity());
-		$query->setSelect($this->getSelectableColumnsForObject());
+		$query->setSelect(['ID']);
 
 		if(!$this->checkOpportunityToSkipRights())
 		{
@@ -213,11 +213,6 @@ class NewDiskStorage extends DiskStorage
 			$query->addFilter('>=SYNC_UPDATE_TIME', DateTime::createFromTimestamp($cursor));
 		}
 
-		if ($this->isEnabledObjectLock)
-		{
-			$query->addSelect('LOCK.*', self::LOCK_PREFIX_IN_SELECT);
-		}
-
 		$query
 			->addFilter('STORAGE_ID', $this->storage->getId())
 			->addFilter('DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE)
@@ -233,8 +228,32 @@ class NewDiskStorage extends DiskStorage
 			$query->setOffset($offset);
 		}
 
+		$objectIds = [];
+		foreach ($query->exec() as $item)
+		{
+			$objectIds[] = $item['ID'];
+		}
+
+		$fetchedItems = [];
+		if ($objectIds)
+		{
+			$query = new Internals\Entity\Query(ObjectTable::getEntity());
+			$query
+				->setSelect($this->getSelectableColumnsForObject())
+				->addFilter('@ID', $objectIds)
+				->addOrder('SYNC_UPDATE_TIME')
+				->addOrder('ID')
+			;
+			if ($this->isEnabledObjectLock)
+			{
+				$query->addSelect('LOCK.*', self::LOCK_PREFIX_IN_SELECT);
+			}
+
+			$fetchedItems = $query->exec()->fetchAll();
+		}
+
 		$count = 0;
-		foreach($query->exec() as $item)
+		foreach($fetchedItems as $item)
 		{
 			if($count === 0)
 			{
@@ -510,7 +529,7 @@ class NewDiskStorage extends DiskStorage
 
 		$query = new Internals\Entity\Query(ObjectTable::getEntity());
 		$query
-			->setSelect($this->getSelectableColumnsForObject())
+			->setSelect(['ID'])
 			->addFilter('PATH_CHILD.PARENT_ID', $link->realObjectId)
 			->addFilter('DELETED_TYPE', ObjectTable::DELETED_TYPE_NONE)
 			->addFilter('=RIGHTS_CHECK', true)
@@ -527,11 +546,6 @@ class NewDiskStorage extends DiskStorage
 //			->addOrder('PATH_CHILD.OBJECT_ID')
 			->setLimit($pageSize + 1)
 		;
-
-		if ($this->isEnabledObjectLock)
-		{
-			$query->addSelect('LOCK.*', self::LOCK_PREFIX_IN_SELECT);
-		}
 
 		$cursor = $pageState->getCursor();
 		if (
@@ -558,8 +572,37 @@ class NewDiskStorage extends DiskStorage
 			$query->setOffset($offset);
 		}
 
+		$objectIds = [];
+		foreach ($query->exec() as $item)
+		{
+			$objectIds[] = $item['ID'];
+			if ($expectedFirstId !== null && $item['ID'] != $expectedFirstId)
+			{
+				throw new UnexpectedNextIdException("{$expectedFirstId} vs {$item['ID']}");
+			}
+		}
+
+		$fetchedItems = [];
+		if ($objectIds)
+		{
+			$query = new Internals\Entity\Query(ObjectTable::getEntity());
+			$query
+				->setSelect($this->getSelectableColumnsForObject())
+				->addFilter('@ID', $objectIds)
+				->addOrder('SYNC_UPDATE_TIME')
+				->addOrder('ID')
+				->setLimit($pageSize + 1)
+			;
+			if ($this->isEnabledObjectLock)
+			{
+				$query->addSelect('LOCK.*', self::LOCK_PREFIX_IN_SELECT);
+			}
+
+			$fetchedItems = $query->exec()->fetchAll();
+		}
+
 		$count = 0;
-		foreach($query->exec() as $item)
+		foreach($fetchedItems as $item)
 		{
 			if($count === 0)
 			{

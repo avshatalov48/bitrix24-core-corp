@@ -41,7 +41,8 @@
 	border: 1px solid #b3b8be;
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	overflow: hidden;
 	height: 378px;
 	border-radius: var(--ui-border-radius-md, 3px);
@@ -246,14 +247,13 @@
 }
 
 .crm-fake-widget-title-input-container input {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	outline: none;
 	border: none;
 	height: 28px;
 	line-height: 28px;
 	color: #535c69;
-	font-size: 14px;
-	font-weight: bold;
 	padding: 0 6px;
 	box-sizing: border-box;
 	width: 100%;
@@ -307,7 +307,8 @@
 
 .crm-fake-widget-content-amt {
 	color: #1a6397;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-align: center;
 	overflow: hidden;
 	padding: 13px 15px;
@@ -470,7 +471,7 @@ a.crm-fake-widget-content-text {
 }
 
 .crm-portriat-popup-input {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	display: inline-block;
 	vertical-align: middle;
 	background: #fff;

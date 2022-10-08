@@ -281,6 +281,13 @@
 		{
 			super(props);
 
+			/*const _setState = this.setState;
+			this.setState = function()
+			{
+				console.trace("setState", arguments);
+				_setState.apply(this, arguments)
+			}.bind(this)*/
+
 			this.userRegistry = new UserRegistry();
 			this.lastPosition = 0;
 			this.userId = env.userId;

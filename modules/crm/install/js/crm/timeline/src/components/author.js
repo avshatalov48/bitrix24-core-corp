@@ -19,6 +19,7 @@ export default {
 			};
 		},
 	},
+	// language=Vue
 	template: `
 		<a
 			v-if="author.SHOW_URL"

@@ -155,33 +155,7 @@ class LeadController extends EntityController
 				)
 			);
 		}
-
-		$enableHistoryPush = $historyEntryID > 0;
-		if(($enableHistoryPush) && Main\Loader::includeModule('pull'))
-		{
-			$pushParams = array();
-			if($enableHistoryPush)
-			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
-				if(is_array($historyFields))
-				{
-					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-						$historyFields,
-						array('ENABLE_USER_INFO' => true)
-					);
-				}
-			}
-
-			$tag = $pushParams['TAG'] = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Lead, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_activity_add',
-					'params' => $pushParams,
-				)
-			);
-		}
+		$this->sendPullEventOnAdd(new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Lead, $ownerID), $historyEntryID);
 
 		$this->createManualOpportunityModificationEntryIfNeeded($ownerID, $authorID, $currentFields, $previousFields);
 	}
@@ -484,6 +458,7 @@ class LeadController extends EntityController
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
 			}
+			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
 		}
 		elseif($typeID === TimelineType::CONVERSION)

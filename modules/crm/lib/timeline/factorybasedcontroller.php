@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Item;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\ArgumentOutOfRangeException;
@@ -191,8 +192,7 @@ abstract class FactoryBasedController extends EntityController
 			{
 				continue;
 			}
-
-			$this->sendPullEvent($entityID, Pusher::ADD_ACTIVITY_PULL_COMMAND, $timelineEntryId);
+			$this->sendPullEventOnAdd(new ItemIdentifier($this->getEntityTypeID(),$entityID), $timelineEntryId);
 		}
 	}
 
@@ -342,8 +342,7 @@ abstract class FactoryBasedController extends EntityController
 		{
 			return;
 		}
-
-		$this->sendPullEvent($ownerID, Pusher::ADD_ACTIVITY_PULL_COMMAND, $timelineEntryId);
+		$this->sendPullEventOnAdd(new ItemIdentifier($this->getEntityTypeID(),$ownerID), $timelineEntryId);
 	}
 
 	protected function sendPullEvent(int $entityId, string $command, int $timelineEntryId = null): void

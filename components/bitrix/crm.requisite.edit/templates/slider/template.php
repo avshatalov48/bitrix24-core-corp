@@ -18,7 +18,7 @@ if (!$arResult['NEED_CLOSE_POPUP']
 	$externalRequisiteSearchConfig = $arResult['EXTERNAL_REQUISITE_SEARCH_CONFIG'];
 }
 
-$jsExts = ['date', 'popup', 'ajax', 'tooltip', 'ls'];
+$jsExts = ['date', 'popup', 'ajax', 'tooltip', 'ls', 'ui.fonts.opensans'];
 if ($isExternalSearchEnabled)
 {
 	$jsExts[] = 'applayout';

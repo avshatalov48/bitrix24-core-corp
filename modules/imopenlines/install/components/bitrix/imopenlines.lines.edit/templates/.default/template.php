@@ -9,16 +9,17 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadMessages(__FILE__);
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.alerts',
 	'ui.hint',
-
 	'ui.entity-selector',
 	'ui.buttons',
 	'ui.forms',
-	'ui.design-tokens',
+	'socnetlogdest',
+	'sidepanel',
 ]);
-CUtil::InitJSCore(['socnetlogdest', 'sidepanel']);
 if (Loader::includeModule('bitrix24'))
 {
 	$APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);

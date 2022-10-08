@@ -1,36 +1,43 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
-$arActivityDescription = array(
+$arActivityDescription = [
 	"NAME" => GetMessage("BPVICA_DESCR_NAME"),
 	"DESCRIPTION" => GetMessage("BPVICA_DESCR_DESCR"),
-	"TYPE" => array('activity', 'robot_activity'),
+	"TYPE" => ['activity', 'robot_activity'],
 	"CLASS" => "VoximplantCallActivity",
 	"JSCLASS" => "BizProcActivity",
-	"CATEGORY" => array(
+	"CATEGORY" => [
 		"ID" => "interaction",
-	),
-	"RETURN" => array(
-		"Result" => array(
+	],
+	"RETURN" => [
+		"Result" => [
 			"NAME" => GetMessage("BPVICA_DESCR_RESULT"),
 			"TYPE" => "bool",
-		),
-		"ResultText" => array(
+		],
+		"ResultText" => [
 			"NAME" => GetMessage("BPVICA_DESCR_RESULT_TEXT"),
 			"TYPE" => "string",
-		),
-		"ResultCode" => array(
+		],
+		"ResultCode" => [
 			"NAME" => GetMessage("BPVICA_DESCR_RESULT_CODE"),
 			"TYPE" => "string",
-		),
-	),
+		],
+	],
 	'FILTER' => [
 		'EXCLUDE' => [
 			['tasks'],
 			['rpa'],
 		]
 	],
-	'ROBOT_SETTINGS' => array(
+	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'client'
-	)
-);
+	],
+	'EXCLUDED' => (
+		!\Bitrix\Main\Loader::includeModule('voximplant')
+		|| !\Bitrix\Voximplant\Limits::hasAccountBalance()
+	),
+];

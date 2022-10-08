@@ -42,7 +42,6 @@ $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON"] = "Ein";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON_NOW"] = "gerade eben aktiviert";
 $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_ON_STATUS"] = "Das Formular ist aktiv";
 $MESS["CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT"] = "Link oder Code anfordern";
-$MESS["CRM_WEBFORM_LIST_ITEM_CONV_CHANGE"] = "Nicht aktiv";
 $MESS["CRM_WEBFORM_LIST_ITEM_DATE_CREATE"] = "Erstellt am";
 $MESS["CRM_WEBFORM_LIST_ITEM_FILL_END"] = "Erfolgreich ausgefüllt";
 $MESS["CRM_WEBFORM_LIST_ITEM_FILL_START"] = "Versuche gesamt";

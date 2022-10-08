@@ -4,6 +4,7 @@ namespace Bitrix\Voximplant\Rest;
 
 use Bitrix\Crm\Integration\StorageType;
 use Bitrix\Main\Application;
+use Bitrix\Main\DB\SqlQueryException;
 use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
@@ -310,6 +311,17 @@ class Helper
 			{
 				$leadCreationError = \CVoxImplantCrmHelper::$lastError;
 			}
+
+			if (self::isIncomingCall($call) && \CVoxImplantCrmHelper::isNewCallScenarioEnabled())
+			{
+				$crmEventData = [
+					'CALLER_ID' => $phoneNumber,
+					'CRM_DATA' => $call->getCrmBindings(),
+					'USER_ID' => $fields['USER_ID'],
+				];
+
+				(new Event('voximplant', 'onCallRegisteredInCrm', $crmEventData))->send();
+			}
 		}
 
 		if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_IMMEDIATE)
@@ -488,7 +500,7 @@ class Helper
 			\CVoxImplantCrmHelper::StartCallTrigger($call);
 		}
 
-		if($statisticRecord["CALL_FAILED_CODE"] == 304 && ($call->getIncoming() == \CVoxImplantMain::CALL_INCOMING || $call->getIncoming() == \CVoxImplantMain::CALL_INCOMING_REDIRECT))
+		if($statisticRecord["CALL_FAILED_CODE"] == 304 && self::isIncomingCall($call))
 		{
 			\CVoxImplantCrmHelper::StartMissedCallTrigger($call);
 		}
@@ -505,10 +517,7 @@ class Helper
 		//recording a missed call
 		if (
 			$statisticRecord["CALL_FAILED_CODE"] == 304
-			&& (
-				$call->getIncoming() == \CVoxImplantMain::CALL_INCOMING
-				|| $call->getIncoming() == \CVoxImplantMain::CALL_INCOMING_REDIRECT
-			)
+			&& self::isIncomingCall($call)
 		)
 		{
 			$missedCall = [
@@ -1258,16 +1267,30 @@ class Helper
 			return $result;
 		}
 
-		$insertResult = ExternalLineTable::add(array(
-			'NUMBER' => $number,
-			'NAME' => $name,
-			'REST_APP_ID' => $restAppId
-		));
-
-		if(!$insertResult->isSuccess())
+		try
 		{
-			$result->addErrors($insertResult->getErrors());
-			return $result;
+			$insertResult = ExternalLineTable::add([
+				'NUMBER' => $number,
+				'NAME' => $name,
+				'REST_APP_ID' => $restAppId
+			]);
+
+			if(!$insertResult->isSuccess())
+			{
+				return $result->addErrors($insertResult->getErrors());
+			}
+		}
+		catch (SqlQueryException $exception)
+		{
+			if (mb_strpos($exception->getMessage(), '(1062)') !== false)
+			{
+				return $result->addError(new Error("Line already exists"));
+			}
+			else
+			{
+				self::writeToLogException($exception);
+				return $result->addError(new Error("DB error"));
+			}
 		}
 		Application::getInstance()->addBackgroundJob(
 			["CVoxImplantUser", "clearCache"],
@@ -1521,5 +1544,20 @@ class Helper
 		}
 
 		return $result;
+	}
+
+	protected static function isIncomingCall(Call $call): bool
+	{
+		return in_array(
+			(int)$call->getIncoming(),
+			[\CVoxImplantMain::CALL_INCOMING, \CVoxImplantMain::CALL_INCOMING_REDIRECT],
+			true
+		);
+	}
+
+	protected static function writeToLogException(\Throwable $e)
+	{
+		$exceptionHandler = Application::getInstance()->getExceptionHandler();
+		$exceptionHandler->writeToLog($e);
 	}
 }

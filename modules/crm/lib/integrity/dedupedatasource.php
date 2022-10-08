@@ -1,6 +1,10 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 
 abstract class DedupeDataSource
@@ -25,8 +29,8 @@ abstract class DedupeDataSource
 		return $this->typeID;
 	}
 	/**
-	* @return DedupeParams
-	*/
+	 * @return DedupeParams
+	 */
 	public function getParams()
 	{
 		return $this->params;
@@ -48,8 +52,8 @@ abstract class DedupeDataSource
 		return $this->params->getScope();
 	}
 	/**
-	* @return DedupeDataSourceResult
-	*/
+	 * @return DedupeDataSourceResult
+	 */
 	abstract public function getList($offset, $limit);
 	abstract public function calculateEntityCount(DuplicateCriterion $criterion, array $options = null);
 	protected function preparePermissionSql()
@@ -98,16 +102,66 @@ abstract class DedupeDataSource
 		return $entityClass;
 	}
 
-	public static function getAssignedByReferenceField(int $entityTypeId, int $userId): Reference
+	public static function registerRuntimeFieldsByParams(Query $query, DedupeParams $params): Query
 	{
+		$categoryId = $params->getCategoryId();
+		$isJoinedToEntity = false;
+
+		// in automatic mode we are looking for items assigned to current user only:
+		if ($params->limitByAssignedUser())
+		{
+			$isJoinedToEntity = true;
+			$query->registerRuntimeField(
+				'',
+				static::getAssignedByReferenceField(
+					$params->getEntityTypeID(),
+					$params->getUserID(),
+					$categoryId
+				)
+			);
+		}
+
+		// using entity category ID to correct filter data
+		if (isset($categoryId) && !$isJoinedToEntity)
+		{
+			$query->registerRuntimeField(
+				'',
+				static::getCategoryReferenceField($params->getEntityTypeID(), $categoryId));
+		}
+
+		return $query;
+	}
+
+	public static function getAssignedByReferenceField(int $entityTypeId, int $userId, ?int $categoryId = null): Reference
+	{
+		$referenceFilter = [
+			'=this.ENTITY_ID' => 'ref.ID',
+			'ref.ASSIGNED_BY_ID' => new SqlExpression('?i', $userId),
+		];
+
+		if (isset($categoryId))
+		{
+			$referenceFilter[] = ['ref.CATEGORY_ID' => new SqlExpression('?', $categoryId)];
+		}
+
 		return new Reference(
 			'ASSIGNED_BY_JOINED_ENTITY',
 			static::getDataManagerClass($entityTypeId),
+			$referenceFilter,
+			['join_type' => Join::TYPE_INNER]
+		);
+	}
+
+	public static function getCategoryReferenceField(int $entityTypeId, int $categoryId): Reference
+	{
+		return new Reference(
+			'CATEGORY_JOINED_ENTITY',
+			static::getDataManagerClass($entityTypeId),
 			[
 				'=this.ENTITY_ID' => 'ref.ID',
-				'ref.ASSIGNED_BY_ID' => new SqlExpression('?i', $userId)
+				'ref.CATEGORY_ID' => new SqlExpression('?', $categoryId)
 			],
-			['join_type' => \Bitrix\Main\ORM\Query\Join::TYPE_INNER]
+			['join_type' => Join::TYPE_INNER]
 		);
 	}
 }

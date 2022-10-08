@@ -10,7 +10,9 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)
 
 use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__)
+Loc::loadMessages(__FILE__);
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 ?>
 
 <div class="crm-tracking-call-tester">

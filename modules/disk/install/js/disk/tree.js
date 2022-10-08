@@ -33,6 +33,7 @@
 		this.ajaxUrl = parameters.ajaxUrl || '/bitrix/components/bitrix/disk.folder.list/ajax.php';
 		this.rootNode = null;
 		this.container = null;
+		this.willLoadSubTrees = {};
 
 		this.events = {
 			onSelectFolder: this.parameters.events.onSelectFolder,
@@ -77,14 +78,27 @@
 
 		loadSubFolders: function (objectId)
 		{
-			return BX.Disk.ajaxPromise({
+			if (this.willLoadSubTrees.hasOwnProperty(objectId))
+			{
+				const result = BX.Promise();
+
+				return result.fulfill(this.willLoadSubTrees[objectId]);
+			}
+
+			this.willLoadSubTrees[objectId] = BX.Disk.ajaxPromise({
 				method: 'POST',
 				dataType: 'json',
 				url: BX.Disk.addToLinkParam(this.ajaxUrl, 'action', 'showSubFolders'),
 				data: {
 					objectId: objectId
 				}
+			}).then(response => {
+				this.willLoadSubTrees[objectId] = response;
+
+				return response;
 			});
+
+			return this.willLoadSubTrees[objectId];
 		},
 
 		showSubFolders: function (node)

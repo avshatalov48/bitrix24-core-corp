@@ -1,7 +1,8 @@
-<?
+<?php
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Intranet\Component\UstatOnline;
+use Bitrix\Intranet;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
@@ -9,6 +10,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 class CIntranetUstatOnlineComponent extends UstatOnline
 {
 	private $errors = [];
+
+	protected function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+		$preFilters[] = new Intranet\ActionFilter\UserType(['employee', 'extranet']);
+		return $preFilters;
+	}
 
 	protected function checkParams(): void
 	{

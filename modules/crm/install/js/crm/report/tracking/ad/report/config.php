@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'sidepanel',
 		'ui.progressbar',
+		'ui.fonts.opensans',
 		'main.core',
 		'main.core.events',
 		'main.popup',

@@ -36,8 +36,10 @@ if (!$isErrorOccured && $isBizProcInstalled)
 	}
 }
 
+$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && !CCrmContact::CheckReadPermission(0, $userPermissions))
+if (!$isErrorOccured && !CCrmContact::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -80,10 +82,18 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 
 $CCrmContact = new CCrmContact();
 
-if (!$isErrorOccured && $isInExportMode && $CCrmContact->cPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'EXPORT'))
+if (!$isErrorOccured && $isInExportMode)
 {
-	$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_PERMISSION_DENIED');
-	$isErrorOccured = true;
+	if ($CCrmContact->cPerms->HavePerm(
+		(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Contact))
+			->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
+		BX_CRM_PERM_NONE,
+		'EXPORT'
+	))
+	{
+		$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_PERMISSION_DENIED');
+		$isErrorOccured = true;
+	}
 }
 
 $exportRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getContactExportRestriction();
@@ -133,6 +143,11 @@ $isAdmin = CCrmPerms::IsAdmin();
 $enableOutmodedFields = $arResult['ENABLE_OUTMODED_FIELDS'] = ContactSettings::getCurrent()->areOutmodedRequisitesEnabled();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+if (!isset($arParams['PATH_TO_CONTACT_LIST']) && $arResult['CATEGORY_ID'] > 0)
+{
+	$arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_CATEGORY', $arParams['PATH_TO_CONTACT_CATEGORY'], $APPLICATION->GetCurPage());
+	$arParams['PATH_TO_CONTACT_LIST'] = str_replace('#category_id#', $arResult['CATEGORY_ID'], $arParams['PATH_TO_CONTACT_LIST']);
+}
 $arParams['PATH_TO_CONTACT_LIST'] = CrmCheckPath('PATH_TO_CONTACT_LIST', $arParams['PATH_TO_CONTACT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_CONTACT_DETAILS'] = CrmCheckPath('PATH_TO_CONTACT_DETAILS', $arParams['PATH_TO_CONTACT_DETAILS'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&details');
 $arParams['PATH_TO_CONTACT_SHOW'] = CrmCheckPath('PATH_TO_CONTACT_SHOW', $arParams['PATH_TO_CONTACT_SHOW'], $APPLICATION->GetCurPage().'?contact_id=#contact_id#&show');
@@ -154,8 +169,6 @@ $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
-
-$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {

@@ -94,7 +94,7 @@ li.bx-crm-section-container.bx-crm-open>div .bx-crm-wf-arrow span{
 	background:transparent url(images/icons-files2.png) no-repeat -72px 0;
 }
 .bx-crm-wf-section-name{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:13px;
 	cursor:pointer;
 	text-align:left;

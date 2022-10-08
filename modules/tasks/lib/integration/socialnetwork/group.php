@@ -9,6 +9,7 @@ use Bitrix\Main;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query\Join;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Query\Filter;
 use Bitrix\Main\Search\Content;
 use Bitrix\Socialnetwork\WorkgroupTable;
@@ -448,5 +449,42 @@ class Group extends \Bitrix\Tasks\Integration\SocialNetwork
 			'groupId' => $groupId,
 			'userId' => $userId,
 		]);
+	}
+
+	/**
+	 * @param int $userIdA
+	 * @param int $userIdB
+	 * @return bool
+	 * @throws Main\LoaderException
+	 */
+	public static function usersHasCommonGroup(int $userIdA, int $userIdB): bool
+	{
+		if (!Loader::includeModule('socialnetwork'))
+		{
+			return false;
+		}
+
+		global $DB;
+
+		$sql = '
+			SELECT count(*) as cnt
+			FROM b_sonet_user2group ug
+			INNER JOIN b_sonet_user2group ug2
+				ON ug.GROUP_ID = ug2.GROUP_ID 
+				AND ug2.USER_ID = '. $userIdB .'
+				AND ug2.ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
+			WHERE 
+				ug.USER_ID = '. $userIdA .'
+				AND ug.ROLE IN ("'. implode('","', \Bitrix\Socialnetwork\UserToGroupTable::getRolesMember()) .'")
+		';
+
+		$res = $DB->query($sql);
+		$row = $res->fetch();
+		if ($row && (int) $row['cnt'] > 0)
+		{
+			return true;
+		}
+
+		return false;
 	}
 }

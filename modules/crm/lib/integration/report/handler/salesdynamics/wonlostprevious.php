@@ -24,7 +24,7 @@ class WonLostPrevious extends WonLostAmount
 
 			list($newFrom, $newTo) = static::getPreviousPeriod($from, $to);
 
-			$query->whereBetween("MOVED_TIME", $newFrom, $newTo);
+			$query->whereBetween("CLOSEDATE", $newFrom, $newTo);
 		}
 	}
 }

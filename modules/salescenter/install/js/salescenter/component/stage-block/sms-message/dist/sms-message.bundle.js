@@ -56,6 +56,10 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    text: {
 	      type: String,
 	      required: true
+	    },
+	    selectedMode: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  computed: {
@@ -78,10 +82,11 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	      BX.ajax.runComponentAction("bitrix:salescenter.app", "saveSmsTemplate", {
 	        mode: "class",
 	        data: {
-	          smsTemplate: smsText
+	          smsTemplate: smsText,
+	          mode: this.selectedMode
 	        },
 	        analyticsLabel: 'salescenterSmsTemplateChange'
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        var errorMessage = response.errors.map(function (err) {
 	          return err.message;
 	        }).join("; ");
@@ -164,7 +169,11 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    },
 	    isReadOnly: {
 	      type: Boolean,
-	      default: false
+	      "default": false
+	    },
+	    selectedMode: {
+	      type: String,
+	      required: true
 	    }
 	  },
 	  data: function data() {
@@ -198,8 +207,9 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    },
 	    //region edit
 	    updateTemplate: function updateTemplate(text) {
-	      this.text = text;
+	      this.editor.template = text;
 	      this.$root.$app.sendingMethodDesc.text = text;
+	      this.$root.$app.sendingMethodDesc.text_modes[this.selectedMode] = text;
 	    },
 	    showPopupHint: function showPopupHint(target, message, timer) {
 	      var _this = this;
@@ -278,7 +288,7 @@ this.BX.Salescenter.Component = this.BX.Salescenter.Component || {};
 	    } //endregion
 
 	  },
-	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\t\n\t\t\t\t<template v-if=\"isEditable()\">\n\t\t\t\t\t<sms-message-edit-block\t\t\t\t\n\t\t\t\t\t\t:text=\"text\"\n\t\t\t\t\t\tv-on:edit-on-before-blur=\"beforeBlur\"\n\t\t\t\t\t\tv-on:edit-on-after-press-key=\"afterPressKey\"\n\t\t\t\t\t\tv-on:edit-on-update-template=\"updateTemplate\"\n\t\t\t\t\t\tv-on:edit-on-has-link-error=\"showHasLinkErrorHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<sms-message-view-block\n\t\t\t\t\t\t:text=\"text\"\n\t\t\t\t\t\t:orderPublicUrl=\"orderPublicUrl\"\n\t\t\t\t\t\tv-on:view-on-mouseenter=\"showSmsMessagePopupHint\"\n\t\t\t\t\t\tv-on:view-on-mouseleave=\"hidePopupHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t\t<sms-message-control-block v-if=\"!isReadOnly\"\n\t\t\t\t\t:editable=\"isEditable()\"\n\t\t\t\t\tv-on:control-on-save=\"afterSaveControl\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
+	  template: "\n\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content\">\n\t\t\t<div class=\"salescenter-app-payment-by-sms-item-container-sms-content-message\">\t\n\t\t\t\t<template v-if=\"isEditable()\">\n\t\t\t\t\t<sms-message-edit-block\t\t\t\t\n\t\t\t\t\t\t:text=\"editor.template\"\n\t\t\t\t\t\t:selectedMode=\"selectedMode\"\n\t\t\t\t\t\tv-on:edit-on-before-blur=\"beforeBlur\"\n\t\t\t\t\t\tv-on:edit-on-after-press-key=\"afterPressKey\"\n\t\t\t\t\t\tv-on:edit-on-update-template=\"updateTemplate\"\n\t\t\t\t\t\tv-on:edit-on-has-link-error=\"showHasLinkErrorHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template> \n\t\t\t\t<template v-else>\n\t\t\t\t\t<sms-message-view-block\n\t\t\t\t\t\t:text=\"editor.template\"\n\t\t\t\t\t\t:orderPublicUrl=\"orderPublicUrl\"\n\t\t\t\t\t\tv-on:view-on-mouseenter=\"showSmsMessagePopupHint\"\n\t\t\t\t\t\tv-on:view-on-mouseleave=\"hidePopupHint\"\n\t\t\t\t\t/>\n\t\t\t\t</template>\n\t\t\t\t<sms-message-control-block v-if=\"!isReadOnly\"\n\t\t\t\t\t:editable=\"isEditable()\"\n\t\t\t\t\tv-on:control-on-save=\"afterSaveControl\"\n\t\t\t\t/>\n\t\t\t</div>\n\t\t</div>\n\t"
 	};
 
 	var SenderList = {

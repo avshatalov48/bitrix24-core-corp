@@ -54,24 +54,37 @@ if ($_REQUEST['FILTER'])
 		$arResult['FILTER'] = array(); $arFilter['USER_ID'] = $arSubIDs;
 	}
 
-	if (isset($arFilterValues['TITLE']) && trim($arFilterValues['TITLE']) <> '')
+	if (isset($arFilterValues['TITLE']) && trim($arFilterValues['TITLE']))
 	{
 		$arResult['FILTER']['TITLE'] = $arFilterValues['TITLE'];
 		$arFilter['~TITLE'] = '%'.trim($arFilterValues['TITLE']).'%';
 	}
 
-	if (isset($arFilterValues['CURRENT_STATE']) && mb_strlen($arFilterValues['CURRENT_STATE']) == 1 && in_array($arFilterValues['CURRENT_STATE'], array(CMeeting::STATE_PREPARE, CMeeting::STATE_ACTION, CMeeting::STATE_CLOSED)))
+	if (
+		isset($arFilterValues['CURRENT_STATE'])
+		&& mb_strlen($arFilterValues['CURRENT_STATE']) === 1
+		&& in_array($arFilterValues['CURRENT_STATE'], [
+			CMeeting::STATE_PREPARE,
+			CMeeting::STATE_ACTION,
+			CMeeting::STATE_CLOSED
+		])
+	)
+	{
 		$arResult['FILTER']['CURRENT_STATE'] = $arFilter['CURRENT_STATE'] = $arFilterValues['CURRENT_STATE'];
+	}
 
 	if (isset($arFilterValues['GROUP_ID']) && $arFilterValues['GROUP_ID'] > 0)
 	{
-		$arResult['FILTER']['GROUP_ID'] = $arFilter['GROUP_ID'] = intval($arFilterValues['GROUP_ID']);
+		$arResult['FILTER']['GROUP_ID'] = $arFilter['GROUP_ID'] = (int)$arFilterValues['GROUP_ID'];
 	}
-
-	if (isset($arFilterValues['OWNER_ID']) && intval($arFilterValues['OWNER_ID']) > 0)
-		$arResult['FILTER']['OWNER_ID'] = $arFilter['OWNER_ID'] = intval($arFilterValues['OWNER_ID']);
-	if (isset($arFilterValues['MEMBER_ID']) && intval($arFilterValues['MEMBER_ID']) > 0)
-		$arResult['FILTER']['MEMBER_ID'] = $arFilter['MEMBER_ID'] = intval($arFilterValues['MEMBER_ID']);
+	if (isset($arFilterValues['OWNER_ID']) && (int)$arFilterValues['OWNER_ID'] > 0)
+	{
+		$arResult['FILTER']['OWNER_ID'] = $arFilter['OWNER_ID'] = (int)$arFilterValues['OWNER_ID'];
+	}
+	if (isset($arFilterValues['MEMBER_ID']) && (int)$arFilterValues['MEMBER_ID'] > 0)
+	{
+		$arResult['FILTER']['MEMBER_ID'] = $arFilter['MEMBER_ID'] = (int)$arFilterValues['MEMBER_ID'];
+	}
 }
 
 $arResult['MEETING_ROOMS_LIST'] = array();
@@ -80,7 +93,7 @@ if ($arParams['RESERVE_MEETING_IBLOCK_ID'] || $arParams['RESERVE_VMEETING_IBLOCK
 	$dbMeetingsList = CIBlockSection::GetList(
 		array('IBLOCK_ID' => 'ASC', 'NAME' => 'ASC', 'ID' => 'DESC'),
 		array('IBLOCK_ID' =>
-			array(intval($arParams['RESERVE_MEETING_IBLOCK_ID']), intval($arParams['RESERVE_VMEETING_IBLOCK_ID']))
+			array((int)$arParams['RESERVE_MEETING_IBLOCK_ID'], (int)$arParams['RESERVE_VMEETING_IBLOCK_ID'])
 		),
 		false,
 		array('ID', 'IBLOCK_ID', 'NAME', 'DESCRIPTION')

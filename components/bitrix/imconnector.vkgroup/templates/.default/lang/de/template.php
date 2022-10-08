@@ -36,9 +36,11 @@ $MESS["IMCONNECTOR_COMPONENT_VKGROUP_LOG_IN_UNDER_AN_ADMINISTRATOR_ACCOUNT_ENTIT
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_MY_OTHER_ENTITY"] = "Ändern";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTED"] = "VK Bestellnachrichten aktiviert";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTION_INFO"] = "Aktivieren Sie neue Bestellbenachrichtigungen in Ihrem VK Shop. Sie werden Bestellbenachrichtigungen in Form von Chats der Bitrix24 Kommunikationskanäle erhalten.<br><br>Nähere Informationen zu VK Shop Bestellungen finden Sie <a onclick=\"top.BX.Helper.show('redirect=detail&code=8288267');\" class=\"imconnector-field-box-link\">in diesem Artikel</a>.";
+$MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTION_INFO_NEW"] = "Bekommen Sie Bestellbenachrichtigungen aus Ihrem VK-Onlineshop. Sie werden die Bestellbenachrichtigungen im Chat Ihres Bitrix24 Kommunikationskanals bekommen.<br><br>Weietere Details zu den Bestellungen im VK-Onlineshop #LINK_START#hier#LINK_END#.";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECT_MESSAGES"] = "Nachrichten aus der VK Gruppe aktivieren";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_GET_INFO"] = "VK Bestellinformationen";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_ADDITIONAL_DESCRIPTION"] = "<a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">Mehr über VK-Bestellbenachrichtigungen</a>";
+$MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "#LINK_START#Mehr über Benachrichtigungen des VK-Onlineshops erfahren#LINK_END#";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_1"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_2"] = "Begleiten Sie Ihre Kunden durch den Sales Funnel im CRM";
 $MESS["IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_3"] = "Antworten Sie Ihren Kunden dann und dort, wann und wo sie dies bevorzugen";

@@ -79,7 +79,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      if (!this.container) {
 	        var extension = this.object.name.split('.').pop().toLowerCase();
 	        extension = main_core.Text.encode(extension === this.object.name ? '' : extension);
-	        this.container = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file disk-file-thumb--", " disk-file-thumb--active\">\n\t\t\t<div class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t\t<div class=\"disk-file-thumb-text\">", "</div>\n\t\t\t<div class=\"disk-file-thumb-loader\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-file-thumb-loader-btn\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t</div>\n\t\t"])), extension, extension, this.object.name, this.progress.getContainer(), this.onClickDelete.bind(this));
+	        this.container = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"disk-file-thumb disk-file-thumb-file disk-file-thumb--", " disk-file-thumb--active\">\n\t\t\t<div class=\"ui-icon ui-icon-file-", " disk-file-thumb-icon\"><i></i></div>\n\t\t\t<div class=\"disk-file-thumb-text\">", "</div>\n\t\t\t<div class=\"disk-file-thumb-loader\">\n\t\t\t\t", "\n\t\t\t\t<div class=\"disk-file-thumb-loader-btn\" onclick=\"", "\"></div>\n\t\t\t</div>\n\t\t</div>\n\t\t"])), extension, extension, main_core.Text.encode(this.object.name), this.progress.getContainer(), this.onClickDelete.bind(this));
 	      }
 
 	      return this.container;
@@ -320,24 +320,24 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "incrementItemsCount",
 	    value: function incrementItemsCount() {
-	      var _this$itemsCount;
+	      var _this$itemsCount, _this$itemsCount2;
 
 	      if (babelHelpers.classPrivateFieldGet(this, _itemsCount) <= 0) {
 	        main_core_events.EventEmitter.emit(this, 'onUploadIsStart');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount = +babelHelpers.classPrivateFieldGet(this, _itemsCount)) + 1), _this$itemsCount;
+	      babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount = babelHelpers.classPrivateFieldGet(this, _itemsCount), _this$itemsCount2 = _this$itemsCount++, _this$itemsCount)), _this$itemsCount2;
 	    }
 	  }, {
 	    key: "decrementItemsCount",
 	    value: function decrementItemsCount() {
-	      var _this$itemsCount2;
+	      var _this$itemsCount3, _this$itemsCount4;
 
 	      if (babelHelpers.classPrivateFieldGet(this, _itemsCount) === 1) {
 	        main_core_events.EventEmitter.emit(this, 'onUploadIsDone');
 	      }
 
-	      babelHelpers.classPrivateFieldSet(this, _itemsCount, Math.max((babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount2 = +babelHelpers.classPrivateFieldGet(this, _itemsCount)) - 1), _this$itemsCount2), 0));
+	      babelHelpers.classPrivateFieldSet(this, _itemsCount, Math.max((babelHelpers.classPrivateFieldSet(this, _itemsCount, (_this$itemsCount3 = babelHelpers.classPrivateFieldGet(this, _itemsCount), _this$itemsCount4 = _this$itemsCount3--, _this$itemsCount3)), _this$itemsCount4), 0));
 	    }
 	  }]);
 	  return FileUploader;
@@ -788,7 +788,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          node.parentNode.removeChild(node);
 	        }
 
-	        _this3.cache.delete(key);
+	        _this3.cache["delete"](key);
 	      });
 	      this.emit('onDestroy');
 	    }
@@ -812,17 +812,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        var contextMenu = new main_popup.Menu({
 	          id: "crm-tunnels-menu-".concat(main_core.Text.getRandom().toLowerCase()),
 	          bindElement: moreButton,
-	          items: [
-	            /*TODO For the Future
-	               (this.data['CAN_UPDATE'] === true && this.data['EDITABLE'] === true ? {
-	            	text:  Loc.getMessage('WDUF_ITEM_MENU_EDIT'),
-	            	className: 'menu-popup-item-edit',
-	            	onclick: (event) => {
-	            		contextMenu.close();
-	            		this.onClickEdit(event);
-	            	}
-	            } : null),*/
-	          _this4.isPluggedIn() ? {
+	          items: [_this4.isPluggedIn() ? {
 	            dataset: {
 	              bxRole: 'insertIntoTheText'
 	            },
@@ -842,7 +832,17 @@ this.BX.Disk = this.BX.Disk || {};
 
 	              _this4.onClickDelete(event);
 	            }
-	          }, _this4.data['CAN_RENAME'] === true ? {
+	          },
+	          /*TODO For the Future
+	             (this.data['CAN_UPDATE'] === true && this.data['EDITABLE'] === true ? {
+	          	text:  Loc.getMessage('WDUF_ITEM_MENU_EDIT'),
+	          	className: 'menu-popup-item-edit',
+	          	onclick: (event) => {
+	          		contextMenu.close();
+	          		this.onClickEdit(event);
+	          	}
+	          } : null),*/
+	          _this4.data['CAN_RENAME'] === true ? {
 	            dataset: {
 	              bxRole: 'renameFile'
 	            },
@@ -896,7 +896,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    value: function clearMenu() {
 	      if (this.cache.has('menu')) {
 	        this.cache.get('menu').destroy();
-	        this.cache.delete('menu');
+	        this.cache["delete"]('menu');
 	      }
 	    }
 	  }, {
@@ -956,10 +956,10 @@ this.BX.Disk = this.BX.Disk || {};
 	    key: "getHTMLForHTMLEditor",
 	    value: function getHTMLForHTMLEditor(tagId) {
 	      if (this.getData('TYPE_FILE') === 'player') {
-	        return "<img contenteditable=\"false\" class=\"bxhtmled-player-surrogate\" data-bx-file-id=\"".concat(this.data.ID, "\" id=\"").concat(tagId, "\" src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" />");
+	        return "<img contenteditable=\"false\" class=\"bxhtmled-player-surrogate\" data-bx-file-id=\"".concat(main_core.Text.encode(this.data.ID), "\" id=\"").concat(tagId, "\" src=\"data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7\" />");
 	      }
 
-	      return "<span contenteditable=\"false\" data-bx-file-id=\"".concat(this.data.ID, "\" id=\"").concat(tagId, "\" style=\"color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;\">").concat(main_core.Text.encode(this.data.NAME), "</span>");
+	      return "<span contenteditable=\"false\" data-bx-file-id=\"".concat(main_core.Text.encode(this.data.ID), "\" id=\"").concat(tagId, "\" style=\"color: #2067B0; border-bottom: 1px dashed #2067B0; margin:0 2px;\">").concat(main_core.Text.encode(this.data.NAME), "</span>");
 	    } //endregion
 
 	  }], [{
@@ -1062,7 +1062,7 @@ this.BX.Disk = this.BX.Disk || {};
 	  }, {
 	    key: "getHTMLForHTMLEditor",
 	    value: function getHTMLForHTMLEditor(tagId) {
-	      return "<img style=\"max-width: 90%;\" data-bx-file-id=\"".concat(this.data.ID, "\" id=\"").concat(tagId, "\" src=\"").concat(this.data.BIG_REVIEW_URL, "\" />");
+	      return "<img style=\"max-width: 90%;\" data-bx-file-id=\"".concat(main_core.Text.encode(this.data.ID), "\" id=\"").concat(tagId, "\" src=\"").concat(this.data.BIG_REVIEW_URL, "\" />");
 	    }
 	  }], [{
 	    key: "detect",
@@ -1179,7 +1179,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        var doc = this.htmlEditor.GetIframeDoc();
 
 	        for (var ii in this.htmlEditor.bxTags) {
-	          if (this.htmlEditor.bxTags.hasOwnProperty(ii) && babelHelpers.typeof(this.htmlEditor.bxTags[ii]) === 'object' && this.htmlEditor.bxTags[ii]['tag'] === this.id && fileIds.indexOf(String(this.htmlEditor.bxTags[ii]['itemId'])) >= 0 && doc.getElementById(ii)) {
+	          if (this.htmlEditor.bxTags.hasOwnProperty(ii) && babelHelpers["typeof"](this.htmlEditor.bxTags[ii]) === 'object' && this.htmlEditor.bxTags[ii]['tag'] === this.id && fileIds.indexOf(String(this.htmlEditor.bxTags[ii]['itemId'])) >= 0 && doc.getElementById(ii)) {
 	            var node = doc.getElementById(ii);
 	            node.parentNode.removeChild(node);
 	          }
@@ -1421,7 +1421,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      var _this4 = this;
 
 	      var item = getItem(itemData);
-	      var input = this.getContainer().querySelector("[data-bx-role=\"reserve-item\"][value=\"".concat(item.getId(), "\"]"));
+	      var input = this.getContainer().querySelector("[data-bx-role=\"reserve-item\"][value=\"".concat(main_core.Text.encode(item.getId()), "\"]"));
 
 	      if (!input) {
 	        input = document.createElement('INPUT');
@@ -1437,6 +1437,9 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 
 	        main_core_events.EventEmitter.emit(_this4, 'OnItemDelete', item);
+	      });
+	      item.subscribe('onDestroy', function () {
+	        _this4.items["delete"](item.getId());
 	      });
 
 	      if (this.isPluggedIn()) {
@@ -2052,7 +2055,7 @@ this.BX.Disk = this.BX.Disk || {};
 	            itemData = _ref3$data[0];
 
 	        if (_this3.items.has(item.id)) {
-	          _this3.items.delete(item.id);
+	          _this3.items["delete"](item.id);
 
 	          main_core_events.EventEmitter.emit(_this3, 'onUploadDone', {
 	            itemData: _this3.convertToItemSavedType(itemData),
@@ -2061,14 +2064,14 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      });
 	      main_core_events.EventEmitter.subscribe(item, 'onUploadError', function () {
-	        _this3.items.delete(item.id);
+	        _this3.items["delete"](item.id);
 
 	        main_core_events.EventEmitter.emit(_this3, 'onUploadError', {
 	          itemContainer: item.getContainer()
 	        });
 	      });
 	      main_core_events.EventEmitter.subscribe(item, 'onDelete', function () {
-	        _this3.items.delete(item.id);
+	        _this3.items["delete"](item.id);
 
 	        _this3.container.removeChild(item.getContainer());
 	      });

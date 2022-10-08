@@ -60,6 +60,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		EventEmitter.subscribe(this._tooltip, 'onSetSelectedRequisite', this.onSetSelectedRequisite.bind(this));
 
 		this.updateAutocompletePlaceholder();
+		this.updateAutocompeteClientResolverPlacementParams();
 
 		EventEmitter.emit(this.getEditor(), 'onFieldInit', {field: this});
 	}
@@ -160,9 +161,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 			}
 			else
 			{
-				const fieldName = this.getClientResolverTitle();
-				const title = fieldName ? Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', fieldName) : '';
-
+				const title = this.getClientResolverTitle();
 				actions.push(Tag.render`
 					<span class="ui-link ui-link-secondary ui-entity-editor-block-title-link"
 						onclick="${this.toggleSearchMode.bind(this)}">${title}</span>`
@@ -307,15 +306,15 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 
 	isAutocompleteEnabled()
 	{
-		if (!this.hasRequisites() || this.getRequisites().isEmpty())
+		if (
+			!this.hasRequisites()
+			|| this.getRequisites().isEmpty()
+			|| this.getRequisites().getSelected().isAddressOnly()
+		)
 		{
 			return !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
 		}
-		let selectedRequisite = this.getRequisites().getSelected();
-		if (selectedRequisite.isAddressOnly())
-		{
-			return !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
-		}
+
 		return true;
 	}
 
@@ -495,12 +494,39 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 		this._autocomplete.setPlaceholderText(clientResolverPropTitle);
 	}
 
+	updateAutocompeteClientResolverPlacementParams()
+	{
+		this._autocomplete.setClientResolverPlacementParams(this.getClientResolverPlacementParams());
+	}
+
+	getClientResolverPlacementParams()
+	{
+		const clientResolverProp = this.getClientResolverPropForPreset(this.getSelectedPresetId());
+
+		return (
+			clientResolverProp
+				? {
+					"isPlacement": BX.prop.getString(clientResolverProp, "IS_PLACEMENT", "N") === "Y",
+					"numberOfPlacements": BX.prop.getArray(clientResolverProp, "PLACEMENTS", []).length,
+					"countryId": BX.prop.getInteger(clientResolverProp, "COUNTRY_ID", 0)
+				}
+				: {}
+		);
+	}
+
 	getClientResolverTitle()
 	{
-		const selectedPresetId = this.getSelectedPresetId();
-		const clientResolverProp = this.getClientResolverPropForPreset(selectedPresetId);
+		let title = "";
 
-		return BX.prop.getString(clientResolverProp, 'TITLE');
+		const clientResolverProp = this.getClientResolverPropForPreset(this.getSelectedPresetId());
+		title = BX.prop.getString(clientResolverProp, "TITLE", "");
+		const isPlacement = (BX.prop.getString(clientResolverProp, 'IS_PLACEMENT', 'N') === 'Y');
+		if (!isPlacement)
+		{
+			title = Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', title);
+		}
+
+		return title;
 	}
 
 	adjustNodesVisibility()
@@ -807,6 +833,7 @@ export class EntityEditorRequisiteField extends BX.Crm.EntityEditorField
 			this.refreshLayoutParts();
 		}
 		this.updateAutocompletePlaceholder();
+		this.updateAutocompeteClientResolverPlacementParams();
 	}
 
 	updateRequisitesDropdown()

@@ -1544,12 +1544,7 @@ BX.Disk.FolderListClass = (function (){
 
 	FolderListClass.prototype.processGridGroupActionRestore = function ()
 	{
-		if (!(this.commonGrid.isGrid()))
-		{
-			return;
-		}
-
-		var selectedRows = this.commonGrid.instance.getRows().getSelectedIds();
+		var selectedRows = this.commonGrid.getSelectedIds();
 		if (!selectedRows.length)
 		{
 			return;
@@ -3384,13 +3379,15 @@ BX.Disk.FolderListClass = (function (){
 				{
 					windowLoader && windowLoader.close();
 
-					if(response.status != 'success')
+					if(response.status !== 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
 							message: response.errors.pop().message
-						})
+						});
+
+						return;
 					}
 
 					if(BX.Disk.isEmptyObject(moduleTasks))
@@ -3425,9 +3422,10 @@ BX.Disk.FolderListClass = (function (){
 						}
 					}
 					var showExtendedRights = !!response.showExtendedRights;
+					var showSystemFolderCheckbox = response.systemFolders.show;
 					var modalWindow = BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL'),
+						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME'). replace('#OBJECT#', response.storage.name),
 						withoutWindowManager: true,
 						contentClassName: '',
 						contentStyle: {
@@ -3561,7 +3559,9 @@ BX.Disk.FolderListClass = (function (){
 											marginTop: '27px',
 											marginBottom: '20px'
 										},
-										html: '<input type="checkbox" ' + (showExtendedRights? 'checked="checked"' : '') + ' id="showExtendedRights"/><label for="showExtendedRights">' + BX.message("DISK_FOLDER_LIST_LABEL_SHOW_EXTENDED_RIGHTS") + '</label>'
+										html:
+											'<div><input type="checkbox" ' + (showExtendedRights? 'checked="checked"' : '') + ' id="showExtendedRights"/><label for="showExtendedRights">' + BX.message("DISK_FOLDER_LIST_LABEL_SHOW_EXTENDED_RIGHTS") + '</label></div>' +
+											(showSystemFolderCheckbox ? '<div><input type="checkbox" id="setRightsOnPseudoSystemFolders"/><label for="setRightsOnPseudoSystemFolders">' + BX.message("DISK_FOLDER_LIST_LABEL_CHANGE_SYSTEM_FOLDERS").replace('#FOLDERS#', response.systemFolders.names.join(', ')) + '</label></div>' : '')
 									})
 								]
 							})
@@ -3642,13 +3642,15 @@ BX.Disk.FolderListClass = (function (){
 				{
 					windowLoader && windowLoader.close();
 
-					if(response.status != 'success')
+					if(response.status !== 'success')
 					{
 						response.errors = response.errors || [{}];
 						BX.Disk.showModalWithStatusAction({
 							status: 'error',
 							message: response.errors.pop().message
-						})
+						});
+
+						return;
 					}
 
 					if(BX.Disk.isEmptyObject(moduleTasks))
@@ -3683,7 +3685,7 @@ BX.Disk.FolderListClass = (function (){
 					}
 					var modalWindow = BX.Disk.modalWindow({
 						modalId: 'bx-disk-detail-sharing-folder-change-right',
-						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL'),
+						title: BX.message('DISK_FOLDER_LIST_RIGHTS_TITLE_MODAL_WITH_NAME'). replace('#OBJECT#', response.object.name),
 						withoutWindowManager: true,
 						contentClassName: '',
 						contentStyle: {

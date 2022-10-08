@@ -9,6 +9,8 @@ $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\UI\NavigationBarPanel;
+
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.quote.list/templates/.default/template.php');
 
@@ -94,32 +96,14 @@ else
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
-			'NAVIGATION_BAR' => [
-				'ITEMS' => array_merge(
-					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Quote),
-					[
-						[
-							//'icon' => 'kanban',
-							'id' => 'kanban',
-							'name' => Loc::getMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_KANBAN'),
-							'active' => 1,
-							'url' => $arResult['PATH_TO_QUOTE_KANBAN']
-						],
-						[
-							//'icon' => 'table',
-							'id' => 'list',
-							'name' => Loc::getMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_LIST'),
-							'active' => 0,
-							'url' => $arResult['PATH_TO_QUOTE_LIST']
-						]
-					]
-				),
-				'BINDING' => [
-					'category' => 'crm.navigation',
-					'name' => 'index',
-					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				]
-			]
+			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Quote))
+				->setItems([
+					NavigationBarPanel::ID_AUTOMATION,
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST
+				], NavigationBarPanel::ID_KANBAN)
+				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+				->get(),
 		],
 		$component,
 		['HIDE_ICONS' => true]

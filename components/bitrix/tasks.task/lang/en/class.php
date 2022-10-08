@@ -2,7 +2,11 @@
 $MESS["TASKS_ACTION_RESULT_REQUIRED"] = "Task creator requires that you provide a task report.<br> Leave a comment to the task and mark it as a task status summary.";
 $MESS["TASKS_REST_BUTTON_TITLE_2"] = "Bitrix24.Market";
 $MESS["TASKS_TEMPLATE_CREATE_FORBIDDEN"] = "Cannot create template because access was denied";
+$MESS["TASKS_TT_AUTO_CHANGE_GROUP"] = "Task has been attached to the current project";
 $MESS["TASKS_TT_AUTO_CHANGE_ORIGINATOR"] = "Task creator has been automatically changed to current user";
+$MESS["TASKS_TT_AUTO_CHANGE_PARENT"] = "Task has been attached to the parent task";
+$MESS["TASKS_TT_AUTO_CHANGE_PARENT_GROUP"] = "Task has been attached to the parent task's project";
+$MESS["TASKS_TT_AUTO_CHANGE_RESPONSIBLE"] = "Responsible person for this task has been changed";
 $MESS["TASKS_TT_COPY_READ_ERROR"] = "Error reading the object to be copied";
 $MESS["TASKS_TT_FORUM_MODULE_NOT_INSTALLED"] = "The Forum module is not installed.";
 $MESS["TASKS_TT_NOT_FOUND_OR_NOT_ACCESSIBLE"] = "The task was not found, or access is denied.";

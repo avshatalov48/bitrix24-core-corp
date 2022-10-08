@@ -5,7 +5,7 @@ return [
 		"files/const",
 		"files/converter",
 		"files/entry",
-		'task',
+		'tasks:task',
 		'disk',
 		'user/account'
 	],

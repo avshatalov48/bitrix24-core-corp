@@ -40,6 +40,8 @@ BX.namespace('Tasks.Component');
 				this.ownerId = Number(this.option('ownerId'));
 				this.groupId = Number(this.option('groupId'));
 
+				this.isScrumLimitExceeded = Boolean(this.option('isScrumLimitExceeded'));
+
 				this.sliderInit();
 			},
 
@@ -85,9 +87,17 @@ BX.namespace('Tasks.Component');
 				catch(e){}
 
 				BX.addCustomEvent('onPullEvent-tasks', function(command, params) {
-					if (command === 'user_counter')
+					switch (command)
 					{
-						this.onUserCounter(params);
+						case 'user_counter':
+							this.onUserCounter(params);
+							break;
+						case 'project_add':
+							this.onProjectAdd(params);
+							break;
+						case 'project_remove':
+							this.onProjectRemove(params);
+							break;
 					}
 				}.bind(this));
 
@@ -127,6 +137,67 @@ BX.namespace('Tasks.Component');
 				{
 					scrumButton.querySelector('.main-buttons-item-counter').innerText = this.getCounterValue(data.scrum_total_comments);
 				}
+			},
+
+			createScrum: function(createLink, sidePanelId)
+			{
+				if (this.isScrumLimitExceeded)
+				{
+					BX.UI.InfoHelper.show(
+						sidePanelId,
+						{
+							isLimit: true,
+							limitAnalyticsLabels: {
+								module: 'tasks',
+								source: 'scrumList'
+							}
+						}
+					);
+				}
+				else
+				{
+					BX.SidePanel.Instance.open(createLink);
+				}
+			},
+
+			onProjectAdd: function(params)
+			{
+				this.updateScrumLimit();
+			},
+
+			onProjectRemove: function(params)
+			{
+				this.updateScrumLimit();
+			},
+
+			updateScrumLimit()
+			{
+				var scrumButton = BX('tasks_panel_menu_view_scrum');
+				if (!scrumButton)
+				{
+					return;
+				}
+
+				this.checkScrumLimit()
+					.then(function(isLimitExceeded) {
+						this.isScrumLimitExceeded = Boolean(isLimitExceeded);
+					}.bind(this))
+				;
+			},
+
+			checkScrumLimit: function()
+			{
+				return BX.ajax.runAction(
+					'bitrix:tasks.scrum.info.checkScrumLimit',
+					{
+						data: {},
+						signedParameters: this.signedParameters,
+					}
+				)
+					.then(function(response) {
+						return response.data;
+					})
+				;
 			},
 
 			getCounterValue: function(value)

@@ -20,6 +20,7 @@ $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . 
 	'ui.dialogs.messagebox',
 	'ui.buttons',
 	'ui.alerts',
+	'ui.fonts.opensans',
 ]);
 
 ?><div class="rpa-item-detail" id="<?=$arResult['jsParams']['containerId'];?>"><?php

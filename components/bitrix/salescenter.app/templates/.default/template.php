@@ -107,4 +107,19 @@ if (!empty($arResult['CURRENCIES']))
 			BX.Salescenter.Manager.init(options);
 		});
 	</script>
+	<?php
+	if($arResult['facebookSettingsPath'])
+	{
+		?>
+		<script>
+			BX.ready(function()
+			{
+				BX.ready(function () {
+					BX.SidePanel.Instance.open('<?=CUtil::JSEscape($arResult['facebookSettingsPath'])?>');
+				});
+			});
+		</script>
+		<?php
+	}
+	?>
 <?

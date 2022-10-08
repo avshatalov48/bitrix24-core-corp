@@ -217,7 +217,8 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 			this.entities = ['user', 'im-chat', 'im-bot', 'im-chat-user', 'imbot-network'];
 			this.setEntitiesOptions(defaultOptions.entities);
 			this.isNetworkSearchEnabled = true;
-			this.provider.doSearch(this.query)
+			this.provider.emptyResults = []; //to re-execute the query if there are no local results
+			this.provider.doSearch(this.query);
 		}
 
 		onSearchNetworkItemSelected(data)

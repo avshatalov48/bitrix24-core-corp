@@ -9,28 +9,22 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\UserTable;
 use Bitrix\Socialservices\Network;
 use Bitrix\Intranet\Invitation;
+use Bitrix\Intranet;
+use Bitrix\Main;
 
-class Invite extends \Bitrix\Main\Engine\Controller
+class Invite extends Main\Engine\Controller
 {
+	protected function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+		$preFilters[] = new Intranet\ActionFilter\UserType(['employee', 'extranet']);
+		$preFilters[] = new Intranet\ActionFilter\InviteAccessControl();
+
+		return $preFilters;
+	}
+
 	public function registerAction(array $fields)
 	{
-		global $USER;
-
-		if (
-			(
-				Loader::includeModule('bitrix24')
-				&& !\CBitrix24::isInvitingUsersAllowed()
-			)
-			|| (
-				!Loader::includeModule('bitrix24')
-				&& !$USER->canDoOperation('edit_all_users')
-			)
-		)
-		{
-			$this->addError(new Error(Loc::getMessage('INTRANET_CONTROLLER_INVITE_NO_PERMISSIONS'), 'INTRANET_CONTROLLER_INVITE_NO_PERMISSIONS'));
-			return null;
-		}
-
 		$errorList = [];
 		$userIdList = \CIntranetInviteDialog::registerNewUser(\CSite::getDefSite(), $fields, $errorList);
 
@@ -145,8 +139,6 @@ class Invite extends \Bitrix\Main\Engine\Controller
 	{
 		global $USER;
 
-		$result = false;
-
 		$userId = (!empty($params['userId']) ? intval($params['userId']) : 0);
 		$currentUserId = $this->getCurrentUser()->getId();
 
@@ -182,38 +174,21 @@ class Invite extends \Bitrix\Main\Engine\Controller
 		];
 	}
 
-	public function getDataAction(array $params = [])
+	public function getDataAction()
 	{
-		$result = [
-			'canInvite' => Invitation::canCurrentUserInvite(),
-			'registerUrl' => ''
+		return [
+			'registerUrl' => Invitation::getRegisterUrl(),
+			'adminConfirm' => Invitation::getRegisterAdminConfirm(),
+			'disableAdminConfirm' => !Invitation::canListDelete(),
+			'sharingMessage' => Invitation::getRegisterSharingMessage(),
+			'rootStructureSectionId' => Invitation::getRootStructureSectionId(),
 		];
-
-		if ($result['canInvite'] == 'Y')
-		{
-			$result['registerUrl'] = Invitation::getRegisterUrl();
-			$result['adminConfirm'] = Invitation::getRegisterAdminConfirm();
-			$result['disableAdminConfirm'] = !Invitation::canListDelete();
-			$result['sharingMessage'] = Invitation::getRegisterSharingMessage();
-			$result['rootStructureSectionId'] = Invitation::getRootStructureSectionId();
-		}
-
-		return $result;
 	}
 
 	public function getRegisterUrlAction(array $params = [])
 	{
-		global $USER;
-
-		$result = '';
-
-		if (Invitation::canCurrentUserInvite())
-		{
-			$result = \Bitrix\Intranet\Invitation::getRegisterUrl();
-		}
-
 		return [
-			'result' => $result
+			'result' => Intranet\Invitation::getRegisterUrl()
 		];
 	}
 

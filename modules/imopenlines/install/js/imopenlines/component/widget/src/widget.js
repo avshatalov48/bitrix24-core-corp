@@ -839,7 +839,7 @@ export class Widget
 			this.pullClient.userId = this.getUserId();
 			this.pullClient.configTimestamp = config? config.server.config_timestamp: 0;
 			this.pullClient.skipStorageInit = false;
-			this.pullClient.storage = PullClient.StorageManager({
+			this.pullClient.storage = new PullClient.StorageManager({
 				userId: this.getUserId(),
 				siteId: this.getSiteId()
 			});

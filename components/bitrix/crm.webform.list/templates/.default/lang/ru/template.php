@@ -77,6 +77,5 @@ $MESS["CRM_WEBFORM_LIST_BTN_DEACTIVATE_TITLE"] = "Выключить";
 $MESS["CRM_WEBFORM_LIST_BTN_CHOOSE_ACTION"] = "Выберите действие";
 $MESS["CRM_WEBFORM_LIST_NOT_ACTIVE"] = "Не активна";
 $MESS["CRM_WEBFORM_LIST_BTN_DETAILS"] = "Подробнее";
-$MESS["CRM_WEBFORM_LIST_ITEM_CONV_CHANGE"] = "Отражено изменение конверсии за последние две недели";
 $MESS["CRM_WEBFORM_LIST_ITEM_WRITE_ACCESS_DENIED"] = "У вас нет прав для редактирования форм, обратитесь к администратору";
 ?>

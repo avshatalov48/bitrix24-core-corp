@@ -1252,6 +1252,37 @@ BX.Disk.MeasureClass = (function ()
 		return true;
 	};
 
+	MeasureClass.prototype.showStorageMeasure = function(rowId, url)
+	{
+		var row = this.getGridRow(rowId);
+		if (row && BX.data(row,'collected') !== '1')
+		{
+			var storageId = parseInt(row.getDataset().storageid);
+			var filterId = parseInt(row.getDataset().filterid);
+			if (storageId > 0)
+			{
+				BX.Disk.showActionModal({
+					text: BX.message('DISK_VOLUME_PERFORMING_MEASURE_DATA'),
+					autoHide: false
+				});
+
+				BX.Disk.measureManager.getGrid().getLoader().show();
+
+				BX.Disk.measureManager.callAction({
+					action: 'measureStorage',
+					storageId: storageId,
+					filterId: filterId,
+					after: function (){ window.location.href = url; }
+				});
+			}
+		}
+		else
+		{
+			window.location.href = url;
+		}
+
+		return true;
+	};
 
 	var metricMarkCodesMap = {};
 

@@ -158,7 +158,7 @@
 
 					if(BX.getClass('BX.Bizproc.Automation.Designer'))
 					{
-						var dlg = BX.Bizproc.Automation.Designer.getRobotSettingsDialog();
+						var dlg = BX.Bizproc.Automation.Designer.getInstance().getRobotSettingsDialog();
 						if (dlg)
 						{
 							dlg.template.initRobotSettingsControls(dlg.robot, newNode);

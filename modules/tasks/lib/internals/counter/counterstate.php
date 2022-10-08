@@ -170,6 +170,13 @@ class CounterState implements \Iterator
 			}
 			unset($this->state[$k]);
 		}
+		foreach ($rawCounters as $k => $row)
+		{
+			if (is_null($row))
+			{
+				unset($rawCounters[$k]);
+			}
+		}
 
 		$this->state = array_merge($this->state, $rawCounters);
 
@@ -236,7 +243,7 @@ class CounterState implements \Iterator
 		}
 
 		$rows = $query->exec()->fetchAll();
-		if ($rowFlag)
+		if (!is_null($rowFlag))
 		{
 			$rows[] = $rowFlag;
 		}

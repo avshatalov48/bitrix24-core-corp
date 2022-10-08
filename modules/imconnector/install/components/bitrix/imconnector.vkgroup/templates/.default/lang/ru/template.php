@@ -31,7 +31,7 @@ $MESS['IMCONNECTOR_COMPONENT_VKGROUP_OTHER_ENTITY'] = 'Другие группы
 
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTED'] = 'Сообщения о заказах ВКонтакте подключены';
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_GET_INFO'] = 'Информация о заказах ВКонтакте';
-$MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTION_INFO'] = 'Подключите приём сообщений о новых заказах в магазине ВКонтакте. Информация о заказах будет приходить в Битрикс24 в виде чатов открытой линии.<br><br>Информацию о заказах ВКонтакте можно найти в <a onclick="top.BX.Helper.show(\'#ID#\');" class="imconnector-field-box-link">статье</a>';
+$MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTION_INFO_NEW'] = 'Подключите приём сообщений о новых заказах в магазине ВКонтакте. Информация о заказах будет приходить в Битрикс24 в виде чатов открытой линии.<br><br>Информацию о заказах ВКонтакте можно найти в #LINK_START#статье#LINK_END#';
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECT_MESSAGES'] = 'Подключите приём сообщений из группы';
 
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_INDEX_TITLE'] = 'Отвечайте на вопросы клиентов из вашей группы Вконтакте';
@@ -48,4 +48,4 @@ $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_1'] = 'Контак�
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_3'] = 'Вы мгновенно реагируете на заказ';
 $MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_LIST_ITEM_4'] = 'Уведомления о заказах автоматически распределяются между менеджерами по правилам очереди';
-$MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_ADDITIONAL_DESCRIPTION'] = '<a href="#" onclick="top.BX.Helper.show(\'#ID#\'); return false;">Подробнее об уведомлениях о заказах ВКонтакте</a>';
+$MESS['IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_ADDITIONAL_DESCRIPTION_NEW'] = '#LINK_START#Подробнее об уведомлениях о заказах ВКонтакте#LINK_END#';

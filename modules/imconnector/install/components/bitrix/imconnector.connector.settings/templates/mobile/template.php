@@ -32,7 +32,7 @@ Loc::loadMessages(__FILE__);
 
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"] . '/bitrix/components/bitrix/imconnector.settings/templates/.default/template.php');
 
-CJSCore::Init(['popup']);
+CJSCore::Init(['popup', 'ui.fonts.opensans']);
 $this->addExternalJs('/bitrix/components/bitrix/imconnector.connector.settings/templates/.default/script.js');
 ?>
 <?if(empty($arResult['RELOAD'])):?>

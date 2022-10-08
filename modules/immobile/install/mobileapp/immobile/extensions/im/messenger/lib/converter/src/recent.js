@@ -52,27 +52,6 @@ jn.define('im/messenger/lib/converter/recent', (require, exports, module) => {
 			return listItem;
 		}
 
-		toCacheItems(recentItems)
-		{
-			const cacheItems = [];
-
-			recentItems.forEach((item) => {
-				cacheItems.push(this.toCacheItem(item));
-			});
-
-			return cacheItems;
-		}
-
-		toCacheItem(recentItem)
-		{
-			return {
-				id: recentItem.id,
-				title: recentItem.title,
-				subTitle: '',
-				imageUrl: recentItem.avatar ? recentItem.avatar : '',
-			};
-		}
-
 		//TODO: moved from old im.recent, need to refactor
 		fromPushToModel(element)
 		{

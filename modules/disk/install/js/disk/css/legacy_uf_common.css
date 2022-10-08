@@ -199,7 +199,7 @@ table.files-list td.files-storage .files-placement:hover {
 	border: 1px solid #d4d4d4;
 	border-radius: 1px;
 	color: #2067b0;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	height: 36px;
 	margin-top: -10px;
@@ -450,7 +450,7 @@ table.files-list td.files-del-btn .del-but {
 }
 
 .diskuf-extended-overlay-text {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 18px;
 	color: rgba(83,92,105,0.7);
 }
@@ -501,7 +501,7 @@ table.files-list td.files-del-btn .del-but {
 	color: #2067b0;
 	cursor: pointer;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align: center;
 	overflow: hidden;
 	position: relative;
@@ -548,6 +548,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 	padding: 10px 0;
 	vertical-align: middle;
 	width: 50%;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .wd-fa-add-file-form-light-separate-row,
@@ -614,7 +615,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 	color: #0b66c3;
 	cursor: pointer;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 2px;
 	text-align: center;
 	overflow: hidden;
@@ -766,7 +767,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 	padding-bottom: 0;
 }
 
-/*.feed-com-files-title {font-size:12px; font-weight:bold; float:left; min-width:50px;}*/
+/*.feed-com-files-title {font-size:12px; font-weight:var(--ui-font-weight-bold); float:left; min-width:50px;}*/
 .diskuf-files-entity .feed-com-files-cont {
 	padding: 0;
 	overflow: hidden;
@@ -814,7 +815,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 	max-width: 490px;
 	color: #2067b0;
 	cursor: pointer;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: none;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -887,7 +888,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 .diskuf-files-entity .feed-com-file-inline.feed-com-file-name,
 .diskuf-files-entity.feed-com-file-inline.feed-com-file-name {
 	color: #2067b0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: top;
 	word-wrap: break-word;
 }
@@ -1133,7 +1134,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 .feed-file-history-popup-title {
 	color: #555555;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: 13px;
 	text-shadow: 0 1px rgba(255, 255, 255, .8);
 }
@@ -1296,7 +1297,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 .feed-file-history-list-title {
 	color: #555;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-bottom: 14px;
 }
 
@@ -1313,7 +1314,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 .feed-file-history-list-link {
 	color: #2067b0;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: underline;
 }
 
@@ -1323,7 +1324,7 @@ td.diskuf-selector-hover .diskuf-uploader-text {
 
 a.feed-file-history-list-name {
 	color: #2067b0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: none;
 }
 
@@ -1381,7 +1382,7 @@ a.feed-file-history-list-name {
 }
 
 .feed-com-files-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #535c69;
 	font-size: 14px;
 	float: left;
@@ -1401,7 +1402,7 @@ a.feed-file-history-list-name {
 }
 .feed-com-file-deleted-name {
 	color: #7e838c;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: line-through;
 	vertical-align: top;
 	word-wrap: break-word;
@@ -1487,7 +1488,8 @@ a.feed-file-history-list-name {
 	display: none;
 	top: 52%;
 	left: 46%;
-	font: 15px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	transform: translate(-50%,-50%);
 	z-index: 2;
@@ -1501,7 +1503,7 @@ a.feed-file-history-list-name {
 .disk-uf-file-switch-control {
 	display: inline-block;
 	border-bottom: 1px solid transparent;
-	font: 12px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(130,139,149,.7);
 	transition: border-bottom .3s;
 }
@@ -1516,7 +1518,7 @@ a.feed-file-history-list-name {
 }
 
 .disk-uf-file-download-archive {
-	font-size: 11px;
+	font-size: 12px;
 	line-height: 22px;
 	margin-top: 5px;
 }

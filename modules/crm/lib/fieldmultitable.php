@@ -82,6 +82,11 @@ class FieldMultiTable extends DataManager
 		return $filter;
 	}
 
+	public static function isImOpenLinesValue(string $value): bool
+	{
+		return preg_match('/^imol\|/', $value) === 1;
+	}
+
 	public static function prepareItemData(array $row): ?array
 	{
 		$value = $row['VALUE'] ?? '';
@@ -97,7 +102,7 @@ class FieldMultiTable extends DataManager
 		if(
 			$typeID === 'PHONE'
 			|| $typeID === 'EMAIL'
-			|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
+			|| ($typeID === 'IM' && static::isImOpenLinesValue($value))
 		)
 		{
 			$formattedValue = $typeID === 'PHONE'

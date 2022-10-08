@@ -1,0 +1,20 @@
+.crm-field-list-editor {
+	position: relative;
+}
+
+.crm-field-list-editor-list {
+
+}
+
+.crm-field-list-editor-footer {
+	margin-top: 17px;
+}
+
+
+/** FieldsPanel hacks **/
+
+.landing-ui-panel-fields {
+	position: fixed;
+	height: 100vh;
+	z-index: 9000;
+}

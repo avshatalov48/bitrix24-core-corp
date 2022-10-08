@@ -547,6 +547,7 @@ class SalesCenterPaySystemComponent extends CBitrixComponent implements Main\Eng
 		$helpdeskCodeMap = [
 			\Sale\Handlers\PaySystem\SkbHandler::class => '11538458',
 			\Sale\Handlers\PaySystem\BePaidHandler::class => '11538452',
+			\Sale\Handlers\PaySystem\BePaidEripHandler::class => '15846692',
 			\Sale\Handlers\PaySystem\LiqPayHandler::class => '11814321',
 			\Sale\Handlers\PaySystem\UaPayHandler::class => '11825299',
 			\Sale\Handlers\PaySystem\WooppayHandler::class => '12183852',

@@ -5,6 +5,7 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED"] = "Edna.ru WhatsApp verb
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Ich möchte</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">WhatsApp via Edna.ru</span> verbinden</div>";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP"] = "<a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">Some actions on your part</a> are required to connect.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP_NEW"] = "#LINK_START#Folgen Sie der Anleitung#LINK_END#, um WhatsApp zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_TITLE"] = "Verbinden Sie Edna.ru WhatsApp mit dem Kommunikationskanal";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_COPY"] = "Kpieren";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_FINAL_FORM_DESCRIPTION"] = "Edna.ru WhatsApp wurde mit Ihrem Kommunikationskanal erfolgreich verbunden. Alle Nachrichten werden von nun an an Ihr Bitrix24 weitergeleitet.";

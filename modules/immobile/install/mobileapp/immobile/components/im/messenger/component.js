@@ -196,6 +196,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		{
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog.bind(this));
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLine.bind(this));
+			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.joinCall, this.joinCall.bind(this));
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch.bind(this));
 			BX.addCustomEvent(EventType.messenger.createChat, this.openChatCreate.bind(this));
@@ -421,6 +422,17 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		onTaskStatusSuccess(taskId, result)
 		{
 			Logger.log('EventType.chatDialog.taskStatusSuccess', taskId, result);
+		}
+
+		getOpenLineParams(options)
+		{
+			const openLineParamsResponseEvent = EventType.messenger.openLineParams + '::' + options.userCode;
+
+			this.dialog.getOpenLineParams(options)
+				.then(params => {
+					BX.postComponentEvent(openLineParamsResponseEvent, [ params ]);
+				})
+			;
 		}
 
 		/* region legacy dialog integration */

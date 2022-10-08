@@ -10,7 +10,7 @@ use Bitrix\Tasks\UI\Component\TemplateHelper;
 
 Loc::loadMessages(__FILE__);
 
-Extension::load(['ui.buttons', 'ui.buttons.icons']);
+Extension::load(['ui.design-tokens', 'ui.fonts.opensans', 'ui.buttons', 'ui.buttons.icons']);
 
 /** @var TemplateHelper $helper */
 $helper = $arResult['HELPER'];

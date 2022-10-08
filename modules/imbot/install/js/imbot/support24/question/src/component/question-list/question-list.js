@@ -1,3 +1,5 @@
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import { BitrixVue } from 'ui.vue';
 import { UI } from 'ui.notification';
 import 'main.loader';

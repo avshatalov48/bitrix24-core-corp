@@ -152,14 +152,15 @@
 
 /*region crm-entity-details-loader*/
 .side-panel-loader.crm-entity-details-loader {
-	left: 20px;
+	left: 0;
+	padding: 20px;
 	background: #eef2f4;
 }
 
 .side-panel-loader.crm-entity-details-loader:before {
 	position: absolute;
 	top: 432px;
-	left: 0;
+	left: 20px;
 	z-index: 400;
 	width: 15px;
 	height: 190px;
@@ -171,29 +172,29 @@
 	position: absolute;
 	top: 186px;
 	bottom: 0;
-	left: 0;
+	left: 20px;
 	z-index: 100;
-	width: 42%;
+	width: calc(42% - 20px);
 	background: url(images/crm_bg_left.min.svg) top right / auto;
 }
 
 .side-panel-loader.crm-entity-details-loader .side-panel-loader-bg.right {
 	position: absolute;
 	top: 186px;
-	right: 10px;
+	right: 20px;
 	bottom: 0;
 	left: auto;
 	z-index: 100;
-	width: calc(58% - 10px);
+	width: calc(58% - 20px);
 	background: url(images/crm_bg_right.min.svg) top left / auto;
 }
 
 .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.top {
 	top: 20px;
 	right: 0;
-	left: 0;
+	left: 20px;
 	z-index: 200;
-	width: calc(100% - 10px);
+	width: calc(100% - 40px);
 	height: 137px;
 	-webkit-mask: url(images/crm_mask_top.min.svg) top right / auto;
 	-moz-mask: url(images/crm_mask_top.min.svg) top right / auto;

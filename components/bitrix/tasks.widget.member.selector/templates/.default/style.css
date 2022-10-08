@@ -35,8 +35,9 @@
   background-color: #ffe558;
 }
 .task-form-field .task-form-field-item[data-bx-type~="extranet"] .task-form-field-item-text:before {
-  display: inline-block;
-  background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -351px;
+	display: inline-block;
+	height: 13px;
+	background: url(/bitrix/js/tasks/css/images/media.png) no-repeat 0 -351px;
 }
 .task-form-field .task-form-field-item[data-bx-type~="mail"] .task-form-field-item-text:before {
   display: inline-block;

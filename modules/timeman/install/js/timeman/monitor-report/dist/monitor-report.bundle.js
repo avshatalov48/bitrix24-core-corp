@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,ui_forms,ui_layoutForm,ui_vuex,ui_vue_components_hint,ui_dialogs_messagebox,ui_icons,timeman_component_timeline,timeman_timeformatter,timeman_monitor,ui_vue_portal,ui_notification,main_core,ui_vue,timeman_const,timeman_dateformatter,main_popup,main_loader) {
+(function (exports,ui_forms,ui_layoutForm,ui_vuex,ui_vue_components_hint,ui_dialogs_messagebox,ui_icons,ui_fonts_opensans,timeman_component_timeline,timeman_timeformatter,timeman_monitor,ui_vue_portal,ui_notification,main_core,ui_vue,timeman_const,timeman_dateformatter,main_popup,main_loader) {
     'use strict';
 
     var AddIntervalPopup = ui_vue.BitrixVue.localComponent('bx-timeman-monitor-report-popup-addinterval', {
@@ -1357,5 +1357,5 @@ this.BX = this.BX || {};
 
     exports.MonitorReport = monitorReport;
 
-}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX.UI,BX,window,BX.UI.Dialogs,BX,BX.Timeman.Component,BX.Timeman,BX.Timeman,BX.Vue,BX,BX,BX,BX.Timeman.Const,BX.Timeman,BX.Main,BX));
+}((this.BX.Timeman = this.BX.Timeman || {}),BX,BX.UI,BX,window,BX.UI.Dialogs,BX,BX,BX.Timeman.Component,BX.Timeman,BX.Timeman,BX.Vue,BX,BX,BX,BX.Timeman.Const,BX.Timeman,BX.Main,BX));
 //# sourceMappingURL=monitor-report.bundle.js.map

@@ -3,11 +3,11 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
-\Bitrix\Main\Localization\Loc::loadMessages(dirname(__FILE__)."/footer.php");
+\Bitrix\Main\Localization\Loc::loadMessages(__DIR__."/footer.php");
 
 \Bitrix\Main\Loader::includeModule('intranet');
 
-CUtil::initJSCore(array('ajax', 'popup', 'ui.design-tokens', 'ui.fonts.opensans'));
+CUtil::initJSCore(array('ajax', 'popup', 'ui.design-tokens', 'ui.fonts.opensans', 'ui.fonts.roboto'));
 
 ?><!DOCTYPE html>
 <html>

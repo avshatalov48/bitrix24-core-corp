@@ -158,3 +158,11 @@ CREATE TABLE IF NOT EXISTS b_documentgenerator_document_binding
 	`ENTITY_ID` int NOT NULL,
 	PRIMARY KEY (ID)
 );
+
+CREATE TABLE IF NOT EXISTS b_documentgenerator_actualize_queue
+(
+	`DOCUMENT_ID` int unsigned NOT NULL,
+	`ADDED_TIME` datetime NOT NULL,
+	`USER_ID` int unsigned NULL,
+	PRIMARY KEY (DOCUMENT_ID)
+);

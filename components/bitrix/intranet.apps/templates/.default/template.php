@@ -19,6 +19,7 @@ use Bitrix\Main\Localization\Loc;
 \Bitrix\Main\UI\Extension::load([
 	'ui.buttons',
 	'ui.forms',
+	'ui.design-tokens',
 ]);
 ?>
 <div class="intranet-apps-widget">

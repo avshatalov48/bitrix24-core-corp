@@ -310,7 +310,7 @@ class CompanyDataProvider extends EntityDataProvider
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
 				[
-					'type' => 'list',
+					'type' => 'entity_selector',
 					'partial' => true
 				]
 			),
@@ -423,10 +423,7 @@ class CompanyDataProvider extends EntityDataProvider
 		}
 		elseif($fieldID === 'WEBFORM_ID')
 		{
-			return array(
-				'params' => array('multiple' => 'Y'),
-				'items' => Crm\WebForm\Manager::getListNames()
-			);
+			return Crm\WebForm\Helper::getEntitySelectorParams(\CCrmOwnerType::Company);
 		}
 		elseif($fieldID === 'ORIGINATOR_ID')
 		{

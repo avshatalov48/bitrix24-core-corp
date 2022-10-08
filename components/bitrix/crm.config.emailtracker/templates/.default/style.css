@@ -1,5 +1,5 @@
 .post-dialog-wrap {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	padding: 35px 25px 0;
 	width: 515px;
@@ -117,7 +117,7 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	color: #3d3d3d;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	height: 39px;
 	outline: none;
@@ -155,7 +155,7 @@
 	background: none;
 	border: none;
 	height: 37px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	top: 0;
 	left: 0;
@@ -888,7 +888,7 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	color: #000;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 16px;
 	height: 47px;
 	outline: none;
@@ -2112,7 +2112,7 @@
 }
 
 .mail-set-textarea-input {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	font-size: 14px;
 	clear: both;
@@ -2154,7 +2154,7 @@
 }
 
 .mail-set-textarea-input-del {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	font-size: 14px;
 	clear: both;

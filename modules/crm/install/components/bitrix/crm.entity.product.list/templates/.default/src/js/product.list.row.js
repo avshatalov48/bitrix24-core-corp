@@ -537,7 +537,7 @@ export class Row
 		storeSearchInput.getNameInput().classList.add('crm-entity-product-list-locked-field');
 		if (this.storeSelector.getWrapper())
 		{
-			this.storeSelector.getWrapper().onclick = () => top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+			this.storeSelector.getWrapper().onclick = () => this.editor.openIntegrationLimitSlider();
 		}
 	}
 
@@ -559,6 +559,14 @@ export class Row
 				(event) => {
 					const item = event.getData();
 					this.updateField(item.NAME, item.VALUE);
+				}
+			);
+
+			EventEmitter.subscribe(
+				this.reserveControl,
+				'onNodeClick',
+				() => {
+					this.editor.openIntegrationLimitSlider();
 				}
 			);
 
@@ -702,11 +710,12 @@ export class Row
 
 	setFields(fields: Object): void
 	{
-		for (let name in fields)
+		for (const name in fields)
 		{
 			if (fields.hasOwnProperty(name))
 			{
 				this.setField(name, fields[name]);
+				this.getModel().setField(name, fields[name]);
 			}
 		}
 	}
@@ -877,7 +886,7 @@ export class Row
 	{
 		const target = event.target;
 		const value = target.type === 'checkbox' ? target.checked : target.value;
-		const mode = event.type === 'input' ? MODE_EDIT : MODE_SET;
+		const mode = (event.type === 'input' || event.type === 'change') ? MODE_EDIT : MODE_SET;
 
 		this.updateField(fieldCode, value, mode);
 	}
@@ -1170,17 +1179,26 @@ export class Row
 		const taxList = this.getEditor().getTaxList();
 		if (Type.isArrayFilled(taxList))
 		{
-			const taxRate = taxList.find((item) => parseInt(item.ID) === parseInt(value));
+			let taxRate = taxList.find((item) => parseInt(item.ID) === parseInt(value));
+			if (!taxRate)
+			{
+				taxRate = taxList.find((item) => Type.isNil(item.VALUE));
+			}
+
 			if (taxRate)
 			{
-				this.changeTaxRate(this.parseFloat(taxRate.VALUE));
+				this.changeTaxRate(taxRate.VALUE);
 			}
 		}
 	}
 
-	changeTaxRate(value: number): void
+	changeTaxRate(value: number | null): void
 	{
-		const preparedValue = this.parseFloat(value, this.getCommonPrecision());
+		const preparedValue =
+			Type.isNil(value) || value === ''
+				? null
+				: this.parseFloat(value, this.getCommonPrecision())
+		;
 
 		this.setTaxRate(preparedValue);
 	}
@@ -1528,6 +1546,23 @@ export class Row
 		this.addActionUpdateTotal();
 		this.executeExternalActions();
 		this.#togglePriceHintPopup(originalPrice < 0 && originalPrice !== value);
+	}
+
+	setBasePrice(value, mode = MODE_SET)
+	{
+		const originalPrice = value;
+		// price can't be less than zero
+		value = Math.max(value, 0);
+		const calculatedFields = this.getCalculator()
+			.setFields(this.getCalculator().calculateBasePrice(this.getCatalogPrice()))
+			.calculatePrice(value)
+		;
+
+		this.setFields(calculatedFields);
+		this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
+		this.addActionProductChange();
+		this.addActionUpdateTotal();
+		this.#togglePriceHintPopup(originalPrice !== value);
 	}
 
 	setBasePrice(value, mode = MODE_SET)
@@ -1971,9 +2006,17 @@ export class Row
 				{
 					value = this.parseFloat(value, this.getQuantityPrecision());
 				}
-				else if (field === 'DISCOUNT_RATE' || field === 'TAX_RATE')
+				else if (field === 'DISCOUNT_RATE')
 				{
 					value = this.parseFloat(value, this.getCommonPrecision());
+				}
+				else if (field === 'TAX_RATE')
+				{
+					value =
+						Type.isNil(value) || value === ''
+							? ''
+							: this.parseFloat(value, this.getCommonPrecision())
+					;
 				}
 				else if (value === 0)
 				{
@@ -2028,7 +2071,8 @@ export class Row
 				result = field;
 				break;
 
-			case 'ENTERED_PRICE':
+			case 'PRICE_NETTO':
+			case 'PRICE_BRUTTO':
 				result = 'PRICE';
 				break;
 

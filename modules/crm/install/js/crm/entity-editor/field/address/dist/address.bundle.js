@@ -2,51 +2,13 @@ this.BX = this.BX || {};
 (function (exports,crm_entityEditor_field_address_base,main_core,main_core_events) {
 	'use strict';
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\">"]);
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4;
 
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\">"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
 	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral([" <span class=\"tariff-lock\"></span>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-entity-editor-content-block\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
 	var EntityEditorAddressField = /*#__PURE__*/function (_BX$Crm$EntityEditorF) {
 	  babelHelpers.inherits(EntityEditorAddressField, _BX$Crm$EntityEditorF);
 
@@ -59,7 +21,6 @@ this.BX = this.BX || {};
 	    _this._isMultiple = null;
 	    _this._autocompleteEnabled = false;
 	    _this._restrictionsCallback = null;
-	    _this._isMarkedAsChanged = false;
 	    return _this;
 	  }
 
@@ -154,7 +115,7 @@ this.BX = this.BX || {};
 	      main_core.Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
 	      if (!this.hasValue() && this._mode === BX.UI.EntityEditorMode.view) {
-	        main_core.Dom.append(main_core.Tag.render(_templateObject(), this.onViewModeClick.bind(this), BX.UI.EntityEditorField.messages.isEmpty), this._wrapper);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-entity-editor-content-block\" onclick=\"", "\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>"])), this.onViewModeClick.bind(this), BX.UI.EntityEditorField.messages.isEmpty), this._wrapper);
 	      } else {
 	        var fieldContainer = this._field.layout(this._mode === BX.UI.EntityEditorMode.edit);
 
@@ -217,7 +178,7 @@ this.BX = this.BX || {};
 	      }
 
 	      if (this._restrictionsCallback && this._restrictionsCallback.length) {
-	        var lockIcon = main_core.Tag.render(_templateObject2());
+	        var lockIcon = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral([" <span class=\"tariff-lock\"></span>"])));
 	        lockIcon.setAttribute('onclick', this._restrictionsCallback);
 	        return lockIcon;
 	      }
@@ -252,7 +213,7 @@ this.BX = this.BX || {};
 	            var type = address.type;
 	            var value = address.value;
 	            var name = "".concat(fieldNamePrefix, "[").concat(type, "]");
-	            var node = main_core.Tag.render(_templateObject3());
+	            var node = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\">"])));
 	            node.name = name;
 	            node.value = value;
 	            main_core.Dom.append(node, this._wrapper);
@@ -265,7 +226,7 @@ this.BX = this.BX || {};
 	      } else {
 	        var _address = this._field.getValue();
 
-	        var _node = main_core.Tag.render(_templateObject4());
+	        var _node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<input type=\"hidden\">"])));
 
 	        _node.name = this.getName();
 	        _node.value = _address ? _address : "";
@@ -306,14 +267,6 @@ this.BX = this.BX || {};
 	    key: "onAddressDataInputting",
 	    value: function onAddressDataInputting() {
 	      this.markAsChanged();
-	    }
-	  }, {
-	    key: "markAsChanged",
-	    value: function markAsChanged() {
-	      if (!this._isMarkedAsChanged) {
-	        babelHelpers.get(babelHelpers.getPrototypeOf(EntityEditorAddressField.prototype), "markAsChanged", this).call(this);
-	        this._isMarkedAsChanged = true;
-	      }
 	    }
 	  }, {
 	    key: "onError",

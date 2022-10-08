@@ -1680,58 +1680,23 @@ class CDiskVolumeComponent extends BaseComponent
 				}
 				else
 				{
-					$folderIndicatorId = Volume\Folder::getIndicatorId();
+					$folderIndicatorId = Volume\FolderTree::getIndicatorId();
 					$fileIndicatorId = Volume\File::getIndicatorId();
 				}
 
 				$this->reload(
 					$storageIndicatorId,
-					array(
+					[
 						'=STORAGE_ID' => $this->storageId,
-					),
+					],
 					$this->filterId,
 					true
 				);
 
-
-				$this->purify(
-					$folderIndicatorId,
-					array(
-						'=STORAGE_ID' => $this->storageId,
-					)
-				);
-				$this->measure(
-					$folderIndicatorId,
-					array(
-						'=STORAGE_ID' => $this->storageId,
-						'=PARENT_ID' => $this->folderId,
-						'=FOLDER_ID' => $this->folderId,
-					),
-					-1,
-					true
-				);
-
-				$this->purify(
-					Volume\Folder::getIndicatorId(),
-					array(
-						'=STORAGE_ID' => $this->storageId,
-						'=PARENT_ID' => null,
-						'=FOLDER_ID' => $this->folderId,
-					)
-				);
-				$this->measure(
-					Volume\Folder::getIndicatorId(),
-					array(
-						'=STORAGE_ID' => $this->storageId,
-						'=FOLDER_ID' => $this->folderId,
-					),
-					-1,
-					true
-				);
-
-				$this->reload(Volume\FileType::getIndicatorId(), array(
+				$this->reload($folderIndicatorId, [
 					'=STORAGE_ID' => $this->storageId,
-				));
+					'=FOLDER_ID' => $this->folderId,
+				]);
 
 				if ($storageIndicatorType != Volume\Storage\TrashCan::className())
 				{

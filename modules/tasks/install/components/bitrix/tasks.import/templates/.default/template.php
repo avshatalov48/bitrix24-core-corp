@@ -1,17 +1,19 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-CUtil::InitJSCore();
-
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Text\HtmlFilter;
 
-Extension::load("ui.buttons");
-Extension::load("ui.buttons.icons");
-Extension::load("ui.alerts");
-Extension::load('tasks.encoding-handler');
+Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.buttons",
+	"ui.buttons.icons",
+	"ui.alerts",
+	"tasks.encoding-handler",
+]);
 
 Loc::loadMessages(__FILE__);
 

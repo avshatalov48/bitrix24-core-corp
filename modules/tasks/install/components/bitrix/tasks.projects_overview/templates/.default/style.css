@@ -5,7 +5,8 @@
 	display: inline-block;
 	margin: 2px 4px;
 	padding: 0 7px;
-	font:bold 11px/16px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	min-width:12px;
 	text-align:center;
 }
@@ -72,7 +73,7 @@
     overflow-x: hidden;
 }
 
-.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}
+.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .structure-dept-emp-popup a,.structure-dept-block a {text-decoration: none; color: #2067B0;}
 .structure-dept-emp-popup a:hover, .structure-dept-block a:hover {text-decoration: underline; color: #2067B0;}
@@ -212,7 +213,8 @@
 .tasks-overview-user-count {
     display: inline-block;
     margin: 0 5px 0 4px;
-    font: 12px 'OpenSans-SemiBold', "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     color: rgba(82,92,105, .71);
 }
 

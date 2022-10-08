@@ -13,6 +13,32 @@ use Bitrix\Imbot\Bot\Partner24;
 
 final class Agent
 {
+
+	/**
+	 * Installs Support bot.
+	 * @see SupportBox::refreshAgent
+	 * @return string
+	 */
+	public static function updateSupport24()
+	{
+		if (
+			\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
+			&& class_exists('\\Bitrix\\ImBot\\Bot\\Support24', true)
+			&& method_exists('\\Bitrix\\ImBot\\Bot\\Support24', 'refreshAgent')
+		)
+		{
+			Support24::addAgent([
+				'class' => Support24::class,
+				'agent' => 'refreshAgent()',
+				'regular' => false,
+				'delay' => random_int(60, 6600),
+			]);
+		}
+
+		return '';
+	}
+
+
 	/**
 	 * @return string
 	 */

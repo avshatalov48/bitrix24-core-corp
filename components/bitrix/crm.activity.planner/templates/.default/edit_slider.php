@@ -56,7 +56,7 @@ $communicationsData = htmlspecialcharsbx(\Bitrix\Main\Web\Json::encode($arResult
 
 $APPLICATION->restartBuffer();
 
-\CJSCore::init(array('crm_activity_planner'));
+\CJSCore::init(array('ui.design-tokens', 'crm_activity_planner', 'ui.fonts.opensans'));
 $pageAsset->addCss('/bitrix/js/crm/css/crm.css');
 $pageAsset->addCss('/bitrix/themes/.default/crm-entity-show.css');
 $pageAsset->addJs('/bitrix/js/calendar/planner.js');

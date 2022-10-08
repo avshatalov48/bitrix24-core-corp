@@ -47,5 +47,13 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-whatsappbyedna-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=14214014');
+				return false;
+			})
 	});
 })(window);

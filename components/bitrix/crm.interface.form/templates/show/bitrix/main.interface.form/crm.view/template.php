@@ -361,6 +361,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.activity.list'
+								);
+								unset($componentData['params']);
 
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$activityListContainerID = $prefix.'_activity_list_wrapper';
@@ -422,6 +427,11 @@ foreach($arResult["TABS"] as &$tab):
 									$loaderID = "{$prefix}_events";
 									$eventViewContainerID = "{$prefix}_event_view_wrapper";
 								}
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.event.view'
+								);
+								unset($componentData['params']);
 
 								?><div id="<?=htmlspecialcharsbx($eventViewContainerID)?>"></div>
 								<script type="text/javascript">
@@ -466,6 +476,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.deal.list'
+								);
+								unset($componentData['params']);
 
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$dealListContainerID = $prefix.'_deal_list_wrapper';
@@ -512,6 +527,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.quote.list'
+								);
+								unset($componentData['params']);
 
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$quoteListContainerID = $prefix.'_quote_list_wrapper';
@@ -558,6 +578,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.invoice.list'
+								);
+								unset($componentData['params']);
 
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$invoiceListContainerID = $prefix.'_invoice_list_wrapper';
@@ -604,6 +629,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.company.list'
+								);
+								unset($componentData['params']);
 
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$companyListContainerID = $prefix.'_company_list_wrapper';
@@ -650,6 +680,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.contact.list'
+								);
+								unset($componentData['params']);
 
 							$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$contactListContainerID = $prefix.'_contact_list_wrapper';
@@ -742,6 +777,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.requisite.list'
+								);
+								unset($componentData['params']);
 
 								$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$requisiteListContainerID = $prefix.'_requisite_list_wrapper';
@@ -788,6 +828,11 @@ foreach($arResult["TABS"] as &$tab):
 							if($enableLazyLoad === true)
 							{
 								unset($componentData['enableLazyLoad']);
+								$componentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+									(array)$componentData['params'],
+									'crm.automation'
+								);
+								unset($componentData['params']);
 
 							$prefix = mb_strtolower("{$arParams['FORM_ID']}_{$field['id']}");
 								$automationContainerID = $prefix.'_crm_automation_wrapper';

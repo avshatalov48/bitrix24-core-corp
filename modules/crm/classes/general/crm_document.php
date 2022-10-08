@@ -1648,7 +1648,9 @@ class CCrmDocument
 	{
 		$arDocumentID = static::GetDocumentInfo($documentId);
 		if (empty($arDocumentID))
+		{
 			throw new CBPArgumentNullException('documentId');
+		}
 
 		$CCrmEntity = null;
 		switch ($arDocumentID['TYPE'])
@@ -1667,12 +1669,22 @@ class CCrmDocument
 				break;
 		}
 
+		$result = new \Bitrix\Main\Result();
+
 		if($CCrmEntity !== null)
 		{
-			$CCrmEntity->Delete($arDocumentID['ID'], array(
-				'CURRENT_USER' => static::getSystemUserId()
-			));
+			$deleteResult = $CCrmEntity->Delete(
+				$arDocumentID['ID'],
+				['CURRENT_USER' => static::getSystemUserId()]
+			);
+
+			if ($deleteResult === false && $CCrmEntity->LAST_ERROR !== '')
+			{
+				$result->addError(new \Bitrix\Main\Error($CCrmEntity->LAST_ERROR));
+			}
 		}
+
+		return $result;
 	}
 
 	public static function PublishDocument($documentId)
@@ -2346,7 +2358,7 @@ class CCrmDocument
 		if (self::$webFormSelectList === null)
 		{
 			self::$webFormSelectList = array();
-			$result = \Bitrix\Crm\WebForm\Internals\FormTable::getList(array(
+			$result = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList(array(
 				'select' => array('ID', 'NAME'),
 				'order' => array('NAME' => 'ASC', 'ID' => 'ASC'),
 			));
@@ -2439,6 +2451,13 @@ class CCrmDocument
 
 			return \Bitrix\Crm\Automation\Factory::isAutomationAvailable($entityTypeId);
 		}
+		elseif ($eventType === CBPDocumentEventType::Script)
+		{
+			$documentInfo = static::GetDocumentInfo($documentId);
+			$entityTypeId = \CCrmOwnerType::ResolveID($documentInfo['TYPE']);
+
+			return \Bitrix\Crm\Automation\Factory::isScriptAvailable($entityTypeId);
+		}
 		return CBPRuntime::isFeatureEnabled();
 	}
 
@@ -2457,6 +2476,24 @@ class CCrmDocument
 		}
 
 		return $documentId;
+	}
+
+	protected static function getVirtualFields(): array
+	{
+		return [
+			'CRM_ID' => [
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CRM_ID'),
+				'Type' => 'string',
+			],
+			'URL' => [
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_URL'),
+				'Type' => 'string',
+			],
+			'URL_BB' => [
+				'Name' => GetMessage('CRM_DOCUMENT_FIELD_URL_BB'),
+				'Type' => 'string',
+			],
+		];
 	}
 
 	protected static function getAssignedByFields()

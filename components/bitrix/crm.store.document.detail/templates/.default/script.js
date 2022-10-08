@@ -1,10 +1,104 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
 this.BX.Crm.Store = this.BX.Crm.Store || {};
-(function (exports,main_core,catalog_entityCard,main_core_events,ui_buttons) {
+(function (exports,ui_designTokens,catalog_entityCard,ui_buttons,main_core,main_core_events) {
 	'use strict';
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _onboardingData = /*#__PURE__*/new WeakMap();
+
+	var _documentGuid = /*#__PURE__*/new WeakMap();
+
+	var _hintProductListField = /*#__PURE__*/new WeakSet();
+
+	var DocumentOnboardingManager = /*#__PURE__*/function () {
+	  function DocumentOnboardingManager(params) {
+	    babelHelpers.classCallCheck(this, DocumentOnboardingManager);
+
+	    _classPrivateMethodInitSpec(this, _hintProductListField);
+
+	    _classPrivateFieldInitSpec(this, _onboardingData, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _classPrivateFieldInitSpec(this, _documentGuid, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _onboardingData, params.onboardingData);
+	    babelHelpers.classPrivateFieldSet(this, _documentGuid, params.documentGuid);
+	  }
+
+	  babelHelpers.createClass(DocumentOnboardingManager, [{
+	    key: "processOnboarding",
+	    value: function processOnboarding() {
+	      var chain = babelHelpers.classPrivateFieldGet(this, _onboardingData).chain;
+	      var step = babelHelpers.classPrivateFieldGet(this, _onboardingData).chainStep;
+
+	      if (chain === 1 && step === 1) {
+	        _classPrivateMethodGet(this, _hintProductListField, _hintProductListField2).call(this);
+	      }
+	    }
+	  }]);
+	  return DocumentOnboardingManager;
+	}();
+
+	function _hintProductListField2() {
+	  var buttonsContainer = document.querySelector("#".concat(babelHelpers.classPrivateFieldGet(this, _documentGuid), "_TABS_MENU"));
+	  var spotlight$$1 = new BX.SpotLight({
+	    id: 'arrow_spotlight',
+	    targetElement: document.querySelector('[data-tab-id=tab_products]'),
+	    autoSave: true,
+	    targetVertex: "middle-center",
+	    zIndex: 200
+	  });
+	  spotlight$$1.show();
+	  spotlight$$1.container.style.pointerEvents = "none";
+
+	  var productListTabListener = function productListTabListener(event) {
+	    spotlight$$1.close();
+
+	    var _event$data = babelHelpers.slicedToArray(event.data, 1),
+	        productListEditor = _event$data[0];
+
+	    var buttonsPanelListener = function buttonsPanelListener() {
+	      var activeHint = productListEditor.getActiveHint();
+
+	      if (activeHint !== null) {
+	        activeHint.close();
+	        main_core.Event.unbind(buttonsContainer, 'click', buttonsPanelListener);
+	      }
+	    };
+
+	    main_core.Event.bind(buttonsContainer, 'click', buttonsPanelListener);
+	    productListEditor.showFieldTourHint('AMOUNT', {
+	      title: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TITLE'),
+	      text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TEXT')
+	    }, function () {
+	      main_core.userOptions.save('crm', 'warehouse-onboarding', 'secondChainStage', 2);
+	      main_core.userOptions.save('crm', 'warehouse-onboarding', 'chainStage', 2);
+	      main_core.Event.unbind(buttonsContainer, 'click', buttonsPanelListener);
+	      main_core_events.EventEmitter.unsubscribe('onDemandRecalculateWrapper', productListTabListener);
+	    });
+	  };
+
+	  main_core_events.EventEmitter.subscribe('onDemandRecalculateWrapper', productListTabListener);
+	}
+
 	var _templateObject;
+
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classStaticPrivateFieldSpecGet(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor(descriptor, "get"); return _classApplyDescriptorGet(receiver, descriptor); }
 
@@ -17,6 +111,9 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
 
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+
+	var _documentOnboardingManager = /*#__PURE__*/new WeakMap();
+
 	var Document = /*#__PURE__*/function (_BaseCard) {
 	  babelHelpers.inherits(Document, _BaseCard);
 
@@ -25,6 +122,12 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	    babelHelpers.classCallCheck(this, Document);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this, id, settings));
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _documentOnboardingManager, {
+	      writable: true,
+	      value: null
+	    });
+
 	    _this.isDocumentDeducted = settings.documentStatus === 'Y';
 	    _this.isDeductLocked = settings.isDeductLocked;
 	    _this.masterSliderUrl = settings.masterSliderUrl;
@@ -60,6 +163,11 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	            (_eventEditor$_toolPan2 = eventEditor._toolPanel) === null || _eventEditor$_toolPan2 === void 0 ? void 0 : _eventEditor$_toolPan2.addError(controllersErrorCollection[0]);
 	            return;
 	          }
+	        }
+
+	        if (action === 'SAVE') {
+	          // for consistency in analytics tags
+	          action = 'save';
 	        }
 
 	        var urlParams = {
@@ -260,7 +368,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	            }
 	          });
 	          deductDocumentAjaxForm.addUrlParams({
-	            action: actionName
+	            action: actionName,
+	            documentType: 'W'
 	          });
 	          deductDocumentAjaxForm.submit();
 	        }
@@ -442,6 +551,17 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        analyticsLabel: data
 	      });
 	    }
+	  }, {
+	    key: "enableOnboardingChain",
+	    value: function enableOnboardingChain(onboardingData) {
+	      if (babelHelpers.classPrivateFieldGet(this, _documentOnboardingManager) === null) {
+	        babelHelpers.classPrivateFieldSet(this, _documentOnboardingManager, new DocumentOnboardingManager({
+	          onboardingData: onboardingData,
+	          documentGuid: this.id
+	        }));
+	        babelHelpers.classPrivateFieldGet(this, _documentOnboardingManager).processOnboarding();
+	      }
+	    }
 	  }], [{
 	    key: "getInstance",
 	    value: function getInstance() {
@@ -460,5 +580,5 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	exports.Document = Document;
 
-}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.Event,BX.UI));
+}((this.BX.Crm.Store.DocumentCard = this.BX.Crm.Store.DocumentCard || {}),BX,BX.Catalog.EntityCard,BX.UI,BX,BX.Event));
 //# sourceMappingURL=script.js.map

@@ -103,7 +103,7 @@
 .bx-crm-widget-form-config-sidebar-message-item {
 	display: inline-block;
 	max-width: 310px;
-	font: bold 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	text-transform: uppercase;
 	text-overflow: ellipsis;
@@ -181,20 +181,20 @@
 .bx-crm-widget-form-config-sidebar-logo-text {
 	display: inline-block;
 	margin: 0 0 0 -2px;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #b2b6bd;
 }
 
 .bx-crm-widget-form-config-sidebar-logo-bx {
 	display: inline-block;
 	margin: 0 -2px 0 0;
-	font: bold 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2fc7f7;
 }
 
 .bx-crm-widget-form-config-sidebar-logo-24 {
 	display: inline-block;
-	font: bold 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #215f98;
 }
 

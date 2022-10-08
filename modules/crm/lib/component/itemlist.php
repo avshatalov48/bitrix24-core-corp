@@ -50,10 +50,17 @@ abstract class ItemList extends Base
 
 		$entityTypeId = (int)$this->arParams['entityTypeId'];
 		$type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
-		if (!$type && $entityTypeId === \CCrmOwnerType::SmartInvoice)
+		if (!$type && \CCrmOwnerType::isDynamicTypeBasedStaticEntity($entityTypeId))
 		{
 			// force creating type
-			Service\Factory\SmartInvoice::createTypeIfNotExists();
+			if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
+			{
+				Service\Factory\SmartInvoice::createTypeIfNotExists();
+			}
+			elseif ($entityTypeId === \CCrmOwnerType::SmartDocument)
+			{
+				Service\Factory\SmartDocument::createTypeIfNotExists();
+			}
 			$type = Service\Container::getInstance()->getTypeByEntityTypeId($entityTypeId);
 		}
 		if (!$type)
@@ -144,6 +151,11 @@ abstract class ItemList extends Base
 
 		if ($categoryId <= 0)
 		{
+			if (!$this->factory->isCategoriesEnabled())
+			{
+				return $this->factory->createDefaultCategoryIfNotExist();
+			}
+
 			return null;
 		}
 

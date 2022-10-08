@@ -42,7 +42,7 @@
 	-webkit-border-radius: 2px 2px 0 0;
 	-moz-border-radius: 2px 2px 0 0;
 	border-radius: 2px 2px 0 0;
-	font: bold 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: rgba(83,92,105, .09);
 	text-align: center;
 	cursor: pointer;
@@ -80,7 +80,7 @@
 }
 
 .popup-window-content .crm-webform-script-tab-body-item-subtitle {
-	font: 14px/16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 }
 
@@ -100,7 +100,7 @@
 	border-radius: 2px;
 	border: 1px solid #caced7;
 	background: #fff;
-	font: 13px/18px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2a2a2a;
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;

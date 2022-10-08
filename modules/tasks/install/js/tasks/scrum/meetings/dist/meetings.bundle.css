@@ -102,7 +102,8 @@
 .tasks-scrum__widget-meetings--header-title {
 	width: 100%;
 	text-align: left;
-	font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: 15px;
 	color: var(--tasks_scrum_meetings-grey);
 	letter-spacing: 0.4px;
@@ -113,7 +114,8 @@
 .tasks-scrum__widget-meetings--btn-create .ui-btn-main,
 .tasks-scrum__widget-meetings--btn-create .ui-btn-menu {
 	height: 19px;
-	font: 10px/14px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--tasks_scrum_meetings-grey-2);
 	border-color: var(--tasks_scrum_meetings-blue_alpha_30);
 }
@@ -169,10 +171,11 @@
 	border: 1px solid var(--tasks_scrum_meetings-blue-2);
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
-	border-radius: 8px;
+	border-radius: var(--ui-border-radius-sm, 8px);
 	padding: 9px 7px 3px;
 	color: var(--tasks_scrum_meetings-grey-2);
-	font: 11px/14px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .tasks-scrum__widget-meetings--creation-block.--visible {
@@ -205,6 +208,7 @@
 }
 
 .tasks-scrum__widget-meetings--create-element {
+	position: relative;
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -214,11 +218,26 @@
 	-webkit-box-pack: justify;
 	    -ms-flex-pack: justify;
 	        justify-content: space-between;
-	padding: 13px 10px 11px;
+	/*padding: 13px 10px 11px;*/
+	padding: 13px 10px 11px 14px;
 	margin: 6px 0;
-	border-radius: 3px;
-	border-left: 4px solid var(--border-color);
-	background: var(--backgground-color);
+	border-radius: var(--ui-border-radius-2xs, 3px);
+	background:var(--backgground-color);
+	/*border-left: 4px solid var(--border-color);*/
+	/*background: var(--backgground-color);*/
+	overflow: hidden;
+}
+
+.tasks-scrum__widget-meetings--create-element::before {
+	content: '';
+	display: block;
+	width: 4px;
+	position: absolute;
+	left: 0;
+	top: 0;
+	bottom: 0;
+	background: var(--border-color);
+	pointer-events: none;
 }
 
 .tasks-scrum__widget-meetings--create-element-name {
@@ -248,8 +267,9 @@
 	display: none;
 	padding: 20px 23px 14px;
 	margin: -1px 4px 2px;
-	border-radius: 5px;
-	font: 11px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-border-radius-2xs, 5px);
+	font: 11px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	background: var(--tasks_scrum_meetings-grey-3_alpha_30);
 	text-align: center;
 	color: var(--tasks_scrum_meetings-grey-4_alpha_70);
@@ -262,8 +282,9 @@
 .tasks-scrum__widget-meetings--empty-meetings {
 	display: none;
 	padding: 11px 9px 14px;
-	border-radius: 5px;
-	font: 11px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-border-radius-2xs, 5px);
+	font: 11px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	background: var(--tasks_scrum_meetings-grey-3_alpha_30);
 	text-align: center;
 	color: var(--tasks_scrum_meetings-grey-4_alpha_70);
@@ -295,12 +316,25 @@
 }
 
 .tasks-scrum__widget-meetings--timetable-content {
-	padding: 7px 10px;
-	border-left: 4px solid;
-	border-radius: 3px;
+	position: relative;
+	padding: 7px 10px 7px 14px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	background: var(--backgground-color);
 	margin-top: 9px;
 	cursor: pointer;
+	overflow: hidden;
+}
+
+.tasks-scrum__widget-meetings--timetable-content::before {
+	content: '';
+	display: block;
+	width: 4px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	background: var(--meetings-border-color);
+	pointer-events: none;
 }
 
 .tasks-scrum__widget-meetings--timetable-content:first-of-type {
@@ -308,7 +342,8 @@
 }
 
 .tasks-scrum__widget-meetings--timetable-title {
-	font: 16px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_meetings-grey-2);
 	margin-bottom: 10px;
 }
@@ -323,12 +358,14 @@
 }
 
 .tasks-scrum__widget-meetings--timetable-time {
-	font: 11px/15px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--tasks_scrum_meetings-grey);
 }
 
 .tasks-scrum__widget-meetings--timetable-name {
-	font: 12px/15px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_meetings-grey-2);
 	white-space: nowrap;
 	overflow: hidden;
@@ -344,7 +381,8 @@
 }
 
 .tasks-scrum__widget-meetings--timetable-repetition {
-	font: 11px/15px "OpenSans-Italic", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-style: italic;
 	color: var(	--tasks_scrum_meetings-grey-5);
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -445,7 +483,8 @@
 .tasks-scrum__widget-meetings--header-separator {
 	position: relative;
 	text-align: center;
-	font: 10px/14px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 10px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_meetings-grey-5);
 	/*margin: 15px 0 12px;*/
 	margin: 15px 0 0;
@@ -506,7 +545,7 @@
 	        align-items: flex-start;
 	margin-top: 6px;
 	padding: 7px 10px 8px;
-	border-radius: 5px;
+	border-radius: var(--ui-border-radius-md, 5px);
 	-webkit-transition: .2s;
 	-o-transition: .2s;
 	transition: .2s;
@@ -538,7 +577,8 @@
 }
 
 .tasks-scrum__widget-meetings--chat-name {
-	font: 13px/15px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	margin-bottom: 3px;
 	color: var(--tasks_scrum_meetings-grey);
 	-o-text-overflow: ellipsis;

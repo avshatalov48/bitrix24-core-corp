@@ -298,7 +298,7 @@ BitrixVue.component('bx-mobile-im-component-dialog',
 		{
 			if (event.type === 'USER')
 			{
-				this.getApplication().openProfile(event.value);
+				this.getApplication().openDialog(event.value);
 			}
 			else if (event.type === 'CHAT')
 			{

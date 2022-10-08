@@ -265,13 +265,15 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 		$role = false;
 
-		$ID = intval($ID);
-		$USER_ID = intval($USER_ID);
+		$ID = (int)$ID;
+		$USER_ID = (int)$USER_ID;
 
 		if ($ID > 0)
 		{
 			if ($USER_ID <= 0)
+			{
 				$USER_ID = $USER->GetID();
+			}
 
 			$sqlFilter = "AND USER_ID='".$USER_ID."'";
 			if ($bCheckHead)
@@ -292,7 +294,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				while ($arRes = $dbRes->Fetch())
 				{
 					$role = CMeeting::ROLE_HEAD;
-					if ($arRes['USER_ID'] == $USER_ID)
+					if ((int)$arRes['USER_ID'] === (int)$USER_ID)
 					{
 						$role = $arRes['USER_ROLE'];
 						break;
@@ -300,10 +302,9 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				}
 
 			}
-			else
+			elseif ($arRes = $dbRes->Fetch())
 			{
-				if ($arRes = $dbRes->Fetch())
-					$role =  $arRes['USER_ROLE'];
+				$role = $arRes['USER_ROLE'];
 			}
 		}
 

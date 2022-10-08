@@ -17,6 +17,7 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Access\TemplateAccessController;
@@ -29,6 +30,7 @@ use Bitrix\Tasks\Integration\SocialServices\User;
 use Bitrix\Tasks\Internals\Task\Template\ReplicateParamsCorrector;
 use Bitrix\Tasks\Item;
 use Bitrix\Tasks\Util;
+use Bitrix\Main\Localization\Loc;
 
 final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 {
@@ -115,6 +117,19 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 		$this->prepareMembers($data);
 		$this->prepareReplicateParams($data);
+
+		if (
+			array_key_exists('REPLICATE', $data)
+			&& $data['REPLICATE'] === 'Y'
+		)
+		{
+			$templateModel = TemplateModel::createFromArray($data);
+			if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_SAVE, null, $templateModel))
+			{
+				$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE'));
+				return $result;
+			}
+		}
 
 		if (!$this->errors->checkNoFatals())
 		{
@@ -211,11 +226,6 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 			return $result;
 		}
 
-		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $id))
-		{
-			return $result;
-		}
-
 		if ($data['CREATED_BY'] <= 0)
 		{
 			$data['CREATED_BY'] = $this->userId;
@@ -227,6 +237,15 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 
 		$this->prepareMembers($data);
 		$this->prepareReplicateParams($data);
+
+		$oldTemplate = \Bitrix\Tasks\Access\Model\TemplateModel::createFromId($id);
+		$newTemplate = TemplateModel::createFromArray($data);
+		$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate);
+		if (!$isAccess)
+		{
+			$this->errors->add('TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE', Loc::getMessage('TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE'));
+			return $result;
+		}
 
 		if ($this->errors->checkNoFatals())
 		{
@@ -350,6 +369,11 @@ final class Template extends \Bitrix\Tasks\Dispatcher\PublicAction
 	private function saveTemplatePermissions($template, array $permissions)
 	{
 		$res = new Util\Result();
+
+		if (!Integration\Bitrix24::checkFeatureEnabled(Integration\Bitrix24\FeatureDictionary::TASKS_TEMPLATES_ACCESS))
+		{
+			return $res;
+		}
 
 		$permissions = array_values($permissions);
 

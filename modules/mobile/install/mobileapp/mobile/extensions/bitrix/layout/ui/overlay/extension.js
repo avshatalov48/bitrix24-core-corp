@@ -46,7 +46,7 @@
 		{
 			return new Promise((resolve) => {
 				this.view.animate({
-					duration:0,
+					duration:300,
 					opacity:0
 				}, () => {
 					resolve();

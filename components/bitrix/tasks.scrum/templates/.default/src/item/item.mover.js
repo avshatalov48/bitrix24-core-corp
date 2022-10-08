@@ -135,6 +135,13 @@ export class ItemMover extends EventEmitter
 			}
 
 			const sourceContainer = dragBeforeStartEvent.sourceContainer;
+			if (Type.isUndefined(sourceContainer))
+			{
+				baseEvent.preventDefault();
+
+				return;
+			}
+
 			const sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
 			const sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
 			if (!sourceEntity)

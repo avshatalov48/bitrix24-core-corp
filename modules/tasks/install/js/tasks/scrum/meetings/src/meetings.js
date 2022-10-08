@@ -9,6 +9,8 @@ import {CreatedEvent, CreatedEventType} from './created.event';
 import {ListEvents} from './list.events';
 import {RequestSender} from './request.sender';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import 'ui.hint';
 import 'ui.icons.b24';
 import 'ui.icons.service';

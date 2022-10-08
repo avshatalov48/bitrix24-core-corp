@@ -176,7 +176,7 @@
     vertical-align:middle;
 }
 .popup-current-text{
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:30px;
     display:inline-block;
     height:30px;
@@ -254,9 +254,9 @@
     /*padding:10px;*/
 }
 .bx-disk-popup-title{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:30px;
     height:30px;
     margin-bottom:10px;
@@ -265,7 +265,7 @@
 }
 .bx-disk-popup-content,
 .bx-disk-popup-content-small{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:16px;
     min-width:500px;
     color:#000;
@@ -281,11 +281,12 @@
     padding:15px;
     color:#535c69;
     background-color:#f8fafa;
+	border-radius: var(--ui-border-radius-xs);
 }
 .bx-disk-popup-content-title{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:15px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     padding-bottom:20px;
     color:#535b69;
     border-bottom:1px solid #cfd4d8;
@@ -322,13 +323,13 @@ hr.bx-disk-popup-delimiter{
             background-size:19px auto;
 }
 span.req{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
     opacity:.6;
     color:#ab2424;
 }
 .bx-disk-popup-label{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
     opacity:.6;
     color:#000;
@@ -342,7 +343,7 @@ span.req{
     height:36px;
     vertical-align:middle;
     border:1px solid #c5cdd3;
-    border-radius:2px;
+    border-radius: var(--ui-field-border-radius, 2px);
     background-color:#fff;
     padding: 0 10px;
 }
@@ -353,17 +354,17 @@ span.req{
 
 /*Create File(Small and Big)*/
 .bx-disk-create-file{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:20px;
     vertical-align:middle;
     color:#0b65c3;
 }
 .bx-disk-create-file-big{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:17px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:17px;
     padding:0 80px;
     vertical-align:middle;
@@ -403,7 +404,7 @@ span.bx-disk-create-file-icon{
     background:url(/bitrix/images/disk/sprite.png?2234) no-repeat -21px -96px;
 }
 a.bx-disk-create-file-big-icon{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:19px;
     font-weight:normal;
     line-height:42px;
@@ -422,7 +423,7 @@ a.bx-disk-create-file-big-icon:hover{
     /*border: 1px solid #d5dade;*/
 }
 a.bx-disk-create-file-icon{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:12px;
     line-height:24px;
     display:inline-block;
@@ -467,7 +468,7 @@ a.bx-disk-create-file-big-pres{
 }
 .bx-disk-popup-upload-title{
     font-size:12px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     margin-bottom:15px;
     text-align:left;
     color:#abaeaf;
@@ -495,10 +496,11 @@ a.bx-disk-create-file-big-pres{
     height:28px;
     padding:0 1px;
     background-color:#d9dde1;
+	border-radius: var(--ui-border-radius-2xs);
 }
 .bx-disk-popup-upload-file-progress-filename{
     font-size:12px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:28px;
     position:absolute;
     z-index:110;
@@ -525,6 +527,7 @@ a.bx-disk-create-file-big-pres{
     bottom:0;
     left:0;
     background:#90d4ef;
+	border-radius: var(--ui-border-radius-2xs);
 }
 .bx-disk-popup-upload-file-progress-line-end{
     position:absolute;
@@ -534,6 +537,7 @@ a.bx-disk-create-file-big-pres{
     left:0;
     width:100%;
     background:#bbed21;
+	border-radius: var(--ui-border-radius-2xs);
 }
 .bx-disk-popup-upload-file-progress-line-cancel{
     font-size:11px;
@@ -590,7 +594,7 @@ a.bx-disk-create-file-big-pres{
     vertical-align:middle;
     opacity:.7;
     border:1px solid #c4cace;
-    border-radius:2px;
+    border-radius: var(--ui-btn-radius, 2px);
     background:url(/bitrix/images/disk/sprite.png?2234) no-repeat -13.5px -795px;
 }
 .bx-disk-popup-upload-file-progress-btn-cencel:hover{
@@ -619,7 +623,7 @@ a.bx-disk-create-file-big-pres{
     vertical-align:middle;
     opacity:.7;
     border:1px solid #c4cace;
-    border-radius:2px;
+    border-radius: var(--ui-btn-radius, 2px);
     background:url(/bitrix/images/disk/sprite.png?2234) no-repeat -12.5px -732px;
 }
 .bx-disk-popup-upload-file-progress-btn-decencel:hover{
@@ -648,7 +652,7 @@ a.bx-disk-create-file-big-pres{
     vertical-align:middle;
     opacity:.7;
     border:1px solid #c4cace;
-    border-radius:2px;
+    border-radius: var(--ui-btn-radius, 2px);
     background:url(/bitrix/images/disk/sprite.png?2234) no-repeat -13.5px -763px;
 }
 .bx-disk-popup-upload-file-progress-btn-end:hover{
@@ -679,7 +683,7 @@ a.bx-disk-create-file-big-pres{
     vertical-align:middle;
     opacity:.7;
     border:1px solid #c4cace;
-    border-radius:2px;
+    border-radius: var(--ui-btn-radius, 2px);
     background:url(/bitrix/images/disk/sprite.png?2234) no-repeat -13px -830px;;
 }
 .bx-disk-popup-upload-file-progress-btn-error:hover{
@@ -745,7 +749,7 @@ a.bx-disk-create-file-big-pres{
 }
 .bx-disk-context-popup-v2-ul-li a{
     font-size:12px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:18px;
     display:block;
     padding:9px 22px;
@@ -929,7 +933,7 @@ table.bx-disk-popup-share-password td{
 }
 .bx-disk-context-popup-fileinfo-people li a{
     font-size:15px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:33px;
     display:block;
     padding:8px 15px;
@@ -986,7 +990,7 @@ table.bx-disk-popup-shared-people-list thead td{
 
 .bx-disk-filepage-used-people-link{
     font-size:15px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:33px;
     display:inline-block;
     padding:8px 0;
@@ -1007,12 +1011,12 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 
 .bx-disk-filepage-used-people-permission-read-only{
     font-size:13px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     text-decoration:none;
 }
 .bx-disk-filepage-used-people-permission{
     font-size:13px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     text-decoration:none;
     color:#0b65c3;
     border-bottom:1px solid #0b65c3;
@@ -1095,7 +1099,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
     text-align:right;
 }
 .bx-disk-popup-shared-permision-list-col2{
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     width:70%;
 }
 .bx-disk-popup-shared-permision-list-col2 span{
@@ -1126,7 +1130,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 .feed-add-post-destination-wrap,
 .feed-add-post-tags-wrap {
     border: 1px solid #e4e4e4;
-    border-radius: 1px;
+    border-radius: var(--ui-border-radius-2xs, 1px);
     overflow: hidden;
     padding: 7px 7px 1px;
     min-height: 36px !important;
@@ -1137,10 +1141,10 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .feed-add-post-destination {
-    border-radius: 1px;
+    border-radius: var(--ui-border-radius-3xs, 1px);
     font-size: 13px;
     display: inline-block;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
     margin: 0 6px 6px 0;
     height: 30px;
     line-height: 29px;
@@ -1257,7 +1261,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
     color: #555;
     display: inline-block;
     font-size: 12px;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     margin: 0 7px 7px 0;
     height: 30px;
     min-width: 108px;
@@ -1272,7 +1276,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
     color: #2067b0;
     cursor: pointer;
     display: inline-block;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
     font-size: 13px;
     margin: 7px 7px 7px 18px;
     line-height: 17px;
@@ -1342,7 +1346,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	margin: 0 5px;
 	padding: 0 15px 15px 15px;
 	min-width: 225px;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	background-color: #fff;
 	vertical-align: top;
 	box-shadow: 0 0 0 1px transparent;
@@ -1371,7 +1375,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	color: #888b90;
 	display: block;
 	font-size: 22px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 41px;
 	line-height: 38px;
 	padding-left: 63px;
@@ -1475,9 +1479,9 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .bx-disk-btn {
-	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size:12px;
-	font-weight:bold;
 	display:inline-block;
 	/*margin-bottom:10px;*/
 	padding:0 15px;
@@ -1494,7 +1498,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	color:#535b69;
 	border:none;
     position: relative;
-	border-radius:2px;
+	border-radius: var(--ui-btn-radius, 2px);
 }
 
 .bx-disk-table-sidebar-cell .bx-disk-btn,
@@ -1578,7 +1582,8 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	/*font-size: 0px;*/
 }
 .bx-disk-btn.clock:before{
-	font-family:'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size:10px;
 	line-height:10px;
 	position:absolute;
@@ -2252,19 +2257,20 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 
 .disk-locked-document-popup-content-title
 .disk-locked-document-popup-desktop-content-title {
-	font: bold 15px "Open Sans", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #000;
 }
 
 .disk-locked-document-popup-content-text,
 .disk-locked-document-popup-desktop-content-text {
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 }
 
 .disk-locked-document-popup-content-link,
 .disk-locked-document-popup-desktop-content-link {
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-decoration: underline;
 }
 
@@ -2277,7 +2283,8 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	max-width: 115px;
     line-height: 26px;
 	margin: 25px auto 10px auto !important;
-	font: bold 12px "Open Sans", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #535c69;
 }
 
@@ -2303,11 +2310,12 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .disk-locked-document-popup-desktop-content-title {
-    font: bold 15px "Open Sans", "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .disk-locked-document-popup-desktop-content-info {
-    font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .disk-locked-document-popup-desktop-content-button {
@@ -2576,7 +2584,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	display: block;
 	overflow: hidden;
 	line-height: 42px;
-	font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	color: #5C646C;
 	padding-left: 19px;
@@ -2694,7 +2702,8 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 .disk-body-overlay-container-text {
 	color: #bfc3c8;
 	font-size: 28px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .ui-viewer-unsupported-text.disk-viewer-office365-text a,
@@ -2778,7 +2787,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 	flex-shrink: 1;
 	margin-right: 15px;
 	max-width: 100%;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -2786,7 +2795,7 @@ table.bx-disk-popup-shared-people-list .bx-disk-filepage-used-people-link:hover{
 }
 
 .disk-viewer-balloon-text span {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .disk-viewer-balloon-text span:first-child {

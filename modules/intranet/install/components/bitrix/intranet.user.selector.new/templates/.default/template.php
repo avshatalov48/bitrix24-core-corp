@@ -1,7 +1,14 @@
-<?
+<?php
 if(!Defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
+/** @global CMain $APPLICATION */
+/** @var array $arParams */
+/** @var array $arResult */
+
 $APPLICATION->AddHeadScript('/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js');
+
+$namePrefix = CUtil::jsEscape($arResult['NAME']);
+$selectorName = 'O_' . $namePrefix;
 
 $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 	http_build_query(
@@ -16,6 +23,7 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 			'nt'                  => $arParams["NAME_TEMPLATE"],
 			'sl'                  => $arParams["SHOW_LOGIN"],
 			'SHOW_USERS'          => ($arParams['SHOW_STRUCTURE_ONLY'] == 'Y' ? 'N' : 'Y'),
+			'SHOW_USER_PROFILE_URL' => $arParams['SHOW_USER_PROFILE_URL'],
 		)
 	);
 ?>
@@ -26,41 +34,74 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 	});
 	IntranetUsers.lastUsers = <?=CUtil::PhpToJSObject($arResult["LAST_USERS_IDS"]); ?>;
 
-	window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'] = new IntranetUsers('<?=CUtil::jsEscape($arResult['NAME']) ?>', <?=($arParams["MULTIPLE"] == "Y" ? "true" : "false"); ?>, <?=($arParams["SUBORDINATE_ONLY"] == "Y" ? "true" : "false"); ?>);
-	window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].ajaxUrl = '<?=$ajaxUrl; ?>';
-	window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].arFixed = <?=CUtil::PhpToJSObject($arResult['FIXED_USERS']); ?>;
+	window['<?= $selectorName; ?>'] = new IntranetUsers('<?= $namePrefix; ?>', <?=($arParams["MULTIPLE"] == "Y" ? "true" : "false"); ?>, <?=($arParams["SUBORDINATE_ONLY"] == "Y" ? "true" : "false"); ?>);
+	window['<?= $selectorName; ?>'].ajaxUrl = '<?=$ajaxUrl; ?>';
+	window['<?= $selectorName; ?>'].arFixed = <?=CUtil::PhpToJSObject($arResult['FIXED_USERS']); ?>;
 
-	<?php foreach($arResult["CURRENT_USERS"] as $user):?>
-		window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].arSelected[<?php echo $user["ID"]?>] = {id : <?php echo CUtil::JSEscape($user["ID"])?>, name : "<?php echo CUtil::JSEscape($user["~NAME"])?>", sub : <?php echo $user["SUBORDINATE"] == "Y" ? "true" : "false"?>, sup : <?php echo $user["SUPERORDINATE"] == "Y" ? "true" : "false"?>, position : "<?php echo CUtil::JSEscape($user["~WORK_POSITION"])?>", photo : "<?php echo CUtil::JSEscape($user["PHOTO"])?>"};
-		IntranetUsers.arEmployeesData[<?php echo $user["ID"]?>] = {id : <?php echo CUtil::JSEscape($user["ID"])?>, name : "<?php echo CUtil::JSEscape($user["~NAME"])?>", sub : <?php echo $user["SUBORDINATE"] == "Y" ? "true" : "false"?>, sup : <?php echo $user["SUPERORDINATE"] == "Y" ? "true" : "false"?>, position : "<?php echo CUtil::JSEscape($user["~WORK_POSITION"])?>", photo : "<?php echo CUtil::JSEscape($user["PHOTO"])?>"};
-	<?php endforeach?>
+	<?php
+	foreach($arResult["CURRENT_USERS"] as $user):
+		$userData = CUtil::PhpToJSObject(
+			array(
+				'id' => $user["ID"],
+				'name' => $user["~NAME"],
+				'sub' => $user["SUBORDINATE"] === "Y",
+				'sup' => $user["SUPERORDINATE"] === "Y",
+				'position' => $user["~WORK_POSITION"],
+				'photo' => $user["PHOTO"],
+				'url' => $user['~USER_PROFILE_URL'],
+			),
+			false,
+			false,
+			true
+		);
+	?>
+		window['<?= $selectorName; ?>'].arSelected[<?php echo $user["ID"]?>] = <?= $userData; ?>;
+		IntranetUsers.arEmployeesData[<?php echo $user["ID"]?>] = <?= $userData; ?>;
+	<?php
+	endforeach;
 
-	<?php foreach($arResult["LAST_USERS"] as $user):?>
-		IntranetUsers.arEmployeesData[<?php echo $user["ID"]?>] = {id : <?php echo CUtil::JSEscape($user["ID"])?>, name : "<?php echo CUtil::JSEscape($user["~NAME"])?>", sub : <?php echo $user["SUBORDINATE"] == "Y" ? "true" : "false"?>, sup : <?php echo $user["SUPERORDINATE"] == "Y" ? "true" : "false"?>, position : "<?php echo CUtil::JSEscape($user["~WORK_POSITION"])?>", photo : "<?php echo CUtil::JSEscape($user["PHOTO"])?>"};
-	<?php endforeach?>
-
+	foreach($arResult["LAST_USERS"] as $user):
+		$userData = CUtil::PhpToJSObject(
+			array(
+				'id' => $user["ID"],
+				'name' => $user["~NAME"],
+				'sub' => $user["SUBORDINATE"] === "Y",
+				'sup' => $user["SUPERORDINATE"] === "Y",
+				'position' => $user["~WORK_POSITION"],
+				'photo' => $user["PHOTO"],
+				'url' => $user['~USER_PROFILE_URL'],
+			),
+			false,
+			false,
+			true
+		);
+	?>
+		IntranetUsers.arEmployeesData[<?php echo $user["ID"]?>] = <?= $userData; ?>;
+	<?php
+	endforeach;
+	?>
 	BX.ready(function() {
 		<?php if ($arParams["FORM_NAME"] <> '' && $arParams["INPUT_NAME"] <> ''):?>
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput = document.forms["<?php echo CUtil::JSEscape($arParams["FORM_NAME"])?>"].element["<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>"];
+			window['<?= $selectorName; ?>'].searchInput = document.forms["<?php echo CUtil::JSEscape($arParams["FORM_NAME"])?>"].element["<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>"];
 		<?php elseif($arParams["INPUT_NAME"] <> ''):?>
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput = BX("<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>");
+			window['<?= $selectorName; ?>'].searchInput = BX("<?php echo CUtil::JSEscape($arParams["INPUT_NAME"])?>");
 		<?php else:?>
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput = BX('<?=CUtil::jsEscape($arResult['NAME']) ?>_user_input');
+			window['<?= $selectorName; ?>'].searchInput = BX('<?= $namePrefix; ?>_user_input');
 		<?php endif?>
 
 		<?php if ($arParams["ON_CHANGE"] <> ''):?>
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onChange = <?php echo CUtil::JSEscape($arParams["ON_CHANGE"])?>;
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onChange(window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].arSelected);
+			window['<?= $selectorName; ?>'].onChange = <?php echo CUtil::JSEscape($arParams["ON_CHANGE"])?>;
+			window['<?= $selectorName; ?>'].onChange(window['<?= $selectorName; ?>'].arSelected);
 		<?php endif?>
 
 		<?php if ($arParams["ON_SELECT"] <> ''):?>
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onSelect= <?php echo CUtil::JSEscape($arParams["ON_SELECT"])?>;
+			window['<?= $selectorName; ?>'].onSelect= <?php echo CUtil::JSEscape($arParams["ON_SELECT"])?>;
 		<?php elseif ($arParams["ON_SECTION_SELECT"] <> ''):?>
-			window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].onSectionSelect= <?php echo CUtil::JSEscape($arParams["ON_SECTION_SELECT"])?>;
+			window['<?= $selectorName; ?>'].onSectionSelect= <?php echo CUtil::JSEscape($arParams["ON_SECTION_SELECT"])?>;
 		<?php endif?>
 
-		BX.bind(window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput, "keyup", BX.proxy(window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].search, window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>']));
-		BX.bind(window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput, "focus", BX.proxy(window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>']._onFocus, window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>']));
+		BX.bind(window['<?= $selectorName; ?>'].searchInput, "keyup", BX.proxy(window['<?= $selectorName; ?>'].search, window['<?= $selectorName; ?>']));
+		BX.bind(window['<?= $selectorName; ?>'].searchInput, "focus", BX.proxy(window['<?= $selectorName; ?>']._onFocus, window['<?= $selectorName; ?>']));
 	});
 </script>
 
@@ -73,26 +114,26 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 				<?php endif?>
 				<?php if($arParams["DISPLAY_TABS"] == 'Y'): ?>
 					<div class="finder-box-tabs">
-						<span class="finder-box-tab finder-box-tab-selected" id="<?php echo $arResult["NAME"]?>_tab_last" onclick="window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].displayTab('last');">
+						<span class="finder-box-tab finder-box-tab-selected" id="<?php echo $arResult["NAME"]?>_tab_last" onclick="window['<?= $selectorName; ?>'].displayTab('last');">
 							<span class="finder-box-tab-left"></span>
 							<span class="finder-box-tab-text"><?php echo GetMessage("INTRANET_LAST_SELECTED")?></span>
 							<span class="finder-box-tab-right"></span>
 						</span>
 						<?php if($arParams["DISPLAY_TAB_STRUCTURE"] == 'Y'): ?>
-						<span class="finder-box-tab" id="<?php echo $arResult["NAME"]?>_tab_structure" onclick="window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].displayTab('structure');">
+						<span class="finder-box-tab" id="<?php echo $arResult["NAME"]?>_tab_structure" onclick="window['<?= $selectorName; ?>'].displayTab('structure');">
 							<span class="finder-box-tab-left"></span>
 							<span class="finder-box-tab-text"><?php echo GetMessage("INTRANET_TAB_USER_STRUCTURE")?></span>
 							<span class="finder-box-tab-right"></span>
 						</span>
 						<?php endif; ?>
 						<?php if($arParams["DISPLAY_TAB_GROUP"] == 'Y'): ?>
-						<span class="finder-box-tab" id="<?php echo $arResult["NAME"]?>_tab_groups" onclick="window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].displayTab('groups');">
+						<span class="finder-box-tab" id="<?php echo $arResult["NAME"]?>_tab_groups" onclick="window['<?= $selectorName; ?>'].displayTab('groups');">
 							<span class="finder-box-tab-left"></span>
 							<span class="finder-box-tab-text"><?php echo GetMessage('INTRANET_TAB_USER_GROUPS'); ?></span>
 							<span class="finder-box-tab-right"></span>
 						</span>
 						<?php endif; ?>
-						<span class="finder-box-tab" id="<?php echo $arResult["NAME"]?>_tab_search" onclick="window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].displayTab('search'), window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].searchInput.focus();">
+						<span class="finder-box-tab" id="<?php echo $arResult["NAME"]?>_tab_search" onclick="window['<?= $selectorName; ?>'].displayTab('search'), window['<?= $selectorName; ?>'].searchInput.focus();">
 							<span class="finder-box-tab-left"></span>
 							<span class="finder-box-tab-text"><?php echo GetMessage("INTRANET_USER_SEARCH")?></span>
 							<span class="finder-box-tab-right"></span>
@@ -109,7 +150,7 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 									<td>
 										<?php $i = 0;?>
 										<?php foreach($arResult["LAST_USERS"] as $key=>$user):?>
-											<div class="finder-box-item<?php echo (in_array($user["ID"], $arParams["VALUE"]) ? " finder-box-item-selected" : "")?>" id="<?php echo $arResult["NAME"]?>_last_employee_<?php echo $user["ID"]?>" onclick="window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].select(event)">
+											<div class="finder-box-item<?php echo (in_array($user["ID"], $arParams["VALUE"]) ? " finder-box-item-selected" : "")?>" id="<?php echo $arResult["NAME"]?>_last_employee_<?php echo $user["ID"]?>" onclick="window['<?= $selectorName; ?>'].select(event)">
 												<?php if ($arParams["MULTIPLE"] == "Y"):?>
 													<input type="checkbox" name="<?php echo $arResult["NAME"]?>[]" value="<?php echo $user["ID"]?>"<?php echo (in_array($user["ID"], $arParams["VALUE"]) ? " checked" : "")?> class="intranet-hidden-input" />
 												<?php else:?>
@@ -158,16 +199,21 @@ $ajaxUrl = $this->__component->GetPath() . '/ajax.php?' .
 			<td class="finder-box-right-column" id="<?=$arResult["NAME"]; ?>_selected_users">
 				<div class="finder-box-selected-title"><?=GetMessage("INTRANET_EMP_CURRENT_COUNT"); ?> (<span id="<?=$arResult["NAME"]; ?>_current_count"><?=sizeof($arResult["CURRENT_USERS"]); ?></span>)</div>
 				<div class="finder-box-selected-items">
-					<? foreach($arResult["CURRENT_USERS"] as $user) { ?>
+					<?php
+					foreach($arResult["CURRENT_USERS"] as $user) { ?>
 						<div
 							class="finder-box-selected-item"
 							id="<?=$arResult["NAME"]; ?>_employee_selected_<?=$user["ID"]; ?>"><div
 								class="finder-box-selected-item-icon"
 								id="<?=$arResult['NAME']; ?>-user-selector-unselect-<?=$user["ID"]; ?>"
-								onclick="window['O_<?=CUtil::jsEscape($arResult['NAME']) ?>'].unselect(<?=$user["ID"]; ?>, this);"
-								<? if (in_array($user['ID'], $arResult['FIXED_USERS'])) { ?>style="visibility: hidden; "<? } ?>></div><span
-									class="finder-box-selected-item-text"><?=$user["NAME"]; ?></span></div>
-					<? } ?>
+								onclick="window['<?= $selectorName; ?>'].unselect(<?=$user["ID"]; ?>, this);"
+								<?php
+								if (in_array($user['ID'], $arResult['FIXED_USERS']))
+								{
+									?>style="visibility: hidden; "<?php
+								} ?>></div><span class="finder-box-selected-item-text"><?=$user["NAME"]; ?></span></div>
+					<?php
+					} ?>
 				</div>
 			</td>
 			<?php endif?>

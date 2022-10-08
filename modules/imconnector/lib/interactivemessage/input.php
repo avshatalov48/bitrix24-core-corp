@@ -28,16 +28,23 @@ use Bitrix\ImConnector\Connector;
  */
 class Input
 {
+	public const
+		COMMAND_SESSION = 'session',
+		COMMAND_SESSION_CLOSE = 'sessionClose',
+		COMMAND_SESSION_CONTINUE = 'sessionContinue',
+		COMMAND_SESSION_NEW = 'sessionNew';
+
 	protected $message;
 	protected $isProcessing = false;
 	protected $idConnector = '';
+
 	public const URL_ACTIVITY = '/crm/activity/?open_view=#activity_id#';
 
 	/**
 	 * @param string $idConnector
-	 * @return Input
+	 * @return self
 	 */
-	public static function init($idConnector = ''): Input
+	public static function init($idConnector = ''): self
 	{
 		$class = __CLASS__;
 
@@ -271,16 +278,22 @@ class Input
 			));
 		}
 
-		$configTask = [];
-
 		if (
 			!empty($params['COMMAND'])
+			&&
+			(
+				$params['COMMAND'] === self::COMMAND_SESSION_NEW
+				|| $params['COMMAND'] === self::COMMAND_SESSION_CLOSE
+				|| $params['COMMAND'] === self::COMMAND_SESSION_CONTINUE
+			)
 			&& !empty($params['CHAT_ID'])
 			&& !empty($params['SESSION_ID'])
 			&& !empty($params['TASK_ID'])
 			&& !empty($params['CONFIG_TASK_ID'])
 		)
 		{
+			$configTask = [];
+
 			$querySession = ImConnector\Data\Session::getInstance()->query();
 			$rawSession = $querySession
 				->setSelect([
@@ -361,7 +374,7 @@ class Input
 			{
 				switch ($params['COMMAND'])
 				{
-					case 'sessionClose':
+					case self::COMMAND_SESSION_CLOSE:
 						$resultCommand = $this->sessionClose(
 							$params['CHAT_ID'],
 							$sessionData['USER_ID'],
@@ -369,7 +382,7 @@ class Input
 						);
 						break;
 
-					case 'sessionContinue':
+					case self::COMMAND_SESSION_CONTINUE:
 						$resultCommand = $this->sessionContinue(
 							$params['CHAT_ID'],
 							$sessionData['USER_ID'],
@@ -377,7 +390,7 @@ class Input
 						);
 						break;
 
-					case 'sessionNew':
+					case self::COMMAND_SESSION_NEW:
 						$resultCommand = $this->sessionNew(
 							$params['CHAT_ID'],
 							$sessionData['USER_ID'],

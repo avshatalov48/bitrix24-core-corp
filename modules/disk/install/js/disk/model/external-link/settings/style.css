@@ -65,10 +65,10 @@
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	box-sizing: border-box;
 }
 
@@ -121,6 +121,8 @@
 
 .disk-external-link-setting-popup-input-password {
 	border-right: none;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 }
 
 .disk-external-link-setting-popup-password-show {
@@ -129,7 +131,9 @@
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2217%22%20height%3D%229%22%20viewBox%3D%220%200%2017%209%22%3E%0A%20%20%3Cpath%20fill%3D%22%23535C6A%22%20fill-rule%3D%22evenodd%22%20d%3D%22M8.333%2C0%20C3.3875%2C0%200.1355%2C3.6645%200%2C3.82%20L1.406%2C5.049%20C1.434%2C5.0175%204.2545%2C1.8675%208.333%2C1.8675%20C12.4115%2C1.8675%2015.232%2C5.0175%2015.259%2C5.0475%20L16.666%2C3.82%20C16.5305%2C3.6645%2013.2785%2C0%208.333%2C0%20M8.208%2C3.934%20C6.827%2C3.934%205.708%2C5.053%205.708%2C6.434%20C5.708%2C7.8145%206.827%2C8.934%208.208%2C8.934%20C9.589%2C8.934%2010.708%2C7.8145%2010.708%2C6.434%20C10.708%2C5.053%209.589%2C3.934%208.208%2C3.934%22/%3E%0A%3C/svg%3E%0A') center center no-repeat;
 	border: 1px solid #c6cdd3;
 	border-left: none;
-	border-radius: 0 2px 2px 0;
+	border-radius: var(--ui-field-border-radius, 2px);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 	transition: .1s;
 	cursor: pointer;
 }

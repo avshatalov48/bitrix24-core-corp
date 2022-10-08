@@ -156,7 +156,7 @@
 	        } else {
 	          BX.rest.AppLayout.openApplication(applicationId);
 	        }
-	      }.bind(this)).catch(function (response) {
+	      }.bind(this))["catch"](function (response) {
 	        this.restAppErrorPopup(" ", response.errors.pop().message);
 	      }.bind(this));
 	    },

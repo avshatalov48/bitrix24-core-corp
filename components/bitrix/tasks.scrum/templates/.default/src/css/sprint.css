@@ -19,7 +19,7 @@
 
 .tasks-scrum__sprints::-webkit-scrollbar-thumb {
 	background: var(--tasks_scrum-white_alpha_52);
-	border-radius: 5px;
+	border-radius: var(--ui-border-radius-xs, 5px);
 	cursor: pointer;
 	transition: .2s;
 }
@@ -29,7 +29,8 @@
 }
 
 .tasks-scrum__content--event-params {
-	font: 12px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum-white_alpha_70);
 	width: 100%;
 }
@@ -91,7 +92,8 @@
 .tasks-scrum__sprint--date-container {
 	width: 100%;
 	display: flex;
-	font: 13px/16px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-left: -2px;
 	min-width: 75px;
 	transition: .2s;
@@ -134,7 +136,7 @@
 .tasks-scrum__sprint--icon-burn-down-chart.ui-btn.ui-btn-xs.ui-btn-light.ui-btn-round.ui-btn {
 	width: 25px;
 	height: 25px;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	background: var(--tasks_scrum-white_alpha_10);
 }
 
@@ -167,7 +169,7 @@
 	display: flex;
 	padding: 5px 13px 6px 13px;
 	background: var(--tasks_scrum-black_alpha_10);
-	border-radius: 36px;
+	border-radius: var(--ui-border-radius-pill, 36px);
 	margin: 1px 8px 0 7px;
 	min-width: 113px;
 }
@@ -185,7 +187,8 @@
 }
 
 .tasks-scrum__sprint--subtitle {
-	font: 13px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	min-width: 17px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -196,9 +199,10 @@
 }
 
 .tasks-scrum__sprint--point {
-	font: 12px/13px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 12px/13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	background: var(--tasks_scrum-white_alpha_10);
-	border-radius: 36px;
+	border-radius: var(--ui-border-radius-pill, 36px);
 	padding: 0 4px;
 	min-width: 28px;
 	min-height: 15px;
@@ -235,7 +239,7 @@
 	width: 25px;
 	height: 25px;
 	background-color: var(--tasks_scrum-white);
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	cursor: pointer;
 	flex-shrink: 0;
 }
@@ -307,12 +311,13 @@
 .tasks-scrum__sprints--new-sprint {
 	box-sizing: border-box;
 	padding: 18px 20px;
-	font: 20px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum-white);
 	text-align: center;
 	background: var(--tasks_scrum-white_alpha_22);
 	border: 2px dashed var(--tasks_scrum-white_alpha_60);
-	border-radius: 4px;
+	border-radius: var(--ui-border-radius-xs, 4px);
 	cursor: pointer;
 	transition: .2s;
 }
@@ -374,7 +379,8 @@
 .tasks-scrum__title-editing-input:active,
 .tasks-scrum__title-editing-input:hover,
 .tasks-scrum__title-editing-input {
-	font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum-white);
 	text-overflow: ellipsis;
 	white-space: nowrap;

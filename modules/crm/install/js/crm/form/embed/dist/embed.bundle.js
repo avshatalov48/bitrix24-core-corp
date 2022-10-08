@@ -1408,378 +1408,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	const isElement = target => target instanceof Node;
-	const isElementList = nodeList => nodeList instanceof NodeList;
-	const eachNode = (nodeList, callback) => {
-	  if (nodeList && callback) {
-	    nodeList = isElementList(nodeList) ? nodeList : [nodeList];
-
-	    for (let i = 0; i < nodeList.length; i++) {
-	      if (callback(nodeList[i], i, nodeList.length) === true) {
-	        break;
-	      }
-	    }
-	  }
-	};
-	const arrayAsSelector = array => {
-	  if (Array.isArray(array)) {
-	    const selector = array.join(', ');
-	    return selector;
-	  }
-	};
-	const nodeListAsArray = nodeList => {
-	  const nodes = [];
-	  eachNode(nodeList, node => nodes.push(node));
-	  return nodes;
-	};
-	const findParentBySelector = ($el, selector, self = true, $root = document) => {
-	  if (self && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) !== -1) {
-	    return $el;
-	  }
-
-	  while (($el = $el.parentElement) && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) === -1);
-
-	  return $el;
-	};
-	const elementHasSelector = ($el, selector, $root = document) => {
-	  const has = nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) !== -1;
-	  return has;
-	};
-	const elementHasOverflowHidden = $el => {
-	  if ($el) {
-	    const computedStyle = getComputedStyle($el);
-	    const overflowIsHidden = computedStyle.overflow === 'hidden';
-	    return overflowIsHidden;
-	  }
-	};
-	const elementScrollTopOnStart = $el => {
-	  if ($el) {
-	    if (elementHasOverflowHidden($el)) {
-	      return true;
-	    }
-
-	    const scrollTop = $el.scrollTop;
-	    return scrollTop <= 0;
-	  }
-	};
-	const elementScrollTopOnEnd = $el => {
-	  if ($el) {
-	    if (elementHasOverflowHidden($el)) {
-	      return true;
-	    }
-
-	    const scrollTop = $el.scrollTop;
-	    const scrollHeight = $el.scrollHeight;
-	    const scrollTopWithHeight = scrollTop + $el.offsetHeight;
-	    return scrollTopWithHeight >= scrollHeight;
-	  }
-	};
-	const elementScrollLeftOnStart = $el => {
-	  if ($el) {
-	    if (elementHasOverflowHidden($el)) {
-	      return true;
-	    }
-
-	    const scrollLeft = $el.scrollLeft;
-	    return scrollLeft <= 0;
-	  }
-	};
-	const elementScrollLeftOnEnd = $el => {
-	  if ($el) {
-	    if (elementHasOverflowHidden($el)) {
-	      return true;
-	    }
-
-	    const scrollLeft = $el.scrollLeft;
-	    const scrollWidth = $el.scrollWidth;
-	    const scrollLeftWithWidth = scrollLeft + $el.offsetWidth;
-	    return scrollLeftWithWidth >= scrollWidth;
-	  }
-	};
-	const elementIsScrollableField = $el => {
-	  const selector = 'textarea, [contenteditable="true"]';
-	  return elementHasSelector($el, selector);
-	};
-	const elementIsInputRange = $el => {
-	  const selector = 'input[type="range"]';
-	  return elementHasSelector($el, selector);
-	};
-
-	const FILL_GAP_AVAILABLE_METHODS = ['padding', 'margin', 'width', 'max-width', 'none'];
-	const TOUCH_DIRECTION_DETECT_OFFSET = 3;
-	const state = {
-	  scroll: true,
-	  queue: 0,
-	  scrollableSelectors: ['[data-scroll-lock-scrollable]'],
-	  lockableSelectors: ['body', '[data-scroll-lock-lockable]'],
-	  fillGapSelectors: ['body', '[data-scroll-lock-fill-gap]', '[data-scroll-lock-lockable]'],
-	  fillGapMethod: FILL_GAP_AVAILABLE_METHODS[0],
-	  //
-	  startTouchY: 0,
-	  startTouchX: 0
-	};
-	const getScrollState = () => {
-	  return state.scroll;
-	};
-	const getTargetScrollBarWidth = ($target, onlyExists = false) => {
-	  if (isElement($target)) {
-	    const currentOverflowYProperty = $target.style.overflowY;
-
-	    if (onlyExists) {
-	      if (!getScrollState()) {
-	        $target.style.overflowY = $target.dataset.scrollLockSavedOverflowYProperty;
-	      }
-	    } else {
-	      $target.style.overflowY = 'scroll';
-	    }
-
-	    const width = getCurrentTargetScrollBarWidth($target);
-	    $target.style.overflowY = currentOverflowYProperty;
-	    return width;
-	  } else {
-	    return 0;
-	  }
-	};
-	const getCurrentTargetScrollBarWidth = $target => {
-	  if (isElement($target)) {
-	    if ($target === document.body) {
-	      const documentWidth = document.documentElement.clientWidth;
-	      const windowWidth = window.innerWidth;
-	      const currentWidth = windowWidth - documentWidth;
-	      return currentWidth;
-	    } else {
-	      const borderLeftWidthCurrentProperty = $target.style.borderLeftWidth;
-	      const borderRightWidthCurrentProperty = $target.style.borderRightWidth;
-	      $target.style.borderLeftWidth = '0px';
-	      $target.style.borderRightWidth = '0px';
-	      const currentWidth = $target.offsetWidth - $target.clientWidth;
-	      $target.style.borderLeftWidth = borderLeftWidthCurrentProperty;
-	      $target.style.borderRightWidth = borderRightWidthCurrentProperty;
-	      return currentWidth;
-	    }
-	  } else {
-	    return 0;
-	  }
-	};
-	const refillGaps = () => {
-	  if (!state.scroll) {
-	    fillGaps();
-	  }
-	};
-
-	const fillGaps = () => {
-	  state.fillGapSelectors.map(selector => {
-	    fillGapSelector(selector);
-	  });
-	};
-
-	const fillGapSelector = selector => {
-	  const $targets = document.querySelectorAll(selector);
-	  const isLockable = state.lockableSelectors.indexOf(selector) !== -1;
-	  eachNode($targets, $target => {
-	    fillGapTarget($target, isLockable);
-	  });
-	};
-
-	const fillGapTarget = ($target, isLockable = false) => {
-	  if (isElement($target)) {
-	    let scrollBarWidth;
-
-	    if ($target.dataset.scrollLockLockable === '' || isLockable) {
-	      scrollBarWidth = getTargetScrollBarWidth($target, true);
-	    } else {
-	      const $lockableParent = findParentBySelector($target, arrayAsSelector(state.lockableSelectors));
-	      scrollBarWidth = getTargetScrollBarWidth($lockableParent, true);
-	    }
-
-	    if ($target.dataset.scrollLockFilledGap === 'true') {
-	      unfillGapTarget($target);
-	    }
-
-	    const computedStyle = window.getComputedStyle($target);
-	    $target.dataset.scrollLockFilledGap = 'true';
-	    $target.dataset.scrollLockCurrentFillGapMethod = state.fillGapMethod;
-
-	    if (state.fillGapMethod === 'margin') {
-	      const currentMargin = parseFloat(computedStyle.marginRight);
-	      $target.style.marginRight = `${currentMargin + scrollBarWidth}px`;
-	    } else if (state.fillGapMethod === 'width') {
-	      $target.style.width = `calc(100% - ${scrollBarWidth}px)`;
-	    } else if (state.fillGapMethod === 'max-width') {
-	      $target.style.maxWidth = `calc(100% - ${scrollBarWidth}px)`;
-	    } else if (state.fillGapMethod === 'padding') {
-	      const currentPadding = parseFloat(computedStyle.paddingRight);
-	      $target.style.paddingRight = `${currentPadding + scrollBarWidth}px`;
-	    }
-	  }
-	};
-
-	const unfillGapTarget = $target => {
-	  if (isElement($target)) {
-	    if ($target.dataset.scrollLockFilledGap === 'true') {
-	      const currentFillGapMethod = $target.dataset.scrollLockCurrentFillGapMethod;
-	      delete $target.dataset.scrollLockFilledGap;
-	      delete $target.dataset.scrollLockCurrentFillGapMethod;
-
-	      if (currentFillGapMethod === 'margin') {
-	        $target.style.marginRight = ``;
-	      } else if (currentFillGapMethod === 'width') {
-	        $target.style.width = ``;
-	      } else if (currentFillGapMethod === 'max-width') {
-	        $target.style.maxWidth = ``;
-	      } else if (currentFillGapMethod === 'padding') {
-	        $target.style.paddingRight = ``;
-	      }
-	    }
-	  }
-	};
-
-	const onResize = e => {
-	  refillGaps();
-	};
-
-	const onTouchStart = e => {
-	  if (!state.scroll) {
-	    state.startTouchY = e.touches[0].clientY;
-	    state.startTouchX = e.touches[0].clientX;
-	  }
-	};
-
-	const onTouchMove = e => {
-	  if (!state.scroll) {
-	    const {
-	      startTouchY,
-	      startTouchX
-	    } = state;
-	    const currentClientY = e.touches[0].clientY;
-	    const currentClientX = e.touches[0].clientX;
-
-	    if (e.touches.length < 2) {
-	      const selector = arrayAsSelector(state.scrollableSelectors);
-	      const direction = {
-	        up: startTouchY < currentClientY,
-	        down: startTouchY > currentClientY,
-	        left: startTouchX < currentClientX,
-	        right: startTouchX > currentClientX
-	      };
-	      const directionWithOffset = {
-	        up: startTouchY + TOUCH_DIRECTION_DETECT_OFFSET < currentClientY,
-	        down: startTouchY - TOUCH_DIRECTION_DETECT_OFFSET > currentClientY,
-	        left: startTouchX + TOUCH_DIRECTION_DETECT_OFFSET < currentClientX,
-	        right: startTouchX - TOUCH_DIRECTION_DETECT_OFFSET > currentClientX
-	      };
-
-	      const handle = ($el, skip = false) => {
-	        if ($el) {
-	          const parentScrollableEl = findParentBySelector($el, selector, false);
-
-	          if (elementIsInputRange($el)) {
-	            return false;
-	          }
-
-	          if (skip || elementIsScrollableField($el) && findParentBySelector($el, selector) || elementHasSelector($el, selector)) {
-	            let prevent = false;
-
-	            if (elementScrollLeftOnStart($el) && elementScrollLeftOnEnd($el)) {
-	              if (direction.up && elementScrollTopOnStart($el) || direction.down && elementScrollTopOnEnd($el)) {
-	                prevent = true;
-	              }
-	            } else if (elementScrollTopOnStart($el) && elementScrollTopOnEnd($el)) {
-	              if (direction.left && elementScrollLeftOnStart($el) || direction.right && elementScrollLeftOnEnd($el)) {
-	                prevent = true;
-	              }
-	            } else if (directionWithOffset.up && elementScrollTopOnStart($el) || directionWithOffset.down && elementScrollTopOnEnd($el) || directionWithOffset.left && elementScrollLeftOnStart($el) || directionWithOffset.right && elementScrollLeftOnEnd($el)) {
-	              prevent = true;
-	            }
-
-	            if (prevent) {
-	              if (parentScrollableEl) {
-	                handle(parentScrollableEl, true);
-	              } else {
-	                e.preventDefault();
-	              }
-	            }
-	          } else {
-	            handle(parentScrollableEl);
-	          }
-	        } else {
-	          e.preventDefault();
-	        }
-	      };
-
-	      handle(e.target);
-	    }
-	  }
-	};
-
-	const onTouchEnd = e => {
-	  if (!state.scroll) {
-	    state.startTouchY = 0;
-	    state.startTouchX = 0;
-	  }
-	};
-
-	if (typeof window !== 'undefined') {
-	  window.addEventListener('resize', onResize);
-	}
-
-	if (typeof document !== 'undefined') {
-	  document.addEventListener('touchstart', onTouchStart);
-	  document.addEventListener('touchmove', onTouchMove, {
-	    passive: false
-	  });
-	  document.addEventListener('touchend', onTouchEnd);
-	}
-
-	const Color = {
-	  parseHex(hex) {
-	    hex = this.fillHex(hex);
-	    let parts = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(hex);
-
-	    if (!parts) {
-	      parts = [0, 0, 0, 1];
-	    } else {
-	      parts = [parseInt(parts[1], 16), parseInt(parts[2], 16), parseInt(parts[3], 16), parseInt(100 * (parseInt(parts[4] || 'ff', 16) / 255)) / 100];
-	    }
-
-	    return parts;
-	  },
-
-	  hexToRgba(hex) {
-	    return 'rgba(' + this.parseHex(hex).join(', ') + ')';
-	  },
-
-	  toRgba(numbers) {
-	    return 'rgba(' + numbers.join(', ') + ')';
-	  },
-
-	  fillHex(hex, fillAlpha = false, alpha = null) {
-	    if (hex.length === 4 || fillAlpha && hex.length === 5) {
-	      hex = hex.replace(/([a-f0-9])/gi, "$1$1");
-	    }
-
-	    if (fillAlpha && hex.length === 7) {
-	      hex += 'ff';
-	    }
-
-	    if (alpha) {
-	      hex = hex.substr(0, 7) + (alpha.toLowerCase() + 'ff').substr(0, 2);
-	    }
-
-	    return hex;
-	  },
-
-	  isHexDark(hex) {
-	    hex = this.parseHex(hex);
-	    const r = hex[0];
-	    const g = hex[1];
-	    const b = hex[2];
-	    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-	    return brightness < 155;
-	  }
-
-	};
-
 	function isHexDark(hex) {
 	  return Color.isHexDark(hex);
 	}
@@ -1840,7 +1468,56 @@ this.BX.Crm = this.BX.Crm || {};
 	    } // {zones: ['pl'], id: 994, lang: 'pl', sec: 'qtxmku'},
 	    ]
 	  });
-	}
+	} // copy from crm.site.form
+
+	const Color = {
+	  parseHex(hex) {
+	    hex = this.fillHex(hex);
+	    let parts = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(hex);
+
+	    if (!parts) {
+	      parts = [0, 0, 0, 1];
+	    } else {
+	      parts = [parseInt(parts[1], 16), parseInt(parts[2], 16), parseInt(parts[3], 16), parseInt(100 * (parseInt(parts[4] || 'ff', 16) / 255)) / 100];
+	    }
+
+	    return parts;
+	  },
+
+	  hexToRgba(hex) {
+	    return 'rgba(' + this.parseHex(hex).join(', ') + ')';
+	  },
+
+	  toRgba(numbers) {
+	    return 'rgba(' + numbers.join(', ') + ')';
+	  },
+
+	  fillHex(hex, fillAlpha = false, alpha = null) {
+	    if (hex.length === 4 || fillAlpha && hex.length === 5) {
+	      hex = hex.replace(/([a-f0-9])/gi, "$1$1");
+	    }
+
+	    if (fillAlpha && hex.length === 7) {
+	      hex += 'ff';
+	    }
+
+	    if (alpha) {
+	      hex = hex.substr(0, 7) + (alpha.toLowerCase() + 'ff').substr(0, 2);
+	    }
+
+	    return hex;
+	  },
+
+	  isHexDark(hex) {
+	    hex = this.parseHex(hex);
+	    const r = hex[0];
+	    const g = hex[1];
+	    const b = hex[2];
+	    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+	    return brightness < 155;
+	  }
+
+	};
 
 	let _$4 = t => t,
 	    _t$4,
@@ -3885,13 +3562,6 @@ this.BX.Crm = this.BX.Crm || {};
 	          }
 	        },
 	        onLoad: event => {
-	          // const sliderContainer = event.getSlider().getContainer();
-	          // Dom.remove(sliderContainer.querySelector('.ui-sidepanel-layout-footer-anchor'));
-	          // sliderContainer.style.overflowX = 'auto';
-	          // sliderContainer.querySelector('.side-panel-content-container').style.overflowX = 'initial';
-	          // sliderContainer.querySelector('.side-panel-content-container').style.overflowY = 'auto';
-	          // sliderContainer.querySelector('.side-panel-content-container').style.minWidth = '800px';
-	          // sliderContainer.querySelector('.ui-sidepanel-layout-footer').style.position = 'sticky';
 	          // BX.UI.Switcher.initByClassName();
 	          babelHelpers.classPrivateFieldLooseBase(instance, _loadTab)[_loadTab](options.activeMenuItemId);
 	        }

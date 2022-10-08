@@ -8,6 +8,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Timeman\Service\DependencyManager;
+use COption;
 
 class TimemanSection
 {
@@ -29,13 +30,32 @@ class TimemanSection
 	{
 		$available = static::isBitrix24() || \CBXFeatures::isFeatureEnabled('StaffAbsence');
 
+		$enabled = static::isBitrix24()
+			? COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y" || \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence")
+			: \CBXFeatures::isFeatureEnabled('StaffAbsence')
+		;
+
+		$locked = false;
+		$onclick = '';
+		$absenceUrl = SITE_DIR . 'timeman/';
+
+		if (!$enabled)
+		{
+			$locked = true;
+			$absenceUrl = '';
+			$onclick = 'javascript:BX.UI.InfoHelper.show("limit_absence_management");';
+		}
+
 		return [
 			'id' => 'absence',
 			'title' => Loc::getMessage('TIMEMAN_SECTION_ABSENCE_ITEM_TITLE'),
 			'available' => $available,
-			'url' => SITE_DIR . 'timeman/',
+			'url' => $absenceUrl,
+			'locked' => $locked,
 			'menuData' => [
 				'menu_item_id' => 'menu_absence',
+				'is_locked' => $locked,
+				'onclick' => $onclick,
 			],
 		];
 	}
@@ -51,6 +71,7 @@ class TimemanSection
 		$locked = false;
 		$onclick = '';
 		$workTimeUrl = SITE_DIR . 'timeman/timeman.php';
+
 		if (static::isBitrix24() && !static::isTimemanInstalled())
 		{
 			$locked = true;
@@ -240,23 +261,20 @@ class TimemanSection
 
 	public static function getMeetings(): array
 	{
+		$available =
+			static::isBitrix24()
+				? static::isMeetingAvailable()
+				: static::isMeetingInstalled() && \CBXFeatures::isFeatureEnabled('Meeting')
+		;
 		$locked = false;
-		$meetingUrl = SITE_DIR . 'timeman/meeting/';
 		$onclick = '';
+		$meetingUrl = SITE_DIR . 'timeman/meeting/';
 
-		if (static::isBitrix24())
+		if (static::isBitrix24() && !static::isMeetingInstalled())
 		{
-			$available = static::isMeetingAvailable();
-			if (!static::isMeetingInstalled())
-			{
-				$locked = true;
-				$meetingUrl = '';
-				$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_meetings");';
-			}
-		}
-		else
-		{
-			$available = static::isMeetingInstalled() && \CBXFeatures::isFeatureEnabled('Meeting');
+			$locked = true;
+			$meetingUrl = '';
+			$onclick = 'javascript:BX.UI.InfoHelper.show("limit_office_meetings");';
 		}
 
 		return [

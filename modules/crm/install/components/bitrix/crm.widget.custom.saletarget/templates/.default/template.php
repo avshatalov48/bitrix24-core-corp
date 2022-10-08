@@ -5,7 +5,12 @@ use Bitrix\Main\Localization\Loc;
 $messages = Loc::loadLanguageFile(__FILE__);
 
 \Bitrix\Main\Loader::includeModule('socialnetwork');
-CJSCore::Init('socnetlogdest');
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'socnetlogdest',
+]);
 
 $this->addExternalJs($this->getFolder() . '/user_selector.js');
 $this->addExternalJs($this->getFolder() . '/config_popup.js');

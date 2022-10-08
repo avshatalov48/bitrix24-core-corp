@@ -5,8 +5,9 @@ global $APPLICATION;
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
 \Bitrix\Main\UI\Extension::load([
-	'popup',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'popup',
 ]);
 
 if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y')

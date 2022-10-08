@@ -53,14 +53,14 @@ align-items: center;
 }
 .crm-report-chart-grid-user-name {
     max-width: 100%;
-    font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #2066B0;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
 }
 .crm-report-chart-grid-company .crm-report-chart-grid-user-name {
-    font: 500 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 500 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #525C69;
 }
 .crm-report-chart-grid-company-icon {
@@ -83,12 +83,12 @@ align-items: center;
     display: inline-block;
 }
 .crm-report-chart-grid-value {
-    font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #525C69;
 }
 .crm-report-chart-grid-value-bold {
     display: inline-block;
-    font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #333;
 }
 .crm-report-chart-grid-value-link {
@@ -126,11 +126,11 @@ align-items: center;
     margin: 0 8px 0 0;
     padding: 0 8px 0 0;
     border-right: 1px solid rgba(82, 92, 105, 0.17);
-    font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 13px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #364150;
 }
 .crm-report-chart-grid-rating-text {
-    font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     text-transform: uppercase;
 }
 .crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-value,

@@ -23,6 +23,8 @@ Main\UI\Extension::load("crm.entity-editor");
 Main\UI\Extension::load("crm.entity-editor.field.requisite");
 Main\UI\Extension::load("ui.icons.b24");
 
+Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
+
 if(Main\Loader::includeModule('calendar'))
 {
 	\Bitrix\Crm\Integration\Calendar::loadResourcebookingUserfieldExtention();

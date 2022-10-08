@@ -29,14 +29,12 @@ class TasksInterfaceFilterComponent extends TasksBaseComponent
 
 		return [
 			'toggleGroupByTasks' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'toggleGroupByGroups' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],

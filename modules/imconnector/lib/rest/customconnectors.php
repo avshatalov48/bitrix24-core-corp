@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\ImConnector\Rest;
 
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentTypeException;
 use \Bitrix\Main\Loader,
 	\Bitrix\Main\Localization\Loc,
 	\Bitrix\Main\ArgumentNullException,
@@ -9,7 +11,8 @@ use \Bitrix\Main\Loader,
 use \Bitrix\Rest\AppTable,
 	\Bitrix\Rest\OAuth\Auth,
 	\Bitrix\Rest\Sqs as RestSqs,
-	\Bitrix\Rest\AuthTypeException;
+	\Bitrix\Rest\AuthTypeException,
+	\Bitrix\Rest\RestException;
 
 use \Bitrix\ImConnector\Library,
 	\Bitrix\ImConnector\CustomConnectors as CC,
@@ -18,7 +21,7 @@ use \Bitrix\ImConnector\Library,
 Loc::loadMessages(__FILE__);
 Library::loadMessages();
 
-if(Loader::includeModule('rest'))
+if (Loader::includeModule('rest'))
 {
 	/**
 	 * Class CustomConnectors
@@ -146,20 +149,21 @@ if(Loader::includeModule('rest'))
 		 * @param $params
 		 * @param $arHandler
 		 * @return mixed
+		 * @throws RestException
 		 */
 		public static function OnStatusCustom($params, $arHandler)
 		{
 			$appId = null;
 			$parameters = $params[0]->getParameters();
 
-			if(!empty($parameters['connector']))
+			if (!empty($parameters['connector']))
 			{
 				$appId = Helper::getAppRestConnector($parameters['connector']);
 			}
 
-			if(empty($appId) || ($arHandler['APP_ID'] != $appId && $arHandler['APP_CODE'] != $appId))
+			if (empty($appId) || ($arHandler['APP_ID'] != $appId && $arHandler['APP_CODE'] != $appId))
 			{
-				throw new \Exception('Wrong app!');
+				throw new RestException('Wrong app!', "WRONG_APP_ID", \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			return $parameters;
@@ -169,9 +173,7 @@ if(Loader::includeModule('rest'))
 		 * @param $params
 		 * @param $arHandler
 		 * @return mixed
-		 * @throws \Bitrix\Main\ArgumentException
-		 * @throws \Bitrix\Main\ObjectPropertyException
-		 * @throws \Bitrix\Main\SystemException
+		 * @throws RestException
 		 */
 		public static function OnSendMessageCustom($params, $arHandler)
 		{
@@ -179,14 +181,14 @@ if(Loader::includeModule('rest'))
 
 			$parameters = $params[0]->getParameters();
 
-			if(!empty($parameters['CONNECTOR']))
+			if (!empty($parameters['CONNECTOR']))
 			{
 				$appId = Helper::getAppRestConnector($parameters['CONNECTOR']);
 			}
 
-			if(!empty($appId) & ($arHandler['APP_ID'] == $appId || $arHandler['APP_CODE'] == $appId))
+			if (!empty($appId) & ($arHandler['APP_ID'] == $appId || $arHandler['APP_CODE'] == $appId))
 			{
-				if(isset($parameters['DATA']))
+				if (isset($parameters['DATA']))
 				{
 					$parameters['MESSAGES'] = $parameters['DATA'];
 					unset($parameters['DATA']);
@@ -194,7 +196,7 @@ if(Loader::includeModule('rest'))
 			}
 			else
 			{
-				throw new \Exception('Wrong app!');
+				throw new RestException('Wrong app!', "WRONG_APP_ID", \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			return $parameters;
@@ -204,9 +206,7 @@ if(Loader::includeModule('rest'))
 		 * @param $params
 		 * @param $arHandler
 		 * @return mixed
-		 * @throws \Bitrix\Main\ArgumentException
-		 * @throws \Bitrix\Main\ObjectPropertyException
-		 * @throws \Bitrix\Main\SystemException
+		 * @throws RestException
 		 */
 		public static function OnUpdateMessageCustom($params, $arHandler)
 		{
@@ -214,14 +214,14 @@ if(Loader::includeModule('rest'))
 
 			$parameters = $params[0]->getParameters();
 
-			if(!empty($parameters['CONNECTOR']))
+			if (!empty($parameters['CONNECTOR']))
 			{
 				$appId = Helper::getAppRestConnector($parameters['CONNECTOR']);
 			}
 
-			if(!empty($appId) & ($arHandler['APP_ID'] == $appId || $arHandler['APP_CODE'] == $appId))
+			if (!empty($appId) & ($arHandler['APP_ID'] == $appId || $arHandler['APP_CODE'] == $appId))
 			{
-				if(isset($parameters['DATA']))
+				if (isset($parameters['DATA']))
 				{
 					$parameters['MESSAGES'] = $parameters['DATA'];
 					unset($parameters['DATA']);
@@ -229,7 +229,7 @@ if(Loader::includeModule('rest'))
 			}
 			else
 			{
-				throw new \Exception('Wrong app!');
+				throw new RestException('Wrong app!', "WRONG_APP_ID", \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			return $parameters;
@@ -239,9 +239,7 @@ if(Loader::includeModule('rest'))
 		 * @param $params
 		 * @param $arHandler
 		 * @return mixed
-		 * @throws \Bitrix\Main\ArgumentException
-		 * @throws \Bitrix\Main\ObjectPropertyException
-		 * @throws \Bitrix\Main\SystemException
+		 * @throws RestException
 		 */
 		public static function OnDeleteMessageCustom($params, $arHandler)
 		{
@@ -249,14 +247,14 @@ if(Loader::includeModule('rest'))
 
 			$parameters = $params[0]->getParameters();
 
-			if(!empty($parameters['CONNECTOR']))
+			if (!empty($parameters['CONNECTOR']))
 			{
 				$appId = Helper::getAppRestConnector($parameters['CONNECTOR']);
 			}
 
-			if(!empty($appId) & ($arHandler['APP_ID'] == $appId || $arHandler['APP_CODE'] == $appId))
+			if (!empty($appId) & ($arHandler['APP_ID'] == $appId || $arHandler['APP_CODE'] == $appId))
 			{
-				if(isset($parameters['DATA']))
+				if (isset($parameters['DATA']))
 				{
 					$parameters['MESSAGES'] = $parameters['DATA'];
 					unset($parameters['DATA']);
@@ -264,7 +262,7 @@ if(Loader::includeModule('rest'))
 			}
 			else
 			{
-				throw new \Exception('Wrong app!');
+				throw new RestException('Wrong app!', "WRONG_APP_ID", \CRestServer::STATUS_WRONG_REQUEST);
 			}
 
 			return $parameters;
@@ -276,13 +274,10 @@ if(Loader::includeModule('rest'))
 		 * @param \CRestServer $server
 		 * @return array
 		 * @throws AuthTypeException
-		 * @throws \Bitrix\Main\ArgumentException
-		 * @throws \Bitrix\Main\ObjectPropertyException
-		 * @throws \Bitrix\Main\SystemException
 		 */
 		public static function register($params, $n, \CRestServer $server)
 		{
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
@@ -298,7 +293,7 @@ if(Loader::includeModule('rest'))
 			$row = AppTable::getByClientId($clientId);
 			$appId = $row['ID'];
 
-			if(mb_strpos($params['ID'], '.') !== false)
+			if (mb_strpos($params['ID'], '.') !== false)
 			{
 				$result = array(
 					'result' => false,
@@ -306,7 +301,7 @@ if(Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_APPLICATION_REGISTRATION_ERROR_POINT')
 				);
 			}
-			else if(
+			else if (
 				!empty($params['ID'])
 				&& !empty($params['NAME'])
 				&& !empty($params['ICON']['DATA_IMAGE'])
@@ -323,44 +318,44 @@ if(Loader::includeModule('rest'))
 					'PLACEMENT_HANDLER' => $params['PLACEMENT_HANDLER']
 				);
 
-				if(isset($params['ICON_DISABLED']))
+				if (isset($params['ICON_DISABLED']))
 				{
 					$registerParams['ICON_DISABLED'] = $params['ICON_DISABLED'];
 				}
-				if(isset($params['DEL_EXTERNAL_MESSAGES']))
+				if (isset($params['DEL_EXTERNAL_MESSAGES']))
 				{
 					$registerParams['DEL_EXTERNAL_MESSAGES'] = $params['DEL_EXTERNAL_MESSAGES'];
 				}
-				if(isset($params['EDIT_INTERNAL_MESSAGES']))
+				if (isset($params['EDIT_INTERNAL_MESSAGES']))
 				{
 					$registerParams['EDIT_INTERNAL_MESSAGES'] = $params['EDIT_INTERNAL_MESSAGES'];
 				}
-				if(isset($params['DEL_INTERNAL_MESSAGES']))
+				if (isset($params['DEL_INTERNAL_MESSAGES']))
 				{
 					$registerParams['DEL_INTERNAL_MESSAGES'] = $params['DEL_INTERNAL_MESSAGES'];
 				}
-				if(isset($params['NEWSLETTER']))
+				if (isset($params['NEWSLETTER']))
 				{
 					$registerParams['NEWSLETTER'] = $params['NEWSLETTER'];
 				}
-				if(isset($params['NEED_SYSTEM_MESSAGES']))
+				if (isset($params['NEED_SYSTEM_MESSAGES']))
 				{
 					$registerParams['NEED_SYSTEM_MESSAGES'] = $params['NEED_SYSTEM_MESSAGES'];
 				}
-				if(isset($params['NEED_SIGNATURE']))
+				if (isset($params['NEED_SIGNATURE']))
 				{
 					$registerParams['NEED_SIGNATURE'] = $params['NEED_SIGNATURE'];
 				}
-				if(isset($params['CHAT_GROUP']))
+				if (isset($params['CHAT_GROUP']))
 				{
 					$registerParams['CHAT_GROUP'] = $params['CHAT_GROUP'];
 				}
-				if(isset($params['COMMENT']))
+				if (isset($params['COMMENT']))
 				{
 					$registerParams['COMMENT'] = $params['COMMENT'];
 				}
 
-				if(Helper::registerApp($registerParams))
+				if (Helper::registerApp($registerParams))
 				{
 					$result = array(
 						'result' => true
@@ -394,7 +389,7 @@ if(Loader::includeModule('rest'))
 					);
 				}
 			}
-			else if(empty($params['ID']))
+			else if (empty($params['ID']))
 			{
 				$result = array(
 					'result' => false,
@@ -402,7 +397,7 @@ if(Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_CONNECTOR_ID_REQUIRED')
 				);
 			}
-			else if(empty($params['NAME']))
+			else if (empty($params['NAME']))
 			{
 				$result = array(
 					'result' => false,
@@ -410,7 +405,7 @@ if(Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NAME_REQUIRED')
 				);
 			}
-			else if(empty($params['ICON']['DATA_IMAGE']))
+			else if (empty($params['ICON']['DATA_IMAGE']))
 			{
 				$result = array(
 					'result' => false,
@@ -418,7 +413,7 @@ if(Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_ICON_REQUIRED')
 				);
 			}
-			else if(empty($appId))
+			else if (empty($appId))
 			{
 				$result = array(
 					'result' => false,
@@ -426,7 +421,7 @@ if(Loader::includeModule('rest'))
 					'error_description' => Loc::getMessage('IMCONNECTOR_REST_NO_APPLICATION_ID')
 				);
 			}
-			else if(empty($params['PLACEMENT_HANDLER']))
+			else if (empty($params['PLACEMENT_HANDLER']))
 			{
 				$result = array(
 					'result' => false,
@@ -452,13 +447,10 @@ if(Loader::includeModule('rest'))
 		 * @param \CRestServer $server
 		 * @return array
 		 * @throws AuthTypeException
-		 * @throws \Bitrix\Main\ArgumentException
-		 * @throws \Bitrix\Main\ObjectPropertyException
-		 * @throws \Bitrix\Main\SystemException
 		 */
 		public static function unRegister($params, $n, \CRestServer $server)
 		{
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
@@ -473,9 +465,9 @@ if(Loader::includeModule('rest'))
 			$row = AppTable::getByClientId($clientId);
 			$appId = $row['ID'];
 
-			if(!empty($appId))
+			if (!empty($appId))
 			{
-				if(Helper::unRegisterApp(array(
+				if (Helper::unRegisterApp(array(
 					'ID' => $params['ID'],
 					'REST_APP_ID' => $appId,
 				)))
@@ -519,22 +511,22 @@ if(Loader::includeModule('rest'))
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
 
-			if(!isset($params['CONNECTOR']))
+			if (!isset($params['CONNECTOR']))
 			{
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			if(!isset($params['LINE']))
+			if (!isset($params['LINE']))
 			{
 				throw new ArgumentNullException("LINE");
 			}
 
-			if(!isset($params['MESSAGES']))
+			if (!isset($params['MESSAGES']))
 			{
 				throw new ArgumentNullException("MESSAGES");
 			}
@@ -542,9 +534,27 @@ if(Loader::includeModule('rest'))
 			$converter = new Converter(Converter::TO_LOWER | Converter::KEYS | Converter::RECURSIVE);
 			$params['MESSAGES'] = $converter->process($params['MESSAGES']);
 
+			if (!is_array($params['MESSAGES']))
+			{
+				throw new ArgumentTypeException("MESSAGES", 'array');
+			}
+
+			foreach ($params['MESSAGES'] as $message)
+			{
+				if (!is_array($message))
+				{
+					throw new ArgumentException('The MESSAGES parameter must be an array of messages (arrays)');
+				}
+
+				if (!isset($message['user'], $message['message'], $message['chat']))
+				{
+					throw new ArgumentException('The incorrect structure of a message inside MESSAGES parameter.');
+				}
+			}
+
 			$resultSend = CC::sendMessages($params['CONNECTOR'], $params['LINE'], $params['MESSAGES']);
 
-			if($resultSend->isSuccess())
+			if ($resultSend->isSuccess())
 			{
 				$result['SUCCESS'] = true;
 			}
@@ -572,22 +582,22 @@ if(Loader::includeModule('rest'))
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
 
-			if(!isset($params['CONNECTOR']))
+			if (!isset($params['CONNECTOR']))
 			{
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			if(!isset($params['LINE']))
+			if (!isset($params['LINE']))
 			{
 				throw new ArgumentNullException("LINE");
 			}
 
-			if(!isset($params['MESSAGES']))
+			if (!isset($params['MESSAGES']))
 			{
 				throw new ArgumentNullException("MESSAGES");
 			}
@@ -597,7 +607,7 @@ if(Loader::includeModule('rest'))
 
 			$resultSend = CC::updateMessages($params['CONNECTOR'], $params['LINE'], $params['MESSAGES']);
 
-			if($resultSend->isSuccess())
+			if ($resultSend->isSuccess())
 			{
 				$result['SUCCESS'] = true;
 			}
@@ -625,22 +635,22 @@ if(Loader::includeModule('rest'))
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
 
-			if(!isset($params['CONNECTOR']))
+			if (!isset($params['CONNECTOR']))
 			{
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			if(!isset($params['LINE']))
+			if (!isset($params['LINE']))
 			{
 				throw new ArgumentNullException("LINE");
 			}
 
-			if(!isset($params['MESSAGES']))
+			if (!isset($params['MESSAGES']))
 			{
 				throw new ArgumentNullException("MESSAGES");
 			}
@@ -650,7 +660,7 @@ if(Loader::includeModule('rest'))
 
 			$resultSend = CC::deleteMessages($params['CONNECTOR'], $params['LINE'], $params['MESSAGES']);
 
-			if($resultSend->isSuccess())
+			if ($resultSend->isSuccess())
 			{
 				$result['SUCCESS'] = true;
 			}
@@ -678,22 +688,22 @@ if(Loader::includeModule('rest'))
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
 
-			if(!isset($params['CONNECTOR']))
+			if (!isset($params['CONNECTOR']))
 			{
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			if(!isset($params['LINE']))
+			if (!isset($params['LINE']))
 			{
 				throw new ArgumentNullException("LINE");
 			}
 
-			if(!isset($params['MESSAGES']))
+			if (!isset($params['MESSAGES']))
 			{
 				throw new ArgumentNullException("MESSAGES");
 			}
@@ -703,7 +713,7 @@ if(Loader::includeModule('rest'))
 
 			$resultSend = CC::sendStatusDelivery($params['CONNECTOR'], $params['LINE'], $params['MESSAGES']);
 
-			if($resultSend->isSuccess())
+			if ($resultSend->isSuccess())
 			{
 				$result['SUCCESS'] = true;
 			}
@@ -731,22 +741,22 @@ if(Loader::includeModule('rest'))
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
 
-			if(!isset($params['CONNECTOR']))
+			if (!isset($params['CONNECTOR']))
 			{
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			if(!isset($params['LINE']))
+			if (!isset($params['LINE']))
 			{
 				throw new ArgumentNullException("LINE");
 			}
 
-			if(!isset($params['MESSAGES']))
+			if (!isset($params['MESSAGES']))
 			{
 				throw new ArgumentNullException("MESSAGES");
 			}
@@ -756,7 +766,7 @@ if(Loader::includeModule('rest'))
 
 			$resultSend = CC::sendStatusReading($params['CONNECTOR'], $params['LINE'], $params['MESSAGES']);
 
-			if($resultSend->isSuccess())
+			if ($resultSend->isSuccess())
 			{
 				$result['SUCCESS'] = true;
 			}
@@ -784,24 +794,24 @@ if(Loader::includeModule('rest'))
 
 			$params = array_change_key_case($params, CASE_UPPER);
 
-			if($server->getAuthType() !== Auth::AUTH_TYPE)
+			if ($server->getAuthType() !== Auth::AUTH_TYPE)
 			{
 				throw new AuthTypeException("Application context required");
 			}
 
-			if(!isset($params['CONNECTOR']))
+			if (!isset($params['CONNECTOR']))
 			{
 				throw new ArgumentNullException("CONNECTOR");
 			}
 
-			if(!isset($params['LINE']))
+			if (!isset($params['LINE']))
 			{
 				throw new ArgumentNullException("LINE");
 			}
 
 			$resultSend = CC::deactivateConnectors($params['CONNECTOR'], $params['LINE']);
 
-			if($resultSend->isSuccess())
+			if ($resultSend->isSuccess())
 			{
 				$result['SUCCESS'] = true;
 			}

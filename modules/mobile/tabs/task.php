@@ -53,7 +53,7 @@ class Task implements Tabable
 			'name' => 'JSStackComponent',
 			'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
 			'componentCode' => 'tasks.list',
-			'scriptPath' => Manager::getComponentPath('tasks.list'),
+			'scriptPath' => Manager::getComponentPath('tasks:tasks.list'),
 			'rootWidget' => [
 				'name' => 'tasks.list',
 				'settings' => [
@@ -136,7 +136,7 @@ class Task implements Tabable
 					'name' => 'JSStackComponent',
 					'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
 					'componentCode' => 'tasks.project.list',
-					'scriptPath' => Manager::getComponentPath('tasks.project.list'),
+					'scriptPath' => Manager::getComponentPath('tasks:tasks.project.list'),
 					'rootWidget' => [
 						'name' => 'tasks.list',
 						'settings' => [
@@ -186,7 +186,7 @@ class Task implements Tabable
 				'name' => 'JSStackComponent',
 				'title' => Loc::getMessage('TAB_TASKS_NAVIGATION_HEADER'),
 				'componentCode' => 'tasks.tabs',
-				'scriptPath' => Manager::getComponentPath('tasks.tabs'),
+				'scriptPath' => Manager::getComponentPath('tasks:tasks.tabs'),
 				'rootWidget' => [
 					'name' => 'tabs',
 					'settings' => [

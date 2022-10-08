@@ -85,6 +85,12 @@ class Partner24 extends Network implements SupportBot
 
 		$supportCode = !empty($params['CODE'])? $params['CODE']: self::getBotCode();
 
+		$settings = self::getBotSettings();
+		if ($settings)
+		{
+			self::saveSettings($settings);
+		}
+
 		if (self::getBotId() > 0)
 		{
 			$botId = parent::getNetworkBotId($supportCode, true);
@@ -195,6 +201,96 @@ class Partner24 extends Network implements SupportBot
 		unset($commandList[self::COMMAND_UNREGISTER]);
 
 		return $commandList;
+	}
+
+	/**
+	 * Loads bot settings from controller.
+	 *
+	 * @param array $params Command arguments.
+	 * <pre>
+	 * [
+	 * 	(int) BOT_ID
+	 * ]
+	 * </pre>
+	 *
+	 * @return array|null
+	 */
+	public static function getBotSettings(array $params = []): ?array
+	{
+		static $result;
+		if (empty($result))
+		{
+			if (Main\Loader::includeModule('bitrix24'))
+			{
+				if (\CBitrix24::isDemoLicense())
+				{
+					$params['PORTAL_TARIFF'] = \CBitrix24::getLicenseType(\CBitrix24::LICENSE_TYPE_PREVIOUS);
+				}
+			}
+
+			$settings = parent::getBotSettings($params);
+			if (empty($settings))
+			{
+				return null;
+			}
+
+			$result = [];
+			$mirrors = [
+				self::OPTION_BOT_NAME => 'partner24_name',
+				self::OPTION_BOT_DESC => 'partner24_desc',
+				self::OPTION_BOT_AVATAR => 'partner24_avatar',
+				self::OPTION_BOT_FOR_ALL => 'partner24_for_all',
+				self::OPTION_BOT_MESSAGES => 'partner24_messages',
+				self::OPTION_BOT_REGULAR_SUPPORT => 'partner24_regular_support',
+			];
+			foreach ($mirrors as $prop => $alias)
+			{
+				if (isset($settings[$alias]))
+				{
+					$result[$prop] = $settings[$alias];
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Apply new settings to bot configuration.
+	 *
+	 * @param array $settings
+	 *
+	 * @return bool
+	 */
+	private static function saveSettings(array $settings): bool
+	{
+		$updateBotProperties = false;
+		foreach ($settings as $optionName => $optionValue)
+		{
+			if (Option::get(self::MODULE_ID, $optionName, '') != $optionValue)
+			{
+				if (
+					in_array($optionName, [
+						self::OPTION_BOT_NAME,
+						self::OPTION_BOT_DESC,
+						self::OPTION_BOT_AVATAR,
+					])
+				)
+				{
+					$updateBotProperties = true;
+				}
+
+				Option::set(self::MODULE_ID, $optionName, $optionValue);
+			}
+		}
+
+		// update im bot props
+		if ($updateBotProperties)
+		{
+			self::updateBotProperties();
+		}
+
+		return true;
 	}
 
 	/**
@@ -764,16 +860,29 @@ class Partner24 extends Network implements SupportBot
 	private static function sendMessageForRecent($message)
 	{
 		$users = [self::getBotId()];
+		$chats = [];
 		foreach (self::getRecentDialogs() as $dialog)
 		{
-			if (in_array($dialog['USER_ID'], $users))
+			if ($dialog['MESSAGE_TYPE'] == \IM_MESSAGE_CHAT && in_array($dialog['CHAT_ID'], $chats))
+			{
+				continue;
+			}
+			elseif ($dialog['MESSAGE_TYPE'] == \IM_MESSAGE_PRIVATE && in_array($dialog['USER_ID'], $users))
 			{
 				continue;
 			}
 
-			if ($dialog['RECENTLY_TALK'] == 'Y' && $dialog['MESSAGE_TYPE'] == \IM_MESSAGE_PRIVATE)
+			if ($dialog['MESSAGE_TYPE'] == \IM_MESSAGE_CHAT)
+			{
+				$chats[] = $dialog['CHAT_ID'];
+			}
+			elseif ($dialog['MESSAGE_TYPE'] == \IM_MESSAGE_PRIVATE)
 			{
 				$users[] = $dialog['USER_ID'];
+			}
+
+			if ($dialog['RECENTLY_TALK'] == 'Y' && $dialog['MESSAGE_TYPE'] == \IM_MESSAGE_PRIVATE)
+			{
 				self::sendMessage([
 					'DIALOG_ID' => $dialog['USER_ID'],
 					'MESSAGE' => $message,
@@ -895,6 +1004,13 @@ class Partner24 extends Network implements SupportBot
 		{
 			return false;
 		}
+
+		$settings = self::getBotSettings();
+		if ($settings)
+		{
+			self::saveSettings($settings);
+		}
+
 		$prevSupportCode = self::getBotCode();
 
 		self::setOptions($supportCode, $supportName);

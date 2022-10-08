@@ -320,7 +320,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 						'serviceUrl' => '/bitrix/components/bitrix/crm.order.check.list/lazyload.ajax.php?&site'.SITE_ID.'&'.bitrix_sessid_get(),
 						'componentData' => array(
 							'template' => '',
-							'params' => array(
+							'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 								'ENABLE_TOOLBAR' => true,
 								'CHECK_COUNT' => '20',
 								'OWNER_ID' => $this->entityID,
@@ -330,7 +330,7 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 								'GRID_ID_SUFFIX' => 'CHECK_DETAILS',
 								'TAB_ID' => 'tab_check',
 								'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-							)
+							], 'crm.order.check.list')
 						)
 					)
 				);
@@ -343,10 +343,10 @@ class CCrmOrderPaymentDetailsComponent extends Crm\Component\EntityDetails\BaseC
 					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'ENTITY_ID' => $this->entityID,
 							'ENTITY_TYPE_NAME' => CCrmOwnerType::OrderPaymentName,
-						)
+						], 'crm.entity.tree')
 					)
 				)
 			);

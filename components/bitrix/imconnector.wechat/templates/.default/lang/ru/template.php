@@ -7,8 +7,8 @@ $MESS["IMCONNECTOR_COMPONENT_WECHAT_LANG"] = "Выберите язык ваше
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECTED"] = "WeChat подключен";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CHANGE_ANY_TIME"] = "Вы можете в любое время изменить или отключить";
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_TITLE"] = "Подключите WeChat к Открытой линии";
-$MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP"] = "Для подключения необходимо <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">создать официальный аккаунт</a>
- или подключить уже существующий. Если у вас еще нет официального аккаунта, мы поможем создать его в несколько шагов и подключить к вашему Битрикс24";
+$MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP_NEW"] = 'Для подключения необходимо #LINK_START#создать официальный аккаунт#LINK_END#
+ или подключить уже существующий. Если у вас еще нет официального аккаунта, мы поможем создать его в несколько шагов и подключить к вашему Битрикс24';
 $MESS['IMCONNECTOR_COMPONENT_WECHAT_INFO_CONNECT_ID'] = 'redirect=detail&code=10112784';
 $MESS["IMCONNECTOR_COMPONENT_WECHAT_CONNECT_HELP"] = '<div class="imconnector-field-button-subtitle">Я хочу</div>
 				<div class="imconnector-field-button-name"><span class="imconnector-field-box-text-bold">Подключить</span> Wechat аккаунт</div>';

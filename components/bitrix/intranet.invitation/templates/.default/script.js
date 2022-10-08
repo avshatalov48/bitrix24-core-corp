@@ -749,6 +749,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            id: "department",
 	            options: {
 	              selectMode: "departmentsOnly",
+	              allowOnlyUserDepartments: true,
 	              allowSelectRootDepartment: true
 	            }
 	          });

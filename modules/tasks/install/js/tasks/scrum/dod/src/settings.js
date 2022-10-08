@@ -1,12 +1,15 @@
-import {Dom, Tag, Type, Loc, Event, Runtime} from 'main.core';
+import {Dom, Tag, Type, Loc, Event, Runtime, Text} from 'main.core';
 import {BaseEvent, EventEmitter} from 'main.core.events';
 import {Loader} from 'main.loader';
 
 import {TagSelector} from 'ui.entity-selector';
+import {Layout} from 'ui.sidepanel.layout';
+import {Item} from 'ui.sidepanel.menu';
+import {UI} from 'ui.notification';
+import {MessageBox, MessageBoxButtons} from 'ui.dialogs.messagebox';
 
 import {ItemType, ItemTypeParams} from './item.type';
 import {TypeStorage} from './type.storage';
-import {Tabs} from './tabs';
 
 import {RequestSender} from './request.sender';
 
@@ -25,15 +28,16 @@ export class Settings
 		this.groupId = parseInt(params.groupId, 10);
 		this.taskId = parseInt(params.taskId, 10);
 
-		this.typeStorage = new TypeStorage();
-		this.tabs = new Tabs();
+		this.sidePanelManager = BX.SidePanel.Instance;
 
-		this.tabs.subscribe('switchType', this.onSwitchType.bind(this));
-		this.tabs.subscribe('createType', this.onCreateType.bind(this));
-		this.tabs.subscribe('changeTypeName', this.onChangeTypeName.bind(this));
-		this.tabs.subscribe('removeType', this.onRemoveType.bind(this));
+		this.typeStorage = new TypeStorage();
+
+		this.layoutMenu = null;
+
+		this.nameInput = null;
 
 		this.changed = false;
+
 		EventEmitter.subscribe(
 			'BX.Tasks.CheckListItem:CheckListChanged',
 			() => {
@@ -42,9 +46,97 @@ export class Settings
 		);
 	}
 
+	show()
+	{
+		this.sidePanelManager.open(
+			'tasks-scrum-dod-settings-side-panel',
+			{
+				cacheable: false,
+				width: 1000,
+				contentCallback: () => {
+					return Layout.createLayout({
+						extensions: ['tasks.scrum.dod', 'ui.entity-selector', 'tasks'],
+						title: Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
+						content: this.renderContent.bind(this),
+						design: {
+							section: false
+						},
+						menu: {},
+						toolbar: ({Button}) => {
+							return [
+								new Button({
+									color: Button.Color.LIGHT_BORDER,
+									text: Loc.getMessage('TASKS_SCRUM_DOD_BTN_CREATE_TYPE'),
+									onclick: () => {
+										this.showTypeForm();
+									},
+								}),
+							];
+						},
+						buttons: []
+					})
+						.then((layout: Layout) => {
+							this.layoutMenu = layout.getMenu();
+
+							this.layoutMenu.subscribe('click', this.onMenuItemClick.bind(this));
+
+							return layout.render();
+						})
+					;
+				},
+				events: {
+					onLoad: this.onLoadSettings.bind(this),
+					onClose: this.onCloseSettings.bind(this),
+					onCloseComplete: this.onCloseSettingsComplete.bind(this)
+				}
+			}
+		);
+	}
+
+	onLoadSettings()
+	{
+		this.layoutMenu.setItems(this.getMenuItems());
+
+		if (!this.isEmpty())
+		{
+			this.buildEditingForm(this.typeStorage.getActiveType());
+		}
+	}
+
+	onCloseSettings()
+	{
+		if (this.isChanged())
+		{
+			this.saveSettings()
+				.then(() => {
+					UI.Notification.Center.notify({
+						autoHideDelay: 1000,
+						content: Loc.getMessage('TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY')
+					});
+				})
+				.catch(() => {})
+			;
+		}
+	}
+
+	onCloseSettingsComplete()
+	{
+		const currentSlider = this.sidePanelManager.getTopSlider();
+		if (currentSlider)
+		{
+			if (
+				currentSlider.getUrl() === 'tasks-scrum-dod-list-side-panel'
+				&& this.isChanged()
+			)
+			{
+				currentSlider.reload();
+			}
+		}
+	}
+
 	isEmpty(): boolean
 	{
-		return this.tabs.isEmpty();
+		return this.typeStorage.isEmpty();
 	}
 
 	isChanged(): boolean
@@ -74,13 +166,9 @@ export class Settings
 				});
 
 				this.typeStorage.setTypes(itemTypes);
+				this.typeStorage.setActiveType();
 
-				this.tabs.setTypeStorage(this.typeStorage);
-				this.tabs.setActiveType(this.typeStorage.getNextType());
-
-				this.addEmptyCreationType();
-
-				return this.render();
+				return this.render(this.typeStorage.getActiveType());
 			})
 			.catch((response) => {
 				this.requestSender.showErrorAlert(response);
@@ -88,19 +176,14 @@ export class Settings
 		;
 	}
 
-	render(): HTMLElement
+	render(type: ItemType): HTMLElement
 	{
-		const currentType: ItemType = this.typeStorage.getNextType();
-
 		this.node = Tag.render`
 			<div class="tasks-scrum-dod-settings">
 				<div class="tasks-scrum-dod-settings-container">
 					<div class="tasks-scrum-dod-settings-container-wrap">
-						<div class="tasks-scrum-dod-settings-container-shell">
-							${this.tabs.render()}
-							<div class="tasks-scrum-dod-settings-container-sidebar-wrapper">
-								${this.renderContainer(currentType)}
-							</div>
+						<div class="tasks-scrum-dod-settings-container-sidebar-wrapper">
+							${this.renderContainer(type)}
 						</div>
 					</div>
 				</div>
@@ -112,7 +195,7 @@ export class Settings
 
 	renderContainer(type: ItemType): HTMLElement
 	{
-		if (this.tabs.isEmpty())
+		if (this.typeStorage.isEmpty())
 		{
 			return this.renderEmptyForm();
 		}
@@ -202,6 +285,44 @@ export class Settings
 		`;
 	}
 
+	renderTypeForm(type?: ItemType): HTMLElement
+	{
+		const name = type ? type.getName() : '';
+
+		this.typeFormNode = Tag.render`
+			<div class="tasks-scrum-dod-settings-type-form">
+				<div class="ui-alert ui-alert-danger --hidden">
+					<span class="ui-alert-message"></span>
+				</div>
+				<div class="ui-ctl ui-ctl-textbox ui-ctl-w100">
+					<input
+						type="text"
+						class="ui-ctl-element"
+						placeholder="${Loc.getMessage('TASKS_SCRUM_DOD_POPUP_INPUT_PLACEHOLDER')}"
+						value="${Text.encode(name)}"
+					>
+				</div>
+			</div>
+		`;
+
+		this.nameInput = this.typeFormNode.querySelector('input');
+
+		Event.bind(
+			this.nameInput,
+			'keydown',
+			(event: KeyboardEvent) => {
+				if (event.key === 'Enter')
+				{
+					this.onOkTypeForm(type);
+				}
+
+				this.hideTypeFormError();
+			}
+		);
+
+		return this.typeFormNode;
+	}
+
 	initParticipantsSelector(type: ItemType)
 	{
 		const participantsSelectorContainer = this.node.querySelector('.tasks-scrum-dod-settings-user-selector');
@@ -219,7 +340,7 @@ export class Settings
 			dialogOptions: {
 				id: selectorId,
 				context: 'TASKS',
-				preselectedItems: this.tabs.getActiveType().getParticipants(),
+				preselectedItems: this.typeStorage.getActiveType().getParticipants(),
 				entities: [
 					{
 						id: 'user',
@@ -274,10 +395,138 @@ export class Settings
 		Dom.append(this.renderEmptyForm(), container);
 	}
 
-	onSwitchType(baseEvent: BaseEvent)
+	showTypeForm(type?: ItemType)
 	{
-		const type: ItemType = baseEvent.getData();
-		const previousType: ?ItemType = this.tabs.getPreviousType();
+		this.typeForm = new MessageBox({
+			popupOptions: this.getDefaultPopupOptions(),
+			title: Type.isUndefined(type)
+				? Loc.getMessage('TASKS_SCRUM_DOD_POPUP_TITLE_CREATE')
+				: Loc.getMessage('TASKS_SCRUM_DOD_POPUP_TITLE_EDIT')
+			,
+			message: this.renderTypeForm(type),
+			buttons: MessageBoxButtons.OK_CANCEL,
+			okCaption: Type.isUndefined(type)
+				? Loc.getMessage('TASKS_SCRUM_DOD_BTN_CREATE_TYPE')
+				: Loc.getMessage('TASKS_SCRUM_DOD_BTN_SAVE')
+			,
+			onOk: () => this.onOkTypeForm(type)
+		});
+
+		const popup = this.typeForm.getPopupWindow();
+		popup.subscribe('onAfterShow', () => {
+			const length = this.nameInput.value.length;
+			this.nameInput.focus();
+			this.nameInput.setSelectionRange(length, length);
+		});
+
+		this.typeForm.show();
+	}
+
+	onOkTypeForm(type?: ItemType)
+	{
+		if (!this.nameInput.value.trim())
+		{
+			this.showTypeFormError(Loc.getMessage('TASKS_SCRUM_DOD_POPUP_EMPTY_NAME'));
+
+			this.typeForm.getOkButton().setDisabled(false);
+
+			return;
+		}
+
+		this.typeForm.close();
+
+		if (Type.isUndefined(type))
+		{
+			const skipPrevious = this.typeStorage.isEmpty();
+			this.createType(this.nameInput.value)
+				.then((createdType: ?ItemType) => {
+					if (createdType)
+					{
+						this.addMenuItem(createdType);
+						this.switchType(createdType, skipPrevious);
+					}
+				})
+			;
+		}
+		else
+		{
+			type.setName(this.nameInput.value);
+
+			this.changeType(type)
+				.then((changedType: ?ItemType) => {
+					if (changedType)
+					{
+						this.changeMenuItem(changedType)
+						this.switchType(changedType);
+					}
+				})
+			;
+		}
+	}
+
+	showTypeFormError(message: string)
+	{
+		const alertNode = this.typeFormNode.querySelector('.ui-alert');
+
+		alertNode.querySelector('.ui-alert-message').textContent = message;
+
+		Dom.removeClass(alertNode, '--hidden');
+	}
+
+	hideTypeFormError()
+	{
+		const alertNode = this.typeFormNode.querySelector('.ui-alert');
+
+		if (!Dom.hasClass(alertNode, '--hidden'))
+		{
+			Dom.addClass(this.typeFormNode.querySelector('.ui-alert'), '--hidden');
+		}
+	}
+
+	createType(name: string): Promise
+	{
+		const container = this.node.querySelector('.tasks-scrum-dod-settings-container-sidebar-wrapper');
+
+		const loader = this.showLoader(container);
+
+		return this.requestSender.createType({
+			groupId: this.groupId,
+			name: name,
+			sort: this.typeStorage.getTypes().size + 1
+		})
+		.then((response) => {
+			this.setChanged();
+			loader.hide();
+
+			const createdType = new ItemType(response.data);
+			this.typeStorage.addType(createdType);
+
+			return createdType;
+		})
+		.catch((response) => {
+			loader.hide();
+
+			this.requestSender.showErrorAlert(response);
+		});
+	}
+
+	switchType(type: ItemType, skipPrevious: boolean = false)
+	{
+		const menuItem: Item = this.getMenuItem(type);
+
+		let previousType: ?ItemType = null;
+		if (!skipPrevious)
+		{
+			previousType = this.typeStorage.getActiveType();
+
+			if (menuItem.getId() === previousType.getId())
+			{
+				return;
+			}
+		}
+
+		this.typeStorage.setActiveType(type);
+		this.setActiveMenuItem(type);
 
 		if (previousType)
 		{
@@ -298,43 +547,17 @@ export class Settings
 		}
 	}
 
-	onCreateType(baseEvent: BaseEvent)
+	changeType(type: ItemType): Promise
 	{
-		const container = this.node.querySelector('.tasks-scrum-dod-settings-container-sidebar-wrapper');
-
-		const loader = this.showLoader(container);
-
-		const tmpType = baseEvent.getData();
-
-		this.requestSender.createType({
-			groupId: this.groupId,
-			name: tmpType.getName(),
-			sort: tmpType.getSort()
-		})
-		.then((response) => {
-			this.setChanged();
-			loader.hide();
-			const createdType = new ItemType(response.data);
-			this.typeStorage.addType(createdType);
-			this.tabs.addType(createdType, tmpType);
-		})
-		.catch((response) => {
-			loader.hide();
-			this.requestSender.showErrorAlert(response);
-		});
-	}
-
-	onChangeTypeName(baseEvent: BaseEvent)
-	{
-		const type = baseEvent.getData();
-
-		this.requestSender.changeTypeName({
+		return this.requestSender.changeTypeName({
 			groupId: this.groupId,
 			id: type.getId(),
 			name: type.getName()
 		})
 			.then(() => {
 				this.setChanged();
+
+				return type;
 			})
 			.catch((response) => {
 				this.requestSender.showErrorAlert(response);
@@ -342,27 +565,24 @@ export class Settings
 		;
 	}
 
-	onRemoveType(baseEvent: BaseEvent)
+	removeType(type: ItemType): Promise
 	{
-		const type = baseEvent.getData();
-
-		this.requestSender.removeType({
+		return this.requestSender.removeType({
 			groupId: this.groupId,
 			id: type.getId()
 		})
 		.then(() => {
 			this.setChanged();
 			this.typeStorage.removeType(type);
-			if (this.tabs.isEmpty())
+			if (this.typeStorage.isEmpty())
 			{
 				this.buildEmptyForm();
+
+				return null;
 			}
 			else
 			{
-				const nextType = [...this.typeStorage.getTypes().values()]
-					.find((type: ItemType) => !this.tabs.isEmptyType(type))
-				;
-				this.tabs.switchToType(nextType);
+				return this.typeStorage.getActiveType()
 			}
 		})
 		.catch((response) => {
@@ -372,12 +592,12 @@ export class Settings
 
 	saveSettings(inputType?: ItemType): Promise
 	{
-		if (this.tabs.isEmpty())
+		if (this.typeStorage.isEmpty())
 		{
 			return Promise.resolve();
 		}
 
-		const type = inputType ? inputType : this.tabs.getActiveType();
+		const type = inputType ? inputType : this.typeStorage.getActiveType();
 
 		if (!(type instanceof ItemType))
 		{
@@ -457,14 +677,9 @@ export class Settings
 		return loader;
 	}
 
-	getActiveType(): ?ItemType
-	{
-		return this.tabs.getActiveType();
-	}
-
 	updateActiveType()
 	{
-		const type = this.tabs.getActiveType();
+		const type = this.typeStorage.getActiveType();
 
 		type.setDodRequired(this.getRequiredOptionValue());
 	}
@@ -478,12 +693,118 @@ export class Settings
 		return container;
 	}
 
-	addEmptyCreationType()
+	getMenuItems(): Array
 	{
-		const itemType = new ItemType();
+		if (this.typeStorage.isEmpty())
+		{
+			return [];
+		}
 
-		this.tabs.setEmptyType(itemType);
+		const items = [];
 
-		this.typeStorage.addType(itemType);
+		this.typeStorage.getTypes()
+			.forEach((type: ItemType) => {
+				items.push(this.getMenuItemOptions(type, items.length === 0))
+			})
+		;
+
+		return items;
+	}
+
+	addMenuItem(type: ItemType): Item
+	{
+		return this.layoutMenu.add(this.getMenuItemOptions(type));
+	}
+
+	changeMenuItem(type: ItemType): ?Item
+	{
+		return this.layoutMenu.change(
+			type.getId(),
+			{
+				label: type.getName()
+			}
+		);
+	}
+
+	removeMenuItem(type: ItemType)
+	{
+		this.layoutMenu.remove(type.getId());
+	}
+
+	getMenuItem(type: ItemType): ?Item
+	{
+		return this.layoutMenu.get(type.getId());
+	}
+
+	setActiveMenuItem(type: ItemType)
+	{
+		this.getMenuItem(type).setActive();
+	}
+
+	getMenuItemOptions(type: ItemType, active: boolean = false): Object
+	{
+		return {
+			id: type.getId(),
+			label: type.getName(),
+			active: active,
+			actions: [
+				{
+					label: Loc.getMessage('TASKS_SCRUM_DOD_BTN_EDIT_TYPE'),
+					onclick: () => {
+						this.showTypeForm(type);
+					}
+				},
+				{
+					label: Loc.getMessage('TASKS_SCRUM_DOD_BTN_REMOVE_TYPE'),
+					onclick: (item: Item) => {
+						(new MessageBox({
+							title: Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE_TITLE'),
+							message: Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE_NEW')
+								.replace('#name#', Text.encode(type.getName()))
+							,
+							popupOptions: this.getDefaultPopupOptions(),
+							okCaption: Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
+							buttons: MessageBoxButtons.OK_CANCEL,
+							minHeight: 100,
+							onOk: (messageBox) => {
+								this.removeType(type)
+									.then((nextType: ?ItemType) => {
+										this.removeMenuItem(type);
+
+										if (!Type.isNull(nextType))
+										{
+											this.switchType(nextType, true);
+										}
+
+										messageBox.close();
+									})
+								;
+							}
+						})).show();
+
+					}
+				},
+			]
+		};
+	}
+
+	onMenuItemClick(baseEvent: BaseEvent)
+	{
+		const { item: menuItem } = baseEvent.getData();
+
+		this.switchType(this.typeStorage.getType(menuItem.getId()));
+	}
+
+	getDefaultPopupOptions(): Object
+	{
+		const popupOptions = {};
+
+		const currentSlider = this.sidePanelManager.getTopSlider();
+		if (currentSlider)
+		{
+			popupOptions.targetContainer = currentSlider.getContainer();
+		}
+
+		return popupOptions;
 	}
 }

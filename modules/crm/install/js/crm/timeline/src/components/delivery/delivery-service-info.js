@@ -29,6 +29,7 @@ export default {
 				: {};
 		},
 	},
+	// language=Vue
 	template: `
 		<div class="crm-entity-stream-content-delivery-title">
 			<div

@@ -19,6 +19,8 @@ import {EventEmitter} from 'main.core.events';
 import AddressString from './addressstring';
 import AddressApplier from './addressapplier';
 import Popup from './popup';
+
+import 'ui.design-tokens';
 import './css/mappopup.css';
 
 export default class MapPopup extends EventEmitter

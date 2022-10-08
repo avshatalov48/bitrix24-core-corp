@@ -1,21 +1,24 @@
-<?
+<?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Grid;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\UI\Component\TemplateHelper;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Type\DateTime;
-use Bitrix\Main\Grid;
-use Bitrix\Tasks\Access\ActionDictionary;
 
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.templates.list/templates/.default/script.js");
 $GLOBALS['APPLICATION']->AddHeadScript("/bitrix/components/bitrix/tasks.list/templates/.default/table-view.js");
 CJSCore::Init(array('tasks_util_query', 'task_popups'));
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 $arParams =& $helper->getComponent(
 )->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
@@ -27,8 +30,8 @@ if ($helper->checkHasFatals())
 if ($arParams['SET_TITLE'] != 'N')
 {
 	//region TITLE
-	$sTitle = $sTitleShort = GetMessage("TASKS_TEMPLATES_TITLE");
-	$APPLICATION->SetPageProperty("title", $sTitle);
+	$sTitle = $sTitleShort = Loc::getMessage('TASKS_TEMPLATES_TITLE');
+	$APPLICATION->SetPageProperty('title', $sTitle);
 	$APPLICATION->SetTitle($sTitleShort);
 	//endregion TITLE
 }
@@ -107,7 +110,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 	)
 	{
 		$actions[] = [
-			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_VIEW'),
+			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_VIEW'),
 			'href' => CComponentEngine::MakePathFromTemplate(
 				$urlPathAction,
 				[
@@ -126,13 +129,13 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 		if ($canCreate)
 		{
 			$actions[] = [
-				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_COPY'),
+				'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_COPY'),
 				'href' => "{$newTemplateLink}?COPY={$row['ID']}{$strIframe2}",
 			];
 		}
 
 		$actions[] = [
-			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK'),
+			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_CREATE_TASK'),
 			'href' => CComponentEngine::MakePathFromTemplate(
 				$urlTaskPath,
 				[
@@ -146,7 +149,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 		if ($canCreate)
 		{
 			$addSubTemplateAction = [
-				'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
+				'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_CREATE_SUB_TEMPLATE'),
 			];
 			if ($arResult['AUX_DATA']['TEMPLATE_SUBTASK_LIMIT_EXCEEDED'])
 			{
@@ -174,7 +177,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 	)
 	{
 		$actions[] = [
-			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_EDIT'),
+			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_EDIT'),
 			'href' => CComponentEngine::MakePathFromTemplate(
 				$urlPathAction,
 				[
@@ -192,7 +195,7 @@ function prepareTaskRowActions($row, $arParams, $arResult)
 	)
 	{
 		$actions[] = [
-			'text' => GetMessageJS('TASKS_TEMPLATES_ROW_ACTION_DELETE'),
+			'text' => Loc::getMessage('TASKS_TEMPLATES_ROW_ACTION_DELETE'),
 			'onclick' => "DeleteTemplate({$row['ID']});",
 		];
 	}
@@ -222,7 +225,7 @@ function prepareTaskTemplateRegular($row, $arParams)
 {
 	if ($row['REPLICATE'] != 'Y')
 	{
-		return GetMessage('TASKS_TEMPLATE_REGULAR_NO');
+		return Loc::getMessage('TASKS_TEMPLATE_REGULAR_NO');
 	}
 
 	return \Bitrix\Tasks\UI\Task\Template::makeReplicationPeriodString($row['REPLICATE_PARAMS']);
@@ -230,59 +233,62 @@ function prepareTaskTemplateRegular($row, $arParams)
 
 function prepareCRM($row, $arParams)
 {
-	$collection = array();
 	if (!array_key_exists('UF_CRM_TASK', $row) || !is_array($row['UF_CRM_TASK']))
 	{
-		return;
+		return '';
 	}
 
 	sort($row['UF_CRM_TASK']);
+
+	$collection = [];
 	foreach ($row['UF_CRM_TASK'] as $value)
 	{
-		$crmElement = explode('_', $value);
-		$type = $crmElement[0];
+		[$type, $id] = explode('_', $value);
 		$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
-		$title = CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
-		$url = CCrmOwnerType::GetShowUrl($typeId, $crmElement[1]);
+		$title = CCrmOwnerType::GetCaption($typeId, $id);
+		$url = CCrmOwnerType::GetShowUrl($typeId, $id);
 
-		if (!isset($collection[$type]))
+		if (!isset($collection[$typeId]))
 		{
-			$collection[$type] = array();
+			$collection[$typeId] = [];
 		}
 
 		if ($title)
 		{
-			$collection[$type][] = '<a href="'.$url.'">'.htmlspecialcharsbx($title).'</a>';
+			$safeTitle = htmlspecialcharsbx($title);
+			$collection[$typeId][] = "<a href=\"{$url}\">{$safeTitle}</a>";
 		}
 	}
 
-	ob_start();
+	$html = [];
 	if ($collection)
 	{
-		echo '<div class="tasks-list-crm-div">';
-		$prevType = null;
-		foreach ($collection as $type => $items)
+		$html[] = '<div class="tasks-list-crm-div">';
+		$previousTypeId = null;
+
+		foreach ($collection as $typeId => $items)
 		{
 			if (empty($items))
 			{
 				continue;
 			}
 
-			echo '<div class="tasks-list-crm-div-wrapper">';
-			if ($type !== $prevType)
+			$html[] = '<div class="tasks-list-crm-div-wrapper">';
+			if ($typeId !== $previousTypeId)
 			{
-				echo '<span class="tasks-list-crm-div-type">'.GetMessage('TASKS_LIST_CRM_TYPE_'.$type).':</span>';
+				$factory = Container::getInstance()->getFactory($typeId);
+				$typeTitle = ($factory ? $factory->getEntityDescription() : '');
+				$html[] = "<span class='tasks-list-crm-div-type'>{$typeTitle}:</span>";
 			}
+			$html[] = implode(', ', $items);
+			$html[] = '</div>';
 
-			$prevType = $type;
-
-			echo implode(', ', $items);
-			echo '</div>';
+			$previousTypeId = $typeId;
 		}
-		echo '</div>';
+		$html[] = '</div>';
 	}
 
-	return ob_get_clean();
+	return implode('', $html);
 }
 
 function prepareUF($fieldName, $row, $arParams)
@@ -292,7 +298,7 @@ function prepareUF($fieldName, $row, $arParams)
 
 	if ($userFieldData['USER_TYPE_ID'] !== 'boolean' && empty($fieldValue) && $fieldValue !== '0')
 	{
-		return GetMessage('TASKS_TEMPLATE_UF_FIELD_BOOLEAN_NOT_PRESENTED');
+		return Loc::getMessage('TASKS_TEMPLATE_UF_FIELD_BOOLEAN_NOT_PRESENTED');
 	}
 
 	if ($fieldName == 'UF_CRM_TASK')
@@ -302,7 +308,7 @@ function prepareUF($fieldName, $row, $arParams)
 
 	if ($userFieldData['USER_TYPE_ID'] == 'boolean')
 	{
-		$fieldValue = (empty($fieldValue)? GetMessage('TASKS_TEMPLATE_UF_FIELD_BOOLEAN_NO') : GetMessage('TASKS_TEMPLATE_UF_FIELD_BOOLEAN_YES'));
+		$fieldValue = (empty($fieldValue)? Loc::getMessage('TASKS_TEMPLATE_UF_FIELD_BOOLEAN_NO') : Loc::getMessage('TASKS_TEMPLATE_UF_FIELD_BOOLEAN_YES'));
 	}
 
 	if (is_array($fieldValue))
@@ -327,7 +333,7 @@ function prepareTaskRowUserBaloonHtml($arParams)
 {
 	if ($arParams['USER_ID'] == 0)
 	{
-		return GetMessageJS('TASKS_TEMPLATES_NO');
+		return Loc::getMessage('TASKS_TEMPLATES_NO');
 	}
 
 	$users = Util\User::getData(array($arParams['USER_ID']));
@@ -416,64 +422,54 @@ function prepareTag($row, $arParams)
 
 function prepareTaskTemplateRow($row, $arParams)
 {
-	$group = SocialNetwork\Group::getData(array($row['GROUP_ID']));
-	$groupName = htmlspecialcharsbx($group[$row['GROUP_ID']]['NAME']);
+	$templateId = $row['ID'];
 
-	$originatorUrl = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_PROFILE'],
-		array("user_id" => $row["CREATED_BY"])
-	);
-	$responsibleUrl = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_USER_PROFILE'],
-		array("user_id" => $row["RESPONSIBLE_ID"])
-	);
+	$groupId = $row['GROUP_ID'];
+	$group = SocialNetwork\Group::getData([$groupId]);
+	$groupName = htmlspecialcharsbx($group[$groupId]['NAME']);
+	$groupUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_GROUP'], ['group_id' => $groupId]);
 
-	$groupUrl = CComponentEngine::MakePathFromTemplate(
-		$arParams['PATH_TO_GROUP'],
-		array("group_id" => $row["GROUP_ID"])
-	);
+	$createdBy = (int)$row['CREATED_BY'];
+	$responsibleId = (int)$row['RESPONSIBLE_ID'];
+	$isForNewUser = ($responsibleId === 0 && (int)$row['TPARAM_TYPE'] === 1);
 
-	$resultRow = array(
-		'ID' => $row['ID'],
+	$resultRow = [
+		'ID' => $templateId,
 		'PARENT_ID' => $row['PARENT_ID'],
 		'TASKS_TEMPLATE_TITLE' => prepareTaskTemplateRowTitle($row, $arParams),
-
-		'TASKS_TEMPLATE_DEADLINE_AFTER' => $row['DEADLINE_AFTER'] > 0 ? GetMessage(
-			'TASKS_TEMPLATE_DEADLINE_AFTER2',
-			[
-				'#AFTER#' => Bitrix\Tasks\UI\Component\TemplateHelper::formatDateAfter($row['MATCH_WORK_TIME'] === 'Y', $row["DEADLINE_AFTER"])
-			]
-		) : GetMessage('TASKS_TEMPLATES_NO'),
-
-		'TASKS_TEMPLATE_CREATED_BY' => prepareTaskRowUserBaloonHtml(
-			array(
-				'PREFIX'           => 'TASKS_TEMPLATE_CREATED_BY_'.$row['ID'],
-				'USER_NAME'        => $arParams['~USER_NAMES'][$row['CREATED_BY']],
-				'USER_PROFILE_URL' => $originatorUrl,
-				'USER_ID'          => $row['CREATED_BY'],
-				'TEMPLATE_ID'      => $row['ID']
-			)
-		),
-		'TASKS_TEMPLATE_RESPONSIBLE_ID' => prepareTaskRowUserBaloonHtml(
-			array(
-				'PREFIX'           => 'TASKS_TEMPLATE_RESPONSIBLE_ID_'.$row['ID'],
-				'USER_NAME'        => $arParams['~USER_NAMES'][$row['RESPONSIBLE_ID']],
-				'USER_PROFILE_URL' => $responsibleUrl,
-				'USER_ID'          => $row['RESPONSIBLE_ID'],
-				'TEMPLATE_ID'      => $row['ID']
-			)
-		),
-		'TASKS_TEMPLATE_GROUP_ID' => '<a href="'.$groupUrl.'" target="_blank">'.$groupName.'</a>',
-		'TASKS_TEMPLATE_REGULAR' => prepareTaskTemplateRegular($row, $arParams),
-		'TASKS_TEMPLATE_FOR_NEW_USER' => $row['RESPONSIBLE_ID'] == 0
-			? GetMessage('TASKS_TEMPLATES_YES')
-			: GetMessage(
-				'TASKS_TEMPLATES_NO'
+		'TASKS_TEMPLATE_DEADLINE_AFTER' =>
+			$row['DEADLINE_AFTER'] > 0
+				? Loc::getMessage(
+					'TASKS_TEMPLATE_DEADLINE_AFTER2',
+					['#AFTER#' => TemplateHelper::formatDateAfter(($row['MATCH_WORK_TIME'] === 'Y'), $row['DEADLINE_AFTER'])]
+				)
+				: Loc::getMessage('TASKS_TEMPLATES_NO')
+		,
+		'TASKS_TEMPLATE_CREATED_BY' => prepareTaskRowUserBaloonHtml([
+			'PREFIX' => "TASKS_TEMPLATE_CREATED_BY_{$templateId}",
+			'USER_NAME' => $arParams['~USER_NAMES'][$createdBy],
+			'USER_PROFILE_URL' => CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_USER_PROFILE'],
+				['user_id' => $createdBy]
 			),
-
-		//		'PRIORITY' => GetMessage('TASKS_PRIORITY_'.$row['PRIORITY']),
+			'USER_ID' => $createdBy,
+			'TEMPLATE_ID' => $templateId,
+		]),
+		'TASKS_TEMPLATE_RESPONSIBLE_ID' => prepareTaskRowUserBaloonHtml([
+			'PREFIX' => "TASKS_TEMPLATE_RESPONSIBLE_ID_{$templateId}",
+			'USER_NAME' => $arParams['~USER_NAMES'][$responsibleId],
+			'USER_PROFILE_URL' => CComponentEngine::MakePathFromTemplate(
+				$arParams['PATH_TO_USER_PROFILE'],
+				['user_id' => $responsibleId]
+			),
+			'USER_ID' => $responsibleId,
+			'TEMPLATE_ID' => $templateId,
+		]),
+		'TASKS_TEMPLATE_GROUP_ID' => "<a href='{$groupUrl}' target='_blank'>{$groupName}</a>",
+		'TASKS_TEMPLATE_REGULAR' => prepareTaskTemplateRegular($row, $arParams),
+		'TASKS_TEMPLATE_FOR_NEW_USER' => Loc::getMessage(('TASKS_TEMPLATES_' . ($isForNewUser ? 'YES' : 'NO'))),
 		'TASKS_TEMPLATE_TAGS' => prepareTag($row, $arParams),
-	);
+	];
 
 	foreach ($arParams['UF'] as $ufName => $ufItem)
 	{
@@ -491,7 +487,7 @@ if (!function_exists('prepareTaskTemplateroupActions'))
 		$snippet = new Grid\Panel\Snippet();
 
 		$actionList = array(
-			array('NAME' => GetMessage('TASKS_TEMPLATE_LIST_CHOOSE_ACTION'), 'VALUE' => 'none')
+			array('NAME' => Loc::getMessage('TASKS_TEMPLATE_LIST_CHOOSE_ACTION'), 'VALUE' => 'none')
 		);
 
 		$applyButton = $snippet->getApplyButton(
@@ -510,7 +506,7 @@ if (!function_exists('prepareTaskTemplateroupActions'))
 		);
 
 		$actionList[] = array(
-			'NAME' => GetMessage('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE'),
+			'NAME' => Loc::getMessage('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE'),
 			'VALUE' => 'delete',
 			'ONCHANGE' => array(
 				array(
@@ -525,7 +521,7 @@ if (!function_exists('prepareTaskTemplateroupActions'))
 					'ITEMS' => array(
 						[
 							"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
-							"TEXT" => GetMessage("TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE"),
+							"TEXT" => Loc::getMessage("TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE"),
 							"VALUE" => "start_call_list",
 							"ONCHANGE" => array(
 								array(

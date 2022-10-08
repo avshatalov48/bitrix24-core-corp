@@ -369,9 +369,6 @@ class CAllCrmQuote
 
 			if (isset($GLOBALS["USER"]) && isset($arFields['COMPANY_ID']) && intval($arFields['COMPANY_ID']) > 0)
 			{
-				if (!class_exists('CUserOptions'))
-					include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 				CUserOptions::SetOption('crm', 'crm_company_search', array('last_selected' => $arFields['COMPANY_ID']));
 			}
 
@@ -381,9 +378,6 @@ class CAllCrmQuote
 				QuoteContactTable::bindContacts($ID, $contactBindings);
 				if (isset($GLOBALS['USER']))
 				{
-					if (!class_exists('CUserOptions'))
-						include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 					CUserOptions::SetOption(
 						'crm',
 						'crm_contact_search',
@@ -1992,6 +1986,9 @@ class CAllCrmQuote
 					'CLOSEDATE' => array(
 						'TYPE' => 'date'
 					),
+					'ACTUAL_DATE' => array(
+						'TYPE' => 'date'
+					),
 					'OPENED' => array(
 						'TYPE' => 'char'
 					),
@@ -2125,6 +2122,7 @@ class CAllCrmQuote
 
 			'BEGINDATE' => array('FIELD' => self::TABLE_ALIAS.'.BEGINDATE', 'TYPE' => 'date'),
 			'CLOSEDATE' => array('FIELD' => self::TABLE_ALIAS.'.CLOSEDATE', 'TYPE' => 'date'),
+			'ACTUAL_DATE' => array('FIELD' => self::TABLE_ALIAS.'.ACTUAL_DATE', 'TYPE' => 'date'),
 
 			'ASSIGNED_BY_ID' => array('FIELD' => self::TABLE_ALIAS.'.ASSIGNED_BY_ID', 'TYPE' => 'int'),
 			'ASSIGNED_BY_LOGIN' => array('FIELD' => 'U.LOGIN', 'TYPE' => 'string', 'FROM' => $assignedByJoin),

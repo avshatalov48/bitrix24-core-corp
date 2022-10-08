@@ -388,7 +388,8 @@ class TmpFile extends Model
 			IO\File::getFileContents($model->getAbsoluteNonCloudPath()),
 			$params['startRange'],
 			$params['endRange'],
-			$params['fileSize']
+			$params['fileSize'],
+			$model->getContentType()
 		);
 		if(!$uploadStatus)
 		{
@@ -420,7 +421,13 @@ class TmpFile extends Model
 
 		if($this->isCloud())
 		{
-			$status = $this->appendContentCloud($fileContent, $params['startRange'], $params['endRange'], $params['fileSize']);
+			$status = $this->appendContentCloud(
+				$fileContent,
+				$params['startRange'],
+				$params['endRange'],
+				$params['fileSize'],
+				$this->getContentType()
+			);
 		}
 		else
 		{
@@ -435,7 +442,7 @@ class TmpFile extends Model
 		return $status;
 	}
 
-	private function appendContentCloud($fileContent, $startRange, $endRange, $fileSize)
+	private function appendContentCloud($fileContent, $startRange, $endRange, $fileSize, string $contentType = null)
 	{
 		$isLastChunk = ($endRange + 1) == $fileSize;
 		$bucket = $this->getBucket();
@@ -463,7 +470,8 @@ class TmpFile extends Model
 		$upload = new CCloudStorageUpload($this->path);
 		if(!$upload->isStarted())
 		{
-			if(!$upload->start($bucket->ID, $fileSize))
+			$contentType = $contentType ?? 'application/octet-stream';
+			if(!$upload->start($bucket->ID, $fileSize, $contentType))
 			{
 				$this->errorCollection->addOne(
 					new Error(

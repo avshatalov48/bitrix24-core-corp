@@ -125,21 +125,14 @@ class OneDriveHandler extends DocumentHandler implements FileCreatable, CloudImp
 		}
 
 		$oauthService = $this->getOAuthService();
-		//this bug. SocServ fill entityOAuth in method getUrl.....
-		$oauthService->getUrl('modal', $this->getScopes());
 		$this->accessToken = $oauthService->getStorageToken();
 
 		return $this;
 	}
 
-	/**
-	 * Returns OAuth service for working with OneDrive.
-	 *
-	 * @return \CSocServLiveIDOAuth|\CSocServAuth
-	 */
-	protected function getOAuthService()
+	protected function getOAuthServiceClass(): string
 	{
-		return new \CSocServLiveIDOAuth($this->userId);
+		return \CSocServLiveIDOAuth::class;
 	}
 
 	/**
@@ -147,7 +140,7 @@ class OneDriveHandler extends DocumentHandler implements FileCreatable, CloudImp
 	 *
 	 * @return array
 	 */
-	protected function getScopes()
+	protected function getScopes(): array
 	{
 		return array(
 			'wl.contacts_skydrive',

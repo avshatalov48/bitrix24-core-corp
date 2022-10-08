@@ -14,6 +14,8 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.common',
 	'ui.forms',
 	'ui.entity-selector',
@@ -24,7 +26,6 @@ Extension::load([
 	'crm.type-model',
 	'main.loader',
 	'ui.layout-form',
-	'ui.design-tokens',
 ]);
 
 /** @var CBitrixComponentTemplate $this */

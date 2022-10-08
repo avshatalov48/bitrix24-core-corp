@@ -142,6 +142,14 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		}
 		// endregion
 
+		foreach ($this->arResult['TABS'] as &$tab)
+		{
+			if (is_array($tab) && isset($tab['id']) && is_string($tab['id']))
+			{
+				$tab['id'] = mb_strtolower($tab['id']);
+			}
+		}
+
 		$initMode = $this->request->get('init_mode');
 		if(!is_string($initMode))
 		{

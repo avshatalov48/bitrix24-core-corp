@@ -26,14 +26,12 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 
 		return [
 			'startReplication' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'stopReplication' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
@@ -89,7 +87,9 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		$templateModel = \Bitrix\Tasks\Access\Model\TemplateModel::createFromId($templateId);
+		$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $templateModel, $templateModel);
+		if (!$isAccess)
 		{
 			$this->addForbiddenError();
 			return [];
@@ -115,7 +115,9 @@ class TasksWidgetReplicationComponent extends TasksBaseComponent
 			return null;
 		}
 
-		if (!TemplateAccessController::can($this->userId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		$templateModel = \Bitrix\Tasks\Access\Model\TemplateModel::createFromId($templateId);
+		$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $templateModel, $templateModel);
+		if (!$isAccess)
 		{
 			$this->addForbiddenError();
 			return [];

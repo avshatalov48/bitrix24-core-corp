@@ -22,7 +22,9 @@ class ContactDuplicateChecker extends DuplicateChecker
 			$secondName = ($processAllFields || in_array('SECOND_NAME', $fieldNames, true)) ? $adapter->getFieldValue('SECOND_NAME', '') : '';
 
 			$criterion = new DuplicatePersonCriterion($lastName, $name, $secondName);
-			$duplicate = $criterion->find(\CCrmOwnerType::Undefined, 20);
+			$criterion->setCategoryId($params->getCategoryId());
+
+			$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined, 20);
 			if($duplicate !== null)
 			{
 				$result[] = $duplicate;

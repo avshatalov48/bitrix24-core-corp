@@ -1,48 +1,19 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-$GLOBALS['INTRANET_TOOLBAR']->Show();
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+$APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 if ($arParams['bAdmin']):
-	$arAbsenceParams = array("MESS" => array(
+	$arAbsenceParams["MESS"] = array(
 		"INTR_ABSENCE_TITLE" => GetMessage("INTR_ABSENCE_TITLE"),
 		"INTR_ABSENCE_BUTTON" => GetMessage("INTR_ABSENCE_BUTTON"),
 		"INTR_CLOSE_BUTTON" => GetMessage("INTR_CLOSE_BUTTON"),
 		"INTR_LOADING" => GetMessage("INTR_LOADING"),
-	));
-	if ($arParams['IBLOCK_CHANGED'])
-	{
-		$arAbsenceParams['IBLOCK_ID'] = $arParams['IBLOCK_ID'];
-	}
-
-	$GLOBALS['INTRANET_TOOLBAR']->AddButton(array(
-		'ONCLICK' => "BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")",
-		"TEXT" => GetMessage('INTR_ABSC_TPL_ADD_ENTRY'),
-		"ICON" => 'add',
-		"SORT" => 1000,
-	));
-	if ($arParams['bAdminX'])
-	{
-		$GLOBALS['INTRANET_TOOLBAR']->AddButton(array(
-			'ONCLICK' => $APPLICATION->GetPopupLink(
-				array(
-					'URL' => '/bitrix/admin/iblock_data_export.php?lang='.LANGUAGE_ID.'&bxpublic=Y',
-					'PARAMS' => array(
-						'height' => 300,
-						'width' => 800
-					),
-					'POST' => array(
-						'STEP' => 2,
-						'IBLOCK_TYPE_ID' => $arParams['IBLOCK_TYPE'],
-						'IBLOCK_ID' => $arParams['IBLOCK_ID'],
-					)
-				)
-			),
-			"TEXT" => GetMessage('INTR_ABSC_TPL_EXPORT_ENTRIES'),
-			"ICON" => 'import-users',
-			"SORT" => 1200,
-		));
-	}
+	);
+	$arAbsenceParams["IBLOCK_ID"] = $arParams['IBLOCK_ID'];
 endif;
 
 $BGCOLORS = array(
@@ -174,8 +145,22 @@ var jsBXCalendarAdmin = {
 endif;
 ?>
 </script>
+
+<?
+if ($arParams['bAdmin'] && $USER->IsAuthorized()):
+	$this->SetViewTarget('pagetitle', 100);?>
+	<span class="webform-small-button webform-small-button-blue webform-small-button-add"
+	   onclick="<?="BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")"?>">
+		<span class="webform-small-button-icon"></span>
+		<span class="webform-small-button-text"><?=GetMessage('INTR_ABSC_TPL_ADD_ENTRY')?></span>
+	</span>
+	<?
+	$this->EndViewTarget();
+endif;
+?>
+
 <div id="bx_calendar_conrol_departments" style="display: none;"><?
 	CIntranetUtils::ShowDepartmentFilter($arResult['UF_DEPARTMENT_field'], true);
 ?>
 </div><div id="bx_calendar_control_datepicker" style="display: none"><input type="hidden" id="bx_goto_date" name="bx_goto_date" value="<?echo ConvertTimeStamp();?>" /><img src="/bitrix/js/main/core/images/calendar-icon.gif" class="calendar-icon" onclick="BX.calendar({node:this, field:'bx_goto_date', bTime: false, callback: jsBXAC.InsertDate});" onmouseover="BX.addClass(this, 'calendar-icon-hover');" onmouseout="BX.removeClass(this, 'calendar-icon-hover');" border="0"/></div>
-<div id="bx_calendar_layout"></div>
+<div id="bx_calendar_layout" style="min-height: 280px;"></div>

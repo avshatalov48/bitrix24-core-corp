@@ -529,6 +529,10 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 		$arData['PARAMS'] = (isset($arData['PARAMS']) && is_array($arData['PARAMS']) ? $arData['PARAMS'] : []);
 
 		$aux = (isset($arData['PARAMS']['AUX']) && $arData['PARAMS']['AUX'] == "Y");
+		$isFileVersionUpdateComment = (
+			isset($arData['PARAMS']['UF_FORUM_MESSAGE_VER'])
+			&& !empty($arData['PARAMS']['UF_FORUM_MESSAGE_VER'])
+		);
 		$messageId  = $arData['MESSAGE_ID'];
 		$strMessage = $arData['PARAMS']['POST_MESSAGE'];
 
@@ -843,7 +847,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			$arData['PARAMS']['IS_PING_COMMENT'] = $isPingComment;
 		}
 
-		if (!$aux || $isPingComment === 'Y')
+		if ((!$aux && !$isFileVersionUpdateComment) || $isPingComment === 'Y')
 		{
 			UserOption::delete($taskId, (int)$messageAuthorId, UserOption\Option::MUTED);
 		}
@@ -927,7 +931,7 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			static::sendNotification($messageData, $arTask, $occurAsUserId, $recipientsIds, $arData);
 		}
 
-		if (!$aux || $isPingComment === 'Y')
+		if ((!$aux && !$isFileVersionUpdateComment) || $isPingComment === 'Y')
 		{
 			self::addToAuditor((int)$messageAuthorId, (int)$taskId);
 		}

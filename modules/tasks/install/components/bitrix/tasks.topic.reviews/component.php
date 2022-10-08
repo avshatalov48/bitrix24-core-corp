@@ -247,7 +247,7 @@ if (
 	|| (isset($_POST['remove_comment']) && ($_POST['remove_comment'] === 'Y'))
 )
 {
-	$path = str_replace(array("\\", "//"), "/", dirname(__FILE__)."/action.php");
+	$path = str_replace(array("\\", "//"), "/", __DIR__."/action.php");
 	include($path);
 	$strErrorMessage = "";
 	foreach ($arError as $res)

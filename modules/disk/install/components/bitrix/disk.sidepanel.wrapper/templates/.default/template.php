@@ -6,7 +6,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 /** @var array $arParams*/
 
 global $APPLICATION;
-CJSCore::Init(array('sidepanel'));
+CJSCore::Init(['sidepanel', 'ui.fonts.opensans']);
 
 ?><!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="<?=LANGUAGE_ID ?>" lang="<?=LANGUAGE_ID ?>">

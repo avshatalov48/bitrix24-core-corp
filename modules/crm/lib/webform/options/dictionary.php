@@ -211,6 +211,11 @@ class Dictionary
 				$scheme[$key] = $value;
 			}
 
+			if ($scheme['mainEntity'] === \CCrmOwnerType::SmartDocument)
+			{
+				continue;
+			}
+
 			$scheme['id'] = $schemeId;
 			$schemes[] = $scheme;
 		}
@@ -233,8 +238,15 @@ class Dictionary
 			'isLoadCategories' => true,
 			'isLoadStages' => true,
 		]);
-		foreach ($typesMap->getTypes() as $type)
+		foreach ($typesMap->getTypesCollection() as $type)
 		{
+			if (
+				in_array($type->getEntityTypeId(), [\CCrmOwnerType::SmartInvoice])
+			)
+			{
+				continue;
+			}
+
 			$categories = [];
 			foreach ($typesMap->getCategories($type->getEntityTypeId()) as $category)
 			{
@@ -252,6 +264,11 @@ class Dictionary
 					'name' => $category->getName(),
 					'stages' => $stages,
 				];
+			}
+
+			if ((int)$type->getEntityTypeId() === \CCrmOwnerType::SmartDocument)
+			{
+				continue;
 			}
 
 			$dynamic[] = [

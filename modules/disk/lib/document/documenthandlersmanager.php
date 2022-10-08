@@ -121,7 +121,7 @@ class DocumentHandlersManager
 		{
 			if ($handler instanceof CloudImportInterface)
 			{
-				if ($this->shouldHideFromUkraine($handler))
+				if ($this->shouldHideByZone($handler))
 				{
 					continue;
 				}
@@ -133,14 +133,9 @@ class DocumentHandlersManager
 		return $list;
 	}
 
-	protected function shouldHideFromUkraine(DocumentHandler $handler): bool
+	protected function getPortalZone(): ?string
 	{
-		if (!($handler instanceof YandexDiskHandler))
-		{
-			return false;
-		}
-
-		$portalPrefix = '';
+		$portalPrefix = null;
 		if (Loader::includeModule('bitrix24'))
 		{
 			$portalPrefix = \CBitrix24::getLicensePrefix();
@@ -150,7 +145,24 @@ class DocumentHandlersManager
 			$portalPrefix = \CIntranetUtils::getPortalZone();
 		}
 
-		return $portalPrefix === 'ua';
+		if (!$portalPrefix)
+		{
+			return null;
+		}
+
+		return $portalPrefix;
+	}
+
+	protected function shouldHideByZone(DocumentHandler $handler): bool
+	{
+		if (!($handler instanceof YandexDiskHandler))
+		{
+			return false;
+		}
+
+		$zone = $this->getPortalZone();
+
+		return !in_array($zone, ['ru', 'kz', 'by'], true);
 	}
 
 	/**

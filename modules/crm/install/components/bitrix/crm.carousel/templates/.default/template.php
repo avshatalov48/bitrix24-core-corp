@@ -4,7 +4,12 @@ if(!(defined('B_PROLOG_INCLUDED') && B_PROLOG_INCLUDED === true)) die();
 use Bitrix\Main\Localization\Loc;
 
 /** @var \CCrmCarouselComponent $component */
-CJSCore::Init(array('popup', 'ajax'));
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'popup',
+	'ajax',
+]);
 
 $guid = $component->getGuid();
 

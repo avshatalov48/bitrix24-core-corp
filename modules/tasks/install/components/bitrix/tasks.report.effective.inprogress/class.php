@@ -131,6 +131,7 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 			SELECT #select#
 			FROM b_tasks as T
 				INNER JOIN b_tasks_member TM ON TM.TASK_ID = T.ID AND TM.TYPE IN ('R', 'A')
+				LEFT JOIN b_sonet_group G ON G.ID = T.GROUP_ID
 			WHERE
 				(
 					(TM.USER_ID = {$userId} AND TM.TYPE = 'R' AND T.CREATED_BY != T.RESPONSIBLE_ID)
@@ -150,8 +151,18 @@ class TasksReportEffectiveInprogressComponent extends TasksReportEffectiveDetail
 		$nav->allowAllRecords(true)->setPageSize($this->getPageSize())->initFromUri();
 		$nav->setRecordCount($count);
 
-		$sql .= "LIMIT ".$nav->getOffset().",".$nav->getLimit();
-		$select = ['ID', 'TITLE', 'DEADLINE', 'CREATED_BY', 'CREATED_DATE', 'CLOSED_DATE', 'STATUS'];
+		$sql .= "LIMIT {$nav->getOffset()},{$nav->getLimit()}";
+		$select = [
+			'T.ID',
+			'T.TITLE',
+			'T.DEADLINE',
+			'T.CREATED_BY',
+			'T.CREATED_DATE',
+			'T.CLOSED_DATE',
+			'T.STATUS',
+			'T.GROUP_ID',
+			'G.NAME AS GROUP_NAME',
+		];
 
 		$tasksList = [];
 		$tasksResult = $connection->query(str_replace('#select#', implode(', ', $select), $sql));

@@ -73,6 +73,11 @@ ChatUserSelector.openDialog = function(dialogId, dialogTitleParams)
 		dialogTitleParams : dialogTitleParams,
 	}, true], 'im.recent');
 
+	BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{
+		dialogId: dialogId,
+		dialogTitleParams,
+	}], 'im.messenger');
+
 	this.close();
 
 	return true;

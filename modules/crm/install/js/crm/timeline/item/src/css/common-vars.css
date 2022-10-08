@@ -1,0 +1,14 @@
+.crm-timeline__card-scope {
+	/*colors*/
+	/*--crm-timeline__card-color-background: var(--ui-color-palette-white-base, #fff);*/
+
+	--crm-timeline__card-color-background: #fff;
+	/*settings*/
+	--crm-timeline__card-border-radius:  var(--ui-border-radius-md, 2px);
+	--crm-timeline__transition-hover: .2s;
+	--crm-timeline__icon-size: 80px;
+	--crm-timeline__logo-background: var(--ui-color-palette-blue-20, rgba(47, 198, 246, .2));
+	/*fonts*/
+	--crm-timeline__font-helvetica: "helvetica neue", arial, sans-serif;
+	--crm-timeline__card-font-title: var(--ui-font-weight-bold, bold) var(--ui-font-size-sm, 13px)/var(--ui-typography-text-sm-line-height, 18px) var(--crm-timeline__font-helvetica);
+}

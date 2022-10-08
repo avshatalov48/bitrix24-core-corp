@@ -1,5 +1,7 @@
 import {Vue} from "ui.vue";
 import {Type} from "main.core";
+
+import "ui.design-tokens";
 import "./timeline.css";
 import {Chart} from "./chart/chart";
 import {Legend} from "./legend/legend";

@@ -44,9 +44,8 @@ export default class ItemDelete extends Item
 		}).then((response) => {
 			if (response.status === 'success')
 			{
-				const grid = BX.Main.gridManager.getInstanceById(GridOptions.getGridId());
-				const row = grid.getRows().getById(this.trackedObjectId);
-				row.remove();
+				const commonGrid = GridOptions.getCommonGrid();
+				commonGrid.removeItemById(this.trackedObjectId);
 			}
 		});
 

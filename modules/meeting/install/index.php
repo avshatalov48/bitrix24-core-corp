@@ -33,7 +33,7 @@ Class meeting extends CModule
 		// Database tables creation
 		if(!$DB->Query("SELECT 'x' FROM b_meeting WHERE 1=0", true))
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/mysql/install.sql");
 		}
 
 		if($this->errors !== false)
@@ -60,7 +60,7 @@ Class meeting extends CModule
 
 		if(!array_key_exists("savedata", $arParams) || $arParams["savedata"] != "Y")
 		{
-			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$this->errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/meeting/install/db/mysql/uninstall.sql");
 
 			if ($this->errors === false && CModule::IncludeModule('forum'))
 			{

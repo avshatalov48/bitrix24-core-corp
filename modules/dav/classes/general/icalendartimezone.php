@@ -134,7 +134,7 @@ class CDavICalendarTimeZone
 
 	public static function GetFormattedServerDateTime($text, $tzid = false, CDavICalendar $calendar = null)
 	{
-		$date = CDavICalendarTimeZone::ParseDateTime($text, $tzid, $calendar);
+		$date = self::ParseDateTime($text, $tzid, $calendar);
 		return date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $date);
 	}
 
@@ -143,35 +143,47 @@ class CDavICalendarTimeZone
 		if (preg_match('/(\+|-)([0-9]{2}):?([0-9]{2})([0-9]{2})?$/', $text, $match))
 			$text = mb_substr($text, 0, -mb_strlen($match[0]));
 
-		$date = CDavICalendarTimeZone::ParseDateTime($text, false, null);
+		$date = self::ParseDateTime($text);
 		return date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $date);
 	}
 
 	public static function ParseDateTime($text, $tzid = false, CDavICalendar $calendar = null)
 	{
 		$arDateParts = explode('T', $text);
+		$notZ = true;
 
-		if (count($arDateParts) != 2 && !empty($text))
+		if (!empty($text) && count($arDateParts) !== 2)
 		{
 			if (!preg_match('/^(\d{4}-?\d{2}-?\d{2})(Z)?$/', $text, $match))
+			{
 				return $text;
+			}
 
 			$arDateParts = explode('T', $match[1].'T000000'.$match[2]);
 		}
 
 		if (($arDate = self::ParseDate($arDateParts[0])) == null)
+		{
 			return $text;
+		}
 		if (($arTime = self::ParseTime($arDateParts[1])) == null)
+		{
 			return $text;
+		}
 
 		$tzoffset = false;
-		if ($arTime["zone"] == 'Local' && $tzid)
+		if ($calendar && $tzid)
+		{
 			$tzoffset = self::GetVTimezoneOffset($arDate, $arTime, $tzid, $calendar);
+			$notZ = false;
+		}
 
 		$result = @mktime($arTime["hours"], $arTime["minutes"], $arTime["seconds"], $arDate["month"], $arDate["mday"], $arDate["year"]);
 
 		if ($tzoffset)
-			$result -= $tzoffset;
+		{
+			$result += $tzoffset;
+		}
 
 /*		if ($arTime["zone"] == 'UTC' || $tzoffset !== false)
 		{
@@ -184,8 +196,10 @@ class CDavICalendarTimeZone
 			$result = @mktime($arTime["hours"], $arTime["minutes"], $arTime["seconds"], $arDate["month"], $arDate["mday"], $arDate["year"]);
 		}*/
 
-		if ($arTime["zone"] != 'Local' || $tzid)
+		if ($notZ && ($arTime["zone"] !== 'Local' || $tzid))
+		{
 			$result += date('Z');
+		}
 
 		return ($result !== false) ? $result : $text;
 	}
@@ -234,7 +248,9 @@ class CDavICalendarTimeZone
 	{
 		$arVTimezones = $calendar->GetComponentsByProperty('VTIMEZONE', 'TZID', $tzid);
 		if (!$arVTimezones)
+		{
 			return false;
+		}
 
 		$arTimeMap = array();
 		foreach ($arVTimezones as $vtimezone)
@@ -284,9 +300,11 @@ class CDavICalendarTimeZone
 	private static function ParseTime($text)
 	{
 		if (!preg_match('/([0-9]{2}):?([0-9]{2}):?([0-9]{2})(Z)?/', $text, $match))
+		{
 			return null;
+		}
 
-		return array("hours" => intval($match[1]), "minutes" => intval($match[2]), "seconds" => intval($match[3]), "zone" => isset($match[4]) ? 'UTC' : 'Local');
+		return array("hours" => (int)$match[1], "minutes" => (int)$match[2], "seconds" => (int)$match[3], "zone" => isset($match[4]) ? 'UTC' : 'Local');
 	}
 
 	private static function ParseUtcOffset($text)

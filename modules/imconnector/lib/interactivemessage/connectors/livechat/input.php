@@ -1,14 +1,13 @@
 <?php
+
 namespace Bitrix\ImConnector\InteractiveMessage\Connectors\Livechat;
 
-use \Bitrix\Main\Web\Json;
-
-use \Bitrix\ImConnector\Error,
-	\Bitrix\ImConnector\Result,
-	\Bitrix\ImConnector\InteractiveMessage;
+use Bitrix\Main\Web\Json;
+use Bitrix\ImConnector\Error;
+use Bitrix\ImConnector\Result;
+use Bitrix\ImConnector\InteractiveMessage;
 
 /**
- * Class Base
  * @package Bitrix\ImConnector\InteractiveMessage\Livechat
  */
 class Input extends InteractiveMessage\Input
@@ -21,7 +20,7 @@ class Input extends InteractiveMessage\Input
 	public function processingCommandKeyboard($command, $data): Result
 	{
 		$result = new Result();
-		if(!empty($data))
+		if (!empty($data))
 		{
 			try
 			{
@@ -34,16 +33,26 @@ class Input extends InteractiveMessage\Input
 		}
 
 		if(
-			$command === 'session'
+			$result->isSuccess()
+			&& $command === self::COMMAND_SESSION
 			&& !empty($data)
-			&& $result->isSuccess()
+			&& (
+				$data['COMMAND'] === self::COMMAND_SESSION_NEW
+				|| $data['COMMAND'] === self::COMMAND_SESSION_CLOSE
+				|| $data['COMMAND'] === self::COMMAND_SESSION_CONTINUE
+			)
 		)
 		{
 			$result = $this->runCommand($data);
 		}
 		else
 		{
-			$result->addError(new Error('Invalid data was transmitted', 'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA', __METHOD__, ['command' => $command, 'data' => $data]));
+			$result->addError(new Error(
+				'Invalid data was transmitted',
+				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+				__METHOD__,
+				['command' => $command, 'data' => $data]
+			));
 		}
 
 		return $result;

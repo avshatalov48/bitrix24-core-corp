@@ -15,7 +15,7 @@ use Bitrix\Main\UI\Extension;
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
-Extension::load('ui.buttons');
+Extension::load(['ui.buttons', 'ui.fonts.opensans']);
 
 $containerId = 'tasks-scrum-epic-' . $arResult['mode'] . '-selector';
 

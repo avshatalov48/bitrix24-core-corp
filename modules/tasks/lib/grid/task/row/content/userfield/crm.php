@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Tasks\Grid\Task\Row\Content\UserField;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Grid\Task\Row\Content\UserField;
 use CCrmOwnerType;
@@ -32,15 +33,15 @@ class Crm extends UserField
 			$title = CCrmOwnerType::GetCaption($typeId, $id);
 			$url = CCrmOwnerType::GetEntityShowPath($typeId, $id);
 
-			if (!isset($collection[$type]))
+			if (!isset($collection[$typeId]))
 			{
-				$collection[$type] = [];
+				$collection[$typeId] = [];
 			}
 
 			if ($title)
 			{
 				$safeTitle = htmlspecialcharsbx($title);
-				$collection[$type][] = "<a href=\"{$url}\">{$safeTitle}</a>";
+				$collection[$typeId][] = "<a href=\"{$url}\">{$safeTitle}</a>";
 			}
 		}
 
@@ -48,9 +49,9 @@ class Crm extends UserField
 		if ($collection)
 		{
 			$html[] = '<div class="tasks-list-crm-div">';
-			$previousType = null;
+			$previousTypeId = null;
 
-			foreach ($collection as $type => $items)
+			foreach ($collection as $typeId => $items)
 			{
 				if (empty($items))
 				{
@@ -58,16 +59,16 @@ class Crm extends UserField
 				}
 
 				$html[] = '<div class="tasks-list-crm-div-wrapper">';
-				if ($type !== $previousType)
+				if ($typeId !== $previousTypeId)
 				{
-					$html[] = '<span class="tasks-list-crm-div-type">'
-						.Loc::getMessage('TASKS_GRID_TASK_ROW_CONTENT_USER_FIELD_CRM_CRM_TYPE_'.$type)
-						.'</span>';
+					$factory = Container::getInstance()->getFactory($typeId);
+					$typeTitle = ($factory ? $factory->getEntityDescription() : '');
+					$html[] = "<span class='tasks-list-crm-div-type'>{$typeTitle}:</span>";
 				}
 				$html[] = implode(', ', $items);
 				$html[] = '</div>';
 
-				$previousType = $type;
+				$previousTypeId = $typeId;
 			}
 
 			$html[] = '</div>';

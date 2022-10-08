@@ -1,9 +1,9 @@
 <?php
 
-define('STOP_STATISTICS', true);
-define('NO_AGENT_CHECK', true);
-define('DisableEventsCheck', true);
-define('BX_SECURITY_SHOW_MESSAGE', true);
+const STOP_STATISTICS = true;
+const NO_AGENT_CHECK = true;
+const DisableEventsCheck = true;
+const BX_SECURITY_SHOW_MESSAGE = true;
 
 
 //extranet users visibility
@@ -12,8 +12,9 @@ const SHOW_FROM_MY_GROUPS = 2;
 const SHOW_NONE = 3;
 const SHOW_FROM_EXACT_GROUP = 4;
 
-/** @var CAllUser $USER */
+/** @var CUser $USER */
 /** @var CCacheManager $CACHE_MANAGER */
+/** @var CMain $APPLICATION */
 
 $SITE_ID = '';
 if (isset($_GET["SITE_ID"]) && is_string($_GET['SITE_ID']))
@@ -22,7 +23,7 @@ if (isset($_GET["SITE_ID"]) && is_string($_GET['SITE_ID']))
 if($SITE_ID != '')
 	define("SITE_ID", $SITE_ID);
 
-$showUsers = (isset($_GET["SHOW_USERS"]) && $_GET["SHOW_USERS"] == "N" ? false : true);
+$showUsers = !(isset($_GET["SHOW_USERS"]) && $_GET["SHOW_USERS"] === "N");
 
 $showExtranetUsers = SHOW_ALL;
 
@@ -62,7 +63,7 @@ CModule::IncludeModule('intranet');
 if (!$USER->IsAuthorized())
 	die;
 
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 
 if (isset($_REQUEST["nt"]))
@@ -79,6 +80,16 @@ $showActiveUsers  = isset($_REQUEST['SHOW_INACTIVE_USERS']) && $_REQUEST['SHOW_I
 $bSubordinateOnly = isset($_REQUEST["S_ONLY"]) && $_REQUEST["S_ONLY"] == "Y";
 $bUseLogin        = !(isset($_REQUEST["sl"]) && $_REQUEST["sl"] == "N");
 $sectionId        = $_REQUEST['SECTION_ID'];
+$showUserProfileUrl = (isset($_REQUEST['SHOW_USER_PROFILE_URL']) && $_REQUEST['SHOW_USER_PROFILE_URL'] === 'Y');
+$userProfileUrlTemplate = '';
+if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
+{
+	$userProfileUrlTemplate = \Bitrix\Socialnetwork\Helper\Path::get('user_profile');
+}
+if ($userProfileUrlTemplate === '')
+{
+	$showUserProfileUrl = false;
+}
 
 $arSubDeps = CIntranetUtils::getSubordinateDepartments($USER->GetID(), true);
 $arManagers = array();
@@ -213,18 +224,36 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 				if ($arRes = $dbUsers->Fetch())
 				{
 					$arFilter['!ID'] = $arRes['ID'];
-					$arUsers[] = array(
+					$userRow = array(
 						'ID'            => $arRes['ID'],
 						'NAME'          => CUser::FormatName($nameTemplate, $arRes, $bUseLogin, false),
 						'LOGIN'         => $arRes['LOGIN'],
 						'EMAIL'         => $arRes['EMAIL'],
-						'WORK_POSITION' => $arRes['WORK_POSITION'] ? $arRes['WORK_POSITION'] : $arRes['PERSONAL_PROFESSION'],
+						'WORK_POSITION' => $arRes['WORK_POSITION'] ?: $arRes['PERSONAL_PROFESSION'],
 						'PHOTO'         => (string)CIntranetUtils::createAvatar($arRes, array()),
 						'HEAD'          => true,
 						'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT'],
 						'SUBORDINATE'   => is_array($arSubDeps) && is_array($arRes['UF_DEPARTMENT']) && array_intersect($arRes['UF_DEPARTMENT'], $arSubDeps) ? 'Y' : 'N',
-						'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N'
+						'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N',
+						'~USER_PROFILE_URL' => '',
+						'USER_PROFILE_URL' => '',
 					);
+					if ($showUserProfileUrl)
+					{
+						$userRow['~USER_PROFILE_URL'] = str_replace(
+							[
+								'#user_id#',
+								'#ID#',
+							],
+							[
+								$arRes['ID'],
+								$arRes['ID'],
+							],
+							$userProfileUrlTemplate
+						);
+						$userRow['USER_PROFILE_URL'] = htmlspecialcharsbx($userRow['~USER_PROFILE_URL']);
+					}
+					$arUsers[] = $userRow;
 				}
 			}
 		}
@@ -240,18 +269,36 @@ if (empty($_REQUEST['GROUP_ID']) && $_REQUEST['MODE'] == 'EMPLOYEES'
 			)
 				continue;
 
-			$arUsers[] = array(
+			$userRow = array(
 				'ID'            => $arRes['ID'],
 				'NAME'          => CUser::FormatName($nameTemplate, $arRes, $bUseLogin, false),
 				'LOGIN'         => $arRes['LOGIN'],
 				'EMAIL'         => $arRes['EMAIL'],
-				'WORK_POSITION' => $arRes['WORK_POSITION'] ? $arRes['WORK_POSITION'] : $arRes['PERSONAL_PROFESSION'],
+				'WORK_POSITION' => $arRes['WORK_POSITION'] ?: $arRes['PERSONAL_PROFESSION'],
 				'PHOTO'         => (string)CIntranetUtils::createAvatar($arRes, array()),
 				'HEAD'          => false,
 				'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT'],
 				'SUBORDINATE'   => is_array($arSubDeps) && is_array($arRes['UF_DEPARTMENT']) && array_intersect($arRes['UF_DEPARTMENT'], $arSubDeps) ? 'Y' : 'N',
-				'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N'
+				'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N',
+				'~USER_PROFILE_URL' => '',
+				'USER_PROFILE_URL' => '',
 			);
+			if ($showUserProfileUrl)
+			{
+				$userRow['~USER_PROFILE_URL'] = str_replace(
+					[
+						'#user_id#',
+						'#ID#',
+					],
+					[
+						$arRes['ID'],
+						$arRes['ID'],
+					],
+					$userProfileUrlTemplate
+				);
+				$userRow['USER_PROFILE_URL'] = htmlspecialcharsbx($userRow['~USER_PROFILE_URL']);
+			}
+			$arUsers[] = $userRow;
 		}
 	}
 
@@ -348,7 +395,7 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 				'%LOGIN' => $search
 			)
 		);
-		
+
 		if ($showActiveUsers == 'Y')
 		{
 			$arFilter['ACTIVE'] = 'Y';
@@ -378,11 +425,11 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 
 		if (
 			(
-				IsModuleInstalled("extranet") 
+				IsModuleInstalled("extranet")
 				&& $showExtranetUsers == SHOW_NONE
 			)
 			|| (
-				IsModuleInstalled("bitrix24") 
+				IsModuleInstalled("bitrix24")
 				&& !IsModuleInstalled("extranet")
 			)
 			|| (
@@ -465,18 +512,36 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 
 		while ($arRes = $dbRes->fetch())
 		{
-			$arUsers[] = array(
+			$userRow = array(
 				'ID' => $arRes['ID'],
 				'NAME' => CUser::FormatName($nameTemplate, $arRes, $bUseLogin, false),
 				'LOGIN' => $arRes['LOGIN'],
 				'EMAIL' => $arRes['EMAIL'],
-				'WORK_POSITION' => $arRes['WORK_POSITION'] ? $arRes['WORK_POSITION'] : $arRes['PERSONAL_PROFESSION'],
+				'WORK_POSITION' => $arRes['WORK_POSITION'] ?: $arRes['PERSONAL_PROFESSION'],
 				'PHOTO' => (string)CIntranetUtils::createAvatar($arRes, array()),
 				'HEAD' => false,
 				'UF_DEPARTMENT' => $arRes['UF_DEPARTMENT'],
 				'SUBORDINATE' => is_array($arSubDeps) && is_array($arRes['UF_DEPARTMENT']) && array_intersect($arRes['UF_DEPARTMENT'], $arSubDeps) ? 'Y' : 'N',
 				'SUPERORDINATE' => in_array($arRes["ID"], $arManagers) ? 'Y' : 'N',
+				'~USER_PROFILE_URL' => '',
+				'USER_PROFILE_URL' => '',
 			);
+			if ($showUserProfileUrl)
+			{
+				$userRow['~USER_PROFILE_URL'] = str_replace(
+					[
+						'#user_id#',
+						'#ID#',
+					],
+					[
+						$arRes['ID'],
+						$arRes['ID'],
+					],
+					$userProfileUrlTemplate
+				);
+				$userRow['USER_PROFILE_URL'] = htmlspecialcharsbx($userRow['~USER_PROFILE_URL']);
+			}
+			$arUsers[] = $userRow;
 		}
 	}
 
@@ -484,4 +549,3 @@ elseif ($_REQUEST['MODE'] == 'SEARCH')
 	echo CUtil::PhpToJsObject(array_values(array_filter($arUsers, array('CIntranetUserSelectorHelper', 'filterViewableUsers'))));
 	die;
 }
-?>

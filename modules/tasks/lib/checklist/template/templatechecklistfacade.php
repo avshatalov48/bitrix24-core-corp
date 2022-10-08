@@ -112,7 +112,9 @@ class TemplateCheckListFacade extends CheckListFacade
 		$items = false;
 		$template = new Template($templateId, $userId);
 
-		if ($template !== null && $template->canRead())
+		$canRead = \Bitrix\Tasks\Access\TemplateAccessController::can((int) $userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_READ, (int) $templateId);
+
+		if ($template !== null && $canRead)
 		{
 			$items = static::getByEntityId($templateId);
 			$items = static::fillActionsForItems($templateId, $userId, $items);
@@ -158,9 +160,9 @@ class TemplateCheckListFacade extends CheckListFacade
 	protected static function fillCommonAccessActions($templateId, $userId)
 	{
 		$actions = array_keys(self::ACTIONS['COMMON']);
-		$template = new Template($templateId, $userId);
+		$canUpdate = \Bitrix\Tasks\Access\TemplateAccessController::can((int) $userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, (int) $templateId);
 
-		static::$commonAccessActions[$templateId][$userId] = array_fill_keys($actions, $template->canUpdate());
+		static::$commonAccessActions[$templateId][$userId] = array_fill_keys($actions, $canUpdate);
 	}
 
 	/**
@@ -172,10 +174,9 @@ class TemplateCheckListFacade extends CheckListFacade
 	protected static function fillItemAccessActions($templateId, $checkList, $userId)
 	{
 		$actions = array_keys(self::ACTIONS['ITEM']);
-		$template = new Template($templateId, $userId);
 		$checkListId = $checkList->getFields()['ID'];
-
-		static::$itemAccessActions[$templateId][$userId][$checkListId] = array_fill_keys($actions, $template->canUpdate());
+		$canUpdate = \Bitrix\Tasks\Access\TemplateAccessController::can((int) $userId, \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_EDIT, (int) $templateId);
+		static::$itemAccessActions[$templateId][$userId][$checkListId] = array_fill_keys($actions, $canUpdate);
 	}
 
 	/**

@@ -1,7 +1,12 @@
 <?php
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
+if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Main\Localization\Loc;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -17,6 +22,7 @@ $activityEditorID = "{$prefix}_editor";
 \Bitrix\Main\UI\Extension::load([
 	'crm.scoringbutton',
 	'crm.conversion',
+	'ui.tour',
 ]);
 
 //region LEGEND
@@ -28,6 +34,14 @@ if(isset($arResult['LEGEND']))
 	</a><?
 	$this->EndViewTarget();
 }
+
+if (isset($arResult['IS_AUTOMATION_DEBUG_ITEM']) && $arResult['IS_AUTOMATION_DEBUG_ITEM'] === 'Y'):
+	$this->SetViewTarget('crm_details_title_prefix');
+	?><span class="crm-details-debug-item">
+		<?= htmlspecialcharsbx(Loc::getMessage('CRM_DEAL_DETAIL_AUTOMATION_DEBUG_ITEM')) ?>
+	</span><?php
+	$this->EndViewTarget();
+endif;
 //endregion
 
 $APPLICATION->IncludeComponent(
@@ -280,6 +294,35 @@ if($arResult['CONVERSION_PERMITTED'] && $arResult['CAN_CONVERT'] && $conversionC
 	</script><?
 endif;
 ?>
+
+<script type="text/javascript">
+	BX.ready(() => {
+		BX.Crm.Deal.DealComponent = new BX.Crm.Deal.DealManager({
+			guid: '<?=CUtil::JSEscape($guid)?>',
+		});
+		<?php if($arResult['WAREHOUSE_CRM_TOUR_DATA']['IS_TOUR_AVAILABLE']): ?>
+		BX.Loc.setMessage(<?=CUtil::PhpToJSObject([
+			'CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TITLE' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TITLE'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TEXT' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_AUTOMATIC_RESERVATION_GUIDE_TEXT'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TITLE' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TITLE'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TEXT' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TEXT'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TITLE' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TITLE'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TEXT' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_ADD_DOCUMENT_GUIDE_TEXT'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE'),
+			'CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT' => Loc::getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT'),
+		])?>);
+
+		const onboardingData = {
+			chain:  Number(<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['CHAIN'])?>),
+			chainStep: Number(<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['STAGE'])?>),
+			successDealGuideIsOver: (<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['SUCCESS_DEAL_GUIDE_IS_OVER'])?> === 'true')
+		};
+		const serviceUrl = '<?='/bitrix/components/bitrix/crm.deal.details/ajax.php?'.bitrix_sessid_get()?>';
+		BX.Crm.Deal.DealComponent.enableOnboardingChain(onboardingData, serviceUrl);
+		<?php endif; ?>
+	});
+</script>
+
 <script type="text/javascript">
 	(function() {
 		var listener = function(e) {
@@ -297,3 +340,10 @@ endif;
 		BX.Event.EventEmitter.subscribe('PaymentDocuments.EntityEditor:changeRealizationDeductedStatus', listener);
 	})();
 </script>
+<?php if ($arResult['ACTIVE_TAB']): ?>
+<script>
+	BX.ready(function () {
+		BX.onCustomEvent('<?= $arResult['GUID'] ?>_click_<?= CUtil::JSEscape($arResult['ACTIVE_TAB']) ?>');
+	});
+</script>
+<?php endif; ?>

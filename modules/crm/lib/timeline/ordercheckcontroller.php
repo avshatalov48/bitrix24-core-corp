@@ -115,8 +115,10 @@ class OrderCheckController extends EntityController
 
 		foreach($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$entityId
+			);
 		}
 	}
 
@@ -141,8 +143,10 @@ class OrderCheckController extends EntityController
 
 		foreach($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$entityId
+			);
 		}
 	}
 
@@ -161,8 +165,10 @@ class OrderCheckController extends EntityController
 
 		foreach($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$entityId
+			);
 		}
 	}
 }

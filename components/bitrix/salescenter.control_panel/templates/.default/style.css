@@ -10,7 +10,8 @@
 
 .salescenter-block-title {
 	color: #000;
-	font: 18px/24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 19px;
 }
 
@@ -49,7 +50,8 @@
 	height: 45px;
 	text-align: center;
 	color: #525c69;
-	font: 13px/14px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -142,7 +144,8 @@
 	text-transform: uppercase;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 8px/14px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 
 .salescenter-item-label-new-text-active {

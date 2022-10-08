@@ -8,6 +8,7 @@ class CacheService
 	const ITEM_TASKS = 'itemTasks';
 	const EPICS = 'epics';
 	const STATS = 'stats';
+	const TEAM_STATS = 'teamStats';
 
 	/** @var \CPHPCache */
 	private $cache;
@@ -15,6 +16,7 @@ class CacheService
 	private $cacheTime;
 	private $cacheId;
 	private $cacheDir;
+	private $rootDir;
 
 	private $map = [
 		CacheService::COMPLETED_SPRINT => [
@@ -37,9 +39,15 @@ class CacheService
 			'dir' => '/tasks/scrum/stats/',
 			'time' => (3600 * 24),
 		],
+		CacheService::TEAM_STATS => [
+			'id' => 'tasks-scrum-team-stats-',
+			'rootDir' => '/tasks/scrum/team-stats/',
+			'dir' => '/tasks/scrum/team-stats/',
+			'time' => (3600 * 24),
+		],
 	];
 
-	public function __construct(int $id, string $typeId)
+	public function __construct(int $id, string $typeId, ?string $extraKey = null)
 	{
 		$this->cache = new \CPHPCache;
 
@@ -51,6 +59,17 @@ class CacheService
 		$this->cacheTime = $this->map[$typeId]['time'];
 		$this->cacheId = $this->map[$typeId]['id'] . $id;
 		$this->cacheDir = $this->map[$typeId]['dir'] . $id;
+
+		if (isset($this->map[$typeId]['rootDir']))
+		{
+			$this->rootDir = $this->map[$typeId]['dir'] . $id;
+		}
+
+		if ($extraKey)
+		{
+			$this->cacheId = $this->cacheId . '-' . $extraKey;
+			$this->cacheDir = $this->cacheDir . '/' . $extraKey;
+		}
 	}
 
 	public function init(): bool
@@ -76,5 +95,13 @@ class CacheService
 	public function clean()
 	{
 		$this->cache->cleanDir($this->cacheDir);
+	}
+
+	public function cleanRoot()
+	{
+		if ($this->rootDir)
+		{
+			$this->cache->cleanDir($this->rootDir);
+		}
 	}
 }

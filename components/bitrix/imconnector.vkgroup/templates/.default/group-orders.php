@@ -25,7 +25,10 @@ Loc::loadMessages(__FILE__);
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_GET_INFO')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTION_INFO', ['#ID#' => $helpDeskCode])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_CONNECTION_INFO_NEW', [
+							'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-vkgroup-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 				<?endif;?>
 			</div>
@@ -146,7 +149,10 @@ Loc::loadMessages(__FILE__);
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_ADDITIONAL_DESCRIPTION', ['#ID#' => $helpDeskCode])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VKGROUP_ORDERS_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+							'#LINK_START#' => '<a href="#" id="imconnector-vkgroup-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 
 					<div class="imconnector-field-box-content-btn">

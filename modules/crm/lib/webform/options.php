@@ -242,7 +242,7 @@ class Options
 	private function convertToFormOptions(array $options)
 	{
 		$views = [];
-		$viewTypes = array_keys($this->getEmbedding()['scripts']);
+		$viewTypes = array_keys($this->getEmbedding()['scripts'] ?? []);
 		$availableOptions = self::getViewOptions();
 		foreach ($options['embedding']['views'] as $viewType => $view)
 		{

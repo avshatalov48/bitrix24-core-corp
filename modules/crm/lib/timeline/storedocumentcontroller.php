@@ -138,11 +138,10 @@ class StoreDocumentController extends EntityController
 
 		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$historyEntryID
 			);
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
 		}
 	}
 
@@ -197,11 +196,10 @@ class StoreDocumentController extends EntityController
 
 		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$historyEntryID
 			);
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
 		}
 	}
 
@@ -295,6 +293,8 @@ class StoreDocumentController extends EntityController
 				$data['ERROR'] = $data['SETTINGS']['ERROR'];
 				$data['ERROR_MESSAGE'] = htmlspecialcharsbx($data['SETTINGS']['ERROR_MESSAGE']);
 			}
+
+			$data['MODIFIED_FIELD'] = $data['FIELD'];
 		}
 
 		return parent::prepareHistoryDataModel($data, $options);

@@ -117,7 +117,8 @@
 	overflow: hidden;
 	padding: 0 17px;
 	margin: 0 4px 0 0;
-	font-family: 'OpenSans-Semibold';
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: 32px;
 	font-size: 13px;
 	color: #404956;
@@ -392,7 +393,8 @@
 
 .automation-base-node-edit {
 	float: right;
-	font-family: "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #1058d0;
 	text-transform: lowercase;
@@ -403,7 +405,8 @@
 	float: left;
 	overflow: hidden;
 	color: #000;
-	font: 16px/22px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-automation-trigger-item-drag .crm-automation-trigger-item-wrapper {
@@ -1014,7 +1017,7 @@
 /*popup styles*/
 
 .crm-automation-popup {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-automation-popup-settings {
@@ -1164,7 +1167,7 @@
 	display: block;
 	width: 100%;
 	resize: vertical;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
 	line-height: 20px;
@@ -1183,7 +1186,7 @@
 	width: 100%;
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	font-size: 14px;
 	border-radius: 2px;
@@ -1276,7 +1279,7 @@
 	line-height: 36px;
 	text-align: center;
 	height: 36px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 16px;
 	color: #555c6d;
 }
@@ -1474,7 +1477,8 @@
 	margin: 14px 0;
 	cursor: pointer;
 	border-radius: 2px;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	outline: none;
 	padding: 0 18px;
@@ -1570,7 +1574,7 @@
 	height: 38px;
 	outline: none;
 	margin: 0 10px 0 0;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2010.97%206.86%22%3E%3Cpolygon%20points%3D%225.49%204.11%201.37%200%200%201.37%204.8%206.17%205.49%206.86%2010.97%201.37%209.6%200%205.49%204.11%22%20fill%3D%22%23535c69%22/%3E%3C/svg%3E');
 	background-position: right 10px center;
 	background-repeat: no-repeat;
@@ -1605,7 +1609,7 @@
 	min-width: 155px;
 	padding: 10px;
 	outline: none;
-	font: 13px "HelveticaNeue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 14px;
 	color: #000000;
 	border: 1px solid #c6cdd3;
@@ -1776,7 +1780,7 @@
 	vertical-align: middle;
 	text-align: center;
 	text-overflow: ellipsis;
-	font: 400 16px/36px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 16px/36px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-automation-popup-settings-lbl {
@@ -1789,7 +1793,8 @@
 	color: #b0b7bd;
 	vertical-align: middle;
 	text-align: right;
-	font: 400 12px/16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin: 5px 30px 0 0;
 }
 

@@ -87,7 +87,7 @@
 	display: flex;
 	flex-direction: column;
 	flex-shrink: 0;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-2xs, 3px);
 	box-sizing: border-box;
 	margin-bottom: 24px;
 	padding: 16px 12px;
@@ -106,11 +106,11 @@
 	z-index: -1;
 	background: var(--tasks_scrum-white_alpha_16);
 	backdrop-filter: blur(28px);
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 }
 
 .tasks-scrum__content.--with-header::before {
-	border-radius: 0 0 3px 3px;
+	border-radius: 0 0 var(--ui-border-radius-xs, 3px) var(--ui-border-radius-xs, 3px);
 }
 
 .tasks-scrum__content .ui-draggable--drop-preview-clone {
@@ -133,7 +133,8 @@
 
 .tasks-scrum__content.--with-header {
 	padding-top: 0;
-	border-top: 5px solid var(--tasks_scrum-blue);
+	/*border-top: 5px solid var(--tasks_scrum-blue);*/
+	border-top: 4px solid var(--tasks_scrum-blue);
 }
 
 .tasks-scrum__content-header {
@@ -159,7 +160,8 @@
 }
 
 .tasks-scrum__title {
-	font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum-white);
 	min-width: 40px;
 	max-width: calc(100% - 22px - 22px - 4px);
@@ -179,8 +181,9 @@
 	display: none;
 	flex-direction: column;
 	align-items: center;
-	font: 14px "OpenSans-Regular", Helvetica, Arial, sans-serif;
-	border-radius: 4px;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	border-radius: var(--ui-border-radius-xs, 3px);
 	box-sizing: border-box;
 	text-align: center;
 	background: var(--tasks_scrum-white_alpha_22);
@@ -223,7 +226,8 @@
 }
 
 .tasks-scrum__content-empty--btn-create {
-	font: 14px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum-white);
 	border-bottom: 1px dashed var(--tasks_scrum-white_alpha_60);
 	transition: .2s;
@@ -348,14 +352,15 @@
 	color: #fff;
 	text-decoration: none;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: auto;
 }
 
 .tasks-scrum-project-side-panel {
 	padding: 0 20px;
 	color: #333;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 20px;
 }
 
@@ -365,7 +370,8 @@
 }
 
 .tasks-scrum-project-side-panel-header-title {
-	font: 24px/30px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 24px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .tasks-scrum-project-side-panel-chart {
@@ -419,7 +425,7 @@
 	height: 100%;
 	background: var(--tasks_scrum-white);
 	transform: rotate(1deg);
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	box-shadow: 0 -1px 1px var(--tasks_scrum-black_alpha_08), 0 1px 1px var(--tasks_scrum-black_alpha_08);
 }
 

@@ -1,4 +1,4 @@
-import {ProductForm} from 'catalog.product-form';
+import {FormMode, ProductForm} from 'catalog.product-form';
 import 'currency';
 import {MixinTemplatesType} from './components/templates-type-mixin';
 import {Runtime, Type, Text} from 'main.core';
@@ -10,14 +10,15 @@ export default {
 	mixins:[MixinTemplatesType],
 	mounted()
 	{
-		if (this.$root.$app.options.templateMode === 'view')
+		const editable = this.$root.$app.options.templateMode !== 'view';
+		const isCompilationMode = this.$root.$app.compilation !== null;
+
+		this.$root.$emit("on-change-editable", editable);
+		if (this.productForm)
 		{
-			this.$root.$emit("on-change-editable", false);
-			if (this.productForm)
-			{
-				this.productForm.setEditable(false);
-			}
+			this.productForm.setEditable(editable, isCompilationMode);
 		}
+
 		if (this.productForm)
 		{
 			const formWrapper = this.$root.$el.querySelector('.salescenter-app-form-wrapper');
@@ -61,7 +62,17 @@ export default {
 				isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
 				fieldHints: this.$root.$app.options.fieldHints,
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
-				showCompilationModeSwitcher: (this.$root.$app.options.showCompilationModeSwitcher === 'Y'),
+				showCompilationModeSwitcher: (
+					this.$root.$app.options.templateMode === 'create'
+					&& this.$root.$app.options.showCompilationModeSwitcher === 'Y'
+					&& this.$root.$app.options.mode === 'payment_delivery'
+				),
+				compilationFormType: this.$root.$app.connector === 'facebook' && this.$root.$app.isAllowedFacebookRegion ? 'FACEBOOK' : 'REGULAR',
+				facebookFailProducts: this.$root.$app.compilation?.FAIL_PRODUCTS,
+				ownerId: this.$root.$app.options.ownerId,
+				ownerTypeId: this.$root.$app.options.ownerTypeId,
+				dialogId: this.$root.$app.options.dialogId,
+				sessionId: this.$root.$app.options.sessionId,
 			}
 		);
 
@@ -78,8 +89,40 @@ export default {
 			'ProductForm:onErrorsChange',
 			Runtime.debounce(this.checkProductErrors, 500, this)
 		);
+
+		EventEmitter.subscribe(
+			this.productForm,
+			'ProductForm:onModeChange',
+			this.onProductFormModeChange
+		);
+
+		EventEmitter.subscribe(
+			this.productForm,
+			'ProductForm:onCompilationCreated',
+			this.onProductFormCompilationCreated.bind(this),
+		);
 	},
 	methods: {
+		onProductFormCompilationCreated(event: BaseEvent)
+		{
+			const data = event.getData();
+			this.$root.$app.newCompilationId = data.compilationId;
+			this.$root.$app.ownerId = data.ownerId;
+			this.$root.$app.options.ownerId = data.ownerId;
+		},
+		onProductFormModeChange(event: BaseEvent)
+		{
+			const mode = event.getData().mode;
+			if (mode === FormMode.COMPILATION || mode === FormMode.COMPILATION_READ_ONLY)
+			{
+				this.$store.commit('orderCreation/enableCompilationMode');
+			}
+			else
+			{
+				this.$store.commit('orderCreation/disableCompilationMode');
+			}
+			this.$emit('on-product-form-mode-change');
+		},
 		onBasketChange(event: BaseEvent)
 		{
 			let processRefreshRequest = (data) => {
@@ -120,6 +163,7 @@ export default {
 				fields.push(item.fields);
 			});
 			this.$store.commit('orderCreation/setBasket', fields);
+			this.changeCompilationProducts();
 
 			if (this.isNeedDisableSubmit())
 			{
@@ -168,6 +212,30 @@ export default {
 						basket: BX.prop.get(data,"items",[])
 					});
 				});
+		},
+		changeCompilationProducts()
+		{
+			const basketItems = this.$store.getters['orderCreation/getBasket']();
+			const productIds = basketItems.map((basketItem) => {
+				return basketItem.skuId;
+			});
+			const compilationId =
+				this.$root.$app.compilation
+					? this.$root.$app.compilation.ID
+					: this.$root.$app.newCompilationId
+			;
+			if (compilationId)
+			{
+				BX.ajax.runAction(
+					'salescenter.compilation.updateCompilation',
+					{
+						data: {
+							compilationId,
+							productIds,
+						},
+					},
+				);
+			}
 		},
 		checkProductErrors()
 		{

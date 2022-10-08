@@ -7,7 +7,6 @@ class CAllDavConnection
 	public static function ParseFields(&$arFields, $id = 0)
 	{
 		global $DB;
-
 		$id = (int)$id;
 		$updateMode = ($id > 0);
 		$addMode = !$updateMode;
@@ -45,6 +44,7 @@ class CAllDavConnection
 		}
 		//throw new CDavArgumentNullException("ACCOUNT_TYPE", GetMessage('DAV_EXP_ACCOUNT_TYPE'));
 
+		// TODO: need to remove dependency from module Calendar
 		if (is_set($arFields, "ACCOUNT_TYPE"))
 		{
 			$arFields["ACCOUNT_TYPE"] = mb_strtolower($arFields["ACCOUNT_TYPE"]);
@@ -52,7 +52,9 @@ class CAllDavConnection
 				'caldav',
 				'ical',
 				\Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_CALDAV,
-				\Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_API
+				\Bitrix\Calendar\Sync\Google\Helper::GOOGLE_ACCOUNT_TYPE_API,
+				\Bitrix\Calendar\Sync\Office365\Helper::ACCOUNT_TYPE,
+				\Bitrix\Calendar\Sync\Icloud\Helper::ACCOUNT_TYPE,
 			], true)
 		)
 			{
@@ -330,4 +332,3 @@ class CDavConnectionResult extends CDBResult
 		return $res;
 	}
 }
-?>

@@ -35,7 +35,8 @@
 .rpa-tile-item-add-text {
 	color: #6d7985;
 	display: block;
-	font: 20px/24px 'OpenSans-Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 20px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	text-align: center;
 	margin-top: 27px;
 	white-space: nowrap;
@@ -104,7 +105,8 @@
 	padding: 0 20px 0 7px;
 	position: relative;
 	text-transform: uppercase;
-	font: 9px/25px 'OpenSans-Semibold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 9px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .rpa-tile-item-button-inner:before {
@@ -124,7 +126,8 @@
 
 .rpa-tile-item-button:hover .rpa-tile-item-button-inner {
 	color: #fff;
-	font-family: 'OpenSans-Semibold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .rpa-tile-item-button:hover .rpa-tile-item-button-inner:before {
@@ -169,14 +172,16 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 	padding: 12px;
-	font: 8px/14px 'OpenSans-Bold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	border-radius: var(--rpa-tile-item-border-radius, var(--ui-border-radius-md));
 	border-top-left-radius: 0;
 	border-top-right-radius: 0;
 }
 
 .rpa-tile-item-text {
-	font: 13px/19px 'OpenSans-Semibold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 13px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	white-space: nowrap;
 	overflow: hidden;
@@ -197,7 +202,8 @@
 	position: absolute;
 	top: -8px;
 	right: -10px;
-	font: 12px/18px 'OpenSans-Semibold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 12px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-align: center;
 }
 

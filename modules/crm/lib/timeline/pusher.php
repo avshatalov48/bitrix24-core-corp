@@ -2,13 +2,13 @@
 
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\Loader;
 
 class Pusher
 {
 	public const ADD_ACTIVITY_PULL_COMMAND = 'timeline_activity_add';
-	public const ADD_LINK_PULL_COMMAND = 'timeline_link_add';
-	public const DELETE_LINK_PULL_COMMAND = 'timeline_link_delete';
+	public const ITEM_ACTION_COMMAND = 'timeline_item_action';
 
 	/** @var \CPullWatch|string|null */
 	protected $pullWatch;
@@ -27,7 +27,7 @@ class Pusher
 	}
 
 	/**
-	 * Send pull event about timeline change
+	 * Send pull event with history data model to timeline
 	 *
 	 * @param int $targetEntityTypeId
 	 * @param int $targetEntityId
@@ -41,23 +41,72 @@ class Pusher
 		array $historyDataModel = null
 	): void
 	{
+		$this->sendPullCommand(
+			$targetEntityTypeId,
+			$targetEntityId,
+			$command,
+			$historyDataModel ? [
+				'HISTORY_ITEM' => $historyDataModel,
+			] : []
+		);
+	}
+
+	/**
+	 * Send pull event with action to timeline
+	 *
+	 * @param int $targetEntityTypeId
+	 * @param int $targetEntityId
+	 * @param string $action
+	 * @param array $actionParams
+	 * @return void
+	 */
+	public function sendPullActionEvent(
+		int $targetEntityTypeId,
+		int $targetEntityId,
+		string $action,
+		array $actionParams = []
+	)
+	{
+		$this->sendPullCommand(
+			$targetEntityTypeId,
+			$targetEntityId,
+			self::ITEM_ACTION_COMMAND,
+			array_merge(
+				['action' => $action],
+				$actionParams
+			)
+		);
+	}
+
+	/**
+	 *  Send pull event to timeline
+	 *
+	 * @param int $targetEntityTypeId
+	 * @param int $targetEntityId
+	 * @param string $command
+	 * @param array $commandParams
+	 * @return void
+	 */
+	protected function sendPullCommand(
+		int $targetEntityTypeId,
+		int $targetEntityId,
+		string $command,
+		array $commandParams = []
+	): void
+	{
 		if (!$this->includePullModule())
 		{
 			return;
 		}
 
 		$pushParams = $this->preparePushParamsByCommand($targetEntityTypeId, $targetEntityId, $command);
-		if (!is_null($historyDataModel))
-		{
-			$pushParams['HISTORY_ITEM'] = $historyDataModel;
-		}
 
 		$this->pullWatch::AddToStack(
 			$pushParams['TAG'],
 			[
 				'module_id' => 'crm',
 				'command' => $command,
-				'params' => $pushParams,
+				'params' => array_merge($pushParams, $commandParams),
 			]
 		);
 	}
@@ -76,6 +125,13 @@ class Pusher
 		}
 
 		return $tag;
+	}
+
+	public function isDetailsPageChannelActive(ItemIdentifier $targetEntityIdentifier): bool
+	{
+		$pushTag = $this->prepareEntityPushTag($targetEntityIdentifier->getEntityTypeId(), $targetEntityIdentifier->getEntityId());
+
+		return \Bitrix\Crm\Integration\PullManager::isPullChannelActiveByTag($pushTag);
 	}
 
 	protected function preparePushParamsByCommand(int $targetEntityTypeId, int $targetEntityId, string $command): array
@@ -98,8 +154,7 @@ class Pusher
 		// events with this commands should be sent to item (deal, quote) details page
 		$itemDetailsCommands = [
 			static::ADD_ACTIVITY_PULL_COMMAND,
-			static::ADD_LINK_PULL_COMMAND,
-			static::DELETE_LINK_PULL_COMMAND,
+			static::ITEM_ACTION_COMMAND,
 		];
 
 		return in_array($command, $itemDetailsCommands, true);

@@ -376,6 +376,7 @@
 		var provider = decodeURIComponent(urlParams.providerClassName).toLowerCase();
 		var templateId = urlParams.templateId;
 		var value = urlParams.value;
+		var sliderWidth = params.hasOwnProperty('sliderWidth') ? params.sliderWidth : null;
 
 		if (!urlParams.hasOwnProperty('documentId'))
 		{
@@ -397,12 +398,12 @@
 							viewUrl = BX.util.add_url_param(viewUrl, {number: previousNumber});
 						}
 
-						BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+						BX.DocumentGenerator.openUrl(viewUrl, loaderPath, sliderWidth);
 					});
 				}
 				else
 				{
-					BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+					BX.DocumentGenerator.openUrl(viewUrl, loaderPath, sliderWidth);
 				}
 			}).catch(function(reason)
 			{
@@ -419,7 +420,7 @@
 		}
 		else
 		{
-			BX.DocumentGenerator.openUrl(viewUrl, loaderPath);
+			BX.DocumentGenerator.openUrl(viewUrl, loaderPath, sliderWidth);
 		}
 	};
 
@@ -480,7 +481,7 @@
 		{
 			if(!BX.type.isNumber(width))
 			{
-				width = 980;
+				width = 810;
 			}
 			BX.SidePanel.Instance.open(viewUrl, {width: width, cacheable: false, loader: loaderPath});
 			var menu = BX.PopupMenu.getCurrentMenu();
@@ -576,6 +577,7 @@
 		this.moduleId = null;
 		this.templatesText = 'Templates';
 		this.documentsText = 'Documents';
+		this.sliderWidth = null;
 		this.fillParameters(params);
 	};
 
@@ -621,6 +623,7 @@
 		this.loaderPath = params.loaderPath || null;
 		this.templateListUrl = params.templateListUrl || null;
 		this.documentUrl = params.documentUrl || null;
+		this.sliderWidth = params.hasOwnProperty('sliderWidth') ? parseInt(params.sliderWidth) : null;
 	};
 
 	/**
@@ -727,12 +730,17 @@
 					analyticsLabel: 'generateDocument',
 					templateCode: response.data.templates[i]['code'],
 				});
+				var docParams = {};
+				if (this.sliderWidth)
+				{
+					docParams.sliderWidth = this.sliderWidth;
+				}
 				this.links.templates[i] = {
 					text: BX.util.htmlspecialchars(response.data.templates[i]['name']),
 					title: BX.util.htmlspecialchars(response.data.templates[i]['name']),
 					onclick: 'BX.DocumentGenerator.Document.onBeforeCreate(' +
 						'\'' + url + '\',' +
-						'{},' +
+						JSON.stringify(docParams) + ',' +
 						'\'' + this.loaderPath + '\',' +
 						'\'' + this.moduleId
 					+ '\')'

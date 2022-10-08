@@ -45,5 +45,14 @@
 
 			}
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-vkgroup-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=8288267');
+				return false;
+			}
+		);
 	});
 })(window);

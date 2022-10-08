@@ -84,7 +84,8 @@
 }
 
 .crm-ml-entity-content-title {
-	font: 28px/34px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 28px/34px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-ml-entity-content-text-notice {
@@ -95,7 +96,8 @@
 }
 
 .crm-ml-entity-content-text {
-	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-ml-entity-content-decs-block {
@@ -149,7 +151,8 @@
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	font-family: 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 46px;
 	line-height: 46px;
 	letter-spacing: -1px;
@@ -246,7 +249,8 @@
 
 .crm-ml-entity-report-title {
 	color: #333;
-	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin: 0 18px 18px;
 }
 
@@ -280,7 +284,7 @@
 
 .crm-ml-entity-report-title-mark {
 	text-transform: uppercase;
-	font: 9px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 9px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: 700;
 	border-radius: 20px;
 	padding: 3px 12px 3px 9px;
@@ -332,7 +336,8 @@
 }
 
 .crm-ml-entity-report-subtitle {
-	font: 18px/24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-ml-entity-report-block-chart, .crm-ml-entity-report-block-event {
@@ -348,18 +353,21 @@
 }
 
 .crm-ml-entity-report-info-detail {
-	font: 18px/24px  'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-ml-entity-report-info-text {
 	color: #828b95;
-	font: 12px/14px  'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 24px;
 }
 
 .crm-ml-entity-report-info-value {
 	color: #333;
-	font: 30px/38px  'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 30px/38px  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin-right: 3px;
 }
 
@@ -449,7 +457,8 @@
 .crm-ml-entity-report-event-name {
 	display: block;
 	color: #333;
-	font: 14px/16px  'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/16px  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	padding-bottom: 5px;
 }
 
@@ -490,7 +499,8 @@
 
 .crm-ml-model-header {
 	margin-bottom: 8px;
-	font: 0/25px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 0/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-ml-model-header span {
@@ -498,7 +508,8 @@
 }
 
 .crm-ml-model-subject {
-	font-family: 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	padding-left: 10px;
 	margin-right: 5px;
 	position: relative;
@@ -549,7 +560,7 @@
 }
 
 .crm-ml-model-description {
-	font: 14px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-ml-model-btn {

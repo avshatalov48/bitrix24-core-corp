@@ -4,7 +4,9 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Context;
 use Bitrix\Tasks\UI;
+use Bitrix\Tasks\Util\Type\DateTime;
 use Bitrix\Tasks\Util\User;
 
 /** @var array $arParams */
@@ -41,10 +43,10 @@ foreach ($dates as $date)
 	$formattedDate = "";
 	if (isset($taskData[$date]) && mb_strlen($taskData[$date]))
 	{
-		$formattedDate = UI::formatDateTime(
-			UI::parseDateTime($taskData[$date]),
-			'^' . UI::getDateTimeFormat()
-		);
+		$culture = Context::getCurrent()->getCulture();
+		$format = "{$culture->getShortDateFormat()} {$culture->getShortTimeFormat()}";
+		$parsed = UI::parseDateTime($taskData[$date]);
+		$formattedDate = FormatDate($format, $parsed);
 	}
 	$arParams['TEMPLATE_DATA'][$date] = $formattedDate;
 }

@@ -59,7 +59,8 @@
 }
 
 .timeman-schedule-form-title-text {
-	font: 16px/23px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 16px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
@@ -165,7 +166,7 @@
 	vertical-align: middle;
 	font-size: 13px;
 	line-height: 32px;
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 5px 4px 0;
 	-webkit-transition: background-color .2s linear;
 	transition: background-color .2s linear;
@@ -184,7 +185,7 @@
 	color: #1069c3;
 	cursor: pointer;
 	display: inline-block;
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 5px 7px 7px 0;
 	font-size: 13px;
 	line-height: 17px;
@@ -364,7 +365,7 @@
 
 .timeman-schedule-form-violation-title-text {
 	color: #535c69;
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 23px;
 	padding-left: 25px;
 	position: relative;
@@ -574,7 +575,7 @@
 	color: #424956;
 	font-size: 15px;
 	line-height: 23px;
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .timeman-schedule-form-limit-item {
@@ -648,7 +649,7 @@
 }
 
 .timeman-schedule-form-worktime-subject-edit input {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	width: initial;
 	min-width: initial;
 	height: initial;
@@ -690,7 +691,8 @@
 }
 
 .timeman-schedule-form-quarter-text {
-	font: 14px/17px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .timeman-schedule-form-quarter-list {
@@ -807,7 +809,8 @@
 }
 
 .timeman-schedule-form-wrap .bx-calendar-name-day {
-	font: 12px/14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #979da5;
 	width: 15px;
 	margin-right: 15px;
@@ -818,7 +821,8 @@
 }
 
 .timeman-schedule-form-wrap .bx-calendar-cell {
-	font: 14px/15px "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #525c69;
 	width: 26px;
 	margin: 2px 2px;
@@ -863,7 +867,8 @@
 
 .timeman-schedule-form-wrap .bx-calendar-top-month {
 	background: none;
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	cursor: auto;
 }
@@ -936,7 +941,7 @@
 	color: #b1b6bc;
 	vertical-align: middle;
 	text-transform: uppercase;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 10px;
 	line-height: 16px;
 }
@@ -1075,7 +1080,7 @@
 	display: inline-block;
 	margin: 0;
 	padding: 0 0 5px;
-	font: normal 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #545c68;
 }
 

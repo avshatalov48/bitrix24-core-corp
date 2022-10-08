@@ -152,7 +152,8 @@
 	background-color: transparent;
 	background-position: center;
 	background-repeat: no-repeat;
-	font: 13px/45px 'OpenSans-Bold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/45px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 	-webkit-transition: background-color .3s, color .3s;
 	-o-transition: background-color .3s, color .3s;
@@ -337,7 +338,8 @@
 .bx-livechat-title {
 	margin: 0 10px 0 0;
 	max-width: 100%;
-	font: 15px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	letter-spacing: -.11px;
 	-o-text-overflow: ellipsis;
@@ -485,7 +487,8 @@
 }
 .bx-livechat-user-name {
 	display: block;
-	font: 18px/18px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/18px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	white-space: nowrap;
 	-o-text-overflow: ellipsis;
@@ -496,7 +499,8 @@
 
 .bx-livechat-user-position {
 	display: block;
-	font: 13px/17px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/17px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	opacity: .6;
 	white-space: nowrap;
@@ -518,26 +522,31 @@
 .bx-livechat-help-title {
 	display: block;
 	margin: 0 0 29px 0;
-	font: 300 26px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 26px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	text-align: center;
 	opacity: .6;
 	width: 100%;
 }
 .bx-livechat-help-title-lg {
-	font: 200 26px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 26px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.27px;
 }
 .bx-livechat-help-title-md {
-	font: 200 24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.25px;
 }
 .bx-livechat-help-title-sm {
-	font: 200 20px/27px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px/27px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.21px;
 }
 .bx-livechat-help-subtitle {
-	font: 14px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .bx-livechat-help-user {
 	display: -webkit-box;
@@ -561,7 +570,8 @@
 	    flex-shrink: 0;
 }
 .bx-livechat-help-user .bx-livechat-user-name {
-	font: 14px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525C69;
 }
 
@@ -720,7 +730,7 @@
 .bx-livechat-logo-name {
 	display: inline-block;
 	margin: 0 2px 0 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #B2B6BD;
 	overflow: hidden;
 	white-space: nowrap;
@@ -846,17 +856,20 @@
 }
 .bx-livechat-alert-title-lg {
 	margin: 0 0 14px 0;
-	font: 300 37px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 37px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	letter-spacing: -.43px;
 }
 .bx-livechat-alert-title-mdl {
 	margin: 14px 0 15px 0;
-	font: 16px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 
 }
 .bx-livechat-alert-title-sm {
 	margin: 23px 0 12px 0;
-	font: 14px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 .bx-livechat-btn-box {
 	margin: 8px 0 15px 0;
@@ -877,7 +890,7 @@
 .bx-livechat-alert-form-title {
 	display: block;
 	margin: 0 0 5px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	opacity: .75;
 }
@@ -903,7 +916,7 @@
 	border: 1px solid #C4C7CB;
 	border-radius: 3px;
 	background: #fff;
-	font: 14px/46px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/46px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	outline: none;
 	-webkit-box-sizing: border-box;
@@ -970,7 +983,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(174,174,174,.8);
 	letter-spacing: -.55px;
 	cursor: pointer;
@@ -986,7 +999,7 @@
 .bx-livechat-alert-link {
 	display: inline-block;
 	margin: 0 0 0 4px;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(174,174,174,.8);
 	text-decoration: underline;
 }
@@ -1078,7 +1091,8 @@
 .bx-livechat-consent-window-title {
 	display: block;
 	margin: 0 0 19px 0;
-	font: 21px/28px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 21px/28px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	text-align: center;
 	letter-spacing: -.41px;
@@ -1092,7 +1106,7 @@
 	border: 1px solid #DEDEDE;
 	border-radius: 3px;
 	background: #FBFBFB;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(0,0,0,.8);
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
@@ -1172,7 +1186,8 @@
 	background-repeat: no-repeat;
 }
 .bx-livechat-mobile-orientation-text {
-	font: 300 24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	letter-spacing: -.23px;
 	opacity: .6;
@@ -1304,7 +1319,7 @@
 .bx-livechat-tooltip-msg {
 	display: inline-block;
 	max-width: 100%;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	-o-text-overflow: ellipsis;
 	   text-overflow: ellipsis;

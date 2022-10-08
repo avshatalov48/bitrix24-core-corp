@@ -45,6 +45,8 @@ return array(
 		'/bitrix/js/crm/entity-editor/js/entity-selector.js',
 	],
 	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'main.polyfill.promise',
 		'ajax',
 		'date',
@@ -71,6 +73,6 @@ return array(
 		'ui.dialogs.messagebox',
 		'crm.entity-editor.field.payment-documents',
 		'crm.entity-editor.field.image',
-		'ui.design-tokens',
+		'crm.placement.detailsearch',
 	]
 );

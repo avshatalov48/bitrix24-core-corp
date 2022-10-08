@@ -64,7 +64,10 @@ class Input extends Base\Input
 			$message['chat']['last_message'] = $lastMessage;
 		}
 
-		if ($params['contentType'] === 'text')
+		if (
+			$params['contentType'] === 'text'
+			|| $params['contentType'] === 'button'
+		)
 		{
 			$message['message']['text'] = $params['text'];
 		}

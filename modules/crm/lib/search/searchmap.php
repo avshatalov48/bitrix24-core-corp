@@ -83,15 +83,14 @@ class SearchMap
 	}
 	public function addUserByID($userID)
 	{
-		$userID = (int)$userID;
-		if($userID <= 0)
+		if((int)$userID <= 0)
 		{
 			return;
 		}
 
-		if(isset(self::$users[$userID]))
+		if(isset(self::$users[(int)$userID]))
 		{
-			$user = self::$users[$userID];
+			$user = self::$users[(int)$userID];
 		}
 		else
 		{

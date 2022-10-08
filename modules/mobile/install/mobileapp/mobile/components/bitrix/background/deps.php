@@ -5,11 +5,11 @@ return [
 		"reload/listeners", // reload vars after reload script
 		"im:chat/uploader", // chat uploader
 		"im:chat/background", // chat background processes (message, reaction, read, .etc)
-		"task/checklist/uploader", // task checklist uploader
-		"task/uploader", // task uploader
-		"task/background", // task background processes (view, .etc)
+		"tasks:task/checklist/uploader", // task checklist uploader
+		"tasks:task/uploader", // task uploader
+		"tasks:task/background", // task background processes (view, .etc)
 		'project/background', // project background processes (view, .etc)
-		"task", // task background processes (view, .etc)
+		"tasks:task", // task background processes (view, .etc)
 		"disk/background", // task background processes (view, .etc)
 		"rest",
 		'livefeed',

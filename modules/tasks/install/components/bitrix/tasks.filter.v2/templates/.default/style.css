@@ -1,6 +1,6 @@
 /*================================ Task list filter ==================================*/
 .task-filter-block .sidebar-block-inner { padding: 10px 5px !important; }
-.task-filter { font: normal normal normal 12px/normal Arial, Helvetica, sans-serif; }
+.task-filter { font: normal normal normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 .task-gantt-filter { width:269px; display:none; background-color: #F0F0F0; padding: 5px 0 8px 0; }
 .task-filter-head { border-bottom: 1px solid #e0e0e0; padding: 0 6px 12px 6px; margin: 0 4px 8px 4px; position: relative;}
 .task-filter-title { font-size: 13px; color: #303030; }
@@ -76,7 +76,7 @@
 
 .task-filter-extra-pages { border-top: 1px solid #e0e0e0; margin: 10px 0 0 0; padding: 10px 0 0 0;}
 
-.task-filter-extra-links { border-top: 1px solid #e0e0e0; margin: 10px 0 0 0; list-style:none; padding:0; font-family:Arial, Helvetica, sans-serif;}
+.task-filter-extra-links { border-top: 1px solid #e0e0e0; margin: 10px 0 0 0; list-style:none; padding:0; font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 .task-filter-extra-links li { display: block; margin: 9px 0 0 15px; padding:0; position:relative;}
 .task-filter-extra-links li a { display:inline-block; color:#606060 !important; text-decoration:underline; font-size: 12px; margin: 0 0 0 23px; vertical-align:middle;}
 .task-filter-extra-links i { display: block; position:absolute; top:0; left:0;  width: 17px; height: 17px; vertical-align:middle;}

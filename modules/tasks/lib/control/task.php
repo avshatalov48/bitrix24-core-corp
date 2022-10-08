@@ -30,6 +30,7 @@ use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\TaskObject;
 use Bitrix\Tasks\Internals\TaskTable;
@@ -162,6 +163,7 @@ class Task
 
 		$this->addToFavorite($fields);
 		$this->setMembers($fields);
+		$this->addParameters($fields);
 		$this->addFiles($fields);
 		$this->setTags($fields);
 		$this->setUserFields($fields);
@@ -245,9 +247,9 @@ class Task
 		}
 
 		$fields = $this->updateTags($fields);
-		$fields = $this->correctDatePlan($fields);
 
 		$fields = $this->onBeforeUpdate($fields);
+		$fields = $this->updateDatePlan($fields);
 
 		try
 		{
@@ -261,6 +263,7 @@ class Task
 		$this->changes = $this->getChanges($fields);
 
 		$this->setMembers($fields);
+		$this->updateParameters($fields);
 		$this->saveFiles($fields);
 		$this->setTags($fields);
 		$this->updateDepends($fields);
@@ -1245,6 +1248,10 @@ class Task
 			'=TASK_ID' => $this->taskId,
 		]);
 
+		TemplateDependenceTable::deleteList([
+			'=DEPENDS_ON_ID' => $this->taskId,
+		]);
+
 		Topic::delete($taskData["FORUM_TOPIC_ID"]);
 		$this->ufManager->Delete(Util\UserField\Task::getEntityCode(), $this->taskId);
 	}
@@ -1329,11 +1336,7 @@ class Task
 	 */
 	private function stopTimer(bool $force = false)
 	{
-		$taskData = $this->sourceTaskData;
-		if (!$taskData)
-		{
-			$taskData = $this->getFullTaskData();
-		}
+		$taskData = $this->getFullTaskData();
 
 		if (!$taskData)
 		{
@@ -1635,6 +1638,7 @@ class Task
 	{
 		$task = $this->getTask();
 		$task->fillMemberList();
+		$task->fillTagList();
 
 		$tagList = $task->getTagList();
 		$tags = [];
@@ -2012,6 +2016,26 @@ class Task
 	/**
 	 * @param array $fields
 	 * @return void
+	 */
+	private function addParameters(array $fields)
+	{
+		$parametes = new Parameter($this->userId, $this->taskId);
+		$parametes->add($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 */
+	private function updateParameters(array $fields)
+	{
+		$parametes = new Parameter($this->userId, $this->taskId);
+		$parametes->update($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
 	 * @throws \Exception
 	 */
 	private function addToFavorite(array $fields): void
@@ -2229,6 +2253,19 @@ class Task
 			}
 		}
 
+		if (
+			isset($fields['END_DATE_PLAN'])
+			&& (string) $fields['END_DATE_PLAN'] === ''
+		)
+		{
+			$fields['DURATION_PLAN'] = 0;
+		}
+
+		$taskData = $this->getFullTaskData() ?? [];
+		$fields = (new TaskFieldHandler($this->userId, $fields, $taskData))
+			->prepareDurationPlanFields()
+			->getFields();
+
 		return $fields;
 	}
 
@@ -2239,19 +2276,6 @@ class Task
 	 */
 	private function correctDatePlan(array $fields): array
 	{
-		if ($this->taskId)
-		{
-			$fields = $this->updateDatePlan($fields);
-
-			if (
-				isset($fields['END_DATE_PLAN'])
-				&& (string) $fields['END_DATE_PLAN'] === ''
-			)
-			{
-				$fields['DURATION_PLAN'] = 0;
-			}
-		}
-
 		if (!$this->needCorrectDatePlan)
 		{
 			return $fields;

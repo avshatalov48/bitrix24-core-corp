@@ -75,7 +75,7 @@
 	padding: 4px 12px;
 	color: #a8adb4;
 	text-decoration: none;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-app-helper-nav-item:hover,
@@ -127,7 +127,8 @@
 	position: absolute;
 	top: 42px;
 	left: 0;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 13px;
 	color: #828b95;
 }
@@ -216,7 +217,7 @@
 
 .salescenter-app-form-text {
 	color: #525c69;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-app-collapse-link-container {
@@ -229,7 +230,7 @@
 	color: #9b9b9b;
 	cursor: pointer;
 	text-decoration: none;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-app-collapse-link-hide,
@@ -237,7 +238,7 @@
 .salescenter-app-collapse-link-pointer-event {
 	display: inline-block;
 	margin: 8px 0 0 1px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #80868e;
 	line-height: 20px;
@@ -322,7 +323,7 @@
 	background-color: #c4f1ff;
 	display: inline-block;
 	color: rgba(82, 92, 105, 0.82);
-	font: bold 7px/10px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 7px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 	text-transform: uppercase;
 	display: -webkit-box;
@@ -348,7 +349,7 @@
 	cursor: pointer;
 	position: relative;
 	transition: all .2s linear;
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-app-add-item-link:hover {
@@ -392,7 +393,7 @@
 	-ms-flex-align: center;
 	align-items: center;
 	justify-content: flex-end;
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	margin-bottom: 5px;
 }
@@ -418,7 +419,8 @@
 }
 
 .salescenter-app-result-grid-total-big {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 21px;
 	color: #525c69;
 }
@@ -496,7 +498,8 @@
 }
 
 .salescenter-title-5 {
-	font-family: "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 17px;
 	margin-bottom: 25px;
 }
@@ -509,7 +512,8 @@
 	min-height: 61px;
 	padding-left: 70px;
 	padding-top: 45px;
-	font: 17px/23px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 17px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	background: no-repeat left top url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2263%22%20height%3D%2258%22%20viewBox%3D%220%200%2063%2058%22%3E%0A%20%20%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20stroke%3D%22%232FC6F6%22%20stroke-width%3D%222%22%20transform%3D%22matrix%28-1%200%200%201%2062%200%29%22%20opacity%3D%22.735%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M1.93041133%2C58.7905093%20C32.289854%2C53.3260973%2048.737543%2C34.3026782%2051.2734784%2C1.72025211%22%20transform%3D%22rotate%284%2026.602%2030.255%29%22/%3E%0A%20%20%20%20%3Cpolyline%20points%3D%2243.58%209.66%2052.965%201.66%2061.58%209.573%22%20transform%3D%22rotate%287%2052.58%205.66%29%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A);
 }
 
@@ -532,7 +536,8 @@
 	bottom: 10px;
 	right: 20px;
 	color: #525c69;
-	font: 12px/22px "OpenSans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	vertical-align: middle;
 	z-index: 310;
 	min-height: 22px;
@@ -589,7 +594,8 @@
 .salescenter-app-sidebar .salescenter-app-sidebar-menu-active .ui-sidepanel-menu-link .ui-sidepanel-menu-link-text {
 	border-radius: 18px;
 	background-color: rgba(94, 102, 117, .76);
-	font: 15px/25px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #fff;
 	padding: 0 11px;
 }
@@ -640,7 +646,8 @@
 
 .salescenter-app-banner-title {
 	color: #2066b0;
-	font: 14px/20px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	padding-bottom: 15px;
 	border-bottom: 1px solid rgba(82, 92, 105, .06);
@@ -725,7 +732,8 @@
 
 .salescenter-app-payment-by-sms-title {
 	padding: 7px 0 25px 7px;
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 22px;
 	color: #333;
 	line-height: 28px;
@@ -885,7 +893,8 @@
 	position: relative;
 	z-index: 9;
 	text-align: center;
-	font: 16px/31px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 16px/31px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 }
 
@@ -894,7 +903,8 @@
 	position: relative;
 	padding: 0 1px 17px 1px;
 	border-bottom: 1px solid rgba(82, 92, 105, .1);
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 18px;
 	color: #333;
 	transition: .2s;
@@ -943,7 +953,7 @@
 	float: right;
 	height: 20px;
 	margin-left: 30px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #80868e;
 	line-height: 24px;
@@ -1097,7 +1107,7 @@
 .salescenter-app-payment-by-sms-item-container-sms-user-name {
 	display: block;
 	text-align: center;
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 10px;
 	color: #969ba2;
 }
@@ -1143,7 +1153,7 @@
 	padding: 13px 17px;
 	background: #ddf4fd;
 	border-radius: 20px;
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #0c0c0c;
 	line-height: 20px;
@@ -1185,7 +1195,7 @@
 	clear: both;
 	display: block;
 	padding: 3px 17px;
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	color: rgba(128, 134, 142, .7);
 	line-height: 16px;
@@ -1199,7 +1209,7 @@
 }
 
 .salescenter-app-payment-by-sms-item-container-sms-content-info select {
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	/*color: rgba(128,134,142,1);*/
 	color: #0b66c3;
@@ -1272,7 +1282,8 @@
 
 .salescenter-app-payment-by-sms-item-container-payment-item-added-text {
 	opacity: .64;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 13px;
 	color: #525c69;
 	transition: .1s;
@@ -1283,7 +1294,8 @@
 }
 
 .salescenter-app-payment-by-sms-item-container-payment-item-title-text {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #525c69;
 	transition: .1s;
@@ -1346,7 +1358,7 @@
 .salescenter-app-payment-by-sms-item-container-payment-item-text-add:hover,
 .salescenter-app-payment-by-sms-item-container-payment-title-item-text {
 	display: inline-block;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 	border-bottom: 1px dashed rgba(130, 139, 149, .4);
@@ -1522,7 +1534,8 @@
 	position: relative;
 	margin: -3px 13px 0 0;
 	display: inline-block;
-	font: 23px/25px "OpenSans-Semibold", Helvetica, Arial, sans-serif;
+	font: 23px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .salescenter-app-payment-by-sms-timeline-content-price:before {
@@ -1530,12 +1543,13 @@
 }
 
 .salescenter-app-payment-by-sms-timeline-content-price-cur {
-	font-family: 'rubleBitrix', 'OpenSans', sans-serif;
+	font-family: 'rubleBitrix', var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	opacity: .8;
 }
 
 .salescenter-app-payment-by-sms-timeline-content-text-strong {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	margin-right: 12px;
 }
 
@@ -1759,7 +1773,7 @@
 }
 
 .salescenter-app-ctl-label-text-link select {
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	/* color: rgba(128,134,142,1); */
 	color: #0b66c3;
@@ -1802,7 +1816,7 @@
 	white-space: nowrap;
 	overflow: hidden;
 	padding: 0 5px 0 3px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: rgba(82, 92, 105, .5);
 	border: 1px solid #c6cdd3;
@@ -1888,7 +1902,7 @@
 	-webkit-transition: all .2s linear;
 	-o-transition: all .2s linear;
 	transition: all .2s linear;
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-app-payment-by-sms-item-container-alert a:hover {
@@ -1901,7 +1915,8 @@
 }
 
 .salescenter-app-payment-by-sms-item-container-alert-config {
-	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-transform: uppercase;
 	font-size: 12px;
 	color: #535c69;
@@ -2103,7 +2118,7 @@
 
 .salescenter-app-payment-side-table {
 	width: 100%;
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -2163,14 +2178,14 @@
 .salescenter-delivery-selector-text-light {
 	display: block;
 	margin-bottom: 3px;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	opacity: .5;
 }
 
 .salescenter-delivery-selector-text-dark {
 	display: block;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -2201,7 +2216,8 @@
 .salescenter-app-order-selector {
 	width: 100%;
 	font-size: 14px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: normal;
 	color: #828a94;
 	margin: -20px 0 15px 7px;
@@ -2256,7 +2272,7 @@
 }
 
 .salescenter-app-payment-item-container-document-selector-title-button {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 	line-height: 20px;
@@ -2268,7 +2284,7 @@
 .salescenter-app-payment-item-container-document-selector-title-sign {
 	display: flex;
 	align-items: center;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	text-decoration: none;
 	color: #828b95;
@@ -2291,4 +2307,24 @@
 
 .salescenter-app-payment-item-container-document-selector-title-sign {
 	border-bottom: 1px dashed rgba(130, 139, 149, 0.4);
+}
+
+.salescenter-app-catalog-facebook-connection-popup .salescenter-app-catalog-facebook-connection-popup--container {
+	display: flex;
+	flex-direction: column;
+	padding: 0 3px 4px 3px;
+}
+
+.salescenter-app-catalog-facebook-connection-popup .salescenter-app-catalog-facebook-connection-popup--title {
+	order: -1;
+	font: var(--ui-font-weight-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: #535C69;
+	text-align: center;
+}
+
+.salescenter-app-catalog-facebook-connection-popup .salescenter-app-catalog-facebook-connection-popup--button-container {
+	margin-top: 15px;
+	padding-top: 15px;
+	border-top: 1px solid rgba(82, 92, 105, .1);
+	text-align: center;
 }

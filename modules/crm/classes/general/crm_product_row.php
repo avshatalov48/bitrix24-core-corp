@@ -138,7 +138,7 @@ class CAllCrmProductRow
 			}
 		}
 
-		$arFields['TAX_RATE'] = isset($arFields['TAX_RATE']) ? round(doubleval($arFields['TAX_RATE']), 2) : 0;
+		$arFields['TAX_RATE'] = isset($arFields['TAX_RATE']) ? round(doubleval($arFields['TAX_RATE']), 2) : null;
 		$arFields['TAX_INCLUDED'] = isset($arFields['TAX_INCLUDED']) && mb_strtoupper($arFields['TAX_INCLUDED']) === 'Y' ? 'Y' : 'N';
 		$arFields['CUSTOMIZED'] = isset($arFields['CUSTOMIZED']) && mb_strtoupper($arFields['CUSTOMIZED']) === 'Y' ? 'Y' : 'N';
 
@@ -457,6 +457,7 @@ class CAllCrmProductRow
 			'MEASURE_CODE' => array('FIELD' => 'PR.MEASURE_CODE', 'TYPE' => 'int'),
 			'MEASURE_NAME' => array('FIELD' => 'PR.MEASURE_NAME', 'TYPE' => 'string'),
 			'SORT' => array('FIELD' => 'PR.SORT', 'TYPE' => 'int'),
+			'XML_ID' => array('FIELD' => 'PR.XML_ID', 'TYPE' => 'string'),
 		);
 	}
 
@@ -692,7 +693,7 @@ class CAllCrmProductRow
 			$ary['DISCOUNT_RATE'] = isset($ary['DISCOUNT_RATE']) ? round((double)$ary['DISCOUNT_RATE'], 2) : 0.0;
 			$ary['DISCOUNT_SUM'] = isset($ary['DISCOUNT_SUM']) ? round((double)$ary['DISCOUNT_SUM'], 2) : 0.0;
 
-			$ary['TAX_RATE'] = isset($ary['TAX_RATE']) ? round((double)$ary['TAX_RATE'], 2) : 0.0;
+			$ary['TAX_RATE'] = isset($ary['TAX_RATE']) ? round((double)$ary['TAX_RATE'], 2) : null;
 			$ary['TAX_INCLUDED'] = isset($ary['TAX_INCLUDED']) ? $ary['TAX_INCLUDED'] : 'N';
 			$ary['CUSTOMIZED'] = isset($ary['CUSTOMIZED']) ? $ary['CUSTOMIZED'] : 'N';
 
@@ -931,6 +932,15 @@ class CAllCrmProductRow
 				'SORT' => $arRow['SORT'],
 			);
 
+			if(isset($arRow['XML_ID']))
+			{
+				$safeRow['XML_ID'] = $arRow['XML_ID'];
+			}
+			else
+			{
+				$safeRow['XML_ID'] = $products[$rowID]['XML_ID'] ?? false;
+			}
+
 			if(isset($prices['PRICE_ACCOUNT']))
 			{
 				$safeRow['PRICE_ACCOUNT'] = $prices['PRICE_ACCOUNT'];
@@ -1037,7 +1047,7 @@ class CAllCrmProductRow
 		$result['PRICE'] = isset($product['PRICE']) ? round((double)$product['PRICE'], 2) : 0.0;
 		$result['PRICE_EXCLUSIVE'] = isset($product['PRICE_EXCLUSIVE']) ? round((double)$product['PRICE_EXCLUSIVE'], 2) : 0.0;
 		$result['QUANTITY'] = isset($product['QUANTITY']) ? round((double)$product['QUANTITY'], 4) : 1;
-		$result['TAX_RATE'] = isset($product['TAX_RATE']) ? round((double)$product['TAX_RATE'], 2) : 0.0;
+		$result['TAX_RATE'] = isset($product['TAX_RATE']) ? round((double)$product['TAX_RATE'], 2) : null;
 		$result['TAX_INCLUDED'] = isset($product['TAX_INCLUDED']) ? ($product['TAX_INCLUDED'] === 'Y' ? 'Y' : 'N') : 'N';
 		$result['DISCOUNT_TYPE_ID'] = isset($product['DISCOUNT_TYPE_ID']) ? intval($product['DISCOUNT_TYPE_ID']) : 0;
 
@@ -1149,6 +1159,22 @@ class CAllCrmProductRow
 
 	protected static function NeedForUpdate(array $original, array $modified)
 	{
+		if (array_key_exists('TAX_RATE', $modified))
+		{
+			$originalTaxRate = $original['TAX_RATE'];
+			$modifiedTaxRate = $modified['TAX_RATE'];
+			if ($modifiedTaxRate !== null && $originalTaxRate !== null)
+			{
+				$modifiedTaxRate = (float)$modifiedTaxRate;
+				$originalTaxRate = (float)$originalTaxRate;
+			}
+
+			if ($modifiedTaxRate !== $originalTaxRate)
+			{
+				return true;
+			}
+		}
+
 		return(
 			isset($modified['PRODUCT_ID']) && $modified['PRODUCT_ID'] != $original['PRODUCT_ID'] ||
 			isset($modified['PRODUCT_NAME']) && $modified['PRODUCT_NAME'] != $original['PRODUCT_NAME'] ||
@@ -1161,7 +1187,6 @@ class CAllCrmProductRow
 			isset($modified['DISCOUNT_TYPE_ID']) && $modified['DISCOUNT_TYPE_ID'] != $original['DISCOUNT_TYPE_ID'] ||
 			isset($modified['DISCOUNT_RATE']) && $modified['DISCOUNT_RATE'] != $original['DISCOUNT_RATE'] ||
 			isset($modified['DISCOUNT_SUM']) && $modified['DISCOUNT_SUM'] != $original['DISCOUNT_SUM'] ||
-			isset($modified['TAX_RATE']) && $modified['TAX_RATE'] != $original['TAX_RATE'] ||
 			isset($modified['TAX_INCLUDED']) && $modified['TAX_INCLUDED'] != $original['TAX_INCLUDED'] ||
 			isset($modified['CUSTOMIZED']) && $modified['CUSTOMIZED'] != $original['CUSTOMIZED'] ||
 			isset($modified['MEASURE_CODE']) && $modified['MEASURE_CODE'] != $original['MEASURE_CODE'] ||
@@ -1445,8 +1470,17 @@ class CAllCrmProductRow
 			}
 			unset($discountSum, $presentDiscountSum);
 
-			$taxRate = round(doubleval($arRow['TAX_RATE']), 2);
-			$presentTaxRate = round(doubleval($arPresentRow['TAX_RATE']), 2);
+			$taxRate = 
+				isset($arRow['TAX_RATE'])
+					? round((double)($arRow['TAX_RATE']), 2)
+					: null
+			;
+
+			$presentTaxRate =
+				isset($arPresentRow['TAX_RATE'])
+					? round((double)($arPresentRow['TAX_RATE']), 2)
+					: null
+			;
 			if($presentTaxRate !== $taxRate)
 			{
 				// Product  tax was changed
@@ -1544,7 +1578,7 @@ class CAllCrmProductRow
 			$arResult['DISCOUNT_RATE'] = isset($arResult['DISCOUNT_RATE']) ? round(doubleval($arResult['DISCOUNT_RATE']), 2) : 0.0;
 			$arResult['DISCOUNT_SUM'] = isset($arResult['DISCOUNT_SUM']) ? round(doubleval($arResult['DISCOUNT_SUM']), 2) : 0.0;
 
-			$arResult['TAX_RATE'] = isset($arResult['TAX_RATE']) ? round(doubleval($arResult['TAX_RATE']), 2) : 0.0;
+			$arResult['TAX_RATE'] = isset($arResult['TAX_RATE']) ? round(doubleval($arResult['TAX_RATE']), 2) : null;
 			$arResult['TAX_INCLUDED'] = isset($arResult['TAX_INCLUDED']) ? $arResult['DISCOUNT_SUM'] : 'N';
 			$arResult['CUSTOMIZED'] = isset($arResult['CUSTOMIZED']) ? $arResult['CUSTOMIZED'] : 'N';
 

@@ -18,7 +18,16 @@ if (
 	return;
 }
 
-CUtil::InitJSCore(array('popup', 'tooltip', 'ajax', 'date', 'tasks_util_query', 'socnetlogdest', 'CJSTask'));
+\Bitrix\Main\UI\Extension::load([
+	'popup',
+	'tooltip',
+	'ajax',
+	'date',
+	'tasks_util_query',
+	'socnetlogdest',
+	'CJSTask',
+	'ui.fonts.opensans',
+]);
 
 $taskListUserOpts = CUserOptions::GetOption('tasks', 'task_list');
 $taskListGlobalOpts = array(

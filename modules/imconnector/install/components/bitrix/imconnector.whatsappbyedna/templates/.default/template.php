@@ -172,10 +172,10 @@ else
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage(
-							'IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP',
-							['#ID#' => $arResult['HELPDESK_CODE']]
-						)?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP_NEW', [
+							'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-whatsappbyedna-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 					<?php
 				}

@@ -123,12 +123,12 @@
 }
 .crm-carousel-item-title-element {
 	display: inline-block;
-	font: bold 16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 }
 .crm-carousel-item-description-element {
 	display: inline-block;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 .crm-carousel-item-title-icon {
@@ -178,7 +178,7 @@
 }
 .crm-carousel-popup-close-text-item {
 	display: inline-block;
-	font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 /* END OF POPUP */

@@ -2,13 +2,14 @@
 
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\EntityPreset;
 use Bitrix\Crm\EntityRequisite;
+use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\StatusTable;
 
 class CCrmComponentHelper
 {
-	private static $USER_NAME_FORMATS = null;
 	public static function TrimZeroTime($str)
 	{
 		$str = trim($str);
@@ -473,7 +474,7 @@ class CCrmComponentHelper
 					'componentData' => [
 						'template' => '',
 						'contextId' => "{$entityTypeName}_{$entityId}_EVENT",
-						'params' => [
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'AJAX_OPTION_ADDITIONAL' => "{$entityTypeName}_{$entityId}_EVENT",
 							'ENTITY_TYPE' => $entityTypeName,
 							'ENTITY_ID' => $entityId,
@@ -483,7 +484,7 @@ class CCrmComponentHelper
 							'SHOW_INTERNAL_FILTER' => 'Y',
 							'PRESERVE_HISTORY' => true,
 							'NAME_TEMPLATE' => $result['NAME_TEMPLATE']
-						]
+						], 'crm.event.view')
 					]
 				];
 			}
@@ -494,6 +495,23 @@ class CCrmComponentHelper
 		}
 
 		return $tabParams;
+	}
+
+	/**
+	 * Method allows detecting active item for "bitrix:crm.control_panel"
+	 *
+	 * @param string          $entityName Entity name (CONTACT|COMPANY or custom value)
+	 * @param int|string|null $categoryId Category ID
+	 *
+	 * @return string
+	 */
+	public static function getMenuActiveItemId(string $entityName, $categoryId): string
+	{
+		$categoryId = isset($categoryId) ? (int)$categoryId : 0;
+
+		return $categoryId > 0
+			? "{$entityName}_C{$categoryId}"
+			: $entityName;
 	}
 
 	/**
@@ -1271,25 +1289,53 @@ class CCrmInstantEditorHelper
 		return $result;
 	}
 
-	public static function prepareRequisitesPresetList($defaultPresetId)
+	public static function prepareRequisitesPresetList($defaultPresetId): array
 	{
 		$result = [];
 		$propertyTypeByCountry = [];
-		$list = \Bitrix\Crm\EntityPreset::getListForRequisiteEntityEditor();
+		$list = EntityPreset::getListForRequisiteEntityEditor();
 		foreach ($list as $item)
 		{
+			$countryId = (int)$item['COUNTRY_ID'];
 			$preset = [
 				'NAME' => $item['NAME'],
 				'VALUE' => $item['ID'],
 				'IS_DEFAULT' => ($defaultPresetId == $item['ID'])
 			];
-			if (!isset($propertyTypeByCountry[$item['COUNTRY_ID']]))
+			if (!isset($propertyTypeByCountry[$countryId]))
 			{
-				$propertyTypeByCountry[$item['COUNTRY_ID']] = \Bitrix\Crm\Integration\ClientResolver::getPropertyTypeByCountry((int)$item['COUNTRY_ID']);
+				$propertyValue = ClientResolver::getClientResolverPropertyWithPlacements($countryId);
+				$propertyTypeByCountry[$countryId] = $propertyValue;
 			}
-			$preset['CLIENT_RESOLVER_PROP'] = $propertyTypeByCountry[$item['COUNTRY_ID']];
+			$preset['CLIENT_RESOLVER_PROP'] = $propertyTypeByCountry[$countryId];
 			$result[] = $preset;
 		}
+
 		return $result;
+	}
+
+	public static function signComponentParams(array $params, string $componentName): string
+	{
+		$signer = new \Bitrix\Main\Security\Sign\Signer;
+
+		return $signer->sign(base64_encode(serialize($params)), 'signed_' . $componentName);
+	}
+
+	public static function unsignComponentParams(string $params, string $componentName): ?array
+	{
+		$signer = new \Bitrix\Main\Security\Sign\Signer;
+		try
+		{
+			return (array)unserialize(
+				base64_decode(
+					$signer->unsign($params, 'signed_' . $componentName)
+				),
+				['allowed_classes' => false]
+			);
+		}
+		catch (\Bitrix\Main\Security\Sign\BadSignatureException $e)
+		{
+			return null;
+		}
 	}
 }

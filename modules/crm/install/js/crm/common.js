@@ -3417,9 +3417,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		ordershipment: 16,
 		orderpayment: 17,
 		smartinvoice: 31,
-		document: 12,
 		storeDocument: 33,
 		shipmentDocument: 34,
+		smartdocument: 36,
+		document: 12
 	};
 	BX.CrmEntityType.names =
 	{
@@ -3438,7 +3439,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		orderpayment: "ORDER_PAYMENT",
 		ordercheck: "ORDER_CHECK",
 		smartinvoice: "SMART_INVOICE",
-		dynamic: "DYNAMIC"
+		dynamic: "DYNAMIC",
+		smartdocument: "SMART_DOCUMENT"
 	};
 	BX.CrmEntityType.abbreviations =
 	{
@@ -3452,7 +3454,8 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		order: "O",
 		ordershipment: "OS",
 		orderpayment: "OP",
-		smartinvoice: "SI"
+		smartinvoice: "SI",
+		smartdocument: "DO"
 	};
 	BX.CrmEntityType.isDefined = function(typeId)
 	{
@@ -3534,6 +3537,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		{
 			return BX.CrmEntityType.names.smartinvoice;
 		}
+		else if(typeId === BX.CrmEntityType.enumeration.smartdocument)
+		{
+			return BX.CrmEntityType.names.smartdocument;
+		}
 		else if (BX.CrmEntityType.isDynamicTypeByTypeId(typeId))
 		{
 			return BX.CrmEntityType.getDynamicTypeName(typeId);
@@ -3597,6 +3604,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		else if(name === BX.CrmEntityType.names.smartinvoice)
 		{
 			return this.enumeration.smartinvoice;
+		}
+		else if(name === BX.CrmEntityType.names.smartdocument)
+		{
+			return this.enumeration.smartdocument;
 		}
 		else if (BX.CrmEntityType.isDynamicTypeByName(name))
 		{
@@ -3677,6 +3688,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 		return (
 			typeId === this.enumeration.quote
 			|| typeId === this.enumeration.smartinvoice
+			|| typeId === this.enumeration.smartdocument
 			|| this.isDynamicTypeByTypeId(typeId)
 		);
 	};
@@ -3700,6 +3712,7 @@ if(typeof(BX.CrmEntityType) === "undefined")
 
 		return (
 			typeId === BX.CrmEntityType.enumeration.smartinvoice
+			|| typeId === BX.CrmEntityType.enumeration.smartdocument
 			|| BX.CrmEntityType.isDynamicTypeByTypeId(typeId)
 		);
 	}
@@ -3708,6 +3721,10 @@ if(typeof(BX.CrmEntityType) === "undefined")
 	{
 		name = String(name);
 		if (name === BX.CrmEntityType.names.smartinvoice)
+		{
+			return true;
+		}
+		if (name === BX.CrmEntityType.names.smartdocument)
 		{
 			return true;
 		}

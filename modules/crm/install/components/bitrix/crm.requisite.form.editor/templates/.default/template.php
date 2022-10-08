@@ -6,6 +6,11 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CBitrixComponentTemplate $this */
 /** @var \CCrmRequisiteFormEditorComponent $component */
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/requisite.js');
 

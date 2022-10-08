@@ -14,6 +14,12 @@ use \Bitrix\Main\Localization\Loc;
 /** @var CBitrixComponent $component */
 
 Loc::loadMessages(__FILE__);
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 ?>
 <?if(empty($arResult['RELOAD'])):?>
 <div id="imconnector_settings">

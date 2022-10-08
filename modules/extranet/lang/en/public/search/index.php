@@ -1,0 +1,3 @@
+<?php
+$MESS["EXTRANET_SEARCH_PAGE_TITLE"] = "Search";
+$MESS["EXTRANET_SEARCH_PAGER_TITLE"] = "Search results";

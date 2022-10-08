@@ -4,9 +4,12 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
+/** @var array $arResult */
 $formParams = $arResult['FORM_PARAMS'];
 $jsParams = $arResult['JS_PARAMS'];
 
+/** @global CMain $APPLICATION */
+global $APPLICATION;
 $APPLICATION->setTitle($formParams['FORM_TITLE']);
 
 if($this->getComponent()->hasErrors())
@@ -20,6 +23,7 @@ if($this->getComponent()->hasErrors())
 }
 
 Extension::load([
+	'ui.design-tokens',
 	'ls',
 	'crm_common',
 	'crm.entity-editor.manager.duplicates',
@@ -102,5 +106,10 @@ $APPLICATION->IncludeComponent(
 		{
 			BX.Crm.RequisiteDetailsManager.create(<?= CUtil::PhpToJSObject($jsParams) ?>);
 			BX.CrmEntityType.categoryCaptions = <?=CUtil::PhpToJSObject(\CCrmOwnerType::GetAllCategoryCaptions(true))?>;
+			BX.message(
+				{
+					"CRM_EDITOR_PLACEMENT_CAUTION": "<?=GetMessageJS('CRM_REQUISITE_DETAILS_PLACEMENT_CAUTION')?>"
+				}
+			);
 		});
 </script>

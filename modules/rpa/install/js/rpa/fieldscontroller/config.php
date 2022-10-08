@@ -15,6 +15,7 @@ return [
 		'main.core.events',
 		'main.popup',
 		'rpa.manager',
+		'ui.design-tokens',
 		'ui.switcher',
 	],
 	'skip_core' => false,

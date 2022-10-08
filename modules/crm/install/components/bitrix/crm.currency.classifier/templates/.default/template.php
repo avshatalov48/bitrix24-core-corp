@@ -6,7 +6,11 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
 
-\Bitrix\Main\UI\Extension::load(['sidepanel', 'ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'sidepanel',
+]);
 
 Loc::loadMessages(__FILE__);
 

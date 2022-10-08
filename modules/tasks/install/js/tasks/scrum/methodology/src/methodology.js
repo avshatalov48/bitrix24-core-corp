@@ -7,6 +7,7 @@ import {RequestSender} from './request.sender';
 import {SidePanel} from './side.panel';
 
 import 'ui.hint';
+import 'ui.fonts.opensans';
 
 import '../css/base.css';
 
@@ -249,9 +250,9 @@ export class Methodology
 							><i></i></div>
 							<div class="tasks-scrum__widget-methodology--content">
 								<div class="tasks-scrum__widget-methodology--name">
-									<span>${Loc.getMessage('TSF_DOD_TITLE')}</span>
+									<span>${Loc.getMessage('TSF_DOD_TITLE_NEW')}</span>
 									<span class="ui-hint">
-										<i class="ui-hint-icon" data-hint="${Loc.getMessage('TSF_DOD_HINT')}"></i>
+										<i class="ui-hint-icon" data-hint="${Loc.getMessage('TSF_DOD_HINT_NEW')}"></i>
 									</span>
 								</div>
 								<div class="tasks-scrum__widget-methodology--btn-box">

@@ -368,7 +368,8 @@ class Order extends ProductsDataProvider
 			{
 				continue;
 			}
-			$vatRate = $shipment->getVatRate() * 100;
+			$vatRate = $shipment->getVatRate();
+			$vatRate = isset($vatRate) ? $vatRate * 100 : null;
 			if (!isset($taxNames[$vatRate]))
 			{
 				continue;
@@ -449,6 +450,7 @@ class Order extends ProductsDataProvider
 
 	public static function getProductProviderDataByBasketItem(array $basketItem, ItemIdentifier $owner, string $currencyId): array
 	{
+
 		return [
 			'ID' => $basketItem['ID'],
 			'OWNER_ID' => $owner->getEntityId(),
@@ -460,14 +462,40 @@ class Order extends ProductsDataProvider
 			'DISCOUNT_TYPE_ID' => Discount::MONETARY,
 			'DISCOUNT_SUM' => $basketItem['DISCOUNT_PRICE'],
 			'PRICE_BRUTTO' => $basketItem['BASE_PRICE'],
-			'DISCOUNT_RATE' => $basketItem['DISCOUNT_RATE'] ?? ($basketItem['DISCOUNT_PRICE'] * 100 / $basketItem['BASE_PRICE']),
-			'TAX_RATE' => $basketItem['VAT_RATE'] * 100,
+			'DISCOUNT_RATE' => self::getDiscountRateByBasketItem($basketItem),
+			'TAX_RATE' => self::getTaxRateByBasketItem($basketItem),
 			'TAX_INCLUDED' => $basketItem['VAT_INCLUDED'] ?? 'N',
 			'MEASURE_CODE' => $basketItem['MEASURE_CODE'] ?? '',
 			'MEASURE_NAME' => $basketItem['MEASURE_NAME'] ?? '',
 			'CUSTOMIZED' => $basketItem['CUSTOM_PRICE'] ?? 'N',
 			'CURRENCY_ID' => $currencyId,
 		];
+	}
+
+	private static function getDiscountRateByBasketItem(array $basketItem) : float
+	{
+		$discountRate = 0;
+
+		if (isset($basketItem['DISCOUNT_RATE']))
+		{
+			$discountRate = $basketItem['DISCOUNT_RATE'];
+		}
+		else if ($basketItem['BASE_PRICE'] > 0)
+		{
+			$discountRate = $basketItem['DISCOUNT_PRICE'] * 100 / $basketItem['BASE_PRICE'];
+		}
+
+		return $discountRate;
+	}
+
+	private static function getTaxRateByBasketItem(array $basketItem) :? float
+	{
+		if ($basketItem['VAT_RATE'] === null)
+		{
+			return null;
+		}
+
+		return $basketItem['VAT_RATE'] * 100;
 	}
 
 	/**

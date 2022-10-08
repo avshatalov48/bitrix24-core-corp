@@ -1,0 +1,78 @@
+.crm-timeline__card-market {
+	display: flex;
+	padding: 6px 14px;
+	margin: 0;
+	background: var(--ui-color-palette-blue-30, rgba(47, 198, 246, .2));
+	border-top: var(--ui-color-palette-blue-50, #d7f4fd);
+	border-radius: 0  0 var(--crm-timeline__card-border-radius) var(--crm-timeline__card-border-radius);
+}
+
+.crm-timeline__card-market_container {
+	display: flex;
+	align-items: center;
+	flex: 1;
+	overflow: hidden;
+	font-family: var(--crm-timeline__font-helvetica);
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-sm, 1.35);
+}
+
+.crm-timeline__card-market_cross {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-left: 15px;
+	width: 16px;
+	height: 21px;
+	cursor: pointer;
+	opacity: .6;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-market_cross:hover {
+	opacity: .8;
+	transition: unset;
+}
+
+.crm-timeline__card-market_cross i {
+	display: inline-block;
+	width: 10px;
+	height: 21px;
+	background: url(../image/crm-timeline_icon-cross.svg) center no-repeat;
+}
+
+.crm-timeline__card-market_text {
+	display: inline-block;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.crm-timeline__card-market_logo {
+	display: inline-block;
+	margin-right: 5px;
+	width: 82px;
+	height: 21px;
+	background: url(../image/crm-timeline_logo-market-ru.svg) center no-repeat;
+}
+
+.crm-timeline__card-market_logo.--clickable {
+	cursor: pointer;
+}
+
+.crm-timeline__card-market_logo.--openlines {
+	background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='80' height='80' rx='12' fill='%23E1F3F9'/%3E%3Ccircle cx='39.5' cy='38.5' r='30.5' fill='%2316A7EB' fill-opacity='0.29'/%3E%3Cpath d='M25.1611 21.4145C22.3997 21.4145 20.1611 23.6531 20.1611 26.4145V38.9145C20.1611 41.6759 22.3997 43.9145 25.1611 43.9145H25.805V47.7932C25.805 49.1295 27.4207 49.7988 28.3656 48.8538L31.3821 45.8373V36.3196C31.3821 32.1775 34.74 28.8196 38.8821 28.8196H50.1611V26.4145C50.1611 23.6531 47.9226 21.4145 45.1611 21.4145H25.1611Z' fill='white'/%3E%3Cpath d='M35.1305 37.1194C35.1305 34.3579 37.369 32.1194 40.1305 32.1194H56.965C59.7264 32.1194 61.965 34.3579 61.965 37.1194V46.9677C61.965 49.7258 59.7318 51.9622 56.975 51.9677V55.1834C56.975 56.6022 55.1876 57.228 54.3026 56.119L50.9896 51.9677H40.1305C37.369 51.9677 35.1305 49.7291 35.1305 46.9677V37.1194Z' fill='white'/%3E%3C/svg%3E%0A");
+}
+
+.crm-timeline__card-market_more {
+	margin-left: 5px;
+	text-decoration: none;
+	color: var(--ui-color-palette-blue-80, rgba(32, 102, 176, .8));
+	cursor: pointer;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-market_more:hover {
+	color: var(--ui-color-palette-blue-95, rgba(32, 102, 176, 1));
+	transition: unset;
+}

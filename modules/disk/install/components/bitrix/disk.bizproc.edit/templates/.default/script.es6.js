@@ -16,26 +16,40 @@ class BizprocEditComponent
 
 	showGlobalVariables()
 	{
-		let me = this;
 		Globals.Manager.Instance.showGlobals(Globals.Manager.Instance.mode.variable, String(this.signedDocumentType))
 			.then((slider) => {
-				me.onAfterSliderClose(slider)
+				this.onAfterSliderClose(slider, window.arWorkflowGlobalVariables)
 			})
 		;
 	}
 
 	showGlobalConstants()
 	{
-		let me = this;
 		Globals.Manager.Instance.showGlobals(Globals.Manager.Instance.mode.constant, String(this.signedDocumentType))
 			.then((slider) => {
-				me.onAfterSliderClose(slider)
+				this.onAfterSliderClose(slider, window.arWorkflowGlobalConstants)
 			});
 	}
 
-	onAfterSliderClose(slider)
+	onAfterSliderClose(slider, target)
 	{
-		//do smt
+		const sliderInfo = slider.getData();
+		if (sliderInfo.get('upsert'))
+		{
+			const newGFields = sliderInfo.get('upsert');
+			for (const fieldId in newGFields)
+			{
+				target[fieldId] = newGFields[fieldId];
+			}
+		}
+		if (sliderInfo.get('delete'))
+		{
+			const deletedGFields = sliderInfo.get('delete');
+			for (const i in deletedGFields)
+			{
+				delete target[deletedGFields[i]];
+			}
+		}
 	}
 }
 

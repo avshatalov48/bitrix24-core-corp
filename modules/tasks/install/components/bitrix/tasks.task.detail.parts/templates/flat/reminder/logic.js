@@ -436,7 +436,8 @@ BX.namespace('Tasks.Component');
 					{
 						var dp = new BX.Tasks.Util.DatePicker({
 							scope: scope,
-							defaultTime: this.optionP('auxData').COMPANY_WORKTIME.HOURS.START
+							defaultTime: this.optionP('auxData').COMPANY_WORKTIME.HOURS.START,
+							calendarSettings: this.optionP('auxData').CALENDAR_SETTINGS
 						});
 						dp.bindEvent('change', BX.delegate(this.onChangeRemindDate, this));
 						dp.bindEvent('open', BX.delegate(this.closeTypeSubWindow, this));

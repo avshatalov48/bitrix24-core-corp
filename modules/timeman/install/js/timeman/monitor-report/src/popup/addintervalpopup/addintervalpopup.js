@@ -4,6 +4,7 @@ import {TimeFormatter} from "timeman.timeformatter";
 import {DateFormatter} from "timeman.dateformatter";
 import {Type} from "main.core";
 
+import 'ui.design-tokens';
 import "ui.icons";
 import "../popup.css";
 import "ui.forms";

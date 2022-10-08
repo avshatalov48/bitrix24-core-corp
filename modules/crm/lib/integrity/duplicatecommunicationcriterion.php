@@ -794,17 +794,17 @@ class DuplicateCommunicationCriterion extends DuplicateCriterion
 			$filter['ENTITY_TYPE_ID'] = $entityTypeID;
 		}
 
-		$dbResult = DuplicateCommunicationMatchCodeTable::getList(
-			array(
-				'select' =>array('ENTITY_TYPE_ID', 'ENTITY_ID'),
-				'order' => array(
-					'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
-					'ENTITY_ID' => 'ASC'
-				),
-				'filter' => $filter,
-				'limit' => $limit
-			)
-		);
+		$listParams = $this->applyEntityCategoryFilter($entityTypeID, [
+			'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+			'order' => [
+				'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
+				'ENTITY_ID' => 'ASC'
+			],
+			'filter' => $filter,
+			'limit' => $limit,
+		]);
+
+		$dbResult = DuplicateCommunicationMatchCodeTable::getList($listParams);
 		$entities = array();
 		while($fields = $dbResult->fetch())
 		{

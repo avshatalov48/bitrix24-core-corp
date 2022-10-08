@@ -200,6 +200,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 									? \CSite::GetNameFormat(false)
 									: str_replace(array('#NOBR#', '#/NOBR#'), array('', ''), trim($params['~NAME_TEMPLATE']));
 
+		$params['IS_SCRUM'] = false;
+
 		$scrumManager = new ScrumManager($params['GROUP_ID']);
 		if ($scrumManager->isScrumProject())
 		{
@@ -213,6 +215,8 @@ class TasksKanbanComponent extends \CBitrixComponent
 				$params['SPRINT_ID'] = 0;
 				$params['SPRINT_SELECTED'] = 'N';
 			}
+
+			$params['IS_SCRUM'] = true;
 
 			$params['IS_ACTIVE_SPRINT'] = ($this->getActiveTab($params['GROUP_ID']) === 'active_sprint' ? 'Y' : 'N');
 		}
@@ -2060,7 +2064,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$this->arResult['MP_CONVERTER'] = 0;
 
 		// for sprint's kanban create by default
-		if ($params['SPRINT_ID'] > 0)
+		if ($params['IS_SCRUM'])
 		{
 			return true;
 		}

@@ -42,7 +42,7 @@ if ($arResult["IS_SIDE_PANEL"]): ?>
 	<? else: ?>
 		<? define("INTERNAL_ADMIN_PAGE", "Y"); ?>
 		<? $bodyClass = $APPLICATION->getPageProperty("BodyClass", false); ?>
-		<? $APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, "pagetitle-toolbar-field-view"))); ?>
+		<? $APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, "pagetitle-toolbar-field-view no-background"))); ?>
 		<? require_once($_SERVER['DOCUMENT_ROOT'].$arResult["PAGE_PATH"]); ?>
 	<? endif; ?>
 <? endif; ?>

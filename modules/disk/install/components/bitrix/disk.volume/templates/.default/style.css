@@ -19,7 +19,8 @@
 	-ms-flex-align: center;
 	height: 53px;
 	color: #545c6a;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	-webkit-box-align: center;
 	align-items: center;
 }
@@ -38,7 +39,8 @@
 	margin: 0 18px 0 0;
 	color: #b8bec4;
 	text-decoration: none;
-	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 	-webkit-transition: color .3s;
 	transition: color .3s;
@@ -49,7 +51,8 @@
 .tasks-view-switcher-list .tasks-view-switcher-list-item-active {
 	border-bottom: 2px solid #b1b8bf;
 	color: #545c6a;
-	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .bx-disk-interface-percent-diagram {
@@ -70,7 +73,8 @@
 .bx-disk-interface-percent-legend {
 	margin: 0 0 13px;
 	color: #535c69;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .bx-disk-interface-percent-legend-title {
@@ -195,7 +199,8 @@
 	display: flex;
 	margin: 0 0 53px;
 	color: #525c69;
-	font: 16px/22px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .disk-volume-wrap-state {
@@ -241,14 +246,16 @@
 .disk-volume-header-title {
 	margin: 0 0 5px;
 	color: #333;
-	font: 27px/37px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 27px/37px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .disk-volume-header-amount-info {
 	display: inline-block;
 	margin: 0 30px 0 0;
 	color: #79818d;
-	font: 18px/22px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .disk-volume-left-block {
@@ -271,7 +278,8 @@
 .disk-volume-main-title {
 	margin: 0 0 25px;
 	color: #333;
-	font: 41px/56px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 41px/56px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .disk-volume-title {
@@ -279,7 +287,8 @@
 	width: 100%;
 	color: #525c69;
 	text-align: center;
-	font: 37px/51px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 37px/51px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .disk-volume-item:last-child { margin: 25px 0 0; }
@@ -397,7 +406,8 @@
 	width: 100%;
 	color: #333;
 	text-align: center;
-	font: 16px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .disk-volume-loader-progress-bar-number {
@@ -445,7 +455,8 @@
 	margin: 0 0 25px;
 	color: #333;
 	text-align: center;
-	font: 86px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 86px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .disk-volume-space-amount-item { color: #828b95; }
@@ -455,7 +466,8 @@
 	margin: 0;
 	color: #333;
 	text-align: center;
-	font: 14px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .disc-volume-notice { margin: 0 0 40px; }
@@ -463,7 +475,8 @@
 .disc-volume-notice-small {
 	color: rgba(83, 92, 105, .5);
 	text-transform: lowercase;
-	font: 11px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 #bx-disk-volume-space {
@@ -476,7 +489,8 @@
 	border-bottom: 1px solid #468ee5;
 	color: #468ee5;
 	vertical-align: top;
-	font: 13px/18px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -507,7 +521,8 @@
 	margin: 15px 0 0;
 	border-bottom: 1px solid #79818d;
 	color: #79818d;
-	font: 12px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: border-bottom .3s;
 }
 
@@ -585,12 +600,14 @@
 
 .disc-volume-space-text {
 	color: #000;
-	font: 21px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 21px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .disc-volume-space-text-grey {
 	color: #525c69;
-	font: 18px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .disk-volume-info-control-panel {
@@ -604,7 +621,8 @@
 	min-height: 30px;
 	border-bottom: 2px solid #eef2f4;
 	background: #fff8d2;
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 27px;
 	-webkit-box-align: center;
 	align-items: center;
@@ -651,7 +669,8 @@
 	padding: 0;
 	min-height: 62px;
 	white-space: nowrap;
-	font: 14px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	-webkit-box-align: center;
 	align-items: center;
 }
@@ -791,7 +810,8 @@
 	text-overflow: ellipsis;
 	text-shadow: none !important;
 	white-space: nowrap;
-	font: 12px/38px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/38px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	-webkit-transition: color .25s linear;
 	transition: color .25s linear;
 }
@@ -828,7 +848,7 @@
 	background: #ffe5e0;
 	color: #f73100;
 	text-align: center;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	line-height: 20px;
 	animation: stepperAlertShow .3s linear forwards;
@@ -904,9 +924,9 @@
 	vertical-align: middle;
 	text-decoration: none;
 	text-transform: uppercase;
-	font-weight: bold;
 	font-size: 12px;
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .disk-volume-list-back:before {

@@ -13,8 +13,14 @@ if (!isset($arResult['HAS_AGREEMENT']))
     return;
 }
 
-CJSCore::Init(array('jquery2', 'fullscreen', 'webrtc_adapter'));
-\Bitrix\Main\UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'jquery2',
+	'fullscreen',
+	'webrtc_adapter',
+	'ui.buttons',
+]);
+
 //\Bitrix\Main\Page\Asset::getInstance()->addJs($this->GetFolder().'/jquery.facedetection.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/faceid/WebPhotoMaker/WebPhotoMaker.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/faceid/WebPhotoMaker/smoother.js');

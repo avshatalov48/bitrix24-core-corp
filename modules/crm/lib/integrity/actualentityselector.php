@@ -21,6 +21,10 @@ use Bitrix\Main\SystemException;
  * @method void setCompanyOrders(array $list) Set company orders.
  * @method int[] getCompanyDeals() Get company deals.
  * @method void setCompanyDeals(array $list) Set company deals.
+ * @method int[] getCompanyDynamics() Get company dynamics.
+ * @method void setCompanyDynamics(array $list) Set company dynamics.
+ * @method int|null getCompanyDynamicId() Get company dynamic ID.
+ * @method void setCompanyDynamicId($id) Set company dynamic ID.
  * @method int|null getCompanyDealId() Get company deal ID.
  * @method void setCompanyDealId($id) Set company deal ID.
  * @method int[] getCompanyReturnCustomerLeads() Get company return customer leads.
@@ -32,6 +36,10 @@ use Bitrix\Main\SystemException;
  * @method void setContactCompanyId($id) Set contact company ID.
  * @method int[] getContactOrders() Get contact orders.
  * @method void setContactOrders(array $list) Set contact orders.
+ * @method int[] getContactDynamics() Get contact dynamics.
+ * @method void setContactDynamics(array $list) Set contact dynamics.
+ * @method int|null getContactDynamicId() Get contact dynamic ID.
+ * @method void setContactDynamicId($id) Set contact dynamic ID.
  * @method int[] getContactDeals() Get contact deals.
  * @method void setContactDeals(array $list) Set contact deals.
  * @method int|null getContactDealId() Get contact deal ID.
@@ -120,6 +128,11 @@ class ActualEntitySelector
 			'ID' => [],
 		),
 		array(
+			'CODE' => 'companyDynamics',
+			'TYPE_ID' => \CCrmOwnerType::Undefined,
+			'ID' => [],
+		),
+		array(
 			'CODE' => 'companyDeals',
 			'TYPE_ID' => \CCrmOwnerType::Deal,
 			'ID' => [],
@@ -144,6 +157,11 @@ class ActualEntitySelector
 		array(
 			'CODE' => 'contactOrders',
 			'TYPE_ID' => \CCrmOwnerType::Order,
+			'ID' => [],
+		),
+		array(
+			'CODE' => 'contactDynamics',
+			'TYPE_ID' => \CCrmOwnerType::Undefined,
 			'ID' => [],
 		),
 		array(
@@ -347,11 +365,11 @@ class ActualEntitySelector
 	public function setDynamicTypeId($entityTypeId)
 	{
 		$entityTypeId = (int)$entityTypeId;
-		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId))
 		{
 			foreach($this->entities as $index => $entity)
 			{
-				if ($entity['CODE'] !== 'dynamics')
+				if (!in_array($entity['CODE'], ['dynamics', 'companyDynamics', 'contactDynamics']))
 				{
 					continue;
 				}
@@ -363,7 +381,6 @@ class ActualEntitySelector
 
 				$this->entities[$index]['TYPE_ID'] = $entityTypeId;
 				$this->entities[$index]['ID'] = [];
-				break;
 			}
 		}
 
@@ -728,7 +745,7 @@ class ActualEntitySelector
 	{
 		$entityTypeId = (int)$entityTypeId;
 		$entityId = (int)$entityId;
-		$isEntityTypeDynamics = \CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId);
+		$isEntityTypeDynamics = \CCrmOwnerType::isUseDynamicTypeBasedApproach($entityTypeId);
 
 		foreach($this->entities as $entity)
 		{
@@ -1027,6 +1044,15 @@ class ActualEntitySelector
 			$this->setOrders($this->getContactOrders());
 		}
 
+		if (!empty($this->getCompanyDynamics()))
+		{
+			$this->setDynamics($this->getCompanyDynamics());
+		}
+		else if (!empty($this->getContactDynamics()))
+		{
+			$this->setDynamics($this->getContactDynamics());
+		}
+
 		if ($this->getCompanyReturnCustomerLeads())
 		{
 			$this->setReturnCustomerLeads($this->getCompanyReturnCustomerLeads());
@@ -1049,9 +1075,15 @@ class ActualEntitySelector
 
 		$this->setCompanyId($ranking->getEntityId());
 		$this->setCompanyOrders($ranking->getOrders());
+
+		if ($this->getDynamicTypeId())
+		{
+			$this->setCompanyDynamics($ranking->getDynamics());
+		}
+
 		if (!$this->getDeals() && !$this->getReturnCustomerLeadId())
 		{
-			// set only if ::setEntity with deals or rc-leads didnt used
+			// set only if ::setEntity with deals or rc-leads didn't use
 			$this->setCompanyDeals($ranking->getDeals());
 			$this->setCompanyReturnCustomerLeads($ranking->getLeads());
 		}
@@ -1071,12 +1103,12 @@ class ActualEntitySelector
 
 		if ($this->getDynamicTypeId())
 		{
-			$this->setDynamics($ranking->getDynamics());
+			$this->setContactDynamics($ranking->getDynamics());
 		}
 
 		if (!$this->getDeals() && !$this->getReturnCustomerLeadId())
 		{
-			// set only if ::setEntity with deals or rc-leads didnt used
+			// set only if ::setEntity with deals or rc-leads didn't use
 			$this->setContactDeals($ranking->getDeals());
 			$this->setContactReturnCustomerLeads($ranking->getLeads());
 		}

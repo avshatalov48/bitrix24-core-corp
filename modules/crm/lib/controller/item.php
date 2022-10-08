@@ -17,6 +17,7 @@ use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\NotSupportedException;
+use Bitrix\Main\Type\Collection;
 use Bitrix\Main\UI\PageNavigation;
 
 class Item extends Base
@@ -640,9 +641,10 @@ class Item extends Base
 
 		$forceDefaultConfig = $params['forceDefaultConfig'] ?? 'N';
 		$editorConfig['FORCE_DEFAULT_CONFIG'] = ($forceDefaultConfig === 'Y');
-		$editorConfig['IS_EMBEDDED'] = true;
+		$editorConfig['IS_EMBEDDED'] = ($params['IS_EMBEDDED'] ?? 'Y') === 'Y';
 		$editorConfig['GUID'] = $guid ?? $editorConfig['GUID'];
 		$editorConfig['CONFIG_ID'] = $configId ?? $editorConfig['CONFIG_ID'];
+		$enableSingleSectionCombining = ($params['enableSingleSectionCombining'] ?? 'Y') === 'Y';
 
 		$editorConfig['COMPONENT_AJAX_DATA']['SIGNED_PARAMETERS'] = ParameterSigner::signParameters(
 			$component->getName(),
@@ -669,6 +671,14 @@ class Item extends Base
 		foreach ($disabledOptions as $option)
 		{
 			$editorConfig[$option] = $params[$option] ?? false;
+			if ($editorConfig[$option] === 'true')
+			{
+				$editorConfig[$option] = true;
+			}
+			else if ($editorConfig[$option] === 'false')
+			{
+				$editorConfig[$option] = false;
+			}
 		}
 
 		$editorConfig['ENABLE_USER_FIELD_MANDATORY_CONTROL'] = true;
@@ -693,7 +703,10 @@ class Item extends Base
 			$editorConfig['ENTITY_FIELDS'] = EditorAdapter::markFieldsAsRequired($editorConfig['ENTITY_FIELDS'], $requiredFields);
 		}
 
-		$editorConfig['ENTITY_CONFIG'] = EditorAdapter::combineConfigIntoOneSection($entityConfig, $params['title'] ?? '');
+		if ($enableSingleSectionCombining)
+		{
+			$editorConfig['ENTITY_CONFIG'] = EditorAdapter::combineConfigIntoOneSection($entityConfig, $params['title'] ?? '');
+		}
 
 		return new Component('bitrix:crm.entity.editor', '', $editorConfig);
 	}
@@ -816,16 +829,17 @@ class Item extends Base
 			return null;
 		}
 		$value = $item->get($fieldName);
-		if(
-			($value === $fileId)
-			||
-			(
-				is_array($value)
-				&& in_array($fileId, $value, true)
-			)
-		)
+		if ((int)$value === $fileId && $fileId > 0)
 		{
 			return BFile::createByFileId($fileId);
+		}
+		if (is_array($value))
+		{
+			Collection::normalizeArrayValuesByInt($value);
+			if (in_array($fileId, $value, true))
+			{
+				return BFile::createByFileId($fileId);
+			}
 		}
 
 		return null;

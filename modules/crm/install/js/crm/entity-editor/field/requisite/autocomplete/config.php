@@ -10,11 +10,14 @@ return array(
 	'rel' => [
 		'main.core',
 		'main.core.events',
+		'ui.design-tokens',
 		'ui.feedback.form',
 		'ui.common',
 		'ui.dropdown',
 		'ui.buttons',
-		'ui.forms'
+		'ui.forms',
+		'ui.dialogs.messagebox',
+		'crm.placement.detailsearch',
 	],
 	'skip_core' => false,
 );

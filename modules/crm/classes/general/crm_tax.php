@@ -1,6 +1,7 @@
 <?php
 Use Bitrix\Main\Loader,
 	Bitrix\Catalog;
+use Bitrix\Main\Localization\Loc;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -89,14 +90,13 @@ class CCrmTax
 		if(!Loader::includeModule('catalog'))
 			return false;
 
-		if(COption::GetOptionString("crm", "vatModeSetted", 'N') == 'Y')
+		if (COption::GetOptionString("crm", "vatModeSetted", 'N') == 'Y')
 		{
 			self::$bVatMode = true;
 		}
 		else
 		{
-			$nActiveVats = CCatalogVat::GetListEx(array(), array('ACTIVE' => 'Y'), array(), false, array('ID'));
-			self::$bVatMode = (intval($nActiveVats) > 0);
+			self::$bVatMode = Catalog\VatTable::getCount(['=ACTIVE' => 'Y',]) > 0;
 		}
 
 		return self::$bVatMode;
@@ -127,28 +127,52 @@ class CCrmTax
 		$count = 0;
 		$strActiveVats = COption::GetOptionString("crm", "crmSaveActiveVats", '');
 
-		if($strActiveVats <> '')
+		if( $strActiveVats <> '')
 		{
 			$arActiveVats = explode(',', $strActiveVats);
 
 			foreach ($arActiveVats as $vatId)
 			{
-				CCatalogVat::Update($vatId, array('ACTIVE' => 'Y'));
-				$count++;
+				$result = Catalog\Model\Vat::update(
+					(int)$vatId,
+					[
+						'ACTIVE' => 'Y',
+					]
+				);
+				if ($result->isSuccess())
+				{
+					$count++;
+				}
 			}
 		}
 		else
 		{
-			$dbVats = CCatalogVat::GetListEx(array(), array('!ACTIVE' => 'Y'), false, false, array('ID'));
-			while($arVat = $dbVats->Fetch())
+			$dbVats = Catalog\Model\Vat::getList([
+				'select' => [
+					'ID',
+				],
+				'filter' => [
+					'!=ACTIVE' => 'Y',
+				],
+			]);
+			while ($arVat = $dbVats->fetch())
 			{
-				CCatalogVat::Update($arVat['ID'], array('ACTIVE' => 'Y'));
-				$count++;
+				$result = Catalog\Model\Vat::update(
+					(int)$arVat['ID'],
+					[
+						'ACTIVE' => 'Y',
+					]
+				);
+				if ($result->isSuccess())
+				{
+					$count++;
+				}
 			}
 		}
 
 		COption::SetOptionString("crm", "vatModeSetted", 'Y');
 		self::$bVatMode = true;
+
 		return $count;
 	}
 
@@ -160,12 +184,27 @@ class CCrmTax
 		$count = 0;
 		$arActiveVats = array();
 
-		$dbActiveVats = CCatalogVat::GetListEx(array(), array('ACTIVE' => 'Y'), false, false, array('ID'));
+		$dbActiveVats = Catalog\Model\Vat::getList([
+			'select' => [
+				'ID',
+			],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+			],
+		]);
 		while($arVat = $dbActiveVats->Fetch())
 		{
 			$arActiveVats[] = $arVat['ID'];
-			CCatalogVat::Update($arVat['ID'], array('ACTIVE' => 'N'));
-			$count++;
+			$result = Catalog\Model\Vat::update(
+				(int)$arVat['ID'],
+				[
+					'ACTIVE' => 'N',
+				]
+			);
+			if ($result->isSuccess())
+			{
+				$count++;
+			}
 		}
 
 		$strActiveVats = !empty($arActiveVats) ? implode(',', $arActiveVats) : '';
@@ -175,11 +214,12 @@ class CCrmTax
 
 		return $count;
 	}
+
 	public static function GetVatRateNameByValue($value)
 	{
-		$value = round((float)$value, 2);
+		$value = isset($value) ? round((float)$value, 2) : null;
 		$infos = self::GetVatRateInfos();
-		foreach($infos as $info)
+		foreach ($infos as $info)
 		{
 			if($info['VALUE'] === $value)
 			{
@@ -188,64 +228,93 @@ class CCrmTax
 		}
 		unset($info);
 
+		if ($value === null)
+		{
+			return Loc::getMessage('CRM_VAT_EMPTY_VALUE');
+		}
+
 		return "{$value}%";
 	}
-	public static function GetDefaultVatRateInfo()
+	public static function GetDefaultVatRateInfo(): ?array
 	{
-		if(self::$DEFAULT_VAT_RATE !== null)
+		if (self::$DEFAULT_VAT_RATE !== null)
 		{
 			return self::$DEFAULT_VAT_RATE;
 		}
 
-		if(!Loader::includeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			return null;
 		}
 
-		$dbResult = CCatalogVat::GetListEx(array('SORT' => 'ASC'), array('ACTIVE' => 'Y'), false, array('nPageTop' => 1));
-		$fields = is_object($dbResult) ? $dbResult->Fetch() : null;
-		if(is_array($fields))
+		$fields = Catalog\VatTable::getRow([
+			'select' => [
+				'ID',
+				'SORT',
+				'NAME',
+				'RATE',
+				'EXCLUDE_VAT',
+			],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC',
+			]
+		]);
+		if (is_array($fields))
 		{
-			$ID = intval($fields['ID']);
-			self::$DEFAULT_VAT_RATE = array(
+			$ID = (int)$fields['ID'];
+			self::$DEFAULT_VAT_RATE = [
 				'ID' => $ID,
-				'NAME' => isset($fields['NAME']) ? $fields['NAME'] : "[{$ID}]",
-				'VALUE' => isset($fields['RATE']) ? round(doubleval($fields['RATE']), 2) : 0.0
-			);
+				'NAME' => $fields['NAME'] ?? '[' . $ID . ']',
+				'VALUE' => $fields['EXCLUDE_VAT'] === 'Y' ? null : round((float)$fields['RATE'], 2),
+			];
 		}
 
 		return self::$DEFAULT_VAT_RATE;
 	}
-	public static function GetVatRateInfos()
+
+	public static function GetVatRateInfos(): array
 	{
-		if(self::$VAT_RATES !== null)
+		if (self::$VAT_RATES !== null)
 		{
 			return self::$VAT_RATES;
 		}
 
 		if (!Loader::includeModule('catalog'))
 		{
-			return array();
+			return [];
 		}
 
-		self::$VAT_RATES = array();
+		self::$VAT_RATES = [];
 		$dbResult = Catalog\VatTable::getList([
-			'select' => ['ID', 'NAME', 'RATE', 'SORT'],
-			'filter' => ['=ACTIVE' => 'Y'],
-			'order' => ['SORT' => 'ASC']
+			'select' => [
+				'ID',
+				'NAME',
+				'RATE',
+				'SORT',
+				'EXCLUDE_VAT',
+			],
+			'filter' => [
+				'=ACTIVE' => 'Y',
+			],
+			'order' => [
+				'SORT' => 'ASC',
+				'ID' => 'ASC',
+			]
 		]);
-		if(is_object($dbResult))
+		while ($fields = $dbResult->fetch())
 		{
-			while($fields = $dbResult->fetch())
-			{
-				$ID = (int)$fields['ID'];
-				self::$VAT_RATES[] = array(
-					'ID' => $ID,
-					'NAME' => $fields['NAME'] ?? "[{$ID}]",
-					'VALUE' => isset($fields['RATE']) ? round((float)$fields['RATE'], 2) : 0.0
-				);
-			}
+			$ID = (int)$fields['ID'];
+			self::$VAT_RATES[] = [
+				'ID' => $ID,
+				'NAME' => $fields['NAME'] ?? '[' . $ID . ']',
+				'VALUE' => $fields['EXCLUDE_VAT'] === 'Y' ? null : round((float)$fields['RATE'], 2),
+			];
 		}
+
 		return self::$VAT_RATES;
 	}
 }

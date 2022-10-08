@@ -9,7 +9,7 @@ define('PUBLIC_AJAX_MODE', true);
 if (isset($_REQUEST['site']) && is_string($_REQUEST['site']))
 {
 	$siteId = mb_substr(preg_replace('/[^a-z0-9_]/i', '', $_REQUEST['site']), 0, 2);
-	if (!$siteId)
+	if ($siteId)
 	{
 		define('SITE_ID', $siteId);
 	}

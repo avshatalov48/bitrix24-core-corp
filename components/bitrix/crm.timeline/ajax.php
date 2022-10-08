@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\BindingsMaker\ActivityBindingsMaker;
 
 define('NO_KEEP_STATISTIC', 'Y');
@@ -38,10 +39,10 @@ if(!function_exists('__CrmTimelineEndResponse'))
 	function __CrmTimelineEndResponse($result)
 	{
 		$GLOBALS['APPLICATION']->RestartBuffer();
-		Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
+		Header('Content-Type: application/json');
 		if(!empty($result))
 		{
-			echo CUtil::PhpToJSObject($result);
+			echo \Bitrix\Main\Web\Json::encode($result);
 		}
 		if(!defined('PUBLIC_AJAX_MODE'))
 		{
@@ -514,6 +515,15 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 		];
 	}
 
+	$compilationProductIds = is_array($_REQUEST['COMPILATION_PRODUCT_IDS']) ? $_REQUEST['COMPILATION_PRODUCT_IDS'] : [];
+	if ($source === 'deal' && !empty($compilationProductIds))
+	{
+		$additionalFields['PRODUCT_IDS'] = $compilationProductIds;
+		$additionalFields['ENTITIES'] = [
+			'DEAL' => $ownerTypeID === CCrmOwnerType::Deal ? CCrmDeal::GetByID($ownerID) : null,
+		];
+	}
+
 	$result = \Bitrix\Crm\Integration\SmsManager::sendMessage([
 		'SENDER_ID' => $senderId,
 		'AUTHOR_ID' => $responsibleID,
@@ -534,6 +544,11 @@ elseif($action == 'SAVE_SMS_MESSAGE')
 			: ['ERROR' => implode(PHP_EOL, $result->getErrorMessages())]
 	);
 }
+/**
+ * @deprecated
+ * @use crm.timeline.item.pin / crm.timeline.item.unpin actions instead
+ * @see \Bitrix\Crm\Controller\Timeline\Item::pinAction
+ */
 elseif($action == 'CHANGE_FASTEN_ITEM')
 {
 	$ownerTypeID = isset($_POST['OWNER_TYPE_ID']) ? (int)$_POST['OWNER_TYPE_ID'] : 0;
@@ -577,20 +592,12 @@ elseif($action == 'CHANGE_FASTEN_ITEM')
 
 	if ($resultUpdating->isSuccess())
 	{
-		$items = array($id => \Bitrix\Crm\Timeline\TimelineEntry::getByID($id));
-		\Bitrix\Crm\Timeline\TimelineManager::prepareDisplayData($items);
-		if(\Bitrix\Main\Loader::includeModule('pull') && CPullOptions::GetQueueServerStatus())
-		{
-			$tag = \Bitrix\Crm\Timeline\TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_item_change_fasten',
-					'params' => array('ENTITY_ID' => $id, 'TAG' => $tag, 'HISTORY_ITEM' => $items[$id]),
-				)
-			);
-		}
+		\Bitrix\Crm\Timeline\Controller::getInstance()->sendPullEventOnPin(
+			new ItemIdentifier($ownerTypeID, $ownerID),
+			$id,
+			$value == 'Y'
+		);
+
 		__CrmTimelineEndResponse(array('ID' => $id));
 	}
 	else
@@ -902,7 +909,7 @@ elseif($action === 'GET_PERMISSIONS')
 			array('=ID' => $ID, 'CHECK_PERMISSIONS' => 'N'),
 			false,
 			false,
-			array('ID', 'TYPE_ID', 'PROVIDER_ID', 'ASSOCIATED_ENTITY_ID')
+			array('ID', 'TYPE_ID', 'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'ASSOCIATED_ENTITY_ID')
 		);
 
 		$fields = $dbResult->Fetch();

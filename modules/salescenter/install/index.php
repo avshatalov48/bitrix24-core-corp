@@ -119,6 +119,23 @@ class salescenter extends CModule
 			50
 		);
 
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
+			'messageservice',
+			'OnMessageSuccessfullySent',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\CrmManager',
+			'onSendCompilation',
+			50
+		);
+
+		\Bitrix\Main\EventManager::getInstance()->registerEventHandler(
+			'catalog',
+			'onFacebookCompilationExportFinished',
+			'salescenter',
+			'\Bitrix\SalesCenter\Controller\Compilation',
+			'onFacebookCompilationExportFinishedHandler'
+		);
+
 		RegisterModule($this->MODULE_ID);
 
 		if(\Bitrix\Main\Loader::includeModule($this->MODULE_ID))
@@ -193,6 +210,22 @@ class salescenter extends CModule
 			'salescenter',
 			'\Bitrix\SalesCenter\Integration\CrmManager',
 			'onSendPaymentByControlCenter'
+		);
+
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
+			'messageservice',
+			'OnMessageSuccessfullySent',
+			'salescenter',
+			'\Bitrix\SalesCenter\Integration\CrmManager',
+			'onSendCompilation'
+		);
+
+		\Bitrix\Main\EventManager::getInstance()->unRegisterEventHandler(
+			'catalog',
+			'onFacebookCompilationExportFinished',
+			'salescenter',
+			'\Bitrix\SalesCenter\Controller\Compilation',
+			'onFacebookCompilationExportFinishedHandler'
 		);
 
 		\Bitrix\SalesCenter\Integration\ImManager::unInstallApplication();

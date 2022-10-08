@@ -17,7 +17,7 @@ $destroyEventName = 'crm-robot-ads-destroy';
 
 	BX.ready(function ()
 	{
-		var dialog = BX.Bizproc.Automation.Designer.getRobotSettingsDialog();
+		var dialog = BX.Bizproc.Automation.Designer.getInstance().getRobotSettingsDialog();
 		if (!dialog)
 		{
 			return;

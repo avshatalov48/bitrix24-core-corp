@@ -24,9 +24,9 @@ class Viber extends Base
 	public function sendMessageProcessing(array $message, $line): array
 	{
 		//Processing for native messages
-		$message = InteractiveMessage\Output::sendMessageProcessing($message, $this->idConnector);
+		$message = InteractiveMessage\Output::processSendingMessage($message, $this->idConnector);
 		//Processing rich links
-		$message = $this->processingMessageForRich($message);
+		$message = $this->processMessageForRich($message);
 
 		return $this->processingMessageForOperatorData($message);
 	}

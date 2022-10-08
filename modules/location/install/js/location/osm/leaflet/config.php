@@ -9,6 +9,7 @@ return [
 	'css' => 'dist/leaflet.bundle.css',
 	'rel' => [
 		'main.polyfill.core',
+		'ui.design-tokens',
 	],
 	'skip_core' => true,
 ];

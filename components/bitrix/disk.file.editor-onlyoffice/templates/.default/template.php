@@ -37,6 +37,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 /** @var array $arResult */
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'disk',
 	'disk.document',
 	'im',
@@ -47,7 +49,6 @@ Extension::load([
 	'disk.external-link',
 	'ui.forms',
 	'ui.alerts',
-	'ui.fonts.opensans',
 	'main.loader',
 	'pull.client',
 	'ui.info-helper',

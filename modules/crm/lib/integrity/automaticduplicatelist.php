@@ -2,8 +2,9 @@
 
 namespace Bitrix\Crm\Integrity;
 
-use Bitrix\Crm\Integrity\Entity\AutomaticDuplicateIndexTable;
 use Bitrix\Main;
+use Bitrix\Crm\Integrity\Entity\AutomaticDuplicateIndexTable;
+use CCrmOwnerType;
 
 class AutomaticDuplicateList extends DuplicateList
 {
@@ -60,6 +61,13 @@ class AutomaticDuplicateList extends DuplicateList
 				)
 			)
 			->addGroup('ENTITY_ID');
+
+		// workaround for correct filter typed contacts/companies by category ID
+		if (in_array($entityTypeID, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
+		{
+			$subQuery->registerRuntimeField('', DedupeDataSource::getCategoryReferenceField($entityTypeID, 0));
+		}
+
 		$query = new Main\Entity\Query($subQuery);
 		$query
 			->registerRuntimeField('', new Main\Entity\ExpressionField('CNT', 'COUNT(*)'))

@@ -6,7 +6,13 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 $isBitrix24Template = SITE_TEMPLATE_ID === "bitrix24";
 
 \Bitrix\Main\Loader::includeModule('ui');
-\Bitrix\Main\UI\Extension::load(["ui.entity-selector","ui.buttons", "ui.buttons.icons", "popup"]);
+\Bitrix\Main\UI\Extension::load([
+	"ui.entity-selector",
+	"ui.buttons",
+	"ui.buttons.icons",
+	"popup",
+	"ui.fonts.opensans"
+]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -16,7 +22,7 @@ if ($isBitrix24Template)
 
 	if (array_key_exists('PROJECT_VIEW', $arParams) && $arParams['PROJECT_VIEW'] === 'Y')
 	{
-		include(dirname(__FILE__).'/project_selector.php');
+		include(__DIR__.'/project_selector.php');
 	}
 
 	$this->EndViewTarget();
@@ -29,7 +35,7 @@ if ($isBitrix24Template)
 
 if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 {
-	include(dirname(__FILE__) . '/filter_selector.php');
+	include(__DIR__ . '/filter_selector.php');
 }
 ?>
 
@@ -40,19 +46,19 @@ if (isset($arParams['FILTER']) && is_array($arParams['FILTER']))
 <?php
 if ($arParams['MENU_GROUP_ID'] == 0 || $arParams['SHOW_CREATE_TASK_BUTTON'] != 'N')
 {
-	include(dirname(__FILE__) . '/create_button.php');
+	include(__DIR__ . '/create_button.php');
 }
 
-include(dirname(__FILE__).'/filter.php');
+include(__DIR__.'/filter.php');
 
 if ($arParams['USE_GROUP_SELECTOR'] == 'Y' && $arParams['PROJECT_VIEW'] !== 'Y')
 {
-	include(dirname(__FILE__).'/group_selector.php');
+	include(__DIR__.'/group_selector.php');
 }
 
 if ($arResult['SPRINT'])
 {
-	include(dirname(__FILE__).'/sprint_selector.php');
+	include(__DIR__.'/sprint_selector.php');
 }
 ?>
 
@@ -66,11 +72,11 @@ if ($arResult['SPRINT'])
 			  !empty($arParams['POPUP_MENU_ITEMS'])
 	)
 	{
-		include(dirname(__FILE__).'/popup_menu.php');
+		include(__DIR__.'/popup_menu.php');
 	}
 	if ($arParams["SHOW_QUICK_FORM_BUTTON"] != "N")
 	{
-		include(dirname(__FILE__).'/quick_form.php');
+		include(__DIR__.'/quick_form.php');
 	}
 	?>
 

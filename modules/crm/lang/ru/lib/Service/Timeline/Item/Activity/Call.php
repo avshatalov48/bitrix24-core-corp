@@ -1,0 +1,25 @@
+<?php
+$MESS['CRM_TIMELINE_TITLE_CALL_INCOMING'] = 'Завершён входящий звонок';
+$MESS['CRM_TIMELINE_TITLE_CALL_INCOMING_DONE'] = 'Обработан входящий звонок';
+$MESS['CRM_TIMELINE_TITLE_CALL_MISSED'] = 'Пропущен входящий звонок';
+$MESS['CRM_TIMELINE_TITLE_CALL_OUTGOING'] = 'Завершен исходящий звонок';
+$MESS['CRM_TIMELINE_TITLE_CALL_INCOMING_PLAN'] = 'Запланирован входящий звонок';
+$MESS['CRM_TIMELINE_TITLE_CALL_OUTGOING_PLAN'] = 'Запланирован исходящий звонок';
+$MESS['CRM_TIMELINE_INCOMING_CALL_DELETION_CONFIRM'] = 'Вы действительно желаете удалить входящий звонок \'#TITLE#\'?';
+$MESS['CRM_TIMELINE_OUTGOING_CALL_DELETION_CONFIRM'] = 'Вы действительно желаете удалить исходящий звонок \'#TITLE#\'?';
+$MESS['CRM_TIMELINE_TAG_CALL_COMPLETED'] = 'Успешно завершён';
+$MESS['CRM_TIMELINE_TAG_CALL_MISSED'] = 'Пропущен';
+$MESS['CRM_TIMELINE_TAG_TRANSCRIPT_PENDING'] = 'Расшифровка в процессе';
+$MESS['CRM_TIMELINE_BLOCK_TITLE_CLIENT'] = 'Клиент';
+$MESS['CRM_TIMELINE_BLOCK_TITLE_QUEUE'] = 'Очередь';
+$MESS['CRM_TIMELINE_BLOCK_TITLE_RESPONSIBLE_USER'] = 'Ответственный';
+$MESS['CRM_TIMELINE_BLOCK_TITLE_THEME'] = 'Тема';
+$MESS['CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_1'] = 'На номер';
+$MESS['CRM_TIMELINE_BLOCK_CALL_ADDITIONAL_INFO_2'] = 'Длительность';
+$MESS['CRM_TIMELINE_BLOCK_CLIENT_MARK_TEXT'] = 'Клиент оценил разговор на #MARK#';
+$MESS['CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_1'] = 'Звонок поступил в нерабочее время';
+$MESS["CRM_TIMELINE_BLOCK_DESCRIPTION_EXCLUDE_2"] = "Длительность звонка:";
+$MESS['CRM_TIMELINE_BUTTON_CALL'] = 'Позвонить';
+$MESS['CRM_TIMELINE_BUTTON_CALL_SCHEDULE'] = 'Запланировать';
+$MESS['CRM_TIMELINE_BUTTON_CALL_COMPLETE'] = 'Обработан';
+$MESS['CRM_TIMELINE_BUTTON_TIP_TRANSCRIPT'] = 'Показать расшифровку звонка';

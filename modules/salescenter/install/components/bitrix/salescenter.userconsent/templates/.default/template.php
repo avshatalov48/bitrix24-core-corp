@@ -6,7 +6,15 @@ use \Bitrix\Main\Localization\Loc;
 $APPLICATION->SetTitle(Loc::getMessage('SALESCENTER_USERCONSENT_TITLE'));
 
 \Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addFeedbackButtonToToolbar();
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'ui.sidepanel-content']);
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.buttons',
+	'ui.icons',
+	'ui.common',
+	'ui.alerts',
+	'ui.sidepanel-content',
+]);
 ?>
 
 <form method="get" action="" id="salescenter-userconsent-form">

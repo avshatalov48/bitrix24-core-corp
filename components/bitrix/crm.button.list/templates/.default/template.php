@@ -10,9 +10,10 @@ use Bitrix\Main\UI\Extension;
 /** @var array $arResult */
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'clipboard',
 	'ui.buttons',
-	'ui.design-tokens'
 ]);
 
 ?>

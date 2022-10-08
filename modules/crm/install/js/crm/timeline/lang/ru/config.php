@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_LOOK_AT_CLIENT_PRODUCTS"] = "Клиент оформил заказ. Посмотрите, какие товары он смотрел.";
 $MESS["CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS"] = "Предложите клиенту оплатить заказ и подтолкните к покупке этих товаров.";
+$MESS["CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS_2"] = "Помогите ему быстрее оплатить заказ: отправьте ссылку на оплату.";
 $MESS["CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_VIEWED_PRODUCTS"] = "Просмотренные товары";
 $MESS["CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE"] = "Показать еще";
 $MESS["CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCT_IN_DEAL"] = "в сделке";
@@ -26,3 +27,13 @@ $MESS["TIMELINE_DELIVERY_TAXI_CLIENT_DELIVERY_PRICE"] = "Выставлено к
 $MESS["TIMELINE_DELIVERY_TAXI_EXPECTED_DELIVERY_PRICE"] = "Расчетная стоимость доставки";
 $MESS["TIMELINE_DELIVERY_TAXI_EXPECTED_PRICE_NOT_RECEIVED"] = "не получена";
 $MESS["TIMELINE_DELIVERY_TAXI_DELIVERY_CANCEL_REQUEST"] = "Отменить заявку";
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_LIST_COMPILATION_SENT"] = "Клиенту отправлена подборка с этими товарами:";
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_ORDER_EXISTS_NOTICE"] = "В сделке уже есть заказ. При оформлении заказа из подборки будет создана новая сделка.";
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_TITLE"] = 'Подборка';
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED"] = 'Просмотрено';
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_DESCRIPTION"] = 'Клиент открыл подборку товаров';
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_LEGEND"] = 'от #DATE_CREATE#';
+$MESS["CRM_TIMELINE_USER_NOTE_SAVE"] = "Сохранить";
+$MESS["CRM_TIMELINE_USER_NOTE_CANCEL"] = "Отмена";
+$MESS["CRM_TIMELINE_USER_NOTE_PLACEHOLDER"] = "Введите текст заметки";
+$MESS["CRM_TIMELINE_PRODUCT_COMPILATION_DEAL_CREATED"] = "Клиент оформил заказ. Создана сделка #DEAL_TITLE# #DEAL_LEGEND#";

@@ -193,7 +193,7 @@
 
 		adjustPopup: function()
 		{
-			if (this.popup != null)
+			if (this.popup != null && this.popup.getPopupContainer())
 			{
 				this.popup.bindOptions.forceBindPosition = true;
 				this.popup.adjustPosition();

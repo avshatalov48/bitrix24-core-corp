@@ -72,6 +72,11 @@ class CDavGroupdavClientRequest
 		$this->body = $body;
 	}
 
+	public function GetBody()
+	{
+		return $this->body;
+	}
+
 	private function CreateBodyProperties($arProperties, &$bodyProp, &$xmlns, &$arXmlnsMap)
 	{
 		if (!is_array($arProperties) || (count($arProperties) <= 0))
@@ -150,6 +155,29 @@ class CDavGroupdavClientRequest
 		$this->body .= $bodyProp;
 		$this->body .= $bodyFilter;
 		$this->body .= "</A:propfind>";
+	}
+
+	public function CreateSyncReportBody($props, $syncToken)
+	{
+		$xmlns = " xmlns:A0=\"urn:ietf:params:xml:ns:caldav\"";
+		$arXmlnsMap = array("urn:ietf:params:xml:ns:caldav" => "A0");
+
+		$bodyProp = "";
+		$this->CreateBodyProperties($props, $bodyProp, $xmlns, $arXmlnsMap);
+
+		$this->body = "<"."?xml version=\"1.0\" encoding=\"UTF-8\"?".">\r\n";
+		$this->body .= "<A:sync-collection xmlns:A=\"DAV:\"".$xmlns.">\r\n";
+		if ($syncToken)
+		{
+			$this->body .= "\t<A:sync-token>" . $syncToken . "</A:sync-token>\r\n";
+		}
+		else
+		{
+			$this->body .= "\t<A:sync-token/>\r\n";
+		}
+		$this->body .= "\t<A:sync-level>". '1' ."</A:sync-level>\r\n";
+		$this->body .= $bodyProp;
+		$this->body .= "</A:sync-collection>";
 	}
 
 	public function CreateReportBody($arProperties = null, $arFilter = null, $arHref = null)

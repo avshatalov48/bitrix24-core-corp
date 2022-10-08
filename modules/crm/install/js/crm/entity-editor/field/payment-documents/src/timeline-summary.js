@@ -186,7 +186,9 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 			<div class="crm-entity-stream-content-detail-table-row">
 				<div class="crm-entity-stream-content-document-description">
 					<a class="ui-link" onclick="${openSlider}">${title} (${sum})</a>
-					${(new Label(labelOptions)).render()}
+					<span class="crm-entity-stream-content-document-description__label">
+						${(new Label(labelOptions)).render()}
+					</span>
 				</div>
 			</div>
 		`;
@@ -216,7 +218,9 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 					<a class="ui-link" onclick="${openSlider}">
 						${title} (${doc.DELIVERY_NAME}, ${sum})
 					</a>
-					${(new Label(labelOptions)).render()}
+					<span class="crm-entity-stream-content-document-description__label">
+						${(new Label(labelOptions)).render()}
+					</span>
 				</div>
 			</div>
 		`;
@@ -261,7 +265,9 @@ export class TimelineSummaryDocuments extends EntityEditorPaymentDocuments
 					<a class="ui-link" onclick="${openSlider}">
 						${title} (${sum})
 					</a>
-					${(new Label(labelOptions)).render()}
+					<span class="crm-entity-stream-content-document-description__label">
+						${(new Label(labelOptions)).render()}
+					</span>
 				</div>
 			</div>
 		`;

@@ -10,7 +10,7 @@ $arParams["IMAGE_SIZE"] = (intval($arParams["IMAGE_SIZE"]) > 0 ? $arParams["IMAG
 
 if (LANGUAGE_ID == 'ru')
 {
-	$path = str_replace(array("\\", "//"), "/", dirname(__FILE__)."/ru/script.php");
+	$path = str_replace(array("\\", "//"), "/", __DIR__."/ru/script.php");
 	include($path);
 }
 ?>

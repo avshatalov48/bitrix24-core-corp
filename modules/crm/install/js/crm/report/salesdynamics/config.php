@@ -11,4 +11,8 @@ return [
 	'css'  => [
 		'/bitrix/js/crm/report/salesdynamics/view.css',
 	],
+	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
+	]
 ];

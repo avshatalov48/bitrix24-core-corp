@@ -83,8 +83,6 @@ foreach ($arResult['ITEM']['INSTANCES'] as $arInstance):
 	endif;
 ?>
 	<div class="meeting-ques-info-wrap">
-		<div class="meeting-list-left-corner"></div>
-		<div class="meeting-list-right-corner"></div>
 		<table class="meeting-ques-info" cellspacing="0">
 			<tbody>
 				<tr class="meeting-ques-info-top">

@@ -1,5 +1,6 @@
 .ui-toolbar .crm-pagetitle.ui-toolbar-title-item-box {
 	display: inline-block;
+	padding: 8px 0;
 }
 
 .ui-page-slider-wrapper .ui-toolbar {
@@ -13,10 +14,6 @@
 	white-space: normal;
 	word-break: break-word;
 	overflow: auto;
-}
-
-.crm-pagetitle .pagetitile-button-container {
-	padding-left: 0;
 }
 
 .pagetitle-narrow.ui-toolbar-title-item-box {

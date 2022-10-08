@@ -2,6 +2,7 @@
 if (!CModule::IncludeModule('iblock'))
 	return false;
 
+
 $GLOBALS['INTR_DEPARTMENTS_CACHE'] = array();
 $GLOBALS['INTR_DEPARTMENTS_CACHE_VALUE'] = array();
 $GLOBALS['CACHE_HONOUR'] = null;
@@ -65,14 +66,14 @@ CJSCore::RegisterExt('intranet_structure', array(
 		'/bitrix/js/intranet/intranet-common.css'
 	],
 	'lang' => '/bitrix/modules/intranet/lang/'.LANGUAGE_ID.'/js_core_intranet_structure.php',
-	'rel' => ['ajax', 'popup', 'ui.forms']
+	'rel' => ['ajax', 'popup', 'ui.forms', 'ui.design-tokens']
 ));
 
 CJSCore::RegisterExt('planner', array(
 	'js' => '/bitrix/js/intranet/core_planner.js',
 	'css' => '/bitrix/js/intranet/core_planner.css',
 	'lang' => '/bitrix/modules/intranet/lang/'.LANGUAGE_ID.'/js_core_intranet_planner.php',
-	'rel' => array('date')
+	'rel' => array('date', 'ui.design-tokens')
 ));
 
 CJSCore::RegisterExt("intranet_notify_dialog", array(

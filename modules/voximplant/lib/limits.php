@@ -224,6 +224,12 @@ class Limits
 		return \Bitrix\Voximplant\Integration\Bitrix24::getLicensePrefix() === 'by';
 	}
 
+	public static function hasAccountBalance(): bool
+	{
+		static $regions = ['kz', 'by'];
+		return !in_array(\Bitrix\Main\Application::getInstance()->getLicense()->getRegion(), $regions, true);
+	}
+
 	/**
 	 * Returns array or russian license prefixes.
 	 * @return array

@@ -46,6 +46,7 @@ $MESS["CONFIG_ENTITY_OPERATOR_DATA_FIELD"] = "Agent information";
 $MESS["CONFIG_ENTITY_QUEUE_TIME_FIELD_NEW"] = "Forward to next in queue delay time";
 $MESS["CONFIG_ENTITY_QUEUE_TYPE_FIELD"] = "Call distribution mode";
 $MESS["CONFIG_ENTITY_SEND_NOTIFICATION_EMPTY_QUEUE"] = "Sends an empty Open Channel notification";
+$MESS["CONFIG_ENTITY_SEND_WELCOME_EACH_SESSION"] = "Send automated response when the customer initiates a new conversation";
 $MESS["CONFIG_ENTITY_TEMPORARY_FIELD"] = "Temporary preferences";
 $MESS["CONFIG_ENTITY_USE_WELCOME_FORM"] = "Show the form when conversation starts";
 $MESS["CONFIG_ENTITY_VOTE_BEFORE_FINISH_FIELD"] = "Allow users to rate ongoing conversations";

@@ -642,7 +642,7 @@ final class Dispatcher
 			throw new Dispatcher\Exception('Root namespace incorrect'); // paranoid disorder
 		}
 
-		$dir = dirname(__FILE__).static::DIRECTORY_TO_CALLABLE;
+		$dir = __DIR__.static::DIRECTORY_TO_CALLABLE;
 
 		$result = array();
 

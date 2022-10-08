@@ -34,6 +34,13 @@ class Company
 	);
 
 	/**
+	 * Company category ID
+	 *
+	 * @var int
+	 */
+	protected static int $categoryId = 0;
+
+	/**
 	 * Returns title of the indicator.
 	 * @return string
 	 */
@@ -42,6 +49,15 @@ class Company
 		return Loc::getMessage('CRM_VOLUME_COMPANY_TITLE');
 	}
 
+	/**
+	 * Returns entity category ID
+	 *
+	 * @return int
+	 */
+	public static function getCategoryId(): int
+	{
+		return self::$categoryId;
+	}
 	/**
 	 * Returns entity list attached to disk object.
 	 * @param string $entityClass Class name of entity.
@@ -206,6 +222,8 @@ class Company
 			'DATE_CREATE'
 		);
 		$query->registerRuntimeField($dayField);
+		$query->where('CATEGORY_ID', self::$categoryId);
+		$query->where('IS_MY_COMPANY', 'N');
 
 		return $query;
 	}
@@ -741,7 +759,7 @@ class Company
 		$activityVolume = new Volume\Activity();
 		$activityVolume->setFilter($this->getFilter());
 
-		$query = $activityVolume->prepareQuery();
+		$query = $activityVolume->prepareQuery(static::className());
 
 		$dropped = -1;
 

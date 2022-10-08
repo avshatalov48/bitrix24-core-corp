@@ -231,7 +231,7 @@ class Factory
 		return $isSupported;
 	}
 
-	public static function runOnAdd($entityTypeId, $entityId)
+	public static function runOnAdd($entityTypeId, $entityId, ?Starter $starter = null)
 	{
 		if ($entityTypeId === \CCrmOwnerType::Lead && !LeadSettings::isEnabled())
 		{
@@ -248,7 +248,7 @@ class Factory
 		}
 
 		$automationTarget = static::getTarget($entityTypeId, $entityId);
-		$automationTarget->getRuntime()->onDocumentAdd();
+		$automationTarget->getRuntime()->onDocumentAdd(static::createAddContext($starter));
 
 		if ($conversionResult = self::shiftConversionResult($entityTypeId, $entityId))
 		{
@@ -256,6 +256,27 @@ class Factory
 		}
 
 		return $result;
+	}
+
+	private static function createAddContext(?Starter $starter = null): ?Bizproc\Runtime\Starter\Context
+	{
+		if (!$starter || !class_exists(Bizproc\Runtime\Starter\Context::class))
+		{
+			return null;
+		}
+
+		$context = new Bizproc\Runtime\Starter\Context();
+
+		$context->setFace($starter->getContext());
+		$context->setModuleId($starter->getContextModuleId());
+		$context->setUserId($starter->getUserId());
+
+		if ($starter->isManualOperation())
+		{
+			$context->setIsManual();
+		}
+
+		return $context;
 	}
 
 	public static function runOnStatusChanged($entityTypeId, $entityId)
@@ -414,6 +435,7 @@ class Factory
 					Trigger\DeliveryFinishedTrigger::className(),
 					Trigger\WebHookTrigger::className(),
 					Trigger\VisitTrigger::className(),
+					Trigger\QrTrigger::className(),
 					Trigger\GuestReturnTrigger::className(),
 					Trigger\OpenLineTrigger::className(),
 					Trigger\OpenLineMessageTrigger::className(),

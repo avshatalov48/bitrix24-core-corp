@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\UI;
 
-Extension::load(['ui.buttons']);
+Extension::load(['ui.design-tokens', 'ui.buttons']);
 
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',

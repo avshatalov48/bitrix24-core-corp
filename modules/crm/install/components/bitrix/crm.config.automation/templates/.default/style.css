@@ -9,7 +9,7 @@
 }
 
 .crm-automation-config-title {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	overflow: hidden;
 	font-size: 14px;
 	color: #525c68;
@@ -31,7 +31,8 @@
 	vertical-align: middle;
 	color: #525c69;
 	padding-top: 5px;
-	font: 300 13px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .bitrix24-light-theme .crm-config-automation-subtitle {
@@ -56,7 +57,7 @@
 }
 
 .crm-config-automation-desc-title-item {
-	font: 24px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #31C2F3;
 }
 
@@ -89,7 +90,7 @@
 }
 
 .crm-config-automation-desc-subtitle-item {
-	font: bold 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #3F4B54;
 }
 
@@ -106,7 +107,7 @@
 	position: relative;
 	padding: 0 0 0 40px;
 	margin: 0 0 18px 0;
-	font: 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #3F4B54;
 	list-style: none;
 }

@@ -15,7 +15,7 @@ export default class PresetDefaultController extends DefaultController
 		let button;
 		const content = document.querySelector('#left-menu-preset-popup').cloneNode(true);
 		return PopupManager.create(
-			this.constructor.toString(), null, {
+			this.constructor.name.toString(), null, {
 			overlay: true,
 			contentColor : "white",
 			contentNoPaddings : true,

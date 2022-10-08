@@ -104,3 +104,10 @@ a.client-info-wrapper > .client-info-description-wrapper {
 	color: #484848;
 	font-size: 11px;
 }
+
+@media (min-width: 1500px) {
+	.ui-alert.crm-store-document-list--alert {
+		margin: 0 auto;
+		max-width: 600px;
+	}
+}

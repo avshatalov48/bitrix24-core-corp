@@ -15,7 +15,10 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-CJSCore::Init(array('crm_activity_planner'));
+
+use Bitrix\Crm\UI\NavigationBarPanel;
+
+CJSCore::Init(array('crm_activity_planner', 'ui.fonts.opensans'));
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
@@ -286,7 +289,7 @@ if($enableToolbar)
 			'TITLE' => $arResult['INTERNAL_ADD_BTN_TITLE'],
 			'ICON' => 'btn-new crm-invoice-command-add-invoice'
 		);
-	
+
 		if ($entityId > 0)
 		{
 			$addButton['LINK'] = CCrmUrlUtil::AddUrlParams(
@@ -297,12 +300,12 @@ if($enableToolbar)
 				array($entityType => $entityId)
 			);
 		}
-	
+
 		if($arResult['ADD_EVENT_NAME'] !== '')
 		{
 			$addButton['ONCLICK'] = "BX.onCustomEvent(window, '{$arResult['ADD_EVENT_NAME']}')";
 		}
-	
+
 		$toolbarButtons[] = $addButton;
 	}
 
@@ -454,18 +457,19 @@ if(!$isInternal
 
 	if($callListUpdateMode)
 	{
-		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = [
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
 			"TEXT" => GetMessage("CRM_INVOICE_UPDATE_CALL_LIST"),
 			"ID" => "update_call_list",
 			"NAME" => "update_call_list",
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$arResult['CALL_LIST_CONTEXT']}')"))
-				)
-			)
-		);
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$callListContext}')"]]
+				]
+			]
+		];
 	}
 	else
 	{
@@ -543,30 +547,15 @@ $APPLICATION->IncludeComponent(
 		'ACTION_PANEL' => $controlPanel,
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
-		'NAVIGATION_BAR' => array(
-			'ITEMS' => array(
-				array(
-					//'icon' => 'kanban',
-					'id' => 'kanban',
-					'name' => GetMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_KANBAN'),
-					'active' => false,
-					'url' => $arParams['PATH_TO_INVOICE_KANBAN']
-				),
-				array(
-					//'icon' => 'table',
-					'id' => 'list',
-					'name' => GetMessage('CRM_INVOICE_LIST_FILTER_NAV_BUTTON_LIST'),
-					'active' => true,
-					'url' => $arParams['PATH_TO_INVOICE_LIST']
-				)
-			),
-			'BINDING' => array(
-				'category' => 'crm.navigation',
-				'name' => 'index',
-				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-			)
-		),
+			? $arResult['PAGINATION']
+			: [],
+		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Invoice))
+			->setItems([
+				NavigationBarPanel::ID_KANBAN,
+				NavigationBarPanel::ID_LIST
+			], NavigationBarPanel::ID_LIST)
+			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+			->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,
@@ -784,4 +773,3 @@ if($arResult['NEED_FOR_REFRESH_ACCOUNTING']):?>
 		);
 	</script>
 <?endif;?>
-

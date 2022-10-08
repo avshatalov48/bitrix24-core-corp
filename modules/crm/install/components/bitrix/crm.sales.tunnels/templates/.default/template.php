@@ -11,6 +11,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
 Extension::load([
+	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.buttons.icons',
@@ -20,7 +21,7 @@ Extension::load([
 	'ui.notification',
 	'dd',
 	'ui.popup',
-	'crm.restriction.bitrix24'
+	'crm.restriction.bitrix24',
 ]);
 
 ?>

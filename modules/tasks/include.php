@@ -11,7 +11,8 @@ require_once __DIR__.'/autoload.php';
 
 CJSCore::RegisterExt('task-popups', array(
 	'js' => '/bitrix/js/tasks/task-popups.js',
-	'css' => '/bitrix/js/tasks/css/task-popups.css'
+	'css' => '/bitrix/js/tasks/css/task-popups.css',
+	'rel' => ['ui.design-tokens'],
 ));
 
 require_once($moduleRoot."/include/asset.php");

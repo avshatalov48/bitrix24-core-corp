@@ -1,4 +1,4 @@
-(function (exports,main_core,bizproc_automation) {
+(function (exports,main_core,bizproc_automation,main_core_events) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
@@ -11,11 +11,6 @@
 	      this.documentType = options.documentType;
 	      this.isRobot = options.isRobot;
 	      var form = document.forms[options.formName];
-	      this.document = new bizproc_automation.Document({
-	        rawDocumentType: this.documentType,
-	        documentFields: options.returnFieldsMap,
-	        title: options.documentName
-	      });
 
 	      if (!main_core.Type.isNil(form)) {
 	        this.entityTypeIdSelect = form.dynamic_type_id;
@@ -23,6 +18,12 @@
 	        this.entityTypeDependentElements = document.querySelectorAll('[data-role="bca-cuda-entity-type-id-dependent"]');
 	      }
 
+	      this.document = new bizproc_automation.Document({
+	        rawDocumentType: this.documentType,
+	        documentFields: options.documentFields,
+	        title: options.documentName
+	      });
+	      this.initAutomationContext();
 	      this.initFilterFields(options);
 	      this.initReturnFields(options);
 	      this.render();
@@ -41,7 +42,12 @@
 	            fieldsMap = _ref2[1];
 
 	        return [Number(entityTypeId), fieldsMap];
-	      }));
+	      })); // issue 0158608
+
+	      if (!main_core.Type.isNil(options.documentType) && !this.isRobot) {
+	        BX.Bizproc.Automation.API.documentType = options.documentType;
+	      }
+
 	      this.conditionGroup = new bizproc_automation.ConditionGroup(options.conditions);
 	    }
 	  }, {
@@ -67,10 +73,137 @@
 	      try {
 	        bizproc_automation.getGlobalContext();
 	      } catch (error) {
-	        bizproc_automation.setGlobalContext(new bizproc_automation.AutomationContext({
+	        bizproc_automation.setGlobalContext(new bizproc_automation.Context({
 	          document: this.document
 	        }));
+	        this.initSelectors();
 	      }
+	    }
+	  }, {
+	    key: "initSelectors",
+	    value: function initSelectors() {
+	      var getSelectorProperties = function getSelectorProperties(_ref5) {
+	        var properties = _ref5.properties,
+	            objectName = _ref5.objectName,
+	            expressionPrefix = _ref5.expressionPrefix;
+
+	        if (main_core.Type.isObject(properties)) {
+	          return Object.entries(properties).map(function (_ref6) {
+	            var _ref7 = babelHelpers.slicedToArray(_ref6, 2),
+	                id = _ref7[0],
+	                property = _ref7[1];
+
+	            return {
+	              id: id,
+	              title: property.Name,
+	              customData: {
+	                field: {
+	                  Id: id,
+	                  Type: property.Type,
+	                  Name: property.Name,
+	                  ObjectName: objectName,
+	                  SystemExpression: "{=".concat(objectName, ":").concat(id, "}"),
+	                  Expression: expressionPrefix ? "{{".concat(expressionPrefix, ":").concat(id, "}}") : "{=".concat(objectName, ":").concat(id, "}")
+	                }
+	              }
+	            };
+	          });
+	        }
+
+	        return [];
+	      };
+
+	      var getGlobalSelectorProperties = function getGlobalSelectorProperties(_ref8) {
+	        var properties = _ref8.properties,
+	            visibilityNames = _ref8.visibilityNames,
+	            objectName = _ref8.objectName;
+
+	        if (main_core.Type.isObject(properties)) {
+	          return Object.entries(properties).map(function (_ref9) {
+	            var _ref10 = babelHelpers.slicedToArray(_ref9, 2),
+	                id = _ref10[0],
+	                property = _ref10[1];
+
+	            var field = {
+	              id: id,
+	              Type: property.Type,
+	              title: property.Name,
+	              ObjectName: objectName,
+	              SystemExpression: "{=".concat(objectName, ":").concat(id, "}"),
+	              Expression: "{=".concat(objectName, ":").concat(id, "}")
+	            };
+
+	            if (property.Visibility && visibilityNames[property.Visibility]) {
+	              field.Expression = "{{".concat(visibilityNames[property.Visibility], ":").concat(property.Name, "}}");
+	            }
+
+	            return {
+	              id: id,
+	              title: property.Name,
+	              supertitle: visibilityNames[property.Visibility],
+	              customData: {
+	                field: field
+	              }
+	            };
+	          });
+	        }
+
+	        return [];
+	      };
+
+	      main_core_events.EventEmitter.subscribe('BX.Bizproc.Automation.Selector:onOpenMenu', function (event) {
+	        var selector = event.getData().selector;
+	        selector.addGroup('workflowParameters', {
+	          id: 'workflowParameters',
+	          title: main_core.Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
+	          children: [{
+	            id: 'parameters',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+	            children: getSelectorProperties({
+	              properties: window.arWorkflowParameters || {},
+	              objectName: 'Template',
+	              expressionPrefix: '~*'
+	            })
+	          }, {
+	            id: 'variables',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+	            children: getSelectorProperties({
+	              properties: window.arWorkflowVariables || {},
+	              objectName: 'Variable'
+	            })
+	          }, {
+	            id: 'constants',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+	            children: getSelectorProperties({
+	              properties: window.arWorkflowConstants || {},
+	              objectName: 'Constant',
+	              expressionPrefix: '~&'
+	            })
+	          }]
+	        });
+
+	        if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames) {
+	          selector.addGroup('globalVariables', {
+	            id: 'globalVariables',
+	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
+	            children: getGlobalSelectorProperties({
+	              properties: window.arWorkflowGlobalVariables || {},
+	              visibilityNames: window.wfGVarVisibilityNames || {},
+	              objectName: 'GlobalVar'
+	            })
+	          });
+	        }
+
+	        selector.addGroup('globalConstants', {
+	          id: 'globalConstants',
+	          title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
+	          children: getGlobalSelectorProperties({
+	            properties: window.arWorkflowGlobalConstants || {},
+	            visibilityNames: window.wfGConstVisibilityNames || {},
+	            objectName: 'GlobalConst'
+	          })
+	        });
+	      });
 	    }
 	  }, {
 	    key: "init",
@@ -136,5 +269,5 @@
 
 	namespace.CrmGetDynamicInfoActivity = CrmGetDynamicInfoActivity;
 
-}((this.window = this.window || {}),BX,BX.Bizproc));
+}((this.window = this.window || {}),BX,BX.Bizproc.Automation,BX.Event));
 //# sourceMappingURL=script.js.map

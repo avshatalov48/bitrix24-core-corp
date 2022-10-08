@@ -6,6 +6,7 @@ import DeliverySelector					from "../delivery-selector";
 import ShipmentView						from "../shipment-view";
 import {StageMixin} 					from "./stage-mixin";
 import {MixinTemplatesType} 			from "../templates-type-mixin";
+import {StatusTypes as Status} from 'salescenter.component.stage-block';
 
 const DeliveryVuex = {
 	props: {
@@ -53,7 +54,7 @@ const DeliveryVuex = {
 			statusClass()
 			{
 				return {
-					'salescenter-app-payment-by-sms-item-disabled-bg': this.installed === false
+					'salescenter-app-payment-by-sms-item-disabled-bg': this.installed === false || this.status === Status.disabled
 				}
 			},
 			productsPrice()

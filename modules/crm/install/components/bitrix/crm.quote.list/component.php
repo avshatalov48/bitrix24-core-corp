@@ -280,6 +280,7 @@ $arResult['HEADERS'] = 	array(
 	array('id' => 'ENTITIES_LINKS', 'name' => GetMessage('CRM_COLUMN_ENTITIES_LINKS'), 'default' => true, 'editable' => false),
 	array('id' => 'CLOSEDATE', 'name' => $factory->getFieldCaption('CLOSEDATE'), 'sort' => 'closedate', 'default' => true, 'editable' => true, 'type' => 'date'),
 	array('id' => 'BEGINDATE', 'name' => $factory->getFieldCaption('BEGINDATE'), 'sort' => 'begindate', 'editable' => true, 'type' => 'date'),
+	array('id' => 'ACTUAL_DATE', 'name' => $factory->getFieldCaption('ACTUAL_DATE'),  'default' => true, 'sort' => 'actual_date', 'editable' => true, 'type' => 'date'),
 	array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false),
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'id', 'first_order' => 'desc', 'width' => 60, 'editable' => false, 'type' => 'int'),
 	array('id' => 'QUOTE_NUMBER', 'name' => GetMessage('CRM_COLUMN_QUOTE_NUMBER'), 'sort' => 'quote_number', 'width' => 60, 'editable' => false),
@@ -1377,8 +1378,10 @@ while($arQuote = $obRes->GetNext())
 
 	$arQuote['CLOSEDATE'] = !empty($arQuote['CLOSEDATE']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arQuote['CLOSEDATE']), 'SHORT', SITE_ID)) : '';
 	$arQuote['BEGINDATE'] = !empty($arQuote['BEGINDATE']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arQuote['BEGINDATE']), 'SHORT', SITE_ID)) : '';
+	$arQuote['ACTUAL_DATE'] = !empty($arQuote['ACTUAL_DATE']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arQuote['ACTUAL_DATE']), 'SHORT', SITE_ID)) : '';
 	$arQuote['~CLOSEDATE'] = $arQuote['CLOSEDATE'];
 	$arQuote['~BEGINDATE'] = $arQuote['BEGINDATE'];
+	$arQuote['~ACTUAL_DATE'] = $arQuote['ACTUAL_DATE'];
 
 	$currencyID =  isset($arQuote['~CURRENCY_ID']) ? $arQuote['~CURRENCY_ID'] : CCrmCurrency::GetBaseCurrencyID();
 	$arQuote['~CURRENCY_ID'] = $currencyID;

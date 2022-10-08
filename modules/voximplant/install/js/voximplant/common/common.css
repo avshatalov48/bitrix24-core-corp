@@ -112,7 +112,7 @@
 /* TEXT */
 .voximplant-start-text-dark-bold {
 	display: inline-block;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -127,7 +127,7 @@
 }
 
 .voximplant-start-head-entity-bold {
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535b6a;
 }
 
@@ -782,7 +782,7 @@
 .voximplant-blacklist-popup-title {
 	display: block;
 	margin: 0 0 18px 0;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .voximplant-blacklist-input-box {
@@ -1135,7 +1135,7 @@
 }
 
 .voximplant-number-settings-bold-text .voximplant-number-settings-label {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .voximplant-number-settings-inner {}
@@ -1313,7 +1313,7 @@
 
 .voximplant-control-settings-value-box {
 	position: relative;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	word-break: break-word;
 }
@@ -1321,7 +1321,7 @@
 .voximplant-control-settings-input {
 	display: none;
 	margin: 0;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 

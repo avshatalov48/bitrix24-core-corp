@@ -72,8 +72,13 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$this->init();
 		if (!$this->checkDocumentReadRights())
 		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage('CRM_DOCUMENT_LIST_NO_VIEW_RIGHTS_ERROR');
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage(
+				Main\Loader::includeModule('bitrix24')
+					? 'CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_CLOUD'
+					: 'CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_BOX'
+			);
 			$this->includeComponentTemplate();
+
 			return;
 		}
 		$this->arResult['GRID'] = $this->prepareGrid();
@@ -486,7 +491,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		}
 		else
 		{
-			$column['PRICE_DELIVERY'] = CCurrencyLang::CurrencyFormat(0, \Bitrix\Currency\CurrencyManager::getBaseCurrency());
+			$column['PRICE_DELIVERY'] = CCurrencyLang::CurrencyFormat(0, (string)\Bitrix\Currency\CurrencyManager::getBaseCurrency());
 		}
 
 		if ($column['RESPONSIBLE_ID'])
@@ -761,7 +766,10 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			'FILTER' => $this->filter->getFieldArrays(),
 			'FILTER_PRESETS' => [],
 			'ENABLE_LABEL' => true,
-			'THEME' => Bitrix\Main\UI\Filter\Theme::MUTED,
+			'THEME' => Bitrix\Main\UI\Filter\Theme::LIGHT,
+			'CONFIG' => [
+				'AUTOFOCUS' => false,
+			]
 		];
 		UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 
@@ -771,6 +779,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			'dataset' => [
 				'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::ADD,
 			],
+			'classList' => ['add-document-button'],
 		]);
 		$addDocumentUrl = $this->getUrlToDocumentDetail(0);
 		$analyticsSourcePart = $this->analyticsSource ? '&inventoryManagementSource=' . $this->analyticsSource : '';

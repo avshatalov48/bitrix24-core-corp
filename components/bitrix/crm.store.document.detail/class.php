@@ -15,16 +15,11 @@ use Bitrix\Catalog;
 use Bitrix\UI;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\ShipmentDocumentRealization;
+use Bitrix\Crm\Integration\Catalog\WarehouseOnboarding;
 
 if (!Main\Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
-	return;
-}
-
-if (!Main\Loader::includeModule('salescenter'))
-{
-	ShowError(GetMessage('SALESCENTER_MODULE_NOT_INSTALLED'));
 	return;
 }
 
@@ -46,10 +41,10 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 	private const COMPONENT_ERROR_EMPTY_ORDER_ID = -0x3;
 
 	/** @var Order\Shipment */
-	private $shipment;
+	private ?Order\Shipment $shipment;
 
 	/** @var Order\Order */
-	private $order;
+	private ?Order\Order $order;
 
 	public function getEntityTypeID()
 	{
@@ -77,10 +72,21 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 	protected function getErrorMessage($error)
 	{
+		if ($error instanceof Main\Error)
+		{
+			return $error->getMessage();
+		}
+
 		if ($error === ComponentError::ENTITY_NOT_FOUND)
 		{
-			return Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_SHIPMENT_NOT_FOUND');
+			return Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND');
 		}
+
+		if($error === self::COMPONENT_ERROR_EMPTY_ORDER_ID)
+		{
+			return Loc::getMessage('CRM_STORE_DOCUMENT_SD_ORDER_NOT_FOUND');
+		}
+
 		return ComponentError::getMessage($error);
 	}
 
@@ -118,6 +124,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 
+		$this->init();
+
 		//region Params
 		$this->arResult['DOCUMENT_ID'] = isset($this->arParams['~DOCUMENT_ID']) ? (int)$this->arParams['~DOCUMENT_ID'] : 0;
 
@@ -138,6 +146,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$this->arResult['OWNER_TYPE_ID'] = (int)($this->arParams['CONTEXT']['OWNER_TYPE_ID'] ?? 0);
 		$this->arResult['OWNER_ID'] = (int)($this->arParams['CONTEXT']['OWNER_ID'] ?? 0);
 
+		$this->arResult['WAREHOUSE_CRM_TOUR_DATA'] = $this->getWarehouseOnboardTourData($this->arResult['OWNER_TYPE_ID']);
+
 		$this->arResult['ORDER_ID'] = 0;
 		if (!\CCrmSaleHelper::isWithOrdersMode())
 		{
@@ -150,6 +160,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::OrderShipmentName.'_'.$this->arResult['DOCUMENT_ID'];
 
+		// $shipment id
 		$this->setEntityID($this->arResult['DOCUMENT_ID']);
 
 		if (!$this->tryToDetectMode())
@@ -158,21 +169,23 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			return;
 		}
 
-		if ($this->entityID > 0)
+		if ($this->getEntityID() > 0)
 		{
-			$this->shipment = Crm\Order\Manager::getShipmentObject($this->entityID);
+			$this->shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($this->entityID);
 			if (!$this->shipment)
 			{
-				$this->addError(new Main\Error(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND')));
-				$this->showErrors();
-				return;
+				$this->addError(ComponentError::ENTITY_NOT_FOUND);
 			}
 
 			$this->order = $this->shipment->getOrder();
 		}
-		elseif ($this->arResult['ORDER_ID'])
+		elseif ($this->arResult['ORDER_ID'] && $this->arResult['ORDER_ID'] > 0)
 		{
 			$this->order = Crm\Order\Order::load($this->arResult['ORDER_ID']);
+			if (!$this->order)
+			{
+				$this->addError(self::COMPONENT_ERROR_EMPTY_ORDER_ID);
+			}
 		}
 		else
 		{
@@ -185,25 +198,18 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			}
 		}
 
-		if ($this->order)
+		if ($this->getErrors())
 		{
-			$this->arResult['ORDER_ID'] = $this->order->getId();
+			$this->showErrors();
+			return;
 		}
+
+		$this->arResult['ORDER_ID'] = $this->order->getId();
 
 		$shipments = $this->order->getShipmentCollection();
 		if ($this->mode === ComponentMode::CREATION)
 		{
 			$this->shipment = $shipments->createItem();
-		}
-		elseif (!$this->shipment)
-		{
-			$this->shipment = $shipments->getItemById($this->entityID);
-			if (!$this->shipment)
-			{
-				$this->addError(new Main\Error(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND')));
-				$this->showErrors();
-				return;
-			}
 		}
 
 		$this->arResult['CONTEXT_PARAMS'] = [
@@ -979,28 +985,10 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$companyId = 0;
 		$contactIds = [];
 
-		$clientCollection = $this->order->getContactCompanyCollection();
-		if ($clientCollection)
-		{
-			/** @var Crm\Order\Company $company */
-			if ($company = $clientCollection->getPrimaryCompany())
-			{
-				$companyId = $company->getField('ENTITY_ID');
-				$this->entityData['COMPANY_ID'] = $companyId;
-			}
-
-			$contacts = $clientCollection->getContacts();
-			/** @var Crm\Order\Contact $contact */
-			foreach ($contacts as $contact)
-			{
-				$contactIds[] = $contact->getField('ENTITY_ID');
-			}
-		}
-
 		if ($this->mode === ComponentMode::CREATION)
 		{
 			$bindingEntity = $this->getOwnerEntity();
-			if (empty($companyId) && empty($contactIds) && $bindingEntity)
+			if ($bindingEntity)
 			{
 				$companyId = $bindingEntity->getCompanyId();
 
@@ -1008,6 +996,25 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 				foreach ($contacts as $contact)
 				{
 					$contactIds[] = $contact->getId();
+				}
+			}
+		}
+		else
+		{
+			$clientCollection = $this->order->getContactCompanyCollection();
+			if ($clientCollection && !$clientCollection->isEmpty())
+			{
+				/** @var Crm\Order\Company $company */
+				if ($company = $clientCollection->getPrimaryCompany())
+				{
+					$companyId = $company->getField('ENTITY_ID');
+				}
+
+				$contacts = $clientCollection->getContacts();
+				/** @var Crm\Order\Contact $contact */
+				foreach ($contacts as $contact)
+				{
+					$contactIds[] = $contact->getField('ENTITY_ID');
 				}
 			}
 		}
@@ -1412,7 +1419,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		$ownerTypeId = $this->arResult['OWNER_TYPE_ID'];
 		$ownerId = $this->arResult['OWNER_ID'];
 
-		if ($this->order)
+		$isOwnerContext = $ownerTypeId && $ownerId;
+		if (!$isOwnerContext)
 		{
 			$entityBinding = $this->order->getEntityBinding();
 			if ($entityBinding)
@@ -1446,5 +1454,37 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 	public function configureActions()
 	{
 		// TODO: Implement configureActions() method.
+	}
+
+	private function getWarehouseOnboardTourData(int $ownerTypeId): array
+	{
+		$tourData = [];
+
+		if
+		(
+			WarehouseOnboarding::isCrmWarehouseOnboardingAvailable($this->userID)
+			&& $ownerTypeId === CCrmOwnerType::Deal
+		)
+		{
+			$warehouseOnboarding = new WarehouseOnboarding($this->userID);
+			if ($warehouseOnboarding->isStoreDocumentChainStepAvailable())
+			{
+				$tourData = [
+					'IS_TOUR_AVAILABLE' => true,
+					'CHAIN_DATA' => $warehouseOnboarding->getCurrentChainData(),
+				];
+			}
+			else
+			{
+				$tourData['IS_TOUR_AVAILABLE'] = false;
+			}
+		}
+		else
+		{
+			$tourData['IS_TOUR_AVAILABLE'] = false;
+		}
+
+
+		return $tourData;
 	}
 }

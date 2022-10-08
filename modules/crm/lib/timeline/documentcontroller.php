@@ -1,8 +1,8 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main\ArgumentException;
-use Bitrix\Main\Loader;
 
 final class DocumentController extends EntityController
 {
@@ -39,7 +39,10 @@ final class DocumentController extends EntityController
 			$text = GetMessage('CRM_DOCUMENT_CONTROLLER_HISTORY_CREATE_MESSAGE');
 		}
 		$this->addEvent($text, $params);
-		$this->addToStack($id, 'timeline_document_add', $params);
+		if ($params['ENTITY_TYPE_ID'] && $params['ENTITY_ID'])
+		{
+			$this->sendPullEventOnAdd(new ItemIdentifier($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']), $id, $params['USER_ID']);
+		}
 	}
 
 	public function onDelete($id, array $params)
@@ -66,8 +69,11 @@ final class DocumentController extends EntityController
 		{
 			$this->addEvent($text, $params);
 		}
+		if ($params['ENTITY_TYPE_ID'] && $params['ENTITY_ID'])
+		{
+			$this->sendPullEventOnDelete(new ItemIdentifier($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']), $id, $params['USER_ID']);
+		}
 
-		$this->addToStack($id, 'timeline_document_delete', $params);
 		DocumentEntry::delete($id);
 
 		parent::onDelete($id, $params);
@@ -88,7 +94,10 @@ final class DocumentController extends EntityController
 		}
 		$text = GetMessage('CRM_DOCUMENT_CONTROLLER_HISTORY_UPDATE_MESSAGE', ['#TITLE#' => $title]);
 		$this->addEvent($text, $params);
-		$this->addToStack($id, 'timeline_document_update', $params);
+		if ($params['ENTITY_TYPE_ID'] && $params['ENTITY_ID'])
+		{
+			$this->sendPullEventOnUpdate(new ItemIdentifier($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']), $id, $params['USER_ID']);
+		}
 	}
 
 	public function prepareSearchContent(array $params)
@@ -131,29 +140,5 @@ final class DocumentController extends EntityController
 			'EVENT_NAME' => $text,
 			'DATE_CREATE' => ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL', SITE_ID)
 		], false);
-	}
-
-	public function addToStack(int $id, $command, array $params)
-	{
-		if(Loader::includeModule('pull') && \CPullOptions::GetQueueServerStatus())
-		{
-			$items = [$id => TimelineEntry::getByID($id)];
-			TimelineManager::prepareDisplayData($items);
-
-			$ownerTypeID = $params['ENTITY_TYPE_ID'];
-			$ownerID = $params['ENTITY_ID'];
-			$tag = TimelineEntry::prepareEntityPushTag($ownerTypeID, $ownerID);
-			\CPullWatch::AddToStack(
-				$tag,
-				[
-					'module_id' => 'crm',
-					'command' => $command,
-					'params' => [
-						'TAG' => $tag,
-						'HISTORY_ITEM' => $items[$id]
-					],
-				]
-			);
-		}
 	}
 }

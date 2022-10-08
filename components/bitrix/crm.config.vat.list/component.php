@@ -67,6 +67,7 @@ $arResult['HEADERS'] = array(
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_POST['action_button_'.$arResult['GRID_ID']]))
 {
+	$success = true;
 	$action = $_POST['action_button_'.$arResult['GRID_ID']];
 	if($arResult['CAN_DELETE'] && $action === 'delete')
 	{
@@ -80,17 +81,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 			if(!$deleteAll && !in_array($vatID, $IDs, true))
 				continue;
 
-			if(!CCatalogVat::Delete($vatID))
+			$result = Catalog\Model\Vat::delete((int)$vatID);
+			if (!$result->isSuccess())
 			{
-				$error = '';
-
-				if ($ex = $APPLICATION->GetException())
-					$error = $ex->GetString();
-				else
+				$error = implode(' ', $result->getErrorMessages());
+				if ($error === '')
+				{
 					$error = GetMessage('CRM_VAT_DELETION_GENERAL_ERROR');
-
+				}
 				ShowError($error);
+				$success = false;
 			}
+			unset($result);
 		}
 
 		unset($_POST['ID'], $_REQUEST['ID']); // otherwise the filter will work
@@ -124,50 +126,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && check_bitrix_sessid() && isset($_PO
 			{
 				if ($ID > 0)
 				{
-					$result = Catalog\VatTable::update($ID, $arFields);
+					$result = Catalog\Model\Vat::update($ID, $arFields);
 				}
 				else
 				{
-					$result = Catalog\VatTable::add($arFields);
+					$result = Catalog\Model\Vat::add($arFields);
 				}
 				if (!$result->isSuccess())
 				{
-					ShowError(GetMessage('CRM_VAT_UPDATE_GENERAL_ERROR'));
+					$error = implode(' ', $result->getErrorMessages());
+					if ($error === '')
+					{
+						$error = GetMessage('CRM_VAT_UPDATE_GENERAL_ERROR');
+					}
+					ShowError($error);
+					$success = false;
 				}
 				unset($result);
 			}
 		}
 	}
 
-	if(!isset($_POST['AJAX_CALL']))
+	if ($success && !isset($_POST['AJAX_CALL']))
 	{
 		LocalRedirect($APPLICATION->GetCurPage());
 	}
 }
 elseif ($_SERVER['REQUEST_METHOD'] == 'GET' && check_bitrix_sessid() && isset($_GET['action_'.$arResult['GRID_ID']]))
 {
+	$success = true;
 	if ($arResult['CAN_DELETE'] && $_GET['action_'.$arResult['GRID_ID']] === 'delete')
 	{
-		$vatID = isset($_GET['ID']) ? $_GET['ID'] : '';
+		$vatID = (int)($_GET['ID'] ?? 0);
 		if($vatID > 0)
 		{
-			if(!CCatalogVat::Delete($vatID))
+			$result = Catalog\Model\Vat::delete($vatID);
+			if (!$result->isSuccess())
 			{
-				$error = '';
-
-				if ($ex = $APPLICATION->GetException())
-					$error = $ex->GetString();
-				else
+				$error = implode(' ', $result->getErrorMessages());
+				if ($error === '')
+				{
 					$error = GetMessage('CRM_VAT_DELETION_GENERAL_ERROR');
-
+				}
 				ShowError($error);
+				$success = false;
 			}
+			unset($result);
 		}
 		unset($_GET['ID'], $_REQUEST['ID']); // otherwise the filter will work
 	}
 
-	if (!isset($_GET['AJAX_CALL']))
-		LocalRedirect($bInternal ? '?'.$arParams['FORM_ID'].'_active_tab=tab_product' : '');
+	if ($success && !isset($_GET['AJAX_CALL']))
+	{
+		LocalRedirect($bInternal ? '?' . $arParams['FORM_ID'] . '_active_tab=tab_product' : '');
+	}
 }
 
 $gridOptions = new CCrmGridOptions($arResult['GRID_ID']);
@@ -192,7 +204,18 @@ foreach($allVats as $k => $v)
 	$arVat['C_SORT'] = $arVat['~C_SORT'] = (int)$v['SORT'];
 	$arVat['SORT'] = $arVat['~SORT'] = (int)$v['SORT'];
 	$arVat['ACTIVE'] = $arVat['~ACTIVE'] = $v['ACTIVE'] == 'Y' ? 'Y' : 'N';
-	$arVat['RATE'] = $arVat['~RATE'] = $v['RATE'];
+	$arVat['~EXCLUDE_VAT'] = $v['EXCLUDE_VAT'];
+	$arVat['EXCLUDE_VAT'] = $v['EXCLUDE_VAT'];
+	if ($v['EXCLUDE_VAT'] === 'Y')
+	{
+		$arVat['~RATE'] = GetMessage('CRM_VAT_EMPTY');
+		$arVat['RATE'] = GetMessage('CRM_VAT_EMPTY');
+	}
+	else
+	{
+		$arVat['~RATE'] = $v['RATE'];
+		$arVat['RATE'] = $v['RATE'];
+	}
 
 	$arVat['PATH_TO_VAT_SHOW'] =
 		CComponentEngine::MakePathFromTemplate(
@@ -238,9 +261,19 @@ if (!empty($sort) && is_array($sort))
 
 	$order = $sort[$by] == 'asc' ? SORT_ASC : SORT_DESC;
 
-	if (in_array($by, array('ID', 'NAME', 'RATE', 'ACTIVE', 'SORT'), true))
+	if (in_array($by, array('ID', 'NAME', 'ACTIVE', 'SORT'), true))
 	{
 		Main\Type\Collection::sortByColumn($vats, array($by => $order));
+	}
+	elseif ($by === 'RATE')
+	{
+		Main\Type\Collection::sortByColumn(
+			$vats,
+			[
+				'EXCLUDE_VAT' => ($order === SORT_DESC ? SORT_ASC : SORT_DESC),
+				'RATE' => $order,
+			]
+		);
 	}
 }
 

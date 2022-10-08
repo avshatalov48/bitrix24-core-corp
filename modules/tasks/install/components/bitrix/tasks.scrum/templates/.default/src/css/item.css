@@ -1,7 +1,8 @@
 .tasks-scrum__item {
 	box-sizing: border-box;
 	padding: 12px 0;
-	border-radius: 3px;
+	/*border-radius: 3px;*/
+	/*border-radius: var(--ui-border-radius-xs, 3px);*/
 	margin-top: 10px;
 	color: var(--tasks_scrum-light-grey);
 	position: relative;
@@ -15,21 +16,54 @@
 	grid-template-columns: 10px calc(100% - 10px - 19% - 64px) 19% 64px;
 }
 
-.tasks-scrum__item::before {
+/*.tasks-scrum__item::before {*/
+/*	content: '';*/
+/*	display: block;*/
+/*	width: calc(100% - 2px);*/
+/*	height: calc(100% - 2px);*/
+/*	position: absolute;*/
+/*	left: 0;*/
+/*	top: 0;*/
+/*	border: 1px solid transparent;*/
+/*	background: var(--tasks_scrum-white);*/
+/*	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);*/
+/*	!*border-radius: 3px;*!*/
+/*	border-radius: var(--ui-border-radius-xs, 3px);*/
+/*	z-index: -1;*/
+/*	transition: .2s;*/
+/*	pointer-events: none;*/
+/*}*/
+
+.tasks-scrum__item--bg {
+	position: absolute;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);
+	border-radius: var(--ui-border-radius-xs, 3px);
+	background: var(--tasks_scrum-white);
+	overflow: hidden;
+	z-index: -1;
+	transition: .2s;
+	/*pointer-events: none;*/
+}
+
+.tasks-scrum__item.--item-backlog .tasks-scrum__item--bg {
+	background: var(--tasks_scrum-grey-3);
+}
+
+.tasks-scrum__item .tasks-scrum__item--bg::before {
 	content: '';
 	display: block;
 	width: calc(100% - 2px);
 	height: calc(100% - 2px);
-	position: absolute;
-	left: 0;
-	top: 0;
 	border: 1px solid transparent;
+	position: absolute;
+	left: 3px;
+	top: 0;
 	background: var(--tasks_scrum-white);
-	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);
-	border-radius: 3px;
-	z-index: -1;
-	transition: .2s;
-	pointer-events: none;
+	z-index: 0;
 }
 
 .tasks-scrum__content-items .tasks-scrum__item:first-of-type {
@@ -64,7 +98,7 @@
 	background: var(--tasks_scrum-white);
 	box-shadow: 0 1px 1px 0 var(--tasks_scrum-black_alpha_08);
 	border: 1px solid var(--tasks_scrum-white);
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	opacity: 1;
 	z-index: -1;
 	transition: .2s;
@@ -141,9 +175,14 @@
 	margin-right: 0;
 }
 
-.tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--short-view::before {
-	left: 10px;
-	width: calc(100% - 12px);
+/*.tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--short-view::before {*/
+/*	left: 10px;*/
+/*	width: calc(100% - 12px);*/
+/*}*/
+
+.tasks-scrum__item-sub-tasks .tasks-scrum__item.--subtasks.--short-view .tasks-scrum__item--bg {
+		left: 10px;
+		width: calc(100% - 10px);
 }
 
 .tasks-scrum__item.--open:not(.--subtasks) + .tasks-scrum__item.--subtasks + .tasks-scrum__item.--subtasks,
@@ -171,7 +210,7 @@
 	margin-right: 11px;
 	cursor: pointer;
 	flex-shrink: 0;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	opacity: 0.4;
 	transition: .2s;
 	background-repeat: no-repeat;
@@ -270,8 +309,9 @@
 	padding: 2px 7px 2px 5px;
 	height: auto;
 	margin: 0 5px 0 0;
-	border-radius: 10px;
-	font: 10px/10px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-border-radius-md, 10px);
+	font: 10px/10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum-dark-grey);
 	border: 1px solid var(--tasks_scrum-dark-grey_alpha_17);
 	box-sizing: border-box;
@@ -376,7 +416,7 @@
 	display: block;
 	width: 8px;
 	height: 8px;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	background-color: var(--tasks_scrum-blue);
 	margin: 1px 4px 0 1px;
 	flex-shrink: 0;
@@ -392,16 +432,15 @@
 
 .tasks-scrum__item--hashtag {
 	display: none;
-	font-size: 12px;
 	color: var(--tasks_scrum-blue-4);
-	line-height: 17px;
 	margin-right: 5px;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	cursor: pointer;
 	transition: .2s;
-	font: 12px/17px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 12px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .tasks-scrum__item--hashtag:hover {
@@ -452,7 +491,7 @@
 
 .tasks-scrum__item--story-points-element {
 	background: var(--tasks_scrum-blue_alpha_20);
-	border-radius: 9.5px;
+	border-radius: var(--ui-border-radius-md, 10px);
 	padding: 2px 5px;
 	min-width: 26px;
 	box-sizing: border-box;
@@ -485,13 +524,13 @@
 }
 
 .tasks-scrum__item--story-points-input {
-	font: 13px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	padding: 6px 6px;
 	box-sizing: border-box;
 	background: var(--tasks_scrum-white);
 	border: 1px solid var(--tasks_scrum-blue);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	width: 100%;
 	transition: .2s;
 }
@@ -503,7 +542,7 @@
 	position: absolute;
 	top: 0;
 	left: 0;
-	border-radius: 3px 0 3px 0;
+	border-radius: var(--ui-border-radius-xs, 3px) 0 var(--ui-border-radius-xs, 3px) 0;
 	background-color: var(--tasks_scrum-blue-2);
 	background-repeat: no-repeat;
 	background-position: 3px 1px;
@@ -543,7 +582,7 @@
 	background: var(--tasks_scrum-white);
 	cursor: pointer;
 	border: 1px solid #A8ADB4;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 }
 
 .tasks-scrum__item--group-mode-input:checked {
@@ -565,8 +604,9 @@
 
 .tasks-scrum__item.--item-backlog {
 	/*padding: 12px 10px 12px 12px;*/
-	padding: 17px 10px 15px 12px;
-	border-left: 3px solid var(--tasks_scrum-grey-3);
+	/*padding: 17px 10px 15px 12px;*/
+	padding: 17px 10px 15px 15px;
+	/*border-left: 3px solid var(--tasks_scrum-grey-3);*/
 }
 
 .tasks-scrum__item.--item-backlog .tasks-scrum__item--info {
@@ -589,9 +629,9 @@
 	margin-right: 5px;
 }
 
-.tasks-scrum__item.--item-backlog .tasks-scrum__item--link {
-	left: -3px;
-}
+/*.tasks-scrum__item.--item-backlog .tasks-scrum__item--link {*/
+/*	left: -3px;*/
+/*}*/
 
 .tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--story-points {
 	display: block;
@@ -608,7 +648,7 @@
 }
 
 .tasks-scrum__item.--item-backlog::before {
-	border-radius: 0 3px 3px 0;
+	border-radius: 0 var(--ui-border-radius-xs, 3px) var(--ui-border-radius-xs, 3px) 0;
 }
 
 .tasks-scrum__item.--short-view.--item-backlog .tasks-scrum__item--comment-counter {
@@ -628,10 +668,16 @@
 .tasks-scrum__item.--linked-mode-current .tasks-scrum__item--substrate::before,
 .tasks-scrum__item.--linked-mode-current .tasks-scrum__item--substrate::after,
 .tasks-scrum__item.--many.--group-mode .tasks-scrum__item--substrate::after,
-.tasks-scrum__item.--group-mode .tasks-scrum__item--substrate::before,
-.tasks-scrum__item.--group-mode::before {
+.tasks-scrum__item.--group-mode .tasks-scrum__item--substrate::before {
 	background: var(--tasks_scrum-blue-3);
 	border: 1px solid var(--tasks_scrum-blue);
+}
+
+.tasks-scrum__item.--group-mode .tasks-scrum__item--bg::before {
+	background: var(--tasks_scrum-blue-3);
+	border: 1px solid var(--tasks_scrum-blue);
+	left: 0;
+	border-radius: var(--ui-border-radius-xs, 6px);
 }
 
 .tasks-scrum__item.--linked-mode-current::before {
@@ -691,14 +737,18 @@
 
 .tasks-scrum__item--epic-full-view {
 	display: none;
-	font: 12px/18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
-	border-radius: 14px;
+	font: 12px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	border-radius: var(--ui-border-radius-xl, 14px);
 	padding: 0 10px 1px;
 	margin: 3px 9px 3px 0;
 	color: var(--tasks_scrum-light-grey);
 	border: 1px solid;
 	transition: .2s;
 	cursor: pointer;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .tasks-scrum__item--epic-full-view.--visible {

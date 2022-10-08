@@ -5,7 +5,7 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_FINAL_FORM_DESCRIPTION"] = "Edna.ru 
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECTED"] = "Edna.ru WhatsApp подключен";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CHANGE_ANY_TIME"] = "Вы можете в любое время изменить или отключить";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_TITLE"] = "Подключите Edna.ru WhatsApp к Открытой линии";
-$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP"] = "Для подключения необходимо <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">выполнить ряд действий</a>.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_STEP_NEW"] = 'Для подключения необходимо #LINK_START#выполнить ряд действий#LINK_END#.';
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_INSTRUCTION_TITLE"] = "<span class=\"imconnector-field-box-text-bold\">Инструкция</span> по подключению аккаунта Edna.ru WhatsApp:";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Я хочу</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">Подключить</span> WhatsApp через Edna.ru</div>";

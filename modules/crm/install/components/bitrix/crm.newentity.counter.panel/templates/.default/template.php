@@ -18,6 +18,8 @@ $wrapperID = "{$prefix}_wrapper";
 $containerID = "{$prefix}_container";
 $counterContainerID = "{$prefix}_counter";
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 ?><div class="crm-alert" id="<?=htmlspecialcharsbx($wrapperID)?>" style="display: none;">
 	<div class="crm-alert-inner" id="<?=htmlspecialcharsbx($containerID)?>">
 		<span class="crm-alert-inner-text"><?=$caption?>:</span>
@@ -35,6 +37,7 @@ $counterContainerID = "{$prefix}_counter";
 				{
 					userId: <?=$arResult['USER_ID']?>,
 					entityTypeId: <?=($arResult['ENTITY_TYPE_ID'])?>,
+					categoryId: <?=isset($arResult['CATEGORY_ID']) ? (int)$arResult['CATEGORY_ID'] : 'null'?>,
 					lastEntityId: <?=($arResult['ENTITY_LAST_ID'])?>,
 					gridId: "<?=CUtil::JSEscape($arResult['GRID_ID'])?>",
 					serviceUrl: "/bitrix/components/bitrix/crm.newentity.counter.panel/ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>",

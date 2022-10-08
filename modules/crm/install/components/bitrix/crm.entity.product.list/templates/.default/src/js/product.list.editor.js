@@ -9,6 +9,8 @@ import {ProductSelector} from 'catalog.product-selector';
 import HintPopup from './hint.popup';
 import {ProductModel} from "catalog.product-model";
 import {PULL} from 'pull.client';
+import {FieldHintManager} from "./field.hint.manager";
+import {Guide} from 'ui.tour';
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -26,6 +28,8 @@ export class Editor
 	isChangedGrid = false;
 	pageEventsManager: PageEventsManager;
 	cache = new Cache.MemoryCache();
+
+	#fieldHintManager: FieldHintManager;
 
 	actions = {
 		disableSaveButton: 'disableSaveButton',
@@ -87,6 +91,8 @@ export class Editor
 		this.initProducts();
 		this.initGridData();
 
+		this.#fieldHintManager = new FieldHintManager(this.getContainer(), this.getGrid.bind(this));
+
 		EventEmitter.emit(window, 'EntityProductListController', [this]);
 
 		this.#initSupportCustomRowActions();
@@ -108,7 +114,7 @@ export class Editor
 						{
 							return;
 						}
-						top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+						this.openIntegrationLimitSlider();
 					};
 					const lock = Tag.render`<span class="crm-entity-product-list-locked-header"></span>`;
 					header.insertBefore(lock, header.firstChild);
@@ -1268,7 +1274,6 @@ export class Editor
 		EventEmitter.subscribeOnce(popup, 'onWindowRegister', BX.defer(() => {
 			popup.Get().style.position = 'fixed';
 			popup.Get().style.top = (parseInt(popup.Get().style.top) - BX.GetWindowScrollPos().scrollTop) + 'px';
-			popup.OVERLAY.style.zIndex = 798;
 		}));
 
 		EventEmitter.subscribeOnce(window, 'EntityProductListController:onInnerCancel', BX.defer(() => {
@@ -2208,6 +2213,51 @@ export class Editor
 
 	handleOnTabShow(): void
 	{
-		EventEmitter.emit('onDemandRecalculateWrapper');
+		EventEmitter.emit('onDemandRecalculateWrapper', [this]);
+	}
+
+	showFieldTourHint(fieldName: string, tourData: Object, endTourHandler: Function, addictedFields: Array<string> = []): void
+	{
+		if (this.products.length > 0)
+		{
+			const firstProductRowNode = this.products[0].getNode();
+
+			const addictedNodes = [];
+			for (const fieldName of addictedFields)
+			{
+				const fieldNode = firstProductRowNode.querySelector(`[data-name="${fieldName}"]`);
+				if (fieldNode !== null)
+				{
+					addictedNodes.push(fieldNode);
+				}
+			}
+
+			const fieldNode = firstProductRowNode.querySelector(`[data-name="${fieldName}"]`);
+
+			if (fieldNode !== null)
+			{
+				this.#fieldHintManager.processFieldTour(fieldNode, tourData, endTourHandler, addictedNodes);
+			}
+		}
+	}
+
+	getActiveHint(): Guide|null
+	{
+		return this.#fieldHintManager.getActiveHint();
+	}
+
+	openIntegrationLimitSlider()
+	{
+		top.BX.UI.InfoHelper.show('limit_store_crm_integration');
+		const helperSlider = top.BX.UI.InfoHelper.getSlider();
+		top.BX.Event.EventEmitter.subscribeOnce('SidePanel.Slider:onCloseComplete', (event) => {
+			const slider = event.getData()[0]?.getSlider();
+			if (slider !== helperSlider)
+			{
+				return;
+			}
+
+			window.location.search += '&active_tab=tab_products';
+		});
 	}
 }

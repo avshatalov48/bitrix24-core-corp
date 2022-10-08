@@ -30,12 +30,14 @@ if ($arResult["FatalError"] <> '')
 	return;
 }
 
-CUtil::InitJSCore(array("ajax", "tooltip"));
 UI\Extension::load([
+	'ajax',
+	'tooltip',
 	'ui.buttons',
 	'ui.alerts',
 	'ui.icons.b24',
-	'socialnetwork.common'
+	'socialnetwork.common',
+	'ui.design-tokens',
 ]);
 
 $frameMode = (\Bitrix\Main\Context::getCurrent()->getRequest()->getQuery('IFRAME') === 'Y');

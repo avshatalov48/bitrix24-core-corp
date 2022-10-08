@@ -226,7 +226,7 @@ class Conversion extends Controller
 		{
 			$config = $configurator->load(static::FACEBOOK_WEBFORM) ?? new Configuration();
 			$formsIds = ($config->has('items') && is_array($forms = $config->get('items'))? $forms : []);
-			$formsResult = Internals\FormTable::getList([
+			$formsResult = Internals\FormTable::getDefaultTypeList([
 				'filter' => [ '=ACTIVE' => 'Y' ],
 				'order' => ['ID' => 'DESC'],
 				'cache' => ['ttl' => 36000]

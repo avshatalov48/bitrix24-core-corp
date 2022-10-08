@@ -7,6 +7,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 $this->getComponent()->addToolbar($this);
 $this->getComponent()->addTopPanel($this);
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $this->setViewTarget("inside_pagetitle_below", 100); ?>
 <div class="crm-item-automation-subtitle">
 	<?= htmlspecialcharsbx($arResult['PAGE_SUBTITLE']) ?>

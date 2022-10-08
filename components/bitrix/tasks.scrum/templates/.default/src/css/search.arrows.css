@@ -12,7 +12,7 @@
 	width: 16px;
 	height: 16px;
 	position: relative;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	border: 1px solid var(--tasks_scrum-white_alpha_80);
 	transition: .2s;
 	opacity: 0.7;
@@ -46,7 +46,7 @@
 	justify-content: center;
 	background: var(--tasks_scrum-white);
 	box-shadow: 0 2px 4px 0 var(--tasks_scrum-black_alpha_10);
-	border-radius: 12px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 	padding: 1px;
 	position: relative;
 
@@ -73,7 +73,7 @@
 	left: 50%;
 	top: 0;
 	transform: translate(-50%, 0);
-	border-radius: 15px;
+	border-radius: var(--ui-border-radius-pill, 15px);
 	white-space: nowrap;
 	padding: 1px 6px 0;
 	background: var(--tasks_scrum-white);

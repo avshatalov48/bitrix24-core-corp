@@ -33,6 +33,7 @@ const EventTypes = {
 	fieldFocus: 'field:focus',
 	fieldBlur: 'field:blur',
 	fieldChangeSelected: 'field:change:selected',
+	view: 'view',
 };
 const ViewTypes = ['inline', 'popup', 'panel', 'widget'];
 const ViewPositions = ['left', 'center', 'right'];
@@ -126,6 +127,7 @@ type Options = {
 	messages: ?Object;
 	language: ?string;
 	visible: ?boolean;
+	editMode: ?boolean;
 	title: ?string;
 	desc: ?string;
 	buttonCaption: ?string;

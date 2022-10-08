@@ -2,6 +2,7 @@
 namespace Bitrix\ImBot\Bot;
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Config\Option;
 
 Loc::loadMessages(__FILE__);
 
@@ -127,6 +128,27 @@ class Marta extends Base
 		}
 
 		return $agentMode? "": $botId;
+	}
+
+	/**
+	 * Agent for deferred bot registration.
+	 * @return string
+	 */
+	public static function delayRegister(): string
+	{
+		if (!Option::get('imbot', 'marta_bot_register_in_progress', 0))
+		{
+			Option::set('imbot', 'marta_bot_register_in_progress', 1);
+
+			if (self::register())
+			{
+				Option::delete('imbot', ['name' => 'marta_bot_register_in_progress']);
+
+				return '';
+			}
+		}
+
+		return __METHOD__ . '();';
 	}
 
 	public static function unRegister()
@@ -441,7 +463,7 @@ class Marta extends Base
 			Loc::loadLanguageFile(__FILE__, $language);
 		}
 
-		$option = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
+		$option = Option::get(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
 		$messages = unserialize($option, ['allowed_classes' => false]);
 
 		$userId = intval($userId);
@@ -475,11 +497,11 @@ class Marta extends Base
 			));
 		}
 
-		\Bitrix\Main\Config\Option::set(self::MODULE_ID, 'marta_rename_message', serialize($messages));
+		Option::set(self::MODULE_ID, 'marta_rename_message', serialize($messages));
 
 		RegisterModuleDependences("bitrix24", "OnDomainChange", self::MODULE_ID, __CLASS__, "onRenamePortalDomainChange");
 
-		$commandId = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'marta_rename_command', 0);
+		$commandId = Option::get(self::MODULE_ID, 'marta_rename_command', 0);
 		if ($commandId <= 0)
 		{
 			$commandId = \Bitrix\Im\Command::register(Array(
@@ -490,7 +512,7 @@ class Marta extends Base
 				'CLASS' => __CLASS__,
 				'METHOD_COMMAND_ADD' => 'onRenamePortalLaterCommand'
 			));
-			\Bitrix\Main\Config\Option::set(self::MODULE_ID, 'marta_rename_command', $commandId);
+			Option::set(self::MODULE_ID, 'marta_rename_command', $commandId);
 		}
 
 		return "";
@@ -509,7 +531,7 @@ class Marta extends Base
 			Loc::loadLanguageFile(__FILE__, $language);
 		}
 
-		$option = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
+		$option = Option::get(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
 		$messages = unserialize($option, ['allowed_classes' => false]);
 		foreach ($messages as $messageId)
 		{
@@ -519,7 +541,7 @@ class Marta extends Base
 			));
 		}
 
-		\Bitrix\Main\Config\Option::set(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
+		Option::set(self::MODULE_ID, 'marta_rename_message', serialize(Array()));
 
 		$newDomain = '[url=http://'.$params['new_domain'].']'.$params['new_domain'].'[/url]';
 
@@ -535,13 +557,13 @@ class Marta extends Base
 
 		UnRegisterModuleDependences("bitrix24", "OnDomainChange", self::MODULE_ID, __CLASS__, "onRenamePortalDomainChange");
 
-		$commandId = \Bitrix\Main\Config\Option::get(self::MODULE_ID, 'marta_rename_command', 0);
+		$commandId = Option::get(self::MODULE_ID, 'marta_rename_command', 0);
 		if ($commandId)
 		{
 			\Bitrix\Im\Command::unRegister(Array(
 				'COMMAND_ID' => $commandId
 			));
-			\Bitrix\Main\Config\Option::set(self::MODULE_ID, 'marta_rename_command', 0);
+			Option::set(self::MODULE_ID, 'marta_rename_command', 0);
 		}
 
 		return true;

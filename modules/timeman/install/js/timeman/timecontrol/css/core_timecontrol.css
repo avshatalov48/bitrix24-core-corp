@@ -1,6 +1,6 @@
 .bx-timeman-timecontrol
 {
-	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #444444;
 	border: 5px solid #e591a6;
 	border-top: 0;
@@ -93,7 +93,7 @@
 .bx-timeman-timecontrol-time-help {
     border-radius: 50%;
     background-color: #e591a6;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
     color: #fff;
     width: 14px;
     height: 14px;
@@ -174,7 +174,7 @@
 	outline:0px;
 	border: 1px solid #bbbbbb;
 	transition: all .2s;
-	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .bx-timeman-timecontrol-message-user-comment-textarea:focus {
 	border-color: #37bd32;
@@ -283,6 +283,6 @@
 #bx-timeman-timecontrol-dialog { padding: 0; }
 #bx-timeman-timecontrol-dialog .popup-window-content { margin-bottom: -11px; }
 
-.bx-timeman-timecontrol-confirm { padding: 10px 10px 7px 10px; width: 430px; font: 13px "Helvetica Neue",Helvetica,Arial,sans-serif; color:#444444;}
-.bx-timeman-timecontrol-confirm-without-buttons { padding: 10px 10px 15px 10px; font: 13px "Helvetica Neue",Helvetica,Arial,sans-serif; color:#444444; }
-.bx-timeman-timecontrol-confirm-title { font-weight: bold; font-size: 15px; text-align: center; margin-bottom: 4px;}
+.bx-timeman-timecontrol-confirm { padding: 10px 10px 7px 10px; width: 430px; font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); color:#444444;}
+.bx-timeman-timecontrol-confirm-without-buttons { padding: 10px 10px 15px 10px; font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); color:#444444; }
+.bx-timeman-timecontrol-confirm-title { font-weight: var(--ui-font-weight-bold); font-size: 15px; text-align: center; margin-bottom: 4px;}

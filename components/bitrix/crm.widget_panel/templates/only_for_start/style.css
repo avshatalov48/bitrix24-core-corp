@@ -84,7 +84,8 @@
 
 .crm-widget {
 	border-radius: var(--ui-border-radius-md, 2px);
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	overflow: hidden;
 	height: 378px;
 	background: #fff;
@@ -109,7 +110,8 @@
 	height: 138px;
 	padding: 0;
 	margin: auto;
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-widget-rating .crm-widget-content:before {
@@ -194,7 +196,8 @@
 .crm-widget-number .crm-widget-content-amt span.crm-widget-content-text,
 .crm-widget-total .crm-widget-content-amt span.crm-widget-content-text {
 	color: #fff;
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	text-decoration: none;
 	border: none;
 }
@@ -318,7 +321,8 @@
 
 .crm-widget-total .crm-widget-title,
 .crm-widget-number .crm-widget-title {
-	/*font-family: "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;*/
+	/*font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);*/
 	font-size: 18px;
 	color: #fff;
 	text-align:left;
@@ -360,13 +364,13 @@
 }
 
 .crm-widget-title-input-container input {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	outline: none;
 	border: none;
 	height: 28px;
 	line-height: 28px;
 	color: #535c69;
-	font-weight: bold;
 	padding: 0 6px;
 	box-sizing: border-box;
 	width: 100%;
@@ -612,7 +616,8 @@ span.curr {
 }
 
 .crm-widget-content-rating {
-	font-family: "OpenSans", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	display: inline-block;
 	vertical-align: middle;
@@ -993,7 +998,8 @@ span.crm-widget-rating-result {
 	border-radius: 3px;
 	display: inline-block;
 	margin: 0 9px;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 	font-size: 0;
 }
@@ -1520,7 +1526,7 @@ div.field-container-period {
 	background: transparent;
 	font-size: 14px;
 	border-radius: var(--ui-field-border-radius, 3px);
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-ie .select-container select {
@@ -2007,13 +2013,15 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-sum {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 40px;
 	line-height: 40px;
 }
 
 .crm-widget-content-segment {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 11px;
 	text-align: right;
 }
@@ -2027,7 +2035,8 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-total {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 11px;
 	text-align: right;
 	letter-spacing: .2px;
@@ -2035,7 +2044,8 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-total-font {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 18px;
 }
 
@@ -2057,11 +2067,13 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-table {
-	font-family: "OpenSans", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-widget-content-title {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 17px;
 	text-transform: uppercase;
 	white-space: nowrap;
@@ -2069,14 +2081,16 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-num {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 	font-size: 48px;
 	line-height: 54px;
 }
 
 .crm-widget-content-summa {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	font-size: 14px;
 	text-transform: uppercase;
@@ -2087,19 +2101,21 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-summa-font {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 22px;
 }
 
 .crm-widget-content-time {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	font-size: 12px;
 	text-align: right;
 }
 
 .crm-widget-content-webform {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	font-size: 18px;
 	float: left;
@@ -2107,7 +2123,8 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 }
 
 .crm-widget-content-webform-link {
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 	font-size: 24px;
 	text-decoration: none;
@@ -2873,7 +2890,8 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 	font-size: 14px;
 	line-height: 19px;
 	color: #2167b0;
-	font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	text-decoration: none;
 }
@@ -3245,7 +3263,8 @@ div.field-container-period span.select-container-period-month { width: 145px; }
 	padding: 0 5px;
 	line-height: 45px;
 	background: rgba(255,255,255,.4);
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 21px;
 	color: #4a7198;
 	text-align: center;

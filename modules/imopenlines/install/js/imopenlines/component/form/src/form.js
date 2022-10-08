@@ -10,6 +10,7 @@
 import { BitrixVue } from "ui.vue";
 import { Vuex } from "ui.vue.vuex";
 import './form.css';
+import 'ui.fonts.opensans';
 
 const EVENT_POSTFIX = 'Openlines';
 const LIVECHAT_PREFIX = 'livechat';

@@ -253,15 +253,17 @@ function renderInput($input, $name, $property)
 	}
 }
 
-CUtil::InitJSCore();
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.buttons',
+]);
+
 $this->addExternalCss('/bitrix/js/crm/entity-editor/css/style.css');
 
 if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens']);
 
 $property = &$arResult['PROPERTY'];
 

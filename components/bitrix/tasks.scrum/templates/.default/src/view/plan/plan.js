@@ -288,11 +288,19 @@ export class Plan extends View
 		this.entityStorage.getBacklog().subscribe('epicSearchClose', this.onEpicSearchClose.bind(this));
 		this.entityStorage.getBacklog().subscribe('filterByEpic', this.onFilterByEpic.bind(this));
 		this.entityStorage.getBacklog().subscribe('filterByTag', this.onFilterByTag.bind(this));
-		this.entityStorage.getBacklog().subscribe('loadItems', this.onLoadItems.bind(this));
+		this.entityStorage.getBacklog().subscribe('loadItems', (baseEvent: BaseEvent) => {
+			const entity: Entity = baseEvent.getTarget();
+			if (!this.loadItemsRepeatCounter.has(entity.getId()))
+			{
+				this.loadItemsRepeatCounter.set(entity.getId(), 0);
+			}
+			this.loadItems(entity);
+		});
 		this.entityStorage.getBacklog().subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 		this.entityStorage.getBacklog().subscribe('showLinked', this.onShowLinked.bind(this));
 		this.entityStorage.getBacklog().subscribe('itemsScroll', this.onActionPanelScroll.bind(this));
 		this.entityStorage.getBacklog().subscribe('showBlank', this.onShowBlank.bind(this));
+		this.entityStorage.getBacklog().subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
 
 		this.entityStorage.getSprints().forEach((sprint) => this.subscribeToSprint(sprint));
 
@@ -333,13 +341,21 @@ export class Plan extends View
 		sprint.subscribe('getSprintCompletedItems', this.onGetSprintCompletedItems.bind(this));
 		sprint.subscribe('showSprintBurnDownChart', this.onShowSprintBurnDownChart.bind(this));
 		sprint.subscribe('showSprintCreateMenu', this.onOpenSprintAddMenu.bind(this));
-		sprint.subscribe('loadItems', this.onLoadItems.bind(this));
+		sprint.subscribe('loadItems', (baseEvent: BaseEvent) => {
+			const entity: Entity = baseEvent.getTarget();
+			if (!this.loadItemsRepeatCounter.has(entity.getId()))
+			{
+				this.loadItemsRepeatCounter.set(entity.getId(), 0);
+			}
+			this.loadItems(entity);
+		});
 		sprint.subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 		sprint.subscribe('showLinked', this.onShowLinked.bind(this));
 		sprint.subscribe('showDropzone', this.onShowDropZone.bind(this));
 		sprint.subscribe('toggleVisibilityContent', () => {
 			this.planBuilder.adjustSprintListWidth();
 		});
+		sprint.subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
 	}
 
 	showErrorAlert(message: string)
@@ -985,52 +1001,6 @@ export class Plan extends View
 		this.filter.scrollToSearchContainer();
 	}
 
-	onLoadItems(baseEvent: BaseEvent)
-	{
-		const entity = baseEvent.getTarget();
-
-		entity.setActiveLoadItems(true);
-
-		if (entity.getNumberItems() >= this.pageSize)
-		{
-			entity.getListItems().addScrollbar();
-		}
-
-		const loader = entity.showItemsLoader();
-
-		const requestData = {
-			entityId: entity.getId(),
-			pageNumber: entity.getPageNumberItems() + 1,
-			pageSize: this.pageSize
-		};
-
-		this.requestSender.getItems(requestData)
-			.then((response) => {
-				const items = response.data;
-				if (Type.isArray(items) && items.length)
-				{
-					entity.incrementPageNumberItems();
-					entity.setActiveLoadItems(false);
-
-					this.createItemsInEntity(entity, items);
-
-					if (entity.isGroupMode())
-					{
-						entity.activateGroupMode();
-					}
-
-					entity.bindItemsLoader();
-				}
-				loader.hide();
-			})
-			.catch((response) => {
-				loader.hide();
-				entity.setActiveLoadItems(false);
-				this.requestSender.showErrorAlert(response);
-			})
-		;
-	}
-
 	onChangeShortView(baseEvent: BaseEvent)
 	{
 		const isShortView = baseEvent.getData();
@@ -1241,6 +1211,11 @@ export class Plan extends View
 		}, 200);
 	}
 
+	onDeactivateGroupMode(baseEvent: BaseEvent)
+	{
+		this.destroyActionPanel();
+	}
+
 	onShowDropZone(baseEvent: BaseEvent)
 	{
 		const sprint: Sprint = baseEvent.getTarget();
@@ -1259,6 +1234,71 @@ export class Plan extends View
 				sprint.showDropzone();
 			}
 		}, 200);
+	}
+
+	loadItems(entity: Entity)
+	{
+		if (this.loadItemsRepeatCounter.get(entity.getId()) > 1)
+		{
+			return;
+		}
+
+		entity.setActiveLoadItems(true);
+
+		if (entity.getNumberItems() >= this.pageSize)
+		{
+			entity.getListItems().addScrollbar();
+		}
+
+		const loader = entity.showItemsLoader();
+
+		const requestData = {
+			entityId: entity.getId(),
+			pageNumber: entity.getPageNumberItems() + 1,
+			pageSize: this.pageSize
+		};
+
+		this.requestSender.getItems(requestData)
+			.then((response) => {
+				const items = response.data;
+
+				entity.setActiveLoadItems(false);
+
+				if (Type.isArray(items) && items.length)
+				{
+					entity.incrementPageNumberItems();
+
+					this.createItemsInEntity(entity, items);
+
+					if (entity.isGroupMode())
+					{
+						entity.activateGroupMode();
+					}
+
+					entity.bindItemsLoader();
+				}
+				else
+				{
+					if (entity.getNumberTasks() !== entity.getNumberItems())
+					{
+						this.loadItemsRepeatCounter.set(
+							entity.getId(),
+							this.loadItemsRepeatCounter.get(entity.getId()) + 1
+						);
+
+						entity.decrementPageNumberItems();
+
+						this.loadItems(entity);
+					}
+				}
+				loader.hide();
+			})
+			.catch((response) => {
+				loader.hide();
+				entity.setActiveLoadItems(false);
+				this.requestSender.showErrorAlert(response);
+			})
+		;
 	}
 
 	renderInput()
@@ -1424,6 +1464,7 @@ export class Plan extends View
 				},
 				tags: {
 					activity: true,
+					disable : !item.isEditAllowed(),
 					callback: (event) => {
 						if (this.tagSearcher.hasActionPanelDialog())
 						{
@@ -1436,6 +1477,7 @@ export class Plan extends View
 				},
 				epic: {
 					activity: true,
+					disable : !item.isEditAllowed(),
 					callback: (event) => {
 						if (this.tagSearcher.hasActionPanelDialog())
 						{
@@ -1559,9 +1601,10 @@ export class Plan extends View
 		;
 
 		const item = Item.buildItem({
-			'id': '',
-			'name': valueWithoutEpic,
-			'groupId': this.getCurrentGroupId()
+			id: '',
+			name: valueWithoutEpic,
+			groupId: this.getCurrentGroupId(),
+			pathToTask: this.pathToTask
 		});
 
 		item.setShortView(this.isShortView);
@@ -1595,6 +1638,8 @@ export class Plan extends View
 		item.setResponsible(responseData.responsible);
 		item.setSourceId(responseData.sourceId);
 		item.setAllowedActions(responseData.allowedActions);
+
+		item.setName(item.getName().getValue());
 	}
 
 	updateEntityCounters(sourceEntity: Entity, endEntity?: Entity)

@@ -275,52 +275,56 @@ final class User
 	 */
 	public static function getData(array $userIds, array $select = ['*'])
 	{
-		$users = array();
+		$users = [];
 		$current = static::getId();
 
-		if(empty($userIds))
+		if (empty($userIds))
 		{
-			$userIds = array($current);
+			$userIds = [$current];
 		}
 
 		$parsed = array_unique(array_filter($userIds, 'intval'));
-		if(!empty($parsed))
+		if (empty($parsed))
 		{
-			// strip away all except mail users
-			$specialEAIds = array_diff(static::getArtificialExternalAuthIds(), array(
-				Mail\User::getExternalCode(), Replica\User::getExternalCode()
-			));
+			return $users;
+		}
 
-			$departmentUFCode = Intranet\User::getDepartmentUFCode();
+		$departmentUFCode = Intranet\User::getDepartmentUFCode();
+		if (Userfield\User::checkFieldExists($departmentUFCode))
+		{
+			$select[] = $departmentUFCode;
+		}
+		if (Loader::includeModule('crm'))
+		{
+			$select[] = 'UF_USER_CRM_ENTITY';
+		}
 
-			if (Loader::includeModule('crm'))
-			{
-				$select[] = 'UF_USER_CRM_ENTITY';
-			}
-			if(Userfield\User::checkFieldExists($departmentUFCode))
-			{
-				$select[] = $departmentUFCode;
-			}
+		$filter = ['ID' => $parsed];
+		$externalAuthIds = array_diff(
+			static::getArtificialExternalAuthIds(),
+			[
+				Mail\User::getExternalCode(),
+				Replica\User::getExternalCode(),
+				IMBot\User::getExternalCode(),
+			]
+		);
+		if (!empty($externalAuthIds))
+		{
+			$filter['!=EXTERNAL_AUTH_ID'] = $externalAuthIds;
+		}
 
-			$filter = array(
-				'ID' => $parsed,
-			);
-			if(!empty($specialEAIds))
-			{
-				$filter['!=EXTERNAL_AUTH_ID'] = $specialEAIds;
-			}
+		$res = UserTable::getList([
+			'select' => $select,
+			'filter' => $filter,
+		]);
+		while ($user = $res->fetch())
+		{
+			$user['IS_EXTRANET_USER'] = Extranet\User::isExtranet($user);
+			$user['IS_EMAIL_USER'] = Mail\User::isEmail($user);
+			$user['IS_CRM_EMAIL_USER'] = ($user['IS_EMAIL_USER'] && !empty($user['UF_USER_CRM_ENTITY']));
+			$user['IS_NETWORK_USER'] = ($user['EXTERNAL_AUTH_ID'] === Replica\User::getExternalCode());
 
-			$res = UserTable::getList(array('filter' => $filter, 'select' => $select));
-
-			while($item = $res->fetch())
-			{
-				$item['IS_EXTRANET_USER'] = Extranet\User::isExtranet($item);
-				$item['IS_EMAIL_USER'] = Mail\User::isEmail($item);
-				$item['IS_CRM_EMAIL_USER'] = $item['IS_EMAIL_USER'] && $item['UF_USER_CRM_ENTITY'] && !empty($item['UF_USER_CRM_ENTITY']);
-				$item['IS_NETWORK_USER'] = ($item["EXTERNAL_AUTH_ID"] === "replica");
-
-				$users[$item['ID']] = $item;
-			}
+			$users[$user['ID']] = $user;
 		}
 
 		return $users;

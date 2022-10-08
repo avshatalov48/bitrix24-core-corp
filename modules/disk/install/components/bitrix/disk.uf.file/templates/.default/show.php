@@ -18,12 +18,14 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Disk\Ui\LazyLoad;
 
 UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.tooltip',
 	'ui.viewer',
 	'disk.document',
 	'disk.viewer.actions',
 	'disk.viewer.document-item',
-	'loader'
+	'loader',
 ]);
 
 if (empty($arResult['IMAGES']) && empty($arResult['FILES']) && empty($arResult['DELETED_FILES']))

@@ -71,7 +71,7 @@ elseif ($action === 'GET_FORMATTED_SUM')
 	$currencyId = $_POST['CURRENCY_ID'] ?? '';
 	if($currencyId === '')
 	{
-		$currencyId = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
+		$currencyId = (string)\Bitrix\Currency\CurrencyManager::getBaseCurrency();
 	}
 
 	__CrmCheckCorrectionDetailsEndJsonResponse([

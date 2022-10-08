@@ -1,5 +1,5 @@
-.crm-entity-stream-section-icon-advice.crm-entity-stream-section-icon  {
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg width='31' height='31' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Ccircle fill='%23B5BBC0' cx='15.5' cy='15.5' r='15.5'/%3E%3Cpath d='M20.332 20.203c0 .284-.232.504-.53.504H9.887c-.298 0-.53-.22-.53-.504v-9.406c0-.284.232-.504.53-.504h6.831l1.89-1.793h-9.35c-.962 0-1.758.755-1.758 1.667v10.666c0 .912.796 1.667 1.757 1.667h11.241c.962 0 1.758-.755 1.758-1.667V16.71l-1.89 1.793v1.7h-.034zm2.985-9.406l-.863-.818c-.232-.22-.596-.22-.795 0l-6.002 5.663-2.686-2.549c-.232-.22-.597-.22-.796 0l-.862.818c-.232.22-.232.567 0 .755l3.98 3.776a.633.633 0 00.53.157c.1-.032.199-.063.298-.157l7.262-6.89c.166-.19.166-.535-.066-.755z' fill='%23FFF'/%3E%3C/g%3E%3C/svg%3E");
+.crm-entity-stream-section-icon-advice.crm-entity-stream-section-icon {
+	background-position: center -121px;
 }
 
 .crm-entity-stream-advice-content {
@@ -7,17 +7,18 @@
     padding: 12px 13px;
     background-color: #fff;
     z-index: 1000;
+	border-radius: var(--ui-border-radius-md, 2px);
 }
 
 .crm-entity-stream-advice-info {
     padding: 0 34px 0 0;
-    font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: rgba(83,92,105,.7);
 }
 
 .crm-entity-stream-advice-inner {
 	padding-top: 20px;
-	margin-top: 20px;
+	margin-top: 12px;
 	border-top: 1px solid rgba(82,92,105,.1);
 }
 
@@ -25,13 +26,12 @@
     display: block;
 	margin: 0 0 19px 0;
     color: #525c69;
-    font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-advice-list {
     padding: 0;
     margin: 0;
-	max-height: 150px;
 	transition: max-height .5s linear;
 }
 
@@ -40,6 +40,7 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 13px;
+	border-radius: var(--ui-border-radius-xs, 1px);
 }
 
 .crm-entity-stream-advice-list-item--active {
@@ -69,7 +70,7 @@
 .crm-entity-stream-advice-list-name {
     display: block;
     margin: 4px 0 3px 0;
-    font: 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #2066b0;
     cursor: pointer;
 }
@@ -85,13 +86,13 @@
 .crm-entity-stream-advice-list-desc-name {
     display: inline-block;
     margin-right: 7px;
-    font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: rgba(82,92,105,.5);
 }
 
 .crm-entity-stream-advice-list-desc-value {
     display: inline-block;
-    font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #333;
 	white-space: nowrap;
 }
@@ -101,7 +102,7 @@
     height: 21px;
     border: 1px solid rgba(82,92,105,.17);
     background: transparent url("data:image/svg+xml;charset=utf-8,%3Csvg width='7' height='7' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4.105.278v2.618h2.588v1.207H4.105v2.619H2.9v-2.62l-2.611.001V2.897h2.61V.277h1.207z' fill='%23838C96' fill-rule='evenodd'/%3E%3C/svg%3E") 10px center no-repeat;
-    font: 12px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 12px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #828b95;
     text-transform: inherit;
 }
@@ -124,7 +125,7 @@
     display: inline-block;
     margin-top: 3px;
     border-bottom: 1px dashed rgba(130,139,149,.4);
-    font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #80868e;
     transition: border-bottom .3s;
 }

@@ -67,7 +67,7 @@ $categoryButton = new Button([
 ]);
 
 $categoryButton->setDropdown(count($arResult['ITEMS']) > 0);
-if($arResult['CATEGORY_COUNTER'] > 0)
+if ($arResult['CATEGORY_COUNTER'] > 0)
 {
 	$categoryButton->setCounter($arResult['CATEGORY_COUNTER']);
 }

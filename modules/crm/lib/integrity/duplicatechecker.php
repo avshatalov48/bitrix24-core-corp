@@ -56,6 +56,8 @@ abstract class DuplicateChecker
 			}
 
 			$criterion = new DuplicateCommunicationCriterion($type, $value);
+			$criterion->setCategoryId($params->getCategoryId());
+
 			$isExists = false;
 			foreach($criterions as $curCriterion)
 			{
@@ -72,7 +74,7 @@ abstract class DuplicateChecker
 				continue;
 			}
 			$criterions[] = $criterion;
-			$duplicate = $criterion->find();
+			$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined);
 			if($duplicate !== null)
 			{
 				$dups[] = $duplicate;
@@ -192,6 +194,7 @@ abstract class DuplicateChecker
 						$requsiiteFieldGroup['fieldName'],
 						$value
 					);
+					$criterion->setCategoryId($params->getCategoryId());
 					$isExists = false;
 					foreach($criterions as $curCriterion)
 					{
@@ -209,7 +212,7 @@ abstract class DuplicateChecker
 					}
 
 					$criterions[] = $criterion;
-					$duplicate = $criterion->find();
+					$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined);
 					if($duplicate !== null)
 					{
 						$dups[] = $duplicate;
@@ -343,6 +346,7 @@ abstract class DuplicateChecker
 						$bankDetailFieldGroup['fieldName'],
 						$value
 					);
+					$criterion->setCategoryId($params->getCategoryId());
 					$isExists = false;
 					foreach($criterions as $curCriterion)
 					{
@@ -360,7 +364,7 @@ abstract class DuplicateChecker
 					}
 
 					$criterions[] = $criterion;
-					$duplicate = $criterion->find();
+					$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined);
 					if($duplicate !== null)
 					{
 						$dups[] = $duplicate;

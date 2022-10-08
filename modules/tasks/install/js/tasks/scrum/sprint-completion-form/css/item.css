@@ -1,7 +1,7 @@
 .tasks-scrum__item-side-panel {
 	box-sizing: border-box;
 	padding: 12px 0;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	margin-top: 10px;
 	color: var(--tasks_scrum_completion-light-grey);
 	position: relative;
@@ -24,7 +24,7 @@
 	border: 1px solid transparent;
 	background: var(--tasks_scrum_completion-white);
 	box-shadow: 0 1px 1px 0 var(--tasks_scrum_completion-black_alpha_08);
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	z-index: -1;
 	transition: .2s;
 	pointer-events: none;
@@ -95,7 +95,7 @@
 	display: block;
 	width: 8px;
 	height: 8px;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	background-color: var(--tasks_scrum_completion-blue);
 	margin: 1px 4px 0 1px;
 	flex-shrink: 0;
@@ -159,7 +159,7 @@
 
 .tasks-scrum__item-side-panel--story-points-element {
 	background: var(--tasks_scrum_completion-blue_alpha_20);
-	border-radius: 9.5px;
+	border-radius: var(--ui-border-radius-pill, 9.5px);
 	padding: 2px 5px;
 	min-width: 32px;
 	box-sizing: border-box;

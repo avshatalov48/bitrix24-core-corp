@@ -5,7 +5,7 @@ html {
 
 body {
 	color: #333;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
@@ -44,14 +44,17 @@ h1 {
 img { border: medium none; }
 
 input { outline: none; }
-
 input::-ms-clear { display: none; }
+
+input, select {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
 
 #panel { position: relative; }
 
 #header {
 	background: #535c69;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 63px;
 	min-width: 1100px;
 	position: relative;
@@ -338,6 +341,7 @@ td.bx-layout-inner-inner-cont {
 	padding: 0 19px;
 	position: relative;
 	transition: min-width .2s, width .2s, opacity .1s, padding .2s;
+	will-change: transform;
 }
 
 .timeman-container.timeman-container--hide {
@@ -567,14 +571,14 @@ td.bx-layout-inner-inner-cont {
 }
 
 .timeman-not-cl-icon {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 0 -796px;
-	background-size: cover;
 	display: block;
-	height: 27px;
-	left: 2px;
-	position: absolute;
-	top: 12px;
 	width: 30px;
+	height: 27px;
+	position: absolute;
+	left: 0;
+	top: 12px;
+	background: url(images/interface/timeman/tm-not-cl-icon.svg) no-repeat center;
+	background-size: cover;
 }
 
 .timeman-not-cl-text {
@@ -617,6 +621,7 @@ td.bx-layout-inner-inner-cont {
 	display: flex;
 	align-items: center;
 	transition: width 1s, opacity 1s, padding 1s;
+	will-change: transform;
 }
 
 .header-item {
@@ -625,6 +630,7 @@ td.bx-layout-inner-inner-cont {
 
 .intranet-header--with-controls .header-item {
 	display: flex;
+	will-change: transform;
 }
 
 .user-block--hide {
@@ -684,7 +690,7 @@ td.bx-layout-inner-inner-cont {
 	display: inline-block;
 	font-size: 14px;
 	height: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	/*margin-top: -2px;*/
 	box-sizing: border-box;
 	overflow: hidden;
@@ -782,7 +788,7 @@ td.bx-layout-inner-inner-cont {
 	color: #fff;
 	display: inline-block;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 9px 0 0;
 	padding: 0 0 0 23px;
 }
@@ -806,6 +812,7 @@ td.bx-layout-inner-inner-cont {
 
 .start-page #sidebar {
 	padding-right: var(--ui-space-inline-none);
+	will-change: transform;
 }
 
 .im-bar-mode.start-page #sidebar {
@@ -1141,7 +1148,7 @@ td.bx-layout-inner-inner-cont {
 
 .pagetitle-menu > div,
 .pagetitle-menu > span {
-	display: inline-block;
+	display: inline-flex;
 	vertical-align: middle;
 	float: none;
 	position: relative;
@@ -1440,27 +1447,16 @@ td.bx-layout-inner-inner-cont {
 
 .bitrix24-copyright {
 	display: inline-block;
-	margin: 0 10px 0 8px;
+	margin: 0 0 0 8px;
 	vertical-align: middle;
-}
-
-.footer-discuss-link {
-	border-left: 1px solid #c8d2d5;
-	color: #8f8e96;
-	display: inline-block;
-	font-size: 14px;
-	height: 18px;
-	padding: 0 5px 0 12px;
-	vertical-align: middle;
-	position: relative;
-	cursor: pointer;
 }
 
 .footer-link {
 	display: inline-block;
-	margin: 0 0 0 7px;
+	margin: 0 0 0 12px;
 	padding: 0 0 0 12px;
 	cursor: pointer;
+	vertical-align: middle;
 }
 
 .clear {
@@ -1502,7 +1498,7 @@ input#flt_show_hidden {
 }
 
 .user-right-bl-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-bottom: 10px;
 }
 
@@ -1738,7 +1734,7 @@ span.bx-group-pagetitle-link {
 	cursor: pointer;
 	display: block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 0 15px;
 	outline: medium none;
 	padding: 3px 11px 5px;
@@ -1778,7 +1774,7 @@ span.bx-group-pagetitle-link {
 .filter-block-title {
 	color: #555;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 0 10px;
 	padding: 0 0 5px;
 	position: relative;
@@ -2310,7 +2306,7 @@ div.blog-list-item .blog-author-icon {
 
 div.blog-list-item div.blog-author a {
 	font-size: 1em;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 div.blog-list-title a {
@@ -2425,7 +2421,7 @@ div.microblog-post {
 	border-radius: var(--ui-border-radius-sm, 1px);
 	color: #41474f;
 	display: block;
-	font: bold 13px/40px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 13px/40px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 16px;
 }
 
@@ -2443,7 +2439,7 @@ div.microblog-post {
 
 .content-edit-form-field-name {
 	color: #525c69;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-bottom: 7px;
 	padding-right: 9px;
 	padding-top: 14px;
@@ -2464,7 +2460,7 @@ div.microblog-post {
 
 .content-edit-form-field-input {
 	color: #555;
-	font: 14px/26px Arial, Helvetica, sans-serif;
+	font: 14px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-bottom: 7px;
 	padding-right: 17px;
 	padding-top: 12px;
@@ -2488,7 +2484,7 @@ div.microblog-post {
 
 .content-edit-form-field-error {
 	color: #de2626;
-	font: 13px Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-bottom: 7px;
 	padding-top: 12px;
 	vertical-align: top;
@@ -2500,7 +2496,7 @@ div.microblog-post {
 }
 
 .content-edit-form-field-input-textarea {
-	font: 13px Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 100px;
 	outline: medium none;
 	resize: none;
@@ -2508,7 +2504,7 @@ div.microblog-post {
 }
 
 .content-edit-form-field-input-text, .content-edit-form-field-input input.string {
-	font: 13px Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 21px;
 	outline: medium none;
 	width: 292px;
@@ -2522,7 +2518,7 @@ div.microblog-post {
 .content-edit-form-field-input-select {
 	border: 1px solid #bdc7d8;
 	color: #5b5b5b;
-	font: 13px Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 27px;
 	outline: medium none;
 	padding: 4px;
@@ -2535,7 +2531,7 @@ div.microblog-post {
 
 .content-edit-form-field-input-selector-name {
 	color: #555;
-	font: 14px Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-left: 2px;
 	/*margin-top: 2px;*/
 	/*position: absolute;*/
@@ -2572,7 +2568,7 @@ div.microblog-post {
 .content-edit-form-event-link-name {
 	border-bottom: 1px dashed #2067b0;
 	display: inline-block;
-	font: 14px Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 17px;
 	padding-top: 2px;
 	vertical-align: top;
@@ -2632,7 +2628,7 @@ div.microblog-post {
 	color: #7a808c;
 	display: inline-block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 29px;
 	line-height: 19px;
 	padding: 6px 15px 0;
@@ -2737,7 +2733,7 @@ div.microblog-post {
 	color: #262728;
 	display: inline-block;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-left: 25px;
 	padding-top: 3px;
 	position: relative;
@@ -2919,7 +2915,7 @@ div.microblog-post {
 }
 
 .content-edit-form-choose-license-bold-td {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .content-edit-form-choose-license-plus {
@@ -2946,7 +2942,7 @@ div.microblog-post {
 }
 
 .content-edit-form-choose-license td a {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: underline;
 }
 
@@ -2982,7 +2978,7 @@ td.content-edit-form-choose-license-blue-text {
 	color: #7a808c;
 	display: inline-block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 29px;
 	line-height: 19px;
 	padding: 6px 15px 0;
@@ -3026,7 +3022,7 @@ td.content-edit-form-choose-license-blue-text {
 .content-edit-form-license-order-digit {
 	color: #4c85c0;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .content-edit-form-license-order-div-left {
@@ -3034,7 +3030,7 @@ td.content-edit-form-choose-license-blue-text {
 }
 
 .content-edit-form-license-order-div-left a {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: underline;
 }
 
@@ -3074,7 +3070,7 @@ td.content-edit-form-choose-license-blue-text {
 .content-edit-form-license-order-td-middle {
 	color: #7f7f7f;
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align: center;
 }
 
@@ -3092,7 +3088,7 @@ td.content-edit-form-choose-license-blue-text {
 .content-edit-form-license-order-partner-send p {
 	color: #759717;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: auto;
 }
 
@@ -3147,7 +3143,7 @@ td.content-edit-form-choose-license-blue-text {
 }
 
 .reports-description-text {
-	font: 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 table.data-table {
@@ -3169,7 +3165,7 @@ table.data-table thead td, table.data-table th, table.data-table thead th {
 	border: 1px solid #fff;
 	color: #072838;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 8px;
 	text-align: left;
 }
@@ -3232,7 +3228,7 @@ table.data-table tfoot td {
 	border-top: 1px solid #efefed;
 	color: #555 !important;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 10px 5px 10px 20px;
 	text-align: left;
 	vertical-align: middle;
@@ -3254,7 +3250,7 @@ table.data-table tfoot td {
 	border: 1px solid #c8cfd4;
 	border-radius: 3px;
 	color: #003;
-	font-family: Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 18px;
 	outline: medium none;
 	padding: 4px;
@@ -3301,7 +3297,7 @@ table.data-table tfoot td {
 .error-404-text1 {
 	color: #5e646c;
 	font-size: 29px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	left: 0;
 	line-height: 38px;
 	position: absolute;
@@ -3313,7 +3309,7 @@ table.data-table tfoot td {
 .error-404-text2 {
 	color: #aaafb2;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	left: 0;
 	line-height: 19px;
 	position: absolute;
@@ -3433,10 +3429,11 @@ a.td1:hover {
 .bx-lang-btn {
 	border-radius: 4px;
 	cursor: pointer;
-	display: inline-block;
+	display: inline-flex;
+	align-items: center;
 	height: 32px;
 	margin: 0 9px 0 0;
-	padding-right: 23px;
+	padding-right: 12px;
 	vertical-align: top;
 }
 
@@ -3444,15 +3441,13 @@ a.td1:hover {
 	display: block;
 	height: 18px;
 	position: relative;
-	margin: 8px 0 0 12px;
-	background-position: -34px -28px;
+	margin: 0 0 0 12px;
 }
 
-.bx-lang-btn-icon:after {
-	display: block;
-	position: absolute;
-	right: -13px;
-	top: 7px;
+.bx-lang-btn:after {
+	display: inline-block;
+	margin-left: 7px;
+	margin-top: 2px;
 	content: "";
 	width: 0;
 	height: 0;
@@ -3460,92 +3455,10 @@ a.td1:hover {
 	border-width: 3px 3px 0 3px;
 }
 
-.language-icon .menu-popup-item-icon {
-	width: 24px;
-	height: 18px;
-	background: url(images/flags.png?3) no-repeat -34px -28px;
-	background-size: 100px 400px;
-	border: 1px solid #ccd3d7;
-}
-
-.ru .bx-lang-btn-icon,
-.ru .menu-popup-item-icon {
-	background-position: 0 0;
-}
-
-.de .bx-lang-btn-icon,
-.de .menu-popup-item-icon {
-	background-position: 0 -28px;
-}
-
-.en .bx-lang-btn-icon,
-.en .menu-popup-item-icon {
-	background-position: 0 -56px;
-}
-
-.ua .bx-lang-btn-icon,
-.ua .menu-popup-item-icon {
-	background-position: 0 -84px;
-}
-
-.la .bx-lang-btn-icon,
-.la .menu-popup-item-icon {
-	background-position: 0 -112px;
-}
-
-.tc .bx-lang-btn-icon,
-.tc .menu-popup-item-icon {
-	background-position: -34px 0;
-}
-
-.sc .bx-lang-btn-icon,
-.sc .menu-popup-item-icon {
-	background-position: 0 -140px;
-}
-
-.br .bx-lang-btn-icon,
-.br .menu-popup-item-icon {
-	background-position: 0 -168px;
-}
-
-.in .bx-lang-btn-icon,
-.in .menu-popup-item-icon {
-	background-position: 0 -308px;
-}
-
-.fr .bx-lang-btn-icon,
-.fr .menu-popup-item-icon {
-	background-position: 0 -252px;
-}
-
-.pl .bx-lang-btn-icon,
-.pl .menu-popup-item-icon {
-	background-position: 0 -224px;
-}
-
-.tr .bx-lang-btn-icon,
-.tr .menu-popup-item-icon {
-	background-position: 0 -336px;
-}
-
-.nl .bx-lang-btn-icon,
-.nl .menu-popup-item-icon {
-	background-position: 0 -196px;
-}
-
-.vn .bx-lang-btn-icon,
-.vn .menu-popup-item-icon {
-	background-position: 0 -280px;
-}
-
-.ja .bx-lang-btn-icon,
-.ja .menu-popup-item-icon {
-	background-position: -34px -56px;
-}
-
 .bx-lang-popup-item {
 	cursor: pointer;
 	padding: 10px 12px;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .bx-lang-popup-item:hover {
@@ -3559,11 +3472,6 @@ a.td1:hover {
 	text-decoration: none;
 	vertical-align: middle;
 	width: 109px;
-}
-
-#bitrix24-logo.bitrix24-logo-ua {
-	background: url(images/logos/logo-ua.svg) center no-repeat;
-	width: 90px;
 }
 
 .b24-loader {
@@ -3628,7 +3536,7 @@ a.td1:hover {
 	border: none;
 	color: #6b727c;
 	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 30px;
 	outline: none;
 	padding: 0;
@@ -3652,7 +3560,7 @@ a.td1:hover {
 	border-radius: 2px;
 	color: #535c69;
 	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 30px;
 	outline: none;
 }
@@ -3703,7 +3611,7 @@ a.td1:hover {
 	color: #000;
 	font-size: 24px;
 	font-weight: normal;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: 0 0 14px;
 }
 
@@ -3735,7 +3643,7 @@ a.td1:hover {
 	z-index: 995;
 	height: 28px;
 	top: -100px;
-	font: 13px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	text-align: center;
 	transition: all .4s linear;
@@ -4113,7 +4021,7 @@ a.td1:hover {
 	padding: 0 20px 0 12px;
 	height: 36px;
 	background: rgba(47, 199, 247, .7);
-	font: bold 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	white-space: nowrap;
 	border-radius: 30px;

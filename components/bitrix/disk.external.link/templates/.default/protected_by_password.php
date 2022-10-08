@@ -13,6 +13,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var CDiskExternalLinkComponent $component */
 use Bitrix\Main\Localization\Loc;
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 if (!empty($arResult['FOLDER']))
 {
 	$helloMessage = $component->getMessage('DISK_EXT_LINK_FOLDER_PROTECT_BY_PASSWORD');

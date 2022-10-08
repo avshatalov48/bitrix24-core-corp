@@ -292,6 +292,10 @@ class Quote extends Factory
 			'ATTRIBUTES' => [\CCrmFieldInfoAttr::CanNotBeEmptied, \CCrmFieldInfoAttr::HasDefaultValue],
 			'CLASS' => Field\CloseDate::class,
 		];
+		$info[Item\Quote::FIELD_NAME_ACTUAL_DATE] = [
+			'TYPE' => Field::TYPE_DATE,
+			'ATTRIBUTES' => [\CCrmFieldInfoAttr::CanNotBeEmptied, \CCrmFieldInfoAttr::HasDefaultValue],
+		];
 
 		if ($this->isMyCompanyEnabled())
 		{
@@ -489,27 +493,8 @@ class Quote extends Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
-				new class extends Operation\Action {
-				/**
-				 * @param Item\Quote $item
-				 * @return Result
-				 */
-				public function process(Item $item): Result
-				{
-					$result = new Result();
-
-					$elements = $item->getStorageElementIds();
-					if(!empty($elements))
-					{
-						foreach($elements as $elementId)
-						{
-							StorageManager::deleteFile($elementId, $item->getStorageTypeId());
-						}
-					}
-
-					return $result;
-				}
-			})
+				new Operation\Action\DeleteQuoteFiles(),
+			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
 				new Operation\Action\Compatible\SendEvent\Delete('OnAfterCrmQuoteDelete')

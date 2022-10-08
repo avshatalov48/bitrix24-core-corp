@@ -41,6 +41,8 @@ abstract class DocumentHandler implements IErrorable
 
 	/** @var  ErrorCollection */
 	protected $errorCollection;
+	/** @var \CSocServAuth */
+	protected $oauthService;
 
 	public function __construct($userId)
 	{
@@ -54,6 +56,37 @@ abstract class DocumentHandler implements IErrorable
 	public static function className()
 	{
 		return get_called_class();
+	}
+
+	protected function getOAuthServiceClass(): string
+	{
+		throw new NotImplementedException();
+	}
+
+	/**
+	 * Returns OAuth service.
+	 *
+	 * @return \CSocServAuth
+	 */
+	protected function getOAuthService(): \CSocServAuth
+	{
+		if ($this->oauthService === null)
+		{
+			$authServiceClass = $this->getOAuthServiceClass();
+
+			$this->oauthService = new $authServiceClass($this->userId);
+			foreach ($this->getScopes() as $scope)
+			{
+				$this->oauthService->getEntityOAuth()->addScope($scope);
+			}
+		}
+
+		return $this->oauthService;
+	}
+
+	protected function getScopes(): array
+	{
+		return [];
 	}
 
 	/**
@@ -79,6 +112,19 @@ abstract class DocumentHandler implements IErrorable
 		return $this;
 	}
 
+	public static function listEditableExtensions(): array
+	{
+		return [
+			'doc',
+			'docx',
+			'xls',
+			'xlsx',
+			'ppt',
+			'pptx',
+			'xodt',
+		];
+	}
+
 	/**
 	 * Detect by extension editable or not
 	 * @param $extension
@@ -86,24 +132,12 @@ abstract class DocumentHandler implements IErrorable
 	 */
 	public static function isEditable($extension)
 	{
-		static $allowedFormat = array(
-			'doc' => 'doc',
-			'.doc' => '.doc',
-			'docx' => 'docx',
-			'.docx' => '.docx',
-			'xls' => 'xls',
-			'.xls' => '.xls',
-			'xlsx' => 'xlsx',
-			'.xlsx' => '.xlsx',
-			'ppt' => 'ppt',
-			'.ppt' => '.ppt',
-			'pptx' => 'pptx',
-			'.pptx' => '.pptx',
-			'.xodt' => '.xodt',
-			'xodt' => 'xodt',
-		);
+		$editableExtensions = static::listEditableExtensions();
 
-		return isset($allowedFormat[$extension]) || isset($allowedFormat[mb_strtolower($extension)]);
+		return
+			in_array($extension, $editableExtensions, true)
+			|| in_array(ltrim($extension, '.'), $editableExtensions, true)
+		;
 	}
 
 	/**

@@ -6,17 +6,17 @@ class ProductSettingsUpdater
 		this.stepOptions = {
 			ajaxSessionID: '',
 			maxExecutionTime: 30,
-			maxOperationCounter: 10
+			maxOperationCounter: 10,
 		};
 		this.finish = false;
 		this.currentState = {
 			counter: 0,
 			operationCounter: 0,
 			errorCounter: 0,
-			lastID: 0
+			lastID: 0,
 		};
 		this.ajaxParams = {
-			operation: 'Y'
+			operation: 'Y',
 		};
 		this.iblocks = [];
 		this.iblockIndex = -1;

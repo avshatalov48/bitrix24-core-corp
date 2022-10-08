@@ -337,6 +337,10 @@ var arAllActGroups = <?=CUtil::PhpToJSObject($arResult['ACTIVITY_GROUPS'])?>;
 var arWorkflowParameters = <?=CUtil::PhpToJSObject($arResult['PARAMETERS'])?>;
 var arWorkflowVariables = <?=CUtil::PhpToJSObject($arResult['VARIABLES'])?>;
 var arWorkflowConstants = <?=CUtil::PhpToJSObject($arResult['CONSTANTS'])?>;
+var arWorkflowGlobalConstants = <?= CUtil::PhpToJSObject($arResult['GLOBAL_CONSTANTS']) ?>;
+var arWorkflowGlobalVariables = <?= CUtil::PhpToJSObject($arResult['GLOBAL_VARIABLES']) ?>;
+var wfGVarVisibilityNames = <?= CUtil::PhpToJSObject($arResult['GLOBAL_VARIABLES_VISIBILITY_NAMES']) ?>;
+var wfGConstVisibilityNames = <?= CUtil::PhpToJSObject($arResult['GLOBAL_CONSTANTS_VISIBILITY_NAMES']) ?>;
 var arWorkflowTemplate = <?=CUtil::PhpToJSObject($arResult['TEMPLATE'][0])?>;
 var arDocumentFields = <?=CUtil::PhpToJSObject($arResult['DOCUMENT_FIELDS'])?>;
 
@@ -351,6 +355,7 @@ var document_type_signed = '<?=CUtil::JSEscape($arResult['DOCUMENT_TYPE_SIGNED']
 var MODULE_ID = <?=CUtil::PhpToJSObject($arResult['MODULE_ID'])?>;
 var ENTITY = <?=CUtil::PhpToJSObject($arResult['ENTITY'])?>;
 var BPMESS = <?=CUtil::PhpToJSObject($JSMESS)?>;
+var BPDesignerUseJson = true;
 
 var CURRENT_SITE_ID = <?=CUtil::PhpToJSObject(SITE_ID)?>;
 

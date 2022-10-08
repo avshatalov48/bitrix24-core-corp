@@ -20,6 +20,8 @@ return [
 		'main.popup',
 		'salescenter.component.stage-block.hint',
 		'currency',
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

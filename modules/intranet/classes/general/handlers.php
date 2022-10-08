@@ -1097,7 +1097,43 @@ class CIntranetEventHandlers
 			self::$userActiveCache = $user["ACTIVE"];
 		}
 
-		return;
+		if (!defined('BX_COMP_MANAGED_CACHE') || !BX_COMP_MANAGED_CACHE)
+		{
+			return;
+		}
+
+		global $CACHE_MANAGER;
+
+		$queryObject = CUser::getList(
+			"id", "asc",
+			["ID_EQUAL_EXACT" => intval($fields['ID'])],
+			['SELECT' => ['UF_DEPARTMENT']]
+		);
+		if ($oldFields = $queryObject->fetch())
+		{
+			if (
+				isset($fields['UF_DEPARTMENT'])
+				&& is_array($fields['UF_DEPARTMENT'])
+				&& $fields['UF_DEPARTMENT'] != $oldFields['UF_DEPARTMENT']
+			)
+			{
+				if (!is_array($oldFields['UF_DEPARTMENT']))
+				{
+					$oldFields['UF_DEPARTMENT'] = [];
+				}
+
+				$arDepts = array_diff($fields['UF_DEPARTMENT'], $oldFields['UF_DEPARTMENT']);
+				if (count($arDepts) > 0)
+				{
+					$CACHE_MANAGER->ClearByTag('intranet_department_structure');
+
+					foreach ($arDepts as $dpt)
+					{
+						$CACHE_MANAGER->ClearByTag('intranet_department_'.$dpt);
+					}
+				}
+			}
+		}
 	}
 
 	/*

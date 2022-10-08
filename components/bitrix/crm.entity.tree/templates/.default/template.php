@@ -183,7 +183,7 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 									href="javascript:void(0);"
 									onclick="BX.DocumentGenerator.Document.onBeforeCreate(
 										'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=<?= $item['ID'] ?>',
-										{},
+										{sliderWidth: 1060},
 										'/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
 										)">
 									<?= Loc::getMessage('CRM_ENTITY_TREE_DOCUMENT_LABEL', [

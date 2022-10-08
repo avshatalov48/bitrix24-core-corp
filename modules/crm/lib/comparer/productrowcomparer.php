@@ -20,6 +20,23 @@ class ProductRowComparer extends ComparerBase
 			&& self::areFieldsEquals($a, $b, 'TAX_INCLUDED')
 			&& self::areFieldsEquals($a, $b, 'CUSTOMIZED')
 			&& self::areFieldsEquals($a, $b, 'SORT')
+			&& self::areFieldsEquals($a, $b, 'TAX_RATE')
 		);
+	}
+
+	public static function areFieldsEquals(array $left, array $right, $name)
+	{
+		if ($name === 'TAX_RATE')
+		{
+			if ($left[$name] !== null && $right[$name] !== null)
+			{
+				$left[$name] = (float)$left[$name];
+				$right[$name] = (float)$right[$name];
+			}
+
+			return $left[$name] === $right[$name];
+		}
+
+		return parent::areFieldsEquals($left, $right, $name);
 	}
 }

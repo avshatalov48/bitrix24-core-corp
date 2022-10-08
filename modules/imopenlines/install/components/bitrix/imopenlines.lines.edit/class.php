@@ -51,6 +51,7 @@ class ImOpenLinesComponentLinesEdit extends CBitrixComponent implements Controll
 		'WORKTIME_ENABLE',
 		'AGREEMENT_MESSAGE',
 		'WELCOME_MESSAGE',
+		'SEND_WELCOME_EACH_SESSION',
 		'WATCH_TYPING',
 		'WELCOME_BOT_ENABLE',
 		'KPI_FIRST_ANSWER_ALERT',

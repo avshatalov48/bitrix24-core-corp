@@ -9,9 +9,12 @@ use Bitrix\Tasks\Control\Exception\TemplateUpdateException;
 use Bitrix\Tasks\Control\Handler\Exception\TemplateFieldValidateException;
 use Bitrix\Tasks\Control\Handler\TemplateFieldHandler;
 use Bitrix\Tasks\Internals\DataBase\Tree\TargetNodeNotFoundException;
+use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
 use Bitrix\Tasks\Internals\Task\Template\DependenceTable;
 use Bitrix\Main\Loader;
+use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 use Bitrix\Tasks\Item\SystemLog;
 
@@ -124,10 +127,14 @@ class Template
 			throw new TemplateAddException();
 		}
 
+		$this->setMembers($fields);
+		$this->setTags($fields);
+		$this->setDependTasks($fields);
+
 		$this->ufManager->Update(\Bitrix\Tasks\Util\UserField\Task\Template::getEntityCode(), $this->templateId, $fields, $this->userId);
 
 		$this->enableReplication($fields);
-		$this->setDepends($fields);
+		$this->setParent($fields);
 		$this->setRights($fields);
 
 		return $template;
@@ -254,9 +261,13 @@ class Template
 
 		$templateObject = $this->save($fields);
 
+		$this->setMembers($fields);
+		$this->setTags($fields);
+		$this->setDependTasks($fields);
+
 		$this->updateFiles($fields);
 		$this->ufManager->Update(\Bitrix\Tasks\Util\UserField\Task\Template::getEntityCode(), $this->templateId, $fields, $this->userId);
-		$this->updateDepends($fields);
+		$this->updateParent($fields);
 
 		if ($isReplicateParamsChanged && !$this->skipAgent)
 		{
@@ -264,6 +275,51 @@ class Template
 		}
 
 		return $templateObject;
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws Exception\TemplateNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function setMembers(array $fields)
+	{
+		$handler = new TemplateMember($this->userId, $this->templateId);
+		$handler->set($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws Exception\TemplateNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function setTags(array $fields)
+	{
+		$handler = new TemplateTag($this->userId, $this->templateId);
+		$handler->set($fields);
+	}
+
+	/**
+	 * @param array $fields
+	 * @return void
+	 * @throws Exception\TemplateNotFoundException
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\DB\SqlQueryException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	private function setDependTasks(array $fields)
+	{
+		$handler = new TemplateDependence($this->userId, $this->templateId);
+		$handler->set($fields);
 	}
 
 	/**
@@ -310,7 +366,7 @@ class Template
 	 * @param array $fields
 	 * @return void
 	 */
-	private function updateDepends(array $fields)
+	private function updateParent(array $fields)
 	{
 		if (!isset($arFields['BASE_TEMPLATE_ID']))
 		{
@@ -404,6 +460,18 @@ class Template
 
 		// delete access rights
 		\Bitrix\Tasks\Item\Access\Task\Template::revokeAll($this->templateId, ['CHECK_RIGHTS' => false]);
+
+		TemplateMemberTable::deleteList([
+			'=TEMPLATE_ID' => $this->templateId,
+		]);
+
+		TemplateTagTable::deleteList([
+			'=TEMPLATE_ID' => $this->templateId,
+		]);
+
+		TemplateDependenceTable::deleteList([
+			'=TEMPLATE_ID' => $this->templateId,
+		]);
 
 		// delete sub templates
 		if ($this->deleteSubTemplates)
@@ -540,19 +608,31 @@ class Template
 	{
 		\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel(
 			$this->templateId,
-			'U'.$fields['CREATED_BY'],
+			'U'.$this->userId,
 			'full',
 			[
 				'CHECK_RIGHTS' => false,
 			]
 		);
+
+		if ($this->userId !== (int) $fields['CREATED_BY'])
+		{
+			\Bitrix\Tasks\Item\Access\Task\Template::grantAccessLevel(
+				$this->templateId,
+				'U'.$fields['CREATED_BY'],
+				'full',
+				[
+					'CHECK_RIGHTS' => false,
+				]
+			);
+		}
 	}
 
 	/**
 	 * @param array $fields
 	 * @return void
 	 */
-	private function setDepends(array $fields)
+	private function setParent(array $fields)
 	{
 		if (!intval($fields['BASE_TEMPLATE_ID']))
 		{
@@ -652,6 +732,7 @@ class Template
 			->prepareBBCodes()
 			->prepareType()
 			->prepareResponsible()
+			->prepareMembers()
 			->prepareTitle()
 			->prepareReplication()
 			->prepareBaseTemplate()
@@ -660,6 +741,7 @@ class Template
 			->preparePriority()
 			->prepareSiteId()
 			->prepareTags()
+			->prepareDependencies()
 			->prepareDescription();
 
 		return $handler->getFields();

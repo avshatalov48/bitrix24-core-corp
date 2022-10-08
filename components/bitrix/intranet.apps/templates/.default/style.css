@@ -34,7 +34,7 @@
 	max-width: 100px;
 	padding: 0 10px 0 15px;
 	box-sizing: border-box;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	line-height: 15px;
 	color: #858c96;
@@ -140,14 +140,14 @@
 	margin-bottom: 5px;
 	font-size: 12px;
 	opacity: .3;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 17px;
 	color: #535C69;
 }
 
 .intranet-apps-widget-popup-text {
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: 17px;
 	color: #535C69;
 	margin-top: 7px;

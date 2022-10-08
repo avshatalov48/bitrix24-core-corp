@@ -1,0 +1,18 @@
+<?php
+
+namespace Bitrix\Crm\Service\Timeline\Item\LogMessage\Binding;
+
+use Bitrix\Main\Localization\Loc;
+
+class Unlink extends Base
+{
+	public function getType(): string
+	{
+		return 'Unlink';
+	}
+
+	public function getTitle(): ?string
+	{
+		return Loc::getMessage('CRM_TIMELINE_UNLINK_TITLE');
+	}
+}

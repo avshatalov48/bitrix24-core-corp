@@ -41,7 +41,7 @@
     position: relative;
     border-bottom: 1px solid;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
     color: #2067b0;
 }
 
@@ -175,7 +175,7 @@
 .structure-designate-boss .structure-boss-name,
 .structure-designate-boss .structure-manager {display:none;}
 /*.structure-designate-boss .structure-boss-block {background-color:#fff; border:1px dashed; height:28px;}*/
-.structure-designate-text {background:#fff; border:1px dashed; color:#6c6c6c; display:none; font-size:11px; font-weight:bold; height:22px; left:-2px; right:-2px; top:-1px; overflow:hidden; text-overflow:ellipsis; padding:7px 0 0 28px; position:absolute; white-space:nowrap;}
+.structure-designate-text {background:#fff; border:1px dashed; color:#6c6c6c; display:none; font-size:11px; font-weight:var(--ui-font-weight-bold); height:22px; left:-2px; right:-2px; top:-1px; overflow:hidden; text-overflow:ellipsis; padding:7px 0 0 28px; position:absolute; white-space:nowrap;}
 .structure-designate-text i {background:url("images/structure_company_sprite.png") no-repeat 0 -152px; height:17px; display:block; position:absolute; width:17px;}
 .structure-designate-boss .structure-add-boss-text {display:block;}
 .structure-designate-boss.structure-dept-third .structure-designate-text {border-color:#a4ca25;}
@@ -285,7 +285,7 @@
 
 /***************************** \company-structure.css *********************************/
 
-.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}
+.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .structure-dept-emp-popup a,.structure-dept-block a {text-decoration: none; color: #2067B0;}
 .structure-dept-emp-popup a:hover, .structure-dept-block a:hover {text-decoration: underline; color: #2067B0;}

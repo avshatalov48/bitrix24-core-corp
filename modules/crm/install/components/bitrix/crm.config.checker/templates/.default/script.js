@@ -2,25 +2,7 @@ this.BX = this.BX || {};
 (function (exports,ui_buttons,main_core,main_core_events) {
 	'use strict';
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\theight: 0;\n\t\t\t\topacity: 0;\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\theight: ", "px;\n\t\t\t\topacity: 1;\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2;
 
 	var Step = /*#__PURE__*/function () {
 	  // does not use yet
@@ -115,9 +97,9 @@ this.BX = this.BX || {};
 	      this.parseErrors(errors, notes);
 
 	      if (this.node.hasChildNodes()) {
-	        main_core.Tag.style(this.node.parentNode)(_templateObject(), this.node.offsetHeight);
+	        main_core.Tag.style(this.node.parentNode)(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\theight: ", "px;\n\t\t\t\topacity: 1;\n\t\t\t"])), this.node.offsetHeight);
 	      } else {
-	        main_core.Tag.style(this.node.parentNode)(_templateObject2());
+	        main_core.Tag.style(this.node.parentNode)(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\theight: 0;\n\t\t\t\topacity: 0;\n\t\t\t"])));
 	      }
 	    }
 	  }, {
@@ -134,15 +116,7 @@ this.BX = this.BX || {};
 	  return Step;
 	}();
 
-	function _templateObject$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</span>"]);
-
-	  _templateObject$1 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$1;
 
 	var StepTelephony = /*#__PURE__*/function (_Step) {
 	  babelHelpers.inherits(StepTelephony, _Step);
@@ -161,7 +135,7 @@ this.BX = this.BX || {};
 	            error = _Object$entries$_i[1];
 
 	        if (key !== "VOXIMPLANT_IS_NOT_CONFIGURED") {
-	          this.node.append(main_core.Tag.render(_templateObject$1(), error["message"]));
+	          this.node.append(main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</span>"])), error["message"]));
 	        }
 	      }
 	    }
@@ -169,25 +143,7 @@ this.BX = this.BX || {};
 	  return StepTelephony;
 	}(Step);
 
-	function _templateObject2$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-wizard-settings-block-hidden-input\">\n\t\t\t\t\t\t<div class=\"crm-wizard-settings-block-hidden-input-inner\">\n\t\t\t\t\t\t\t<div class=\"crm-wizard-settings-block-hidden-input-label\">", "</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\" id=\"crm_numbers\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"ui-btn ui-btn-light-border\" id=\"crm_button\" onclick=\"", "\">", "</button>\n\t\t\t\t\t</div>\n"]);
-
-	  _templateObject2$1 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</span>"]);
-
-	  _templateObject$2 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$2, _templateObject2$1;
 
 	var StepCrmForm = /*#__PURE__*/function (_Step) {
 	  babelHelpers.inherits(StepCrmForm, _Step);
@@ -229,7 +185,7 @@ this.BX = this.BX || {};
 	            key = _Object$entries$_i[0],
 	            error = _Object$entries$_i[1];
 
-	        this.node.append(main_core.Tag.render(_templateObject$2(), error["message"]));
+	        this.node.append(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</span>"])), error["message"]));
 	      }
 
 	      if (notes && main_core.Type.isArray(notes["items"])) {
@@ -250,52 +206,14 @@ this.BX = this.BX || {};
 	        notes["items"].forEach(function (number) {
 	          numbers += "\n\t\t\t\t\t<option value=\"".concat(number['LINE_NUMBER'], "\" ").concat(numberIsInUse.length === 1 && number['IS_IN_USE'] ? "selected" : "", ">\n\t\t\t\t\t\t[").concat(number['LINE_NUMBER'], "] ").concat(number['SHORT_NAME'], "\n\t\t\t\t\t</option>\n\t\t\t");
 	        });
-	        main_core.Dom.append(main_core.Tag.render(_templateObject2$1(), main_core.Loc.getMessage("CRM_CHANGE_CRM_FORM_NUMBER"), numbers, this.onChange.bind(this), main_core.Loc.getMessage("CRM_BUTTON_APPLY")), this.node);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-wizard-settings-block-hidden-input\">\n\t\t\t\t\t\t<div class=\"crm-wizard-settings-block-hidden-input-inner\">\n\t\t\t\t\t\t\t<div class=\"crm-wizard-settings-block-hidden-input-label\">", "</div>\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\" id=\"crm_numbers\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<button class=\"ui-btn ui-btn-light-border\" id=\"crm_button\" onclick=\"", "\">", "</button>\n\t\t\t\t\t</div>\n"])), main_core.Loc.getMessage("CRM_CHANGE_CRM_FORM_NUMBER"), numbers, this.onChange.bind(this), main_core.Loc.getMessage("CRM_BUTTON_APPLY")), this.node);
 	      }
 	    }
 	  }]);
 	  return StepCrmForm;
 	}(Step);
 
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "", "</div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t<li class=\"", "\">\n\t\t<a href=\"", "\" onclick=\"BX.SidePanel.Instance.open(this.href); return false;\">", "</a>\n\t</li>\n\t\t\t\t\t\t"]);
-
-	  _templateObject2$2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<ul class=\"crm-wizard-settings-block-list\"></ul>"]);
-
-	  _templateObject$3 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$3, _templateObject2$2, _templateObject3, _templateObject4;
 
 	var StepImconnector = /*#__PURE__*/function (_Step) {
 	  babelHelpers.inherits(StepImconnector, _Step);
@@ -316,13 +234,13 @@ this.BX = this.BX || {};
 	            error = _Object$entries$_i[1];
 
 	        if (error["code"] === "IMCONNECTOR_IS_NOT_CORRECT" && main_core.Type.isArray(error["customData"])) {
-	          node = main_core.Tag.render(_templateObject$3());
+	          node = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["<ul class=\"crm-wizard-settings-block-list\"></ul>"])));
 	          error["customData"].forEach(function (item) {
-	            node.append(main_core.Tag.render(_templateObject2$2(), item["icon_class"], item["link"], item["name"]));
+	            node.append(main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t<li class=\"", "\">\n\t\t<a href=\"", "\" onclick=\"BX.SidePanel.Instance.open(this.href); return false;\">", "</a>\n\t</li>\n\t\t\t\t\t\t"])), item["icon_class"], item["link"], item["name"]));
 	          });
-	          node = main_core.Tag.render(_templateObject3(), error["message"], node);
+	          node = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "", "</div>"])), error["message"], node);
 	        } else {
-	          node = main_core.Tag.render(_templateObject4(), error["message"]);
+	          node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</div>"])), error["message"]);
 	        }
 
 	        this.node.append(node);
@@ -332,85 +250,7 @@ this.BX = this.BX || {};
 	  return StepImconnector;
 	}(Step);
 
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t<li>\n\t\t", "\n\t\t<a href=\"", "\" onclick=\"BX.SidePanel.Instance.open(this.href); return false;\">", "</a>\n\t</li>\n\t\t\t\t\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</div>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<ul class=\"crm-wizard-settings-block-provider-list\"></ul>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<li>", "</li>"]);
-
-	  _templateObject4$1 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3$1() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</div>"]);
-
-	  _templateObject3$1 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2$3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<ul class=\"crm-wizard-settings-block-provider-list\"></ul>"]);
-
-	  _templateObject2$3 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject$4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\"></div>"]);
-
-	  _templateObject$4 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$4, _templateObject2$3, _templateObject3$1, _templateObject4$1, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
 
 	var StepMessageService = /*#__PURE__*/function (_Step) {
 	  babelHelpers.inherits(StepMessageService, _Step);
@@ -432,7 +272,7 @@ this.BX = this.BX || {};
 	    value: function parseErrors(errors) {
 	      var node = null,
 	          node2 = null;
-	      var errorNode = main_core.Tag.render(_templateObject$4());
+	      var errorNode = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\"></div>"])));
 
 	      for (var _i = 0, _Object$entries = Object.entries(errors); _i < _Object$entries.length; _i++) {
 	        var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
@@ -441,20 +281,20 @@ this.BX = this.BX || {};
 
 	        if (error["code"] === "NONEXISTENT_PROVIDER") {
 	          if (node2 === null) {
-	            node2 = main_core.Tag.render(_templateObject2$3());
-	            errorNode.append(main_core.Tag.render(_templateObject3$1(), node2));
+	            node2 = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<ul class=\"crm-wizard-settings-block-provider-list\"></ul>"])));
+	            errorNode.append(main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</div>"])), node2));
 	          }
 
-	          node2.append(main_core.Tag.render(_templateObject4$1(), error["message"]));
+	          node2.append(main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["<li>", "</li>"])), error["message"]));
 	        } else if (error["code"] === "NONWORKING_PROVIDER") {
 	          if (node === null) {
-	            node = main_core.Tag.render(_templateObject5());
-	            errorNode.append(main_core.Tag.render(_templateObject6(), node));
+	            node = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<ul class=\"crm-wizard-settings-block-provider-list\"></ul>"])));
+	            errorNode.append(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</div>"])), node));
 	          }
 
-	          node.append(main_core.Tag.render(_templateObject7(), error["message"], error["customData"]["manageUrl"], error["customData"]["shortName"]));
+	          node.append(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t<li>\n\t\t", "\n\t\t<a href=\"", "\" onclick=\"BX.SidePanel.Instance.open(this.href); return false;\">", "</a>\n\t</li>\n\t\t\t\t\t\t"])), error["message"], error["customData"]["manageUrl"], error["customData"]["shortName"]));
 	        } else {
-	          errorNode.append(main_core.Tag.render(_templateObject8(), error["message"]));
+	          errorNode.append(main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), error["message"]));
 	        }
 	      }
 
@@ -466,15 +306,7 @@ this.BX = this.BX || {};
 	  return StepMessageService;
 	}(Step);
 
-	function _templateObject$5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</span>"]);
-
-	  _templateObject$5 = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject$5;
 
 	var StepPaySystem = /*#__PURE__*/function (_Step) {
 	  babelHelpers.inherits(StepPaySystem, _Step);
@@ -500,7 +332,7 @@ this.BX = this.BX || {};
 	            error = _Object$entries$_i[1];
 
 	        if (key !== "PAY_SYSTEM_IS_NOT_CONFIGURED") {
-	          this.node.append(main_core.Tag.render(_templateObject$5(), error["message"]));
+	          this.node.append(main_core.Tag.render(_templateObject$5 || (_templateObject$5 = babelHelpers.taggedTemplateLiteral(["<span class=\"crm-wizard-settings-block-hidden-notice crm-wizard-settings-block-hidden-notice-unselected\">", "</span>"])), error["message"]));
 	        }
 	      }
 	    }
@@ -637,7 +469,7 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.emit(this, "Iterator:response", data["stepSteps"]);
 
 	      if (this.finished !== true) {
-	        this.continue();
+	        this["continue"]();
 	      } else {
 	        this.finish();
 	      }

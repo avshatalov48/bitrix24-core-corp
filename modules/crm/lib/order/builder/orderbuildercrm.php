@@ -9,7 +9,6 @@ use Bitrix\Main\ObjectException;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\Json;
 use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
-use Bitrix\Sale\TradingPlatform;
 use Bitrix\Sale\Helpers\Order\Builder\OrderBuilder;
 use Bitrix\Sale\Helpers\Order\Builder\OrderBuilderNew;
 use Bitrix\Sale\Helpers\Order\Builder\SettingsContainer;
@@ -117,13 +116,6 @@ class OrderBuilderCrm extends OrderBuilder
 						{
 							$fields = array_intersect_key($p, array_flip(BasketItem::getAllFields()));
 							$fields = array_merge($fieldsValues, $fields);
-							$currency = $fields['CURRENCY'] ?? $this->order->getCurrency();
-							$fields['PRICE'] = $this->unFormatPrice((string)$fields['PRICE'], $currency);
-							$fields['QUANTITY'] = str_replace(
-								[' ', chr(194).chr(160), chr(160), ','],
-								['', '', '', '.'],
-								$fields['QUANTITY']
-							);
 							$fields['OFFER_ID'] = $fields['PRODUCT_ID'];
 							$this->formData['PRODUCT'][$k] = $fields;
 						}
@@ -146,23 +138,6 @@ class OrderBuilderCrm extends OrderBuilder
 		}
 
 		return parent::buildBasket();
-	}
-
-	protected function unFormatPrice(string $formattedPrice, string $currency): float
-	{
-		if(!Loader::includeModule('currency'))
-		{
-			throw new SystemException('Can\'t include module "currency"');
-		}
-
-		$formattedPrice = str_replace(
-			[chr(194).chr(160), chr(160)],
-			'&nbsp;',
-			$formattedPrice
-		);
-
-		$result = \CCurrencyLang::getUnFormattedValue($formattedPrice, $currency);
-		return (float)str_replace(' ', '', $result);
 	}
 
 	/**
@@ -249,8 +224,39 @@ class OrderBuilderCrm extends OrderBuilder
 		return parent::buildPayments();
 	}
 
+	/**
+	 * Filling form data fields `PRODUCT` and `SHIPMENT` by form data of basket builder.
+	 *
+	 * @return void
+	 */
+	private function fillShipmentsByBasketBuilder(): void
+	{
+		$basketFormData = $this->getBasketBuilder()->getFormData();
+
+		if (isset($this->formData['PRODUCT'], $basketFormData['PRODUCT']))
+		{
+			$this->formData['PRODUCT'] = $basketFormData['PRODUCT'];
+		}
+
+		if (isset($this->formData['SHIPMENT'], $basketFormData['SHIPMENT']))
+		{
+			foreach ($basketFormData['SHIPMENT'] as $index => $shipment)
+			{
+				if (isset($this->formData['SHIPMENT'][$index], $shipment['PRODUCT']))
+				{
+					$this->formData['SHIPMENT'][$index]['PRODUCT'] = $shipment['PRODUCT'];
+				}
+			}
+		}
+	}
+
 	public function buildShipments()
 	{
+		if ($this->getSettingsContainer()->getItemValue('fillShipmentsByBasketBuilder'))
+		{
+			$this->fillShipmentsByBasketBuilder();
+		}
+
 		$dateTypeFields = [
 			'DELIVERY_DOC_DATE', 'DATE_DEDUCTED', 'DATE_MARKED',
 			'DATE_CANCELED', 'DATE_RESPONSIBLE_ID'

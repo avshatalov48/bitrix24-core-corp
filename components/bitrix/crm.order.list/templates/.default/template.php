@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UI\NavigationBarPanel;
+
 /**
  * Bitrix vars
  * Bitrix vars
@@ -24,6 +26,8 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
@@ -843,18 +847,19 @@ if(!$isInternal
 	}
 	elseif($callListUpdateMode)
 	{
-		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = [
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
 			"TEXT" => GetMessage("CRM_ORDER_UPDATE_CALL_LIST"),
 			"ID" => "update_call_list",
 			"NAME" => "update_call_list",
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$arResult['CALL_LIST_CONTEXT']}')"))
-				)
-			)
-		);
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$callListContext}')"]]
+				]
+			]
+		];
 	}
 	else
 	{
@@ -976,41 +981,14 @@ $APPLICATION->IncludeComponent(
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
-		'NAVIGATION_BAR' => array(
-			'ITEMS' => array_merge(
-				\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Order),
-				array(
-					array(
-						//'icon' => 'kanban',
-						'id' => 'kanban',
-						'name' => GetMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_KANBAN'),
-						'active' => false,
-						'url' => $arParams['PATH_TO_ORDER_KANBAN']
-					),
-					array(
-						//'icon' => 'table',
-						'id' => 'list',
-						'name' => GetMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_LIST'),
-						'active' => true,
-						'url' => $arResult['PATH_TO_ORDER_LIST']
-					),
-					/*
-					array(
-						//'icon' => 'chart',
-						'id' => 'widget',
-						'name' => GetMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_WIDGET'),
-						'active' => false,
-						'url' => $arResult['PATH_TO_ORDER_WIDGET']
-					)
-					*/
-				)
-			),
-			'BINDING' => array(
-				'category' => 'crm.navigation',
-				'name' => 'index',
-				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-			)
-		),
+		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Order))
+			->setItems([
+				NavigationBarPanel::ID_AUTOMATION,
+				NavigationBarPanel::ID_KANBAN,
+				NavigationBarPanel::ID_LIST
+			], NavigationBarPanel::ID_LIST)
+			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+			->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,
@@ -1278,4 +1256,3 @@ if(!$isInternal):
 </script>
 <?endif;?>
 <?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
-

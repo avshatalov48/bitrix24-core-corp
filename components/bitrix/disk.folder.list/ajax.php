@@ -11,16 +11,18 @@ use Bitrix\Disk\Internals\Error\Error;
 use Bitrix\Disk\Internals\ExternalLinkTable;
 use Bitrix\Disk\Internals\FolderTable;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Disk\Internals\RightTable;
 use Bitrix\Disk\Internals\SharingTable;
 use Bitrix\Disk\BaseObject;
+use Bitrix\Disk\Internals\SimpleRightTable;
 use Bitrix\Disk\ProxyType;
+use Bitrix\Disk\Security\SecurityContext;
 use Bitrix\Disk\Sharing;
 use Bitrix\Disk\Storage;
 use Bitrix\Disk\User;
 use Bitrix\Disk\Ui;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Event;
 use Bitrix\Main\EventResult;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -52,6 +54,8 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 	const ERROR_COULD_NOT_MOVE_OBJECT          = 'DISK_FLAC_22003';
 	const ERROR_COULD_NOT_CREATE_FIND_EXT_LINK = 'DISK_FLAC_22004';
 	const ERROR_DISK_QUOTA                     = 'DISK_FLAC_22005';
+
+	private ?array $prevRightsOnStorage = null;
 
 	protected function listActions()
 	{
@@ -354,37 +358,46 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 	protected function processActionShowRightsOnStorageDetail($storageId)
 	{
-		$storage = Storage::loadById((int)$storageId, array('ROOT_OBJECT'));
-		if(!$storage)
+		if (!Bitrix24Manager::isFeatureEnabled('disk_folder_sharing'))
 		{
-			$this->errorCollection[] = new Error(Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'), self::ERROR_COULD_NOT_FIND_OBJECT);
+			$this->sendJsonAccessDeniedResponse();
+		}
+
+		$storage = Storage::loadById((int)$storageId, ['ROOT_OBJECT']);
+		if (!$storage)
+		{
+			$this->errorCollection[] = new Error(
+				Loc::getMessage('DISK_FOLDER_LIST_ERROR_COULD_NOT_FIND_OBJECT'),
+				self::ERROR_COULD_NOT_FIND_OBJECT
+			);
 			$this->sendJsonErrorResponse();
 		}
 
 		$rightsManager = Driver::getInstance()->getRightsManager();
 		$securityContext = $storage->getCurrentUserSecurityContext();
-		if(!$storage->canChangeRights($securityContext))
+		$proxyType = $storage->getProxyType();
+		if (!$storage->canChangeRights($securityContext))
 		{
 			$this->sendJsonAccessDeniedResponse();
 		}
 
-		$readOnlyAccessCodes = array();
-		if($storage->getProxyType() instanceof Bitrix\Disk\ProxyType\User && !User::isCurrentUserAdmin())
+		$readOnlyAccessCodes = [];
+		if ($proxyType instanceof Bitrix\Disk\ProxyType\User && !User::isCurrentUserAdmin())
 		{
 			$readOnlyAccessCodes['IU' . $storage->getEntityId()] = true;
 			$readOnlyAccessCodes['U' . $storage->getEntityId()] = true;
 		}
-		elseif($storage->getProxyType() instanceof Bitrix\Disk\ProxyType\Group)
+		elseif ($proxyType instanceof Bitrix\Disk\ProxyType\Group)
 		{
-			$readOnlyAccessCodes['SG' . $storage->getEntityId() . '_A' ] = true;
+			$readOnlyAccessCodes['SG' . $storage->getEntityId() . '_A'] = true;
 		}
 
-		$rightsByAccessCode = array();
-		foreach($rightsManager->getAllListNormalizeRights($storage->getRootObject()) as $rightOnObject)
+		$rightsByAccessCode = [];
+		foreach ($rightsManager->getAllListNormalizeRights($storage->getRootObject()) as $rightOnObject)
 		{
-			if(empty($rightOnObject['NEGATIVE']))
+			if (empty($rightOnObject['NEGATIVE']))
 			{
-				if(isset($readOnlyAccessCodes[$rightOnObject['ACCESS_CODE']]))
+				if (isset($readOnlyAccessCodes[$rightOnObject['ACCESS_CODE']]))
 				{
 					$rightOnObject['READ_ONLY'] = true;
 				}
@@ -392,15 +405,32 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				$rightsByAccessCode[$rightOnObject['ACCESS_CODE']][] = $rightOnObject;
 			}
 		}
-		$access  = new CAccess();
+		$access = new CAccess();
 		$names = $access->getNames(array_keys($rightsByAccessCode));
 
-		$this->sendJsonSuccessResponse(array(
+		$systemFolderNames = [];
+		if ($proxyType instanceof ProxyType\Common)
+		{
+			foreach ($proxyType->listPseudoSystemFolders($securityContext) as $systemFolder)
+			{
+				$systemFolderNames[] = $systemFolder->getName();
+			}
+		}
+
+		$this->sendJsonSuccessResponse([
+			'storage' => [
+				'id' => $storage->getId(),
+				'name' => $proxyType->getTitleForCurrentUser(),
+			],
+			'systemFolders' => [
+				'show' => !empty($systemFolderNames),
+				'names' => $systemFolderNames,
+			],
 			'showExtendedRights' => $storage->isEnabledShowExtendedRights(),
 			'rights' => $rightsByAccessCode,
 			'accessCodeNames' => $names,
 			'tasks' => $rightsManager->getTasks(),
-		));
+		]);
 	}
 
 	protected function processActionShowRightsOnObjectDetail($objectId)
@@ -453,11 +483,14 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$access  = new CAccess();
 		$names = $access->getNames(array_keys($rightsByAccessCode));
 
-		$this->sendJsonSuccessResponse(array(
+		$this->sendJsonSuccessResponse([
+			'object' => [
+				'name' => $object->getName(),
+			],
 			'rights' => $rightsByAccessCode,
 			'accessCodeNames' => $names,
 			'tasks' => $rightsManager->getTasks(),
-		));
+		]);
 	}
 
 	protected function processActionShowSettingsOnBizproc($storageId)
@@ -501,6 +534,11 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 
 	protected function processActionSaveRightsOnStorage($storageId)
 	{
+		if (!Bitrix24Manager::isFeatureEnabled('disk_folder_sharing'))
+		{
+			$this->sendJsonAccessDeniedResponse();
+		}
+
 		$storage = Storage::loadById((int)$storageId, array('ROOT_OBJECT'));
 		if(!$storage)
 		{
@@ -547,6 +585,12 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 				$this->sendJsonErrorResponse();
 			}
 
+			if (($storage->getProxyType() instanceof ProxyType\Common) && !$this->request->getPost('setRightsOnPseudoSystemFolders'))
+			{
+				$this->setRightsOnCommonStorage($newRights, $storage, $securityContext);
+				$this->sendJsonSuccessResponse();
+			}
+
 			if($rightsManager->set($storage->getRootObject(), $newRights))
 			{
 				$this->sendJsonSuccessResponse();
@@ -556,6 +600,75 @@ class DiskFolderListAjaxController extends \Bitrix\Disk\Internals\Controller
 		$this->errorCollection->addFromEntity($rightsManager);
 
 		$this->sendJsonErrorResponse();
+	}
+
+	private function setRightsOnCommonStorage(array $newRights, Storage $storage, SecurityContext $securityContext): void
+	{
+		if (!($storage->getProxyType() instanceof ProxyType\Common))
+		{
+			return;
+		}
+
+		$newSimpleRights = [];
+		foreach ($newRights as $right)
+		{
+			if ($right['NEGATIVE'])
+			{
+				continue;
+			}
+
+			$newSimpleRights[] = [
+				'ACCESS_CODE' => $right['ACCESS_CODE'],
+				'OBJECT_ID' => $storage->getRootObjectId(),
+			];
+		}
+
+		SimpleRightTable::deleteBatch(['OBJECT_ID' => $storage->getRootObjectId()]);
+		SimpleRightTable::insertBatch($newSimpleRights);
+
+		$rightsManager = \Bitrix\Disk\Driver::getInstance()->getRightsManager();
+		$rootItems = $storage->getChildren($securityContext);
+
+		$pseudoSystemFoldersId = [];
+		foreach ($rootItems as $item)
+		{
+			if (
+				in_array($item->getCode(), ProxyType\Common::PSEUDO_SYSTEM_FOLDER_CODE, true)
+				|| in_array($item->getXmlId(), ProxyType\Common::PSEUDO_SYSTEM_FOLDER_XML_ID, true))
+			{
+				$pseudoSystemFoldersId[] = $item->getId();
+				continue;
+			}
+
+			$rightsManager->append($item, $newRights);
+		}
+
+		$rightsOnRootObject = [];
+		$pseudoSystemRights = [];
+		foreach ($newRights as $newRight)
+		{
+			$rightsOnRootObject[] = [
+				'OBJECT_ID' => $storage->getRootObjectId(),
+				'TASK_ID' => $newRight['TASK_ID'],
+				'ACCESS_CODE' => $newRight['ACCESS_CODE'],
+				'DOMAIN' => $newRight['DOMAIN'] ?? null,
+				'NEGATIVE' => $newRight['NEGATIVE'] ?? 0,
+			];
+
+			foreach ($pseudoSystemFoldersId as $folderId)
+			{
+				$pseudoSystemRights[] = [
+					'OBJECT_ID' => $folderId,
+					'TASK_ID' => $newRight['TASK_ID'],
+					'ACCESS_CODE' => $newRight['ACCESS_CODE'],
+					'DOMAIN' => null,
+					'NEGATIVE' => 1,
+				];
+			}
+
+		}
+		RightTable::deleteBatch(['OBJECT_ID' => $storage->getRootObjectId()]);
+		RightTable::insertBatch(array_merge($rightsOnRootObject, $pseudoSystemRights));
 	}
 
 	protected function processActionSaveRightsOnObject($objectId)

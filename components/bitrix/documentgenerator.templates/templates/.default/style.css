@@ -2,6 +2,10 @@
 	background: #ebf1f4 !important;
 }
 
+#workarea-content .workarea-content-paddings {
+	height: 100%;
+}
+
 .docs-template-wrap-slider {
 	padding: 0 25px;
 }

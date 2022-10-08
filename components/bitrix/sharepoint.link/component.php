@@ -1,7 +1,7 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-if (!CBXFeatures::IsFeatureEnabled('intranet_sharepoint'))
+if (!CBXFeatures::IsFeatureEnabled('intranet_sharepoint') && IsModuleInstalled("bitrix24"))
 	return false;
 
 /*

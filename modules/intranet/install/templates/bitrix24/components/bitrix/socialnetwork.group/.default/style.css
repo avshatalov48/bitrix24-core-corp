@@ -2,7 +2,7 @@
 	background: transparent;
 	padding: 6px 17px;
 	border: none;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	word-wrap: break-word;
 }
 
@@ -26,7 +26,7 @@
 	padding: 0 0 12px 0;
 	margin: 0 0 12px 0;
 	border-bottom: 1px solid #ebf1f4;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -83,7 +83,7 @@ a.socialnetwork-group-title-link:hover {
 .socialnetwork-group-user-name a {
 	color: #0b66c3;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .socialnetwork-group-user-name a:hover {
@@ -148,7 +148,7 @@ a.socialnetwork-group-title-link:hover {
 .socialnetwork-group-desc-title {
 	color: #555;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 5px;
 }
 
@@ -228,7 +228,7 @@ a.socialnetwork-group-title-link:hover {
 	background: none;
 	box-shadow: none;
 	box-sizing: border-box;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline: medium none;
 	text-indent: 0;
 }
@@ -487,7 +487,7 @@ a.socialnetwork-group-title-link:hover {
 
 .sonet-group-user-request-join-message-text {
 	position: relative;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #80868e;
 	border: 1px solid #c6cdd3;

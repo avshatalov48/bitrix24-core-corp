@@ -42,7 +42,10 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 			getRecentPage: (state) => (pageNumber, itemsPerPage) => {
 				const list = [...state.collection];
 
-				return list.splice((pageNumber - 1) * itemsPerPage, itemsPerPage);
+				return list
+					.splice((pageNumber - 1) * itemsPerPage, itemsPerPage)
+					.sort(sortListByMessageDateWithPinned)
+				;
 			},
 			getTitleById: (state) => (id) => {
 				return state.collection.find((item) => item.id == id).title;
@@ -364,6 +367,27 @@ jn.define('im/messenger/model/recent', (require, exports, module) => {
 
 	function sortListByMessageDate(a, b)
 	{
+		if (a.message && b.message)
+		{
+			const timestampA = new Date(a.message.date).getTime();
+			const timestampB = new Date(b.message.date).getTime();
+
+			return timestampB - timestampA;
+		}
+	}
+
+	function sortListByMessageDateWithPinned(a, b)
+	{
+		if (!a.pinned && b.pinned)
+		{
+			return 1;
+		}
+
+		if (a.pinned && !b.pinned)
+		{
+			return -1;
+		}
+
 		if (a.message && b.message)
 		{
 			const timestampA = new Date(a.message.date).getTime();

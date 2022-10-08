@@ -28,6 +28,7 @@ export class Selector
 					id: "department",
 					options: {
 						selectMode: "departmentsOnly",
+						allowOnlyUserDepartments: true,
 						allowSelectRootDepartment: true,
 					}
 				});

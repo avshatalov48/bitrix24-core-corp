@@ -14,7 +14,11 @@ use Bitrix\Main\Entity\EnumField;
 
 Loc::loadMessages(__FILE__);
 
+use Bitrix\Main\ORM\Fields\Relations\OneToMany;
+use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateObject;
+use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
 use Bitrix\Tasks\Util\UserField;
 
 /**
@@ -227,14 +231,18 @@ class TemplateTable extends Main\Entity\DataManager
 			),
 
 			// references
-			'CREATOR' => array(
+			'CREATOR' => [
 				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.CREATED_BY' => 'ref.ID')
-			),
-			'RESPONSIBLE' => array(
+				'reference' => ['=this.CREATED_BY' => 'ref.ID']
+			],
+			'RESPONSIBLE' => [
 				'data_type' => 'Bitrix\Main\User',
-				'reference' => array('=this.RESPONSIBLE_ID' => 'ref.ID')
-			),
+				'reference' => ['=this.RESPONSIBLE_ID' => 'ref.ID']
+			],
+
+			(new OneToMany("MEMBERS", TemplateMemberTable::class, "TEMPLATE")),
+			(new OneToMany("TAG_LIST", TemplateTagTable::class, "TEMPLATE")),
+			(new OneToMany("DEPENDENCIES", TemplateDependenceTable::class, "TEMPLATE")),
 		);
 	}
 	/**

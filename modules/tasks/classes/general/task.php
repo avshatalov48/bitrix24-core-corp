@@ -547,10 +547,9 @@ class CTasks
 					break;
 
 				case "REFERENCE:RESPONSIBLE_ID":
-					$key = 'RESPONSIBLE_ID';
 					$arSqlSearch[] = CTasks::FilterCreate(
-						$sAliasPrefix."T.".$key,
-						$val,
+						"{$sAliasPrefix}T.RESPONSIBLE_ID",
+						"{$sAliasPrefix}T.{$val}",
 						'reference',
 						$bFullJoin,
 						$cOperationType
@@ -5107,6 +5106,11 @@ class CTasks
 	 */
 	public static function RepeatTaskByTemplateId ($templateId, $flipFlop = 1, array &$debugHere = array())
 	{
+		if (\Bitrix\Tasks\Update\TemplateConverter::isProceed())
+		{
+			return 'CTasks::RepeatTaskByTemplateId('.$templateId.');';
+		}
+
 		return Replicator\Task\FromTemplate::repeatTask(
 			$templateId,
 			array(

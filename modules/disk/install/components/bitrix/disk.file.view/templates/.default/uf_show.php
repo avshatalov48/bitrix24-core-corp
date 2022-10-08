@@ -15,7 +15,10 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
 
 CJSCore::Init([
-	'disk', 'core', 'ui.buttons',
+	'disk',
+	'core',
+	'ui.buttons',
+	'ui.design-tokens',
 ]);
 
 Loc::loadMessages(__DIR__ . '/template.php');

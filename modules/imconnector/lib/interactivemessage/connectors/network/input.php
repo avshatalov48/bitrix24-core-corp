@@ -2,13 +2,12 @@
 
 namespace Bitrix\ImConnector\InteractiveMessage\Connectors\Network;
 
-use \Bitrix\Main\Web\Json;
-use \Bitrix\ImConnector\Error;
-use \Bitrix\ImConnector\Result;
-use \Bitrix\ImConnector\InteractiveMessage;
+use Bitrix\Main\Web\Json;
+use Bitrix\ImConnector\Error;
+use Bitrix\ImConnector\Result;
+use Bitrix\ImConnector\InteractiveMessage;
 
 /**
- * Class Base
  * @package Bitrix\ImConnector\InteractiveMessage\Network
  */
 class Input extends InteractiveMessage\Input
@@ -33,17 +32,27 @@ class Input extends InteractiveMessage\Input
 			}
 		}
 
-		if(
-			$command === 'session'
-			&& !empty($data)
-			&& $result->isSuccess()
+		if (
+			$result->isSuccess()
+			&& (empty($data) || empty($data['COMMAND']))
 		)
 		{
-			$result = $this->runCommand($data);
+			$result->addError(new Error(
+				'Invalid data was transmitted',
+				'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA',
+				__METHOD__,
+				['command' => $command, 'data' => $data]
+			));
 		}
-		else
-		{
-			$result->addError(new Error('Invalid data was transmitted', 'IMCONNECTOR_INTERACTIVE_MESSAGE_ERROR_NOT_LOAD_CORRECT_DATA', __METHOD__, ['command' => $command, 'data' => $data]));
+
+		if (
+			$result->isSuccess()
+			&& (
+				$command === self::COMMAND_SESSION
+				&& in_array($data['COMMAND'], [self::COMMAND_SESSION_NEW, self::COMMAND_SESSION_CLOSE, self::COMMAND_SESSION_CONTINUE])
+			)
+		){
+			$result = $this->runCommand($data);
 		}
 
 		return $result;

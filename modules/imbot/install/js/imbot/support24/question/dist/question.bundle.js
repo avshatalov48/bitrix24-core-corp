@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Imbot = this.BX.Imbot || {};
-(function (exports,ui_vue_vuex,ui_notification,main_loader,ui_infoHelper,main_core_events,ui_buttons,ui_vue,main_core) {
+(function (exports,ui_vue_vuex,ui_notification,main_loader,ui_infoHelper,main_core_events,ui_fonts_opensans,ui_buttons,ui_designTokens,ui_vue,main_core) {
 	'use strict';
 
 	var QuestionModel = /*#__PURE__*/function (_VuexBuilderModel) {
@@ -761,5 +761,5 @@ this.BX.Imbot = this.BX.Imbot || {};
 
 	exports.Question = Question$1;
 
-}((this.BX.Imbot.Support24 = this.BX.Imbot.Support24 || {}),BX,BX,BX,BX,BX.Event,BX.UI,BX,BX));
+}((this.BX.Imbot.Support24 = this.BX.Imbot.Support24 || {}),BX,BX,BX,BX,BX.Event,BX,BX.UI,BX,BX,BX));
 //# sourceMappingURL=question.bundle.js.map

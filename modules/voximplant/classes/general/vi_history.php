@@ -827,7 +827,7 @@ class CVoxImplantHistory
 			'TRANSCRIPT_PENDING' => ($call['TRANSCRIPT_PENDING'] == 'Y'),
 			'DURATION_TEXT' => static::convertDurationToText($call['CALL_DURATION'], CVoxImplantHistory::DURATION_FORMAT_BRIEF),
 			'COMMENT' =>  $call['COMMENT'],
-			'PORTAL_NUMBER' => $call['PORTAL_NUMBER'],
+			'CALL_VOTE' => $call['CALL_VOTE'],
 		];
 	}
 

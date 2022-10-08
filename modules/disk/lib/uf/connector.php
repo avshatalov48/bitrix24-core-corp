@@ -27,6 +27,11 @@ abstract class Connector
 			throw new SystemException("Could not include module {$attachedObject->getModuleId()}");
 		}
 		$className = str_replace('\\\\', '\\', $attachedObject->getEntityType());
+		if (!is_subclass_of($className, Connector::class))
+		{
+			throw new SystemException('Invalid class for Connector. Must be instance of Connector');
+		}
+
 		/** @var \Bitrix\Disk\Uf\Connector $connector */
 		$connector = new $className($attachedObject->getEntityId());
 

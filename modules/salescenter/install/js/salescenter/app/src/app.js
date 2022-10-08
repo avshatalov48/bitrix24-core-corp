@@ -3,11 +3,12 @@ import {VuexBuilder} from 'ui.vue.vuex';
 import {rest as Rest} from 'rest.client';
 import {Manager} from 'salescenter.manager';
 import {Loader} from 'main.loader';
-import {Type, Text, Loc, ajax as Ajax, Event} from 'main.core';
+import {Type, Text, Loc, ajax as Ajax, Event, Tag} from 'main.core';
 import {EventEmitter} from 'main.core.events';
-import {MenuManager} from 'main.popup';
+import {MenuManager, Popup} from 'main.popup';
 import 'ui.notification';
 import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import {ApplicationModel} from './models/application';
 import {OrderCreationModel} from './models/ordercreation';
 import {DocumentSelectorModel} from './models/document-selector';
@@ -15,8 +16,15 @@ import Chat from './chat';
 import Deal from './deal';
 import './css/component.css';
 
+const instances = new Map();
+
 export class App
 {
+	static getByDialogId(dialogId: string): ?App
+	{
+		return instances.get(dialogId) || null;
+	}
+
 	constructor(options = {
 		dialogId: null,
 		sessionId: null,
@@ -29,6 +37,7 @@ export class App
 		isCatalogAvailable: false,
 		isOrderPublicUrlExists: false,
 		isWithOrdersMode: true,
+		compilation: null,
 		documentSelector: DocumentSelectorParams|null,
 	})
 	{
@@ -57,6 +66,8 @@ export class App
 		this.orderPublicUrl = '';
 		this.fileControl = options.fileControl;
 		this.currencyCode = options.currencyCode;
+		this.compilation = null;
+		this.newCompilationId = null;
 		this.assignedById = options.assignedById;
 
 		if(Type.isString(options.stageOnOrderPaid))
@@ -161,10 +172,17 @@ export class App
 			this.sendingMethodDesc = this.options.sendingMethodDesc;
 		}
 
+		if(Type.isObject(options.compilation))
+		{
+			this.compilation = options.compilation;
+		}
+
 		this.isPaymentCreationAvailable = (
 			(this.sessionId > 0 && this.dialogId.length > 0) || (this.ownerTypeId && this.ownerId)
 		);
 		this.connector = Type.isString(options.connector) ? options.connector : '';
+
+		this.isAllowedFacebookRegion = Type.isBoolean(options.isAllowedFacebookRegion) ? options.isAllowedFacebookRegion : false;
 
 		if (Type.isPlainObject(options.documentSelector))
 		{
@@ -183,6 +201,10 @@ export class App
 			.then((result) => this.initTemplate(result))
 			.catch((error) => App.showError(error))
 		;
+
+		EventEmitter.subscribe(window.parent, 'onSendCompilationChatButtonClick', this.sendCompilation.bind(this));
+
+		instances.set(this.dialogId, this);
 	}
 
 	static initStore()
@@ -290,6 +312,11 @@ export class App
 					if (context.documentSelector)
 					{
 						this.$store.commit('documentSelector/fillState', context.documentSelector);
+					}
+
+					if (this.$app.options.showCompilationModeSwitcher === 'N')
+					{
+						this.$store.commit('orderCreation/enableCompilationMode');
 					}
 				},
 				mounted()
@@ -598,6 +625,189 @@ export class App
 			this.stopProgress();
 		});
 	}
+
+	sendCompilation(buttonEvent = null, sendCompilationLinkToFacebook = false)
+	{
+		if (!this.isPaymentCreationAvailable)
+		{
+			this.closeApplication();
+			return null;
+		}
+
+		if (!this.store.getters['orderCreation/isAllowedSubmit'] || this.isProgress)
+		{
+			return null;
+		}
+
+		if (!this.isAllowedFacebookRegion)
+		{
+			sendCompilationLinkToFacebook = true;
+		}
+
+		this.startProgress(buttonEvent);
+
+		let options = {
+			dialogId: this.dialogId,
+			sendingMethod: this.sendingMethod,
+			sendingMethodDesc: this.sendingMethodDesc,
+			ownerTypeId: this.ownerTypeId,
+			ownerId: this.ownerId,
+			connector: this.connector,
+			sessionId: this.sessionId,
+			sendCompilationLinkToFacebook: sendCompilationLinkToFacebook,
+			compilationId: this.compilation ? this.compilation.ID : this.newCompilationId,
+			editable: this.options.templateMode === 'create',
+		};
+
+		if (this.stageOnOrderPaid !== null)
+		{
+			options.stageOnOrderPaid = this.stageOnOrderPaid;
+		}
+		if (this.stageOnDeliveryFinished !== null)
+		{
+			options.stageOnDeliveryFinished = this.stageOnDeliveryFinished;
+		}
+
+		if (this.connector === 'facebook' && this.isAllowedFacebookRegion && !sendCompilationLinkToFacebook)
+		{
+			this.sendCompilationToFacebook(buttonEvent, options)
+		}
+		else
+		{
+			this.sendCompilationAjaxAction(buttonEvent, options);
+		}
+	}
+
+	sendCompilationToFacebook(buttonEvent, options)
+	{
+		BX.ajax.runComponentAction(
+			'bitrix:salescenter.app',
+			'getFacebookSettingsPath',
+			{
+				mode: 'class',
+				data: {
+					dialogId: this.dialogId,
+				}
+			}
+		).then((response) => {
+			const facebookSettingsPath = response.data;
+			if (facebookSettingsPath)
+			{
+				this.stopProgress(buttonEvent);
+				this.showFacebookCatalogConnectionPopup(buttonEvent, facebookSettingsPath)
+			}
+			else
+			{
+				BX.ajax.runAction('salescenter.compilation.sendFacebookModerationWaitingNotification', {
+					data: {
+						options,
+					},
+				}).then((result) => {
+					this.sendCompilationAjaxAction(buttonEvent, options);
+					this.store.dispatch('orderCreation/resetBasket');
+					this.closeApplication();
+					this.stopProgress(buttonEvent);
+				});
+			}
+		});
+	}
+
+	showFacebookCatalogConnectionPopup(buttonEvent, facebookSettingsPath)
+	{
+		if (!this.facebookCatalogConnectionPopup)
+		{
+			this.facebookCatalogConnectionPopup = new Popup({
+				className: 'salescenter-app-catalog-facebook-connection-popup',
+				content: this.getFacebookCatalogConnectionPopupContent(buttonEvent, facebookSettingsPath),
+				width: 500,
+				overlay: true,
+				offsetTop: 0,
+				offsetLeft: 0,
+				padding: 17,
+				animation: 'fading-slide',
+				angle: false,
+				closeIcon: {
+					top: '5px',
+					right: '5px',
+				},
+			});
+		}
+
+		this.facebookCatalogConnectionPopup.show();
+	}
+
+	getFacebookCatalogConnectionPopupContent(buttonEvent, facebookSettingsPath)
+	{
+		const setFacebookCatalogConnectionButton = Tag.render`
+			<button class="ui-btn ui-btn-md ui-btn-primary">
+				${Loc.getMessage('SALESCENTER_FACEBOOK_CATALOG_POPUP_SET_BUTTON')}
+			</button>
+		`;
+		Event.bind(setFacebookCatalogConnectionButton, 'click', this.setFacebookCatalogConnectionPopupHandler.bind(this, facebookSettingsPath));
+
+		const sendLinkToB24CompilationButton = Tag.render`
+			<button class="ui-btn ui-btn-md ui-btn-light-border">
+				${Loc.getMessage('SALESCENTER_FACEBOOK_CATALOG_POPUP_SEND_B24_COMPILATION_LINK_BUTTON')}
+			</button>
+		`;
+		Event.bind(sendLinkToB24CompilationButton, 'click', this.sendLinkToB24CompilationButtonPopupHandler.bind(this, buttonEvent));
+
+		return Tag.render`
+			<div class="salescenter-app-catalog-facebook-connection-popup--container">
+				<div class="salescenter-app-catalog-facebook-connection-popup--title">${Loc.getMessage('SALESCENTER_FACEBOOK_CATALOG_POPUP_TITLE_1')}</div>
+				<div class="salescenter-app-catalog-facebook-connection-popup--button-container">
+					${setFacebookCatalogConnectionButton}
+					${sendLinkToB24CompilationButton}
+				</div>
+			</div>
+		`;
+	}
+
+	setFacebookCatalogConnectionPopupHandler(facebookSettingsPath)
+	{
+		BX.SidePanel.Instance.open(facebookSettingsPath);
+		this.facebookCatalogConnectionPopup.close();
+	}
+
+	sendLinkToB24CompilationButtonPopupHandler(buttonEvent)
+	{
+		this.facebookCatalogConnectionPopup.close();
+		this.sendCompilation(buttonEvent, true);
+	}
+
+	sendCompilationAjaxAction(buttonEvent, options)
+	{
+		const basketItems = this.store.getters['orderCreation/getBasket']();
+		const productIds = basketItems.map((basketItem) => {
+			return basketItem.skuId;
+		});
+		BX.ajax.runAction('salescenter.compilation.sendCompilation', {
+			data: {
+				productIds,
+				options,
+			},
+			analyticsLabel: 'salescenterCreateCompilation',
+		}).then((result) => {
+			this.store.dispatch('orderCreation/resetBasket');
+			this.stopProgress(buttonEvent);
+
+			if (result.data && result.data.compilation)
+			{
+				this.slider.data.set('action', 'sendCompilation');
+				this.slider.data.set('compilation', result.data.compilation);
+			}
+
+			this.closeApplication();
+			this.emitGlobalEvent('salescenter.app:oncompilationcreated');
+		}).catch((data) => {
+			data.errors.forEach((error) => {
+				alert(error.message);
+			});
+			this.stopProgress(buttonEvent);
+			App.showError(data);
+		});
+	}
+
 	sendShipment(buttonEvent)
 	{
 		if (!this.isPaymentCreationAvailable)

@@ -5,9 +5,11 @@ namespace Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\ConversionEntry;
 use Bitrix\Crm\Timeline\CreationEntry;
 use Bitrix\Crm\Timeline\LinkEntry;
+use Bitrix\Crm\Timeline\LogMessageEntry;
 use Bitrix\Crm\Timeline\MarkEntry;
 use Bitrix\Crm\Timeline\ModificationEntry;
 use Bitrix\Crm\Timeline\RestorationEntry;
+use Bitrix\Crm\Timeline\SignDocument;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Crm\Timeline\UnlinkEntry;
 use Bitrix\Crm\Timeline\FinalSummaryEntry;
@@ -25,6 +27,9 @@ class Facade
 	public const MARK = MarkEntry::class;
 	public const FINAL_SUMMARY = FinalSummaryEntry::class;
 	public const FINAL_SUMMARY_DOCUMENTS = FinalSummaryDocumentsEntry::class;
+	public const SIGN_DOCUMENT = SignDocument\Entry::class;
+	public const SIGN_DOCUMENT_LOG = SignDocument\LogEntry::class;
+	public const LOG_MESSAGE = LogMessageEntry::class;
 
 	/** @var TimelineEntry */
 	protected $timelineEntryClass = TimelineEntry::class;

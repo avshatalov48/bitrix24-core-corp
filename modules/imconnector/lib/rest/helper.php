@@ -16,9 +16,6 @@ class Helper
 	/**
 	 * @param $params
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function registerApp($params)
 	{
@@ -116,9 +113,6 @@ class Helper
 	/**
 	 * @param $params
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function unRegisterApp($params): bool
 	{
@@ -163,9 +157,6 @@ class Helper
 	 * @param $params
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function registerPlacement($params)
 	{
@@ -182,14 +173,13 @@ class Helper
 
 		$result = ($placement['ID'] > 0) ? $placement['ID'] : self::addPlacement($params)->getId();
 
-		return intval($result);
+		return (int)$result;
 	}
 
 	/**
 	 * @param $params
 	 *
 	 * @return \Bitrix\Main\ORM\Data\AddResult
-	 * @throws \Exception
 	 */
 	protected static function addPlacement($params)
 	{
@@ -218,9 +208,6 @@ class Helper
 	 * @param $placementId
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function unRegisterPlacement($placementId)
 	{
@@ -246,7 +233,6 @@ class Helper
 	 * @param $placementId
 	 *
 	 * @return \Bitrix\Main\ORM\Data\DeleteResult
-	 * @throws \Exception
 	 */
 	protected static function deletePlacement($placementId)
 	{
@@ -378,9 +364,6 @@ class Helper
 	/**
 	 * @param $idConnector
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getAppRestConnector($idConnector)
 	{

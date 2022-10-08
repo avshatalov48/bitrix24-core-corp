@@ -32,6 +32,9 @@ class Entity extends Main\Engine\Controller
 			'renderImageInput' => [
 				'class' =>  Crm\Controller\Action\Entity\RenderImageInputAction::class,
 			],
+			'canChangeCurrency' => [
+				'class' => Crm\Controller\Action\Entity\CanChangeCurrencyAction::class,
+			],
 		);
 	}
 

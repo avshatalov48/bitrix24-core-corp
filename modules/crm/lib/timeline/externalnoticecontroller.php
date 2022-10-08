@@ -54,6 +54,7 @@ class ExternalNoticeController extends EntityController
 			$settings['FIELD_NAME'] = isset($params['FIELD_NAME']) ? (string)$params['FIELD_NAME'] : '';
 			$settings['CURRENT_VALUE'] = isset($params['CURRENT_VALUE']) ? (string)$params['CURRENT_VALUE'] : '';
 			$settings['PREVIOUS_VALUE'] = isset($params['PREVIOUS_VALUE']) ? (string)$params['PREVIOUS_VALUE'] : '';
+			$settings['MODIFIED_FIELD'] = $settings['FIELD_NAME'];
 		}
 
 		if ($fields['DATE_INSERT'] instanceof Main\Type\Date)

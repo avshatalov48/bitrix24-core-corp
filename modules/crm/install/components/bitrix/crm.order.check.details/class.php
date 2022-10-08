@@ -2,6 +2,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm;
+use Bitrix\Crm\Order\EntityBinding;
 use Bitrix\Main;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
@@ -10,6 +11,7 @@ use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Component\ComponentError;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Component\EntityDetails\ComponentMode;
+use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
 if(!Main\Loader::includeModule('crm'))
@@ -46,50 +48,23 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		return ComponentError::getMessage($error);
 	}
 
-	public function initializeParams(array $params)
+	/**
+	 * @inheritDoc
+	 */
+	public function onPrepareComponentParams($arParams)
 	{
-		global $APPLICATION;
-		foreach($params as $k => $v)
-		{
-			if(!is_string($v))
-			{
-				continue;
-			}
+		$arParams['OWNER_TYPE'] = (int)$this->request->get('owner_type');
+		$arParams['OWNER_ID'] = (int)$this->request->get('owner_id');
 
-			if($k === 'PATH_TO_PRODUCT_SHOW')
-			{
-				$this->arResult['PATH_TO_PRODUCT_SHOW'] = $this->arParams['PATH_TO_PRODUCT_SHOW'] = $v;
-			}
-			elseif($k === 'PATH_TO_USER_PROFILE')
-			{
-				$this->arResult['PATH_TO_USER_PROFILE'] = $this->arParams['PATH_TO_USER_PROFILE'] = $v;
-			}
-			elseif($k === 'NAME_TEMPLATE')
-			{
-				$this->arResult['NAME_TEMPLATE'] = $this->arParams['NAME_TEMPLATE'] = $v;
-			}
-			elseif($k === 'ORDER_ID')
-			{
-				$this->arResult[$k] = $this->arParams[$k] = (int)$v;
-			}
-		}
-
-		$this->arResult['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath(
-			'PATH_TO_ORDER_PAYMENT_DETAILS',
-			$params['PATH_TO_ORDER_PAYMENT_DETAILS'],
-			COption::GetOptionString('crm', 'path_to_order_payment_details'),
-		);
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath(
-			'PATH_TO_ORDER_SHIPMENT_DETAILS',
-			$params['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-			COption::GetOptionString('crm', 'path_to_order_shipment_details')
-		);
+		return parent::onPrepareComponentParams($arParams);
 	}
 
-	public function loadOrder()
+	public function loadOrder(): void
 	{
-		if($this->orderId > 0 && $this->order === null)
+		if ($this->orderId > 0 && $this->order === null)
+		{
 			$this->order = Order\Order::load($this->orderId);
+		}
 	}
 
 	public function executeComponent()
@@ -109,19 +84,6 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			$APPLICATION->GetCurPage().'?order_id=#order_id#&show',
 			null
 		);
-
-		$this->arResult['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath(
-			'PATH_TO_ORDER_PAYMENT_DETAILS',
-			COption::GetOptionString('crm', 'path_to_order_payment_details'),
-			null
-		);
-
-		$this->arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath(
-			'PATH_TO_ORDER_SHIPMENT_DETAILS',
-			COption::GetOptionString('crm', 'path_to_order_shipment_details'),
-			null
-		);
-
 		$this->arResult['ACTION_URI'] = $this->arResult['POST_FORM_URI'] = POST_FORM_ACTION_URI;
 		$this->arResult['DATE_FORMAT'] = Main\Type\Date::getFormat();
 		$this->arResult['CONTEXT_ID'] = \CCrmOwnerType::OrderCheckName.'_'.$this->arResult['ENTITY_ID'];
@@ -144,7 +106,6 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		if ($this->arResult['ENTITY_ID'] > 0)
 		{
 			$entityData = $this->prepareEntityData($this->arResult['ENTITY_ID']);
-			$this->orderId = $entityData['ORDER_ID'];
 			$this->arResult['READ_ONLY'] = true;
 		}
 		else
@@ -167,6 +128,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 		{
 			$this->addError(Loc::getMessage('CRM_ORDER_NOT_FOUND'));
 			$this->showErrors();
+			return;
+		}
+
+		if (
+			!CCrmSaleHelper::isWithOrdersMode()
+			&& $this->order->getTradeBindingCollection()->isEmpty()
+		)
+		{
+			ShowError(Loc::getMessage('CRM_ORDER_CHECK_NOT_FOUND'));
 			return;
 		}
 
@@ -235,15 +205,15 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 				'name' => 'main',
 				'title' => Loc::getMessage('CRM_ORDER_SECTION_MAIN'),
 				'type' => 'section',
-				'elements' => array(
+				'elements' => [
 					array('name' => 'ID'),
-					array('name' => 'ORDER_ID'),
+					array('name' => $this->isWithOrdersMode() ? 'ORDER_ID' : 'ENTITY_ID'),
 					array('name' => 'CASHBOX_NAME'),
 					array('name' => 'SUM_WITH_CURRENCY'),
 					array('name' => 'STATUS_NAME'),
 					array('name' => 'CHECK_LINK'),
 					array('name' => 'DATE_CREATE')
-				)
+				]
 			),
 			array(
 				'name' => 'payment_information',
@@ -325,13 +295,30 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 					'editable' => false,
 					'data' => array('enableTime' => true)
 				),
-				array(
-					'name' => 'ORDER_ID',
-					'title' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_ORDER_ID'),
-					'type' => 'crm_entity',
-					'editable' => false,
-					'data' =>  array('typeId' => \CCrmOwnerType::Order)
-				),
+				...[
+					$this->isWithOrdersMode()
+						? [
+							'name' => 'ORDER_ID',
+							'title' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_ORDER_ID'),
+							'type' => 'text',
+							'editable' => false,
+						]
+						: [
+							'name' => 'ENTITY_ID',
+							'title' => Loc::getMessage(
+								'CRM_COLUMN_ORDER_CHECK_ENTITY',
+								[
+									'#ENTITY_NAME#' => lcfirst(
+										CCrmOwnerType::getDescription(
+											$this->getOrderBindingOwnerTypeId()
+										)
+									)
+								]
+							),
+							'type' => 'text',
+							'editable' => false
+						]
+				],
 				array(
 					'name' => 'CHECK_LINK',
 					'title' => Loc::getMessage('CRM_COLUMN_ORDER_CHECK_LINK'),
@@ -369,7 +356,7 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			$this->arResult['ORDER_ID'] = $this->orderId;
 			$this->arResult['IS_MULTIPLE'] = Cashbox\Manager::isSupportedFFD105() ? 'Y' : 'N';
 			$this->arResult['MAIN_LIST'] = $this->getEntityList();
-			$this->arResult['DEFAULT_MAIN_ENTITY'] = $this->arResult['MAIN_LIST'][0];
+			$this->arResult['DEFAULT_MAIN_ENTITY'] = $this->getDefaultMainEntity();
 
 			$checkTypes = $this->getCheckTypes($this->arResult['DEFAULT_MAIN_ENTITY']['TYPE']);
 
@@ -658,12 +645,10 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 					"#ACCOUNT_NUMBER#" => $payment->getField('ACCOUNT_NUMBER'),
 					"#DATE_BILL#" => FormatDate($this->arResult['DATE_FORMAT'], MakeTimeStamp($payment->getField('DATE_BILL')))
 				));
-				$link = CComponentEngine::MakePathFromTemplate(
-					$this->arResult['PATH_TO_ORDER_PAYMENT_DETAILS'],
-					array('payment_id' => $paymentId)
-				);
 				$this->arResult['ENTITY_DATA']['PAYMENT_VALUE'] .= CCrmViewHelper::RenderInfo(
-					$link,
+					Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getPaymentDetailsLink(
+						$paymentId
+					),
 					htmlspecialcharsbx($paymentTitle),
 					htmlspecialcharsbx($payment->getField('PAY_SYSTEM_NAME')),
 					array('TARGET' => '_self')
@@ -693,12 +678,10 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 				"#ACCOUNT_NUMBER#" => $shipment->getField('ACCOUNT_NUMBER'),
 				"#DATE_INSERT#" => FormatDate($this->arResult['DATE_FORMAT'], MakeTimeStamp($shipment->getField('DATE_INSERT')))
 			));
-			$link = CComponentEngine::MakePathFromTemplate(
-				$this->arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-				array('shipment_id' => $shipmentId)
-			);
+
 			$this->arResult['ENTITY_DATA']['SHIPMENT_VALUE'] .= CCrmViewHelper::RenderInfo(
-				$link,
+				Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+					->getShipmentDetailsLink($shipmentId),
 				htmlspecialcharsbx($shipmentTitle),
 				htmlspecialcharsbx($shipment->getField('DELIVERY_NAME')),
 				array('TARGET' => '_self')
@@ -786,6 +769,13 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			}
 		}
 
+		$this->orderId = $check['ORDER_ID'];
+		$this->loadOrder();
+		if (!$this->isWithOrdersMode())
+		{
+			$check['ENTITY_ID'] = $this->getOrderBindingOwnerId();
+		}
+
 		return $check;
 	}
 
@@ -823,5 +813,66 @@ class CCrmOrderCheckDetailsComponent extends Crm\Component\EntityDetails\BaseCom
 			$this->orderId,
 			$this->userPermissions
 		);
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function isWithOrdersMode(): bool
+	{
+		return CCrmSaleHelper::isWithOrdersMode();
+	}
+
+	/**
+	 * @return int|null
+	 */
+	private function getOrderBindingOwnerTypeId(): ?int
+	{
+		$binding = $this->getOrderBinding();
+
+		return $binding ? $binding->getOwnerTypeId() : null;
+	}
+
+	/**
+	 * @return int|null
+	 */
+	private function getOrderBindingOwnerId(): ?int
+	{
+		$binding = $this->getOrderBinding();
+
+		return $binding ? $binding->getOwnerId() : null;
+	}
+
+	/**
+	 * @return EntityBinding|null
+	 */
+	private function getOrderBinding(): ?EntityBinding
+	{
+		return $this->order ? $this->order->getEntityBinding() : null;
+	}
+
+	/**
+	 * @return int
+	 */
+	private function getDefaultMainEntity(): array
+	{
+		$entityTypeMap = [
+			Cashbox\Check::SUPPORTED_ENTITY_TYPE_PAYMENT => CCrmOwnerType::OrderPayment,
+			Cashbox\Check::SUPPORTED_ENTITY_TYPE_SHIPMENT => CCrmOwnerType::ShipmentDocument,
+		];
+
+		foreach ($this->arResult['MAIN_LIST'] as $entityIndex => $entity)
+		{
+			if (
+				isset($entityTypeMap[$entity['TYPE']])
+				&& (int)$entityTypeMap[$entity['TYPE']] === (int)$this->arParams['OWNER_TYPE']
+				&& (int)$entity['VALUE'] === (int)$this->arParams['OWNER_ID']
+			)
+			{
+				return $entity;
+			}
+		}
+
+		return $this->arResult['MAIN_LIST'][0];
 	}
 }

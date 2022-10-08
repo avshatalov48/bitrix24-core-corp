@@ -41,8 +41,8 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 					$quantity,
 					0
 				);
-				$reserveInfo->storeId = $row['RESERVE_STORE_ID'];
-				$reserveInfo->dateReserveEnd = (string)$row['RESERVE_DATE_RESERVE_END'];
+				$reserveInfo->setStoreId($row['RESERVE_STORE_ID']);
+				$reserveInfo->setDateReserveEnd((string)$row['RESERVE_DATE_RESERVE_END']);
 
 				if ($row['RESERVE_IS_AUTO'] !== 'Y')
 				{
@@ -60,7 +60,7 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 					'RESERVE_QUANTITY' => $quantity,
 				]);
 
-				$reserveInfo->deltaReserveQuantity = $quantity - $reserveQuantity;
+				$reserveInfo->setDeltaReserveQuantity($quantity - $reserveQuantity);
 			}
 			else
 			{
@@ -77,8 +77,8 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 					$quantity,
 					$quantity
 				);
-				$reserveInfo->storeId = $this->defaultStoreId;
-				$reserveInfo->dateReserveEnd = (string)$this->defaultDateReserveEnd;
+				$reserveInfo->setStoreId($this->defaultStoreId);
+				$reserveInfo->setDateReserveEnd((string)$this->defaultDateReserveEnd);
 			}
 
 			$result->addErrors($saveResult->getErrors());
@@ -90,9 +90,9 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 	/**
 	 * @inheritDoc
 	 */
-	public function reservationProductRow(int $productRowId, float $quantity, int $storeId, ?Date $dateReserveEnd): Result
+	public function reservationProductRow(int $productRowId, float $quantity, int $storeId, ?Date $dateReserveEnd): ReservationResult
 	{
-		$result = new Result();
+		$result = new ReservationResult();
 
 		$productRow = $this->getProductRow($productRowId);
 		if (!$productRow)
@@ -112,18 +112,40 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 			return $result;
 		}
 
-		$isAutoReservation = $productRowQuantity === $quantity;
+		$reserveInfo = $result->addReserveInfo(
+			$productRowId,
+			$quantity,
+			$quantity
+		);
+		$reserveInfo->setStoreId($storeId);
+		$reserveInfo->setDateReserveEnd($dateReserveEnd ? (string)$dateReserveEnd : null);
 
+		$isAutoReservation = $productRowQuantity === $quantity;
 		$existReserve = $this->getReserve($productRowId);
 		if ($existReserve)
 		{
-			return $this->saveCrmReserve([
+			if ((int)$existReserve['STORE_ID'] !== $storeId)
+			{
+				$reserveInfo->setChanged();
+			}
+			else
+			{
+				$reserveInfo->setDeltaReserveQuantity($quantity - (float)$existReserve['RESERVE_QUANTITY']);
+			}
+
+			$saveResult = $this->saveCrmReserve([
 				'ID' => $existReserve['ID'],
 				'RESERVE_QUANTITY' => $quantity,
 				'STORE_ID' => $storeId,
 				'DATE_RESERVE_END' => $dateReserveEnd,
 				'IS_AUTO' => $isAutoReservation && $existReserve['IS_AUTO'] === 'Y' ? 'Y' : 'N',
 			]);
+
+			$result->addErrors(
+				$saveResult->getErrors()
+			);
+
+			return $result;
 		}
 
 		// If the quantity is empty, reserve all. Only when adding.
@@ -133,13 +155,19 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 			$isAutoReservation = true;
 		}
 
-		return $this->saveCrmReserve([
+		$saveResult = $this->saveCrmReserve([
 			'ROW_ID' => $productRowId,
 			'RESERVE_QUANTITY' => $quantity,
 			'STORE_ID' => $storeId,
 			'DATE_RESERVE_END' => $dateReserveEnd,
 			'IS_AUTO' => $isAutoReservation ? 'Y' : 'N',
 		]);
+
+		$result->addErrors(
+			$saveResult->getErrors()
+		);
+
+		return $result;
 	}
 
 	/**
@@ -222,6 +250,8 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 			'select' => [
 				'ID',
 				'IS_AUTO',
+				'STORE_ID',
+				'RESERVE_QUANTITY',
 			],
 			'filter' => [
 				'=ROW_ID' => $productRowId,

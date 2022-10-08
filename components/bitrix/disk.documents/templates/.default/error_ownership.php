@@ -9,7 +9,7 @@ use \Bitrix\Main\Localization\Loc;
 
 $APPLICATION->setTitle(Loc::getMessage('DISK_DOCUMENTS_PAGE_TITLE'));
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'disk-documents-error--modifier');
-
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 ?>
 <div class="disk-documents-error-wrap">
 	<div class="disk-documents-error">

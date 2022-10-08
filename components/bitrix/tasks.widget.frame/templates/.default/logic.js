@@ -47,6 +47,7 @@ BX.namespace('Tasks.Component');
 			{
 				var opened = BX.hasClass(node, 'opened');
 				BX.toggleClass(node, 'opened');
+				BX.toggleClass(node.parentNode, 'opened');
 
 				var state = this.getState();
 

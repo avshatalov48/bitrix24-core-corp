@@ -2,6 +2,8 @@
 $MESS["CRM_DOCUMENT_VIEW_SEND"] = "Отправить";
 $MESS["CRM_DOCUMENT_VIEW_DOWNLOAD_IN"] = "Скачать в формате:";
 $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "с подписями и печатью";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_AND_STAMP"] = "Печать и подпись";
+$MESS["CRM_DOCUMENT_VIEW_QR"] = "QR код для оплаты";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_LINK"] = "Публичная ссылка";
 $MESS["CRM_DOCUMENT_VIEW_SEND_EMAIL"] = "на email";
 $MESS["CRM_DOCUMENT_VIEW_SEND_SMS"] = "по sms";
@@ -19,8 +21,13 @@ $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Для отправки �
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_GENERATION_MESSAGE"] = "Идёт генерация документа";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_TIME_MESSAGE"] = "На создание картинки и PDF документа необходимо около 20 секунд";
 $MESS["CRM_DOCUMENT_VIEW_PREVIEW_READY_MESSAGE"] = "Сейчас документ доступен в формате docx, вы можете получить на него ссылку, скачать или отправить клиенту.";
+$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE"] = "Готовим PDF файл для предпросмотра";
+$MESS["CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY"] = "Вы можете скачать документ в формате .docx прямо сейчас или скопировать ссылку и отправить клиенту";
 $MESS["CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES"] = "Нет доступных к отправке файлов";
 $MESS["CRM_DOCUMENT_VIEW_TRY_AGAIN"] = "Попробовать ещё раз";
-$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"docs-preview-details-link\">Заполнить <br> или редактировать</a>
-<span class=\"docs-preview-details-text\">реквизиты моей компании</span>";
+$MESS["CRM_DOCUMENT_VIEW_CREATE_OR_EDIT_MY_COMPANY_REQUISITES"] = "<a href=\"#URL#\" target=\"_blank\" class=\"crm__document-view--details-link\">Заполнить <br> или редактировать</a>
+<span class=\"crm__document-view--details-text\">реквизиты моей компании</span>";
 $MESS["CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME"] = "Клиент перешел по публичной ссылке <span>#TIME#</span>";
+$MESS["CRM_DOCUMENT_VIEW_REQUISITES_MY_COMPANY_TITLE"] = "Реквизиты моей компании";
+$MESS["CRM_DOCUMENT_VIEW_PAYMENT_BUTTON"] = "Принять оплату";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Подписать";

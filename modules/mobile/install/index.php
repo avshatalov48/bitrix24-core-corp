@@ -35,7 +35,8 @@ Class mobile extends CModule
 	private function getSubmodules(): ?array {
 		return [
 			"im",
-			"crm"
+			"crm",
+			"tasks",
 		];
 	}
 

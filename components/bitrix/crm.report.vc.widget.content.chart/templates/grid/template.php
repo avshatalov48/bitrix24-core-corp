@@ -17,8 +17,12 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LeadSettings;
 
-Extension::load(["ui.icons", "ui.hint", "crm.report.tracking.ad.report"]);
-
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.icons',
+	'ui.hint',
+	'crm.report.tracking.ad.report',
+]);
 
 if ($arResult['FEATURE_CODE'])
 {

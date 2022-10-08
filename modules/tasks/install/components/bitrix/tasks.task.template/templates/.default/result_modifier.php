@@ -16,7 +16,7 @@ use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Site;
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 $arParams =& $helper->getComponent()->arParams;
 
 $template = $arResult['ITEM'];
@@ -299,10 +299,9 @@ elseif(intval($template['BASE_TEMPLATE_ID']))
 {
 	if($template['TPARAM_TYPE'] != 1) // not for new user
 	{
-		$pItem = $templates->getItemById(intval($template['BASE_TEMPLATE_ID']));
+		$pItem = $templates[0];
 		if($pItem)
 		{
-			$pItem = $pItem->export('~');
 			$pItem['ENTITY_TYPE'] = 'TT';
 
 			$seParentItem[] = $pItem;

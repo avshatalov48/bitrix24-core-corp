@@ -216,6 +216,10 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 
 		self::clearSettings();
 
+		self::deleteAgent([
+			'mask' => 'refreshAgent',/** @see SupportBox::refreshAgent */
+		]);
+
 		return $result;
 	}
 
@@ -452,7 +456,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 
 		if (
 			self::isEnabledQuestionFunctional()
-			&& !(self::instanceDialogSession($dialogId)->getSessionId() > 0)
+			&& !(self::instanceDialogSession(self::getBotId(), $dialogId)->getSessionId() > 0)
 			&& !self::allowAdditionalQuestion()
 		)
 		{
@@ -484,15 +488,6 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 */
 	public static function onSessionVote(array $params): bool
 	{
-		if (!empty($params['BOT_ID']) && !empty($params['DIALOG_ID']))
-		{
-			if ($params['BOT_ID'] == $params['DIALOG_ID'])
-			{
-				$params['DIALOG_ID'] = (string)$params['USER_ID'];
-			}
-			self::instanceDialogSession($params['DIALOG_ID'])->clearSessions();
-		}
-
 		return self::clientSessionVote($params);
 	}
 
@@ -511,6 +506,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		if (!empty($messageFields['DIALOG_ID']))
 		{
 			self::startDialogSession([
+				'BOT_ID' => self::getBotId(),
 				'DIALOG_ID' => $messageFields['DIALOG_ID'],
 				'GREETING_SHOWN' => 'Y',
 			]);
@@ -730,7 +726,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		}
 		elseif ($messageFields['COMMAND'] === Mixin\COMMAND_QUEUE_NUMBER)
 		{
-			$sessionId = self::instanceDialogSession($messageFields['DIALOG_ID'])->getSessionId();
+			$sessionId = self::instanceDialogSession(self::getBotId(), $messageFields['DIALOG_ID'])->getSessionId();
 			if (!$sessionId)
 			{
 				$lastMessages = (new \CIMMessage())->getLastMessage($messageFields['FROM_USER_ID'], static::getBotId(), false, false);
@@ -772,7 +768,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		{
 			if (
 				self::isEnabledQuestionFunctional()
-				&& !(self::instanceDialogSession($messageFields['DIALOG_ID'])->getSessionId() > 0)
+				&& !(self::instanceDialogSession(self::getBotId(), $messageFields['DIALOG_ID'])->getSessionId() > 0)
 			)
 			{
 				self::dropMessage((int)$messageId);
@@ -867,7 +863,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 		self::setBotId($botId);
 		self::setActive(true);
 		self::addAgent([
-			'agent' => 'refreshAgent()',
+			'agent' => 'refreshAgent()', /** @see SupportBox::refreshAgent */
 			'class' => __CLASS__,
 			'regular' => false,
 			'delay' => random_int(30, 360),
@@ -1009,7 +1005,7 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	 *
 	 * @return array|null
 	 */
-	public static function getBotSettings(array $params = [])
+	public static function getBotSettings(array $params = []): ?array
 	{
 		static $result;
 		if (empty($result))
@@ -1399,11 +1395,10 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 	/**
 	 * Refresh settings agent.
 	 *
-	 * @param int $retryCount
-	 *
+	 * @param bool $regular
 	 * @return string
 	 */
-	public static function refreshAgent(int $retryCount = 0): string
+	public static function refreshAgent(bool $regular = true): string
 	{
 		do
 		{
@@ -1501,8 +1496,6 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 					]);
 				}
 			}
-
-			$retryCount ++;
 		}
 		else
 		{
@@ -1510,11 +1503,9 @@ class SupportBox extends Network implements SupportBot, SupportQuestion
 			{
 				\CIMNotify::deleteBySubTag("IMBOT|SUPPORT|ERR");
 			}
-
-			$retryCount = '';
 		}
 
-		return __METHOD__. "({$retryCount});";
+		return $regular ? __METHOD__. '();' : '';
 	}
 
 	/**

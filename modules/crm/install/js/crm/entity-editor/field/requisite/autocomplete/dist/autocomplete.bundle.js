@@ -1,96 +1,8 @@
 this.BX = this.BX || {};
-(function (exports,main_core,main_core_events) {
+(function (exports,main_core,main_core_events,ui_designTokens,crm_placement_detailsearch,ui_dialogs_messagebox) {
 	'use strict';
 
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-popup-wrapper\">\n\t\t\t\t\t<div class=\"crm-rq-popup-items-list\">", "</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button class=\"crm-rq-popup-item-add-new-btn\">\n\t\t\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\" onclick=\"", "\"></span>\n\t\t\t\t\t\t\t<span class=\"crm-rq-popup-item-add-new-btn-text\" onclick=\"", "\">", "</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<a href=\"\" onclick=\"", "\">", "</a>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-popup-item crm-rq-popup-item-helper\"></div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" placeholder=\"", "\" class=\"ui-ctl-element ui-ctl-textbox\" />"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-search\" onclick=\"", "\"></button>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
 	var RequisiteAutocompleteField = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(RequisiteAutocompleteField, _EventEmitter);
 
@@ -111,6 +23,21 @@ this.BX = this.BX || {};
 	    _this._currentItem = null;
 	    _this._domNodes = {};
 	    _this._dropdown = null;
+	    _this.currentSearchQueryText = "";
+	    _this.detailAutocompletePlacement = null;
+	    _this.entitySearchPopupCloseHandler = null;
+	    _this.placementsParamsHandler = null;
+	    _this.searchQueryInputHandler = null;
+	    _this.beforeAddPlacementItemsHandler = null;
+	    _this.placementSearchParamsHandler = null;
+	    _this.placementSetFoundItemsHandler = null;
+	    _this.placementEntitySelectHandler = null;
+	    _this.externalSearchHandler = null;
+	    _this.externalSearchResultHandlerList = null;
+	    _this.beforeEntitySearchPopupCloseHandler = null;
+	    _this.onDocumentClickConfirm = null;
+	    _this.creatingItem = null;
+	    _this.clientResolverPlacementParams = null;
 	    return _this;
 	  }
 
@@ -125,7 +52,23 @@ this.BX = this.BX || {};
 	      this._featureRestrictionCallback = BX.prop.getString(this._settings, "featureRestrictionCallback", '');
 	      this._isPermitted = this._featureRestrictionCallback === '';
 	      this._showFeedbackLink = this._isPermitted ? BX.prop.getBoolean(this._settings, "showFeedbackLink", false) : false;
+	      this.clientResolverPlacementParams = this.filterclientResolverPlacementParams(BX.prop.getObject(this._settings, "clientResolverPlacementParams", null));
+	      this.externalSearchHandler = this.onExternalSearch.bind(this);
+	      this.externalSearchResultHandlerList = new Map();
 	      this.doInitialize();
+	    }
+	  }, {
+	    key: "filterclientResolverPlacementParams",
+	    value: function filterclientResolverPlacementParams(params) {
+	      if (!main_core.Type.isObject(params)) {
+	        return null;
+	      }
+
+	      return {
+	        isPlacement: BX.prop.getBoolean(params, "isPlacement", false),
+	        numberOfPlacements: BX.prop.getInteger(params, "numberOfPlacements", 0),
+	        countryId: BX.prop.getInteger(params, "countryId", 0)
+	      };
 	    }
 	  }, {
 	    key: "doInitialize",
@@ -137,17 +80,17 @@ this.BX = this.BX || {};
 	        return;
 	      }
 
-	      this._domNodes.requisiteClearButton = main_core.Tag.render(_templateObject(), this.onSearchStringClear.bind(this));
-	      this._domNodes.requisiteSearchButton = main_core.Tag.render(_templateObject2(), this.onSearchButtonClick.bind(this));
-	      var placeholder = this._placeholderText.length ? main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').replace('#FIELD_NAME#', this._placeholderText) : "";
-	      this._domNodes.requisiteSearchString = main_core.Tag.render(_templateObject3(), main_core.Text.encode(placeholder));
+	      this._domNodes.requisiteClearButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-clear\" onclick=\"", "\"></button>"])), this.onSearchStringClear.bind(this));
+	      this._domNodes.requisiteSearchButton = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<button class=\"ui-ctl-after ui-ctl-icon-search\" onclick=\"", "\"></button>"])), this.onSearchButtonClick.bind(this));
+	      var placeholder = this._placeholderText;
+	      this._domNodes.requisiteSearchString = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" placeholder=\"", "\" class=\"ui-ctl-element ui-ctl-textbox\" />"])), main_core.Text.encode(placeholder));
 
 	      if (!this._isPermitted) {
 	        this._domNodes.requisiteSearchString.setAttribute('onclick', this._featureRestrictionCallback);
 	      }
 
 	      this.refreshLayout();
-	      main_core.Dom.append(main_core.Tag.render(_templateObject4(), this._domNodes.requisiteSearchButton, this._domNodes.requisiteClearButton, this._domNodes.requisiteSearchString), container);
+	      main_core.Dom.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t<div class=\"ui-ctl ui-ctl-w100 ui-ctl-after-icon\">\n\t\t\t", "\n\t\t\t", "\n\t\t\t", "\n\t\t</div>"])), this._domNodes.requisiteSearchButton, this._domNodes.requisiteClearButton, this._domNodes.requisiteSearchString), container);
 	      this.initDropdown();
 	      this.refreshLayout();
 	    }
@@ -155,22 +98,27 @@ this.BX = this.BX || {};
 	    key: "initDropdown",
 	    value: function initDropdown() {
 	      if (!this._dropdown) {
+	        var isPlacement = BX.prop.getBoolean(this.clientResolverPlacementParams, "isPlacement", false);
 	        this._dropdown = new Dropdown({
+	          isDisabled: !this._isPermitted,
 	          searchAction: BX.prop.getString(this._settings, "searchAction", ""),
+	          externalSearchHandler: isPlacement ? this.externalSearchHandler : null,
 	          items: [],
 	          enableCreation: true,
-	          enableCreationOnBlur: false,
+	          enableCreationOnBlur: true,
 	          autocompleteDelay: 1000,
 	          messages: {
 	            creationLegend: main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADD_REQUISITE'),
 	            notFound: main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_NOT_FOUND')
-	          }
+	          },
+	          placementParams: this.clientResolverPlacementParams
 	        });
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onSelect', this.onEntitySelect.bind(this));
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onAdd', this.onEntityAdd.bind(this));
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onReset', this.onEntityReset.bind(this));
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onBeforeSearchStart', this.onEntitySearchStart.bind(this));
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onSearchComplete', this.onEntitySearchComplete.bind(this));
+	        BX.addCustomEvent(this._dropdown, 'Dropdown:onGetPopupAlertContainer', this.onGetPopupAlertContainer.bind(this));
 	      }
 
 	      this._dropdown.searchOptions = this._context;
@@ -180,6 +128,20 @@ this.BX = this.BX || {};
 
 	      this.setEnabled(this._isEnabled);
 	      this.setShowFeedbackLink(this._showFeedbackLink);
+	    }
+	  }, {
+	    key: "getDropdownPopup",
+	    value: function getDropdownPopup() {
+	      return this._dropdown.getPopupWindow();
+	    }
+	  }, {
+	    key: "closeDropdownPopup",
+	    value: function closeDropdownPopup() {
+	      var dropownPopup = this.getDropdownPopup();
+
+	      if (dropownPopup) {
+	        dropownPopup.close();
+	      }
 	    }
 	  }, {
 	    key: "setCurrentItem",
@@ -234,17 +196,17 @@ this.BX = this.BX || {};
 	      }
 
 	      this._domNodes.requisiteSearchString.value = text;
+	      this.onSearchQueryInput();
 	      this.setLoading(false);
 	    }
 	  }, {
 	    key: "getState",
 	    value: function getState() {
-	      var state = {
+	      return {
 	        currentItem: this._currentItem,
 	        searchQuery: main_core.Type.isDomNode(this._domNodes.requisiteSearchString) ? this._domNodes.requisiteSearchString.value : null,
 	        items: main_core.Type.isObject(this._dropdown) ? this._dropdown.getItems() : []
 	      };
-	      return state;
 	    }
 	  }, {
 	    key: "setState",
@@ -257,6 +219,7 @@ this.BX = this.BX || {};
 
 	      if (main_core.Type.isString(state.searchQuery) && main_core.Type.isDomNode(this._domNodes.requisiteSearchString) && this._isPermitted) {
 	        this._domNodes.requisiteSearchString.value = state.searchQuery;
+	        this.onSearchQueryInput();
 	      }
 
 	      if (main_core.Type.isArray(state.items)) {
@@ -278,9 +241,13 @@ this.BX = this.BX || {};
 	      this._placeholderText = main_core.Type.isStringFilled(text) ? text : "";
 
 	      if (main_core.Type.isDomNode(this._domNodes.requisiteSearchString)) {
-	        var placeholder = this._placeholderText.length ? main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').replace('#FIELD_NAME#', this._placeholderText) : "";
-	        this._domNodes.requisiteSearchString.placeholder = placeholder;
+	        this._domNodes.requisiteSearchString.placeholder = this._placeholderText;
 	      }
+	    }
+	  }, {
+	    key: "setClientResolverPlacementParams",
+	    value: function setClientResolverPlacementParams(params) {
+	      this.clientResolverPlacementParams = this.filterclientResolverPlacementParams(params);
 	    }
 	  }, {
 	    key: "setEnabled",
@@ -343,7 +310,52 @@ this.BX = this.BX || {};
 	      var data = event.getData();
 	      var dropdown = data[0];
 	      var selected = data[1];
-	      dropdown.getPopupWindow().close();
+
+	      if (dropdown === this._dropdown && selected["appSid"] && !selected["created"]) {
+	        if (!this.creatingItem) {
+	          this.creatingItem = selected;
+	          selected._loader = new BX.Loader({
+	            target: selected.node,
+	            size: 40
+	          });
+	          selected.node.classList.add('client-editor-active');
+	          selected.node.parentNode.classList.add('client-editor-inactive');
+
+	          selected._loader.show();
+
+	          BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:pick", [{
+	            appSid: selected["appSid"],
+	            data: selected
+	          }]);
+	        }
+
+	        return;
+	      }
+
+	      this.selectEntity(selected);
+	    }
+	  }, {
+	    key: "selectEntity",
+	    value: function selectEntity(selected) {
+	      if (this.creatingItem) {
+	        for (var prop in selected) {
+	          if (selected.hasOwnProperty(prop)) {
+	            this.creatingItem[prop] = selected[prop];
+	          }
+	        }
+
+	        this.creatingItem["created"] = true;
+	        this.creatingItem = null;
+
+	        this._dropdown.setItems([]);
+	      }
+
+	      if (this.onDocumentClickConfirm) {
+	        this.onDocumentClickConfirm.close();
+	        this.onDocumentClickConfirm = null;
+	      }
+
+	      this.closeDropdownPopup();
 	      this.setCurrentItem(selected);
 	      this.emit('onSelectValue', selected);
 	    }
@@ -368,9 +380,305 @@ this.BX = this.BX || {};
 	      this._dropdown.setItems([]);
 	    }
 	  }, {
+	    key: "onExternalSearch",
+	    value: function onExternalSearch() {
+	      var _this2 = this;
+
+	      return new Promise(function (resolve) {
+	        if (_this2.detailAutocompletePlacement) {
+	          var params = {
+	            appId: 0
+	          };
+	          BX.onCustomEvent(_this2.detailAutocompletePlacement, "Placements:startDefaultSearch", [params]);
+
+	          if (main_core.Type.isInteger(params["appId"]) && params["appId"] > 0) {
+	            if (!_this2.externalSearchResultHandlerList.has(params["appId"])) {
+	              _this2.externalSearchResultHandlerList.set(params["appId"], function (result) {
+	                resolve(result);
+	              });
+	            }
+
+	            return;
+	          }
+	        }
+
+	        resolve([]);
+	      });
+	    }
+	  }, {
+	    key: "initPlacement",
+	    value: function initPlacement(searchControl, container) {
+	      if (!this.detailAutocompletePlacement) {
+	        var isAutocompletePlacementEnabled = main_core.Type.isPlainObject(this.clientResolverPlacementParams) && this.clientResolverPlacementParams.hasOwnProperty("numberOfPlacements") && main_core.Type.isNumber(this.clientResolverPlacementParams["numberOfPlacements"]) && this.clientResolverPlacementParams["numberOfPlacements"] > 0;
+
+	        if (isAutocompletePlacementEnabled) {
+	          this.detailAutocompletePlacement = new crm_placement_detailsearch.DetailSearch("CRM_REQUISITE_AUTOCOMPLETE");
+	        }
+
+	        if (this.detailAutocompletePlacement) {
+	          if (!this.dropdownPopup) {
+	            this.dropdownPopup = this._dropdown.getPopupWindow();
+	          }
+
+	          this.beforeEntitySearchPopupCloseHandler = this.onBeforeEntitySearchPopupClose.bind(this, this.dropdownPopup._tryCloseByEvent.bind(this.dropdownPopup));
+	          this.dropdownPopup._tryCloseByEvent = this.beforeEntitySearchPopupCloseHandler;
+	          this.entitySearchPopupCloseHandler = this.onEntitySearchPopupClose.bind(this);
+	          BX.addCustomEvent(this.dropdownPopup, 'onPopupClose', this.entitySearchPopupCloseHandler);
+	          this.placementsParamsHandler = this.onPlacementsParams.bind(this);
+	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:params", this.placementsParamsHandler);
+	          this.beforeAddPlacementItemsHandler = this.onBeforeAppendPlacementItems.bind(this);
+	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:beforeAppendItems", this.beforeAddPlacementItemsHandler);
+	          this.placementSearchParamsHandler = this.onPlacamentSearchParams.bind(this);
+	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:searchParams", this.placementSearchParamsHandler);
+	          this.placementSetFoundItemsHandler = this.onPlacementSetFoundItems.bind(this);
+	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:setFoundItems", this.placementSetFoundItemsHandler);
+	          this.placementEntitySelectHandler = this.onPlacementEntitySelect.bind(this);
+	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:select", this.placementEntitySelectHandler);
+	          this.detailAutocompletePlacement.show(container, container.querySelector('div.crm-rq-popup-item-add-new'), {
+	            hideLoader: true
+	          });
+	        }
+
+	        if (main_core.Type.isDomNode(this._domNodes.requisiteSearchString)) {
+	          if (!this.searchQueryInputHandler) {
+	            this.searchQueryInputHandler = this.onSearchQueryInput.bind(this);
+	          }
+
+	          this._domNodes.requisiteSearchString.addEventListener("input", this.searchQueryInputHandler);
+
+	          this._domNodes.requisiteSearchString.addEventListener("keyup", this.searchQueryInputHandler);
+	        }
+	      }
+	    }
+	  }, {
+	    key: "onSearchQueryInput",
+	    value: function onSearchQueryInput() {
+	      if (this._domNodes.requisiteSearchString.value !== this.currentSearchQueryText) {
+	        this.currentSearchQueryText = this._domNodes.requisiteSearchString.value;
+	        this.fireChangeSearchQueryEvent();
+	      }
+	    }
+	  }, {
+	    key: "fireChangeSearchQueryEvent",
+	    value: function fireChangeSearchQueryEvent() {
+	      if (this.detailAutocompletePlacement && main_core.Type.isDomNode(this._domNodes.requisiteSearchString)) {
+	        BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:changeQuery", [{
+	          currentSearchQuery: this._domNodes.requisiteSearchString.value
+	        }]);
+	      }
+	    }
+	  }, {
 	    key: "onEntitySearchComplete",
 	    value: function onEntitySearchComplete() {
 	      this.setLoading(false);
+	    }
+	  }, {
+	    key: "onGetPopupAlertContainer",
+	    value: function onGetPopupAlertContainer(searchControl, container) {
+	      this.initPlacement(searchControl, container);
+	    }
+	  }, {
+	    key: "onBeforeEntitySearchPopupClose",
+	    value: function onBeforeEntitySearchPopupClose(originalHandler, event) {
+	      if (this.onDocumentClickConfirm) {
+	        return BX.eventReturnFalse(event);
+	      }
+
+	      var eventResult = {
+	        active: false
+	      };
+	      BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:active", [eventResult]);
+
+	      if (eventResult.active) {
+	        BX.unbind(document, 'click', this._dropdown.documentClickHandler);
+
+	        var f = function (messageBox, e) {
+	          BX.bind(document, 'click', this._dropdown.documentClickHandler);
+	          messageBox.close();
+	          this.onDocumentClickConfirm = null;
+	          BX.eventCancelBubble(e);
+	        }.bind(this);
+
+	        this.onDocumentClickConfirm = ui_dialogs_messagebox.MessageBox.create({
+	          message: BX.message('CRM_EDITOR_PLACEMENT_CAUTION') || 'Dow you want to terminate process?',
+	          buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	          modal: true,
+	          onOk: function (messageBox, button, e) {
+	            f(messageBox, e);
+
+	            this._dropdown.documentClickHandler(e);
+
+	            originalHandler(e);
+	          }.bind(this),
+	          onCancel: function onCancel(messageBox, button, e) {
+	            f(messageBox, e);
+	          }
+	        });
+	        BX.eventCancelBubble(event);
+	        this.onDocumentClickConfirm.show();
+	        return BX.eventReturnFalse(event);
+	      }
+
+	      originalHandler(event);
+	    }
+	  }, {
+	    key: "onEntitySearchPopupClose",
+	    value: function onEntitySearchPopupClose() {
+	      this.destroyPlacement();
+	    }
+	  }, {
+	    key: "destroyPlacement",
+	    value: function destroyPlacement() {
+	      if (this.searchQueryInputHandler) {
+	        this._domNodes.requisiteSearchString.removeEventListener("input", this.searchQueryInputHandler);
+
+	        this._domNodes.requisiteSearchString.removeEventListener("keyup", this.searchQueryInputHandler);
+
+	        this.searchQueryInputHandler = null;
+	      }
+
+	      if (this._dropdown && this._dropdown.hasOwnProperty("documentClickHandler")) {
+	        BX.unbind(document, 'click', this._dropdown.documentClickHandler);
+	      }
+
+	      if (this.detailAutocompletePlacement) {
+	        var dropdownPopup = this.getDropdownPopup();
+
+	        if (dropdownPopup) {
+	          BX.removeCustomEvent(dropdownPopup, "onPopupClose", this.entitySearchPopupCloseHandler);
+	        }
+
+	        this.entitySearchPopupCloseHandler = null;
+	        BX.onCustomEvent(this.detailAutocompletePlacement, "Placements:destroy");
+	        BX.removeCustomEvent(this.detailAutocompletePlacement, "Placements:params", this.placementsParamsHandler);
+	        this.placementsParamsHandler = null;
+	        BX.removeCustomEvent(this.detailAutocompletePlacement, "Placements:beforeAppendItems", this.beforeAddPlacementItemsHandler);
+	        this.beforeAddPlacementItemsHandler = null;
+	        BX.removeCustomEvent(this.detailAutocompletePlacement, "Placements:searchParams", this.placementSearchParamsHandler);
+	        this.placementSearchParamsHandler = null;
+	        BX.removeCustomEvent(this.detailAutocompletePlacement, "Placements:setFoundItems", this.placementSetFoundItemsHandler);
+	        this.placementSetFoundItemsHandler = null;
+	        BX.removeCustomEvent(this.detailAutocompletePlacement, "Placements:select", this.placementEntitySelectHandler);
+	        this.placementEntitySelectHandler = null;
+	        this.detailAutocompletePlacement = null;
+	        this.creatingItem = null;
+
+	        this._dropdown.setItems([]);
+	      }
+	    }
+	  }, {
+	    key: "onPlacementsParams",
+	    value: function onPlacementsParams(params) {
+	      if (main_core.Type.isObject(params)) {
+	        if (this._dropdown) {
+	          this._dropdown.setPlacementParams(this.clientResolverPlacementParams);
+	        }
+
+	        if (this.clientResolverPlacementParams) {
+	          if (params.hasOwnProperty("placementParams")) {
+	            params["placementParams"] = this.clientResolverPlacementParams;
+	          }
+
+	          if (params.hasOwnProperty("currentSearchQuery")) {
+	            params["currentSearchQuery"] = this._domNodes.requisiteSearchString.value;
+	          }
+	        }
+	      }
+	    }
+	  }, {
+	    key: "onBeforeAppendPlacementItems",
+	    value: function onBeforeAppendPlacementItems() {
+	      var dropdownPopup = this.getDropdownPopup();
+
+	      if (dropdownPopup) {
+	        BX.addClass(dropdownPopup.popupContainer, "client-editor-popup");
+	      }
+	    }
+	  }, {
+	    key: "onPlacamentSearchParams",
+	    value: function onPlacamentSearchParams(params) {
+	      params["searchQuery"] = this._domNodes.requisiteSearchString.value;
+	    }
+	  }, {
+	    key: "onPlacementSetFoundItems",
+	    value: function onPlacementSetFoundItems(placementItem, results) {
+	      var items = [];
+	      results.forEach(function (result) {
+	        items.push({
+	          id: result.id,
+	          title: result.name,
+	          appSid: placementItem["appSid"],
+	          module: 'crm',
+	          subModule: 'rest',
+	          subTitle: placementItem["title"],
+	          attributes: {
+	            phone: result.phone ? [{
+	              value: result.phone
+	            }] : '',
+	            email: result.email ? [{
+	              value: result.email
+	            }] : '',
+	            web: result.web ? [{
+	              value: result.web
+	            }] : ''
+	          }
+	        });
+	      }.bind(this));
+	      var appId = parseInt(placementItem["placementInfo"]["id"]);
+
+	      if (appId > 0 && this.externalSearchResultHandlerList.has(appId)) {
+	        this.externalSearchResultHandlerList.get(appId)(items);
+	        this.externalSearchResultHandlerList["delete"](appId);
+	      } else {
+	        this._dropdown.setItems(items);
+	      }
+	    }
+	  }, {
+	    key: "onPlacementEntitySelect",
+	    value: function onPlacementEntitySelect(data) {
+	      var entityData = {
+	        type: data["entityType"],
+	        id: data["id"],
+	        title: data["title"],
+	        fields: data["fields"]
+	      };
+
+	      if (main_core.Type.isPlainObject(entityData["fields"]) && entityData["fields"].hasOwnProperty("RQ_ADDR") && main_core.Type.isPlainObject(entityData["fields"]["RQ_ADDR"])) {
+	        var responseHandler = function (response) {
+	          var status = BX.prop.getString(response, "status", "");
+	          var data = BX.prop.getObject(response, "data", {});
+	          var messages = [];
+
+	          if (status === "error") {
+	            var errors = BX.prop.getArray(response, "errors", []);
+
+	            for (var i = 0; i < errors.length; i++) {
+	              messages.push(BX.prop.getString(errors[i], "message"));
+	            }
+	          }
+
+	          if (messages.length > 0) {
+	            BX.UI.Notification.Center.notify({
+	              content: messages.join("<br>"),
+	              position: "top-center",
+	              autoHideDelay: 10000
+	            });
+	            delete entityData["fields"]["RQ_ADDR"];
+	          } else {
+	            entityData["fields"]["RQ_ADDR"] = data;
+	          }
+
+	          this.selectEntity(entityData);
+	        }.bind(this);
+
+	        BX.ajax.runAction('crm.requisite.address.getLocationAddressJsonByFields', {
+	          data: {
+	            addresses: entityData["fields"]["RQ_ADDR"]
+	          }
+	        }).then(responseHandler, responseHandler);
+	      } else {
+	        this.selectEntity(entityData);
+	      }
 	    }
 	  }], [{
 	    key: "create",
@@ -387,16 +695,23 @@ this.BX = this.BX || {};
 	  babelHelpers.inherits(Dropdown, _BX$UI$Dropdown);
 
 	  function Dropdown(options) {
-	    var _this2;
+	    var _this3;
 
 	    babelHelpers.classCallCheck(this, Dropdown);
-	    _this2 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Dropdown).call(this, options));
-	    _this2.feedbackFormParams = BX.prop.getObject(options, "feedbackFormParams", {});
-	    _this2.canAddRequisite = BX.prop.getBoolean(options, "canAddRequisite", false);
-	    return _this2;
+	    _this3 = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Dropdown).call(this, options));
+	    _this3.feedbackFormParams = BX.prop.getObject(options, "feedbackFormParams", {});
+	    _this3.canAddRequisite = BX.prop.getBoolean(options, "canAddRequisite", false);
+	    _this3.externalSearchHandler = BX.prop.getFunction(options, "externalSearchHandler", null);
+	    _this3.placementParams = BX.prop.getObject(options, "placementParams", null);
+	    return _this3;
 	  }
 
 	  babelHelpers.createClass(Dropdown, [{
+	    key: "setPlacementParams",
+	    value: function setPlacementParams(params) {
+	      this.placementParams = params;
+	    }
+	  }, {
 	    key: "isTargetElementChanged",
 	    value: function isTargetElementChanged() {
 	      return false;
@@ -438,13 +753,13 @@ this.BX = this.BX || {};
 
 	        if (feedbackAvailable) {
 	          var textParts = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE').split('#ADVICE_NEW_SERVICE_LINK#');
-	          var item = main_core.Tag.render(_templateObject5());
+	          var item = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-popup-item crm-rq-popup-item-helper\"></div>"])));
 
 	          if (textParts[0] && textParts[0].length) {
 	            main_core.Dom.append(document.createTextNode(textParts[0]), item);
 	          }
 
-	          main_core.Dom.append(main_core.Tag.render(_templateObject6(), this.showFeedbackForm.bind(this), main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK')), item);
+	          main_core.Dom.append(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<a href=\"\" onclick=\"", "\">", "</a>"])), this.showFeedbackForm.bind(this), main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK')), item);
 
 	          if (textParts[1] && textParts[1].length) {
 	            main_core.Dom.append(document.createTextNode(textParts[1]), item);
@@ -454,31 +769,48 @@ this.BX = this.BX || {};
 	        }
 
 	        if (this.canAddRequisite) {
-	          items.push(main_core.Tag.render(_templateObject7(), this.onEmptyValueEvent.bind(this), this.onEmptyValueEvent.bind(this), BX.prop.getString(this.messages, "creationLegend")));
+	          items.push(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button class=\"crm-rq-popup-item-add-new-btn\">\n\t\t\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"></span>\n\t\t\t\t\t\t\t<span class=\"crm-rq-popup-item-add-new-btn-text\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t>", "</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"])), this.onEmptyValueEvent.bind(this), this.onEmptyValueEvent.bind(this), BX.prop.getString(this.messages, "creationLegend")));
 	        }
 
-	        this.popupAlertContainer = items.length ? main_core.Tag.render(_templateObject8(), items) : main_core.Tag.render(_templateObject9());
+	        this.popupAlertContainer = items.length ? main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-popup-wrapper\">\n\t\t\t\t\t<div class=\"crm-rq-popup-items-list\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), items) : main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	        BX.onCustomEvent(this, "Dropdown:onGetPopupAlertContainer", [this, this.popupAlertContainer]);
 	      }
 
 	      this.togglePopupAlertVisibility();
 	      return this.popupAlertContainer;
 	    }
 	  }, {
+	    key: "getTargetElementValue",
+	    value: function getTargetElementValue() {
+	      if (this.targetElement !== "undefined" && main_core.Type.isStringFilled(this.targetElement["value"])) {
+	        return this.targetElement["value"].trim();
+	      }
+
+	      return "";
+	    }
+	  }, {
 	    key: "togglePopupAlertVisibility",
 	    value: function togglePopupAlertVisibility() {
 	      if (main_core.Type.isDomNode(this.popupAlertContainer)) {
-	        this.popupAlertContainer.style.display = this.getItems().length > 0 ? "none" : "";
+	        var numberOfPlacements = BX.prop.getInteger(this.placementParams, "numberOfPlacements", 0);
+	        var isVisible = numberOfPlacements > 0 || this.getItems().length <= 0;
+	        this.popupAlertContainer.style.display = isVisible ? "" : "none";
 	      }
 	    }
 	  }, {
 	    key: "setItems",
 	    value: function setItems(items) {
-	      babelHelpers.get(babelHelpers.getPrototypeOf(Dropdown.prototype), "setItems", this).call(this, items);
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Dropdown.prototype), "setItems", this).call(this, [{
+	        id: 1,
+	        name: "N",
+	        title: "T"
+	      }]);
 	      this.togglePopupAlertVisibility();
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Dropdown.prototype), "setItems", this).call(this, items);
 	    }
 	  }, {
 	    key: "getNewAlertContainer",
-	    value: function getNewAlertContainer(items) {
+	    value: function getNewAlertContainer() {
 	      return null;
 	    }
 	  }, {
@@ -502,11 +834,22 @@ this.BX = this.BX || {};
 
 	      this._feedbackForm.openPanel();
 	    }
+	  }, {
+	    key: "searchItemsByStr",
+	    value: function searchItemsByStr(target) {
+	      if (this.externalSearchHandler) {
+	        return this.externalSearchHandler().then(function (result) {
+	          return result;
+	        });
+	      }
+
+	      return babelHelpers.get(babelHelpers.getPrototypeOf(Dropdown.prototype), "searchItemsByStr", this).call(this, target);
+	    }
 	  }]);
 	  return Dropdown;
 	}(BX.UI.Dropdown);
 
 	exports.RequisiteAutocompleteField = RequisiteAutocompleteField;
 
-}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event));
+}((this.BX.Crm = this.BX.Crm || {}),BX,BX.Event,BX,BX.Crm.Placement,BX.UI.Dialogs));
 //# sourceMappingURL=autocomplete.bundle.js.map

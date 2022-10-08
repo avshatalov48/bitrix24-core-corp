@@ -27,9 +27,11 @@ class Form
 
 	protected $id = null;
 	protected static $defaultParams = array(
+		'TYPE_ID' => Internals\FormTable::TYPE_DEFAULT,
 		'ACTIVE' => 'N',
 		'IS_SYSTEM' => 'N',
 		'COPYRIGHT_REMOVED' => 'N',
+		'IS_PAY' => 'N',
 		'LANGUAGE_ID' => '',
 		'USE_CAPTCHA' => 'N',
 		'USE_LICENCE' => 'N',
@@ -420,7 +422,10 @@ class Form
 		$captchaVersion = $result['CAPTCHA_VERSION'] ?? '';
 		if ($captchaKey <> '' && $captchaSecret <> '')
 		{
-			if ($captchaKey !== ReCaptcha::getKey($captchaVersion) && $captchaSecret !== ReCaptcha::getSecret($captchaVersion))
+			if (
+				$captchaKey !== ReCaptcha::getKey($captchaVersion)
+				&& $captchaSecret !== ReCaptcha::getSecret($captchaVersion)
+			)
 			{
 				$this->forceBuild = true;
 				ReCaptcha::setKey($captchaKey, $captchaSecret, $captchaVersion);
@@ -445,11 +450,9 @@ class Form
 			// captcha
 			if($result['USE_CAPTCHA'] == 'Y')
 			{
-				$hasCaptchaKey = ((ReCaptcha::getKey($captchaVersion) <> '') ? 1 : 0) +
-					((ReCaptcha::getSecret($captchaVersion) <> '') ? 1 : 0)
-				;
-				$hasCaptchaDefaultKey = ReCaptcha::getDefaultKey($captchaVersion) <> '' && ReCaptcha::getDefaultSecret($captchaVersion) <> '';
-				if ($hasCaptchaKey == 1 || ($hasCaptchaKey == 0 && !$hasCaptchaDefaultKey))
+				$hasCaptchaKey = ReCaptcha::getKey(2) <> '' && ReCaptcha::getSecret(2) <> '';
+				$hasCaptchaDefaultKey = ReCaptcha::getDefaultKey(2) <> '' && ReCaptcha::getDefaultSecret(2) <> '';
+				if (!$hasCaptchaKey && !$hasCaptchaDefaultKey)
 				{
 					$this->errors[] = Loc::getMessage('CRM_WEBFORM_FORM_ERROR_CAPTCHA_KEY');
 				}
@@ -1791,23 +1794,29 @@ class Form
 
 	public static function incCounterView($formId)
 	{
-		Internals\FormViewTable::add(array('FORM_ID' => $formId));
-		return Internals\FormCounterTable::incCounters($formId, array('VIEWS'));
+		Main\Application::getInstance()->addBackgroundJob(function() use ($formId) {
+			Internals\FormCounterDailyTable::incrementViews(new Main\Type\Date(), (int)$formId);
+			Internals\FormCounterTable::incCounters($formId, array('VIEWS'));
+		});
+		return true;
 	}
 
 	public static function incCounterStartFill($formId)
 	{
 		Internals\FormStartEditTable::add(array('FORM_ID' => $formId));
+		Internals\FormCounterDailyTable::incrementStartFill(new Main\Type\Date(), (int)$formId);
 		return Internals\FormCounterTable::incCounters($formId, array('START_FILL'));
 	}
 
 	public static function incCounterEndFill($formId)
 	{
+		Internals\FormCounterDailyTable::incrementEndFill(new Main\Type\Date(), (int)$formId);
 		return Internals\FormCounterTable::incCounters($formId, array('END_FILL'));
 	}
 
 	public static function resetCounters($formId)
 	{
+		Internals\FormCounterDailyTable::resetCounters(new Main\Type\Date(), (int)$formId);
 		$newCounterId = Internals\FormCounterTable::addByFormId($formId);
 		// TODO: merge all counters
 		return $newCounterId;
@@ -1846,7 +1855,7 @@ class Form
 			$maxActivated = self::getMaxActivatedFormLimit();
 		}
 
-		$formDb = Internals\FormTable::getList(array(
+		$formDb = Internals\FormTable::getDefaultTypeList(array(
 			'select' => array('ID'),
 			'filter' => array('=ACTIVE' => 'Y', '=IS_SYSTEM' => 'N'),
 			'order' => array('ID' => 'ASC')

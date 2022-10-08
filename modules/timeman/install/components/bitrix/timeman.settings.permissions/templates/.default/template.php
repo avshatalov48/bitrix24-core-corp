@@ -9,11 +9,11 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadLanguageFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
 	'access',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.alerts',
-	'ui.design-tokens',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
@@ -82,7 +82,7 @@ Loc::loadLanguageFile(__FILE__);
 										<?= htmlspecialcharsbx($task['NAME']) ?>
 									</td>
 									<td class="table-blue-td-action">
-										<? if ($task['CAN_BE_EDIT']): ?>
+										<? if ($task['CAN_BE_EDIT'] || $task['SYS'] === 'Y'): ?>
 											<a class="tm-edit-task table-blue-edit" title=
 											"<?= htmlspecialcharsbx(Loc::getMessage('TIMEMAN_SETTINGS_PERMS_EDIT')) ?>" href=
 											"<?= $this->__component->getEditTaskUrl($task) ?>"></a>

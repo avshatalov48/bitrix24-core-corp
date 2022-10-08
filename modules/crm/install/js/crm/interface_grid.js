@@ -1599,7 +1599,9 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 							{
 								"ASSIGNED_BY_ID": { 0: eventArgs["userId"] },
 								"ASSIGNED_BY_ID_label": [ eventArgs["userName"] ],
-								"ACTIVITY_COUNTER": { 0: eventArgs["counterTypeId"] }
+								"ACTIVITY_COUNTER": BX.Type.isPlainObject(eventArgs["counterTypeId"])
+									? eventArgs["counterTypeId"]
+									: { 0: eventArgs["counterTypeId"] }
 							},
 							options
 						);

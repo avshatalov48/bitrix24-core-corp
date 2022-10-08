@@ -1,87 +1,9 @@
 (function (exports,main_core,main_core_events,main_loader,ui_dialogs_messagebox,crm_typeModel,crm_router,ui_entitySelector) {
 	'use strict';
 
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div style=\"margin-bottom: 10px;\" class=\"ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row\">\n\t\t\t<input type=\"hidden\" name=\"id\" value=\"", "\" />\n\t\t\t<input class=\"ui-ctl-element\" name=\"value\" type=\"text\" value=\"", "\">\n\t\t\t<div class=\"crm-type-custom-section-remove-item\" onclick=\"", "\"></div>\n\t\t</div>"]);
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
 
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-light-border\" onclick=\"", "\">", "</span>"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-primary\" onclick=\"", "\">", "</span>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-buttons-container\"></div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<hr class=\"crm-type-custom-sections-line\">"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-section-add-item-container\">\n\t\t\t\t<span class=\"crm-type-custom-section-add-item-button\" onclick=\"", "\">", "</span>\n\t\t\t</div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-list-container\"></div>\""]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t</div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -157,7 +79,7 @@
 
 	      if (this.deleteButton) {
 	        main_core.Event.bind(this.deleteButton, 'click', function (event) {
-	          _this.delete(event);
+	          _this["delete"](event);
 	        });
 	      }
 
@@ -343,7 +265,7 @@
 	        _this5.afterSave(response);
 
 	        _this5.isNew = false;
-	      }).catch(function (errors) {
+	      })["catch"](function (errors) {
 	        _this5.showErrors(errors);
 
 	        _this5.stopProgress();
@@ -466,7 +388,7 @@
 	        return new Promise(function (resolve) {
 	          _this6.startProgress();
 
-	          _this6.type.delete().then(function (response) {
+	          _this6.type["delete"]().then(function (response) {
 	            _this6.stopProgress();
 
 	            var isUrlChanged = main_core.Type.isObject(response.data) && response.data.isUrlChanged === true;
@@ -486,7 +408,7 @@
 	                location.href = listUrl.toString();
 	              }
 	            }
-	          }).catch(function (errors) {
+	          })["catch"](function (errors) {
 	            _this6.showErrors(errors);
 
 	            _this6.stopProgress();
@@ -909,7 +831,7 @@
 	    }
 
 	    this.initSelector();
-	    this.settingsContainer = main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST'));
+	    this.settingsContainer = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-hidden crm-type-custom-sections-settings-container\">\n\t\t\t<div class=\"crm-type-relation-subtitle\">", "</div>\n\t\t</div>"])), main_core.Loc.getMessage('CRM_TYPE_DETAIL_CUSTOM_SECTION_LIST'));
 	    this.container.append(this.settingsContainer);
 	    this.adjustInitialState();
 	    this.bindEvents();
@@ -990,32 +912,32 @@
 	      var _this13 = this;
 
 	      if (!this.sectionsListContainer) {
-	        this.sectionsListContainer = main_core.Tag.render(_templateObject2());
+	        this.sectionsListContainer = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-list-container\"></div>"])));
 	        this.settingsContainer.append(this.sectionsListContainer);
 	      }
 
 	      this.renderSectionsList(this.sectionsListContainer);
 
 	      if (!this.addSectionItemButton) {
-	        this.addSectionItemButton = main_core.Tag.render(_templateObject3(), function () {
+	        this.addSectionItemButton = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-section-add-item-container\">\n\t\t\t\t<span class=\"crm-type-custom-section-add-item-button\" onclick=\"", "\">", "</span>\n\t\t\t</div>"])), function () {
 	          _this13.sectionsListContainer.append(_this13.renderSectionItem());
 	        }, main_core.Loc.getMessage('CRM_COMMON_ACTION_ADD'));
 	        this.settingsContainer.append(this.addSectionItemButton);
 	      }
 
 	      if (!this.buttonsContainer) {
-	        this.settingsContainer.append(main_core.Tag.render(_templateObject4()));
-	        this.buttonsContainer = main_core.Tag.render(_templateObject5());
+	        this.settingsContainer.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<hr class=\"crm-type-custom-sections-line\">"]))));
+	        this.buttonsContainer = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-sections-buttons-container\"></div>"])));
 	        this.settingsContainer.append(this.buttonsContainer);
 	      }
 
 	      if (!this.saveButton) {
-	        this.saveButton = main_core.Tag.render(_templateObject6(), this.onSaveConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_SAVE'));
+	        this.saveButton = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-primary\" onclick=\"", "\">", "</span>"])), this.onSaveConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_SAVE'));
 	        this.buttonsContainer.append(this.saveButton);
 	      }
 
 	      if (!this.cancelButton) {
-	        this.cancelButton = main_core.Tag.render(_templateObject7(), this.onCancelConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_CANCEL'));
+	        this.cancelButton = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<span class=\"ui-btn ui-btn-light-border\" onclick=\"", "\">", "</span>"])), this.onCancelConfigHandler.bind(this), main_core.Loc.getMessage('CRM_COMMON_ACTION_CANCEL'));
 	        this.buttonsContainer.append(this.cancelButton);
 	      }
 	    }
@@ -1079,7 +1001,7 @@
 	      var _this15 = this;
 
 	      var item = new CustomSectionItem(section);
-	      var node = main_core.Tag.render(_templateObject8(), item.getId(), main_core.Text.encode(item.getValue()), function (event) {
+	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div style=\"margin-bottom: 10px;\" class=\"ui-ctl ui-ctl-textbox ui-ctl-w100 ui-ctl-row\">\n\t\t\t<input type=\"hidden\" name=\"id\" value=\"", "\" />\n\t\t\t<input class=\"ui-ctl-element\" name=\"value\" type=\"text\" value=\"", "\">\n\t\t\t<div class=\"crm-type-custom-section-remove-item\" onclick=\"", "\"></div>\n\t\t</div>"])), item.getId(), main_core.Text.encode(item.getValue()), function (event) {
 	        event.preventDefault();
 
 	        _this15.sectionsListContainer.removeChild(item.getNode());

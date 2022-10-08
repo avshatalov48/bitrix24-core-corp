@@ -33,7 +33,7 @@ class ChannelWhatsApp implements iProvider
 			return array();
 		}
 
-		return FormTable::getList(array(
+		return FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'filter' => array(
 				'=ACTIVE' => 'Y',
@@ -56,7 +56,7 @@ class ChannelWhatsApp implements iProvider
 		}
 
 		$enumList = array();
-		$enumListDb = FormTable::getList(array(
+		$enumListDb = FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'filter' => array(
 				'=ACTIVE' => 'Y',

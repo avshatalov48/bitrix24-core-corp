@@ -35,7 +35,7 @@
 	display: flex;
 	align-items: flex-start;
 	color: #525c69;
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-userconsent-control-checkbox-label .ui-hint-icon {

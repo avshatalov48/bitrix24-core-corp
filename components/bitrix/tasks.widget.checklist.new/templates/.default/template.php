@@ -11,6 +11,7 @@ use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
 Extension::load([
+	'ui.design-tokens',
 	'loader',
 	'main.polyfill.closest',
 	'main.polyfill.matches',

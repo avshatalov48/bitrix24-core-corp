@@ -1,4 +1,5 @@
 import History from "./history";
+import {EventEmitter} from "main.core.events";
 
 /** @memberof BX.Crm.Timeline.Items */
 export default class FinalSummaryDocuments extends History
@@ -126,6 +127,16 @@ export default class FinalSummaryDocuments extends History
 		);
 
 		return wrapper;
+	}
+
+	prepareLayout(options)
+	{
+		super.prepareLayout(options);
+		const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
+		if (enableAdd)
+		{
+			EventEmitter.emit('BX.Crm.Timeline.Items.FinalSummaryDocuments:onHistoryNodeAdded', [this._wrapper]);
+		}
 	}
 
 	getIconClassName()

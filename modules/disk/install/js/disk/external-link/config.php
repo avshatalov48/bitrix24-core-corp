@@ -8,6 +8,8 @@ return [
 	'css' => 'style.css',
 	'js' => 'external-link.bundle.js',
 	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'clipboard',
 		'ui.switcher',
 		'ui.layout-form',

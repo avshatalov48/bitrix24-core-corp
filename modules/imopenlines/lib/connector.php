@@ -214,6 +214,7 @@ class Connector
 						$session = new Session();
 						$resultLoadSession = $session->load([
 							'USER_CODE' => self::getUserCode($params['connector']),
+							'CRM_SKIP_PHONE_VALIDATE' => ($params['extra']['skip_phone_validate'] ?? ''),
 							//TODO: ??
 							'CONNECTOR' => $params,
 							'DEFERRED_JOIN' => 'Y',
@@ -855,13 +856,15 @@ class Connector
 	public function sendStatusRead($connector, $messages, $event)
 	{
 		if (empty($messages))
+		{
 			return false;
+		}
 
 		if ($connector['connector_id'] == self::TYPE_NETWORK)
 		{
 
 		}
-		else if ($connector['connector_id'] == 'lines')
+		elseif ($connector['connector_id'] == 'lines')
 		{
 			Log::write(array($connector, $messages, $event), 'STATUS READ');
 
@@ -874,7 +877,7 @@ class Connector
 			$chat = new \CIMChat();
 			$chat->SetReadMessage($connector['chat_id'], $maxId, true);
 		}
-		else if (ImOpenLines\Connector::isLiveChat($connector['connector_id']))
+		elseif (ImOpenLines\Connector::isLiveChat($connector['connector_id']))
 		{
 			Log::write(array($connector, $messages, $event), 'STATUS READ');
 
@@ -922,9 +925,13 @@ class Connector
 		return $params['connector_id'].'|'.$params['line_id'].'|'.$params['chat_id'].'|'.$params['user_id'];
 	}
 
+	//region IM event handlers
+
 	/**
-	 * @param $fields
-	 * @param $chat
+	 * Handler for event `im:OnBeforeChatMessageAdd` fired in \CIMMessenger::Add.
+	 * @see \CIMMessenger::Add
+	 * @param array $fields
+	 * @param array $chat
 	 * @return array|bool
 	 */
 	public static function onBeforeMessageSend($fields, $chat)
@@ -976,9 +983,11 @@ class Connector
 	}
 
 	/**
-	 * @param $messageId
-	 * @param $messageFields
-	 * @param $flags
+	 * Handler for event `im:OnAfterMessagesUpdate` fired in \CIMMessenger::Add.
+	 * @see \CIMMessenger::Add
+	 * @param int $messageId
+	 * @param array $messageFields
+	 * @param array $flags
 	 * @return bool
 	 */
 	public static function onMessageUpdate($messageId, $messageFields, $flags)
@@ -1055,6 +1064,8 @@ class Connector
 	}
 
 	/**
+	 * Handler for event `im:OnAfterMessagesDelete` fired in \CIMMessenger::Add.
+	 * @see \CIMMessenger::Add
 	 * @param $messageId
 	 * @param $messageFields
 	 * @param $flags
@@ -1302,7 +1313,7 @@ class Connector
 			)
 			{
 				//Processing for native messages
-				$interactiveMessage = InteractiveMessage\Output::getInstance($messageFields['TO_CHAT_ID'], ['connectorId' => 'livechat']);
+				$interactiveMessage = InteractiveMessage\Output::getInstance($messageFields['TO_CHAT_ID'], ['connectorId' => self::TYPE_LIVECHAT]);
 				$message = $interactiveMessage->nativeMessageProcessing($message);
 
 				$isActiveKeyboard = $interactiveMessage->isLoadedKeyboard();
@@ -1337,10 +1348,10 @@ class Connector
 					(new AutomaticAction($session))->automaticSendMessage($messageId);
 				}
 
-				\CIMMessageParam::Set($messageId, ['CONNECTOR_MID' => $mid]);
-				\CIMMessageParam::SendPull($messageId, ['CONNECTOR_MID']);
-				\CIMMessageParam::Set($mid, $paramsMessageLiveChat);
-				\CIMMessageParam::SendPull($mid, array_keys($paramsMessageLiveChat));
+				\CIMMessageParam::set($messageId, ['CONNECTOR_MID' => $mid]);
+				\CIMMessageParam::sendPull($messageId, ['CONNECTOR_MID']);
+				\CIMMessageParam::set($mid, $paramsMessageLiveChat);
+				\CIMMessageParam::sendPull($mid, array_keys($paramsMessageLiveChat));
 			}
 			if (
 				$messageFields['NO_SESSION_OL'] !== 'Y'
@@ -1363,7 +1374,6 @@ class Connector
 
 			$params = [];
 			$allowedFields = ['CLASS', 'url', 'fromSalescenterApplication', 'richUrlPreview'];
-
 			foreach ($messageFields['PARAMS'] as $key => $value)
 			{
 				if (in_array($key, $allowedFields))
@@ -1387,7 +1397,7 @@ class Connector
 				{
 					if ($attach instanceof \CIMMessageParamAttach)
 					{
-						$attaches[] = $attach->GetJSON();
+						$attaches[] = $attach->getJson();
 					}
 				}
 			}
@@ -1446,6 +1456,8 @@ class Connector
 					}
 				}
 			}
+
+
 			if (
 				empty($attaches)
 				&& empty($files)
@@ -1509,8 +1521,7 @@ class Connector
 				//Pull\Event::send();
 			}
 
-			$manager = new self();
-			$resultSendMessage = $manager->sendMessage($fields);
+			$resultSendMessage = (new self())->sendMessage($fields);
 			if (!$resultSendMessage->isSuccess())
 			{
 				$isErrorLineDeactivated = $resultSendMessage->getErrorCollection()->get('IMOPENLINES_ERROR_LINE_DEACTIVATED');
@@ -1532,6 +1543,7 @@ class Connector
 
 	/**
 	 * Typing notification.
+	 * Handler for event `im:OnStartWriting`
 	 *
 	 * @param $params
 	 * @return bool
@@ -1609,8 +1621,7 @@ class Connector
 						'user' => Queue::getUserData($actualLineId, $params['USER_ID'])
 					];
 
-					$manager = new self();
-					$result = $manager->sendStatusWriting($fields);
+					$result = (new self())->sendStatusWriting($fields);
 				}
 			}
 		}
@@ -1643,7 +1654,8 @@ class Connector
 				'session' => [
 					'id' => $session->getData('ID'),
 					'closed' => $session->getData('CLOSED'),
-					'parent_id' => $session->getData('PARENT_ID'),
+					'parent_id' => $session->getData('PARENT_ID'), // previous session
+					'close_term' => $session->getConfig('FULL_CLOSE_TIME'), // minutes to close session
 				],
 				'chat' => ['id' => $chatEntityId['connectorChatId']],
 				'user' => ['id' => $chatEntityId['connectorUserId']],
@@ -2067,6 +2079,10 @@ class Connector
 		return false;
 	}
 
+	//endregion
+
+	//region Supported interfaces
+
 	/**
 	 * @return array
 	 */
@@ -2134,81 +2150,6 @@ class Connector
 		$connectorList[] = self::TYPE_NETWORK;
 
 		return $connectorList;
-	}
-
-	/**
-	 * Returns the array of the operator description.
-	 *
-	 * @param $lineId
-	 * @param $userId
-	 * @param string $userCodeSession
-	 * @return array|string
-	 */
-	public static function getOperatorInfo($lineId, $userId, $userCodeSession = '')
-	{
-		$result = [];
-
-		$actualLineId = Queue::getActualLineId([
-			'LINE_ID' =>  $lineId,
-			'USER_CODE' => $userCodeSession
-		]);
-
-		$userArray = Queue::getUserData($actualLineId, $userId);
-		if ($userArray)
-		{
-			$result =  array_merge(
-				ImUser::getInstance($userId)->getFields(),
-				array_change_key_case($userArray, CASE_LOWER)
-			);
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Returns the name of the operator description.
-	 *
-	 * @param $lineId
-	 * @param $userId
-	 * @param string $userCodeSession
-	 * @return array|string
-	 */
-	public static function getOperatorName($lineId, $userId, $userCodeSession = '')
-	{
-		$result = '';
-
-		$actualLineId = Queue::getActualLineId([
-			'LINE_ID' =>  $lineId,
-			'USER_CODE' => $userCodeSession
-		]);
-
-		$userArray = Queue::getUserData($actualLineId, $userId);
-
-		if ($userArray)
-		{
-			$result = $userArray['NAME'];
-		}
-
-		return $result;
-	}
-
-	/**
-	 * Returns the operator's avatar.
-	 *
-	 * @param int $lineId OpenLine Id.
-	 * @param int $userId User Id.
-	 * @param string $userCodeSession Combined session code, ex. 'livechat|1|33|14'.
-	 * @return string|null
-	 */
-	public static function getOperatorAvatar(int $lineId, int $userId, string $userCodeSession = ''): ?string
-	{
-		$actualLineId = Queue::getActualLineId([
-			'LINE_ID' =>  $lineId,
-			'USER_CODE' => $userCodeSession
-		]);
-		$userArray = Queue::getUserData($actualLineId, $userId);
-
-		return $userArray['AVATAR'];
 	}
 
 	/**
@@ -2314,7 +2255,7 @@ class Connector
 	}
 
 	/**
-	 * @param $connectorId
+	 * @param string $connectorId
 	 * @return bool
 	 */
 	public static function isEnableGroupByChat($connectorId)
@@ -2330,7 +2271,7 @@ class Connector
 	}
 
 	/**
-	 * @param $idConnector
+	 * @param string $idConnector
 	 * @return bool
 	 */
 	public static function isLiveChat($idConnector)
@@ -2348,7 +2289,7 @@ class Connector
 	}
 
 	/**
-	 * @param $idConnector
+	 * @param string $idConnector
 	 * @return bool
 	 */
 	private static function isNeedConnectorWritingStatus(string $idConnector): bool
@@ -2367,7 +2308,7 @@ class Connector
 	}
 
 	/**
-	 * @param $idConnector
+	 * @param string $idConnector
 	 * @return bool
 	 */
 	protected static function isImessage(string $idConnector): bool
@@ -2386,7 +2327,7 @@ class Connector
 	}
 
 	/**
-	 * @param $idConnector
+	 * @param string $idConnector
 	 * @return bool
 	 */
 	public static function isNeedCRMTracker(string $idConnector): bool
@@ -2400,6 +2341,87 @@ class Connector
 
 		return $result;
 	}
+
+	//endregion
+
+	//region Operator
+
+	/**
+	 * Returns the array of the operator description.
+	 *
+	 * @param $lineId
+	 * @param $userId
+	 * @param string $userCodeSession
+	 * @return array|string
+	 */
+	public static function getOperatorInfo($lineId, $userId, $userCodeSession = '')
+	{
+		$result = [];
+
+		$actualLineId = Queue::getActualLineId([
+			'LINE_ID' =>  $lineId,
+			'USER_CODE' => $userCodeSession
+		]);
+
+		$userArray = Queue::getUserData($actualLineId, $userId);
+		if ($userArray)
+		{
+			$result =  array_merge(
+				ImUser::getInstance($userId)->getFields(),
+				array_change_key_case($userArray, CASE_LOWER)
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns the name of the operator description.
+	 *
+	 * @param $lineId
+	 * @param $userId
+	 * @param string $userCodeSession
+	 * @return array|string
+	 */
+	public static function getOperatorName($lineId, $userId, $userCodeSession = '')
+	{
+		$result = '';
+
+		$actualLineId = Queue::getActualLineId([
+			'LINE_ID' =>  $lineId,
+			'USER_CODE' => $userCodeSession
+		]);
+
+		$userArray = Queue::getUserData($actualLineId, $userId);
+
+		if ($userArray)
+		{
+			$result = $userArray['NAME'];
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Returns the operator's avatar.
+	 *
+	 * @param int $lineId OpenLine Id.
+	 * @param int $userId User Id.
+	 * @param string $userCodeSession Combined session code, ex. 'livechat|1|33|14'.
+	 * @return string|null
+	 */
+	public static function getOperatorAvatar(int $lineId, int $userId, string $userCodeSession = ''): ?string
+	{
+		$actualLineId = Queue::getActualLineId([
+			'LINE_ID' =>  $lineId,
+			'USER_CODE' => $userCodeSession
+		]);
+		$userArray = Queue::getUserData($actualLineId, $userId);
+
+		return $userArray['AVATAR'];
+	}
+
+	//endregion
 
 	/**
 	 * @param $chatId

@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Disk;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
@@ -249,21 +250,7 @@ class CommentController extends EntityController
 			throw new \Bitrix\Main\ArgumentException('ID must be greater than zero.', 'ID');
 		}
 
-		if(
-			(int)$params['ENTITY_TYPE_ID'] &&
-			(int)$params['ENTITY_ID'] &&
-			\Bitrix\Main\Loader::includeModule('pull'))
-		{
-			$tag = \Bitrix\Crm\Timeline\TimelineEntry::prepareEntityPushTag($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']);
-			\CPullWatch::AddToStack(
-				$tag,
-				array(
-					'module_id' => 'crm',
-					'command' => 'timeline_comment_delete',
-					'params' => array('ENTITY_ID' => $id, 'TAG' => $tag),
-				)
-			);
-		}
+		$this->sendPullEventOnDelete(new ItemIdentifier($params['ENTITY_TYPE_ID'], $params['ENTITY_ID']), $id);
 	}
 	protected function onSave($id, array $data)
 	{

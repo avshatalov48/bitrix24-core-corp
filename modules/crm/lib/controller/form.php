@@ -21,6 +21,7 @@ class Form extends Main\Engine\JsonController
 	private const ERROR_CODE_WIDGET_WRITE_ACCESS_DENIED = 4;
 	private const ERROR_CODE_OPENLINES_READ_ACCESS_DENIED = 5;
 	private const ERROR_CODE_OPENLINES_WRITE_ACCESS_DENIED = 6;
+	private const ERROR_CODE_PHONE_NOT_VERIFIED = 'PHONE_NOT_VERIFIED';
 
 	// check for modify permission if set to false
 	private const EMBED_OPENLINES_SHOW_ALL = true;
@@ -50,7 +51,7 @@ class Form extends Main\Engine\JsonController
 			$ormFilter['=IS_CALLBACK'] = $filter['isCallback'] ? 'Y' : 'N';
 		}
 
-		$result = WebForm\Internals\FormTable::getList([
+		$result = WebForm\Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID', 'NAME'],
 			'filter' => $ormFilter,
 			'order' => ['ID' => 'DESC'],
@@ -215,7 +216,7 @@ class Form extends Main\Engine\JsonController
 		$viewOptions = $this->buildViewOptions(WebForm\Options::getViewOptions(), $dict);
 		$scripts = WebForm\Script::getListContext($formData, []); // embed codes
 		$pubLink = WebForm\Script::getUrlContext($formData); // public form link
-		
+
 		$previewLink = strtr(WebForm\Script::getPublicFormPath(), [
 			'#id#' => $formData['ID'],
 			'#form_id#' => $formData['ID'],
@@ -505,6 +506,12 @@ class Form extends Main\Engine\JsonController
 	{
 		if (!$this->checkFormAccess(true))
 		{
+			return [];
+		}
+
+		if ($this->shouldVerifyPhone() && !$this->isPhoneVerified())
+		{
+			$this->addError(new Main\Error('Phone doesn\'t verified', static::ERROR_CODE_PHONE_NOT_VERIFIED));
 			return [];
 		}
 
@@ -887,7 +894,7 @@ class Form extends Main\Engine\JsonController
 	private function getFormNames(array $formIds): array
 	{
 		$formIds = array_unique($formIds);
-		$result = WebForm\Internals\FormTable::getList([
+		$result = WebForm\Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID', 'NAME'],
 			'filter' => [
 				'=ID' => $formIds,
@@ -1091,5 +1098,24 @@ class Form extends Main\Engine\JsonController
 			? \Bitrix\UI\Util::getArticleUrlByCode($helpCenterId)
 			: 'https://helpdesk.bitrix24.ru/open/'.$helpCenterId
 		;
+	}
+
+	private function isPhoneVerified(): bool
+	{
+		return !\Bitrix\Main\Loader::includeModule('bitrix24') || \CBitrix24::isPhoneConfirmed();
+	}
+
+	private function shouldVerifyPhone(): bool
+	{
+		if (!\Bitrix\Main\Loader::includeModule('bitrix24'))
+		{
+			return false;
+		}
+		$validatedLicenseType = [
+			'project',
+			'demo'
+		];
+
+		return in_array(\CBitrix24::getLicenseType(), $validatedLicenseType, true);
 	}
 }

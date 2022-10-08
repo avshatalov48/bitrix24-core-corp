@@ -62,7 +62,11 @@ export default {
 				return;
 			}
 
-			if (this.editable)
+			if (this.$store.getters['orderCreation/isCompilationMode'])
+			{
+				this.$root.$app.sendCompilation(event.target);
+			}
+			else if (this.editable)
 			{
 				this.$root.$app.sendPayment(event.target);
 			}
@@ -157,21 +161,11 @@ export default {
 				return false;
 			}
 
-			let isCurrentSenderConnected = false;
-			for (let sender of this.$root.$app.options.senders)
-			{
-				if (sender.code !== this.$root.$app.options.currentSenderCode)
-				{
-					continue;
-				}
-
-				if (sender.isConnected)
-				{
-					isCurrentSenderConnected = true;
-					break;
-				}
-			}
-			if (!isCurrentSenderConnected)
+			const senders = this.$root.$app.options.senders;
+			const filteredSenders = senders.filter(sender => (
+				sender.code === this.$root.$app.options.currentSenderCode && sender.isConnected
+			));
+			if (filteredSenders.length === 0)
 			{
 				return false;
 			}

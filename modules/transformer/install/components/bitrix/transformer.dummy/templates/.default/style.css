@@ -18,14 +18,16 @@
 	margin: 0 0 7px;
 	padding: 0;
 	color: rgba(95, 103, 116, .46);
-	font: 600 15px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .transformer-uf-file-loader-desc {
 	display: block;
 	margin: 0 0 28px 0;
 	color: rgba(95, 103, 116, .46);
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .transformer-uf-file-loader-inner {

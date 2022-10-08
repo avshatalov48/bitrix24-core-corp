@@ -15,10 +15,14 @@ use Bitrix\Main\Web\Json;
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
 Extension::load([
-	"ui.icons", "ui.switcher",
-	"sidepanel", "ui.forms",
-	"ui.buttons"
+	"ui.icons",
+	"ui.switcher",
+	"sidepanel",
+	"ui.forms",
+	"ui.buttons",
+	"ui.fonts.opensans",
 ]);
+
 $config = \CUserOptions::GetOption("crm", "config_checker", ["lastTime" => null, "show" => "Y"]);
 $request = \Bitrix\Main\Context::getCurrent()->getRequest();
 $isSlider = $request->getQuery("IFRAME") === "Y" && $request->getQuery("IFRAME_TYPE") === "SIDE_SLIDER";

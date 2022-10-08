@@ -134,7 +134,7 @@ this.BX = this.BX || {};
 	        data: {
 	          params: params
 	        }
-	      }).then(this._requestCompleteHandler).catch(this._requestCompleteHandler);
+	      }).then(this._requestCompleteHandler)["catch"](this._requestCompleteHandler);
 	    }
 	  }, {
 	    key: "disableItemsList",

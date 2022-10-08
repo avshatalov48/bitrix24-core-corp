@@ -1,7 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
-Bitrix\Main\UI\Extension::load("ui.tooltip");
+Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.fonts.opensans"]);
 
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 

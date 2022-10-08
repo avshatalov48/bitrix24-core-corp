@@ -1,0 +1,3 @@
+<?php
+$MESS["CRM_DOCGEN_VALUE_TAX_RATE_TAX_FREE"] = "Tax excluded";
+$MESS["CRM_DOCGEN_VALUE_TAX_RATE_TITLE"] = "Tax rate";

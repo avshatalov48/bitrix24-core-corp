@@ -3,7 +3,11 @@
 use Bitrix\Crm\Integrity\DuplicateIndexType;
 use Bitrix\Main\UI;
 
-UI\Extension::load("ui.tooltip");
+UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.tooltip',
+]);
 
 /** @var array $arResult */
 

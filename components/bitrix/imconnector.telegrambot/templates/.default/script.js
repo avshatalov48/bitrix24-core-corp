@@ -79,5 +79,14 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-telegrambot-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=6352401');
+				return false;
+			}
+		);
 	});
 })(window);

@@ -215,9 +215,9 @@ class Util
 		Option::set('tasks', $name, $value);
 	}
 
-	public static function getOption($name)
+	public static function getOption($name, $default = '')
 	{
-		return Option::get('tasks', $name);
+		return Option::get('tasks', $name, $default);
 	}
 
 	public static function unSetOption($name)

@@ -1,7 +1,7 @@
 .salescenter-company-contacts-header-link {
 	display: inline-block;
 	vertical-align: middle;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #80868e;
 	line-height: 21px;

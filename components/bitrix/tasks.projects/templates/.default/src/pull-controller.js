@@ -1,4 +1,4 @@
-import {Type} from 'main.core';
+import {Type, ajax} from 'main.core';
 
 import {Grid} from './grid';
 
@@ -42,6 +42,9 @@ export class PullController
 	constructor(options)
 	{
 		this.signedParameters = options.signedParameters;
+		this.isScrumList = options.isScrumList === 'Y';
+		this.createProjectUrl = options.createProjectUrl;
+		this.scrumLimitSidePanelId = options.scrumLimitSidePanelId;
 
 		this.grid = new Grid(options);
 
@@ -86,6 +89,16 @@ export class PullController
 			response => this.onCheckExistenceSuccess(response, data.ID, params),
 			response => console.error(response)
 		);
+
+		if (this.isScrumList)
+		{
+			this.checkScrumLimit()
+				.then(
+					isLimitExceeded => this.onCheckScrumLimit(isLimitExceeded),
+					response => console.error(response)
+				)
+			;
+		}
 	}
 
 	onProjectUpdate(data)
@@ -103,6 +116,16 @@ export class PullController
 	onProjectRemove(data)
 	{
 		this.removeRow(data.ID);
+
+		if (this.isScrumList)
+		{
+			this.checkScrumLimit()
+				.then(
+					isLimitExceeded => this.onCheckScrumLimit(isLimitExceeded),
+					response => console.error(response)
+				)
+			;
+		}
 	}
 
 	onProjectUserAdd(data)
@@ -247,6 +270,24 @@ export class PullController
 		});
 	}
 
+	checkScrumLimit(): Promise
+	{
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
+				'bitrix:tasks.scrum.info.checkScrumLimit',
+				{
+					data: {},
+					signedParameters: this.signedParameters,
+				}
+			)
+				.then(
+					response => resolve(response.data),
+					response => reject(response)
+				)
+			;
+		});
+	}
+
 	onCheckExistenceSuccess(response, groupId, params)
 	{
 		if (Type.isUndefined(response.data[groupId]))
@@ -279,6 +320,26 @@ export class PullController
 		else
 		{
 			this.moveToDirectPlace(groupId, group, params);
+		}
+	}
+
+	onCheckScrumLimit(isLimitExceeded: boolean)
+	{
+		this.projectAddButton = document.getElementById('projectAddButton');
+		if (!Type.isDomNode(this.projectAddButton))
+		{
+			return;
+		}
+
+		if (isLimitExceeded)
+		{
+			this.projectAddButton.href = `javascript:BX.UI.InfoHelper.show('${this.scrumLimitSidePanelId
+				}', {isLimit: true, limitAnalyticsLabels: {module: 'tasks', source: 'scrumList'}})`
+			;
+		}
+		else
+		{
+			this.projectAddButton.href = this.createProjectUrl;
 		}
 	}
 

@@ -2,6 +2,7 @@ main.core.minimal
 imopenlines.component.widget
 main.polyfill.customevent
 pull.component.status
+ui.design-tokens
 ui.vue
 main.core.events
 pull.client
@@ -49,6 +50,6 @@ im.controller
 im.provider.pull
 im.lib.timer
 im.lib.cookie
+im.lib.uploader
 im.event-handler
 im.lib.clipboard
-im.lib.uploader

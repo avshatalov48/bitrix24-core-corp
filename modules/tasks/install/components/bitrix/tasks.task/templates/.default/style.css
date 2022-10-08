@@ -1,5 +1,5 @@
 .task-form {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .template-bitrix24 .task-info {
@@ -23,7 +23,8 @@
 	height: 32px;
 	border: 1px solid transparent;
 	outline: none;
-	font: 19px/32px 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 19px/32px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .task-info-panel-title .task-field-error {
@@ -73,6 +74,24 @@
 	position: relative;
 	padding: 0 5px;
 	background: #f8f9fa;
+	border-radius: var(--ui-border-radius-sm);
+}
+
+/* It hides task-options-item border-bottom */
+.task-options:after {
+	content: '';
+	left: 15px;
+	right: 15px;
+	bottom: 0;
+	background-color: #f8f9fa;
+	position: absolute;
+	height: 1px;
+	display: none;
+}
+
+.task-options-main.task-options:after,
+.task-options.task-options-more:not(.invisible):after {
+	display: block;
 }
 
 .task-options {
@@ -94,7 +113,7 @@
 .task-options-title {
 	color: #000;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 18px;
 	padding: 0 25px;
 	margin-bottom: 15px;
@@ -103,7 +122,7 @@
 .task-options-subtitle {
 	position: relative;
 	color: rgba(83, 92, 105, .6);
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 9px;
 	text-transform: uppercase;
 	margin: 15px 25px 5px;
@@ -151,21 +170,6 @@
 	font-weight: normal;
 }
 
-.task-options:after {
-	position: absolute;
-	content: '';
-	left: 1px;
-	right: 1px;
-	top: 0;
-	margin: auto;
-	height: 1px;
-	background: #f0f1f3;
-}
-
-.task-options:after {
-	top: auto;
-	bottom: 0;
-}
 
 .task-options-field {
 	position: relative;
@@ -293,7 +297,7 @@
 .mode-unit-selected-hours [data-unit="hours"],
 .mode-unit-selected-mins [data-unit="mins"] {
 	color: #535c69;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	border-bottom: 1px dashed transparent;
 	cursor: default;
 }
@@ -369,7 +373,7 @@
 .task-options-destination-text {
 	display: inline-block;
 	vertical-align: middle;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .task-options-item-destination-wrap {
@@ -549,7 +553,7 @@ span.task-options-destination-wrap {
 	color: #5e6675;
 	padding-left: 26px;
 	float: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .task-options-panel-more:hover:before {
@@ -616,7 +620,7 @@ span.task-options-destination-wrap {
 	border: none;
 	color: #555;
 	display: inline-block;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 30px;
 	min-width: 108px;
 	outline: none;
@@ -629,7 +633,7 @@ span.task-options-destination-wrap {
 	color: #2067b0;
 	cursor: pointer;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	line-height: 17px;
 	text-decoration: none;
@@ -798,7 +802,7 @@ span.task-options-destination-wrap {
 	font-size: 15px;
 	display: inline-block;
 	vertical-align: middle;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 }
 
 .task-options-inp-container-period {
@@ -843,7 +847,7 @@ span.task-options-destination-wrap {
 }
 
 .task-info-head-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 15px;
 	color: #535c69;
 }
@@ -970,7 +974,7 @@ span.task-options-destination-wrap {
 	color: #565e6a;
 	font-size: 13px;
 	text-align: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 26px;
 	padding-left: 30px;
 }
@@ -1234,6 +1238,7 @@ select.task-options-inp {
 	line-height: 17px;
 	padding: 11px 15px;
 	position: relative;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .task-message-label {
@@ -1294,7 +1299,7 @@ select.task-options-inp {
 	color: #2067b0;
 	cursor: pointer;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 7px 0;
 	line-height: 17px;
 	text-decoration: none;
@@ -1331,6 +1336,7 @@ select.task-options-inp {
 	padding: 7px 12px 7px 7px;
 	background: #edf1f2;
 	margin: 0 1px 3px 0;
+	border-radius: var(--ui-border-radius-xs);
 }
 
 .task-options-field-nol .task-options-field .task-field-label {
@@ -1353,7 +1359,7 @@ select.task-options-inp {
 }
 
 .task-options-task-name {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 14px;
 	color: #1f67b0;
 	text-decoration: underline;
@@ -1589,6 +1595,12 @@ select.task-options-inp {
 	border-bottom: 1px solid #f0f1f3;
 }
 
+.task-iframe-popup .task-additional-alt,
+.ui-page-slider-wrapper .task-additional-alt,
+.task-additional-alt.opened {
+	border-bottom: none;
+}
+
 .task-additional-alt-promo {
 	overflow: hidden;
 	padding-left: 10px;
@@ -1625,7 +1637,7 @@ select.task-options-inp {
 	display: inline-block;
 	overflow: hidden;
 	float: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-left: 26px;
 	cursor: pointer;
 	color: #5e6675;
@@ -1691,7 +1703,8 @@ select.task-options-inp {
 }
 
 .tasks-form-footer-container .webform-button-link {
-	font: 12px/39px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 12px/39px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	transition: background .5s ease;
 	text-align: center;
 	vertical-align: middle;
@@ -1820,7 +1833,7 @@ select.task-options-inp {
 	padding: 16px 18px;
 	margin: 0 0 15px 0;
 	background: rgba(123, 213, 0, .17);
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-event-message-red {

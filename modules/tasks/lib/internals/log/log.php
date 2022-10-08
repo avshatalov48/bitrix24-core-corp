@@ -97,11 +97,6 @@ class Log
 		$message[] = $data;
 		$message = implode("\n", $message);
 
-		if(!defined('LOG_FILENAME'))
-		{
-			define('LOG_FILENAME', $_SERVER["DOCUMENT_ROOT"]."/log.txt");
-		}
-
 		AddMessage2Log($message, 'tasks');
 	}
 }

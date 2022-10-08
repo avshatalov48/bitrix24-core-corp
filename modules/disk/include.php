@@ -4,6 +4,7 @@ use Bitrix\Disk\Document\OnlyOffice\Bitrix24Scenario;
 use Bitrix\Disk\Document\OnlyOffice\ExporterBitrix24Scenario;
 use Bitrix\Main\UI\Extension;
 
+
 \Bitrix\Main\Loader::registerAutoLoadClasses(
 	"disk",
 	array(
@@ -112,7 +113,7 @@ CJSCore::RegisterExt('disk', array(
 	'js' => '/bitrix/js/disk/c_disk.js',
 	'css' => '/bitrix/js/disk/css/disk.css',
 	'lang' => BX_ROOT.'/modules/disk/lang/'.LANGUAGE_ID.'/js_disk.php',
-	'rel' => array('core', 'popup', 'ajax', 'fx', 'dd', 'ui.notification'),
+	'rel' => array('core', 'popup', 'ajax', 'fx', 'dd', 'ui.notification', 'ui.design-tokens', 'ui.fonts.opensans'),
 	'oninit' => function() {
 
 		$bitrix24Scenario = new Bitrix24Scenario();
@@ -165,7 +166,7 @@ CJSCore::RegisterExt('file_dialog', array(
 	'js' => '/bitrix/js/disk/file_dialog.js',
 	'css' => '/bitrix/js/disk/css/file_dialog.css',
 	'lang' => '/bitrix/modules/disk/lang/'.LANGUAGE_ID.'/install/js/file_dialog.php',
-	'rel' => array('core', 'popup', 'json', 'ajax', 'disk',),
+	'rel' => array('core', 'popup', 'json', 'ajax', 'disk', 'ui.design-tokens'),
 ));
 
 CJSCore::RegisterExt('disk_desktop', array(

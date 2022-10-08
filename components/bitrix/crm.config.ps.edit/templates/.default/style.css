@@ -36,7 +36,7 @@ table.bx-edit-tabs a.pressed {margin:0px; border:1px solid #AEB6C2; background-c
 	width: 30%;
 	text-align: right;
 	vertical-align: top;
-	font: bold 12px/15px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 .bx-props-field-width{
@@ -52,7 +52,7 @@ table.bx-edit-tabs a.pressed {margin:0px; border:1px solid #AEB6C2; background-c
 }
 
 #user_props_list td:first-child{
-	font: bold 12px/15px "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	width: 35% !important;
 }
@@ -69,18 +69,18 @@ td.bx-field-value>input[type=text] {
 	-webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
 	-moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	color: #555 !important;
 }
 .bx-field-value select {
 	font-size: 13px;
 	width: 262px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	color: #555 !important;
 }
 
 input {
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -104,7 +104,7 @@ td.bx-field-value textarea {
     box-shadow: 0 1px 2px rgba(0,0,0,0.14) inset;
     overflow: auto;
     color: #555!important;
-    font: 12px/15px "Helvetica Neue",Helvetica,Arial,sans-serif!important;
+    font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica))!important;
 }
 
 body input[name=save] {
@@ -121,7 +121,7 @@ body input[name=save] {
     -webkit-box-shadow: 0 2px 2px #ccc;
     -moz-box-shadow: 0 2px 2px #ccc;
     box-shadow: 0 2px 2px #ccc;
-    font: bold 14px/32px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font: bold 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #fff;
     text-shadow: #799a16 0 1px 1px!important;
     cursor: pointer;
@@ -144,7 +144,7 @@ input[name=apply] {
     -webkit-box-shadow: 0 2px 2px #ccc;
     -moz-box-shadow: 0 2px 2px #ccc;
     box-shadow: 0 2px 2px #ccc;
-    font: bold 14px/32px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font: bold 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #555;
     text-shadow: #fff 0 1px 1px!important;
     cursor: pointer;
@@ -163,7 +163,7 @@ input[name=cancel] {
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     box-shadow: none;
-    font: 14px/32px "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font: 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #d20000;
     text-shadow: none;
     cursor: pointer;

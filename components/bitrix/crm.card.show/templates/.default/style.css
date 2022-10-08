@@ -85,12 +85,12 @@
 	width: 530px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 29px/34px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 29px/34px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-user-name-link { color: #fff; }
 
-.crm-card-show-user-name-desc { font: 15px/24px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+.crm-card-show-user-name-desc { font: 15px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 /* USER SETTINGS */
 .crm-card-show-user-settings-container {
@@ -112,7 +112,7 @@
 .crm-card-show-user-settings-title {
 	margin: 0 5px 0 0;
 	color: rgba(255, 255, 255, .63);
-	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-user-settings:first-child { margin: 0 44px 0 0; }
@@ -121,7 +121,7 @@
 	margin: 0 10px 0 0;
 	border-bottom: 1px solid #3bc8f5;
 	color: #3bc8f5;
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -145,7 +145,7 @@
 	margin: 0 0 15px;
 	height: 60px;
 	color: rgba(255, 255, 255, .6);
-	font: 12px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-detail-header-user {
@@ -168,7 +168,8 @@
 
 .crm-card-show-detail-header-user-name {
 	color: #fff;
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-card-show-detail-header-user-status { margin: auto 0; }
@@ -194,7 +195,7 @@
 	height: 100%;
 	max-height: 283px;
 	color: #fff;
-	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-custom-scroll div::-webkit-scrollbar {
@@ -212,14 +213,14 @@
 
 .crm-card-show-detail-info-block { margin: 4px 0 0; }
 
-.crm-card-show-detail-info-title-item { font: bold 13px/18px "Helvetica Neue", Arial, Helvetica, sans-serif; }
+.crm-card-show-detail-info-title-item { font: bold 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 .crm-card-show-detail-info-name-item > a { color: #fff; }
 
 .crm-card-show-detail-info-desc-item,
 .crm-card-show-detail-info-progress-bar {
 	color: rgba(255, 255, 255, .6);
-	font: 11px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-detail-info-main-inner {
@@ -286,7 +287,7 @@
 .crm-card-show-user-responsible-title {
 	margin: 0 10px 0;
 	color: rgba(255, 255, 255, .7);
-	font: 11px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-user-responsible-user {
@@ -311,14 +312,14 @@
 .crm-card-show-user-responsible-user-name {
 	margin: 0 0 2px;
 	color: #fff;
-	font: 14px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-user-responsible-detail-info { display: block; }
 
 .crm-card-show-user-responsible-detail-info .crm-card-show-user-responsible-title {
 	margin: 0 0 5px;
-	font: bold 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-detail-info-wrap { margin: 0 0 20px; }
@@ -326,7 +327,7 @@
 .crm-card-show-user-responsible-user-info-position {
 	display: block;
 	color: rgba(255, 255, 255, .5);
-	font: 11px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* END OF RESPONSIBLE */

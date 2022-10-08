@@ -1,6 +1,16 @@
 /* FEED */
 
 /*region Wrapper */
+
+.crm-entity-stream-section,
+.crm-entity-stream-section__scope {
+	--crm-entity-stream-section-bottom-indent: 15px;
+	--crm-timeline-card-icon-size: var(--ui-size-4xl, 36px);
+	--crm-timeline-card-icon-left-indent: var(--ui-space-inline-sm-neg, -12px);
+	--crm-timeline-card-icon-top-indent:  calc(var(--ui-space-inset-sm, 12px) / 2);
+	--crm-timeline-stream-section-connect-line-color: rgba(255, 255, 255, 0.6);
+}
+
 .crm-entity-stream-container-content { }
 
 .crm-entity-stream-container-empty {
@@ -25,7 +35,8 @@
 	max-width: 500px;
 	color: #555c6d;
 	text-align: center;
-	font: 20px/31px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/31px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-stream-container-empty-list {
@@ -40,7 +51,7 @@
 	padding: 0;
 	color: #555c6d;
 	vertical-align: middle;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-container-empty-list-item:before {
@@ -59,20 +70,25 @@
 /*region Event Wrapper*/
 .crm-entity-stream-section {
 	position: relative;
-	margin-bottom: 15px;
+	margin-bottom: var(--crm-entity-stream-section-bottom-indent);
 	transition: height 220ms ease, opacity 220ms ease;
 }
 
 .crm-entity-stream-section:before {
 	position: absolute;
-	top: 20px;
+	top: calc(var(--crm-timeline-card-icon-top-indent) + var(--crm-timeline-card-icon-size) / 2 ); /*  23px*/
 	right: 0;
-	left: -29px;
-	z-index: 100;
+	left: var(--crm-timeline-card-icon-left-indent);
+	width: calc(var(--crm-timeline-card-icon-left-indent) * -1);
+	z-index: -1;
 	height: 1px;
-	background-color: #dbe1e6;
+	background-color: var(--crm-timeline-stream-section-connect-line-color);
 	content: "";
 	transition: left 300ms ease;
+}
+
+.crm-entity-stream-section-label:before {
+	width: 100%;
 }
 
 .crm-entity-stream-section-fixed-anchor { position: relative; }
@@ -81,12 +97,34 @@
 .crm-entity-stream-section:after {
 	position: absolute;
 	top: 20px;
-	bottom: -41px;
-	left: -29px;
+	left: calc(var(--crm-timeline-card-icon-left-indent) - var(--crm-timeline-card-icon-size) / 2);
 	z-index: 100;
 	width: 1px;
-	background-color: #cfd6da;
+	background-color: var(--crm-timeline-stream-section-connect-line-color);
 	content: "";
+}
+
+.crm-entity-stream-section:after {
+	--top-indent: calc(var(--crm-timeline-card-icon-top-indent) + var(--crm-timeline-card-icon-size));
+	top: var(--top-indent);
+	bottom: calc((var(--crm-entity-stream-section-bottom-indent) + var(--crm-timeline-card-icon-top-indent)) * -1);
+}
+
+.crm-entity-stream-section-fixed-anchor:after {
+	top: var(--crm-timeline-card-icon-top-indent);
+}
+
+.crm-entity-stream-section-top-fixed:after {
+	top: 0;
+}
+
+.crm-entity-stream-section-history-label:after,
+.crm-entity-stream-section-planned-label:after,
+.crm-entity-stream-section-today-label:after,
+.crm-entity-stream-section-filter:after,
+.crm-entity-stream-section-filter-empty:after {
+	top: 6px;
+	bottom: calc((var(--crm-entity-stream-section-bottom-indent) + var(--crm-timeline-card-icon-top-indent)) * -1)
 }
 
 .bitrix24-dark-theme .crm-entity-stream-section:after,
@@ -97,7 +135,9 @@
 
 .crm-entity-stream-section.crm-entity-stream-section-planned-above-overlay .crm-entity-stream-section-icon-info .crm-entity-stream-section-content { background-color: #f1f6f6; }
 
-.crm-entity-stream-section.crm-entity-stream-section-top-fixed { }
+.crm-entity-stream-section.crm-entity-stream-section-top-fixed:before {
+	display: none;
+}
 
 .crm-entity-stream-section-top-fixed-btn {
 	position: absolute;
@@ -173,11 +213,11 @@
 /*region Icons */
 .crm-entity-stream-section-icon {
 	position: absolute;
-	top: 5px;
-	left: -44px;
+	top: var(--crm-timeline-card-icon-top-indent);
+	left: calc(var(--crm-timeline-card-icon-left-indent) - var(--crm-timeline-card-icon-size));
 	z-index: 200;
-	width: 31px;
-	height: 31px;
+	width: var(--crm-timeline-card-icon-size);
+	height: var(--crm-timeline-card-icon-size);
 	border-radius: 50%;
 	background: #7f8389 url(images/icons-sprite.svg?5) no-repeat center 0;
 	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
@@ -203,51 +243,49 @@
 	content: "1";
 	vertical-align: middle;
 	text-align: center;
-	font: bold 9px/12px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 9px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
-.crm-entity-stream-section-icon-IM { background-position: center 0; }
+.crm-entity-stream-section-icon-IM { background-position: center 2px; }
 
 .crm-entity-stream-section-icon-live-im {
 	background-color: #9dcf00;
-	background-position: center -1211px;
+	background-position: center -1209px;
 }
 
-.crm-entity-stream-section-icon-call { background-position: center -31px; }
+.crm-entity-stream-section-icon-call { background-position: center -28px; }
 
-.crm-entity-stream-section-icon-email { background-position: center -62px; }
+.crm-entity-stream-section-icon-email { background-position: center -59px; }
 
-.crm-entity-stream-section-icon-crmForm { background-position: center -93px; }
+.crm-entity-stream-section-icon-crmForm { background-position: center -90px; }
 
-.crm-entity-stream-section-icon-store { background-position: center -1249px; }
+.crm-entity-stream-section-icon-store { background-position: center -1246px; }
 
 .crm-entity-stream-section-icon-task,
-.crm-entity-stream-section-icon-store-document { background-position: center -124px; }
+.crm-entity-stream-section-icon-store-document { background-position: center -121px; }
 
-.crm-entity-stream-section-icon-meeting { background-position: center -155px; }
+.crm-entity-stream-section-icon-meeting { background-position: center -152px; }
 
-.crm-entity-stream-section-icon-visit { background-position: center -912px; }
+.crm-entity-stream-section-icon-visit { background-position: center -909px; }
 
-.crm-entity-stream-section-icon-bp { background-position: center -1086px; }
+.crm-entity-stream-section-icon-bp { background-position: center -1083px; }
 
 .crm-entity-stream-section-icon-info {
-	background-color: #a4acb3;
-	background-position: center -186px;
+	background-color: rgba(255, 255, 255, 0.6);
+	background-position: center -183px;
 }
 
 .crm-entity-stream-section-icon-comment {
-	background-color: #2fc6f6;
-	background-position: center -217px;
+	background-position: center -215px;
 }
 
 .crm-entity-stream-section-icon-complete {
-	background-color: #7bd500;
-	background-position: center -651px;
+	background-position: center -648px;
 }
 
 .crm-entity-stream-section-icon-convert {
-	background-color: #2fc6f6;
-	background-position: center -682px;
+	background-position: center -679px;
 }
 
 .crm-entity-stream-section-icon-link {
@@ -261,15 +299,14 @@
 }
 
 .crm-entity-stream-section-icon-wallet {
-	background-color: #10c13e;
-	background-position: center -1310px;
+	background-position: center -1308px;
 }
 
-.crm-entity-stream-section-icon-document { background-position: center -1174px; }
+.crm-entity-stream-section-icon-document { background-position: center -1171px; }
 
-.crm-entity-stream-section-icon-robot { background-position: center -713px; }
+.crm-entity-stream-section-icon-robot { background-position: center -710px; }
 
-.crm-entity-stream-section-icon-rest { background-position: center -1133px; }
+.crm-entity-stream-section-icon-rest { background-position: center -1130px; }
 
 .crm-entity-stream-section-icon-taxi {
 	background-image: url('data:image/svg+xml;base64,DQo8c3ZnIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgd2lkdGg9IjE4IiBoZWlnaHQ9IjE0IiB2aWV3Qm94PSIwIDAgMTggMTQiPg0KICA8cGF0aCBmaWxsPSIjRkZGRkZGIiBkPSJNNjg2LjQ0MzE2OSw0OTEzLjM4Mjc4IEM2ODcuMzY3NjI0LDQ5MTMuMzgyNzggNjg4LjExNzA0Miw0OTE0LjEzMjIgNjg4LjExNzA0Miw0OTE1LjA1NjY2IEM2ODguMTE3MDQyLDQ5MTUuOTgxMTEgNjg3LjM2NzYyNCw0OTE2LjczMDUzIDY4Ni40NDMxNjksNDkxNi43MzA1MyBDNjg1LjUxODcxNCw0OTE2LjczMDUzIDY4NC43NjkyOTYsNDkxNS45ODExMSA2ODQuNzY5Mjk2LDQ5MTUuMDU2NjYgQzY4NC43NjkyOTYsNDkxNC4xMzIyIDY4NS41MTg3MTQsNDkxMy4zODI3OCA2ODYuNDQzMTY5LDQ5MTMuMzgyNzggWiBNNjk1LjIxOTM2Nyw0OTEzLjM4Mjc4IEM2OTYuMTQzODIxLDQ5MTMuMzgyNzggNjk2Ljg5MzI0LDQ5MTQuMTMyMiA2OTYuODkzMjQsNDkxNS4wNTY2NiBDNjk2Ljg5MzI0LDQ5MTUuOTgxMTEgNjk2LjE0MzgyMSw0OTE2LjczMDUzIDY5NS4yMTkzNjcsNDkxNi43MzA1MyBDNjk0LjI5NDkxMiw0OTE2LjczMDUzIDY5My41NDU0OTMsNDkxNS45ODExMSA2OTMuNTQ1NDkzLDQ5MTUuMDU2NjYgQzY5My41NDU0OTMsNDkxNC4xMzIyIDY5NC4yOTQ5MTIsNDkxMy4zODI3OCA2OTUuMjE5MzY3LDQ5MTMuMzgyNzggWiBNNjk5Ljg3NTMzOSw0OTE0LjAwMzU4IEM2OTkuODc1MzM5LDQ5MTQuNjg5MjkgNjk5LjMxOTQ1OSw0OTE1LjI0NTIgNjk4LjYzMzc0Niw0OTE1LjI0NTIgTDY5Ny43OTkyNTEsNDkxNS4yNDUyIEM2OTcuODAzNzM2LDQ5MTUuMTgyOTQgNjk3LjgwNjAxOCw0OTE1LjEyMDA2IDY5Ny44MDYwMTgsNDkxNS4wNTY2NiBDNjk3LjgwNjAxOCw0OTEzLjYyODA5IDY5Ni42NDc5MzUsNDkxMi40NyA2OTUuMjE5MzY3LDQ5MTIuNDcgQzY5My43OTA3OTksNDkxMi40NyA2OTIuNjMyNzE1LDQ5MTMuNjI4MDkgNjkyLjYzMjcxNSw0OTE1LjA1NjY2IEM2OTIuNjMyNzE1LDQ5MTUuMTIwMDYgNjkyLjYzNDk5Nyw0OTE1LjE4Mjk0IDY5Mi42Mzk0ODIsNDkxNS4yNDUyIEw2ODkuMDIzMDU0LDQ5MTUuMjQ1MiBDNjg5LjAyNzUzOSw0OTE1LjE4Mjk0IDY4OS4wMjk4Miw0OTE1LjEyMDA2IDY4OS4wMjk4Miw0OTE1LjA1NjY2IEM2ODkuMDI5ODIsNDkxMy42MjgwOSA2ODcuODcxNzM3LDQ5MTIuNDcgNjg2LjQ0MzE2OSw0OTEyLjQ3IEM2ODUuMDE0NjAxLDQ5MTIuNDcgNjgzLjg1NjUxOCw0OTEzLjYyODA5IDY4My44NTY1MTgsNDkxNS4wNTY2NiBDNjgzLjg1NjUxOCw0OTE1LjEyMDA2IDY4My44NTg3OTksNDkxNS4xODI5NCA2ODMuODYzMjg1LDQ5MTUuMjQ1MiBMNjgzLjMyMDc3MSw0OTE1LjI0NTIgQzY4Mi42MzUwNTgsNDkxNS4yNDUyIDY4Mi4wNzkxNzksNDkxNC42ODkyOSA2ODIuMDc5MTc5LDQ5MTQuMDAzNTggTDY4Mi4wNzkxNzksNDkxMC44OTk2IEM2ODIuMDc5MTc5LDQ5MTAuODY0NzYgNjgyLjA4MDYxMyw0OTEwLjgzMDI2IDY4Mi4wODM0MjcsNDkxMC43OTYxNSBMNjgyLjA3OTE3OSw0OTEwLjc5NjEzIEw2ODIuMDc5MTc5LDQ5MDUuMjA4OTYgQzY4Mi4wNzkxNzksNDkwNC4yOTQ2OCA2ODIuODIwMzUyLDQ5MDMuNTUzNTEgNjgzLjczNDYzNSw0OTAzLjU1MzUxIEw2OTEuMzc2ODUxLDQ5MDMuNTUzNTEgQzY5Mi4yOTExMzQsNDkwMy41NTM1MSA2OTMuMDMyMzA4LDQ5MDQuMjk0NjggNjkzLjAzMjMwOCw0OTA1LjIwODk2IEw2OTMuMDMyMzAxLDQ5MDUuNTE5MzYgTDY5NS4xNTQxNDEsNDkwNS41MTkzNiBDNjk2LjEyNjAxMiw0OTA1LjUxOTM2IDY5Ny4wMzMxMzIsNDkwNi4wMDY2OCA2OTcuNTY5NjgsNDkwNi44MTcwMiBMNjk5LjI5MDY0OCw0OTA5LjQxNjE2IEM2OTkuNDY1NzQ5LDQ5MDkuNjgwNjIgNjk5LjYwMzMyMyw0OTA5Ljk2NjA1IDY5OS43MDA5MTQsNDkxMC4yNjQzMSBDNjk5LjgxMTYzMSw0OTEwLjQ1MDIgNjk5Ljg3NTMzOSw0OTEwLjY2NzQ2IDY5OS44NzUzMzksNDkxMC44OTk2IEw2OTkuODc1MzM5LDQ5MTQuMDAzNTggWiBNNjk1LjM0MTA1NCw0OTA2Ljc2MDk2IEw2OTMuODc0MzA4LDQ5MDYuNzYwOTYgTDY5My44NzQzMDgsNDkwOS42NTgwMSBMNjk3LjkzMTIxMiw0OTA5LjY1ODAxIEw2OTYuMzc1MjUzLDQ5MDcuMzE1NTQgQzY5Ni4xNDUxNDksNDkwNi45NjkxNSA2OTUuNzU2OTA5LDQ5MDYuNzYwOTYgNjk1LjM0MTA1NCw0OTA2Ljc2MDk2IFoiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC02ODIgLTQ5MDMpIi8+DQo8L3N2Zz4NCg==');
@@ -287,17 +324,18 @@
 
 .crm-entity-stream-section-icon-restApp {
 	background-color: #2fc6f8;
-	background-position: center -1285px;
+	background-position: center -1282px;
 }
 
 .crm-entity-stream-section-icon-sms,
 .crm-entity-stream-section-icon-new {
 	background-color: #2fc6f8;
-	background-position: center -744px;
+	background-position: center -742px;
 }
 
 .crm-entity-stream-section-icon-zoom {
-	background-position: center -1342px;
+	background-image: url(images/icon_zoom.svg);
+	background-position: center;
 }
 
 .crm-entity-stream-section-icon-check {
@@ -305,7 +343,7 @@
 	background-position: center;
 }
 
-.crm-entity-stream-section-icon-wait { background-position: center -248px; }
+.crm-entity-stream-section-icon-wait { background-position: center -245px; }
 
 .crm-entity-stream-section.crm-entity-stream-section-notTask .crm-entity-stream-section-icon-info { background-color: #9ece00; }
 
@@ -383,7 +421,7 @@
 	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md, 2px));
 	background-color: #fff;
 	box-shadow: 0 1px 1px 0 rgba(0, 0, 0, .04);
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: all 300ms ease, 1000ms background-color linear;
 }
 
@@ -449,7 +487,7 @@
 	color: #858c95;
 	vertical-align: middle;
 	text-decoration: none;
-	font: 400 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: 250ms all ease;
 }
 
@@ -481,6 +519,7 @@
 	position: relative;
 	padding: 8px 50px 10px 15px;
 	transition: all 300ms ease, 1000ms background-color linear;
+	border-radius: var(--ui-border-radius-md, 10px);
 }
 
 .crm-entity-stream-section-planned .crm-entity-stream-content-event { padding-left: 35px; }
@@ -522,7 +561,7 @@
 	color: #333;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 13px/21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 13px/21px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-bottom: 2px;
 }
 
@@ -540,7 +579,7 @@
 
 .crm-entity-stream-content-event-time {
 	color: #a8adb4;
-	font: 400 13px/21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/21px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-event-paid,
@@ -619,7 +658,7 @@
 	color: #535c69;
 	word-break: break-all;
 	word-break: break-word;
-	font: 400 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-ie .crm-entity-stream-content-detail,
@@ -644,6 +683,10 @@
 	margin-bottom: 3px;
 	word-break: break-all;
 	word-break: break-word;
+}
+
+.crm-entity-stream-content-document-description__label {
+	margin-left: 4px;
 }
 
 .crm-entity-stream-content-detail-description .crm-entity-stream-content-detail-description-logo {
@@ -692,7 +735,7 @@
 
 .crm-entity-stream-content-detail-sms-service {
 	color: #80868e;
-	font: 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-sms-service a {
@@ -754,7 +797,8 @@
 	margin-right: 15px;
 	padding: 0 15px 0 13px;
 	color: #fff;
-	font: 25px/40px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 25px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-stream-content-detail-payment-value:before {
@@ -891,14 +935,15 @@
 
 .crm-entity-stream-content-detail-cost-prev span,
 .crm-entity-stream-content-detail-cost-current span {
-	font-family: 'rubleBitrix', 'OpenSans';
+	font-family: 'rubleBitrix', var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	vertical-align: middle;
 }
 
 .crm-entity-stream-content-detail-additional {
 	margin-bottom: 3px;
 	color: #a8adb4;
-	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	line-height: 17px;
 }
@@ -946,7 +991,8 @@
 	border-bottom: 2px solid transparent;
 	color: #555c6d !important;
 	vertical-align: middle;
-	font: 14px/47px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/47px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 	transition: all 300ms ease;
 }
@@ -1012,7 +1058,7 @@
 	outline: none;
 	border: none;
 	color: #000;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	resize: none;
 	transition: 400ms all ease;
 	border-radius: var(--crm-entity-stream-section-border-radius, var(--ui-border-radius-md));
@@ -1053,7 +1099,7 @@
 	border-bottom: 1px solid #f7f8f8;
 	background-color: #f8fafb;
 	color: #828b95;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -1110,7 +1156,7 @@
 	outline: none;
 	border: none;
 	color: #000;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	resize: none;
 	transition: 400ms all ease;
 }
@@ -1162,7 +1208,8 @@
 	left: 15px;
 	border-bottom: 1px dashed;
 	vertical-align: middle;
-	font: 400 13px/17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transform: translateY(-50%);
 }
 
@@ -1175,7 +1222,8 @@
 	color: #b0b7bd;
 	vertical-align: middle;
 	text-align: right;
-	font: 400 12px/16px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transform: translateY(-50%);
 }
 
@@ -1192,7 +1240,7 @@
 	margin-bottom: 5px;
 	padding-bottom: 4px;
 	color: #a8adb4;
-	font: 400 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-sms-status strong {
@@ -1206,7 +1254,7 @@
 	border-style: solid;
 	border-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2251%22%20viewBox%3D%220%200%2026%2051%22%3E%0A%20%20%3Cpath%20fill%3D%22none%22%20stroke%3D%22%232FC6F6%22%20d%3D%22M1165.63419%2C2673.12695%20L1150.5%2C2673.12695%20L1150.5%2C2668.62695%20C1150.5%2C2667.24624%201149.38071%2C2666.12695%201148%2C2666.12695%20L1144%2C2666.12695%20C1142.61929%2C2666.12695%201141.5%2C2667.24624%201141.5%2C2668.62695%20L1141.5%2C2712.62695%20C1141.5%2C2714.00766%201142.61929%2C2715.12695%201144%2C2715.12695%20L1148%2C2715.12695%20C1149.38071%2C2715.12695%201150.5%2C2714.00766%201150.5%2C2712.62695%20L1150.5%2C2685.92251%20L1165.63419%2C2673.12695%20Z%22%20transform%3D%22translate%28-1141%20-2665%29%22%20opacity%3D%22.41%22/%3E%0A%3C/svg%3E%0A') 22 21 5 4 repeat;
 	color: #000;
-	font: 400 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-section-planned .crm-entity-stream-content-detail-sms-fragment { border-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2226%22%20height%3D%2251%22%20viewBox%3D%220%200%2026%2051%22%3E%0A%20%20%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23D4D3BD%22%20d%3D%22M1165.63419%2C2673.12695%20L1150.5%2C2673.12695%20L1150.5%2C2668.62695%20C1150.5%2C2667.24624%201149.38071%2C2666.12695%201148%2C2666.12695%20L1144%2C2666.12695%20C1142.61929%2C2666.12695%201141.5%2C2667.24624%201141.5%2C2668.62695%20L1141.5%2C2712.62695%20C1141.5%2C2714.00766%201142.61929%2C2715.12695%201144%2C2715.12695%20L1148%2C2715.12695%20C1149.38071%2C2715.12695%201150.5%2C2714.00766%201150.5%2C2712.62695%20L1150.5%2C2685.92251%20L1165.63419%2C2673.12695%20Z%22%20transform%3D%22translate%28-1141%20-2665%29%22%20opacity%3D%22.41%22/%3E%0A%3C/svg%3E%0A') 22 21 5 4 repeat; }
@@ -1243,7 +1291,8 @@
 	top: 50%;
 	right: 15px;
 	transform: translateY(-50%);
-	font: 400 13px/17px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-stream-content-sms-file-icon,
@@ -1276,7 +1325,7 @@
 	border-bottom: 1px solid #f0f0f0;;
 	background-color: #f8fafb;
 	color: #828b95;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -1321,7 +1370,8 @@
 	position: relative;
 }
 .crm-entity-stream-content-sms-file-external-link-popup-limit-desc-text {
-	font: 16px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 }
 .crm-entity-stream-content-sms-file-external-link-popup-limit-desc-number {
@@ -1383,7 +1433,12 @@
 
 .crm-entity-stream-section-planned-label:before,
 .crm-entity-stream-section-today-label:before,
-.crm-entity-stream-section-history-label:before { top: 10px; }
+.crm-entity-stream-section-history-label:before {
+	--left-indent: calc(var(--crm-timeline-card-icon-left-indent) - var(--crm-timeline-card-icon-size) / 2);
+	left: var(--left-indent);
+	width: calc(100% - var(--left-indent));
+	top: 10px;
+}
 
 .crm-entity-stream-section-planned-label .crm-entity-stream-section-content,
 .crm-entity-stream-section-today-label .crm-entity-stream-section-content,
@@ -1398,15 +1453,15 @@
 	min-height: 18px;
 	border-radius: 11px;
 	color: #fff;
-	font: bold 12px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-planned-label {
-	background-color: #9ece00;
+	background-color: var(--ui-color-primary-alt, #9dcf00);
 }
 
 .crm-entity-stream-today-label {
-	background-color: #2fc6f5;
+	background-color: var(--ui-color-primary, #2fc6f6);
 }
 
 .crm-entity-stream-filter-label {
@@ -1424,7 +1479,7 @@
 }
 
 .crm-entity-stream-filter-label:hover, .crm-entity-stream-filter-label-active {
-	color: #2fc6f6;
+	color: var(--ui-color-primary, #2fc6f6);
 }
 
 .crm-entity-stream-history-label {
@@ -1509,7 +1564,7 @@
 	border-bottom: 1px solid #f7f8f8;
 	background-color: #f8fafb;
 	color: #99a0a9;
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-wait-conditions a {
@@ -1546,7 +1601,7 @@
 	width: calc(100% - 30px);
 	border: none;
 	color: #000;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	resize: none;
 	transition: 400ms all ease;
 }
@@ -1599,7 +1654,7 @@
 	vertical-align: middle;
 	text-align: center;
 	text-overflow: ellipsis;
-	font: 400 16px/36px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 16px/36px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /*endregion*/
@@ -1607,7 +1662,7 @@
 /*region Event: notTask*/
 .crm-entity-stream-section-notTask .crm-entity-stream-content-detail {
 	color: #a8adb4;
-	font: 13px/25px "Helvetica Neue", Helvetica, Arial, sans-serif
+	font: 13px/25px var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 }
 
 .crm-entity-stream-section-notTask .crm-entity-stream-content-event,
@@ -1623,7 +1678,7 @@
 /*region Event: newEntity */
 .crm-entity-stream-section-newEntity .crm-entity-stream-content-detail {
 	color: #333;
-	font: 13px/25px "Helvetica Neue", Helvetica, Arial, sans-serif
+	font: 13px/25px var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 }
 
 .crm-entity-stream-section-newEntity .crm-entity-stream-content-event,
@@ -1661,7 +1716,7 @@
 	padding-bottom: 4px;
 	border-bottom: 1px solid #f2f2f4;
 	color: #a8adb4;
-	font: 400 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-email { margin-bottom: 5px; }
@@ -1669,13 +1724,13 @@
 .crm-entity-stream-content-detail-email-title {
 	margin-bottom: 3px;
 	color: #525c69;
-	font: bold 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-email-to,
 .crm-entity-stream-content-detail-email-from {
 	color: #b1b7c6;
-	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-email-to {
@@ -1688,7 +1743,7 @@
 
 .crm-entity-stream-content-detail-email-fragment {
 	color: #000;
-	font: 400 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-email-files { margin-bottom: 5px; }
@@ -1696,7 +1751,7 @@
 .crm-entity-stream-content-detail-email-files a {
 	border-bottom: 1px dashed;
 	color: #828b95;
-	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: 300ms all ease;
 }
 
@@ -1826,14 +1881,14 @@
 
 .crm-entity-stream-live-im-user-invite-text {
 	padding-left: 6px;
-	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	opacity: .72;
 }
 
 .crm-entity-stream-live-im-user-counter {
 	padding-left: 1px;
 	color: #2fc6f6;
-	font: 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-live-im-separator {
@@ -1855,7 +1910,7 @@
 .crm-entity-stream-live-im-time {
 	padding-right: 5px;
 	color: #525c69;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-live-im-message {
@@ -1875,7 +1930,7 @@
 	color: #525c69;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-live-im-message-counter {
@@ -1884,7 +1939,8 @@
 	border-radius: 8px;
 	background: #2fc6f6 no-repeat 8px center url(images/live-im.svg);
 	color: #fff;
-	font: 9px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 9px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-stream-live-im-message-show {
@@ -1921,7 +1977,7 @@
 	padding: 7px 11px;
 	border-radius: 4px;
 	color: #555c6d;
-	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-stream-content-detail-IM-message-incoming { background-color: #e0f7fe; }
@@ -2114,7 +2170,7 @@
 	outline: none;
 	border: 1px solid #e2e4e6;
 	color: #333;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	resize: none;
 	transition: 220ms all linear;
 }
@@ -2169,27 +2225,32 @@ table.blogquote td {
 }
 
 .crm-entity-stream-content-detain-info-status {
+	--crm-entity-stream-content-detain-info-status-black-rgb: 0, 0, 0;
 	display: inline-block;
 	overflow: hidden;
-	padding: 0 12px;
-	border-radius: 9px;
-	background-color: #e8f1fb;
-	color: #333;
+	padding: 0 var(--ui-space-inset-xs, 8px);
+	border-radius: 40px;
+	background-color: rgba(var(--ui-color-base-solid-rgb, var(--crm-entity-stream-content-detain-info-status-black-rgb)), 0.05);
+	color: var(--ui-color-text-secondary, #525c69);
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-size: 12px;
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: 1.8333333;
 }
 
 .crm-entity-stream-content-detail-info-separator-icon {
 	display: block;
-	padding: 0 5px;
-	width: 13px;
-	height: 9px;
-	background: url(images/icons-sprite.svg?3) no-repeat center -950px;
+	margin: 0 5px;
+	width: 9px;
+	height: 7px;
+	-webkit-mask-image: url(images/crm-timeline__change-stage-arrow.svg);
+	-webkit-mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	background-color: #A9ADB3;
 }
 
-/*endregion/*/
+/*endregion!*/
 
 /*region Event: Convert*/
 .crm-entity-stream-section-convert { }
@@ -2232,7 +2293,7 @@ table.blogquote td {
 
 .crm-entity-stream-section-convert .crm-entity-stream-content-detail-target { font-size: 13px; }
 
-/*endregion/*/
+/*endregion!*/
 
 /*region Event: Audio Player Cap */
 .crm-audio-cap-wrap-container {
@@ -2299,7 +2360,7 @@ table.blogquote td {
 	white-space: nowrap;
 	padding: 0 10px 0 16px;
 	height: 19px;
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	line-height: 19px;
 	color: rgba(82,92,104,.5);
@@ -2401,7 +2462,7 @@ table.blogquote td {
 	background: #fff url(images/icons-sprite.svg?3) no-repeat -5px -377px;
 	color: #979da4;
 	vertical-align: middle;
-	font: 11px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-steam-audio-encrypt-btn.locked { background: #fff url(images/icons-sprite.svg?3) no-repeat -5px -888px; }
@@ -2482,7 +2543,7 @@ table.blogquote td {
 	100% { stroke-dasharray: 89, 200; stroke-dashoffset: -124px; }
 }
 
-/*endregion/*/
+/*endregion!*/
 
 /*region Event: Files*/
 .crm-entity-stream-section-files { padding: 3px 15px 0; }
@@ -2645,6 +2706,7 @@ table.blogquote td {
 	top: 25px;
 	content: '';
 	width: 50%;
+	left: calc(var(--crm-timeline-card-icon-left-indent) - (var(--crm-timeline-card-icon-size) / 2));
 }
 
 .crm-entity-stream-filter-container {
@@ -2744,7 +2806,8 @@ table.blogquote td {
 }
 
 .crm-entity-stream-filter-empty-text {
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #a8adb4;
 	max-width: 360px;
 	text-align: center;
@@ -2758,6 +2821,7 @@ table.blogquote td {
 }
 
 .crm-entity-stream-section-filter-empty:before {
+	display: none;
 	top: 310px;
 	background-color: rgba(207, 214, 218, .4);
 }
@@ -2884,7 +2948,7 @@ table.blogquote td {
 	padding: 13px 19px;
 	background: #dcf5fd;
 	border-radius: 20px;
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #0c0c0c;
 	line-height: 20px;
@@ -3311,13 +3375,13 @@ span + .crm-entity-stream-content-delivery-title .crm-entity-stream-content-deli
 .crm-entity-stream-content-delivery-order-box-label {
 	display: block;
 	margin-bottom: 5px;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #868c96;
 }
 
 .crm-entity-stream-content-delivery-order-box {
 	margin-bottom: 15px;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -3460,7 +3524,7 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 .crm-entity-stream-content-delivery-sms-name {
 	display: block;
 	text-align: center;
-	font-family: HelveticaNeue, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 10px;
 	color: #969BA2;
 }
@@ -3601,7 +3665,7 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 .crm-entity-stream-courier-name {
 	display: inline-block;
 	margin-right: 11px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #2066b0;
 	cursor: pointer;
@@ -3624,7 +3688,7 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 }
 
 .crm-entity-stream-content-cart-text span {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #9b9b9b;
 	border-bottom: 1px dashed rgba(155,155,155,.4);
@@ -3642,7 +3706,7 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 .crm-entity-stream-content-cart-in {
 	display: inline-block;
 	vertical-align: middle;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #333;
 	margin-right: 20px;
@@ -3668,7 +3732,8 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	line-height: 41px;
 	background: #177ce2;
 	border-radius: 24px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 15px;
 	color: #fff;
 }
@@ -3717,7 +3782,8 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	height: 41px;
 	background: #177ce2;
 	border-radius: 24px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 15px;
 	color: #fff;
 	line-height: 41px;
@@ -3776,7 +3842,8 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	border: 1px solid rgba(130,139,149,.21);
 	border-radius: 2px;
 	align-self: center;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 13px;
 	color: #333;
 	line-height: 14px;
@@ -3827,7 +3894,7 @@ span + .crm-entity-stream-content-delivery-phone-ext {
 	margin-bottom: 15px;
 	padding-bottom: 12px;
 	border-bottom: 1px solid rgba(82,92,105,.14);
-	font: 14px Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 

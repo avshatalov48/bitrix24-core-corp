@@ -10,6 +10,8 @@ $createCompany = in_array(\CCrmOwnerType::Company, $config['items']);
 $dealCategory = $config['dealCategoryId'];
 $completeActivities = $config['completeActivities'];
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $APPLICATION->SetTitle(GetMessage("CRM_TYPE_SETTINGS"));
 ?>
 <style>
@@ -26,7 +28,8 @@ $APPLICATION->SetTitle(GetMessage("CRM_TYPE_SETTINGS"));
 	}
 
 	.crm-lead-mode-slider-container-title {
-		font: 22px/22px "OpenSans-Light", Helvetica, Arial,sans-serif;
+		font: 22px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+		font-weight: var(--ui-font-weight-light, 300);
 	}
 
 	.crm-lead-mode-slider-container p {
@@ -177,7 +180,9 @@ $APPLICATION->SetTitle(GetMessage("CRM_TYPE_SETTINGS"));
 		text-align: left;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font: 400 15px/37px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font: 15px/37px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+		font-weight: var(--ui-font-weight-regular, 400);
+
 		transition: border .3s ease, background-color .3s ease, color .3s ease, padding .3s ease;
 		-webkit-box-flex: 1;
 		-ms-flex: 1;
@@ -188,7 +193,7 @@ $APPLICATION->SetTitle(GetMessage("CRM_TYPE_SETTINGS"));
 		-o-appearance: none;
 		appearance: none;
 	}
-	
+
 	.ui-button-panel {
 		text-align: center;
 	}

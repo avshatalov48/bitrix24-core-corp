@@ -9,13 +9,14 @@ define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Util\User;
 
-Loc::loadMessages(dirname(__FILE__).'/template.php');
-Loc::loadMessages(dirname(__FILE__).'/export_excel.php');
+Loc::loadMessages(__DIR__.'/template.php');
+Loc::loadMessages(__DIR__.'/export_excel.php');
 
 $APPLICATION->RestartBuffer();
 
@@ -189,49 +190,50 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 					case 'UF_CRM_TASK':
 						if (!empty($columnValue) && Loader::includeModule('crm'))
 						{
-							$collection = [];
 							sort($columnValue);
 
+							$collection = [];
 							foreach ($columnValue as $value)
 							{
 								[$type, $id] = explode('_', $value);
 								$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
 								$title = CCrmOwnerType::GetCaption($typeId, $id);
 
-								if (!isset($collection[$type]))
+								if (!isset($collection[$typeId]))
 								{
-									$collection[$type] = [];
+									$collection[$typeId] = [];
 								}
-
 								if ($title)
 								{
-									$collection[$type][] = $title;
+									$collection[$typeId][] = $title;
 								}
 							}
 
 							ob_start();
 							if (!empty($collection))
 							{
-								$prevType = null;
+								$previousTypeId = null;
 
-								foreach ($collection as $type => $items)
+								foreach ($collection as $typeId => $items)
 								{
 									if (empty($items))
 									{
 										continue;
 									}
 
-									if ($type !== $prevType)
+									if ($typeId !== $previousTypeId)
 									{
-										echo Loc::getMessage('TASKS_LIST_CRM_TYPE_'.$type).': ';
+										$factory = Container::getInstance()->getFactory($typeId);
+										$typeTitle = ($factory ? $factory->getEntityDescription() : '');
+
+										echo "{$typeTitle}: ";
 									}
 
-									$prevType = $type;
+									$previousTypeId = $typeId;
 
-									echo implode(', ', $items).';';
+									echo implode(', ', $items) . ';';
 								}
 							}
-
 							$columnValue = ob_get_clean();
 						}
 						else

@@ -3,7 +3,10 @@
 namespace Bitrix\Crm\Category\Entity;
 
 use Bitrix\Crm\Model\EO_ItemCategory;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use CCrmOwnerType;
 
 class ItemCategory extends Category
 {
@@ -12,6 +15,21 @@ class ItemCategory extends Category
 	public function __construct(EO_ItemCategory $entityObject)
 	{
 		$this->entityObject = $entityObject;
+
+		Container::getInstance()->getLocalization()->loadMessages(); // TODO: separate file with system categories
+	}
+
+	public function getData(): array
+	{
+		if (in_array($this->getEntityTypeId(), [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
+		{
+			return array_merge(parent::getData(), [
+				'IS_SYSTEM' => $this->getIsSystem(),
+				'CODE' => $this->getCode(),
+			]);
+		}
+
+		return parent::getData();
 	}
 
 	public function getId(): ?int
@@ -33,6 +51,16 @@ class ItemCategory extends Category
 
 	public function getName(): string
 	{
+		$code = $this->getCode();
+		if (!empty($code))
+		{
+			$name = Loc::getMessage($code);
+			if (!empty($name))
+			{
+				return $name;
+			}
+		}
+
 		return $this->entityObject->getName();
 	}
 
@@ -65,6 +93,16 @@ class ItemCategory extends Category
 	public function getIsDefault(): bool
 	{
 		return $this->entityObject->getIsDefault();
+	}
+
+	public function getIsSystem(): bool
+	{
+		return $this->entityObject->getIsSystem();
+	}
+
+	public function getCode(): string
+	{
+		return $this->entityObject->getCode();
 	}
 
 	public function save(): Result

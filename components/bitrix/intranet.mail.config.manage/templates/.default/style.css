@@ -1,5 +1,5 @@
 .post-dialog-wrap {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	float: left;
 	padding: 35px 25px 0;
@@ -12,7 +12,7 @@
 	box-shadow: 0 1px 0 #fdfdfe;
 	color: #555;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 70px;
 	width: 100%;
 }
@@ -103,7 +103,7 @@
 	color: #555;
 	display: block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 8px;
 }
 
@@ -118,7 +118,7 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	color: #3d3d3d;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	height: 39px;
 	outline: none;
@@ -156,7 +156,7 @@
 	background: none;
 	border: none;
 	height: 37px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	top: 0;
 	left: 0;
@@ -192,7 +192,7 @@
 	border-radius: 2px;
 	color: #262728;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 25px;
 	max-width: 851px;
 	padding: 10px;
@@ -282,7 +282,7 @@
 	color: #276aae;
 	display: inline-block;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: middle;
 	text-decoration: underline;
 	cursor: pointer;
@@ -337,7 +337,7 @@
 	color: #000;
 	font-size: 17px;
 	margin: 0 28px 0 0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: middle;
 	max-width: 300px;
 	-ms-text-overflow: ellipsis;
@@ -350,7 +350,7 @@
 	display: inline-block;
 	color: #000;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: middle;
 }
 
@@ -358,7 +358,7 @@
 	display: inline-block;
 	color: #6f950d;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 28px 0 0;
 	vertical-align: middle;
 }
@@ -367,7 +367,7 @@
 	display: inline-block;
 	color: #d04749;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 28px 0 0;
 	vertical-align: middle;
 }
@@ -410,7 +410,7 @@
 	line-height: 30px;
 	float: right;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-shadow: 0 1px #fff;
 	text-decoration: none;
 	padding: 0 17px;
@@ -443,7 +443,7 @@
 	display: inline-block;
 	border-bottom: 1px dashed #4e89ca;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 0 25px 3px;
 	text-decoration: none;
 }
@@ -466,7 +466,7 @@
 .post-dialog-success-cell {
 	color: #555;
 	font-size: 19px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 130px;
 	padding: 15px 40px 40px;
 	text-align: center;
@@ -505,7 +505,7 @@
 	color: #000;
 	display: inline-block;
 	font-size: 19px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: 3%;
 	vertical-align: middle;
 	width: 48%;
@@ -639,7 +639,7 @@
 .mail-block-title-text,
 .mail-block-title-at {
 	color: #7a808c;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 28px;
 	display: block;
 	min-height: 30px;
@@ -732,7 +732,7 @@
 	display: inline-block;
 	height: 25px;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 24px;
 	text-shadow: 0 1px #fff;
 	padding: 0 13px;
@@ -891,7 +891,7 @@
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;
 	color: #000;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 16px;
 	height: 47px;
 	outline: none;
@@ -1001,7 +1001,7 @@
 	color: #000;
 	display: inline-block;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: 14px;
 	vertical-align: middle;
 }
@@ -1074,7 +1074,7 @@
 	padding: 0 15px;
 	position: relative;
 	text-decoration: none;
-	font: bold 22px/50px Arial;
+	font: var(--ui-font-weight-bold) 22px/50px Arial;
 	color: #585858 !important;
 	white-space: nowrap;
 	overflow: hidden;
@@ -1167,7 +1167,7 @@
 	color: #555;
 	cursor: pointer;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 32px;
 	line-height: 31px;
 	margin-left: 24px;
@@ -1190,7 +1190,7 @@
 }
 
 .mail-set-title-name {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .mail-set-item-block-wrap {
@@ -1200,7 +1200,7 @@
 .mail-set-item-block-name {
 	color: #000;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding:0 0 10px 14px;
 }
 
@@ -1347,13 +1347,13 @@
 
 .mail-white-block-title {
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 22px;
 }
 
 .mail-white-block-title2 {
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 15px;
 }
 
@@ -1411,7 +1411,7 @@
 .mail-info-message-red {
 	color: #a20000;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 4px;
 }
 
@@ -1420,7 +1420,7 @@
 }
 
 .mail-domain-status-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 8px;
 }
 
@@ -1460,7 +1460,7 @@
 	color: #4d525e;
 	display: block;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	overflow: hidden;
 }
 
@@ -1486,7 +1486,7 @@
 	color: #737a83;
 	display: inline-block;
 	font-size: 36px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: top;
 	line-height: 36px;
 	margin: 0 7px 0 0;
@@ -1505,7 +1505,7 @@
 
 .mail-alert-popup-title{
 	color: #d61010;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	margin-bottom: 10px;
 }
@@ -1557,7 +1557,7 @@
 }
 
 .mail-white-block-token .mail-set-first-label {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .mail-white-block-token .mail-set-first-checkbox-wrap {
@@ -1569,7 +1569,7 @@
 	background-color: #a3b2b9;
 	border-radius: 2px;
 	color: #fff;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 14px;
 	float: right;
 	height: 27px;
@@ -1598,7 +1598,7 @@
 .mail-alert-popup-del-title {
 	color: #c91d24;
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 20px;
 }
 
@@ -1722,7 +1722,7 @@
 .mail-set-domain-offer-title {
 	color: #000;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 20px;
 }
 
@@ -1752,7 +1752,7 @@
 }
 
 .mail-set-domain-offer-block .webform-small-button-text {
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 }
 
 .no-border {
@@ -1775,7 +1775,7 @@
 
 .mail-white-block-domain .post-dialog-stat-text {
 	color: #000;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 18px;
 	float: left;
 	margin-top: 5px;
@@ -1785,7 +1785,7 @@
 	color: #2167af;
 	float: right;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 4px 30px 0 0;
 	text-decoration: underline;
 }
@@ -1820,7 +1820,7 @@
 }
 
 .mail-info-domain-description-text {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .mail-confirm-domain-popup {
@@ -1832,7 +1832,7 @@
 .mail-confirm-domain-popup-title {
 	color: #555;
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 33px;
 }
 
@@ -2076,7 +2076,7 @@
 
 .mail-set-item-block-crm-wrapper {
 	display: block;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 }
 .mail-set-item-block-crm-wrapper-dec {
@@ -2093,7 +2093,7 @@
 	display: block;
 	overflow: hidden;
 	color: #000;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 0 10px 0;
 	border-bottom: 1px solid #e0e3e3;
 	-webkit-text-shadow: 0px 1px 0px rgba(255, 255, 255, 0.7);
@@ -2114,7 +2114,7 @@
 }
 
 .mail-set-textarea-input {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	font-size: 14px;
 	clear: both;
@@ -2157,7 +2157,7 @@
 }
 
 .mail-set-textarea-input-del {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	font-size: 14px;
 	clear: both;
@@ -2293,7 +2293,7 @@
 	display: block;
 	color: #000;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 0 8px 0;
 }
 
@@ -2326,7 +2326,7 @@
 	margin: 15px 0 8px 0;
 	color: #fff;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	-webkit-text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
 	-moz-text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
 	text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.2);
@@ -2471,7 +2471,7 @@
 	border: 1px solid;
 	border-color: #b9bcbe #bdc1c3 #c1c5c8;
 	border-radius: 2px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 32px;
 	padding: 0 5px;
 	-webkit-box-sizing: border-box;
@@ -2486,7 +2486,7 @@
 	border: 1px solid;
 	border-color: #b9bcbe #bdc1c3 #c1c5c8;
 	border-radius: 2px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 32px;
 	outline: none;
 	padding: 5px 3px 5px 0;
@@ -2495,7 +2495,7 @@
 
 .manage-dialog-form-textarea {
 	background-color: #fff;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	border: 1px solid;
 	border-color: #b9bcbe #bdc1c3 #c1c5c8;

@@ -4,7 +4,9 @@ namespace Bitrix\Crm\Timeline;
 use Bitrix\Crm;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Main;
+use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Entity\Query;
+use Bitrix\Main\ORM\Data\UpdateResult;
 use Bitrix\Main\Type\DateTime;
 
 class TimelineEntry
@@ -234,6 +236,25 @@ class TimelineEntry
 		);
 		//endregion
 	}
+
+	public static function getEntriesIdsByAssociatedEntity(int $entityTypeId, int $entityId, int $limit)
+	{
+		$query = Entity\TimelineTable::query();
+		$query->addFilter('=ASSOCIATED_ENTITY_ID', $entityId);
+		$query->addFilter('=ASSOCIATED_ENTITY_TYPE_ID', $entityTypeId);
+		$query->addSelect('ID');
+		$query->setOrder(['CREATED' => 'DESC', 'ID' => 'DESC']);
+		$query->setLimit($limit);
+		$items = $query->exec();
+		$result = [];
+		while ($item = $items->fetch())
+		{
+			$result[] = (int)$item['ID'];
+		}
+
+		return $result;
+	}
+
 	public static function deleteByAssociatedEntity($entityTypeID, $entityID)
 	{
 		$query = static::prepareDeleteQuery($entityTypeID);
@@ -361,5 +382,99 @@ class TimelineEntry
 	{
 		$builder = new Crm\Search\TimelineSearchContentBuilder();
 		$builder->build($ID);
+	}
+
+	public static function checkBindingExists(int $id, int $ownerTypeId, int $ownerId): bool
+	{
+		return Entity\TimelineBindingTable::checkBindingExists($id, $ownerTypeId, $ownerId);
+	}
+
+	public static function isFixed(int $id, int $ownerTypeId, int $ownerId): bool
+	{
+		return Entity\TimelineBindingTable::isFixed($id, $ownerTypeId, $ownerId);
+	}
+
+	public static function setIsFixed(int $id, int $ownerTypeId, int $ownerId, bool $isFixed): UpdateResult
+	{
+		return Entity\TimelineBindingTable::setIsFixed($id, $ownerTypeId, $ownerId, $isFixed);
+	}
+
+	protected static function getRequiredIntegerParam(string $paramName, array $params): int
+	{
+		$integer = (int)($params[$paramName] ?? 0);
+		if ($integer <= 0)
+		{
+			throw new \Bitrix\Main\ArgumentException($paramName . ' must be greater than zero.', $paramName);
+		}
+
+		return $integer;
+	}
+
+	protected static function fetchEntityId(array $params): int
+	{
+		$entityId = $params['ENTITY_ID'] ?? 0;
+		if ($entityId <= 0)
+		{
+			throw new ArgumentException('Entity ID must be greater than zero.', 'entityID');
+		}
+
+		return (int)$entityId;
+	}
+
+	protected static function fetchEntityTypeId(array $params): int
+	{
+		$entityTypeId = $params['ENTITY_TYPE_ID'] ?? 0;
+		if ($entityTypeId <= 0)
+		{
+			throw new ArgumentException('Entity type ID must be greater than zero.', 'entityTypeID');
+		}
+
+		return (int)$entityTypeId;
+	}
+
+	protected static function fetchAuthorId(array $params): int
+	{
+		$authorId = $params['AUTHOR_ID'] ?? 0;
+		if ($authorId <= 0)
+		{
+			throw new ArgumentException('Author ID must be greater than zero.', 'authorID');
+		}
+
+		return (int)$authorId;
+	}
+
+	protected static function fetchCategoryId(array $params): int
+	{
+		$categoryId = $params['TYPE_CATEGORY_ID'] ?? 0;
+		if ($categoryId <= 0)
+		{
+			throw new ArgumentException('Category Id must be greater than zero.', 'authorID');
+		}
+
+		return (int)$categoryId;
+	}
+
+	protected static function fetchParams(array $params): array
+	{
+		$authorId = $params['AUTHOR_ID'] ?? 0;
+		$authorId = $authorId <= 0 ? \CCrmSecurityHelper::GetCurrentUserID() : (int)$authorId;
+
+		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
+			? $params['CREATED']
+			: new DateTime();
+
+		$settings = [];
+		if (isset($params['SETTINGS']) && is_array($params['SETTINGS']))
+		{
+			$settings = $params['SETTINGS'];
+		}
+
+		$bindings = [];
+		if (isset($params['BINDINGS']) && is_array($params['BINDINGS']))
+		{
+			$bindings = $params['BINDINGS'];
+		}
+
+		return [$authorId, $created, $settings, $bindings];
 	}
 }

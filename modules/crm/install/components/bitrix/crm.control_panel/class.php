@@ -203,7 +203,11 @@ class CrmControlPanel extends CBitrixComponent
 		$categories = $factory->getCategories();
 		foreach ($categories as $category)
 		{
-			if ($category->getIsDefault() || !$userPermissionsService->canViewItemsInCategory($category))
+			if (
+				$category->getIsSystem()
+				|| $category->getIsDefault()
+				|| !$userPermissionsService->canViewItemsInCategory($category)
+			)
 			{
 				continue;
 			}

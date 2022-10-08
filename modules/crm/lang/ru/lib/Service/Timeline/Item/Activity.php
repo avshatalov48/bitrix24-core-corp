@@ -1,0 +1,9 @@
+<?php
+$MESS['CRM_TIMELINE_POSTPONE'] = 'Отложить';
+$MESS['CRM_TIMELINE_POSTPONE_1H'] = '1 час';
+$MESS['CRM_TIMELINE_POSTPONE_2H'] = '2 часа';
+$MESS['CRM_TIMELINE_POSTPONE_3H'] = '3 часа';
+$MESS['CRM_TIMELINE_POSTPONE_1D'] = '1 день';
+$MESS['CRM_TIMELINE_POSTPONE_2D'] = '2 дня';
+$MESS['CRM_TIMELINE_POSTPONE_3D'] = '3 дня';
+$MESS['CRM_TIMELINE_ACTIVITY_DELETION_CONFIRM'] = 'Вы действительно желаете удалить это событие?';

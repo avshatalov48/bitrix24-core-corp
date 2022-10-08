@@ -117,7 +117,7 @@ if (!$arResult["FatalError"])
 	if(
 		$arResult["User"]["ID"] == $USER->GetID()
 		&& CSocNetUser::IsCurrentUserModuleAdmin(SITE_ID, false)
-		&& !isset($_SESSION["SONET_ADMIN"])
+		&& !CSocNetUser::IsEnabledModuleAdmin()
 	)
 	{
 		$arResult["SHOW_SONET_ADMIN"] = true;

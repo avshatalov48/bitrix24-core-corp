@@ -1239,6 +1239,8 @@ abstract class Kanban
 		$specialReqKeys = $this->getSpecialReqKeys();
 		$result = [];
 
+		$activeAutomationDebugEntityIds = \CCrmBizProcHelper::getActiveDebugEntityIds($this->entity->getTypeId());
+
 		foreach($rows as $rowId => $row)
 		{
 			if (is_array($renderedRows[$rowId]))
@@ -1390,6 +1392,12 @@ abstract class Kanban
 					}
 				}
 			}
+
+			$isAutomationDebugItem =
+				!empty($activeAutomationDebugEntityIds) && in_array($row['ID'], $activeAutomationDebugEntityIds)
+			;
+			$result[$row['ID']]['isAutomationDebugItem'] = $isAutomationDebugItem;
+
 		}
 		$result = $this->sort($result);
 

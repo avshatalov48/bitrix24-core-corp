@@ -7,7 +7,8 @@
 	position: relative;
 }
 .crm-tracking-call-tester-title {
-	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 26px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin: 0;
 	padding: 21px 0 21px 5px;
 	display: block;
@@ -45,7 +46,8 @@
 }
 
 .crm-tracking-call-tester-header {
-	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	margin: 0 0 19px;
 }

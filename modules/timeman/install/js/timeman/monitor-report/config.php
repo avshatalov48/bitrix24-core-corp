@@ -14,6 +14,7 @@ return [
 		'ui.vue.components.hint',
 		'ui.dialogs.messagebox',
 		'ui.icons',
+		'ui.fonts.opensans',
 		'timeman.component.timeline',
 		'timeman.timeformatter',
 		'timeman.monitor',
@@ -27,6 +28,7 @@ return [
 		'main.loader',
 		'ui.pinner',
 		'ui.alerts',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

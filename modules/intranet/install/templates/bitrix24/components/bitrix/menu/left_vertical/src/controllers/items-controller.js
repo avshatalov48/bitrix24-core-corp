@@ -438,7 +438,7 @@ export default class ItemsController extends DefaultController{
 		if (countersDynamic['hide'] !== undefined && countersDynamic['hide'] !== 0)
 		{
 			const hiddenCounterNode = this.parentContainer.querySelector('#menu-hidden-counter');
-			hiddenCounterNode.dataset.counterValue = Math.max(0, hiddenCounterNode.dataset.counterValue + countersDynamic['hide']);
+			hiddenCounterNode.dataset.counterValue = Math.max(0, Number(hiddenCounterNode.dataset.counterValue) + Number(countersDynamic['hide']));
 			if (hiddenCounterNode.dataset.counterValue > 0)
 			{
 				hiddenCounterNode.classList.remove('menu-hidden-counter');

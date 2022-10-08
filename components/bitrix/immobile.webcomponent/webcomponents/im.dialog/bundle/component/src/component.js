@@ -55,7 +55,7 @@ ChatDialog.init = function()
 
 		this.database = new ReactDatabase(ChatDatabaseName, this.userId, this.languageId);
 
-		const initCallback = (messageData) => {
+		this.message.init((messageData) => {
 			this.loadConfig(() => {
 				if (!this.mobileConfig)
 				{
@@ -95,45 +95,10 @@ ChatDialog.init = function()
 				this.initMessenger({type: 'cache'});
 				this.loadWidgetData();
 			});
-		};
-
-		if (this.dialogId)
-		{
-			this.message.init(initCallback);
-
-			return;
-		}
-
-		this.getDialogByUserCode(data.USER_CODE)
-			.then(dialog => {
-				BXMobileApp.UI.Page.params.get({
-					callback: (data) => {
-						this.dialogId = dialog.dialog_id;
-
-						data.DIALOG_ID = this.dialogId;
-						BXMobileApp.UI.Page.params.set({ data });
-
-						this.message.init(initCallback);
-					},
-				});
-			})
-		;
+		});
 	});
 
 	return true;
-};
-
-ChatDialog.getDialogByUserCode = function(userCode)
-{
-	return new Promise((resolve) => {
-		BX.rest.callMethod('imopenlines.dialog.get', { USER_CODE: userCode })
-			.then(response => {
-				resolve(response.data());
-			})
-			.catch(() => {
-				resolve({ dialogId: 0 });
-			});
-	});
 };
 
 ChatDialog.openDialog = function(dialogId)

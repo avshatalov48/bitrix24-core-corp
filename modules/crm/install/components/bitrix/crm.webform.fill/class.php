@@ -841,9 +841,23 @@ class CCrmWebFormFillComponent extends \CBitrixComponent
 		global $APPLICATION;
 		$APPLICATION->RestartBuffer();
 
+		global $USER;
+		if (!$USER->IsAuthorized())
+		{
+			$this->arResult['PREVIEW']['AD_TITLE'] = Loc::getMessage('CRM_WEBFORM_PREVIEW_AD_AUTH_TITLE');
+			$this->arResult['PREVIEW']['AD_SUBTITLE'] = Loc::getMessage('CRM_WEBFORM_PREVIEW_AD_AUTH_SUBTITLE');
+			$this->includeComponentTemplate('preview_ad');
+			CMain::FinalActions();
+			exit;
+		}
+
 		if (!\Bitrix\Main\Loader::includeModule('crm') || !WebForm\Manager::checkReadPermission())
 		{
-			die('access denied');
+			$this->arResult['PREVIEW']['AD_TITLE'] = Loc::getMessage('CRM_WEBFORM_PREVIEW_AD_NSD_TITLE');
+			$this->arResult['PREVIEW']['AD_SUBTITLE'] = Loc::getMessage('CRM_WEBFORM_PREVIEW_AD_NSD_SUBTITLE');
+			$this->includeComponentTemplate('preview_ad');
+			CMain::FinalActions();
+			exit;
 		}
 
 		$previewTypeParam = $this->arParams['PREVIEW_TYPE'];

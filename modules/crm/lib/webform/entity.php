@@ -24,6 +24,7 @@ class Entity
 	const ENUM_ENTITY_SCHEME_DEAL_INVOICE = 6;
 	const ENUM_ENTITY_SCHEME_QUOTE_INVOICE = 7;
 	const ENUM_ENTITY_SCHEME_LEAD_INVOICE = 8;
+	const ENUM_ENTITY_SCHEME_INVOICE = 9;
 
 	public static function getMap($entityTypeName = null)
 	{
@@ -160,10 +161,12 @@ class Entity
 			return $dynamicTypeMap;
 		}
 
+		//$types = Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument);
 		$dynamicTypeMap = [];
-		foreach (Container::getInstance()->getDynamicTypesMap()->load()->getTypes() as $type)
+		foreach (Container::getInstance()->getDynamicTypesMap()->load()->getTypesCollection() as $type)
 		{
 			$dynamicTypeMap[\CCrmOwnerType::resolveName($type->getEntityTypeId())] = array(
+				'HIDDEN' => !\CCrmOwnerType::isPossibleDynamicTypeId($type->getEntityTypeId()),
 				'GET_FIELDS_CALL' => function () use ($type) {
 					$factory = Container::getInstance()->getFactory($type->getEntityTypeId());
 					return $factory
@@ -429,7 +432,7 @@ class Entity
 			),
 		);
 
-		foreach (Container::getInstance()->getDynamicTypesMap()->load()->getTypes() as $type)
+		foreach (Container::getInstance()->getDynamicTypesMap()->load()->getTypesCollection() as $type)
 		{
 			$entityTypeName = \CCrmOwnerType::resolveName($type->getEntityTypeId());
 			$schemes[$type->getEntityTypeId() * 10] = [
@@ -444,6 +447,16 @@ class Entity
 				'DYNAMIC' => true,
 				'DESCRIPTION' => Loc::getMessage('CRM_WEBFORM_ENTITY_SCHEME_DYNAMIC_DESC')
 			];
+
+			if (in_array($type->getEntityTypeId(), [
+				defined('\CCrmOwnerType::SmartDocument')
+						? \CCrmOwnerType::SmartDocument
+						: \CCrmOwnerType::Undefined,
+					\CCrmOwnerType::SmartInvoice,
+				]))
+			{
+				continue;
+			}
 
 			$schemes[$type->getEntityTypeId() * 10 + 1] = [
 				'NAME' => $type->getTitle(),
@@ -524,8 +537,8 @@ class Entity
 		}
 
 		/**@var $className \CCrmLead*/
-		$className = $entity['CLASS_NAME'];
-		return $className::GetFieldCaption($fieldId);
+		$className = $entity['CLASS_NAME'] ?? '';
+		return $className ? $className::GetFieldCaption($fieldId) : '';
 	}
 
 	public static function getDefaultFieldsInfoMethod()

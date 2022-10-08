@@ -172,7 +172,12 @@ class CCrmBizProc
 
 		$arErrorsTmp = array();
 		CBPDocument::OnDocumentDelete(array('crm', $this->sDocument, $this->sEntityType.'_'.$ID), $arErrorsTmp);
-		if (count($arErrorsTmp) > 0)
+		\Bitrix\Crm\Automation\QR\QrTable::deleteByEntity(
+			CCrmOwnerType::ResolveID($this->sEntityType),
+			$ID
+		);
+
+		if ($arErrorsTmp)
 		{
 			$this->LAST_ERROR = '';
 			foreach ($arErrorsTmp as $e)

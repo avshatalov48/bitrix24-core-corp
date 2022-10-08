@@ -1,0 +1,39 @@
+.crm-timeline__text-block.--color-green {
+	color: var(--ui-color-palette-green-80 ,#688800)
+}
+
+.crm-timeline__text-block.--color-base-50 {
+	color: var(--ui-color-base-50 ,#a8adb4)
+}
+
+.crm-timeline__text-block.--color-base-70 {
+	color: var(--ui-color-base-70 ,#828b95)
+}
+
+.crm-timeline__text-block.--color-base-90 {
+	color: var(--ui-color-base-90 ,#525c69)
+}
+
+.crm-timeline__text-block.--weight-normal {
+	font-weight: var(--ui-font-weight-normal, 400);
+}
+
+.crm-timeline__text-block.--weight-medium {
+	font-weight: var(--ui-font-weight-medium, 500);
+}
+
+.crm-timeline__text-block.--weight-bold {
+	font-weight: var(--ui-font-weight-bold, 700);
+}
+
+.crm-timeline__text-block.--size-xs {
+	font-size: var(--ui-font-size-xs, 12px);
+	line-height: var(--ui-font-line-height-sm);
+}
+
+.crm-timeline__text-block.--size-sm {
+	font-size: var(--ui-font-size-sm, 13px);
+}
+
+.crm-timeline__text-block.--size-md {
+	font-size: var(--ui-font-size-md, 14px);}

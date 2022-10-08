@@ -7,10 +7,11 @@ define('NO_AGENT_STATISTIC','Y');
 define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(dirname(__FILE__).'/template.php');
-Loc::loadMessages(dirname(__FILE__).'/export_excel.php');
+Loc::loadMessages(__DIR__.'/template.php');
+Loc::loadMessages(__DIR__.'/export_excel.php');
 
 $APPLICATION->RestartBuffer();
 
@@ -193,49 +194,50 @@ $groupCache = array();
 					case "UF_CRM_TASK":
 						if (!empty($arTask[$field]))
 						{
-							$collection = array();
 							sort($arTask[$field]);
+
+							$collection = [];
 							foreach ($arTask[$field] as $value)
 							{
-								$crmElement = explode('_', $value);
-								$type = $crmElement[0];
+								[$type, $id] = explode('_', $value);
 								$typeId = CCrmOwnerType::ResolveID(CCrmOwnerTypeAbbr::ResolveName($type));
-								$title = CCrmOwnerType::GetCaption($typeId, $crmElement[1]);
+								$title = CCrmOwnerType::GetCaption($typeId, $id);
 
-								if (!isset($collection[$type]))
-									$collection[$type] = array();
-
+								if (!isset($collection[$typeId]))
+								{
+									$collection[$typeId] = [];
+								}
 								if ($title)
 								{
-									$collection[$type][] = $title;
+									$collection[$typeId][] = $title;
 								}
 							}
 
 							ob_start();
 							if ($collection)
 							{
-
-								$prevType = null;
-								foreach ($collection as $type => $items)
+								$previousTypeId = null;
+								foreach ($collection as $typeId => $items)
 								{
 									if (empty($items))
 									{
 										continue;
 									}
 
-									if ($type !== $prevType)
+									if ($typeId !== $previousTypeId)
 									{
-										echo GetMessage('TASKS_LIST_CRM_TYPE_'.$type).': ';
+										$factory = Container::getInstance()->getFactory($typeId);
+										$typeTitle = ($factory ? $factory->getEntityDescription() : '');
+
+										echo "{$typeTitle}: ";
 									}
 
-									$prevType = $type;
+									$previousTypeId = $typeId;
 
-									echo implode(', ', $items).';';
+									echo implode(', ', $items) . ';';
 								}
 							}
-
 							$arTask[$field] = ob_get_clean();
-
 						}
 						else
 						{

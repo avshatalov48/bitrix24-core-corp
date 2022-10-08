@@ -15,7 +15,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 use Bitrix\Main\Localization\Loc;
 
-CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item',));
+CJSCore::Init(array('disk', 'ui.viewer', 'disk.viewer.document-item', 'ui.fonts.opensans'));
 
 Loc::loadMessages(__FILE__);
 

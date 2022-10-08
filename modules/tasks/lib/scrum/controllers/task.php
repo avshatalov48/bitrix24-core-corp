@@ -7,6 +7,7 @@ use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Socialnetwork\Item\Workgroup;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -266,5 +267,69 @@ class Task extends Controller
 		$item->getInfo()->setVisibilitySubtasks('N');
 
 		return $itemService->changeItem($item);
+	}
+
+	/**
+	 * The method checks if the task is in the Scrum.
+	 *
+	 * @param int $taskId Task id.
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function isScrumTaskAction(int $taskId): bool
+	{
+		$queryObject = TaskTable::getList([
+			'filter' => [
+				'ID' => $taskId,
+			],
+			'select' => ['GROUP_ID'],
+		]);
+		if ($taskData = $queryObject->fetch())
+		{
+			$group = Workgroup::getById($taskData['GROUP_ID']);
+
+			return ($group && $group->isScrumProject());
+		}
+
+		return false;
+	}
+
+	/**
+	 * The method returns the missing data for the parent task status update operation.
+	 *
+	 * @param int $taskId Task id.
+	 * @return array
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function getDataAction(int $taskId): array
+	{
+		$data = [
+			'taskId' => $taskId,
+		];
+
+		$queryObject = TaskTable::getList([
+			'filter' => [
+				'ID' => $taskId,
+			],
+			'select' => ['GROUP_ID', 'PARENT_ID'],
+		]);
+		if ($taskData = $queryObject->fetch())
+		{
+			if ($taskData['GROUP_ID'])
+			{
+				$data['groupId'] = $taskData['GROUP_ID'];
+			}
+
+			if ($taskData['PARENT_ID'])
+			{
+				$data['parentTaskId'] = $taskData['PARENT_ID'];
+			}
+		}
+
+		return $data;
 	}
 }

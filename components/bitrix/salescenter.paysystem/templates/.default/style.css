@@ -65,7 +65,7 @@
 	color: #525c69;
 	vertical-align: middle;
 	text-transform: none;
-	font: 400 18px/24px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 18px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .salescenter-editor-section-content {
@@ -344,6 +344,13 @@
 	background-color: #E36F10;
 }
 
+.salescenter-bepaiderip-icon{ width: 97px; }
+.salescenter-bepaiderip-icon i{
+	background-image: url(images/bepaiderip.svg);
+	background-size: 70% auto;
+	background-color: #E36F10;
+}
+
 .salescenter-cashondelivery-icon { width: 97px; }
 .salescenter-cashondelivery-icon i {
 	background-image: url(images/cashondelivery.svg);
@@ -524,7 +531,7 @@
 	text-overflow: ellipsis;
 	font-size: 14px;
 	color: #0b66c3;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	cursor: pointer;
 	text-decoration: none;
 }
@@ -588,7 +595,8 @@
 .salescenter-paysystem-cashbox-block-title {
 	color: #333;
 	margin-bottom: 8px;
-	font: 16px/20px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 16px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .salescenter-paysystem-cashbox-block-description {

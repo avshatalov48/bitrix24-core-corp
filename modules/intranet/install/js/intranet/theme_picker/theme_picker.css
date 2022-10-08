@@ -298,7 +298,7 @@
 	max-width: 85px;
 	border: none;
 	height: 20px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #333;
 	text-transform: uppercase;
@@ -468,7 +468,7 @@
 }
 
 .theme-dialog-field-file-add {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-decoration: none;
 	margin: 0 0 4px 0;
 	color: #0063c6;

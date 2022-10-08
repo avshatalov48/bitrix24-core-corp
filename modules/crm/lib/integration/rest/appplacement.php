@@ -19,6 +19,7 @@ class AppPlacement
 	public const REQUISITE_EDIT_FORM = 'CRM_REQUISITE_EDIT_FORM';
 	public const ONEC_PAGE = '1C_PAGE';
 	public const DETAIL_SEARCH = 'CRM_DETAIL_SEARCH';
+	public const REQUISITE_AUTOCOMPLETE = 'CRM_REQUISITE_AUTOCOMPLETE';
 
 	//region Grid context actions
 	/**
@@ -176,6 +177,7 @@ class AppPlacement
 				self::REQUISITE_EDIT_FORM,
 				self::ONEC_PAGE,
 				self::DETAIL_SEARCH,
+				self::REQUISITE_AUTOCOMPLETE,
 			],
 		);
 	}

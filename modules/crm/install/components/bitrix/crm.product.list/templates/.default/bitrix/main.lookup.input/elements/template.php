@@ -17,7 +17,7 @@ if(isset($arParams['INPUT_VALUE_STRING']) && mb_strlen($arParams['INPUT_VALUE_ST
 	}
 }
 
-
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 <div class="mli-layout" id="layout_<?=$control_id?>">
 	<?if($arParams["MULTIPLE"]=="Y"):?>

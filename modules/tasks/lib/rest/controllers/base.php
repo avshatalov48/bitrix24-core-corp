@@ -126,6 +126,6 @@ class Base extends Controller
 	 */
 	protected function getUserId()
 	{
-		return CurrentUser::get()->getId();
+		return (int) CurrentUser::get()->getId();
 	}
 }

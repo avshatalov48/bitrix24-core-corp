@@ -130,14 +130,15 @@
 	display: block;
 	margin-top: 30px;
 	margin-bottom: 13px;
-	font: 34px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 34px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #525c69;
 	z-index: 2;
 }
 
 .crm-entity-merger-sidebar-warning-text {
 	position: relative;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	z-index: 2;
 }
@@ -235,7 +236,8 @@
 	padding: 0 36px;
 	border-radius: 18px;
 	border: 1px solid rgba(82, 92, 105, .21);
-	font: 14px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	max-width: 100%;
 	overflow: hidden;
@@ -315,7 +317,8 @@
 .crm-entity-merger-column-btn-link-dark-box {
 	position: relative;
 	flex-grow: 1;
-	font: 14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 }
 
@@ -333,12 +336,14 @@
 
 .crm-entity-merger-column-btn-text {
 	margin-right: 2px;
-	font: 14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-entity-merger-column-btn-link-dark-box .crm-entity-merger-column-btn-date,
 .crm-entity-merger-column-btn-date {
-	font: 14px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-merger-column-btn-link-box {
@@ -650,7 +655,8 @@ div.crm-entity-merger-sidebar div.ui-entity-editor-section-header,
 .crm-entity-merger-panel-list-item {
 	margin-right: 23px;
 	list-style: none;
-	font: 11px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 }
 
@@ -689,7 +695,7 @@ div.crm-entity-merger-sidebar div.ui-entity-editor-section-header,
 .crm-entity-merger-panel-label {
 	display: flex;
 	align-items: center;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	text-align: left;
 }

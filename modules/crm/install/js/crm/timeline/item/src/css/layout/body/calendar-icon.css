@@ -1,0 +1,105 @@
+.crm-timeline__calendar-icon {
+	--crm-timeline__calendar-icon_size: 50px;
+	--crm-timeline__calendar-icon_border-width: 1px;
+	--crm-timeline__calendar-icon_primary-color: var(--ui-color-primary, #2fc6f6);
+	--crm-timeline__calendar-icon_content-font: var(--ui-font-family-secondary, var(--ui-font-family-open-sans), 'Open Sans', sans-serif);
+	--crm-timeline__calendar-icon_bottom-radius: var(--ui-border-radius-2xs, 4px);
+	--crm-timeline__calendar-icon_top-radius: var(--ui-border-radius-xs, 6px);
+	--crm-timeline__calendar-icon_white-rgb: 255, 255, 255;
+
+	width: var(--crm-timeline__calendar-icon_size);
+	height: var(--crm-timeline__calendar-icon_size);
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	border-radius:
+		var(--crm-timeline__calendar-icon_top-radius) /
+		calc(var(--crm-timeline__calendar-icon_bottom-radius) + 1px);
+	overflow: hidden;
+	background: linear-gradient(
+		0deg,
+		rgba(var(--ui-color-background-primary-rgb, var(--crm-timeline__calendar-icon_white-rgb)), 0.5),
+		rgba(var(--ui-color-background-primary-rgb, var(--crm-timeline__calendar-icon_white-rgb)), 0.5)),
+		var(--crm-timeline__calendar-icon_primary-color);
+
+}
+
+.crm-timeline__calendar-icon_top {
+	position: relative;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 9px;
+	background-color: var(--crm-timeline__calendar-icon_primary-color);
+}
+
+.crm-timeline__calendar-icon_top::after {
+	content: '';
+	display: block;
+	position: absolute;
+	width: 100%;
+	height: var(--crm-timeline__calendar-icon_border-width);
+	bottom: calc(var(--crm-timeline__calendar-icon_border-width) * -1);
+	left: 0;
+	background-color: var(--crm-timeline__calendar-icon_primary-color);
+	opacity: 0.15;
+}
+
+.crm-timeline__calendar-icon_bullets {
+	margin-top: 1px;
+	width: 24px;
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.crm-timeline__calendar-icon_bullet {
+	width: 4px;
+	height: 4px;
+	border-radius: 50%;
+	background-color: var(--ui-color-background-primary, #fff);
+	opacity: 0.5;
+}
+
+.crm-timeline__calendar-icon_content {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	width: calc(100% - var(--crm-timeline__calendar-icon_border-width) * 2);
+	margin-bottom: var(--crm-timeline__calendar-icon_border-width);
+	flex-grow: 1;
+	background-color: var(--ui-color-background-primary, #fff);
+	border-bottom-left-radius: var(--crm-timeline__calendar-icon_bottom-radius);
+	border-bottom-right-radius: var(--crm-timeline__calendar-icon_bottom-radius);
+	font-family: var(--crm-timeline__calendar-icon_content-font);
+	font-weight: var(--ui-font-weight-bold, bold);
+	text-transform: uppercase;
+}
+
+.crm-timeline__calendar-icon_day {
+	font-size: var(--ui-font-size-xl, 16px);
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--ui-color-base-90, #525c69);
+}
+
+.crm-timeline__calendar-icon_month {
+	font-size: var(--ui-font-size-7xs, 7px);
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--ui-color-base-50, #A8ADB4);
+}
+
+.crm-timeline__calendar-icon_date {
+	white-space: pre-wrap;
+	font-size: var(--ui-font-size-7xs, 7px);
+	color: var(--crm-timeline__calendar-icon_primary-color);
+	line-height: var(--ui-font-line-height-md, 1.4);
+}
+
+.crm-timeline__calendar-icon_day-week {
+	margin-right: 1px;
+}

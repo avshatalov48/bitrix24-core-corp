@@ -17,22 +17,21 @@ use Bitrix\Crm\Integration;
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/message.js');
 
-Bitrix\Main\UI\Extension::load(
-	[
-		'ui.buttons',
-		'ui.icons',
-		'ui.selector',
-		'crm.zoom',
-		'ui.timeline',
-		'ui.forms',
-		'crm.delivery.taxi',
-		'crm.timeline',
-		'sidepanel',
-		'crm.restriction.bitrix24',
-		'ui.hint',
-		'ui.design-tokens',
-	]
-);
+Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.buttons',
+	'ui.icons',
+	'ui.selector',
+	'crm.zoom',
+	'ui.timeline',
+	'ui.forms',
+	'crm.delivery.taxi',
+	'crm.timeline',
+	'sidepanel',
+	'crm.restriction.bitrix24',
+	'ui.hint',
+]);
 
 //HACK: Preloading files for prevent trembling of player afer load.
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/timeline_player/timeline_player.css');
@@ -54,7 +53,13 @@ if(\Bitrix\Main\Loader::includeModule('disk'))
 	]);
 }
 
-$jsLibraries = array('crm_visit_tracker', 'ui.viewer', 'player');
+$jsLibraries = [
+	'crm_visit_tracker',
+	'ui.viewer',
+	'player',
+	//used in CRM_DOCUMENT activity item in inline edit to select new create date
+	'date',
+];
 
 if(\Bitrix\Main\Loader::includeModule('voximplant'))
 {
@@ -227,13 +232,18 @@ if(!empty($arResult['ERRORS']))
 
 				if ($arResult['ENABLE_VISIT'])
 				{
+					$classParams = $arResult['IS_VISIT_RESTRICTED']
+						? ['IS_LOCKED' => true]
+						: []
+					;
 					$menuItems[] = [
 							'ID' => 'visit',
 							'TEXT' => GetMessage('CRM_TIMELINE_VISIT'),
 							'TITLE' => GetMessage('CRM_TIMELINE_VISIT'),
-						] + ($arResult['IS_VISIT_RESTRICTED'] ? [
-							'IS_LOCKED' => true,
-						] : [] ) + $baseMenuItem;
+						]
+						+ $classParams
+						+ $baseMenuItem
+					;
 				}
 
 				foreach($arResult['ADDITIONAL_TABS'] as $tab)
@@ -674,8 +684,8 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				zoomCreatedMessage: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_CONFERENCE_MESSAGE")?>',
 				zoomCreatedCopyInviteLink: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_COPY_INVITE_LINK")?>',
 				zoomCreatedStartConference: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_START_CONFERENCE")?>',
-				storeDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_TITLE')?>",
-				storeDocumentDescription: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_DESCRIPTION')?>",
+				storeDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_TITLE_2')?>",
+				storeDocumentDescription: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_DESCRIPTION_2')?>",
 			};
 
 			BX.CrmTimelineWaitEditor.messages =
@@ -837,7 +847,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"CRM_TIMELINE_SMS_UPLOAD_FILE": '<?=GetMessageJS("CRM_TIMELINE_SMS_UPLOAD_FILE")?>',
 				"CRM_TIMELINE_SMS_FIND_FILE": '<?=GetMessageJS("CRM_TIMELINE_SMS_FIND_FILE")?>',
 				"CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_SUCCESSFUL_ACTIVITY")?>',
-				"CRM_TIMELINE_ZOOM_CONFERENCE_END": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CONFERENCE_END")?>',
+				"CRM_TIMELINE_ZOOM_CONFERENCE_END": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CONFERENCE_END_2")?>',
 				"CRM_TIMELINE_ZOOM_JOINED_CONFERENCE": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_JOINED_CONFERENCE")?>',
 				"CRM_TIMELINE_ZOOM_MEETING_RECORD": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_MEETING_RECORD")?>',
 				"CRM_TIMELINE_ZOOM_MEETING_RECORD_PART": '<?=GetMessageJS("CRM_TIMELINE_ZOOM_MEETING_RECORD_PART")?>',
@@ -879,12 +889,12 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					containerId: "<?=CUtil::JSEscape($listContainerID)?>",
 					activityEditorId: "<?=CUtil::JSEscape($arResult['ACTIVITY_EDITOR_ID'])?>",
 					chatData: <?=CUtil::PhpToJSObject($arResult['CHAT_DATA'])?>,
-					scheduleData: <?=CUtil::PhpToJSObject($scheduleItems)?>,
-					historyData: <?=CUtil::PhpToJSObject($historyItems)?>,
+					scheduleData: <?=\Bitrix\Main\Web\Json::encode($scheduleItems)?>,
+					historyData: <?=\Bitrix\Main\Web\Json::encode($historyItems)?>,
 					historyNavigation: <?=CUtil::PhpToJSObject($arResult['HISTORY_NAVIGATION'])?>,
 					historyFilterId: "<?=CUtil::JSEscape($arResult['HISTORY_FILTER_ID'])?>",
 					isHistoryFilterApplied: <?=$arResult['IS_HISTORY_FILTER_APPLIED'] ? 'true' : 'false'?>,
-					fixedData: <?=CUtil::PhpToJSObject($fixedItems)?>,
+					fixedData: <?=\Bitrix\Main\Web\Json::encode($fixedItems)?>,
 					ajaxId: "<?=CUtil::JSEscape($arResult['AJAX_ID'])?>",
 					currentUrl: "<?=CUtil::JSEscape($arResult['CURRENT_URL'])?>",
 					serviceUrl: "/bitrix/components/bitrix/crm.timeline/ajax.php?&site=<?=SITE_ID?>&<?=bitrix_sessid_get()?>",

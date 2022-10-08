@@ -26,6 +26,8 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 if ($arParams['INDIVIDUAL_USE'] !== 'Y')
 {
 	$this->addExternalCss('/bitrix/components/bitrix/imconnector.settings/templates/.default/style.css');
@@ -114,7 +116,10 @@ if (empty($arResult['PAGE'])) //case when not first open
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_OLX_INDEX_ADDITIONAL_DESCRIPTION', ['#ID#' => 'redirect=detail&code=11405312'])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_OLX_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+							'#LINK_START#' => '<a href="#" id="imconnector-olx-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 
 					<div class="imconnector-field-box-content-btn">
@@ -169,8 +174,9 @@ else
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_OLX_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_OLX_CONNECT_STEP', [
-							'#ID#' => 'redirect=detail&code=11405312',
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_OLX_CONNECT_STEP_NEW', [
+							'#LINK_START#' => '<a id="imconnector-olx-link-help" class="imconnector-field-box-link">',
+							'#LINK_END#' => '</a>',
 						])?>
 					</div>
 					<?php

@@ -36,7 +36,8 @@ export default {
 				titleTemplate: Loc.getMessage('SALESCENTER_APP_CHAT_MESSAGE_TITLE'),
 				showHint: this.$root.$app.options.templateMode !== 'view',
 				editorTemplate: this.$root.$app.sendingMethodDesc.text,
-				editorUrl: this.$root.$app.orderPublicUrl
+				editorUrl: this.$root.$app.orderPublicUrl,
+				selectedMode: 'payment',
 			},
 			product: {
 				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
@@ -155,7 +156,14 @@ export default {
 		},
 		submitButtonLabel()
 		{
-			return Loc.getMessage('SALESCENTER_SEND');
+			return this.editable && !this.$root.$app?.compilation
+				? Loc.getMessage('SALESCENTER_SEND')
+				: Loc.getMessage('SALESCENTER_RESEND')
+				;
+		},
+		isFacebookForm()
+		{
+			return this.$root.$app?.connector === 'facebook' && this.$root.$app?.isAllowedFacebookRegion;
 		},
 		isShowDocumentSelector()
 		{
@@ -254,6 +262,10 @@ export default {
 		{
 			this.$emit('stage-block-send-on-send', event);
 		},
+		onSendCompilationLinkToFacebook(event)
+		{
+			this.$emit('stage-block-send-on-send-compilation-link-to-facebook', event);
+		},
 		changeProvider(value)
 		{
 			this.$root.$app.sendingMethodDesc.provider = value;
@@ -263,7 +275,28 @@ export default {
 		{
 			BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
 		},
+		onProductFormModeChange()
+		{
+			const isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
+			if (isCompilationMode)
+			{
+				this.stages.delivery.status = Status.disabled;
 
+				this.stages.message.selectedMode = 'compilation';
+				this.$root.$app.sendingMethodDesc.text = this.$root.$app.sendingMethodDesc.text_modes.compilation;
+				this.stages.message.editorTemplate = this.$root.$app.sendingMethodDesc.text_modes.compilation;
+			}
+			else
+			{
+				this.stages.delivery.status = this.$root.$app.options.deliveryList.isInstalled
+					? Status.complete
+					: Status.disabled;
+
+				this.stages.message.selectedMode = 'payment';
+				this.$root.$app.sendingMethodDesc.text = this.$root.$app.sendingMethodDesc.text_modes.payment;
+				this.stages.message.editorTemplate = this.$root.$app.sendingMethodDesc.text_modes.payment;
+			}
+		},
 	},
 	created()
 	{
@@ -276,6 +309,7 @@ export default {
 	template: `
 		<div>
 			<chat-message-block
+				v-if="editable"
 				@stage-block-sms-send-on-change-provider="changeProvider"
 				:counter="counter++"
 				:status="stages.message.status"
@@ -284,12 +318,14 @@ export default {
 				:showHint="stages.message.showHint"
 				:editorTemplate="stages.message.editorTemplate"
 				:editorUrl="stages.message.editorUrl"
-			/>	
-			<product-block 
+				:selectedMode="stages.message.selectedMode"
+			/>
+			<product-block
 				:counter="counter++"
 				:status="stages.product.status"
 				:title="stages.product.title"
 				:hintTitle="stages.product.hintTitle"
+				@on-product-form-mode-change="onProductFormModeChange"
 			/>
 			<paysystem-block
 				@on-stage-tile-collection-slider-close="stageRefresh($event, 'PAY_SYSTEM')"
@@ -340,8 +376,10 @@ export default {
 			/>
 			<send-block
 				@on-submit="onSend"
+				@on-submit-compilation-link-to-facebook="onSendCompilationLinkToFacebook"
 				:buttonEnabled="isSendAllowed"
 				:buttonLabel="submitButtonLabel"
+				:isFacebookForm="isFacebookForm"
 			/>
 			<timeline-block
 				v-if="hasStageTimeLine"

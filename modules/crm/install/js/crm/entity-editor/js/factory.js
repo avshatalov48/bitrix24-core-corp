@@ -389,6 +389,10 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				{
 					return BX.Crm.SmartInvoiceModel.create(id, settings);
 				}
+				else if(entityTypeId === BX.CrmEntityType.enumeration.smartdocument)
+				{
+					return BX.Crm.SmartDocumentModel.create(id, settings);
+				}
 				else if (BX.CrmEntityType.isDynamicTypeByTypeId(entityTypeId))
 				{
 					return BX.Crm.FactoryBasedModel.create(id, settings);

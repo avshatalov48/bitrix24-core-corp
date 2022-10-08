@@ -49,7 +49,7 @@ this.BX.Salescenter = this.BX.Salescenter || {};
 	        }).then(function (response) {
 	          _this2.response = response;
 	          resolve(_this2);
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          _this2.response = error;
 	          resolve(_this2);
 	        });

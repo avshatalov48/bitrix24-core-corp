@@ -1,6 +1,7 @@
 <?
 
 use Bitrix\Calendar\Sync\Google;
+use Bitrix\Calendar\Sync\Office365;
 use Bitrix\Main\DI\ServiceLocator;
 
 include_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/dav/classes/general/connection.php");
@@ -19,7 +20,7 @@ class CDavConnection
 			{
 				$APPLICATION->ThrowException($v[0], $v[1]);
 			}
-			return;
+			return null;
 		}
 
 		$arInsert = $DB->PrepareInsert("b_dav_connections", $arFields);
@@ -32,14 +33,25 @@ class CDavConnection
 		$id = (int)$DB->LastID();
 		if (($id > 0) && \Bitrix\Main\Loader::includeModule('calendar'))
 		{
+			// TODO: remove dependence from different calendar systems
 			/** @var Google\Helper $googleHelper */
 			$googleHelper = ServiceLocator::getInstance()->get('calendar.service.google.helper');
+			/** @var Office365\Helper $office365Helper */
+			$office365Helper = ServiceLocator::getInstance()->get('calendar.service.office365.helper');
+			$iCloudHelper = ServiceLocator::getInstance()->get('calendar.service.icloud.helper');
 			$caldavHelper = ServiceLocator::getInstance()->get('calendar.service.caldav.helper');
 			$connectionType = $googleHelper->isGoogleConnection($arFields['ACCOUNT_TYPE'])
 				? 'google'
-				: ($caldavHelper->isYandex($arFields['SERVER_HOST'])
-					? 'yandex'
-					: 'caldav')
+				: ($office365Helper->isVendorConnection($arFields['ACCOUNT_TYPE'])
+					? 'office365'
+					: ($iCloudHelper->isVendorConnection($arFields['ACCOUNT_TYPE'])
+						? 'icloud'
+						: ($caldavHelper->isYandex($arFields['SERVER_HOST'])
+							? 'yandex'
+							: 'caldav'
+						)
+					)
+				)
 			;
 			$connectionName = $connectionType . $id;
 			\Bitrix\Calendar\Util::addPullEvent(
@@ -66,7 +78,28 @@ class CDavConnection
 		global $DB;
 
 		if (count($arSelectFields) <= 0)
-			$arSelectFields = array("ID", "ENTITY_TYPE", "ENTITY_ID", "ACCOUNT_TYPE", "NAME", "SERVER_SCHEME", "SERVER_HOST", "SERVER_PORT", "SYNC_TOKEN", "SERVER_USERNAME", "SERVER_PASSWORD", "SERVER_PATH", "CREATED", "MODIFIED", "SYNCHRONIZED", "LAST_RESULT");
+		{
+			$arSelectFields = array(
+				"ID",
+				"ENTITY_TYPE",
+				"ENTITY_ID",
+				"ACCOUNT_TYPE",
+				"NAME",
+				"SERVER_SCHEME",
+				"SERVER_HOST",
+				"SERVER_PORT",
+				"SYNC_TOKEN",
+				"SERVER_USERNAME",
+				"SERVER_PASSWORD",
+				"SERVER_PATH",
+				"CREATED",
+				"MODIFIED",
+				"SYNCHRONIZED",
+				"LAST_RESULT",
+				"IS_DELETED",
+				"NEXT_SYNC_TRY",
+			);
+		}
 
 		static $arFields = array(
 			"ID" => Array("FIELD" => "N.ID", "TYPE" => "int"),
@@ -85,6 +118,8 @@ class CDavConnection
 			"SYNCHRONIZED" => Array("FIELD" => "N.SYNCHRONIZED", "TYPE" => "datetime"),
 			"LAST_RESULT" => Array("FIELD" => "N.LAST_RESULT", "TYPE" => "string"),
 			"SYNC_TOKEN" => Array("FIELD" => "N.SYNC_TOKEN", "TYPE" => "string"),
+			"IS_DELETED" => Array("FIELD" => "N.IS_DELETED", "TYPE" => "string"),
+			"NEXT_SYNC_TRY" => Array("FIELD" => "N.NEXT_SYNC_TRY", "TYPE" => "datetime"),
 		);
 
 		$arSqls = CDav::PrepareSql($arFields, $arOrder, $arFilter, $arGroupBy, $arSelectFields);
@@ -160,4 +195,3 @@ class CDavConnection
 		return $dbRes;
 	}
 }
-?>

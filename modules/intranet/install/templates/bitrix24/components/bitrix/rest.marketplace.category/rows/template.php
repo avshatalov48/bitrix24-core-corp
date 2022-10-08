@@ -2,7 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 /*template is only for telephony because of telephony button*/
 
-\Bitrix\Main\UI\Extension::load("ui.buttons");
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.design-tokens"]);
 
 if (!is_array($arResult["ITEMS"]))
 	return;

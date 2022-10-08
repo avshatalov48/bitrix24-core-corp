@@ -70,7 +70,7 @@ BX.CrmScheduleOpenLineAction = BX.Crm.Timeline.Actions.OpenLine;
 //endregion
 
 //region Base Item
-BX.CrmTimelineItem = BX.Crm.Timeline.Item;
+BX.CrmTimelineItem = BX.Crm.Timeline.CompatibleItem;
 //endregion
 
 BX.Crm.TimelineEditorMode = BX.Crm.Timeline.Types.EditorMode;

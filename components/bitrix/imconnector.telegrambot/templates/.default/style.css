@@ -13,7 +13,8 @@
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 15px/37px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/37px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: border-color .3s ease;
 	-webkit-appearance: none;
 	appearance: none;

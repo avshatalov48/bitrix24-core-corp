@@ -472,8 +472,8 @@ BX.namespace('BX.Crm.Activity');
 			var dn = this.getNode('detail-container');
 			node.innerHTML = node.getAttribute('data-label-short');
 			dn.style.maxHeight = '60px';
-			dn.style.marginTop = '30px';
-			dn.style.marginBottom = '15px';
+			dn.style.paddingTop = '30px';
+			dn.style.paddingBottom = '15px';
 			dn.style.opacity = 1;
 		}
 	};
@@ -487,15 +487,15 @@ BX.namespace('BX.Crm.Activity');
 
 		var start = {
 			dateMaxHeight: delta * 60,
-			dateMarginTop: delta * 30,
-			dateMarginBottom: delta * 15,
+			datePaddingTop: delta * 30,
+			datePaddingBottom: delta * 15,
 			dateOpacity: delta * 100
 
 		};
 		var end = {
 			dateMaxHeight: 60 - delta * 60,
-			dateMarginTop: 30 - delta * 30,
-			dateMarginBottom: 15 - delta * 15,
+			datePaddingTop: 30 - delta * 30,
+			datePaddingBottom: 15 - delta * 15,
 			dateOpacity: 100 - delta * 100
 		};
 
@@ -508,8 +508,8 @@ BX.namespace('BX.Crm.Activity');
 			{
 				// mn.style.marginLeft = state.mainMarginLeft + 'px';
 				dn.style.maxHeight = state.dateMaxHeight + 'px';
-				dn.style.marginTop = state.dateMarginTop + 'px';
-				dn.style.marginBottom = state.dateMarginBottom + 'px';
+				dn.style.paddingTop = state.datePaddingTop + 'px';
+				dn.style.paddingBottom = state.datePaddingBottom + 'px';
 				dn.style.opacity = state.dateOpacity / 100;
 
 				// win.getPopup().adjustPosition();
@@ -1172,7 +1172,7 @@ BX.namespace('BX.Crm.Activity');
 					refreshParams.data = data;
 					refreshParams.focusSelector = refreshParams.show ? true : (params.focusSelector == undefined ? false : params.focusSelector);
 					me.refreshPlannerState(refreshParams);
-					
+
 					if (me.calendarPlanner)
 					{
 						me.calendarPlanner.hideLoader();

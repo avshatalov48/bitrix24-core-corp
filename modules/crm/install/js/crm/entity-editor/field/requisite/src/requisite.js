@@ -5,6 +5,8 @@ import {EntityEditorClientRequisites} from "./client-requisites";
 import {EntityEditorRequisiteTooltip} from "./requisite-tooltip";
 import {EntityEditorRequisiteEditor} from "./requisite-editor";
 import {RequisiteList} from "./requisite-list";
+
+import 'ui.design-tokens';
 import "./requisite.css"
 
 export {

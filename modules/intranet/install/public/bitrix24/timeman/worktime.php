@@ -12,7 +12,6 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 {
 	$licenseType = CBitrix24::getLicenseType();
 }
-?><?
 
 if (ModuleManager::isModuleInstalled("timeman"))
 {

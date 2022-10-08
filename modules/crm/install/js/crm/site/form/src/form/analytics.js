@@ -15,10 +15,23 @@ class Analytics
 
 	onFormEvent(data: any, obj: Object, type: string)
 	{
+		if (this.#form.disabled)
+		{
+			return;
+		}
+
+		if (this.#form.editMode)
+		{
+			return; // don't handle analytics in form editor mode
+		}
+
 		switch (type)
 		{
 			case Type.EventTypes.showFirst:
 				this.send('view');
+				break;
+			case Type.EventTypes.view: // form
+				this.#form.analyticsHandler('view', this.#form.identification.id);
 				break;
 			case Type.EventTypes.fieldFocus:
 				if (!this.#isStartSent)

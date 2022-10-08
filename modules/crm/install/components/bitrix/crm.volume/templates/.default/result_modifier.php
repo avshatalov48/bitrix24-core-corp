@@ -20,7 +20,7 @@ Loc::loadMessages(__FILE__);
 
 \CJSCore::Init(array('core', 'update_stepper'));
 
-\Bitrix\Main\UI\Extension::load('ui.alerts');
+\Bitrix\Main\UI\Extension::load(['ui.alerts', 'ui.fonts.opensans']);
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/sale/core_ui_widget.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/sale/core_iterator.js');

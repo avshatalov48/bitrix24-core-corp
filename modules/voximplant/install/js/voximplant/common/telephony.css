@@ -1,7 +1,7 @@
 .tel-title {
 	color: #555;
 	font-size: 22px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tel-inner {
@@ -66,7 +66,7 @@
 .tel-set-main-new-phone {
 	color: #262626;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 36px;
 	margin-top: 18px;
 	text-align: center;
@@ -99,7 +99,7 @@
 .tel-phones-list-notice a {
 	text-decoration: underline;
 	color: #d31212;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tel-phones-list-notice a:hover {
@@ -255,7 +255,7 @@
 .tel-balance-title {
 	color: #6a727f;
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 17px;
 	text-shadow: 0 1px #fff;
 	white-space: initial;
@@ -304,7 +304,7 @@
 	color: rgba(0, 0, 0, 0);
 	display: inline-block;
 	font-family: Arial, sans-serif;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-shadow: none;
 	vertical-align: middle;
 }
@@ -407,7 +407,7 @@
 	display: inline-block;
 	font-size: 21px;
 	text-transform: uppercase;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 21px;
 	height: 27px;
 	min-width: 16px;
@@ -445,7 +445,7 @@
 	color: #7a808c !important;
 	cursor: pointer;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 31px;
 	margin: 10px 0;
 	min-width: 76px;
@@ -512,7 +512,7 @@
 	display: inline-block;
 	text-decoration: none !important;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 29px;
 	line-height: 29px;
 	min-width: 105px;
@@ -564,7 +564,7 @@
 .bx-vi-docs-title {
 	color: #41474f;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 7px;
 	padding-top: 13px;
 }
@@ -587,7 +587,7 @@
 .tel-history-title {
 	color: #41474f;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 22px;
 }
 
@@ -619,7 +619,7 @@
 
 .tel-history-text-right {
 	float: right;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tel-history-block-info-current {
@@ -632,7 +632,7 @@
 }
 
 .tel-history-notice {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-bottom: 5px;
 }
 
@@ -667,7 +667,7 @@
 	border-color: #ccd3dd #c4cbd4 #bbc2cc;
 	color: #41474f;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 45px;
 	text-shadow: 0 1px rgba(255, 255, 255, 0.75);
 	text-align: left;
@@ -737,7 +737,7 @@
 .tel-num-block {
 	color: #525252;
 	font-size: 29px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 10px;
 }
 
@@ -754,7 +754,7 @@
 
 .tel-balance-text-bold {
 	display: block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-bottom: 5px;
 }
 
@@ -789,7 +789,7 @@
 	display: inline-block;
 	color: #fff;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-shadow: 0 1px #921f1f;
 	padding: 0 8px;
 }
@@ -800,7 +800,7 @@
 .tel-num-not-conf-text {
 	color: #b51515;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 15px;
 }
 
@@ -838,7 +838,7 @@
 }
 
 .tel-new-num-inp-wrap .tel-new-num-inp {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	width: 100%;
 }
 
@@ -1005,7 +1005,7 @@
 	border-radius: 3px 3px 0 0;
 	color: #41474f;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 35px;
 	line-height: 34px;
 	padding-left: 12px;
@@ -1020,7 +1020,7 @@
 	background-color: #eef3f4;
 	color: #5c6470;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 37px;
 	height: 38px;
 	margin-bottom: 28px;
@@ -1074,7 +1074,7 @@
 	color: #000;
 	display: inline-block;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: top;
 	text-align: right;
 }
@@ -1088,7 +1088,7 @@
 	color: #000;
 	display: inline-block;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-bottom: 12px;
 }
 
@@ -1237,7 +1237,7 @@
 	color: #2067b0;
 	display: inline-block;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 20px;
 	margin-right: 9px;
 	line-height: 20px;
@@ -1273,7 +1273,7 @@
 	color: #2067B0;
 	display: inline-block;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 20px;
 	/*margin: 0 9px 9px 0;*/
 	padding-left: 14px;
@@ -1500,7 +1500,7 @@
 
 .tel-block-title-text {
 	color: #7a808c;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 24px;
 	display: block;
 	line-height: 25px;
@@ -1576,7 +1576,7 @@
 	display: inline-block;
 	height: 25px;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 24px;
 	text-shadow: 0 1px #fff;
 	padding: 0 13px;
@@ -1934,7 +1934,7 @@
 }
 
 .tel-set-b-text-block {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 18px;
 }
 
@@ -2466,7 +2466,7 @@
 
 .tel-set-info-descr-num {
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 7px;
 }
 
@@ -2507,7 +2507,7 @@
 }
 
 .tel-set-info-cont-footer .webform-small-button-text {
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	min-width: 30px;
 }
 
@@ -2530,7 +2530,7 @@
 .tel-set-sip-block-title {
 	color: #5c6470;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 0 10px;
 }
 
@@ -2553,7 +2553,7 @@
 	font-size: 14px;
 	color: #000;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tel-set-sip-reg-status-result-success {
@@ -2717,7 +2717,7 @@
 	display: inline-block;
 	font-size: 20px;
 	padding-left: 20px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	word-wrap: normal;
 }
 
@@ -2917,7 +2917,7 @@
 }
 
 .voximplant-status-panel-badge {
-	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
 }
 

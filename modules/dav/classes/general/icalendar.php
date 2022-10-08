@@ -103,14 +103,28 @@ class CDavICalendarComponent
 		$arComponents = array();
 		foreach ($arContent as $key => $val)
 		{
-			if (is_array($val) && mb_substr($key, 0, 1) == "@")
+			if (
+				is_array($val)
+				&& $key === '@VALARM'
+				&& !array_key_exists('TYPE', $val)
+				&& !array_key_exists('TRIGGER', $val)
+			)
+			{
+				foreach ($val as $val1)
+				{
+					$arComponents[] = new CDavICalendarComponent($val1);
+				}
+			}
+			elseif (is_array($val) && mb_substr($key, 0, 1) == "@")
 			{
 				$arComponents[] = new CDavICalendarComponent($val);
 			}
 			elseif (is_array($val) && !array_key_exists("PARAMETERS", $val) && !array_key_exists("VALUE", $val))
 			{
 				foreach ($val as $val1)
+				{
 					$arProperties[] = new CDavICalendarProperty($key, $val1);
+				}
 			}
 			else
 			{

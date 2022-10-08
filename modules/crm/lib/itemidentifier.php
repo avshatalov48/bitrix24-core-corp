@@ -111,4 +111,14 @@ class ItemIdentifier
 			'ENTITY_ID' => $this->getEntityId(),
 		];
 	}
+
+	public static function createFromArray(array $data): ?self
+	{
+		if (isset($data['ENTITY_TYPE_ID']) && isset($data['ENTITY_ID']))
+		{
+			return new self((int)$data['ENTITY_TYPE_ID'], (int)$data['ENTITY_ID']);
+		}
+
+		return null;
+	}
 }

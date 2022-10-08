@@ -1,4 +1,4 @@
-div.bx-crm-interface-list {font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+div.bx-crm-interface-list {font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 div.empty {height:0;}
 
 /* Drag-n-Drop*/
@@ -92,7 +92,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.grid-lock {background
 	padding:0 0 13px 0;
 }
 .bx-crm-interface-list td{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	vertical-align:middle !important;
 }
@@ -319,9 +319,9 @@ input.bx-crm-folder-title{
 
 /*Buttons*/
 .bx-crm-btn {
-	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size:12px;
-	font-weight:bold;
 	display:inline-block;
 	margin-bottom:10px;
 	padding:0 15px;
@@ -424,7 +424,7 @@ td.bx-crm-not-result:hover{
 
 /*Footer Toolbar*/
 .bx-crm-footer-interface-toolbar-container{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	line-height:54px;
 	height:54px;

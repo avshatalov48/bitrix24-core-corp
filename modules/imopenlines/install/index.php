@@ -212,6 +212,7 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
+		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer');
 
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');
@@ -470,6 +471,7 @@ final class imopenlines extends \CModule
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionStart');
 		$eventManager->unRegisterEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Connector', 'onSessionFinish');
+		$eventManager->unRegisterEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer');
 
 		$this->UnInstallChatApps();
 

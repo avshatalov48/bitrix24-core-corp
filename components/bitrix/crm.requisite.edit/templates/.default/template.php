@@ -7,6 +7,7 @@ use Bitrix\Main\Page\Asset;
 
 global $APPLICATION;
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 
@@ -234,7 +235,7 @@ if($arResult['POPUP_MODE'] === 'Y' && $arResult['DUPLICATE_CONTROL']['ENABLED'] 
 			"<?=CCrmOwnerType::DealName?>": "<?=$entityTypeCategories[CCrmOwnerType::Deal]?>",
 			"<?=CCrmOwnerType::InvoiceName?>": "<?=$entityTypeCategories[CCrmOwnerType::Invoice]?>"
 		};
-		
+
 		//DUPLICATE CONTROL
 		var dupControllerId = (formId.toLowerCase() + "_dup");
 		var dupControllerRequisite = BX.CrmDupControllerRequisite.create(

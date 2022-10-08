@@ -12,3 +12,4 @@ DROP TABLE IF EXISTS b_documentgenerator_role;
 DROP TABLE IF EXISTS b_documentgenerator_role_permission;
 DROP TABLE IF EXISTS b_documentgenerator_role_access;
 DROP TABLE IF EXISTS b_documentgenerator_document_binding;
+DROP TABLE IF EXISTS b_documentgenerator_actualize_queue;

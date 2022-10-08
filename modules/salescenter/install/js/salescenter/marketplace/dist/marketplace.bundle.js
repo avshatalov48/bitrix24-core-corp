@@ -65,7 +65,7 @@ this.BX = this.BX || {};
 	        if (app.TYPE === "A") ; else {
 	          BX.rest.AppLayout.openApplication(tile.id);
 	        }
-	      }.bind(this)).catch(function (response) {
+	      }.bind(this))["catch"](function (response) {
 	        this.errorPopup(" ", response.errors.pop().message);
 	      }.bind(this));
 	    }

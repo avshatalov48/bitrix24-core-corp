@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Category\Entity;
 
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Result;
+use CCrmOwnerType;
 
 class ClientDefaultCategory extends Category
 {
@@ -16,6 +17,19 @@ class ClientDefaultCategory extends Category
 		$this->entityTypeId = $entityTypeId;
 		$this->name = $name;
 		$this->sort = $sort;
+	}
+
+	public function getData(): array
+	{
+		if (in_array($this->getEntityTypeId(), [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
+		{
+			return array_merge(parent::getData(), [
+				'IS_SYSTEM' => $this->getIsSystem(),
+				'CODE' => $this->getCode(),
+			]);
+		}
+
+		return parent::getData();
 	}
 
 	public function getId(): ?int
@@ -59,6 +73,11 @@ class ClientDefaultCategory extends Category
 	}
 
 	public function getIsDefault(): bool
+	{
+		return true;
+	}
+
+	public function getIsSystem(): bool
 	{
 		return true;
 	}

@@ -1,16 +1,16 @@
-import Item from "../item";
+import CompatibleItem from "./compatible-item";
 import History from "./history";
 import {Item as ItemType} from "../types";
 
 /** @memberof BX.Crm.Timeline.Items */
-export default class Scheduled extends Item
+export default class Scheduled extends CompatibleItem
 {
 	constructor()
 	{
 		super();
 		this._schedule = null;
 		this._deadlineNode = null;
-	
+
 		this._headerClickHandler = BX.delegate(this.onHeaderClick, this);
 		this._setAsDoneButtonHandler = BX.delegate(this.onSetAsDoneButtonClick, this);
 	}
@@ -22,7 +22,7 @@ export default class Scheduled extends Item
 		{
 			throw "Scheduled. The field 'activityEditor' is not assigned.";
 		}
-	
+
 		if(this.hasPermissions() && !this.verifyPermissions())
 		{
 			this.loadPermissions();
@@ -60,7 +60,7 @@ export default class Scheduled extends Item
 		{
 			return;
 		}
-	
+
 		this.setPermissions(permissions);
 		window.setTimeout(function(){ this.refreshLayout(); }.bind(this), 0);
 	}
@@ -77,7 +77,13 @@ export default class Scheduled extends Item
 
 	isCounterEnabled()
 	{
+		if (this.isDone())
+		{
+			return this._existedStreamItemDeadLine && History.isCounterEnabled(this._existedStreamItemDeadLine);
+		}
+
 		const deadline = this.getDeadline();
+
 		return deadline && History.isCounterEnabled(deadline);
 	}
 
@@ -92,7 +98,7 @@ export default class Scheduled extends Item
 		{
 			return;
 		}
-	
+
 		this.markAsDone(true);
 		this._schedule.onItemMarkedAsDone(
 			this,
@@ -191,7 +197,7 @@ export default class Scheduled extends Item
 					this._container.appendChild(this._wrapper);
 				}
 			}
-	
+
 			this.markAsTerminated(this._schedule.checkItemForTermination(this));
 		}
 	}

@@ -10,7 +10,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(['crm.toolbar-component']);
+Extension::load(['crm.toolbar-component', 'ui.fonts.opensans']);
 
 if(!empty($arResult['additionalScripts']))
 {

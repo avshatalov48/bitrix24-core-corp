@@ -89,7 +89,7 @@ $arParams["ITEM_URL"] = CComponentEngine::MakePathFromTemplate($arParams["SEF_FO
 
 if ($componentPage != 'list' && $arParams['SET_NAVCHAIN'] !== 'N')
 {
-	\Bitrix\Main\Localization\Loc::loadLanguageFile(dirname(__FILE__)."/.description.php");
+	\Bitrix\Main\Localization\Loc::loadLanguageFile(__DIR__."/.description.php");
 	$APPLICATION->AddChainItem(GetMessage('MEETINGS_NAME'), $arParams['LIST_URL']);
 }
 

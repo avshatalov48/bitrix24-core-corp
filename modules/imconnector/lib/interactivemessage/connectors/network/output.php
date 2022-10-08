@@ -19,30 +19,51 @@ class Output extends InteractiveMessage\Output
 	 */
 	public function nativeMessageProcessing($message): array
 	{
-		$command = 'session';
 		if ($this->isLoadedKeyboard())
 		{
-			foreach ($this->keyboardData as $keyboard)
+			$keyboard = [];
+			foreach ($this->keyboardData as $button)
 			{
-				$commandParams = [
-					'COMMAND' => $keyboard['COMMAND'],
-					'CHAT_ID' => $this->idChat,
-					'SESSION_ID' => $keyboard['SESSION_ID'],
-					'TASK_ID' => $keyboard['TASK_ID'],
-					'CONFIG_TASK_ID' => $keyboard['CONFIG_TASK_ID'],
+				$buttonData = [
+					'TYPE' => $button['TYPE'] ?? 'BUTTON',
+					'TEXT' => $button['TEXT_BUTTON'],
+					'BG_COLOR' => $button['BOTTOM_COLOR'],
+					'TEXT_COLOR' => $button['TEXT_COLOR'],
+					'DISABLED' => $button['DISABLED'] ?? 'N',
+					'DISPLAY' => $button['DISPLAY'] ?? 'BLOCK',
 				];
-				$commandParams = Json::encode($commandParams);
 
-				$message['keyboardData'][] = [
-					'TEXT' => $keyboard['TEXT_BUTTON'],
-					'DISABLED' => 'N',
-					'COMMAND' => $command,
-					'COMMAND_PARAMS' => $commandParams,
-					'BG_COLOR' => $keyboard['BOTTOM_COLOR'],
-					'TEXT_COLOR' => $keyboard['TEXT_COLOR'],
-					'DISPLAY' => 'LINE',
-				];
+				if (isset($button['LINK']))
+				{
+					$buttonData['LINK'] = $button['LINK'];
+				}
+				if (isset($button['COMMAND']))
+				{
+					$buttonData['COMMAND'] = $button['COMMAND'];
+					if (isset($button['COMMAND_PARAMS']))
+					{
+						$buttonData['COMMAND_PARAMS'] =
+							is_array($button['COMMAND_PARAMS'])
+								? Json::encode($button['COMMAND_PARAMS'])
+								: $button['COMMAND_PARAMS'] ?? '';
+					}
+				}
+				if (isset($button['ACTION']))
+				{
+					$buttonData['ACTION'] = $button['ACTION'];
+					if (isset($button['ACTION_VALUE']))
+					{
+						$buttonData['ACTION_VALUE'] =
+							is_array($button['ACTION_VALUE'])
+								? Json::encode($button['ACTION_VALUE'])
+								: $button['ACTION_VALUE'] ?? '-';
+					}
+				}
+
+				$keyboard[] = $buttonData;
 			}
+
+			$message['keyboardData'] = $keyboard;
 		}
 
 		return $message;

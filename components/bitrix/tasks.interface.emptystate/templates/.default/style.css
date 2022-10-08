@@ -1,0 +1,25 @@
+.tasks-interface__emptystate {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin: auto 30px;
+	text-align: center;
+}
+
+.tasks-interface__emptystate-title {
+	margin-bottom: 75px;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-size: var(--ui-typography-heading-h1-font-size, 28px);
+	line-height: var(--ui-typography-heading-h1-line-height, 1.2);
+	font-weight: var(--ui-typography-heading-h1-font-weight, 300);
+	color: var(--ui-typography-heading-h1-color, #333);
+}
+
+.tasks-interface__emptystate-info {
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));;
+	font-size: var(--ui-typography-text-lg-font-size, 15px);
+	line-height: var(--ui-typography-text-lg-line-height, 1.4);
+	font-weight: var(--ui-typography-text-lg-font-weight, 400);
+}
+

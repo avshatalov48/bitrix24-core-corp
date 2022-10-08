@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $href = $arParams["PATH_TO_TASKS"];
@@ -112,7 +113,7 @@ BX.ready(function(){
 				)
 				{
 					$str .= $funcRenderPresetsTree(
-						$funcRenderPresetsTree, 
+						$funcRenderPresetsTree,
 						$arPresetData['#Children'],
 						$curFilterId,
 						$counts,
@@ -127,8 +128,8 @@ BX.ready(function(){
 		};
 
 		echo $funcRenderPresetsTree(
-			$funcRenderPresetsTree, $arResult['PRESETS_TREE'], 
-			$arResult['SELECTED_PRESET_ID'], $arResult['COUNTS'], 
+			$funcRenderPresetsTree, $arResult['PRESETS_TREE'],
+			$arResult['SELECTED_PRESET_ID'], $arResult['COUNTS'],
 			$bSkipManual = true,
 			$arParams
 		);
@@ -138,8 +139,8 @@ BX.ready(function(){
 	<ul class="task-filter-items task-filter-own-items">
 		<?php
 		echo $funcRenderPresetsTree(
-			$funcRenderPresetsTree, $arResult['PRESETS_TREE'], 
-			$arResult['SELECTED_PRESET_ID'], $arResult['COUNTS'], 
+			$funcRenderPresetsTree, $arResult['PRESETS_TREE'],
+			$arResult['SELECTED_PRESET_ID'], $arResult['COUNTS'],
 			$bSkipManual = false,
 			$arParams
 		);
@@ -418,7 +419,7 @@ BX.ready(function(){
 				<input class="filter-checkbox" type="checkbox" id="filter-marked" name="F_MARKED" value="Y"<?php if ($arParams["ADV_FILTER"]["F_MARKED"] == "Y"):?> checked<?php endif?> />&nbsp;<label for="filter-marked"><?php echo GetMessage("TASKS_FILTER_MARKED")?></label><br />
 				<input class="filter-checkbox" type="checkbox" id="filter-in-report" name="F_IN_REPORT" value="Y"<?php if ($arParams["ADV_FILTER"]["F_IN_REPORT"] == "Y"):?> checked<?php endif?> />&nbsp;<label for="filter-in-report"><?php echo GetMessage("TASKS_FILTER_ADV_IN_REPORT")?></label><br />
 				<input class="filter-checkbox" type="checkbox" id="filter-overdued" name="F_OVERDUED" value="Y"<?php if ($arParams["ADV_FILTER"]["F_OVERDUED"] == "Y"):?> checked<?php endif?> />&nbsp;<label for="filter-overdued"><?php echo GetMessage("TASKS_FILTER_OVERDUED")?></label><br />
-				<input class="filter-checkbox" type="checkbox" id="user-from-my-office" 
+				<input class="filter-checkbox" type="checkbox" id="user-from-my-office"
 					onclick="if (this.checked) BX('filter-show-not-my-tasks').checked = false;"
 					name="F_SUBORDINATE" value="Y"<?php
 						if (
@@ -426,7 +427,7 @@ BX.ready(function(){
 							|| ($arParams["ADV_FILTER"]["F_ADVANCED"] != "Y" && $arResult["TASK_TYPE"] == "group")
 						):?> checked<?php
 					endif; ?> />&nbsp;<label for="user-from-my-office"><?php echo GetMessage("TASKS_FILTER_SHOW_SUBORDINATE")?></label><br />
-				<input class="filter-checkbox" type="checkbox" id="filter-show-not-my-tasks" 
+				<input class="filter-checkbox" type="checkbox" id="filter-show-not-my-tasks"
 					onclick="if (this.checked) BX('user-from-my-office').checked = false;"
 					name="F_ANY_TASK" value="Y"<?php
 						if (

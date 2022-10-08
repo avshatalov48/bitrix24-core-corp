@@ -7,7 +7,7 @@
     overflow-x: hidden;
 }
 
-.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}
+.structure-dept-block, .structure-move-employee, .structure-dept-emp-popup {font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .structure-dept-emp-popup a,.structure-dept-block a {text-decoration: none; color: #2067B0;}
 .structure-dept-emp-popup a:hover, .structure-dept-block a:hover {text-decoration: underline; color: #2067B0;}
@@ -91,7 +91,7 @@
 	border: none;
 	colr:#41474e;
 	font-size: 18px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align: left;
 	width: 38%;
 }
@@ -132,7 +132,7 @@
 	box-shadow:inset 0 1px 0 #e2f5fa;
 	color: #535b67;
 	font-size: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 38px;
 	text-shadow: 0 1px #fff;
 }
@@ -194,7 +194,7 @@ a.task-direct-number:hover {
 	line-height: 16px;
 	height: 16px;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	top: -9px;
 	text-shadow: 0 1px rgba(0,0,0,.15);
 	min-width: 11px;
@@ -240,7 +240,7 @@ a.task-direct-number:hover {
 	color: #1a60a9;
 	display: block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;

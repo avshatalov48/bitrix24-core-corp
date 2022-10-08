@@ -34,7 +34,8 @@ Extension::load([
 	'ui.notification',
 	'ui.dialogs.messagebox',
 	'ui.counter',
-	'ui.label'
+	'ui.label',
+	'ui.fonts.opensans',
 ]);
 
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');

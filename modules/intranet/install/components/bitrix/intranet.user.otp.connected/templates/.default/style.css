@@ -11,7 +11,7 @@
 
 .intranet-user-otp-con-top-title {
 	padding-right: 15px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #333;
 }
@@ -35,8 +35,8 @@
 	margin-right: 9px;
 	height: 39px;
 	line-height: 39px;
-	border-radius: 3px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	border-radius: var(--ui-border-radius-2xs, 3px);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 }
 

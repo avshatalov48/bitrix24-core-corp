@@ -74,7 +74,7 @@ class CBPCrmGetPaymentInfoActivity extends CBPActivity
 			$this->writeToTrackingService(
 				GetMessage('CRM_BP_GPI_ORDER_NOT_FOUND'),
 				0,
-				CBPTrackingType::Debug,
+				CBPTrackingType::Error,
 			);
 		}
 

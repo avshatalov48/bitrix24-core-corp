@@ -14,6 +14,12 @@ class Company extends Item
 	public const FIELD_NAME_REVENUE = 'REVENUE';
 	public const FIELD_NAME_IS_MY_COMPANY = 'IS_MY_COMPANY';
 
+	/**
+	 * @deprecated Real banking details are stored separately now.
+	 * This field is not used in the product anymore. It's here for backwards compatibility only.
+	 */
+	public const FIELD_NAME_BANKING_DETAILS = 'BANKING_DETAILS';
+
 	protected function disableCheckUserFields(): void
 	{
 		CompanyTable::disableUserFieldsCheck();
@@ -21,7 +27,9 @@ class Company extends Item
 
 	public function getTitlePlaceholder(): ?string
 	{
-		return Loc::getMessage('CRM_COMPANY_UNTITLED');
+		$number = ($this->getId() > 0) ? $this->getId() : '';
+
+		return Loc::getMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE', ['%NUMBER%' => $number]);
 	}
 
 	protected function getExternalizableFieldNames(): array

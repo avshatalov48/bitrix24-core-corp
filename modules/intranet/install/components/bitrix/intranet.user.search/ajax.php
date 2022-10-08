@@ -23,7 +23,7 @@ else
 if (!$USER->IsAuthorized() || CModule::IncludeModule('extranet') && !CExtranet::IsIntranetUser($SITE_ID) && !$USER->IsAdmin() || !check_bitrix_sessid())
 	die();
 
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 $bExtranet = (CModule::IncludeModule('extranet') && CExtranet::IsExtranetSite($SITE_ID) && $_REQUEST['IS_EXTRANET'] == "Y") ? true : false;
 

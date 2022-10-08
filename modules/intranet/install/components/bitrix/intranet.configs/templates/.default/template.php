@@ -10,7 +10,8 @@ use Bitrix\Location;
 	'ui.hint',
 	'ui.dialogs.messagebox',
 	'ui.forms',
-	'ui.alerts'
+	'ui.alerts',
+	'ui.design-tokens',
 ]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
@@ -909,7 +910,8 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<?=GetMessage('CONFIG_OTP_SECURITY_DAYS')?>
 			</td>
 			<td class="content-edit-form-field-input">
-				<div class="ui-ctl ui-ctl-dropdown">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
 					<select id="security_otp_days" name="security_otp_days" class="ui-ctl-element">
 						<?for($i=5; $i<=10; $i++):?>
 							<option
@@ -1087,7 +1089,7 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 	<?
 	}
 
-	if($arResult['SHOW_LOCATION_SOURCES_SETTINGS'])
+	if($arResult['IS_LOCATION_MODULE_INCLUDED'])
 	{
 		?>
 		<tr>
@@ -1095,16 +1097,40 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 				<div class="content-edit-form-header-wrap content-edit-form-header-wrap-blue"><?=GetMessage('CONFIG_LOCATION_SOURCES_SETTINGS')?></div>
 			</td>
 		</tr>
+		<tr>
+			<td class="content-edit-form-field-name content-edit-form-field-name-left">
+				<?=Loc::getMessage('CONFIG_NAME_CURRENT_MAP_PROVIDER')?>
+			</td>
+			<td class="content-edit-form-field-input">
+				<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown">
+					<div class="ui-ctl-after ui-ctl-icon-angle"></div>
+					<select class="ui-ctl-element" name="LOCATION_SOURCE_CODE">
+						<?
+						$locationSourceCode = Location\Infrastructure\SourceCodePicker::getSourceCode();
 
+						/** @var Bitrix\Location\Entity\Source $source */
+						foreach ($arResult['LOCATION_SOURCES'] as $source):
+							$sourceCode = $source->getCode();
+							$sourceName = $source->getName();
+							$isSelected = ($locationSourceCode === $sourceCode);
+							?>
+							<option value="<?=htmlspecialcharsbx($source->getCode())?>" <?=($isSelected) ? ' selected="selected" ' : ''?>>
+								<?=htmlspecialcharsbx($sourceName)?>
+							</option>
+						<?endforeach;?>
+					</select>
+				</div>
+			</td>
+		</tr>
 		<?
 		/** @var Bitrix\Location\Entity\Source $source */
 		foreach ($arResult['LOCATION_SOURCES'] as $source):
 			$sourceCode = $source->getCode();
 
-			if (
-				$sourceCode === \Bitrix\Location\Entity\Source\Factory::OSM_SOURCE_CODE
-				&& !isModuleInstalled('bitrix24')
-			)
+			/**
+			 * OSM provider does not have any settings
+			 */
+			if ($sourceCode === \Bitrix\Location\Entity\Source\Factory::OSM_SOURCE_CODE)
 			{
 				continue;
 			}
@@ -1119,7 +1145,13 @@ $mpUserAllowInstall = count($arResult['MP_ALLOW_USER_INSTALL']) > 0;
 			?>
 			<tr class="heading">
 				<td></td>
-				<td><strong><?=htmlspecialcharsbx($source->getName())?></strong></td>
+				<td>
+					<strong>
+						<?=htmlspecialcharsbx(
+							Loc::getMessage('CONFIG_NAME_MAP_PROVIDER_SETTINGS', ['#PROVIDER#' => $source->getName()])
+						)?>
+					</strong>
+				</td>
 			</tr>
 			<?if (!is_null($config)):?>
 				<?

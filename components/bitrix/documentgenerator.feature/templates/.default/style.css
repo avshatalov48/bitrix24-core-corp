@@ -25,7 +25,7 @@
 }
 
 .documentgenerator-limit-desc-number {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .documentgenerator-limit-img-lock {

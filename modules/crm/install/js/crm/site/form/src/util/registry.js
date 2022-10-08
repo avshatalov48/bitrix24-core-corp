@@ -1,5 +1,6 @@
 import * as ScrollLock from './scroll-lock/scroll-lock';
 import {MoveObserver} from './moveobserver';
+import {ViewObserver} from './viewobserver';
 
 const Scroll = {
 	items: [],
@@ -270,5 +271,6 @@ export {
 	Scroll,
 	Browser,
 	MoveObserver,
+	ViewObserver,
 	Font,
 }

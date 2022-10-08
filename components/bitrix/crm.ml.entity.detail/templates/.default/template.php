@@ -5,7 +5,9 @@ use Bitrix\Main\Localization\Loc;
 
 /** @var CBitrixComponentTemplate $this */
 
-CJSCore::Init([
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
 	"amcharts",
 	"amcharts_serial",
 	"crm_activity_planner",
@@ -13,7 +15,6 @@ CJSCore::Init([
 	"ui.buttons",
 	"ui.hint",
 	"ui.feedback.form",
-	"ui.design-tokens",
 ]);
 
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");

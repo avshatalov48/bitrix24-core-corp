@@ -120,7 +120,7 @@
 	padding: 14px 0 11px 17px;
 	border-bottom: none;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #2067b0;
 	cursor: pointer;
 }
@@ -159,10 +159,11 @@
 .calendar-item-icon-day {
 	color: #fff;
 	display: block;
-	font-size: 15px;
+	font-size: 12px;
 	height: 18px;
-	line-height: 15px;
+	line-height: 18px;
 	text-align: center;
+	text-transform: uppercase;
 }
 
 .calendar-item-icon-date {
@@ -170,12 +171,12 @@
 	color: #535c69;
 	display: block;
 	font-size: 28px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 35px;
 	line-height: 32px;
 	margin: 0 4px;
 	text-align: center;
-	border-radius: var(--ui-border-radius-xs);
+	border-radius: var(--ui-border-radius-2xs);
 }
 
 .sidebar-widget-calendar .widget-last-item {
@@ -296,10 +297,9 @@
 	color: #1165b2;
 	display: block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-top: 16px;
 	text-decoration: none;
-	text-shadow: 0 1px rgba(255, 255, 255, 0.75);
 }
 .sidebar-imp-mess-title:hover {
 	color: #1165b2;
@@ -438,7 +438,7 @@
 	color: #535c69;
 	display: inline-block;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: -3px 0 5px;
 	width: 100%;
 }
@@ -447,7 +447,7 @@
 	display: block;
 	font-size: 13px;
 	font-weight: normal;
-	word-wrap: break-word;
+	word-break: break-word;
 }
 .sidebar-widget-item:hover .user-post-title {
 	text-decoration: underline;

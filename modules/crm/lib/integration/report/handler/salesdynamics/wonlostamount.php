@@ -99,7 +99,7 @@ class WonLostAmount extends Handler\Deal implements IReportMultipleData
 			$toDateValue = ($timePeriodValue['to'] instanceof DateTime) ? $timePeriodValue['to'] : new DateTime($timePeriodValue['to']);
 			$fromDateValue = ($timePeriodValue['from'] instanceof DateTime) ? $timePeriodValue['from'] : new DateTime($timePeriodValue['from']);
 
-			$query->whereBetween("MOVED_TIME", $fromDateValue, $toDateValue);
+			$query->whereBetween("CLOSEDATE", $fromDateValue, $toDateValue);
 		}
 	}
 

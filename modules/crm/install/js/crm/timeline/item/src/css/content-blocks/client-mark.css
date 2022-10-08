@@ -1,0 +1,50 @@
+.crm-timeline__client-mark {
+	--icon-color: inherit;
+	--text-color: inherit;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+	font-family: inherit;
+	font-weight: var(--ui-font-weight-normal, 400);
+	font-size: var(--ui-font-size-sm, 13px);
+}
+
+.crm-timeline__client-mark_icon-wrapper {
+	width: 18px;
+	height: 18px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	margin-right: var(--ui-space-inline-3xs, 2px);
+}
+
+.crm-timeline__client-mark.--negative-mark {
+	--icon-color: var(--ui-color-text-alert, #ff5752);
+	--text-color: var(--ui-color-text-alert, #ff5752);
+}
+
+.crm-timeline__client-mark.--neutral-mark {
+	--icon-color: var(--ui-color-text-warning, #ffa900);
+	--text-color: var(--ui-color-text-warning, #ffa900);
+}
+
+.crm-timeline__client-mark.--positive-mark {
+	--icon-color: var(--ui-color-primary-alt, #9dcf00);
+	--text-color: var(--ui-color-primary-alt, #9dcf00);
+}
+
+.crm-timeline__client-mark_icon {
+	fill: var(--icon-color);
+	margin-bottom: 3px;
+}
+
+.crm-timeline__client-mark_icon.--flipped {
+	transform: scale(1, -1);
+	margin-bottom: 0;
+}
+
+.crm-timeline__client-mark_text,
+.crm-timeline__client-mark_mark {
+	color: var(--text-color);
+}

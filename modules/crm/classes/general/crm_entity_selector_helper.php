@@ -6,6 +6,7 @@ use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Location\Entity\Address;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -512,12 +513,9 @@ class CCrmEntitySelectorHelper
 						),
 					]
 				);
-				$result[$urlKey] = CComponentEngine::MakePathFromTemplate(
-					COption::GetOptionString('crm', 'path_to_order_details'),
-					[
-						'order_id' => $entityID,
-					]
-				);
+
+				$result[$urlKey] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+					->getOrderDetailsLink($entityID);
 			}
 			else
 			{

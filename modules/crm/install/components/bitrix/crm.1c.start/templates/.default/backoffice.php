@@ -8,7 +8,15 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 
-\Bitrix\Main\UI\Extension::load(array("ui.fonts.opensans", "ui.buttons", "ui.alerts", "ui.forms", "ui.icons", "ui.sidepanel-content"));
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.buttons",
+	"ui.alerts",
+	"ui.forms",
+	"ui.icons",
+	"ui.sidepanel-content",
+]);
 
 global $APPLICATION;
 $APPLICATION->SetTitle(Loc::getMessage("CRM_1C_START_BACKOFFICE_NAME"));

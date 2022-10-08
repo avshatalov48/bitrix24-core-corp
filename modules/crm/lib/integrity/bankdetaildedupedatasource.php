@@ -31,8 +31,8 @@ class BankDetailDedupeDataSource extends MatchHashDedupeDataSource
 		return null;
 	}
 	/**
-	* @return DuplicateCriterion
-	*/
+	 * @return DuplicateCriterion
+	 */
 	protected function createCriterionFromMatches(array $matches)
 	{
 		return DuplicateBankDetailCriterion::createFromMatches($matches);
@@ -128,10 +128,8 @@ class BankDetailDedupeDataSource extends MatchHashDedupeDataSource
 				DuplicateIndexMismatch::prepareQueryField($criterion, $entityTypeID, $rootEntityID, $userID)
 			);
 		}
-		if ($this->getParams()->limitByAssignedUser())
-		{
-			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
-		}
+
+		$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $this->getParams());
 
 		$limit = 0;
 		if(is_array($options) && isset($options['LIMIT']))

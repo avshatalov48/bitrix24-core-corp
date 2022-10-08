@@ -130,8 +130,6 @@ $arResult['EXPORT_LIST'] = $arResult['LIST'];
 
 if (!empty($arResult['LIST']))
 {
-	$prevGroupId = 0;
-
 	$users = [];
 	$groups = [];
 
@@ -148,6 +146,7 @@ if (!empty($arResult['LIST']))
 
 	$groups = SocialNetwork\Group::getData($groups);
 	$preparedRows = $grid->prepareRows();
+	$prevGroupId = $arResult['LAST_GROUP_ID'];
 
 	foreach ($arResult['LIST'] as $key => $row)
 	{
@@ -163,7 +162,7 @@ if (!empty($arResult['LIST']))
 			$actionEditTask = SocialNetwork\Group::ACTION_EDIT_TASKS;
 
 			$arResult['ROWS'][] = [
-				'id' => 'group_'.$groupId,
+				'id' => "group_{$groupId}",
 				'group_id' => $groupId,
 				'parent_id' => 0,
 				'has_child' => true,
@@ -201,6 +200,8 @@ if (!empty($arResult['LIST']))
 
 		$prevGroupId = $groupId;
 	}
+
+	$arResult['LAST_GROUP_ID'] = $prevGroupId;
 }
 
 $disabledActions = [];

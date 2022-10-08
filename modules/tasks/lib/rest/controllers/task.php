@@ -821,7 +821,7 @@ final class Task extends Base
 	private function processFilter(array $filter, int $userId, string $roleId): array
 	{
 		$filter = $this->processFilterSearchIndex($filter);
-		$filter = $this->processFilterStatus($filter);
+		// $filter = $this->processFilterStatus($filter);
 		$filter = $this->processFilterWithoutDeadline($filter, $userId, $roleId);
 		$filter = $this->processFilterNotViewed($filter, $userId, $roleId);
 		$filter = $this->processFilterRoleId($filter, $userId, $roleId);

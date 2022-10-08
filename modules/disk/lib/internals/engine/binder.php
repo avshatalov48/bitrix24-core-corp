@@ -41,6 +41,11 @@ class Binder extends \Bitrix\Main\Engine\Binder
 		static::registerParameterDependsOnName(
 			\Bitrix\Disk\Internals\Model::class,
 			function($className, $id) {
+				if (is_numeric($id) && $id <= 0)
+				{
+					return null;
+				}
+
 				/** @var \Bitrix\Disk\Internals\Model $className */
 				return $className::getById($id);
 			}

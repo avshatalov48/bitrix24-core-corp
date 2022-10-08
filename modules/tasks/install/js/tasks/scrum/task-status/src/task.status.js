@@ -8,10 +8,10 @@ import {Dod} from 'tasks.scrum.dod';
 import {RequestSender} from './request.sender';
 
 type State = {
-	groupId: number,
-	parentTaskId: number,
 	taskId: number,
 	action: 'complete' | 'renew',
+	groupId?: number,
+	parentTaskId?: number,
 	performActionOnParentTask?: boolean
 }
 
@@ -37,19 +37,40 @@ export class TaskStatus
 
 	setState(state: State)
 	{
-		this.groupId = parseInt(state.groupId, 10);
-		this.parentTaskId = parseInt(state.parentTaskId, 10);
 		this.taskId = parseInt(state.taskId, 10);
 		this.action = (
 			state.action === TaskStatus.actions.complete
 				? TaskStatus.actions.complete
 				: TaskStatus.actions.renew
 		);
+		this.groupId = Type.isUndefined(state.groupId) ? 0 : parseInt(state.groupId, 10);
+		this.parentTaskId = Type.isUndefined(state.parentTaskId) ? 0 : parseInt(state.parentTaskId, 10);
 		this.performActionOnParentTask = (
 			Type.isUndefined(state.performActionOnParentTask)
 				? false
 				: state.performActionOnParentTask
 		);
+	}
+
+	updateState(): Promise
+	{
+		return this.requestSender.getData({
+			taskId: this.taskId
+		})
+			.then((response) => {
+				this.setState(
+					{
+						...{
+							action: this.action,
+							groupId: this.groupId,
+							parentTaskId: this.parentTaskId,
+							performActionOnParentTask: this.performActionOnParentTask
+						},
+						...response.data
+					}
+				);
+			})
+		;
 	}
 
 	update(): Promise
@@ -125,8 +146,14 @@ export class TaskStatus
 		;
 	}
 
-	isParentScrumTask(taskId: number): Promise
+	isParentScrumTask(taskId?: number): Promise
 	{
+		taskId = Type.isUndefined(taskId) ? this.parentTaskId : taskId;
+		if (!taskId)
+		{
+			return new Promise((resolve) => resolve(false));
+		}
+
 		return this.requestSender.isParentScrumTask({
 			groupId: this.groupId,
 			taskId: taskId

@@ -7,8 +7,8 @@ $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_NAME_CHAT_LINK'] = 'Ссылка на ча
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_CONNECTED'] = 'Apple Business Chat подключен';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_CHANGE_ANY_TIME'] = 'Вы можете в любое время изменить или отключить';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE'] = 'Подключите бизнес чат к Открытой линии';
-$MESS['IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP'] = 'Для подключения необходимо <a onclick="top.BX.Helper.show(\'#ID#\');" class="imconnector-field-box-link">создать бизнес чат</a>
- или <a onclick\"top.BX.Helper.show(\'#ID#\');" class="imconnector-field-box-link">подключить уже существующий</a>.';
+$MESS['IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP_NEW'] = 'Для подключения необходимо #LINK1_START#создать бизнес чат#LINK1_END#
+ или #LINK2_START#подключить уже существующий#LINK2_END#.';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INFO'] = 'Информация';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INFO_OLD_CONNECT'] = 'Информация об уже подключенном Бизнес чате';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INFO_NEW_CONNECT'] = 'Подключаемый бизнес чат';
@@ -24,4 +24,4 @@ $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_1'] = 'Контакты и
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
 $MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
-$MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION'] = 'Для подключения необходимо <a href="#" onclick="top.BX.Helper.show(\'#ID#\'); return false;">создать бизнес чат</a> или <a href="#"  onclick\"top.BX.Helper.show(\'#ID#\'); return false;">подключить уже существующий</a>. Подключаются только верифицированные Apple Business Chat ID. Подключить или настроить вручную';
+$MESS['IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION_NEW'] = 'Для подключения необходимо #LINK1_START#создать бизнес чат#LINK1_END# или #LINK2_START#подключить уже существующий#LINK2_END#. Подключаются только верифицированные Apple Business Chat ID. Подключить или настроить вручную';

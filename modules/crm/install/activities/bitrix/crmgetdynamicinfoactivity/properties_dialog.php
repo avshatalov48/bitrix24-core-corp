@@ -14,9 +14,15 @@ use Bitrix\Main\Web\Json;
 	['ui.buttons', 'ui.hint', 'ui.notification', 'ui.alerts', 'ui.dialogs.messagebox', 'ui.entity-selector']
 );
 
-$messages = Loc::loadLanguageFile(
-	\Bitrix\Main\Application::getDocumentRoot()
-	. Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/template.php')
+$messages = array_merge(
+	Loc::loadLanguageFile(
+		\Bitrix\Main\Application::getDocumentRoot()
+		. Path::normalize('/bitrix/components/bitrix/bizproc.automation/templates/.default/template.php')
+	),
+	Loc::loadLanguageFile(
+		\Bitrix\Main\Application::getDocumentRoot()
+		. Path::normalize('/bitrix/components/bitrix/bizproc.workflow.edit/templates/.default/template.php')
+	)
 );
 Asset::getInstance()->addJs(Path::normalize('/bitrix/activities/bitrix/crmgetdynamicinfoactivity/script.js'));
 
@@ -79,6 +85,7 @@ unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty[
 		var script = new BX.Crm.Activity.CrmGetDynamicInfoActivity({
 			documentType: <?=Json::encode($dialog->getDocumentType())?>,
 			documentName: '<?=CUtil::JSEscape($dialog->getRuntimeData()['DocumentName'])?>',
+			documentFields: <?= Json::encode($dialog->getRuntimeData()['DocumentFields']) ?>,
 			isRobot: false,
 			formName: '<?=CUtil::JSEscape($dialog->getFormName())?>',
 			returnFieldsProperty: <?=Json::encode($returnFieldsProperty)?>,

@@ -9,6 +9,8 @@ $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\UI\NavigationBarPanel;
+
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.order.list/templates/.default/template.php');
 
 // if not isset
@@ -80,46 +82,19 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
-			'NAVIGATION_BAR' => array(
-				'ITEMS' => array_merge(
-					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Order),
-					array(
-						array(
-							//'icon' => 'kanban',
-							'id' => 'kanban',
-							'name' => Loc::getMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_KANBAN'),
-							'active' => 1,
-							'url' => $arResult['PATH_TO_ORDER_KANBAN']
-						),
-						array(
-							//'icon' => 'table',
-							'id' => 'list',
-							'name' => Loc::getMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_LIST'),
-							'active' => 0,
-							'url' => $arResult['PATH_TO_ORDER_LIST']
-						),
-						/*
-						array(
-							//'icon' => 'chart',
-							'id' => 'widget',
-							'name' => GetMessage('CRM_ORDER_LIST_FILTER_NAV_BUTTON_WIDGET'),
-							'active' => false,
-							'url' => $arResult['PATH_TO_ORDER_WIDGET']
-						)
-						*/
-					)
-				),
-				'BINDING' => array(
-					'category' => 'crm.navigation',
-					'name' => 'index',
-					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				)
-			)
-		),
+			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Order))
+				->setItems([
+					NavigationBarPanel::ID_AUTOMATION,
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST
+				], NavigationBarPanel::ID_KANBAN)
+				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+				->get(),
+		],
 		$component,
-		array('HIDE_ICONS' => true)
+		['HIDE_ICONS' => true]
 	);
 
 	$APPLICATION->IncludeComponent(

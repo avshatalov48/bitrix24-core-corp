@@ -18,13 +18,16 @@ class Dependence
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function setPrevious(array $depends = [])
+	public function setPrevious($depends = [])
 	{
 		$this->loadTask();
 
 		$this->deleteByTask();
 
-		if (empty($depends))
+		if (
+			!is_array($depends)
+			|| empty($depends)
+		)
 		{
 			return;
 		}

@@ -2,17 +2,13 @@
 
 namespace Bitrix\Crm\Timeline;
 
-use Bitrix\Main;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Binding;
-use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\PhaseSemantics;
-use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\DI\ServiceLocator;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Sale\Cashbox\CheckManager;
 
 class DynamicController extends FactoryBasedController
 {
@@ -107,7 +103,7 @@ class DynamicController extends FactoryBasedController
 
 					if ($timelineEntryId)
 					{
-						$this->sendPullEvent($entityID, Pusher::ADD_ACTIVITY_PULL_COMMAND, $timelineEntryId);
+						$this->sendPullEventOnAdd(new ItemIdentifier($this->getEntityTypeID(),$entityID), $timelineEntryId);
 					}
 				}
 			}

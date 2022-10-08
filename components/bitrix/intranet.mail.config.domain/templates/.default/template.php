@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
 $crDomainSetup = !empty($arResult['SETTINGS']) && $arResult['SETTINGS']['type'] == 'crdomain'
@@ -303,7 +305,7 @@ $registeredDomain = (boolean) ($arResult['SETTINGS']['flags'] & CMail::F_DOMAIN_
 		});
 
 	</script>
-		
+
 <? else: ?>
 
 	<div id="domain" class="mail-set-wrap<? if (IsIE() == 8): ?> bx-ie bx-ie8<? endif ?>"<? if (empty($arResult['SETTINGS'])): ?> style="display: none; "<? endif ?>>

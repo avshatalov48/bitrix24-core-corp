@@ -68,7 +68,7 @@ interface FieldImplementation
 	public function transformToExternalValue(string $commonFieldName, $value, int $valuesType);
 
 	/**
-	 * @param Array<string, mixed> $externalValues
+	 * @param Array<string, mixed> $externalValues - [$commonFieldName => $externalValue]
 	 * @return void
 	 */
 	public function setFromExternalValues(array $externalValues): void;

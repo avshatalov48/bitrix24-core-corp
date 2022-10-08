@@ -2,6 +2,7 @@ import {Loc, Reflection, Tag} from "main.core";
 import {BaseCard} from "catalog.entity-card";
 import {EventEmitter} from "main.core.events";
 import {Button, ButtonColor, ButtonState} from "ui.buttons";
+import {DocumentOnboardingManager, OnboardingData} from "./document.onboarding.manager";
 
 export class Document extends BaseCard
 {
@@ -10,6 +11,8 @@ export class Document extends BaseCard
 	static saveAndDeductAction = 'saveAndDeduct';
 	static deductAction = 'deduct';
 	static cancelDeductAction = 'cancelDeduct';
+
+	#documentOnboardingManager: DocumentOnboardingManager|null = null;
 
 	constructor(id, settings)
 	{
@@ -31,7 +34,7 @@ export class Document extends BaseCard
 			const eventEditor = event.data[0];
 			if (eventEditor && eventEditor._ajaxForm)
 			{
-				const action = eventEditor._ajaxForm?._actionName === 'SAVE' ? 'save' : eventEditor._ajaxForm?._config.data.ACTION;
+				let action = eventEditor._ajaxForm?._actionName === 'SAVE' ? 'save' : eventEditor._ajaxForm?._config.data.ACTION;
 				if (action === Document.saveAndDeductAction)
 				{
 					const controllersErrorCollection = this.getControllersIssues(eventEditor.getControllers());
@@ -44,13 +47,21 @@ export class Document extends BaseCard
 					}
 				}
 
+				if (action === 'SAVE')
+				{
+					// for consistency in analytics tags
+					action = 'save';
+				}
+
 				let urlParams = {
 					isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
 				};
+
 				if (action)
 				{
 					urlParams.action = action;
 				}
+
 				eventEditor._ajaxForm.addUrlParams(urlParams);
 			}
 		});
@@ -255,6 +266,7 @@ export class Document extends BaseCard
 
 				deductDocumentAjaxForm.addUrlParams({
 					action: actionName,
+					documentType: 'W',
 				});
 
 				deductDocumentAjaxForm.submit();
@@ -451,5 +463,17 @@ export class Document extends BaseCard
 				analyticsLabel: data,
 			}
 		);
+	}
+
+	enableOnboardingChain(onboardingData: OnboardingData)
+	{
+		if (this.#documentOnboardingManager === null)
+		{
+			this.#documentOnboardingManager  = new DocumentOnboardingManager({
+				onboardingData: onboardingData,
+				documentGuid: this.id
+			});
+			this.#documentOnboardingManager.processOnboarding();
+		}
 	}
 }

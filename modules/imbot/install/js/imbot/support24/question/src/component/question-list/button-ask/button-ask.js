@@ -1,7 +1,10 @@
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import { BitrixVue } from 'ui.vue';
 import 'ui.buttons';
 
 import { Theme } from '../../../mixin/theme';
+
 import './button-ask.css';
 
 export const ButtonAskProps = Object.freeze({

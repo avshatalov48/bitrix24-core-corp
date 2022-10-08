@@ -281,6 +281,27 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		return $conditionGroup;
 	}
 
+	public static function GetPropertiesDialog(
+		$documentType,
+		$activityName,
+		$workflowTemplate,
+		$workflowParameters,
+		$workflowVariables,
+		$currentValues = null,
+		$formName = '',
+		$popupWindow = null,
+		$siteId = ''
+	)
+	{
+		$dialog = parent::GetPropertiesDialog(...func_get_args());
+		$dialog->setRuntimeData([
+			'DocumentName' => static::getDocumentService()->getEntityName('crm', $documentType[1]),
+			'DocumentFields' => array_values(Crm\Automation\Helper::getDocumentFields($documentType)),
+		]);
+
+		return $dialog;
+	}
+
 	protected static function getReturnFieldsMap(int $entityTypeId): array
 	{
 		$fieldsMap = [];

@@ -6,7 +6,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\UI\Extension;
 use Bitrix\Main\Web\Json;
 
-Extension::load(array("ui.graph.circle", "ui.buttons.icons", "ui.design-tokens"));
+Extension::load(array("ui.graph.circle", "ui.buttons.icons", "ui.design-tokens", "ui.fonts.opensans"));
 
 $isIFrame = $_REQUEST['IFRAME'] == 'Y';
 

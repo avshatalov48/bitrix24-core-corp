@@ -2,6 +2,7 @@
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 global $APPLICATION;
 $APPLICATION->SetTitle(GetMessage('CRM_INVOICE_WGT_PAGE_TITLE_SHORT'));
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',

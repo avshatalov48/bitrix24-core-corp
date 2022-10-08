@@ -1,5 +1,5 @@
-.crm-rq-popup-wrapper {
-	margin-top: -8px;
+.rq-dropdown-container {
+	margin: 0;
 }
 
 .crm-rq-popup-items-list {}
@@ -14,18 +14,18 @@
 }
 
 .crm-rq-popup-item-name {
-	font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	margin-bottom: 6px;
 }
 
 .crm-rq-popup-item-desc {
-	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a1a5ac;
 }
 
 .crm-rq-popup-item-helper {
-	font: 300 12px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 300 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -45,7 +45,7 @@
 }
 
 .crm-rq-popup-item-add-new-btn-text {
-	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a1a5ac;
 	margin-left: 10px;
 }
@@ -53,7 +53,7 @@
 .crm-rq-add-rq {
 	cursor: pointer;
 	vertical-align: middle;
-	font: 13px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	display: -webkit-box;
 	display: -ms-flexbox;
@@ -70,7 +70,7 @@
 
 .ui-btn.crm-rq-btn {
 	--ui-btn-height: 16px;
-	--ui-btn-icon: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg width='17px' height='17px' viewBox='0 0 17 17' version='1.1' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink'%3E%3Cpath d='M8.66666667,4.66666667 L8.66666667,7.33266667 L11.3333333,7.33333333 L11.3333333,8.66666667 L8.66666667,8.66666667 L8.66666667,11.3333333 L7.33333333,11.3333333 L7.33266667,8.66666667 L4.66666667,8.66666667 L4.66666667,7.33333333 L7.33266667,7.33266667 L7.33333333,4.66666667 L8.66666667,4.66666667 Z' fill='%23fff'%3E%3C/path%3E%3C/svg%3E");
+	--ui-btn-icon: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='UTF-8'%3F%3E%3Csvg xmlns='http://www.w3.org/2000/svg' version='1.1' width='16px' height='16px' viewBox='-0.5 -0.5 81 81'%3E%3Cdefs/%3E%3Cg%3E%3Crect x='0' y='0' width='80' height='80' fill='none' stroke='none' pointer-events='all'/%3E%3Crect x='17.5' y='35' width='45' height='10' fill='rgb(255, 255, 255)' stroke='none' pointer-events='none'/%3E%3Crect x='17.5' y='35' width='45' height='10' fill='rgb(255, 255, 255)' stroke='none' transform='rotate(90,40,40)' pointer-events='none'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 .ui-dropdown-container.rq-dropdown-container

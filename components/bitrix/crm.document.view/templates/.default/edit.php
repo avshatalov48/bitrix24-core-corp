@@ -162,12 +162,12 @@ if($arParams['IS_SLIDER'])
 	</script>
 	<?$APPLICATION->ShowHead(); ?>
 </head>
-<body class="docs-preview-slider-wrap">
-<div class="docs-preview-title">
+<body class="crm__document-view--slider-wrap">
+<div class="crm__document-view--title">
 	<div class="pagetitle-wrap">
 		<div class="pagetitle-inner-container">
 			<div class="pagetitle">
-				<span id="pagetitle" class="pagetitle-item docs-preview-pagetitle-item"><?= Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_TITLE');?>
+				<span id="pagetitle" class="pagetitle-item crm__document-view--pagetitle-item"><?= Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_EDIT_TITLE');?>
 				</span>
 			</div>
 		</div>

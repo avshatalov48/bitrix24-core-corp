@@ -30,7 +30,8 @@
 }
 
 .pwt-report-header-title {
-    font: 26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+    font: 26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
     padding: 21px 0 9px 12px !important;
     -webkit-user-select: none;
        -moz-user-select: none;
@@ -64,7 +65,7 @@
 }
 
 .pwt-report-alert-link {
-    font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     text-decoration: none;
     color: #2066b0;
     border-bottom: 1px dashed rgba(39, 107, 179, .4);
@@ -99,8 +100,8 @@
 }
 
 .pwt-report-content-header-title {
-    font: 14px/23px "Helvetica Neue", Helvetica, "Open Sans", Arial;
-    font-weight: bold;
+    font: 14px/23px "Helvetica Neue", Helvetica, var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     color: #525c69;
     -webkit-user-select: none;
        -moz-user-select: none;
@@ -118,7 +119,7 @@
             flex-direction: column;
     padding: 23px;
     color: #535c69;
-    font: 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     overflow: hidden;
     margin: 12px;
     border-radius: 6px;
@@ -307,7 +308,7 @@
     border: 1px solid rgba(83,92,105,.2);
     border-radius: 2px;
     background: #fff;
-    font: 15px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     -webkit-box-sizing: border-box;
             box-sizing: border-box;
     -webkit-transition: all .3s ease-in-out;
@@ -413,12 +414,12 @@
     -webkit-box-pack: center;
         -ms-flex-pack: center;
             justify-content: center;
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     width: 100%;
 }
 
 .bx-timeman-monitor-report-popup-content-title {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 350px;
     white-space: nowrap;
     -o-text-overflow: ellipsis;
@@ -427,7 +428,7 @@
 }
 
 .bx-timeman-monitor-report-popup-time {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .bx-timeman-monitor-report-group-wrap {
     margin-right: 36px;
@@ -460,8 +461,8 @@
     -webkit-box-direction: normal;
         -ms-flex-direction: column;
             flex-direction: column;
-    font: 13px/18px "Open Sans", Arial, normal;
-    font-weight: 600;
+    font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     padding: 11px 13px 15px 13px;
     border-radius: 4px 4px 0 0;
 }
@@ -561,7 +562,8 @@
     -webkit-box-align: center;
         -ms-flex-align: center;
             align-items: center;
-    font: 13px/18px "Open Sans", Arial, normal;
+    font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
     color: #505A69;
     margin-right: 8px;
     -webkit-user-select: none;
@@ -571,7 +573,8 @@
 }
 
 .bx-monitor-group-hint {
-    font: 13px/18px "Open Sans", Arial, normal;
+    font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
     color: #505A69;
     margin-right: 8px;
 	min-height: 36px;
@@ -608,7 +611,7 @@
     border: 1px solid rgba(83,92,105,.2);
     border-radius: 2px;
     background: #fff;
-    font: 15px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     -webkit-box-sizing: border-box;
             box-sizing: border-box;
     -webkit-transition: all .3s ease-in-out;
@@ -702,7 +705,7 @@
 }
 
 .bx-timeman-monitor-popup-content-title {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 350px;
     white-space: nowrap;
     -o-text-overflow: ellipsis;
@@ -711,7 +714,7 @@
 }
 
 .bx-timeman-monitor-popup-time {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-monitor-group-item-move {
@@ -1019,7 +1022,7 @@
 }
 
 .bx-monitor-group-item-title {
-    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -1032,7 +1035,7 @@
 }
 
 .bx-monitor-group-item-title-full {
-    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 185px;
     overflow: hidden;
     white-space: nowrap;
@@ -1045,7 +1048,7 @@
 }
 
 .bx-monitor-group-item-title-small {
-    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 115px;
     overflow: hidden;
     -webkit-user-select: none;
@@ -1055,7 +1058,7 @@
 }
 
 .bx-monitor-group-item-subtitle {
-    font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 115px;
     overflow: hidden;
     -webkit-user-select: none;
@@ -1085,7 +1088,7 @@
 }
 
 .bx-monitor-group-site-title {
-    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -1129,7 +1132,7 @@
         -ms-flex-align: center;
             align-items: center;
     margin-right: 11px;
-    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     -webkit-user-select: none;
        -moz-user-select: none;
         -ms-user-select: none;
@@ -1148,7 +1151,7 @@
     -webkit-box-align: center;
         -ms-flex-align: center;
             align-items: center;
-    font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-monitor-group-btn-right {

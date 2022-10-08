@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core_events,currency,ui_notification,pull_client,ui_vue,main_core) {
+(function (exports,ui_notification,currency,ui_designTokens,pull_client,crm_timeline_tools,main_core_events,crm_timeline_item,ui_vue,main_core) {
 	'use strict';
 
 	/** @memberof BX.Crm.Timeline.Types */
@@ -26,7 +26,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  finalSummary: 18,
 	  delivery: 19,
 	  finalSummaryDocuments: 20,
-	  storeDocument: 21
+	  storeDocument: 21,
+	  productCompilation: 22,
+	  signDocument: 23
 	};
 	/** @memberof BX.Crm.Timeline.Types */
 
@@ -63,43 +65,58 @@ this.BX.Crm = this.BX.Crm || {};
 	  view: 1,
 	  edit: 2
 	};
+	/** @memberof BX.Crm.Timeline.Types */
+
+	const Compilation = {
+	  productList: 1,
+	  orderExists: 2,
+	  compilationViewed: 3,
+	  newDealCreated: 4
+	};
 
 	var types = /*#__PURE__*/Object.freeze({
 		Item: Item,
 		Mark: Mark,
 		Delivery: Delivery,
 		Order: Order,
-		EditorMode: EditorMode
+		EditorMode: EditorMode,
+		Compilation: Compilation
 	});
 
 	/** @memberof BX.Crm.Timeline */
 
-	let Item$1 = /*#__PURE__*/function () {
-	  function Item$$1() {
-	    babelHelpers.classCallCheck(this, Item$$1);
-	    this._id = "";
-	    this._settings = {};
-	    this._data = {};
-	    this._container = null;
-	    this._wrapper = null;
-	    this._typeCategoryId = null;
-	    this._associatedEntityData = null;
-	    this._associatedEntityTypeId = null;
-	    this._associatedEntityId = null;
-	    this._isContextMenuShown = false;
-	    this._contextMenuButton = null;
-	    this._activityEditor = null;
-	    this._actions = [];
-	    this._actionContainer = null;
-	    this._isTerminated = false;
-	    this._vueComponent = null;
-	    this._vueComponentMountedNode = null;
+	let CompatibleItem = /*#__PURE__*/function (_Item) {
+	  babelHelpers.inherits(CompatibleItem, _Item);
+
+	  function CompatibleItem() {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, CompatibleItem);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CompatibleItem).call(this));
+	    _this._id = "";
+	    _this._settings = {};
+	    _this._data = {};
+	    _this._container = null;
+	    _this._typeCategoryId = null;
+	    _this._associatedEntityData = null;
+	    _this._associatedEntityTypeId = null;
+	    _this._associatedEntityId = null;
+	    _this._isContextMenuShown = false;
+	    _this._contextMenuButton = null;
+	    _this._activityEditor = null;
+	    _this._actions = [];
+	    _this._actionContainer = null;
+	    _this._vueComponent = null;
+	    _this._vueComponentMountedNode = null;
+	    _this._existedStreamItemDeadLine = null;
+	    return _this;
 	  }
 
-	  babelHelpers.createClass(Item$$1, [{
+	  babelHelpers.createClass(CompatibleItem, [{
 	    key: "initialize",
 	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	      this._setId(id);
+
 	      this._settings = settings ? settings : {};
 	      this._container = this.getSetting("container");
 
@@ -172,8 +189,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        associatedEntityData = {};
 	      }
 
-	      this._data["ASSOCIATED_ENTITY"] = associatedEntityData;
-	      this.clearCachedData();
+	      const data = this._data;
+	      data.ASSOCIATED_ENTITY = associatedEntityData;
+	      this.setData(data);
 	    }
 	  }, {
 	    key: "hasPermissions",
@@ -189,12 +207,14 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "setPermissions",
 	    value: function setPermissions(permissions) {
-	      if (!BX.type.isPlainObject(this._data["ASSOCIATED_ENTITY"])) {
-	        this._data["ASSOCIATED_ENTITY"] = {};
+	      const data = this._data;
+
+	      if (!main_core.Type.isPlainObject(data.ASSOCIATED_ENTITY)) {
+	        data.ASSOCIATED_ENTITY = {};
 	      }
 
-	      this._data["ASSOCIATED_ENTITY"]["PERMISSIONS"] = permissions;
-	      this.clearCachedData();
+	      data.ASSOCIATED_ENTITY.PERMISSIONS = permissions;
+	      this.setData(data);
 	    }
 	  }, {
 	    key: "getTextDataParam",
@@ -236,41 +256,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this._container = BX.type.isElementNode(container) ? container : null;
 	    }
 	  }, {
-	    key: "getWrapper",
-	    value: function getWrapper() {
-	      return this._wrapper;
-	    }
-	  }, {
-	    key: "addWrapperClass",
-	    value: function addWrapperClass(className, timeout) {
-	      if (!this._wrapper) {
-	        return;
-	      }
-
-	      BX.addClass(this._wrapper, className);
-
-	      if (BX.type.isNumber(timeout) && timeout >= 0) {
-	        window.setTimeout(BX.delegate(function () {
-	          this.removeWrapperClass(className);
-	        }, this), timeout);
-	      }
-	    }
-	  }, {
-	    key: "removeWrapperClass",
-	    value: function removeWrapperClass(className, timeout) {
-	      if (!this._wrapper) {
-	        return;
-	      }
-
-	      BX.removeClass(this._wrapper, className);
-
-	      if (BX.type.isNumber(timeout) && timeout >= 0) {
-	        window.setTimeout(BX.delegate(function () {
-	          this.addWrapperClass(className);
-	        }, this), timeout);
-	      }
-	    }
-	  }, {
 	    key: "layout",
 	    value: function layout(options) {
 	      if (!BX.type.isElementNode(this._container)) {
@@ -306,7 +291,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const app = new this._vueComponent({
 	        propsData: {
 	          self: this,
-	          langMessages: Item$$1.messages,
+	          langMessages: CompatibleItem.messages,
 	          mode: mode
 	        }
 	      });
@@ -324,21 +309,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "showActions",
 	    value: function showActions(show) {}
 	  }, {
-	    key: "clearLayout",
-	    value: function clearLayout() {
-	      this._wrapper = BX.remove(this._wrapper);
-	    }
-	  }, {
-	    key: "refreshLayout",
-	    value: function refreshLayout() {
-	      const anchor = this._wrapper.previousSibling;
-	      this._wrapper = BX.remove(this._wrapper);
-	      this._playerWrappers = {};
-	      this.layout({
-	        anchor: anchor
-	      });
-	    }
-	  }, {
 	    key: "clearCachedData",
 	    value: function clearCachedData() {
 	      this._typeCategoryId = null;
@@ -354,32 +324,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "markAsDone",
 	    value: function markAsDone(isDone) {}
-	  }, {
-	    key: "isTerminated",
-	    value: function isTerminated() {
-	      return this._isTerminated;
-	    }
-	  }, {
-	    key: "markAsTerminated",
-	    value: function markAsTerminated(terminated) {
-	      terminated = !!terminated;
-
-	      if (this._isTerminated === terminated) {
-	        return;
-	      }
-
-	      this._isTerminated = terminated;
-
-	      if (!this._wrapper) {
-	        return;
-	      }
-
-	      if (terminated) {
-	        BX.addClass(this._wrapper, "crm-entity-stream-section-last");
-	      } else {
-	        BX.removeClass(this._wrapper, "crm-entity-stream-section-last");
-	      }
-	    }
 	  }, {
 	    key: "view",
 	    value: function view() {}
@@ -603,7 +547,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getMessage",
 	    value: function getMessage(name) {
-	      const m = Item$$1.messages;
+	      const m = CompatibleItem.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
 	    }
 	  }], [{
@@ -620,10 +564,10 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.userTimezoneOffset;
 	    }
 	  }]);
-	  return Item$$1;
-	}();
+	  return CompatibleItem;
+	}(crm_timeline_item.Item);
 
-	babelHelpers.defineProperty(Item$1, "messages", {});
+	babelHelpers.defineProperty(CompatibleItem, "messages", {});
 
 	/** @memberof BX.Crm.Timeline.Animation */
 	let Fasten = /*#__PURE__*/function () {
@@ -663,13 +607,13 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      BX.addClass(node, 'crm-entity-stream-section-animate-start');
 
-	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+	      if (this._anchor.parentNode && node) {
+	        this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+	      }
 
 	      setTimeout(BX.delegate(function () {
 	        BX.removeClass(node, 'crm-entity-stream-section-animate-start');
 	      }, this), 0);
-
-	      this._finalItem.onFinishFasten();
 	    }
 	  }, {
 	    key: "run",
@@ -756,8 +700,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	let History = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(History, _Item);
+	let History = /*#__PURE__*/function (_CompatibleItem) {
+	  babelHelpers.inherits(History, _CompatibleItem);
 
 	  function History() {
 	    var _this;
@@ -808,7 +752,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getCreatedTime() {
 	      if (this._createdTime === null) {
 	        const time = BX.parseDate(this.getCreatedTimestamp(), false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-	        this._createdTime = new Date(time.getTime() + 1000 * Item$1.getUserTimezoneOffset());
+	        this._createdTime = new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	      }
 
 	      return this._createdTime;
@@ -860,6 +804,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function isFixed() {
 	      return this._isFixed;
 	    }
+	    /**
+	     * deprecated
+	     */
+
 	  }, {
 	    key: "fasten",
 	    value: function fasten(e) {
@@ -893,15 +841,18 @@ this.BX.Crm = this.BX.Crm || {};
 	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
 	          "OWNER_ID": this.getOwnerId(),
 	          "ID": this._id
-	        },
-	        onsuccess: BX.delegate(this.onSuccessFasten, this)
+	        }
 	      });
 	      this.closeContextMenu();
 	    }
+	    /**
+	     * deprecated
+	     */
+
 	  }, {
 	    key: "onSuccessFasten",
 	    value: function onSuccessFasten(result) {
-	      if (BX.type.isNotEmptyString(result.ERROR)) return;
+	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
 
 	      if (!this.isFixed()) {
 	        this._data.IS_FIXED = 'Y';
@@ -926,9 +877,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      this.closeContextMenu();
 	    }
-	  }, {
-	    key: "onFinishFasten",
-	    value: function onFinishFasten(e) {}
+	    /**
+	     * deprecated
+	     */
+
 	  }, {
 	    key: "unfasten",
 	    value: function unfasten(e) {
@@ -942,15 +894,18 @@ this.BX.Crm = this.BX.Crm || {};
 	          "OWNER_TYPE_ID": this.getOwnerTypeId(),
 	          "OWNER_ID": this.getOwnerId(),
 	          "ID": this._id
-	        },
-	        onsuccess: BX.delegate(this.onSuccessUnfasten, this)
+	        }
 	      });
 	      this.closeContextMenu();
 	    }
+	    /**
+	     * deprecated
+	     */
+
 	  }, {
 	    key: "onSuccessUnfasten",
 	    value: function onSuccessUnfasten(result) {
-	      if (BX.type.isNotEmptyString(result.ERROR)) return;
+	      if (result && BX.type.isNotEmptyString(result.ERROR)) return;
 	      let item;
 	      let historyItem;
 
@@ -1041,6 +996,11 @@ this.BX.Crm = this.BX.Crm || {};
 	          className: this.getIconClassName()
 	        }
 	      }));
+
+	      if (this.isContextMenuEnabled()) {
+	        main_core.Dom.append(this.prepareContextMenuButton(), wrapper);
+	      }
+
 	      const contentWrapper = BX.create("DIV", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event"
@@ -1177,6 +1137,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	      header.appendChild(this.prepareTitleLayout());
+	      const statusNode = this.getStatusNode();
+
+	      if (main_core.Type.isDomNode(statusNode)) {
+	        main_core.Dom.append(statusNode, header);
+	      }
+
 	      header.appendChild(BX.create("SPAN", {
 	        attrs: {
 	          className: "crm-entity-stream-content-event-time"
@@ -1184,6 +1150,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        text: this.formatTime(this.getCreatedTime())
 	      }));
 	      return header;
+	    }
+	  }, {
+	    key: "getStatusNode",
+	    value: function getStatusNode() {
+	      return null;
 	    }
 	  }, {
 	    key: "onActivityCreate",
@@ -1230,7 +1201,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return History;
-	}(Item$1);
+	}(CompatibleItem);
 
 	var HistoryItemMixin = {
 	  props: {
@@ -1264,6 +1235,112 @@ this.BX.Crm = this.BX.Crm || {};
 	  methods: {
 	    getLangMessage(key) {
 	      return this.langMessages.hasOwnProperty(key) ? this.langMessages[key] : key;
+	    }
+
+	  }
+	};
+
+	var ProductListMixin = {
+	  data() {
+	    return {
+	      notificationBalloon: false,
+	      activeRequestsCnt: 0,
+	      dealId: null,
+	      products: []
+	    };
+	  },
+
+	  methods: {
+	    isProductsGridAvailable() {
+	      return !!this.productsGrid;
+	    },
+
+	    setProductsGrid(productsGrid) {
+	      this.productsGrid = productsGrid;
+
+	      if (this.productsGrid) {
+	        this.onProductsGridChanged();
+	      }
+	    },
+
+	    // region event handlers
+	    handleProductAddingToDeal() {
+	      this.activeRequestsCnt += 1;
+	    },
+
+	    handleProductAddedToDeal() {
+	      if (this.activeRequestsCnt > 0) {
+	        this.activeRequestsCnt -= 1;
+	      }
+
+	      if (!(this.activeRequestsCnt === 0 && this.productsGrid)) {
+	        return;
+	      }
+
+	      BX.Crm.EntityEditor.getDefault().reload();
+	      this.productsGrid.reloadGrid(false);
+
+	      if (!this.notificationBalloon || this.notificationBalloon.getState() !== BX.UI.Notification.State.OPEN) {
+	        this.notificationBalloon = ui_notification.UI.Notification.Center.notify({
+	          content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
+	          actions: [{
+	            title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
+	            events: {
+	              click: (event, balloon, action) => {
+	                BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
+	                balloon.close();
+	              }
+	            }
+	          }]
+	        });
+	      }
+	    },
+
+	    // endregion
+	    // region custom events
+	    subscribeCustomEvents() {
+	      main_core_events.EventEmitter.subscribe('EntityProductListController', this.onProductsGridCreated);
+	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
+	    },
+
+	    unsubscribeCustomEvents() {
+	      main_core_events.EventEmitter.unsubscribe('EntityProductListController', this.onProductsGridCreated);
+	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
+	    },
+
+	    onProductsGridCreated(event) {
+	      this.setProductsGrid(event.getData()[0]);
+	    },
+
+	    onProductsGridChanged(event) {
+	      if (!this.productsGrid) {
+	        return;
+	      }
+
+	      let dealOfferIds = this.productsGrid.products.map((product, index) => {
+	        if (!(product.hasOwnProperty('fields') && product.fields.hasOwnProperty('OFFER_ID'))) {
+	          return null;
+	        }
+
+	        return product.fields.OFFER_ID;
+	      });
+
+	      for (const [i, product] of this.products.entries()) {
+	        let isInDeal = dealOfferIds.some(id => parseInt(id) === parseInt(product.offerId));
+
+	        if (product.isInDeal === isInDeal) {
+	          continue;
+	        }
+
+	        ui_vue.Vue.set(this.products, i, Object.assign({}, product, {
+	          isInDeal
+	        }));
+	      }
+	    },
+
+	    // endregion
+	    beforeDestroy() {
+	      this.unsubscribeCustomEvents();
 	    }
 
 	  }
@@ -1353,6 +1430,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<li
 			:class="{'crm-entity-stream-advice-list-item--active': product.isInDeal}"
@@ -1392,7 +1470,7 @@ this.BX.Crm = this.BX.Crm || {};
 					</div>
 				</div>
 			</div>
-			<div v-if="isAddToDealVisible" class="crm-entity-stream-advice-list-btn-box">				
+			<div v-if="isAddToDealVisible" class="crm-entity-stream-advice-list-btn-box">
 				<button
 					@click="addProductToDeal"
 					class="ui-btn ui-btn-round ui-btn-xs crm-entity-stream-advice-list-btn"
@@ -1404,193 +1482,121 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	var component = ui_vue.Vue.extend({
-	  mixins: [HistoryItemMixin],
-	  components: {
-	    'product': Product
+	var ProductList = {
+	  props: {
+	    products: [],
+	    dealId: null,
+	    isAddToDealVisible: false
 	  },
 
 	  data() {
 	    return {
 	      isShortList: true,
-	      shortListProductsCnt: 3,
-	      isNotificationShown: false,
-	      activeRequestsCnt: 0,
-	      dealId: null,
-	      products: [],
-	      isProductsGridAvailable: false
+	      shortListProductsCnt: 3
 	    };
+	  },
+
+	  components: {
+	    'product': Product
+	  },
+	  methods: {
+	    onProductAddedToDeal() {
+	      this.$emit('product-added-to-deal');
+	    },
+
+	    onProductAddingToDeal() {
+	      this.$emit('product-adding-to-deal');
+	    },
+
+	    showMore() {
+	      this.isShortList = false;
+	      const listWrap = this.$refs.adviceList;
+	      listWrap.style.maxHeight = 950 + 'px';
+	    }
+
+	  },
+	  computed: {
+	    isShowMoreVisible() {
+	      return this.isShortList && this.products.length > this.shortListProductsCnt;
+	    },
+
+	    visibleProducts() {
+	      let result = [];
+	      const length = this.isShortList && this.shortListProductsCnt < this.products.length ? this.shortListProductsCnt : this.products.length;
+
+	      for (let productIndex = 0; productIndex < length; productIndex++) {
+	        result.push(this.products[productIndex]);
+	      }
+
+	      return result;
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div>
+			<transition-group ref="adviceList" class="crm-entity-stream-advice-list" name="list" tag="ul">
+				<product
+					v-for="product in visibleProducts"
+					v-bind:key="product.offerId"
+					:product="product"
+					:dealId="dealId"
+					:isAddToDealVisible="isAddToDealVisible"
+					@product-added-to-deal="onProductAddedToDeal"
+					@product-adding-to-deal="onProductAddingToDeal"
+				></product>
+			</transition-group>
+			<!--</ul>-->
+			<a
+				v-if="isShowMoreVisible"
+				@click.prevent="showMore"
+				class="crm-entity-stream-advice-link"
+				href="#"
+			>
+				${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE')}
+			</a>
+		</div>
+	`
+	};
+
+	var component = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin, ProductListMixin],
+	  components: {
+	    'product-list': ProductList
 	  },
 
 	  created() {
 	    this.products = this.data.VIEWED_PRODUCTS;
 	    this.dealId = this.data.DEAL_ID;
-	    this._productsGrid = null;
+	    this.productsGrid = null;
 	    this.subscribeCustomEvents();
 	    BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', controller => {
 	      this.setProductsGrid(controller.getProductList());
 	    });
 	  },
 
-	  methods: {
-	    setProductsGrid(productsGrid) {
-	      this._productsGrid = productsGrid;
-
-	      if (this._productsGrid) {
-	        this.onProductsGridChanged();
-	        this.isProductsGridAvailable = true;
-	      }
-	    },
-
-	    showMore() {
-	      this.isShortList = false;
-	      const listWrap = document.querySelector('.crm-entity-stream-advice-list');
-	      listWrap.style.maxHeight = 950 + 'px';
-	    },
-
-	    // region event handlers
-	    handleProductAddingToDeal() {
-	      this.activeRequestsCnt++;
-	    },
-
-	    handleProductAddedToDeal() {
-	      if (this.activeRequestsCnt > 0) {
-	        this.activeRequestsCnt--;
-	      }
-
-	      if (!(this.activeRequestsCnt === 0 && this._productsGrid)) {
-	        return;
-	      }
-
-	      BX.Crm.EntityEditor.getDefault().reload();
-
-	      this._productsGrid.reloadGrid(false);
-
-	      if (!this.isNotificationShown) {
-	        ui_notification.UI.Notification.Center.notify({
-	          content: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_PRODUCTS_ADDED_TO_DEAL'),
-	          events: {
-	            onClose: event => {
-	              this.isNotificationShown = false;
-	            }
-	          },
-	          actions: [{
-	            title: main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_EDIT_PRODUCTS'),
-	            events: {
-	              click: (event, balloon, action) => {
-	                BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
-	                balloon.close();
-	              }
-	            }
-	          }]
-	        });
-	        this.isNotificationShown = true;
-	      }
-	    },
-
-	    // endregion
-	    // region custom events
-	    subscribeCustomEvents() {
-	      main_core_events.EventEmitter.subscribe('EntityProductListController', this.onProductsGridCreated);
-	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
-	    },
-
-	    unsubscribeCustomEvents() {
-	      main_core_events.EventEmitter.unsubscribe('EntityProductListController', this.onProductsGridCreated);
-	      main_core_events.EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onProductsGridChanged);
-	    },
-
-	    onProductsGridCreated(event) {
-	      this.setProductsGrid(event.getData()[0]);
-	    },
-
-	    onProductsGridChanged(event) {
-	      if (!this._productsGrid) {
-	        return;
-	      }
-
-	      let dealOfferIds = this._productsGrid.products.map((product, index) => {
-	        if (!(product.hasOwnProperty('fields') && product.fields.hasOwnProperty('OFFER_ID'))) {
-	          return null;
-	        }
-
-	        return product.fields.OFFER_ID;
-	      });
-
-	      for (const [i, product] of this.products.entries()) {
-	        let isInDeal = dealOfferIds.some(id => id == product.offerId);
-
-	        if (product.isInDeal === isInDeal) {
-	          continue;
-	        }
-
-	        ui_vue.Vue.set(this.products, i, Object.assign({}, product, {
-	          isInDeal
-	        }));
-	      }
-	    },
-
-	    // endregion
-	    beforeDestroy() {
-	      this.unsubscribeCustomEvents();
-	    }
-
-	  },
-	  computed: {
-	    visibleProducts() {
-	      let result = [];
-	      let i = 1;
-
-	      for (const product of this.products) {
-	        if (this.isShortList && i > this.shortListProductsCnt) {
-	          break;
-	        }
-
-	        result.push(product);
-	        i++;
-	      }
-
-	      return result;
-	    },
-
-	    isShowMoreVisible() {
-	      return this.isShortList && this.products.length > this.shortListProductsCnt;
-	    }
-
-	  },
+	  // language=Vue
 	  template: `
-		<div class="crm-entity-stream-section crm-entity-stream-section-advice">
+		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
 			<div class="crm-entity-stream-advice-content">
 				<div class="crm-entity-stream-advice-info">
 					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_LOOK_AT_CLIENT_PRODUCTS')}
-					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS')}
+					${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_ENCOURAGE_CLIENT_BUY_PRODUCTS_2')}
 				</div>
 				<div class="crm-entity-stream-advice-inner">
 					<h3 class="crm-entity-stream-advice-subtitle">
 						${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_VIEWED_PRODUCTS')}
 					</h3>
 					<!--<ul class="crm-entity-stream-advice-list">-->
-					<transition-group class="crm-entity-stream-advice-list" name="list" tag="ul">						
-						<product
-							v-for="product in visibleProducts"
-							v-bind:key="product"
-							:product="product"
-							:dealId="dealId"
-							:isAddToDealVisible="isProductsGridAvailable"
-							@product-added-to-deal="handleProductAddedToDeal"
-							@product-adding-to-deal="handleProductAddingToDeal"
-						></product>
-					</transition-group>
+					<product-list
+						:products="products"
+						:dealId="dealId"
+						:isAddToDealVisible="isProductsGridAvailable"
+						@product-added-to-deal="handleProductAddedToDeal"
+						@product-adding-to-deal="handleProductAddingToDeal"
+					></product-list>
 					<!--</ul>-->
-					<a
-						v-if="isShowMoreVisible"
-						@click.prevent="showMore"
-						class="crm-entity-stream-advice-link"
-						href="#"
-					>
-						${main_core.Loc.getMessage('CRM_TIMELINE_ENCOURAGE_BUY_PRODUCTS_SHOW_MORE')}
-					</a>
 				</div>
 			</div>
 		</div>
@@ -1617,6 +1623,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<a
 			v-if="author.SHOW_URL"
@@ -1744,6 +1751,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-sms">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-sms"></div>
@@ -1830,6 +1838,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-content-delivery-title">
 			<div
@@ -2299,6 +2308,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  },
+	  // language=Vue
 	  template: `
 		<div
 			class="crm-entity-stream-section crm-entity-stream-section-new"
@@ -2513,6 +2523,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
@@ -2639,6 +2650,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 
 	  },
+	  // language=Vue
 	  template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>
@@ -3673,6 +3685,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    _this._source = null;
 	    _this._paymentId = null;
 	    _this._shipmentId = null;
+	    _this._compilationProductIds = [];
 	    _this._templateId = null;
 	    _this._templatesContainer = null;
 	    _this._templateFieldHintNode = null;
@@ -4206,7 +4219,8 @@ this.BX.Crm = this.BX.Crm || {};
 	          "TO_ENTITY_TYPE_ID": this._commEntityTypeId,
 	          "TO_ENTITY_ID": this._commEntityId,
 	          "PAYMENT_ID": this._paymentId,
-	          "SHIPMENT_ID": this._shipmentId
+	          "SHIPMENT_ID": this._shipmentId,
+	          "COMPILATION_PRODUCT_IDS": this._compilationProductIds
 	        },
 	        onsuccess: BX.delegate(this.onSaveSuccess, this),
 	        onfailure: BX.delegate(this.onSaveFailure, this)
@@ -4274,6 +4288,13 @@ this.BX.Crm = this.BX.Crm || {};
 	              this._source = 'order';
 	              this._paymentId = result.get('order').paymentId;
 	              this._shipmentId = result.get('order').shipmentId;
+	            } else if (result.get('action') === 'sendCompilation' && result.get('compilation')) {
+	              this._input.focus();
+
+	              this._input.value = this._input.value + result.get('compilation').title;
+	              this.setMessageLengthCounter();
+	              this._source = 'deal';
+	              this._compilationProductIds = result.get('compilation').productIds;
 	            }
 	          }
 	        }.bind(this));
@@ -5004,8 +5025,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	/** @memberof BX.Crm.Timeline.Items */
 
-	let Scheduled = /*#__PURE__*/function (_Item) {
-	  babelHelpers.inherits(Scheduled, _Item);
+	let Scheduled = /*#__PURE__*/function (_CompatibleItem) {
+	  babelHelpers.inherits(Scheduled, _CompatibleItem);
 
 	  function Scheduled() {
 	    var _this;
@@ -5085,6 +5106,10 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "isCounterEnabled",
 	    value: function isCounterEnabled() {
+	      if (this.isDone()) {
+	        return this._existedStreamItemDeadLine && History.isCounterEnabled(this._existedStreamItemDeadLine);
+	      }
+
 	      const deadline = this.getDeadline();
 	      return deadline && History.isCounterEnabled(deadline);
 	    }
@@ -5227,7 +5252,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Scheduled;
-	}(Item$1);
+	}(CompatibleItem);
 
 	/** @memberof BX.Crm.Timeline */
 	let Action = /*#__PURE__*/function () {
@@ -6050,7 +6075,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        if (BX.SidePanel) {
 	          BX.SidePanel.Instance.open(url, {
-	            width: 980
+	            width: 1060
 	          });
 	        } else {
 	          top.location.href = url;
@@ -6088,6 +6113,405 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Document;
 	}(HistoryActivity);
 
+	/** @memberof BX.Crm.Timeline.Animation */
+	let Item$1 = /*#__PURE__*/function () {
+	  function Item() {
+	    babelHelpers.classCallCheck(this, Item);
+	    this._id = "";
+	    this._settings = {};
+	    this._initialItem = null;
+	    this._finalItem = null;
+	    this._events = null;
+	  }
+
+	  babelHelpers.createClass(Item, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	      this._settings = settings ? settings : {};
+	      this._initialItem = this.getSetting("initialItem");
+	      this._finalItem = this.getSetting("finalItem");
+	      this._anchor = this.getSetting("anchor");
+	      this._events = this.getSetting("events", {});
+	    }
+	  }, {
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "getSetting",
+	    value: function getSetting(name, defaultval) {
+	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
+	    }
+	  }, {
+	    key: "run",
+	    value: function run() {
+	      this._node = this._initialItem.getWrapper();
+	      const originalPosition = BX.pos(this._node);
+	      this._initialYPosition = originalPosition.top;
+	      this._initialXPosition = originalPosition.left;
+	      this._initialWidth = this._node.offsetWidth;
+	      this._initialHeight = this._node.offsetHeight;
+	      this._anchorYPosition = BX.pos(this._anchor).top;
+	      this.createStub();
+	      this.createGhost();
+	      this.moveGhost();
+	    }
+	  }, {
+	    key: "createStub",
+	    value: function createStub() {
+	      this._stub = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow"
+	        },
+	        children: [BX.create("DIV", {
+	          attrs: {
+	            className: "crm-entity-stream-section-icon"
+	          }
+	        }), BX.create("DIV", {
+	          props: {
+	            className: "crm-entity-stream-section-content"
+	          },
+	          style: {
+	            height: this._initialHeight + "px"
+	          }
+	        })]
+	      });
+
+	      this._node.parentNode.insertBefore(this._stub, this._node);
+	    }
+	  }, {
+	    key: "createGhost",
+	    value: function createGhost() {
+	      this._ghostNode = this._node;
+	      this._ghostNode.style.position = "absolute";
+	      this._ghostNode.style.width = this._initialWidth + "px";
+	      this._ghostNode.style.height = this._initialHeight + "px";
+	      this._ghostNode.style.top = this._initialYPosition + "px";
+	      this._ghostNode.style.left = this._initialXPosition + "px";
+	      document.body.appendChild(this._ghostNode);
+	      setTimeout(BX.proxy(function () {
+	        BX.addClass(this._ghostNode, "crm-entity-stream-section-casper");
+	      }, this), 20);
+	    }
+	  }, {
+	    key: "moveGhost",
+	    value: function moveGhost() {
+	      const node = this._ghostNode;
+	      const movingEvent = new BX.easing({
+	        duration: 500,
+	        start: {
+	          top: this._initialYPosition
+	        },
+	        finish: {
+	          top: this._anchorYPosition
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          node.style.top = state.top + "px";
+	        }, this)
+	      });
+	      setTimeout(BX.proxy(function () {
+	        movingEvent.animate();
+	        node.style.boxShadow = "";
+	      }, this), 500);
+	      const placeEventAnim = new BX.easing({
+	        duration: 500,
+	        start: {
+	          height: 0
+	        },
+	        finish: {
+	          height: this._initialHeight + 20
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          this._anchor.style.height = state.height + "px";
+	        }, this),
+	        complete: BX.proxy(function () {
+	          if (BX.type.isFunction(this._events["complete"])) {
+	            this._events["complete"]();
+	          }
+
+	          this.addHistoryItem();
+	          this.removeGhost();
+	        }, this)
+	      });
+	      setTimeout(function () {
+	        placeEventAnim.animate();
+	      }, 500);
+	    }
+	  }, {
+	    key: "addHistoryItem",
+	    value: function addHistoryItem() {
+	      const node = this._finalItem.getWrapper();
+
+	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+
+	      this._finalItemHeight = this._anchor.offsetHeight - node.offsetHeight;
+	      this._anchor.style.height = 0;
+	      node.style.marginBottom = this._finalItemHeight + "px";
+	    }
+	  }, {
+	    key: "removeGhost",
+	    value: function removeGhost() {
+	      const ghostNode = this._ghostNode;
+
+	      const finalNode = this._finalItem.getWrapper();
+
+	      ghostNode.style.overflow = "hidden";
+	      const hideCasperItem = new BX.easing({
+	        duration: 70,
+	        start: {
+	          opacity: 100,
+	          height: ghostNode.offsetHeight,
+	          marginBottom: this._finalItemHeight
+	        },
+	        finish: {
+	          opacity: 0,
+	          height: finalNode.offsetHeight,
+	          marginBottom: 20
+	        },
+	        // transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          ghostNode.style.opacity = state.opacity / 100;
+	          ghostNode.style.height = state.height + "px";
+	          finalNode.style.marginBottom = state.marginBottom + "px";
+	        }, this),
+	        complete: BX.proxy(function () {
+	          ghostNode.remove();
+	          finalNode.style.marginBottom = "";
+	          this.collapseStub();
+	        }, this)
+	      });
+	      hideCasperItem.animate();
+	    }
+	  }, {
+	    key: "collapseStub",
+	    value: function collapseStub() {
+	      const removePlannedEvent = new BX.easing({
+	        duration: 500,
+	        start: {
+	          opacity: 100,
+	          height: this._initialHeight,
+	          marginBottom: 15
+	        },
+	        finish: {
+	          opacity: 0,
+	          height: 0,
+	          marginBottom: 0
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          this._stub.style.height = state.height + "px";
+	          this._stub.style.marginBottom = state.marginBottom + "px";
+	          this._stub.style.opacity = state.opacity / 100;
+	        }, this),
+	        complete: BX.proxy(function () {
+	          this.inited = false;
+	        }, this)
+	      });
+	      removePlannedEvent.animate();
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Item();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return Item;
+	}();
+
+	/** @memberof BX.Crm.Timeline.Animation */
+	let Shift = /*#__PURE__*/function () {
+	  function Shift() {
+	    babelHelpers.classCallCheck(this, Shift);
+	    this._node = null;
+	    this._anchor = null;
+	    this._nodeParent = null;
+	    this._startPosition = null;
+	    this._events = null;
+	  }
+
+	  babelHelpers.createClass(Shift, [{
+	    key: "initialize",
+	    value: function initialize(node, anchor, startPosition, shadowNode, events) {
+	      this._node = node;
+	      this._shadowNode = shadowNode;
+	      this._anchor = anchor;
+	      this._nodeParent = node.parentNode;
+	      this._startPosition = startPosition;
+	      this._events = BX.type.isPlainObject(events) ? events : {};
+	    }
+	  }, {
+	    key: "run",
+	    value: function run() {
+	      this._anchorPosition = BX.pos(this._anchor);
+	      setTimeout(BX.proxy(function () {
+	        BX.addClass(this._node, "crm-entity-stream-section-casper");
+	      }, this), 0);
+	      const movingEvent = new BX.easing({
+	        duration: 1500,
+	        start: {
+	          top: this._startPosition.top,
+	          height: 0
+	        },
+	        finish: {
+	          top: this._anchorPosition.top,
+	          height: this._startPosition.height + 20
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.proxy(function (state) {
+	          this._node.style.top = state.top + "px";
+	          this._anchor.style.height = state.height + "px";
+	        }, this),
+	        complete: BX.proxy(function () {
+	          this.finish();
+	        }, this)
+	      });
+	      movingEvent.animate();
+	    }
+	  }, {
+	    key: "finish",
+	    value: function finish() {
+	      if (BX.type.isFunction(this._events["complete"])) {
+	        this._events["complete"]();
+	      }
+
+	      if (this._shadowNode !== false) ;
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(node, anchor, startPosition, shadowNode, events) {
+	      const self = new Shift();
+	      self.initialize(node, anchor, startPosition, shadowNode, events);
+	      return self;
+	    }
+	  }]);
+	  return Shift;
+	}();
+
+	/** @memberof BX.Crm.Timeline.Animation */
+
+	let ItemNew = /*#__PURE__*/function () {
+	  function ItemNew() {
+	    babelHelpers.classCallCheck(this, ItemNew);
+	    this._id = "";
+	    this._settings = {};
+	    this._initialItem = null;
+	    this._finalItem = null;
+	    this._events = null;
+	  }
+
+	  babelHelpers.createClass(ItemNew, [{
+	    key: "initialize",
+	    value: function initialize(id, settings) {
+	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
+	      this._settings = settings ? settings : {};
+	      this._initialItem = this.getSetting("initialItem");
+	      this._finalItem = this.getSetting("finalItem");
+	      this._anchor = this.getSetting("anchor");
+	      this._events = this.getSetting("events", {});
+	    }
+	  }, {
+	    key: "getId",
+	    value: function getId() {
+	      return this._id;
+	    }
+	  }, {
+	    key: "getSetting",
+	    value: function getSetting(name, defaultval) {
+	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
+	    }
+	  }, {
+	    key: "addHistoryItem",
+	    value: function addHistoryItem() {
+	      const node = this._finalItem.getWrapper();
+
+	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+	    }
+	  }, {
+	    key: "run",
+	    value: function run() {
+	      this._node = this._initialItem.getWrapper();
+	      this.createStub();
+	      BX.addClass(this._node, 'crm-entity-stream-section-animate-start');
+	      this._startPosition = BX.pos(this._stub);
+	      this._node.style.position = "absolute";
+	      this._node.style.width = this._startPosition.width + "px";
+	      this._node.style.height = this._startPosition.height + "px";
+	      this._node.style.top = this._startPosition.top + "px";
+	      this._node.style.left = this._startPosition.left + "px";
+	      this._node.style.zIndex = 960;
+	      document.body.appendChild(this._node);
+	      const shift = Shift.create(this._node, this._anchor, this._startPosition, this._stub, {
+	        complete: BX.delegate(this.finish, this)
+	      });
+	      shift.run();
+	    }
+	  }, {
+	    key: "createStub",
+	    value: function createStub() {
+	      this._stub = BX.create("DIV", {
+	        attrs: {
+	          className: "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow"
+	        },
+	        children: [BX.create("DIV", {
+	          attrs: {
+	            className: "crm-entity-stream-section-icon"
+	          }
+	        }), BX.create("DIV", {
+	          props: {
+	            className: "crm-entity-stream-section-content"
+	          },
+	          style: {
+	            height: this._initialItem._wrapper.clientHeight + "px"
+	          }
+	        })]
+	      });
+
+	      this._node.parentNode.insertBefore(this._stub, this._node);
+	    }
+	  }, {
+	    key: "finish",
+	    value: function finish() {
+	      const stubContainer = this._stub.querySelector('.crm-entity-stream-section-content');
+
+	      this._anchor.style.height = 0; //this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
+
+	      setTimeout(BX.delegate(function () {
+	        BX.removeClass(this._node, 'crm-entity-stream-section-animate-start');
+	      }, this), 0);
+	      this._node.style.opacity = 0;
+	      setTimeout(BX.delegate(function () {
+	        stubContainer.style.height = 0;
+	        stubContainer.style.opacity = 0;
+	        stubContainer.style.paddingTop = 0;
+	        stubContainer.style.paddingBottom = 0;
+	      }, this), 120);
+	      setTimeout(BX.delegate(function () {
+	        BX.remove(this._stub);
+	        BX.remove(this._node);
+	        this.addHistoryItem();
+
+	        if (BX.type.isFunction(this._events["complete"])) {
+	          this._events["complete"]();
+	        }
+	      }, this), 420);
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new ItemNew();
+	      self.initialize(id, settings);
+	      return self;
+	    }
+	  }]);
+	  return ItemNew;
+	}();
+
 	/** @memberof BX.Crm.Timeline */
 
 	let Steam = /*#__PURE__*/function () {
@@ -6105,6 +6529,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    this._isStubMode = false;
 	    this._userId = 0;
 	    this._readOnly = false;
+	    this._streamType = crm_timeline_item.StreamType.history;
+	    this._anchor = null;
 	    this._serviceUrl = "";
 	  }
 
@@ -6145,6 +6571,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this._id;
 	    }
 	  }, {
+	    key: "isScheduleStream",
+	    value: function isScheduleStream() {
+	      return this.getStreamType() === crm_timeline_item.StreamType.scheduled;
+	    }
+	  }, {
+	    key: "isFixedHistoryStream",
+	    value: function isFixedHistoryStream() {
+	      return this.getStreamType() === crm_timeline_item.StreamType.pinned;
+	    }
+	  }, {
+	    key: "isHistoryStream",
+	    value: function isHistoryStream() {
+	      return this.getStreamType() === crm_timeline_item.StreamType.history;
+	    }
+	  }, {
 	    key: "getSetting",
 	    value: function getSetting(name, defaultval) {
 	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
@@ -6174,6 +6615,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getServiceUrl",
 	    value: function getServiceUrl() {
 	      return this._serviceUrl;
+	    }
+	  }, {
+	    key: "getAnchor",
+	    value: function getAnchor() {
+	      return this._anchor;
+	    }
+	  }, {
+	    key: "getStreamType",
+	    value: function getStreamType() {
+	      return this._streamType;
 	    }
 	  }, {
 	    key: "refreshLayout",
@@ -6227,12 +6678,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      return this._serverTimezoneOffset;
-	    }
+	    } // @todo replace by DatetimeConverter
+
 	  }, {
 	    key: "formatTime",
 	    value: function formatTime(time, now, utc) {
 	      return BX.date.format(this._timeFormat, time, now, utc);
-	    }
+	    } // @todo replace by DatetimeConverter
+
 	  }, {
 	    key: "formatDate",
 	    value: function formatDate(date) {
@@ -6257,6 +6710,220 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      return text.substring(0, offset) + "...";
+	    }
+	  }, {
+	    key: "getItems",
+	    value: function getItems() {
+	      return [];
+	    }
+	    /**
+	     * @abstract
+	     */
+
+	  }, {
+	    key: "setItems",
+	    value: function setItems(items) {
+	      throw new Error('Stream.setItems() must be overridden');
+	    }
+	  }, {
+	    key: "getLastItem",
+	    value: function getLastItem() {
+	      const items = this.getItems();
+	      return items.length > 0 ? items[items.length - 1] : null;
+	    }
+	  }, {
+	    key: "findItemById",
+	    value: function findItemById(id) {
+	      id = id.toString();
+	      return this.getItems().find(item => item.getId() === id) || null;
+	    }
+	  }, {
+	    key: "getItemIndex",
+	    value: function getItemIndex(item) {
+	      return this.getItems().findIndex(currentItem => currentItem === item);
+	    }
+	  }, {
+	    key: "removeItemByIndex",
+	    value: function removeItemByIndex(index) {
+	      const items = this.getItems();
+
+	      if (index < items.length) {
+	        items.splice(index, 1);
+	        this.setItems(items);
+	      }
+	    }
+	    /**
+	     * @abstract
+	     */
+
+	  }, {
+	    key: "createItem",
+	    value: function createItem(data) {
+	      throw new Error('Stream.createItem() must be overridden');
+	    }
+	  }, {
+	    key: "createItemCopy",
+	    value: function createItemCopy(item) {
+	      if (item instanceof crm_timeline_item.ConfigurableItem) {
+	        return item.clone();
+	      }
+
+	      return this.createItem(item.getData());
+	    }
+	  }, {
+	    key: "refreshItem",
+	    value: function refreshItem(item, animated = true) {
+	      const index = this.getItemIndex(item);
+
+	      if (index < 0) {
+	        return Promise.resolve();
+	      }
+
+	      this.removeItemByIndex(index);
+	      let itemPositionChanged = false;
+	      let newIndex = 0;
+	      let newItem;
+
+	      if (this.isScheduleStream()) {
+	        newItem = this.createItemCopy(item);
+	        newIndex = this.calculateItemIndex(newItem);
+	        itemPositionChanged = newIndex !== index;
+	      }
+
+	      if (!itemPositionChanged) {
+	        this.addItem(item, newIndex);
+	        item.refreshLayout();
+
+	        if (animated) {
+	          return this.animateItemAdding(item);
+	        }
+
+	        return Promise.resolve();
+	      }
+
+	      const anchor = this.createAnchor(newIndex);
+	      this.addItem(newItem, newIndex);
+
+	      if (animated) {
+	        newItem.layout({
+	          add: false
+	        });
+	        return new Promise(resolve => {
+	          const animation = Item$1.create('', {
+	            initialItem: item,
+	            finalItem: newItem,
+	            anchor: anchor,
+	            events: {
+	              complete: () => {
+	                item.destroy();
+	                resolve();
+	              }
+	            }
+	          });
+	          animation.run();
+	        });
+	      } else {
+	        newItem.layout({
+	          anchor: anchor
+	        });
+	        return Promise.resolve();
+	      }
+	    }
+	  }, {
+	    key: "calculateItemIndex",
+	    value: function calculateItemIndex(item) {
+	      return 0;
+	    }
+	  }, {
+	    key: "createAnchor",
+	    value: function createAnchor(index) {
+	      return null;
+	    }
+	    /**
+	     * @abstract
+	     */
+
+	  }, {
+	    key: "addItem",
+	    value: function addItem(item, index) {
+	      throw new Error('Stream.addItem() must be overridden');
+	    }
+	    /**
+	     * @abstract
+	     */
+
+	  }, {
+	    key: "deleteItem",
+	    value: function deleteItem(item) {
+	      throw new Error('Stream.deleteItem() must be overridden');
+	    }
+	  }, {
+	    key: "deleteItemAnimated",
+	    value: function deleteItemAnimated(item) {
+	      if (!main_core.Type.isDomNode(item.getWrapper())) {
+	        this.deleteItem(item);
+	        return Promise.resolve();
+	      }
+
+	      return new Promise(resolve => {
+	        const wrapperPosition = main_core.Dom.getPosition(item.getWrapper());
+	        const hideEvent = new BX.easing({
+	          duration: 1000,
+	          start: {
+	            height: wrapperPosition.height,
+	            opacity: 1,
+	            marginBottom: 15
+	          },
+	          finish: {
+	            height: 0,
+	            opacity: 0,
+	            marginBottom: 0
+	          },
+	          transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	          step: state => {
+	            main_core.Dom.style(item.getWrapper(), {
+	              height: state.height + 'px',
+	              opacity: state.opacity,
+	              marginBottom: state.marginBottom
+	            });
+	          },
+	          complete: () => {
+	            this.deleteItem(item);
+	            resolve();
+	          }
+	        });
+	        hideEvent.animate();
+	      });
+	    }
+	  }, {
+	    key: "moveItemToStream",
+	    value: function moveItemToStream(item, destinationStream, destinationItem) {
+	      this.removeItemByIndex(this.getItemIndex(item));
+
+	      if (this.getItems().length > 0) {
+	        this.refreshLayout();
+	      }
+
+	      return new Promise(resolve => {
+	        const animation = ItemNew.create('', {
+	          initialItem: item,
+	          finalItem: destinationItem,
+	          anchor: destinationStream.createAnchor(),
+	          events: {
+	            complete: () => {
+	              this.refreshLayout();
+	              destinationStream.refreshLayout();
+	              resolve();
+	            }
+	          }
+	        });
+	        animation.run();
+	      });
+	    }
+	  }, {
+	    key: "animateItemAdding",
+	    value: function animateItemAdding(item) {
+	      return Promise.resolve();
 	    }
 	  }]);
 	  return Steam;
@@ -6638,6 +7305,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (isoDate === "") {
 	        this._messageDateNode.innerHTML = "";
 	      } else {
+	        // @todo replace by DatetimeConverter
 	        const remoteDate = new Date(isoDate).getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 	        const localTime = new Date().getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 	        this._messageDateNode.innerHTML = this.formatTime(remoteDate, localTime, true);
@@ -7448,7 +8116,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return null;
 	      }
 
-	      return new Date(time.getTime() + 1000 * Item$1.getUserTimezoneOffset());
+	      return new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	    }
 	  }, {
 	    key: "markAsDone",
@@ -7488,9 +8156,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      let wrapperClassName = this.getWrapperClassName();
 
 	      if (wrapperClassName !== "") {
-	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
+	        wrapperClassName = this._schedule.getItemClassName() + " " + wrapperClassName;
 	      } else {
-	        wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
+	        wrapperClassName = this._schedule.getItemClassName();
 	      }
 
 	      const wrapper = BX.create("DIV", {
@@ -7710,35 +8378,38 @@ this.BX.Crm = this.BX.Crm || {};
 	        });
 	      }
 
-	      const handler = BX.delegate(this.onContextMenuItemSelect, this);
+	      if (this.canPostpone()) {
+	        const handler = BX.delegate(this.onContextMenuItemSelect, this);
 
-	      if (!this._postponeController) {
-	        this._postponeController = SchedulePostponeController.create("", {
-	          item: this
-	        });
+	        if (!this._postponeController) {
+	          this._postponeController = SchedulePostponeController.create("", {
+	            item: this
+	          });
+	        }
+
+	        const postponeMenu = {
+	          id: "postpone",
+	          text: this._postponeController.getTitle(),
+	          items: []
+	        };
+
+	        const commands = this._postponeController.getCommandList();
+
+	        let i = 0;
+	        const length = commands.length;
+
+	        for (; i < length; i++) {
+	          const command = commands[i];
+	          postponeMenu.items.push({
+	            id: command["name"],
+	            text: command["title"],
+	            onclick: handler
+	          });
+	        }
+
+	        menuItems.push(postponeMenu);
 	      }
 
-	      const postponeMenu = {
-	        id: "postpone",
-	        text: this._postponeController.getTitle(),
-	        items: []
-	      };
-
-	      const commands = this._postponeController.getCommandList();
-
-	      let i = 0;
-	      const length = commands.length;
-
-	      for (; i < length; i++) {
-	        const command = commands[i];
-	        postponeMenu.items.push({
-	          id: command["name"],
-	          text: command["title"],
-	          onclick: handler
-	        });
-	      }
-
-	      menuItems.push(postponeMenu);
 	      return menuItems;
 	    }
 	  }, {
@@ -7749,6 +8420,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._postponeController) {
 	        this._postponeController.processCommand(item.id);
 	      }
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(id, settings) {
+	      const self = new Activity();
+	      self.initialize(id, settings);
+	      return self;
 	    }
 	  }]);
 	  return Activity;
@@ -8332,7 +9010,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return null;
 	      }
 
-	      return new Date(time.getTime() + 1000 * Item$1.getUserTimezoneOffset());
+	      return new crm_timeline_tools.DatetimeConverter(time).toUserTime().getValue();
 	    }
 	  }, {
 	    key: "isDone",
@@ -8992,10 +9670,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (entityData['ZOOM_INFO']) {
 	        const topic = entityData['ZOOM_INFO']['TOPIC'];
 	        const duration = entityData['ZOOM_INFO']['DURATION'];
-	        const startTimeStamp = BX.parseDate(entityData['ZOOM_INFO']['CONF_START_TIME'], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
-	        const date = new Date(startTimeStamp.getTime() + 1000 * Item$1.getUserTimezoneOffset());
+	        const startTime = BX.parseDate(entityData['ZOOM_INFO']['CONF_START_TIME'], false, "YYYY-MM-DD", "YYYY-MM-DD HH:MI:SS");
+	        const date = new crm_timeline_tools.DatetimeConverter(startTime).toUserTime().toDatetimeString({
+	          delimiter: ', '
+	        });
 	        const detailZoomMessage = BX.create("span", {
-	          text: this.getMessage("zoomCreatedMessage").replace("#CONFERENCE_TITLE#", topic).replace("#DATE_TIME#", this.formatDateTime(date)).replace("#DURATION#", duration)
+	          text: this.getMessage("zoomCreatedMessage").replace("#CONFERENCE_TITLE#", topic).replace("#DATE_TIME#", date).replace("#DURATION#", duration)
 	        });
 	        const detailZoomInfoLink = BX.create("A", {
 	          attrs: {
@@ -9109,405 +9789,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  }]);
 	  return Zoom;
 	}(Activity$1);
-
-	/** @memberof BX.Crm.Timeline.Animation */
-	let Item$2 = /*#__PURE__*/function () {
-	  function Item() {
-	    babelHelpers.classCallCheck(this, Item);
-	    this._id = "";
-	    this._settings = {};
-	    this._initialItem = null;
-	    this._finalItem = null;
-	    this._events = null;
-	  }
-
-	  babelHelpers.createClass(Item, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._initialItem = this.getSetting("initialItem");
-	      this._finalItem = this.getSetting("finalItem");
-	      this._anchor = this.getSetting("anchor");
-	      this._events = this.getSetting("events", {});
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getSetting",
-	    value: function getSetting(name, defaultval) {
-	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
-	    }
-	  }, {
-	    key: "run",
-	    value: function run() {
-	      this._node = this._initialItem.getWrapper();
-	      const originalPosition = BX.pos(this._node);
-	      this._initialYPosition = originalPosition.top;
-	      this._initialXPosition = originalPosition.left;
-	      this._initialWidth = this._node.offsetWidth;
-	      this._initialHeight = this._node.offsetHeight;
-	      this._anchorYPosition = BX.pos(this._anchor).top;
-	      this.createStub();
-	      this.createGhost();
-	      this.moveGhost();
-	    }
-	  }, {
-	    key: "createStub",
-	    value: function createStub() {
-	      this._stub = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow"
-	        },
-	        children: [BX.create("DIV", {
-	          attrs: {
-	            className: "crm-entity-stream-section-icon"
-	          }
-	        }), BX.create("DIV", {
-	          props: {
-	            className: "crm-entity-stream-section-content"
-	          },
-	          style: {
-	            height: this._initialHeight + "px"
-	          }
-	        })]
-	      });
-
-	      this._node.parentNode.insertBefore(this._stub, this._node);
-	    }
-	  }, {
-	    key: "createGhost",
-	    value: function createGhost() {
-	      this._ghostNode = this._node;
-	      this._ghostNode.style.position = "absolute";
-	      this._ghostNode.style.width = this._initialWidth + "px";
-	      this._ghostNode.style.height = this._initialHeight + "px";
-	      this._ghostNode.style.top = this._initialYPosition + "px";
-	      this._ghostNode.style.left = this._initialXPosition + "px";
-	      document.body.appendChild(this._ghostNode);
-	      setTimeout(BX.proxy(function () {
-	        BX.addClass(this._ghostNode, "crm-entity-stream-section-casper");
-	      }, this), 20);
-	    }
-	  }, {
-	    key: "moveGhost",
-	    value: function moveGhost() {
-	      const node = this._ghostNode;
-	      const movingEvent = new BX.easing({
-	        duration: 500,
-	        start: {
-	          top: this._initialYPosition
-	        },
-	        finish: {
-	          top: this._anchorYPosition
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          node.style.top = state.top + "px";
-	        }, this)
-	      });
-	      setTimeout(BX.proxy(function () {
-	        movingEvent.animate();
-	        node.style.boxShadow = "";
-	      }, this), 500);
-	      const placeEventAnim = new BX.easing({
-	        duration: 500,
-	        start: {
-	          height: 0
-	        },
-	        finish: {
-	          height: this._initialHeight + 20
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          this._anchor.style.height = state.height + "px";
-	        }, this),
-	        complete: BX.proxy(function () {
-	          if (BX.type.isFunction(this._events["complete"])) {
-	            this._events["complete"]();
-	          }
-
-	          this.addHistoryItem();
-	          this.removeGhost();
-	        }, this)
-	      });
-	      setTimeout(function () {
-	        placeEventAnim.animate();
-	      }, 500);
-	    }
-	  }, {
-	    key: "addHistoryItem",
-	    value: function addHistoryItem() {
-	      const node = this._finalItem.getWrapper();
-
-	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
-
-	      this._finalItemHeight = this._anchor.offsetHeight - node.offsetHeight;
-	      this._anchor.style.height = 0;
-	      node.style.marginBottom = this._finalItemHeight + "px";
-	    }
-	  }, {
-	    key: "removeGhost",
-	    value: function removeGhost() {
-	      const ghostNode = this._ghostNode;
-
-	      const finalNode = this._finalItem.getWrapper();
-
-	      ghostNode.style.overflow = "hidden";
-	      const hideCasperItem = new BX.easing({
-	        duration: 70,
-	        start: {
-	          opacity: 100,
-	          height: ghostNode.offsetHeight,
-	          marginBottom: this._finalItemHeight
-	        },
-	        finish: {
-	          opacity: 0,
-	          height: finalNode.offsetHeight,
-	          marginBottom: 20
-	        },
-	        // transition : BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          ghostNode.style.opacity = state.opacity / 100;
-	          ghostNode.style.height = state.height + "px";
-	          finalNode.style.marginBottom = state.marginBottom + "px";
-	        }, this),
-	        complete: BX.proxy(function () {
-	          ghostNode.remove();
-	          finalNode.style.marginBottom = "";
-	          this.collapseStub();
-	        }, this)
-	      });
-	      hideCasperItem.animate();
-	    }
-	  }, {
-	    key: "collapseStub",
-	    value: function collapseStub() {
-	      const removePlannedEvent = new BX.easing({
-	        duration: 500,
-	        start: {
-	          opacity: 100,
-	          height: this._initialHeight,
-	          marginBottom: 15
-	        },
-	        finish: {
-	          opacity: 0,
-	          height: 0,
-	          marginBottom: 0
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          this._stub.style.height = state.height + "px";
-	          this._stub.style.marginBottom = state.marginBottom + "px";
-	          this._stub.style.opacity = state.opacity / 100;
-	        }, this),
-	        complete: BX.proxy(function () {
-	          this.inited = false;
-	        }, this)
-	      });
-	      removePlannedEvent.animate();
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new Item();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return Item;
-	}();
-
-	/** @memberof BX.Crm.Timeline.Animation */
-	let Shift = /*#__PURE__*/function () {
-	  function Shift() {
-	    babelHelpers.classCallCheck(this, Shift);
-	    this._node = null;
-	    this._anchor = null;
-	    this._nodeParent = null;
-	    this._startPosition = null;
-	    this._events = null;
-	  }
-
-	  babelHelpers.createClass(Shift, [{
-	    key: "initialize",
-	    value: function initialize(node, anchor, startPosition, shadowNode, events) {
-	      this._node = node;
-	      this._shadowNode = shadowNode;
-	      this._anchor = anchor;
-	      this._nodeParent = node.parentNode;
-	      this._startPosition = startPosition;
-	      this._events = BX.type.isPlainObject(events) ? events : {};
-	    }
-	  }, {
-	    key: "run",
-	    value: function run() {
-	      this._anchorPosition = BX.pos(this._anchor);
-	      setTimeout(BX.proxy(function () {
-	        BX.addClass(this._node, "crm-entity-stream-section-casper");
-	      }, this), 0);
-	      const movingEvent = new BX.easing({
-	        duration: 1500,
-	        start: {
-	          top: this._startPosition.top,
-	          height: 0
-	        },
-	        finish: {
-	          top: this._anchorPosition.top,
-	          height: this._startPosition.height + 20
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.proxy(function (state) {
-	          this._node.style.top = state.top + "px";
-	          this._anchor.style.height = state.height + "px";
-	        }, this),
-	        complete: BX.proxy(function () {
-	          this.finish();
-	        }, this)
-	      });
-	      movingEvent.animate();
-	    }
-	  }, {
-	    key: "finish",
-	    value: function finish() {
-	      if (BX.type.isFunction(this._events["complete"])) {
-	        this._events["complete"]();
-	      }
-
-	      if (this._shadowNode !== false) ;
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(node, anchor, startPosition, shadowNode, events) {
-	      const self = new Shift();
-	      self.initialize(node, anchor, startPosition, shadowNode, events);
-	      return self;
-	    }
-	  }]);
-	  return Shift;
-	}();
-
-	/** @memberof BX.Crm.Timeline.Animation */
-
-	let ItemNew = /*#__PURE__*/function () {
-	  function ItemNew() {
-	    babelHelpers.classCallCheck(this, ItemNew);
-	    this._id = "";
-	    this._settings = {};
-	    this._initialItem = null;
-	    this._finalItem = null;
-	    this._events = null;
-	  }
-
-	  babelHelpers.createClass(ItemNew, [{
-	    key: "initialize",
-	    value: function initialize(id, settings) {
-	      this._id = BX.type.isNotEmptyString(id) ? id : BX.util.getRandomString(4);
-	      this._settings = settings ? settings : {};
-	      this._initialItem = this.getSetting("initialItem");
-	      this._finalItem = this.getSetting("finalItem");
-	      this._anchor = this.getSetting("anchor");
-	      this._events = this.getSetting("events", {});
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this._id;
-	    }
-	  }, {
-	    key: "getSetting",
-	    value: function getSetting(name, defaultval) {
-	      return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
-	    }
-	  }, {
-	    key: "addHistoryItem",
-	    value: function addHistoryItem() {
-	      const node = this._finalItem.getWrapper();
-
-	      this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
-	    }
-	  }, {
-	    key: "run",
-	    value: function run() {
-	      this._node = this._initialItem.getWrapper();
-	      this.createStub();
-	      BX.addClass(this._node, 'crm-entity-stream-section-animate-start');
-	      this._startPosition = BX.pos(this._stub);
-	      this._node.style.position = "absolute";
-	      this._node.style.width = this._startPosition.width + "px";
-	      this._node.style.height = this._startPosition.height + "px";
-	      this._node.style.top = this._startPosition.top + "px";
-	      this._node.style.left = this._startPosition.left + "px";
-	      this._node.style.zIndex = 960;
-	      document.body.appendChild(this._node);
-	      const shift = Shift.create(this._node, this._anchor, this._startPosition, this._stub, {
-	        complete: BX.delegate(this.finish, this)
-	      });
-	      shift.run();
-	    }
-	  }, {
-	    key: "createStub",
-	    value: function createStub() {
-	      this._stub = BX.create("DIV", {
-	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-shadow"
-	        },
-	        children: [BX.create("DIV", {
-	          attrs: {
-	            className: "crm-entity-stream-section-icon"
-	          }
-	        }), BX.create("DIV", {
-	          props: {
-	            className: "crm-entity-stream-section-content"
-	          },
-	          style: {
-	            height: this._initialItem._wrapper.clientHeight + "px"
-	          }
-	        })]
-	      });
-
-	      this._node.parentNode.insertBefore(this._stub, this._node);
-	    }
-	  }, {
-	    key: "finish",
-	    value: function finish() {
-	      const stubContainer = this._stub.querySelector('.crm-entity-stream-section-content');
-
-	      this._anchor.style.height = 0; //this._anchor.parentNode.insertBefore(this._node, this._anchor.nextSibling);
-
-	      setTimeout(BX.delegate(function () {
-	        BX.removeClass(this._node, 'crm-entity-stream-section-animate-start');
-	      }, this), 0);
-	      this._node.style.opacity = 0;
-	      setTimeout(BX.delegate(function () {
-	        stubContainer.style.height = 0;
-	        stubContainer.style.opacity = 0;
-	        stubContainer.style.paddingTop = 0;
-	        stubContainer.style.paddingBottom = 0;
-	      }, this), 120);
-	      setTimeout(BX.delegate(function () {
-	        BX.remove(this._stub);
-	        BX.remove(this._node);
-	        this.addHistoryItem();
-
-	        if (BX.type.isFunction(this._events["complete"])) {
-	          this._events["complete"]();
-	        }
-	      }, this), 420);
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(id, settings) {
-	      const self = new ItemNew();
-	      self.initialize(id, settings);
-	      return self;
-	    }
-	  }]);
-	  return ItemNew;
-	}();
 
 	/** @memberof BX.Crm.Timeline.Streams */
 
@@ -9669,9 +9950,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.getLastItem() === item;
 	    }
 	  }, {
-	    key: "getLastItem",
-	    value: function getLastItem() {
-	      return this._items.length > 0 ? this._items[this._items.length - 1] : null;
+	    key: "getItems",
+	    value: function getItems() {
+	      return this._items;
+	    }
+	  }, {
+	    key: "setItems",
+	    value: function setItems(items) {
+	      this._items = items;
 	    }
 	  }, {
 	    key: "calculateItemIndex",
@@ -9711,11 +9997,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this._items.length;
 	    }
 	  }, {
-	    key: "getItems",
-	    value: function getItems() {
-	      return this._items;
-	    }
-	  }, {
 	    key: "getItemByAssociatedEntity",
 	    value: function getItemByAssociatedEntity($entityTypeId, entityId) {
 	      if (!BX.type.isNumber($entityTypeId)) {
@@ -9750,27 +10031,9 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.getItemByAssociatedEntity(BX.prop.getInteger(itemData, "ASSOCIATED_ENTITY_TYPE_ID", 0), BX.prop.getInteger(itemData, "ASSOCIATED_ENTITY_ID", 0));
 	    }
 	  }, {
-	    key: "getItemIndex",
-	    value: function getItemIndex(item) {
-	      for (let i = 0, l = this._items.length; i < l; i++) {
-	        if (this._items[i] === item) {
-	          return i;
-	        }
-	      }
-
-	      return -1;
-	    }
-	  }, {
 	    key: "getItemByIndex",
 	    value: function getItemByIndex(index) {
 	      return index < this._items.length ? this._items[index] : null;
-	    }
-	  }, {
-	    key: "removeItemByIndex",
-	    value: function removeItemByIndex(index) {
-	      if (index < this._items.length) {
-	        this._items.splice(index, 1);
-	      }
 	    }
 	  }, {
 	    key: "createItem",
@@ -9778,7 +10041,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      const entityTypeID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
 	      const entityID = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_ID", 0);
 	      const entityData = BX.prop.getObject(data, "ASSOCIATED_ENTITY", {});
-	      const itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
+	      let itemId = BX.CrmEntityType.resolveName(entityTypeID) + "_" + entityID.toString();
+
+	      if (data.hasOwnProperty('type')) {
+	        itemId = data.id;
+	        return crm_timeline_item.ConfigurableItem.create(itemId, {
+	          timelineId: this.getId(),
+	          container: this.getWrapper(),
+	          itemClassName: this.getItemClassName(),
+	          isReadOnly: this.isReadOnly(),
+	          streamType: this.getStreamType(),
+	          data: data
+	        });
+	      }
 
 	      if (entityTypeID === BX.CrmEntityType.enumeration.wait) {
 	        return Wait$1.create(itemId, {
@@ -9885,6 +10160,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      return null;
 	    }
 	  }, {
+	    key: "getWrapper",
+	    value: function getWrapper() {
+	      return this._wrapper;
+	    }
+	  }, {
+	    key: "getItemClassName",
+	    value: function getItemClassName() {
+	      return 'crm-entity-stream-section crm-entity-stream-section-planned';
+	    }
+	  }, {
+	    key: "getStreamType",
+	    value: function getStreamType() {
+	      return crm_timeline_item.StreamType.scheduled;
+	    }
+	  }, {
 	    key: "addItem",
 	    value: function addItem(item, index) {
 	      if (!BX.type.isNumber(index) || index < 0) {
@@ -9943,38 +10233,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.refreshLayout();
 
 	      this._manager.processSheduleLayoutChange();
-	    }
-	  }, {
-	    key: "refreshItem",
-	    value: function refreshItem(item) {
-	      const index = this.getItemIndex(item);
-
-	      if (index < 0) {
-	        return;
-	      }
-
-	      this.removeItemByIndex(index);
-	      const newItem = this.createItem(item.getData());
-	      const newIndex = this.calculateItemIndex(newItem);
-
-	      if (newIndex === index) {
-	        this.addItem(item, newIndex);
-	        item.refreshLayout();
-	        item.addWrapperClass("crm-entity-stream-section-updated", 1000);
-	        return;
-	      }
-
-	      const anchor = this.createAnchor(newIndex);
-	      this.addItem(newItem, newIndex);
-	      newItem.layout({
-	        add: false
-	      });
-	      const animation = Item$2.create("", {
-	        initialItem: item,
-	        finalItem: newItem,
-	        anchor: anchor
-	      });
-	      animation.run();
 	    }
 	  }, {
 	    key: "transferItemToHistory",
@@ -10086,6 +10344,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getMessage(name) {
 	      const m = Schedule.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
+	    }
+	  }, {
+	    key: "animateItemAdding",
+	    value: function animateItemAdding(item) {
+	      item.addWrapperClass('crm-entity-stream-section-updated', 1000);
+	      return Promise.resolve();
 	    }
 	  }], [{
 	    key: "create",
@@ -14011,13 +14275,14 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareManualContinuePayContent() {
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
-	          className: 'crm-entity-stream-section crm-entity-stream-section-advice'
+	          className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice'
 	        }
 	      });
 	      wrapper.appendChild(BX.create("DIV", {
 	        attrs: {
 	          className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-advice'
-	        }
+	        },
+	        children: [BX.create('i')]
 	      }));
 	      const content = BX.create("DIV", {
 	        attrs: {
@@ -14040,7 +14305,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      const showUrl = BX.prop.getString(entityData, "SHOW_URL", "");
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
-	          className: 'crm-entity-stream-section crm-entity-stream-section-advice'
+	          className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice'
 	        }
 	      });
 	      wrapper.appendChild(BX.create("DIV", {
@@ -14890,6 +15155,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        children: [content]
 	      }));
 	      return wrapper;
+	    }
+	  }, {
+	    key: "prepareLayout",
+	    value: function prepareLayout(options) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(FinalSummaryDocuments.prototype), "prepareLayout", this).call(this, options);
+	      const enableAdd = BX.type.isPlainObject(options) ? BX.prop.getBoolean(options, "add", true) : true;
+
+	      if (enableAdd) {
+	        main_core_events.EventEmitter.emit('BX.Crm.Timeline.Items.FinalSummaryDocuments:onHistoryNodeAdded', [this._wrapper]);
+	      }
 	    }
 	  }, {
 	    key: "getIconClassName",
@@ -15785,7 +16060,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function prepareContent() {
 	      const wrapper = BX.create("DIV", {
 	        attrs: {
-	          className: "crm-entity-stream-section crm-entity-stream-section-comment"
+	          className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-comment"
 	        }
 	      });
 
@@ -16032,13 +16307,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  }, {
-	    key: "onFinishFasten",
-	    value: function onFinishFasten() {
-	      this.registerImages(this._commentWrapper);
-	      if (BX.type.isDomNode(this._fileBlock)) this.registerImages(this._fileBlock);
-	      BX.LazyLoad.showImages();
-	    }
-	  }, {
 	    key: "registerImages",
 	    value: function registerImages(node) {
 	      const commentImages = node.querySelectorAll('[data-bx-viewer="image"]');
@@ -16247,6 +16515,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        onsuccess: BX.delegate(this.onRemoveSuccess, this),
 	        onfailure: BX.delegate(this.onRequestFailure, this)
 	      });
+	    }
+	  }, {
+	    key: "refreshLayout",
+	    value: function refreshLayout() {
+	      this._playerWrappers = {};
+	      babelHelpers.get(babelHelpers.getPrototypeOf(Comment.prototype), "refreshLayout", this).call(this);
 	    }
 	  }, {
 	    key: "onSaveSuccess",
@@ -16864,6 +17138,88 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Scoring;
 	}(History);
 
+	/** @memberof BX.Crm.Timeline.Animation */
+	let Expand = /*#__PURE__*/function () {
+	  function Expand() {
+	    babelHelpers.classCallCheck(this, Expand);
+	    this._node = null;
+	    this._callback = null;
+	  }
+
+	  babelHelpers.createClass(Expand, [{
+	    key: "initialize",
+	    value: function initialize(node, callback) {
+	      this._node = node;
+	      this._callback = BX.type.isFunction(callback) ? callback : null;
+	    }
+	  }, {
+	    key: "run",
+	    value: function run() {
+	      const position = BX.pos(this._node);
+	      this._node.style.height = 0;
+	      this._node.style.opacity = 0;
+	      this._node.style.overflow = "hidden";
+	      new BX.easing({
+	        duration: 150,
+	        start: {
+	          height: 0
+	        },
+	        finish: {
+	          height: position.height
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.delegate(this.onNodeHeightStep, this),
+	        complete: BX.delegate(this.onNodeHeightComplete, this)
+	      }).animate();
+	    }
+	  }, {
+	    key: "onNodeHeightStep",
+	    value: function onNodeHeightStep(state) {
+	      this._node.style.height = state.height + "px";
+	    }
+	  }, {
+	    key: "onNodeHeightComplete",
+	    value: function onNodeHeightComplete() {
+	      this._node.style.overflow = "";
+	      new BX.easing({
+	        duration: 150,
+	        start: {
+	          opacity: 0
+	        },
+	        finish: {
+	          opacity: 100
+	        },
+	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+	        step: BX.delegate(this.onNodeOpacityStep, this),
+	        complete: BX.delegate(this.onNodeOpacityComplete, this)
+	      }).animate();
+	    }
+	  }, {
+	    key: "onNodeOpacityStep",
+	    value: function onNodeOpacityStep(state) {
+	      this._node.style.opacity = state.opacity / 100;
+	    }
+	  }, {
+	    key: "onNodeOpacityComplete",
+	    value: function onNodeOpacityComplete() {
+	      this._node.style.height = "";
+	      this._node.style.opacity = "";
+
+	      if (this._callback) {
+	        this._callback();
+	      }
+	    }
+	  }], [{
+	    key: "create",
+	    value: function create(node, callback) {
+	      const self = new Expand();
+	      self.initialize(node, callback);
+	      return self;
+	    }
+	  }]);
+	  return Expand;
+	}();
+
 	/** @memberof BX.Crm.Timeline.Streams */
 
 	let History$1 = /*#__PURE__*/function (_Stream) {
@@ -17070,9 +17426,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this._items.length > 0 || this._isFilterApplied || this._isStubMode;
 	    }
 	  }, {
-	    key: "getLastItem",
-	    value: function getLastItem() {
-	      return this._items.length > 0 ? this._items[this._items.length - 1] : null;
+	    key: "getItems",
+	    value: function getItems() {
+	      return this._items;
+	    }
+	  }, {
+	    key: "setItems",
+	    value: function setItems(items) {
+	      this._items = items;
 	    }
 	  }, {
 	    key: "getItemByIndex",
@@ -17083,24 +17444,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getItemCount",
 	    value: function getItemCount() {
 	      return this._items.length;
-	    }
-	  }, {
-	    key: "removeItemByIndex",
-	    value: function removeItemByIndex(index) {
-	      if (index < this._items.length) {
-	        this._items.splice(index, 1);
-	      }
-	    }
-	  }, {
-	    key: "getItemIndex",
-	    value: function getItemIndex(item) {
-	      for (let i = 0, length = this._items.length; i < length; i++) {
-	        if (this._items[i] === item) {
-	          return i;
-	        }
-	      }
-
-	      return -1;
 	    }
 	  }, {
 	    key: "getItemsByAssociatedEntity",
@@ -17128,19 +17471,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      return results;
-	    }
-	  }, {
-	    key: "findItemById",
-	    value: function findItemById(id) {
-	      id = id.toString();
-
-	      for (let i = 0, l = this._items.length; i < l; i++) {
-	        if (this._items[i].getId() === id) {
-	          return this._items[i];
-	        }
-	      }
-
-	      return null;
 	    }
 	  }, {
 	    key: "createFilterEmptyResultSection",
@@ -17535,6 +17865,36 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  }, {
+	    key: "createProductCompilationItem",
+	    value: function createProductCompilationItem(data) {
+	      var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+	      var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+
+	      if (entityId !== BX.CrmEntityType.enumeration.deal) {
+	        return null;
+	      }
+
+	      var settings = {
+	        history: this._history,
+	        fixedHistory: this._fixedHistory,
+	        container: this._wrapper,
+	        activityEditor: this._activityEditor,
+	        data: data
+	      };
+
+	      if (typeId === Compilation.productList) {
+	        settings.vueComponent = BX.Crm.Timeline.ProductCompilationList;
+	      } else if (typeId === Compilation.orderExists) {
+	        settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
+	      } else if (typeId === Compilation.compilationViewed) {
+	        settings.vueComponent = BX.Crm.Timeline.ProductCompilationViewed;
+	      } else if (typeId === Compilation.newDealCreated) {
+	        settings.vueComponent = BX.Crm.Timeline.NewDealCreated;
+	      }
+
+	      return BX.CrmHistoryItem.create(data["ID"], settings);
+	    }
+	  }, {
 	    key: "createExternalNotificationItem",
 	    value: function createExternalNotificationItem(data) {
 	      const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
@@ -17582,6 +17942,18 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "createItem",
 	    value: function createItem(data) {
+	      if (data.hasOwnProperty('type')) {
+	        return crm_timeline_item.ConfigurableItem.create(data.id, {
+	          timelineId: this.getId(),
+	          container: this.getWrapper(),
+	          itemClassName: this.getItemClassName(),
+	          useShortTimeFormat: true,
+	          isReadOnly: this.isReadOnly(),
+	          streamType: this.getStreamType(),
+	          data: data
+	        });
+	      }
+
 	      const typeId = BX.prop.getInteger(data, "TYPE_ID", Item.undefined);
 	      const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
@@ -17589,6 +17961,8 @@ this.BX.Crm = this.BX.Crm || {};
 	        return this.createActivityItem(data);
 	      } else if (typeId === Item.order) {
 	        return this.createOrderEntityItem(data);
+	      } else if (typeId === Item.productCompilation) {
+	        return this.createProductCompilationItem(data);
 	      } else if (typeId === Item.storeDocument) {
 	        return this.createStoreDocumentItem(data);
 	      } else if (typeId === Item.externalNotification) {
@@ -17723,6 +18097,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	    }
 	  }, {
+	    key: "getWrapper",
+	    value: function getWrapper() {
+	      return this._wrapper;
+	    }
+	  }, {
+	    key: "getItemClassName",
+	    value: function getItemClassName() {
+	      return 'crm-entity-stream-section crm-entity-stream-section-history';
+	    }
+	  }, {
 	    key: "addItem",
 	    value: function addItem(item, index) {
 	      if (!BX.type.isNumber(index) || index < 0) {
@@ -17841,16 +18225,13 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      const now = BX.prop.extractDate(new Date());
 	      let i, item;
-	      let lastItemTime = "";
 
 	      for (i = 0; i < length; i++) {
-	        const itemId = BX.prop.getInteger(itemData[i], "ID", 0);
+	        const itemId = BX.prop.getInteger(itemData[i], 'id', BX.prop.getInteger(itemData[i], 'ID', 0));
 
 	        if (itemId <= 0) {
 	          continue;
 	        }
-
-	        lastItemTime = BX.prop.getString(itemData[i], "CREATED_SERVER", "");
 
 	        if (this.findItemById(itemId) !== null) {
 	          continue;
@@ -17958,6 +18339,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function getMessage(name) {
 	      const m = History$$1.messages;
 	      return m.hasOwnProperty(name) ? m[name] : name;
+	    }
+	  }, {
+	    key: "animateItemAdding",
+	    value: function animateItemAdding(item) {
+	      return new Promise(resolve => {
+	        Expand.create(item.getWrapper(), resolve).run();
+	      });
 	    }
 	  }], [{
 	    key: "create",
@@ -18082,6 +18470,25 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      }).load(BX.delegate(this.onItemsLoad, this));
 	    }
+	  }, {
+	    key: "addItem",
+	    value: function addItem(item, index) {
+	      babelHelpers.get(babelHelpers.getPrototypeOf(FixedHistory.prototype), "addItem", this).call(this, item, index);
+
+	      if (item instanceof CompatibleItem) {
+	        item._isFixed = true;
+	      }
+	    }
+	  }, {
+	    key: "getItemClassName",
+	    value: function getItemClassName() {
+	      return 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-top-fixed';
+	    }
+	  }, {
+	    key: "getStreamType",
+	    value: function getStreamType() {
+	      return crm_timeline_item.StreamType.pinned;
+	    }
 	  }], [{
 	    key: "create",
 	    value: function create(id, settings) {
@@ -18095,93 +18502,335 @@ this.BX.Crm = this.BX.Crm || {};
 	}(History$1);
 	FixedHistory.instances = {};
 
-	/** @memberof BX.Crm.Timeline.Animation */
-	let Expand = /*#__PURE__*/function () {
-	  function Expand() {
-	    babelHelpers.classCallCheck(this, Expand);
-	    this._node = null;
-	    this._callback = null;
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _scheduleStream = /*#__PURE__*/new WeakMap();
+
+	var _fixedHistoryStream = /*#__PURE__*/new WeakMap();
+
+	var _historyStream = /*#__PURE__*/new WeakMap();
+
+	var _itemsQueue = /*#__PURE__*/new WeakMap();
+
+	var _itemsQueueProcessing = /*#__PURE__*/new WeakMap();
+
+	var _addToQueue = /*#__PURE__*/new WeakSet();
+
+	var _processQueueItem = /*#__PURE__*/new WeakSet();
+
+	var _addItem = /*#__PURE__*/new WeakSet();
+
+	var _updateItem = /*#__PURE__*/new WeakSet();
+
+	var _deleteItem = /*#__PURE__*/new WeakSet();
+
+	var _moveItem = /*#__PURE__*/new WeakSet();
+
+	var _pinItem = /*#__PURE__*/new WeakSet();
+
+	var _unpinItem = /*#__PURE__*/new WeakSet();
+
+	var _getStreamByName = /*#__PURE__*/new WeakSet();
+
+	let PullActionProcessor = /*#__PURE__*/function () {
+	  function PullActionProcessor(params) {
+	    babelHelpers.classCallCheck(this, PullActionProcessor);
+
+	    _classPrivateMethodInitSpec(this, _getStreamByName);
+
+	    _classPrivateMethodInitSpec(this, _unpinItem);
+
+	    _classPrivateMethodInitSpec(this, _pinItem);
+
+	    _classPrivateMethodInitSpec(this, _moveItem);
+
+	    _classPrivateMethodInitSpec(this, _deleteItem);
+
+	    _classPrivateMethodInitSpec(this, _updateItem);
+
+	    _classPrivateMethodInitSpec(this, _addItem);
+
+	    _classPrivateMethodInitSpec(this, _processQueueItem);
+
+	    _classPrivateMethodInitSpec(this, _addToQueue);
+
+	    _classPrivateFieldInitSpec(this, _scheduleStream, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec(this, _fixedHistoryStream, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec(this, _historyStream, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec(this, _itemsQueue, {
+	      writable: true,
+	      value: []
+	    });
+
+	    _classPrivateFieldInitSpec(this, _itemsQueueProcessing, {
+	      writable: true,
+	      value: false
+	    });
+
+	    if (main_core.Type.isObject(params.scheduleStream)) {
+	      babelHelpers.classPrivateFieldSet(this, _scheduleStream, params.scheduleStream);
+	    } else {
+	      throw new Error(`scheduleStream must be set`);
+	    }
+
+	    if (main_core.Type.isObject(params.fixedHistoryStream)) {
+	      babelHelpers.classPrivateFieldSet(this, _fixedHistoryStream, params.fixedHistoryStream);
+	    } else {
+	      throw new Error(`fixedHistoryStream must be set`);
+	    }
+
+	    if (main_core.Type.isObject(params.historyStream)) {
+	      babelHelpers.classPrivateFieldSet(this, _historyStream, params.historyStream);
+	    } else {
+	      throw new Error(`historyStream must be set`);
+	    }
 	  }
 
-	  babelHelpers.createClass(Expand, [{
-	    key: "initialize",
-	    value: function initialize(node, callback) {
-	      this._node = node;
-	      this._callback = BX.type.isFunction(callback) ? callback : null;
-	    }
-	  }, {
-	    key: "run",
-	    value: function run() {
-	      const position = BX.pos(this._node);
-	      this._node.style.height = 0;
-	      this._node.style.opacity = 0;
-	      this._node.style.overflow = "hidden";
-	      new BX.easing({
-	        duration: 150,
-	        start: {
-	          height: 0
-	        },
-	        finish: {
-	          height: position.height
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.delegate(this.onNodeHeightStep, this),
-	        complete: BX.delegate(this.onNodeHeightComplete, this)
-	      }).animate();
-	    }
-	  }, {
-	    key: "onNodeHeightStep",
-	    value: function onNodeHeightStep(state) {
-	      this._node.style.height = state.height + "px";
-	    }
-	  }, {
-	    key: "onNodeHeightComplete",
-	    value: function onNodeHeightComplete() {
-	      this._node.style.overflow = "";
-	      new BX.easing({
-	        duration: 150,
-	        start: {
-	          opacity: 0
-	        },
-	        finish: {
-	          opacity: 100
-	        },
-	        transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
-	        step: BX.delegate(this.onNodeOpacityStep, this),
-	        complete: BX.delegate(this.onNodeOpacityComplete, this)
-	      }).animate();
-	    }
-	  }, {
-	    key: "onNodeOpacityStep",
-	    value: function onNodeOpacityStep(state) {
-	      this._node.style.opacity = state.opacity / 100;
-	    }
-	  }, {
-	    key: "onNodeOpacityComplete",
-	    value: function onNodeOpacityComplete() {
-	      this._node.style.height = "";
-	      this._node.style.opacity = "";
-
-	      if (this._callback) {
-	        this._callback();
-	      }
-	    }
-	  }], [{
-	    key: "create",
-	    value: function create(node, callback) {
-	      const self = new Expand();
-	      self.initialize(node, callback);
-	      return self;
+	  babelHelpers.createClass(PullActionProcessor, [{
+	    key: "processAction",
+	    value: function processAction(actionParams) {
+	      _classPrivateMethodGet(this, _addToQueue, _addToQueue2).call(this, actionParams);
 	    }
 	  }]);
-	  return Expand;
+	  return PullActionProcessor;
 	}();
 
+	function _addToQueue2(actionParams) {
+	  babelHelpers.classPrivateFieldGet(this, _itemsQueue).push(actionParams);
+
+	  if (!babelHelpers.classPrivateFieldGet(this, _itemsQueueProcessing)) {
+	    _classPrivateMethodGet(this, _processQueueItem, _processQueueItem2).call(this);
+	  }
+	}
+
+	function _processQueueItem2() {
+	  if (!babelHelpers.classPrivateFieldGet(this, _itemsQueue).length) {
+	    babelHelpers.classPrivateFieldSet(this, _itemsQueueProcessing, false);
+	    return;
+	  }
+
+	  babelHelpers.classPrivateFieldSet(this, _itemsQueueProcessing, true);
+	  const actionParams = babelHelpers.classPrivateFieldGet(this, _itemsQueue).shift();
+
+	  const stream = _classPrivateMethodGet(this, _getStreamByName, _getStreamByName2).call(this, actionParams.stream);
+
+	  const promises = [];
+
+	  switch (actionParams.action) {
+	    case 'add':
+	      promises.push(_classPrivateMethodGet(this, _addItem, _addItem2).call(this, actionParams.id, actionParams.item, stream));
+	      break;
+
+	    case 'update':
+	      promises.push(_classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, stream, false));
+
+	      if (stream.isHistoryStream()) {
+	        // fixed history stream can contain the same item as a history stream, so both should be updated:
+	        promises.push(_classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, actionParams.id, actionParams.item, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream), false));
+	      }
+
+	      break;
+
+	    case 'delete':
+	      promises.push(_classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, actionParams.id, stream));
+
+	      if (stream.isHistoryStream()) {
+	        // fixed history stream can contain the same item as a history stream, so both should be updated:
+	        promises.push(_classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, actionParams.id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream)));
+	      }
+
+	      break;
+
+	    case 'move':
+	      // move item from one stream to another one:
+	      const sourceStream = _classPrivateMethodGet(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream);
+
+	      promises.push(_classPrivateMethodGet(this, _moveItem, _moveItem2).call(this, actionParams.params.fromId, sourceStream, actionParams.id, stream, actionParams.item));
+	      break;
+
+	    case 'changePinned':
+	      // pin or unpin item
+	      if (_classPrivateMethodGet(this, _getStreamByName, _getStreamByName2).call(this, actionParams.params.fromStream).isHistoryStream()) {
+	        promises.push(_classPrivateMethodGet(this, _pinItem, _pinItem2).call(this, actionParams.id, actionParams.item));
+	      } else {
+	        promises.push(_classPrivateMethodGet(this, _unpinItem, _unpinItem2).call(this, actionParams.id, actionParams.item));
+	      }
+
+	  }
+
+	  Promise.all(promises).then(() => {
+	    _classPrivateMethodGet(this, _processQueueItem, _processQueueItem2).call(this);
+	  });
+	}
+
+	function _addItem2(id, itemData, stream) {
+	  const existedStreamItem = stream.findItemById(id);
+
+	  if (existedStreamItem) {
+	    return Promise.resolve();
+	  }
+
+	  const streamItem = stream.createItem(itemData);
+
+	  if (!streamItem) {
+	    return Promise.resolve();
+	  }
+
+	  const index = stream.calculateItemIndex(streamItem);
+	  const anchor = stream.createAnchor(index);
+	  stream.addItem(streamItem, index);
+	  streamItem.layout({
+	    anchor: anchor
+	  });
+	  return stream.animateItemAdding(streamItem);
+	}
+
+	function _updateItem2(id, itemData, stream, animated = true) {
+	  const isDone = BX.prop.getString(itemData['ASSOCIATED_ENTITY'], 'COMPLETED') === 'Y';
+	  const existedStreamItem = stream.findItemById(id);
+
+	  if (!existedStreamItem) {
+	    return Promise.resolve();
+	  }
+
+	  if (existedStreamItem instanceof CompatibleItem && isDone) {
+	    existedStreamItem._existedStreamItemDeadLine = existedStreamItem.getDeadline();
+	  }
+
+	  existedStreamItem.setData(itemData);
+	  return stream.refreshItem(existedStreamItem, animated);
+	}
+
+	function _deleteItem2(id, stream) {
+	  const item = stream.findItemById(id);
+
+	  if (item) {
+	    return stream.deleteItemAnimated(item);
+	  }
+
+	  return Promise.resolve();
+	}
+
+	function _moveItem2(sourceId, sourceStream, destinationId, destinationStream, destinationItemData) {
+	  const sourceItem = sourceStream.findItemById(sourceId);
+
+	  if (!sourceItem) {
+	    return _classPrivateMethodGet(this, _addItem, _addItem2).call(this, destinationId, destinationItemData, destinationStream);
+	  }
+
+	  const existedDestinationItem = destinationStream.findItemById(destinationId);
+
+	  if (sourceItem && existedDestinationItem) {
+	    return _classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, sourceId, sourceStream);
+	  }
+
+	  const destinationItem = destinationStream.createItem(destinationItemData);
+	  destinationStream.addItem(destinationItem, destinationStream.calculateItemIndex(destinationItem));
+	  destinationItem.layout({
+	    add: false
+	  });
+	  return sourceStream.moveItemToStream(sourceItem, destinationStream, destinationItem);
+	}
+
+	function _pinItem2(id, itemData) {
+	  if (babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).findItemById(id)) {
+	    return Promise.resolve();
+	  }
+
+	  const historyItem = babelHelpers.classPrivateFieldGet(this, _historyStream).findItemById(id);
+
+	  if (!historyItem) // fixed history item does not exist into history items stream, so just add to fixed history stream
+	    {
+	      return _classPrivateMethodGet(this, _addItem, _addItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
+	    }
+
+	  if (historyItem instanceof CompatibleItem) {
+	    historyItem.onSuccessFasten();
+	    return Promise.resolve();
+	  } else {
+	    return _classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false).then(() => {
+	      const fixedHistoryItem = babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).createItem(itemData);
+	      babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).addItem(fixedHistoryItem, 0);
+	      fixedHistoryItem.layout({
+	        add: false
+	      });
+	      return new Promise(resolve => {
+	        const animation = Fasten.create('', {
+	          initialItem: historyItem,
+	          finalItem: fixedHistoryItem,
+	          anchor: babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).getAnchor(),
+	          events: {
+	            complete: resolve
+	          }
+	        });
+	        animation.run();
+	      });
+	    });
+	  }
+	}
+
+	function _unpinItem2(id, itemData) {
+	  const fixedHistoryItem = babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream).findItemById(id);
+
+	  if (fixedHistoryItem instanceof CompatibleItem) {
+	    fixedHistoryItem.onSuccessUnfasten();
+	    return Promise.resolve();
+	  } else {
+	    return _classPrivateMethodGet(this, _updateItem, _updateItem2).call(this, id, itemData, babelHelpers.classPrivateFieldGet(this, _historyStream), false).then(() => {
+	      return _classPrivateMethodGet(this, _deleteItem, _deleteItem2).call(this, id, babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream));
+	    });
+	  }
+	}
+
+	function _getStreamByName2(streamName) {
+	  switch (streamName) {
+	    case 'scheduled':
+	      return babelHelpers.classPrivateFieldGet(this, _scheduleStream);
+
+	    case 'fixedHistory':
+	      return babelHelpers.classPrivateFieldGet(this, _fixedHistoryStream);
+
+	    case 'history':
+	      return babelHelpers.classPrivateFieldGet(this, _historyStream);
+	  }
+
+	  throw new Error(`Stream "${streamName}" not found`);
+	}
+
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	/** @memberof BX.Crm.Timeline */
+
+	var _itemPullActionProcessor = /*#__PURE__*/new WeakMap();
 
 	let Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
+
+	    _classPrivateFieldInitSpec$1(this, _itemPullActionProcessor, {
+	      writable: true,
+	      value: null
+	    });
+
 	    this._id = "";
 	    this._settings = {};
 	    this._container = null;
@@ -18255,6 +18904,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        container: this._container,
 	        activityEditor: this._activityEditor,
 	        itemData: this.getSetting("scheduleData"),
+	        templates: this.getSetting("templates"),
 	        isStubMode: this._ownerId <= 0,
 	        ajaxId: ajaxId,
 	        serviceUrl: serviceUrl,
@@ -18268,6 +18918,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        editorContainer: this._editorContainer,
 	        activityEditor: this._activityEditor,
 	        itemData: this.getSetting("fixedData"),
+	        templates: this.getSetting("templates"),
 	        isStubMode: this._ownerId <= 0,
 	        ajaxId: ajaxId,
 	        serviceUrl: serviceUrl,
@@ -18281,6 +18932,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        fixedHistory: this._fixedHistory,
 	        activityEditor: this._activityEditor,
 	        itemData: this.getSetting("historyData"),
+	        templates: this.getSetting("templates"),
 	        navigation: this.getSetting("historyNavigation", {}),
 	        filterId: BX.prop.getString(this._settings, "historyFilterId", this._id),
 	        isFilterApplied: BX.prop.getBoolean(this._settings, "isHistoryFilterApplied", false),
@@ -18386,6 +19038,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      if (this._pullTagName !== "") {
 	        BX.addCustomEvent("onPullEvent-crm", BX.delegate(this.onPullEvent, this));
 	        this.extendWatch();
+	        babelHelpers.classPrivateFieldSet(this, _itemPullActionProcessor, new PullActionProcessor({
+	          scheduleStream: this._schedule,
+	          fixedHistoryStream: this._fixedHistory,
+	          historyStream: this._history
+	        }));
 	      }
 
 	      this._menuBar = MenuBar.create(this._id, {
@@ -18428,6 +19085,11 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
+	      if (command === 'timeline_item_action') {
+	        babelHelpers.classPrivateFieldGet(this, _itemPullActionProcessor).processAction(params);
+	        return;
+	      }
+
 	      if (command === "timeline_chat_create") {
 	        this.processChatCreate(params);
 	      } else if (command === "timeline_activity_add") {
@@ -18438,24 +19100,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.processActivityExternalDelete(params);
 	      } else if (command === "timeline_comment_add") {
 	        this.processCommentExternalAdd(params);
-	      } else if (command === "timeline_link_add") {
-	        this.processLinkExternalAdd(params);
-	      } else if (command === "timeline_link_delete") {
-	        this.processLinkExternalDelete(params);
-	      } else if (command === "timeline_document_add") {
-	        this.processLinkExternalAdd(params);
-	      } else if (command === "timeline_document_update") {
-	        this.processDocumentExternalUpdate(params);
-	      } else if (command === "timeline_document_delete") {
-	        this.processDocumentExternalDelete(params);
 	      } else if (command === "timeline_comment_update") {
 	        this.processCommentExternalUpdate(params);
 	      } else if (command === "timeline_comment_delete") {
 	        this.processCommentExternalDelete(params);
 	      } else if (command === "timeline_changed_binding") {
 	        this.processChangeBinding(params);
-	      } else if (command === "timeline_item_change_fasten") {
-	        this.processItemChangeFasten(params);
 	      } else if (command === "timeline_item_update") {
 	        this.processItemExternalUpdate(params);
 	      } else if (command === "timeline_wait_add") {
@@ -18618,22 +19268,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 	    }
 	  }, {
-	    key: "processLinkExternalAdd",
-	    value: function processLinkExternalAdd(params) {
-	      let historyItemData, historyItem;
-	      historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-
-	      if (historyItemData !== null) {
-	        historyItem = this.addHistoryItem(historyItemData);
-	        Expand.create(historyItem.getWrapper(), null).run();
-	      }
-	    }
-	  }, {
-	    key: "processLinkExternalDelete",
-	    value: function processLinkExternalDelete(params) {
-	      this.processLinkExternalAdd(params);
-	    }
-	  }, {
 	    key: "processCommentExternalUpdate",
 	    value: function processCommentExternalUpdate(params) {
 	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
@@ -18672,51 +19306,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      }, this), 1200);
 	    }
 	  }, {
-	    key: "processDocumentExternalDelete",
-	    value: function processDocumentExternalDelete(params) {
-	      window.setTimeout(BX.delegate(function () {
-	        const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-	        let i, length;
-	        const associatedEntityId = BX.prop.getInteger(historyItemData, "ASSOCIATED_ENTITY_ID", 0);
-
-	        let historyItems = this._history.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.document, associatedEntityId);
-
-	        for (i = 0, length = historyItems.length; i < length; i++) {
-	          if (historyItems[i] instanceof Document) {
-	            this._history.deleteItem(historyItems[i]);
-	          }
-	        }
-
-	        historyItems = this._fixedHistory.getItemsByAssociatedEntity(BX.CrmEntityType.enumeration.document, associatedEntityId);
-
-	        for (i = 0, length = historyItems.length; i < length; i++) {
-	          if (historyItems[i] instanceof Document) {
-	            this._fixedHistory.deleteItem(historyItems[i]);
-	          }
-	        }
-	      }, this), 100);
-	    }
-	  }, {
-	    key: "processDocumentExternalUpdate",
-	    value: function processDocumentExternalUpdate(params) {
-	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-	      const id = BX.prop.getInteger(historyItemData, "ID", 0);
-
-	      const updateItem = this._history.findItemById(id);
-
-	      if (updateItem instanceof Document && historyItemData !== null) {
-	        updateItem.setData(historyItemData);
-	        updateItem.updateWrapper();
-	      }
-
-	      const updateFixedItem = this._fixedHistory.findItemById(id);
-
-	      if (updateFixedItem instanceof Document && historyItemData !== null) {
-	        updateFixedItem.setData(historyItemData);
-	        updateFixedItem.updateWrapper();
-	      }
-	    }
-	  }, {
 	    key: "processChangeBinding",
 	    value: function processChangeBinding(params) {
 	      const entityId = BX.prop.getString(params, "OLD_ID", 0);
@@ -18724,7 +19313,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      const item = this._history.findItemById(entityId);
 
-	      if (item instanceof Item$1) {
+	      if (item instanceof crm_timeline_item.Item) {
 	        item._id = entityNewId;
 	        const itemData = item.getData();
 	        itemData.ID = entityNewId;
@@ -18733,39 +19322,12 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      const fixedItem = this._fixedHistory.findItemById(entityId);
 
-	      if (fixedItem instanceof Item$1) {
+	      if (fixedItem instanceof crm_timeline_item.Item) {
 	        fixedItem._id = entityNewId;
 	        const fixedItemData = fixedItem.getData();
 	        fixedItemData.ID = entityNewId;
 	        fixedItem.setData(fixedItemData);
 	      }
-	    }
-	  }, {
-	    key: "processItemChangeFasten",
-	    value: function processItemChangeFasten(params) {
-	      const entityId = BX.prop.getInteger(params, "ENTITY_ID", 0);
-	      const historyItemData = BX.prop.getObject(params, "HISTORY_ITEM", null);
-	      window.setTimeout(BX.delegate(function () {
-	        const fixedItem = this._fixedHistory.findItemById(entityId);
-
-	        if (historyItemData['IS_FIXED'] === 'N' && fixedItem) {
-	          fixedItem.onSuccessUnfasten();
-	        } else if (historyItemData['IS_FIXED'] === 'Y' && !fixedItem) {
-	          const historyItem = this._history.findItemById(entityId);
-
-	          if (historyItem) {
-	            historyItem.onSuccessFasten();
-	          } else {
-	            const newFixedItem = this._fixedHistory.createItem(this._data);
-
-	            newFixedItem._isFixed = true;
-
-	            this._fixedHistory.addItem(newFixedItem, 0);
-
-	            newFixedItem.layout();
-	          }
-	        }
-	      }, this), 1200);
 	    }
 	  }, {
 	    key: "processItemExternalUpdate",
@@ -19470,6 +20032,163 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Comment;
 	}();
 
+	var component$5 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin, ProductListMixin],
+	  components: {
+	    'product-list': ProductList
+	  },
+
+	  created() {
+	    this.products = this.data.SENT_PRODUCTS;
+	    this.dealId = this.data.DEAL_ID;
+	    this.productsGrid = null;
+	    this.subscribeCustomEvents();
+	    BX.Crm.EntityEditor.getDefault().tapController('PRODUCT_LIST', controller => {
+	      this.setProductsGrid(controller.getProductList());
+	    });
+	  },
+
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-history crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info">
+					${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_LIST_COMPILATION_SENT')}
+				</div>
+				<div class="crm-entity-stream-advice-inner">
+					<!--<ul class="crm-entity-stream-advice-list">-->
+					<product-list
+						:products="products"
+						:dealId="dealId"
+						:isAddToDealVisible="isProductsGridAvailable"
+						@product-added-to-deal="handleProductAddedToDeal"
+						@product-adding-to-deal="handleProductAddingToDeal"
+					></product-list>
+					<!--</ul>-->
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	var component$6 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info">
+					${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_ORDER_EXISTS_NOTICE')}
+				</div>
+			</div>
+		</div>
+	`
+	});
+
+	var component$7 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  computed: {
+	    legend() {
+	      var compilationCreationDate = BX.prop.getString(this.data, 'COMPILATION_CREATION_DATE', '');
+	      var legendTextTemplate = main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_LEGEND');
+	      return legendTextTemplate.replace('#DATE_CREATE#', compilationCreationDate);
+	    },
+
+	    authorFormattedName() {
+	      var _this$data, _this$data$AUTHOR;
+
+	      return this === null || this === void 0 ? void 0 : (_this$data = this.data) === null || _this$data === void 0 ? void 0 : (_this$data$AUTHOR = _this$data.AUTHOR) === null || _this$data$AUTHOR === void 0 ? void 0 : _this$data$AUTHOR.FORMATTED_NAME;
+	    },
+
+	    authorHref() {
+	      var _this$data2, _this$data2$AUTHOR;
+
+	      return this === null || this === void 0 ? void 0 : (_this$data2 = this.data) === null || _this$data2 === void 0 ? void 0 : (_this$data2$AUTHOR = _this$data2.AUTHOR) === null || _this$data2$AUTHOR === void 0 ? void 0 : _this$data2$AUTHOR.SHOW_URL;
+	    },
+
+	    authorImageUrl() {
+	      var _this$data3, _this$data3$AUTHOR;
+
+	      return this === null || this === void 0 ? void 0 : (_this$data3 = this.data) === null || _this$data3 === void 0 ? void 0 : (_this$data3$AUTHOR = _this$data3.AUTHOR) === null || _this$data3$AUTHOR === void 0 ? void 0 : _this$data3$AUTHOR.IMAGE_URL;
+	    },
+
+	    authorImageStyle() {
+	      if (this.authorImageUrl) {
+	        return {
+	          backgroundImage: "url('" + this.authorImageUrl + "')",
+	          backgroundSize: '21px'
+	        };
+	      }
+
+	      return {};
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-history">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-info"></div>
+			<div class="crm-entity-stream-section-content">
+				<div class="crm-entity-stream-content-event">
+					<div class="crm-entity-stream-content-header">
+						<div class="crm-entity-stream-content-event-title">
+							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_TITLE')}
+						</div>
+						<span class="crm-entity-stream-content-event-done">
+							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED')}
+						</span>
+						<span class="crm-entity-stream-content-event-time">{{createdAt}}</span>
+					</div>
+					<div class="crm-entity-stream-content-detail">
+						<div class="crm-entity-stream-content-detail-description">
+							${main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_VIEWED_DESCRIPTION')}
+						</div>
+					</div>
+						<a
+							class="ui-icon ui-icon-common-user crm-entity-stream-content-detail-employee" 
+							v-bind:title="authorFormattedName"
+							target="_blank"
+							v-bind:href="authorHref"
+						>
+							<i :style="authorImageStyle"></i>
+						</a>
+					</div>
+			</div>
+		</div>
+	`
+	});
+
+	var component$8 = ui_vue.Vue.extend({
+	  mixins: [HistoryItemMixin],
+	  computed: {
+	    message() {
+	      var _this$data, _this$data$NEW_DEAL_D, _this$data2, _this$data2$NEW_DEAL_, _this$data3, _this$data3$NEW_DEAL_;
+
+	      const dealTitle = BX.util.htmlspecialchars(this === null || this === void 0 ? void 0 : (_this$data = this.data) === null || _this$data === void 0 ? void 0 : (_this$data$NEW_DEAL_D = _this$data.NEW_DEAL_DATA) === null || _this$data$NEW_DEAL_D === void 0 ? void 0 : _this$data$NEW_DEAL_D.TITLE);
+	      const dealLegend = this === null || this === void 0 ? void 0 : (_this$data2 = this.data) === null || _this$data2 === void 0 ? void 0 : (_this$data2$NEW_DEAL_ = _this$data2.NEW_DEAL_DATA) === null || _this$data2$NEW_DEAL_ === void 0 ? void 0 : _this$data2$NEW_DEAL_.LEGEND;
+	      const dealUrl = this === null || this === void 0 ? void 0 : (_this$data3 = this.data) === null || _this$data3 === void 0 ? void 0 : (_this$data3$NEW_DEAL_ = _this$data3.NEW_DEAL_DATA) === null || _this$data3$NEW_DEAL_ === void 0 ? void 0 : _this$data3$NEW_DEAL_.SHOW_URL;
+	      const dealTitleLink = `<a href="${dealUrl}">${dealTitle}</a>`;
+	      let message = main_core.Loc.getMessage('CRM_TIMELINE_PRODUCT_COMPILATION_DEAL_CREATED');
+	      message = message.replace('#DEAL_TITLE#', dealTitleLink);
+	      message = message.replace('#DEAL_LEGEND#', dealLegend);
+	      return message;
+	    }
+
+	  },
+	  // language=Vue
+	  template: `
+		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice">
+			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-advice"></div>
+			<div class="crm-entity-stream-advice-content">
+				<div class="crm-entity-stream-advice-info" v-html="message">
+				</div>
+			</div>
+		</div>
+	`
+	});
+
 	const Streams = {
 	  History: History$1,
 	  FixedHistory,
@@ -19556,7 +20275,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  Scheduled: ScheduledItems
 	};
 	const Animations = {
-	  Item: Item$2,
+	  Item: Item$1,
 	  ItemNew,
 	  Expand,
 	  Shift,
@@ -19578,9 +20297,13 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.Types = types;
 	exports.Action = Action;
 	exports.Actions = Actions;
-	exports.Item = Item$1;
 	exports.Items = Items;
 	exports.Animations = Animations;
+	exports.CompatibleItem = CompatibleItem;
+	exports.ProductCompilationList = component$5;
+	exports.CompilationOrderNotice = component$6;
+	exports.ProductCompilationViewed = component$7;
+	exports.NewDealCreated = component$8;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.Event,BX,BX,BX,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX,BX,BX,BX.Crm.Timeline,BX.Event,BX.Crm.Timeline,BX,BX));
 //# sourceMappingURL=timeline.bundle.js.map

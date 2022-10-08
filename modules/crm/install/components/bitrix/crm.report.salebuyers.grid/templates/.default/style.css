@@ -15,7 +15,7 @@
 }
 
 .crm-report-regularcustomers-bold {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-report-regularcustomers-right {
@@ -39,11 +39,11 @@
 	margin: 0 8px 0 0;
 	padding: 0 8px 0 0;
 	border-right: 1px solid rgba(82,92,105,.17);
-	font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #364150;
 }
 .crm-report-regularcustomers-grid-rating-text {
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
 }
 

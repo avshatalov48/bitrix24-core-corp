@@ -1,5 +1,12 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
-if(is_array($arResult['DATA'])&&count($arResult['DATA'])>0)
+<?
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
+if (is_array($arResult['DATA']) && count($arResult['DATA']) > 0)
 {
 ?>
 <span class="site-selector-separator"></span><span class="tm-dashboard"><span id="bx_tm" class="tm-dashboard-inner"></span></span>

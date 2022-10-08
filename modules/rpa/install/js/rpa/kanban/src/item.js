@@ -25,7 +25,7 @@ export default class Item extends Kanban.Item
 
 		if (!this.layout.content)
 		{
-			this.layout.content = Tag.render`<div ondblclick="${this.onDoubleClick.bind(this)}" class="main-kanban-item-default rpa-kanban-item"></div>`;
+			this.layout.content = Tag.render`<div ondblclick="${this.onDoubleClick.bind(this)}" class="rpa-kanban-item"></div>`;
 		}
 		else
 		{
@@ -50,7 +50,9 @@ export default class Item extends Kanban.Item
 		this.layout.description.appendChild(this.renderTasksParticipants());
 		this.layout.description.appendChild(this.renderTasksCounter());
 
-		this.layout.content.style.borderLeft = "2px solid #" + this.getColumn().getColor();
+		this.layout.content.appendChild(BX.Tag.render`<div class="rpa-kanban-item-line"></div>`);
+		this.layout.content.style.setProperty("--rpa-kanban-item-color", "#" + this.getColumn().getColor());
+
 		if(this.isDraggable())
 		{
 			this.layout.content.style.backgroundColor = "#fff";

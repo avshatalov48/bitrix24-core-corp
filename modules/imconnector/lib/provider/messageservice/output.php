@@ -78,7 +78,7 @@ class Output extends Base\Output
 			$registerResult = $this->sender->register($registerFields);
 			if (!$registerResult->isSuccess())
 			{
-				$result->setData($registerResult->getErrorMessages());
+				$result->addErrors($registerResult->getErrors());
 			}
 		}
 

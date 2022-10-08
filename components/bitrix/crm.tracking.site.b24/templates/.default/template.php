@@ -16,10 +16,13 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
 Extension::load([
-	'ui.icons', 'ui.switcher',
-	'sidepanel', 'crm.tracking.connector',
+	'ui.icons',
+	'ui.switcher',
+	'sidepanel',
+	'crm.tracking.connector',
 	'ui.sidepanel-content',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);

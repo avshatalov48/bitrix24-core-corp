@@ -1,0 +1,269 @@
+.crm-timeline__card-logo_container {
+	display: flex;
+	margin-right: var(--ui-space-inline-md, 16px);
+	position: relative;
+}
+
+.crm-timeline__card-logo {
+	position: relative;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: var(--crm-timeline__icon-size, 80px);
+	height: var(--crm-timeline__icon-size, 80px);
+	border-radius: var(--ui-border-radius-lg, 12px);
+	background-color: var(--ui-color-palette-blue-20, #e5f9ff);
+	overflow: hidden;
+	transition: 0.25s ease linear;
+}
+
+.crm-timeline__card-logo::before {
+	display: none;
+	content: '';
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	background-color: rgba(0, 0, 0, 0.03);
+	z-index: 1;
+	opacity: 0;
+	transition: opacity 0.2s linear;
+}
+
+.crm-timeline__card-logo:hover::before {
+	opacity: 1;
+	transition-duration: 0s;
+}
+
+.crm-timeline__card-logo.--clickable::before {
+	display: block;
+}
+
+.crm-timeline__card-logo.--clickable {
+	cursor: pointer;
+}
+
+.crm-timeline__card-logo_content {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	align-items: center;
+	width: 100%;
+	height: 100%;
+	z-index: 1;
+}
+
+.crm-timeline__card-logo_icon {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+
+.crm-timeline__card-logo_icon.--in-circle {
+	width: var(--ui-size-7xl, 64px);
+	height: var(--ui-size-7xl, 64px);
+	border-radius: 50%;
+	background-color: #fff;
+	box-shadow: 0px 3px 6px rgba(4, 61, 79, 0.12);
+}
+
+.crm-timeline__card-logo_icon.--in-circle > i {
+	width: var(--ui-size-6xl, 48px);
+	height: var(--ui-size-6xl, 48px);
+	mask-size: contain;
+}
+.crm-timeline__card-logo_icon > i {
+	display: inline-block;
+	width: 100%;
+	height: 100%;
+	mask-image: url(../../../images/crm-timeline_icon-card-no-image.svg);
+	mask-position: center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-primary, #2fc6f6);
+	background-position: center;
+	background-repeat: no-repeat;
+	z-index: 2;
+}
+
+.crm-timeline__card.--disabled .crm-timeline__card-icon > i {
+	mask-image: url(../../../images/crm-timeline_icon-card-no-image-disabled.svg);
+}
+
+.crm-timeline__card-logo.--failure {
+	background-color: var(--ui-color-background-alert, #ffe8e8);
+}
+
+.crm-timeline__card-logo_icon.--mail-income-read > i,
+.crm-timeline__card-logo_icon.--mail-income-unread > i,
+.crm-timeline__card-logo_icon.--mail-outcome > i,
+.crm-timeline__card-logo_icon.--document > i,
+.crm-timeline__card-logo_icon.--document-signed > i {
+	background-color: transparent;
+	mask-image: none;
+}
+
+.crm-timeline__card-logo_icon.--mail-income-read > i {
+	background-image: url('../../../images/timeline-card-logos/mail/crm-timeline__mail-income-read.svg');
+}
+
+.crm-timeline__card-logo_icon.--mail-income-unread > i {
+	background-image: url('../../../images/timeline-card-logos/mail/crm-timeline__mail-income-unread.svg');
+}
+
+.crm-timeline__card-logo_icon.--mail-outcome > i {
+	background-image: url('../../../images/timeline-card-logos/mail/crm-timeline__mail-outcome.svg');
+}
+
+.crm-timeline__card-logo_icon.--document > i {
+	background-image: url('../../../images/timeline-card-logos/document/crm-timeline__document.svg');
+}
+
+.crm-timeline__card-logo_icon.--document-signed > i {
+	background-image: url('../../../images/timeline-card-logos/document/crm-timeline__document-signed.svg');
+}
+
+.crm-timeline__card-logo_icon.--call > i {
+	mask-image: url('../../../images/timeline-card-logos/call/crm-timeline__incoming-call.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-vk > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__vk-icon.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-avito > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__avito-icon.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-chat > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__channel-chat.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-vk-order > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__vk-order.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-viber > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__viber.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-bitrix > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__bitrix.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-vk-form > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__vk-form.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-fb > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__fb.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-apple > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__apple.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-whatsapp-bitrix > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__whatsapp-bitrix.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-instagram-direct > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__instagram-direct.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-web-form > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__web-form.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-ok > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__ok.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-telegram > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__telegram.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-whatsapp-bitrix-2 > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__whatsapp-bitrix-2.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-whatsapp > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__whatsapp.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-fb-chat > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__fb-chat.svg');
+}
+
+.crm-timeline__card-logo_icon.--channel-edna > i {
+	mask-image: url('../../../images/timeline-card-logos/chanell/crm-timeline__edna.svg');
+}
+
+
+.crm-timeline__card-logo_add-icon {
+	--add-icon-size: var(--ui-size-3xl, 34px);
+	display: block;
+	content: '';
+	position: absolute;
+	bottom: var(--ui-space-inline-3xs, 2px);
+	right: var(--ui-space-inline-3xs, 2px);
+	width: var(--add-icon-size);
+	height: var(--add-icon-size);
+	border-radius: var(--ui-border-radius-2xl, 16px) 0 var(--ui-border-radius-lg, 12px) 0;
+	background-color: var(--ui-color-background-primary, #ffffff);
+	background-position: center center;
+	background-repeat: no-repeat;
+	opacity: 1;
+	transition: background-color 0.2s linear;
+	box-shadow: -1px -1px 2px rgba(0, 83, 109, 0.06);
+	z-index: 2;
+	overflow: hidden;
+}
+
+.crm-timeline__card-logo_add-icon > i {
+	display: block;
+	width: 100%;
+	height: 100%;
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-primary, #2fc6f6);
+}
+
+.crm-timeline__card-logo_add-icon.--type-failure {
+	background-color: var(--ui-color-background-alert, #ffe8e8);
+}
+
+.crm-timeline__card-logo_add-icon.--type-success > i {
+	background-color: var(--ui-color-primary-alt, #9dcf00);
+}
+
+.crm-timeline__card-logo_add-icon.--icon-alert > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__alert.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-check > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__check.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-refresh > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__refresh.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-search > i {
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__search.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-double-check > i {
+	mask-size: 20px;
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__double-check.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--icon-sign > i {
+	background-color: var(--ui-color-palette-blue-60, #1aa9d6);
+	mask-image: url('../../../images/timeline-card-logos/document/additions/crm-timeline__sign.svg');
+}
+
+.crm-timeline__card-logo_add-icon.--type-failure > i {
+	background-color: var(--ui-color-background-on-alert, #e92f2a);
+}

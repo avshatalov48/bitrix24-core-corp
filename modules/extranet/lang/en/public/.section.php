@@ -1,0 +1,2 @@
+<?php
+$MESS["EXTRANET_SECTION_TITLE"] = "Home";

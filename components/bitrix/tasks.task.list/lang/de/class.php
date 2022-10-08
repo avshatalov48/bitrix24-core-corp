@@ -6,6 +6,7 @@ $MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK"] = "Aufgabe erstellen";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE"] = "Hier werden die Aufgaben angezeigt, für die Sie und/oder Ihre Mitarbeiter verantwortlich sind. Erstellen Sie Ihre erste Aufgabe, damit sie hier erscheint.";
 $MESS["TASKS_GRID_STUB_PROJECT_PROJECT_CREATED"] = "Projekt wurde erstellt";
 $MESS["TASKS_GRID_STUB_TITLE"] = "Aufgabe erstellen";
+$MESS["TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK"] = "Leider konnten wir die ausgewählten Aufgaben nicht erledigen, weil sie einem Scrum Team gehören.";
 $MESS["TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TEXT"] = "Dieses Feld kann nur Zahlen enthalten.";
 $MESS["TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TITLE"] = "Ungültiger Eintrag";
 $MESS["TASKS_GROUP_ACTION_ERROR_MESSAGE"] = "\"#MESSAGE#\" in folgenden Aufgaben: #TASK_IDS#";

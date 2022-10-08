@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main;
@@ -9,83 +10,70 @@ class CreationEntry extends TimelineEntry
 {
 	public static function create(array $params)
 	{
-		$entityTypeID = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : 0;
-		if($entityTypeID <= 0)
-		{
-			throw new Main\ArgumentException('Entity type ID must be greater than zero.', 'entityTypeID');
-		}
+		[$authorId, $created, $settings, $bindings] = self::fetchParams($params);
+		$entityTypeId = self::fetchEntityTypeId($params);
+		$entityId = self::fetchEntityId($params);
+		$authorId = self::fetchAuthorId($params);
 
-		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
-		if($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'entityID');
-		}
-
-		$entityClassName = isset($params['ENTITY_CLASS_NAME']) ? $params['ENTITY_CLASS_NAME'] : '';
-
-		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : 0;
-		if(!is_int($authorID))
-		{
-			$authorID = (int)$authorID;
-		}
-
-		if($authorID <= 0)
-		{
-			throw new Main\ArgumentException('Author ID must be greater than zero.', 'authorID');
-		}
-
-		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
-			? $params['CREATED'] : new DateTime();
-
-		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
-
-		$result = TimelineTable::add(
-			array(
-				'TYPE_ID' => TimelineType::CREATION,
-				'TYPE_CATEGORY_ID' => 0,
-				'CREATED' => $created,
-				'AUTHOR_ID' => $authorID,
-				'SETTINGS' => $settings,
-				'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
-				'ASSOCIATED_ENTITY_CLASS_NAME' => $entityClassName,
-				'ASSOCIATED_ENTITY_ID' => $entityID
-			)
-		);
-
+		$result = TimelineTable::add([
+			'TYPE_ID' => TimelineType::CREATION,
+			'TYPE_CATEGORY_ID' => 0,
+			'CREATED' => $created,
+			'AUTHOR_ID' => $authorId,
+			'SETTINGS' => $settings,
+			'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeId,
+			'ASSOCIATED_ENTITY_CLASS_NAME' => $params['ENTITY_CLASS_NAME'] ?? '',
+			'ASSOCIATED_ENTITY_ID' => $entityId
+		]);
 		if(!$result->isSuccess())
 		{
 			return 0;
 		}
 
-		$ID = $result->getId();
-		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
-		if(empty($bindings))
+		$createdId = $result->getId();
+		if (empty($bindings))
 		{
-			$bindings[] = array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID);
+			$bindings[] = ['ENTITY_TYPE_ID' => $entityTypeId, 'ENTITY_ID' => $entityId];
 		}
-		self::registerBindings($ID, $bindings);
-		if($entityTypeID === \CCrmOwnerType::Activity)
+
+		self::registerBindings($createdId, $bindings);
+		if ($entityTypeId === \CCrmOwnerType::Activity)
 		{
-			self::buildSearchContent($ID);
+			self::buildSearchContent($createdId);
 		}
-		return $ID;
+
+		return $createdId;
 	}
-	public static function rebind($entityTypeID, $oldEntityID, $newEntityID)
+	
+	public static function rebind($entityTypeId, $oldEntityID, $newEntityID)
 	{
-		Entity\TimelineBindingTable::rebind($entityTypeID, $oldEntityID, $newEntityID, array(TimelineType::CREATION));
+		Entity\TimelineBindingTable::rebind(
+			$entityTypeId,
+			$oldEntityID,
+			$newEntityID,
+			[TimelineType::CREATION]
+		);
 	}
+	
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID)
 	{
-		Entity\TimelineBindingTable::attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array(TimelineType::CREATION));
+		Entity\TimelineBindingTable::attach(
+			$srcEntityTypeID,
+			$srcEntityID,
+			$targEntityTypeID,
+			$targEntityID,
+			[TimelineType::CREATION]
+		);
 	}
-	public static function shiftEntity($entityTypeID, $entityID, DateTime $time)
+	
+	public static function shiftEntity($entityTypeId, $entityId, DateTime $time)
 	{
 		$dbResult = Entity\TimelineTable::getList(
 			array(
 				'select' => array('ID'),
 				'filter' => array(
-					'=ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
-					'=ASSOCIATED_ENTITY_ID' => $entityID,
+					'=ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeId,
+					'=ASSOCIATED_ENTITY_ID' => $entityId,
 					'=TYPE_ID' => TimelineType::CREATION
 				),
 				'limit' => 1

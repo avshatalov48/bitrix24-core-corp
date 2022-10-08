@@ -10,6 +10,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
+use Bitrix\Main\Event;
 use Bitrix\Main\HttpRequest;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Loader;
@@ -151,6 +152,7 @@ class Router
 		return [
 			'bitrix:crm.quote.details' => 'type/' . \CCrmOwnerType::Quote . '/details/#ENTITY_ID#/',
 			'bitrix:crm.invoice.details' => 'type/' . \CCrmOwnerType::SmartInvoice . '/details/#ENTITY_ID#/',
+			'bitrix:crm.document.details' => 'type/' . \CCrmOwnerType::SmartDocument . '/details/#ENTITY_ID#/',
 			'bitrix:crm.item.details' => 'type/#ENTITY_TYPE_ID#/details/#ENTITY_ID#/',
 			'bitrix:crm.item.kanban' => 'type/#entityTypeId#/kanban/category/#categoryId#/',
 			'bitrix:crm.type.detail' => 'type/detail/#entityTypeId#/',
@@ -304,6 +306,26 @@ class Router
 	{
 		$entityTypeId = $parameters['ENTITY_TYPE_ID'] ?? $parameters['entityTypeId'] ?? null;
 		$entityTypeId = (int)$entityTypeId;
+
+		$event = new Event('crm', 'onGetUrlForTemplateRouter', [
+			'componentName' => $componentName,
+			'parameters' => $parameters,
+			'getParameters' => $getParameters,
+			'entityTypeId' => $entityTypeId
+		]);
+		$event->send();
+		foreach ($event->getResults() as $result)
+		{
+			if ($result->getType() !== \Bitrix\Main\EventResult::ERROR)
+			{
+				$return = $result->getParameters();
+				if ($return instanceof Uri)
+				{
+					return $return;
+				}
+			}
+		}
+
 		$template = $this->getUrlTemplates()[$componentName] ?? null;
 		if ($template)
 		{
@@ -450,6 +472,33 @@ class Router
 
 		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
 		$template = Option::get(static::MODULE_ID, "path_to_{$entityName}_kanban");
+		if (empty($template))
+		{
+			return null;
+		}
+
+		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+	}
+
+	public function getCalendarUrl(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		// TODO: implement new routing if needed
+
+		return $this->getCalendarUrlWithOldRouting($entityTypeId, $categoryId);
+	}
+
+	protected function getCalendarUrlWithOldRouting(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		if ($entityTypeId === \CCrmOwnerType::Deal && !is_null($categoryId))
+		{
+			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_calendar');
+
+			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId]));
+		}
+
+		// to Deal/Lead
+		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+		$template = Option::get(static::MODULE_ID, "path_to_{$entityName}_calendar");
 		if (empty($template))
 		{
 			return null;
@@ -1086,6 +1135,24 @@ class Router
 		return $url;
 	}
 
+	public function signChildrenItemsComponentParams(int $entityTypeId, array $componentParams): string
+	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+		if (!$factory)
+		{
+			return '';
+		}
+
+		$componentName = $this->getItemListComponentName($entityTypeId);
+		if (!$componentName)
+		{
+			return '';
+		}
+		$componentName = str_replace('bitrix:', '', $componentName);
+
+		return \CCrmInstantEditorHelper::signComponentParams($componentParams, $componentName);
+	}
+
 	/**
 	 * Return name of detail component by $entityTypeId.
 	 *
@@ -1112,6 +1179,7 @@ class Router
 		return [
 			\CCrmOwnerType::Quote => 'bitrix:crm.quote.details',
 			\CCrmOwnerType::SmartInvoice => 'bitrix:crm.invoice.details',
+			\CCrmOwnerType::SmartDocument => 'bitrix:crm.document.details',
 			\CCrmOwnerType::CommonDynamicName => 'bitrix:crm.item.details',
 		];
 	}

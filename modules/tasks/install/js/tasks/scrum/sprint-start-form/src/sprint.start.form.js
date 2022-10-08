@@ -6,6 +6,7 @@ import {Layout} from 'ui.sidepanel.layout';
 import {RequestSender} from './request.sender';
 
 import 'ui.hint';
+import 'ui.fonts.opensans';
 
 import '../css/base.css';
 
@@ -46,6 +47,8 @@ export class SprintStartForm extends EventEmitter
 	{
 		super(params);
 
+		this.setEventNamespace('BX.Tasks.Scrum.SprintStartForm');
+
 		this.groupId = parseInt(params.groupId, 10);
 		this.sprintId = parseInt(params.sprintId, 10);
 
@@ -56,6 +59,8 @@ export class SprintStartForm extends EventEmitter
 		this.requestSender = new RequestSender();
 
 		this.node = null;
+
+		this.startButton = null;
 	}
 
 	show()
@@ -78,7 +83,7 @@ export class SprintStartForm extends EventEmitter
 						},
 						buttons: ({cancelButton, SaveButton}) => {
 							return [
-								new SaveButton({
+								this.startButton = new SaveButton({
 									text: Loc.getMessage('TASKS_SCRUM_SPRINT_START_FORM_BUTTON'),
 									onclick: this.onStart.bind(this)
 								}),
@@ -93,6 +98,8 @@ export class SprintStartForm extends EventEmitter
 
 	onStart()
 	{
+		this.startButton.setWaiting();
+
 		const baseContainer = this.node.querySelector('.tasks-scrum__side-panel-start--info-basic');
 
 		const timeContainer = this.node.querySelector('.tasks-scrum__side-panel-start--timing');
@@ -115,6 +122,7 @@ export class SprintStartForm extends EventEmitter
 				});
 			})
 			.catch((response) => {
+				this.startButton.setWaiting(false);
 				this.requestSender.showErrorAlert(
 					response,
 					Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP')

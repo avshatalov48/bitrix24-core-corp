@@ -2,10 +2,7 @@
 
 namespace Bitrix\SalesCenter\Integration;
 
-use Bitrix\Crm\Activity\Provider\OpenLine;
-use Bitrix\Crm\Activity\Provider\WebForm;
 use Bitrix\Crm\Activity\Provider\Sms;
-use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\AddressTable;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\LeadContactTable;
@@ -24,14 +21,15 @@ use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Crm\WebForm\Internals\FormTable;
 use Bitrix\Crm\Timeline;
 use Bitrix\Main\Loader;
-use Bitrix\Main\ORM\Query\Query;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Salescenter\Analytics;
 use Bitrix\Main\PhoneNumber\Parser;
 use Bitrix\Crm;
 use Bitrix\Crm\Activity;
+use Bitrix\Crm\ClientInfo;
 use Bitrix\Crm\Workflow\PaymentWorkflow;
 use Bitrix\Crm\Workflow\PaymentStage;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Item\Deal;
 use CCrmOwnerType;
 
@@ -39,6 +37,9 @@ Main\Localization\Loc::loadMessages(__FILE__);
 
 class CrmManager extends Base
 {
+	public const SMS_MODE_PAYMENT = 'payment';
+	public const SMS_MODE_COMPILATION = 'compilation';
+
 	protected $dealsLink;
 	protected $contactsLink;
 	protected $forms;
@@ -316,93 +317,13 @@ class CrmManager extends Base
 
 		if($this->isEnabled)
 		{
-			if($ownerTypeId == \CCrmOwnerType::Lead)
-			{
-				$lead = LeadTable::getById($ownerId)->fetch();
-				if($lead)
-				{
-					$clientInfo['COMPANY_ID'] = (int)$lead['COMPANY_ID'];
-					$clientInfo['CONTACT_IDS'] = LeadContactTable::getLeadContactIDs($ownerId);
-				}
-			}
-			elseif($ownerTypeId == \CCrmOwnerType::Deal)
-			{
-				$deal = DealTable::getById($ownerId)->fetch();
-				if($deal)
-				{
-					$clientInfo['CONTACT_IDS'] = DealContactTable::getDealContactIDs($ownerId);
-					$clientInfo['COMPANY_ID'] = (int)$deal['COMPANY_ID'];
-
-					$clientInfo['OWNER_ID'] = $ownerId;
-					$clientInfo['OWNER_TYPE_ID'] = $ownerTypeId;
-				}
-			}
-			elseif($ownerTypeId == \CCrmOwnerType::Contact)
-			{
-				$clientInfo['CONTACT_IDS'] = [(int)$ownerId];
-			}
-			elseif($ownerTypeId == \CCrmOwnerType::Company)
-			{
-				$clientInfo['COMPANY_ID'] = (int)$ownerId;
-			}
-			elseif($ownerTypeId == \CCrmOwnerType::Order)
-			{
-				$order = Order\Order::load($ownerId);
-				if($order)
-				{
-					$collection = $order->getContactCompanyCollection();
-					$company = $collection->getPrimaryCompany();
-					if($company)
-					{
-						$clientInfo['COMPANY_ID'] = (int)$company->getField('ENTITY_ID');
-					}
-					$contacts = $collection->getContacts();
-					foreach($contacts as $contact)
-					{
-						$clientInfo['CONTACT_IDS'][] = (int)$contact->getField('ENTITY_ID');
-					}
-				}
-			}
-			elseif($ownerTypeId == \CCrmOwnerType::Invoice)
-			{
-				$invoice = \CCrmInvoice::GetByID($ownerId);
-				if ($invoice)
-				{
-					$companyID = $invoice['UF_COMPANY_ID'] ?? 0;
-					if ($companyID)
-					{
-						$clientInfo['COMPANY_ID'] = $companyID;
-					}
-
-					$contactID = $invoice['UF_CONTACT_ID'] ?? 0;
-					if ($contactID)
-					{
-						$clientInfo['CONTACT_IDS'][] = $contactID;
-					}
-				}
-			}
-			else
-			{
-				$factory = Crm\Service\Container::getInstance()->getFactory($ownerTypeId);
-				if ($factory)
-				{
-					$item = $factory->getItem($ownerId);
-
-					if ($item && $item->getCompanyId())
-					{
-						$clientInfo['COMPANY_ID'] = (int)$item->getCompanyId();
-					}
-
-					if ($item && $item->getContactId())
-					{
-						$clientInfo['CONTACT_IDS'] = [(int)$item->getContactId()];
-					}
-				}
-
-				$clientInfo['OWNER_ID'] = $ownerId;
-				$clientInfo['OWNER_TYPE_ID'] = $ownerTypeId;
-			}
-
+			$clientInfo =
+				ClientInfo::createFromOwner(
+					(int)$ownerTypeId,
+					(int)$ownerId
+				)
+				->toArray()
+			;
 		}
 
 		return $clientInfo;
@@ -665,6 +586,105 @@ class CrmManager extends Base
 		return '';
 	}
 
+	/**
+	 * @param int $compilationId
+	 * @param int $dealId
+	 * @param array $compilationLink
+	 * @param array $sendingInfo
+	 * @return bool
+	 */
+	public function sendCompilationBySms(int $compilationId, int $dealId, array $compilationLink, array $sendingInfo): bool
+	{
+		$linkForMessage = $compilationLink['link'];
+
+		$messageBody = str_replace(
+			'#LINK#',
+			$linkForMessage,
+			$sendingInfo['text']
+		);
+
+		$senderId = (mb_strpos($sendingInfo['provider'], '|') === false) ? $sendingInfo['provider'] : 'rest';
+
+		$messageTo = $this->getDealContactPhone($dealId);
+		$responsibleId = \CCrmOwnerType::GetResponsibleID(\CCrmOwnerType::Deal, $dealId);
+
+		$result = Crm\MessageSender\MessageSender::send(
+			[
+				Crm\Integration\SmsManager::getSenderCode() => [
+					'ACTIVITY_PROVIDER_TYPE_ID' => Sms::PROVIDER_TYPE_SALESCENTER_PAYMENT_SENT,
+					'MESSAGE_BODY' => $messageBody,
+					'SENDER_ID' => $senderId,
+					'MESSAGE_FROM' => $senderId === 'rest' ? $sendingInfo['provider'] : null,
+				]
+			],
+			[
+				'COMMON_OPTIONS' => [
+					'PHONE_NUMBER' => $messageTo,
+					'USER_ID' => $responsibleId,
+					'ADDITIONAL_FIELDS' => [
+						'ENTITY_TYPE' => \CCrmOwnerType::ContactName,
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+						'ENTITY_ID' => $this->getPrimaryContact($dealId)['CONTACT_ID'],
+						'ENTITIES' => [
+							'DEAL' => \CCrmDeal::GetByID($dealId),
+						],
+						'BINDINGS' => [
+							[
+								'OWNER_TYPE_ID' => \CCrmOwnerType::Contact,
+								'OWNER_ID' => $this->getPrimaryContact($dealId)['CONTACT_ID']
+							],
+							[
+								'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+								'OWNER_ID' => $dealId,
+							]
+						],
+						'ACTIVITY_AUTHOR_ID' => $responsibleId,
+						'ACTIVITY_DESCRIPTION' => $messageBody,
+						'PRODUCT_IDS' => $compilationLink['productIds'],
+						'COMPILATION_ID' => $compilationId,
+					]
+				]
+			]
+		);
+
+		return $result->isSuccess();
+	}
+
+	public static function onSendCompilation(Main\Event $event): void
+	{
+		$additionalFields = $event->getParameter('ADDITIONAL_FIELDS');
+
+		if (!$additionalFields)
+		{
+			return;
+		}
+
+		$dealId = (int)$additionalFields['ENTITIES']['DEAL']['ID'];
+		$productIds = $additionalFields['PRODUCT_IDS'];
+		$compilationId = (int)$additionalFields['COMPILATION_ID'];
+
+		if (!$dealId || !$productIds || !$compilationId)
+		{
+			return;
+		}
+
+		$compilationProducts = CatalogManager::getInstance()->getProductVariations($productIds);
+		if (empty($compilationProducts))
+		{
+			return;
+		}
+
+		$timelineParams = [
+			'SETTINGS' => [
+				'DEAL_ID' => $dealId,
+				'SENT_PRODUCTS' => $compilationProducts,
+				'COMPILATION_ID' => $compilationId,
+			]
+		];
+
+		Timeline\ProductCompilationController::getInstance()->onCompilationSent($dealId, $timelineParams);
+	}
+
 	public function sendPaymentBySms(Order\Payment $payment, array $sendingInfo, Order\Shipment $shipment = null)
 	{
 		/** @var Order\Order $order */
@@ -818,18 +838,58 @@ class CrmManager extends Base
 		AddEventToStatFile('salescenter', 'orderSend', $order->getId(), $constructor->getChannelNameLabel($order), 'channel_name');
 	}
 
-	public function saveSmsTemplate($template)
+	public function saveSmsTemplate($template, $mode = self::SMS_MODE_PAYMENT)
 	{
-		Main\Config\Option::set('salescenter', 'salescenter_sms_template', $template);
+		$smsOptions = $this->getSmsTemplateOptionsMap()[$mode];
+		if (!$smsOptions)
+   		{
+   			$smsOptions = $this->getSmsTemplateOptionsMap()[self::SMS_MODE_PAYMENT];
+   		}
+
+		Main\Config\Option::set('salescenter', $smsOptions['option_name'], $template);
 	}
 
-	public function getSmsTemplate()
+	public function getSmsTemplate($mode = self::SMS_MODE_PAYMENT)
 	{
+		$smsOptions = $this->getSmsTemplateOptionsMap()[$mode];
+		if (!$smsOptions)
+		{
+   			$smsOptions = $this->getSmsTemplateOptionsMap()[self::SMS_MODE_PAYMENT];
+   		}
+
 		return Main\Config\Option::get(
 			'salescenter',
-			'salescenter_sms_template',
-			Main\Localization\Loc::getMessage('SALESCENTER_CRMMANAGER_SMS_TEMPLATE_3')
+			$smsOptions['option_name'],
+			$smsOptions['default_text']
 		);
+	}
+
+	/**
+	 * @return array
+	 */
+	public function getAllSmsTemplates(): array
+	{
+		return [
+			self::SMS_MODE_PAYMENT => $this->getSmsTemplate(self::SMS_MODE_PAYMENT),
+			self::SMS_MODE_COMPILATION => $this->getSmsTemplate(self::SMS_MODE_COMPILATION),
+		];
+	}
+
+	/**
+	 * @return array
+	 */
+	private function getSmsTemplateOptionsMap(): array
+	{
+		return [
+			self::SMS_MODE_PAYMENT => [
+				'option_name' => 'salescenter_sms_template',
+				'default_text' => Loc::getMessage('SALESCENTER_CRMMANAGER_SMS_TEMPLATE_3'),
+			],
+			self::SMS_MODE_COMPILATION => [
+				'option_name' => 'salescenter_compilation_sms_template',
+				'default_text' => Loc::getMessage('SALESCENTER_CRMMANAGER_COMPILATION_SMS_TEMPLATE'),
+			]
+		];
 	}
 
 	/**
@@ -1140,11 +1200,7 @@ class CrmManager extends Base
 		return array_column($result, 'VALUE');
 	}
 
-	/**
-	 * @param int $dealId
-	 * @return mixed|string
-	 */
-	public function getDealContactPhoneFormat(int $dealId)
+	private function getDealContactPhone(int $dealId)
 	{
 		$contact = $this->getPrimaryContact($dealId);
 		if (!$contact)
@@ -1213,7 +1269,22 @@ class CrmManager extends Base
 			return '';
 		}
 
-		return Parser::getInstance()->parse($phone['VALUE'])->format();
+		return $phone['VALUE'];
+	}
+
+	/**
+	 * @param int $dealId
+	 * @return mixed|string
+	 */
+	public function getDealContactPhoneFormat(int $dealId)
+	{
+		$phone = $this->getDealContactPhone($dealId);
+		if ($phone === '')
+		{
+			return '';
+		}
+
+		return Parser::getInstance()->parse($phone)->format();
 	}
 
 	public function getOrderLimitSliderId()

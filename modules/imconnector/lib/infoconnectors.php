@@ -309,9 +309,8 @@ class InfoConnectors
 	 */
 	public static function getInfoConnectorsById($lineId)
 	{
-		$lineId = (int)$lineId;
 		$filter  = array(
-			'LINE_ID' => $lineId
+			'=LINE_ID' => (int)$lineId
 		);
 
 		return self::getInfoConnectors($filter);
@@ -337,9 +336,6 @@ class InfoConnectors
 	 * @param array $filter
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getInfoConnectorsList($filter = array())
 	{
@@ -362,7 +358,7 @@ class InfoConnectors
 	 */
 	public static function addInfoConnectors($lineId)
 	{
-		$connectorsInfoCount = InfoConnectorsTable::getByPrimary(['LINE_ID' => $lineId])->getSelectedRowsCount();
+		$connectorsInfoCount = InfoConnectorsTable::getByPrimary($lineId)->getSelectedRowsCount();
 		$result = false;
 
 		if ($connectorsInfoCount == 0)
@@ -374,22 +370,23 @@ class InfoConnectors
 			$dataEncoded = Json::encode($data);
 			$hashDataEncoded = md5($dataEncoded);
 
-			$result = InfoConnectorsTable::add(
-				[
-					'LINE_ID' => $lineId,
-					'DATA' => $dataEncoded,
-					'EXPIRES' => $timeExpires,
-					'DATA_HASH' => $hashDataEncoded,
-				]
-			);
-
-			$cacheData = [
+			$result = InfoConnectorsTable::add([
+				'LINE_ID' => $lineId,
 				'DATA' => $dataEncoded,
 				'EXPIRES' => $timeExpires,
 				'DATA_HASH' => $hashDataEncoded,
-			];
+			]);
 
-			self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
+			if ($result->isSuccess())
+			{
+				$cacheData = [
+					'DATA' => $dataEncoded,
+					'EXPIRES' => $timeExpires,
+					'DATA_HASH' => $hashDataEncoded,
+				];
+
+				self::rewriteInfoConnectorsLineCache($lineId, $cacheData);
+			}
 		}
 
 		return $result;
@@ -404,11 +401,11 @@ class InfoConnectors
 	 */
 	public static function updateInfoConnectors($lineId)
 	{
-		$connectorRes = InfoConnectorsTable::getByPrimary(['LINE_ID' => $lineId]);
+		$connectorRes = InfoConnectorsTable::getByPrimary($lineId);
 		$connectorsInfoCount = $connectorRes->getSelectedRowsCount();
 		$result = false;
 
-		if ($connectorsInfoCount === 1)
+		if ($connectorsInfoCount == 1)
 		{
 			$cacheTime = (int)Library::CACHE_TIME_INFO_CONNECTORS_LINE;
 			$timeExpires = \Bitrix\Main\Type\DateTime::createFromTimestamp(time() + $cacheTime);

@@ -364,15 +364,12 @@ class VoximplantStartComponent extends \CBitrixComponent
 				'onclick' => 'BX.Voximplant.Start.onConfigureTelephonyButtonClick()'
 			];
 
-			if(!$this->isRestOnly())
-			{
-				$result[] = [
-					'id' => 'access',
-					'title' => Loc::getMessage("VOX_START_ACCESS_CONTROL"),
-					'className' => 'voximplant-start-logo-access-rights',
-					'onclick' => 'BX.Voximplant.Start.onAccessControlButtonClick()'
-				];
-			}
+			$result[] = [
+				'id' => 'access',
+				'title' => Loc::getMessage("VOX_START_ACCESS_CONTROL"),
+				'className' => 'voximplant-start-logo-access-rights',
+				'onclick' => 'BX.Voximplant.Start.onAccessControlButtonClick()'
+			];
 		}
 
 		if(!\Bitrix\Voximplant\Limits::isRestOnly())

@@ -536,4 +536,30 @@ if(typeof BX.Crm.SmartInvoiceModel === "undefined")
 		return self;
 	};
 }
+
+if(typeof BX.Crm.SmartDocumentModel === "undefined")
+{
+	/**
+	 * @extends BX.Crm.FactoryBasedModel
+	 * @memberOf BX.Crm
+	 * @constructor
+	 */
+	BX.Crm.SmartDocumentModel = function()
+	{
+		BX.Crm.SmartDocumentModel.superclass.constructor.apply(this);
+	};
+
+	BX.extend(BX.Crm.SmartDocumentModel, BX.Crm.FactoryBasedModel);
+	/**
+	 * @param {string} id
+	 * @param {Object} settings
+	 * @return {BX.Crm.QuoteModel}
+	 */
+	BX.Crm.SmartDocumentModel.create = function(id, settings)
+	{
+		var self = new BX.Crm.SmartDocumentModel();
+		self.initialize(id, settings);
+		return self;
+	};
+}
 //endregion

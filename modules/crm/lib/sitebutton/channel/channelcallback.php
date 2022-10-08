@@ -45,7 +45,7 @@ class ChannelCallback implements iProvider
 			return array();
 		}
 
-		return FormTable::getList(array(
+		return FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME'),
 			'filter' => array(
 				'=ACTIVE' => 'Y',
@@ -68,7 +68,7 @@ class ChannelCallback implements iProvider
 		}
 
 		$enumList = array();
-		$enumListDb = FormTable::getList(array(
+		$enumListDb = FormTable::getDefaultTypeList(array(
 			'select' => array('ID', 'NAME', 'CALL_FROM'),
 			'filter' => array(
 				'=ACTIVE' => 'Y',

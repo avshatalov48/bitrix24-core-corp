@@ -14,7 +14,7 @@ $hasOptions2 = isModuleInstalled('crm');
 $bodyClass = $APPLICATION->getPageProperty('BodyClass', false);
 $APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view')));
 
-\CJSCore::init(array('socnetlogdest', 'popup', 'fx'));
+\CJSCore::init(array('socnetlogdest', 'popup', 'fx', 'ui.design-tokens'));
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templates/.default/style.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -320,9 +320,9 @@ $APPLICATION->includeComponent(
 			var dummyNode = BX.create('DIV', {
 				children: [
 					BX.create('INPUT', {
-						attrs: { 
-							type: 'hidden', 
-							name: 'MAILBOX', 
+						attrs: {
+							type: 'hidden',
+							name: 'MAILBOX',
 							value: rid
 						}
 					})

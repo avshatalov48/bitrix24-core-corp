@@ -329,6 +329,9 @@ if(isset($_GET['id']))
 	Crm\Settings\DealSettings::getCurrent(),
 	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
 );
+\CCrmEntityHelper::setEnabledUniversalActivityScenarioFlagByRequest(
+	\Bitrix\Main\Application::getInstance()->getContext()->getRequest()
+);
 
 if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
 	&& ($componentPage === 'edit' || $componentPage === 'show')

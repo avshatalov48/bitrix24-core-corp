@@ -432,6 +432,12 @@
 							ignore: "Y",
 							id: grid.getCheckedId()
 						}, false);
+					}.bind(this), function(response) {
+						grid.stopActionPanel();
+						grid.onApplyFilter();
+						BX.UI.Notification.Center.notify({
+							content: response.errors[0].message
+						});
 					}.bind(this));
 				}.bind(this)
 			);

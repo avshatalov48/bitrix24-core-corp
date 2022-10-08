@@ -1920,10 +1920,7 @@ abstract class EntityMerger
 									continue;
 								}
 
-								if(\CCrmFileProxy::TryResolveFile($fileID, $file, $fileOptions))
-								{
-									$targ[$fieldID][] = static::getAddressFields($data);
-								}
+								$targ[$fieldID][] = static::getAddressFields($data);
 							}
 						}
 						elseif (isset($targ[$fieldID]) && is_array($targ[$fieldID]))
@@ -2022,12 +2019,20 @@ abstract class EntityMerger
 			return null;
 		}
 
-		if (!AddressType::isRawValue($value))
+		// the value has been cleared;
+		// we have to return an empty value so that the original entity's value stays intact
+		$isDelete = (is_string($value) && mb_strlen($value) > 4 && mb_substr($value, -4) === '_del');
+		if ($isDelete)
 		{
-			return $value;
+			return null;
 		}
 
 		$addressFields = AddressType::getAddressFieldsByValue($value);
+		if (!$addressFields)
+		{
+			return null;
+		}
+
 		unset($addressFields['id']);
 
 		try

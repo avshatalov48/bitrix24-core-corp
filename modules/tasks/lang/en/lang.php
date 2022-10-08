@@ -37,6 +37,7 @@ $MESS["TASKS_LONG_TITLE"] = "The task name is too long";
 $MESS["TASKS_PARENT_SELF"] = "A task cannot be a subtask of itself.";
 $MESS["TASKS_RIGHTS_MORE_LINK"] = "Learn more about access permissions";
 $MESS["TASKS_TASK_CREATE_ACCESS_DENIED"] = "Insufficient permission to create a task.";
+$MESS["TASKS_TEMPLATE_CREATE_TASK_NOT_ACCESSIBLE"] = "Cannot save the template because the selected task author has insufficient permissions to assign tasks to the selected responsible person, or doesn't have access to the task's project. Please assign appropriate permissions and try again.";
 $MESS["TASKS_TEMPLATE_MEMBER_CONVERT"] = "We are now updating the templates to make them even more convenient. You can still continue using other areas of your Bitrix24. This will only take a while.";
 $MESS["TASKS_TEMPLATE_MEMBER_CONVERT_TITLE"] = "Please wait.#BR#Templates will be here soon.";
 $MESS["TASKS_UNKNOWN_ADD_ERROR"] = "Error creating a task.";

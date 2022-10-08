@@ -33,8 +33,26 @@ if (!Loader::includeModule('sale'))
 global $APPLICATION;
 Header('Content-Type: text/html; charset='.LANG_CHARSET);
 $APPLICATION->ShowAjaxHead();
-$componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
-$componentParams = isset($componentData['params']) && is_array($componentData['params']) ? $componentData['params'] : array();
+
+$componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : [];
+$componentParams = [];
+if (isset($componentData['signedParameters']))
+{
+	$componentParams = \CCrmInstantEditorHelper::unsignComponentParams(
+		(string)$componentData['signedParameters'],
+		'crm.order.product.list'
+	);
+	if (is_null($componentParams))
+	{
+		ShowError('Wrong component signed parameters');
+		die();
+	}
+}
+elseif (isset($componentData['params']) && is_array($componentData['params']))
+{
+	ShowError('Component params must be signed');
+	die();
+}
 
 //Security check
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();

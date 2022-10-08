@@ -43,7 +43,8 @@
 }
 
 .crm-alert-inner-text {
-	font: 500 14px/17px "OpenSans-Semibold", "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	vertical-align: middle;
 	color: #525C69;
 	margin-right: 7px;
@@ -60,7 +61,8 @@
 	box-sizing: border-box;
 	border-radius: 30px;
 	background: transparent;
-	font: 11px/14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	vertical-align: middle;
 	color: #333;
 	border: 1px solid rgba(82, 92, 105, 0.31);

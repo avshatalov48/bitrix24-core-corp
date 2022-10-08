@@ -115,6 +115,10 @@ class Container
 					{
 						$factoryClassName = Factory\SmartInvoice::class;
 					}
+					elseif ($entityTypeId === \CCrmOwnerType::SmartDocument)
+					{
+						$factoryClassName = Factory\SmartDocument::class;
+					}
 					else
 					{
 						$factoryClassName = static::$dynamicFactoriesClassName;
@@ -429,6 +433,21 @@ class Container
 	public function getTimelineHistoryDataModelMaker(): Timeline\HistoryDataModel\Maker
 	{
 		return ServiceLocator::getInstance()->get('crm.timeline.historyDataModel.maker');
+	}
+
+	public function getTimelineScheduledItemFactory(): \Bitrix\Crm\Service\Timeline\Item\Factory\ScheduledItem
+	{
+		return ServiceLocator::getInstance()->get('crm.timeline.factory.scheduledItem');
+	}
+
+	public function getTimelineHistoryItemFactory(): \Bitrix\Crm\Service\Timeline\Item\Factory\HistoryItem
+	{
+		return ServiceLocator::getInstance()->get('crm.timeline.factory.historyItem');
+	}
+
+	public function getTimelineActivityItemFactory(): \Bitrix\Crm\Service\Timeline\Item\Factory\ConfigurableActivity
+	{
+		return ServiceLocator::getInstance()->get('crm.timeline.factory.activityItem');
 	}
 
 	public function getRestEventManager(): Integration\Rest\EventManager

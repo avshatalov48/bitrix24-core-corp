@@ -2,6 +2,8 @@
 
 use Bitrix\Main\Localization\Loc;
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 if ($arParams['IS_AJAX'] == 'Y')
 {
 	echo '<link rel="stylesheet" type="text/css" href="', $this->getFolder(), '/style.css?5" />';

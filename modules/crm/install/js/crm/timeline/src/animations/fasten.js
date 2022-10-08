@@ -36,14 +36,16 @@ export default class Fasten
 	{
 		const node = this._finalItem.getWrapper();
 		BX.addClass(node, 'crm-entity-stream-section-animate-start');
-		this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+		if (this._anchor.parentNode && node)
+		{
+			this._anchor.parentNode.insertBefore(node, this._anchor.nextSibling);
+		}
 		setTimeout( BX.delegate(
 			function() {
 				BX.removeClass(node, 'crm-entity-stream-section-animate-start');
 			},
 			this
 		), 0);
-		this._finalItem.onFinishFasten();
 	}
 
 	run()

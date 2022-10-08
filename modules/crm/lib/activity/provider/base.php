@@ -2,7 +2,7 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
-use \Bitrix\Main;
+use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -538,6 +538,12 @@ class Base
 	{
 	}
 
+	/**
+	 * This method provides some additional data to render timeline record about completing the activity.
+	 *
+	 * @param $historyFields
+	 * @return null
+	 */
 	public static function prepareHistoryItemData($historyFields)
 	{
 		return null;
@@ -566,5 +572,53 @@ class Base
 
 		$permission = \CCrmPerms::GetUserPermissions($userId);
 		return \CCrmActivity::CheckReadPermission($activityFields['OWNER_TYPE_ID'], $activityFields['OWNER_ID'], $permission);
+	}
+
+	public static function isTypeValid(string $typeId): bool
+	{
+		$availableTypes = static::getTypes();
+		foreach ($availableTypes as $type)
+		{
+			if ($type['PROVIDER_TYPE_ID'] === $typeId)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	public function createActivity(string $typeId, array $fields): Main\Result
+	{
+		$result = new Main\Result();
+		if (!static::isTypeValid($typeId))
+		{
+			return $result->addError(new Main\Error('Invalid typeId: ' . $typeId));
+		}
+
+		$fields['TYPE_ID'] = \CCrmActivityType::Provider;
+		$fields['PROVIDER_ID'] = static::getId();
+		$fields['PROVIDER_TYPE_ID'] = $typeId;
+
+		$activityId = \CCrmActivity::Add(
+			$fields,
+			false,
+			true,
+			[
+				'REGISTER_SONET_EVENT' => true,
+			]
+		);
+		if ($activityId > 0)
+		{
+			return $result->setData(['id' => $activityId]);
+		}
+		global $APPLICATION;
+		$ex = $APPLICATION->GetException();
+		if($ex)
+		{
+			$result->addError(new Main\Error((string)$ex->GetString()));
+		}
+
+		return $result;
 	}
 }

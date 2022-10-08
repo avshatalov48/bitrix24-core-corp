@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\Rest\Controllers;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\TemplateModel;
 use Bitrix\Tasks\Access\TemplateAccessController;
 use Bitrix\Main\Engine\Response;
 use Bitrix\Tasks\Item\Task\Template as TaskTemplate;
@@ -39,6 +40,27 @@ class Template extends Base
 
 		$fields = $this->filterFields($fields);
 
+		if (
+			array_key_exists('REPLICATE', $fields)
+			&& $fields['REPLICATE'] === 'Y'
+		)
+		{
+			$templateModel = TemplateModel::createFromArray($fields);
+			if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_SAVE, null, $templateModel))
+			{
+				return false;
+			}
+		}
+
+		if (array_key_exists('USER_ID', $params))
+		{
+			unset($params['USER_ID']);
+		}
+		if (array_key_exists('ID', $fields))
+		{
+			unset($fields['ID']);
+		}
+
 		return (new \CTaskTemplates())->Add($fields, $params);
 	}
 
@@ -55,7 +77,10 @@ class Template extends Base
 	{
 		$currentUserId = CurrentUser::get()->getId();
 
-		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_EDIT, $templateId))
+		$oldTemplate = \Bitrix\Tasks\Access\Model\TemplateModel::createFromId($templateId);
+		$newTemplate = TemplateModel::createFromArray($fields);
+		$isAccess = (new TemplateAccessController($currentUserId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate);
+		if (!$isAccess)
 		{
 			return false;
 		}
@@ -126,9 +151,16 @@ class Template extends Base
 	 */
 	public function getAction($templateId, array $params = array())
 	{
+		$currentUserId = CurrentUser::get()->getId();
+
+		if (!TemplateAccessController::can($currentUserId, ActionDictionary::ACTION_TEMPLATE_READ, $templateId))
+		{
+			return false;
+		}
+
 		$template = new \CTaskTemplates();
 		$template = $template->GetByID($templateId, $params);
-
+		$template = $template->Fetch();
 
 		return $template;
 	}

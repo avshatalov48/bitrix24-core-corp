@@ -79,6 +79,7 @@ final class Task extends \Bitrix\Tasks\Integration\Socialnetwork
 			return false;
 		}
 
+		\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
 		$APPLICATION->SetAdditionalCSS('/bitrix/js/tasks/css/tasks.css');
 
 		if (isset($arFields['~PARAMS']) && $arFields['~PARAMS'])

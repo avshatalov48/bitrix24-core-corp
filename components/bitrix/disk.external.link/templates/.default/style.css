@@ -1,6 +1,6 @@
 html,
 body{
-    font-family:'HelveticaNeue', arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     margin:0;
     padding:0;
 }
@@ -32,9 +32,9 @@ table{
     background:#535c69;
 }
 .bx-shared-logo {
-    font-family:'OpenSans-SemiBold', sans-serif;
+    font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     font-size:24px;
-    font-weight: normal;
     line-height:24px;
     text-align:center;
     vertical-align:middle;
@@ -78,7 +78,7 @@ td.bx-shared-body-fileinfo-param {
 }
 td.bx-shared-body-fileinfo-value{
     font-size:15px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     vertical-align: baseline;
 	padding-bottom: 0;
     color:#535b69;
@@ -99,7 +99,8 @@ td.bx-shared-body-fileinfo-value{
 /*- SideBar SharedLink-*/
 
 .bx-disk-sidebar-shared-title{
-    font-family:'OpenSans', sans-serif;
+    font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
     font-size:12px;
     padding-bottom:5px;
     text-align:left;
@@ -323,7 +324,7 @@ td.bx-shared-body-fileinfo-value{
 
 /*Buttons*/
 .bx-disk-dc-button-gray{
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:30px;
     display:block;
     height:30px;
@@ -345,7 +346,7 @@ td.bx-shared-body-fileinfo-value{
     border:1px solid #555;
 }
 .bx-disk-dc-button-darkgray{
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:30px;
     display:block;
     height:32px;
@@ -378,9 +379,9 @@ td.bx-shared-body-fileinfo-value{
 }
 
 .bx-disk-btn{
-    font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     font-size:12px;
-    font-weight:bold;
     display:inline-block;
     margin-bottom:10px;
     padding:0 15px;
@@ -508,7 +509,7 @@ td.bx-shared-body-fileinfo-value{
 	color: #000;
 	text-align: center;
 	text-transform: uppercase;
-	font: 400 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 html[lang='en'] .banner-b24-link-container-cyrcle-title.l3 span,
@@ -567,7 +568,7 @@ html[lang='de'] .banner-b24-link-container-cyrcle-title.l4 span {
 .banner-b24-link-container-cyrcle-button span{
 	font-family: 'Geometria', Arial, "Helvetica Neue", Helvetica, sans-serif;
     font-size:14px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:40px;
     display:inline-block;
     height:40px;
@@ -623,13 +624,13 @@ html[lang='de'] .banner-b24-link-container-cyrcle-title.l4 span {
 }
 
 span.req{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
     opacity:.6;
     color:#ab2424;
 }
 .bx-disk-popup-label{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
     opacity:.6;
     color:#000;
@@ -643,7 +644,7 @@ span.req{
     height:36px;
     vertical-align:middle;
     border:1px solid #c5cdd3;
-    border-radius:2px;
+    border-radius: var(--ui-field-border-radius, 2px);
     background-color:#fff;
 }
 .bx-disk-popup-buttons{
@@ -659,9 +660,9 @@ span.req{
     background:#F8FAFB;
 }
 .bx-disk-popup-title{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:14px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     line-height:30px;
     height:30px;
     margin-bottom:10px;
@@ -670,7 +671,7 @@ span.req{
 }
 .bx-disk-popup-content,
 .bx-disk-popup-content-small{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:16px;
     min-width:500px;
     padding:20px;
@@ -689,9 +690,9 @@ span.req{
     background-color:#f8fafa;
 }
 .bx-disk-popup-content-title{
-    font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size:15px;
-    font-weight:bold;
+    font-weight:var(--ui-font-weight-bold);
     padding-bottom:20px;
     color:#535b69;
     border-bottom:1px solid #cfd4d8;
@@ -730,7 +731,7 @@ hr.bx-disk-popup-delimiter{
 .bx-disk-pass-popup-title {
 	color: #535c69;
 	font-size: 19px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-top: 9px;
 }
 
@@ -745,7 +746,7 @@ hr.bx-disk-popup-delimiter{
 	margin: 21px 0 4px;
 	text-align: left;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 
 }
 
@@ -759,7 +760,7 @@ hr.bx-disk-popup-delimiter{
     padding: 0 15px;
     max-width: 900px;
     min-height: 200px;
-    font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
     box-sizing: border-box;
@@ -807,7 +808,7 @@ hr.bx-disk-popup-delimiter{
 .disk-object-header {
     position: relative;
     padding: 0 0 0 86px;
-    font: 36px "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 36px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .disk-object-header:before {
@@ -831,7 +832,7 @@ hr.bx-disk-popup-delimiter{
 .disk-object-size-number,
 .disk-object-changed-number {
 	display: table-cell;
-    font: bold 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #535c69;
 	width: 100%;
 }

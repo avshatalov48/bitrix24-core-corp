@@ -2,6 +2,12 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Imopenlines\Limit;
 use Bitrix\Main\Localization\Loc;
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 ?>
 
 <div class="imopenlines-form-settings-section">

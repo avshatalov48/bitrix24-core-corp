@@ -293,7 +293,10 @@ class ContactDataProvider extends EntityDataProvider
 		$result += array(
 			'WEBFORM_ID' => $this->createField(
 				'WEBFORM_ID',
-				array('type' => 'list', 'partial' => true)
+				[
+					'type' => 'entity_selector',
+					'partial' => true
+				]
 			),
 			'ORIGINATOR_ID' => $this->createField(
 				'ORIGINATOR_ID',
@@ -400,10 +403,7 @@ class ContactDataProvider extends EntityDataProvider
 		}
 		elseif($fieldID === 'WEBFORM_ID')
 		{
-			return array(
-				'params' => array('multiple' => 'Y'),
-				'items' => Crm\WebForm\Manager::getListNames()
-			);
+			return Crm\WebForm\Helper::getEntitySelectorParams(\CCrmOwnerType::Contact);
 		}
 		elseif($fieldID === 'ORIGINATOR_ID')
 		{

@@ -17,6 +17,6 @@ require_once($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/main/include/prolog_befo
 CModule::IncludeModule('tasks');
 CBitrixComponent::includeComponentClass("bitrix:tasks.task.template");
 
-$helper = require_once(dirname(__FILE__).'/helper.php');
+$helper = require_once(__DIR__.'/helper.php');
 TasksBaseComponent::executeComponentAjax(array(), array('RUNTIME_ACTIONS' => $helper->getRunTimeActions()));
 TasksBaseComponent::doFinalActions();

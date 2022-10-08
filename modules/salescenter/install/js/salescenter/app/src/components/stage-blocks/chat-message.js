@@ -32,7 +32,11 @@ const ChatMessage = {
 		editorUrl: {
 			type: String,
 			required: true
-		}
+		},
+		selectedMode: {
+			type: String,
+			required: true,
+		},
 	},
 	mixins: [StageMixin],
 	components: {
@@ -104,7 +108,7 @@ const ChatMessage = {
 					<div class="salescenter-app-payment-by-sms-item-container-sms">
 						<chat-user-avatar-block :manager="manager"/>
 						<div class="salescenter-app-payment-by-sms-item-container-sms-content">
-							<chat-message-editor-block :editor="editor" :isReadOnly="isMessageReadOnly"/>
+							<chat-message-editor-block :editor="editor" :isReadOnly="isMessageReadOnly" :selectedMode="selectedMode"/>
 						</div>
 					</div>
 				</div>

@@ -2,8 +2,8 @@
 
 <?
 use Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load("ui.forms");
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+
+\Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.alerts', 'ui.design-tokens']);
 $APPLICATION->SetPageProperty("BodyClass", "no-paddings no-hidden no-background");
 
 if (empty($arResult["EMAIL_FORWARD_TO"]))

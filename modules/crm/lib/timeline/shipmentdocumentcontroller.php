@@ -55,11 +55,10 @@ class ShipmentDocumentController extends EntityController
 
 		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$historyEntryID
 			);
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
 		}
 
 		$this->onStatusModify($ownerID, $params);
@@ -124,11 +123,10 @@ class ShipmentDocumentController extends EntityController
 
 		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$historyEntryID
 			);
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
 		}
 	}
 
@@ -183,11 +181,10 @@ class ShipmentDocumentController extends EntityController
 
 		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$historyEntryID
 			);
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
 		}
 	}
 
@@ -262,6 +259,7 @@ class ShipmentDocumentController extends EntityController
 				$data['STATUS_TITLE'] = $data['SETTINGS']['NEW_VALUE'];
 				$data['STATUS_CLASS'] = $data['SETTINGS']['CLASS'];
 			}
+			$data['MODIFIED_FIELD'] = $data['FIELD'];
 
 			// if (isset($data['SETTINGS']['ERROR']))
 			// {

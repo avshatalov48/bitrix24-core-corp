@@ -2,7 +2,8 @@
 namespace Bitrix\ImOpenLines\Tools;
 
 use \Bitrix\Main\Loader,
-	\Bitrix\Main\PhoneNumber;
+	\Bitrix\Main\PhoneNumber,
+	\Bitrix\Main\Application;
 
 use \Bitrix\Crm\Communication\Validator as CrmValidator,
 	\Bitrix\Crm\Communication\Normalizer as CrmNormalizer;
@@ -21,9 +22,44 @@ class Phone
 	 */
 	public static function validate($phone)
 	{
-		$result = PhoneNumber\Parser::getInstance()
-			->parse($phone)
-			->isValid();
+		static $region;
+		if ($region === null)
+		{
+			$region = strtoupper(Application::getInstance()->getLicense()->getRegion() ?: PhoneNumber\Parser::getDefaultCountry());
+		}
+
+		$phoneParsed = PhoneNumber\Parser::getInstance()->parse($phone, $region);
+		$result = $phoneParsed->isValid();
+
+		// Moldova's number (issue #158084)
+		if ($result && $phoneParsed->getCountryCode() == '373')
+		{
+			$phoneMd = preg_replace("/[^0-9]+/", '', $phone);
+			return (
+				substr($phoneMd, 0, 1) === '0' // local starts with '0 231 xxxxx'
+				|| substr($phoneMd, 0, 3) === '373' // international starts with '371 231 xxxxx'
+			);
+		}
+
+		if (!$result && !preg_match("/^\+/", $phone))
+		{
+			// prefix phone by "+"
+			$phoneParsed = PhoneNumber\Parser::getInstance()->parse('+'. $phone, $region);
+			$result = $phoneParsed->isValid();
+		}
+
+		// Brazil's number (issue #129267)
+		if (!$result && $phoneParsed->getCountryCode() == '55')
+		{
+			$phoneBr = preg_replace("/[^0-9]+/", '', $phone);
+			if (strlen($phoneBr) == 12)
+			{
+				// insert "9" at position 5
+				$phoneBr = substr($phoneBr, 0, 4) . '9' . substr($phoneBr, 4);
+				$phoneParsed = PhoneNumber\Parser::getInstance()->parse('+' . $phoneBr, $region);
+				$result = $phoneParsed->isValid();
+			}
+		}
 
 		return $result;
 	}
@@ -33,7 +69,6 @@ class Phone
 	 *
 	 * @param string $phone Phone number.
 	 * @return string|null
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function normalize($phone)
 	{
@@ -55,7 +90,6 @@ class Phone
 	 * @param $phone1
 	 * @param $phone2
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function isSame($phone1, $phone2)
 	{
@@ -72,27 +106,23 @@ class Phone
 	/**
 	 * @param $text
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function parseText($text)
 	{
 		$result = [];
-		$matchesPhones = [];
-		$phoneParserManager = PhoneNumber\Parser::getInstance();
-		preg_match_all('/' . $phoneParserManager->getValidNumberPattern() . '/i', $text, $matchesPhones);
+		$matchesPhones = self::extractNumbers($text);;
 
 		if (!empty($matchesPhones[0]))
 		{
 			foreach ($matchesPhones[0] as $phone)
 			{
-				$phoneNumberManager = $phoneParserManager->parse($phone);
-				if($phoneNumberManager->isValid())
+				if (self::validate($phone))
 				{
 					$result[] = self::normalize($phone);
 				}
 			}
 
-			if(!empty($result))
+			if (!empty($result))
 			{
 				$result = array_unique($result);
 			}
@@ -102,10 +132,27 @@ class Phone
 	}
 
 	/**
+	 * @param $text
+	 * @return array
+	 */
+	public static function extractNumbers($text)
+	{
+		$matchesPhones = [];
+		$phoneParserManager = PhoneNumber\Parser::getInstance();
+		preg_match_all('/' . $phoneParserManager->getValidNumberPattern() . '/i', $text, $matchesPhones);
+
+		if (!empty($matchesPhones))
+		{
+			$matchesPhones = array_unique($matchesPhones);
+		}
+
+		return $matchesPhones;
+	}
+
+	/**
 	 * @param $phones
 	 * @param $searchPhone
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function isInArray($phones, $searchPhone)
 	{
@@ -129,7 +176,6 @@ class Phone
 	/**
 	 * @param $phones
 	 * @return array
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getArrayUniqueValidate($phones)
 	{

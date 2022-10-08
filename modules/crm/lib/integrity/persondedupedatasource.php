@@ -9,22 +9,22 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 		parent::__construct(DuplicateIndexType::PERSON, $params);
 	}
 	/**
-	* @return Array
-	*/
+	 * @return Array
+	 */
 	protected function loadEntityMatches($entityTypeID, $entityID)
 	{
 		return DuplicatePersonCriterion::loadEntityMatches($entityTypeID, $entityID);
 	}
 	/**
-	* @return Array
-	*/
+	 * @return Array
+	 */
 	protected function loadEntitesMatches($entityTypeID, array $entityIDs)
 	{
 		return DuplicatePersonCriterion::loadEntitiesMatches($entityTypeID, $entityIDs);
 	}
 	/**
-	* @return array|null
-	*/
+	 * @return array|null
+	 */
 	protected function getEntityMatchesByHash($entityTypeID, $entityID, $matchHash)
 	{
 		$matches = DuplicatePersonCriterion::loadEntityMatches($entityTypeID, $entityID);
@@ -59,8 +59,8 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 		return null;
 	}
 	/**
-	* @return DuplicateCriterion
-	*/
+	 * @return DuplicateCriterion
+	 */
 	protected function createCriterionFromMatches(array $matches)
 	{
 		return DuplicatePersonCriterion::createFromMatches($matches);
@@ -212,10 +212,8 @@ class PersonDedupeDataSource extends MatchHashDedupeDataSource
 				DuplicateIndexMismatch::prepareQueryField($criterion, $entityTypeID, $rootEntityID, $userID)
 			);
 		}
-		if ($this->getParams()->limitByAssignedUser())
-		{
-			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
-		}
+
+		$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $this->getParams());
 
 		$limit = 0;
 		if(is_array($options) && isset($options['LIMIT']))

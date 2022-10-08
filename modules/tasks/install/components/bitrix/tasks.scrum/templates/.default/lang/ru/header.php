@@ -121,6 +121,7 @@ $MESS["TASKS_SCRUM_AVERAGE_NUMBER_STORY_POINTS"] = "Среднее количе�
 $MESS["TASKS_SCRUM_ITEM_ACTIONS_TASK_HINT"] = "Открыть задачу";
 $MESS["TASKS_SCRUM_ITEM_ACTIONS_FILE_HINT"] = "Прикрепить файл";
 $MESS["TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT"] = "Открыть DoD";
+$MESS["TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT_NEW"] = "Посмотреть критерии готовности задачи";
 $MESS["TASKS_SCRUM_ITEM_ACTIONS_MOVE_HINT"] = "Переместить задачи";
 $MESS["TASKS_SCRUM_ITEM_ACTIONS_SPRINT_HINT"] = "Переместить в спринт";
 $MESS["TASKS_SCRUM_ITEM_ACTIONS_BACKLOG_HINT"] = "Переместить в бэклог";

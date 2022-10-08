@@ -14,7 +14,8 @@ use Bitrix\Main\UI\Extension;
 Extension::load([
 	'ui.icons',
 	'ui.sidepanel-content',
-	'ui.design-tokens'
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 $name = htmlspecialcharsbx($arResult['ROW']['NAME']);

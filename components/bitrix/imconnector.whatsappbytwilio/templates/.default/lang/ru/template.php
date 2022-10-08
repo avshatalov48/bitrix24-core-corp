@@ -8,7 +8,7 @@ $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_TESTED'] = 'Тестировани
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECTED'] = 'WhatsApp подключен';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CHANGE_ANY_TIME'] = 'Вы можете в любое время изменить или отключить';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_TITLE'] = 'Подключите WhatsApp к Открытой линии';
-$MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP'] = 'Для подключения необходимо <a onclick="top.BX.Helper.show(\'#ID#\');" class="imconnector-field-box-link">выполнить ряд действий</a>.';
+$MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP_NEW'] = 'Для подключения необходимо #LINK_START#выполнить ряд действий#LINK_END#.';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO_CONNECT_ID'] = 'redirect=detail&code=10102021';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO_CONNECT_CONNECT_ID'] = 'redirect=detail&code=10102021';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INSTRUCTION_TITLE'] = '<span class="imconnector-field-box-text-bold">Инструкция</span> по подключению бизнес аккаунта WhatsApp:';
@@ -26,5 +26,5 @@ $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_1'] = 'Конта�
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
 $MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
-$MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION'] = 'Для подключения необходимо выполнить <a href="#" onclick="top.BX.Helper.show(\'#ID#\');return false;">несколько шагов.</a>';
+$MESS['IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION_NEW'] = 'Для подключения необходимо выполнить #LINK_START#несколько шагов.#LINK_END#';
 

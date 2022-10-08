@@ -2,7 +2,7 @@
 
 global $MESS;
 
-$langFile = GetLangFileName(dirname(__FILE__)."/", "/quote.php");
+$langFile = GetLangFileName(__DIR__."/", "/quote.php");
 
 if(file_exists($langFile))
 	include($langFile);

@@ -31,7 +31,15 @@ class TelegramBot extends Base
 		$user = $this->getUserByUserCode(['id' => $message['user']['id']]);
 		if (!$user->isSuccess())
 		{
-			$userId = $this->addUser($message['user']);
+			$addResult = $this->addUser($message['user']);
+			if ($addResult->isSuccess())
+			{
+				$userId = $addResult->getResult();
+			}
+			else
+			{
+				$result->addErrors($addResult->getErrors());
+			}
 		}
 		else
 		{

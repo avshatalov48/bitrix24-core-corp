@@ -14,7 +14,7 @@ class CWizardSolPanelIntranet
 
 		if($USER->IsAdmin())
 		{
-			if($_REQUEST['add_new_site_sol']=='sol' && check_bitrix_sessid())
+			if(isset($_REQUEST['add_new_site_sol']) && $_REQUEST['add_new_site_sol']=='sol' && check_bitrix_sessid())
 			{
 				$dbrSites = CSite::GetList();
 				$arSitesID = Array();

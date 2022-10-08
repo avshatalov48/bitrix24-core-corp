@@ -55,6 +55,8 @@ jn.define('im/messenger/const/rest', (require, exports, module) => {
 
 		userCounters: 'user.counters',
 		serverTime: 'server.time',
+
+		openlinesDialogGet: 'imopenlines.dialog.get',
 	});
 
 	module.exports = {

@@ -99,7 +99,10 @@ if (empty($arResult['PAGE'])) //case when not first open
 					{
 						?>
 						<div class="imconnector-field-box-content">
-							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP', array('#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_INFO_CONNECT_ID')))?>
+							<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP_NEW', [
+								'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-wechat-link-help">',
+								'#LINK_END#' => '</a>',
+							])?>
 						</div>
 						<form action="<?=$arResult["URL"]["SIMPLE_FORM"]?>" method="post" class="ui-btn-container">
 							<input type="hidden" name="<?=$arResult["CONNECTOR"]?>_form" value="true">
@@ -156,7 +159,10 @@ else
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP', array('#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_INFO_CONNECT_ID')))?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WECHAT_CONNECT_STEP_NEW', [
+							'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-wechat-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 					<?
 				}

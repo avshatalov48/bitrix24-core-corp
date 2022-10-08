@@ -7,20 +7,16 @@
  */
 namespace Bitrix\Crm\WebForm\Internals;
 
-use Bitrix\Crm\Ads\AdsForm;
-use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
+use Bitrix\Main;
 use Bitrix\Main\ORM;
 use Bitrix\Main\Context;
-use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Main\Security\Random;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 
-use Bitrix\Crm\Ads;
-use Bitrix\Crm\WebForm\Helper;
-use Bitrix\Crm\WebForm\ResultEntity;
-use Bitrix\Crm\WebForm\Entity as WebFormEntity;
-use Bitrix\Crm\Integration;
+use Bitrix\Crm\Ads\AdsForm;
+use Bitrix\Crm\Ads\Internals\AdsFormLinkTable;
+use Bitrix\Crm\WebForm;
 
 Loc::loadMessages(__FILE__);
 
@@ -31,6 +27,9 @@ Loc::loadMessages(__FILE__);
  */
 class FormTable extends ORM\Data\DataManager
 {
+	const TYPE_DEFAULT = 0;
+	const TYPE_SMART_DOCUMENT = 1;
+
 	public static function getTableName()
 	{
 		return 'b_crm_webform';
@@ -43,6 +42,10 @@ class FormTable extends ORM\Data\DataManager
 				'data_type' => 'integer',
 				'primary' => true,
 				'autocomplete' => true,
+			),
+			'TYPE_ID' => array(
+				'data_type' => 'integer',
+				'default_value' => 0,
 			),
 			'CODE' => array(
 				'data_type' => 'string',
@@ -103,8 +106,8 @@ class FormTable extends ORM\Data\DataManager
 			'ENTITY_SCHEME' => array(
 				'data_type' => 'enum',
 				'required' => true,
-				'default_value' => WebFormEntity::ENUM_ENTITY_SCHEME_LEAD,
-				'values' => WebFormEntity::getSchemesCodes()
+				'default_value' => WebForm\Entity::ENUM_ENTITY_SCHEME_LEAD,
+				'values' => WebForm\Entity::getSchemesCodes()
 			),
 			'IS_PAY' => array(
 				'data_type' => 'boolean',
@@ -114,8 +117,8 @@ class FormTable extends ORM\Data\DataManager
 			),
 			'DUPLICATE_MODE' => array(
 				'data_type' => 'enum',
-				'default_value' => ResultEntity::DUPLICATE_CONTROL_MODE_NONE,
-				'values' => ResultEntity::getDuplicateModes()
+				'default_value' => WebForm\ResultEntity::DUPLICATE_CONTROL_MODE_NONE,
+				'values' => WebForm\ResultEntity::getDuplicateModes()
 			),
 			'GOOGLE_ANALYTICS_ID' => array(
 				'data_type' => 'string',
@@ -234,6 +237,30 @@ class FormTable extends ORM\Data\DataManager
 		);
 	}
 
+	/**
+	 * Get form list with default type.
+	 *
+	 * @param array $parameters DataManager parameters.
+	 * @return ORM\Query\Result
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getDefaultTypeList(array $parameters = []): ORM\Query\Result
+	{
+		$filter = $parameters['filter'] ?? [];
+		$filter = is_array($filter) ? $filter : [];
+		$filter['=TYPE_ID'] = static::TYPE_DEFAULT;
+		$parameters['filter'] = $filter;
+
+		return static::getList($parameters);
+	}
+
+	public static function getList(array $parameters = [])
+	{
+		return parent::getList($parameters);
+	}
+
 	public static function onBeforeAdd(ORM\Event $event)
 	{
 		$fields = $event->getParameter('fields');
@@ -336,7 +363,7 @@ class FormTable extends ORM\Data\DataManager
 		// delete preset fields
 		PresetFieldTable::delete(array('FORM_ID' => $formId));
 		// delete view statistics
-		FormViewTable::delete(array('FORM_ID' => $formId));
+		FormCounterDailyTable::deleteByFormId($formId);
 		// delete start edit statistics
 		FormStartEditTable::delete(array('FORM_ID' => $formId));
 

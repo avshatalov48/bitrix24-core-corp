@@ -13,7 +13,6 @@ if ($CrmPerms->HavePerm('ORDER', BX_CRM_PERM_NONE))
 $arParams['PATH_TO_ORDER_SHIPMENT_LIST'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_LIST', $arParams['PATH_TO_ORDER_SHIPMENT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_SHOW', $arParams['PATH_TO_ORDER_SHIPMENT_SHOW'], $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
 $arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_EDIT', $arParams['PATH_TO_ORDER_SHIPMENT_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
-$arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_DETAILS', $arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'], $APPLICATION->GetCurPage().'?order_id=#order_id#&details');
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)$arParams['ELEMENT_ID'] : 0;
 
@@ -57,17 +56,6 @@ if($arParams['TYPE'] === 'details')
 
 	$scripts = isset($arParams['~SCRIPTS']) && is_array($arParams['~SCRIPTS']) ? $arParams['~SCRIPTS'] : array();
 
-	if ($bAdd)
-	{
-		$exposeUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-				array('order_id' => $arParams['ELEMENT_ID'])
-			),
-			array('expose' => 1)
-		);
-	}
-
 	//Force start new bar after first button
 	$arResult['BUTTONS'][] = array('NEWBAR' => true);
 
@@ -100,23 +88,6 @@ if($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
-	if ($bAdd)
-	{
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('ORDER_SHIPMENT_ADD'),
-			'TITLE' => GetMessage('ORDER_SHIPMENT_ADD_TITLE'),
-			'LINK' =>
-				CCrmUrlUtil::AddUrlParams(
-					CComponentEngine::MakePathFromTemplate(
-						$arParams[\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() ? 'PATH_TO_ORDER_SHIPMENT_DETAILS' : 'PATH_TO_ORDER_SHIPMENT_EDIT'],
-						array('shipment_id' => 0)
-					),
-					array()
-			),
-			'HIGHLIGHT' => true
-		);
-	}
-
 	if(count($arResult['BUTTONS']) > 1)
 	{
 		//Force start new bar after first button
@@ -138,8 +109,8 @@ if ($bAdd && $arParams['TYPE'] != 'list')
 		'TEXT' => GetMessage('ORDER_SHIPMENT_ADD'),
 		'TITLE' => GetMessage('ORDER_SHIPMENT_ADD_TITLE'),
 		'LINK' => CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_ORDER_SHIPMENT_EDIT'],
-				array('shipment_id' => 0)
+			$arParams['PATH_TO_ORDER_SHIPMENT_EDIT'],
+			array('shipment_id' => 0)
 		),
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'

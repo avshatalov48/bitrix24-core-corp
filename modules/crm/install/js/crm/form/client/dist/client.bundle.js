@@ -11,7 +11,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      json: data
 	    }).then(function (response) {
 	      resolve(response.data);
-	    }).catch(function (error) {
+	    })["catch"](function (error) {
 	      reject(error.errors);
 	    });
 	  });
@@ -102,12 +102,12 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this = this;
 
 	      if (main_core.Type.isNumber(formId) || main_core.Type.isStringFilled(formId)) {
-	        this.cache.delete("formOptions#".concat(formId));
+	        this.cache["delete"]("formOptions#".concat(formId));
 	      } else {
 	        this.cache.keys().filter(function (key) {
 	          return key.startsWith('formOptions#');
 	        }).forEach(function (key) {
-	          _this.cache.delete(key);
+	          _this.cache["delete"](key);
 	        });
 	      }
 	    }

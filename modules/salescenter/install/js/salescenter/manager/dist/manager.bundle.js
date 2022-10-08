@@ -2,6 +2,9 @@ this.BX = this.BX || {};
 (function (exports,rest_client,main_core) {
 	'use strict';
 
+	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+
+	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
 	var Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
@@ -63,7 +66,7 @@ this.BX = this.BX || {};
 	        rest_client.rest.callMethod('salescenter.manager.getConfig').then(function (result) {
 	          Manager.init(result.answer.result);
 	          resolve(result.answer.result);
-	        }).catch(function (reason) {
+	        })["catch"](function (reason) {
 	          reject(reason);
 	        });
 	      });
@@ -95,7 +98,7 @@ this.BX = this.BX || {};
 	          width: 760
 	        }).then(function () {
 	          resolve();
-	        }).catch(function (reason) {
+	        })["catch"](function (reason) {
 	          reject(reason);
 	        });
 	      });
@@ -144,7 +147,7 @@ this.BX = this.BX || {};
 	            Manager.isSitePublished = true;
 	            Manager.firePublicConnectedSiteEvent();
 	            resolve(result);
-	          }).catch(function (reason) {
+	          })["catch"](function (reason) {
 	            reject(reason);
 	          });
 	        } else {
@@ -402,7 +405,7 @@ this.BX = this.BX || {};
 	          } else {
 	            resolve(result);
 	          }
-	        }).catch(function (reason) {
+	        })["catch"](function (reason) {
 	          reject(reason);
 	        });
 	      });
@@ -482,7 +485,7 @@ this.BX = this.BX || {};
 	        rest_client.rest.callMethod(method, data).then(function (result) {
 	          resolve(result);
 	          Manager.showNotification(BX.message('SALESCENTER_MANAGER_HIDE_URL_SUCCESS'));
-	        }).catch(function (result) {
+	        })["catch"](function (result) {
 	          reject(result);
 	        });
 	      });
@@ -501,7 +504,7 @@ this.BX = this.BX || {};
 	        rest_client.rest.callMethod(method, data).then(function (result) {
 	          resolve(result);
 	          Manager.showNotification(BX.message('SALESCENTER_MANAGER_DELETE_URL_SUCCESS'));
-	        }).catch(function (result) {
+	        })["catch"](function (result) {
 	          reject(result);
 	        });
 	      });
@@ -519,11 +522,11 @@ this.BX = this.BX || {};
 	        options = {};
 	      }
 
-	      options = babelHelpers.objectSpread({}, {
+	      options = _objectSpread(_objectSpread({}, {
 	        cacheable: false,
 	        allowChangeHistory: false,
 	        events: {}
-	      }, options);
+	      }), options);
 	      return new Promise(function (resolve) {
 	        if (main_core.Type.isString(url) && url.length > 1) {
 	          options.events.onClose = function (event) {
@@ -660,7 +663,7 @@ this.BX = this.BX || {};
 	          if (formId > 0) {
 	            Manager.addNewFormPage(formId).then(function (result) {
 	              resolve(result);
-	            }).catch(function (reason) {
+	            })["catch"](function (reason) {
 	              reject(reason);
 	            });
 	          }
@@ -706,7 +709,7 @@ this.BX = this.BX || {};
 	            }).show();
 	            reject();
 	          }
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          Manager.getPopup({
 	            id: popupId,
 	            title: BX.message('SALESCENTER_MANAGER_ERROR_POPUP'),
@@ -956,7 +959,7 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        Manager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());
-	        }).catch(function (reason) {});
+	        })["catch"](function (reason) {});
 	      });
 	    }
 	  }, {
@@ -967,7 +970,7 @@ this.BX = this.BX || {};
 	          reject('wrong params');
 	        }
 
-	        params = babelHelpers.objectSpread({}, params, {
+	        params = _objectSpread(_objectSpread({}, params), {
 	          action: 'salescenter.manager.addAnalytic',
 	          sessid: BX.bitrix_sessid()
 	        });
@@ -1001,7 +1004,7 @@ this.BX = this.BX || {};
 	        }).then(function (response) {
 	          Manager.fieldsMap = response.data.fields;
 	          resolve(response.data.fields);
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject(response.errors);
 	        });
 	      });
@@ -1030,7 +1033,7 @@ this.BX = this.BX || {};
 	          }
 	        }).then(function (response) {
 	          resolve(response.data.pageUrl);
-	        }).catch(function (response) {
+	        })["catch"](function (response) {
 	          reject(response.errors);
 	        });
 	      });

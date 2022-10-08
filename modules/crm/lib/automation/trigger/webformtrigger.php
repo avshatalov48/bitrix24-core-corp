@@ -45,7 +45,7 @@ class WebFormTrigger extends BaseTrigger
 		$result = parent::toArray();
 		if (static::isEnabled())
 		{
-			$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getList(array(
+			$forms = \Bitrix\Crm\WebForm\Internals\FormTable::getDefaultTypeList(array(
 				'select' => array('ID', 'NAME'),
 				'order' => array('NAME' => 'ASC', 'ID' => 'ASC'),
 			))->fetchAll();

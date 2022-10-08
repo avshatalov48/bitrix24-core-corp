@@ -9,13 +9,13 @@ use Bitrix\Main\Localization\Loc;
 Loc::loadLanguageFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
 	'sidepanel',
 	'access',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.alerts',
     'ui.info-helper',
-	'ui.design-tokens',
 ]);
 
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');

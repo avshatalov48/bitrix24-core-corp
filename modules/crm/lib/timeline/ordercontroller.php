@@ -45,12 +45,7 @@ class OrderController extends EntityController
 			'SETTINGS' => $settings,
 			'BINDINGS' => $bindings,
 		]);
-
-		foreach($bindings as $binding)
-		{
-			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
-		}
+		$this->sendAddPullEventToBindings($bindings, $entityId);
 	}
 
 	/**
@@ -88,11 +83,7 @@ class OrderController extends EntityController
 			'BINDINGS' => $bindings,
 		]);
 
-		foreach($bindings as $binding)
-		{
-			$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-			self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
-		}
+		$this->sendAddPullEventToBindings($bindings, $entityId);
 	}
 
 	/**
@@ -129,12 +120,7 @@ class OrderController extends EntityController
 					'BINDINGS' => $bindings
 				)
 			);
-
-			foreach($bindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-				self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
-			}
+			$this->sendAddPullEventToBindings($bindings, $historyEntryID);
 		}
 	}
 
@@ -163,12 +149,10 @@ class OrderController extends EntityController
 				'SETTINGS' => ['MESSAGE'=>$params['MESSAGE']<>''?$params['MESSAGE']:'']
 			)
 		);
-
-		if($historyEntryID > 0)
-		{
-			$tag = TimelineEntry::prepareEntityPushTag(\CCrmOwnerType::Order, $ownerID);
-			self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
-		}
+		$this->sendPullEventOnAdd(
+			new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Order, $ownerID),
+			$historyEntryID
+		);
 	}
 
 	/**
@@ -312,6 +296,35 @@ class OrderController extends EntityController
 					['ENTITY_TYPE_ID' => \CCrmOwnerType::Order,	'ENTITY_ID' => $ownerId]
 				]
 			]);
+		}
+	}
+
+	/**
+	 * @param int $ownerId
+	 * @param int $dealId
+	 */
+	final public function markDealAsCreatedFromOrder(int $ownerId, int $dealId): void
+	{
+		$creationEntry =
+			Entity\TimelineTable::query()
+				->setSelect(['ID', 'SETTINGS'])
+				->where('ASSOCIATED_ENTITY_TYPE_ID', \CCrmOwnerType::Deal)
+				->where('ASSOCIATED_ENTITY_ID', $dealId)
+				->where('TYPE_ID', TimelineType::CREATION)
+				->setLimit(1)
+				->fetch()
+		;
+
+		if ($creationEntry)
+		{
+			$settings = $creationEntry['SETTINGS'] ?? [];
+
+			$settings['ORDER'] = [
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
+				'ENTITY_ID' => $ownerId,
+			];
+
+			Entity\TimelineTable::update($creationEntry['ID'], ['SETTINGS' => $settings]);
 		}
 	}
 
@@ -523,7 +536,7 @@ class OrderController extends EntityController
 					$data['FINISH_NAME'] = $data['COMMENT'];
 				}
 			}
-
+			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
 		}
 		elseif($typeID === TimelineType::CONVERSION)
@@ -644,16 +657,7 @@ class OrderController extends EntityController
 				'BINDINGS' => $bindings
 			]
 		);
-
-		$enableHistoryPush = $historyEntryID > 0;
-		if ($enableHistoryPush)
-		{
-			foreach($bindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-				self::pushHistoryEntry($historyEntryID, $tag, 'timeline_activity_add');
-			}
-		}
+		$this->sendAddPullEventToBindings($bindings, $historyEntryID);
 	}
 
 	/**
@@ -702,12 +706,7 @@ class OrderController extends EntityController
 				'BINDINGS' => $bindings,
 				'SETTINGS' => $settings
 			]);
-
-			foreach($bindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']);
-				self::pushHistoryEntry($entityId, $tag, 'timeline_activity_add');
-			}
+			$this->sendAddPullEventToBindings($bindings, $entityId);
 		}
 	}
 
@@ -754,5 +753,16 @@ class OrderController extends EntityController
 	{
 		$params['SETTINGS']['FIELDS']['MANUAL_CONTINUE_PAY'] = 'Y';
 		return $this->notifyOrderEntry($ownerId, $params);
+	}
+
+	protected function sendAddPullEventToBindings(array $bindings, int $timelineEntryId): void
+	{
+		foreach($bindings as $binding)
+		{
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$timelineEntryId
+			);
+		}
 	}
 }

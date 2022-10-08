@@ -15,4 +15,4 @@ $APPLICATION->SetAdditionalCSS($this->getTemplate()->getFolder()."/map.css");
 $APPLICATION->AddHeadScript($this->getTemplate()->getFolder()."/map.js");
 $APPLICATION->AddHeadScript("/bitrix/js/main/dd.js");
 
-Extension::load(["ajax", "fx"]);
+Extension::load(["ajax", "fx", "ui.design-tokens"]);

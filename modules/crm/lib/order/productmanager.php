@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Order;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 use Bitrix\Main\Type\Date;
 use Bitrix\Sale;
 
@@ -376,6 +377,15 @@ class ProductManager
 		return $this->productConverter->convertToSaleBasketFormat($product);
 	}
 
+	private function getOrderProductByBasketId(array $productList, int $id)
+	{
+		$product = array_filter($productList, static function ($product) use ($id) {
+			return (int)$product['ID'] === $id;
+		});
+
+		return current($product) ?? null;
+	}
+
 	private function getOrderProductByBasketCode(array $productList, string $code)
 	{
 		$product = array_filter($productList, static function ($product) use ($code) {
@@ -412,6 +422,8 @@ class ProductManager
 
 	/**
 	 * @param array $products
+	 *
+	 * @return void
 	 */
 	public function syncOrderProducts(array $products): void
 	{
@@ -484,7 +496,19 @@ class ProductManager
 		foreach ($basketProducts as $product)
 		{
 			$productId = (int)($product['skuId'] ?? $product['productId']);
+			$basketId = (int)($product['additionalFields']['originBasketId'] ?? 0);
 
+			$orderBaskerProduct = null;
+			if (!$basketId)
+			{
+				$orderBaskerProduct =
+					$this->getOrderProductByXmlId($orderProducts, $product['innerId'])
+					?? $this->getOrderProductByBasketCode($orderProducts, $product['code'])
+				;
+				$basketId = (int)($orderBaskerProduct['ID'] ?? 0);
+			}
+
+			// if change basket item
 			if (
 				!empty($product['additionalFields']['originBasketId'])
 				&& (string)$product['additionalFields']['originBasketId'] !== (string)$product['code']
@@ -493,19 +517,42 @@ class ProductManager
 				$basketProduct = $this->getOrderProductByBasketCode($orderProducts, $product['additionalFields']['originBasketId']);
 				if ($basketProduct)
 				{
-					$index = $this->searchProductById($resultProductList, $basketProduct['PRODUCT_ID'], $usedIndexes);
+					$index = false;
+					if (isset($basketProduct['ID']))
+					{
+						$index = $this->searchProductByBasketId($resultProductList, $basketProduct['ID'], $usedIndexes);
+					}
+
+					if ($index === false)
+					{
+						$index = $this->searchProductById($resultProductList, $basketProduct['PRODUCT_ID'], $usedIndexes);
+					}
+
 					if ($index !== false)
 					{
 						$resultProductList[$index]['QUANTITY'] = $basketProduct['QUANTITY'];
 					}
+
+					continue;
 				}
 			}
+			// if change product
 			elseif (
 				!empty($product['additionalFields']['originProductId'])
 				&& (int)$product['additionalFields']['originProductId'] !== $productId
 			)
 			{
-				$index = $this->searchProductById($resultProductList, $product['additionalFields']['originProductId'], $usedIndexes);
+				$index = false;
+				if ($basketId)
+				{
+					$index = $this->searchProductByBasketId($resultProductList, $basketId, $usedIndexes);
+				}
+
+				if ($index === false)
+				{
+					$index = $this->searchProductById($resultProductList, $product['additionalFields']['originProductId'], $usedIndexes);
+				}
+
 				if ($index !== false)
 				{
 					$resultProductList[$index]['PRODUCT_ID'] = $productId;
@@ -519,12 +566,23 @@ class ProductManager
 			}
 			else
 			{
-				$index = $this->searchProductById($resultProductList, $productId, $usedIndexes);
+				$index = false;
+				if ($basketId)
+				{
+					$index = $this->searchProductByBasketId($resultProductList, $basketId, $usedIndexes);
+				}
+
+				if ($index === false)
+				{
+					$index = $this->searchProductById($resultProductList, $productId, $usedIndexes);
+				}
+
 				if ($index !== false)
 				{
 					$basketProduct =
-						$this->getOrderProductByXmlId($orderProducts, $product['innerId'])
-						?: $this->getOrderProductByBasketCode($orderProducts, $product['code'])
+						$orderBaskerProduct
+						?? $this->getOrderProductByBasketId($orderProducts, $basketId)
+						?? $this->getOrderProductByXmlId($orderProducts, $product['innerId'])
 					;
 					if ($basketProduct)
 					{
@@ -538,6 +596,7 @@ class ProductManager
 						$resultProductList[$index]['PRICE_ACCOUNT'] = $product['price'];
 						$resultProductList[$index]['PRICE_NETTO'] = $product['basePrice'];
 						$resultProductList[$index]['PRICE_BRUTTO'] = $product['price'];
+						$resultProductList[$index]['XML_ID'] = $basketId ? ProductRowXmlId::getXmlIdFromBasketId($basketId) : null;
 
 						if (!empty($product['discount']))
 						{
@@ -568,6 +627,7 @@ class ProductManager
 				'MEASURE_NAME' => $product['measureName'],
 				'TAX_RATE' => $product['taxRate'],
 				'TAX_INCLUDED' => $product['taxIncluded'],
+				'XML_ID' => $basketId ? ProductRowXmlId::getXmlIdFromBasketId($basketId) : null,
 			];
 
 			if (!empty($product['discount']))
@@ -582,6 +642,8 @@ class ProductManager
 			}
 
 			$resultProductList[] = $item;
+
+			$usedIndexes[$productId][] = end(array_keys($resultProductList));
 		}
 
 		return $resultProductList;

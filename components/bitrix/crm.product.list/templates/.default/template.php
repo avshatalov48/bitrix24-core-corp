@@ -13,6 +13,11 @@ $mgrId = isset($extMgrId[0]) ? $extMgrId : 'CrmProductSectionManager';
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/activity.js');
 CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/interface_grid.js');
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if (SITE_TEMPLATE_ID === 'bitrix24')

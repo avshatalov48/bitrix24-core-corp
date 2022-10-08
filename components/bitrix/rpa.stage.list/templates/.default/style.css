@@ -40,7 +40,7 @@
 	background: #ace9fb;
 	margin-bottom: 5px;
 	font-size: 15px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #545c69;
 	overflow: hidden;
 	-moz-user-select: none;
@@ -164,10 +164,10 @@
 	text-transform: uppercase;
 	text-decoration: none;
 	color: #545c69;
-	font-weight: bold;
 	padding-left: 4px;
 	display: inline-block;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 12px;
 	cursor: pointer;
 }
@@ -186,7 +186,7 @@
 	text-transform: uppercase;
 	text-align: center;
 	color: #545c69;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 30px;
 	margin: 15px 0 -15px;
 	font-size: 19px;
@@ -216,7 +216,7 @@
 	padding: 0 10px;
 	overflow: hidden;
 	line-height: 25px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 88px;
 	font-size: 11px;
 	text-transform: uppercase;
@@ -425,7 +425,7 @@
 	line-height: 28px;
 	color: #535c69;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 6px;
 	box-sizing: border-box;
 	width: 100%;

@@ -455,8 +455,12 @@ class CVoxImplantCrmHelper
 			'ORIGIN_ID' => 'VI_'.$callFields['CALL_ID'],
 			'BINDINGS' => $bindings,
 			'SETTINGS' => array(),
-			'AUTHOR_ID' => $callFields['PORTAL_USER_ID']
+			'AUTHOR_ID' => $callFields['PORTAL_USER_ID'],
 		);
+		if (static::isNewCallScenarioEnabled())
+		{
+			$activityFields['IS_INCOMING_CHANNEL'] = ($direction === CCrmActivityDirection::Incoming ? 'Y' : 'N');
+		}
 
 		if($callFields['INCOMING'] === CVoxImplantMain::CALL_CALLBACK)
 		{
@@ -478,48 +482,65 @@ class CVoxImplantCrmHelper
 			)
 		);
 
-		$params = CVoxImplantHistory::PrepereData($callFields);
-		if (isset($additionalParams['DESCRIPTION']) && $additionalParams['DESCRIPTION'] <> '')
+		if (static::isNewCallScenarioEnabled())
 		{
-			$description = $additionalParams['DESCRIPTION'];
-		}
-		else if($additionalParams['WORKTIME_SKIPPED'] == 'Y')
-		{
-			$description = GetMessage('VI_WORKTIME_SKIPPED_CALL');
+			$activityFields['DESCRIPTION'] = $additionalParams['DESCRIPTION'] ?? '';
+			$activityFields['SETTINGS']['IS_DESCRIPTION_ONLY'] = true;
 		}
 		else
 		{
-			if($params['CALL_DURATION'] > 0)
+			$description = '';
+			$params = CVoxImplantHistory::PrepereData($callFields);
+			if (isset($additionalParams['DESCRIPTION']) && $additionalParams['DESCRIPTION'] <> '')
 			{
-				$description = GetMessage('VI_CRM_CALL_DURATION', array('#DURATION#' => $params['CALL_DURATION_TEXT']));
+				$description = $additionalParams['DESCRIPTION'];
 			}
-		}
-
-		if ($callFields['INCOMING'] == CVoxImplantMain::CALL_INCOMING)
-		{
-			$portalNumbers = array_map(
-				function($line)
+			else if ($additionalParams['WORKTIME_SKIPPED'] == 'Y')
+			{
+				$description = GetMessage('VI_WORKTIME_SKIPPED_CALL');
+			}
+			else
+			{
+				if ($params['CALL_DURATION'] > 0)
 				{
-					return $line["SHORT_NAME"];
-				},
-				CVoxImplantConfig::GetLinesEx([
-					"showRestApps" => true,
-					"showInboundOnly" => true
-				])
-			);
-			$portalNumber = isset($portalNumbers[$callFields['PORTAL_NUMBER']])? $portalNumbers[$callFields['PORTAL_NUMBER']]: '';
-			if ($portalNumber)
-			{
-				$description = $description."\n".GetMessage('VI_CRM_CALL_TO_PORTAL_NUMBER', array('#PORTAL_NUMBER#' => $portalNumber));
+					$description = GetMessage('VI_CRM_CALL_DURATION', ['#DURATION#' => $params['CALL_DURATION_TEXT']]);
+				}
 			}
+
+			if ($callFields['INCOMING'] == CVoxImplantMain::CALL_INCOMING)
+			{
+				$portalNumbers = array_map(
+					function($line)
+					{
+						return $line["SHORT_NAME"];
+					},
+					CVoxImplantConfig::GetLinesEx([
+						"showRestApps" => true,
+						"showInboundOnly" => true
+					])
+				);
+				$portalNumber = isset($portalNumbers[$callFields['PORTAL_NUMBER']])? $portalNumbers[$callFields['PORTAL_NUMBER']]: '';
+				if ($portalNumber)
+				{
+					$description = $description."\n".GetMessage('VI_CRM_CALL_TO_PORTAL_NUMBER', array('#PORTAL_NUMBER#' => $portalNumber));
+				}
+			}
+
+			$activityFields['DESCRIPTION'] = $description;
 		}
 
-		$activityFields['DESCRIPTION'] = $description;
 		$activityFields['DESCRIPTION_TYPE'] = CCrmContentType::PlainText;
 
-		if($callFields['INCOMING'] == CVoxImplantMain::CALL_INCOMING || $callFields['INCOMING'] == CVoxImplantMain::CALL_CALLBACK)
+		if (
+			$callFields['INCOMING'] == CVoxImplantMain::CALL_INCOMING
+			|| $callFields['INCOMING'] == CVoxImplantMain::CALL_CALLBACK
+		)
 		{
-			$activityFields['COMPLETED'] = $callFields['CALL_FAILED_CODE'] != '304';
+			if (!static::isNewCallScenarioEnabled())
+			{
+				$activityFields['COMPLETED'] = $callFields['CALL_FAILED_CODE'] != '304';
+			}
+
 			if ($callFields['CALL_FAILED_CODE'] === '304')
 			{
 				$activityFields['SETTINGS']['MISSED_CALL'] = true;
@@ -546,13 +567,22 @@ class CVoxImplantCrmHelper
 			$activityFields['RESULT_STREAM'] = \Bitrix\Crm\Activity\StatisticsStream::Missing;
 		}
 
-		if($callFields['CALL_VOTE'] > 3)
+		if ($callFields['CALL_VOTE'] > 3)
+		{
 			$activityFields['RESULT_MARK'] = \Bitrix\Crm\Activity\StatisticsMark::Positive;
+		}
+		else if ($callFields['CALL_VOTE'] == 3 && static::isNewCallScenarioEnabled())
+		{
+			$activityFields['RESULT_MARK'] = \Bitrix\Crm\Activity\StatisticsMark::Neutral;
+		}
 		else if ($callFields['CALL_VOTE'] > 0)
+		{
 			$activityFields['RESULT_MARK'] = \Bitrix\Crm\Activity\StatisticsMark::Negative;
+		}
 		else
+		{
 			$activityFields['RESULT_MARK'] = \Bitrix\Crm\Activity\StatisticsMark::None;
-
+		}
 
 		$activityId = CCrmActivity::Add(
 			$activityFields,
@@ -1753,5 +1783,24 @@ class CVoxImplantCrmHelper
 			},
 			$bindings
 		);
+	}
+
+	/**
+	 *
+	 * Temporary method for independent operation of modules voximplant and crm
+	 *
+	 * @return bool
+	 */
+	public static function isNewCallScenarioEnabled(): bool
+	{
+		if(
+			\Bitrix\Main\Loader::includeModule('crm')
+			&& method_exists('\Bitrix\Crm\Settings\Crm', 'isUniversalActivityScenarioEnabled')
+		)
+		{
+			return \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled();
+		}
+
+		return false;
 	}
 }

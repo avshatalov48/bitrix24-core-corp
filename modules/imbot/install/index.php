@@ -1,6 +1,9 @@
 <?php
 
 use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
 if (class_exists('imbot'))
@@ -8,14 +11,14 @@ if (class_exists('imbot'))
 	return;
 }
 
-class imbot extends \CModule
+final class imbot extends \CModule
 {
 	public $MODULE_ID = "imbot";
 	public $MODULE_GROUP_RIGHTS = "Y";
 
 	public function __construct()
 	{
-		$arModuleVersion = array();
+		$arModuleVersion = [];
 
 		include(__DIR__.'/version.php');
 
@@ -36,12 +39,12 @@ class imbot extends \CModule
 
 	public function DoInstall()
 	{
-		global $APPLICATION, $step;
+		global $step;
 		$step = IntVal($step);
 		if($step < 2)
 		{
 			$this->CheckModules();
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step1.php");
+			$this->getApplication()->IncludeAdminFile(Loc::getMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step1.php");
 		}
 		elseif($step == 2)
 		{
@@ -52,27 +55,25 @@ class imbot extends \CModule
 				));
 				$this->InstallFiles();
 			}
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step2.php");
+			$this->getApplication()->IncludeAdminFile(Loc::getMessage("IMBOT_INSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/step2.php");
 		}
 		return true;
 	}
 
 	public function CheckModules()
 	{
-		global $APPLICATION;
-
-		if (!Main\Loader::includeModule('pull') || !CPullOptions::GetQueueServerStatus())
+		if (!Loader::includeModule('pull') || !CPullOptions::GetQueueServerStatus())
 		{
 			$this->errors[] = Loc::getMessage('IMBOT_CHECK_PULL');
 		}
 
-		if (!Main\ModuleManager::isModuleInstalled('im'))
+		if (!ModuleManager::isModuleInstalled('im'))
 		{
 			$this->errors[] = Loc::getMessage('IMBOT_CHECK_IM');
 		}
 		else
 		{
-			$imVersion = Main\ModuleManager::getVersion('im');
+			$imVersion = ModuleManager::getVersion('im');
 			if (version_compare("16.1.0", $imVersion) == 1)
 			{
 				$this->errors[] = Loc::getMessage('IMBOT_CHECK_IM_VERSION');
@@ -81,7 +82,7 @@ class imbot extends \CModule
 
 		if(is_array($this->errors) && !empty($this->errors))
 		{
-			$APPLICATION->ThrowException(implode("<br>", $this->errors));
+			$this->getApplication()->ThrowException(implode("<br>", $this->errors));
 			return false;
 		}
 
@@ -90,13 +91,11 @@ class imbot extends \CModule
 
 	public function InstallDB($params = Array())
 	{
-		global $DB, $APPLICATION;
-
 		$this->errors = false;
 
-		if (!$DB->query("SELECT 'x' FROM b_im_bot_network_session WHERE 1=0", true))
+		if (!$this->getInstanceDB()->query("SELECT 'x' FROM b_im_bot_network_session WHERE 1=0", true))
 		{
-			$errors = $DB->runSqlBatch(sprintf(
+			$errors = $this->getInstanceDB()->runSqlBatch(sprintf(
 				'%s/bitrix/modules/%s/install/db/mysql/install.sql',
 				$_SERVER['DOCUMENT_ROOT'],
 				mb_strtolower($this->MODULE_ID)
@@ -110,88 +109,119 @@ class imbot extends \CModule
 			}
 		}
 
-		if (strlen($params['PUBLIC_URL']) > 0 && strlen($params['PUBLIC_URL']) < 12)
+		if (
+			strlen($params['PUBLIC_URL']) > 0
+			&& strlen($params['PUBLIC_URL']) < 12
+			||
+			!empty($params['PUBLIC_URL'])
+			&& (
+				!($parsedUrl = \parse_url($params['PUBLIC_URL']))
+				|| empty($parsedUrl['host'])
+				|| !in_array($parsedUrl['scheme'], ['http', 'https'])
+			)
+		)
 		{
 			if (!$this->errors)
 			{
-				$this->errors = Array();
+				$this->errors = [];
 			}
 			$this->errors[] = Loc::getMessage('IMBOT_CHECK_PUBLIC_PATH');
 		}
 
 		if($this->errors !== false)
 		{
-			$APPLICATION->ThrowException(implode("", $this->errors));
+			$this->getApplication()->ThrowException(implode("", $this->errors));
 			return false;
 		}
 
-		Main\ModuleManager::registerModule($this->MODULE_ID);
+		ModuleManager::registerModule($this->MODULE_ID);
 
-		\COption::SetOptionString("imbot", "portal_url", $params['PUBLIC_URL']);
+		Option::set('imbot', 'portal_url', $params['PUBLIC_URL']);
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager = Main\EventManager::getInstance();
+		/** @see \Bitrix\ImBot\Event::onUserRead */
 		$eventManager->registerEventHandlerCompatible('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
+		/** @see \Bitrix\ImBot\Event::onChatRead */
+		$eventManager->registerEventHandlerCompatible('im', 'OnAfterChatRead', 'imbot', '\Bitrix\ImBot\Event', 'onChatRead');
+		/** @see \Bitrix\ImBot\Event::onMessageLike */
 		$eventManager->registerEventHandlerCompatible('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
+		/** @see \Bitrix\ImBot\Event::onStartWriting */
 		$eventManager->registerEventHandlerCompatible('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
+		/** @see \Bitrix\ImBot\Event::onSessionVote */
 		$eventManager->registerEventHandlerCompatible('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
+		/** @see \Bitrix\ImBot\RestService::onRestServiceBuildDescription */
 		$eventManager->registerEventHandlerCompatible('rest', 'OnRestServiceBuildDescription', 'imbot', '\Bitrix\ImBot\RestService', 'onRestServiceBuildDescription');
+		/** @see imbot::getTableSchema */
+		$eventManager->registerEventHandlerCompatible('perfmon', 'OnGetTableSchema', 'imbot', 'imbot', 'getTableSchema');
 
-		Main\Loader::includeModule('imbot');
+		/** @see \Bitrix\ImBot\DialogSession::clearClosedSessions */
+		\CAgent::AddAgent('\Bitrix\ImBot\DialogSession::clearClosedSessions();', 'imbot', 'N', 86400, '', 'Y', \ConvertTimeStamp(time() + 86400, 'FULL'));
+
+		Loader::includeModule('imbot');
 
 		return true;
 	}
 
 	public function InstallFiles()
 	{
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
-		CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/",true, true);
+		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
+		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js/",true, true);
 
 		return true;
 	}
 
 	public function DoUninstall()
 	{
-		global $APPLICATION, $step, $DB;
+		global $step;
 		$step = IntVal($step);
 
 		$botCount = 0;
 		if ($step < 2)
 		{
-			$result = $DB->Query("SELECT COUNT(1) CNT FROM b_user WHERE EXTERNAL_AUTH_ID = 'bot'");
+			$result = $this->getInstanceDB()->Query("SELECT COUNT(1) CNT FROM b_user WHERE EXTERNAL_AUTH_ID = 'bot'");
 			$row = $result->Fetch();
 			$botCount = $row['CNT'];
 		}
 		if ($botCount > 0)
 		{
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep0.php");
+			$this->getApplication()->IncludeAdminFile(
+				Loc::getMessage("IMBOT_UNINSTALL_TITLE"),
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep0.php"
+			);
 		}
-		else if($step<2)
+		elseif ($step < 2)
 		{
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep1.php");
+			$this->getApplication()->IncludeAdminFile(
+				Loc::getMessage("IMBOT_UNINSTALL_TITLE"),
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep1.php"
+			);
 		}
-		else if($step==2)
+		elseif ($step == 2)
 		{
 			$this->UnInstallDB(array("savedata" => $_REQUEST["savedata"]));
 			$this->UnInstallFiles();
 
-			$APPLICATION->IncludeAdminFile(Loc::getMessage("IMBOT_UNINSTALL_TITLE"), $_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep2.php");
+			$this->getApplication()->IncludeAdminFile(
+				Loc::getMessage("IMBOT_UNINSTALL_TITLE"),
+				$_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imbot/install/unstep2.php"
+			);
 		}
 	}
 
 	public function UnInstallDB($arParams = Array())
 	{
-		global $APPLICATION, $DB;
-
 		$this->errors = false;
 
-		Main\Loader::includeModule('imbot');
+		Loader::includeModule('imbot');
 
-		$eventManager = \Bitrix\Main\EventManager::getInstance();
+		$eventManager = Main\EventManager::getInstance();
 		$eventManager->unRegisterEventHandler('im', 'OnAfterUserRead', 'imbot', '\Bitrix\ImBot\Event', 'onUserRead');
+		$eventManager->unRegisterEventHandler('im', 'OnAfterChatRead', 'imbot', '\Bitrix\ImBot\Event', 'onChatRead');
 		$eventManager->unRegisterEventHandler('im', 'OnAfterMessagesLike', 'imbot', '\Bitrix\ImBot\Event', 'onMessageLike');
 		$eventManager->unRegisterEventHandler('im', 'OnStartWriting', 'imbot', '\Bitrix\ImBot\Event', 'onStartWriting');
 		$eventManager->unRegisterEventHandler('im', 'OnSessionVote', 'imbot', '\Bitrix\ImBot\Event', 'onSessionVote');
 		$eventManager->unRegisterEventHandler('rest', 'OnRestServiceBuildDescription', 'imbot', '\Bitrix\ImBot\RestService', 'onRestServiceBuildDescription');
+		$eventManager->unRegisterEventHandler('perfmon', 'OnGetTableSchema', 'imbot', 'imbot', 'getTableSchema');
 
 		$dir = new Main\IO\Directory(Main\Application::getDocumentRoot().'/bitrix/modules/imbot/lib/bot/');
 		$dirList = $dir->getChildren();
@@ -212,32 +242,66 @@ class imbot extends \CModule
 
 		if (!isset($arParams['savedata']) || $arParams['savedata'] !== true)
 		{
-			$errors = $DB->runSqlBatch(sprintf(
+			$errors = $this->getInstanceDB()->runSqlBatch(sprintf(
 				'%s/bitrix/modules/%s/install/db/mysql/uninstall.sql',
 				$_SERVER['DOCUMENT_ROOT'],
 				strtolower($this->MODULE_ID)
 			));
 			if ($errors !== false)
 			{
-				$APPLICATION->ThrowException(implode("<br>", $errors));
+				$this->getApplication()->ThrowException(implode("<br>", $errors));
 
 				return false;
 			}
 		}
 
-		Main\ModuleManager::unRegisterModule($this->MODULE_ID);
+		ModuleManager::unRegisterModule($this->MODULE_ID);
 
 		return true;
 	}
 
-	function UnInstallFiles()
+	public function UnInstallFiles()
 	{
-		if ($_ENV["COMPUTERNAME"] !== 'BX')
-		{
-			DeleteDirFilesEx("/bitrix/js/imbot/");
-		}
+		\DeleteDirFilesEx("/bitrix/js/imbot/");
 
 		return true;
 	}
 
+	/**
+	 * Event handler 'perfmon::OnGetTableSchema'.
+	 * @see \CPerfomanceSchema::Init
+	 * @return array
+	 */
+	public static function getTableSchema(): array
+	{
+		return [
+			'main' => [
+				'b_user' => [
+					'ID' => [
+						'b_im_bot_network_session' => 'BOT_ID',
+					]
+				],
+			],
+		];
+	}
+
+	/**
+	 * @return \CMain
+	 */
+	private static function getApplication(): \CMain
+	{
+		/** @global \CMain $APPLICATION */
+		global $APPLICATION;
+		return $APPLICATION;
+	}
+
+	/**
+	 * @return CDatabase
+	 */
+	private function getInstanceDB(): \CDatabase
+	{
+		/** @global \CDatabase $DB */
+		global $DB;
+		return $DB;
+	}
 }

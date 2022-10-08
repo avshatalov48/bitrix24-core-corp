@@ -1,0 +1,2 @@
+<?php
+$MESS["EXTRANET_SEARCH_SECTION_TITLE"] = "Search";

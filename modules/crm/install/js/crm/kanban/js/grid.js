@@ -67,6 +67,7 @@ BX.CRM.Kanban.Grid.prototype = {
 	customFieldsPopup: null,
 	customFieldsContainer: null,
 	actionPanel: null,
+	customActionPanel: null,
 	currentNode: null,
 	itemMoving: null,
 	actionItems: [],
@@ -2126,7 +2127,9 @@ BX.CRM.Kanban.Grid.prototype = {
 					var fields = {
 						"ASSIGNED_BY_ID": { 0: eventArgs["userId"] },
 						"ASSIGNED_BY_ID_label": [ eventArgs["userName"] ],
-						"ACTIVITY_COUNTER": { 0: eventArgs["counterTypeId"] }
+						"ACTIVITY_COUNTER": BX.Type.isPlainObject(eventArgs["counterTypeId"])
+							? eventArgs["counterTypeId"]
+							: { 0: eventArgs["counterTypeId"] }
 					};
 					var filter = BX.Main.filterManager.getById(gridData.gridId);
 					var api = filter.getApi();
@@ -2290,16 +2293,18 @@ BX.CRM.Kanban.Grid.prototype = {
 					"required_fm",
 					itemData.required_fm
 				);
-				if (eventParams.entityData["OPPORTUNITY"])
+
+				// @todo #015661 it may be necessary to rollback commit after merging with mobile/crm
+				if (eventParams.entityData["OPPORTUNITY_ACCOUNT"])
 				{
-					this.itemMoving.price = parseFloat(eventParams.entityData["OPPORTUNITY"]);
+					this.itemMoving.price = parseFloat(eventParams.entityData["OPPORTUNITY_ACCOUNT"]);
 					this.itemMoving.item.setDataKey(
 						"price",
 						this.itemMoving.price
 					);
 					this.itemMoving.item.setDataKey(
 						"price_formatted",
-						eventParams.entityData["FORMATTED_OPPORTUNITY_WITH_CURRENCY"]
+						eventParams.entityData["FORMATTED_OPPORTUNITY_ACCOUNT_WITH_CURRENCY"]
 					);
 				}
 			}
@@ -2507,6 +2512,16 @@ BX.CRM.Kanban.Grid.prototype = {
 		if(!renderToNode)
 		{
 			renderToNode = document.getElementById('uiToolbarContainer');
+		}
+
+		if (this.customActionPanel)
+		{
+			this.customActionPanel.renderTo = renderToNode;
+			this.actionPanel = this.customActionPanel;
+
+			this.actionPanel.draw();
+
+			return;
 		}
 
 		this.actionPanel = new BX.UI.ActionPanel({
@@ -2834,6 +2849,21 @@ BX.CRM.Kanban.Grid.prototype = {
 			this.actionPanel.removeItems();
 			this.actionPanel = null;
 		}
+
+		if (this.customActionPanel)
+		{
+			this.customActionPanel.removeItems();
+			this.customActionPanel = null;
+		}
+	},
+
+	/**
+	 * Set Custom Action Panel
+	 * @param {BX.UI.ActionPanel} actionPanel
+	 */
+	setCustomActionPanel: function (actionPanel)
+	{
+		this.customActionPanel = actionPanel;
 	},
 
 	reload: function ()

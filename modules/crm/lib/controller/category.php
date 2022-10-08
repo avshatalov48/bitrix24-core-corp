@@ -118,6 +118,24 @@ class Category extends Base
 			return;
 		}
 
+		if ($category->getIsSystem())
+		{
+			$this->addError(
+				new Error(
+					Loc::getMessage('CRM_TYPE_CATEGORY_DELETE_ERROR_SYSTEM'),
+					ErrorCode::REMOVING_DISABLED
+				)
+			);
+
+			return;
+		}
+
+		if (!$this->userPermissions->canDeleteCategory($category))
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+			return;
+		}
+
 		if (!$this->userPermissions->canDeleteCategory($category))
 		{
 			$this->addError(ErrorCode::getAccessDeniedError());
@@ -138,6 +156,19 @@ class Category extends Base
 		{
 			return null;
 		}
+
+		if ($fields['isSystem'] === 'Y')
+		{
+			$this->addError(
+				new Error(
+					Loc::getMessage('CRM_TYPE_CATEGORY_ADD_ERROR_SYSTEM'),
+					ErrorCode::ADDING_DISABLED
+				)
+			);
+
+			return null;
+		}
+
 		$category = $factory->createCategory();
 		if (!$this->userPermissions->canAddCategory($category))
 		{

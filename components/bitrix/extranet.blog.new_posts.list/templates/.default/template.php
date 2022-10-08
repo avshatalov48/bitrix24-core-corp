@@ -1,5 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 
 if (array_key_exists("CATEGORY", $arParams) && $arParams["CATEGORY"] <> '')
 	echo GetMessage("BLOG_BLOG_BLOG_CATEGORY_FILTER", array("#CATEGORY#" => htmlspecialcharsbx($arParams["CATEGORY"])));
@@ -17,7 +22,7 @@ if(count($arResult["POSTS"])>0)
 					<td width="100%" align="left">
 						<span class="blog-post-date"><b><?=$CurPost["DATE_PUBLISH_FORMATED"]?></b></span><br />
 						<span class="blog-author"><b><a href="<?=$CurPost["urlToAuthor"]?>" class="blog-user"></a>&nbsp;<?
-						
+
 						if (COption::GetOptionString("blog", "allow_alias", "Y") == "Y" && ($CurPost["urlToBlog"] <> '' || $CurPost["urlToAuthor"] <> '') && array_key_exists("BLOG_USER_ALIAS", $CurPost) && $CurPost["BLOG_USER_ALIAS"] <> '')
 						{
 							$arTmpUser = array(
@@ -35,7 +40,7 @@ if(count($arResult["POSTS"])>0)
 								"SECOND_NAME" => $CurPost["~AUTHOR_SECOND_NAME"],
 								"LOGIN" => $CurPost["~AUTHOR_LOGIN"],
 								"NAME_LIST_FORMATTED" => "",
-							);	
+							);
 
 						$GLOBALS["APPLICATION"]->IncludeComponent("bitrix:main.user.link",
 							'',
@@ -49,7 +54,7 @@ if(count($arResult["POSTS"])>0)
 								"NAME_LIST_FORMATTED" => $arTmpUser["NAME_LIST_FORMATTED"],
 								"USE_THUMBNAIL_LIST" => "N",
 								"PROFILE_URL" => $CurPost["urlToAuthor"],
-								"PROFILE_URL_LIST" => $CurPost["urlToBlog"],							
+								"PROFILE_URL_LIST" => $CurPost["urlToBlog"],
 								"PATH_TO_SONET_MESSAGES_CHAT" => $arParams["~PATH_TO_MESSAGES_CHAT"],
 								"PATH_TO_VIDEO_CALL" => $arParams["~PATH_TO_VIDEO_CALL"],
 								"DATE_TIME_FORMAT" => $arParams["DATE_TIME_FORMAT"],
@@ -66,7 +71,7 @@ if(count($arResult["POSTS"])>0)
 							false,
 							array("HIDE_ICONS" => "Y")
 						);
-						
+
 						?>:&nbsp;<a href="<?=$CurPost["urlToPost"]?>"><?=$CurPost["TITLE"]?></a></b></span>
 					</td>
 				</tr>
@@ -86,7 +91,7 @@ if(count($arResult["POSTS"])>0)
 					<td colspan="2"><div class="blog-line"></div></td>
 				</tr>
 				<tr>
-					<td align="left">						
+					<td align="left">
 						<?
 						if(!empty($CurPost["CATEGORY"]))
 						{
@@ -118,4 +123,4 @@ if(count($arResult["POSTS"])>0)
 	if($arResult["NAV_STRING"] <> '')
 		echo $arResult["NAV_STRING"];
 }
-?>	
+?>

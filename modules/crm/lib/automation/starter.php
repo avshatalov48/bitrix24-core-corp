@@ -19,6 +19,7 @@ class Starter
 	protected $entityTypeId;
 	protected $entityId;
 	protected $userId;
+	protected bool $isManual = false;
 
 	private $statusFieldKey = 'STAGE_ID';
 
@@ -65,10 +66,20 @@ class Starter
 		return $this;
 	}
 
+	public function getContext(): string
+	{
+		return $this->context;
+	}
+
 	public function setContextModuleId(string $moduleId): self
 	{
 		$this->contextModuleId = $moduleId;
 		return $this;
+	}
+
+	public function getContextModuleId(): string
+	{
+		return $this->contextModuleId;
 	}
 
 	public function setUserId(int $userId): self
@@ -77,14 +88,21 @@ class Starter
 		return $this;
 	}
 
+	public function getUserId(): int
+	{
+		return (int)$this->userId;
+	}
+
 	public function setUserIdFromCurrent(): self
 	{
+		$this->isManual = true;
+
 		return $this->setUserId((int) \CCrmSecurityHelper::GetCurrentUserID());
 	}
 
 	public function runOnAdd(): Result
 	{
-		return Factory::runOnAdd($this->entityTypeId, $this->entityId);
+		return Factory::runOnAdd($this->entityTypeId, $this->entityId, $this);
 	}
 
 	public function runOnUpdate(array $fields, array $prevFields): Result
@@ -125,6 +143,11 @@ class Starter
 		}
 
 		return new Result();
+	}
+
+	public function isManualOperation(): bool
+	{
+		return $this->isManual;
 	}
 
 	private function compareFields(array $actual, array $previous)

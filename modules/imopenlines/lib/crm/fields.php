@@ -17,6 +17,10 @@ class Fields
 	protected $userId;
 	/** @var array */
 	protected $emails = [];
+
+	/** @var bool */
+	protected $skipPhoneValidate = false;
+
 	/** @var array */
 	protected $phones = [];
 	/** @var array */
@@ -97,6 +101,14 @@ class Fields
 	}
 
 	/**
+	 * @param bool $flag
+	 */
+	public function setSkipPhoneValidate(bool $flag)
+	{
+		$this->skipPhoneValidate = $flag;
+	}
+
+	/**
 	 * @param $field
 	 * @return bool
 	 */
@@ -104,10 +116,24 @@ class Fields
 	{
 		$result = false;
 
-		if(!empty($field) && Tools\Phone::validate($field) && !Tools\Phone::isInArray($this->phones, $field))
+		if (
+			!empty($field)
+			&& $this->skipPhoneValidate !== true
+			&& Tools\Phone::validate($field)
+			&& !Tools\Phone::isInArray($this->phones, $field)
+		)
 		{
 			$this->phones[] = $field;
-
+			$result = true;
+		}
+		elseif (
+			!empty($field)
+			&& $this->skipPhoneValidate === true
+			&& Tools\Phone::extractNumbers($field)
+			&& !Tools\Phone::isInArray($this->phones, $field)
+		)
+		{
+			$this->phones[] = $field;
 			$result = true;
 		}
 
@@ -283,7 +309,19 @@ class Fields
 					$this->setPersonEmail('');
 				}
 				$phone = $user->getPhone();
-				if(!empty($phone) && Tools\Phone::validate($phone))
+				if (
+					!empty($phone)
+					&& $this->skipPhoneValidate !== true
+					&& Tools\Phone::validate($phone)
+				)
+				{
+					$this->setPersonPhone($phone);
+				}
+				elseif (
+					!empty($phone)
+					&& $this->skipPhoneValidate === true
+					&& Tools\Phone::extractNumbers($phone)
+				)
 				{
 					$this->setPersonPhone($phone);
 				}
@@ -360,7 +398,19 @@ class Fields
 	{
 		$return = false;
 
-		if(Tools\Phone::validate($field))
+		if (
+			$this->skipPhoneValidate !== true
+			&& Tools\Phone::validate($field)
+		)
+		{
+			$this->person['PHONE'] = $field;
+
+			$return = true;
+		}
+		elseif (
+			$this->skipPhoneValidate === true
+			&& Tools\Phone::extractNumbers($field)
+		)
 		{
 			$this->person['PHONE'] = $field;
 

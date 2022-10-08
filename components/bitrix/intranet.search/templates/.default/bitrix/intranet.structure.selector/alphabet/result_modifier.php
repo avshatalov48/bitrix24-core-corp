@@ -10,7 +10,7 @@ if (!isset($arParams['ALPHABET_LANG']) || !is_array($arParams['ALPHABET_LANG']) 
 $arResult['ALPHABET'] = array();
 foreach ($arParams['ALPHABET_LANG'] as $key => $language_id)
 {
-	$file = dirname(__FILE__).'/lang/'.$language_id.'/template.php';
+	$file = __DIR__.'/lang/'.$language_id.'/template.php';
 	if (file_exists($file))
 	{
 		if ($arMess = __IncludeLang($file, true));

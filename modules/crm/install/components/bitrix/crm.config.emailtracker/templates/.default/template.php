@@ -102,7 +102,13 @@ if (!empty($arParams['MAILBOX']))
 	}
 }
 
-CJSCore::init(array('socnetlogdest', 'popup', 'fx'));
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'socnetlogdest',
+	'popup',
+	'fx',
+]);
+
 $APPLICATION->setAdditionalCSS('/bitrix/components/bitrix/main.post.form/templates/.default/style.css');
 
 $respList = array();

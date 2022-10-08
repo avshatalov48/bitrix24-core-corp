@@ -1,7 +1,8 @@
 <?php
-use Bitrix\Main\Loader,
-	Bitrix\Catalog,
-	Bitrix\Iblock;
+use Bitrix\Main\Loader;
+use Bitrix\Catalog;
+use Bitrix\Iblock;
+use Bitrix\Crm;
 
 if (!Loader::includeModule('iblock'))
 {
@@ -422,31 +423,20 @@ class CAllCrmCatalog
 		return $arResult;
 	}
 
-	public static function GetDefaultID()
+	/**
+	 * @deprecated
+	 * @see Crm\Product\Catalog::getDefaultId
+	 *
+	 * @return int
+	 */
+	public static function GetDefaultID(): int
 	{
-		$ID = intval(COption::GetOptionString('crm', 'default_product_catalog_id', '0'));
-
-		//Check if IBlock exists. Using if \Bitrix\Iblock\IblockTable::getList to avoid using of the IBlock cache.
-		if($ID > 0 && CModule::IncludeModule('iblock'))
-		{
-			$dbResult = \Bitrix\Iblock\IblockTable::getList(
-				array(
-					'select' => array('ID'),
-					'filter' => array('=ID' => $ID)
-				)
-			);
-			if(!is_array($dbResult->fetch()))
-			{
-				$ID = 0;
-			}
-		}
-
-		return $ID;
+		return (int)Crm\Product\Catalog::getDefaultId();
 	}
 
 	public static function EnsureDefaultExists()
 	{
-		$ID = self::GetDefaultID();
+		$ID = (int)Crm\Product\Catalog::getDefaultId();
 
 		// Create new IBlock
 		if($ID <= 0)
@@ -717,10 +707,6 @@ class CAllCrmCatalog
 	// TODO: remove after refactoring
 	private static function createMorePhoto(int $iblockId): void
 	{
-		if (!Loader::includeModule('bitrix24'))
-		{
-			return;
-		}
 		if (!Loader::includeModule('iblock'))
 		{
 			return;

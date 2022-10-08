@@ -1,0 +1,92 @@
+
+.crm-timeline__card-top {
+	padding: var(--ui-space-inset-sm, 12px) var(--ui-space-inset-md, 16px) 0 var(--ui-space-inset-md, 16px);
+	display: flex;
+	justify-content: space-between;
+	margin-bottom: 4px;
+}
+
+.crm-timeline__card-top:last-child {
+	margin-bottom: unset;
+}
+
+.crm-timeline__card-top_info {
+	max-width: calc(100% - 20px);
+	flex: 1;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	--margin-fix-space: 5px;
+}
+
+.crm-timeline__card-top_info_left {
+	max-width: 100%;
+	display: flex;
+	align-items: center;
+	margin-right: 8px;
+	margin-bottom: 8px;
+	/*margin-bottom: 3px;*/
+}
+
+.crm-timeline__card-top_info_right {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: baseline;
+	flex-wrap: wrap;
+}
+
+.crm-timeline__card-top_controller {
+	display: inline-flex;
+	vertical-align: middle;
+	align-items: center;
+	margin-right: 8px;
+}
+
+.crm-timeline__card-top_controller:empty {
+	display: none;
+}
+
+.crm-timeline__card-top_checkbox {
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 6px 0 0;
+	cursor: pointer;
+}
+
+.crm-timeline__card-top_checkbox:last-child {
+	margin-right: unset;
+}
+
+.crm-timeline__card-top_icon {
+	display: inline-block;
+	vertical-align: middle;
+	width: 16px;
+	height: 16px;
+	background: center no-repeat;
+	cursor: pointer;
+}
+
+.crm-timeline__card-top_icon.--pin,
+.crm-timeline__card-top_icon.--unpin {
+	background-image: url(../image/crm-timeline_icon-pin.svg);
+}
+
+.crm-timeline__card-top_user-icon {
+	position: absolute;
+	top: 10px;
+	right: 14px;
+	display: block;
+}
+
+.crm-timeline__user-icon {
+	width: 20px;
+	height: 20px;
+	cursor: pointer;
+}
+
+.crm-timeline__user-icon.--muted {
+	opacity: 0.5;
+}

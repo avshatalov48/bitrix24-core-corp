@@ -1,1 +1,9 @@
-<svg width="16px" height="32px" viewBox="0 0 16 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><path d="M0,2.99610022 C0,1.34139976 1.3355407,0 2.99805158,0 L6.90478569,0 C8.56056385,0 10.3661199,1.25756457 10.9371378,2.80757311 L16,16.5505376 L11.0069874,29.2022189 C10.3971821,30.7473907 8.56729657,32 6.90478569,32 L2.99805158,32 C1.34227341,32 0,30.6657405 0,29.0038998 L0,2.99610022 Z" id="Bg"/></defs><g id="Bar" stroke="none" fill-rule="evenodd"><mask fill="white" id="mask"><use xlink:href="#Bg"/></mask><use fill="#d3d7dc" xlink:href="#Bg"/><polygon id="Ln" fill="#F00" mask="url(#mask)" points="0 30 16 30 16 32 0 32"/></g></svg>
+<svg width="295" height="32" viewBox="0 0 295 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+	<mask id="mask0_2_11" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="295" height="32">
+		<path fill="#d3d7dc" d="M0 2.9961C0 1.3414 1.33554 0 2.99805 0L285.905 7.15256e-07C287.561 7.15256e-07 289.366 1.25757 289.937 2.80757L295 16.5505L290.007 29.2022C289.397 30.7474 287.567 32 285.905 32H2.99805C1.34227 32 0 30.6657 0 29.0039V2.9961Z"/>
+	</mask>
+	<g mask="url(#mask0_2_11)">
+		<path fill="#d3d7dc" d="M0 2.9961C0 1.3414 1.33554 0 2.99805 0L285.905 7.15256e-07C287.561 7.15256e-07 289.366 1.25757 289.937 2.80757L295 16.5505L290.007 29.2022C289.397 30.7474 287.567 32 285.905 32H2.99805C1.34227 32 0 30.6657 0 29.0039V2.9961Z"/>
+		<path d="M0 30H295V32H0V30Z" fill="#7bd500"/>
+	</g>
+</svg>

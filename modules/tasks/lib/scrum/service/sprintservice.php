@@ -138,6 +138,18 @@ class SprintService implements Errorable
 				return $sprint;
 			}
 
+			$lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId());
+			if (!$kanbanService->hasSprintStages($sprint->getId()))
+			{
+				$kanbanService->createSprintStages($sprint->getId(), $lastSprintId);
+			}
+			if ($kanbanService->getErrors())
+			{
+				$this->errorCollection->add($kanbanService->getErrors());
+
+				return $sprint;
+			}
+
 			$allTaskIds = $itemService->getTaskIdsByEntityId($sprint->getId());
 
 			$backlog = $backlogService->getBacklogByGroupId($sprint->getGroupId());
@@ -192,8 +204,6 @@ class SprintService implements Errorable
 
 				return $sprint;
 			}
-
-			$lastSprintId = $kanbanService->getLastCompletedSprintIdSameGroup($sprint->getId());
 
 			$kanbanService->addTasksToKanban(
 				$sprint->getId(),
@@ -377,6 +387,7 @@ class SprintService implements Errorable
 			}
 
 			(new CacheService($sprint->getGroupId(), CacheService::STATS))->clean();
+			(new CacheService($sprint->getGroupId(), CacheService::TEAM_STATS))->cleanRoot();
 		}
 		catch (\Exception $exception)
 		{

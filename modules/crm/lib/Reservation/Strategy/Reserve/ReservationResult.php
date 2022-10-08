@@ -52,6 +52,19 @@ class ReservationResult extends Result
 	}
 
 	/**
+	 * Reservation information only with changed quantites.
+	 *
+	 * @return ReserveInfo[]
+	 */
+	public function getChangedReserveInfos(): array
+	{
+		return array_filter(
+			$this->reserves,
+			fn(ReserveInfo $i) => $i->isChanged()
+		);
+	}
+
+	/**
 	 * Add reservation info.
 	 *
 	 * @param int $rowId

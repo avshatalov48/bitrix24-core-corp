@@ -2,6 +2,7 @@ import {BitrixVue} from "ui.vue";
 import {Interval} from "./interval/interval";
 import {EntityGroup} from "timeman.const";
 
+import 'ui.design-tokens';
 import "ui.icons";
 import "ui.alerts";
 import "../popup.css";

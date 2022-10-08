@@ -28,9 +28,9 @@ class ManualStrategy implements Strategy
 	/**
 	 * @inheritDoc
 	 */
-	public function reservationProductRow(int $productRowId, float $quantity, int $storeId, ?Date $dateReserveEnd): Result
+	public function reservationProductRow(int $productRowId, float $quantity, int $storeId, ?Date $dateReserveEnd): ReservationResult
 	{
-		$result = new Result();
+		$result = new ReservationResult();
 
 		$currentQuantity = $this->getRowQuantity($productRowId);
 		if (!isset($currentQuantity))
@@ -41,9 +41,14 @@ class ManualStrategy implements Strategy
 		$deductedQuantity = $this->getDeductedQuantity($productRowId);
 		$freeQuantity = $currentQuantity - $deductedQuantity;
 
+		$reserveInfo = $result->addReserveInfo($productRowId, $quantity, $quantity);
+		$reserveInfo->setStoreId($storeId);
+		$reserveInfo->setDateReserveEnd($dateReserveEnd ? (string)$dateReserveEnd : null);
+
 		$existReserve = ProductRowReservationTable::getRow([
 			'select' => [
 				'ID',
+				'STORE_ID',
 				'RESERVE_QUANTITY',
 			],
 			'filter' => [
@@ -60,23 +65,41 @@ class ManualStrategy implements Strategy
 				{
 					$quantity -= $delta - $freeQuantity;
 				}
+
+				$reserveInfo->setDeltaReserveQuantity($delta);
+				$reserveInfo->setReserveQuantity($quantity);
+			}
+			else
+			{
+				$reserveInfo->setDeltaReserveQuantity(0);
 			}
 
-			return ProductRowReservationTable::update($existReserve['ID'], [
+			if ($storeId !== (int)$existReserve['STORE_ID'])
+			{
+				$reserveInfo->setChanged();
+			}
+
+			$saveResult = ProductRowReservationTable::update($existReserve['ID'], [
+				'RESERVE_QUANTITY' => $quantity,
+				'STORE_ID' => $storeId,
+				'DATE_RESERVE_END' => $dateReserveEnd,
+			]);
+		}
+		else
+		{
+			$saveResult = ProductRowReservationTable::add([
+				'ROW_ID' => $productRowId,
 				'RESERVE_QUANTITY' => $quantity,
 				'STORE_ID' => $storeId,
 				'DATE_RESERVE_END' => $dateReserveEnd,
 			]);
 		}
 
-		$quantity = min($quantity, $freeQuantity);
+		$result->addErrors(
+			$saveResult->getErrors()
+		);
 
-		return ProductRowReservationTable::add([
-			'ROW_ID' => $productRowId,
-			'RESERVE_QUANTITY' => $quantity,
-			'STORE_ID' => $storeId,
-			'DATE_RESERVE_END' => $dateReserveEnd,
-		]);
+		return $result;
 	}
 
 	/**

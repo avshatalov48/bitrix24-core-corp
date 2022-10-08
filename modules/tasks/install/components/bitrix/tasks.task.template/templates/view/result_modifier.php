@@ -234,19 +234,16 @@ elseif(intval($template['BASE_TEMPLATE_ID']))
 {
 	if($template['TPARAM_TYPE'] != 1) // not for new user
 	{
-		$pItem = $templates->getItemById(intval($template['BASE_TEMPLATE_ID']));
+		$pItem = $templates[0];
 		if($pItem)
 		{
-			$pItem = $pItem->export('~');
-			$pItem['URL'] = $arParams["PATH_TO_TEMPLATES_TEMPLATE"];
-
 			$pItem['URL'] = CComponentEngine::makePathFromTemplate(
-				$arParams["PATH_TO_USER_TEMPLATES_TEMPLATE"],
-				array(
-					"template_id" => $pItem['ID'],
-					"action" => "view",
-					"user_id" => $arParams['USER_ID']
-				)
+				$arParams['PATH_TO_USER_TEMPLATES_TEMPLATE'],
+				[
+					'template_id' => $pItem['ID'],
+					'action' => 'view',
+					'user_id' => $arParams['USER_ID']
+				],
 			);
 		}
 		else

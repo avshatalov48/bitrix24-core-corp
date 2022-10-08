@@ -24,7 +24,8 @@
 	background: transparent;
 	color: #fff;
 	text-transform: uppercase;
-	font: 16px/53px 'OpenSans-Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 16px/53px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	cursor: pointer;
 	transition: opacity .3s, background .3s;
 }
@@ -51,16 +52,20 @@
 	display: inline-block;
 	margin: 35px 0 25px;
 	color: #000;
-	font: 23px/27px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 23px/27px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
-.adm-promo-main-title .adm-promo-title-item { font: 36px/42px 'OpenSans-Light', 'Helvetica Neue', Helvetica, Arial, sans-serif; }
+.adm-promo-main-title .adm-promo-title-item {
+	font: 36px/42px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
+}
 
 .b24-list-title.adm-promo-title { margin: 0 auto 36px; }
 
 .b24-list-title .adm-promo-title-item {
 	color: #535c69;
-	font: 22px/30px 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 22px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-container-logo {
@@ -119,7 +124,7 @@
 	padding: 10px 0 0;
 	width: 33%;
 	text-align: center;
-	font: 14px/16px 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .advantage-item-1 {
@@ -138,7 +143,8 @@
 .b24-time-desc {
 	margin: 0 0 66px;
 	color: #3f4b54;
-	font: 14px/20px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-list {
@@ -152,7 +158,8 @@
 	padding: 0 0 0 40px;
 	color: #333;
 	list-style: none;
-	font: 14px/19px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-list-item:last-child { margin: 0; }
@@ -170,7 +177,8 @@
 	color: #fff;
 	content: '';
 	text-align: center;
-	font: bold 15px/17px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/17px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	-webkit-transform: translate(0, -50%);
 	transform: translate(0, -50%);
 }
@@ -195,7 +203,8 @@
 	color: #fff;
 	content: '';
 	text-align: center;
-	font: bold 21px/37px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 21px/37px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .b24-time-desc-block-blue {
@@ -207,7 +216,8 @@
 
 .b24-time-desc-text {
 	color: #333;
-	font: 24px/33px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px/33px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-desc-text a { color: #468ee5; }
@@ -219,7 +229,8 @@
 
 .b24-time-desc-text-list {
 	color: #333;
-	font: 19px/26px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 19px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-desc-text-list-item { color: #333; }
@@ -246,7 +257,8 @@
 	color: rgba(59, 200, 245, 1);
 	content: '';
 	text-align: center;
-	font: bold 15px/29px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/29px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .b24-time-desc-list-item-count-1:before { content: '2.1'; }
@@ -255,18 +267,21 @@
 
 .b24-time-desc-list-item-element-title {
 	margin: 0 0 8px;
-	font: 20px/27px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px/27px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-desc-list-item-element {
 	color: #333;
-	font: 14px/19px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/19px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-desc-text-small {
 	color: #333;
 	text-align: left;
-	font: 13px/18px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-desc-warning {
@@ -284,14 +299,16 @@
 	margin: 0 0 21px;
 	color: #468ee5;
 	text-align: center;
-	font: 40px/30px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 40px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-bottom-subtitle {
 	margin: 0 0 240px;
 	color: #525c69;
 	text-align: center;
-	font: 24px/30px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .b24-time-count-block-1:before { content: '1'; }
@@ -313,7 +330,8 @@
 .b24-time-progressbar-desc {
 	margin: 0 0 46px;
 	color: #525c69;
-	font: 15px/30px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .active .b24-time-button {

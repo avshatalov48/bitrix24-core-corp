@@ -138,7 +138,7 @@
 .location-map-item-description a,
 .location-map-item-description strong {
 	color: #fff;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	white-space: nowrap;
 	-o-text-overflow: ellipsis;
@@ -177,14 +177,14 @@
 }
 
 .location-map-address-text {
-	font: 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #4a4a4a;
 	vertical-align: middle;
 	display: inline;
 }
 
 .location-map-address-third-party-warning {
-	font: 10px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #4a4a4a;
 	vertical-align: middle;
 	display: inline;
@@ -303,11 +303,12 @@
 }
 
 .location-map-address-changed-title {
-	font: 700 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .location-map-address-changed-text {
-	font: 400 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .location-map-address-changed-btn {
@@ -317,7 +318,8 @@
 	background: #B0B4BA;
 	border: none;
 	outline: none;
-	font: 700 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	padding: 6px 13px 7px 34px;
 	cursor: pointer;
 }
@@ -339,7 +341,8 @@
 	background: #B0B4BA;
 	border: none;
 	outline: none;
-	font: 700 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	padding: 6px 13px 7px 13px;
 	cursor: pointer;
 }

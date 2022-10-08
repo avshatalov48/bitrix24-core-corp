@@ -225,7 +225,7 @@ if ($GLOBALS['APPLICATION']->GetShowIncludeAreas() && $GLOBALS['USER']->IsAdmin(
 if ($arParams['bAdmin']):
 	global $INTRANET_TOOLBAR;
 
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	CJSCore::Init(array('intranet_structure'));
 

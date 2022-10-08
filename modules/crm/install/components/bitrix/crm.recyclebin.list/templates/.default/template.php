@@ -11,6 +11,8 @@ if(SITE_TEMPLATE_ID === 'bitrix24')
 	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-paddings pagetitle-toolbar-field-view flexible-layout crm-pagetitle-view crm-toolbar');
 }
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.control_panel',
 	'',

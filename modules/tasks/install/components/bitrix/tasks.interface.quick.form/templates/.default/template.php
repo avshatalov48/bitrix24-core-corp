@@ -7,7 +7,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\UI\Extension;
 use Bitrix\Tasks\UI\ScopeDictionary;
 
-Extension::load(['ui.entity-selector']);
+Extension::load(['ui.design-tokens', 'ui.entity-selector']);
 
 $projectId = 0;
 $projectName = GetMessage("TASKS_QUICK_IN_GROUP");

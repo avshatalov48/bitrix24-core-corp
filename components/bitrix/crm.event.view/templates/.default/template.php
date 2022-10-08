@@ -5,6 +5,7 @@ Bitrix\Main\UI\Extension::load("ui.tooltip");
 
 global $APPLICATION, $USER;
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -151,25 +152,37 @@ $prefix = $arResult['GRID_ID'];
 		if(isset($arResult['ENTITY_TYPE']) && $arResult['ENTITY_TYPE'] !== ''
 			&& isset($arResult['ENTITY_ID']) && is_int($arResult['ENTITY_ID']) && $arResult['ENTITY_ID'] > 0)
 		{
-			$toolbarButtons[] = array(
-				'TEXT' => GetMessage('CRM_EVENT_VIEW_ADD_SHORT'),
-				'TITLE' => GetMessage('CRM_EVENT_VIEW_ADD'),
-				'ONCLICK' => "BX.CrmEventListManager.items[\"{$managerID}\"].addItem()",
-				'ICON' => 'btn-new'
-			);
+			$showAddEventButton = true;
+			if (in_array($arResult['ENTITY_TYPE'], [CCrmOwnerType::ContactName, CCrmOwnerType::CompanyName]))
+			{
+				$showAddEventButton = !\Bitrix\Crm\Service\Container::getInstance()->getFactory(CCrmOwnerType::ResolveID($arResult['ENTITY_TYPE']))
+					->getItemCategoryId($arResult['ENTITY_ID'])
+				;
+			}
+			if ($showAddEventButton)
+			{
+				$toolbarButtons[] = [
+					'TEXT' => GetMessage('CRM_EVENT_VIEW_ADD_SHORT'),
+					'TITLE' => GetMessage('CRM_EVENT_VIEW_ADD'),
+					'ONCLICK' => "BX.CrmEventListManager.items[\"{$managerID}\"].addItem()",
+					'ICON' => 'btn-new'
+				];
+			}
 		}
 
-
-		$APPLICATION->IncludeComponent(
-			'bitrix:crm.interface.toolbar',
-			'',
-			array(
-				'TOOLBAR_ID' => $toolbarID,
-				'BUTTONS' => $toolbarButtons
-			),
-			$component,
-			array('HIDE_ICONS' => 'Y')
-		);
+		if (!empty($toolbarButtons))
+		{
+			$APPLICATION->IncludeComponent(
+				'bitrix:crm.interface.toolbar',
+				'',
+				[
+					'TOOLBAR_ID' => $toolbarID,
+					'BUTTONS' => $toolbarButtons
+				],
+				$component,
+				['HIDE_ICONS' => 'Y']
+			);
+		}
 
 		$APPLICATION->ShowViewContent('crm-internal-filter');
 	}

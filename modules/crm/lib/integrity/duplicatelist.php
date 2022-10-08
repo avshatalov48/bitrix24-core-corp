@@ -1,6 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Main;
+use CCrmOwnerType;
 
 class DuplicateList
 {
@@ -607,6 +610,13 @@ class DuplicateList
 				)
 			)
 			->addGroup('ENTITY_ID');
+
+		// workaround for correct filter typed contacts/companies by category ID
+		if (in_array($entityTypeID, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
+		{
+			$subQuery->registerRuntimeField('', DedupeDataSource::getCategoryReferenceField($entityTypeID, 0));
+		}
+
 		$query = new Main\Entity\Query($subQuery);
 		$query
 			->registerRuntimeField('', new Main\Entity\ExpressionField('CNT', 'COUNT(*)'))

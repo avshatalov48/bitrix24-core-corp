@@ -39,7 +39,7 @@
 	box-shadow: none;
 	box-sizing: border-box;
 	color: #fff;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	height: 34px;
 	outline: medium none;
@@ -105,7 +105,7 @@
 .search-title-top-item-text {
 	width: 100%;
 	color: #525c69;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	position: relative;
 	transition: border-bottom-color .3s linear;
 	overflow-wrap: break-word;
@@ -119,8 +119,8 @@
 
 .search-title-top-subtitle-text {
 	color: #525c69;
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-weight: 700;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .search-title-top-subtitle {
@@ -430,7 +430,7 @@
 }
 
 .search-title-top-list-limits-content {
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .search-title-top-list-limits-content p {

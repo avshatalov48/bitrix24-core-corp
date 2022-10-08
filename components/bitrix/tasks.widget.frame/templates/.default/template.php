@@ -172,12 +172,22 @@ $inputPrefix = $arParams['INPUT_PREFIX'];
 		</div>
 
 		<?// UN-PINNED DYNAMIC?>
-		<?if(count($blocks['DYNAMIC'])):?>
-
-			<div class="js-id-wfr-edit-form-additional task-additional-block <?=($arResult['TEMPLATE_DATA']['ADDITIONAL_DYNAMIC_DISPLAYED'] ? '' : 'hidden')?>">
+		<?if(count($blocks['DYNAMIC'])):
+			$opened = false;
+			foreach($blocks['DYNAMIC'] as $block)
+			{
+				$blockName = $block['CODE'];
+				if (!$state['BLOCKS'][$blockName]['PINNED'] && $state['BLOCKS'][$blockName]['OPENED'])
+				{
+					$opened = true;
+					break;
+				}
+			}
+			?>
+			<div class="js-id-wfr-edit-form-additional task-additional-block <?=($arResult['TEMPLATE_DATA']['ADDITIONAL_DYNAMIC_DISPLAYED'] ? '' : 'hidden')?><?=($opened ? ' opened' : '') ?>">
 
 				<?// generate block link with block names ?>
-				<div class="js-id-wfr-edit-form-additional-header task-additional-alt opened">
+				<div class="js-id-wfr-edit-form-additional-header task-additional-alt <?=($opened ? 'opened' : '') ?>">
 					<div class="task-additional-alt-more">
 						<?=Loc::getMessage('TASKS_TWF_T_ADDITIONAL_OPEN')?>
 					</div>

@@ -1,12 +1,15 @@
-import {Loc, Tag, Type, Dom} from 'main.core';
+import {Loc, Tag, Type} from 'main.core';
 import {Layout} from 'ui.sidepanel.layout';
-import './embed.css';
 import {EmbedOptions} from './types';
 import {DataProvider} from "./data_provider";
 import {Widget} from './tab/widget';
 import {Openlines} from './tab/openlines';
 import * as Form from './tab/form/index';
 import {openFeedbackForm} from "./util";
+
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
+import './embed.css';
 
 const DEFAULT_WIDGETS_COUNT = 10;
 
@@ -54,14 +57,6 @@ export class Embed
 					}
 				},
 				onLoad: (event) => {
-					// const sliderContainer = event.getSlider().getContainer();
-					// Dom.remove(sliderContainer.querySelector('.ui-sidepanel-layout-footer-anchor'));
-					// sliderContainer.style.overflowX = 'auto';
-					// sliderContainer.querySelector('.side-panel-content-container').style.overflowX = 'initial';
-					// sliderContainer.querySelector('.side-panel-content-container').style.overflowY = 'auto';
-					// sliderContainer.querySelector('.side-panel-content-container').style.minWidth = '800px';
-					// sliderContainer.querySelector('.ui-sidepanel-layout-footer').style.position = 'sticky';
-
 					// BX.UI.Switcher.initByClassName();
 					instance.#loadTab(options.activeMenuItemId);
 				}

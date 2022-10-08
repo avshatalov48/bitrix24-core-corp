@@ -1,0 +1,135 @@
+.crm-requisite-fieldset-viewer {
+	position: relative;
+	background: #FFFFFF;
+	box-shadow: 0 9px 18px rgba(0, 0, 0, 0.12);
+	border-radius: 12px;
+}
+
+.crm-requisite-fieldset-viewer-content {
+	padding: 16px;
+}
+
+.crm-requisite-fieldset-viewer-banner {
+	position: relative;
+	background: #E5F9FF;
+	border-radius: 8px;
+	height: 94px;
+	padding-left: 117px;
+}
+
+.crm-requisite-fieldset-viewer-banner::before {
+	background: url("images/banner-icon.svg") left top no-repeat;
+	position: absolute;
+	content: '';
+	width: 101px;
+	height: 94px;
+	left: 0;
+}
+
+.crm-requisite-fieldset-viewer-banner-text {
+	padding-top: 15px;
+	padding-bottom: 15px;
+	padding-right: 44px;
+}
+
+.crm-requisite-fieldset-viewer-banner-text-title {
+	font-family: OpenSans, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 16px;
+	line-height: 22px;
+	color: #333333;
+}
+
+.crm-requisite-fieldset-viewer-banner-text-description {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-weight: 400;
+	font-size: 12.5px;
+	line-height: 14px;
+	color: #6A737F;
+	padding-top: 7px;
+}
+
+.crm-requisite-fieldset-viewer-list {
+	border: 1px solid #DFE0E3;
+	border-radius: 8px;
+	height: 295px;
+	max-height: 295px;
+	margin-top: 8px;
+	overflow: auto;
+	padding-top: 4px;
+	padding-left: 14px;
+	padding-right: 14px;
+	padding-bottom: 14px;
+	box-sizing: border-box;
+}
+
+.crm-requisite-fieldset-viewer-list-item {
+	display: flex;
+	justify-content: space-between;
+	border-bottom: 1px solid #EDEEF0;
+	padding-top: 9px;
+	padding-bottom: 8px;
+	min-height: 40px;
+}
+
+.crm-requisite-fieldset-viewer-list-item:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+.crm-requisite-fieldset-viewer-list-item-left {
+	padding-right: 20px;
+}
+
+.crm-requisite-fieldset-viewer-list-item-label {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 13px;
+	line-height: 16px;
+	color: #828B95;
+	padding-bottom: 2px;
+}
+
+.crm-requisite-fieldset-viewer-list-item-value {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	line-height: 17px;
+	color: #525C69;
+}
+
+.crm-requisite-fieldset-viewer-list-item-right {
+	display: flex;
+	align-items: center;
+}
+
+.crm-requisite-fieldset-viewer-close-button {
+	background: #ffffff;
+	position: absolute;
+	width: 36px;
+	height: 36px;
+	border-radius: 12px;
+	top: 4px;
+	right: 4px;
+	cursor: pointer;
+}
+
+.crm-requisite-fieldset-viewer-close-button::after {
+	background: url('images/close-icon.svg') center center no-repeat;
+	display: block;
+	content: '';
+	width: 12px;
+	height: 12px;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate3d(-50%, -50%, 0);
+	transition: all 200ms ease;
+}
+
+.crm-requisite-fieldset-viewer-close-button:hover::after {
+	background: url('images/close-icon-hover.svg') center center no-repeat;
+}
+
+.crm-requisite-fieldset-viewer-footer {
+	display: flex;
+	justify-content: center;
+	padding-top: 16px;
+}

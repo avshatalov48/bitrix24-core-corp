@@ -651,9 +651,12 @@ export default class OrderModification extends History
 
 	prepareManualContinuePayContent()
 	{
-		const wrapper = BX.create("DIV", {attrs: {className: 'crm-entity-stream-section crm-entity-stream-section-advice'}});
+		const wrapper = BX.create("DIV", {attrs: {className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice'}});
 		wrapper.appendChild(
-			BX.create("DIV", { attrs: { className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-advice' } })
+			BX.create("DIV", {
+				attrs: { className: 'crm-entity-stream-section-icon crm-entity-stream-section-icon-advice' },
+				children: [BX.create('i')],
+			})
 		);
 
 		const content = BX.create("DIV", {
@@ -677,7 +680,7 @@ export default class OrderModification extends History
 			"DIV",
 			{
 				attrs: {
-					className: 'crm-entity-stream-section crm-entity-stream-section-advice'
+					className: 'crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-advice'
 				}
 			}
 		);

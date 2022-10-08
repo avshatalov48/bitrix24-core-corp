@@ -7,7 +7,7 @@ if (defined('BX_IM_FULLSCREEN'))
 }
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load('ui.tutor');
+\Bitrix\Main\UI\Extension::load(['ui.tutor', 'ui.design-tokens']);
 $this->SetViewTarget("im-fullscreen");
 ?>
 <div class="bx-desktop bx-im-fullscreen-popup" id="im-workarea-popup">
@@ -90,7 +90,7 @@ $this->SetViewTarget("im-fullscreen");
 <?
 $this->SetViewTarget("im", 100);
 ?>
-<div class="bx-im-bar <?=($arResult['OL_OPERATOR']?"bx-im-bar-with-ol":"")?>" id="bx-im-bar">
+<div class="bx-im-bar bx-im-bar-with-ol" id="bx-im-bar">
 	<div class="help-block" id="bx-help-block" title="<?=GetMessage("AUTH_HELP")?>">
 		<div class="help-icon-border"></div>
 		<div class="help-block-icon"></div>
@@ -112,16 +112,14 @@ $this->SetViewTarget("im", 100);
 		));
 	}
 	?>
-	<div id="bx-im-bar-notify" class="bx-im-informer <?=($arResult['OL_OPERATOR']?"":"bx-im-border-b")?>">
+	<div id="bx-im-bar-notify" class="bx-im-informer">
 		<div class="bx-im-informer-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_NOTIFY');?>"></div>
 		<div class="bx-im-informer-num"></div>
 	</div>
-	<?if ($arResult['OL_OPERATOR']):?>
 	<div id="bx-im-bar-ol" class="bx-im-informer bx-im-informer-ol bx-im-border-b">
 		<div class="bx-im-informer-ol-icon" title="<?=GetMessage('IM_MESSENGER_OPEN_OL');?>"></div>
 		<div class="bx-im-informer-num"></div>
 	</div>
-	<?endif;?>
 	<div id="bx-im-bar-search" class="bx-im-search bx-im-border-b" title="<?=GetMessage('IM_MESSENGER_OPEN_SEARCH');?>">
 		<div class="bx-im-informer-num"></div>
 	</div>

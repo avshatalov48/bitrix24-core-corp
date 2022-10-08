@@ -18,6 +18,8 @@ $can = $templateData["DATA"]["TASK"]["ACTION"];
 $workingTime = $templateData["AUX_DATA"]["COMPANY_WORKTIME"];
 $stages = isset($arParams['TEMPLATE_DATA']['DATA']['STAGES']) ? $arParams['TEMPLATE_DATA']['DATA']['STAGES'] : array();
 $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 ?>
 
 <div class="task-detail-sidebar">
@@ -91,7 +93,8 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 						"COMPANY_WORKTIME" => array(
 							"HOURS" => $arResult["TEMPLATE_DATA"]["AUX_DATA"]["COMPANY_WORKTIME"]["HOURS"]
 						)
-					)
+					),
+					"CALENDAR_SETTINGS" => $arResult['CALENDAR_SETTINGS'],
 				),
 				false,
 				array("HIDE_ICONS" => "Y", "ACTIVE_COMPONENT" => "Y")

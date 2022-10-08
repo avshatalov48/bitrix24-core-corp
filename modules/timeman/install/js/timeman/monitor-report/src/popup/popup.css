@@ -27,7 +27,7 @@
     border: 1px solid rgba(83,92,105,.2);
     border-radius: 2px;
     background: #fff;
-    font: 15px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+    font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     box-sizing: border-box;
     transition: all .3s ease-in-out;
     outline: none;
@@ -104,12 +104,12 @@
 .bx-timeman-monitor-report-popup-title {
     display: flex;
     justify-content: center;
-    font: 15px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     width: 100%;
 }
 
 .bx-timeman-monitor-report-popup-content-title {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 350px;
     white-space: nowrap;
     text-overflow: ellipsis;
@@ -117,5 +117,5 @@
 }
 
 .bx-timeman-monitor-report-popup-time {
-    font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }

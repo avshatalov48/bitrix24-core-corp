@@ -158,6 +158,11 @@ class Config
 		$this->form->merge(['AGREEMENTS' => $agreements]);
 	}
 
+	public function clearFields()
+	{
+		$this->fieldsConfig->clear();
+	}
+
 	public function appendField(array $options)
 	{
 		if (!empty($options['type']))

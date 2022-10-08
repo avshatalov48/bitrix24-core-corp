@@ -15,22 +15,41 @@
 	  babelHelpers.createClass(BizprocEditComponent, [{
 	    key: "showGlobalVariables",
 	    value: function showGlobalVariables() {
-	      var me = this;
+	      var _this = this;
+
 	      bizproc_globals.Globals.Manager.Instance.showGlobals(bizproc_globals.Globals.Manager.Instance.mode.variable, String(this.signedDocumentType)).then(function (slider) {
-	        me.onAfterSliderClose(slider);
+	        _this.onAfterSliderClose(slider, window.arWorkflowGlobalVariables);
 	      });
 	    }
 	  }, {
 	    key: "showGlobalConstants",
 	    value: function showGlobalConstants() {
-	      var me = this;
+	      var _this2 = this;
+
 	      bizproc_globals.Globals.Manager.Instance.showGlobals(bizproc_globals.Globals.Manager.Instance.mode.constant, String(this.signedDocumentType)).then(function (slider) {
-	        me.onAfterSliderClose(slider);
+	        _this2.onAfterSliderClose(slider, window.arWorkflowGlobalConstants);
 	      });
 	    }
 	  }, {
 	    key: "onAfterSliderClose",
-	    value: function onAfterSliderClose(slider) {//do smt
+	    value: function onAfterSliderClose(slider, target) {
+	      var sliderInfo = slider.getData();
+
+	      if (sliderInfo.get('upsert')) {
+	        var newGFields = sliderInfo.get('upsert');
+
+	        for (var fieldId in newGFields) {
+	          target[fieldId] = newGFields[fieldId];
+	        }
+	      }
+
+	      if (sliderInfo.get('delete')) {
+	        var deletedGFields = sliderInfo.get('delete');
+
+	        for (var i in deletedGFields) {
+	          delete target[deletedGFields[i]];
+	        }
+	      }
 	    }
 	  }]);
 	  return BizprocEditComponent;

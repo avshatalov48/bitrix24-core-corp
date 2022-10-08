@@ -1,3 +1,6 @@
+import {Reflection} from "main.core";
+import CommonGrid from "./grid/common-grid";
+
 export class Options
 {
 	static gridId: String = 'diskDocumentsGrid'; // $arParams['GRID_ID']
@@ -7,6 +10,24 @@ export class Options
 	static getGridId()
 	{
 		return Options.gridId;
+	}
+
+	static getCommonGrid(): CommonGrid
+	{
+		let gridInstance;
+		const gridId = this.getGridId();
+		if (Reflection.getClass('BX.Main.gridManager') && BX.Main.gridManager.getInstanceById(gridId))
+		{
+			gridInstance = BX.Main.gridManager.getInstanceById(gridId);
+		}
+		else if (Reflection.getClass('BX.Main.tileGridManager') && BX.Main.tileGridManager.getInstanceById(gridId))
+		{
+			gridInstance = BX.Main.tileGridManager.getInstanceById(gridId);
+		}
+
+		return new CommonGrid({
+			gridInstance: gridInstance,
+		});
 	}
 
 	static setGridId(gridId: ?String)

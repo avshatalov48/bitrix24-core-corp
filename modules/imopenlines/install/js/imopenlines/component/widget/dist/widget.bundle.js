@@ -1,4 +1,4 @@
-(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_utils,main_md5,main_core,im_lib_logger,im_eventHandler,im_const,main_core_minimal,ui_vue_vuex,ui_vue,main_core_events) {
+(function (exports,main_polyfill_customevent,pull_component_status,ui_vue_components_smiles,im_component_dialog,im_component_textarea,im_view_quotepanel,imopenlines_component_message,imopenlines_component_form,rest_client,im_provider_rest,main_date,pull_client,ui_vue_components_crm_form,im_controller,im_lib_cookie,im_lib_localstorage,im_lib_utils,main_md5,im_lib_uploader,main_core,im_lib_logger,im_eventHandler,im_const,main_core_minimal,ui_vue_vuex,ui_vue,main_core_events) {
 	'use strict';
 
 	/**
@@ -1836,7 +1836,7 @@
 	        _this9.pullClient.userId = _this9.getUserId();
 	        _this9.pullClient.configTimestamp = config ? config.server.config_timestamp : 0;
 	        _this9.pullClient.skipStorageInit = false;
-	        _this9.pullClient.storage = pull_client.PullClient.StorageManager({
+	        _this9.pullClient.storage = new pull_client.PullClient.StorageManager({
 	          userId: _this9.getUserId(),
 	          siteId: _this9.getSiteId()
 	        });
@@ -3280,6 +3280,8 @@
 	    babelHelpers.classCallCheck(this, WidgetTextareaUploadHandler);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(WidgetTextareaUploadHandler).call(this, $Bitrix));
 	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "storedFile", null);
+	    babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "widgetApplication", null);
+	    _this.widgetApplication = $Bitrix.Application.get();
 	    _this.onConsentAcceptedHandler = _this.onConsentAccepted.bind(babelHelpers.assertThisInitialized(_this));
 	    _this.onConsentDeclinedHandler = _this.onConsentDeclined.bind(babelHelpers.assertThisInitialized(_this));
 	    main_core_events.EventEmitter.subscribe(WidgetEventType.consentAccepted, _this.onConsentAcceptedHandler);
@@ -3334,7 +3336,8 @@
 	        fileName: message.file.source.file.name,
 	        generateUniqueName: true,
 	        diskFolderId: this.getDiskFolderId(),
-	        previewBlob: message.file.previewBlob
+	        previewBlob: message.file.previewBlob,
+	        chunkSize: this.widgetApplication.getLocalize('isCloud') ? im_lib_uploader.Uploader.CLOUD_MAX_CHUNK_SIZE : im_lib_uploader.Uploader.BOX_MIN_CHUNK_SIZE
 	      });
 	    }
 	  }, {
@@ -4887,5 +4890,5 @@
 	  detail: {}
 	}));
 
-}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX.Main,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX,BX.Messenger.Lib,BX.Messenger,BX.Messenger.Const,BX,BX,BX,BX.Event));
+}((this.window = this.window || {}),BX,window,window,BX.Messenger,window,BX,window,window,BX,BX.Messenger.Provider.Rest,BX.Main,BX,BX.Ui.Vue.Components.Crm,BX.Messenger,BX.Messenger.Lib,BX.Messenger.Lib,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX,BX.Messenger.Lib,BX.Messenger,BX.Messenger.Const,BX,BX,BX,BX.Event));
 //# sourceMappingURL=widget.bundle.js.map

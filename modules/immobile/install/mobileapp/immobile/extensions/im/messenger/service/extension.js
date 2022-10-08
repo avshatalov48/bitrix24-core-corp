@@ -9,6 +9,7 @@ jn.define('im/messenger/service', (require, exports, module) => {
 	const { RecentService } = jn.require('im/messenger/service/recent');
 	const { PromotionService } = jn.require('im/messenger/service/promotion');
 	const { UserService } = jn.require('im/messenger/service/user');
+	const { OpenLinesService } = jn.require('im/messenger/service/openlines');
 
 	module.exports = {
 		DialogService: new DialogService(),
@@ -17,5 +18,6 @@ jn.define('im/messenger/service', (require, exports, module) => {
 		RecentService: new RecentService(),
 		PromotionService: new PromotionService(),
 		UserService: new UserService(),
+		OpenLinesService: new OpenLinesService(),
 	};
 });

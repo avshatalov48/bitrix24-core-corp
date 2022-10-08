@@ -6,10 +6,9 @@ use Bitrix\Disk\Internals\BaseComponent;
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\Web\PostDecodeFilter;
+use Bitrix\Bizproc;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
-
-Loc::loadMessages(__FILE__);
 
 class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappable
 {
@@ -150,12 +149,22 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			}
 		}
 
-		if (method_exists('CBPDocument', 'signDocumentType'))
-		{
-			$this->arResult['DOCUMENT_TYPE_SIGNED'] = \CBPDocument::signDocumentType(
-				[$this->arParams['MODULE_ID'], $this->arResult['ENTITY'], $this->arResult['DOCUMENT_TYPE']]
-			);
-		}
+		$this->arResult['DOCUMENT_TYPE_SIGNED'] = \CBPDocument::signDocumentType(
+			[$this->arParams['MODULE_ID'], $this->arResult['ENTITY'], $this->arResult['DOCUMENT_TYPE']]
+		);
+
+		$this->arResult['GLOBAL_CONSTANTS'] = Bizproc\Workflow\Type\GlobalConst::getAll(
+			$this->arResult['DOCUMENT_COMPLEX_TYPE']
+		);
+		$this->arResult['GLOBAL_VARIABLES'] = Bizproc\Workflow\Type\GlobalVar::getAll(
+			$this->arResult['DOCUMENT_COMPLEX_TYPE']
+		);
+		$this->arResult['GLOBAL_CONSTANTS_VISIBILITY_NAMES'] =
+			Bizproc\Workflow\Type\GlobalConst::getVisibilityFullNames($this->arResult['DOCUMENT_COMPLEX_TYPE'])
+		;
+		$this->arResult['GLOBAL_VARIABLES_VISIBILITY_NAMES'] =
+			Bizproc\Workflow\Type\GlobalVar::getVisibilityFullNames($this->arResult['DOCUMENT_COMPLEX_TYPE'])
+		;
 
 		return true;
 	}
@@ -231,14 +240,11 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 
 	protected function processActionSaveAjax()
 	{
-		//if ($this->request->isAjaxRequest())
-		{
-			$this->request->addFilter(new PostDecodeFilter);
-		}
+		CBPHelper::decodeTemplatePostData($_POST);
 
 		if($this->request->getQuery('saveuserparams')=='Y')
 		{
-			$serializeValue = serialize($this->request->getPost('USER_PARAMS'));
+			$serializeValue = serialize($_POST['USER_PARAMS']);
 			$maxLength = 16777215;//pow(2, 24) - 1; //mysql mediumtext column length
 			if (\Bitrix\Main\Text\BinaryString::getLength($serializeValue) > $maxLength)
 			{
@@ -254,18 +260,18 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			$this->end();
 		}
 
-		$fields = array(
+		$fields = [
 			'DOCUMENT_TYPE' => $this->arResult['DOCUMENT_COMPLEX_TYPE'],
-			'AUTO_EXECUTE' 	=> $this->request->getPost('workflowTemplateAutostart'),
-			'NAME' 			=> $this->request->getPost('workflowTemplateName'),
-			'DESCRIPTION' 	=> $this->request->getPost('workflowTemplateDescription'),
-			'TEMPLATE' 		=> $this->request->getPost('arWorkflowTemplate'),
-			'PARAMETERS'	=> $this->request->getPost('arWorkflowParameters'),
-			'VARIABLES' 	=> $this->request->getPost('arWorkflowVariables'),
-			'CONSTANTS' 	=> $this->request->getPost('arWorkflowConstants'),
-			'USER_ID'		=> intval($this->getUser()->getID()),
+			'AUTO_EXECUTE' => $_POST['workflowTemplateAutostart'],
+			'NAME' => $_POST['workflowTemplateName'],
+			'DESCRIPTION' => $_POST['workflowTemplateDescription'],
+			'TEMPLATE' => $_POST['arWorkflowTemplate'],
+			'PARAMETERS' => $_POST['arWorkflowParameters'],
+			'VARIABLES' => $_POST['arWorkflowVariables'],
+			'CONSTANTS' => $_POST['arWorkflowConstants'],
+			'USER_ID' => intval($this->getUser()->getID()),
 			'MODIFIER_USER' => new CBPWorkflowTemplateUser(CBPWorkflowTemplateUser::CurrentUser),
-		);
+		];
 
 		if(!is_array($fields["VARIABLES"]))
 		{

@@ -56,6 +56,7 @@ class CCrmNewEntityCounterPanelComponent extends CBitrixComponent
 
 		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
 		$this->arResult['ENTITY_TYPE_NAME'] = $this->entityTypeName;
+		$this->arResult['CATEGORY_ID'] = isset($this->arParams['CATEGORY_ID']) ? (int)$this->arParams['CATEGORY_ID'] : null;
 
 		$entity = \Bitrix\Crm\Entity\EntityManager::resolveByTypeID($this->entityTypeID);
 		$this->arResult['ENTITY_LAST_ID'] = $this->entityLastID = $entity->getLastID($this->userID, true);

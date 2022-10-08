@@ -185,7 +185,12 @@ if(is_object($dbActivity))
 
 $arResult['LOADER'] = array(
 	'serviceUrl' => '/bitrix/components/bitrix/crm.livefeed.activity.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
-	'componentData' => array('params' => array('ENTITY_TYPE_ID' => $entityTypeID, 'ENTITY_ID' => $entityID))
+	'componentData' => [
+		'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
+			'ENTITY_TYPE_ID' => $entityTypeID,
+			'ENTITY_ID' => $entityID,
+		], 'crm.livefeed.activity.list')
+	],
 );
 
 $this->IncludeComponentTemplate();

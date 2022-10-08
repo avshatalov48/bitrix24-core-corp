@@ -1,71 +1,74 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Main;
+use Bitrix\Main\ArgumentException;
+use Bitrix\Main\ArgumentNullException;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Type\DateTime;
 
 class DocumentEntry extends TimelineEntry
 {
 	public static function create(array $params, $documentId = null)
 	{
+		[$authorId, $created, $settings, $bindings] = self::fetchParams($params);
+
 		if (is_null($documentId))
 		{
-			throw new Main\ArgumentNullException('documentId');
+			throw new ArgumentNullException('documentId');
 		}
 
-		$text = isset($params['TEXT']) ? $params['TEXT'] : '';
-		if($text === '')
+		$text = $params['TEXT'] ?? '';
+		if ($text === '')
 		{
-			throw new Main\ArgumentException('Text should not be empty', 'text');
+			throw new ArgumentException('Text should not be empty', 'text');
 		}
 
-		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : 0;
-		if($authorID <= 0)
-		{
-			$authorID = \CCrmSecurityHelper::GetCurrentUserID();
-		}
-
-		$settings = isset($params['SETTINGS']) ? $params['SETTINGS'] : [];
 		$settings['DOCUMENT_ID'] = $documentId;
 
-		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
-			? $params['CREATED'] : new DateTime();
-
-		$result = TimelineTable::add(
-			array(
-				'TYPE_ID' => TimelineType::DOCUMENT,
-				'TYPE_CATEGORY_ID' => (int)$params['TYPE_CATEGORY_ID'],
-				'CREATED' => $created,
-				'AUTHOR_ID' => $authorID,
-				'COMMENT' => $text,
-				'SETTINGS' => $settings,
-				'ASSOCIATED_ENTITY_TYPE_ID' => TimelineType::DOCUMENT,
-				'ASSOCIATED_ENTITY_ID' => $documentId,
-			)
-		);
-
-		if(!$result->isSuccess())
+		$result = TimelineTable::add([
+			'TYPE_ID' => TimelineType::DOCUMENT,
+			'TYPE_CATEGORY_ID' => (int)$params['TYPE_CATEGORY_ID'],
+			'CREATED' => $created,
+			'AUTHOR_ID' => $authorId,
+			'COMMENT' => $text,
+			'SETTINGS' => $settings,
+			'ASSOCIATED_ENTITY_TYPE_ID' => TimelineType::DOCUMENT,
+			'ASSOCIATED_ENTITY_ID' => $documentId,
+		]);
+		if (!$result->isSuccess())
 		{
 			return 0;
 		}
 
-		$ID = $result->getId();
-		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : array();
-		self::registerBindings($ID, $bindings);
-		self::buildSearchContent($ID);
-		return $ID;
+		$createdId = $result->getId();
+
+		self::registerBindings($createdId, $bindings);
+		self::buildSearchContent($createdId);
+
+		return $createdId;
 	}
 
 	public static function rebind($entityTypeID, $oldEntityID, $newEntityID)
 	{
-		Entity\TimelineBindingTable::rebind($entityTypeID, $oldEntityID, $newEntityID, array(TimelineType::DOCUMENT));
+		Entity\TimelineBindingTable::rebind(
+			$entityTypeID,
+			$oldEntityID,
+			$newEntityID,
+			[TimelineType::DOCUMENT]
+		);
 	}
 
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID)
 	{
-		Entity\TimelineBindingTable::attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array(TimelineType::DOCUMENT));
+		Entity\TimelineBindingTable::attach(
+			$srcEntityTypeID,
+			$srcEntityID,
+			$targEntityTypeID,
+			$targEntityID,
+			[TimelineType::DOCUMENT]
+		);
 	}
 
 	public static function update($ID, array $params)

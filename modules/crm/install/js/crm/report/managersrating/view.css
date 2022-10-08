@@ -32,7 +32,8 @@
 	/*padding: 0 14px;*/
 	/*padding: 0 0 12px 0;*/
 	/*border-bottom: 1px solid rgba(130,139,149,.19);*/
-	font: 18px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #333;
 	text-align: left;
 }
@@ -60,13 +61,15 @@
 }
 
 .crm-report-financial-rating-modal-value {
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-report-financial-rating-modal-line {
 	display: block;
 	margin: 0 0 12px 0;
-	/*font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;*/
+	/*font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);*/
 	color: #333;
 	text-align: left;
 }
@@ -86,19 +89,21 @@
 .crm-report-financial-rating-modal-subtitle {
 	display: block;
 	margin: 0 0 2px 0;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 	opacity: .84;
 }
 
 .crm-report-financial-rating-modal-value-divider {
 	padding: 0 7px;
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-report-financial-rating-modal-percent {
 	display: inline-block;
-	font: 20px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #2fc6f6;
 }
 
@@ -106,7 +111,8 @@
 .crm-report-financial-rating-value-down {
 	position: relative;
 	padding-left: 15px;
-	font: 14px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 }
 

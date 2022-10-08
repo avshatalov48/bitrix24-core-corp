@@ -34,7 +34,7 @@ export class CreatedEvent extends EventEmitter
 		this.node = Tag.render`
 			<div
 				class="tasks-scrum__widget-meetings--timetable-content"
-				style="background: ${colorBackground}; border-color: ${colorBorder};"
+				style="background: ${colorBackground}; --meetings-border-color: ${colorBorder};"
 			>
 				<div class="tasks-scrum__widget-meetings--timetable-navigation">
 					<div class="tasks-scrum__widget-meetings--timetable-time">

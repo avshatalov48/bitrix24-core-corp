@@ -3,8 +3,10 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListConverterHelper;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Provider\TemplateProvider;
 use Bitrix\Tasks\Util\Error\Collection;
 use Bitrix\Tasks\Item\Task\Template;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
@@ -49,26 +51,22 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 		return [
 			'saveChecklist' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setPriority' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setTags' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'delete' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
@@ -258,12 +256,13 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		{
 			// check task access
 			$id = intval($arParams[static::getParameterAlias('ID')]);
-			$arResult['ITEM'] = new Template($id, $arResult['USER_ID']);
 
-			if(!$arResult['ITEM']->canRead(null))
+			if (!\Bitrix\Tasks\Access\TemplateAccessController::can((int)$arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TEMPLATE_READ, $id))
 			{
 				$errors->add('ACCESS_DENIED', Loc::getMessage('TASKS_TTTC_NOT_FOUND_OR_NOT_ACCESSIBLE'));
 			}
+
+			$arResult['ITEM'] = new Template($id, $arResult['USER_ID']);
 		}
 
 		return $errors->checkNoFatals();
@@ -344,6 +343,11 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 		$formSubmitted = $this->formData !== false;
 		$id = $this->template->getId();
+
+		if (!array_key_exists('USER_ID', $this->arResult))
+		{
+			$this->arResult['USER_ID'] = $this->userId;
+		}
 
 		if ($id)
 		{
@@ -676,9 +680,9 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 		return $tasks;
 	}
 
-	protected function getTaskTemplateData(array $ids)
+	protected function getTaskTemplateData(array $ids): array
 	{
-		$items = array();
+		$items = [];
 
 		if(!empty($ids))
 		{
@@ -686,13 +690,27 @@ class TasksTaskTemplateComponent extends TasksBaseComponent
 
 			if(!empty($ids))
 			{
-				$items = \Bitrix\Tasks\Item\Task\Template::find(
-					array(
-						'select' => array('ID', 'TITLE'),
-						'filter' => array('ID' => $ids),
-					),
-					array('USER_ID' => $this->userId)
+				$user = UserModel::createFromId($this->userId);
+
+				global $DB, $USER_FIELD_MANAGER;
+				$provider = new TemplateProvider($DB, $USER_FIELD_MANAGER);
+				$rows = $provider->getList(
+					[],
+					['ID' => $ids],
+					['ID', 'TITLE'],
+					[
+						'USER_ID' => $this->userId,
+						'USER_IS_ADMIN' => $user->isAdmin(),
+					],
+					[]
 				);
+				while ($row  = $rows->Fetch())
+				{
+					$items[] = [
+						'ID' => $row['ID'],
+						'TITLE' => $row['TITLE'],
+					];
+				}
 			}
 		}
 

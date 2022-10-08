@@ -148,7 +148,7 @@ final class FocusController extends Internals\Controller
 		}
 
 		$urlManager = Driver::getInstance()->getUrlManager();
-		$uri = new Uri($listingPath);
+		$uri = new Uri($urlManager->encodeUrn($listingPath));
 		$pathInListing = $gridOptions->getNavigation()->addParams($uri, false, $finalPage);
 
 		if (Main\Grid\Context::isInternalRequest())
@@ -163,7 +163,7 @@ final class FocusController extends Internals\Controller
 			));
 		}
 
-		return $urlManager->encodeUrn($pathInListing->getUri()) . "#hl-" . $objectId . ($command);
+		return $pathInListing->getUri() . "#hl-" . $objectId . $command;
 	}
 
 	private function findObject($objectId)

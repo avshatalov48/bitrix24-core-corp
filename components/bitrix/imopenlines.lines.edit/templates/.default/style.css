@@ -6,7 +6,7 @@
     border: medium none;
     color: #555;
     display: inline-block;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     font-size: 12px;
     height: 30px;
     margin: -6px 9px 0 0;
@@ -19,7 +19,7 @@
     border-radius: 1px;
     display: inline-block;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
     height: 30px;
     line-height: 29px;
     margin: 0 6px 6px 0;
@@ -96,7 +96,7 @@
 	padding: 0 0 20px 0;
 	max-width: 1025px;
 	border-bottom: 1px solid rgba(216,216,216,.45);
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
@@ -104,7 +104,7 @@
 
 .imol-vote-description {
 	margin: 0 0 13px 0;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #828B95;
 }
 
@@ -135,14 +135,14 @@
 .imol-vote-content-small {
 	padding: 16px;
 	min-height: 122px;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C68;
 }
 
 .imol-vote-content-middle {
 	padding: 11px 15px;
 	min-height: 166px;
-	font: bold 11px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 11px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	text-align: center;
 	text-transform: uppercase;
@@ -282,7 +282,7 @@
 
 .imol-vote-important-info {
 	margin: 0 0 61px 0;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #828B95;
 }
 
@@ -329,7 +329,7 @@
 .imol-vote-content-button {
 	display: block;
 	margin-top: 5px;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 	cursor: pointer;
 }
@@ -399,7 +399,8 @@
 /* UI Form settings */
 
 .imopenlines-form-settings-title {
-	font: 18px/22px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	border-bottom: 1px solid rgba(82, 92, 105, .1);
 	padding: 0 0 16px 7px;
@@ -502,7 +503,8 @@
 	text-align: left;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 15px/23px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	transition: border .3s ease, background-color .3s ease, color .3s ease;
 	flex: 6;
 	-webkit-appearance: none;
@@ -523,7 +525,7 @@
 	display: flex;
 	align-items: flex-start;
 	color: #525c69;
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-control-checkbox {
@@ -534,7 +536,7 @@
 	display: flex;
 	align-items: center;
 	margin: 0 0 6px 0;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a9adb2;
 }
 
@@ -562,7 +564,7 @@
 .imopenlines-control-link {
 	display: inline-block;
 	border-bottom: 1px dashed #ABAFB7;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #5E6674;
 	text-decoration: none;
 	transition: border-color .3s;
@@ -611,14 +613,16 @@
 }
 
 .imopenlines-title {
-	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 26px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin: 0;
 	display: block;
 	word-wrap: break-word;
 }
 
 .imopenlines-title-channels {
-	font: 18px/16px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 18px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin: 10px 0 0 0;
 	display: block;
 	word-wrap: break-word;
@@ -640,13 +644,15 @@
 	width: 100%;
 	border: 1px solid transparent;
 	outline: none;
-	font: 26px/26px "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font: 26px/26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin-bottom: 10px;
 }
 
 .imopenlines-editable-btn {
 	cursor: pointer;
-	font-family: OpenSans-Semibold, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	display: inline-block;
 	width: 30px;
 	height: 20px;
@@ -776,7 +782,7 @@
 	color: #424956;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 14px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 0 9px;
 }
 
@@ -884,8 +890,8 @@
 .imopenlines-user-photo-uploaded-item-container-title span{
 	text-transform: uppercase;
 	font-size: 9px;
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #727379;
 	position: relative;
 	background: #fff;
@@ -1298,7 +1304,7 @@
 .imopenlines-form-welcome-create-link {
     display: inline-block;
     margin-top: 7px;
-    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     cursor: pointer;
 }
 
@@ -1359,7 +1365,7 @@ select {
 
 .imopenlines-lines-edit-popup-text {
 	padding-left: 7px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c68;
 }
 
@@ -1399,12 +1405,12 @@ select {
 	padding: 0 0 10px 0;
 	margin: 0 0 17px 0;
 	border-bottom: 1px solid rgba(82, 92, 105, .1);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #858C96;
 }
 
 .imopenlines-control-alert-popup {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 }
 
@@ -1415,7 +1421,7 @@ select {
 .imopenlines-control-alert-popup-title {
 	display: block;
 	margin: 0 0 15px 0;
-	font: bold 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-control-alert-popup.popup-window {
@@ -1441,5 +1447,5 @@ select {
 
 #imol_watch_typing_not_available a {
     margin-left: 0;
-    font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }

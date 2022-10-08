@@ -72,7 +72,7 @@ Class transformer extends CModule
 
 		if (!$DB->Query("SELECT 'x' FROM b_transformer_command WHERE 1=0", true))
 		{
-			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/db/".mb_strtolower($DB->type)."/install.sql");
+			$errors = $DB->RunSQLBatch($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/transformer/install/db/mysql/install.sql");
 		}
 
 		if($errors !== false)
@@ -128,7 +128,7 @@ Class transformer extends CModule
 		$errors = false;
 
 		if (!isset($params['savedata']) || $params['savedata'] !== "Y")
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/transformer/install/db/".mb_strtolower($DB->type)."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/transformer/install/db/mysql/uninstall.sql");
 
 		if($errors !== false)
 		{

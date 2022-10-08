@@ -4,6 +4,8 @@ import {Form} from "./form";
 import {Payment} from "./payment";
 import {Lead} from "./lead";
 
+import 'ui.fonts.opensans';
+
 export class Registry
 {
 	static conversion(code : string) : Conversion

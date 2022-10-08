@@ -75,7 +75,7 @@ class Action
 		$actionValue = Json::encode($decodeValue);
 
 
-
+		/** @var \Bitrix\ImConnector\InteractiveMessage\Connectors\Livechat\Input $interactiveMessage */
 		$interactiveMessage = \Bitrix\ImConnector\InteractiveMessage\Input::init('livechat');
 		$result = $interactiveMessage->processingCommandKeyboard($command, $actionValue);
 		if (!$result->isSuccess())

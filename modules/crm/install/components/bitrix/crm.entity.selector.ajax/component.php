@@ -542,6 +542,7 @@ if(count($selectedList) > 0)
 $APPLICATION->RestartBuffer();
 $APPLICATION->ShowAjaxHead();
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/crm.js');
 

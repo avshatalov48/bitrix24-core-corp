@@ -6,6 +6,8 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Tasks\Util\User;
+
 if(!CModule::IncludeModule('rest'))
 {
 	return;
@@ -384,85 +386,100 @@ final class CTaskRestService extends IRestService
 	public static function __callStatic($transitMethodName, $args)
 	{
 		global $APPLICATION;
-
 		$APPLICATION->resetException();
 
-		if ( ! self::$inited )
+		if (!self::$inited)
+		{
 			self::_init();
+		}
 
 		$arFuncNameParts = explode(self::delimiter, $transitMethodName, 2);
-		$className  = $arFuncNameParts[0];
+		$className = $arFuncNameParts[0];
 		$methodName = $arFuncNameParts[1];
 
 		$returnValue = null;
-		$arMessages  = array();
+		$errors  = [];
 		$parsedReturnValue = null;
-
 		$withoutExceptions = false;
+
 		try
 		{
-			if ( ! in_array($className, self::$arAllowedClasses, true) && ! isset(self::$allowedSpecialClasses[$className]))
+			if (
+				!isset(self::$allowedSpecialClasses[$className])
+				&& !in_array($className, self::$arAllowedClasses, true)
+			)
+			{
 				throw new Exception('Unknown REST-method signature given');
+			}
 
 			$methodArgs = [];
-
 			foreach ($args[0] as $value)
+			{
 				$methodArgs[] = $value;
+			}
 
-			/** @noinspection PhpUndefinedMethodInspection */
-			list($returnValue, $dbResult) = $className::runRestMethod(
-				(int) \Bitrix\Tasks\Util\User::getId(),
+			[$returnValue, $dbResult] = $className::runRestMethod(
+				User::getId(),
 				$methodName,
 				$methodArgs,
-				(array)self::getNavData($args[1]),
+				self::getNavData($args[1]),
 				$args[2] //instance of CRestServer
 			);
 
-			$parsedReturnValue = self::_parseReturnValue($className, $methodName, $returnValue, array('SERVER' => $args[2]));
-
+			$parsedReturnValue = self::_parseReturnValue($className, $methodName, $returnValue, ['SERVER' => $args[2]]);
 			if ($dbResult !== null)
+			{
 				$parsedReturnValue = self::setNavData($parsedReturnValue, $dbResult);
+			}
 
 			$withoutExceptions = true;
 		}
 		catch (CTaskAssertException $e)
 		{
-			$arMessages[] = array(
-				'id'   => 'TASKS_ERROR_ASSERT_EXCEPTION',
-				'text' => 'TASKS_ERROR_ASSERT_EXCEPTION'
-			);
+			$errors[] = [
+				'id' => 'TASKS_ERROR_ASSERT_EXCEPTION',
+				'text' => 'TASKS_ERROR_ASSERT_EXCEPTION',
+			];
 		}
 		catch (TasksException $e)
 		{
-			$errCode = $e->getCode();
-			$errMsg  = $e->getMessage();
+			$code = $e->getCode();
+			$message = $e->getMessage();
 
 			if ($e->GetCode() & TasksException::TE_FLAG_SERIALIZED_ERRORS_IN_MESSAGE)
-				$arMessages = unserialize($errMsg, ['allowed_classes' => false]);
+			{
+				$errors = unserialize($message, ['allowed_classes' => false]);
+				if (!$errors)
+				{
+					$errors = [['text' => $message]];
+				}
+			}
 			else
 			{
-				$arMessages[] = array(
-					'id'   => 'TASKS_ERROR_EXCEPTION_#' . $errCode,
-					'text' => 'TASKS_ERROR_EXCEPTION_#' . $errCode
-						. '; ' . $errMsg
-						. '; ' . TasksException::renderErrorCode($e)
-				);
+				$errors[] = [
+					'id' => "TASKS_ERROR_EXCEPTION_#{$code}",
+					'text' => "TASKS_ERROR_EXCEPTION_#{$code}; {$message}; " . TasksException::renderErrorCode($e),
+				];
 			}
 		}
 		catch (Exception $e)
 		{
-			$errMsg = $e->getMessage();
-			if ($errMsg !== '')
-				$arMessages[] = array('text' => $errMsg, 'id' => 'TASKS_ERROR');
+			if ($e->getMessage() !== '')
+			{
+				$errors[] = [
+					'id' => 'TASKS_ERROR',
+					'text' => $e->getMessage(),
+				];
+			}
 		}
 
 		if ($withoutExceptions)
-			return ($parsedReturnValue);
-		else
 		{
-			self::_emitError($arMessages);
-			throw new Exception();
+			return $parsedReturnValue;
 		}
+
+		self::_emitError($errors);
+		throw new Exception();
 	}
 
 

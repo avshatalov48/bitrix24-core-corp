@@ -15,6 +15,7 @@ $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_BEFORE_TAX_WORDS_TITLE"] = "Сум�
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_BEFORE_DISCOUNT_TITLE"] = "Сумма без скидки и налогов";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_QUANTITY_TITLE"] = "Общее количество товаров";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_QUANTITY_WORDS_TITLE"] = "Общее количество товаров прописью";
+$MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_ROWS_TITLE"] = "Количество строк";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_ROWS_WORDS_TITLE"] = "Количество строк прописью";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_RAW_TITLE"] = "Сумма исходных цен";
 $MESS["CRM_DOCGEN_PRODUCTSDATAPROVIDER_CURRENCY_NAME_TITLE"] = "Название валюты";

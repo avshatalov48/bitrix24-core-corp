@@ -1,74 +1,47 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Main;
-use Bitrix\Main\Type\DateTime;
 
 class StoreDocumentEntry extends TimelineEntry
 {
 	public static function create(array $params)
 	{
-		$entityID = isset($params['ENTITY_ID']) ? (int)$params['ENTITY_ID'] : 0;
-		if ($entityID <= 0)
-		{
-			throw new Main\ArgumentException('Entity ID must be greater than zero.', 'entityID');
-		}
-
-		$entityClassName = isset($params['ENTITY_CLASS_NAME']) ? $params['ENTITY_CLASS_NAME'] : '';
-
-		$authorID = isset($params['AUTHOR_ID']) ? (int)$params['AUTHOR_ID'] : 0;
-		if (!is_int($authorID))
-		{
-			$authorID = (int)$authorID;
-		}
-
-		if ($authorID <= 0)
-		{
-			throw new Main\ArgumentException('Author ID must be greater than zero.', 'authorID');
-		}
-
-		$categoryID = isset($params['TYPE_CATEGORY_ID']) ? (int)$params['TYPE_CATEGORY_ID'] : 0;
-		if ($categoryID <= 0)
-		{
-			throw new Main\ArgumentException('Category Id must be greater than zero.', 'authorID');
-		}
-
-		$created = isset($params['CREATED']) && ($params['CREATED'] instanceof DateTime)
-			? $params['CREATED'] : new DateTime();
-
-		$settings = isset($params['SETTINGS']) && is_array($params['SETTINGS']) ? $params['SETTINGS'] : array();
-		$entityTypeID = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : \CCrmOwnerType::StoreDocument;
-		if ($entityTypeID <= 0)
+		[$authorId, $created, $settings, $bindings] = self::fetchParams($params);
+		$entityId = self::fetchEntityId($params);
+		$entityTypeId = isset($params['ENTITY_TYPE_ID']) ? (int)$params['ENTITY_TYPE_ID'] : \CCrmOwnerType::StoreDocument;
+		if ($entityTypeId <= 0)
 		{
 			throw new Main\ArgumentException('Category Id must be greater than zero.', 'entityTypeID');
 		}
+		$authorId = self::fetchAuthorId($params);
+		$categoryId = self::fetchCategoryId($params);
 
-		$result = TimelineTable::add(
-			array(
-				'TYPE_ID' => TimelineType::STORE_DOCUMENT,
-				'TYPE_CATEGORY_ID' => $categoryID,
-				'CREATED' => $created,
-				'AUTHOR_ID' => $authorID,
-				'SETTINGS' => $settings,
-				'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeID,
-				'ASSOCIATED_ENTITY_CLASS_NAME' => $entityClassName,
-				'ASSOCIATED_ENTITY_ID' => $entityID
-			)
-		);
-
+		$result = TimelineTable::add([
+			'TYPE_ID' => TimelineType::STORE_DOCUMENT,
+			'TYPE_CATEGORY_ID' => $categoryId,
+			'CREATED' => $created,
+			'AUTHOR_ID' => $authorId,
+			'SETTINGS' => $settings,
+			'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeId,
+			'ASSOCIATED_ENTITY_CLASS_NAME' => $params['ENTITY_CLASS_NAME'] ?? '',
+			'ASSOCIATED_ENTITY_ID' => $entityId
+		]);
 		if (!$result->isSuccess())
 		{
 			return 0;
 		}
 
-		$ID = $result->getId();
-		$bindings = isset($params['BINDINGS']) && is_array($params['BINDINGS']) ? $params['BINDINGS'] : [];
+		$createdId = $result->getId();
+
 		if (empty($bindings))
 		{
-			$bindings[] = ['ENTITY_TYPE_ID' => \CCrmOwnerType::StoreDocument, 'ENTITY_ID' => $entityID];
+			$bindings[] = ['ENTITY_TYPE_ID' => \CCrmOwnerType::StoreDocument, 'ENTITY_ID' => $entityId];
 		}
-		self::registerBindings($ID, $bindings);
-		return $ID;
+		self::registerBindings($createdId, $bindings);
+
+		return $createdId;
 	}
 }

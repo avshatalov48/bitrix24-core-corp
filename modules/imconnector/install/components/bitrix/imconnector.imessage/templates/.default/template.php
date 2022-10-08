@@ -124,7 +124,12 @@ if($arResult['CAN_USE_CONNECTION'] === true)
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION', ['#ID#' => $arResult['HELP_DESK_PARAMS']])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+							'#LINK1_START#' => '<a href="#" id="imconnector-imessage-link-help-create">',
+							'#LINK1_END#' => '</a>',
+							'#LINK2_START#' => '<a href="#" id="imconnector-imessage-link-help-connect">',
+							'#LINK2_END#' => '</a>',
+						])?>
 						<br />
 						<form action="<?=$arResult['URL']['SAVE_FORM']?>" method="post" class="ui-btn-container">
 							<input type="hidden" name="<?=$arResult['CONNECTOR']?>_form" id="<?=$arResult['CONNECTOR']?>_action_form" value="true">
@@ -190,7 +195,12 @@ else:?>
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP', ['#ID#' => $arResult['HELP_DESK_PARAMS']])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_IMESSAGE_CONNECT_STEP_NEW', [
+							'#LINK1_START#' => '<a id="imconnector-imessage-link-help-create" class="imconnector-field-box-link">',
+							'#LINK1_END#' => '</a>',
+							'#LINK2_START#' => '<a id="imconnector-imessage-link-help-connect" class="imconnector-field-box-link">',
+							'#LINK2_END#' => '</a>',
+						])?>
 					</div>
 				<?else:?>
 					<div class="imconnector-field-main-subtitle">

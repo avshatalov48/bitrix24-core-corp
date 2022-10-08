@@ -1,4 +1,4 @@
-import {Type, Dom} from 'main.core';
+import {Type, Dom, Text} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import DefaultController from './default-controller';
 import ItemMoreButton from '../items/item-more';
@@ -174,7 +174,7 @@ export default class FileController extends DefaultController {
 		const item = getItem(itemData);
 
 		let input = this.getContainer()
-			.querySelector(`[data-bx-role="reserve-item"][value="${item.getId()}"]`);
+			.querySelector(`[data-bx-role="reserve-item"][value="${Text.encode(item.getId())}"]`);
 		if (!input)
 		{
 			input = document.createElement('INPUT');
@@ -190,7 +190,9 @@ export default class FileController extends DefaultController {
 			}
 			EventEmitter.emit(this, 'OnItemDelete', item);
 		});
-
+		item.subscribe('onDestroy', () => {
+			this.items.delete(item.getId())
+		});
 		if (this.isPluggedIn())
 		{
 			EventEmitter.emit(this.eventObject, 'onShowControllers:File:Increment');

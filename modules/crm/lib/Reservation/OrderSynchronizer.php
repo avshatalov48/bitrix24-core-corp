@@ -11,15 +11,17 @@ use Bitrix\Sale\Configuration;
 use Bitrix\Sale\Helpers\Order\Builder\BuildingException;
 use Bitrix\Sale\ReserveQuantity;
 use Bitrix\Catalog\Product;
-use Bitrix\SalesCenter\Builder\Converter\CatalogJSProductForm;
-use Bitrix\Salescenter\Builder\Manager;
-use Bitrix\Salescenter\Builder\SettingsContainer;
-use Bitrix\SalesCenter\Integration\CrmManager;
 use Bitrix\Catalog\v2\Helpers\PropertyValue;
 use Bitrix\Catalog\StoreTable;
-use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
+use Bitrix\Crm\ClientInfo;
+use Bitrix\Crm\Order\Builder\Factory;
 use Bitrix\Main\Loader;
+use Bitrix\Sale\Helpers\Order\Builder\Converter\CatalogJSProductForm;
 
+/**
+ * @deprecated 23.0.0
+ * @see \Bitrix\Crm\Order\OrderDealSynchronizer
+ */
 class OrderSynchronizer
 {
 	/** @var int */
@@ -43,10 +45,9 @@ class OrderSynchronizer
 	{
 		Loader::requireModule('catalog');
 		Loader::requireModule('sale');
-		Loader::requireModule('salescenter');
 
 		$this->dealId = $dealId;
-		$this->dealFields = \CCrmDeal::GetByID($dealId);
+		$this->dealFields = \CCrmDeal::GetByID($dealId, false);
 
 		$this->dealProducts = $dealProducts;
 
@@ -88,7 +89,7 @@ class OrderSynchronizer
 			return;
 		}
 
-		$orderBuilder = Manager::getBuilder(SettingsContainer::BUILDER_SCENARIO_RESERVATION);
+		$orderBuilder = Factory::createBuilderForReservation();
 
 		$wasAutomaticReservationEnabled = self::isAutomaticReservationEnabled();
 		if ($wasAutomaticReservationEnabled)
@@ -117,6 +118,11 @@ class OrderSynchronizer
 		}
 
 		self::disableContactAutoCreationModeByOrder($order);
+
+		if (isset($this->dealFields['CURRENCY_ID']) && $order->getCurrency() !== $this->dealFields['CURRENCY_ID'])
+		{
+			$order->changeCurrency($this->dealFields['CURRENCY_ID']);
+		}
 
 		$order->save();
 
@@ -270,12 +276,14 @@ class OrderSynchronizer
 		/**
 		 * Client Info
 		 */
-		$clientInfo = CrmManager::getInstance()->getClientInfo(
-			\CCrmOwnerType::Deal,
-			$this->dealId
-		);
-		unset($clientInfo['OWNER_ID'], $clientInfo['OWNER_TYPE_ID']);
-		$result['CLIENT'] = $clientInfo;
+		if ($this->order && !$this->order->getContactCompanyCollection()->isEmpty())
+		{
+			$result['CLIENT'] = ClientInfo::createFromOwner(\CCrmOwnerType::Order, $this->order->getId())->toArray(false);
+		}
+		else
+		{
+			$result['CLIENT'] = ClientInfo::createFromOwner(\CCrmOwnerType::Deal, $this->dealId)->toArray(false);
+		}
 
 		return $result;
 	}

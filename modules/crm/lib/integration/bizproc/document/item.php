@@ -474,7 +474,7 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 		{
 			throw new \Exception(Loc::getMessage('CRM_BP_DOCUMENT_ITEM_ENTITY_TYPE_ERROR'));
 		}
-		$entityFields = [];
+		$entityFields = static::getVirtualFields();
 
 		foreach ($factory->getFieldsInfo() as $fieldId => $field)
 		{

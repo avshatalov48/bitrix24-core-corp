@@ -12,6 +12,8 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
  * @global CUser $USER
  */
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 $this->setFrameMode(true);
 
 if ($arResult['TASKS_ENABLED']):

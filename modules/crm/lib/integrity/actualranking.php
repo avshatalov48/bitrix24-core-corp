@@ -411,7 +411,7 @@ class ActualRanking
 			return;
 		}
 
-		if (!\CCrmOwnerType::isPossibleDynamicTypeId($this->dynamicTypeId))
+		if (!\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->dynamicTypeId))
 		{
 			return;
 		}

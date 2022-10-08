@@ -9,6 +9,32 @@
 	--main-grid-border-radius: var(--ui-border-radius-md);
 	--ui-form-section-border-radius: var(--ui-border-radius-md);
 	--ui-form-collapse-block-border-radius: var(--ui-border-radius-sm);
+
+	--ui-font-family-primary: var(--ui-font-family-system);
+	--ui-font-family-secondary: var(--ui-font-family-system);
+}
+
+.bx-win:root,
+.bx-win body {
+	--ui-font-weight-bold: 600;
+	--ui-font-weight-medium: 600;
+}
+
+.bx-linux:root,
+.bx-linux body {
+	--ui-font-weight-bold: 500;
+	--ui-font-weight-semi-bold: 500;
+}
+
+b,
+strong,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .bitrix24-default-theme:not(.ui-page-slider-wrapper) .main-buttons-box {

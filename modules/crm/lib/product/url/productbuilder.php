@@ -48,36 +48,10 @@ if (Loader::includeModule('catalog'))
 				return null;
 			}
 
-			$result = [];
-
-			if (!\CCrmSaleHelper::isWithOrdersMode())
+			$result = parent::getContextMenuItems($pageType, $items, $options);
+			if ($result === null)
 			{
-				Extension::load(['crm.config.catalog']);
-
-				$result[] = [
-					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_INVENTORY_MANAGEMENT_AND_PRODUCTS'),
-					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_INVENTORY_MANAGEMENT_AND_PRODUCTS'),
-					'ONCLICK' => "BX.Crm.Config.Catalog.Slider.open()"
-				];
-			}
-
-			if (
-				Catalog\Config\Feature::isInventoryManagementEnabled()
-				&& !Catalog\Component\UseStore::isUsed()
-			)
-			{
-				Extension::load(['catalog.store-use']);
-
-				$sliderPath = \CComponentEngine::makeComponentPath('bitrix:catalog.warehouse.master.clear');
-				$sliderPath = getLocalPath('components' . $sliderPath . '/slider.php');
-
-				$result[] = [
-					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_NAME_Y'),
-					'TITLE' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_WAREHOUSE_TITLE_Y'),
-					'ONCLICK' => "BX.Catalog.StoreUse.ProductGridMenu.openWarehousePanel('" . $sliderPath . "')"
-				];
-
-				unset($sliderPath);
+				$result = [];
 			}
 
 			$importUrl = $this->fillUrlTemplate(

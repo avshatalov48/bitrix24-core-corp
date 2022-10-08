@@ -178,7 +178,7 @@ input:hover + .sale-address-control-path-input-clear {
 	flex: 1;
 	flex-basis: 100%;
 	margin-left: 3px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 }

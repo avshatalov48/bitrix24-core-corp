@@ -291,7 +291,7 @@ if (typeof BX.Crm.RequisiteDetailsManager === "undefined")
 				'presetCountryId': this.getPresetCountryId()
 			});
 
-			setTimeout(this.closeSliderSilently.bind(this), 0);
+			setTimeout(this.closeSliderSilently.bind(this), 10);
 		},
 		emitEvent: function(eventName, eventData)
 		{

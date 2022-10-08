@@ -22,6 +22,9 @@ import * as LastNameField from './lastname/controller';
 import * as CompanyNameField from './companyname/controller';
 import * as LayoutField from './layout/controller';
 import * as ResourceBookingField from './resourcebooking/controller';
+import * as AddressField from './address/controller';
+import * as RqField from './rq/controller';
+import * as Container from './container/controller';
 
 
 let controllers = [
@@ -48,6 +51,9 @@ let controllers = [
 	CompanyNameField.Controller,
 	LayoutField.Controller,
 	ResourceBookingField.Controller,
+	Container.Controller,
+	AddressField.Controller,
+	RqField.Controller,
 ];
 let component = BaseField.Controller.component();
 component.components = Object.assign(

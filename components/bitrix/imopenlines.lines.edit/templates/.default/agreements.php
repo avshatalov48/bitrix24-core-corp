@@ -1,6 +1,13 @@
 <?
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc; ?>
+use \Bitrix\Main\Localization\Loc;
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
+?>
 
 <div class="imopenlines-form-settings-section">
 	<?if(!empty($arResult['ERROR'])):?>

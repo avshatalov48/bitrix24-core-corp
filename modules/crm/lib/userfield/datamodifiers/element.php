@@ -17,6 +17,7 @@ use COption;
 use CDBResult;
 use Bitrix\Crm\Order\Permissions\Order;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service;
 
 /**
  * Class Element
@@ -413,10 +414,8 @@ class Element
 					'title' => (str_replace([';', ','], ' ', $order['ACCOUNT_NUMBER'])),
 					'desc' => $order['ACCOUNT_NUMBER'],
 					'id' => $order['SID'],
-					'url' => CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', 'path_to_order_details'),
-						['order_id' => $order['ID']]
-					),
+					'url' => Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getOrderDetailsLink($order['ID']),
 					'type' => 'order',
 					'selected' => $isSelected
 				];
@@ -947,10 +946,8 @@ class Element
 					'title' => $order['ACCOUNT_NUMBER'],
 					'desc' => $order['ACCOUNT_NUMBER'],
 					'id' => $order['SID'],
-					'url' => CComponentEngine::MakePathFromTemplate(
-						COption::GetOptionString('crm', 'path_to_order_details'),
-						['order_id' => $order['ID']]
-					),
+					'url' => Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getOrderDetailsLink($order['ID']),
 					'type' => 'order',
 					'selected' => $isSelected
 				];

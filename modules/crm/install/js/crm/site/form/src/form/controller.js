@@ -26,6 +26,7 @@ class Controller extends Event
 	language: string = 'en';
 	messages: Messages.Storage;
 	design: Design.Model;
+	editMode: boolean;
 
 	#fields: Array<Field.BaseField> = [];
 	#dependence: Dependence;
@@ -95,6 +96,8 @@ class Controller extends Event
 		this.provider = options.provider || {};
 		this.analyticsHandler = options.analyticsHandler || {};
 
+		this.editMode = options.editMode ?? false;
+
 		if (this.provider.form)
 		{
 			this.loading = true;
@@ -153,6 +156,14 @@ class Controller extends Event
 		this.emit(Type.EventTypes.init);
 
 		this.render();
+
+		// track form views
+		Util.ViewObserver.observe(
+			document.querySelector('#b24-' + this.getId() + ' .b24-form-wrapper'),
+			() => {
+				this.emit(Type.EventTypes.view);
+			}
+		);
 	}
 
 	load()
@@ -529,6 +540,7 @@ class Controller extends Event
 
 				case 'date':
 				case 'datetime':
+				case 'rq':
 					options.format = options.type === 'date'
 						? this.date.dateFormat
 						: this.date.dateTimeFormat;

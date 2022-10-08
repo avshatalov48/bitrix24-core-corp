@@ -7,7 +7,16 @@ use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-background');
 
-Extension::load(['ui.buttons', 'ui.icons', 'ui.common', 'ui.alerts', 'salescenter.manager']);
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.buttons',
+	'ui.icons',
+	'ui.common',
+	'ui.alerts',
+	'salescenter.manager',
+]);
+
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 
 $APPLICATION->SetTitle(Loc::getMessage('SC_CRM_STORE_TITLE_2'));

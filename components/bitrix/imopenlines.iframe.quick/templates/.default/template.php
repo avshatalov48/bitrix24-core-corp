@@ -20,6 +20,7 @@ use Bitrix\Main\Localization\Loc;
 	<meta charset="utf-8" />
 <?php
 Extension::load([
+	'ui.design-tokens',
 	'ui.fonts.opensans',
 	'ui.info-helper',
 	'ajax'

@@ -22,15 +22,24 @@ class ScrumProjectTask extends Base
 		}
 		else
 		{
+			$kanbanService = new Tasks\Scrum\Service\KanbanService();
+
 			$projectId = Document\Task::resolveScrumProjectId($this->getDocumentType()[2]);
 
 			$sprintService = new Tasks\Scrum\Service\SprintService();
 
 			$sprint = $sprintService->getActiveSprintByGroupId($projectId);
 
-			Tasks\Kanban\StagesTable::setWorkMode(Tasks\Kanban\StagesTable::WORK_MODE_ACTIVE_SPRINT);
+			if ($kanbanService->isTaskInKanban($sprint->getId(), $this->getDocumentId()))
+			{
+				Tasks\Kanban\StagesTable::setWorkMode(Tasks\Kanban\StagesTable::WORK_MODE_ACTIVE_SPRINT);
 
-			$documentStatus = Tasks\Kanban\StagesTable::getDefaultStageId($sprint->getId());
+				$documentStatus = Tasks\Kanban\StagesTable::getDefaultStageId($sprint->getId());
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		return $documentStatus;
@@ -56,13 +65,14 @@ class ScrumProjectTask extends Base
 	public function getDocumentStatusList($categoryId = 0)
 	{
 		$sprintService = new Tasks\Scrum\Service\SprintService();
+		$kanbanService = new Tasks\Scrum\Service\KanbanService();
 
 		$projectId = Document\Task::resolveScrumProjectId($this->getDocumentType()[2]);
 		$sprint = $sprintService->getActiveSprintByGroupId($projectId);
 
 		Tasks\Kanban\StagesTable::setWorkMode(Tasks\Kanban\StagesTable::WORK_MODE_ACTIVE_SPRINT);
 
-		return Tasks\Kanban\StagesTable::getStages($sprint->getId());
+		return $kanbanService->getStages($sprint->getId());
 	}
 
 	private function getTaskStage(): array

@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UI\NavigationBarPanel;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -24,7 +25,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.icons.b24']);
+Bitrix\Main\UI\Extension::load(['crm.merger.batchmergemanager', 'ui.icons.b24', 'ui.fonts.opensans']);
 
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
@@ -199,7 +200,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 	{
 		$arActions[] = array('SEPARATOR' => true);
 
-		if($arResult['PERM_CONTACT'])
+		if($arResult['PERM_CONTACT'] && !$arResult['CATEGORY_ID'])
 		{
 			$arEntitySubMenuItems[] = array(
 				'TITLE' => GetMessage('CRM_COMPANY_CONTACT_ADD_TITLE'),
@@ -207,7 +208,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arCompany['PATH_TO_CONTACT_EDIT'])."')"
 			);
 		}
-		if($arResult['PERM_DEAL'])
+		if($arResult['PERM_DEAL'] && !$arResult['CATEGORY_ID'])
 		{
 			$arEntitySubMenuItems[] = array(
 				'TITLE' => GetMessage('CRM_COMPANY_DEAL_ADD_TITLE'),
@@ -215,7 +216,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				'ONCLICK' => "BX.Crm.Page.open('".CUtil::JSEscape($arCompany['PATH_TO_DEAL_EDIT'])."')"
 			);
 		}
-		if($arResult['PERM_QUOTE'])
+		if($arResult['PERM_QUOTE'] && !$arResult['CATEGORY_ID'])
 		{
 			$quoteAction = [
 				'TITLE' => GetMessage('CRM_COMPANY_ADD_QUOTE_TITLE'),
@@ -241,6 +242,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 			$arResult['PERM_INVOICE']
 			&& IsModuleInstalled('sale')
 			&& \Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled()
+			&& !$arResult['CATEGORY_ID']
 		)
 		{
 			$localization = \Bitrix\Crm\Service\Container::getInstance()->getLocalization();
@@ -250,7 +252,10 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 				'ONCLICK' => "jsUtils.Redirect([], '".CUtil::JSEscape($arContact['PATH_TO_INVOICE_ADD'])."');"
 			);
 		}
-		if (\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartInvoice))
+		if (
+			\Bitrix\Crm\Service\Container::getInstance()->getUserPermissions()->checkAddPermissions(\CCrmOwnerType::SmartInvoice)
+			&& !$arResult['CATEGORY_ID']
+		)
 		{
 			$arEntitySubMenuItems[] = [
 				'TITLE' => \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice),
@@ -280,7 +285,7 @@ foreach($arResult['COMPANY'] as $sKey =>  $arCompany)
 
 		if($arCompany['EDIT'])
 		{
-			if (RestrictionManager::isHistoryViewPermitted())
+			if (RestrictionManager::isHistoryViewPermitted() && !$arResult['CATEGORY_ID'])
 			{
 				$arActions[] = $arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_COMPANY_EVENT_TITLE'),
@@ -817,18 +822,19 @@ if(!$isInternal
 
 	if($callListUpdateMode)
 	{
-		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = [
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
 			"TEXT" => GetMessage("CRM_COMPANY_UPDATE_CALL_LIST"),
 			"ID" => "update_call_list",
 			"NAME" => "update_call_list",
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$arResult['CALL_LIST_CONTEXT']}')"))
-				)
-			)
-		);
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$callListContext}')"]]
+				]
+			]
+		];
 	}
 	else
 	{
@@ -865,7 +871,8 @@ $APPLICATION->IncludeComponent(
 	'',
 	array(
 		'ENTITY_TYPE_NAME' => CCrmOwnerType::CompanyName,
-		'GRID_ID' => $arResult['GRID_ID']
+		'GRID_ID' => $arResult['GRID_ID'],
+		'CATEGORY_ID' => $arResult['CATEGORY_ID'],
 	),
 	$component
 );
@@ -892,7 +899,7 @@ $APPLICATION->IncludeComponent(
 		'FILTER_PARAMS' => array(
 			'LAZY_LOAD' => array(
 				'GET_LIST' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'GET_FIELD' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
+				'GET_FIELD' => '/bitrix/components/bitrix/crm.company.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 			),
 			'ENABLE_FIELDS_SEARCH' => 'Y',
 			'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
@@ -910,23 +917,9 @@ $APPLICATION->IncludeComponent(
 			? $arResult['PAGINATION'] : array(),
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-		'NAVIGATION_BAR' => $isMyCompanyMode ? null :
-			array(
-				'ITEMS' => array(
-					/*array(
-						//'icon' => 'table',
-						'id' => 'list',
-						'name' => GetMessage('CRM_COMPANY_LIST_FILTER_NAV_BUTTON_LIST'),
-						'active' => true,
-						'url' => $arParams['PATH_TO_COMPANY_LIST']
-					),*/
-				),
-				'BINDING' => array(
-					'category' => 'crm.navigation',
-					'name' => 'index',
-					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				)
-			),
+		'NAVIGATION_BAR' => $isMyCompanyMode
+			? null
+			: (new NavigationBarPanel(CCrmOwnerType::Company))->setBinding($arResult['NAVIGATION_CONTEXT_ID'])->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,

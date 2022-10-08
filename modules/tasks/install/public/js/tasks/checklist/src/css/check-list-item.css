@@ -46,7 +46,7 @@
 	white-space: nowrap;
 	-webkit-transition: background-color 0.3s linear;
 	transition: background-color 0.3s linear;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c68;
 	line-height: 36px;
 }

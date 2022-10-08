@@ -12,7 +12,12 @@
  * @var $arParams array
  */
 
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 
 $author = $arResult['USERS'][$result->getCreatedBy()] ? $arResult['USERS'][$result->getCreatedBy()] : null;
 ?>

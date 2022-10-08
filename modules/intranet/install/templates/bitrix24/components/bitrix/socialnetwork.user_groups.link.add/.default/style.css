@@ -22,7 +22,7 @@
 	vertical-align: middle;
 	height: 100%;
 	border: none;
-	font: 14px/30px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: 0;
 	outline: none;
 	padding: 0;

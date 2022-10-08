@@ -114,6 +114,29 @@ final class Fields
 						];
 					}
 					break;
+				case 'rq':
+					if (!$options['multiple'])
+					{
+						$options['requisite'] = WebForm\Requisite::instance()
+							->convertSettingsToOptions($field['SETTINGS_DATA'] ?? [])
+						;
+					}
+					break;
+				case 'address':
+					if (!$options['multiple'])
+					{
+						$options['fields'] = WebForm\Requisite::instance()
+							->getAddressField(
+								\CCrmOwnerType::ResolveID($data['ENTITY_NAME']),
+								(string)$data['ENTITY_FIELD_NAME']
+							)['fields'] ?? []
+						;
+						if (!$options['fields'])
+						{
+							$gotoNextField = true;
+						}
+					}
+					break;
 				case 'bool':
 				case 'radio':
 				case 'checkbox':
@@ -216,6 +239,7 @@ final class Fields
 					&& $field['SETTINGS_DATA']['AUTOCOMPLETE'] === 'Y'
 					|| $enableAutocomplete && empty($field['SETTINGS_DATA']['AUTOCOMPLETE']),
 				'bigPic' => ($field['SETTINGS_DATA']['BIG_PIC'] ?? 'N') === 'Y',
+				'size' => ($field['SETTINGS_DATA']['SIZE'] ?? null),
 				'contentTypes' => $contentTypes,
 			];
 		}
@@ -533,6 +557,15 @@ final class Fields
 		return $this;
 	}
 
+	public function clear()
+	{
+		$this->form->merge([
+			'FIELDS' => [],
+			'DEPENDENCIES' => [],
+			'DEP_GROUPS' => [],
+		]);
+	}
+
 	public function append(array $options)
 	{
 		$field = self::$fields[$options['name']];
@@ -553,6 +586,10 @@ final class Fields
 				},
 				$field['ITEMS']
 			);
+		}
+		if (empty($options['size']) && !empty($field['SIZE']))
+		{
+			$options['size'] = is_array($field['SIZE']) ? $field['SIZE'] : null;
 		}
 
 		$data = $this->getTabletFormattedField([
@@ -662,6 +699,12 @@ final class Fields
 				: []
 			;
 		}
+		if($data['TYPE'] === 'rq')
+		{
+			$data['SETTINGS_DATA']['REQUISITE'] = WebForm\Requisite::instance()
+				->convertOptionsToSettings($options['requisite'] ?? [])
+			;
+		}
 
 		if (isset($options['autocomplete']))
 		{
@@ -676,6 +719,14 @@ final class Fields
 		if (isset($options['hintOnFocus']))
 		{
 			$data['SETTINGS_DATA']['HINT_ON_FOCUS'] = ($options['hintOnFocus'] ?? false) ? 'Y' : 'N';
+		}
+
+		if (isset($options['size']) && is_array($options['size']))
+		{
+			$data['SETTINGS_DATA']['SIZE'] = [
+				'min' => (int)($options['size']['min'] ?? 0),
+				'max' => (int)($options['size']['max'] ?? 0),
+			];
 		}
 
 		$data['REQUIRED'] = $options['required'] ? 'Y' : 'N';
@@ -745,6 +796,13 @@ final class Fields
 		{
 			$settingsData = $options['booking']['settings_data'] ?? [];
 			$data['SETTINGS_DATA'] = $settingsData;
+		}
+
+		if($data['TYPE'] === WebForm\Internals\FieldTable::TYPE_ENUM_RQ)
+		{
+			$data['SETTINGS_DATA'] = WebForm\Requisite::instance()
+				->convertSettingsToOptions($options['requisite'] ?? [])
+			;
 		}
 
 		return $data;

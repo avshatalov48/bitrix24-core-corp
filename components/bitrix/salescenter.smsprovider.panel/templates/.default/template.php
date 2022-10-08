@@ -20,6 +20,7 @@ Extension::load([
 	'salescenter.app',
 	'salescenter.lib',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 ?>
 <div class="salescenter-smsprovider-title">

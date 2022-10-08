@@ -652,6 +652,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 				'widget' => '#E36F10',
 				'checkout' => '#E36F10',
 			],
+			'bepaiderip' => '#E36F10',
 			'uapay' => '#E41F18',
 			'cash' => '#8EB927',
 			'sberbankonline' => '#2C9B47',

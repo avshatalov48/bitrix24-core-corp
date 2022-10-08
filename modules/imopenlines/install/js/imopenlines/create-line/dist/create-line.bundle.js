@@ -9,6 +9,7 @@ this.BX = this.BX || {};
 	    babelHelpers.defineProperty(this, "isLocked", false);
 	    babelHelpers.defineProperty(this, "cache", new main_core.Cache.MemoryCache());
 	    this.path = options.path;
+	    this.sliderWidth = options.sliderWidth;
 
 	    if (this.path) {
 	      this.init();
@@ -53,7 +54,7 @@ this.BX = this.BX || {};
 	    key: "onSuccess",
 	    value: function onSuccess(data) {
 	      BX.SidePanel.Instance.open(this.path.replace('#LINE#', data.config_id), {
-	        width: 700,
+	        width: this.sliderWidth,
 	        cacheable: false
 	      });
 	    }

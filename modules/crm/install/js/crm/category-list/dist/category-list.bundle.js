@@ -2,30 +2,36 @@ this.BX = this.BX || {};
 (function (exports,main_core,crm_categoryModel) {
 	'use strict';
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var instance = null;
 	/**
 	 * @memberOf BX.Crm
 	 */
 
-	var _items = new WeakMap();
+	var _items = /*#__PURE__*/new WeakMap();
 
-	var _isProgress = new WeakMap();
+	var _isProgress = /*#__PURE__*/new WeakMap();
 
-	var _loadItems = new WeakSet();
+	var _loadItems = /*#__PURE__*/new WeakSet();
 
 	var CategoryList = /*#__PURE__*/function () {
 	  function CategoryList() {
 	    babelHelpers.classCallCheck(this, CategoryList);
 
-	    _loadItems.add(this);
+	    _classPrivateMethodInitSpec(this, _loadItems);
 
-	    _items.set(this, {
+	    _classPrivateFieldInitSpec(this, _items, {
 	      writable: true,
 	      value: {}
 	    });
 
-	    _isProgress.set(this, {
+	    _classPrivateFieldInitSpec(this, _isProgress, {
 	      writable: true,
 	      value: false
 	    });
@@ -45,7 +51,7 @@ this.BX = this.BX || {};
 	        _classPrivateMethodGet(_this, _loadItems, _loadItems2).call(_this, entityTypeId).then(function (categories) {
 	          babelHelpers.classPrivateFieldGet(_this, _items)[entityTypeId] = categories;
 	          resolve(categories);
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          babelHelpers.classPrivateFieldGet(_this, _items)[entityTypeId] = [];
 	          reject(error);
 	        });
@@ -74,7 +80,7 @@ this.BX = this.BX || {};
 	  return CategoryList;
 	}();
 
-	var _loadItems2 = function _loadItems2(entityTypeId) {
+	function _loadItems2(entityTypeId) {
 	  var _this2 = this;
 
 	  return new Promise(function (resolve, reject) {
@@ -95,7 +101,7 @@ this.BX = this.BX || {};
 	        categories.push(new crm_categoryModel.CategoryModel(category));
 	      });
 	      resolve(categories);
-	    }).catch(function (response) {
+	    })["catch"](function (response) {
 	      babelHelpers.classPrivateFieldSet(_this2, _isProgress, false);
 	      reject("CategoryList error: " + response.errors.map(function (_ref) {
 	        var message = _ref.message;
@@ -103,7 +109,7 @@ this.BX = this.BX || {};
 	      }).join("; "));
 	    });
 	  });
-	};
+	}
 
 	exports.CategoryList = CategoryList;
 

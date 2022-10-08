@@ -344,6 +344,7 @@ export default class EntityChat extends Stream
 		}
 		else
 		{
+			// @todo replace by DatetimeConverter
 			const remoteDate = (new Date(isoDate)).getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 			const localTime = (new Date).getTime() / 1000 + this.getServerTimezoneOffset() + this.getUserTimezoneOffset();
 			this._messageDateNode.innerHTML = this.formatTime(remoteDate, localTime, true);

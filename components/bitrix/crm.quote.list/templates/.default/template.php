@@ -14,6 +14,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use \Bitrix\Crm\Category\DealCategory;
 use \Bitrix\Crm\Conversion\EntityConverter;
 use Bitrix\Crm\Tracking;
+use Bitrix\Crm\UI\NavigationBarPanel;
 
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')
@@ -24,7 +25,7 @@ if (CModule::IncludeModule('bitrix24') && !\Bitrix\Crm\CallList\CallList::isAvai
 {
 	CBitrix24::initLicenseInfoPopupJS();
 }
-CJSCore::Init(['crm_activity_planner', 'crm_common']);
+CJSCore::Init(['crm_activity_planner', 'crm_common', 'ui.fonts.opensans']);
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/progress_control.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/autorun_proc.js');
@@ -263,7 +264,8 @@ $prefixLC = mb_strtolower($arResult['GRID_ID']);
 						)
 					) : '',
 				'ENTITIES_LINKS' => $arQuote['FORMATTED_ENTITIES_LINKS'],
-				'CLOSEDATE' => empty($arQuote['CLOSEDATE']) ? '' : '<nobr>'.$arQuote['CLOSEDATE'].'</nobr>'
+				'CLOSEDATE' => empty($arQuote['CLOSEDATE']) ? '' : '<nobr>'.$arQuote['CLOSEDATE'].'</nobr>',
+				'ACTUAL_DATE' => empty($arQuote['ACTUAL_DATE']) ? '' : '<nobr>'.$arQuote['ACTUAL_DATE'].'</nobr>',
 			) + $arResult['QUOTE_UF'][$sKey]
 		);
 
@@ -478,18 +480,19 @@ if(!$isInternal
 
 	if($callListUpdateMode)
 	{
-		$controlPanel['GROUPS'][0]['ITEMS'][] = array(
+		$callListContext = \CUtil::jsEscape($arResult['CALL_LIST_CONTEXT']);
+		$controlPanel['GROUPS'][0]['ITEMS'][] = [
 			"TYPE" => \Bitrix\Main\Grid\Panel\Types::BUTTON,
 			"TEXT" => GetMessage("CRM_QUOTE_UPDATE_CALL_LIST"),
 			"ID" => "update_call_list",
 			"NAME" => "update_call_list",
-			'ONCHANGE' => array(
-				array(
+			'ONCHANGE' => [
+				[
 					'ACTION' => Bitrix\Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => array(array('JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$arResult['CALL_LIST_CONTEXT']}')"))
-				)
-			)
-		);
+					'DATA' => [['JS' => "BX.CrmUIGridExtension.updateCallList('{$gridManagerID}', {$arResult['CALL_LIST_ID']}, '{$callListContext}')"]]
+				]
+			]
+		];
 	}
 	else
 	{
@@ -603,32 +606,14 @@ $APPLICATION->IncludeComponent(
 			? $arResult['PAGINATION'] : array(),
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
-		'NAVIGATION_BAR' => array(
-			'ITEMS' => array_merge(
-				\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Quote),
-				[
-					[
-						//'icon' => 'kanban',
-						'id' => 'kanban',
-						'name' => GetMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_KANBAN'),
-						'active' => false,
-						'url' => $arParams['PATH_TO_QUOTE_KANBAN']
-					],
-					[
-						//'icon' => 'table',
-						'id' => 'list',
-						'name' => GetMessage('CRM_QUOTE_LIST_FILTER_NAV_BUTTON_LIST'),
-						'active' => true,
-						'url' => $arResult['PATH_TO_QUOTE_LIST']
-					],
-				]
-			),
-			'BINDING' => array(
-				'category' => 'crm.navigation',
-				'name' => 'index',
-				'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-			)
-		),
+		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Quote))
+			->setItems([
+				NavigationBarPanel::ID_AUTOMATION,
+				NavigationBarPanel::ID_KANBAN,
+				NavigationBarPanel::ID_LIST
+			], NavigationBarPanel::ID_LIST)
+			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+			->get(),
 		'EXTENSION' => array(
 			'ID' => $gridManagerID,
 			'CONFIG' => array(

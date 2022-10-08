@@ -189,6 +189,7 @@ class Session
 		//params
 		$this->connectorId = $params['SOURCE'];
 
+		$fields = [];
 		$fields['PARENT_ID'] = (int)$params['PARENT_ID'];
 		$fields['USER_CODE'] = $params['USER_CODE'];
 
@@ -197,7 +198,8 @@ class Session
 		$fields['CONFIG_ID'] = (int)$params['CONFIG_ID'];
 		$fields['USER_ID'] = (int)$params['USER_ID'];
 		$fields['OPERATOR_ID'] = (int)$params['OPERATOR_ID'];
-		$params['CRM_TRACE_DATA'] = (string)$params['CRM_TRACE_DATA'];
+		$params['CRM_TRACE_DATA'] = (string)($params['CRM_TRACE_DATA'] ?? '');
+		$params['CRM_SKIP_PHONE_VALIDATE'] = (string)($params['CRM_SKIP_PHONE_VALIDATE'] ?? '');
 		$fields['SOURCE'] = $params['SOURCE'];
 		$fields['MODE'] =  $params['MODE'] === self::MODE_OUTPUT? self::MODE_OUTPUT: self::MODE_INPUT;
 		$params['DEFERRED_JOIN'] =  $params['DEFERRED_JOIN'] === 'Y'? 'Y': 'N';
@@ -283,6 +285,7 @@ class Session
 		if($crmManager->isLoaded())
 		{
 			$crmFieldsManager = $crmManager->getFields();
+			$crmFieldsManager->setSkipPhoneValidate($params['CRM_SKIP_PHONE_VALIDATE'] === 'Y');
 			$crmFieldsManager->setDataFromUser($fields['USER_ID']);
 			$crmManager->setModeCreate($this->config['CRM_CREATE']);
 
@@ -520,6 +523,7 @@ class Session
 				/* END CRM BLOCK */
 
 				/* Event */
+				$eventData = [];
 				$eventData['SESSION'] = $this->session;
 				$eventData['RUNTIME_SESSION'] = $this;
 				$eventData['CONFIG'] = $this->config;
@@ -1348,6 +1352,7 @@ class Session
 
 			if ($update['CLOSED'] === 'Y')
 			{
+				$eventData = [];
 				$eventData['RUNTIME_SESSION'] = $this;
 				$eventData['SESSION'] = $this->session;
 				$eventData['CONFIG'] = $this->config;
@@ -1553,8 +1558,9 @@ class Session
 			unset($fields['CHECK_DATE_CLOSE']);
 		}
 		elseif (
-			isset($fields['DATE_MODIFY']) &&
-			$fields['CLOSED'] !== 'Y'
+			isset($fields['DATE_MODIFY'])
+			&& $fields['DATE_MODIFY'] instanceof DateTime
+			&& $fields['CLOSED'] !== 'Y'
 		)
 		{
 			$dateCrmClose = new DateTime();
@@ -1612,7 +1618,10 @@ class Session
 
 						if ($this->session['WAIT_ANSWER'] == 'N')
 						{
-							$fields['STATUS'] = $this->session['STATUS'] >= self::STATUS_OPERATOR? self::STATUS_CLIENT_AFTER_OPERATOR: self::STATUS_CLIENT;
+							$fields['STATUS'] =
+								$this->session['STATUS'] >= self::STATUS_OPERATOR
+									? self::STATUS_CLIENT_AFTER_OPERATOR
+									: self::STATUS_CLIENT;
 						}
 					}
 				}
@@ -1628,7 +1637,11 @@ class Session
 						$fields['WAIT_ANSWER'] == 'Y'
 					)
 					{
-						$fields['STATUS'] = $this->session['STATUS'] >= self::STATUS_CLIENT_AFTER_OPERATOR? self::STATUS_CLIENT_AFTER_OPERATOR: self::STATUS_CLIENT;
+						$fields['STATUS'] =
+							$this->session['STATUS'] >= self::STATUS_CLIENT_AFTER_OPERATOR
+								? self::STATUS_CLIENT_AFTER_OPERATOR
+								: self::STATUS_CLIENT;
+
 						$dateClose->add('1 MONTH');
 
 						if ($this->session['STATUS'] >=  self::STATUS_OPERATOR)
@@ -1659,6 +1672,7 @@ class Session
 					}
 				}
 			}
+
 			//On pause
 			else
 			{
@@ -1669,7 +1683,7 @@ class Session
 					User::getInstance($fields['USER_ID'])->isConnector()
 				)
 				{
-					$dateClose->add('1 MONTH');
+					$dateClose->add('1 WEEK');
 
 					if (
 						$this->session['STATUS'] >= self::STATUS_OPERATOR ||
@@ -1681,14 +1695,17 @@ class Session
 
 					if ($this->session['WAIT_ANSWER'] == 'N')
 					{
-						$fields['STATUS'] = $this->session['STATUS'] >= self::STATUS_OPERATOR? self::STATUS_CLIENT_AFTER_OPERATOR: self::STATUS_CLIENT;
+						$fields['STATUS'] =
+							$this->session['STATUS'] >= self::STATUS_OPERATOR
+								? self::STATUS_CLIENT_AFTER_OPERATOR
+								: self::STATUS_CLIENT;
 					}
 				}
 				else
 				{
 					if (isset($fields['SKIP_DATE_CLOSE']))
 					{
-						$dateClose->add('1 MONTH');
+						$dateClose->add('1 WEEK');
 					}
 					else if (
 						$this->session['WAIT_ANSWER'] === 'Y' &&
@@ -1696,9 +1713,12 @@ class Session
 						$fields['WAIT_ANSWER'] === 'Y'
 					)
 					{
-						$dateClose->add('1 MONTH');
+						$dateClose->add('1 WEEK');
 
-						$fields['STATUS'] = $this->session['STATUS'] >= self::STATUS_CLIENT_AFTER_OPERATOR? self::STATUS_CLIENT_AFTER_OPERATOR: self::STATUS_CLIENT;
+						$fields['STATUS'] =
+							$this->session['STATUS'] >= self::STATUS_CLIENT_AFTER_OPERATOR
+								? self::STATUS_CLIENT_AFTER_OPERATOR
+								: self::STATUS_CLIENT;
 
 						if ($this->session['STATUS'] >=  self::STATUS_OPERATOR)
 						{
@@ -1721,7 +1741,7 @@ class Session
 					}
 					else
 					{
-						$dateClose->add('1 MONTH');
+						$dateClose->add('1 WEEK');
 
 						$fields['STATUS'] = self::STATUS_OPERATOR;
 						$updateDateCrmClose = $dateCrmClose;
@@ -1736,11 +1756,12 @@ class Session
 		}
 
 		if (
-			isset($fields['DATE_LAST_MESSAGE']) &&
-			$this->session['DATE_CREATE']
+			isset($fields['DATE_LAST_MESSAGE'])
+			&& $fields['DATE_LAST_MESSAGE'] instanceof DateTime
+			&& $this->session['DATE_CREATE'] instanceof DateTime
 		)
 		{
-			$fields['TIME_DIALOG'] = $fields['DATE_LAST_MESSAGE']->getTimestamp()-$this->session['DATE_CREATE']->getTimestamp();
+			$fields['TIME_DIALOG'] = $fields['DATE_LAST_MESSAGE']->getTimestamp() - $this->session['DATE_CREATE']->getTimestamp();
 		}
 
 		if(
@@ -1813,8 +1834,8 @@ class Session
 
 			Model\SessionCheckTable::delete($this->session['ID']);
 		}
-		//END The actual closing
-		else if (isset($fields['PAUSE']))
+
+		elseif (isset($fields['PAUSE']))
 		{
 			if ($fields['PAUSE'] == 'Y')
 			{
@@ -1928,19 +1949,19 @@ class Session
 				{
 					if ($updateCheckTable['DATE_CLOSE'])
 					{
-						$dateClose = clone $updateCheckTable['DATE_CLOSE'];
+						$dateCheckClose = clone $updateCheckTable['DATE_CLOSE'];
 					}
 					else
 					{
-						$dateClose = new Main\Type\DateTime();
+						$dateCheckClose = new Main\Type\DateTime();
 					}
-					$dateClose->add($this->getConfig('AUTO_CLOSE_TIME').' SECONDS');
-					$dateClose->add('1 DAY');
+					$dateCheckClose->add($this->getConfig('AUTO_CLOSE_TIME').' SECONDS');
+					$dateCheckClose->add('1 DAY');
 
 					$crmManager = new Crm($this);
 					if($crmManager->isLoaded())
 					{
-						$crmManager->setSessionDataClose($dateClose);
+						$crmManager->setSessionDataClose($dateCheckClose);
 					}
 				}
 			}
@@ -2234,90 +2255,99 @@ class Session
 
 			$connectorKeyboard = [];
 
-			if(!empty($configTask['TEXT_BUTTON_CLOSE']))
+			if (!empty($configTask['TEXT_BUTTON_CLOSE']))
 			{
 				$bottomColor = '#86AE1E';
 				$textColor = '#fff';
 
-				$operatorKeyboard->addButton(
-					[
-						'TEXT' => $configTask['TEXT_BUTTON_CLOSE'],
-						'ACTION' => 'SEND',
-						'ACTION_VALUE' => $configTask['LONG_TEXT_BUTTON_CLOSE'],
-						'BG_COLOR' => $bottomColor,
-						'TEXT_COLOR' =>$textColor,
-						'DISPLAY' => 'LINE',
-						'DISABLED' => 'Y'
-					]
-				);
+				$operatorKeyboard->addButton([
+					'TEXT' => $configTask['TEXT_BUTTON_CLOSE'],
+					'ACTION' => 'SEND',
+					'ACTION_VALUE' => $configTask['LONG_TEXT_BUTTON_CLOSE'],
+					'BG_COLOR' => $bottomColor,
+					'TEXT_COLOR' => $textColor,
+					'DISPLAY' => 'LINE',
+					'DISABLED' => 'Y'
+				]);
 
 				$connectorKeyboard[] = [
 					'TEXT_BUTTON' => $configTask['TEXT_BUTTON_CLOSE'],
 					'LONG_TEXT' => $configTask['LONG_TEXT_BUTTON_CLOSE'],
 					'BOTTOM_COLOR' => $bottomColor,
 					'TEXT_COLOR' => $textColor,
-					'COMMAND' => 'sessionClose',
-					'SESSION_ID' => $this->session['ID'],
-					'TASK_ID' => $idTask,
-					'CONFIG_TASK_ID' => $idConfigTask,
+					'DISPLAY' => 'LINE',
+					'COMMAND' => \Bitrix\ImConnector\InteractiveMessage\Input::COMMAND_SESSION,
+					'COMMAND_PARAMS' => [
+						'COMMAND' => \Bitrix\ImConnector\InteractiveMessage\Input::COMMAND_SESSION_CLOSE,
+						'SESSION_ID' => $this->session['ID'],
+						'CHAT_ID' => $this->session['CHAT_ID'],
+						'TASK_ID' => $idTask,
+						'CONFIG_TASK_ID' => $idConfigTask,
+					],
 				];
 			}
 
-			if(!empty($configTask['TEXT_BUTTON_CONTINUE']))
+			if (!empty($configTask['TEXT_BUTTON_CONTINUE']))
 			{
 				$bottomColor = '#EE322D';
 				$textColor = '#fff';
 
-				$operatorKeyboard->addButton(
-					[
-						'TEXT' => $configTask['TEXT_BUTTON_CONTINUE'],
-						'ACTION' => 'SEND',
-						'ACTION_VALUE' => $configTask['LONG_TEXT_BUTTON_CONTINUE'],
-						'BG_COLOR' => $bottomColor,
-						'TEXT_COLOR' =>$textColor,
-						'DISPLAY' => 'LINE',
-						'DISABLED' => 'Y'
-					]
-				);
+				$operatorKeyboard->addButton([
+					'TEXT' => $configTask['TEXT_BUTTON_CONTINUE'],
+					'ACTION' => 'SEND',
+					'ACTION_VALUE' => $configTask['LONG_TEXT_BUTTON_CONTINUE'],
+					'BG_COLOR' => $bottomColor,
+					'TEXT_COLOR' => $textColor,
+					'DISPLAY' => 'LINE',
+					'DISABLED' => 'Y'
+				]);
 
 				$connectorKeyboard[] = [
 					'TEXT_BUTTON' => $configTask['TEXT_BUTTON_CONTINUE'],
 					'LONG_TEXT' => $configTask['LONG_TEXT_BUTTON_CONTINUE'],
 					'BOTTOM_COLOR' => $bottomColor,
 					'TEXT_COLOR' => $textColor,
-					'COMMAND' => 'sessionContinue',
-					'SESSION_ID' => $this->session['ID'],
-					'TASK_ID' => $idTask,
-					'CONFIG_TASK_ID' => $idConfigTask,
+					'DISPLAY' => 'LINE',
+					'COMMAND' => \Bitrix\ImConnector\InteractiveMessage\Input::COMMAND_SESSION,
+					'COMMAND_PARAMS' => [
+						'COMMAND' => \Bitrix\ImConnector\InteractiveMessage\Input::COMMAND_SESSION_CONTINUE,
+						'SESSION_ID' => $this->session['ID'],
+						'CHAT_ID' => $this->session['CHAT_ID'],
+						'TASK_ID' => $idTask,
+						'CONFIG_TASK_ID' => $idConfigTask,
+					],
 				];
 			}
 
-			if(!empty($configTask['TEXT_BUTTON_NEW']))
+			if (!empty($configTask['TEXT_BUTTON_NEW']))
 			{
 				$bottomColor = '#0CA7D9';
 				$textColor = '#fff';
 
-				$operatorKeyboard->addButton(
-					[
-						'TEXT' => $configTask['TEXT_BUTTON_NEW'],
-						'ACTION' => 'SEND',
-						'ACTION_VALUE' => $configTask['LONG_TEXT_BUTTON_NEW'],
-						'BG_COLOR' => $bottomColor,
-						'TEXT_COLOR' =>$textColor,
-						'DISPLAY' => 'LINE',
-						'DISABLED' => 'Y'
-					]
-				);
+				$operatorKeyboard->addButton([
+					'TEXT' => $configTask['TEXT_BUTTON_NEW'],
+					'ACTION' => 'SEND',
+					'ACTION_VALUE' => $configTask['LONG_TEXT_BUTTON_NEW'],
+					'BG_COLOR' => $bottomColor,
+					'TEXT_COLOR' => $textColor,
+					'DISPLAY' => 'LINE',
+					'DISABLED' => 'Y'
+				]);
 
 				$connectorKeyboard[] = [
 					'TEXT_BUTTON' => $configTask['TEXT_BUTTON_NEW'],
 					'LONG_TEXT' => $configTask['LONG_TEXT_BUTTON_NEW'],
 					'BOTTOM_COLOR' => $bottomColor,
 					'TEXT_COLOR' => $textColor,
-					'COMMAND' => 'sessionNew',
-					'SESSION_ID' => $this->session['ID'],
-					'TASK_ID' => $idTask,
-					'CONFIG_TASK_ID' => $idConfigTask,
+					'DISPLAY' => 'LINE',
+					'COMMAND' => \Bitrix\ImConnector\InteractiveMessage\Input::COMMAND_SESSION,
+					'COMMAND_PARAMS' => [
+						'COMMAND' => \Bitrix\ImConnector\InteractiveMessage\Input::COMMAND_SESSION_NEW,
+						'SESSION_ID' => $this->session['ID'],
+						'CHAT_ID' => $this->session['CHAT_ID'],
+						'TASK_ID' => $idTask,
+						'CONFIG_TASK_ID' => $idConfigTask,
+					],
 				];
 			}
 

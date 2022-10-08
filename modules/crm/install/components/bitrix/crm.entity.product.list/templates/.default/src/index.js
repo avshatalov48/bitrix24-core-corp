@@ -1,3 +1,4 @@
+import 'ui.design-tokens';
 import './css/product.list.css';
 import './css/total.css';
 import './css/store.available.popup.css';

@@ -22,6 +22,7 @@ $APPLICATION->IncludeComponent(
 			'PATH_TO_EDIT' => $arResult['PATH_TO_EDIT'],
 			'SET_TITLE' => 'Y',
 		],
-		'USE_UI_TOOLBAR' => 'Y'
+		'USE_UI_TOOLBAR' => 'Y',
+		'USE_PADDING' => false,
 	)
 );

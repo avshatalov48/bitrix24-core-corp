@@ -113,7 +113,8 @@ $APPLICATION->IncludeComponent(
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Order,
 			'GUID' => "{$guid}_timeline",
 			'ENABLE_WAIT' => true,
-			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES']
+			'WAIT_TARGET_DATES' => $arResult['WAIT_TARGET_DATES'],
+			'ENABLE_SALESCENTER' => false,
 		),
 		'ENABLE_PROGRESS_BAR' => false,
 		'ACTIVITY_EDITOR_ID' => $activityEditorID,

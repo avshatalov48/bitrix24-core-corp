@@ -19,6 +19,8 @@ $documentRoot = \Bitrix\Main\Application::getDocumentRoot();
 $messages = Loc::loadLanguageFile(__FILE__);
 
 CJSCore::Init([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'disk',
 	'disk_information_popups',
 	'sidepanel',

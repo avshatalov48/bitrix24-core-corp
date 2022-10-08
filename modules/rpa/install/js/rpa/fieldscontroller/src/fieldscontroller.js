@@ -7,6 +7,7 @@ import {MenuManager, Menu} from 'main.popup';
 
 import {Manager} from 'rpa.manager';
 
+import 'ui.design-tokens';
 import 'ui.switcher';
 
 /**

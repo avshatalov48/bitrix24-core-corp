@@ -283,7 +283,7 @@ BX.namespace("Tasks.Component");
 		);
 
 		var id = data["ID"];
-		var date = BX.formatDate(BX.parseDate(data["CREATED_DATE"]), BX.message("FORMAT_DATETIME"));
+		var date = data["CREATED_DATE"];
 		var comment = data["COMMENT_TEXT"];
 
 		var time = data["SECONDS"];

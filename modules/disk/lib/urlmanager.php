@@ -838,7 +838,7 @@ class UrlManager implements IErrorable
 			$accessPoints = \CUrlRewriter::getList(array('ID' => 'bitrix:disk.services'));
 			if(empty($accessPoints))
 			{
-				$rewriteCondition = "#^/disk/(?<action>[0-9a-zA-Z]+)/(?<fileId>[0-9]+)/(.*)$#";
+				$rewriteCondition = "#^/disk/(?<action>[0-9a-zA-Z]+)/(?<fileId>[0-9]+)/\?#";
 			}
 			else
 			{

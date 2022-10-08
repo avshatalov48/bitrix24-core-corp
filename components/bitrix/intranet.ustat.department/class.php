@@ -13,7 +13,7 @@ class IntranetUstatDepartment extends \CBitrixComponent implements \Bitrix\Main\
 	public function configureActions()
 	{
 		$defaultPrefilters = [
-			new \Bitrix\Intranet\ActionFilter\UserType(['employee']),
+			new \Bitrix\Intranet\ActionFilter\UserType(['employee', 'extranet']),
 		];
 
 		return [

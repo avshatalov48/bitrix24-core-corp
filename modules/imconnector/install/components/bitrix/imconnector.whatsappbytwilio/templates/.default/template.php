@@ -115,7 +115,10 @@ if(empty($arResult['PAGE']))
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO_CONNECT_ID')])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+							'#LINK_START#' => '<a href="#" id="imconnector-whatsappbytwilio-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 
 					<div class="imconnector-field-box-content-btn">
@@ -177,7 +180,10 @@ else
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INFO_CONNECT_ID')])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP_NEW', [
+								'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-whatsappbytwilio-link-help">',
+								'#LINK_END#' => '</a>',
+							])?>
 					</div>
 					<?
 				}

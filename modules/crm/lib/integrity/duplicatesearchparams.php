@@ -9,6 +9,9 @@ class DuplicateSearchParams
 	protected $enablePermissionCheck = false;
 	protected $enableRanking = false;
 
+	protected ?int $entityTypeId = null;
+	protected ?int $categoryId = null;
+
 	public function __construct($fieldNames = array(), $userID = 0, $enablePermissionCheck = false)
 	{
 		$this->setFieldNames($fieldNames);
@@ -53,5 +56,26 @@ class DuplicateSearchParams
 	public function getFieldNames()
 	{
 		return $this->fieldNames;
+	}
+
+	public function getEntityTypeId(): ?int
+	{
+		return $this->entityTypeId;
+	}
+
+	public function setEntityTypeId(?int $entityTypeId): void
+	{
+		$this->entityTypeId = $entityTypeId;
+	}
+
+
+	public function getCategoryId(): ?int
+	{
+		return $this->categoryId;
+	}
+
+	public function setCategoryId(?int $categoryId): void
+	{
+		$this->categoryId = $categoryId;
 	}
 }

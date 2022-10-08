@@ -16,7 +16,10 @@ global $APPLICATION;
 $presetListManagerId = 'PresetListManager_'.$arResult['COMPONENT_ID'];
 $presetAddFormId = 'PresetListManager_'.$arResult['COMPONENT_ID'].'_FormPresetAdd';
 
-\Bitrix\Main\UI\Extension::load('ui.design-tokens');
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans'
+]);
 
 $presetUfieldsUrl = str_replace(
 	array('#entity_type#'),

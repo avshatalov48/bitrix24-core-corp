@@ -342,7 +342,7 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 					{
 						$arSections = array();
 
-						$dbRes = CIBlockSection::GetList(array('left_margin' => asc), array(
+						$dbRes = CIBlockSection::GetList(array('left_margin' => 'ASC'), array(
 							'IBLOCK_ID' => $IBLOCK_ID,
 							'SECTION_ID' => $dpt_parent
 						));

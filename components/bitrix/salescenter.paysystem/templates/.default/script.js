@@ -525,7 +525,7 @@
 				var descriptionEditor = this.lookupDescriptionEditor(innerDoc);
 				if (descriptionEditor)
 				{
-					descriptionEditor.SetEditorContent(commonSettingsFormData.DESCRIPTION);
+					descriptionEditor.SetEditorContent(BX.util.htmlspecialchars(commonSettingsFormData.DESCRIPTION));
 					descriptionEditor.SaveContent();
 					if (descriptionEditor.pEditorDocument)
 					{
@@ -552,7 +552,7 @@
 				if (descriptionEditor)
 				{
 					descriptionEditor.SaveContent();
-					paySystemFormData.DESCRIPTION = descriptionEditor.GetContent();
+					paySystemFormData.DESCRIPTION = BX.util.htmlspecialcharsback(descriptionEditor.GetContent());
 				}
 			}
 			catch (err)

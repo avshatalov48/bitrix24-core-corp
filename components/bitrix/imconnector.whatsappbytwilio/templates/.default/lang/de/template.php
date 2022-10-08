@@ -7,10 +7,12 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECTED"] = "WhatsApp verbunden"
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">Ich möchte</div>
 				<div class=\"imconnector-field-button-name\"> WhatsApp über Twilio <span class=\"imconnector-field-box-text-bold\">verbinden</span></div>";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP"] = "Nutzen Sie folgende <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">Anleitung</a>, um WhatsApp Account zu verbinden";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP_NEW"] = "#LINK_START#Folgen Sie der Anleitung#LINK_END#, um WhatsApp zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_TITLE"] = "WhatsApp mit dem Kommunikationskanal verbinden";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_COPY"] = "Kopieren";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_FINAL_FORM_DESCRIPTION"] = "WhatsApp wurde mit Ihrem Kommunikationskanal verbunden. Von nun an können Sie alle Nachrichten in Ihrem Bitrix24 sehen.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION"] = "<a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\');return false;\">Folgen Sie den Anleitungen</a>, um WhatsApp mit Bitrix24 zu verbinden.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "#LINK_START#Folgen Sie der Anleitung#LINK_END#, um WhatsApp zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_1"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_2"] = "Begleiten Sie Ihre Kunden durch den Sales Funnel im CRM";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_3"] = "Antworten Sie Ihren Kunden dann und dort, wann und wo sie dies bevorzugen";

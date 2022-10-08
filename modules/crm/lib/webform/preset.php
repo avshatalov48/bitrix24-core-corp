@@ -116,7 +116,7 @@ class Preset
 		{
 			$filter['=XML_ID'] = $xmlId;
 		}
-		$formDb = Internals\FormTable::getList([
+		$formDb = Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID'],
 			'filter' => $filter,
 		]);
@@ -464,7 +464,7 @@ class Preset
 	 */
 	public static function installVersion2()
 	{
-		$formDb = Internals\FormTable::getList([
+		$formDb = Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID'],
 			'filter' => [
 				'IS_SYSTEM' => 'Y'

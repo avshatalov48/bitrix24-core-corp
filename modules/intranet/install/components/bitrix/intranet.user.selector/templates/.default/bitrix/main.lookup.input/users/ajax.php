@@ -14,7 +14,7 @@ CModule::IncludeModule('socialnetwork');
 if (!$USER->IsAuthorized()/* || CModule::IncludeModule('extranet') && !CExtranet::IsIntranetUser() && !$USER->IsAdmin()*/)
 	die();
 
-__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 if ($_REQUEST['MODE'] == 'SEARCH')
 {

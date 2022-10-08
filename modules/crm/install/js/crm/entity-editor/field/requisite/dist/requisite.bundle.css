@@ -13,7 +13,7 @@
 .crm-rq-org-item {
 	padding: 9px 18px 13px;
 	border: 1px solid #e9ebee;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-sm, 2px);
 	margin-bottom: 14px;
 	-webkit-transition: 250ms linear all;
 	-o-transition: 250ms linear all;
@@ -70,18 +70,18 @@
 .crm-rq-org-item.crm-rq-org-item-selected::before {opacity: 1;}
 
 .crm-rq-org-name {
-	font: bold 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 }
 
 .crm-rq-org-description {
-	font: 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	margin-bottom: 11px;
 }
 
 .crm-rq-org-requisite-title {
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a3a9b1;
 	margin-bottom: 13px;
 }
@@ -105,7 +105,7 @@
 }
 
 .crm-rq-org-requisite-info {
-	font: 14px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	display: block;
 }

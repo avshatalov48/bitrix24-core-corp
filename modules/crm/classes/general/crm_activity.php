@@ -149,6 +149,12 @@ class CAllCrmActivity
 			));
 		}
 
+		$isIncomingChannel = ($arFields['IS_INCOMING_CHANNEL'] === 'Y');
+		if ($isIncomingChannel)
+		{
+			\Bitrix\Crm\Activity\IncomingChannel::getInstance()->register($ID, (int)$arFields['RESPONSIBLE_ID'], $arFields['COMPLETED'] === 'Y');
+		}
+
 		$arFields['ID'] = $ID;
 		$arFields['SETTINGS'] = isset($arFields['SETTINGS']) ? unserialize($arFields['SETTINGS'], ['allowed_classes' => false]) : array();
 		$arFields['PROVIDER_PARAMS'] = isset($arFields['PROVIDER_PARAMS']) ? unserialize($arFields['PROVIDER_PARAMS'], ['allowed_classes' => false]) : array();
@@ -184,7 +190,7 @@ class CAllCrmActivity
 			);
 		}
 
-		self::SaveBindings($ID, $arBindings, false, false);
+		self::SaveBindings($ID, $arBindings, false, false, false);
 		if(isset($arFields['COMMUNICATIONS']) && is_array($arFields['COMMUNICATIONS']))
 		{
 			self::SaveCommunications($ID, $arFields['COMMUNICATIONS'], $arFields, false, false);
@@ -217,6 +223,16 @@ class CAllCrmActivity
 				}
 			}
 			unset($arBinding);
+		}
+
+		if (!$completed)
+		{
+			\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForBindingsAndResponsibles(
+				$arBindings,
+				[
+					0, $arFields['RESPONSIBLE_ID']
+				]
+			);
 		}
 
 		\Bitrix\Crm\Activity\CommunicationStatistics::registerActivity($arFields);
@@ -262,7 +278,10 @@ class CAllCrmActivity
 					$counterCodes,
 					EntityCounterManager::prepareCodes(
 						$arBinding['OWNER_TYPE_ID'],
-						EntityCounterType::getAll(true),
+						$isIncomingChannel
+							? EntityCounterType::getAll(true)
+							: EntityCounterType::getAllDeadlineBased(true)
+						,
 						array('ENTITY_ID' => $arBinding['OWNER_ID'], 'EXTENDED_MODE' => true)
 					)
 				);
@@ -552,12 +571,14 @@ class CAllCrmActivity
 			return false; // is not exists
 		}
 
+		$needRegisterUncompletedActivities = false;
 		if(is_array($arBindings))
 		{
 			$bindingsChanged = !self::IsBindingsEquals($arBindings, $arPrevBindings);
 			if($bindingsChanged)
 			{
-				self::SaveBindings($ID, $arBindings, false, false);
+				self::SaveBindings($ID, $arBindings, false, false, false);
+				$needRegisterUncompletedActivities = true;
 			}
 		}
 		else
@@ -570,25 +591,70 @@ class CAllCrmActivity
 		{
 			self::SaveCommunications($ID, $arFields['COMMUNICATIONS'], $arFields, false, false);
 		}
+		$responsibleID = (int)(
+			$arFields['RESPONSIBLE_ID']
+			?? $arPrevEntity['RESPONSIBLE_ID']
+			?? 0
+		);
 
 		$prevCompleted = isset($arPrevEntity['COMPLETED']) && $arPrevEntity['COMPLETED'] === 'Y';
+		$prevCompletedForStatistics = $prevCompleted;
 		if($prevCompleted && isset($arPrevEntity['STATUS']))
 		{
-			$prevCompleted = $arPrevEntity['STATUS'] == CCrmActivityStatus::Completed;
+			$prevCompletedForStatistics = $arPrevEntity['STATUS'] == CCrmActivityStatus::Completed;
 		}
 
 		$curCompleted = isset($arCurEntity['COMPLETED']) && $arCurEntity['COMPLETED'] === 'Y';
+		$curCompletedForStatistics = $curCompleted;
 		if($curCompleted && isset($arCurEntity['STATUS']))
 		{
-			$curCompleted = $arCurEntity['STATUS'] == CCrmActivityStatus::Completed;
+			$curCompletedForStatistics = $arCurEntity['STATUS'] == CCrmActivityStatus::Completed;
+		}
+
+		$incomingChannel = \Bitrix\Crm\Activity\IncomingChannel::getInstance();
+		// IS_INCOMING_CHANNEL changed
+		if (isset($arFields['IS_INCOMING_CHANNEL']))
+		{
+			if ($arFields['IS_INCOMING_CHANNEL'] === 'Y')
+			{
+				$incomingChannel->register($ID, $responsibleID, $curCompleted);
+			}
+			if ($arFields['IS_INCOMING_CHANNEL'] === 'N')
+			{
+				$incomingChannel->unregister($ID);
+			}
+			$needRegisterUncompletedActivities = true;
+		}
+		// RESPONSIBLE_ID changed
+		elseif (isset($arFields['RESPONSIBLE_ID']) && $responsibleID != $arPrevEntity['RESPONSIBLE_ID'])
+		{
+			if ($incomingChannel->isIncomingChannel($ID))
+			{
+				$incomingChannel->register($ID, $responsibleID, $curCompleted);
+			}
+			$needRegisterUncompletedActivities = true;
+		}
+		// COMPLETED changed
+		elseif ($prevCompleted != $curCompleted)
+		{
+			if ($incomingChannel->isIncomingChannel($ID))
+			{
+				$incomingChannel->register($ID, $responsibleID, $curCompleted);
+			}
+			$needRegisterUncompletedActivities = true;
 		}
 
 		$prevDeadline = isset($arPrevEntity['DEADLINE']) ? $arPrevEntity['DEADLINE'] : '';
 		$curDeadline = isset($arCurEntity['DEADLINE']) ? $arCurEntity['DEADLINE'] : '';
 
-		if($prevCompleted
+		if ($prevDeadline !== $curDeadline)
+		{
+			$needRegisterUncompletedActivities = true;
+		}
+
+		if($prevCompletedForStatistics
 			&& $prevDeadline
-			&& ($bindingsChanged || $prevCompleted != $curCompleted || $prevDeadline !== $curDeadline))
+			&& ($bindingsChanged || $prevCompletedForStatistics != $curCompletedForStatistics || $prevDeadline !== $curDeadline))
 		{
 			$deadline = new \Bitrix\Main\Type\DateTime($prevDeadline);
 			$deadline->setTime(0, 0, 0);
@@ -610,7 +676,7 @@ class CAllCrmActivity
 			}
 		}
 
-		if($curCompleted && $curDeadline !== '')
+		if($curCompletedForStatistics && $curDeadline !== '')
 		{
 			$deadline = new \Bitrix\Main\Type\DateTime($curDeadline);
 			$deadline->setTime(0, 0, 0);
@@ -647,9 +713,6 @@ class CAllCrmActivity
 
 		// Synchronize user activity -->
 		$arSyncKeys = array();
-		$responsibleID = isset($arFields['RESPONSIBLE_ID'])
-			? intval($arFields['RESPONSIBLE_ID'])
-			: (isset($arPrevEntity['RESPONSIBLE_ID']) ? intval($arPrevEntity['RESPONSIBLE_ID']) : 0);
 
 		$counterCodes = EntityCounterManager::prepareCodes(CCrmOwnerType::Activity, EntityCounterType::CURRENT);
 		foreach($arBindings as $arBinding)
@@ -704,6 +767,24 @@ class CAllCrmActivity
 			}
 		}
 		// <-- Synchronize user activity
+
+		if ($needRegisterUncompletedActivities)
+		{
+			$bindingsToRegister = $arPrevBindings;
+			if ($bindingsChanged)
+			{
+				$bindingsToRegister = array_merge($bindingsToRegister, $arBindings);
+			}
+			$usersToRegister = [0, $arPrevEntity['RESPONSIBLE_ID']];
+			if (isset($arFields['RESPONSIBLE_ID']))
+			{
+				$usersToRegister[] = $arFields['RESPONSIBLE_ID'];
+			}
+			\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForBindingsAndResponsibles(
+				$bindingsToRegister,
+				$usersToRegister
+			);
+		}
 
 		if($regEvent)
 		{
@@ -891,6 +972,8 @@ class CAllCrmActivity
 			return false; //is not found
 		}
 
+		$incomingChannel = \Bitrix\Crm\Activity\IncomingChannel::getInstance();
+		$isIncomingChannel = $incomingChannel->isIncomingChannel($ID);
 		if(!$movedToRecycleBin && \Bitrix\Crm\Recycling\ActivityController::isEnabled())
 		{
 			$enableRecycleBin = (isset($options['ENABLE_RECYCLE_BIN']) && $options['ENABLE_RECYCLE_BIN'])
@@ -898,6 +981,7 @@ class CAllCrmActivity
 
 			if($enableRecycleBin)
 			{
+				$ary['IS_INCOMING_CHANNEL'] = $isIncomingChannel ? 'Y' : 'N';
 				$recycleBinResult = \Bitrix\Crm\Recycling\ActivityController::getInstance()->moveToBin(
 					$ID,
 					array('FIELDS' => $ary)
@@ -910,6 +994,8 @@ class CAllCrmActivity
 					$resultData = $recycleBinResult->getData();
 					if(is_array($resultData) && isset($resultData['isDeleted']) && $resultData['isDeleted'])
 					{
+						$incomingChannel->unregister($ID);
+
 						return true;
 					}
 				}
@@ -931,6 +1017,7 @@ class CAllCrmActivity
 		}
 
 		$USER_FIELD_MANAGER->Delete(static::UF_ENTITY_TYPE, $ID);
+		$incomingChannel->unregister($ID);
 
 		$responsibleID = isset($ary['RESPONSIBLE_ID']) ? (int)$ary['RESPONSIBLE_ID'] : 0;
 		// Synchronize user activity -->
@@ -1007,7 +1094,10 @@ class CAllCrmActivity
 						$counterCodes,
 						EntityCounterManager::prepareCodes(
 							$arBinding['OWNER_TYPE_ID'],
-							EntityCounterType::getAll(true),
+							$isIncomingChannel
+								? EntityCounterType::getAll(true)
+								: EntityCounterType::getAllDeadlineBased(true)
+							,
 							array('ENTITY_ID' => $arBinding['OWNER_ID'], 'EXTENDED_MODE' => true)
 						)
 					);
@@ -1017,6 +1107,12 @@ class CAllCrmActivity
 					EntityCounterManager::reset($counterCodes, array($responsibleID));
 				}
 			}
+			\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForBindingsAndResponsibles(
+				$arBindings,
+				[
+					0, $responsibleID
+				]
+			);
 		}
 
 		$skipAssocEntity = isset($options['SKIP_ASSOCIATED_ENTITY']) ? (bool)$options['SKIP_ASSOCIATED_ENTITY'] : false;
@@ -1042,9 +1138,23 @@ class CAllCrmActivity
 		\Bitrix\Crm\Statistics\ActivityStatisticEntry::unregister($ID);
 		\Bitrix\Crm\Integration\Channel\ActivityChannelBinding::unregisterAll($ID);
 
+		if (isset($recycleBinResult))
+		{
+			$recycleBinEntityId = $recycleBinResult->getData()['recyclingEntityId'];
+		}
+		else
+		{
+			$recycleBinEntityId = Crm\Recycling\ActivityController::getInstance()->getRecyclingEntityId($ID);
+		}
+
 		\Bitrix\Crm\Timeline\ActivityController::getInstance()->onDelete(
 			$ID,
-			array('FIELDS' => $ary, 'BINDINGS' => $arBindings, 'MOVED_TO_RECYCLE_BIN' => $movedToRecycleBin)
+			[
+				'FIELDS' => $ary,
+				'BINDINGS' => $arBindings,
+				'MOVED_TO_RECYCLE_BIN' => $movedToRecycleBin,
+				'RECYCLE_BIN_ENTITY_ID' => $recycleBinEntityId,
+			]
 		);
 
 		\Bitrix\Crm\Ml\Scoring::onActivityDelete($ID);
@@ -1095,7 +1205,7 @@ class CAllCrmActivity
 		$result = true;
 		if(!(isset($options['SKIP_BINDINGS']) && $options['SKIP_BINDINGS']))
 		{
-			$result = self::DeleteBindings($ID);
+			$result = self::DeleteBindings($ID, false);
 		}
 
 		if($result && !(isset($options['SKIP_COMMUNICATIONS']) && $options['SKIP_COMMUNICATIONS']))
@@ -1734,7 +1844,6 @@ class CAllCrmActivity
 		//DEADLINE
 		if($action == 'ADD' && !isset($fields['DEADLINE']) && !isset($fields['~DEADLINE']))
 		{
-			$start = null;
 			if(isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
 			{
 				$fields['DEADLINE'] = $fields['START_TIME'];
@@ -1748,6 +1857,21 @@ class CAllCrmActivity
 				$fields['~DEADLINE'] = CCrmDateTimeHelper::GetMaxDatabaseDate();
 			}
 		}
+		// incoming channel activity cannot have a deadline
+		if ($fields['IS_INCOMING_CHANNEL'] === 'Y')
+		{
+			unset($fields['DEADLINE']);
+			$fields['~DEADLINE'] = CCrmDateTimeHelper::GetMaxDatabaseDate();
+		}
+
+		if (
+			$action !== 'ADD'
+			&& !isset($fields['IS_INCOMING_CHANNEL'])
+			&& \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel($ID)
+		)
+		{
+			unset($fields['DEADLINE']);
+		}
 
 		if (empty($params['DISABLE_USER_FIELD_CHECK']))
 		{
@@ -1760,7 +1884,7 @@ class CAllCrmActivity
 
 		return self::GetErrorCount() == 0;
 	}
-	public static function DeleteBindings($activityID)
+	public static function DeleteBindings($activityID, $registerUncompletedActivities = true)
 	{
 		$activityID = intval($activityID);
 		if($activityID <= 0)
@@ -1769,6 +1893,11 @@ class CAllCrmActivity
 		}
 
 		global $DB;
+
+		if ($registerUncompletedActivities)
+		{
+			\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForActivity($activityID);
+		}
 
 		$DB->Query(
 			'DELETE FROM '.CCrmActivity::BINDING_TABLE_NAME.' WHERE ACTIVITY_ID = '.$activityID,
@@ -2268,7 +2397,7 @@ class CAllCrmActivity
 		}
 
 	}
-	public static function SaveBindings($ID, $arBindings, $registerEvents = true, $checkPerms = true)
+	public static function SaveBindings($ID, $arBindings, $registerEvents = true, $checkPerms = true, $registerUncompletedActivities = true)
 	{
 		$result = array();
 		foreach($arBindings as $arBinding)
@@ -2288,7 +2417,7 @@ class CAllCrmActivity
 		}
 
 		$effectiveBindings = array_values($result);
-		CCrmActivity::DoSaveBindings($ID, $effectiveBindings);
+		CCrmActivity::DoSaveBindings($ID, $effectiveBindings, $registerUncompletedActivities);
 		Crm\Timeline\ActivityController::synchronizeBindings($ID, $effectiveBindings);
 	}
 	public static function GetBindings($ID)
@@ -2536,6 +2665,13 @@ class CAllCrmActivity
 				self::SynchronizeUserActivity($ownerTypeID, $newOwnerID, $responsibleID);
 			}
 		}
+		\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForBindingsAndResponsibles(
+			[
+				['OWNER_TYPE_ID' => $ownerTypeID, 'OWNER_ID' => $oldOwnerID],
+				['OWNER_TYPE_ID' => $ownerTypeID, 'OWNER_ID' => $newOwnerID],
+			],
+			array_merge([0], $responsibleIDs)
+		);
 
 		if($enableCalendarEvents)
 		{
@@ -2745,7 +2881,7 @@ class CAllCrmActivity
 			}
 
 			$bindings[] = array('OWNER_TYPE_ID' => $targOwnerTypeID, 'OWNER_ID' => $targOwnerID);
-			self::SaveBindings($itemID, $bindings, false, false);
+			self::SaveBindings($itemID, $bindings, false, false, false);
 			$processed++;
 
 			$responsibleID = isset($fields['RESPONSIBLE_ID']) ? (int)$fields['RESPONSIBLE_ID'] : 0;
@@ -2779,6 +2915,12 @@ class CAllCrmActivity
 				$responsibleIDs
 			);
 		}
+		\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForBindingsAndResponsibles(
+			[
+				['OWNER_TYPE_ID' => $targOwnerTypeID, 'OWNER_ID' => $targOwnerID]
+			],
+			array_merge($responsibleIDs, [0])
+		);
 		self::SynchronizeUserActivity($targOwnerTypeID, $targOwnerID, 0);
 		\Bitrix\Crm\Activity\CommunicationStatistics::rebuild($targOwnerTypeID, array($targOwnerID));
 	}
@@ -2825,7 +2967,7 @@ class CAllCrmActivity
 			}
 
 			array_splice($bindings, $bindingIndex, 1);
-			self::SaveBindings($itemID, $bindings, false, false);
+			self::SaveBindings($itemID, $bindings, false, false, false);
 			$processed++;
 
 			$responsibleID = isset($fields['RESPONSIBLE_ID']) ? (int)$fields['RESPONSIBLE_ID'] : 0;
@@ -2859,6 +3001,12 @@ class CAllCrmActivity
 				$responsibleIDs
 			);
 		}
+		\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForBindingsAndResponsibles(
+			[
+				['OWNER_TYPE_ID' => $targOwnerTypeID, 'OWNER_ID' => $targOwnerID]
+			],
+			array_merge($responsibleIDs, [0])
+		);
 		self::SynchronizeUserActivity($targOwnerTypeID, $targOwnerID, 0);
 		\Bitrix\Crm\Activity\CommunicationStatistics::rebuild($targOwnerTypeID, array($targOwnerID));
 	}
@@ -3924,6 +4072,11 @@ class CAllCrmActivity
 			$parseResult = \CCrmOwnerType::ParseEntitySlug(mb_strtoupper(trim($value)));
 			if(is_array($parseResult))
 			{
+				if ($parseResult['ENTITY_TYPE_ID'] === \CCrmOwnerType::Order && !\CCrmSaleHelper::isWithOrdersMode())
+				{
+					continue;
+				}
+
 				$ownerTypeName = \CCrmOwnerType::ResolveName($parseResult['ENTITY_TYPE_ID']);
 				$ownerID = $parseResult['ENTITY_ID'];
 			}
@@ -4382,6 +4535,8 @@ class CAllCrmActivity
 
 		$connection = \Bitrix\Main\Application::getConnection();
 
+		Crm\Activity\UncompletedActivity::unregister(new \Bitrix\Crm\ItemIdentifier($ownerTypeID, $ownerID));
+
 		//region Delete unbound items
 		$deleteMap = array();
 		$dbResult = $connection->query(/** @lang MySQL */
@@ -4498,6 +4653,12 @@ class CAllCrmActivity
 			while($arRes = $dbRes->Fetch())
 			{
 				$processedIDs[] = intval($arRes['ACTIVITY_ID']);
+				Crm\Activity\UncompletedActivity::synchronizeForActivity((int)$arRes['ACTIVITY_ID'], [
+					[
+						'OWNER_TYPE_ID' => $ownerTypeID,
+						'OWNER_ID' => $ownerID,
+					]
+				]);
 			}
 		}
 

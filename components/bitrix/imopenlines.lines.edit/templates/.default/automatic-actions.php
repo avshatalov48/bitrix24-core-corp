@@ -1,6 +1,16 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
-use \Bitrix\Main\Localization\Loc; ?>
+use \Bitrix\Main\Localization\Loc;
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
+$sendWelcomeMessage = $arResult['CONFIG']['WELCOME_MESSAGE'] === 'Y';
+$sendWelcomeEachSession = $arResult['CONFIG']['SEND_WELCOME_EACH_SESSION'] === 'Y';
+
+?>
 
 <div class="imopenlines-form-settings-section">
 	<?if(!empty($arResult['ERROR'])):?>
@@ -20,16 +30,41 @@ use \Bitrix\Main\Localization\Loc; ?>
 					   name="CONFIG[WELCOME_MESSAGE]"
 					   value="Y"
 					   class="imopenlines-control-checkbox"
-					   <? if ($arResult['CONFIG']['WELCOME_MESSAGE'] === 'Y') { ?>checked<? } ?>>
-				<?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW')?>
-				<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TIP'))?>"></span>
+					   <?= $sendWelcomeMessage ? 'checked' : '' ?>>
+				<?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE')?>
 			</label>
 		</div>
-		<div class="imopenlines-control-container <? if ($arResult['CONFIG']['WELCOME_MESSAGE'] !== 'Y') { ?>invisible<? } ?>" id="imol_action_welcome">
-			<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TEXT')?></div>
-			<div class="imopenlines-control-inner">
+		<div  <?= !$sendWelcomeMessage ? 'class="invisible"' : '' ?> id="imol_welcome_message_block">
+			<div class="imopenlines-control-checkbox-container" id="imol_welcome_message_each_session_n">
+				<label class="imopenlines-control-checkbox-label">
+					<input type="radio"
+						   id="imol_send_welcome_each_session_n"
+						   name="CONFIG[SEND_WELCOME_EACH_SESSION]"
+						   value="N"
+						   class="imopenlines-control-checkbox"
+						<?= !$sendWelcomeEachSession ? 'checked' : '' ?>>
+					<?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_N_EACH_SESSION_NEW')?>
+					<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_N_EACH_SESSION_TIP'))?>"></span>
+				</label>
+			</div>
+			<div class="imopenlines-control-checkbox-container" id="imol_welcome_message_each_session_y">
+				<label class="imopenlines-control-checkbox-label">
+					<input type="radio"
+						   id="imol_send_welcome_each_session_y"
+						   name="CONFIG[SEND_WELCOME_EACH_SESSION]"
+						   value="Y"
+						   class="imopenlines-control-checkbox"
+						<?= $sendWelcomeEachSession ? 'checked' : '' ?>>
+					<?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_Y_EACH_SESSION')?>
+					<span data-hint-html data-hint="<?=htmlspecialcharsbx(Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_Y_EACH_SESSION_TIP'))?>"></span>
+				</label>
+			</div>
+			<div class="imopenlines-control-container" id="imol_action_welcome">
+				<div class="imopenlines-control-subtitle"><?=Loc::getMessage('IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TEXT')?></div>
+				<div class="imopenlines-control-inner">
 				<textarea type="text" class="imopenlines-control-input imopenlines-control-textarea"
-				name="CONFIG[WELCOME_MESSAGE_TEXT]"><?=htmlspecialcharsbx($arResult['CONFIG']['WELCOME_MESSAGE_TEXT'])?></textarea>
+						  name="CONFIG[WELCOME_MESSAGE_TEXT]"><?=htmlspecialcharsbx($arResult['CONFIG']['WELCOME_MESSAGE_TEXT'])?></textarea>
+				</div>
 			</div>
 		</div>
 	</div>

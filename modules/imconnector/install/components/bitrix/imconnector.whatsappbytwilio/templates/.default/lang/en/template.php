@@ -7,10 +7,12 @@ $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECTED"] = "WhatsApp connected"
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_HELP"] = "<div class=\"imconnector-field-button-subtitle\">I'd like to</div>
 				<div class=\"imconnector-field-button-name\"><span class=\"imconnector-field-box-text-bold\">connect</span> WhatsApp via Twilio</div>";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP"] = "Use the following <a onclick=\"top.BX.Helper.show('#ID#');\" class=\"imconnector-field-box-link\">instruction</a> to connect a WhatsApp account";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_STEP_NEW"] = "#LINK_START#Follow the instructions#LINK_END# to connect WhatsApp.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_CONNECT_TITLE"] = "Connect WhatsApp to your Open Channel";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_COPY"] = "Copy";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_FINAL_FORM_DESCRIPTION"] = "WhatsApp has been connected to your Open Channel. From now on, you will see all messages inside your Bitrix24.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION"] = "<a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\');return false;\">Follow the instructions</a> to connect WhatsApp to Bitrix24.";
+$MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "#LINK_START#Follow the instructions#LINK_END# to connect WhatsApp.";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_1"] = "Save contacts and communication history to the CRM";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_2"] = "Guide the customer through the sales funnel in the CRM";
 $MESS["IMCONNECTOR_COMPONENT_WHATSAPPBYTWILIO_INDEX_LIST_ITEM_3"] = "Reply to your customers when and where they prefer";

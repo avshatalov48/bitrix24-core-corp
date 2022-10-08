@@ -15,8 +15,21 @@ $messages = Loc::loadLanguageFile(Application::getDocumentRoot().$componentPath.
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.worktime.grid/templates/.default/violation-style.css');
 \Bitrix\Main\Loader::includeModule('ui');
 $timeHelper = TimeHelper::getInstance();
-Extension::load(['ui.buttons', 'ui.buttons.icons', 'ui.hint', 'loader', 'ui.forms', 'timeman.export']);
-CJSCore::Init(['timeman', 'sidepanel', 'date']);
+
+Extension::load([
+	'ui.design-tokens',
+	'ui.buttons',
+	'ui.buttons.icons',
+	'ui.hint',
+	'loader',
+	'ui.forms',
+	'timeman.export',
+	'ui.fonts.opensans',
+	'timeman',
+	'sidepanel',
+	'date',
+]);
+
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/js/timeman/component/basecomponent.js');
 \Bitrix\UI\Toolbar\Facade\Toolbar::addFilter([
 	'FILTER_ID' => $arResult['FILTER']['ID'],
@@ -95,7 +108,7 @@ endif; ?>
 					data-role="violations-toggle-enabled"
 					value="<?php echo $arResult['gridConfigOptions']['showViolationsItem'] ? 'Y' : 'N'; ?>">
 			<div class="timeman-top-title-month" data-role="tm-grid-navigation-arrows">
-				<a href="<?= $arResult['URLS']['PERIOD_PREV'] ?>" class="timeman-navigation-previous"
+				<a href="<?= htmlspecialcharsbx($arResult['URLS']['PERIOD_PREV']) ?>" class="timeman-navigation-previous"
 						data-start-datesel="<?= $arResult['URLS']['PERIOD_PREV_PARTS']['REPORT_PERIOD_datesel'] ?>"
 						data-start-to="<?= $arResult['URLS']['PERIOD_PREV_PARTS']['REPORT_PERIOD_to'] ?>"
 						data-start-from="<?= $arResult['URLS']['PERIOD_PREV_PARTS']['REPORT_PERIOD_from'] ?>"
@@ -110,7 +123,7 @@ endif; ?>
 					</h2>
 				</span>
 
-				<a href="<?= $arResult['URLS']['PERIOD_NEXT'] ?>" class="timeman-navigation-next"
+				<a href="<?= htmlspecialcharsbx($arResult['URLS']['PERIOD_NEXT']) ?>" class="timeman-navigation-next"
 						data-start-datesel="<?= $arResult['URLS']['PERIOD_NEXT_PARTS']['REPORT_PERIOD_datesel'] ?>"
 						data-start-to="<?= $arResult['URLS']['PERIOD_NEXT_PARTS']['REPORT_PERIOD_to'] ?>"
 						data-start-from="<?= $arResult['URLS']['PERIOD_NEXT_PARTS']['REPORT_PERIOD_from'] ?>"
@@ -122,7 +135,7 @@ endif; ?>
 
 		<div class="timeman-top-title-right">
 			<div class="timeman-top-title-today">
-				<a href="<?= $arResult['URLS']['PERIOD_TODAY'] ?>" class="timeman-top-title-today-text"
+				<a href="<?= htmlspecialcharsbx($arResult['URLS']['PERIOD_TODAY']) ?>" class="timeman-top-title-today-text"
 						data-role="tm-navigation-today"
 						data-start-datesel="<?= $arResult['URLS']['PERIOD_TODAY_PARTS']['REPORT_PERIOD_datesel'] ?>"
 						data-start-to="<?= $arResult['URLS']['PERIOD_TODAY_PARTS']['REPORT_PERIOD_to'] ?>"

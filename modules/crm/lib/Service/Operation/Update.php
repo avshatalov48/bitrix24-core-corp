@@ -271,8 +271,7 @@ class Update extends Operation
 
 		$factory = Container::getInstance()->getFactory($this->getItem()->getEntityTypeId());
 
-		//todo this will be false for company, but we still have to register bindings changed. Introduce another factory flag?
-		if ($factory->isClientEnabled())
+		if ($this->item->hasField(Item::FIELD_NAME_CONTACT_BINDINGS))
 		{
 			RelationController::getInstance()->registerEventsByBindingsChange(
 				$this->getItemIdentifier(),
@@ -291,7 +290,8 @@ class Update extends Operation
 				\CCrmOwnerType::Company,
 				$this->itemBeforeSave->remindActual(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
 				$this->item->get(Item\Contact::FIELD_NAME_COMPANY_BINDINGS),
-				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration()
+				$this->getItemsThatExcludedFromTimelineRelationEventsRegistration(),
+				$this->getContext()->getUserId(),
 			);
 		}
 

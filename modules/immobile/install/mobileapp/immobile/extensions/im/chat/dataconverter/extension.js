@@ -722,12 +722,15 @@ ChatDataConverter.getActionList = function(element)
 				fillOnSwipe: true,
 			});
 
-			result.push({
-				title : BX.message("ELEMENT_MENU_PROFILE"),
-				identifier : "profile",
-				color : "#3e99ce",
-				iconName : "action_userlist",
-			});
+			if (!element.user.bot)
+			{
+				result.push({
+					title : BX.message("ELEMENT_MENU_PROFILE"),
+					identifier : "profile",
+					color : "#3e99ce",
+					iconName : "action_userlist",
+				});
+			}
 
 			if (
 				!element.options

@@ -27,7 +27,11 @@ if (!$arResult['FORM']['LICENCE_BUTTON_CAPTION'])
 	$arResult['FORM']['LICENCE_BUTTON_CAPTION'] = Loc::getMessage('CRM_ORDERFORM_EDIT_LICENCE_BUTTON_CAPTION_DEFAULT');
 }
 
-CUtil::InitJSCore();
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.buttons",
+]);
 
 if (\Bitrix\Main\Loader::includeModule('socialnetwork'))
 {
@@ -40,7 +44,7 @@ if (\Bitrix\Main\Loader::includeModule('bitrix24'))
 }
 
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/core/core_dragdrop.js');
-\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.design-tokens"]);
+
 
 $APPLICATION->SetPageProperty(
 	'BodyClass',

@@ -1,6 +1,7 @@
 <?php
 $MESS["CRM_GEDA_EMPTY_TEMPLATE_ID"] = "Document template is not specified";
 $MESS["CRM_GEDA_MODULE_DOCGEN_ERROR"] = "The Document Generator module is not installed.";
+$MESS["CRM_GEDA_NAME_CREATE_ACTIVITY"] = "Add activity";
 $MESS["CRM_GEDA_NAME_DELETE"] = "Delete";
 $MESS["CRM_GEDA_NAME_MY_COMPANY_BANK_DETAIL_ID"] = "My company banking details";
 $MESS["CRM_GEDA_NAME_MY_COMPANY_ID"] = "My company";

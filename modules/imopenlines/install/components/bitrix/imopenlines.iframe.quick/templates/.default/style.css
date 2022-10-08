@@ -28,7 +28,7 @@
 	height: 100%;
 	margin: 0;
 	padding: 0;
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick.imopenlines-iframe-quick-dark {
@@ -155,7 +155,7 @@
 	color: var(--inp-color);
 	border: 1px solid var(--inp-border);
 	border-radius: 1px;
-	font: 14px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-color .3s;
 }
 
@@ -259,7 +259,8 @@
 	max-width: 430px;
 	max-height: 44px;
 	color: var(--result-item-color);
-	font: 13px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 	transition: color .3s;
 }
@@ -301,7 +302,7 @@
 	color: #fff;
 	text-align: center;
 	text-decoration: none;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	opacity: 1;
 	cursor: pointer;
 	transition: opacity .5s;
@@ -315,7 +316,7 @@
 
 .imopenlines-iframe-quick-category-item { cursor: pointer; }
 
-.imopenlines-iframe-quick-category-item-selected { font-weight: bold; }
+.imopenlines-iframe-quick-category-item-selected { font-weight: var(--ui-font-weight-bold); }
 
 #quick-create-url { cursor: pointer; }
 
@@ -337,7 +338,8 @@
 	margin: 0 0 30px;
 	color: var(--info-text-color);
 	text-align: center;
-	font: 18px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .imopenlines-iframe-quick-info-list {
@@ -345,7 +347,7 @@
 	padding: 0 0 0 24px;
 	max-width: 430px;
 	color: var(--info-text-color);
-	font: 13px/24px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick-info-list-item {
@@ -369,7 +371,7 @@
 	border-bottom: 1px solid var(--info-text-brd);
 	color: var(--info-text-color);
 	text-decoration: none;
-	font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: .3s border-bottom;
 }
@@ -392,7 +394,7 @@
 
 .imopenlines-iframe-quick-edit {
 	padding: 12px 13px 20px 13px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick-edit-header {
@@ -410,7 +412,7 @@
 .imopenlines-iframe-quick-edit-select {
 	display: inline-block;
 	border-bottom: 1px dashed rgba(135, 144, 154, .5);
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -465,24 +467,24 @@
 	background-color: transparent;
 	color: var(--inp-color);
 	border: 1px solid var(--inp-border);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	resize: vertical;
 }
 
 .imopenlines-iframe-quick-edit-textarea::-webkit-input-placeholder { /* Chrome/Opera/Safari */
 	color: var(--inp-placeholder-color);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick-edit-textarea::-moz-placeholder { /* Firefox 19+ */
 	color: var(--inp-placeholder-color);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	opacity: 1;
 }
 
 .imopenlines-iframe-quick-edit-textarea:-moz-placeholder { /* Firefox 18- */
 	color: var(--inp-placeholder-color);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick-edit-button {
@@ -492,7 +494,7 @@
 	outline: none;
 	border: 0;
 	border-radius: 60px;
-	font: 13px/27px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/27px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: background .3s;
 }
@@ -527,7 +529,7 @@
 	padding: 7px 10px;
 	background-color: #f8f4bc;
 	color: #a18537;
-	font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick-edit-result {
@@ -535,7 +537,7 @@
 	padding: 7px 10px;
 	background-color: #fae5e8;
 	color: #da3c4f;
-	font: 13px/16px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .imopenlines-iframe-quick-edit-textarea.imopenlines-iframe-quick-edit-textarea-result { min-height: 97px; }

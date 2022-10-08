@@ -4,12 +4,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Crm\EntityAddressType;
 
 global $APPLICATION;
+
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans"]);
+
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_form.js');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/common.js');
 $APPLICATION->AddHeadScript('/bitrix/js/main/dd.js');
-
-\Bitrix\Main\UI\Extension::load("ui.buttons");
 
 $settings = isset($arParams['SETTINGS']) && is_array($arParams['SETTINGS']) ? $arParams['SETTINGS'] : array();
 
@@ -253,7 +254,7 @@ foreach($arSections as &$arSection):
 		$val = isset($field['value'])
 				? $field['value']
 				: (isset($arParams['~DATA'][$field['id']]) ? $arParams['~DATA'][$field['id']] : '');
-		
+
 		$valEncoded = '';
 		//Custom type don't use $valEncoded, arrays can't be encoded
 		if($field['type'] !== 'custom' && !is_array($val))
@@ -807,7 +808,7 @@ foreach($arSections as &$arSection):
 								}
 								$rqLinkedInputId = "{$arParams['FORM_ID']}_DATA_INPUT_{$rqLinkedInputName}";
 								?><input type="hidden" id="<?= htmlspecialcharsbx($rqLinkedInputId) ?>" name="<?= htmlspecialcharsbx($rqLinkedInputName) ?>" value="<?= $rqLinkedId ?>" /><?
-								
+
 								$bdLinkedInputName = '';
 								if (isset($params['BANK_DETAIL_INPUT_NAME']))
 								{
@@ -1031,7 +1032,7 @@ foreach($arSections as &$arSection):
 								}
 								$rqLinkedInputId = "{$arParams['FORM_ID']}_DATA_INPUT_{$rqLinkedInputName}";
 								?><input type="hidden" id="<?= htmlspecialcharsbx($rqLinkedInputId) ?>" name="<?= htmlspecialcharsbx($rqLinkedInputName) ?>" value="<?= $rqLinkedId ?>" /><?
-								
+
 								$bdLinkedInputName = '';
 								if (isset($params['BANK_DETAIL_INPUT_NAME']))
 								{

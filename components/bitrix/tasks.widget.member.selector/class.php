@@ -78,56 +78,47 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		return [
 			'setResponsible' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setAuditors' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setAccomplices' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'enterAuditor' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'leaveAuditor' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setProject' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'isAbsence' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'getDestination' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
 			'setDestination' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],
@@ -245,7 +236,11 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		if ($context && $context === self::CONTEXT_TEMPLATE)
 		{
-			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_EDIT, TemplateModel::createFromId($taskId));
+			$oldTemplate = TemplateModel::createFromId(($taskId));
+			$newTemplate = clone $oldTemplate;
+			$newTemplate->setGroupId($groupId);
+
+			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate);
 		}
 		else
 		{
@@ -415,7 +410,21 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		if ($context && $context === self::CONTEXT_TEMPLATE)
 		{
-			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_EDIT, TemplateModel::createFromId($taskId));
+			$oldTemplate = TemplateModel::createFromId((int)$taskId);
+			$newTemplate = clone $oldTemplate;
+
+			$members = $newTemplate->getMembers();
+			$members[RoleDictionary::ROLE_RESPONSIBLE] = [];
+			if (is_array($data))
+			{
+				foreach ($data as $responsible)
+				{
+					$members[RoleDictionary::ROLE_RESPONSIBLE][] = (int)$responsible['ID'];
+				}
+			}
+			$newTemplate->setMembers($members);
+
+			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate);
 		}
 		else
 		{
@@ -498,7 +507,8 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		if ($context && $context === self::CONTEXT_TEMPLATE)
 		{
-			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_EDIT, TemplateModel::createFromId($taskId));
+			$template = TemplateModel::createFromId($taskId);
+			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $template, $template);
 		}
 		else
 		{
@@ -569,7 +579,21 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		if ($context && $context === self::CONTEXT_TEMPLATE)
 		{
-			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_EDIT, TemplateModel::createFromId($taskId));
+			$oldTemplate = TemplateModel::createFromId((int)$taskId);
+			$newTemplate = clone $oldTemplate;
+
+			$members = $newTemplate->getMembers();
+			$members[RoleDictionary::ROLE_ACCOMPLICE] = [];
+			if (is_array($data))
+			{
+				foreach ($data as $accomplice)
+				{
+					$members[RoleDictionary::ROLE_ACCOMPLICE][] = (int)$accomplice['ID'];
+				}
+			}
+			$newTemplate->setMembers($members);
+
+			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate);
 		}
 		else
 		{

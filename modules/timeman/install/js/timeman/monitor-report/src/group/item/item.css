@@ -46,7 +46,7 @@
 }
 
 .bx-monitor-group-item-title {
-    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -55,7 +55,7 @@
 }
 
 .bx-monitor-group-item-title-full {
-    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 185px;
     overflow: hidden;
     white-space: nowrap;
@@ -64,14 +64,14 @@
 }
 
 .bx-monitor-group-item-title-small {
-    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 115px;
     overflow: hidden;
     user-select: none;
 }
 
 .bx-monitor-group-item-subtitle {
-    font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 115px;
     overflow: hidden;
     user-select: none;
@@ -98,7 +98,7 @@
 }
 
 .bx-monitor-group-site-title {
-    font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     max-width: 130px;
     overflow: hidden;
     white-space: nowrap;
@@ -129,7 +129,7 @@
     display: flex;
     align-items: center;
     margin-right: 11px;
-    font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     user-select: none;
 }
 
@@ -141,7 +141,7 @@
 .bx-monitor-group-item-count {
     display: flex;
     align-items: center;
-    font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-monitor-group-btn-right {

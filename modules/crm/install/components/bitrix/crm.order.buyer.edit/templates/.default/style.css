@@ -48,7 +48,7 @@
 	width: 100%;
 	border: 1px solid #caced7;
 	border-radius: 0;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	box-sizing: border-box;

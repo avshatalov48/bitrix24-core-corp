@@ -37,7 +37,8 @@ div.bx-disk-interface-toolbar.bx-filepage{
 	text-decoration:none;
 	text-transform:uppercase;
 	color:#535c69;
-	font-family: "OpenSans-Bold";
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 .bx-disk-interface-toolbar .bx-disk-context-button:hover,
 .bx-disk-interface-toolbar .bx-disk-context-button.active{
@@ -238,7 +239,7 @@ div.bx-disk-interface-toolbar.bx-filepage{
 
 /*Footer Toolbar*/
 .bx-disk-footer-interface-toolbar-container{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	line-height:54px;
 	height:54px;

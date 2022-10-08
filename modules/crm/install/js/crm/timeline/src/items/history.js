@@ -1,9 +1,11 @@
-import Item from "../item";
+import CompatibleItem from "./compatible-item";
 import {Item as ItemType} from "../types";
 import Fasten from "../animations/fasten";
+import {DatetimeConverter} from "crm.timeline.tools";
+import {Type, Dom} from "main.core";
 
 /** @memberof BX.Crm.Timeline.Items */
-export default class History extends Item
+export default class History extends CompatibleItem
 {
 	constructor()
 	{
@@ -57,7 +59,7 @@ export default class History extends Item
 				"YYYY-MM-DD HH:MI:SS"
 			);
 
-			this._createdTime = new Date(time.getTime() + 1000 * Item.getUserTimezoneOffset());
+			this._createdTime = (new DatetimeConverter(time)).toUserTime().getValue();
 		}
 		return this._createdTime;
 	}
@@ -108,6 +110,9 @@ export default class History extends Item
 		return this._isFixed;
 	}
 
+	/**
+	 * deprecated
+	 */
 	fasten(e)
 	{
 		if (this._fixedHistory._items.length >= 3)
@@ -146,16 +151,18 @@ export default class History extends Item
 						"OWNER_ID": this.getOwnerId(),
 						"ID": this._id
 					},
-				onsuccess: BX.delegate(this.onSuccessFasten, this)
 			}
 		);
 
 		this.closeContextMenu();
 	}
 
+	/**
+	 * deprecated
+	 */
 	onSuccessFasten(result)
 	{
-		if (BX.type.isNotEmptyString(result.ERROR))
+		if (result && BX.type.isNotEmptyString(result.ERROR))
 			return;
 
 		if (!this.isFixed())
@@ -180,10 +187,9 @@ export default class History extends Item
 		this.closeContextMenu();
 	}
 
-	onFinishFasten(e)
-	{
-	}
-
+	/**
+	 * deprecated
+	 */
 	unfasten(e)
 	{
 		BX.ajax(
@@ -199,16 +205,18 @@ export default class History extends Item
 						"OWNER_ID": this.getOwnerId(),
 						"ID": this._id
 					},
-				onsuccess: BX.delegate(this.onSuccessUnfasten, this)
 			}
 		);
 
 		this.closeContextMenu();
 	}
 
+	/**
+	 * deprecated
+	 */
 	onSuccessUnfasten(result)
 	{
-		if (BX.type.isNotEmptyString(result.ERROR))
+		if (result && BX.type.isNotEmptyString(result.ERROR))
 			return;
 
 		let item;
@@ -291,6 +299,11 @@ export default class History extends Item
 		}
 		const wrapper = BX.create("DIV", {attrs: {className: wrapperClassName}});
 		wrapper.appendChild(BX.create("DIV", { attrs: { className: this.getIconClassName() } }));
+
+		if (this.isContextMenuEnabled())
+		{
+			Dom.append(this.prepareContextMenuButton(), wrapper);
+		}
 
 		const contentWrapper = BX.create("DIV", {attrs: {className: "crm-entity-stream-content-event"}});
 		wrapper.appendChild(
@@ -428,6 +441,13 @@ export default class History extends Item
 	{
 		const header = BX.create("DIV", {attrs: {className: "crm-entity-stream-content-header"}});
 		header.appendChild(this.prepareTitleLayout());
+
+		const statusNode = this.getStatusNode();
+		if (Type.isDomNode(statusNode))
+		{
+			Dom.append(statusNode, header);
+		}
+
 		header.appendChild(
 			BX.create("SPAN",
 				{
@@ -438,6 +458,11 @@ export default class History extends Item
 		);
 
 		return header;
+	}
+
+	getStatusNode(): ?HTMLElement
+	{
+		return null;
 	}
 
 	onActivityCreate(activity, data)

@@ -33,6 +33,7 @@ Extension::load([
 	'ui.alerts',
 	'ajax',
 	'ui.dialogs.messagebox',
+	'ui.fonts.opensans',
 ]);
 
 ?>

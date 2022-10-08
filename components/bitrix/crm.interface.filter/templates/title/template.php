@@ -115,7 +115,7 @@ $navigationBarId = htmlspecialcharsbx("{$filterIDLc}_nav_bar");
 $navigationBar = new NavigationBar($arParams);
 $viewList = $navigationBar->getSwitchViewList();
 
-Extension::load(['crm.toolbar-component']);
+Extension::load(['crm.toolbar-component', 'ui.fonts.opensans']);
 
 // switch view panel region
 if($isBitrix24Template)

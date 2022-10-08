@@ -68,8 +68,8 @@ class ReservePaidProductsStrategy extends ManualStrategy
 
 			if ($reserve)
 			{
-				$reserveInfo->storeId = $reserve['STORE_ID'];
-				$reserveInfo->dateReserveEnd = (string)$reserve['DATE_RESERVE_END'];
+				$reserveInfo->setStoreId($reserve['STORE_ID']);
+				$reserveInfo->setDateReserveEnd((string)$reserve['DATE_RESERVE_END']);
 
 				$saveResult = $this->saveCrmReserve([
 					'ID' => $reserve['ID'],
@@ -78,8 +78,8 @@ class ReservePaidProductsStrategy extends ManualStrategy
 			}
 			else
 			{
-				$reserveInfo->storeId = $this->defaultStoreId;
-				$reserveInfo->dateReserveEnd = (string)$this->defaultDateReserveEnd;
+				$reserveInfo->setStoreId($this->defaultStoreId);
+				$reserveInfo->setDateReserveEnd((string)$this->defaultDateReserveEnd);
 
 				$saveResult = $this->saveCrmReserve([
 					'ROW_ID' => $rowId,
@@ -174,8 +174,8 @@ class ReservePaidProductsStrategy extends ManualStrategy
 				$newReserveQuantity,
 				$newReserveQuantity - $reserveQuantity
 			);
-			$reserveInfo->storeId = $reserve['STORE_ID'];
-			$reserveInfo->dateReserveEnd = (string)$reserve['DATE_RESERVE_END'];
+			$reserveInfo->setStoreId((int)$reserve['STORE_ID']);
+			$reserveInfo->setDateReserveEnd((string)$reserve['DATE_RESERVE_END']);
 
 			$result->addErrors($saveResult->getErrors());
 		}

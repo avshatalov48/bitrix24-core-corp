@@ -1,7 +1,8 @@
 .bx-imopenlines-message-dialog-number {
 	display: block;
 	padding: 10px 25px 0;
-	font: 12px/19px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/19px var(--ui-font-family-secondary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #717171;
 	text-align: right;
 	margin-bottom: -10px;

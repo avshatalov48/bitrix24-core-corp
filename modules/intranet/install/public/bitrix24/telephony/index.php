@@ -2,7 +2,14 @@
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/telephony/index.php");
 
-$APPLICATION->SetTitle(GetMessage("VI_PAGE_STAT_TITLE"));
+if (\Bitrix\Main\Application::getInstance()->getLicense()->getRegion() === 'by')
+{
+	$APPLICATION->SetTitle(GetMessage("VI_PAGE_STAT_TITLE_BY"));
+}
+else
+{
+	$APPLICATION->SetTitle(GetMessage("VI_PAGE_STAT_TITLE"));
+}
 ?>
 
 <?$APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrapper",

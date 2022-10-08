@@ -15,6 +15,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
  * @var string $templateFolder
  */
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS("/bitrix/components/bitrix/socialnetwork.log.ex/templates/.default/style.css");
 
 $UID = $arResult['UID'];

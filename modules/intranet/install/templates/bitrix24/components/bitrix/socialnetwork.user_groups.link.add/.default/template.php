@@ -13,7 +13,7 @@ $this->SetViewTarget('inside_pagetitle');
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'pagetitle-toolbar-field-view');
 
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+\Bitrix\Main\UI\Extension::load(["ui.buttons.icons", "ui.design-tokens"]);
 
 $popupName = $this->randString(6);
 $APPLICATION->IncludeComponent(
@@ -21,7 +21,7 @@ $APPLICATION->IncludeComponent(
 	".default",
 	array(
 		"NAME" => $popupName,
-		"PATH_TO_GROUP_EDIT" => ($arParams["PATH_TO_GROUP_CREATE"] <> '' 
+		"PATH_TO_GROUP_EDIT" => ($arParams["PATH_TO_GROUP_CREATE"] <> ''
 			? htmlspecialcharsback($arParams["PATH_TO_GROUP_CREATE"])
 			: ""
 		)

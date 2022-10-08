@@ -13,6 +13,8 @@ return [
 	],
 	'skip_core' => false,
 	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'main.qrcode',
 		'main.core',
 		'main.popup',

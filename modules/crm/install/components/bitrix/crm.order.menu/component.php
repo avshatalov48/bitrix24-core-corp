@@ -12,6 +12,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Crm\Restriction\OrderRestriction;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Service;
 use \Bitrix\Crm\Order\Permissions,
 	\Bitrix\Main\Config\Option;
 
@@ -25,7 +26,6 @@ if(!Permissions\Order::checkReadPermission(0, $CrmPerms))
 
 $arParams['PATH_TO_ORDER_LIST'] = CrmCheckPath('PATH_TO_ORDER_LIST', $arParams['PATH_TO_ORDER_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_ORDER_EDIT'] = CrmCheckPath('PATH_TO_ORDER_EDIT', $arParams['PATH_TO_ORDER_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
-$arParams['PATH_TO_ORDER_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_DETAILS', $arParams['PATH_TO_ORDER_DETAILS'], $APPLICATION->GetCurPage().'?order_id=#order_id#&details');
 $arParams['PATH_TO_ORDER_IMPORT'] = CrmCheckPath('PATH_TO_ORDER_IMPORT', $arParams['PATH_TO_ORDER_IMPORT'], $APPLICATION->GetCurPage().'?import');
 $arParams['PATH_TO_MIGRATION'] = SITE_DIR."marketplace/category/migration/";
 $arParams['PATH_TO_ORDER_FORM'] = CrmCheckPath('PATH_TO_ORDER_FORM', $arParams['PATH_TO_ORDER_FORM'], $APPLICATION->GetCurPage());
@@ -120,9 +120,9 @@ if($arParams['TYPE'] === 'details')
 	if($bAdd)
 	{
 		$copyUrl = CHTTP::urlAddParams(
-			CComponentEngine::MakePathFromTemplate(
-				$arParams['PATH_TO_ORDER_DETAILS'],
-				array('order_id' => $arParams['ELEMENT_ID'])
+			Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
+				$arParams['ELEMENT_ID'],
+				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 			),
 			array('copy' => 1)
 		);
@@ -202,9 +202,9 @@ if(count($sites) <= 0)
 if($bAdd)
 {
 	$link = CCrmUrlUtil::AddUrlParams(
-		CComponentEngine::MakePathFromTemplate(
-			$arParams['PATH_TO_ORDER_DETAILS'],
-			array('order_id' => 0)
+		Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
+			0,
+			Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 		),
 		array('SITE_ID' => key($sites))
 	);
@@ -226,9 +226,9 @@ if($bAdd)
 		{
 			$onClickHandler = 'BX.SidePanel.Instance.open(\'' .
 				CCrmUrlUtil::AddUrlParams(
-					CComponentEngine::MakePathFromTemplate(
-						$arParams['PATH_TO_ORDER_DETAILS'],
-						array('order_id' => 0)
+					Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
+						0,
+						Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 					),
 					array('SITE_ID' => $lid)
 				) . '\')';

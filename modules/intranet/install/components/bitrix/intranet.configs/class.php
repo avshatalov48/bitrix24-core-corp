@@ -336,8 +336,8 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			if (Loader::includeModule("socialservices"))
 			{
 				\Bitrix\Socialservices\Network::setRegisterSettings(array(
-																		"REGISTER" => isset($_POST["allow_register"]) ? "Y" : "N",
-																	));
+					"REGISTER" => isset($_POST["allow_register"]) ? "Y" : "N",
+				));
 			}
 
 			//allow invite users
@@ -826,8 +826,13 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			Location\Infrastructure\FormatCode::setCurrent($_REQUEST['address_format_code']);
 		}
 
-		if ($this->arResult['SHOW_LOCATION_SOURCES_SETTINGS'])
+		if ($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
 		{
+			if (isset($_REQUEST['LOCATION_SOURCE_CODE']))
+			{
+				Location\Infrastructure\SourceCodePicker::setSourceCode($_REQUEST['LOCATION_SOURCE_CODE']);
+			}
+
 			/** @var Bitrix\Location\Entity\Source $source */
 			foreach ($this->arResult['LOCATION_SOURCES'] as $source)
 			{
@@ -1008,14 +1013,9 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			$this->arResult["IS_LICENSE_PAID"] = CBitrix24::IsLicensePaid();
 		}
 
-		$this->arResult['SHOW_LOCATION_SOURCES_SETTINGS'] = false;
 		$this->arResult['LOCATION_SOURCES'] = [];
 		if ($this->arResult['IS_LOCATION_MODULE_INCLUDED'])
 		{
-			$this->arResult['SHOW_LOCATION_SOURCES_SETTINGS'] = Loader::includeModule("bitrix24")
-				? \CBitrix24::isCustomDomain()
-				: true;
-
 			$this->arResult['LOCATION_SOURCE_REPOSITORY'] = new SourceRepository(new Location\Entity\Source\OrmConverter());
 			$this->arResult['LOCATION_SOURCES'] = $this->arResult['LOCATION_SOURCE_REPOSITORY']->findAll();
 		}

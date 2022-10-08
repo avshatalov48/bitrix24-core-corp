@@ -24,7 +24,7 @@ this.BX = this.BX || {};
 	          return salescenter_manager.Manager.openSlider(url);
 	        }
 
-	        if (babelHelpers.typeof(url) === 'object' && url !== null) {
+	        if (babelHelpers["typeof"](url) === 'object' && url !== null) {
 	          if (url.type === 'ui_helper') {
 	            return BX.loadExt('ui.info-helper').then(function () {
 	              BX.UI.InfoHelper.show(url.value);

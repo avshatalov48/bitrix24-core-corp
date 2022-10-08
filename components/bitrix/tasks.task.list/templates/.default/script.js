@@ -344,6 +344,25 @@ BX.Tasks.GridActions = {
 				BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION')});
 			}
 		}
+		else if (code === 'complete' || code === 'renew')
+		{
+			BX.ajax.runAction(
+				'bitrix:tasks.scrum.task.isScrumTask',
+				{
+					mode: 'class',
+					data: { taskId: taskId }
+				}
+			).then(function(response) {
+				if (response.data === true)
+				{
+					this.doScrumAction(code, taskId, args);
+				}
+				else
+				{
+					this.doAction(code, taskId, args);
+				}
+			}.bind(this));
+		}
 		else
 		{
 			this.doAction(code, taskId, args);
@@ -366,7 +385,7 @@ BX.Tasks.GridActions = {
 			BX.UI.Notification.Center.notify({content: BX.message('TASKS_LIST_ACTION_PING_NOTIFICATION')});
 		}
 
-		BX.ajax.runComponentAction(component, action, {
+		return BX.ajax.runComponentAction(component, action, {
 			mode: 'class',
 			data: args
 		}).then(
@@ -380,12 +399,15 @@ BX.Tasks.GridActions = {
 				if (!this.gridId)
 				{
 					window.location.href = window.location.href;
-					return;
+
+					return false;
 				}
 				if (!this.checkCanMove())
 				{
 					this.reloadRow(taskId);
 				}
+
+				return true;
 			}.bind(this)
 		).catch(
 			function(response)
@@ -397,6 +419,76 @@ BX.Tasks.GridActions = {
 				}
 			}.bind(this)
 		);
+	},
+
+	doScrumAction(action, taskId, args)
+	{
+		var promise = new BX.Promise();
+
+		var taskStatus = null;
+		var isParentScrumTask = false;
+
+		top.BX.loadExt('tasks.scrum.task-status')
+			.then(function() {
+				if (
+					!BX.type.isUndefined(top.BX.Tasks.Scrum)
+					&& !BX.type.isUndefined(top.BX.Tasks.Scrum.TaskStatus)
+				)
+				{
+					taskStatus = new top.BX.Tasks.Scrum.TaskStatus({
+						taskId: taskId,
+						action: action,
+						performActionOnParentTask: true
+					});
+					taskStatus.updateState()
+						.then(function() {
+							taskStatus.isParentScrumTask()
+								.then(function(result) {
+									isParentScrumTask = result;
+									if (isParentScrumTask)
+									{
+										promise.fulfill();
+									}
+									else
+									{
+										if (action === 'complete')
+										{
+											return taskStatus.showDod(taskId)
+												.then(function() {
+													promise.fulfill();
+												}.bind(this))
+												.catch(function() {
+													promise.reject();
+												}.bind(this))
+												;
+										}
+										else
+										{
+											promise.fulfill();
+										}
+									}
+								}.bind(this))
+							;
+						}.bind(this))
+					;
+				}
+				else
+				{
+					promise.fulfill();
+				}
+			}.bind(this))
+		;
+
+		promise.then(function() {
+			this.doAction(action, taskId, args)
+				.then(function() {
+					if (taskStatus && isParentScrumTask)
+					{
+						taskStatus.update();
+					}
+				}.bind(this))
+			;
+		}.bind(this));
 	},
 
 	getTotalCount: function(prefix, userId, groupId, parameters)
@@ -480,16 +572,22 @@ BX.Tasks.GridActions = {
 
 	reloadGrid: function()
 	{
-		if (BX.Bitrix24 && BX.Bitrix24.Slider && BX.Bitrix24.Slider.getLastOpenPage())
+		if (
+			BX.SidePanel
+			&& BX.SidePanel.Instance
+			&& BX.SidePanel.Instance.getLastOpenSlider()
+		)
 		{
-			BX.Bitrix24.Slider.destroy(BX.Bitrix24.Slider.getLastOpenPage().getUrl());
+			BX.SidePanel.Instance.destroy(BX.SidePanel.Instance.getLastOpenSlider().getUrl());
 		}
 
-		var grid = BX.Main.gridManager.getById(this.gridId);
-		if (grid && grid.hasOwnProperty('instance'))
+		var filterManager = BX.Main.filterManager.getById(this.gridId);
+		if (!filterManager)
 		{
-			grid.instance.reloadTable('POST', {apply_filter: 'Y', clear_nav: 'Y'});
+			console.log('BX.Main.filterManager not initialised');
+			return;
 		}
+		filterManager.getSearch().apply();
 	},
 
 	setCurrentGroupAction: function(groupAction)
@@ -887,11 +985,13 @@ BX(function() {
 		this.userId = Number(options.userId);
 		this.ownerId = Number(options.ownerId);
 		this.groupId = Number(options.groupId);
+		this.lastGroupId = Number(options.lastGroupId);
 
 		this.sorting = options.sorting;
 		this.groupByGroups = (options.groupByGroups === 'true');
 		this.groupBySubTasks = (options.groupBySubTasks === 'true');
 		this.arParams = options.arParams;
+		this.migrationBarOptions = options.migrationBarOptions;
 
 		this.calendarSettings = (options.calendarSettings ? options.calendarSettings : {});
 
@@ -923,6 +1023,7 @@ BX(function() {
 			this.bindEvents();
 			this.fillTaskListItems(options.taskList);
 			this.colorPinnedRows();
+			this.showStub();
 
 			if (options.arParams && options.arParams['LAZY_LOAD'])
 			{
@@ -962,6 +1063,7 @@ BX(function() {
 				this.updateCanMove();
 				this.colorPinnedRows();
 				this.clearTaskListItems();
+				this.clearLastGroupId();
 				this.getRows()
 					.map(function(row) {
 						return row.getId();
@@ -971,8 +1073,10 @@ BX(function() {
 					})
 					.forEach(function(id) {
 						this.addTaskListItem(id);
+						this.updateLastGroupId(id);
 					}.bind(this))
 				;
+				this.showStub();
 			}.bind(this));
 
 			BX.addCustomEvent('BX.Tasks.Filter.group', function(grid, groupType, value) {
@@ -981,6 +1085,11 @@ BX(function() {
 					this[groupType] = value;
 				}
 			}.bind(this));
+
+			// this solution cause http://jabber.bx/view.php?id=155858
+			// BX.addCustomEvent('Grid::beforeRequest', function(gridData, eventArgs) {
+			// 	eventArgs.url = BX.util.add_url_param(eventArgs.url, {lastGroupId: this.lastGroupId});
+			// }.bind(this));
 		},
 
 		updateCanMove: function()
@@ -1656,15 +1765,60 @@ BX(function() {
 
 		showStub: function()
 		{
-			if (this.stub)
-			{
-				this.getRealtime().showStub({content: this.stub});
-			}
+			// this.showMigrationBar();
 		},
 
 		hideStub: function()
 		{
 			this.getGrid().hideEmptyStub();
+		},
+
+		showMigrationBar: function()
+		{
+			if (
+				this.taskList.size > 0
+				|| this.groupId
+			)
+			{
+				return;
+			}
+
+			var filterManager = BX.Main.filterManager.getById(BX.Tasks.GridActions.gridId);
+			if (
+				!filterManager
+				|| !BX.Dom.hasClass(filterManager.getSearch().getContainer(), 'main-ui-filter-default-applied')
+			)
+			{
+				return;
+			}
+
+			if (!this.migrationContainer)
+			{
+				var migration = new BX.UI.MigrationBar({
+					title: this.migrationBarOptions.title,
+					minWidth: 600,
+					minHeight: 200,
+					cross: false,
+					items: this.migrationBarOptions.items.map(function(item) {
+						return {src: item};
+					}),
+					buttons: [
+						{
+							text: this.migrationBarOptions.buttonMigrate,
+							color: BX.UI.ButtonColor.PRIMARY,
+							round: true,
+							link: '/marketplace/?tag[]=migrator&tag[]=tasks',
+						},
+					],
+					link: {
+						text: this.migrationBarOptions.other,
+					},
+				});
+				migration.show();
+				this.migrationContainer = migration.getContainer();
+				BX.Dom.style(this.migrationContainer, 'marginTop', '50px');
+			}
+			BX.Dom.append(this.migrationContainer, document.querySelector('.main-grid-empty-inner'));
 		},
 
 		showMoreButton: function()
@@ -1707,7 +1861,20 @@ BX(function() {
 		clearTaskListItems: function()
 		{
 			this.taskList.clear();
-		}
+		},
+
+		updateLastGroupId: function(id)
+		{
+			if (id.indexOf('group_') === 0)
+			{
+				this.lastGroupId = Number(id.replace('group_', ''));
+			}
+		},
+
+		clearLastGroupId: function()
+		{
+			this.lastGroupId = 0;
+		},
 	};
 
 	BX.addCustomEvent('tasksTaskEvent', BX.delegate(function(type, data) {

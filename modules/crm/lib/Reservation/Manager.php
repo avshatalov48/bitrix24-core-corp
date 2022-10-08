@@ -331,6 +331,11 @@ final class Manager
 			{
 				if ($order->isChanged())
 				{
+					if ($this->needSyncOrderClientWithEntity($order))
+					{
+						$this->syncOrderClientWithEntity($order);
+					}
+
 					$saveOrderResult = $order->save();
 					if (!$saveOrderResult->isSuccess())
 					{
@@ -384,13 +389,7 @@ final class Manager
 	 */
 	private function createOrder(): ?Crm\Order\Order
 	{
-		$order = $this->getEntity()->createOrderByEntity();
-		if ($order && $order->getContactCompanyCollection())
-		{
-			$order->getContactCompanyCollection()->disableAutoCreationMode();
-		}
-
-		return $order;
+		return $this->getEntity()->createOrderByEntity();
 	}
 
 	/**
@@ -655,5 +654,73 @@ final class Manager
 		}
 
 		return $diffProducts;
+	}
+
+	/**
+	 * Ñhecks if client synchronization is needed
+	 * If order contains only new shipment - true
+	 * Otherwise - false
+	 *
+	 * @param Crm\Order\Order $order
+	 * @return bool
+	 */
+	private function needSyncOrderClientWithEntity(Crm\Order\Order $order): bool
+	{
+		/** @var Crm\Order\Shipment $shipment */
+		foreach ($order->getShipmentCollection()->getNotSystemItems() as $shipment)
+		{
+			if ((int)$shipment->getId() > 0)
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private function syncOrderClientWithEntity(Crm\Order\Order $order): void
+	{
+		$clientInfo = Crm\ClientInfo::createFromOwner(
+			$this->getEntity()->getOwnerTypeId(),
+			$this->getEntity()->getOwnerId()
+		);
+
+		if ($clientInfo->isClientExists())
+		{
+			$contactCompanyCollection = $order->getContactCompanyCollection();
+			if (!$contactCompanyCollection->isEmpty())
+			{
+				$contactCompanyCollection->clearCollection();
+			}
+
+			$clientData = $clientInfo->toArray();
+
+			if ((int)($clientData['COMPANY_ID']) > 0)
+			{
+				/** @var Crm\Order\Company $company */
+				$company = $contactCompanyCollection->createCompany();
+				$company->setFields([
+					'ENTITY_ID' => $clientData['COMPANY_ID'],
+					'IS_PRIMARY' => 'Y',
+				]);
+			}
+
+			if (!empty($clientData['CONTACT_IDS']))
+			{
+				$contactIds = array_unique($clientData['CONTACT_IDS']);
+				$firstClientKey = key($contactIds);
+				foreach ($contactIds as $key => $itemId)
+				{
+					if ($itemId > 0)
+					{
+						$contact = $contactCompanyCollection->createContact();
+						$contact->setFields([
+							'ENTITY_ID' => $itemId,
+							'IS_PRIMARY' => ($key === $firstClientKey) ? 'Y' : 'N',
+						]);
+					}
+				}
+			}
+		}
 	}
 }

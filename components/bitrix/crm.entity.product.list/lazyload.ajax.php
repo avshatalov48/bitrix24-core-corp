@@ -41,8 +41,25 @@ if (!CCrmSecurityHelper::IsAuthorized())
 global $APPLICATION;
 Header('Content-Type: text/html; charset='.LANG_CHARSET);
 $APPLICATION->ShowAjaxHead();
+
 $componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : [];
-$componentParams = isset($componentData['params']) && is_array($componentData['params']) ? $componentData['params'] : [];
+$componentParams = [];
+if (isset($componentData['signedParameters']))
+{
+	$componentParams = \CCrmInstantEditorHelper::unsignComponentParams(
+		(string)$componentData['signedParameters'],
+		'crm.entity.product.list'
+	);
+	if (is_null($componentParams))
+	{
+		die();
+	}
+}
+elseif (isset($componentData['params']) && is_array($componentData['params']))
+{
+	ShowError('Component params must be signed');
+	die();
+}
 
 // Security check
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();

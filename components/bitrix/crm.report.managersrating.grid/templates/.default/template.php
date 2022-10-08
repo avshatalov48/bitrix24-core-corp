@@ -4,7 +4,11 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)	die();
 
 use Bitrix\Main\UI\Extension;
 
-Extension::load(["ui.icons", "ui.hint"]);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.icons',
+	'ui.hint',
+]);
 
 $rows = [];
 

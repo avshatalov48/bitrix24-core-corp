@@ -26,4 +26,12 @@ class Modification extends Presenter
 			['#FIELD_NAME#' => $fieldTitle]
 		);
 	}
+
+	protected function prepareDataBySettingsForSpecificEvent(array $data, array $settings): array
+	{
+		$fieldName = $settings['FIELD'] ?? '';
+		$data['MODIFIED_FIELD'] = $fieldName;
+
+		return $data;
+	}
 }

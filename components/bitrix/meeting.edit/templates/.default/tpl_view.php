@@ -171,17 +171,12 @@ $APPLICATION->IncludeComponent(
 ?>
 <div id="keeper_selector_content" class="menu-popup" style="display: none;"></div>
 <div class="sidebar-block">
-	<b class="r2"></b>
-	<b class="r1"></b>
-	<b class="r0"></b>
 	<div class="sidebar-block-inner">
 		<div class="meeting-detail-info-users">
-			<div class="meeting-detail-info-users-border"></div>
 			<div class="meeting-detail-info-users-inner">
 				<div class="meeting-detail-info-users-title"><span><?=GetMessage('ME_OWNER')?></span><?/*<a class="webform-field-action-link" href=""><?=GetMessage('ME_CHANGE')?></a>*/?></div>
 				<div class="meeting-detail-info-users-list" id="meeting_users_O"></div>
 			</div>
-			<div class="meeting-detail-info-users-border"></div>
 		</div>
 		<table cellspacing="0" class="meeting-detail-info-layout">
 			<tbody>
@@ -219,7 +214,6 @@ endif;
 ?>			</tbody></table>
 
 		<div class="meeting-detail-info-users" id="">
-			<div class="meeting-detail-info-users-border"></div>
 			<div class="meeting-detail-info-users-inner">
 				<div class="meeting-detail-info-users-title"><span><?=GetMessage('ME_KEEPER')?></span>
 <?
@@ -231,11 +225,9 @@ endif;
 ?>
 				</div><div class="meeting-detail-info-users-list" id="meeting_users_K"></div>
 			</div>
-			<div class="meeting-detail-info-users-border"></div>
 		</div>
 
 		<div class="meeting-detail-info-users meeting-detail-info-member">
-			<div class="meeting-detail-info-users-border"></div>
 			<div class="meeting-detail-info-users-inner">
 				<div class="meeting-detail-info-users-title"><span><?=GetMessage('ME_MEMBERS')?></span>
 <?
@@ -247,20 +239,17 @@ endif;
 ?>
 				</div><div class="meeting-detail-info-users-list" id="meeting_users_M"></div>
 			</div>
-			<div class="meeting-detail-info-users-border"></div>
 		</div>
 <?
 if (count($arUsers['R']) > 0):
 ?>
 		<div class="meeting-detail-info-users meeting-refuse">
-			<div class="meeting-detail-info-users-border"></div>
 			<div class="meeting-detail-info-users-inner">
 				<div onclick="BX.toggle(BX('meeting_users_R')); BX.toggleClass(this,'meeting-refuse-close')" class="meeting-detail-info-users-title meeting-refuse-close">
 					<span class="meeting-refuse-title"><?=GetMessage('ME_REFUSED')?> (<?=count($arUsers['R'])?>)</span><span class="meeting-refuse-corner"></span>
 				</div>
 				<div style="display:none;" id="meeting_users_R"></div>
 			</div>
-			<div class="meeting-detail-info-users-border"></div>
 		</div>
 <?
 endif;

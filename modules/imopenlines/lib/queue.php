@@ -92,11 +92,11 @@ class Queue
 
 		$count = 0;
 		$countIterationPull = 0;
-		while($time->getElapsedTime() <= $limitTime && (empty($limit) || $count < $limit))
+		while ($time->getElapsedTime() <= $limitTime && (empty($limit) || $count < $limit))
 		{
 			$reasonReturn = Queue::REASON_DEFAULT;
 
-			if($countIterationPull > 10 && Loader::includeModule('pull'))
+			if ($countIterationPull > 10 && Loader::includeModule('pull'))
 			{
 				$countIterationPull = 0;
 
@@ -107,12 +107,12 @@ class Queue
 				'<=DATE_QUEUE' => new DateTime()
 			];
 
-			if(!empty($lineId) && is_numeric($lineId) && $lineId > 0)
+			if (!empty($lineId) && is_numeric($lineId) && $lineId > 0)
 			{
 				$filter['=SESSION.CONFIG_ID'] = $lineId;
 			}
 
-			if(!empty($runSessionIds))
+			if (!empty($runSessionIds))
 			{
 				$filter['!=SESSION_ID'] = $runSessionIds;
 			}
@@ -125,8 +125,8 @@ class Queue
 				'select' => $select,
 				'filter' => $filter,
 				'order' => [
-					'DATE_QUEUE',
-					'SESSION.DATE_CREATE'
+					'DATE_QUEUE' => 'ASC',
+					'SESSION_ID' => 'ASC',
 				],
 				'limit' => 1
 			]);
@@ -135,13 +135,13 @@ class Queue
 			{
 				$fields = [];
 
-				if(!empty($row['REASON_RETURN']))
+				if (!empty($row['REASON_RETURN']))
 				{
 					$reasonReturn = $row['REASON_RETURN'];
 				}
 				unset($row['REASON_RETURN']);
 
-				foreach($row as $key=>$value)
+				foreach ($row as $key=>$value)
 				{
 					$key = str_replace('IMOPENLINES_MODEL_SESSION_CHECK_SESSION_', '', $key);
 					$fields[$key] = $value;
@@ -164,7 +164,7 @@ class Queue
 				$session->loadByArray($fields, $configs[$fields['CONFIG_ID']], $chats[$fields['CHAT_ID']]);
 				$resultTransfer = $session->transferToNextInQueue(false);
 
-				if($resultTransfer == true)
+				if ($resultTransfer == true)
 				{
 					$countIterationPull++;
 				}
@@ -187,9 +187,6 @@ class Queue
 	 *
 	 * @param int $line
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isThereSessionTransfer($line = 0)
 	{
@@ -520,10 +517,6 @@ class Queue
 	 *
 	 * @param $params
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getActualLineId($params)
 	{
@@ -585,7 +578,6 @@ class Queue
 	 * @param $sessionId
 	 * @param DateTime $dateQueue
 	 * @param string $reasonReturn
-	 * @throws \Exception
 	 */
 	public static function returnSessionWaitClientToQueue($sessionId, DateTime $dateQueue, $reasonReturn = self::REASON_DEFAULT)
 	{
@@ -602,7 +594,6 @@ class Queue
 	 * @param string $reasonReturn
 	 * @param $session
 	 * @return bool|int
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function sendMessageReturnedSession($reasonReturn = Queue::REASON_DEFAULT, $session)
 	{
@@ -658,7 +649,6 @@ class Queue
 	 * @param $id
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function isRealOperator(int $id): bool
 	{
@@ -687,10 +677,6 @@ class Queue
 	 * @param string $isCheckAvailable
 	 * @param bool $ignorePause
 	 * @return bool|string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isOperatorActive($userId, $isCheckAvailable = 'Y', bool $ignorePause = false)
 	{
@@ -746,10 +732,6 @@ class Queue
 	 * @param string $isCheckAvailable
 	 * @param bool $ignorePause
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isOperatorsActiveLine($idLine, $isCheckAvailable = 'Y', bool $ignorePause = false): bool
 	{
@@ -788,7 +770,6 @@ class Queue
 	 * @param $userId
 	 * @param bool $ignorePause
 	 * @return bool|string
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	public static function getActiveStatusByTimeman(int $userId, bool $ignorePause = false)
 	{
@@ -883,9 +864,6 @@ class Queue
 	 * @param int $lineId OpenLine(config) ID.
 	 * @param int $operatorId The operator ID which we want to check.
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isOperatorSingleInLine(int $lineId, int $operatorId): bool
 	{
@@ -919,9 +897,6 @@ class Queue
 	 * @param int $maxChat
 	 * @param null $typeMaxChat
 	 * @return int|mixed
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getCountFreeSlotOperator($idUser, $idLine = 0, $maxChat = 0, $typeMaxChat = null)
 	{

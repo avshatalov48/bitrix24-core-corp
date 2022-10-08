@@ -36,12 +36,29 @@ class Contact
 	);
 
 	/**
+	 * Contact category ID
+	 *
+	 * @var int
+	 */
+	protected static int $categoryId = 0;
+
+	/**
 	 * Returns title of the indicator.
 	 * @return string
 	 */
 	public function getTitle()
 	{
 		return Loc::getMessage('CRM_VOLUME_CONTACT_TITLE');
+	}
+
+	/**
+	 * Returns entity category ID
+	 *
+	 * @return int
+	 */
+	public static function getCategoryId(): int
+	{
+		return self::$categoryId;
 	}
 
 	/**
@@ -209,6 +226,7 @@ class Contact
 			'DATE_CREATE'
 		);
 		$query->registerRuntimeField($dayField);
+		$query->where('CATEGORY_ID', self::$categoryId);
 
 		return $query;
 	}
@@ -752,7 +770,7 @@ class Contact
 		$activityVolume = new Volume\Activity();
 		$activityVolume->setFilter($this->getFilter());
 
-		$query = $activityVolume->prepareQuery();
+		$query = $activityVolume->prepareQuery(static::className());
 
 		$dropped = -1;
 

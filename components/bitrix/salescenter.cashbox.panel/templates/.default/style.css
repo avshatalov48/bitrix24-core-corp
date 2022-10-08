@@ -34,7 +34,8 @@
 	height: 45px;
 	text-align: center;
 	color: #525c69;
-	font: 13px/14px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -83,13 +84,13 @@
 }
 
 .ui-page-slider-workarea-content-padding {
-	padding: 0;
 	overflow-x: visible;
 }
 
 .salescenter-cashbox-title {
 	color: #333;
-	font: 16px/22px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-bottom: 13px;
 	padding-bottom: 13px;
 	border-bottom: 1px solid rgba(82,92,105,.10);
@@ -120,7 +121,8 @@
 	text-transform: uppercase;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 8px/11px "OpenSans-Bold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 8px/11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	padding-left: 6px;
 	display: inline-block;
 }

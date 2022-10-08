@@ -1488,26 +1488,10 @@ class TaskService implements Errorable
 		}
 	}
 
-	private function cleanTagsInTaskName(string $name): array
-	{
-		$tags = [];
-		if (isset($name) && preg_match_all('/\s#([^\s,\[\]<>]+)/is', ' '.$name, $matches))
-		{
-			$name = trim(str_replace($matches[0], '', $name));
-			$tags = $matches[1];
-		}
-		return [$name, $tags];
-	}
-
 	private function addTags(int $taskId, array $tags): void
 	{
 		$tasksObject = new \CTasks();
 		$tasksObject->addTags($taskId, $this->executiveUserId, $tags, $this->executiveUserId);
-	}
-
-	private function setErrors(Result $result, string $code): void
-	{
-		$this->errorCollection->setError(new Error(implode('; ', $result->getErrorMessages()), $code));
 	}
 
 	private static function createScrumItem(int $taskId, array $fields, $previousFields = []): void

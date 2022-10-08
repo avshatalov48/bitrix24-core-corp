@@ -24,5 +24,14 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-olx-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=11405312');
+				return false;
+			}
+		);
 	});
 })(window);

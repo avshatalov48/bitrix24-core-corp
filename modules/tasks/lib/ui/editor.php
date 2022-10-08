@@ -80,7 +80,6 @@ final class Editor
 
 				"id" => $parameters['ID'],
 				"documentCSS" => "body {color:#434343;}",
-				"fontFamily" => "'Helvetica Neue', Helvetica, Arial, sans-serif",
 				"fontSize" => "12px",
 				"bInitByJS" => false,
 				"height" => 100,

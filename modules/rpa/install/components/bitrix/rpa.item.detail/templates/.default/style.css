@@ -41,7 +41,8 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	transition: color .2s linear;
-	font: 14px/25px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .rpa-item-detail-tabs-item-current {
@@ -118,7 +119,7 @@
 	color: #2067b0;
 	cursor: pointer;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	margin: 7px 7px 7px 18px;
 	line-height: 17px;

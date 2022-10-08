@@ -86,9 +86,14 @@ class CDiskExternalLinkComponent extends DiskComponent
 				!$this->checkDownloadToken($this->request->getQuery('token'))
 			)
 			{
-				$this->showNotFoundPage();
+				$link = \Bitrix\Disk\Driver::getInstance()->getUrlManager()->getUrlExternalLink([
+					'hash' => $this->externalLink->getHash(),
+					'action' => 'default',
+					'session' => 'expired',
+				]);
 
-				return false;
+				$redirect = new \Bitrix\Main\Engine\Response\Redirect($link);
+				\Bitrix\Main\Application::getInstance()->end(0, $redirect);
 			}
 
 			if ($this->externalLink->hasPassword() && !$this->checkPassword())
@@ -242,6 +247,7 @@ class CDiskExternalLinkComponent extends DiskComponent
 		$this->arResult = array(
 			'PROTECTED_BY_PASSWORD' => $this->externalLink->hasPassword(),
 			'VALID_PASSWORD' => $validPassword,
+			'SESSION_EXPIRED' => $this->request->getQuery('session') === 'expired',
 			'SITE_NAME' => Option::get('main', 'site_name', $server->getServerName()),
 		);
 

@@ -18,6 +18,7 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
 use Bitrix\Main\ORM\Fields\ArrayField;
+use Bitrix\Main\ORM\Fields\DateField;
 use Bitrix\Main\ORM\Fields\EnumField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\Relations\CascadePolicy;
@@ -27,6 +28,7 @@ use Bitrix\Main\ORM\Fields\StringField;
 use Bitrix\Main\ORM\Fields\TextField;
 use Bitrix\Main\ORM\Objectify\EntityObject;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\UserTable;
 
 Loc::loadMessages(__FILE__);
@@ -275,6 +277,13 @@ class QuoteTable extends DataManager
 
 			(new OneToMany('ELEMENTS', QuoteElementTable::class, 'QUOTE'))
 				->configureJoinType(Join::TYPE_INNER)
+			,
+
+			(new DateField(Item\Quote::FIELD_NAME_ACTUAL_DATE))
+				->configureDefaultValue(static function(): Date {
+					return (new Date())->add('7D');
+				})
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_ACTUAL_DATE'))
 			,
 		];
 	}

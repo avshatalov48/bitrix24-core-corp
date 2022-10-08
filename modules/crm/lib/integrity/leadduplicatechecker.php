@@ -24,7 +24,7 @@ class LeadDuplicateChecker extends DuplicateChecker
 			$secondName = ($processAllFields || in_array('SECOND_NAME', $fieldNames, true)) ? $adapter->getFieldValue('SECOND_NAME', '') : '';
 
 			$criterion = new DuplicatePersonCriterion($lastName, $name, $secondName);
-			$duplicate = $criterion->find(\CCrmOwnerType::Undefined, 20);
+			$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined, 20);
 
 			if($duplicate !== null)
 			{
@@ -38,7 +38,7 @@ class LeadDuplicateChecker extends DuplicateChecker
 			$criterion = new DuplicateOrganizationCriterion($companyTitle);
 			$criterion->setStrictComparison($this->useStrictComparison);
 
-			$duplicate = $criterion->find();
+			$duplicate = $criterion->find($params->getEntityTypeId() ?? \CCrmOwnerType::Undefined);
 			if($duplicate !== null)
 			{
 				$result[] = $duplicate;

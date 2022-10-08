@@ -14,7 +14,7 @@ Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js')
 \CJSCore::init("sidepanel");
 
 $bodyClass = $APPLICATION->getPageProperty("BodyClass", false);
-$APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, "pagetitle-toolbar-field-view")));
+$APPLICATION->setPageProperty("BodyClass", trim(sprintf("%s %s", $bodyClass, "pagetitle-toolbar-field-view no-background")));
 ?>
 
 <? $this->setViewTarget('inside_pagetitle', 10); ?>

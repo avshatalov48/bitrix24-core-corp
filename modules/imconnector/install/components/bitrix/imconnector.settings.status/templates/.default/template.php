@@ -15,7 +15,7 @@ use Bitrix\Main\UI\Extension;
 /** @var CBitrixComponent $component */
 
 Loc::loadMessages(__FILE__);
-\CJSCore::Init('loader');
+\CJSCore::Init(['loader', 'ui.fonts.opensans']);
 ?>
 
 <?

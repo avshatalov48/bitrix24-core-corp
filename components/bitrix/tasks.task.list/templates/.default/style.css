@@ -41,7 +41,8 @@
 	font-size: 9px;
 	color: #a9aeb5 !important;
 	text-decoration: none !important;
-	font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .task-title-comments-grid:before {
@@ -229,7 +230,8 @@
 	margin: -16px -32px;
 	padding: 0 10px;
 	background: #f1f5f7;
-	font-family: 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: 46px;
 	text-align: left;
 }
@@ -315,7 +317,8 @@
 }
 
 .tasks-list-create-title {
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	font-size: 31px;
 	line-height: 31px;
@@ -331,7 +334,8 @@
 }
 
 .tasks-list-create-subtitle {
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	margin-top: 22px;
 	font-size: 16px;
 	line-height: 22px;

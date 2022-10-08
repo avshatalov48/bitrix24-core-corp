@@ -8,6 +8,11 @@
 	        box-sizing: border-box;
 }
 
+.salescenter-delivery--disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}
+
 .crm-entity-stream-section-content .salescenter-delivery {
 	width: auto;
 	margin-right: 13px;
@@ -42,7 +47,7 @@
 	font-size: 14px;
 	color: #333;
 	letter-spacing: normal;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-transition: .1s;
 	-o-transition: .1s;
 	transition: .1s;
@@ -214,7 +219,7 @@
 	padding: 7px 14px 9px 14px;
 	border: 1px solid rgba(168,173,180,.58);
 	border-radius: 3px;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 }
 
@@ -250,7 +255,7 @@
 }
 
 .salescenter-delivery-car-info {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	color: #9ba1aa;
 	line-height: 18px;
@@ -287,14 +292,15 @@
 	white-space: nowrap;
 	-o-text-overflow: ellipsis;
 	   text-overflow: ellipsis;
-	font-family: "OpenSans-SemiBold", Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #333;
 	line-height: 23px;
 }
 
 .salescenter-delivery-car-title--sm {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 }
@@ -492,7 +498,7 @@
 	overflow: hidden;
 	margin: 0 0 -5px 27px;
 	opacity: .9;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	line-height: 22px;
 	-webkit-transition: .1s;
@@ -509,7 +515,7 @@
 	overflow: hidden;
 	margin: 0;
 	opacity: .9;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 13px;
 	line-height: 22px;
 	-webkit-transition: .1s;
@@ -667,7 +673,7 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	font-family: HelveticaNeue, Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	color: #525c69;
 }
@@ -693,8 +699,8 @@
 .salescenter-delivery-status {
 	display: inline-block;
 	padding: 0 9px;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 10px;
 	color: #525c69;
 	text-align: center;
@@ -742,7 +748,8 @@ span + .salescenter-delivery-status {
 }
 
 .salescenter-delivery-table-total-result {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 21px;
 	color: #525c69;
 	text-align: right;
@@ -757,13 +764,14 @@ span + .salescenter-delivery-status {
 }
 
 .salescenter-delivery-table-total-symbol {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 5px;
 	color: rgba(82,92,105,.5);
 }
 
 .salescenter-delivery-table-total-result .salescenter-delivery-table-total-symbol {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 21px;
 }
 
@@ -809,7 +817,7 @@ span + .salescenter-delivery-status {
 	white-space: nowrap;
 	overflow: hidden;
 	padding: 0 5px 0 3px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: rgba(82,92,105,.5);
 	border: 1px solid #c6cdd3;
@@ -904,7 +912,7 @@ span + .salescenter-delivery-status {
 	display: inline-block;
 	vertical-align: middle;
 	margin-left: 9px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-style: italic;
 	font-size: 12px;
 	color: #828b95;
@@ -1007,7 +1015,8 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 	border-radius: 7px;
 	padding: 0 5px;
 	color: #767b81;
-	font: 8px/14px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	vertical-align: middle;
 	opacity: 0;
 	cursor: pointer;
@@ -1096,7 +1105,8 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 
 .salescenter-delivery-method-item--add .salescenter-delivery-method-name {
 	opacity: .5;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #525c69;
 	line-height: 23px;
@@ -1177,14 +1187,15 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 
 .salescenter-delivery-method-title {
 	opacity: .5;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 11px;
 	color: #525c69;
 	line-height: 13px;
 }
 
 .salescenter-delivery-method-name {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 14px;
 	color: #333;
 }
@@ -1209,7 +1220,8 @@ textarea.ui-ctl-element.salescenter-delivery-comment-textarea {
 	padding: 0 6px;
 	background: #2fc6f6;
 	border-radius: 8px;
-	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 11px;
 	line-height: 16px;
 	color: #fff;
@@ -1416,7 +1428,7 @@ input:hover + .sale-address-control-path-input-clear {
 	-ms-flex-preferred-size: 100%;
 	    flex-basis: 100%;
 	margin-left: 3px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	color: #525c69;
 }

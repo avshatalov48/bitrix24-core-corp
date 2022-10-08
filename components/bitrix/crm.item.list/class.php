@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Integration;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
@@ -919,16 +920,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	{
 		$settingsItems = parent::getToolbarSettingsItems();
 
-		$categoryId = $this->getCategoryId();
-		if (is_null($categoryId) && $this->factory->isCategoriesSupported())
-		{
-			$categoryId = $this->factory->createDefaultCategoryIfNotExist()->getId();
-		}
+		$permissions = Container::getInstance()->getUserPermissions();
 
-		if (Container::getInstance()->getUserPermissions()->canExportTypeInCategory(
-			$this->entityTypeId,
-			(int)$categoryId
-		))
+		if ($permissions->checkExportPermissions($this->entityTypeId, 0, $this->getCategoryId()))
 		{
 			$settingsItems[] = ['delimiter' => true];
 			$settingsItems[] = [

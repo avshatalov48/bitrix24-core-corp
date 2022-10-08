@@ -10,6 +10,7 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 		this._pullCommands = null;
 
 		this._entityTypeId = 0;
+		this._categoryId = null;
 		this._lastEntityId = 0;
 		this._gridId = "";
 
@@ -48,6 +49,7 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 
 			this._userId = BX.prop.getInteger(this._settings, "userId", 0);
 			this._entityTypeId = BX.prop.getInteger(this._settings, "entityTypeId", 0);
+			this._categoryId = BX.prop.getInteger(this._settings, "categoryId", null);
 			this._lastEntityId = BX.prop.getInteger(this._settings, "lastEntityId", 0);
 			this._gridId = BX.prop.getString(this._settings, "gridId", "");
 
@@ -174,7 +176,8 @@ if(typeof(BX.CrmNewEntityCounterPanel) === "undefined")
 						{
 							"ACTION": "GET_NEW_ENTITY_IDS",
 							"LAST_ENTITY_ID": this._lastEntityId,
-							"ENTITY_TYPE_ID": this._entityTypeId
+							"ENTITY_TYPE_ID": this._entityTypeId,
+							"CATEGORY_ID": BX.Type.isNumber(this._categoryId) ? this._categoryId : '',
 						},
 					onsuccess: this._refreshSuccessCallback
 				}

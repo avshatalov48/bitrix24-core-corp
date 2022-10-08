@@ -17,6 +17,7 @@ Extension::load([
 	'popup',
 	'salescenter.manager',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();

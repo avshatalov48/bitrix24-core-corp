@@ -254,6 +254,7 @@ class ViewedTable extends TaskDataManager
 	public static function set(int $taskId, int $userId, ?DateTime $viewedDate = null, array $parameters = []): void
 	{
 		$parameters['SEND_PUSH'] = ($parameters['SEND_PUSH'] ?? !isset($viewedDate));
+		$parameters['IS_REAL_VIEW'] = ($parameters['IS_REAL_VIEW'] ?? false);
 		$parameters['UPDATE_TOPIC_LAST_VISIT'] = ($parameters['UPDATE_TOPIC_LAST_VISIT'] ?? true);
 		$parameters['SOURCE_VIEWED_DATE'] = $viewedDate;
 
@@ -342,14 +343,19 @@ class ViewedTable extends TaskDataManager
 			Forum\Task\UserTopic::updateLastVisit($taskId, $userId, $viewedDate);
 		}
 
-		$event = new Event('tasks', 'onTaskUpdateViewed', ['taskId' => $taskId, 'userId' => $userId]);
+		$eventParameters = [
+			'taskId' => $taskId,
+			'userId' => $userId,
+			'isRealView' => $parameters['IS_REAL_VIEW'],
+		];
+		$event = new Event('tasks', 'onTaskUpdateViewed', $eventParameters);
 		$event->send();
 
 		Counter\CounterService::addEvent(
 			Counter\Event\EventDictionary::EVENT_AFTER_TASK_VIEW,
 			[
-				'TASK_ID' => (int) $taskId,
-				'USER_ID' => (int) $userId
+				'TASK_ID' => $taskId,
+				'USER_ID' => $userId,
 			]
 		);
 	}

@@ -7,7 +7,10 @@ import {Text} from 'main.core';
 import {PreviewBlock} from 'salescenter.component.store-preview';
 import {RequisiteBlock} from 'salescenter.component.mycompany-requisite-settings';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import './store-settings.css';
+
 
 export class StoreSettings
 {

@@ -6,6 +6,8 @@ Loc::loadMessages(__FILE__);
 
 $isSidePanel = (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y');
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 global $APPLICATION;
 
 $userPropsList = '';

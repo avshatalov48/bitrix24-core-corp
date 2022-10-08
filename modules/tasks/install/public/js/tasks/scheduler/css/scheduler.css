@@ -21,7 +21,7 @@
 	border-top: 1px solid #edeef0;
 	white-space: nowrap;
 	box-sizing: border-box;
-	font: normal normal 13px/32px Helvetica, Arial, sans-serif;
+	font: normal normal 13px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .scheduler-resource-name {
@@ -53,7 +53,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	overflow: hidden;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 12px;
 	line-height: 16px;
 }

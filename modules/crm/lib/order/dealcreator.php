@@ -15,6 +15,13 @@ class DealCreator
 		$this->order = $order;
 	}
 
+	/**
+	 * Create deal.
+	 *
+	 * Creates a deal without products, for creating products rows use method `addProductsToDeal`.
+	 *
+	 * @return int
+	 */
 	public function create()
 	{
 		$selector = $this->getActualEntitySelector();
@@ -97,58 +104,18 @@ class DealCreator
 		];
 	}
 
+	/**
+	 * Adds the order basket items to the deal as the product rows.
+	 *
+	 * If you need to sync a deal and an order, maybe you need `OrderDealSynchronizer`?
+	 * @see \Bitrix\Crm\Order\OrderDealSynchronizer
+	 *
+	 * @param mixed $dealId
+	 *
+	 * @return void
+	 */
 	public function addProductsToDeal($dealId)
 	{
-		$result = [];
-
-		$sort = 0;
-
-		/** @var BasketItem $basketItem */
-		foreach ($this->order->getBasket() as $basketItem)
-		{
-			$basePriceWithoutVat = $basketItem->getBasePrice();
-			if ($basketItem->isVatInPrice())
-			{
-				$basePriceWithoutVat -= $basketItem->getVat();
-			}
-
-			$item = [
-				'PRODUCT_ID' => $basketItem->getField('PRODUCT_ID'),
-				'PRODUCT_NAME' => $basketItem->getField('NAME'),
-				'PRICE' => $basketItem->getBasePrice(),
-				'PRICE_ACCOUNT' => $basketItem->getBasePrice(),
-				'PRICE_EXCLUSIVE' => $basePriceWithoutVat,
-				'PRICE_NETTO' => $basePriceWithoutVat,
-				'PRICE_BRUTTO' => $basketItem->getBasePrice(),
-				'QUANTITY' => $basketItem->getQuantity(),
-				'MEASURE_CODE' => $basketItem->getField('MEASURE_CODE'),
-				'MEASURE_NAME' => $basketItem->getField('MEASURE_NAME'),
-				'TAX_RATE' => $basketItem->getVatRate() * 100,
-				'DISCOUNT_SUM' => 0,
-				'TAX_INCLUDED' => $basketItem->isVatInPrice() ? 'Y' : 'N',
-				'SORT' => $sort,
-			];
-
-			if ($basketItem->getDiscountPrice() > 0)
-			{
-				$item['DISCOUNT_TYPE_ID'] = \Bitrix\Crm\Discount::MONETARY;
-				$item['DISCOUNT_SUM'] = $basketItem->getDiscountPrice();
-			}
-
-			$item['PRICE'] -= $item['DISCOUNT_SUM'];
-			$item['PRICE_ACCOUNT'] -= $item['DISCOUNT_SUM'];
-			$item['PRICE_EXCLUSIVE'] -= $item['DISCOUNT_SUM'];
-
-			$result[] = $item;
-
-			$sort += 10;
-		}
-
-
-		if ($result)
-		{
-			\CCrmDeal::SaveProductRows($dealId, $result);
-		}
+		Manager::copyOrderProductsToDeal($this->order, $dealId);
 	}
-
 }

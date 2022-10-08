@@ -41,7 +41,7 @@
 }
 
 .bx-imbot-support24-question-list-question-title {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	line-height: 20px;
 	color: #6A737F;

@@ -9,7 +9,7 @@ class CCrmActivity extends CAllCrmActivity
 	const FIELD_MULTI_TABLE_NAME = 'b_crm_field_multi';
 	const DB_TYPE = 'MYSQL';
 
-	public static function DoSaveBindings($ID, &$arBindings)
+	public static function DoSaveBindings($ID, &$arBindings, $registerUncompletedActivities = true)
 	{
 		global $DB;
 
@@ -30,15 +30,31 @@ class CCrmActivity extends CAllCrmActivity
 		$ar2Delete = array();
 		self::PrepareAssociationsSave($arBindings, $arPresentComms, $ar2Add, $ar2Delete);
 
+		$existedBindings = $registerUncompletedActivities
+			? self::GetBindings($ID)
+			: []
+		;
+
 		if($ID > 0)
 		{
-			self::DeleteBindings($ID);
+			self::DeleteBindings($ID, false);
 		}
 
 		if(count($arBindings) == 0)
 		{
+			if ($registerUncompletedActivities && !empty($existedBindings))
+			{
+				\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForActivity($ID, $existedBindings);
+			}
 			return true;
 		}
+
+		$existedBindingsMap = [];
+		foreach ($existedBindings as $binding)
+		{
+			$existedBindingsMap[$binding['OWNER_TYPE_ID']][$binding['OWNER_ID']] = true;
+		}
+		$newBindings = [];
 
 		$bulkColumns = '';
 		$bulkValues = array();
@@ -48,6 +64,10 @@ class CCrmActivity extends CAllCrmActivity
 			if(isset($arBinding['ID']))
 			{
 				unset($arBinding['ID']);
+			}
+			if (!($existedBindingsMap[$arBinding['OWNER_TYPE_ID']][$arBinding['OWNER_ID']]))
+			{
+				$newBindings[] = $arBinding;
 			}
 
 			$data = $DB->PrepareInsert(self::BINDING_TABLE_NAME, $arBinding);
@@ -88,6 +108,11 @@ class CCrmActivity extends CAllCrmActivity
 			false,
 			'File: '.__FILE__.'<br/>Line: '.__LINE__
 		);
+		if (!empty($newBindings) && $registerUncompletedActivities)
+		{
+			\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForActivity($ID, $newBindings);
+		}
+
 		return true;
 	}
 	public static function PrepareBindingsFilterSql(&$arBindings, $tableAlias = '')

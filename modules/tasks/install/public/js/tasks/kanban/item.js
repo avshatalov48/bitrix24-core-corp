@@ -733,7 +733,8 @@ BX.Tasks.Kanban.Item.prototype = {
 		}
 
 		// border color
-		BX.style(this.container, "border-left", "3px solid " + rgba);
+		//BX.style(this.container, "border-left", "3px solid " + rgba);
+		this.container.style.setProperty("--tasks-kanban-item-color", rgba);
 		// background
 		if (data.background)
 		{
@@ -1161,6 +1162,7 @@ BX.Tasks.Kanban.Item.prototype = {
 			}
 		});
 		this.container.appendChild(this.link);
+		this.container.appendChild(BX.Tag.render`<div class="tasks-kanban-item-line"></div>`);
 
 		//endregion
 

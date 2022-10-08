@@ -3,10 +3,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main;
 use Bitrix\Crm\Order;
-
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Sale\Cashbox;
+use Bitrix\Main\Loader;
+use Bitrix\Crm;
 
 Loc::loadMessages(__FILE__);
 
@@ -26,52 +27,56 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	{
 		global  $APPLICATION;
 
+		if (!$this->checkRequiredModules())
+		{
+			$this->showErrors();
+			return null;
+		}
+
 		$params['PATH_TO_ORDER_CHECK_SHOW'] = isset($params['PATH_TO_ORDER_CHECK_SHOW']) ? $params['PATH_TO_ORDER_CHECK_SHOW'] : '';
 		$params['PATH_TO_ORDER_CHECK_SHOW'] = CrmCheckPath('PATH_TO_ORDER_CHECK_SHOW', $params['PATH_TO_ORDER_CHECK_SHOW'], $APPLICATION->GetCurPage().'?check_id=#check_id#');
 		$params['PATH_TO_ORDER_CHECK_EDIT'] = isset($params['PATH_TO_ORDER_CHECK_EDIT']) ? $params['PATH_TO_ORDER_CHECK_EDIT'] : '';
 		$params['PATH_TO_ORDER_CHECK_EDIT'] = CrmCheckPath('PATH_TO_ORDER_CHECK_EDIT', $params['PATH_TO_ORDER_CHECK_EDIT'], $APPLICATION->GetCurPage().'?check_id=#check_id#');
-		$params['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath(
-			'PATH_TO_ORDER_PAYMENT_DETAILS',
-			$params['PATH_TO_ORDER_PAYMENT_DETAILS'],
-			$APPLICATION->GetCurPage().'?payment_id=#payment_id#&show'
-		);
-		$params['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath(
-			'PATH_TO_ORDER_SHIPMENT_DETAILS',
-			$params['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-			$APPLICATION->GetCurPage().'?shipment_id=#shipment_id#&show'
-		);
 		$params['OWNER_ID'] = (int)$params['OWNER_ID'];
 		$params['OWNER_TYPE'] = (int)$params['OWNER_TYPE'];
 
 		return $params;
 	}
 
-	protected function init()
+	/**
+	 * @return bool
+	 */
+	private function checkRequiredModules(): bool
 	{
-		if(!CModule::IncludeModule('crm'))
+		if (!Loader::includeModule('crm'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED');
 			return false;
 		}
 
-		if(!CModule::IncludeModule('currency'))
+		if (!Loader::includeModule('currency'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CURRENCY');
 			return false;
 		}
 
-		if(!CModule::IncludeModule('catalog'))
+		if (!Loader::includeModule('catalog'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CATALOG');
 			return false;
 		}
 
-		if (!CModule::IncludeModule('sale'))
+		if (!Loader::includeModule('sale'))
 		{
 			$this->errors[] = Loc::getMessage('CRM_MODULE_NOT_INSTALLED_SALE');
 			return false;
 		}
 
+		return true;
+	}
+
+	protected function init()
+	{
 		$this->userPermissions = CCrmPerms::GetCurrentUserPermissions();
 		$this->orderId = $this->getOrderId();
 
@@ -133,23 +138,30 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 
 	protected function getHeaders()
 	{
-		$result = array(
-			array("id" => "ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_ID"), "sort" => "ID", "default" => true, 'editable' => false),
-			array("id" => "TITLE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TITLE"), "sort" => "ID", "default" => true, 'editable' => false),
-			array("id" => "CHECK_TYPE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TYPE"), "sort" => "TYPE", "default" => true, 'editable' => false),
-			array("id" => "CHECK_STATUS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_STATUS"), "sort" => "STATUS", "default" => true, 'editable' => false),
-			array("id" => "CASHBOX_NAME", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true, 'editable' => false),
-			array("id" => "ORDER_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_ORDER_ID"), "sort" => "ORDER_ID", "default" => false, 'editable' => false),
-			array("id" => "DATE_CREATE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => false, 'editable' => false),
-			array("id" => "FORMATTED_SUM", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SUM"), "sort" => "SUM", "default" => true, 'editable' => false),
-			array("id" => "LINK_PARAMS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_LINK"), "default" => true, 'editable' => false),
-			array("id" => "PAYMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"), "sort" => "PAYMENT_ID", "default" => true, 'editable' => false),
-			array("id" => "SHIPMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"), "sort" => "SHIPMENT_ID", "default" => true, 'editable' => false),
-			array("id" => "PAYMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"), "sort" => "PAYMENT_ID", "default" => false, 'editable' => false),
-			array("id" => "SHIPMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"), "sort" => "SHIPMENT_ID", "default" => false, 'editable' => false),
-		);
-
-		return $result;
+		return [
+			...[
+				array("id" => "TITLE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TITLE"), "sort" => "ID", "default" => true, 'editable' => false),
+				array("id" => "CHECK_TYPE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TYPE"), "sort" => "TYPE", "default" => true, 'editable' => false),
+				array("id" => "CHECK_STATUS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_STATUS"), "sort" => "STATUS", "default" => true, 'editable' => false),
+				array("id" => "CASHBOX_NAME", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true, 'editable' => false),
+			],
+			...(
+				CCrmSaleHelper::isWithOrdersMode()
+					? [
+						array("id" => "ORDER_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_ORDER_ID"), "sort" => "ORDER_ID", "default" => false, 'editable' => false),
+					]
+					: []
+			),
+			...[
+				array("id" => "DATE_CREATE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => false, 'editable' => false),
+				array("id" => "FORMATTED_SUM", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SUM"), "sort" => "SUM", "default" => true, 'editable' => false),
+				array("id" => "LINK_PARAMS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_LINK"), "default" => true, 'editable' => false),
+				array("id" => "PAYMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"), "sort" => "PAYMENT_ID", "default" => true, 'editable' => false),
+				array("id" => "SHIPMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"), "sort" => "SHIPMENT_ID", "default" => true, 'editable' => false),
+				array("id" => "PAYMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"), "sort" => "PAYMENT_ID", "default" => false, 'editable' => false),
+				array("id" => "SHIPMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"), "sort" => "SHIPMENT_ID", "default" => false, 'editable' => false),
+			]
+		];
 	}
 
 	public function executeComponent()
@@ -201,8 +213,10 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		}
 
 		$this->arResult['HEADERS'] = $this->getHeaders();
-		//OWNER_ID for new entities is zero
-		$ownerID = isset($this->arParams['OWNER_ID']) ? (int)$this->arParams['OWNER_ID'] : 0;
+
+		$this->arResult['OWNER_TYPE'] = ($this->arParams['OWNER_TYPE'] > 0) ? $this->arParams['OWNER_TYPE'] : \CCrmOwnerType::Order;
+		$this->arResult['OWNER_ID'] = isset($this->arParams['OWNER_ID']) ? (int)$this->arParams['OWNER_ID'] : 0;
+
 		if($this->arResult['ENABLE_TOOLBAR'])
 		{
 			$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = CComponentEngine::MakePathFromTemplate(
@@ -210,24 +224,19 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 				array('check_id' => 0)
 			);
 
-			$addParams['order_id'] = $this->orderId;
-
-			if(!empty($addParams))
-			{
-				$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = CHTTP::urlAddParams(
-					$this->arResult['PATH_TO_ORDER_CHECK_ADD'],
-					$addParams
-				);
-			}
+			$this->arResult['PATH_TO_ORDER_CHECK_ADD'] = CHTTP::urlAddParams(
+				$this->arResult['PATH_TO_ORDER_CHECK_ADD'],
+				[
+					'order_id' => $this->orderId,
+					'owner_type' => $this->arResult['OWNER_TYPE'],
+					'owner_id' => $this->arResult['OWNER_ID'],
+				]
+			);
 		}
-		// Check owner type (Order by default)
-		$ownerType = ($this->arParams['OWNER_TYPE'] > 0) ? $this->arParams['OWNER_TYPE'] : \CCrmOwnerType::Order;
 
 		/** @var \CBitrixComponent $this */
 		$this->arResult['COMPONENT_ID'] = $this->randString();
 
-		$this->arResult['OWNER_TYPE'] = $ownerType;
-		$this->arResult['OWNER_ID'] = $ownerID;
 		$this->arResult['DATE_FORMAT'] = Main\Type\Date::getFormat();
 
 
@@ -237,6 +246,11 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		$this->arResult['HEADERS'] = $this->getHeaders();
 		$resultPrepared = $this->prepareItems();
 		$this->arResult = array_merge($this->arResult, $resultPrepared);
+
+		if ($this->arParams['SET_TITLE'])
+		{
+			$this->setTitle();
+		}
 
 		$this->IncludeComponentTemplate();
 		return $this->arResult['ROWS_COUNT'];
@@ -276,7 +290,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 				}
 			}
 
-			if ($check['LINK_PARAMS'])
+			if ($cashbox && $check['LINK_PARAMS'])
 			{
 				$check['URL'] = $cashbox->getCheckLink($check['LINK_PARAMS']);
 			}
@@ -355,7 +369,7 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 		}
 		elseif ($this->arParams['OWNER_TYPE'] === CCrmOwnerType::OrderPayment)
 		{
-			$payment = \Bitrix\Crm\Order\Manager::getPaymentObject((int)$this->arParams['OWNER_ID']);
+			$payment = Crm\Order\Manager::getPaymentObject((int)$this->arParams['OWNER_ID']);
 			if ($payment)
 			{
 				$orderId = $payment->getField('ORDER_ID');
@@ -508,5 +522,32 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 
 		return $result;
 	}
-}
 
+	private function setTitle(): void
+	{
+		global $APPLICATION;
+
+		if ($this->arParams['OWNER_TYPE'] !== CCrmOwnerType::OrderPayment)
+		{
+			return;
+		}
+
+		$payment = Crm\Order\Manager::getPaymentObject((int)$this->arParams['OWNER_ID']);
+		if (!$payment)
+		{
+			return;
+		}
+
+		$APPLICATION->SetTitle(Loc::getMessage(
+			'CRM_ORDER_CHECK_LIST_TITLE',
+			[
+				'#ACCOUNT_NUMBER#' => htmlspecialcharsbx($payment->getField('ACCOUNT_NUMBER')),
+				'#DATE_BILL#' => FormatDate(
+					$this->arResult['DATE_FORMAT'],
+					MakeTimeStamp($payment->getField('DATE_BILL'))
+				),
+				'#PAY_SYSTEM_NAME#' => $payment->getPaymentSystemName(),
+			]
+		));
+	}
+}

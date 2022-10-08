@@ -11,7 +11,7 @@ namespace Bitrix\Crm\WebForm;
 use Bitrix\Main\Loader;
 use Bitrix\Catalog\v2\Integration\JS\ProductForm\BasketBuilder;
 use Bitrix\Catalog\v2\Integration\JS\ProductForm\BasketItem;
-use Bitrix\SalesCenter\Builder\Converter\CatalogJSProductForm;
+use Bitrix\Sale\Helpers\Order\Builder\Converter\CatalogJSProductForm;
 
 /**
  * Class Catalog

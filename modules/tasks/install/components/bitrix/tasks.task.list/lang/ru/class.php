@@ -17,6 +17,8 @@ $MESS['TASKS_GRID_STUB_PROJECT_PROJECT_CREATED'] = 'Проект создан';
 $MESS['TASKS_GRID_STUB_PROJECT_CREATE_TASK'] = 'Создать задачу';
 $MESS['TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE'] = 'Здесь будет список задач, которые вы выполняете или поручаете своим сотрудникам. Создайте первую задачу, чтобы увидеть как она появится в списке';
 
+$MESS["TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK"] = "К сожалению, не удалось завершить выбранные задачи, так как они привязаны к Скрам-команде";
+
 /*
 $MESS["TASKS_MODULE_NOT_AVAILABLE_IN_THIS_EDITION"] = "Модуль управления задачами не доступен в данной редакции продукта.";
 $MESS["TASKS_MODULE_NOT_FOUND"] = "Модуль управления задачами не установлен.";

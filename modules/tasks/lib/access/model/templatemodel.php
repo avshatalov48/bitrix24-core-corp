@@ -16,6 +16,7 @@ use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\AccessibleTask;
 use Bitrix\Tasks\CheckList\Template\TemplateCheckListFacade;
+use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Internals\Task\TemplateTable;
 
 class TemplateModel
@@ -25,8 +26,10 @@ class TemplateModel
 
 	public const ROLE_OWNER = 'OWNER';
 
-	private $id;
+	private $id = 0;
 	private $members;
+	private $groupId;
+	private $replicate;
 
 	private $permissions;
 
@@ -44,7 +47,7 @@ class TemplateModel
 	/**
 	 * @return static
 	 */
-	public static function createNew(): self
+	public static function createNew(): AccessibleItem
 	{
 		$model = new self();
 		return $model;
@@ -64,6 +67,80 @@ class TemplateModel
 		}
 
 		return static::$cache[$id];
+	}
+
+	/**
+	 * @param array $fields
+	 * @return AccessibleItem
+	 */
+	public static function createFromArray(array $fields): AccessibleItem
+	{
+		$model = new self();
+
+		$templateId = array_key_exists('ID', $fields) ? (int)$fields['ID'] : 0;
+		$model->setId($templateId);
+
+		$groupId = array_key_exists('GROUP_ID', $fields) ? (int)$fields['GROUP_ID'] : 0;
+		$model->setGroupId($groupId);
+
+		$members = [];
+		$members[RoleDictionary::ROLE_DIRECTOR] = [];
+		if (array_key_exists('CREATED_BY', $fields))
+		{
+			$members[RoleDictionary::ROLE_DIRECTOR][] = (int) $fields['CREATED_BY'];
+		}
+
+		$members[RoleDictionary::ROLE_RESPONSIBLE] = [];
+		if (array_key_exists('RESPONSIBLES', $fields))
+		{
+			if (is_string($fields['RESPONSIBLES']))
+			{
+				$members[RoleDictionary::ROLE_RESPONSIBLE] = unserialize($fields['RESPONSIBLES'], ['allowed_classes' => false]);
+			}
+			elseif (is_array($fields['RESPONSIBLES']))
+			{
+				$members[RoleDictionary::ROLE_RESPONSIBLE] = $fields['RESPONSIBLES'];
+			}
+		}
+		if (array_key_exists('RESPONSIBLE_ID', $fields))
+		{
+			$members[RoleDictionary::ROLE_RESPONSIBLE][] = (int) $fields['RESPONSIBLE_ID'];
+		}
+		$members[RoleDictionary::ROLE_RESPONSIBLE] = array_unique(array_values($members[RoleDictionary::ROLE_RESPONSIBLE]));
+
+
+		$members[RoleDictionary::ROLE_ACCOMPLICE] = [];
+		if (array_key_exists('ACCOMPLICES', $fields))
+		{
+			if (is_string($fields['ACCOMPLICES']))
+			{
+				$members[RoleDictionary::ROLE_ACCOMPLICE] = unserialize($fields['ACCOMPLICES'], ['allowed_classes' => false]);
+			}
+			elseif (is_array($fields['ACCOMPLICES']))
+			{
+				$members[RoleDictionary::ROLE_ACCOMPLICE] = $fields['ACCOMPLICES'];
+			}
+		}
+
+		$members[RoleDictionary::ROLE_AUDITOR] = [];
+		if (array_key_exists('AUDITORS', $fields))
+		{
+			if (is_string($fields['AUDITORS']))
+			{
+				$members[RoleDictionary::ROLE_AUDITOR] = unserialize($fields['AUDITORS'], ['allowed_classes' => false]);
+			}
+			elseif (is_array($fields['AUDITORS']))
+			{
+				$members[RoleDictionary::ROLE_AUDITOR] = $fields['AUDITORS'];
+			}
+		}
+
+		$model->setMembers($members);
+
+		$regular = array_key_exists('REPLICATE', $fields) && $fields['REPLICATE'] === 'Y';
+		$model->setRegular($regular);
+
+		return $model;
 	}
 
 	private function __construct()
@@ -105,27 +182,24 @@ class TemplateModel
 				return $this->members;
 			}
 
-			$members = TemplateTable::query()
-				->addSelect('CREATED_BY')
-				->addSelect('RESPONSIBLE_ID')
-				->addSelect('RESPONSIBLES')
-				->addSelect('ACCOMPLICES')
-				->addSelect('AUDITORS')
-				->where('ID', $this->id)
-				->exec()
-				->fetch();
+			$members =
+				TemplateMemberTable::query()
+					->addSelect('USER_ID')
+					->addSelect('TYPE')
+					->where('TEMPLATE_ID', $this->id)
+					->exec()
+					->fetchAll()
+			;
 
 			if (!$members)
-            {
-                return $this->members;
-            }
+			{
+				return $this->members;
+			}
 
-			$responsibles = unserialize($members['RESPONSIBLES'], ['allowed_classes' => false]);
-
-			$this->members[RoleDictionary::ROLE_DIRECTOR] 		= [$members['CREATED_BY']];
-			$this->members[RoleDictionary::ROLE_RESPONSIBLE] 	= !empty($responsibles) ? $responsibles : [$members['RESPONSIBLE_ID']];
-			$this->members[RoleDictionary::ROLE_ACCOMPLICE] 	= unserialize($members['ACCOMPLICES'], ['allowed_classes' => false]);
-			$this->members[RoleDictionary::ROLE_AUDITOR] 		= unserialize($members['AUDITORS'], ['allowed_classes' => false]);
+			foreach ($members as $member)
+			{
+				$this->members[$member['TYPE']][] = $member['USER_ID'];
+			}
 		}
 		if (!$role)
 		{
@@ -138,6 +212,16 @@ class TemplateModel
 		}
 
 		return [];
+	}
+
+	/**
+	 * @param array $members
+	 * @return $this
+	 */
+	public function setMembers(array $members): self
+	{
+		$this->members = $members;
+		return $this;
 	}
 
 	/**
@@ -213,7 +297,22 @@ class TemplateModel
 	 */
 	public function getGroupId(): int
 	{
-		return 0;
+		if (is_null($this->groupId))
+		{
+			$template = $this->loadTemplate();
+			$this->groupId = $template ? $template['GROUP_ID'] : 0;
+		}
+		return $this->groupId;
+	}
+
+	/**
+	 * @param int $groupId
+	 * @return $this
+	 */
+	public function setGroupId(int $groupId): self
+	{
+		$this->groupId = $groupId;
+		return $this;
 	}
 
 	/**
@@ -273,6 +372,32 @@ class TemplateModel
 	}
 
 	/**
+	 * @return bool
+	 * @throws \Bitrix\Main\ArgumentException
+	 * @throws \Bitrix\Main\ObjectPropertyException
+	 * @throws \Bitrix\Main\SystemException
+	 */
+	public function isRegular(): bool
+	{
+		if (is_null($this->replicate))
+		{
+			$template = $this->loadTemplate();
+			$this->replicate = ($template['REPLICATE'] === 'Y');
+		}
+		return $this->replicate;
+	}
+
+	/**
+	 * @param bool $value
+	 * @return bool
+	 */
+	public function setRegular(bool $value): self
+	{
+		$this->replicate = $value;
+		return $this;
+	}
+
+	/**
 	 * @return array
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
@@ -315,9 +440,11 @@ class TemplateModel
 		}
 		if ($this->template === null)
 		{
-			$res = \Bitrix\Tasks\Internals\Task\TemplateTable::query()
+			$res = TemplateTable::query()
 				->addSelect('ID')
 				->addSelect('ZOMBIE')
+				->addSelect('GROUP_ID')
+				->addSelect('REPLICATE')
 				->where('ID', $this->id)
 				->exec()
 				->fetch();

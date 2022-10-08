@@ -10,6 +10,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
 $rootTitle = GetMessage('CRM_PRODUCT_SECTION_TREE_TITLE');
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 <div class="bx-crm-wf-section-name tal"><?php echo $rootTitle ?></div>
 <div id="crm-product-section-tree-<?= $component->getComponentId() ?>" style="display: none;"></div>

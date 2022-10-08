@@ -32,7 +32,7 @@
 .config-webform-button-upload .config-webform-button-text {
 	background: url("/bitrix/js/main/core/images/controls-sprite.png") repeat-x 0 -251px;
 	color: #5b5b5b;
-	font: 14px/26px Arial,Helvetica,sans-serif;
+	font: 14px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding: 0 8px;
 	text-shadow: none;
 }
@@ -69,7 +69,7 @@
 	border-width: 1px;
 	box-shadow: 0 1px 1px #ede8cc inset;
 	color: #555555;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	line-height: 20px;
 	margin-bottom: 12px;

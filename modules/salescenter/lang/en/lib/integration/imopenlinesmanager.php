@@ -1,10 +1,14 @@
 <?php
+$MESS["SALESCENTER_IMOPMANAGER_COMPILATION_MESSAGE_PREVIEW"] = "We have picked these items just for you. Drop us a line if you have questions! #LINK#";
+$MESS["SALESCENTER_IMOPMANAGER_COMPILATION_MESSAGE_TOP"] = "We have picked these items just for you.";
+$MESS["SALESCENTER_IMOPMANAGER_EMPTY_COMPILATION_LINK"] = "Product selection link is missing";
 $MESS["SALESCENTER_IMOPMANAGER_ORDER_ADD_MESSAGE_BOTTOM"] = "Easy one click payment. Send us a message if you have any questions!";
 $MESS["SALESCENTER_IMOPMANAGER_ORDER_ADD_MESSAGE_DISCOUNT"] = "Order discount #DISCOUNT#";
 $MESS["SALESCENTER_IMOPMANAGER_ORDER_ADD_MESSAGE_TOP"] = "Your order for #SUM# of #DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM_2"] = "Drop us a line if you have any questions!";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_TOP_2"] = "Please use this link to pay for your order.";
 $MESS["SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW_2"] = "Please use this link to pay for your order. Drop us a line if you have any questions! #LINK#";
+$MESS["SALESCENTER_IMOPMANAGER_SYSTEM_CLIENT_MAKE_ORDER"] = "Customer has placed an order.";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_LINK"] = "Payment ##DEAL_ID# of #DEAL_DATE#";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_DEAL_ADD_TEXT"] = "Deal for #SUM# has been created";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_ADD_LINK"] = "Order ##ORDER_ID# of #ORDER_DATE#";
@@ -12,6 +16,7 @@ $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_ADD_TEXT"] = "Order for #SUM# was cr
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_CHECK_NOTIFY_ERROR"] = "Error printing receipt ##CHECK_ID#.";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_CHECK_TEXT_BOTTOM"] = "Use the link to view and print the receipt.";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_CHECK_TEXT_TOP"] = "Order receipt for #SUM# from #ORDER_DATE#";
+$MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_NOTIFY_REORDER"] = "The deal already has an order. A new deal will be created should the customer opt to order products from the selection.";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_PAID_TEXT_BOTTOM"] = "Click the link to view order information. Thank you for your business!";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_PAID_TEXT_TOP"] = "Order total #SUM# of #DATE# has been paid";
 $MESS["SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_TEXT"] = "Order for #SUM#";

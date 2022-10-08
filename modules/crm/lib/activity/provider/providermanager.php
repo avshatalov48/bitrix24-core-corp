@@ -1,8 +1,6 @@
 <?php
 namespace Bitrix\Crm\Activity\Provider;
 
-use Bitrix\Crm\Activity;
-use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -34,6 +32,8 @@ class ProviderManager
 				Delivery::getId()        => Delivery::className(),
 				CallTracker::getId()    => CallTracker::class,
 				StoreDocument::getId()   => StoreDocument::className(),
+				Document::getId() => Document::className(),
+				SignDocument::getId() => SignDocument::className(),
 			);
 
 			if(Visit::isAvailable())

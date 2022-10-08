@@ -2,7 +2,6 @@ import * as Item from './item';
 import * as Component from './components/field';
 import * as Messages from "../../form/messages";
 import * as Design from "../../form/design";
-import * as Util from '../../util/registry';
 import { getStoredFieldValue, getStoredFieldValueByFieldName } from "../storage"
 import Event from "../../util/event";
 
@@ -11,6 +10,11 @@ type Entity = {
 	name: string;
 	fieldName: string;
 	type: string;
+};
+
+type Size = {
+	min: ?number;
+	max: ?number;
 };
 
 type Options = {
@@ -32,6 +36,7 @@ type Options = {
 	values: ?Array;
 	messages: ?Messages.Storage;
 	design: ?Design.Model;
+	size: ?Size;
 	contentTypes: ?Array<string>;
 };
 

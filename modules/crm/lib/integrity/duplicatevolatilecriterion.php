@@ -495,17 +495,17 @@ class DuplicateVolatileCriterion extends DuplicateCriterion
 			$filter['ENTITY_TYPE_ID'] = $entityTypeID;
 		}
 
-		$res = DuplicateVolatileMatchCodeTable::getList(
-			[
-				'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
-				'order' => [
-					'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
-					'ENTITY_ID' => 'ASC',
-				],
-				'filter' => $filter,
-				'limit' => $limit,
-			]
-		);
+		$listParams = $this->applyEntityCategoryFilter($entityTypeID, [
+			'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+			'order' => [
+				'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
+				'ENTITY_ID' => 'ASC',
+			],
+			'filter' => $filter,
+			'limit' => $limit,
+		]);
+
+		$res = DuplicateVolatileMatchCodeTable::getList($listParams);
 		$entities = [];
 		while ($row = $res->fetch())
 		{

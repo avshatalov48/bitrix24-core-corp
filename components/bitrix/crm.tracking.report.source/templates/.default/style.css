@@ -97,7 +97,7 @@
 
 .crm-tracking-report-source-row-text {
 	margin: 5px 0 0 0;
-	font: 12px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(128, 137, 147, 0.7);
 	white-space: nowrap;
 }
@@ -119,10 +119,10 @@
 	margin: 0 8px 0 0;
 	padding: 0 8px 0 0 ;
 	border-right: 1px solid rgba(82,92,105,.17);
-	font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .crm-tracking-report-source-rating-text {
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
 	font-weight: bold;
 	white-space: nowrap;

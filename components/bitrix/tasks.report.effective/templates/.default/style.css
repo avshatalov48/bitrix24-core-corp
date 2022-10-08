@@ -9,7 +9,8 @@
 	position: absolute;
 	top: 50%;
 	left: 50%;
-	font-family: 'OpenSans-Light', serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 72px;
 	line-height: 72px;
 	color: #333;
@@ -183,7 +184,8 @@
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 55px;
 	font-size: 18px;
 	border-bottom: 1px solid #f0f0f2;
@@ -270,7 +272,8 @@
 	bottom: 15px;
 	right: 24px;
 	font-size: 48px;
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .task-report-widget-50-50 .task-report-widget-container-content {
@@ -279,7 +282,8 @@
 
 .task-report-widget-container-title {
 	font-size: 16px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	line-height: 40px;
 	color: #fff;
 	padding: 0 17px;
@@ -375,7 +379,8 @@
 	bottom: 27px;
 	left: 20px;
 	opacity: .9;
-	font-family: 'OpenSans-Regular', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 13px;
 	color: #fff;
 }

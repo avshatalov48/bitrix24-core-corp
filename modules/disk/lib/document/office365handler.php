@@ -15,8 +15,10 @@ Loc::loadMessages(__FILE__);
 
 class Office365Handler extends OneDriveHandler implements IViewer
 {
-	const SUFFIX_TO_CREATE_LINK           = 'createLink';
-	const SUFFIX_TO_CREATE_UPLOAD_SESSION = 'createUploadSession';
+	public const ERROR_CODE_SHARED_LINK_RESTRICTIONS = 'DISK_O365_HANDLER_22001';
+
+	public const SUFFIX_TO_CREATE_LINK = 'createLink';
+	public const SUFFIX_TO_CREATE_UPLOAD_SESSION = 'createUploadSession';
 
 	/**
 	 * Internal code. Identificate document handler
@@ -50,20 +52,9 @@ class Office365Handler extends OneDriveHandler implements IViewer
 		return Loc::getMessage('DISK_OFFICE365_HANDLER_NAME_STORAGE');
 	}
 
-	/**
-	 * Returns OAuth service for working with Office365.
-	 *
-	 * @return \CSocServOffice365OAuth|\CSocServAuth
-	 */
-	protected function getOAuthService()
+	protected function getOAuthServiceClass(): string
 	{
-		$oauth = new \CSocServOffice365OAuth($this->userId);
-		foreach ($this->getScopes() as $scope)
-		{
-			$oauth->getEntityOAuth()->addScope($scope);
-		}
-
-		return $oauth;
+		return \CSocServOffice365OAuth::class;
 	}
 
 	protected function instantiateResumableUpload(FileData $fileData)
@@ -89,7 +80,7 @@ class Office365Handler extends OneDriveHandler implements IViewer
 	 *
 	 * @return array
 	 */
-	protected function getScopes()
+	protected function getScopes(): array
 	{
 		return array(
 			'offline_access',
@@ -249,6 +240,29 @@ class Office365Handler extends OneDriveHandler implements IViewer
 					'Insufficient scope (403)',
 					self::ERROR_CODE_INSUFFICIENT_SCOPE
 				);
+
+				return false;
+			}
+		}
+		elseif($status === 400)
+		{
+			$result = Json::decode($http->getResult());
+			$code = $result['error']['code'] ?? null;
+			$message = $result['error']['message'] ?? null;
+
+			if (
+				$code === 'invalidRequest'
+				&& $message === 'The default link settings cannot be used to create a sharing link without a scope. Scope must be specified'
+			)
+			{
+				//shared link doesn't work due to policy https://go.microsoft.com/fwlink/?linkid=2185222
+				if (!$this->errorCollection->getErrorByCode(self::ERROR_CODE_SHARED_LINK_RESTRICTIONS))
+				{
+					$this->errorCollection[] = new Error(
+						Loc::getMessage('DISK_OFFICE365_HANDLER_ERROR_COULD_NOT_GET_SHARED_LINK'),
+						self::ERROR_CODE_SHARED_LINK_RESTRICTIONS
+					);
+				}
 
 				return false;
 			}

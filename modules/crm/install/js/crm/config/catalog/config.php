@@ -18,6 +18,7 @@ return [
 		'catalog.store-use',
 		'ui.vue',
 		'ui.notification',
+		'ui.design-tokens',
 	],
 	'skip_core' => false,
 ];

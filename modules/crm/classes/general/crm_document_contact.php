@@ -5,7 +5,7 @@ use Bitrix\Crm;
 if (!CModule::IncludeModule('bizproc'))
 	return;
 
-IncludeModuleLangFile(dirname(__FILE__)."/crm_document.php");
+IncludeModuleLangFile(__DIR__."/crm_document.php");
 
 class CCrmDocumentContact extends CCrmDocument implements IBPWorkflowDocument
 {
@@ -38,17 +38,13 @@ class CCrmDocumentContact extends CCrmDocument implements IBPWorkflowDocument
 		$addressLabels = Bitrix\Crm\EntityAddress::getShortLabels();
 		$printableFieldNameSuffix = ' ('.GetMessage('CRM_FIELD_BP_TEXT').')';
 
-		$arResult = array(
+		$arResult = static::getVirtualFields() + array(
 			'ID' => array(
 				'Name' => GetMessage('CRM_FIELD_ID'),
 				'Type' => 'int',
 				'Filterable' => true,
 				'Editable' => false,
 				'Required' => false,
-			),
-			'CRM_ID' => array(
-				'Name' => GetMessage('CRM_DOCUMENT_FIELD_CRM_ID'),
-				'Type' => 'string',
 			),
 			'NAME' => array(
 				'Name' => GetMessage('CRM_FIELD_FIRST_NAME'),

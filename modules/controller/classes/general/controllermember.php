@@ -176,11 +176,15 @@ class CAllControllerMember
 		global $DB;
 		$member_id = intval($member_id);
 
+		$lockIdSql = $DB->ForSQL("X".$APPLICATION->GetServerUniqID()."_update_counters_".$member_id);
+		$DB->Query("SELECT GET_LOCK('".$lockIdSql."', -1) as L");
+
 		$arMember = CControllerMember::GetMember($member_id);
 		if(!$arMember)
 		{
 			$e = new CApplicationException("Member #".$member_id." is not found.");
 			$APPLICATION->ThrowException($e);
+			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
 			return false;
 		}
 
@@ -189,6 +193,7 @@ class CAllControllerMember
 		{
 			$e = new CApplicationException("Group #".$arMember["CONTROLLER_GROUP_ID"]." is not found.");
 			$APPLICATION->ThrowException($e);
+			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
 			return false;
 		}
 
@@ -256,6 +261,7 @@ class CAllControllerMember
 				$e = new CApplicationException("Command execution error.");
 				$APPLICATION->ThrowException($e);
 			}
+			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
 			return false;
 		}
 
@@ -284,11 +290,13 @@ class CAllControllerMember
 			$e = $APPLICATION->GetException();
 			$e = new CApplicationException(GetMessage("CTRLR_MEM_COUNTERS_ERR1").$e->GetString());
 			$APPLICATION->ThrowException($e);
+			$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
 			return false;
 		}
 
 		CControllerCounter::UpdateMemberValues($member_id, $ar_command_result);
 
+		$DB->Query("SELECT RELEASE_LOCK('".$lockIdSql."') as L");
 		return $arFields;
 	}
 

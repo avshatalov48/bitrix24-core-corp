@@ -6,7 +6,11 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 use \Bitrix\Crm\Integration\Report\Handler\SalesDynamics\WonLostAmount;
 
-Extension::load(["ui.icons", "ui.hint"]);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.icons',
+	'ui.hint',
+]);
 
 $rows = [];
 

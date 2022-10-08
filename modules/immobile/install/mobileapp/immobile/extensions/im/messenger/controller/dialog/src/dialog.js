@@ -6,6 +6,7 @@
  */
 jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) => {
 
+	const { Type } = jn.require('type');
 	const { Loc } = jn.require('loc');
 	const {
 		EventType,
@@ -612,12 +613,25 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 
 		openWebDialog(options)
 		{
-			if (!this.webDialog)
-			{
-				this.webDialog = new WebDialog();
-			}
+			return new Promise(resolve => {
+				if (Type.isStringFilled(options.userCode))
+				{
+					WebDialog.getOpenlineDialogByUserCode(options.userCode).then(dialog => {
+						options.dialogId = dialog.dialog_id;
+						WebDialog.open(options);
+					});
 
-			this.webDialog.open(options);
+					return;
+				}
+
+				WebDialog.open(options);
+				resolve();
+			});
+		}
+
+		getOpenLineParams(options = {})
+		{
+			return WebDialog.getOpenLineParams(options);
 		}
 
 		createAudioCall()

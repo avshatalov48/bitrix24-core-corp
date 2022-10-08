@@ -78,7 +78,7 @@ class UserConsent
 		$userList = array(1);
 
 		// from forms
-		$formUserDb = FormTable::getList(array(
+		$formUserDb = FormTable::getDefaultTypeList(array(
 			'select' => array('ACTIVE_CHANGE_BY'),
 		));
 		while ($formUser = $formUserDb->fetch())
@@ -355,7 +355,7 @@ class UserConsent
 		}
 
 		// update forms
-		$forms = FormTable::getList(array(
+		$forms = FormTable::getDefaultTypeList(array(
 			'select' => array('ID'),
 			'filter' => array(
 				'=AGREEMENT_ID' => null,

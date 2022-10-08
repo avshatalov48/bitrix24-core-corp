@@ -1,7 +1,10 @@
-<?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
-CJSCore::Init(array('finder'));
+\Bitrix\Main\UI\Extension::load(['finder', 'ui.design-tokens']);
 
 $this->setFrameMode(true);
 

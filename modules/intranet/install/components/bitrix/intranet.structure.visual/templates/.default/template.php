@@ -4,7 +4,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column flexible-layout");
 
-Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.buttons"]);
+Bitrix\Main\UI\Extension::load(["ui.tooltip", "ui.buttons", "ui.design-tokens"]);
 
 $arParams['PAGE_URL'] = $APPLICATION->GetCurPageParam("", array('action', 'section', 'level', 'mr', 'mode', 'sessid', 'dpt_id', 'dpt_to', 'dpt_from', 'user_id', 'type', 'undo', 'dpt_before', 'dpt_after', 'dpt_parent'));
 $arParams['PAGE_URL_JS'] = CUtil::JSEscape($arParams['PAGE_URL']);

@@ -63,6 +63,7 @@ CJSCore::RegisterExt('crm_common', array(
 	],
 	'rel' => [
 		'ui.design-tokens',
+		'ui.fonts.opensans',
 	]
 ));
 
@@ -70,7 +71,7 @@ CJSCore::RegisterExt('crm_activity_planner', array(
 	'js' => array('/bitrix/js/crm/activity_planner.js', '/bitrix/js/crm/communication_search.js'),
 	'css' => '/bitrix/js/crm/css/crm-activity-planner.css',
 	'lang' => '/bitrix/modules/crm/lang/'.LANGUAGE_ID.'/install/js/activity_planner.php',
-	'rel' => array('core', 'popup', 'date', 'fx', 'socnetlogdest', 'ui.design-tokens'),
+	'rel' => array('core', 'popup', 'date', 'fx', 'socnetlogdest', 'ui.design-tokens', 'ui.fonts.opensans'),
 ));
 
 CJSCore::RegisterExt('crm_recorder', array(

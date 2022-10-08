@@ -1,5 +1,7 @@
 <?php
+$MESS["IMCONNECTOR_COMPONENT_AVITO_CONNECT_STEP_NEW"] = "Sie müssen #LINK_START#einen Account erstellen#LINK_END# oder einen existierenden nutzen. Wenn Sie noch keinen Account haben, werden wir Ihnen helfen, ihn zu erstellen und mit Bitrix24 zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_ADDITIONAL_DESCRIPTION"] = "Sie müssen <a href=\"#\" onclick=\"top.BX.Helper.show(\'#ID#\'); return false;\">einen Account erstellen</a> oder den nutzen, den Sie schon haben. Haben Sie noch keinen Account, werden wir Ihnen dabei helfen, diesen zu erstellen und mit Ihrem Bitrix24 zu verbinden.";
+$MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_ADDITIONAL_DESCRIPTION_NEW"] = "Sie müssen #LINK_START#einen Account erstellen#LINK_END# oder einen existierenden nutzen. Wenn Sie noch keinen Account haben, werden wir Ihnen helfen, ihn zu erstellen und mit Bitrix24 zu verbinden.";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_LIST_ITEM_1"] = "Bearbeiten Sie die Anfragen aus Avito direkt in Bitrix24";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_LIST_ITEM_2"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";
 $MESS["IMCONNECTOR_COMPONENT_AVITO_INDEX_LIST_ITEM_3"] = "Begleiten Sie Ihre Kunden durch den Sales Funnel im CRM";

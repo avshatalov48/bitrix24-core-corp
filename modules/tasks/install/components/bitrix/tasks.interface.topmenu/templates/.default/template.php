@@ -53,4 +53,6 @@ if(SITE_TEMPLATE_ID === "bitrix24")
 	$this->EndViewTarget();
 }
 
-$arResult['HELPER']->initializeExtension();
+$arResult['HELPER']->initializeExtension([
+	'isScrumLimitExceeded' => \Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit::isLimitExceeded(),
+]);

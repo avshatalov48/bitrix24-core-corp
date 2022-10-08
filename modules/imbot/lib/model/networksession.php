@@ -92,6 +92,17 @@ class NetworkSessionTable extends Main\Entity\DataManager
 				'required' => false,
 				'default_value' => [__CLASS__, 'getCurrentDate'],
 			],
+			'CLOSE_TERM' => [
+				'data_type' => 'integer',
+				'default_value' => 1440,
+			],
+			'CLOSED' => [
+				'data_type' => 'boolean',
+				'expression' => [
+					"CASE WHEN %s IS NULL THEN 0 WHEN %s = '0000-00-00' THEN 0 ELSE %s < NOW() END",
+					'DATE_FINISH', 'DATE_FINISH', 'DATE_FINISH',
+				]
+			],
 		];
 	}
 

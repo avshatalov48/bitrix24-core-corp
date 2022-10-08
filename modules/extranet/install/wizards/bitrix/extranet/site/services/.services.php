@@ -1,5 +1,9 @@
-<?
-if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 $arServices = Array(
 
@@ -13,7 +17,6 @@ $arServices = Array(
 		"NAME" => GetMessage("SERVICE_FILES"),
 		"STAGES" => Array(
 			"files.php",
-			"bitrix.php",
 		),
 	),
 
@@ -51,4 +54,3 @@ $arServices = Array(
 		"NAME" => GetMessage("SERVICE_FILEMAN"),
 	),
 );
-?>

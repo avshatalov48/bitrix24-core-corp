@@ -16,7 +16,11 @@ const MessageEditor = {
 		isReadOnly: {
 			type: Boolean,
 			default: false,
-		}
+		},
+		selectedMode: {
+			type: String,
+			required: true,
+		},
 	},
 	data()
 	{
@@ -60,8 +64,9 @@ const MessageEditor = {
 		//region edit
 		updateTemplate(text)
 		{
-			this.text = text;
+			this.editor.template = text;
 			this.$root.$app.sendingMethodDesc.text = text;
+			this.$root.$app.sendingMethodDesc.text_modes[this.selectedMode] = text;
 		},
 		showPopupHint(target, message, timer)
 		{
@@ -172,7 +177,8 @@ const MessageEditor = {
 			<div class="salescenter-app-payment-by-sms-item-container-sms-content-message">	
 				<template v-if="isEditable()">
 					<sms-message-edit-block				
-						:text="text"
+						:text="editor.template"
+						:selectedMode="selectedMode"
 						v-on:edit-on-before-blur="beforeBlur"
 						v-on:edit-on-after-press-key="afterPressKey"
 						v-on:edit-on-update-template="updateTemplate"
@@ -181,7 +187,7 @@ const MessageEditor = {
 				</template> 
 				<template v-else>
 					<sms-message-view-block
-						:text="text"
+						:text="editor.template"
 						:orderPublicUrl="orderPublicUrl"
 						v-on:view-on-mouseenter="showSmsMessagePopupHint"
 						v-on:view-on-mouseleave="hidePopupHint"

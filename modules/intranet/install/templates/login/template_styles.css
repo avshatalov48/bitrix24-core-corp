@@ -35,7 +35,7 @@
 }
 
 :root {
-	--intranet-pub-font-family-montserrat: 'Montserrat-regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--intranet-pub-font-family-montserrat: 'Montserrat-regular', var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	--intranet-pub-font-family-primary: var(--ui-font-family-montserrat, var(--intranet-pub-font-family-montserrat));
 }
 
@@ -53,6 +53,8 @@ body {
 	margin: 0;
 	/*min-width: 1024px;*/
 	padding: 0;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
 .main-logo {
@@ -121,7 +123,7 @@ body {
 	display: block;
 	overflow: hidden;
 	background-color: #fff;
-	border-radius: 4px;
+	border-radius: var(--ui-border-radius-3xl, 4px);
 	max-width: 705px;
 	position: relative;
 	padding: 26px 45px;
@@ -260,7 +262,7 @@ body {
 	border: 2px solid #c8ccd1;
 	border-radius: 4px;
 	box-sizing: border-box;
-	font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 15px;
 	color: #333;
 	outline: none;
@@ -346,7 +348,7 @@ body {
 }
 
 .login-item-description-pas {
-	font-family: Georgia, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: Georgia, var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-style: italic;
 }
 
@@ -562,7 +564,7 @@ a.login-item-link:hover {
 .login-item-checkbox-label {
 	color: #5e5d5d;
 	font-size: 14px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	line-height: normal;
 }
 
@@ -1063,22 +1065,18 @@ a.login-btn {
 .errortext,
 .notetext {
 	background: #f9ebee;
-	border: 1px solid;
-	border-color: #d5c1b4 #e6d2cd #f2dedf;
 	border-radius: 6px;
 	font-weight: 600;
 	color: #bb404c;
 	font-size: 14px;
 	min-height: 16px;
 	margin: 0 0 12px;
-	text-shadow: 0 1px rgba(255, 255, 255, .89);
 	padding: 10px 0 10px 42px;
 	position: relative;
 }
 
 .notetext {
 	background-color: #d6eecd;
-	border-color: #b8cb9f #c7dcb6 #d1e8c6;
 	color: #33823d;
 	padding: 10px 0 10px 16px;
 }

@@ -47,6 +47,7 @@ else
 	$APPLICATION->setPageProperty('BodyClass', trim(sprintf('%s %s', $bodyClass, 'pagetitle-toolbar-field-view')));
 }
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 
 <form id="<?=htmlspecialcharsbx($formId) ?>" action="<?=POST_FORM_ACTION_URI ?>" method="POST">

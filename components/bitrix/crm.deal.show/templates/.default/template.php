@@ -11,6 +11,12 @@ if (!empty($arResult['ERROR_MESSAGE']))
 global $APPLICATION;
 $APPLICATION->AddHeadScript('/bitrix/js/crm/instant_editor.js');
 $APPLICATION->AddHeadScript('/bitrix/js/crm/dialog.js');
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 $APPLICATION->SetAdditionalCSS("/bitrix/themes/.default/crm-entity-show.css");
 if(SITE_TEMPLATE_ID === 'bitrix24')

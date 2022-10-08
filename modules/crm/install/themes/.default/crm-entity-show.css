@@ -78,7 +78,7 @@ div.crm-fld-block-readonly { min-height: 24px; }
 	outline: none;
 	border: 1px solid #b7b7b7;
 	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.13) inset;
-	font: 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 table.bx-crm-view-fieldset-content-table input.crm-fld-element-input { height: 18px; }
@@ -116,7 +116,7 @@ table.bx-crm-view-fieldset-content-table input.crm-fld-element-input { height: 1
 .crm-fld-element-select {
 	display: inline;
 	margin: 2px 0 0;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-fld-edit .crm-fld-text-lhe { display: none; }
@@ -156,7 +156,7 @@ table.bx-crm-view-fieldset-content-table input.crm-fld-element-input { height: 1
 	border-radius: 4px;
 	background: #f1f1f1;
 	color: #494949;
-	font: 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-khtml-border-radius: 4px;
 }
 
@@ -165,7 +165,7 @@ table.bx-crm-view-fieldset-content-table input.crm-fld-element-input { height: 1
 .crm-entity-info-header h2 {
 	margin: 3px 0 11px;
 	padding: 0 5px;
-	font: bold 14px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 14px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-info-section {
@@ -377,7 +377,7 @@ h1.crm-fld-edit .crm-fld-icon { display: none; }
 #pagetitle .crm-fld-element-input {
 	padding: 5px 7px 5px 5px;
 	height: 25px;
-	font: bold 21px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 21px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-navigation {
@@ -429,7 +429,7 @@ h1.crm-fld-edit .crm-fld-icon { display: none; }
 	border-radius: 4px 4px 0 0;
 	background: url("images/crm/mini-sprite.png") repeat-x 0 -200px #efefef;
 	white-space: nowrap;
-	font: bold 15px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* for old templates */
@@ -442,7 +442,7 @@ table.bx-edit-table td.bx-heading .bx-crm-view-fieldset-title {
 	border-radius: 4px 4px 0 0;
 	background: none;
 	white-space: nowrap;
-	font: bold 15px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-crm-view-fieldset-minimized .bx-crm-view-fieldset-title {
@@ -454,7 +454,7 @@ table.bx-edit-table td.bx-heading .bx-crm-view-fieldset-title {
 .bx-crm-view-fieldset-close-title {
 	border-bottom: 1px dashed #0069c4;
 	color: #0069c4;
-	font: bold 15px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 }
 
@@ -532,7 +532,7 @@ div.bx-crm-view .bx-crm-view-fieldset-title a.bx-crm-view-fieldset-title-button 
 	vertical-align: top;
 	text-decoration: none;
 	text-shadow: 0 1px 0 #fff;
-	font: bold 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 table.bx-crm-view-fieldset-content-table {
@@ -828,7 +828,7 @@ table.crm-view-table a:hover {
 	padding: 0 14px;
 	border-radius: 4px;
 	background: #fbf4bf;
-	font: 12px/26px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-view-table-total-value {
@@ -844,13 +844,13 @@ div.bx-crm-dialog-view-comm-list-popup {
 	margin-top: 9px;
 	padding: 0 15px 14px;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 div.bx-crm-dialog-long-run-proc-popup {
 	overflow: hidden;
 	font-size: 14px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 div.bx-crm-dialog-activity-call-event div.bx-crm-dialog-view-meeting-popup,
@@ -957,7 +957,7 @@ div.bx-crm-dialog-view-activity-file .finder-box-selected-item-icon {
 	margin-left: 9px;
 	font-weight: bold;
 	font-size: 15px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 div.bx-crm-dialog-add-meeting-popup,
@@ -983,7 +983,7 @@ table.bx-crm-dialog-activity-table,
 table.bx-crm-dialog-quote-print-table {
 	width: 100%;
 	color: #555;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 td.bx-crm-dialog-activity-table-left,
@@ -1008,7 +1008,7 @@ span.bx-crm-dialog-title-text {
 	white-space: nowrap;
 	font-weight: bold;
 	font-size: 15px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 span.bx-crm-dialog-title-minimize-button, span.bx-crm-dialog-title-maximize-button {
@@ -1280,7 +1280,7 @@ textarea.bx-crm-dialog-description-form {
 	box-shadow: 0 1px 1px #e9e8e8 inset;
 	color: #a9a9a9;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	resize: none;
 }
 
@@ -1445,7 +1445,7 @@ a.bx-crm-dialog-activity-fwplayer-download-link {
 .crm-connection-search-dlg-wrapper {
 	margin: 0 8px 0 1px;
 	width: 396px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-connection-search-dlg-title {

@@ -196,4 +196,20 @@ class CrmSmartInvoiceDetailsComponent extends FactoryBased
 
 		return $tabCodes;
 	}
+
+	public function saveAction(array $data): ?array
+	{
+		$result = parent::saveAction($data);
+
+		if (!$this->getErrors() && $this->item && !$this->item->isNew())
+		{
+			\Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->enqueueItemScheduledDocumentsForActualization(
+				\Bitrix\Crm\ItemIdentifier::createByItem($this->item),
+				$this->userID,
+				\Bitrix\Crm\Integration\DocumentGeneratorManager::ACTUALIZATION_POSITION_BACKGROUND,
+			);
+		}
+
+		return $result;
+	}
 }

@@ -22,7 +22,6 @@ use Bitrix\Crm\Counter\EntityCounterManager;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
-use Bitrix\Main\Text\HtmlFilter;
 
 class CAllCrmDeal
 {
@@ -1992,9 +1991,6 @@ class CAllCrmDeal
 				DealContactTable::bindContacts($ID, $contactBindings);
 				if (isset($GLOBALS['USER']))
 				{
-					if (!class_exists('CUserOptions'))
-						include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 					CUserOptions::SetOption(
 						'crm',
 						'crm_contact_search',
@@ -2099,9 +2095,6 @@ class CAllCrmDeal
 
 			if (isset($GLOBALS['USER']) && isset($arFields['COMPANY_ID']) && intval($arFields['COMPANY_ID']) > 0)
 			{
-				if (!class_exists('CUserOptions'))
-					include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 				CUserOptions::SetOption('crm', 'crm_company_search', array('last_selected' => $arFields['COMPANY_ID']));
 			}
 
@@ -3225,9 +3218,6 @@ class CAllCrmDeal
 
 			if (isset($GLOBALS['USER']) && isset($arFields['COMPANY_ID']) && $arFields['COMPANY_ID'] > 0)
 			{
-				if (!class_exists('CUserOptions'))
-					include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 				CUserOptions::SetOption('crm', 'crm_company_search', array('last_selected' => $arFields['COMPANY_ID']));
 			}
 
@@ -4228,13 +4218,41 @@ class CAllCrmDeal
 
 	public static function SaveProductRows($ID, $arRows, $checkPerms = true, $regEvent = true, $syncOwner = true)
 	{
+		global $APPLICATION;
+
+		/**
+		 * @var CMain $APPLICATION
+		 */
+
+		$events = GetModuleEvents('crm', 'OnBeforeCrmDealProductRowsSave');
+		while ($event = $events->Fetch())
+		{
+			$eventResult = ExecuteModuleEventEx($event, array($ID, $arRows));
+			if ($eventResult instanceof \Bitrix\Main\Result)
+			{
+				$error = join(', ', $eventResult->getErrorMessages());
+				if ($error)
+				{
+					$APPLICATION->ThrowException($error);
+					return false;
+				}
+			}
+			elseif ($eventResult === false)
+			{
+				return false;
+			}
+		}
+
 		$result = CCrmProductRow::SaveRows('D', $ID, $arRows, null, $checkPerms, $regEvent, $syncOwner);
 		if($result)
 		{
 			$events = GetModuleEvents('crm', 'OnAfterCrmDealProductRowsSave');
 			while ($event = $events->Fetch())
+			{
 				ExecuteModuleEventEx($event, array($ID, $arRows));
+			}
 		}
+
 		return $result;
 	}
 

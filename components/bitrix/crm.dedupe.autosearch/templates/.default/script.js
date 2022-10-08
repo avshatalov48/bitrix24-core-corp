@@ -1,85 +1,7 @@
 (function (exports,ui_notification,main_popup,main_core,main_core_events,main_loader) {
 	'use strict';
 
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-alert ui-alert-warning\">\n\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span class=\"ui-link\" onclick=\"", "\">", "</span>\n\t\t\t\t</span>\n\t\t\t</div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<p>", "</p>\n\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-element\">", "</div>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span>\n\t\t\t\t", "\n\t\t\t\t<br>\n\t\t\t\t", "\n\t\t\t\t<span class=\"ui-hint notification-hint-inline\">\n\t\t\t\t\t<span class=\"ui-hint-icon\" onclick=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t</span>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
 	var namespace = main_core.Reflection.namespace('BX.Crm');
 	var DedupeAutosearch = /*#__PURE__*/function () {
 	  function DedupeAutosearch() {
@@ -235,7 +157,7 @@
 	      var entityTypeName = BX.CrmEntityType.resolveName(this._entityTypeId);
 	      var foundItemsCount = BX.prop.getInteger(this._progressData, 'FOUND_ITEMS', 0);
 	      var totalEntitiesCount = BX.prop.getInteger(this._progressData, 'TOTAL_ENTITIES', 0);
-	      var notificationContent = main_core.Tag.render(_templateObject(), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_' + entityTypeName).replace('#FOUND_ITEMS_COUNT#', foundItemsCount).replace('#TOTAL_ENTITIES_COUNT#', totalEntitiesCount), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT'), this.onHintClick.bind(this));
+	      var notificationContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<span>\n\t\t\t\t", "\n\t\t\t\t<br>\n\t\t\t\t", "\n\t\t\t\t<span class=\"ui-hint notification-hint-inline\">\n\t\t\t\t\t<span class=\"ui-hint-icon\" onclick=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t</span>"])), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT_' + entityTypeName).replace('#FOUND_ITEMS_COUNT#', foundItemsCount).replace('#TOTAL_ENTITIES_COUNT#', totalEntitiesCount), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_START_CONFIRMATION_TEXT'), this.onHintClick.bind(this));
 	      ui_notification.UI.Notification.Center.notify({
 	        content: notificationContent,
 	        autoHide: false,
@@ -277,14 +199,14 @@
 	        return;
 	      }
 
-	      var message = main_core.Tag.render(_templateObject2());
+	      var message = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	      var automaticallyFoundText = successCount > 0 ? main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_COMPLETE_TEXT_' + entityTypeName).replace('#FOUND_ITEMS_COUNT#', successCount) : main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_EMPTY_RESULTS_' + entityTypeName);
-	      main_core.Dom.append(main_core.Tag.render(_templateObject3(), automaticallyFoundText), message);
+	      main_core.Dom.append(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), automaticallyFoundText), message);
 	      var actions = [];
 	      var notificationWidth = 400;
 
 	      if (conflictsCount > 0) {
-	        main_core.Dom.append(main_core.Tag.render(_templateObject4(), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_COMPLETE_CONFLICTED_TEXT').replace('#CONFLICTS_COUNT#', conflictsCount)), message);
+	        main_core.Dom.append(main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div>", "</div>"])), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_COMPLETE_CONFLICTED_TEXT').replace('#CONFLICTS_COUNT#', conflictsCount)), message);
 	        actions.push({
 	          title: main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_BUTTON'),
 	          events: {
@@ -363,7 +285,7 @@
 	  }, {
 	    key: "getSettingsPopupLoader",
 	    value: function getSettingsPopupLoader() {
-	      var loaderContainer = main_core.Tag.render(_templateObject5());
+	      var loaderContainer = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	      loaderContainer.style.height = '180px';
 	      var loader = new main_loader.Loader({
 	        target: loaderContainer
@@ -382,8 +304,8 @@
 	        return item.value === _this7._selectedExecInterval ? item.title : prev;
 	      }, '');
 
-	      this._selectedExecIntervalNode = main_core.Tag.render(_templateObject6(), selectedExecInterval);
-	      return main_core.Tag.render(_templateObject7(), this.getConflictsInfo(conflictsCount), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_SETTINGS_NOTE'), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_SETTINGS_INTERVAL_TITLE'), this.toggleIntervalsList.bind(this), this._selectedExecIntervalNode);
+	      this._selectedExecIntervalNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-ctl-element\">", "</div>"])), selectedExecInterval);
+	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div>\n\t\t\t\t", "\n\t\t\t\t<p>", "</p>\n\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-w100\" onclick=\"", "\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.getConflictsInfo(conflictsCount), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_SETTINGS_NOTE'), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_SETTINGS_INTERVAL_TITLE'), this.toggleIntervalsList.bind(this), this._selectedExecIntervalNode);
 	    }
 	  }, {
 	    key: "needLoadConflictsCount",
@@ -412,7 +334,7 @@
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject8(), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_SETTINGS_CONFLICTS_FOUND').replace('#CONFLICTS_COUNT#', conflictsCount), this.onStartMergeButtonClick.bind(this), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_BUTTON'));
+	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-alert ui-alert-warning\">\n\t\t\t\t<span class=\"ui-alert-message\">\n\t\t\t\t\t", "\n\t\t\t\t\t<span class=\"ui-link\" onclick=\"", "\">", "</span>\n\t\t\t\t</span>\n\t\t\t</div>"])), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_SETTINGS_CONFLICTS_FOUND').replace('#CONFLICTS_COUNT#', conflictsCount), this.onStartMergeButtonClick.bind(this), main_core.Loc.getMessage('CRM_DP_AUTOSEARCH_COMPLETE_RESOLVE_CONFLICT_BUTTON'));
 	    }
 	  }, {
 	    key: "getShortTimeout",

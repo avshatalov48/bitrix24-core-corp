@@ -6,8 +6,7 @@ use Bitrix\Main\Localization\Loc;
 
 if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_exists("CDavCalendarHandler"))
 {
-	class CDavCalendarHandler
-		extends CDavGroupdavHandler
+	class CDavCalendarHandler extends CDavGroupdavHandler
 	{
 		protected function GetMethodMinimumPrivilege($method)
 		{
@@ -972,7 +971,8 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 			$recEvents = [];
 			if (count($arEvents) > 1)
 			{
-				for($i = 1; $i <= count($arEvents) - 1; $i++)
+				$cnt = count($arEvents);
+				for($i = 1; $i <= $cnt - 1; $i++)
 				{
 					$recEvents[] = $this->ConvertICalToArray($arEvents[$i], $cal);
 				}

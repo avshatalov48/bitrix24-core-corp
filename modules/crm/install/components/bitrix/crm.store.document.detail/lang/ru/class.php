@@ -20,6 +20,7 @@ $MESS["CRM_STORE_DOCUMENT_SHIPMENT_EXTRA_SERVICES"] = "Доп. услуги";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_TITLE"] = "Реализация ##ACCOUNT_NUMBER#";
 $MESS["CRM_STORE_DOCUMENT_ERROR_SHIPMENT_SERVICE_RESTRICTED"] = "Служба доставки не попадает под ограничения";
 $MESS["CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND"] = "Отгрузка не найдена";
+$MESS["CRM_STORE_DOCUMENT_SD_ORDER_NOT_FOUND"] = "Заказ не найден";
 $MESS["CRM_STORE_DOCUMENT_SHIPMENT_SECTION_PROPERTIES"] = "Свойства доставки";
 $MESS["CRM_STORE_DOCUMENT_EMPTY_USER_INPUT_VALUE_WITH_CLIENT"] = "Введите значение для поиска или выберите клиента";
 $MESS["CRM_STORE_DOCUMENT_EMPTY_USER_INPUT_VALUE"] = "Введите значение для поиска";

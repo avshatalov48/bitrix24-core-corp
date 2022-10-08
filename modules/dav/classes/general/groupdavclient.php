@@ -154,6 +154,11 @@ class CDavGroupdavClient
 		$this->connected = false;
 	}
 
+	public function getError()
+	{
+		return $this->arError[0];
+	}
+
 	public function GetErrors()
 	{
 		return $this->arError;
@@ -174,7 +179,9 @@ class CDavGroupdavClient
 		$response = $this->Options($path);
 
 		if (is_null($response))
+		{
 			return false;
+		}
 		if ($dav = $response->GetHeader('DAV'))
 		{
 			$ar = explode(",", $dav);
@@ -197,7 +204,7 @@ class CDavGroupdavClient
 		return $this->Send($request);
 	}
 
-	public function Propfind($path, $arProperties = null, $arFilter = null, $depth = 1)
+	public function Propfind($path, $arProperties = null, $arFilter = null, $depth = 1, $logger = null)
 	{
 		$path = $this->FormatUri($path);
 
@@ -209,19 +216,57 @@ class CDavGroupdavClient
 
 		$response = $this->Send($request);
 
-		if (!is_null($response))
+		if ($response)
 		{
-			if (($statusCode = $response->GetStatus('code')) && (strcmp($statusCode, '207') == 0))
+			if ($logger)
 			{
-				if (($contentType = $response->GetHeader('Content-Type')) && (mb_strpos($contentType, '/xml') !== false))
-					return $response->GetBodyXml();
+				$this->logAction($logger, $request, $response);
 			}
+
+			$code = (int)$response->GetStatus();
+			if ($code !== 207)
+			{
+				$this->AddError($code, $response->GetStatus('phrase'));
+			}
+
+			return $response;
 		}
 
 		return null;
 	}
 
-	public function Report($path, $arProperties = null, $arFilter = null, $arHref = null, $depth = 1)
+	public function SyncReport($path, $props, $syncToken, $logger = null)
+	{
+		$path = $this->FormatUri($path);
+
+		$request = $this->CreateBasicRequest('REPORT', $path);
+		$request->AddHeader('Depth', 1);
+		$request->AddHeader('Content-type', 'text/xml');
+
+		$request->CreateSyncReportBody($props, $syncToken);
+
+		$response = $this->Send($request);
+		if ($response)
+		{
+			if ($logger)
+			{
+				$this->logAction($logger, $request, $response);
+			}
+
+			$code = (int)$response->GetStatus();
+			if ($code !== 207)
+			{
+				$this->AddError($code, $response->GetStatus('phrase'));
+			}
+
+			return $response;
+		}
+
+		return null;
+
+	}
+
+	public function Report($path, $arProperties = null, $arFilter = null, $arHref = null, $depth = 1, $logger = null)
 	{
 		$path = $this->FormatUri($path);
 
@@ -233,19 +278,26 @@ class CDavGroupdavClient
 
 		$response = $this->Send($request);
 
-		if (!is_null($response))
+		if ($response)
 		{
-			if (($statusCode = $response->GetStatus('code')) && (strcmp($statusCode, '207') == 0))
+			if ($logger)
 			{
-				if (($contentType = $response->GetHeader('Content-Type')) && (mb_strpos($contentType, '/xml') !== false))
-					return $response->GetBodyXml();
+				$this->logAction($logger, $request, $response);
 			}
+
+			$code = (int)$response->GetStatus();
+			if ($code !== 207)
+			{
+				$this->AddError($code, $response->GetStatus('phrase'));
+			}
+
+			return $response;
 		}
 
 		return null;
 	}
 
-	public function Delete($path)
+	public function Delete($path, $logger = null)
 	{
 		$path = $this->FormatUri($path);
 
@@ -253,30 +305,28 @@ class CDavGroupdavClient
 
 		$response = $this->Send($request);
 
-		if (!is_null($response))
+		if ($response)
 		{
-			$statusCode = $response->GetStatus('code');
+			if ($logger)
+			{
+				$this->logAction($logger, $request, $response);
+			}
 
-			if (strcmp($statusCode, '207') == 0)
+			$code = (int)$response->GetStatus();
+			$acceptCodes = [200, 201, 204, 404];
+
+			if (!in_array($code, $acceptCodes))
 			{
-				if (($contentType = $response->GetHeader('Content-Type')) && (mb_strpos($contentType, '/xml') !== false))
-					return $response->GetBodyXml();
+				$this->AddError($response->GetStatus(), $response->GetStatus('phrase'));
 			}
-			elseif (strcmp($statusCode, '404') == 0)
-			{
-				$this->AddError("404", "Item is not found");
-				return false;
-			}
-			elseif (strcmp($statusCode, '200') == 0 || strcmp($statusCode, '201') == 0 || strcmp($statusCode, '204') == 0)
-			{
-				return true;
-			}
+
+			return $response;
 		}
 
 		return null;
 	}
 
-	public function Put($path, $data)
+	public function Put($path, $data, $logger = null)
 	{
 		$path = $this->FormatUri($path);
 
@@ -287,26 +337,99 @@ class CDavGroupdavClient
 
 		$response = $this->Send($request);
 
-		if (!is_null($response))
+		if ($response)
 		{
-			$code = $response->GetStatus('code');
+			if ($logger)
+			{
+				$this->logAction($logger, $request, $response);
+			}
 
-			if ($code != 200 && $code != 201 && $code != 204)
-				$this->AddError($code, GetMessage("DAV_GDC_SERVER_ERROR").$response->GetStatus('phrase'));
+			$code = (int)$response->GetStatus();
+			$acceptCodes = [200, 201, 204];
 
-			return $response->GetStatus('code');
+			if (!in_array($code, $acceptCodes))
+			{
+				$this->AddError($code, $response->GetStatus('phrase'));
+			}
+
+			return $response;
 		}
 
 		$this->AddError("NA", "Unknown error");
 		return null;
 	}
 
+	public function Mkcol($path, $data, $logger = null)
+	{
+		$path = $this->FormatUri($path);
+
+		$request = $this->CreateBasicRequest('MKCOL', $path);
+		$request->AddHeader('Content-type', 'text/xml; charset=UTF-8');
+		
+		$request->SetBody($data);
+		$response = $this->Send($request);
+
+		if ($response)
+		{
+			if ($logger)
+			{
+				$this->logAction($logger, $request, $response);
+			}
+
+			$code = (int)$response->GetStatus();
+			$acceptCodes = [200, 201, 204];
+
+			if (!in_array($code, $acceptCodes))
+			{
+				$this->AddError($code, $response->GetStatus('phrase'));
+			}
+
+			return $response;
+		}
+
+		return null;
+	}
+	
+	public function Proppatch($path, $data, $logger = null)
+	{
+		$path = $this->FormatUri($path);
+		
+		$request = $this->CreateBasicRequest('PROPPATCH', $path);
+		$request->AddHeader('Content-type', 'text/xml; charset=UTF-8');
+
+		$request->SetBody($data);
+		$response = $this->Send($request);
+		
+		if ($response)
+		{
+			if ($logger)
+			{
+				$this->logAction($logger, $request, $response);
+			}
+
+			$code = (int)$response->GetStatus();
+			
+			if ($code !== 207)
+			{
+				$this->AddError($code, $response->GetStatus('phrase'));
+			}
+			
+			return $response;
+		}
+		
+		return null;
+	}
+
 	public function Encode($text)
 	{
 		if (is_null($text) || empty($text))
+		{
 			return $text;
+		}
 		if ($this->encoding == "utf-8")
+		{
 			return $text;
+		}
 
 		global $APPLICATION;
 		return $APPLICATION->ConvertCharset($text, "utf-8", $this->encoding);
@@ -315,9 +438,13 @@ class CDavGroupdavClient
 	public function Decode($text)
 	{
 		if (is_null($text) || empty($text))
+		{
 			return $text;
+		}
 		if ($this->encoding == "utf-8")
+		{
 			return $text;
+		}
 
 		global $APPLICATION;
 		return $APPLICATION->ConvertCharset($text, $this->encoding, "utf-8");
@@ -339,7 +466,9 @@ class CDavGroupdavClient
 		for ($i = 0, $cnt = count($arParts); $i < $cnt; $i++)
 		{
 			if ($arParts[$i] <> '')
+			{
 				$arPartsNew[] = str_replace("%40", "@", rawurlencode($arParts[$i]));
+			}
 		}
 		return "/".implode('/', $arPartsNew);
 	}
@@ -350,17 +479,25 @@ class CDavGroupdavClient
 
 		$request->SetMethod($method);
 		if ($this->proxyUsed)
+		{
 			$request->SetPath($this->scheme."://".$this->server.((intval($this->port) > 0) ? ":".$this->port : "").$path);
+		}
 		else
+		{
 			$request->SetPath($path);
+		}
 
 		$request->AddHeader('Host', $this->server);
 		$request->AddHeader('User-Agent', $this->userAgent);
 		$request->AddHeader("Connection", "Keep-Alive");
 		if ($this->googleAuth != null)
+		{
 			$request->AddHeader("Authorization", sprintf("GoogleLogin auth=%s", $this->googleAuth));
+		}
 		if ($this->googleOAuth != null)
+		{
 			$request->AddHeader('Authorization', sprintf('Bearer %s', $this->googleOAuth));
+		}
 
 		return $request;
 	}
@@ -459,12 +596,18 @@ class CDavGroupdavClient
 		$authenticateProxy = $response->GetHeader('Proxy-Authenticate');
 
 		if (is_null($authenticate) && is_null($authenticateProxy))
+		{
 			return null;
+		}
 
 		if (!is_null($authenticate) && !is_array($authenticate))
+		{
 			$authenticate = array($authenticate);
+		}
 		if (!is_null($authenticateProxy) && !is_array($authenticateProxy))
+		{
 			$authenticateProxy = array($authenticateProxy);
+		}
 
 		if (!is_null($authenticate))
 		{
@@ -521,16 +664,6 @@ class CDavGroupdavClient
 		return $request;
 	}
 
-	private static function gmailUsernameFix($name, $link)
-	{
-		if (mb_strpos($name, '@gmail.com') !== false)
-		{
-			$arN = explode('@', $name);
-			$name = str_replace('.', '', $arN[0]).'@'.$arN[1];
-		}
-		return $name;
-	}
-
 	private function AuthenticateDigest($arDigestRequest, $request, $response, $verb = "Authorization")
 	{
 		// qop="auth",algorithm=MD5-sess,nonce="+Upgraded+v1fdcb1e18d2cc7a72322c81c0d8d2a3c332f7908ef0dfcb01aa9fb63930eadf5722dc8f6ce7b82912353531b18360cd62382a6c2433939d3f",charset=utf-8,realm="Digest"
@@ -584,9 +717,8 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 
 		$cn = md5(uniqid());
 
-		$userName = static::gmailUsernameFix($this->userName, $this->server);
-
-		$a1 = md5($userName.':'.$arDigestRequest["realm"].':'.$this->userPassword).":".$arDigestRequest["nonce"].":".$cn;
+		$a1 = md5($this->userName . ':' . $arDigestRequest["realm"] . ':' . $this->userPassword) . ":"
+			. $arDigestRequest["nonce"] . ":" . $cn;
 		$a2 = $request->GetMethod().":".$request->GetPath();
 		$hash = md5(md5($a1).":".$arDigestRequest["nonce"].":00000001:".$cn.":".$arDigestRequest["qop"].":".md5($a2));
 
@@ -594,7 +726,7 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 			$verb,
 			sprintf(
 				"Digest username=\"%s\",realm=\"%s\",nonce=\"%s\",uri=\"%s\",cnonce=\"%s\",nc=00000001,algorithm=%s,response=\"%s\",qop=\"%s\",charset=utf-8",
-				$userName,
+				$this->userName,
 				$arDigestRequest["realm"],
 				$arDigestRequest["nonce"],
 				$request->GetPath(),
@@ -610,14 +742,11 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 
 	private function AuthenticateBasic($arBasicRequest, $request, $response, $verb = "Authorization")
 	{
-		// realm="test-exch2007"
-		$userName = static::gmailUsernameFix($this->userName, $this->server);
-
 		$request->SetHeader(
 			$verb,
 			sprintf(
 				"Basic %s",
-				base64_encode($userName.":".$this->userPassword)
+				base64_encode($this->userName . ":" . $this->userPassword)
 			)
 		);
 
@@ -812,13 +941,41 @@ If the "algorithm" directive's value is "MD5" or is unspecified, then
 		if ($bConnectionClosed)
 			$this->Disconnect();
 
-		$responce = new CDavGroupdavClientResponce($arHeaders, $body);
+		$response = new CDavGroupdavClientResponce($arHeaders, $body);
 
-		$httpVersion = $responce->GetStatus('version');
+		$httpVersion = $response->GetStatus('version');
 		if (is_null($httpVersion) || ($httpVersion != 'HTTP/1.1' && $httpVersion != 'HTTP/1.0'))
 			return null;
 
-		return $responce;
+		return $response;
+	}
+
+	private function logAction(
+		\Bitrix\Calendar\Sync\Util\RequestLogger $logger,
+		CDavGroupdavClientRequest $request,
+		CDavGroupdavClientResponce $response
+	): void
+	{
+		if (!CModule::IncludeModule('calendar'))
+		{
+			return;
+		}
+
+		$responseBody = '';
+		if ($response->GetBody())
+		{
+			$responseBody = $this->Encode($response->GetBody());
+			$responseBody = preg_replace("/\n[\s\n]+\n/", "\n" , $responseBody);
+		}
+
+		$logger->write([
+			'requestParams' => $request->GetBody(),
+			'url' => $request->GetPath(),
+			'method' => $request->GetMethod(),
+			'statusCode' => $response->GetStatus(),
+			'response' => $responseBody,
+			'error' => implode(',', $this->GetErrors()),
+		]);
 	}
 }
 ?>

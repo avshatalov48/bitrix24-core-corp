@@ -119,6 +119,7 @@ class TaskComponent
 		this.editor = Manager.getEditor(this.typeId, this.itemId);
 		BX.addCustomEvent(window, 'BX.UI.EntityEditorAjax:onSubmitFailure', this.onEditorErrors.bind(this));
 		BX.addCustomEvent(window, 'BX.UI.EntityEditorAjax:onSubmit', this.onEditorSubmit.bind(this));
+		BX.addCustomEvent(window, 'BX.UI.EntityEditor:onSave', this.onEditorSave.bind(this));
 		BX.addCustomEvent(window, "BX.UI.EntityEditor:onFailedValidation", this.onEditorErrors.bind(this));
 
 		this.unregisterActiveFields();
@@ -162,6 +163,14 @@ class TaskComponent
 		if (response.data.completed && Type.isFunction(this.onTaskComplete))
 		{
 			setTimeout(this.onTaskComplete.bind(this, response.data), 10);
+		}
+	}
+
+	onEditorSave(editor, eventArgs)
+	{
+		if (this.editor === editor)
+		{
+			eventArgs.enableCloseConfirmation = false;
 		}
 	}
 

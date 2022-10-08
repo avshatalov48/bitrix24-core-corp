@@ -81,14 +81,14 @@ final class IndexManager
 			return;
 		}
 
-		$status = $content? ObjectExtendedIndexTable::STATUS_EXTENDED : ObjectExtendedIndexTable::STATUS_SHORT;
-		if ($content)
+		$status = $content ? ObjectExtendedIndexTable::STATUS_EXTENDED : ObjectExtendedIndexTable::STATUS_SHORT;
+		if ($status === ObjectExtendedIndexTable::STATUS_EXTENDED)
 		{
 			//try to update by short version of search index
 			ObjectExtendedIndexTable::upsert(
 				$object->getId(),
 				$textBuilder->getSearchValue(),
-				$status
+				ObjectExtendedIndexTable::STATUS_EXTENDED
 			);
 		}
 
@@ -409,15 +409,16 @@ final class IndexManager
 			CSearch::changePermission(
 				Driver::INTERNAL_MODULE_ID,
 				$this->getSimpleRights($object),
-				$this->getItemId($object)
+				self::getItemId($object)
 			);
 		}
 		elseif($object instanceof Folder)
 		{
+			$simpleRights = $this->getSimpleRights($object);
 
 			CSearch::changePermission(
 				Driver::INTERNAL_MODULE_ID,
-				$this->getSimpleRights($object),
+				$simpleRights,
 				false,
 				$object->getStorageId(),
 				$object->getId()
@@ -425,8 +426,8 @@ final class IndexManager
 
 			CSearch::changePermission(
 				Driver::INTERNAL_MODULE_ID,
-				$this->getSimpleRights($object),
-				$this->getItemId($object)
+				$simpleRights,
+				self::getItemId($object)
 			);
 		}
 	}

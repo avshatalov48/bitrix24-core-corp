@@ -223,3 +223,5 @@ $MESS["CONFIG_NAME_FILEMAN_GOOGLE_API_KEY"] = "Ключ для интеграц�
 $MESS["CONFIG_LOCATION_SOURCE_OSM_SERVICE_URL"] = "Адрес сервиса";
 $MESS["CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY"] = "Ключ для интеграции с Yandex Maps";
 $MESS["CONFIG_EXAMPLE"] = "Пример";
+$MESS["CONFIG_NAME_MAP_PROVIDER_SETTINGS"] = "Настройки провайдера #PROVIDER#";
+$MESS["CONFIG_NAME_CURRENT_MAP_PROVIDER"] = "Используемый провайдер карт";

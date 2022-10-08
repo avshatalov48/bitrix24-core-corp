@@ -121,7 +121,7 @@ class LandingTable extends ORM\Data\DataManager
 
 		if ($rows === null || !$cache)
 		{
-			$rows = FormTable::getList([
+			$rows = FormTable::getDefaultTypeList([
 				'select' => ['FORM_ID' => 'ID', 'LANDING_ID' => 'LANDING.LANDING_ID'],
 				'order' => ['FORM_ID' => 'ASC'],
 				'cache' => ['ttl' => 3600],
@@ -210,7 +210,7 @@ class LandingTable extends ORM\Data\DataManager
 		$isStarted = true;
 
 		$generated = false;
-		$rows = FormTable::getList([
+		$rows = FormTable::getDefaultTypeList([
 			'select' => ['ID', 'NAME', 'LANDING_ID' => 'LANDING.LANDING_ID'],
 			'filter' => ['=LANDING.LANDING_ID' => null],
 			'order' => ['ID' => 'ASC'],

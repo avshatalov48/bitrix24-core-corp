@@ -16,7 +16,7 @@ $arResult['BX24_RU_ZONE'] = \Bitrix\Main\ModuleManager::isModuleInstalled('bitri
 							preg_match("/^(ru)_/", COption::GetOptionString("main", "~controller_group_name", ""));
 
 // create template controller with js-dependency injections
-$arResult['HELPER'] = $helper = require(dirname(__FILE__).'/helper.php');
+$arResult['HELPER'] = $helper = require(__DIR__.'/helper.php');
 //$arParams =& $helper->getComponent()->arParams; // make $arParams the same variable as $this->__component->arParams, as it really should be
 
 $strIframe = '';
@@ -138,21 +138,6 @@ $scrumUri->addParams([
 	]
 ]);
 
-$scrumSubClick = '';
-$scrumSubLink = '';
-
-$isScrumLimited = ScrumLimit::isLimitExceeded();
-if ($isScrumLimited)
-{
-	$sidePanelId = ScrumLimit::getSidePanelId();
-
-	$scrumSubClick = 'BX.UI.InfoHelper.show("'. $sidePanelId .'", {isLimit: true, limitAnalyticsLabels: {module: "tasks", source: "topMenu"}});';
-}
-else
-{
-	$scrumSubLink = $scrumUri->getUri();
-}
-
 $arResult['ITEMS'][] = [
 	"TEXT" => GetMessage("TASKS_PANEL_TAB_SCRUM"),
 	"URL" => $tasksLink.'scrum/'.$strIframe,
@@ -160,8 +145,9 @@ $arResult['ITEMS'][] = [
 	"IS_ACTIVE" => ($arParams["MARK_SECTION_SCRUM_LIST"] === "Y"),
 	'SUB_LINK' => [
 		'CLASS' => '',
-		'ON_CLICK' => $scrumSubClick,
-		'URL' => $scrumSubLink,
+		'ON_CLICK' => 'BX.Tasks.Component.TopMenu.getInstance("topmenu").createScrum("'
+			. $scrumUri->getUri() . '", "'.ScrumLimit::getSidePanelId().'");'
+		,
 	],
 	'COUNTER' => $arResult['SCRUM_COUNTER'],
 	'COUNTER_ID' => 'tasks_scrum_counter',

@@ -23,7 +23,11 @@ class Shipment extends Sale\Shipment
 	{
 		/** \Bitrix\Crm\Order\Shipment $shipment */
 		$shipment = parent::create($collection, $service);
-		$shipment->initField('IS_REALIZATION', 'Y');
+
+		if (Sale\Configuration::useStoreControl())
+		{
+			$shipment->initField('IS_REALIZATION', 'Y');
+		}
 
 		return $shipment;
 	}
@@ -58,6 +62,7 @@ class Shipment extends Sale\Shipment
 			$name === 'DEDUCTED'
 			&& $value === 'Y'
 			&& $this->getField('IS_REALIZATION') === 'N'
+			&& Sale\Configuration::useStoreControl()
 		)
 		{
 			$this->setField('IS_REALIZATION', 'Y');

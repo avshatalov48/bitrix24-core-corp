@@ -43,5 +43,14 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-avito-link-help-create'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=10179780');
+				return false;
+			}
+		);
 	});
 })(window);

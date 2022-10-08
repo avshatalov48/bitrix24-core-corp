@@ -41,7 +41,7 @@ $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
 
 if ($action === 'GET_ROW_COUNT')
 {
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$params = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
 	$gridID = isset($params['GRID_ID']) ? $params['GRID_ID'] : '';

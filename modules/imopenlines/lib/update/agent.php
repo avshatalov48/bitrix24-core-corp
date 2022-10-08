@@ -5,7 +5,7 @@ use \Bitrix\Main\Loader;
 
 final class Agent
 {
-	public function update1720()
+	public static function update1720(): string
 	{
 		if(Loader::IncludeModule("im") && class_exists('\Bitrix\Im\Model\AppTable') && class_exists('\Bitrix\Im\App'))
 		{
@@ -48,7 +48,7 @@ final class Agent
 	/**
 	 * @return string
 	 */
-	public function update222000(): string
+	public static function update222000(): string
 	{
 		if (
 			Loader::IncludeModule('im')

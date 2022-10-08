@@ -25,6 +25,7 @@ export class OrderCreationModel extends VuexBuilderModel
 			deliveryId: null,
 			delivery: null,
 			isEnabledSubmit: false,
+			isCompilationMode: false,
 			errors: [],
 			total: {
 				sum: null,
@@ -95,6 +96,10 @@ export class OrderCreationModel extends VuexBuilderModel
 			isAllowedSubmit: state =>
 			{
 				return state.isEnabledSubmit;
+			},
+			isCompilationMode: state =>
+			{
+				return state.isCompilationMode;
 			},
 			getTotal: state =>
 			{
@@ -206,6 +211,14 @@ export class OrderCreationModel extends VuexBuilderModel
 			disableSubmit: (state) =>
 			{
 				state.isEnabledSubmit = false;
+			},
+			enableCompilationMode: (state) =>
+			{
+				state.isCompilationMode = true;
+			},
+			disableCompilationMode: (state) =>
+			{
+				state.isCompilationMode = false;
 			},
 		}
 	}

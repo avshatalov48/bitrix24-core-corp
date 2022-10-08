@@ -1,11 +1,15 @@
 <?php
 namespace Bitrix\Crm\Integration;
+use Bitrix\Crm\Activity\Provider\OpenLine;
+use Bitrix\Crm\ActivityTable;
+use Bitrix\ImOpenLines\Model\SessionTable;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Imopenlines;
 use Bitrix\Im;
+use http\Exception\InvalidArgumentException;
 
 Loc::loadMessages(__FILE__);
 

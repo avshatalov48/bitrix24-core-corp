@@ -2,40 +2,47 @@
 
 namespace Bitrix\Crm\Service;
 
-use Bitrix\Crm\Service\Factory\Dynamic;
-use Bitrix\Crm\Service\Factory\SmartInvoice;
-
 class Director
 {
 	public function getScenariosForNewCategory(int $entityTypeId, int $categoryId): Scenario\Collection
 	{
 		$scenarios = [];
 		$factory = Container::getInstance()->getFactory($entityTypeId);
-		if ($factory instanceof SmartInvoice)
+		if (!($factory instanceof Factory\Dynamic))
 		{
-			$defaultStages = new Scenario\DefaultStages(
-				$factory->getStagesEntityId($categoryId),
-				\CCrmStatus::getDynamicEntityStatusPrefix($entityTypeId, $categoryId),
-				$categoryId,
-			);
-			$defaultStages->setStagesData(\CCrmStatus::GetDefaultInvoiceStatuses());
-			$scenarios[] = $defaultStages;
-			$scenarios[] = new Scenario\PurgeStagesCache($factory);
+			return new Scenario\Collection($scenarios);
 		}
-		elseif ($factory instanceof Dynamic)
+		if ($factory->getType()->getIsSetOpenPermissions())
 		{
-			if ($factory->getType()->getIsSetOpenPermissions())
-			{
-				$scenarios[] = new Scenario\DefaultCategoryPermissions($entityTypeId, $categoryId);
-			}
-			$scenarios[] = new Scenario\DefaultStages(
-				$factory->getStagesEntityId($categoryId),
-				\CCrmStatus::getDynamicEntityStatusPrefix($entityTypeId, $categoryId),
-				$categoryId
-			);
-			$scenarios[] = new Scenario\PurgeStagesCache($factory);
+			$scenarios[] = new Scenario\DefaultCategoryPermissions($entityTypeId, $categoryId);
 		}
+		$defaultStages = new Scenario\DefaultStages(
+			$factory->getStagesEntityId($categoryId),
+			\CCrmStatus::getDynamicEntityStatusPrefix($entityTypeId, $categoryId),
+			$categoryId,
+		);
+		$defaultStagesData = $this->getDefaultStagesData($factory);
+		if (is_array($defaultStagesData))
+		{
+			$defaultStages->setStagesData($defaultStagesData);
+		}
+		$scenarios[] = $defaultStages;
+		$scenarios[] = new Scenario\PurgeStagesCache($factory);
 
 		return new Scenario\Collection($scenarios);
+	}
+
+	private function getDefaultStagesData(Factory $factory): ?array
+	{
+		if ($factory instanceof Factory\SmartInvoice)
+		{
+			return \CCrmStatus::GetDefaultInvoiceStatuses();
+		}
+		// if ($factory instanceof Factory\SmartDocument)
+		// {
+		// 	return [];
+		// }
+
+		return null;
 	}
 }

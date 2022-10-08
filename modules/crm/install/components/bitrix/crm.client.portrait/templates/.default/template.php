@@ -5,7 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\UI;
 
-UI\Extension::load(["ui.tooltip", "ui.design-tokens"]);
+UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.tooltip",
+]);
 
 /* @global CMain $APPLICATION */
 /* @var array $arResult */
@@ -399,11 +403,12 @@ if (isset($arParams['IS_FRAME']) && $arParams['IS_FRAME'] === 'Y' && empty($arPa
 						sessid: BX.bitrix_sessid(),
 						PARAMS: {
 							template: '.default',
-							params: {
-								ELEMENT_ID: <?=(int)$arResult['ELEMENT']['ID']?>,
-								ELEMENT_TYPE: '<?=CUtil::JSEscape($arResult['ENTITY_TYPE_ID'])?>',
-								IS_FRAME: 'Y',
-								IS_FRAME_RELOAD: 'Y'
+							signedParameters: '<?=CUtil::JSEscape(\CCrmInstantEditorHelper::signComponentParams([
+									'ELEMENT_ID' => (int)$arResult['ELEMENT']['ID'],
+									'ELEMENT_TYPE' => $arResult['ENTITY_TYPE_ID'],
+									'IS_FRAME' => 'Y',
+									'IS_FRAME_RELOAD' => 'Y',
+								], 'crm.client.portrait'))?>',
 							}
 						}
 					},

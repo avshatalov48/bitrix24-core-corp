@@ -1,6 +1,10 @@
 <?php
 namespace Bitrix\Crm\Integrity;
+use Bitrix\Crm\CompanyTable;
+use Bitrix\Crm\ContactTable;
 use Bitrix\Main;
+use Bitrix\Main\DB\SqlExpression;
+use Bitrix\Main\Entity\ReferenceField;
 
 abstract class DuplicateCriterion
 {
@@ -9,6 +13,8 @@ abstract class DuplicateCriterion
 	protected $sortDescendingByEntityTypeId = false;
 
 	protected $limitByAssignedUser = false;
+
+	protected ?int $categoryId = null;
 
 	public function isStrictComparison()
 	{
@@ -132,10 +138,10 @@ abstract class DuplicateCriterion
 				$query->addFilter('@ENTITY_ID', new Main\DB\SqlExpression($permissionSql));
 			}
 		}
-		if ($this->limitByAssignedUser())
-		{
-			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
-		}
+
+		$dedupeParams = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $this->getScope());
+		$dedupeParams->setLimitByAssignedUser($this->limitByAssignedUser());
+		$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $dedupeParams);
 
 		$limit = isset($options['limit']) ? (int)$options['limit'] : 0;
 		if($limit > 0)
@@ -165,8 +171,8 @@ abstract class DuplicateCriterion
 	}
 
 	/**
-	* @return Duplicate
-	*/
+	 * @return Duplicate
+	 */
 	public function createDuplicate(
 		$entityTypeID,
 		$rootEntityID,
@@ -219,10 +225,9 @@ abstract class DuplicateCriterion
 			}
 		}
 
-		if ($this->limitByAssignedUser())
-		{
-			$query->registerRuntimeField('', DedupeDataSource::getAssignedByReferenceField($entityTypeID, $userID));
-		}
+		$dedupeParams = new DedupeParams($entityTypeID, $userID, $enablePermissionCheck, $this->getScope());
+		$dedupeParams->setLimitByAssignedUser($this->limitByAssignedUser());
+		$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $dedupeParams);
 
 		if($limit > 0)
 		{
@@ -299,8 +304,8 @@ abstract class DuplicateCriterion
 	}
 
 	/**
-	* @return Main\Entity\Query
-	*/
+	 * @return Main\Entity\Query
+	 */
 	protected static function createQuery()
 	{
 		throw new Main\NotImplementedException('Method createQuery must be overridden');
@@ -318,5 +323,39 @@ abstract class DuplicateCriterion
 	public function setLimitByAssignedUser(bool $limitByAssignedUser): void
 	{
 		$this->limitByAssignedUser = $limitByAssignedUser;
+	}
+
+	public function getCategoryId(): ?int
+	{
+		return $this->categoryId;
+	}
+
+	public function setCategoryId(?int $categoryId): void
+	{
+		$this->categoryId = $categoryId;
+	}
+
+	protected function applyEntityCategoryFilter(int $entityTypeId, array $getListParams): array
+	{
+		$refTables = [
+			\CCrmOwnerType::Contact => ContactTable::class,
+			\CCrmOwnerType::Company => CompanyTable::class,
+		];
+		if (!is_null($this->getCategoryId()) && isset($refTables[$entityTypeId]))
+		{
+
+			$getListParams['runtime'] = [
+				new ReferenceField('UA',
+					$refTables[$entityTypeId]::getEntity(),
+					[
+						'=ref.ID' => 'this.ENTITY_ID',
+						'=ref.CATEGORY_ID' => new SqlExpression('?i', $this->getCategoryId()),
+					],
+					['join_type' => Main\ORM\Query\Join::TYPE_INNER]
+				)
+			];
+		}
+
+		return $getListParams;
 	}
 }

@@ -4,6 +4,7 @@ $MESS["CRM_SALE_STATUS_D"] = "Отклонён";
 $MESS["CRM_SALE_STATUS_P"] = "Оплачен";
 $MESS["CRM_SALE_STATUS_S"] = "Отправлен клиенту";
 $MESS["CRM_VAT_1"] = "Без НДС";
+$MESS["CRM_VAT_0"] = "НДС 0%";
 $MESS["CRM_VAT_2"] = "НДС 18%";
 $MESS["CRM_VAT_3"] = "НДС 12%";
 $MESS["CRM_VAT_21"] = "НДС 20%";

@@ -356,15 +356,15 @@ if (!class_exists("CDavExchangeCalendar"))
 				'changekey' => $params['changekey']
 			];
 
-			$startDate = CCalendar::GetOriginalDate($params['parentDateFrom'], $params['dateFrom'], $params['parentTz'], true);
-			$endDate = CCalendar::GetOriginalDate($params['parentDateTo'], $params['dateTo'], $params['parentTz'], true);
+			$startDate = CCalendar::GetOriginalDate($params['parentDateFrom'], $params['dateFrom'], $params['parentTz'], 'Y-m-d\TH:i:s\Z');
+			$endDate = CCalendar::GetOriginalDate($params['parentDateTo'], $params['dateTo'], $params['parentTz'], 'Y-m-d\TH:i:s\Z');
 			$utcTz = new \DateTimeZone("UTC");
 
 			$arItem = array(
 				"type" => "CalendarView",
 				"properties" => array(
-					"StartDate" => $startDate->setTimeZone($utcTz)->format('Y-m-d\TH:i:s\Z'),
-					"EndDate" => $endDate->setTimeZone($utcTz)->format('Y-m-d\TH:i:s\Z'),
+					"StartDate" => $startDate,
+					"EndDate" => $endDate,
 					"MaxEntriesReturned" => 1
 				)
 			);

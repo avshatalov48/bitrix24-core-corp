@@ -3,7 +3,7 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 
-\CJSCore::init("sidepanel");
+\CJSCore::init(["sidepanel", "ui.fonts.opensans"]);
 
 \Bitrix\Main\Localization\Loc::loadLanguageFile(__FILE__);
 

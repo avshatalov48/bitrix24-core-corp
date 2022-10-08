@@ -58,15 +58,13 @@ body div.bx-interface-form input.webform-button-text {
 .finder-box-tab {
 	margin: 0 3px 0 0;
 	border: 1px solid #c9d2de;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-2xs, 2px);
 }
 
 .finder-box-tab-text {
 	line-height: 20px;
 	padding: 0 5px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #2067b0;
 }
 
@@ -145,7 +143,7 @@ body div.bx-interface-form input.webform-button-text {
 
 /* WebForms */
 .webform {
-	font: normal normal normal 12px/normal "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal normal normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .webform-main-fields .webform-round-corners {
@@ -241,7 +239,7 @@ body div.bx-interface-form input.webform-button-text {
 }
 
 .task-detail-info-users-title {
-	font: normal normal normal 13px/normal "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal normal normal 13px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .task-detail-info-users-inner {
@@ -259,7 +257,7 @@ body div.bx-interface-form input.webform-button-text {
 
 .task-detail-info-layout-name {
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #555;
 }
 
@@ -300,7 +298,7 @@ body div.bx-interface-form input.webform-button-text {
 .task-detail-info-assistants .task-detail-info-users-title, .task-detail-info-auditors .task-detail-info-users-title {
 	color: #555555;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 0 5px 3px;
 }
 
@@ -318,7 +316,7 @@ body div.bx-interface-form input.webform-button-text {
 
 .task-detail-info-user-name a {
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #2067b0 !important;
 }
 
@@ -359,7 +357,7 @@ body div.bx-interface-form input.webform-button-text {
 }
 
 .task-title-button-back-text {
-	font: normal normal normal 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal normal normal 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #5c6470;
 	text-shadow: 0 1px #fff;
 	text-decoration: none;
@@ -399,7 +397,7 @@ body div.bx-interface-form input.webform-button-text {
 	border-radius: 2px;
 	outline: none;
 	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .task-list-toolbar-search-reset {
@@ -457,7 +455,7 @@ body div.bx-interface-form input.webform-button-text {
 
 /* Task Filter */
 .task-filter {
-	font: normal normal normal 12px/normal "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal normal normal 12px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .task-filter-block {
@@ -495,7 +493,7 @@ body div.bx-interface-form input.webform-button-text {
 .task-filter-title {
 	color: #FFFFFF;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 12px 0 0 16px;
 	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 }
@@ -508,7 +506,7 @@ body div.bx-interface-form input.webform-button-text {
 	color: #FFFFFF !important;
 	border-bottom: 1px dashed #fff !important;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 10px 0 0 0;
 	text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
 	display: inline-block;
@@ -938,7 +936,6 @@ body div.bx-interface-form input.webform-button-text {
 	border: none;
 	color: #41474f;
 	font-size: 14px;
-	text-shadow: 0 1px #fff;
 }
 
 .task-head-cell {
@@ -966,7 +963,7 @@ body div.bx-interface-form input.webform-button-text {
 }
 
 th.task-title-column {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	-moz-border-top-left-radius: 3px;
 	-webkit-border-top-left-radius: 3px;
 	border-top-left-radius: 3px;
@@ -1048,9 +1045,8 @@ td.task-project-column {
 
 .task-project-name .task-project-name-link {
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #41474f;
-	text-shadow: 0 1px #fff;
 }
 
 /* Reports */
@@ -1126,7 +1122,7 @@ body table.bx-edit-tabs td.bx-tab-container-selected td.bx-tab-selected {
 	-webkit-border-radius: 4px 4px 0 0;
 	-khtml-border-radius: 4px 4px 0 0;
 	border-radius: 4px 4px 0 0;
-	font: bold 12px/31px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/31px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #5c6470;
 }
 
@@ -1139,19 +1135,17 @@ body table.bx-edit-tabs td.bx-tab-container-disabled td.bx-tab {
 	-webkit-border-radius: 4px 4px 0 0;
 	-khtml-border-radius: 4px 4px 0 0;
 	border-radius: 4px 4px 0 0;
-	font: bold 12px/31px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/31px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #D7D7D7;
 }
 
 body table.bx-edit-tabs td.bx-tab-container td.bx-tab {
-	text-shadow: #fff 0 1px 1px !important;
 	color: #2067b0;
 	background: url(images/interface/grid/bx-tab-container.gif) repeat-x left top;
 }
 
 body table.bx-edit-tabs td.bx-tab-container td.bx-tab-hover {
 	color: #2067b0;
-	text-shadow: #fff 0 1px 1px !important;
 	background: url(images/interface/grid/bx-tab-container-hover.gif) repeat-x left top;
 }
 
@@ -1173,7 +1167,7 @@ body div.bx-interface-form,
 body div.bx-interface-form input[type="text"],
 body div.bx-interface-form textarea,
 body div.bx-interface-form select {
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -1198,7 +1192,7 @@ body div.bx-interface-form div.bx-buttons input[name=save] {
 	-webkit-box-shadow: 0 2px 2px #ccc;
 	-moz-box-shadow: 0 2px 2px #ccc;
 	box-shadow: 0 2px 2px #ccc;
-	font: bold 14px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	text-shadow: #799a16 0 1px 1px !important;
 	cursor: pointer;
@@ -1241,7 +1235,7 @@ body div.bx-interface-form div.bx-buttons input[name=apply] {
 	-webkit-box-shadow: 0 2px 2px #ccc;
 	-moz-box-shadow: 0 2px 2px #ccc;
 	box-shadow: 0 2px 2px #ccc;
-	font: bold 14px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	text-shadow: #fff 0 1px 1px !important;
 	cursor: pointer;
@@ -1285,7 +1279,7 @@ body div.bx-interface-form div.bx-buttons input[name=cancel] {
 	-webkit-box-shadow: none;
 	-moz-box-shadow: none;
 	box-shadow: none;
-	font: 14px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #d20000;
 	text-shadow: none;
 	cursor: pointer;
@@ -1322,7 +1316,7 @@ body .wd-tags a {
 	-webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) inset;
 	-moz-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) inset;
 	box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1) inset;
-	font: bold 12px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	text-shadow: #fff 0 1px 1px;
 	background: none repeat scroll 0 0 #e8eff0 !important;
@@ -1370,7 +1364,7 @@ body table.bx-edit-tab-title {
 	/*border-color: #d4edf7 #c2e6f4 #b5e1f1;*/
 	/*border-radius: 4px;*/
 	/*padding: 0 18px;*/
-	/*font: bold 14px/38px "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+	/*font: var(--ui-font-weight-bold) 14px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));*/
 	/*color: #41474f;*/
 	/*text-shadow: #fff 0 1px 1px;*/
 	/*background: url(images/interface/grid/form-title-blue.gif) repeat-x left top;*/
@@ -1403,31 +1397,31 @@ body div.bx-edit-table {
 table.bx-edit-table td {
 	background: transparent;
 	color: #555;
-	padding: 7px 5px;
+	padding: 9px 5px;
 }
 
 body table.bx-edit-table td.bx-field-name {
 	width: 20%;
-	font: bold 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: 14px;
+	line-height: 15px;
+	font-weight: var(--ui-font-weight-bold);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555555;
+	vertical-align: middle;
 }
 
 body table#tab_section_edit_table tr td input[type=text],
 body table#tab_main_edit_table tr td input[type=text],
 body table.bx-edit-table td.bx-field-value > input[type=text] {
 	width: 257px;
-	height: 16px;
-	padding: 2px;
+	height: var(--ui-field-size);
+	padding: 0 11px;
 	border: 1px solid #b9bcbe;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
-	-khtml-border-radius: 2px;
-	border-radius: 2px;
-	-webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
-	-moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-	color: #555 !important;
+	border-radius: var(--ui-field-border-radius, 2px);
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
+	color: #535c69 !important;
+	box-sizing: border-box;
+	vertical-align: middle;
 }
 
 body table.bx-edit-table td.bx-field-value > select {
@@ -1440,19 +1434,12 @@ body table.bx-edit-table td.bx-field-value option {
 
 body table.bx-edit-table td.bx-field-value textarea {
 	width: 98%;
-	height: 130px;
-	padding: 2px;
+	padding: 11px;
 	border: 1px solid #b9bcbe;
-	-moz-border-radius: 2px;
-	-webkit-border-radius: 2px;
-	-khtml-border-radius: 2px;
-	border-radius: 2px;
-	-webkit-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
-	-moz-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
-	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.14) inset;
+	border-radius: var(--ui-field-border-radius, 2px);
 	overflow: auto;
-	color: #555 !important;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	color: #535c69 !important;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 }
 
 body table.field_crm td.field_crm_entity {
@@ -1500,7 +1487,7 @@ body table.bx-edit-table td.bx-heading {
 	-webkit-border-radius: 4px;
 	-khtml-border-radius: 4px;
 	border-radius: 4px;
-	font: bold 14px/38px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #41474f;
 	background: url(images/interface/grid/form-title-grey.gif) repeat-x left top;
 }
@@ -1510,7 +1497,7 @@ body table.bx-edit-table td.bx-field-value select.bx-user-field-enum {
 }
 
 body td.bx-field-value table.bx-user-info-anchor td.bx-user-info-anchor-cell a {
-	font: bold 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555555;
 }
 
@@ -1526,7 +1513,7 @@ body table.bx-grid-multiaction select,
 body table.bx-grid-multiaction input,
 body table.bx-grid-multiaction td {
 	white-space: nowrap;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -1693,7 +1680,7 @@ body table.bx-interface-grid {
 
 body table.bx-interface-grid td {
 	padding: 10px !important;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -1754,7 +1741,7 @@ body table.bx-interface-grid tr.bx-grid-head td.bx-right {
 	border: 0;
 	padding: 0 10px !important;
 	/*text-shadow:#fff 0 1px 1px;*/
-	font: 12px/40px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/40px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 	white-space: nowrap;
 }
@@ -1770,7 +1757,7 @@ body table.bx-interface-grid tr.bx-grid-head > td {
 }
 
 body table.bx-interface-grid tr.bx-grid-head > td.bx-sorted {
-	background: url(images/interface/grid/bx-grid-head-sorted.png) repeat-x left top !important;
+	background: #cbcfd1 url(images/interface/grid/bx-grid-head-sorted.png) repeat-x left top !important;
 }
 
 body table.bx-interface-grid tr.bx-grid-head td.bx-left {
@@ -1832,7 +1819,7 @@ body table.bx-interface-grid tr.bx-grid-footer td td {
 	height: 38px;
 	border: 0;
 	padding: 0 15px !important;
-	font: 12px/38px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: transparent;
 	color: #555;
 }
@@ -1959,7 +1946,7 @@ body div.bx-popup-menu td.popupmenu div.popupitem td.gutter {
 }
 
 body div.bx-popup-menu td.popupmenu div.popupitem td.item {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	font-size: 13px !important;
 	color: #555555 !important;
 	text-shadow: 0 1px rgba(255, 255, 255, 0.5) !important;
@@ -1997,14 +1984,30 @@ body div.wd_perm_buttons {
 	margin-left: 20%;
 }
 
-body div.bx-form-notes,
 body table.bx-interface-grid td input,
 body table.bx-interface-grid td textarea,
 body table.bx-interface-grid td select,
 body table.bx-edit-table td.bx-field-value select {
-	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
-	color: #555 !important;
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
+	border: 1px solid #b9bcbe;
+	border-radius: var(--ui-field-border-radius);
+	background-color: #fff;
+	color: #535c69 !important;
+	vertical-align: middle;
+	height: var(--ui-field-size);
+	padding: 0 11px;
+	box-sizing: border-box;
+}
+
+body table.bx-edit-table td.bx-field-value select[multiple],
+body table.bx-edit-table td.bx-field-value select[size] {
+	height: auto;
+}
+
+body div.bx-form-notes {
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 }
 
 .bx-grid-themes-menu-item {
@@ -2039,7 +2042,7 @@ body table.bx-edit-table td.bx-field-value select {
 	padding: 10px 0;
 	line-height: 15px;
 	font-size: 12px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	color: #555;
 }
 
@@ -2065,7 +2068,7 @@ body table.bx-edit-table td.bx-field-value select {
 	position: relative;
 	margin: 0 0 10px 0;
 	padding: 0 0 5px 0;
-	font: bold 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -2090,7 +2093,7 @@ body table.bx-edit-table td.bx-field-value select {
 	right: 42px;
 	text-decoration: none;
 	color: #a8a8a8;
-	font: 11px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .filter-block-title a.filter-save:hover {
@@ -2106,7 +2109,7 @@ body table.bx-edit-table td.bx-field-value select {
 	display: block;
 	margin: 0 0 6px;
 	padding: 0 !important;
-	font: 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -2114,12 +2117,12 @@ body table.bx-edit-table td.bx-field-value select {
 	display: inline-block;
 	margin: 0 0 6px;
 	padding: 0 !important;
-	font: 13px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
 .filter-field input {
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -2141,7 +2144,7 @@ body table.bx-edit-table td.bx-field-value select {
 }
 
 .filter-field select {
-	font: 13px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -2274,7 +2277,7 @@ body table.bx-edit-table td.bx-field-value select {
 	-webkit-box-shadow: 0px 0px 1px #ccc;
 	-moz-box-shadow: 0px 0px 1px #ccc;
 	box-shadow: 0px 0px 1px #ccc;
-	font: bold 13px/25px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 13px/25px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	text-shadow: #fff 0 1px 1px !important;
 	cursor: pointer;
@@ -2304,7 +2307,7 @@ body table.bx-edit-table td.bx-field-value select {
 	-webkit-box-shadow: none;
 	-moz-box-shadow: none;
 	box-shadow: none;
-	font: 13px/25px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/25px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2067b0;
 	text-shadow: none;
 	cursor: pointer;
@@ -2321,7 +2324,7 @@ body table.bx-edit-table td.bx-field-value select {
 	-webkit-border-radius: 4px;
 	-khtml-border-radius: 4px;
 	border-radius: 4px;
-	font: bold 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	background: #f0f5f6;
 }
@@ -2334,7 +2337,7 @@ body table.bx-edit-table td.bx-field-value select {
 
 .filter-presets a {
 	margin: 0;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #41474f;
 }
 
@@ -2353,12 +2356,12 @@ body table.bx-edit-table td.bx-field-value select {
 .filter-presets ul li a {
 	margin: 0;
 	color: #2067b0;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .filter-presets label a {
 	margin: 0;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #41474f;
 }
 
@@ -2439,7 +2442,7 @@ body .bx-tm-popup-clock-wnd {
 body .bx-tm-popup-clock-wnd-title {
 	position: relative;
 	padding: 0 5px 17px;
-	font: bold 14px/19px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #545c68;
 	text-shadow: #cfd1d1 0 0 1px;
 	border-bottom: 1px solid #eef2f4;
@@ -2497,7 +2500,7 @@ body div.bx-clock-div-inline div.bxc-mouse-control-cont {
 }
 
 body .bx-tm-popup-clock-wnd-subtitle {
-	font: bold 14px/34px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/34px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin-left: 14px;
 	color: #535c69;
 	height: 34px;
@@ -2513,7 +2516,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	border-radius: var(--ui-border-radius-2xs, 2px);
 	color: #555;
 	margin-top: 4px;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 110px;
 	overflow: auto;
 	padding: 6px 8px;
@@ -2549,7 +2552,6 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	-webkit-border-radius: 0 3px 3px;
 	-khtml-border-radius: 0 3px 3px;
 	border-radius: 0 3px 3px;
-	background: none repeat scroll 0 0 #eef2f4;
 }
 
 /*.tm-popup-report-buttons{padding:12px 0 10px;}*/
@@ -2558,6 +2560,9 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	border: 1px solid #c6cdd3;
 	padding: 10px;
 	border-radius: var(--ui-border-radius-xs, 0);
+}
+
+.tm-tabs-box .tm-tab-content {
 	border-top-left-radius: 0;
 }
 
@@ -2582,7 +2587,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 .tm-popup-report-textarea {
 	border: 1px solid #c6cdd3;
 	border-radius: var(--ui-border-radius-2xs, 2px);
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: 0;
 	padding: 7px;
 	outline: none;
@@ -2599,9 +2604,9 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	border-bottom: none;
 	color: #535c69;
 	height: 41px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 41px;
 	margin: 0 0 0 10px;
 	vertical-align: top;
@@ -2665,7 +2670,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	-webkit-border-radius: 4px 4px 0 0;
 	-khtml-border-radius: 4px 4px 0 0;
 	border-radius: 4px 4px 0 0;
-	font: bold 12px/32px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2067b0;
 	text-shadow: #fff 0 0 1px;
 	background: url(images/interface/grid/bx-tab-container.gif) repeat-x left top;
@@ -2694,7 +2699,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 .tm-popup-section-text {
 	color: #535c69;
 	height: 39px;
-	font: bold 14px/39px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/39px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	padding-left: 10px;
 	vertical-align: middle;
 }
@@ -2731,7 +2736,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 
 .tm-popup-event {
 	margin: 0 6px 6px;
-	font: 14px/normal Arial, Helvetica, sans-serif;
+	font: 14px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tm-popup-event-datetime {
@@ -2781,7 +2786,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	border: 1px solid #c6cdd3;
 	border-radius: var(--ui-border-radius-2xs, 2px);
 	color: #555;
-	font: 14px/normal "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 36px;
 	padding: 0 7px;
 	outline: none;
@@ -2915,7 +2920,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 .tm-popup-timeman-change-time-mode .tm-popup-change-time-link {
 	clear: both;
 	color: #8a8f94;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 14px;
 	margin: 0 0 -20px 4px;
 	padding-top: 6px;
@@ -2931,7 +2936,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 .tm-popup-timeman-paused-mode .tm-popup-timeman-pause {
 	display: inline-block !important;
 	height: 30px;
-	font: 12px/31px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/31px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	text-align: left;
 	overflow: visible;
@@ -2949,7 +2954,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 
 .tm-popup-timeman-paused-mode .tm-popup-notice-time-unit,
 .tm-popup-timeman-paused-mode .tm-popup-notice-time-number {
-	font: bold 15px/31px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 15px/31px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 }
 
@@ -2971,7 +2976,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	display: inline-block;
 	height: 31px;
 	padding: 0;
-	font: bold 14px/30px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: top;
 }
 
@@ -2984,7 +2989,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	border: none;
 	color: #7f858d;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	height: 20px;
 	margin: 0;
 	padding: 0;
@@ -3002,34 +3007,33 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	display: inline-block;
 	height: 15px;
 	padding: 0;
-	font: bold 14px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	vertical-align: top;
 }
 
 .tm-popup-notice-pencil {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat scroll 0 -267px;
-	background-size: cover;
-	border: none;
-	position: absolute;
-	top: 2px;
-	right: -5px;
 	width: 19px;
 	height: 19px;
+	position: absolute;
+	top: 0;
+	right: -5px;
+	background: url(images/interface/timeman/tm-popup-notice-pencil.svg) no-repeat scroll center;
+	background-size: cover;
+	border: none;
 }
 
 .tm-popup-notice-time {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 0 -230px;
-	background-size: cover;
-	color: #555;
+	width: auto;
 	height: 16px;
+	position: absolute;
 	top: 0;
 	right: 11px;
-	font: bold 12px/13px "Helvetica Neue", Helvetica, Arial, sans-serif;
 	padding: 0 8px 0 20px;
-	position: absolute;
 	vertical-align: middle;
-	width: auto;
+	background: url(images/interface/timeman/tm-popup-notice-time.svg) no-repeat left center;
+	color: #555;
+	font: var(--ui-font-weight-bold) 12px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tm-popup-notice-time .tm-popup-notice-time-unit {
@@ -3039,7 +3043,7 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 
 .tm-popup-notice-time .tm-popup-notice-time-unit,
 .tm-popup-notice-time .tm-popup-notice-time-number {
-	font: bold 14px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 14px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 }
 
@@ -3051,148 +3055,9 @@ body .bx-tm-popup-clock-wnd .bx-tm-popup-clock-wnd-report textarea {
 	line-height: 12px;
 }
 
-
-
 .tm-popup-notice-time .tm-popup-notice-time-number,
 .tm-popup-notice-time .tm-popup-notice-time-unit {
 	color: #80868e;
-}
-
-
-.webform-button.tm-webform-button-pause,
-.webform-button.tm-webform-button-play,
-.webform-button.tm-popup-main-button,
-.webform-small-button.tm-webform-button-pause,
-.webform-small-button.tm-webform-button-play,
-.webform-small-button.tm-popup-main-button {
-	height: 40px;
-	padding: 0 15px;
-}
-
-.webform-button.tm-webform-button-pause .webform-button-text,
-.webform-button.tm-webform-button-play .webform-button-text,
-.webform-button.tm-popup-main-button .webform-button-text,
-.webform-small-button.tm-webform-button-pause .webform-small-button-text,
-.webform-small-button.tm-webform-button-play .webform-small-button-text,
-.webform-small-button.tm-popup-main-button .webform-small-button-text {
-	position: relative;
-	font: 13px/40px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
-	font-weight: var(--ui-font-weight-bold, 700);
-	display: inline-block;
-}
-
-.webform-button.tm-webform-button-play .text-pause,
-.webform-button.tm-webform-button-pause .text-play,
-.webform-small-button.tm-webform-button-play .text-pause,
-.webform-small-button.tm-webform-button-pause .text-play {
-	display: none;
-}
-
-.webform-button.tm-webform-button-pause .webform-button-text:before,
-.webform-button.tm-webform-button-play .webform-button-text:before,
-.webform-button.tm-popup-main-button .webform-button-text:before,
-.webform-small-button.tm-webform-button-pause .webform-small-button-text:before,
-.webform-small-button.tm-webform-button-play .webform-small-button-text:before,
-.webform-small-button.tm-popup-main-button .webform-small-button-text:before {
-	content: "";
-	display: block;
-	position: absolute;
-	left: 0;
-	top: 12px;
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 100px 100px;
-	background-size: cover;
-	width: 19px;
-	height: 19px;
-}
-
-/*-----------------------green----------------------*/
-.tm-popup-main-button.webform-button-accept .webform-button-text,
-.tm-popup-main-button.webform-button-create .webform-button-text,
-.tm-popup-main-button.webform-small-button-accept .webform-small-button-text,
-.tm-popup-main-button.webform-small-button-create .webform-small-button-text {
-	padding: 0 5px 0 18px;
-
-}
-
-.tm-popup-main-button.webform-button-accept .webform-button-text:before,
-.tm-popup-main-button.webform-button-create .webform-button-text:before,
-.tm-popup-main-button.webform-small-button-accept .webform-small-button-text:before,
-.tm-popup-main-button.webform-small-button-create .webform-small-button-text:before {
-	background-position: 0 -124px;
-}
-
-/*-----------------------red----------------------*/
-.tm-popup-main-button.webform-button-decline .webform-button-text,
-.tm-popup-main-button.webform-small-button-decline .webform-small-button-text {
-	margin: 0 -5px 0 -6px;
-	padding: 0 4px 0 19px;
-}
-
-.tm-popup-main-button.webform-button-decline .webform-button-text:before,
-.tm-popup-main-button.webform-small-button-decline .webform-small-button-text:before {
-	background-position: 2px -175px !important;
-}
-
-/*---------------------grey------------------------*/
-
-
-.tm-webform-button-play .webform-button-icon,
-.tm-webform-button-pause .webform-button-icon,
-.tm-webform-button-play .webform-small-button-icon,
-.tm-webform-button-pause .webform-small-button-icon {
-	display: none;
-}
-
-.webform-button.tm-webform-button-play,
-.webform-button.tm-webform-button-pause,
-.webform-small-button.tm-webform-button-play,
-.webform-small-button.tm-webform-button-pause {
-	background: #868d95;
-	-webkit-box-shadow: none;
-	box-shadow: none;
-	color: #fff;
-}
-
-.webform-button.tm-webform-button-pause:hover,
-.webform-button.tm-webform-button-play:hover,
-.webform-small-button.tm-webform-button-pause:hover,
-.webform-small-button.tm-webform-button-play:hover {
-	background: #5b6573;
-}
-
-.webform-button.tm-webform-button-play:active,
-.webform-button.tm-webform-button-pause:active,
-.webform-small-button.tm-webform-button-play:active,
-.webform-small-button.tm-webform-button-pause:active {
-	background: #3b506e;
-}
-
-.tm-webform-button-pause .webform-button-text.text-pause,
-.tm-webform-button-play .webform-button-text.text-play,
-.tm-webform-button-pause .webform-small-button-text.text-pause,
-.tm-webform-button-play .webform-small-button-text.text-play {
-	padding: 0 0 0 21px;
-	color: #fff;
-	margin-left: -6px;
-	position: relative;
-}
-
-.tm-webform-button-pause .webform-button-text.text-pause:before,
-.tm-webform-button-pause .webform-small-button-text.text-pause:before {
-	background-position: 2px -150px !important;
-}
-.tm-webform-button-play .webform-button-text.text-play:before,
-.tm-webform-button-play .webform-small-button-text.text-play:before {
-	background-position: 0 -199px !important;
-}
-
-
-
-.tm-webform-button-play .webform-button-text.text-play,
-.tm-webform-button-play .webform-small-button-text.text-play {
-	margin-left: -5px;
-	padding-left: 14px;
-	padding-right: 0;
 }
 
 .tm-popup-report-editmode .tm-popup-report-button .popup-window-button-text {
@@ -3224,7 +3089,7 @@ div.bx-clock-div-inline .bxc-clock-cont {
 	width: 50%;
 	margin: 0;
 	padding: 0 0 5px;
-	font: normal 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: normal 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #545c68;
 }
 
@@ -3271,7 +3136,7 @@ div.bx-clock-div-inline .bxc-clock-cont {
 	height: 41px;
 	line-height: 41px;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0;
 	position: relative;
 	border-radius: var(--ui-border-radius-2xs);
@@ -3286,12 +3151,12 @@ div.bx-clock-div-inline .bxc-clock-cont {
 }
 
 .bx-tm-popup-edit-clock-wnd .bx-tm-field .bx-tm-report-field {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 0 -216px;
 	display: block;
-	top: 0;
-	padding-left: 21px;
 	position: absolute;
+	top: 0;
 	right: 20px;
+	padding-left: 21px;
+	background: url(images/interface/timeman/tm-popup-notice-time.svg) no-repeat left center;
 }
 
 .bx-tm-popup-edit-clock-wnd div:nth-child(6).bx-tm-field .bx-tm-report-field {
@@ -3328,14 +3193,12 @@ div.bx-clock-div-inline .bxc-clock-cont {
 
 
 .tm-info-bar-btn:before {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 100px 100px;
-	background-size: cover;
 	content: '';
-	left: 5px;
-	top: 4px;
+	width: 19px;
 	height: 18px;
 	position: absolute;
-	width: 19px;
+	left: 5px;
+	top: 4px;
 	opacity: 1;
 }
 
@@ -3386,7 +3249,7 @@ div.bx-clock-div-inline .bxc-clock-cont {
 .tm-social-set-title {
 	color: #555656;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 0 14px 2px;
 }
 
@@ -3398,7 +3261,7 @@ div.bx-clock-div-inline .bxc-clock-cont {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .25) inset;
 	color: #585858;
 	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 52px;
 	margin: 0 0 11px;
 	text-align: left;
@@ -3427,7 +3290,7 @@ div.bx-clock-div-inline .bxc-clock-cont {
 	color: #555656;
 	display: inline-block;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: 6px;
 	vertical-align: middle;
 }
@@ -3496,7 +3359,7 @@ body div.bx-clock-div input[type="button"] {
 	border-radius: 4px;
 	-webkit-box-shadow: 0 1px 1px #ccd3d5;
 	box-shadow: 0 1px 1px #ccd3d5;
-	font: bold 12px/23px "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+	font: var(--ui-font-weight-bold) 12px/23px var(--ui-font-family-primary, var(--ui-font-family-helvetica)) !important;
 	color: #555;
 	text-shadow: #fff 0 1px 1px;
 	cursor: pointer;
@@ -3551,7 +3414,7 @@ body div.bx-clock-div table.bxc-cus-sel-tbl td:first-child input,
 	border: 1px solid #bcc0c5 !important;
 	color: #6b727b;
 	box-shadow: none;
-	font: bold 17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 32px;
 	padding: 0 18px 0 5px;
 	text-align: center;
@@ -3559,6 +3422,10 @@ body div.bx-clock-div table.bxc-cus-sel-tbl td:first-child input,
 	outline: medium none;
 	box-sizing: content-box;
 	border-radius: var(--ui-border-radius-2xs, 0);
+}
+
+body .bx-tm-popup-clock-wnd-custom-date-picker {
+	font-size: 15px;
 }
 
 .bx-tm-report-edit {
@@ -3577,14 +3444,14 @@ body div.bx-clock-div span.double-dot {
 }
 
 body div.bx-clock-div table.bxc-cus-sel-tbl td.bxc-pointer {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 4px -371px;
-	bottom: 1px;
 	display: block;
-	right: 1px;
-	height: 16px;
-	opacity: 0.4;
-	position: absolute;
 	width: 19px;
+	height: 16px;
+	position: absolute;
+	right: 1px;
+	bottom: 1px;
+	background: url(images/interface/timeman/tm-arrow-down.svg) no-repeat 1px center;
+	opacity: 0.4;
 }
 
 body div.bx-clock-div table.bxc-cus-sel-tbl td.bxc-pointer:hover {
@@ -3597,7 +3464,7 @@ body div.bx-clock-div table.bxc-cus-sel-tbl td.bxc-pointer img {
 }
 
 body div.bx-clock-div table.bxc-cus-sel-tbl tbody tr:first-child td.bxc-pointer {
-	background-position: 4px -357px;
+	background-image: url(images/interface/timeman/tm-arrow-up.svg);
 	top: 1px;
 }
 
@@ -3824,7 +3691,7 @@ body div.bx-clock-div .hm11 img.bxc-min-arr-cont {
 body .tm-popup-section-title-text {
 	padding: 0 9px 7px;
 	margin: 0;
-	font: bold 13px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 13px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -3832,7 +3699,7 @@ body .tm-report-popup-people {
 	position: relative;
 	padding: 0;
 	margin: 0 0 10px 0;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	background: #dbecf4;
 	border-radius: var(--ui-border-radius-xs);
@@ -3850,7 +3717,7 @@ body .tm-report-popup-people .tm-report-popup-people-inner {
 }
 
 body .tm-report-popup-people .tm-report-popup-user-label {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #555;
 }
 
@@ -3867,7 +3734,7 @@ body .tm-report-popup-people a.tm-report-popup-user-avatar {
 }
 
 body .tm-report-popup-people a.tm-report-popup-user-name {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #2067b0 !important;
 }
 
@@ -3887,7 +3754,7 @@ body .tm-report-popup-time {
 	position: relative;
 	padding: 0;
 	margin: 10px 0;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	background: #dae4e6;
 }
@@ -3910,13 +3777,13 @@ body .tm-report-popup-time .tm-report-popup-time-inner {
 body .tm-report-popup-time .tm-report-popup-time-brief {
 	height: 32px;
 	line-height: 32px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	border-bottom: 1px solid #c6cdd3;
 }
 
 body .tm-report-popup-time .tm-report-popup-time-brief .tm-report-popup-time-title {
 	top: 0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 body .tm-report-popup-time .tm-report-popup-time-brief .tm-report-popup-time-data {
@@ -3935,7 +3802,7 @@ body .tm-report-popup-time .tm-report-popup-time-brief .tm-report-popup-time-edi
 }
 
 body .tm-report-popup-time .tm-report-popup-time-brief .tm-report-popup-time-value {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 body .tm-report-popup-time .tm-report-popup-time-full {
@@ -3986,7 +3853,7 @@ body .tm-report-popup-time .tm-report-popup-time-full td.tm-report-popup-time-ap
 body .tm-report-popup-time .tm-report-popup-time-full .tm-report-popup-time-label {
 	padding: 0 0 0 20px;
 	margin: 0;
-	font: 14px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	background: url(images/interface/timeman/notice-time.png) no-repeat left 2px;
 }
@@ -3995,7 +3862,7 @@ body .tm-report-popup-time .tm-report-popup-time-full .tm-report-popup-time-real
 	display: block;
 	margin: 0;
 	padding-left: 20px;
-	font: 14px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -4013,7 +3880,7 @@ body .tm-report-popup-time .tm-report-popup-time-full .tm-report-popup-time-fixe
 
 body .tm-report-popup-time .tm-report-popup-time-full .tm-report-popup-time-value {
 	margin: 0 0 0 3px;
-	font: 15px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -4035,7 +3902,7 @@ body .tm-report-popup-desc {
 	position: relative;
 	padding: 0;
 	margin: 10px 0;
-	font: 12px/15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 
@@ -4051,7 +3918,7 @@ body .tm-report-popup-read-mode .tm-report-popup-desc .tm-report-popup-desc-text
 	-khtml-border-radius: 3px;
 	border-radius: 3px;
 	border: 1px solid #bcd0d5;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	background: #ffffff;
 }
@@ -4178,7 +4045,7 @@ body .tm-report-popup-items .tm-popup-section-title-link {
 	right: 2px;
 	top: 4px;
 	padding: 0 22px 0 0;
-	font: 11px/13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2067b0;
 	text-decoration: none;
 	cursor: pointer;
@@ -4192,7 +4059,7 @@ body .tm-report-popup-items .tm-popup-section-title-link-weekly {
 /* ================================ work_report ================================ */
 body .tm-report .bx-tm-data-table td {
 	border-color: #d6d6d6;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 body .tm-report .bx-tm-data-table thead td {
@@ -4328,7 +4195,7 @@ body .tm-report .tm-report-right-border {
 
 
 .tm-info-bar-btn-play:before {
-	background-position: 0 -72px;
+	background: url(images/interface/timeman/tm-info-bar-btn-play.svg) no-repeat center;
 }
 
 .tm-info-bar-btn-pause,
@@ -4339,11 +4206,11 @@ body .tm-report .tm-report-right-border {
 
 
 .tm-info-bar-btn-pause:before {
-	background-position: 0 -21px;
+	background: url(images/interface/timeman/tm-info-bar-btn-pause.svg) no-repeat center;
 }
 
 .tm-info-bar-btn-flag:before {
-	background-position: 0 -50px;
+	background: url(images/interface/timeman/tm-info-bar-btn-flag.svg) no-repeat center;
 }
 
 .tm-info-bar-time {
@@ -4367,8 +4234,8 @@ body .tm-report .tm-report-right-border {
 	display: block;
 	width: 19px;
 	height: 19px;
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 0 -98px;
 	left: 0;
+	background: url(images/interface/timeman/tm-info-bar-time.svg) no-repeat center;
 }
 
 .tm-popup-social-cell {
@@ -4386,7 +4253,7 @@ body .tm-report .tm-report-right-border {
 .tm-social-set-title {
 	color: #555656;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 0 14px 2px;
 }
 
@@ -4398,7 +4265,7 @@ body .tm-report .tm-report-right-border {
 	box-shadow: 0 1px 2px 0 rgba(0, 0, 0, .25) inset;
 	color: #585858;
 	font-size: 13px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	height: 52px;
 	margin: 0 0 11px;
 	text-align: left;
@@ -4427,7 +4294,7 @@ body .tm-report .tm-report-right-border {
 	color: #555656;
 	display: inline-block;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-left: 6px;
 	vertical-align: middle;
 }
@@ -4467,7 +4334,7 @@ body .tm-report .tm-report-right-border {
 }
 
 .tm-popup-task-item {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-shadow: 0 1px #fff;
 }
 
@@ -4492,12 +4359,11 @@ body .tm-report .tm-report-right-border {
 }
 
 .tm-task-item-menu {
-	background: url(images/interface/timeman/tm-sprite.svg) no-repeat 0 -385px;
-	background-size: cover;
-	right: -3px;
-	top: 8px;
 	width: 25px;
 	height: 19px;
+	right: -3px;
+	top: 8px;
+	background: url(images/interface/timeman/tm-task-item-menu.svg) no-repeat center;
 }
 
 /*============================================================ END TASK IN TM ===================================================*/
@@ -4559,7 +4425,7 @@ body .tm-report .tm-report-right-border {
 
 .bx-lm-groupbox-search .bx-finder-groupbox-content {
 	padding-top: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #70767d
 }
 
@@ -4568,7 +4434,7 @@ body .tm-report .tm-report-right-border {
 	border-radius: 2px;
 	cursor: pointer;
 	color: #5c6470;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 12px;
 	height: 40px;
 	margin: 12px 16px 0 0;
@@ -4847,7 +4713,7 @@ body .tm-report .tm-report-right-border {
 
 .bx-lm-box .bx-finder-company-department-text {
 	color: #2067b0;
-	font-weight: bold
+	font-weight: var(--ui-font-weight-bold)
 }
 
 .bx-lm-box .bx-finder-company-department-check-text {
@@ -4869,7 +4735,7 @@ body .tm-report .tm-report-right-border {
 
 .bx-lm-element-groups .bx-finder-box-item-t7-name {
 	color: #688617;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .bx-lm-box .bx-finder-company-department-opened .bx-finder-company-department-arrow {
@@ -4892,7 +4758,7 @@ body .tm-report .tm-report-right-border {
 .bx-finder-box-item-t7-name {
 	font-size: 13px;
 	line-height: 17px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	max-width: 167px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -4910,7 +4776,7 @@ body .tm-report .tm-report-right-border {
 .bx-lm-element-sonetgroup .bx-finder-box-item-t7-name,
 .bx-lm-box-tab-content-sonetgroup .bx-finder-box-item-t6-name {
 	color: #2A747E;
-	font-weight: bold
+	font-weight: var(--ui-font-weight-bold)
 }
 
 .bx-lm-element-sonetgroup.bx-lm-element-extranet .bx-finder-box-item-t3-name,
@@ -4962,7 +4828,7 @@ body .tm-report .tm-report-right-border {
 .bx-lm-element-department .bx-finder-box-item-t7-name,
 .bx-lm-element-department .bx-finder-box-item-t3-name {
 	color: #5c6470;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .bx-finder-search-block {
@@ -5050,7 +4916,7 @@ body .tm-report .tm-report-right-border {
 
 .bx-ss-timeman-header-div {
 	border-bottom: 1px solid #eef2f4;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin-bottom: 14px;
 	padding-bottom: 18px;
 }
@@ -5067,7 +4933,7 @@ body .tm-report .tm-report-right-border {
 	box-shadow: inset 0 0 0 1px #c6cdd3;
 	border-radius: 2px;
 	color: #545c68;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	margin-bottom: 28px;
 	resize: none;

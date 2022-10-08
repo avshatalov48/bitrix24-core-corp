@@ -109,7 +109,7 @@
   color: #2067b0;
   cursor: pointer;
   display: inline-block;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   font-size: 13px;
   margin: 7px 7px 7px 7px;
   line-height: 17px;
@@ -172,9 +172,7 @@
   margin: 0 5px 5px 0;
 }
 .task-form-field .task-form-field-item {
-  -webkit-transition: background-color 0.2s linear;
-  transition: background-color 0.2s linear;
-  display: inline-block;
+  display: inline-flex;
   overflow: hidden;
   vertical-align: middle;
   white-space: nowrap;
@@ -183,6 +181,7 @@
   line-height: 30px;
   margin: 0 5px 5px 0;
   background: #bcedfc;
+  transition: background-color 0.2s linear;
   border-radius: var(--task-form-field-item-border-radius, var(--ui-border-radius-3xs));
 }
 .task-form-field .task-form-field-item a[href="javascript:void(0);"] {
@@ -195,15 +194,16 @@
   background-color: #8be0fa;
 }
 .task-form-field .task-form-field-item .task-form-field-item-text {
-  padding: 0 0 0 10px;
-  display: inline-block;
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: middle;
-  font-weight: bold;
-  font-size: 13px;
-  text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	padding: 0 0 0 10px;
+	max-width: 250px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	vertical-align: middle;
+	font-weight: var(--ui-font-weight-bold);
+	font-size: 13px;
+	text-decoration: none;
 }
 .task-form-field .task-form-field-item .task-form-field-item-text:before {
   display: none;
@@ -214,28 +214,29 @@
   margin-right: 5px;
 }
 .task-form-field .task-form-field-item .task-form-field-item-delete {
-  width: 25px;
-  height: 30px;
-  z-index: 1;
-  cursor: pointer;
-  display: inline-block;
-  vertical-align: middle;
-  position: relative;
-  margin: auto;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	vertical-align: middle;
+	position: relative;
+	width: 25px;
+	height: 30px;
+	margin: auto;
+	cursor: pointer;
+	z-index: 1;
+	opacity: .4;
+	transition: .2s;
+}
+
+.task-form-field .task-form-field-item .task-form-field-item-delete:hover {
+	transition: none;
+	opacity: .75;
 }
 .task-form-field .task-form-field-item .task-form-field-item-delete:after {
   content: '';
-  background-image: url(images/media.png);
-  background: url(images/media.png) no-repeat -2px -17px;
-  width: 6px;
-  height: 6px;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  margin: auto auto auto 7px;
-  opacity: 0.2;
+  width: 8px;
+  height: 7px;
+  background: url(images/tasks-form-field-cross.svg) center no-repeat;
 }
 .tasks-scrollpane {
   overflow-x: hidden;
@@ -291,7 +292,7 @@
   text-overflow: ellipsis;
   -ms-text-overflow: ellipsis;
   font-size: 12px;
-  font-weight: bold;
+  font-weight: var(--ui-font-weight-bold);
   line-height: 28px;
   position: absolute;
   z-index: 110;

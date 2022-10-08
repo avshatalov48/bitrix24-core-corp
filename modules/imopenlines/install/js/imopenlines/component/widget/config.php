@@ -30,6 +30,7 @@ return [
 		'im.lib.localstorage',
 		'im.lib.utils',
 		'main.md5',
+		'im.lib.uploader',
 		'main.core',
 		'im.lib.logger',
 		'im.event-handler',

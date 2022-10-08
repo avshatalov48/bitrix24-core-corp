@@ -2,7 +2,7 @@
 
 if(window.IntranetUsers)
 	return;
-	
+
 window.IntranetUsers = function(name, multiple, bSubordinateOnly) {
 	this.name = name;
 	this.multiple = multiple;
@@ -196,8 +196,9 @@ IntranetUsers.prototype.show = function (sectionID, usersData, sectionPrefixName
 				sub : arEmployees[i].SUBORDINATE == "Y" ? true : false,
 				sup : arEmployees[i].SUPERORDINATE == "Y" ? true : false,
 				position : arEmployees[i].WORK_POSITION,
-				photo : arEmployees[i].PHOTO
-			}
+				photo : arEmployees[i].PHOTO,
+				url: arEmployees[i].USER_PROFILE_URL
+			};
 
 			var obInput = BX.create("input", {
 				props : {
@@ -328,7 +329,8 @@ IntranetUsers.prototype.select = function(e)
 			sub : IntranetUsers.arEmployeesData[obInput.value].sub,
 			sup : IntranetUsers.arEmployeesData[obInput.value].sup,
 			position : IntranetUsers.arEmployeesData[obInput.value].position,
-			photo : IntranetUsers.arEmployeesData[obInput.value].photo
+			photo : IntranetUsers.arEmployeesData[obInput.value].photo,
+			url: IntranetUsers.arEmployeesData[obInput.value].url
 		};
 	}
 	else
@@ -376,7 +378,8 @@ IntranetUsers.prototype.select = function(e)
 					sub : IntranetUsers.arEmployeesData[obInput.value].sub,
 					sup : IntranetUsers.arEmployeesData[obInput.value].sup,
 					position : IntranetUsers.arEmployeesData[obInput.value].position,
-					photo : IntranetUsers.arEmployeesData[obInput.value].photo
+					photo : IntranetUsers.arEmployeesData[obInput.value].photo,
+					url : IntranetUsers.arEmployeesData[obInput.value].url
 				};
 			}
 		}
@@ -643,7 +646,8 @@ IntranetUsers.prototype.showResults = function(data)
 				sub : arEmployees[i].SUBORDINATE == "Y" ? true : false,
 				sup : arEmployees[i].SUPERORDINATE == "Y" ? true : false,
 				position : arEmployees[i].WORK_POSITION,
-				photo : arEmployees[i].PHOTO
+				photo : arEmployees[i].PHOTO,
+				url: arEmployees[i].USER_PROFILE_URL
 			};
 
 			var obInput = BX.create("input", {

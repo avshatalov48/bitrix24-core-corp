@@ -21,7 +21,8 @@
 }
 
 .crm-tracking-channel-pool-header {
-	font: 22px/28px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 	margin: 0 0 19px;
 }
@@ -81,7 +82,8 @@
 
 .crm-tracking-channel-pool-section-title-text {
 	color: #525c69;
-	font: 14px/22px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 14px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	padding-left: 29px;
 	position: relative;
 	margin-bottom: 7px;

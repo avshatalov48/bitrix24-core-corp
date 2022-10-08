@@ -35,5 +35,14 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-viber-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=7417097');
+				return false;
+			}
+		);
 	});
 })(window);

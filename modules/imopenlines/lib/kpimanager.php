@@ -2,7 +2,6 @@
 
 namespace Bitrix\ImOpenLines;
 
-use Bitrix\ImOpenLines\Model\SessionCheckTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -32,14 +31,11 @@ class KpiManager
 	 * Return whole list of messages for current session
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getSessionMessages()
 	{
 		$filter = array(
-			'SESSION_ID' => $this->sessionId
+			'=SESSION_ID' => $this->sessionId
 		);
 		$messages = SessionKpiMessagesTable::getList(
 			array(
@@ -55,9 +51,6 @@ class KpiManager
 	 * Return a kpi message about first message in session.
 	 *
 	 * @return array|false
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getFirstMessage()
 	{
@@ -80,20 +73,16 @@ class KpiManager
 	 * There can be only one not answered message at a time
 	 *
 	 * @return array|false
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getNotAnsweredMessage()
 	{
 		$filter = array(
-			'SESSION_ID' => $this->sessionId,
-			'TIME_ANSWER' => null
+			'=SESSION_ID' => $this->sessionId,
+			'=TIME_ANSWER' => null
 		);
 		$message = SessionKpiMessagesTable::getList(
 			array(
 				'filter' => $filter,
-				//'cache' => array('ttl' => 3600)
 			)
 		);
 
@@ -102,14 +91,11 @@ class KpiManager
 
 	/**
 	 * @return array|false
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getLastMessage()
 	{
 		$filter = array(
-			'SESSION_ID' => $this->sessionId
+			'=SESSION_ID' => $this->sessionId
 		);
 		$message = SessionKpiMessagesTable::getList(
 			array(
@@ -133,8 +119,8 @@ class KpiManager
 	public function getExpiredMessages($includeNoticed = true)
 	{
 		$filter = [
-			'TIME_ANSWER' => null,
-			'TIME_STOP' => null,
+			'=TIME_ANSWER' => null,
+			'=TIME_STOP' => null,
 			'<TIME_EXPIRED' => DateTime::createFromTimestamp(time()),
 			'=SESSION_ID' => $this->sessionId,
 		];
@@ -156,17 +142,14 @@ class KpiManager
 	 * @param bool $includeNoticed
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function getLineExpiredMessages($lineId, $includeNoticed = true)
 	{
 		$select = ['*'];
 		$filter = [
 			'=SESSION.CONFIG_ID' => $lineId,
-			'TIME_ANSWER' => null,
-			'TIME_STOP' => null,
+			'=TIME_ANSWER' => null,
+			'=TIME_STOP' => null,
 			'<TIME_EXPIRED' => DateTime::createFromTimestamp(time()),
 		];
 
@@ -191,21 +174,18 @@ class KpiManager
 	 * @param bool $includeNoticed
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function getLinesWithExpiredMessages($includeNoticed = true)
+	protected static function getLinesWithExpiredMessages($includeNoticed = true)
 	{
 		$expiredMessages = array();
 		$lineFilter = array(
 			'LOGIC' => 'OR',
 			array(
-				'ACTIVE' => 'Y',
+				'=ACTIVE' => 'Y',
 				'>KPI_FIRST_ANSWER_TIME' => '0'
 			),
 			array(
-				'ACTIVE' => 'Y',
+				'=ACTIVE' => 'Y',
 				'>KPI_FURTHER_ANSWER_TIME' => '0'
 			)
 
@@ -233,10 +213,6 @@ class KpiManager
 	 * @param $fields
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function addMessage($fields)
 	{
@@ -303,7 +279,6 @@ class KpiManager
 	 * @param $fields
 	 *
 	 * @return \Bitrix\Main\ORM\Data\UpdateResult
-	 * @throws \Exception
 	 */
 	public function updateMessage($kpiMessageId, $fields)
 	{
@@ -315,9 +290,6 @@ class KpiManager
 	/**
 	 * Delete all kpi messages for current session
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function deleteSessionMessages()
 	{
@@ -332,9 +304,6 @@ class KpiManager
 	/**
 	 * Stop message answer timer
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function stopTimer()
 	{
@@ -356,9 +325,6 @@ class KpiManager
 	/**
 	 * Enable message answer timer with stopped timer
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function startTimer()
 	{
@@ -399,25 +365,17 @@ class KpiManager
 	 * Calculate full answer time for first message
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getFirstMessageAnswerTime()
 	{
 		$firstMessage = $this->getFirstMessage();
-		$result = $this->getMessageAnswerTime($firstMessage);
-
-		return $result;
+		return $this->getMessageAnswerTime($firstMessage);
 	}
 
 	/**
 	 * Calculate full answer time for session
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getFullAnswerTime()
 	{
@@ -436,9 +394,6 @@ class KpiManager
 	 * Calculate average answer time for session
 	 *
 	 * @return float|int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getAverageAnswerTime()
 	{
@@ -450,18 +405,13 @@ class KpiManager
 			$result += $this->getMessageAnswerTime($message);
 		}
 
-		$result = count($messages) > 0 ? intval($result/count($messages)) : 0;
-
-		return $result;
+		return count($messages) > 0 ? intval($result/count($messages)) : 0;
 	}
 
 	/**
 	 * Calculate max answer time for session
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function getMaxAnswerTime()
 	{
@@ -520,7 +470,6 @@ class KpiManager
 		$notAnsweredMessage = $kpi->getNotAnsweredMessage();
 		if (!empty($notAnsweredMessage))
 		{
-			//$kpi->stopTimer();
 			$kpi->updateMessage(
 				$notAnsweredMessage['ID'],
 				array(
@@ -536,7 +485,6 @@ class KpiManager
 	 * @param array $notificationUserList
 	 * @param string $message
 	 *
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected static function sendExpiredNotification($notificationUserList, $message)
 	{
@@ -563,10 +511,6 @@ class KpiManager
 	 *
 	 * @param $operatorId
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function operatorDayStart($operatorId)
 	{
@@ -587,10 +531,6 @@ class KpiManager
 	 *
 	 * @param $operatorId
 	 *
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function operatorDayEnd($operatorId)
 	{
@@ -612,9 +552,6 @@ class KpiManager
 	 * @param $lineId
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function startLineSessionsTimers($lineId)
 	{
@@ -624,7 +561,7 @@ class KpiManager
 				'filter' => array(
 					'=SESSION.CONFIG_ID' => $lineId,
 					'<SESSION.STATUS' => Session::STATUS_WAIT_CLIENT,
-					'TIME_ANSWER' => null
+					'=TIME_ANSWER' => null
 				),
 				'group' => array('SESSION_ID')
 			)
@@ -645,9 +582,6 @@ class KpiManager
 	 * @param $lineId
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function stopLineSessionsTimers($lineId)
 	{
@@ -657,8 +591,8 @@ class KpiManager
 				'filter' => array(
 					'=SESSION.CONFIG_ID' => $lineId,
 					'<SESSION.STATUS' => Session::STATUS_WAIT_CLIENT,
-					'TIME_ANSWER' => null,
-					'TIME_STOP' => null
+					'=TIME_ANSWER' => null,
+					'=TIME_STOP' => null
 				),
 				'group' => array('SESSION_ID')
 			)
@@ -677,21 +611,16 @@ class KpiManager
 	 * @param $operatorId
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function getOperatorActiveKpiSessions($operatorId)
 	{
 		$result = [];
 
 		$filterQueue = [
-			'CONFIG.KPI_CHECK_OPERATOR_ACTIVITY' => 'Y',
-			'CONFIG.ACTIVE' => 'Y',
+			'=CONFIG.KPI_CHECK_OPERATOR_ACTIVITY' => 'Y',
+			'=CONFIG.ACTIVE' => 'Y',
 			'>CONFIG.KPI_FURTHER_ANSWER_TIME' => 0,
-			'USER_ID' => $operatorId
-			//'CONFIG.CHECK_AVAILABLE' => 'Y'
+			'=USER_ID' => $operatorId
 		];
 		$queueListManager = QueueTable::getList(
 			[
@@ -714,7 +643,7 @@ class KpiManager
 		{
 			$filterKpiMessages = [
 				'=OPERATOR_ID' => $operatorId,
-				'CONFIG_ID' => $configList,
+				'=CONFIG_ID' => $configList,
 				'><STATUS' => [Session::STATUS_ANSWER, Session::STATUS_OPERATOR]
 			];
 
@@ -751,7 +680,6 @@ class KpiManager
 	 * @param null $lineId
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
 	 */
 	protected function checkOperatorActivity($operatorId, $lineId = null)
 	{
@@ -790,9 +718,6 @@ class KpiManager
 	 * @param $message
 	 *
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	protected static function getKpiMessageReplaceFields($message)
 	{
@@ -820,13 +745,13 @@ class KpiManager
 					'LOGIC' => 'OR',
 					array(
 						'>KPI_FIRST_ANSWER_TIME' => 0,
-						'CHECK_AVAILABLE' => 'Y',
-						'ACTIVE' => 'Y'
+						'=CHECK_AVAILABLE' => 'Y',
+						'=ACTIVE' => 'Y'
 					),
 					array(
 						'>KPI_FURTHER_ANSWER_TIME' => 0,
-						'CHECK_AVAILABLE' => 'Y',
-						'ACTIVE' => 'Y'
+						'=CHECK_AVAILABLE' => 'Y',
+						'=ACTIVE' => 'Y'
 					)
 				),
 			)
@@ -848,17 +773,13 @@ class KpiManager
 	{
 		self::checkWorkTime();
 
-		return '\\Bitrix\\ImOpenLines\\KpiManager::checkWorkTimeAgent()';
+		return __METHOD__. '()';
 	}
 
 	/**
 	 * Agent for sending expired notification messages for all lines, taking account of line settings
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function setExpiredMessagesAgent()
 	{
@@ -892,6 +813,6 @@ class KpiManager
 			}
 		}
 
-		return '\\Bitrix\\ImOpenLines\\KpiManager::setExpiredMessagesAgent();';
+		return __METHOD__. '();';
 	}
 }

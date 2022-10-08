@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 
+use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -1309,8 +1310,9 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$fields = [];
 
-		$clientResolverPropertyType = \Bitrix\Crm\Integration\ClientResolver::getPropertyTypeByCountry((int)$this->presetCountryId);
-		$featureRestriction = \Bitrix\Crm\Integration\ClientResolver::getRestriction((int)$this->presetCountryId);
+		$clientResolverPropertyType = ClientResolver::getClientResolverPropertyWithPlacements($this->presetCountryId);
+		$placementParams = ClientResolver::getClientResolverPlacementParams($this->presetCountryId);
+		$featureRestriction = ClientResolver::getRestriction($this->presetCountryId);
 		$fields[] = [
 			'title' => Loc::getMessage('CRM_REQUISITE_DETAILS_AUTOCOMPLETE'),
 			'name' => 'AUTOCOMPLETE',
@@ -1319,9 +1321,12 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 			'enabledMenu' => false,
 			'data' => [
 				'enabled' => !!$clientResolverPropertyType,
-				'featureRestrictionCallback' => $featureRestriction ? $featureRestriction->prepareInfoHelperScript() : '',
-				'placeholder' => $clientResolverPropertyType ? $clientResolverPropertyType['TITLE'] : '',
-				'feedback_form' => \Bitrix\Crm\EntityRequisite::getRequisiteFeedbackFormParams()
+				'featureRestrictionCallback' =>
+					$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
+				,
+				'placeholder' => ClientResolver::getClientResolverPlaceholderText($this->presetCountryId),
+				'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
+				'clientResolverPlacementParams' => $placementParams
 			]
 		];
 

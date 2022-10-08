@@ -59,6 +59,16 @@ class ClientInfo
 	}
 
 	/**
+	 * Gets true if client (contacts or company) exists
+	 *
+	 * @return bool
+	 */
+	public function isClientExists(): bool
+	{
+		return $this->companyId || $this->contactIds;
+	}
+
+	/**
 	 * Create instance by owner values.
 	 *
 	 * For some entities, owner values will also be added automatically.

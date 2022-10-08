@@ -17,6 +17,8 @@ Loc::loadMessages(__FILE__);
 $messages = Loc::loadLanguageFile(__FILE__);
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'admin_interface',
 	'ui.buttons',
 	'ui.icons',
@@ -26,7 +28,6 @@ Extension::load([
 	'ui.switcher',
 	'salescenter.manager',
 	'ui.sidepanel-content',
-	'ui.design-tokens',
 ]);
 ?>
 
@@ -175,6 +176,10 @@ Extension::load([
 			{
 				$description = Loc::getMessage('SALESCENTER_SP_PAYSYSTEM_'.$arResult['PAYSYSTEM_HANDLER_FULL'].'_PUBLIC_DESCRIPTION');
 			}
+
+			$sanitizer = new CBXSanitizer();
+			$sanitizer->SetLevel(\CBXSanitizer::SECURE_LEVEL_LOW);
+			$description = $sanitizer->SanitizeHtml($description);
 			?>
 			<div class="ui-slider-section">
 				<div class="ui-slider-heading-4"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_TITLE')?></div>
@@ -195,7 +200,7 @@ Extension::load([
 							<label for="DESCRIPTION"><?=Loc::getMessage('SALESCENTER_SP_PARAMS_FORM_DESCRIPTION')?></label>
 						</div>
 						<div class="ui-ctl ui-ctl-textarea ui-ctl-no-resize ui-ctl-w100">
-							<textarea name="DESCRIPTION" id="DESCRIPTION" class="ui-ctl-element"><?=htmlspecialcharsbx($description)?></textarea>
+							<textarea name="DESCRIPTION" id="DESCRIPTION" class="ui-ctl-element"><?=$description?></textarea>
 						</div>
 					</div>
 					<div class="salescenter-editor-content-block">

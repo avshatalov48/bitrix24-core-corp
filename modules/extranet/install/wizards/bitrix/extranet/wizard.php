@@ -291,59 +291,6 @@ class SiteSettingsStep extends CWizardStep
 		}
 
 		$siteLogo = $this->GetFileContentImgSrc($siteDocumentRoot.$siteFolder."include/company_name.php", false);
-/*
-		if (!$siteLogo)
-		{
-			$defaultSiteId = CSite::GetDefSite();
-
-			$rsSites = CSite::GetByID($defaultSiteId);
-			if ($arSite = $rsSites->Fetch())
-			{
-				$defaultSiteFolder = $arSite["DIR"];
-				$defaultSiteDocRoot = $arSite["DOC_ROOT"];
-			}
-
-			if (empty($defaultSiteFolder))
-			{
-				$defaultSiteFolder = "/";
-			}
-
-			if (empty($defaultSiteDocRoot))
-			{
-				$defaultSiteDocRoot = $_SERVER['DOCUMENT_ROOT'];
-			}
-
-			$rsDefSiteTemplates = CSite::GetTemplateList($defaultSiteId);
-			while ($arDefSiteTemplates = $rsDefSiteTemplates->Fetch())
-			{
-				if ($arDefSiteTemplates["CONDITION"] == "")
-				{
-					$defaultTemplateId = $arDefSiteTemplates["TEMPLATE"];
-
-					if(strpos($defaultTemplateId, "light") === 0)
-					{
-						$defaultThemeId = COption::GetOptionString("main", "wizard_light_theme_id", false, $defaultSiteId);
-						if ($defaultThemeId)
-						{
-							$siteLogo = $this->GetFileContentImgSrc($defaultSiteDocRoot.$defaultSiteFolder."include/company_name.php",
-								"/bitrix/wizards/bitrix/portal/images/templates/light/themes/".$defaultThemeId."/images/".LANGUAGE_ID."/logo.jpg"
-							);
-						}
-					}
-					elseif ($defaultTemplateId == "bitrix24")
-					{
-						$siteLogo = $this->GetFileContentImgSrc($defaultSiteDocRoot.$defaultSiteFolder."include/company_name.php", false);
-					}
-					else
-					{
-						$siteLogo = COption::GetOptionString("main", "wizard_site_logo", false, $defaultSiteId);
-					}
-
-					break;
-				}
-			}
-		}
-*/
 
 		$wizard->SetDefaultVars(
 			Array(
@@ -478,48 +425,7 @@ class SiteSettingsStep extends CWizardStep
 
 			$this->content .= '<tr><td>&nbsp;</td></tr>';
 		}
-/*
-		elseif (
-			strpos($templateID, "light") === 0
-			|| $templateID == "bitrix24"
-		)
-		{
-			$siteLogo = $wizard->GetVar("siteLogo", true);
 
-			$this->content .= '<tr><td>';
-
-			$this->content .= <<<JS
-				<script type="text/javascript">
-						function OnSiteLogoClick(checked)
-						{
-								var siteLogoImage = document.getElementById("site-logo-image");
-								var siteLogoUpload = document.getElementById("site-logo-upload");
-
-								siteLogoUpload.disabled = !checked;
-
-								if (siteLogoImage)
-									siteLogoImage.className = checked ? "" : "disabled";
-						}
-				</script>
-JS;
-
-			$this->content .= $this->ShowCheckboxField("useSiteLogo", "Y", Array("id" => "use-site-logo", "onclick" => "OnSiteLogoClick(this.checked)"));
-			$this->content .= ' <label for="use-site-logo">'.GetMessage("wiz_company_logo").'</label>';
-
-			$this->content .= (
-				$siteLogo
-					? "<div style='margin: 5px 0 5px 0;'>".CFile::ShowImage($siteLogo, 0, 0, "border=0 id=\"site-logo-image\"".($wizard->GetVar("useSiteLogo", true) != "Y" ? " class=\"disabled\"" : ""), "", true)."</div>"
-					: "<br />"
-			);
-
-			$arParams = Array("id" => "site-name", "style" => "width:90%", "id" => "site-logo-upload", "show_file_info" => "N");
-			if ($wizard->GetVar("useSiteLogo", true) != "Y")
-				$arParams["disabled"] = "disabled";
-
-			$this->content .= $this->ShowFileField("siteLogo", $arParams);
-			$this->content .= '</td></tr>';
-		}
-*/
 		define("WIZARD_IS_RERUN", COption::GetOptionString("extranet", "extranet_site") <> '');
 		
 		if(WIZARD_IS_RERUN !== true)
@@ -871,4 +777,3 @@ class FinishStep extends CWizardStep
 		$this->content .= GetMessage("FINISH_STEP_CONTENT");
 	}
 }
-?>

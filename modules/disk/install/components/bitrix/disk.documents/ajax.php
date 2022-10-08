@@ -8,6 +8,8 @@ use Bitrix\Disk\Integration\Bitrix24Manager;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
+Main\Loader::requireModule('disk');
+
 final class DiskDocumentsController extends Disk\Internals\Engine\Controller
 {
 	public function getMenuActionsAction(Disk\Document\TrackedObject $trackedObject)

@@ -22,14 +22,19 @@ use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Conversion\LeadConverter;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Order\Builder\SettingsContainer;
+use Bitrix\Crm\Order\PersonType;
 use Bitrix\Crm\RequisiteAddress;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Sale\Delivery;
 use Bitrix\ImOpenLines;
+use Bitrix\Sale\Helpers\Order\Builder\Converter\CatalogJSProductForm;
 use Bitrix\Sale\PaySystem\PaymentAvailablesPaySystems;
-use Bitrix\SalesCenter\Builder\Converter;
+use Bitrix\Sale\Tax\VatCalculator;
+use Bitrix\SalesCenter\Component\VatRate;
 use CCrmLead;
 use CCrmOwnerType;
+use CCrmSecurityHelper;
 
 Loc::loadMessages(__FILE__);
 
@@ -186,7 +191,7 @@ class Order extends Base
 		;
 		$formData = $this->obtainOrderFields($params);
 
-		$formData['PRODUCT'] = Converter\CatalogJSProductForm::convertToBuilderFormat($basketItems);
+		$formData['PRODUCT'] = CatalogJSProductForm::convertToBuilderFormat($basketItems);
 
 		$formData['PROPERTIES'] = $this->obtainPropertiesFields($propertyValues);
 
@@ -195,7 +200,7 @@ class Order extends Base
 			$formData['SHIPMENT'][] = $this->obtainShipmentFields($params, $formData['PRODUCT']);
 		}
 
-		if ($scenario !== Salescenter\Builder\SettingsContainer::BUILDER_SCENARIO_SHIPMENT)
+		if ($scenario !== SettingsContainer::BUILDER_SCENARIO_SHIPMENT)
 		{
 			$formData['PAYMENT'][] = $this->obtainPaymentFields($formData);
 		}
@@ -203,6 +208,25 @@ class Order extends Base
 		if (!empty($params['currency']))
 		{
 			$formData['CURRENCY'] = $params['currency'];
+		}
+
+		if (empty($formData['SITE_ID']))
+		{
+			$formData['SITE_ID'] = SITE_ID;
+		}
+
+		if (!empty($formData['CLIENT']['COMPANY_ID']))
+		{
+			$formData['PERSON_TYPE_ID'] = PersonType::getCompanyPersonTypeId();
+		}
+		else
+		{
+			$formData['PERSON_TYPE_ID'] = PersonType::getContactPersonTypeId();
+		}
+
+		if (!isset($formData['RESPONSIBLE_ID']))
+		{
+			$formData['RESPONSIBLE_ID'] = CCrmSecurityHelper::GetCurrentUserID();
 		}
 
 		return $formData;
@@ -611,13 +635,13 @@ class Order extends Base
 
 		return $result;
 	}
-	
+
 	/**
 	 * Move lead to finish status, and linked with deal
-	 * 
+	 *
 	 * @param int $leadId
 	 * @param int $dealId
-	 * 
+	 *
 	 * @return void
 	 */
 	private function convertionLeadWithExistDeal(int $leadId, int $dealId): void
@@ -638,7 +662,7 @@ class Order extends Base
 		$contextData = [
 			CCrmOwnerType::DealName => $dealId,
 		];
-		
+
 		// load deal relations
 		$dealIdentifier = new ItemIdentifier(CCrmOwnerType::Deal, $dealId);
 		$dealRelations = Container::getInstance()->getRelationManager()->getParentRelations($dealIdentifier->getEntityTypeId());
@@ -648,7 +672,7 @@ class Order extends Base
 			{
 				continue;
 			}
-			
+
 			$parentIds = $relation->getParentElements($dealIdentifier);
 			foreach ($parentIds as $parentId)
 			{
@@ -705,6 +729,7 @@ class Order extends Base
 		$crmInfo = ImOpenLinesManager::getInstance()->setSessionId($options['sessionId'])->getCrmInfo();
 		$dialogLeadId = $crmInfo ? (int)$crmInfo['LEAD'] : null;
 
+		$basketItems = VatRate::prepareTaxPrices($basketItems);
 		$basketItems = $this->processBasketItems($basketItems);
 
 		$options['basketItems'] = $basketItems;
@@ -734,7 +759,7 @@ class Order extends Base
 					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_CANT_BUILD_ORDER'))
 				);
 			}
-			
+
 			return [];
 		}
 
@@ -793,7 +818,7 @@ class Order extends Base
 				{
 					$this->convertionLeadWithExistDeal($dialogLeadId, $entityId);
 				}
-				
+
 				if (!empty($options['sessionId']) && (int)$options['ownerId'] <= 0)
 				{
 					$this->onAfterDealAdd($entityId, $options['sessionId']);
@@ -852,9 +877,9 @@ class Order extends Base
 					$r = new Main\Result();
 
 					$binding = $order->getEntityBinding();
-					if ($binding->getOwnerTypeId() === \CCrmOwnerType::Deal)
+					if ($binding && $binding->getOwnerTypeId() === \CCrmOwnerType::Deal)
 					{
-						$dealId = $order->getEntityBinding()->getOwnerId();
+						$dealId = $binding->getOwnerId();
 
 						if ($dealId && (int)$options['ownerId'] <= 0)
 						{
@@ -980,6 +1005,7 @@ class Order extends Base
 			return [];
 		}
 
+		$basketItems = VatRate::prepareTaxPrices($basketItems);
 		$basketItems = $this->processBasketItems($basketItems);
 
 		$options['basketItems'] = $basketItems;
@@ -1011,7 +1037,7 @@ class Order extends Base
 					new Error(Loc::getMessage('SALESCENTER_CONTROLLER_ORDER_CANT_BUILD_ORDER'))
 				);
 			}
-			
+
 			return [];
 		}
 
@@ -1032,14 +1058,17 @@ class Order extends Base
 			{
 				$binding = $order->getEntityBinding();
 
-				$dealPrimaryContactId = $this->getDealPrimaryContactId($binding->getOwnerId());
-				if ($dealPrimaryContactId)
+				if ($binding)
 				{
-					$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
-				}
+					$dealPrimaryContactId = $this->getDealPrimaryContactId($binding->getOwnerId());
+					if ($dealPrimaryContactId)
+					{
+						$this->tryToFillContactDeliveryAddress($dealPrimaryContactId, $shipment->getId());
+					}
 
-				$productManager = new Crm\Order\ProductManager($binding->getOwnerTypeId(), $binding->getOwnerId());
-				$productManager->setOrder($order)->syncOrderProducts($basketItems);
+					$productManager = new Crm\Order\ProductManager($binding->getOwnerTypeId(), $binding->getOwnerId());
+					$productManager->setOrder($order)->syncOrderProducts($basketItems);
+				}
 
 				$this->saveDeliveryAddressFrom($shipment->getId());
 			}
@@ -1193,7 +1222,8 @@ class Order extends Base
 		{
 			foreach ($data['PRODUCT'] as $index => $item)
 			{
-				$sum += Sale\PriceMaths::roundPrecision($item['QUANTITY'] * $item['PRICE']);
+				$price = VatRate::getPriceWithTax($item);
+				$sum += Sale\PriceMaths::roundPrecision($item['QUANTITY'] * $price);
 
 				$result['PRODUCT'][] = [
 					'BASKET_CODE' => $index,
@@ -2297,114 +2327,51 @@ HTML;
 
 	private function onAfterDealAdd(int $dealId, int $sessionId): void
 	{
-		$sessionInfo = ImOpenLinesManager::getInstance()->setSessionId($sessionId)->getSessionInfo();
-		if ($sessionInfo)
+		ImOpenLinesManager::getInstance()->updateDealAfterCreation($dealId, $sessionId);
+	}
+
+	/**
+	 * @param int $id
+	 * @return array[]|false
+	 */
+	public function getPublicUrlAction($id)
+	{
+		if (!is_scalar($id))
 		{
-			$session = new ImOpenLines\Session();
-			$sessionStart = $session->load([
-				'USER_CODE' => $sessionInfo['USER_CODE'],
-				'SKIP_CREATE' => 'Y',
-			]);
-			if ($sessionStart)
+			$this->addError(new Error('Parameter id must be integer'));
+			return false;
+		}
+
+		$id = (int)$id;
+		$order = Crm\Order\Order::load($id);
+		if (!$order)
+		{
+			$this->addError(new Error('Entity is not exist'));
+			return false;
+		}
+
+		if (LandingManager::getInstance()->isOrderPublicUrlAvailable())
+		{
+
+			$urlInfo = LandingManager::getInstance()->getUrlInfoByOrder($order);
+
+			if (is_array($urlInfo) === false)
 			{
-				$dealContactData = Crm\Binding\DealContactTable::getList([
-					'select' => ['CONTACT_ID'],
-					'filter' => [
-						'=DEAL_ID' => $dealId,
-						'=IS_PRIMARY' => 'Y',
-						'!=CONTACT_ID' => 0,
-					],
-				])->fetch();
-				if ($dealContactData)
-				{
-					$contactId = $dealContactData['CONTACT_ID'];
-				}
-
-				$updateSession = [
-					'CRM_CREATE_DEAL' => 'Y',
-				];
-
-				$updateChat = [
-					'DEAL' => $dealId,
-					'ENTITY_ID' => $dealId,
-					'ENTITY_TYPE' => 'DEAL',
-					'CRM' => 'Y',
-				];
-
-				$crmManager = new ImOpenLines\Crm($session);
-				$selector = $crmManager->getEntityManageFacility()->getSelector();
-				$registeredEntities = $crmManager->getEntityManageFacility()->getRegisteredEntities();
-
-				if ($selector)
-				{
-					$entity = new Crm\Entity\Identificator\Complex(\CCrmOwnerType::Deal, $dealId);
-					$selector->setEntity($entity->getTypeId(), $entity->getId());
-					$registeredEntities->setComplex($entity, true);
-				}
-
-				if (isset($contactId))
-				{
-					$updateSession['CRM_CREATE_CONTACT'] = 'Y';
-					$updateChat['CONTACT'] = $contactId;
-
-					if ($selector)
-					{
-						$entity = new Crm\Entity\Identificator\Complex(\CCrmOwnerType::Contact, $contactId);
-						$selector->setEntity($entity->getTypeId(), $entity->getId());
-						$registeredEntities->setComplex($entity, true);
-					}
-				}
-
-				$registerActivityResult = $crmManager->registerActivity();
-				if ($registerActivityResult->isSuccess())
-				{
-					$updateSession['CRM_ACTIVITY_ID'] = $registerActivityResult->getResult();
-					$session->updateCrmFlags($updateSession);
-					$chat = $session->getChat();
-					if ($chat)
-					{
-						$chat->setCrmFlag($updateChat);
-					}
-
-					$trace = $crmManager->getEntityManageFacility()->getTrace();
-					if ($trace && !$trace->getId())
-					{
-						$traceId = $trace->save();
-						if ($traceId)
-						{
-							Crm\Tracking\Trace::appendEntity($traceId, \CCrmOwnerType::Deal, $dealId);
-						}
-					}
-
-					$crmManager->updateUserConnector();
-				}
-
-
-				$dealFields = [];
-				if (isset($contactId))
-				{
-					$contactData = Crm\Entity\Contact::getByID($contactId);
-					if (!empty($contactData['LAST_NAME']))
-					{
-						$dealFields = [
-							'TITLE' => $contactData['LAST_NAME'] . ' - ' . $session->getConfig('LINE_NAME')
-						];
-					}
-				}
-
-				if (!$dealFields && $session->getChat())
-				{
-					$dealFields = [
-						'TITLE' => $session->getChat()->getData('TITLE')
-					];
-				}
-
-				if ($dealFields)
-				{
-					$deal = new \CCrmDeal(false);
-					$deal->Update($dealId, $dealFields);
-				}
+				$this->addError(new Error('Error retrieving url info'));
+				return false;
 			}
 		}
+		else
+		{
+			$this->addError(new Error('Public url is not available'));
+			return false;
+		}
+
+		return [
+			'order' => [
+				'url' => $urlInfo['url'],
+				'shortUrl' => $urlInfo['shortUrl'],
+			]
+		];
 	}
 }

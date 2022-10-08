@@ -11,6 +11,8 @@ import {Tag, Text} from 'main.core';
 import {Loc} from 'main.core';
 import 'currency';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import './css/deliveryselector.css';
 
 export default {
@@ -557,6 +559,10 @@ export default {
 				Vue.set(this.relatedServices, i, relatedService);
 			}
 		},
+		isSelectorDisabled()
+		{
+			return this.$store.getters['orderCreation/isCompilationMode'];
+		},
 	},
 	created()
 	{
@@ -876,7 +882,7 @@ export default {
 		},
 	},
 	template: `
-		<div class="salescenter-delivery">
+		<div class="salescenter-delivery" :class="{'salescenter-delivery--disabled': isSelectorDisabled()}">
 			<div class="salescenter-delivery-header">
 				<div class="salescenter-delivery-car-title--sm">{{localize.SALE_DELIVERY_SERVICE_SELECTOR_DELIVERY_METHOD}}</div>
 				<div class="salescenter-delivery-method" ref="delivery-methods">

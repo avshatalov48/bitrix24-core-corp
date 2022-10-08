@@ -32,6 +32,7 @@ Extension::load([
 	'salescenter.manager',
 	'salescenter.app',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 ?>
 

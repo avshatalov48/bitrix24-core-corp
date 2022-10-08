@@ -1,4 +1,8 @@
+import {Type, Dom} from 'main.core';
 import Manager from "./manager";
+import {Item, ConfigurableItem, StreamType} from 'crm.timeline.item';
+import ItemAnimation from "./animations/item";
+import ItemNew from "./animations/item-new";
 
 /** @memberof BX.Crm.Timeline */
 export default class Steam
@@ -19,6 +23,8 @@ export default class Steam
 		this._isStubMode = false;
 		this._userId = 0;
 		this._readOnly = false;
+		this._streamType = StreamType.history;
+		this._anchor = null;
 
 		this._serviceUrl = "";
 	}
@@ -62,6 +68,21 @@ export default class Steam
 		return this._id;
 	}
 
+	isScheduleStream(): boolean
+	{
+		return this.getStreamType() === StreamType.scheduled;
+	}
+
+	isFixedHistoryStream(): boolean
+	{
+		return this.getStreamType() === StreamType.pinned;
+	}
+
+	isHistoryStream(): boolean
+	{
+		return this.getStreamType() === StreamType.history;
+	}
+
 	getSetting(name, defaultval)
 	{
 		return this._settings.hasOwnProperty(name) ? this._settings[name] : defaultval;
@@ -93,6 +114,15 @@ export default class Steam
 	getServiceUrl()
 	{
 		return this._serviceUrl;
+	}
+
+	getAnchor(): ?HTMLElement
+	{
+		return this._anchor;
+	}
+
+	getStreamType() {
+		return this._streamType;
 	}
 
 	refreshLayout()
@@ -149,11 +179,13 @@ export default class Steam
 		return this._serverTimezoneOffset;
 	}
 
+	// @todo replace by DatetimeConverter
 	formatTime(time, now, utc)
 	{
 		return BX.date.format(this._timeFormat, time, now, utc);
 	}
 
+	// @todo replace by DatetimeConverter
 	formatDate(date)
 	{
 		return (
@@ -169,7 +201,7 @@ export default class Steam
 		);
 	}
 
-	cutOffText(text, length)
+	cutOffText(text, length): string
 	{
 		if (!BX.type.isNumber(length))
 		{
@@ -188,5 +220,221 @@ export default class Steam
 			offset += whitespaceOffset;
 		}
 		return text.substring(0, offset) + "...";
+	}
+
+	getItems(): Array
+	{
+		return [];
+	}
+
+	/**
+	 * @abstract
+	 */
+	setItems(items: Array): void
+	{
+		throw new Error('Stream.setItems() must be overridden');
+	}
+
+	getLastItem(): ?Item
+	{
+		const items = this.getItems();
+
+		return items.length > 0 ? items[items.length - 1] : null;
+	}
+
+	findItemById(id): ?Item
+	{
+		id = id.toString();
+
+		return this.getItems().find(item => item.getId() === id) || null;
+	}
+
+	getItemIndex(item: Item): number
+	{
+		return this.getItems().findIndex((currentItem) => (currentItem === item));
+	}
+
+	removeItemByIndex(index): void
+	{
+		const items = this.getItems();
+		if (index < items.length)
+		{
+			items.splice(index, 1);
+			this.setItems(items);
+		}
+	}
+
+	/**
+	 * @abstract
+	 */
+	createItem(data): Item
+	{
+		throw new Error('Stream.createItem() must be overridden');
+	}
+
+	createItemCopy(item: Item): Item
+	{
+		if (item instanceof ConfigurableItem)
+		{
+			return item.clone();
+		}
+
+		return this.createItem(item.getData());
+	}
+
+	refreshItem(item: Item, animated: boolean = true): Promise
+	{
+		const index = this.getItemIndex(item);
+		if(index < 0)
+		{
+			return Promise.resolve();
+		}
+
+		this.removeItemByIndex(index);
+
+		let itemPositionChanged = false;
+		let newIndex = 0;
+		let newItem;
+		if (this.isScheduleStream())
+		{
+			newItem = this.createItemCopy(item);
+			newIndex = this.calculateItemIndex(newItem);
+
+			itemPositionChanged = newIndex !== index;
+		}
+
+		if(!itemPositionChanged)
+		{
+			this.addItem(item, newIndex);
+			item.refreshLayout();
+			if (animated)
+			{
+				return this.animateItemAdding(item);
+			}
+
+			return Promise.resolve();
+		}
+
+		const anchor = this.createAnchor(newIndex);
+		this.addItem(newItem, newIndex);
+		if (animated)
+		{
+			newItem.layout({add: false});
+
+			return new Promise((resolve) => {
+				const animation = ItemAnimation.create(
+					'',
+					{
+						initialItem: item,
+						finalItem: newItem,
+						anchor: anchor,
+						events: {
+							complete: () => {
+								item.destroy();
+								resolve();
+							}
+						}
+					}
+				);
+				animation.run();
+			});
+		}
+		else
+		{
+			newItem.layout({anchor: anchor});
+
+			return Promise.resolve();
+		}
+	}
+
+	calculateItemIndex(item: Item): Number
+	{
+		return 0;
+	}
+
+	createAnchor(index): HTMLElement
+	{
+		return null;
+	}
+
+	/**
+	 * @abstract
+	 */
+	addItem(item: Item, index): void
+	{
+		throw new Error('Stream.addItem() must be overridden');
+	}
+
+	/**
+	 * @abstract
+	 */
+	deleteItem(item: Item): void
+	{
+		throw new Error('Stream.deleteItem() must be overridden');
+	}
+
+	deleteItemAnimated(item: Item): void
+	{
+		if (!Type.isDomNode(item.getWrapper()))
+		{
+			this.deleteItem(item);
+
+			return Promise.resolve();
+		}
+
+		return new Promise((resolve) => {
+			const wrapperPosition = Dom.getPosition(item.getWrapper());
+
+			const hideEvent = new BX.easing({
+				duration: 1000,
+				start: {height: wrapperPosition.height, opacity: 1, marginBottom: 15},
+				finish: {height: 0, opacity: 0, marginBottom: 0},
+				transition: BX.easing.makeEaseOut(BX.easing.transitions.quart),
+				step: (state) => {
+					Dom.style(item.getWrapper(), {
+						height:  state.height + 'px',
+						opacity:  state.opacity,
+						marginBottom:  state.marginBottom,
+					});
+				},
+				complete: () => {
+					this.deleteItem(item)
+					resolve();
+				}
+			});
+
+			hideEvent.animate();
+		});
+	}
+
+	moveItemToStream(item: Item, destinationStream: Steam, destinationItem: Item): void
+	{
+		this.removeItemByIndex(this.getItemIndex(item));
+		if (this.getItems().length > 0)
+		{
+			this.refreshLayout();
+		}
+
+		return new Promise((resolve) => {
+			const animation = ItemNew.create(
+				'',
+				{
+					initialItem: item,
+					finalItem: destinationItem,
+					anchor: destinationStream.createAnchor(),
+					events: {complete: () => {
+							this.refreshLayout();
+							destinationStream.refreshLayout();
+							resolve();
+						}}
+				}
+			);
+			animation.run();
+		});
+	}
+
+	animateItemAdding(item): Promise
+	{
+		return Promise.resolve();
 	}
 }

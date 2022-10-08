@@ -102,13 +102,20 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 		{
 			const recentUserList = ChatUtils.objectClone(MessengerStore.getters['recentModel/getUserList']);
 			const recentUserListIndex = {};
+			const recentUserListRemoveIndex = {};
 
 			const userItems = [];
 			if (Type.isArrayFilled(recentUserList))
 			{
 				recentUserList.forEach(recentUserChat => {
-					if (recentUserChat.user.id === MessengerParams.getUserId() || recentUserChat.user.bot)
+					if (
+						recentUserChat.user.id === MessengerParams.getUserId()
+						|| recentUserChat.user.bot
+						|| recentUserChat.invited
+					)
 					{
+						recentUserListRemoveIndex[recentUserChat.user.id] = true;
+
 						return;
 					}
 
@@ -122,7 +129,12 @@ jn.define('im/messenger/controller/dialog-selector', (require, exports, module) 
 			if (Type.isArrayFilled(colleaguesList))
 			{
 				colleaguesList.forEach((user) => {
-					if (recentUserListIndex[user.id] || user.id === MessengerParams.getUserId() || user.bot)
+					if (
+						recentUserListIndex[user.id]
+						|| user.id === MessengerParams.getUserId()
+						|| user.bot
+						|| recentUserListRemoveIndex[user.id]
+					)
 					{
 						return;
 					}

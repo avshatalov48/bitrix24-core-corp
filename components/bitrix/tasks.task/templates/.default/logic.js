@@ -1250,7 +1250,7 @@ BX.namespace('Tasks.Component');
 				var items = [];
 
 				titles.forEach(function(title) {
-					title = title.trim();
+					title = title.trim().substring(0, 255).trim();
 					if (title.length > 0)
 					{
 						var newCheckListItem = new BX.Tasks.CheckListItem({TITLE: title});

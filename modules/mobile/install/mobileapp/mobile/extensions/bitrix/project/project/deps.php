@@ -6,7 +6,7 @@ return [
 		'project/utils',
 	],
 	'components' => [
-		'tasks.list',
+		'tasks:tasks.list',
 		'user.disk',
 	],
 ];

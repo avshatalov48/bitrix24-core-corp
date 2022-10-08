@@ -195,8 +195,11 @@ $MESS['IMOL_CONFIG_EDIT_CRM_FORWARD_TIP'] = 'Обращение поступит
 $MESS['IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE'] = 'Автоматически менять ответственного за лид при ручном перенаправлении обращения на другого оператора';
 $MESS['IMOL_CONFIG_EDIT_CRM_TRANSFER_CHANGE_DEAL'] = 'Автоматически менять ответственного за сделку при ручном перенаправлении обращения на другого оператора';
 $MESS['IMOL_CONFIG_EDIT_WORKTIME_DAYOFF_TIP'] = 'Чтобы выделить несколько выходных дней, удерживайте клавишу <b>CTRL</b> в Windows или <b>CMD</b> в macOS.';
-$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW'] = 'Отправить автоматический ответ на первое сообщение клиента';
-$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TIP'] = 'Автоматический ответ будет отправлен сразу после первого обращения клиента в Открытую линию';
+$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE'] = 'Отправлять автоматически ответ на сообщение клиента';
+$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_N_EACH_SESSION_NEW'] = 'Только один раз – при первом обращении в компанию';
+$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_N_EACH_SESSION_TIP'] = 'Автоответ будет отправлен один раз, когда клиент впервые обратится в компанию с нового канала. Все последующие новые диалоги с ним будут без автоматического приветствия';
+$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_Y_EACH_SESSION'] = 'На каждое первое сообщение в новом диалоге';
+$MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_Y_EACH_SESSION_TIP'] = 'В этом случае каждый раз, когда клиент будет открывать новый диалог с компанией, он будет получать автоматическое приветствие';
 $MESS['IMOL_CONFIG_EDIT_WELCOME_MESSAGE_NEW_TEXT'] = 'Текст автоматического ответа';
 
 $MESS['IMOL_CONFIG_EDIT_AUTOMATIC_MESSAGE_ENABLE'] = 'Включить автоматическое сообщение при бездействии пользователя';

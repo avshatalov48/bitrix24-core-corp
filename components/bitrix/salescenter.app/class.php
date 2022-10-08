@@ -1,6 +1,9 @@
 <?php
 
+use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade;
+use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Crm\Activity\Provider\Sms;
+use Bitrix\Main\ObjectNotFoundException;
 use Bitrix\MessageService;
 use Bitrix\Main;
 use Bitrix\Crm;
@@ -8,6 +11,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\SalesCenter\Driver;
+use Bitrix\SalesCenter\Integration\CatalogManager;
 use Bitrix\SalesCenter\Integration\ImOpenLinesManager;
 use Bitrix\SalesCenter\Integration\LandingManager;
 use Bitrix\SalesCenter\Integration\PullManager;
@@ -30,7 +34,10 @@ use Bitrix\SalesCenter;
 use Bitrix\SalesCenter\Integration\LocationManager;
 use Bitrix\Catalog\v2\Integration\JS\ProductForm;
 use Bitrix\Catalog;
+use Bitrix\Catalog\v2\Integration\JS\ProductForm\BasketItem;
+use Bitrix\Catalog\VatTable;
 use Bitrix\Sale\PaySystem\ClientType;
+use Bitrix\Sale\Tax\VatCalculator;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
@@ -165,7 +172,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$arParams['ownerTypeId'] = CCrmOwnerType::Deal;
 		}
 
-		//@TODO backward compatibility
+		if (!$arParams['compilationId'])
+		{
+			$arParams['compilationId'] = $this->request->get('compilationId');
+		}
 
 		return parent::onPrepareComponentParams($arParams);
 	}
@@ -369,6 +379,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['isFrame'] = Application::getInstance()->getContext()->getRequest()->get('IFRAME') === 'Y';
 		$this->arResult['isCatalogAvailable'] = (\Bitrix\Main\Config\Option::get('salescenter', 'is_catalog_enabled', 'N') === 'Y');
 		$this->arResult['dialogId'] = $this->arParams['dialogId'];
+		$this->arResult['compilation'] = $this->getCompilation();
 		$this->arResult['sessionId'] = $this->arParams['sessionId'];
 		$this->arResult['context'] = $this->getContextFromParams($this->arParams);
 		$this->arResult['orderAddPullTag'] = PullManager::getInstance()->subscribeOnOrderAdd();
@@ -388,7 +399,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['vatList'] = $this->getProductVatList();
 		$this->arResult['catalogIblockId'] = \CCrmCatalog::GetDefaultID();
 		$this->arResult['basePriceId'] = \CCatalogGroup::GetBaseGroup()['ID'];
-		$this->arResult['showCompilationModeSwitcher'] = \Bitrix\Main\Config\Option::get('catalog', 'product_form_enable_compilation', 'N');
+		$notificationCenterEnabled = $this->arResult['currentSenderCode'] === \Bitrix\Crm\Integration\NotificationsManager::getSenderCode();
+		$this->arResult['showCompilationModeSwitcher'] = !$notificationCenterEnabled && !$this->arResult['compilation'] ? 'Y' : 'N';
 		$this->arResult['showProductDiscounts'] = \CUserOptions::GetOption('catalog.product-form', 'showDiscountBlock', 'Y');
 		$this->arResult['showProductTaxes'] = \CUserOptions::GetOption('catalog.product-form', 'showTaxBlock', 'Y');
 		$collapseOptions = $this->getCollapseOptions();
@@ -518,6 +530,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				!\CCrmSaleHelper::isWithOrdersMode()
 				|| $this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE
 				|| count($this->getOrderIdListByEntityId($ownerId, $ownerTypeId)) === 0
+				|| !empty($this->arResult['compilation'])
 			)
 			&&
 			!(
@@ -598,6 +611,52 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['isWithOrdersMode'] = \CCrmSaleHelper::isWithOrdersMode();
 
 		$this->arResult['documentSelector'] = $this->getDocumentSelectorParameters();
+
+		$this->arResult['isAllowedFacebookRegion'] = $this->getFacebookFacade()->isExportAvailable();
+
+		$this->arResult['facebookSettingsPath'] = $this->getFacebookSettingsPath();
+	}
+
+	private function getCompilation(): ?array
+	{
+		if ($this->arParams['compilationId'])
+		{
+			$compilation = CatalogManager::getInstance()->getCompilationById($this->arParams['compilationId']);
+			$exportedProducts = $this->getFacebookFacade()->getExportedProducts($compilation['PRODUCT_IDS']);
+			$failProducts = [];
+			foreach ($exportedProducts as $exportedProduct)
+			{
+				if (!empty($exportedProduct['ERROR']))
+				{
+					$failProducts[$exportedProduct['ID']] = $exportedProduct['ERROR'];
+				}
+			}
+			$compilation['FAIL_PRODUCTS'] = $failProducts;
+			$date = $compilation['CREATION_DATE'];
+			$culture = \Bitrix\Main\Context::getCurrent()->getCulture();
+			$shortDateFormat = $culture->getShortDateFormat();
+			$formattedDate = $date->format($shortDateFormat);
+			$compilation['TITLE'] = Loc::getMessage(
+				'SALESCENTER_APP_FACEBOOK_COMPILATION_TITLE',
+				[
+					'#COMPILAITON_DATE#' => $formattedDate,
+				]
+			);
+			$compilation['TITLE_TAB'] = Loc::getMessage(
+				'SALESCENTER_APP_FACEBOOK_COMPILATION_TITLE_TAB',
+				[
+					'#COMPILAITON_DATE#' => $formattedDate,
+				]
+			);
+			if (!$compilation['FAIL_PRODUCTS'])
+			{
+				$this->arResult['templateMode'] = 'view';
+			}
+
+			return $compilation;
+		}
+
+		return null;
 	}
 
 	/**
@@ -605,6 +664,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function makeTitle(): string
 	{
+		if (!empty($this->arResult['compilation']))
+		{
+			return $this->arResult['compilation']['TITLE'];
+		}
+
 		if ($this->arParams['context'] === SalesCenter\Component\ContextDictionary::DEAL)
 		{
 			if ($this->arResult['templateMode'] === self::TEMPLATE_VIEW_MODE)
@@ -812,6 +876,8 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				->setMeasureName($product['MEASURE_NAME'])
 			;
 
+			$this->fillVat($item, $product);
+
 			if ($product['DISCOUNT_PRICE'] > 0)
 			{
 				$discountRate = $product['DISCOUNT_PRICE'] / $product['BASE_PRICE'] * 100;
@@ -833,6 +899,11 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	private function getBasket(): array
 	{
+		if ($this->arParams['compilationId'])
+		{
+			return $this->getCompilationProducts();
+		}
+
 		if ($this->arParams['templateMode'] === self::TEMPLATE_VIEW_MODE) {
 			return $this->getOrderProducts();
 		}
@@ -842,6 +913,27 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		}
 
 		return [];
+	}
+
+	private function getCompilationProducts(): array
+	{
+		$productIds = $this->arResult['compilation']['PRODUCT_IDS'];
+		$formBuilder = new ProductForm\BasketBuilder();
+
+		foreach ($productIds as $productId)
+		{
+			$item = $formBuilder->loadItemBySkuId($productId);
+
+			if ($item === null)
+			{
+				$item = $formBuilder->createItem();
+			}
+
+			$formBuilder->setItem($item);
+			$item->setSort($formBuilder->count() * 100);
+		}
+
+		return $formBuilder->getFormattedItems();
 	}
 
 	private function getShipmentData(int $contactId, int $personTypeId)
@@ -1164,6 +1256,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				->setMeasureName($product['MEASURE_NAME'])
 			;
 
+			$this->fillVat($item, $product);
+
+			if (isset($product['XML_ID']))
+			{
+				$item->setId($product['XML_ID']);
+			}
+
 			$formBuilder->setItem($item);
 			$item->setSort($formBuilder->count() * 100);
 		}
@@ -1172,12 +1271,62 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	}
 
 	/**
+	 * Fill basket item vat's info by input fields.
+	 *
+	 * @param BasketItem $basketItem
+	 * @param array $basketItemFields
+	 *
+	 * @return void
+	 */
+	private function fillVat(BasketItem $basketItem, array $basketItemFields): void
+	{
+		$vatRate = null;
+		if (array_key_exists('VAT_RATE', $basketItemFields))
+		{
+			$vatRate =
+				(string)$basketItemFields['VAT_RATE'] !== ''
+					? (float)$basketItemFields['VAT_RATE']
+					: null
+			;
+
+			if (Main\Loader::includeModule('catalog'))
+			{
+				$vatId =
+					isset($vatRate)
+						? VatTable::getActiveVatIdByRate($vatRate * 100)
+						: VatTable::getExcludeVatId()
+				;
+				if (isset($vatId))
+				{
+					$basketItem->setTaxId($vatId);
+				}
+			}
+		}
+
+		$vatIncluded = $basketItemFields['VAT_INCLUDED'] ?? 'Y';
+		$basketItem->setTaxIncluded($vatIncluded);
+
+		if ($vatIncluded === 'N' && $vatRate > 0)
+		{
+			$price = (float)$basketItemFields['PRICE'];
+
+			$vatCalculator = new VatCalculator($vatRate);
+			$priceWithVat = $vatCalculator->accrue($price);
+
+			$basketItem
+				->setPrice($priceWithVat)
+				->setPriceExclusive($priceWithVat)
+			;
+		}
+	}
+
+	/**
 	 * @return array
 	 */
 	private function getPaySystemList(): array
 	{
 		$result = [];
-		
+
 		$result['groups'] = [
 			[
 				'id' => ClientType::B2C,
@@ -2182,6 +2331,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				'provider' => in_array($provider, $availableProviders) ? $provider : $defaultProvider,
 				'text' => $lastPaymentSms ?? CrmManager::getInstance()->getSmsTemplate(),
 				'sent' => $lastPaymentSms ? true : false,
+				'text_modes' => CrmManager::getInstance()->getAllSmsTemplates(),
 			];
 		}
 
@@ -2189,6 +2339,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		{
 			return [
 				'text' => ImOpenLinesManager::getInstance()->getImMessagePreview(),
+				'text_modes' => ImOpenLinesManager::getInstance()->getAllImMessagePreviews(),
 			];
 		}
 	}
@@ -2403,6 +2554,66 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			: 'N';
 	}
 
+	private function getFacebookSettingsPath(): ?string
+	{
+		if (!$this->arResult['isAllowedFacebookRegion'])
+		{
+			return null;
+		}
+
+		if ($this->arParams['dialogId'] && Main\Loader::includeModule('im'))
+		{
+			$chatId = \Bitrix\Im\Dialog::getChatId($this->arParams['dialogId']);
+			$chat = \Bitrix\Im\Chat::getById($chatId);
+			[$connector, $line] = explode('|', $chat['ENTITY_ID']);
+
+			if ($connector !== 'facebook' || $this->hasCatalogExportAuth())
+			{
+				return null;
+			}
+
+			return
+				Main\Loader::includeModule('bitrix24')
+					? "/contact_center/connector?ID=facebook&LINE={$line}&action-line=create&MENU_TAB=catalog"
+					: "/services/contact_center/connector?ID=facebook&LINE={$line}&action-line=create&MENU_TAB=catalog"
+			;
+		}
+
+		return null;
+	}
+
+	private function getFacebookFacade(): ?FacebookFacade
+	{
+		static $facade = null;
+
+		if ($facade === null)
+		{
+			if (Main\Loader::includeModule('catalog') && Main\Loader::includeModule('crm'))
+			{
+				try
+				{
+					$iblockId = CCrmCatalog::EnsureDefaultExists();
+					$facade = ServiceContainer::get('integration.seo.facebook.facade', compact('iblockId'));
+				}
+				catch (ObjectNotFoundException $exception)
+				{
+				}
+			}
+		}
+
+		return $facade;
+	}
+
+	private function hasCatalogExportAuth(): bool
+	{
+		if ($facebookFacade = $this->getFacebookFacade())
+		{
+			return $facebookFacade->hasAuth();
+		}
+
+		return false;
+	}
+
 	// region Actions
 
 	/**
@@ -2420,16 +2631,16 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 	/**
 	 * @param string $smsTemplate
-	 * @noinspection PhpUnused
+	 * @param string $mode
 	 */
-	public function saveSmsTemplateAction(string $smsTemplate): void
+	public function saveSmsTemplateAction(string $smsTemplate, string $mode = CrmManager::SMS_MODE_PAYMENT): void
 	{
 		if (Main\Loader::includeModule('salescenter'))
 		{
-			$currentSmsTemplate = CrmManager::getInstance()->getSmsTemplate();
+			$currentSmsTemplate = CrmManager::getInstance()->getSmsTemplate($mode);
 			if ($smsTemplate !== $currentSmsTemplate)
 			{
-				CrmManager::getInstance()->saveSmsTemplate($smsTemplate);
+				CrmManager::getInstance()->saveSmsTemplate($smsTemplate, $mode);
 			}
 		}
 	}
@@ -2584,5 +2795,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 			$optionsName,
 			[]
 		);
+	}
+
+	public function getFacebookSettingsPathAction($dialogId): ?string
+	{
+		$this->arParams['dialogId'] = $dialogId;
+		$this->arResult['isAllowedFacebookRegion'] = $this->getFacebookFacade()->isExportAvailable();
+
+		return $this->getFacebookSettingsPath();
 	}
 }

@@ -24,7 +24,11 @@ use Bitrix\ImConnector\Connector;
 
 Loc::loadMessages(__FILE__);
 
-CJSCore::Init(['clipboard', 'ui.design-tokens']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'clipboard',
+]);
 
 if($arParams['INDIVIDUAL_USE'] !== 'Y')
 {

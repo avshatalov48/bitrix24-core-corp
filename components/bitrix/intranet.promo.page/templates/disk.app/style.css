@@ -3,7 +3,7 @@
 }
 
 .intranet-promo-block-title {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 27px;
 	font-weight: 400;
 	margin: 0;
@@ -93,7 +93,7 @@
 
 .intranet-promo-section-desc {
 	font-size: 14px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: 400;
 	line-height: 24px;
 	padding: 10px 0;

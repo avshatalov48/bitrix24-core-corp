@@ -122,3 +122,6 @@ $MESS["TASKS_LIST_ACTION_PING_NOTIFICATION"] = "Пинг-уведомление 
 $MESS["TASKS_LIST_ACTION_COPY_LINK_NOTIFICATION"] = "Ссылка на задачу скопирована в буфер обмена";
 $MESS["TASKS_ROW_COUNT_TITLE"] = "Всего";
 $MESS["TASKS_SHOW_ROW_COUNT"] = "Показать количество";
+$MESS['TASKS_GRID_STUB_MIGRATION_TITLE'] = "Перенесите свои задачи из других систем";
+$MESS['TASKS_GRID_STUB_MIGRATION_BUTTON_MIGRATE'] = "Перенести";
+$MESS['TASKS_GRID_STUB_MIGRATION_OTHER'] = "и другие";

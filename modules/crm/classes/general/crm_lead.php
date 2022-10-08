@@ -1782,9 +1782,6 @@ class CAllCrmLead
 			LeadContactTable::bindContacts($ID, $contactBindings);
 			if(isset($GLOBALS['USER']))
 			{
-				if (!class_exists('CUserOptions'))
-					include_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/classes/'.$GLOBALS['DBType'].'/favorites.php');
-
 				CUserOptions::SetOption(
 					'crm',
 					'crm_contact_search',

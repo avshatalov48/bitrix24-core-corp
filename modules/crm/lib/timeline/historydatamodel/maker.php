@@ -85,6 +85,14 @@ class Maker
 		{
 			return new Presenter\FinalSummaryDocuments($entityImplementation);
 		}
+		if ($timelineEntryType === TimelineType::SIGN_DOCUMENT)
+		{
+			return new Presenter\SignDocument($entityImplementation);
+		}
+		if ($timelineEntryType === TimelineType::SIGN_DOCUMENT_LOG)
+		{
+			return new Presenter\SignDocumentLog($entityImplementation);
+		}
 
 		return new Presenter($entityImplementation);
 	}

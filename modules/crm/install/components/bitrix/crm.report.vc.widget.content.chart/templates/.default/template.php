@@ -16,7 +16,13 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load(['ui.icons', 'ui.hint', 'ui.info-helper']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.info-helper',
+	'ui.icons',
+	'ui.hint',
+]);
 
 $this->addExternalJs($this->GetFolder() . '/js/helper.js');
 $this->addExternalJs($this->GetFolder() . '/js/popup.js');

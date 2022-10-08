@@ -6,6 +6,7 @@ $MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK"] = "Create a task";
 $MESS["TASKS_GRID_STUB_PROJECT_CREATE_TASK_SUBTITLE"] = "This view will show tasks you and/or your employees are responsible for. Create your first task to see it on this page.";
 $MESS["TASKS_GRID_STUB_PROJECT_PROJECT_CREATED"] = "Project has been created";
 $MESS["TASKS_GRID_STUB_TITLE"] = "Create a task";
+$MESS["TASKS_GROUP_ACTION_COMPLETE_SCRUM_TASK"] = "Unfortunately, we could not complete the selected tasks because they belong to a scrum team.";
 $MESS["TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TEXT"] = "This field can only contain numbers.";
 $MESS["TASKS_GROUP_ACTION_DAYS_NUM_INVALID_TITLE"] = "Invalid Entry";
 $MESS["TASKS_GROUP_ACTION_ERROR_MESSAGE"] = "\"#MESSAGE#\" in these tasks: #TASK_IDS#";

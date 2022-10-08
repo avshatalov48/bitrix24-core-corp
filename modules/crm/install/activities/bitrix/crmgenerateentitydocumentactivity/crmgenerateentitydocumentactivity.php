@@ -42,6 +42,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			'MyCompanyId' => null,
 			'MyCompanyRequisiteId' => null,
 			'MyCompanyBankDetailId' => null,
+			'CreateActivity' => 'N',
 
 			//return
 			'DocumentId' => null,
@@ -49,6 +50,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			'DocumentPdf' => null,
 			'DocumentDocx' => null,
 			'DocumentNumber' => null,
+			'DocumentActivityId' => null,
 		);
 
 		$this->SetPropertiesTypes([
@@ -57,6 +59,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			'DocumentPdf' => ['Type' => 'file'],
 			'DocumentDocx' => ['Type' => 'file'],
 			'DocumentNumber' => ['Type' => 'string'],
+			'DocumentActivityId' => ['Type' => 'int'],
 		]);
 	}
 
@@ -68,6 +71,7 @@ class CBPCrmGenerateEntityDocumentActivity
 		$this->DocumentPdf = null;
 		$this->DocumentDocx = null;
 		$this->DocumentNumber = null;
+		$this->DocumentActivityId = null;
 	}
 
 	public function Cancel()
@@ -97,6 +101,7 @@ class CBPCrmGenerateEntityDocumentActivity
 		if (!$itemIdentifier)
 		{
 			$this->WriteToTrackingService('Could not parse entities', 0, CBPTrackingType::Error);
+			return CBPActivityExecutionStatus::Closed;
 		}
 		$entityTypeId = $itemIdentifier->getEntityTypeId();
 		$entityId = $itemIdentifier->getEntityId();
@@ -180,8 +185,26 @@ class CBPCrmGenerateEntityDocumentActivity
 		if($this->EnablePublicUrl === 'Y')
 		{
 			$result = $document->enablePublicUrl();
-			if ($result->isSuccess()) {
+			if ($result->isSuccess())
+			{
 				$this->DocumentUrl = $document->getPublicUrl();
+			}
+		}
+
+		if ($this->CreateActivity === 'Y')
+		{
+			$createActivityResult = DocumentGeneratorManager::getInstance()->createDocumentActivity(
+				$document,
+				$itemIdentifier,
+				$targetUserId,
+			);
+			if ($createActivityResult->isSuccess())
+			{
+				$this->DocumentActivityId = $createActivityResult->getData()['id'];
+			}
+			else
+			{
+				$this->WriteToTrackingService(implode(',', $result->getErrorMessages()), 0, CBPTrackingType::Error);
 			}
 		}
 
@@ -493,6 +516,15 @@ class CBPCrmGenerateEntityDocumentActivity
 		{
 			$enablePublicUrl = $arCurrentValues['public_url_text'] ?? 'N';
 		}
+		$createActivity = $arCurrentValues['create_activity'] ?? null;
+		if (!empty($createActivity))
+		{
+			$enablePublicUrl = $enablePublicUrl === 'Y' ? 'Y' : 'N';
+		}
+		else
+		{
+			$createActivity = $arCurrentValues['create_activity'] ?? 'N';
+		}
 
 		$withStamps = $arCurrentValues['with_stamps'] ?? null;
 		if(!empty($withStamps))
@@ -508,6 +540,7 @@ class CBPCrmGenerateEntityDocumentActivity
 			'TemplateId' => !empty($arCurrentValues['template_id']) ? $arCurrentValues['template_id'] : $arCurrentValues['template_id_text'],
 			'UseSubscription' => $useSubscription,
 			'EnablePublicUrl' => $enablePublicUrl,
+			'CreateActivity' => $createActivity,
 			'WithStamps' => $withStamps,
 			'Values' => $arCurrentValues['Values'],
 			'MyCompanyId' => !empty($arCurrentValues['my_company_id']) ? $arCurrentValues['my_company_id'] : $arCurrentValues['my_company_id_text'],

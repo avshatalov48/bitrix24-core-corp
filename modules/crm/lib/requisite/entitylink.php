@@ -1726,14 +1726,9 @@ class EntityLink
 			'isLoadStages' => false,
 		]);
 
-		foreach ($dynamicTypesMap->getTypes() as $type)
+		foreach ($dynamicTypesMap->getTypesCollection() as $type)
 		{
 			$types[$type->getEntityTypeId()] = $type->getEntityTypeId();
-		}
-
-		if (Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
-		{
-			$types[\CCrmOwnerType::SmartInvoice] = \CCrmOwnerType::SmartInvoice;
 		}
 
 		return $types;

@@ -1,1 +1,1 @@
-.crm-item-automation-subtitle{display:flex;align-items:center;position:relative;vertical-align:middle;color:#525c69;padding-top:5px;font:300 13px "Open Sans","Helvetica Neue",Helvetica,Arial,sans-serif}.bitrix24-light-theme .crm-item-automation-subtitle{color:#fff}
+.crm-item-automation-subtitle{display:flex;align-items:center;position:relative;vertical-align:middle;color:#525c69;padding-top:5px;font:13px var(--ui-font-family-secondary,var(--ui-font-family-open-sans));font-weight:var(--ui-font-weight-regular,400)}.bitrix24-light-theme .crm-item-automation-subtitle{color:#fff}

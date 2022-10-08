@@ -52,6 +52,11 @@ export class RequestSender
 		return this.sendRequest('task', 'isParentScrumTask', data);
 	}
 
+	getData(data): Promise
+	{
+		return this.sendRequest('task', 'getData', data);
+	}
+
 	showErrorAlert(response: ErrorResponse, alertTitle?: string)
 	{
 		if (Type.isUndefined(response.errors))

@@ -36,8 +36,10 @@ if (!$isErrorOccured && $isBizProcInstalled)
 	}
 }
 
+$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
-if (!$isErrorOccured && !CCrmCompany::CheckReadPermission(0, $userPermissions))
+if (!$isErrorOccured && !CCrmCompany::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
 {
 	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
 	$isErrorOccured = true;
@@ -77,10 +79,18 @@ $arResult['STEXPORT_TOTAL_ITEMS'] = isset($arParams['STEXPORT_TOTAL_ITEMS']) ?
 
 
 $CCrmCompany = new CCrmCompany();
-if (!$isErrorOccured && !empty($sExportType) && $CCrmCompany->cPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'EXPORT'))
+if (!$isErrorOccured && !empty($sExportType))
 {
-	$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
-	$isErrorOccured = true;
+	if ($CCrmCompany->cPerms->HavePerm(
+		(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Company))
+			->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
+		BX_CRM_PERM_NONE,
+		'EXPORT'
+	))
+	{
+		$errorMessage = GetMessage('CRM_PERMISSION_DENIED');
+		$isErrorOccured = true;
+	}
 }
 
 if ($isErrorOccured)
@@ -122,6 +132,12 @@ $isAdmin = CCrmPerms::IsAdmin();
 $enableOutmodedFields = $arResult['ENABLE_OUTMODED_FIELDS'] = CompanySettings::getCurrent()->areOutmodedRequisitesEnabled();
 
 $arResult['CURRENT_USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
+
+if (!isset($arParams['PATH_TO_COMPANY_LIST']) && $arResult['CATEGORY_ID'] > 0)
+{
+	$arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_CATEGORY', $arParams['PATH_TO_COMPANY_CATEGORY'], $APPLICATION->GetCurPage());
+	$arParams['PATH_TO_COMPANY_LIST'] = str_replace('#category_id#', $arResult['CATEGORY_ID'], $arParams['PATH_TO_COMPANY_LIST']);
+}
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_LIST', $arParams['PATH_TO_COMPANY_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath('PATH_TO_COMPANY_DETAILS', $arParams['PATH_TO_COMPANY_DETAILS'], $APPLICATION->GetCurPage().'?company_id=#company_id#&details');
 $arParams['PATH_TO_COMPANY_SHOW'] = CrmCheckPath('PATH_TO_COMPANY_SHOW', $arParams['PATH_TO_COMPANY_SHOW'], $APPLICATION->GetCurPage().'?company_id=#company_id#&show');
@@ -156,8 +172,6 @@ $arResult['IS_AJAX_CALL'] = isset($_REQUEST['AJAX_CALL']) || isset($_REQUEST['aj
 $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
-
-$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
 
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {

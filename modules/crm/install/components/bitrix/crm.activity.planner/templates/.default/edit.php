@@ -12,6 +12,9 @@ $activity = $arResult['ACTIVITY'];
 
 $storageValues = array();
 $storageProps = array();
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui.fonts.opensans']);
+
 switch ($activity['STORAGE_TYPE_ID'])
 {
 	case Integration\StorageType::WebDav:

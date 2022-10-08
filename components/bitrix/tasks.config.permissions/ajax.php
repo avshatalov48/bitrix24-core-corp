@@ -93,6 +93,11 @@ class TasksConfigPermissionsAjaxController extends \Bitrix\Main\Engine\Controlle
 
 	private function checkPermissions(Action $action): bool
 	{
+		if (!\Bitrix\Tasks\Integration\Bitrix24::checkFeatureEnabled(\Bitrix\Tasks\Integration\Bitrix24\FeatureDictionary::TASKS_PERMISSIONS))
+		{
+			return false;
+		}
+
 		return \Bitrix\Tasks\Access\TaskAccessController::can(\Bitrix\Tasks\Util\User::getId(), \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_ADMIN);
 	}
 

@@ -1,3 +1,4 @@
+import 'ui.design-tokens';
 import './css/check-list-item.css';
 
 import {Dom, Event, Loc, Runtime, Tag, Text} from 'main.core';
@@ -291,7 +292,7 @@ class CheckListItem extends CompositeTreeItem
 			<span class="tasks-checklist-item-auditor">
 				<a class="tasks-checklist-item-${type}-icon" title="${Loc.getMessage(messageId)}"></a>
 				<a href="${url}" class="tasks-checklist-item-${type}-link">${name}</a>
-			</span>
+			</span> 
 		`;
 	}
 
@@ -1309,7 +1310,7 @@ class CheckListItem extends CompositeTreeItem
 							   value="${this.fields.getTitle()}"
 							   onkeydown="${this.onInputKeyDown.bind(this)}"
 							   onblur="${this.rememberInputState.bind(this)}"/>
-						<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.clearInput.bind(this)}"/>
+						<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.clearInput.bind(this)}"></button>
 					</div>
 				</div>
 			`;
@@ -1332,7 +1333,7 @@ class CheckListItem extends CompositeTreeItem
 							<span class="tasks-checklist-item-flag-sub-checklist-progress">
 								${progressBarLayout.getContainer()}
 							</span>
-							<span class="tasks-checklist-item-flag-element-decorate"/>
+							<span class="tasks-checklist-item-flag-element-decorate"></span>
 						</label>
 					</div>
 				</div>
@@ -1343,7 +1344,7 @@ class CheckListItem extends CompositeTreeItem
 							   value="${this.fields.getTitle()}"
 							   onkeydown="${this.onInputKeyDown.bind(this)}"
 							   onblur="${this.rememberInputState.bind(this)}"/>
-						<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.clearInput.bind(this)}"/>
+						<button class="ui-ctl-after ui-ctl-icon-clear" onclick="${this.clearInput.bind(this)}"></button>
 					</div>
 				</div>
 			</div>
@@ -1582,7 +1583,6 @@ class CheckListItem extends CompositeTreeItem
 		if (['+', '@'].includes(e.data))
 		{
 			this.getMemberSelector(e, this.optionManager.defaultMemberSelectorType, true);
-			e.preventDefault();
 		}
 	}
 
@@ -2801,7 +2801,7 @@ class CheckListItem extends CompositeTreeItem
 	{
 		const nodeId = this.getNodeId();
 		const layouts = {
-			deleteButton: Tag.render`<button class="tasks-checklist-item-remove" onclick="${this.onDeleteClick.bind(this)}"/>`,
+			deleteButton: Tag.render`<button class="tasks-checklist-item-remove" onclick="${this.onDeleteClick.bind(this)}"></button>`,
 			dndButton: Tag.render`<div class="tasks-checklist-item-dragndrop"></div>`,
 			attachments: this.getAttachmentsLayout(),
 		};
@@ -2837,7 +2837,7 @@ class CheckListItem extends CompositeTreeItem
 								<span class="tasks-checklist-item-flag-sub-checklist-progress" id="progress_${nodeId}">
 									${this.progress.getContainer()}
 								</span>
-								<span class="tasks-checklist-item-flag-element-decorate"/>
+								<span class="tasks-checklist-item-flag-element-decorate"></span>
 							</label>
 						</div>
 					</div>

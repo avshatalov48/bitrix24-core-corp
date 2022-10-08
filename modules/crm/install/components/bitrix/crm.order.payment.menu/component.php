@@ -14,7 +14,6 @@ if ($CrmPerms->HavePerm('ORDER', BX_CRM_PERM_NONE))
 $arParams['PATH_TO_ORDER_PAYMENT_LIST'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_LIST', $arParams['PATH_TO_ORDER_PAYMENT_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_ORDER_PAYMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_SHOW', $arParams['PATH_TO_ORDER_PAYMENT_SHOW'], $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
 $arParams['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_EDIT', $arParams['PATH_TO_ORDER_PAYMENT_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
-$arParams['PATH_TO_ORDER_PAYMENT_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_DETAILS', $arParams['PATH_TO_ORDER_PAYMENT_DETAILS'], $APPLICATION->GetCurPage().'?order_id=#order_id#&details');
 
 $arParams['ELEMENT_ID'] = isset($arParams['ELEMENT_ID']) ? (int)$arParams['ELEMENT_ID'] : 0;
 
@@ -90,23 +89,6 @@ if($arParams['TYPE'] === 'details')
 
 if($arParams['TYPE'] === 'list')
 {
-	if ($bAdd)
-	{
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('ORDER_PAYMENT_ADD'),
-			'TITLE' => GetMessage('ORDER_PAYMENT_ADD_TITLE'),
-			'LINK' =>
-				CCrmUrlUtil::AddUrlParams(
-					CComponentEngine::MakePathFromTemplate(
-						$arParams[\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled() ? 'PATH_TO_ORDER_PAYMENT_DETAILS' : 'PATH_TO_ORDER_PAYMENT_EDIT'],
-						array('payment_id' => 0)
-					),
-					array()
-			),
-			'HIGHLIGHT' => true
-		);
-	}
-
 	if ($bConfig)
 	{
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');

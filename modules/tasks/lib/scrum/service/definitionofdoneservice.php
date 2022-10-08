@@ -146,7 +146,7 @@ class DefinitionOfDoneService implements Errorable
 		try
 		{
 			$result = TypeChecklistFacade::add($entityId, $this->executiveUserId, [
-				'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_0'),
+				'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_NEW_0'),
 				'IS_COMPLETE' => 'N',
 				'PARENT_ID' => 0
 			]);
@@ -155,7 +155,7 @@ class DefinitionOfDoneService implements Errorable
 			for ($i = 1; $i <= 3; $i++)
 			{
 				TypeChecklistFacade::add($entityId, $this->executiveUserId, [
-					'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_'.$i),
+					'TITLE' => Loc::getMessage('TASKS_SCRUM_DEFINITION_OF_DONE_NEW_'.$i),
 					'IS_COMPLETE' => 'N',
 					'PARENT_ID' => $newItemId
 				]);

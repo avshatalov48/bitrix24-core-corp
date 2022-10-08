@@ -8,7 +8,7 @@ $MESS['IMCONNECTOR_COMPONENT_VIBER_API_KEY'] = 'Введите ключ свое
 $MESS['IMCONNECTOR_COMPONENT_VIBER_CONNECTED'] = 'Viber подключен';
 $MESS['IMCONNECTOR_COMPONENT_VIBER_CHANGE_ANY_TIME'] = 'Вы можете в любое время изменить или отключить';
 $MESS['IMCONNECTOR_COMPONENT_VIBER_CONNECT_TITLE'] = 'Подключите Viber к Открытой линии';
-$MESS['IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP'] = 'Для подключения необходимо <a onclick="top.BX.Helper.show(\'#ID#\');" class="imconnector-field-box-link">создать публичный аккаунт в Viber</a>
+$MESS['IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP_NEW'] = 'Для подключения необходимо #LINK_START#создать публичный аккаунт в Viber#LINK_END#
  или подключить уже существующий. Если у вас еще нет публичного аккаунта, мы поможем создать его в несколько шагов и подключить к вашему Битрикс24';
 $MESS['IMCONNECTOR_COMPONENT_VIBER_INFO_CONNECT_ID'] = 'redirect=detail&code=7417097';
 $MESS['IMCONNECTOR_COMPONENT_VIBER_INFO_ANDROID_CONNECT_ID'] = 'redirect=detail&code=7417097';
@@ -26,5 +26,5 @@ $MESS['IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_1'] = 'Контакты и п
 $MESS['IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_2'] = 'CRM помогает вести клиента по воронке продаж';
 $MESS['IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_3'] = 'Вы отвечаете клиентам быстро и там, где им удобно';
 $MESS['IMCONNECTOR_COMPONENT_VIBER_INDEX_LIST_ITEM_4'] = 'Вопросы от клиентов автоматически распределяются между менеджерами по правилам очереди';
-$MESS['IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION'] = 'Для подключения необходимо <a href="#" onclick="top.BX.Helper.show(\'#ID#\'); return false;">создать публичный аккаунт в Viber</a> или подключить уже существующий. Если у вас еще нет публичного аккаунта, мы поможем создать его в несколько шагов и подключить к вашему Битрикс24.';
+$MESS['IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION_NEW'] = 'Для подключения необходимо #LINK_START#создать публичный аккаунт в Viber#LINK_END# или подключить уже существующий. Если у вас еще нет публичного аккаунта, мы поможем создать его в несколько шагов и подключить к вашему Битрикс24.';
 

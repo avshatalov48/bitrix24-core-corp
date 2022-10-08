@@ -7,6 +7,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 Loc::loadLanguageFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui',
 	'ui.forms',
 	'ui.buttons',
@@ -15,7 +17,6 @@ Loc::loadLanguageFile(__FILE__);
 	'ui.alerts',
 	'ui.switcher',
 	'salescenter.manager',
-	'ui.design-tokens',
 ]);
 
 $formId = 'salescenter-delivery-service-installation-form';

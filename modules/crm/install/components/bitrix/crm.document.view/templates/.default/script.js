@@ -9,55 +9,53 @@
 		this.downloadUrl = '';
 		this.editTemplateUrl = '';
 		this.editDocumentUrl = '';
-		this.emailCommunication = [];
-		this.storageTypeID = 0;
-		this.emailDiskFile = 0;
 		this.title = '';
-		this.sendSmsUrl = '';
 		this.values = {};
+		this.documentId = null;
 		this.progress = false;
-		this.progressInterval = 0;
+		this.loader = null;
 		this.changeStampsEnabled = false;
 		this.changeStampsDisabledReason = '';
+		this.changeQrCodeEnabled = false;
+		this.changeQrCodeEnabledDisabledReason = '';
 		this.myCompanyEditUrl = '';
 		this.isTransformationError = false;
 		this.transformationErrorMessage = '';
 		this.transformationErrorCode = 0;
+		this.viewer = null;
+		this.publicUrl = null;
 	};
 
 	BX.Crm.DocumentView.init = function(options)
 	{
-		this.transformationErrorNode = BX('docs-preview-transform-error');
-		this.previewNode = BX('docs-preview-node');
-		this.imageContainer = BX('crm-document-image');
+		this.transformationErrorNode = document.getElementById('crm__document-view--transform-error');
+		this.previewNode = document.getElementById('crm__document-view--node');
 		this.documentId = options.id;
-		options.imageContainer = this.imageContainer;
+		this.publicUrl = options.publicUrl;
 		options.previewNode = this.previewNode;
 		options.transformationErrorNode = this.transformationErrorNode;
 		options.onReady = BX.proxy(function(options)
 		{
 			this.applyOptions(options);
 			this.showError(false);
-			if(this.progressInterval)
-			{
-				clearInterval(this.progressInterval);
-			}
+			this.showPdf();
 		}, this);
 		this.preview = new BX.DocumentGenerator.DocumentPreview(options);
 		this.applyOptions(options);
-		this.initSendButton();
 		this.initButtons();
 		this.initEvents();
-		if(!options.imageUrl && !this.isTransformationError)
+		if(!options.pdfUrl && !this.isTransformationError)
 		{
-			if(options.pdfUrl)
+			this.initPreviewMessage(2);
+		}
+		if (options.pdfUrl)
+		{
+			var viewer = this.getViewer();
+			if (viewer)
 			{
-				this.showPdf();
+				viewer.setPdfSource(options.pdfUrl);
 			}
-			else
-			{
-				this.initPreviewMessage(2);
-			}
+			this.showPdf();
 		}
 		if(options.documentUrl)
 		{
@@ -92,13 +90,13 @@
 		{
 			this.values = options.values;
 		}
-		if(options.emailCommunication)
-		{
-			this.emailCommunication = options.emailCommunication;
-		}
 		if(options.emailDiskFile)
 		{
-			this.emailDiskFile = options.emailDiskFile;
+			var selector = this.getChannelSelector();
+			if (selector)
+			{
+				selector.setFiles([options.emailDiskFile]);
+			}
 		}
 		if(options.storageTypeID)
 		{
@@ -108,21 +106,25 @@
 		{
 			this.title = options.title;
 		}
-		if(options.sendSmsUrl)
+		if(BX.type.isBoolean(options.isTransformationError))
 		{
-			this.sendSmsUrl = options.sendSmsUrl;
+			this.isTransformationError = options.isTransformationError;
 		}
 		if(BX.type.isBoolean(options.changeStampsEnabled))
 		{
 			this.changeStampsEnabled = options.changeStampsEnabled;
 		}
-		if(BX.type.isBoolean(options.isTransformationError))
-		{
-			this.isTransformationError = options.isTransformationError;
-		}
 		if(options.changeStampsDisabledReason)
 		{
 			this.changeStampsDisabledReason = options.changeStampsDisabledReason;
+		}
+		if(BX.type.isBoolean(options.changeQrCodeEnabled))
+		{
+			this.changeQrCodeEnabled = options.changeQrCodeEnabled;
+		}
+		if(options.changeQrCodeDisabledReason)
+		{
+			this.changeQrCodeDisabledReason = options.changeQrCodeDisabledReason;
 		}
 		if(options.myCompanyEditUrl)
 		{
@@ -142,72 +144,6 @@
 		}
 		this.preview.applyOptions(options);
 	};
-
-	BX.Crm.DocumentView.initSendButton = function()
-	{
-		var sendButton = BX('crm-document-send');
-		if(this.storageTypeID > 0 || this.sendSmsUrl)
-		{
-			BX.bind(sendButton, 'click', BX.proxy(function()
-			{
-				BX.PopupMenu.show('crm-document-send-menu', sendButton, [
-						(this.storageTypeID > 0 ? {text: BX.message('CRM_DOCUMENT_VIEW_SEND_EMAIL'), onclick: BX.proxy(this.sendEmail, this)} : null),
-						(this.sendSmsUrl ? {text: BX.message('CRM_DOCUMENT_VIEW_SEND_SMS'), onclick: BX.proxy(this.sendSms, this)} : null)
-					],
-					{
-						offsetLeft: 0,
-						offsetTop: 0,
-						closeByEsc: true
-					}
-				);
-			}, this));
-		}
-		else
-		{
-			BX.hide(sendButton);
-		}
-	};
-
-	BX.Crm.DocumentView.sendEmail = function()
-	{
-		if(this.emailDiskFile > 0)
-		{
-			var settings = {
-				'subject': this.title,
-				'communications': this.emailCommunication,
-				'diskfiles': [this.emailDiskFile],
-				'storageTypeID': this.storageTypeID
-			};
-			BX.CrmActivityEditor.items['document-send-email'].addEmail(settings);
-		}
-		else
-		{
-			this.showError(BX.message('CRM_DOCUMENT_VIEW_NO_AVAILABLE_FILES'));
-		}
-	};
-
-	BX.Crm.DocumentView.sendSms = function()
-	{
-		if(this.sendSmsUrl)
-		{
-			if(!BX.hasClass(BX('docs-preview-switcher'), 'docs-preview-switcher-off'))
-			{
-				if(BX.SidePanel)
-				{
-					BX.SidePanel.Instance.open(this.sendSmsUrl, {width: 443});
-				}
-				else
-				{
-					top.location.href = this.sendSmsUrl;
-				}
-				this.showError(false);
-				return;
-			}
-		}
-
-		this.showError(BX.message('CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY'));
-	};
-
 	BX.Crm.DocumentView.closeSlider = function()
 	{
 		var slider = BX.SidePanel.Instance.getTopSlider();
@@ -228,18 +164,24 @@
 		{
 			slider.getData().set('document', {
 				id: Number(this.documentId),
-				title: BX('pagetitle') ? BX('pagetitle').innerText : '',
+				title: document.getElementById('pagetitle') ? document.getElementById('pagetitle').innerText : '',
 				detailUrl: BX.Uri.removeParam(this.editDocumentUrl || '', ['mode']),
-				isWithStamps: BX('crm-document-stamp').checked,
+				isWithStamps: document.getElementById('crm-document-stamp').checked,
 			})
 		}
 	}
 
 	BX.Crm.DocumentView.initButtons = function()
 	{
-		BX.bind(BX('crm-document-stamp'), 'click', BX.proxy(this.showChangeStampsDisabledMessage, this));
-		BX.bind(BX('crm-document-stamp'), 'change', BX.proxy(this.onChangeStamps, this));
-		BX.bind(BX('crm-document-edit-template'), 'click', BX.proxy(function(event)
+		BX.bind(document.getElementById('crm-document-stamp'), 'click', BX.proxy(this.showChangeStampsDisabledMessage, this));
+		BX.bind(document.getElementById('crm-document-stamp'), 'change', BX.proxy(this.onChangeStamps, this));
+		var qrCodeInput = document.getElementById('crm-document-qr');
+		if (qrCodeInput)
+		{
+			BX.Event.bind(qrCodeInput, 'click', this.handleQrCodeInputClick.bind(this));
+			BX.Event.bind(qrCodeInput, 'change', this.handleQrCodeInputChange.bind(this));
+		}
+		BX.bind(document.getElementById('crm-document-edit-template'), 'click', BX.proxy(function(event)
 		{
 			if(this.editTemplateUrl)
 			{
@@ -254,7 +196,7 @@
 			}
 			event.preventDefault();
 		}, this));
-		BX.bind(BX('crm-document-print'), 'click', BX.proxy(function()
+		BX.bind(document.getElementById('crm-document-print'), 'click', BX.proxy(function()
 		{
 			if(this.printUrl)
 			{
@@ -265,29 +207,41 @@
 				this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
 			}
 		}, this));
-		BX.bind(BX('crm-document-download-file'), 'click', BX.proxy(function()
+		var downloadButton = BX.UI.ButtonManager.createFromNode(document.getElementById('crm-document-download'));
+		if (downloadButton)
 		{
-			if(this.downloadUrl && !this.progress)
-			{
-				window.open(this.downloadUrl, '_blank');
-			}
-		}, this));
-		BX.bind(BX('crm-document-download-pdf'), 'click', BX.proxy(function()
-		{
-			if(this.pdfUrl)
-			{
-				window.open(this.pdfUrl,'_blank');
-			}
-			else if (this.preview.imageUrl)
-			{
-				this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
-			}
-			else
-			{
-				this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
-			}
-		}, this));
-		BX.bind(BX('crm-document-edit-document'), 'click', BX.proxy(function()
+			downloadButton.setMenu({
+				items: [
+					{
+						text: 'PDF',
+						onclick: function() {
+							if(this.pdfUrl)
+							{
+								window.open(this.pdfUrl,'_blank');
+							}
+							else if (this.preview.imageUrl)
+							{
+								this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
+							}
+							else
+							{
+								this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
+							}
+						}.bind(this)
+					},
+					{
+						text: 'DOCX',
+						onclick: function() {
+							if(this.downloadUrl && !this.progress)
+							{
+								window.open(this.downloadUrl, '_blank');
+							}
+						}.bind(this)
+					}
+				]
+			})
+		}
+		BX.bind(document.getElementById('crm-document-edit-document'), 'click', BX.proxy(function()
 		{
 			if(BX.SidePanel)
 			{
@@ -304,10 +258,31 @@
 				top.location.href = this.editDocumentUrl;
 			}
 		}, this));
-		BX.bind(BX('docs-preview-switcher'), 'click', BX.proxy(this.enablePublicUrl, this));
-		BX.bind(BX('crm-document-public-url-container'), 'click', BX.proxy(this.handleClickInput, this));
-		BX.bind(BX('crm-document-copy-public-url'), 'click', BX.proxy(this.copyPublicUrl, this));
-		BX.bind(BX('crm-document-show-pdf'), 'click', BX.proxy(this.showPdf, this));
+
+		BX.Event.EventEmitter.subscribe('BX.Crm.ChannelSelector.List:getLink', function() {
+			if (this.publicUrl)
+			{
+				return Promise.resolve(this.publicUrl);
+			}
+			else
+			{
+				return new Promise(function(resolve, reject) {
+					BX.ajax.runAction('crm.documentgenerator.document.enablePublicUrl', {
+						data: {
+							status: 1,
+							id: Number(this.documentId)
+						}
+					}).then(BX.proxy(function(response)
+					{
+						this.publicUrl = response.data.publicUrl;
+						resolve(response.data.publicUrl);
+					}, this), BX.proxy(function(response)
+					{
+						reject(response.errors.pop().message);
+					}, this));
+				}.bind(this))
+			}
+		}.bind(this));
 	};
 
 	BX.Crm.DocumentView.showError = function(text)
@@ -319,16 +294,17 @@
 				this.transformationErrorMessage = text;
 			}
 		}
-		if(text === false)
+		var errorNode = document.getElementById('crm-document-view-error');
+		if(text === false && errorNode)
 		{
-			BX.hide(BX('crm-document-view-error'));
+			BX.hide(errorNode);
 		}
 		if(!text)
 		{
 			return;
 		}
 		var message = '';
-		if(BX.type.isArray(text))
+		if(BX.Type.isArray(text))
 		{
 			message = text.map(function(error){return error.message;}).join("\n");
 		}
@@ -336,40 +312,41 @@
 		{
 			message = text;
 		}
-		BX('crm-document-view-error-message').innerText = message;
-		BX.show(BX('crm-document-view-error'));
+		if (errorNode)
+		{
+			document.getElementById('crm-document-view-error-message').innerText = message;
+			BX.show(errorNode);
+		}
 	};
 
 	BX.Crm.DocumentView.showChangeStampsDisabledMessage = function(event)
 	{
-		if(this.changeStampsEnabled)
+		if (this.changeStampsEnabled)
 		{
 			return;
 		}
 		event.preventDefault();
-		if(this.changeStampsDisabledReason)
+		if (this.changeStampsDisabledReason)
 		{
-			if(this.popupChangeStampsMessage && this.popupChangeStampsMessage.isShown())
-			{
-				return;
-			}
-			this.popupChangeStampsMessage = new BX.PopupWindow('crm-popup-change-stamps', BX('crm-document-stamp'), {
-				className: 'crm-popup-stamps-disabled',
-				bindOptions: {
-					position: 'top'
-				},
-				width: 230,
-				offsetLeft: 90,
-				darkMode: true,
-				angle: true,
-				content: this.changeStampsDisabledReason,
-				autoHide: true
-			});
-
-			this.popupChangeStampsMessage.show();
+			BX.Crm.DocumentView.showPopupNotice(
+				this.changeStampsDisabledReason
+			);
 		}
 	};
+	BX.Crm.DocumentView.showPopupNotice = function(content) {
+		BX.UI.Notification.Center.notify({
+			content: content,
+		});
+	};
+	BX.Crm.DocumentView.getChannelSelector = function() {
+		var ChannelSelectorList = BX.Reflection.getClass('BX.Crm.ChannelSelector.List');
+		if (ChannelSelectorList)
+		{
+			return ChannelSelectorList.getById('document-channel-selector');
+		}
 
+		return null;
+	};
 	BX.Crm.DocumentView.onChangeStamps = function()
 	{
 		if(this.changeStampsEnabled)
@@ -390,19 +367,26 @@
 		}
 		this.progress = true;
 		this.pdfUrl = '';
-		this.printUrl = '';
-		this.emailDiskFile = 0;
-		BX('crm-document-stamp').disabled = true;
+		document.getElementById('crm-document-stamp').disabled = true;
 		var stampsEnabled = 0;
-		if(BX('crm-document-stamp').checked)
+		if(document.getElementById('crm-document-stamp').checked)
 		{
 			stampsEnabled = 1;
+		}
+		var qrCodeInput = document.getElementById('crm-document-qr');
+		if (qrCodeInput && !qrCodeInput.checked)
+		{
+			this.values['PaymentQrCode'] = '';
+		}
+		else
+		{
+			this.values['PaymentQrCode'] = 'this.SOURCE.PAYMENT_QR_CODE';
 		}
 		if(BX.type.isDomNode(this.preview.imageNode))
 		{
 			BX.hide(this.preview.imageNode);
 		}
-		BX.hide(BX('crm-document-pdf'));
+		BX.hide(document.getElementById('crm-document-pdf'));
 		BX.hide(this.transformationErrorNode);
 		this.initPreviewMessage(1);
 		this.preview.imageUrl = null;
@@ -416,10 +400,9 @@
 		{
 			this.initPreviewMessage(2);
 			this.progress = false;
-			BX('crm-document-stamp').disabled = false;
+			document.getElementById('crm-document-stamp').disabled = false;
 			this.applyOptions(response.data.document);
-			BX.show(BX('crm-document-show-pdf'));
-			var title = BX('pagetitle');
+			var title = document.getElementById('pagetitle');
 			if(title && response.data.document && response.data.document.title)
 			{
 				title.innerText = response.data.document.title;
@@ -432,7 +415,7 @@
 				this.applyOptions(response.data.document);
 			}
 			this.progress = false;
-			BX('crm-document-stamp').disabled = false;
+			document.getElementById('crm-document-stamp').disabled = false;
 			if(response.data && response.data.document && response.data.document.isTransformationError)
 			{
 				BX.hide(this.previewNode);
@@ -443,51 +426,6 @@
 				this.initPreviewMessage(0);
 			}
 			this.showError(response.errors.pop().message);
-		}, this));
-	};
-
-	BX.Crm.DocumentView.enablePublicUrl = function()
-	{
-		if(this.progress)
-		{
-			return;
-		}
-
-		BX('crm-document-stamp').disabled = true;
-
-		var status = 0, analyticsLabel;
-		if(BX.hasClass(BX('docs-preview-switcher'), 'docs-preview-switcher-off'))
-		{
-			status = 1;
-			BX.removeClass(BX('docs-preview-switcher'), 'docs-preview-switcher-off');
-			BX('crm-document-public-value-container').style.height = '47px';
-			analyticsLabel = 'enablePublicUrl';
-		}
-		else
-		{
-			BX.addClass(BX('docs-preview-switcher'), 'docs-preview-switcher-off');
-			BX('crm-document-public-value-container').style.height = 0;
-			analyticsLabel = 'disablePublicUrl';
-		}
-		this.preview.showLoader();
-		BX.ajax.runAction('crm.documentgenerator.document.enablePublicUrl', {
-			analyticsLabel: analyticsLabel,
-			data: {
-				status: status,
-				id: this.documentId
-			}
-		}).then(BX.proxy(function(response)
-		{
-			this.progress = false;
-			BX('crm-document-stamp').disabled = false;
-			BX('crm-document-public-url-container').value = response.data.publicUrl || '';
-			this.preview.hideLoader();
-		}, this), BX.proxy(function(response)
-		{
-			this.progress = false;
-			BX('crm-document-stamp').disabled = false;
-			this.showError(response.errors.pop().message);
-			this.preview.hideLoader();
 		}, this));
 	};
 
@@ -503,50 +441,6 @@
 		}, this));
 	};
 
-	BX.Crm.DocumentView.handleClickInput = function()
-	{
-		var input = BX('crm-document-public-url-container');
-		BX.focus(input);
-		input.setSelectionRange(0, input.value.length);
-	};
-
-	BX.Crm.DocumentView.copyPublicUrl = function()
-	{
-		this.handleClickInput();
-		document.execCommand("copy");
-
-		this.showCopyLinkPopup(BX('crm-document-copy-public-url'), BX.message('CRM_DOCUMENT_VIEW_COPY_PUBLIC_URL_MESSAGE'));
-	};
-
-	BX.Crm.DocumentView.showCopyLinkPopup = function(node, message) {
-		if(this.popupOuterLink)
-		{
-			return;
-		}
-
-		this.popupOuterLink = new BX.PopupWindow('crm-popup-copy-link', node, {
-			className: 'crm-popup-copy-link',
-			bindPosition: {
-				position: 'top'
-			},
-			offsetLeft: 15,
-			darkMode: true,
-			angle: true,
-			content: message
-		});
-
-		this.popupOuterLink.show();
-
-		setTimeout(function() {
-			BX.hide(BX(this.popupOuterLink.uniquePopupId));
-		}.bind(this), 2000);
-
-		setTimeout(function() {
-			this.popupOuterLink.destroy();
-			this.popupOuterLink = null;
-		}.bind(this), 2200)
-	};
-
 	BX.Crm.DocumentView.initPreviewMessage = function(step)
 	{
 		if(step !== 2 && step !== 0)
@@ -557,115 +451,91 @@
 		BX.show(this.previewNode);
 		if(step === 0)
 		{
-			BX.hide(BX('docs-preview-node-message'));
-			BX.hide(BX('docs-preview-node-detail'));
-			if(this.progressInterval > 0)
-			{
-				clearInterval(this.progressInterval);
-			}
+			BX.hide(document.getElementById('crm__document-view--node-message'));
+			BX.hide(document.getElementById('crm__document-view--node-detail'));
 		}
 		else if(step === 1)
 		{
-			BX('docs-preview-node-message').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_GENERATION_MESSAGE');
-			BX.show(BX('docs-preview-node-message'));
-			BX.hide(BX('docs-preview-node-detail'));
-			this.startProgressBar(BX('docs-progress-bar'), 10);
+			document.getElementById('crm__document-view--node-message').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_GENERATION_MESSAGE');
+			BX.show(document.getElementById('crm__document-view--node-message'));
+			BX.hide(document.getElementById('crm__document-view--node-detail'));
+			this.startProgressBar();
 		}
 		else
 		{
-			BX('docs-preview-node-message').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_TIME_MESSAGE');
-			BX('docs-preview-node-detail').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_READY_MESSAGE');
-			BX.show(BX('docs-preview-node-message'));
-			BX.show(BX('docs-preview-node-detail'));
-			this.startProgressBar(BX('docs-progress-bar'), 20);
+			document.getElementById('crm__document-view--node-message').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_PREPARE');
+			document.getElementById('crm__document-view--node-detail').innerText = BX.message('CRM_DOCUMENT_VIEW_PREVIEW_MESSAGE_READY');
+			BX.show(document.getElementById('crm__document-view--node-message'));
+			BX.show(document.getElementById('crm__document-view--node-detail'));
+			this.startProgressBar();
 		}
 	};
 
-	BX.Crm.DocumentView.startProgressBar = function(node, limit, start, interval)
+	BX.Crm.DocumentView.startProgressBar = function()
 	{
-		if(this.progressInterval > 0)
+		if (!this.loader)
 		{
-			clearInterval(this.progressInterval);
+			this.loader = new BX.Loader({
+				color: '#2fc6f6',
+			});
 		}
-		if(!BX.type.isDomNode(node))
+
+		this.loader.show(document.getElementById('docs-progress-bar'));
+	};
+
+	BX.Crm.DocumentView.getViewer = function()
+	{
+		if (!this.viewer)
 		{
-			return;
-		}
-		if(!BX.type.isNumber(limit))
-		{
-			limit = 20;
-		}
-		if(!BX.type.isNumber(start) || start > 100)
-		{
-			start = 0;
-		}
-		if(!BX.type.isNumber(interval))
-		{
-			interval = 100;
-		}
-		node.style.width = start + '%';
-		var stepSize = 100 / (limit / (interval / 1000));
-		this.progressInterval = setInterval(BX.proxy(function()
-		{
-			var width;
-			var oldWidth = parseFloat(node.style.width);
-			if(oldWidth === 100)
+			const pdfNode = document.getElementById('crm-document-pdf');
+			if (!pdfNode)
 			{
-				width = 0;
+				return null;
 			}
-			else
-			{
-				width = oldWidth + stepSize;
-				if(width > 100)
-				{
-					width = 100;
-				}
-			}
-			node.style.width = width + '%';
-		}, this), interval);
+			this.viewer = new BX.UI.Viewer.SingleDocumentController({baseContainer: pdfNode, stretch: true});
+			this.viewer.setItems([BX.UI.Viewer.buildItemByNode(pdfNode)]);
+		}
+
+		return this.viewer;
 	};
 
 	BX.Crm.DocumentView.showPdf = function()
 	{
-		if(this.pdfUrl)
+		BX.show(document.getElementById('crm-document-pdf'));
+		if (this.pdfUrl)
 		{
-			if(BX('crm-document-pdf').style.display === 'block')
+			var viewer = BX.Crm.DocumentView.getViewer();
+			if (viewer)
 			{
-				return;
+				viewer.setPdfSource(this.pdfUrl);
+				viewer.setScale(1.2).open(0);
 			}
-			BX.ajax.runAction('crm.documentgenerator.document.showpdf', {
-				data: {
-					id: this.documentId
-				}
-			}).then(BX.proxy(function(response)
-			{
-				var imageNode = this.preview.imageNode;
-				if(imageNode)
-				{
-					BX.hide(imageNode);
-				}
-				var html = BX.processHTML(response.data.html);
-				BX('crm-document-pdf').innerHTML = html.HTML;
-				BX.hide(BX('crm-document-show-pdf'));
-				BX.show(BX('crm-document-pdf'));
-				if(!!html.SCRIPT)
-				{
-					BX.ajax.processScripts(html.SCRIPT);
-				}
-			}, this)).then(function(response)
-			{
-				BX.Crm.DocumentView.showError(response.errors.pop().message);
-			});
-		}
-		else if (this.preview.imageUrl)
-		{
-			this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
 		}
 		else
 		{
-			this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
+			this.showError(BX.message('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR'));
 		}
 	};
+	BX.Crm.DocumentView.handleQrCodeInputClick = function(event)
+	{
+		if (this.changeQrCodeEnabled)
+		{
+			return;
+		}
+		if (this.changeQrCodeDisabledReason)
+		{
+			BX.Crm.DocumentView.showPopupNotice(
+				this.this.changeQrCodeDisabledReason
+			);
+		}
+	};
+	BX.Crm.DocumentView.handleQrCodeInputChange = function(event)
+	{
+		if (this.changeQrCodeEnabled)
+		{
+			this.updateDocument();
+		}
+	}
 
 	BX.Crm.DocumentEdit = {
 
@@ -673,25 +543,25 @@
 
 	BX.Crm.DocumentEdit.init = function()
 	{
-		BX.bind(BX('crm-document-edit-spoiler'), 'click', function()
+		BX.bind(document.getElementById('crm-document-edit-spoiler'), 'click', function()
 		{
-			BX.show(BX('crm-document-edit-all'));
-			BX.hide(BX('crm-document-edit-spoiler'));
+			BX.show(document.getElementById('crm-document-edit-all'));
+			BX.hide(document.getElementById('crm-document-edit-spoiler'));
 		});
 		this.initForm();
 	};
 
 	BX.Crm.DocumentEdit.initForm = function()
 	{
-		BX.bind(BX('crm-document-edit-form'), 'submit', BX.proxy(this.sendForm, this));
-		BX.bind(BX('crm-document-edit-save'), 'click', BX.proxy(this.sendForm, this));
-		BX.bind(BX('crm-document-edit-cancel'), 'click', BX.proxy(this.closeSlider, this));
-		BX.bindDelegate(BX('crm-document-edit-form'), 'change', {className: 'crm-document-edit-select'}, BX.proxy(this.refillValues, this));
+		BX.bind(document.getElementById('crm-document-edit-form'), 'submit', BX.proxy(this.sendForm, this));
+		BX.bind(document.getElementById('crm-document-edit-save'), 'click', BX.proxy(this.sendForm, this));
+		BX.bind(document.getElementById('crm-document-edit-cancel'), 'click', BX.proxy(this.closeSlider, this));
+		BX.bindDelegate(document.getElementById('crm-document-edit-form'), 'change', {className: 'crm-document-edit-select'}, BX.proxy(this.refillValues, this));
 	};
 
 	BX.Crm.DocumentEdit.sendForm = function(event)
 	{
-		var form = BX('crm-document-edit-form');
+		var form = document.getElementById('crm-document-edit-form');
 		var error = '';
 		var values = {};
 		for(var i = 0; i < form.length; i++)
@@ -745,7 +615,7 @@
 
 	BX.Crm.DocumentEdit.collectFormData = function()
 	{
-		var form = BX('crm-document-edit-form');
+		var form = document.getElementById('crm-document-edit-form');
 		var data = {};
 		for(var i = 0; i < form.length; i++)
 		{
@@ -781,8 +651,8 @@
 
 	BX.Crm.DocumentEdit.showError = function(error)
 	{
-		BX('crm-document-edit-error').innerHTML = error;
-		BX.show(BX('crm-document-edit-error'));
+		document.getElementById('crm-document-edit-error').innerHTML = error;
+		BX.show(document.getElementById('crm-document-edit-error'));
 	};
 
 	BX.Crm.DocumentEdit.refillValues = function()
@@ -799,7 +669,7 @@
 		}
 		BX.ajax.runAction('crm.documentgenerator.' + entityName + '.getFields', {data: data}).then(function(response)
 		{
-			var form = BX('crm-document-edit-form');
+			var form = document.getElementById('crm-document-edit-form');
 			var result = response.data[entityName + 'Fields'];
 			for(var name in result)
 			{
@@ -807,7 +677,7 @@
 				{
 					if(typeof result[name].value === 'object' && BX.type.isNotEmptyObject(result[name].value))
 					{
-						var select = BX('field-' + name);
+						var select = document.getElementById('field-' + name);
 						if(!select)
 						{
 							var group = result[name].group;
@@ -815,7 +685,7 @@
 							{
 								group = result[name].group[result[name].group.length - 1];
 							}
-							var groupNode = BX('crm-document-edit-group-' + group);
+							var groupNode = document.getElementById('crm-document-edit-group-' + group);
 							if(groupNode)
 							{
 								var header = BX.findChild(groupNode, {tag: 'h3'});

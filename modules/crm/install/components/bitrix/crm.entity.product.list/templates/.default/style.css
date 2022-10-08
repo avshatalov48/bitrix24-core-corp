@@ -3,7 +3,7 @@
 }
 
 .symbol_ruble {
-	font-family: 'rubleBitrix', "Helvetica Neue", Helvetica, Arial, sans-serif
+	font-family: 'rubleBitrix', var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 }
 
 .crm-entity-product-set-item-container {
@@ -88,7 +88,7 @@
 
 .crm-entity-product-properties-scu-title-text {
 	color: #525c69;
-	font: 10px/11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 10px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-properties-scu-list {
@@ -177,7 +177,7 @@
 	color: #000;
 	vertical-align: middle;
 	text-align: center;
-	font: bold 11px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /**/
@@ -194,7 +194,7 @@
 	color: #333;
 	white-space: nowrap;
 	background: #fff;
-	font: 400 14px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 400 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	display: -webkit-box;
 	display: -ms-flexbox;
 	display: flex;
@@ -267,12 +267,12 @@
 	color: #9b9b9b;
 	text-decoration: line-through;
 	white-space: nowrap;
-	font: 13px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-info-price-desc {
 	color: rgba(83, 92, 105, .62);
-	font: 11px/13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /*endregion*/
@@ -288,7 +288,7 @@
 	height: 39px;
 	border: none;
 	border-radius: 3px;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: right;
 	color: #333;
 }
@@ -296,7 +296,7 @@
 .crm-entity-product-control-tax-sum-field {
 	position: relative;
 	padding: 12px 0;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: right;
 	color: #333;
 }
@@ -307,7 +307,7 @@
 
 .crm-entity-product-control-amount-desc {
 	color: rgba(83, 92, 105, 0.62);
-	font: 11px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-control-arrows {
@@ -363,7 +363,7 @@
 	border: 1px solid #c6cdd3;
 	border-radius: 3px;
 	text-align: left;
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
 	color: #333;
@@ -382,7 +382,7 @@
 	width: 115px;
 	border: 1px solid #c6cdd3;
 	text-align: left;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	display: block;
 	-webkit-box-sizing: border-box;
@@ -429,7 +429,7 @@
 .crm-entity-product-control-additional-nds span {
 	border-bottom: 1px dashed;
 	color: #196fba;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-control-additional-nds:hover span {
@@ -461,7 +461,8 @@
 	margin-bottom: 6px;
 	color: #535c69;
 	text-transform: uppercase;
-	font: 11px/12px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-product-control-discounts-list {
@@ -495,14 +496,14 @@
 .crm-entity-product-control-discounts-list-item-desc {
 	padding-left: 25px;
 	color: #76888a;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-control-discounts-list-add-item-btn {
 	border-bottom: 1px dashed;
 	color: rgba(83, 92, 105, 0.82);
 	text-decoration: none;
-	font: 12px/16px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-transition: 250ms linear all;
 	-o-transition: 250ms linear all;
 	transition: 250ms linear all;
@@ -565,7 +566,7 @@
 
 .crm-entity-product-control-discounts-list-add-item-title {
 	color: #76888a;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-control-discounts-list-add-item-inner {
@@ -593,14 +594,14 @@
 	margin-right: 26px;
 	border-bottom: 1px dashed;
 	color: #196fba;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 }
 
 .crm-entity-product-control-discounts-list-add-item-text {
 	margin-right: 6px;
 	color: #333;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /*endregion*/
@@ -663,7 +664,7 @@
 
 .crm-entity-total-box-row-column {
 	color: #333;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-total-box-row .crm-entity-total-box-row-column:first-child {
@@ -691,7 +692,8 @@
 	margin-bottom: 6px;
 	color: #535c69;
 	text-transform: uppercase;
-	font: 11px/12px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-entity-promotional-code-box {
@@ -725,7 +727,7 @@
 .crm-entity-product-control-discounts-field-description {
 	padding-top: 10px;
 	color: #76888a;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-product-refresh-stub {
@@ -953,7 +955,7 @@ select.crm-entity-product-control-select-field:hover {
 
 .crm-product-list-payment-side-table {
 	width: 50%;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -986,7 +988,8 @@ select.crm-entity-product-control-select-field:hover {
 
 .crm-product-list-result-grid-total-big .crm-product-list-result-grid-item-currency-symbol {
 	color: rgba(82,92,105,.5);
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-product-list-page-content {
@@ -1015,7 +1018,7 @@ select.crm-entity-product-control-select-field:hover {
 	-webkit-box-pack: end;
 	    -ms-flex-pack: end;
 	        justify-content: flex-end;
-	font: 15px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	margin-bottom: 5px;
 }
@@ -1043,7 +1046,8 @@ select.crm-entity-product-control-select-field:hover {
 }
 
 .crm-product-list-result-grid-total-big {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 21px;
 	color: #525c69;
 	padding-top: 10px;

@@ -514,7 +514,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'serviceUrl' => '/bitrix/components/bitrix/crm.quote.list/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'QUOTE_COUNT' => '20',
 							'PATH_TO_QUOTE_SHOW' => $this->arResult['PATH_TO_QUOTE_SHOW'],
 							'PATH_TO_QUOTE_EDIT' => $this->arResult['PATH_TO_QUOTE_EDIT'],
@@ -526,7 +526,7 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 							'ENABLE_TOOLBAR' => true,
 							'PRESERVE_HISTORY' => true,
 							'ADD_EVENT_NAME' => 'CrmCreateQuoteFromLead'
-						)
+						], 'crm.quote.list')
 					)
 				)
 			);
@@ -579,10 +579,10 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'ENTITY_ID' => $this->entityID,
 							'ENTITY_TYPE_NAME' => CCrmOwnerType::LeadName,
-						)
+						], 'crm.entity.tree')
 					)
 				)
 			);
@@ -2003,6 +2003,11 @@ class CCrmLeadDetailsComponent extends CBitrixComponent
 		$this->entityData['FORMATTED_OPPORTUNITY_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
 			$this->entityData['OPPORTUNITY'],
 			$this->entityData['CURRENCY_ID'],
+			''
+		);
+		$this->entityData['FORMATTED_OPPORTUNITY_ACCOUNT_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString(
+			$this->entityData['OPPORTUNITY_ACCOUNT'],
+			$this->entityData['ACCOUNT_CURRENCY_ID'],
 			''
 		);
 		$this->entityData['FORMATTED_OPPORTUNITY'] = \CCrmCurrency::MoneyToString(

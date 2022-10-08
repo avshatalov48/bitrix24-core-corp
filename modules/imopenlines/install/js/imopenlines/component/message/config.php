@@ -16,6 +16,7 @@ return [
 		'ui.vue',
 		'ui.vue.vuex',
 		'im.view.message',
+		'ui.fonts.opensans',
 		'main.core.events',
 	],
 	'skip_core' => true,

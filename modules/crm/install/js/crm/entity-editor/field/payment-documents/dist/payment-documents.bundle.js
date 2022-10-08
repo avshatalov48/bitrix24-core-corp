@@ -174,6 +174,8 @@ this.BX = this.BX || {};
 	          if (onSuccess && main_core.Type.isFunction(onSuccess)) {
 	            onSuccess(response);
 	          }
+
+	          _this._emitChangeDocumentsEvent();
 	        } else {
 	          _this._showCommonError();
 
@@ -283,6 +285,12 @@ this.BX = this.BX || {};
 	            popupMenu.close();
 	          }
 	        }]
+	      });
+	      menuItems.push({
+	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CASHBOX_CHECKS'),
+	        onclick: function onclick() {
+	          return _this3._openPaymentChecksListSlider(doc.ID);
+	        }
 	      });
 	      menuItems.push({
 	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
@@ -721,6 +729,18 @@ this.BX = this.BX || {};
 	      this._context().startSalescenterApplication(orderId, options);
 	    }
 	  }, {
+	    key: "_openPaymentChecksListSlider",
+	    value: function _openPaymentChecksListSlider(paymentId) {
+	      BX.SidePanel.Instance.open(BX.Uri.addParam('/crm/payment/checks/list.php', {
+	        'owner_id': paymentId,
+	        'owner_type': BX.CrmEntityType.enumeration.orderpayment
+	      }), {
+	        width: 1500,
+	        allowChangeHistory: false,
+	        cacheable: false
+	      });
+	    }
+	  }, {
 	    key: "_resendPaymentSlider",
 	    value: function _resendPaymentSlider(orderId, paymentId) {
 	      var analyticsLabel = 'crmDealPaymentDocumentsResendPaymentSlider';
@@ -815,6 +835,8 @@ this.BX = this.BX || {};
 	          entityTypeId: _this7._options.OWNER_TYPE_ID,
 	          entityId: _this7._options.OWNER_ID
 	        });
+
+	        _this7._emitChangeDocumentsEvent();
 	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
@@ -854,6 +876,8 @@ this.BX = this.BX || {};
 	          entityTypeId: _this8._options.OWNER_TYPE_ID,
 	          entityId: _this8._options.OWNER_ID
 	        });
+
+	        _this8._emitChangeDocumentsEvent();
 	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
@@ -899,6 +923,8 @@ this.BX = this.BX || {};
 	          entityTypeId: _this9._options.OWNER_TYPE_ID,
 	          entityId: _this9._options.OWNER_ID
 	        });
+
+	        _this9._emitChangeDocumentsEvent();
 	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
@@ -941,6 +967,8 @@ this.BX = this.BX || {};
 
 	      var onSuccess = function onSuccess(response) {
 	        _this10._reloadOwner();
+
+	        _this10._emitChangeDocumentsEvent();
 	      };
 
 	      var reloadModelOnError = function reloadModelOnError(response) {
@@ -1054,6 +1082,14 @@ this.BX = this.BX || {};
 	          this._rootNode.classList.remove('is-loading');
 	        }
 	      }
+	    }
+	  }, {
+	    key: "_emitChangeDocumentsEvent",
+	    value: function _emitChangeDocumentsEvent() {
+	      main_core_events.EventEmitter.emit('PaymentDocuments.EntityEditor:changeDocuments', {
+	        entityTypeId: this._options.OWNER_TYPE_ID,
+	        entityId: this._options.OWNER_ID
+	      });
 	    }
 	  }, {
 	    key: "_subscribeToGlobalEvents",
@@ -1276,7 +1312,7 @@ this.BX = this.BX || {};
 	        return _this3._resendPaymentSlider(doc.ORDER_ID, doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject7$1 || (_templateObject7$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">", " (", ")</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderDeliveryDocument",
@@ -1302,7 +1338,7 @@ this.BX = this.BX || {};
 	        return _this4._viewDeliverySlider(doc.ORDER_ID, doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, doc.DELIVERY_NAME, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject8$1 || (_templateObject8$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ", ", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, doc.DELIVERY_NAME, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderRealizationDocument",
@@ -1336,7 +1372,7 @@ this.BX = this.BX || {};
 	        return _this5._viewRealizationSlider(doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderTotalSum",

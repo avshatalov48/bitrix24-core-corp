@@ -1,0 +1,2 @@
+<?php
+$MESS["EXTRANET_CONTACTS_PERSONAL"] = "Contacts";

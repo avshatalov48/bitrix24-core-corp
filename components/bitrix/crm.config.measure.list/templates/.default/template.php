@@ -1,6 +1,7 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 global $APPLICATION;
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 
 $arResult['GRID_DATA'] = $arColumns = array();

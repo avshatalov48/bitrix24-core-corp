@@ -19,6 +19,7 @@ $MESS["CRM_WEBFORM_LIST_ITEM_ACTIVE_CHANGE_BY"] = "Кто активировал
 $MESS["CRM_WEBFORM_LIST_ITEM_NAME"] = "Название";
 $MESS["CRM_WEBFORM_LIST_ITEM_ENTITY_COUNTERS"] = "Форма создает";
 $MESS["CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU"] = "Конверсия";
+$MESS["CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU"] = "Изменения";
 $MESS["CRM_WEBFORM_LIST_FILTER_PRESET_SYSTEM"] = "Предустановленные";
 $MESS["CRM_WEBFORM_LIST_FILTER_PRESET_MY_FORMS"] = "Мои формы";
 $MESS["CRM_WEBFORM_LIST_FILTER_CREATED_BY"] = "Кем создана";
@@ -32,17 +33,23 @@ $MESS["CRM_WEBFORM_LIST_ITEM_CONVERSION_BAD"] = "Плохо";
 $MESS["CRM_WEBFORM_LIST_ITEM_CONVERSION_NORMAL"] = "Нормально";
 $MESS["CRM_WEBFORM_LIST_ITEM_CONVERSION_GOOD"] = "Хорошо";
 $MESS["CRM_WEBFORM_LIST_ITEM_CONVERSION_PERFECT"] = "Отлично";
+$MESS["CRM_WEBFORM_LIST_ITEM_SUBMITS_NONE"] = "Сбор данных";
+$MESS["CRM_WEBFORM_LIST_ITEM_SUBMITS_AWFUL"] = "Число заполнений снизилось значительно";
+$MESS["CRM_WEBFORM_LIST_ITEM_SUBMITS_BAD"] = "Число заполнений снизилось незначительно";
+$MESS["CRM_WEBFORM_LIST_ITEM_SUBMITS_NORMAL"] = "Число заполнений не изменилось";
+$MESS["CRM_WEBFORM_LIST_ITEM_SUBMITS_GOOD"] = "Число заполнений выросло незначительно";
+$MESS["CRM_WEBFORM_LIST_ITEM_SUBMITS_PERFECT"] = "Число заполнений выросло значительно";
 $MESS["CRM_WEBFORM_LIST_FILTER_PRESET_CALLABLE"] = "Обратный звонок";
 $MESS["CRM_WEBFORM_LIST_FILTER_PRESET_CALLABLE_Y"] = "Да";
 $MESS["CRM_WEBFORM_LIST_FILTER_PRESET_CALLABLE_N"] = "Нет";
 $MESS["CRM_WEBFORM_LIST_FILTER_PRESET_CALLABLE_NOTSET"] = "Не установлено";
+$MESS["CRM_WEBFORM_LIST_FILTER_PRESET_PUBLINK"] = "Публичная ссылка";
 $MESS['TASKS_GRID_STUB_NO_DATA_TITLE'] = 'По вашему запросу ничего не найдено';
 $MESS['TASKS_GRID_STUB_NO_DATA_DESCRIPTION'] = 'Попробуйте сбросить значения в фильтре или изменить запрос поиска';
 $MESS['CRM_WEBFORM_LIST_FILTER_INTEGRATIONS'] = 'Рекламные интеграции';
 $MESS['CRM_WEBFORM_LIST_FILTER_INTEGRATIONS_FACEBOOK'] = 'Facebook';
 $MESS['CRM_WEBFORM_LIST_FILTER_INTEGRATIONS_VKONTAKTE'] = 'Вконтакте';
 $MESS['CRM_WEBFORM_LIST_FILTER_PRESET_WHATSAPP'] = 'WhatsApp';
-
-
-
+$MESS["CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT"] = "Сравнение количества заполненных форм за последние 2 недели с количеством заполнений за 2 недели до этого";
+$MESS["CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU_HINT"] = "Количество заполнений к количеству просмотров за последние 2 недели";
 ?>

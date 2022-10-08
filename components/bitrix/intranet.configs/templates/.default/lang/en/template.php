@@ -55,7 +55,7 @@ Advanced Bitrix24.Drive features are available in commercial subscriptions start
 $MESS["CONFIG_DISK_LOCK_POPUP_TITLE"] = "Available only in advanced Bitrix24 Drive";
 $MESS["CONFIG_DISK_OBJECT_LOCK_ENABLED"] = "Allow document locking";
 $MESS["CONFIG_DISK_TRANSFORM_FILES_ON_OPEN"] = "Convert file as soon as it is opened";
-$MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history";
+$MESS["CONFIG_DISK_VERSION_LIMIT_PER_FILE"] = "Max. entries in document history.";
 $MESS["CONFIG_DISK_VIEWER_SERVICE"] = "View documents using";
 $MESS["CONFIG_EMAIL_FROM"] = "E-mail of the site administrator<br>(default sender address)";
 $MESS["CONFIG_EXAMPLE"] = "Example";
@@ -110,6 +110,7 @@ $MESS["CONFIG_MP_ALLOW_USER_INSTALL1"] = "Allow users to install apps";
 $MESS["CONFIG_NAME_CHANGE_ACTION"] = "Change";
 $MESS["CONFIG_NAME_CHANGE_INFO"] = "Note: you can change your Bitrix24 address only once.";
 $MESS["CONFIG_NAME_CHANGE_SECTION"] = "Change your Bitrix24 address";
+$MESS["CONFIG_NAME_CURRENT_MAP_PROVIDER"] = "Current map provider";
 $MESS["CONFIG_NAME_FILEMAN_GOOGLE_API_KEY"] = "Google Maps key specified in the Site Explorer module settings";
 $MESS["CONFIG_NAME_FILEMAN_YANDEX_MAP_API_KEY"] = "Yandex Maps key";
 $MESS["CONFIG_NAME_FORMAT"] = "Name format";
@@ -118,6 +119,7 @@ $MESS["CONFIG_NAME_GOOGLE_API_KEY"] = "Google API integration preferences";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD"] = "Google Maps API for Bitrix24 integration key";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_FIELD2"] = "Google Maps JavaScript API, Places API and Geocoding API browser key";
 $MESS["CONFIG_NAME_GOOGLE_API_KEY_HINT"] = "A Google API key is required to use maps. To get your key, please <a href=\"https://developers.google.com/maps/documentation/javascript/get-api-key\" target=\"_blank\">use this form</a>.";
+$MESS["CONFIG_NAME_MAP_PROVIDER_SETTINGS"] = "#PROVIDER# provider settings";
 $MESS["CONFIG_NETWORK_AVAILABLE"] = "Allow users of my Bitrix24 communicate in global Bitrix24 Network";
 $MESS["CONFIG_NETWORK_AVAILABLE_NOT_CONFIRMED"] = "This feature will be available once the administrator has confirmed the account.";
 $MESS["CONFIG_NETWORK_AVAILABLE_TEXT_NEW"] = "Communication in Bitrix24.Network is available to commercial Bitrix24 users only.<br/><br/>

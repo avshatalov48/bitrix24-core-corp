@@ -888,7 +888,8 @@ class RelationManager
 		$result = [];
 		foreach ($tabCodes as $tabCode => $entityTypeId)
 		{
-			$serviceUrl = Container::getInstance()->getRouter()->getChildrenItemsListUrl(
+			$router = Container::getInstance()->getRouter();
+			$serviceUrl = $router->getChildrenItemsListUrl(
 				$entityTypeId,
 				$parentEntityTypeId,
 				$parentEntityId
@@ -903,14 +904,17 @@ class RelationManager
 						'serviceUrl' => $serviceUrl,
 						'componentData' => [
 							'template' => '',
-							'params' => [
-								'GRID_ID_SUFFIX' => 'PARENT_' . \CCrmOwnerType::ResolveName($parentEntityTypeId) . '_DETAILS',
-								'TAB_ID' => $tabCode,
-								'ENABLE_TOOLBAR' => true,
-								'PRESERVE_HISTORY' => true,
-								'PARENT_ENTITY_TYPE_ID' => $parentEntityTypeId,
-								'PARENT_ENTITY_ID' => $parentEntityId,
-							]
+							'signedParameters' => $router->signChildrenItemsComponentParams(
+								$entityTypeId,
+								[
+									'GRID_ID_SUFFIX' => 'PARENT_' . \CCrmOwnerType::ResolveName($parentEntityTypeId) . '_DETAILS',
+									'TAB_ID' => $tabCode,
+									'ENABLE_TOOLBAR' => true,
+									'PRESERVE_HISTORY' => true,
+									'PARENT_ENTITY_TYPE_ID' => $parentEntityTypeId,
+									'PARENT_ENTITY_ID' => $parentEntityId,
+								]
+							)
 						]
 					],
 					'enabled' => !$isNew,

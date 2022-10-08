@@ -1,8 +1,8 @@
 .crm-feed-client-more-link {
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-	font-size:12px; 
-	line-height:13px; 
-	margin-top:3px; 
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size:12px;
+	line-height:13px;
+	margin-top:3px;
 	padding-left:7px;
 	text-decoration:underline;
 	color:#A8A8A8;
@@ -19,7 +19,7 @@
 }
 
 /*.structure-dept-block, .structure-move-employee, */
-.feed-activity-client-popup {font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;}
+.feed-activity-client-popup {font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 
 .feed-activity-client-popup a
 /*,.structure-dept-block a */
@@ -45,24 +45,24 @@
 }
 
 .feed-activity-client-name {
-	color:#000; 
-	font-size:11px; 
-	line-height:12px; 
-	margin-top:3px; 
-	overflow:hidden; 
-	text-overflow:ellipsis; 
-	white-space:nowrap; 
+	color:#000;
+	font-size:11px;
+	line-height:12px;
+	margin-top:3px;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
 	display:inline-block;
 	width:150px;
 }
 .feed-activity-client-comm {
-	color:#000; 
-	font-size:11px; 
-	line-height:12px; 
-	margin-top:3px; 
-	overflow:hidden; 
-	text-overflow:ellipsis; 
-	white-space:nowrap; 
+	color:#000;
+	font-size:11px;
+	line-height:12px;
+	margin-top:3px;
+	overflow:hidden;
+	text-overflow:ellipsis;
+	white-space:nowrap;
 	display:inline-block;
 	max-width:100px;
 }

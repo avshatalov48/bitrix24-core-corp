@@ -1,8 +1,10 @@
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import "main.qrcode";
 import {Event, Loc, Tag} from 'main.core';
 import {Popup} from 'main.popup';
 import 'ui.notification';
-import './style.css'
+import './style.css';
 
 export type QrOptions = {
 	link: string;
@@ -139,7 +141,7 @@ export class Qr
 			})
 		}
 	}
-	
+
 	#getContainerInputLink()
 	{
 		if(!this.#containerInputLink)
@@ -154,7 +156,7 @@ export class Qr
 
 		return this.#containerInputLink;
 	}
-	
+
 	#getContainerCopyLink()
 	{
 		if(!this.#containerCopyLink)

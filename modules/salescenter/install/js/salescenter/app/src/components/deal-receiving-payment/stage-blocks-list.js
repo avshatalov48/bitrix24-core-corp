@@ -50,7 +50,8 @@ export default {
 					: Loc.getMessage('SALESCENTER_APP_CONTACT_BLOCK_TITLE_MESSAGE_2'),
 				showHint: this.$root.$app.options.templateMode !== 'view',
 				editorTemplate: this.$root.$app.sendingMethodDesc.text,
-				editorUrl: this.$root.$app.orderPublicUrl
+				editorUrl: this.$root.$app.orderPublicUrl,
+				selectedMode: 'payment',
 			},
 			product: {
 				status: this.$root.$app.options.basket && this.$root.$app.options.basket.length > 0
@@ -271,6 +272,28 @@ export default {
 		{
 			BX.userOptions.save('salescenter', 'add_payment_collapse_options', type, value);
 		},
+		onProductFormModeChange()
+		{
+			const isCompilationMode = this.$store.getters['orderCreation/isCompilationMode'];
+			if (isCompilationMode)
+			{
+				this.stages.delivery.status = Status.disabled;
+
+				this.stages.message.selectedMode = 'compilation';
+				this.$root.$app.sendingMethodDesc.text = this.$root.$app.sendingMethodDesc.text_modes.compilation;
+				this.stages.message.editorTemplate = this.$root.$app.sendingMethodDesc.text_modes.compilation;
+			}
+			else
+			{
+				this.stages.delivery.status = this.$root.$app.options.deliveryList.isInstalled
+					? Status.complete
+					: Status.disabled;
+
+				this.stages.message.selectedMode = 'payment';
+				this.$root.$app.sendingMethodDesc.text = this.$root.$app.sendingMethodDesc.text_modes.payment;
+				this.stages.message.editorTemplate = this.$root.$app.sendingMethodDesc.text_modes.payment;
+			}
+		},
 		isViewWithoutDelivery()
 		{
 			return (
@@ -308,12 +331,14 @@ export default {
 				:showHint="stages.message.showHint"
 				:editorTemplate="stages.message.editorTemplate"
 				:editorUrl="stages.message.editorUrl"
+				:selectedMode="stages.message.selectedMode"
 			/>
 			<product-block
 				:counter="counter++"
 				:status="stages.product.status"
 				:title="stages.product.title"
 				:hintTitle="stages.product.hintTitle"
+				@on-product-form-mode-change="onProductFormModeChange"
 			/>
 			<paysystem-block
 				v-if="editable"

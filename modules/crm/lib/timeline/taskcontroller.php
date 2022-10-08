@@ -60,50 +60,32 @@ class TaskController extends ActivityController
 			$created = new DateTime($fields['CREATED_DATE'], Date::convertFormatToPhp(FORMAT_DATETIME));
 		}
 
-		$historyEntryID = CreationEntry::create(
-				array(
-					'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
-					'ENTITY_ID' => $ownerID,
-					'AUTHOR_ID' => $authorID,
-					'CREATED' => $created,
-					'BINDINGS' => self::mapBindings($bindings)
-				)
-			);
+		$historyEntryID = CreationEntry::create([
+			'ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+			'ENTITY_ID' => $ownerID,
+			'AUTHOR_ID' => $authorID,
+			'CREATED' => $created,
+			'BINDINGS' => self::mapBindings($bindings)
+		]);
 
-		$enableHistoryPush = $historyEntryID > 0;
-		$enableSchedulePush = true;
+		$pullEventData = [$ownerID => $fields];
 
-		if(($enableHistoryPush || $enableSchedulePush) && Main\Loader::includeModule('pull'))
+		\Bitrix\Crm\Timeline\EntityController::loadCommunicationsAndMultifields(
+			$pullEventData,
+			\Bitrix\Crm\Service\Container::getInstance()
+				->getUserPermissions($params['CURRENT_USER'] ?? null)
+				->getCrmPermissions()
+		);
+
+		foreach($bindings as $binding)
 		{
-			$pushParams = array();
-			if($enableHistoryPush)
-			{
-				$historyFields = TimelineEntry::getByID($historyEntryID);
-				if(is_array($historyFields))
-				{
-					$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-						$historyFields,
-						array('ENABLE_USER_INFO' => true)
-					);
-				}
-			}
-			if($enableSchedulePush)
-			{
-				$pushParams['SCHEDULE_ITEM'] = self::prepareScheduleDataModel($fields);
-			}
-
-			foreach($bindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
-				\CPullWatch::AddToStack(
-					$tag,
-					array(
-						'module_id' => 'crm',
-						'command' => 'timeline_activity_add',
-						'params' => array_merge($pushParams, array('TAG' => $tag)),
-					)
-				);
-			}
+			$itemIdentifier = new \Bitrix\Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
+			$this->sendPullEventOnAdd($itemIdentifier, $historyEntryID, $params['CURRENT_USER'] ?? null);
+			$this->sendPullEventOnAddScheduled(
+				$itemIdentifier,
+				$pullEventData[$ownerID],
+				$params['CURRENT_USER'] ?? null
+			);
 		}
 	}
 	public function onModify($ownerID, array $params)
@@ -160,33 +142,12 @@ class TaskController extends ActivityController
 				)
 			);
 		}
-
-		if($historyEntryID > 0 && Main\Loader::includeModule('pull'))
+		foreach($bindings as $binding)
 		{
-			$pushParams = array();
-			$historyFields = TimelineEntry::getByID($historyEntryID);
-			if(is_array($historyFields))
-			{
-				$pushParams['HISTORY_ITEM'] = $this->prepareHistoryDataModel(
-					$historyFields,
-					array('ENABLE_USER_INFO' => true)
-				);
-			}
-
-			foreach($bindings as $binding)
-			{
-				$tag = TimelineEntry::prepareEntityPushTag($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']);
-				\CPullWatch::AddToStack(
-					$tag,
-					array(
-						'module_id' => 'crm',
-						'command' => 'timeline_activity_add',
-						'params' => array_merge($pushParams, array('TAG' => $tag)),
-					)
-				);
-			}
+			$this->sendPullEventOnAdd(new \Bitrix\Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']), $historyEntryID);
 		}
 	}
+
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
@@ -201,6 +162,7 @@ class TaskController extends ActivityController
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
 			}
+			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
 		}
 		return parent::prepareHistoryDataModel($data, $options);

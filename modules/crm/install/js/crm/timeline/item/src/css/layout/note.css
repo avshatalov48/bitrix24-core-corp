@@ -1,0 +1,106 @@
+.crm-timeline__card-note {
+	display: flex;
+	flex-wrap: wrap;
+	padding: 7px 5px 9px 8px;
+	--height-base: 38px;
+	--user-icon-container-size: 22px;
+	--user-icon-container-right-margin: 8px;
+	box-shadow: 0 2px 3px rgba(0, 0, 0, .06);
+	background: var(--ui-color-background-note, #fff8cf);
+}
+
+.crm-timeline__card-note_user {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: var(--user-icon-container-size);
+	height: var(--user-icon-container-size);
+	margin-right: var(--user-icon-container-right-margin);
+}
+
+.crm-timeline__card-note_area {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
+	overflow: hidden;
+}
+
+.crm-timeline__card-note_value {
+	min-height: 21px;
+	font-family: var(--crm-timeline__font-helvetica);
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-typography-text-md-line-height, 18px);
+	color: var(--ui-color-text-primary, rgba(51, 51, 51, 1));
+}
+
+.crm-timeline__card-note_edit {
+	display: inline-flex;
+	vertical-align: top;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 21px;
+	cursor: pointer;
+	opacity: .33;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-note_edit:hover {
+	opacity: .6;
+	transition: unset;
+}
+
+.crm-timeline__card-note_edit i {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	background: url(../image/crm-timeline_icon-edit.svg) center no-repeat;
+}
+
+.crm-timeline__card-note_cross {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	cursor: pointer;
+	opacity: .2;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-note_cross:hover {
+	opacity: .6;
+	transition: unset;
+}
+
+.crm-timeline__card-note_cross i {
+	display: inline-block;
+	width: 10px;
+	height: 10px;
+	background: url(../image/crm-timeline_icon-cross.svg) center no-repeat;
+}
+
+.crm-timeline__card-note_text {
+	min-height: 100%;
+	position: relative;
+	border: none;
+	outline: none;
+}
+
+.crm-timeline__card-note_placeholder {
+	position: relative;
+	left: 0;
+	top: 0;
+	color: var(--ui-color-base-50, #A8ADB4);
+}
+
+.crm-timeline__card-note__controls {
+	margin-top: 10px;
+	display: flex;
+	width: 100%;
+}
+
+.crm-timeline__card-note__control:not(:last-child) {
+	margin-right: var(--ui-space-inline-2xs, 4px);
+}

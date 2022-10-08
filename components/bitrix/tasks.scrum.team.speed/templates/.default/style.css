@@ -12,3 +12,30 @@
 .tasks-scrum-sprint-team-speed-chart {
 	min-height: 60vh;
 }
+
+.tasks-scrum-sprint-team-speed-stats {
+	padding: 0 39px 0 19px;
+	background: #fff;
+}
+
+.tasks-scrum-sprint-team-speed-stats-container.--loader {
+	opacity: 0.3;
+}
+
+.tasks-scrum-sprint-team-speed-stats-row {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-box-flex: 1;
+	    -ms-flex: 1 1 auto;
+	        flex: 1 1 auto;
+	text-align: center;
+}
+
+.tasks-scrum-sprint-team-speed-stats-row > div {
+	padding: 5px;
+}
+
+.tasks-scrum-sprint-team-speed-stats-row > div:last-child {
+	font-weight: bold;
+}

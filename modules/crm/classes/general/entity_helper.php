@@ -442,4 +442,14 @@ class CCrmEntityHelper
 			$settings->setFactoryEnabled(mb_strtoupper($enableFactory) === 'Y');
 		}
 	}
+
+	public static function setEnabledUniversalActivityScenarioFlagByRequest(\Bitrix\Main\Request $request): void
+	{
+		if ($request->get('enableUniversalActivityScenario') !== null)
+		{
+			$enableUniversalActivityScenario = (string)$request->get('enableUniversalActivityScenario');
+
+			\Bitrix\Crm\Settings\Crm::setUniversalActivityScenarioEnabled(mb_strtoupper($enableUniversalActivityScenario) === 'Y');
+		}
+	}
 }

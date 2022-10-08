@@ -435,7 +435,7 @@ this.BX.Location = this.BX.Location || {};
 	   */
 	  on: function on(types, fn, context) {
 	    // types can be a map of types/handlers
-	    if (babelHelpers.typeof(types) === 'object') {
+	    if (babelHelpers["typeof"](types) === 'object') {
 	      for (var type in types) {
 	        // we don't process space-separated events here for performance;
 	        // it's a hot path since Layer uses the on(obj) syntax
@@ -468,7 +468,7 @@ this.BX.Location = this.BX.Location || {};
 	    if (!types) {
 	      // clear all listeners if called without arguments
 	      delete this._events;
-	    } else if (babelHelpers.typeof(types) === 'object') {
+	    } else if (babelHelpers["typeof"](types) === 'object') {
 	      for (var type in types) {
 	        this._off(type, types[type], fn);
 	      }
@@ -625,7 +625,7 @@ this.BX.Location = this.BX.Location || {};
 	  // @method once(…): this
 	  // Behaves as [`on(…)`](#evented-on), except the listener will only get fired once and then removed.
 	  once: function once(types, fn, context) {
-	    if (babelHelpers.typeof(types) === 'object') {
+	    if (babelHelpers["typeof"](types) === 'object') {
 	      for (var type in types) {
 	        this.once(type, types[type], fn);
 	      }
@@ -867,7 +867,7 @@ this.BX.Location = this.BX.Location || {};
 	    return x;
 	  }
 
-	  if (babelHelpers.typeof(x) === 'object' && 'x' in x && 'y' in x) {
+	  if (babelHelpers["typeof"](x) === 'object' && 'x' in x && 'y' in x) {
 	    return new Point(x.x, x.y);
 	  }
 
@@ -1349,7 +1349,7 @@ this.BX.Location = this.BX.Location || {};
 	    return a;
 	  }
 
-	  if (isArray(a) && babelHelpers.typeof(a[0]) !== 'object') {
+	  if (isArray(a) && babelHelpers["typeof"](a[0]) !== 'object') {
 	    if (a.length === 3) {
 	      return new LatLng(a[0], a[1], a[2]);
 	    }
@@ -1365,7 +1365,7 @@ this.BX.Location = this.BX.Location || {};
 	    return a;
 	  }
 
-	  if (babelHelpers.typeof(a) === 'object' && 'lat' in a) {
+	  if (babelHelpers["typeof"](a) === 'object' && 'lat' in a) {
 	    return new LatLng(a.lat, 'lng' in a ? a.lng : a.lon, a.alt);
 	  }
 
@@ -1801,7 +1801,7 @@ this.BX.Location = this.BX.Location || {};
 	    div.innerHTML = '<v:shape adj="1"/>';
 	    var shape = div.firstChild;
 	    shape.style.behavior = 'url(#default#VML)';
-	    return shape && babelHelpers.typeof(shape.adj) === 'object';
+	    return shape && babelHelpers["typeof"](shape.adj) === 'object';
 	  } catch (e) {
 	    return false;
 	  }
@@ -2464,7 +2464,7 @@ this.BX.Location = this.BX.Location || {};
 	// Adds a set of type/listener pairs, e.g. `{click: onClick, mousemove: onMouseMove}`
 
 	function on(obj, types, fn, context) {
-	  if (babelHelpers.typeof(types) === 'object') {
+	  if (babelHelpers["typeof"](types) === 'object') {
 	    for (var type in types) {
 	      addOne(obj, type, types[type], fn);
 	    }
@@ -2488,7 +2488,7 @@ this.BX.Location = this.BX.Location || {};
 	// Removes a set of type/listener pairs, e.g. `{click: onClick, mousemove: onMouseMove}`
 
 	function off(obj, types, fn, context) {
-	  if (babelHelpers.typeof(types) === 'object') {
+	  if (babelHelpers["typeof"](types) === 'object') {
 	    for (var type in types) {
 	      removeOne(obj, type, types[type], fn);
 	    }
@@ -5705,7 +5705,7 @@ this.BX.Location = this.BX.Location || {};
 
 	function _simplifyDP(points, sqTolerance) {
 	  var len = points.length,
-	      ArrayConstructor = (typeof Uint8Array === "undefined" ? "undefined" : babelHelpers.typeof(Uint8Array)) !== undefined + '' ? Uint8Array : Array,
+	      ArrayConstructor = (typeof Uint8Array === "undefined" ? "undefined" : babelHelpers["typeof"](Uint8Array)) !== undefined + '' ? Uint8Array : Array,
 	      markers = new ArrayConstructor(len);
 	  markers[0] = markers[len - 1] = 1;
 
@@ -5895,7 +5895,7 @@ this.BX.Location = this.BX.Location || {};
 
 
 	function isFlat(latlngs) {
-	  return !isArray(latlngs[0]) || babelHelpers.typeof(latlngs[0][0]) !== 'object' && typeof latlngs[0][0] !== 'undefined';
+	  return !isArray(latlngs[0]) || babelHelpers["typeof"](latlngs[0][0]) !== 'object' && typeof latlngs[0][0] !== 'undefined';
 	}
 
 	function _flat(latlngs) {
@@ -13329,34 +13329,38 @@ this.BX.Location = this.BX.Location || {};
 		map: createMap
 	});
 
-	var _token = new WeakMap();
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 
-	var _sourceRepository = new WeakMap();
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
-	var _isRefreshing = new WeakMap();
+	var _token = /*#__PURE__*/new WeakMap();
 
-	var _refreshingPromise = new WeakMap();
+	var _sourceRepository = /*#__PURE__*/new WeakMap();
+
+	var _isRefreshing = /*#__PURE__*/new WeakMap();
+
+	var _refreshingPromise = /*#__PURE__*/new WeakMap();
 
 	var TokenContainer = /*#__PURE__*/function () {
 	  function TokenContainer(props) {
 	    babelHelpers.classCallCheck(this, TokenContainer);
 
-	    _token.set(this, {
+	    _classPrivateFieldInitSpec(this, _token, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _sourceRepository.set(this, {
+	    _classPrivateFieldInitSpec(this, _sourceRepository, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _isRefreshing.set(this, {
+	    _classPrivateFieldInitSpec(this, _isRefreshing, {
 	      writable: true,
 	      value: false
 	    });
 
-	    _refreshingPromise.set(this, {
+	    _classPrivateFieldInitSpec(this, _refreshingPromise, {
 	      writable: true,
 	      value: null
 	    });
@@ -13378,7 +13382,7 @@ this.BX.Location = this.BX.Location || {};
 	        _this.token = sourceProps.sourceParams.token;
 	        babelHelpers.classPrivateFieldSet(_this, _isRefreshing, false);
 	        return sourceProps.sourceParams.token;
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        babelHelpers.classPrivateFieldSet(_this, _isRefreshing, false);
 	        console.error(response);
 	      }));
@@ -13397,17 +13401,23 @@ this.BX.Location = this.BX.Location || {};
 	  return TokenContainer;
 	}();
 
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
-	var _tokenContainer = new WeakMap();
+	var _tokenContainer = /*#__PURE__*/new WeakMap();
 
-	var _hostName = new WeakMap();
+	var _hostName = /*#__PURE__*/new WeakMap();
 
-	var _waitingRequests = new WeakMap();
+	var _waitingRequests = /*#__PURE__*/new WeakMap();
 
-	var _processingUnauthorized = new WeakMap();
+	var _processingUnauthorized = /*#__PURE__*/new WeakMap();
 
-	var _processUnauthorizedResponse = new WeakSet();
+	var _processUnauthorizedResponse = /*#__PURE__*/new WeakSet();
 
 	var TileLayerAuth = /*#__PURE__*/function (_Leaflet$TileLayer) {
 	  babelHelpers.inherits(TileLayerAuth, _Leaflet$TileLayer);
@@ -13425,24 +13435,24 @@ this.BX.Location = this.BX.Location || {};
 
 	    _this = babelHelpers.possibleConstructorReturn(this, (_babelHelpers$getProt = babelHelpers.getPrototypeOf(TileLayerAuth)).call.apply(_babelHelpers$getProt, [this].concat(args)));
 
-	    _processUnauthorizedResponse.add(babelHelpers.assertThisInitialized(_this));
+	    _classPrivateMethodInitSpec(babelHelpers.assertThisInitialized(_this), _processUnauthorizedResponse);
 
-	    _tokenContainer.set(babelHelpers.assertThisInitialized(_this), {
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _tokenContainer, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _hostName.set(babelHelpers.assertThisInitialized(_this), {
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _hostName, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _waitingRequests.set(babelHelpers.assertThisInitialized(_this), {
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _waitingRequests, {
 	      writable: true,
 	      value: []
 	    });
 
-	    _processingUnauthorized.set(babelHelpers.assertThisInitialized(_this), {
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _processingUnauthorized, {
 	      writable: true,
 	      value: false
 	    });
@@ -13495,7 +13505,7 @@ this.BX.Location = this.BX.Location || {};
 	          reader.readAsDataURL(blobResponse);
 	          done(null, img);
 	        }
-	      }).catch(function (response) {
+	      })["catch"](function (response) {
 	        console.error(response);
 	      });
 	    }
@@ -13517,7 +13527,7 @@ this.BX.Location = this.BX.Location || {};
 	  return TileLayerAuth;
 	}(TileLayer);
 
-	var _processUnauthorizedResponse2 = function _processUnauthorizedResponse2(url, img, done) {
+	function _processUnauthorizedResponse2(url, img, done) {
 	  var _this3 = this;
 
 	  babelHelpers.classPrivateFieldSet(this, _processingUnauthorized, true);
@@ -13536,7 +13546,7 @@ this.BX.Location = this.BX.Location || {};
 
 	    babelHelpers.classPrivateFieldSet(_this3, _processingUnauthorized, false);
 	  });
-	};
+	}
 
 	Icon.Default.imagePath = '/bitrix/js/location/osm/leaflet/images/';
 

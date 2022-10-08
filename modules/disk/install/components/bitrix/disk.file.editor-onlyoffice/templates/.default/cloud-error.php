@@ -27,8 +27,9 @@ Loc::loadLanguageFile(__DIR__ . '/template.php');
 
 /** @var array $arResult */
 Extension::load([
-	'disk',
+	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'disk',
 	'main.loader',
 ]);
 

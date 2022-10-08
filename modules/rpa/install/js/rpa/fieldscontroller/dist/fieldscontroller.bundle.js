@@ -2,153 +2,13 @@ this.BX = this.BX || {};
 (function (exports,main_core,ui_userfieldfactory,ui_userfield,main_loader,main_core_events,main_popup,rpa_manager) {
 	'use strict';
 
-	function _templateObject14() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-select-field-button\" onclick=\"", "\">", "</div>"]);
-
-	  _templateObject14 = function _templateObject14() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-create-field-button\" onclick=\"", "\">", "</div>"]);
-
-	  _templateObject13 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-footer\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"]);
-
-	  _templateObject12 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<span data-switcher='", "' class=\"ui-switcher rpa-fields-controller-switcher\"></span>"]);
-
-	  _templateObject11 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-settings\"></div>"]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-wrapper-gear\"></div>"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-wrapper\"></div>"]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-title\">", "</div>"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-subtitle\">", "</div>"]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-container\"></div>"]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-row\" data-role=\"field-row-", "\"></div>"]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-fields\"></div>"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-container\"></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div></div>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	/**
 	 * @memberof BX.Rpa
 	 * @mixes EventEmitter
 	 */
 
-	var FieldsController =
-	/*#__PURE__*/
-	function () {
+	var FieldsController = /*#__PURE__*/function () {
 	  function FieldsController(params) {
 	    var _this = this;
 
@@ -235,7 +95,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "removeField",
 	    value: function removeField(userField) {
-	      this.fields.delete(userField.getName());
+	      this.fields["delete"](userField.getName());
 	      return this;
 	    }
 	  }, {
@@ -260,7 +120,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "removeHiddenField",
 	    value: function removeHiddenField(userField) {
-	      this.hiddenFields.delete(userField.getName());
+	      this.hiddenFields["delete"](userField.getName());
 	      return this;
 	    }
 	  }, {
@@ -270,7 +130,7 @@ this.BX = this.BX || {};
 	      container.appendChild(this.renderFields());
 
 	      if (this.factory) {
-	        this.layout.configurator = main_core.Tag.render(_templateObject());
+	        this.layout.configurator = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	        container.appendChild(this.layout.configurator);
 	        container.appendChild(this.renderFooter());
 	      }
@@ -280,7 +140,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "renderContainer",
 	    value: function renderContainer() {
-	      this.layout.container = main_core.Tag.render(_templateObject2());
+	      this.layout.container = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-container\"></div>"])));
 	      return this.getContainer();
 	    }
 	  }, {
@@ -300,7 +160,7 @@ this.BX = this.BX || {};
 	          this.settings.values = this.getSettings();
 	        }
 	      } else {
-	        this.layout.fieldsContainer = main_core.Tag.render(_templateObject3());
+	        this.layout.fieldsContainer = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-fields\"></div>"])));
 	      }
 
 	      Array.from(this.fields.values()).forEach(function (userField) {
@@ -322,21 +182,21 @@ this.BX = this.BX || {};
 	    value: function renderField(userField) {
 	      var _this5 = this;
 
-	      var row = main_core.Tag.render(_templateObject4(), userField.getName());
-	      var container = main_core.Tag.render(_templateObject5());
+	      var row = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-row\" data-role=\"field-row-", "\"></div>"])), userField.getName());
+	      var container = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-container\"></div>"])));
 
 	      if (this.fieldSubTitle) {
-	        container.appendChild(main_core.Tag.render(_templateObject6(), main_core.Text.encode(this.fieldSubTitle)));
+	        container.appendChild(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-subtitle\">", "</div>"])), main_core.Text.encode(this.fieldSubTitle)));
 	      }
 
-	      container.appendChild(main_core.Tag.render(_templateObject7(), main_core.Text.encode(userField.getTitle())));
-	      var wrapper = main_core.Tag.render(_templateObject8());
+	      container.appendChild(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-title\">", "</div>"])), main_core.Text.encode(userField.getTitle())));
+	      var wrapper = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-wrapper\"></div>"])));
 	      wrapper.appendChild(container);
 
 	      if (this.settings) {
 	        wrapper.appendChild(this.renderSwitcher(userField));
 	      } else {
-	        var fieldSettingsButton = main_core.Tag.render(_templateObject9());
+	        var fieldSettingsButton = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-wrapper-gear\"></div>"])));
 	        this.getSettingsMenu(fieldSettingsButton, userField).destroy();
 	        main_core.Event.bind(fieldSettingsButton, 'click', function () {
 	          _this5.getSettingsMenu(fieldSettingsButton, userField).show();
@@ -345,7 +205,7 @@ this.BX = this.BX || {};
 	      }
 
 	      row.appendChild(wrapper);
-	      row.appendChild(main_core.Tag.render(_templateObject10()));
+	      row.appendChild(main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-field-settings\"></div>"]))));
 	      return row;
 	    }
 	  }, {
@@ -356,7 +216,7 @@ this.BX = this.BX || {};
 	        checked: this.settings.values[userField.getName()] === true,
 	        inputName: this.settings.inputName + '[' + userField.getName() + ']'
 	      };
-	      var switcher = main_core.Tag.render(_templateObject11(), JSON.stringify(data));
+	      var switcher = main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<span data-switcher='", "' class=\"ui-switcher rpa-fields-controller-switcher\"></span>"])), JSON.stringify(data));
 	      new BX.UI.Switcher({
 	        node: switcher
 	      });
@@ -366,7 +226,7 @@ this.BX = this.BX || {};
 	    key: "renderFooter",
 	    value: function renderFooter() {
 	      if (!this.layout.footer) {
-	        this.layout.footer = main_core.Tag.render(_templateObject12(), this.getSelectButton(), this.getCreateButton());
+	        this.layout.footer = main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-footer\">\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t</div>"])), this.getSelectButton(), this.getCreateButton());
 	      }
 
 	      this.updateSelectButtonAppearance();
@@ -387,7 +247,7 @@ this.BX = this.BX || {};
 	    key: "getCreateButton",
 	    value: function getCreateButton() {
 	      if (!this.layout.createButton) {
-	        this.layout.createButton = main_core.Tag.render(_templateObject13(), this.handleCreateButtonClick.bind(this), main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FILED_CREATE_BUTTON'));
+	        this.layout.createButton = main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-create-field-button\" onclick=\"", "\">", "</div>"])), this.handleCreateButtonClick.bind(this), main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FILED_CREATE_BUTTON'));
 	      }
 
 	      return this.layout.createButton;
@@ -405,7 +265,7 @@ this.BX = this.BX || {};
 	    key: "getSelectButton",
 	    value: function getSelectButton() {
 	      if (!this.layout.selectButton) {
-	        this.layout.selectButton = main_core.Tag.render(_templateObject14(), this.handleSelectButtonClick.bind(this), main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FIELD_SELECT_BUTTON'));
+	        this.layout.selectButton = main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"rpa-fields-controller-select-field-button\" onclick=\"", "\">", "</div>"])), this.handleSelectButtonClick.bind(this), main_core.Loc.getMessage('RPA_FIELDS_SELECTOR_FIELD_SELECT_BUTTON'));
 	      }
 
 	      return this.layout.selectButton;
@@ -497,7 +357,7 @@ this.BX = this.BX || {};
 	        _this7.emit('onFieldSave', {
 	          userField: userField
 	        });
-	      }).catch(function (errors) {
+	      })["catch"](function (errors) {
 	        _this7.stopProgress();
 
 	        _this7.showError(errors);

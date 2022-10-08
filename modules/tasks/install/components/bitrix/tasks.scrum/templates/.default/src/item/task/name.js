@@ -6,6 +6,8 @@ type Params = {
 	name: string,
 	isCompleted: boolean,
 	isImportant: boolean,
+	pathToTask: string,
+	sourceId: number,
 }
 
 export class Name extends EventEmitter
@@ -19,6 +21,9 @@ export class Name extends EventEmitter
 		this.value = ((Type.isString(params.name) && params.name) ? params.name.trim() : '');
 		this.important = params.isImportant;
 		this.completed = params.isCompleted;
+		this.sourceId = params.sourceId;
+
+		this.pathToTask = this.sourceId ? params.pathToTask.replace('#task_id#', this.sourceId) : null;
 
 		if (!this.value)
 		{
@@ -41,13 +46,27 @@ export class Name extends EventEmitter
 			value = value.replace(new RegExp(Tool.escapeRegex(lastWord) + '$'), `<span>${lastWord}</span>`);
 		}
 
-		this.node = Tag.render`
-			<div class="tasks-scrum__item--title ${visualClasses}">
-				${value}
-			</div>
-		`;
+		if (this.pathToTask)
+		{
+			this.node = Tag.render`
+				<a
+					href="${Text.encode(this.pathToTask)}"
+					class="tasks-scrum__item--title ${visualClasses}"
+				>
+					${value}
+				</a>
+			`;
+		}
+		else
+		{
+			this.node = Tag.render`
+				<div class="tasks-scrum__item--title ${visualClasses}">
+					${value}
+				</div>
+			`;
 
-		Event.bind(this.node, 'click', this.onClick.bind(this));
+			Event.bind(this.node, 'click', this.onClick.bind(this));
+		}
 
 		return this.node;
 	}

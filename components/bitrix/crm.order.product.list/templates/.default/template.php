@@ -4,7 +4,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Grid\Panel\Actions;
 use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load(["ui.fonts.ruble", "ui.design-tokens"]);
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.opensans",
+	"ui.fonts.ruble",
+]);
 
 $APPLICATION->AddHeadScript('/bitrix/js/crm/interface_grid.js');
 
@@ -182,7 +186,7 @@ foreach($arResult['PRODUCTS'] as $product)
 
 	if (!$isReadOnly)
 	{
-		$priceInnerHtml = '<input id="crm-product-price-'.$product['BASKET_CODE'].'" name="'.$namePrefix.'[PRICE]" value="'.$product['FORMATTED_PRICE'].'" class="crm-order-product-control-amount-field"> '.$product['CURRENCY_NAME_SHORT'];
+		$priceInnerHtml = '<input id="crm-product-price-'.$product['BASKET_CODE'].'" name="'.$namePrefix.'[PRICE]" type="number" value="'.$product['PRICE'].'" class="crm-order-product-control-amount-field crm-order-product-control-price-field"> '.$product['CURRENCY_NAME_SHORT'];
 	}
 	else
 	{

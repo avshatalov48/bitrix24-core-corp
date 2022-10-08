@@ -90,7 +90,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          } else {
 	            reject();
 	          }
-	        }).catch(function () {
+	        })["catch"](function () {
 	          reject();
 	        });
 	      });

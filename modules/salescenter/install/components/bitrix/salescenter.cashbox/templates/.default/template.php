@@ -8,6 +8,8 @@ $messages = Loc::loadLanguageFile(__FILE__);
 $messages = array_merge($messages, Loc::loadLanguageFile(__DIR__.'/../../../salescenter.cashbox.panel/templates/.default/template.php'));
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.icons',
 	'ui.common',
@@ -19,7 +21,6 @@ Extension::load([
 	'sidepanel',
 	'loader',
 	'ui.switcher',
-	'ui.design-tokens',
 ]);
 ?>
 

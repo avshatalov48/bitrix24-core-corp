@@ -1,7 +1,12 @@
 <?
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use \Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load('ui.notification');
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.notification',
+]);
 ?>
 <script>
 	BX.ready(function(){

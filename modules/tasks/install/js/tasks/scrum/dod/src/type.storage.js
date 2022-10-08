@@ -1,15 +1,16 @@
 import {ItemType} from './item.type';
+import {Type} from 'main.core';
 
 export class TypeStorage
 {
+	constructor()
+	{
+		this.types = new Map();
+	}
+
 	setTypes(types: Map<number, ItemType>)
 	{
 		this.types = types;
-	}
-
-	getNextType(): ItemType
-	{
-		return this.types.values().next().value;
 	}
 
 	getTypes(): Map<number, ItemType>
@@ -30,5 +31,28 @@ export class TypeStorage
 	removeType(type: ItemType)
 	{
 		this.types.delete(type.getId());
+	}
+
+	setActiveType(inputType: ?ItemType)
+	{
+		inputType = Type.isNil(inputType) ? this.types.values().next().value : inputType;
+
+		this.types.forEach((type: ItemType) => type.setActive(inputType.getId() === type.getId()));
+	}
+
+	getActiveType(): ?ItemType
+	{
+		const foundItem = [...this.types.values()].find((type: ItemType) => type.isActive());
+		if (Type.isNil(foundItem))
+		{
+			return this.types.values().next().value;
+		}
+
+		return foundItem;
+	}
+
+	isEmpty(): boolean
+	{
+		return this.types.size === 0;
 	}
 }

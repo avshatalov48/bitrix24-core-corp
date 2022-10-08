@@ -73,7 +73,7 @@
 	vertical-align: middle;
 	color: #333;
 	margin-top: 3px;
-	font: bold 16px/21px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 16px/21px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .ios-guide-section-final .ios-guide-section-num {
@@ -130,7 +130,7 @@
 }
 
 .ios-guide-section-title {
-	font: 20px/25px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/25px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	position: relative;
 	padding-left: 2px;
@@ -171,7 +171,7 @@
 @media (max-width: 480px) {
 	.ios-guide-info {
 		padding: 20px 16px 7px 16px;
-		font: 15px/18px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font: 15px/18px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 
 	.ios-guide-header {
@@ -180,7 +180,7 @@
 	}
 
 	.ios-guide-header-title {
-		font: 500 20px/23px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font: 500 20px/23px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 
 	.ios-guide-content {
@@ -188,7 +188,7 @@
 	}
 
 	.ios-guide-section-content {
-		font: 16px/22px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif
+		font: 16px/22px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica))
 	}
 
 	.ios-guide-section-inline.ios-guide-section {
@@ -197,10 +197,10 @@
 
 	.ios-guide-button,
 	.ios-guide-button:hover {
-		font: 500 17px/28px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font: 500 17px/28px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 
 	.ios-guide-link {
-		font: 16px/22px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font: 16px/22px "Roboto", var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 }

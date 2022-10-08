@@ -47,5 +47,14 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-whatsappbytwilio-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=10102021');
+				return false;
+			}
+		);
 	});
 })(window);

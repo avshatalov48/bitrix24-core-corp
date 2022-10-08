@@ -7,7 +7,7 @@
 	background:#fff;
 }
 .bx-otp-info-popup-content{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:16px;
 	min-width:500px;
 	padding:20px;
@@ -43,9 +43,9 @@
 }
 
 .bx-otp-info-popup-content-title{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:21px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	margin-top:6px;
 	padding-bottom:10px;
 	color:#505967;

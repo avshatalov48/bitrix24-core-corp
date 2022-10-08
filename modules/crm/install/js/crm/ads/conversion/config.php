@@ -11,6 +11,7 @@ return [
 		'ui.sidepanel.layout',
 		'seo.ads.login',
 		'main.core',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

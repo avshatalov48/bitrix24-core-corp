@@ -6,6 +6,8 @@ import {Confetti} from 'ui.confetti';
 
 import {RequestSender} from './request.sender';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import 'ui.hint';
 
 import '../css/base.css';
@@ -161,6 +163,7 @@ export class SprintCompletionForm extends EventEmitter
 				}
 			})
 			.catch((response) => {
+				this.completeButton.setWaiting(false);
 				this.requestSender.showErrorAlert(
 					response,
 					Loc.getMessage('TASKS_SCRUM_SPRINT_COMPLETION_ERROR_TITLE_POPUP')

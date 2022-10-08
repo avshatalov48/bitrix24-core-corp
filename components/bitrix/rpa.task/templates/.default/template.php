@@ -2,7 +2,14 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-hidden");
-\Bitrix\Main\UI\Extension::load(['ui.forms', 'ui.buttons', 'ui.notification']);
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.forms',
+	'ui.buttons',
+	'ui.notification',
+]);
 
 $user = $arResult['USER'];
 $isMine = $arResult['IS_MINE'];

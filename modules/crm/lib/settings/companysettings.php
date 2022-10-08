@@ -1,8 +1,12 @@
 <?php
 namespace Bitrix\Crm\Settings;
+
 use Bitrix\Main;
+
 class CompanySettings
 {
+	use Traits\EnableFactory;
+
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 
 	/** @var CompanySettings  */
@@ -31,6 +35,7 @@ class CompanySettings
 		$this->enableOutmodedRequisites = new BooleanSetting('~CRM_ENABLE_COMPANY_OUTMODED_FIELDS', false);
 		$this->enableDeferredCleaning = new BooleanSetting('enable_company_deferred_cleaning', true);
 		$this->enableRecycleBin = new BooleanSetting('enable_company_recycle_bin', true);
+		$this->initIsFactoryEnabledSetting(\CCrmOwnerType::Company, false);
 	}
 	/**
 	 * Get current instance

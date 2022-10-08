@@ -2440,4 +2440,9 @@ class EditorAdapter
 
 		return $requisiteBinding;
 	}
+
+	public function getAdditionalField(string $fieldName): ?array
+	{
+		return $this->additionalFields[$fieldName] ?? null;
+	}
 }

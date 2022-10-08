@@ -17,7 +17,7 @@
 
 .scheduler-print-caption {
 	margin: 0 0 3px 0;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #828b95;
 }
 
@@ -34,7 +34,7 @@
 	background-color: #fff;
 	background-repeat: no-repeat;
 	color: #535c69;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: .22s;
 	-webkit-appearance: none;
 	-moz-appearance: none;
@@ -56,12 +56,12 @@
 .scheduler-print-control.scheduler-print-control-select {
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNSIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDI1IDE2Ij4gIDxwb2x5Z29uIGZpbGw9IiM1MzVDNjkiIGZpbGwtcnVsZT0iZXZlbm9kZCIgcG9pbnRzPSIzLjU0NiA3LjQyNSAzLjU0NiAxLjYwNyAxLjYwNyAxLjYwNyAxLjYwNyA4LjM5NCAxLjYwNyA5LjM2NCA5LjM2NCA5LjM2NCA5LjM2NCA3LjQyNSIgdHJhbnNmb3JtPSJyb3RhdGUoLTQ1IDkuOSAxLjY1NykiLz48L3N2Zz4=);
 	background-position: right center;
-	font: 14px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .scheduler-print-control-label {
 	display: block;
-	font: 13px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c6a;
 }
 
@@ -69,6 +69,6 @@
 	padding: 40px;
 	min-width: 200px;
 	max-width: 400px;
-	font: 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: center;
 }

@@ -1,5 +1,5 @@
 .bx-crm-popup-title{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	font-weight:bold;
 	line-height:30px;
@@ -10,7 +10,7 @@
 }
 .bx-crm-popup-content,
 .bx-crm-popup-content-small{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:16px;
 	min-width:500px;
 	padding:20px;
@@ -29,7 +29,7 @@
 	background-color:#f8fafa;
 }
 .bx-crm-popup-content-title{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:15px;
 	font-weight:bold;
 	padding-bottom:20px;
@@ -54,9 +54,9 @@
 }
 
 .bx-crm-btn{
-	font-family:'Open Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size:12px;
-	font-weight:bold;
 	display:inline-block;
 	margin-bottom:10px;
 	padding:0 15px;
@@ -153,7 +153,7 @@
 	box-shadow: none;
 }
 .bx-crm-popup-label{
-	font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:14px;
 	opacity:.6;
 	color:#000;

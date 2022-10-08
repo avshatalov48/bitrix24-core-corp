@@ -1,4 +1,4 @@
-(function (exports,ui_vue,ui_vue_vuex,im_view_message,main_core_events) {
+(function (exports,ui_vue,ui_vue_vuex,im_view_message,ui_fonts_opensans,main_core_events) {
 	'use strict';
 
 	/**
@@ -192,5 +192,5 @@
 	  template: "\n\t\t<div v-if=\"showMessage\" class=\"bx-imopenlines-message\">\n\t\t\t<div v-if=\"dialogNumber\" class=\"bx-imopenlines-message-dialog-number\">{{dialogNumber}}</div>\n\t\t\t#PARENT_TEMPLATE#\n\t\t</div>\n\t"
 	});
 
-}((this.window = this.window || {}),BX,BX,window,BX.Event));
+}((this.window = this.window || {}),BX,BX,window,BX,BX.Event));
 //# sourceMappingURL=message.bundle.js.map

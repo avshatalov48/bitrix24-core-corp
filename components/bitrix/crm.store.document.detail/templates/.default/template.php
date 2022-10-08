@@ -17,9 +17,12 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-background');
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'catalog.entity-card',
 	'catalog.document-card',
 	'crm.entity-selector',
+	'spotlight',
 ]);
 
 if (
@@ -205,6 +208,14 @@ $tabContainerClassName .= ' ui-entity-stream-section-planned-above-overlay';
 				document.getElementById('<?=CUtil::JSEscape($arResult['TOOLBAR_ID'])?>'),
 				<?=CUtil::JSEscape(((int)$arResult['DOCUMENT_ID'] <= 0))?>
 			);
+		<?endif;?>
+
+		<?if ($arResult['WAREHOUSE_CRM_TOUR_DATA']['IS_TOUR_AVAILABLE']):?>
+		const onboardingData = {
+			chain:  Number(<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['CHAIN'])?>),
+			chainStep: Number(<?=CUtil::PhpToJSObject($arResult['WAREHOUSE_CRM_TOUR_DATA']['CHAIN_DATA']['STAGE'])?>),
+		};
+		BX.Crm.Store.DocumentCard.Document.Instance.enableOnboardingChain(onboardingData);
 		<?endif;?>
 	});
 </script>

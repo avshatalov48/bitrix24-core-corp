@@ -10,7 +10,7 @@ use Bitrix\Tasks\Component\Task\TasksTaskFormState;
 
 Loc::loadMessages(__FILE__);
 
-\Bitrix\Main\UI\Extension::load("ui.alerts");
+\Bitrix\Main\UI\Extension::load(["ui.design-tokens", "ui.fonts.opensans", "ui.alerts"]);
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
@@ -27,7 +27,23 @@ if (!empty($arResult['ERROR']))
 		}
 	}
 }
+?>
 
+<?php
+if (
+	$arResult['DATA']['FROM_TEMPLATE']
+	&& \Bitrix\Tasks\Update\TemplateConverter::isProceed()
+):
+?>
+	<?php
+		$APPLICATION->IncludeComponent("bitrix:tasks.interface.emptystate", "", [
+			'TITLE' => Loc::getMessage('TASKS_TEMPLATE_MEMBER_CONVERT_TITLE'),
+			'TEXT' => Loc::getMessage('TASKS_TEMPLATE_MEMBER_CONVERT'),
+		]);
+	?>
+<?php return; endif; ?>
+
+<?php
 $templateId = $arResult['TEMPLATE_DATA']['ID'];
 
 if($arParams["ENABLE_MENU_TOOLBAR"])
@@ -69,13 +85,34 @@ if($arParams["ENABLE_MENU_TOOLBAR"])
 		)
 	);
 }
-?>
 
-<?php if(Type::isIterable($arResult['ERROR']) && !empty($arResult['ERROR'])):?>
-	<?php foreach($arResult['ERROR'] as $error):?>
-		<div class="task-message-label <?=($error['TYPE'] == 'WARNING' ? 'warning' : 'error')?>"><?=htmlspecialcharsbx($error['MESSAGE'])?></div>
-	<?php endforeach?>
-<?php endif?>
+if (Type::isIterable($arResult['ERROR']))
+{
+	$errors = [];
+	$warnings = [];
+
+	foreach ($arResult['ERROR'] as $error)
+	{
+		if ($error['TYPE'] === 'WARNING')
+		{
+			$warnings[] = htmlspecialcharsbx($error['MESSAGE']);
+		}
+		else
+		{
+			$errors[] = htmlspecialcharsbx($error['MESSAGE']);
+		}
+	}
+
+	if (!empty($errors))
+	{
+		?><div class="task-message-label error"><?= implode("<br/>", $errors) ?></div><?php
+	}
+	if (!empty($warnings))
+	{
+		?><div class="task-message-label warning"><?= implode("<br/>", $warnings) ?></div><?php
+	}
+}
+?>
 
 <?php if($arResult['COMPONENT_DATA']['EVENT_TYPE'] == 'ADD' && !empty($arResult['DATA']['EVENT_TASK'])):?>
 	<div class="task-message-label">

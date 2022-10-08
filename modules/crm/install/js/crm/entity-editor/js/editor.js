@@ -442,11 +442,11 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	{
 		var mode = this._mode;
 		BX.Crm.EntityEditor.superclass.releaseActiveControls.apply(this, [options]);
-		if(this._mode !== BX.UI.EntityEditorMode.view)
+		if(this._mode !== BX.UI.EntityEditorMode.view && !this.getActiveControlCount())
 		{
 			this._mode = BX.UI.EntityEditorMode.view;
 		}
-		if(mode !== BX.UI.EntityEditorMode.view)
+		if(mode !== this._mode)
 		{
 			this._modeChangeNotifier.notify([ this ]);
 		}
@@ -744,7 +744,7 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		// 	this._controls[i].processSchemeChange();
 		// }
 	};
-	BX.Crm.EntityEditor.prototype.onSaveSuccess = function(result)
+	BX.Crm.EntityEditor.prototype.onSaveSuccess = function(result, params)
 	{
 		//todo refactor it on parent class
 		this._isRequestRunning = false;
@@ -940,37 +940,65 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 		}
 		else
 		{
-			if(BX.type.isPlainObject(entityData))
+			var needSwitchMode =  BX.prop.getBoolean(params, "switchMode", true);
+			if (needSwitchMode)
 			{
-				//Notification event is disabled because we will call "refreshLayout" for all controls at the end.
-				this._model.setData(entityData, { enableNotification: false });
+				if (BX.type.isPlainObject(entityData))
+				{
+					//Notification event is disabled because we will call "refreshLayout" for all controls at the end.
+					this._model.setData(entityData, {enableNotification: false});
+				}
+
+				this.adjustTitle();
+				this.adjustSize();
+				this.releaseAjaxForm();
+				this.initializeAjaxForm();
+
+				for (var i = 0, length = this._controllers.length; i < length; i++)
+				{
+					this._controllers[i].onAfterSave();
+				}
+
+				if (this._modeSwitch.isRunning())
+				{
+					this._modeSwitch.complete();
+				}
+				else
+				{
+					this.switchToViewMode({refreshLayout: false});
+				}
+
+				this.refreshLayout({reset: true});
+				if (!this.isToolPanelAlwaysVisible())
+				{
+					this.hideToolPanel();
+				}
 			}
-
-			this.adjustTitle();
-			this.adjustSize();
-			this.releaseAjaxForm();
-			this.initializeAjaxForm();
-
-			for(var i = 0, length = this._controllers.length; i < length; i++)
+			else if(BX.type.isPlainObject(entityData))
 			{
-				this._controllers[i].onAfterSave();
-			}
+				var previousModel = Object.create(this._model); // clone model object
+				previousModel.setData(  // copy model data
+					BX.clone(this._model.getData()),
+					{
+						enableNotification: false
+					}
+				);
 
-			//console.log("switchToViewMode");
+				//Notification event is disabled because we will call "refreshViewModeLayout" for all controls at the end.
+				this._model.setData(entityData, {enableNotification: false});
 
-			if(this._modeSwitch.isRunning())
-			{
-				this._modeSwitch.complete();
-			}
-			else
-			{
-				this.switchToViewMode({ refreshLayout: false });
-			}
+				this.adjustTitle();
+				this.adjustSize();
 
-			this.refreshLayout({ reset: true });
-			if (!this.isToolPanelAlwaysVisible())
-			{
-				this.hideToolPanel();
+				for(var i = 0, length = this._controllers.length; i < length; i++)
+				{
+					this._controllers[i].onReload();
+				}
+
+				this.refreshViewModeLayout({
+					previousModel: previousModel,
+					reset: true
+				});
 			}
 		}
 	};

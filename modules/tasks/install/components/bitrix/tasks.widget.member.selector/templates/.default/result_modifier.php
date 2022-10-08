@@ -105,7 +105,7 @@ foreach($arParams['DATA'] as $i => $item)
 	$item['DISPLAY'] = $display;
 
 	// define URL
-	$item['URL'] = $item['ID'] ? str_replace('{{ID}}', $item['ID'], $url) : 'javascript:void(0);';
+	$item['URL'] = ((int)$item['ID'] ? str_replace('{{ID}}', $item['ID'], $url) : 'javascript:void(0);');
 
 	// define TYPE class
 	$typeSet = array();

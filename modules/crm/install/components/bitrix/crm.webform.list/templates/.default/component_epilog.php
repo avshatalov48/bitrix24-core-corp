@@ -4,4 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-CUtil::InitJSCore(['ui.dialogs.messagebox']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.dialogs.messagebox',
+]);

@@ -38,8 +38,6 @@ class Agent
 	 * Returns the type of the agent run.
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getTypeRunAgent()
 	{
@@ -73,8 +71,6 @@ class Agent
 	 * Returns the timeout time for agents, depending on the context.
 	 *
 	 * @return int
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 */
 	public static function getTimeOutTransferToNextInQueue()
 	{
@@ -111,11 +107,6 @@ class Agent
 	 * @param $nextExec
 	 * @param int $offset
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function transferToNextInQueue($nextExec = 0, $offset = 0)
 	{
@@ -150,11 +141,6 @@ class Agent
 	 *
 	 * @param $nextExec
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function closeByTime($nextExec = 0)
 	{
@@ -238,13 +224,6 @@ class Agent
 	 * Send notification about unavailability of the operator.
 	 *
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function sendMessageNoAnswer()
 	{
@@ -279,11 +258,6 @@ class Agent
 	 *
 	 * @param $nextExec
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function mailByTime($nextExec = 0)
 	{
@@ -341,11 +315,6 @@ class Agent
 	 *
 	 * @param $nextExec
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function dismissedOperator($nextExec = 0)
 	{
@@ -431,13 +400,6 @@ class Agent
 
 	/**
 	 * @return string
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ArgumentNullException
-	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function sendAutomaticMessage()
 	{

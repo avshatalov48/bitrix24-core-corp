@@ -1,4 +1,4 @@
-.crm-exch1c-rekv-title {font: bold 14px/38px \"Helvetica Neue\",Helvetica,Arial,sans-serif;}
+.crm-exch1c-rekv-title {font: bold 14px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 .crm-exch1c-val-ctrl {margin-left: 5px;}
 .crm-exch1c-more-button {margin-bottom: 20px;}
 .crm-exch1c-rekv-name {height: 16px;}

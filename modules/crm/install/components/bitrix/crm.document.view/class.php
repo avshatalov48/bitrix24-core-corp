@@ -1,43 +1,50 @@
 <?php
 
-use Bitrix\Crm\Integration\DocumentGenerator\DataProvider\CrmEntityDataProvider;
-use Bitrix\Crm\Integration\SmsManager;
+use Bitrix\Crm\Format;
+use Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
+use Bitrix\Crm\Integration\DocumentGeneratorManager;
+use Bitrix\Crm\Service\Container;
+use Bitrix\DocumentGenerator\Components\ViewComponent;
+use Bitrix\DocumentGenerator\CreationMethod;
+use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
 use Bitrix\Main\Application;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-if(!\Bitrix\Main\Loader::includeModule('documentgenerator'))
+if(!Loader::includeModule('documentgenerator'))
 {
 	die('Module documentgenerator is not installed');
 }
 
-class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\ViewComponent
+class CrmDocumentViewComponent extends ViewComponent
 {
 	public function executeComponent()
 	{
-		if(!$this->includeModules())
+		if (!$this->includeModules())
 		{
 			ShowError(Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_MODULE_ERROR'));
 			return;
 		}
-		if($this->arParams['MODE'] === 'change' && !check_bitrix_sessid())
+		if ($this->arParams['MODE'] === 'change' && !check_bitrix_sessid())
 		{
 			ShowError(Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_CSRF_ERROR'));
 			return;
 		}
 		$result = $this->initDocument();
-		if(!$result->isSuccess())
+		if (!$result->isSuccess())
 		{
 			$this->arResult['ERRORS'] = $result->getErrorMessages();
 			$this->includeComponentTemplate();
 			return;
 		}
-		if($this->document->ID > 0 && $this->arParams['MODE'] == 'edit')
+		Container::getInstance()->getLocalization()->loadMessages();
+		if ($this->document->ID > 0 && $this->arParams['MODE'] === 'edit')
 		{
-			if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
+			if (!Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
 			{
 				$this->arResult['ERRORS'] = [Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')];
 				$this->includeComponentTemplate();
@@ -47,37 +54,13 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 			$this->includeComponentTemplate('edit');
 			return;
 		}
-		if($this->document->ID > 0 && $this->arParams['MODE'] == 'sms')
-		{
-			$link = '';
-			$publicUrl = $this->document->getPublicUrl(true);
-			if(!$publicUrl)
-			{
-				$this->includeComponentLang('templates/.default/template.php');
-				$this->arResult['ERRORS'] = [Loc::getMessage('CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY')];
-			}
-			else
-			{
-				$link = $publicUrl->getLocator();
-			}
-			$this->arResult['smsConfig'] = [
-				'ENTITY_TYPE_ID' => $this->getCrmOwnerType(),
-				'ENTITY_ID' => $this->getValue(),
-				'TEXT' => Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_SMS_TEXT', [
-					'#TITLE#' => $this->document->getTitle(),
-					'#LINK#' => $link,
-				]),
-			];
-			$this->includeComponentTemplate('sms');
-			return;
-		}
-		if(!$this->document->ID && Bitrix24Manager::isEnabled() && Bitrix24Manager::isDocumentsLimitReached())
+		if (!$this->document->ID && Bitrix24Manager::isEnabled() && Bitrix24Manager::isDocumentsLimitReached())
 		{
 			$this->includeComponentTemplate('limit');
 			return;
 		}
 		$isNewDocument = true;
-		if($this->document->ID > 0)
+		if ($this->document->ID > 0)
 		{
 			$isNewDocument = false;
 		}
@@ -88,47 +71,132 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 //			$this->includeComponentTemplate('edit');
 //			return;
 //		}
-		if($this->arParams['MODE'] === 'change' && $this->document->ID > 0 && \Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
+		if (
+			$this->arParams['MODE'] === 'change'
+			&& $this->document->ID > 0
+			&& Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document)
+		)
 		{
 			$result = $this->document->update($this->arParams['VALUES']);
 		}
 		else
 		{
-			\Bitrix\DocumentGenerator\CreationMethod::markDocumentAsCreatedByPublic($this->document);
+			if ($isNewDocument)
+			{
+				CreationMethod::markDocumentAsCreatedByPublic($this->document);
+			}
 			$isSendToTransformation = !$this->document->PDF_ID;
 			$result = $this->document->getFile($isSendToTransformation);
 		}
 		$this->arResult = $result->getData();
-		if(!$result->isSuccess())
+		if (
+			$isSendToTransformation
+			&& !empty($this->arResult['transformationCancelReason'])
+			&& $this->arResult['transformationCancelReason'] instanceof \Bitrix\Main\Error
+			&& $this->arResult['transformationCancelReason']->getCode() === 'TRANSFORM_FORMATS_PROCESSED'
+		)
 		{
-			if($this->arResult['isTransformationError'] !== true)
+			$this->arResult['isTransformationError'] = true;
+			$this->arResult['transformationErrorMessage'] = Loc::getMessage('CRM_DOCUMENT_VIEW_COMPONENT_PROCESSED_NO_PDF_ERROR');
+		}
+		if (!$result->isSuccess())
+		{
+			if ($this->arResult['isTransformationError'] !== true)
 			{
 				$this->arResult['ERRORS'] = $result->getErrorMessages();
 			}
 		}
-		if($isNewDocument)
+		if ($isNewDocument)
 		{
 			$this->arResult['documentUrl'] = $this->getDocumentUrl();
 		}
 		$this->arResult['values'] = $this->arParams['VALUES'];
-		$this->arResult['emailCommunication'] = $this->getEmailCommunication();
-		if(\Bitrix\DocumentGenerator\Driver::getInstance()->getDefaultStorage() instanceof \Bitrix\DocumentGenerator\Storage\Disk)
-		{
-			$this->arResult['storageTypeID'] = \Bitrix\Crm\Integration\StorageType::Disk;
-			$this->arResult['emailDiskFile'] = $this->getEmailDiskFile(!$result->isSuccess());
-		}
 		$this->arResult['editTemplateUrl'] = $this->getEditTemplateUrl();
-		if($this->arResult['editTemplateUrl'])
+		if ($this->arResult['editTemplateUrl'])
 		{
 			$this->arResult['editDocumentUrl'] = $this->getEditDocumentUrl();
 		}
-		$this->arResult['sendSmsUrl'] = $this->getSendSmsUrl();
-		/** @var CrmEntityDataProvider $provider */
+		$this->arResult['myCompanyRequisites'] = [
+			'title' => Loc::getMessage('CRM_COMMON_EMPTY_VALUE'),
+			'link' => null,
+			'subTitle' => '',
+		];
+		$this->arResult['clientRequisites'] = [
+			'title' => Loc::getMessage('CRM_COMMON_EMPTY_VALUE'),
+			'link' => null,
+			'subTitle' => '',
+		];
+		/** @var DataProvider\CrmEntityDataProvider $provider */
 		$provider = $this->document->getProvider();
-		if($provider)
+		if ($provider)
 		{
 			$this->arResult['PROVIDER'] = get_class($provider);
-			$this->arResult['editMyCompanyRequisitesUrl'] = $provider->getMyCompanyEditUrl(false);
+			$myCompanyProvider = $provider->getMyCompanyProvider();
+			if ($myCompanyProvider)
+			{
+				[$requisiteData, ] = $myCompanyProvider->getClientRequisitesAndBankDetail();
+
+				$myCompanyId = \Bitrix\DocumentGenerator\DataProviderManager::getInstance()->getValueFromList($provider->getMyCompanyId());
+				if (is_numeric($myCompanyId) && (int)$myCompanyId > 0)
+				{
+					$link = Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Company, (int)$myCompanyId);
+				}
+
+				$this->arResult['myCompanyRequisites'] = [
+					'title' =>
+						Format\Requisite::formatOrganizationName($requisiteData)
+						?? $myCompanyProvider->getValue('TITLE')
+						?: $this->arResult['myCompanyRequisites']['title']
+					,
+					'link' => $link ?? $this->arResult['myCompanyRequisites']['link'],
+					'subTitle' =>
+						Format\Requisite::formatShortRequisiteString($requisiteData)
+						?? $this->arResult['myCompanyRequisites']['subTitle']
+					,
+				];
+			}
+			[$clientRequisiteData, ] = $provider->getClientRequisitesAndBankDetail();
+			$companyProvider = $provider->getValue('COMPANY');
+			if ($companyProvider instanceof DataProvider\Company)
+			{
+				$this->arResult['clientRequisites'] = [
+					'title' =>
+						Format\Requisite::formatOrganizationName($clientRequisiteData)
+						?? $companyProvider->getValue('NAME')
+						?: $this->arResult['clientRequisites']['title']
+					,
+					'link' =>
+						Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Company, (int)$companyProvider->getSource())
+						?? $this->arResult['clientRequisites']['link']
+					,
+					'subTitle' =>
+						Format\Requisite::formatShortRequisiteString($clientRequisiteData)
+						?? $this->arResult['clientRequisites']['subTitle']
+					,
+				];
+			}
+			else
+			{
+				$contactProvider = $provider->getValue('CONTACT');
+				if ($contactProvider instanceof DataProvider\Contact)
+				{
+					$this->arResult['clientRequisites'] = [
+						'title' =>
+							$clientRequisiteData['RQ_COMPANY_NAME']
+							?? $contactProvider->getValue('FORMATTED_NAME')
+							?: $this->arResult['clientRequisites']['title']
+						,
+						'link' =>
+							Container::getInstance()->getRouter()->getItemDetailUrl(\CCrmOwnerType::Contact, (int)$contactProvider->getSource())
+							?? $this->arResult['clientRequisites']['link']
+						,
+						'subTitle' =>
+							Format\Requisite::formatShortRequisiteString($clientRequisiteData)
+							?? $this->arResult['clientRequisites']['subTitle']
+						,
+					];
+				}
+			}
 		}
 		else
 		{
@@ -137,10 +205,29 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 		}
 		$this->arResult['TEMPLATE_NAME'] = '';
 		$this->arResult['TEMPLATE_CODE'] = '';
-		if($this->template)
+		if ($this->template)
 		{
 			$this->arResult['TEMPLATE_NAME'] = $this->template->NAME;
 			$this->arResult['TEMPLATE_CODE'] = $this->template->CODE;
+		}
+
+		if ($this->getValue() > 0 && $this->document->FILE_ID > 0)
+		{
+			$this->arResult['channelSelectorParameters'] = [
+				'id' => 'document-channel-selector',
+				'entityTypeId' => (int)$this->getCrmOwnerType(),
+				'entityId' => (int)$this->getValue(),
+				'body' => $this->document->getTitle(),
+				'configureContext' => 'crm.document.view',
+				'link' => $this->document->getPublicUrl(true),
+				'isLinkObtainable' => true,
+				'isConfigurable' => true,
+			];
+			if (Driver::getInstance()->getDefaultStorage() instanceof \Bitrix\DocumentGenerator\Storage\Disk)
+			{
+				$this->arResult['channelSelectorParameters']['storageTypeId'] = \Bitrix\Crm\Integration\StorageType::Disk;
+				$this->arResult['channelSelectorParameters']['files'] = [$this->getEmailDiskFile(true)];
+			}
 		}
 
 		$this->includeComponentTemplate();
@@ -159,10 +246,14 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	 */
 	protected function getEditDocumentUrl()
 	{
-		if(\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
+		if (Driver::getInstance()->getUserPermissions()->canModifyDocument($this->document))
 		{
 			$uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-			return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])->addParams(['documentId' => $this->document->ID, 'mode' => 'edit'])->getLocator();
+
+			return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])
+				->addParams(['documentId' => $this->document->ID, 'mode' => 'edit'])
+				->getLocator()
+			;
 		}
 
 		return false;
@@ -173,10 +264,10 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	 */
 	protected function getCrmDataProvider()
 	{
-		if($this->document)
+		if ($this->document)
 		{
 			$provider = $this->document->getProvider();
-			if($provider instanceof CrmEntityDataProvider)
+			if ($provider instanceof DataProvider\CrmEntityDataProvider)
 			{
 				return $provider;
 			}
@@ -186,30 +277,14 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	}
 
 	/**
-	 * @return array
-	 */
-	protected function getEmailCommunication()
-	{
-		$result = [];
-
-		$provider = $this->getCrmDataProvider();
-		if($provider)
-		{
-			$result = $provider->getEmailCommunication();
-		}
-
-		return $result;
-	}
-
-	/**
 	 * @return int
 	 */
-	public function getCrmOwnerType()
+	public function getCrmOwnerType(): int
 	{
 		$result = 0;
 
 		$provider = $this->getCrmDataProvider();
-		if($provider)
+		if ($provider)
 		{
 			$result = $provider->getCrmOwnerType();
 		}
@@ -221,11 +296,11 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	 * @param bool $docx
 	 * @return int
 	 */
-	protected function getEmailDiskFile($docx = false)
+	protected function getEmailDiskFile($docx = false): int
 	{
 		$result = 0;
 
-		if($this->document)
+		if ($this->document)
 		{
 			$result = $this->document->getEmailDiskFile($docx);
 		}
@@ -234,41 +309,16 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	}
 
 	/**
-	 * @return bool
-	 */
-	protected function isSmsEnabled()
-	{
-		if(!SmsManager::canSendMessage())
-		{
-			return false;
-		}
-
-		$phones = SmsManager::getEntityPhoneCommunications($this->getCrmOwnerType(), $this->getValue());
-		return !empty($phones);
-	}
-
-	/**
-	 * @return string
-	 * @throws \Bitrix\Main\SystemException
-	 */
-	protected function getSendSmsUrl()
-	{
-		if($this->isSmsEnabled())
-		{
-			$uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-			return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])->addParams(['documentId' => $this->document->ID, 'mode' => 'sms'])->getLocator();
-		}
-
-		return '';
-	}
-
-	/**
 	 * @return string
 	 */
-	protected function getDocumentUrl()
+	protected function getDocumentUrl(): string
 	{
 		$uri = new Uri(Application::getInstance()->getContext()->getRequest()->getRequestUri());
-		return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])->addParams(['documentId' => $this->document->ID])->getLocator();
+
+		return $uri->deleteParams(['mode', 'templateId', 'values', 'value', 'provider'])
+			->addParams(['documentId' => $this->document->ID])
+			->getLocator()
+		;
 	}
 
 	/**
@@ -276,17 +326,20 @@ class CrmDocumentViewComponent extends \Bitrix\DocumentGenerator\Components\View
 	 */
 	protected function getEditTemplateUrl()
 	{
-		if($this->template && !$this->template->isDeleted())
+		if ($this->template && !$this->template->isDeleted())
 		{
-			if(!\Bitrix\DocumentGenerator\Driver::getInstance()->getUserPermissions()->canModifyTemplate($this->template->ID))
+			if (!Driver::getInstance()->getUserPermissions()->canModifyTemplate($this->template->ID))
 			{
 				return true;
 			}
-			$addUrl = \Bitrix\Crm\Integration\DocumentGeneratorManager::getInstance()->getAddTemplateUrl();
-			if($addUrl)
+			$addUrl = DocumentGeneratorManager::getInstance()->getAddTemplateUrl();
+			if ($addUrl)
 			{
 				$editUrl = new Uri($addUrl);
-				$editUrl->addParams(['ID' => $this->template->ID, 'UPLOAD' => 'Y']);
+				$editUrl->addParams([
+					'ID' => $this->template->ID,
+					'UPLOAD' => 'Y',
+				]);
 
 				return $editUrl->getLocator();
 			}

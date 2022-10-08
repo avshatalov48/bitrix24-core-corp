@@ -74,7 +74,7 @@ class QuoteElementTable extends Entity\DataManager
 		]);
 		while($item = $list->fetchObject())
 		{
-			Crm\Integration\StorageManager::deleteFile($item->getElementId(), $item->getStorageTypeId());
+			Crm\Integration\StorageManager::deleteFile($item->getElementId(), (int)$item->getStorageTypeId());
 			$deleteResult = $item->delete();
 			if(!$deleteResult->isSuccess())
 			{

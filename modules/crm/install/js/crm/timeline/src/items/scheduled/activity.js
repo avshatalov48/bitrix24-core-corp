@@ -1,7 +1,7 @@
 import Scheduled from "../scheduled";
 import {Item as ItemType} from "../../types";
-import Item from "../../item";
 import SchedulePostponeController from "../../tools/schedule-postpone-controller";
+import {DatetimeConverter} from "crm.timeline.tools";
 
 /** @memberof BX.Crm.Timeline.Items.Scheduled */
 export default class Activity extends Scheduled
@@ -192,7 +192,7 @@ export default class Activity extends Scheduled
 			return null;
 		}
 
-		return new Date(time.getTime() + 1000 * Item.getUserTimezoneOffset());
+		return (new DatetimeConverter(time)).toUserTime().getValue();
 	}
 
 	markAsDone(isDone)
@@ -236,11 +236,11 @@ export default class Activity extends Scheduled
 		let wrapperClassName = this.getWrapperClassName();
 		if(wrapperClassName !== "")
 		{
-			wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned" + " " + wrapperClassName;
+			wrapperClassName = this._schedule.getItemClassName() + " " + wrapperClassName;
 		}
 		else
 		{
-			wrapperClassName = "crm-entity-stream-section crm-entity-stream-section-planned";
+			wrapperClassName = this._schedule.getItemClassName();
 		}
 
 		const wrapper = BX.create("DIV", {attrs: {className: wrapperClassName}});
@@ -467,35 +467,39 @@ export default class Activity extends Scheduled
 			menuItems.push({ id: "remove", text: this.getMessage("menuDelete"), onclick: BX.delegate(this.processRemoval, this)});
 		}
 
-		const handler = BX.delegate(this.onContextMenuItemSelect, this);
-
-		if(!this._postponeController)
+		if (this.canPostpone())
 		{
-			this._postponeController = SchedulePostponeController.create("", { item: this });
-		}
+			const handler = BX.delegate(this.onContextMenuItemSelect, this);
 
-		const postponeMenu =
+			if(!this._postponeController)
 			{
-				id: "postpone",
-				text: this._postponeController.getTitle(),
-				items: []
-			};
+				this._postponeController = SchedulePostponeController.create("", { item: this });
+			}
 
-		const commands = this._postponeController.getCommandList();
-		let i = 0;
-		const length = commands.length;
-		for(; i < length; i++)
-		{
-			const command = commands[i];
-			postponeMenu.items.push(
+			const postponeMenu =
 				{
-					id: command["name"],
-					text: command["title"],
-					onclick: handler
-				}
-			);
+					id: "postpone",
+					text: this._postponeController.getTitle(),
+					items: []
+				};
+
+			const commands = this._postponeController.getCommandList();
+			let i = 0;
+			const length = commands.length;
+			for(; i < length; i++)
+			{
+				const command = commands[i];
+				postponeMenu.items.push(
+					{
+						id: command["name"],
+						text: command["title"],
+						onclick: handler
+					}
+				);
+			}
+			menuItems.push(postponeMenu);
 		}
-		menuItems.push(postponeMenu);
+
 		return menuItems;
 	}
 
@@ -506,5 +510,12 @@ export default class Activity extends Scheduled
 		{
 			this._postponeController.processCommand(item.id);
 		}
+	}
+
+	static create(id, settings)
+	{
+		const self = new Activity();
+		self.initialize(id, settings);
+		return self;
 	}
 }

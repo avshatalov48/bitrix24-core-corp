@@ -4,7 +4,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 //use Bitrix\Main\Localization\Loc;
 //Loc::loadMessages(dirname(__FILE__).'/template.php');
 
-// js extension to be registered instead of script.js 
+// js extension to be registered instead of script.js
 
 $folder = $this->GetFolder();
 $extensionId = 'tasks_component_ext_'.rand(999, 9999999);
@@ -15,6 +15,8 @@ CJSCore::RegisterExt(
 		'js'  => $folder.'/logic.js',
 		'css' => '/bitrix/js/tasks/css/tasks.css',
 		'rel' =>  array(
+			'ui.design-tokens',
+			'ui.fonts.opensans',
 			'tasks',
 			'tasks_util',
 			'popup',

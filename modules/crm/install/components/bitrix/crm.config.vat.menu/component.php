@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
+/** @var array $arParams */
+
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
@@ -21,14 +23,14 @@ if (!isset($arParams['TYPE']))
 
 $arResult['BUTTONS'] = array();
 
-$vatID = isset($arParams['VAT_ID']) ? intval($arParams['VAT_ID']) : 0;
+$vatID = (int)($arParams['VAT_ID'] ?? 0);
 
 $CrmPerms = new CCrmPerms($USER->GetID());
 
 $vatAdd = $vatEdit = $vatDelete = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE');
 $vatShow = $CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ');
 
-$exists = isset($vatID) && is_array(CCrmVat::GetByID($vatID));
+$exists = $vatID > 0 && is_array(CCrmVat::GetByID($vatID));
 
 if ($arParams['TYPE'] !== 'list')
 {
@@ -95,7 +97,11 @@ if ($vatShow && $arParams['TYPE'] == 'edit' && $exists)
 }
 */
 
-if ($vatDelete && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $exists)
+if (
+	$vatDelete
+	&& ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show')
+	&& $exists
+)
 {
 	$arResult['BUTTONS'][] = array(
 		'TEXT' => GetMessage('CRM_VAT_DELETE'),
@@ -109,4 +115,3 @@ if ($vatDelete && ($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') &
 }
 
 $this->IncludeComponentTemplate();
-?>

@@ -346,12 +346,19 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 		//region Tabs
 		$this->arResult['TABS'] = array();
 
+		$productComponentData = $this->arResult['PRODUCT_COMPONENT_DATA'];
+		$productComponentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+			(array)$productComponentData['params'],
+			'crm.order.shipment.product.list'
+		);
+		unset($productComponentData['params']);
+
 		$this->arResult['TABS'][] = array(
 			'id' => 'tab_products',
 			'name' => Loc::getMessage('CRM_ORDER_SHIPMENT_PRODUCT_LIST'),
 			'loader' => array(
 				'serviceUrl' => '/bitrix/components/bitrix/crm.order.shipment.product.list/lazyload.ajax.php?&shipmentId='.$this->shipment->getId().'&'.bitrix_sessid_get(),
-				'componentData' => $this->arResult['PRODUCT_COMPONENT_DATA']
+				'componentData' => $productComponentData,
 			)
 		);
 
@@ -364,10 +371,10 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.SITE_ID.'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'ENTITY_ID' => $this->entityID,
 							'ENTITY_TYPE_NAME' => CCrmOwnerType::OrderShipmentName,
-						)
+						], 'crm.entity.tree')
 					)
 				)
 			);
@@ -928,12 +935,16 @@ class CCrmOrderShipmentDetailsComponent extends Crm\Component\EntityDetails\Base
 
 		if(isset($this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['TITLE']))
 		{
-			$this->entityData['DELIVERY_STORE_TITLE'] = $this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['TITLE'];
+			$this->entityData['DELIVERY_STORE_TITLE'] = htmlspecialcharsbx(
+				$this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['TITLE']
+			);
 		}
 
 		if(isset($this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['ADDRESS']))
 		{
-			$this->entityData['DELIVERY_STORE_ADDRESS'] = $this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['ADDRESS'];
+			$this->entityData['DELIVERY_STORE_ADDRESS'] = htmlspecialcharsbx(
+				$this->entityData['DELIVERY_STORES_LIST'][$this->entityData['DELIVERY_STORE_ID']]['ADDRESS']
+			);
 		}
 
 		//endregion

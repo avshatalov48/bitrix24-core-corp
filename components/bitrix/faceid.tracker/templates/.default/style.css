@@ -26,7 +26,7 @@
 .faceid-tracker-main-user-start-desc-item {
 	padding: 50px;
 	background: #F5F7F8;
-	font: 19px/22px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 19px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 	text-align: center;
 }
@@ -71,7 +71,7 @@
 	position: absolute;
 	left: 50%;
 	bottom: 128px;
-	font: 20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 	-webkit-transform: translate(-50%,0);
 	transform: translate(-50%,0);
@@ -80,7 +80,7 @@
 .faceid-tracker-error {
 	display: none;
 	margin: 0;
-	font: 18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #D8000C;
 	text-align: center;
 	z-index: 1;
@@ -311,7 +311,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 	margin: 0 0 20px 0;
 	border: 1px solid #f0edd0;
 	background: #fffffc;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	display: none;
 }
@@ -369,7 +369,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-header-description-title-item {
-	font: 22px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #31c2f3;
 }
 
@@ -481,7 +481,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-sidebar-photo-settings-inner-title-item {
-	font: 13px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(66,73,86,.5);
 }
 
@@ -497,7 +497,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 	position: relative;
 	padding: 6px 0 6px 25px;
 	max-width: 300px;
-	font: 14px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 	box-sizing: border-box;
 	-webkit-transition: color .3s;
@@ -620,7 +620,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 
 .faceid-tracker-sidebar-title-item {
 	display: inline-block;
-	font: bold 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	text-transform: uppercase;
 	vertical-align: middle;
@@ -653,7 +653,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-sidebar-settings-control-label {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .faceid-tracker-control-info {
@@ -675,7 +675,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 .faceid-tracker-sidebar-settings-status-container {
 	margin: 16px 0 0 0;
 	background: #f3f7f9;
-	font: 14px/28px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/28px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -692,7 +692,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 .faceid-tracker-sidebar-total {
 	padding: 6px 0;
 	background: #a9bbc0;
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 }
 
@@ -707,7 +707,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 .faceid-tracker-sidebar-status-link-item {
 	display: inline-block;
 	border-bottom: 1px solid rgba(11,102,195,.29);
-	font: bold 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0B66C3;
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
@@ -737,7 +737,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-main-header-user-item {
-	font: bold 11px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 11px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 	text-transform: uppercase;
 }
@@ -750,18 +750,18 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-main-header-user-number {
-	font: 11px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 }
 
 .faceid-tracker-main-header-recognition-item {
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
 .faceid-tracker-main-header-recognition-add {
 	border-bottom: 1px solid #535c69;
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
@@ -876,7 +876,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 	background: #EBEEF2;
 	border-radius: 30px;
 	border: 2px solid #fff;
-	font: bold 9px/11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 9px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0B66C3;
 	text-transform: uppercase;
 }
@@ -896,7 +896,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 	background: #7ED321;
 	border-radius: 30px;
 	border: 2px solid #fff;
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	text-align: center;
 }
@@ -933,7 +933,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 
 .faceid-tracker-main-user-photo-count-info-desc {
 	margin: 0 0 10px 0;
-	font: 9px/11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 9px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 	text-align: center;
 }
@@ -959,12 +959,12 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-main-user-info-description-item {
-	font: 11px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A5AEBA;
 }
 
 .faceid-tracker-main-user-info-name {
-	font: 15px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .faceid-tracker-main-user-info-name-item {
@@ -1042,7 +1042,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 
 .faceid-tracker-main-user-info-control-social-name {
 	display: none;
-	font: 13px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 }
 
@@ -1065,7 +1065,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 	position: relative;
 	display: inline-block;
 	border-bottom: 1px solid transparent;
-	font: 13px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0B66C3;
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
@@ -1084,7 +1084,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 .faceid-tracker-main-user-more-item {
 	display: inline-block;
 	border-bottom: 1px dashed rgba(11,102,195,.5);
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0B66C3;
 	vertical-align: middle;
 	-webkit-transition: border-bottom .3s;
@@ -1145,7 +1145,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-profile-search-item {
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 }
 
@@ -1168,7 +1168,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-main-user-date-item {
-	font: 13px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .faceid-tracker-main-user-social-link {
@@ -1176,7 +1176,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-main-user-social-link-item {
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 	cursor: pointer;
 }
@@ -1203,13 +1203,13 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .faceid-tracker-profile-search-found-more-item {
-	font: bold 10px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	text-transform: uppercase;
 }
 
 .faceid-tracker-profile-search-found-more-count {
-	font: 12px/14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A9B1BD;
 }
 
@@ -1250,7 +1250,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 	padding: 15px 10px;
 	width: 595px;
 	background: #fff;
-	font: 12px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535C69;
 	-webkit-transform: translate(-50%,-50%);
 	transform: translate(-50%,-50%);
@@ -1259,11 +1259,11 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 }
 
 .tracker-text-bold {
-	font: bold 12px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 12px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tracker-agreement-popup-title-item {
-	font: bold 14px/17px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868E;
 }
 
@@ -1331,7 +1331,7 @@ div.faceid-tracker-main-user-info-control-button .faceid-tracker-user-loader-ite
 
 .faceid-tracker-first-visit-desc-title {
 	margin: 0 0 14px 0;
-	font: bold 21px/26px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 21px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .faceid-tracker-first-visit-desc-item {

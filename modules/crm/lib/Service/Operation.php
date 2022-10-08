@@ -33,6 +33,8 @@ abstract class Operation
 	public const ACTION_BEFORE_SAVE = 'beforeSave';
 	public const ACTION_AFTER_SAVE = 'afterSave';
 
+	public const DEFAULT_ACTION_SORT = 500;
+
 	/** @var \CCrmBizProcHelper */
 	protected $bizProcHelper = \CCrmBizProcHelper::class;
 	/** @var Item */
@@ -82,7 +84,7 @@ abstract class Operation
 		return $this->itemBeforeSave;
 	}
 
-	public function addAction(string $actionPlacement, Action $action): self
+	public function addAction(string $actionPlacement, Action $action, int $sort = self::DEFAULT_ACTION_SORT): self
 	{
 		if (
 			$actionPlacement !== static::ACTION_BEFORE_SAVE
@@ -92,7 +94,25 @@ abstract class Operation
 			throw new ArgumentOutOfRangeException('actionPlacement');
 		}
 
-		$this->actions[$actionPlacement][] = $action;
+		while (isset($this->actions[$actionPlacement][$sort]))
+		{
+			$sort++;
+		}
+
+		$this->actions[$actionPlacement][$sort] = $action;
+
+		return $this;
+	}
+
+	public function removeAction(string $actionPlacement, string $actionClassName): self
+	{
+		foreach ($this->actions[$actionPlacement] as $index => $action)
+		{
+			if (get_class($action) === $actionClassName)
+			{
+				unset($this->actions[$actionPlacement][$index]);
+			}
+		}
 
 		return $this;
 	}
@@ -341,10 +361,26 @@ abstract class Operation
 	 */
 	public function checkFields(): Result
 	{
-		$result = new Result();
+		$requiredFields = $this->getRequiredFields();
+		if (empty($requiredFields))
+		{
+			return new Result();
+		}
+
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
+		if (!$factory)
+		{
+			throw new InvalidOperationException('Factory not found');
+		}
+
+		return $this->checkRequiredFields($requiredFields, $factory);
+	}
+
+	final public function getRequiredFields(): array
+	{
 		if (empty($this->fieldsCollection))
 		{
-			return $result;
+			return [];
 		}
 
 		$requiredFields = [];
@@ -374,7 +410,6 @@ abstract class Operation
 		}
 		if (
 			$this->isCheckRequiredUserFields()
-			&& $this->fieldAttributeManager::isPhaseDependent()
 		)
 		{
 			$requiredFields = array_merge($requiredFields, $this->getStageDependantRequiredFields($factory));
@@ -395,6 +430,7 @@ abstract class Operation
 		}
 
 		$requiredFields = array_diff($requiredFields, $notDisplayedFields);
+
 		$filteredFields = $this->getItem()->getFilteredUserFields();
 		if (isset($filteredFields))
 		{
@@ -403,9 +439,7 @@ abstract class Operation
 			});
 		}
 
-		$result = $this->checkRequiredFields($requiredFields, $factory);
-
-		return $result;
+		return array_unique(array_diff($requiredFields, $notDisplayedFields));
 	}
 
 	/**
@@ -961,6 +995,8 @@ abstract class Operation
 	{
 		if (!empty($this->actions[$placementCode]))
 		{
+			ksort($this->actions[$placementCode]);
+
 			/** @var Action $action */
 			foreach($this->actions[$placementCode] as $action)
 			{
@@ -1138,7 +1174,7 @@ abstract class Operation
 			$this->fieldAttributeManager::getItemConfigScope($this->item)
 		);
 
-		if ($this->item->isStagesEnabled())
+		if ($this->item->isStagesEnabled() && $this->fieldAttributeManager::isPhaseDependent())
 		{
 			$categoryId = $this->item->isCategoriesSupported() ? $this->item->getCategoryId() : null;
 			$stages = $factory->getStages($categoryId);

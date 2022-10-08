@@ -304,7 +304,7 @@ export default Vue.extend({
 		{
 			this.setDeliveryInfo(this.entityData['DELIVERY_INFO']);
 		}
-		
+
 		this.subscribePullEvents();
 
 		this._checkRequestStatusTimeoutId = null;
@@ -531,6 +531,7 @@ export default Vue.extend({
 			}
 		},
 	},
+	// language=Vue
 	template: `
 		<div
 			class="crm-entity-stream-section crm-entity-stream-section-new"

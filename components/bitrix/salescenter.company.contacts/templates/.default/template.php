@@ -2,7 +2,14 @@
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization;
-\Bitrix\Main\UI\Extension::load(['salescenter.component.store-settings','ui.forms', 'ui.buttons', 'ui.hint']);
+
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'salescenter.component.store-settings',
+	'ui.forms',
+	'ui.buttons',
+	'ui.hint',
+]);
 
 Localization\Loc::loadMessages(__FILE__);
 

@@ -1,5 +1,5 @@
 this.BX = this.BX || {};
-(function (exports,clipboard,ui_switcher,ui_layoutForm,main_core,main_core_events,main_date,ui_buttons,main_popup) {
+(function (exports,ui_designTokens,ui_fonts_opensans,clipboard,ui_switcher,ui_layoutForm,main_core,main_core_events,main_date,ui_buttons,main_popup) {
 	'use strict';
 
 	var Backend = /*#__PURE__*/function () {
@@ -648,7 +648,7 @@ this.BX = this.BX || {};
 	              deathTimeTimestamp: deathTimeTimestamp,
 	              deathTime: deathTime
 	            });
-	          }).finally(function () {
+	          })["finally"](function () {
 	            main_core_events.EventEmitter.emit(_this5, 'Disk:ExternalLink:Settings:Saved', function () {});
 	          });
 	        } else if (enableDeathTime !== this.data.hasDeathTime) {
@@ -659,7 +659,7 @@ this.BX = this.BX || {};
 	              deathTimeTimestamp: null,
 	              deathTime: null
 	            });
-	          }).finally(function () {
+	          })["finally"](function () {
 	            main_core_events.EventEmitter.emit(_this5, 'Disk:ExternalLink:Settings:Saved', function () {});
 	          });
 	        }
@@ -679,7 +679,7 @@ this.BX = this.BX || {};
 	            _this5.setData({
 	              hasPassword: true
 	            });
-	          }).finally(function () {
+	          })["finally"](function () {
 	            main_core_events.EventEmitter.emit(_this5, 'Disk:ExternalLink:Settings:Saved', function () {});
 	          });
 	        } else if (enablePassword !== this.data.hasPassword) {
@@ -688,7 +688,7 @@ this.BX = this.BX || {};
 	            _this5.setData({
 	              hasPassword: false
 	            });
-	          }).finally(function () {
+	          })["finally"](function () {
 	            main_core_events.EventEmitter.emit(_this5, 'Disk:ExternalLink:Settings:Saved', function () {});
 	          });
 	        }
@@ -707,7 +707,7 @@ this.BX = this.BX || {};
 	            _this5.setData({
 	              canEditDocument: true
 	            });
-	          }).finally(function () {
+	          })["finally"](function () {
 	            main_core_events.EventEmitter.emit(_this5, 'Disk:ExternalLink:Settings:Saved', function () {});
 	          });
 	        } else {
@@ -716,7 +716,7 @@ this.BX = this.BX || {};
 	            _this5.setData({
 	              canEditDocument: false
 	            });
-	          }).finally(function () {
+	          })["finally"](function () {
 	            main_core_events.EventEmitter.emit(_this5, 'Disk:ExternalLink:Settings:Saved', function () {});
 	          });
 	        }
@@ -771,7 +771,7 @@ this.BX = this.BX || {};
 	          minWidth: 410,
 	          events: {
 	            onClose: function onClose() {
-	              _this6.cache.delete('popup');
+	              _this6.cache["delete"]('popup');
 	            }
 	          },
 	          buttons: [popupSave, new ui_buttons.CloseButton({
@@ -872,5 +872,5 @@ this.BX = this.BX || {};
 	exports.ExternalLink = InputSimple;
 	exports.ExternalLinkForTrackedObject = InputSimpleForTrackedObject;
 
-}((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX.UI,BX,BX.Event,BX,BX.UI,BX.Main));
+}((this.BX.Disk = this.BX.Disk || {}),BX,BX,BX,BX,BX.UI,BX,BX.Event,BX.Main,BX.UI,BX.Main));
 //# sourceMappingURL=external-link.bundle.js.map

@@ -14,6 +14,7 @@ use Bitrix\Main\Localization\Loc;
 	'color_picker',
 	'ui.alerts',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 if($this->getComponent()->getErrors())

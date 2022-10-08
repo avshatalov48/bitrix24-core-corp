@@ -12,25 +12,8 @@ export default class Toolbar
 
 	static reloadGridAndFocus(rowId: ?number)
 	{
-		let gridInstance;
-		const gridId = GridOptions.getGridId();
-		if (Reflection.getClass('BX.Main.gridManager') && BX.Main.gridManager.getInstanceById(gridId))
-		{
-			gridInstance = BX.Main.gridManager.getInstanceById(gridId);
-		}
-		else if (Reflection.getClass('BX.Main.tileGridManager') && BX.Main.tileGridManager.getInstanceById(gridId))
-		{
-			gridInstance = BX.Main.tileGridManager.getInstanceById(gridId);
-		}
-
-		const commonGrid = new CommonGrid({
-			gridInstance: gridInstance,
-		});
-
-		if (gridInstance)
-		{
-			commonGrid.reload();
-		}
+		const commonGrid = GridOptions.getCommonGrid();
+		commonGrid.reload();
 	}
 
 	static runCreating(documentType, service): void

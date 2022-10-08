@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Recycling;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Recyclebin;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -10,6 +11,9 @@ class ActivityController extends BaseController
 {
 	/** @var ActivityController|null  */
 	protected static $instance = null;
+
+	/** @var Array<int, int> */
+	private array $entityIdToRecyclingEntityId = [];
 
 	/**
 	 * @return ActivityController|null
@@ -37,7 +41,7 @@ class ActivityController extends BaseController
 			'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'PARENT_ID', 'THREAD_ID', 'URN', 'SETTINGS',
 			'ORIGINATOR_ID', 'ORIGIN_ID', 'AUTHOR_ID', 'EDITOR_ID', 'PROVIDER_PARAMS',
 			'RESULT_STATUS', 'RESULT_STREAM', 'RESULT_SOURCE_ID', 'RESULT_MARK', 'RESULT_VALUE', 'RESULT_SUM', 'RESULT_CURRENCY_ID',
-			'AUTOCOMPLETE_RULE'
+			'AUTOCOMPLETE_RULE', 'IS_INCOMING_CHANNEL',
 		);
 	}
 
@@ -87,7 +91,14 @@ class ActivityController extends BaseController
 			array('*')
 		);
 		$fields = $dbResult->Fetch();
-		return is_array($fields) ? $fields : null;
+		if (is_array($fields))
+		{
+			$fields['IS_INCOMING_CHANNEL'] = \Bitrix\Crm\Activity\IncomingChannel::getInstance()->isIncomingChannel((int)$entityID) ? 'Y' : 'N';
+
+			return $fields;
+		}
+
+		return null;
 	}
 
 	public function prepareEntityData($entityID, array $params = array())
@@ -192,6 +203,7 @@ class ActivityController extends BaseController
 		}
 
 		$recyclingEntityID = $recyclingEntity->getId();
+		$this->entityIdToRecyclingEntityId[$entityID] = $recyclingEntityID;
 
 		//region Relations
 		foreach($relations as $relation)
@@ -430,6 +442,7 @@ class ActivityController extends BaseController
 		Relation::deleteJunks();
 		//endregion
 
+		unset($this->entityIdToRecyclingEntityId[$entityID]);
 		$this->rebuildSearchIndex($newEntityID);
 		$this->fireAfterRecoverEvent($recyclingEntityID, $newEntityID);
 		return true;
@@ -475,7 +488,7 @@ class ActivityController extends BaseController
 		$associatedEntityID = isset($fields['ASSOCIATED_ENTITY_ID']) ? (int)$fields['ASSOCIATED_ENTITY_ID'] : 0;
 		if($provider && $associatedEntityID > 0)
 		{
-			$deleteParams = [];
+			$deleteParams = ['IS_ERASING_FROM_RECYCLE_BIN' => true];
 			if ($provider === Crm\Activity\Provider\Task::class)
 			{
 				$deleteParams['SKIP_TASKS'] = $params['SKIP_TASKS'] ?? true;
@@ -485,6 +498,7 @@ class ActivityController extends BaseController
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
 
+		unset($this->entityIdToRecyclingEntityId[$entityID]);
 		$this->fireAfterEraseEvent($recyclingEntityID);
 	}
 
@@ -528,4 +542,34 @@ class ActivityController extends BaseController
 		Crm\Timeline\TimelineEntry::deleteByAssociatedEntity($this->getSuspendedEntityTypeID(), $recyclingEntityID);
 	}
 	//endregion
+
+	final public function getRecyclingEntityId(int $entityId): int
+	{
+		if (isset($this->entityIdToRecyclingEntityId[$entityId]))
+		{
+			return (int)$this->entityIdToRecyclingEntityId[$entityId];
+		}
+
+		if (Main\Loader::includeModule('recyclebin'))
+		{
+			$row =
+				Recyclebin\Internals\Models\RecyclebinTable::query()
+					->setSelect(['ID'])
+					->where('ENTITY_TYPE', $this->getRecyclebinEntityTypeName())
+					->where('ENTITY_ID', $entityId)
+					->setLimit(1)
+					->fetchObject()
+			;
+
+			$recyclingEntityId = $row ? (int)$row->getId() : 0;
+		}
+		else
+		{
+			$recyclingEntityId = 0;
+		}
+
+		$this->entityIdToRecyclingEntityId[$entityId] = $recyclingEntityId;
+
+		return $recyclingEntityId;
+	}
 }

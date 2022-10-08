@@ -19,7 +19,7 @@
 	min-width: 156px;
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
-	border-radius: 12px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 }
 
 .tasks-scrum__widget-methodology.--active {
@@ -47,7 +47,8 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	font: 13px/15px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--tasks_scrum_meetings-grey_alpha_87);
 }
 
@@ -73,7 +74,8 @@
 }
 
 .tasks-scrum__widget-methodology--description {
-	font: 11px/15px OpenSans-Regular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_meetings-grey_alpha_66);
 	margin-bottom: 4px;
 	width: 100%;
@@ -113,13 +115,14 @@
 }
 
 .tasks-scrum__widget-methodology--label {
-	font: 9px/11px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 9px/11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--tasks_scrum_meetings-white);
 	position: absolute;
 	right: 15px;
 	top: -5px;
 	background: var(--tasks_scrum_meetings-blue);
-	border-radius: 14px;
+	border-radius: var(--ui-border-radius-xl, 14px);
 	-webkit-box-shadow: 0 1px 1px var(--tasks_scrum_meetings-black_alpha_15);
 	        box-shadow: 0 1px 1px var(--tasks_scrum_meetings-black_alpha_15);
 	padding: 1px 8px;
@@ -149,7 +152,7 @@
 	left: 0;
 	top: 0;
 	border: 1px solid var(--tasks_scrum_meetings-green);
-	border-radius: 12px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 	pointer-events: none;
 }
 

@@ -4,8 +4,10 @@ namespace Bitrix\DocumentGenerator\Components;
 
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
+use Bitrix\DocumentGenerator\Service\ActualizeQueue;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main\Application;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -98,6 +100,11 @@ abstract class ViewComponent extends \CBitrixComponent
 					{
 						return $result->addError(new Error(Loc::getMessage('DOCGEN_DOCUMENT_VIEW_ACCESS_ERROR')));
 					}
+					$queue = ServiceLocator::getInstance()->get('documentgenerator.service.actualizeQueue');
+					$queue->addTask(
+						ActualizeQueue\Task::createByDocument($document)
+							->setPosition(ActualizeQueue\Task::ACTUALIZATION_POSITION_IMMEDIATELY)
+					);
 				}
 				else
 				{

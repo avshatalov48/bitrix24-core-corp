@@ -1,10 +1,10 @@
 <?php
 namespace Bitrix\ImConnector\InteractiveMessage;
 
-use \Bitrix\Main\Loader;
-use \Bitrix\Im\Model\ChatTable;
-use \Bitrix\ImOpenLines\Chat;
-use \Bitrix\ImConnector\Connector;
+use Bitrix\Main\Loader;
+use Bitrix\Im\Model\ChatTable;
+use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImConnector\Connector;
 
 /**
  * Class Base
@@ -13,26 +13,41 @@ use \Bitrix\ImConnector\Connector;
 class Output
 {
 	/**
-	 * @var array Output
+	 * @var self[]
 	 */
 	protected static $instances = [];
 
 	protected $idConnector = '';
 	protected $idChat = 0;
 
-	//keyboard
+	/** @var array */
 	protected $keyboardData = [];
+
+	/**
+	 * Output constructor.
+	 * @param int $idChat
+	 * @param string $idConnector
+	 */
+	protected function __construct($idChat, $idConnector)
+	{
+		$this->idChat = $idChat;
+		$this->idConnector = $idConnector;
+	}
+
+	protected function __clone()
+	{
+	}
 
 	/**
 	 * @param int $chatId
 	 * @param array $params
-	 * @return Output
+	 * @return self
 	 */
-	public static function getInstance($chatId = 0, $params = []): Output
+	public static function getInstance($chatId = 0, $params = []): self
 	{
 		if(!isset(static::$instances[$chatId]))
 		{
-			static::$instances[$chatId] = self::initialization($chatId, $params['connectorId']);
+			static::$instances[$chatId] = self::init($chatId, $params['connectorId']);
 		}
 
 		return static::$instances[$chatId];
@@ -52,7 +67,7 @@ class Output
 	 * @param string $connectorId
 	 * @return Output
 	 */
-	private static function initialization($chatId = 0, $connectorId = ''): Output
+	private static function init($chatId = 0, $connectorId = ''): self
 	{
 		$class = __CLASS__;
 
@@ -101,31 +116,19 @@ class Output
 	 *
 	 * @param array $messageFields
 	 * @param string $connectorId
+	 *
 	 * @return array
 	 */
-	public static function sendMessageProcessing($messageFields, $connectorId): array
+	public static function processSendingMessage(array $messageFields, string $connectorId): array
 	{
 		if(!empty($messageFields['im']['chat_id']) && $messageFields['im']['chat_id'] > 0)
 		{
-			$messageFields['message'] = self::getInstance($messageFields['im']['chat_id'], ['connectorId' => $connectorId])->nativeMessageProcessing($messageFields['message']);
+			$messageFields['message'] =
+				self::getInstance($messageFields['im']['chat_id'], ['connectorId' => $connectorId])
+					->nativeMessageProcessing($messageFields['message']);
 		}
 
 		return $messageFields;
-	}
-
-	/**
-	 * Output constructor.
-	 * @param $idChat
-	 * @param $idConnector
-	 */
-	protected function __construct($idChat, $idConnector)
-	{
-		$this->idChat = $idChat;
-		$this->idConnector = $idConnector;
-	}
-
-	protected function __clone()
-	{
 	}
 
 	/**
@@ -135,6 +138,26 @@ class Output
 	 * @return bool
 	 */
 	public function setFormIds($ids = []): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Sets an array of catalog products external (facebook) ID's for a message.
+	 *
+	 * @param array $ids External (facebook) ids of catalog products.
+	 */
+	public function setProductIds(array $ids = []): void
+	{
+	}
+
+	/**
+	 * Checks if an interactive message is available for the open line.
+	 *
+	 * @param int $lineId Open line id.
+	 * @return bool
+	 */
+	public function isAvailable(int $lineId): bool
 	{
 		return false;
 	}
@@ -176,13 +199,13 @@ class Output
 	 * Add keyboard data.
 	 *
 	 * @param array $data
-	 * @return bool
+	 * @return self
 	 */
-	public function setKeyboardData($data = []): bool
+	public function setKeyboardData($data = []): self
 	{
 		$this->keyboardData = $data;
 
-		return true;
+		return $this;
 	}
 
 	/**
@@ -192,28 +215,9 @@ class Output
 	 */
 	public function isLoadedKeyboard(): bool
 	{
-		$result = false;
-
-		if(
-			!empty($this->keyboardData) &&
-			is_array($this->keyboardData)
-		)
-		{
-			foreach ($this->keyboardData as $keyboard)
-			{
-				if(
-					!empty($keyboard['COMMAND']) &&
-					!empty($keyboard['SESSION_ID']) &&
-					!empty($keyboard['TEXT_BUTTON'])
-				)
-				{
-					$result = true;
-					break;
-				}
-			}
-		}
-
-		return $result;
+		return
+			!empty($this->keyboardData)
+			&& is_array($this->keyboardData);
 	}
 
 	/**

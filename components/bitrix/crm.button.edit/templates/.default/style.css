@@ -85,8 +85,8 @@
 	position: relative;
 	font-size: 12px;
 	color: #535c69;
-	font-family: 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: uppercase;
 	margin-right: 20px;
 	padding-left: 18px;
@@ -143,7 +143,8 @@
 
 .crm-button-edit-button-item {
 	border: 0;
-	font: 25px "OpenSans", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #000;
 	width: 100%;
 }
@@ -173,7 +174,7 @@
 }
 
 .crm-button-edit-channel-description-item {
-	font: 14px/18px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	opacity: .85;
 }
 
@@ -192,7 +193,7 @@
 .crm-button-edit-channel-title-item {
 	display: inline-block;
 	padding: 10px 7px;
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	vertical-align: middle;
 }
@@ -295,7 +296,7 @@
 
 .crm-button-edit-channel-lines-title-item {
 	display: inline-block;
-	font: bold 15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	vertical-align: middle;
 }
@@ -466,7 +467,7 @@
 	height: 38px;
 	border: 1px solid #c1c5c8;
 	border-radius: var(--ui-field-border-radius, 2px);
-	font: 16px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #1a1a1a;
 	background: #fff;
 	box-sizing: border-box;
@@ -506,7 +507,7 @@ select::-ms-expand {
 
 .crm-button-edit-channel-lines-inner-create-button-item,
 .crm-button-edit-channel-lines-display-options-settings-button {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	-webkit-transition: color .3s ease;
 	-moz-transition: color .3s ease;
@@ -550,7 +551,7 @@ select::-ms-expand {
 .crm-button-edit-channel-lines-social-name {
 	display: block;
 	margin: 0 10px 10px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	vertical-align: middle;
 }
@@ -643,7 +644,7 @@ select::-ms-expand {
 	position: relative;
 	display: inline-block;
 	border-bottom: 1px dashed #0C66C3;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0C66C3;
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
@@ -703,7 +704,7 @@ select::-ms-expand {
 	-webkit-box-flex: 1;
 	-ms-flex: 1;
 	flex: 1;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #5C5651;
 }
 
@@ -713,7 +714,7 @@ select::-ms-expand {
 
 .crm-button-edit-channel-lines-phone-description,
 .crm-button-edit-channel-lines-phone-number {
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(83,92,105,.5);
 	vertical-align: middle;
 }
@@ -729,7 +730,7 @@ select::-ms-expand {
 }
 
 .crm-button-edit-channel-lines-display-options-title-item {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #1a1a1a;
 }
 
@@ -760,7 +761,7 @@ select::-ms-expand {
 
 .crm-button-edit-channel-lines-display-options-settings-item {
 	display: inline-block;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	vertical-align: middle;
 }
@@ -797,7 +798,7 @@ select::-ms-expand {
 	width: -webkit-calc(100% - 24px);
 	width: calc(100% - 24px);
 	border-radius: var(--ui-field-border-radius, 2px);
-	font: 14px/38px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-channel-lines-display-options-links-block-button {
@@ -888,7 +889,7 @@ select::-ms-expand {
 }
 
 .crm-button-edit-channel-lines-display-options-links-description-text {
-	font: italic 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: italic 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -925,7 +926,7 @@ select::-ms-expand {
 .crm-button-edit-sidebar-title-item {
 	display: inline-block;
 	margin: 0 0 13px 0;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555c6d;
 }
 
@@ -1007,7 +1008,7 @@ select::-ms-expand {
 	align-self: flex-start;
 	margin: 0 0 5px 0;
 	width: 50%;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	vertical-align: middle;
 	white-space: normal;
@@ -1033,7 +1034,7 @@ select::-ms-expand {
 .crm-web-form-color-picker {
 	display: inline-block;
 	max-width: 100%;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	vertical-align: middle;
 	white-space: nowrap;
@@ -1229,7 +1230,7 @@ select::-ms-expand {
 	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2219%22%20height%3D%227%22%20viewBox%3D%220%200%2019%207%22%3E%0A%20%20%3Cpolygon%20fill%3D%22%23535C69%22%20fill-rule%3D%22evenodd%22%20points%3D%223.546%207.425%203.546%201.607%201.607%201.607%201.607%208.394%201.607%209.364%209.364%209.364%209.364%207.425%22%20transform%3D%22rotate%28-45%20.657%203.485%29%22/%3E%0A%3C/svg%3E%0A');
 	background-repeat: no-repeat;
 	background-position: right center;
-	font: 15px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 15px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* END OF SHOW */
@@ -1239,7 +1240,7 @@ select::-ms-expand {
 	padding: 16px;
 	border-radius: 2px;
 	background: #f8fafb;
-	font: 14px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	box-sizing: border-box;
 	word-wrap: break-word;
@@ -1337,7 +1338,7 @@ select::-ms-expand {
 
 .crm-button-edit-hello-title-item {
 	display: inline-block;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-constructor-block {
@@ -1364,14 +1365,14 @@ select::-ms-expand {
 }
 
 .crm-button-edit-hello-description-item {
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 }
 
 .crm-button-edit-hello-select-description-item {
 	display: inline-block;
 	margin: 0 0 10px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-select-delay {
@@ -1388,7 +1389,7 @@ select::-ms-expand {
 	background-image: url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMiIgaGVpZ2h0PSI3IiB2aWV3Qm94PSIwIDAgMjIgNyI+PHBhdGggZmlsbD0iIzUyNUM2OCIgZmlsbC1ydWxlPSJldmVub2RkIiBkPSJNNC41IDZMOSAxSDAiLz48L3N2Zz4=);
 	background-repeat: no-repeat;
 	background-position: center right;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-hello-link-block {
@@ -1415,19 +1416,19 @@ select::-ms-expand {
 }
 
 .crm-button-edit-hello-input-item::-webkit-input-placeholder {
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-hello-input-item:-moz-placeholder { /* Firefox 18- */
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-hello-input-item::-moz-placeholder {  /* Firefox 19+ */
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-hello-input-item:-ms-input-placeholder {
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-add-link {
@@ -1436,7 +1437,7 @@ select::-ms-expand {
 
 .crm-button-edit-hello-link-item {
 	border-bottom: 1px dashed #287ACF;
-	font: 12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #287ACF;
 	-webkit-transition: border-bottom .3s;
 	transition: border-bottom .3s;
@@ -1511,7 +1512,7 @@ select::-ms-expand {
 	cursor: pointer;
 }
 .b24-widget-button-popup-image-edit {
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82,92,104,.5);
 	-webkit-transition: color .3s;
 	transition: color .3s;
@@ -1554,7 +1555,7 @@ select::-ms-expand {
 	display: inline-block;
 	/*width: -webkit-calc(100% - 22px);*/
 	/*width: calc(100% - 22px);*/
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	vertical-align: middle;
 }
@@ -1563,7 +1564,7 @@ select::-ms-expand {
 	/*width: -webkit-calc(100% - 22px);*/
 	/*width: calc(100% - 22px);*/
 	margin: 4px 0 0 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	vertical-align: middle;
 }
@@ -1573,7 +1574,7 @@ select::-ms-expand {
 	/*width: calc(100% - 32px);*/
 	min-width: 196px;
 	border: 1px solid rgba(82,92,104,.24);
-	font: 700 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 700 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	-webkit-transition: border-color .3s;
 	transition: border-color .3s;
@@ -1585,7 +1586,7 @@ select::-ms-expand {
 	max-height: 121px;
 	box-sizing: border-box;
 	border: 1px solid rgba(82,92,104,.24);
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	vertical-align: top;
 	-webkit-transition: border-color .3s;
@@ -1612,8 +1613,8 @@ select::-ms-expand {
 .crm-button-edit-photo-uploaded-item-container-title span{
 	text-transform: uppercase;
 	font-size: 9px;
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font-weight: bold;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: #727379;
 	position: relative;
 	background: #fff;
@@ -2012,7 +2013,7 @@ select::-ms-expand {
 
 .crm-button-edit-hello-pages {
 	padding: 12px 0 0 10px;
-	font: bold 13px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 }
 
@@ -2025,7 +2026,7 @@ select::-ms-expand {
 	-webkit-border-radius: 2px;
 	-moz-border-radius: 2px;
 	border-radius: 2px;
-	font: 16px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #eb314b;
 	text-align: center;
 	min-width: 400px;
@@ -2061,7 +2062,7 @@ select::-ms-expand {
 
 .crm-button-edit-channel-lines-display-options-time-title {
 	margin: 0 0 5px 0;
-	font: 13px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(0,0,0,.6);
 }
 

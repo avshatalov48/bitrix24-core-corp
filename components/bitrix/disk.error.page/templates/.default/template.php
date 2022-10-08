@@ -1,6 +1,10 @@
 <?php
 use Bitrix\Main\Localization\Loc;
 $APPLICATION->SetPageProperty("BodyClass", "bx-disk-404-align-center");
+\Bitrix\Main\UI\Extension::load([
+	"ui.design-tokens",
+	"ui.fonts.montserrat"
+]);
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var array $arParams */

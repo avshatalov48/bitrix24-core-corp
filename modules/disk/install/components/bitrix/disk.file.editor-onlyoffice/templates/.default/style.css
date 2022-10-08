@@ -70,7 +70,8 @@
 .disk-fe-office-header-mode-text {
 	display: inline-block;
 	margin-right: 14px;
-	font: 12px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 	opacity: .5;
 }
@@ -122,7 +123,8 @@
 	display: inline-block;
 	margin-right: 19px;
 	padding-left: 14px;
-	font: 10px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: rgba(82,92,105,.7);
 }
 
@@ -163,7 +165,8 @@
 	display: inline-block;
 	margin: 0 4px;
 	padding-left: 9px;
-	font: 14px 'OpenSans-SemiBold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: rgba(82,92,105,.71);
 }
 .disk-fe-office-header-user-count:before {
@@ -245,7 +248,8 @@
 	height: 14px;
 	border-radius: 7px;
 	background-color: #2fc6f6;
-	font: 8px/14px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 8px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: #fff;
 	text-transform: uppercase;
 }
@@ -316,12 +320,14 @@
 .disk-file-editor-onlyoffice-loader-text--sm {
 	display: block;
 	margin-bottom: 10px;
-	font: 31px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 31px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 }
 
 .disk-file-editor-onlyoffice-loader-text--sm {
-	font: 16px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 }
 
@@ -338,6 +344,15 @@
 
 .disk-fe-office-warning-wrap {
 	height: 100%;
+}
+
+.disk-fe-office-warning--popup {
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	right: 0;
+	overflow: hidden;
 }
 
 .disk-fe-office-warning--popup .disk-fe-office-warning-wrap {
@@ -420,20 +435,22 @@
 .disk-fe-office-warning-title {
 	display: block;
 	margin-bottom: 15px;
-	font: 34px 'OpenSans-Light', Helvetca, Arial, sans-sarif;
+	font: 34px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #525c69;
 }
 
 .disk-fe-office-warning-file-name {
 	margin-bottom: 32px;
-	font: 26px 'OpenSans-Light', Helvetca, Arial, sans-sarif;
+	font: 26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #525c69;
 }
 
 .disk-fe-office-warning-desc {
 	display: block;
 	margin-bottom: 40px;
-	font: 14px/19px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 

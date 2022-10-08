@@ -150,7 +150,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 		elseif(!$this->AsChildTask && CBPHelper::isEmptyValue($fields['PARENT_ID']) === false)
 		{
 			$parentId = is_array($fields['PARENT_ID']) ? reset($fields['PARENT_ID']) : $fields['PARENT_ID'];
-			if(is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId)))
+			if(
+				!is_numeric($parentId)
+				|| is_null(\Bitrix\Tasks\Integration\Bizproc\Document\Task::getDocument($parentId))
+			)
 			{
 				$parentIdModifiedProperty = $logMap['PARENT_ID'];
 				$parentIdModifiedProperty['BaseType'] = 'string';
@@ -940,7 +943,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 				"Editable" => true,
 				"Required" => true,
 				"Multiple" => false,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
 			),
 			"RESPONSIBLE_ID" => array(
 				"Name" => GetMessage("BPTA1A_TASKASSIGNEDTO"),
@@ -967,7 +973,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => true,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
 			),
 			"START_DATE_PLAN" => array(
 				"Name" => GetMessage("BPTA1A_TASKACTIVEFROM"),
@@ -1041,7 +1050,10 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 				"Editable" => true,
 				"Required" => false,
 				"Multiple" => true,
-				"BaseType" => "user"
+				"BaseType" => "user",
+				"Settings" => [
+					'allowEmailUsers' => true,
+				],
 			),
 			"PARENT_ID" => array(
 				"Name" => GetMessage('BPTA1A_MAKE_SUBTASK'),

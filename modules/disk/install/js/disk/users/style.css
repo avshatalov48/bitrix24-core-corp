@@ -36,7 +36,8 @@
 	padding-left: 9px;
 	margin: 0 4px 0 6px;
 	height: 23px;
-    font: 14px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+    font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
     color: #525c69;
     opacity: .71;
 }
@@ -61,7 +62,8 @@
 
 .disk-active-user--grid .disk-active-user-value {
 	height: 20px;
-	font: 12px "OpenSans-SemiBold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .disk-active-user--grid .disk-active-user-list-item {
@@ -108,7 +110,7 @@
 	text-decoration: none;
 	cursor: auto;
 	padding: 0 0 9px 0;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 	border-bottom: 1px solid #D8D8D8;
 	margin: 0 2px 9px 2px;
@@ -209,7 +211,7 @@
 	padding: 1px 0 0 6px;
 	max-width: 130px;
 	height: 15px;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #656365;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -226,7 +228,7 @@ a.disk-active-user-popup-item .disk-active-user-popup-name:hover {
 	position: relative;
 	text-align: center;
 	vertical-align: center;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #656365;
 	padding-top: 10px;
 }

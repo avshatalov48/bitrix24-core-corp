@@ -24,6 +24,8 @@ Extension::load([
 	'ui.viewer',
 	'sidepanel',
 	'disk.viewer.document-item',
+	'ui.notification',
+	'ui.fonts.opensans',
 ]);
 
 $langId = $component->getLangId();
@@ -154,6 +156,11 @@ switch(mb_strtolower($langId))
 			BX.remove(BX.findChildByClassName(BX('<?=$arResult['GRID']['ID']?>'), 'bx-disk-action'));
 			BX.remove(BX.findChildByClassName(BX('<?=$arResult['GRID']['ID']?>'), 'bx-head-advanced-more'));
 
+			<?php if($arResult['SESSION_EXPIRED']): ?>
+				BX.UI.Notification.Center.notify({
+					content: '<?= GetMessageJS('DISK_EXT_SESSION_EXPIRED') ?>',
+				});
+			<?php endif; ?>
 		});
 		</script>
 		<? } elseif($arResult['PROTECTED_BY_PASSWORD']){ ?>

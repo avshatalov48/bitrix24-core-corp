@@ -1,9 +1,14 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
 global $APPLICATION;
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
 $APPLICATION->SetAdditionalCSS('/bitrix/js/crm/css/crm.css');
 
-$arResult['GRID_DATA'] = $arColumns = array();
+$arResult['GRID_DATA'] = array();
+$arColumns = array();
+$rateColumn = array(
+	'RATE' => false,
+);
 foreach ($arResult['HEADERS'] as $arHead)
 {
 	$arColumns[$arHead['id']] = false;
@@ -43,11 +48,20 @@ foreach($arResult['VATS'] as $key => &$arVat)
 		);
 	}
 
+	$editable = $arColumns;
+	if ($arResult['CAN_EDIT'])
+	{
+		$editable = $arVat['EXCLUDE_VAT'] === 'N'
+			? array()
+			: $rateColumn
+		;
+	}
+
 	$arResult['GRID_DATA'][] = array(
 		'id' => $key,
 		'actions' => $arActions,
 		'data' => $arVat,
-		'editable' => $arResult['CAN_EDIT'] ? true : $arColumns,
+		'editable' => $editable,
 		'columns' => array(
 			'C_SORT' => $arVat['SORT'],
 			'ACTIVE' => $arVat['ACTIVE'],

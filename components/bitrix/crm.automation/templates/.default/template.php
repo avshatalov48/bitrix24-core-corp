@@ -10,6 +10,11 @@ $titleView = $arResult['ENTITY_CAPTION'] ? GetMessage('CRM_AUTOMATION_CMP_TITLE_
 
 $titleEdit = GetMessage('CRM_AUTOMATION_CMP_TITLE_'.$arResult['ENTITY_TYPE_NAME'].'_EDIT');
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 global $APPLICATION;
 
 $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
@@ -38,7 +43,8 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			if (data && data['VALUE'])
 			{
-				var cmp = BX.getClass('BX.Bizproc.Automation.Designer.component');
+				var designer = BX.getClass('BX.Bizproc.Automation.Designer') && BX.Bizproc.Automation.Designer.getInstance();
+				var cmp = designer && designer.component;
 				if (cmp)
 				{
 					cmp.setDocumentStatus(data['VALUE']);
@@ -51,7 +57,8 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			if (data.entityTypeId === entityTypeId && data.entityId === entityId && data.currentStepId)
 			{
-				var cmp = BX.getClass('BX.Bizproc.Automation.Designer.component');
+				var designer = BX.getClass('BX.Bizproc.Automation.Designer') && BX.Bizproc.Automation.Designer.getInstance();
+				var cmp = designer && designer.component;
 				if (cmp)
 				{
 					cmp.setDocumentStatus(data.currentStepId);
@@ -66,7 +73,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		var DocumentTriggerDialogHandler = function(trigger, form)
 		{
-			var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+			var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 
 			if (triggerData && triggerData['TEMPLATE_LIST'])
 			{
@@ -117,7 +124,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 		BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-MISSED_CALL', function(trigger, form)
 			{
-				var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+				var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 				if (triggerData && triggerData['LINES'])
 				{
 					var select = BX.create('select', {
@@ -194,7 +201,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			var triggerDialogHandler = function(trigger, form)
 			{
-				var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+				var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 
 				if (triggerData && triggerData['CONFIG_LIST'])
 				{
@@ -292,7 +299,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 
 				var menuItems = [];
 
-				BX.Bizproc.getGlobalContext().document.getFields().forEach(function(field)
+				BX.Bizproc.Automation.getGlobalContext().document.getFields().forEach(function(field)
 				{
 					var fieldId = field['Id'];
 
@@ -391,7 +398,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 				}));
 
 				var fields = trigger.getApplyRules()['fields'] || [];
-				BX.Bizproc.getGlobalContext().document.getFields().forEach(function(field)
+				BX.Bizproc.Automation.getGlobalContext().document.getFields().forEach(function(field)
 				{
 					if (fields.includes((field['Id'])))
 					{
@@ -413,7 +420,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-FILL_TRACKNUM', function(trigger, form)
 				{
-					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+					var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['DELIVERY_LIST'])
 					{
 						var select = BX.create('select', {
@@ -462,7 +469,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 		{
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-WEBHOOK', function(trigger, form)
 				{
-					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+					var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 
 					if (triggerData && triggerData['HANDLER'] && triggerData['HANDLER'].indexOf('{{PASSWORD}}') > 0)
 					{
@@ -532,7 +539,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-SHIPMENT_CHANGED', function(trigger, form)
 				{
-					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+					var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['FIELDS'])
 					{
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
@@ -585,7 +592,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-OPENLINE_ANSWER_CTRL', function(trigger, form)
 				{
-					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+					var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['FIELDS'])
 					{
 						var conditionGroup = new BX.Bizproc.Automation.ConditionGroup(
@@ -638,7 +645,7 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 			var selector;
 			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-TASK_STATUS', function(trigger, form)
 				{
-					var triggerData = BX.Bizproc.getGlobalContext().getAvailableTrigger(trigger.getCode());
+					var triggerData = BX.Bizproc.Automation.getGlobalContext().getAvailableTrigger(trigger.getCode());
 					if (triggerData && triggerData['STATUS_LIST'])
 					{
 						var select = BX.create('select', {
@@ -721,6 +728,69 @@ $APPLICATION->IncludeComponent('bitrix:bizproc.automation', '', [
 					selector.destroy();
 				}
 			});
+		})();
+
+		(function()//QR
+		{
+			var designer = BX.getClass('BX.Bizproc.Automation.Designer') && BX.Bizproc.Automation.Designer.getInstance();
+			var cmp = designer && designer.component;
+			if (!cmp)
+			{
+				return;
+			}
+
+			var triggerDialogHandler = function(trigger, form)
+			{
+				const ownerList = [];
+
+				cmp.templateManager.templates.forEach((template) => {
+					template.robots.forEach((robot) => {
+						if (robot.data.Type === 'CrmGenerateQr')
+						{
+							ownerList.push([robot.getId(), robot.getProperty('QrTitle')]);
+						}
+					});
+				});
+
+				var select = BX.create('select', {
+					attrs: {className: 'bizproc-automation-popup-settings-dropdown'},
+					props: {
+						name: 'owner_id',
+						value: ''
+					},
+					children: [BX.create('option', {
+						props: {value: ''},
+						text: BX.message('BIZPROC_AUTOMATION_TRIGGER_WEBFORM_ANY')
+					})]
+				});
+
+				ownerList.forEach((item) => {
+					select.appendChild(BX.create('option', {
+						props: {value: item[0]},
+						text: item[1]
+					}));
+				});
+
+				if (BX.type.isPlainObject(trigger.getApplyRules()) && trigger.getApplyRules()['ownerId'])
+				{
+					select.value = trigger.getApplyRules()['ownerId'];
+				}
+
+				var div = BX.create('div', {attrs: {className: 'bizproc-automation-popup-settings'},
+					children: [BX.create('span', {attrs: {
+							className: 'bizproc-automation-popup-settings-title'
+						}, text: BX.message('BIZPROC_AUTOMATION_TRIGGER_QR_LABEL') + ':'}), select]
+				});
+				form.appendChild(div);
+			}
+
+			var triggerSaveHandler = function(trigger, formData)
+			{
+				trigger.setApplyRules({ownerId: formData['data']['owner_id']});
+			};
+
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onOpenSettingsDialog-QR', triggerDialogHandler);
+			BX.addCustomEvent('BX.Bizproc.Automation.TriggerManager:onSaveSettings-QR', triggerSaveHandler);
 		})();
 	});
 </script>

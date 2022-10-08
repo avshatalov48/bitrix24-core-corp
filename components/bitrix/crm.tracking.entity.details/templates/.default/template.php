@@ -16,6 +16,11 @@ use Bitrix\Main\Web\Json;
 
 Loc::loadMessages(__FILE__);
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 $containerId = 'crm-tracking-entity-details';
 ?>
 <div id="<?=htmlspecialcharsbx($containerId)?>"

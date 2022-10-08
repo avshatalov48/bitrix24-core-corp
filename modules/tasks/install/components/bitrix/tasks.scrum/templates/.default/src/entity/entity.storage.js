@@ -58,11 +58,6 @@ export class EntityStorage
 		return this.sprints;
 	}
 
-	getFilteredCompletedSprints(): Map<number, Sprint>
-	{
-		return this.filteredCompletedSprints;
-	}
-
 	getActiveSprint(): ?Sprint
 	{
 		return [...this.sprints.values()].find((sprint: Sprint) => sprint.isActive());

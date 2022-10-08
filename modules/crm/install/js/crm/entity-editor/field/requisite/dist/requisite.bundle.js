@@ -2365,6 +2365,7 @@ this.BX = this.BX || {};
 	      main_core_events.EventEmitter.subscribe(this._tooltip, 'onAddBankDetails', this.onAddBankDetails.bind(this));
 	      main_core_events.EventEmitter.subscribe(this._tooltip, 'onSetSelectedRequisite', this.onSetSelectedRequisite.bind(this));
 	      this.updateAutocompletePlaceholder();
+	      this.updateAutocompeteClientResolverPlacementParams();
 	      main_core_events.EventEmitter.emit(this.getEditor(), 'onFieldInit', {
 	        field: this
 	      });
@@ -2458,8 +2459,7 @@ this.BX = this.BX || {};
 	        if (this.isSearchMode) {
 	          actions.push(main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\"\n\t\t\t\t\t\tonclick=\"", "\">", "</span>"])), this.toggleSearchMode.bind(this), main_core.Loc.getMessage('REQUISITE_LABEL_DETAILS_SELECT')));
 	        } else {
-	          var fieldName = this.getClientResolverTitle();
-	          var title = fieldName ? main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', fieldName) : '';
+	          var title = this.getClientResolverTitle();
 	          actions.push(main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<span class=\"ui-link ui-link-secondary ui-entity-editor-block-title-link\"\n\t\t\t\t\t\tonclick=\"", "\">", "</span>"])), this.toggleSearchMode.bind(this), title));
 	        }
 	      }
@@ -2589,13 +2589,7 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "isAutocompleteEnabled",
 	    value: function isAutocompleteEnabled() {
-	      if (!this.hasRequisites() || this.getRequisites().isEmpty()) {
-	        return !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
-	      }
-
-	      var selectedRequisite = this.getRequisites().getSelected();
-
-	      if (selectedRequisite.isAddressOnly()) {
+	      if (!this.hasRequisites() || this.getRequisites().isEmpty() || this.getRequisites().getSelected().isAddressOnly()) {
 	        return !!this.getClientResolverPropForPreset(this.getSelectedPresetId());
 	      }
 
@@ -2736,11 +2730,33 @@ this.BX = this.BX || {};
 	      this._autocomplete.setPlaceholderText(clientResolverPropTitle);
 	    }
 	  }, {
+	    key: "updateAutocompeteClientResolverPlacementParams",
+	    value: function updateAutocompeteClientResolverPlacementParams() {
+	      this._autocomplete.setClientResolverPlacementParams(this.getClientResolverPlacementParams());
+	    }
+	  }, {
+	    key: "getClientResolverPlacementParams",
+	    value: function getClientResolverPlacementParams() {
+	      var clientResolverProp = this.getClientResolverPropForPreset(this.getSelectedPresetId());
+	      return clientResolverProp ? {
+	        "isPlacement": BX.prop.getString(clientResolverProp, "IS_PLACEMENT", "N") === "Y",
+	        "numberOfPlacements": BX.prop.getArray(clientResolverProp, "PLACEMENTS", []).length,
+	        "countryId": BX.prop.getInteger(clientResolverProp, "COUNTRY_ID", 0)
+	      } : {};
+	    }
+	  }, {
 	    key: "getClientResolverTitle",
 	    value: function getClientResolverTitle() {
-	      var selectedPresetId = this.getSelectedPresetId();
-	      var clientResolverProp = this.getClientResolverPropForPreset(selectedPresetId);
-	      return BX.prop.getString(clientResolverProp, 'TITLE');
+	      var title = "";
+	      var clientResolverProp = this.getClientResolverPropForPreset(this.getSelectedPresetId());
+	      title = BX.prop.getString(clientResolverProp, "TITLE", "");
+	      var isPlacement = BX.prop.getString(clientResolverProp, 'IS_PLACEMENT', 'N') === 'Y';
+
+	      if (!isPlacement) {
+	        title = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', title);
+	      }
+
+	      return title;
 	    }
 	  }, {
 	    key: "adjustNodesVisibility",
@@ -3044,6 +3060,7 @@ this.BX = this.BX || {};
 	      }
 
 	      this.updateAutocompletePlaceholder();
+	      this.updateAutocompeteClientResolverPlacementParams();
 	    }
 	  }, {
 	    key: "updateRequisitesDropdown",

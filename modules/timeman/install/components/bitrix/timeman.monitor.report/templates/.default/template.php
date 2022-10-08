@@ -13,7 +13,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
-Extension::load(['timeman.monitor-report']);
+Extension::load(['ui.design-tokens', 'timeman.monitor-report']);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty(

@@ -13,7 +13,8 @@
 }
 
 .timeman-report-nav-current {
-	font: 19px/25px "OpenSans-Light", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 19px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #333;
 }
 
@@ -44,7 +45,7 @@
 }
 
 .timeman-report-user-name {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	color: #2066b0;
 	text-decoration: none;
 	overflow: hidden;
@@ -114,7 +115,8 @@
 
 .timeman-report-title-text {
 	color: #333;
-	font: 16px/23px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .timeman-report-title-change {
@@ -142,7 +144,9 @@
 	overflow: hidden;
 	color: #333;
 	background: #eaf9fe;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	border-radius: var(--ui-border-radius-sm);
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .timeman-report-time-item + .timeman-report-time-item {

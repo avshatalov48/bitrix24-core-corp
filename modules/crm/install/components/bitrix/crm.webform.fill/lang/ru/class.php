@@ -11,4 +11,10 @@ $MESS["CRM_WEBFORM_ERROR_NOT_FOUND"] = "Форма не найдена.";
 $MESS["CRM_WEBFORM_ERROR_SECURITY"] = "Скорее всего ссылка на форму поменялась.";
 $MESS["CRM_WEBFORM_ERROR_DEACTIVATED"] = "Форма не активна.";
 
+$MESS["CRM_WEBFORM_PREVIEW_AD_NSD_TITLE"] = "У вас недостаточно прав";
+$MESS["CRM_WEBFORM_PREVIEW_AD_NSD_SUBTITLE"] = "Вам прислали ссылку на предпросмотр формы. Получите доступ к формам или попросите владельца прислать публичную ссылку на форму";
+
+$MESS["CRM_WEBFORM_PREVIEW_AD_AUTH_TITLE"] = "Вы не авторизованы";
+$MESS["CRM_WEBFORM_PREVIEW_AD_AUTH_SUBTITLE"] = "Вам прислали ссылку на предпросмотр формы. Авторизуйтесь в Битрикс24 или попросите владельца прислать публичную ссылку на форму";
+
 ?>

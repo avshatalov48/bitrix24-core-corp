@@ -8,7 +8,6 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 {
 	$licenseType = CBitrix24::getLicenseType();
 }
-?> <?
 
 if (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'))
 {
@@ -28,9 +27,13 @@ if (IsModuleInstalled("timeman") && \Bitrix\Main\Loader::includeModule('timeman'
 elseif (!(!IsModuleInstalled("timeman") && in_array($licenseType, array("company", "edu", "nfr"))))
 {
 	if (LANGUAGE_ID == "de" || LANGUAGE_ID == "la")
+	{
 		$lang = LANGUAGE_ID;
+	}
 	else
+	{
 		$lang = LangSubst(LANGUAGE_ID);
+	}
 	?>
 	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT")?></p>
 	<div style="text-align: center;"><img src="images/<?=$lang?>/timeman.png"/></div>

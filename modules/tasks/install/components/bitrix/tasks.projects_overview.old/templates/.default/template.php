@@ -5,6 +5,8 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $bodyClass = $bodyClass ? $bodyClass." page-one-column" : "page-one-column";
 $APPLICATION->SetPageProperty("BodyClass", $bodyClass);
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 $APPLICATION->IncludeComponent(
 	'bitrix:tasks.interface.topmenu',
 	'.default',
@@ -108,7 +110,7 @@ $APPLICATION->IncludeComponent(
 									?></span><?php
 									foreach ($arProject['HEADS'] as $arHead)
 									{
-										?><a href="<?php echo $arHead['HREF']; ?>" class="task-project-director" 
+										?><a href="<?php echo $arHead['HREF']; ?>" class="task-project-director"
 											title="<?php echo $arHead['FORMATTED_NAME'] ?>"
 											<?php
 											if ($arHead['PHOTO_SRC'])

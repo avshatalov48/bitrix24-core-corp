@@ -6,6 +6,13 @@ use \Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.buttons',
+	'sale.barcode',
+]);
+
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/slider.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/themes/.default/crm-entity-show.css');
@@ -14,12 +21,6 @@ if($arResult['ADDITIONAL_CSS_PATH'] <> '')
 {
 	\Bitrix\Main\Page\Asset::getInstance()->addCss($arResult['ADDITIONAL_CSS_PATH']);
 }
-
-\Bitrix\Main\UI\Extension::load([
-	'ui.buttons',
-	'sale.barcode',
-	'ui.design-tokens'
-]);
 
 if(SITE_TEMPLATE_ID === 'bitrix24')
 {

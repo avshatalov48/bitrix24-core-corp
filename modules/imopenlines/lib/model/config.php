@@ -439,6 +439,11 @@ class ConfigTable extends Main\Entity\DataManager
 				'values' => ['N', 'Y'],
 				'title' => Loc::getMessage('CONFIG_ENTITY_WELCOME_FORM_DELAY'),
 				'default_value' => 'Y',
+			]),
+			new BooleanField('SEND_WELCOME_EACH_SESSION', [
+				'values' => ['N', 'Y'],
+				'title' => Loc::getMessage('CONFIG_ENTITY_SEND_WELCOME_EACH_SESSION'),
+				'default_value' => 'N',
 			])
 		];
 	}

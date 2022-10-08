@@ -240,7 +240,7 @@
        -moz-user-select: none;
         -ms-user-select: none;
             user-select: none;
-    font: 12px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .bx-timeman-component-timeline-legend-item {
     display: -webkit-box;
@@ -275,7 +275,7 @@
         -ms-flex-align: center;
             align-items: center;
     color: #535c69;
-    font: 13px/22px "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font: 13px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     margin-right: 16px;
     -webkit-user-select: none;
        -moz-user-select: none;

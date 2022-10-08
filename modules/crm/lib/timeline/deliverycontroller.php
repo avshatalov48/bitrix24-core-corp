@@ -111,13 +111,12 @@ class DeliveryController extends EntityController
 		$bindings = TimelineBindingsMaker::makeByDeliveryRequestId($deliveryRequest['ID']);
 		TimelineEntry::registerBindings($result->getId(), $bindings);
 
-		foreach ($bindings as $binding)
+		foreach($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$result->getId()
 			);
-			self::pushHistoryEntry($result->getId(), $tag, 'timeline_activity_add');
 		}
 
 		return (int)$result->getId();
@@ -163,11 +162,10 @@ class DeliveryController extends EntityController
 
 		foreach ($bindings as $binding)
 		{
-			$tag = TimelineEntry::prepareEntityPushTag(
-				$binding['ENTITY_TYPE_ID'],
-				$binding['ENTITY_ID']
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier($binding['ENTITY_TYPE_ID'], $binding['ENTITY_ID']),
+				$result->getId()
 			);
-			self::pushHistoryEntry($result->getId(), $tag, 'timeline_activity_add');
 		}
 
 		return (int)$result->getId();

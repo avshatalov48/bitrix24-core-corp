@@ -1,12 +1,7 @@
 <?php
 
 namespace Bitrix\SalesCenter\Integration;
-
-use Bitrix\Landing\Field;
-use Bitrix\Landing\Landing;
-use Bitrix\Landing\Rights;
-use Bitrix\Landing\Site;
-use Bitrix\Landing\Subtype;
+use Bitrix\Landing;
 use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\UrlManager;
@@ -65,9 +60,9 @@ class LandingManager extends Base
 			{
 				if(static::getInstance()->isConnectionAvailable())
 				{
-					Rights::setGlobalOff();
-					\Bitrix\Landing\PublicAction\Site::publication($landingId, true);
-					Rights::setGlobalOn();
+					Landing\Rights::setGlobalOff();
+					Landing\PublicAction\Site::publication($landingId, true);
+					Landing\Rights::setGlobalOn();
 				}
 
 				static::getInstance()->createWebFormPages();
@@ -136,7 +131,7 @@ class LandingManager extends Base
 	{
 		$result = new \Bitrix\Main\ORM\EventResult();
 
-		$getMetaFromUrl = function(\Bitrix\Landing\Hook\Page $hook)
+		$getMetaFromUrl = function(Landing\Hook\Page $hook)
 		{
 			$hash = Application::getInstance()->getContext()->getRequest()->get(ImOpenLinesManager::META_PARAM);
 			if($hash)
@@ -172,11 +167,11 @@ class LandingManager extends Base
 						{
 							if (intval($image) > 0)
 							{
-								$image = \Bitrix\Landing\File::getFileArray(intval($image));
+								$image = Landing\File::getFileArray(intval($image));
 								$image = $image['SRC'] ?? null;
 								if ($image)
 								{
-									$image = \Bitrix\Landing\Manager::getUrlFromFile($image);
+									$image = Landing\Manager::getUrlFromFile($image);
 								}
 							}
 
@@ -188,7 +183,7 @@ class LandingManager extends Base
 							}
 						}
 
-						\Bitrix\Landing\Manager::setPageView('MetaOG', $content);
+						Landing\Manager::setPageView('MetaOG', $content);
 
 						return true;
 					}
@@ -287,8 +282,8 @@ class LandingManager extends Base
 
         if($siteId === static::getInstance()->getConnectedSiteId())
         {
-            \Bitrix\Landing\Manager::enableFeatureTmp(
-                \Bitrix\Landing\Manager::FEATURE_PUBLICATION_SITE
+            Landing\Manager::enableFeatureTmp(
+                Landing\Manager::FEATURE_PUBLICATION_SITE
             );
         }
 
@@ -358,8 +353,8 @@ class LandingManager extends Base
 			$siteId = $this->getConnectedSiteId();
 			if ($siteId > 0 && $this->isEnabled)
 			{
-				Rights::setOff();
-				$site = Site::getList([
+				Landing\Rights::setOff();
+				$site = Landing\Site::getList([
 					'select' => ['ID', 'ACTIVE', 'XML_ID'],
 					'filter' => [
 						'=ID' => $siteId,
@@ -372,7 +367,7 @@ class LandingManager extends Base
 					$this->connectedSite = $site;
 				}
 
-				Rights::setOn();
+				Landing\Rights::setOn();
 			}
 		}
 
@@ -386,8 +381,8 @@ class LandingManager extends Base
 	{
 		if($this->isEnabled)
 		{
-			return \Bitrix\Landing\Manager::checkFeature(
-				\Bitrix\Landing\Manager::FEATURE_PUBLICATION_SITE,
+			return Landing\Manager::checkFeature(
+				Landing\Manager::FEATURE_PUBLICATION_SITE,
 				[
 					'type' => 'STORE'
 				]
@@ -453,7 +448,7 @@ class LandingManager extends Base
 
 		if ($this->isEnabled())
 		{
-			Rights::setOff();
+			Landing\Rights::setOff();
 			$componentName = 'bitrix:landing.demo';
 			$className = \CBitrixComponent::includeComponentClass($componentName);
 			$demoCmp = new $className;
@@ -464,7 +459,7 @@ class LandingManager extends Base
 				'DISABLE_REDIRECT' => 'Y',
 			];
 			$result = $demoCmp->actionSelect(self::SITE_TEMPLATE_CODE);
-			Rights::setOn();
+			Landing\Rights::setOn();
 
 			return $result;
 		}
@@ -576,7 +571,7 @@ class LandingManager extends Base
 			'=SITE.DELETED' => 'N',
 			'=DELETED' => 'N',
 		], $filter);
-		$pageList = Landing::getList([
+		$pageList = Landing\Landing::getList([
 			'select' => [
 				'ID',
 				'TITLE',
@@ -595,14 +590,14 @@ class LandingManager extends Base
 			$landings[$landing['ID']] = $landing;
 		}
 
-		$areas = \Bitrix\Landing\TemplateRef::landingIsArea(array_keys($landings));
+		$areas = Landing\TemplateRef::landingIsArea(array_keys($landings));
 		$landings = array_filter($landings, function($landing) use ($areas)
 			{
 				return !$areas[$landing['ID']];
 			}
 		);
 
-		$landing = Landing::createInstance(0);
+		$landing = Landing\Landing::createInstance(0);
 		$publicUrls = $landing->getPublicUrl(array_keys($landings));
 		if(is_array($publicUrls))
 		{
@@ -631,7 +626,7 @@ class LandingManager extends Base
 
 		if($withAdditionalFields && $this->loadedLandings[$landingId] && !$this->loadedLandings[$landingId]['additionalFields'])
 		{
-			$this->loadedLandings[$landingId]['additionalFields'] = Landing::getAdditionalFields($landingId);
+			$this->loadedLandings[$landingId]['additionalFields'] = Landing\Landing::getAdditionalFields($landingId);
 		}
 
 
@@ -675,7 +670,7 @@ class LandingManager extends Base
 	 */
 	private function getAdditionalFieldValue($field = null)
 	{
-		if($field && $field instanceof Field)
+		if($field && $field instanceof Landing\Field)
 		{
 			return $field->getValue();
 		}
@@ -685,18 +680,18 @@ class LandingManager extends Base
 
 	/**
 	 * @param array $urlParameters
-	 * @return false|array
+	 * @return array|null
 	 */
-	public function getOrderPublicUrlInfo(array $urlParameters = [])
+	public function getOrderPublicUrlInfo(array $urlParameters = []): ?array
 	{
 		return $this->getPublicUrlInfo('order', $urlParameters);
 	}
 
 	/**
 	 * @param array $urlParameters
-	 * @return false|array
+	 * @return array|null
 	 */
-	public function getCollectionPublicUrlInfo(array $urlParameters = [])
+	public function getCollectionPublicUrlInfo(array $urlParameters = []): ?array
 	{
 		return $this->getPublicUrlInfo('catalog', $urlParameters);
 	}
@@ -705,9 +700,9 @@ class LandingManager extends Base
 	 * Get public url from any system landing pages
 	 * @param string $code
 	 * @param array $urlParameters
-	 * @return array|false|mixed
+	 * @return array|null
 	 */
-	protected function getPublicUrlInfo(string $code, array $urlParameters = [])
+	protected function getPublicUrlInfo(string $code, array $urlParameters = []): ?array
 	{
 		if (!isset($this->landingPublicUrlInfo[$code]))
 		{
@@ -717,18 +712,26 @@ class LandingManager extends Base
 			}
 			if ($this->isEnabled && $this->isSiteExists())
 			{
-				Rights::setOff();
-				$sysPages = \Bitrix\Landing\Syspage::get($this->getConnectedSiteId());
+				Landing\Rights::setOff();
+				$siteId = $this->getConnectedSiteId();
+				$sysPages = Landing\Syspage::get($siteId, true);
+
+				// try to update to add new pages if needed
+				if (!isset($sysPages[$code]))
+				{
+					Landing\Site\Version::update(
+						$siteId,
+						Landing\Site::getVersion($siteId)
+					);
+					$sysPages = Landing\Syspage::get($siteId, true, true);
+				}
+
 				if (isset($sysPages[$code]))
 				{
 					$landingId = (int)$sysPages[$code]['LANDING_ID'];
-					$landing = Landing::createInstance($landingId);
+					$landing = Landing\Landing::createInstance($landingId);
 					if ($landing->exist())
 					{
-						\Bitrix\Landing\Site\Version::update(
-							$landing->getSiteId(),
-							$landing->getMeta()['SITE_VERSION']
-						);
 						$this->landingPublicUrlInfo[$code] = [
 							'url' => $landing->getPublicUrl(false, true),
 							'title' => $landing->getTitle(),
@@ -737,13 +740,13 @@ class LandingManager extends Base
 						];
 					}
 				}
-				Rights::setOn();
+				Landing\Rights::setOn();
 			}
 		}
 
 		if (!isset($this->landingPublicUrlInfo[$code]))
 		{
-			return false;
+			return null;
 		}
 
 		$publicUrlInfo = $this->landingPublicUrlInfo[$code];
@@ -774,7 +777,7 @@ class LandingManager extends Base
 
 		if (!isset($info[$order->getId()]))
 		{
-			$urlInfo = false;
+			$urlInfo = null;
 			if ($this->isOrderPublicUrlAvailable())
 			{
 				$urlParameters = [
@@ -830,7 +833,7 @@ class LandingManager extends Base
 	public function isOrderPublicUrlExists()
 	{
 		$orderPublicUrlInfo = $this->getOrderPublicUrlInfo();
-		return ($orderPublicUrlInfo !== false);
+		return ($orderPublicUrlInfo !== null);
 	}
 	//endregion
 
@@ -844,10 +847,10 @@ class LandingManager extends Base
 		{
 			$this->connectedWebForms = [];
 			$landings = $this->getLandings();
-			$blocks = Subtype\Form::getLandingFormBlocks(array_keys($landings));
+			$blocks = Landing\Subtype\Form::getLandingFormBlocks(array_keys($landings));
 			foreach ($blocks as $block)
 			{
-				$formId = Subtype\Form::getFormByBlock((int)$block['ID']);
+				$formId = Landing\Subtype\Form::getFormByBlock((int)$block['ID']);
 				if ($formId)
 				{
 					$this->connectedWebForms[] = [
@@ -935,7 +938,7 @@ class LandingManager extends Base
 					'DISABLE_REDIRECT' => 'Y'
 				];
 
-				$additionalFields = Site::getAdditionalFields($this->getConnectedSiteId());
+				$additionalFields = Landing\Site::getAdditionalFields($this->getConnectedSiteId());
 				$landingDemoComponent->setAdditionalFields([
 					'THEME_CODE' => $this->getAdditionalFieldValue($additionalFields['THEME_CODE']),
 					'THEME_CODE_TYPO' => $this->getAdditionalFieldValue($additionalFields['THEME_CODE_TYPO']),
@@ -985,7 +988,7 @@ class LandingManager extends Base
 					$result->setData(array_merge($result->getData(), ['pageId' => $updateResult->getId()]));
 					if($isPublic)
 					{
-						$landing = Landing::createInstance($landingId);
+						$landing = Landing\Landing::createInstance($landingId);
 						$landing->publication();
 						if(!$landing->getError()->isEmpty())
 						{
@@ -1000,7 +1003,7 @@ class LandingManager extends Base
 			}
 			else
 			{
-				Landing::delete($landingId);
+				Landing\Landing::delete($landingId);
 				$result->addErrors($setResult->getErrors());
 			}
 		}
@@ -1025,14 +1028,14 @@ class LandingManager extends Base
 		{
 			return $result->addError(new Error('Form not found'));
 		}
-		$blocks = Subtype\Form::getLandingFormBlocks($landingId);
+		$blocks = Landing\Subtype\Form::getLandingFormBlocks($landingId);
 		if (empty($blocks))
 		{
 			return $result->addError(new Error('Could not found block with form on the page'));
 		}
 		foreach ($blocks as $blockData)
 		{
-			if (!Subtype\Form::setFormIdToBlock((int)$blockData['ID'], (int)$formId))
+			if (!Landing\Subtype\Form::setFormIdToBlock((int)$blockData['ID'], (int)$formId))
 			{
 				return $result->addError(new Error('Error while set form ID to block'));
 			}
@@ -1056,7 +1059,7 @@ class LandingManager extends Base
 	{
 		if($this->isSiteExists())
 		{
-			return Landing::getList([
+			return Landing\Landing::getList([
 				'select' => ['*'],
 				'filter' => [
 					'=SITE_ID' => $this->getConnectedSiteId(),
@@ -1164,7 +1167,7 @@ class LandingManager extends Base
 		{
 			return $result->addError(new Error('Web form '.$formId.' is not found'));
 		}
-		$result = Landing::update($landingId, [
+		$result = Landing\Landing::update($landingId, [
 			'TITLE' => $form['NAME'],
 		]);
 		if(!$result->isSuccess())

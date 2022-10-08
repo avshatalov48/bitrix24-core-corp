@@ -16,7 +16,7 @@
 
 .crm-report-salesdynamics-grid-user-name {
 	max-width: 100%;
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066B0;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -24,12 +24,12 @@
 }
 
 .crm-report-salesdynamics-grid-total {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066B0;
 }
 
 .crm-report-salesdynamics-bold {
-	font: bold 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-report-salesdynamics-right {
@@ -53,11 +53,11 @@
 	margin: 0 8px 0 0;
 	padding: 0 8px 0 0;
 	border-right: 1px solid rgba(82,92,105,.17);
-	font: 13px/10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #364150;
 }
 .crm-report-salesdynamics-grid-rating-text {
-	font: 10px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
 }
 

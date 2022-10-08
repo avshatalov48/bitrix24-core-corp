@@ -26,6 +26,14 @@ if (isset($arParams['SCOPE']) && $arParams['SCOPE'] !== '')
 {
 	$createButtonUri->addParams(['SCOPE' => $arParams['SCOPE']]);
 }
+if ($arParams['MENU_GROUP_ID'] > 0)
+{
+	$createButtonUri->addParams(['GROUP_ID' => $arParams['MENU_GROUP_ID']]);
+}
+if ((int)$arParams['USER_ID'] !== (int)$arResult['USER_ID'])
+{
+	$createButtonUri->addParams(['RESPONSIBLE_ID' => $arParams['USER_ID']]);
+}
 
 $createButtonClass = 'ui-btn-split tasks-interface-filter-btn-add';
 $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-btn-themes' : ' ui-btn-success');

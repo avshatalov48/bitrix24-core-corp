@@ -11,7 +11,9 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\WebForm\Internals\ResultTable;
 use Bitrix\Crm\WebForm\Internals\Model;
 use Bitrix\Crm\WebForm\Internals\FormCounterTable;
+use Bitrix\Crm\WebForm\Internals\FormCounterDailyTable;
 use Bitrix\Main\Entity\Result as EntityResult;
+use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
 Loc::loadMessages(__FILE__);
@@ -104,6 +106,7 @@ class Result extends Model
 			if($this->id > 0)
 			{
 				$this->addEntity();
+				FormCounterDailyTable::incrementEndFill(new Date(), (int)$fields['FORM_ID']);
 				FormCounterTable::incCounters(
 					$fields['FORM_ID'],
 					array(

@@ -1,0 +1,152 @@
+.crm-field-list-editor-item {
+	background-color: #ffffff;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	box-sizing: border-box;
+	padding-top: 15px;
+	padding-bottom: 17px;
+	padding-left: 20px;
+	margin-top: -1px;
+	border-top: 1px solid #edeef0;
+	border-bottom: 1px solid #edeef0;
+}
+
+.crm-field-list-editor-item-header {
+	display: flex;
+	flex-grow: 1;
+	align-items: center;
+}
+
+.crm-field-list-editor-item-drag-button {
+	width: 6px;
+	height: 14px;
+	background: url(images/drag-button.svg) no-repeat center;
+	background-size: contain;
+	cursor: grab;
+	opacity: .4;
+	position: absolute;
+	left: 1px;
+	transition: 250ms linear all;
+}
+
+.crm-field-list-editor-item-drag-button:hover {
+	opacity: 1;
+}
+
+.crm-field-list-editor-item-text {
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	flex-grow: 1;
+}
+
+.crm-field-list-editor-item-text-source-title {
+	font-size: 12.5px;
+	color: #515e68;
+	opacity: .5;
+	letter-spacing: .25px;
+	padding-bottom: 5px;
+	line-height: normal;
+}
+
+.crm-field-list-editor-item-actions {
+	display: flex;
+}
+
+.crm-field-list-editor-item-text-custom-title {
+	font-size: 15px;
+	line-height: normal;
+	color: #3f4857;
+	min-height: 18px;
+}
+
+.crm-field-list-editor-item-text-source-title-inner,
+.crm-field-list-editor-item-text-custom-title-inner {
+	display: inline-block;
+	max-width: 300px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.crm-field-list-editor-item-text-custom-title-inner {
+	max-width: 400px;
+}
+
+[class^="crm-field-list-editor-item-button-"] {
+	background-repeat: no-repeat;
+	background-position: center center;
+	width: 25px;
+	height: 25px;
+	opacity: .4;
+	transition: opacity 200ms ease;
+	cursor: pointer;
+	margin: 0 auto;
+}
+
+[class^="crm-field-list-editor-item-button-"]:hover {
+	opacity: 1;
+}
+
+.crm-field-list-editor-item-button-edit {
+	background: url("images/edit-icon.svg") center no-repeat;
+	width: 50px;
+}
+
+.crm-field-list-editor-item-button-remove {
+	background: url("images/remove-icon.svg") center no-repeat;
+}
+
+.crm-field-list-editor-item-opened {
+	background: #fcfcfc;
+}
+
+.crm-field-list-editor-item-body {
+	background: #F4F6F8;
+	display: none;
+	margin-left: -20px;
+	margin-bottom: -17px;
+	margin-top: 17px;
+	padding-top: 20px;
+}
+
+.crm-field-list-editor-item::before,
+.crm-field-list-editor-item::after {
+	position: absolute;
+	content: '';
+	width: 5px;
+	top: 0;
+	bottom: 0;
+}
+
+.crm-field-list-editor-item::before {
+	left: -5px;
+}
+
+.crm-field-list-editor-item::after {
+	right: -5px;
+}
+
+.crm-field-list-editor-item-opened.crm-field-list-editor-item::before,
+.crm-field-list-editor-item-opened.crm-field-list-editor-item::after {
+	background: #fcfcfc;
+}
+
+.crm-field-list-editor-item-opened .crm-field-list-editor-item-body {
+	display: block;
+}
+
+.crm-field-list-editor-item-form-checkbox-row {
+	margin-bottom: 5px;
+}
+
+.crm-field-list-editor-item-form-checkbox-row .ui-ctl-checkbox {
+	min-height: 20px;
+}
+
+.crm-field-list-editor-state-load {
+	min-height: 200px;
+}
+
+.crm-field-list-editor-state-load .crm-field-list-editor-footer {
+	display: none;
+}

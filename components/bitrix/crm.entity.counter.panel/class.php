@@ -95,9 +95,12 @@ class CCrmEntityCounterPanelComponent extends CBitrixComponent
 		$data = array();
 		$codes = array();
 		$total = 0;
-		foreach(EntityCounterType::getAllSupported($this->entityTypeID, true) as $typeID)
+		$allSupportedTypes = EntityCounterType::getAllSupported($this->entityTypeID, true);
+		foreach($allSupportedTypes as $typeID)
 		{
-			if(EntityCounterType::isGrouping($typeID))
+			if(
+				EntityCounterType::isGroupingForArray($typeID, $allSupportedTypes)
+			)
 			{
 				$codes[] = EntityCounter::prepareCode($this->entityTypeID, $typeID, $this->extras);
 				continue;

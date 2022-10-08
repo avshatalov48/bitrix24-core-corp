@@ -335,7 +335,7 @@ final class Task extends \Bitrix\Tasks\Item
 			$this->addLogRecord([
 				"TASK_ID" => $taskId,
 				"USER_ID" => $occurAsUserId,
-				"CREATED_DATE" => $state->getEnterTimeObject(),
+				"CREATED_DATE" => $fullTaskData['CREATED_DATE'],
 				"FIELD" => "NEW",
 			], $result);
 

@@ -15,6 +15,7 @@ return [
 		'main.polyfill.core',
 		'ui.vue',
 		'ui.vue.vuex',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => true,
 ];

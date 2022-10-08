@@ -1,363 +1,7 @@
 this.BX = this.BX || {};
 this.BX.Tasks = this.BX.Tasks || {};
-(function (exports,ui_sidepanel_layout,ui_notification,ui_layoutForm,ui_forms,ui_entitySelector,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_buttons) {
+(function (exports,ui_entitySelector,ui_sidepanel_menu,ui_notification,main_core,main_core_events,main_loader,ui_dialogs_messagebox,ui_buttons,ui_sidepanel_layout) {
 	'use strict';
-
-	var ItemType = /*#__PURE__*/function () {
-	  function ItemType() {
-	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-	    babelHelpers.classCallCheck(this, ItemType);
-	    this.setId(params.id);
-	    this.setName(params.name);
-	    this.setSort(params.sort);
-	    this.setDodRequired(params.dodRequired);
-	    this.setParticipants(params.participants);
-	  }
-
-	  babelHelpers.createClass(ItemType, [{
-	    key: "setId",
-	    value: function setId(id) {
-	      this.id = main_core.Type.isInteger(id) ? parseInt(id, 10) : main_core.Type.isString(id) && id ? id : main_core.Text.getRandom();
-	    }
-	  }, {
-	    key: "getId",
-	    value: function getId() {
-	      return this.id;
-	    }
-	  }, {
-	    key: "setName",
-	    value: function setName(name) {
-	      this.name = main_core.Type.isString(name) ? name : '';
-	    }
-	  }, {
-	    key: "getName",
-	    value: function getName() {
-	      return this.name;
-	    }
-	  }, {
-	    key: "setSort",
-	    value: function setSort(sort) {
-	      this.sort = main_core.Type.isInteger(sort) ? parseInt(sort, 10) : 0;
-	    }
-	  }, {
-	    key: "getSort",
-	    value: function getSort() {
-	      return this.sort;
-	    }
-	  }, {
-	    key: "setDodRequired",
-	    value: function setDodRequired(value) {
-	      this.dodRequired = value === 'Y';
-	    }
-	  }, {
-	    key: "isDodRequired",
-	    value: function isDodRequired() {
-	      return this.dodRequired;
-	    }
-	  }, {
-	    key: "setParticipants",
-	    value: function setParticipants(participants) {
-	      var _this = this;
-
-	      this.participants = [];
-
-	      if (!main_core.Type.isArray(participants)) {
-	        return;
-	      }
-
-	      participants.forEach(function (participant) {
-	        _this.participants.push([participant.entityId, participant.id]);
-	      });
-	    }
-	  }, {
-	    key: "getParticipants",
-	    value: function getParticipants() {
-	      return this.participants;
-	    }
-	  }]);
-	  return ItemType;
-	}();
-
-	var TypeStorage = /*#__PURE__*/function () {
-	  function TypeStorage() {
-	    babelHelpers.classCallCheck(this, TypeStorage);
-	  }
-
-	  babelHelpers.createClass(TypeStorage, [{
-	    key: "setTypes",
-	    value: function setTypes(types) {
-	      this.types = types;
-	    }
-	  }, {
-	    key: "getNextType",
-	    value: function getNextType() {
-	      return this.types.values().next().value;
-	    }
-	  }, {
-	    key: "getTypes",
-	    value: function getTypes() {
-	      return this.types;
-	    }
-	  }, {
-	    key: "addType",
-	    value: function addType(type) {
-	      this.types.set(type.getId(), type);
-	    }
-	  }, {
-	    key: "getType",
-	    value: function getType(typeId) {
-	      return this.types.get(typeId);
-	    }
-	  }, {
-	    key: "removeType",
-	    value: function removeType(type) {
-	      this.types["delete"](type.getId());
-	    }
-	  }]);
-	  return TypeStorage;
-	}();
-
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
-	var Tabs = /*#__PURE__*/function (_EventEmitter) {
-	  babelHelpers.inherits(Tabs, _EventEmitter);
-
-	  function Tabs() {
-	    var _this;
-
-	    babelHelpers.classCallCheck(this, Tabs);
-	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Tabs).call(this));
-
-	    _this.setEventNamespace('BX.Tasks.Scrum.Dod.Tabs');
-
-	    _this.sidePanelManager = BX.SidePanel.Instance;
-	    _this.tabNodes = new Map();
-	    _this.activeType = null;
-	    _this.previousType = null;
-	    return _this;
-	  }
-
-	  babelHelpers.createClass(Tabs, [{
-	    key: "setTypeStorage",
-	    value: function setTypeStorage(typeStorage) {
-	      this.typeStorage = typeStorage;
-	    }
-	  }, {
-	    key: "render",
-	    value: function render() {
-	      var _this2 = this;
-
-	      var sidebarClass = 'tasks-scrum-dod-settings-container-sidebar' + ' tasks-scrum-dod-settings-container-sidebar-settings';
-	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), sidebarClass, babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (type) {
-	        return _this2.renderTab(type);
-	      }));
-	      return this.node;
-	    }
-	  }, {
-	    key: "isEmpty",
-	    value: function isEmpty() {
-	      return this.tabNodes.size === 0;
-	    }
-	  }, {
-	    key: "renderTab",
-	    value: function renderTab(type) {
-	      var _this3 = this;
-
-	      if (this.isEmptyType(type)) {
-	        var addNode = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"sidebar-tab-link\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-name\">\n\t\t\t\t\t\t+ ", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE'));
-	        main_core.Event.bind(addNode, 'click', this.createType.bind(this));
-	        return addNode;
-	      } else {
-	        var tabClass = this.isActiveType(type) ? 'sidebar-tab sidebar-tab-active' : 'sidebar-tab';
-	        var tabNode = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"", "\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-edit\"></div>\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-type-remove\"></div>\n\t\t\t\t</div>\n\t\t\t"])), tabClass, main_core.Text.encode(type.getName()));
-	        this.tabNodes.set(type.getId(), tabNode);
-	        main_core.Event.bind(tabNode, 'click', function (event) {
-	          var edit = main_core.Dom.hasClass(event.target, 'tasks-scrum-dod-settings-type-edit');
-	          var remove = main_core.Dom.hasClass(event.target, 'tasks-scrum-dod-settings-type-remove');
-
-	          if (!_this3.isActiveType(type)) {
-	            _this3.switchType(type, tabNode);
-	          }
-
-	          if (edit) {
-	            _this3.changeTypeName(type, tabNode);
-	          }
-
-	          if (remove) {
-	            _this3.removeType(type, tabNode);
-	          }
-	        });
-	        return tabNode;
-	      }
-	    }
-	  }, {
-	    key: "addType",
-	    value: function addType(newType, tmpType) {
-	      if (tmpType) {
-	        main_core.Dom.remove(this.tabNodes.get(tmpType.getId()));
-	        this.tabNodes["delete"](tmpType.getId());
-	      }
-
-	      var node = this.renderTab(newType);
-	      main_core.Dom.insertBefore(node, this.node.lastElementChild);
-	      this.switchType(newType, node);
-	    }
-	  }, {
-	    key: "switchType",
-	    value: function switchType(type, typeNode) {
-	      var savePrevious = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
-	      this.tabNodes.forEach(function (node) {
-	        main_core.Dom.removeClass(node, 'sidebar-tab-active');
-	      });
-	      main_core.Dom.addClass(typeNode, 'sidebar-tab-active');
-
-	      if (savePrevious && !this.isEmpty()) {
-	        this.setPreviousType(this.getActiveType());
-	      } else {
-	        this.setPreviousType(null);
-	      }
-
-	      this.setActiveType(type);
-	      this.emit('switchType', type);
-	    }
-	  }, {
-	    key: "createType",
-	    value: function createType() {
-	      var _this4 = this;
-
-	      var type = new ItemType();
-	      type.setSort(this.typeStorage.getTypes().size);
-	      this.tabNodes.forEach(function (node) {
-	        main_core.Dom.removeClass(node, 'sidebar-tab-active');
-	      });
-	      var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"sidebar-tab sidebar-tab-active\">\n\t\t\t\t<input type=\"text\" class=\"tasks-scrum-dod-settings-type-name-input\">\n\t\t\t</div>\n\t\t"])));
-	      var nameNode = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-dod-settings-type-name\"></div>"])));
-	      main_core.Dom.insertBefore(node, this.node.lastElementChild);
-	      var input = node.querySelector('input');
-	      main_core.Event.bind(input, 'change', function (event) {
-	        type.setName(event.target['value']);
-
-	        _this4.emit('createType', type);
-
-	        nameNode.textContent = main_core.Text.encode(type.getName());
-	        main_core.Dom.replace(input, nameNode);
-	      }, true);
-	      main_core.Event.bind(input, 'blur', function (event) {
-	        if (event.target['value'].trim() === '') {
-	          main_core.Dom.remove(node);
-	        }
-	      }, true);
-	      main_core.Event.bind(input, 'keydown', function (event) {
-	        if (event.isComposing || event.keyCode === 13) {
-	          input.blur();
-	        }
-	      });
-	      input.focus();
-	      this.tabNodes.set(type.getId(), node);
-	    }
-	  }, {
-	    key: "changeTypeName",
-	    value: function changeTypeName(type, typeNode) {
-	      var _this5 = this;
-
-	      var inputNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<input type=\"text\" class=\"tasks-scrum-dod-settings-type-name-input\" value=\"", "\">\n\t\t"])), main_core.Text.encode(type.getName()));
-	      var nameNode = typeNode.querySelector('.tasks-scrum-dod-settings-type-name');
-	      main_core.Event.bind(inputNode, 'change', function (event) {
-	        type.setName(event.target['value']);
-
-	        _this5.emit('changeTypeName', type);
-
-	        inputNode.blur();
-	      }, true);
-	      main_core.Event.bind(inputNode, 'blur', function () {
-	        nameNode.textContent = main_core.Text.encode(type.getName());
-	        main_core.Dom.replace(inputNode, nameNode);
-	      }, true);
-	      main_core.Event.bind(inputNode, 'keydown', function (event) {
-	        if (event.isComposing || event.keyCode === 13) {
-	          inputNode.blur();
-	        }
-	      });
-	      main_core.Dom.replace(nameNode, inputNode);
-	      inputNode.focus();
-	      inputNode.setSelectionRange(type.getName().length, type.getName().length);
-	    }
-	  }, {
-	    key: "removeType",
-	    value: function removeType(type, typeNode) {
-	      var _this6 = this;
-
-	      var popupOptions = {};
-	      var currentSlider = this.sidePanelManager.getTopSlider();
-
-	      if (currentSlider) {
-	        popupOptions.targetContainer = currentSlider.getContainer();
-	      }
-
-	      new ui_dialogs_messagebox.MessageBox({
-	        message: main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE'),
-	        popupOptions: popupOptions,
-	        okCaption: main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
-	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	        onOk: function onOk(messageBox) {
-	          _this6.tabNodes["delete"](type.getId());
-
-	          if (_this6.isActiveType(type)) {
-	            _this6.setActiveType(null);
-	          }
-
-	          _this6.setPreviousType(null);
-
-	          main_core.Dom.remove(typeNode);
-
-	          _this6.emit('removeType', type);
-
-	          messageBox.close();
-	        }
-	      }).show();
-	    }
-	  }, {
-	    key: "setActiveType",
-	    value: function setActiveType(type) {
-	      this.activeType = type;
-	    }
-	  }, {
-	    key: "getActiveType",
-	    value: function getActiveType() {
-	      return this.activeType;
-	    }
-	  }, {
-	    key: "setPreviousType",
-	    value: function setPreviousType(type) {
-	      this.previousType = type;
-	    }
-	  }, {
-	    key: "getPreviousType",
-	    value: function getPreviousType() {
-	      return this.previousType;
-	    }
-	  }, {
-	    key: "isActiveType",
-	    value: function isActiveType(type) {
-	      return this.activeType && this.activeType.getId() === type.getId();
-	    }
-	  }, {
-	    key: "setEmptyType",
-	    value: function setEmptyType(type) {
-	      this.emptyType = type;
-	    }
-	  }, {
-	    key: "isEmptyType",
-	    value: function isEmptyType(type) {
-	      return type.getId() === this.emptyType.getId();
-	    }
-	  }, {
-	    key: "switchToType",
-	    value: function switchToType(type) {
-	      this.switchType(type, this.tabNodes.get(type.getId()), false);
-	    }
-	  }]);
-	  return Tabs;
-	}(main_core_events.EventEmitter);
 
 	var RequestSender = /*#__PURE__*/function () {
 	  function RequestSender() {
@@ -442,7 +86,154 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return RequestSender;
 	}();
 
-	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1;
+	var ItemType = /*#__PURE__*/function () {
+	  function ItemType() {
+	    var params = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+	    babelHelpers.classCallCheck(this, ItemType);
+	    this.setId(params.id);
+	    this.setName(params.name);
+	    this.setSort(params.sort);
+	    this.setDodRequired(params.dodRequired);
+	    this.setParticipants(params.participants);
+	    this.setActive(params.active === 'Y');
+	  }
+
+	  babelHelpers.createClass(ItemType, [{
+	    key: "setId",
+	    value: function setId(id) {
+	      this.id = main_core.Type.isInteger(id) ? parseInt(id, 10) : main_core.Type.isString(id) && id ? id : main_core.Text.getRandom();
+	    }
+	  }, {
+	    key: "getId",
+	    value: function getId() {
+	      return this.id;
+	    }
+	  }, {
+	    key: "setName",
+	    value: function setName(name) {
+	      this.name = main_core.Type.isString(name) ? name : '';
+	    }
+	  }, {
+	    key: "getName",
+	    value: function getName() {
+	      return this.name;
+	    }
+	  }, {
+	    key: "setSort",
+	    value: function setSort(sort) {
+	      this.sort = main_core.Type.isInteger(sort) ? parseInt(sort, 10) : 0;
+	    }
+	  }, {
+	    key: "getSort",
+	    value: function getSort() {
+	      return this.sort;
+	    }
+	  }, {
+	    key: "setDodRequired",
+	    value: function setDodRequired(value) {
+	      this.dodRequired = value === 'Y';
+	    }
+	  }, {
+	    key: "isDodRequired",
+	    value: function isDodRequired() {
+	      return this.dodRequired;
+	    }
+	  }, {
+	    key: "setActive",
+	    value: function setActive(value) {
+	      this.active = main_core.Type.isBoolean(value) ? value : false;
+	    }
+	  }, {
+	    key: "isActive",
+	    value: function isActive() {
+	      return this.active;
+	    }
+	  }, {
+	    key: "setParticipants",
+	    value: function setParticipants(participants) {
+	      var _this = this;
+
+	      this.participants = [];
+
+	      if (!main_core.Type.isArray(participants)) {
+	        return;
+	      }
+
+	      participants.forEach(function (participant) {
+	        _this.participants.push([participant.entityId, participant.id]);
+	      });
+	    }
+	  }, {
+	    key: "getParticipants",
+	    value: function getParticipants() {
+	      return this.participants;
+	    }
+	  }]);
+	  return ItemType;
+	}();
+
+	var TypeStorage = /*#__PURE__*/function () {
+	  function TypeStorage() {
+	    babelHelpers.classCallCheck(this, TypeStorage);
+	    this.types = new Map();
+	  }
+
+	  babelHelpers.createClass(TypeStorage, [{
+	    key: "setTypes",
+	    value: function setTypes(types) {
+	      this.types = types;
+	    }
+	  }, {
+	    key: "getTypes",
+	    value: function getTypes() {
+	      return this.types;
+	    }
+	  }, {
+	    key: "addType",
+	    value: function addType(type) {
+	      this.types.set(type.getId(), type);
+	    }
+	  }, {
+	    key: "getType",
+	    value: function getType(typeId) {
+	      return this.types.get(typeId);
+	    }
+	  }, {
+	    key: "removeType",
+	    value: function removeType(type) {
+	      this.types["delete"](type.getId());
+	    }
+	  }, {
+	    key: "setActiveType",
+	    value: function setActiveType(inputType) {
+	      inputType = main_core.Type.isNil(inputType) ? this.types.values().next().value : inputType;
+	      this.types.forEach(function (type) {
+	        return type.setActive(inputType.getId() === type.getId());
+	      });
+	    }
+	  }, {
+	    key: "getActiveType",
+	    value: function getActiveType() {
+	      var foundItem = babelHelpers.toConsumableArray(this.types.values()).find(function (type) {
+	        return type.isActive();
+	      });
+
+	      if (main_core.Type.isNil(foundItem)) {
+	        return this.types.values().next().value;
+	      }
+
+	      return foundItem;
+	    }
+	  }, {
+	    key: "isEmpty",
+	    value: function isEmpty() {
+	      return this.types.size === 0;
+	    }
+	  }]);
+	  return TypeStorage;
+	}();
+
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
 	var Settings = /*#__PURE__*/function () {
 	  function Settings(params) {
 	    var _this = this;
@@ -451,12 +242,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    this.requestSender = params.requestSender;
 	    this.groupId = parseInt(params.groupId, 10);
 	    this.taskId = parseInt(params.taskId, 10);
+	    this.sidePanelManager = BX.SidePanel.Instance;
 	    this.typeStorage = new TypeStorage();
-	    this.tabs = new Tabs();
-	    this.tabs.subscribe('switchType', this.onSwitchType.bind(this));
-	    this.tabs.subscribe('createType', this.onCreateType.bind(this));
-	    this.tabs.subscribe('changeTypeName', this.onChangeTypeName.bind(this));
-	    this.tabs.subscribe('removeType', this.onRemoveType.bind(this));
+	    this.layoutMenu = null;
+	    this.nameInput = null;
 	    this.changed = false;
 	    main_core_events.EventEmitter.subscribe('BX.Tasks.CheckListItem:CheckListChanged', function () {
 	      _this.setChanged();
@@ -464,9 +253,84 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 
 	  babelHelpers.createClass(Settings, [{
+	    key: "show",
+	    value: function show() {
+	      var _this2 = this;
+
+	      this.sidePanelManager.open('tasks-scrum-dod-settings-side-panel', {
+	        cacheable: false,
+	        width: 1000,
+	        contentCallback: function contentCallback() {
+	          return ui_sidepanel_layout.Layout.createLayout({
+	            extensions: ['tasks.scrum.dod', 'ui.entity-selector', 'tasks'],
+	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
+	            content: _this2.renderContent.bind(_this2),
+	            design: {
+	              section: false
+	            },
+	            menu: {},
+	            toolbar: function toolbar(_ref) {
+	              var Button = _ref.Button;
+	              return [new Button({
+	                color: Button.Color.LIGHT_BORDER,
+	                text: main_core.Loc.getMessage('TASKS_SCRUM_DOD_BTN_CREATE_TYPE'),
+	                onclick: function onclick() {
+	                  _this2.showTypeForm();
+	                }
+	              })];
+	            },
+	            buttons: []
+	          }).then(function (layout) {
+	            _this2.layoutMenu = layout.getMenu();
+
+	            _this2.layoutMenu.subscribe('click', _this2.onMenuItemClick.bind(_this2));
+
+	            return layout.render();
+	          });
+	        },
+	        events: {
+	          onLoad: this.onLoadSettings.bind(this),
+	          onClose: this.onCloseSettings.bind(this),
+	          onCloseComplete: this.onCloseSettingsComplete.bind(this)
+	        }
+	      });
+	    }
+	  }, {
+	    key: "onLoadSettings",
+	    value: function onLoadSettings() {
+	      this.layoutMenu.setItems(this.getMenuItems());
+
+	      if (!this.isEmpty()) {
+	        this.buildEditingForm(this.typeStorage.getActiveType());
+	      }
+	    }
+	  }, {
+	    key: "onCloseSettings",
+	    value: function onCloseSettings() {
+	      if (this.isChanged()) {
+	        this.saveSettings().then(function () {
+	          ui_notification.UI.Notification.Center.notify({
+	            autoHideDelay: 1000,
+	            content: main_core.Loc.getMessage('TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY')
+	          });
+	        })["catch"](function () {});
+	      }
+	    }
+	  }, {
+	    key: "onCloseSettingsComplete",
+	    value: function onCloseSettingsComplete() {
+	      var currentSlider = this.sidePanelManager.getTopSlider();
+
+	      if (currentSlider) {
+	        if (currentSlider.getUrl() === 'tasks-scrum-dod-list-side-panel' && this.isChanged()) {
+	          currentSlider.reload();
+	        }
+	      }
+	    }
+	  }, {
 	    key: "isEmpty",
 	    value: function isEmpty() {
-	      return this.tabs.isEmpty();
+	      return this.typeStorage.isEmpty();
 	    }
 	  }, {
 	    key: "isChanged",
@@ -481,7 +345,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderContent",
 	    value: function renderContent() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      return this.requestSender.getSettings({
 	        groupId: this.groupId
@@ -493,30 +357,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          itemTypes.set(itemType.getId(), itemType);
 	        });
 
-	        _this2.typeStorage.setTypes(itemTypes);
+	        _this3.typeStorage.setTypes(itemTypes);
 
-	        _this2.tabs.setTypeStorage(_this2.typeStorage);
+	        _this3.typeStorage.setActiveType();
 
-	        _this2.tabs.setActiveType(_this2.typeStorage.getNextType());
-
-	        _this2.addEmptyCreationType();
-
-	        return _this2.render();
+	        return _this3.render(_this3.typeStorage.getActiveType());
 	      })["catch"](function (response) {
-	        _this2.requestSender.showErrorAlert(response);
+	        _this3.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "render",
-	    value: function render() {
-	      var currentType = this.typeStorage.getNextType();
-	      this.node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings\">\n\t\t\t\t<div class=\"tasks-scrum-dod-settings-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-wrap\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-shell\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-sidebar-wrapper\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.tabs.render(), this.renderContainer(currentType));
+	    value: function render(type) {
+	      this.node = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings\">\n\t\t\t\t<div class=\"tasks-scrum-dod-settings-container\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-wrap\">\n\t\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-container-sidebar-wrapper\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderContainer(type));
 	      return this.node;
 	    }
 	  }, {
 	    key: "renderContainer",
 	    value: function renderContainer(type) {
-	      if (this.tabs.isEmpty()) {
+	      if (this.typeStorage.isEmpty()) {
 	        return this.renderEmptyForm();
 	      } else {
 	        return this.renderEditingForm(type);
@@ -525,25 +384,25 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderEditingForm",
 	    value: function renderEditingForm(type) {
-	      return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content ui-form-content-dod-list\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderRequiredOption(type), this.renderParticipantsSelector());
+	      return main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content ui-form-content-dod-list\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.renderRequiredOption(type), this.renderParticipantsSelector());
 	    }
 	  }, {
 	    key: "renderEmptyForm",
 	    value: function renderEmptyForm() {
-	      return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE_PROMPT'));
+	      return main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_CREATE_TYPE_PROMPT'));
 	    }
 	  }, {
 	    key: "renderRequiredOption",
 	    value: function renderRequiredOption(type) {
-	      var _this3 = this;
+	      var _this4 = this;
 
-	      var node = main_core.Tag.render(_templateObject4$1 || (_templateObject4$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element ui-form-content-required-option\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL'));
+	      var node = main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<label class=\"ui-ctl ui-ctl-checkbox\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"ui-ctl-element ui-form-content-required-option\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</label>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_OPTIONS_REQUIRED_LABEL'));
 	      var checkbox = node.querySelector('.ui-form-content-required-option');
 	      checkbox.checked = type.isDodRequired();
 	      main_core.Event.bind(checkbox, 'click', function () {
-	        _this3.setChanged();
+	        _this4.setChanged();
 
-	        _this3.updateActiveType();
+	        _this4.updateActiveType();
 	      });
 	      return node;
 	    }
@@ -552,7 +411,24 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderParticipantsSelector() {
 	      return ''; //todo tmp
 
-	      return main_core.Tag.render(_templateObject5$1 || (_templateObject5$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-user-selector\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_USER_SELECTOR'));
+	      return main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t<div class=\"tasks-scrum-dod-settings-user-selector\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_USER_SELECTOR'));
+	    }
+	  }, {
+	    key: "renderTypeForm",
+	    value: function renderTypeForm(type) {
+	      var _this5 = this;
+
+	      var name = type ? type.getName() : '';
+	      this.typeFormNode = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum-dod-settings-type-form\">\n\t\t\t\t<div class=\"ui-alert ui-alert-danger --hidden\">\n\t\t\t\t\t<span class=\"ui-alert-message\"></span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-ctl ui-ctl-textbox ui-ctl-w100\">\n\t\t\t\t\t<input\n\t\t\t\t\t\ttype=\"text\"\n\t\t\t\t\t\tclass=\"ui-ctl-element\"\n\t\t\t\t\t\tplaceholder=\"", "\"\n\t\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t\t>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_INPUT_PLACEHOLDER'), main_core.Text.encode(name));
+	      this.nameInput = this.typeFormNode.querySelector('input');
+	      main_core.Event.bind(this.nameInput, 'keydown', function (event) {
+	        if (event.key === 'Enter') {
+	          _this5.onOkTypeForm(type);
+	        }
+
+	        _this5.hideTypeFormError();
+	      });
+	      return this.typeFormNode;
 	    }
 	  }, {
 	    key: "initParticipantsSelector",
@@ -570,7 +446,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        dialogOptions: {
 	          id: selectorId,
 	          context: 'TASKS',
-	          preselectedItems: this.tabs.getActiveType().getParticipants(),
+	          preselectedItems: this.typeStorage.getActiveType().getParticipants(),
 	          entities: [{
 	            id: 'user',
 	            options: {
@@ -590,7 +466,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "buildEditingForm",
 	    value: function buildEditingForm(type) {
-	      var _this4 = this;
+	      var _this6 = this;
 
 	      var container = this.cleanTypeForm();
 	      main_core.Dom.append(this.renderEditingForm(type), container);
@@ -606,7 +482,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      })["catch"](function (response) {
 	        loader.hide();
 
-	        _this4.requestSender.showErrorAlert(response);
+	        _this6.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -616,12 +492,124 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      main_core.Dom.append(this.renderEmptyForm(), container);
 	    }
 	  }, {
-	    key: "onSwitchType",
-	    value: function onSwitchType(baseEvent) {
-	      var _this5 = this;
+	    key: "showTypeForm",
+	    value: function showTypeForm(type) {
+	      var _this7 = this;
 
-	      var type = baseEvent.getData();
-	      var previousType = this.tabs.getPreviousType();
+	      this.typeForm = new ui_dialogs_messagebox.MessageBox({
+	        popupOptions: this.getDefaultPopupOptions(),
+	        title: main_core.Type.isUndefined(type) ? main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_TITLE_CREATE') : main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_TITLE_EDIT'),
+	        message: this.renderTypeForm(type),
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	        okCaption: main_core.Type.isUndefined(type) ? main_core.Loc.getMessage('TASKS_SCRUM_DOD_BTN_CREATE_TYPE') : main_core.Loc.getMessage('TASKS_SCRUM_DOD_BTN_SAVE'),
+	        onOk: function onOk() {
+	          return _this7.onOkTypeForm(type);
+	        }
+	      });
+	      var popup = this.typeForm.getPopupWindow();
+	      popup.subscribe('onAfterShow', function () {
+	        var length = _this7.nameInput.value.length;
+
+	        _this7.nameInput.focus();
+
+	        _this7.nameInput.setSelectionRange(length, length);
+	      });
+	      this.typeForm.show();
+	    }
+	  }, {
+	    key: "onOkTypeForm",
+	    value: function onOkTypeForm(type) {
+	      var _this8 = this;
+
+	      if (!this.nameInput.value.trim()) {
+	        this.showTypeFormError(main_core.Loc.getMessage('TASKS_SCRUM_DOD_POPUP_EMPTY_NAME'));
+	        this.typeForm.getOkButton().setDisabled(false);
+	        return;
+	      }
+
+	      this.typeForm.close();
+
+	      if (main_core.Type.isUndefined(type)) {
+	        var skipPrevious = this.typeStorage.isEmpty();
+	        this.createType(this.nameInput.value).then(function (createdType) {
+	          if (createdType) {
+	            _this8.addMenuItem(createdType);
+
+	            _this8.switchType(createdType, skipPrevious);
+	          }
+	        });
+	      } else {
+	        type.setName(this.nameInput.value);
+	        this.changeType(type).then(function (changedType) {
+	          if (changedType) {
+	            _this8.changeMenuItem(changedType);
+
+	            _this8.switchType(changedType);
+	          }
+	        });
+	      }
+	    }
+	  }, {
+	    key: "showTypeFormError",
+	    value: function showTypeFormError(message) {
+	      var alertNode = this.typeFormNode.querySelector('.ui-alert');
+	      alertNode.querySelector('.ui-alert-message').textContent = message;
+	      main_core.Dom.removeClass(alertNode, '--hidden');
+	    }
+	  }, {
+	    key: "hideTypeFormError",
+	    value: function hideTypeFormError() {
+	      var alertNode = this.typeFormNode.querySelector('.ui-alert');
+
+	      if (!main_core.Dom.hasClass(alertNode, '--hidden')) {
+	        main_core.Dom.addClass(this.typeFormNode.querySelector('.ui-alert'), '--hidden');
+	      }
+	    }
+	  }, {
+	    key: "createType",
+	    value: function createType(name) {
+	      var _this9 = this;
+
+	      var container = this.node.querySelector('.tasks-scrum-dod-settings-container-sidebar-wrapper');
+	      var loader = this.showLoader(container);
+	      return this.requestSender.createType({
+	        groupId: this.groupId,
+	        name: name,
+	        sort: this.typeStorage.getTypes().size + 1
+	      }).then(function (response) {
+	        _this9.setChanged();
+
+	        loader.hide();
+	        var createdType = new ItemType(response.data);
+
+	        _this9.typeStorage.addType(createdType);
+
+	        return createdType;
+	      })["catch"](function (response) {
+	        loader.hide();
+
+	        _this9.requestSender.showErrorAlert(response);
+	      });
+	    }
+	  }, {
+	    key: "switchType",
+	    value: function switchType(type) {
+	      var _this10 = this;
+
+	      var skipPrevious = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      var menuItem = this.getMenuItem(type);
+	      var previousType = null;
+
+	      if (!skipPrevious) {
+	        previousType = this.typeStorage.getActiveType();
+
+	        if (menuItem.getId() === previousType.getId()) {
+	          return;
+	        }
+	      }
+
+	      this.typeStorage.setActiveType(type);
+	      this.setActiveMenuItem(type);
 
 	      if (previousType) {
 	        this.saveSettings(previousType).then(function (response) {
@@ -629,92 +617,63 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          previousType.setDodRequired(updatedType.dodRequired);
 	          previousType.setParticipants(updatedType.participants);
 
-	          _this5.buildEditingForm(type);
+	          _this10.buildEditingForm(type);
 	        });
 	      } else {
 	        this.buildEditingForm(type);
 	      }
 	    }
 	  }, {
-	    key: "onCreateType",
-	    value: function onCreateType(baseEvent) {
-	      var _this6 = this;
+	    key: "changeType",
+	    value: function changeType(type) {
+	      var _this11 = this;
 
-	      var container = this.node.querySelector('.tasks-scrum-dod-settings-container-sidebar-wrapper');
-	      var loader = this.showLoader(container);
-	      var tmpType = baseEvent.getData();
-	      this.requestSender.createType({
-	        groupId: this.groupId,
-	        name: tmpType.getName(),
-	        sort: tmpType.getSort()
-	      }).then(function (response) {
-	        _this6.setChanged();
-
-	        loader.hide();
-	        var createdType = new ItemType(response.data);
-
-	        _this6.typeStorage.addType(createdType);
-
-	        _this6.tabs.addType(createdType, tmpType);
-	      })["catch"](function (response) {
-	        loader.hide();
-
-	        _this6.requestSender.showErrorAlert(response);
-	      });
-	    }
-	  }, {
-	    key: "onChangeTypeName",
-	    value: function onChangeTypeName(baseEvent) {
-	      var _this7 = this;
-
-	      var type = baseEvent.getData();
-	      this.requestSender.changeTypeName({
+	      return this.requestSender.changeTypeName({
 	        groupId: this.groupId,
 	        id: type.getId(),
 	        name: type.getName()
 	      }).then(function () {
-	        _this7.setChanged();
+	        _this11.setChanged();
+
+	        return type;
 	      })["catch"](function (response) {
-	        _this7.requestSender.showErrorAlert(response);
+	        _this11.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
-	    key: "onRemoveType",
-	    value: function onRemoveType(baseEvent) {
-	      var _this8 = this;
+	    key: "removeType",
+	    value: function removeType(type) {
+	      var _this12 = this;
 
-	      var type = baseEvent.getData();
-	      this.requestSender.removeType({
+	      return this.requestSender.removeType({
 	        groupId: this.groupId,
 	        id: type.getId()
 	      }).then(function () {
-	        _this8.setChanged();
+	        _this12.setChanged();
 
-	        _this8.typeStorage.removeType(type);
+	        _this12.typeStorage.removeType(type);
 
-	        if (_this8.tabs.isEmpty()) {
-	          _this8.buildEmptyForm();
+	        if (_this12.typeStorage.isEmpty()) {
+	          _this12.buildEmptyForm();
+
+	          return null;
 	        } else {
-	          var nextType = babelHelpers.toConsumableArray(_this8.typeStorage.getTypes().values()).find(function (type) {
-	            return !_this8.tabs.isEmptyType(type);
-	          });
-
-	          _this8.tabs.switchToType(nextType);
+	          return _this12.typeStorage.getActiveType();
 	        }
 	      })["catch"](function (response) {
-	        _this8.requestSender.showErrorAlert(response);
+	        _this12.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "saveSettings",
 	    value: function saveSettings(inputType) {
-	      var _this9 = this;
+	      var _this13 = this;
 
-	      if (this.tabs.isEmpty()) {
+	      if (this.typeStorage.isEmpty()) {
 	        return Promise.resolve();
 	      }
 
-	      var type = inputType ? inputType : this.tabs.getActiveType();
+	      var type = inputType ? inputType : this.typeStorage.getActiveType();
 
 	      if (!(type instanceof ItemType)) {
 	        return Promise.resolve();
@@ -727,7 +686,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        items: this.getChecklistItems(),
 	        participants: this.getSelectedParticipants()
 	      })["catch"](function (response) {
-	        _this9.requestSender.showErrorAlert(response);
+	        _this13.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -781,14 +740,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return loader;
 	    }
 	  }, {
-	    key: "getActiveType",
-	    value: function getActiveType() {
-	      return this.tabs.getActiveType();
-	    }
-	  }, {
 	    key: "updateActiveType",
 	    value: function updateActiveType() {
-	      var type = this.tabs.getActiveType();
+	      var type = this.typeStorage.getActiveType();
 	      type.setDodRequired(this.getRequiredOptionValue());
 	    }
 	  }, {
@@ -799,17 +753,113 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return container;
 	    }
 	  }, {
-	    key: "addEmptyCreationType",
-	    value: function addEmptyCreationType() {
-	      var itemType = new ItemType();
-	      this.tabs.setEmptyType(itemType);
-	      this.typeStorage.addType(itemType);
+	    key: "getMenuItems",
+	    value: function getMenuItems() {
+	      var _this14 = this;
+
+	      if (this.typeStorage.isEmpty()) {
+	        return [];
+	      }
+
+	      var items = [];
+	      this.typeStorage.getTypes().forEach(function (type) {
+	        items.push(_this14.getMenuItemOptions(type, items.length === 0));
+	      });
+	      return items;
+	    }
+	  }, {
+	    key: "addMenuItem",
+	    value: function addMenuItem(type) {
+	      return this.layoutMenu.add(this.getMenuItemOptions(type));
+	    }
+	  }, {
+	    key: "changeMenuItem",
+	    value: function changeMenuItem(type) {
+	      return this.layoutMenu.change(type.getId(), {
+	        label: type.getName()
+	      });
+	    }
+	  }, {
+	    key: "removeMenuItem",
+	    value: function removeMenuItem(type) {
+	      this.layoutMenu.remove(type.getId());
+	    }
+	  }, {
+	    key: "getMenuItem",
+	    value: function getMenuItem(type) {
+	      return this.layoutMenu.get(type.getId());
+	    }
+	  }, {
+	    key: "setActiveMenuItem",
+	    value: function setActiveMenuItem(type) {
+	      this.getMenuItem(type).setActive();
+	    }
+	  }, {
+	    key: "getMenuItemOptions",
+	    value: function getMenuItemOptions(type) {
+	      var _this15 = this;
+
+	      var active = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+	      return {
+	        id: type.getId(),
+	        label: type.getName(),
+	        active: active,
+	        actions: [{
+	          label: main_core.Loc.getMessage('TASKS_SCRUM_DOD_BTN_EDIT_TYPE'),
+	          onclick: function onclick() {
+	            _this15.showTypeForm(type);
+	          }
+	        }, {
+	          label: main_core.Loc.getMessage('TASKS_SCRUM_DOD_BTN_REMOVE_TYPE'),
+	          onclick: function onclick(item) {
+	            new ui_dialogs_messagebox.MessageBox({
+	              title: main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE_TITLE'),
+	              message: main_core.Loc.getMessage('TASKS_SCRUM_CONFIRM_TEXT_REMOVE_TYPE_NEW').replace('#name#', main_core.Text.encode(type.getName())),
+	              popupOptions: _this15.getDefaultPopupOptions(),
+	              okCaption: main_core.Loc.getMessage('TASKS_SCRUM_BUTTON_TEXT_REMOVE'),
+	              buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	              minHeight: 100,
+	              onOk: function onOk(messageBox) {
+	                _this15.removeType(type).then(function (nextType) {
+	                  _this15.removeMenuItem(type);
+
+	                  if (!main_core.Type.isNull(nextType)) {
+	                    _this15.switchType(nextType, true);
+	                  }
+
+	                  messageBox.close();
+	                });
+	              }
+	            }).show();
+	          }
+	        }]
+	      };
+	    }
+	  }, {
+	    key: "onMenuItemClick",
+	    value: function onMenuItemClick(baseEvent) {
+	      var _baseEvent$getData = baseEvent.getData(),
+	          menuItem = _baseEvent$getData.item;
+
+	      this.switchType(this.typeStorage.getType(menuItem.getId()));
+	    }
+	  }, {
+	    key: "getDefaultPopupOptions",
+	    value: function getDefaultPopupOptions() {
+	      var popupOptions = {};
+	      var currentSlider = this.sidePanelManager.getTopSlider();
+
+	      if (currentSlider) {
+	        popupOptions.targetContainer = currentSlider.getContainer();
+	      }
+
+	      return popupOptions;
 	    }
 	  }]);
 	  return Settings;
 	}();
 
-	var _templateObject$2, _templateObject2$2;
+	var _templateObject$1, _templateObject2$1;
 	var List = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(List, _EventEmitter);
 
@@ -827,16 +877,101 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.taskId = parseInt(params.taskId, 10);
 	    _this.skipNotifications = main_core.Type.isBoolean(params.skipNotifications) ? params.skipNotifications : false;
 	    _this.typeStorage = new TypeStorage();
-	    _this.tabs = new Tabs();
 	    _this.empty = true;
 	    _this.node = null;
 	    return _this;
 	  }
 
 	  babelHelpers.createClass(List, [{
+	    key: "show",
+	    value: function show() {
+	      var _this2 = this;
+
+	      this.sidePanelManager.open('tasks-scrum-dod-list-side-panel', {
+	        cacheable: false,
+	        width: 800,
+	        contentCallback: function contentCallback() {
+	          return ui_sidepanel_layout.Layout.createContent({
+	            extensions: ['tasks.scrum.dod', 'tasks'],
+	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
+	            content: _this2.renderContent.bind(_this2),
+	            design: {
+	              section: false
+	            },
+	            toolbar: function toolbar(_ref) {
+	              var Button = _ref.Button;
+	              return [new Button({
+	                color: Button.Color.LIGHT_BORDER,
+	                text: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TOOLBAR_SETTINGS'),
+	                onclick: function onclick() {
+	                  return _this2.emit('showSettings', false);
+	                }
+	              })];
+	            },
+	            buttons: function buttons(_ref2) {
+	              var cancelButton = _ref2.cancelButton,
+	                  SaveButton = _ref2.SaveButton;
+	              return [new SaveButton({
+	                text: _this2.getListButtonText(),
+	                onclick: _this2.onSaveList.bind(_this2)
+	              }), new ui_buttons.CancelButton({
+	                onclick: function onclick() {
+	                  _this2.emit('reject');
+
+	                  _this2.sidePanelManager.close(false);
+	                }
+	              })];
+	            }
+	          });
+	        },
+	        events: {
+	          onLoad: this.onLoadList.bind(this)
+	        }
+	      });
+	    }
+	  }, {
+	    key: "onLoadList",
+	    value: function onLoadList() {
+	      if (this.isEmpty()) {
+	        return;
+	      }
+
+	      this.renderList();
+	    }
+	  }, {
+	    key: "onSaveList",
+	    value: function onSaveList() {
+	      var _this3 = this;
+
+	      if (this.isEmpty()) {
+	        return;
+	      }
+
+	      this.save().then(function (decision) {
+	        if (decision === 'resolve') {
+	          _this3.emit('resolve');
+
+	          _this3.sidePanelManager.close(false);
+	        } else if (decision === 'reject') {
+	          _this3.emit('reject');
+
+	          _this3.sidePanelManager.close(false);
+	        }
+	      });
+	    }
+	  }, {
+	    key: "getListButtonText",
+	    value: function getListButtonText() {
+	      if (this.isSkipNotifications()) {
+	        return main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_SAVE_BUTTON_TEXT');
+	      } else {
+	        return main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_COMPLETE_BUTTON_TEXT');
+	      }
+	    }
+	  }, {
 	    key: "renderContent",
 	    value: function renderContent() {
-	      var _this2 = this;
+	      var _this4 = this;
 
 	      return this.requestSender.getSettings({
 	        groupId: this.groupId,
@@ -845,42 +980,34 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      }).then(function (response) {
 	        var types = main_core.Type.isArray(response.data.types) ? response.data.types : [];
 	        var activeTypeId = main_core.Type.isInteger(response.data.activeTypeId) ? parseInt(response.data.activeTypeId, 10) : 0;
-	        _this2.empty = types.length === 0;
+	        _this4.empty = types.length === 0;
 	        var itemTypes = new Map();
 	        types.forEach(function (typeData) {
 	          var itemType = new ItemType(typeData);
 	          itemTypes.set(itemType.getId(), itemType);
 	        });
 
-	        _this2.typeStorage.setTypes(itemTypes);
+	        _this4.typeStorage.setTypes(itemTypes);
 
-	        _this2.tabs.setTypeStorage(_this2.typeStorage);
+	        _this4.typeStorage.setActiveType(itemTypes.get(activeTypeId));
 
-	        var activeType = itemTypes.get(activeTypeId);
-
-	        if (main_core.Type.isUndefined(activeType)) {
-	          _this2.tabs.setActiveType(_this2.typeStorage.getNextType());
-	        } else {
-	          _this2.tabs.setActiveType(activeType);
-	        }
-
-	        if (_this2.isEmpty()) {
-	          if (!_this2.isSkipNotifications()) {
-	            _this2.emit('resolve');
+	        if (_this4.isEmpty()) {
+	          if (!_this4.isSkipNotifications()) {
+	            _this4.emit('resolve');
 	          }
 
-	          return _this2.renderEmpty();
+	          return _this4.renderEmpty();
 	        }
 
-	        return _this2.render();
+	        return _this4.render();
 	      })["catch"](function (response) {
-	        _this2.requestSender.showErrorAlert(response);
+	        _this4.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "renderList",
 	    value: function renderList() {
-	      var _this3 = this;
+	      var _this5 = this;
 
 	      var listNode = this.node.querySelector('.tasks-scrum-dod-checklist');
 	      main_core.Dom.clean(listNode);
@@ -893,24 +1020,24 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        loader.hide();
 	        main_core.Runtime.html(listNode, response.data.html);
 	      })["catch"](function (response) {
-	        _this3.requestSender.showErrorAlert(response);
+	        _this5.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
 	    key: "renderEmpty",
 	    value: function renderEmpty() {
-	      var _this4 = this;
+	      var _this6 = this;
 
-	      var node = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY'));
+	      var node = main_core.Tag.render(_templateObject$1 || (_templateObject$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_EMPTY'));
 	      main_core.Event.bind(node.querySelector('span'), 'click', function () {
-	        return _this4.emit('showSettings');
+	        return _this6.emit('showSettings', true);
 	      });
 	      return node;
 	    }
 	  }, {
 	    key: "render",
 	    value: function render() {
-	      var _this5 = this;
+	      var _this7 = this;
 
 	      var activeType = this.getActiveType();
 
@@ -919,23 +1046,23 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return "<option value=\"".concat(parseInt(typeData.id, 10), "\" ").concat(selected, ">").concat(main_core.Text.encode(typeData.name), "</option>");
 	      };
 
-	      this.node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element tasks-scrum-dod-types\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content tasks-scrum-dod-checklist\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (typeData) {
+	      this.node = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"ui-form ui-form-line tasks-scrum-dod-form\">\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t<select class=\"ui-ctl-element tasks-scrum-dod-types\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t<div class=\"ui-form-content tasks-scrum-dod-checklist\"></div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_DOD_LABEL_TYPES'), babelHelpers.toConsumableArray(this.typeStorage.getTypes().values()).map(function (typeData) {
 	        return renderOption(typeData);
 	      }).join(''));
 	      var typeSelector = this.node.querySelector('.tasks-scrum-dod-types');
 	      main_core.Event.bind(typeSelector, 'change', function (event) {
 	        var typeId = parseInt(event.target.value, 10);
 
-	        _this5.tabs.setActiveType(_this5.typeStorage.getType(typeId));
+	        _this7.typeStorage.setActiveType(_this7.typeStorage.getType(typeId));
 
-	        _this5.renderList();
+	        _this7.renderList();
 	      });
 	      return this.node;
 	    }
 	  }, {
 	    key: "save",
 	    value: function save() {
-	      var _this6 = this;
+	      var _this8 = this;
 
 	      var activeType = this.getActiveType();
 	      return this.requestSender.saveList({
@@ -944,29 +1071,29 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        groupId: this.groupId,
 	        items: this.getListItems()
 	      }).then(function () {
-	        if (_this6.isSkipNotifications()) {
-	          return _this6.solve();
+	        if (_this8.isSkipNotifications()) {
+	          return _this8.solve();
 	        } else {
-	          if (_this6.isListRequired(_this6.getActiveType())) {
-	            if (_this6.isAllToggled()) {
+	          if (_this8.isListRequired(_this8.getActiveType())) {
+	            if (_this8.isAllToggled()) {
 	              return 'resolve';
 	            } else {
-	              _this6.showInfoPopup();
+	              _this8.showInfoPopup();
 
 	              return 'wait';
 	            }
 	          } else {
-	            if (_this6.isAllToggled()) {
+	            if (_this8.isAllToggled()) {
 	              return 'resolve';
 	            } else {
-	              _this6.showConfirmPopup();
+	              _this8.showConfirmPopup();
 
 	              return 'wait';
 	            }
 	          }
 	        }
 	      })["catch"](function (response) {
-	        _this6.requestSender.showErrorAlert(response);
+	        _this8.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -982,7 +1109,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "getActiveType",
 	    value: function getActiveType() {
-	      return this.tabs.getActiveType();
+	      return this.typeStorage.getActiveType();
 	    }
 	  }, {
 	    key: "isListRequired",
@@ -1051,7 +1178,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showConfirmPopup",
 	    value: function showConfirmPopup() {
-	      var _this7 = this;
+	      var _this9 = this;
 
 	      var popupOptions = {};
 	      var currentSlider = this.sidePanelManager.getTopSlider();
@@ -1069,7 +1196,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          color: ui_buttons.Button.Color.SUCCESS,
 	          events: {
 	            click: function click() {
-	              _this7.emit('resolve');
+	              _this9.emit('resolve');
 
 	              messageBox.close();
 	            }
@@ -1079,7 +1206,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          color: ui_buttons.Button.Color.LINK,
 	          events: {
 	            click: function click() {
-	              _this7.emit('reject');
+	              _this9.emit('reject');
 
 	              messageBox.close();
 	            }
@@ -1152,10 +1279,16 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      _this.sidePanelManager.close(false);
 	    });
 
-	    _this.list.subscribe('showSettings', function () {
-	      _this.sidePanelManager.close(false, function () {
-	        return _this.showSettings();
-	      });
+	    _this.list.subscribe('showSettings', function (baseEvent) {
+	      var close = baseEvent.getData();
+
+	      if (close) {
+	        _this.sidePanelManager.close(false, function () {
+	          return _this.showSettings();
+	        });
+	      } else {
+	        _this.showSettings();
+	      }
 	    });
 
 	    return _this;
@@ -1191,164 +1324,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "showSettings",
 	    value: function showSettings() {
-	      var _this3 = this;
-
-	      this.sidePanelManager.open('tasks-scrum-dod-settings-side-panel', {
-	        cacheable: false,
-	        width: 1000,
-	        contentCallback: function contentCallback() {
-	          return ui_sidepanel_layout.Layout.createContent({
-	            extensions: ['tasks.scrum.dod', 'ui.entity-selector', 'tasks'],
-	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
-	            content: _this3.createSettingsContent.bind(_this3),
-	            design: {
-	              section: false
-	            },
-	            buttons: []
-	          });
-	        },
-	        events: {
-	          onLoad: this.onLoadSettings.bind(this),
-	          onClose: this.onCloseSettings.bind(this),
-	          onCloseComplete: this.onCloseSettingsComplete.bind(this)
-	        }
-	      });
+	      this.settings.show();
 	    }
 	  }, {
 	    key: "showList",
 	    value: function showList() {
-	      var _this4 = this;
-
-	      this.sidePanelManager.open('tasks-scrum-dod-list-side-panel', {
-	        cacheable: false,
-	        width: 800,
-	        contentCallback: function contentCallback() {
-	          return ui_sidepanel_layout.Layout.createContent({
-	            extensions: ['tasks.scrum.dod', 'tasks'],
-	            title: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TITLE'),
-	            content: _this4.createListContent.bind(_this4),
-	            design: {
-	              section: false
-	            },
-	            toolbar: function toolbar(_ref) {
-	              var Button = _ref.Button;
-	              return [new Button({
-	                color: Button.Color.LIGHT_BORDER,
-	                text: main_core.Loc.getMessage('TASKS_SCRUM_DOD_TOOLBAR_SETTINGS'),
-	                onclick: _this4.showSettings.bind(_this4)
-	              })];
-	            },
-	            buttons: function buttons(_ref2) {
-	              var cancelButton = _ref2.cancelButton,
-	                  SaveButton = _ref2.SaveButton;
-	              return [new SaveButton({
-	                text: _this4.getListButtonText(),
-	                onclick: _this4.onSaveList.bind(_this4)
-	              }), new ui_buttons.CancelButton({
-	                onclick: function onclick() {
-	                  _this4.emit('reject');
-
-	                  _this4.sidePanelManager.close(false);
-	                }
-	              })];
-	            }
-	          });
-	        },
-	        events: {
-	          onLoad: this.onLoadList.bind(this)
-	        }
-	      });
-	    }
-	  }, {
-	    key: "createSettingsContent",
-	    value: function createSettingsContent() {
-	      var _this5 = this;
-
-	      return new Promise(function (resolve, reject) {
-	        _this5.settings.renderContent().then(function (content) {
-	          resolve(content);
-	        });
-	      });
-	    }
-	  }, {
-	    key: "createListContent",
-	    value: function createListContent() {
-	      var _this6 = this;
-
-	      return new Promise(function (resolve, reject) {
-	        _this6.list.renderContent().then(function (content) {
-	          resolve(content);
-	        });
-	      });
-	    }
-	  }, {
-	    key: "onLoadSettings",
-	    value: function onLoadSettings() {
-	      if (!this.settings.isEmpty()) {
-	        this.settings.buildEditingForm(this.settings.getActiveType());
-	      }
-	    }
-	  }, {
-	    key: "onLoadList",
-	    value: function onLoadList() {
-	      if (this.list.isEmpty()) {
-	        return;
-	      }
-
-	      this.list.renderList();
-	    }
-	  }, {
-	    key: "onCloseSettings",
-	    value: function onCloseSettings() {
-	      if (this.settings.isChanged()) {
-	        this.settings.saveSettings().then(function () {
-	          ui_notification.UI.Notification.Center.notify({
-	            autoHideDelay: 1000,
-	            content: main_core.Loc.getMessage('TASKS_SCRUM_DOD_SAVE_SETTINGS_NOTIFY')
-	          });
-	        })["catch"](function () {});
-	      }
-	    }
-	  }, {
-	    key: "onCloseSettingsComplete",
-	    value: function onCloseSettingsComplete() {
-	      var currentSlider = this.sidePanelManager.getTopSlider();
-
-	      if (currentSlider) {
-	        if (currentSlider.getUrl() === 'tasks-scrum-dod-list-side-panel' && this.settings.isChanged()) {
-	          currentSlider.reload();
-	        }
-	      }
-	    }
-	  }, {
-	    key: "onSaveList",
-	    value: function onSaveList() {
-	      var _this7 = this;
-
-	      if (this.list.isEmpty()) {
-	        return;
-	      }
-
-	      this.list.save().then(function (decision) {
-	        if (decision === 'resolve') {
-	          _this7.emit('resolve');
-
-	          _this7.sidePanelManager.close(false);
-	        } else if (decision === 'reject') {
-	          _this7.emit('reject');
-
-	          _this7.sidePanelManager.close(false);
-	        }
-	      });
-	    }
-	  }, {
-	    key: "getListButtonText",
-	    value: function getListButtonText() {
-	      if (this.list.isSkipNotifications()) {
-	        return main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_SAVE_BUTTON_TEXT');
-	      } else {
-	        return main_core.Loc.getMessage('TASKS_SCRUM_DOD_CONFIRM_COMPLETE_BUTTON_TEXT');
-	      }
+	      this.list.show();
 	    }
 	  }]);
 	  return Dod;
@@ -1356,5 +1337,5 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	exports.Dod = Dod;
 
-}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.SidePanel,BX,BX.UI,BX,BX.UI.EntitySelector,BX,BX.Event,BX,BX.UI.Dialogs,BX.UI));
+}((this.BX.Tasks.Scrum = this.BX.Tasks.Scrum || {}),BX.UI.EntitySelector,BX.UI.SidePanel,BX,BX,BX.Event,BX,BX.UI.Dialogs,BX.UI,BX.UI.SidePanel));
 //# sourceMappingURL=dod.bundle.js.map

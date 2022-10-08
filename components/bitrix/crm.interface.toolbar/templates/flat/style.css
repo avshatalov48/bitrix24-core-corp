@@ -23,7 +23,8 @@ div.bx-crm-interface-toolbar{
 	text-transform:uppercase;
 	color:#6b798a;
 	opacity:.8;
-	font-family: "OpenSans-Bold";
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 }
 .bx-crm-interface-toolbar .bx-crm-context-button:hover,
 .bx-crm-interface-toolbar .bx-crm-context-button.active{

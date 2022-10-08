@@ -206,6 +206,7 @@ $MESS["TASKS_TTDP_PROJECT_TASK_IN"] = "Задача в проекте (груп�
 $MESS["TASKS_TTV_SUB_TITLE"] = "Задача № #ID#";
 $MESS["TASKS_AJAX_ERROR_LOAD_TEMPLATES"] = "Ошибка загрузки списка";
 $MESS["TASKS_AJAX_EMPTY_TEMPLATES"] = "Нет шаблонов задач";
+$MESS["TASKS_TASK_AJAX_LOAD_TEMPLATES"] = "Загрузка списка...";
 $MESS["TASKS_EFFECTIVE_TAB"] = "Замечания";
 $MESS["TASKS_TASK_CANCEL_BUTTON_TEXT"] = "Отменить";
 $MESS["TASKS_TASK_CLOSE_SLIDER_CONFIRMATION_POPUP_HEADER"] = "Подтверждение";

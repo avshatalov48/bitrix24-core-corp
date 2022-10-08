@@ -43,7 +43,7 @@
 
 .disk-control-external-link-text {
 	display: block;
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	transition: opacity .3s;
 	opacity: .5;
@@ -53,7 +53,7 @@
 	display: none;
 	max-width: 185px;
 	border-bottom: 1px dashed rgba(130,139,149,.4);
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	transition: border-bottom .3s, opacity .3s;
 }
@@ -83,7 +83,7 @@
 .disk-control-external-link-subtitle {
 	display: none;
 	margin-top: 3px;
-	font: 11px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 	transition: opacity .3s;
 	opacity: .5;

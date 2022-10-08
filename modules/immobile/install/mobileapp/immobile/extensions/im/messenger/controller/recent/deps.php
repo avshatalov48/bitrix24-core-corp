@@ -17,6 +17,7 @@ return [
 		'im:messenger/lib/renderer',
 		'im:messenger/lib/event',
 		'im:messenger/lib/counters',
+		'im:messenger/cache/share-dialog',
 		'im:chat/timer',
 		'im:chat/utils',
 		'user/profile',

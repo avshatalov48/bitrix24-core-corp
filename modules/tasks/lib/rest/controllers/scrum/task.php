@@ -169,7 +169,7 @@ class Task extends Base
 		{
 			$epicService = new EpicService($this->getUserId());
 			$epic = $epicService->getEpic((int) $fields['epicId']);
-			if ($epic->getId())
+			if (!$epic->getId())
 			{
 				$this->errorCollection->add([new Error('Epic not found')]);
 

@@ -20,7 +20,7 @@ class Webform extends Crm\Volume\Base
 		Crm\WebForm\Internals\ResultTable::class,
 		Crm\WebForm\Internals\ResultEntityTable::class,
 		Crm\WebForm\Internals\FormStartEditTable::class,
-		Crm\WebForm\Internals\FormViewTable::class,
+		Crm\WebForm\Internals\FormCounterDailyTable::class,
 	);
 
 	/**

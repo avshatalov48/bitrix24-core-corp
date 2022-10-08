@@ -6,6 +6,11 @@ define("NO_AGENT_CHECK", true);
 define("DisableEventsCheck", true);
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
+if(CModule::IncludeModule('extranet') && !CExtranet::IsIntranetUser())
+{
+	return false;
+}
+
 IncludeModuleLangFile(__FILE__);
 
 \Bitrix\Main\UI\Extension::load("ui.hint");
@@ -155,7 +160,7 @@ else
 		die();
 	}
 
-	$ID = 1;
+	$ID = 0;
 	if($_SERVER["REQUEST_METHOD"] === "POST" && check_bitrix_sessid())
 	{
 		if (
@@ -188,7 +193,7 @@ else
 				if ($val == '')
 					unset($arErrors[$key]);
 			}
-			$ID = 0;
+			$ID = -1;
 			die('error:<li>'.implode('</li><li>', array_map('htmlspecialcharsbx', $arErrors))).'</li>';
 		}
 		elseif (isset($_POST['absence_element_id']))
@@ -203,7 +208,7 @@ else
 <body>
 <div style="width: 450px;"><?
 
-	if ($ID>1)
+	if ($ID > 0)
 	{
 	?>
 
@@ -238,7 +243,7 @@ endif;
 		<table width="100%" cellpadding="5">
 			<tr valign="bottom">
 				<td colspan="2">
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="USER_ID"><?=GetMessage("INTR_ABSENCE_USER")?></label></div>
+					<div style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px"><label for="USER_ID"><?=GetMessage("INTR_ABSENCE_USER")?></label></div>
 					<?
 					$UserName = "";
 					if (isset($_POST['USER_ID']) || isset($arElement["PROPERTY_USER_VALUE"]))
@@ -315,7 +320,7 @@ endif;
 			</tr>
 			<tr valign="bottom">
 				<td>
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="ABSENCE_TYPE"><?=GetMessage("INTR_ABSENCE_TYPE")?></label></div>
+					<div style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px"><label for="ABSENCE_TYPE"><?=GetMessage("INTR_ABSENCE_TYPE")?></label></div>
 					<select name="ABSENCE_TYPE" id="absence_type" style="width:100%;font-size:14px;border:1px #c8c8c8 solid;">
 						<option value="0"><?=GetMessage("INTR_ABSENCE_NO_TYPE")?></option>
 						<?
@@ -333,7 +338,7 @@ endif;
 			</tr>
 			<tr valign="bottom">
 				<td>
-					<div id="intr-absence-name" style="font-size:14px;font-weight:bold;padding-bottom:8px">
+					<div id="intr-absence-name" style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px">
 						<label for="NAME"><?=GetMessage("INTR_ABSENCE_NAME")?></label>
 						<span style="position: relative;top: 2px;" data-hint="<?=GetMessage('INTR_ABSENCE_NAME_HINT')?>"></span>
 					</div>
@@ -342,7 +347,7 @@ endif;
 			</tr>
 			<tr>
 				<td>
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><?=GetMessage("INTR_ABSENCE_PERIOD")?></div>
+					<div style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px"><?=GetMessage("INTR_ABSENCE_PERIOD")?></div>
 				</td>
 			</tr>
 			<tr valign="bottom" >
@@ -414,7 +419,7 @@ endif;
 	<?if(isset($arParams["ABSENCE_ELEMENT_ID"]) && intval($arParams["ABSENCE_ELEMENT_ID"])>0 || isset($_POST['absence_element_id'])):?>
 	myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_EDIT')) ?>');
 	myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_EDIT_TITLE')) ?>');
-	<?elseif ($ID > 1):?>
+	<?elseif ($ID > 0):?>
 	myButton.setName('<?=\CUtil::jsEscape(getMessage('INTR_ABSENCE_ADD_MORE')) ?>');
 	myPopup.setTitleBar('<?=\CUtil::jsEscape(getMessage('INTR_ADD_TITLE')) ?>');
 	<?else:?>

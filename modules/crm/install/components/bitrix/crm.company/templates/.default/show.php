@@ -13,6 +13,8 @@ $APPLICATION->IncludeComponent(
 	'',
 	array(
 		'ID' => $cpID,
+		// IMPORTANT: "show.php" redirected to "details.php"
+		// 			  "ACTIVE_ITEM_ID" recalculated in bitrix:crm.entity.details.frame based on CATEGORY ID
 		'ACTIVE_ITEM_ID' => $cpActiveItemID,
 		'PATH_TO_COMPANY_LIST' => (isset($arResult['PATH_TO_COMPANY_LIST']) && !$isMyCompanyMode) ? $arResult['PATH_TO_COMPANY_LIST'] : '',
 		'PATH_TO_COMPANY_EDIT' => (isset($arResult['PATH_TO_COMPANY_EDIT']) && !$isMyCompanyMode) ? $arResult['PATH_TO_COMPANY_EDIT'] : '',
@@ -82,4 +84,3 @@ else
 		$component
 	);
 }
-?>

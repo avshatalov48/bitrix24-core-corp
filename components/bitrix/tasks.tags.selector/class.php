@@ -42,8 +42,7 @@ class TasksTagsSelector extends \CBitrixComponent
 
 		return [
 			'updateTags' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],

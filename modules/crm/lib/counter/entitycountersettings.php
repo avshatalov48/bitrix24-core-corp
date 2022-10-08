@@ -16,6 +16,7 @@ class EntityCounterSettings
 		);
 
 		$enabledCounters = [
+		//	\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL, // temporary disabled
 			\Bitrix\Crm\Counter\EntityCounterType::PENDING,
 			\Bitrix\Crm\Counter\EntityCounterType::OVERDUE,
 			\Bitrix\Crm\Counter\EntityCounterType::CURRENT,
@@ -41,7 +42,23 @@ class EntityCounterSettings
 
 	public function isCounterTypeEnabled(int $counterType): bool
 	{
-		return in_array($counterType, $this->enabledCountersTypes, true);
+		$enabled = in_array($counterType, $this->enabledCountersTypes, true);
+		if ($enabled)
+		{
+			return true;
+		}
+		if (in_array(
+			$counterType,
+			[
+				\Bitrix\Crm\Counter\EntityCounterType::OVERDUE,
+				\Bitrix\Crm\Counter\EntityCounterType::PENDING,
+			]
+		))
+		{
+			return $this->isCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::CURRENT);
+		}
+
+		return false;
 	}
 
 	public function isIdleCounterEnabled(): bool
@@ -57,6 +74,16 @@ class EntityCounterSettings
 	public function isPendingCounterEnabled(): bool
 	{
 		return $this->isCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::PENDING);
+	}
+
+	public function isCurrentCounterEnabled(): bool
+	{
+		return $this->isCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::CURRENT);
+	}
+
+	public function isIncomingCounterEnabled(): bool
+	{
+		return $this->isCounterTypeEnabled(\Bitrix\Crm\Counter\EntityCounterType::INCOMING_CHANNEL);
 	}
 
 	public function setIsCountersEnabled(bool $isCountersEnabled): self

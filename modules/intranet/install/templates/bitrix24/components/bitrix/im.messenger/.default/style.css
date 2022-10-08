@@ -337,7 +337,7 @@
 	border-radius: 50%;
 	color: #8ed200;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	width: 30px;
 	height: 30px;
 	line-height: 30px;
@@ -803,7 +803,7 @@
 }
 
 .bx-im-bar .bx-messenger-cl-item-empty {
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #606162;
 	height: 21px;
 	text-align: center;

@@ -8,6 +8,8 @@ return [
 	'css' => 'dist/embed.bundle.css',
 	'js' => 'dist/embed.bundle.js',
 	'rel' => [
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 		'main.qrcode',
 		'ui.stepbystep',
 		'ui.notification',

@@ -1,0 +1,77 @@
+
+.crm-timeline__card-action {
+	padding: calc(var(--ui-space-inset-sm, 12px) * -1) var(--ui-space-inset-md, 16px) var(--ui-space-inset-sm, 12px) var(--ui-space-inset-md, 16px);
+	display: flex;
+	margin-bottom: 16px;
+}
+
+.crm-timeline__card-action:last-child {
+	margin-bottom: unset;
+}
+
+.crm-timeline__card-action_buttons {
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
+	margin-bottom: -8px;
+}
+
+.crm-timeline__card-action_menu {
+	display: flex;
+	margin: -1px 0 0 14px;
+}
+
+.crm-timeline__card-action_menu-item {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	margin-left: 9px;
+	cursor: pointer;
+	opacity: .4;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card-action_menu-item:first-child {
+	margin-left: unset;
+}
+
+.crm-timeline__card-action_menu-item.--hover,
+.crm-timeline__card-action_menu-item:hover {
+	opacity: .6;
+	transition: unset;
+}
+
+.crm-timeline__card-action_menu-item i {
+	width: 28px;
+	height: 28px;
+	background: center no-repeat;
+}
+
+.crm-timeline__card-action_menu-item.--dotted i {
+	background-image: url(../image/crm-timeline_icon-dotted.svg);
+}
+
+.crm-timeline__card-action_menu-item.--note i {
+	background-image: url(../image/crm-timeline_icon-note.svg);
+}
+
+.crm-timeline__card-action_menu-item.--list i {
+	background-image: url(../image/crm-timeline_icon-list.svg);
+}
+
+.crm-timeline__card-action-btn {
+	display: inline-block;
+	min-width: 120px;
+	width: 31%;
+	margin: 0 8px 8px 0;
+}
+
+.crm-timeline__card-action-btn .ui-btn {
+	width: 100%;
+}
+
+.crm-timeline__card-action-btn.ui-btn:last-child {
+	margin-right: unset;
+}

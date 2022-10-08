@@ -10,6 +10,7 @@ return array(
 	'rel' => [
 		'main.core',
 		'main.core.events',
+		'ui.design-tokens',
 		'main.popup',
 		'main.loader',
 		'crm.entity-editor',

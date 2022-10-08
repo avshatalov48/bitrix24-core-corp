@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Timeman = this.BX.Timeman || {};
-(function (exports,main_core,timeman_timeformatter,ui_vue_components_hint,ui_vue) {
+(function (exports,main_core,ui_designTokens,timeman_timeformatter,ui_vue_components_hint,ui_vue) {
     'use strict';
 
     var Interval = ui_vue.BitrixVue.localComponent('bx-timeman-component-timeline-chart-interval', {
@@ -65,11 +65,11 @@ this.BX.Timeman = this.BX.Timeman || {};
         readOnly: Boolean,
         showMarkers: {
           type: Boolean,
-          default: true
+          "default": true
         },
         isOverChart: {
           type: Boolean,
-          default: false
+          "default": false
         }
       },
       computed: {
@@ -190,5 +190,5 @@ this.BX.Timeman = this.BX.Timeman || {};
       template: "\n\t\t<div class=\"bx-timeman-component-timeline\">\n\t\t\t<Chart\n\t\t\t\t:intervals=\"chart\"\n\t\t\t\t:fixedSizeType=\"fixedSizeType\"\n\t\t\t\t:readOnly=\"readOnly\"\n\t\t\t\t@intervalClick=\"onIntervalClick\"\n\t\t\t/>\n\t\t\t\n\t\t\t<Legend\n\t\t\t\t:items=\"legend\"\n\t\t\t/>\n\n\t\t\t<transition appear name=\"bx-timeman-component-timeline-fade\">\n\t\t\t\t<Chart\n\t\t\t\t\tv-if=\"Type.isArrayFilled(overChart)\"\n\t\t\t\t\t:intervals=\"overChart\"\n\t\t\t\t\t:fixedSizeType=\"fixedSizeType\"\n\t\t\t\t\t:readOnly=\"true\"\n\t\t\t\t\t:showMarkers=\"false\"\n\t\t\t\t\t:isOverChart=\"true\"\n\t\t\t\t/>\n\t\t\t</transition>\n\t\t</div>\n\t"
     });
 
-}((this.BX.Timeman.Component = this.BX.Timeman.Component || {}),BX,BX.Timeman,window,BX));
+}((this.BX.Timeman.Component = this.BX.Timeman.Component || {}),BX,BX,BX.Timeman,window,BX));
 //# sourceMappingURL=timeline.bundle.js.map

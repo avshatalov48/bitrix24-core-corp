@@ -124,7 +124,7 @@ class EntityCounterPanel extends CounterPanel
 
 			this.#data[code].VALUE = data[code];
 
-			let item = this.getItemById(code);
+			const item = this.getItemById(code);
 			item.updateValue(Text.toNumber(data[code]));
 			item.updateColor(EntityCounterPanel.detectCounterItemColor(this.#data[code].TYPE_NAME, Text.toNumber(data[code])));
 		}
@@ -138,7 +138,7 @@ class EntityCounterPanel extends CounterPanel
 			const eventArgs = {
 				userId: this.#userId.toString(),
 				userName: this.#userName,
-				counterTypeId: typeId.toString(),
+				counterTypeId: this.#prepareFilterTypeId(typeId),
 				cancel: false
 			};
 
@@ -169,6 +169,18 @@ class EntityCounterPanel extends CounterPanel
 		}
 
 		return true;
+	}
+	#prepareFilterTypeId(typeId: Number): Object
+	{
+		if (typeId === EntityCounterType.CURRENT)
+		{
+			return {
+				0: EntityCounterType.OVERDUE.toString(),
+				1: EntityCounterType.PENDING.toString(),
+			}
+		}
+
+		return typeId.toString();
 	}
 
 	#markCounters(): void
@@ -227,8 +239,18 @@ class EntityCounterPanel extends CounterPanel
 
 	static detectCounterItemColor(type: String, value: Number): String
 	{
-		return [EntityCounterType.IDLE_NAME, EntityCounterType.OVERDUE_NAME].includes(type) && value > 0
-			? 'DANGER'
+		const isRedCounter = [
+			EntityCounterType.IDLE_NAME,
+			EntityCounterType.OVERDUE_NAME,
+			EntityCounterType.CURRENT_NAME,
+		].includes(type);
+
+		const isGreenCounter  =  [
+			EntityCounterType.INCOMING_CHANNEL_NAME,
+		].includes(type);
+
+		return (value > 0)
+			? (isRedCounter ? 'DANGER' : (isGreenCounter ? 'SUCCESS' : 'THEME'))
 			: 'THEME';
 	}
 }

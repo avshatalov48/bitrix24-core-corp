@@ -22,135 +22,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Conversion;
 	}();
 
-	function _templateObject13() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject13 = function _templateObject13() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject12() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-slider-no-access\">\n\t\t\t\t\t<div class=\"ui-slider-no-access-inner\">\n\t\t\t\t\t\t<div class=\"ui-slider-no-access-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-slider-no-access-subtitle\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-slider-no-access-img\">\n\t\t\t\t\t\t\t<div class=\"ui-slider-no-access-img-inner\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject12 = function _templateObject12() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject11() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t\t<div class=\"ui-slider-heading-3\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-login-block\">\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-login-wrapper\">\n\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\tclass=\"webform-small-button webform-small-button-transparent\"\n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t<span class=\"crm-ads-conversion-settings-detail\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject11 = function _templateObject11() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject10() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject10 = function _templateObject10() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject9() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"ui-slider-section crm-ads-conversion-settings\">\n\t\t\t\t\t\t\t<div class=\"ui-slider-heading-3\">", "</div>\n\t\t\t\t\t\t</div>"]);
-
-	  _templateObject9 = function _templateObject9() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject8() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject8 = function _templateObject8() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject7() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-settings-block\">\n\t\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-settings-name-block\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"crm-ads-conversion-settings-name\">", "</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"crm-ads-conversion-settings-detail\">\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-settings-control\">\n\t\t\t\t\t\t\t\t\t\t<span data-switcher-node=\"\"/>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t"]);
-
-	  _templateObject7 = function _templateObject7() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject6() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject6 = function _templateObject6() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject5() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject5 = function _templateObject5() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject4() {
-	  var data = babelHelpers.taggedTemplateLiteral(["", ""]);
-
-	  _templateObject4 = function _templateObject4() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject3() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-slider-section crm-ads-conversion-account-section\">\n\t\t\t\t\t\t<div class=\"crm-ads-conversion-block\">\n\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social crm-ads-conversion-social-facebook\">\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-avatar\">\n\t\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-avatar-icon\" \n\t\t\t\t\t\t\t\t\t\tstyle=\"background-image: url(", ")\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-user\">\n\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\ttarget=\"_top\" \n\t\t\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-user-link\" \n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-shutoff\">\n\t\t\t\t\t\t\t\t\t<span \n\t\t\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-shutoff-link\" \n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"]);
-
-	  _templateObject3 = function _templateObject3() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-slider-section crm-ads-conversion-title-section\">\n\t\t\t\t\t<span class=\"ui-icon ui-slider-icon ui-icon-service-fb\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t</span>\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div class=\"ui-slider-paragraph-2\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<ul class=\"ui-slider-list crm-ads-conversion-features\">\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<a \n\t\t\t\t\t\t\thref=\"https://www.facebook.com/business/help/1292598407460746?id=1205376682832142\" \n\t\t\t\t\t\t\tclass=\"ui-slider-link\" \n\t\t\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div/>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13;
 	var FacebookConversion = /*#__PURE__*/function (_Conversion) {
 	  babelHelpers.inherits(FacebookConversion, _Conversion);
 
@@ -160,7 +32,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    var width = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 800;
 	    babelHelpers.classCallCheck(this, FacebookConversion);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(FacebookConversion).call(this, width));
-	    _this.tag = main_core.Tag.render(_templateObject());
+	    _this.tag = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div/>"])));
 	    BX.addCustomEvent(window, 'seo-client-auth-result', function (eventData) {
 	      var _this$slider;
 
@@ -229,7 +101,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	          _this2.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        switcher.check(true, false);
 
 	        _this2.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
@@ -255,7 +127,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	          _this3.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        switcher.check(true, false);
 
 	        _this3.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
@@ -296,7 +168,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        var _this4$slider;
 
 	        (_this4$slider = _this4.slider) === null || _this4$slider === void 0 ? void 0 : _this4$slider.reload();
-	      }).catch(function () {
+	      })["catch"](function () {
 	        var _this4$slider2;
 
 	        (_this4$slider2 = _this4.slider) === null || _this4$slider2 === void 0 ? void 0 : _this4$slider2.reload();
@@ -315,14 +187,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.tag.innerHTML = '';
 
 	      if (this.data && this.data.available) {
-	        this.tag.appendChild(main_core.Tag.render(_templateObject2(), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TITLE'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_1'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_2'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_3'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_4'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_LINK')));
+	        this.tag.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-slider-section crm-ads-conversion-title-section\">\n\t\t\t\t\t<span class=\"ui-icon ui-slider-icon ui-icon-service-fb\">\n\t\t\t\t\t\t<i></i>\n\t\t\t\t\t</span>\n\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t<div class=\"ui-slider-paragraph-2\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<ul class=\"ui-slider-list crm-ads-conversion-features\">\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t\t<li class=\"ui-slider-list-item\">\n\t\t\t\t\t\t\t\t<span class=\"ui-slider-list-text\">\n\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t</li>\n\t\t\t\t\t\t</ul>\n\t\t\t\t\t\t<a \n\t\t\t\t\t\t\thref=\"https://www.facebook.com/business/help/1292598407460746?id=1205376682832142\" \n\t\t\t\t\t\t\tclass=\"ui-slider-link\" \n\t\t\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</a>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TITLE'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_1'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_2'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_3'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_4'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_LINK')));
 
 	        if (this.data.auth && this.data.profile) {
-	          this.tag.appendChild(main_core.Tag.render(_templateObject3(), main_core.Tag.safe(_templateObject4(), this.data.profile.picture), this.data.profile.url ? 'href="' + main_core.Tag.safe(_templateObject5(), this.data.profile.url) + '"' : "", main_core.Tag.safe(_templateObject6(), this.data.profile.name), this.logout.bind(this), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGOUT')));
+	          this.tag.appendChild(main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-slider-section crm-ads-conversion-account-section\">\n\t\t\t\t\t\t<div class=\"crm-ads-conversion-block\">\n\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social crm-ads-conversion-social-facebook\">\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-avatar\">\n\t\t\t\t\t\t\t\t\t<div \n\t\t\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-avatar-icon\" \n\t\t\t\t\t\t\t\t\t\tstyle=\"background-image: url(", ")\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-user\">\n\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\ttarget=\"_top\" \n\t\t\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-user-link\" \n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-social-shutoff\">\n\t\t\t\t\t\t\t\t\t<span \n\t\t\t\t\t\t\t\t\t\tclass=\"crm-ads-conversion-social-shutoff-link\" \n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Tag.safe(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["", ""])), this.data.profile.picture), this.data.profile.url ? 'href="' + main_core.Tag.safe(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["", ""])), this.data.profile.url) + '"' : "", main_core.Tag.safe(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["", ""])), this.data.profile.name), this.logout.bind(this), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGOUT')));
 
 	          if (main_core.Type.isArray(this.data.items)) {
 	            this.tag.appendChild(this.data.items.reduce(function (tag, value) {
-	              var itemNode = main_core.Tag.render(_templateObject7(), main_core.Tag.safe(_templateObject8(), value.name), main_core.Loc.getMessage('CRM_ADS_CONVERSION_DETAIL'));
+	              var itemNode = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-settings-block\">\n\t\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-settings-name-block\">\n\t\t\t\t\t\t\t\t\t\t<span class=\"crm-ads-conversion-settings-name\">", "</span>\n\t\t\t\t\t\t\t\t\t\t<span class=\"crm-ads-conversion-settings-detail\">\n\t\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-settings-control\">\n\t\t\t\t\t\t\t\t\t\t<span data-switcher-node=\"\"/>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t"])), main_core.Tag.safe(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["", ""])), value.name), main_core.Loc.getMessage('CRM_ADS_CONVERSION_DETAIL'));
 	              var switcher = new BX.UI.Switcher({
 	                node: itemNode.querySelector('[data-switcher-node]'),
 	                checked: value.enable
@@ -333,14 +205,14 @@ this.BX.Crm = this.BX.Crm || {};
 	              };
 	              tag.appendChild(itemNode);
 	              return tag;
-	            }, main_core.Tag.render(_templateObject9(), main_core.Tag.safe(_templateObject10(), this.getScriptMessage()))));
+	            }, main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div class=\"ui-slider-section crm-ads-conversion-settings\">\n\t\t\t\t\t\t\t<div class=\"ui-slider-heading-3\">", "</div>\n\t\t\t\t\t\t</div>"])), main_core.Tag.safe(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["", ""])), this.getScriptMessage()))));
 	          }
 	        } else {
-	          this.tag.appendChild(main_core.Tag.render(_templateObject11(), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_CONNECT_TITLE'), this.login.bind(this), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_5')));
+	          this.tag.appendChild(main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-slider-section\">\n\t\t\t\t\t\t<div class=\"ui-slider-content-box\">\n\t\t\t\t\t\t\t<div class=\"ui-slider-heading-3\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-login-block\">\n\t\t\t\t\t\t\t\t<div class=\"crm-ads-conversion-login-wrapper\">\n\t\t\t\t\t\t\t\t\t<a\n\t\t\t\t\t\t\t\t\t\tclass=\"webform-small-button webform-small-button-transparent\"\n\t\t\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t\t\t\t<span class=\"crm-ads-conversion-settings-detail\">\n\t\t\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_CONNECT_TITLE'), this.login.bind(this), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN'), main_core.Loc.getMessage('CRM_ADS_CONVERSION_LOGIN_OPPORTUNITY_TEXT_LIST_5')));
 	        }
 	      } else {
-	        this.tag.appendChild(main_core.Tag.render(_templateObject12(), main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_TITLE_SERVICE_ERROR'), this.errors.length > 0 ? this.errors.reduce(function (unique, value) {
-	          var item = main_core.Tag.safe(_templateObject13(), _this5.getErrorMessage(value));
+	        this.tag.appendChild(main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-slider-no-access\">\n\t\t\t\t\t<div class=\"ui-slider-no-access-inner\">\n\t\t\t\t\t\t<div class=\"ui-slider-no-access-title\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-slider-no-access-subtitle\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-slider-no-access-img\">\n\t\t\t\t\t\t\t<div class=\"ui-slider-no-access-img-inner\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_TITLE_SERVICE_ERROR'), this.errors.length > 0 ? this.errors.reduce(function (unique, value) {
+	          var item = main_core.Tag.safe(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["", ""])), _this5.getErrorMessage(value));
 
 	          if (unique.includes(item)) {
 	            unique.push(item);
@@ -415,7 +287,7 @@ this.BX.Crm = this.BX.Crm || {};
 	                  _this6.render();
 
 	                  return _this6.tag;
-	                }).catch(function (response) {
+	                })["catch"](function (response) {
 	                  _this6.saveData(response.data);
 
 	                  _this6.saveErrors(response.errors);
@@ -554,7 +426,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	          _this2.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        switcher.check(!_this2.data.configuration.enabled, false);
 
 	        _this2.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
@@ -628,7 +500,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	          _this2.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));
 	        }
-	      }).catch(function () {
+	      })["catch"](function () {
 	        switcher.check(!_this2.data.configuration.enabled, false);
 
 	        _this2.notify(main_core.Loc.getMessage('CRM_ADS_CONVERSION_ERROR_SAVE'));

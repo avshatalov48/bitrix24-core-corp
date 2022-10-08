@@ -8,7 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 use Bitrix\Main\UI\Extension;
 use Bitrix\Bitrix24\Feature;
 
-Extension::load(['ui.icons']);
+Extension::load(['ui.icons', 'ui.fonts.opensans']);
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . ' no-background no-all-paddings pagetitle-toolbar-field-view ');

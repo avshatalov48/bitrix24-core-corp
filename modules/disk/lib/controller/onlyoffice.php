@@ -27,7 +27,6 @@ use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Engine\Router;
 use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
-use Bitrix\Main\HttpRequest;
 use Bitrix\Main\HttpResponse;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Cipher;
@@ -384,16 +383,31 @@ final class OnlyOffice extends Engine\Controller
 		];
 	}
 
-	public function downloadAction(Models\DocumentSession $documentSession)
+	public function downloadAction(Models\DocumentSession $documentSession): ?Response\BFile
 	{
 		$this->enableExtendedErrorInfo();
 
-		if ($documentSession->isVersion())
+		$bfileId = null;
+		$fileName = null;
+		if ($documentSession->isVersion() && $documentSession->getVersion())
 		{
-			return Response\BFile::createByFileId($documentSession->getVersion()->getFileId(), $documentSession->getVersion()->getName());
+			$bfileId = $documentSession->getVersion()->getFileId();
+			$fileName = $documentSession->getVersion()->getName();
+		}
+		elseif (!$documentSession->isVersion() && $documentSession->getFile())
+		{
+			$bfileId = $documentSession->getFile()->getFileId();
+			$fileName = $documentSession->getFile()->getName();
 		}
 
-		return Response\BFile::createByFileId($documentSession->getObject()->getFileId(), $documentSession->getObject()->getName());
+		if (!$bfileId || !$fileName)
+		{
+			$this->addError(new Error('Could find file or version for this document session'));
+
+			return null;
+		}
+
+		return Response\BFile::createByFileId($bfileId, $fileName);
 	}
 
 	public function handleOnlyOfficeAction(Models\DocumentSession $documentSession, JsonPayload $payload): ?Response\Json
@@ -406,6 +420,7 @@ final class OnlyOffice extends Engine\Controller
 		Application::getInstance()->addBackgroundJob(function () use ($status, $documentSession){
 			$this->processStatusToInfoModel($documentSession, $status);
 		});
+		$this->logUsageMetrics($documentSession, $payloadData);
 
 		switch ($status)
 		{
@@ -484,6 +499,15 @@ final class OnlyOffice extends Engine\Controller
 
 	protected function handleDocumentClosedWithoutChanges(Models\DocumentSession $documentSession): void
 	{
+		AddEventToStatFile(
+			'disk',
+			'disk_oo_doc_closed',
+			$documentSession->getExternalHash(),
+			ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(),
+			'without_changes',
+			0
+		);
+
 		$this->deactivateDocumentSessions($documentSession->getExternalHash());
 		$documentInfo = $documentSession->getInfo();
 		if (!$documentInfo)
@@ -543,7 +567,7 @@ final class OnlyOffice extends Engine\Controller
 			{
 				$documentSession->setAsNonActive();
 			}
-			elseif ($type === self::STATUS_IS_BEING_EDITED && $documentSession->isNonActive())
+			else if (($type === self::STATUS_IS_BEING_EDITED) && $documentSession->isNonActive())
 			{
 				$documentSession->setAsActive();
 			}
@@ -627,6 +651,21 @@ final class OnlyOffice extends Engine\Controller
 			return false;
 		}
 
+		if (in_array($payloadData['status'], [
+			self::STATUS_IS_READY_FOR_SAVE,
+			self::STATUS_ERROR_WHILE_SAVING,
+		], true))
+		{
+			AddEventToStatFile(
+				'disk',
+				'disk_oo_doc_closed',
+				$documentSession->getExternalHash(),
+				ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(),
+				'with_changes',
+				0
+			);
+		}
+
 		if (empty($payloadData['url']))
 		{
 			$this->addError(new Error("Could not find 'url' in payload. Status: {$payloadData['status']}"));
@@ -705,6 +744,25 @@ final class OnlyOffice extends Engine\Controller
 				],
 				'event' => $event,
 			]);
+		}
+	}
+
+	private function logUsageMetrics(Models\DocumentSession $documentSession, array $payloadData): void
+	{
+		$server = ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer();
+		$actions = $payloadData['actions'] ?? [];
+		foreach ($actions as $action)
+		{
+			$type = $action['type'] ?? null;
+			$userId = (int)($action['userid'] ?? null);
+			if ($type === self::ACTION_TYPE_DISCONNECT)
+			{
+				AddEventToStatFile('disk', 'disk_oo_user_disconnect', $documentSession->getExternalHash(), $server, '', $userId);
+			}
+			else if ($type === self::STATUS_IS_BEING_EDITED)
+			{
+				AddEventToStatFile('disk', 'disk_oo_user_join', $documentSession->getExternalHash(), $server, '', $userId);
+			}
 		}
 	}
 

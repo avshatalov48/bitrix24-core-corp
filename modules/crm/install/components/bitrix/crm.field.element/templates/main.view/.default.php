@@ -11,7 +11,7 @@ use Bitrix\Main\Web\Json;
  * @var array $arResult
  */
 
-Bitrix\Main\UI\Extension::load('ui.tooltip');
+Bitrix\Main\UI\Extension::load(['ui.tooltip', 'ui.fonts.opensans']);
 
 Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 if(\CCrmSipHelper::isEnabled())

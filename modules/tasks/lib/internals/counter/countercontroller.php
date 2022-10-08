@@ -175,7 +175,42 @@ class CounterController
 	public function updateInOptionCounter()
 	{
 		$value = Counter::getInstance($this->userId)->get(CounterDictionary::COUNTER_MEMBER_TOTAL);
-		\CUserCounter::Set($this->userId, CounterDictionary::LEFT_MENU_TASKS, $value, '**', '', false);
+		if (!$this->isSameValueCached($value))
+		{
+			\CUserCounter::Set(
+				$this->userId,
+				CounterDictionary::LEFT_MENU_TASKS,
+				$value,
+				'**',
+				'',
+				false
+			);
+		}
+	}
+
+	private function isSameValueCached(int $value): bool
+	{
+		global $CACHE_MANAGER;
+
+		$cache = $CACHE_MANAGER->Get('user_counter' . $this->userId);
+		if (!$cache)
+		{
+			return false;
+		}
+
+		foreach ($cache as $item)
+		{
+			if (
+				$item['CODE'] === CounterDictionary::LEFT_MENU_TASKS
+				&& $item['SITE_ID'] === '**'
+				&& (int)$item['CNT'] === $value
+			)
+			{
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**

@@ -98,7 +98,7 @@ export default class Comment extends History
 	{
 		const wrapper = BX.create("DIV",
 			{
-				attrs: {className: "crm-entity-stream-section crm-entity-stream-section-comment"}
+				attrs: {className: "crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-comment"}
 			}
 		);
 
@@ -386,14 +386,6 @@ export default class Comment extends History
 		}
 	}
 
-	onFinishFasten()
-	{
-		this.registerImages(this._commentWrapper);
-		if (BX.type.isDomNode(this._fileBlock))
-			this.registerImages(this._fileBlock);
-		BX.LazyLoad.showImages();
-	}
-
 	registerImages(node)
 	{
 		const commentImages = node.querySelectorAll('[data-bx-viewer="image"]');
@@ -614,6 +606,12 @@ export default class Comment extends History
 				onfailure: BX.delegate(this.onRequestFailure, this)
 			}
 		);
+	}
+
+	refreshLayout()
+	{
+		this._playerWrappers = {};
+		super.refreshLayout();
 	}
 
 	onSaveSuccess(data)

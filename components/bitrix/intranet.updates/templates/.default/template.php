@@ -1,6 +1,10 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
-CUtil::InitJSCore("popup");
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+\Bitrix\Main\UI\Extension::load(['popup', 'ui.design-tokens']);
 $APPLICATION->AddHeadScript("/bitrix/js/main/admin_tools.js");
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 

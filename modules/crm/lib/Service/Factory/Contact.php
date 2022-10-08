@@ -346,6 +346,8 @@ class Contact extends Service\Factory
 		];
 	}
 
+	//region categories
+
 	/**
 	 * Returns true if this entity supports categories.
 	 *
@@ -379,6 +381,8 @@ class Contact extends Service\Factory
 
 		return $categories;
 	}
+
+	//endregion
 
 	protected function getTrackedFieldNames(): array
 	{
@@ -466,33 +470,7 @@ class Contact extends Service\Factory
 			)
 			->addAction(
 				Operation::ACTION_AFTER_SAVE,
-				new class extends Operation\Action {
-					public function process(Item $item): Result
-					{
-						$itemBeforeSave = $this->getItemBeforeSave();
-						if (!$itemBeforeSave)
-						{
-							return new Result();
-						}
-
-						$difference = ComparerBase::compareEntityFields(
-							$itemBeforeSave->getData(Values::ACTUAL),
-							$item->getData(),
-						);
-
-						if (
-							$difference->isChanged(Item::FIELD_NAME_NAME)
-							|| $difference->isChanged(Item::FIELD_NAME_SECOND_NAME)
-							|| $difference->isChanged(Item::FIELD_NAME_LAST_NAME)
-							|| $difference->isChanged(Item::FIELD_NAME_HONORIFIC)
-						)
-						{
-							\CCrmActivity::ResetEntityCommunicationSettings($item->getEntityTypeId(), $item->getId());
-						}
-
-						return new Result();
-					}
-				}
+				new Operation\Action\ResetEntityCommunicationSettingsInActivities(),
 			)
 		;
 

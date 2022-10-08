@@ -14,7 +14,8 @@
 .bx-disk-404-title {
 	text-align: center;
 	padding-bottom: 10px;
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font-family-default: 'Montserrat-regular', 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-montserrat, --font-family-default);
 	color: #000;
 	font-size: 40px;
 }
@@ -25,7 +26,8 @@
 	color: #808080;
 	font-size: 20px;
 	line-height: 130%;
-	font-family: "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	--font-family-default: 'Montserrat-regular', 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-montserrat, --font-family-default);
 	text-align: center;
 }
 

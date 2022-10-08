@@ -109,7 +109,7 @@
 }
 .tasks-uf-panel .tasks-uf-panel-row .tasks-uf-panel-row-title input[type="text"] {
   border: 1px solid #c6cdd3;
-  border-radius: 2px;
+  border-radius: var(--ui-field-border-radius, 2px);
   padding: 8px 10px;
   color: #535c69;
   font-size: 15px;
@@ -238,7 +238,7 @@
 }
 .tasks-uf-panel .tasks-uf-panel-row.defaceable .tasks-uf-panel-row-data input[type="text"] {
   border: 1px solid #c6cdd3;
-  border-radius: 2px;
+  border-radius: var(--ui-field-border-radius, 2px);
   padding: 8px 10px;
   color: #535c69;
   font-size: 15px;

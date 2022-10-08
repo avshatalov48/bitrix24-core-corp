@@ -10,7 +10,6 @@ use Bitrix\Tasks\Internals\TaskTable as Task;
 use Bitrix\Tasks\MemberTable;
 use Bitrix\Tasks\ProjectsTable;
 use Bitrix\Main\ORM\Fields\ArrayField;
-use Bitrix\Tasks\Scrum\Service\KanbanService;
 
 Loc::loadMessages(__FILE__);
 
@@ -402,11 +401,6 @@ class StagesTable extends Entity\DataManager
 				if ($entityType == self::WORK_MODE_TIMELINE)
 				{
 					$source = TimeLineTable::getStages();
-				}
-				else if ($entityType == self::WORK_MODE_ACTIVE_SPRINT)
-				{
-					$kanbanService = new KanbanService();
-					$source = $kanbanService->generateKanbanStages($entityId);
 				}
 				else
 				{

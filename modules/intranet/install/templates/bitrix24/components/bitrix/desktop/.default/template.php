@@ -7,6 +7,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/pubstyles.css');
 
 if(!defined("BX_GADGET_DEFAULT"))
@@ -159,14 +160,14 @@ if ($arResult["PERMISSION"] > "W")
 				</td>
 				<td class="gd-page-column<?=$i?>" valign="top"  width="<?=$arResult["COLUMN_WIDTH"][$i]?>" id="s1"><?
 			}
-				
+
 			foreach($arResult["GADGETS"][$i] as $arGadget)
 			{
 				$bChangable = true;
 				if (
-					!$GLOBALS["USER"]->IsAdmin() 
-					&& array_key_exists("GADGETS_FIXED", $arParams) 
-					&& is_array($arParams["GADGETS_FIXED"]) 
+					!$GLOBALS["USER"]->IsAdmin()
+					&& array_key_exists("GADGETS_FIXED", $arParams)
+					&& is_array($arParams["GADGETS_FIXED"])
 					&& in_array($arGadget["GADGET_ID"], $arParams["GADGETS_FIXED"])
 					&& array_key_exists("CAN_BE_FIXED", $arGadget)
 					&& $arGadget["CAN_BE_FIXED"]

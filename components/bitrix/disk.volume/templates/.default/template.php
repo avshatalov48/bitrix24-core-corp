@@ -14,7 +14,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 /** @var \CDiskVolumeComponent $component */
 
 use Bitrix\Main\Localization\Loc;
-\Bitrix\Main\UI\Extension::load("ui.buttons", "ui.fonts.opensans");
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.fonts.opensans"]);
 
 Loc::loadMessages(__FILE__);
 
@@ -535,7 +535,7 @@ if ($arResult['Storage']['FILE_COUNT'] > 0)
 								BX.addClass(spaceSelectorTrashCan, 'disc-volume-space-entity-block-inprocess');
 							}
 						}
-					}, 
+					},
 					param
 				));
 			}

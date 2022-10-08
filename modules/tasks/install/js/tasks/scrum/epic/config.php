@@ -14,6 +14,8 @@ return [
 		'ui.notification',
 		'main.core',
 		'ui.dialogs.messagebox',
+		'ui.design-tokens',
+		'ui.fonts.opensans',
 	],
 	'skip_core' => false,
 ];

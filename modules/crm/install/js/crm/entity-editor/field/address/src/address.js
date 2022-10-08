@@ -11,7 +11,6 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 		this._isMultiple = null;
 		this._autocompleteEnabled = false;
 		this._restrictionsCallback = null;
-		this._isMarkedAsChanged = false;
 	}
 
 	initialize(id, settings)
@@ -263,15 +262,6 @@ export class EntityEditorAddressField extends BX.Crm.EntityEditorField
 	onAddressDataInputting()
 	{
 			this.markAsChanged();
-	}
-
-	markAsChanged()
-	{
-		if (!this._isMarkedAsChanged)
-		{
-			super.markAsChanged();
-			this._isMarkedAsChanged = true;
-		}
 	}
 
 	onError(event)

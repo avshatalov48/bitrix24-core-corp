@@ -14,6 +14,8 @@ abstract class ErrorCode
 	public const OWNER_NOT_FOUND = 'OWNER_NOT_FOUND';
 	public const REQUIRED_ARG_MISSING = 'REQUIRED_ARG_MISSING';
 	public const INVALID_ARG_VALUE = 'INVALID_ARG_VALUE';
+	public const ADDING_DISABLED = 'ADDING_DISABLED';
+	public const REMOVING_DISABLED = 'REMOVING_DISABLED';
 
 	protected static function loadMessages(): void
 	{

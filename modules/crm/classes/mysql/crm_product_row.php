@@ -99,6 +99,10 @@ class CCrmProductRow extends CAllCrmProductRow
 			foreach($updateRows as $ID => $row)
 			{
 				unset($row['ID'], $row['OWNER_TYPE'], $row['OWNER_ID']);
+				if ($row['TAX_RATE'] === null)
+				{
+					$row['TAX_RATE'] = false;
+				}
 				$scriptValues = $DB->PrepareUpdate($tableName, $row);
 
 				$DB->Query("UPDATE {$tableName} SET {$scriptValues} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
@@ -114,6 +118,16 @@ class CCrmProductRow extends CAllCrmProductRow
 
 					$row['OWNER_TYPE'] = $ownerType;
 					$row['OWNER_ID'] = $ownerID;
+					if ($row['TAX_RATE'] === null)
+					{
+						$row['TAX_RATE'] = false;
+					}
+
+					if ($row['XML_ID'] === null)
+					{
+						$row['XML_ID'] = false;
+					}
+
 					$data = $DB->PrepareInsert($tableName, $row);
 
 					$DB->Query(
@@ -135,6 +149,15 @@ class CCrmProductRow extends CAllCrmProductRow
 
 					$row['OWNER_TYPE'] = $ownerType;
 					$row['OWNER_ID'] = $ownerID;
+					if ($row['TAX_RATE'] === null)
+					{
+						$row['TAX_RATE'] = false;
+					}
+
+					if ($row['XML_ID'] === null)
+					{
+						$row['XML_ID'] = false;
+					}
 					$data = $DB->PrepareInsert($tableName, $row);
 
 					if($scriptColumns === '')

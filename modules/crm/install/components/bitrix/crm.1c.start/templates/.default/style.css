@@ -59,7 +59,8 @@
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: 13px/20px 'OpenSans-Semibold', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 .onec-placement-block .ui-tile-list-item { padding: 0; }
 .onec-logo-container { margin-bottom: 10px; }
@@ -141,7 +142,8 @@
 .crm-onec-header-title {
 	margin-bottom: 20px;
 	color: #000;
-	font: 22px/28px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 22px/28px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 }
 
 .crm-onec-header-right-block { }
@@ -187,7 +189,7 @@
 
 .crm-onec-header-futures-text {
 	color: #000;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-onec-header-futures-icon {
@@ -212,7 +214,7 @@
 
 .crm-onec-install-description {
 	color: #000;
-	font: 13px/18px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-onec-alert-warning {
@@ -262,13 +264,15 @@
 	color: #fff;
 	vertical-align: middle;
 	text-align: center;
-	font: 14px/25px "OpenSans-SemiBold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-onec-section-step-title {
 	padding-left: 8px;
 	color: #333;
-	font: 18px/24px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-onec-section-header-block-right { }
@@ -276,12 +280,13 @@
 .crm-onec-section-info-link {
 	border-bottom: 1px solid;
 	color: #9b9b9b;
-	font: 13px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-onec-block-title {
 	color: #000;
-	font: 16px/24px 'OpenSans-Regular', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 16px/24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .bitrix24-light-theme .crm-onec-block-title { color: #fff; }

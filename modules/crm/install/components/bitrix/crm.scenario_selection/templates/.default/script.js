@@ -222,7 +222,7 @@ if (typeof (BX.CrmScenarioSelection) === 'undefined')
 					titleBar: BX.message('CRM_SCENARIO_SELECTION_TO_DEAL_MODE_TITLE'),
 					contentColor: 'white',
 					className: 'bx-popup-crm-scenario-selection-popup',
-					maxWidth: 600
+					maxWidth: 800
 				}
 			);
 			this.popupConfirm.show();

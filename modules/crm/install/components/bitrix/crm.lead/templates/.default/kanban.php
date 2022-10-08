@@ -16,6 +16,8 @@ $asset->addJs('/bitrix/js/crm/common.js');
 
 // some common langs
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\UI\NavigationBarPanel;
+
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.lead.list/templates/.default/template.php');
 
@@ -130,49 +132,20 @@ else
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
-		array(
+		[
 			'ENTITY_TYPE' => $entityType,
-			'NAVIGATION_BAR' => array(
-				'ITEMS' => array_merge(
-					\Bitrix\Crm\Automation\Helper::getNavigationBarItems(\CCrmOwnerType::Lead),
-					array(
-						array(
-							//'icon' => 'kanban',
-							'id' => 'kanban',
-							'name' => Loc::getMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_KANBAN'),
-							'active' => 1,
-							'url' => $arResult['PATH_TO_LEAD_KANBAN']
-						),
-						array(
-							//'icon' => 'table',
-							'id' => 'list',
-							'name' => Loc::getMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_LIST'),
-							'active' => 0,
-							'url' => $arResult['PATH_TO_LEAD_LIST']
-						)
-					),
-					(\Bitrix\Crm\Integration\Calendar::isResourceBookingEnabled()
-						?
-						array(
-							array(
-								'id' => 'calendar',
-								'name' => GetMessage('CRM_LEAD_LIST_FILTER_NAV_BUTTON_CALENDAR'),
-								'active' => 0,
-								'url' => $arResult['PATH_TO_LEAD_CALENDAR']
-							)
-						)
-						: array()
-					)
-				),
-				'BINDING' => array(
-					'category' => 'crm.navigation',
-					'name' => 'index',
-					'key' => mb_strtolower($arResult['NAVIGATION_CONTEXT_ID'])
-				)
-			)
-		),
+			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Lead, $categoryID))
+				->setItems([
+					NavigationBarPanel::ID_AUTOMATION,
+					NavigationBarPanel::ID_KANBAN,
+					NavigationBarPanel::ID_LIST,
+					NavigationBarPanel::ID_CALENDAR
+				], NavigationBarPanel::ID_KANBAN)
+				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
+				->get()
+		],
 		$component,
-		array('HIDE_ICONS' => true)
+		['HIDE_ICONS' => true]
 	);
 
 	/*

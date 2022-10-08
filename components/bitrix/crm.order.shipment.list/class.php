@@ -5,7 +5,7 @@ use Bitrix\Main;
 use Bitrix\Crm\Order\Shipment;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Settings\LayoutSettings;
-
+use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
 
@@ -20,7 +20,6 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 	{
 		global  $APPLICATION;
 
-		$arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_DETAILS', $arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'], $APPLICATION->GetCurPage().'?order_id=#order_id#&details');
 		$arParams['PATH_TO_ORDER_SHIPMENT_SHOW'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_SHOW', $arParams['PATH_TO_ORDER_SHIPMENT_SHOW'], $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
 		$arParams['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_EDIT', $arParams['PATH_TO_ORDER_SHIPMENT_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
 		$arParams['PATH_TO_USER_PROFILE'] = CrmCheckPath('PATH_TO_USER_PROFILE', $arParams['PATH_TO_USER_PROFILE'], '/company/personal/user/#user_id#/');
@@ -770,11 +769,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 			$currencyID =  isset($arOrderShipment['CURRENCY']) ? $arOrderShipment['CURRENCY'] : CCrmCurrency::GetBaseCurrencyID();
 			$arOrderShipment['CURRENCY'] = htmlspecialcharsbx($currencyID);
-			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-				array(
-					'shipment_id' => $entityID
-				)
+			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getShipmentDetailsLink(
+				$entityID,
+				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 			);
 
 			$arOrderShipment['PATH_TO_ORDER_SHIPMENT_DETAILS'] = CHTTP::urlAddParams(
@@ -892,11 +889,9 @@ class CCrmOrderShipmentListComponent extends \CBitrixComponent
 
 		if($this->arResult['ENABLE_TOOLBAR'])
 		{
-			$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-				array(
-					'shipment_id' => 0
-				)
+			$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getShipmentDetailsLink(
+				0,
+				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 			);
 
 			$this->arResult['PATH_TO_ORDER_SHIPMENT_ADD'] = CHTTP::urlAddParams(

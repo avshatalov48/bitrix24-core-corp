@@ -21,7 +21,7 @@
     cursor: pointer;
     display: inline-block;
     font-size: 13px;
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
     line-height: 17px;
     margin: 7px 7px 7px 3px;
     position: relative;
@@ -35,7 +35,7 @@
 	border-radius: var(--ui-border-radius-3xs, 1px);
 	font-size: 13px;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	margin: 0 6px 6px 0;
 	height: 30px;
 	line-height: 29px;

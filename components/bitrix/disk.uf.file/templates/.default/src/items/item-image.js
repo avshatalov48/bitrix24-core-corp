@@ -33,7 +33,7 @@ export default class ItemImage extends Item
 
 	getHTMLForHTMLEditor(tagId: String)
 	{
-		return `<img style="max-width: 90%;" data-bx-file-id="${this.data.ID}" id="${tagId}" src="${this.data.BIG_REVIEW_URL}" />`
+		return `<img style="max-width: 90%;" data-bx-file-id="${Text.encode(this.data.ID)}" id="${tagId}" src="${this.data.BIG_REVIEW_URL}" />`
 	}
 
 	static detect(itemData: ItemSavedType)

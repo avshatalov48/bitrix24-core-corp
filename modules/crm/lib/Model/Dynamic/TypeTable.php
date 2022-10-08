@@ -17,7 +17,7 @@ use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Recycling\DynamicController;
 use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Service\Container;
-use Bitrix\Crm\Service\Factory\SmartInvoice;
+use Bitrix\Crm\Service\Factory\Dynamic;
 use Bitrix\Crm\StatusTable;
 use Bitrix\Crm\Timeline\TimelineEntry;
 use Bitrix\Main\Application;
@@ -705,18 +705,15 @@ class TypeTable extends UserField\Internal\TypeDataManager
 
 			static::addReferencesToEntity($entity, $factory);
 
-			if ($factory instanceof SmartInvoice)
+			if ($factory instanceof Dynamic)
 			{
-				$entity->addField((new ORM\Fields\TextField(\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_COMMENTS))
-					->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS'))
-				);
-				$entity->addField((new ORM\Fields\StringField(\Bitrix\Crm\Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER))
-					->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER'))
-				);
-				$entity->addField((new StringField('LOCATION_ID'))
-					->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
-					->configureSize(100)
-				);
+				foreach ($factory->getAdditionalTableFields() as $field)
+				{
+					if ($field instanceof ORM\Fields\Field)
+					{
+						$entity->addField($field);
+					}
+				}
 			}
 		}
 

@@ -2,17 +2,15 @@
 
 namespace Bitrix\Crm\Service\Sale\Reservation;
 
-use Bitrix\Crm\Binding\OrderEntityTable;
 use Bitrix\Crm\Integration\Sale\Reservation\Config\Entity\Deal;
 use Bitrix\Crm\Integration\Sale\Reservation\Config\EntityFactory;
-use Bitrix\Crm\Order\OrderCreator;
+use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Order\Payment;
+use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Reservation\BasketReservation;
 use Bitrix\Crm\Reservation\Internals\ProductReservationMapTable;
-use Bitrix\Crm\Reservation\OrderSynchronizer;
 use Bitrix\Crm\Reservation\Strategy\Factory\OptionStrategyFactory;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
-use Bitrix\Crm\Reservation\Strategy\Reserve\ReserveInfo;
 use Bitrix\Crm\Reservation\Strategy\ReservePaidProductsStrategy;
 use Bitrix\Crm\Reservation\Strategy\ReserveQuantityEqualProductQuantityStrategy;
 use Bitrix\Crm\Reservation\Strategy\Strategy;
@@ -22,11 +20,10 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
-use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Configuration;
 use Bitrix\Sale\Order;
-use CCrmDeal;
 use CCrmOwnerType;
+use CCrmOwnerTypeAbbr;
 
 /**
  * Service for work with reservation of product rows.
@@ -164,7 +161,7 @@ class ReservationService
 			$result = $strategy->removeReservesPaymentProducts($ownerTypeId, $ownerId, $payment);
 			if ($result->isSuccess() && $ownerTypeId === CCrmOwnerType::Deal)
 			{
-				$this->synchronizeOrderForDealByReservationResult($ownerId, $result);
+				$this->synchronizeOrderReservesForDealByReservationResult($ownerId, $result);
 			}
 		}
 
@@ -202,7 +199,7 @@ class ReservationService
 		$result = $strategy->reservation($ownerTypeId, $ownerId);
 		if ($result->isSuccess() && $ownerTypeId === CCrmOwnerType::Deal)
 		{
-			$this->synchronizeOrderForDealByReservationResult($ownerId, $result);
+			$this->synchronizeOrderReservesForDealByReservationResult($ownerId, $result);
 		}
 
 		return $result;
@@ -218,7 +215,7 @@ class ReservationService
 	 *
 	 * @return Result
 	 */
-	public function reservationProductRow(int $productRowId, float $quantity, ?int $storeId, ?Date $dateReserveEnd): Result
+	public function reservationProductRow(int $productRowId, float $quantity, ?int $storeId = null, ?Date $dateReserveEnd = null): Result
 	{
 		$strategy = $this->getStrategy();
 		if (!$strategy)
@@ -235,100 +232,18 @@ class ReservationService
 			$dateReserveEnd = $this->getDefaultDateReserveEnd();
 		}
 
-		return $strategy->reservationProductRow($productRowId, $quantity, $storeId, $dateReserveEnd);
-	}
-
-	/**
-	 * Synchronize deal product rows reserves with order basket items.
-	 *
-	 * @param int $dealId
-	 * @param array $dealProducts
-	 * @param bool $fillReserveId append sale reserves for correct sync, see `OrderSynchronizer::searchProduct`
-	 *
-	 * @return void
-	 */
-	public function synchronizeOrderForDeal(int $dealId, array $dealProducts, bool $fillReserveId = true): void
-	{
-		if (empty($dealProducts))
+		$result = $strategy->reservationProductRow($productRowId, $quantity, $storeId, $dateReserveEnd);
+		if ($result->isSuccess())
 		{
-			return;
-		}
+			[$ownerTypeId, $ownerId] = $this->getOwnerForRow($productRowId);
 
-		$orderId = (int)current(
-			OrderEntityTable::getOrderIdsByOwner($dealId, CCrmOwnerType::Deal)
-		);
-		if (!$orderId)
-		{
-			$order = (new OrderCreator($dealId))->create();
-			if (!$order)
+			if ($ownerTypeId === CCrmOwnerType::Deal)
 			{
-				return;
+				$this->synchronizeOrderReservesForDealByReservationResult($ownerId, $result);
 			}
-			$orderId = $order->getId();
 		}
 
-		if ($fillReserveId)
-		{
-			$dealProducts = $this->fillBasketReserves($dealProducts, true);
-		}
-
-		$synchronizer = new OrderSynchronizer($dealId, $dealProducts, $orderId);
-		$synchronizer->synchronize();
-	}
-
-	/**
-	 * Synchronize deal product rows reserves with order basket items by result of reservation.
-	 *
-	 * @param int $dealId
-	 * @param ReservationResult $result
-	 *
-	 * @return void
-	 */
-	private function synchronizeOrderForDealByReservationResult(int $dealId, ReservationResult $result): void
-	{
-		$reservedProductRows = $result->getReserveInfos();
-		if ($reservedProductRows)
-		{
-			$dealProducts = CCrmDeal::LoadProductRows($dealId);
-			foreach ($dealProducts as &$dealProduct)
-			{
-				$rowId = $dealProduct['ID'];
-				$reserveInfo = $reservedProductRows[$rowId] ?? null;
-				if ($reserveInfo)
-				{
-					/**
-					 * @var ReserveInfo $reserveInfo
-					 */
-
-					$dealProduct['STORE_ID'] = $reserveInfo->storeId;
-					$dealProduct['DATE_RESERVE_END'] = $reserveInfo->dateReserveEnd;
-					$dealProduct['INPUT_RESERVE_QUANTITY'] = $reserveInfo->reserveQuantity;
-					if (isset($dealProduct['RESERVE_QUANTITY']))
-					{
-						$dealProduct['RESERVE_QUANTITY'] += $reserveInfo->deltaReserveQuantity;
-					}
-				}
-			}
-			unset($dealProduct);
-
-			$this->synchronizeOrderForDeal($dealId, $dealProducts, false);
-		}
-		else
-		{
-			$this->removeReservesProductsByDeal($dealId);
-		}
-	}
-
-	private function removeReservesProductsByDeal(int $dealId): void
-	{
-		$entityBuilder = new \Bitrix\Crm\Reservation\Entity\EntityBuilder();
-		$entityBuilder
-			->setOwnerTypeId(\CCrmOwnerType::Deal)
-			->setOwnerId($dealId)
-		;
-		$entity = $entityBuilder->build();
-
-		(new \Bitrix\Crm\Reservation\Manager($entity))->unReserve();
+		return $result;
 	}
 
 	/**
@@ -366,13 +281,27 @@ class ReservationService
 	}
 
 	/**
-	 * Save relation product row and basket items.
+	 * Synchronize deal product rows reserves with order basket items by result of reservation.
+	 *
+	 * @param int $dealId
+	 * @param ReservationResult $result
+	 *
+	 * @return void
+	 */
+	private function synchronizeOrderReservesForDealByReservationResult(int $dealId, ReservationResult $result): void
+	{
+		$syncronizer = new OrderDealSynchronizer();
+		$syncronizer->syncOrderReservesFromDeal($dealId, $result);
+	}
+
+	/**
+	 * Synchronize deal product rows reserves with order basket items by result of reservation.
 	 *
 	 * @param int $ownerTypeId
 	 * @param int $ownerId
 	 * @param Order $order
 	 *
-	 * @return Result
+	 * @return void
 	 */
 	public function mappingReservations(int $ownerTypeId, int $ownerId, Order $order): Result
 	{
@@ -432,5 +361,34 @@ class ReservationService
 			'PRODUCT_ROW_ID' => $rowId,
 			'BASKET_RESERVATION_ID' => $basketReservationId,
 		]);
+	}
+
+	/**
+	 * Owner info of row.
+	 *
+	 * @param int $productRowId
+	 *
+	 * @return array in format [ownerTypeId, ownerId]
+	 */
+	private function getOwnerForRow(int $productRowId): array
+	{
+		$row = ProductRowTable::getRow([
+			'select' => [
+				'OWNER_ID',
+				'OWNER_TYPE',
+			],
+			'filter' => [
+				'=ID' => $productRowId,
+			],
+		]);
+		if ($row)
+		{
+			return [
+				(int)CCrmOwnerTypeAbbr::ResolveTypeID($row['OWNER_TYPE']),
+				(int)$row['OWNER_ID'],
+			];
+		}
+
+		return [null, null];
 	}
 }

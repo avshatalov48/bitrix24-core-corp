@@ -59,40 +59,7 @@ final class DealGenerator extends Main\Update\Stepper
 
 	protected function addProductToDeal($dealId, Crm\Order\Order $order)
 	{
-		$productList = [];
-
-		/** @var Crm\Order\BasketItem $basketItem */
-		foreach ($order->getBasket() as $basketItem)
-		{
-			$item = [
-				'PRODUCT_ID' => $basketItem->getProductId(),
-				'PRODUCT_NAME' => $basketItem->getField('NAME'),
-				'PRICE' => $basketItem->getBasePrice(),
-				'PRICE_ACCOUNT' => $basketItem->getBasePrice(),
-				'PRICE_EXCLUSIVE' => $basketItem->getBasePrice(),
-				'PRICE_NETTO' => $basketItem->getBasePrice(),
-				'PRICE_BRUTTO' => $basketItem->getBasePrice(),
-				'QUANTITY' => $basketItem->getQuantity(),
-				'MEASURE_CODE' => $basketItem->getField('MEASURE_CODE'),
-				'MEASURE_NAME' => $basketItem->getField('MEASURE_NAME'),
-				'TAX_RATE' => $basketItem->getVatRate(),
-				'TAX_INCLUDED' => $basketItem->isVatInPrice() ? 'Y' : 'N',
-			];
-
-			if ($basketItem->getDiscountPrice())
-			{
-				$item['DISCOUNT_TYPE_ID'] = Crm\Discount::MONETARY;
-				$item['DISCOUNT_SUM'] = $basketItem->getDiscountPrice();
-
-				$item['PRICE'] -= $basketItem->getDiscountPrice();
-				$item['PRICE_ACCOUNT'] -= $basketItem->getDiscountPrice();
-				$item['PRICE_EXCLUSIVE'] -= $basketItem->getDiscountPrice();
-			}
-
-			$productList[] = $item;
-		}
-
-		\CCrmDeal::addProductRows($dealId, $productList);
+		Crm\Order\Manager::copyOrderProductsToDeal($order, $dealId);
 	}
 
 	protected function bindDealToOrder($dealId, Crm\Order\Order $order)

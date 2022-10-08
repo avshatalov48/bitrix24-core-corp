@@ -180,6 +180,9 @@ export class EntityEditorPaymentDocuments
 				if (onSuccess && Type.isFunction(onSuccess)) {
 					onSuccess(response);
 				}
+
+				this._emitChangeDocumentsEvent();
+
 			} else {
 				this._showCommonError();
 				if (onError && Type.isFunction(onError)) {
@@ -292,6 +295,12 @@ export class EntityEditorPaymentDocuments
 				}
 			]
 		});
+
+		menuItems.push({
+			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CASHBOX_CHECKS'),
+			onclick: () => this._openPaymentChecksListSlider(doc.ID)
+		});
+
 		menuItems.push({
 			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
 			className: (doc.PAID === 'Y') ? 'menu-popup-no-icon crm-entity-widget-payment-menu-item-remove' : '',
@@ -774,6 +783,21 @@ export class EntityEditorPaymentDocuments
 		this._context().startSalescenterApplication(orderId, options);
 	}
 
+	_openPaymentChecksListSlider(paymentId: number)
+	{
+		BX.SidePanel.Instance.open(
+			BX.Uri.addParam('/crm/payment/checks/list.php', {
+				'owner_id': paymentId,
+				'owner_type': BX.CrmEntityType.enumeration.orderpayment,
+			}),
+			{
+				width: 1500,
+				allowChangeHistory: false,
+				cacheable: false,
+			}
+		);
+	}
+
 	_resendPaymentSlider(orderId: number, paymentId: number)
 	{
 		let analyticsLabel = 'crmDealPaymentDocumentsResendPaymentSlider';
@@ -864,6 +888,8 @@ export class EntityEditorPaymentDocuments
 				entityTypeId: this._options.OWNER_TYPE_ID,
 				entityId: this._options.OWNER_ID,
 			});
+
+			this._emitChangeDocumentsEvent();
 		};
 		const reloadModelOnError = response => {
 			this._showErrorOnAction(response);
@@ -898,6 +924,8 @@ export class EntityEditorPaymentDocuments
 				entityTypeId: this._options.OWNER_TYPE_ID,
 				entityId: this._options.OWNER_ID,
 			});
+
+			this._emitChangeDocumentsEvent();
 		};
 		const reloadModelOnError = response => {
 			this._showShipmentStatusError(response, shipment.ID);
@@ -938,6 +966,8 @@ export class EntityEditorPaymentDocuments
 				entityTypeId: this._options.OWNER_TYPE_ID,
 				entityId: this._options.OWNER_ID,
 			});
+
+			this._emitChangeDocumentsEvent();
 		};
 		const reloadModelOnError = response => {
 			this._showErrorOnAction(response);
@@ -977,6 +1007,7 @@ export class EntityEditorPaymentDocuments
 
 		const onSuccess = response => {
 			this._reloadOwner();
+			this._emitChangeDocumentsEvent();
 		};
 		const reloadModelOnError = response => {
 			this._showErrorOnAction(response);
@@ -1094,6 +1125,14 @@ export class EntityEditorPaymentDocuments
 				this._rootNode.classList.remove('is-loading');
 			}
 		}
+	}
+
+	_emitChangeDocumentsEvent()
+	{
+		EventEmitter.emit('PaymentDocuments.EntityEditor:changeDocuments', {
+			entityTypeId: this._options.OWNER_TYPE_ID,
+			entityId: this._options.OWNER_ID
+		});
 	}
 
 	_subscribeToGlobalEvents()

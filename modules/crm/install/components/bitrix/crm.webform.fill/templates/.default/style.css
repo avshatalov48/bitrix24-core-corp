@@ -40,7 +40,8 @@ select::-ms-expand {
 	position: relative;
 	padding: 17px 0 0 0;
 	line-height: 22px;
-	font: 13px "OpenSans-Regular",sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #616161;
 }
 
@@ -77,7 +78,8 @@ select::-ms-expand {
 .crm-webform-header {
 	margin: 0 0 16px 0;
 	padding: 0 !important;
-	font: bold 22px "OpenSans-Regular",sans-serif;
+	font: 22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-transform: none;
 	color: #333;
 	text-align: center;
@@ -174,7 +176,8 @@ select::-ms-expand {
 	-webkit-border-radius: 0;
 	-moz-border-radius: 0;
 	border-radius: 0;
-	font: normal 100% "OpenSans-Regular",sans-serif;
+	font: normal 100% var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 	text-align: left;
 	white-space: normal;
@@ -533,7 +536,8 @@ textarea.crm-webform-textarea {
 	-moz-border-radius: 2px;
 	border-radius: 2px;
 	background: transparent;
-	font: bold 12px "OpenSans", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	vertical-align: middle;
 	text-decoration: none;
 	text-transform: uppercase;
@@ -572,7 +576,8 @@ textarea.crm-webform-textarea {
 	-webkit-border-radius: 50%;
 	-moz-border-radius: 50%;
 	border-radius: 50%;
-	font: 11px/8px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/8px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #fff;
 	text-align: right;
 }
@@ -708,20 +713,23 @@ textarea.crm-webform-textarea {
 .crm-webform-popup-success {
 	display: none;
 	padding: 0 0 15px 0;
-	font: normal 24px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+	font: normal 24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #2798d3;
 }
 
 .crm-webform-popup-warning {
 	display: none;
 	padding: 0 0 15px 0;
-	font: normal 24px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+	font: normal 24px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #e92444;
 }
 
 .crm-webform-popup-text {
 	padding: 0 0 20px 0;
-	font: normal 20px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+	font: normal 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #000;
 }
 
@@ -750,7 +758,8 @@ textarea.crm-webform-textarea {
 	-webkit-border-radius: 50%;
 	-moz-border-radius: 50%;
 	border-radius: 50%;
-	font: 11px/8px "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/8px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #535c69;
 	text-align: right;
 	-webkit-transform: translate(-50%, -50%);
@@ -840,7 +849,8 @@ textarea.crm-webform-textarea {
 }
 
 .crm-webform-cart-title {
-	font: 16px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-webform-cart-image {
@@ -864,23 +874,28 @@ textarea.crm-webform-textarea {
 
 .crm-webform-cart-goods-name,
 .crm-webform-cart-goods-cost {
-	font: 16px "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-webform-cart-services-name {
-	font: 12px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+	font: 12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-webform-cart-services-cost {
-	font: 14px "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-webform-cart-goods-total-price-name {
-	font: 16px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-webform-cart-goods-total-price-cost {
-	font: 18px "OpenSans-Semibold", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .crm-webform-cart-goods-cost,
@@ -921,12 +936,12 @@ textarea.crm-webform-textarea {
 }
 
 .crm-webform-mini-cart-goods-name {
-	font: bold 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-webform-mini-cart-goods-cost,
 .crm-webform-mini-cart-services-cost {
-	font: bold 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-flex: 0;
 	-ms-flex: 0 1 auto;
 	flex: 0 1 auto;
@@ -956,26 +971,27 @@ a.crm-webform-bottom-link:hover, a.crm-webform-bottom-link:focus {
 .crm-webform-bottom-text {
 	display: inline-block;
 	margin: 0 0 0 -2px;
-	font: bold 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #B2B6BD;
 }
 
 .crm-webform-bottom-logo-bx {
 	display: inline-block;
 	margin: 0 -2px 0 0;
-	font: bold 13px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2fc7f7;
 }
 
 .crm-webform-bottom-logo-24 {
 	display: inline-block;
-	font: bold 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #215f98;
 }
 
 .crm-webform-callback-free {
 	margin: 6px 0;
-	font: 11px "OpenSans", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 
@@ -1044,7 +1060,8 @@ a.crm-webform-bottom-link:hover, a.crm-webform-bottom-link:focus {
 	justify-content: center;
 	padding: 20px;
 	min-height: 400px;
-	font: 30px/38px "HelveticaNeue-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 30px/38px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #0FA050;
 	text-align: center;
 	letter-spacing: 0;
@@ -1086,15 +1103,18 @@ a.crm-webform-bottom-link:hover, a.crm-webform-bottom-link:focus {
 	}
 
 	.crm-webform-popup-success {
-		font: normal 20px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+		font: normal 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	}
 
 	.crm-webform-popup-warning {
-		font: normal 20px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+		font: normal 20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	}
 
 	.crm-webform-popup-text {
-		font: normal 26px "OpenSans-Regular", Arial, Helvetica, sans-serif;
+		font: normal 26px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	}
 }
 

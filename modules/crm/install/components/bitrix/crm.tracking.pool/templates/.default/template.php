@@ -15,8 +15,15 @@ use Bitrix\Main\Web\Json;
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
 Extension::load([
-	"ui.buttons", "ui.buttons.icons", "ui.icons", "popup", "ui.forms",
-	"loader", "ui.sidepanel-content", "ui.info-helper"
+	"ui.buttons",
+	"ui.buttons.icons",
+	"ui.icons",
+	"popup",
+	"ui.forms",
+	"loader",
+	"ui.sidepanel-content",
+	"ui.info-helper",
+	"ui.fonts.opensans",
 ]);
 
 $containerId = 'crm-tracking-channel-pool';

@@ -1,6 +1,7 @@
 /*- SideBar SharedLink-*/
 .bx-disk-sidebar-shared-title{
-	font-family:'OpenSans', sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size:12px;
 	padding-bottom:5px;
 	text-decoration:none;
@@ -40,7 +41,8 @@
 	height:34px;
 }
 .bx-disk-sidebar-shared-outlink-switcher-track{
-	font-family:'OpenSans', sans-serif;
+	font-family:var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size:10px;
 	line-height:22px;
 	position:absolute;
@@ -105,7 +107,7 @@
 }
 .bx-disk-filepage-title{
 	font-size:14px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	line-height:20px;
 	-webkit-box-sizing:border-box;
 	   -moz-box-sizing:border-box;
@@ -146,7 +148,7 @@ td.bx-disk-filepage-fileinfo-param{
 }
 td.bx-disk-filepage-fileinfo-value{
 	font-size:15px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	line-height:34px;
 	height:40px;
 	padding-left:10px;
@@ -199,7 +201,7 @@ table.bx-disk-filepage-fileusedtable td{
 }
 .bx-disk-filepage-used-type{
 	font-size:14px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	padding-bottom:5px;
 	color:#535b69;
 }
@@ -232,7 +234,7 @@ table.bx-disk-filepage-fileusedtable td{
 .bx-disk-filepage-used-people-list-ul span.bx-disk-filepage-used-people-without-link,
 .bx-disk-filepage-used-people-list-ul li a{
 	font-size:15px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	line-height:33px;
 	-webkit-transition:color .2s ease;
 	   -moz-transition:color .2s ease;
@@ -264,7 +266,7 @@ table.bx-disk-filepage-fileusedtable td{
 }
 .bx-disk-filepage-used-people-list-all-btn{
 	font-size:14px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	/*border-bottom: 1px solid #e7e8e9;*/
 	line-height:16px;
 	-webkit-transition:opacity .2s ease;
@@ -317,10 +319,10 @@ hr.bx-disk-delimiter{
 }
 .bx-disk-form-bizproc-start-table {width:100%;}
 .bx-disk-form-bizproc-start-div {padding:10px;width: 550px;}
-.bx-disk-form-bizproc-start-td-title {text-align:center;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:14px;font-weight:bold;color:#7f858d;}
-.bx-disk-form-bizproc-start-td-error {text-align:left;font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:13px;font-weight:bold;color:red;}
-.bx-disk-form-bizproc-start-td-name-bizproc {font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size: 13px;font-weight: bold;height: 30px;color: #4f5359;}
-.field-name {font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;font-size:12px;font-weight:bold;color:#abaeaf;}
+.bx-disk-form-bizproc-start-td-title {text-align:center;font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size:14px;font-weight:var(--ui-font-weight-bold);color:#7f858d;}
+.bx-disk-form-bizproc-start-td-error {text-align:left;font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size:13px;font-weight:var(--ui-font-weight-bold);color:red;}
+.bx-disk-form-bizproc-start-td-name-bizproc {font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size: 13px;font-weight: var(--ui-font-weight-bold);height: 30px;color: #4f5359;}
+.field-name {font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));font-size:12px;font-weight:var(--ui-font-weight-bold);color:#abaeaf;}
 .bx-disk-form-bizproc-start-td-button-bizproc {text-align:right;}
 
 /* New Style BizProc */
@@ -328,14 +330,15 @@ hr.bx-disk-delimiter{
 div.bx-edit-tab-title {background-color:#E8E8E8; padding-left:8px;}
 table.bx-edit-tab-title {width:100%; border-collapse:separate;}
 table.bx-edit-tab-title td.bx-icon {padding:5px 5px 5px 0px; width:32px; height:32px;}
-table.bx-edit-tab-title td.bx-form-title {width:100%; padding:10px 0px 10px 0px; font-size:140%; color:black; font-weight:bold; font-family:Arial,helvetica,sans-serif;}
+table.bx-edit-tab-title td.bx-form-title {width:100%; padding:10px 0px 10px 0px; font-size:140%; color:black; font-weight:var(--ui-font-weight-bold); font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));}
 .bizproc-main-btn {
 	border: 1px solid #c6cdd3;
 	border-radius: 2px;
 	color: #535c69;
 	cursor: pointer;
 	display: inline-block;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 12px;
 	height: 36px;
 	line-height: 36px;
@@ -368,7 +371,7 @@ ul.bizproc-document-states li{margin-top:12px;}
 ul.bizproc-document-states li.bizproc-list-item-first{margin-top:0px;}
 ul.bizproc-document-states li.bizproc-document-start{overflow:hidden;}
 ul.bizproc-document-states li.bizproc-document-start td, ul.bizproc-document-states li.bizproc-item-buttons td{
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	height:35px!important;
 	overflow:hidden;
 }
@@ -393,7 +396,7 @@ th.bizproc-field-name{
 	height: 50px;
 	color: #535c69;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align:left;
 	padding: 0  11px 0 16px;
 	white-space: nowrap;
@@ -402,7 +405,7 @@ th.bizproc-field-name{
 table tr td.bizproc-field-name {
 	color: #535c69;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-right: 20px;
 	padding-left: 16px;
 	width: 15%;
@@ -432,7 +435,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 .disk-detail {
 	display: flex;
 	overflow: hidden;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 }
 
@@ -441,10 +444,12 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	overflow: hidden;
 	padding: 24px 27px;
 	background: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .disk-detail-file {
-	font-family: 'OpenSans-Regular', Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	display: flex;
 }
 
@@ -511,6 +516,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	margin-bottom: 8px;
 	background: #f5f7f8;
 	color: #515c69;
+	border-radius: var(--ui-border-radius-sm);
 }
 
 .disk-file-info-item-title {
@@ -588,6 +594,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	background: #f5f8f9;
 	box-sizing: border-box;
 	padding: 20px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .disk-detail-sidebar-section {
@@ -829,7 +836,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	position: relative;
 	padding: 4px 0 4px 28px;
 	color: #525c69;
-	font-family: 'OpenSans-Bold', sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	text-decoration: none;
 	font-size: 12px;
 	text-transform: uppercase;
@@ -963,7 +971,9 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding: 0 8px 0 0;
 	border: 1px solid rgba(163,168,171,.34);
 	border-left: none;
-	border-radius: 1px;
+	border-radius: var(--ui-field-border-radius, 1px);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 	font-size: 14px;
 	color: rgba(163,168,171,.8);
 	box-sizing: border-box;
@@ -982,7 +992,9 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	width: 22px;
 	border: 1px solid rgba(163,168,171,.34);
 	border-right: none;
-	border-radius: 1px;
+	border-radius: var(--ui-field-border-radius, 1px);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 	cursor: pointer;
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213px%22%20height%3D%2215px%22%20viewBox%3D%220%200%2013%2015%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%20%20%3Cg%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-894.000000%2C%20-1091.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28894.000000%2C%201091.000000%29%22%20fill%3D%22%23a3a8ab%22%20opacity%3D%22.48%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M9.57894737%2C0%20L1.36842105%2C0%20C0.615789474%2C0%200%2C0.613636364%200%2C1.36363636%20L0%2C10.9090909%20L1.36842105%2C10.9090909%20L1.36842105%2C1.36363636%20L9.57894737%2C1.36363636%20L9.57894737%2C0%20Z%20M11.6315789%2C2.72727273%20L4.10526316%2C2.72727273%20C3.35263158%2C2.72727273%202.73684211%2C3.34090909%202.73684211%2C4.09090909%20L2.73684211%2C13.6363636%20C2.73684211%2C14.3863636%203.35263158%2C15%204.10526316%2C15%20L11.6315789%2C15%20C12.3842105%2C15%2013%2C14.3863636%2013%2C13.6363636%20L13%2C4.09090909%20C13%2C3.34090909%2012.3842105%2C2.72727273%2011.6315789%2C2.72727273%20Z%20M11.6315789%2C13.6363636%20L4.10526316%2C13.6363636%20L4.10526316%2C4.09090909%20L11.6315789%2C4.09090909%20L11.6315789%2C13.6363636%20Z%22%20id%3D%22Shape%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') left 5px center no-repeat;
 }
@@ -1251,10 +1263,10 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: #fff;
 	border: 1px solid #c6cdd3;
-	border-radius: 2px;
+	border-radius: var(--ui-field-border-radius, 2px);
 	box-sizing: border-box;
 }
 
@@ -1306,6 +1318,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 
 .disk-external-link-setting-popup-input-password {
 	border-right: none;
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 }
 
 .disk-external-link-setting-popup-password-show {
@@ -1386,7 +1400,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding: 15px 20px;
 	overflow: hidden;
 	box-sizing: border-box;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #525c69;
 }
 
@@ -1405,6 +1420,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	background: #fff ;
 	padding: 13px 19px;
 	margin-bottom: 10px;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .disk-detail-properties-block:last-child {
@@ -1414,7 +1430,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 .disk-detail-properties-file-name {
 	display: block;
 	overflow: hidden;
-	font-family: "OpenSans-Light", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	font-size: 16px;
 	margin-bottom: 5px;
 	word-wrap: break-word;
@@ -1428,7 +1445,7 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	color: rgba(82,92,105,.5);
 	margin-bottom: 18px;
 	border-collapse: collapse;
-	font-family: Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .disk-detail-properties-table:after {
@@ -1582,7 +1599,8 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 .disk-detail-properties-section-title-text {
 	flex: 1;
 	font-size: 14px;
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .disk-detail-properties-section-title-action {
@@ -1664,7 +1682,9 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	width: 22px;
 	border: 1px solid rgba(163,168,171,.34);
 	border-right: none;
-	border-radius: 1px;
+	border-radius: var(--ui-field-border-radius, 1px);
+	border-top-right-radius: 0;
+	border-bottom-right-radius: 0;
 	cursor: pointer;
 	background: #fff url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2213px%22%20height%3D%2215px%22%20viewBox%3D%220%200%2013%2015%22%20version%3D%221.1%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%20%20%20%20%3Cg%20stroke-width%3D%221%22%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%20transform%3D%22translate%28-894.000000%2C%20-1091.000000%29%22%3E%0A%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%28894.000000%2C%201091.000000%29%22%20fill%3D%22%23a3a8ab%22%20opacity%3D%22.48%22%3E%0A%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M9.57894737%2C0%20L1.36842105%2C0%20C0.615789474%2C0%200%2C0.613636364%200%2C1.36363636%20L0%2C10.9090909%20L1.36842105%2C10.9090909%20L1.36842105%2C1.36363636%20L9.57894737%2C1.36363636%20L9.57894737%2C0%20Z%20M11.6315789%2C2.72727273%20L4.10526316%2C2.72727273%20C3.35263158%2C2.72727273%202.73684211%2C3.34090909%202.73684211%2C4.09090909%20L2.73684211%2C13.6363636%20C2.73684211%2C14.3863636%203.35263158%2C15%204.10526316%2C15%20L11.6315789%2C15%20C12.3842105%2C15%2013%2C14.3863636%2013%2C13.6363636%20L13%2C4.09090909%20C13%2C3.34090909%2012.3842105%2C2.72727273%2011.6315789%2C2.72727273%20Z%20M11.6315789%2C13.6363636%20L4.10526316%2C13.6363636%20L4.10526316%2C4.09090909%20L11.6315789%2C4.09090909%20L11.6315789%2C13.6363636%20Z%22%20id%3D%22Shape%22%3E%3C/path%3E%0A%20%20%20%20%20%20%20%20%3C/g%3E%0A%20%20%20%20%3C/g%3E%0A%3C/svg%3E') left 5px center no-repeat;
 }
@@ -1675,7 +1695,9 @@ table tr.bizproc-item-row-last td{padding-bottom: 25px;}
 	padding: 0 8px 0 0;
 	border: 1px solid rgba(163,168,171,.34);
 	border-left: none;
-	border-radius: 1px;
+	border-radius: var(--ui-field-border-radius, 1px);
+	border-top-left-radius: 0;
+	border-bottom-left-radius: 0;
 	font-size: 14px;
 	color: rgba(163,168,171,.8);
 	box-sizing: border-box;

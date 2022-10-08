@@ -169,7 +169,7 @@ export class ActionPanel extends EventEmitter
 			dod = Tag.render`
 				<div
 					class="${baseBtnClass} tasks-scrum__action-panel--btn-dod ${disableClass}"
-					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT')}" data-hint-no-icon
+					data-hint="${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT_NEW')}" data-hint-no-icon
 				>
 					<span class="tasks-scrum__action-panel--text">
 						${Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD')}

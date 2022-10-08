@@ -29,6 +29,7 @@ class UserPermissions
 	public const PERMISSION_CONFIG = \CCrmPerms::PERM_CONFIG;
 
 	public const ATTRIBUTES_OPENED = 'O';
+	public const ATTRIBUTES_READ_ALL = \CCrmPerms::ATTR_READ_ALL;
 
 	/** @var int */
 	protected $userId;
@@ -634,6 +635,11 @@ class UserPermissions
 			{
 				$attributes[] = 'CU' . $observerId;
 			}
+		}
+
+		if ($item->hasField(Item\Company::FIELD_NAME_IS_MY_COMPANY) && $item->get(Item\Company::FIELD_NAME_IS_MY_COMPANY))
+		{
+			$attributes[] = static::ATTRIBUTES_READ_ALL;
 		}
 
 		$attributesProvider = Container::getInstance()->getUserPermissions((int)$assignedById)->getAttributesProvider();

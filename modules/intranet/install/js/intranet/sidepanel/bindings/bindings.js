@@ -795,7 +795,15 @@
 					cacheable: false,
 					allowChangeHistory: false
 				}
-			}
+			},
+			{
+				condition: [ '/bitrix/components/bitrix/bitrix24.license.scan/' ],
+				options: {
+					cacheable: false,
+					allowChangeHistory: false,
+					width: 1195,
+				}
+			},
 		]
 	});
 

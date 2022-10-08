@@ -31,6 +31,43 @@ class Event
 	}
 
 	/**
+	 * Handler for "im:OnAfterChatRead" event.
+	 * @see \CIMChat::SetReadMessage
+	 *
+	 * @param array $params
+	 * @return bool
+	 */
+	public static function onChatRead($params)
+	{
+		$botList = [];
+		$relations = \CIMChat::GetRelationById($params['CHAT_ID']);
+		foreach ($relations as $relation)
+		{
+			if ($relation['EXTERNAL_AUTH_ID'] === \Bitrix\Im\Bot::EXTERNAL_AUTH_ID)
+			{
+				$botList[(int)$relation['USER_ID']] = (int)$relation['USER_ID'];
+			}
+		}
+
+		$result = true;
+		foreach ($botList as $botId)
+		{
+			$botData = \Bitrix\Im\Bot::getCache($botId);
+			if (!$botData)
+			{
+				continue;
+			}
+
+			if (class_exists($botData['CLASS']) && method_exists($botData['CLASS'], 'onChatRead'))
+			{
+				$result = call_user_func_array([$botData['CLASS'], 'onChatRead'], [$params]);
+			}
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Handler for "im:OnAfterMessagesLike" event.
 	 * @see \CIMMessenger::Like
 	 *

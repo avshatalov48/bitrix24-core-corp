@@ -1,7 +1,7 @@
 import Scheduled from "../scheduled";
 import {Item as ItemType} from "../../types";
-import Item from "../../item";
 import SchedulePostponeController from "../../tools/schedule-postpone-controller";
+import {DatetimeConverter} from "crm.timeline.tools";
 
 /** @memberof BX.Crm.Timeline.Items.Scheduled */
 export default class Wait extends Scheduled
@@ -11,7 +11,7 @@ export default class Wait extends Scheduled
 		super();
 		this._postponeController = null;
 	}
-	
+
 	getTypeId()
 	{
 		return ItemType.wait;
@@ -51,7 +51,7 @@ export default class Wait extends Scheduled
 			return null;
 		}
 
-		return new Date(time.getTime() + 1000 * Item.getUserTimezoneOffset());
+		return (new DatetimeConverter(time)).toUserTime().getValue();
 	}
 
 	isDone()

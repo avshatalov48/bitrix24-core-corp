@@ -13,6 +13,7 @@ use Bitrix\Main\Grid;
 use Bitrix\Crm\Agent\Search\OrderSearchContentRebuildAgent;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Catalog;
+use Bitrix\Crm\Service;
 
 Loc::loadMessages(__FILE__);
 
@@ -38,7 +39,6 @@ class CCrmOrderListComponent extends \CBitrixComponent
 	{
 		global  $APPLICATION;
 
-		$arParams['PATH_TO_ORDER_DETAILS'] = CrmCheckPath('PATH_TO_ORDER_DETAILS', $arParams['PATH_TO_ORDER_DETAILS'], $APPLICATION->GetCurPage().'?order_id=#order_id#&details');
 		$arParams['PATH_TO_ORDER_SHOW'] = CrmCheckPath('PATH_TO_ORDER_SHOW', $arParams['PATH_TO_ORDER_SHOW'], $APPLICATION->GetCurPage().'?order_id=#order_id#&show');
 		$arParams['PATH_TO_ORDER_EDIT'] = CrmCheckPath('PATH_TO_ORDER_EDIT', $arParams['PATH_TO_ORDER_EDIT'], $APPLICATION->GetCurPage().'?order_id=#order_id#&edit');
 		$arParams['PATH_TO_QUOTE_EDIT'] = CrmCheckPath('PATH_TO_QUOTE_EDIT', $arParams['PATH_TO_QUOTE_EDIT'], $APPLICATION->GetCurPage().'?quote_id=#quote_id#&edit');
@@ -1735,11 +1735,10 @@ class CCrmOrderListComponent extends \CBitrixComponent
 			$arOrder['DATE_INSERT'] = !empty($arOrder['DATE_INSERT']) ? CCrmComponentHelper::TrimDateTimeString(ConvertTimeStamp(MakeTimeStamp($arOrder['DATE_INSERT']), 'FULL', SITE_ID)) : '';
 			$currencyID =  isset($arOrder['CURRENCY']) ? $arOrder['CURRENCY'] : CCrmCurrency::GetBaseCurrencyID();
 			$arOrder['CURRENCY'] = htmlspecialcharsbx($currencyList[$currencyID]);
-			$arOrder['PATH_TO_ORDER_DETAILS'] = CComponentEngine::MakePathFromTemplate(
-				$this->arParams['PATH_TO_ORDER_DETAILS'],
-				array('order_id' => $entityID)
+			$arOrder['PATH_TO_ORDER_DETAILS'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getOrderDetailsLink(
+				$entityID,
+				Service\Sale\EntityLinkBuilder\Context::getShopAreaContext()
 			);
-
 			$arOrder['PATH_TO_ORDER_SHOW'] = $arOrder['PATH_TO_ORDER_DETAILS'];
 			$arOrder['PATH_TO_ORDER_EDIT'] = CCrmUrlUtil::AddUrlParams(
 				$arOrder['PATH_TO_ORDER_DETAILS'],

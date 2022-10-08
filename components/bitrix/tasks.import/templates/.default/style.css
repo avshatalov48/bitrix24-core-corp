@@ -63,22 +63,22 @@
 }
 
 .tasks-import-results-counts-total {
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	color: #868d95;
 }
 
 .tasks-import-results-counts-processed {
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	color: #0cafe2;
 }
 
 .tasks-import-results-counts-successful {
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	color: green;
 }
 
 .tasks-import-results-counts-error {
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	color: red;
 }
 
@@ -135,7 +135,7 @@
 	width: 100%;
 	border: none;
 	background: transparent;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: default;
 }
 
@@ -163,7 +163,7 @@
 .tasks-import-required-fields {
 	background-color: transparent;
 	margin-bottom: 10px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tasks-progress {
@@ -232,7 +232,8 @@
 	color: #525c69;
 	vertical-align: middle;
 	text-transform: uppercase;
-	font: 600 11px/23px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .tasks-entity-widget-content {
@@ -250,7 +251,7 @@
 .tasks-entity-widget-content-block-title {
 	margin-bottom: 5px;
 	color: #a3a9b1;
-	font: 12px/14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tasks-entity-widget-content-select {
@@ -265,7 +266,7 @@
 	border-radius: 1px;
 	background: #fff no-repeat calc(100% - 6px) center url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%227%22%20viewBox%3D%220%200%2011%207%22%3E%20%20%3Cpath%20fill%3D%22%23979797%22%20fill-rule%3D%22evenodd%22%20d%3D%22M349.545942%2C95.4246212%20L349.545942%2C89.6066017%20L347.606602%2C89.6066017%20L347.606602%2C96.3942911%20L347.606602%2C97.363961%20L355.363961%2C97.363961%20L355.363961%2C95.4246212%20L349.545942%2C95.4246212%20Z%22%20transform%3D%22rotate%28-45%2067.431%20465.144%29%22/%3E%3C/svg%3E);
 	color: #424956;
-	font: 15px/17px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: 220ms all ease;
 	-webkit-appearance: none;
 	-moz-appearance: none;

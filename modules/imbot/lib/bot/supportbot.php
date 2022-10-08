@@ -54,4 +54,13 @@ interface SupportBot extends NetworkBot
 	 * @return string|null
 	 */
 	public static function getMessage(string $code): ?string;
+
+	/**
+	 * Loads bot settings from controller.
+	 *
+	 * @param array $params Command arguments.
+	 *
+	 * @return array|null
+	 */
+	public static function getBotSettings(array $params = []): ?array;
 }

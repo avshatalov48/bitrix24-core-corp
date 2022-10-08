@@ -88,6 +88,8 @@ class Conversion extends Operation
 			return $result;
 		}
 
+		$this->applySettingsToWizard($wizard);
+
 		$wizard->execute();
 		$isSuccess = ($wizard->getErrorText() === '');
 		if ($isSuccess)
@@ -121,6 +123,12 @@ class Conversion extends Operation
 				}
 			}
 		}
+	}
+
+	private function applySettingsToWizard(EntityConversionWizard $wizard): void
+	{
+		$wizard->enableUserFieldCheck($this->isCheckFieldsEnabled());
+		$wizard->enableBizProcCheck($this->isCheckWorkflowsEnabled());
 	}
 
 	public function isFieldProcessionEnabled(): bool

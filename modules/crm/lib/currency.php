@@ -14,6 +14,11 @@ class Currency
 		return \CCrmCurrency::GetBaseCurrencyID();
 	}
 
+	public static function isCurrencyIdDefined(string $currencyId): bool
+	{
+		return in_array($currencyId, static::getCurrencyIds(), true);
+	}
+
 	/**
 	 * Returns a flat array of all currencyId
 	 *

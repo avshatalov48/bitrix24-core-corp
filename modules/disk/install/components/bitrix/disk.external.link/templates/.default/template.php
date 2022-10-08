@@ -14,7 +14,12 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
 
-Extension::load('ui.viewer');
+Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'ui.viewer',
+	'ui.notification',
+]);
 
 $langId = $component->getLangId();
 switch(mb_strtolower($langId))
@@ -57,6 +62,11 @@ switch(mb_strtolower($langId))
 	BX.ready(function(){
 		let inlineController = new BX.UI.Viewer.InlineController({baseContainer: BX('test-content')});
 		inlineController.renderItemByNode(BX('test-content'));
+		<?php if($arResult['SESSION_EXPIRED']): ?>
+			BX.UI.Notification.Center.notify({
+				content: '<?= GetMessageJS('DISK_EXT_SESSION_EXPIRED') ?>',
+			});
+		<?php endif; ?>
 	});
 </script>
 	<div class="bx-shared-wrap">

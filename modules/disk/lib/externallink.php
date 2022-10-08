@@ -267,7 +267,7 @@ final class ExternalLink extends Internals\Model
 	 * @see ExternalLinkTable::getListOfTypeValues().
 	 * @return int
 	 */
-	public function getType()
+	public function getType(): int
 	{
 		return $this->type;
 	}

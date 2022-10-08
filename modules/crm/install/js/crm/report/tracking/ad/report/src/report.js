@@ -2,9 +2,10 @@ import './report.css';
 
 import 'sidepanel';
 import 'ui.progressbar';
+import 'ui.fonts.opensans';
 import { Tag, Runtime, Event, Loc, Text } from 'main.core';
 import { EventEmitter } from 'main.core.events'
-import { Menu, Popup, PopupOptions } from 'main.popup'
+import { Menu, Popup, PopupOptions } from 'main.popup';
 
 type Options = {
 	sourceId: string;

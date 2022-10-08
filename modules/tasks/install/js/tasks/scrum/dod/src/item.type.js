@@ -5,7 +5,8 @@ export type ItemTypeParams = {
 	name?: string,
 	sort?: number,
 	dodRequired?: 'Y' | 'N',
-	participants: Array<Participant>
+	participants?: Array<Participant>,
+	active?: 'Y' | 'N'
 }
 
 export type Participant = {
@@ -22,6 +23,7 @@ export class ItemType
 		this.setSort(params.sort);
 		this.setDodRequired(params.dodRequired);
 		this.setParticipants(params.participants);
+		this.setActive(params.active === 'Y');
 	}
 
 	setId(id: number)
@@ -66,6 +68,16 @@ export class ItemType
 	isDodRequired(): boolean
 	{
 		return this.dodRequired;
+	}
+
+	setActive(value: boolean)
+	{
+		this.active = Type.isBoolean(value) ? value : false;
+	}
+
+	isActive(): boolean
+	{
+		return this.active;
 	}
 
 	setParticipants(participants: Array<Participant>)

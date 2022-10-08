@@ -181,11 +181,11 @@ class Manager
 		{
 			$params['filter'] = array();
 		}
-		$params['filter']['ACTIVE'] = 'Y';
-		$params['filter']['IS_CALLBACK_FORM'] = 'N';
+		$params['filter']['=ACTIVE'] = 'Y';
+		$params['filter']['=IS_CALLBACK_FORM'] = 'N';
 
 		$list = array();
-		$listDb = Internals\FormTable::getList($params);
+		$listDb = Internals\FormTable::getDefaultTypeList($params);
 		while($item = $listDb->fetch())
 		{
 			$list[] = $item;
@@ -202,7 +202,7 @@ class Manager
 	public static function getListPlain(array $parameters = [])
 	{
 		$parameters["cache"] = array("ttl" => 3600);
-		return Internals\FormTable::getList($parameters)->fetchAll();
+		return Internals\FormTable::getDefaultTypeList($parameters)->fetchAll();
 	}
 
 	/**
@@ -221,6 +221,31 @@ class Manager
 			{
 				$result[$form['ID']] = $form['NAME'];
 			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Get prepared data to entity selector component.
+	 *
+	 * @param string $entityId
+	 * @param string $tabId
+	 *
+	 * @return array|array[]|null
+	 */
+	public static function getListForEntitySelector(string $entityId, string $tabId)
+	{
+		static $result = null;
+		if (!is_array($result))
+		{
+			$formList = self::getListPlain(['select' => ['ID', 'NAME']]);
+			$result = array_map(fn($form): array => [
+				'id' => $form['ID'],
+				'entityId' => $entityId,
+				'tabs' => $tabId,
+				'title' => sprintf('%s [%d]', $form['NAME'], $form['ID']),
+			], $formList);
 		}
 
 		return $result;

@@ -125,7 +125,7 @@
 	            }
 
 	            _this2.grid.reloadTable();
-	          }).catch(_this2.showErrorsFromResponse.bind(_this2));
+	          })["catch"](_this2.showErrorsFromResponse.bind(_this2));
 	          messageBox.close();
 	        }
 	      });

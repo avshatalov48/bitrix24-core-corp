@@ -17,6 +17,11 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var string $componentPath */
 /** @var \Bitrix\Disk\Internals\BaseComponent $component */
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+]);
+
 $toolbarId = $arParams['TOOLBAR_ID'];
 ?>
 <div class="bx-disk-interface-toolbar <?= $arParams['CLASS_NAME'] ?>" id="<?=htmlspecialcharsbx($toolbarId)?>">

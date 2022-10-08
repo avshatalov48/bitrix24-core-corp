@@ -8,10 +8,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 \Bitrix\Main\UI\Extension::load([
+	'ui.alerts',
 	'ui.tooltip',
 	'ui.icons',
 	'ui.notification',
-	'crm.store-document-grid-manager'
+	'crm.store-document-grid-manager',
 ]);
 
 global $APPLICATION;
@@ -34,8 +35,8 @@ $this->endViewTarget();
 
 if (!empty($arResult['ERROR_MESSAGES']) && is_array($arResult['ERROR_MESSAGES'])): ?>
 	<?php foreach($arResult['ERROR_MESSAGES'] as $error):?>
-		<div class="ui-alert ui-alert-danger" style="margin-bottom: 0px;">
-			<span class="ui-alert-message"><?= htmlspecialcharsbx($error) ?></span>
+		<div class="ui-alert ui-alert-danger crm-store-document-list--alert" style="margin-bottom: 0;">
+			<span class="ui-alert-message"><?= $error ?></span>
 		</div>
 	<?php endforeach;?>
 	<?php

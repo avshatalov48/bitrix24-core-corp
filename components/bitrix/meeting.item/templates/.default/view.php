@@ -12,7 +12,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 if ($arResult['INCLUDE_LANG'])
 {
-	\Bitrix\Main\Localization\Loc::loadLanguageFile(dirname(__FILE__)."/template.php");
+	\Bitrix\Main\Localization\Loc::loadLanguageFile(__DIR__."/template.php");
 }
 
 ?>

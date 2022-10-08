@@ -1,4 +1,5 @@
 <?php
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /** @var CMain $APPLICATION */
@@ -7,6 +8,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Catalog;
 use Bitrix\Crm\Settings\OrderSettings;
 use Bitrix\Crm\Product\Url;
+use Bitrix\Crm\Service;
 
 if (!CModule::IncludeModule('crm'))
 {
@@ -149,55 +151,24 @@ if($componentPage === 'index')
 	$componentPage = (OrderSettings::getCurrent()->getCurrentListViewID() == OrderSettings::VIEW_KANBAN) ? 'kanban' : 'list';
 }
 
-if(\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled()
-	&& ($componentPage === 'edit'
-		|| $componentPage === 'show'
-		|| $componentPage === 'check'
-		|| $componentPage === 'shipment'
-		|| $componentPage === 'payment')
+if (
+	!CCrmSaleHelper::isWithOrdersMode()
+	&& (
+		$componentPage === 'index'
+		|| $componentPage === 'list'
+		|| $componentPage === 'automation'
+		|| $componentPage === 'analytics/list'
+		|| $componentPage === 'kanban'
+		|| (
+			(
+				$componentPage === 'details'
+				&& (int)$arResult['VARIABLES']['order_id'] === 0
+			)
+		)
+	)
 )
 {
-	if ($componentPage === 'check')
-	{
-		$redirectUrl = CComponentEngine::MakePathFromTemplate(
-			$arResult['PATH_TO_ORDER_CHECK_DETAILS'],
-			array('check_id' => $arResult['VARIABLES']['check_id'])
-		);
-	}
-	elseif($componentPage === 'shipment')
-	{
-		$redirectUrl = CComponentEngine::MakePathFromTemplate(
-			$arResult['PATH_TO_ORDER_SHIPMENT_DETAILS'],
-			array('shipment_id' => $arResult['VARIABLES']['shipment_id'])
-		);
-	}
-	elseif($componentPage === 'payment')
-	{
-		$redirectUrl = CComponentEngine::MakePathFromTemplate(
-			$arResult['PATH_TO_ORDER_PAYMENT_DETAILS'],
-			array('payment_id' => $arResult['VARIABLES']['payment_id'])
-		);
-	}
-	else
-	{
-		$redirectUrl = CComponentEngine::MakePathFromTemplate(
-			$arResult['PATH_TO_ORDER_DETAILS'],
-			array('order_id' => $arResult['VARIABLES']['order_id'])
-		);
-	}
-
-	if(isset($_SERVER['QUERY_STRING']))
-	{
-		parse_str($_SERVER['QUERY_STRING'], $queryParams);
-
-		if(!empty($queryParams))
-			$redirectUrl = CHTTP::urlAddParams($redirectUrl, $queryParams, array('encode' => true));
-	}
-
-	LocalRedirect($redirectUrl, '301 Moved Permanently');
+	LocalRedirect(Service\Container::getInstance()->getRouter()->getItemListUrl(\CCrmOwnerType::Deal));
 }
-else
-{
-	$this->IncludeComponentTemplate($componentPage);
-}
-?>
+
+$this->IncludeComponentTemplate($componentPage);

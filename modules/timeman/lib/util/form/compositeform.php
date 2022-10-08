@@ -145,7 +145,7 @@ abstract class CompositeForm extends BaseForm
 
 	public function hasErrors($fieldName = null)
 	{
-		if ($fieldName !== null && CUtil::binStrpos($fieldName, '.') === false)
+		if ($fieldName !== null && strpos($fieldName, '.') === false)
 		{
 			return parent::hasErrors($fieldName);
 		}
@@ -166,9 +166,9 @@ abstract class CompositeForm extends BaseForm
 							return true;
 						}
 					}
-					elseif (CUtil::binStrpos($fieldName, $name . '.' . $index . '.') === 0)
+					elseif (strpos($fieldName, $name . '.' . $index . '.') === 0)
 					{
-						if ($item->hasErrors(CUtil::binSubstr($fieldName, CUtil::binStrlen($name . '.' . $index . '.'))))
+						if ($item->hasErrors(substr($fieldName, strlen($name . '.' . $index . '.'))))
 						{
 							return true;
 						}
@@ -184,9 +184,9 @@ abstract class CompositeForm extends BaseForm
 						return true;
 					}
 				}
-				elseif (CUtil::binStrpos($fieldName, $name . '.') === 0)
+				elseif (strpos($fieldName, $name . '.') === 0)
 				{
-					if ($form->hasErrors(CUtil::binSubstr($fieldName, CUtil::binStrlen($name . '.'))))
+					if ($form->hasErrors(substr($fieldName, strlen($name . '.'))))
 					{
 						return true;
 					}

@@ -305,9 +305,16 @@
 			BX.animationHandler.fadeSlideToggleByClass(BX('imol_queue_settings_block'));
 			//BX.OpenLinesConfigEdit.toggleBoolInputValue(BX('imol_queue_settings_input'));
 		},
-		toggleAutoMessageBlock: function()
+		toggleWelcomeMessageBlock: function()
 		{
-			BX.animationHandler.fadeSlideToggleByClass(BX('imol_action_welcome'))
+			if(BX('imol_welcome_message').checked)
+			{
+				BX.removeClass(BX('imol_welcome_message_block'), 'invisible');
+			}
+			else
+			{
+				BX.addClass(BX('imol_welcome_message_block'), 'invisible');
+			}
 		},
 		toggleAutomaticMessageBlock: function()
 		{
@@ -630,7 +637,7 @@
 			BX.bind(
 				BX('imol_welcome_message'),
 				'change',
-				BX.OpenLinesConfigEdit.toggleAutoMessageBlock
+				BX.OpenLinesConfigEdit.toggleWelcomeMessageBlock
 			);
 			BX.bind(
 				BX('imol_automatic_message'),

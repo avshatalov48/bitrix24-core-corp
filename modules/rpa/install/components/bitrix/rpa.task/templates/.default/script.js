@@ -3,9 +3,7 @@
 
 	var namespace = main_core.Reflection.namespace('BX.Rpa');
 
-	var TaskComponent =
-	/*#__PURE__*/
-	function () {
+	var TaskComponent = /*#__PURE__*/function () {
 	  function TaskComponent(typeId, itemId, options) {
 	    babelHelpers.classCallCheck(this, TaskComponent);
 	    babelHelpers.defineProperty(this, "typeId", null);
@@ -111,6 +109,7 @@
 	      this.editor = rpa_manager.Manager.getEditor(this.typeId, this.itemId);
 	      BX.addCustomEvent(window, 'BX.UI.EntityEditorAjax:onSubmitFailure', this.onEditorErrors.bind(this));
 	      BX.addCustomEvent(window, 'BX.UI.EntityEditorAjax:onSubmit', this.onEditorSubmit.bind(this));
+	      BX.addCustomEvent(window, 'BX.UI.EntityEditor:onSave', this.onEditorSave.bind(this));
 	      BX.addCustomEvent(window, "BX.UI.EntityEditor:onFailedValidation", this.onEditorErrors.bind(this));
 	      this.unregisterActiveFields();
 	    }
@@ -151,6 +150,13 @@
 
 	      if (response.data.completed && main_core.Type.isFunction(this.onTaskComplete)) {
 	        setTimeout(this.onTaskComplete.bind(this, response.data), 10);
+	      }
+	    }
+	  }, {
+	    key: "onEditorSave",
+	    value: function onEditorSave(editor, eventArgs) {
+	      if (this.editor === editor) {
+	        eventArgs.enableCloseConfirmation = false;
 	      }
 	    }
 	  }, {

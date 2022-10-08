@@ -190,7 +190,7 @@ class Http
 		$params['BX_TYPE'] = $this->type;
 		$params['BX_REGION'] = $this->region;
 		$params['BX_VERSION'] = Main\ModuleManager::getVersion('imbot');
-		$params['BX_LANG'] = \Bitrix\Im\Bot::getDefaultLanguage();
+		$params['BX_LANG'] = \Bitrix\Main\Localization\Loc::getCurrentLang();
 		$params = \Bitrix\Main\Text\Encoding::convertEncoding($params, SITE_CHARSET, 'UTF-8');
 		$params['BX_HASH'] = self::requestSign($this->type, md5(implode('|', $params)));
 

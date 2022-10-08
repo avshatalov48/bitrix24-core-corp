@@ -51,9 +51,4 @@ class DynamicEntity extends Base
 
 		return $dynamicEntityProducts;
 	}
-
-	public function createOrderByEntity(): ?Crm\Order\Order
-	{
-		return Crm\Order\Manager::createOrderWithoutProductByDynamicEntity($this->ownerTypeId, $this->ownerId);
-	}
 }

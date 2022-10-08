@@ -1,6 +1,9 @@
 <?php
 
 use Bitrix\Intranet\UserField\Types\EmployeeType;
+use Bitrix\Main;
+use Bitrix\Main\Loader;
+use Bitrix\SocialNetwork;
 
 IncludeModuleLangFile(__FILE__);
 
@@ -203,26 +206,34 @@ class CUserTypeEmployeeDisplay extends \Bitrix\Main\UserField\TypeBase
 
 class CIBlockPropertyEmployee extends CIEmployeeProperty
 {
+	private const USER_PROFILE_PUBLIC = 'PUBLIC';
+	private const USER_PROFILE_ADMIN = 'ADMIN';
+
+	private static array $urlTemplates = [
+		self::USER_PROFILE_PUBLIC => null,
+		self::USER_PROFILE_ADMIN => '/bitrix/admin/user_edit.php?ID=#ID#&lang=' . LANGUAGE_ID,
+	];
+
 	public static function GetUserTypeDescription()
 	{
-		return array(
+		return [
 			"PROPERTY_TYPE" => "S",
 			"USER_TYPE" =>"employee",
 			"DESCRIPTION" => GetMessage('INTR_PROP_EMP_TITLE'),
-			"GetPropertyFieldHtml" => array("CIBlockPropertyEmployee","GetPropertyFieldHtml"),
-			"GetAdminListViewHTML" => array("CIBlockPropertyEmployee","GetAdminListViewHTML"),
-			"GetPublicViewHTML" => array("CIBlockPropertyEmployee","GetPublicViewHTML"),
-			"GetPublicEditHTML" => array("CIBlockPropertyEmployee","GetPublicEditHTML"),
-			"GetPublicEditHTMLMulty" => array("CIBlockPropertyEmployee", "GetPublicEditHTMLMulty"),
-			"GetPublicFilterHTML" => array("CIBlockPropertyEmployee","GetPublicFilterHTML"),
-			"GetUIFilterProperty" => array(__CLASS__, 'GetUIFilterProperty'),
-			"ConvertToDB" => array("CIBlockPropertyEmployee","ConvertFromToDB"),
-			"CheckFields" => array("CIBlockPropertyEmployee","CheckFields"),
-			"GetLength" => array("CIBlockPropertyEmployee","GetLength"),
-			"GetUIEntityEditorProperty" => array("CIBlockPropertyEmployee","GetUIEntityEditorProperty"),
-			"GetUIEntityEditorPropertyEditHtml" => array("CIBlockPropertyEmployee","GetUIEntityEditorPropertyEditHtml"),
-			"GetUIEntityEditorPropertyViewHtml" => array("CIBlockPropertyEmployee","GetUIEntityEditorPropertyViewHtml"),
-		);
+			"GetPropertyFieldHtml" => [__CLASS__,"GetPropertyFieldHtml"],
+			"GetAdminListViewHTML" => [__CLASS__,"getAdminListViewHtmlExtended"],
+			"GetPublicViewHTML" => [__CLASS__,"getPublicViewHtmlExtended"],
+			"GetPublicEditHTML" => [__CLASS__,"GetPublicEditHTML"],
+			"GetPublicEditHTMLMulty" => [__CLASS__, "GetPublicEditHTMLMulty"],
+			"GetPublicFilterHTML" => [__CLASS__,"GetPublicFilterHTML"],
+			"GetUIFilterProperty" => [__CLASS__, 'GetUIFilterProperty'],
+			"ConvertToDB" => [__CLASS__,"ConvertFromToDB"],
+			"CheckFields" => [__CLASS__,"CheckFields"],
+			"GetLength" => [__CLASS__,"GetLength"],
+			"GetUIEntityEditorProperty" => [__CLASS__,"GetUIEntityEditorProperty"],
+			"GetUIEntityEditorPropertyEditHtml" => [__CLASS__,"GetUIEntityEditorPropertyEditHtml"],
+			"GetUIEntityEditorPropertyViewHtml" => [__CLASS__,"GetUIEntityEditorPropertyViewHtml"],
+		];
 	}
 
 	public static function CheckFields($arProperty, $value)
@@ -252,6 +263,12 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		return parent::GetEditForm($value, $strHTMLControlName);
 	}
 
+	/**
+	 * @deprecated
+	 *
+	 * @param $value
+	 * @return string
+	 */
 	public static function GetAdminListViewHTML($value)
 	{
 		$value = func_num_args() > 1 ? func_get_arg(1) : null;
@@ -259,11 +276,120 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		return parent::GetAdminListViewHTML($value);
 	}
 
+	public static function getAdminListViewHtmlExtended(array $property, array $value, $control): string
+	{
+		$result = '';
+		if (isset($value['VALUE']))
+		{
+			$user = static::_GetUserArray($value['VALUE']);
+			if (!empty($user))
+			{
+				$name = htmlspecialcharsbx('(' . $user['LOGIN'] . ') ' . $user['NAME'] . ' ' . $user['LAST_NAME']);
+				$mode = defined("PUBLIC_MODE") && PUBLIC_MODE == 1
+					? self::USER_PROFILE_PUBLIC
+					: self::USER_PROFILE_ADMIN
+				;
+				$url = self::getUserProfileUrl($mode, $user);
+
+				if ($url !== null)
+				{
+					$result .= '[<a href="' . htmlspecialcharsbx($url) . '">' . htmlspecialcharsbx($user['ID']) . '</a>] ' . $name;
+				}
+				else
+				{
+					$result = $name;
+				}
+			}
+		}
+
+		return $result ?: '&nbsp;';
+	}
+
+	/**
+	 * @deprecated
+	 *
+	 * @param $value
+	 * @return string
+	 */
 	public static function GetPublicViewHTML($value)
 	{
 		$value = func_num_args() > 1 ? func_get_arg(1) : null;
 
 		return parent::GetPublicViewHTML($value);
+	}
+
+	public static function getPublicViewHtmlExtended(array $property, array $value, $control): string
+	{
+		$result = '';
+		if (isset($value['VALUE']))
+		{
+			if (!is_array($control))
+			{
+				$control = [];
+			}
+			$mode = (string)($control['MODE'] ?? '');
+
+			$user = static::_GetUserArray($value['VALUE']);
+			if (!empty($user))
+			{
+				$useUrl =
+					$mode !== 'SIMPLE_TEXT'
+					&& $mode !== 'ELEMENT_TEMPLATE'
+					&& $mode !== 'CSV_EXPORT'
+				;
+				$name = '(' . $user['LOGIN'] . ') ' . $user['NAME'] . ' ' . $user['LAST_NAME'];
+				if ($mode !== 'CSV_EXPORT')
+				{
+					$name = htmlspecialcharsbx($name);
+				}
+				$url = $useUrl ? self::getUserProfileUrl(self::USER_PROFILE_PUBLIC, $user) : null;
+
+				if ($url !== null)
+				{
+					$result .= '<a href="' . htmlspecialcharsbx($url) . '">' . $name . '</a>';
+				}
+				else
+				{
+					$result = $name;
+				}
+			}
+		}
+
+		return $result ?: '&nbsp;';
+	}
+
+	private static function getUserProfileUrl(string $mode, array $user): ?string
+	{
+		if (self::$urlTemplates[self::USER_PROFILE_PUBLIC] === null)
+		{
+			self::$urlTemplates[self::USER_PROFILE_PUBLIC] = '';
+			if (Loader::includeModule('socialnetwork'))
+			{
+				self::$urlTemplates[self::USER_PROFILE_PUBLIC] = Socialnetwork\Helper\Path::get('user_profile');
+			}
+		}
+
+		if (!isset(self::$urlTemplates[$mode]))
+		{
+			return null;
+		}
+
+		if (self::$urlTemplates[$mode] === '')
+		{
+			return null;
+		}
+
+		return str_replace(
+			[
+				'#user_id#',
+				'#ID#',
+			],
+			[
+				$user['ID'],
+				$user['ID'],
+			],
+			self::$urlTemplates[$mode]
+		);
 	}
 
 	public static function GetPublicFilterHTML($arProperty, $strHTMLControlName)
@@ -374,10 +500,12 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 						: $arUser["NAME"] . " " . $arUser["LAST_NAME"]
 				;
 			}
+			$url = self::getUserProfileUrl(self::USER_PROFILE_PUBLIC, $arUser);
 		}
 		else
 		{
 			$UF_HeadName = "";
+			$url = null;
 		}
 
 		$controlID = "Single_" . RandString(6);
@@ -385,7 +513,16 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		?>
 		<input type="text" id="<?echo $controlID?>" value="<?if($arUser) echo htmlspecialcharsbx($arUser['ID']);?>" name="<?echo $controlName?>" style="width:35px;font-size:14px;border:1px #c8c8c8 solid;">
 		<a href="javascript:void(0)" id="single-user-choice<?echo $controlID?>"><?=GetMessage("INTR_PROP_EMP_SU")?></a>
-		<span id="<?echo $controlID?>_name" style="margin-left:15px"><?=htmlspecialcharsex($UF_HeadName)?></span>
+		<span id="<?echo $controlID?>_name" style="margin-left:15px"><?php
+		if ($url !== null)
+		{
+			echo '<a href="' . htmlspecialcharsbx($url) . '">' . htmlspecialcharsex($UF_HeadName) . '</a>';
+		}
+		else
+		{
+			echo htmlspecialcharsex($UF_HeadName);
+		}
+		?></span>
 		<span id="structure-department-head<?echo $controlID?>" class="structure-department-head" <?if ($UF_HeadName != ""):?>style="visibility:visible"<?endif;?> onclick='BX("<?echo $controlID?>").value = ""; BX("<?echo $controlID?>_name").innerHTML = ""; BX("structure-department-head<?echo $controlID?>").style.visibility="hidden";'></span><br>
 		<?CUtil::InitJSCore(array('popup'));?>
 		<script type="text/javascript" src="/bitrix/components/bitrix/intranet.user.selector.new/templates/.default/users.js"></script>
@@ -397,8 +534,17 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 		function onSingleSelect<?echo $controlID?>(arUser)
 		{
+			let userName;
+			if (arUser.url !== '')
+			{
+				userName = '<a href="' + arUser.url + '">' + BX.util.htmlspecialchars(arUser.name) + '</a>'
+			}
+			else
+			{
+				userName = BX.util.htmlspecialchars(arUser.name);
+			}
 			BX("<?echo $controlID?>").value = arUser.id;
-			BX("<?echo $controlID?>_name").innerHTML = BX.util.htmlspecialchars(arUser.name);
+			BX("<?echo $controlID?>_name").innerHTML = userName;
 			BX("structure-department-head<?echo $controlID?>").style.visibility="visible";
 		}
 
@@ -445,6 +591,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 				"ON_SELECT" => "onSingleSelect".$controlID,
 				"SITE_ID" => SITE_ID,
 				"SHOW_EXTRANET_USERS" => "NONE",
+				'SHOW_USER_PROFILE_URL' => 'Y',
 			), null, array("HIDE_ICONS" => "Y")
 		);
 
@@ -459,7 +606,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 			ob_start();
 
 		$arValues = array();
-		$UF_HeadName = "";
+		//$UF_HeadName = "";
 		foreach($value as $arValue)
 		{
 			if (is_array($arValue))
@@ -469,7 +616,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 
 			if ($arUser)
 			{
-				$UF_HeadName .= $arUser["NAME"] == "" && $arUser["LAST_NAME"] == "" ? $arUser["LOGIN"] : $arUser["NAME"]." ".$arUser["LAST_NAME"];
+				//$UF_HeadName .= $arUser["NAME"] == "" && $arUser["LAST_NAME"] == "" ? $arUser["LOGIN"] : $arUser["NAME"]." ".$arUser["LAST_NAME"];
 				$arValues[] = $arUser["ID"];
 			}
 		}
@@ -500,13 +647,22 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 				var arUser = arUsers[i];
 				if(arUser)
 				{
+					let userName;
+					if (arUser.url !== '')
+					{
+						userName = '<a href="' + arUser.url + '">' + BX.util.htmlspecialchars(arUser.name) + '</a>'
+					}
+					else
+					{
+						userName = BX.util.htmlspecialchars(arUser.name);
+					}
 					if(!hiddens[i])
 					{
 						hiddens[i] = BX.clone(hiddens[0], true);
 						hiddens[0].parentNode.insertBefore(hiddens[i], hiddens[0]);
 					}
 					hiddens[i].value = arUser.id;
-					text += '['+arUser.id+'] ' + BX.util.htmlspecialchars(arUser.name)+'<br>';
+					text += '['+arUser.id+'] ' + userName + '<br>';
 				}
 			}
 			BX("<?echo $controlID?>_res").innerHTML = text;
@@ -555,6 +711,7 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 				"ON_CHANGE" => "onMultipleSelect".$controlID,
 				"SITE_ID" => SITE_ID,
 				"SHOW_EXTRANET_USERS" => "NONE",
+				'SHOW_USER_PROFILE_URL' => 'Y',
 			), null, array("HIDE_ICONS" => "Y")
 		);
 
@@ -591,27 +748,11 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 	 */
 	public static function GetUIFilterProperty($property, $strHTMLControlName, &$field)
 	{
-		//TODO: change this code to common engine properties description in future
-		global $USER;
-
-		$canViewUserList = false;
-		if (isset($USER) && $USER instanceof CUser)
-				{
-					$canViewUserList = (
-						$USER->CanDoOperation('view_subordinate_users')
-						|| $USER->CanDoOperation('view_all_users')
-					);
-		}
-		if ($canViewUserList)
-		{
-			$field['type'] = 'custom_entity';
-			$field['filterable'] = '';
-			$field['selector'] = ['type' => 'user'];
-		}
-		else
-		{
-			$field = null;
-		}
+		$field['type'] = Main\UI\Filter\FieldAdapter::CUSTOM_ENTITY;
+		$field['filterable'] = '';
+		$field['selector'] = [
+			'type' => 'user',
+		];
 	}
 
 	public static function GetUIEntityEditorProperty($settings, $value)

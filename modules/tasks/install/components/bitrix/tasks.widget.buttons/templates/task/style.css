@@ -38,7 +38,7 @@
 	display: inline-block;
 	vertical-align: top;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	min-width: 60px;
 }
 

@@ -1,5 +1,5 @@
 import Stream from "../stream";
-import {Item as ItemType, Order as OrderType, Delivery as DeliveryType} from "../types";
+import {Item as ItemType, Order as OrderType, Delivery as DeliveryType, Compilation as CompilationType} from "../types";
 import HistoryItem from "../items/history";
 import Modification from "../items/modification";
 import Conversion from "../items/conversion";
@@ -35,6 +35,8 @@ import Document from "../items/document";
 import Sender from "../items/sender";
 import Bizproc from "../items/bizproc";
 import Scoring from "../items/scoring";
+import {ConfigurableItem} from "crm.timeline.item";
+import Expand from "../animations/expand";
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class History extends Stream
@@ -264,9 +266,14 @@ export default class History extends Stream
 		return (this._items.length > 0 || this._isFilterApplied || this._isStubMode);
 	}
 
-	getLastItem()
+	getItems(): Array
 	{
-		return this._items.length > 0 ? this._items[this._items.length - 1] : null;
+		return this._items;
+	}
+
+	setItems(items: Array): void
+	{
+		this._items = items;
 	}
 
 	getItemByIndex(index)
@@ -277,27 +284,6 @@ export default class History extends Stream
 	getItemCount()
 	{
 		return this._items.length;
-	}
-
-	removeItemByIndex(index)
-	{
-		if (index < this._items.length)
-		{
-			this._items.splice(index, 1);
-		}
-	}
-
-	getItemIndex(item)
-	{
-		for (let i = 0, length = this._items.length; i < length; i++)
-		{
-			if (this._items[i] === item)
-			{
-				return i;
-			}
-		}
-
-		return -1;
 	}
 
 	getItemsByAssociatedEntity($entityTypeId, entityId)
@@ -327,19 +313,6 @@ export default class History extends Stream
 			}
 		}
 		return results;
-	}
-
-	findItemById(id)
-	{
-		id = id.toString();
-		for (let i = 0, l = this._items.length; i < l; i++)
-		{
-			if (this._items[i].getId() === id)
-			{
-				return this._items[i];
-			}
-		}
-		return null;
 	}
 
 	createFilterEmptyResultSection()
@@ -858,6 +831,43 @@ export default class History extends Stream
 		}
 	}
 
+	createProductCompilationItem(data)
+	{
+		var typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
+		var entityId = BX.prop.getInteger(data, "ASSOCIATED_ENTITY_TYPE_ID", 0);
+		if(entityId !== BX.CrmEntityType.enumeration.deal)
+		{
+			return null;
+		}
+
+		var settings = {
+			history: this._history,
+			fixedHistory: this._fixedHistory,
+			container: this._wrapper,
+			activityEditor: this._activityEditor,
+			data: data
+		};
+
+		if (typeId === CompilationType.productList)
+		{
+			settings.vueComponent = BX.Crm.Timeline.ProductCompilationList;
+		}
+		else if (typeId === CompilationType.orderExists)
+		{
+			settings.vueComponent = BX.Crm.Timeline.CompilationOrderNotice;
+		}
+		else if (typeId === CompilationType.compilationViewed)
+		{
+			settings.vueComponent = BX.Crm.Timeline.ProductCompilationViewed;
+		}
+		else if (typeId === CompilationType.newDealCreated)
+		{
+			settings.vueComponent = BX.Crm.Timeline.NewDealCreated;
+		}
+
+		return BX.CrmHistoryItem.create(data["ID"], settings);
+	}
+
 	createExternalNotificationItem(data)
 	{
 		const typeId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
@@ -927,6 +937,19 @@ export default class History extends Stream
 
 	createItem(data)
 	{
+		if (data.hasOwnProperty('type'))
+		{
+			return ConfigurableItem.create(data.id, {
+				timelineId: this.getId(),
+				container: this.getWrapper(),
+				itemClassName: this.getItemClassName(),
+				useShortTimeFormat: true,
+				isReadOnly: this.isReadOnly(),
+				streamType: this.getStreamType(),
+				data: data,
+			})
+		}
+
 		const typeId = BX.prop.getInteger(data, "TYPE_ID", ItemType.undefined);
 		const typeCategoryId = BX.prop.getInteger(data, "TYPE_CATEGORY_ID", 0);
 
@@ -937,6 +960,10 @@ export default class History extends Stream
 		else if (typeId === ItemType.order)
 		{
 			return this.createOrderEntityItem(data);
+		}
+		else if(typeId === ItemType.productCompilation)
+		{
+			return this.createProductCompilationItem(data);
 		}
 		else if (typeId === ItemType.storeDocument)
 		{
@@ -1160,6 +1187,16 @@ export default class History extends Stream
 		);
 	}
 
+	getWrapper()
+	{
+		return this._wrapper;
+	}
+
+	getItemClassName()
+	{
+		return 'crm-entity-stream-section crm-entity-stream-section-history';
+	}
+
 	addItem(item, index)
 	{
 		if (!BX.type.isNumber(index) || index < 0)
@@ -1297,16 +1334,19 @@ export default class History extends Stream
 
 		const now = BX.prop.extractDate(new Date());
 		let i, item;
-		let lastItemTime = "";
 		for (i = 0; i < length; i++)
 		{
-			const itemId = BX.prop.getInteger(itemData[i], "ID", 0);
+			const itemId = BX.prop.getInteger(
+				itemData[i],
+				'id',
+				BX.prop.getInteger(itemData[i], 'ID', 0)
+			);
+
 			if (itemId <= 0)
 			{
 				continue;
 			}
 
-			lastItemTime = BX.prop.getString(itemData[i], "CREATED_SERVER", "");
 			if (this.findItemById(itemId) !== null)
 			{
 				continue;
@@ -1429,6 +1469,13 @@ export default class History extends Stream
 	{
 		const m = History.messages;
 		return m.hasOwnProperty(name) ? m[name] : name;
+	}
+
+	animateItemAdding(item): Promise
+	{
+		return new Promise((resolve) => {
+			Expand.create(item.getWrapper(), resolve).run();
+		});
 	}
 
 	static create(id, settings)

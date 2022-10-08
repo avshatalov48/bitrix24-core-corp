@@ -13,3 +13,5 @@ $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_NO_AUTHORIZATION_PAGE"] = "Подключ�
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_ERROR_REQUEST_INFORMATION_FROM_SERVER"] = "Произошла ошибка на сервере";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_INVALID_OAUTH_ACCESS_TOKEN"] = "Потерян доступ к управлению публичной страницы. Необходимо повторно выполнить подключение.";
 $MESS["IMCONNECTOR_COMPONENT_FACEBOOK_REPEATING_ERROR"] = "Если ошибка повторяется на протяжении длительного времени: отключите канал и настройте его снова.";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_OPEN_LINES"] = "Открытые линии";
+$MESS["IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_CATALOG"] = "Каталог товаров";

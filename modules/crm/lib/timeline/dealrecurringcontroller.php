@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Crm\Data\EntityFieldsHelper;
@@ -12,7 +13,6 @@ class DealRecurringController extends DealController
 {
 	const CONTROLLER_NAME = __CLASS__;
 	const PUSH_COMMAND_DEAL_ADD = "timeline_deal_add";
-	const PUSH_COMMAND_DEAL_MODIFY = "timeline_activity_add";
 
 	public function onCreate($ownerID, array $params)
 	{
@@ -105,8 +105,10 @@ class DealRecurringController extends DealController
 					)
 				)
 			);
-
-			$this->pushHistory($historyEntryID, $ownerID, self::PUSH_COMMAND_DEAL_MODIFY);
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::Deal, $ownerID),
+				$historyEntryID
+			);
 		}
 	}
 
@@ -177,7 +179,10 @@ class DealRecurringController extends DealController
 				)
 			);
 
-			$this->pushHistory($historyEntryID, (int)$recurringDealID, self::PUSH_COMMAND_DEAL_MODIFY);
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::DealRecurring, $recurringDealID),
+				$historyEntryID
+			);
 		}
 	}
 
@@ -230,37 +235,28 @@ class DealRecurringController extends DealController
 					)
 				)
 			);
-
-			$this->pushHistory($historyEntryID, $ownerID, self::PUSH_COMMAND_DEAL_MODIFY);
+			$this->sendPullEventOnAdd(
+				new \Bitrix\Crm\ItemIdentifier(\CCrmOwnerType::DealRecurring, $ownerID),
+				$historyEntryID
+			);
 		}
 	}
 
 	public function prepareHistoryDataModel(array $data, array $options = null)
 	{
 		$typeID = isset($data['TYPE_ID']) ? (int)$data['TYPE_ID'] : TimelineType::UNDEFINED;
-		$settings = isset($data['SETTINGS']) ? $data['SETTINGS'] : array();
+		$typeCategoryId = (int)($data['TYPE_CATEGORY_ID'] ?? LogMessageType::UNDEFINED);
+		$settings = $data['SETTINGS'] ?? [];
+		$base = $settings['BASE'] ?? [];
 
 		if($typeID === TimelineType::CREATION)
 		{
-			$base = isset($settings['BASE']) ? $settings['BASE'] : null;
 			$codeTitle = ($base['ENTITY_TYPE_ID'] === \CCrmOwnerType::DealRecurring) ? 'CRM_DEAL_RECURRING_CREATION' : 'CRM_DEAL_CREATION';
 			$data['TITLE'] = Loc::getMessage($codeTitle);
 
-			if(is_array($base))
-			{
-				$entityTypeID = isset($base['ENTITY_TYPE_ID']) ? $base['ENTITY_TYPE_ID'] : 0;
-				$caption = Loc::getMessage("CRM_DEAL_BASE_CAPTION_BASED_ON_DEAL");
+			$caption = Loc::getMessage("CRM_DEAL_BASE_CAPTION_BASED_ON_DEAL");
+			$this->applySettingsBaseData($data, $base, $caption);
 
-				$entityID = isset($base['ENTITY_ID']) ? $base['ENTITY_ID'] : 0;
-				if(\CCrmOwnerType::IsDefined($entityTypeID) && $entityID > 0)
-				{
-					$data['BASE']['CAPTION'] = $caption;
-					if(\CCrmOwnerType::TryGetEntityInfo(\CCrmOwnerType::Deal, $entityID, $baseEntityInfo, false))
-					{
-						$data['BASE']['ENTITY_INFO'] = $baseEntityInfo;
-					}
-				}
-			}
 			unset($data['SETTINGS']);
 		}
 		elseif($typeID === TimelineType::CONVERSION)
@@ -300,7 +296,15 @@ class DealRecurringController extends DealController
 				$messageCode = ($settings['FINISH'] !== 'Y') ? "CRM_DEAL_RECURRING_NOT_ACTIVE" : "CRM_DEAL_RECURRING_ACTIVE";
 				$data['TITLE'] =  Loc::getMessage($messageCode);
 			}
+			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
+		}
+		elseif (
+			$typeID === TimelineType::LOG_MESSAGE
+			&& $typeCategoryId === LogMessageType::CALL_INCOMING
+		)
+		{
+			$this->applySettingsBaseData($data, $base);
 		}
 
 		return EntityController::prepareHistoryDataModel($data, $options);

@@ -24,6 +24,7 @@ import {Loader} from "main.loader";
 import "ui.pinner";
 import "ui.alerts";
 
+import "ui.design-tokens";
 import "./monitor-report.css";
 
 class MonitorReport

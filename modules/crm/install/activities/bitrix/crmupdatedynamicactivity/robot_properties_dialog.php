@@ -8,6 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Json;
 
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs(getLocalPath('activities/bitrix/crmupdatedynamicactivity/script.js'));
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 $map = $dialog->getMap();

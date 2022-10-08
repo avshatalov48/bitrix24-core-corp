@@ -110,6 +110,12 @@ class DealScoring extends Base
 	 */
 	public function getTrainingSetSize()
 	{
+		static $cache = [];
+		if (isset($cache[$this->name]))
+		{
+			return $cache[$this->name];
+		}
+
 		$categoryId = static::getModelCategory($this->name);
 		$cursor = DealTable::getList([
 			"select" => [
@@ -136,7 +142,8 @@ class DealScoring extends Base
 			$rows[$row["STAGE_SEMANTIC_ID"]] = (int)$row["CNT"];
 		}
 
-		return [$rows["S"], $rows["F"]];
+		$cache[$this->name] = [$rows["S"], $rows["F"]];
+		return $cache[$this->name];
 	}
 
 	public function getTrainingSet($fromId, $limit)

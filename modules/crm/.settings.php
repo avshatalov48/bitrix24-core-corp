@@ -65,6 +65,9 @@ return array(
 			'crm.service.factory.order' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Factory\\Order',
 			],
+			'crm.service.factory.smartDocument' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Factory\\SmartDocument',
+			],
 			'crm.type.factory' => [
 				'className' => '\\Bitrix\\Crm\\Model\\Dynamic\\Factory',
 			],
@@ -179,6 +182,9 @@ return array(
 			'crm.kanban.entity.smartInvoice' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartInvoice',
 			],
+			'crm.kanban.entity.smartDocument' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\SmartDocument',
+			],
 			'crm.listEntity.entity.lead' => [
 				'className' => '\\Bitrix\\Crm\\listEntity\\Entity\\Lead',
 			],
@@ -254,6 +260,15 @@ return array(
 			'crm.timeline.historyDataModel.maker' => [
 				'className' => '\\Bitrix\\Crm\\Timeline\\HistoryDataModel\\Maker',
 			],
+			'crm.timeline.factory.scheduledItem' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Timeline\\Item\\Factory\\ScheduledItem',
+			],
+			'crm.timeline.factory.historyItem' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Timeline\\Item\\Factory\\HistoryItem',
+			],
+			'crm.timeline.factory.activityItem' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Timeline\\Item\\Factory\\ConfigurableActivity',
+			],
 			'crm.conversion.mapper' => [
 				'className' => '\\Bitrix\\Crm\\Conversion\\Mapper',
 			],
@@ -287,6 +302,9 @@ return array(
 						\Bitrix\Main\DI\ServiceLocator::getInstance()->get('crm.shipment.product'),
 					];
 				},
+			],
+			'crm.sale.entity.linkBuilder' => [
+				'className' => Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::class,
 			],
 		],
 		'readonly' => true,
@@ -348,6 +366,13 @@ return array(
 					'provider' => [
 						'moduleId' => 'crm',
 						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartInvoice'
+					],
+				],
+				[
+					'entityId' => 'smart_document',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\SmartDocument'
 					],
 				],
 			],

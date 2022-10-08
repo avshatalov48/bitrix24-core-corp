@@ -11,5 +11,5 @@ return [
 	'js' => [
 		'/bitrix/js/crm/scoringbutton/crm.scoring.button.js'
 	],
-	'rel' => ['spotlight']
+	'rel' => ['spotlight', 'ui.fonts.opensans']
 ];

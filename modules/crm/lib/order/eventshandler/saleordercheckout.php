@@ -2,8 +2,14 @@
 
 namespace Bitrix\Crm\Order\EventsHandler;
 
+use Bitrix\Crm\Binding\DealContactTable;
+use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Main\Application;
+use CCrmContact;
+use CCrmFieldMulti;
+use CCrmOwnerType;
 
 final class SaleOrderCheckout
 {
@@ -55,5 +61,58 @@ final class SaleOrderCheckout
 		}
 
 		return true;
+	}
+
+	public static function onPrepareJsonData(array &$jsonData): void
+	{
+		$properties = $jsonData['SCHEME']['PROPERTIES'] ?? null;
+		if (!$properties)
+		{
+			return;
+		}
+
+		$session = Application::getInstance()->getSession();
+		$compilationDealId = $session->get('CATALOG_CURRENT_COMPILATION_DEAL_ID');
+		if (!$compilationDealId)
+		{
+			return;
+		}
+
+		$currentDealContactData = [];
+
+		$contactBindings = DealContactTable::getDealBindings($compilationDealId);
+		$primaryDealContactId = EntityBinding::getPrimaryEntityID(
+			CCrmOwnerType::Contact,
+			$contactBindings
+		);
+
+		$contactData = CCrmContact::GetByID($primaryDealContactId, false);
+		$contactPhoneData = CCrmFieldMulti::GetEntityFirstField(
+			CCrmOwnerType::ContactName,
+			$primaryDealContactId,
+			CCrmFieldMulti::PHONE
+		);
+		$contactEmailData = CCrmFieldMulti::GetEntityFirstField(
+			CCrmOwnerType::ContactName,
+			$primaryDealContactId,
+			CCrmFieldMulti::EMAIL
+		);
+
+		$currentDealContactData['NAME'] = $contactData['FULL_NAME'];
+		$currentDealContactData['PHONE'] = $contactPhoneData['VALUE'];
+		$currentDealContactData['EMAIL'] = $contactEmailData['VALUE'];
+
+		foreach ($properties as $propertyKey => $property)
+		{
+			$propertyType = $property['TYPE'] ?? null;
+			$currentDealContactValue = $currentDealContactData[$propertyType] ?? null;
+
+			if ($currentDealContactValue !== null)
+			{
+				$properties[$propertyKey]['VALUE'] = $currentDealContactValue;
+			}
+		}
+
+		$jsonData['SCHEME']['PROPERTIES'] = $properties;
 	}
 }

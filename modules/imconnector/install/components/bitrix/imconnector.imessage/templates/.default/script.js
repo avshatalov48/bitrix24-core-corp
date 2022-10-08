@@ -32,6 +32,11 @@
 		});
 		popupShowTrue.show();
 	};
+	function showIMessageHelpdesk()
+	{
+		top.BX.Helper.show('redirect=detail&code=10798618');
+		return false;
+	}
 	BX.ready(function(){
 		BX.bindDelegate(
 			document.body,
@@ -50,6 +55,18 @@
 			'submit',
 			{tag: 'form'},
 			addPreloader
+		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-imessage-link-help-create'}},
+			showIMessageHelpdesk
+		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-imessage-link-help-connect'}},
+			showIMessageHelpdesk
 		);
 	});
 })(window);

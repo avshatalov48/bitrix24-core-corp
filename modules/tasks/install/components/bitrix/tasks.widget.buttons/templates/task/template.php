@@ -3,9 +3,12 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load("popup");
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'popup',
+	'ui.buttons',
+	'ui.buttons.icons',
+]);
 
 Loc::loadMessages(__FILE__);
 

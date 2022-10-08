@@ -47,9 +47,19 @@ class CCrmDateTimeHelper
 		return FormatDate('FULL', MakeTimeStamp($datetime, FORMAT_DATETIME) - $offset);
 	}
 
-	public static function GetMaxDatabaseDate()
+	public static function GetMaxDatabaseDate($preparedForInsert = true)
 	{
-		return "'9999-12-31 00:00:00'";
+		$maxDate = (new DateTime())
+			->setDate(9999, 12, 31)
+			->setTime(0, 0, 0)
+			->disableUserTime()
+		;
+		if ($preparedForInsert)
+		{
+			return Main\Application::getConnection()->getSqlHelper()->convertToDbDateTime($maxDate);
+		}
+
+		return $maxDate->toString();
 	}
 	public static function IsMaxDatabaseDate($datetime, $format = false)
 	{
@@ -121,5 +131,75 @@ class CCrmDateTimeHelper
 	public static function DateToSql(Date $date)
 	{
 		return Main\Application::getConnection()->getSqlHelper()->convertToDb($date, new DatetimeField('D'));
+	}
+
+	private static function getUserTimezoneOffset(int $userId = null): int
+	{
+		static $offsets = [];
+
+		$currentUser = \Bitrix\Crm\Service\Container::getInstance()->getContext()->getUserId();
+		if (is_null($userId))
+		{
+			$userId = $currentUser;
+		}
+
+		if (!isset($offsets[$userId]))
+		{
+			$offsets[$userId] = (int)($userId > 0 ? \CTimeZone::GetOffset($currentUser === $userId ? null : $userId) : 0);
+		}
+
+		return $offsets[$userId] ?: 0;
+	}
+
+	/**
+	 * Coverts DateTime to user timezone for arbitrary user
+	 *
+	 * @param DateTime $serverTime
+	 * @param int|null $userId
+	 * @return DateTime
+	 */
+	public static function getUserTime(DateTime $serverTime, int $userId = null): DateTime
+	{
+		$offset = self::getUserTimezoneOffset($userId);
+		$time = clone $serverTime;
+		if ($offset)
+		{
+			$time->add(($offset < 0 ? '-' : '') . 'PT' . abs($offset) . 'S');
+		}
+
+		return $time;
+	}
+
+	/**
+	 * Coverts DateTime from user timezone to server timezone for arbitrary user
+	 *
+	 * @param DateTime $userTime
+	 * @param int|null $userId
+	 * @return DateTime
+	 */
+	public static function getServerTime(DateTime $userTime, int $userId = null): DateTime
+	{
+		$offset = self::getUserTimezoneOffset($userId);
+		$time = clone $userTime;
+		if ($offset)
+		{
+			$time->add(($offset < 0 ? '' : '-') . 'PT' . abs($offset) . 'S');
+		}
+
+		return $time;
+	}
+
+	/**
+	 * Coverts DateTime to Date according to user timezone for arbitrary user
+	 *
+	 * @param DateTime $serverDate
+	 * @param int|null $userId
+	 * @return DateTime
+	 */
+	public static function getUserDate(DateTime $serverDate, int $userId = null): Date
+	{
+		return Date::createFromTimestamp(
+			\CCrmDateTimeHelper::getUserTime($serverDate, $userId)->setTime(0, 0, 0)->getTimestamp()
+		);
 	}
 }

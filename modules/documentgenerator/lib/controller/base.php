@@ -49,7 +49,7 @@ abstract class Base extends Controller
 						$controller = $this;
 					}
 					/** @var \Bitrix\DocumentGenerator\Document $className */
-					$document = $className::loadById($id);
+					$document = $className::loadById((int)$id);
 					if (!$document)
 					{
 						$controller->addError(

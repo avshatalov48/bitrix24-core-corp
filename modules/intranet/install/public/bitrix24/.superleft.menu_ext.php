@@ -69,8 +69,10 @@ if (\Bitrix\Main\Config\Option::get('intranet', 'left_menu_crm_store_menu', 'N')
 {
 	$arMenu[] = array(
 		GetMessage("MENU_STORE_ACCOUNTING_SECTION"),
-		'/shop/documents/',
-		[],
+		'/shop/documents/inventory/',
+		[
+			"/shop/documents/",
+		],
 		['menu_item_id' => 'menu_crm_store'],
 		''
 	);

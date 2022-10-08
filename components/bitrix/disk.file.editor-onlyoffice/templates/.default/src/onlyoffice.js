@@ -34,6 +34,7 @@ export default class OnlyOffice
 	context: Context = null;
 	usersInDocument: UserManager = null;
 	sharingControlType: ?SharingControlType = null;
+	brokenDocumentOpened: boolean = false;
 
 	constructor(editorOptions: EditorOptions)
 	{
@@ -326,6 +327,7 @@ export default class OnlyOffice
 		}
 
 		BX.Disk.Viewer.Actions.runActionEdit({
+			name: this.context.object.name,
 			objectId: this.context.object.id,
 			attachedObjectId: this.context.attachedObject.id,
 			serviceCode: serviceCode,
@@ -363,6 +365,21 @@ export default class OnlyOffice
 		currentSlider.close();
 	}
 
+	isDocumentReadyToEdit(): boolean
+	{
+		if (this.brokenDocumentOpened)
+		{
+			return false;
+		}
+
+		if (!this.caughtDocumentReady)
+		{
+			return false;
+		}
+
+		return true;
+	}
+
 	handleSliderClose(event: BaseEvent): void
 	{
 		console.log('handleSliderClose');
@@ -383,7 +400,7 @@ export default class OnlyOffice
 			return;
 		}
 
-		if (this.isViewMode())
+		if (this.isViewMode() || !this.isDocumentReadyToEdit())
 		{
 			this.handleClose();
 
@@ -482,7 +499,11 @@ export default class OnlyOffice
 	{
 		console.log('onlyoffice error:', d.data);
 
-		if (d.data.errorCode === -84)
+		if (d.data.errorCode === -82)
+		{
+			this.brokenDocumentOpened = true;
+		}
+		else if (d.data.errorCode === -84)
 		{
 			setTimeout(() => {
 				(new CustomErrorControl()).showWhenTooLarge(

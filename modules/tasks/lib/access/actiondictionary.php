@@ -49,6 +49,7 @@ class ActionDictionary
 		ACTION_TEMPLATE_EDIT				= 'template_edit',
 		ACTION_TEMPLATE_REMOVE				= 'template_remove',
 		ACTION_TEMPLATE_CREATE				= 'template_create',
+		ACTION_TEMPLATE_SAVE				= 'template_save',
 
 		ACTION_TASK_EXPORT					= 'task_export',
 		ACTION_TASK_IMPORT					= 'task_import',

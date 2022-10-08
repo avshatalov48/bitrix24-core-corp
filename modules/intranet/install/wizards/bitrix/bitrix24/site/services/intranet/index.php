@@ -73,8 +73,8 @@ if ($structure_iblock_id = COption::GetOptionInt('intranet', 'iblock_structure',
 		$dbRes = CLanguage::GetList();
 		while ($arRes = $dbRes->Fetch())
 		{
-			if (file_exists(dirname(__FILE__).'/'.$arRes['LID'].'/labels.php'))
-				require(dirname(__FILE__).'/'.$arRes['LID'].'/labels.php');
+			if (file_exists(__DIR__.'/'.$arRes['LID'].'/labels.php'))
+				require(__DIR__.'/'.$arRes['LID'].'/labels.php');
 		}
 
 		$obUT->Add(array(

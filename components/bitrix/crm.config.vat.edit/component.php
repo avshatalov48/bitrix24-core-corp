@@ -1,4 +1,6 @@
 <?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+/** @var array $arParams */
+
 use Bitrix\Main\Loader,
 	Bitrix\Catalog;
 
@@ -62,9 +64,11 @@ if($vatID > 0)
 	}
 }
 
+$excludeVatId = CCrmVat::getExcludeVatId();
+
 $arResult['VAT_ID'] = $vatID;
 $arResult['VAT'] = $arVat;
-$isEditMode = $vatID > 0 ? true : false;
+$isEditMode = $vatID > 0;
 
 $arResult['FORM_ID'] = 'CRM_VAT_EDIT';
 $arResult['GRID_ID'] = 'CRM_VAT_EDIT';
@@ -77,7 +81,7 @@ if(check_bitrix_sessid())
 {
 	if($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save']) || isset($_POST['apply'])))
 	{
-		$vatID = isset($_POST['vat_id']) ? intval($_POST['vat_id']) : 0;
+		$vatID = (int)($_POST['vat_id'] ?? 0);
 
 		$fields = array();
 
@@ -99,8 +103,26 @@ if(check_bitrix_sessid())
 		if(isset($_POST['NAME']))
 			$fields['NAME'] = $_POST['NAME'];
 
-		if(isset($_POST['RATE']))
-			$fields['RATE'] = (float)$_POST['RATE'];
+		if ($vatID !== $excludeVatId)
+		{
+			if ($excludeVatId === null)
+			{
+				$value = $_POST['EXCLUDE_VAT'] ?? null;
+				if (is_string($value))
+				{
+					$fields['EXCLUDE_VAT'] = $value;
+				}
+			}
+			$value = $_POST['RATE'] ?? null;
+			if (is_string($value))
+			{
+				$value = (float)$value;
+				if ($value >= 0)
+				{
+					$fields['RATE'] = $value;
+				}
+			}
+		}
 
 		$arVat = CCrmVat::GetByID($vatID);
 
@@ -110,10 +132,10 @@ if(check_bitrix_sessid())
 		{
 			if (is_array($arVat))
 			{
-				$result = Catalog\VatTable::update($vatID, $fields);
+				$result = Catalog\Model\Vat::update($vatID, $fields);
 				if (!$result->isSuccess())
 				{
-					$errorMsg = implode('. ', $result->getErrorMessages());
+					$errorMsg = implode(' ', $result->getErrorMessages());
 					if ($errorMsg === '')
 					{
 						$errorMsg = GetMessage('CRM_VAT_UPDATE_UNKNOWN_ERROR');
@@ -123,14 +145,14 @@ if(check_bitrix_sessid())
 			}
 			else
 			{
-				$result = Catalog\VatTable::add($fields);
+				$result = Catalog\Model\Vat::add($fields);
 				if ($result->isSuccess())
 				{
 					$vatID = (int)$result->getId();
 				}
 				else
 				{
-					$errorMsg = implode('. ', $result->getErrorMessages());
+					$errorMsg = implode(' ', $result->getErrorMessages());
 					if ($errorMsg === '')
 					{
 						$errorMsg = GetMessage('CRM_VAT_ADD_UNKNOWN_ERROR');
@@ -167,12 +189,21 @@ if(check_bitrix_sessid())
 	}
 	elseif ($_SERVER['REQUEST_METHOD'] == 'GET' &&  isset($_GET['delete']))
 	{
-		$vatID = isset($arParams['VAT_ID']) ? intval($arParams['VAT_ID']) : 0;
+		$vatID = (int)($arParams['VAT_ID'] ?? 0);
 		$arVat = $vatID > 0 ? CCrmVat::GetByID($vatID) : null;
 		if($arVat)
 		{
-			if(!CCatalogVat::Delete($vatID))
-				ShowError(GetMessage('CRM_VAT_DELETE_UNKNOWN_ERROR'));
+			$result = Catalog\Model\Vat::delete($vatID);
+			if (!$result->isSuccess())
+			{
+				$error = implode(' ', $result->getErrorMessages());
+				if ($error === '')
+				{
+					$error = GetMessage('CRM_VAT_DELETE_UNKNOWN_ERROR');
+				}
+				ShowError($error);
+			}
+			unset($result);
 		}
 
 		LocalRedirect(
@@ -203,11 +234,20 @@ $arResult['FIELDS']['tab_1'][] = array(
 	'type' =>  'text'
 );
 
+if ($excludeVatId === null)
+{
+	$arResult['FIELDS']['tab_1'][] = array(
+		'id' => 'EXCLUDE_VAT',
+		'name' =>  GetMessage('CRM_VAT_FIELD_EXCLUDE_VAT'),
+		'value' => $arVat['EXCLUDE_VAT'] === 'Y',
+		'type' => 'checkbox',
+	);
+}
 $arResult['FIELDS']['tab_1'][] = array(
 	'id' => 'RATE',
 	'name' =>  GetMessage('CRM_VAT_FIELD_RATE'),
-	'value' => floatval($arVat['RATE']),
-	'type' =>  'text'
+	'value' => $arVat['EXCLUDE_VAT'] === 'Y' ? GetMessage('CRM_VAT_EMPTY') : $arVat['RATE'],
+	'type' =>  $arVat['EXCLUDE_VAT'] === 'Y' ? 'custom' : 'text'
 );
 
 $arResult['FIELDS']['tab_1'][] = array(
@@ -225,4 +265,3 @@ $arResult['FIELDS']['tab_1'][] = array(
 );
 
 $this->IncludeComponentTemplate();
-?>

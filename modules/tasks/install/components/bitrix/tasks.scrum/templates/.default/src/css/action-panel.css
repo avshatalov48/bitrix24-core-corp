@@ -20,7 +20,7 @@
 	padding: 8px 13px 8px 17px;
 	background-color: #fff;
 	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.14);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	z-index: 100;
 	display: inline-flex;
 	flex-wrap: nowrap;

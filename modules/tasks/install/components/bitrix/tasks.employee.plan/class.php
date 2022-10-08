@@ -40,8 +40,7 @@ class TasksEmployeePlanComponent extends TasksBaseComponent
 
 		return [
 			'getGridRegion' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],

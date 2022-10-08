@@ -45,12 +45,17 @@ class Welcome
 	public function automaticAddMessage()
 	{
 		$result = false;
+		$isNewSession = (int)$this->session['MESSAGE_COUNT'] === 0;
+		$sendWelcomeEachSession = $this->config['SEND_WELCOME_EACH_SESSION'] === 'Y';
+		$isInboundCall = $this->session['MODE'] === Session::MODE_INPUT;
+		$isBotAnswered = $this->session['JOIN_BOT'];
 
-		if (
-			$this->session['MODE'] == Session::MODE_INPUT &&
-			$this->session['JOIN_BOT'] == false &&
-			($this->chat->isNowCreated() || $this->isTextAfterWelcomeFormIsNeeded())
-		)
+		$isAllowedAutomaticMessage = $isInboundCall && !$isBotAnswered;
+		$isNeededAutomaticMessage = $this->chat->isNowCreated()
+			|| $this->isTextAfterWelcomeFormIsNeeded()
+			|| ($isNewSession && $sendWelcomeEachSession);
+
+		if ($isAllowedAutomaticMessage && $isNeededAutomaticMessage)
 		{
 			$result = $this->sendMessage();
 		}
@@ -164,9 +169,11 @@ class Welcome
 			$clientChatId = Chat::parseLinesChatEntityId($this->session['USER_CODE'])['connectorChatId'];
 			$this->clientChat = new Chat($clientChatId);
 		}
-		$isFormNeeded = $this->clientChat->getFieldData(Chat::FIELD_LIVECHAT)['WELCOME_FORM_NEEDED'];
+		$isFormNeeded =
+			$this->clientChat->getFieldData(Chat::FIELD_LIVECHAT)['WELCOME_FORM_NEEDED'] === 'Y'
+			&& $this->chat->isNowCreated();
 
-		return $isFormNeeded === 'Y';
+		return $isFormNeeded;
 	}
 
 	private function isTextAfterWelcomeFormIsNeeded(): bool

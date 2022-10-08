@@ -151,7 +151,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          }
 	        }).then(function (response) {
 	          if (response.status === 'success') {
-	            _this2.badAttempts.delete(userId);
+	            _this2.badAttempts["delete"](userId);
 
 	            resolve(response.data.user);
 	          }
@@ -553,6 +553,7 @@ this.BX.Disk = this.BX.Disk || {};
 	    babelHelpers.defineProperty(this, "context", null);
 	    babelHelpers.defineProperty(this, "usersInDocument", null);
 	    babelHelpers.defineProperty(this, "sharingControlType", null);
+	    babelHelpers.defineProperty(this, "brokenDocumentOpened", false);
 	    var options = main_core.Type.isPlainObject(editorOptions) ? editorOptions : {};
 	    this.pullConfig = options.pullConfig;
 	    this.documentSession = options.documentSession;
@@ -815,6 +816,7 @@ this.BX.Disk = this.BX.Disk || {};
 	      }
 
 	      BX.Disk.Viewer.Actions.runActionEdit({
+	        name: this.context.object.name,
 	        objectId: this.context.object.id,
 	        attachedObjectId: this.context.attachedObject.id,
 	        serviceCode: serviceCode
@@ -853,6 +855,19 @@ this.BX.Disk = this.BX.Disk || {};
 	      currentSlider.close();
 	    }
 	  }, {
+	    key: "isDocumentReadyToEdit",
+	    value: function isDocumentReadyToEdit() {
+	      if (this.brokenDocumentOpened) {
+	        return false;
+	      }
+
+	      if (!this.caughtDocumentReady) {
+	        return false;
+	      }
+
+	      return true;
+	    }
+	  }, {
 	    key: "handleSliderClose",
 	    value: function handleSliderClose(event) {
 	      console.log('handleSliderClose');
@@ -874,7 +889,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        return;
 	      }
 
-	      if (this.isViewMode()) {
+	      if (this.isViewMode() || !this.isDocumentReadyToEdit()) {
 	        this.handleClose();
 	        return;
 	      }
@@ -962,7 +977,9 @@ this.BX.Disk = this.BX.Disk || {};
 
 	      console.log('onlyoffice error:', d.data);
 
-	      if (d.data.errorCode === -84) {
+	      if (d.data.errorCode === -82) {
+	        this.brokenDocumentOpened = true;
+	      } else if (d.data.errorCode === -84) {
 	        setTimeout(function () {
 	          new CustomErrorControl().showWhenTooLarge(_this3.context.object.name, _this3.getEditorWrapperNode(), _this3.getContainer(), _this3.linkToDownload);
 	        }, 100);

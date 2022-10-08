@@ -19,7 +19,7 @@ export default {
 			this.$emit('on-submit', event);
 		},
 	},
-	template: `		
+	template: `
 		<div
 			:class="buttonClass"
 			class="salescenter-app-payment-by-sms-item-show salescenter-app-payment-by-sms-item salescenter-app-payment-by-sms-item-send"

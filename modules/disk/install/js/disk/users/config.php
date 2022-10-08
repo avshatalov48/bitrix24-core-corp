@@ -8,6 +8,7 @@ return [
 	'css' => 'style.css',
 	'js' => 'dist/users.bundle.js',
 	'rel' => [
+		'ui.design-tokens',
 		'main.core',
 		'main.popup',
 		'main.polyfill.intersectionobserver',

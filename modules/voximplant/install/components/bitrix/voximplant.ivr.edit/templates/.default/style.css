@@ -34,7 +34,7 @@
 /**/
 .ivr-section-title{
 	background: #d5f1fc;
-	font: bold 16px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 16px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	padding: 11px 19px;
 	text-align: left;
@@ -86,7 +86,7 @@
 .ivr-block-title {
 	margin: 5px 0 14px 0;
 	padding: 0;
-	font: bold 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 .ivr-block-row {
@@ -440,7 +440,7 @@
 	position: relative;
 }
 .ivr-logic-tree-section-title-text {
-	font: bold 16px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 16px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 }
 .ivr-logic-tree-section-collapse-btn {

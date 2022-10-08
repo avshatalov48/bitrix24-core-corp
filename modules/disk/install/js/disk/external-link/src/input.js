@@ -1,5 +1,7 @@
 import {Cache, Type, Dom, Text, Tag, Loc, Runtime} from 'main.core';
 import {EventEmitter} from 'main.core.events';
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import 'clipboard';
 import 'ui.switcher';
 import 'ui.layout-form';

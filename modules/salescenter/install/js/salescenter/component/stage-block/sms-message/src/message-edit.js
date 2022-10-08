@@ -4,6 +4,10 @@ const MessageEdit = {
 			type: String,
 			required: true
 		},
+		selectedMode: {
+			type: String,
+			required: true,
+		},
 	},
 	computed:
 		{
@@ -37,11 +41,12 @@ const MessageEdit = {
 						mode: "class",
 						data: {
 							smsTemplate: smsText,
+							mode: this.selectedMode,
 						},
 						analyticsLabel: 'salescenterSmsTemplateChange'
 					}
 				).catch((response) => {
-					const errorMessage = response.errors.map(function(err){return err.message}).join("; ");
+					const errorMessage = response.errors.map((err) => {return err.message}).join("; ");
 					alert(errorMessage);
 				});
 			},

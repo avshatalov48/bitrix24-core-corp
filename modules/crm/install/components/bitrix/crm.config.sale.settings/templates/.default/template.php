@@ -1,6 +1,6 @@
 <? if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-CUtil::InitJSCore(array("amcharts", "amcharts_funnel", "amcharts_serial"));
+CUtil::InitJSCore(array("amcharts", "amcharts_funnel", "amcharts_serial", "ui.fonts.opensans"));
 Bitrix\Main\Page\Asset::getInstance()->addCss("/bitrix/js/crm/css/crm.css");
 Bitrix\Main\Page\Asset::getInstance()->addJs($this->GetFolder()."/drag_and_drop.js");
 

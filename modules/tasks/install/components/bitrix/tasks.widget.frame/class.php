@@ -21,8 +21,7 @@ class TasksWidgetFrameComponent extends TasksBaseComponent
 
 		return [
 			'setState' => [
-				'prefilters' => [
-					new \Bitrix\Main\Engine\ActionFilter\Authentication(),
+				'+prefilters' => [
 					new \Bitrix\Tasks\Action\Filter\BooleanFilter(),
 				],
 			],

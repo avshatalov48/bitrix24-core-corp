@@ -16,6 +16,17 @@ class TemplateFieldHandler
 	private $templateId;
 	private $userId;
 
+	/**
+	 *
+	 */
+	public const DEPRECATED_FIELDS = [
+		'ACCOMPLICES',
+		'AUDITORS',
+		'RESPONSIBLES',
+		'TAGS',
+		'DEPENDS_ON',
+	];
+
 	public function __construct(int $userId, array $fields, array $templateData = null)
 	{
 		$this->userId = $userId;
@@ -23,22 +34,6 @@ class TemplateFieldHandler
 		$this->templateData = $templateData;
 
 		$this->setTemplateId();
-	}
-
-	/**
-	 * @return $this
-	 */
-	public function prepareDescription(): self
-	{
-		if (
-			array_key_exists('DESCRIPTION', $this->fields)
-			&& $this->fields['DESCRIPTION'] !== ''
-		)
-		{
-			$this->fields['DESCRIPTION'] = Emoji::encode($this->fields['DESCRIPTION']);
-		}
-
-		return $this;
 	}
 
 	/**
@@ -104,6 +99,40 @@ class TemplateFieldHandler
 		)
 		{
 			$this->fields['MULTITASK'] = 'Y';
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 */
+	public function prepareDependencies(): self
+	{
+		if (!array_key_exists('DEPENDS_ON', $this->fields))
+		{
+			return $this;
+		}
+
+		if (!is_array($this->fields['DEPENDS_ON']))
+		{
+			$this->fields['DEPENDS_ON'] = [];
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 */
+	public function prepareDescription(): self
+	{
+		if (
+			array_key_exists('DESCRIPTION', $this->fields)
+			&& $this->fields['DESCRIPTION'] !== ''
+		)
+		{
+			$this->fields['DESCRIPTION'] = Emoji::encode($this->fields['DESCRIPTION']);
 		}
 
 		return $this;
@@ -406,6 +435,14 @@ class TemplateFieldHandler
 		}
 
 		if (
+			array_key_exists('RESPONSIBLES', $this->fields)
+			&& is_string($this->fields['RESPONSIBLES'])
+		)
+		{
+			$this->fields['RESPONSIBLES'] = unserialize($this->fields['RESPONSIBLES'], ['allowed_classes' => false]);
+		}
+
+		if (
 			(
 				!$this->templateId
 				&& (int) $this->fields['TPARAM_TYPE'] !== \CTaskTemplates::TYPE_FOR_NEW_USER
@@ -437,17 +474,41 @@ class TemplateFieldHandler
 
 		if (
 			!$this->templateId
-			&& (string) $this->fields['RESPONSIBLES'] === ''
+			&& empty($this->fields['RESPONSIBLES'])
 		)
 		{
 			$this->fields['RESPONSIBLES'] = [$this->fields['RESPONSIBLE_ID']];
 		}
 		elseif (
-			(string) $this->fields['RESPONSIBLES'] === ''
-			&& (string) $this->templateData['RESPONSIBLES'] === ''
+			empty($this->fields['RESPONSIBLES'])
+			&& empty($this->templateData['RESPONSIBLES'])
 		)
 		{
 			$this->fields['RESPONSIBLES'] = [$this->fields['RESPONSIBLE_ID']];
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @return $this
+	 */
+	public function prepareMembers(): self
+	{
+		if (
+			array_key_exists('ACCOMPLICES', $this->fields)
+			&& is_string($this->fields['ACCOMPLICES'])
+		)
+		{
+			$this->fields['ACCOMPLICES'] = unserialize($this->fields['ACCOMPLICES'], ['allowed_classes' => false]);
+		}
+
+		if (
+			array_key_exists('AUDITORS', $this->fields)
+			&& is_string($this->fields['AUDITORS'])
+		)
+		{
+			$this->fields['AUDITORS'] = unserialize($this->fields['AUDITORS'], ['allowed_classes' => false]);
 		}
 
 		return $this;
@@ -527,6 +588,12 @@ class TemplateFieldHandler
 		foreach ($fields as $fieldName => $value)
 		{
 			if (!array_key_exists($fieldName, $tableFields))
+			{
+				unset($fields[$fieldName]);
+				continue;
+			}
+
+			if (in_array($fieldName, self::DEPRECATED_FIELDS))
 			{
 				unset($fields[$fieldName]);
 				continue;

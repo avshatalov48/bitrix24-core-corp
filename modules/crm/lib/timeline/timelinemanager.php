@@ -1,7 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Timeline;
 
 use Bitrix\Main\Loader;
+use Bitrix\Crm\Service;
 
 class TimelineManager
 {
@@ -123,13 +125,13 @@ class TimelineManager
 		{
 			return ShipmentDocumentController::getInstance();
 		}
-		elseif(\CCrmOwnerType::isUseDynamicTypeBasedApproach($assocEntityTypeID))
-		{
-			return DynamicController::getInstance($assocEntityTypeID);
-		}
 		elseif ($assocEntityTypeID === \CCrmOwnerType::Quote)
 		{
 			return QuoteController::getInstance();
+		}
+		elseif(\CCrmOwnerType::isUseDynamicTypeBasedApproach($assocEntityTypeID))
+		{
+			return DynamicController::getInstance($assocEntityTypeID);
 		}
 
 		return null;
@@ -140,7 +142,7 @@ class TimelineManager
 		self::prepareDisplayData($items);
 		$item = $items[0];
 	}
-	public static function prepareDisplayData(array &$items, $userID = 0, $userPermissions = null)
+	public static function prepareDisplayData(array &$items, $userID = 0, $userPermissions = null, bool $checkPermissions = true)
 	{
 		$entityMap = array();
 		foreach($items as $ID => $item)
@@ -214,17 +216,17 @@ class TimelineManager
 			{
 				$activityIDs = array_keys($entityInfos);
 				$dbResult = \CCrmActivity::GetList(
-					array(),
-					array('@ID' => $activityIDs, 'CHECK_PERMISSIONS' => 'N'),
+					[],
+					['@ID' => $activityIDs, 'CHECK_PERMISSIONS' => 'N'],
 					false,
 					false,
-					array(
+					[
 						'ID', 'OWNER_ID', 'OWNER_TYPE_ID', 'TYPE_ID', 'RESPONSIBLE_ID',  'CREATED',
 						'PROVIDER_ID', 'PROVIDER_TYPE_ID', 'PROVIDER_PARAMS',
 						'ASSOCIATED_ENTITY_ID', 'DIRECTION', 'SUBJECT', 'STATUS', 'DEADLINE',
 						'DESCRIPTION', 'DESCRIPTION_TYPE', 'ASSOCIATED_ENTITY_ID',
-						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS'
-					)
+						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS', 'RESULT_MARK'
+					]
 				);
 				while($fields = $dbResult->Fetch())
 				{
@@ -235,8 +237,17 @@ class TimelineManager
 					}
 
 					$responsibleID = isset($fields['RESPONSIBLE_ID']) ? (int)$fields['RESPONSIBLE_ID'] : 0;
-					$isPermitted = $responsibleID === $userID
-						|| \CCrmActivity::CheckReadPermission($fields['OWNER_TYPE_ID'], $fields['OWNER_ID'], $userPermissions);
+					if ($checkPermissions)
+					{
+						$isPermitted =
+							($responsibleID === $userID)
+							|| \CCrmActivity::CheckReadPermission($fields['OWNER_TYPE_ID'], $fields['OWNER_ID'], $userPermissions)
+						;
+					}
+					else
+					{
+						$isPermitted = true;
+					}
 
 					$itemIDs = isset($entityInfos[$assocEntityID]['ITEM_IDS'])
 						? $entityInfos[$assocEntityID]['ITEM_IDS'] : array();
@@ -299,10 +310,8 @@ class TimelineManager
 				);
 				while ($payment = $paymentsData->fetch())
 				{
-					$payment['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
-						\Bitrix\Main\Config\Option::get('crm', 'path_to_order_payment_details'),
-						array('payment_id' => $payment['ID'])
-					);
+					$payment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getPaymentDetailsLink($payment['ID']);
 					$payment['SUM_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($payment['SUM'], $payment['CURRENCY']);
 					$orderPaymentMap[$payment['ORDER_ID']][$payment['ID']] = $payment;
 				}
@@ -319,10 +328,8 @@ class TimelineManager
 				);
 				while ($shipment = $shipmentsData->fetch())
 				{
-					$shipment['SHOW_URL'] = \CComponentEngine::MakePathFromTemplate(
-						\Bitrix\Main\Config\Option::get('crm', 'path_to_order_shipment_details'),
-						array('shipment_id' => $shipment['ID'])
-					);
+					$shipment['SHOW_URL'] = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+						->getShipmentDetailsLink($shipment['ID']);
 					$shipment['PRICE_WITH_CURRENCY'] = \CCrmCurrency::MoneyToString($shipment['PRICE'], $shipment['CURRENCY']);
 					$orderShipmentMap[$shipment['ORDER_ID']][$shipment['ID']] = $shipment;
 				}
@@ -373,10 +380,8 @@ class TimelineManager
 							array('check_id' => $check['ID'])
 						);
 
-						$listLink = \CComponentEngine::MakePathFromTemplate(
-							\Bitrix\Main\Config\Option::get('crm', 'path_to_order_details'),
-							array('order_id' => $check['ORDER_ID'])
-						);
+						$listLink = Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()
+							->getOrderDetailsLink($check['ORDER_ID']);
 
 						$uri = new \Bitrix\Main\Web\Uri($listLink);
 						$uri->addParams(['tab' => 'check']);

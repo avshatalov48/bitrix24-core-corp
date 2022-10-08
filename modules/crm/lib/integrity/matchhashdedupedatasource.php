@@ -11,8 +11,8 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 		parent::__construct($typeID, $params);
 	}
 	/**
-	* @return DuplicateCriterion
-	*/
+	 * @return DuplicateCriterion
+	 */
 	abstract protected function createCriterionFromMatches(array $matches);
 	abstract protected function prepareResult(array &$map, DedupeDataSourceResult $result);
 
@@ -71,8 +71,8 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 	}
 
 	/**
-	* @return DedupeDataSourceResult
-	*/
+	 * @return DedupeDataSourceResult
+	 */
 	public function getList($offset, $limit)
 	{
 		return $this->getListInternal([], $offset, $limit);
@@ -145,11 +145,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 			));
 		}
 
-		// in automatic mode we are looking for items assigned to current user only:
-		if ($this->params->limitByAssignedUser())
-		{
-			$query->registerRuntimeField('', static::getAssignedByReferenceField($this->getEntityTypeID(), $this->getUserID()));
-		}
+		$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $this->params);
 
 		if ($scope === DuplicateIndexType::DEFAULT_SCOPE)
 		{
@@ -233,11 +229,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 					$query->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
 				}
 
-				// in automatic mode we are looking for items assigned to current user only:
-				if ($this->params->limitByAssignedUser())
-				{
-					$query->registerRuntimeField('', static::getAssignedByReferenceField($this->getEntityTypeID(), $this->getUserID()));
-				}
+				$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $this->params);
 
 				$query->setOffset(0);
 				$query->setLimit(100);
@@ -301,11 +293,7 @@ abstract class MatchHashDedupeDataSource extends DedupeDataSource
 				$query->addFilter('@SCOPE', array(DuplicateIndexType::DEFAULT_SCOPE, $scope));
 			}
 
-			// in automatic mode we are looking for items assigned to current user only:
-			if ($this->params->limitByAssignedUser())
-			{
-				$query->registerRuntimeField('', static::getAssignedByReferenceField($this->getEntityTypeID(), $this->getUserID()));
-			}
+			$query = DedupeDataSource::registerRuntimeFieldsByParams($query, $this->params);
 
 			$dbResult = $query->exec();
 			while($fields = $dbResult->fetch())

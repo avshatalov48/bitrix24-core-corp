@@ -139,7 +139,7 @@ class CCrmCurrency
 
 		if(!self::$BASE_CURRENCY_ID)
 		{
-			self::$BASE_CURRENCY_ID = Currency\CurrencyManager::getBaseCurrency();
+			self::$BASE_CURRENCY_ID = (string)Currency\CurrencyManager::getBaseCurrency();
 		}
 		return self::$BASE_CURRENCY_ID;
 	}
@@ -195,7 +195,7 @@ class CCrmCurrency
 		}
 
 		$baseCurrencyID = Currency\CurrencyManager::getBaseCurrency();
-		if(!isset($baseCurrencyID[0]))
+		if ($baseCurrencyID === null)
 		{
 			return false;
 		}

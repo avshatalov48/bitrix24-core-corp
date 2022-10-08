@@ -40,6 +40,7 @@ class Output extends Base\Output
 					'USER' => $message['user']['id'],
 					'SESSION_ID' => $message['session']['id'],
 					'PARENT_ID' => $message['session']['parent_id'],
+					'CLOSE_TERM' => $message['session']['close_term'],
 				];
 
 				if ($immediately)

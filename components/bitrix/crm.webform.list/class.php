@@ -123,7 +123,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			$this->preparePost();
 		}
 
-		$dbForms = Internals\FormTable::getList(array(
+		$dbForms = Internals\FormTable::getDefaultTypeList(array(
 			"select"=> $this->getDataFields(),
 			"filter"=> $this->getDataFilters(),
 			'order' => $this->getOrder(),
@@ -145,18 +145,12 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 
 			$form['COUNT_START_FILL'] = (int)$counters['COMMON']['START_FILL'];
 			$form['COUNT_END_FILL'] = (int)$counters['COMMON']['END_FILL'];
-			$form['COUNT_START_FILL'] = $form['COUNT_START_FILL'] ?: 1;
-			$form['SUMMARY_CONVERSION'] =
-				$form['COUNT_END_FILL']
-				/
-				(
-					$form['COUNT_END_FILL'] > $form['COUNT_START_FILL']
-						? $form['COUNT_END_FILL']
-						: $form['COUNT_START_FILL']
-				)
-			;
-			$form['ACTIVE_CHANGE_BY'] = $this->getUserInfo($form['ACTIVE_CHANGE_BY']);
+			$form['COUNT_VIEWS'] = (int)$counters['COMMON']['VIEWS'];
+			$form['COUNT_RESET_DATE'] = $counters['COMMON']['DATE_CREATE'];
+			$form['SUMMARY_CONVERSION'] = 0;
+			$form['SUMMARY_SUBMITS'] = 0;
 
+			$form['ACTIVE_CHANGE_BY'] = $this->getUserInfo($form['ACTIVE_CHANGE_BY']);
 
 			$replaceList = array('id' => $form['ID'], 'form_id' => $form['ID']);
 			$form['PATH_TO_WEB_FORM_LIST'] = CComponentEngine::makePathFromTemplate(
@@ -205,7 +199,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			$this->arResult['ITEMS'][] = $form;
 		}
 
-		$this->calcConversion();
+		$this->calcConversionAndSubmits();
 
 		$this->arResult['STUB'] = [
 			'title' => Loc::getMessage('TASKS_GRID_STUB_NO_DATA_TITLE'),
@@ -283,7 +277,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		}
 	}
 
-	protected function calcConversion(): void
+	protected function calcConversionAndSubmits(): void
 	{
 		$ids = array_column($this->arResult['ITEMS'], 'ID');
 
@@ -297,20 +291,20 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				'to' => (new Main\Type\Date())->add("-14 days"),
 			],
 		];
-		$edits = [];
+		$views = [];
 		foreach ($periods as $periodKey => $period)
 		{
-			$rows = WebForm\Internals\FormStartEditTable::query()
+			$rows = WebForm\Internals\FormCounterDailyTable::query()
 				->addSelect('FORM_ID')
 				->addSelect('CNT')
 				->addFilter('FORM_ID', $ids)
-				->addFilter('>DATE_CREATE', $period['from'])
-				->addFilter('<=DATE_CREATE', $period['to'])
-				->registerRuntimeField(new Main\ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'FORM_ID'))
+				->addFilter('>DATE_STAT', $period['from'])
+				->addFilter('<=DATE_STAT', $period['to'])
+				->registerRuntimeField(new Main\ORM\Fields\ExpressionField('CNT', 'SUM(%s)', 'VIEWS'))
 				->addGroup('FORM_ID')
 			;
 			$rows = $rows->fetchAll();
-			$edits[$periodKey] = array_combine(
+			$views[$periodKey] = array_combine(
 				array_column($rows, 'FORM_ID'),
 				array_column($rows, 'CNT')
 			);
@@ -319,13 +313,13 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		$results = [];
 		foreach ($periods as $periodKey => $period)
 		{
-			$rows = WebForm\Internals\ResultTable::query()
+			$rows = WebForm\Internals\FormCounterDailyTable::query()
 				->addSelect('FORM_ID')
 				->addSelect('CNT')
 				->addFilter('FORM_ID', $ids)
-				->addFilter('>DATE_INSERT', $period['from'])
-				->addFilter('<=DATE_INSERT', $period['to'])
-				->registerRuntimeField(new Main\ORM\Fields\ExpressionField('CNT', 'COUNT(%s)', 'FORM_ID'))
+				->addFilter('>DATE_STAT', $period['from'])
+				->addFilter('<=DATE_STAT', $period['to'])
+				->registerRuntimeField(new Main\ORM\Fields\ExpressionField('CNT', 'SUM(%s)', 'END_FILL'))
 				->addGroup('FORM_ID')
 			;
 			$rows = $rows->fetchAll();
@@ -338,21 +332,23 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		foreach ($this->arResult['ITEMS'] as $formIndex => $form)
 		{
 			$id = $form['ID'];
+			$formCreate = max($form['COUNT_RESET_DATE'], $form['DATE_CREATE']);
+			$allTimeEndFill = $form['COUNT_END_FILL'];
+			$allTimeViews = $form['COUNT_VIEWS'];
 
-			$conv = [];
+			$conv = $submits = [];
 			foreach ($periods as $periodKey => $period)
 			{
-				$conv[$periodKey] = (
-					($results[$periodKey][$id] ?? 0)
-					/
-					(($edits[$periodKey][$id] ?? 0) ?: 1)
-				);
+				$viewsForPeriod = $views[$periodKey][$id] ?? 0;
+				$resultsForPeriod = $results[$periodKey][$id] ?? 0;
+				$conv[$periodKey] = $viewsForPeriod > 0 ? $resultsForPeriod / $viewsForPeriod : 0;
+				$submits[$periodKey] = $resultsForPeriod;
 			}
 
-			$form['SUMMARY_CONVERSION'] = $conv['current'] ?: $form['SUMMARY_CONVERSION'];
-			$trend = $conv['current'] ? $conv['current'] >= $conv['recent'] : null;
+			$form['SUMMARY_CONVERSION'] = self::formatConversion($conv['current'], $allTimeViews);
 
-			$form['SUMMARY_CONVERSION'] = self::formatConversion($form['SUMMARY_CONVERSION'], $trend);
+			$form['SUMMARY_SUBMITS'] = self::formatSubmits((int)$submits['current'], (int)$submits['recent'], $formCreate, $allTimeEndFill);
+
 			$this->arResult['ITEMS'][$formIndex] = $form;
 		}
 	}
@@ -427,26 +423,23 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		];
 	}
 
-	protected static function formatConversion($value, $trend)
+	protected static function formatConversion($value, $allTimeViews)
 	{
 		$value = $value > 1 ? 1 : $value;
 		$value = round($value * 100);
 
-		$code = 'none';
-		if (isset($value))
+		switch (true)
 		{
-			if ($trend === false || ($value > 0 && $value < 75))
-			{
-				$code = 'bad';
-			}
-			if ($value >= 75 && $value < 90)
-			{
-				$code = 'normal';
-			}
-			if ($trend || $value >= 90)
-			{
-				$code = 'good';
-			}
+			case $value <= 35:
+				$code = 'bad'; break;
+			case $value >= 36 && $value <= 60:
+				$code = 'normal'; break;
+			case $value >= 61 && $value <= 80:
+				$code = 'good'; break;
+			case $value >= 81:
+				$code = 'perfect'; break;
+			default:
+				$code = 'none'; break;
 		}
 
 		$map = [
@@ -456,23 +449,105 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			],
 			'bad' => [
 				'text' =>  Loc::getMessage('CRM_WEBFORM_LIST_ITEM_CONVERSION_BAD'),
-				'color' => 'down',
+				'color' => 'down2',
 			],
 			'normal' => [
 				'text' =>  Loc::getMessage('CRM_WEBFORM_LIST_ITEM_CONVERSION_NORMAL'),
-				'color' => '',
+				'color' => 'normal-green',
 			],
 			'good' => [
 				'text' =>  Loc::getMessage('CRM_WEBFORM_LIST_ITEM_CONVERSION_GOOD'),
-				'color' => 'up',
+				'color' => 'up2',
+			],
+			'perfect' => [
+				'text' =>  Loc::getMessage('CRM_WEBFORM_LIST_ITEM_CONVERSION_PERFECT'),
+				'color' => 'up3',
 			],
 		];
 
 		return [
 			'color' => $map[$code]['color'],
-			'value' => $value . ($value ? '%' : ''),
+			'value' => $allTimeViews > 0 ? $value . '%' : null,
 			'text' => $map[$code]['text'],
 		];
+	}
+
+	protected static function formatSubmits(int $valueCurrent, int $valueRecent, DateTime $creationDate, int $allTimeEndFill): array
+	{
+		$result = [
+			'value' => $valueCurrent,
+			'color' => '',
+			'text' => '',
+			'hint' => '',
+		];
+
+		// if there are no submits
+		if ($allTimeEndFill <= 0)
+		{
+			return $result;
+		}
+
+		// form created in the last 4 weeks, data collecting
+		if ($creationDate > DateTime::createFromPhp(new \DateTime('-4 weeks')))
+		{
+			$result['text'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_NONE');
+			$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_NONE');
+			$result['value'] = null;
+			return $result;
+		}
+
+		// low values, simplified mode
+		if ($valueCurrent <=10 && $valueRecent <=10)
+		{
+			switch (true)
+			{
+				case $valueCurrent === $valueRecent:
+					$result['color'] = 'normal-green';
+					$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_NORMAL');
+					break;
+				case $valueCurrent > $valueRecent:
+					$result['color'] = 'up2';
+					$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_GOOD');
+					break;
+				case $valueCurrent < $valueRecent:
+					$result['color'] = 'down2';
+					$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_BAD');
+					break;
+			}
+			return $result;
+		}
+
+		$rate = $valueCurrent === 0
+			? ($valueRecent === 0 ? 0 : -100)
+			: (($valueCurrent - $valueRecent) / $valueCurrent) * 100
+		;
+
+		switch (true)
+		{
+			// stable, if equals or differs by no more than 7.5%
+			case abs($rate) <= 7.5:
+				$result['color'] = 'normal-green';
+				$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_NORMAL');
+				break;
+			case $rate > 7.5 && $rate <= 20:
+				$result['color'] = 'up2';
+				$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_GOOD');
+				break;
+			case $rate < -7.5 && $rate >= -20:
+				$result['color'] = 'down2';
+				$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_BAD');
+				break;
+			case $rate > 20:
+				$result['color'] = 'up3';
+				$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_PERFECT');
+				break;
+			case $rate < -20:
+				$result['color'] = 'down3';
+				$result['hint'] = Loc::getMessage('CRM_WEBFORM_LIST_ITEM_SUBMITS_AWFUL');
+				break;
+		}
+
+		return $result;
 	}
 
 	protected function getGridColumns()
@@ -533,6 +608,15 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				"id" => "SUMMARY_CONVERSION",
 				"name" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU'),
 				"default" => true,
+				"title" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU_HINT'),
+				"hint" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_CONVERSION_MENU_HINT'),
+			),
+			array(
+				"id" => "SUMMARY_SUBMITS",
+				"name" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU'),
+				"default" => true,
+				"title" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT'),
+				"hint" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT'),
 			),
 		);
 	}
@@ -652,7 +736,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		{
 			$this->prepareNavigationParams();
 			$this->arResult["NAVIGATION_OBJECT"] = new PageNavigation($this->arResult["NAVIGATION_KEY"]);
-			$this->arResult["NAVIGATION_OBJECT"]->allowAllRecords(true)->setPageSize(10)->initFromUri();
+			$this->arResult["NAVIGATION_OBJECT"]->allowAllRecords(false)->setPageSize(10)->initFromUri();
 		}
 		return $this->arResult["NAVIGATION_OBJECT"];
 	}
@@ -712,6 +796,29 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		if (isset($requestFilter['ACTIVE']) && in_array($requestFilter['ACTIVE'], ['Y', 'N'], true))
 		{
 			$filter['=ACTIVE'] = $requestFilter['ACTIVE'] === 'Y';
+		}
+
+		if (!empty($requestFilter['PUBLINK']))
+		{
+			$formIdByPublink = null;
+
+			// check for public link
+			if (preg_match('#/pub/site/(\d+)/([a-zA-Z_\d]+)#', $requestFilter['PUBLINK'], $matches))
+			{
+				// $siteId = $matches[1];
+				$landingCode = $matches[2];
+				$formIdByPublink = $this->getFormIdByLandingCode($landingCode);
+			}
+
+			// check for form editor link
+			if (!$formIdByPublink && preg_match('#/sites/site/(\d+)/view/(\d+)#', $requestFilter['PUBLINK'], $matches))
+			{
+				// $siteId = $matches[1];
+				$landingId = $matches[2];
+				$formIdByPublink = $this->getFormIdByLandingId((int)$landingId);
+			}
+
+			$filter['=ID'] = $formIdByPublink;
 		}
 
 		$integrations = $requestFilter['INTEGRATIONS'] ?? null;
@@ -793,6 +900,15 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				"default" => false,
 			),
 		);
+
+		if (\Bitrix\Main\ModuleManager::isModuleInstalled('landing'))
+		{
+			$list[] = array(
+				"id" => "PUBLINK",
+				"name" => Loc::getMessage('CRM_WEBFORM_LIST_FILTER_PRESET_PUBLINK'),
+				"default" => false,
+			);
+		}
 
 		if (WebForm\WhatsApp::canUse())
 		{
@@ -1051,5 +1167,52 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		}
 
 		return $users[$userId];
+	}
+
+	protected function getFormIdByLandingCode(string $landingCode): ?int
+	{
+		if (!Loader::includeModule('landing'))
+		{
+			return null;
+		}
+
+		$result = \Bitrix\Landing\Internals\LandingTable::query()
+			->setSelect(['FORM_ID' => 'BCWL.FORM_ID'])
+			->setFilter([
+				'=CODE' => $landingCode,
+				// '=SITE_ID' => (int)$siteId,
+				// '=DELETED' => 'N',
+			])
+			->registerRuntimeField(
+				'BCWL',
+				(new Main\ORM\Fields\Relations\Reference(
+					'BCWL',
+					Internals\LandingTable::class,
+					Main\ORM\Query\Join::on('this.ID', 'ref.LANDING_ID')
+				))->configureJoinType(Main\ORM\Query\Join::TYPE_INNER),
+			)
+			->setLimit(1)
+			->exec();
+
+		if ($row = $result->fetch())
+		{
+			return (int)$row['FORM_ID'];
+		}
+		return null;
+	}
+	
+	protected function getFormIdByLandingId(int $landingId): ?int
+	{
+		$row = Internals\LandingTable::getRow([
+			'select' => ['FORM_ID'],
+			'filter' => [
+				'=LANDING_ID' => $landingId,
+			]
+		]);
+
+		if ($row) {
+			return (int)$row['FORM_ID'];
+		}
+		return null;
 	}
 }

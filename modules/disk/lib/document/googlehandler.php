@@ -127,11 +127,16 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 		return $socGoogleOAuth->getUrl('modal', $this->getScopes());
 	}
 
-	private function getScopes()
+	protected function getScopes(): array
 	{
 		return array(
 			'https://www.googleapis.com/auth/drive'
 		);
+	}
+
+	protected function getOAuthServiceClass(): string
+	{
+		return \CSocServGoogleOAuth::class;
 	}
 
 	/**
@@ -148,10 +153,7 @@ class GoogleHandler extends DocumentHandler implements IViewer, FileCreatable, C
 			return false;
 		}
 
-		$socGoogleOAuth = new \CSocServGoogleOAuth($this->userId);
-		//this bug. SocServ fill entityOAuth in method getUrl.....
-		$socGoogleOAuth->getUrl('modal', $this->getScopes());
-		$this->accessToken = $socGoogleOAuth->getStorageToken();
+		$this->accessToken = $this->getOAuthService()->getStorageToken();
 
 		return $this;
 	}

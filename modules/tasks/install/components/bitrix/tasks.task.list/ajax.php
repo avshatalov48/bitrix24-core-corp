@@ -14,7 +14,7 @@ if(isset($_POST['SITE_ID']) && (string) $_POST['SITE_ID'] != '')
 }
 
 require_once($_SERVER["DOCUMENT_ROOT"].'/bitrix/modules/main/include/prolog_before.php');
-require_once(dirname(__FILE__).'/class.php');
+require_once(__DIR__.'/class.php');
 
 TasksTaskListComponent::executeComponentAjax();
 TasksTaskListComponent::doFinalActions();

@@ -92,6 +92,11 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function getUrlByDealId(int $dealId): ?string
 	{
+		if (!Main\Loader::includeModule('salescenter'))
+		{
+			return null;
+		}
+
 		$payment = $this->createPayment($dealId);
 		if (!$payment)
 		{
@@ -108,6 +113,11 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 
 	private function createPayment(int $dealId) :? Order\Payment
 	{
+		if (!Main\Loader::includeModule('salescenter'))
+		{
+			return null;
+		}
+
 		$deal = CCrmDeal::GetByID($dealId, false);
 		if (!$deal)
 		{
@@ -180,48 +190,16 @@ class CBPCrmGetPaymentUrlActivity extends CBPActivity
 			return $products;
 		}
 
-		$propertyValues = array_fill_keys($productIds, []);
-		$iblockIds = array_unique(array_values(CIBlockElement::GetIBlockByIDList($productIds)));
-		foreach ($iblockIds as $iblockId)
-		{
-			$basketPropertiesCodes = array_values(\Bitrix\Catalog\Product\PropertyCatalogFeature::getBasketPropertyCodes($iblockId, ['CODE' => 'Y']));
-			CIBlockElement::GetPropertyValuesArray($propertyValues, $iblockId, ['ID' => $productIds], ['CODE' => $basketPropertiesCodes]);
-		}
+		$productParams = Helpers\Admin\Blocks\OrderBasket::getProductsData(
+			$productIds,
+			SITE_ID,
+			['PROPS']
+		);
 
 		$products = array_combine(array_column($products, 'OFFER_ID'), $products);
-		foreach ($propertyValues as $productId => $properties)
+		foreach ($productParams as $productId => $fields)
 		{
-			foreach ($properties as $code => $property)
-			{
-				if (empty($property['VALUE']))
-				{
-					continue;
-				}
-
-				if (empty($products[$productId]['PROPS']))
-				{
-					$products[$productId]['PROPS'] = [];
-				}
-
-				$displayValue = $property['VALUE'];
-
-				if (!empty($property['USER_TYPE']))
-				{
-					$userTypeDescription = CIBlockProperty::GetUserType($property['USER_TYPE']);
-					if (isset($userTypeDescription['GetPublicViewHTML']))
-					{
-						$userType = $userTypeDescription['GetPublicViewHTML'];
-						$displayValue = (string)$userType($property, ['VALUE' => $property['VALUE']], ['MODE' => 'SIMPLE_TEXT']);
-					}
-				}
-
-				$products[$productId]['PROPS'][] = [
-					'NAME' => $property['NAME'],
-					'SORT' => $property['SORT'],
-					'CODE' => $code,
-					'VALUE' => $displayValue,
-				];
-			}
+			$products[$productId]['PROPS'] = $fields['PROPS'] ?? [];
 		}
 
 		return $products;

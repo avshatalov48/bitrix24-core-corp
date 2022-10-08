@@ -7,6 +7,8 @@ import {UI} from 'ui.notification';
 
 import {RequestSender} from './request.sender';
 
+import 'ui.design-tokens';
+import 'ui.fonts.opensans';
 import '../css/base.css';
 
 type Params = {
@@ -752,8 +754,10 @@ export class Epic extends EventEmitter
 						</div>
 						<div class="tasks-scrum-epic-form-header-separate"></div>
 						<div class="tasks-scrum-epic-header-color">
-							<div class="tasks-scrum-epic-header-color-current" style=
-								"background-color: ${Text.encode(epic.color)};">
+							<div
+								class="tasks-scrum-epic-header-color-current"
+								style="background-color: ${Text.encode(epic.color)};"
+							>
 							</div>
 						</div>
 					</div>
@@ -787,9 +791,13 @@ export class Epic extends EventEmitter
 		const nameField = Tag.render`
 			<div class="tasks-scrum-epic-form-header">
 				<div class="tasks-scrum-epic-form-header-title">
-					<input type="text" name="name" value="${Text.encode(name)}" class=
-						"tasks-scrum-epic-form-header-title-control" placeholder=
-						"${Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER')}">
+					<input
+						type="text"
+						name="name"
+						value="${Text.encode(name)}"
+						class="tasks-scrum-epic-form-header-title-control"
+						placeholder="${Loc.getMessage('TASKS_SCRUM_SPRINT_ADD_EPIC_NAME_PLACEHOLDER')}"
+					>
 				</div>
 				<div class="tasks-scrum-epic-form-header-separate"></div>
 				<div class="tasks-scrum-epic-header-color">

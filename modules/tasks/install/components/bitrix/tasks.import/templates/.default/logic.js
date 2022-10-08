@@ -148,70 +148,71 @@ BX.TasksImport = (function ()
 			data: {
 				importParameters: parameters
 			}
-		}).then(function(response)
-		{
-			if (response.status === "error")
+		}).then(
+			function(response)
+			{
+				var data = response.data;
+				var importsTotalCount = data['IMPORTS_TOTAL_COUNT'];
+				var successfulImports = data['SUCCESSFUL_IMPORTS'];
+				var errorImports = data['ERROR_IMPORTS'];
+				var interval = 0;
+
+				if (BX('processed_count').innerHTML === "0")
+				{
+					BX('progress_bar').max = importsTotalCount;
+					BX('imports_total_count').innerHTML = importsTotalCount;
+				}
+
+				if (successfulImports > 0 || errorImports > 0)
+				{
+					BX('progress_bar').value += successfulImports + errorImports;
+					BX('processed_count').innerHTML = BX('progress_bar').value;
+					BX('successful_imports').innerHTML = parseInt(BX('successful_imports').innerHTML) + successfulImports;
+					BX('error_imports').innerHTML = parseInt(BX('error_imports').innerHTML) + errorImports;
+
+					interval = 1000 * data['MAX_EXECUTION_TIME'] / (successfulImports + errorImports);
+					TasksImport.resetTimer(interval);
+
+					if (errorImports > 0)
+					{
+						TasksImport.showImportErrors(data['ERROR_IMPORTS_MESSAGES'], false);
+					}
+
+					if (!data['ALL_LINES_LOADED'])
+					{
+						if (BX('hidden_force_import_stop').value === 'N')
+						{
+							data['ERROR_IMPORTS_MESSAGES'] = [];
+							TasksImport.prototype.startImport(data);
+						}
+						else
+						{
+							TasksImport.doFinalProgressActions('STOPPED');
+						}
+					}
+					else if (parseInt(BX('progress_bar').value) === parseInt(importsTotalCount))
+					{
+						BX('hidden_import_done').value = 'Y';
+						TasksImport.doFinalProgressActions('DONE');
+					}
+					else
+					{
+						TasksImport.doFinalProgressActions('ERROR');
+					}
+				}
+				else
+				{
+					TasksImport.doFinalProgressActions('DONE');
+				}
+			},
+			function(response)
 			{
 				BX('imports_total_count').innerHTML = 0;
 
 				TasksImport.doFinalProgressActions('ERROR');
 				TasksImport.showImportErrors(response.errors, true);
-
-				return;
 			}
-
-			var data = response.data;
-			var importsTotalCount = data['IMPORTS_TOTAL_COUNT'];
-			var successfulImports = data['SUCCESSFUL_IMPORTS'];
-			var errorImports = data['ERROR_IMPORTS'];
-			var interval = 0;
-
-			if (BX('processed_count').innerHTML === "0")
-			{
-				BX('progress_bar').max = importsTotalCount;
-				BX('imports_total_count').innerHTML = importsTotalCount;
-			}
-
-			if (successfulImports > 0 || errorImports > 0)
-			{
-				BX('progress_bar').value += successfulImports + errorImports;
-				BX('processed_count').innerHTML = BX('progress_bar').value;
-				BX('successful_imports').innerHTML = parseInt(BX('successful_imports').innerHTML) + successfulImports;
-				BX('error_imports').innerHTML = parseInt(BX('error_imports').innerHTML) + errorImports;
-
-				interval = 1000 * data['MAX_EXECUTION_TIME'] / (successfulImports + errorImports);
-				TasksImport.resetTimer(interval);
-
-				if (errorImports > 0)
-					TasksImport.showImportErrors(data['ERROR_IMPORTS_MESSAGES'], false);
-
-				if (!data['ALL_LINES_LOADED'])
-				{
-					if (BX('hidden_force_import_stop').value === 'N')
-					{
-						data['ERROR_IMPORTS_MESSAGES'] = [];
-						TasksImport.prototype.startImport(data);
-					}
-					else
-					{
-						TasksImport.doFinalProgressActions('STOPPED');
-					}
-				}
-				else if (parseInt(BX('progress_bar').value) === parseInt(importsTotalCount))
-				{
-					BX('hidden_import_done').value = 'Y';
-					TasksImport.doFinalProgressActions('DONE');
-				}
-				else
-				{
-					TasksImport.doFinalProgressActions('ERROR');
-				}
-			}
-			else
-			{
-				TasksImport.doFinalProgressActions('DONE');
-			}
-		});
+		);
 	};
 
 	TasksImport.prototype.stopImport = function()

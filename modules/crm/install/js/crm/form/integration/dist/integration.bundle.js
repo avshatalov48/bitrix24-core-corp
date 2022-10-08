@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_sidepanelContent,main_core,main_core_events,crm_form_type,crm_form_fields_mapper,ui_alerts,ui_buttons,ui_dropdown,main_core_ajax,main_loader,seo_ads_login,seo_ads_client_selector) {
+(function (exports,ui_sidepanelContent,main_core,main_core_events,crm_form_type,crm_form_fields_mapper,ui_alerts,ui_buttons,ui_dropdown,main_core_ajax,main_loader,seo_ads_login) {
 	'use strict';
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13;
@@ -712,5 +712,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.Integration = Integration;
 
-}((this.BX.Crm.Form = this.BX.Crm.Form || {}),BX,BX,BX.Event,BX.Crm.Form,BX.Crm.Form.Fields,BX.UI,BX.UI,BX,BX,BX,BX.Seo.Ads,BX.Seo.Ads));
+}((this.BX.Crm.Form = this.BX.Crm.Form || {}),BX,BX,BX.Event,BX.Crm.Form,BX.Crm.Form.Fields,BX.UI,BX.UI,BX,BX,BX,BX.Seo.Ads));
 //# sourceMappingURL=integration.bundle.js.map

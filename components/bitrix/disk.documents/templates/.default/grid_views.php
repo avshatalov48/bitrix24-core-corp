@@ -14,6 +14,8 @@ $inverseDirection = mb_strtolower($direction) == 'desc'? 'asc' : 'desc';
 $isTile = $arResult['GRID_VIEW']['MODE'] === 'tile';
 $isBigTile = $arResult['GRID_VIEW']['VIEW_SIZE'] === 'xl';
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 $isBitrix24Template = (SITE_TEMPLATE_ID === 'bitrix24');
 
 $isBitrix24Template && $this->setViewTarget('below_pagetitle');

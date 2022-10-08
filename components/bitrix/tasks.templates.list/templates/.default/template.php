@@ -7,10 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
-\Bitrix\Main\UI\Extension::load("ui.buttons");
-\Bitrix\Main\UI\Extension::load("ui.buttons.icons");
-
-
+\Bitrix\Main\UI\Extension::load(["ui.buttons", "ui.buttons.icons", "ui.fonts.opensans"]);
 
 $isIFrame = isset($_REQUEST["IFRAME"]) && $_REQUEST["IFRAME"] === "Y";
 if($isIFrame)
@@ -28,7 +25,7 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 	$APPLICATION->SetPageProperty(
 		'BodyClass',
-		($bodyClass ? $bodyClass.' ' : '').' no-background no-all-paddings pagetitle-toolbar-field-view '
+		($bodyClass ? $bodyClass.' ' : '').' no-all-paddings pagetitle-toolbar-field-view'
 	);
 }
 
@@ -46,6 +43,7 @@ $templateAddUrl = CComponentEngine::MakePathFromTemplate(
 
 
 ?>
+
 <?php
 if ($arParams['HIDE_MENU'] != 'Y')
 {
@@ -126,170 +124,180 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 }
 ?>
 
-<? $helper->displayFatals(); ?>
-<? if (!$helper->checkHasFatals()): ?>
+<?php if (\Bitrix\Tasks\Update\TemplateConverter::isProceed()): ?>
+	<?php
+		$APPLICATION->IncludeComponent("bitrix:tasks.interface.emptystate", "", [
+			'TITLE' => Loc::getMessage('TASKS_TEMPLATE_MEMBER_CONVERT_TITLE'),
+			'TEXT' => Loc::getMessage('TASKS_TEMPLATE_MEMBER_CONVERT'),
+		]);
+	?>
+<?php else: ?>
 
-	<div id='<?=$helper->getScopeId()?>' class='tasks'>
+	<? $helper->displayFatals(); ?>
+	<? if (!$helper->checkHasFatals()): ?>
 
-		<? $helper->displayWarnings(); ?>
+		<div id='<?=$helper->getScopeId()?>' class='tasks'>
 
-		<? // make dom node accessible in js controller like that: ?>
-		<div class='js-id-grid'>
-			<?php
-			$APPLICATION->IncludeComponent(
-				'bitrix:main.ui.grid',
-				'',
-				array(
-					'GRID_ID'   => $arParams['GRID_ID'],
-					'HEADERS'   => $arResult['GRID']['HEADERS'],
-					'SORT'      => isset($arParams['SORT']) ? $arParams['SORT'] : array(),
-					'SORT_VARS' => isset($arParams['SORT_VARS']) ? $arParams['SORT_VARS'] : array(),
-					'ROWS'      => $arResult['ROWS'],
+			<? $helper->displayWarnings(); ?>
 
-					'AJAX_MODE' => 'Y',
-					//Strongly required
-					"AJAX_OPTION_JUMP" => "N",
-					"AJAX_OPTION_STYLE" => "N",
-					"AJAX_OPTION_HISTORY" => "N",
+			<? // make dom node accessible in js controller like that: ?>
+			<div class='js-id-grid'>
+				<?php
+				$APPLICATION->IncludeComponent(
+					'bitrix:main.ui.grid',
+					'',
+					array(
+						'GRID_ID'   => $arParams['GRID_ID'],
+						'HEADERS'   => $arResult['GRID']['HEADERS'],
+						'SORT'      => isset($arParams['SORT']) ? $arParams['SORT'] : array(),
+						'SORT_VARS' => isset($arParams['SORT_VARS']) ? $arParams['SORT_VARS'] : array(),
+						'ROWS'      => $arResult['ROWS'],
 
-					"ALLOW_COLUMNS_SORT"      => true,
-					"ALLOW_ROWS_SORT"         => false,
-					"ALLOW_COLUMNS_RESIZE"    => true,
-					"ALLOW_HORIZONTAL_SCROLL" => true,
-					"ALLOW_SORT"              => true,
-					"ALLOW_PIN_HEADER"        => true,
-					"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
+						'AJAX_MODE' => 'Y',
+						//Strongly required
+						"AJAX_OPTION_JUMP" => "N",
+						"AJAX_OPTION_STYLE" => "N",
+						"AJAX_OPTION_HISTORY" => "N",
 
-					"SHOW_CHECK_ALL_CHECKBOXES" => true,
-					"SHOW_ROW_CHECKBOXES" => true,
-					//					"SHOW_ROW_ACTIONS_MENU"     => true,
-					"SHOW_GRID_SETTINGS_MENU" => true,
-					"SHOW_NAVIGATION_PANEL" => true,
-					"SHOW_PAGINATION" => true,
-					//					"SHOW_SELECTED_COUNTER"     => true,
-					//					"SHOW_TOTAL_COUNTER"        => true,
-					"SHOW_PAGESIZE" => true,
-					//					"SHOW_ACTION_PANEL"         => true,
+						"ALLOW_COLUMNS_SORT"      => true,
+						"ALLOW_ROWS_SORT"         => false,
+						"ALLOW_COLUMNS_RESIZE"    => true,
+						"ALLOW_HORIZONTAL_SCROLL" => true,
+						"ALLOW_SORT"              => true,
+						"ALLOW_PIN_HEADER"        => true,
+						"ACTION_PANEL"            => $arResult['GROUP_ACTIONS'],
 
-					"MESSAGES" => $arResult['MESSAGES'],
+						"SHOW_CHECK_ALL_CHECKBOXES" => true,
+						"SHOW_ROW_CHECKBOXES" => true,
+						//					"SHOW_ROW_ACTIONS_MENU"     => true,
+						"SHOW_GRID_SETTINGS_MENU" => true,
+						"SHOW_NAVIGATION_PANEL" => true,
+						"SHOW_PAGINATION" => true,
+						//					"SHOW_SELECTED_COUNTER"     => true,
+						//					"SHOW_TOTAL_COUNTER"        => true,
+						"SHOW_PAGESIZE" => true,
+						//					"SHOW_ACTION_PANEL"         => true,
 
-					"ENABLE_COLLAPSIBLE_ROWS" => true,
-					//		'ALLOW_SAVE_ROWS_STATE'=>true,
+						"MESSAGES" => $arResult['MESSAGES'],
 
-					"SHOW_MORE_BUTTON" => false,
-					'~NAV_PARAMS' => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
-					'NAV_OBJECT' => $arResult['NAV_OBJECT'],
-					'NAV_STRING' => $arResult['NAV_STRING'],
+						"ENABLE_COLLAPSIBLE_ROWS" => true,
+						//		'ALLOW_SAVE_ROWS_STATE'=>true,
 
-					"TOTAL_ROWS_COUNT" => $arResult['TOTAL_RECORD_COUNT'],
-					//		"CURRENT_PAGE" => $arResult[ 'NAV' ]->getCurrentPage(),
-					//		"ENABLE_NEXT_PAGE" => ($arResult[ 'NAV' ]->getPageSize() * $arResult[ 'NAV' ]->getCurrentPage()) < $arResult[ 'NAV' ]->getRecordCount(),
-					"PAGE_SIZES" => $arResult['PAGE_SIZES'],
-					"DEFAULT_PAGE_SIZE" => 50
-				),
-				$component,
-				array('HIDE_ICONS' => 'Y')
-			);
-			?>
+						"SHOW_MORE_BUTTON" => false,
+						'~NAV_PARAMS' => $arResult['GET_LIST_PARAMS']['NAV_PARAMS'],
+						'NAV_OBJECT' => $arResult['NAV_OBJECT'],
+						'NAV_STRING' => $arResult['NAV_STRING'],
+
+						"TOTAL_ROWS_COUNT" => $arResult['TOTAL_RECORD_COUNT'],
+						//		"CURRENT_PAGE" => $arResult[ 'NAV' ]->getCurrentPage(),
+						//		"ENABLE_NEXT_PAGE" => ($arResult[ 'NAV' ]->getPageSize() * $arResult[ 'NAV' ]->getCurrentPage()) < $arResult[ 'NAV' ]->getRecordCount(),
+						"PAGE_SIZES" => $arResult['PAGE_SIZES'],
+						"DEFAULT_PAGE_SIZE" => 50
+					),
+					$component,
+					array('HIDE_ICONS' => 'Y')
+				);
+				?>
+
+			</div>
 
 		</div>
 
-	</div>
-
-	<?php
-	if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS']))
-	{
-		$selectors = array();
-
-		foreach ($arResult['FILTER']['FIELDS'] as $filterItem)
+		<?php
+		if (isset($arResult['FILTER']['FIELDS']) && is_array($arResult['FILTER']['FIELDS']))
 		{
-			if (!(isset($filterItem['type']) &&
-				  $filterItem['type'] === 'custom_entity' &&
-				  isset($filterItem['selector']) &&
-				  is_array($filterItem['selector'])))
+			$selectors = array();
+
+			foreach ($arResult['FILTER']['FIELDS'] as $filterItem)
 			{
-				continue;
-			}
-
-			$selector = $filterItem['selector'];
-			$selectorType = isset($selector['TYPE']) ? $selector['TYPE'] : '';
-			$selectorData = isset($selector['DATA']) && is_array($selector['DATA']) ? $selector['DATA'] : null;
-			$selectorData['MODE'] = $selectorType;
-			$selectorData['MULTI'] = $filterItem['params']['multiple'] && $filterItem['params']['multiple'] == 'Y';
-
-			if (!empty($selectorData) && $selectorType == 'user')
-			{
-				$selectors[] = $selectorData;
-			}
-			if (!empty($selectorData) && $selectorType == 'group')
-			{
-				$selectors[] = $selectorData;
-			}
-		}
-
-		if (!empty($selectors))
-		{
-			\CUtil::initJSCore(
-				array(
-					'tasks_integration_socialnetwork'
-				)
-			);
-		}
-
-		if (!empty($selectors))
-		{
-			?>
-			<script type="text/javascript"><?
-				foreach ($selectors as $groupSelector)
+				if (!(isset($filterItem['type']) &&
+					  $filterItem['type'] === 'custom_entity' &&
+					  isset($filterItem['selector']) &&
+					  is_array($filterItem['selector'])))
 				{
-				$selectorID = $groupSelector['ID'];
-				$selectorMode = $groupSelector['MODE'];
-				$fieldID = $groupSelector['FIELD_ID'];
-				$multi = $groupSelector['MULTI'];
-				?>BX.ready(
-					function() {
-						BX.FilterEntitySelector.create(
-							"<?= \CUtil::JSEscape($selectorID)?>",
-							{
-								fieldId: "<?= \CUtil::JSEscape($fieldID)?>",
-								mode: "<?= \CUtil::JSEscape($selectorMode)?>",
-								multi: <?= $multi ? 'true' : 'false'?>
-							}
-						);
-					}
-				);<?
+					continue;
 				}
-				?></script><?
+
+				$selector = $filterItem['selector'];
+				$selectorType = isset($selector['TYPE']) ? $selector['TYPE'] : '';
+				$selectorData = isset($selector['DATA']) && is_array($selector['DATA']) ? $selector['DATA'] : null;
+				$selectorData['MODE'] = $selectorType;
+				$selectorData['MULTI'] = $filterItem['params']['multiple'] && $filterItem['params']['multiple'] == 'Y';
+
+				if (!empty($selectorData) && $selectorType == 'user')
+				{
+					$selectors[] = $selectorData;
+				}
+				if (!empty($selectorData) && $selectorType == 'group')
+				{
+					$selectors[] = $selectorData;
+				}
+			}
+
+			if (!empty($selectors))
+			{
+				\CUtil::initJSCore(
+					array(
+						'tasks_integration_socialnetwork'
+					)
+				);
+			}
+
+			if (!empty($selectors))
+			{
+				?>
+				<script type="text/javascript"><?
+					foreach ($selectors as $groupSelector)
+					{
+					$selectorID = $groupSelector['ID'];
+					$selectorMode = $groupSelector['MODE'];
+					$fieldID = $groupSelector['FIELD_ID'];
+					$multi = $groupSelector['MULTI'];
+					?>BX.ready(
+						function() {
+							BX.FilterEntitySelector.create(
+								"<?= \CUtil::JSEscape($selectorID)?>",
+								{
+									fieldId: "<?= \CUtil::JSEscape($fieldID)?>",
+									mode: "<?= \CUtil::JSEscape($selectorMode)?>",
+									multi: <?= $multi ? 'true' : 'false'?>
+								}
+							);
+						}
+					);<?
+					}
+					?></script><?
+			}
 		}
-	}
-	?>
+		?>
 
-	<? $helper->initializeExtension(); ?>
+		<? $helper->initializeExtension(); ?>
 
-	<script>
-		var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.templates.list/ajax.php?SITE_ID=<?php echo SITE_ID?>";
+		<script>
+			var tasksListAjaxUrl = "/bitrix/components/bitrix/tasks.templates.list/ajax.php?SITE_ID=<?php echo SITE_ID?>";
 
-		BX.message({
-			TASKS_PATH_TO_USER_PROFILE: '<?php echo CUtil::JSEscape($arParams['PATH_TO_USER_PROFILE'])?>',
-			TASKS_PATH_TO_TASK: '<?php echo CUtil::JSEscape(
-				str_replace('#template_id#', '#task_id#', $arParams['PATH_TO_TEMPLATES_TEMPLATE'])
-			)?>',
-			TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET: '',
-			TASKS_PATH_TO_TEMPLATES_TEMPLATE: '<?php echo CUtil::JSEscape($arParams['PATH_TO_TEMPLATES_TEMPLATE'])?>',
+			BX.message({
+				TASKS_PATH_TO_USER_PROFILE: '<?php echo CUtil::JSEscape($arParams['PATH_TO_USER_PROFILE'])?>',
+				TASKS_PATH_TO_TASK: '<?php echo CUtil::JSEscape(
+					str_replace('#template_id#', '#task_id#', $arParams['PATH_TO_TEMPLATES_TEMPLATE'])
+				)?>',
+				TASKS_LIST_MENU_RESET_TO_DEFAULT_PRESET: '',
+				TASKS_PATH_TO_TEMPLATES_TEMPLATE: '<?php echo CUtil::JSEscape($arParams['PATH_TO_TEMPLATES_TEMPLATE'])?>',
 
-			TASKS_LIST_CONFIRM_ACTION_FOR_ALL_ITEMS: '<?php echo GetMessageJS(
-				'TASKS_LIST_CONFIRM_ACTION_FOR_ALL_TEMPLATE_ITEMS'
-			); ?>',
-			TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS: '<?php echo GetMessageJS(
-				'TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_TEMPLATE_ITEMS'
-			); ?>',
-			TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS: '<?php echo GetMessageJS(
-				'TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_TEMPLATE_ITEMS'
-			); ?>',
+				TASKS_LIST_CONFIRM_ACTION_FOR_ALL_ITEMS: '<?php echo GetMessageJS(
+					'TASKS_LIST_CONFIRM_ACTION_FOR_ALL_TEMPLATE_ITEMS'
+				); ?>',
+				TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_ITEMS: '<?php echo GetMessageJS(
+					'TASKS_LIST_CONFIRM_REMOVE_FOR_SELECTED_TEMPLATE_ITEMS'
+				); ?>',
+				TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_ITEMS: '<?php echo GetMessageJS(
+					'TASKS_LIST_CONFIRM_REMOVE_FOR_ALL_TEMPLATE_ITEMS'
+				); ?>',
 
-			TASKS_LIST_GROUP_ACTION_DELETE_ERROR: '<?php echo GetMessageJS('TASKS_LIST_GROUP_ACTION_DELETE_ERROR'); ?>',
-			TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM: '<?php echo GetMessageJS('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM'); ?>',
-		});
-	</script>
+				TASKS_LIST_GROUP_ACTION_DELETE_ERROR: '<?php echo GetMessageJS('TASKS_LIST_GROUP_ACTION_DELETE_ERROR'); ?>',
+				TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM: '<?php echo GetMessageJS('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM'); ?>',
+			});
+		</script>
+	<? endif ?>
+
 <? endif ?>
-

@@ -33,86 +33,61 @@ class BasketService
 	/**
 	 * Get relations sale basket items and crm product rows.
 	 *
-	 * @param array $rowsIds
+	 * @param array $filter for tablet `ProductRowTable`.
 	 *
 	 * @return array in format `['rowId' => 'basketId']`
 	 */
-	public function getRowIdsToBasketIdsByRows(array $rowsIds): array
-	{
-		$row = ProductRowTable::getRow([
-			'select' => [
-				'ID',
-				'OWNER_ID',
-				'OWNER_TYPE',
-			],
-			'filter' => [
-				'=ID' => $rowsIds,
-				'!OWNER_ID' => null,
-				'!OWNER_TYPE' => null,
-			],
-		]);
-		if (!$row)
-		{
-			return [];
-		}
-
-		return $this->getRowIdsToBasketIdsByEntity(
-			CCrmOwnerTypeAbbr::ResolveTypeID($row['OWNER_TYPE']),
-			$row['OWNER_ID']
-		);
-	}
-
-	/**
-	 * Get relations sale basket items and crm product rows.
-	 *
-	 * @param int $ownerTypeId
-	 * @param int $ownerId
-	 *
-	 * @return array in format `['rowId' => 'basketId']`
-	 */
-	public function getRowIdsToBasketIdsByEntity(int $ownerTypeId, int $ownerId): array
+	private function getRowsIdsToBasketIdsByFilter(array $filter): array
 	{
 		$rows = ProductRowTable::getList([
 			'select' => [
 				'ID',
+				'OWNER_ID',
+				'OWNER_TYPE',
 				'PRODUCT_ID',
 				'PRICE',
 				'QUANTITY',
+				'XML_ID',
 			],
-			'filter' => [
-				'=OWNER_TYPE' => CCrmOwnerTypeAbbr::ResolveByTypeID($ownerTypeId),
-				'=OWNER_ID' => $ownerId,
-			],
+			'filter' => $filter,
 			'order' => [
 				'ID' => 'ASC',
 			],
 		]);
-		if (!$rows->getSelectedRowsCount())
+		if ($rows->getSelectedRowsCount() === 0)
 		{
 			return [];
 		}
 
 		$productRelations = new ProductRelationsBuilder();
+		$orderFilter = [];
 
 		foreach ($rows as $row)
 		{
 			$productRelations->addCrmProductRow(
-				$row['ID'],
-				$row['PRODUCT_ID'],
-				$row['PRICE'],
-				$row['QUANTITY'],
+				(int)$row['ID'],
+				(int)$row['PRODUCT_ID'],
+				(float)$row['PRICE'],
+				(float)$row['QUANTITY'],
+				(string)$row['XML_ID']
 			);
+
+			if (empty($orderFilter))
+			{
+				$orderFilter = [
+					'=OWNER_TYPE_ID' => CCrmOwnerTypeAbbr::ResolveTypeID($row['OWNER_TYPE']),
+					'=OWNER_ID' => (int)$row['OWNER_ID'],
+				];
+			}
 		}
 
 		$rows = OrderEntityTable::getList([
 			'select' => [
 				'ORDER_ID',
 			],
-			'filter' => [
-				'=OWNER_TYPE_ID' => $ownerTypeId,
-				'=OWNER_ID' => $ownerId,
-			],
+			'filter' => $orderFilter,
 		]);
+
 		$orderIds = array_column($rows->fetchAll(), 'ORDER_ID');
 		if (empty($orderIds))
 		{
@@ -125,6 +100,7 @@ class BasketService
 				'PRODUCT_ID',
 				'QUANTITY',
 				'PRICE',
+				'XML_ID',
 			],
 			'filter' => [
 				'=ORDER_ID' => $orderIds,
@@ -133,7 +109,7 @@ class BasketService
 				'ID' => 'ASC',
 			],
 		]);
-		if (!$rows->getSelectedRowsCount())
+		if ($rows->getSelectedRowsCount() === 0)
 		{
 			return [];
 		}
@@ -141,14 +117,43 @@ class BasketService
 		foreach ($rows as $row)
 		{
 			$productRelations->addSaleBasketItem(
-				$row['ID'],
-				$row['PRODUCT_ID'],
-				$row['PRICE'],
-				$row['QUANTITY'],
+				(int)$row['ID'],
+				(int)$row['PRODUCT_ID'],
+				(float)$row['PRICE'],
+				(float)$row['QUANTITY'],
+				(string)$row['XML_ID']
 			);
 		}
 		return $productRelations->getRelations();
 	}
 
+	/**
+	 * Get relations sale basket items and crm product rows.
+	 *
+	 * @param int $ownerTypeId
+	 * @param int $ownerId
+	 *
+	 * @return array in format `['rowId' => 'basketId']`
+	 */
+	public function getRowIdsToBasketIdsByEntity(int $ownerTypeId, int $ownerId): array
+	{
+		return $this->getRowsIdsToBasketIdsByFilter([
+			'=OWNER_TYPE' => CCrmOwnerTypeAbbr::ResolveByTypeID($ownerTypeId),
+			'=OWNER_ID' => $ownerId,
+		]);
+	}
 
+	/**
+	 * Get relations sale basket items and crm product rows.
+	 *
+	 * @param array $rowsIds
+	 *
+	 * @return array in format `['rowId' => 'basketId']`
+	 */
+	public function getRowIdsToBasketIdsByRows(array $rowsIds): array
+	{
+		return $this->getRowsIdsToBasketIdsByFilter([
+			'=ID' => $rowsIds,
+		]);
+	}
 }

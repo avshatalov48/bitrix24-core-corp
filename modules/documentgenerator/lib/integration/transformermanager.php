@@ -22,6 +22,9 @@ final class TransformerManager implements InterfaceCallback
 	const QUEUE_NAME = 'documentgenerator_create';
 	const PATH = 'documentgenerator_preview';
 
+	public const ERROR_CODE_TRANSFORM_FORMATS_FILLED = 'TRANSFORM_FORMATS_FILLED';
+	public const ERROR_CODE_TRANSFORM_FORMATS_PROCESSED = 'TRANSFORM_FORMATS_PROCESSED';
+
 	protected $result;
 	protected $document;
 	protected $transformInfo;
@@ -183,13 +186,27 @@ final class TransformerManager implements InterfaceCallback
 
 		if(empty($formats))
 		{
-			//$this->result->addError(new Error('No need to transform'));
-			return $this->result;
+			return $this->result->setData([
+				'cancelReason' => new Error(
+					'All transform formats are present',
+					static::ERROR_CODE_TRANSFORM_FORMATS_FILLED,
+				),
+			]);
 		}
 
 		if($this->isConverted($formats))
 		{
-			//$this->result->addError(new Error('Already converted'));
+			$status = $this->transformInfo['status'] ?? 0;
+			if ($status === Command::STATUS_SUCCESS)
+			{
+				$this->result->setData([
+					'cancelReason' => new Error(
+						'All transform formats already processed',
+						static::ERROR_CODE_TRANSFORM_FORMATS_PROCESSED,
+					),
+				]);
+			}
+
 			return $this->result;
 		}
 

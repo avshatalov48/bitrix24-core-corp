@@ -439,17 +439,17 @@ class DuplicateOrganizationCriterion extends DuplicateCriterion
 			$filter['ENTITY_TYPE_ID'] = $entityTypeID;
 		}
 
-		$dbResult = DuplicateOrganizationMatchCodeTable::getList(
-			array(
-				'select' =>array('ENTITY_TYPE_ID', 'ENTITY_ID'),
-				'order' => array(
-					'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
-					'ENTITY_ID' => 'ASC'
-				),
-				'filter' => $filter,
-				'limit' => $limit
-			)
-		);
+		$listParams = $this->applyEntityCategoryFilter($entityTypeID, [
+			'select' => ['ENTITY_TYPE_ID', 'ENTITY_ID'],
+			'order' => [
+				'ENTITY_TYPE_ID' => $this->sortDescendingByEntityTypeId ? 'DESC' : 'ASC',
+				'ENTITY_ID' => 'ASC'
+			],
+			'filter' => $filter,
+			'limit' => $limit,
+		]);
+		$dbResult = DuplicateOrganizationMatchCodeTable::getList($listParams);
+
 		$entities = array();
 		while($fields = $dbResult->fetch())
 		{

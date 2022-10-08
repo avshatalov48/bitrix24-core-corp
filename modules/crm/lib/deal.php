@@ -526,6 +526,9 @@ class DealTable extends Main\ORM\Data\DataManager
 		return $result;
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	public static function onAfterUpdate(Event $event): EventResult
 	{
 		$item = $event->getParameter('object');

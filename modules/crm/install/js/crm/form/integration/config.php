@@ -19,7 +19,6 @@ return [
 		'main.core.ajax',
 		'main.loader',
 		'seo.ads.login',
-		'seo.ads.client_selector',
 	],
 	'skip_core' => false,
 ];

@@ -4,7 +4,7 @@ use Bitrix\Main\Localization\Loc;
 
 $APPLICATION->SetTitle("");
 
-\Bitrix\Main\UI\Extension::load('intranet.security');
+\Bitrix\Main\UI\Extension::load(['intranet.security', 'ui.design-tokens']);
 $menuContainerId = 'intranet-user-profile-security-menu-'.$this->randString();
 ?>
 

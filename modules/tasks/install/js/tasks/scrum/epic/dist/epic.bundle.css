@@ -11,6 +11,7 @@
 .tasks-scrum-epic-form-container {
 	background-color: #fff;
 	padding: 19px 17px;
+	border-radius: var(--ui-border-radius-md, 0px);
 }
 
 .tasks-scrum-epic-form-header {
@@ -28,14 +29,14 @@
 	-ms-flex: 1;
 	flex: 1;
 	padding-bottom: 12px;
-	font: 18px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
 .tasks-scrum-epic-form-header-title-control {
 	width: 100%;
 	border-color: transparent;
-	font: 18px/20px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 18px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 }
 
@@ -72,7 +73,7 @@
 .tasks-scrum-epic-header-color-current {
 	width: 19px;
 	height: 19px;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-2xs, 2px);
 }
 
 .tasks-scrum-epic-header-color-btn-angle {
@@ -104,7 +105,7 @@
 .tasks-scrum-epic-grid-name-color {
 	width: 19px;
 	height: 19px;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-2xs, 2px);
 }
 
 .tasks-scrum-epic-grid-tasks-total:hover {
@@ -183,13 +184,15 @@
 }
 
 .tasks-scrum-epics-empty-first-title {
-	font: 37px/32px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 37px/32px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #525c69;
 	margin-bottom: 67px;
 }
 
 .tasks-scrum-epics-empty-second-title {
-	font: 20px/32px "OpenSans-Light", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 20px/32px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	color: #a8adb4;
 	margin-bottom: 47px;
 }

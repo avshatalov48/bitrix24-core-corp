@@ -15,13 +15,14 @@
 .disk-file-editor-templates-title-name {
 	display: block;
 	margin-bottom: 8px;
-	font: 18px "OpenSans-Regular", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #333;
 }
 
 .disk-file-editor-templates-title-desc {
 	display: block;
-	font: 13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #858c96;
 }
 
@@ -103,7 +104,7 @@
 }
 
 .disk-file-editor-templates-item-name {
-	font: 14px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: center;
 	color: #858c96;
 }

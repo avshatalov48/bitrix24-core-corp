@@ -46,7 +46,8 @@
 	margin-bottom: 9px;
 	padding: 0 13px;
 	display: block;
-	font: 14px 'OpenSans-Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: rgba(255,255,255,.5);
 	transform: rotate(-90deg);
 }
@@ -170,7 +171,7 @@
 	}
 
 	.feed-add-post .disk-file-control-panel-card-name {
-		font: 11px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+		font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	}
 }
 
@@ -309,7 +310,7 @@
 .disk-file-thumb-loader .ui-progressround-status-percent-incircle {
 	top: -1px;
 	left: 22px;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transform: none;
 	white-space: nowrap;
 }
@@ -344,7 +345,7 @@
 	top: 3px;
 	left: 27px;
 	max-width: 70px;
-	font: 12px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #fff;
 	white-space: nowrap;
 	overflow: hidden;
@@ -373,7 +374,7 @@
 
 .disk-file-thumb-loader-size {
 	order: 2;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525c69;
 }
 
@@ -400,7 +401,7 @@
 	-webkit-box-orient: vertical;
 	padding: 0 6px;
 	margin-bottom: 6px;
-	font: 11px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.8);
 	overflow: hidden;
 	max-width: 100%;
@@ -445,7 +446,7 @@
 .disk-file-thumb-file-extension {
 	display: inline-block;
 	margin-left: -3px;
-	font: 12px/13px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a8adb4;
 }
 
@@ -631,7 +632,7 @@
 
 .disk-file-control-panel-card-name {
 	display: block;
-	font: 13px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.9);
 }
 
@@ -720,7 +721,7 @@
 	height: 41px;
 	border-radius: 12px;
 	border: 2px dashed rgba(82,92,105,.15);
-	font: 13px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: rgba(82,92,105,.5);
 	text-align: center;
 	transition: height .3s, border .3s;
@@ -740,7 +741,7 @@
 	height: 100%;
 	border: 2px dashed #2fc6f6;
 	background-color: #fff;
-	font: 15px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	z-index: 5;
 }
 
@@ -807,7 +808,7 @@
 	height: 90px;
 	margin: 0;
 	border: 1px solid #c6cdd3;
-	font: 14px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	box-sizing: border-box;
 	width: 100%;

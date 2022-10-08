@@ -999,7 +999,6 @@ final class CCrmEntityProductListComponent
 					'PRICE_EXCLUSIVE',
 					'PRICE_NETTO',
 					'PRICE_BRUTTO',
-					'TAX_RATE',
 					'TAX_SUM',
 					'SUM',
 				];
@@ -1009,6 +1008,11 @@ final class CCrmEntityProductListComponent
 					{
 						$this->rows[$index][$name] = (float)$this->rows[$index][$name];
 					}
+				}
+
+				if (isset($row['TAX_RATE']))
+				{
+					$row['TAX_RATE'] = ($row['TAX_RATE'] === '') ? null : (float)$row['TAX_RATE'];
 				}
 			}
 
@@ -2017,7 +2021,7 @@ final class CCrmEntityProductListComponent
 
 				if (!isset($row['PRICE_BRUTTO']) || $row['PRICE_BRUTTO'] == 0)
 				{
-					$row['PRICE_BRUTTO'] = CCrmProductRow::CalculateInclusivePrice($row['PRICE_NETTO'], $row['TAX_RATE']);
+					$row['PRICE_BRUTTO'] = CCrmProductRow::CalculateInclusivePrice($row['PRICE_NETTO'], (float)$row['TAX_RATE']);
 				}
 
 				if (!isset($row['MEASURE_CODE']) || $row['MEASURE_CODE'] == '')

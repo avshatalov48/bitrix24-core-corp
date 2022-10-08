@@ -16,5 +16,6 @@ return [
 		'./src/recent',
 		'./src/promotion',
 		'./src/user',
+		'./src/openlines',
 	],
 ];

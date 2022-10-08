@@ -1,5 +1,5 @@
 import {Dom, Type} from 'main.core';
-import {EventEmitter} from 'main.core.events';
+import {BaseEvent, EventEmitter} from 'main.core.events';
 
 import {SidePanel} from '../service/side.panel';
 import {Filter} from '../service/filter';
@@ -42,6 +42,8 @@ export class View extends EventEmitter
 
 		this.isOwnerCurrentUser = (params.isOwnerCurrentUser === 'Y');
 
+		this.loadItemsRepeatCounter = new Map();
+
 		this.sidePanel = new SidePanel();
 
 		this.requestSender = new RequestSender({
@@ -54,11 +56,17 @@ export class View extends EventEmitter
 			scrumManager: this,
 			requestSender: this.requestSender
 		});
+		this.filter.subscribe('applyFilter', this.onApplyFilter.bind(this));
 
 		this.userId = parseInt(params.userId, 10);
 		this.groupId = parseInt(params.groupId, 10);
 
 		this.pathToTask = (Type.isString(params.pathToTask) ? params.pathToTask : '');
+	}
+
+	onApplyFilter(baseEvent: BaseEvent)
+	{
+		this.loadItemsRepeatCounter.clear();
 	}
 
 	renderTo(container: HTMLElement)

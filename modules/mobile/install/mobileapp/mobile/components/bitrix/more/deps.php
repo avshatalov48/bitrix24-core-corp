@@ -1,10 +1,11 @@
-<?
+<?php
+
 return [
 	'extensions' => [
 		'utils',
 		'recipient',
 		'helpers/component',
-		'task',
+		'tasks:task',
 		'menu/spotlight',
 		'stress/more',
 		'qrauth/utils',

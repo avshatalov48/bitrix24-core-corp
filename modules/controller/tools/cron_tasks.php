@@ -1,5 +1,5 @@
 <?php
-$DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"] = realpath(dirname(__FILE__)."/../../../..");
+$DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"] = realpath(__DIR__."/../../../..");
 
 //select status,count(*) from b_controller_task group by status
 //update b_controller_task set status='L' where status='F' and task_id='REMOTE_COMMAND'
@@ -7,7 +7,8 @@ $DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"] = realpath(dirname(__FILE__)."/../../
 /*Command line arguments*/
 $limit = 10000;
 $show_eta = false;
-for ($i = 1; $i < count($argv); $i++)
+$c = count($argv);
+for ($i = 1; $i < $c; $i++)
 {
 	if (preg_match("/^--limit=([0-9]+)\$/", $argv[$i], $match))
 	{

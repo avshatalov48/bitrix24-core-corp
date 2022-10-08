@@ -70,7 +70,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      }
 	    }
-	  }).catch(function (_ref2) {
+	  })["catch"](function (_ref2) {
 	    var errors = _ref2.errors;
 
 	    for (var _action2 in requestData) {
@@ -489,6 +489,22 @@ this.BX.Disk = this.BX.Disk || {};
 	      return Options.gridId;
 	    }
 	  }, {
+	    key: "getCommonGrid",
+	    value: function getCommonGrid() {
+	      var gridInstance;
+	      var gridId = this.getGridId();
+
+	      if (main_core.Reflection.getClass('BX.Main.gridManager') && BX.Main.gridManager.getInstanceById(gridId)) {
+	        gridInstance = BX.Main.gridManager.getInstanceById(gridId);
+	      } else if (main_core.Reflection.getClass('BX.Main.tileGridManager') && BX.Main.tileGridManager.getInstanceById(gridId)) {
+	        gridInstance = BX.Main.tileGridManager.getInstanceById(gridId);
+	      }
+
+	      return new CommonGrid({
+	        gridInstance: gridInstance
+	      });
+	    }
+	  }, {
 	    key: "setGridId",
 	    value: function setGridId(gridId) {
 	      Options.gridId = gridId;
@@ -544,22 +560,8 @@ this.BX.Disk = this.BX.Disk || {};
 	  babelHelpers.createClass(Toolbar, null, [{
 	    key: "reloadGridAndFocus",
 	    value: function reloadGridAndFocus(rowId) {
-	      var gridInstance;
-	      var gridId = Options.getGridId();
-
-	      if (main_core.Reflection.getClass('BX.Main.gridManager') && BX.Main.gridManager.getInstanceById(gridId)) {
-	        gridInstance = BX.Main.gridManager.getInstanceById(gridId);
-	      } else if (main_core.Reflection.getClass('BX.Main.tileGridManager') && BX.Main.tileGridManager.getInstanceById(gridId)) {
-	        gridInstance = BX.Main.tileGridManager.getInstanceById(gridId);
-	      }
-
-	      var commonGrid = new CommonGrid({
-	        gridInstance: gridInstance
-	      });
-
-	      if (gridInstance) {
-	        commonGrid.reload();
-	      }
+	      var commonGrid = Options.getCommonGrid();
+	      commonGrid.reload();
 	    }
 	  }, {
 	    key: "runCreating",
@@ -744,7 +746,7 @@ this.BX.Disk = this.BX.Disk || {};
 	        _this2.data['href'] = data;
 
 	        _this2.open();
-	      }).catch(function (_ref2) {
+	      })["catch"](function (_ref2) {
 	        var errors = _ref2.errors;
 
 	        _this2.hideLoad();
@@ -1059,9 +1061,8 @@ this.BX.Disk = this.BX.Disk || {};
 	        }
 	      }).then(function (response) {
 	        if (response.status === 'success') {
-	          var grid = BX.Main.gridManager.getInstanceById(Options.getGridId());
-	          var row = grid.getRows().getById(_this2.trackedObjectId);
-	          row.remove();
+	          var commonGrid = Options.getCommonGrid();
+	          commonGrid.removeItemById(_this2.trackedObjectId);
 	        }
 	      });
 	      return true;
@@ -1191,7 +1192,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          if (menu) {
 	            menu.removeMenuItem('loader');
 	          }
-	        }.bind(this)).catch(function (_ref3) {
+	        }.bind(this))["catch"](function (_ref3) {
 	          var errors = _ref3.errors;
 	          //Hide Loader and show errors
 	          console.log(errors);
@@ -1278,7 +1279,7 @@ this.BX.Disk = this.BX.Disk || {};
 	          if (menu) {
 	            menu.removeMenuItem('loader');
 	          }
-	        }.bind(this)).catch(function (_ref4) {
+	        }.bind(this))["catch"](function (_ref4) {
 	          var errors = _ref4.errors;
 	          //Hide Loader and show errors
 	          console.log(errors);

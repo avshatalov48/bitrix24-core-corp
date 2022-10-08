@@ -129,7 +129,7 @@
 .tm-violation-hint-title {
 	margin-bottom: 6px;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .timeman-grid-worktime-icon-container {
@@ -271,7 +271,8 @@
 .timeman-top-title {
 	cursor: pointer;
 	color: #333;
-	font: 24px/33px 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 24px/33px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	margin: 0;
 }
 
@@ -290,7 +291,8 @@
 	border-bottom: 1px dashed transparent;
 	color: #525c69;
 	vertical-align: middle;
-	font: 300 17px/22px "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 17px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	cursor: pointer;
 	transition: all 220ms ease;
 }
@@ -371,7 +373,8 @@
 .timeman-report-container .main-grid-cell-head .main-grid-head-title {
 	color: #525c69;
 	font-size: 15px;
-	font-family: 'OpenSans-Light', "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-light, 300);
 	letter-spacing: 0;
 	line-height: 16px;
 	padding-right: 0;
@@ -379,7 +382,7 @@
 
 .timeman-report-container .timeman-grid-cell-stat-head.main-grid-cell-head .main-grid-head-title {
 	text-transform: none;
-	font: 12px/12px "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font: 12px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: center;
 }
 
@@ -404,8 +407,8 @@
 }
 
 .timeman-report-container .main-grid-cell-head:first-child .main-grid-head-title {
-	font: 14px/15px "Helvetica Neue", Arial, Helvetica, sans-serif;
-	font-weight: 700;
+	font: 14px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	text-transform: none;
 }
 
@@ -427,7 +430,7 @@
 }
 
 .timeman-report-container .timeman-grid-cell-empty.main-grid-cell:first-child .main-grid-cell-content {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	color: rgba(82, 92, 105, .75);
 	line-height: 25px;
 }
@@ -508,7 +511,7 @@
 }
 
 .timeman-grid-worktime-name {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 11px;
 	color: #535c69;
 	line-height: 14px;
@@ -526,15 +529,15 @@
 	border-radius: 10px;
 	background-color: #2fc6f6;
 	color: #fff;
-	font-weight: normal;
 	line-height: 15px;
 	margin: 0 4px;
-	font-family: "OpenSans-Semibold", "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .timeman-grid-head-title-text {
 	font-size: 12px;
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight: normal;
 	color: rgba(130, 139, 149, .65);
 	vertical-align: middle;
@@ -729,7 +732,7 @@
 }
 
 .timeman-report-container-plan .main-grid-cell-head:first-child .main-grid-head-title {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	color: #525c69;
 	line-height: 25px;
 }
@@ -922,7 +925,7 @@ body.timeman-print-mode .timeman-grid-worktime-shift:after {
 }
 
 span.tm-department-name a {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	color: #7a828c;
 	line-height: 25px;
 	display: inline-block !important;
@@ -953,7 +956,7 @@ span.tm-department-name a {
 	color: #525c69;
 	font-size: 12px;
 	text-transform: none;
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .main-grid-cell-head-stat.main-grid-cell-head .main-grid-cell-head-container {
@@ -1001,7 +1004,7 @@ div + .timeman-entity-config-block {
 }
 
 .timeman-grid-column-header-today .main-grid-head-title {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .timeman-grid-worktime-expired-text {

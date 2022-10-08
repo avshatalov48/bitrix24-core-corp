@@ -360,4 +360,9 @@ class Provider
 			UserOptionController::getInstance($this->userId, $projectId)->delete(UserOptionTypeDictionary::OPTION_PINNED);
 		}
 	}
+
+	public function isScrum(): bool
+	{
+		return $this->isScrum;
+	}
 }

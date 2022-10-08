@@ -9,14 +9,15 @@ use \Bitrix\Imopenlines\Limit;
  * @var array $arResult
  * @var CMain $APPLICATION
  */
-Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
 Extension::load([
+	'ui.design-tokens',
 	'ui.alerts',
 	'access',
 	'sidepanel',
-	'ui.design-tokens',
 ]);
+
+Asset::getInstance()->addCss('/bitrix/css/main/table/style.css');
 
 $APPLICATION->IncludeComponent('bitrix:ui.info.helper', '', []);
 

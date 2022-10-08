@@ -98,7 +98,7 @@ this.BX = this.BX || {};
 
 	          _this3.$refs['nameInput'].focus();
 	        }
-	      }).catch(function (result) {
+	      })["catch"](function (result) {
 	        _this3.urlCheckStatus = 22;
 	        _this3.errorMessage = result.answer.error_description;
 	      });
@@ -137,7 +137,7 @@ this.BX = this.BX || {};
 	          if (_this4.$root.$app.addUrlPopup) {
 	            _this4.$root.$app.addUrlPopup.close();
 	          }
-	        }).catch(function (result) {
+	        })["catch"](function (result) {
 	          _this4.errorMessage = result.answer.error_description;
 	        });
 	      }
@@ -239,7 +239,7 @@ this.BX = this.BX || {};
 	          zIndexAbsolute: 2000,
 	          maxHeight: 500
 	        });
-	      }).catch(function (errors) {
+	      })["catch"](function (errors) {
 	        if (main_core.Type.isArray(errors)) {
 	          _this7.errorMessage = errors.pop().message;
 	        } else {

@@ -118,7 +118,7 @@ export class Captcha
 								</div>
 							</div>
 						</div>
-						<div class="ui-form-row">
+						<div class="ui-form-row" style="margin: 20px 0 0;">
 							<div class="ui-form-label">
 								<div class="ui-ctl-label-text">Secret</div>
 							</div>

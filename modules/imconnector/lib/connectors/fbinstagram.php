@@ -36,13 +36,15 @@ class FbInstagram extends InstagramBase
 	/**
 	 * @param array $oldUserFields
 	 * @param array $userFields
-	 * @return int
+	 * @return Result
 	 */
-	protected function updateUser(array $oldUserFields, array $userFields)
+	protected function updateUser(array $oldUserFields, array $userFields): Result
 	{
-		$cUser = new \CUser;
+		$result = new Result;
+		$user = new \CUser;
 
 		$userId = $userFields['ID'];
+		$result->setResult($userId);
 
 		if (
 			$userFields['MD5'] !== md5(serialize($oldUserFields))
@@ -55,11 +57,20 @@ class FbInstagram extends InstagramBase
 			$fields = $this->preparationUserFields($oldUserFields, $userId);
 			if(!empty($fields))
 			{
-				$cUser->Update($userId, $fields);
+				static::getApplication()->resetException();
+
+				if (!$user->update($userId, $fields))
+				{
+					$error = static::getApplication()->getException();
+					if ($error instanceof \CApplicationException)
+					{
+						$result->addError(new Error($error->getString()));
+					}
+				}
 			}
 		}
 
-		return $userId;
+		return $result;
 	}
 
 	//Input

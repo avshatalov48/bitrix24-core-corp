@@ -1,4 +1,4 @@
-.task-quick-info { font-size:12px; font-family:Arial, Helvetica,sans-serif; color:#000;  padding:3px 6px 0 4px;  }
+.task-quick-info { font-size:12px; font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica)); color:#000;  padding:3px 6px 0 4px;  }
 .task-quick-info-box { border-top:1px solid #e8e8e8; overflow:hidden; padding:0 5px 7px; zoom:1; }
 .task-quick-info-box-title { padding-left: 0; width:385px; border: 0 none;}
 .task-quick-info-title-label { color:#6B6B6B; font-size:12px; vertical-align:bottom; float: left; }

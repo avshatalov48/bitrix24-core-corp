@@ -1,5 +1,6 @@
 .tasks-scrum__sprints--completed-title {
-	font: 11px/12px "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 11px/12px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	margin: 0 0 13px 0;
 	color: var(--tasks_scrum-white_alpha_80);
 	text-transform: uppercase;
@@ -10,7 +11,7 @@
 .tasks-scrum__sprints--completed-title-text {
 	display: inline-block;
 	padding: 6px 17px 5px;
-	border-radius: 29px;
+	border-radius: var(--ui-border-radius-3xl, 29px);
 	background: var(--tasks_scrum-black_alpha_10);
 	position: relative;
 }
@@ -39,7 +40,7 @@
 	align-items: center;
 	box-sizing: border-box;
 	padding: 3px 7px 3px 12px;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	font-size: 14px;
 	line-height: 17px;
 	color: var(--tasks_scrum-white);
@@ -80,7 +81,7 @@
 }
 
 .tasks-scrum__sprints--completed-stats span {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tasks-scrum__sprints--completed-stats span:first-of-type {
@@ -95,13 +96,13 @@
 
 .tasks-scrum__sprints--completed .tasks-scrum__content {
 	border-top: none;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	background: var(--tasks_scrum-black_alpha_13);
 	margin-bottom: 10px;
 }
 
 .tasks-scrum__sprints--completed .tasks-scrum__title {
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--tasks_scrum-white_alpha_80);
 	margin-top: 0;
 	max-width: 100%;
@@ -143,12 +144,12 @@
 
 .tasks-scrum__sprints--completed .tasks-scrum__content--event-params {
 	text-align: right;
-	font: 14px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--tasks_scrum-white_alpha_80);
 }
 
 .tasks-scrum__sprints--completed .tasks-scrum__content--event-params span {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .tasks-scrum-completed-sprints-observer-target {
@@ -169,7 +170,7 @@
 	display: none;
 	text-align: center;
 	justify-content: center;
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	padding: 12px 0 11px;
 	color: var(--tasks_scrum-white_alpha_80);
 	background: var(--tasks_scrum-white_alpha_13);

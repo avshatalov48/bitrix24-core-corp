@@ -70,6 +70,10 @@ const SmsMessage = {
 		editorUrl: {
 			type: String,
 			required: true
+		},
+		selectedMode: {
+			type: String,
+			required: true,
 		}
 	},
 	mixins: [StageMixin],
@@ -374,7 +378,7 @@ const SmsMessage = {
 									</div>
 								</div>
 							</div>
-							<sms-message-editor-block v-else :editor="editor"/>
+							<sms-message-editor-block v-else :editor="editor" :selectedMode="selectedMode"/>
 							<template v-if="currentSenderCode === 'bitrix24'">
 								<div class="salescenter-app-payment-by-sms-item-container-sms-content-info">
 									${Loc.getMessage('SALESCENTER_SEND_ORDER_VIA_BITRIX24')}

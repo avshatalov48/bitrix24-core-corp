@@ -33,7 +33,7 @@ Extension::load(['ui.entity-selector']);
 			    <?ob_start();?>
 				<span class="js-id-tdp-mem-sel-is-item js-id-tdp-mem-sel-is-item-{{VALUE}} task-form-field-item {{ITEM_SET_INVISIBLE}}"
 					  data-item-value="{{VALUE}}" data-bx-type="{{TYPE_SET}}">
-					<a class="task-form-field-item-text task-options-destination-text" href="{{URL}}" target="_blank">
+					<a class="task-form-field-item-text task-options-destination-text" href="{{URL}}">
 						{{DISPLAY}}
 					</a>
 					<span class="js-id-tdp-mem-sel-is-item-delete task-form-field-item-delete" title="<?=Loc::getMessage('TASKS_COMMON_CANCEL_SELECT')?>"></span>

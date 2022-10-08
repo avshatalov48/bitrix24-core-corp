@@ -15,7 +15,6 @@ use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Catalog;
 use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
-use Bitrix\Salescenter;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -24,11 +23,6 @@ Loc::loadMessages(__FILE__);
 if (!Loader::includeModule('crm'))
 {
 	die('Can\'t include module "CRM"');
-}
-
-if (!Main\Loader::includeModule('salescenter'))
-{
-	die('Can\'t include module "salescenter"');
 }
 
 /** @internal  */
@@ -206,9 +200,9 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		$result = $this->saveOrder();
 		if (!is_null($result))
 		{
-			[$orderId, $shipmentId] = $result;
+			[, $shipmentId] = $result;
 
-			$shipment = Crm\Order\Manager::getShipmentObject($shipmentId);
+			$shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($shipmentId);
 			if (!$shipment)
 			{
 				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND'));
@@ -274,12 +268,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		if ($isNew && !Permissions\Order::checkCreatePermission($this->userPermissions))
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-			return;
-		}
-
-		if ($isNew && Crm\Restriction\OrderRestriction::isOrderLimitReached())
-		{
-			$this->addError('You have reached the order limit for your plan');
 			return;
 		}
 
@@ -883,9 +871,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 		$formData['PROPERTIES'] = $this->getPropertiesField($formData);
 
-		$orderBuilder = Salescenter\Builder\Manager::getBuilder(
-			Salescenter\Builder\SettingsContainer::BUILDER_SCENARIO_SHIPMENT
-		);
+		$orderBuilder = Crm\Order\Builder\Factory::createBuilderForShipment();
 
 		$director = new Builder\Director;
 		/** @var Crm\Order\Order $order */

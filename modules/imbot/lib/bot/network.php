@@ -3,6 +3,7 @@
 namespace Bitrix\ImBot\Bot;
 
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
@@ -278,6 +279,15 @@ class Network extends Base implements NetworkBot
 	 * @return array{command: string, icon: string, js: string, context: string, lang: string}[]
 	 */
 	public static function getAppList(): array
+	{
+		return [];
+	}
+
+	/**
+	 * Returns event handler list.
+	 * @return array{module: string, event: string, class: string, handler: string}[]
+	 */
+	public static function getEventHandlerList(): array
 	{
 		return [];
 	}
@@ -715,7 +725,7 @@ class Network extends Base implements NetworkBot
 	 *
 	 * @return array|null
 	 */
-	public static function getBotSettings(array $params = [])
+	public static function getBotSettings(array $params = []): ?array
 	{
 		$http = self::instanceHttpClient();
 		$result = $http->query('settingsSupport', $params,true);
@@ -1078,9 +1088,11 @@ class Network extends Base implements NetworkBot
 			Log::write($params, 'NETWORK: startDialogSession');
 
 			static::startDialogSession([
+				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'SESSION_ID' => $params['SESSION_ID'],
 				'PARENT_ID' => $params['PARENT_ID'],
+				'CLOSE_TERM' => $params['CLOSE_TERM'],
 			]);
 		}
 
@@ -1090,9 +1102,11 @@ class Network extends Base implements NetworkBot
 			Log::write($params, 'NETWORK: finishDialogSession');
 
 			static::finishDialogSession([
+				'BOT_ID' => $params['BOT_ID'],
 				'DIALOG_ID' => $params['DIALOG_ID'],
 				'SESSION_ID' => $params['SESSION_ID'],
 				'PARENT_ID' => $params['PARENT_ID'],
+				'CLOSE_TERM' => $params['CLOSE_TERM'],
 			]);
 		}
 
@@ -1551,17 +1565,7 @@ class Network extends Base implements NetworkBot
 
 		if (!empty($messageFields['KEYBOARD']))
 		{
-			$keyboard = ['BOT_ID' => $messageFields['BOT_ID']];
-			if (!isset($messageFields['KEYBOARD']['BUTTONS']))
-			{
-				$keyboard['BUTTONS'] = $messageFields['KEYBOARD'];
-			}
-			else
-			{
-				$keyboard = $messageFields['KEYBOARD'];
-			}
-			$keyboard = Keyboard::getKeyboardByJson($keyboard);
-			$message['KEYBOARD'] = $keyboard;
+			$message['KEYBOARD'] = self::processIncomingKeyboard($messageFields);
 		}
 
 		if (!empty($messageFields['ATTACH']))
@@ -1599,6 +1603,15 @@ class Network extends Base implements NetworkBot
 
 		// url preview
 		if (isset($messageFields['URL_PREVIEW']) && $messageFields['URL_PREVIEW'] === 'N')
+		{
+			$message['URL_PREVIEW'] = 'N';
+		}
+
+		// system
+		if (
+			isset($messageFields['PARAMS'], $messageFields['PARAMS']['CLASS'])
+			&& $messageFields['PARAMS']['CLASS'] === 'bx-messenger-content-item-ol-output'
+		)
 		{
 			$message['URL_PREVIEW'] = 'N';
 		}
@@ -1735,16 +1748,7 @@ class Network extends Base implements NetworkBot
 		$keyboard = [];
 		if (!empty($messageFields['KEYBOARD']))
 		{
-			$keyboard = ['BOT_ID' => $messageFields['BOT_ID']];
-			if (!isset($messageFields['KEYBOARD']['BUTTONS']))
-			{
-				$keyboard['BUTTONS'] = $messageFields['KEYBOARD'];
-			}
-			else
-			{
-				$keyboard = $messageFields['KEYBOARD'];
-			}
-			$keyboard = Keyboard::getKeyboardByJson($keyboard);
+			$keyboard = self::processIncomingKeyboard($messageFields);
 		}
 
 		if (!empty($messageFields['FILES']))
@@ -1917,7 +1921,7 @@ class Network extends Base implements NetworkBot
 
 		if ((int)$params['SESSION_ID'] > 0)
 		{
-			self::instanceDialogSession($params['DIALOG_ID'])
+			self::instanceDialogSession((int)$params['BOT_ID'], $params['DIALOG_ID'])
 				->setSessionId((int)$params['SESSION_ID']);
 		}
 
@@ -1938,7 +1942,40 @@ class Network extends Base implements NetworkBot
 	 */
 	public static function onChatStart($dialogId, $joinFields)
 	{
+		$botData = Im\Bot::getListCache();
+
+		if (
+			($bot = $botData[$joinFields['BOT_ID']])
+			&& $bot["TEXT_PRIVATE_WELCOME_MESSAGE"] <> ''
+			&& $joinFields['CHAT_TYPE'] == \IM_MESSAGE_PRIVATE
+			&& $joinFields['FROM_USER_ID'] != $joinFields['BOT_ID']
+		)
+		{
+			$messageFields = [
+				'DIALOG_ID' => $joinFields['USER_ID'],
+				'FROM_USER_ID' => $joinFields['BOT_ID'],
+				'MESSAGE' => static::replacePlaceholders($bot['TEXT_PRIVATE_WELCOME_MESSAGE'], $joinFields['USER_ID']),
+				'URL_PREVIEW' => 'N',
+				'PARAMS' => [self::MESSAGE_PARAM_ALLOW_QUOTE => 'N'],
+			];
+
+			Application::getInstance()->addBackgroundJob(
+				[static::class, 'delayShowingMessage'],
+				[$joinFields['BOT_ID'], $messageFields],
+				Application::JOB_PRIORITY_LOW
+			);
+		}
+
 		return true;
+	}
+
+	/**
+	 * @param array $messageFields
+	 * @return bool
+	 */
+	public static function delayShowingMessage($botId, $messageFields)
+	{
+		return Im\Bot::addMessage(['BOT_ID' => $botId], $messageFields);
 	}
 
 	/**
@@ -1981,7 +2018,7 @@ class Network extends Base implements NetworkBot
 			return false;
 		}
 
-		self::instanceDialogSession($messageFields['DIALOG_ID'])->update(['DATE_LAST_ACTIVITY' => new Main\Type\DateTime]);
+		self::instanceDialogSession((int)$messageFields['BOT_ID'], $messageFields['DIALOG_ID'])->start();
 
 		// check user vote for session by direct text input '1' or '0'
 		if (self::checkSessionVoteMessage($messageFields))
@@ -2931,6 +2968,36 @@ class Network extends Base implements NetworkBot
 		return $recordFile;
 	}
 
+	/**
+	 * @param array $messageFields
+	 * @return Keyboard|null
+	 */
+	protected static function processIncomingKeyboard(array $messageFields): ?Keyboard
+	{
+		$keyboard = null;
+		if (!empty($messageFields['KEYBOARD']))
+		{
+			$keyboardData = [];
+			if (!isset($messageFields['KEYBOARD']['BUTTONS']))
+			{
+				$keyboardData['BUTTONS'] = $messageFields['KEYBOARD'];
+			}
+			else
+			{
+				$keyboardData = $messageFields['KEYBOARD'];
+			}
+			if (is_string($keyboardData))
+			{
+				$keyboardData = \CUtil::jsObjectToPhp($keyboardData);
+			}
+
+			$keyboardData['BOT_ID'] = $messageFields['BOT_ID'] ?? static::getBotId();
+			$keyboard = Keyboard::getKeyboardByJson($keyboardData);
+		}
+
+		return $keyboard;
+	}
+
 	//endregion
 
 
@@ -3517,15 +3584,18 @@ class Network extends Base implements NetworkBot
 	//region OL session
 
 	/**
+	 * @param int $botId
 	 * @param string|null $dialogId
+	 * @param int|null $sessionId
 	 * @return ImBot\DialogSession
 	 */
-	protected static function instanceDialogSession(?string $dialogId = null): ImBot\DialogSession
+	protected static function instanceDialogSession(int $botId, ?string $dialogId = null): ImBot\DialogSession
 	{
 		static $dialogSession;
 		if (!($dialogSession instanceof ImBot\DialogSession))
 		{
-			$dialogSession = new ImBot\DialogSession(static::getBotId(), $dialogId);
+			$dialogSession = new ImBot\DialogSession($botId ?: static::getBotId(), $dialogId);
+			$dialogSession->load();
 		}
 
 		return $dialogSession;
@@ -3538,9 +3608,11 @@ class Network extends Base implements NetworkBot
 	 * @param array $params Command arguments.
 	 * <pre>
 	 * [
+	 * 	(int) BOT_ID
 	 * 	(string) DIALOG_ID
 	 * 	(int) SESSION_ID Current session Id.
 	 * 	(int) PARENT_ID Previous session Id.
+	 * 	(int) CLOSE_TERM Delay time (minutes) to close session.
 	 * 	(string) GREETING_SHOWN - Y|N
 	 * 	(array) MENU_STATE
 	 * ]
@@ -3550,12 +3622,12 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function startDialogSession($params)
 	{
-		if (empty($params['DIALOG_ID']))
+		if (empty($params['BOT_ID']) || empty($params['DIALOG_ID']))
 		{
 			return false;
 		}
 
-		return self::instanceDialogSession($params['DIALOG_ID'])->start($params);
+		return self::instanceDialogSession((int)$params['BOT_ID'], $params['DIALOG_ID'])->start($params);
 	}
 
 	/**
@@ -3567,6 +3639,7 @@ class Network extends Base implements NetworkBot
 	 * [
 	 * 	(string) DIALOG_ID
 	 * 	(int) SESSION_ID Current session Id.
+	 * 	(int) CLOSE_TERM Delay time (minutes) to close session.
 	 * ]
 	 * </pre>
 	 *
@@ -3574,12 +3647,19 @@ class Network extends Base implements NetworkBot
 	 */
 	protected static function finishDialogSession($params)
 	{
-		if (empty($params['DIALOG_ID']))
+		if (empty($params['DIALOG_ID']) || empty($params['SESSION_ID']))
 		{
 			return false;
 		}
 
-		return self::instanceDialogSession($params['DIALOG_ID'])->finish($params);
+		sleep(1);
+		$session = self::instanceDialogSession((int)$params['BOT_ID'], $params['DIALOG_ID']);
+		if ($session->getSessionId() == (int)$params['SESSION_ID'])
+		{
+			return $session->finish($params);
+		}
+
+		return false;
 	}
 
 	//endregion
@@ -3722,7 +3802,7 @@ class Network extends Base implements NetworkBot
 		}
 
 		$agentAdded = true;
-		$agents = \CAgent::getList([], ['=NAME' => $className.'::'.$agentName.';']);
+		$agents = \CAgent::getList([], ['MODULE_ID' => 'imbot', '=NAME' => $className.'::'.$agentName.';']);
 		if (!$agents->fetch())
 		{
 			$agentAdded = (bool)(\CAgent::addAgent(

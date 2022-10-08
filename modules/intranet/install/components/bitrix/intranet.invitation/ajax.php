@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Iblock;
 use Bitrix\Intranet\Invitation\Register;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -20,6 +21,7 @@ use Bitrix\Main\Engine\ActionFilter;
 use Bitrix\Intranet\Internals\InvitationTable;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Entity;
+use Bitrix\Intranet;
 
 class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -156,28 +158,88 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		return !(Loader::includeModule("bitrix24") && !CBitrix24::isMoreUserAvailable());
 	}
 
-	protected function getHeadDepartmentId()
+	protected function getHeadDepartmentId(): ?int
 	{
-		if (Loader::includeModule('iblock'))
-		{
-			$rsIBlock = CIBlock::GetList(array(), array("CODE" => "departments"));
-			$arIBlock = $rsIBlock->Fetch();
-			$iblockID = $arIBlock["ID"];
+		return Intranet\DepartmentStructure::getInstance(SITE_ID)->getBaseDepartmentId();
+	}
 
-			$dbUpDepartment = CIBlockSection::GetList(
-				array(),
-				array(
-					"SECTION_ID" => 0,
-					"IBLOCK_ID" => $iblockID
-				)
-			);
-			if ($upDepartment = $dbUpDepartment->Fetch())
+	private function getCurrentUserDepartment(): array
+	{
+		$result = [];
+		global $USER;
+		if ($USER->isAuthorized())
+		{
+			$res = \CUser::getById($USER->getId());
+			if ($user = $res->fetch())
 			{
-				return $upDepartment['ID'];
+				if (!empty($user['UF_DEPARTMENT']))
+				{
+					if (is_array($user['UF_DEPARTMENT']))
+					{
+						$result = $user['UF_DEPARTMENT'];
+					}
+					elseif ((int)$user['UF_DEPARTMENT'] > 0)
+					{
+						$result = [(int)$user['UF_DEPARTMENT']];
+					}
+				}
 			}
 		}
 
-		return false;
+		return $result;
+	}
+
+	private function filterDepartment(?array $departmentList): ?array
+	{
+		$result = null;
+
+		if (empty($departmentList))
+		{
+			$result = null;
+		}
+		else if (Intranet\CurrentUser::get()->isAdmin())
+		{
+			$result = $departmentList;
+		}
+		elseif (Loader::includeModule('iblock'))
+		{
+			$result = null;
+			if ($userDepartmentList = Intranet\CurrentUser::get()->getDepartmentIds())
+			{
+				$departmentAllList = Iblock\SectionTable::getList([
+					'select' => ['ID', 'LEFT_MARGIN', 'RIGHT_MARGIN'],
+					'filter' => [
+						'=ID' => array_diff(
+							array_merge($userDepartmentList, $departmentList),
+							[$this->getHeadDepartmentId()]
+						),
+						'=ACTIVE' => 'Y',
+					],
+					'order' => ['LEFT_MARGIN' => 'ASC']
+				])->fetchAll();
+
+				$userDepartmentListExtended = array_filter($departmentAllList, function($dep) use ($userDepartmentList) {
+						return in_array($dep['ID'], $userDepartmentList);
+					})
+				;
+				$result = array_column(array_filter(
+					$departmentAllList,
+					function($checkedDepartment) use ($departmentList, $userDepartmentList, $userDepartmentListExtended)
+					{
+						$found = in_array($checkedDepartment['ID'], $departmentList) ?
+							array_filter($userDepartmentListExtended, function ($userDepartment) use ($checkedDepartment) {
+								return $userDepartment['LEFT_MARGIN'] <= $checkedDepartment['LEFT_MARGIN']
+									&& $checkedDepartment['RIGHT_MARGIN'] <= $userDepartment['RIGHT_MARGIN'];
+							})
+							: [];
+						return !empty($found);
+					}),
+					'ID'
+				);
+			}
+		}
+
+		return $result;
 	}
 
 	protected function prepareUsersForResponse($userIds): array
@@ -297,15 +359,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$userData = $_POST;
-
-		if (!isset($userData["UF_DEPARTMENT"]) || empty($userData["UF_DEPARTMENT"]))
-		{
-			$departmentId = [$this->getHeadDepartmentId()];
-		}
-		else
-		{
-			$departmentId = $userData["UF_DEPARTMENT"];
-		}
+		$departmentId = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: $this->getHeadDepartmentId();
 
 		foreach ($userData["ITEMS"] as $key => $item)
 		{
@@ -471,13 +525,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 			return false;
 		}
 
-		$isCurrentUserAdmin = (
-			(
-				Loader::includeModule("bitrix24")
-				&& CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-			)
-			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
-		);
+		$isCurrentUserAdmin = Intranet\CurrentUser::get()->isAdmin();
 
 		if (Loader::includeModule("socialservices"))
 		{
@@ -512,16 +560,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$userData = $_POST;
-
-		if (empty($userData["UF_DEPARTMENT"]))
-		{
-			$departmentId = $this->getHeadDepartmentId();
-			$userData["DEPARTMENT_ID"] = [$departmentId];
-		}
-		else
-		{
-			$userData["DEPARTMENT_ID"] = $userData["UF_DEPARTMENT"];
-		}
+		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: $this->getHeadDepartmentId();
 
 		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
 

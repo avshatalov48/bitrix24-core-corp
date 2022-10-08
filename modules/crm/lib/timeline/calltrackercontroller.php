@@ -46,15 +46,7 @@ class CallTrackerController extends EntityController
 			{
 				foreach ($bindings as $binding)
 				{
-					$tag = TimelineEntry::prepareEntityPushTag(
-						$binding['OWNER_TYPE_ID'],
-						$binding['OWNER_ID']
-					);
-					self::pushHistoryEntry(
-						$historyEntryId,
-						$tag,
-						'timeline_activity_add'
-					);
+					$this->sendPullEventOnAdd(new \Bitrix\Crm\ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']), $historyEntryId);
 				}
 			}
 		}

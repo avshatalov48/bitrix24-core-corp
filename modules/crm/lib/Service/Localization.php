@@ -32,4 +32,12 @@ class Localization
 
 		return (string)$message;
 	}
+
+	public function prepareFieldValueWithTitle(string $fieldTitle, string $value): ?string
+	{
+		return Loc::getMessage('CRM_LOCALIZATION_FIELD_VALUE_WITH_TITLE', [
+			'#TITLE#' => $fieldTitle,
+			'#VALUE#' => $value,
+		]);
+	}
 }

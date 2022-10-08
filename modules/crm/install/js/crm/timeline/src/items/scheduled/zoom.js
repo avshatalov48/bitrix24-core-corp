@@ -1,5 +1,5 @@
 import Activity from "./activity";
-import Item from "../../item";
+import {DatetimeConverter} from "crm.timeline.tools";
 
 /** @memberof BX.Crm.Timeline.Items.Scheduled */
 export default class Zoom extends Activity
@@ -130,18 +130,18 @@ export default class Zoom extends Activity
 		{
 			const topic = entityData['ZOOM_INFO']['TOPIC'];
 			const duration = entityData['ZOOM_INFO']['DURATION'];
-			const startTimeStamp = BX.parseDate(
+			const startTime = BX.parseDate(
 				entityData['ZOOM_INFO']['CONF_START_TIME'],
 				false,
 				"YYYY-MM-DD",
 				"YYYY-MM-DD HH:MI:SS"
 			);
-			const date = new Date(startTimeStamp.getTime() + 1000 * Item.getUserTimezoneOffset());
+			const date = (new DatetimeConverter(startTime)).toUserTime().toDatetimeString({delimiter: ', '});
 			const detailZoomMessage = BX.create("span",
 				{
 					text: this.getMessage("zoomCreatedMessage")
 						.replace("#CONFERENCE_TITLE#", topic)
-						.replace("#DATE_TIME#", this.formatDateTime(date))
+						.replace("#DATE_TIME#", date)
 						.replace("#DURATION#", duration)
 				}
 			);

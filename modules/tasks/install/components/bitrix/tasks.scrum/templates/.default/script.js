@@ -550,6 +550,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.setEventNamespace('BX.Tasks.Scrum.View');
 
 	    _this.isOwnerCurrentUser = params.isOwnerCurrentUser === 'Y';
+	    _this.loadItemsRepeatCounter = new Map();
 	    _this.sidePanel = new SidePanel();
 	    _this.requestSender = new RequestSender({
 	      signedParameters: params.signedParameters,
@@ -560,6 +561,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      scrumManager: babelHelpers.assertThisInitialized(_this),
 	      requestSender: _this.requestSender
 	    });
+
+	    _this.filter.subscribe('applyFilter', _this.onApplyFilter.bind(babelHelpers.assertThisInitialized(_this)));
+
 	    _this.userId = parseInt(params.userId, 10);
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.pathToTask = main_core.Type.isString(params.pathToTask) ? params.pathToTask : '';
@@ -567,6 +571,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }
 
 	  babelHelpers.createClass(View, [{
+	    key: "onApplyFilter",
+	    value: function onApplyFilter(baseEvent) {
+	      this.loadItemsRepeatCounter.clear();
+	    }
+	  }, {
 	    key: "renderTo",
 	    value: function renderTo(container) {
 	      if (!main_core.Type.isDomNode(container)) {
@@ -851,7 +860,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Tool;
 	}();
 
-	var _templateObject$3;
+	var _templateObject$3, _templateObject2;
 	var Name = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Name, _EventEmitter);
 
@@ -866,6 +875,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.value = main_core.Type.isString(params.name) && params.name ? params.name.trim() : '';
 	    _this.important = params.isImportant;
 	    _this.completed = params.isCompleted;
+	    _this.sourceId = params.sourceId;
+	    _this.pathToTask = _this.sourceId ? params.pathToTask.replace('#task_id#', _this.sourceId) : null;
 
 	    if (!_this.value) {
 	      throw new Error(main_core.Loc.getMessage('TASKS_SCRUM_TASK_ADD_NAME_ERROR'));
@@ -888,8 +899,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        value = value.replace(new RegExp(Tool.escapeRegex(lastWord) + '$'), "<span>".concat(lastWord, "</span>"));
 	      }
 
-	      this.node = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__item--title ", "\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), visualClasses, value);
-	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
+	      if (this.pathToTask) {
+	        this.node = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__item--title ", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"])), main_core.Text.encode(this.pathToTask), visualClasses, value);
+	      } else {
+	        this.node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__item--title ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), visualClasses, value);
+	        main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
+	      }
+
 	      return this.node;
 	    }
 	  }, {
@@ -1076,7 +1092,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Comments;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$7, _templateObject2;
+	var _templateObject$7, _templateObject2$1;
 	var Epic = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Epic, _EventEmitter);
 
@@ -1117,7 +1133,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var colorBorder = this.convertHexToRGBA(this.epic.color, 0.7);
 	      var colorBackground = this.convertHexToRGBA(this.epic.color, 0.3);
 	      var visibility = this.epic.id > 0 ? '--visible' : '';
-	      this.node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item--epic-full-view ", "\"\n\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t>", "</div>\n\t\t"])), visibility, colorBackground, colorBorder, main_core.Text.encode(this.epic.name));
+	      this.node = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item--epic-full-view ", "\"\n\t\t\t\tstyle=\"background: ", "; border-color: ", ";\"\n\t\t\t>", "</div>\n\t\t"])), visibility, colorBackground, colorBorder, main_core.Text.encode(this.epic.name));
 	      main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
 	      return this.node;
 	    }
@@ -1159,7 +1175,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Epic;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$8, _templateObject2$1, _templateObject3;
+	var _templateObject$8, _templateObject2$2, _templateObject3;
 	var Tags = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Tags, _EventEmitter);
 
@@ -1183,7 +1199,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      if (this.tags.length) {
 	        this.node = main_core.Tag.render(_templateObject$8 || (_templateObject$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t", "\n\t\t\t"])), this.tags.map(function (tag) {
-	          return main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum__item--hashtag --visible\">#", "</div>"])), main_core.Text.encode(tag));
+	          return main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum__item--hashtag --visible\">#", "</div>"])), main_core.Text.encode(tag));
 	        }));
 	      } else {
 	        this.node = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum__item--hashtag\"></div>"])));
@@ -1584,7 +1600,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return SubTasks;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$c, _templateObject2$2;
+	var _templateObject$c, _templateObject2$3;
 	var Item = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Item, _EventEmitter);
 
@@ -1597,6 +1613,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    _this.setEventNamespace('BX.Tasks.Scrum.Item');
 
 	    _this.groupMode = false;
+	    _this.decompositionMode = false;
 	    _this.node = null;
 	    _this.toggle = null;
 	    _this.name = null;
@@ -1611,6 +1628,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    _this.setItemParams(params);
 
+	    _this.shortView = 'Y';
 	    return _this;
 	  }
 
@@ -1634,8 +1652,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.setDisableStatus(false);
 	      this.setAllowedActions(params.allowedActions);
 	      this.setImportant(params.isImportant);
-	      this.shortView = 'Y';
-	      this.decompositionMode = false;
+	      this.pathToTask = params.pathToTask;
 	    }
 	  }, {
 	    key: "setToggle",
@@ -1665,7 +1682,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var name = new Name({
 	        name: inputName,
 	        isCompleted: this.isCompleted(),
-	        isImportant: this.isImportant()
+	        isImportant: this.isImportant(),
+	        pathToTask: this.pathToTask,
+	        sourceId: this.getSourceId()
 	      });
 
 	      if (this.name) {
@@ -2118,7 +2137,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	        switch (this.getEntityType()) {
 	          case 'backlog':
-	            main_core.Dom.style(this.getNode(), 'borderLeft', '3px solid' + this.getBorderColor());
+	            main_core.Dom.style(this.getNode().querySelector('.tasks-scrum__item--bg'), 'backgroundColor', this.getBorderColor());
 	            break;
 
 	          case 'sprint':
@@ -2347,7 +2366,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var subClass = this.getSubTasksCount() > 1 ? ' --many ' : '';
 	      var linkedClass = this.isLinkedTask() && !this.isSubTask() ? ' --linked ' : '';
 	      var entityClass = '--item-' + this.getEntityType();
-	      this.node = main_core.Tag.render(_templateObject$c || (_templateObject$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item", "", "", "tasks-scrum__item--drag --short-view ", "\"\n\t\t\t\tdata-id=\"", "\"\n\t\t\t\tdata-sort=\"", "\"\n\t\t\t>\n\t\t\t\t<div class=\"tasks-scrum__item--link\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--info\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-scrum__item--main-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--entity-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--counter-container\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__item--group-mode\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"tasks-scrum__item--group-mode-input\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item--substrate\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--dragstrate\"></div>\n\t\t\t</div>\n\t\t"])), typeClass, subClass, linkedClass, entityClass, main_core.Text.encode(this.getId()), main_core.Text.encode(this.getSort()), this.toggle ? this.toggle.render() : '', this.name ? this.name.render() : '', this.epic ? this.epic.render() : '', this.tags ? this.tags.render() : '', this.comments ? this.comments.render() : '', this.files ? this.files.render() : '', this.checklist ? this.checklist.render() : '', this.responsible ? this.responsible.render() : '', !this.isSubTask() && this.storyPoints ? this.storyPoints.render() : '');
+	      this.node = main_core.Tag.render(_templateObject$c || (_templateObject$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item", "", "", "tasks-scrum__item--drag --short-view ", "\"\n\t\t\t\tdata-id=\"", "\"\n\t\t\t\tdata-sort=\"", "\"\n\t\t\t>\n\t\t\t<div class=\"tasks-scrum__item--bg\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--link\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--info\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-scrum__item--main-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"tasks-scrum__item--entity-content\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--counter-container\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t\t", "\n\t\t\t\t<div class=\"tasks-scrum__item--group-mode\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"tasks-scrum__item--group-mode-input\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item--substrate\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--dragstrate\"></div>\n\t\t\t</div>\n\t\t"])), typeClass, subClass, linkedClass, entityClass, main_core.Text.encode(this.getId()), main_core.Text.encode(this.getSort()), this.toggle ? this.toggle.render() : '', this.name ? this.name.render() : '', this.epic ? this.epic.render() : '', this.tags ? this.tags.render() : '', this.comments ? this.comments.render() : '', this.files ? this.files.render() : '', this.checklist ? this.checklist.render() : '', this.responsible ? this.responsible.render() : '', !this.isSubTask() && this.storyPoints ? this.storyPoints.render() : '');
 	      main_core.Event.bind(this.node, 'click', this.onItemClick.bind(this));
 	      this.updateBorderColor();
 	      return this.node;
@@ -2359,7 +2378,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var subClass = this.getSubTasksCount() > 1 ? ' --many ' : '';
 	      var linkedClass = this.isLinkedTask() && !this.isSubTask() ? ' --linked ' : '';
 	      var entityClass = '--item-' + this.getEntityType();
-	      this.node = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item", "", "", "tasks-scrum__item--drag --full-view ", "\"\n\t\t\t\tdata-id=\"", "\"\n\t\t\t\tdata-sort=\"", "\"\n\t\t\t>\n\t\t\t<div class=\"tasks-scrum__item--info-task--basic\">\n\t\t\t\t<div class=\"tasks-scrum__item--link\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--info\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-scrum__item--main-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum__item--info-task--details\">\n\t\t\t\t", "\n\n\t\t\t\t\t<div class=\"tasks-scrum__item--counter-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\n\t\t\t\t", "\n\t\t\t</div>\n\n\t\t\t\t<div class=\"tasks-scrum__item--group-mode\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"tasks-scrum__item--group-mode-input\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item--substrate\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--dragstrate\"></div>\n\t\t\t</div>\n\t\t"])), typeClass, subClass, linkedClass, entityClass, main_core.Text.encode(this.getId()), main_core.Text.encode(this.getSort()), this.toggle ? this.toggle.render() : '', this.name ? this.name.render() : '', this.epic ? this.epic.renderFullView() : '', this.tags ? this.tags.render() : '', this.comments ? this.comments.render() : '', this.responsible ? this.responsible.render() : '', this.files ? this.files.render() : '', this.checklist ? this.checklist.render() : '', !this.isSubTask() && this.storyPoints ? this.storyPoints.render() : '');
+	      this.node = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div\n\t\t\t\tclass=\"tasks-scrum__item", "", "", "tasks-scrum__item--drag --full-view ", "\"\n\t\t\t\tdata-id=\"", "\"\n\t\t\t\tdata-sort=\"", "\"\n\t\t\t>\n\t\t\t<div class=\"tasks-scrum__item--bg\"></div>\n\t\t\t<div class=\"tasks-scrum__item--info-task--basic\">\n\t\t\t\t<div class=\"tasks-scrum__item--link\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--info\">\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"tasks-scrum__item--main-info\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"tasks-scrum__item--tags\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t\t<div class=\"tasks-scrum__item--info-task--details\">\n\t\t\t\t", "\n\n\t\t\t\t\t<div class=\"tasks-scrum__item--counter-container\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\n\t\t\t\t", "\n\t\t\t</div>\n\n\t\t\t\t<div class=\"tasks-scrum__item--group-mode\">\n\t\t\t\t\t<input type=\"checkbox\" class=\"tasks-scrum__item--group-mode-input\">\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__item--substrate\"></div>\n\t\t\t\t<div class=\"tasks-scrum__item--dragstrate\"></div>\n\t\t\t</div>\n\t\t"])), typeClass, subClass, linkedClass, entityClass, main_core.Text.encode(this.getId()), main_core.Text.encode(this.getSort()), this.toggle ? this.toggle.render() : '', this.name ? this.name.render() : '', this.epic ? this.epic.renderFullView() : '', this.tags ? this.tags.render() : '', this.comments ? this.comments.render() : '', this.responsible ? this.responsible.render() : '', this.files ? this.files.render() : '', this.checklist ? this.checklist.render() : '', !this.isSubTask() && this.storyPoints ? this.storyPoints.render() : '');
 	      this.updateTagsVisibility();
 	      main_core.Event.bind(this.node, 'click', this.onItemClick.bind(this));
 	      this.updateBorderColor();
@@ -2625,7 +2644,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Item;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$d, _templateObject2$3;
+	var _templateObject$d, _templateObject2$4;
 	var ListItems = /*#__PURE__*/function () {
 	  function ListItems(entity) {
 	    babelHelpers.classCallCheck(this, ListItems);
@@ -2647,7 +2666,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderLoader",
 	    value: function renderLoader() {
-	      return main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-entity-items-loader\"></div>"])));
+	      return main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["<div class=\"tasks-scrum-entity-items-loader\"></div>"])));
 	    }
 	  }, {
 	    key: "getNode",
@@ -3679,6 +3698,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.pageNumberItems++;
 	    }
 	  }, {
+	    key: "decrementPageNumberItems",
+	    value: function decrementPageNumberItems() {
+	      this.pageNumberItems--;
+	    }
+	  }, {
 	    key: "recalculateItemsSort",
 	    value: function recalculateItemsSort() {
 	      var _this3 = this;
@@ -3923,6 +3947,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        item.removeItemFromGroupMode();
 	      });
 	      this.groupModeItems.clear();
+	      this.emit('deactivateGroupMode');
 	    }
 	  }, {
 	    key: "isGroupMode",
@@ -4096,7 +4121,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Entity;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$f, _templateObject2$4;
+	var _templateObject$f, _templateObject2$5;
 	var Header = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Header, _EventEmitter);
 
@@ -4132,7 +4157,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderTaskCounterLabel",
 	    value: function renderTaskCounterLabel(value) {
-	      return main_core.Tag.render(_templateObject2$4 || (_templateObject2$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog-tasks\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK_COUNTER').replace('#value#', value));
+	      return main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__backlog-tasks\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_BACKLOG_HEADER_TASK_COUNTER').replace('#value#', value));
 	    }
 	  }, {
 	    key: "onEpicClick",
@@ -4148,7 +4173,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Header;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$g, _templateObject2$5;
+	var _templateObject$g, _templateObject2$6;
 	var Blank = /*#__PURE__*/function () {
 	  function Blank(entity) {
 	    babelHelpers.classCallCheck(this, Blank);
@@ -4174,7 +4199,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderCompletedSprint",
 	    value: function renderCompletedSprint() {
-	      this.node = main_core.Tag.render(_templateObject2$5 || (_templateObject2$5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprints--completed-empty\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINT_EMPTY'));
+	      this.node = main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprints--completed-empty\">\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINT_EMPTY'));
 	      return this.node;
 	    }
 	  }, {
@@ -4192,7 +4217,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Blank;
 	}();
 
-	var _templateObject$h, _templateObject2$6, _templateObject3$1, _templateObject4;
+	var _templateObject$h, _templateObject2$7, _templateObject3$1, _templateObject4;
 	var Dropzone = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Dropzone, _EventEmitter);
 
@@ -4246,7 +4271,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function renderSprint() {
 	      var _this3 = this;
 
-	      this.node = main_core.Tag.render(_templateObject2$6 || (_templateObject2$6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-empty\" data-entity-id=\"", "\">\n\t\t\t\t<div class=\"tasks-scrum__content-empty--title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.entity.getId(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_1'), this.renderSprintEmptyText());
+	      this.node = main_core.Tag.render(_templateObject2$7 || (_templateObject2$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content-empty\" data-entity-id=\"", "\">\n\t\t\t\t<div class=\"tasks-scrum__content-empty--title\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), this.entity.getId(), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_1'), this.renderSprintEmptyText());
 
 	      if (!this.mandatoryExists) {
 	        main_core.Event.bind(this.node.querySelector('.tasks-scrum__content-empty--btn-create'), 'click', function () {
@@ -4892,7 +4917,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Stats;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$q, _templateObject2$7, _templateObject3$2, _templateObject4$1;
+	var _templateObject$q, _templateObject2$8, _templateObject3$2, _templateObject4$1;
 	var Name$1 = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Name, _EventEmitter);
 
@@ -4984,7 +5009,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderEditInput",
 	    value: function renderEditInput() {
 	      var uiClasses = 'ui-ctl ui-ctl-sm ui-ctl-textbox ui-ctl-underline ui-ctl-no-padding';
-	      return main_core.Tag.render(_templateObject2$7 || (_templateObject2$7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__title-editing ", "\">\n\t\t\t\t<input\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"tasks-scrum__title-editing-input ui-ctl-element\"\n\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t>\n\t\t\t</div>\n\t\t"])), uiClasses, main_core.Text.encode(this.sprint.getName()));
+	      return main_core.Tag.render(_templateObject2$8 || (_templateObject2$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__title-editing ", "\">\n\t\t\t\t<input\n\t\t\t\t\ttype=\"text\"\n\t\t\t\t\tclass=\"tasks-scrum__title-editing-input ui-ctl-element\"\n\t\t\t\t\tvalue=\"", "\"\n\t\t\t\t>\n\t\t\t</div>\n\t\t"])), uiClasses, main_core.Text.encode(this.sprint.getName()));
 	    }
 	  }, {
 	    key: "renderEdit",
@@ -5042,7 +5067,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return ChartIcon;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$s, _templateObject2$8;
+	var _templateObject$s, _templateObject2$9;
 	var Counters = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(Counters, _EventEmitter);
 
@@ -5079,7 +5104,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        return '';
 	      }
 
-	      return main_core.Tag.render(_templateObject2$8 || (_templateObject2$8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div \n\t\t\t\tclass=\"tasks-scrum__sprint--point --completed\"\n\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_AVERAGE_NUMBER_STORY_POINTS'), this.sprint.getAverageNumberStoryPoints());
+	      return main_core.Tag.render(_templateObject2$9 || (_templateObject2$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div \n\t\t\t\tclass=\"tasks-scrum__sprint--point --completed\"\n\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t>\n\t\t\t\t", "\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_AVERAGE_NUMBER_STORY_POINTS'), this.sprint.getAverageNumberStoryPoints());
 	    }
 	  }]);
 	  return Counters;
@@ -6261,11 +6286,6 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      return this.sprints;
 	    }
 	  }, {
-	    key: "getFilteredCompletedSprints",
-	    value: function getFilteredCompletedSprints() {
-	      return this.filteredCompletedSprints;
-	    }
-	  }, {
 	    key: "getActiveSprint",
 	    value: function getActiveSprint() {
 	      return babelHelpers.toConsumableArray(this.sprints.values()).find(function (sprint) {
@@ -6494,7 +6514,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return Scroller;
 	}();
 
-	var _templateObject$z, _templateObject2$9, _templateObject3$3, _templateObject4$2, _templateObject5;
+	var _templateObject$z, _templateObject2$a, _templateObject3$3, _templateObject4$2, _templateObject5;
 	var CompletedSprints = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(CompletedSprints, _EventEmitter);
 
@@ -6550,7 +6570,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    key: "renderHeader",
 	    value: function renderHeader() {
 	      var btnStyles = 'tasks-scrum__sprint--btn-dropdown ui-btn ui-btn-sm ui-btn-icon-angle-down';
-	      this.header = main_core.Tag.render(_templateObject2$9 || (_templateObject2$9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprints--completed-header\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed-name\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed-stats\"></div>\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed-btn ", "\"></div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINTS_NAME'), btnStyles);
+	      this.header = main_core.Tag.render(_templateObject2$a || (_templateObject2$a = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__sprints--completed-header\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed-name\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed-stats\"></div>\n\t\t\t\t<div class=\"tasks-scrum__sprints--completed-btn ", "\"></div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_COMPLETED_SPRINTS_NAME'), btnStyles);
 	      var btnNode = this.header.querySelector('.tasks-scrum__sprints--completed-btn');
 	      main_core.Event.bind(btnNode, 'click', this.onBtnClick.bind(this));
 	      return this.header;
@@ -6821,7 +6841,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return CompletedSprints;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$A, _templateObject2$a;
+	var _templateObject$A, _templateObject2$b;
 	var PlanBuilder = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(PlanBuilder, _EventEmitter);
 
@@ -6904,7 +6924,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "renderSprintDropzone",
 	    value: function renderSprintDropzone() {
-	      this.sprintDropzone = main_core.Tag.render(_templateObject2$a || (_templateObject2$a = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--new-sprint\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_PLAN_SPRINT_DROPZONE'));
+	      this.sprintDropzone = main_core.Tag.render(_templateObject2$b || (_templateObject2$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"tasks-scrum__content\">\n\t\t\t\t<div class=\"tasks-scrum__sprints--new-sprint\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_PLAN_SPRINT_DROPZONE'));
 	      main_core.Event.bind(this.sprintDropzone, 'click', this.createSprint.bind(this));
 	      return this.sprintDropzone;
 	    }
@@ -7125,7 +7145,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  return PlanBuilder;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$B, _templateObject2$b, _templateObject3$4, _templateObject4$3, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
+	var _templateObject$B, _templateObject2$c, _templateObject3$4, _templateObject4$3, _templateObject5$1, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12;
 
 	function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
 
@@ -7249,7 +7269,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      if (this.itemList.task.activity) {
 	        var disableClass = this.itemList.task.disable === true ? '--disabled' : '';
-	        task = main_core.Tag.render(_templateObject2$b || (_templateObject2$b = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"", " tasks-scrum__action-panel--btn-task ", "\"\n\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--icon\"></span>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t\t"])), baseBtnClass, disableClass, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK_HINT'), main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK'));
+	        task = main_core.Tag.render(_templateObject2$c || (_templateObject2$c = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"", " tasks-scrum__action-panel--btn-task ", "\"\n\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--icon\"></span>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t\t"])), baseBtnClass, disableClass, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK_HINT'), main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_TASK'));
 	      }
 
 	      if (this.itemList.attachment.activity) {
@@ -7261,7 +7281,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.itemList.dod.activity) {
 	        var _disableClass2 = this.itemList.dod.disable === true ? '--disabled' : '';
 
-	        dod = main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"", " tasks-scrum__action-panel--btn-dod ", "\"\n\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t\t"])), baseBtnClass, _disableClass2, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT'), main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD'));
+	        dod = main_core.Tag.render(_templateObject4$3 || (_templateObject4$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div\n\t\t\t\t\tclass=\"", " tasks-scrum__action-panel--btn-dod ", "\"\n\t\t\t\t\tdata-hint=\"", "\" data-hint-no-icon\n\t\t\t\t>\n\t\t\t\t\t<span class=\"tasks-scrum__action-panel--text\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"tasks-scrum__action-panel--separator\"></div>\n\t\t\t"])), baseBtnClass, _disableClass2, main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD_HINT_NEW'), main_core.Loc.getMessage('TASKS_SCRUM_ITEM_ACTIONS_DOD'));
 	      }
 
 	      if (this.itemList.move.activity) {
@@ -8045,6 +8065,12 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        }
 
 	        var sourceContainer = dragBeforeStartEvent.sourceContainer;
+
+	        if (main_core.Type.isUndefined(sourceContainer)) {
+	          baseEvent.preventDefault();
+	          return;
+	        }
+
 	        var sourceEntityId = parseInt(sourceContainer.dataset.entityId, 10);
 	        var sourceEntity = this.entityStorage.findEntityByEntityId(sourceEntityId);
 
@@ -10197,11 +10223,20 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.entityStorage.getBacklog().subscribe('epicSearchClose', this.onEpicSearchClose.bind(this));
 	      this.entityStorage.getBacklog().subscribe('filterByEpic', this.onFilterByEpic.bind(this));
 	      this.entityStorage.getBacklog().subscribe('filterByTag', this.onFilterByTag.bind(this));
-	      this.entityStorage.getBacklog().subscribe('loadItems', this.onLoadItems.bind(this));
+	      this.entityStorage.getBacklog().subscribe('loadItems', function (baseEvent) {
+	        var entity = baseEvent.getTarget();
+
+	        if (!_this3.loadItemsRepeatCounter.has(entity.getId())) {
+	          _this3.loadItemsRepeatCounter.set(entity.getId(), 0);
+	        }
+
+	        _this3.loadItems(entity);
+	      });
 	      this.entityStorage.getBacklog().subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 	      this.entityStorage.getBacklog().subscribe('showLinked', this.onShowLinked.bind(this));
 	      this.entityStorage.getBacklog().subscribe('itemsScroll', this.onActionPanelScroll.bind(this));
 	      this.entityStorage.getBacklog().subscribe('showBlank', this.onShowBlank.bind(this));
+	      this.entityStorage.getBacklog().subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
 	      this.entityStorage.getSprints().forEach(function (sprint) {
 	        return _this3.subscribeToSprint(sprint);
 	      });
@@ -10242,13 +10277,22 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      sprint.subscribe('getSprintCompletedItems', this.onGetSprintCompletedItems.bind(this));
 	      sprint.subscribe('showSprintBurnDownChart', this.onShowSprintBurnDownChart.bind(this));
 	      sprint.subscribe('showSprintCreateMenu', this.onOpenSprintAddMenu.bind(this));
-	      sprint.subscribe('loadItems', this.onLoadItems.bind(this));
+	      sprint.subscribe('loadItems', function (baseEvent) {
+	        var entity = baseEvent.getTarget();
+
+	        if (!_this4.loadItemsRepeatCounter.has(entity.getId())) {
+	          _this4.loadItemsRepeatCounter.set(entity.getId(), 0);
+	        }
+
+	        _this4.loadItems(entity);
+	      });
 	      sprint.subscribe('toggleActionPanel', this.onToggleActionPanel.bind(this));
 	      sprint.subscribe('showLinked', this.onShowLinked.bind(this));
 	      sprint.subscribe('showDropzone', this.onShowDropZone.bind(this));
 	      sprint.subscribe('toggleVisibilityContent', function () {
 	        _this4.planBuilder.adjustSprintListWidth();
 	      });
+	      sprint.subscribe('deactivateGroupMode', this.onDeactivateGroupMode.bind(this));
 	    }
 	  }, {
 	    key: "showErrorAlert",
@@ -10823,51 +10867,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.filter.scrollToSearchContainer();
 	    }
 	  }, {
-	    key: "onLoadItems",
-	    value: function onLoadItems(baseEvent) {
-	      var _this16 = this;
-
-	      var entity = baseEvent.getTarget();
-	      entity.setActiveLoadItems(true);
-
-	      if (entity.getNumberItems() >= this.pageSize) {
-	        entity.getListItems().addScrollbar();
-	      }
-
-	      var loader = entity.showItemsLoader();
-	      var requestData = {
-	        entityId: entity.getId(),
-	        pageNumber: entity.getPageNumberItems() + 1,
-	        pageSize: this.pageSize
-	      };
-	      this.requestSender.getItems(requestData).then(function (response) {
-	        var items = response.data;
-
-	        if (main_core.Type.isArray(items) && items.length) {
-	          entity.incrementPageNumberItems();
-	          entity.setActiveLoadItems(false);
-
-	          _this16.createItemsInEntity(entity, items);
-
-	          if (entity.isGroupMode()) {
-	            entity.activateGroupMode();
-	          }
-
-	          entity.bindItemsLoader();
-	        }
-
-	        loader.hide();
-	      })["catch"](function (response) {
-	        loader.hide();
-	        entity.setActiveLoadItems(false);
-
-	        _this16.requestSender.showErrorAlert(response);
-	      });
-	    }
-	  }, {
 	    key: "onChangeShortView",
 	    value: function onChangeShortView(baseEvent) {
-	      var _this17 = this;
+	      var _this16 = this;
 
 	      var isShortView = baseEvent.getData();
 	      this.planBuilder.setShortView(isShortView);
@@ -10896,7 +10898,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 
-	        _this17.requestSender.showErrorAlert(response);
+	        _this16.requestSender.showErrorAlert(response);
 	      });
 	    }
 	  }, {
@@ -10925,7 +10927,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onShowLinked",
 	    value: function onShowLinked(baseEvent) {
-	      var _this18 = this;
+	      var _this17 = this;
 
 	      var item = baseEvent.getData();
 
@@ -10957,7 +10959,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	        filteredItems.forEach(function (itemParams) {
 	          var item = Item.buildItem(itemParams);
 
-	          var entity = _this18.entityStorage.findEntityByEntityId(item.getEntityId());
+	          var entity = _this17.entityStorage.findEntityByEntityId(item.getEntityId());
 
 	          if (!entity.isCompleted() && !entity.hasItem(item)) {
 	            item.setShortView(entity.getShortView());
@@ -10966,7 +10968,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 
-	        var allItems = _this18.entityStorage.getAllItems();
+	        var allItems = _this17.entityStorage.getAllItems();
 
 	        var items = new Set();
 	        linkedItemIds.forEach(function (itemId) {
@@ -10975,17 +10977,17 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          }
 	        });
 
-	        _this18.itemDesigner.updateBorderColor(items);
+	        _this17.itemDesigner.updateBorderColor(items);
 
 	        if (linkedItemIds.length > 0) {
-	          _this18.searchItems.start(item, linkedItemIds);
+	          _this17.searchItems.start(item, linkedItemIds);
 	        } else {
-	          _this18.searchItems.fadeInAll();
+	          _this17.searchItems.fadeInAll();
 	        }
 
 	        loader.hide();
 	      })["catch"](function (response) {
-	        _this18.requestSender.showErrorAlert(response);
+	        _this17.requestSender.showErrorAlert(response);
 
 	        loader.hide();
 	      });
@@ -11017,7 +11019,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  }, {
 	    key: "onShowBlank",
 	    value: function onShowBlank(baseEvent) {
-	      var _this19 = this;
+	      var _this18 = this;
 
 	      var backlog = baseEvent.getTarget();
 	      setTimeout(function () {
@@ -11025,7 +11027,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          return;
 	        }
 
-	        if (_this19.entityStorage.existsAtLeastOneItem()) {
+	        if (_this18.entityStorage.existsAtLeastOneItem()) {
 	          if (backlog.isExactSearchApplied()) {
 	            backlog.showEmptySearchStub();
 	          } else {
@@ -11035,6 +11037,11 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          backlog.showBlank();
 	        }
 	      }, 200);
+	    }
+	  }, {
+	    key: "onDeactivateGroupMode",
+	    value: function onDeactivateGroupMode(baseEvent) {
+	      this.destroyActionPanel();
 	    }
 	  }, {
 	    key: "onShowDropZone",
@@ -11051,6 +11058,59 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          sprint.showDropzone();
 	        }
 	      }, 200);
+	    }
+	  }, {
+	    key: "loadItems",
+	    value: function loadItems(entity) {
+	      var _this19 = this;
+
+	      if (this.loadItemsRepeatCounter.get(entity.getId()) > 1) {
+	        return;
+	      }
+
+	      entity.setActiveLoadItems(true);
+
+	      if (entity.getNumberItems() >= this.pageSize) {
+	        entity.getListItems().addScrollbar();
+	      }
+
+	      var loader = entity.showItemsLoader();
+	      var requestData = {
+	        entityId: entity.getId(),
+	        pageNumber: entity.getPageNumberItems() + 1,
+	        pageSize: this.pageSize
+	      };
+	      this.requestSender.getItems(requestData).then(function (response) {
+	        var items = response.data;
+	        entity.setActiveLoadItems(false);
+
+	        if (main_core.Type.isArray(items) && items.length) {
+	          entity.incrementPageNumberItems();
+
+	          _this19.createItemsInEntity(entity, items);
+
+	          if (entity.isGroupMode()) {
+	            entity.activateGroupMode();
+	          }
+
+	          entity.bindItemsLoader();
+	        } else {
+	          if (entity.getNumberTasks() !== entity.getNumberItems()) {
+	            _this19.loadItemsRepeatCounter.set(entity.getId(), _this19.loadItemsRepeatCounter.get(entity.getId()) + 1);
+
+	            entity.decrementPageNumberItems();
+
+	            _this19.loadItems(entity);
+	          }
+	        }
+
+	        loader.hide();
+	      })["catch"](function (response) {
+	        loader.hide();
+	        entity.setActiveLoadItems(false);
+
+	        _this19.requestSender.showErrorAlert(response);
+	      });
 	    }
 	  }, {
 	    key: "renderInput",
@@ -11212,6 +11272,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          },
 	          tags: {
 	            activity: true,
+	            disable: !item.isEditAllowed(),
 	            callback: function callback(event) {
 	              if (_this21.tagSearcher.hasActionPanelDialog()) {
 	                _this21.tagSearcher.closeActionPanelDialogs();
@@ -11224,6 +11285,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          },
 	          epic: {
 	            activity: true,
+	            disable: !item.isEditAllowed(),
 	            callback: function callback(event) {
 	              if (_this21.tagSearcher.hasActionPanelDialog()) {
 	                _this21.tagSearcher.closeActionPanelDialogs();
@@ -11333,9 +11395,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      var value = input.getInputNode().value.trim();
 	      var valueWithoutEpic = epic ? value.replace(new RegExp('@' + Tool.escapeRegex(epic.name) + '$', 'g'), '') : value;
 	      var item = Item.buildItem({
-	        'id': '',
-	        'name': valueWithoutEpic,
-	        'groupId': this.getCurrentGroupId()
+	        id: '',
+	        name: valueWithoutEpic,
+	        groupId: this.getCurrentGroupId(),
+	        pathToTask: this.pathToTask
 	      });
 	      item.setShortView(this.isShortView);
 	      return item;
@@ -11367,6 +11430,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      item.setResponsible(responseData.responsible);
 	      item.setSourceId(responseData.sourceId);
 	      item.setAllowedActions(responseData.allowedActions);
+	      item.setName(item.getName().getValue());
 	    }
 	  }, {
 	    key: "updateEntityCounters",

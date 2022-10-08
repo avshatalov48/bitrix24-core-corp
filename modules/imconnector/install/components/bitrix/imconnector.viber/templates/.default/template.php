@@ -112,7 +112,10 @@ $placeholder = $arResult['placeholder']['api_token'] ? Loc::getMessage('IMCONNEC
 					</ul>
 
 					<div class="imconnector-field-box-content-text-light">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_INFO_CONNECT_ID')])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_INDEX_ADDITIONAL_DESCRIPTION_NEW', [
+							'#LINK_START#' => '<a href="#" id="imconnector-viber-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 
 					<div class="imconnector-field-box-content-btn">
@@ -168,7 +171,10 @@ else:?>
 						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_CONNECT_TITLE')?>
 					</div>
 					<div class="imconnector-field-box-content">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP', ['#ID#' => Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_INFO_CONNECT_ID')])?>
+						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_VIBER_CONNECT_STEP_NEW', [
+							'#LINK_START#' => '<a class="imconnector-field-box-link" id="imconnector-viber-link-help">',
+							'#LINK_END#' => '</a>',
+						])?>
 					</div>
 				<?else:?>
 					<div class="imconnector-field-main-subtitle">

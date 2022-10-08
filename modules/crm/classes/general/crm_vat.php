@@ -12,14 +12,25 @@ class CCrmVat
 		if (!Loader::includeModule('catalog'))
 			return false;
 
-		$VATS = isset(self::$VATS) ? self::$VATS : null;
+		$VATS = self::$VATS ?? null;
 
 		if (!$VATS)
 		{
 			$VATS = [];
 			$iterator = Catalog\VatTable::getList([
-				'select' => ['ID', 'ACTIVE', 'SORT', 'NAME', 'RATE'],
-				'order' => ['SORT' => 'ASC']
+				'select' => [
+					'ID',
+					'ACTIVE',
+					'SORT',
+					'NAME',
+					'RATE',
+					'EXCLUDE_VAT',
+					'XML_ID',
+				],
+				'order' => [
+					'SORT' => 'ASC',
+					'ID' => 'ASC',
+				]
 			]);
 			while ($row = $iterator->fetch())
 			{
@@ -43,7 +54,22 @@ class CCrmVat
 
 		$arVats = self::GetAll();
 
-		return isset($arVats[$vatID]) ? $arVats[$vatID] : false;
+		return $arVats[$vatID] ?? false;
+	}
+
+	/**
+	 * Returns excluded catalog vat id, if exists.
+	 *
+	 * @return int|null
+	 */
+	public static function getExcludeVatId(): ?int
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return null;
+		}
+
+		return Catalog\VatTable::getExcludeVatId();
 	}
 
 	public static function GetVatRatesListItems()

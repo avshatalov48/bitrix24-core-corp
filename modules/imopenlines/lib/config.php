@@ -394,6 +394,15 @@ class Config
 			$fields['WELCOME_MESSAGE'] = 'Y';
 		}
 
+		if (isset($params['SEND_WELCOME_EACH_SESSION']))
+		{
+			$fields['SEND_WELCOME_EACH_SESSION'] = $params['SEND_WELCOME_EACH_SESSION'] == 'Y'? 'Y': 'N';
+		}
+		else if ($mode == self::MODE_ADD)
+		{
+			$fields['SEND_WELCOME_EACH_SESSION'] = 'N';
+		}
+
 		if (isset($params['WELCOME_MESSAGE_TEXT']))
 		{
 			$fields['WELCOME_MESSAGE_TEXT'] = Emoji::encode($params['WELCOME_MESSAGE_TEXT']);

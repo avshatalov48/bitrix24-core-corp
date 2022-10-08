@@ -24,9 +24,10 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 /** @var array $arResult */
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'disk',
 	'im',
-	'ui.fonts.opensans',
 	'main.loader',
 	'pull.client',
 ]);

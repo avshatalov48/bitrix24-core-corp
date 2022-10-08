@@ -1,0 +1,106 @@
+.crm-timeline__card {
+	display: flex;
+	flex-direction: column;
+	background-color: var(--crm-timeline__card-color-background);
+	border-radius: var(--crm-timeline__card-border-radius);
+}
+
+.crm-timeline__card.--stream-type-pinned {
+	background-color: var(--ui-color-palette-green-10, #fafded);
+}
+
+.crm-timeline__card.--stream-type-scheduled {
+	background-color: #FFFEEF;
+}
+
+.crm-timeline__card.--log-message {
+	--crm-timeline__card_log-message-white-rgb: 255, 255, 255;
+	background-color: rgba(var(--ui-color-background-primary-rgb, var(--crm-timeline__card_log-message-white-rgb)), 0.95);
+	opacity: 1;
+}
+
+.crm-timeline__card.--disabled {
+	--crm-timeline__logo-background: var(--ui-color-palette-gray-10, rgba(130, 139, 149, .7));
+}
+
+.crm-timeline__card-tags {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-start;
+	flex-wrap: wrap;
+}
+
+.crm-timeline__card-time {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 2px;
+	margin-bottom: 8px;
+	font-family: var(--crm-timeline__font-helvetica);
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: 18px;
+	color: var(--ui-color-palette-gray-40, rgba(82, 92, 105, .4));
+}
+
+.crm-timeline__card-body {
+	padding: 0 var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px) var(--ui-space-inset-md, 16px);
+	display: flex;
+	align-items: flex-start;
+}
+
+.crm-timeline__card-body:last-child {
+	margin-bottom: unset;
+}
+
+.crm-timeline__card-container {
+	max-width: calc(100% - var(--crm-timeline__icon-size) - 18px);
+	flex: 1;
+	padding: 2px 0;
+}
+
+.crm-timeline__card_link {
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--ui-color-link-primary-base, #2066b0);
+	text-decoration: underline !important;
+	text-decoration-color: transparent !important;
+	cursor: pointer;
+	transition: var(--crm-timeline__transition-hover);
+}
+
+.crm-timeline__card_link.--bold {
+	font-weight: var(--ui-font-weight-medium, 500);
+}
+
+.crm-timeline__card_link:hover {
+	/*text-decoration-color: var(--ui-color-link-primary-base, #2066b0) !important;*/
+	transition-duration: unset;
+}
+
+.crm-timeline__card-icon + .crm-timeline__card-container {
+	max-width: calc(100% - 98px);
+}
+
+.crm-timeline__card-container_block {
+	display: block;
+	margin-bottom: 10px;
+}
+
+.crm-timeline__card-container_block:last-child {
+	margin-bottom: unset;
+}
+
+.crm-timeline__card-bottom {
+	display: block;
+}
+
+.crm-timeline__card_more-menu .menu-popup-item-icon {
+	opacity: 0.5;
+}
+
+.crm-timeline__card_more-menu .menu-popup-item-text {
+	color: var(--ui-color-palette-gray-90, #525c69);
+}
+
+.crm-timeline__player-alert {
+	--ui-alert-border-radius: 32px;
+}

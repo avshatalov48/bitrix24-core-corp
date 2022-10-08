@@ -36,6 +36,7 @@
 	        box-sizing: border-box;
 	background: var(--tasks_scrum_completion-white);
 	padding: 20px;
+	border-radius: var(--ui-border-radius-md, 0px);
 }
 
 .tasks-scrum__side-panel-completion--block + .tasks-scrum__side-panel-completion--block {
@@ -48,12 +49,13 @@
 	border-bottom: 1px solid var(--tasks_scrum_completion-dark-grey_alpha_10);
 	margin-bottom: 15px;
 	padding: 3px 2px 20px;
-	font: 18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_completion-light-grey);
 }
 
 .tasks-scrum__side-panel-completion--info-basic-description {
-	font: 14px/20px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--tasks_scrum_completion-dark-grey);
 	overflow: hidden;
 	overflow-wrap: break-word;
@@ -64,6 +66,7 @@
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
 	padding: 20px 20px 28px 20px;
+	border-radius: var(--ui-border-radius-md, 0px);
 }
 
 .tasks-scrum__side-panel-completion--info-row {
@@ -99,8 +102,9 @@
 
 .tasks-scrum__epic-label {
 	display: block;
-	font: 12px/18px "OpenSans-Regular", Helvetica, Arial, sans-serif;
-	border-radius: 14px;
+	font: 12px/18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
+	border-radius: var(--ui-border-radius-xl, 14px);
 	padding: 0 7px 1px;
 	margin: 1px 9px 10px 0;
 	border: 1px solid;
@@ -122,13 +126,14 @@
 	        box-sizing: border-box;
 	min-width: 76%;
 	padding: 28px 26px 20px;
-	border-radius: 12px;
+	border-radius: var(--ui-border-radius-lg, 12px);
 	background: var(--tasks_scrum_completion-white);
 	margin-top: 4px;
 }
 
 .tasks-scrum__side-panel-completion--plan-block-number {
-	font: 24px/15px "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font: 24px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--tasks_scrum_completion-light-grey);
 	text-align: center;
 	display: -webkit-box;
@@ -140,7 +145,7 @@
 	-webkit-box-pack: center;
 	    -ms-flex-pack: center;
 	        justify-content: center;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	width: 58px;
 	height: 58px;
 	background: var(--tasks_scrum_completion-blue_alpha_10);
@@ -167,7 +172,8 @@
 	position: absolute;
 	top: -2px;
 	left: 94%;
-	font: 10px/15px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 10px/15px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--tasks_scrum_completion-white);
 	text-align: center;
 	padding: 0 4px 0 5px;
@@ -175,7 +181,7 @@
 	background: var(--tasks_scrum_completion-blue);
 	-webkit-box-shadow: 0 1px 2px 0 var(--tasks_scrum_completion-black_alpha_14);
 	        box-shadow: 0 1px 2px 0 var(--tasks_scrum_completion-black_alpha_14);
-	border-radius: 7.5px;
+	border-radius: var(--ui-border-radius-sm, 7.5px);
 	-webkit-transform: translate(-50%, 0px);
 	    -ms-transform: translate(-50%, 0px);
 	        transform: translate(-50%, 0px);
@@ -189,7 +195,8 @@
 
 .tasks-scrum__side-panel-completion--progress-percent {
 	display: none;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .tasks-scrum__side-panel-completion--plan-block-number.--percent .tasks-scrum__side-panel-completion--progress-percent {
@@ -263,7 +270,8 @@
 	-webkit-box-align: center;
 	    -ms-flex-align: center;
 	        align-items: center;
-	font: 13px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	position: relative;
 }
 
@@ -275,7 +283,7 @@
 }
 
 .tasks-scrum__side-panel-completion--sprint-timing {
-	font: 14px/24px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 14px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .tasks-scrum__side-panel-completion--date-name-block {
@@ -314,14 +322,14 @@
 
 .tasks-scrum__side-panel-completion--info-items {
 	background: var(--tasks_scrum_completion-grey-6);
-	border-radius: 2px;
+	border-radius: var(--ui-border-radius-xs, 2px);
 	padding: 13px;
 }
 .tasks-scrum__item-side-panel {
 	-webkit-box-sizing: border-box;
 	        box-sizing: border-box;
 	padding: 12px 0;
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	margin-top: 10px;
 	color: var(--tasks_scrum_completion-light-grey);
 	position: relative;
@@ -348,7 +356,7 @@
 	background: var(--tasks_scrum_completion-white);
 	-webkit-box-shadow: 0 1px 1px 0 var(--tasks_scrum_completion-black_alpha_08);
 	        box-shadow: 0 1px 1px 0 var(--tasks_scrum_completion-black_alpha_08);
-	border-radius: 3px;
+	border-radius: var(--ui-border-radius-xs, 3px);
 	z-index: -1;
 	-webkit-transition: .2s;
 	-o-transition: .2s;
@@ -444,7 +452,7 @@
 	display: block;
 	width: 8px;
 	height: 8px;
-	border-radius: 50%;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	background-color: var(--tasks_scrum_completion-blue);
 	margin: 1px 4px 0 1px;
 	-ms-flex-negative: 0;
@@ -525,7 +533,7 @@
 
 .tasks-scrum__item-side-panel--story-points-element {
 	background: var(--tasks_scrum_completion-blue_alpha_20);
-	border-radius: 9.5px;
+	border-radius: var(--ui-border-radius-pill, 9.5px);
 	padding: 2px 5px;
 	min-width: 32px;
 	-webkit-box-sizing: border-box;

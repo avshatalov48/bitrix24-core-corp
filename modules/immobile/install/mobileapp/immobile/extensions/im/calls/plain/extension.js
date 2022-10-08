@@ -1030,7 +1030,9 @@
 			this._onPeerConnectionRemoveTrackHandler = this._onPeerConnectionRemoveTrack.bind(this);
 			this._onPeerConnectionAddStreamHandler = this._onPeerConnectionAddStream.bind(this);
 			this._onPeerConnectionRemoveStreamHandler = this._onPeerConnectionRemoveStream.bind(this);
-			this._onPeerConnectionSignalingStateChangeHandler =this._onPeerConnectionSignalingStateChange.bind(this);
+
+			// debounce is important to prevent possible deadlocks in the application (this event can occur while calling setRemoteDescription)
+			this._onPeerConnectionSignalingStateChangeHandler = CallUtil.debounce(this._onPeerConnectionSignalingStateChange.bind(this), 100);
 
 			// intervals and timeouts
 			this.answerTimeout = null;

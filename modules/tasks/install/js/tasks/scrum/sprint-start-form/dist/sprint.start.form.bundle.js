@@ -65,6 +65,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    babelHelpers.classCallCheck(this, SprintStartForm);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(SprintStartForm).call(this, params));
+
+	    _this.setEventNamespace('BX.Tasks.Scrum.SprintStartForm');
+
 	    _this.groupId = parseInt(params.groupId, 10);
 	    _this.sprintId = parseInt(params.sprintId, 10);
 	    /* eslint-disable */
@@ -74,6 +77,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	    _this.requestSender = new RequestSender();
 	    _this.node = null;
+	    _this.startButton = null;
 	    return _this;
 	  }
 
@@ -99,7 +103,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	            buttons: function buttons(_ref) {
 	              var cancelButton = _ref.cancelButton,
 	                  SaveButton = _ref.SaveButton;
-	              return [new SaveButton({
+	              return [_this2.startButton = new SaveButton({
 	                text: main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_FORM_BUTTON'),
 	                onclick: _this2.onStart.bind(_this2)
 	              }), cancelButton];
@@ -113,6 +117,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onStart() {
 	      var _this3 = this;
 
+	      this.startButton.setWaiting();
 	      var baseContainer = this.node.querySelector('.tasks-scrum__side-panel-start--info-basic');
 	      var timeContainer = this.node.querySelector('.tasks-scrum__side-panel-start--timing');
 	      var dateInputs = timeContainer.querySelectorAll('.ui-ctl-date');
@@ -130,6 +135,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	          _this3.emit('afterStart');
 	        });
 	      })["catch"](function (response) {
+	        _this3.startButton.setWaiting(false);
+
 	        _this3.requestSender.showErrorAlert(response, main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_START_ERROR_TITLE_POPUP'));
 	      });
 	    }

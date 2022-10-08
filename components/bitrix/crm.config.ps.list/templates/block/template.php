@@ -3,6 +3,8 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 
 use Bitrix\Main\Localization\Loc;
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 
 <div class="crm-config-ps-list-task-options-payment-method">

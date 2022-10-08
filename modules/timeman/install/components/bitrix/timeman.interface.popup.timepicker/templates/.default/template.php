@@ -7,7 +7,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 use Bitrix\Main\Localization\Loc;
 
 require_once($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/main/tools/clock.php");
-CJSCore::Init(['ui', 'date']);
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens', 'ui', 'date']);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/timeman.interface.popup.timepicker/templates/.default/timepicker.css');
 \Bitrix\Main\Page\Asset::getInstance()->addJS('/bitrix/components/bitrix/timeman.interface.popup.timepicker/templates/.default/timepicker.js');
 

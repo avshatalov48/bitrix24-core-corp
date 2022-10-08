@@ -24,7 +24,20 @@ use Bitrix\Main\Type\Date;
  * </ul>
  *
  * @package Bitrix\Transformer
- **/
+ *
+ * DO NOT WRITE ANYTHING BELOW THIS
+ *
+ * <<< ORMENTITYANNOTATION
+ * @method static EO_Command_Query query()
+ * @method static EO_Command_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Command_Result getById($id)
+ * @method static EO_Command_Result getList(array $parameters = array())
+ * @method static EO_Command_Entity getEntity()
+ * @method static \Bitrix\Transformer\Entity\EO_Command createObject($setDefaultValues = true)
+ * @method static \Bitrix\Transformer\Entity\EO_Command_Collection createCollection()
+ * @method static \Bitrix\Transformer\Entity\EO_Command wakeUpObject($row)
+ * @method static \Bitrix\Transformer\Entity\EO_Command_Collection wakeUpCollection($rows)
+ */
 
 class CommandTable extends Main\Entity\DataManager
 {

@@ -246,6 +246,38 @@ class Router
 		return null;
 	}
 
+	openDocumentSlider(documentId: number): Promise<?BX.SidePanel.Slider>
+	{
+		return Router.openSlider(
+			'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=' + documentId,
+			{
+				width: 1060,
+				loader: '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg',
+			}
+		);
+	}
+
+	openSignDocumentSlider(documentId: number, memberHash: string): Promise<?BX.SidePanel.Slider>
+	{
+		// todo make a url template
+		return Router.openSlider(
+			'/bitrix/components/bitrix/crm.signdocument.view/slider.php?documentId=' + documentId
+			+ '&memberHash=' + memberHash
+			,
+			{
+				width: 1060,
+				loader: '/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg',
+			}
+		);
+	}
+
+	openSignDocumentModifySlider(documentId: number): Promise<?BX.SidePanel.Slider>
+	{
+		return Router.openSlider(
+			'/sign/doc/0/?docId=' + documentId
+		);
+	}
+
     closeSettingsMenu(event, item)
     {
         if(item && Type.isFunction(item.getMenuWindow))

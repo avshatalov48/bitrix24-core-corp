@@ -1,7 +1,7 @@
 .crm-main-wrap {
 	color:#000;
 	font-size:14px;
-	font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -201,7 +201,7 @@
 	color:#000;
 	height:19px;
 	font-size:14px;
-	font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	outline:none;
 	padding:0;
 	width:100%;
@@ -563,7 +563,7 @@
 	color:#3f4b54;
 	cursor:pointer;
 	display:inline-block;
-	font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-weight:bold;
 	font-size:13px;
 	line-height:16px;

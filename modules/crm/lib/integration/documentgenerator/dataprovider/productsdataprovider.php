@@ -158,6 +158,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 				{
 					$crmProduct['PRICE'] = $crmProduct['PRICE_EXCLUSIVE'];
 				}
+
 				$result[] = [
 					'ID' => $crmProduct['ID'],
 					'NAME' => $crmProduct['PRODUCT_NAME'],
@@ -318,6 +319,10 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 				'VALUE' => [$this, 'getSumWithoutWords'],
 				'FORMAT' => ['CURRENCY_ID' => $currencyID, 'WORDS' => true, 'NO_SIGN' => true],
 			],
+			'TOTAL_ROWS' => [
+				'TITLE' => GetMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_ROWS_TITLE'),
+				'VALUE' => [$this, 'getTotalRows'],
+			],
 			'TOTAL_ROWS_WORDS' => [
 				'TITLE' => GetMessage('CRM_DOCGEN_PRODUCTSDATAPROVIDER_TOTAL_ROWS_WORDS_TITLE'),
 				'TYPE' => Money::class,
@@ -420,7 +425,13 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		foreach($this->products as $product)
 		{
 			$rate = $product->getRawValue('TAX_RATE');
-			if($rate > 0 || ($rate == 0 && isset($taxNames[$rate])))
+			if (
+				$rate !== false
+				&& (
+					$rate > 0
+					|| ($rate == 0 && isset($taxNames[$rate]))
+				)
+			)
 			{
 				if(!isset($taxes[$rate]))
 				{

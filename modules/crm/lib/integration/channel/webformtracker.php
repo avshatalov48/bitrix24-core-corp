@@ -74,7 +74,7 @@ class WebFormTracker extends ChannelTracker
 	 */
 	protected function checkPossibilityOfUsing(array $params = null)
 	{
-		$dbResult = WebFormTable::getList(
+		$dbResult = WebFormTable::getDefaultTypeList(
 			array(
 				'filter' => array('=ACTIVE' => 'Y'),
 				'select' => array('ID'),
@@ -126,7 +126,7 @@ class WebFormTracker extends ChannelTracker
 	{
 		$sort = 1;
 		$results = array();
-		$dbResult = WebFormTable::getList(array(
+		$dbResult = WebFormTable::getDefaultTypeList(array(
 			'filter' => array('=ACTIVE' => 'Y'),
 			'select' => array('ID', 'NAME')));
 		while ($form = $dbResult->fetch())
@@ -181,7 +181,7 @@ class WebFormTracker extends ChannelTracker
 			return Loc::getMessage('WEBFORM_CHANNEL');
 		}
 
-		$dbResult = WebFormTable::getList(
+		$dbResult = WebFormTable::getDefaultTypeList(
 			array(
 				'select' => array('ID', 'NAME'),
 				'filter' => array('ID' => $originID)

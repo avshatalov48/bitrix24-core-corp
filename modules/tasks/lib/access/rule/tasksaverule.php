@@ -14,10 +14,12 @@ use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\AssignTrait;
+use Bitrix\Tasks\Access\Rule\Traits\GroupTrait;
 
 class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
 	use AssignTrait;
+	use GroupTrait;
 
 	/* @var AccessibleItem $oldTask */
 	private $oldTask;
@@ -68,7 +70,7 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		if (
 			$this->newTask->getGroupId()
 			&& $this->newTask->getGroupId() !== $this->oldTask->getGroupId()
-			&& !$this->canSetGroup($this->newTask->getGroupId())
+			&& !$this->canSetGroup($this->user->getUserId(), $this->newTask->getGroupId())
 		)
 		{
 			$this->controller->addError(static::class, 'Access to set group denied');
@@ -103,40 +105,6 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		)
 		{
 			$this->controller->addError(static::class, 'Access to assign director denied');
-			return false;
-		}
-
-		return true;
-	}
-
-	/**
-	 * @param int $groupId
-	 * @return bool
-	 * @throws \Bitrix\Main\LoaderException
-	 */
-	private function canSetGroup(int $groupId): bool
-	{
-		if (!Loader::includeModule('socialnetwork'))
-		{
-			return false;
-		}
-
-		if (
-			!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
-				$groupId,
-				'tasks',
-				'edit_tasks',
-				$this->user->getUserId()
-			)
-			&&
-			!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
-				$groupId,
-				'tasks',
-				'create_tasks',
-				$this->user->getUserId()
-			)
-		)
-		{
 			return false;
 		}
 

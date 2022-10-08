@@ -5,7 +5,14 @@ use Bitrix\Main\IO\File;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 
-\Bitrix\Main\UI\Extension::load(['sidepanel', "ui.buttons", 'salescenter.manager', 'loader']);
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
+	'sidepanel',
+	"ui.buttons",
+	'salescenter.manager',
+	'loader',
+]);
 
 function salescenterConnectTemplateRenderLogoBlock(array $data, \CBitrixComponentTemplate $template): string
 {

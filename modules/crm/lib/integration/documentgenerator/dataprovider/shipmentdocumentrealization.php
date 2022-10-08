@@ -2,14 +2,16 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\ShipmentItem;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\DocumentGenerator\Nameable;
+use \Bitrix\Crm\Integration\DocumentGenerator;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Internals\ShipmentTable;
 use Bitrix\Sale\Repository\ShipmentRepository;
 use Bitrix\Crm\Order\Shipment;
-use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Order;
 use Bitrix\Crm\Security\EntityPermissionType;
 
 /**
@@ -19,7 +21,7 @@ use Bitrix\Crm\Security\EntityPermissionType;
  */
 class ShipmentDocumentRealization extends ProductsDataProvider implements Nameable
 {
-	/** @var Order|null */
+	/** @var Order\Order|null */
 	private $order;
 
 	/** @var Shipment|null */
@@ -60,21 +62,20 @@ class ShipmentDocumentRealization extends ProductsDataProvider implements Nameab
 				continue;
 			}
 
-			$result[] = [
-				'ID' => $shipmentItem->getId(),
-				'NAME' => $basketItem->getField('NAME'),
-				'PRODUCT_ID' => $basketItem->getField('PRODUCT_ID'),
-				'QUANTITY' => $shipmentItem->getQuantity(),
-				'PRICE' => $basketItem->getPrice(),
-				'TAX_RATE' => $basketItem->getVatRate() * 100,
-				'TAX_INCLUDED' => $basketItem->isVatInPrice() ? 'Y' : 'N',
-				'MEASURE_CODE' => $basketItem->getField('MEASURE_CODE'),
-				'MEASURE_NAME' => $basketItem->getField('MEASURE_NAME'),
-				'OWNER_ID' => $shipmentItem->getId(),
-				'OWNER_TYPE' => \CCrmOwnerType::ShipmentDocument,
-				'CUSTOMIZED' => 'Y',
-				'CURRENCY_ID' => $basketItem->getCurrency(),
-			];
+			$item = DocumentGenerator\DataProvider\Order::getProductProviderDataByBasketItem(
+				$basketItem->toArray(),
+				new ItemIdentifier(
+					\CCrmOwnerType::ShipmentDocument,
+					$this->shipment->getId(),
+				),
+				$this->getCurrencyId()
+			);
+
+			$item['ID'] = $shipmentItem->getId();
+			$item['QUANTITY'] = $shipmentItem->getQuantity();
+			$item['CUSTOMIZED'] = 'Y';
+
+			$result[] = $item;
 		}
 
 		return $result;
@@ -182,5 +183,15 @@ class ShipmentDocumentRealization extends ProductsDataProvider implements Nameab
 				}
 			}
 		}
+	}
+
+	public function getCurrencyId()
+	{
+		if ($this->order)
+		{
+			return $this->order->getCurrency();
+		}
+
+		return parent::getCurrencyId();
 	}
 }

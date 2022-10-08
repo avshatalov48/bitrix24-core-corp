@@ -16,7 +16,8 @@
 	background: rgba(255, 255, 255, .15);
 	font-size: 13px;
 	line-height: 25px;
-	font-family: 'OpenSans-SemiBold', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .ui-btn.ui-btn-light-border.crm-robot-btn:before {
@@ -50,7 +51,8 @@
 	-ms-flex-align: center;
 	align-items: center;
 	height: 53px;
-	font: 14px/normal 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/normal var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #545c6a;
 	flex: 1;
 }
@@ -64,7 +66,8 @@
 
 .crm-view-switcher-list-item {
 	margin: 0 18px 0 0;
-	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #545c6a;
 	-webkit-transition: color .3s;
 	transition: color .3s;
@@ -77,7 +80,8 @@
 
 .crm-view-switcher-list-item-active {
 	border-bottom: 2px solid #b1b8bf;
-	font: 14px/30px 'OpenSans-Regular', "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 14px/30px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #545c6a;
 }
 

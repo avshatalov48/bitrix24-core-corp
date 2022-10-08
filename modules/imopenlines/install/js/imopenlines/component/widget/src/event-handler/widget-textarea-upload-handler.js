@@ -1,15 +1,18 @@
-import { TextareaUploadHandler } from 'im.event-handler';
-import { Logger } from "im.lib.logger";
-import { EventEmitter } from "main.core.events";
-import { WidgetEventType } from "../const";
+import {TextareaUploadHandler} from 'im.event-handler';
+import {Logger} from 'im.lib.logger';
+import {EventEmitter} from 'main.core.events';
+import {WidgetEventType} from '../const';
+import {Uploader} from 'im.lib.uploader';
 
 export class WidgetTextareaUploadHandler extends TextareaUploadHandler
 {
 	storedFile: Object = null;
+	widgetApplication: Object = null;
 
 	constructor($Bitrix)
 	{
 		super($Bitrix);
+		this.widgetApplication = $Bitrix.Application.get();
 
 		this.onConsentAcceptedHandler = this.onConsentAccepted.bind(this);
 		this.onConsentDeclinedHandler = this.onConsentDeclined.bind(this);
@@ -64,6 +67,7 @@ export class WidgetTextareaUploadHandler extends TextareaUploadHandler
 			generateUniqueName: true,
 			diskFolderId: this.getDiskFolderId(),
 			previewBlob: message.file.previewBlob,
+			chunkSize: this.widgetApplication.getLocalize('isCloud') ? Uploader.CLOUD_MAX_CHUNK_SIZE : Uploader.BOX_MIN_CHUNK_SIZE,
 		});
 	}
 

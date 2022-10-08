@@ -176,9 +176,9 @@ class Form extends Webpack\Base
 		else
 		{
 			$sec = WebForm\Internals\FormTable::getRow([
-					'select' => ['SECURITY_CODE'],
-					'filter' => ['=ID' => $this->getId()]
-				])['SECURITY_CODE'] ?? '';
+				'select' => ['SECURITY_CODE'],
+				'filter' => ['=ID' => $this->getId()]
+			])['SECURITY_CODE'] ?? '';
 		}
 
 		$this->configureFormEmbeddedScript([

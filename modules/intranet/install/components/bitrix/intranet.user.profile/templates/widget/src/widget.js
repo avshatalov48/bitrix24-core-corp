@@ -544,7 +544,7 @@ export default class Widget extends EventEmitter
 						<div class="system-auth-form__item-logo--image ${cssPostfix}"></div>
 					</div>
 					<div class="system-auth-form__item-container">
-						<div class="system-auth-form__item-title ${isInstalled ? ' --without-margin' : '--min-height'}"">${title}</div>
+						<div class="system-auth-form__item-title ${isInstalled ? ' --without-margin' : '--min-height'}">${title}</div>
 						${isInstalled ?
 							Tag.render`
 							<a href="${linkToDistributive}" class="system-auth-form__item-title --link-dotted">${Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')}</a>

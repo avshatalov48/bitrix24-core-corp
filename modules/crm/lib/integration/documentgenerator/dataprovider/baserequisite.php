@@ -132,7 +132,7 @@ abstract class BaseRequisite extends DataProvider
 			'ID' => 'ID',
 			'ENTITY_TYPE_ID' => 'ENTITY_TYPE_ID',
 			'ENTITY_ID' => 'ENTITY_ID',
-			'PRESET_ID' => 'PRESET_ID',
+			// 'PRESET_ID' => 'PRESET_ID',
 			'DATE_CREATE' => 'DATE_CREATE',
 			'DATE_MODIFY' => 'DATE_MODIFY',
 			'CREATED_BY_ID' => 'CREATED_BY_ID',

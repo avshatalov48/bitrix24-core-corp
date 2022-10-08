@@ -2,6 +2,7 @@ import {Kanban} from 'main.kanban';
 import {Type, ajax as Ajax, Loc, Text, Event} from 'main.core';
 import 'ui.buttons';
 import 'ui.notification';
+import 'ui.fonts.opensans';
 import {PullManager} from './pullmanager';
 import Item from './item';
 import Column from './column';

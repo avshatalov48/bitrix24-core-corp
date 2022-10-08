@@ -2,25 +2,7 @@ this.BX = this.BX || {};
 (function (exports,main_core_events,main_core,crm_entityEditor_field_requisite_autocomplete) {
 	'use strict';
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-entity-editor-content-block\"></div>"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral([" <span class=\"tariff-lock\"></span>"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2;
 	var EntityEditorRequisiteAutocomplete = /*#__PURE__*/function (_BX$UI$EntityEditorFi) {
 	  babelHelpers.inherits(EntityEditorRequisiteAutocomplete, _BX$UI$EntityEditorFi);
 
@@ -46,7 +28,8 @@ this.BX = this.BX || {};
 	        featureRestrictionCallback: BX.prop.getString(params, "featureRestrictionCallback", ''),
 	        searchAction: 'crm.requisite.entity.search',
 	        feedbackFormParams: BX.prop.getObject(params, "feedback_form", {}),
-	        showFeedbackLink: !enabled
+	        showFeedbackLink: !enabled,
+	        clientResolverPlacementParams: BX.prop.getObject(params, "clientResolverPlacementParams", null)
 	      });
 
 	      this._autocomplete.subscribe('onSelectValue', this.onSelectAutocompleteValue.bind(this));
@@ -66,7 +49,7 @@ this.BX = this.BX || {};
 	        return babelHelpers.get(babelHelpers.getPrototypeOf(EntityEditorRequisiteAutocomplete.prototype), "createTitleMarker", this).call(this);
 	      }
 
-	      var lockIcon = main_core.Tag.render(_templateObject());
+	      var lockIcon = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral([" <span class=\"tariff-lock\"></span>"])));
 	      lockIcon.setAttribute('onclick', restrictionCallback);
 	      return lockIcon;
 	    }
@@ -101,7 +84,7 @@ this.BX = this.BX || {};
 	      main_core.Dom.append(this.createTitleNode(this.getTitle()), this._wrapper);
 
 	      if (this._mode === BX.UI.EntityEditorMode.edit) {
-	        var autocompleteContainer = main_core.Tag.render(_templateObject2());
+	        var autocompleteContainer = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-entity-editor-content-block\"></div>"])));
 
 	        this._autocomplete.layout(autocompleteContainer);
 

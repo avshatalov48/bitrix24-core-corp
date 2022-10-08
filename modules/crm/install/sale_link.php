@@ -7,6 +7,8 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\RequisiteAddress;
 use	Bitrix\Sale\BusinessValue;
 use Bitrix\Sale\Internals\BusinessValuePersonDomainTable;
+use Bitrix\Catalog;
+
 /**
  * @global $DB CDatabase
  */
@@ -133,7 +135,10 @@ if (defined("ADMIN_SECTION"))
 }
 
 $defCurrency = \Bitrix\Currency\CurrencyManager::getBaseCurrency();
-COption::SetOptionString("sale", "default_currency", $defCurrency);
+if ($defCurrency !== null)
+{
+	COption::SetOptionString("sale", "default_currency", $defCurrency);
+}
 
 // Create invoice statuses
 $statusesSort = array(
@@ -2022,68 +2027,117 @@ if (!Main\Loader::includeModule('catalog'))
 
 if($billPsLocalization == "ru")
 {
-	$dbVat = CCatalogVat::GetListEx(
-		array(),
-		array('RATE' => 0),
-		false,
-		false,
-		array('ID')
-	);
-	if(!($dbVat->Fetch()))
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'Y',
+		],
+	]);
+	if ($vat === null)
 	{
-		$arF = array ("ACTIVE" => "Y", "SORT" => "100", "NAME" => Loc::getMessage("CRM_VAT_1"), "RATE" => '0');
-		CCatalogVat::Add($arF);
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_1'),
+			'ACTIVE' => 'Y',
+			'SORT' => 100,
+			'EXCLUDE_VAT' => 'Y',
+			'RATE' => null,
+		]);
 	}
-	$dbVat = CCatalogVat::GetListEx(
-		array(),
-		array('RATE' => 20),
-		false,
-		false,
-		array('ID')
-	);
-	if(!($dbVat->Fetch()))
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'N',
+			'=RATE' => 0,
+		],
+	]);
+	if ($vat === null)
 	{
-		$arF = array ("ACTIVE" => "Y", "SORT" => "200", "NAME" => Loc::getMessage("CRM_VAT_21"), "RATE" => '20');
-		CCatalogVat::Add($arF);
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_0'),
+			'ACTIVE' => 'Y',
+			'SORT' => 200,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 0,
+		]);
+	}
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=RATE' => 20,
+		],
+	]);
+	if ($vat === null)
+	{
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_21'),
+			'ACTIVE' => 'Y',
+			'SORT' => 300,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 20,
+		]);
 	}
 }
-else if($billPsLocalization == "kz")
+elseif($billPsLocalization == "kz")
 {
-	$dbVat = CCatalogVat::GetListEx(
-		array(),
-		array('RATE' => 0),
-		false,
-		false,
-		array('ID')
-	);
-	if(!($dbVat->Fetch()))
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=EXCLUDE_VAT' => 'Y',
+		],
+	]);
+	if ($vat === null)
 	{
-		$arF = array ("ACTIVE" => "Y", "SORT" => "100", "NAME" => Loc::getMessage("CRM_VAT_1"), "RATE" => '0');
-		CCatalogVat::Add($arF);
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_1'),
+			'ACTIVE' => 'Y',
+			'SORT' => 100,
+			'EXCLUDE_VAT' => 'Y',
+			'RATE' => null,
+		]);
 	}
-	$dbVat = CCatalogVat::GetListEx(
-		array(),
-		array('RATE' => 12),
-		false,
-		false,
-		array('ID')
-	);
-	if(!($dbVat->Fetch()))
+	$vat = Catalog\Model\Vat::getRow([
+		'select' => [
+			'ID',
+		],
+		'filter' => [
+			'=RATE' => 12,
+		],
+	]);
+	if ($vat === null)
 	{
-		$arF = array ("ACTIVE" => "Y", "SORT" => "200", "NAME" => Loc::getMessage("CRM_VAT_3"), "RATE" => '12');
-		CCatalogVat::Add($arF);
+		Catalog\Model\Vat::add([
+			'NAME' => Loc::getMessage('CRM_VAT_3'),
+			'ACTIVE' => 'Y',
+			'SORT' => 200,
+			'EXCLUDE_VAT' => 'N',
+			'RATE' => 12,
+		]);
 	}
 }
 
 // get default vat
 $defCatVatId = 0;
-$dbVat = CCatalogVat::GetListEx(array('SORT' => 'ASC'), array(), false, array('nPageTop' => 1));
-if ($arVat = $dbVat->Fetch())
+$vat = Catalog\Model\Vat::getRow([
+	'select' => [
+		'ID',
+		'SORT',
+	],
+	'order' => [
+		'SORT' => 'ASC',
+	],
+]);
+if ($vat !== null)
 {
-	$defCatVatId = $arVat['ID'];
+	$defCatVatId = (int)$vat['ID'];
 }
-unset($arVat, $dbVat);
-$defCatVatId = (int)$defCatVatId;
 
 $arActiveLangs = array();
 $languageIterator = Main\Localization\LanguageTable::getList(array(

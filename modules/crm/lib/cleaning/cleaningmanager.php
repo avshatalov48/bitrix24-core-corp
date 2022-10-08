@@ -164,20 +164,32 @@ class CleaningManager
 
 		if ($entityTypeId === \CCrmOwnerType::Company || $entityTypeId === \CCrmOwnerType::Contact)
 		{
-			$cleaner->addJob(
-				new class extends Cleaner\Job {
-					public function run(Options $options): Result
-					{
-						if (Main\Loader::includeModule('sale'))
+			$cleaner
+				->addJob(
+					new class extends Cleaner\Job {
+						public function run(Options $options): Result
 						{
-							$binding = new \Bitrix\Crm\Order\ContactCompanyBinding($options->getEntityTypeId());
-							$binding->unbind($options->getEntityId());
-						}
+							if (Main\Loader::includeModule('sale'))
+							{
+								$binding = new \Bitrix\Crm\Order\ContactCompanyBinding($options->getEntityTypeId());
+								$binding->unbind($options->getEntityId());
+							}
 
-						return new Result();
+							return new Result();
+						}
 					}
-				}
-			);
+				)
+				->addJob(
+					new class extends Cleaner\Job {
+						public function run(Options $options): Result
+						{
+							$requisite = new \Bitrix\Crm\EntityRequisite();
+
+							return $requisite->deleteByEntity($options->getEntityTypeId(), $options->getEntityId());
+						}
+					}
+				)
+			;
 		}
 
 		if ($entityTypeId === \CCrmOwnerType::Deal)

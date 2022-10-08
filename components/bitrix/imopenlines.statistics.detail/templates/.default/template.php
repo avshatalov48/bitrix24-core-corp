@@ -15,6 +15,10 @@ use \Bitrix\Main\UI;
  * @var \CBitrixComponent $component
  */
 
+\Bitrix\Main\UI\Extension::load([
+	'ui.design-tokens',
+]);
+
 if ($arResult['LINE_NAME'])
 {
 	$APPLICATION->SetTitle(Loc::getMessage('OL_STAT_TITLE', ['#LINE_NAME#' => htmlspecialcharsbx($arResult['LINE_NAME'])]));

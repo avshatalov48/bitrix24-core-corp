@@ -233,7 +233,8 @@ class Openlines
 	/**
 	 * Replace web client.
 	 *
-	 * @return ImBot\Http
+	 * @param ImBot\Http $httpClient
+	 * @return void
 	 */
 	public static function initHttpClient(ImBot\Http $httpClient): void
 	{

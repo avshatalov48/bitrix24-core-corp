@@ -165,10 +165,16 @@ table.bx-crm-interface-grid tr.bx-active td.bx-crm-sorted
 	border-bottom: none;
 	display: inline-block;
 	color: #0b66c3;
-	font-size: 14px;
+	font-size: 13px;
 	min-height: 14px;
 	margin-left: 34px;
 	position: relative;
+}
+
+.bx-core-adm-dialog a.crm-gds-item,
+.bx-core-adm-dialog a.crm-gds-item:link,
+.bx-core-adm-dialog a.crm-gds-item:hover {
+	font-size: 13px;
 }
 
 .crm-gds-item:before {

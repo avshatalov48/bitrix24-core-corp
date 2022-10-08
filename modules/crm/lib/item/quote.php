@@ -44,6 +44,7 @@ class Quote extends Item
 	public const FIELD_NAME_STORAGE_TYPE = 'STORAGE_TYPE_ID';
 	public const FIELD_NAME_STORAGE_ELEMENTS = 'STORAGE_ELEMENT_IDS';
 	public const FIELD_NAME_PERSON_TYPE_ID = 'PERSON_TYPE_ID';
+	public const FIELD_NAME_ACTUAL_DATE = 'ACTUAL_DATE';
 
 	protected function getItemReferenceFieldNameInProduct(): string
 	{

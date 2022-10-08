@@ -155,14 +155,6 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 		$toTaskDateStart = $task->getStartDatePlanGmt(true);
 		$toTaskDateEnd = $task->getEndDatePlanGmt();
 
-		/*
-		print_r($relation['FROM_TASK_ID'].' => '.$relation['TASK_ID'].PHP_EOL);
-		print_r('From task date start '.$fromTaskDateStart->toStringGmt().' '.$fromTaskDateStart->getTimeStamp().PHP_EOL);
-		print_r('From task date end '.$fromTaskDateEnd->toStringGmt().' '.$fromTaskDateEnd->getTimeStamp().PHP_EOL);
-		print_r('To task date start '.$toTaskDateStart->toStringGmt().' '.$toTaskDateStart->getTimeStamp().PHP_EOL);
-		print_r('To task date end '.$toTaskDateEnd->toStringGmt().' '.$toTaskDateEnd->getTimeStamp().PHP_EOL);
-		*/
-
 		$matchWorkTime = $task->getMatchWorkTime();
 
 		if ($this->getType() == ProjectDependenceTable::LINK_TYPE_START_START)

@@ -8,6 +8,7 @@ use Bitrix\Catalog\MeasureTable;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Integration\DocumentGenerator\ProductLoader;
 use Bitrix\Crm\Integration\DocumentGenerator\Value\Money;
+use Bitrix\Crm\Integration\DocumentGenerator\Value\TaxRate;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\DocumentGenerator\DataProvider\HashDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
@@ -173,6 +174,11 @@ class Product extends HashDataProvider
 					'FORMAT' => ['CURRENCY_ID' => $currencyId, 'NO_SIGN' => true, 'WITH_ZEROS' => false],
 				],
 				'TAX_RATE' => ['TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_TITLE'),],
+				'TAX_RATE_NAME' => [
+					'TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_RATE_NAME_TITLE'),
+					'VALUE' => [$this, 'getTaxRate'],
+					'TYPE' => TaxRate::class,
+				],
 				'TAX_INCLUDED' => ['TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_TAX_INCLUDED_TITLE'),],
 				'MEASURE_CODE' => ['TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_CODE_TITLE'),],
 				'MEASURE_NAME' => ['TITLE' => Loc::getMessage('CRM_DOCGEN_DATAPROVIDER_PRODUCT_MEASURE_NAME_TITLE'),],
@@ -267,6 +273,20 @@ class Product extends HashDataProvider
 		}
 
 		return $value * $this->data['QUANTITY'];
+	}
+
+	/**
+	 * @param string $placeholder
+	 * @return float
+	 */
+	public function getTaxRate()
+	{
+		if ($this->data['TAX_RATE'] === false)
+		{
+			return TaxRate::TAX_FREE;
+		}
+
+		return $this->data['TAX_RATE'];
 	}
 
 	/**

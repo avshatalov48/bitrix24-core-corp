@@ -25,6 +25,7 @@ Extension::load([
 	'ajax',
 	'applayout',
 	'ui.design-tokens',
+	'ui.fonts.opensans',
 ]);
 
 \Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();

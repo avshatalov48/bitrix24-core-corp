@@ -100,7 +100,7 @@
 					name: 'JSStackComponent',
 					componentCode: 'tasks.list',
 					canOpenInDefault: true,
-					scriptPath: availableComponents['tasks.list'].publicUrl,
+					scriptPath: availableComponents['tasks:tasks.list'].publicUrl,
 					rootWidget: {
 						settings: {
 							...{

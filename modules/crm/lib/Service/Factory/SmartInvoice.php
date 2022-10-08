@@ -21,6 +21,7 @@ use Bitrix\Crm\UserField\UserFieldManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Data\AddResult;
+use Bitrix\Main\ORM\Fields;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
 
@@ -95,6 +96,11 @@ class SmartInvoice extends Dynamic
 			'TYPE' => Field::TYPE_LOCATION,
 			'ATTRIBUTES' => $locationAttributes,
 		];
+
+		if (isset($settings[Item::FIELD_NAME_CLOSE_DATE]))
+		{
+			$settings[Item::FIELD_NAME_CLOSE_DATE]['SETTINGS']['isSetCurrentDateOnCompletionEnabled'] = false;
+		}
 
 		return $settings;
 	}
@@ -292,22 +298,11 @@ class SmartInvoice extends Dynamic
 
 		$operation->addAction(
 			Operation::ACTION_AFTER_SAVE,
-			new class extends Operation\Action {
-				public function process(Item $item): Result
-				{
-					$itemBeforeSave = $this->getItemBeforeSave();
-					if (
-						$itemBeforeSave
-						&& $itemBeforeSave->isChangedStageId()
-						&& $item instanceof Item\SmartInvoice
-					)
-					{
-						InvoiceTrigger::onSmartInvoiceStatusChanged($item);
-					}
-
-					return new Result();
-				}
-			}
+			new Operation\Action\SmartInvoiceStatusChangedTrigger(),
+		);
+		$operation->addAction(
+			Operation::ACTION_AFTER_SAVE,
+			new Operation\Action\ActualizeDocuments()
 		);
 
 		return $operation;
@@ -333,5 +328,21 @@ class SmartInvoice extends Dynamic
 				}
 			}
 		}
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public function getAdditionalTableFields(): array
+	{
+		return [
+			(new Fields\TextField(Item\SmartInvoice::FIELD_NAME_COMMENTS))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_COMMENTS')),
+			(new Fields\StringField(Item\SmartInvoice::FIELD_NAME_ACCOUNT_NUMBER))
+				->configureTitle(Loc::getMessage('CRM_TYPE_SMART_INVOICE_FIELD_ACCOUNT_NUMBER')),
+			(new Fields\StringField(Item::FIELD_NAME_LOCATION_ID))
+				->configureTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_LOCATION'))
+				->configureSize(100),
+		];
 	}
 }

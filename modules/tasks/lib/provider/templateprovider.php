@@ -10,6 +10,8 @@ namespace Bitrix\Tasks\Provider;
 
 use Bitrix\Tasks\Access\Permission\PermissionDictionary;
 use Bitrix\Tasks\Access\Permission\TasksTemplatePermissionTable;
+use Bitrix\Tasks\Internals\Task\MemberTable;
+use Bitrix\Tasks\Internals\Task\Template\TemplateMemberTable;
 use Bitrix\Tasks\Util\User;
 use \CDBResult;
 use \CUserTypeSQL;
@@ -62,7 +64,41 @@ class TemplateProvider
 
 		$query = $this->buildQuery();
 
-		return $this->executeQuery($query);
+		$result = $this->executeQuery($query);
+
+		$rows = [];
+		while ($row = $result->Fetch())
+		{
+			$rows[] = $row;
+		}
+
+		if (empty($rows))
+		{
+			return $result;
+		}
+
+		$templateIds = array_column($rows, 'ID');
+		$members = $this->getMembers($templateIds);
+
+		foreach ($rows as $k => $row)
+		{
+			$row['RESPONSIBLES'] = (isset($members[$row['ID']][MemberTable::MEMBER_TYPE_RESPONSIBLE]))
+				? serialize($members[$row['ID']][MemberTable::MEMBER_TYPE_RESPONSIBLE])
+				: serialize([]);
+			$row['ACCOMPLICES'] = (isset($members[$row['ID']][MemberTable::MEMBER_TYPE_ACCOMPLICE]))
+				? serialize($members[$row['ID']][MemberTable::MEMBER_TYPE_ACCOMPLICE])
+				: serialize([]);
+			$row['AUDITORS'] = (isset($members[$row['ID']][MemberTable::MEMBER_TYPE_AUDITOR]))
+				? serialize($members[$row['ID']][MemberTable::MEMBER_TYPE_AUDITOR])
+				: serialize([]);
+
+			$rows[$k] = $row;
+		}
+
+		$cdbResult = new CDBResult($result);
+		$cdbResult->InitFromArray($rows);
+
+		return $cdbResult;
 	}
 
 	public function getCount($includeSubTemplates = false, array $arParams = []): int
@@ -102,6 +138,24 @@ class TemplateProvider
 		return 0;
 	}
 
+	private function getMembers(array $templateIds): array
+	{
+		$members = TemplateMemberTable::getList([
+			'select' => ['*'],
+			'filter' => [
+				'@TEMPLATE_ID' => $templateIds,
+			],
+		])->fetchAll();
+
+		$result = [];
+		foreach ($members as $member)
+		{
+			$result[$member['TEMPLATE_ID']][$member['TYPE']][] = $member['USER_ID'];
+		}
+
+		return $result;
+	}
+
 	private function makeAccessSql(): self
 	{
 		if (!$this->userId)
@@ -120,6 +174,7 @@ class TemplateProvider
 
 		// user can view department's templates
 		$departmentMembers = $this->getDepartmentMembers();
+
 		if (
 			!empty($departmentMembers)
 			&& in_array(PermissionDictionary::TEMPLATE_DEPARTMENT_VIEW, $permissions)
@@ -145,7 +200,14 @@ class TemplateProvider
 			';
 		}
 
-		$this->arSqlSearch[] = '((' . implode(') OR (', $query) . '))';
+		if (empty($query))
+		{
+			$this->arSqlSearch[] = '(1 = 0)';
+		}
+		else
+		{
+			$this->arSqlSearch[] = '((' . implode(') OR (', $query) . '))';
+		}
 
 		return $this;
 	}

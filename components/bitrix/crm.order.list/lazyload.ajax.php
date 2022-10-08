@@ -49,8 +49,24 @@ if(\Bitrix\Main\ModuleManager::isModuleInstalled('rest'))
 	);
 }
 
-$componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
-$componentParams = isset($componentData['params']) && is_array($componentData['params']) ? $componentData['params'] : array();
+$componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : [];
+$componentParams = [];
+if (isset($componentData['signedParameters']))
+{
+	$componentParams = \CCrmInstantEditorHelper::unsignComponentParams(
+		(string)$componentData['signedParameters'],
+		'crm.order.list'
+	);
+	if (is_null($componentParams))
+	{
+		die();
+	}
+}
+elseif (isset($componentData['params']) && is_array($componentData['params']))
+{
+	ShowError('Component params must be signed');
+	die();
+}
 
 //Security check
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();

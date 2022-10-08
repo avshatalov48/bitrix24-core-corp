@@ -12,6 +12,8 @@ use Bitrix\Main\Localization\Loc;
 
 if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+Main\Loader::requireModule('disk');
+
 class CDiskDocumentsComponent extends BaseComponent implements Controllerable
 {
 	public const ERROR_COULD_NOT_VIEW_DOCUMENTS = 'DISK_DOCUMENTS_22000';

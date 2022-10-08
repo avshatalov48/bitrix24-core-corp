@@ -2,6 +2,11 @@
 $MESS["C_PVG_ADD_NEW_PROPERTY_VALUE_BUTTON"] = "Neuen Wert hinzufügen";
 $MESS["C_PVG_CREATE_VARIATION"] = "Variante hinzufügen";
 $MESS["C_PVG_CREATE_VARIATION_PROPERTY"] = "Varianteneigenschaft erstellen";
+$MESS["C_PVG_SIMPLE_PRODUCT_POPUP_BUTTON_CLOSE"] = "Schließen";
+$MESS["C_PVG_SIMPLE_PRODUCT_POPUP_BUTTON_COPY"] = "Produkt kopieren";
+$MESS["C_PVG_SIMPLE_PRODUCT_POPUP_DOC_LINK_INFO"] = "Mehr";
+$MESS["C_PVG_SIMPLE_PRODUCT_POPUP_TEXT"] = "Erstellen Sie ein neues Produkt im Katalog, oder klicken Sie auf #COPY_BUTTON_NAME#, um das Produkt und dessen Eigenschaften in einem neuen Produkteintrag zu klonen, wo Sie auch Varianten dazu hinzufügen können. #LINK_INFO#";
+$MESS["C_PVG_SIMPLE_PRODUCT_POPUP_TITLE"] = "Varianten können zum Produkt nicht hinzugefügt werden, weil es als einfach erstellt wurde.";
 $MESS["C_PVG_STORE_ADD_NEW_BARCODE"] = "Strichcode eingeben";
 $MESS["C_PVG_STORE_ADD_ONE_MORE_BARCODE"] = "Mehr hinzufügen";
 $MESS["C_PVG_STORE_AMOUNT_POPUP_AMOUNT"] = "Verfügbar";

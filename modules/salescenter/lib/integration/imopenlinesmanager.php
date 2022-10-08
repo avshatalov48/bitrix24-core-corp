@@ -3,6 +3,7 @@
 namespace Bitrix\SalesCenter\Integration;
 
 use Bitrix\Crm\Tracking\Channel\Imol;
+use Bitrix\ImOpenLines;
 use Bitrix\ImOpenLines\Im,
 	Bitrix\ImOpenLines\SalesCenter as ImOlSalesCenter;
 use Bitrix\ImOpenLines\Chat;
@@ -618,6 +619,44 @@ class ImOpenLinesManager extends Base
 		return $result;
 	}
 
+	public function sendCompilationMessage($compilationLink, $dialogId, $dealId): Result
+	{
+		$result = new Result();
+
+		if (!$compilationLink)
+		{
+			$result->addError(new Error(Loc::getMessage('SALESCENTER_IMOPMANAGER_EMPTY_COMPILATION_LINK')));
+		}
+
+		if ($this->isEnabled())
+		{
+			$messageFields = [
+				'DIALOG_ID' => $dialogId,
+				'AUTHOR_ID' => Driver::getInstance()->getUserId(),
+				'FROM_USER_ID' => Driver::getInstance()->getUserId(),
+				'MESSAGE' => $this->createImMessageByCompilationLink($compilationLink['link']),
+			];
+
+			$imOlMessage = new ImOlSalesCenter\Other(ImOlSalesCenter\Other::normalizeChatId($dialogId));
+			$imOlMessage->setMessage($messageFields);
+
+			$resultSendMessage = $imOlMessage->send();
+
+			if (!$resultSendMessage->isSuccess())
+			{
+				$result->addErrors($resultSendMessage->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param Payment $payment
+	 * @param $dialogId
+	 * @param array $paymentData
+	 * @return Result
+	 */
 	public function sendPaymentMessage(Payment $payment, $dialogId, array $paymentData = []): Result
 	{
 		$result = new Result();
@@ -1008,10 +1047,30 @@ class ImOpenLinesManager extends Base
 		return $message;
 	}
 
-	public function getImMessagePreview()
+	public function getImMessagePreview($mode = CrmManager::SMS_MODE_PAYMENT): ?string
 	{
-		return Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW_2');
+		if ($mode === CrmManager::SMS_MODE_PAYMENT)
+		{
+			return Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_MESSAGE_PREVIEW_2');
+		}
+		if ($mode === CrmManager::SMS_MODE_COMPILATION)
+		{
+			return Loc::getMessage('SALESCENTER_IMOPMANAGER_COMPILATION_MESSAGE_PREVIEW');
+		}
+
+		return null;
 	}
+
+	/**
+	 * @return array
+	 */
+	public function getAllImMessagePreviews(): array
+	{
+		return [
+			CrmManager::SMS_MODE_PAYMENT => $this->getImMessagePreview(CrmManager::SMS_MODE_PAYMENT),
+			CrmManager::SMS_MODE_COMPILATION => $this->getImMessagePreview(CrmManager::SMS_MODE_COMPILATION),
+		];
+   }
 
 	/**
 	 * @param Payment $payment
@@ -1029,6 +1088,21 @@ class ImOpenLinesManager extends Base
 			$message .= '[BR]';
 		}
 		$message .= $publicUrl;
+
+		return $message;
+	}
+
+	public function createImMessageByCompilationLink(string $compilationLink): string
+	{
+		$paymentPreviewData = $this->getCompilationPreviewData();
+		$message = '[B]'.$paymentPreviewData['title'].'[/B]';
+		$message .= '[BR]';
+		if($paymentPreviewData['description'])
+		{
+			$message .= $paymentPreviewData['description'];
+			$message .= '[BR]';
+		}
+		$message .= $compilationLink;
 
 		return $message;
 	}
@@ -1231,6 +1305,17 @@ class ImOpenLinesManager extends Base
 	}
 
 	/**
+	 * @return array
+	 */
+	public function getCompilationPreviewData()
+	{
+		return [
+			'title' => Loc::getMessage('SALESCENTER_IMOPMANAGER_COMPILATION_MESSAGE_TOP'),
+			'description' => Loc::getMessage('SALESCENTER_IMOPMANAGER_PAYMENT_ADD_MESSAGE_BOTTOM_2'),
+		];
+	}
+
+	/**
 	 * @param null $url
 	 * @return array
 	 */
@@ -1305,6 +1390,38 @@ class ImOpenLinesManager extends Base
 	}
 
 	/**
+	 * Send system notification to the dialog about reorder
+	 * @param $dialogId
+	 * @return Result
+	 */
+	public function sendReorderNotification($dialogId): Result
+	{
+		$result = new Result();
+		if ($this->isEnabled())
+		{
+			$attach = new \CIMMessageParamAttach();
+			$attach->AddMessage(Loc::getMessage('SALESCENTER_IMOPMANAGER_SYSTEM_ORDER_NOTIFY_REORDER'));
+
+			$messageId = Im::addMessage([
+				'DIALOG_ID' => $dialogId,
+				'AUTHOR_ID' => Driver::getInstance()->getUserId(),
+				'FROM_USER_ID' => Driver::getInstance()->getUserId(),
+				'SYSTEM' => 'Y',
+				'PARAMS' => $this->getCommonImParams(),
+				'ATTACH' => $attach,
+				'SKIP_CONNECTOR' => 'Y',
+			]);
+
+			if (!$messageId)
+			{
+				global $APPLICATION;
+				$result->addError(new Error($APPLICATION->LAST_ERROR));
+			}
+		}
+		return $result;
+	}
+
+	/**
 	 * @param array $activity
 	 * @param $sessionId
 	 * @return Result
@@ -1367,5 +1484,205 @@ class ImOpenLinesManager extends Base
 		$userCode = $this->getSessionUserCode();
 
 		return $manager->getUrlWithParameters($page, ['USER_CODE' => $userCode, 'EVENT_POSTFIX' => FormHandler::EVENT_POSTFIX]);
+	}
+
+	/**
+	 * Create an attach with a link to a deal bind to an order
+	 * @param Order $order
+	 * @return Result
+	 */
+	protected function createImSystemAttachByClientOrder(Order $order): Result
+	{
+		$result = new Result();
+
+		$entityBinding = $order->getEntityBinding();
+		$dealId = $entityBinding ? $entityBinding->getOwnerId() : null;
+
+		if ($dealId)
+		{
+			$dealData = \CCrmDeal::getByID($dealId, false);
+			if ($dealData)
+			{
+				$attach = new \CIMMessageParamAttach();
+				$attach->AddLink([
+					'NAME' => $dealData['TITLE'],
+					'LINK' => SaleManager::getInstance()->getDealLink($dealId),
+				]);
+
+				$attach->AddMessage(Loc::getMessage('SALESCENTER_IMOPMANAGER_SYSTEM_CLIENT_MAKE_ORDER'));
+				$attach->AddMessage($this->getDealDescription($dealData));
+
+				$result->setData(['attach' => $attach]);
+			}
+			else
+			{
+				$result->addError(new Error("Deal #{$dealId} is not exists."));
+			}
+		}
+		else
+		{
+			$result->addError(new Error('No deal binding to order.'));
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Send system notification in dialog about new created order from client
+	 * @param $dialogId
+	 * @param $order
+	 * @return Result
+	 */
+	public function sendNewOrderNotification($dialogId, $order): Result
+	{
+		$result = new Result();
+		if ($this->isEnabled())
+		{
+			$attachCreatingResult = $this->createImSystemAttachByClientOrder($order);
+
+			if ($attachCreatingResult->isSuccess())
+			{
+				$attach = $attachCreatingResult->getData()['attach'];
+
+				$messageId = Im::addMessage([
+					'DIALOG_ID' => $dialogId,
+					'AUTHOR_ID' => Driver::getInstance()->getUserId(),
+					'FROM_USER_ID' => Driver::getInstance()->getUserId(),
+					'SYSTEM' => 'Y',
+					'PARAMS' => $this->getCommonImParams(),
+					'ATTACH' => $attach,
+					'SKIP_CONNECTOR' => 'Y',
+				]);
+
+				if (!$messageId)
+				{
+					global $APPLICATION;
+					$result->addError(new Error($APPLICATION->LAST_ERROR));
+				}
+			}
+			else
+			{
+				$result->addErrors($attachCreatingResult->getErrors());
+			}
+		}
+
+		return $result;
+	}
+
+	public function updateDealAfterCreation(int $dealId, int $sessionId): void
+	{
+		$sessionInfo = $this->setSessionId($sessionId)->getSessionInfo();
+		if (!$sessionInfo)
+		{
+			return;
+		}
+
+		$session = new ImOpenLines\Session();
+		$sessionStart = $session->load([
+			'USER_CODE' => $sessionInfo['USER_CODE'],
+			'SKIP_CREATE' => 'Y',
+		]);
+		if (!$sessionStart)
+		{
+			return;
+		}
+
+		$dealContactData = Crm\Binding\DealContactTable::getList([
+			'select' => ['CONTACT_ID'],
+			'filter' => [
+				'=DEAL_ID' => $dealId,
+				'=IS_PRIMARY' => 'Y',
+				'!=CONTACT_ID' => 0,
+			],
+		])->fetch();
+		if ($dealContactData)
+		{
+			$contactId = $dealContactData['CONTACT_ID'];
+		}
+
+		$updateSession = [
+			'CRM_CREATE_DEAL' => 'Y',
+		];
+
+		$updateChat = [
+			'DEAL' => $dealId,
+			'ENTITY_ID' => $dealId,
+			'ENTITY_TYPE' => 'DEAL',
+			'CRM' => 'Y',
+		];
+
+		$crmManager = new ImOpenLines\Crm($session);
+		$selector = $crmManager->getEntityManageFacility()->getSelector();
+		$registeredEntities = $crmManager->getEntityManageFacility()->getRegisteredEntities();
+
+		if ($selector)
+		{
+			$entity = new Crm\Entity\Identificator\Complex(\CCrmOwnerType::Deal, $dealId);
+			$selector->setEntity($entity->getTypeId(), $entity->getId());
+			$registeredEntities->setComplex($entity, true);
+		}
+
+		if (isset($contactId))
+		{
+			$updateSession['CRM_CREATE_CONTACT'] = 'Y';
+			$updateChat['CONTACT'] = $contactId;
+
+			if ($selector)
+			{
+				$entity = new Crm\Entity\Identificator\Complex(\CCrmOwnerType::Contact, $contactId);
+				$selector->setEntity($entity->getTypeId(), $entity->getId());
+				$registeredEntities->setComplex($entity, true);
+			}
+		}
+
+		$registerActivityResult = $crmManager->registrationChanges();
+		if ($registerActivityResult->isSuccess())
+		{
+			$updateSession['CRM_ACTIVITY_ID'] = $registerActivityResult->getResult();
+			$session->updateCrmFlags($updateSession);
+			$chat = $session->getChat();
+			if ($chat)
+			{
+				$chat->setCrmFlag($updateChat);
+			}
+
+			$trace = $crmManager->getEntityManageFacility()->getTrace();
+			if ($trace && !$trace->getId())
+			{
+				$traceId = $trace->save();
+				if ($traceId)
+				{
+					Crm\Tracking\Trace::appendEntity($traceId, \CCrmOwnerType::Deal, $dealId);
+				}
+			}
+
+			$crmManager->updateUserConnector();
+		}
+
+
+		$dealFields = [];
+		if (isset($contactId))
+		{
+			$contactData = Crm\Entity\Contact::getByID($contactId);
+			if (!empty($contactData['LAST_NAME']))
+			{
+				$dealFields = [
+					'TITLE' => $contactData['LAST_NAME'] . ' - ' . $session->getConfig('LINE_NAME')
+				];
+			}
+		}
+
+		if (!$dealFields && $session->getChat())
+		{
+			$dealFields = [
+				'TITLE' => $session->getChat()->getData('TITLE')
+			];
+		}
+
+		if ($dealFields)
+		{
+			$deal = new \CCrmDeal(false);
+			$deal->Update($dealId, $dealFields);
+		}
 	}
 }

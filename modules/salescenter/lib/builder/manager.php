@@ -2,6 +2,8 @@
 
 namespace Bitrix\Salescenter\Builder;
 
+use Bitrix\Crm\Order\Builder\BasketBuilderWithDistributedQuantityControl;
+use Bitrix\Crm\Order\Builder\SettingsContainer;
 use Bitrix\Main;
 
 /**
@@ -98,9 +100,7 @@ final class Manager
 	{
 		$builder = new OrderBuilder(new SettingsContainer($settings));
 
-		$basketBuilderClass = is_null($basketBuilderClass)
-			? BasketBuilder::class
-			: $basketBuilderClass;
+		$basketBuilderClass ??= BasketBuilderWithDistributedQuantityControl::class;
 
 		$builder->setBasketBuilder(
 			new $basketBuilderClass($builder)

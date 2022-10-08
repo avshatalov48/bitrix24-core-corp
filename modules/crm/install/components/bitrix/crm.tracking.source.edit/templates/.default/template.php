@@ -17,6 +17,8 @@ $bodyClass = $APPLICATION->GetPageProperty("BodyClass");
 $APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "") . "no-all-paddings no-background");
 
 Extension::load([
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.buttons',
 	'ui.buttons.icons',
 	'ui.alerts',
@@ -28,7 +30,6 @@ Extension::load([
 	'seo.ads.client_selector',
 	'seo.ads.login',
 	'ui.info-helper',
-	'ui.design-tokens',
 ]);
 
 $this->addExternalCss($this->GetFolder() . '/utm.css');

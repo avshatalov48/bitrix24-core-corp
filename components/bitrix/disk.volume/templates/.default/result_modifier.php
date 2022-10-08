@@ -703,7 +703,7 @@ switch ($arResult['ACTION'])
 
 			$actions[] = array(
 				'text' => Loc::getMessage('DISK_VOLUME_MORE'),
-				'onclick' => "jsUtils.Redirect([], '". \CUtil::JSEscape($row['ACTION_URL']). "');",
+				'onclick' => "BX.Disk.measureManager.showStorageMeasure(". $row['ID']. ", '". \CUtil::JSEscape($row['ACTION_URL']). "');",
 				'default' => true,
 			);
 
@@ -745,6 +745,8 @@ switch ($arResult['ACTION'])
 					"data-indicatorId" => $indicator::getIndicatorId(),
 					"data-storageId" => $storage->getId(),
 					"data-filteridTrashcan" => $trashcanFilterId,
+					"data-filterId" => $row['ID'],
+					"data-collected" => (int)$row['COLLECTED'],
 				),
 			);
 		}

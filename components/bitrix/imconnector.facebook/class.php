@@ -1,27 +1,33 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+	die();
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Web\Uri;
 use Bitrix\Main\Data\Cache;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ObjectNotFoundException;
 
 use Bitrix\ImConnector\Output;
 use Bitrix\ImConnector\Status;
 use Bitrix\ImConnector\Library;
 use Bitrix\ImConnector\Connector;
 
-class ImConnectorFacebook extends \CBitrixComponent
+use Bitrix\Catalog\v2\IoC\ServiceContainer;
+use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade;
+
+
+class ImConnectorFacebook extends CBitrixComponent
 {
 	protected $cacheId;
 
 	protected $connector = 'facebook';
 	protected $error = [];
 	protected $messages = [];
-	/** @var \Bitrix\ImConnector\Output */
+	/** @var Output */
 	protected $connectorOutput;
-	/**@var \Bitrix\ImConnector\Status */
+	/**@var Status */
 	protected $status;
 
 	protected $pageId = 'page_fb';
@@ -30,6 +36,7 @@ class ImConnectorFacebook extends \CBitrixComponent
 
 	/**
 	 * Check the connection of the necessary modules.
+	 *
 	 * @return bool
 	 * @throws LoaderException
 	 */
@@ -42,6 +49,7 @@ class ImConnectorFacebook extends \CBitrixComponent
 		else
 		{
 			ShowError(Loc::getMessage('IMCONNECTOR_COMPONENT_FACEBOOK_MODULE_NOT_INSTALLED'));
+
 			return false;
 		}
 	}
@@ -64,6 +72,11 @@ class ImConnectorFacebook extends \CBitrixComponent
 		$this->cacheId = Connector::getCacheIdConnector($this->arParams['LINE'], $this->connector);
 
 		$this->arResult['PAGE'] = $this->request[$this->pageId];
+		$this->arResult["WRONG_USER"] = $this->request['wrong_user'];
+		$this->arResult['IFRAME'] = $this->request->get('IFRAME') === 'Y';
+		$this->arResult['MENU_TAB'] = (htmlspecialcharsbx($this->request->get('MENU_TAB')) ?: 'connector');
+		$this->arResult['CONFIG_MENU'] = $this->getPagesMenu();
+		$this->arResult['CATALOG_AUTH'] = $this->getCatalogAuth();
 	}
 
 	/**
@@ -86,10 +99,32 @@ class ImConnectorFacebook extends \CBitrixComponent
 			$this->arResult['DATA_STATUS'] = $data;
 		}
 
-		if($resetError)
+		if ($resetError)
 		{
 			$this->status->setError(false);
 			$this->arResult['ERROR_STATUS'] = false;
+		}
+	}
+
+	private function saveCatalogPermissionData(array $formData): void
+	{
+		if (!isset($formData['PERMISSIONS']['CATALOG']))
+		{
+			$formData['PERMISSIONS']['CATALOG'] = 'N';
+		}
+
+		$dataToSave = [
+			'CATALOG' => $formData['PERMISSIONS']['CATALOG'],
+		];
+
+		$currentStatusData = $this->status->getData();
+		if (
+			!isset($currentStatusData['CATALOG'])
+			|| $currentStatusData['CATALOG'] !== $formData['PERMISSIONS']['CATALOG'])
+		{
+			$dataToSave = array_merge($currentStatusData, $dataToSave);
+			$this->status->setData($dataToSave);
+			$this->arResult['DATA_STATUS'] = $this->status->getData();
 		}
 	}
 
@@ -104,13 +139,13 @@ class ImConnectorFacebook extends \CBitrixComponent
 	public function saveForm()
 	{
 		//If been sent the current form
-		if ($this->request->isPost() && !empty($this->request[$this->connector. '_form']))
+		if ($this->request->isPost() && !empty($this->request[$this->connector . '_form']))
 		{
 			//If the session actual
 			if (check_bitrix_sessid())
 			{
 				//Activation
-				if ($this->request[$this->connector. '_active'] && empty($this->arResult['ACTIVE_STATUS']))
+				if ($this->request[$this->connector . '_active'] && empty($this->arResult['ACTIVE_STATUS']))
 				{
 					$this->status->setActive(true);
 					$this->arResult['ACTIVE_STATUS'] = true;
@@ -122,7 +157,7 @@ class ImConnectorFacebook extends \CBitrixComponent
 				if (!empty($this->arResult['ACTIVE_STATUS']))
 				{
 					//If you remove the reference to the user
-					if ($this->request[$this->connector. '_del_user'])
+					if ($this->request[$this->connector . '_del_user'])
 					{
 						$delUser = $this->connectorOutput->delUserActive($this->request['user_id']);
 
@@ -142,7 +177,7 @@ class ImConnectorFacebook extends \CBitrixComponent
 					}
 
 					//If you remove the reference to the group
-					if ($this->request[$this->connector. '_del_page'])
+					if ($this->request[$this->connector . '_del_page'])
 					{
 						$delPage = $this->connectorOutput->delPageActive($this->request['page_id']);
 
@@ -192,7 +227,7 @@ class ImConnectorFacebook extends \CBitrixComponent
 						$this->cleanCache();
 					}
 
-					if ($this->request[$this->connector. '_del'])
+					if ($this->request[$this->connector . '_del'])
 					{
 						$rawDelete = $this->connectorOutput->deleteConnector();
 
@@ -238,10 +273,10 @@ class ImConnectorFacebook extends \CBitrixComponent
 
 		$this->arResult['FORM']['STEP'] = 1;
 
-		if($this->arResult['ACTIVE_STATUS'])
+		if ($this->arResult['ACTIVE_STATUS'])
 		{
 			//Reset cache
-			if(!empty($this->arResult['PAGE']))
+			if (!empty($this->arResult['PAGE']))
 				$this->cleanCache();
 
 			$cache = Cache::createInstance();
@@ -254,12 +289,14 @@ class ImConnectorFacebook extends \CBitrixComponent
 			{
 				$uri = new Uri(Library::getCurrentUri());
 				$uri->addParams(['reload' => 'Y', 'ajaxid' => $this->arParams['AJAX_ID'], $this->pageId => 'simple_form']);
+				$uri->deleteParams(['wrong_user']);
 
 				$infoOAuth = $this->connectorOutput->getAuthorizationInformation(urlencode($uri->getUri()));
 
 				if ($infoOAuth->isSuccess())
 				{
 					$this->arResult['FORM'] = $infoOAuth->getData();
+					$this->saveCatalogPermissionData($this->arResult["FORM"]);
 
 					if (!empty($this->arResult['FORM']['PAGE']))
 					{
@@ -291,13 +328,13 @@ class ImConnectorFacebook extends \CBitrixComponent
 				{
 					foreach ($infoOAuth->getErrorCollection() as $error)
 					{
-						if($error->getCode() == Library::ERROR_CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN)
+						if ($error->getCode() == Library::ERROR_CONNECTOR_MESSENGER_INVALID_OAUTH_ACCESS_TOKEN)
 						{
 							$InvalidOauthAccessToken = true;
 						}
 					}
 
-					if (!empty($InvalidOauthAccessToken ))
+					if (!empty($InvalidOauthAccessToken))
 					{
 						$this->arResult['FORM'] = $infoOAuth->getData();
 						$this->arResult['FORM']['STEP'] = 1;
@@ -343,13 +380,48 @@ class ImConnectorFacebook extends \CBitrixComponent
 		$this->arResult['CONNECTOR'] = $this->connector;
 	}
 
+	protected function getPagesMenu(): array
+	{
+		$menuList = [
+			'connector' => [
+				'PAGE' => 'connector.php',
+				'NAME' => Loc::getMessage("IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_OPEN_LINES"),
+				'ACTIVE' => $this->arResult['MENU_TAB'] === 'connector',
+			],
+		];
+
+		if ($this->isCatalogExportAvailable())
+		{
+			$menuList['catalog'] = [
+				'PAGE' => 'catalog.php',
+				'NAME' => Loc::getMessage("IMCONNECTOR_COMPONENT_FACEBOOK_MENU_TAB_CATALOG"),
+				'ACTIVE' => $this->arResult['MENU_TAB'] === 'catalog',
+			];
+		}
+
+		$menuItemBase = Library::getCurrentUri();
+		$uri = new Uri($menuItemBase);
+		if ($this->request['IFRAME'] === 'Y')
+		{
+			$uri->addParams(['IFRAME' => 'Y']);
+		}
+
+		foreach ($menuList as $code => &$menuItem)
+		{
+			$uri->addParams(['MENU_TAB' => $code]);
+			$menuItem['ATTRIBUTES']['HREF'] = $uri->getUri();
+		}
+
+		return $menuList;
+	}
+
 	public function executeComponent()
 	{
 		Loc::loadMessages(__FILE__);
 
-		if($this->checkModules())
+		if ($this->checkModules())
 		{
-			if(Connector::isConnector($this->connector))
+			if (Connector::isConnector($this->connector))
 			{
 				$this->initialization();
 
@@ -357,12 +429,12 @@ class ImConnectorFacebook extends \CBitrixComponent
 
 				$this->constructionForm();
 
-				if(!empty($this->error))
+				if (!empty($this->error))
 				{
 					$this->arResult['error'] = $this->error;
 				}
 
-				if(!empty($this->messages))
+				if (!empty($this->messages))
 				{
 					$this->arResult['messages'] = $this->messages;
 				}
@@ -377,4 +449,69 @@ class ImConnectorFacebook extends \CBitrixComponent
 			}
 		}
 	}
-};
+
+	private function getCatalogAuth(): array
+	{
+		$result = [];
+
+		if ($this->isCatalogExportAvailable())
+		{
+			$result['HAS_AUTH'] = $this->hasCatalogExportAuth();
+			//$result['PAGE_ID'] = $this->getPageId();
+		}
+
+		return $result;
+	}
+
+	private function getFacebookFacade(): ?FacebookFacade
+	{
+		static $facade = null;
+
+		if ($facade === null)
+		{
+			if (Loader::includeModule('catalog') && Loader::includeModule('crm'))
+			{
+				try
+				{
+					$iblockId = CCrmCatalog::EnsureDefaultExists();
+					$facade = ServiceContainer::get('integration.seo.facebook.facade', compact('iblockId'));
+				}
+				catch (ObjectNotFoundException $exception)
+				{
+				}
+			}
+		}
+
+		return $facade;
+	}
+
+	private function isCatalogExportAvailable(): bool
+	{
+		if ($facebookFacade = $this->getFacebookFacade())
+		{
+			return $facebookFacade->isExportAvailable();
+		}
+
+		return false;
+	}
+
+	private function hasCatalogExportAuth(): bool
+	{
+		if ($facebookFacade = $this->getFacebookFacade())
+		{
+			return $facebookFacade->hasAuth();
+		}
+
+		return false;
+	}
+
+	private function getPageId(): ?string
+	{
+		if ($facebookFacade = $this->getFacebookFacade())
+		{
+			return $facebookFacade->getPageId();
+		}
+
+		return null;
+	}
+}

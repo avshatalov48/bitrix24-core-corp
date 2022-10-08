@@ -500,12 +500,19 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 
 		if ($this->mode !== ComponentMode::COPING && $this->mode !== ComponentMode::CREATION)
 		{
+			$productComponentData = $this->arResult['PRODUCT_COMPONENT_DATA'];
+			$productComponentData['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+				(array)$productComponentData['params'],
+				'crm.order.product.list'
+			);
+			unset($productComponentData['params']);
+
 			$this->arResult['TABS'][] = array(
 				'id' => 'tab_products',
 				'name' => Loc::getMessage('CRM_ORDER_TAB_PRODUCTS'),
 				'loader' => array(
 					'serviceUrl' => '/bitrix/components/bitrix/crm.order.product.list/lazyload.ajax.php?&site='.$this->order->getSiteId().'&'.bitrix_sessid_get(),
-					'componentData' => $this->arResult['PRODUCT_COMPONENT_DATA']
+					'componentData' => $productComponentData
 				),
 				'html' => '<div class="crm-entity-section-product-loader"></div>'
 			);
@@ -542,12 +549,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'serviceUrl' => '/bitrix/components/bitrix/crm.order.payment.list/lazyload.ajax.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'INTERNAL_FILTER' => array('ORDER_ID' => $this->entityID),
 							'ORDER_ID' => $this->order->getId(),
 							'ENABLE_TOOLBAR' => true,
 							'PATH_TO_ORDER_PAYMENT_LIST' => '/bitrix/components/bitrix/crm.order.payment.list/class.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get()
-						)
+						], 'crm.order.payment.list')
 					)
 				)
 			);
@@ -564,7 +571,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 							'serviceUrl' => '/bitrix/components/bitrix/crm.order.check.list/lazyload.ajax.php?&site'.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
 							'componentData' => array(
 								'template' => '',
-								'params' => array(
+								'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 									'ENABLE_TOOLBAR' => true,
 									'CHECK_COUNT' => '20',
 									'OWNER_ID' => $this->entityID,
@@ -576,7 +583,7 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 									'GRID_ID_SUFFIX' => 'CHECK_DETAILS',
 									'TAB_ID' => 'tab_check',
 									'NAME_TEMPLATE' => $this->arResult['NAME_TEMPLATE']
-								)
+								], 'crm.order.check.list')
 							)
 						)
 					);
@@ -625,12 +632,12 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'serviceUrl' => '/bitrix/components/bitrix/crm.order.shipment.list/lazyload.ajax.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'INTERNAL_FILTER' => array('ORDER_ID' => $this->entityID),
 							'ENABLE_TOOLBAR' => true,
 							'PATH_TO_ORDER_SHIPMENT_LIST' => '/bitrix/components/bitrix/crm.order.shipment.list/class.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
 							'BUILDER_CONTEXT' => $this->arResult['BUILDER_CONTEXT']
-						)
+						], 'crm.order.shipment.list')
 					)
 				)
 			);
@@ -652,10 +659,10 @@ class CCrmOrderDetailsComponent extends Crm\Component\EntityDetails\BaseComponen
 					'serviceUrl' => '/bitrix/components/bitrix/crm.entity.tree/lazyload.ajax.php?&site='.$this->arResult['SITE_ID'].'&'.bitrix_sessid_get(),
 					'componentData' => array(
 						'template' => '.default',
-						'params' => array(
+						'signedParameters' => \CCrmInstantEditorHelper::signComponentParams([
 							'ENTITY_ID' => $this->entityID,
 							'ENTITY_TYPE_NAME' => CCrmOwnerType::OrderName,
-						)
+						], 'crm.entity.tree')
 					)
 				)
 			);

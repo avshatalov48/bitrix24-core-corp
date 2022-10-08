@@ -21,7 +21,8 @@
 	width: 100%;
 	max-height: 33px;
 	min-height: 33px;
-	font-family: OpenSans-Regular, "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 14px;
 	color: var(--graphite);
 }
@@ -142,7 +143,8 @@
 }
 
 .task-interface-btn-toolbar {
-	font-family: "OpenSans-SemiBold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-size: 13px;
 }
 
@@ -246,7 +248,8 @@
 .intranet-binding-menu-btn-round .ui-btn-menu {
 	text-transform: none;
 	height: 27px;
-	font: 13px/25px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 13px/25px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 }
 
 .intranet-binding-menu-btn-round .ui-btn-main {
@@ -670,7 +673,7 @@
 		background: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='5' viewBox='0 0 17 5'%3E%3Cpath fill='%23535c69' fill-rule='evenodd' d='M6.25,10.4166667 C7.40059323,10.4166667 8.33333333,11.3494068 8.33333333,12.5 C8.33333333,13.6505932 7.40059323,14.5833333 6.25,14.5833333 C5.09940677,14.5833333 4.16666667,13.6505932 4.16666667,12.5 C4.16666667,11.3494068 5.09940677,10.4166667 6.25,10.4166667 Z M12.5,10.4166667 C13.6505932,10.4166667 14.5833333,11.3494068 14.5833333,12.5 C14.5833333,13.6505932 13.6505932,14.5833333 12.5,14.5833333 C11.3494068,14.5833333 10.4166667,13.6505932 10.4166667,12.5 C10.4166667,11.3494068 11.3494068,10.4166667 12.5,10.4166667 Z M18.75,10.4166667 C19.9005932,10.4166667 20.8333333,11.3494068 20.8333333,12.5 C20.8333333,13.6505932 19.9005932,14.5833333 18.75,14.5833333 C17.5994068,14.5833333 16.6666667,13.6505932 16.6666667,12.5 C16.6666667,11.3494068 17.5994068,10.4166667 18.75,10.4166667 Z' transform='translate(-4 -10)'/%3E%3C/svg%3E%0A") center no-repeat;
 	}
 
-	.bitrix24-dark-theme .ui-slider-page .task-interface-toolbar--item--3 .ui-btn-menu:before {
+	.bitrix24-light-theme .ui-slider-page .task-interface-toolbar--item--3 .ui-btn-menu:before {
 		background-image: url("data:image/svg+xml,%0A%3Csvg xmlns='http://www.w3.org/2000/svg' width='17' height='5' viewBox='0 0 17 5'%3E%3Cpath fill='%23FFF' fill-rule='evenodd' d='M6.25,10.4166667 C7.40059323,10.4166667 8.33333333,11.3494068 8.33333333,12.5 C8.33333333,13.6505932 7.40059323,14.5833333 6.25,14.5833333 C5.09940677,14.5833333 4.16666667,13.6505932 4.16666667,12.5 C4.16666667,11.3494068 5.09940677,10.4166667 6.25,10.4166667 Z M12.5,10.4166667 C13.6505932,10.4166667 14.5833333,11.3494068 14.5833333,12.5 C14.5833333,13.6505932 13.6505932,14.5833333 12.5,14.5833333 C11.3494068,14.5833333 10.4166667,13.6505932 10.4166667,12.5 C10.4166667,11.3494068 11.3494068,10.4166667 12.5,10.4166667 Z M18.75,10.4166667 C19.9005932,10.4166667 20.8333333,11.3494068 20.8333333,12.5 C20.8333333,13.6505932 19.9005932,14.5833333 18.75,14.5833333 C17.5994068,14.5833333 16.6666667,13.6505932 16.6666667,12.5 C16.6666667,11.3494068 17.5994068,10.4166667 18.75,10.4166667 Z' transform='translate(-4 -10)'/%3E%3C/svg%3E%0A");
 	}
 

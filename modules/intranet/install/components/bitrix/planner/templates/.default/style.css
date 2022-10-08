@@ -1,5 +1,13 @@
 .tm-dashboard {display: inline-block;}
-.tm-dashboard-inner { display: inline-block; height: 20px; cursor: pointer; color: #3e3e3e; font:normal 11px/normal Arial, Helvetica, sans-serif; padding: 0 0 0 9px; }
+
+.tm-dashboard-inner {
+	display: inline-block;
+	height: 20px;
+	cursor: pointer;
+	color: #3e3e3e;
+	font: normal 11px/normal var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	padding: 0 0 0 9px;
+}
 
 .tm-dashboard:hover { background: #cfcfcf;}
 .tm-dashboard:hover .tm-dashboard-title, .tm-dashboard:hover .tm-dashboard-arrow { visibility: visible; }
@@ -29,7 +37,7 @@
 	border-radius: 4px;
 	border: 1px solid;
 	height: 31px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	margin: 0 0 9px;
 	position: relative;
 }

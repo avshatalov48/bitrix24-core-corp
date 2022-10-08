@@ -63,6 +63,13 @@ if($action === 'GET_NEW_ENTITY_IDS')
 {
 	$lastEntityID = isset($_POST['LAST_ENTITY_ID']) ? (int)$_POST['LAST_ENTITY_ID'] : 0;
 	$entityTypeID = isset($_POST['ENTITY_TYPE_ID']) ? (int)$_POST['ENTITY_TYPE_ID'] : 0;
+	$categoryId = isset($_POST['CATEGORY_ID']) && $_POST['CATEGORY_ID']!=='' ? (int)$_POST['CATEGORY_ID'] : null;
+	$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeID);
+	if ($factory && !$factory->isCategoriesEnabled())
+	{
+		$categoryId = null;
+	}
+
 	if($lastEntityID <= 0 || !CCrmOwnerType::IsDefined($entityTypeID))
 	{
 		__CrmNewEntityCounterEndJsonResponse(array('ERROR'=>'INVALID PARAMS'));
@@ -75,7 +82,8 @@ if($action === 'GET_NEW_ENTITY_IDS')
 			'DESC',
 			100,
 			\CCrmSecurityHelper::GetCurrentUserID(),
-			true
+			true,
+			$categoryId
 		)
 	);
 

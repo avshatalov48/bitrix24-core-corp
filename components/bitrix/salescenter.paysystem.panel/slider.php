@@ -43,6 +43,8 @@ $APPLICATION->IncludeComponent(
 			],
 		],
 		'USE_UI_TOOLBAR' => 'Y',
+		'USE_UI_TOOLBAR_MARGIN' => false,
+		'USE_PADDING' => false,
 	]
 );
 

@@ -9,9 +9,6 @@ use Bitrix\Crm\Service\Container;
 
 class RelationController extends Controller
 {
-	public const BIND_EVENT_NAME = Pusher::ADD_LINK_PULL_COMMAND;
-	public const UNBIND_EVENT_NAME = Pusher::DELETE_LINK_PULL_COMMAND;
-
 	protected function __construct()
 	{
 	}
@@ -151,7 +148,6 @@ class RelationController extends Controller
 	{
 		$this->registerRelationEvent(
 			TimelineEntry\Facade::LINK,
-			static::BIND_EVENT_NAME,
 			$timelineOwner,
 			$boundEntity,
 			$authorId
@@ -166,7 +162,6 @@ class RelationController extends Controller
 	{
 		$this->registerRelationEvent(
 			TimelineEntry\Facade::UNLINK,
-			static::UNBIND_EVENT_NAME,
 			$timelineOwner,
 			$boundEntity,
 			$authorId
@@ -175,14 +170,12 @@ class RelationController extends Controller
 
 	/**
 	 * @param string $timelineEntryType - constant of TimelineEntry\Facade
-	 * @param string $pushCommand
 	 * @param ItemIdentifier $timelineOwner - the resulting event will be displayed in this entity's timeline
 	 * @param ItemIdentifier $boundEntity - the entity that was bound to the timeline owner
 	 * @param int|null $authorId
 	 */
 	protected function registerRelationEvent(
 		string $timelineEntryType,
-		string $pushCommand,
 		ItemIdentifier $timelineOwner,
 		ItemIdentifier $boundEntity,
 		?int $authorId = null
@@ -209,23 +202,6 @@ class RelationController extends Controller
 			return;
 		}
 
-		$timelineEntry = Container::getInstance()->getTimelineEntryFacade()->getById($timelineEntryId);
-
-		$historyDataModel = null;
-		if (is_array($timelineEntry))
-		{
-			$historyDataModel = Container::getInstance()->getTimelineHistoryDataModelMaker()->prepareHistoryDataModel(
-				$timelineEntry,
-				//todo make this option true by default?
-				['ENABLE_USER_INFO' => true]
-			);
-		}
-
-		Container::getInstance()->getTimelinePusher()->sendPullEvent(
-			$timelineOwner->getEntityTypeId(),
-			$timelineOwner->getEntityId(),
-			$pushCommand,
-			$historyDataModel
-		);
+		$this->sendPullEventOnAdd($timelineOwner, $timelineEntryId);
 	}
 }

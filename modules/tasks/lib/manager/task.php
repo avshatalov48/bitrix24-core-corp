@@ -13,11 +13,11 @@
 namespace Bitrix\Tasks\Manager;
 
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Comments;
 use Bitrix\Tasks\Integration\Extranet;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Integration\Timeman;
-use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Manager\Task\Accomplice;
 use Bitrix\Tasks\Manager\Task\Auditor;
@@ -25,7 +25,6 @@ use Bitrix\Tasks\Manager\Task\Checklist;
 use Bitrix\Tasks\Manager\Task\ElapsedTime;
 use Bitrix\Tasks\Manager\Task\Log;
 use Bitrix\Tasks\Manager\Task\Originator;
-use Bitrix\Tasks\Manager\Task\Parameter;
 use Bitrix\Tasks\Manager\Task\ParentTask;
 use Bitrix\Tasks\Manager\Task\Project;
 use Bitrix\Tasks\Manager\Task\ProjectDependence;
@@ -180,11 +179,6 @@ final class Task extends \Bitrix\Tasks\Manager
 					$data[CheckList::getCode(true)],
 					['analyticsData' => $parameters['ANALYTICS_DATA']]
 				);
-			}
-
-			if (array_key_exists('SE_PARAMETER', $data))
-			{
-				Parameter::manageSet($userId, $taskId, $data[ 'SE_PARAMETER' ], $subEntityParams);
 			}
 
 			Template::manageTaskReplication($userId, $taskId, $data, $subEntityParams);
@@ -403,20 +397,7 @@ final class Task extends \Bitrix\Tasks\Manager
 		$canEditBefore = $task->checkAccess($action); // get our rights before doing anything
 		if (!empty($cleanData))
 		{
-			// spike: save parameters before CTasks::Update(), at low level, to be sure worker will work out correctly
-			// todo: get rid of this
-			if ($canEditBefore && array_key_exists('SE_PARAMETER', $data) && is_array($data[ 'SE_PARAMETER' ]))
-			{
-				\Bitrix\Tasks\Item\Task\Parameter::deleteByParent($taskId, array());
-				foreach ($data[ 'SE_PARAMETER' ] as $parameter)
-				{
-					unset($parameter[ 'ID' ]);
-					$parameter[ 'TASK_ID' ] = $taskId;
-					ParameterTable::add($parameter);
-				}
-			}
 			$commentPoster->enableDeferredPostMode();
-
 			$task->update($cleanData, $parameters['TASK_ACTION_UPDATE_PARAMETERS']); // do not check return result, because method will throw an exception on error
 		}
 
@@ -458,11 +439,6 @@ final class Task extends \Bitrix\Tasks\Manager
 				$data[Checklist::getCode(true)],
 				['analyticsData' => $parameters['ANALYTICS_DATA']]
 			);
-		}
-
-		if (array_key_exists('SE_PARAMETER', $data))
-		{
-			Parameter::manageSet($userId, $taskId, $data[ 'SE_PARAMETER' ], $subEntityParams);
 		}
 
 		Template::manageTaskReplication($userId, $taskId, $data, $subEntityParams);
@@ -981,8 +957,16 @@ final class Task extends \Bitrix\Tasks\Manager
 		return $nav;
 	}
 
-	public static function extendData(&$data, array $references = array())
+	public static function extendData(&$data, array $references = array(), int $userId = 0)
 	{
+		if (!$userId)
+		{
+			$userId = (int) \Bitrix\Tasks\Util\User::getId();
+		}
+
+		$user = UserModel::createFromId($userId);
+		$data = self::cleanData($user, $data);
+
 		if (is_array($references[ 'USER' ]))
 		{
 			Originator::extendData($data, $references[ 'USER' ]);
@@ -1000,6 +984,101 @@ final class Task extends \Bitrix\Tasks\Manager
 		{
 			Project::extendData($data, $references[ 'GROUP' ]);
 		}
+	}
+
+	private static function cleanData(UserModel $user, array $data)
+	{
+		$userId = $user->getUserId();
+
+		if (
+			array_key_exists('SE_PROJECT', $data)
+			&& isset($data['SE_PROJECT']['ID'])
+		)
+		{
+			$groupId = (int) $data['SE_PROJECT']['ID'];
+			if (
+				!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+					$groupId,
+					'tasks',
+					'view',
+					$userId
+				)
+			)
+			{
+				$data['SE_PROJECT']['ID'] = 0;
+			}
+		}
+
+		if (!$user->isExtranet() || $user->isAdmin())
+		{
+			return $data;
+		}
+
+		if (
+			array_key_exists('SE_ORIGINATOR', $data)
+			&& isset($data['SE_ORIGINATOR']['ID'])
+		)
+		{
+			if (!Group::usersHasCommonGroup($userId, (int) $data['SE_ORIGINATOR']['ID']))
+			{
+				$data['SE_ORIGINATOR']['ID'] = $userId;
+			}
+		}
+
+		if (
+			array_key_exists('SE_RESPONSIBLE', $data)
+			&& is_array($data['SE_RESPONSIBLE'])
+		)
+		{
+			foreach ($data['SE_RESPONSIBLE'] as $code => $member)
+			{
+				if (!Group::usersHasCommonGroup($userId, (int) $member['ID']))
+				{
+					unset($data['SE_RESPONSIBLE'][$code]);
+				}
+			}
+		}
+		if (empty($data['SE_RESPONSIBLE']))
+		{
+			$data['SE_RESPONSIBLE'] = [
+				'U'.$userId => [
+					'ID' => $userId,
+					'NAME' => '',
+					'LAST_NAME' => '',
+					'EMAIL' => '',
+				],
+			];
+		}
+
+		if (
+			array_key_exists('SE_ACCOMPLICE', $data)
+			&& is_array($data['SE_ACCOMPLICE'])
+		)
+		{
+			foreach ($data['SE_ACCOMPLICE'] as $code => $member)
+			{
+				if (!Group::usersHasCommonGroup($userId, (int) $member['ID']))
+				{
+					unset($data['SE_ACCOMPLICE'][$code]);
+				}
+			}
+		}
+
+		if (
+			array_key_exists('SE_AUDITOR', $data)
+			&& is_array($data['SE_AUDITOR'])
+		)
+		{
+			foreach ($data['SE_AUDITOR'] as $code => $member)
+			{
+				if (!Group::usersHasCommonGroup($userId, (int) $member['ID']))
+				{
+					unset($data['SE_AUDITOR'][$code]);
+				}
+			}
+		}
+
+		return $data;
 	}
 
 	public static function mergeData($primary = array(), $secondary = array())

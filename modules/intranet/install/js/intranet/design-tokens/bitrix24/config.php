@@ -9,7 +9,7 @@ if (defined('ADMIN_SECTION') && ADMIN_SECTION === true)
 	return [];
 }
 
-if (defined('SITE_TEMPLATE_ID') && in_array(SITE_TEMPLATE_ID, ['bitrix24', 'desktop_app', 'login', 'pub']))
+if (defined('SITE_TEMPLATE_ID') && in_array(SITE_TEMPLATE_ID, ['bitrix24', 'desktop_app', 'login', 'pub', 'landing24']))
 {
 	return [
 		'css' =>[

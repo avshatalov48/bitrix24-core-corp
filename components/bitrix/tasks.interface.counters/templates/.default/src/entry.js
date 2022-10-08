@@ -4,7 +4,8 @@ import { Menu, MenuItem } from 'main.popup';
 import { Filter } from './counters-helper';
 import CountersItem from './counters-item';
 
-import './style.css'
+import 'ui.fonts.opensans';
+import './style.css';
 
 export class Counters
 {
@@ -566,7 +567,7 @@ export class Counters
 		this.$other.cropped = this.isCroppedBlock(this.$other.layout);
 
 		this.$other.layout = Tag.render`
-			<div class="tasks-counters--item --other" ${this.$other.cropped ? '--cropp' : ''}">
+			<div class="tasks-counters--item --other ${this.$other.cropped ? '--cropp' : ''}">
 				<div data-role="tasks-counters--item-head-other" class="tasks-counters--item-head">${Loc.getMessage('TASKS_COUNTER_OTHER')}</div>
 				<div class="tasks-counters--item-content">
 					${content}

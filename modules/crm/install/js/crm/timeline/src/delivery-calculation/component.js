@@ -92,6 +92,7 @@ export default Vue.extend({
 			return this.data.FIELDS.ADDRESS_TO_FORMATTED;
 		},
 	},
+	// language=Vue
 	template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-new">
 			<div class="crm-entity-stream-section-icon crm-entity-stream-section-icon-new crm-entity-stream-section-icon-taxi"></div>

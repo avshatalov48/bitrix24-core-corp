@@ -9,7 +9,8 @@
 }
 
 .bx-imbot-support24-question-list-empty-title {
-	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 18px;
 	line-height: 26px;
 	color: #545c68;
@@ -22,7 +23,7 @@
 
 .bx-imbot-support24-question-list-empty-description {
 	width: 400px;
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	line-height: 21px;
 	color: #545c68;
@@ -196,7 +197,8 @@
 }
 
 .bx-imbot-support24-question-list-placeholder-text {
-	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 15px;
 	line-height: 26px;
 	color: #959ca4;
@@ -207,7 +209,8 @@
 }
 
 .bx-imbot-support24-question-list-not-found-icon {
-	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	font-size: 29px;
 	line-height: 29px;
 	color: #bdc1c6;
@@ -299,9 +302,9 @@
 	height: 29px;
 	width: 118px;
 	border: 1px solid #dedede;
-	font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	font-style: normal;
-	font-weight: 600;
 	font-size: 12px;
 	line-height: 16px;
 	cursor: pointer;
@@ -350,7 +353,7 @@
 .bx-imbot-support24-question-list-button-ask-primary {
 	height: 32px;
 	width: 142px;
-	font-family: "Helvetica Neue", Arial, Helvetica, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .bx-imbot-support24-question-list-question {
 	display: -webkit-box;
@@ -399,7 +402,7 @@
 }
 
 .bx-imbot-support24-question-list-question-title {
-	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size: 14px;
 	line-height: 20px;
 	color: #6A737F;

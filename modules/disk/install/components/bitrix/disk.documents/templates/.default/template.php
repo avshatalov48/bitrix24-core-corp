@@ -10,6 +10,8 @@ use \Bitrix\Disk;
 use \Bitrix\Main;
 use \Bitrix\Main\Localization\Loc;
 CJSCore::Init(array(
+	'ui.design-tokens',
+	'ui.fonts.opensans',
 	'ui.viewer',
 	'ui.ears',
 	'ui.tilegrid',

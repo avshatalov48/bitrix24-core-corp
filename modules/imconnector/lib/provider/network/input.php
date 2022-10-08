@@ -50,7 +50,7 @@ class Input extends Base\Input
 	{
 		$result = parent::routing($command, $connector, $line, $data);
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			switch ($command)
 			{
@@ -119,7 +119,7 @@ class Input extends Base\Input
 	{
 		$result = clone $this->result;
 
-		if(!Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			$result->addError(new Error(
 				'Failed to load the im module',
@@ -128,7 +128,7 @@ class Input extends Base\Input
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultData = [];
 			foreach ($this->data as $cell => $params)
@@ -254,7 +254,7 @@ class Input extends Base\Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultData = [];
 			foreach ($this->data as $cell => $params)
@@ -262,7 +262,7 @@ class Input extends Base\Input
 				$resultProcessingSessionVote = $this->processingSessionVote($params);
 
 				$resultData[$cell] = $resultProcessingSessionVote->getResult();
-				if($resultProcessingSessionVote->isSuccess())
+				if ($resultProcessingSessionVote->isSuccess())
 				{
 					$resultData[$cell]['SUCCESS'] = true;
 				}
@@ -364,7 +364,7 @@ class Input extends Base\Input
 	{
 		$result = clone $this->result;
 
-		if(!Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			$result->addError(new Error(
 				'Failed to load the im module',
@@ -373,7 +373,7 @@ class Input extends Base\Input
 			));
 		}
 
-		if(!Loader::includeModule('imopenlines'))
+		if (!Loader::includeModule('imopenlines'))
 		{
 			$result->addError(new Error(
 				'Failed to load the imopenlines module',
@@ -382,7 +382,7 @@ class Input extends Base\Input
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultData = [];
 			foreach ($this->data as $cell => $params)
@@ -390,7 +390,7 @@ class Input extends Base\Input
 				$resultProcessingFinishSession = $this->processingFinishSession($params, $message);
 
 				$resultData[$cell] = $resultProcessingFinishSession->getResult();
-				if($resultProcessingFinishSession->isSuccess())
+				if ($resultProcessingFinishSession->isSuccess())
 				{
 					$resultData[$cell]['SUCCESS'] = true;
 				}
@@ -468,7 +468,7 @@ class Input extends Base\Input
 					'SKIP_CREATE' => 'Y',
 				]));
 
-				if(
+				if (
 					!$resultSessionStart->isSuccess() ||
 					$resultSessionStart->getResult() !== true
 				)
@@ -501,7 +501,7 @@ class Input extends Base\Input
 	{
 		$result = clone $this->result;
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultData = [];
 			foreach ($this->data as $cell => $params)
@@ -509,7 +509,7 @@ class Input extends Base\Input
 				$resultProcessingCommandKeyboard = $this->processingCommandKeyboard($params);
 
 				$resultData[$cell] = $resultProcessingCommandKeyboard->getResult();
-				if($resultProcessingCommandKeyboard->isSuccess())
+				if ($resultProcessingCommandKeyboard->isSuccess())
 				{
 					$resultData[$cell]['SUCCESS'] = true;
 				}
@@ -534,7 +534,7 @@ class Input extends Base\Input
 		$result = clone $this->result;
 		$userId = 0;
 
-		if(!Loader::includeModule('imbot'))
+		if (!Loader::includeModule('imbot'))
 		{
 			$result->addError(new Error(
 				'Failed to load the ImBot module',
@@ -543,7 +543,7 @@ class Input extends Base\Input
 			));
 		}
 
-		if(!Loader::includeModule('im'))
+		if (!Loader::includeModule('im'))
 		{
 			$result->addError(new Error(
 				'Failed to load the im module',
@@ -552,11 +552,11 @@ class Input extends Base\Input
 			));
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess())
 		{
 			$resultProcessing = Connector::initConnectorHandler($this->connector)->processingInputCommandKeyboard($params, $this->line);
 
-			if($resultProcessing->isSuccess())
+			if ($resultProcessing->isSuccess())
 			{
 				$params = $resultProcessing->getResult()['PARAMS'];
 				$userId = $resultProcessing->getResult()['USER_ID'];
@@ -567,7 +567,7 @@ class Input extends Base\Input
 			}
 		}
 
-		if($result->isSuccess())
+		if ($result->isSuccess() && (int)$params['MESSAGE_ID'] > 0)
 		{
 			/** @var \Bitrix\Im\Services\Message $messager */
 			$messager = ServiceLocator::getInstance()->get('Im.Services.Message');
@@ -600,7 +600,7 @@ class Input extends Base\Input
 				'command_params' => $params['COMMAND_PARAMS'],
 			], Library::EVENT_RECEIVED_MESSAGE);
 
-			if(!$resultEvent->isSuccess())
+			if (!$resultEvent->isSuccess())
 			{
 				$result->addErrors($resultEvent->getErrors());
 			}
@@ -650,14 +650,14 @@ class Input extends Base\Input
 	{
 		$result = $this->sendEvent($data, Library::EVENT_RECEIVED_MESSAGE);
 
-		if(
+		if (
 			$result->isSuccess()
 			&& !empty($result->getResult())
 		)
 		{
 			foreach ($result->getResult() as $evenResult)
 			{
-				if($evenResult instanceof EventResult)
+				if ($evenResult instanceof EventResult)
 				{
 					$connectorParameters = $evenResult->getParameters();
 

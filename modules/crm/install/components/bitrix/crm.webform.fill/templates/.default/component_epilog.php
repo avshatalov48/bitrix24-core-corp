@@ -4,7 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm\WebForm\Helper;
 use Bitrix\Main\Loader;
 
-CUtil::InitJSCore(array('core', 'ls', 'ajax', 'date', 'popup'));
+CUtil::InitJSCore(array('core', 'ls', 'ajax', 'date', 'popup', 'ui.fonts.opensans'));
 
 if (Loader::includeModule('calendar'))
 {

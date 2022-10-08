@@ -11,6 +11,7 @@ use Bitrix\Crm\Service\Factory;
 use Bitrix\Main\Engine\AutoWire\ExactParameter;
 use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\Page;
+use Bitrix\Main\Error;
 use Bitrix\Main\UI\PageNavigation;
 
 class ProductRow extends Base
@@ -259,6 +260,11 @@ class ProductRow extends Base
 			return null;
 		}
 
+		if (!$this->isGetListParamsValid($getListParams))
+		{
+			return null;
+		}
+
 		$collection = $this->dataManager::getList($getListParams)->fetchCollection();
 
 		return new Page(
@@ -343,6 +349,41 @@ class ProductRow extends Base
 		}
 
 		return $isReadPermitted;
+	}
+
+	protected function isGetListParamsValid(array $getListParams): bool
+	{
+		return $this->isFilterValid($getListParams['filter'] ?? []);
+	}
+
+	protected function isFilterValid(array $filter): bool
+	{
+		$isErrorProneOperation = static function(string $key): bool {
+			return (
+				preg_match('/([<>])/' . BX_UTF_PCRE_MODIFIER, $key)
+				&& mb_strpos($key, '><') === false
+			);
+		};
+		$isValidType = fn($value) => is_string($value) || is_numeric($value);
+
+		foreach ($filter as $key => $value)
+		{
+			if (is_string($key) && $isErrorProneOperation($key) && !$isValidType($value))
+			{
+				$this->addError(
+					new Error("Value for filter key '{$key}' should be either string or number", ErrorCode::INVALID_ARG_VALUE),
+				);
+
+				return false;
+			}
+
+			if (is_array($value) && !$this->isFilterValid($value))
+			{
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public function setAction(string $ownerType, int $ownerId, array $productRows): ?array

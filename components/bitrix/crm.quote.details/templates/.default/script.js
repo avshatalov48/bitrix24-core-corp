@@ -1,25 +1,7 @@
 (function (exports,main_core,main_popup,ui_buttons,main_core_events,crm_itemDetailsComponent,crm_conversion) {
 	'use strict';
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral([" <option value=\"", "\">", "</option> "]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2;
 	var printWindowWidth = 900;
 	var printWindowHeight = 600;
 	var namespace = main_core.Reflection.namespace('BX.Crm');
@@ -128,7 +110,7 @@
 	      if (this.isMultipleTemplates) {
 	        this.openTemplateSelectDialog().then(function (templateId) {
 	          _this3.openPrintWindow(link, templateId, openInNewWindow);
-	        }).catch(function () {});
+	        })["catch"](function () {});
 	      } else {
 	        var selectedPrintTemplate = this.getSinglePrintTemplate();
 	        this.openPrintWindow(link, selectedPrintTemplate.id, openInNewWindow);
@@ -155,13 +137,13 @@
 	      var _this4 = this;
 
 	      return new Promise(function (resolve, reject) {
-	        var templateSelectDialogContent = main_core.Tag.render(_templateObject(), _this4.messages.template);
+	        var templateSelectDialogContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"ui-form ui-form-line\">\n\t\t\t\t\t<div class=\"ui-form-row\">\n\t\t\t\t\t\t<div class=\"ui-form-label\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl-label-text\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"ui-form-content\">\n\t\t\t\t\t\t\t<div class=\"ui-ctl ui-ctl-after-icon ui-ctl-dropdown\">\n\t\t\t\t\t\t\t\t<div class=\"ui-ctl-after ui-ctl-icon-angle\"></div>\n\t\t\t\t\t\t\t\t<select class=\"ui-ctl-element\">\n\t\t\t\t\t\t\t\t</select>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), _this4.messages.template);
 	        var select = templateSelectDialogContent.querySelector('select');
 
 	        _this4.printTemplates.forEach(function (_ref) {
 	          var id = _ref.id,
 	              name = _ref.name;
-	          select.appendChild(main_core.Tag.render(_templateObject2(), main_core.Text.encode(id), main_core.Text.encode(name)));
+	          select.appendChild(main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral([" <option value=\"", "\">", "</option> "])), main_core.Text.encode(id), main_core.Text.encode(name)));
 	        });
 
 	        var popup = new main_popup.Popup({
@@ -214,7 +196,7 @@
 	      if (this.isMultipleTemplates) {
 	        this.openTemplateSelectDialog().then(function (templateId) {
 	          _this5.sendViaEmail(templateId);
-	        }).catch(function () {});
+	        })["catch"](function () {});
 	      } else {
 	        var selectedPrintTemplate = this.getSinglePrintTemplate();
 	        this.sendViaEmail(selectedPrintTemplate.id);
@@ -230,7 +212,7 @@
 	      if (!top.BX.SidePanel.Instance) {
 	        this.modifyEmailSettings(this.emailSettings).then(function (emailSettings) {
 	          _this6.getActivityEditor().addEmail(emailSettings);
-	        }).catch(this.showErrorsFromResponse.bind(this));
+	        })["catch"](this.showErrorsFromResponse.bind(this));
 	        return;
 	      }
 

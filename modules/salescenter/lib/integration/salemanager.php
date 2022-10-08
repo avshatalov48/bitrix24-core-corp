@@ -14,10 +14,12 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale\Payment;
 use Bitrix\Main\Loader;
+use Bitrix\Sale\PaySystem\ApplePay;
 use Bitrix\Sale\PaySystem\ClientType;
 use Bitrix\SalesCenter;
 use Bitrix\Salescenter\Analytics;
 use Bitrix\Salescenter\SaleshubItem;
+use Bitrix\Crm\Service;
 
 class SaleManager extends Base
 {
@@ -100,12 +102,9 @@ class SaleManager extends Base
 	 */
 	public function getPaymentLink($paymentId): string
 	{
-		return \CComponentEngine::MakePathFromTemplate(
-			Option::get('crm', 'path_to_order_payment_details'),
-			[
-				'payment_id' => $paymentId,
-			]
-		);
+		return Loader::includeModule('crm')
+			? Service\Sale\EntityLinkBuilder\EntityLinkBuilder::getInstance()->getPaymentDetailsLink($paymentId)
+			: '';
 	}
 
 	// region event handlers
@@ -469,7 +468,7 @@ class SaleManager extends Base
 		while ($item = $dbRes->fetch())
 		{
 			$item['PS_CLIENT_TYPE'] = $item['PS_CLIENT_TYPE'] ?: ClientType::DEFAULT;
-			
+
 			$result[$item['ID']] = $item;
 		}
 
@@ -757,21 +756,7 @@ class SaleManager extends Base
 			return false;
 		}
 
-		[$className] = Sale\PaySystem\Manager::includeHandler('adyen');
-
-		if (isset($paySystem['ACTION_FILE'])
-			&& $paySystem['ACTION_FILE'] === Sale\PaySystem\Manager::getFolderFromClassName($className)
-		)
-		{
-			if (isset($paySystem['PS_MODE'])
-				&& $paySystem['PS_MODE'] === $className::PAYMENT_METHOD_APPLE_PAY
-			)
-			{
-				return true;
-			}
-		}
-
-		return false;
+		return ApplePay::isApplePaySystem($paySystem);
 	}
 
 	public function isTelegramOrder(Crm\Order\Order $order): bool

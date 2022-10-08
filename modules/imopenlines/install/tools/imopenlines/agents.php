@@ -1,6 +1,6 @@
 <?php
 
-$_SERVER["DOCUMENT_ROOT"] = realpath(dirname(__FILE__)."/../../..");
+$_SERVER["DOCUMENT_ROOT"] = realpath(__DIR__."/../../..");
 $DOCUMENT_ROOT = $_SERVER["DOCUMENT_ROOT"];
 
 if (file_exists($_SERVER['DOCUMENT_ROOT'] . "/bitrix/modules/imopenlines/handlers/agents.php"))

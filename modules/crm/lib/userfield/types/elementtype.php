@@ -190,9 +190,13 @@ class ElementType extends StringType
 			\CCrmOwnerType::ContactName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Contact),
 			\CCrmOwnerType::CompanyName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company),
 			\CCrmOwnerType::DealName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Deal),
-			\CCrmOwnerType::OrderName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order),
 			\CCrmOwnerType::QuoteName => \CCrmOwnerType::GetDescription(\CCrmOwnerType::Quote),
 		];
+
+		if (\CCrmSaleHelper::isWithOrdersMode())
+		{
+			$entityTypes[\CCrmOwnerType::OrderName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderName);
+		}
 
 		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 		{
@@ -335,7 +339,7 @@ class ElementType extends StringType
 			$selectorOptions['addTabCrmDeals'] = 'Y';
 			$tabsCounter++;
 		}
-		if(in_array(\CCrmOwnerType::OrderName, $availableTypes, true))
+		if(in_array(\CCrmOwnerType::OrderName, $availableTypes, true) && \CCrmSaleHelper::isWithOrdersMode())
 		{
 			$selectorOptions['enableCrmOrders'] = 'Y';
 			$selectorOptions['addTabCrmOrders'] = 'Y';

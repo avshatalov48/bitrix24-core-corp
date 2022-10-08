@@ -21,8 +21,6 @@ if (!CModule::IncludeModule('crm'))
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
 $CrmPerms = CCrmPerms::GetCurrentUserPermissions();
-if ($CrmPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE))
-	return;
 
 $arParams['PATH_TO_COMPANY_LIST'] = CrmCheckPath('PATH_TO_COMPANY_LIST', $arParams['PATH_TO_COMPANY_LIST'], $APPLICATION->GetCurPage());
 $arParams['PATH_TO_COMPANY_DETAILS'] = CrmCheckPath('PATH_TO_COMPANY_DETAILS', $arParams['PATH_TO_COMPANY_DETAILS'], $APPLICATION->GetCurPage().'?company_id=#company_id#&details');
@@ -47,6 +45,15 @@ if($arParams['ELEMENT_ID'] > 0)
 else
 {
 	$arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+}
+
+if ($CrmPerms->HavePerm(
+	(new \Bitrix\Crm\Category\PermissionEntityTypeHelper(CCrmOwnerType::Company))
+		->getPermissionEntityTypeForCategory($arResult['CATEGORY_ID']),
+	BX_CRM_PERM_NONE)
+)
+{
+	return;
 }
 
 $arResult['MYCOMPANY_MODE'] = (isset($arParams['MYCOMPANY_MODE']) && $arParams['MYCOMPANY_MODE'] === 'Y') ? 'Y' : 'N';
@@ -216,7 +223,7 @@ if($arParams['TYPE'] === 'list')
 		'HINT' => GetMessage('CRM_COMPANY_ADD_HINT')
 	];
 
-	if (!$isMyCompanyMode && $bImport && !$isInSlider)
+	if (!$isMyCompanyMode && $bImport && !$isInSlider && $arResult['CATEGORY_ID'] === 0)
 	{
 		$importUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_IMPORT'], []);
 		if ($arResult['CATEGORY_ID'] > 0)
@@ -240,7 +247,10 @@ if($arParams['TYPE'] === 'list')
 
 	if ($bExport && !$isInSlider)
 	{
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
+		if (!empty($arResult['BUTTONS']))
+		{
+			$arResult['BUTTONS'][] = ['SEPARATOR' => true];
+		}
 
 		$entityType = \CCrmOwnerType::CompanyName;
 		$stExportId = 'EXPORT_'.$entityType;
@@ -337,9 +347,12 @@ if($arParams['TYPE'] === 'list')
 		unset($entityType, $stExportId, $randomSequence, $stExportManagerId);
 	}
 
-	if (!$isMyCompanyMode && $bDedupe && !$isInSlider)
+	if (!$isMyCompanyMode && $bDedupe && !$isInSlider && $arResult['CATEGORY_ID'] === 0)
 	{
-		$arResult['BUTTONS'][] = array('SEPARATOR' => true);
+		if (!empty($arResult['BUTTONS']))
+		{
+			$arResult['BUTTONS'][] = ['SEPARATOR' => true];
+		}
 
 		$restriction = \Bitrix\Crm\Restriction\RestrictionManager::getDuplicateControlRestriction();
 		if($restriction->hasPermission())
@@ -349,6 +362,11 @@ if($arParams['TYPE'] === 'list')
 					? $arParams['PATH_TO_COMPANY_DEDUPEWIZARD']
 					: $arParams['PATH_TO_COMPANY_DEDUPE']
 			);
+
+			if ($arResult['CATEGORY_ID'] > 0)
+			{
+				$dedupePath = CHTTP::urlAddParams($dedupePath, ['category_id' => $arResult['CATEGORY_ID']]);
+			}
 
 			$arResult['BUTTONS'][] = array(
 				'TEXT' => GetMessage('COMPANY_DEDUPE'),

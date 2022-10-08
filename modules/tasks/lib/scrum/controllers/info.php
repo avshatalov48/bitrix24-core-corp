@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Scrum\Controllers;
 use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Loader;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
+use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\ScrumLimit;
 use Bitrix\Tasks\Util\User;
 
 class Info extends Controller
@@ -45,6 +46,11 @@ class Info extends Controller
 	public function saveAnalyticsLabelAction()
 	{
 		return '';
+	}
+
+	public function checkScrumLimitAction(): bool
+	{
+		return ScrumLimit::isLimitExceeded();
 	}
 
 	public function saveScrumStartAction()

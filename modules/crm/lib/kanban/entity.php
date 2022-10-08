@@ -629,7 +629,7 @@ abstract class Entity
 		return 'STATUS_ID';
 	}
 
-	public function getCurrency(): string
+	public function getCurrency(): ?string
 	{
 		return \CCrmCurrency::GetAccountCurrencyID();
 	}
@@ -1730,6 +1730,11 @@ abstract class Entity
 					return null;
 				}
 			}
+			elseif($entityTypeName === \CCrmOwnerType::SmartDocumentName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.smartDocument');
+				$instance->setFactory(Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument));
+			}
 			else
 			{
 				$typeId = \CCrmOwnerType::ResolveID($entityTypeName);
@@ -1897,9 +1902,7 @@ abstract class Entity
 			}
 			if (in_array($this->displayedFields[$fieldId]->getType(), ['date', 'datetime']))
 			{
-				$this->displayedFields[$fieldId]->setDisplayParams([
-					'DATETIME_FORMAT' => $this->getDateFormat('full'),
-				]);
+				$this->displayedFields[$fieldId]->addDisplayParam('DATETIME_FORMAT', $this->getDateFormat('full'));
 			}
 			if ($fieldId === $this->getAssignedByFieldName())
 			{

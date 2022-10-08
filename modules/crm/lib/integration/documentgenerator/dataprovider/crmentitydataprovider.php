@@ -39,6 +39,8 @@ use Bitrix\Main\Type\DateTime;
 
 abstract class CrmEntityDataProvider extends EntityDataProvider implements Hashable, DocumentNumerable, Nameable
 {
+	public const QR_CODE_FIELD_NAME = 'PAYMENT_QR_CODE';
+
 	protected $multiFields;
 	protected $linkData;
 	protected $requisiteIds;
@@ -212,13 +214,10 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 			if($entryId > 0)
 			{
-				$saveData = array(
-					'COMMENT' => $text,
-					'ENTITY_TYPE_ID' => $entityTypeId,
-					'ENTITY_ID' => $entityId,
-					'DOCUMENT_ID' => $document->ID,
+				DocumentController::getInstance()->sendPullEventOnAdd(
+					new ItemIdentifier($entityTypeId, $entityId),
+					$entryId
 				);
-				DocumentController::getInstance()->addToStack($entryId, 'timeline_document_add', $saveData);
 			}
 		}
 	}
@@ -252,7 +251,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 
 			if ($this->isLightMode())
 			{
-				unset($fields['PAYMENT_QR_CODE']);
+				unset($fields[static::QR_CODE_FIELD_NAME]);
 			}
 
 			$this->fields = $fields;
@@ -319,7 +318,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 			'VALUE' => [$this, 'getBankDetailId'],
 			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_BANK_DETAIL_TITLE'),
 		];
-		$fields['PAYMENT_QR_CODE'] = [
+		$fields[static::QR_CODE_FIELD_NAME] = [
 			'TYPE' => static::FIELD_TYPE_IMAGE,
 			'VALUE' => [$this, 'getPaymentQrCode'],
 			'TITLE' => GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_PAYMENT_QR_CODE_TITLE'),
@@ -1264,7 +1263,7 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		return $this->paymentQrCodePath;
 	}
 
-	public function prepareTransactionData(): Barcode\Payment\TransactionData
+	public function getMyCompanyProvider(): ?Company
 	{
 		$dataProviderManager = DataProviderManager::getInstance();
 		$myCompany = $dataProviderManager->getDataProviderValue($this, 'MY_COMPANY');
@@ -1286,12 +1285,13 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 				}
 			}
 		}
-		$myCompanyRequisites = [];
-		$myCompanyBankDetail = [];
-		if ($myCompany instanceof Company)
-		{
-			[$myCompanyRequisites, $myCompanyBankDetail] = $this->extractRequisiteAndBankDetailDataFromProvider($myCompany, 'MY_COMPANY');
-		}
+
+		return $myCompany instanceof Company ? $myCompany : null;
+	}
+
+	public function prepareTransactionData(): Barcode\Payment\TransactionData
+	{
+		[$myCompanyRequisites, $myCompanyBankDetail] = $this->getMyCompanyRequisitesAndBankDetail();
 		$myCompanyTransactionPartyData = Barcode\Payment\DataAssembler::createTransactionPartyDataByRequisiteData(
 			$myCompanyRequisites,
 			$myCompanyBankDetail
@@ -1303,6 +1303,45 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		);
 
 		return new TransactionData($myCompanyTransactionPartyData, $clientTransactionPartyData);
+	}
+
+	/**
+	 * @internal May be refactored soon. Do not use it in your code. Is not covered by backwards compatibility
+	 *
+	 * @return array[] = [
+	 *     $requisites,
+	 *     $bankDetail
+	 * ];
+	 */
+	final public function getMyCompanyRequisitesAndBankDetail(): array
+	{
+		$myCompanyRequisites = [];
+		$myCompanyBankDetail = [];
+
+		$myCompany = $this->getMyCompanyProvider();
+		if ($myCompany)
+		{
+			[$myCompanyRequisites, $myCompanyBankDetail] = $this->extractRequisiteAndBankDetailDataFromProvider($myCompany, 'MY_COMPANY');
+		}
+
+		return [
+			$myCompanyRequisites,
+			$myCompanyBankDetail,
+		];
+	}
+
+	/**
+	 * @internal May be refactored soon. Do not use it in your code.
+	 * Is not covered by backwards compatibility
+	 *
+	 * @return array[] = [
+	 *     $requisites,
+	 *     $bankDetail
+	 * ];
+	 */
+	final public function getClientRequisitesAndBankDetail(): array
+	{
+		return $this->extractRequisiteAndBankDetailDataFromProvider($this);
 	}
 
 	protected function extractRequisiteAndBankDetailDataFromProvider(
@@ -1736,34 +1775,78 @@ abstract class CrmEntityDataProvider extends EntityDataProvider implements Hasha
 		$stampPlaceholders = [];
 		$data['changeStampsEnabled'] = false;
 		$template = $document->getTemplate();
-		if($template)
+		if ($template)
 		{
 			$stampPlaceholders = $this->getTemplateStampsFields($template);
 		}
-		if(!empty($stampPlaceholders))
+		$documentStampFields = $document->getFields($stampPlaceholders);
+		if (empty($stampPlaceholders))
 		{
-			$documentFields = $document->getFields($stampPlaceholders);
-			foreach($stampPlaceholders as $placeholder)
+			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE');
+		}
+		else
+		{
+			foreach ($stampPlaceholders as $placeholder)
 			{
-				if(isset($documentFields[$placeholder]['VALUE']) && !empty($documentFields[$placeholder]['VALUE']) && $documentFields[$placeholder]['VALUE'] != false)
+				if (
+					!empty($documentStampFields[$placeholder]['VALUE'])
+					&& $documentStampFields[$placeholder]['VALUE'] != false
+				)
 				{
 					$data['changeStampsEnabled'] = true;
 					break;
 				}
 			}
-			if(!$data['changeStampsEnabled'])
-			{
-				$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_EMPTY_FIELDS');
-				$data['myCompanyEditUrl'] = $this->getMyCompanyEditUrl();
-				if($data['myCompanyEditUrl'])
-				{
-					$data['changeStampsDisabledReason'] .= '<br />'.GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_EDIT_MY_COMPANY', ['#URL#' => $data['myCompanyEditUrl']]);
-				}
-			}
+		}
+		$templateFields = $template->getFields();
+		$qrPlaceholder = 'PaymentQrCode';
+		$data['changeQrCodeEnabled'] = false;
+		$data['qrCodeEnabled'] = false;
+		$documentQrCodeFields = $document->getFields([$qrPlaceholder]);
+		if (!isset($templateFields[$qrPlaceholder]))
+		{
+			$data['changeQrCodeDisabledReason'] = 'No qr code in template';
 		}
 		else
 		{
-			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_NO_TEMPLATE');
+			if (empty($this->getPaymentQrCode()))
+			{
+				$data['changeQrCodeDisabledReason'] = 'Not enough data for qr';
+			}
+			else
+			{
+				$data['changeQrCodeEnabled'] = true;
+				$data['qrCodeEnabled'] = (
+					!empty($documentQrCodeFields[$qrPlaceholder]['VALUE'])
+					&& $documentQrCodeFields[$qrPlaceholder]['VALUE'] != false
+				);
+			}
+		}
+		if (!$data['changeStampsEnabled'])
+		{
+			$data['changeStampsDisabledReason'] = GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_STAMPS_DISABLED_EMPTY_FIELDS');
+			$data['myCompanyEditUrl'] = $this->getMyCompanyEditUrl();
+			if($data['myCompanyEditUrl'])
+			{
+				$data['changeStampsDisabledReason'] .= '<br />'.GetMessage('CRM_DOCGEN_CRMENTITYDATAPROVIDER_EDIT_MY_COMPANY', ['#URL#' => $data['myCompanyEditUrl']]);
+			}
+		}
+
+		$products = [];
+
+		$currencyId = $this->getRawValue('CURRENCY_ID');
+		$products['currencyId'] = is_string($currencyId) ? $currencyId : null;
+
+		$totalSum = $this->getRawValue('TOTAL_SUM');
+		$products['totalSum'] = is_numeric($totalSum) ? $totalSum : null;
+
+		$totalRows = $this->getRawValue('TOTAL_ROWS');
+		$products['totalRows'] = is_numeric($totalRows) ? $totalRows : null;
+
+		$productsWithNotNullValues = array_filter($products, fn($value) => !is_null($value));
+		if (!empty($productsWithNotNullValues))
+		{
+			$data['products'] = $products;
 		}
 
 		return $data;

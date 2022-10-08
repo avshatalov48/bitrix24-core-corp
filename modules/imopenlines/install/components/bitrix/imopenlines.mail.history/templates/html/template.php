@@ -8,6 +8,8 @@ use Bitrix\Main\Localization\Loc;
 
 $mess = Loc::loadLanguageFile(__FILE__, $arResult['LANGUAGE_ID']);
 
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+
 if (!empty($arResult['ERROR']))
 {
 	ShowError($mess['IMOL_HTML_FORMAT_ERROR']);
@@ -16,7 +18,7 @@ if (!empty($arResult['ERROR']))
 ?>
 <body style="margin: 0;padding: 0;display: flex;flex-direction: column;height: 100%;">
 	<div style="height: 71px;background: #17A3EA;text-align: center;margin-bottom: 28px;">
-		<div style="padding-top: 15px;font: 15px/20px 'OpenSans-Semibold', 'Helvetica Neue', Helvetica, Arial, sans-serif;color: #fff">
+		<div style="padding-top: 15px;font: 15px/20px var(--ui-font-family-secondary, var(--ui-font-family-open-sans)); font-weight: var(--ui-font-weight-semi-bold, 600); color: #fff">
 			<?=htmlspecialcharsbx($arResult['TEMPLATE_WIDGET_TITLE'])?>
 		</div>
 		<a

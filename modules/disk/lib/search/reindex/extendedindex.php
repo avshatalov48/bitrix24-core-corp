@@ -9,6 +9,7 @@ use Bitrix\Disk\File;
 use Bitrix\Disk\Folder;
 use Bitrix\Disk\Internals\Index\ObjectExtendedIndexTable;
 use Bitrix\Disk\Internals\ObjectTable;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
 class ExtendedIndex extends Stepper
 {
@@ -77,15 +78,24 @@ class ExtendedIndex extends Stepper
 
 	protected function processStep($lastId)
 	{
-		$objectRows = ObjectTable::getList([
+		$indexStatus = ObjectExtendedIndexTable::STATUS_EXTENDED;
+		$parameters = [
 			'select' => ['*'],
 			'filter' => [
 				'>ID' => $lastId,
+				'WITHOUT_FULLTEXT' => true,
 			],
 			'order' => ['ID' => 'ASC'],
 			'offset' => 0,
 			'limit' => $this->getPortionSize(),
-		]);
+			'runtime' => [
+				new ExpressionField('WITHOUT_FULLTEXT',
+					"CASE WHEN NOT EXISTS(SELECT 'x' FROM b_disk_object_extended_index WHERE OBJECT_ID = %1\$s AND STATUS = {$indexStatus}) THEN 1 ELSE 0 END",
+					['ID']),
+			]
+		];
+
+		$objectRows = ObjectTable::getList($parameters);
 
 		$indexManager = Driver::getInstance()->getIndexManager();
 		$indexManager

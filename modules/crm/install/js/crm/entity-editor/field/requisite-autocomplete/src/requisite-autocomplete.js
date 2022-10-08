@@ -15,13 +15,15 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 	{
 		let params = this._schemeElement.getData();
 		let enabled = BX.prop.getBoolean(params, "enabled", false);
+
 		this._autocomplete = RequisiteAutocompleteField.create(this.getName(), {
 			placeholderText: BX.prop.getString(params, "placeholder", ""),
 			enabled: enabled,
 			featureRestrictionCallback: BX.prop.getString(params, "featureRestrictionCallback", ''),
 			searchAction: 'crm.requisite.entity.search',
 			feedbackFormParams: BX.prop.getObject(params, "feedback_form", {}),
-			showFeedbackLink: !enabled
+			showFeedbackLink: !enabled,
+			clientResolverPlacementParams: BX.prop.getObject(params, "clientResolverPlacementParams", null)
 		});
 		this._autocomplete.subscribe('onSelectValue', this.onSelectAutocompleteValue.bind(this));
 		this._autocomplete.subscribe('onClear', this.onClearAutocompleteValue.bind(this));

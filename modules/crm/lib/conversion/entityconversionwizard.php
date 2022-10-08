@@ -179,7 +179,11 @@ class EntityConversionWizard
 
 	public function save()
 	{
-		$session = Main\Application::getInstance()->getSession();
+		$session = self::getSession();
+		if (!$session)
+		{
+			return;
+		}
 
 		$storageName = static::getSessionStorageName($this->getEntityTypeID());
 
@@ -195,6 +199,24 @@ class EntityConversionWizard
 		$wizards[$this->getEntityID()] = $this->externalize();
 
 		$session->set($storageName, $wizards);
+	}
+
+	private static function getSession(): ?Main\Session\SessionInterface
+	{
+		$session = Main\Application::getInstance()->getSession();
+
+		//todo rewrite using $session->isAccessible() (dependency on main 22.200.0) or use SessionLocalStorage instead of session
+		try
+		{
+			$session->start();
+		}
+		catch (\Throwable $throwable)
+		{
+			//session is not accessible in this context
+			return null;
+		}
+
+		return $session->isStarted() ? $session : null;
 	}
 
 	/**
@@ -225,7 +247,11 @@ class EntityConversionWizard
 
 	public static function loadByIdentifier(ItemIdentifier $source): ?self
 	{
-		$session = Main\Application::getInstance()->getSession();
+		$session = self::getSession();
+		if (!$session)
+		{
+			return null;
+		}
 
 		$storageName = static::getSessionStorageName($source->getEntityTypeId());
 
@@ -241,7 +267,11 @@ class EntityConversionWizard
 
 	public static function removeByIdentifier(ItemIdentifier $source): void
 	{
-		$session = Main\Application::getInstance()->getSession();
+		$session = self::getSession();
+		if (!$session)
+		{
+			return;
+		}
 
 		$storageName = static::getSessionStorageName($source->getEntityTypeId());
 

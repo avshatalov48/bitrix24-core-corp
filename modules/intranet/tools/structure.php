@@ -185,7 +185,7 @@ else
 		<table width="100%" cellpadding="5">
 			<tr valign="bottom">
 				<td>
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="NAME"><?echo GetMessage("INTR_STRUCTURE_NAME")?></label></div>
+					<div style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px"><label for="NAME"><?echo GetMessage("INTR_STRUCTURE_NAME")?></label></div>
 					<div class="ui-ctl ui-ctl-textbox ui-ctl-sm">
 						<input type="text"
 							class="ui-ctl-element"
@@ -196,7 +196,7 @@ else
 			<?if (!(isset($arParams["UF_DEPARTMENT_ID"]) && empty($arSection["IBLOCK_SECTION_ID"])))://for top department no parent department?>
 			<tr valign="bottom">
 				<td>
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="IBLOCK_SECTION_ID"><?echo GetMessage("INTR_STRUCTURE_DEPARTMENT")?></label></div>
+					<div style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px"><label for="IBLOCK_SECTION_ID"><?echo GetMessage("INTR_STRUCTURE_DEPARTMENT")?></label></div>
 
 					<div class="ui-ctl ui-ctl-after-icon ui-ctl-dropdown ui-ctl-sm">
 						<div class="ui-ctl-after ui-ctl-icon-angle"></div>
@@ -225,7 +225,7 @@ else
 			<?endif;?>
 			<tr valign="bottom">
 				<td colspan="2">
-					<div style="font-size:14px;font-weight:bold;padding-bottom:8px"><label for="UF_HEAD"><?echo GetMessage("INTR_STRUCTURE_HEAD")?></label></div>
+					<div style="font-size:14px;font-weight: var(--ui-font-weight-bold);padding-bottom:8px"><label for="UF_HEAD"><?echo GetMessage("INTR_STRUCTURE_HEAD")?></label></div>
 					<?
 					$UF_HeadName = "";
 					if (isset($_POST['UF_HEAD']))

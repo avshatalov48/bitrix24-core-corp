@@ -29,6 +29,16 @@ abstract class Category implements \JsonSerializable
 
 	abstract public function delete(): Result;
 
+	public function getIsSystem(): bool
+	{
+		return false;
+	}
+
+	public function getCode(): string
+	{
+		return '';
+	}
+
 	public function getData(): array
 	{
 		return [

@@ -1,6 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Integrity;
+
 use Bitrix\Main;
+use CCrmOwnerType;
 
 class DedupeParams
 {
@@ -14,8 +17,15 @@ class DedupeParams
 	protected $limitByDirtyIndexItems = false;
 	protected $checkChangedOnly = false;
 
+	/**
+	 * Entity category ID. Currently, use system category with ID = 0 only.
+	 *
+	 * @var int
+	 */
+	private int $categoryId = 0;
+
 	public function __construct($entityTypeID, $userID, $enablePermissionCheck = false,
-								$scope = DuplicateIndexType::DEFAULT_SCOPE)
+		$scope = DuplicateIndexType::DEFAULT_SCOPE)
 	{
 		$this->setEntityTypeID($entityTypeID);
 		$this->setUserID($userID);
@@ -125,5 +135,15 @@ class DedupeParams
 	public function isCheckChangedOnly(): bool
 	{
 		return $this->checkChangedOnly;
+	}
+
+	public function getCategoryId(): ?int
+	{
+		if (in_array($this->entityTypeID, [CCrmOwnerType::Contact, CCrmOwnerType::Company], true))
+		{
+			return $this->categoryId;
+		}
+
+		return null;
 	}
 }

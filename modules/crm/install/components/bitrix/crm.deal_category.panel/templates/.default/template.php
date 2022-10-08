@@ -11,6 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 $guid = $arResult['GUID'];
 $containerID = "{$guid}_container";
+
+\Bitrix\Main\UI\Extension::load(['ui.design-tokens']);
 ?>
 <!-- Use class name "crm-deal-panel" if empty -->
 <div class="crm-deal-panel-array-have" id="<?=htmlspecialcharsbx($containerID)?>">

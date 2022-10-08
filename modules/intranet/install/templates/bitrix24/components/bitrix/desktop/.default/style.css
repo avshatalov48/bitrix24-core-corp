@@ -8,7 +8,7 @@ table.data-table-gadget {width: 100%; background-color:white; margin-bottom:10px
 .gdparent { position: relative; }
 .gdcorn {position:absolute; left: -1px; top: -1px; width: 4px; height: 4px; background-image:url(images/gadget.gif); overflow: hidden;}
 .gdbcorn {position:absolute; left: -1px; top: -3px; width: 4px; height: 4px; background-image:url(images/gadget.gif); background-position: 0 -4px; overflow: hidden;}
-.gdheader { padding: 0 0 8px 0; margin: 1px; font-family: Arial,Helvetica,sans-serif; font-size: 18px; font-weight: normal; color:#222; background:#fff; zoom:1; overflow: hidden; }
+.gdheader { padding: 0 0 8px 0; margin: 1px; font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); font-size: 18px; font-weight: normal; color:#222; background:#fff; zoom:1; overflow: hidden; }
 #sidebar .gdheader { background:transparent; }
 .ghheader-underline { height:2px; background: #d5d5d5 url(images/header-underline.png) no-repeat right 0; border-left:1px solid #e3e3e3;}
 
@@ -23,14 +23,14 @@ table.gadgetholder-mainpage td.gd-page-column2 .ghheader-underline, table.gadget
 .gdheader-hover .gdheader-actions { display:inline-block; }
 .gdheader-title {  margin-right: 70px;}
 
-a.gdremove, a.gdsettings, a.gdhide, a.gdshow, a.gdshow:hover, a.gdremove:hover, a.gdsettings:hover, a.gdhide:hover 
+a.gdremove, a.gdsettings, a.gdhide, a.gdshow, a.gdshow:hover, a.gdremove:hover, a.gdsettings:hover, a.gdhide:hover
 {
-	display:inline-block; 
+	display:inline-block;
 	height:19px;
-	width:19px; 
-	margin-left:1px; 
-	margin-top:0; 
-	overflow:hidden; 
+	width:19px;
+	margin-left:1px;
+	margin-top:0;
+	overflow:hidden;
 	background-image:url(images/gadget.gif);
 	vertical-align:top;
 }

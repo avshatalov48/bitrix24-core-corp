@@ -58,7 +58,8 @@
 .crm-form-embed__link.--with-arrow {
 	position: relative;
 	margin-right: 26px;
-	font: 18px 'OpenSans-Regular', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+	font: 18px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 }
 
 .crm-form-embed__link.--with-arrow::before {
@@ -99,7 +100,8 @@
 }
 
 .crm-form-embed__qr-block--info-name {
-	font: 19px  'OpenSans-SemiBold', 'Helvetica Neue', Helvetica, Arial, sans-serif;;
+	font: 19px  var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	color: var(--crm-form-embed__gray);
 	margin-bottom: 16px;
 }
@@ -299,7 +301,7 @@
 	word-break: break-word;
 	white-space: break-spaces;
 	margin: 9px 5px 16px;
-	font: 15px/26px 'HelveticaNeue', Helvetica, Arial, sans-serif;
+	font: 15px/26px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-form-embed__code {
@@ -346,7 +348,8 @@
 }
 
 .crm-form-embed__subtitle {
-	font: 16px 'OpenSans-Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--crm-form-embed__gray-4);
 	margin-bottom: 15px;
 }
@@ -456,7 +459,8 @@
 }
 
 .crm-form-embed__settings--option-font.--modern {
-	font: 14px "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font: 14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	color: var(--crm-form-embed__gray);
 }
 
@@ -497,7 +501,8 @@
 }
 
 .crm-form-embed__settings--option-layout-text {
-	font: 12px/16px "OpenSans-Semibold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 12px/16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-semi-bold, 600);
 	text-align: center;
 	color: var(--crm-form-embed__gray-4);
 	transition: .2s;
@@ -560,7 +565,8 @@
 }
 
 .crm-form-embed__settings--option-title {
-	font: 16px/22px 'OpenSans-Regular', Helvetca, Arial, sans-sarif;
+	font: 16px/22px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--crm-form-embed__gray);
 	margin-bottom: 15px;
 }
@@ -696,7 +702,8 @@
 }
 
 .crm-form-embed__scope .crm-form-embed__label-text-color {
-	font: 16px 'OpenSans-Regular', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+	font: 16px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: var(--crm-form-embed__gray-4);
 }
 

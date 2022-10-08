@@ -9,6 +9,9 @@ $UID = $arResult['UID'];
 $prefix = htmlspecialcharsbx($UID).'_';
 $activityEditorID = $arResult['ACTIVITY_EDITOR_UID'];
 
+$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings');
+
 if($arResult['ENABLE_ACTIVITY_ADD'] || $arResult['SHOW_ACTIVITIES']):
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.activity.editor',

@@ -234,6 +234,21 @@ abstract class Base
 	}
 
 	/**
+	 * Set tag attribute.
+	 *
+	 * @return $this
+	 */
+	public function setTagAttribute(string $key, $value): self
+	{
+		if ($key != '')
+		{
+			$this->tagAttributes[$key] = $value;
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Get embedded script.
 	 *
 	 * @return string

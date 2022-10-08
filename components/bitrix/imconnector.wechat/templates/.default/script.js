@@ -43,5 +43,14 @@
 			{tag: 'form'},
 			addPreloader
 		);
+		BX.bindDelegate(
+			document.body,
+			'click',
+			{props: {id:'imconnector-wechat-link-help'}},
+			() => {
+				top.BX.Helper.show('redirect=detail&code=10112784');
+				return false;
+			}
+		);
 	});
 })(window);

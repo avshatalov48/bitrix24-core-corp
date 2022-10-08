@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Model;
 
 use Bitrix\Crm\Category\Entity\ItemCategory;
@@ -53,6 +54,12 @@ class ItemCategoryTable extends DataManager
 			(new BooleanField('IS_DEFAULT'))
 				->configureStorageValues('N', 'Y')
 				->configureDefaultValue('N'),
+			(new BooleanField('IS_SYSTEM'))
+				->configureStorageValues('N', 'Y')
+				->configureDefaultValue('N'),
+			(new StringField('CODE'))
+				->configureSize(255)
+				->configureDefaultValue(''),
 			(new DatetimeField('CREATED_DATE'))
 				->configureRequired()
 				->configureDefaultValue(static function() {
@@ -94,10 +101,25 @@ class ItemCategoryTable extends DataManager
 		return $result;
 	}
 
+	public static function onBeforeAdd(Event $event): EventResult
+	{
+		$result = new EventResult();
+
+		$fields = $event->getParameter('fields');
+		if ($fields['IS_SYSTEM'])
+		{
+			$result->addError(new EntityError(Loc::getMessage('CRM_TYPE_CATEGORY_ADD_ERROR_SYSTEM')));
+		}
+
+		return $result;
+	}
+
 	public static function onBeforeUpdate(Event $event): EventResult
 	{
 		$object = $event->getParameter('object');
 		$object->reset('ENTITY_TYPE_ID');
+		$object->reset('IS_SYSTEM');
+		$object->reset('CODE');
 
 		return new EventResult();
 	}
@@ -133,10 +155,15 @@ class ItemCategoryTable extends DataManager
 		{
 			$result->addError(new EntityError(Loc::getMessage('CRM_CATEGORY_TABLE_DELETE_ERROR_DEFAULT')));
 		}
+		elseif ($category->getIsSystem())
+		{
+			$result->addError(new EntityError(Loc::getMessage('CRM_TYPE_CATEGORY_DELETE_ERROR_SYSTEM')));
+		}
 		elseif ($factory->getItemsCount($category->getItemsFilter()) > 0)
 		{
 			$result->addError(new EntityError(Loc::getMessage('CRM_CATEGORY_TABLE_DELETE_ERROR_ITEMS')));
 		}
+
 		if (!$result->getErrors() && $factory->isStagesSupported())
 		{
 			$stages = $factory->getStages($category->getId());

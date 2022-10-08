@@ -33,6 +33,10 @@ export default {
 			{
 				BX.Salescenter.Manager.openHowToSell(e);
 			},
+			onProductFormModeChange(event)
+			{
+				this.$emit('on-product-form-mode-change');
+			}
 		},
 	computed:
 		{
@@ -56,7 +60,9 @@ export default {
 			<template v-slot:block-container>
 				<div :class="containerClassMixin">
 					<div class="salescenter-app-payment-by-sms-item-container-payment">
-						<product/>
+						<product
+						@on-product-form-mode-change="onProductFormModeChange"
+						/>
 					</div>
 				</div>
 			</template>
