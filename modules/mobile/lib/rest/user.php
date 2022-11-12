@@ -337,7 +337,6 @@ class User extends \IRestService
 		$data['EMPLOYEES'] = [];
 		$deps = self::departmentGet($departmentIDs);
 		$heads = array_values(CIntranetUtils::GetDepartmentManager($departmentIDs, $userId, true));
-		$employees = CIntranetUtils::getSubordinateEmployees($userId);
 		$data['DEPARTMENTS'] = implode(', ', $deps);
 		$data['HEAD'] = CUser::FormatName(CSite::GetNameFormat(false), $heads[0]);
 		$photoData = self::getUserPhoto($heads[0]['PERSONAL_PHOTO'], $photoSize);
@@ -347,26 +346,32 @@ class User extends \IRestService
 			'position' => $heads[0]['WORK_POSITION'],
 		];
 		$data['HEAD_DATA'] = array_merge($headData, $photoData);
-		$data['EMPLOYEES_LIST'] = [];
-		while ($employee = $employees->fetch())
+		$data['EMPLOYEES_LIST'] = "";
+
+		if (\CExtranet::isIntranetUser() === true)
 		{
-			if($userId == $employee['ID'])
-				continue;
+			$employees = CIntranetUtils::getSubordinateEmployees($userId);
+			$employeeList = [];
+			while ($employee = $employees->fetch())
+			{
+				if($userId == $employee['ID'])
+					continue;
 
-			$photos = self::getUserPhoto($employee['PERSONAL_PHOTO'], $photoSize);
-			$employeeData = [
-				'name' => CUser::FormatName(CSite::GetNameFormat(false), $employee),
-				'userId' => $employee['ID'],
-				'imageUrl' => $photos['PERSONAL_PHOTO'],
+				$photos = self::getUserPhoto($employee['PERSONAL_PHOTO'], $photoSize);
+				$employeeData = [
+					'name' => CUser::FormatName(CSite::GetNameFormat(false), $employee),
+					'userId' => $employee['ID'],
+					'imageUrl' => $photos['PERSONAL_PHOTO'],
 
-			];
+				];
 
-			$data['EMPLOYEES'][] = $employeeData;
-			$data['EMPLOYEES_LIST'][] = $employeeData['name'];
+				$data['EMPLOYEES'][] = $employeeData;
+				$employeeList[] = $employeeData['name'];
+			}
+
+			if(!empty($employeeList))
+				$data['EMPLOYEES_LIST'] = implode(', ', $employeeList);
 		}
-
-		if(count($data['EMPLOYEES_LIST']) > 0)
-			$data['EMPLOYEES_LIST'] = implode(', ', $data['EMPLOYEES_LIST']);
 
 		return $data;
 	}

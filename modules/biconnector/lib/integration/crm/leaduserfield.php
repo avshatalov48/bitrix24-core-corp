@@ -14,7 +14,7 @@ class LeadUserField
 	 *
 	 * @return void
 	 */
-	function onBIConnectorDataSources(\Bitrix\Main\Event $event)
+	public static function onBIConnectorDataSources(\Bitrix\Main\Event $event)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
 		{
@@ -50,6 +50,24 @@ class LeadUserField
 				'DATE_MODIFY' => [
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'L.DATE_MODIFY',
+					'FIELD_TYPE' => 'datetime',
+					'TABLE_ALIAS' => 'L',
+					'JOIN' => 'INNER JOIN b_crm_lead L ON L.ID = LUF.VALUE_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_lead L ON L.ID = LUF.VALUE_ID',
+				],
+				//b_crm_lead.DATE_CREATE DATETIME NULL,
+				'DATE_CREATE' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'L.DATE_CREATE',
+					'FIELD_TYPE' => 'datetime',
+					'TABLE_ALIAS' => 'L',
+					'JOIN' => 'INNER JOIN b_crm_lead L ON L.ID = LUF.VALUE_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_lead L ON L.ID = LUF.VALUE_ID',
+				],
+				//b_crm_lead.DATE_CLOSED DATETIME NULL,
+				'DATE_CLOSED' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'L.DATE_CLOSED',
 					'FIELD_TYPE' => 'datetime',
 					'TABLE_ALIAS' => 'L',
 					'JOIN' => 'INNER JOIN b_crm_lead L ON L.ID = LUF.VALUE_ID',

@@ -779,32 +779,15 @@ else
 			}
 
 			//Region automation
-			if (class_exists('\Bitrix\Crm\Automation\Factory'))
+			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
+			$starter->setContextToMobile()->setUserIdFromCurrent();
+			if (!$isEditMode)
 			{
-				if (class_exists('\Bitrix\Crm\Automation\Starter'))
-				{
-					$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
-					$starter->setContextToMobile()->setUserIdFromCurrent();
-					if (!$isEditMode)
-					{
-						$starter->runOnAdd();
-					}
-					else
-					{
-						$starter->runOnUpdate($arFields, $arSrcElement);
-					}
-				}
-				else
-				{
-					if (!$isEditMode)
-					{
-						\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
-					}
-					elseif (isset($arFields['STAGE_ID']) && $arSrcElement['STAGE_ID'] != $arFields['STAGE_ID'])
-					{
-						\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Deal, $arResult['ELEMENT']['ID']);
-					}
-				}
+				$starter->runOnAdd();
+			}
+			else
+			{
+				$starter->runOnUpdate($arFields, $arSrcElement);
 			}
 			//end automation
 

@@ -28,7 +28,7 @@ export class Selector
 					id: "department",
 					options: {
 						selectMode: "departmentsOnly",
-						allowOnlyUserDepartments: true,
+						allowOnlyUserDepartments: !(!!this.options["isAdmin"] && this.options["isAdmin"] === true),
 						allowSelectRootDepartment: true,
 					}
 				});

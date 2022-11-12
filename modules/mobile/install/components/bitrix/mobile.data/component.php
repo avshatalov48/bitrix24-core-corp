@@ -16,7 +16,7 @@ Bitrix\Main\Loader::includeModule("mobileapp");
 Bitrix\Main\Loader::includeModule("mobile");
 Bitrix\MobileApp\Mobile::getInstance();
 
-include_once(dirname(__FILE__) . "/functions.php");
+include_once(__DIR__ . "/functions.php");
 
 defineApiVersion();
 

@@ -4,17 +4,21 @@ define("STOP_STATISTICS", true);
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
 if(!$USER->IsAuthorized())
+{
 	$APPLICATION->AuthForm(GetMessage("ACCESS_DENIED"));
+}
 
 if (!CModule::IncludeModule('meeting'))
+{
 	return;
+}
 
 if (isset($_REQUEST['fileId']))
 {
-	$fileId = intval($_REQUEST['fileId']);
-	$meetingId = intval($_REQUEST['meetingId']);
-	$itemId = intval($_REQUEST['itemId']);
-	$reportId = intval($_REQUEST['reportId']);
+	$fileId = (int)$_REQUEST['fileId'];
+	$meetingId = (int)$_REQUEST['meetingId'];
+	$itemId = (int)$_REQUEST['itemId'];
+	$reportId = (int)$_REQUEST['reportId'];
 
 	$checkedFileId = 0;
 
@@ -23,16 +27,13 @@ if (isset($_REQUEST['fileId']))
 		if ($reportId > 0)
 		{
 			$dbRes = CMeetingReports::GetList(array('ID' => 'DESC'), array('ID' => $reportId), false, false, array('MEETING_ID'));
-			if($arReport = $dbRes->Fetch())
+			if(($arReport = $dbRes->Fetch()) && CMeeting::GetUserRole($arReport['MEETING_ID']))
 			{
-				if (CMeeting::GetUserRole($arReport['MEETING_ID']))
+				$dbRes = CMeetingReports::GetFiles($reportId, $fileId);
+				$arRes = $dbRes->Fetch();
+				if ($arRes)
 				{
-					$dbRes = CMeetingReports::GetFiles($reportId, $fileId);
-					$arRes = $dbRes->Fetch();
-					if ($arRes)
-					{
-						$checkedFileId = $arRes['FILE_ID'];
-					}
+					$checkedFileId = $arRes['FILE_ID'];
 				}
 			}
 		}
@@ -86,14 +87,14 @@ if (isset($_REQUEST['fileId']))
 	die();
 }
 
-$MEETING_ID = intval($_REQUEST['MEETING_ID']);
+$MEETING_ID = (int)$_REQUEST['MEETING_ID'];
 
 if ($MEETING_ID > 0)
 {
 	$ACCESS = CMeeting::GetUserRole($MEETING_ID);
 	if ($ACCESS)
 	{
-		if ($ACCESS == CMeeting::ROLE_OWNER || $ACCESS == CMeeting::ROLE_KEEPER)
+		if ($ACCESS === CMeeting::ROLE_OWNER || $ACCESS === CMeeting::ROLE_KEEPER)
 		{
 			$new_state = $_REQUEST['STATE'];
 			if ($new_state && check_bitrix_sessid())
@@ -105,10 +106,10 @@ if ($MEETING_ID > 0)
 				switch ($new_state)
 				{
 					case CMeeting::STATE_ACTION:
-						$arFields['DATE_START'] = ConvertTimeStamp(false, 'FULL');
+						$arFields['DATE_START'] = ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL');
 					break;
 					case CMeeting::STATE_CLOSED:
-						$arFields['DATE_FINISH'] = ConvertTimeStamp(false, 'FULL');
+						$arFields['DATE_FINISH'] = ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL');
 					break;
 // TODO we lose original DATE_START here; fix it later during calendar integration
 					case CMeeting::STATE_PREPARE:
@@ -129,7 +130,7 @@ if ($MEETING_ID > 0)
 				$arMeeting['USERS'] =  CMeeting::GetUsers($MEETING_ID);
 				foreach($arMeeting['USERS'] as $userId=>$userRole)
 				{
-					if($userRole == CMeeting::ROLE_OWNER)
+					if($userRole === CMeeting::ROLE_OWNER)
 					{
 						$ownerId = $userId;
 					}
@@ -152,7 +153,7 @@ elseif(isset($_REQUEST['PLACE_ID']))
 	$arPlace = CMeeting::CheckPlace($_REQUEST['PLACE_ID']);
 	if(is_array($arPlace) && $arPlace['ROOM_IBLOCK'] > 0 && $arPlace['ROOM_ID'] > 0)
 	{
-		$eventId = intval($_REQUEST['EVENT_ID']);
+		$eventId = (int)$_REQUEST['EVENT_ID'];
 
 		$eventStart = CMeeting::MakeDateTime($_REQUEST['DATE_START_DATE'], $_REQUEST['DATE_START_TIME']);
 		$eventFinish = CMeeting::MakeDateTime($_REQUEST['DATE_START_DATE'], $_REQUEST['DATE_START_TIME'], $_REQUEST['DURATION']);
@@ -198,7 +199,7 @@ elseif(isset($_REQUEST['PLACE_ID']))
 
 			for ($i = 0, $l = count($arPeriodicElements); $i < $l; $i++)
 			{
-				if (!$reservationId || $arPeriodicElements[$i]['ID'] != $reservationId)
+				if (!$reservationId || (int)$arPeriodicElements[$i]['ID'] !== (int)$reservationId)
 				{
 					$bReserved = true;
 					break;

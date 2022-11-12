@@ -51,7 +51,7 @@ class Common
 	/**
 	 * @return string
 	 */
-	public static function getPublicFolder():string
+	public static function getPublicFolder(): string
 	{
 		return
 			self::GetPortalType() === self::TYPE_BITRIX24
@@ -63,7 +63,15 @@ class Common
 	/**
 	 * @return string
 	 */
-	public static function getContactCenterPublicFolder():string
+	public static function getDialogListUrl(): string
+	{
+		return self::getPublicFolder(). 'list/';
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function getContactCenterPublicFolder(): string
 	{
 		return
 			self::GetPortalType() === self::TYPE_BITRIX24

@@ -2,7 +2,7 @@
 if (!IsModuleInstalled("bitrix24") || !$USER->CanDoOperation('bitrix24_invite'))
 	die();
 
-include(dirname(__FILE__)."/functions.php");
+include(__DIR__."/functions.php");
 
 $arResult["ERRORS"] = "";
 

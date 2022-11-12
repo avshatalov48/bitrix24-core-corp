@@ -9,16 +9,22 @@ $arParams['MEETING_ADD_URL'] = $arParams['MEETING_ADD_URL'] ? $arParams['MEETING
 $arParams['MEETING_EDIT_URL'] = $arParams['MEETING_EDIT_URL'] ? $arParams['MEETING_EDIT_URL'] : 'meeting.php?MEETING_ID=#MEETING_ID#&edit=Y';
 $arParams['MEETING_COPY_URL'] = $arParams['MEETING_COPY_URL'] ? $arParams['MEETING_COPY_URL'] : 'meeting.php?MEETING_ID=#MEETING_ID#&COPY=Y';
 
-$arParams['MEETINGS_COUNT'] = intval($arParams['MEETINGS_COUNT']);
+$arParams['MEETINGS_COUNT'] = (int)$arParams['MEETINGS_COUNT'];
 if ($arParams['MEETINGS_COUNT'] <= 0)
+{
 	$arParams['MEETINGS_COUNT'] = 20;
+}
 
-if ($arParams["NAME_TEMPLATE"] == '')
+if (!$arParams["NAME_TEMPLATE"])
+{
 	$arParams["NAME_TEMPLATE"] = CSite::GetNameFormat();
+}
 
 $arParams['PAGER_TITLE'] = trim($arParams['PAGER_TITLE']);
-if ($arParams['PAGER_TITLE'] == '')
+if (!$arParams['PAGER_TITLE'])
+{
 	$arParams['PAGER_TITLE'] = GetMessage('ML_PAGER_TITLE');
+}
 
 $arResult['MEETINGS'] = array();
 $arResult['USERS'] = array();
@@ -33,7 +39,7 @@ $arNavParams = array(
 	"bShowAll" => false
 );
 
-$arSubIDs = array($USER->GetID());
+$arSubIDs = [$USER->GetID()];
 $dbUsers = CIntranetUtils::GetSubordinateEmployees($arParams['USER_ID'], true, 'Y', array('ID'));
 while ($arUser = $dbUsers->Fetch())
 {
@@ -42,8 +48,8 @@ while ($arUser = $dbUsers->Fetch())
 
 $arResult['IS_HEAD'] = count($arSubIDs) > 0;
 
-$arFilter = array("USER_ID" => $arParams['USER_ID']);
-$arResult['FILTER'] = array('MY' => true);
+$arFilter = ["USER_ID" => $arParams['USER_ID']];
+$arResult['FILTER'] = ['MY' => true];
 
 if ($_REQUEST['FILTER'])
 {
@@ -51,7 +57,8 @@ if ($_REQUEST['FILTER'])
 
 	if ($arResult['IS_HEAD'] && !isset($arFilterValues['MY']))
 	{
-		$arResult['FILTER'] = array(); $arFilter['USER_ID'] = $arSubIDs;
+		$arResult['FILTER'] = [];
+		$arFilter['USER_ID'] = [];
 	}
 
 	if (isset($arFilterValues['TITLE']) && trim($arFilterValues['TITLE']))
@@ -87,8 +94,17 @@ if ($_REQUEST['FILTER'])
 	}
 }
 
-$arResult['MEETING_ROOMS_LIST'] = array();
-if ($arParams['RESERVE_MEETING_IBLOCK_ID'] || $arParams['RESERVE_VMEETING_IBLOCK_ID'])
+$arResult['MEETING_ROOMS_LIST'] = [];
+
+if (CMeeting::IsNewCalendar())
+{
+	$roomsList = Bitrix\Calendar\Rooms\Manager::getRoomsList();
+	foreach ($roomsList as $room)
+	{
+		$arResult['MEETING_ROOMS_LIST'][CMeeting::makeCalendarPlace($room['ID'])] = $room;
+	}
+}
+else if ($arParams['RESERVE_MEETING_IBLOCK_ID'] || $arParams['RESERVE_VMEETING_IBLOCK_ID'])
 {
 	$dbMeetingsList = CIBlockSection::GetList(
 		array('IBLOCK_ID' => 'ASC', 'NAME' => 'ASC', 'ID' => 'DESC'),
@@ -124,23 +140,35 @@ while ($arRes = $dbRes->GetNext())
 	$arRes['USERS'] = CMeeting::GetUsers($arRes['ID']);
 	foreach ($arRes['USERS'] as $u=>$r)
 	{
-		if ($r == CMeeting::ROLE_OWNER)
+		if ($r === CMeeting::ROLE_OWNER)
+		{
 			$arRes['OWNER_ID'] = $u;
+		}
 	}
 	$arUserIDs = array_merge($arUserIDs, array_keys($arRes['USERS']));
 
-	if($arRes['PLACE'] <> '' && array_key_exists($arRes['PLACE'], $arResult['MEETING_ROOMS_LIST']))
+	if($arRes['PLACE'] && array_key_exists($arRes['PLACE'], $arResult['MEETING_ROOMS_LIST']))
 	{
 		$arRes['PLACE'] = $arResult['MEETING_ROOMS_LIST'][$arRes['PLACE']]['NAME'];
+	}
+	else if (
+		$arRes['PLACE']
+		&& !array_key_exists($arRes['PLACE'], $arResult['MEETING_ROOMS_LIST'])
+		&& preg_match('/^calendar_(\d+)$/', $arRes['PLACE'])
+	)
+	{
+		unset($arRes['PLACE'], $arRes['~PLACE']);
 	}
 
 	$arResult['MEETINGS'][] = $arRes;
 }
 
-$title = GetMessage('ML_LIST_TITLE'.($arParams['USER_ID'] == $USER->GetID() ? '' : '_NOT_MINE'));
+$title = GetMessage('ML_LIST_TITLE'.((int)$arParams['USER_ID'] === (int)$USER->GetID() ? '' : '_NOT_MINE'));
 $APPLICATION->SetTitle($title);
 if ($arParams['SET_NAVCHAIN'] !== 'N')
+{
 	$APPLICATION->AddChainItem($title, $arParams['LIST_URL']);
+}
 
 CJSCore::Init(array('meeting', 'popup', 'ajax'));
 

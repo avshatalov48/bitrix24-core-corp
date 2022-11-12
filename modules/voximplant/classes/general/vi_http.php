@@ -1062,7 +1062,7 @@ class CVoxImplantHttp
 	
 	public static function GetPortalSign()
 	{
-		if(defined('BX24_HOST_NAME') || defined('VOXIMPLANT_HOST_NAME'))
+		if( (defined('BX24_HOST_NAME') && function_exists('bx_sign')) || defined('VOXIMPLANT_HOST_NAME') )
 		{
 			return self::RequestSign(self::TYPE_BITRIX24, defined('BX24_HOST_NAME')? md5(BX24_HOST_NAME): md5(VOXIMPLANT_HOST_NAME));
 		}

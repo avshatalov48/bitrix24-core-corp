@@ -34,6 +34,7 @@
 			this.isRusCloud = params.isRusCloud === "Y";
 			this.isCurrentUserIntegrator = params.isCurrentUserIntegrator === "Y";
 			this.personalMobile = this.initialFields["PERSONAL_MOBILE"];
+			this.isCurrentUserAdmin = params.isCurrentUserAdmin;
 
 			this.entityEditorInstance = new namespace.EntityEditor({
 				managerInstance: this,
@@ -132,35 +133,49 @@
 
 		initAvatarLoader: function()
 		{
-			var resCamera = new BX.AvatarEditor({enableCamera : true});
-			if (
-				BX('intranet-user-profile-photo-camera')
-				&& !resCamera.isCameraEnabled()
-			)
+			if (BX('intranet-user-profile-photo-camera')
+				&& BX('intranet-user-profile-photo-file'))
 			{
-				BX.hide(BX('intranet-user-profile-photo-camera'));
+				if (BX.AvatarEditor)
+				{
+					setTimeout(function() {
+						if (BX.AvatarEditor.isCameraAvailable() !== true)
+						{
+							BX.hide(BX('intranet-user-profile-photo-camera'));
+						}
+					}, 0);
+
+					var getEditor = function() {
+						var editor = BX.AvatarEditor.getInstanceById('intranet-user-profile-photo-file');
+						if (editor === null)
+						{
+							editor = BX.AvatarEditor.createInstance('intranet-user-profile-photo-file', {
+								enableCamera: true,
+								enableMask: true
+							});
+							editor.subscribeOnFormIsReady('newPhoto', this.changePhoto.bind(this));
+						}
+						return editor;
+					}.bind(this);
+
+					BX.bind(BX('intranet-user-profile-photo-camera'), 'click', function() { getEditor().show('camera'); });
+					BX.bind(BX('intranet-user-profile-photo-file'), 'click', function(){ getEditor().show('file'); });
+					BX.bind(BX('intranet-user-profile-photo-mask'), 'click', function(){ getEditor().show('mask'); });
+				}
+				else
+				{
+					BX.hide(BX('intranet-user-profile-photo-camera'));
+					BX.hide(BX('intranet-user-profile-photo-file'));
+					BX.hide(BX('intranet-user-profile-photo-mask'));
+				}
 			}
 
-			BX.bind(BX('intranet-user-profile-photo-camera'), "click", function(){ resCamera.show('camera'); });
-			BX.bind(BX('intranet-user-profile-photo-file'), "click", function(){ resCamera.show('file'); });
-
-			BX.addCustomEvent(resCamera, "onApply", BX.proxy(function(file, canvas) {
-				var formObj = new FormData();
-				if (!file.name)
-				{
-					file.name = "tmp.png"
-				}
-				formObj.append('newPhoto', file, file.name);
-
-				this.changePhoto(formObj);
-			}, this));
-
-			BX.bind(BX("intranet-user-profile-photo-remove"), "click", BX.proxy(function () {
+			BX.bind(BX("intranet-user-profile-photo-remove"), "click", function () {
 				if (BX("intranet-user-profile-photo").style.backgroundImage != "")
 				{
 					this.showConfirmPopup(BX.message("INTRANET_USER_PROFILE_PHOTO_DELETE_CONFIRM"), this.deletePhoto.bind(this));
 				}
-			}, this))
+			}.bind(this))
 		},
 
 		showActionPopup: function(bindElement)
@@ -222,8 +237,7 @@
 			}
 
 			if (
-				(this.userStatus === "admin" || this.userStatus === "employee" || this.userStatus === "integrator" || this.isExtranetUser)
-				&& this.canEditProfile
+				this.isCurrentUserAdmin
 				&& !this.isOwnProfile
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)
@@ -251,7 +265,7 @@
 				});
 			}
 
-			if (this.userStatus === "fired" && this.canEditProfile && !this.isOwnProfile)
+			if (this.userStatus === "fired" && !this.isOwnProfile)
 			{
 				menuItems.push({
 					text: BX.message("INTRANET_USER_PROFILE_HIRE"),
@@ -462,26 +476,30 @@
 			}
 		},
 
-		changePhoto: function(dataObj)
+		changePhoto: function(event)
 		{
+			var dataObj = (event.getData())['form'];
 			var loader = this.showLoader({node: BX("intranet-user-profile-photo"), loader: null, size: 100});
 
 			BX.ajax.runComponentAction(this.componentName, "loadPhoto", {
 				signedParameters: this.signedParameters,
 				mode: 'ajax',
 				data: dataObj
-			}).then(function (response) {
-				if (response.data)
-				{
-					(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{url: response.data}]);
-					BX("intranet-user-profile-photo").style = "background-image: url('" + response.data + "'); background-size: cover;";
+			})
+			.then(
+				(response) => {
+					if (response.data)
+					{
+						(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{url: response.data}]);
+						BX("intranet-user-profile-photo").style = "background-image: url('" + response.data + "'); background-size: cover;";
+					}
+					this.hideLoader({loader: loader});
+				},
+				(response) => {
+					this.hideLoader({loader: loader});
+					this.showErrorPopup(response["errors"][0].message);
 				}
-
-				this.hideLoader({loader: loader});
-			}.bind(this), function (response) {
-				this.hideLoader({loader: loader});
-				this.showErrorPopup(response["errors"][0].message);
-			}.bind(this));
+			);
 		},
 
 		deletePhoto: function()

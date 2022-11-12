@@ -497,6 +497,7 @@ $APPLICATION->IncludeComponent("bitrix:ui.button.panel", "", array(
 			componentName: '<?=$this->getComponent()->getName() ?>',
 			userOptions: <?=CUtil::phpToJsObject($arParams['USER_OPTIONS'])?>,
 			isCloud: '<?=$arResult["IS_CLOUD"] ? "Y" : "N"?>',
+			isAdmin: '<?=$arResult["IS_CURRENT_USER_ADMIN"] ? "Y" : "N"?>',
 			menuContainerNode: document.querySelector('#<?=$menuContainerId?>'),
 			contentContainerNode: document.querySelector('[data-id="<?=$contentContainerId?>"]'),
 			contentNodes: BX.findChildren(BX('intranet-dialog-tabs'), {className: 'popup-window-tab-content'}, true),

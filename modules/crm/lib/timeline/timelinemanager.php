@@ -277,7 +277,7 @@ class TimelineManager
 				$communications = \CCrmActivity::PrepareCommunicationInfos(
 					$activityIDs,
 					array(
-						'ENABLE_PERMISSION_CHECK' => true,
+						'ENABLE_PERMISSION_CHECK' => $checkPermissions,
 						'USER_PERMISSIONS' => $userPermissions
 					)
 				);

@@ -1,0 +1,24 @@
+<?php
+$MESS["SPP_ACCESS_DENIED"] = "Zugriff verweigert";
+$MESS["SPP_ACTIONBOX_APPS"] = "Bitrix24.Market";
+$MESS["SPP_PAYSYSTEM_APP_INTEGRATION_REQUIRED"] = "Integration erwünscht?";
+$MESS["SPP_PAYSYSTEM_APP_RECOMMEND"] = "Empfehlen";
+$MESS["SPP_PAYSYSTEM_APP_SEE_ALL"] = "Alle anzeigen";
+$MESS["SPP_PAYSYSTEM_APP_TOTAL_APPLICATIONS"] = "Apps gesamt";
+$MESS["SPP_PAYSYSTEM_BEPAID_WIDGET_TITLE"] = "Zahlung per bePaid";
+$MESS["SPP_PAYSYSTEM_CASHONDELIVERYCALC_TITLE"] = "Zahlung gegen Nachnahme inkl. Überweisungsgebühr ";
+$MESS["SPP_PAYSYSTEM_CASHONDELIVERY_TITLE"] = "Zahlung gegen Nachnahme";
+$MESS["SPP_PAYSYSTEM_ITEM_EXTRA"] = "Andere Zahlungssysteme";
+$MESS["SPP_PAYSYSTEM_LIQPAY_TITLE"] = "Zahlung per LiqPay";
+$MESS["SPP_PAYSYSTEM_PAYPAL_TITLE"] = "Zahlung per PayPal";
+$MESS["SPP_PAYSYSTEM_PLATON_APPLE_PAY_TITLE"] = "Zahlung via Google Pay";
+$MESS["SPP_PAYSYSTEM_PLATON_BANK_CARD_TITLE"] = "Zahlung mit der Kreditkarte/Debitkarte";
+$MESS["SPP_PAYSYSTEM_PLATON_GOOGLE_PAY_TITLE"] = "Zahlung via Privat24";
+$MESS["SPP_PAYSYSTEM_PLATON_PRIVAT24_TITLE"] = "Zahlung via Apple Pay ";
+$MESS["SPP_PAYSYSTEM_SBERBANKONLINE_TITLE"] = "Kredit- oder Debitkarte (Sberbank)";
+$MESS["SPP_PAYSYSTEM_SBP_RECOMMEND"] = "Eine Bank empfehlen";
+$MESS["SPP_PAYSYSTEM_SKB_SKB_TITLE"] = "System der Schnellzahlungen";
+$MESS["SPP_PAYSYSTEM_UAPAY_TITLE"] = "Zahlung per UAPAY";
+$MESS["SPP_PAYSYSTEM_WEBMONEY_TITLE"] = "Zahlung per WebMoney";
+$MESS["SPP_SALESCENTER_MODULE_ERROR"] = "Das Modul \"Verkauf in Chats\" ist nicht installiert.";
+$MESS["SPP_SALE_MODULE_ERROR"] = "Das Modul Onlineshop ist nicht installiert.";

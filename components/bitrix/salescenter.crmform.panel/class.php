@@ -38,7 +38,7 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 			$templates = self::getAllowedTemplates();
 		}
 
-		$formsCollection = WebForm\Internals\FormTable::getList([
+		$formsCollection = WebForm\Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID'],
 			'filter' => ['ACTIVE' => 'Y', 'TEMPLATE_ID' => $templates],
 			'limit' => 1
@@ -155,7 +155,7 @@ class SalesCenterCrmFormPanel extends CBitrixComponent
 	{
 		$existingForms = [];
 
-		$formsCollection = WebForm\Internals\FormTable::getList([
+		$formsCollection = WebForm\Internals\FormTable::getDefaultTypeList([
 			'select' => ['ID', 'NAME', 'TEMPLATE_ID'],
 			'filter' => ['ACTIVE' => 'Y', 'TEMPLATE_ID' => self::getAllowedTemplates()],
 			'order' => ['ID' => 'DESC'],

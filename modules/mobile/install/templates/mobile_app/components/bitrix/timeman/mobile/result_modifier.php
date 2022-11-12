@@ -102,3 +102,5 @@ if (CModule::IncludeModule("pull"))
 $arResult["statusClass"] = $statusClass;
 $arResult["stateTimer"] = $stateTimer;
 $arResult["pauseTimer"] = $pauseTimer;
+
+\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');

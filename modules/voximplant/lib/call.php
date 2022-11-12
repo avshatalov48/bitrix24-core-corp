@@ -401,7 +401,7 @@ class Call
 	 */
 	public function getCallerId()
 	{
-		return $this->callerId;
+		return (string)$this->callerId;
 	}
 
 	/**

@@ -31,7 +31,22 @@
 				return;
 			}
 
-			const newCurrency = data.fieldValue ? data.fieldValue.currency : null;
+			const field = this.editor.getControlByIdRecursive(data.fieldName);
+			if (!field)
+			{
+				return;
+			}
+
+			let newCurrency = null;
+			if (field instanceof EntityEditorMoneyField)
+			{
+				newCurrency = data.fieldValue ? data.fieldValue.currency : null;
+			}
+			else
+			{
+				newCurrency = data.fieldValue ? data.fieldValue : null;
+			}
+
 			if (!this.fieldUpdateInProgress && newCurrency && this.currency !== newCurrency)
 			{
 				this.currency = newCurrency;
@@ -45,7 +60,7 @@
 
 			const amount = BX.prop.getNumber(data, 'total', 0);
 			const field = this.editor.getControlByIdRecursive('TOTAL_WITH_CURRENCY');
-			if (field)
+			if (field && field instanceof EntityEditorMoneyField)
 			{
 				const prevFieldValue = field.getValue();
 				const currency = prevFieldValue ? prevFieldValue.currency : '';

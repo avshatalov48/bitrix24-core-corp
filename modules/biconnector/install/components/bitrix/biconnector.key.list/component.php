@@ -87,7 +87,7 @@ $keyList = \Bitrix\BIConnector\KeyTable::getList([
 while ($data = $keyList->fetch())
 {
 	$accessKey = $data['ACCESS_KEY'] . LANGUAGE_ID;
-	$data['ACCESS_KEY'] = '<input type="password" class="biconnector-key-grid-access-key" readonly value="' . htmlspecialcharsBx($accessKey) . '" size="' . strlen($accessKey) . '">'
+	$data['ACCESS_KEY'] = '<input type="password" class="biconnector-key-grid-access-key" readonly value="' . htmlspecialcharsBx($accessKey) . '" size="' . (strlen($accessKey) + 3) . '">'
 		. '<button class="biconnector-key-grid-action-link" onclick="return showText(this, \'' . CUtil::JSEscape(Loc::getMessage('CT_BBKL_KEY_SHOW')) . '\', \'' . CUtil::JSEscape(Loc::getMessage('CT_BBKL_KEY_HIDE')) . '\')">' . Loc::getMessage('CT_BBKL_KEY_SHOW') . '</button>'
 		. '<button class="biconnector-key-grid-action-link" onclick="return copyText(this, \'' . CUtil::JSEscape(Loc::getMessage('CT_BBKL_KEY_COPIED')) . '\')">' . Loc::getMessage('CT_BBKL_KEY_COPY') . '</button>'
 	;

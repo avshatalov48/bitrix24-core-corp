@@ -228,7 +228,7 @@ class Action
 		return $result;
 	}
 
-	function onFinish(Event $event)
+	public static function onFinish(Event $event)
 	{
 		$result = [
 			'CREATE_DOM_LIST' => [],

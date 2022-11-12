@@ -309,7 +309,14 @@ class CVoxImplantHistory
 
 		if($call->getCrmCallList() > 0)
 		{
-			CVoxImplantCrmHelper::attachCallToCallList($call->getCrmCallList(), $arFields);
+			try
+			{
+				CVoxImplantCrmHelper::attachCallToCallList($call->getCrmCallList(), $arFields);
+			}
+			catch (\Exception $exception)
+			{
+				Application::getInstance()->getExceptionHandler()->writeToLog($exception);
+			}
 		}
 
 		/* repeat missed callback, if neeeded */

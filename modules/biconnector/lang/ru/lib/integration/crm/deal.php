@@ -35,6 +35,7 @@ $MESS['CRM_BIC_DEAL_FIELD_CONTACT'] = "Контакт";
 $MESS['CRM_BIC_DEAL_FIELD_CONTACT_NAME'] = "Название контакта";
 $MESS['CRM_BIC_DEAL_FIELD_CONTACT_FULL'] = "Идентификатор и название контакта";
 $MESS['CRM_BIC_DEAL_FIELD_TITLE'] = "Название сделки";
+$MESS['CRM_BIC_DEAL_FIELD_CRM_PRODUCT_ID'] = "Идентификатор товара из CRM (множ.)";
 $MESS['CRM_BIC_DEAL_FIELD_CRM_PRODUCT'] = "Товар из CRM (множ.)";
 $MESS['CRM_BIC_DEAL_FIELD_CRM_PRODUCT_COUNT'] = "Количество товаров из CRM (множ.)";
 $MESS['CRM_BIC_DEAL_FIELD_CATEGORY_ID'] = "Идентификатор воронки сделки";

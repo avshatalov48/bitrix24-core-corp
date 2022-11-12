@@ -126,19 +126,28 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 
 			$primary = null;
 			$concat_fields = [];
-			$i = 0;
-			foreach ($result['schema'] as $fieldInfo)
+			foreach ($result['schema'] as $i => $fieldInfo)
 			{
 				if (isset($fieldInfo['IS_PRIMARY']) && $fieldInfo['IS_PRIMARY'] === 'Y')
 				{
 					$primary = $i;
 				}
-				if (isset($fieldInfo['CONCAT_GROUP_BY']))
+				elseif (isset($fieldInfo['CONCAT_GROUP_BY']))
 				{
-					$concat_fields[$i] = $fieldInfo['CONCAT_GROUP_BY'];
+					$unique_id = $i;
+					foreach ($result['schema'] as $j => $keyInfo)
+					{
+						if ($keyInfo['ID'] == $fieldInfo['CONCAT_KEY'])
+						{
+							$unique_id = $j;
+							break;
+						}
+					}
+					$concat_fields[$i] = [
+						'delimiter' => $fieldInfo['CONCAT_GROUP_BY'],
+						'unique_id' => $unique_id,
+					];
 				}
-
-				$i++;
 			}
 
 			$row_dat = [];
@@ -171,35 +180,39 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 					if (!$output_row)
 					{
 						$output_row = $row;
-						foreach ($concat_fields as $i => $delimiter)
+						foreach ($concat_fields as $i => $concatInfo)
 						{
-							$output_row[$i] = $row[$i] ? [$row[$i] => 1] : [];
+							$concat_id = $row[$concatInfo['unique_id']];
+							$output_row[$i] = [
+								$concat_id => $row[$i]
+							];
 						}
 					}
 					elseif ($row[$primary] === $output_row[$primary])
 					{
-						foreach ($concat_fields as $i => $delimiter)
+						foreach ($concat_fields as $i => $concatInfo)
 						{
-							if ($row[$i])
-							{
-								$output_row[$i][$row[$i]] = 1;
-							}
+							$concat_id = $row[$concatInfo['unique_id']];
+							$output_row[$i][$concat_id] = $row[$i];
 						}
 					}
 					else
 					{
-						foreach ($concat_fields as $i => $delimiter)
+						foreach ($concat_fields as $i => $concatInfo)
 						{
-							$output_row[$i] = implode($delimiter, array_keys($output_row[$i]));
+							$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
 						}
 						echo $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
 						$comma = ',';
 						$count++;
 
 						$output_row = $row;
-						foreach ($concat_fields as $i => $delimiter)
+						foreach ($concat_fields as $i => $concatInfo)
 						{
-							$output_row[$i] = $row[$i] ? [$row[$i] => 1] : [];
+							$concat_id = $row[$concatInfo['unique_id']];
+							$output_row[$i] = [
+								$concat_id => $row[$i]
+							];
 						}
 					}
 				}
@@ -213,9 +226,9 @@ if (\Bitrix\Main\Loader::includeModule('biconnector'))
 
 			if ($output_row)
 			{
-				foreach ($concat_fields as $i => $delimiter)
+				foreach ($concat_fields as $i => $concatInfo)
 				{
-					$output_row[$i] = implode($delimiter, array_keys($output_row[$i]));
+					$output_row[$i] = implode($concatInfo['delimiter'], $output_row[$i]);
 				}
 				echo $comma . '{"values":' . Bitrix\Main\Web\Json::encode($output_row, JSON_UNESCAPED_UNICODE) . '}' . "\n";
 				$count++;

@@ -4,7 +4,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main,
 	Bitrix\Main\Loader,
 	Bitrix\Main\Localization\Loc,
-	Bitrix\Sale,
 	Bitrix\Rest,
 	Bitrix\SalesCenter\Integration\SaleManager,
 	Bitrix\SalesCenter\Integration\RestManager,
@@ -114,10 +113,19 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			$marketplaceRecommendedItems = $this->getMarketplaceItems($recommendedItemCodeList, true);
 		}
 
-		$paySystemItems = array_merge(
-			$this->getPaySystemItems(),
-			$marketplaceRecommendedItems
+		$paySystemItemsResult = (new Bitrix\SalesCenter\Component\PaySystem())->getRecommendedItems(
+			$this->paySystemList,
+			$this->isMainMode(),
+			self::PAYSYSTEM_TITLE_LENGTH_LIMIT,
+			$this->paySystemColor,
 		);
+
+		$paySystemItems = $paySystemItemsResult->isSuccess()
+			? array_merge(
+				$paySystemItemsResult->getData(),
+				$marketplaceRecommendedItems
+			)
+			: $marketplaceRecommendedItems;
 
 		// paysystem
 		$this->arResult['paySystemPanelParams'] = [
@@ -232,402 +240,6 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 
 	/**
 	 * @return array
-	 * @throws Main\ArgumentException
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\IO\FileNotFoundException
-	 */
-	private function getPaySystemItems(): array
-	{
-		$systemHandlerList = $this->getSystemPaySystemHandlersList();
-		$paySystemPanel = $this->getPaySystemPanel();
-		$paySystemPath = $this->getPaySystemComponentPath();
-		$paySystemIterator = Sale\PaySystem\Manager::getList([
-			'select' => ['ID', 'ACTIVE', 'NAME', 'ACTION_FILE', 'PS_MODE'],
-			'filter' => [
-				'=ACTION_FILE' => array_keys($systemHandlerList),
-				'=ENTITY_REGISTRY_TYPE' => 'ORDER',
-			],
-		]);
-
-		$yandexHandler = \Sale\Handlers\PaySystem\YandexCheckoutHandler::class;
-		$yandexHandler = Sale\PaySystem\Manager::getFolderFromClassName($yandexHandler);
-
-		$paySystemActions = [];
-		foreach ($paySystemIterator as $paySystem)
-		{
-			if (!$paySystem['PS_MODE'] && $paySystem['ACTION_FILE'] !== $yandexHandler)
-			{
-				$paySystem['PS_MODE'] = null;
-			}
-
-			$paySystemHandler = $paySystem['ACTION_FILE'];
-			$inPanel = array_key_exists($paySystem['ACTION_FILE'], $paySystemPanel);
-			$psMode = $paySystem['PS_MODE'];
-			$isActive = $paySystem['ACTIVE'] === 'Y';
-			if ($psMode !== null)
-			{
-				$inPanel = in_array($psMode, $paySystemPanel[$paySystem['ACTION_FILE']] ?? [], true);
-			}
-
-			if (!$isActive && !$inPanel)
-			{
-				continue;
-			}
-
-			$queryParams = [
-				'lang' => LANGUAGE_ID,
-				'publicSidePanel' => 'Y',
-				'ID' => $paySystem['ID'],
-				'ACTION_FILE' => $paySystem['ACTION_FILE'],
-			];
-
-			if ($psMode !== null)
-			{
-				$queryParams['PS_MODE'] = $psMode;
-
-				if (!isset($paySystemActions[$paySystemHandler]['ACTIVE'][$psMode])
-					|| $paySystemActions[$paySystemHandler]['ACTIVE'][$psMode] === false
-				)
-				{
-					$paySystemActions[$paySystemHandler]['ACTIVE'][$psMode] = $isActive;
-				}
-				$paySystemActions[$paySystemHandler]['PS_MODE'] = true;
-				$paySystemActions[$paySystemHandler]['HANDLER_NAME'] = $systemHandlerList[$paySystemHandler]['name'];
-				$paySystemActions[$paySystemHandler]['ITEMS'][$psMode]['HANDLER_NAME'] = $systemHandlerList[$paySystemHandler]['psMode'][$psMode];
-				$paySystemActions[$paySystemHandler]['ITEMS'][$psMode]['ITEMS'][] = [
-					'NAME' => Loc::getMessage('SPP_PAYSYSTEM_SETTINGS', [
-						'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystem['NAME'])
-					]),
-					'LINK' => $paySystemPath->addParams($queryParams)->getLocator(),
-				];
-			}
-			else
-			{
-				$paySystemPath->addParams($queryParams)->getLocator();
-
-				if (!isset($paySystemActions[$paySystemHandler]['ACTIVE'])
-					|| $paySystemActions[$paySystemHandler]['ACTIVE'] === false
-				)
-				{
-					$paySystemActions[$paySystemHandler]['ACTIVE'] = $isActive;
-				}
-				$paySystemActions[$paySystemHandler]['PS_MODE'] = false;
-				$paySystemActions[$paySystemHandler]['HANDLER_NAME'] = $systemHandlerList[$paySystemHandler]['name'];
-				$paySystemActions[$paySystemHandler]['ITEMS'][] = [
-					'NAME' => Loc::getMessage('SPP_PAYSYSTEM_SETTINGS', [
-						'#PAYSYSTEM_NAME#' => htmlspecialcharsbx($paySystem['NAME'])
-					]),
-					'LINK' => $paySystemPath->addParams($queryParams)->getLocator(),
-				];
-			}
-		}
-
-		foreach ($paySystemPanel as $handler => $psModeList)
-		{
-			if (!$this->isPaySystemAvailable($handler))
-			{
-				continue;
-			}
-
-			if ($psModeList)
-			{
-				foreach ($psModeList as $psMode)
-				{
-					if (!$this->isPaySystemAvailable($handler, $psMode))
-					{
-						continue;
-					}
-
-					if (empty($paySystemActions[$handler]['ITEMS'][$psMode]))
-					{
-						$paySystemActions[$handler]['PS_MODE'] = true;
-						$paySystemActions[$handler]['ACTIVE'][$psMode] = false;
-						$paySystemActions[$handler]['ITEMS'][$psMode] = [];
-					}
-				}
-			}
-			elseif (empty($paySystemActions[$handler]))
-			{
-				$paySystemActions[$handler] = [
-					'ACTIVE' => false,
-					'PS_MODE' => false,
-				];
-			}
-		}
-
-		if ($paySystemActions)
-		{
-			$paySystemActions = $this->getPaySystemMenu($paySystemActions);
-		}
-
-		$paySystemItems = [];
-		foreach ($paySystemActions as $handler => $paySystem)
-		{
-			$queryParams = [
-				'lang' => LANGUAGE_ID,
-				'publicSidePanel' => 'Y',
-				'CREATE' => 'Y',
-			];
-
-			$isActive = false;
-			$title = Loc::getMessage('SPP_PAYSYSTEM_'.mb_strtoupper($handler).'_TITLE');
-			if (!$title)
-			{
-				$title = Loc::getMessage('SPP_PAYSYSTEM_DEFAULT_TITLE', [
-					'#PAYSYSTEM_NAME#' => $paySystem['HANDLER_NAME']
-				]);
-			}
-
-			$handlerTitle = $title;
-
-			$image = $this->getImagePath().'marketplace_default.svg';
-			$itemSelectedImage = $this->getImagePath().'marketplace_default_s.svg';
-
-			$imagePath = $this->getImagePath().$handler.'.svg';
-			$itemSelectedImagePath = $this->getImagePath().$handler.'_s.svg';
-			if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$imagePath))
-			{
-				$image = $imagePath;
-				$itemSelectedImage = $itemSelectedImagePath;
-			}
-
-			if (!empty($paySystem['ITEMS']))
-			{
-				if ($paySystem['PS_MODE'])
-				{
-					foreach ($paySystem['ITEMS'] as $psMode => $paySystemItem)
-					{
-						$title = $handlerTitle;
-						$type = $psMode;
-						$isActive = $paySystemActions[$handler]['ACTIVE'][$psMode];
-						if (!$isActive
-							&& (
-								isset($paySystemPanel[$handler])
-								&& !in_array($psMode, $paySystemPanel[$handler], true)
-							)
-						)
-						{
-							continue;
-						}
-
-						if (empty($paySystemItem)
-							&& (
-								isset($paySystemPanel[$handler])
-								&& !in_array($psMode, $paySystemPanel[$handler], true)
-							)
-						)
-						{
-							continue;
-						}
-
-						if (Loc::getMessage('SPP_PAYSYSTEM_'.mb_strtoupper($handler).'_'.mb_strtoupper($psMode).'_TITLE'))
-						{
-							$title = Loc::getMessage('SPP_PAYSYSTEM_'.mb_strtoupper($handler).'_'.mb_strtoupper($psMode).'_TITLE');
-						}
-
-						$queryParams['ACTION_FILE'] = $handler;
-						$queryParams['PS_MODE'] = $psMode;
-						$paySystemPath = $this->getPaySystemComponentPath();
-						$paySystemPath->addParams($queryParams);
-
-						$imagePath = $this->getImagePath().$handler.'_'.$psMode.'.svg';
-						$itemSelectedImagePath = $this->getImagePath().$handler.'_'.$psMode.'_s.svg';
-						if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$imagePath))
-						{
-							$image = $imagePath;
-							$itemSelectedImage = $itemSelectedImagePath;
-						}
-
-						if (is_array($this->paySystemColor[$handler]))
-						{
-							$itemSelectedColor = $this->paySystemColor[$handler][$psMode];
-						}
-						else
-						{
-							$itemSelectedColor = $this->paySystemColor[$handler];
-						}
-
-						if (!$itemSelectedColor)
-						{
-							$itemSelectedColor = '#56C472';
-						}
-
-						$paySystemItems[] = [
-							'id' => $handler.'_'.$psMode,
-							'sort' => $this->getPaySystemSort($handler, $psMode),
-							'title' => $this->getFormattedTitle($title),
-							'image' => $image,
-							'itemSelectedColor' => $itemSelectedColor,
-							'itemSelected' => $isActive,
-							'itemSelectedImage' => $itemSelectedImage,
-							'data' => [
-								'type' => 'paysystem',
-								'connectPath' => $paySystemPath->getLocator(),
-								'menuItems' => $paySystemItem['ITEMS'] ?? $paySystemItem,
-								'showMenu' => !empty($paySystemItem),
-								'paySystemType' => $type,
-								'recommendation' => $this->isPaySystemRecommendation($handler, $psMode),
-							],
-						];
-					}
-				}
-				else
-				{
-					$isActive = $paySystemActions[$handler]['ACTIVE'];
-
-					if (!$isActive && (!array_key_exists($handler, $paySystemPanel)))
-					{
-						continue;
-					}
-					$type = $handler;
-
-					$queryParams['ACTION_FILE'] = $handler;
-					$paySystemPath = $this->getPaySystemComponentPath();
-					$paySystemPath->addParams($queryParams);
-
-					$imagePath = $this->getImagePath().$handler.'.svg';
-					$itemSelectedImagePath = $this->getImagePath().$handler.'_s.svg';
-					if (Main\IO\File::isFileExists(Main\Application::getDocumentRoot().$imagePath))
-					{
-						$image = $imagePath;
-						$itemSelectedImage = $itemSelectedImagePath;
-					}
-
-					$paySystemItems[] = [
-						'id' => $handler,
-						'sort' => $this->getPaySystemSort($handler),
-						'title' => $this->getFormattedTitle($title),
-						'image' => $image,
-						'itemSelectedColor' => $this->paySystemColor[$handler] ?? '#56C472',
-						'itemSelected' => $isActive,
-						'itemSelectedImage' => $itemSelectedImage,
-						'data' => [
-							'type' => 'paysystem',
-							'connectPath' => $paySystemPath->getLocator(),
-							'menuItems' => $paySystem['ITEMS'],
-							'showMenu' => !empty($paySystem['ITEMS']),
-							'paySystemType' => $type,
-							'recommendation' => $this->isPaySystemRecommendation($handler),
-						],
-					];
-				}
-			}
-			else
-			{
-				$type = $handler;
-				$queryParams['ACTION_FILE'] = $handler;
-				$paySystemPath = $this->getPaySystemComponentPath();
-				$paySystemPath->addParams($queryParams);
-
-				$paySystemItems[] = [
-					'id' => $handler,
-					'sort' => $this->getPaySystemSort($handler),
-					'title' => $this->getFormattedTitle($title),
-					'image' => $image,
-					'itemSelectedColor' => $this->paySystemColor[$handler] ?? '#56C472',
-					'itemSelected' => $isActive,
-					'itemSelectedImage' => $itemSelectedImage,
-					'data' => [
-						'type' => 'paysystem',
-						'connectPath' => $paySystemPath->getLocator(),
-						'menuItems' => [],
-						'showMenu' => false,
-						'paySystemType' => $type,
-						'recommendation' => $this->isPaySystemRecommendation($handler),
-					],
-				];
-			}
-		}
-
-		Main\Type\Collection::sortByColumn($paySystemItems, ['sort' => SORT_ASC]);
-
-		return $paySystemItems;
-	}
-
-	/**
-	 * @return array
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 * @throws Main\IO\FileNotFoundException
-	 */
-	private function getSystemPaySystemHandlersList(): array
-	{
-		$systemHandlerList = [];
-
-		$handlerList = Sale\PaySystem\Manager::getHandlerList();
-		if (isset($handlerList['SYSTEM']))
-		{
-			$systemHandlers = array_keys($handlerList['SYSTEM']);
-			foreach ($systemHandlers as $key => $systemHandler)
-			{
-				if ($systemHandler === 'inner')
-				{
-					continue;
-				}
-
-				$handlerDescription = Sale\PaySystem\Manager::getHandlerDescription($systemHandler);
-				if (empty($handlerDescription))
-				{
-					continue;
-				}
-
-				$systemHandlerList[$systemHandler] = [
-					'name' => $handlerDescription['NAME'] ?? $handlerList['SYSTEM'][$systemHandler],
-				];
-
-				/** @var Sale\PaySystem\BaseServiceHandler $handlerClass */
-				$handlerClass = Sale\PaySystem\Manager::getClassNameFromPath($systemHandler);
-				if (!class_exists($handlerClass))
-				{
-					$documentRoot = Main\Application::getDocumentRoot();
-					$path = Sale\PaySystem\Manager::getPathToHandlerFolder($systemHandler);
-					$fullPath = $documentRoot.$path.'/handler.php';
-					if ($path && Main\IO\File::isFileExists($fullPath))
-					{
-						require_once $fullPath;
-					}
-				}
-
-				if (class_exists($handlerClass) && ($psMode = $handlerClass::getHandlerModeList()))
-				{
-					$systemHandlerList[$systemHandler]['psMode'] = $psMode;
-				}
-			}
-		}
-
-		return $systemHandlerList;
-	}
-
-	/**
-	 * @param $handler
-	 * @param null $psMode
-	 * @return bool
-	 * @throws Main\ArgumentNullException
-	 * @throws Main\ArgumentOutOfRangeException
-	 */
-	private function isPaySystemAvailable($handler, $psMode = null): bool
-	{
-		$description = Sale\PaySystem\Manager::getHandlerDescription($handler);
-		$isAvailable = $description && !(isset($description['IS_AVAILABLE']) && !$description['IS_AVAILABLE']);
-		if (!$psMode)
-		{
-			return $isAvailable;
-		}
-
-		$psModeList = [];
-		/** @var Sale\PaySystem\BaseServiceHandler $handlerClass */
-		[$handlerClass] = Sale\PaySystem\Manager::includeHandler($handler);
-		if (class_exists($handlerClass))
-		{
-			$psModeList = $handlerClass::getHandlerModeList();
-		}
-
-		return isset($psModeList[$psMode]);
-	}
-
-	/**
-	 * @return array
 	 */
 	private function getPaySystemColor(): array
 	{
@@ -677,83 +289,6 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 			],
 			'platon' => '#EC6125',
 		];
-	}
-
-	/**
-	 * @return array
-	 */
-	private function getPaySystemPanel(): array
-	{
-		$zone = $this->getZone();
-		$paySystemPanel = [];
-		if ($this->isMainMode())
-		{
-			foreach ($this->paySystemList as $handler => $handlerItem)
-			{
-				if (!empty($handlerItem['psMode']))
-				{
-					foreach ($handlerItem['psMode'] as $psMode => $psModeItem)
-					{
-						if ($psModeItem['main'])
-						{
-							$paySystemPanel[$handler][] = $psMode;
-						}
-					}
-				}
-				elseif ($handlerItem['main']
-					|| (in_array( $zone, ['ru', 'by']) === false && $handler === 'paypal')
-				)
-				{
-					$paySystemPanel[$handler] = [];
-				}
-			}
-		}
-		else
-		{
-			foreach ($this->paySystemList as $handler => $handlerItem)
-			{
-				if (!empty($handlerItem['psMode']))
-				{
-					foreach ($handlerItem['psMode'] as $psMode => $psModeItem)
-					{
-						$paySystemPanel[$handler][] = $psMode;
-					}
-				}
-				else
-				{
-					$paySystemPanel[$handler] = [];
-				}
-			}
-		}
-
-		return $paySystemPanel;
-	}
-
-	/**
-	 * @param $handler
-	 * @param bool $psMode
-	 * @return int|mixed
-	 */
-	private function getPaySystemSort($handler, $psMode = false)
-	{
-		$defaultSort = 10000;
-		if ($psMode)
-		{
-			return $this->paySystemList[$handler]['psMode'][$psMode]['sort'] ?? $defaultSort;
-		}
-
-		return $this->paySystemList[$handler]['sort'] ?? $defaultSort;
-	}
-
-	private function isPaySystemRecommendation($handler, $psMode = false)
-	{
-		$isRecommendation = false;
-		if ($psMode)
-		{
-			return $this->paySystemList[$handler]['psMode'][$psMode]['recommendation'] ?? $isRecommendation;
-		}
-
-		return $this->paySystemList[$handler]['recommendation'] ?? $isRecommendation;
 	}
 
 	/**
@@ -888,6 +423,13 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 	 */
 	private function getUserPaySystemItems(): array
 	{
+		if (!Loader::includeModule('sale'))
+		{
+			return [];
+		}
+		$paySystemManager = Main\DI\ServiceLocator::getInstance()->get('sale.paysystem.manager');
+
+
 		$userHandlerList = $this->getUserPaySystemHandlersList();
 		if (empty($userHandlerList))
 		{
@@ -896,7 +438,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 
 		$paySystemPath = $this->getPaySystemComponentPath();
 		$filter = $this->getFilterForPaySystem($userHandlerList);
-		$paySystemIterator = Sale\PaySystem\Manager::getList([
+		$paySystemIterator = $paySystemManager::getList([
 			'select' => ['ID', 'ACTIVE', 'NAME', 'ACTION_FILE', 'PS_MODE'],
 			'filter' => $filter,
 		]);
@@ -1095,9 +637,15 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 	 */
 	private function getUserPaySystemHandlersList(): array
 	{
+		if (!Loader::includeModule('sale'))
+		{
+			return [];
+		}
+		$paySystemManager = Main\DI\ServiceLocator::getInstance()->get('sale.paysystem.manager');
+
 		$userHandlerList = [];
 
-		$handlerList = Sale\PaySystem\Manager::getHandlerList();
+		$handlerList = $paySystemManager::getHandlerList();
 		if (isset($handlerList['USER']))
 		{
 			$userHandlers = array_keys($handlerList['USER']);
@@ -1109,7 +657,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 					continue;
 				}
 
-				$handlerDescription = Sale\PaySystem\Manager::getHandlerDescription($userHandler);
+				$handlerDescription = $paySystemManager::getHandlerDescription($userHandler);
 				if (empty($handlerDescription))
 				{
 					continue;
@@ -1119,12 +667,12 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 					'name' => $handlerDescription['NAME'] ?? $handlerList['USER'][$userHandler],
 				];
 
-				/** @var Sale\PaySystem\BaseServiceHandler $handlerClass */
-				$handlerClass = Sale\PaySystem\Manager::getClassNameFromPath($userHandler);
+				/** @var \Bitrix\Sale\PaySystem\BaseServiceHandler $handlerClass */
+				$handlerClass = $paySystemManager::getClassNameFromPath($userHandler);
 				if (!class_exists($handlerClass))
 				{
 					$documentRoot = Main\Application::getDocumentRoot();
-					$path = Sale\PaySystem\Manager::getPathToHandlerFolder($userHandler);
+					$path = $paySystemManager::getPathToHandlerFolder($userHandler);
 					$fullPath = $documentRoot.$path.'/handler.php';
 					if ($path && Main\IO\File::isFileExists($fullPath))
 					{
@@ -1434,21 +982,7 @@ class SalesCenterPaySystemPanel extends CBitrixComponent implements Controllerab
 
 	private function getZone()
 	{
-		if (Main\ModuleManager::isModuleInstalled('bitrix24'))
-		{
-			$zone = \CBitrix24::getPortalZone();
-		}
-		else
-		{
-			$iterator = Main\Localization\LanguageTable::getList([
-				'select' => ['ID'],
-				'filter' => ['=DEF' => 'Y', '=ACTIVE' => 'Y']
-			]);
-			$row = $iterator->fetch();
-			$zone = $row['ID'];
-		}
-
-		return $zone;
+		return (new \Bitrix\SalesCenter\Component\PaySystem())->getZone();
 	}
 
 	/**

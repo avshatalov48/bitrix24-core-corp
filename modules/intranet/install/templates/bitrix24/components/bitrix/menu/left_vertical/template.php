@@ -197,22 +197,26 @@ $groupPopupExists = false;
 							{
 								?><span class="menu-item-beta">beta</span><?
 							}
-							if ($counterId <> ''):
-								$itemCounter = "";
+							if ($counterId <> '')
+							{
+								$valueCounter = "";
+								$badgeCounter = "";
 								if ($isCompositeMode === false)
 								{
-									$itemCounter =  $counter > 99 ? "99+" : $counter;
+									$valueCounter = intval($counter);
+									$badgeCounter =  $counter > 99 ? "99+" : $counter;
 								}
 								?>
-								<span class="menu-item-index-wrap"><?
-								?><span
-									data-role="counter"
-									data-counter-value="<?=(int) $counter?>"
-									class="menu-item-index"
-									id="menu-counter-<?= mb_strtolower($item["PARAMS"]["counter_id"])?>"><?=$itemCounter?></span>
-								</span>
-							<?endif ?>
-							<? if ($item['IS_GROUP'] === 'Y'):?>
+								<span class="menu-item-index-wrap">
+									<span
+										data-role="counter"
+										data-counter-value="<?=$valueCounter?>"
+										class="menu-item-index"
+										id="menu-counter-<?= mb_strtolower($item["PARAMS"]["counter_id"])?>"><?=$badgeCounter?></span>
+									</span>
+							<?
+							}
+							if ($item['IS_GROUP'] === 'Y'):?>
 								<span class="menu-item-link-arrow"></span>
 							<?endif ?>
 						</a><?

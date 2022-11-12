@@ -22,11 +22,14 @@ class Phone
 	 */
 	public static function validate($phone)
 	{
-		static $region;
-		if ($region === null)
-		{
-			$region = strtoupper(Application::getInstance()->getLicense()->getRegion() ?: PhoneNumber\Parser::getDefaultCountry());
-		}
+//		static $region;
+//		if ($region === null)
+//		{
+//			$region = strtoupper(Application::getInstance()->getLicense()->getRegion() ?: PhoneNumber\Parser::getDefaultCountry());
+//		}
+		// temporary fix for http://jabber.bx/view.php?id=159612
+		// todo: review later
+		$region = PhoneNumber\Parser::getDefaultCountry();
 
 		$phoneParsed = PhoneNumber\Parser::getInstance()->parse($phone, $region);
 		$result = $phoneParsed->isValid();

@@ -1,6 +1,8 @@
 <?php
 use Bitrix\Main\Context;
 
+if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+
 $culture = Context::getCurrent()->getCulture();
 return [
 	'locale'=>$culture->getName(),

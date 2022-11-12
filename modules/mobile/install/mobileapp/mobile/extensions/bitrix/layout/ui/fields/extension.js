@@ -88,6 +88,12 @@
 
 			if (type === Type.SELECT)
 			{
+				// temporary fix
+				if (data.config && data.config.items)
+				{
+					data.items = data.config.items;
+				}
+
 				return new Fields.Select(data);
 			}
 

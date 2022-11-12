@@ -48,7 +48,7 @@ if ($arParams['MEETING_ID'] > 0)
 			return ShowError(GetMessage("ME_MEETING_NOT_FOUND"));
 		}
 
-		if(CMeeting::CheckPlace($arResult["MEETING"]["PLACE"]))
+		if (CMeeting::CheckPlace($arResult["MEETING"]["PLACE"]))
 		{
 			$arResult["MEETING"]["PLACE_ID"] = $arResult["MEETING"]["PLACE"];
 		}
@@ -421,15 +421,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_REQUEST['save']) && $arResu
 
 			foreach ($arAgenda as $key => $item)
 			{
-				$isNewAgengaItem = (intval($key) === 0);
+				$isNewAgengaItem = (int)$key === 0;
 
 				if (!$isNewAgengaItem)
 				{
 					$dbRes = CMeetingInstance::GetList(
 						['ID' => 'DESC'],
 						[
-							'ITEM_ID' => $key,
-							'MEETING_ID' => $MEETING_ID,
+							'ID' => (int)$key,
+							'MEETING_ID' => (int)$MEETING_ID,
 						],
 						false,
 						false,
@@ -735,13 +735,37 @@ if ($arResult['CAN_EDIT'])
 
 if ($arParams['EDIT'] && $arResult['CAN_EDIT'] || isset($arResult["MEETING"]["PLACE_ID"]))
 {
-	$arResult['MEETING_ROOMS_LIST'] = array();
-	if ($arParams['RESERVE_MEETING_IBLOCK_ID'] || $arParams['RESERVE_VMEETING_IBLOCK_ID'])
+	$arResult['MEETING_ROOMS_LIST'] = [];
+	if (CMeeting::IsNewCalendar())
+	{
+		$roomsList = Bitrix\Calendar\Rooms\Manager::getRoomsList();
+		$roomExist = false;
+		foreach ($roomsList as $room)
+		{
+			$room['MEETING_ROOM_ID'] = CMeeting::makeCalendarPlace($room['ID']);
+			$arResult['MEETING_ROOMS_LIST'][] = $room;
+
+			if (
+				$arResult["MEETING"]["PLACE_ID"]
+				&& $arResult["MEETING"]["PLACE_ID"] === $room['MEETING_ROOM_ID']
+			)
+			{
+				$arResult["MEETING"]["PLACE"] = htmlspecialcharsbx($room["NAME"]);
+				$roomExist = true;
+			}
+		}
+
+		if ($arResult["MEETING"]["PLACE_ID"] && !$roomExist)
+		{
+			unset($arResult["MEETING"]["PLACE"], $arResult["MEETING"]["PLACE_ID"]);
+		}
+	}
+	else if ($arParams['RESERVE_MEETING_IBLOCK_ID'] || $arParams['RESERVE_VMEETING_IBLOCK_ID'])
 	{
 		$dbMeetingsList = CIBlockSection::GetList(
 			array('IBLOCK_ID' => 'ASC', 'NAME' => 'ASC', 'ID' => 'DESC'),
 			array('IBLOCK_ID' =>
-				array(intval($arParams['RESERVE_MEETING_IBLOCK_ID']), intval($arParams['RESERVE_VMEETING_IBLOCK_ID']))
+				array((int)$arParams['RESERVE_MEETING_IBLOCK_ID'], (int)$arParams['RESERVE_VMEETING_IBLOCK_ID'])
 			),
 			false,
 			array('ID', 'IBLOCK_ID', 'NAME', 'DESCRIPTION')
@@ -751,7 +775,7 @@ if ($arParams['EDIT'] && $arResult['CAN_EDIT'] || isset($arResult["MEETING"]["PL
 			$arRoom["MEETING_ROOM_ID"] = CMeeting::MakePlace($arRoom["IBLOCK_ID"], $arRoom["ID"]);
 			$arResult['MEETING_ROOMS_LIST'][] = $arRoom;
 
-			if(isset($arResult["MEETING"]["PLACE_ID"]) && $arResult["MEETING"]["PLACE_ID"] == $arRoom["MEETING_ROOM_ID"])
+			if (isset($arResult["MEETING"]["PLACE_ID"]) && (int)$arResult["MEETING"]["PLACE_ID"] === (int)$arRoom["MEETING_ROOM_ID"])
 			{
 				$arResult["MEETING"]["PLACE"] = htmlspecialcharsbx($arRoom["NAME"]);
 			}

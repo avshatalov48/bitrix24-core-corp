@@ -189,7 +189,7 @@
 					return result;
 				}
 
-				if (control.getId() === controlId)
+				if (control && control.getId() === controlId)
 				{
 					return control;
 				}

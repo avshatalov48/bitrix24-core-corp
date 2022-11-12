@@ -12,6 +12,7 @@
 
 namespace Bitrix\Tasks\Manager;
 
+use Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Comments;
@@ -988,6 +989,11 @@ final class Task extends \Bitrix\Tasks\Manager
 
 	private static function cleanData(UserModel $user, array $data)
 	{
+		if ($user->isAdmin())
+		{
+			return $data;
+		}
+
 		$userId = $user->getUserId();
 
 		if (
@@ -997,19 +1003,26 @@ final class Task extends \Bitrix\Tasks\Manager
 		{
 			$groupId = (int) $data['SE_PROJECT']['ID'];
 			if (
-				!\Bitrix\Socialnetwork\Internals\Registry\FeaturePermRegistry::getInstance()->get(
+				!FeaturePermRegistry::getInstance()->get(
 					$groupId,
 					'tasks',
-					'view',
+					'create_tasks',
+					$userId
+				)
+				&& !FeaturePermRegistry::getInstance()->get(
+					$groupId,
+					'tasks',
+					'edit_tasks',
 					$userId
 				)
 			)
 			{
 				$data['SE_PROJECT']['ID'] = 0;
 			}
+
 		}
 
-		if (!$user->isExtranet() || $user->isAdmin())
+		if (!$user->isExtranet())
 		{
 			return $data;
 		}

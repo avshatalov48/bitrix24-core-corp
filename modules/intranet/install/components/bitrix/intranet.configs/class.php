@@ -656,11 +656,23 @@ final class IntranetConfigsComponent extends CBitrixComponent
 			{
 				COption::SetOptionString("bitrix24", "feature_crm", "Y");
 				ModuleManager::add("crm");
+
+				if (!IsModuleInstalled("crmmobile"))
+				{
+					ModuleManager::add("crmmobile");
+				}
+
 				$manualModulesChangedList['crm'] = 'Y';
 			}
 			elseif (!isset($_POST["feature_crm"]) && IsModuleInstalled("crm"))
 			{
 				COption::SetOptionString("bitrix24", "feature_crm", "N");
+
+				if (IsModuleInstalled("crmmobile"))
+				{
+					ModuleManager::delete("crmmobile");
+				}
+
 				ModuleManager::delete("crm");
 				$manualModulesChangedList['crm'] = 'N';
 			}

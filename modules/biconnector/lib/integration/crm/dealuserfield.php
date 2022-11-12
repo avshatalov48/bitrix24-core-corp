@@ -14,7 +14,7 @@ class DealUserField
 	 *
 	 * @return void
 	 */
-	function onBIConnectorDataSources(\Bitrix\Main\Event $event)
+	public static function onBIConnectorDataSources(\Bitrix\Main\Event $event)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
 		{
@@ -50,6 +50,15 @@ class DealUserField
 				'DATE_CREATE' => [
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'D.DATE_CREATE',
+					'FIELD_TYPE' => 'datetime',
+					'TABLE_ALIAS' => 'D',
+					'JOIN' => 'INNER JOIN b_crm_deal D ON D.ID = DUF.VALUE_ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_deal D ON D.ID = DUF.VALUE_ID',
+				],
+				//b_crm_deal.CLOSEDATE DATETIME DEFAULT NULL,
+				'CLOSEDATE' => [
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'D.CLOSEDATE',
 					'FIELD_TYPE' => 'datetime',
 					'TABLE_ALIAS' => 'D',
 					'JOIN' => 'INNER JOIN b_crm_deal D ON D.ID = DUF.VALUE_ID',

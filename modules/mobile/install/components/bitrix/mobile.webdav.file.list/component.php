@@ -276,7 +276,7 @@ if ( ! defined('LANGUAGE_ID') )
 		define('LANGUAGE_ID', 'en');
 }
 
-$langFilename = dirname(__FILE__) . '/lang/' . $lng . '/ajax.php';
+$langFilename = __DIR__ . '/lang/' . $lng . '/ajax.php';
 if (file_exists($langFilename))
 {
 	__IncludeLang($langFilename);

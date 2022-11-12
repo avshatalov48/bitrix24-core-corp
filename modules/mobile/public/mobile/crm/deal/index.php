@@ -77,17 +77,6 @@ switch ($page)
 			)
 		);
 		break;
-	case "calltracker_details":
-		$APPLICATION->IncludeComponent(
-			'bitrix:mobile.crm.calltracker.details',
-			'',
-			array(
-				'ENTITY_TYPE_ID' => CCrmOwnerType::Deal,
-				'ENTITY_ID' => $_REQUEST['deal_id']
-			)
-		);
-		break;
-
 }
 ?>
 

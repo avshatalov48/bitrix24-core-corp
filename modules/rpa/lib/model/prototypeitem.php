@@ -95,7 +95,7 @@ abstract class PrototypeItem extends Main\UserField\Internal\PrototypeItemDataMa
 		/** @var Item $item */
 		$item = static::getById($id)->fetchObject();
 		$userTypeManager = UserFieldHelper::getInstance()->getManager();
-		if($userTypeManager)
+		if ($userTypeManager instanceof \CUserTypeManager)
 		{
 			$userFields = $userTypeManager->GetUserFields(static::getItemUserFieldEntityId());
 			foreach($userFields as $userField)

@@ -61,6 +61,7 @@ class MicrosoftPowerBI extends Service
 					'TYPE' => $this->mapType($type),
 					'IS_PRIMARY' => $fieldInfo['IS_PRIMARY'] ?: null,
 					'CONCAT_GROUP_BY' => $fieldInfo['CONCAT_GROUP_BY'] ?: null,
+					'CONCAT_KEY' => $fieldInfo['CONCAT_KEY'] ?: null,
 				];
 			}
 		}
@@ -261,6 +262,10 @@ class MicrosoftPowerBI extends Service
 						|| !($strQueryWhere && $canBeFiltered)
 					)
 					{
+						if ($tableFields[$fieldName]['CONCAT_KEY'])
+						{
+							$selectedFields[$tableFields[$fieldName]['CONCAT_KEY']] = $tableFields[$tableFields[$fieldName]['CONCAT_KEY']];
+						}
 						$selectedFields[$fieldName] = $tableFields[$fieldName];
 					}
 				}

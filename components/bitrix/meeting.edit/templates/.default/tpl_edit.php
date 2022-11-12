@@ -221,7 +221,7 @@ endif;
 				</div>
 				<div class="meeting-new-meeting-plase">
 					<span class="meeting-new-meeting-plase-text"><?=GetMessage('ME_PLACE')?></span>
-					<input type="text" name="PLACE" value="<?=$arResult['MEETING']['PLACE']?>" onchange="onMeetingRoomChange()" />
+					<input type="text" name="PLACE" value="<?=$arResult['MEETING']['PLACE']?>" autocomplete="off" onchange="onMeetingRoomChange()" />
 					<input type="hidden" name="PLACE_ID" value="<?=htmlspecialcharsbx($arResult['MEETING']['PLACE_ID'])?>">
 					<span id="meeting_room_flag" class="meeting-room-flag meeting-rm-free" style="display:<?=$arResult['MEETING']['PLACE_ID']==''?'none':'inline-block'?>"><span class="meeting-rm-icon"></span><span class="meeting-room-flag-text"><?=GetMessage('ME_MR_FREE')?></span></span>
 <?

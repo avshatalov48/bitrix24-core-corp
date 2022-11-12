@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\ImOpenLines\Crm;
 
 use Bitrix\ImOpenLines\Crm;
@@ -10,6 +11,7 @@ use Bitrix\ImOpenLines\Session;
 use Bitrix\Crm\Activity\StatisticsStatus;
 use Bitrix\Crm\Integration\Channel\IMOpenLineTracker;
 
+use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 
@@ -66,7 +68,7 @@ class Activity
 				}
 				else
 				{
-					$addFields['COMPLETED'] = $params['COMPLETED'] == 'Y' ? 'Y' : 'N';
+					$addFields['COMPLETED'] = $params['COMPLETED'] === 'Y' ? 'Y' : 'N';
 				}
 				if (empty($params['MODE']))
 				{
@@ -115,6 +117,16 @@ class Activity
 							'ENTITY_TYPE_ID' => $entity['ENTITY_TYPE_ID']
 						];
 					}
+				}
+
+				if (
+					$addFields['DIRECTION'] === \CCrmActivityDirection::Incoming
+					&& static::isNewOpenLinesScenarioEnabled()
+				)
+				{
+					$addFields['IS_INCOMING_CHANNEL'] = 'Y';
+
+					(new Event('imopenlines', 'OnImOpenLineRegisteredInCrm', $addFields))->send();
 				}
 
 				$id = \CCrmActivity::Add($addFields, false, true, ['REGISTER_SONET_EVENT' => true]);
@@ -205,8 +217,18 @@ class Activity
 
 				if (!empty($updateDate))
 				{
-					$resultUpdate = \CCrmActivity::Update($id, $updateDate, false, true, ['REGISTER_SONET_EVENT' => true]);
+					$updateOptions = ['REGISTER_SONET_EVENT' => true];
 
+					if (static::isNewOpenLinesScenarioEnabled())
+					{
+						$activityFields = \CCrmActivity::GetByID($id, false);
+						if (isset($activityFields['RESPONSIBLE_ID']) && $activityFields['RESPONSIBLE_ID'] > 0)
+						{
+							$updateOptions['CURRENT_USER'] = $activityFields['RESPONSIBLE_ID'];
+						}
+					}
+
+					$resultUpdate = \CCrmActivity::Update($id, $updateDate, false, true, $updateOptions);
 					if ($resultUpdate == false)
 					{
 						if (\CAllCrmActivity::GetErrorCount() > 0)
@@ -230,5 +252,24 @@ class Activity
 		}
 
 		return $result;
+	}
+
+	/**
+	 *
+	 * Temporary method for independent operation of modules imopenlines and crm
+	 *
+	 * @return bool
+	 */
+	private static function isNewOpenLinesScenarioEnabled(): bool
+	{
+		if(
+			Loader::includeModule('crm')
+			&& method_exists(\Bitrix\Crm\Settings\Crm::class, 'isUniversalActivityScenarioEnabled')
+		)
+		{
+			return \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled();
+		}
+
+		return false;
 	}
 }

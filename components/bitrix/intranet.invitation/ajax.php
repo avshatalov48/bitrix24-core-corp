@@ -359,7 +359,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$userData = $_POST;
-		$departmentId = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: $this->getHeadDepartmentId();
+		$departmentId = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: [$this->getHeadDepartmentId()];
 
 		foreach ($userData["ITEMS"] as $key => $item)
 		{
@@ -560,7 +560,7 @@ class CIntranetInvitationComponentAjaxController extends \Bitrix\Main\Engine\Con
 		}
 
 		$userData = $_POST;
-		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: $this->getHeadDepartmentId();
+		$userData["DEPARTMENT_ID"] = $this->filterDepartment($userData["UF_DEPARTMENT"]) ?: [$this->getHeadDepartmentId()];
 
 		$idAdded = CIntranetInviteDialog::AddNewUser(SITE_ID, $userData, $strError);
 

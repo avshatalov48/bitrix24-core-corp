@@ -382,12 +382,10 @@ class CIBlockPropertyEmployee extends CIEmployeeProperty
 		return str_replace(
 			[
 				'#user_id#',
+				'#USER_ID#',
 				'#ID#',
 			],
-			[
-				$user['ID'],
-				$user['ID'],
-			],
+			(string)$user['ID'],
 			self::$urlTemplates[$mode]
 		);
 	}

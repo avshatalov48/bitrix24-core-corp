@@ -590,32 +590,15 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid() && $arResult["I
 		}
 
 		//Region automation
-		if (class_exists('\Bitrix\Crm\Automation\Factory'))
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
+		$starter->setContextToMobile()->setUserIdFromCurrent();
+		if(!$bEdit)
 		{
-			if (class_exists('\Bitrix\Crm\Automation\Starter'))
-			{
-				$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
-				$starter->setContextToMobile()->setUserIdFromCurrent();
-				if(!$bEdit)
-				{
-					$starter->runOnAdd();
-				}
-				else
-				{
-					$starter->runOnUpdate($arFields, is_array($arResult['ELEMENT']) ? $arResult['ELEMENT'] : []);
-				}
-			}
-			else
-			{
-				if (!$bEdit)
-				{
-					\Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
-				}
-				elseif (isset($arFields['STATUS_ID']) && is_array($arResult['ELEMENT']) && $arFields['STATUS_ID'] != $arResult['ELEMENT']['STATUS_ID'])
-				{
-					\Bitrix\Crm\Automation\Factory::runOnStatusChanged(\CCrmOwnerType::Lead, $arResult['ELEMENT']['ID']);
-				}
-			}
+			$starter->runOnAdd();
+		}
+		else
+		{
+			$starter->runOnUpdate($arFields, is_array($arResult['ELEMENT']) ? $arResult['ELEMENT'] : []);
 		}
 		//end automation
 

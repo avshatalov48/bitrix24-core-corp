@@ -60,6 +60,7 @@ class Im
 			'TO_CHAT_ID' => $chatId,
 			'MESSAGE' => $message,
 			'SYSTEM' => 'Y',
+			'URL_PREVIEW' => 'N',
 			'IMPORTANT_CONNECTOR' => 'Y',
 			'PARAMS' => [
 				'CLASS' => 'bx-messenger-content-item-ol-output',

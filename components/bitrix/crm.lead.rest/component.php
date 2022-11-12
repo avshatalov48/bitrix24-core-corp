@@ -36,15 +36,14 @@ $bCheckPerms = true;
 // authorize
 if (isset($arData['LOGIN']) && isset($arData['PASSWORD']))
 {
-	$CCrmUser = new CUser();
-	if (($error = $CCrmUser->Login($arData['LOGIN'], $arData['PASSWORD'], 'N', 'Y')) !== true)
+	if (($error = $USER->Login($arData['LOGIN'], $arData['PASSWORD'])) !== true)
 	{
 		$APPLICATION->RestartBuffer();
 		echo CUtil::PhpToJSObject(array('error' => 403, 'error_message' => $error === false ? "OTP required" : $APPLICATION->ConvertCharset(strip_tags(nl2br($error['MESSAGE'])), LANG_CHARSET, 'UTF-8')));
 		exit();
 	}
 
-	CCRMLeadRest::CreateAuthHash($arData);
+	CCRMLeadRest::CreateAuthHash();
 }
 elseif ($arData['AUTH'])
 {

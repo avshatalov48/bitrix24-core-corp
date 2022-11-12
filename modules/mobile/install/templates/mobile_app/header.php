@@ -43,6 +43,11 @@ $APPLICATION->IncludeComponent("bitrix:mobile.data", "", Array(
 	$APPLICATION->ShowHead();
 	if (!defined("BX_DONT_INCLUDE_MOBILE_TEMPLATE_CSS"))
 	{
+		if (!defined('MOBILE_TEMPLATE_CSS'))
+		{
+			\Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+		}
+
 		$APPLICATION->SetAdditionalCSS(SITE_TEMPLATE_PATH . (defined('MOBILE_TEMPLATE_CSS') ? MOBILE_TEMPLATE_CSS : "/common_styles.css"));
 	}
 

@@ -40,6 +40,7 @@ $MESS['CRM_BIC_LEAD_FIELD_STATUS_SEMANTIC'] = "Тип статуса";
 $MESS['CRM_BIC_LEAD_FIELD_CRM_PRODUCT_ID'] = "Идентификатор товара из CRM (множ.)";
 $MESS['CRM_BIC_LEAD_FIELD_CRM_PRODUCT_NAME'] = "Название товара из CRM (множ.)";
 $MESS['CRM_BIC_LEAD_FIELD_CRM_PRODUCT'] = "Товар из CRM (множ.)";
+$MESS['CRM_BIC_LEAD_FIELD_CRM_PRODUCT_COUNT'] = "Количество товаров из CRM (множ.)";
 $MESS['CRM_BIC_LEAD_FIELD_OPPORTUNITY'] = "Ожидаемая сумма";
 $MESS['CRM_BIC_LEAD_FIELD_CURRENCY_ID'] = "Валюта";
 $MESS['CRM_BIC_LEAD_FIELD_CURRENCY_ID_FULL'] = "Идентификатор валюты";

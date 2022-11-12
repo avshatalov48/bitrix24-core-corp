@@ -749,7 +749,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            id: "department",
 	            options: {
 	              selectMode: "departmentsOnly",
-	              allowOnlyUserDepartments: true,
+	              allowOnlyUserDepartments: !(!!this.options["isAdmin"] && this.options["isAdmin"] === true),
 	              allowSelectRootDepartment: true
 	            }
 	          });
@@ -849,6 +849,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    _this.userOptions = params.userOptions;
 	    _this.isExtranetInstalled = params.isExtranetInstalled === "Y";
 	    _this.isCloud = params.isCloud === "Y";
+	    _this.isAdmin = params.isAdmin === "Y";
 	    _this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
 	    _this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 	    _this.regenerateUrlBase = params.regenerateUrlBase;
@@ -944,7 +945,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
 	                options: {
 	                  department: true,
-	                  project: true
+	                  project: true,
+	                  isAdmin: this.isAdmin
 	                }
 	              };
 	              this.renderSelector(selectorParams);
@@ -954,7 +956,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
 	                options: {
 	                  department: false,
-	                  project: "extranet"
+	                  project: "extranet",
+	                  isAdmin: this.isAdmin
 	                }
 	              };
 	              this.renderSelector(_selectorParams);
@@ -964,7 +967,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	                contentBlock: this.contentBlocks[action].querySelector("[data-role='entity-selector-container']"),
 	                options: {
 	                  department: true,
-	                  project: true
+	                  project: true,
+	                  isAdmin: this.isAdmin
 	                }
 	              };
 	              this.renderSelector(_selectorParams2);

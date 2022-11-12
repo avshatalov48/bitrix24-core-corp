@@ -9,7 +9,7 @@ class CCRMLeadRest
 
 	/* public section */
 
-	public static function CreateAuthHash($arData)
+	public static function CreateAuthHash()
 	{
 		global $USER, $APPLICATION;
 		self::$authHash = $USER->AddHitAuthHash($APPLICATION->GetCurPage());

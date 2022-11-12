@@ -14,7 +14,10 @@ div.bizproc-item-description {
 div.bizproc-item-text{
 	margin: 1em 0 0 1em;}
 div.bizproc-item-buttons{
-	margin: 1.5em 0 0 1em;}
+	/*margin: 1.5em 0 0 1em;*/
+	margin: 1.5em 0 0 0;
+}
+
 div.bizproc-item-buttons input {
 	margin-right:0.7em;}
 
@@ -43,6 +46,16 @@ table.bizproc-task-table select
 }
 span.required {
 	color: red;
+}
+
+table.bizproc-task-table tr {
+	display: flex;
+	flex-direction: column;
+}
+
+table.bizproc-task-table td:first-child {
+	margin-bottom: 15px;
+	text-align: left;
 }
 
 .bp-task-block .webform-small-button.add-field-button {
@@ -108,3 +121,5 @@ span.required {
 .bp-task-block .bp-task-form {
 	margin-top: 15px;
 }
+
+.bp-task-block .bp-task-form

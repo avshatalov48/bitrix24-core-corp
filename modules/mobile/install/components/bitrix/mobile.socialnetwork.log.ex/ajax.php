@@ -34,7 +34,7 @@ else
 	define("LANGUAGE_ID", "en");
 }
 
-__IncludeLang(dirname(__FILE__)."/lang/".$lng."/ajax.php");
+__IncludeLang(__DIR__."/lang/".$lng."/ajax.php");
 
 if(CModule::IncludeModule("socialnetwork"))
 {

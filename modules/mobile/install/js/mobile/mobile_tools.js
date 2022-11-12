@@ -300,6 +300,31 @@
 						})
 					}
 				},
+				{
+					resolveFunction: BX.MobileTools.diskFileKnowledge,
+					openFunction: function(fileId) {
+
+						BX.ajax.get("/bitrix/services/main/ajax.php?action=landing.api.diskFile.info&fileId=" + fileId, function(data)
+						{
+							if (typeof data === 'string')
+							{
+								data = JSON.parse(data);
+							}
+
+							if (!data.data)
+							{
+								return;
+							}
+
+							app.openDocument({
+								url: "/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=" + fileId,
+								filename: data.data.NAME ? data.data.NAME : "File"
+							});
+						});
+
+						return false;
+					}
+				},
 			];
 
 			if (Application.getApiVersion() >= 41)
@@ -456,6 +481,16 @@
 		{
 			var result = url.match(/\/disk\/showFile\/(\d+)\//i);
 			if(result)
+			{
+				return result[1];
+			}
+
+			return null;
+		},
+		diskFileKnowledge:function(url)
+		{
+			let result = url.match(/#diskFile(\d+)/i);
+			if (result)
 			{
 				return result[1];
 			}

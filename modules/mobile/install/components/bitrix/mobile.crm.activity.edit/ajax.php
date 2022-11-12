@@ -70,7 +70,7 @@ $curUserPrems = CCrmPerms::GetCurrentUserPermissions();
 $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
 if($action === 'SAVE_ENTITY')
 {
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$typeName = isset($_REQUEST['ENTITY_TYPE_NAME']) ? $_REQUEST['ENTITY_TYPE_NAME'] : '';
 	if($typeName !== 'ACTIVITY')
@@ -645,7 +645,7 @@ if($action === 'SAVE_ENTITY')
 }
 elseif($action === 'DELETE_ENTITY')
 {
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$typeName = isset($_REQUEST['ENTITY_TYPE_NAME']) ? $_REQUEST['ENTITY_TYPE_NAME'] : '';
 	if($typeName !== 'ACTIVITY')
@@ -687,7 +687,7 @@ elseif($action === 'DELETE_ENTITY')
 }
 elseif($action === 'GET_ENTITY')
 {
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$typeName = isset($_REQUEST['ENTITY_TYPE_NAME']) ? $_REQUEST['ENTITY_TYPE_NAME'] : '';
 	if($typeName !== 'ACTIVITY')
@@ -716,7 +716,7 @@ elseif($action === 'GET_ENTITY')
 }
 elseif($action === 'COMPLETE')
 {
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$typeName = isset($_REQUEST['ENTITY_TYPE_NAME']) ? $_REQUEST['ENTITY_TYPE_NAME'] : '';
 	if($typeName !== 'ACTIVITY')

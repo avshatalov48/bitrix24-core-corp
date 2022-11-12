@@ -18,7 +18,7 @@
 
 		handleFieldChange(eventArgs)
 		{
-			if (eventArgs.editorId === this.editorRef.getId())
+			if (this.editorRef && eventArgs.editorId === this.editorRef.getId())
 			{
 				this.emit('DetailCard::onTabChange', [{id: this.id}]);
 			}
@@ -26,7 +26,7 @@
 
 		handleFocusChange(focused, eventArgs)
 		{
-			if (eventArgs.editorId === this.editorRef.getId())
+			if (this.editorRef && eventArgs.editorId === this.editorRef.getId())
 			{
 				this.emit('DetailCard::onTabEdit', [
 					{id: this.id},

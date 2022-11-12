@@ -142,7 +142,7 @@
 }
 
 .biconnector-report-service-connection-step-inner-value {
-	font: bold 12px/16px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: var(--ui-font-weight-bold) 12px/16px "Roboto", "Helvetica Neue", Helvetica, Arial, sans-serif;
 	color: #333;
 }
 

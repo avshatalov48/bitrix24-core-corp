@@ -311,17 +311,6 @@ class Helper
 			{
 				$leadCreationError = \CVoxImplantCrmHelper::$lastError;
 			}
-
-			if (self::isIncomingCall($call) && \CVoxImplantCrmHelper::isNewCallScenarioEnabled())
-			{
-				$crmEventData = [
-					'CALLER_ID' => $phoneNumber,
-					'CRM_DATA' => $call->getCrmBindings(),
-					'USER_ID' => $fields['USER_ID'],
-				];
-
-				(new Event('voximplant', 'onCallRegisteredInCrm', $crmEventData))->send();
-			}
 		}
 
 		if(\CVoxImplantConfig::GetLeadWorkflowExecution() == \CVoxImplantConfig::WORKFLOW_START_IMMEDIATE)
@@ -356,7 +345,7 @@ class Helper
 			'CALL_ID' => $call->getCallId(),
 			'CRM_CREATED_LEAD' => (int)$call->getCreatedCrmLead() ?: null,
 			'CRM_CREATED_ENTITIES' => $createdEntities,
-			'CRM_ENTITY_TYPE' => $call->getPrimaryEntityType(),
+			'CRM_ENTITY_TYPE' => (string)$call->getPrimaryEntityType(),
 			'CRM_ENTITY_ID' => (int)$call->getPrimaryEntityId() ?: null,
 		);
 

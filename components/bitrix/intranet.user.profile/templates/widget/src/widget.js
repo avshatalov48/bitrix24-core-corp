@@ -1,4 +1,4 @@
-import {Uri, Type, Tag, Cache, Loc, Browser, Text} from 'main.core';
+import {Uri, Type, Tag, Cache, Loc, Browser, Text, ajax} from 'main.core';
 import {EventEmitter} from 'main.core.events';
 import {PopupComponentsMaker} from 'ui.popupcomponentsmaker';
 import {StressLevel} from './stress-level';
@@ -6,6 +6,7 @@ import ThemePicker from './theme-picker';
 import {Menu} from 'main.popup';
 import 'main.qrcode';
 import Options from "./options";
+import MaskEditor from "./mask-editor";
 import Ustat from "./ustat";
 import {QrAuthorization} from "ui.qrauthorization";
 
@@ -20,7 +21,7 @@ export default class Widget extends EventEmitter
 
 
 	constructor(container, {
-		profile: {ID, FULL_NAME, PHOTO, STATUS, URL, WORK_POSITION},
+		profile: {ID, FULL_NAME, PHOTO, MASK, STATUS, URL, WORK_POSITION},
 		component: {componentName, signedParameters},
 		features
 	})
@@ -28,7 +29,7 @@ export default class Widget extends EventEmitter
 		super();
 		this.setEventNamespace(Options.eventNameSpace);
 		this.#container = container;
-		this.#profile = {ID, FULL_NAME, PHOTO, STATUS, URL, WORK_POSITION};
+		this.#profile = {ID, FULL_NAME, PHOTO, MASK, STATUS, URL, WORK_POSITION};
 		this.#features = features;
 		if (!Type.isStringFilled(this.#features.browser))
 		{
@@ -89,7 +90,6 @@ export default class Widget extends EventEmitter
 				},
 				{
 					html: this.#getMaskContainer(),
-					disabled: true,
 					backgroundColor: '#fafafa'
 				}
 			],
@@ -328,25 +328,13 @@ export default class Widget extends EventEmitter
 	#getMaskContainer(): Element
 	{
 		return this.#cache.remember('Mask', () => {
-			return Tag.render`
-				<div class="system-auth-form__item system-auth-form__scope --padding-sm">
-					<div class="system-auth-form__item-logo">
-						<div class="system-auth-form__item-logo--image --mask"></div>
-					</div>
-					<div class="system-auth-form__item-container">
-						<div class="system-auth-form__item-title">
-							<span>${Loc.getMessage('INTRANET_USER_PROFILE_MASKS')}</span>
-							<span class="system-auth-form__icon-help"></span>
-						</div>
-						<div class="system-auth-form__item-content --center --center-force">
-							<div class="ui-qr-popupcomponentmaker__btn">${Loc.getMessage('INTRANET_USER_PROFILE_INSTALL')}</div>
-						</div>
-					</div>
-					<div class="system-auth-form__item-new --soon">
-						<div class="system-auth-form__item-new--title">${Loc.getMessage('INTRANET_USER_PROFILE_SOON')}</div>
-					</div>
-				</div>
-			`;
+			const maskEditor = new MaskEditor(this.#profile.MASK);
+			maskEditor.subscribe('onOpen', this.hide);
+			maskEditor.subscribe('onChangePhoto', ({data}) => {
+				this.#savePhoto(data)
+			});
+			this.emit('onChangePhoto')
+			return maskEditor.getPromise();
 		});
 	}
 
@@ -368,13 +356,33 @@ export default class Widget extends EventEmitter
 		});
 	}
 
+	#savePhoto(dataObj)
+	{
+		ajax.runComponentAction(
+			this.#cache.get('componentParams').componentName,
+			'loadPhoto',
+			{
+				signedParameters: this.#cache.get('componentParams').signedParameters,
+				mode: 'ajax',
+				data: dataObj
+			}
+		).then(function (response) {
+				if (response.data)
+			{
+				(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{url: response.data}]);
+			}
+		}.bind(this), function (response) {
+			console.log('response: ', response);
+		}.bind(this));
+	}
+
 	#getStressLevel(): Promise
 	{
 		if (this.#features['stressLevel'] !== 'Y')
 		{
 			return null;
 		}
-		const result = this.#cache.remember('getStressLevel', () => {
+		return this.#cache.remember('getStressLevel', () => {
 			return StressLevel.getPromise({
 				signedParameters: this.#cache.get('componentParams').signedParameters,
 				componentName: this.#cache.get('componentParams').componentName,
@@ -382,8 +390,6 @@ export default class Widget extends EventEmitter
 				data: this.#features['stressLevelData'] ?? null
 			});
 		});
-		this.#cache.delete('componentParams');
-		return result;
 	}
 
 	#getQrContainer(flex): Element

@@ -6,4 +6,5 @@ return [
 	'catalog/barcode-scanner',
 	'notify',
 	'helpers/component',
+	'files',
 ];

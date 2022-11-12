@@ -3,8 +3,11 @@ namespace Bitrix\BIConnector;
 
 class Manager
 {
+	const IS_VALID_URL = 1;
+	const IS_EXTERNAL_URL = 2;
+
 	protected static $instance = null;
-	protected $dataSources = null;
+	protected $dataSources = [];
 	protected $connectionName = '';
 	protected $serviceId = '';
 	protected $keyId = 0;
@@ -34,10 +37,10 @@ class Manager
 
 	protected function init($languageId = '')
 	{
-		if (!isset($this->dataSources))
+		if (!isset($this->dataSources[$languageId]))
 		{
-			$this->dataSources = [];
-			$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorDataSources', [$this, &$this->dataSources, $languageId]);
+			$this->dataSources[$languageId] = [];
+			$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorDataSources', [$this, &$this->dataSources[$languageId], $languageId]);
 			$event->send();
 		}
 	}
@@ -45,13 +48,13 @@ class Manager
 	public function getDataSources($languageId = '')
 	{
 		$this->init($languageId);
-		return $this->dataSources;
+		return $this->dataSources[$languageId];
 	}
 
 	public function getTableDescription($table, $languageId = '')
 	{
 		$this->init($languageId);
-		return $this->dataSources[$table];
+		return $this->dataSources[$languageId][$table];
 	}
 
 	public function checkAccessKey($key)
@@ -70,6 +73,11 @@ class Manager
 			if ($dbKey)
 			{
 				$this->connectionName = $dbKey['CONNECTION'];
+				$pool = \Bitrix\Main\Application::getInstance()->getConnectionPool();
+				if ($this->connectionName === $pool::DEFAULT_CONNECTION_NAME)
+				{
+					$this->connectionName .= '_' . __CLASS__;
+				}
 				$this->keyId = $dbKey['ID'];
 				return true;
 			}
@@ -113,18 +121,18 @@ class Manager
 		return $result;
 	}
 
-	public function validateDashboardUrl($url)
+	private function checkDashboardUrlFlag($url, $flag)
 	{
-		$found = false;
-
-		if (!$found && Services\GoogleDataStudio::validateDashboardUrl($url))
+		$found = Services\GoogleDataStudio::validateDashboardUrl($url);
+		if ($found & $flag)
 		{
-			$found = true;
+			return true;
 		}
 
-		if (!$found && Services\MicrosoftPowerBI::validateDashboardUrl($url))
+		$found = Services\MicrosoftPowerBI::validateDashboardUrl($url);
+		if ($found & $flag)
 		{
-			$found = true;
+			return true;
 		}
 
 		$event = new \Bitrix\Main\Event('biconnector', 'OnBIConnectorValidateDashboardUrl', [$url]);
@@ -133,11 +141,25 @@ class Manager
 		{
 			if ($evenResult->getResultType() == \Bitrix\Main\EventResult::SUCCESS)
 			{
-				$found = $found || $evenResult->getParameters();
+				$found = $evenResult->getParameters();
+				if ($found & $flag)
+				{
+					return true;
+				}
 			}
 		}
 
-		return $found;
+		return false;
+	}
+
+	public function validateDashboardUrl($url)
+	{
+		return $this->checkDashboardUrlFlag($url, static::IS_VALID_URL);
+	}
+
+	public function isExternalDashboardUrl($url)
+	{
+		return $this->checkDashboardUrlFlag($url, static::IS_EXTERNAL_URL);
 	}
 
 	public function getConnections()

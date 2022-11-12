@@ -16,6 +16,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page;
+use Bitrix\UI;
 
 $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
 $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 'no-all-paddings no-background');
@@ -28,6 +29,8 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '') . 
 	'ui.icons.b24',
 	'ui.design-tokens',
 	'ui.fonts.opensans',
+	'ui.avatar-editor',
+	'avatar_editor'
 ]);
 
 CJSCore::Init("loader");
@@ -235,7 +238,21 @@ if (
 					?>
 					<div class="intranet-user-profile-userpic-load">
 						<div class="intranet-user-profile-userpic-create" id="intranet-user-profile-photo-camera"><?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_CAMERA")?></div>
-						<div class="intranet-user-profile-userpic-upload" id="intranet-user-profile-photo-file"><?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_LOAD")?></div>
+						<div class="intranet-user-profile-userpic-upload" id="intranet-user-profile-photo-file" <?=(
+							class_exists(UI\Avatar\Mask\Helper::class)
+							? UI\Avatar\Mask\Helper::getHTMLAttribute($arResult["User"]["PERSONAL_PHOTO"]) : ''
+						)?>><?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_LOAD")?></div><?php
+
+						if (class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
+							&&
+							\Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability-delete-after-10.2022', 'N') === 'Y'
+						)
+						{
+							?><div class="intranet-user-profile-userpic-mask" id="intranet-user-profile-photo-mask">
+								<?=Loc::getMessage("INTRANET_USER_PROFILE_AVATAR_MASK")?>
+							</div><?php
+						}
+						?>
 					</div>
 					<div class="intranet-user-profile-userpic-remove" id="intranet-user-profile-photo-remove"></div>
 					<?php

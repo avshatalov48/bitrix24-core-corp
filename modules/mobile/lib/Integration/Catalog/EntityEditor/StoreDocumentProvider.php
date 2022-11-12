@@ -15,6 +15,7 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 
 	private const USER_FIELD = 'user';
 	private const STRING_FIELD = 'string';
+	private const SELECT_FIELD = 'select';
 	private const ENTITY_SELECTOR_FIELD = 'entity-selector';
 	private const FILE_FIELD = 'file';
 
@@ -83,6 +84,10 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 			if ($field['type'] === 'text')
 			{
 				$field['type'] = self::STRING_FIELD;
+			}
+			elseif ($field['type'] === 'list')
+			{
+				$field['type'] = self::SELECT_FIELD;
 			}
 			elseif ($field['type'] === 'contractor')
 			{
@@ -201,6 +206,14 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 				'color' => '#b47a00',
 				'backgroundColor' => '#ffdfa1',
 			],
+		];
+	}
+
+	protected function getProductSummaryInfoTotal(array $document)
+	{
+		return [
+			'amount' => $document['TOTAL'],
+			'currency' => $document['CURRENCY'],
 		];
 	}
 
@@ -358,5 +371,16 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		unset($field);
 
 		return $fields;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function prepareCurrencyListItem(array $currency): array
+	{
+		return array_change_key_case(
+			parent::prepareCurrencyListItem($currency),
+			CASE_LOWER
+		);
 	}
 }

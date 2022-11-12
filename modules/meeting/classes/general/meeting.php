@@ -11,6 +11,7 @@ abstract class CAllMeeting
 	const ROLE_HEAD = 'H';
 
 	const MEETING_ROOM_PREFIX = 'mr';
+	const CALENDAR_ROOM_PREFIX = 'calendar';
 
 	abstract public static function GetList($arOrder = [], $arFilter = [], $arGroupBy = false, $arNavStartParams = false, $arSelectFields = []);
 
@@ -18,9 +19,11 @@ abstract class CAllMeeting
 	{
 		global $DB;
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		if ($ID <= 0)
+		{
 			return false;
+		}
 
 		$query = "
 SELECT ins.*, ".$DB->DateToCharFunction("ins.DEADLINE", "FULL")." as DEADLINE, it.TITLE, it.DESCRIPTION
@@ -35,7 +38,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 	public static function GetByID($ID)
 	{
-		return CMeeting::GetList([], array('ID' => intval($ID)));
+		return CMeeting::GetList([], array('ID' => (int)$ID));
 	}
 
 	public static function Add($arFields)
@@ -93,10 +96,12 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		}
 
 		if (!self::CheckFields('UPDATE', $arFields))
+		{
 			return false;
+		}
 
 		$strUpdate = $DB->PrepareUpdate('b_meeting', $arFields);
-		$query = 'UPDATE b_meeting SET '.$strUpdate.' WHERE ID=\''.intval($ID).'\'';
+		$query = 'UPDATE b_meeting SET '.$strUpdate.' WHERE ID=\''. (int)$ID .'\'';
 
 		$arBind = [];
 		if(isset($arFields['DESCRIPTION']))
@@ -134,9 +139,11 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		global $DB;
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		if ($ID <= 0)
+		{
 			return false;
+		}
 
 		if ($bClear)
 		{
@@ -153,12 +160,16 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 		{
 			foreach ($arUsers as $USER_ID => $USER_ROLE)
 			{
-				$USER_ID = intval($USER_ID);
+				$USER_ID = (int)$USER_ID;
 				if ($USER_ID <= 0)
+				{
 					continue;
+				}
 
-				if ($USER_ROLE != self::ROLE_OWNER && $USER_ROLE != self::ROLE_KEEPER)
+				if ($USER_ROLE !== self::ROLE_OWNER && $USER_ROLE !== self::ROLE_KEEPER)
+				{
 					$USER_ROLE = self::ROLE_MEMBER;
+				}
 
 				if ($DB->Query("INSERT INTO b_meeting_users (MEETING_ID, USER_ID, USER_ROLE) VALUES ('".$ID."', '".$USER_ID."', '".$USER_ROLE."')", true))
 				{
@@ -176,7 +187,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 		$arUsers = [];
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		if ($ID > 0)
 		{
 			$dbRes = $DB->Query("SELECT USER_ID, USER_ROLE FROM b_meeting_users WHERE MEETING_ID='".$ID."'");
@@ -193,23 +204,26 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		global $DB;
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		if ($ID <= 0)
+		{
 			return;
+		}
 
 		if (count($arFiles) <= 0)
 		{
-			$DB->Query("DELETE FROM b_meeting_files WHERE MEETING_ID='".intval($ID)."'");
+			$DB->Query("DELETE FROM b_meeting_files WHERE MEETING_ID='". (int)$ID ."'");
 		}
 
 		if (count($arFiles) > 0)
 		{
 			foreach ($arFiles as $FILE_ID)
 			{
-				$FILE_ID = intval($FILE_ID);
+				$FILE_ID = (int)$FILE_ID;
 				if ($FILE_ID > 0)
 				{
-					$DB->Query("INSERT INTO b_meeting_files (MEETING_ID, FILE_ID, FILE_SRC) VALUES ('".$ID."', '".$FILE_ID."', '".intval($src)."')", true);
+					$DB->Query("INSERT INTO b_meeting_files (MEETING_ID, FILE_ID, FILE_SRC) 
+						VALUES ('".$ID."', '".$FILE_ID."', '". (int)$src ."')", true);
 				}
 			}
 		}
@@ -219,15 +233,17 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		global $DB;
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		if ($ID <= 0)
+		{
 			return;
+		}
 
 		$query = "SELECT FILE_ID, FILE_SRC FROM b_meeting_files WHERE MEETING_ID='".$ID."'";
 
 		if ($fileId > 0)
 		{
-			$query .= " AND FILE_ID='".intval($fileId)."'";
+			$query .= " AND FILE_ID='". (int)$fileId ."'";
 		}
 
 		$query .= " ORDER BY FILE_ID ASC";
@@ -249,7 +265,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		global $DB;
 
-		$FILE_SRC = intval($FILE_SRC);
+		$FILE_SRC = (int)$FILE_SRC;
 		if ($FILE_SRC > 0)
 		{
 			$dbRes = $DB->Query("SELECT * FROM b_meeting_files WHERE FILE_SRC='".$FILE_SRC."'");
@@ -308,6 +324,11 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 			}
 		}
 
+		if (!$role && $USER->isAdmin())
+		{
+			return CMeeting::ROLE_MEMBER;
+		}
+
 		return $role;
 	}
 
@@ -315,7 +336,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 	{
 		global $DB;
 
-		$ID = intval($ID);
+		$ID = (int)$ID;
 		if ($ID < 1)
 			return false;
 
@@ -360,13 +381,13 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 		if (!IsAmPmMode())
 		{
-			$date_start = $date.' '.$time.':00';
+			// $date_start = $date.' '.$time.':00';
 			$date_start = FormatDate(
 				$DB->DateFormatToPhp(FORMAT_DATETIME),
 				MakeTimeStamp(
 					$date.' '.$time,
 					FORMAT_DATE.' HH:MI'
-				) + intval($duration)
+				) + (int)$duration
 			);
 		}
 		else
@@ -376,7 +397,7 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 				MakeTimeStamp(
 					$date.' '.$time,
 					FORMAT_DATE.' H:MI T'
-				) + intval($duration)
+				) + (int)$duration
 			);
 		}
 
@@ -385,20 +406,32 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 
 	public static function MakePlace($iblockId, $roomId)
 	{
-		return self::MEETING_ROOM_PREFIX.'_'.intval($iblockId).'_'.intval($roomId);
+		return self::MEETING_ROOM_PREFIX.'_'. (int)$iblockId .'_'. (int)$roomId;
+	}
+
+	public static function makeCalendarPlace($roomId)
+	{
+		return self::CALENDAR_ROOM_PREFIX . '_' . (int)$roomId;
 	}
 
 	public static function CheckPlace($place)
 	{
-		if($place <> '')
+		if ($place)
 		{
 			$matches = [];
 			if(preg_match('/^'.self::MEETING_ROOM_PREFIX.'_([\d]+)_([\d]+)$/', $place, $matches))
 			{
-				return array(
-					'ROOM_IBLOCK' => intval($matches[1]),
-					'ROOM_ID' => intval($matches[2])
-				);
+				return [
+					'ROOM_IBLOCK' => (int)$matches[1],
+					'ROOM_ID' => (int)$matches[2]
+				];
+			}
+
+			if(preg_match('/^'.self::CALENDAR_ROOM_PREFIX.'_([\d]+)$/', $place, $matches))
+			{
+				return [
+					'ROOM_ID' => (int)$matches[1],
+				];
 			}
 		}
 
@@ -516,9 +549,13 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 			{
 				$arUserSet = $obCalendar->GetUserSettings(array('static' => false, 'userId' => $USER->GetID()));
 				if ($arUserSet && isset($arUserSet['MeetCalId']) && in_array($arUserSet['MeetCalId'], $arGuestCalendars))
-					$guestCalendarId = intval($arUserSet['MeetCalId']);
+				{
+					$guestCalendarId = (int)$arUserSet['MeetCalId'];
+				}
 				else
+				{
 					$guestCalendarId = $arGuestCalendars[0];
+				}
 			}
 
 			//$bGroup = $arParams['GROUP_ID'] > 0;
@@ -652,18 +689,24 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 			$dbFiles = CFile::GetList([], array("@ID" => implode(",", array_keys($arInput))));
 			while ($arFile = $dbFiles->GetNext())
 			{
-				$fileSrc = intval($arInput[$arFile['ID']]);
+				$fileSrc = (int)$arInput[$arFile['ID']];
 				$fileUrl = CFile::GetFileSRC($arFile);
 				$fileLink = $fileUrl;
 				if (is_array($arFrom))
 				{
 					$fileLink = '/bitrix/tools/ajax_meeting.php?fileId='.$arFile['ID'];
 					if ($arFrom['REPORT'])
-						$fileLink .= '&reportId='.intval($arFrom['REPORT']);
+					{
+						$fileLink .= '&reportId=' . (int)$arFrom['REPORT'];
+					}
 					elseif ($arFrom['ITEM'])
-						$fileLink .= '&itemId='.intval($arFrom['ITEM']);
+					{
+						$fileLink .= '&itemId=' . (int)$arFrom['ITEM'];
+					}
 					elseif ($arFrom['MEETING'])
-						$fileLink .= '&meetingId='.intval($arFrom['MEETING']);
+					{
+						$fileLink .= '&meetingId=' . (int)$arFrom['MEETING'];
+					}
 				}
 
 				$arFiles[] = array(
@@ -974,10 +1017,11 @@ ORDER BY ins.INSTANCE_PARENT_ID, ins.SORT
 					{
 						if ($arFields[$key]["TYPE"] == "int")
 						{
-							if ((intval($val) == 0) && (mb_strpos($strOperation, "=") !== False))
+							if (((int)$val == 0) && (mb_strpos($strOperation, "=") !== False))
 								$arSqlSearch_tmp[] = "(".$arFields[$key]["FIELD"]." IS ".(($strNegative == "Y") ? "NOT " : "")."NULL) ".(($strNegative == "Y") ? "AND" : "OR")." ".(($strNegative == "Y") ? "NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." 0)";
 							else
-								$arSqlSearch_tmp[] = (($strNegative == "Y") ? " ".$arFields[$key]["FIELD"]." IS NULL OR NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." ".intval($val)." )";
+								$arSqlSearch_tmp[] = (($strNegative == "Y") ? " ".$arFields[$key]["FIELD"]." IS NULL OR NOT " : "")."(".$arFields[$key]["FIELD"]." ".$strOperation." ". (int)$val
+									." )";
 						}
 						elseif ($arFields[$key]["TYPE"] == "double")
 						{

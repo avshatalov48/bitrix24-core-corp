@@ -209,7 +209,16 @@ class LandingManager extends Base
 	public static function onLandingPublication(Event $event)
 	{
 		$landingId = (int) $event->getParameter('id');
-		if($landingId > 0)
+		$code = $event->getParameter('tplCode');
+
+		if (!empty($code))
+		{
+			if (mb_strpos($code, 'chats') !== false)
+			{
+				PullManager::getInstance()->sendLandingPublicationEvent($landingId);
+			}
+		}
+		else if ($landingId > 0)
 		{
 			PullManager::getInstance()->sendLandingPublicationEvent($landingId);
 		}

@@ -62,7 +62,7 @@ class CrmManager extends Base
 			$this->forms = [];
 			if($this->isEnabled)
 			{
-				$formList = FormTable::getList([
+				$formList = FormTable::getDefaultTypeList([
 					'select' => ['ID', 'NAME', 'SECURITY_CODE'],
 					'filter' => [
 						'=ACTIVE' => 'Y',

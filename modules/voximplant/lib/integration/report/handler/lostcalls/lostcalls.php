@@ -6,6 +6,7 @@ use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\ORM\Fields\ExpressionField;
+use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Fields\ScalarField;
 use Bitrix\Main\ORM\Query\Join;
 use Bitrix\Main\ORM\Query\Query;
@@ -16,6 +17,7 @@ use Bitrix\Main\UI\Filter\DateType;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Voximplant\Model\StatisticMissedTable;
 use Bitrix\Voximplant\Integration\Report\Handler\Base;
+use Bitrix\Voximplant\StatisticTable;
 use CTimeZone;
 
 /**
@@ -118,30 +120,42 @@ class LostCalls extends Base implements IReportMultipleData
 	 */
 	public function prepareEntityListFilter($requestParameters): Query
 	{
-		$query = StatisticMissedTable::query();
+		$missedQuery = StatisticMissedTable::query();
 		$fields = StatisticMissedTable::getEntity()->getScalarFields();
 
 		foreach ($fields as $field)
 		{
-			$query->addSelect($field->getName());
+			$missedQuery->addSelect($field->getName());
 		}
 
-		$query->registerRuntimeField(new ExpressionField(
+		$missedQuery->registerRuntimeField(new ExpressionField(
 			'UNANSWERED',
 			"if(DATE_SUB(%s, INTERVAL 24 HOUR) <= %s, 'N', 'Y')",
 			['CALLBACK_CALL_START_DATE', 'CALL_START_DATE'])
 		);
-		$query->where('UNANSWERED', '=', 'Y');
+		$missedQuery->where('UNANSWERED', '=', 'Y');
 
 		$sliderFilterParameters = $this->mergeRequestWithReportFilter($requestParameters->toArray());
 
-		$this->addToQueryFilterCase($query, $sliderFilterParameters);
+		$this->addToQueryFilterCase($missedQuery, $sliderFilterParameters);
 
-		$query->whereBetween(
+		$missedQuery->whereBetween(
 			'CALL_START_DATE',
 			DateTime::createFromUserTime($requestParameters->get('START_DATE_from')),
 			DateTime::createFromUserTime($requestParameters->get('START_DATE_to'))
 		);
+
+		//The calling code expects that this method will return a query to StatisticTable
+		// and can add filters to its fields.
+		// @see CVoximplantStatisticDetailComponent createReportSliderQuery
+		$query = StatisticTable::query();
+		$query->setSelect(['ID']);
+		$query->registerRuntimeField(new Reference(
+			'STATISTIC_MISSED',
+			\Bitrix\Main\Entity\Base::getInstanceByQuery($missedQuery),
+			Join::on('this.ID', 'ref.ID'),
+			['join_type' => Join::TYPE_INNER]
+		));
 
 		return $query;
 	}

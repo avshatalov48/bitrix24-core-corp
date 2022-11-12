@@ -24,6 +24,7 @@ export default class Form extends EventEmitter
 
 		this.isExtranetInstalled = params.isExtranetInstalled === "Y";
 		this.isCloud = params.isCloud === "Y";
+		this.isAdmin = params.isAdmin === "Y";
 		this.isInvitationBySmsAvailable = params.isInvitationBySmsAvailable === "Y";
 		this.isCreatorEmailConfirmed = params.isCreatorEmailConfirmed === "Y";
 		this.regenerateUrlBase = params.regenerateUrlBase;
@@ -136,6 +137,7 @@ export default class Form extends EventEmitter
 							options: {
 								department: true,
 								project: true,
+								isAdmin: this.isAdmin,
 							}
 						};
 						this.renderSelector(selectorParams);
@@ -150,6 +152,7 @@ export default class Form extends EventEmitter
 							options: {
 								department: false,
 								project: "extranet",
+								isAdmin: this.isAdmin,
 							}
 						};
 						this.renderSelector(selectorParams);
@@ -164,6 +167,7 @@ export default class Form extends EventEmitter
 							options: {
 								department: true,
 								project: true,
+								isAdmin: this.isAdmin,
 							}
 						};
 						this.renderSelector(selectorParams);

@@ -150,30 +150,22 @@ function updateListNumbers()
 	BX.listNumber(window.listItemParams);
 }
 
-function saveData(bTimeout)
+function saveData()
 {
-	if (!!window.BXMEETINGCANEDIT)
-	{
-		if (window.saveTimer)
-			clearTimeout(window.saveTimer);
-
-		if (!bTimeout)
+	setTimeout(() => {
+		if (window.BXMEETINGCANEDIT)
 		{
-			window.saveTimer = setTimeout("saveData(true)", 1000);
-		}
-		else
-		{
-			var f = document.forms.meeting_edit
-			if (f.MEETING_ID.value > 0)
+			const form = document.forms.meeting_edit
+			if (form.MEETING_ID.value > 0)
 			{
-				f.save_type.value = 'BGSAVE';
-				BX.ajax.submit(f);
+				form.save_type.value = 'BGSAVE';
+				BX.ajax.submit(form);
 				setTimeout(function(){
-					f.save_type.value = 'SUBMIT';
-				}, 15);
+					form.save_type.value = 'SUBMIT';
+				}, 30);
 			}
 		}
-	}
+	}, 100);
 }
 
 function replaceKeys(repl, link)

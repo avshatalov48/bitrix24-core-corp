@@ -144,11 +144,11 @@ class Session
 		$params['SOURCE'] = $parsedUserCode['CONNECTOR_ID'];
 		$params['CHAT_ID'] = $parsedUserCode['EXTERNAL_CHAT_ID'];
 
-		if(Connector::isEnableGroupByChat($parsedUserCode['CONNECTOR_ID']))
+		if (Connector::isEnableGroupByChat($parsedUserCode['CONNECTOR_ID']))
 		{
 			$parsedUserCode['CONNECTOR_USER_ID'] = 0;
 
-			if(!empty($params['USER_ID']))
+			if (!empty($params['USER_ID']))
 			{
 				$params['USER_CODE_FAIL'] = $params['USER_CODE'];
 			}
@@ -164,7 +164,7 @@ class Session
 
 		$resultStart = $this->start($params);
 
-		if(
+		if (
 			$resultStart->isSuccess() &&
 			$resultStart->getResult() === true
 		)
@@ -247,7 +247,7 @@ class Session
 					//Creating a new session
 					$resultCreate = $this->createSession($fields, $params);
 
-					if($resultCreate->isSuccess())
+					if ($resultCreate->isSuccess())
 					{
 						$result->setResult(true);
 					}
@@ -282,14 +282,14 @@ class Session
 
 		/* CRM BLOCK */
 		$crmManager = new Crm($this);
-		if($crmManager->isLoaded())
+		if ($crmManager->isLoaded())
 		{
 			$crmFieldsManager = $crmManager->getFields();
 			$crmFieldsManager->setSkipPhoneValidate($params['CRM_SKIP_PHONE_VALIDATE'] === 'Y');
 			$crmFieldsManager->setDataFromUser($fields['USER_ID']);
 			$crmManager->setModeCreate($this->config['CRM_CREATE']);
 
-			if(Connector::isNeedCRMTracker($fields['SOURCE']))
+			if (Connector::isNeedCRMTracker($fields['SOURCE']))
 			{
 				$crmManager->setSkipCreate();
 				$crmManager->setIgnoreSearchPerson();
@@ -336,7 +336,7 @@ class Session
 				'DATE_QUEUE' => (new DateTime())->add('180 SECONDS'),
 			]);
 
-			if($resultAddSessionCheck->isSuccess())
+			if ($resultAddSessionCheck->isSuccess())
 			{
 				$this->session = $fields;
 				$this->session['ID'] = $this->session['SESSION_ID'] = $fields['SESSION_ID'];
@@ -370,7 +370,7 @@ class Session
 
 				if ($this->chat->isNowCreated())
 				{
-					if(intval($messageId) < 0)
+					if (intval($messageId) < 0)
 					{
 						$messageId = 0;
 					}
@@ -392,7 +392,7 @@ class Session
 						$fields['WORKTIME'] = 'N';
 						$fields['WAIT_ACTION'] = 'Y';
 					}
-					else if(!(new AutomaticAction\WorkTime($this))->isWorkTimeLine())
+					elseif (!(new AutomaticAction\WorkTime($this))->isWorkTimeLine())
 					{
 						$fields['WORKTIME'] = 'N';
 						if ($this->session['JOIN_BOT'])
@@ -477,7 +477,7 @@ class Session
 					$limit = \Bitrix\ImConnector\Connector::getReplyLimit($fields['SOURCE']);
 					if ($limit)
 					{
-						if(!empty($limit['BLOCK_DATE']))
+						if (!empty($limit['BLOCK_DATE']))
 						{
 							$limit['BLOCK_DATE'] = (new DateTime())->add($limit['BLOCK_DATE'] . ' SECONDS');
 
@@ -512,9 +512,17 @@ class Session
 				}
 				elseif ($fields['MODE'] == self::MODE_OUTPUT)
 				{
-					if($this->config['CRM'] == 'Y' && $crmManager->isLoaded())
+					if ($this->config['CRM'] == 'Y' && $crmManager->isLoaded())
 					{
 						$crmFieldsManager->setTitle($this->chat->getData('TITLE'));
+
+						if (
+							$params['REOPEN'] === 'Y'
+							|| $fields['IS_FIRST'] === 'N'
+						)
+						{
+							$crmManager->setSkipAutomationTriggerFirstMessage();
+						}
 
 						$crmManager->registrationChanges();
 						$crmManager->sendCrmImMessages();
@@ -640,7 +648,7 @@ class Session
 			],
 			'order' => ['ID' => 'DESC']
 		]);
-		while($row = $orm->fetch())
+		while ($row = $orm->fetch())
 		{
 			if (
 				$row['USER_CODE'] === $fields['USER_CODE']
@@ -709,7 +717,7 @@ class Session
 			$loadSession['SESSION_ID'] = $loadSession['ID'];
 			$this->session = $loadSession;
 
-			if($params['VOTE_SESSION'] === 'Y')
+			if ($params['VOTE_SESSION'] === 'Y')
 			{
 				$this->session['VOTE_SESSION'] = true;
 			}
@@ -803,12 +811,12 @@ class Session
 							],
 						]);
 					}
-					else if (!$this->chat->isNowCreated())
+					elseif (!$this->chat->isNowCreated())
 					{
 						$this->chat->join($fields['USER_ID']);
 					}
 
-					if(
+					if (
 						!empty($fields['OPERATOR_ID']) &&
 						empty($this->session['OPERATOR_ID'])
 					)
@@ -816,7 +824,7 @@ class Session
 						$resultChatAnswer = $this->chat->answer($fields['OPERATOR_ID'], true);
 						$this->answer($fields['OPERATOR_ID']);
 
-						/*if(!$resultChatAnswer->isSuccess())
+						/*if (!$resultChatAnswer->isSuccess())
 						{
 							$result->addErrors($resultChatAnswer->getErrors());
 						}*/
@@ -860,13 +868,13 @@ class Session
 					$result = true;
 				}
 			}
-			else if ($count <= 20)
+			elseif ($count <= 20)
 			{
 				usleep(500);
 				$result = $this->prepareUserChat($params, ++$count);
 			}
 		}
-		else if ($params['SKIP_CREATE'] != 'Y')
+		elseif ($params['SKIP_CREATE'] != 'Y')
 		{
 			$params['USER_ID'] = intval($params['USER_ID']);
 			\Bitrix\Imopenlines\Model\UserRelationTable::add([
@@ -918,7 +926,7 @@ class Session
 			$closeDate->add('1 DAY');
 
 			$crmManager = new Crm($this);
-			if($crmManager->isLoaded())
+			if ($crmManager->isLoaded())
 			{
 				$crmManager->setSessionAnswered(['DATE_CLOSE' => $closeDate]);
 				$crmManager->executeAutomationAnswerControlTrigger($this);
@@ -941,7 +949,7 @@ class Session
 			$sessionUpdate['DATE_OPERATOR_ANSWER'] = $currentDate;
 
 			$dateCreate = $this->getData('DATE_CREATE');
-			if(
+			if (
 				!empty($dateCreate) &&
 				$dateCreate instanceof DateTime
 			)
@@ -1075,7 +1083,7 @@ class Session
 					'PARAMS' => $params
 				]);
 
-				if(!empty($addMessageId))
+				if (!empty($addMessageId))
 				{
 					$lastMessageId = $addMessageId;
 				}
@@ -1179,7 +1187,7 @@ class Session
 					{
 						$paramsDateCloseVote = '';
 
-						if(
+						if (
 							!empty((int)$this->config['VOTE_TIME_LIMIT'])
 							&& (int)$this->config['VOTE_TIME_LIMIT'] > 0
 						)
@@ -1213,7 +1221,7 @@ class Session
 							]
 						]);
 
-						if(!empty($addMessageId))
+						if (!empty($addMessageId))
 						{
 							$lastMessageId = $addMessageId;
 						}
@@ -1307,7 +1315,7 @@ class Session
 				if ($this->session['CRM_ACTIVITY_ID'] > 0)
 				{
 					$crmManager = new Crm($this);
-					if($crmManager->isLoaded())
+					if ($crmManager->isLoaded())
 					{
 						$crmManager->setSessionClosed(['DATE_CLOSE' => $currentDate]);
 					}
@@ -1381,7 +1389,7 @@ class Session
 		$this->session['CLOSED'] = 'Y';
 		$update['FORCE_CLOSE'] = 'Y';
 
-		if(!empty($this->session['DATE_LAST_MESSAGE']))
+		if (!empty($this->session['DATE_LAST_MESSAGE']))
 		{
 			$closeDate = $this->session['DATE_LAST_MESSAGE']->add('60 MINUTES');
 		}
@@ -1428,7 +1436,7 @@ class Session
 		if ($this->session['CRM_ACTIVITY_ID'] > 0)
 		{
 			$crmManager = new Crm($this);
-			if($crmManager->isLoaded())
+			if ($crmManager->isLoaded())
 			{
 				$crmManager->setSessionClosed(['DATE_CLOSE' => $closeDate]);
 			}
@@ -1593,7 +1601,7 @@ class Session
 					)
 					{
 						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
-						if(!empty($fullCloseTime))
+						if (!empty($fullCloseTime))
 						{
 							$dateClose->add($fullCloseTime . ' MINUTES');
 						}
@@ -1631,7 +1639,7 @@ class Session
 					{
 						$dateClose->add('1 MONTH');
 					}
-					else if (
+					elseif (
 						$this->session['WAIT_ANSWER'] == 'Y' &&
 						$fields['WAIT_ANSWER'] != 'N' ||
 						$fields['WAIT_ANSWER'] == 'Y'
@@ -1649,14 +1657,14 @@ class Session
 							$updateDateCrmClose = $dateCrmClose;
 						}
 					}
-					else if (
+					elseif (
 						$this->session['WAIT_ACTION'] === 'Y' &&
 						$fields['WAIT_ACTION'] !== 'N' ||
 						$fields['WAIT_ACTION'] === 'Y'
 					)
 					{
 						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
-						if(!empty($fullCloseTime))
+						if (!empty($fullCloseTime))
 						{
 							$dateClose->add($fullCloseTime . ' MINUTES');
 						}
@@ -1707,7 +1715,7 @@ class Session
 					{
 						$dateClose->add('1 WEEK');
 					}
-					else if (
+					elseif (
 						$this->session['WAIT_ANSWER'] === 'Y' &&
 						$fields['WAIT_ANSWER'] !== 'N' ||
 						$fields['WAIT_ANSWER'] === 'Y'
@@ -1725,14 +1733,14 @@ class Session
 							$updateDateCrmClose = $dateCrmClose;
 						}
 					}
-					else if (
+					elseif (
 						$this->session['WAIT_ACTION'] === 'Y' &&
 						$fields['WAIT_ACTION'] !== 'N' ||
 						$fields['WAIT_ACTION'] === 'Y'
 					)
 					{
 						$fields['STATUS'] = self::STATUS_WAIT_CLIENT;
-						if(!empty($fullCloseTime))
+						if (!empty($fullCloseTime))
 						{
 							$dateClose->add($fullCloseTime . ' MINUTES');
 						}
@@ -1764,7 +1772,7 @@ class Session
 			$fields['TIME_DIALOG'] = $fields['DATE_LAST_MESSAGE']->getTimestamp() - $this->session['DATE_CREATE']->getTimestamp();
 		}
 
-		if(
+		if (
 			!isset($fields['DATE_FIRST_LAST_USER_ACTION'])
 			&& isset($fields['INPUT_MESSAGE'])
 			&& $fields['INPUT_MESSAGE'] === true
@@ -1846,7 +1854,7 @@ class Session
 				$updateCheckTable['DATE_QUEUE'] = null;
 			}
 		}
-		else if (isset($fields['WAIT_ANSWER']))
+		elseif (isset($fields['WAIT_ANSWER']))
 		{
 			if ($fields['WAIT_ANSWER'] == 'Y')
 			{
@@ -1878,7 +1886,7 @@ class Session
 		}
 
 		//If the status is lower than STATUS_WAIT_CLIENT, the dialog cannot be in the evaluation waiting state
-		if(
+		if (
 			isset($fields['STATUS']) &&
 			$fields['STATUS'] < self::STATUS_WAIT_CLIENT &&
 			!array_key_exists('WAIT_VOTE', $fields) &&
@@ -1959,7 +1967,7 @@ class Session
 					$dateCheckClose->add('1 DAY');
 
 					$crmManager = new Crm($this);
-					if($crmManager->isLoaded())
+					if ($crmManager->isLoaded())
 					{
 						$crmManager->setSessionDataClose($dateCheckClose);
 					}
@@ -1975,7 +1983,7 @@ class Session
 		)
 		{
 			$crmManager = new Crm($this);
-			if($crmManager->isLoaded())
+			if ($crmManager->isLoaded())
 			{
 				$crmManager->setSessionDataClose($updateDateCrmClose);
 			}
@@ -2001,7 +2009,7 @@ class Session
 				$parsedUserCode = Session\Common::parseUserCode($this->session['USER_CODE']);
 			}
 
-			if(
+			if (
 				(int)$this->session['STATUS'] !== self::STATUS_OPERATOR &&
 				(int)$fields['STATUS'] === self::STATUS_OPERATOR
 			)
@@ -2047,7 +2055,7 @@ class Session
 			$this->session['CHECK_'.$key] = $value;
 		}
 
-		if(
+		if (
 			$this->session['STATUS'] < self::STATUS_CLOSE &&
 			$this->session['CLOSED'] === 'Y'
 		)
@@ -2064,11 +2072,11 @@ class Session
 			Model\SessionTable::update($this->session['ID'], $fields);
 		}
 
-		if($isResponseOperator !== null)
+		if ($isResponseOperator !== null)
 		{
 			$automaticActionMessages = new AutomaticAction\Messages($this);
 
-			if($isResponseOperator === true)
+			if ($isResponseOperator === true)
 			{
 				$automaticActionMessages->setStatusResponseOperator();
 			}
@@ -2156,7 +2164,7 @@ class Session
 			$update['USER_ID'] = $GLOBALS['USER']->GetId();
 		}
 
-		if(isset($params['INPUT_MESSAGE']))
+		if (isset($params['INPUT_MESSAGE']))
 		{
 			$update['INPUT_MESSAGE'] = $params['INPUT_MESSAGE'];
 		}
@@ -2178,7 +2186,7 @@ class Session
 
 		$queueManager = Queue::initialization($this);
 
-		if($queueManager)
+		if ($queueManager)
 		{
 			$result = $queueManager->transferToNext($manual);
 		}
@@ -2212,7 +2220,7 @@ class Session
 			]);
 		}
 
-		if($this->session['SEND_NO_ANSWER_TEXT'] != 'Y')
+		if ($this->session['SEND_NO_ANSWER_TEXT'] != 'Y')
 		{
 			$this->update(['SEND_NO_ANSWER_TEXT' => 'Y', 'WAIT_ACTION' => 'Y']);
 		}
@@ -2236,7 +2244,7 @@ class Session
 	{
 		$result = new Result();
 
-		if(empty($configTask))
+		if (empty($configTask))
 		{
 			$configTask = ConfigAutomaticMessagesTable::getByPrimary($idConfigTask)->fetch();
 		}
@@ -2370,7 +2378,7 @@ class Session
 		}
 
 		$resultDelete = SessionAutomaticTasksTable::delete($idTask);
-		if(!$resultDelete->isSuccess())
+		if (!$resultDelete->isSuccess())
 		{
 			$result->addErrors($resultDelete->getErrors());
 		}
@@ -2505,7 +2513,7 @@ class Session
 		if (!empty($this->joinUserList))
 		{
 			$operatorFromCrm = false;
-			if($this->isNowCreated())
+			if ($this->isNowCreated())
 			{
 				$operatorFromCrm = $this->session['OPERATOR_FROM_CRM'] == 'Y'? true : false;
 			}
@@ -2530,7 +2538,7 @@ class Session
 		$result = false;
 		$updateFields = [];
 
-		if(
+		if (
 			(isset($fields['CRM_CREATE_LEAD']) && $fields['CRM_CREATE_LEAD'] == 'Y') ||
 			(isset($fields['CRM_CREATE_COMPANY']) && $fields['CRM_CREATE_COMPANY'] == 'Y') ||
 			(isset($fields['CRM_CREATE_CONTACT']) && $fields['CRM_CREATE_CONTACT'] == 'Y') ||
@@ -2547,9 +2555,9 @@ class Session
 		}
 		else
 		{
-			if(isset($fields['CRM_CREATE']))
+			if (isset($fields['CRM_CREATE']))
 			{
-				if($fields['CRM_CREATE'] == 'Y')
+				if ($fields['CRM_CREATE'] == 'Y')
 				{
 					$updateFields['CRM_CREATE'] = 'Y';
 					$updateFields['CRM'] = 'Y';
@@ -2558,9 +2566,9 @@ class Session
 				{
 					$updateFields['CRM_CREATE'] = 'N';
 
-					if(isset($fields['CRM']))
+					if (isset($fields['CRM']))
 					{
-						if($fields['CRM'] == 'Y')
+						if ($fields['CRM'] == 'Y')
 						{
 							$updateFields['CRM'] = 'Y';
 						}
@@ -2573,9 +2581,9 @@ class Session
 			}
 		}
 
-		if(isset($fields['CRM_CREATE_LEAD']))
+		if (isset($fields['CRM_CREATE_LEAD']))
 		{
-			if($fields['CRM_CREATE_LEAD'] == 'Y')
+			if ($fields['CRM_CREATE_LEAD'] == 'Y')
 			{
 				$updateFields['CRM_CREATE_LEAD'] = 'Y';
 			}
@@ -2585,9 +2593,9 @@ class Session
 			}
 		}
 
-		if(isset($fields['CRM_CREATE_COMPANY']))
+		if (isset($fields['CRM_CREATE_COMPANY']))
 		{
-			if($fields['CRM_CREATE_COMPANY'] == 'Y')
+			if ($fields['CRM_CREATE_COMPANY'] == 'Y')
 			{
 				$updateFields['CRM_CREATE_COMPANY'] = 'Y';
 			}
@@ -2597,9 +2605,9 @@ class Session
 			}
 		}
 
-		if(isset($fields['CRM_CREATE_CONTACT']))
+		if (isset($fields['CRM_CREATE_CONTACT']))
 		{
-			if($fields['CRM_CREATE_CONTACT'] == 'Y')
+			if ($fields['CRM_CREATE_CONTACT'] == 'Y')
 			{
 				$updateFields['CRM_CREATE_CONTACT'] = 'Y';
 			}
@@ -2609,9 +2617,9 @@ class Session
 			}
 		}
 
-		if(isset($fields['CRM_CREATE_DEAL']))
+		if (isset($fields['CRM_CREATE_DEAL']))
 		{
-			if($fields['CRM_CREATE_DEAL'] == 'Y')
+			if ($fields['CRM_CREATE_DEAL'] == 'Y')
 			{
 				$updateFields['CRM_CREATE_DEAL'] = 'Y';
 			}
@@ -2621,23 +2629,23 @@ class Session
 			}
 		}
 
-		if(isset($fields['CRM_ACTIVITY_ID']))
+		if (isset($fields['CRM_ACTIVITY_ID']))
 		{
 			$updateFields['CRM_ACTIVITY_ID'] = $fields['CRM_ACTIVITY_ID'];
 		}
 
-		if(!empty($updateFields))
+		if (!empty($updateFields))
 		{
 			foreach ($updateFields as $cell=>$field)
 			{
-				if($this->getData($cell) == $field)
+				if ($this->getData($cell) == $field)
 				{
 					unset($updateFields[$cell]);
 				}
 			}
 		}
 
-		if(!empty($updateFields))
+		if (!empty($updateFields))
 		{
 			$result = $this->update($updateFields);
 		}
@@ -2781,7 +2789,7 @@ class Session
 				$userId = $GLOBALS['USER']->GetId();
 			}
 
-			if($resultPermissions)
+			if ($resultPermissions)
 			{
 				$fieldsUpdate = [];
 
@@ -2794,9 +2802,9 @@ class Session
 					],
 				];
 
-				if(!empty($commentValue))
+				if (!empty($commentValue))
 				{
-					if(mb_strlen($commentValue) > 10000)
+					if (mb_strlen($commentValue) > 10000)
 					{
 						$commentValue = mb_substr($commentValue, 0, 10000).'...';
 					}
@@ -2804,7 +2812,7 @@ class Session
 					$commentValueSafely = htmlspecialcharsbx($commentValue);
 				}
 
-				if($voteValue !== null && $commentValue !== null)
+				if ($voteValue !== null && $commentValue !== null)
 				{
 					$voteValue = $voteValue == 1 || $voteValue <= 5? $voteValue: 0;
 
@@ -2812,7 +2820,7 @@ class Session
 
 					$fieldsUpdate['COMMENT_HEAD'] = $commentValue;
 
-					if($voteValue > 0)
+					if ($voteValue > 0)
 					{
 						\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_HEAD_AND_COMMENT, $sessionData['ID'], ['vote' => $voteValue, 'comment' => $commentValue], $sessionData['OPERATOR_ID'], $userId);
 					}
@@ -2845,7 +2853,7 @@ class Session
 					$result = true;
 				}
 
-				if(!empty($fieldsUpdate))
+				if (!empty($fieldsUpdate))
 				{
 					Model\SessionTable::update($sessionId, $fieldsUpdate);
 				}
@@ -2856,13 +2864,13 @@ class Session
 						'IMOL_VOTE_SID' => $sessionData['ID']
 					];
 
-					if($voteValue !==null)
+					if ($voteValue !==null)
 					{
 						$pullMessage['params']['voteValue'] = $voteValue;
 						$paramsPull['IMOL_VOTE_HEAD'] = $voteValue;
 					}
 
-					if($commentValue !==null)
+					if ($commentValue !==null)
 					{
 						$pullMessage['params']['commentValue'] = $commentValueSafely;
 						$paramsPull['IMOL_COMMENT_HEAD']['text'] = $commentValueSafely;
@@ -2873,7 +2881,7 @@ class Session
 
 					\Bitrix\Pull\Event::add($pullUsers, $pullMessage);
 
-					if($voteValue !==null)
+					if ($voteValue !==null)
 					{
 						$pullMessage['skip_users'] = $pullUsers;
 						unset($pullMessage['params']['commentValue']);
@@ -2909,14 +2917,14 @@ class Session
 			'CLOSED' => 'Y'
 		]);
 
-		if(!$resultSessionUpdate->isSuccess())
+		if (!$resultSessionUpdate->isSuccess())
 		{
 			$result->addErrors($resultSessionUpdate->getErrors());
 		}
 
 		$resultSessionCheckDelete = Model\SessionCheckTable::delete($duplicateSession['ID']);
 
-		if(!$resultSessionCheckDelete->isSuccess())
+		if (!$resultSessionCheckDelete->isSuccess())
 		{
 			$result->addErrors($resultSessionCheckDelete->getErrors());
 		}
@@ -2977,7 +2985,7 @@ class Session
 		{
 			$result = new Result();
 		}
-		else if(!($result instanceof Result))
+		elseif (!($result instanceof Result))
 		{
 			$resultData = $result;
 			$result = new Result();
@@ -3005,7 +3013,7 @@ class Session
 	{
 		$result = false;
 
-		if(
+		if (
 			$this->isDisabledSendSystemMessage === false
 			&& !empty($this->connectorId)
 			&& !ReplyBlock::isBlocked($this)
@@ -3013,7 +3021,7 @@ class Session
 		{
 			$result = Connector::isEnableSendSystemMessage($this->connectorId);
 
-			if(
+			if (
 				$result === true
 				&& $this->action === self::ACTION_CLOSED
 				&& $this->config['ACTIVE'] === 'N'

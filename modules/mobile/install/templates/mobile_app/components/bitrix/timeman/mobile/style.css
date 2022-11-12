@@ -1,35 +1,6 @@
-@font-face{
-	font-family: 'OpenSans-Regular';
-	src: url('/bitrix/fonts/opensans-regular.eot');
-	src: local('Open Sans'),
-	url('/bitrix/fonts/opensans-regular.woff') format('woff'),
-	url('/bitrix/fonts/opensans-regular.ttf') format('truetype');
-	font-weight: normal;
-	font-style: normal;
-}
-
-@font-face{
-	font-family: 'OpenSans-Semibold';
-	src: url('/bitrix/fonts/opensans-semibold.eot');
-	src: local('Open Sans Semibold'),
-	url('/bitrix/fonts/opensans-semibold.woff') format('woff'),
-	url('/bitrix/fonts/opensans-semibold.ttf') format('truetype');
-	font-weight: normal;
-	font-style: normal;
-}
-
-@font-face {
-	font-family: 'OpenSans-Bold';
-	src: url('/bitrix/fonts/opensans-bold.eot');
-	src: local('Open Sans Bold'),
-	url('/bitrix/fonts/opensans-bold.woff') format('woff'),
-	url('/bitrix/fonts/opensans-bold.ttf') format('truetype');
-	font-weight: normal;
-	font-style: normal;
-}
-
 .mobile-timeman {
-	font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #293139;
 	font-size: 22px;
 	display: flex;
@@ -58,11 +29,11 @@
 }
 
 .mobile-timeman-timing-title {
-	font-family: "OpenSans-Bold", "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 18px;
 	text-align: center;
 	text-transform: uppercase;
-	font-weight: bold;
 }
 
 .mobile-timeman-time {
@@ -110,7 +81,8 @@
 	border-left: none;
 	border-right: none;
 	font-size: 18px;
-	font-family: "OpenSans-Regular", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	color: #535c69;
 	resize: none;
 	-webkit-appearance: none;
@@ -171,9 +143,9 @@
 	color: #293139;
 	display: block;
 	margin: 0 auto 15px auto;
-	font-family: "OpenSans-Bold", Helvetica, Arial, sans-serif;
+	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-bold, 700);
 	font-size: 14px;
-	font-weight: bold;
 	outline: none;
 	vertical-align: middle;
 	text-decoration: none;
@@ -255,7 +227,8 @@
 
 	.mobile-timeman-completion-textarea {
 		font-size: 16px;
-		font-family: "OpenSans-Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
+		font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
+	font-weight: var(--ui-font-weight-regular, 400);
 	}
 
 	.mobile-timeman-control-info {

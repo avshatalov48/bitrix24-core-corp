@@ -14,3 +14,6 @@ $MESS['CRM_BIC_LSH_FIELD_STATUS_SEMANTIC_ID'] = "Идентификатор ти
 $MESS['CRM_BIC_LSH_FIELD_STATUS_SEMANTIC'] = "Тип статуса";
 $MESS['CRM_BIC_LSH_FIELD_STATUS_ID'] = "Идентификатор статуса";
 $MESS['CRM_BIC_LSH_FIELD_STATUS'] = "Статус";
+$MESS['CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME'] = "Имя ответственного";
+$MESS['CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME_FULL'] = "Имя пользователя, назначенного ответственным за лид";
+$MESS['CRM_BIC_LSH_FIELD_STATUS_NAME'] = "Название статуса";

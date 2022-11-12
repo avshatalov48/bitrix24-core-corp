@@ -68,7 +68,7 @@ $curUserPrems = CCrmPerms::GetCurrentUserPermissions();
 $action = isset($_REQUEST['ACTION']) ? $_REQUEST['ACTION'] : '';
 if($action === 'SAVE_CONFIGURATION')
 {
-	__IncludeLang(dirname(__FILE__).'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
+	__IncludeLang(__DIR__.'/lang/'.LANGUAGE_ID.'/'.basename(__FILE__));
 
 	$emailAddresser = isset($_REQUEST['EMAIL_ADDRESSER']) ? $_REQUEST['EMAIL_ADDRESSER'] : '';
 

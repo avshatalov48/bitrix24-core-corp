@@ -11,6 +11,7 @@ return [
 		'ui.popupcomponentsmaker',
 		'main.popup',
 		'main.qrcode',
+		'ui.avatar-editor',
 		'main.core',
 		'main.core.events',
 		'ui.qrauthorization',

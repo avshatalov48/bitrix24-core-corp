@@ -2,14 +2,12 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Loader;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\Component\ParameterSigner;
 use Bitrix\Bitrix24\Integrator;
 use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\Event;
 use Bitrix\Main\Engine\Response\Component;
+use Bitrix\UI;
 
 class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Controller
 {
@@ -214,21 +212,30 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 
 		$userData = \Bitrix\Main\UserTable::getList(array(
-			"select" => array('ID', 'PERSONAL_PHOTO'),
-			"filter" => array(
-				"=ID" => $this->userId
+			'select' => array('ID', 'PERSONAL_PHOTO'),
+			'filter' => array(
+				'=ID' => $this->userId
 			),
 		))->fetch();
 
-		$newPhotoFile = $this->getRequest()->getFile("newPhoto");
-		if ($userData["PERSONAL_PHOTO"])
+		$user = new CUser;
+		$newPhotoFile = $this->getRequest()->getFile('newPhoto');
+
+		if (
+			class_exists(UI\Avatar\Mask\Helper::class)
+			&& ($maskInfo = UI\Avatar\Mask\Helper::getDataFromRequest('newPhoto', $this->getRequest()))
+		)
 		{
-			$newPhotoFile["old_file"] = $userData["PERSONAL_PHOTO"];
-			$newPhotoFile["del"] = $userData["PERSONAL_PHOTO"];
+			[$newPhotoFile, $newPhotoMaskFile] = $maskInfo;
 		}
 
-		$user = new CUser;
-		$res = $user->Update($this->userId, array("PERSONAL_PHOTO" => $newPhotoFile));
+		if ($userData['PERSONAL_PHOTO'])
+		{
+			$newPhotoFile['old_file'] = $userData['PERSONAL_PHOTO'];
+			$newPhotoFile['del'] = $userData['PERSONAL_PHOTO'];
+		}
+
+		$res = $user->Update($this->userId, array('PERSONAL_PHOTO' => $newPhotoFile));
 
 		if (!$res)
 		{
@@ -237,27 +244,33 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 		}
 
 		$newUserData = \Bitrix\Main\UserTable::getList(array(
-			"select" => array('ID', 'PERSONAL_PHOTO'),
-			"filter" => array(
-				"=ID" => $this->userId
+			'select' => array('ID', 'PERSONAL_PHOTO'),
+			'filter' => array(
+				'=ID' => $this->userId
 			),
 		))->fetch();
 
-		if ($newUserData["PERSONAL_PHOTO"] > 0)
+		if (isset($newPhotoMaskFile))
 		{
-			$file = \CFile::GetFileArray($newUserData["PERSONAL_PHOTO"]);
+			UI\Avatar\Mask\Helper::save($newUserData["PERSONAL_PHOTO"], $newPhotoMaskFile);
+		}
+
+
+		if ($newUserData['PERSONAL_PHOTO'] > 0)
+		{
+			$file = \CFile::GetFileArray($newUserData['PERSONAL_PHOTO']);
 			if ($file !== false)
 			{
 				$fileTmp = \CFile::ResizeImageGet(
 					$file,
-					array("width" => 212, "height" => 212),
+					array('width' => 212, 'height' => 212),
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					false,
 					false,
 					true
 				);
 
-				return $fileTmp["src"];
+				return $fileTmp['src'];
 			}
 		}
 	}

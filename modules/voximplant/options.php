@@ -27,7 +27,7 @@ if ($ViAccount->GetError()->error)
 	}
 	else
 	{
-		$errorMessage = GetMessage('VI_ACCOUNT_ERROR');
+		$errorMessage = GetMessage('VI_ACCOUNT_ERROR') . ";  " . $ViAccount->GetError()->msg ;
 	}
 }
 else

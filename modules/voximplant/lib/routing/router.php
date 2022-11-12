@@ -135,6 +135,12 @@ class Router
 
 		$phoneNumber = $call->getCallerId();
 
+		if ($phoneNumber === '')
+		{
+			$rootNode->setNext(new Hangup(404, 'Not found'));
+			return $rootNode;
+		}
+
 		$queueId = 0;
 		$userId = 0;
 

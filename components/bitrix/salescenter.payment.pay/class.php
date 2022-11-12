@@ -96,6 +96,8 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		$this->checkModules();
 		$this->setupRegistry();
 
+		$request = $this->request;
+
 		if (empty($params['ACTIVE_DATE_FORMAT']))
 		{
 			$params['ACTIVE_DATE_FORMAT'] = Main\Type\DateTime::getFormat();
@@ -113,7 +115,24 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 
 		if (empty($params['ACCESS_CODE']))
 		{
-			$params['ACCESS_CODE'] = Main\Context::getCurrent()->getRequest()->get('access');
+			$params['ACCESS_CODE'] = $request->get('access');
+		}
+
+		if (isset($params['EXCLUDED_PAY_SYSTEMS']) || $request->get('excludedPS'))
+		{
+			$excludedPaySystems = $params['EXCLUDED_PAY_SYSTEMS'] ?? $request->get('excludedPS');
+
+			$params['NEED_VALIDATE_EXCLUDED_PAY_SYSTEMS'] = is_array($excludedPaySystems);
+
+			$params['EXCLUDED_PAY_SYSTEMS'] =
+				$params['NEED_VALIDATE_EXCLUDED_PAY_SYSTEMS']
+					? array_map('intval', $excludedPaySystems)
+					: []
+			;
+		}
+		else
+		{
+			$params['NEED_VALIDATE_EXCLUDED_PAY_SYSTEMS'] = false;
 		}
 
 		if ((int)($params['PAYMENT_ID']) > 0 || $params['PAYMENT_ACCOUNT_NUMBER'] != '')
@@ -517,9 +536,17 @@ class SalesCenterPaymentPay extends \CBitrixComponent implements Main\Engine\Con
 		])->fetchAll();
 		$salesCenterRestrictionIds = array_column($salesCenterRestrictionIds, 'ID');
 		$paySystemList = PaySystem\Manager::getListWithRestrictions($payment);
+
+		$excludedPaySystemIds = $this->arParams['EXCLUDED_PAY_SYSTEMS'];
+		$needValidateExcludedPaySystems = $this->arParams['NEED_VALIDATE_EXCLUDED_PAY_SYSTEMS'];
+
 		foreach ($paySystemList as $paySystemElement)
 		{
 			if (!in_array($paySystemElement['ID'], $salesCenterRestrictionIds))
+			{
+				continue;
+			}
+			if ($needValidateExcludedPaySystems && in_array((int)$paySystemElement['ID'], $excludedPaySystemIds, true))
 			{
 				continue;
 			}

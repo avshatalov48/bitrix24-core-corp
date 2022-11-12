@@ -780,7 +780,7 @@
 	border-color: var(--graphite_alpha_70);
 }
 
-.system-auth-form__item.--active .ui-qr-popupcomponentmaker__btn {
+.system-auth-form__item.--active:not(.--changeable) .ui-qr-popupcomponentmaker__btn {
 	height: 22px;
 	background: var(--blue_alpha_12) !important;
 	border-radius: 8px;

@@ -283,11 +283,23 @@ final class imopenlines extends \CModule
 	{
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/public", $_SERVER["DOCUMENT_ROOT"]."/", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/js", $_SERVER["DOCUMENT_ROOT"]."/bitrix/js", true, true);
-		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/components/bitrix", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix", true, true);
+		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/components", $_SERVER["DOCUMENT_ROOT"]."/bitrix/components", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/activities", $_SERVER["DOCUMENT_ROOT"]."/bitrix/activities", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/templates", $_SERVER["DOCUMENT_ROOT"]."/bitrix/templates", true, true);
-		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imconnector/install/pub", $_SERVER["DOCUMENT_ROOT"]."/pub", true, true);
 		\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/imopenlines/install/tools", $_SERVER["DOCUMENT_ROOT"]."/bitrix/tools", true, true);
+
+		return true;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function UnInstallFiles()
+	{
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imopenlines/install/js', $_SERVER['DOCUMENT_ROOT'].'/bitrix/js');
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imopenlines/install/components/bitrix', $_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix');
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imopenlines/install/activities/bitrix', $_SERVER['DOCUMENT_ROOT'].'/bitrix/activities/bitrix');
+		\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imopenlines/install/tools', $_SERVER['DOCUMENT_ROOT'].'/bitrix/tools');
 
 		return true;
 	}

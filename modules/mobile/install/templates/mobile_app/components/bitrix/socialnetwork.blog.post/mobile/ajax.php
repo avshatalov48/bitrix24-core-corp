@@ -1,4 +1,5 @@
-<?
+<?php
+
 define("NO_KEEP_STATISTIC", true);
 define("BX_STATISTIC_BUFFER_USED", false);
 define("NOT_CHECK_PERMISSIONS", true);
@@ -114,7 +115,7 @@ if(!$strError)
 				"important",
 				Array(
 					"BLOG_URL" => "",
-					"FILTER" => array(">UF_BLOG_POST_IMPRTNT" => 0, "!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $GLOBALS["USER"]->GetId(), "VALUE" => "Y")),
+					"FILTER" => array("=UF_BLOG_POST_IMPRTNT" => 1, "!POST_PARAM_BLOG_POST_IMPRTNT" => array("USER_ID" => $GLOBALS["USER"]->GetId(), "VALUE" => "Y")),
 					"FILTER_NAME" => "",
 					"YEAR" => "",
 					"MONTH" => "",
@@ -270,9 +271,9 @@ if(!$strError)
 			$arFile["MODULE_ID"] = $moduleId;
 
 			$ufCode = (
-				isset($arFileStorage["DISC_FOLDER"]) 
-				|| isset($arFileStorage["WEBDAV_DATA"]) 
-					? "UF_BLOG_COMMENT_FILE" 
+				isset($arFileStorage["DISC_FOLDER"])
+				|| isset($arFileStorage["WEBDAV_DATA"])
+					? "UF_BLOG_COMMENT_FILE"
 					: "UF_BLOG_COMMENT_DOC"
 			);
 
@@ -292,13 +293,13 @@ if(!$strError)
 			}
 
 			$res = ''.CFile::CheckImageFile(
-				$arFile, 
+				$arFile,
 				(
 					intval($arPostFields[$ufCode]['SETTINGS']['MAX_ALLOWED_SIZE']) > 0
-						? $arPostFields[$ufCode]['SETTINGS']['MAX_ALLOWED_SIZE'] 
+						? $arPostFields[$ufCode]['SETTINGS']['MAX_ALLOWED_SIZE']
 						: 5000000
-				), 
-				0, 
+				),
+				0,
 				0
 			);
 
@@ -359,9 +360,9 @@ if(!$strError)
 			}
 
 			$commentUrl = CComponentEngine::MakePathFromTemplate(
-				COption::GetOptionString("socialnetwork", "userblogpost_page", false, SITE_ID), 
+				COption::GetOptionString("socialnetwork", "userblogpost_page", false, SITE_ID),
 				array(
-					"blog" => $arBlog["URL"], 
+					"blog" => $arBlog["URL"],
 					"post_id" => $arBlogPost["ID"],
 					"user_id" => $arBlog["OWNER_ID"]
 				)
@@ -380,11 +381,11 @@ if(!$strError)
 
 		if (!$strError)
 		{
-			BXClearCache(true, "/blog/comment/".$post_id."/");			
+			BXClearCache(true, "/blog/comment/".$post_id."/");
 			$GLOBALS["DB"]->Query("UPDATE b_blog_image SET COMMENT_ID=".intval($commentId)." WHERE BLOG_ID=".intval($arBlogPost["BLOG_ID"])." AND POST_ID=".intval($post_id)." AND IS_COMMENT = 'Y' AND (COMMENT_ID = 0 OR COMMENT_ID is null) AND USER_ID=".intval($GLOBALS["USER"]->GetId())."", true);
 
 			if (
-				$arCommentFields["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH 
+				$arCommentFields["PUBLISH_STATUS"] != BLOG_PUBLISH_STATUS_PUBLISH
 				&& $arCommentFields["PUBLISH_STATUS"] <> ''
 			)
 			{
@@ -411,7 +412,7 @@ if(!$strError)
 				$strError = "Can't find parent log entry";
 			}
 		}
-		
+
 		if (!$strError)
 		{
 			$parserBlog = new blogTextParser();
@@ -439,9 +440,9 @@ if(!$strError)
 				$strError = "Can't add socialnetwork comment";
 			}
 		}
-		
+
 		if (!$strError)
-		{		
+		{
 			CSocNetLog::CounterIncrement(
 				$log_comment_id,
 				false,
@@ -486,7 +487,7 @@ if(!$strError)
 				$arComment["DateFormated"] = FormatDateFromDB($arComment["DATE_CREATE"], $arParams["DATE_TIME_FORMAT"], true);
 
 				if (
-					strcasecmp(LANGUAGE_ID, 'EN') !== 0 
+					strcasecmp(LANGUAGE_ID, 'EN') !== 0
 					&& strcasecmp(LANGUAGE_ID, 'DE') !== 0
 				)
 				{
@@ -494,8 +495,8 @@ if(!$strError)
 				}
 
 				$arAuthor = CBlogUser::GetUserInfo(
-					$arComment["AUTHOR_ID"], 
-					$arParams["PATH_TO_USER"], 
+					$arComment["AUTHOR_ID"],
+					$arParams["PATH_TO_USER"],
 					array(
 						"AVATAR_SIZE_COMMENT" => $arParams["AVATAR_SIZE_COMMENT"]
 					)
@@ -517,7 +518,7 @@ if(!$strError)
 				if (intval($arAuthor["PERSONAL_PHOTO"]) > 0)
 				{
 					$image_resize = CFile::ResizeImageGet(
-						$arAuthor["PERSONAL_PHOTO"], 
+						$arAuthor["PERSONAL_PHOTO"],
 						array(
 							"width" => $arParams["AVATAR_SIZE_COMMENT"],
 							"height" => $arParams["AVATAR_SIZE_COMMENT"]
@@ -564,7 +565,7 @@ if(!$strError)
 				$urlToPost = CComponentEngine::MakePathFromTemplate(
 					htmlspecialcharsBack($arParams["PATH_TO_POST"]),
 					array(
-						"post_id" => "#source_post_id#", 
+						"post_id" => "#source_post_id#",
 						"user_id" => $arPost["AUTHOR_ID"]
 					)
 				);
@@ -614,4 +615,3 @@ echo \Bitrix\Main\Web\Json::encode($arResult);
 define('PUBLIC_AJAX_MODE', true);
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/epilog_after.php");
 die();
-?>

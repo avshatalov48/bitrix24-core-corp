@@ -16,6 +16,7 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
 use Bitrix\Mobile\WebComponentManager;
 use Bitrix\Main\ModuleManager;
+use Bitrix\Im;
 
 if ($_SERVER["REQUEST_METHOD"] == "OPTIONS")
 {
@@ -263,6 +264,7 @@ else
 					"turnServerPassword" => Main\Config\Option::get("im", "turn_server_password", ""),
 					"callLogService" => Main\Config\Option::get("im", "call_log_service", ""),
 					"jitsiServer" => Main\Config\Option::get("im", "jitsi_server", ""),
+					"sfuServerEnabled" => Main\Loader::includeModule('im') && Im\Call\Call::isCallServerEnabled(),
 				]
 			],
 			[

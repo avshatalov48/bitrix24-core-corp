@@ -14,7 +14,7 @@ class Lead
 	 *
 	 * @return void
 	 */
-	function onBIConnectorDataSources(\Bitrix\Main\Event $event)
+	public static function onBIConnectorDataSources(\Bitrix\Main\Event $event)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
 		{
@@ -236,6 +236,7 @@ class Lead
 				*/
 				'CRM_PRODUCT_ID' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'P.ID',
 					'FIELD_TYPE' => 'string',
@@ -245,6 +246,7 @@ class Lead
 				],
 				'CRM_PRODUCT_NAME' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'P.PRODUCT_NAME',
 					'FIELD_TYPE' => 'string',
@@ -254,8 +256,19 @@ class Lead
 				],
 				'CRM_PRODUCT' => [
 					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
 					'IS_METRIC' => 'N', // 'Y'
 					'FIELD_NAME' => 'concat_ws(\' \', concat(\'[\', P.ID, \']\'), nullif(P.PRODUCT_NAME, \'\'))',
+					'FIELD_TYPE' => 'string',
+					'TABLE_ALIAS' => 'P',
+					'JOIN' => 'INNER JOIN b_crm_product_row P ON P.OWNER_TYPE = \'L\' AND P.OWNER_ID = L.ID',
+					'LEFT_JOIN' => 'LEFT JOIN b_crm_product_row P ON P.OWNER_TYPE = \'L\' AND P.OWNER_ID = L.ID',
+				],
+				'CRM_PRODUCT_COUNT' => [
+					'CONCAT_GROUP_BY' => ', ',
+					'CONCAT_KEY' => 'CRM_PRODUCT_ID',
+					'IS_METRIC' => 'N', // 'Y'
+					'FIELD_NAME' => 'TRIM(TRAILING \'.\' FROM (TRIM(TRAILING \'0\' FROM P.QUANTITY)))',
 					'FIELD_TYPE' => 'string',
 					'TABLE_ALIAS' => 'P',
 					'JOIN' => 'INNER JOIN b_crm_product_row P ON P.OWNER_TYPE = \'L\' AND P.OWNER_ID = L.ID',
@@ -266,7 +279,7 @@ class Lead
 					'IS_METRIC' => 'Y',
 					'AGGREGATION_TYPE' => 'SUM',
 					'FIELD_NAME' => 'L.OPPORTUNITY',
-					'FIELD_TYPE' => 'int',
+					'FIELD_TYPE' => 'double',
 				],
 				//CURRENCY_ID VARCHAR (50) DEFAULT NULL,
 				'CURRENCY_ID' => [

@@ -23,6 +23,8 @@ Main\UI\Extension::load([
 	'qrcode',
 	'ui.qrauthorization',
 	'ui.fonts.opensans',
+	'ui.avatar-editor',
+	'avatar_editor'
 ]);
 $themePicker = new ThemePicker($arParams['SITE_TEMPLATE_ID'] ?: (defined('SITE_TEMPLATE_ID') ? SITE_TEMPLATE_ID : 'bitrix24'));
 
@@ -65,6 +67,7 @@ if (
 {
 	$arResult['B24NET_WWW'] = true;
 }
+$photoId = !empty($arResult['User']['PHOTO']) ? $arResult['User']['PERSONAL_PHOTO'] : null;
 ?>
 <script type='application/javascript'>
 BX.message(<?=CUtil::phpToJsObject(Main\Localization\Loc::loadLanguageFile(__FILE__))?>);
@@ -80,7 +83,7 @@ BX.ready(function() {
 		'profile' => [
 				'ID' => $arResult['User']['ID'],
 				'FULL_NAME' => $arResult['User']['FULL_NAME'],
-				'PHOTO' => isset($arResult['User']['PHOTO']) && !empty($arResult['User']['PHOTO']) ?
+				'PHOTO' => $photoId > 0 ?
 					\CHTTP::urnEncode(
 						call_user_func(
 							function($photoId)
@@ -102,22 +105,26 @@ BX.ready(function() {
 								}
 								return '';
 							},
-							$arResult['User']['PERSONAL_PHOTO']
+							$photoId
 						)
 				) : '',
 				'STATUS' => ((
-					isset($arResult["User"]["STATUS"])
-					&& !empty($arResult["User"]["STATUS"])
+					!empty($arResult['User']['STATUS'])
 					&& (
-						!( $arResult["User"]["STATUS"] === "employee"
-							&& ($arResult["IsOwnProfile"] || !$arResult["Permissions"]['edit'])
+						!( $arResult['User']['STATUS'] === 'employee'
+							&& ($arResult['IsOwnProfile'] || !$arResult['Permissions']['edit'])
 						)
-						|| $arResult["User"]["SHOW_SONET_ADMIN"]
-					)) ? $arResult["User"]["STATUS"] : ''
+						|| $arResult['User']['SHOW_SONET_ADMIN']
+					)) ? $arResult['User']['STATUS'] : ''
 				),
-				'WORK_POSITION' => $arResult["User"]["WORK_POSITION"],
-				'URL' => $userUrl,
-			],
+				'WORK_POSITION' => $arResult['User']['WORK_POSITION'],
+				'URL' => $userUrl
+			]
+			+ (class_exists(Bitrix\UI\Avatar\Mask\Helper::class)
+				&& \Bitrix\Main\Config\Option::get('ui', 'avatar-editor-availability-delete-after-10.2022', 'N') === 'Y' ?
+			[
+				'MASK' => Bitrix\UI\Avatar\Mask\Helper::getData($photoId)
+			] : []),
 			'features' => [
 				'themePicker' => array_intersect_key(
 					($themePicker->getCurrentTheme() ?? []),
@@ -138,7 +145,7 @@ BX.ready(function() {
 				'otp' => $otpValue,
 				'bindings' =>
 					!$arResult['isExtranetSite']
-					&& !in_array($arResult["User"]["STATUS"], ['email', 'extranet']) ? Binding\Menu::getMenuItems(
+					&& !in_array($arResult['User']['STATUS'], ['email', 'extranet']) ? Binding\Menu::getMenuItems(
 						'top_panel',
 						'user_menu',
 						['inline' => true, 'context' => ['USER_ID' => $USER->GetID()]]) : [],

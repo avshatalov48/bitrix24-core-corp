@@ -14,3 +14,6 @@ $MESS["CRM_BIC_LSH_FIELD_STATUS_SEMANTIC"] = "Status type";
 $MESS["CRM_BIC_LSH_FIELD_STATUS_SEMANTIC_ID"] = "Status type ID";
 $MESS["CRM_BIC_LSH_FIELD_TYPE_ID"] = "Record type";
 $MESS["CRM_BIC_LSH_TABLE"] = "Lead: status history";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME"] = "Responsible person";
+$MESS["CRM_BIC_LSH_FIELD_ASSIGNED_BY_NAME_FULL"] = "The name of the user who was assigned as responsible for this lead";
+$MESS["CRM_BIC_LSH_FIELD_STATUS_NAME"] = "Status name";

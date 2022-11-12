@@ -13,6 +13,7 @@ use Bitrix\Socialnetwork\ComponentHelper;
 use Bitrix\Main\Engine\ActionFilter\CloseSession;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\UI;
 
 class UserProfile extends \CBitrixComponent implements \Bitrix\Main\Engine\Contract\Controllerable, \Bitrix\Main\Errorable
 {

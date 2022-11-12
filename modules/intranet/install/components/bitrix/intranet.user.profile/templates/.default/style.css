@@ -292,8 +292,10 @@
 
 .intranet-user-profile-userpic-upload,
 .intranet-user-profile-userpic-create,
+.intranet-user-profile-userpic-mask,
 .intranet-user-profile-userpic-upload:hover,
-.intranet-user-profile-userpic-create:hover {
+.intranet-user-profile-userpic-create:hover,
+.intranet-user-profile-userpic-mask:hover {
 	display: block;
 	text-align: center;
 	font-family: var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
@@ -304,19 +306,22 @@
 	cursor: pointer;
 	opacity: .85;
 	transition: .1s;
+	margin-bottom: 9px;
 }
 
 .intranet-user-profile-userpic-upload:hover,
-.intranet-user-profile-userpic-create:hover {
+.intranet-user-profile-userpic-create:hover,
+.intranet-user-profile-userpic-mask:hover {
 	opacity: 1;
 }
 
 .intranet-user-profile-userpic-create {
-	margin-bottom: 9px;
+
 }
 
 .intranet-user-profile-userpic-upload:before,
-.intranet-user-profile-userpic-create:before {
+.intranet-user-profile-userpic-create:before,
+.intranet-user-profile-userpic-mask:before {
 	content: '';
 	display: inline-block;
 	margin: 1px 6px 0 0;
@@ -333,6 +338,13 @@
 	width: 14px;
 	height: 13px;
 	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2014%2013%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M10%2C13%20L10%2C10%20L12%2C10%20L12%2C2%20L2%2C2%20L2%2C10%20L4%2C10%20L4%2C13%20L1.70000005%2C13%20C0.761115947%2C13%20-1.07064464e-16%2C12.2388841%20-2.22044605e-16%2C11.3%20L-2.22044605e-16%2C1.70000005%20C-3.37024746e-16%2C0.761115947%200.761115947%2C-2.95815068e-14%201.70000005%2C-2.97539771e-14%20L12.3%2C-2.95319325e-14%20C13.2388841%2C-2.88705061e-14%2014%2C0.761115947%2014%2C1.70000005%20L14%2C11.3%20C14%2C12.2388841%2013.2388841%2C13%2012.3%2C13%20L10%2C13%20Z%20M6.00870612%2C7.92000351%20L3.10110152%2C7.92000351%20L7.00847103%2C4.3678494%20L10.9158405%2C7.92000351%20L8.02731135%2C7.92000351%20L8.02731135%2C12.8931369%20L6.00870612%2C12.8931369%20L6.00870612%2C7.92000351%20Z%22/%3E%3C/svg%3E') center center no-repeat;
+}
+
+.intranet-user-profile-userpic-mask:before {
+	width: 16px;
+	height: 16px;
+	margin: 0 4px 0 0;
+	background: url("data:image/svg+xml,%3Csvg width='24' height='24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M12 20.005a8.005 8.005 0 1 0 0-16.01 8.005 8.005 0 0 0 0 16.01zm4.445-3.966a6.007 6.007 0 1 0-8.893 0h8.893zm-.754-1.562c-.28.071-.575.109-.878.109H9.191c-.305 0-.602-.039-.884-.11.186-.527.949-.922 1.653-1.229.192-.083.308-.15.425-.218.115-.066.23-.132.42-.216.021-.103.03-.209.025-.314l.325-.039s.043.079-.025-.384c0 0-.366-.096-.383-.833 0 0-.274.093-.291-.354-.003-.089-.026-.174-.048-.256-.052-.197-.099-.373.139-.526l-.171-.463s-.181-1.79.61-1.645c-.321-.515 2.385-.943 2.565.634.07.475.07.958 0 1.434 0 0 .404-.047.134.731 0 0-.149.56-.377.435 0 0 .037.708-.322.828 0 0 .026.377.026.402l.3.046s-.01.314.05.348c.275.18.575.315.89.403.933.24 1.406.651 1.406 1.011l.033.206z' fill='%23525C69'/%3E%3C/svg%3E") center center no-repeat;
 }
 
 .intranet-user-profile-rank {

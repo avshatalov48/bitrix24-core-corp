@@ -69,7 +69,9 @@
 			{
 				return resolve();
 			}
-			client.connect().then(resolve).catch(reject)
+			client.connect().then(resolve).catch((err) => {
+				reject(new VoxConnectionError())
+			})
 		});
 	};
 
@@ -351,5 +353,11 @@
 			});
 
 		return result;
+	}
+
+	class VoxConnectionError extends Error
+	{
+		code = 'NETWORK_ERROR';
+		name = 'VoxConnectionError';
 	}
 })();

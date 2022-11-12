@@ -1,6 +1,7 @@
 <?
 IncludeModuleLangFile(__FILE__);
 
+use Bitrix\Main\Event;
 use Bitrix\Voximplant as VI;
 use Bitrix\Crm\Activity\Provider;
 use Bitrix\Crm\Tracking;
@@ -257,6 +258,14 @@ class CVoxImplantCrmHelper
 			return false;
 		}
 
+		$isCallRegisteredInCrmEventSent = false;
+		if (!empty($call->getCrmBindings()) && static::isNewCallScenarioEnabled())
+		{
+			static::sendCallRegisteredInCrmEvent($call);
+
+			$isCallRegisteredInCrmEventSent = true;
+		}
+
 		$shouldCreateLead = true;
 		if(!is_array($config))
 		{
@@ -366,8 +375,12 @@ class CVoxImplantCrmHelper
 			$call->updateCrmBindings($entityManager->getActivityBindings());
 		}
 
-		return true;
+		if (!$isCallRegisteredInCrmEventSent && static::isNewCallScenarioEnabled())
+		{
+			static::sendCallRegisteredInCrmEvent($call);
+		}
 
+		return true;
 	}
 
 	/**
@@ -1075,15 +1088,8 @@ class CVoxImplantCrmHelper
 			$arErrors
 		);
 
-		if (class_exists('\Bitrix\Crm\Automation\Starter'))
-		{
-			$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $leadId);
-			$starter->setContextModuleId('voximplant')->runOnAdd();
-		}
-		else
-		{
-			Bitrix\Crm\Automation\Factory::runOnAdd(\CCrmOwnerType::Lead, $leadId);
-		}
+		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Lead, $leadId);
+		$starter->setContextModuleId('voximplant')->runOnAdd();
 	}
 
 	// Starts call trigger for all associated entities, except for created lead.
@@ -1399,7 +1405,9 @@ class CVoxImplantCrmHelper
 		if($crmEntityId == 0)
 			throw new \Bitrix\Main\ArgumentException('Crm entity id is empty');
 
-		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId);
+		$callList = \Bitrix\Crm\CallList\CallList::createWithId($callListId, false, [
+			'checkPermissions' => false,
+		]);
 
 		$primary = [
 			'LIST_ID' => $callListId,
@@ -1802,5 +1810,18 @@ class CVoxImplantCrmHelper
 		}
 
 		return false;
+	}
+
+	private static function sendCallRegisteredInCrmEvent(VI\Call $call): void
+	{
+		$crmEventData = [
+			'CALL_ID' => $call->getCallId(),
+			'CALLER_ID' => $call->getCallerId(),
+			'CRM_DATA' => $call->getCrmBindings(),
+			'USER_ID' => $call->getUserId(),
+			'INCOMING' => $call->getIncoming(),
+		];
+
+		(new Event('voximplant', 'onCallRegisteredInCrm', $crmEventData))->send();
 	}
 }

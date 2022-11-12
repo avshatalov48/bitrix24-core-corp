@@ -167,6 +167,18 @@ BX.ready(function() {
 			loader.hide();
 			BX.removeClass(userBlock, '--wait');
 			BX.Runtime.html(null, response.data.html);
+		}, (response) => {
+			loader.hide();
+			BX.removeClass(userBlock, '--wait');
+			if (response && response.status === "error")
+			{
+					BX.UI.Notification.Center.notify({
+					content: [response.errors ? response.errors[0].message : 'Unknown error'].join(' '),
+					position: 'top-right',
+					category: 'menu-self-item-popup',
+					autoHideDelay: 3000
+				});
+			}
 		});
 	}
 	BX('user-block').addEventListener('click', handler);

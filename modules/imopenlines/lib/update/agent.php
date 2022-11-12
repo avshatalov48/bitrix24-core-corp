@@ -5,22 +5,23 @@ use \Bitrix\Main\Loader;
 
 final class Agent
 {
-	public static function update1720(): string
+	public static function updateQuick(): string
 	{
-		if(Loader::IncludeModule("im") && class_exists('\Bitrix\Im\Model\AppTable') && class_exists('\Bitrix\Im\App'))
+		if (
+			Loader::IncludeModule("im")
+			&& class_exists('\Bitrix\Im\Model\AppTable')
+			&& class_exists('\Bitrix\Im\App')
+		)
 		{
-			$result = \Bitrix\Im\Model\AppTable::getList(Array(
-				'filter' => Array('=MODULE_ID' => 'imopenlines', '=CODE' => 'quick')
-			))->fetch();
+			$imagePath = BX_ROOT.'/modules/imopenlines/install/icon/icon_quick.png';
+
+			$result = \Bitrix\Im\Model\AppTable::getList([
+				'filter' => ['=MODULE_ID' => 'imopenlines', '=CODE' => 'quick']
+			])->fetch();
 
 			if (!$result)
 			{
-				$imagePath = BX_ROOT.'/modules/imopenlines/install/icon/icon_quick.png';
-
-				$iconId = \CFile::SaveFile(
-					\CFile::MakeFileArray($imagePath),
-					'imopenlines'
-				);
+				$iconId = \CFile::SaveFile(\CFile::MakeFileArray($imagePath), 'imopenlines');
 
 				\Bitrix\Im\App::register(Array(
 					'MODULE_ID' => 'imopenlines',
@@ -36,6 +37,28 @@ final class Agent
 					'METHOD_LANG_GET' => 'onAppLang',
 				));
 			}
+			else
+			{
+				$iconFileOk = false;
+				$appId = (int)$result['ID'];
+				$iconId = (int)$result['ICON_FILE_ID'];
+				if ($iconId)
+				{
+					$file = \CFile::getByID($iconId)->fetch();
+
+					$iconFileOk = \Bitrix\Main\IO\File::isFileExists(
+						\Bitrix\Main\Application::getDocumentRoot()
+						.$file['SRC']
+					);
+				}
+				if (
+					$iconFileOk !== true
+					&& ($iconId = \CFile::SaveFile(\CFile::MakeFileArray($imagePath), 'imopenlines'))
+				)
+				{
+					\Bitrix\Im\Model\AppTable::update($appId, ['ICON_FILE_ID' => $iconId])->isSuccess();
+				}
+			}
 
 			return '';
 		}
@@ -43,6 +66,11 @@ final class Agent
 		{
 			return __METHOD__. '();';
 		}
+	}
+
+	public static function update1720(): string
+	{
+		return self::updateQuick();
 	}
 
 	/**

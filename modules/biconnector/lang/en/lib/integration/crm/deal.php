@@ -34,6 +34,7 @@ $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_ID_FULL"] = "The ID of the user who created
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_NAME"] = "Created by";
 $MESS["CRM_BIC_DEAL_FIELD_CREATED_BY_NAME_FULL"] = "The name of the user who created the deal";
 $MESS["CRM_BIC_DEAL_FIELD_CRM_PRODUCT"] = "CRM product (multiple)";
+$MESS["CRM_BIC_DEAL_FIELD_CRM_PRODUCT_ID"] = "CRM product ID (mult.)";
 $MESS["CRM_BIC_DEAL_FIELD_CRM_PRODUCT_COUNT"] = "Product quantity as seen in CRM (mult.)";
 $MESS["CRM_BIC_DEAL_FIELD_CURRENCY_ID"] = "Currency";
 $MESS["CRM_BIC_DEAL_FIELD_CURRENCY_ID_FULL"] = "Currency ID";

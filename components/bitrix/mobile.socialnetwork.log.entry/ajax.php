@@ -42,7 +42,7 @@ else
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/mobile.socialnetwork.log.entry/include.php");
 
-__IncludeLang(dirname(__FILE__)."/lang/".$lng."/ajax.php");
+__IncludeLang(__DIR__."/lang/".$lng."/ajax.php");
 
 if(CModule::IncludeModule("socialnetwork"))
 {

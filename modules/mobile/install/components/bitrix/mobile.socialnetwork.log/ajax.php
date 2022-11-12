@@ -40,7 +40,7 @@ $APPLICATION->IncludeComponent("bitrix:mobile.data", "", Array(
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/components/bitrix/mobile.socialnetwork.log/include.php");
 
-__IncludeLang(dirname(__FILE__)."/lang/".$lng."/ajax.php");
+__IncludeLang(__DIR__."/lang/".$lng."/ajax.php");
 
 if(CModule::IncludeModule("socialnetwork"))
 {

@@ -14,7 +14,7 @@ class Company
 	 *
 	 * @return void
 	 */
-	function onBIConnectorDataSources(\Bitrix\Main\Event $event)
+	public static function onBIConnectorDataSources(\Bitrix\Main\Event $event)
 	{
 		if (!\Bitrix\Main\Loader::includeModule('crm'))
 		{

@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Intranet = this.BX.Intranet || {};
-(function (exports,ui_popupcomponentsmaker,main_popup,main_qrcode,main_core,main_core_events,ui_qrauthorization) {
+(function (exports,ui_popupcomponentsmaker,main_popup,main_qrcode,ui_avatarEditor,main_core,main_core_events,ui_qrauthorization) {
 	'use strict';
 
 	var Options = function Options() {
@@ -214,11 +214,176 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return ThemePicker;
 	}(main_core_events.EventEmitter);
 
-	var _templateObject$2, _templateObject2$1, _templateObject3, _templateObject4, _templateObject5, _templateObject6;
+	var _templateObject$2, _templateObject2$1, _templateObject3;
 
-	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	var _container$1 = /*#__PURE__*/new WeakMap();
+
+	var _isAvailable = /*#__PURE__*/new WeakMap();
+
+	var _isInstalled = /*#__PURE__*/new WeakMap();
+
+	var _avatarInfo = /*#__PURE__*/new WeakMap();
+
+	var _avatarEditor = /*#__PURE__*/new WeakMap();
+
+	var MaskEditor = /*#__PURE__*/function (_EventEmitter) {
+	  babelHelpers.inherits(MaskEditor, _EventEmitter);
+
+	  function MaskEditor(data) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, MaskEditor);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(MaskEditor).call(this));
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _container$1, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _isAvailable, {
+	      writable: true,
+	      value: false
+	    });
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _isInstalled, {
+	      writable: true,
+	      value: false
+	    });
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _avatarInfo, {
+	      writable: true,
+	      value: {
+	        scr: null,
+	        maskId: null
+	      }
+	    });
+
+	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _avatarEditor, {
+	      writable: true,
+	      value: void 0
+	    });
+
+	    _this.setEventNamespace(Options.eventNameSpace);
+
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _isAvailable, data !== undefined);
+
+	    if (main_core.Type.isPlainObject(data)) {
+	      babelHelpers.classPrivateFieldGet(babelHelpers.assertThisInitialized(_this), _avatarInfo).src = data.src;
+	    }
+
+	    _this.getContainer();
+
+	    if (main_core.Type.isPlainObject(data) && data.maskId) {
+	      _this.installMask(data.maskId);
+	    } else {
+	      _this.uninstallMask();
+	    }
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(MaskEditor, [{
+	    key: "getEditor",
+	    value: function getEditor() {
+	      var _this2 = this;
+
+	      if (babelHelpers.classPrivateFieldGet(this, _avatarEditor)) {
+	        return babelHelpers.classPrivateFieldGet(this, _avatarEditor);
+	      }
+
+	      if (!babelHelpers.classPrivateFieldGet(this, _isAvailable)) {
+	        return null;
+	      }
+
+	      babelHelpers.classPrivateFieldSet(this, _avatarEditor, ui_avatarEditor.Editor.getOrCreateInstanceById('intranet-user-profile-photo-file', {
+	        enableCamera: true,
+	        enableMask: true
+	      }));
+	      babelHelpers.classPrivateFieldGet(this, _avatarEditor).subscribe('onApply', function (_ref) {
+	        var maskedBlob = _ref.data.maskedBlob;
+
+	        if (maskedBlob) {
+	          return _this2.installMask(maskedBlob['maskId']);
+	        }
+
+	        _this2.uninstallMask();
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _avatarEditor).subscribeOnFormIsReady('newPhoto', function (_ref2) {
+	        var form = _ref2.data.form;
+
+	        _this2.emit('onChangePhoto', form);
+	      });
+	      babelHelpers.classPrivateFieldGet(this, _avatarEditor).loadData(babelHelpers.classPrivateFieldGet(this, _avatarInfo));
+	      return babelHelpers.classPrivateFieldGet(this, _avatarEditor);
+	    }
+	  }, {
+	    key: "getContainer",
+	    value: function getContainer() {
+	      var _this3 = this;
+
+	      if (babelHelpers.classPrivateFieldGet(this, _container$1) instanceof HTMLElement) {
+	        return babelHelpers.classPrivateFieldGet(this, _container$1);
+	      }
+
+	      if (!babelHelpers.classPrivateFieldGet(this, _isAvailable)) {
+	        babelHelpers.classPrivateFieldSet(this, _container$1, main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON')));
+	      } else {
+	        var onclick = function onclick() {
+	          _this3.emit('onOpen');
+
+	          _this3.getEditor().show('mask');
+	        };
+
+	        var button = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" onclick=\"", "\"></div>"])), onclick);
+	        babelHelpers.classPrivateFieldSet(this, _container$1, main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --changeable --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), button));
+	        this.subscribe('onInstall', function () {
+	          button.innerHTML = main_core.Loc.getMessage('INTRANET_USER_PROFILE_CHANGE');
+	          main_core.Dom.addClass(babelHelpers.classPrivateFieldGet(_this3, _container$1), '--active');
+	        });
+	        this.subscribe('onUninstall', function () {
+	          button.innerHTML = main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL');
+	          main_core.Dom.removeClass(babelHelpers.classPrivateFieldGet(_this3, _container$1), '--active');
+	        });
+	      }
+
+	      return babelHelpers.classPrivateFieldGet(this, _container$1);
+	    }
+	  }, {
+	    key: "getPromise",
+	    value: function getPromise() {
+	      var _this4 = this;
+
+	      return new Promise(function (resolve) {
+	        resolve(_this4.getContainer());
+	      });
+	    }
+	  }, {
+	    key: "installMask",
+	    value: function installMask(maskId) {
+	      babelHelpers.classPrivateFieldSet(this, _isInstalled, true);
+	      babelHelpers.classPrivateFieldGet(this, _avatarInfo).maskId = maskId;
+	      this.emit('onInstall');
+	    }
+	  }, {
+	    key: "uninstallMask",
+	    value: function uninstallMask() {
+	      babelHelpers.classPrivateFieldSet(this, _isInstalled, false);
+	      babelHelpers.classPrivateFieldGet(this, _avatarInfo).maskId = null;
+	      this.emit('onUninstall');
+	    }
+	  }]);
+	  return MaskEditor;
+	}(main_core_events.EventEmitter);
+
+	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4, _templateObject5, _templateObject6;
+
+	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 
@@ -245,13 +410,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      var div;
 
 	      if (range > 0 && myPosition > 0) {
-	        div = main_core.Tag.render(_templateObject$2 || (_templateObject$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --margin-s\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__icon-help\" data-hint=\"", "\" data-hint-no-icon></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\n\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.onclickHandle, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USTAT_COMPANY_HELP_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
+	        div = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --margin-s\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__icon-help\" data-hint=\"", "\" data-hint-no-icon></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\n\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), this.onclickHandle, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USTAT_COMPANY_HELP_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
 	          '#POSITION#': myPosition,
 	          '#AMONG#': range
 	        }), userList);
 	      } else {
 	        var onclick = range > 0 ? this.onclickHandle : function () {};
-	        div = main_core.Tag.render(_templateObject2$1 || (_templateObject2$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --without-stat ", "\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container --flex --column\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --lighter\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY_BRIEF'));
+	        div = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --without-stat ", "\" onclick=\"", "\">\n\t\t\t\t<div class=\"system-auth-form__item-container --flex --column\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --lighter\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY_BRIEF'));
 	      }
 
 	      BX.UI.Hint.init(div);
@@ -274,7 +439,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          userList = _classPrivateMethodGe2.userList,
 	          range = _classPrivateMethodGe2.range;
 
-	      var div = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --center --padding-ustat ", "\">\n\t\t\t\t<div class=\"system-auth-form__item-image\">\n\t\t\t\t\t<div class=\"system-auth-form__item-image--src --ustat\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --overflow\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --xl --without-margin\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container--inline\" data-role=\"my-position\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --without-margin --margin-right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\" data-role=\"user-list\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__icon-help --absolute-right-bottom\" data-hint=\"", "\" data-hint-no-icon></div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '--without-stat', main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
+	      var div = main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --center --padding-ustat ", "\">\n\t\t\t\t<div class=\"system-auth-form__item-image\">\n\t\t\t\t\t<div class=\"system-auth-form__item-image--src --ustat\"></div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --overflow\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --xl --without-margin\">", "</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__item-container --block\">\n\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light\" data-role=\"empty-info\">", "</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container--inline\" data-role=\"my-position\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-light --without-margin --margin-right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --white-space --margin-xl\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span class=\"system-auth-form__ustat-icon --up\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__userlist\" data-role=\"user-list\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"system-auth-form__icon-help --absolute-right-bottom\" data-hint=\"", "\" data-hint-no-icon></div>\n\t\t\t</div>\n\t\t"])), range > 0 ? '--clickable' : '--without-stat', main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_IS_EMPTY'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_RATING'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_PULSE_MY_POSITION', {
 	        '#POSITION#': myPosition,
 	        '#AMONG#': range
 	      }), userList, main_core.Loc.getMessage('INTRANET_USTAT_COMPANY_HELP_RATING'));
@@ -362,18 +527,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  };
 	}
 
-	var _templateObject$3, _templateObject2$2, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23, _templateObject24;
+	var _templateObject$4, _templateObject2$3, _templateObject3$2, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7, _templateObject8, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14, _templateObject15, _templateObject16, _templateObject17, _templateObject18, _templateObject19, _templateObject20, _templateObject21, _templateObject22, _templateObject23;
 
-	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
 
-	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$2(obj, privateMap); privateMap.set(obj, value); }
+	function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
 
-	function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+	function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
 	var widgetMarker = Symbol('user.widget');
 
-	var _container$1 = /*#__PURE__*/new WeakMap();
+	var _container$2 = /*#__PURE__*/new WeakMap();
 
 	var _popup = /*#__PURE__*/new WeakMap();
 
@@ -394,6 +559,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	var _getMaskContainer = /*#__PURE__*/new WeakSet();
 
 	var _getCompanyPulse = /*#__PURE__*/new WeakSet();
+
+	var _savePhoto = /*#__PURE__*/new WeakSet();
 
 	var _getStressLevel = /*#__PURE__*/new WeakSet();
 
@@ -421,6 +588,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        ID = _ref$profile.ID,
 	        FULL_NAME = _ref$profile.FULL_NAME,
 	        PHOTO = _ref$profile.PHOTO,
+	        MASK = _ref$profile.MASK,
 	        STATUS = _ref$profile.STATUS,
 	        URL = _ref$profile.URL,
 	        WORK_POSITION = _ref$profile.WORK_POSITION,
@@ -447,6 +615,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getStressLevel);
 
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _savePhoto);
+
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getCompanyPulse);
 
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getMaskContainer);
@@ -459,38 +629,39 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _getProfileContainer);
 
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _container$1, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _container$2, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _popup, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _popup, {
 	      writable: true,
 	      value: void 0
 	    });
 
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _profile, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _profile, {
 	      writable: true,
 	      value: null
 	    });
 
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _features, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _features, {
 	      writable: true,
 	      value: {}
 	    });
 
-	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _cache, {
+	    _classPrivateFieldInitSpec$2(babelHelpers.assertThisInitialized(_this), _cache, {
 	      writable: true,
 	      value: new main_core.Cache.MemoryCache()
 	    });
 
 	    _this.setEventNamespace(Options.eventNameSpace);
 
-	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _container$1, container);
+	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _container$2, container);
 	    babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _profile, {
 	      ID: ID,
 	      FULL_NAME: FULL_NAME,
 	      PHOTO: PHOTO,
+	      MASK: MASK,
 	      STATUS: STATUS,
 	      URL: URL,
 	      WORK_POSITION: WORK_POSITION
@@ -549,7 +720,6 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        overflow: true
 	      }, {
 	        html: _classPrivateMethodGet$1(this, _getMaskContainer, _getMaskContainer2).call(this),
-	        disabled: true,
 	        backgroundColor: '#fafafa'
 	      }], _classPrivateMethodGet$1(this, _getCompanyPulse, _getCompanyPulse2).call(this, !!_classPrivateMethodGet$1(this, _getStressLevel, _getStressLevel2).call(this)) ? [{
 	        html: _classPrivateMethodGet$1(this, _getCompanyPulse, _getCompanyPulse2).call(this, !!_classPrivateMethodGet$1(this, _getStressLevel, _getStressLevel2).call(this)),
@@ -622,7 +792,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      };
 
 	      babelHelpers.classPrivateFieldSet(this, _popup, new ui_popupcomponentsmaker.PopupComponentsMaker({
-	        target: babelHelpers.classPrivateFieldGet(this, _container$1),
+	        target: babelHelpers.classPrivateFieldGet(this, _container$2),
 	        content: content.map(prepareFunc),
 	        width: 400
 	      }));
@@ -671,8 +841,8 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      return BX.SidePanel.Instance.open(babelHelpers.classPrivateFieldGet(_this3, _profile).URL);
 	    };
 
-	    var avatarNode = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO, "')\"") : '');
-	    var nameNode = main_core.Tag.render(_templateObject2$2 || (_templateObject2$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME);
+	    var avatarNode = main_core.Tag.render(_templateObject$4 || (_templateObject$4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span class=\"system-auth-form__profile-avatar--image\"\n\t\t\t\t\t", ">\n\t\t\t\t</span>\n\t\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO ? "\n\t\t\t\t\t\tstyle=\"background-size: cover; background-image: url('".concat(babelHelpers.classPrivateFieldGet(_this3, _profile).PHOTO, "')\"") : '');
+	    var nameNode = main_core.Tag.render(_templateObject2$3 || (_templateObject2$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__profile-name\">", "</div>\n\t\t\t"])), babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME);
 	    main_core_events.EventEmitter.subscribe(main_core_events.EventEmitter.GLOBAL_TARGET, 'BX.Intranet.UserProfile:Avatar:changed', function (_ref2) {
 	      var _ref2$data = babelHelpers.slicedToArray(_ref2.data, 1),
 	          url = _ref2$data[0].url;
@@ -686,7 +856,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	      babelHelpers.classPrivateFieldGet(_this3, _profile).FULL_NAME = fullName;
 	      nameNode.innerHTML = fullName;
-	      babelHelpers.classPrivateFieldGet(_this3, _container$1).querySelector('#user-name').innerHTML = fullName;
+	      babelHelpers.classPrivateFieldGet(_this3, _container$2).querySelector('#user-name').innerHTML = fullName;
 	    });
 	    var workPosition = main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(_this3, _profile).WORK_POSITION) ? main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this3, _profile).WORK_POSITION) : '';
 
@@ -694,7 +864,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      workPosition = main_core.Loc.getMessage('INTRANET_USER_PROFILE_' + babelHelpers.classPrivateFieldGet(_this3, _profile).STATUS);
 	    }
 
-	    return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t\t<div class=\"system-auth-form__profile\">\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-content --margin--right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__profile-position\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-controls\">\n\t\t\t\t\t\t\t<span class=\"ui-qr-popupcomponentmaker__btn --large --border\" >\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t \t\t<!-- <span class=\"ui-qr-popupcomponentmaker__btn --large --success\">any text</span> -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), onclick, avatarNode, nameNode, workPosition, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PROFILE'));
+	    return main_core.Tag.render(_templateObject3$2 || (_templateObject3$2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --clickable\" onclick=\"", "\">\n\t\t\t\t\t<div class=\"system-auth-form__profile\">\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-avatar\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-content --margin--right\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__profile-position\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__profile-controls\">\n\t\t\t\t\t\t\t<span class=\"ui-qr-popupcomponentmaker__btn --large --border\" >\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t \t\t<!-- <span class=\"ui-qr-popupcomponentmaker__btn --large --success\">any text</span> -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), onclick, avatarNode, nameNode, workPosition, main_core.Loc.getMessage('INTRANET_USER_PROFILE_PROFILE'));
 	  });
 	}
 
@@ -737,22 +907,34 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _getMaskContainer2() {
+	  var _this7 = this;
+
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('Mask', function () {
-	    return main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --mask\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">\n\t\t\t\t\t\t\t<span>", "</span>\n\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help\"></span>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_MASKS'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON'));
+	    var maskEditor = new MaskEditor(babelHelpers.classPrivateFieldGet(_this7, _profile).MASK);
+	    maskEditor.subscribe('onOpen', _this7.hide);
+	    maskEditor.subscribe('onChangePhoto', function (_ref4) {
+	      var data = _ref4.data;
+
+	      _classPrivateMethodGet$1(_this7, _savePhoto, _savePhoto2).call(_this7, data);
+	    });
+
+	    _this7.emit('onChangePhoto');
+
+	    return maskEditor.getPromise();
 	  });
 	}
 
 	function _getCompanyPulse2(isNarrow) {
-	  var _this7 = this;
+	  var _this8 = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getCompanyPulse', function () {
-	    if (babelHelpers.classPrivateFieldGet(_this7, _features).pulse === 'Y' && babelHelpers.classPrivateFieldGet(_this7, _profile).ID > 0 && babelHelpers.classPrivateFieldGet(_this7, _profile).ID === main_core.Loc.getMessage('USER_ID')) {
+	    if (babelHelpers.classPrivateFieldGet(_this8, _features).pulse === 'Y' && babelHelpers.classPrivateFieldGet(_this8, _profile).ID > 0 && babelHelpers.classPrivateFieldGet(_this8, _profile).ID === main_core.Loc.getMessage('USER_ID')) {
 	      var _babelHelpers$classPr;
 
 	      return Ustat.getPromise({
-	        userId: babelHelpers.classPrivateFieldGet(_this7, _profile).ID,
+	        userId: babelHelpers.classPrivateFieldGet(_this8, _profile).ID,
 	        isNarrow: isNarrow,
-	        data: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this7, _features)['pulseData']) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null
+	        data: (_babelHelpers$classPr = babelHelpers.classPrivateFieldGet(_this8, _features)['pulseData']) !== null && _babelHelpers$classPr !== void 0 ? _babelHelpers$classPr : null
 	      });
 	    }
 
@@ -760,35 +942,49 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  });
 	}
 
+	function _savePhoto2(dataObj) {
+	  main_core.ajax.runComponentAction(babelHelpers.classPrivateFieldGet(this, _cache).get('componentParams').componentName, 'loadPhoto', {
+	    signedParameters: babelHelpers.classPrivateFieldGet(this, _cache).get('componentParams').signedParameters,
+	    mode: 'ajax',
+	    data: dataObj
+	  }).then(function (response) {
+	    if (response.data) {
+	      (top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
+	        url: response.data
+	      }]);
+	    }
+	  }.bind(this), function (response) {
+	    console.log('response: ', response);
+	  }.bind(this));
+	}
+
 	function _getStressLevel2() {
-	  var _this8 = this;
+	  var _this9 = this;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _features)['stressLevel'] !== 'Y') {
 	    return null;
 	  }
 
-	  var result = babelHelpers.classPrivateFieldGet(this, _cache).remember('getStressLevel', function () {
+	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getStressLevel', function () {
 	    var _babelHelpers$classPr2;
 
 	    return StressLevel.getPromise({
-	      signedParameters: babelHelpers.classPrivateFieldGet(_this8, _cache).get('componentParams').signedParameters,
-	      componentName: babelHelpers.classPrivateFieldGet(_this8, _cache).get('componentParams').componentName,
-	      userId: babelHelpers.classPrivateFieldGet(_this8, _profile).ID,
-	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this8, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
+	      signedParameters: babelHelpers.classPrivateFieldGet(_this9, _cache).get('componentParams').signedParameters,
+	      componentName: babelHelpers.classPrivateFieldGet(_this9, _cache).get('componentParams').componentName,
+	      userId: babelHelpers.classPrivateFieldGet(_this9, _profile).ID,
+	      data: (_babelHelpers$classPr2 = babelHelpers.classPrivateFieldGet(_this9, _features)['stressLevelData']) !== null && _babelHelpers$classPr2 !== void 0 ? _babelHelpers$classPr2 : null
 	    });
 	  });
-	  babelHelpers.classPrivateFieldGet(this, _cache)["delete"]('componentParams');
-	  return result;
 	}
 
 	function _getQrContainer2(flex) {
-	  var _this9 = this;
+	  var _this10 = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getQrContainer', function () {
-	    var isInstalled = babelHelpers.classPrivateFieldGet(_this9, _features)['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y' || babelHelpers.classPrivateFieldGet(_this9, _features)['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
+	    var isInstalled = babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_ANDROID_INSTALLED'] === 'Y' || babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_IOS_INSTALLED'] === 'Y';
 
 	    var onclick = function onclick() {
-	      _this9.hide();
+	      _this10.hide();
 
 	      new ui_qrauthorization.QrAuthorization({
 	        title: main_core.Loc.getMessage('INTRANET_USER_PROFILE_QRCODE_TITLE2'),
@@ -800,7 +996,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    var onclickHelp = function onclickHelp(event) {
 	      top.BX.Helper.show('redirect=detail&code=14999860');
 
-	      _this9.hide();
+	      _this10.hide();
 
 	      event.preventDefault();
 	      event.stopPropagation();
@@ -811,13 +1007,13 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	    if (flex !== 2 && flex !== 0) {
 	      // for a small size
-	      node = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", "  --clickable\" onclick=\"", "\" style=\"padding: 10px 14px\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center --column --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --center --margin-xl\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr\" style=\"margin-bottom: 12px\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__icon-help --absolute\" onclick=\"", "\" title=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
+	      node = main_core.Tag.render(_templateObject6$1 || (_templateObject6$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", "  --clickable\" onclick=\"", "\" style=\"padding: 10px 14px\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center --column --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --center --margin-xl\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr\" style=\"margin-bottom: 12px\">\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__icon-help --absolute\" onclick=\"", "\" title=\"", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'));
 	    } else if (flex === 0) {
 	      //full size
-	      node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-qr-xl\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --l\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --large --border\" style=\"margin-top: auto\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --full-size\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
+	      node = main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-qr-xl\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --l\">", "</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --large --border\" style=\"margin-top: auto\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --full-size\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
 	    } else {
 	      // for flex 2. It is kind of middle
-	      node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-mid-qr  --clickable\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\" title=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --size-2\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
+	      node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope ", " --padding-mid-qr  --clickable\" onclick=\"", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --column --flex --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --block\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t\t<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\" title=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --qr\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__qr --size-2\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? '--active' : '', onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_TITLE2_SMALL'), onclickHelp, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK'), onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_MOBILE_SHOW_QR'));
 	    }
 
 	    return node;
@@ -825,20 +1021,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _getDeskTopContainer2() {
-	  var _this10 = this;
+	  var _this11 = this;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _features).browser === 'Linux') {
 	    return null;
 	  }
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getDeskTopContainer', function () {
-	    var isInstalled = babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
+	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_MAC_INSTALLED'] === 'Y';
 	    var cssPostfix = '--apple';
 	    var title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_APPLE');
 	    var linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.dmg';
 
-	    if (babelHelpers.classPrivateFieldGet(_this10, _features).browser === 'Windows') {
-	      isInstalled = babelHelpers.classPrivateFieldGet(_this10, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
+	    if (babelHelpers.classPrivateFieldGet(_this11, _features).browser === 'Windows') {
+	      isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['appInstalled']['APP_WINDOWS_INSTALLED'] === 'Y';
 	      cssPostfix = '--windows';
 	      title = main_core.Loc.getMessage('INTRANET_USER_PROFILE_DESKTOP_WINDOWS');
 	      linkToDistributive = 'https://dl.bitrix24.com/b24/bitrix24_desktop.exe';
@@ -849,12 +1045,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      event.stopPropagation();
 	      return false;
 	    } : function () {
-	      _this10.hide();
+	      _this11.hide();
 
 	      return true;
 	    };
 
-	    if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(_this10, _features)['otp']) === false) {
+	    if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(_this11, _features)['otp']) === false) {
 	      var menuPopup = null;
 
 	      var popupClick = function popupClick(event) {
@@ -867,48 +1063,48 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            onclick: function onclick() {
 	              menuPopup.close();
 
-	              _this10.hide();
+	              _this11.hide();
 	            }
 	          }],
 	          angle: true,
 	          offsetLeft: 10,
 	          events: {
 	            onShow: function onShow() {
-	              _this10.getPopup().getPopup().setAutoHide(false);
+	              _this11.getPopup().getPopup().setAutoHide(false);
 	            },
 	            onClose: function onClose() {
-	              _this10.getPopup().getPopup().setAutoHide(true);
+	              _this11.getPopup().getPopup().setAutoHide(true);
 	            }
 	          }
 	        });
 	        menuPopup.toggle();
 	      };
 
-	      return main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div data-role=\"desktop-item\" class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --center --display-flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --center --display-flex\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
+	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div data-role=\"desktop-item\" class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --center --display-flex\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --center --display-flex\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', title, linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	    }
 
-	    return main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title ", "\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? ' --without-margin' : '--min-height', title, isInstalled ? main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')) : '', linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
+	    return main_core.Tag.render(_templateObject11 || (_templateObject11 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image ", "\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title ", "\">", "</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --center --center-force\">\n\t\t\t\t\t\t\t<a class=\"ui-qr-popupcomponentmaker__btn\" href=\"", "\" target=\"_blank\" onclick=\"", "\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</a>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', cssPostfix, isInstalled ? ' --without-margin' : '--min-height', title, isInstalled ? main_core.Tag.render(_templateObject12 || (_templateObject12 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-title --link-dotted\">", "</a>\n\t\t\t\t\t\t\t"])), linkToDistributive, main_core.Loc.getMessage('INTRANET_USER_PROFILE_DOWNLOAD')) : '', linkToDistributive, onclick, isInstalled ? main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALLED') : main_core.Loc.getMessage('INTRANET_USER_PROFILE_INSTALL'));
 	  });
 	}
 
 	function _getOTPContainer2(single) {
-	  var _this11 = this;
+	  var _this12 = this;
 
 	  if (main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _features)['otp']) === false) {
 	    return null;
 	  }
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getOTPContainer', function () {
-	    var isInstalled = babelHelpers.classPrivateFieldGet(_this11, _features)['otp']['IS_ACTIVE'] === 'Y' || babelHelpers.classPrivateFieldGet(_this11, _features)['otp']['IS_ACTIVE'] === true;
+	    var isInstalled = babelHelpers.classPrivateFieldGet(_this12, _features)['otp']['IS_ACTIVE'] === 'Y' || babelHelpers.classPrivateFieldGet(_this12, _features)['otp']['IS_ACTIVE'] === true;
 
 	    var _onclick = function onclick() {
-	      _this11.hide();
+	      _this12.hide();
 
-	      if (String(babelHelpers.classPrivateFieldGet(_this11, _features)['otp']['URL']).length > 0) {
-	        main_core.Uri.addParam(babelHelpers.classPrivateFieldGet(_this11, _features)['otp']['URL'], {
+	      if (String(babelHelpers.classPrivateFieldGet(_this12, _features)['otp']['URL']).length > 0) {
+	        main_core.Uri.addParam(babelHelpers.classPrivateFieldGet(_this12, _features)['otp']['URL'], {
 	          page: 'otpConnected'
 	        });
-	        BX.SidePanel.Instance.open(main_core.Uri.addParam(babelHelpers.classPrivateFieldGet(_this11, _features)['otp']['URL'], {
+	        BX.SidePanel.Instance.open(main_core.Uri.addParam(babelHelpers.classPrivateFieldGet(_this12, _features)['otp']['URL'], {
 	          page: 'otpConnected'
 	        }), {
 	          width: 1100
@@ -918,16 +1114,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	      }
 	    };
 
-	    var button = isInstalled ? main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
+	    var button = isInstalled ? main_core.Tag.render(_templateObject13 || (_templateObject13 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURNED_ON')) : main_core.Tag.render(_templateObject14 || (_templateObject14 = babelHelpers.taggedTemplateLiteral(["<div class=\"ui-qr-popupcomponentmaker__btn\" style=\"margin-top: auto\" onclick=\"", "\">", "</div>"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_TURN_ON'));
 
 	    var onclickHelp = function onclickHelp() {
 	      top.BX.Helper.show('redirect=detail&code=6641271');
 
-	      _this11.hide();
+	      _this12.hide();
 	    };
 
 	    if (single !== true) {
-	      return main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --authentication\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --column --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin --block\">\n\t\t\t\t\t\t\t\t", "&nbsp;<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-content --margin-top-auto --center --center-force\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_templateObject17 || (_templateObject17 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t\t"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE')) : '', button, isInstalled ? '' : "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new\">\n\t\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">".concat(main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE'), "</div>\n\t\t\t\t\t\t\t</div>"));
+	      return main_core.Tag.render(_templateObject15 || (_templateObject15 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-bottom-10 ", "\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --authentication\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --column --flex-start\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --without-margin --block\">\n\t\t\t\t\t\t\t\t", "&nbsp;<span class=\"system-auth-form__icon-help --inline\" onclick=\"", "\"></span>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-content --margin-top-auto --center --center-force\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t", "\n\t\t\t\t\t</div>\n\t\t\t\t"])), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_templateObject16 || (_templateObject16 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --link-dotted\" onclick=\"", "\">", "</div>\n\t\t\t\t\t\t\t\t"])), _onclick, main_core.Loc.getMessage('INTRANET_USER_PROFILE_CONFIGURE')) : '', button, isInstalled ? '' : "\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new\">\n\t\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">".concat(main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE'), "</div>\n\t\t\t\t\t\t\t</div>"));
 	    }
 
 	    var menuPopup = null;
@@ -948,30 +1144,30 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        offsetLeft: 10,
 	        events: {
 	          onShow: function onShow() {
-	            _this11.getPopup().getPopup().setAutoHide(false);
+	            _this12.getPopup().getPopup().setAutoHide(false);
 	          },
 	          onClose: function onClose() {
-	            _this11.getPopup().getPopup().setAutoHide(true);
+	            _this12.getPopup().getPopup().setAutoHide(true);
 	          }
 	        }
 	      });
 	      menuPopup.toggle();
 	    };
 
-	    return main_core.Tag.render(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --authentication\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<!-- <span class=\"system-auth-form__icon-help\" onclick=\"", "\"></span> -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --column --space-around\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --display-flex\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_templateObject19 || (_templateObject19 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', button, isInstalled ? '' : "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new system-auth-form__item-new-icon --ssl\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">".concat(main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE'), "</div>\n\t\t\t\t\t\t</div>"));
+	    return main_core.Tag.render(_templateObject17 || (_templateObject17 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm-all ", " --vertical --center\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo --margin-bottom --center system-auth-form__item-container --flex\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --authentication\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light --center --s\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t<!-- <span class=\"system-auth-form__icon-help\" onclick=\"", "\"></span> -->\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t\t<div class=\"system-auth-form__item-container --flex --column --space-around\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content --flex --display-flex\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), isInstalled ? ' --active' : '', main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_MESSAGE'), onclickHelp, isInstalled ? main_core.Tag.render(_templateObject18 || (_templateObject18 = babelHelpers.taggedTemplateLiteral(["<div class=\"system-auth-form__config --absolute\" onclick=\"", "\"></div>"])), popupClick) : '', button, isInstalled ? '' : "\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new system-auth-form__item-new-icon --ssl\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">".concat(main_core.Loc.getMessage('INTRANET_USER_PROFILE_OTP_TITLE'), "</div>\n\t\t\t\t\t\t</div>"));
 	  });
 	}
 
 	function _getLoginHistoryContainer2() {
-	  var _this12 = this;
+	  var _this13 = this;
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getLoginHistoryContainer', function () {
-	    if (babelHelpers.classPrivateFieldGet(_this12, _features)['history']) // for the future
+	    if (babelHelpers.classPrivateFieldGet(_this13, _features)['history']) // for the future
 	      {
-	        main_core.Tag.render(_templateObject20 || (_templateObject20 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --vertical\">\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center --border\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --history\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --sm\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\">Logout</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__visited\">\n\t\t\t\t\t\t<div class=\"system-auth-form__visited-item\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-icon --apple\"></div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-text\">Device 2</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-action\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__visited-item\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-icon --android\"></div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-text\">Device 1</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-action\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__show-history\">Logout</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE'));
+	        main_core.Tag.render(_templateObject19 || (_templateObject19 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --vertical\">\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center --border\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --history\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__item-title --sm\">", "</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__item-content\">\n\t\t\t\t\t\t\t<div class=\"ui-qr-popupcomponentmaker__btn --border\">Logout</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__visited\">\n\t\t\t\t\t\t<div class=\"system-auth-form__visited-item\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-icon --apple\"></div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-text\">Device 2</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-action\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"system-auth-form__visited-item\">\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-icon --android\"></div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-text\">Device 1</div>\n\t\t\t\t\t\t\t<div class=\"system-auth-form__visited-action\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container\">\n\t\t\t\t\t\t<div class=\"system-auth-form__show-history\">Logout</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE'));
 	      }
 
-	    var resultEmpty = main_core.Tag.render(_templateObject21 || (_templateObject21 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --history-gray\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON'));
+	    var resultEmpty = main_core.Tag.render(_templateObject20 || (_templateObject20 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --history-gray\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-new --soon\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-new--title\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('INTRANET_USER_PROFILE_HISTORY_TITLE'), main_core.Loc.getMessage('INTRANET_USER_PROFILE_SOON'));
 	    return {
 	      html: resultEmpty,
 	      disabled: true,
@@ -981,41 +1177,41 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _getBindings2() {
-	  var _this13 = this;
+	  var _this14 = this;
 
 	  if (!(main_core.Type.isPlainObject(babelHelpers.classPrivateFieldGet(this, _features)['bindings']) && main_core.Type.isStringFilled(babelHelpers.classPrivateFieldGet(this, _features)['bindings']['text']) && main_core.Type.isArray(babelHelpers.classPrivateFieldGet(this, _features)['bindings']['items']) && babelHelpers.classPrivateFieldGet(this, _features)['bindings']['items'].length > 0)) {
 	    return null;
 	  }
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getBindingsContainer', function () {
-	    var div = main_core.Tag.render(_templateObject22 || (_templateObject22 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --binding\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"arrow\" class=\"system-auth-form__item-icon --arrow-right\"></div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this13, _features)['bindings']['text']));
+	    var div = main_core.Tag.render(_templateObject21 || (_templateObject21 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --center --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --binding\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div data-role=\"arrow\" class=\"system-auth-form__item-icon --arrow-right\"></div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Text.encode(babelHelpers.classPrivateFieldGet(_this14, _features)['bindings']['text']));
 	    div.addEventListener('click', function () {
-	      _this13.__bindingsMenu = _this13.__bindingsMenu || new main_popup.Menu({
+	      _this14.__bindingsMenu = _this14.__bindingsMenu || new main_popup.Menu({
 	        className: 'system-auth-form__popup',
 	        bindElement: div.querySelector('[data-role="arrow"]'),
-	        items: babelHelpers.classPrivateFieldGet(_this13, _features)['bindings']['items'],
+	        items: babelHelpers.classPrivateFieldGet(_this14, _features)['bindings']['items'],
 	        angle: true,
 	        cachable: false,
 	        offsetLeft: 10,
 	        events: {
 	          onShow: function onShow() {
-	            _this13.getPopup().getPopup().setAutoHide(false);
+	            _this14.getPopup().getPopup().setAutoHide(false);
 	          },
 	          onClose: function onClose() {
-	            _this13.getPopup().getPopup().setAutoHide(true);
+	            _this14.getPopup().getPopup().setAutoHide(true);
 
-	            if (_this13.__bindingsMenu.isNeedToHide !== false) {
-	              _this13.hide();
+	            if (_this14.__bindingsMenu.isNeedToHide !== false) {
+	              _this14.hide();
 	            }
 	          }
 	        }
 	      });
-	      _this13.__bindingsMenu.isNeedToHide = false;
+	      _this14.__bindingsMenu.isNeedToHide = false;
 
-	      _this13.__bindingsMenu.toggle();
+	      _this14.__bindingsMenu.toggle();
 
 	      setTimeout(function () {
-	        _this13.__bindingsMenu.isNeedToHide = true;
+	        _this14.__bindingsMenu.isNeedToHide = true;
 	      }, 0);
 	    });
 	    return div;
@@ -1023,16 +1219,16 @@ this.BX.Intranet = this.BX.Intranet || {};
 	}
 
 	function _getNotificationContainer2() {
-	  var _this14 = this;
+	  var _this15 = this;
 
 	  if (babelHelpers.classPrivateFieldGet(this, _features)['im'] !== 'Y') {
 	    return null;
 	  }
 
 	  return babelHelpers.classPrivateFieldGet(this, _cache).remember('getNotificationContainer', function () {
-	    var div = main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --notification\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_NOTIFICATION'));
+	    var div = main_core.Tag.render(_templateObject22 || (_templateObject22 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item --hover system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --notification\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_NOTIFICATION'));
 	    div.addEventListener('click', function () {
-	      _this14.hide();
+	      _this15.hide();
 
 	      BXIM.openSettings({
 	        'onlyPanel': 'notify'
@@ -1050,7 +1246,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	    newUrl.setQueryParam('sessid', BX.bitrix_sessid());
 	    newUrl.setQueryParam('backurl', encodeURIComponent(backUrl.toString())); //TODO   
 
-	    return main_core.Tag.render(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), newUrl.toString());
+	    return main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"system-auth-form__item system-auth-form__scope --padding-sm\">\n\t\t\t\t\t<div class=\"system-auth-form__item-logo\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-logo--image --logout\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<div class=\"system-auth-form__item-container --center\">\n\t\t\t\t\t\t<div class=\"system-auth-form__item-title --light\">", "</div>\n\t\t\t\t\t</div>\n\t\t\t\t\t<a href=\"", "\" class=\"system-auth-form__item-link-all\"></a>\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('AUTH_LOGOUT'), newUrl.toString());
 	  });
 	}
 
@@ -1058,5 +1254,5 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	exports.Widget = Widget;
 
-}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX.Main,BX,BX,BX.Event,BX.UI));
+}((this.BX.Intranet.UserProfile = this.BX.Intranet.UserProfile || {}),BX.UI,BX.Main,BX,BX.UI.AvatarEditor,BX,BX.Event,BX.UI));
 //# sourceMappingURL=script.js.map

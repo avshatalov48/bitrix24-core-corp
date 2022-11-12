@@ -9506,6 +9506,8 @@ window._main_polyfill_core = true;
 	        globalClass += ' bx-win';
 	      } else if (Browser.isMac()) {
 	        globalClass += ' bx-mac';
+	      } else if (Browser.isLinux()) {
+	        globalClass += ' bx-linux';
 	      } else if (Browser.isAndroid()) {
 	        globalClass += ' bx-android';
 	      }

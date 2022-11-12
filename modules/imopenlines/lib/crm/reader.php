@@ -265,7 +265,11 @@ class Reader
 		{
 			// first contact
 			$entityToExtract = array_values($this->result[\CCrmOwnerType::Contact])[0];
-			if (\CAllCrmContact::isDefaultName($entityToExtract['NAME']))
+			if (
+				$entityToExtract
+				&& isset($entityToExtract['NAME'])
+				&& \CAllCrmContact::isDefaultName($entityToExtract['NAME'])
+			)
 			{
 				$isDefaultName = true;
 			}
