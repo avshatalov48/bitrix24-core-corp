@@ -1,25 +1,34 @@
-(() => {
-	class ButtonsToolbar extends LayoutComponent
+/**
+ * @module layout/ui/buttons-toolbar
+ */
+jn.define('layout/ui/buttons-toolbar', (require, exports, module) => {
+	/**
+	 * @function ButtonsToolbar
+	 */
+	function ButtonsToolbar(props)
 	{
-		render()
-		{
-			return new UI.BottomToolbar({
-				isWithSafeArea: (this.props.isWithSafeArea || false),
-				items: this.props.buttons.map((button, index) => {
-					return View(
-						{
-							style: {
-								flex: 1,
-								marginLeft: (index === 0 ? 2 : 8),
-								marginRight: (index === this.props.buttons.length - 1 ? 2 : 0),
-							},
-						},
-						button
-					);
-				}),
-			});
-		}
+		const { buttons, ...passThroughProps } = props;
+
+		const separatorStyle = (index) => index ? {
+			borderLeftWidth: 1,
+			borderLeftColor: '#eef2f4',
+		} : {};
+
+		return new UI.BottomToolbar({
+			...passThroughProps,
+			items: buttons.map((button, index) => View(
+				{
+					style: {
+						flex: 1,
+						paddingLeft: index === 0 ? 2 : 4,
+						paddingRight: index === buttons.length - 1 ? 2 : 4,
+						...separatorStyle(index),
+					},
+				},
+				button,
+			)),
+		});
 	}
 
-	this.ButtonsToolbar = ButtonsToolbar;
-})();
+	module.exports = { ButtonsToolbar };
+});

@@ -1,0 +1,59 @@
+/**
+ * @module tasks/layout/task/fields/timeTrackingIs
+ */
+jn.define('tasks/layout/task/fields/timeTrackingIs', (require, exports, module) => {
+	const {Loc} = require('loc');
+	const {BooleanField, BooleanMode} = require('layout/ui/fields/boolean');
+
+	class TimeTrackingIs extends LayoutComponent
+	{
+		constructor(props)
+		{
+			super(props);
+
+			this.state = {
+				isTimeTracking: props.isTimeTracking,
+			};
+		}
+
+		componentWillReceiveProps(props)
+		{
+			this.state = {
+				isTimeTracking: props.isTimeTracking,
+			};
+		}
+
+		render()
+		{
+			return BooleanField({
+				readOnly: this.props.readOnly,
+				showEditIcon: !this.props.readOnly,
+				showTitle: false,
+				value: this.state.isTimeTracking,
+				config: {
+					deepMergeStyles: {
+						...this.props.deepMergeStyles,
+						wrapper: {
+							...this.props.deepMergeStyles.wrapper,
+							height: 52,
+						},
+						readOnlyWrapper: {
+							...this.props.deepMergeStyles.readOnlyWrapper,
+							height: 52,
+						},
+					},
+					mode: BooleanMode.SWITCHER,
+					description: Loc.getMessage('TASKSMOBILE_LAYOUT_TASK_FIELDS_TIME_TRACKING_IS'),
+					showSwitcher: true,
+				},
+				testId: 'timeTrackingIs',
+				onChange: (value) => {
+					this.setState({isTimeTracking: value});
+					this.props.onChange(value);
+				},
+			});
+		}
+	}
+
+	module.exports = {TimeTrackingIs};
+});

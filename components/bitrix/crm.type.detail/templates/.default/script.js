@@ -921,7 +921,7 @@
 	      if (!this.addSectionItemButton) {
 	        this.addSectionItemButton = main_core.Tag.render(_templateObject3 || (_templateObject3 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-type-custom-section-add-item-container\">\n\t\t\t\t<span class=\"crm-type-custom-section-add-item-button\" onclick=\"", "\">", "</span>\n\t\t\t</div>"])), function () {
 	          _this13.sectionsListContainer.append(_this13.renderSectionItem());
-	        }, main_core.Loc.getMessage('CRM_COMMON_ACTION_ADD'));
+	        }, main_core.Loc.getMessage('CRM_COMMON_ACTION_CREATE'));
 	        this.settingsContainer.append(this.addSectionItemButton);
 	      }
 

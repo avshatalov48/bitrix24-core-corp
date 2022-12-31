@@ -225,3 +225,28 @@ if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
 \Bitrix\Main\Config\Option::set('tasks', 'tasksDisableDefaultListGroups', (new \Bitrix\Main\Type\DateTime())->format('Y-m-d H:i:s'));
 \Bitrix\Main\Config\Option::set('tasks', 'needTaskCheckListConversion', 'N');
 \Bitrix\Main\Config\Option::set('tasks', 'needTemplateCheckListConversion', 'N');
+
+// Geoip options. Option 'user_device_history' is only for enterprize.
+if (\Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24'))
+{
+	COption::SetOptionString('main', 'collect_geonames', 'Y');
+	COption::SetOptionString('main', 'user_device_geodata', 'Y');
+
+	// bitrix24 specific file location
+	$handlers = \Bitrix\Main\Service\GeoIp\HandlerTable::getList([
+		'select' => ['ID'],
+		'filter' => [
+			'=CLASS_NAME' => '\\Bitrix\\Main\\Service\\GeoIp\\GeoIP2',
+		],
+	]);
+	if ($handler = $handlers->fetch())
+	{
+		\Bitrix\Main\Service\GeoIp\HandlerTable::update($handler['ID'], [
+			"ACTIVE" => 'Y',
+			"CONFIG" => [
+				'TYPE' => 'city',
+				'FILE' => '/usr/share/GeoIP/GeoLite2-City.mmdb',
+			],
+		]);
+	}
+}

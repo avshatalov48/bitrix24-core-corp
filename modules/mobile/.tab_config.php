@@ -11,7 +11,7 @@ $config = [
 		['code' => 'stream', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Stream"],
 		['code' => 'task', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Task"],
 		['code' => 'menu', 'class' => "\\Bitrix\\Mobile\\AppTabs\\Menu"],
-		['code' => 'calltracker', 'class' => "\\Bitrix\\Mobile\\AppTabs\\CallTracker"],
+		['code' => 'crm', 'class' => \Bitrix\Mobile\AppTabs\Crm::class],
 	],
 	'required' => [
 		'chat' => 100,
@@ -23,7 +23,7 @@ $config = [
 	],
 ];
 
-if (Mobile::getInstance()  && Mobile::getApiVersion() >= 41)
+if (Mobile::getInstance() && Mobile::getApiVersion() >= 41)
 {
 	$config = array_merge($config, [
 		'presets' => [
@@ -42,6 +42,12 @@ if (Mobile::getInstance()  && Mobile::getApiVersion() >= 41)
 			'task' => [
 				'task' => 100,
 				'chat' => 200,
+				'menu' => 1000,
+			],
+			'crm' => [
+				'crm' => 100,
+				'chat' => 200,
+				'task' => 300,
 				'menu' => 1000,
 			]
 		]

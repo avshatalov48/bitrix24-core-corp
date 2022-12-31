@@ -27,6 +27,7 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			'DynamicTypeId' => 0,
 			'DynamicFilterFields' => ['items' => []],
 			'ReturnFields' => [],
+			'OnlyDynamicEntities' => 'N',
 
 			// return
 			'DynamicEntityFields' => null,
@@ -346,12 +347,14 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			}
 		}
 
+		$showOnlyDynamicEntities = static::showOnlyDynamicEntities($dialog);
+
 		return [
 			'DynamicTypeId' => [
 				'Name' => Loc::getMessage('CRM_GDIA_TYPE_ID'),
 				'FieldName' => 'dynamic_type_id',
 				'Type' => FieldType::SELECT,
-				'Options' => $typeNames,
+				'Options' => $showOnlyDynamicEntities ? static::getOnlyDynamicEntities($typeNames) : $typeNames,
 				'Required' => true
 			],
 			'ReturnFields' => [
@@ -373,6 +376,14 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				'Getter' => function($dialog, $property, $currentActivity, $compatible) {
 					return $currentActivity['Properties']['DynamicFilterFields'];
 				},
+			],
+			'OnlyDynamicEntities' => [
+				'FieldName' => 'only_dynamic_entities',
+				'Type' => 'bool',
+				'Default' => $showOnlyDynamicEntities ? 'Y' : 'N',
+				'Settings' => [
+					'Hidden' => true,
+				],
 			],
 		];
 	}
@@ -431,5 +442,42 @@ class CBPCrmGetDynamicInfoActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 		);
 
 		return in_array($fieldId, $internalFieldIds, true);
+	}
+
+	private static function showOnlyDynamicEntities(?PropertiesDialog $dialog = null): bool
+	{
+		if (!$dialog)
+		{
+			return false;
+		}
+
+		$context = $dialog->getContext() ?? [];
+		if ($context['addMenuGroup'] === 'digitalWorkplace')
+		{
+			return true;
+		}
+
+		$workflowTemplate = $dialog->getWorkflowTemplate();
+		$currentActivity = \CBPWorkflowTemplateLoader::FindActivityByName(
+			$workflowTemplate,
+			$dialog->getActivityName()
+		);
+
+		return (
+			is_array($currentActivity)
+			&& is_array($currentActivity['Properties'])
+			&& $currentActivity['Properties']['OnlyDynamicEntities'] === 'Y'
+		);
+	}
+
+	private static function getOnlyDynamicEntities(array $dynamicTypeIdOptions): array
+	{
+		return array_filter(
+			$dynamicTypeIdOptions,
+			static function($key) {
+				return ($key >= CCrmOwnerType::DynamicTypeStart && $key <= CCrmOwnerType::DynamicTypeEnd);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
 	}
 }

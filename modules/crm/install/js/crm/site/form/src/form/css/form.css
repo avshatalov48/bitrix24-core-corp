@@ -56,8 +56,9 @@
 	color: var(--b24-text-color);
 	letter-spacing: .6px;
 	margin-bottom: 9px;
-	font: 700 24px/33px "Helvetica Neue", Helvetica, Arial, sans-serif;
-	font: 700 24px/33px var(--b24-font-family);
+	font: 24px/33px "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font: 24px/33px var(--b24-font-family);
+	font-weight: var(--ui-font-weight-bold);
 	word-break: break-word;
 }
 

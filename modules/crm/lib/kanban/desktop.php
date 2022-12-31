@@ -16,41 +16,12 @@ class Desktop extends Kanban
 	 */
 	protected function isDropZone(array $status = []): bool
 	{
-		if (!isset($status['STATUS_ID']))
+		if ($this->viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
 		{
 			return false;
 		}
 
-		if (!empty($this->allowStages) && !in_array($status['STATUS_ID'], $this->allowStages, true))
-		{
-			return true;
-		}
-
-		if (in_array($status['STATUS_ID'], $this->allowStages, true))
-		{
-			return false;
-		}
-
-		if (
-			(
-				$status['PROGRESS_TYPE'] === 'WIN' &&
-				!in_array(PhaseSemantics::SUCCESS, $this->allowSemantics, true)
-			)
-			|| (
-				$status['PROGRESS_TYPE'] === 'LOOSE' &&
-				!in_array(PhaseSemantics::FAILURE, $this->allowSemantics, true)
-			)
-			|| (
-				$status['PROGRESS_TYPE'] !== 'WIN' &&
-				$status['PROGRESS_TYPE'] !== 'LOOSE' &&
-				!in_array(PhaseSemantics::PROCESS, $this->allowSemantics, true)
-			)
-		)
-		{
-			return true;
-		}
-
-		return false;
+		return parent::isDropZone($status);
 	}
 
 	protected function getPathToImport(): string

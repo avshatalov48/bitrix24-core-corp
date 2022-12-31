@@ -175,7 +175,7 @@ if($arParams['TYPE'] === 'details')
 if($arParams['TYPE'] === 'list')
 {
 	$arResult['BUTTONS'][] = [
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			[
 				'quote_id' => 0
@@ -466,7 +466,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 if ($bAdd)
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_QUOTE_EDIT'],
 			array(
 				'quote_id' => 0

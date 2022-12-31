@@ -228,72 +228,16 @@ if(typeof BX.Crm.EntityEditor === "undefined")
 	};
 	BX.Crm.EntityEditor.prototype.initializeAjaxForm = function()
 	{
-		if(this._ajaxForm)
-		{
-			return;
-		}
-
-		var ajaxData = BX.prop.getObject(this._settings, "ajaxData", {});
-			var actionName = BX.prop.getString(ajaxData, "ACTION_NAME", "");
-			var componentName = BX.prop.getString(ajaxData, "COMPONENT_NAME", "");
-
-			if(componentName !== "")
-			{
-				if(actionName === "")
-				{
-					actionName = "save";
-				}
-
-				this._ajaxForm = BX.Crm.ComponentAjax.create(
-					this._id,
-					{
-						elementNode: this._formElement,
-						className: componentName,
-						signedParameters: BX.prop.getString(ajaxData, "SIGNED_PARAMETERS", null),
-						actionName: actionName,
-						callbacks:
-							{
-								onSuccess: BX.delegate(this.onSaveSuccess, this),
-								onFailure: BX.delegate(this.onSaveFailure, this)
-							}
-					}
-				);
-			}
-			else
-			{
-				if(actionName === "")
-				{
-					actionName = "SAVE";
-				}
-				this._ajaxForm = BX.Crm.AjaxForm.create(
-					this._id,
-					{
-						elementNode: this._formElement,
-						config:
-						{
-							url: this._serviceUrl,
-							method: "POST",
-							dataType: "json",
-							processData : true,
-							onsuccess: BX.delegate(this.onSaveSuccess, this),
-							data:
-							{
-								"ACTION": actionName,
-								"ACTION_ENTITY_ID": this._entityId,
-								"ACTION_ENTITY_TYPE": this.getEntityTypeForAction(
-								),
-								"ENABLE_REQUIRED_USER_FIELD_CHECK": this._enableRequiredUserFieldCheck ? 'Y' : 'N'
-							}
-						}
-					}
-				);
-			}
-
-		//Prevent submit form by Enter if only one input on form
-		this._formElement.setAttribute("onsubmit", "return false;");
-
+		BX.Crm.EntityEditor.superclass.initializeAjaxForm.apply(this);
 		BX.addCustomEvent(this._ajaxForm, "onAfterSubmit", this._afterFormSubmitHandler);
 		BX.addCustomEvent(this._ajaxForm, "onSubmitCancel", this._cancelFormSubmitHandler);
+	};
+	BX.Crm.EntityEditor.prototype.getAjaxFormConfigData = function()
+	{
+		return {
+			'ACTION_ENTITY_TYPE': this.getEntityTypeForAction(),
+			'ACTION_ENTITY_ID': this._entityId
+		};
 	};
 	BX.Crm.EntityEditor.prototype.releaseAjaxForm = function()
 	{

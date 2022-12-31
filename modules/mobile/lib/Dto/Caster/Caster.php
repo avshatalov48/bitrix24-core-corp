@@ -4,8 +4,9 @@ namespace Bitrix\Mobile\Dto\Caster;
 
 abstract class Caster
 {
-	/** @var bool */
-	protected $isCollection = false;
+	protected bool $isCollection = false;
+
+	protected bool $isNullable = false;
 
 	public function __construct(bool $isCollection = false)
 	{
@@ -23,6 +24,12 @@ abstract class Caster
 		return $this;
 	}
 
+	public function nullable(bool $isNullable = true): Caster
+	{
+		$this->isNullable = $isNullable;
+		return $this;
+	}
+
 	/**
 	 * @param mixed $value
 	 * @return mixed
@@ -36,10 +43,22 @@ abstract class Caster
 			{
 				foreach ($value as $singleVal)
 				{
-					$result[] = $this->castSingleValue($singleVal);
+					if ($this->isNullable && $singleVal === null)
+					{
+						$result[] = $singleVal;
+					}
+					else
+					{
+						$result[] = $this->castSingleValue($singleVal);
+					}
 				}
 			}
 			return $result;
+		}
+
+		if ($this->isNullable && $value === null)
+		{
+			return $value;
 		}
 
 		return $this->castSingleValue($value);

@@ -1,6 +1,4 @@
 (() => {
-	const MAX_PHOTO_WIDTH = 2048;
-	const MAX_PHOTO_HEIGHT = 2048;
 
 	/**
 	 * @class EntityEditorFileField
@@ -11,13 +9,20 @@
 		{
 			return {
 				...super.prepareConfig(),
-				// ToDo reloadEntityListFromProps: this.editor && this.editor.settings.loadFromModel,
-				fileInfo: this.prepareFileInfo()
+				fileInfo: this.prepareFileInfo(),
+				controller: this.prepareControllerOptions(),
+				enableToEdit: this.parent.isInEditMode(),
 			};
 		}
 
 		prepareFileInfo()
 		{
+			const fileInfo = this.schemeElement.getDataParam('fileInfo', null);
+			if (fileInfo)
+			{
+				return fileInfo;
+			}
+
 			const fileInfoField = this.schemeElement.getDataParam('fileInfoField', null);
 			if (fileInfoField)
 			{
@@ -27,82 +32,21 @@
 			return [];
 		}
 
-		getValuesToSave()
+		prepareControllerOptions()
 		{
-			return {
-				[this.getName()]: new Promise((resolve) => {
-					let files = CommonUtils.objectClone(this.getValue());
+			const controller = this.schemeElement.getDataParam('controller', {});
 
-					if (!Array.isArray(files))
-					{
-						files = []
-					}
+			const controllerOptions = {};
+			const controllerOptionNames = this.schemeElement.getDataParam('controllerOptionNames', {});
+			Object.keys(controllerOptionNames).forEach((optionName) => {
+				controllerOptions[optionName] = this.model.getField(controllerOptionNames[optionName], null);
+			});
 
-					const resultFiles = files.filter((file) => !(typeof file === 'object' && file !== null));
+			controller.options = controllerOptions;
 
-					const promises = files
-						.filter((file) => typeof file === 'object' && file !== null)
-						.map((newFile) => {
-							return this.resizeIfFileIsImage(newFile).then((path) => {
-								return BX.FileUtils.fileForReading(path)
-									.then((file) => {
-										file.readMode = BX.FileConst.READ_MODE.DATA_URL;
-
-										return file
-											.readNext()
-											.then((fileData) => {
-												if (fileData.content)
-												{
-													const fileInfo = file.file;
-													const content = fileData.content;
-
-													return {
-														name: (fileInfo && fileInfo.name ? fileInfo.name : photo.name),
-														type: newFile.type,
-														content: content.substr(content.indexOf("base64,") + 7)
-													};
-												}
-
-												return null;
-											})
-											.catch(e => console.error(e));
-									})
-							})
-						})
-					;
-
-					Promise
-						.all(promises)
-						.then((newFiles) => {
-							resolve({
-								[this.getName()]: [
-									...resultFiles,
-									...newFiles
-								]
-							});
-						})
-					;
-				})
-			};
-		}
-
-		resizeIfFileIsImage(file)
-		{
-			if (file.type.indexOf('image/') === 0)
-			{
-				return FileProcessing.resize(
-					'EntityEditorFileField_' + Math.random().toString(),
-					{
-						url: file.url,
-						width: MAX_PHOTO_WIDTH,
-						height: MAX_PHOTO_HEIGHT
-					}
-				);
-			}
-
-			return Promise.resolve(file.url);
+			return controller;
 		}
 	}
 
-	jnexport(EntityEditorFileField)
+	jnexport(EntityEditorFileField);
 })();

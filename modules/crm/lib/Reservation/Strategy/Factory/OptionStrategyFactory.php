@@ -31,12 +31,7 @@ class OptionStrategyFactory
 	 */
 	private function isUsedStrategy(): bool
 	{
-		return
-			Loader::includeModule('catalog')
-			&& State::isUsedInventoryManagement()
-			&& !CCrmSaleHelper::isWithOrdersMode()
-			&& RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
-		;
+		return CCrmSaleHelper::isProcessInventoryManagement();
 	}
 
 	/**

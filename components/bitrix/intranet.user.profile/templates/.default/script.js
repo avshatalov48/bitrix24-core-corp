@@ -237,7 +237,7 @@
 			}
 
 			if (
-				this.isCurrentUserAdmin
+				this.isCurrentUserAdmin === 'Y'
 				&& !this.isOwnProfile
 				&& !BX.util.in_array(this.userStatus, ['email', 'shop' ])
 			)
@@ -490,8 +490,12 @@
 				(response) => {
 					if (response.data)
 					{
-						(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{url: response.data}]);
-						BX("intranet-user-profile-photo").style = "background-image: url('" + response.data + "'); background-size: cover;";
+						(top || window).BX.onCustomEvent('BX.Intranet.UserProfile:Avatar:changed', [{
+							userId: this.userId,
+							url: response.data
+						}]);
+
+						BX("intranet-user-profile-photo").style = "background-image: url('" + encodeURI(response.data) + "'); background-size: cover;";
 					}
 					this.hideLoader({loader: loader});
 				},

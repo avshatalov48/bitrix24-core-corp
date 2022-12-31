@@ -86,12 +86,23 @@ class KanbanDataProvider extends \Bitrix\Crm\Component\EntityList\ClientDataProv
 			{
 				$title = $this->formatTitle($clientsInfo[$clientId]);
 				$items[$id][$fieldPrefix . 'Name'] = htmlspecialcharsbx($title);
-				$items[$id][$fieldPrefix . 'Tooltip'] = \CCrmViewHelper::PrepareEntityBaloonHtml([
-					'ENTITY_TYPE_ID' => $this->clientEntityTypeId,
-					'ENTITY_ID' => $item[$clientFieldId],
-					'TITLE' => $title,
-					'PREFIX' => $entityTypeName . '_' . $item['id'],
-				]);
+
+				if ($clientsInfo[$clientId][$entityTypeName . '_IS_ACCESSIBLE'])
+				{
+					$items[$id][$fieldPrefix . 'Tooltip'] = \CCrmViewHelper::PrepareEntityBaloonHtml([
+						'ENTITY_TYPE_ID' => $this->clientEntityTypeId,
+						'ENTITY_ID' => $item[$clientFieldId],
+						'TITLE' => $title,
+						'PREFIX' => $entityTypeName . '_' . $item['id'],
+					]);
+				}
+				else
+				{
+					$items[$id][$fieldPrefix . 'Tooltip'] = $items[$id][$fieldPrefix . 'Name'];
+				}
+
+				$items[$id]['ADDITIONAL_' . $entityTypeName . '_INFO'] = $this->getAdditionalClientInfo($clientsInfo[$clientId]);
+
 				foreach ($fieldsToAdd as $fieldId)
 				{
 					if (
@@ -112,6 +123,11 @@ class KanbanDataProvider extends \Bitrix\Crm\Component\EntityList\ClientDataProv
 				$items[$id][$clientFieldId] = null;
 			}
 		}
+	}
+
+	protected function getAdditionalClientInfo(array $clientInfo): array
+	{
+		return [];
 	}
 
 	protected function getBaseFields(): array

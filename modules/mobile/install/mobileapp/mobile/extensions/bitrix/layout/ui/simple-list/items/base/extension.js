@@ -1,4 +1,18 @@
 (() => {
+
+	const { ClientType } = jn.require('layout/ui/fields/client');
+	const { TabType } = jn.require('layout/ui/detail-card/tabs/factory/type');
+	const { FieldFactory, StringType } = jn.require('layout/ui/fields');
+	const { CounterComponent } = jn.require('layout/ui/kanban/counter');
+	const { CommunicationButton } = jn.require('crm/communication/button');
+	const { chain, transition } = jn.require('animation');
+	const { Haptics } = jn.require('haptics');
+	const { mergeImmutable } = jn.require('utils/object');
+	const { CounterView } = jn.require('layout/ui/counter-view');
+	const { FriendlyDate } = jn.require('layout/ui/friendly-date');
+	const { Moment } = jn.require('utils/date');
+	const { longDate, dayMonth } = jn.require('utils/date/formats');
+
 	/**
 	 * @class ListItems.Base
 	 */
@@ -7,45 +21,25 @@
 		constructor(props)
 		{
 			super(props);
+			this.testId = props.testId || '';
 			this.blockManager = new ItemLayoutBlocksManager(this.props.itemLayoutOptions);
 			this.showMenuHandler = props.showMenuHandler;
-			this.itemDetailOpenHandler = props.itemDetailOpenHandler;
 			this.params = (this.props.params || {});
-			this.editable = (this.props.editable || false);
-			this.section = (this.props.section !== undefined ? this.props.section : null);
-			this.row = (this.props.row !== undefined ? this.props.row : null);
+			this.styles = styles;
+
+			this.communicationButtonRef = null;
+
+			this.showCommunicationButton = this.showCommunicationButton.bind(this);
 		}
 
 		componentWillReceiveProps(props)
 		{
-			this.row = (props.row !== undefined ? props.row : null);
+			this.testId = props.testId || '';
 		}
 
-		animate(callback)
+		blink(callback = null, showUpdated = true)
 		{
-			if (this.elementRef)
-			{
-				this.elementRef.animate(
-					{
-						duration: 300,
-						backgroundColor: '#FFECC4',
-					},
-					() => {
-						this.elementRef.animate(
-							{
-								duration: 300,
-								backgroundColor: '#FFFFFF',
-							},
-							() => {
-								if (callback)
-								{
-									callback();
-								}
-							}
-						)
-					}
-				);
-			}
+			this.setLoading(this.dropLoading.bind(this, callback, showUpdated));
 		}
 
 		render()
@@ -53,100 +47,138 @@
 			const itemData = this.props.item.data;
 			const activityTotal = (itemData.activityTotal || 0);
 
+			const customStyles = this.getCustomStyles();
+			let wrapperStyle = BX.prop.getObject(customStyles, 'wrapper', {});
+			wrapperStyle = mergeImmutable(styles.wrapper, wrapperStyle);
+
 			return View(
 				{
-					style: styles.wrapper,
-					onClick: () => this.itemDetailOpenHandler(this.props.item.id, this.props.item.data),
-					onLongClick: this.isMenuEnabled() && (() => this.showMenuHandler(this.props.item.data.id))
+					style: wrapperStyle,
+					onClick: () => this.props.itemDetailOpenHandler(
+						this.props.item.id,
+						this.props.item.data,
+						this.params,
+					),
+					onLongClick: this.isMenuEnabled() && (() => {
+						Haptics.impactLight();
+						this.showMenuHandler(this.props.item.data.id);
+					})
 				},
 				View(
 					{
 						style: styles.item,
-						ref: ref => this.elementRef = ref
+						ref: ref => this.elementRef = ref,
 					},
 					View(
 						{
-							style: styles.header
+							testId: `${this.testId}_SECTION`,
+							style: styles.header,
 						},
 						Text({
+							testId: `${this.testId}_SECTION_TITLE`,
 							style: styles.title,
-							text: (itemData.name || itemData.id)
+							text: (itemData.name || itemData.id),
+							numberOfLines: 2,
+							ellipsize: 'end',
 						}),
-
 						View(
 							{
+								testId: `${this.testId}_SECTION_DATE`,
 								style: styles.dateView,
 							},
-							FieldFactory.create(
-								FieldFactory.Type.DATE,
-								{
-									value: itemData.date,
-									readOnly: true,
-									showTitle: false,
-									config: {
-										styles: {
-											value: styles.date,
-											readOnlyWrapper: {
-												paddingTop: 4,
-											}
-										}
-									}
-								}
-							),
-							FieldFactory.create(
-								FieldFactory.Type.STRING,
-								{
-									value: itemData.legend,
-									readOnly: true,
-									showTitle: false,
-									hidden: !Boolean(itemData.legend),
-									config: {
-										numberOfLines: 1,
-										ellipsize: 'end',
-										styles: {
-											value: styles.legend,
-											readOnlyWrapper: {
-												paddingTop: 0,
-											}
-										}
-									}
-								}
-							),
+							this.renderSubTitle(itemData),
+							Boolean(itemData.legend) && FieldFactory.create(StringType, {
+								value: itemData.legend,
+								readOnly: true,
+								showTitle: false,
+								config: {
+									numberOfLines: 1,
+									ellipsize: 'end',
+									styles: {
+										value: styles.legend,
+										readOnlyWrapper: {
+											paddingTop: 0,
+										},
+									},
+								},
+							}),
 						),
 					),
 
 					...this.renderMenuIcon(activityTotal),
-
-					View(
-						{
-							style: styles.contentWrapper
-						},
-
-						this.getFields('fields'),
-						this.getFields('userFields'),
-
-						(
-							this.blockManager.can('useConnectsBlock')
-								? View(
-									{
-										style: styles.connectsContainer
-									},
-									this.renderConnects()
-								)
-								: null
-						)
-					)
+					this.renderContent(itemData),
 				),
-			)
+			);
+		}
+
+		getCustomStyles()
+		{
+			return BX.prop.getObject(this.props, 'customStyles', {});
+		}
+
+		renderContent(itemData)
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'flex-start',
+					},
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+						},
+					},
+					...this.renderSpecialFields(itemData),
+					this.renderFields('fields'),
+					this.renderFields('userFields'),
+					...this.renderBottomSpecialFields(itemData),
+				),
+				this.renderRightBlock(),
+			);
 		}
 
 		isMenuEnabled()
 		{
-			return (
-				this.blockManager.can('useItemMenu')
-				&& this.props.hasActions
-				&& this.editable
+			return (this.blockManager.can('useItemMenu') && this.props.hasActions);
+		}
+
+		renderSubTitle(data)
+		{
+			return View(
+				{
+					style: {
+						flex: 1,
+					},
+				},
+				...this.getSubTitleComponents(data),
 			);
+		}
+
+		getSubTitleComponents(data)
+		{
+			return [
+				this.renderDate(data),
+			];
+		}
+
+		renderDate(data)
+		{
+			const moment = Moment.createFromTimestamp(data.date);
+			const defaultFormat = moment.inThisYear ? dayMonth() : longDate();
+
+			return (new FriendlyDate({
+				moment,
+				defaultFormat,
+				showTime: true,
+				useTimeAgo: true,
+				style: {
+					...this.styles.date,
+					paddingTop: 4,
+				},
+			}));
 		}
 
 		renderMenuIcon(activityTotal)
@@ -160,25 +192,17 @@
 					View(
 						{
 							style: styles.menuContainer(this.hasCounter(activityTotal)),
-							onClick: () => this.showMenuHandler(this.props.item.data.id)
+							onClick: () => this.showMenuHandler(this.props.item.data.id),
 						},
 						ImageButton({
+							testId: `${this.testId}_CONTEXT_MENU_BTN`,
 							style: styles.menu,
 							svg: {
-								content: this.getMenuFilledColor(svgImages.menu, activityTotal)
+								content: this.getMenuFilledColor(svgImages.menu, activityTotal),
 							},
-							onClick: () => this.showMenuHandler(this.props.item.data.id)
+							onClick: () => this.showMenuHandler(this.props.item.data.id),
 						}),
-					)
-				);
-
-				results.push(
-					View(
-						{
-							style: styles.counterWrapper,
-						},
-						this.renderCounter(activityTotal)
-					)
+					),
 				);
 			}
 
@@ -214,7 +238,7 @@
 
 		getMenuFilledColor(svg, counterValue)
 		{
-			const filledColor = this.hasCounter(counterValue) ? '#FF5752' : '#B9C0CA';
+			const filledColor = this.hasCounter(counterValue) ? '#ff5752' : '#b9c0ca';
 			return svg.content.replace(/%color%/g, filledColor);
 		}
 
@@ -233,21 +257,96 @@
 			const statuses = (this.params.statuses || {});
 			return fieldStatuses.map(id => {
 				return {
-					name: (statuses[id] ? statuses[id].title : '').toLocaleUpperCase(Application.getLang()),
-					backgroundColor:  (statuses[id] ? statuses[id].backgroundColor : '#E3F3CC'),
-					color: (statuses[id] ? statuses[id].textColor : '#739F00'),
-				}
+					name: (statuses[id] ? statuses[id].title : '').toLocaleUpperCase(env.languageId),
+					backgroundColor: (statuses[id] ? statuses[id].backgroundColor : '#e3f3cc'),
+					color: (statuses[id] ? statuses[id].textColor : '#739f00'),
+				};
 			});
 		}
 
-		renderConnects()
+		renderRightBlock()
 		{
-			return ConnectComponent({
-				data: (this.props.item.data || {})
-			});
+			const useConnectsBlock = this.blockManager.can('useConnectsBlock');
+			const useCountersBlock = this.blockManager.can('useCountersBlock');
+
+			if (!useConnectsBlock && !useCountersBlock)
+			{
+				return null;
+			}
+
+			const { item } = this.props;
+
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						flexDirection: 'column',
+						alignItems: 'center',
+						width: (Application.getPlatform() === 'android' ? 80 : 76),
+					},
+				},
+				useCountersBlock && new CounterComponent({
+					...item.data.counters,
+					onClick: this.props.itemDetailOpenHandler && (() => this.props.itemDetailOpenHandler(
+						item.id,
+						item.data,
+						{ ...this.params, activeTab: TabType.TIMELINE },
+					)),
+					onLongClick: this.props.itemCounterLongClickHandler && (() => {
+						Haptics.impactLight();
+						this.props.itemCounterLongClickHandler('activity', item.id);
+					}),
+				}),
+				useConnectsBlock && this.renderConnectionComponent(),
+			);
 		}
 
-		getFields(section)
+		renderConnectionComponent()
+		{
+			const { item, params } = this.props;
+
+			return View(
+				{
+					style: {
+						flexDirection: 'column',
+						alignItems: 'center',
+						justifyContent: 'center',
+						width: 76,
+					},
+					onClick: this.showCommunicationButton,
+				},
+				new CommunicationButton({
+					ref: (ref) => this.communicationButtonRef = ref,
+					border: false,
+					horizontal: false,
+					value: item.data[ClientType],
+					ownerInfo: {
+						ownerId: item.id,
+						ownerTypeName: params.entityTypeName,
+					},
+				}),
+			);
+		}
+
+		showCommunicationButton()
+		{
+			if (this.communicationButtonRef)
+			{
+				this.communicationButtonRef.showMenu();
+			}
+		}
+
+		renderSpecialFields(data)
+		{
+			return [];
+		}
+
+		renderBottomSpecialFields(data)
+		{
+			return [];
+		}
+
+		renderFields(section)
 		{
 			const data = this.props.item.data;
 			if (!data[section])
@@ -260,28 +359,45 @@
 				const config = {
 					...(field.config || {}),
 					styles: this.getFieldStyle(field),
+					reloadEntityListFromProps: true,
+					ellipsize: true,
+					deepMergeStyles: this.getFieldDeepMergeStyles(),
 				};
 
-				fields.push(FieldFactory.create(
-					field.type,
-					{
-						title: field.title,
-						value: field.value,
-						readOnly: (field.params && field.params.readOnly),
-						config: config,
-					}
-				));
+				const fieldComponent = FieldFactory.create(field.type, {
+					testId: `${this.testId}_${field.type}_${field.name}`.toUpperCase(),
+					title: field.title,
+					value: field.value,
+					readOnly: (field.params && field.params.readOnly),
+					config: config,
+					multiple: (field.multiple || false),
+					isShowAnimate: (field.isShowAnimate || false),
+				});
+
+				// @todo here need to start the animation of changing the field value
+
+				fields.push(fieldComponent);
 			});
 
 			return View(
 				{
+					testId: `${this.testId}_FIELDS_LIST`,
 					style: {
 						marginBottom: 0,
 						flexDirection: 'column',
-					}
+					},
 				},
-				...fields
+				...fields,
 			);
+		}
+
+		getFieldDeepMergeStyles()
+		{
+			return {
+				externalWrapper: {
+					marginLeft: 24,
+				},
+			};
 		}
 
 		getFieldStyle(field)
@@ -294,99 +410,63 @@
 			if (styles[field.params.styleName])
 			{
 				return {
-					value: styles[field.params.styleName]
-				}
+					value: styles[field.params.styleName],
+				};
 			}
 
 			return {};
 		}
-	}
 
-	function ConnectNotification()
+		setLoading(callback = null)
 		{
-			return View(
-				{
-					style: {
-						width: 6,
-						height: 6,
-						position: 'absolute',
-						top: 0,
-						right: 0,
-						backgroundColor: '#FF5752',
-						borderWidth: 1,
-						borderRadius: 3,
-						borderColor: '#ffffff'
-					}
-				},
-			)
-		}
-
-	function ConnectItem({ value, svg, style }) {
-		function getBackgroundColor(elements)
-		{
-			const enabledColor = '#e6f6fd';
-			const disabledColor = '#f6f7f7';
-
-			return (elements.length ? enabledColor : disabledColor);
-		}
-
-		function getFilledSvgContent(svg, elements)
-		{
-			return svg.content.replace(/%color%/g, getColor(elements));
-		}
-
-		function getColor(elements)
-		{
-			const enabledColor = '#378EE7';
-			const disabledColor = '#B9C0CA';
-
-			return (elements.length ? enabledColor : disabledColor);
-		}
-
-		return View(
+			if (!this.elementRef)
 			{
-				style: {
-					padding: 12,
-					backgroundColor: getBackgroundColor(value),
-					borderRadius: 20,
-					alignItems: 'center',
-					justifyContent: 'center',
-					width: 42,
-					height: 42,
-					marginBottom: 10,
-				}
-			},
-			View(
-				{
-					style: {
-						...connectStyles.defaultIconWrapper,
-						...style
-					},
-				},
-				Image({
-					style: {
-						width: style.width - 3,
-						height: style.height - 3,
-					},
-					svg: {
-						content: getFilledSvgContent(svg, value),
-					}
-				}),
-				(Array.isArray(value) && value.length ? ConnectNotification() : null),
-			)
-		);
-	}
+				return null;
+			}
 
-	function ConnectComponent(props) {
-		const chats = (props.data.chat || []);
-		const mails = (props.data.email || []);
-		const phones = (props.data.phone || []);
+			const duration = 300;
+			const opacity = 0.5;
 
-		return View({},
-			ConnectItem({ value: phones, svg: svgImages.phone, style: connectStyles.phoneIconWrapper }),
-			ConnectItem({ value: chats, svg: svgImages.chat, style: connectStyles.chatIconWrapper }),
-			ConnectItem({ value: mails, svg: svgImages.mail, style: connectStyles.mailsIconWrapper }),
-		);
+			this.elementRef.animate({ duration, opacity }, callback);
+		}
+
+		dropLoading(callback = null, blink = true)
+		{
+			if (!this.elementRef)
+			{
+				return null;
+			}
+
+			const transitionToBeige = transition(this.elementRef, {
+				duration: 300,
+				backgroundColor: '#ffecc4',
+				opacity: 1,
+			});
+
+			const transitionToWhite = transition(this.elementRef, {
+				duration: 300,
+				backgroundColor: '#ffffff',
+				opacity: 1,
+			});
+
+			const animate = (
+				blink
+					? chain(
+						transitionToBeige,
+						transitionToWhite,
+					)
+					: chain(
+						transitionToWhite,
+					)
+			);
+
+			animate().then(callback);
+		}
+
+		prepareActions(actions)
+		{
+			// may be implemented in a child class
+		}
 	}
 
 	class ItemLayoutBlocksManager
@@ -411,27 +491,18 @@
 		separator: {
 			content: '<svg width="5" height="6" viewBox="0 0 5 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path opacity="0.2" d="M2.61816 5.13232C3.84131 5.13232 4.84473 4.12891 4.84473 2.90576C4.84473 1.68262 3.84131 0.679199 2.61816 0.679199C1.39502 0.679199 0.391602 1.68262 0.391602 2.90576C0.391602 4.12891 1.39502 5.13232 2.61816 5.13232Z" fill="#515E68"/></svg>',
 		},
-		mail: {
-			content: '<svg width="18" height="12" viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg"><g><path d="M9.00002 4.88332L1.38462 0H16.6154L9.00002 4.88332Z" fill="%color%"/><path d="M18 1.47201L9.00002 7.66886L0 1.47198V10.9425C0 11.5273 0.579747 12 1.29438 12H16.7056C17.422 12 18 11.5266 18 10.9425V1.47201Z" fill="%color%"/></g></svg>',
-		},
-		chat: {
-			content: '<svg width="17" height="15" viewBox="0 0 17 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.42474 0C1.53331 0 0 1.50968 0 3.37197V8.85776C0 10.6758 1.46133 12.1578 3.29057 12.2272V13.8739C3.29057 14.8298 4.42561 15.3494 5.16794 14.7332L8.18414 12.2297H13.5753C15.4667 12.2297 17 10.72 17 8.85776V3.37197C17 1.50968 15.4667 0 13.5753 0H3.42474Z" fill="%color%"/></svg>'
-		},
-		phone: {
-			content: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 18C13.9706 18 18 13.9706 18 9C18 4.02944 13.9706 0 9 0C4.02944 0 0 4.02944 0 9C0 13.9706 4.02944 18 9 18ZM13.2578 11.1232L12.0073 10.1862C11.5632 9.85252 10.904 10.0132 10.5798 10.4712L10.2091 10.9967C10.1293 11.1056 9.96498 11.1397 9.85057 11.0737C8.70336 10.3253 7.72244 9.28096 7.04349 8.08927C6.97875 7.96587 7.01236 7.80485 7.133 7.728L7.658 7.37758C8.12796 7.06393 8.32144 6.4242 8.01512 5.95467L7.14051 4.67555C6.87546 4.28161 6.32068 4.2281 5.97243 4.55154C4.665 5.801 4.09464 7.97149 6.96255 11.0035C9.83041 14.0356 12.0089 13.5505 13.3163 12.3011C13.665 11.9775 13.6356 11.4102 13.2578 11.1232Z" fill="%color%"/></svg>'
-		},
 		menu: {
-			content: '<svg width="21" height="5" viewBox="0 0 21 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.83871 2.41935C4.83871 3.75553 3.75553 4.83871 2.41935 4.83871C1.08318 4.83871 0 3.75553 0 2.41935C0 1.08318 1.08318 0 2.41935 0C3.75553 0 4.83871 1.08318 4.83871 2.41935Z" fill="%color%"/><path d="M10.1613 4.83871C11.4975 4.83871 12.5806 3.75553 12.5806 2.41935C12.5806 1.08318 11.4975 0 10.1613 0C8.82512 0 7.74194 1.08318 7.74194 2.41935C7.74194 3.75553 8.82512 4.83871 10.1613 4.83871Z" fill="%color%"/><path d="M17.9032 4.83871C19.2394 4.83871 20.3226 3.75553 20.3226 2.41935C20.3226 1.08318 19.2394 0 17.9032 0C16.5671 0 15.4839 1.08318 15.4839 2.41935C15.4839 3.75553 16.5671 4.83871 17.9032 4.83871Z" fill="%color%"/></svg>'
-		}
-	}
+			content: '<svg width="21" height="5" viewBox="0 0 21 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.83871 2.41935C4.83871 3.75553 3.75553 4.83871 2.41935 4.83871C1.08318 4.83871 0 3.75553 0 2.41935C0 1.08318 1.08318 0 2.41935 0C3.75553 0 4.83871 1.08318 4.83871 2.41935Z" fill="%color%"/><path d="M10.1613 4.83871C11.4975 4.83871 12.5806 3.75553 12.5806 2.41935C12.5806 1.08318 11.4975 0 10.1613 0C8.82512 0 7.74194 1.08318 7.74194 2.41935C7.74194 3.75553 8.82512 4.83871 10.1613 4.83871Z" fill="%color%"/><path d="M17.9032 4.83871C19.2394 4.83871 20.3226 3.75553 20.3226 2.41935C20.3226 1.08318 19.2394 0 17.9032 0C16.5671 0 15.4839 1.08318 15.4839 2.41935C15.4839 3.75553 16.5671 4.83871 17.9032 4.83871Z" fill="%color%"/></svg>',
+		},
+	};
 
 	const styles = {
 		wrapper: {
 			paddingBottom: 12,
-			backgroundColor: '#f0f2f5',
+			backgroundColor: '#f5f7f8',
 		},
 		item: {
-			backgroundColor: '#FFFFFF',
+			backgroundColor: '#ffffff',
 			borderRadius: 12,
 			paddingTop: 17,
 			paddingBottom: 17,
@@ -446,17 +517,15 @@
 		// 	flexGrow: 0,
 		// },
 		header: {
-			flexDirection: 'row',
-			flexWrap: 'wrap',
-			marginRight: 61,
-			marginBottom: 5,
+			flexDirection: 'column',
+			marginRight: 56,
+			marginBottom: 4,
 			marginLeft: 24,
 		},
 		title: {
 			color: '#000000',
 			fontWeight: 'bold',
 			fontSize: 18,
-			width: '100%',
 		},
 		dateView: {
 			flexWrap: 'no-wrap',
@@ -464,8 +533,8 @@
 		},
 		date: {
 			fontSize: 13,
-			color: '#82888F',
-			flex: 0,
+			color: '#82888f',
+			flexShink: 2,
 		},
 		legend: {
 			flex: 0,
@@ -481,60 +550,24 @@
 			right: 6,
 			borderRadius: 10,
 			borderWidth: 2,
-			borderColor: '#ffffff',
-		},
-		contentWrapper: {
-			position: 'relative',
-			marginLeft: 24,
-			marginRight: 14,
-		},
-		money: {
-			fontSize: 21,
-			//fontWeight: 'bold',
-			color: '#333333',
 		},
 		client: {
 			fontSize: 19,
 			color: '#333333',
 		},
-		connectsContainer: {
-			position: 'absolute',
-			top: 20,
-			right: 0,
-		},
 		menuContainer: (hasCounter) => ({
 			position: 'absolute',
 			top: 8,
-			right: 11,
+			right: Application.getPlatform() === 'android' ? 18 : 16,
 			width: 42,
 			height: 42,
 			padding: 9,
-			backgroundColor: (hasCounter ? '#ffdcdb' : '#ffffff'),
+			backgroundColor: (hasCounter ? '#ffdcdb' : ''),
 			borderRadius: 20,
 			justifyContent: 'center',
 			alignItems: 'center',
 		}),
-	}
-
-	const connectStyles = {
-		defaultIconWrapper: {
-			position: 'relative',
-			alignItems: 'center',
-			justifyContent: 'center',
-		},
-		phoneIconWrapper: {
-			width: 21,
-			height: 21,
-		},
-		chatIconWrapper: {
-			width: 20,
-			height: 18,
-		},
-		mailsIconWrapper: {
-			width: 21,
-			height: 15,
-		}
-	}
+	};
 
 	this.ListItems = this.ListItems || {};
 	this.ListItems.Base = Base;

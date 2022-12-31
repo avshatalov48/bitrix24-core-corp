@@ -484,6 +484,7 @@ if(typeof(BX.CrmInterfaceGridManager) == 'undefined')
 			{
 				processParams["ENTITY_IDS"] = ids;
 			}
+			processParams.sessid = BX.bitrix_sessid();
 
 			this._deletionProcessDialog = BX.CrmLongRunningProcessDialog.create(
 				contextId,
@@ -1789,6 +1790,50 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 			this.items[extensionId].viewActivity(activityId, options);
 		}
 	};
+	BX.CrmUIGridExtension.showActivityAddingPopupFromMenu = function(gridManagerId, entityTypeId, entityId)
+	{
+		if (!BX.Main || !BX.Main.MenuManager || !BX.Main.MenuManager.Data)
+		{
+			return;
+		}
+		var menus = Object.keys(BX.Main.MenuManager.Data);
+		var menu = menus.length ? BX.Main.MenuManager.Data[menus[0]] : null;
+		if (menu && menu.bindElement)
+		{
+			BX.CrmUIGridExtension.showActivityAddingPopup(menu.bindElement, gridManagerId, entityTypeId, entityId);
+			menu.close();
+		}
+	};
+	BX.CrmUIGridExtension.showActivityAddingPopup = function(bindElement, gridManagerId, entityTypeId, entityId)
+	{
+		BX.Dom.addClass(bindElement, '--active');
+		var key = entityTypeId + '_' + entityId;
+		BX.Runtime.loadExtension('crm.activity.adding-popup').then(function(exports) {
+			if (!BX.CrmUIGridExtension.activityAddingPopup.hasOwnProperty(key))
+			{
+				BX.CrmUIGridExtension.activityAddingPopup[key] = new exports.AddingPopup(
+					entityTypeId,
+					entityId,
+					{
+						events: {
+							onClose: function() {
+								BX.Dom.removeClass(bindElement, '--active');
+							},
+							onSave: function() {
+								var gridExtension = BX.CrmUIGridExtension.getById(gridManagerId);
+								if (gridExtension)
+								{
+									gridExtension.reloadGrid();
+								}
+							}
+						}
+					}
+				);
+
+			}
+			BX.CrmUIGridExtension.activityAddingPopup[key].show(bindElement);
+		});
+	};
 	//endregion
 	//region Call list
 	BX.CrmUIGridExtension.createCallList = function(extensionId, createActivity)
@@ -1829,6 +1874,7 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 	//endregion
 	//region Constructor & Items
 	BX.CrmUIGridExtension.items = {};
+	BX.CrmUIGridExtension.activityAddingPopup = {};
 	BX.CrmUIGridExtension.create = function(id, settings)
 	{
 		if (settings.hasOwnProperty('destroyPreviousExtension') && settings.destroyPreviousExtension &&
@@ -1842,6 +1888,15 @@ if(typeof(BX.CrmUIGridExtension) === "undefined")
 		//BX.onCustomEvent(this, 'CREATED', [self]);
 		return self;
 	};
+	BX.CrmUIGridExtension.getById = function(id)
+	{
+		if (this.items.hasOwnProperty(id))
+		{
+			return this.items[id];
+		}
+
+		return null;
+	}
 	//endregion
 }
 //endregion

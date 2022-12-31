@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
@@ -377,7 +378,7 @@ class QuoteDataProvider extends EntityDataProvider
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_quote_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,

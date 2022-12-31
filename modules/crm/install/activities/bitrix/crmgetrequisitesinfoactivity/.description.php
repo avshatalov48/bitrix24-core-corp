@@ -1,24 +1,33 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	'NAME' => GetMessage('CRM_GRI_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_GRI_DESC'),
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('CRM_GRI_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_GRI_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGetRequisitesInfoActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'FILTER' => [
 		'INCLUDE' => [
-			['crm']
-		]
+			['crm'],
+		],
 	],
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
-	),
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
+	],
 	'ADDITIONAL_RESULT' => ['RequisitePresetFields'],
 	'ROBOT_SETTINGS' => [
-		'CATEGORY' => 'employee'
-	]
-);
+		'CATEGORY' => 'employee',
+		'GROUP' => ['paperwork', 'payment'],
+		'SORT' => 1700,
+		'IS_SUPPORTING_ROBOT' => true,
+	],
+];

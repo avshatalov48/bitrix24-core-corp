@@ -4,6 +4,7 @@ namespace Bitrix\Disk;
 
 use Bitrix\Disk\Internals;
 use Bitrix\Disk\Internals\Error\Error;
+use Bitrix\Disk\Internals\Grid\FolderListOptions;
 use Bitrix\Disk\Internals\ObjectTable;
 use Bitrix\Main;
 use Bitrix\Main\Application;
@@ -88,7 +89,7 @@ final class FocusController extends Internals\Controller
 			return;
 		}
 
-		$gridOptions = new Internals\Grid\FolderListOptions($object->getStorage());
+		$gridOptions = new FolderListOptions($object->getStorage());
 		$filter = array(
 			'PARENT_ID' => $object->getParentId(),
 			'DELETED_TYPE' => ObjectTable::DELETED_TYPE_NONE,
@@ -139,7 +140,7 @@ final class FocusController extends Internals\Controller
 		LocalRedirect($this->buildUrlToFocus($urlManager->getPathInTrashcanListing($object), $object->getId(), $finalPage, $gridOptions));
 	}
 
-	private function buildUrlToFocus($listingPath, $objectId, $finalPage, Internals\Grid\FolderListOptions $gridOptions)
+	private function buildUrlToFocus($listingPath, $objectId, $finalPage, FolderListOptions $gridOptions)
 	{
 		$command = $this->request->getQuery('cmd')?: '';
 		if ($command)
@@ -195,11 +196,11 @@ final class FocusController extends Internals\Controller
 		return true;
 	}
 
-	private function getPageWithObject(BaseObject $object, Internals\Grid\FolderListOptions $gridOptions, array $filter)
+	private function getPageWithObject(BaseObject $object, FolderListOptions $gridOptions, array $filter)
 	{
 		$storage = $object->getStorage();
 		$securityContext = $storage->getCurrentUserSecurityContext();
-		$pageSize = $gridOptions->getPageSize();
+		$pageSize = $gridOptions->getPageSize() ?: FolderListOptions::COUNT_ON_PAGE;
 
 		$parameters = array(
 			'select' => array('ID'),

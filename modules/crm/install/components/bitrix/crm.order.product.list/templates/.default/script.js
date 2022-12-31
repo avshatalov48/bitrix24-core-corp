@@ -20,10 +20,23 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 			this._id = id;
 			this._settings = config ? config : {};
 			this._isChanged = this.getSetting('isChanged', false);
+			this._isReadOnly = this.getSetting('isReadOnly', false);
+			if (!this._isReadOnly)
+			{
+				BX.Event.EventEmitter.unsubscribeAll('onFocusToProductList');
+				BX.Event.EventEmitter.subscribe('onFocusToProductList', () => {
+					this.onFocusToProductList();
+					BX.onCustomEvent('crmOrderProductListFocused');
+				});
+			}
 
 			BX.addCustomEvent('crmOrderDetailDiscountToggle', BX.proxy(function(data){
 				this.setDiscountById(data.discountId, data.isSet, false, true);
 			}, this));
+
+			BX.onCustomEvent('crmOrderProductListInit', [{
+				id: this._id,
+			}]);
 		},
 
 		setController: function(controller)
@@ -187,6 +200,17 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 						]
 				}
 			).open();
+		},
+
+		onFocusToProductList: function()
+		{
+			const languageId = this.getSetting('languageId', false);
+			const siteId = this.getSetting('siteId', false);
+			const orderId = this.getSetting('orderId', false);
+			if (languageId && siteId && orderId)
+			{
+				this.addProductSearch({languageId, siteId, orderId});
+			}
 		},
 
 		onProductAdd: function(params, iBlockId)
@@ -530,4 +554,3 @@ if(typeof BX.Crm.Order.Product.List === "undefined")
 		return self;
 	};
 }
-

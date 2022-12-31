@@ -4,6 +4,7 @@ if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Crm\WebForm\Options;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -618,6 +619,11 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				"title" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT'),
 				"hint" => Loc::getMessage('CRM_WEBFORM_LIST_VIEWS_SUBMITS_MENU_HINT'),
 			),
+			[
+				"id" => "GET_PAYMENT",
+				"name" => Loc::getMessage("CRM_WEBFORM_LIST_ITEM_GET_PAYMENT"),
+				"default" => false
+			]
 		);
 	}
 	protected function getOrder()
@@ -727,6 +733,7 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 			"ENTITY_SCHEME",
 			"IS_SYSTEM",
 			"FORM_SETTINGS",
+			"IS_PAY"
 		];
 	}
 
@@ -796,6 +803,10 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 		if (isset($requestFilter['ACTIVE']) && in_array($requestFilter['ACTIVE'], ['Y', 'N'], true))
 		{
 			$filter['=ACTIVE'] = $requestFilter['ACTIVE'] === 'Y';
+		}
+		if (isset($requestFilter['GET_PAYMENT']) && in_array($requestFilter['GET_PAYMENT'], ['Y', 'N'], true))
+		{
+			$filter['=IS_PAY'] = $requestFilter['GET_PAYMENT'] === 'Y';
 		}
 
 		if (!empty($requestFilter['PUBLINK']))
@@ -899,6 +910,12 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				"type" => "checkbox",
 				"default" => false,
 			),
+			[
+				"id" => "GET_PAYMENT",
+				"name" => Loc::getMessage('CRM_WEBFORM_LIST_FILTER_PRESET_GET_PAYMENT'),
+				'type' => 'checkbox',
+				'default' => false,
+			]
 		);
 
 		if (\Bitrix\Main\ModuleManager::isModuleInstalled('landing'))
@@ -960,7 +977,8 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 				'fields' => array(
 					'ACTIVE_CHANGE_BY' => $USER->GetID(),
 				)
-			),'system_fields' => array(
+			),
+			'system_fields' => array(
 				'name' => Loc::getMessage('CRM_WEBFORM_LIST_FILTER_PRESET_SYSTEM'),
 				'fields' => array(
 					'IS_SYSTEM' => 'Y',
@@ -972,6 +990,13 @@ class CCrmWebFormListComponent extends \CBitrixComponent
 					'IS_CALLBACK_FORM' => 'Y',
 				)
 			),
+			'get_payment' => [
+				'name' => Loc::getMessage('CRM_WEBFORM_LIST_FILTER_PRESET_GET_PAYMENT'),
+				'fields' => [
+					'GET_PAYMENT' => 'Y',
+					'ACTIVE' => 'Y',
+				]
+			]
 		);
 
 		if (WebForm\WhatsApp::canUse())

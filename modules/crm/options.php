@@ -128,16 +128,9 @@ if($MOD_RIGHT>='Y' || $USER->IsAdmin()):
 
 	if ($REQUEST_METHOD=='GET' && $RestoreDefaults <> '' && check_bitrix_sessid())
 	{
-		$extranetExists = IsModuleInstalled('extranet');
-		if ($extranetExists)
-		{
-			$shopEnabled = Main\Config\Option::get('crm', 'crm_shop_enabled');
-		}
+		$defaultCatalogId = Main\Config\Option::get('crm', 'default_product_catalog_id');
 		COption::RemoveOption($module_id);
-		if ($extranetExists)
-		{
-			Main\Config\Option::set('crm', 'crm_shop_enabled', $shopEnabled);
-		}
+		Main\Config\Option::set('crm', 'default_product_catalog_id', $defaultCatalogId);
 	}
 
 	if($REQUEST_METHOD=='POST' && $Update <> '' && check_bitrix_sessid())

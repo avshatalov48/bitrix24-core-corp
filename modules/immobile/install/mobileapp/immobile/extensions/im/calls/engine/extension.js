@@ -478,7 +478,7 @@
 
 		isCallServerAllowed()
 		{
-			return true;
+			return BX.componentParameters.get('sfuServerEnabled', true);
 		}
 
 		isNativeCall(callId)

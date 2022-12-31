@@ -1,11 +1,13 @@
 (() => {
+	const { StringField } = jn.require('layout/ui/fields/string');
+
 	class ProjectNameField extends LayoutComponent
 	{
 		render()
 		{
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.STRING, {
+				StringField({
 					readOnly: false,
 					required: true,
 					focus: (this.props.focus || false),

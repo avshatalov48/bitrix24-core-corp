@@ -12,6 +12,6 @@ class Timeline extends Base
 
 	protected function getDefaultTitle(): string
 	{
-		return Loc::getMessage('M_UI_TAB_TIMELINE_DEFAULT_TITLE');
+		return Loc::getMessage('M_UI_TAB_TIMELINE_DEFAULT_TITLE2');
 	}
 }

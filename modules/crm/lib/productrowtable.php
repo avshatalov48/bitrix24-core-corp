@@ -7,7 +7,7 @@
  */
 namespace Bitrix\Crm;
 
-use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
+use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Application;
 use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
@@ -56,6 +56,8 @@ class ProductRowTable extends DataManager
 
 	public static function getMap(): array
 	{
+		$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
+
 		return [
 			(new IntegerField('ID'))
 				->configurePrimary()
@@ -161,12 +163,13 @@ class ProductRowTable extends DataManager
 				->configureDefaultValue(''),
 			(new IntegerField('SORT'))
 				->configureDefaultValue(0),
-			(new StringField('XML_ID')),
-			(new Reference(
-				'RESERVATION',
-				ProductRowReservationTable::class,
-				Join::on('this.ID', 'ref.ROW_ID')
-			)),
+			(new StringField('XML_ID'))
+				->configureDefaultValue(''),
+			(new IntegerField('TYPE'))
+				->configureDefaultValue(ProductType::TYPE_PRODUCT)
+				->configureRequired()
+				->addValidator([static::class, 'validateSupportedProductType']),
+			$fieldRepository->getProductRowReservation(),
 		];
 	}
 
@@ -264,5 +267,38 @@ class ProductRowTable extends DataManager
 				}
 			}
 		}
+	}
+
+	/**
+	 * Validates product type before save
+	 *
+	 * @param $value
+	 * @param $primary
+	 * @param array $row
+	 * @param \Bitrix\Main\ORM\Fields\Field $field
+	 * @return bool|string
+	 */
+	public static function validateSupportedProductType($value, $primary, array $row, \Bitrix\Main\ORM\Fields\Field $field)
+	{
+		$value = (int)$value;
+		if (in_array($value, static::getSupportedProductTypes(), true))
+		{
+			return true;
+		}
+
+		return 'Type is not supported';
+	}
+
+	private static function getSupportedProductTypes(): array
+	{
+		return [
+			ProductType::TYPE_PRODUCT,
+			ProductType::TYPE_SET,
+			ProductType::TYPE_SKU,
+			ProductType::TYPE_OFFER,
+			ProductType::TYPE_FREE_OFFER,
+			ProductType::TYPE_EMPTY_SKU,
+			ProductType::TYPE_SERVICE,
+		];
 	}
 }

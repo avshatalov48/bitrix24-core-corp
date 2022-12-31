@@ -17,6 +17,16 @@ class ResponsibleChangedTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_RESPONSIBLE_CHANGED_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_RESPONSIBLE_CHANGED_NAME_1');
+	}
+
+	public static function getGroup(): array
+	{
+		return ['elementControl'];
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_RESPONSIBLE_CHANGED_DESCRIPTION') ?? '';
 	}
 }

@@ -7,17 +7,25 @@ export const ChangeStreamButton = {
 		title: String,
 		action: Object,
 	},
+	data(): Object {
+		return {
+			isReadonlyMode: false,
+		}
+	},
 	inject: [
 		'isReadOnly',
 	],
-
+	mounted()
+	{
+		this.isReadonlyMode = this.isReadOnly;
+	},
 	computed: {
 		isShowPinButton() {
-			return this.type === 'pin' && !this.isReadOnly;
+			return this.type === 'pin' && !this.isReadonlyMode;
 		},
 
 		isShowUnpinButton() {
-			return this.type==='unpin' && !this.isReadOnly;
+			return this.type==='unpin' && !this.isReadonlyMode;
 		},
 	},
 	methods: {
@@ -32,11 +40,21 @@ export const ChangeStreamButton = {
 		},
 		onClick(): void
 		{
-
 			if (this.action)
 			{
 				const action = new Action(this.action);
 				action.execute(this);
+			}
+		},
+		setDisabled(disabled: boolean)
+		{
+			if (!this.isReadonly && !disabled)
+			{
+				this.isReadonlyMode = false;
+			}
+			if (disabled)
+			{
+				this.isReadonlyMode = true;
 			}
 		}
 	},
@@ -47,6 +65,7 @@ export const ChangeStreamButton = {
 				v-if="type === 'complete'"
 				@click="executeAction"
 				type="checkbox"
+				:disabled="isReadonlyMode"
 				class="crm-timeline__card-top_checkbox"
 			/>
 			<div

@@ -1,33 +1,42 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => GetMessage('CRM_BP_GPI_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_BP_GPI_DESC'),
+	'NAME' => Loc::getMessage('CRM_BP_GPI_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPI_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGetPaymentInfoActivity',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
 	],
 	'RETURN' => [
 		'PaymentId' => [
-			'NAME' => GetMessage('CRM_BP_GPI_RETURN_PAYMENT_ID'),
+			'NAME' => Loc::getMessage('CRM_BP_GPI_RETURN_PAYMENT_ID'),
 			'TYPE' => 'int',
 		],
 		'PaymentAccountNumber' => [
-			'NAME' => GetMessage('CRM_BP_GPI_RETURN_PAYMENT_NUM'),
+			'NAME' => Loc::getMessage('CRM_BP_GPI_RETURN_PAYMENT_NUM'),
 			'TYPE' => 'string',
 		],
 	],
 	'FILTER' => [
 		'INCLUDE' => [
-			['crm', 'CCrmDocumentDeal']
+			['crm', 'CCrmDocumentDeal'],
 		],
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
+		'GROUP' => ['payment', 'delivery'],
+		'SORT' => 900,
+		'IS_SUPPORTING_ROBOT' => true,
 	],
 ];

@@ -30,8 +30,15 @@ if (IsModuleInstalled("video") && !array_key_exists("PATH_TO_VIDEO_CALL", $arPar
 
 $arParams['SHOW_YEAR'] = $arParams['SHOW_YEAR'] == 'Y' ? 'Y' : ($arParams['SHOW_YEAR'] == 'M' ? 'M' : 'N');
 
-if (!$arParams['DATE_FORMAT']) $arParams['DATE_FORMAT'] = CComponentUtil::GetDateFormatDefault();
-if (!$arParams['DATE_FORMAT_NO_YEAR']) $arParams['DATE_FORMAT_NO_YEAR'] = CComponentUtil::GetDateFormatDefault(true);
+if (!isset($arParams['DATE_FORMAT']))
+{
+	$arParams['DATE_FORMAT'] = \Bitrix\Main\Context::getCurrent()->getCulture()->getLongDateFormat()();
+}
+
+if (!isset($arParams['DATE_FORMAT_NO_YEAR']))
+{
+	$arParams['DATE_FORMAT_NO_YEAR'] = \Bitrix\Main\Context::getCurrent()->getCulture()->getDayMonthFormat();
+}
 
 $arParams['DETAIL_URL'] = trim($arParams['DETAIL_URL']);
 if (!$arParams['DETAIL_URL'])
@@ -226,10 +233,14 @@ else
 	while ($arUser = $dbUsers->Fetch())
 	{
 		if (!$arUser['PERSONAL_BIRTHDAY'])
+		{
 			continue;
+		}
 
 		if ((++$num) > $arParams['NUM_USERS'])
+		{
 			break;
+		}
 
 		if ($arParams['bCache'] && defined("BX_COMP_MANAGED_CACHE"))
 		{

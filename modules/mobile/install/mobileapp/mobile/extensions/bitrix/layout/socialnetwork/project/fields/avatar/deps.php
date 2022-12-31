@@ -1,6 +1,8 @@
 <?php
 
 return [
-	'files',
-	'layout/ui/fields',
+	'extensions' => [
+		'files',
+		'layout/ui/fields/image-select',
+	],
 ];

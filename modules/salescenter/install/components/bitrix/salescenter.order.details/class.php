@@ -57,26 +57,15 @@ class SalesCenterOrderDetails extends CBitrixComponent implements Main\Engine\Co
 
 		if (!$params['HEADER_TITLE'])
 		{
-			if (Loader::includeModule('crm'))
+			$title = '';
+			if (
+				Loader::includeModule('salescenter')
+				&& Loader::includeModule('crm')
+			)
 			{
-				$res = CompanyTable::getList(
-					[
-						'select' => [
-							'ID', 'TITLE'
-						],
-						'filter' => [
-							'=IS_MY_COMPANY' => 'Y'
-						],
-						'order' => [
-							'DATE_MODIFY' => 'desc'
-						]
-					]
-				);
-				if ($row = $res->fetch())
-				{
-					$title = $row['TITLE'];
-				}
+				$title = \Bitrix\SalesCenter\Integration\CrmManager::getPublishedCompanyName();
 			}
+
 			$params['HEADER_TITLE'] = $title ?? 'Company 24';
 		}
 

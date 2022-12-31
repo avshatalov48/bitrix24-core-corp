@@ -148,6 +148,22 @@ if(isset($arResult['TEMPLATE']) && isset($arResult['TEMPLATE']['ID']))
 					</div>
 				</div>
 			</div>
+			<div class="docs-template-load-numerator" id="add-template-products-table-type-block">
+				<div class="docs-template-load-block-wrap">
+					<div class="docs-template-load-block-title-inner">
+						<span class="docs-template-load-title"><?=Loc::getMessage('DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_TITLE');?></span>
+					</div>
+					<div class="docs-template-load-product-type-select-wrap">
+						<select class="docs-template-load-select docs-template-load-indentation-14" id="docs-template-products-table-variant-select">
+							<? foreach ($arResult["PRODUCTS_TABLE_VARIANT"] as $type) : ?>
+								<option value="<?= $type; ?>"
+									<?= ($arResult['TEMPLATE']['PRODUCTS_TABLE_VARIANT'] === $type) ? 'selected="selected"' : ''; ?>
+								> <?= Loc::getMessage('DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT'.($type ? '_'.ToUpper($type) : '')) ?> </option>
+							<? endforeach; ?>
+						</select>
+					</div>
+				</div>
+			</div>
 			<div class="docs-template-load-crm" id="add-template-provider-block">
 				<div class="docs-template-load-block-wrap">
 					<div class="docs-template-load-block-title-inner">

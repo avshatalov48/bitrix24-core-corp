@@ -3,6 +3,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Component\EntityDetails\FactoryBased;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -20,6 +21,37 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 	{
 		$arParams['ENTITY_TYPE_ID'] = CCrmOwnerType::SmartDocument;
 		return parent::onPrepareComponentParams($arParams);
+	}
+
+
+	public function getEditorEntityConfig(): array
+	{
+		$sections = [];
+
+		$sectionMain = [
+			'name' => 'main',
+			'title' => Loc::getMessage('CRM_COMPONENT_FACTORYBASED_EDITOR_MAIN_SECTION_TITLE'),
+			'type' => 'section',
+			'elements' => [],
+		];
+		$sectionMain['elements'][] = ['name' => Item::FIELD_NAME_TITLE];
+		$sectionMain['elements'][] = ['name' =>  EditorAdapter::FIELD_OPPORTUNITY];
+
+		$sections[] = $sectionMain;
+
+		$sectionAdditional = [
+			'name' => 'additional',
+			'title' => Loc::getMessage('CRM_TYPE_ITEM_EDITOR_SECTION_ADDITIONAL'),
+			'type' => 'section',
+			'elements' => [],
+		];
+		$sectionAdditional['elements'][] = ['name' => EditorAdapter::FIELD_CLIENT];
+		$sectionAdditional['elements'][] = ['name' => Item::FIELD_NAME_MYCOMPANY_ID];
+		$sectionAdditional['elements'][] = ['name' => Item::FIELD_NAME_ASSIGNED];
+
+		$sections[] = $sectionAdditional;
+
+		return $sections;
 	}
 
 	public function getInlineEditorEntityConfig(): array
@@ -59,24 +91,5 @@ class CrmSmartDocumentDetailsComponent extends FactoryBased
 		$this->executeBaseLogic();
 
 		$this->includeComponentTemplate();
-	}
-
-	public function getEditorConfig(): array
-	{
-		$config = parent::getEditorConfig();
-
-		foreach ($config['ENTITY_FIELDS'] as &$field)
-		{
-			if(
-				$field['name'] === EditorAdapter::FIELD_CLIENT
-				&& isset($field['data']['clientEditorFieldsParams'][\CCrmOwnerType::ContactName]['REQUISITES'])
-			)
-			{
-				$field['data']['clientEditorFieldsParams'][\CCrmOwnerType::ContactName]['REQUISITES']['isHidden'] = true;
-				break;
-			}
-		}
-
-		return $config;
 	}
 }

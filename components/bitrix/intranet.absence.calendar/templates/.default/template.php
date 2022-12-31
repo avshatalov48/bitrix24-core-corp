@@ -62,14 +62,15 @@ while($enum_fields = $property_enums->GetNext())
 
 ?>
 <script type="text/javascript">
-function GetAbsenceDialog(abcenseID)
+function GetAbsenceDialog(absenceID)
 {
 	<?
 	$arAbsenceParams["MESS"]["INTR_ABSENCE_TITLE"] = GetMessage("INTR_ABSENCE_TITLE_EDIT");
+	$arAbsenceParams["MESS"]["INTR_ABSENCE_POPUP_BUTTON"] = GetMessage("INTR_ABSENCE_EDIT_BUTTON_POPUP");
 	$arAbsenceParams["ABSENCE_ELEMENT_ID"] = "#ABSENCE_ID#";
 	?>
 	var dialog = "<?="BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")"?>";
-	return dialog.replace("#ABSENCE_ID#", abcenseID);
+	return dialog.replace("#ABSENCE_ID#", absenceID);
 }
 jsBXAC.Init(
 	{
@@ -146,8 +147,10 @@ endif;
 ?>
 </script>
 
-<?
+<?php
 if ($arParams['bAdmin'] && $USER->IsAuthorized()):
+	$arAbsenceParams["MESS"]["INTR_ABSENCE_TITLE"] = GetMessage("INTR_ABSENCE_TITLE");
+	$arAbsenceParams["MESS"]["INTR_ABSENCE_POPUP_BUTTON"] = GetMessage("INTR_ABSENCE_ADD_BUTTON_POPUP");
 	$this->SetViewTarget('pagetitle', 100);?>
 	<span class="webform-small-button webform-small-button-blue webform-small-button-add"
 	   onclick="<?="BX.AbsenceCalendar.ShowForm(".CUtil::PhpToJSObject($arAbsenceParams).")"?>">

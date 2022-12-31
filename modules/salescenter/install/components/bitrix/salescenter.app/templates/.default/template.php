@@ -59,7 +59,11 @@ $this->SetViewTarget('pagetitle');
 ?>
 	<div class="pagetitle-container pagetitle-align-right-container">
 		<?php
-		Bitrix24Manager::getInstance()->renderIntegrationRequestButton();
+		Bitrix24Manager::getInstance()->renderIntegrationRequestButton(
+			[
+				Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT
+			]
+		);
 		Bitrix24Manager::getInstance()->renderFeedbackButton();
 		?>
 	</div>

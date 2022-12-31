@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/ui/fields',
+	'extensions' => [
+		'layout/ui/fields/entity-selector',
+		'layout/ui/fields/user',
+	],
 ];

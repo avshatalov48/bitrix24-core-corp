@@ -346,6 +346,9 @@ class CCrmOwnerType
 			case self::StoreDocumentName:
 				return self::StoreDocument;
 
+			case self::ShipmentDocumentName:
+				return self::ShipmentDocument;
+
 			case CCrmOwnerTypeAbbr::System:
 			case self::SystemName:
 				return self::System;
@@ -984,7 +987,9 @@ class CCrmOwnerType
 			{
 				return CComponentEngine::MakePathFromTemplate(
 					COption::GetOptionString('crm', 'path_to_store_document_details'),
-					array('document_id' => $ID)
+					[
+						'store_document_id' => $ID,
+					]
 				);
 			}
 
@@ -992,7 +997,9 @@ class CCrmOwnerType
 			{
 				return CComponentEngine::MakePathFromTemplate(
 					COption::GetOptionString('crm', 'path_to_shipment_document_details'),
-					array('document_id' => $ID)
+					[
+						'shipment_document_id' => $ID,
+					]
 				);
 			}
 
@@ -1185,6 +1192,7 @@ class CCrmOwnerType
 			|| $typeID === CCrmOwnerType::OrderCheck
 			|| $typeID === CCrmOwnerType::OrderShipment
 			|| $typeID === CCrmOwnerType::OrderPayment
+			|| $typeID === CCrmOwnerType::StoreDocument
 			|| $typeID === CCrmOwnerType::SmartInvoice
 			|| $typeID === CCrmOwnerType::SmartDocument
 		)
@@ -1892,7 +1900,7 @@ class CCrmOwnerType
 					array('@ID' => $IDs, 'CHECK_PERMISSIONS' => $checkPermissions ? 'Y' : 'N'),
 					false,
 					false,
-					array('ID', 'HONORIFIC', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE', 'PHOTO', 'ASSIGNED_BY_ID')
+					array('ID', 'HONORIFIC', 'NAME', 'POST', 'SECOND_NAME', 'LAST_NAME', 'COMPANY_ID', 'COMPANY_TITLE', 'PHOTO', 'ASSIGNED_BY_ID')
 				);
 				break;
 			}
@@ -2284,6 +2292,7 @@ class CCrmOwnerType
 				$result = array(
 					'TITLE' => CCrmContact::PrepareFormattedName($arRes),
 					'LEGEND' => isset($arRes['COMPANY_TITLE']) ? $arRes['COMPANY_TITLE'] : '',
+					'POST' => isset($arRes['POST']) ? $arRes['POST'] : '',
 					'RESPONSIBLE_ID' => isset($arRes['ASSIGNED_BY_ID']) ? intval($arRes['ASSIGNED_BY_ID']) : 0,
 					'IMAGE_FILE_ID' => isset($arRes['PHOTO']) ? intval($arRes['PHOTO']) : 0,
 					'SHOW_URL' =>
@@ -3546,6 +3555,8 @@ class CCrmOwnerTypeAbbr
 	 */
 	public static function ResolveByTypeName(string $typeName): string
 	{
+		$typeName = mb_strtoupper(trim($typeName));
+
 		if ($typeName === '')
 		{
 			return self::Undefined;

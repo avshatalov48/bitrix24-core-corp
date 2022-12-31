@@ -17,6 +17,8 @@ use Bitrix\Crm\ClientInfo;
 use Bitrix\Crm\Order\Builder\Factory;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\Helpers\Order\Builder\Converter\CatalogJSProductForm;
+use Bitrix\Crm\ProductRowCollection;
+use Bitrix\Crm\ProductRow;
 
 /**
  * @deprecated 23.0.0
@@ -27,21 +29,21 @@ class OrderSynchronizer
 	/** @var int */
 	private $dealId;
 
-	/** @var array */
+	/** @var ProductRowCollection $dealProducts */
 	private $dealProducts;
 
 	/** @var Order|null */
 	private $order;
 
-	/** @var array|false|null */
-	private $dealFields = [];
+	/** @var array|false|null $dealFields */
+	private $dealFields;
 
 	/**
 	 * @param int $dealId
-	 * @param array $dealProducts
+	 * @param ProductRowCollection $dealProducts
 	 * @param int|null $orderId
 	 */
-	public function __construct(int $dealId, array $dealProducts, int $orderId)
+	public function __construct(int $dealId, ProductRowCollection $dealProducts, int $orderId)
 	{
 		Loader::requireModule('catalog');
 		Loader::requireModule('sale');
@@ -68,14 +70,24 @@ class OrderSynchronizer
 		}
 
 		$defaultStoreId = StoreTable::getDefaultStoreId();
+		/** @var ProductRow $dealProduct */
 		foreach ($this->dealProducts as $dealProduct)
 		{
-			if (
-				(int)$dealProduct['STORE_ID'] !== (int)$defaultStoreId
-				|| (int)$dealProduct['RESERVE_QUANTITY'] > 0
-			)
+			$productRowReservation = $dealProduct->getProductRowReservation();
+			if ($productRowReservation)
 			{
-				return true;
+				$storeId = $defaultStoreId;
+				if ($productRowReservation->getStoreId() > 0)
+				{
+					$storeId = $productRowReservation->getStoreId();
+				}
+
+				$reserveQuantity = $productRowReservation->getReserveQuantity() ?: 0;
+
+				if ($storeId !== $defaultStoreId || $reserveQuantity > 0)
+				{
+					return true;
+				}
 			}
 		}
 
@@ -146,9 +158,21 @@ class OrderSynchronizer
 		 * Deal Products
 		 */
 		$dealProducts = [];
+
+		/** @var ProductRow $dealProduct */
 		foreach ($this->dealProducts as $dealProduct)
 		{
-			$dealProducts[] = (new ProductManager\EntityProductConverterWithReserve)->convertToSaleBasketFormat($dealProduct);
+			$dealProductFields = $dealProduct->toArray();
+			$productReservation = $dealProduct->getProductRowReservation();
+			if ($productReservation)
+			{
+				$dealProductFields['RESERVE_ID'] = $productReservation->getReserveId();
+				$dealProductFields['RESERVE_QUANTITY'] = $productReservation->getReserveQuantity();
+				$dealProductFields['STORE_ID'] = $productReservation->getStoreId();
+				$dealProductFields['DATE_RESERVE_END'] = (string)$productReservation->getDateReserveEnd();
+			}
+
+			$dealProducts[] = (new ProductManager\EntityProductConverterWithReserve)->convertToSaleBasketFormat($dealProductFields);
 		}
 
 		/**
@@ -177,6 +201,8 @@ class OrderSynchronizer
 				else
 				{
 					$product['BASKET_CODE'] = $orderProducts[$index]['BASKET_CODE'];
+					$foundProducts[] = $product['BASKET_CODE'];
+
 					if ($product['QUANTITY'] < $orderProducts[$index]['QUANTITY'])
 					{
 						$product['QUANTITY'] = $orderProducts[$index]['QUANTITY'];
@@ -315,15 +341,19 @@ class OrderSynchronizer
 
 			$resultItem['RESERVE'] = [];
 
-			/** @var ReserveQuantity $reserveItem */
-			foreach ($basketItem->getReserveQuantityCollection() as $reserveItem)
+			$reserveCollection = $basketItem->getReserveQuantityCollection();
+			if ($reserveCollection)
 			{
-				$resultItem['RESERVE'][$reserveItem->getId()] = [
-					'QUANTITY' => $reserveItem->getQuantity(),
-					'STORE_ID' => $reserveItem->getStoreId(),
-					'DATE_RESERVE_END' => $basketItem->getField('DATE_RESERVE_END'),
-					'RESERVED_BY' => $basketItem->getField('RESERVED_BY'),
-				];
+				/** @var ReserveQuantity $reserveItem */
+				foreach ($reserveCollection as $reserveItem)
+				{
+					$resultItem['RESERVE'][$reserveItem->getId()] = [
+						'QUANTITY' => $reserveItem->getQuantity(),
+						'STORE_ID' => $reserveItem->getStoreId(),
+						'DATE_RESERVE_END' => $basketItem->getField('DATE_RESERVE_END'),
+						'RESERVED_BY' => $basketItem->getField('RESERVED_BY'),
+					];
+				}
 			}
 
 			$result[] = $resultItem;
@@ -404,7 +434,6 @@ class OrderSynchronizer
 					}
 				}
 
-				$foundProducts[] = $item['BASKET_CODE'];
 				return $index;
 			}
 		}

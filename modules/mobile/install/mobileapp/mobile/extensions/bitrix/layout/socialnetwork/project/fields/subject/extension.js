@@ -1,4 +1,7 @@
 (() => {
+	const { StringField } = jn.require('layout/ui/fields/string');
+	const { MenuSelectField } = jn.require('layout/ui/fields/menu-select');
+
 	class ProjectSubjectField extends LayoutComponent
 	{
 		render()
@@ -7,7 +10,7 @@
 			{
 				return View(
 					{},
-					FieldFactory.create(FieldFactory.Type.STRING, {
+					StringField({
 						readOnly: true,
 						title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_SUBJECT_TITLE'),
 						value: this.props.value,
@@ -23,14 +26,19 @@
 
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.MENU_SELECT, {
+				MenuSelectField({
 					readOnly: false,
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_SUBJECT_TITLE'),
-					value: (selectedSubject ? selectedSubject.NAME : null),
-					parentWidget: this.props.parentWidget,
-					menuTitle: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_SUBJECT_MENU_TITLE'),
-					menuItems: this.props.subjects.map((subject) => ({id: Number(subject.ID), title: subject.NAME})),
+					value: (selectedSubject ? Number(selectedSubject.ID) : null),
 					onChange: (id, title) => this.props.onChange(id, title),
+					config: {
+						menuTitle: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_SUBJECT_MENU_TITLE'),
+						menuItems: this.props.subjects.map((subject) => ({
+							id: Number(subject.ID),
+							title: subject.NAME,
+						})),
+						parentWidget: this.props.parentWidget,
+					},
 				})
 			);
 		}

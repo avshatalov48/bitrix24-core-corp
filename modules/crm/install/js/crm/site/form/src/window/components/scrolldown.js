@@ -14,9 +14,9 @@ const Scrollable = {
 				</div>
 			</transition>						
 			<div class="b24-window-scrollable" :style="{ zIndex: zIndexComputed }">
-				<div v-if="enabled" class="b24-window-scroll-anchor"></div>
+				<div v-show="enabled" class="b24-window-scroll-anchor"></div>
 				<slot></slot>
-				<div v-if="enabled" class="b24-window-scroll-anchor"></div>
+				<div v-show="enabled" class="b24-window-scroll-anchor"></div>
 			</div>
 			<transition name="b24-a-fade">
 				<div class="b24-window-scroll-arrow-down-box"

@@ -1,8 +1,20 @@
-<?if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?
 
-if (!CModule::IncludeModule('crm'))
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Main\Loader;
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+
+if (!Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+	return;
+}
+
+if (!Loader::includeModule('catalog'))
+{
+	ShowError('The Commercial Catalog module is not installed.');
 	return;
 }
 
@@ -26,29 +38,24 @@ if (!empty($_REQUEST['copy']))
 	$isCopyMode = true;
 	$isEditMode = false;
 }
+$arResult['IS_EDIT_PERMITTED'] = (
+	(
+		$entityID > 0
+		&& AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_EDIT)
+	)
+	|| (
+		$entityID === 0
+		&& AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_ADD)
+	)
+);
+$arResult['IS_VIEW_PERMITTED'] = AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
+$arResult['IS_DELETE_PERMITTED'] = AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_DELETE);
+$arResult['IS_PRICE_EDITABLE'] = AccessController::getCurrent()->check(ActionDictionary::ACTION_PRICE_EDIT);
 
-$arResult["IS_EDIT_PERMITTED"] = false;
-$arResult["IS_VIEW_PERMITTED"] = false;
-$arResult["IS_DELETE_PERMITTED"] = CCrmProduct::CheckDeletePermission($arParams['ELEMENT_ID'], $userPermissions);
-
-if($isEditMode)
-{
-	$arResult["IS_EDIT_PERMITTED"] = CCrmProduct::CheckUpdatePermission($arParams['ELEMENT_ID'], $userPermissions);
-	if (!$arResult["IS_EDIT_PERMITTED"] && $arParams["RESTRICTED_MODE"])
-	{
-		$arResult["IS_VIEW_PERMITTED"] = CCrmProduct::CheckReadPermission($arParams['ELEMENT_ID'], $userPermissions);
-	}
-}
-elseif($isCopyMode)
-{
-	$arResult["IS_VIEW_PERMITTED"] = CCrmProduct::CheckReadPermission($arParams['ELEMENT_ID'], $userPermissions);
-}
-else
-{
-	$arResult["IS_EDIT_PERMITTED"] = CCrmProduct::CheckCreatePermission($userPermissions);
-}
-
-if(!$arResult["IS_EDIT_PERMITTED"] && !$arResult["IS_VIEW_PERMITTED"])
+if (
+	!$arResult['IS_EDIT_PERMITTED']
+	&& !$arResult['IS_VIEW_PERMITTED']
+)
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -91,6 +98,7 @@ if (check_bitrix_sessid())
 			|| $bAjaxSubmit
 			|| isset($_POST['save'])
 		)
+		&& $arResult["IS_EDIT_PERMITTED"]
 	)
 	{
 		CUtil::JSPostUnescape();
@@ -112,14 +120,17 @@ if (check_bitrix_sessid())
 			$productFields['ACTIVE'] = $_POST['ACTIVE'] == 'Y' ? 'Y' : 'N';
 		}
 
-		if (isset($_POST['CURRENCY']))
+		if ($entityID === 0 || $arResult['IS_PRICE_EDITABLE'])
 		{
-			$productFields['CURRENCY_ID'] = strval($_POST['CURRENCY']);
-		}
+			if (isset($_POST['CURRENCY']))
+			{
+				$productFields['CURRENCY_ID'] = strval($_POST['CURRENCY']);
+			}
 
-		if (isset($_POST['PRICE']))
-		{
-			$productFields['PRICE'] = round(doubleval($_POST['PRICE']), 2);
+			if (isset($_POST['PRICE']))
+			{
+				$productFields['PRICE'] = round(doubleval($_POST['PRICE']), 2);
+			}
 		}
 
 		if($productID <= 0)
@@ -521,27 +532,30 @@ $arResult['FIELDS'][] = array(
 	'value' => isset($product['ACTIVE']) ? $product['ACTIVE'] : ($isEditMode ? 'N' : 'Y')
 );
 
-$arCurrencies = CCrmCurrencyHelper::PrepareListItems();
-if ($arResult["IS_EDIT_PERMITTED"])
-	$value = isset($product['CURRENCY_ID']) ? $product['CURRENCY_ID'] : $baseCurrencyID;
-else
-	$value = isset($product['CURRENCY_ID']) ? $arCurrencies[$product['CURRENCY_ID']] : $arCurrencies[$baseCurrencyID];
+if ($entityID === 0 || $arResult['IS_PRICE_EDITABLE'])
+{
+	$arCurrencies = CCrmCurrencyHelper::PrepareListItems();
+	if ($arResult["IS_EDIT_PERMITTED"])
+		$value = isset($product['CURRENCY_ID']) ? $product['CURRENCY_ID'] : $baseCurrencyID;
+	else
+		$value = isset($product['CURRENCY_ID']) ? $arCurrencies[$product['CURRENCY_ID']] : $arCurrencies[$baseCurrencyID];
 
-$arResult['FIELDS'][] = array(
-	'id' => 'CURRENCY',
-	'name' => GetMessage('CRM_FIELD_CURRENCY'),
-	'type' =>  $arResult["IS_EDIT_PERMITTED"] ? 'list' : 'label',
-	'items' => $arCurrencies,
-	'value' => $value
-);
+	$arResult['FIELDS'][] = array(
+		'id' => 'CURRENCY',
+		'name' => GetMessage('CRM_FIELD_CURRENCY'),
+		'type' =>  $arResult["IS_EDIT_PERMITTED"] ? 'list' : 'label',
+		'items' => $arCurrencies,
+		'value' => $value
+	);
 
-$arResult['FIELDS'][] = array(
-	'id' => 'PRICE',
-	'name' => GetMessage('CRM_FIELD_PRICE'),
-	'type' =>  $arResult["IS_EDIT_PERMITTED"] ? 'text' : 'label',
-	'params' => array(),
-	'value' => isset($product['PRICE']) ? strval(round(doubleval($product['PRICE']), 2)) : ''
-);
+	$arResult['FIELDS'][] = array(
+		'id' => 'PRICE',
+		'name' => GetMessage('CRM_FIELD_PRICE'),
+		'type' =>  $arResult["IS_EDIT_PERMITTED"] ? 'text' : 'label',
+		'params' => array(),
+		'value' => isset($product['PRICE']) ? strval(round(doubleval($product['PRICE']), 2)) : ''
+	);
+}
 
 if ($bVatMode)
 {

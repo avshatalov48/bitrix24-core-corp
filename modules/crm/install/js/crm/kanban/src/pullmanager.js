@@ -1,6 +1,7 @@
-import {Event, Type, Loc} from 'main.core';
+import {Event, Type, Loc, Text} from 'main.core';
 import PullQueue from "./pullqueue";
 import {EventEmitter} from "main.core.events";
+import {ViewMode} from "./viewmode";
 
 export default class PullManager
 {
@@ -8,6 +9,8 @@ export default class PullManager
 	queue: PullQueue;
 	notifier: BX.UI.Notification.Balloon;
 	openedSlidersCount: Number;
+
+	static eventIds = new Set();
 
 	constructor(grid)
 	{
@@ -22,10 +25,21 @@ export default class PullManager
 		this.bindEvents();
 	}
 
+	static registerRandomEventId(): string
+	{
+		const eventId = Text.getRandom(12);
+		this.registerEventId(eventId);
+		return eventId;
+	}
+
+	static registerEventId(eventId: string)
+	{
+		this.eventIds.add(eventId);
+	}
+
 	init()
 	{
-		Event.ready(() =>
-		{
+		Event.ready(() => {
 			const Pull = BX.PULL;
 			if (!Pull)
 			{
@@ -33,17 +47,35 @@ export default class PullManager
 				return;
 			}
 
+			const gridData = this.grid.getData();
+			const { pullTag, eventKanbanUpdatedTag, viewMode } = gridData;
+
 			Pull.subscribe({
 				moduleId: this.grid.getData().moduleId,
-				command: this.grid.getData().pullTag,
-				callback: (params) =>
-				{
+				//command: this.grid.getData().pullTag,
+				callback: (data) => {
+					if (
+						data.command !== pullTag
+						&& !(data.command.indexOf(eventKanbanUpdatedTag) === 0 && viewMode === ViewMode.MODE_ACTIVITIES)
+					)
+					{
+						return;
+					}
+
+					const { params } = data;
+
 					if (Type.isString(params.eventName))
 					{
+						if(PullManager.eventIds.has(params.eventId))
+						{
+							return;
+						}
+
 						if(this.queue.isOverflow())
 						{
 							return;
 						}
+
 						if (params.eventName === 'ITEMUPDATED')
 						{
 							this.onPullItemUpdated(params);
@@ -86,7 +118,7 @@ export default class PullManager
 	{
 		if (this.updateItem(params))
 		{
-			this.queue.loadItem();
+			this.queue.loadItem(false, params.ignoreDelay || false);
 		}
 	}
 
@@ -113,7 +145,7 @@ export default class PullManager
 	{
 		if (this.addItem(params))
 		{
-			this.queue.loadItem();
+			this.queue.loadItem(false, params.ignoreDelay || false);
 		}
 	}
 

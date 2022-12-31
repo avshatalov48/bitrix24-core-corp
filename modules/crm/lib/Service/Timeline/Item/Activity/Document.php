@@ -56,7 +56,7 @@ final class Document extends Activity
 	private function getOpenDocumentAction(): Layout\Action
 	{
 		return
-			(new Layout\Action\JsEvent($this->getType() . ':Open'))
+			(new Layout\Action\JsEvent('Document:Open'))
 				->addActionParamInt('documentId', $this->getDocumentId())
 		;
 	}
@@ -78,7 +78,7 @@ final class Document extends Activity
 
 	public function getContentBlocks(): ?array
 	{
-		$blocks = [];
+		$blocks =  [];
 
 		$documentsPermissions = Driver::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
@@ -88,7 +88,7 @@ final class Document extends Activity
 				(new Layout\Body\ContentBlock\EditableText())
 					->setValue($this->getDocumentTitle())
 					->setAction(
-						(new Layout\Action\JsEvent($this->getType() . ':UpdateTitle'))
+						(new Layout\Action\JsEvent('Document:UpdateTitle'))
 							->addActionParamInt('documentId', $this->getDocumentId())
 						,
 					)
@@ -98,7 +98,7 @@ final class Document extends Activity
 				(new Layout\Body\ContentBlock\EditableDate())
 					->setDate($this->getDocumentCreateDate())
 					->setAction(
-						(new Layout\Action\JsEvent($this->getType() . ':UpdateCreateDate'))
+						(new Layout\Action\JsEvent('Document:UpdateCreateDate'))
 							->addActionParamInt('documentId', $this->getDocumentId())
 						,
 					)
@@ -191,7 +191,7 @@ final class Document extends Activity
 			'copyPublicLink' =>
 				(new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_COPY_LINK'), Layout\Footer\Button::TYPE_SECONDARY))
 					->setAction(
-						$this->getUrlAction($this->getType() . ':CopyPublicLink', 'publicUrl', $this->getPublicUrl()),
+						$this->getUrlAction('Document:CopyPublicLink', 'publicUrl', $this->getPublicUrl()),
 					)
 			,
 
@@ -215,7 +215,7 @@ final class Document extends Activity
 			(new Layout\Menu\MenuItem(Loc::getMessage('CRM_COMMON_ACTION_PRINT')))
 				->setIcon('print')
 				->setAction(
-					$this->getUrlAction($this->getType() . ':Print', 'printUrl', $this->getPrintUrl()),
+					$this->getUrlAction('Document:Print', 'printUrl', $this->getPrintUrl()),
 				)
 				->setSort(100)
 		;
@@ -223,7 +223,7 @@ final class Document extends Activity
 		$menuItems['downloadPdf'] =
 			(new Layout\Menu\MenuItem(Loc::getMessage('CRM_TIMELINE_ACTIVITY_DOCUMENT_DOWNLOAD_PDF')))
 				->setAction(
-					$this->getUrlAction($this->getType() . ':DownloadPdf', 'pdfUrl', $this->getPdfUrl()),
+					$this->getUrlAction('Document:DownloadPdf', 'pdfUrl', $this->getPdfUrl()),
 				)
 				->setSort(200)
 		;
@@ -231,7 +231,7 @@ final class Document extends Activity
 		$menuItems['downloadDocx'] =
 			(new Layout\Menu\MenuItem(Loc::getMessage('CRM_TIMELINE_ACTIVITY_DOCUMENT_DOWNLOAD_DOCX')))
 				->setAction(
-					$this->getUrlAction($this->getType() . ':DownloadDocx', 'docxUrl', $this->getDocxUrl()),
+					$this->getUrlAction('Document:DownloadDocx', 'docxUrl', $this->getDocxUrl()),
 				)
 				->setSort(300)
 		;

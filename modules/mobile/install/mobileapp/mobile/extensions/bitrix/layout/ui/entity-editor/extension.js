@@ -1,19 +1,44 @@
 (() => {
+	const { EventEmitter } = jn.require('event-emitter');
+	const { useCallback } = jn.require('utils/function');
+	const { PureComponent } = jn.require('layout/pure-component');
+	const { EntityEditorControlFactory } = jn.require('layout/ui/entity-editor/control');
+	const { FadeView } = jn.require('animation/components/fade-view');
+
 	/**
 	 * @class EntityEditor
 	 */
-	class EntityEditor extends LayoutComponent
+	class EntityEditor extends PureComponent
 	{
 		constructor(props)
 		{
 			super(props);
 
+			this.layout = props.layout || layout;
+
 			/** @type {EntityEditorColumn[]} */
 			this.controls = [];
+
 			/** @type {EntityEditorBaseController[]} */
 			this.controllers = [];
 
+			this.isScrollToViewEnabled = Application.getApiVersion() >= 44;
+			this.alreadyScrolledToInvalidField = false;
+
+			this.scrollViewRef = null;
+			this.scrollY = 0;
+
 			this.init(props);
+		}
+
+		componentDidMount()
+		{
+			this.customEventEmitter.on('UI.EntityEditor::switchToViewMode', this.switchToViewMode.bind(this));
+		}
+
+		switchToViewMode()
+		{
+			return Promise.all(this.getControls().map(control => control.switchToViewMode()));
 		}
 
 		componentWillReceiveProps(props)
@@ -23,51 +48,163 @@
 
 		init(props)
 		{
-			this.id = CommonUtils.isNotEmptyString(props.id) ? props.id : CommonUtils.getRandom(4);
+			this.id = CommonUtils.isNotEmptyString(props.id) ? props.id : Random.getString();
+
+			this.uid = CommonUtils.isNotEmptyString(props.uid) ? props.uid : Random.getString();
+			/** @type {EventEmitter} */
+			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+
 			this.settings = props.settings ? props.settings : {};
 
 			/** @type {EntityModel} */
-			this.model = BX.prop.get(this.settings, "model", null);
+			this.model = BX.prop.get(this.settings, 'model', null);
 			/** @type {EntityScheme} */
-			this.scheme = BX.prop.get(this.settings, "scheme", null);
+			this.scheme = BX.prop.get(this.settings, 'scheme', null);
 			/** @type {EntityConfig} */
-			this.config = BX.prop.get(this.settings, "config", null);
+			this.config = BX.prop.get(this.settings, 'config', null);
 
-			this.entityTypeName = BX.prop.getString(this.settings, "entityTypeName", '');
-			this.entityId = BX.prop.getInteger(this.settings, "entityId", 0);
-			this.context = BX.prop.getObject(this.settings, "context", {});
-			this.contextId = BX.prop.getString(this.settings, "contextId", "");
-			this.serviceUrl = BX.prop.getString(this.settings, "serviceUrl", "");
-			this.moduleId = BX.prop.getString(this.settings, "moduleId", '');
+			this.payload = BX.prop.get(this.settings, 'payload', '');
+			this.entityTypeName = BX.prop.getString(this.settings, 'entityTypeName', '');
+			this.entityId = BX.prop.getInteger(this.settings, 'entityId', 0);
+			this.context = BX.prop.getObject(this.settings, 'context', {});
+			this.contextId = BX.prop.getString(this.settings, 'contextId', '');
+			this.serviceUrl = BX.prop.getString(this.settings, 'serviceUrl', '');
+			this.moduleId = BX.prop.getString(this.settings, 'moduleId', '');
 
 			this.isNew = this.entityId <= 0 && this.model.isIdentifiable();
 
-			this.readOnly = BX.prop.getBoolean(this.settings, "readOnly", false);
+			this.readOnly = BX.prop.getBoolean(this.settings, 'readOnly', false);
 			if (this.readOnly)
 			{
 				this.enableSectionEdit = this.enableSectionCreation = false;
 			}
 
-			this.availableSchemeElements = this.scheme.getAvailableElements();
-			this.desktopUrl = BX.prop.getString(this.settings, "desktopUrl", '');
-			this.controllers.forEach((controller) => controller.setModel(this.model));
+			this.toolbarAlwaysVisible = BX.prop.getBoolean(this.settings, 'isToolbarAlwaysVisible', false);
 
-			if (BX.prop.getBoolean(this.settings, "loadFromModel", false))
+			this.enableVisibilityPolicy = BX.prop.getBoolean(this.settings, 'enableVisibilityPolicy', true);
+
+			this.enableModeToggle = false;
+			let initialMode = BX.UI.EntityEditorMode.intermediate;
+
+			if (!this.readOnly)
 			{
-				this.controllers.forEach((controller) => controller.loadFromModel());
+				this.enableModeToggle = BX.prop.getBoolean(this.settings, 'enableModeToggle', true);
+				initialMode = BX.UI.EntityEditorMode.parse(BX.prop.getString(this.settings, 'initialMode', ''));
 			}
+
+			if (this.isNew && !this.readOnly)
+			{
+				this.mode = BX.UI.EntityEditorMode.edit;
+			}
+			else
+			{
+				this.mode = initialMode !== BX.UI.EntityEditorMode.intermediate ? initialMode : BX.UI.EntityEditorMode.view;
+			}
+
+			this.processControlModeChange(this);
+
+			this.isChanged = false;
+			this.entityDetailsUrl = BX.prop.getString(this.settings, 'entityDetailsUrl', '');
+
+			this.customEventEmitter.emit('UI.EntityEditor::onInit', [{
+				readOnly: this.readOnly,
+			}]);
+		}
+
+		getMode()
+		{
+			return this.mode;
+		}
+
+		getName()
+		{
+			return this.id;
+		}
+
+		getEntityDetailsUrl()
+		{
+			return this.entityDetailsUrl;
 		}
 
 		render()
 		{
-			return View(
+			const { onScroll } = this.props;
+			return ScrollView(
 				{
+					ref: (ref) => this.scrollViewRef = ref,
 					style: {
-						flexDirection: 'column'
-					}
+						flex: 1,
+					},
+					resizableByKeyboard: true,
+					showsVerticalScrollIndicator: false,
+					showsHorizontalScrollIndicator: false,
+					onScroll: (params) => {
+						this.scrollY = params.contentOffset.y;
+						if (onScroll)
+						{
+							onScroll(params);
+						}
+					},
+					scrollEventThrottle: 15,
 				},
-				...this.renderControls()
-			)
+				new FadeView({
+					visible: false,
+					fadeInOnMount: true,
+					slot: () => {
+						return View(
+							{
+								style: {
+									flexDirection: 'column',
+									paddingTop: 12,
+								},
+							},
+							...this.renderControls(),
+							...this.initializeControllers(),
+						);
+					},
+				}),
+			);
+		}
+
+		scrollTop(animated = true)
+		{
+			if (this.scrollViewRef)
+			{
+				this.scrollViewRef.scrollToBegin(animated);
+			}
+		}
+
+		scrollTo(position, animated = true)
+		{
+			if (this.scrollViewRef)
+			{
+				this.scrollViewRef.scrollTo({ ...position, animated });
+			}
+		}
+
+		scrollToInvalidField(fieldView, animated = true)
+		{
+			if (this.isScrollToViewEnabled && !this.alreadyScrolledToInvalidField)
+			{
+				this.alreadyScrolledToInvalidField = true;
+
+				const position = this.scrollViewRef.getPosition(fieldView);
+				this.scrollTo(position, animated);
+			}
+		}
+
+		scrollToFocusedField(fieldView, animated = true)
+		{
+			if (this.isScrollToViewEnabled)
+			{
+				const { y } = this.scrollViewRef.getPosition(fieldView);
+
+				if (y > this.scrollY + device.screen.height * 0.4)
+				{
+					const positionY = y - 150;
+					this.scrollTo({ y: positionY }, animated);
+				}
+			}
 		}
 
 		getValuesFromModel()
@@ -85,30 +222,36 @@
 			let controlValues = {};
 
 			[...this.controls, ...this.controllers].forEach((control) => {
-				controlValues = {...controlValues, ...control.getValuesToSave()};
+				controlValues = { ...controlValues, ...control.getValuesToSave() };
 			});
 
-			const loading = Object.keys(controlValues)
-				.filter((name) => controlValues[name] instanceof Promise)
-				.map((name) => controlValues[name])
-			;
+			const loading = (
+				Object
+					.keys(controlValues)
+					.filter((name) => controlValues[name] instanceof Promise)
+					.map((name) => controlValues[name])
+			);
 
-			return Promise
-				.all(loading)
-				.then((processedFields) => {
-					processedFields.forEach((field) => {
-						controlValues = {...controlValues, ...field};
-					});
+			return (
+				Promise
+					.all(loading)
+					.then((processedFields) => {
+						processedFields.forEach((field) => {
+							controlValues = { ...controlValues, ...field };
+						});
 
-					return Promise.resolve(controlValues);
-				})
-				;
+						return controlValues;
+					})
+			);
 		}
 
 		validate()
 		{
+			this.alreadyScrolledToInvalidField = false;
+
 			const validator = EntityAsyncValidator.create();
-			this.controls.forEach((control) => {
+
+			this.getControls().forEach((control) => {
 				validator.addResult(control.validate());
 			});
 
@@ -121,16 +264,17 @@
 				this.scheme.getElements()
 					.map((element, index) => {
 						return this.renderControl(
-							ref => {
-								this.controls[index] = ref;
-							},
+							useCallback((ref) => this.controls[index] = ref, [index]),
 							element.getType(),
 							element.getName(),
+							this.uid,
 							{
 								schemeElement: element,
-								readOnly: this.readOnly
-							}
-						)
+								readOnly: this.readOnly,
+								mode: this.mode,
+								isChanged: this.isChanged,
+							},
+						);
 					})
 					.filter((element) => element)
 			);
@@ -138,22 +282,31 @@
 
 		initializeControllers()
 		{
-			const controllers = BX.prop.getArray(this.settings, 'controllers', [])
-				.map(controller => this.createController(
-					BX.prop.getString(controller, 'name', ''),
-					BX.prop.getString(controller, 'type', ''),
-					BX.prop.getObject(controller, 'config', {})
-				))
-				.filter((controller) => controller)
-			;
-			controllers.map((controller) => controller.loadFromModel());
+			const controllers = BX.prop.getArray(this.settings, 'controllers', []);
 
-			return controllers;
+			return (
+				controllers
+					.map((controller, index) => this.createController(
+						ref => {
+							this.controllers[index] = ref;
+						},
+						BX.prop.getString(controller, 'name', ''),
+						BX.prop.getString(controller, 'type', ''),
+						this.uid,
+						BX.prop.getObject(controller, 'config', {}),
+					))
+					.filter((controller) => controller)
+			);
 		}
 
 		getId()
 		{
 			return this.id;
+		}
+
+		getEntityTypeName()
+		{
+			return this.entityTypeName;
 		}
 
 		getEntityId()
@@ -163,14 +316,24 @@
 
 		getControls()
 		{
-			return this.controls;
+			return this.controls.filter((control) => control);
+		}
+
+		blurInlineFields(fieldToSkip = null)
+		{
+			return Promise.all(this.getControls().map(control => control.blurInlineFields(fieldToSkip)));
 		}
 
 		getControlById(controlId)
 		{
-			this.controls.find(control => control.getId() === controlId);
+			return this.getControls().find(control => control.getId() === controlId);
 		}
 
+		/**
+		 * @param {String} controlId
+		 * @param {EntityEditorBaseControl[]|null} controls
+		 * @return {EntityEditorBaseControl|EntityEditorField|null}
+		 */
 		getControlByIdRecursive(controlId, controls = null)
 		{
 			if (!controls)
@@ -184,7 +347,7 @@
 					return result;
 				}
 
-				if (!control instanceof EntityEditorBaseControl)
+				if (!(control instanceof EntityEditorBaseControl))
 				{
 					return result;
 				}
@@ -207,26 +370,54 @@
 			}, null);
 		}
 
-		getDesktopUrl()
+		/**
+		 * @param {EntityEditorBaseControl[]|null} controls
+		 * @returns {EntityEditorField[]}
+		 */
+		getFieldControls(controls = null)
 		{
-			return this.desktopUrl;
+			if (!controls)
+			{
+				controls = this.getControls();
+			}
+
+			return (
+				controls
+					.reduce((result, control) => {
+						if (!(control instanceof EntityEditorBaseControl))
+						{
+							return result;
+						}
+
+						if (control instanceof EntityEditorField)
+						{
+							result.unshift(control);
+						}
+						else
+						{
+							result = [...result, ...this.getFieldControls(control.getControls())];
+						}
+
+						return result;
+					}, [])
+			);
 		}
 
-		renderControl(ref, type, id, settings)
+		renderControl(ref, type, id, uid, settings)
 		{
-			settings["serviceUrl"] = this.serviceUrl;
-			settings["model"] = this.model;
-			settings["editor"] = this;
+			settings['serviceUrl'] = this.serviceUrl;
+			settings['model'] = this.model;
+			settings['editor'] = this;
 
-			return EntityEditorControl({ref, type, id, settings});
+			return EntityEditorControlFactory({ ref, type, id, uid, settings, layout: this.layout });
 		}
 
-		createController(id, type, settings)
+		createController(ref, id, type, uid, settings)
 		{
-			settings["model"] = this.model;
-			settings["editor"] = this;
+			settings['model'] = this.model;
+			settings['editor'] = this;
 
-			return EntityEditorControllerFactory.create({type, id, settings});
+			return EntityEditorControllerFactory.create({ ref, type, id, uid, settings });
 		}
 
 		canChangeScheme()
@@ -234,11 +425,83 @@
 			return this.config && this.config.isChangeable();
 		}
 
-		componentDidMount()
+		isModeToggleEnabled()
 		{
-			this.controllers = this.initializeControllers();
+			return this.enableModeToggle;
+		}
+
+		/**
+		 * @param {EntityEditorBaseControl} control
+		 * @param mode
+		 * @param options
+		 * @returns {Promise}
+		 */
+		switchControlMode(control, mode, options = {})
+		{
+			if (!this.isModeToggleEnabled())
+			{
+				if (control.getMode() === BX.UI.EntityEditorMode.edit)
+				{
+					return control.setState({ focus: true });
+				}
+
+				return Promise.reject();
+			}
+
+			return control.setMode(mode, options, true);
+		}
+
+		/**
+		 * @param {EntityEditor|EntityEditorBaseControl} control
+		 */
+		processControlModeChange(control)
+		{
+			if (control.getMode() === BX.UI.EntityEditorMode.edit)
+			{
+				this.emitSetEditMode(control);
+			}
+			else if (!this.isToolPanelAlwaysVisible() && !this.hasActiveControl())
+			{
+				this.emitViewEditMode(control);
+			}
+		}
+
+		hasActiveControl()
+		{
+			return this.getControls().find(control => control.isActive());
+		}
+
+		isToolPanelAlwaysVisible()
+		{
+			return this.toolbarAlwaysVisible;
+		}
+
+		/**
+		 * @param {EntityEditorBaseControl} control
+		 */
+		emitSetEditMode(control)
+		{
+			this.customEventEmitter.emit('UI.EntityEditor::onSetEditMode', [control.getName()]);
+		}
+
+		/**
+		 * @param {EntityEditorBaseControl} control
+		 */
+		emitViewEditMode(control)
+		{
+			this.customEventEmitter.emit('UI.EntityEditor::onSetViewMode', [control.getName()]);
+		}
+
+		markAsChanged()
+		{
+			this.isChanged = true;
+		}
+
+		isVisibilityPolicyEnabled()
+		{
+			return this.enableVisibilityPolicy;
 		}
 	}
 
-	jnexport(EntityEditor)
+	jnexport(EntityEditor);
 })();

@@ -111,6 +111,10 @@
 							onClose: function()
 							{
 								this.menuShowed = false;
+								if (event && event.target)
+								{
+									event.target.blur();
+								}
 							}.bind(this)
 						}
 					}

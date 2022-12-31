@@ -1,3 +1,5 @@
 <?php
-$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME"] = "Изменены поля";
-?>
+
+$MESS['CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME'] = 'Изменены поля';
+$MESS['CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME_1'] = 'Отследить изменение полей';
+$MESS['CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_DESCRIPTION'] = 'Меняет стадию, если в элементе изменены значения полей';

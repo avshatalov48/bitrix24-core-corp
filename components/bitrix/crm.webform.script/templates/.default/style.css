@@ -42,7 +42,7 @@
 	-webkit-border-radius: 2px 2px 0 0;
 	-moz-border-radius: 2px 2px 0 0;
 	border-radius: 2px 2px 0 0;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: rgba(83,92,105, .09);
 	text-align: center;
 	cursor: pointer;

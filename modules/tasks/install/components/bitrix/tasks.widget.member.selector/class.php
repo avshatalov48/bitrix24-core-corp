@@ -1,7 +1,6 @@
 <?php
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
-//use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
@@ -507,15 +506,35 @@ class TasksWidgetMemberSelectorComponent extends TasksBaseComponent
 
 		if ($context && $context === self::CONTEXT_TEMPLATE)
 		{
-			$template = TemplateModel::createFromId($taskId);
-			$isAccess = (new TemplateAccessController($this->userId))->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $template, $template);
+			$oldTemplate = TemplateModel::createFromId($taskId);
+			$newTemplate = clone $oldTemplate;
+
+			$members = $newTemplate->getMembers();
+			$members[RoleDictionary::ROLE_AUDITOR] = [];
+			if (is_array($data))
+			{
+				foreach ($data as $auditor)
+				{
+					$members[RoleDictionary::ROLE_AUDITOR][] = (int)$auditor['ID'];
+				}
+			}
+
+			$newTemplate->setMembers($members);
+
+			$isAccess =
+				(new TemplateAccessController($this->userId))
+					->check(ActionDictionary::ACTION_TEMPLATE_SAVE, $oldTemplate, $newTemplate)
+			;
 		}
 		else
 		{
 			$oldTask = TaskModel::createFromId($taskId);
 			$newTask = TaskModel::createFromRequest(['SE_AUDITOR' => $data]);
 
-			$isAccess = (new TaskAccessController($this->userId))->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask);
+			$isAccess =
+				(new TaskAccessController($this->userId))
+					->check(ActionDictionary::ACTION_TASK_SAVE, $oldTask, $newTask)
+			;
 		}
 
 		if (!$isAccess)

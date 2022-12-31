@@ -12,6 +12,7 @@ $chosenEntityValues = $dialog->getCurrentValue('dynamic_entities_fields');
 
 $typeIdField = $dialog->getMap()['DynamicTypeId'];
 $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
+
 ?>
 <tr>
 	<td align="right" width="40%"><?=htmlspecialcharsbx($typeIdField['Name'])?>:</td>
@@ -57,6 +58,17 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 				<?php endforeach; ?>
 			</table>
 		<?php endforeach; ?>
+	</td>
+</tr>
+
+<tr hidden>
+	<td width="60%">
+		<?= $dialog->renderFieldControl(
+			$dialog->getMap()['OnlyDynamicEntities'],
+			$dialog->getCurrentValue('only_dynamic_entities'),
+			false,
+			1
+		) ?>
 	</td>
 </tr>
 

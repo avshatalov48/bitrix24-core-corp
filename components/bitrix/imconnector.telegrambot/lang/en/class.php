@@ -4,7 +4,6 @@ $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_MODULE_NOT_INSTALLED"] = "The \"Externa
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_ACTIVE_CONNECTOR"] = "This connector is inactive.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_CONNECT"] = "Failed to establish test connection using parameters provided";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_DATA_SAVE"] = "There's no data to save";
-$MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_REGISTER"] = "Registration error";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_NO_SAVE"] = "Error saving data. Please check your input and try again.";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_OK_CONNECT"] = "Test connection has been established successfully";
 $MESS["IMCONNECTOR_COMPONENT_TELEGRAMBOT_OK_REGISTER"] = "Registration was a success";

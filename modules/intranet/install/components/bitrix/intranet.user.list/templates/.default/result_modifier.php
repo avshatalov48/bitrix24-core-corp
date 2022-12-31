@@ -12,6 +12,7 @@ global $USER_FIELD_MANAGER;
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 
 use Bitrix\Intranet\Component\UserList;
+use Bitrix\Intranet\Site\Sections\TimemanSection;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\UrlManager;
@@ -372,6 +373,15 @@ foreach($arResult['ROWS'] as $key => $row)
 			'TITLE' => Loc::getMessage('INTRANET_USER_LIST_ACTION_VIDEOCALL_TITLE'),
 			'TEXT' => Loc::getMessage('INTRANET_USER_LIST_ACTION_VIDEOCALL'),
 			'ONCLICK' => 'jsBXIUL.videoCall('.$userFields["ID"].')'
+		];
+	}
+
+	if (in_array('loginhistory', $actions))
+	{
+		$arResult['ROWS'][$key]['actions'][] = [
+			'TITLE' => Loc::getMessage('INTRANET_USER_LIST_ACTION_LOGINHISTORY'),
+			'TEXT' => Loc::getMessage('INTRANET_USER_LIST_ACTION_LOGINHISTORY'),
+			'ONCLICK' => "BX.SidePanel.Instance.open('" . TimemanSection::getUserLoginHistoryUrlById((int)$arResult['ROWS'][$key]['id']) . "', {allowChangeHistory: false});",
 		];
 	}
 

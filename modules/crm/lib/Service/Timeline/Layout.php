@@ -4,10 +4,11 @@ namespace Bitrix\Crm\Service\Timeline;
 
 use Bitrix\Crm\Service\Timeline\Layout\Base;
 use Bitrix\Crm\Service\Timeline\Layout\Body;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
 use Bitrix\Crm\Service\Timeline\Layout\Footer;
-use Bitrix\Crm\Service\Timeline\Layout\MarketPanel;
 use Bitrix\Crm\Service\Timeline\Layout\Header;
 use Bitrix\Crm\Service\Timeline\Layout\Icon;
+use Bitrix\Crm\Service\Timeline\Layout\MarketPanel;
 
 class Layout extends Base
 {

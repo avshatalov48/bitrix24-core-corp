@@ -172,7 +172,10 @@ class EventHandler
 		if ($isTelegramRequest)
 		{
 			$session = Main\Application::getInstance()->getSession();
-			$session->set(self::TELEGRAM_USER_CODE, $request->get(self::TELEGRAM_USER_CODE));
+			if ($session->isAccessible())
+			{
+				$session->set(self::TELEGRAM_USER_CODE, $request->get(self::TELEGRAM_USER_CODE));
+			}
 		}
 	}
 	// endregion
@@ -193,7 +196,7 @@ class EventHandler
 		$telegramUserCode = null;
 
 		$session = Main\Application::getInstance()->getSession();
-		if ($session->has(self::TELEGRAM_USER_CODE))
+		if ($session->isAccessible() && $session->has(self::TELEGRAM_USER_CODE))
 		{
 			$telegramUserCode = (string)$session->get(self::TELEGRAM_USER_CODE);
 		}

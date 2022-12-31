@@ -1,0 +1,6 @@
+<?php
+
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_TASK_TAG"] = "Начните печатать для выбора тега";
+$MESS["SELECTOR_COMPONENT_CREATE_TASK_TAG"] = "Добавить тег";
+$MESS["SELECTOR_COMPONENT_CREATING_TASK_TAG"] = "Добавление тега...";
+$MESS["SELECTOR_COMPONENT_PICK_TASK_TAG_2"] = "Теги";

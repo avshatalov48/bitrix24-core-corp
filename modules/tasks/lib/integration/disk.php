@@ -137,70 +137,78 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 	 * @param int $userId
 	 * @return Result
 	 */
-	public static function addFile($file, $userId = 0)
+	public static function addFile($file, int $userId = 0): Result
 	{
 		$result = new Result();
 
-		if(!static::includeModule())
+		if (!static::includeModule())
 		{
 			$result->addError('MODULE_NOT_INSTALLED', 'Disk not installed');
 			return $result;
 		}
 
-		if(!$userId)
+		if (!$userId)
 		{
 			$userId = User::getId();
 		}
 
-		$storage = Driver::getInstance()->getStorageByUserId($userId);
-		if(!$storage)
+		if (!($storage = Driver::getInstance()->getStorageByUserId($userId)))
 		{
 			$result->addError('CANT_OBTAIN_STORAGE', 'Could not obtain storage');
 			return $result;
 		}
 
-		$folder = $storage->getFolderForUploadedFiles();
-		if(!$folder)
+		if (!($folder = $storage->getFolderForUploadedFiles()))
 		{
 			$result->addError('CANT_OBTAIN_FOLDER', 'Could not obtain folder');
 			return $result;
 		}
-		$securityContext = $storage->getSecurityContext($userId);
-		if(!$folder->canAdd($securityContext))
+
+		if (!$folder->canAdd($storage->getSecurityContext($userId)))
 		{
 			$result->addError('ACCESS_DENIED', 'Access denied');
 			return $result;
 		}
 
-		if(is_array($file))
+		if (is_array($file))
 		{
-			$fileId = intval($file['ID']);
+			$fileId = (int)$file['ID'];
 			$fileArray = $file;
 		}
 		else
 		{
-			$fileId = intval($file);
+			$fileId = (int)$file;
 			$fileArray = \CFile::getFileArray($fileId);
 		}
 
-		$file = $folder->addFile(array(
-			'NAME' => Ui\Text::correctFilename($fileArray['FILE_NAME']),
-			'FILE_ID' => $fileId,
-			'CONTENT_PROVIDER' => null,
-			'SIZE' => $fileArray['FILE_SIZE'],
-			'CREATED_BY' => $userId,
-			'UPDATE_TIME' => null,
-		), array(), true);
-		if(!$file)
+		$addedFile = $folder->addFile(
+			[
+				'NAME' => Ui\Text::correctFilename($fileArray['FILE_NAME']),
+				'FILE_ID' => $fileId,
+				'CONTENT_PROVIDER' => null,
+				'SIZE' => $fileArray['FILE_SIZE'],
+				'CREATED_BY' => $userId,
+				'UPDATE_TIME' => null,
+			],
+			[],
+			true
+		);
+		if (!$addedFile && $result->getErrors())
 		{
-			$result->getErrors()->add('ACCESS_DENIED', 'Access denied', Error::TYPE_FATAL, array('FOLDER_ERRORS' => $folder->getErrors()));
+			$result->getErrors()->add(
+				'ACCESS_DENIED',
+				'Access denied',
+				Error::TYPE_FATAL,
+				['FOLDER_ERRORS' => $folder->getErrors()]
+			);
+
 			return $result;
 		}
 
-		$result->setData(array(
-			'FILE' => $file,
-			'ATTACHMENT_ID' => FileUserType::NEW_FILE_PREFIX.$file->getId()
-		));
+		$result->setData([
+			'FILE' => $addedFile,
+			'ATTACHMENT_ID' => FileUserType::NEW_FILE_PREFIX . $addedFile->getId(),
+		]);
 
 		return $result;
 	}
@@ -346,11 +354,11 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 		unset($file);
 	}
 
-	public static function getAttachmentData(array $valueList)
+	public static function getAttachmentData(array $valueList): array
 	{
-		$result = array();
+		$result = [];
 
-		if(!static::includeModule())
+		if (!static::includeModule())
 		{
 			return $result;
 		}
@@ -358,27 +366,23 @@ abstract class Disk extends \Bitrix\Tasks\Integration
 		$driver = Driver::getInstance();
 		$urlManager = $driver->getUrlManager();
 
-		foreach ($valueList as $key => $value)
+		foreach ($valueList as $value)
 		{
-			$attachedObject = AttachedObject::loadById($value, array('OBJECT'));
-			if(
-				!$attachedObject
-				|| !$attachedObject->getFile()
-			)
+			$attachedObject = AttachedObject::loadById($value, ['OBJECT']);
+			if (!$attachedObject || !($file = $attachedObject->getFile()))
 			{
 				continue;
 			}
 
-			$attachedObjectUrl = $urlManager->getUrlUfController('show', array('attachedId' => $value));
-
-			$result[$value] = array(
-				"ID" => $value,
-				"OBJECT_ID" => $attachedObject->getFile()->getId(),
-				"NAME" => $attachedObject->getFile()->getName(),
-				"SIZE" => \CFile::formatSize($attachedObject->getFile()->getSize()),
-				"URL" => $attachedObjectUrl,
-				"IS_IMAGE" => TypeFile::isImage($attachedObject->getFile())
-			);
+			$result[$value] = [
+				'ID' => $value,
+				'OBJECT_ID' => $file->getId(),
+				'NAME' => $file->getName(),
+				'SIZE' => \CFile::formatSize($file->getSize()),
+				'URL' => $urlManager::getUrlUfController('show', ['attachedId' => $value]),
+				'TYPE' => TypeFile::getMimeTypeByFilename($file->getName()),
+				'IS_IMAGE' => TypeFile::isImage($file),
+			];
 		}
 
 		return $result;

@@ -2095,22 +2095,14 @@ class Config
 		if (!\Bitrix\Main\Loader::includeModule('pull'))
 			return false;
 
-		$channelId = [];
+		$userList = [];
 		$orm = \Bitrix\ImOpenlines\Model\QueueTable::getList([
 			'select' => [
 				'USER_ID',
-				'CHANNEL_ID' =>	'CHANNEL.CHANNEL_ID'
 			 ],
-			'runtime' => [
-				new ReferenceField(
-					'CHANNEL',
-					'\Bitrix\Pull\Model\ChannelTable',
-					[
-						'=ref.USER_ID' => 'this.USER_ID',
-						'=ref.CHANNEL_TYPE' => new Main\DB\SqlExpression('?s', 'private')
-					],
-					['join_type' => 'LEFT']
-				)
+			'filter' => [
+				'=USER.ACTIVE' => 'Y',
+				'=USER.IS_ONLINE' => 'Y',
 			],
 			'order' => [
 				'SORT' => 'ASC',
@@ -2119,13 +2111,10 @@ class Config
 		]);
 		while ($row = $orm->fetch())
 		{
-			if (!$row['CHANNEL_ID'])
-				continue;
-
-			$channelId[$row['USER_ID']] = $row['CHANNEL_ID'];
+			$userList[] = $row['USER_ID'];
 		}
 
-		\Bitrix\Pull\Event::add(array_values($channelId), Array(
+		\Bitrix\Pull\Event::add($userList, Array(
 			'module_id' => 'imopenlines',
 			'command' => $isDelete? 'queueItemDelete': 'queueItemUpdate',
 			'expiry' => 3600,

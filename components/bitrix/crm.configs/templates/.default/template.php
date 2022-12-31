@@ -26,6 +26,12 @@ if($arResult['BITRIX24'])
 $tabs['numerator'] = GetMessage("CRM_CONFIGS_TAB_NUMERATOR");
 $tabs['other'] = GetMessage("CRM_CONFIGS_TAB_OTHER");
 
+$catalogAccessController = null;
+if (\Bitrix\Main\Loader::includeModule('catalog'))
+{
+	$catalogAccessController = \Bitrix\Catalog\Access\AccessController::getCurrent();
+}
+
 /* Settings items */
 $items = array();
 if($arResult['PERM_CONFIG'])
@@ -39,15 +45,26 @@ if($arResult['PERM_CONFIG'])
 	$items['tab_content_where_to_begin']['LOCATIONS']['URL'] = $siteDir.'/crm/configs/locations/';
 	$items['tab_content_where_to_begin']['LOCATIONS']['ICON_CLASS'] = 'img-location';
 	$items['tab_content_where_to_begin']['LOCATIONS']['NAME'] = GetMessage("CRM_CONFIGS_LOCATIONS");
-	$items['tab_content_where_to_begin']['TAX']['URL'] = $siteDir.'/crm/configs/tax/';
-	$items['tab_content_where_to_begin']['TAX']['ICON_CLASS'] = 'img-taxes';
-	$items['tab_content_where_to_begin']['TAX']['NAME'] = GetMessage("CRM_CONFIGS_TAX");
-	$items['tab_content_where_to_begin']['MEASURE']['URL'] = $siteDir.'/crm/configs/measure/';
-	$items['tab_content_where_to_begin']['MEASURE']['ICON_CLASS'] = 'img-units';
-	$items['tab_content_where_to_begin']['MEASURE']['NAME'] = GetMessage("CRM_CONFIGS_MEASURE");
-	$items['tab_content_where_to_begin']['PRODUCT_PROPS']['URL'] = $siteDir.'/crm/configs/productprops/';
-	$items['tab_content_where_to_begin']['PRODUCT_PROPS']['ICON_CLASS'] = 'img-properties';
-	$items['tab_content_where_to_begin']['PRODUCT_PROPS']['NAME'] = GetMessage("CRM_CONFIGS_PRODUCT_PROPS");
+	if ($catalogAccessController && $catalogAccessController->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_VAT_EDIT))
+	{
+		$items['tab_content_where_to_begin']['TAX']['URL'] = $siteDir.'/crm/configs/tax/';
+		$items['tab_content_where_to_begin']['TAX']['ICON_CLASS'] = 'img-taxes';
+		$items['tab_content_where_to_begin']['TAX']['NAME'] = GetMessage("CRM_CONFIGS_TAX");
+	}
+	if ($catalogAccessController && $catalogAccessController->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_MEASURE_EDIT))
+	{
+		$items['tab_content_where_to_begin']['MEASURE']['URL'] = $siteDir.'/crm/configs/measure/';
+		$items['tab_content_where_to_begin']['MEASURE']['ICON_CLASS'] = 'img-units';
+		$items['tab_content_where_to_begin']['MEASURE']['NAME'] = GetMessage("CRM_CONFIGS_MEASURE");
+	}
+
+	if ($catalogAccessController && $catalogAccessController->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
+	{
+		$items['tab_content_where_to_begin']['PRODUCT_PROPS']['URL'] = $siteDir.'/crm/configs/productprops/';
+		$items['tab_content_where_to_begin']['PRODUCT_PROPS']['ICON_CLASS'] = 'img-properties';
+		$items['tab_content_where_to_begin']['PRODUCT_PROPS']['NAME'] = GetMessage("CRM_CONFIGS_PRODUCT_PROPS");
+	}
+
 	$items['tab_content_where_to_begin']['DEAL_CATEGORY'] = array(
 		'URL' => $siteDir.'/crm/configs/deal_category/',
 		'NAME' => GetMessage("CRM_CONFIGS_DEAL_CATEGORY"),

@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'catalog/product-wizard-step',
+	'extensions' => [
+		'catalog/product-wizard-step',
+		'layout/ui/fields/money',
+	],
 ];

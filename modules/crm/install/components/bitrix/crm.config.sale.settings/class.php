@@ -9,6 +9,8 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @global CMain $APPLICATION
  */
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
@@ -52,11 +54,6 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 		{
 			$this->checkRequiredParams();
 
-			if (!CCrmSaleHelper::isShopAccess('admin'))
-			{
-				throw new SystemException('Access denied');
-			}
-
 			$this->checkPostRequest();
 
 			$this->formatResult();
@@ -84,11 +81,6 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 	public function saveCommonSettingsAction()
 	{
 		$this->checkRequiredParams();
-
-		if (!CCrmSaleHelper::isShopAccess('admin'))
-		{
-			return;
-		}
 
 		$request = Context::getCurrent()->getRequest();
 		if ($request->isAjaxRequest() && $request->get("common_sale_settings") === "Y")
@@ -294,11 +286,6 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 	protected function checkPostRequest()
 	{
 		$this->checkRequiredParams();
-
-		if (!CCrmSaleHelper::isShopAccess('admin'))
-		{
-			return;
-		}
 
 		$request = Context::getCurrent()->getRequest();
 		if ($request->isPost() && check_bitrix_sessid() && $this->arParams['TYPE_SETTINGS'] !== 'fields')
@@ -1099,7 +1086,7 @@ class CCrmConfigSaleSettings extends \CBitrixComponent implements Controllerable
 
 		$content .= '<div class="crm-sale-settings-option-block">';
 		$content .= '<div class="crm-sale-settings-option-label">'.Loc::getMessage("CRM_CF_LOCATION_ZIP").'</div>';
-		$content .= '<div><input type="text" name="location_zip['.$siteId.']" 
+		$content .= '<div><input type="text" name="location_zip['.$siteId.']"
 			value="'.HtmlFilter::encode($address["location_zip"]).'"></div>';
 		$content .= '</div>';
 

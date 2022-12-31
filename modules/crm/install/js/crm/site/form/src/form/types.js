@@ -43,6 +43,7 @@ type View = {
 	position: ?string;
 	vertical: ?string;
 	delay: ?number;
+	hideOnOverlayClick: ?boolean;
 };
 
 type DateOptions = {
@@ -119,6 +120,14 @@ type SubmitResponse = {
 	refill: ?RefillResponse;
 };
 
+type ProxyItem = {
+	source: Array<string>;
+	target: string;
+};
+type Proxy = {
+	fonts: Array<ProxyItem>;
+};
+
 type Options = {
 	id: ?string;
 	identification: ?Identification;
@@ -145,6 +154,8 @@ type Options = {
 	analyticsHandler: ?Function;
 	dependencies: ?Array<DependenceGroup>;
 	handlers: ?Object;
+	proxy: ?Proxy;
+	hideOnOverlayClick: ?Boolean
 };
 
 export {
@@ -166,4 +177,6 @@ export {
 	Dependence,
 	DependenceAction,
 	DependenceCondition,
+	Proxy,
+	ProxyItem,
 }

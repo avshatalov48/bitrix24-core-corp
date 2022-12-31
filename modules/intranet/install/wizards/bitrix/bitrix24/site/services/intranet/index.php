@@ -24,27 +24,8 @@ RegisterModuleDependences("main", "OnGetStaticCacheProvider", "intranet", "\\Bit
 COption::SetOptionString("main", "~show_composite_banner", "N");
 COption::SetOptionString("intranet", "composite_enabled", "Y");
 
-//Default Themes
-$defaultThemes = array(
-	"br" => "light:atmosphere",
-	"by" => "light:mountains",
-	"cn" => "dark:sea-stones",
-	"tc" => "dark:sea-stones",
-	"sc" => "dark:sea-stones",
-	"de" => "light:atmosphere",
-	"en" => "light:atmosphere",
-	"eu" => "light:atmosphere",
-	"fr" => "light:atmosphere",
-	"in" => "light:sunset",
-	"kz" => "light:atmosphere",
-	"la" => "light:atmosphere",
-	"pl" => "light:mountains",
-	"ru" => "light:atmosphere",
-	"ua" => "light:atmosphere",
-);
-
-$defaultThemeId = isset($defaultThemes[LANGUAGE_ID]) ? $defaultThemes[LANGUAGE_ID] : "light:atmosphere";
-$theme = new Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
+$defaultThemeId = "light:milky-way";
+$theme = new \Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker(WIZARD_TEMPLATE_ID, WIZARD_SITE_ID);
 $theme->setDefaultTheme($defaultThemeId);
 
 CUserOptions::SetOption("intranet", "left_menu_collapsed", "Y", true);

@@ -203,7 +203,7 @@
 	margin-bottom: 5px;
 	padding: 13px 10px;
 	border: 1px solid #edeef0;
-	border-radius: 1px;
+	border-radius: var(--ui-border-radius-xs, 1px);
 	background-color: #fdfdfd;
 }
 

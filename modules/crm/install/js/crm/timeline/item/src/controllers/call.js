@@ -1,24 +1,41 @@
-import {Base} from './base';
-import {Type} from 'main.core';
+import { Base } from './base';
+import { Type } from 'main.core';
 import ConfigurableItem from '../configurable-item';
 
 export class Call extends Base
 {
-	onItemAction(item: ConfigurableItem, action: String, actionData: ?Object): void
+	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
+		const {action, actionType, actionData} = actionParams;
+
+		if (actionType !== 'jsEvent')
+		{
+			return;
+		}
+
 		if (action === 'Call:MakeCall' && actionData)
 		{
 			this.#makeCall(actionData);
 		}
 
-		if (action === 'Call:Schedule' && actionData && actionData.activityId)
+		if (action === 'Call:Schedule' && actionData)
 		{
-			this.#scheduleCall(actionData.activityId);
+			this.#scheduleCall(actionData.activityId, actionData.scheduleDate);
 		}
 
 		if (action === 'Call:OpenTranscript' && actionData && actionData.callId)
 		{
 			this.#openTranscript(actionData.callId);
+		}
+
+		if (action === 'Call:ChangePlayerState' && actionData && actionData.recordId)
+		{
+			this.#changePlayerState(item, actionData.recordId);
+		}
+
+		if (action === 'Call:DownloadRecord' && actionData && actionData.url)
+		{
+			this.#downloadRecord(actionData.url);
 		}
 	}
 
@@ -51,9 +68,23 @@ export class Call extends Base
 		window.top['BXIM'].phoneTo(actionData.phone, params);
 	}
 
-	#scheduleCall(activityId): void
+	#scheduleCall(activityId: Number, scheduleDate: String): void
 	{
-		console.warn('Not implemented yet')
+		if (BX.CrmTimelineManager)
+		{
+			const timeline = BX.CrmTimelineManager.getDefault();
+			if (timeline)
+			{
+				const menuBar = timeline.getMenuBar();
+				BX(menuBar.getActiveItem()).scrollIntoView({block: 'start', inline: 'nearest', behavior: 'smooth'});
+				menuBar.setActiveItemById('todo');
+
+				const todoEditor = menuBar.getTodoEditor();
+				todoEditor.setFocused();
+				todoEditor.setParentActivityId(activityId);
+				todoEditor.setDeadLine(scheduleDate);
+			}
+		}
 	}
 
 	#openTranscript(callId): void
@@ -64,6 +95,34 @@ export class Call extends Base
 				callId: callId
 			}).show();
 		}
+	}
+
+	#changePlayerState(item: ConfigurableItem, recordId: Number): void
+	{
+		const player = item.getLayoutContentBlockById('audio');
+		if (!player)
+		{
+			return;
+		}
+
+		if (recordId !== player.id)
+		{
+			return;
+		}
+
+		if (player.state === 'play')
+		{
+			player.pause();
+		}
+		else
+		{
+			player.play();
+		}
+	}
+
+	#downloadRecord(url: String): void
+	{
+		location.href = url;
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

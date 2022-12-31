@@ -1310,24 +1310,13 @@ class CCrmRequisiteDetailsComponent extends CBitrixComponent
 	{
 		$fields = [];
 
-		$clientResolverPropertyType = ClientResolver::getClientResolverPropertyWithPlacements($this->presetCountryId);
-		$placementParams = ClientResolver::getClientResolverPlacementParams($this->presetCountryId);
-		$featureRestriction = ClientResolver::getRestriction($this->presetCountryId);
 		$fields[] = [
 			'title' => Loc::getMessage('CRM_REQUISITE_DETAILS_AUTOCOMPLETE'),
 			'name' => 'AUTOCOMPLETE',
 			'type' => 'requisite_autocomplete',
 			'editable' => true,
 			'enabledMenu' => false,
-			'data' => [
-				'enabled' => !!$clientResolverPropertyType,
-				'featureRestrictionCallback' =>
-					$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
-				,
-				'placeholder' => ClientResolver::getClientResolverPlaceholderText($this->presetCountryId),
-				'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
-				'clientResolverPlacementParams' => $placementParams
-			]
+			'data' => CCrmComponentHelper::getRequisiteAutocompleteFieldInfoData($this->presetCountryId)
 		];
 
 		if ($this->presetId > 0)

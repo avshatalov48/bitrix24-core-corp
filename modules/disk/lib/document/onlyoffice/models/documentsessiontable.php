@@ -23,9 +23,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_DocumentSession_Query query()
- * @method static EO_DocumentSession_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_DocumentSession_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_DocumentSession_Result getById($id)
- * @method static EO_DocumentSession_Result getList(array $parameters = array())
+ * @method static EO_DocumentSession_Result getList(array $parameters = [])
  * @method static EO_DocumentSession_Entity getEntity()
  * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Document\OnlyOffice\Models\EO_DocumentSession_Collection createCollection()
@@ -148,6 +148,11 @@ final class DocumentSessionTable extends DataManager
 	public static function deleteBatch(array $filter)
 	{
 		parent::deleteBatch($filter);
+	}
+
+	public static function clearOld(): void
+	{
+
 	}
 
 	public static function clearTable(): void

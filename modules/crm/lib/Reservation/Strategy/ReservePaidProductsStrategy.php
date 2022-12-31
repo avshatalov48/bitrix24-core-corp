@@ -11,6 +11,7 @@ use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
 use Bitrix\Crm\Service\Sale\BasketService;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ORM\Data\AddResult;
@@ -283,6 +284,7 @@ class ReservePaidProductsStrategy extends ManualStrategy
 				'=OWNER_TYPE' => CCrmOwnerTypeAbbr::ResolveByTypeID($ownerTypeId),
 				'=OWNER_ID' => $ownerId,
 				'=PRODUCT_ID' => array_keys($paidProducts),
+				'!@TYPE' => ReservationService::getInstance()->getRestrictedProductTypes(),
 			],
 		]);
 		foreach ($rows as $row)

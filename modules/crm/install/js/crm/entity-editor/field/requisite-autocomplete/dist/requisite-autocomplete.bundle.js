@@ -35,6 +35,10 @@ this.BX = this.BX || {};
 	      this._autocomplete.subscribe('onSelectValue', this.onSelectAutocompleteValue.bind(this));
 
 	      this._autocomplete.subscribe('onClear', this.onClearAutocompleteValue.bind(this));
+
+	      this._autocomplete.subscribe('onInstallDefaultApp', this.onInstallDefaultApp.bind(this));
+
+	      main_core_events.EventEmitter.subscribe("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp", this.onInstallDefaultAppGlobal.bind(this));
 	    }
 	  }, {
 	    key: "createTitleMarker",
@@ -122,9 +126,102 @@ this.BX = this.BX || {};
 	      this._autocomplete.setContext(this.getAutocompleteContext());
 	    }
 	  }, {
+	    key: "setUserFieldValue",
+	    value: function setUserFieldValue(fieldName, fieldValue) {
+	      if (this._editor) {
+	        var allowedFieldTypes = ["string", "double", "boolean", "datetime"];
+
+	        var control = this._editor.getControlByIdRecursive(fieldName);
+
+	        var fieldType = control.getFieldType();
+
+	        if (control instanceof BX.UI.EntityEditorUserField && allowedFieldTypes.indexOf(fieldType) >= 0) {
+	          var fieldNode;
+	          var valueControl;
+
+	          switch (fieldType) {
+	            case "string":
+	              if (main_core.Type.isStringFilled(fieldValue)) {
+	                fieldNode = control.getFieldNode();
+
+	                if (main_core.Type.isDomNode(fieldNode)) {
+	                  valueControl = fieldNode.querySelector("input[type=\"text\"][name=\"".concat(fieldName, "\"]"));
+
+	                  if (valueControl) {
+	                    valueControl.value = fieldValue;
+	                  }
+	                }
+	              }
+
+	              break;
+
+	            case "double":
+	              var numberValue;
+	              numberValue = "" + fieldValue;
+
+	              if (/^[\-+]?\d*[.,]?\d+?$/.test(numberValue)) {
+	                fieldNode = control.getFieldNode();
+
+	                if (main_core.Type.isDomNode(fieldNode)) {
+	                  valueControl = fieldNode.querySelector("input[type=\"text\"][name=\"".concat(fieldName, "\"]"));
+
+	                  if (valueControl) {
+	                    valueControl.value = numberValue;
+	                  }
+	                }
+	              }
+
+	              break;
+
+	            case "boolean":
+	              fieldNode = control.getFieldNode();
+
+	              if (main_core.Type.isDomNode(fieldNode)) {
+	                valueControl = fieldNode.querySelector("input[type=\"checkbox\"][name=\"".concat(fieldName, "\"]"));
+
+	                if (valueControl) {
+	                  var booleanValue = !!(main_core.Type.isNumber(fieldValue) ? fieldValue : parseInt(fieldValue));
+	                  valueControl.value = booleanValue ? 1 : 0;
+	                  valueControl.checked = booleanValue;
+	                }
+	              }
+
+	              break;
+
+	            case "datetime":
+	              fieldNode = control.getFieldNode();
+
+	              if (main_core.Type.isDomNode(fieldNode) && main_core.Type.isStringFilled(fieldValue)) {
+	                var datetimeValue = fieldValue;
+	                valueControl = fieldNode.querySelector("input[type=\"text\"][name=\"".concat(fieldName, "\"]"));
+
+	                if (valueControl) {
+	                  valueControl.value = datetimeValue;
+	                  BX.fireEvent(valueControl, 'change');
+	                }
+	              }
+
+	              break;
+	          }
+	        }
+	      }
+	    }
+	  }, {
 	    key: "onSelectAutocompleteValue",
 	    value: function onSelectAutocompleteValue(event) {
 	      this._autocompleteData = event.getData();
+
+	      if (main_core.Type.isPlainObject(this._autocompleteData["fields"])) {
+	        var fields = this._autocompleteData["fields"];
+
+	        for (var fieldName in fields) {
+	          if (main_core.Type.isString(fieldName) && fieldName.length > 3 && fieldName.substr(0, 3) === "UF_" && fields.hasOwnProperty(fieldName)) {
+	            this.setUserFieldValue(fieldName, fields[fieldName]);
+	            delete fields[fieldName];
+	          }
+	        }
+	      }
+
 	      this.markAsChanged();
 	    }
 	  }, {
@@ -133,6 +230,44 @@ this.BX = this.BX || {};
 	      this._autocomplete.setCurrentItem(null);
 
 	      this._autocompleteData = null;
+	    }
+	  }, {
+	    key: "onInstallDefaultApp",
+	    value: function onInstallDefaultApp() {
+	      BX.onGlobalCustomEvent("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp");
+	    }
+	  }, {
+	    key: "onInstallDefaultAppGlobal",
+	    value: function onInstallDefaultAppGlobal() {
+	      var _this2 = this;
+
+	      var data = this._schemeElement.getData();
+
+	      if (main_core.Type.isPlainObject(data) && data.hasOwnProperty("clientResolverPlacementParams") && main_core.Type.isPlainObject(data["clientResolverPlacementParams"])) {
+	        var countryId = BX.prop.getInteger(data["clientResolverPlacementParams"], "countryId", 0);
+
+	        if (countryId > 0) {
+	          BX.ajax.runAction('crm.requisite.schemedata.getRequisiteAutocompleteSchemeData', {
+	            data: {
+	              "countryId": countryId
+	            }
+	          }).then(function (data) {
+	            if (main_core.Type.isPlainObject(data) && data.hasOwnProperty("data") && main_core.Type.isPlainObject(data["data"])) {
+	              _this2._schemeElement.setData(data["data"]);
+
+	              if (_this2._autocomplete) {
+	                if (main_core.Type.isStringFilled(data["data"]["placeholder"])) {
+	                  _this2._autocomplete.setPlaceholderText(data["data"]["placeholder"]);
+	                }
+
+	                if (main_core.Type.isPlainObject(data["data"]["clientResolverPlacementParams"])) {
+	                  _this2._autocomplete.setClientResolverPlacementParams(data["data"]["clientResolverPlacementParams"]);
+	                }
+	              }
+	            }
+	          });
+	        }
+	      }
 	    }
 	  }, {
 	    key: "getAutocompleteData",

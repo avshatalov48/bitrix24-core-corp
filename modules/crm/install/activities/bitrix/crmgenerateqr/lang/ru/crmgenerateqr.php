@@ -5,7 +5,6 @@ $MESS['CRMBPGQR_DESCRIPTION_DEFAULT'] = "Добро пожаловать, [b]#CO
 Рады вас видеть. Нажмите на кнопку, чтобы подтвердить ваш визит";
 $MESS['CRMBPGQR_QRTITLE_NAME'] = "Идентификатор для триггера";
 $MESS['CRMBPGQR_QRTITLE_DEFAULT'] = "QR-код от #DM#";
-$MESS['CRMBPGQR_ADVANCEDMODE_NAME'] = "Дополнить настройки для персонализированной страницы";
 $MESS['CRMBPGQR_COMPLETE_ACTION_LABEL_NAME'] = "Текст кнопки";
 $MESS['CRMBPGQR_COMPLETE_ACTION_LABEL_DEFAULT'] = "Подтвердить";
 $MESS['CRMBPGQR_SHOW_ACTIONS_NAME'] = "Отобразить кнопки";

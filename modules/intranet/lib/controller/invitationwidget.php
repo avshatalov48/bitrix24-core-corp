@@ -7,9 +7,33 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\CurrentUser;
+use Bitrix\Intranet;
+use Bitrix\Main;
 
-class InvitationWidget extends \Bitrix\Main\Engine\Controller
+class InvitationWidget extends Main\Engine\Controller
 {
+	public function configureActions()
+	{
+		$configureActions = parent::configureActions();
+
+		$accessControl = new Intranet\ActionFilter\InviteAccessControl();
+		$configureActions['saveInvitationRight'] = [
+			'+prefilters' => [
+				$accessControl
+			]
+		];
+
+		return $configureActions;
+	}
+
+	protected function getDefaultPreFilters()
+	{
+		$preFilters = parent::getDefaultPreFilters();
+		$preFilters[] = new Intranet\ActionFilter\UserType(['employee']);
+
+		return $preFilters;
+	}
+
 	protected function isCurrentUserAdmin()
 	{
 		return (
@@ -79,7 +103,7 @@ class InvitationWidget extends \Bitrix\Main\Engine\Controller
 		}
 
 		return [
-			'invitationLink' => $invitationLink,
+			'invitationLink' => $isInvitationAvailable ? $invitationLink : '',
 			'structureLink' => '/company/vis_structure.php',
 			'isInvitationAvailable' => $isInvitationAvailable,
 			'isExtranetAvailable' => ModuleManager::isModuleInstalled('extranet'),

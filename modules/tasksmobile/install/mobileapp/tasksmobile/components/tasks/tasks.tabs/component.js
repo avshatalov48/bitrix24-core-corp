@@ -4,7 +4,7 @@
 	class Pull
 	{
 		/**
-		 * @param {TaskTabs} tabs
+		 * @param {TasksTabs} tabs
 		 * @param {Integer} userId
 		 */
 		constructor(tabs, userId)
@@ -131,7 +131,7 @@
 		}
 	}
 
-	class TaskTabs
+	class TasksTabs
 	{
 		static get tabNames()
 		{
@@ -233,10 +233,10 @@
 
 			if (changed)
 			{
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{tabId}], TaskTabs.tabNames.tasks);
-				BX.postComponentEvent('tasks.tabs:onTabSelected', [{tabId}], TaskTabs.tabNames.projects);
+				BX.postComponentEvent('tasks.tabs:onTabSelected', [{tabId}], TasksTabs.tabNames.tasks);
+				BX.postComponentEvent('tasks.tabs:onTabSelected', [{tabId}], TasksTabs.tabNames.projects);
 			}
-			else if (tabId === TaskTabs.tabNames.scrum)
+			else if (tabId === TasksTabs.tabNames.scrum)
 			{
 				qrauth.open({
 					redirectUrl: `/company/personal/user/${this.userId}/tasks/scrum/`,
@@ -244,7 +244,7 @@
 					title: BX.message('MOBILE_TASKS_TABS_TAB_SCRUM'),
 				});
 			}
-			else if (tabId === TaskTabs.tabNames.efficiency)
+			else if (tabId === TasksTabs.tabNames.efficiency)
 			{
 				BX.postComponentEvent('taskbackground::efficiency::open', [{userId: this.userId}]);
 			}
@@ -314,7 +314,7 @@
 
 		updateTasksCounter(value)
 		{
-			this.tabs.updateItem(TaskTabs.tabNames.tasks, {
+			this.tabs.updateItem(TasksTabs.tabNames.tasks, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_TASKS'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
@@ -323,7 +323,7 @@
 
 		updateProjectsCounter(value)
 		{
-			this.tabs.updateItem(TaskTabs.tabNames.projects, {
+			this.tabs.updateItem(TasksTabs.tabNames.projects, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_PROJECTS'),
 				counter: Number(value),
 				label: (value > 0 ? String(value) : ''),
@@ -332,7 +332,7 @@
 
 		updateEfficiencyCounter(value)
 		{
-			this.tabs.updateItem(TaskTabs.tabNames.efficiency, {
+			this.tabs.updateItem(TasksTabs.tabNames.efficiency, {
 				title: BX.message('MOBILE_TASKS_TABS_TAB_EFFICIENCY'),
 				label: (value || value === 0 ? `${String(value)}%` : ''),
 				selectable: false,
@@ -340,5 +340,5 @@
 		}
 	}
 
-	return new TaskTabs(tabs);
+	return new TasksTabs(tabs);
 })();

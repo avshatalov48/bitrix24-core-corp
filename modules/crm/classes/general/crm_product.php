@@ -338,6 +338,15 @@ class CCrmProduct
 			$arCatalogProductFields['VAT_ID'] = $arFields['VAT_ID'];
 		if (isset($arFields['MEASURE']) && !empty($arFields['MEASURE']))
 			$arCatalogProductFields['MEASURE'] = (int)$arFields['MEASURE'];
+		if (isset($arFields['TYPE']))
+		{
+			$productType = (int)$arFields['TYPE'];
+			$productTypeList = Catalog\ProductTable::getProductTypes(true);
+			if (isset($productTypeList[$productType]))
+			{
+				$arCatalogProductFields['TYPE'] = $productType;
+			}
+		}
 		if (self::innerProductModify($arCatalogProductFields))
 		{
 			if (isset($arFields['PRICE']))

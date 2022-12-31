@@ -168,7 +168,7 @@
 	text-overflow: ellipsis;
 	font-size: 14px;
 	color: #0b66c3;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	cursor: pointer;
 	text-decoration: none;
 }

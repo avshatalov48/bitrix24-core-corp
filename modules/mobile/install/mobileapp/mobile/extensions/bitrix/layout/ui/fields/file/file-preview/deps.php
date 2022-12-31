@@ -1,5 +1,8 @@
 <?php
+
 return [
-	'utils',
-	'layout/ui/file',
+	'extensions' => [
+		'layout/ui/file',
+		'utils',
+	],
 ];

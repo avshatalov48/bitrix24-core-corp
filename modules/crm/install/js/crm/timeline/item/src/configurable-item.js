@@ -1,11 +1,12 @@
-import { Dom, Text, Type } from 'main.core';
+import {ajax, Dom, Text, Type} from 'main.core';
 import TimelineItem from './item';
 import { Item } from './components/item';
 import Layout from './layout';
 import { BitrixVue } from 'ui.vue3';
+import { Base } from "./controllers/base";
 import ControllerManager from './controller-manager';
 import { DatetimeConverter } from 'crm.timeline.tools';
-import {StreamType} from 'crm.timeline.item';
+import { StreamType } from 'crm.timeline.item';
 
 declare type ConfigurableItemParams = {
 	timelineId: string,
@@ -13,6 +14,9 @@ declare type ConfigurableItemParams = {
 	itemClassName: string,
 	useShortTimeFormat: boolean,
 	isReadOnly: boolean,
+	currentUser: ?Object,
+	ownerTypeId: number,
+	ownerId: number,
 	data: ConfigurableItemData,
 	streamType: number;
 };
@@ -20,6 +24,7 @@ declare type ConfigurableItemParams = {
 declare type ConfigurableItemData = {
 	type: string,
 	timestamp: ?Number,
+	sort: ?Array,
 	layout: ?Object,
 }
 
@@ -30,9 +35,13 @@ export default class ConfigurableItem extends TimelineItem
 	#type: string = null;
 	#timelineId: string = null;
 	#timestamp: number = null;
+	#sort: Array = null;
 	#useShortTimeFormat: boolean = false;
 	#isReadOnly: boolean = false;
-	#controllers: Array = null;
+	#currentUser: ?Object = null;
+	#ownerTypeId: number = null;
+	#ownerId: number = null;
+	#controllers: Base[] = null;
 	#layoutComponent: ?Object = null;
 	#layoutApp: ?Object = null;
 	#layout: ?Layout = null;
@@ -52,6 +61,9 @@ export default class ConfigurableItem extends TimelineItem
 
 			this.#useShortTimeFormat = settings.useShortTimeFormat || false;
 			this.#isReadOnly = settings.isReadOnly || false;
+			this.#currentUser = settings.currentUser || null;
+			this.#ownerTypeId = settings.ownerTypeId;
+			this.#ownerId = settings.ownerId;
 			this.#streamType = settings.streamType || StreamType.history;
 		}
 
@@ -62,6 +74,7 @@ export default class ConfigurableItem extends TimelineItem
 	{
 		this.#type = data.type || null;
 		this.#timestamp = data.timestamp || null;
+		this.#sort = data.sort || [];
 		this.#layout = new Layout(data.layout || {});
 	}
 
@@ -106,11 +119,40 @@ export default class ConfigurableItem extends TimelineItem
 		if (this.#layoutComponent)
 		{
 			this.#layoutComponent.setLayout(this.getLayout().asPlainObject());
+			for (const controller of this.#controllers)
+			{
+				controller.onAfterItemRefreshLayout(this);
+			}
 		}
 		else
 		{
 			super.refreshLayout();
 		}
+	}
+
+	getLayoutContentBlockById(id: string): ?Object
+	{
+		return this.#layoutComponent.getContentBlockById(id);
+	}
+
+	getLogo(): ?Object
+	{
+		return this.#layoutComponent.getLogo();
+	}
+
+	getLayoutFooterButtonById(id: string): ?Object
+	{
+		return this.#layoutComponent.getFooterButtonById(id);
+	}
+
+	getLayoutHeaderChangeStreamButton(): ?Object
+	{
+		return this.#layoutComponent.getHeaderChangeStreamButton();
+	}
+
+	highlightContentBlockById(blockId: string, isHighlighted: boolean): void
+	{
+		this.#layoutComponent.highlightContentBlockById(blockId, isHighlighted);
 	}
 
 	clearLayout(): void
@@ -164,17 +206,18 @@ export default class ConfigurableItem extends TimelineItem
 			initialLayout: this.getLayout().asPlainObject(),
 			id: String(this.getId()),
 			useShortTimeFormat: this.#useShortTimeFormat,
-			isReadOnly: this.#isReadOnly,
+			isReadOnly: this.isReadOnly(),
+			currentUser: this.getCurrentUser(),
 			streamType: this.#streamType,
 			onAction: this.#onLayoutAppAction.bind(this),
 		};
 	}
 
-	#onLayoutAppAction(action: string, actionParams: ?Object)
+	#onLayoutAppAction(eventData: ?Object)
 	{
 		for (const controller of this.#controllers)
 		{
-			controller.onItemAction(this, action, actionParams);
+			controller.onItemAction(this, eventData);
 		}
 	}
 
@@ -209,9 +252,19 @@ export default class ConfigurableItem extends TimelineItem
 		return (new DatetimeConverter(new Date(this.#timestamp * 1000))).toUserTime().getValue();
 	}
 
+	getSort(): Array
+	{
+		return this.#sort;
+	}
+
 	isReadOnly(): boolean
 	{
 		return this.#isReadOnly;
+	}
+
+	getCurrentUser(): ?Object
+	{
+		return this.#currentUser;
 	}
 
 	clone(): ConfigurableItem
@@ -222,13 +275,49 @@ export default class ConfigurableItem extends TimelineItem
 			itemClassName: this.#itemClassName,
 			useShortTimeFormat: this.#useShortTimeFormat,
 			isReadOnly: this.#isReadOnly,
+			currentUser: this.#currentUser,
 			streamType: this.#streamType,
 			data: {
 				type: this.#type,
 				timestamp: this.#timestamp,
+				sort: this.#sort,
 				layout: this.getLayout().asPlainObject(),
 			},
 		});
+	}
+
+	reloadFromServer(): Promise
+	{
+		const data = {
+			ownerTypeId: this.#ownerTypeId,
+			ownerId: this.#ownerId,
+		};
+		if (this.#streamType === StreamType.history || this.#streamType === StreamType.pinned)
+		{
+			data.historyIds = [ this.getId() ];
+		}
+		else if (this.#streamType === StreamType.scheduled)
+		{
+			data.activityIds = [ this.getId() ];
+		}
+		else
+		{
+			throw new Error('Wrong stream type');
+		}
+
+		return ajax.runAction('crm.timeline.item.load', {data})
+			.then(response => {
+				Object.values(response.data).forEach(item => {
+					if (item.id === this.getId())
+					{
+						this.setData(item);
+						this.refreshLayout();
+					}
+				})
+			})
+			.catch(err => {
+				console.error(err);
+			});
 	}
 
 	static create(id, settings): ConfigurableItem

@@ -63,6 +63,7 @@ class RequisiteTable extends Entity\DataManager
 			'RQ_FIRST_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
 			'RQ_LAST_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
 			'RQ_SECOND_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
+			'RQ_COMPANY_ID' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField255']],
 			'RQ_COMPANY_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField255']],
 			'RQ_COMPANY_FULL_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField300']],
 			'RQ_COMPANY_REG_DATE' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField30']],
@@ -117,6 +118,15 @@ class RequisiteTable extends Entity\DataManager
 			'RQ_REGON' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField9']],
 			'RQ_KRS' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField10']],
 			'RQ_PESEL' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField11']],
+			'RQ_LEGAL_FORM' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField80']],
+			'RQ_SIRET' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField20']],
+			'RQ_SIREN' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField15']],
+			'RQ_CAPITAL' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField30']],
+			'RQ_RCS' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
+			'RQ_CNPJ' =>  ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField20']],
+			'RQ_STATE_REG' =>  ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField25']],
+			'RQ_MNPL_REG' =>  ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField20']],
+			'RQ_CPF' =>  ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField20']],
 			'RQ_SIGNATURE' => ['data_type' => 'integer'],
 			'RQ_STAMP' => ['data_type' => 'integer'],
 		];
@@ -203,6 +213,18 @@ class RequisiteTable extends Entity\DataManager
 	{
 		return array(
 			new Main\Entity\Validator\Length(null, 128)
+		);
+	}
+
+	/**
+	 * Returns validators for RQ_... field with max length 80 chars.
+	 *
+	 * @return array
+	 */
+	public static function validateRqStringField80()
+	{
+		return array(
+			new Main\Entity\Validator\Length(null, 80)
 		);
 	}
 

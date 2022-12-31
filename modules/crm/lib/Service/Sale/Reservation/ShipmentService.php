@@ -13,6 +13,7 @@ use Bitrix\Main\Result;
 use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals\ShipmentItemTable;
 use Bitrix\Sale\ReserveQuantity;
+use Bitrix\Sale\ReserveQuantityCollection;
 use Bitrix\Sale\Shipment;
 use Bitrix\Sale\ShipmentItem;
 
@@ -191,7 +192,7 @@ class ShipmentService
 			 * @var BasketItem $basketItem
 			 */
 			$basketItem = $basketItems[$basketId] ?? null;
-			if (!$basketItem)
+			if (!$basketItem || !$basketItem->isReservableItem())
 			{
 				continue;
 			}
@@ -211,13 +212,18 @@ class ShipmentService
 
 			if ($needReserveQuantity > 0)
 			{
-				/**
-				 * @var ReserveQuantity $basketReserve
-				 */
-				$basketReserve = $basketItem->getReserveQuantityCollection()->current();
+				/** @var ReserveQuantityCollection $reserveCollection */
+				$reserveCollection = $basketItem->getReserveQuantityCollection();
+				if (!$reserveCollection)
+				{
+					continue;
+				}
+
+				/** @var ReserveQuantity $basketReserve */
+				$basketReserve = $reserveCollection->current();
 				if (!$basketReserve)
 				{
-					$basketReserve = $basketItem->getReserveQuantityCollection()->create();
+					$basketReserve = $reserveCollection->create();
 					$basketReserve->setFieldsNoDemand([
 						'STORE_ID' => $rowReserve['STORE_ID'],
 						'DATE_RESERVE_END' => $rowReserve['DATE_RESERVE_END'],

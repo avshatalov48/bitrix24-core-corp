@@ -3,24 +3,46 @@
 	const MAX_PRODUCT_PHOTO_WIDTH = 2048;
 	const MAX_PRODUCT_PHOTO_HEIGHT = 2048;
 
-	class CatalogProductWizardComponent extends LayoutComponent
+	/**
+	 * @abstract
+	 */
+	class BaseCatalogProductWizardComponent extends LayoutComponent
 	{
 		constructor(props)
 		{
 			super(props);
-			this.product = new CatalogProductEntity(result.iblock);
+			this.product = this.makeProductEntity();
 			const initialProductData = BX.componentParameters.get('entityData', {});
 			Object.keys(initialProductData).forEach(fieldId => {
 				this.product.set(fieldId, initialProductData[fieldId]);
 			});
 		}
 
-		getStepForId(stepId) {
-			switch (stepId) {
-				case 'title': return new CatalogProductTitleStep(this.product);
-				case 'photo': return new CatalogProductPhotoStep(this.product);
-				case 'prices': return new StoreCatalogProductPricesStep(this.product);
-				case 'amount': return new StoreCatalogProductAmountStep(this.product);
+		/**
+		 * @abstract
+		 * @returns {BaseCatalogProductEntity}
+		 */
+		makeProductEntity() {}
+
+		/**
+		 * @abstract
+		 * @returns {{
+		 *     id: string,
+		 *     component: WizardStep,
+		 * }[]}
+		 */
+		getSteps()
+		{
+			return [];
+		}
+
+		getStepForId(stepId)
+		{
+			const step = this.getSteps().find(step => step.id === stepId);
+
+			if (step)
+			{
+				return new step.component(this.product);
 			}
 		}
 
@@ -33,29 +55,119 @@
 					},
 				},
 				new Wizard({
-					steps: ['title', 'photo', 'prices', 'amount'],
+					steps: this.getSteps().map(step => step.id),
 					stepForId: this.getStepForId.bind(this),
 				})
 			);
 		}
 	}
 
-	class CatalogProductEntity
+	class StoreCatalogWizard extends BaseCatalogProductWizardComponent
+	{
+		makeProductEntity()
+		{
+			return new StoreCatalogProductEntity(result.iblock);
+		}
+
+		getSteps()
+		{
+			const steps = [];
+
+			const hasProductEditAccess = !!result.permissions['catalog_product_edit'];
+			const hasStoreReadAccess = result.permissions['catalog_store'].length > 0;
+
+			steps.push({
+				id: 'title',
+				component: CatalogProductTitleStep
+			});
+
+			if (hasProductEditAccess)
+			{
+				steps.push({
+					id: 'photo',
+					component: CatalogProductPhotoStep
+				});
+
+				steps.push({
+					id: 'prices',
+					component: StoreCatalogProductPricesStep
+				});
+			}
+
+			if (hasStoreReadAccess)
+			{
+				steps.push({
+					id: 'amount',
+					component: StoreCatalogProductAmountStep
+				});
+			}
+
+			return steps;
+		}
+	}
+
+	class CrmCatalogWizard extends BaseCatalogProductWizardComponent
+	{
+		makeProductEntity()
+		{
+			return new CrmCatalogProductEntity(result.iblock);
+		}
+
+		getSteps()
+		{
+			return [
+				{ id: 'title', component: CatalogProductTitleStep },
+				{ id: 'photo', component: CatalogProductPhotoStep },
+				{ id: 'prices', component: CrmProductPricesStep },
+			];
+		}
+	}
+
+	class WizardFactory
+	{
+		static make(type)
+		{
+			switch (type) {
+				case 'crm':
+					return new CrmCatalogWizard();
+				default:
+					return new StoreCatalogWizard();
+			}
+		}
+	}
+
+	class BaseCatalogProductEntity
 	{
 		constructor(iblock)
 		{
 			this.iblock = iblock;
 			this.config = null;
+			this.fields = this.getDefaultFields();
+			this.hasUnsavedChanges = false;
+		}
 
-			this.fields = {
+		/**
+		 * @abstract
+		 * @returns {string}
+		 */
+		getContext()
+		{
+			return '';
+		}
+
+		/**
+		 * @abstract
+		 * @returns {object}
+		 */
+		getDefaultFields()
+		{
+			return {
 				'IBLOCK_SECTION_ID': 0,
 				'ID': 0,
 				'NAME': '',
 				'BARCODE': '',
 				'MORE_PHOTO': [],
-			};
-
-			this.hasUnsavedChanges = false;
+			}
 		}
 
 		getTitle()
@@ -95,14 +207,7 @@
 		{
 			this.fields[fieldId] = value;
 
-			const ownProductFields = [
-				'ID',
-				'NAME',
-				'SECTION_ID',
-				'BARCODE',
-				'MORE_PHOTO',
-				'BASE_PRICE',
-			];
+			const ownProductFields = Object.keys(this.getDefaultFields());
 
 			if (ownProductFields.includes(fieldId))
 			{
@@ -110,7 +215,7 @@
 			}
 		}
 
-		save()
+		save(savePhotos = false)
 		{
 			if (!this.hasUnsavedChanges && this.config)
 			{
@@ -118,134 +223,153 @@
 			}
 
 			const id = this.get('ID');
-			const options = {
-				fields: {
-					NAME: this.get('NAME'),
-					IBLOCK_SECTION_ID: this.get('SECTION_ID'),
-					BARCODE: this.get('BARCODE'),
-					IBLOCK_ID: this.getIblockId(),
-				},
+			const fields = {
+				NAME: this.get('NAME'),
+				IBLOCK_SECTION_ID: this.get('SECTION_ID'),
+				IBLOCK_ID: this.getIblockId(),
+				...this.prepareOptionalFields(),
+				...this.prepareBasePrice(),
 			};
+
+			if (savePhotos)
+			{
+				fields.MORE_PHOTO = this.prepareMorePhoto();
+			}
+
+			const options = { fields };
+
 			if (id)
 			{
 				options.id = id;
 			}
-			const basePrice = this.get('BASE_PRICE', null);
-			if (basePrice)
+
+			const restBatch = {};
+
+			if (!this.config)
 			{
-				if (id)
-				{
-					options.fields['PRICES'] = {
-						'BASE': {
-							'PRICE': basePrice.amount,
-							'CURRENCY': basePrice.currency,
-						},
-					};
-				}
-				else
-				{
-					options.fields['PRICE'] = basePrice.amount;
-					options.fields['CURRENCY'] = basePrice.currency;
-				}
+				restBatch.config = ['mobile.catalog.productwizard.config', { wizardType: this.getContext() }];
+			}
+			if (this.hasUnsavedChanges)
+			{
+				restBatch.save = ['mobile.catalog.productwizard.saveProduct', options];
 			}
 
-			return this.prepareMorePhoto().then((morePhoto) => {
-				options.fields['MORE_PHOTO'] = morePhoto;
+			return new Promise((resolve, reject) => {
+				BX.rest.callBatch(restBatch, response => {
+					let hasErrors = false;
 
-				let restBatch = {};
-				if (!this.config)
-				{
-					restBatch.config = ['mobile.catalog.productwizard.config', {wizardType: 'store'}];
-				}
-				if (this.hasUnsavedChanges)
-				{
-					restBatch.save = ['mobile.catalog.productwizard.saveProduct', options];
-				}
+					const error = this.getErrorFromResponse(response);
+					if (error)
+					{
+						this.showError(error);
+						reject();
+						hasErrors = true;
+					}
 
-				return new Promise ((resolve, reject) => {
-					BX.rest.callBatch(restBatch, response => {
-						let hasErrors = false;
-
-						const error = this.getErrorFromResponse(response);
-						if (error)
+					Object.keys(restBatch).forEach(action => {
+						if (!response[action].answer && !hasErrors)
 						{
-							this.showError(error);
+							this.showError(BX.message('WIZARD_SAVE_PRODUCT_ERROR'));
 							reject();
 							hasErrors = true;
 						}
-
-						Object.keys(restBatch).forEach(action => {
-							if (!response[action].answer && !hasErrors)
+						else if (!hasErrors)
+						{
+							const error = this.getErrorFromResponse(response[action].answer);
+							if (error)
 							{
-								this.showError(BX.message('WIZARD_SAVE_PRODUCT_ERROR'));
+								this.showError(error);
 								reject();
 								hasErrors = true;
 							}
-							else if(!hasErrors)
-							{
-								const error = this.getErrorFromResponse(response[action].answer);
-								if (error)
-								{
-									this.showError(error);
-									reject();
-									hasErrors = true;
-								}
-							}
-						});
-
-						if (!hasErrors)
-						{
-							if (!this.config)
-							{
-								this.config = response.config.answer.result;
-							}
-
-							if (this.hasUnsavedChanges)
-							{
-								const saveResult = response.save.answer.result;
-								this.set('ID', String(saveResult.id));
-								this.synchronizeMorePhotoValue(saveResult.morePhoto);
-								this.hasUnsavedChanges = false;
-							}
-
-							resolve();
 						}
 					});
+
+					if (!hasErrors)
+					{
+						if (!this.config)
+						{
+							this.config = response.config.answer.result;
+						}
+
+						if (this.hasUnsavedChanges)
+						{
+							const saveResult = response.save.answer.result;
+							this.set('ID', String(saveResult.id));
+							this.synchronizeMorePhotoValue(saveResult.morePhoto);
+							this.hasUnsavedChanges = false;
+						}
+
+						resolve();
+					}
 				});
 			});
 		}
 
+		prepareOptionalFields()
+		{
+			const result = {};
+			const optionalFields = ['BARCODE', 'MEASURE_CODE', 'QUANTITY', 'VAT_ID'];
+
+			optionalFields.forEach(fieldId => {
+				const value = this.get(fieldId, null);
+				if (value !== null)
+				{
+					result[fieldId] = value;
+				}
+			});
+
+			const vatIncluded = this.get('VAT_INCLUDED', null);
+			if (vatIncluded !== null)
+			{
+				result.VAT_INCLUDED = vatIncluded ? 'Y' : 'N';
+			}
+
+			return result;
+		}
+
+		prepareBasePrice()
+		{
+			const id = this.get('ID');
+			const basePrice = this.get('BASE_PRICE', null);
+			if (basePrice)
+			{
+				const priceValue = { PRICE: basePrice.amount, CURRENCY: basePrice.currency };
+
+				return id
+					? { PRICES: { BASE: priceValue } }
+					: priceValue;
+			}
+
+			return {};
+		}
+
 		prepareMorePhoto()
 		{
-			return Promise.all(
-				this.get('MORE_PHOTO', [])
-					.filter(photo => !photo.hasOwnProperty('iblockPropertyValue'))
-					.map(photo => this.getPhotoBase64Content(photo))
-			).then((morePhoto) => { // need update only new and removed photos
-				const existed = this.get('MORE_PHOTO', [])
-					.filter(photo => photo.hasOwnProperty('iblockPropertyValue'))
-				;
-				let result = {};
+			const photos = this.get('MORE_PHOTO', []);
+			const existedPhotos = photos.filter(photo => photo.hasOwnProperty('iblockPropertyValue'));
+			const newPhotos = photos.filter(photo => !photo.hasOwnProperty('iblockPropertyValue'));
 
-				existed.forEach((item) => {
-					result[item.valueCode] = item.signedFileId;
-				});
+			const result = {};
 
-				morePhoto.forEach((item) => {
-					result['file' + Math.floor(Math.random()*10000000)] = item;
-				});
-
-				return result;
+			existedPhotos.forEach((item) => {
+				result[item.valueCode] = item.signedFileId;
 			});
+
+			newPhotos.forEach((item) => {
+				result['file' + Math.floor(Math.random() * 10000000)] = item;
+			});
+
+			return result;
 		}
 
 		synchronizeMorePhotoValue(savedValue)
 		{
 			savedValue = Array.isArray(savedValue) ? savedValue : [];
 
-			let morePhoto = this.get('MORE_PHOTO', []);
-
+			const morePhoto = this.get('MORE_PHOTO', []);
 			let iterator = 0;
+
 			morePhoto.forEach((photo) => {
 				if (iterator < savedValue.length)
 				{
@@ -258,42 +382,6 @@
 			});
 
 			this.set('MORE_PHOTO', morePhoto);
-		}
-
-		getPhotoBase64Content(photo)
-		{
-				return FileProcessing.resize(
-					'catalogPhoto_' + Math.random().toString(),
-					{
-						url: photo.url,
-						width: MAX_PRODUCT_PHOTO_WIDTH,
-						height: MAX_PRODUCT_PHOTO_HEIGHT,
-					}
-				).then(path => {
-					return BX.FileUtils.fileForReading(path)
-						.then(file => {
-							file.readMode = BX.FileConst.READ_MODE.DATA_URL;
-
-							return file.readNext()
-								.then(fileData => {
-									if (fileData.content)
-									{
-										let content = fileData.content;
-
-										return {
-											'base64Encoded': {
-												filename: (file.file && file.file.name ? file.file.name : photo.name),
-												content: content.substr(content.indexOf("base64,") + 7, content.length) // base64 encoded photo
-											}
-										};
-									}
-
-									return '';
-								})
-								.catch(e => this.showError(e));
-						})
-						.catch(e => this.showError(e));
-				});
 		}
 
 		getErrorFromResponse(response)
@@ -325,9 +413,57 @@
 		}
 	}
 
+	class StoreCatalogProductEntity extends BaseCatalogProductEntity
+	{
+		getContext()
+		{
+			return 'store';
+		}
+
+		getDefaultFields()
+		{
+			return {
+				'IBLOCK_SECTION_ID': 0,
+				'SECTION_ID': 0,
+				'ID': 0,
+				'NAME': '',
+				'BARCODE': '',
+				'MORE_PHOTO': [],
+				'BASE_PRICE': null,
+			}
+		}
+	}
+
+	class CrmCatalogProductEntity extends BaseCatalogProductEntity
+	{
+		getContext()
+		{
+			return 'crm';
+		}
+
+		getDefaultFields()
+		{
+			return {
+				'IBLOCK_SECTION_ID': 0,
+				'SECTION_ID': 0,
+				'ID': 0,
+				'NAME': '',
+				'BARCODE': '',
+				'MORE_PHOTO': [],
+				'BASE_PRICE': null,
+				'MEASURE_CODE': null,
+				'QUANTITY': 0,
+				'VAT_ID': null,
+				'VAT_INCLUDED': false,
+			}
+		}
+	}
+
 	BX.onViewLoaded(() =>
 	{
+		const wizardType = BX.componentParameters.get('type', 'store');
+
 		layout.enableNavigationBarBorder(false);
-		layout.showComponent(new CatalogProductWizardComponent())
+		layout.showComponent(WizardFactory.make(wizardType));
 	});
 })();

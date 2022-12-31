@@ -265,7 +265,6 @@ class Template
 		$this->setTags($fields);
 		$this->setDependTasks($fields);
 
-		$this->updateFiles($fields);
 		$this->ufManager->Update(\Bitrix\Tasks\Util\UserField\Task\Template::getEntityCode(), $this->templateId, $fields, $this->userId);
 		$this->updateParent($fields);
 
@@ -368,7 +367,7 @@ class Template
 	 */
 	private function updateParent(array $fields)
 	{
-		if (!isset($arFields['BASE_TEMPLATE_ID']))
+		if (!isset($fields['BASE_TEMPLATE_ID']))
 		{
 			return;
 		}
@@ -380,20 +379,6 @@ class Template
 		catch(\Bitrix\Tasks\DB\Tree\LinkExistsException $e)
 		{
 		}
-	}
-
-	/**
-	 * @param array $fields
-	 * @return void
-	 */
-	private function updateFiles(array $fields)
-	{
-		if (!isset($fields['FILES']))
-		{
-			return;
-		}
-
-		\CTaskFiles::removeTemporaryStatusForFiles(unserialize($fields['FILES'], ['allowed_classes' => false]), $this->userId);
 	}
 
 	/**
@@ -504,7 +489,9 @@ class Template
 		// delete user fields
 		$this->ufManager->Delete("TASKS_TASK_TEMPLATE", $this->templateId);
 
-		TemplateTable::delete($this->templateId);
+		$res = TemplateTable::delete($this->templateId);
+
+		return $res->isSuccess();
 	}
 
 	/**
@@ -737,7 +724,6 @@ class Template
 			->prepareReplication()
 			->prepareBaseTemplate()
 			->prepareParentId()
-			->prepareFiles($this->checkFileRights)
 			->preparePriority()
 			->prepareSiteId()
 			->prepareTags()

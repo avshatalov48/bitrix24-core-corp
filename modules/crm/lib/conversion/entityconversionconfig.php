@@ -221,6 +221,18 @@ class EntityConversionConfig
 		$this->items[$item->getEntityTypeID()] = $item;
 	}
 
+	public function deleteItemByEntityTypeId(int $entityTypeId): bool
+	{
+		if ($this->items[$entityTypeId])
+		{
+			unset($this->items[$entityTypeId]);
+
+			return true;
+		}
+
+		return false;
+	}
+
 	/**
 	* @return EntityConversionConfigItem[]
 	*/

@@ -24,13 +24,32 @@ elseif (isset($_REQUEST['category_id']))
 	$categoryId = (int)$_REQUEST['category_id'];
 }
 
-$APPLICATION->IncludeComponent(
-	'bitrix:crm.entity.details.frame',
-	'',
-	[
-		'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
-		'ENTITY_ID' => $arResult['VARIABLES']['contact_id'],
-		'ENABLE_TITLE_EDIT' => false,
-		'EXTRAS' => ['CATEGORY_ID' => $categoryId],
-	]
-);
+if (isset($_REQUEST['IFRAME']) && $_REQUEST['IFRAME'] === 'Y')
+{
+	$APPLICATION->IncludeComponent(
+		'bitrix:crm.entity.details.frame',
+		'',
+		[
+			'ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+			'ENTITY_ID' => $arResult['VARIABLES']['contact_id'],
+			'ENABLE_TITLE_EDIT' => false,
+			'EXTRAS' => ['CATEGORY_ID' => $categoryId],
+		]
+	);
+}
+else
+{
+	Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/workareainvisible.css');
+	$entityId = isset($arResult['VARIABLES']['contact_id']) ? (int)$arResult['VARIABLES']['contact_id'] : 0;
+	$entityCategoryId = $entityId <= 0 ? $categoryId : null;
+	$viewCategoryId = $categoryId;
+
+	$script = CCrmViewHelper::getDetailFrameWrapperScript(
+		CCrmOwnerType::Contact,
+		$entityId,
+		$entityCategoryId,
+		$viewCategoryId
+	);
+
+	echo $script;
+}

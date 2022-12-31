@@ -185,7 +185,7 @@
 
 .crm-fake-widget-total .crm-fake-widget-content-period span {
 	background: transparent;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-fake-widget-head {
@@ -492,7 +492,7 @@ a.crm-fake-widget-content-text {
 
 .crm-portrait-item-title {
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #293139;
 	margin: 0 0 37px 0;
 }

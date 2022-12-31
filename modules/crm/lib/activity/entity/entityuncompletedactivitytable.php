@@ -34,6 +34,9 @@ class EntityUncompletedActivityTable extends \Bitrix\Main\Entity\DataManager
 			(new BooleanField('IS_INCOMING_CHANNEL'))
 				->configureStorageValues('N', 'Y')
 				->configureRequired(),
+			(new BooleanField('HAS_ANY_INCOMING_CHANEL'))
+				->configureStorageValues('N', 'Y')
+				->configureRequired(),
 		];
 	}
 

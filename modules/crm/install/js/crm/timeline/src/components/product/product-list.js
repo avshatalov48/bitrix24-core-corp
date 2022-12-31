@@ -7,6 +7,7 @@ export default {
 		products: [],
 		dealId: null,
 		isAddToDealVisible: false,
+		showProductLink: true,
 	},
 
 	data()
@@ -73,6 +74,7 @@ export default {
 					:product="product"
 					:dealId="dealId"
 					:isAddToDealVisible="isAddToDealVisible"
+					:showProductLink="showProductLink"
 					@product-added-to-deal="onProductAddedToDeal"
 					@product-adding-to-deal="onProductAddingToDeal"
 				></product>

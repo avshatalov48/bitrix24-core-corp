@@ -68,16 +68,16 @@ class CompanyTable extends Entity\DataManager
 
 		$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		return [
+		$map = [
 			//fields here are sorted by b_crm_company columns order in install.sql. Please, keep it that way
 
 			$fieldRepository->getId(),
 
-			$fieldRepository->getCreatedTime('DATE_CREATE'),
+			$fieldRepository->getCreatedTime('DATE_CREATE', true),
 
-			$fieldRepository->getUpdatedTime('DATE_MODIFY'),
+			$fieldRepository->getUpdatedTime('DATE_MODIFY', true),
 
-			$fieldRepository->getCreatedBy('CREATED_BY_ID'),
+			$fieldRepository->getCreatedBy('CREATED_BY_ID', true),
 
 			(new Reference(
 				'CREATED_BY',
@@ -87,7 +87,7 @@ class CompanyTable extends Entity\DataManager
 				->configureTitle(Loc::getMessage('CRM_COMPANY_ENTITY_CREATED_BY_FIELD'))
 			,
 
-			$fieldRepository->getUpdatedBy('MODIFY_BY_ID'),
+			$fieldRepository->getUpdatedBy('MODIFY_BY_ID', true),
 
 			(new Reference(
 				'MODIFY_BY',
@@ -284,6 +284,8 @@ class CompanyTable extends Entity\DataManager
 				Multifield\Type\Phone::ID,
 			),
 		];
+
+		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Company));
 	}
 
 	public static function disableUserFieldsCheck(): void

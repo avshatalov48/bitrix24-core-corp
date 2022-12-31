@@ -37,7 +37,9 @@ elseif (!(!IsModuleInstalled("timeman") && in_array($licenseType, array("company
 	<div style="text-align: center;"><img src="images/<?=$lang?>/workreport.png"/></div>
 	<p><?=GetMessage("TARIFF_RESTRICTION_TEXT2")?></p>
 	<br/>
-	<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("workreport")?></div>
+	<?php if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
+		<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("workreport")?></div>
+	<?php endif;?>
 	<?
 }
 ?>

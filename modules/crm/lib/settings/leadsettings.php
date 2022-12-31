@@ -1,5 +1,6 @@
 <?php
 namespace Bitrix\Crm\Settings;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm\Activity;
 use Bitrix\Crm\Restriction\RestrictionManager;
@@ -11,6 +12,8 @@ class LeadSettings
 	const VIEW_LIST = EntityViewSettings::LIST_VIEW;
 	const VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW;
 	const VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW;
+
+	public const CRM_TYPE_MENU_ITEM_ID = 'crm-type-button';
 
 	/** @var LeadSettings  */
 	private static $current = null;
@@ -245,8 +248,10 @@ class LeadSettings
 			self::includeModuleFile();
 
 			self::$descriptions= array(
-				self::VIEW_LIST => GetMessage('CRM_LEAD_SETTINGS_VIEW_LIST'),
-				self::VIEW_KANBAN => GetMessage('CRM_LEAD_SETTINGS_VIEW_KANBAN')
+				self::VIEW_LIST => GetMessage('CRM_COMMON_LIST'),
+				self::VIEW_KANBAN => Crm::isUniversalActivityScenarioEnabled()
+					? GetMessage('CRM_COMMON_PIPELINE')
+					: GetMessage('CRM_LEAD_SETTINGS_VIEW_KANBAN')
 			);
 		}
 		return self::$descriptions;
@@ -302,6 +307,23 @@ class LeadSettings
 		return $isEnabled == "Y";
 	}
 
+	public static function getCrmTypeMenuItem(bool $compatibleKeys = false): array
+	{
+		$result = [
+			'id' => self::CRM_TYPE_MENU_ITEM_ID,
+			'text' => Main\Localization\Loc::getMessage('CRM_LEAD_SETTINGS_CRM_TYPE_MENU_ITEM'),
+			'title' => Main\Localization\Loc::getMessage('CRM_LEAD_SETTINGS_CRM_TYPE_MENU_ITEM'),
+			'onclick' => self::showCrmTypePopup(),
+		];
+
+		if ($compatibleKeys)
+		{
+			$result = array_change_key_case($result, CASE_UPPER);
+		}
+
+		return $result;
+	}
+
 	public static function showCrmTypePopup()
 	{
 		\CJSCore::Init(array('popup', 'sidepanel'));
@@ -346,6 +368,7 @@ class LeadSettings
 	 */
 	protected static function includeModuleFile()
 	{
+		Container::getInstance()->getLocalization()->loadMessages();
 		if(self::$messagesLoaded)
 		{
 			return;

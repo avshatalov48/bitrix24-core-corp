@@ -5,6 +5,8 @@ namespace Bitrix\Mobile\Integration\Catalog\StoreDocumentList;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Mobile\Integration\Catalog\EntityEditor\StoreDocumentProvider;
 use Bitrix\Catalog\EO_StoreDocument;
+use Bitrix\Mobile\InventoryControl\Dto\DocumentListItem;
+use Bitrix\Mobile\InventoryControl\Dto\DocumentListItemData;
 
 class Item
 {
@@ -23,28 +25,16 @@ class Item
 		$this->document = $document;
 	}
 
-	public function prepareItem(): array
+	public function prepareItem(): DocumentListItem
 	{
 		$document = $this->document;
 
-		$this->prepareContractor($document);
 		$this->prepareResponsible($document);
-
-		$data = [];
-		if (isset($document['CONTRACTOR_PERSON_NAME']))
-		{
-			$data['CONTRACTOR_PERSON_NAME'] = $document['CONTRACTOR_PERSON_NAME'];
-		}
-		if (isset($document['CONTRACTOR_COMPANY']))
-		{
-			$data['CONTRACTOR_COMPANY'] = $document['CONTRACTOR_COMPANY'];
-		}
 
 		$dp = StoreDocumentProvider::createByArray($document, [
 			'skipFiles' => true,
 			'skipProducts' => true,
 			'skipUsers' => isset($document['USER_INFO']),
-			'data' => $data,
 		]);
 
 		$entityData = $dp->getEntityData();
@@ -52,32 +42,14 @@ class Item
 		$id = (int)$document['ID'];
 		$docType = $document['DOC_TYPE'];
 
-		return [
+		return $this->buildItemDto([
 			'id' => $id,
-			'data' => [
-				'id' => $id,
-				'docType' => $docType,
-				'name' => $entityData['TITLE'] ?: StoreDocumentTable::getTypeList(true)[$docType],
-				'date' => $entityData['DATE_CREATE'],
-				'statuses' => $this->getStatus($document),
-				'fields' => $this->getFields($dp),
-			],
-		];
-	}
-
-	protected function prepareContractor(array &$document): void
-	{
-		if (isset($document['CATALOG_STORE_DOCUMENT_CONTRACTOR_ID']))
-		{
-			$document['CONTRACTOR_ID'] = $document['CATALOG_STORE_DOCUMENT_CONTRACTOR_ID'];
-			$document['CONTRACTOR_PERSON_NAME'] = $document['CATALOG_STORE_DOCUMENT_CONTRACTOR_PERSON_NAME'];
-			$document['CONTRACTOR_COMPANY'] = $document['CATALOG_STORE_DOCUMENT_CONTRACTOR_COMPANY'];
-			unset(
-				$document['CATALOG_STORE_DOCUMENT_CONTRACTOR_ID'],
-				$document['CATALOG_STORE_DOCUMENT_CONTRACTOR_PERSON_NAME'],
-				$document['CATALOG_STORE_DOCUMENT_CONTRACTOR_COMPANY'],
-			);
-		}
+			'docType' => $docType,
+			'name' => $entityData['TITLE'] ?: StoreDocumentTable::getTypeList(true)[$docType],
+			'date' => $entityData['DATE_CREATE'],
+			'statuses' => $this->getStatus($document),
+			'fields' => $this->getFields($dp),
+		]);
 	}
 
 	protected function prepareResponsible(array &$document): void
@@ -109,6 +81,15 @@ class Item
 		}
 	}
 
+	protected function buildItemDto(array $data): DocumentListItem
+	{
+		$item = new DocumentListItem([
+			'id' => $data['id'],
+		]);
+		$item->data = new DocumentListItemData($data);
+		return $item;
+	}
+
 	protected function getFields(StoreDocumentProvider $item): array
 	{
 		$fieldsConfig = $this->getFieldsConfig($item);
@@ -117,6 +98,18 @@ class Item
 		$fields = [];
 		foreach ($fieldsConfig as $fieldConfig)
 		{
+			$fieldConfig['config'] = (isset($fieldConfig['config']) && is_array($fieldConfig['config']))
+				? $fieldConfig['config']
+				: [];
+
+			if (isset($fieldConfig['data']) && is_array($fieldConfig['data']))
+			{
+				$fieldConfig['config'] = array_merge(
+					$fieldConfig['config'],
+					$fieldConfig['data']
+				);
+			}
+
 			if ($fieldConfig['name'] === self::SUM_FIELD_ID)
 			{
 				$value = [
@@ -130,9 +123,23 @@ class Item
 				$fieldConfig['config']['entityList'] = ($entityData[$fieldConfig['name'] . '_ENTITY_LIST'] ?? []);
 				$value = ($fieldConfig['config']['entityList'] ? current($fieldConfig['config']['entityList'])['id'] : null);
 			}
+			elseif ($fieldConfig['type'] === 'client_light')
+			{
+				$value = [
+					'company' => $entityData[$fieldConfig['data']['info']]['COMPANY_DATA'],
+					'contact' => $entityData[$fieldConfig['data']['info']]['CONTACT_DATA'],
+				];
+
+				$fieldConfig['entityList'] = $value;
+			}
 			else
 			{
 				$value = ($entityData[$fieldConfig['name']] ?? null);
+			}
+
+			if ($fieldConfig['type'] === 'opportunity')
+			{
+				$fieldConfig['type'] = 'money';
 			}
 
 			if ($value !== null || !empty($fieldConfig['required']))

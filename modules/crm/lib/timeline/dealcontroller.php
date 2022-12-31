@@ -8,6 +8,7 @@ use Bitrix\Crm\Entity\PaymentDocumentsRepository;
 use Bitrix\Crm\History\DealStageHistoryEntry;
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Timeline\HistoryDataModel\Presenter\SignDocument;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Localization\Loc;
@@ -150,8 +151,14 @@ class DealController extends EntityController
 			$categoryID = \CCrmDeal::GetCategoryID($ownerID);
 		}
 
+		$categoryChanged = false;
+		if (isset($previousFields['CATEGORY_ID']) && isset($currentFields['CATEGORY_ID']) && $previousFields['CATEGORY_ID'] != $currentFields['CATEGORY_ID'])
+		{
+			$categoryChanged = true;
+		}
+
 		$authorID = self::resolveEditorID($currentFields);
-		if($prevStageID !== $curStageID)
+		if(!$categoryChanged && $prevStageID !== $curStageID)
 		{
 			$stageNames = \CCrmDeal::GetStageNames($categoryID);
 			$historyEntryID = ModificationEntry::create(
@@ -500,8 +507,17 @@ class DealController extends EntityController
 		$culture = Main\Context::getCurrent()->getCulture();
 		$associatedEntityTypeID = isset($data['ASSOCIATED_ENTITY_TYPE_ID'])
 			? (int)$data['ASSOCIATED_ENTITY_TYPE_ID']
-			: \CCrmOwnerType::Deal
-		;
+			: \CCrmOwnerType::Deal;
+
+		if (isset($settings[SignDocument::DOCUMENT_DATA_KEY]))
+		{
+			$data[SignDocument::DOCUMENT_DATA_KEY] = $settings[SignDocument::DOCUMENT_DATA_KEY];
+		}
+
+		if (isset($settings[SignDocument::MESSAGE_DATA_KEY]))
+		{
+			$data[SignDocument::MESSAGE_DATA_KEY] = $settings[SignDocument::MESSAGE_DATA_KEY];
+		}
 
 		if($typeID === TimelineType::CREATION)
 		{
@@ -557,6 +573,8 @@ class DealController extends EntityController
 				$data['TITLE'] =  Loc::getMessage('CRM_DEAL_MODIFICATION_IS_MANUAL_OPPORTUNITY');
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
+				$data['START'] = $settings['START'];
+				$data['FINISH'] = $settings['FINISH'];
 			}
 			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
@@ -631,10 +649,7 @@ class DealController extends EntityController
 
 			$data = array_merge($data, $settings);
 		}
-		elseif (
-			$typeID === TimelineType::LOG_MESSAGE
-			&& $typeCategoryId === LogMessageType::CALL_INCOMING
-		)
+		elseif ($typeID === TimelineType::LOG_MESSAGE)
 		{
 			$this->applySettingsBaseData($data, $base);
 		}

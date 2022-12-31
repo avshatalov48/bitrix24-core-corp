@@ -40,9 +40,9 @@
 						this.renderProperties(),
 						View(
 							{},
-							this.renderStoreAmount(),
+							...this.renderStoreAmount(),
 							this.renderLineSeparator(),
-							this.renderPurchasePrice(),
+							...this.renderPurchasePrice(),
 							this.renderSellPrice(),
 						)
 					),
@@ -82,7 +82,7 @@
 						? this.props.galleryInfo[this.props.gallery[0]]
 						: this.props.gallery[0]
 				);
-				if (picture)
+				if (picture && picture.previewUrl)
 				{
 					absPath = picture.previewUrl.startsWith('/')
 						? currentDomain + picture.previewUrl
@@ -217,6 +217,17 @@
 
 		renderStoreAmount()
 		{
+			if (
+				!(
+					this.props.permissions['catalog_store_all']
+					|| this.props.permissions['catalog_store'].includes(this.props.storeToId)
+				)
+
+			)
+			{
+				return [];
+			}
+
 			let amount = Number(this.props.amount);
 			if (isNaN(amount))
 			{
@@ -225,31 +236,33 @@
 
 			const measure = CommonUtils.objectDeepGet(this.props, 'measure.name', '');
 
-			return View(
-				{
-					style: Styles.amount.wrapper
-				},
-				this.renderStoreName(),
+			return [
 				View(
 					{
-						style: {
-							width: '50%',
-							flexDirection: 'row',
-							justifyContent: 'flex-end',
-						}
+						style: Styles.amount.wrapper
 					},
-					Text({
-						text: `${amount} `,
-						style: Styles.amount.value,
-						numberOfLines: 1,
-					}),
-					Text({
-						text: `${measure}`,
-						style: {...Styles.amount.value, color: '#828B95'},
-						numberOfLines: 1,
-					})
+					this.renderStoreName(),
+					View(
+						{
+							style: {
+								width: '50%',
+								flexDirection: 'row',
+								justifyContent: 'flex-end',
+							}
+						},
+						Text({
+							text: `${amount} `,
+							style: Styles.amount.value,
+							numberOfLines: 1,
+						}),
+						Text({
+							text: `${measure}`,
+							style: {...Styles.amount.value, color: '#828B95'},
+							numberOfLines: 1,
+						})
+					)
 				)
-			);
+			];
 		}
 
 		renderStoreName()
@@ -298,6 +311,11 @@
 
 		renderPurchasePrice()
 		{
+			if (!this.props.permissions['catalog_purchas_info'])
+			{
+				return [];
+			}
+
 			const title = () => View(
 				{
 					style: Styles.summaryRow.leftWrapper
@@ -347,16 +365,18 @@
 				);
 			};
 
-			return View(
-				{
-					style: {
-						flexDirection: 'row',
-						marginBottom: 4,
-					}
-				},
-				title(),
-				value(),
-			);
+			return [
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							marginBottom: 4,
+						}
+					},
+					title(),
+					value(),
+				)
+			];
 		}
 
 		renderSellPrice()

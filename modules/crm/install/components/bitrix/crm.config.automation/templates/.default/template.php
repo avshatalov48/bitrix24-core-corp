@@ -1,4 +1,9 @@
-<? if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 global $APPLICATION;
 /** @var array $arResult */
 
@@ -38,45 +43,12 @@ if (empty($arParams['DISABLE_TOP_MENU']) || $arParams['DISABLE_TOP_MENU'] != 'Y'
 		$component
 	);
 }
-?>
-<?if (!$arResult['HIDE_HELP']):?>
-<div class="crm-config-automation-desc-container" data-role="help-container">
-	<div class="crm-config-automation-desc-head">
-		<div class="crm-config-automation-desc-title">
-			<span class="crm-config-automation-desc-title-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_TITLE'))?></span>
-		</div>
-		<div class="crm-config-automation-desc-close-icon" data-role="close-btn">
-			<span class="crm-config-automation-desc-close-icon-item"></span>
-		</div>
-	</div><!--crm-config-automation-desc-head-->
-	<div class="crm-config-automation-desc-main">
-		<div class="crm-config-automation-desc-visual-block">
-			<span class="crm-config-automation-desc-visual-block-item"></span>
-		</div>
-		<div class="crm-config-automation-desc-list-block">
-			<ul class="crm-config-automation-desc-list">
-				<li class="crm-config-automation-desc-list-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_1_1'))?></li>
-				<li class="crm-config-automation-desc-list-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_1_2'))?></li>
-				<li class="crm-config-automation-desc-list-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_1_3'))?></li>
-			</ul>
-			<div class="crm-config-automation-desc-subtitle">
-				<span class="crm-config-automation-desc-subtitle-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_TITLE_2'))?></span>
-			</div>
-			<ul class="crm-config-automation-desc-list">
-				<li class="crm-config-automation-desc-list-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_2_1'))?></li>
-				<li class="crm-config-automation-desc-list-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_2_2'))?></li>
-				<li class="crm-config-automation-desc-list-item"><?=htmlspecialcharsbx(GetMessage('CRM_CONFIG_AUTOMATION_HELP_2_3'))?></li>
-			</ul>
-		</div>
-	</div><!--crm-config-automation-desc-main-->
-</div><!--crm-config-automation-desc-container-->
-<?endif;
 
 $this->setViewTarget("inside_pagetitle_below", 100); ?>
 <div class="crm-config-automation-subtitle">
 	<?= htmlspecialcharsbx($arResult['SUBTITLE']) ?>
 </div>
-<? $this->endViewTarget();
+<?php $this->endViewTarget();
 
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.automation',
@@ -139,29 +111,6 @@ $APPLICATION->IncludeComponent(
 					}
 				);
 			});
-		}
-
-		var helpContainer = document.querySelector('[data-role="help-container"]');
-
-		if (helpContainer)
-		{
-			var closeButton = document.querySelector('[data-role="close-btn"]');
-			if (closeButton)
-			{
-				BX.bind(closeButton, 'click', function()
-				{
-					BX.ajax(
-						{
-							url: "/bitrix/components/bitrix/crm.config.automation/ajax.php?<?=bitrix_sessid_get()?>",
-							method: "POST",
-							dataType: "json",
-							data:
-								{ "ACTION" : "HIDE_HELP"}
-						}
-					);
-					BX.remove(helpContainer);
-				});
-			}
 		}
 	})
 </script>

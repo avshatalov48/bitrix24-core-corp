@@ -121,7 +121,7 @@
 	margin: 0 10px 0 0;
 	border-bottom: 1px solid #3bc8f5;
 	color: #3bc8f5;
-	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -213,7 +213,7 @@
 
 .crm-card-show-detail-info-block { margin: 4px 0 0; }
 
-.crm-card-show-detail-info-title-item { font: bold 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
+.crm-card-show-detail-info-title-item { font: var(--ui-font-weight-bold) 13px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica)); }
 
 .crm-card-show-detail-info-name-item > a { color: #fff; }
 
@@ -319,7 +319,7 @@
 
 .crm-card-show-user-responsible-detail-info .crm-card-show-user-responsible-title {
 	margin: 0 0 5px;
-	font: bold 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-card-show-detail-info-wrap { margin: 0 0 20px; }

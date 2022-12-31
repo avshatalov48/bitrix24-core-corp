@@ -76,6 +76,17 @@ unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty[
 	</td>
 </tr>
 
+<tr hidden>
+	<td width="60%">
+		<?= $dialog->renderFieldControl(
+			$dialog->getMap()['OnlyDynamicEntities'],
+			$dialog->getCurrentValue('only_dynamic_entities'),
+			false,
+			1
+		) ?>
+	</td>
+</tr>
+
 <script>
 	BX.ready(function()
 	{

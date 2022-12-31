@@ -9,7 +9,7 @@ class Deal
 	 * @param array $parameters Parameters that will be passed to the component.
 	 * @return string HTML code of the preview.
 	 */
-	public function buildPreview($parameters)
+	public static function buildPreview($parameters)
 	{
 		global $APPLICATION;
 		if(empty($parameters['NAME_TEMPLATE']))
@@ -32,7 +32,7 @@ class Deal
 	 * @param array $parameters Allowed key: dealId.
 	 * @return bool True if current user has access to the deal.
 	 */
-	public function checkUserReadAccess($parameters)
+	public static function checkUserReadAccess($parameters)
 	{
 		return \CCrmDeal::CheckReadPermission($parameters['dealId'], \CCrmPerms::GetCurrentUserPermissions());
 	}

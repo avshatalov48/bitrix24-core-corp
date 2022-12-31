@@ -35,13 +35,14 @@
 	align-items: center;
 	justify-content: center;
 	margin-right: 10px;
-	width: 52px;
-	height: 56px;
-	border-radius: 50%;
+	min-width: 52px;
+	height: 53px;
+	border-radius: var(--ui-border-radius-circle, 50%);
 	overflow: hidden;
 }
 
 .intranet-ustat-online-counter .ui-graph-circle-wrapper {
+	display: flex;
 	top: 1px;
 	width: 52px;
 	height: 52px;
@@ -70,8 +71,15 @@
 }
 
 .intranet-ustat-online-counter .ui-graph-circle-number {
+	position: static;
+	top: unset;
+	left: unset;
+	align-self: center;
+	width: 52px;
+	line-height: unset;
 	font-size: 21px;
-	line-height: 21px;
+	text-align: center;
+	transform: unset;
 }
 
 .ui-graph-font-sm .ui-graph-circle-number {
@@ -90,21 +98,6 @@
 	width: 42px;
 	height: 42px;
 }
-
-.intranet-ustat-online-counter .ui-graph-circle-counter .ui-graph-circle-number {
-	margin-top: 1px;
-}
-
-/*.intranet-ustat-online-counter .ui-graph-circle {*/
-/*    font-size: 56px;*/
-/*    transform: perspective(1px) scale3d(.28, .28, 1) translateZ(0);*/
-/*    -webkit-font-smoothing: subpixel-antialiased;*/
-/*    -webkit-backface-visibility: hidden;*/
-/*    backface-visibility: hidden;*/
-/*    -webkit-perspective: 1000;*/
-/*    transform-style: preserve-3d;*/
-/*    will-change: transform;*/
-/*}*/
 
 .intranet-ustat-online-icon-box {
 	display: flex;

@@ -12,6 +12,7 @@ return [
 		'ui.notification',
 		'ui.dialogs.messagebox',
 		'crm.timeline.tools',
+		'crm.datetime',
 		'main.popup',
 		'main.core.events',
 		'ui.vue3',
@@ -21,8 +22,10 @@ return [
 		'ui.label',
 		'ui.buttons',
 		'ui.vue3.components.audioplayer',
+		'ui.vue3.components.hint',
 		'ui.alerts',
 		'ui.fonts.opensans',
+		'loader',
 	],
 	'skip_core' => false,
 ];

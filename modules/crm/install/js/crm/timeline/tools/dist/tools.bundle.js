@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core,main_date) {
+(function (exports,main_core,main_date,crm_datetime) {
 	'use strict';
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -23,15 +23,7 @@ this.BX.Crm = this.BX.Crm || {};
 	     * @param timestamp Timestamp in server timezone
 	     */
 	    value: function createFromServerTimestamp(timestamp) {
-	      let serverTimezoneOffset = parseInt(main_core.Loc.getMessage('CRM_TIMELINE_SERVER_TZ_OFFSET'));
-
-	      if (isNaN(serverTimezoneOffset)) {
-	        serverTimezoneOffset = 0;
-	      }
-
-	      const clientTimezoneOffset = -new Date().getTimezoneOffset() * 60;
-	      const timestampInClientTz = timestamp + serverTimezoneOffset - clientTimezoneOffset;
-	      const date = new Date(timestampInClientTz * 1000);
+	      const date = crm_datetime.Factory.createFromTimestampInServerTimezone(timestamp);
 	      return new DatetimeConverter(date);
 	    }
 	  }]);
@@ -73,7 +65,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "toUserTime",
 	    value: function toUserTime() {
-	      babelHelpers.classPrivateFieldSet(this, _datetime, new Date(babelHelpers.classPrivateFieldGet(this, _datetime).getTime() + 1000 * DatetimeConverter.getUserTimezoneOffset()));
+	      const serverTimestamp = Math.floor(babelHelpers.classPrivateFieldGet(this, _datetime).getTime() / 1000);
+	      babelHelpers.classPrivateFieldSet(this, _datetime, new Date(crm_datetime.TimestampConverter.serverToUser(serverTimestamp) * 1000));
 	      return this;
 	    }
 	  }, {
@@ -93,22 +86,9 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "toDateString",
 	    value: function toDateString() {
-	      return main_date.DateTimeFormat.format([['today', 'today'], ['tommorow', 'tommorow'], ['yesterday', 'yesterday'], ['', babelHelpers.classPrivateFieldGet(this, _datetime).getFullYear() === new Date().getFullYear() ? babelHelpers.classPrivateFieldGet(this, _shortDateFormat) : babelHelpers.classPrivateFieldGet(this, _fullDateFormat)]], babelHelpers.classPrivateFieldGet(this, _datetime));
+	      return main_date.DateTimeFormat.format([['today', 'today'], ['tommorow', 'tommorow'], ['yesterday', 'yesterday'], ['', babelHelpers.classPrivateFieldGet(this, _datetime).getFullYear() === crm_datetime.Factory.getUserNow().getFullYear() ? babelHelpers.classPrivateFieldGet(this, _shortDateFormat) : babelHelpers.classPrivateFieldGet(this, _fullDateFormat)]], babelHelpers.classPrivateFieldGet(this, _datetime));
 	    }
 	  }], [{
-	    key: "getUserTimezoneOffset",
-	    value: function getUserTimezoneOffset() {
-	      if (!this.userTimezoneOffset) {
-	        this.userTimezoneOffset = parseInt(main_core.Loc.getMessage('USER_TZ_OFFSET'));
-
-	        if (isNaN(this.userTimezoneOffset)) {
-	          this.userTimezoneOffset = 0;
-	        }
-	      }
-
-	      return this.userTimezoneOffset;
-	    }
-	  }, {
 	    key: "getSiteDateFormat",
 	    value: function getSiteDateFormat() {
 	      return main_date.DateTimeFormat.convertBitrixFormat(main_core.Loc.getMessage('FORMAT_DATE'));
@@ -124,5 +104,5 @@ this.BX.Crm = this.BX.Crm || {};
 
 	exports.DatetimeConverter = DatetimeConverter;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Main));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX,BX.Main,BX.Crm.DateTime));
 //# sourceMappingURL=tools.bundle.js.map

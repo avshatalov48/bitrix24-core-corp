@@ -372,7 +372,7 @@ if (!empty($arResult['SELECTED']))
 				'selected' => $sSelected
 			);
 		}
-		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT']);
+		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT'] ?? []);
 	}
 	if ($arParams['arUserField']['SETTINGS']['CONTACT'] == 'Y'
 		&& isset($arSelected['CONTACT']) && !empty($arSelected['CONTACT'])
@@ -416,7 +416,7 @@ if (!empty($arResult['SELECTED']))
 				'selected' => $sSelected
 			);
 		}
-		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT']);
+		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT'] ?? []);
 	}
 	if (true || $arParams['arUserField']['SETTINGS']['COMPANY'] == 'Y'
 	&& isset($arSelected['COMPANY']) && !empty($arSelected['COMPANY']))
@@ -468,7 +468,7 @@ if (!empty($arResult['SELECTED']))
 				'selected' => $sSelected
 			);
 		}
-		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT']);
+		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT'] ?? []);
 	}
 	if ($arParams['arUserField']['SETTINGS']['DEAL'] == 'Y'
 	&& isset($arSelected['DEAL']) && !empty($arSelected['DEAL']))
@@ -503,7 +503,7 @@ if (!empty($arResult['SELECTED']))
 				'selected' => $sSelected
 			);
 		}
-		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT']);
+		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT'] ?? []);
 	}
 	if ($arParams['arUserField']['SETTINGS']['QUOTE'] == 'Y'
 	&& isset($arSelected['QUOTE']) && !empty($arSelected['QUOTE']))
@@ -545,7 +545,7 @@ if (!empty($arResult['SELECTED']))
 				'selected' => $sSelected
 			);
 		}
-		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT']);
+		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT'] ?? []);
 	}
 	if (isset($arSettings['PRODUCT'])
 		&& $arSettings['PRODUCT'] == 'Y'
@@ -601,7 +601,7 @@ if (!empty($arResult['SELECTED']))
 			);
 		}
 		unset($arProducts);
-		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT']);
+		$arResult['ELEMENT'] = array_merge($ar, $arResult['ELEMENT'] ?? []);
 	}
 }
 

@@ -7,7 +7,7 @@
 /* Tab controls*/
 table.bx-edit-tabs {border-collapse:separate;}
 table.bx-edit-tabs table {border-collapse:separate;}
-table.bx-edit-tabs td {font-size:12px; font-weight:bold; color:#7C7C7C; white-space:nowrap; border-bottom:4px solid #878787; padding:0px;}
+table.bx-edit-tabs td {font-size:12px; font-weight:var(--ui-font-weight-bold); color:#7C7C7C; white-space:nowrap; border-bottom:4px solid #878787; padding:0px;}
 table.bx-edit-tabs td.bx-tab-container {border:none; cursor:pointer; cursor: hand;}
 table.bx-edit-tabs td.bx-tab-container-selected, table.bx-edit-tabs td.bx-tab-container-disabled {cursor:default;}
 table.bx-edit-tabs td.bx-tab-container-disabled td {border:none; color:#D7D7D7;}
@@ -36,7 +36,7 @@ table.bx-edit-tabs a.pressed {margin:0px; border:1px solid #AEB6C2; background-c
 	width: 30%;
 	text-align: right;
 	vertical-align: top;
-	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 }
 .bx-props-field-width{
@@ -52,7 +52,7 @@ table.bx-edit-tabs a.pressed {margin:0px; border:1px solid #AEB6C2; background-c
 }
 
 #user_props_list td:first-child{
-	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555;
 	width: 35% !important;
 }
@@ -121,7 +121,7 @@ body input[name=save] {
     -webkit-box-shadow: 0 2px 2px #ccc;
     -moz-box-shadow: 0 2px 2px #ccc;
     box-shadow: 0 2px 2px #ccc;
-    font: bold 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+    font: var(--ui-font-weight-bold) 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #fff;
     text-shadow: #799a16 0 1px 1px!important;
     cursor: pointer;
@@ -144,7 +144,7 @@ input[name=apply] {
     -webkit-box-shadow: 0 2px 2px #ccc;
     -moz-box-shadow: 0 2px 2px #ccc;
     box-shadow: 0 2px 2px #ccc;
-    font: bold 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+    font: var(--ui-font-weight-bold) 14px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #555;
     text-shadow: #fff 0 1px 1px!important;
     cursor: pointer;

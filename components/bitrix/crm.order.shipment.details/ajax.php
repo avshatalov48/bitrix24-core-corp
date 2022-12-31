@@ -397,15 +397,29 @@ final class AjaxProcessor extends \Bitrix\Crm\Order\AjaxProcessor
 	{
 		global $APPLICATION;
 		$componentParams = $this->request['PRODUCT_COMPONENT_DATA'];
+		$componentParams['params']['signedParameters'] = \CCrmInstantEditorHelper::signComponentParams(
+			(array)$componentParams['params'],
+			'crm.order.shipment.product.list'
+		);
 
 		ob_start();
 		$APPLICATION->IncludeComponent('bitrix:crm.order.shipment.product.list',
-			isset($componentParams['template']) ? $componentParams['template'] : '',
+			$componentParams['template'] ?? '',
 			array_merge(
 				$componentParams['params'],
 				[
 					'SHIPMENT' => $shipment,
-					'AJAX_MODE' => 'N'
+					'AJAX_MODE' => 'N',
+					'AJAX_LOADER' => [
+						'url' => '/bitrix/components/bitrix/crm.order.shipment.product.list/lazyload.ajax.php?&site=' . SITE_ID . '&' . bitrix_sessid_get(),
+						'method' => 'POST',
+						'dataType' => 'ajax',
+						'data' => [
+							'PARAMS' => [
+								'signedParameters' => $componentParams['params']['signedParameters']
+							],
+						],
+					],
 				]
 			),
 			false,

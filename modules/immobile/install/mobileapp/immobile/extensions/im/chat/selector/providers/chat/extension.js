@@ -333,7 +333,20 @@ jn.define('im/chat/selector/providers/chat', (require, exports, module) => {
 					getParameters: {context: this.context}
 				})
 				.then(response => {
+					let itemsFromCache =
+						this.cache.get('recent')
+							.concat(this.cache.get('items'))
+					;
+					itemsFromCache = this.processResult(query, itemsFromCache);
 					const items = this.prepareItems(response.data.dialog.items);
+
+					itemsFromCache.forEach(item => {
+						const foundItem =  items.find(internalItem => internalItem.title === item.title);
+						if (typeof foundItem === 'undefined')
+						{
+							items.push(item);
+						}
+					});
 
 					if (items.length === 0)
 					{

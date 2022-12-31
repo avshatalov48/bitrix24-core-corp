@@ -4,18 +4,15 @@ IncludeModuleLangFile(__FILE__);
 use Bitrix\Crm;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\Binding\LeadContactTable;
-use Bitrix\Crm\Counter\EntityCounterManager;
-use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\CustomerType;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integration\Channel\LeadChannelBinding;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
-use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
-use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Crm\UtmTable;
@@ -23,6 +20,7 @@ use Bitrix\Crm\UtmTable;
 class CAllCrmLead
 {
 	use UserFieldPreparer;
+	use EntityFieldsNormalizer;
 
 	static public $sUFEntityID = 'CRM_LEAD';
 
@@ -30,6 +28,8 @@ class CAllCrmLead
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_LEAD_SPD';
 	const TOTAL_COUNT_CACHE_ID = 'crm_lead_total_count';
 	const CACHE_TTL = 3600;
+
+	protected const TABLE_NAME = 'b_crm_lead';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -1406,7 +1406,7 @@ class CAllCrmLead
 			$arFields['OPPORTUNITY'] = 0.0;
 		}
 
-		if(!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
+		if(!isset($arFields['TITLE']) || !is_string($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 		{
 			$arFields['TITLE'] = self::GetDefaultTitle();
 		}
@@ -1646,7 +1646,10 @@ class CAllCrmLead
 		//endregion
 
 		unset($arFields['ID']);
-		$ID = intval($DB->Add('b_crm_lead', $arFields, array(), '', false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+		$this->normalizeEntityFields($arFields);
+		$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], '', false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
 		//Append ID to TITLE if required
 		if($ID > 0 && $arFields['TITLE'] === self::GetDefaultTitle())
 		{
@@ -1666,19 +1669,19 @@ class CAllCrmLead
 		$arFields['ID'] = $ID;
 		$arFields['DATE_CREATE'] = $arFields['DATE_MODIFY'] = ConvertTimeStamp(time() + CTimeZone::GetOffset(), 'FULL');
 
-		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-			->setEntityAttributes($arEntityAttr)
-		;
-		Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
-			->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
-		;
-
 		//region Save Observers
 		if(!empty($observerIDs))
 		{
 			Crm\Observer\ObserverManager::registerBulk($observerIDs, \CCrmOwnerType::Lead, $ID);
 		}
 		//endregion
+
+		$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+			->setEntityAttributes($arEntityAttr)
+		;
+		Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
+			->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+		;
 
 		$addressFields = array(
 			'ADDRESS_1' => isset($arFields['ADDRESS']) ? $arFields['ADDRESS'] : null,
@@ -1759,20 +1762,7 @@ class CAllCrmLead
 		;
 		$duplicateCriterionRegistrar->register($data);
 
-		if($assignedByID > 0)
-		{
-			EntityCounterManager::reset(
-				EntityCounterManager::prepareCodes(
-					CCrmOwnerType::Lead,
-					array(
-						EntityCounterType::IDLE,
-						EntityCounterType::ALL
-					)
-				),
-				array($assignedByID)
-			);
-		}
-
+		\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityAdd(CCrmOwnerType::Lead, $arFields);
 		// tracking of entity
 		Tracking\Entity::onAfterAdd(CCrmOwnerType::Lead, $ID, $arFields);
 
@@ -1893,8 +1883,6 @@ class CAllCrmLead
 				ExecuteModuleEventEx($arEvent, array(&$arFields));
 			}
 		}
-
-		\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::LeadName, 'kanban_add');
 
 		if ($ID>0)
 		{
@@ -2449,7 +2437,9 @@ class CAllCrmLead
 
 			unset($arFields['ID']);
 
-			$sUpdate = $DB->PrepareUpdate('b_crm_lead', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+			$this->normalizeEntityFields($arFields);
+			$sUpdate = $DB->PrepareUpdate(self::TABLE_NAME, $arFields);
+
 			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_lead SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
@@ -2496,13 +2486,6 @@ class CAllCrmLead
 			}
 			//endregion
 
-			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
-				->setEntityAttributes($arEntityAttr)
-			;
-			Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
-				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
-			;
-
 			//region Save contacts
 			if(!empty($removedContactBindings))
 			{
@@ -2533,6 +2516,15 @@ class CAllCrmLead
 					$ID
 				);
 			}
+			//endregion
+
+			//region Save access rights for owner and observers
+			$securityRegisterOptions = (new \Bitrix\Crm\Security\Controller\RegisterOptions())
+				->setEntityAttributes($arEntityAttr)
+			;
+			Crm\Security\Manager::getEntityController(CCrmOwnerType::Lead)
+				->register(self::$TYPE_NAME, $ID, $securityRegisterOptions)
+			;
 			//endregion
 
 			//region Address
@@ -2730,38 +2722,15 @@ class CAllCrmLead
 
 			if($bResult && (isset($arFields['ASSIGNED_BY_ID']) || isset($arFields['STATUS_ID'])))
 			{
-				$assignedByIDs = array();
-				if($assignedByID > 0)
-				{
-					$assignedByIDs[] = $assignedByID;
-				}
-
 				$previousAssignedByID = isset($arRow['ASSIGNED_BY_ID']) ? (int)$arRow['ASSIGNED_BY_ID'] : 0;
-				if($previousAssignedByID > 0 && $assignedByID !== $previousAssignedByID)
-				{
-					$assignedByIDs[] = $previousAssignedByID;
-				}
-
-				if(!empty($assignedByIDs))
-				{
-					EntityCounterManager::reset(
-						EntityCounterManager::prepareCodes(
-							CCrmOwnerType::Lead,
-							array(
-								EntityCounterType::PENDING,
-								EntityCounterType::OVERDUE,
-								EntityCounterType::IDLE,
-								EntityCounterType::ALL
-							)
-						),
-						$assignedByIDs
-					);
-				}
-
 				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
 				{
 					DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Lead, $ID);
 				}
+			}
+			if ($bResult)
+			{
+				\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(CCrmOwnerType::Lead, $arRow, $currentFields);
 			}
 
 			// update utm fields
@@ -2956,8 +2925,6 @@ class CAllCrmLead
 			}
 			//endregion
 
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::LeadName, 'kanban_update');
-
 			$statusSemanticsId = $arFields['STATUS_SEMANTIC_ID'] ?: $arRow['STATUS_SEMANTIC_ID'];
 			if(Crm\Ml\Scoring::isMlAvailable() && !Crm\PhaseSemantics::isFinal($statusSemanticsId))
 			{
@@ -3065,17 +3032,16 @@ class CAllCrmLead
 			$contactID = 0;
 		}
 
-		$sWherePerm = '';
-		if ($this->bCheckPermission)
+		$hasDeletePerm = \Bitrix\Crm\Service\Container::getInstance()
+			->getUserPermissions($iUserId)
+			->checkDeletePermissions(CCrmOwnerType::Lead, $ID);
+
+		if (
+			$this->bCheckPermission
+			&& !$hasDeletePerm
+		)
 		{
-			$arEntityAttr = $this->cPerms->GetEntityAttr(self::$TYPE_NAME, $ID);
-			$sEntityPerm = $this->cPerms->GetPermType(self::$TYPE_NAME, 'DELETE', $arEntityAttr[$ID]);
-			if ($sEntityPerm == BX_CRM_PERM_NONE)
-				return false;
-			else if ($sEntityPerm == BX_CRM_PERM_SELF)
-				$sWherePerm = " AND ASSIGNED_BY_ID = {$iUserId}";
-			else if ($sEntityPerm == BX_CRM_PERM_OPEN)
-				$sWherePerm = " AND (OPENED = 'Y' OR ASSIGNED_BY_ID = {$iUserId})";
+			return false;
 		}
 
 		$events = GetModuleEvents('crm', 'OnBeforeCrmLeadDelete');
@@ -3112,7 +3078,7 @@ class CAllCrmLead
 		}
 
 		$tableName = CCrmLead::TABLE_NAME;
-		$sSql = "DELETE FROM {$tableName} WHERE ID = {$ID}{$sWherePerm}";
+		$sSql = "DELETE FROM {$tableName} WHERE ID = {$ID}";
 		$obRes = $DB->Query($sSql, false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 		if (is_object($obRes) && $obRes->AffectedRowsCount() > 0)
 		{
@@ -3178,21 +3144,7 @@ class CAllCrmLead
 
 			DuplicateIndexMismatch::unregisterEntity(CCrmOwnerType::Lead, $ID);
 
-			if($assignedByID > 0)
-			{
-				EntityCounterManager::reset(
-					EntityCounterManager::prepareCodes(
-						CCrmOwnerType::Lead,
-						array(
-							EntityCounterType::PENDING,
-							EntityCounterType::OVERDUE,
-							EntityCounterType::IDLE,
-							EntityCounterType::ALL
-						)
-					),
-					array($assignedByID)
-				);
-			}
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityDelete(CCrmOwnerType::Lead, $arFields);
 
 			if($isConverted)
 			{
@@ -3277,7 +3229,7 @@ class CAllCrmLead
 			$item,
 			[
 				'TYPE' => self::$TYPE_NAME,
-				'SKIP_CURRENT_USER' => ($iUserId !== 0),
+				'SKIP_CURRENT_USER' => false,
 			]
 		);
 

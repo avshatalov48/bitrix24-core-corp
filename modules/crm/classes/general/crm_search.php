@@ -8,11 +8,24 @@ class CCrmSearch
 	static $oCallback = null;
 	static $callback_method = '';
 	static $arMess = array();
+	protected static bool $updateSearchIndexEnabled = true;
+
+	public static function isUpdateSearchIndexEnabled(): bool
+	{
+		return CModule::IncludeModule('search') && self::$updateSearchIndexEnabled;
+	}
+
+	public static function enableUpdateSearchIndex(bool $enable = true): void
+	{
+		self::$updateSearchIndexEnabled = $enable;
+	}
 
 	public static function UpdateSearch($arFilter, $ENTITY_TYPE, $bOverWrite = false)
 	{
-		if (!CModule::IncludeModule('search'))
+		if (!self::isUpdateSearchIndexEnabled())
+		{
 			return false;
+		}
 
 		$limit = 1000;
 		switch ($ENTITY_TYPE)

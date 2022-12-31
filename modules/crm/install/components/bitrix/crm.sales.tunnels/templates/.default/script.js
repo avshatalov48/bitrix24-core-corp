@@ -2248,7 +2248,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var title = this.getTitle();
 	      var titleEditor = this.getTitleEditor();
 	      var value = titleEditor.value;
-	      var newTitle = value.trim() || main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER');
+	      var newTitle = value.trim() || main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2');
 
 	      if (title.innerText !== newTitle) {
 	        title.innerText = newTitle;
@@ -2378,7 +2378,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            access: "A"
 	          }
 	        }, items.length > 0 ? {
-	          text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS'),
+	          text: main_core.Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2'),
 	          items: items
 	        } : null, {
 	          delimiter: true
@@ -2429,7 +2429,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      var _this22 = this;
 
 	      return this.cache.remember('removeButton', function () {
-	        var button = main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-remove-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY'));
+	        var button = main_core.Tag.render(_templateObject23 || (_templateObject23 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-remove-button\" \n\t\t\t\t\tonclick=\"", "\" \n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t> </span>\n\t\t\t"])), _this22.onRemoveButtonClick.bind(_this22), main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY2'));
 
 	        if (_this22["default"]) {
 	          main_core.Tag.style(button)(_templateObject24 || (_templateObject24 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\tdisplay: none;\n\t\t\t\t"])));
@@ -2548,7 +2548,7 @@ this.BX.Crm = this.BX.Crm || {};
 
 	        var onBlur = _this25.onTitleEditorBlur.bind(_this25);
 
-	        return main_core.Tag.render(_templateObject26 || (_templateObject26 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input class=\"crm-st-category-info-title-editor\" \n\t\t\t\t\t onkeydown=\"", "\"\n\t\t\t\t\t onblur=\"", "\"\n\t\t\t\t\t value=\"", "\"\n\t\t\t\t\t placeholder=\"", "\"\n\t\t\t\t >\n\t\t\t"])), onKeyDown, onBlur, main_core.Text.encode(_this25.name), main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'));
+	        return main_core.Tag.render(_templateObject26 || (_templateObject26 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<input class=\"crm-st-category-info-title-editor\" \n\t\t\t\t\t onkeydown=\"", "\"\n\t\t\t\t\t onblur=\"", "\"\n\t\t\t\t\t value=\"", "\"\n\t\t\t\t\t placeholder=\"", "\"\n\t\t\t\t >\n\t\t\t"])), onKeyDown, onBlur, main_core.Text.encode(_this25.name), main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2'));
 	      });
 	    }
 	  }, {
@@ -2595,7 +2595,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "getDragButton",
 	    value: function getDragButton() {
 	      return this.cache.remember('dragButton', function () {
-	        return main_core.Tag.render(_templateObject29 || (_templateObject29 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-action-drag\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>&nbsp;</span>\n\t\t\t"])), main_core.Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON'));
+	        return main_core.Tag.render(_templateObject29 || (_templateObject29 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<span \n\t\t\t\t\tclass=\"crm-st-category-action-drag\"\n\t\t\t\t\ttitle=\"", "\"\n\t\t\t\t\t>&nbsp;</span>\n\t\t\t"])), main_core.Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON2'));
 	      });
 	    }
 	  }, {
@@ -2633,10 +2633,10 @@ this.BX.Crm = this.BX.Crm || {};
 	          overlay: {
 	            opacity: 30
 	          },
-	          titleBar: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE').replace('#name#', _this28.getTitle().innerText),
-	          content: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION'),
+	          titleBar: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE2').replace('#name#', _this28.getTitle().innerText),
+	          content: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION2'),
 	          buttons: [new main_popup.PopupWindowButton({
-	            text: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_REMOVE_BUTTON_LABEL'),
+	            text: main_core.Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_REMOVE_BUTTON_LABEL2'),
 	            className: 'popup-window-button-decline',
 	            events: {
 	              click: function click() {
@@ -2957,7 +2957,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    }, '');
 	  }
 
-	  return main_core.Loc.getMessage('CRM_ST_SAVE_ERROR');
+	  return main_core.Loc.getMessage('CRM_ST_SAVE_ERROR2');
 	}
 
 	var Manager = /*#__PURE__*/function () {
@@ -3080,7 +3080,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      }
 
 	      return Backend.createCategory({
-	        name: main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'),
+	        name: main_core.Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2'),
 	        sort: this.getMaxSort() + 10
 	      }).then(function (response) {
 	        _this5.addCategoryFromOptions(response.data);

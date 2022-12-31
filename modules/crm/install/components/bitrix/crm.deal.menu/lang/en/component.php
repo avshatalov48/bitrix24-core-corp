@@ -28,6 +28,7 @@ $MESS["DEAL_ADD_TITLE"] = "Add Deal";
 $MESS["DEAL_CHANGE_CATEGORY"] = "Move to pipeline";
 $MESS["DEAL_COPY"] = "Copy";
 $MESS["DEAL_COPY_TITLE"] = "Copy deal";
+$MESS["DEAL_CREATE"] = "Create deal";
 $MESS["DEAL_CREATE_ON_BASIS"] = "Generate: ";
 $MESS["DEAL_CREATE_ON_BASIS_TITLE"] = "Create invoice and quote using deal";
 $MESS["DEAL_CRM_RECURRING_LIST"] = "Recurring deal templates";

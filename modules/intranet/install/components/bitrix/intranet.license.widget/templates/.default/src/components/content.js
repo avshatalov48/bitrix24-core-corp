@@ -97,7 +97,6 @@ export const ContentComponent = {
 		},
 		showHelper()
 		{
-			console.error('intranet.license.widget: needs a helper iformation.');
 			if (this.license.isDemo)
 			{
 				const article = this.isCloud ? "limit_support_bitrix" : "limit_support_bitrix_box";

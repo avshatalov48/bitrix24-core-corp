@@ -1,3 +1,4 @@
+import {Dom} from "main.core";
 import Manager from "./manager";
 
 /** @memberof BX.Crm.Timeline */
@@ -60,17 +61,21 @@ export default class Editor
 			BX.bind(this._cancelButton, "click", this._cancelButtonHandler);
 		}
 
-		BX.bind(this._input, "focus", this._focusHandler);
-		BX.bind(this._input, "blur", this._blurHandler);
-		BX.bind(this._input, "keyup", this._keyupHandler);
-		BX.bind(this._input, "cut", this._delayedKeyupHandler);
-		BX.bind(this._input, "paste", this._delayedKeyupHandler);
-
+		this.bindInputHandlers();
 		this.doInitialize();
 	}
 
 	doInitialize()
 	{
+	}
+
+	bindInputHandlers()
+	{
+		BX.bind(this._input, "focus", this._focusHandler);
+		BX.bind(this._input, "blur", this._blurHandler);
+		BX.bind(this._input, "keyup", this._keyupHandler);
+		BX.bind(this._input, "cut", this._delayedKeyupHandler);
+		BX.bind(this._input, "paste", this._delayedKeyupHandler);
 	}
 
 	getId()
@@ -92,7 +97,10 @@ export default class Editor
 		}
 
 		this._isVisible = visible;
-		this._container.style.display = visible ? "" : "none";
+		if (this._container)
+		{
+			this._container.style.display = visible ? "" : "none";
+		}
 	}
 
 	isVisible()
@@ -126,7 +134,21 @@ export default class Editor
 
 	onSaveButtonClick(e)
 	{
-		this.save();
+		Dom.addClass(this._saveButton, 'ui-btn-wait');
+		const removeButtonWaitClass = () => Dom.removeClass(this._saveButton, 'ui-btn-wait');
+
+		const saveResult = this.save();
+		if (saveResult instanceof BX.Promise || saveResult instanceof Promise)
+		{
+			saveResult.then(
+				() => removeButtonWaitClass(),
+				() => removeButtonWaitClass()
+			);
+		}
+		else
+		{
+			removeButtonWaitClass();
+		}
 	}
 
 	onCancelButtonClick()

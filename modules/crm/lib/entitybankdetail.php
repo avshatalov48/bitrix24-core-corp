@@ -30,6 +30,8 @@ class EntityBankDetail
 	private static $rqFields = array(
 		'RQ_BANK_NAME',
 		'RQ_BANK_ADDR',
+		'RQ_BANK_CODE',
+		'RQ_AGENCY_NAME',
 		'RQ_BANK_ROUTE_NUM',
 		'RQ_BIK',
 		'RQ_MFO',
@@ -38,9 +40,13 @@ class EntityBankDetail
 		'RQ_IIK',
 		'RQ_ACC_CURRENCY',
 		'RQ_COR_ACC_NUM',
+		'RQ_ACC_TYPE',
 		'RQ_IBAN',
 		'RQ_SWIFT',
-		'RQ_BIC'
+		'RQ_BIC',
+		'RQ_CODEB',
+		'RQ_CODEG',
+		'RQ_RIB',
 	);
 	private static $rqFiltrableFields = null;
 	private static $rqFieldMapByCountry = [
@@ -82,6 +88,20 @@ class EntityBankDetail
 			'RQ_ACC_NUM',
 			'RQ_IBAN',
 		],
+		// BR
+		34 => [
+			'RQ_BANK_NAME',
+			'RQ_BANK_ADDR',
+			'RQ_BANK_CODE',
+			'RQ_AGENCY_NAME',
+			'RQ_BANK_ROUTE_NUM',
+			'RQ_ACC_NAME',
+			'RQ_ACC_NUM',
+			'RQ_ACC_TYPE',
+			'RQ_IBAN',
+			'RQ_SWIFT',
+			'RQ_BIC',
+		],
 		// DE
 		46 => [
 			'RQ_BANK_NAME',
@@ -116,6 +136,20 @@ class EntityBankDetail
 			'RQ_IBAN',
 			'RQ_SWIFT',
 			'RQ_BIC',
+		],
+		// FR
+		132 => [
+			'RQ_BANK_NAME',
+			'RQ_BANK_ADDR',
+			'RQ_BANK_ROUTE_NUM',
+			'RQ_ACC_NAME',
+			'RQ_ACC_NUM',
+			'RQ_IBAN',
+			'RQ_SWIFT',
+			'RQ_BIC',
+			'RQ_CODEB',
+			'RQ_CODEG',
+			'RQ_RIB',
 		],
 		// US
 		122 => [
@@ -167,64 +201,70 @@ class EntityBankDetail
 	{
 		if(!self::$FIELD_INFOS)
 		{
-			self::$FIELD_INFOS = array(
-				'ID' => array(
+			self::$FIELD_INFOS = [
+				'ID' => [
 						'TYPE' => 'integer',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'ENTITY_TYPE_ID' => array(
+						'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly]
+				],
+				'ENTITY_TYPE_ID' => [
 						'TYPE' => 'integer',
-						'ATTRIBUTES' => array(
+						'ATTRIBUTES' => [
 								\CCrmFieldInfoAttr::Required,
 								\CCrmFieldInfoAttr::Immutable,
 								\CCrmFieldInfoAttr::Hidden
-						)
-				),
-				'ENTITY_ID' => array(
+						]
+				],
+				'ENTITY_ID' => [
 						'TYPE' => 'integer',
-						'ATTRIBUTES' => array(
+						'ATTRIBUTES' => [
 								\CCrmFieldInfoAttr::Required,
 								\CCrmFieldInfoAttr::Immutable
-						)
-				),
-				'COUNTRY_ID' => array('TYPE' => 'integer'),
-				'DATE_CREATE' => array(
+						]
+				],
+				'COUNTRY_ID' => ['TYPE' => 'integer'],
+				'DATE_CREATE' => [
 						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'DATE_MODIFY' => array(
+						'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly]
+				],
+				'DATE_MODIFY' => [
 						'TYPE' => 'datetime',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'CREATED_BY_ID' => array(
+						'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly]
+				],
+				'CREATED_BY_ID' => [
 						'TYPE' => 'user',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'MODIFY_BY_ID' => array(
+						'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly]
+				],
+				'MODIFY_BY_ID' => [
 						'TYPE' => 'user',
-						'ATTRIBUTES' => array(\CCrmFieldInfoAttr::ReadOnly)
-				),
-				'NAME' => array('TYPE' => 'string'),
-				'CODE' => array('TYPE' => 'string'),
-				'XML_ID' => array('TYPE' => 'string'),
-				'ACTIVE' => array('TYPE' => 'char'),
-				'SORT' => array('TYPE' => 'integer'),
-				'RQ_BANK_NAME' => array('TYPE' => 'string'),
-				'RQ_BANK_ADDR' => array('TYPE' => 'string'),
-				'RQ_BANK_ROUTE_NUM' => array('TYPE' => 'string'),
-				'RQ_BIK' => array('TYPE' => 'string'),
-				'RQ_MFO' => array('TYPE' => 'string'),
-				'RQ_ACC_NAME' => array('TYPE' => 'string'),
-				'RQ_ACC_NUM' => array('TYPE' => 'string'),
-				'RQ_IIK' => array('TYPE' => 'string'),
-				'RQ_ACC_CURRENCY' => array('TYPE' => 'string'),
-				'RQ_COR_ACC_NUM' => array('TYPE' => 'string'),
-				'RQ_IBAN' => array('TYPE' => 'string'),
-				'RQ_SWIFT' => array('TYPE' => 'string'),
-				'RQ_BIC' => array('TYPE' => 'string'),
-				'COMMENTS' => array('TYPE' => 'string'),
-				'ORIGINATOR_ID' => array('TYPE' => 'string')
-			);
+						'ATTRIBUTES' => [\CCrmFieldInfoAttr::ReadOnly]
+				],
+				'NAME' => ['TYPE' => 'string'],
+				'CODE' => ['TYPE' => 'string'],
+				'XML_ID' => ['TYPE' => 'string'],
+				'ACTIVE' => ['TYPE' => 'char'],
+				'SORT' => ['TYPE' => 'integer'],
+				'RQ_BANK_NAME' => ['TYPE' => 'string'],
+				'RQ_BANK_ADDR' => ['TYPE' => 'string'],
+				'RQ_BANK_CODE' => ['TYPE' => 'string'],
+				'RQ_AGENCY_NAME' => ['TYPE' => 'string'],
+				'RQ_BANK_ROUTE_NUM' => ['TYPE' => 'string'],
+				'RQ_BIK' => ['TYPE' => 'string'],
+				'RQ_MFO' => ['TYPE' => 'string'],
+				'RQ_ACC_NAME' => ['TYPE' => 'string'],
+				'RQ_ACC_NUM' => ['TYPE' => 'string'],
+				'RQ_ACC_TYPE' => ['TYPE' => 'string'],
+				'RQ_IIK' => ['TYPE' => 'string'],
+				'RQ_ACC_CURRENCY' => ['TYPE' => 'string'],
+				'RQ_COR_ACC_NUM' => ['TYPE' => 'string'],
+				'RQ_IBAN' => ['TYPE' => 'string'],
+				'RQ_SWIFT' => ['TYPE' => 'string'],
+				'RQ_BIC' => ['TYPE' => 'string'],
+				'RQ_CODEB' => ['TYPE' => 'string'],
+				'RQ_CODEG' => ['TYPE' => 'string'],
+				'RQ_RIB' => ['TYPE' => 'string'],
+				'COMMENTS' => ['TYPE' => 'string'],
+				'ORIGINATOR_ID' => ['TYPE' => 'string']
+			];
 		}
 		return self::$FIELD_INFOS;
 	}
@@ -356,17 +396,23 @@ class EntityBankDetail
 			self::$rqFieldValidationMap = [
 				'RQ_BANK_NAME' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
 				'RQ_BANK_ADDR' => [['type' => 'length', 'params' => ['min' => null, 'max' => 255]]],
+				'RQ_BANK_CODE' => [['type' => 'length', 'params' => ['min' => null, 'max' => 50]]],
+				'RQ_AGENCY_NAME' => [['type' => 'length', 'params' => ['min' => null, 'max' => 50]]],
 				'RQ_BANK_ROUTE_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 9]]],
 				'RQ_BIK' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
 				'RQ_MFO' => [['type' => 'length', 'params' => ['min' => null, 'max' => 6]]],
 				'RQ_ACC_NAME' => [['type' => 'length', 'params' => ['min' => null, 'max' => 150]]],
 				'RQ_ACC_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 34]]],
+				'RQ_ACC_TYPE' => [['type' => 'length', 'params' => ['min' => null, 'max' => 50]]],
 				'RQ_IIK' => [['type' => 'length', 'params' => ['min' => null, 'max' => 20]]],
 				'RQ_ACC_CURRENCY' => [['type' => 'length', 'params' => ['min' => null, 'max' => 100]]],
 				'RQ_COR_ACC_NUM' => [['type' => 'length', 'params' => ['min' => null, 'max' => 34]]],
 				'RQ_IBAN' => [['type' => 'length', 'params' => ['min' => null, 'max' => 34]]],
 				'RQ_SWIFT' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
-				'RQ_BIC' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]]
+				'RQ_BIC' => [['type' => 'length', 'params' => ['min' => null, 'max' => 11]]],
+				'RQ_CODEB' => [['type' => 'length', 'params' => ['min' => null, 'max' => 5]]],
+				'RQ_CODEG' => [['type' => 'length', 'params' => ['min' => null, 'max' => 5]]],
+				'RQ_RIB' => [['type' => 'length', 'params' => ['min' => null, 'max' => 2]]],
 			];
 		}
 
@@ -1082,7 +1128,9 @@ class EntityBankDetail
 				'RQ_COR_ACC_NUM',
 				'RQ_IBAN',
 				'RQ_SWIFT',
-				'RQ_BIC'
+				'RQ_BIC',
+				'RQ_CODEB',
+				'RQ_CODEG',
 			);
 		}
 
@@ -1625,32 +1673,40 @@ class EntityBankDetail
 		{
 			self::$duplicateCriterionFieldsMap = array(
 				1 => array(        // ru
-					'RQ_ACC_NUM'
+					'RQ_ACC_NUM',
 				),
 				4 => array(        // by
-					'RQ_ACC_NUM'
+					'RQ_ACC_NUM',
 				),
 				6 => array(        // kz
-					'RQ_IIK'
+					'RQ_IIK',
 				),
 				14 => array(       // ua
-					'RQ_ACC_NUM'
+					'RQ_ACC_NUM',
+				),
+				34 => array(       // br
+					'RQ_ACC_NUM',
+					'RQ_IBAN',
 				),
 				46 => array(       // de
 					'RQ_ACC_NUM',
-					'RQ_IBAN'
+					'RQ_IBAN',
 				),
 				77 => array(      // co
 					'RQ_ACC_NUM',
-					'RQ_IBAN'
+					'RQ_IBAN',
 				),
 				110 => array(      // pl
 					'RQ_ACC_NUM',
-					'RQ_IBAN'
+					'RQ_IBAN',
+				),
+				132 => array(      // fr
+					'RQ_ACC_NUM',
+					'RQ_IBAN',
 				),
 				122 => array(      // us
 					'RQ_ACC_NUM',
-					'RQ_IBAN'
+					'RQ_IBAN',
 				),
 			);
 		}

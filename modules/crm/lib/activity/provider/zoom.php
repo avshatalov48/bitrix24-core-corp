@@ -172,9 +172,12 @@ class Zoom extends Base
 
 	public static function checkFields($action, &$fields, $id, $params = null)
 	{
-		if (($action === 'UPDATE') && isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
+		if ($action === 'UPDATE')
 		{
-			$fields['DEADLINE'] = $fields['START_TIME'];
+			if (isset($fields['START_TIME']) && $fields['START_TIME'] !== '')
+			{
+				$fields['DEADLINE'] = $fields['START_TIME'];
+			}
 		}
 
 		return new \Bitrix\Main\Result();

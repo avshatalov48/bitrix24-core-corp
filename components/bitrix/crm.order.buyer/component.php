@@ -1,4 +1,4 @@
-<?
+<?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 if (!CModule::IncludeModule('crm'))
@@ -23,7 +23,13 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
-if (!CCrmSaleHelper::isShopAccess())
+if (!CModule::IncludeModule('catalog'))
+{
+	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_CATALOG'));
+	return;
+}
+
+if (!\Bitrix\Catalog\Access\AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

@@ -354,10 +354,22 @@ export class ListEditor extends EventEmitter
 
 		this.showFieldsPanel(fieldsPanelOptions)
 			.then((result) => {
+				this.setFieldsDictionary(
+					FieldsPanel.getInstance().getCrmFields(),
+				);
+
+				return result;
+			})
+			.then((result) => {
 				result.forEach((fieldName) => {
+					const fieldData = this.getFieldByName(fieldName);
+					if (!Type.isString(fieldData.label) && Type.isString(fieldData.caption))
+					{
+						fieldData.label = fieldData.caption;
+					}
 					this.addItem({
-						sourceData: this.getFieldByName(fieldName),
-						data: this.getFieldByName(fieldName),
+						sourceData: fieldData,
+						data: fieldData,
 					});
 
 					this.onChange();

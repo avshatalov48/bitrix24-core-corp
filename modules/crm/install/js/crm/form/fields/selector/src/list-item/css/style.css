@@ -1,0 +1,8 @@
+.crm-form-fields-selector-field {
+	border-bottom: 1px solid #EDEEF0;
+	user-select: none;
+}
+
+.crm-form-fields-selector-field-checkbox {
+	margin-bottom: 0;
+}

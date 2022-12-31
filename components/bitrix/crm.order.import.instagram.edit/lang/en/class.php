@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["CRM_OIIE_ERROR_ACCESS_DENIED"] = "Insufficient permissions to import data.";
 $MESS["CRM_OIIE_FACEBOOK_NO_AUTHORIZATION_PAGE"] = "Cannot link the page";
 $MESS["CRM_OIIE_FACEBOOK_NO_DEL_PAGE"] = "Cannot unlink the page";
 $MESS["CRM_OIIE_FACEBOOK_NO_DEL_USER"] = "Cannot unlink your user account";
@@ -17,4 +18,4 @@ $MESS["CRM_OIIE_MODULE_NOT_INSTALLED_CRM"] = "The CRM module is not installed.";
 $MESS["CRM_OIIE_MODULE_NOT_INSTALLED_IMCONNECTOR"] = "The External IM Connectors module is not installed.";
 $MESS["CRM_OIIE_SETTINGS_NO_DISABLE"] = "Error disabling product import";
 $MESS["CRM_OIIE_TITLE"] = "Connect Instagram to Your Online Store";
-?>
+$MESS["CRM_OIIE_TITLE_WITH_ASTERISK"] = "Connect Instagram to your online store";

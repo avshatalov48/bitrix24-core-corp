@@ -1,5 +1,8 @@
-(() =>
-{
+(() => {
+	const { BarcodeType } = jn.require('layout/ui/fields/barcode');
+	const { StringType } = jn.require('layout/ui/fields/string');
+	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
+
 	class FooterComponent extends LayoutComponent
 	{
 		constructor(props)
@@ -16,10 +19,6 @@
 			return View({
 					style: CatalogProductWizardStepStyles.footer.container,
 				},
-				Text({
-					style: CatalogProductWizardStepStyles.footer.text,
-					text: BX.message('WIZARD_STEP_FOOTER_TEXT_PRODUCT')
-				}),
 				this.renderSections()
 			);
 		}
@@ -73,12 +72,13 @@
 				widgetParams: {
 					backdrop: {
 						mediumPositionPercent: 70,
+						horizontalSwipeAllowed: false,
 					},
 				},
 				allowMultipleSelection: false,
 			});
 
-			selector.show();
+			FocusManager.blurFocusedFieldIfHas().then(() => selector.show());
 		}
 	}
 
@@ -95,7 +95,7 @@
 
 			this.addField(
 				'NAME',
-				FieldFactory.Type.STRING,
+				StringType,
 				BX.message('WIZARD_FIELD_PRODUCT_NAME'),
 				this.entity.get('NAME', ''),
 				{
@@ -104,7 +104,7 @@
 			);
 			this.addField(
 				'BARCODE',
-				FieldFactory.Type.BARCODE,
+				BarcodeType,
 				BX.message('WIZARD_FIELD_PRODUCT_BARCODE'),
 				this.entity.get('BARCODE', ''),
 			);

@@ -9,6 +9,7 @@ use Bitrix\Crm\Integration\Rest\EventManager;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
+use Bitrix\Crm\Timeline\DocumentController;
 use Bitrix\DocumentGenerator\CreationMethod;
 use Bitrix\DocumentGenerator\Document;
 use Bitrix\DocumentGenerator\Driver;
@@ -262,6 +263,36 @@ class DocumentGeneratorManager
 					'entityId' => (int)$provider->getSource(),
 				]);
 				$event->send();
+			}
+		}
+
+		return true;
+	}
+
+	final public static function onDocumentTransformationComplete(Event $event): bool
+	{
+		$documentId = (int)$event->getParameter('documentId');
+		if ($documentId > 0 && self::getInstance()->isEnabled())
+		{
+			$document = Document::loadById($documentId);
+			if ($document)
+			{
+				$provider = $document->getProvider();
+				if ($provider instanceof DataProvider\CrmEntityDataProvider)
+				{
+					$owner = $provider->getTimelineItemIdentifier();
+
+					if ($owner)
+					{
+						DocumentController::getInstance()->onDocumentTransformationComplete(
+							$documentId,
+							[
+								'ENTITY_TYPE_ID' => $owner->getEntityTypeId(),
+								'ENTITY_ID' => $owner->getEntityId()
+							],
+						);
+					}
+				}
 			}
 		}
 

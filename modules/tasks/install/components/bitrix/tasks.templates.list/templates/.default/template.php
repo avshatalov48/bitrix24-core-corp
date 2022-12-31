@@ -192,7 +192,7 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 						//		"CURRENT_PAGE" => $arResult[ 'NAV' ]->getCurrentPage(),
 						//		"ENABLE_NEXT_PAGE" => ($arResult[ 'NAV' ]->getPageSize() * $arResult[ 'NAV' ]->getCurrentPage()) < $arResult[ 'NAV' ]->getRecordCount(),
 						"PAGE_SIZES" => $arResult['PAGE_SIZES'],
-						"DEFAULT_PAGE_SIZE" => 50
+						"DEFAULT_PAGE_SIZE" => 50,
 					),
 					$component,
 					array('HIDE_ICONS' => 'Y')
@@ -296,6 +296,8 @@ if ($arParams['HIDE_FILTER'] != 'Y')
 
 				TASKS_LIST_GROUP_ACTION_DELETE_ERROR: '<?php echo GetMessageJS('TASKS_LIST_GROUP_ACTION_DELETE_ERROR'); ?>',
 				TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM: '<?php echo GetMessageJS('TASKS_TEMPLATE_LIST_GROUP_ACTION_REMOVE_CONFIRM'); ?>',
+				TASKS_TEMPLATES_LIST_TITLE_ERROR: '<?= Loc::getMessage('TASKS_TEMPLATES_LIST_TITLE_ERROR')?>',
+				TASKS_TEMPLATES_LIST_CLOSE: '<?= Loc::getMessage('TASKS_TEMPLATES_LIST_CLOSE')?>',
 			});
 		</script>
 	<? endif ?>

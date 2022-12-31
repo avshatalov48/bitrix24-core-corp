@@ -40,6 +40,7 @@ $MESS["MENU_RPA_SECTION"] = "Robotic Process Automation (RPA)";
 $MESS["MENU_SALESCENTER_SECTION"] = "Sales Center";
 $MESS["MENU_SETTINGS_SECTION"] = "Settings";
 $MESS["MENU_SHOP"] = "Online Store";
+$MESS["MENU_SIGN"] = "Bitrix24.Sign";
 $MESS["MENU_SITES"] = "Sites";
 $MESS["MENU_SITES_AND_STORES"] = "Sites and stores";
 $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Inventory management";

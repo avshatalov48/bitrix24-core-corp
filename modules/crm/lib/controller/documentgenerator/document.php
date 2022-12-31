@@ -2,9 +2,9 @@
 
 namespace Bitrix\Crm\Controller\DocumentGenerator;
 
+use Bitrix\Crm\Controller\ErrorCode;
 use Bitrix\Crm\Integration\DocumentGeneratorManager;
-use Bitrix\DocumentGenerator\Engine\CheckPermissions;
-use Bitrix\DocumentGenerator\UserPermissions;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Engine\ActionFilter\Csrf;
 use Bitrix\Main\Engine\Response\DataType\ContentUri;
 use Bitrix\Main\Engine\Response\DataType\Page;
@@ -98,6 +98,25 @@ class Document extends Base
 			$filter = [];
 		}
 		$filter['=template.moduleId'] = static::MODULE_ID;
+
+		if (
+			(!isset($filter['entityTypeId']) || !is_scalar($filter['entityTypeId']))
+			&& !\CCrmPerms::IsAccessEnabled()
+		)
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
+		if (
+			(isset($filter['entityTypeId']) && is_scalar($filter['entityTypeId']))
+			&& !Container::getInstance()->getUserPermissions()->checkReadPermissions($filter['entityTypeId'])
+		)
+		{
+			$this->addError(ErrorCode::getAccessDeniedError());
+
+			return null;
+		}
 
 		if(is_array($select) && in_array('entityId', $select))
 		{

@@ -3,6 +3,14 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+$runtime = CBPRuntime::getRuntime();
+
+$socMess = $runtime->getActivityDescription('SocNetMessageActivity');
+$control = $runtime->getActivityDescription('CrmControlNotifyActivity');
+
+$messageTitle = $socMess['ROBOT_SETTINGS']['TITLE'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_NOTIFY_TITLE');
+$controlTitle = $control['NAME'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_CONTROL_TITLE');
+
 return array(
 	'NEW'        =>
 		array(
@@ -13,7 +21,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_1"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A80076_39574_91538_16852',
 			),
@@ -24,7 +32,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_2"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'                 => 'A98281_91927_73796_24217',
 				'Delay'                =>
@@ -43,7 +51,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A67355_61522_13033_73744',
 				'Delay'      =>
@@ -65,7 +73,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_2"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A28086_71643_28365_98086',
 			),
@@ -75,7 +83,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A51190_50950_64719_78291',
 				'Delay'      =>
@@ -97,7 +105,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_2"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A86449_35886_93041_19637',
 				'Delay'      =>
@@ -114,7 +122,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_LEAD_2_MESSAGE_3"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_LEAD_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A57404_93335_19193_84575',
 				'Delay'      =>

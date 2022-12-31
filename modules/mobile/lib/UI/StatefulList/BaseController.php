@@ -8,6 +8,13 @@ class BaseController extends \Bitrix\Main\Engine\Controller
 {
 	protected const PREFIX = '';
 
+	protected function init()
+	{
+		parent::init();
+
+		define('BX_MOBILE', true);
+	}
+
 	/**
 	 * @return array
 	 * @throws Exception

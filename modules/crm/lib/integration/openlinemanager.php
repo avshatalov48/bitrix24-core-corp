@@ -1,24 +1,29 @@
 <?php
+
 namespace Bitrix\Crm\Integration;
-use Bitrix\Crm\Activity\Provider\OpenLine;
-use Bitrix\Crm\ActivityTable;
+
+use Bitrix\Im;
+use Bitrix\Im\Counter;
+use Bitrix\ImOpenLines\Chat;
+use Bitrix\ImOpenLines\Config;
 use Bitrix\ImOpenLines\Model\SessionTable;
-use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Imopenlines;
-use Bitrix\Im;
-use http\Exception\InvalidArgumentException;
 
 Loc::loadMessages(__FILE__);
 
 class OpenLineManager
 {
-	/** @var bool|null  */
-	private static $isEnabled = null;
-	private static $supportedTypes = array(
-		'IM' => array(
+	private static $isEnabled;
+
+	/**
+	 * List of supported IM types
+	 *
+	 * @var array
+	 */
+	private static array $supportedTypes = [
+		'IM' => [
 			'IMOL' => true,
 			'OPENLINE' => true,
 			'BITRIX24' => true,
@@ -26,9 +31,33 @@ class OpenLineManager
 			'TELEGRAM' => true,
 			'VK' => true,
 			'VIBER' => true,
-			'INSTAGRAM' => true
-		)
-	);
+			'INSTAGRAM' => true,
+		]
+	];
+
+	private static array $supportedConnectors = [
+		'livechat',
+		'fbinstagram',
+		'viber',
+		'wechat',
+		'network',
+		'facebook',
+		'facebookmessenger',
+		'facebookcomments',
+		'fbinstagramdirect',
+		'imessage',
+		'olx',
+		'notifications',
+		'whatsappbyedna',
+		'whatsappbytwilio',
+		'vkgroup',
+		'vkgrouporder',
+		'ok',
+		'avito',
+		'telegrambot',
+		'telegram',
+		'imessage',
+	];
 
 	/**
 	 * Check if current manager enabled.
@@ -36,23 +65,24 @@ class OpenLineManager
 	 */
 	public static function isEnabled()
 	{
-		if(self::$isEnabled === null)
+		if (self::$isEnabled === null)
 		{
 			self::$isEnabled = ModuleManager::isModuleInstalled('imopenlines')
 				&& Loader::includeModule('imopenlines');
 		}
+
 		return self::$isEnabled;
 	}
 
 	public static function prepareMultiFieldLinkAttributes($typeName, $valueTypeID, $value)
 	{
-		if(!(isset(self::$supportedTypes[$typeName]) && isset(self::$supportedTypes[$typeName][$valueTypeID])))
+		if (!(isset(self::$supportedTypes[$typeName]) && isset(self::$supportedTypes[$typeName][$valueTypeID])))
 		{
 			return null;
 		}
 
 		$items = explode('|', $value);
-		if(!(is_array($items) && count($items) > 2 && $items[0] === 'imol'))
+		if (!(is_array($items) && count($items) > 2 && $items[0] === 'imol'))
 		{
 			return null;
 		}
@@ -60,32 +90,31 @@ class OpenLineManager
 		$typeID = $items[1];
 		$suffix = mb_strtoupper(preg_replace('/[^a-z0-9]/i', '', $typeID));
 		$text = Loc::getMessage("CRM_OPEN_LINE_{$suffix}");
-		if($text === null)
+		if ($text === null)
 		{
 			$text = Loc::getMessage('CRM_OPEN_LINE_SEND_MESSAGE');
 		}
 
-		return array(
+		return [
 			'HREF' => '#',
 			'ONCLICK' => "if(typeof(top.BXIM)!=='undefined') top.BXIM.openMessengerSlider('{$value}', {RECENT: 'N', MENU: 'N'}); return BX.PreventDefault(event);",
 			'TEXT' => $text,
-			'TITLE' => $text
-		);
+			'TITLE' => $text,
+		];
 	}
 
 	public static function getSessionMessages($sessionID, $limit = 20)
 	{
-		if(
+		if (
 			!Loader::includeModule('im')
 			|| !Loader::includeModule('imopenlines')
 		)
 		{
-			return array();
+			return [];
 		}
 
-		$sessionID = intval($sessionID);
-
-		if($limit <= 0)
+		$sessionID = (int)$sessionID;
+		if ($limit <= 0)
 		{
 			$limit = 20;
 		}
@@ -110,11 +139,8 @@ class OpenLineManager
 		";
 
 		$connection = \Bitrix\Main\Application::getConnection();
-		$dbResult = $connection->query(
-			$connection->getSqlHelper()->getTopSql($query, $limit)
-		);
-
-		$results = array();
+		$dbResult = $connection->query($connection->getSqlHelper()->getTopSql($query, $limit));
+		$results = [];
 		while ($messageFields = $dbResult->fetch())
 		{
 			$messageFields['MESSAGE'] = Im\Text::parse($messageFields['MESSAGE']);
@@ -129,5 +155,84 @@ class OpenLineManager
 		}
 
 		return $results;
+	}
+
+	public static function getLineConnectorType(?string $code): ?string
+	{
+		if (!isset($code))
+		{
+			return null;
+		}
+
+		$connectorId = Chat::parseLinesChatEntityId($code)['connectorId'] ?? '';
+		if (!in_array($connectorId, static::$supportedConnectors, true))
+		{
+			return null;
+		}
+
+		return $connectorId;
+	}
+
+	public static function getLineTitle(?string $code): ?string
+	{
+		if (!isset($code))
+		{
+			return null;
+		}
+
+		$lineId = Chat::parseLinesChatEntityId($code)['lineId'];
+		if (!isset($lineId))
+		{
+			return null;
+		}
+
+		return (new Config())->get($lineId)['LINE_NAME'] ?? null;
+	}
+
+	public static function getChatTitle(?string $code): ?string
+	{
+		if (!isset($code))
+		{
+			return null;
+		}
+
+		$chat = new Chat();
+		$isLoaded = $chat->load(['USER_CODE' => $code, 'ONLY_LOAD' => 'Y']);
+
+		return $isLoaded ? $chat->getData('TITLE') : null;
+	}
+
+	public static function getSessionData(?int $sessionId): array
+	{
+		if (!isset($sessionId))
+		{
+			return [];
+		}
+
+		$session = SessionTable::getById($sessionId)->fetch();
+
+		return $session ?: [];
+	}
+
+	public static function getChatUnReadMessages(?string $code, ?int $userId): int
+	{
+		if (
+			!isset($code)
+			|| !Loader::includeModule('im')
+			|| !Loader::includeModule('imopenlines')
+		)
+		{
+			return 0;
+		}
+
+		$chatId = Chat::getChatIdByUserCode($code);
+		if ($chatId > 0)
+		{
+			$counters = Counter::get($userId);
+
+			return (int)$counters['LINES'][$chatId];
+		}
+
+		return 0;
 	}
 }

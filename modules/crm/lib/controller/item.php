@@ -289,16 +289,19 @@ class Item extends Base
 			$currentFiles = array_flip($item->get($fieldName) ?? []);
 			foreach ($fileData as $file)
 			{
-				$fileId = (int)$file['ID'];
-				if ($fileId > 0)
+				if (isset($file['ID']))
 				{
-					if (isset($currentFiles[$fileId]))
+					$fileId = (int)$file['ID'];
+					if ($fileId > 0)
 					{
-						Container::getInstance()->getFileUploader()->registerFileId($field, $fileId);
-						$result[] = $fileId;
-					}
+						if (isset($currentFiles[$fileId]))
+						{
+							Container::getInstance()->getFileUploader()->registerFileId($field, $fileId);
+							$result[] = $fileId;
+						}
 
-					continue;
+						continue;
+					}
 				}
 
 				$fileId = $this->uploadFile($field, $file);

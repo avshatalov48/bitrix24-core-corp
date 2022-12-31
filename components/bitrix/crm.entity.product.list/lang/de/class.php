@@ -1,6 +1,6 @@
 <?php
+$MESS["CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED"] = "Sie haben nicht genügend Rechte, um den Katalog anzuzeigen.";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE"] = "Verfügbarer Bestand";
-$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT"] = "Verfügbarer Bestand = Lagerbestand - Reservierte Menge.";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT_2"] = "Verfügbarer Bestand = Lagerbestand - Reservierte Menge. #HELPER_HTML_LINK#";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_BASE_PRICE"] = "Basispreis";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_CURRENCY"] = "Währung";

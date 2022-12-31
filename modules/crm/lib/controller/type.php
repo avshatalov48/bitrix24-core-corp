@@ -318,6 +318,8 @@ class Type extends Base
 		{
 			$availableForBindingEntityTypes = $relationManager->getAvailableForChildBindingEntityTypes($entityTypeId);
 			$selectedChildTypes = $this->prepareRelationsData((array)$relations['CHILD']);
+
+			$relationsCollection = $relationManager->getRelations($entityTypeId);
 			foreach ($availableForBindingEntityTypes as $availableTypeId => $description)
 			{
 				$typeResult = $this->processRelation(

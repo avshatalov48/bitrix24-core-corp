@@ -123,7 +123,7 @@
 }
 .crm-carousel-item-title-element {
 	display: inline-block;
-	font: bold 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	vertical-align: middle;
 }
 .crm-carousel-item-description-element {

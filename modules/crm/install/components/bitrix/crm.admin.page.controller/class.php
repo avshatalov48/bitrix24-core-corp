@@ -16,6 +16,8 @@ use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm;
 use Bitrix\Iblock;
 use Bitrix\Crm\Settings\OrderSettings;
@@ -128,10 +130,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 
 		if ($this->checkRequiredModules())
 		{
-			if (
-				!CCrmSaleHelper::isShopAccess('admin')
-				&& !CCrmSaleHelper::isShopAccess('manager')
-			)
+			if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
 			{
 				return $items;
 			}
@@ -307,7 +306,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 		$catalogParentId = null;
 		foreach ($this->listMenuItems as $menuItemId => $menuItem)
 		{
-			if (!preg_match('/^menu_catalog_[0-9]+$/', $menuItemId))
+			if (!preg_match('/^menu_catalog_[0-9+]+$/', $menuItemId))
 			{
 				continue;
 			}
@@ -746,6 +745,41 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			],
 		];
 
+		$accessRightsButton = [
+			"parent_menu" => "menu_sale_settings",
+			"sort" => 740,
+			"text" => GetMessage("SHOP_MENU_CATALOG_RIGHTS_SETTINGS"),
+			"title" => GetMessage("SHOP_MENU_CATALOG_RIGHTS_SETTINGS"),
+			"additional" => "Y",
+			"url_constant" => true,
+			"items_id" => "menu_catalog_rights_settings",
+		];
+
+
+		if (Catalog\Config\Feature::isAccessControllerCheckingEnabled())
+		{
+			$accessRightsButton['url'] = "/shop/settings/permissions/";
+			$accessRightsButton['url_constant'] = true;
+		}
+		else
+		{
+			$helpLink = Catalog\Config\Feature::getAccessControllerHelpLink();
+			if (!empty($helpLink))
+			{
+				$accessRightsButton['is_locked'] = true;
+				$accessRightsButton['on_click'] = $helpLink['LINK'];
+			}
+			else
+			{
+				$accessRightsButton = null;
+			}
+		}
+
+		if ($accessRightsButton)
+		{
+			$result[] = $accessRightsButton;
+		}
+
 		if (
 			Loader::includeModule('landing')
 			&& Landing\Rights::hasAdditionalRight(Landing\Rights::ADDITIONAL_RIGHTS['menu24'])
@@ -763,7 +797,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			];
 		}
 
-		if (CCrmSaleHelper::isShopAccess("admin"))
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
 		{
 			$result[] = array(
 				"parent_menu" => "global_menu_store",
@@ -800,7 +834,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 				"text" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
 				"title" => GetMessage("SHOP_MENU_SETTINGS_CATALOG_SETTINGS"),
 				"additional" => "Y",
-				'on_click' => 'BX.Crm.Config.Catalog.Slider.open(); return false;',
+				'on_click' => 'BX.Crm.Config.Catalog.Slider.open(\'shop\'); return false;',
 				"items_id" => "csc_catalog_settings",
 			];
 		}
@@ -1133,7 +1167,7 @@ class CCrmAdminPageController extends \CBitrixComponent implements Controllerabl
 			"sale_ps_handler_refund",
 		];
 
-		if (!CCrmSaleHelper::isShopAccess('admin'))
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
 		{
 			$result = array_merge(
 				$result,

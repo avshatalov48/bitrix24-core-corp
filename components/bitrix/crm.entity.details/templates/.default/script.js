@@ -832,6 +832,8 @@ if(typeof BX.Crm.OrderDetailManager === "undefined")
 	{
 		BX.addCustomEvent(window, "Crm.EntityProgress.Saved", BX.delegate(this.onProgressSave, this));
 		BX.addCustomEvent(window, "Crm.EntityProgress.onSaveBefore", BX.delegate(this.onProgressSaveBefore, this));
+		this.subscribeToProductRowSummaryEvents();
+		this._isProductListFocusing = false;
 		this._cancelReason = "";
 	};
 	BX.Crm.OrderDetailManager.prototype.onProgressSave = function(sender, eventArgs)
@@ -893,6 +895,51 @@ if(typeof BX.Crm.OrderDetailManager === "undefined")
 
 		eventArgs['STATE_SUCCESS'] = self.isSuccess ? "Y" : "N";
 	};
+
+	BX.Crm.OrderDetailManager.prototype.subscribeToProductRowSummaryEvents = function()
+	{
+		BX.addCustomEvent(window, "BX.UI.EntityEditorProductRowSummary:onDetailProductListLinkClick", () => {
+			BX.onCustomEvent(window, "OpenEntityDetailTab", ['tab_products']);
+		});
+
+		const onFirstProductListFocusHandler = () => {
+			const onProductListInitHandler = () => {
+				BX.onCustomEvent(window, "onFocusToProductList");
+			}
+			BX.addCustomEvent(window, "crmOrderProductListInit", onProductListInitHandler);
+			onProductListFocusHandler();
+			const onAfterFocusHandler = () => {
+				BX.removeCustomEvent("BX.UI.EntityEditorProductRowSummary:onAddNewRowInProductList", onFirstProductListFocusHandler);
+				BX.addCustomEvent(window, "BX.UI.EntityEditorProductRowSummary:onAddNewRowInProductList", onProductListFocusHandler);
+
+				BX.removeCustomEvent("crmOrderProductListInit", onProductListInitHandler);
+				BX.removeCustomEvent("crmOrderProductListFocused", onAfterFocusHandler);
+			}
+			BX.addCustomEvent(window, "crmOrderProductListFocused", onAfterFocusHandler);
+		};
+		BX.addCustomEvent(window, "BX.UI.EntityEditorProductRowSummary:onAddNewRowInProductList", onFirstProductListFocusHandler);
+
+		const onProductListFocusHandler = () => {
+			if (this._isProductListFocusing)
+			{
+				return;
+			}
+			else
+			{
+				this._isProductListFocusing = true;
+			}
+
+			BX.onCustomEvent(window, "OpenEntityDetailTab", ['tab_products']);
+			setTimeout(() => {
+				BX.onCustomEvent(window, 'onFocusToProductList');
+			}, 200);
+		}
+
+		BX.addCustomEvent(window, "crmOrderProductListFocused", () => {
+			this._isProductListFocusing = false;
+		});
+	};
+
 	BX.Crm.OrderDetailManager.prototype.getMessage = function(name)
 	{
 		var m = BX.Crm.OrderDetailManager.messages;

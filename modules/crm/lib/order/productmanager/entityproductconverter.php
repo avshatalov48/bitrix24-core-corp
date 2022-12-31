@@ -2,12 +2,16 @@
 
 namespace Bitrix\Crm\Order\ProductManager;
 
+use Bitrix\Sale\Basket;
 use Bitrix\Crm\Discount;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\BasketXmlId;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
+use Bitrix\Sale\BasketItem;
+use Bitrix\Sale\Internals\Catalog\ProductTypeMapper;
 use Bitrix\Main\Loader;
 use Bitrix\Sale\PriceMaths;
 use Bitrix\Sale\Tax\VatCalculator;
+use Bitrix\Catalog;
 use Exception;
 
 /**
@@ -15,12 +19,19 @@ use Exception;
  */
 class EntityProductConverter implements ProductConverter
 {
+	private ?Basket $basket = null;
+
 	/**
 	 * @throws Exception if not installed 'sale' module.
 	 */
 	public function __construct()
 	{
 		Loader::requireModule('sale');
+	}
+
+	public function setBasketItem(Basket $basket): void
+	{
+		$this->basket = $basket;
 	}
 
 	/**
@@ -43,6 +54,19 @@ class EntityProductConverter implements ProductConverter
 		}
 
 		$discountPrice = $basePrice - $price;
+
+		$vatRate = null;
+		if (isset($product['TAX_RATE']) && is_numeric($product['TAX_RATE']))
+		{
+			$vatRate = (float)$product['TAX_RATE'] * 0.01;
+		}
+
+		$xmlId = null;
+		if (isset($product['ID']) && is_numeric($product['ID']))
+		{
+			$xmlId = BasketXmlId::getXmlIdFromRowId((int)$product['ID']);
+		}
+
 		return [
 			'NAME' => $product['PRODUCT_NAME'],
 			'MODULE' => $product['PRODUCT_ID'] ? 'catalog' : '',
@@ -55,9 +79,10 @@ class EntityProductConverter implements ProductConverter
 			'CUSTOM_PRICE' => 'Y',
 			'MEASURE_CODE' => $product['MEASURE_CODE'],
 			'MEASURE_NAME' => $product['MEASURE_NAME'],
-			'VAT_RATE' => $product['TAX_RATE'] === null ? null : $product['TAX_RATE'] * 0.01,
+			'VAT_RATE' => $vatRate,
 			'VAT_INCLUDED' => $product['TAX_INCLUDED'],
-			'XML_ID' => $product['ID'] ? BasketXmlId::getXmlIdFromRowId($product['ID']) : null,
+			'XML_ID' => $xmlId,
+			'TYPE' => ProductTypeMapper::getType((int)$product['TYPE']),
 			// not `sale` basket item, but used.
 			'DISCOUNT_SUM' => $discountPrice,
 			'DISCOUNT_RATE' => $product['DISCOUNT_RATE'] ?? null,
@@ -70,15 +95,34 @@ class EntityProductConverter implements ProductConverter
 	 */
 	public function convertToCrmProductRowFormat(array $basketItem): array
 	{
+		$taxRate = null;
+		if (array_key_exists('VAT_RATE', $basketItem))
+		{
+			if ($basketItem['VAT_RATE'] === null)
+			{
+				$taxRate = false;
+			}
+			elseif (is_numeric($basketItem['VAT_RATE']))
+			{
+				$taxRate = (float)$basketItem['VAT_RATE'] * 100;
+			}
+		}
+
+		$xmlId = null;
+		if (isset($basketItem['ID']) && is_numeric($basketItem['ID']))
+		{
+			$xmlId = ProductRowXmlId::getXmlIdFromBasketId((int)$basketItem['ID']);
+		}
+
 		$result = [
-			'XML_ID' => $basketItem['ID'] ? ProductRowXmlId::getXmlIdFromBasketId($basketItem['ID']) : null,
+			'XML_ID' => $xmlId,
 			'PRODUCT_NAME' => $basketItem['NAME'],
 			'PRODUCT_ID' => $basketItem['PRODUCT_ID'],
 			'QUANTITY' => $basketItem['QUANTITY'],
 			//'PRICE_ACCOUNT' => 'Calculated when saving',
 			'MEASURE_CODE' => $basketItem['MEASURE_CODE'],
 			'MEASURE_NAME' => $basketItem['MEASURE_NAME'],
-			'TAX_RATE' => $basketItem['VAT_RATE'] === null ? null : $basketItem['VAT_RATE'] * 100,
+			'TAX_RATE' => $taxRate,
 			'TAX_INCLUDED' => $basketItem['VAT_INCLUDED'],
 		];
 
@@ -110,6 +154,75 @@ class EntityProductConverter implements ProductConverter
 		$result['DISCOUNT_PERCENT'] = null; // set null, it will be recalculated when saving.
 		$result['DISCOUNT_SUM'] = PriceMaths::roundPrecision($result['PRICE_NETTO'] - $result['PRICE_EXCLUSIVE']);
 
+		// type
+		$result['TYPE'] = $this->getTypeByProductId((int)$basketItem['PRODUCT_ID']);
+
 		return $result;
+	}
+
+	private function getTypeByProductId(int $productId): ?int
+	{
+		$catalogProductTypes = $this->getCatalogProductTypes();
+		return $catalogProductTypes[$productId] ?? null;
+	}
+
+	private function getCatalogProductTypes(): array
+	{
+		static $result = [];
+
+		if (!$this->basket)
+		{
+			return $result;
+		}
+
+		if (!Loader::includeModule('catalog'))
+		{
+			return $result;
+		}
+
+		// local cache
+		$basketUniqHash = $this->getBasketUniqHash();
+		if (!empty($result[$basketUniqHash]))
+		{
+			return $result[$basketUniqHash];
+		}
+
+		$productIds = [];
+
+		/** @var BasketItem $basketItem */
+		foreach ($this->basket as $basketItem)
+		{
+			$productIds[] = $basketItem->getProductId();
+		}
+
+		if ($productIds)
+		{
+			$productIterator = Catalog\ProductTable::getList([
+				'select' => ['ID', 'TYPE'],
+				'filter' => [
+					'@ID' => $productIds,
+				],
+			]);
+
+			$rows = [];
+			while ($product = $productIterator->fetch())
+			{
+				$rows[$product['ID']] = (int)$product['TYPE'];
+			}
+
+			$result[$basketUniqHash] = $rows;
+		}
+
+		return $result[$basketUniqHash];
+	}
+
+	private function getBasketUniqHash(): ?string
+	{
+		if ($this->basket)
+		{
+			return md5(serialize($this->basket->toArray()));
+		}
+
+		return null;
 	}
 }

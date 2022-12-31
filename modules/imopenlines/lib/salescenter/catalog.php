@@ -63,7 +63,7 @@ class Catalog extends Base
 		return !empty($this->productIds) && is_array($this->productIds);
 	}
 
-	public function OnChatAnswer(Event $event): void
+	public static function OnChatAnswer(Event $event): void
 	{
 		$region = \Bitrix\Main\Application::getInstance()->getLicense()->getRegion();
 		if ($region === null || $region === 'ru')

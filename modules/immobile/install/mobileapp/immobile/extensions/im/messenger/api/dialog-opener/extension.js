@@ -20,7 +20,85 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 	{
 		static getVersion()
 		{
-			return 1;
+			return 2;
+		}
+
+		/**
+		 * Opens a dialog on top of the parent widget.
+		 *
+		 * @param {object} options
+		 *
+		 * @param {string|number} options.dialogId
+		 *
+		 * @param {object} [options.dialogTitleParams]
+		 * @param {string} [options.dialogTitleParams.name]
+		 * @param {string} [options.dialogTitleParams.description]
+		 * @param {string} [options.dialogTitleParams.avatar]
+		 * @param {string} [options.dialogTitleParams.color]
+		 *
+		 * @param {object} [options.parentWidget]
+		 *
+		 * @return {Promise}
+		 */
+		static open(options)
+		{
+			return new Promise((resolve, reject) => {
+				if (!FeatureFlag.native.openWebComponentParentWidgetSupported)
+				{
+					reject({
+						text: 'This method is not supported in applications with the API version less than 45.',
+						code: 'UNSUPPORTED_APP_VERSION',
+					});
+
+					return;
+				}
+
+				if (!Type.isObject(options))
+				{
+					reject({
+						text: `options must be an object, ${options} given.`,
+						code: 'INVALID_ARGUMENT',
+					});
+
+					return;
+				}
+
+				if (!Type.isStringFilled(options.dialogId) && !Type.isNumber(options.dialogId))
+				{
+					reject({
+						text: `options.userCode must be a filled string or number, ${options.dialogId} given.`,
+						code: 'INVALID_ARGUMENT',
+					});
+
+					return;
+				}
+
+				EntityReady.wait('chat').then(() => {
+					const openDialogParamsEvent = EventType.messenger.openDialogParams + '::' + options.dialogId;
+
+					const onOpenDialogParams = (params) => {
+						BX.removeCustomEvent(openDialogParamsEvent, onOpenDialogParams);
+
+						if (options.parentWidget)
+						{
+							PageManager.openWebComponent(params, options.parentWidget);
+						}
+						else
+						{
+							PageManager.openWebComponent(params);
+						}
+
+						resolve();
+					};
+
+					BX.addCustomEvent(openDialogParamsEvent, onOpenDialogParams);
+
+					BX.postComponentEvent(EventType.messenger.getOpenDialogParams, [{
+						dialogId: options.dialogId,
+						dialogTitleParams: options.dialogTitleParams,
+					}], 'im.messenger');
+				});
+			});
 		}
 
 		/**
@@ -30,11 +108,11 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 		 *
 		 * @param {string} options.userCode
 		 *
-		 * @param {object} [options.titleParams]
-		 * @param {string} [options.titleParams.name]
-		 * @param {string} [options.titleParams.description]
-		 * @param {string} [options.titleParams.avatar]
-		 * @param {string} [options.titleParams.color]
+		 * @param {object} [options.dialogTitleParams]
+		 * @param {string} [options.dialogTitleParams.name]
+		 * @param {string} [options.dialogTitleParams.description]
+		 * @param {string} [options.dialogTitleParams.avatar]
+		 * @param {string} [options.dialogTitleParams.color]
 		 *
 		 * @param {object} [options.parentWidget]
 		 *
@@ -53,10 +131,20 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 					return;
 				}
 
+				if (!Type.isObject(options))
+				{
+					reject({
+						text: `options must be an object, ${options} given.`,
+						code: 'INVALID_ARGUMENT',
+					});
+
+					return;
+				}
+
 				if (!Type.isStringFilled(options.userCode))
 				{
 					reject({
-						text: 'options.userCode must be a filled string.',
+						text: `options.userCode must be a filled string, ${options.userCode} given.`,
 						code: 'INVALID_ARGUMENT',
 					});
 
@@ -95,7 +183,7 @@ jn.define('im/messenger/api/dialog-opener', (require, exports, module) => {
 
 					BX.postComponentEvent(EventType.messenger.getOpenLineParams, [{
 						userCode: options.userCode,
-						titleParams: options.titleParams,
+						dialogTitleParams: options.dialogTitleParams,
 					}], 'im.messenger');
 				});
 			});

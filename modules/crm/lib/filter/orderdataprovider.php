@@ -385,40 +385,12 @@ class OrderDataProvider extends EntityDataProvider
 	 */
 	private function getSources()
 	{
-		$result = [];
-		if (Main\Loader::includeModule('landing'))
+		if (Main\Loader::includeModule('sale'))
 		{
-			$tradingPlatforms = [];
-			$platformData = \Bitrix\Landing\Site::getList([
-				'filter' => ['=TYPE' => 'STORE'],
-				'select' => ['ID', 'TITLE']
-			]);
-
-			while ($landing = $platformData->fetch())
-			{
-				$code = \Bitrix\Sale\TradingPlatform\Landing\Landing::getCodeBySiteId($landing['ID']);
-				$tradingPlatforms[$code] = $landing['TITLE'];
-			}
-
-			if (!empty($tradingPlatforms))
-			{
-				$platformsData = \Bitrix\Sale\TradingPlatformTable::getList([
-					'select' => ['CODE', 'ID'],
-					'filter' => ['=CLASS' => "\\".\Bitrix\Sale\TradingPlatform\Landing\Landing::class]
-				]);
-
-				while ($platform = $platformsData->fetch())
-				{
-					$code = $platform['CODE'];
-					if (isset($tradingPlatforms[$code]))
-					{
-						$result[$platform['ID']] = $tradingPlatforms[$code];
-					}
-				}
-			}
+			return Sale\TradingPlatform\Manager::getActivePlatformList();
 		}
 
-		return $result;
+		return [];
 	}
 
 	/**

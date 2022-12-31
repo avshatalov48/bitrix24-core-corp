@@ -9,19 +9,25 @@ class ItemIdentifier
 {
 	/** @var int */
 	private $entityTypeId;
+
 	/** @var int */
 	private $entityId;
+
+	/** @var int|null */
+	private ?int $categoryId = null;
 
 	/**
 	 * ItemIdentifier constructor.
 	 *
 	 * @param int $entityTypeId
 	 * @param int $entityId
+	 * @param int|null $categoryId
 	 */
-	public function __construct(int $entityTypeId, int $entityId)
+	public function __construct(int $entityTypeId, int $entityId, ?int $categoryId = null)
 	{
 		$this->setEntityTypeId($entityTypeId);
 		$this->setEntityId($entityId);
+		$this->setCategoryId($categoryId);
 	}
 
 	/**
@@ -81,6 +87,25 @@ class ItemIdentifier
 	}
 
 	/**
+	 * @param int|null $categoryId
+	 * @return ItemIdentifier
+	 */
+	private function setCategoryId(?int $categoryId): ItemIdentifier
+	{
+		$this->categoryId = $categoryId;
+
+		return $this;
+	}
+
+	/**
+	 * @return int|null
+	 */
+	public function getCategoryId(): ?int
+	{
+		return $this->categoryId;
+	}
+
+	/**
 	 * Transform this object to string
 	 *
 	 * @return string
@@ -109,6 +134,7 @@ class ItemIdentifier
 		return [
 			'ENTITY_TYPE_ID' => $this->getEntityTypeId(),
 			'ENTITY_ID' => $this->getEntityId(),
+			'CATEGORY_ID' => $this->getCategoryId(),
 		];
 	}
 

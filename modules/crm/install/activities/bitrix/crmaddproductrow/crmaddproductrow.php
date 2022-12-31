@@ -7,6 +7,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\Access\CatalogAccessChecker;
 
 class CBPCrmAddProductRow extends CBPActivity
 {
@@ -170,7 +171,14 @@ class CBPCrmAddProductRow extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
-		$dialog->setMap(static::getPropertiesMap($documentType));
+		if (!CatalogAccessChecker::hasAccess())
+		{
+			$dialog->setRenderer(CatalogAccessChecker::getDialogRenderer());
+		}
+		else
+		{
+			$dialog->setMap(static::getPropertiesMap($documentType));
+		}
 
 		return $dialog;
 	}
@@ -232,6 +240,11 @@ class CBPCrmAddProductRow extends CBPActivity
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
+		if (!CatalogAccessChecker::hasAccess())
+		{
+			return false;
+		}
+
 		$errors = [];
 		$properties = [];
 

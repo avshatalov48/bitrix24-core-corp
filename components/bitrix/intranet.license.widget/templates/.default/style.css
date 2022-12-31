@@ -882,10 +882,6 @@ a.license-widget-item-info-text:hover { color: #2b89ea; }
 	display: block;
 }
 
-.bx-ie .ui-btn.license-btn {
-	padding-right: 30px;
-}
-
 .ui-btn.license-btn .license-widget-label {
 	right: 7px;
 }

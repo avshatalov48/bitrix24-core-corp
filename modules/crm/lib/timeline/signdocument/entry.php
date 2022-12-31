@@ -25,6 +25,7 @@ class Entry extends TimelineEntry
 	public const TYPE_CATEGORY_INTEGRITY_FAILURE = 13;
 	public const TYPE_CATEGORY_SENT_INTEGRITY_FAILURE = 14;
 	public const TYPE_CATEGORY_PRINTED_FORM = 15;
+	public const TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED = 16;
 
 	public static function create(array $params): ?int
 	{

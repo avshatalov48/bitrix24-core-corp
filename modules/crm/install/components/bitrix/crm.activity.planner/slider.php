@@ -25,6 +25,8 @@ $APPLICATION->includeComponent(
 	'bitrix:crm.activity.planner', '',
 	array(
 		'ACTION'           => $action,
+		'SUBJECT'          => $_REQUEST['SUBJECT'] ?? '',
+		'BODY'             => $_REQUEST['BODY'] ?? '',
 		'ELEMENT_ID'       => $action && isset($_REQUEST['activity_id']) ? (int) $_REQUEST['activity_id'] : 0,
 		'FROM_ACTIVITY_ID' => isset($_REQUEST['FROM_ACTIVITY_ID']) ? (int) $_REQUEST['FROM_ACTIVITY_ID'] : 0,
 		'MESSAGE_TYPE'     => isset($_REQUEST['MESSAGE_TYPE']) ? (string) $_REQUEST['MESSAGE_TYPE'] : 0,

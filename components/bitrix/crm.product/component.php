@@ -25,6 +25,12 @@ if (!CModule::IncludeModule('sale'))
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
 	return;
 }
+if (!\Bitrix\Catalog\Access\AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
+{
+	$this->IncludeComponentTemplate('product_error');
+
+	return;
+}
 
 global $APPLICATION;
 

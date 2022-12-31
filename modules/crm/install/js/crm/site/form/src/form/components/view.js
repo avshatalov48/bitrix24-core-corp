@@ -187,6 +187,7 @@ const Popup = {
 				:scrollDown="!this.form.isOnState()"  
 				:scrollDownText="scrollDownText"
 				@hide="form.hide()"
+				:hideOnOverlayClick="form.view.hideOnOverlayClick"
 			>
 				<div v-if="form.view.title" class="b24-window-header">
 					<div class="b24-window-header-title">{{ form.view.title }}</div>

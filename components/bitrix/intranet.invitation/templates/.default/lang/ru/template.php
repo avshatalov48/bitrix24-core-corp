@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS["BX24_INVITE_DIALOG_TITLE"] = "Пригласить сотрудника";
 $MESS["BX24_INVITE_DIALOG_EMAIL"] = "Введите через запятую или пробел E-mail сотрудников, которых хотите пригласить на портал";
 $MESS["BX24_INVITE_DIALOG_EMAIL_SHORT"] = "Эл. почта";
@@ -131,4 +131,5 @@ $MESS["INTRANET_INVITE_DIALOG_USER_MAX_COUNT"] = "На вашем тарифно
 $MESS["INTRANET_INVITE_DIALOG_CONFIRM_CREATOR_EMAIL_ERROR"] = "Перед приглашением необходимо подтвердить email создателя портала по ссылке из письма.";
 $MESS["INTRANET_INVITE_DIALOG_USER_CURRENT_COUNT"] = "Сейчас в вашем Битрикс24 зарегистрировано уже";
 $MESS["INTRANET_INVITE_DIALOG_UNLIMITED"] = "неограниченно";
-?>
+$MESS["INTRANET_INVITE_DIALOG_ACCESS_ERROR"] = "Доступ закрыт";
+

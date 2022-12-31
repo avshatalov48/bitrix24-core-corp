@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Item;
 
 use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
+use Bitrix\Crm\Timeline\Entity\NoteTable;
 
 abstract class LogMessage extends Configurable
 {

@@ -1,0 +1,3 @@
+<?php
+
+$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_RELATED_TASKS"] = "Связанные задачи";

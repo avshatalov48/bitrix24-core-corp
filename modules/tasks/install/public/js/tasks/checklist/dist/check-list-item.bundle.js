@@ -1448,7 +1448,6 @@ this.BX = this.BX || {};
 	      };
 
 	      var title = this.fields.getTitle();
-	      console.log('title', title);
 	      title = this.isCheckList() ? CheckListItem.getDefaultCheckListTitle(title) : title;
 	      this.fields.getMembers().forEach(function (_ref) {
 	        var id = _ref.id,

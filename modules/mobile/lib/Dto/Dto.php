@@ -8,6 +8,8 @@ use Bitrix\Mobile\Dto\Transformer\Transformer;
 
 abstract class Dto implements \JsonSerializable
 {
+	private ?array $casts = null;
+
 	public function __construct(?array $fields = null)
 	{
 		if ($fields !== null)
@@ -145,5 +147,15 @@ abstract class Dto implements \JsonSerializable
 	public function getCasts(): array
 	{
 		return [];
+	}
+
+	public function getCachedCasts(): array
+	{
+		if ($this->casts === null)
+		{
+			$this->casts = $this->getCasts();
+		}
+
+		return $this->casts;
 	}
 }

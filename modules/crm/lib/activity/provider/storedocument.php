@@ -12,6 +12,8 @@ Loc::loadMessages(__FILE__);
 class StoreDocument extends Base
 {
 	private const PROVIDER_TYPE_DEFAULT = 'STORE_DOCUMENT';
+	private const PROVIDER_TYPE_ID_PRODUCT = 'STORE_DOCUMENT_PRODUCT';
+	private const PROVIDER_TYPE_ID_SERVICE = 'STORE_DOCUMENT_SERVICE';
 
 	public static function getName()
 	{
@@ -28,7 +30,12 @@ class StoreDocument extends Base
 	 */
 	public static function getTypeId(array $activity)
 	{
-		return self::PROVIDER_TYPE_DEFAULT;
+		if (isset($activity['PROVIDER_TYPE_ID']) && $activity['PROVIDER_TYPE_ID'] === self::PROVIDER_TYPE_ID_SERVICE)
+		{
+			return self::PROVIDER_TYPE_ID_SERVICE;
+		}
+
+		return self::PROVIDER_TYPE_ID_PRODUCT;
 	}
 
 	/**
@@ -40,7 +47,29 @@ class StoreDocument extends Base
 		return true;
 	}
 
-	public static function addActivity(int $dealId): ?int
+	public static function addProductActivity(int $dealId): ?int
+	{
+		return self::internalAdd(
+			$dealId,
+			[
+				'SUBJECT' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_STORE_DOCUMENT_PRODUCT_SUBJECT'),
+				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID_PRODUCT,
+			]
+		);
+	}
+
+	public static function addServiceActivity(int $dealId): ?int
+	{
+		return self::internalAdd(
+			$dealId,
+			[
+				'SUBJECT' => Loc::getMessage('CRM_ACTIVITY_PROVIDER_STORE_DOCUMENT_SERVICE_SUBJECT'),
+				'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_ID_SERVICE,
+			]
+		);
+	}
+
+	private static function internalAdd(int $dealId, $fields): ?int
 	{
 		$deal = \CCrmDeal::GetByID($dealId, false);
 		if (!$deal)
@@ -55,35 +84,28 @@ class StoreDocument extends Base
 		$startTime = new Type\DateTime();
 		$endTime = $deadlineTime = self::getDeadlineTime();
 
-		$fields = [
-			'TYPE_ID' => \CCrmActivityType::Provider,
-			'PROVIDER_ID' => self::PROVIDER_TYPE_DEFAULT,
-			'PROVIDER_TYPE_ID' => self::PROVIDER_TYPE_DEFAULT,
-			'SUBJECT' => self::getActivitySubject(),
-			'IS_HANDLEABLE' => 'Y',
-			'COMPLETED' => 'N',
-			'STATUS' => \CCrmActivityStatus::Waiting,
-			'RESPONSIBLE_ID' => $responsibleId,
-			'PRIORITY' => \CCrmActivityPriority::Medium,
-			'AUTHOR_ID' => $authorId,
-			'START_TIME' => $startTime,
-			'END_TIME' => $endTime,
-			'DEADLINE' => $deadlineTime,
-			'OWNER_ID' => $ownerId,
-			'OWNER_TYPE_ID' => $ownerTypeId,
-			'ASSOCIATED_ENTITY_ID' => $dealId,
-		];
+		$fields =
+			[
+				'TYPE_ID' => \CCrmActivityType::Provider,
+				'PROVIDER_ID' => self::PROVIDER_TYPE_DEFAULT,
+				'IS_HANDLEABLE' => 'Y',
+				'COMPLETED' => 'N',
+				'STATUS' => \CCrmActivityStatus::Waiting,
+				'RESPONSIBLE_ID' => $responsibleId,
+				'PRIORITY' => \CCrmActivityPriority::Medium,
+				'AUTHOR_ID' => $authorId,
+				'START_TIME' => $startTime,
+				'END_TIME' => $endTime,
+				'DEADLINE' => $deadlineTime,
+				'OWNER_ID' => $ownerId,
+				'OWNER_TYPE_ID' => $ownerTypeId,
+				'ASSOCIATED_ENTITY_ID' => $dealId,
+			]
+			+ $fields
+		;
 
 		$activityId = (int)\CCrmActivity::add($fields, false);
 		return $activityId > 0 ? $activityId : null;
-	}
-
-	/**
-	 * @return string
-	 */
-	private static function getActivitySubject(): string
-	{
-		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_STORE_DOCUMENT_SUBJECT');
 	}
 
 	/**

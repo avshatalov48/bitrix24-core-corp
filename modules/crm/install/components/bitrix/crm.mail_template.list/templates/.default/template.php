@@ -32,7 +32,13 @@ foreach($arResult['ITEMS'] as &$item)
 			'ICONCLASS' => 'delete',
 			'TITLE' => GetMessage('CRM_MAIL_TEMPLATE_DELETE_TITLE'),
 			'TEXT' => GetMessage('CRM_MAIL_TEMPLATE_DELETE'),
-			'ONCLICK' => 'crm_mail_template_delete_grid(\''.CUtil::JSEscape(GetMessage('CRM_MAIL_TEMPLATE_DELETE_TITLE')).'\', \''.CUtil::JSEscape(sprintf(GetMessage('CRM_MAIL_TEMPLATE_DELETE_CONFIRM'), $item['TITLE'])).'\', \''.CUtil::JSEscape(GetMessage('CRM_MAIL_TEMPLATE_DELETE')).'\', \''.CUtil::JSEscape($item['PATH_TO_DELETE']).'\')'
+			'ONCLICK' => "crm_mail_template_delete_grid('"
+				.CUtil::JSEscape(GetMessage('CRM_MAIL_TEMPLATE_DELETE_TITLE'))
+				."', '"
+				.CUtil::JSEscape(GetMessage('CRM_MAIL_TEMPLATE_DELETE_CONFIRM_MSGVER_1', ['#TITLE#' => $item['TITLE']]))."', '"
+				.CUtil::JSEscape(GetMessage('CRM_MAIL_TEMPLATE_DELETE'))."', '"
+				.CUtil::JSEscape($item['PATH_TO_DELETE'])
+				."')"
 		);
 	}
 

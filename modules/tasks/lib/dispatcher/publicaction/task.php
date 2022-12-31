@@ -749,7 +749,9 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = [];
 
-		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id)
+		)
 		{
 			$this->addForbiddenError();
 			return $result;
@@ -798,7 +800,9 @@ final class Task extends \Bitrix\Tasks\Dispatcher\RestrictedAction
 	{
 		$result = [];
 
-		if (!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id))
+		if (
+			!TaskAccessController::can($this->userId, ActionDictionary::ACTION_TASK_READ, (int)$id)
+		)
 		{
 			$this->addForbiddenError();
 			return $result;

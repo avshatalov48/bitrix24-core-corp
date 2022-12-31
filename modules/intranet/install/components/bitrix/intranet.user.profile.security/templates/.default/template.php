@@ -1,6 +1,7 @@
 <?if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();?>
 <?
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Intranet\Site\Sections\TimemanSection;
 
 $APPLICATION->SetTitle("");
 
@@ -41,4 +42,27 @@ $APPLICATION->IncludeComponent("bitrix:ui.sidepanel.wrappermenu", "", array(
 			contentContainer: document.querySelector("#intranet-user-profile-security-content")
 		});
 	});
+
+	function openUserLoginHistory()
+	{
+		BX.SidePanel.Instance.open(
+			'<?= TimemanSection::getUserLoginHistoryUrlById((int)$arParams["USER_ID"]) ?>',
+			{
+				width: 1100,
+				events: {
+					onClose: function(){
+						var slider = BX.SidePanel.Instance.getSlider('/company/personal/user/<?= CUtil::JSEscape($arParams["USER_ID"]) ?>/common_security/?page=auth');
+
+						if (slider !== null)
+						{
+							slider.reload();
+						}
+					},
+					omCloseComplete: function(){
+						BX.SidePanel.Instance.destroy('<?= TimemanSection::getUserLoginHistoryUrlById((int)$arParams["USER_ID"]) ?>');
+					}
+				}
+			}
+		);
+	}
 </script>

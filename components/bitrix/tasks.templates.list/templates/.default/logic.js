@@ -260,8 +260,26 @@ function DeleteTemplate(templateId)
 						if (
 							!response.status
 							|| response.status !== 'success'
+							|| !response.data.success
 						)
 						{
+							var onErrorBox = new top.BX.UI.Dialogs.MessageBox({
+								title: BX.message('TASKS_TEMPLATES_LIST_TITLE_ERROR'),
+								message: response.data.message,
+								noCaption: BX.message('TASKS_TEMPLATES_LIST_CLOSE'),
+								maxWidth: 437,
+								maxHeight: 160,
+								buttons: top.BX.UI.Dialogs.MessageBoxButtons.NO,
+								onNo: function(){
+									onErrorBox.close();
+								}.bind(this),
+							});
+							onErrorBox.show();
+							if (response.data.needReload)
+							{
+								this.reloadGrid();
+							}
+
 							return;
 						}
 

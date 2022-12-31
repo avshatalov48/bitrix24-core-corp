@@ -6,4 +6,5 @@ $MESS["CRM_WEBFORM_RESULT_ENTITY_ACTIVITY_SUBJECT"] = "Заполнение CRM-
 $MESS["CRM_WEBFORM_RESULT_ENTITY_ACTIVITY_RESPONSIBLE_IM_NOTIFY"] = "Вам назначено новое дело \"#title#\"";
 $MESS["CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT"] = "Заполнена CRM-форма \"%title%\"";
 $MESS["CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT_CALL"] = "Заказан обратный звонок с номера \"%phone%\"";
+$MESS["CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE"] = "Создан элемент CRM";
 ?>

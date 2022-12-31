@@ -7,23 +7,23 @@ namespace Bitrix\ImOpenLines;
  */
 class AutomaticAction
 {
-	/**Session*/
+	/** @var Session*/
 	protected $sessionManager = null;
-	protected $session = [];
-	protected $config = [];
-	/**Chat*/
-	protected $chat = null;
+	//protected $session = [];
+	//protected $config = [];
+	///**Chat*/
+	//protected $chat = null;
 
 	/**
 	 * AutomaticAction constructor.
 	 * @param Session $session
 	 */
-	function __construct($session)
+	public function __construct($session)
 	{
 		$this->sessionManager = $session;
-		$this->session = $session->getData();
-		$this->config = $session->getConfig();
-		$this->chat = $session->getChat();
+		//$this->session = $session->getData();
+		//$this->config = $session->getConfig();
+		//$this->chat = $session->getChat();
 	}
 
 	/**
@@ -45,7 +45,6 @@ class AutomaticAction
 		//Automatic action
 		$this->sessionManager->execAutoAction([
 			'MESSAGE_ID' => $messageId,
-			'INPUT_MESSAGE' => true
 		]);
 
 		return true;
@@ -56,11 +55,6 @@ class AutomaticAction
 	 *
 	 * @param $messageId
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function automaticSendMessage($messageId)
 	{

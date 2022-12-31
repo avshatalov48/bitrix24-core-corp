@@ -1,11 +1,21 @@
 <?php
+
 return [
-	'extensions'=>[
+	'extensions' => [
 		'catalog/store/events',
-		'layout/ui/fields',
+		'layout/ui/fields/barcode',
+		'layout/ui/fields/combined',
+		'layout/ui/fields/entity-selector',
+		'layout/ui/fields/file',
+		'layout/ui/fields/money',
+		'layout/ui/fields/number',
+		'layout/ui/fields/select',
+		'layout/ui/fields/string',
 		'layout/ui/fields-wrapper',
 		'layout/ui/banner-button',
 		'qrauth/utils',
 		'utils',
-	]
+		'alert',
+		'notify',
+	],
 ];

@@ -3,7 +3,7 @@
  */
 jn.define('runtime', (require, exports, module) => {
 
-	const { Type } = jn.require('type');
+	const { Type } = require('type');
 
 	class Runtime
 	{

@@ -12,7 +12,7 @@ use Bitrix\Main\Application;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Entity\EnumField;
 use Bitrix\Main\Localization\Loc;
-
+use Bitrix\Disk\Driver;
 use Bitrix\Main\ORM\Fields\Relations\OneToMany;
 use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultTable;
@@ -402,6 +402,17 @@ class TaskTable extends TaskDataManager
 		{
 			return;
 		}
+		$driver = Driver::getInstance();
+		$userFieldManager = $driver->getUserFieldManager();
+		$attachedObjects = $userFieldManager->getAttachedObjectByEntity(
+			'TASKS_TASK',
+			$id,
+			\Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode()
+		);
+		$ids = array_map(static function ($el): int {
+			return $el->getId();
+		}, $attachedObjects);
+		$insertData[\Bitrix\Tasks\Integration\Disk\UserField::getMainSysUFCode()] = $ids;
 
 		foreach ($insertData as $field => $value)
 		{

@@ -21,8 +21,7 @@
 }
 
 .task-info-panel-important {
-	float: right;
-	line-height: 30px;
+	order: 1;
 }
 
 .task-info-panel-important span {
@@ -77,6 +76,9 @@
 }
 
 .task-detail-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 	padding: 11px 13px 12px 20px;
 	border-bottom: 1px solid #e9eaec;
 }
@@ -104,8 +106,9 @@
 .task-detail-content {
 	position: relative;
 	padding: 2px 23px 0;
-	color: #535c69;
-	font: 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 14.5px;
+	line-height: var(--ui-font-line-height-lg, 22px);
 	overflow: hidden;
 }
 
@@ -662,7 +665,6 @@ input.task-detail-field-add {
 	color: #858c96;
 	width: 90px;
 	float: left;
-	word-wrap: break-word;
 }
 
 .task-detail-sidebar-item-value {

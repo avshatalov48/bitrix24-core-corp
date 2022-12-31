@@ -38,11 +38,11 @@ class Factory
 		return $this->createItems([$row])[0] ?? null;
 	}
 
-	public function installDefaults(): Main\Result
+	public function installDefaults(?int $presetId = null): Main\Result
 	{
 		$result = new Main\Result();
 		$items = [];
-		foreach ($this->makeDefaultItems() as $item)
+		foreach ($this->makeDefaultItems($presetId) as $item)
 		{
 			$saveResult = $this->save($item);
 			if (!$saveResult->isSuccess())
@@ -110,11 +110,12 @@ class Factory
 		;
 	}
 
-	private function makeDefaultItems(): array
+	private function makeDefaultItems(?int $presetId = null): array
 	{
 		/** @var Item[] $items */
 		$items = [];
-		$code = 'def-req-' . \CCrmOwnerType::Company;
+		$code = 'def-req-' . \CCrmOwnerType::Company . ($presetId ? '-'. $presetId : '');
+
 		if (!$this->fetchByCode($code))
 		{
 			$items[] = (new Item)
@@ -125,7 +126,7 @@ class Factory
 			;
 		}
 
-		$code = 'def-req-' . \CCrmOwnerType::Contact;
+		$code = 'def-req-' . \CCrmOwnerType::Contact . ($presetId ? '-'. $presetId : '');
 		if (!$this->fetchByCode($code))
 		{
 			$items[] = (new Item)
@@ -145,11 +146,11 @@ class Factory
 				continue;
 			}
 
-			$rqPresetId = EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0;
+			$rqPresetId = $presetId ?: (EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0);
 			if (!$rqPresetId)
 			{
 				EntityRequisite::installDefaultPresets();
-				$rqPresetId = EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0;
+				$rqPresetId =  $presetId ?: (EntityRequisite::getDefaultPresetId($presetEntityTypeId) ?: 0);
 			}
 
 			if (!$rqPresetId)
@@ -159,7 +160,8 @@ class Factory
 
 			$fields = [];
 			$countryId = EntityRequisite::getSingleInstance()->getCountryIdByPresetId($rqPresetId);
-			$regionFields = $this->getDefaultItemRegionFieldMap()[$countryId] ?? [];
+			$fieldsMap = $this->getDefaultItemRegionFieldMap();
+			$regionFields = $fieldsMap[$countryId] ?? $fieldsMap[Country::ID_USA];
 			foreach ([$item->getEntityTypeId(), $item->getClientEntityTypeId()] as $typeId)
 			{
 				$fields = array_merge($fields, $regionFields[$typeId] ?? []);
@@ -195,7 +197,6 @@ class Factory
 				CCrmOwnerType::Contact => [
 					'RQ_ADDR_PRIMARY',
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'POST',
@@ -203,13 +204,11 @@ class Factory
 				CCrmOwnerType::Company => [
 					'RQ_ADDR_PRIMARY',
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 				],
 			],
 			Country::ID_POLAND => [
 				CCrmOwnerType::Contact => [
 					'POST',
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'RQ_COMPANY_NAME',
@@ -221,7 +220,6 @@ class Factory
 					'WEB',
 				],
 				CCrmOwnerType::Company => [
-					'RQ_SIGNATURE',
 					'RQ_COMPANY_NAME',
 					'RQ_ADDR_PRIMARY',
 					'PHONE',
@@ -233,7 +231,6 @@ class Factory
 			],
 			Country::ID_COLOMBIA => [
 				CCrmOwnerType::Contact => [
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'POST',
@@ -241,20 +238,17 @@ class Factory
 				],
 				CCrmOwnerType::Company => [
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 				],
 			],
 			Country::ID_USA => [
 				CCrmOwnerType::Contact => [
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 					'NAME',
 					'LAST_NAME',
 					'POST',
 				],
 				CCrmOwnerType::Company => [
 					'RQ_COMPANY_NAME',
-					'RQ_SIGNATURE',
 				],
 			],
 			Country::ID_RUSSIA => [

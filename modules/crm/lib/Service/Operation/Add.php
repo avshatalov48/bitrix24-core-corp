@@ -2,11 +2,13 @@
 
 namespace Bitrix\Crm\Service\Operation;
 
+use Bitrix\Crm\Activity\Entity\ToDo;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Field\Collection;
 use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
+use Bitrix\Crm\Kanban\EntityActivityDeadline;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service\Container;
@@ -59,33 +61,14 @@ class Add extends Operation
 		$registrar->registerByItem($this->getItem());
 	}
 
-	protected function isCountersUpdateNeeded(): bool
+	protected function notifyCounterMonitor(): void
 	{
-		return true;
-	}
-
-	protected function getUserIdsForCountersReset(): array
-	{
-		if ($this->item->hasField(Item::FIELD_NAME_ASSIGNED) && $this->item->getAssignedById() > 0)
+		$fieldsValues = [];
+		foreach ($this->getCounterMonitorSignificantFields() as $commonFieldName => $entityFieldName)
 		{
-			return [$this->item->getAssignedById()];
+			$fieldsValues[$entityFieldName] = $this->item->get($commonFieldName);
 		}
-
-		return [];
-	}
-
-	protected function getTypesOfCountersToReset(): array
-	{
-		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
-		if (!$factory || !$factory->getCountersSettings()->isIdleCounterEnabled())
-		{
-			return [];
-		}
-
-		return [
-			EntityCounterType::IDLE,
-			EntityCounterType::ALL,
-		];
+		\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityAdd($this->getItem()->getEntityTypeId(), $fieldsValues);
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
@@ -145,7 +128,7 @@ class Add extends Operation
 			);
 		}
 
-		if (!$factory->isStagesSupported())
+		if (!$factory->isStagesEnabled())
 		{
 			return;
 		}
@@ -171,15 +154,37 @@ class Add extends Operation
 		}
 	}
 
+	protected function createToDoActivity(): void
+	{
+		parent::createToDoActivity();
+
+		$context = $this->getContext();
+		$viewMode = $context->getItemOption('VIEW_MODE');
+
+		if ($viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES)
+		{
+			$stageId = $context->getItemOption('STAGE_ID');
+			if (!$stageId)
+			{
+				return;
+			}
+
+			$deadline = (new EntityActivityDeadline())->getDeadline($stageId);
+
+			if ($deadline)
+			{
+				ToDo::createWithDefaultDescription(
+					$this->item->getEntityTypeId(),
+					$this->item->getId(),
+					$deadline
+				);
+			}
+		}
+	}
+
 	protected function sendPullEvent(): void
 	{
 		parent::sendPullEvent();
-
-		\Bitrix\Crm\Kanban\SupervisorTable::sendItem(
-			$this->item->getId(),
-			\CCrmOwnerType::ResolveName($this->item->getEntityTypeId()),
-			'kanban_add'
-		);
 
 		PullManager::getInstance()->sendItemAddedEvent($this->pullItem, $this->pullParams);
 	}

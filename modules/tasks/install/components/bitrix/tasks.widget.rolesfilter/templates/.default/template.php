@@ -26,8 +26,9 @@ $this->SetViewTarget("sidebar", 200);
 		<a class="plus-icon" href="<?= $url ?>"></a>
 	</div>
 	<?php if (is_array($arResult['ROLES'])): ?>
-		<div class="sidebar-widget-item-wrap">
+		<div class="sidebar-widget-content">
 			<?php foreach ($arResult['ROLES'] as $role): ?>
+			<div class="sidebar-widget-item --with-separator">
 				<a class="task-item" href="<?= $role['HREF'] ?>">
 					<span class="task-item-text"><?= $role['TITLE'] ?></span>
 					<span class="task-item-index-wrap">
@@ -37,6 +38,7 @@ $this->SetViewTarget("sidebar", 200);
 						</span>
 					</span>
 				</a>
+			</div>
 			<?php endforeach ?>
 		</div>
 	<?php endif ?>

@@ -364,6 +364,7 @@ abstract class EntityBase
 			->setRawQueryOrder((string)$sortOrder)
 			->setRawQueryLimit((int)$limit)
 			->setNeedReturnRawQuery(true)
+			->setUseRawQueryDistinct($limit > 1)
 		;
 		$builderResult = $this->buildPermissionSqlForCategories($userPermissions->GetUserID(), $builderOptions, $categories);
 

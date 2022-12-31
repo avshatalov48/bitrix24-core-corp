@@ -181,9 +181,24 @@ class BindingMenu
 			$marketUrl = \Bitrix\Rest\Marketplace\Url::getConfigurationPlacementUrl($manifestCode);
 		}
 
+		$entityList = ['lead', 'deal', 'contact', 'company', 'order', 'smart_invoice'];
+		$typesMap = Container::getInstance()->getDynamicTypesMap();
+		$typesMap->load([
+			'isLoadStages' => false,
+			'isLoadCategories' => false,
+		]);
+
+		foreach ($typesMap->getTypes() as $type)
+		{
+			if ($type->getIsAutomationEnabled())
+			{
+				$entityList[] = strtolower(\CCrmOwnerType::ResolveName($type->getEntityTypeId()));
+			}
+		}
+
 		foreach ([BindingMenu\SectionCode::SWITCHER, BindingMenu\SectionCode::DETAIL] as $placement)
 		{
-			foreach (['lead', 'deal', 'contact', 'company', 'order', 'smart_invoice'] as $entity)
+			foreach ($entityList as $entity)
 			{
 				if (!Automation\Factory::isScriptAvailable(\CCrmOwnerType::ResolveID($entity)))
 				{

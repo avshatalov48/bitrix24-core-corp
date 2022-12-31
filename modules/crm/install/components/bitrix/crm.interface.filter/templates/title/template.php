@@ -117,6 +117,9 @@ $viewList = $navigationBar->getSwitchViewList();
 
 Extension::load(['crm.toolbar-component', 'ui.fonts.opensans']);
 
+
+$belowPageTitleFilled = false;
+
 // switch view panel region
 if($isBitrix24Template)
 {
@@ -124,7 +127,9 @@ if($isBitrix24Template)
 }
 ?>
 
-<?php if (!empty($viewList['items'])): ?>
+<?php if (!empty($viewList['items'])):
+	$belowPageTitleFilled = true;
+?>
 	<div id="<?=$navigationBarId?>" class="crm-view-switcher"></div>
 	<script type="text/javascript">
 		BX.ready(function() {
@@ -158,6 +163,8 @@ if($isBitrix24Template)
 	{
 		Extension::load('bizproc.script');
 
+		$belowPageTitleFilled = true;
+
 		$APPLICATION->includeComponent(
 			'bitrix:intranet.binding.menu',
 			'',
@@ -168,7 +175,10 @@ if($isBitrix24Template)
 		);
 	}
 
-	echo $navigationBar->getAutomationView();
+	if ($arResult['SHOW_AUTOMATION_VIEW'])
+	{
+		echo $navigationBar->getAutomationView();
+	}
 ?>
 </div>
 
@@ -179,6 +189,12 @@ if($isBitrix24Template)
 	$this->EndViewTarget();
 }
 //endregion
+
+if ($belowPageTitleFilled)
+{
+	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-pagetitle-view');
+}
 
 if (empty($arParams['~RENDER_INTO_VIEW']))
 {

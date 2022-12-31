@@ -1,16 +1,20 @@
 <?
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm\Integration\Sale\Reservation;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Loader;
 use Bitrix\Catalog\Component\UseStore;
 use Bitrix\Catalog\Config\Feature;
+use Bitrix\Catalog\Config\Options\CheckRightsOnDecreaseStoreAmount;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Engine\ActionFilter\ContentType;
 use Bitrix\Main\Engine\Response\AjaxJson;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Error;
+use Bitrix\Main\LoaderException;
 
 class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllerable
 {
@@ -30,6 +34,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			&& $this->hasPermissions())
 		)
 		{
+			$this->includeComponentTemplate('denied');
 			return;
 		}
 
@@ -66,7 +71,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		{
 			return $errorResponse;
 		}
-		
+
 		return $this->respondSuccess($this->getResult());
 	}
 
@@ -93,6 +98,22 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			}
 		}
 
+		if (isset($values['checkRightsOnDecreaseStoreAmount']))
+		{
+			if ($values['checkRightsOnDecreaseStoreAmount'] === true)
+			{
+				CheckRightsOnDecreaseStoreAmount::set(
+					CheckRightsOnDecreaseStoreAmount::ENABLED_VALUE
+				);
+			}
+			else
+			{
+				CheckRightsOnDecreaseStoreAmount::set(
+					CheckRightsOnDecreaseStoreAmount::DISABLED_VALUE
+				);
+			}
+		}
+
 		$catalogOptionSettings = [
 			'defaultQuantityTrace' => self::OPTION_DEFAULT_QUANTITY_TRACE,
 			'defaultCanBuyZero' => self::OPTION_DEFAULT_CAN_BUY_ZERO,
@@ -100,7 +121,7 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 			'defaultProductVatIncluded' => self::OPTION_DEFAULT_PRODUCT_VAT_INCLUDED,
 		];
 
-		if ($this->isCommonProductProcessingEnabled())
+		if ($this->isCanEnableProductCardSlider())
 		{
 			$catalogOptionSettings['productCardSliderEnabled'] = self::OPTION_PRODUCT_CARD_SLIDER_ENABLED;
 		}
@@ -149,17 +170,35 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 	 */
 	private function getResult(): array
 	{
+		$accessController = AccessController::getCurrent();
+
 		return [
 			'isStoreControlUsed' => UseStore::isUsed(),
-			'isCommonProductProcessingEnabled' => $this->isCommonProductProcessingEnabled(),
+			'isBitrix24' => static::isBitrix24(),
 			'productsCnt' => $this->getProductsCnt(),
 			'reservationEntities' => $this->getReservationEntities(),
 			'defaultQuantityTrace' => Option::get('catalog', self::OPTION_DEFAULT_QUANTITY_TRACE) === 'Y',
 			'defaultCanBuyZero' => Option::get('catalog', self::OPTION_DEFAULT_CAN_BUY_ZERO) === 'Y',
 			'defaultSubscribe' => Option::get('catalog', self::OPTION_DEFAULT_SUBSCRIBE) === 'Y',
-			'productCardSliderEnabled' => Option::get('catalog', self::OPTION_PRODUCT_CARD_SLIDER_ENABLED) === 'Y',
+			'productCardSliderEnabled' => Option::get('catalog', self::OPTION_PRODUCT_CARD_SLIDER_ENABLED) === 'Y', // TODO: delete if not need
+			'isCanEnableProductCardSlider' => $this->isCanEnableProductCardSlider(),
 			'defaultProductVatIncluded' => Option::get('catalog', self::OPTION_DEFAULT_PRODUCT_VAT_INCLUDED) === 'Y',
+			'configCatalogSource' => \Bitrix\Main\Context::getCurrent()->getRequest()->get('configCatalogSource'),
+			'checkRightsOnDecreaseStoreAmount' => CheckRightsOnDecreaseStoreAmount::isEnabled(),
+			'hasAccessToCatalogSettings' => $accessController->check(ActionDictionary::ACTION_CATALOG_SETTINGS_ACCESS),
+			'hasAccessToReservationSettings' => $accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS),
+			'hasAccessToInventoryManagmentSettings' => $accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS),
 		];
+	}
+
+	private function isCanEnableProductCardSlider(): bool
+	{
+		if (static::isBitrix24())
+		{
+			return Option::get('catalog', self::OPTION_PRODUCT_CARD_SLIDER_ENABLED) !== 'Y';
+		}
+
+		return true;
 	}
 
 	/**
@@ -219,7 +258,16 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 	 */
 	private function hasPermissions(): bool
 	{
-		return CCrmSaleHelper::isShopAccess('admin');
+		$accessController = \Bitrix\Catalog\Access\AccessController::getCurrent();
+
+		return
+			(
+				$accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+				&& $accessController->check(ActionDictionary::ACTION_CATALOG_SETTINGS_ACCESS)
+			)
+			||
+			$accessController->check(ActionDictionary::ACTION_RESERVED_SETTINGS_ACCESS)
+		;
 	}
 
 	/**
@@ -243,11 +291,15 @@ class CCrmConfigCatalogSettings extends \CBitrixComponent implements Controllera
 		return AjaxJson::createSuccess($data);
 	}
 
-	/**
-	 * @return bool
-	 */
-	private function isCommonProductProcessingEnabled(): bool
+	private static function isBitrix24(): bool
 	{
-		return Feature::isCommonProductProcessingEnabled();
+		static $isBitrix24Included;
+
+		if (!isset($isBitrix24Included))
+		{
+			$isBitrix24Included = Loader::includeModule('bitrix24');
+		}
+
+		return $isBitrix24Included;
 	}
 }

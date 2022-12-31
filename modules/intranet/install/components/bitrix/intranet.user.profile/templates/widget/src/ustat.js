@@ -64,7 +64,7 @@ export default class Ustat {
 				userList.appendChild(
 					Tag.render`
 						<div title="${Text.encode(fullName)}" class="system-auth-form__userlist-item ui-icon ui-icon ui-icon-common-user">
-							<i ${avatarSrc ? `style="background-image: url('${avatarSrc}');background-size: cover;"` : ''}></i>
+							<i ${avatarSrc ? `style="background-image: url('${encodeURI(avatarSrc)}');background-size: cover;"` : ''}></i>
 						</div>
 					`
 				);

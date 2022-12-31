@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm\Order;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
@@ -362,19 +364,26 @@ class CrmBuyerEdit extends \CBitrixComponent
 			return false;
 		}
 
+		if (!Loader::includeModule('catalog'))
+		{
+			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_MODULE_NOT_INSTALLED_CATALOG'));
+
+			return false;
+		}
+
 		return true;
 	}
 
 	protected function checkPermissions()
 	{
-		if (!CCrmSaleHelper::isShopAccess('manager'))
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
 		{
 			$this->errorCollection[] = new \Bitrix\Main\Error(Loc::getMessage('CRM_PERMISSION_DENIED'));
 
 			return false;
 		}
 
-		$this->arResult['PERM_CAN_EDIT'] = CCrmSaleHelper::isShopAccess();
+		$this->arResult['PERM_CAN_EDIT'] = true;
 
 		return true;
 	}

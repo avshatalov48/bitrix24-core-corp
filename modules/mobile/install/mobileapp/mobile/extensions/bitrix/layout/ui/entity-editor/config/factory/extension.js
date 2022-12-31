@@ -1,6 +1,9 @@
 (() => {
 	const COLUMN = 'column';
 	const SECTION = 'section';
+	/**
+	 * @class EntityConfigFactory
+	 */
 	class EntityConfigFactory
 	{
 		static createByType(type, settings)

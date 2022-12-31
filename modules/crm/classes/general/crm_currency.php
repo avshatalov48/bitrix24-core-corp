@@ -726,6 +726,7 @@ class CCrmCurrency
 		}
 		return $decimals;
 	}
+
 	public static function GetExchangeRate($currencyID)
 	{
 		if (!Loader::includeModule('currency'))
@@ -733,20 +734,24 @@ class CCrmCurrency
 			return 1;
 		}
 
+		$currencyID = (string) $currencyID;
+
 		$rates = new self::$currencyRatesClassName();
 		if(!($rs = $rates->_get_last_rates(date('Y-m-d'), $currencyID)))
 		{
 			return 1.0;
 		}
 
-		$exchRate = doubleval($rs['RATE']);
-		$cnt = intval($rs['RATE_CNT']);
+		$exchRate = (double)$rs['RATE'];
+		$cnt = (int)$rs['RATE_CNT'];
+
 		if ($exchRate <= 0)
 		{
-			$exchRate = doubleval($rs["AMOUNT"]);
-			$cnt = intval($rs['AMOUNT_CNT']);
+			$exchRate = (double)$rs["AMOUNT"];
+			$cnt = (int)$rs['AMOUNT_CNT'];
 		}
-		return $cnt != 1 ? ($exchRate / $cnt) : $exchRate;
+
+		return ($cnt !== 1 ? ($exchRate / $cnt) : $exchRate);
 	}
 
 	private static function ClearCache()

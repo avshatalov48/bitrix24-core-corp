@@ -172,7 +172,7 @@ abstract class PresetAbstract implements PresetInterface
 					$expectedStructure = null;
 					foreach ($newData as $structureContent)
 					{
-						if (array_key_exists($groupId , $structureContent))
+						if (is_array($structureContent) && array_key_exists($groupId , $structureContent))
 						{
 							$expectedStructure = $structureContent[$groupId];
 							break;

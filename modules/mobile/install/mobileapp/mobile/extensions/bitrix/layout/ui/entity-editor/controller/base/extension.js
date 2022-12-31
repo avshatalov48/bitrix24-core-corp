@@ -1,52 +1,82 @@
-(() =>
-{
+(() => {
+
+	const { EventEmitter } = jn.require('event-emitter');
+
 	/**
 	 * @class EntityEditorBaseController
 	 */
-	class EntityEditorBaseController
+	class EntityEditorBaseController extends LayoutComponent
 	{
 		constructor(props)
 		{
-			this.id = CommonUtils.isNotEmptyString(props.id) ? props.id : CommonUtils.getRandom(4);
-			this.settings = props.settings ? props.settings : {};
-			/** @type {EntityEditor} */
-			this.editor = BX.prop.get(this.settings, "editor", null);
-			/** @type {EntityModel} */
-			this.model = BX.prop.get(this.settings, "model", null);
+			super(props);
 
-			this.initialize();
+			this.initialize(props.id, props.uid, props.settings);
 		}
 
-		setModel(model)
+		componentWillReceiveProps(props)
 		{
-			this.model = model;
+			this.initialize(props.id, props.uid, props.settings);
+
+			if (this.editor && this.editor.settings.loadFromModel)
+			{
+				this.loadFromModel();
+			}
+		}
+
+		componentDidMount()
+		{
+			this.bindEvents();
+			this.loadFromModel();
+		}
+
+		componentWillUnmount()
+		{
+			this.unbindEvents();
+		}
+
+		bindEvents()
+		{
+		}
+
+		unbindEvents()
+		{
+		}
+
+		initialize(id, uid, settings)
+		{
+			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
+
+			this.uid = CommonUtils.isNotEmptyString(uid) ? uid : Random.getString();
+			/** @type {EventEmitter} */
+			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+
+			this.settings = settings ? settings : {};
+			/** @type {EntityEditor} */
+			this.editor = BX.prop.get(this.settings, 'editor', null);
+			/** @type {EntityModel} */
+			this.model = BX.prop.get(this.settings, 'model', null);
 		}
 
 		loadFromModel()
 		{
 		}
 
-		on(eventName, callback)
+		getUid()
 		{
-			BX.addCustomEvent(eventName, callback);
-
-			return this;
-		}
-
-		emit(eventName, args)
-		{
-			BX.postComponentEvent(eventName, args);
-		}
-
-		initialize()
-		{
+			return this.uid;
 		}
 
 		getValuesToSave()
 		{
 			return {};
 		}
+
+		render()
+		{
+			return null;
+		}
 	}
 
-	jnexport(EntityEditorBaseController)
+	jnexport(EntityEditorBaseController);
 })();

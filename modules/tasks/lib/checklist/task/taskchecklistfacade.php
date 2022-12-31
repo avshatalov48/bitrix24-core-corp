@@ -4,6 +4,7 @@ namespace Bitrix\Tasks\CheckList\Task;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\ArgumentTypeException;
 use Bitrix\Main\Db\SqlQueryException;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\SystemException;
@@ -207,6 +208,7 @@ class TaskCheckListFacade extends CheckListFacade
 
 	private static function addAuditorsToTask(CTaskItem $task, array $members): void
 	{
+		//checklist auditors
 		try
 		{
 			$taskData = $task->getData(false);

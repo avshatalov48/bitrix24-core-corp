@@ -6,16 +6,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Localization\Loc;
+\Bitrix\Main\Page\Asset::getInstance()->addCss(getLocalPath('activities/bitrix/crmgenerateqr/crmgenerateqr.css'));
 
 /** @var \Bitrix\Bizproc\Activity\PropertiesDialog $dialog */
 ?>
 
 <div class="bizproc-automation-popup-settings bizproc-automation-popup-settings-text" style="max-width: 660px">
 	<p><?= Loc::getMessage('CRMBPGQR_HELP_1') ?></p>
-	<p><?= Loc::getMessage('CRMBPGQR_HELP_2') ?></p>
-	<p><?= Loc::getMessage('CRMBPGQR_HELP_3') ?></p>
-	<p style="text-align: center"><img src="/pub/crm/qr/?test&img=y" alt="QR" width="200" height="200"/></p>
-	<p><?= Loc::getMessage('CRMBPGQR_HELP_4') ?></p>
+	<div class="bizproc-automation-popup-settings__qr">
+		<div class="bizproc-automation-popup-settings__qr_img-block">
+			<img class="bizproc-automation-popup-settings__qr_img" src="/pub/crm/qr/?test&img=y" alt="QR" />
+		</div>
+		<div class="bizproc-automation-popup-settings__qr_description">
+			<div class="bizproc-automation-popup-settings__qr_text --weighty"><?= Loc::getMessage('CRMBPGQR_HELP_2') ?></div>
+			<div class="bizproc-automation-popup-settings__qr_text --weighty"><?= Loc::getMessage('CRMBPGQR_HELP_3') ?></div>
+			<div class="bizproc-automation-popup-settings__qr_text"><?= Loc::getMessage('CRMBPGQR_HELP_4') ?></div>
+		</div>
+	</div>
 </div>
 
 <style>

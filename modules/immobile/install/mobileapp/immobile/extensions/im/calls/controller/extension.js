@@ -620,7 +620,7 @@
 
 						if (button == 3)
 						{
-							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{dialogId: this.currentCall.associatedEntity.id}], 'im.messenger');
+							BX.postComponentEvent('ImMobile.Messenger.Dialog:open', [{callId}], 'im.messenger');
 							return;
 						}
 

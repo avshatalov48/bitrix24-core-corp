@@ -24,4 +24,6 @@ abstract class Item implements \JsonSerializable
 	{
 		return $this->model;
 	}
+
+	abstract public function getSort(): array;
 }

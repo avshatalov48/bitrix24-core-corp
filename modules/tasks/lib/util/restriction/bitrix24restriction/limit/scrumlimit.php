@@ -44,18 +44,15 @@ class ScrumLimit extends Limit
 		return (static::getCurrentValue() >= $limit);
 	}
 
-	public static function getSidePanelId(): string
+	public static function getSidePanelId(int $limit = 0): string
 	{
 		$sidePanelId = 'limit_tasks_scrum';
 
 		if (Loader::includeModule('bitrix24'))
 		{
-			$currentEdition = \CBitrix24::getLicenseType();
+			$limit = ($limit > 0 ? $limit : static::getLimit());
 
-			$listScrumEditions = array_merge(\CBitrix24::BASE_EDITIONS, \CBitrix24::ACTUAL_EDITIONS);
-			$listScrumEditions = array_merge($listScrumEditions, ['alive', 'nfr', 'demo', 'ftf']);
-
-			if (!in_array($currentEdition, $listScrumEditions))
+			if ($limit === 0)
 			{
 				$sidePanelId = 'limit_tasks_scrum_restriction';
 			}

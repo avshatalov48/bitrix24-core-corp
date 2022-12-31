@@ -88,10 +88,10 @@ foreach($shipmentItemCollection as $shipmentItem)
 			</div>
 		</div>
 	</div>
-
-	<div class="crm-iframe-workarea" id="crm-content-outer">
-		<div class="crm-iframe-sidebar"><?$APPLICATION->ShowViewContent("sidebar"); ?></div>
-		<div class="crm-iframe-content"><?
+</div>
+<div class="crm-iframe-workarea" id="crm-content-outer">
+	<div class="crm-iframe-sidebar"><?$APPLICATION->ShowViewContent("sidebar"); ?></div>
+	<div class="crm-iframe-content"><?
 
 $componentData = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
 $componentParams = isset($componentData['params']) && is_array($componentData['params']) ? $componentData['params'] : array();
@@ -128,7 +128,7 @@ $APPLICATION->IncludeComponent('bitrix:crm.order.shipment.product.list',
 );
 
 	?></div>
-	</div>
+</div>
 </body>
 </html><?
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/epilog_after.php');

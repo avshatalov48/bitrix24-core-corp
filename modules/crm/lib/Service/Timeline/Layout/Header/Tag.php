@@ -13,11 +13,13 @@ class Tag extends Button
 	public const TYPE_SECONDARY = 'secondary';
 
 	protected string $type;
+	protected string $hint;
 
 	public function __construct(string $title, string $type)
 	{
 		parent::__construct($title);
 		$this->type = $type;
+		$this->hint = '';
 	}
 
 	public function getType(): string
@@ -32,12 +34,25 @@ class Tag extends Button
 		return $this;
 	}
 
+	public function getHint(): string
+	{
+		return $this->hint;
+	}
+
+	public function setHint(string $hint): self
+	{
+		$this->hint = $hint;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return array_merge(
 			parent::toArray(),
 			[
 				'type' => $this->getType(),
+				'hint' => $this->getHint(),
 			]
 		);
 	}

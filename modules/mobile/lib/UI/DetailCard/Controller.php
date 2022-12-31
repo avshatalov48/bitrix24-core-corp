@@ -5,13 +5,25 @@ declare(strict_types = 1);
 namespace Bitrix\Mobile\UI\DetailCard;
 
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Engine\Contract\FallbackActionInterface;
 use Bitrix\Main\Engine\JsonController;
-use Bitrix\Main\Engine\JsonPayload;
 use Bitrix\Main\Error;
 
-abstract class Controller extends JsonController
+abstract class Controller extends JsonController implements FallbackActionInterface
 {
-	private const NON_CRITICAL_ERROR_DATA_KEY = 'NON_CRITICAL';
+	protected const ADD_INTERNAL_ACTION = 'addInternal';
+	protected const UPDATE_INTERNAL_ACTION = 'updateInternal';
+	protected const LOAD_ACTION = 'load';
+	protected const LOAD_TAB_CONFIG_ACTION = 'loadTabConfig';
+
+	protected const NON_CRITICAL_ERROR_DATA_KEY = 'NON_CRITICAL';
+
+	protected function init()
+	{
+		parent::init();
+
+		define('BX_MOBILE', true);
+	}
 
 	protected function getDefaultPreFilters(): array
 	{
@@ -20,153 +32,154 @@ abstract class Controller extends JsonController
 			new ActionFilter\Csrf(),
 			new ActionFilter\HttpMethod([ActionFilter\HttpMethod::METHOD_POST]),
 			new ActionFilter\ContentType([ActionFilter\ContentType::JSON]),
+			new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 		];
 	}
 
 	public function configureActions(): array
 	{
 		return [
-			'load' => [
+			self::LOAD_TAB_CONFIG_ACTION => [
 				'+prefilters' => [
 					new ActionFilter\CloseSession(),
-					new ActionFilter\Scope(ActionFilter\Scope::NOT_REST),
 				],
 			],
+		];
+	}
+
+	final public function fallbackAction($actionName)
+	{
+		if ($actionName === self::LOAD_ACTION)
+		{
+			$actionName = $this->prepareTabLoadName();
+		}
+
+		return $this->forward($this, $actionName);
+	}
+
+	public static function getTabActionName(string $tabId): string
+	{
+		return mb_strtolower(self::LOAD_ACTION . $tabId);
+	}
+
+	protected function findInSourceParametersList(string $key)
+	{
+		foreach ($this->getSourceParametersList() as $list)
+		{
+			if (isset($list[$key]))
+			{
+				return $list[$key];
+			}
+		}
+
+		return null;
+	}
+
+	private function prepareTabLoadName(): string
+	{
+		$tabId = $this->findInSourceParametersList('tabId');
+		if (!$tabId)
+		{
+			throw new \DomainException("Empty tab id for load action.");
+		}
+
+		$actionName = self::getTabActionName($tabId);
+
+		if (!in_array($actionName, $this->listNameActions(), true))
+		{
+			throw new \DomainException("Action {{$actionName}} not found.");
+		}
+
+		return $actionName;
+	}
+
+	/**
+	 * @return array|null
+	 */
+	public function updateAction(): ?array
+	{
+		$entityId = $this->forward($this, self::UPDATE_INTERNAL_ACTION);
+		if ($this->getCriticalErrors())
+		{
+			return null;
+		}
+
+		return [
+			'entityId' => $entityId,
+			'load' => $this->createLoadResponse(),
+			'title' => $this->getEntityTitle(),
+			'header' => $this->getEntityHeader(),
+		];
+	}
+
+	/**
+	 * @return array|null
+	 */
+	public function addAction(): ?array
+	{
+		$entityId = $this->forward($this, self::ADD_INTERNAL_ACTION);
+		if ($this->getCriticalErrors())
+		{
+			return null;
+		}
+
+		$this->setSourceParametersList(array_merge(
+			[
+				['entityId' => $entityId],
+			],
+			$this->getSourceParametersList(),
+		));
+
+		return [
+			'entityId' => $entityId,
+			'load' => $this->createLoadResponse(),
+			'title' => $this->getEntityTitle(),
+			'header' => $this->getEntityHeader(),
 		];
 	}
 
 	/**
 	 * @return string[]
 	 */
-	abstract public function getLoadActionsList(): array;
-
-	public static function getTabActionName(string $tabId): string
-	{
-		return mb_strtolower("load{$tabId}");
-	}
-
-	public function loadAction(JsonPayload $payload): array
-	{
-		$data = $payload->getData() ?? [];
-		$tabId = (string)($data['tabId'] ?? '');
-		$action = static::getTabActionName($tabId);
-
-		if ($tabId === '' || !in_array($action, $this->listNameActions(), true))
-		{
-			throw new \DomainException("Action {{$action}} not found.");
-		}
-
-		$parameters = [
-			'params' => (array)($data['parameters'] ?? [])
-		];
-
-		return $this->forward($this, $action, $parameters);
-	}
+	abstract public function getTabIds(): array;
 
 	/**
-	 * @param JsonPayload $payload
-	 * @return array|null
-	 */
-	public function updateAction(JsonPayload $payload): ?array
-	{
-		[$parameters, $data] = $this->extractSavePayload($payload);
-
-		$entityId = $this->update($parameters, $data);
-		if ($this->getCriticalErrors())
-		{
-			return null;
-		}
-
-		return [
-			'id' => $entityId,
-			'load' => $this->createLoadResponse($parameters),
-			'title' => $this->getEntityTitle($entityId),
-		];
-	}
-
-	/**
-	 * @param array $parameters
-	 * @param array $data
-	 * @return int|null
-	 */
-	abstract protected function update(array $parameters, array $data): ?int;
-
-	/**
-	 * @param JsonPayload $payload
-	 * @return array|null
-	 */
-	public function addAction(JsonPayload $payload): ?array
-	{
-		[$parameters, $data] = $this->extractSavePayload($payload);
-
-		$entityId = $this->add($parameters, $data);
-		if ($this->getCriticalErrors())
-		{
-			return null;
-		}
-
-		$parameters = ['id' => $entityId];
-
-		return [
-			'id' => $entityId,
-			'params' => $parameters,
-			'load' => $this->createLoadResponse($parameters),
-			'title' => $this->getEntityTitle($entityId),
-		];
-	}
-
-	/**
-	 * @param array $parameters
-	 * @param array $data
-	 * @return int|null
-	 */
-	abstract protected function add(array $parameters, array $data): ?int;
-
-	/**
-	 * @param JsonPayload $payload
 	 * @return array
 	 */
-	protected function extractSavePayload(JsonPayload $payload): array
-	{
-		$data = $payload->getData() ?? [];
-
-		$parameters = $data['parameters'] ?? [];
-		$data = $data['data'] ?? [];
-
-		return [$parameters, $data];
-	}
-
-	/**
-	 * @param array $parameters
-	 * @return array
-	 */
-	protected function createLoadResponse(array $parameters): array
+	protected function createLoadResponse(): array
 	{
 		$result = [];
 
-		$loadActionsList = $this->getLoadActionsList();
-		foreach ($loadActionsList as $loadAction)
+		$closeOnSave = $this->findInSourceParametersList('closeOnSave');
+		if ($closeOnSave)
 		{
+			return $result;
+		}
+
+		$loadedTabs = $this->findInSourceParametersList('loadedTabs');
+
+		foreach ($this->getTabIds() as $tabId)
+		{
+			if ($loadedTabs !== null && !in_array($tabId, $loadedTabs, true))
+			{
+				continue;
+			}
+
 			$result[] = [
-				'id' => $loadAction,
-				'result' => $this->forward(
-					static::class,
-					'load' . ucfirst($loadAction),
-					[
-						'params' => $parameters,
-					]
-				),
+				'id' => $tabId,
+				'result' => $this->forward($this, self::LOAD_ACTION . $tabId),
 			];
 		}
 
 		return $result;
 	}
 
-	/**
-	 * @param int $entityId
-	 * @return string
-	 */
-	abstract protected function getEntityTitle(int $entityId): string;
+	abstract protected function getEntityTitle(): string;
+
+	protected function getEntityHeader(): ?array
+	{
+		return null;
+	}
 
 	/**
 	 * @return Error[]
@@ -175,8 +188,7 @@ abstract class Controller extends JsonController
 	{
 		return array_filter(
 			$this->getErrors(),
-			function ($error)
-			{
+			static function ($error) {
 				$customData = $error->getCustomData();
 
 				return !(

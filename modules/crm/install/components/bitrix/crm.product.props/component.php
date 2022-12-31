@@ -26,6 +26,13 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
+if (!\Bitrix\Catalog\Access\AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
+{
+	$this->IncludeComponentTemplate('productprops_error');
+	
+	return;
+}
+
 global $APPLICATION;
 
 $componentPage = '';

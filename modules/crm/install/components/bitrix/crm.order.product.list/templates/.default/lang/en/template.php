@@ -3,6 +3,7 @@ $MESS["CRM_ORDER_PL_ADD"] = "Add";
 $MESS["CRM_ORDER_PL_ADD_PRODUCT"] = "Add product";
 $MESS["CRM_ORDER_PL_APPLY"] = "Apply";
 $MESS["CRM_ORDER_PL_AVAILABLE"] = "Available";
+$MESS["CRM_ORDER_PL_CATALOG_DENIED_HINT"] = "Insufficient permission to view the catalog.";
 $MESS["CRM_ORDER_PL_CHANGE"] = "Edit";
 $MESS["CRM_ORDER_PL_CHANGE_ITEM_IN_SHOPPING_CART"] = "Edit shopping cart item";
 $MESS["CRM_ORDER_PL_CHOOSE_ACTION"] = "Select action";

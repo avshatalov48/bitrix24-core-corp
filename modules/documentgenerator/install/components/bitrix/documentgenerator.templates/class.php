@@ -79,6 +79,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 			$this->arResult['TITLE'] = Loc::getMessage('DOCGEN_TEMPLATE_DOWNLOAD_ADD_TEMPLATE');
 			$this->arResult['PROVIDERS'] = $this->getProviders();
 			$this->arResult['REGIONS'] = Driver::getInstance()->getRegionsList();
+			$this->arResult['PRODUCTS_TABLE_VARIANT'] = TemplateTable::getProductsTableVariantList();
 			if($this->arParams['ID'] > 0)
 			{
 				$template = \Bitrix\DocumentGenerator\Template::loadById($this->arParams['ID']);
@@ -109,6 +110,7 @@ class DocumentsTemplateComponent extends CBitrixComponent implements Controllera
 						$this->arResult['TEMPLATE']['NAME'] = $template->NAME;
 						$this->arResult['TEMPLATE']['NUMERATOR_ID'] = $template->NUMERATOR_ID;
 						$this->arResult['TEMPLATE']['WITH_STAMPS'] = $template->WITH_STAMPS;
+						$this->arResult['TEMPLATE']['PRODUCTS_TABLE_VARIANT'] = $template->PRODUCTS_TABLE_VARIANT;
 						$this->arResult['TEMPLATE']['PROVIDERS'] = [];
 						if (empty($this->arParams['MODULE']))
 						{

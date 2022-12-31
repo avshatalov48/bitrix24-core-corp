@@ -1,10 +1,12 @@
 <?php
 
+use Bitrix\Catalog\Config\State;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Db\SqlQueryException;
 use Bitrix\Main\Loader;
 use Bitrix\Crm;
+use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Main;
 use Bitrix\Sale;
 use Bitrix\Main\LoaderException;
@@ -357,12 +359,6 @@ class CCrmSaleHelper
 	 */
 	public static function isShopAccess($role = "")
 	{
-		$shopEnabled = Option::get("crm", "crm_shop_enabled", "N");
-		if ($shopEnabled == "N")
-		{
-			return false;
-		}
-
 		global $USER;
 		if (!is_object($USER))
 		{
@@ -439,7 +435,7 @@ class CCrmSaleHelper
 
 	private static function addToCacheAccess(int $userId, string $role, bool $access): void
 	{
-		self::$userIdsWithShopAccess[$userId] = self::$userIdsWithShopAccess[$userId] ?: [];
+		self::$userIdsWithShopAccess[$userId] = self::$userIdsWithShopAccess[$userId] ?? [];
 		self::$userIdsWithShopAccess[$userId][$role] = $access;
 	}
 
@@ -1332,5 +1328,23 @@ class CCrmSaleHelper
 		{
 			$GLOBALS['CACHE_MANAGER']->ClearByTag('bitrix24_left_menu');
 		}
+	}
+
+	/**
+	 * Checks whether all the conditions for processing inventory management are met.
+	 *
+	 * ATTENTION: this is not a check whether inventory management is ENABLED,
+	 * but a check whether it is POSSIBLE to use it.
+	 *
+	 * @return bool
+	 */
+	public static function isProcessInventoryManagement(): bool
+	{
+		return
+			!static::isWithOrdersMode()
+			&& RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
+			&& Loader::includeModule('catalog')
+			&& State::isUsedInventoryManagement()
+		;
 	}
 }

@@ -1,0 +1,1 @@
+{"version":3,"sources":["call.js"],"names":["jn","define","require","exports","module","TimelineItemBase","CallActivity","hasPlayer","this","layoutSchema","body","blocks","audio"],"mappings":"AAGAA,GAAGC,OAAO,mCAAmC,CAACC,EAASC,EAASC,KAE/D,MAAMC,iBAAEA,GAAqBH,EAAQ,0BAKlC,MAAMI,UAAqBD,EAEzBE,gBAEH,OAAOC,KAAKC,aAAaC,KAAKC,OAAOC,OAIpCR,EAAOD,QAAU,CAAEG,aAAAA","file":"call.map.js"}

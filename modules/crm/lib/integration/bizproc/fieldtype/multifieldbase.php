@@ -117,7 +117,7 @@ class MultiFieldBase extends BaseType\Base
 		$value = $typeValue;
 
 		ob_start();
-		$APPLICATION->IncludeComponent('bitrix:crm.field_multi.edit', '',
+		$APPLICATION->IncludeComponent('bitrix:crm.field_multi.edit', 'new',
 			Array(
 				'FM_MNEMONIC' => static::generateControlName($field),
 				'ENTITY_ID'   => $fieldType->getDocumentType()[2],

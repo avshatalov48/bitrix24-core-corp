@@ -1,5 +1,6 @@
 <?php
 $MESS["CRMBPGQR_DESCR_DESCR"] = "Create a QR code for the visitor tracker page";
+$MESS["CRMBPGQR_DESCR_DESCR_1_MSGVER_1"] = "Creates personalized QR codes for any marketing purpose (helper).";
 $MESS["CRMBPGQR_DESCR_NAME"] = "Create QR code";
 $MESS["CRMBPGQR_RETURN_PAGE_LINK"] = "Short page link";
 $MESS["CRMBPGQR_RETURN_PAGE_LINK_BB"] = "Page link (BBcode)";

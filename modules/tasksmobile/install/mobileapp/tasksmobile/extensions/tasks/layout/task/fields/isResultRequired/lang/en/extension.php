@@ -1,0 +1,2 @@
+<?php
+$MESS["TASKSMOBILE_LAYOUT_TASK_FIELDS_IS_RESULT_REQUIRED"] = "Task report is required";

@@ -8,12 +8,13 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\OrderStatus;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Service;
-use Bitrix\Crm\StatusTable;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProvider\User;
 use Bitrix\DocumentGenerator\DataProviderManager;
+use Bitrix\DocumentGenerator\Dictionary;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Sale\BasketItem;
 use Bitrix\Sale\Internals;
 use Bitrix\Sale\PropertyBase;
 use Bitrix\Sale\Registry;
@@ -450,7 +451,6 @@ class Order extends ProductsDataProvider
 
 	public static function getProductProviderDataByBasketItem(array $basketItem, ItemIdentifier $owner, string $currencyId): array
 	{
-
 		return [
 			'ID' => $basketItem['ID'],
 			'OWNER_ID' => $owner->getEntityId(),
@@ -468,6 +468,7 @@ class Order extends ProductsDataProvider
 			'MEASURE_CODE' => $basketItem['MEASURE_CODE'] ?? '',
 			'MEASURE_NAME' => $basketItem['MEASURE_NAME'] ?? '',
 			'CUSTOMIZED' => $basketItem['CUSTOM_PRICE'] ?? 'N',
+			'PRODUCT_VARIANT' => self::getProductVariantByBasketItem($basketItem),
 			'CURRENCY_ID' => $currencyId,
 		];
 	}
@@ -486,6 +487,16 @@ class Order extends ProductsDataProvider
 		}
 
 		return $discountRate;
+	}
+
+	private static function getProductVariantByBasketItem(array $basketItem) : string
+	{
+		if (isset($basketItem['TYPE']) && (int)$basketItem['TYPE'] === BasketItem::TYPE_SERVICE)
+		{
+			return Dictionary\ProductVariant::SERVICE;
+		}
+
+		return Dictionary\ProductVariant::GOODS;
 	}
 
 	private static function getTaxRateByBasketItem(array $basketItem) :? float

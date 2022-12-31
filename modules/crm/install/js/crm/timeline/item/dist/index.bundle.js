@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,ui_cnt,ui_label,main_popup,main_core_events,crm_timeline_item,ui_vue3_components_audioplayer,ui_buttons,currency_currencyCore,ui_vue3,ui_alerts,main_date,crm_router,ui_dialogs_messagebox,crm_timeline_tools,ui_notification,main_core) {
+(function (exports,ui_cnt,ui_label,main_core_events,main_loader,crm_timeline_item,ui_vue3_components_audioplayer,main_popup,currency_currencyCore,ui_vue3,ui_alerts,crm_datetime,main_date,crm_router,ui_dialogs_messagebox,crm_timeline_tools,ui_notification,main_core,ui_buttons) {
 	'use strict';
 
 	let Item = /*#__PURE__*/function () {
@@ -182,6 +182,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
+	      main_core.Dom.clean(this.counterNodeContainer);
 	      const counter = new ui_cnt.Counter({
 	        value: 1,
 	        border: true,
@@ -196,6 +197,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    this.renderCounter();
 	  },
 
+	  watch: {
+	    counterType(newCounterType) // update if counter state changed
+	    {
+	      this.$nextTick(() => {
+	        this.renderCounter();
+	      });
+	    }
+
+	  },
 	  template: `
 		<div :class="className">
 			<i></i>
@@ -312,6 +322,33 @@ this.BX.Crm = this.BX.Crm || {};
 	function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
 	function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+	const AnimationTarget = {
+	  block: 'block',
+	  item: 'item'
+	};
+	const AnimationType = {
+	  disable: 'disable',
+	  loader: 'loader'
+	};
+	const ActionType = {
+	  JS_EVENT: 'jsEvent',
+	  AJAX_ACTION: {
+	    STARTED: 'ajaxActionStarted',
+	    FINISHED: 'ajaxActionFinished',
+	    FAILED: 'ajaxActionFailed'
+	  },
+
+	  isJsEvent(type) {
+	    return type === this.JS_EVENT;
+	  },
+
+	  isAjaxAction(type) {
+	    return type === this.AJAX_ACTION.STARTED || type === this.AJAX_ACTION.FINISHED || type === this.AJAX_ACTION.FAILED;
+	  }
+
+	};
+	Object.freeze(ActionType.AJAX_ACTION);
+	Object.freeze(ActionType);
 
 	var _type = /*#__PURE__*/new WeakMap();
 
@@ -319,13 +356,31 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _actionParams = /*#__PURE__*/new WeakMap();
 
+	var _animation = /*#__PURE__*/new WeakMap();
+
+	var _prepareRunActionParams = /*#__PURE__*/new WeakSet();
+
 	var _prepareMenuItems = /*#__PURE__*/new WeakSet();
 
+	var _startAnimation = /*#__PURE__*/new WeakSet();
+
+	var _stopAnimation = /*#__PURE__*/new WeakSet();
+
+	var _isAnimationValid = /*#__PURE__*/new WeakSet();
+
 	let Action = /*#__PURE__*/function () {
-	  function Action(params) {
+	  function Action(_params) {
 	    babelHelpers.classCallCheck(this, Action);
 
+	    _classPrivateMethodInitSpec(this, _isAnimationValid);
+
+	    _classPrivateMethodInitSpec(this, _stopAnimation);
+
+	    _classPrivateMethodInitSpec(this, _startAnimation);
+
 	    _classPrivateMethodInitSpec(this, _prepareMenuItems);
+
+	    _classPrivateMethodInitSpec(this, _prepareRunActionParams);
 
 	    _classPrivateFieldInitSpec$1(this, _type, {
 	      writable: true,
@@ -342,48 +397,91 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 
-	    babelHelpers.classPrivateFieldSet(this, _type, params.type);
-	    babelHelpers.classPrivateFieldSet(this, _value, params.value);
-	    babelHelpers.classPrivateFieldSet(this, _actionParams, params.actionParams);
+	    _classPrivateFieldInitSpec$1(this, _animation, {
+	      writable: true,
+	      value: null
+	    });
+
+	    babelHelpers.classPrivateFieldSet(this, _type, _params.type);
+	    babelHelpers.classPrivateFieldSet(this, _value, _params.value);
+	    babelHelpers.classPrivateFieldSet(this, _actionParams, _params.actionParams);
+	    babelHelpers.classPrivateFieldSet(this, _animation, main_core.Type.isPlainObject(_params.animation) ? _params.animation : null);
 	  }
 
 	  babelHelpers.createClass(Action, [{
 	    key: "execute",
 	    value: function execute(vueComponent) {
-	      if (this.isJsEvent()) {
-	        vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action:' + babelHelpers.classPrivateFieldGet(this, _value), babelHelpers.classPrivateFieldGet(this, _actionParams));
-	        vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
-	          action: babelHelpers.classPrivateFieldGet(this, _value),
-	          actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams)
-	        });
-	      }
-
-	      if (this.isJsCode()) {
-	        eval(babelHelpers.classPrivateFieldGet(this, _value));
-	      }
-
-	      if (this.isAjaxAction()) {
-	        main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), {
-	          data: babelHelpers.classPrivateFieldGet(this, _actionParams)
-	        }).then(() => {// do something
-	        }, response => {
-	          ui_notification.UI.Notification.Center.notify({
-	            content: response.errors[0].message,
-	            autoHideDelay: 5000
+	      return new Promise((resolve, reject) => {
+	        if (this.isJsEvent()) {
+	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+	            action: babelHelpers.classPrivateFieldGet(this, _value),
+	            actionType: ActionType.JS_EVENT,
+	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams),
+	            animationCallbacks: {
+	              onStart: _classPrivateMethodGet(this, _startAnimation, _startAnimation2).bind(this, vueComponent),
+	              onStop: _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).bind(this, vueComponent)
+	            }
 	          });
-	        });
-	      }
+	          resolve(true);
+	        } else if (this.isJsCode()) {
+	          _classPrivateMethodGet(this, _startAnimation, _startAnimation2).call(this, vueComponent);
 
-	      if (this.isRedirect()) {
-	        location.href = babelHelpers.classPrivateFieldGet(this, _value);
-	      }
+	          eval(babelHelpers.classPrivateFieldGet(this, _value));
 
-	      if (this.isShowMenu()) {
-	        Menu.showMenu(vueComponent, _classPrivateMethodGet(this, _prepareMenuItems, _prepareMenuItems2).call(this, babelHelpers.classPrivateFieldGet(this, _value).items, vueComponent), {
-	          id: 'actionMenu',
-	          bindElement: vueComponent.$el
-	        });
-	      }
+	          _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
+
+	          resolve(true);
+	        } else if (this.isAjaxAction()) {
+	          _classPrivateMethodGet(this, _startAnimation, _startAnimation2).call(this, vueComponent);
+
+	          vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+	            action: babelHelpers.classPrivateFieldGet(this, _value),
+	            actionType: ActionType.AJAX_ACTION.STARTED,
+	            actionData: babelHelpers.classPrivateFieldGet(this, _actionParams)
+	          });
+	          main_core.ajax.runAction(babelHelpers.classPrivateFieldGet(this, _value), {
+	            data: _classPrivateMethodGet(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, babelHelpers.classPrivateFieldGet(this, _actionParams))
+	          }).then(response => {
+	            _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
+
+	            vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+	              action: babelHelpers.classPrivateFieldGet(this, _value),
+	              actionType: ActionType.AJAX_ACTION.FINISHED,
+	              actionData: babelHelpers.classPrivateFieldGet(this, _actionParams),
+	              response
+	            });
+	            resolve(response);
+	          }, response => {
+	            _classPrivateMethodGet(this, _stopAnimation, _stopAnimation2).call(this, vueComponent);
+
+	            ui_notification.UI.Notification.Center.notify({
+	              content: response.errors[0].message,
+	              autoHideDelay: 5000
+	            });
+	            vueComponent.$Bitrix.eventEmitter.emit('crm:timeline:item:action', {
+	              action: babelHelpers.classPrivateFieldGet(this, _value),
+	              actionType: ActionType.AJAX_ACTION.FAILED,
+	              actionParams: babelHelpers.classPrivateFieldGet(this, _actionParams),
+	              response
+	            });
+	            reject(response);
+	          });
+	        } else if (this.isRedirect()) {
+	          _classPrivateMethodGet(this, _startAnimation, _startAnimation2).call(this, vueComponent);
+
+	          location.href = babelHelpers.classPrivateFieldGet(this, _value);
+	          resolve(babelHelpers.classPrivateFieldGet(this, _value));
+	        } else if (this.isShowMenu()) {
+	          Menu.showMenu(vueComponent, _classPrivateMethodGet(this, _prepareMenuItems, _prepareMenuItems2).call(this, babelHelpers.classPrivateFieldGet(this, _value).items, vueComponent), {
+	            id: 'actionMenu',
+	            bindElement: vueComponent.$el,
+	            minWidth: vueComponent.$el.offsetWidth
+	          });
+	          resolve(true);
+	        } else {
+	          reject(false);
+	        }
+	      });
 	    }
 	  }, {
 	    key: "isJsEvent",
@@ -419,8 +517,110 @@ this.BX.Crm = this.BX.Crm || {};
 	  return Action;
 	}();
 
+	function _prepareRunActionParams2(params) {
+	  const result = {};
+
+	  if (main_core.Type.isUndefined(params)) {
+	    return result;
+	  }
+
+	  for (const paramName in params) {
+	    const paramValue = params[paramName];
+
+	    if (main_core.Type.isDate(paramValue)) {
+	      result[paramName] = main_date.DateTimeFormat.format(crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat(), paramValue);
+	    } else if (main_core.Type.isPlainObject(paramValue)) {
+	      result[paramName] = _classPrivateMethodGet(this, _prepareRunActionParams, _prepareRunActionParams2).call(this, paramValue);
+	    } else {
+	      result[paramName] = paramValue;
+	    }
+	  }
+
+	  return result;
+	}
+
 	function _prepareMenuItems2(items, vueComponent) {
 	  return Object.values(items).filter(item => item.state !== 'hidden' && item.scope !== 'mobile' && (!vueComponent.isReadOnly || !item.hideIfReadonly)).sort((a, b) => a.sort - b.sort);
+	}
+
+	function _startAnimation2(vueComponent) {
+	  if (!_classPrivateMethodGet(this, _isAnimationValid, _isAnimationValid2).call(this)) {
+	    return;
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _animation).target === AnimationTarget.item) {
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.disable) {
+	      vueComponent.$root.setFaded(true);
+	    }
+
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.loader) {
+	      vueComponent.$root.showLoader(true);
+	    }
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _animation).target === AnimationTarget.block) {
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.disable) {
+	      if (main_core.Type.isFunction(vueComponent.setDisabled)) {
+	        vueComponent.setDisabled(true);
+	      }
+	    }
+
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.loader) {
+	      if (main_core.Type.isFunction(vueComponent.setLoading)) {
+	        vueComponent.setLoading(true);
+	      }
+	    }
+	  }
+	}
+
+	function _stopAnimation2(vueComponent) {
+	  if (!_classPrivateMethodGet(this, _isAnimationValid, _isAnimationValid2).call(this)) {
+	    return;
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _animation).forever) {
+	    return; // should not be stopped
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _animation).target === AnimationTarget.item) {
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.disable) {
+	      vueComponent.$root.setFaded(false);
+	    }
+
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.loader) {
+	      vueComponent.$root.showLoader(false);
+	    }
+	  }
+
+	  if (babelHelpers.classPrivateFieldGet(this, _animation).target === AnimationTarget.block) {
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.disable) {
+	      if (main_core.Type.isFunction(vueComponent.setDisabled)) {
+	        vueComponent.setDisabled(false);
+	      }
+	    }
+
+	    if (babelHelpers.classPrivateFieldGet(this, _animation).type === AnimationType.loader) {
+	      if (main_core.Type.isFunction(vueComponent.setLoading)) {
+	        vueComponent.setLoading(false);
+	      }
+	    }
+	  }
+	}
+
+	function _isAnimationValid2() {
+	  if (!babelHelpers.classPrivateFieldGet(this, _animation)) {
+	    return false;
+	  }
+
+	  if (!AnimationTarget.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).target)) {
+	    return false;
+	  }
+
+	  if (!AnimationType.hasOwnProperty(babelHelpers.classPrivateFieldGet(this, _animation).type)) {
+	    return false;
+	  }
+
+	  return true;
 	}
 
 	const ChangeStreamButton = {
@@ -430,14 +630,26 @@ this.BX.Crm = this.BX.Crm || {};
 	    title: String,
 	    action: Object
 	  },
+
+	  data() {
+	    return {
+	      isReadonlyMode: false
+	    };
+	  },
+
 	  inject: ['isReadOnly'],
+
+	  mounted() {
+	    this.isReadonlyMode = this.isReadOnly;
+	  },
+
 	  computed: {
 	    isShowPinButton() {
-	      return this.type === 'pin' && !this.isReadOnly;
+	      return this.type === 'pin' && !this.isReadonlyMode;
 	    },
 
 	    isShowUnpinButton() {
-	      return this.type === 'unpin' && !this.isReadOnly;
+	      return this.type === 'unpin' && !this.isReadonlyMode;
 	    }
 
 	  },
@@ -456,6 +668,16 @@ this.BX.Crm = this.BX.Crm || {};
 	        const action = new Action(this.action);
 	        action.execute(this);
 	      }
+	    },
+
+	    setDisabled(disabled) {
+	      if (!this.isReadonly && !disabled) {
+	        this.isReadonlyMode = false;
+	      }
+
+	      if (disabled) {
+	        this.isReadonlyMode = true;
+	      }
 	    }
 
 	  },
@@ -465,6 +687,7 @@ this.BX.Crm = this.BX.Crm || {};
 				v-if="type === 'complete'"
 				@click="executeAction"
 				type="checkbox"
+				:disabled="isReadonlyMode"
 				class="crm-timeline__card-top_checkbox"
 			/>
 			<div
@@ -560,6 +783,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      required: false,
 	      default: ''
 	    },
+	    hint: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
 	    action: {
 	      type: Object,
 	      required: false,
@@ -576,7 +804,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    className() {
 	      return {
 	        'crm-timeline__card-status': true,
-	        '--clickable': !!this.action
+	        '--clickable': !!this.action,
+	        '--hint': !!this.hint
 	      };
 	    },
 
@@ -611,13 +840,14 @@ this.BX.Crm = this.BX.Crm || {};
 	        title,
 	        type
 	      } = tagOptions;
-	      const uppercaseTitle = title && typeof title === 'string' ? title.toUpperCase() : '';
+	      const uppercaseTitle = title && main_core.Type.isString(title) ? title.toUpperCase() : '';
 	      const label = new ui_label.Label({
 	        text: uppercaseTitle,
 	        color: this.getLabelColorFromTagType(type),
 	        fill: true
 	      });
-	      this.tagContainerRef.appendChild(label.render());
+	      main_core.Dom.clean(this.tagContainerRef);
+	      main_core.Dom.append(label.render(), this.tagContainerRef);
 	    },
 
 	    executeAction() {
@@ -638,8 +868,15 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  },
 
+	  updated() {
+	    this.renderTag({
+	      title: this.title,
+	      type: this.type
+	    });
+	  },
+
 	  template: `
-		<div ref="tag" :class="className" @click="executeAction"></div>
+		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
 	`
 	};
 
@@ -716,13 +953,240 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	const Hint = {
+	  data() {
+	    return {
+	      isMouseOnHintArea: false,
+	      hintPopup: null
+	    };
+	  },
+
+	  props: {
+	    icon: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    textBlocks: {
+	      type: Array,
+	      required: false,
+	      default: []
+	    }
+	  },
+	  computed: {
+	    hintContentIcon() {
+	      if (this.icon === '') {
+	        return null;
+	      }
+
+	      const iconElement = main_core.Dom.create('i');
+	      return main_core.Dom.create('div', {
+	        attrs: {
+	          classname: this.hintContentIconClassname
+	        },
+	        children: [iconElement]
+	      });
+	    },
+
+	    hintContentText() {
+	      return main_core.Dom.create('div', {
+	        attrs: {
+	          classname: 'crm-timeline__hint_popup-content-text'
+	        },
+	        children: this.hintContentTextBlocks
+	      });
+	    },
+
+	    hintContentTextBlocks() {
+	      return this.textBlocks.map(this.getContentBlockNode);
+	    },
+
+	    hintContentIconClassname() {
+	      const baseClassname = 'crm-timeline__hint_popup-content-icon';
+	      return `${baseClassname} --${this.icon}`;
+	    },
+
+	    hintIconClassname() {
+	      return ['ui-hint', 'crm-timeline__header-hint', {
+	        '--active': this.hintPopup
+	      }];
+	    },
+
+	    hasContent() {
+	      return this.textBlocks.length > 0;
+	    }
+
+	  },
+	  methods: {
+	    getHintContent() {
+	      return main_core.Dom.create('div', {
+	        attrs: {
+	          classname: 'crm-timeline__hint_popup-content'
+	        },
+	        style: {
+	          display: 'flex'
+	        },
+	        children: [this.hintContentIcon, this.hintContentText]
+	      });
+	    },
+
+	    getPopupOptions() {
+	      return {
+	        darkMode: true,
+	        autoHide: false,
+	        content: this.getHintContent(),
+	        maxWidth: 400,
+	        bindOptions: {
+	          position: 'top'
+	        },
+	        animation: 'fading-slide'
+	      };
+	    },
+
+	    getPopupPosition() {
+	      var _this$hintPopup;
+
+	      const hintElem = this.$refs.hint;
+	      const defaultAngleLeftOffset = main_popup.Popup.getOption('angleLeftOffset');
+	      const {
+	        width: hintWidth,
+	        left: hintLeftOffset,
+	        top: hintTopOffset
+	      } = main_core.Dom.getPosition(hintElem);
+	      const {
+	        width: popupWidth
+	      } = main_core.Dom.getPosition((_this$hintPopup = this.hintPopup) === null || _this$hintPopup === void 0 ? void 0 : _this$hintPopup.getPopupContainer());
+	      return {
+	        left: hintLeftOffset + defaultAngleLeftOffset - (popupWidth - hintWidth) / 2,
+	        top: hintTopOffset + 15
+	      };
+	    },
+
+	    getPopupAngleOffset(popupContainer) {
+	      const angleWidth = 33;
+	      const {
+	        width: popupWidth
+	      } = main_core.Dom.getPosition(popupContainer);
+	      return (popupWidth - angleWidth) / 2;
+	    },
+
+	    onMouseEnterToPopup() {
+	      this.isMouseOnHintArea = true;
+	    },
+
+	    onHintAreaMouseLeave() {
+	      this.isMouseOnHintArea = false;
+	      setTimeout(() => {
+	        if (!this.isMouseOnHintArea) {
+	          this.hideHintPopup();
+	        }
+	      }, 400);
+	    },
+
+	    onMouseEnterToHint() {
+	      this.isMouseOnHintArea = true;
+	      this.showHintPopupWithDebounce();
+	    },
+
+	    showHintPopup() {
+	      if (!this.isMouseOnHintArea || this.hintPopup && this.hintPopup.isShown()) {
+	        return;
+	      }
+
+	      this.hintPopup = new main_popup.Popup(this.getPopupOptions());
+	      const popupContainer = this.hintPopup.getPopupContainer();
+	      main_core.Event.bind(popupContainer, 'mouseenter', this.onMouseEnterToPopup);
+	      main_core.Event.bind(popupContainer, 'mouseleave', this.onHintAreaMouseLeave);
+	      this.hintPopup.show();
+	      this.hintPopup.setBindElement(this.getPopupPosition());
+	      this.hintPopup.setAngle(false);
+	      this.hintPopup.setAngle({
+	        offset: this.getPopupAngleOffset(popupContainer, this.$refs.hint)
+	      });
+	      this.hintPopup.adjustPosition();
+	      this.hintPopup.show();
+	    },
+
+	    showHintPopupWithDebounce() {
+	      main_core.Runtime.debounce(this.showHintPopup, 300, this)();
+	    },
+
+	    hideHintPopup() {
+	      if (!this.hintPopup) {
+	        return;
+	      }
+
+	      this.hintPopup.close();
+	      const popupContainer = this.hintPopup.getPopupContainer();
+	      main_core.Event.unbind(popupContainer, 'mouseenter', this.onMouseEnterToPopup);
+	      main_core.Event.unbind(popupContainer, 'mouseleave', this.onHintAreaMouseLeave);
+	      this.hintPopup.destroy();
+	      this.hintPopup = null;
+	    },
+
+	    hideHintPopupWithDebounce() {
+	      return main_core.Runtime.debounce(this.hideHintPopup, 300, this);
+	    },
+
+	    getContentBlockNode(contentBlock) {
+	      if (contentBlock.type === 'text') {
+	        return this.getTextNode(contentBlock.options);
+	      } else if (contentBlock.type === 'link') {
+	        return this.getLinkNode(contentBlock.options);
+	      }
+
+	      return null;
+	    },
+
+	    getTextNode(textOptions = {}) {
+	      return main_core.Dom.create('span', {
+	        text: textOptions.text
+	      });
+	    },
+
+	    getLinkNode(linkOptions = {}) {
+	      const link = main_core.Dom.create('span', {
+	        text: linkOptions.text
+	      });
+	      main_core.Dom.addClass(link, 'crm-timeline__hint_popup-content-link');
+
+	      link.onclick = () => {
+	        this.executeAction(linkOptions.action);
+	      };
+
+	      return link;
+	    },
+
+	    executeAction(actionObj) {
+	      if (actionObj) {
+	        const action = new Action(actionObj);
+	        action.execute(this);
+	      }
+	    }
+
+	  },
+	  template: `
+		<span
+			ref="hint"
+			@click.stop.prevent
+			@mouseenter="onMouseEnterToHint"
+			@mouseleave="onHintAreaMouseLeave"
+			v-if="hasContent"
+			:class="hintIconClassname"
+		>
+			<span class="ui-hint-icon" />
+		</span>
+	`
+	};
+
 	const Header = {
 	  components: {
 	    ChangeStreamButton,
 	    Title,
 	    Tag,
 	    User,
-	    FormatDate
+	    FormatDate,
+	    Hint
 	  },
 	  props: {
 	    title: String,
@@ -732,7 +1196,8 @@ this.BX.Crm = this.BX.Crm || {};
 	    useShortTimeFormat: Boolean,
 	    changeStreamButton: Object | null,
 	    tags: Object,
-	    user: Object
+	    user: Object,
+	    infoHelper: Object
 	  },
 	  inject: ['isReadOnly'],
 	  computed: {
@@ -757,6 +1222,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    tagsAscSorter(tagA, tagB) {
 	      return tagA.sort - tagB.sort;
+	    },
+
+	    getChangeStreamButton() {
+	      return this.$refs.changeStreamButton;
 	    }
 
 	  },
@@ -764,8 +1233,9 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-timeline__card-top">
 			<div class="crm-timeline__card-top_info">
 				<div class="crm-timeline__card-top_info_left">
-					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton"></ChangeStreamButton>
+					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton" ref="changeStreamButton"></ChangeStreamButton>
 					<Title :title="title" :action="titleAction"></Title>
+					<Hint v-if="infoHelper" v-bind="infoHelper"></Hint>
 				</div>
 				<div ref="tags" class="crm-timeline__card-top_info_right">
 					<Tag
@@ -803,6 +1273,13 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 	    action: Object
 	  },
+
+	  data() {
+	    return {
+	      currentIcon: this.icon
+	    };
+	  },
+
 	  computed: {
 	    className() {
 	      return ['crm-timeline__card-logo', `--${this.type}`, {
@@ -811,13 +1288,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 
 	    iconClassname() {
-	      return ['crm-timeline__card-logo_icon', `--${this.type || this.icon}`, {
+	      return ['crm-timeline__card-logo_icon', `--${this.currentIcon}`, `--type-${this.iconType}`, {
 	        '--in-circle': this.inCircle
 	      }];
 	    },
 
 	    addIconClassname() {
 	      return ['crm-timeline__card-logo_add-icon', `--type-${this.addIconType}`, `--icon-${this.addIcon}`];
+	    }
+
+	  },
+	  watch: {
+	    icon(newIcon) {
+	      this.currentIcon = newIcon;
 	    }
 
 	  },
@@ -829,6 +1312,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      const action = new Action(this.action);
 	      action.execute(this);
+	    },
+
+	    setIcon(icon) {
+	      this.currentIcon = icon;
 	    }
 
 	  },
@@ -856,20 +1343,24 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  },
 	  computed: {
+	    userTime() {
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().getValue();
+	    },
+
 	    date() {
-	      return main_date.DateTimeFormat.format('d', this.timestamp);
+	      return main_date.DateTimeFormat.format('d', this.userTime);
 	    },
 
 	    month() {
-	      return main_date.DateTimeFormat.format('F', this.timestamp);
+	      return main_date.DateTimeFormat.format('F', this.userTime);
 	    },
 
 	    dayWeek() {
-	      return main_date.DateTimeFormat.format('D', this.timestamp);
+	      return main_date.DateTimeFormat.format('D', this.userTime);
 	    },
 
 	    time() {
-	      return main_date.DateTimeFormat.format('H:i', this.timestamp);
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().toTimeString();
 	    }
 
 	  },
@@ -923,6 +1414,12 @@ this.BX.Crm = this.BX.Crm || {};
 	    blocks: Object
 	  },
 
+	  data() {
+	    return {
+	      blockRefs: {}
+	    };
+	  },
+
 	  mounted() {
 	    const blocks = this.$refs.blocks;
 
@@ -939,12 +1436,45 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 	  },
 
+	  beforeUpdate() {
+	    this.blockRefs = {};
+	  },
+
 	  computed: {
 	    visibleBlocks() {
 	      return Object.keys(this.blocks).map(id => ({
 	        id,
 	        ...this.blocks[id]
-	      })).filter(item => item.scope !== 'mobile');
+	      })).filter(item => item.scope !== 'mobile').sort((a, b) => {
+	        let aSort = a.sort === undefined ? 0 : a.sort;
+	        let bSort = b.sort === undefined ? 0 : b.sort;
+
+	        if (aSort < bSort) {
+	          return -1;
+	        }
+
+	        if (aSort > bSort) {
+	          return 1;
+	        }
+
+	        return 0;
+	      });
+	    }
+
+	  },
+	  methods: {
+	    getContentBlockById(blockId) {
+	      var _this$blockRefs$block;
+
+	      return (_this$blockRefs$block = this.blockRefs[blockId]) !== null && _this$blockRefs$block !== void 0 ? _this$blockRefs$block : null;
+	    },
+
+	    getLogo() {
+	      return this.$refs.logo;
+	    },
+
+	    saveRef(ref, id) {
+	      this.blockRefs[id] = ref;
 	    }
 
 	  },
@@ -952,7 +1482,7 @@ this.BX.Crm = this.BX.Crm || {};
 		<div class="crm-timeline__card-body">
 			<div v-if="logo" class="crm-timeline__card-logo_container">
 				<LogoCalendar v-if="logo.icon === 'calendar'" v-bind="logo"></LogoCalendar>
-				<Logo v-else v-bind="logo"></Logo>
+				<Logo v-else v-bind="logo" ref="logo"></Logo>
 			</div>
 			<div class="crm-timeline__card-container">
 				<div
@@ -963,7 +1493,7 @@ this.BX.Crm = this.BX.Crm || {};
 					<component
 						:is="block.rendererName"
 						v-bind="block.properties"
-						ref="blocks"
+						:ref="(el) => this.saveRef(el, block.id)"
 					/>
 				</div>
 			</div>
@@ -971,8 +1501,174 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
+	let ButtonState = function ButtonState() {
+	  babelHelpers.classCallCheck(this, ButtonState);
+	};
+	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
+	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
+	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
+	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
+
+	const BaseButton = {
+	  props: {
+	    id: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    state: {
+	      type: String,
+	      required: false,
+	      default: ButtonState.DEFAULT
+	    },
+	    action: Object
+	  },
+
+	  data() {
+	    return {
+	      currentState: this.state
+	    };
+	  },
+
+	  computed: {
+	    itemStateToButtonStateDict() {
+	      return {
+	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
+	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED
+	      };
+	    }
+
+	  },
+	  methods: {
+	    setDisabled(disabled) {
+	      if (disabled) {
+	        this.setButtonState(ButtonState.DISABLED);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+
+	    setLoading(loading) {
+	      if (loading) {
+	        this.setButtonState(ButtonState.LOADING);
+	      } else {
+	        this.setButtonState(ButtonState.DEFAULT);
+	      }
+	    },
+
+	    setButtonState(state) {
+	      if (this.currentState !== state) {
+	        this.currentState = state;
+	      }
+	    },
+
+	    onLayoutUpdated() {
+	      this.setButtonState(this.state);
+	    },
+
+	    executeAction() {
+	      if (this.action && this.currentState !== ButtonState.DISABLED && this.currentState !== ButtonState.LOADING) {
+	        const action = new Action(this.action);
+	        action.execute(this);
+	      }
+	    }
+
+	  },
+
+	  created() {
+	    this.$Bitrix.eventEmitter.subscribe('layout:updated', this.onLayoutUpdated);
+	  },
+
+	  beforeDestroy() {
+	    this.$Bitrix.eventEmitter.unsubscribe('layout:updated', this.onLayoutUpdated);
+	  },
+
+	  template: `<button></button>`
+	};
+
+	const AdditionalButtonIcon = Object.freeze({
+	  NOTE: 'note',
+	  SCRIPT: 'script',
+	  PRINT: 'print',
+	  DOTS: 'dots'
+	});
+	const AdditionalButtonColor = Object.freeze({
+	  DEFAULT: 'default',
+	  PRIMARY: 'primary'
+	});
+	const AdditionalButton = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
+	  props: {
+	    iconName: {
+	      type: String,
+	      required: false,
+	      default: '',
+
+	      validator(value) {
+	        return Object.values(AdditionalButtonIcon).indexOf(value) > -1;
+	      }
+
+	    },
+	    color: {
+	      type: String,
+	      required: false,
+	      default: AdditionalButtonColor.DEFAULT,
+
+	      validator(value) {
+	        return Object.values(AdditionalButtonColor).indexOf(value) > -1;
+	      }
+
+	    }
+	  },
+	  computed: {
+	    className() {
+	      return ['crm-timeline__card_add-button', {
+	        [`--icon-${this.iconName}`]: this.iconName,
+	        [`--color-${this.color}`]: this.color,
+	        [`--state-${this.currentState}`]: this.currentState
+	      }];
+	    },
+
+	    ButtonState() {
+	      return ButtonState;
+	    },
+
+	    loaderHtml() {
+	      const loader = new main_loader.Loader({
+	        mode: 'inline',
+	        size: 20
+	      });
+	      loader.show();
+	      return loader.layout.outerHTML;
+	    }
+
+	  },
+	  template: `
+		<transition name="crm-timeline__card_add-button-fade" mode="out-in">
+			<div
+				v-if="currentState === ButtonState.LOADING"
+				v-html="loaderHtml"
+				class="crm-timeline__card_add-button"
+			></div>
+			<div
+				v-else
+				:title="title"
+				@click="executeAction"
+				:class="className">
+			</div>
+		</transition>
+	`
+	});
+
 	const MenuId = 'timeline-more-button-menu';
 	const Menu$1 = {
+	  components: {
+	    AdditionalButton
+	  },
 	  props: {
 	    buttons: Array,
 	    // buttons that didn't fit into footer
@@ -1000,6 +1696,13 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      result = [...result, ...this.itemsArray];
 	      return result;
+	    },
+
+	    buttonProps() {
+	      return {
+	        color: AdditionalButtonColor.DEFAULT,
+	        icon: AdditionalButtonIcon.DOTS
+	      };
 	    }
 
 	  },
@@ -1026,7 +1729,11 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  },
 	  // language=Vue
-	  template: `<div class="crm-timeline__card-action_menu-item --dotted" @click="showMenu"><i></i></div>`
+	  template: `
+		<div class="crm-timeline__card-action_menu-item" @click="showMenu">
+		<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		</div>
+	`
 	};
 
 	let ButtonType = function ButtonType() {
@@ -1037,30 +1744,12 @@ this.BX.Crm = this.BX.Crm || {};
 	babelHelpers.defineProperty(ButtonType, "SECONDARY", 'secondary');
 	babelHelpers.defineProperty(ButtonType, "LIGHT", 'light');
 
-	let ButtonState = function ButtonState() {
-	  babelHelpers.classCallCheck(this, ButtonState);
-	};
-	babelHelpers.defineProperty(ButtonState, "DEFAULT", '');
-	babelHelpers.defineProperty(ButtonState, "LOADING", 'loading');
-	babelHelpers.defineProperty(ButtonState, "DISABLED", 'disabled');
-	babelHelpers.defineProperty(ButtonState, "HIDDEN", 'hidden');
-
-	const Button = {
+	const Button = ui_vue3.BitrixVue.cloneComponent(BaseButton, {
 	  props: {
-	    title: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
 	    type: {
 	      type: String,
 	      required: false,
 	      default: ButtonType.SECONDARY
-	    },
-	    state: {
-	      type: String,
-	      required: false,
-	      default: ButtonState.DEFAULT
 	    },
 	    iconName: {
 	      type: String,
@@ -1071,13 +1760,14 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: 'extra_small'
-	    },
-	    action: Object
+	    }
 	  },
 
 	  data() {
 	    return {
-	      popup: null
+	      popup: null,
+	      uiButton: Object.freeze(null),
+	      timerSecondsRemaining: 0
 	    };
 	  },
 
@@ -1088,12 +1778,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      const color = this.itemTypeToButtonColorDict[this.type] || ui_buttons.Button.Color.LIGHT_BORDER;
 	      const text = this.type === ButtonType.ICON ? '' : this.title;
 	      return {
+	        id: this.id,
 	        round: true,
 	        dependOnTheme: false,
 	        size: ui_buttons.Button.Size[upperCaseButtonSize],
 	        text: text,
 	        color: color,
-	        state: this.itemStateToButtonStateDict[this.state],
+	        state: this.itemStateToButtonStateDict[this.currentState],
 	        icon: ui_buttons.Button.Icon[upperCaseIconName]
 	      };
 	    },
@@ -1107,19 +1798,53 @@ this.BX.Crm = this.BX.Crm || {};
 	      };
 	    },
 
-	    itemStateToButtonStateDict() {
-	      return {
-	        [ButtonState.LOADING]: ui_buttons.Button.State.WAITING,
-	        [ButtonState.DISABLED]: ui_buttons.Button.State.DISABLED
-	      };
-	    },
-
 	    buttonContainerRef() {
 	      return this.$refs.buttonContainer;
 	    }
 
 	  },
 	  methods: {
+	    getUiButton() {
+	      return this.uiButton;
+	    },
+
+	    disableWithTimer(sec) {
+	      this.setButtonState(ButtonState.DISABLED);
+	      const btn = this.getUiButton();
+	      let remainingSeconds = sec;
+	      btn.setText(this.formatSeconds(remainingSeconds));
+	      const timer = setInterval(() => {
+	        if (remainingSeconds < 1) {
+	          clearInterval(timer);
+	          btn.setText(this.title);
+	          this.setButtonState(ButtonState.DEFAULT);
+	          return;
+	        }
+
+	        remainingSeconds--;
+	        btn.setText(this.formatSeconds(remainingSeconds));
+	      }, 1000);
+	    },
+
+	    formatSeconds(sec) {
+	      const minutes = Math.floor(sec / 60);
+	      const seconds = sec % 60;
+	      const formatMinutes = this.formatNumber(minutes);
+	      const formatSeconds = this.formatNumber(seconds);
+	      return `${formatMinutes}:${formatSeconds}`;
+	    },
+
+	    formatNumber(num) {
+	      return num < 10 ? `0${num}` : num;
+	    },
+
+	    setButtonState(state) {
+	      var _this$getUiButton, _this$itemStateToButt;
+
+	      this.parentSetButtonState(state);
+	      (_this$getUiButton = this.getUiButton()) === null || _this$getUiButton === void 0 ? void 0 : _this$getUiButton.setState((_this$itemStateToButt = this.itemStateToButtonStateDict[this.currentState]) !== null && _this$itemStateToButt !== void 0 ? _this$itemStateToButt : null);
+	    },
+
 	    renderButton() {
 	      if (!this.buttonContainerRef) {
 	        return;
@@ -1128,13 +1853,13 @@ this.BX.Crm = this.BX.Crm || {};
 	      this.buttonContainerRef.innerHTML = '';
 	      const button = new ui_buttons.Button(this.buttonOptions);
 	      button.renderTo(this.buttonContainerRef);
-	    },
+	      this.uiButton = button;
+	    }
 
-	    executeAction() {
-	      if (this.action && this.state !== ButtonState.DISABLED && this.state !== ButtonState.LOADING) {
-	        const action = new Action(this.action);
-	        action.execute(this);
-	      }
+	  },
+	  watch: {
+	    state(newValue) {
+	      this.setButtonState(newValue);
 	    }
 
 	  },
@@ -1154,7 +1879,7 @@ this.BX.Crm = this.BX.Crm || {};
 			@click="executeAction">
 		</div>
 	`
-	};
+	});
 
 	const Buttons = {
 	  components: {
@@ -1167,9 +1892,26 @@ this.BX.Crm = this.BX.Crm || {};
 	      default: () => []
 	    }
 	  },
+	  methods: {
+	    getButtonById(buttonId) {
+	      const buttons = this.$refs.buttons;
+	      return this.items.reduce((found, button, index) => {
+	        if (found) {
+	          return found;
+	        }
+
+	        if (button.id === buttonId) {
+	          return buttons[index];
+	        }
+
+	        return null;
+	      }, null);
+	    }
+
+	  },
 	  template: `
 			<div class="crm-timeline__card-action_buttons">
-				<Button class="crm-timeline__card-action-btn" v-for="item in items" v-bind="item" />
+				<Button class="crm-timeline__card-action-btn" v-for="item in items" v-bind="item" ref="buttons" />
 			</div>
 		`
 	};
@@ -1183,7 +1925,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  components: {
 	    Buttons,
 	    Menu: Menu$1,
-	    Button
+	    Button,
+	    AdditionalButton
 	  },
 	  props: {
 	    buttons: Object,
@@ -1218,7 +1961,10 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 
 	    visibleButtons() {
-	      return this.buttons ? Object.values(this.buttons).filter(this.visibleButtonsFilter) : [];
+	      return this.buttons ? Object.keys(this.buttons).map(id => ({
+	        id,
+	        ...this.buttons[id]
+	      })).filter(this.visibleButtonsFilter) : [];
 	    },
 
 	    visibleAdditionalButtons() {
@@ -1247,19 +1993,49 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    buttonsSorter(buttonA, buttonB) {
 	      return (buttonA === null || buttonA === void 0 ? void 0 : buttonA.sort) - (buttonB === null || buttonB === void 0 ? void 0 : buttonB.sort);
+	    },
+
+	    getButtonById(buttonId) {
+	      if (this.$refs.buttons) {
+	        const foundButton = this.$refs.buttons.getButtonById(buttonId);
+
+	        if (foundButton) {
+	          return foundButton;
+	        }
+	      }
+
+	      if (this.$refs.additionalButtons) {
+	        return this.visibleAndSortedAdditionalButtons.reduce((found, button, index) => {
+	          if (found) {
+	            return found;
+	          }
+
+	          if (button.id === buttonId) {
+	            return buttons[index];
+	          }
+
+	          return null;
+	        }, null);
+	      }
+
+	      return null;
 	    }
 
 	  },
 	  template: `
 		<div class="crm-timeline__card-action">
-			<Buttons :items="baseButtons" />
+			<Buttons ref="buttons" :items="baseButtons" />
 			<div class="crm-timeline__card-action_menu">
-				<Button
+				<div
 					v-for="button in visibleAndSortedAdditionalButtons"
 					:key="button.id"
-					v-bind="button"
 					class="crm-timeline__card-action_menu-item"
-				/>
+				>
+					<additional-button
+						v-bind="button"
+					>
+					</additional-button>
+				</div>
 				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" />
 			</div>
 		</div>
@@ -1328,158 +2104,6 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	const Note = {
-	  components: {
-	    User,
-	    Button
-	  },
-	  props: {
-	    text: {
-	      type: String,
-	      required: false,
-	      default: ''
-	    },
-	    saveNoteAction: Object,
-	    deleteNoteAction: Object,
-	    user: Object
-	  },
-
-	  data() {
-	    return {
-	      isEdit: false,
-	      note: this.text,
-	      oldNote: this.text
-	    };
-	  },
-
-	  computed: {
-	    ButtonType() {
-	      return ButtonType;
-	    },
-
-	    saveButtonState() {
-	      return this.note.trim().length ? ButtonState.DEFAULT : ButtonState.DISABLED;
-	    },
-
-	    encodedText() {
-	      return main_core.Text.encode(this.text);
-	    }
-
-	  },
-	  methods: {
-	    startEditing() {
-	      this.isEdit = true;
-	      this.setCaretToEnd();
-	    },
-
-	    setCaretToEnd() {
-	      const el = this.$refs.noteText;
-	      const selection = window.getSelection();
-	      const range = document.createRange();
-	      selection.removeAllRanges();
-	      range.selectNodeContents(el);
-	      range.collapse(false);
-	      selection.addRange(range);
-	      el.focus();
-	    },
-
-	    onEdit(e) {
-	      this.note = e.target.innerText;
-	    },
-
-	    onEnterHandle(e) {
-	      if (e.ctrlKey) {
-	        this.finishEditing();
-	      }
-	    },
-
-	    finishEditing() {
-	      if (this.saveButtonState === ButtonState.DISABLED || this.state === ButtonState.LOADING) {
-	        return;
-	      }
-
-	      const note = this.$refs.noteText.innerText.trim();
-	      this.$refs.noteText.innerText = note;
-	      this.note = note;
-	      this.oldNote = note;
-	      this.isEdit = false;
-	      this.saveNote();
-	    },
-
-	    cancelEditing() {
-	      this.note = this.oldNote;
-	      this.$refs.noteText.innerText = this.oldNote;
-	      this.isEdit = false;
-	    },
-
-	    deleteNote() {
-	      this.executeAction(this.deleteNoteAction);
-	    },
-
-	    saveNote() {
-	      this.executeAction({ ...this.saveNoteAction,
-	        value: this.note
-	      });
-	    },
-
-	    executeAction(actionObject) {
-	      if (!actionObject) {
-	        return;
-	      }
-
-	      const action = new Action(actionObject);
-	      action.execute(this);
-	    }
-
-	  },
-	  template: `
-		<div class="crm-timeline__card-note">
-			<div class="crm-timeline__card-note_user">
-				<User v-bind="user"></User>
-			</div>
-			<div class="crm-timeline__card-note_area">
-				<div class="crm-timeline__card-note_value">
-					<span
-						ref="noteText"
-						@input="onEdit"
-						@keydown.esc="cancelEditing"
-						@keydown.enter="onEnterHandle"
-						v-html="encodedText"
-						:contenteditable="isEdit"
-						tabindex="0"
-						class="crm-timeline__card-note_text"
-					></span>
-					<span
-						v-if="!note"
-						@click.prevent="setCaretToEnd"
-						class="crm-timeline__card-note_placeholder"
-					>
-						{{ $Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_PLACEHOLDER') }}
-					</span>
-					<span
-						v-if="!isEdit"
-						class="crm-timeline__card-note_edit"
-						@click.prevent.stop="startEditing"
-					>
-						<i></i>
-					</span>
-				</div>
-				<div v-if="isEdit" class="crm-timeline__card-note__controls">
-					<div class="crm-timeline__card-note__control --save">
-						<Button @click="finishEditing" :state="saveButtonState" :type="ButtonType.PRIMARY" :title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_SAVE')" />
-					</div>
-					<div class="crm-timeline__card-note__control --cancel">
-						<Button @click="cancelEditing" :type="ButtonType.LIGHT" :title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_CANCEL')" />
-					</div>
-				</div>
-			</div>
-			<div class="crm-timeline__card-note_cross" @click="deleteNote">
-				<i></i>
-			</div>
-		</div>
-		`
-	};
-
 	const UserPick = {
 	  template: `
 		<div class="ui-icon ui-icon-common-user crm-timeline__card-top_user-icon">
@@ -1501,7 +2125,6 @@ this.BX.Crm = this.BX.Crm || {};
 	    Body,
 	    Footer,
 	    MarketPanel,
-	    Note,
 	    UserPick
 	  },
 	  props: {
@@ -1510,6 +2133,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    useShortTimeFormat: Boolean,
 	    isLogMessage: Boolean,
 	    isReadOnly: Boolean,
+	    currentUser: Object | null,
 	    onAction: Function,
 	    streamType: {
 	      type: Number,
@@ -1520,7 +2144,9 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  data() {
 	    return {
-	      layout: this.initialLayout
+	      layout: this.initialLayout,
+	      isFaded: false,
+	      loader: Object.freeze(null)
 	    };
 	  },
 
@@ -1529,7 +2155,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    return {
 	      isLogMessage: !!((_this$initialLayout = this.initialLayout) !== null && _this$initialLayout !== void 0 && _this$initialLayout.isLogMessage),
-	      isReadOnly: this.isReadOnly
+	      isReadOnly: this.isReadOnly,
+	      currentUser: this.currentUser
 	    };
 	  },
 
@@ -1544,11 +2171,87 @@ this.BX.Crm = this.BX.Crm || {};
 	  methods: {
 	    onActionEvent(event) {
 	      const eventData = event.getData();
-	      this.onAction(eventData.action, eventData.actionParams);
+	      this.onAction(main_core.Runtime.clone(eventData));
 	    },
 
 	    setLayout(newLayout) {
 	      this.layout = newLayout;
+	      this.isFaded = false;
+	      this.$Bitrix.eventEmitter.emit('layout:updated');
+	    },
+
+	    setFaded(faded) {
+	      this.isFaded = faded;
+	    },
+
+	    showLoader(showLoader) {
+	      if (showLoader) {
+	        this.setFaded(true);
+
+	        if (!this.loader) {
+	          this.loader = new main_loader.Loader();
+	        }
+
+	        this.loader.show(this.$el.parentNode);
+	      } else {
+	        if (this.loader) {
+	          this.loader.hide();
+	        }
+
+	        this.setFaded(false);
+	      }
+	    },
+
+	    getContentBlockById(blockId) {
+	      if (!this.$refs.body) {
+	        return null;
+	      }
+
+	      return this.$refs.body.getContentBlockById(blockId);
+	    },
+
+	    getLogo() {
+	      if (!this.$refs.body) {
+	        return null;
+	      }
+
+	      return this.$refs.body.getLogo();
+	    },
+
+	    getHeaderChangeStreamButton() {
+	      if (!this.$refs.header) {
+	        return null;
+	      }
+
+	      return this.$refs.header.getChangeStreamButton();
+	    },
+
+	    getFooterButtonById(buttonId) {
+	      if (!this.$refs.footer) {
+	        return null;
+	      }
+
+	      return this.$refs.footer.getButtonById(buttonId);
+	    },
+
+	    highlightContentBlockById(blockId, isHighlighted) {
+	      if (!isHighlighted) {
+	        this.isFaded = false;
+	      }
+
+	      const block = this.getContentBlockById(blockId);
+
+	      if (!block) {
+	        return;
+	      }
+
+	      if (isHighlighted) {
+	        this.isFaded = true;
+	        main_core.Dom.addClass(block.$el, '--highlighted');
+	      } else {
+	        this.isFaded = false;
+	        main_core.Dom.removeClass(block.$el, '--highlighted');
+	      }
 	    }
 
 	  },
@@ -1567,12 +2270,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  template: `
 		<div :data-id="id" :class="timelineCardClassname">
+			<div class="crm-timeline__card_fade" v-if="isFaded"></div>
 			<div class="crm-timeline__card_icon_container">
 				<Icon v-bind="layout.icon"></Icon>
 			</div>
-			<Header v-if="layout.header" v-bind="layout.header" :use-short-time-format="useShortTimeFormat"></Header>
-			<Body v-if="layout.body" v-bind="layout.body"></Body>
-			<Footer v-if="layout.footer" v-bind="layout.footer"></Footer>
+			<Header v-if="layout.header" v-bind="layout.header" :use-short-time-format="useShortTimeFormat" ref="header"></Header>
+			<Body v-if="layout.body" v-bind="layout.body" ref="body"></Body>
+			<Footer v-if="layout.footer" v-bind="layout.footer" ref="footer"></Footer>
 			<MarketPanel v-if="layout.marketPanel" v-bind="layout.marketPanel"></MarketPanel>
 		</div>
 	`
@@ -1599,7 +2303,7 @@ this.BX.Crm = this.BX.Crm || {};
 	  babelHelpers.createClass(Layout, [{
 	    key: "asPlainObject",
 	    value: function asPlainObject() {
-	      return Object.assign({}, babelHelpers.classPrivateFieldGet(this, _layout));
+	      return main_core.Runtime.clone(babelHelpers.classPrivateFieldGet(this, _layout));
 	    }
 	  }, {
 	    key: "getFooterMenuItemById",
@@ -1619,6 +2323,39 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }]);
 	  return Layout;
+	}();
+
+	let Base = /*#__PURE__*/function () {
+	  function Base() {
+	    babelHelpers.classCallCheck(this, Base);
+	  }
+
+	  babelHelpers.createClass(Base, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {}
+	  }, {
+	    key: "getContentBlockComponents",
+	    value: function getContentBlockComponents(item) {
+	      return {};
+	    }
+	  }, {
+	    key: "onAfterItemRefreshLayout",
+	    value: function onAfterItemRefreshLayout(item) {}
+	    /**
+	     * Will be executed before item node deleted from DOM
+	     * @param item
+	     */
+
+	  }, {
+	    key: "onBeforeItemClearLayout",
+	    value: function onBeforeItemClearLayout(item) {}
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return false;
+	    }
+	  }]);
+	  return Base;
 	}();
 
 	function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
@@ -1710,9 +2447,17 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _timestamp = /*#__PURE__*/new WeakMap();
 
+	var _sort = /*#__PURE__*/new WeakMap();
+
 	var _useShortTimeFormat = /*#__PURE__*/new WeakMap();
 
 	var _isReadOnly = /*#__PURE__*/new WeakMap();
+
+	var _currentUser = /*#__PURE__*/new WeakMap();
+
+	var _ownerTypeId = /*#__PURE__*/new WeakMap();
+
+	var _ownerId = /*#__PURE__*/new WeakMap();
 
 	var _controllers = /*#__PURE__*/new WeakMap();
 
@@ -1774,6 +2519,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: null
 	    });
 
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _sort, {
+	      writable: true,
+	      value: null
+	    });
+
 	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _useShortTimeFormat, {
 	      writable: true,
 	      value: false
@@ -1782,6 +2532,21 @@ this.BX.Crm = this.BX.Crm || {};
 	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _isReadOnly, {
 	      writable: true,
 	      value: false
+	    });
+
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _currentUser, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _ownerTypeId, {
+	      writable: true,
+	      value: null
+	    });
+
+	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _ownerId, {
+	      writable: true,
+	      value: null
 	    });
 
 	    _classPrivateFieldInitSpec$4(babelHelpers.assertThisInitialized(_this), _controllers, {
@@ -1826,6 +2591,9 @@ this.BX.Crm = this.BX.Crm || {};
 	        this.setData(settings.data);
 	        babelHelpers.classPrivateFieldSet(this, _useShortTimeFormat, settings.useShortTimeFormat || false);
 	        babelHelpers.classPrivateFieldSet(this, _isReadOnly, settings.isReadOnly || false);
+	        babelHelpers.classPrivateFieldSet(this, _currentUser, settings.currentUser || null);
+	        babelHelpers.classPrivateFieldSet(this, _ownerTypeId, settings.ownerTypeId);
+	        babelHelpers.classPrivateFieldSet(this, _ownerId, settings.ownerId);
 	        babelHelpers.classPrivateFieldSet(this, _streamType, settings.streamType || crm_timeline_item.StreamType.history);
 	      }
 
@@ -1836,6 +2604,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    value: function setData(data) {
 	      babelHelpers.classPrivateFieldSet(this, _type$1, data.type || null);
 	      babelHelpers.classPrivateFieldSet(this, _timestamp, data.timestamp || null);
+	      babelHelpers.classPrivateFieldSet(this, _sort, data.sort || []);
 	      babelHelpers.classPrivateFieldSet(this, _layout$1, new Layout(data.layout || {}));
 	    }
 	  }, {
@@ -1882,9 +2651,38 @@ this.BX.Crm = this.BX.Crm || {};
 	      // try to refresh layout via vue reactivity, if possible:
 	      if (babelHelpers.classPrivateFieldGet(this, _layoutComponent)) {
 	        babelHelpers.classPrivateFieldGet(this, _layoutComponent).setLayout(this.getLayout().asPlainObject());
+
+	        for (const controller of babelHelpers.classPrivateFieldGet(this, _controllers)) {
+	          controller.onAfterItemRefreshLayout(this);
+	        }
 	      } else {
 	        babelHelpers.get(babelHelpers.getPrototypeOf(ConfigurableItem.prototype), "refreshLayout", this).call(this);
 	      }
+	    }
+	  }, {
+	    key: "getLayoutContentBlockById",
+	    value: function getLayoutContentBlockById(id) {
+	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getContentBlockById(id);
+	    }
+	  }, {
+	    key: "getLogo",
+	    value: function getLogo() {
+	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getLogo();
+	    }
+	  }, {
+	    key: "getLayoutFooterButtonById",
+	    value: function getLayoutFooterButtonById(id) {
+	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getFooterButtonById(id);
+	    }
+	  }, {
+	    key: "getLayoutHeaderChangeStreamButton",
+	    value: function getLayoutHeaderChangeStreamButton() {
+	      return babelHelpers.classPrivateFieldGet(this, _layoutComponent).getHeaderChangeStreamButton();
+	    }
+	  }, {
+	    key: "highlightContentBlockById",
+	    value: function highlightContentBlockById(blockId, isHighlighted) {
+	      babelHelpers.classPrivateFieldGet(this, _layoutComponent).highlightContentBlockById(blockId, isHighlighted);
 	    }
 	  }, {
 	    key: "clearLayout",
@@ -1934,9 +2732,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      return new crm_timeline_tools.DatetimeConverter(new Date(babelHelpers.classPrivateFieldGet(this, _timestamp) * 1000)).toUserTime().getValue();
 	    }
 	  }, {
+	    key: "getSort",
+	    value: function getSort() {
+	      return babelHelpers.classPrivateFieldGet(this, _sort);
+	    }
+	  }, {
 	    key: "isReadOnly",
 	    value: function isReadOnly() {
 	      return babelHelpers.classPrivateFieldGet(this, _isReadOnly);
+	    }
+	  }, {
+	    key: "getCurrentUser",
+	    value: function getCurrentUser() {
+	      return babelHelpers.classPrivateFieldGet(this, _currentUser);
 	    }
 	  }, {
 	    key: "clone",
@@ -1947,12 +2755,43 @@ this.BX.Crm = this.BX.Crm || {};
 	        itemClassName: babelHelpers.classPrivateFieldGet(this, _itemClassName),
 	        useShortTimeFormat: babelHelpers.classPrivateFieldGet(this, _useShortTimeFormat),
 	        isReadOnly: babelHelpers.classPrivateFieldGet(this, _isReadOnly),
+	        currentUser: babelHelpers.classPrivateFieldGet(this, _currentUser),
 	        streamType: babelHelpers.classPrivateFieldGet(this, _streamType),
 	        data: {
 	          type: babelHelpers.classPrivateFieldGet(this, _type$1),
 	          timestamp: babelHelpers.classPrivateFieldGet(this, _timestamp),
+	          sort: babelHelpers.classPrivateFieldGet(this, _sort),
 	          layout: this.getLayout().asPlainObject()
 	        }
+	      });
+	    }
+	  }, {
+	    key: "reloadFromServer",
+	    value: function reloadFromServer() {
+	      const data = {
+	        ownerTypeId: babelHelpers.classPrivateFieldGet(this, _ownerTypeId),
+	        ownerId: babelHelpers.classPrivateFieldGet(this, _ownerId)
+	      };
+
+	      if (babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.history || babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.pinned) {
+	        data.historyIds = [this.getId()];
+	      } else if (babelHelpers.classPrivateFieldGet(this, _streamType) === crm_timeline_item.StreamType.scheduled) {
+	        data.activityIds = [this.getId()];
+	      } else {
+	        throw new Error('Wrong stream type');
+	      }
+
+	      return main_core.ajax.runAction('crm.timeline.item.load', {
+	        data
+	      }).then(response => {
+	        Object.values(response.data).forEach(item => {
+	          if (item.id === this.getId()) {
+	            this.setData(item);
+	            this.refreshLayout();
+	          }
+	        });
+	      }).catch(err => {
+	        console.error(err);
 	      });
 	    }
 	  }], [{
@@ -1985,15 +2824,16 @@ this.BX.Crm = this.BX.Crm || {};
 	    initialLayout: this.getLayout().asPlainObject(),
 	    id: String(this.getId()),
 	    useShortTimeFormat: babelHelpers.classPrivateFieldGet(this, _useShortTimeFormat),
-	    isReadOnly: babelHelpers.classPrivateFieldGet(this, _isReadOnly),
+	    isReadOnly: this.isReadOnly(),
+	    currentUser: this.getCurrentUser(),
 	    streamType: babelHelpers.classPrivateFieldGet(this, _streamType),
 	    onAction: _classPrivateMethodGet$1(this, _onLayoutAppAction, _onLayoutAppAction2).bind(this)
 	  };
 	}
 
-	function _onLayoutAppAction2(action, actionParams) {
+	function _onLayoutAppAction2(eventData) {
 	  for (const controller of babelHelpers.classPrivateFieldGet(this, _controllers)) {
-	    controller.onItemAction(this, action, actionParams);
+	    controller.onItemAction(this, eventData);
 	  }
 	}
 
@@ -2006,36 +2846,6 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  return components;
 	}
-
-	let Base = /*#__PURE__*/function () {
-	  function Base() {
-	    babelHelpers.classCallCheck(this, Base);
-	  }
-
-	  babelHelpers.createClass(Base, [{
-	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {}
-	  }, {
-	    key: "getContentBlockComponents",
-	    value: function getContentBlockComponents(item) {
-	      return {};
-	    }
-	    /**
-	     * Will be executed before item node deleted from DOM
-	     * @param item
-	     */
-
-	  }, {
-	    key: "onBeforeItemClearLayout",
-	    value: function onBeforeItemClearLayout(item) {}
-	  }], [{
-	    key: "isItemSupported",
-	    value: function isItemSupported(item) {
-	      return false;
-	    }
-	  }]);
-	  return Base;
-	}();
 
 	function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$5(obj, privateSet); privateSet.add(obj); }
 
@@ -2073,7 +2883,18 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  babelHelpers.createClass(Activity, [{
 	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData,
+	        animationCallbacks
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
 	      if (action === 'Activity:Edit' && actionData && actionData.activityId) {
 	        _classPrivateMethodGet$2(this, _editActivity, _editActivity2).call(this, actionData.activityId);
 	      }
@@ -2093,7 +2914,7 @@ this.BX.Crm = this.BX.Crm || {};
 	            modal: true,
 	            buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
 	            onYes: () => {
-	              return _classPrivateMethodGet$2(this, _deleteActivity, _deleteActivity2).call(this, actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
+	              return _classPrivateMethodGet$2(this, _deleteActivity, _deleteActivity2).call(this, actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
 	            },
 	            onNo: messageBox => {
 	              messageBox.close();
@@ -2108,7 +2929,9 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
 	      const itemType = item.getType();
-	      return itemType.indexOf('Activity:') === 0; // for items with type started from `Activity:`
+	      return itemType.indexOf('Activity:') === 0 // for items with type started from `Activity:`
+	      || itemType === 'TodoCreated' // TodoCreated can contain link to activity
+	      ;
 	    }
 	  }]);
 	  return Activity;
@@ -2130,7 +2953,11 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
-	function _deleteActivity2(activityId, ownerTypeId, ownerId) {
+	function _deleteActivity2(activityId, ownerTypeId, ownerId, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+
 	  return main_core.ajax.runAction('crm.timeline.activity.delete', {
 	    data: {
 	      activityId,
@@ -2138,12 +2965,21 @@ this.BX.Crm = this.BX.Crm || {};
 	      ownerId
 	    }
 	  }).then(() => {
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
 	    return true;
 	  }, response => {
 	    ui_notification.UI.Notification.Center.notify({
 	      content: response.errors[0].message,
 	      autoHideDelay: 5000
 	    });
+
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
 	    return true;
 	  });
 	}
@@ -2176,7 +3012,12 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var Text = {
 	  props: {
-	    value: String,
+	    value: String | Number,
+	    title: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
 	    color: {
 	      type: String,
 	      required: false,
@@ -2191,6 +3032,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      type: String,
 	      required: false,
 	      default: 'md'
+	    },
+	    multiline: {
+	      type: Boolean,
+	      required: false,
+	      default: false
 	    }
 	  },
 	  computed: {
@@ -2214,16 +3060,25 @@ this.BX.Crm = this.BX.Crm || {};
 	      const upperCaseWeightProp = this.size ? this.size.toUpperCase() : '';
 	      const size = TextSize[upperCaseWeightProp] ? TextSize[upperCaseWeightProp] : TextSize.SM;
 	      return `--size-${size}`;
+	    },
+
+	    encodedText() {
+	      let text = main_core.Text.encode(this.value);
+
+	      if (this.multiline) {
+	        text = text.replace(/\n/g, '<br />');
+	      }
+
+	      return text;
 	    }
 
 	  },
 	  template: `
 		<span
-			:title="value"
+			:title="title"
 			:class="className"
-		>
-			{{value}}
-		</span>`
+			v-html="encodedText"
+		></span>`
 	};
 
 	var Link = {
@@ -2284,6 +3139,27 @@ this.BX.Crm = this.BX.Crm || {};
 				{{text}}
 			</span>
 		`
+	};
+
+	var DateBlock = {
+	  props: {
+	    withTime: {
+	      type: Boolean,
+	      required: false,
+	      default: true
+	    }
+	  },
+	  extends: Text,
+	  computed: {
+	    encodedText() {
+	      const dateInUserTimezone = crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.value).toUserTime();
+	      return main_core.Text.encode(this.withTime ? dateInUserTimezone.toDatetimeString({
+	        delimiter: ', '
+	      }) : dateInUserTimezone.toDateString());
+	    }
+
+	  },
+	  template: Text.template
 	};
 
 	var WithTitle = {
@@ -2351,7 +3227,13 @@ this.BX.Crm = this.BX.Crm || {};
 		</span>`
 	};
 
-	const defaultPlaybackRateValues = [0.5, 1, 1.25, 1.5, 1.75, 2];
+	let LogoType = function LogoType() {
+	  babelHelpers.classCallCheck(this, LogoType);
+	};
+	babelHelpers.defineProperty(LogoType, "CALL_AUDIO_PLAY", 'call-play-record');
+	babelHelpers.defineProperty(LogoType, "CALL_AUDIO_PAUSE", 'call-pause-record');
+
+	const defaultPlaybackRateValues = [0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0];
 	const TimelineAudio = ui_vue3.BitrixVue.cloneComponent(ui_vue3_components_audioplayer.AudioPlayer, {
 	  props: {
 	    playbackRateValues: {
@@ -2368,7 +3250,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  data() {
 	    return { ...this.parentData(),
-	      playbackRate: 1
+	      playbackRate: defaultPlaybackRateValues[2],
+	      isSeeking: false
 	    };
 	  },
 
@@ -2395,9 +3278,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 
 	    totalTimeClassname() {
-	      return ['ui-vue-audioplayer-total-time', {
-	        '--hidden': this.isTotalTimeHidden
-	      }];
+	      return ['ui-vue-audioplayer-total-time'];
 	    },
 
 	    progressPosition() {
@@ -2420,14 +3301,6 @@ this.BX.Crm = this.BX.Crm || {};
 	      return this.formatTime(this.timeTotal);
 	    },
 
-	    isTotalTimeHidden() {
-	      const totalTimeRef = this.$refs.totalTime;
-	      const seekRef = this.$refs.seek;
-	      if (!this.loaded || !totalTimeRef || !seekRef) return true;
-	      const seekWidth = seekRef.offsetWidth;
-	      return this.progressInPixel + seekWidth / 2 >= totalTimeRef.offsetLeft;
-	    },
-
 	    playbackRateMenuItems() {
 	      return this.playbackRateValues.map(rate => {
 	        return this.createPlaybackRateMenuItem({
@@ -2441,9 +3314,13 @@ this.BX.Crm = this.BX.Crm || {};
 	  },
 	  methods: {
 	    changePlaybackRate(playbackRate) {
-	      const audio = this.$refs.source;
+	      var _this$$refs, _this$$refs$source;
+
 	      this.playbackRate = playbackRate;
-	      audio.playbackRate = playbackRate;
+
+	      if ((_this$$refs = this.$refs) !== null && _this$$refs !== void 0 && (_this$$refs$source = _this$$refs.source) !== null && _this$$refs$source !== void 0 && _this$$refs$source.playbackRate) {
+	        this.$refs.source.playbackRate = playbackRate;
+	      }
 	    },
 
 	    createPlaybackRateMenuItem(options = {}) {
@@ -2463,56 +3340,144 @@ this.BX.Crm = this.BX.Crm || {};
 	    },
 
 	    getPlaybackRateOptionText(rate) {
-	      return `${rate}x`;
+	      return this.isFloat(rate) ? `${rate}x` : `${rate}.0x`;
 	    },
 
-	    renderPlaybackRateButton() {
-	      const playbackRateButtonContainer = this.$refs.playbackRateButtonContainer;
-	      playbackRateButtonContainer.innerHTML = '';
-	      const btn = new ui_buttons.Button({
-	        text: this.getPlaybackRateOptionText(this.playbackRate),
-	        round: true,
-	        dropdown: true,
-	        color: ui_buttons.Button.Color.LIGHT_BORDER,
-	        size: ui_buttons.Button.Size.EXTRA_SMALL,
-	        noCaps: true,
-	        className: 'playback-speed-button crm-timeline__playback-speed-menu_scope',
-	        menu: {
-	          className: 'crm-timeline__playback-speed-menu_scope',
-	          width: 100,
-	          events: {
-	            onPopupShow: () => {
-	              const btnContainerWidth = btn.getContainer().offsetWidth;
-	              const popupWindow = btn.getMenuWindow().getPopupWindow();
-	              popupWindow.setWidth(btnContainerWidth * 1.8);
-	              popupWindow.setOffset({
-	                offsetLeft: btnContainerWidth - 8
-	              });
-	              popupWindow.adjustPosition();
-	            }
-	          },
-	          angle: {
-	            position: 'top'
-	          },
-	          offsetLeft: 0,
-	          items: this.playbackRateMenuItems
-	        }
+	    showPlaybackRateMenu() {
+	      const menu = new main_popup.Menu({
+	        id: `12xx${this.id}`,
+	        className: 'crm-timeline__playback-speed-menu_scope',
+	        width: 100,
+	        bindElement: this.$refs.playbackRateButtonContainer,
+	        events: {
+	          onPopupShow: () => {
+	            const {
+	              width: btnContainerWidth
+	            } = main_core.Dom.getPosition(this.$refs.playbackRateButtonContainer);
+	            const popupWindow = menu.getPopupWindow();
+	            popupWindow.setOffset({
+	              offsetLeft: btnContainerWidth / 2
+	            });
+	            popupWindow.adjustPosition();
+	          }
+	        },
+	        angle: {
+	          position: 'top'
+	        },
+	        offsetLeft: 0,
+	        items: this.playbackRateMenuItems
 	      });
-	      btn.renderTo(playbackRateButtonContainer);
+	      menu.show();
+	    },
+
+	    isFloat(n) {
+	      return n % 1 !== 0;
+	    },
+
+	    startSeeking(event) {
+	      this.isSeeking = true;
+	      const {
+	        clientX
+	      } = event;
+	      this.source().pause();
+	      main_core.bind(document, 'mouseup', this.finishSeeking);
+	      main_core.bind(document, 'mousemove', this.seeking);
+	      this.setSeekByCursor(clientX);
+	    },
+
+	    seeking(event) {
+	      if (!this.isSeeking) {
+	        return;
+	      }
+
+	      const timeline = this.$refs.track;
+	      const {
+	        clientX
+	      } = event;
+	      const {
+	        left,
+	        right,
+	        width
+	      } = main_core.Dom.getPosition(timeline);
+
+	      if (clientX < left) {
+	        this.seek = 0;
+	      } else if (clientX > right) {
+	        this.seek = width - 1;
+	      } else {
+	        this.seek = clientX - left;
+	      }
+
+	      this.setPosition();
+	      event.preventDefault();
+	    },
+
+	    finishSeeking() {
+	      this.isSeeking = false;
+	      this.setPosition();
+	      this.source().play();
+	      main_core.unbind(document, 'mouseup', this.finishSeeking);
+	      main_core.unbind(document, 'mousemove', this.seeking);
+	    },
+
+	    setSeekByCursor(x) {
+	      const timeline = this.$refs.track;
+	      const {
+	        clientX
+	      } = event;
+	      const {
+	        left,
+	        right,
+	        width
+	      } = main_core.Dom.getPosition(timeline);
+
+	      if (clientX < left) {
+	        this.seek = 0;
+	      } else if (x > right) {
+	        this.seek = width;
+	      } else {
+	        this.seek = clientX - left;
+	      }
+	    },
+
+	    setPosition(event) {
+	      if (!this.loaded) {
+	        this.loadFile(true);
+	        return false;
+	      }
+
+	      const pixelPerPercent = this.$refs.track.offsetWidth / 100;
+	      this.setProgress(this.seek / pixelPerPercent, this.seek);
+	      this.source().currentTime = this.timeTotal / 100 * this.progress;
+	    },
+
+	    changeLogoIcon(icon) {
+	      if (!this.$parent) {
+	        return;
+	      }
+
+	      const logo = this.$parent.getLogo();
+
+	      if (!logo) {
+	        return;
+	      }
+
+	      logo.setIcon(icon);
+	    },
+
+	    audioEventRouterWrapper(eventName, event) {
+	      this.audioEventRouter(eventName, event);
+
+	      if (eventName === 'play') {
+	        this.changeLogoIcon(LogoType.CALL_AUDIO_PAUSE);
+	      }
+
+	      if (eventName === 'pause') {
+	        this.changeLogoIcon(LogoType.CALL_AUDIO_PLAY);
+	      }
 	    }
 
 	  },
-	  watch: {
-	    playbackRate() {
-	      this.renderPlaybackRateButton();
-	    }
-
-	  },
-
-	  mounted() {
-	    this.renderPlaybackRateButton();
-	  },
-
 	  template: `
 		<div
 			:class="containerClassname"
@@ -2530,26 +3495,28 @@ this.BX.Crm = this.BX.Crm || {};
 				</button>
 			</div>
 			<div class="ui-vue-audioplayer-timeline-container">
-				<div class="ui-vue-audioplayer-track-container" @mousemove="seeking" @click="setPosition" ref="track">
+				<div class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
 					<div class="ui-vue-audioplayer-track-mask"></div>
 					<div class="ui-vue-audioplayer-track" :style="progressPosition"></div>
-					<div @click.stop class="ui-vue-audioplayer-track-seek" :style="seekPosition">
+					<div @mousedown="startSeeking" class="ui-vue-audioplayer-track-seek" :style="seekPosition">
 						<div ref="seek" class="ui-vue-audioplayer-track-seek-icon"></div>
-						<div :class="timeCurrentClassname">{{formatTimeCurrent}}</div>
 					</div>
 <!--					<div class="ui-vue-audioplayer-track-event" @mousemove="seeking"></div>-->
 				</div>
 				<div :class="totalTimeClassname">
+					<div :class="timeCurrentClassname">{{formatTimeCurrent}}</div>
 					<div ref="totalTime" class="ui-vue-audioplayer-time">{{formatTimeTotal}}</div>
 				</div>
 			</div>
 			<div
-				v-if="isShowPlaybackRateMenu"
+				@click="showPlaybackRateMenu"
 				ref="playbackRateButtonContainer"
-				class="ui-vue-audioplayer_playback-speed-menu-container">
+				class="ui-vue-audioplayer_playback-speed-menu-container"
+			>
+				{{ getPlaybackRateOptionText(playbackRate) }}
 			</div>
 			<audio
-				v-if="src" 
+				v-if="src"
 				:src="src"
 				class="ui-vue-audioplayer-source"
 				ref="source"
@@ -2563,9 +3530,9 @@ this.BX.Crm = this.BX.Crm || {};
 				@loadeddata="audioEventRouter('loadeddata', $event)"
 				@loadedmetadata="audioEventRouter('loadedmetadata', $event)"
 				@timeupdate="audioEventRouter('timeupdate', $event)"
-				@play="audioEventRouter('play', $event)"
+				@play="audioEventRouterWrapper('play', $event)"
 				@playing="audioEventRouter('playing', $event)"
-				@pause="audioEventRouter('pause', $event)"
+				@pause="audioEventRouterWrapper('pause', $event)"
 			></audio>
 		</div>
 	`
@@ -2723,19 +3690,301 @@ this.BX.Crm = this.BX.Crm || {};
 		`
 	});
 
+	const EditableDescription = {
+	  components: {
+	    Button
+	  },
+	  props: {
+	    text: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    saveAction: {
+	      type: Object,
+	      required: false,
+	      default: () => ({})
+	    }
+	  },
+
+	  data() {
+	    return {
+	      value: this.text,
+	      oldValue: this.text,
+	      isEdit: false,
+	      isSaving: false,
+	      isLongText: false,
+	      isCollapsed: false
+	    };
+	  },
+
+	  inject: ['isReadOnly'],
+	  computed: {
+	    className() {
+	      return ['crm-timeline__editable-text', {
+	        '--is-edit': this.isEdit,
+	        '--is-long': this.isLongText,
+	        '--is-expanded': this.isCollapsed || !this.isLongText
+	      }];
+	    },
+
+	    saveTextButtonProps() {
+	      return {
+	        state: this.saveTextButtonState,
+	        type: ButtonType.PRIMARY,
+	        title: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SAVE')
+	      };
+	    },
+
+	    cancelEditingButtonProps() {
+	      return {
+	        type: ButtonType.LIGHT,
+	        title: this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_CANCEL'),
+	        state: this.isSaving ? ButtonState.DISABLED : ButtonState.DEFAULT
+	      };
+	    },
+
+	    saveTextButtonState() {
+	      const trimValue = this.value.trim();
+
+	      if (trimValue.length === 0) {
+	        return ButtonState.DISABLED;
+	      } else if (this.isSaving) {
+	        return ButtonState.LOADING;
+	      } else {
+	        return ButtonState.DEFAULT;
+	      }
+	    },
+
+	    expandButtonText() {
+	      return this.isCollapsed ? this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_HIDE') : this.$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_SHOW');
+	    }
+
+	  },
+	  methods: {
+	    startEditing() {
+	      this.isEdit = true;
+	      this.isCollapsed = true;
+	      this.$nextTick(() => {
+	        const textarea = this.$refs.textarea;
+	        this.adjustHeight(textarea);
+	        textarea.focus();
+	      });
+	      this.emitEvent('EditableDescription:StartEdit');
+	    },
+
+	    emitEvent(eventName) {
+	      const action = new Action({
+	        type: 'jsEvent',
+	        value: eventName
+	      });
+	      action.execute(this);
+	    },
+
+	    adjustHeight(elem) {
+	      elem.style.height = 0;
+	      elem.style.height = elem.scrollHeight + "px";
+	    },
+
+	    onPressEnter(event) {
+	      if (event.ctrlKey === true || main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true)) {
+	        this.saveText();
+	      }
+	    },
+
+	    saveText() {
+	      if (this.saveTextButtonState === ButtonState.DISABLED || this.saveTextButtonState === ButtonState.LOADING || !this.isEdit) {
+	        return;
+	      }
+
+	      if (this.value.trim() === this.oldValue) {
+	        this.isEdit = false;
+	        this.emitEvent('EditableDescription:FinishEdit');
+	      }
+
+	      this.isSaving = true;
+	      const encodedTrimText = this.value.trim();
+	      this.executeSaveAction(encodedTrimText).then(() => {
+	        this.isEdit = false;
+	        this.oldValue = encodedTrimText;
+	        this.value = encodedTrimText;
+	        this.$nextTick(() => {
+	          this.isLongText = this.checkIsLongText();
+	        });
+	        this.emitEvent('EditableDescription:FinishEdit');
+	      }).finally(() => {
+	        this.isSaving = false;
+	      });
+	    },
+
+	    executeSaveAction(text) {
+	      var _actionDescription$ac;
+
+	      if (!this.saveAction) {
+	        return;
+	      }
+
+	      if (!this.value) {
+	        return;
+	      } // to avoid unintended props mutation
+
+
+	      const actionDescription = main_core.Runtime.clone(this.saveAction);
+	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
+	      actionDescription.actionParams.value = text;
+	      const action = new Action(actionDescription);
+	      return action.execute(this);
+	    },
+
+	    cancelEditing() {
+	      if (!this.isEdit || this.isSaving) {
+	        return;
+	      }
+
+	      this.value = this.oldValue;
+	      this.isEdit = false;
+	      this.emitEvent('EditableDescription:FinishEdit');
+	    },
+
+	    clearText() {
+	      if (this.isSaving) {
+	        return;
+	      }
+
+	      this.value = '';
+	      this.$refs.textarea.focus();
+	    },
+
+	    toggleIsCollapsed() {
+	      this.isCollapsed = !this.isCollapsed;
+	    },
+
+	    checkIsLongText() {
+	      var _this$$refs$rootEleme;
+
+	      const textBlock = this.$refs.text;
+	      if (!textBlock) return false;
+	      const textBlockMaxHeightStyle = window.getComputedStyle(textBlock).getPropertyValue('--crm-timeline__editable-text_max-height');
+	      const textBlockMaxHeight = parseFloat(textBlockMaxHeightStyle.slice(0, -2));
+	      return ((_this$$refs$rootEleme = this.$refs.rootElement) === null || _this$$refs$rootEleme === void 0 ? void 0 : _this$$refs$rootEleme.offsetHeight) > textBlockMaxHeight;
+	    }
+
+	  },
+	  watch: {
+	    text(newTextValue) {
+	      // update text from push
+	      this.value = newTextValue;
+	      this.oldValue = newTextValue;
+	      this.$nextTick(() => {
+	        this.isLongText = this.checkIsLongText();
+	      });
+	    },
+
+	    value() {
+	      if (!this.isEdit) return;
+	      this.$nextTick(() => {
+	        this.adjustHeight(this.$refs.textarea);
+	      });
+	    }
+
+	  },
+
+	  mounted() {
+	    this.$nextTick(() => {
+	      this.isLongText = this.checkIsLongText();
+	    });
+	  },
+
+	  template: `
+		<div class="crm-timeline__editable-text_wrapper">
+			<div ref="rootElement" :class="className">
+				<button
+					v-if="isEdit"
+					:disabled="isSaving"
+					@click="clearText"
+					class="crm-timeline__editable-text_clear-btn"
+				>
+					<i class="crm-timeline__editable-text_clear-icon"></i>
+				</button>
+				<button
+					v-if="isLongText && !isEdit && !isReadOnly"
+					:disabled="isSaving"
+					@click="startEditing"
+					class="crm-timeline__editable-text_edit-btn"
+				>
+					<i class="crm-timeline__editable-text_edit-icon"></i>
+				</button>
+				<div class="crm-timeline__editable-text_inner">
+					<div class="crm-timeline__editable-text_content">
+						<textarea
+							v-if="isEdit"
+							ref="textarea"
+							v-model="value"
+							:disabled="!isEdit || isSaving"
+							:placeholder="$Bitrix.Loc.getMessage('CRM_TIMELINE_ITEM_EDITABLE_DESCRIPTION_PLACEHOLDER')"
+							@keydown.esc="cancelEditing"
+							@keydown.enter="onPressEnter"
+							class="crm-timeline__editable-text_text"
+						></textarea>
+						<span
+							v-else
+							ref="text"
+							class="crm-timeline__editable-text_text"
+						>
+							{{value}}
+						</span>
+						<span
+							v-if="!isEdit && !isLongText && !isReadOnly"
+							@click="startEditing"
+							class="crm-timeline__editable-text_text-edit-icon"
+						>
+							<span class="crm-timeline__editable-text_edit-icon"></span>
+						</span>
+					</div>
+					<div
+						v-if="isEdit"
+						class="crm-timeline__editable-text_actions"
+					>
+						<div class="crm-timeline__editable-text_action">
+							<Button
+								v-bind="saveTextButtonProps"
+								@click="saveText"
+							/>
+						</div>
+						<div class="crm-timeline__editable-text_action">
+							<Button
+								v-bind="cancelEditingButtonProps"
+								@click="cancelEditing"
+							/>
+						</div>
+					</div>
+				</div>
+				<button
+					v-if="isLongText && !isEdit"
+					@click="toggleIsCollapsed"
+					class="crm-timeline__editable-text_collapse-btn"
+				>
+					{{ expandButtonText }}
+				</button>
+			</div>
+		</div>
+	`
+	};
+
 	var EditableDate = {
 	  components: {
 	    Link
 	  },
 	  props: {
-	    date: Number,
+	    value: Number,
+	    withTime: Boolean,
 	    action: Object
 	  },
 
 	  data() {
 	    return {
-	      currentDate: this.date,
-	      initialDate: this.date,
+	      currentDate: this.value,
+	      initialDate: this.value,
 	      actionTimeoutId: null
 	    };
 	  },
@@ -2767,8 +4016,8 @@ this.BX.Crm = this.BX.Crm || {};
 	      BX.calendar({
 	        node: event.target,
 	        value: this.currentDateInSiteFormat,
-	        bTime: false,
-	        bHideTime: true,
+	        bTime: this.withTime,
+	        bHideTime: !this.withTime,
 	        bSetFocus: false,
 	        callback_after: newDate => {
 	          this.currentDate = Math.round(newDate.getTime() / 1000);
@@ -2849,64 +4098,408 @@ this.BX.Crm = this.BX.Crm || {};
 	`
 	};
 
-	var DatePill = {
+	const Note = {
+	  components: {
+	    User,
+	    Button
+	  },
 	  props: {
-	    date: Number,
-	    action: Object
+	    id: {
+	      type: Number,
+	      required: false
+	    },
+	    text: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    deleteConfirmationText: {
+	      type: String,
+	      required: false,
+	      default: ''
+	    },
+	    saveNoteAction: {
+	      type: Object
+	    },
+	    deleteNoteAction: {
+	      type: Object
+	    },
+	    updatedBy: {
+	      type: Object,
+	      required: false
+	    }
 	  },
 
 	  data() {
 	    return {
-	      currentDate: this.date,
-	      initialDate: this.date,
-	      actionTimeoutId: null
+	      note: this.text,
+	      oldNote: this.text,
+	      isEdit: false,
+	      isExist: !!this.id,
+	      isSaving: false,
+	      isDeleting: false
 	    };
 	  },
 
+	  inject: ['isReadOnly', 'currentUser'],
 	  computed: {
-	    currentFormatDate() {
-	      if (!this.currentDateObject) {
-	        return null;
+	    ButtonType() {
+	      return ButtonType;
+	    },
+
+	    isDeleteButtonVisible() {
+	      return this.isEdit && !(this.isReadOnly || this.isSaving);
+	    },
+
+	    isEditButtonVisible() {
+	      return !(this.isReadOnly || this.isEdit);
+	    },
+
+	    saveButtonState() {
+	      if (this.isSaving) {
+	        return ButtonState.LOADING;
 	      }
 
-	      return main_date.DateTimeFormat.format(this.dateFormat, this.currentDateObject);
+	      if (this.note.trim().length > 0) {
+	        return ButtonState.DEFAULT;
+	      }
+
+	      return ButtonState.DISABLED;
 	    },
 
-	    dateFormat() {
-	      return 'D, j M, H:i';
+	    cancelButtonState() {
+	      if (this.isSaving) {
+	        return ButtonState.DISABLED;
+	      }
+
+	      return ButtonState.DEFAULT;
 	    },
 
-	    currentDateObject() {
-	      return this.currentDate ? new Date(this.currentDate * 1000) : null;
+	    isNoteVisible() {
+	      return this.isExist || this.isEdit;
 	    },
 
-	    calendarParams() {
+	    user() {
+	      if (this.updatedBy) {
+	        return this.updatedBy;
+	      }
+
+	      if (this.currentUser) {
+	        return this.currentUser;
+	      }
+
 	      return {
-	        value: this.currentFormatDate,
-	        bTime: true,
-	        bHideTime: false,
-	        bSetFocus: false
+	        title: '',
+	        detailUrl: '',
+	        imageUrl: ''
 	      };
 	    }
 
 	  },
 	  methods: {
+	    startEditing() {
+	      this.isEdit = true;
+	      this.$nextTick(() => {
+	        const textarea = this.$refs.noteText;
+	        this.adjustHeight(textarea);
+	        textarea.focus();
+	      });
+	      this.executeAction({
+	        type: 'jsEvent',
+	        value: 'Note:StartEdit'
+	      });
+	    },
+
+	    adjustHeight(elem) {
+	      elem.style.height = 0;
+	      elem.style.height = elem.scrollHeight + "px";
+	    },
+
+	    setEditMode(editMode) {
+	      const isEdit = editMode ? !this.isReadOnly : false;
+
+	      if (isEdit !== this.isEdit) {
+	        if (isEdit) {
+	          this.startEditing();
+	        } else {
+	          this.isEdit = false;
+	          this.executeAction({
+	            type: 'jsEvent',
+	            value: 'Note:FinishEdit'
+	          });
+	        }
+	      }
+	    },
+
+	    onEnterHandle(event) {
+	      if (event.ctrlKey === true || main_core.Browser.isMac() && (event.metaKey === true || event.altKey === true)) {
+	        this.saveNote();
+	      }
+	    },
+
+	    cancelEditing() {
+	      this.note = this.oldNote;
+	      this.isEdit = false;
+	      this.executeAction({
+	        type: 'jsEvent',
+	        value: 'Note:FinishEdit'
+	      });
+	    },
+
+	    deleteNote() {
+	      if (this.isSaving) {
+	        return;
+	      }
+
+	      if (!this.isExist) {
+	        this.cancelEditing();
+	        return;
+	      }
+
+	      if (this.deleteConfirmationText && this.deleteConfirmationText.length) {
+	        ui_dialogs_messagebox.MessageBox.show({
+	          message: this.deleteConfirmationText,
+	          modal: true,
+	          buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
+	          onYes: messageBox => {
+	            messageBox.close();
+	            this.executeDeleteAction();
+	          },
+	          onNo: messageBox => {
+	            messageBox.close();
+	          }
+	        });
+	      } else {
+	        this.executeDeleteAction();
+	      }
+	    },
+
+	    saveNote() {
+	      if (this.saveButtonState === ButtonState.DISABLED || this.isSaving || this.isDeleting) {
+	        return;
+	      }
+
+	      if (this.note === this.text) {
+	        this.cancelEditing();
+	        return;
+	      }
+
+	      this.isSaving = true;
+	      const action = main_core.Runtime.clone(this.saveNoteAction);
+	      action.actionParams.text = this.note;
+	      this.executeAction(action).then(({
+	        status
+	      }) => {
+	        if (status === 'success') {
+	          this.oldNote = this.$refs.noteText.value.trim();
+	          this.isExist = true;
+	          this.cancelEditing();
+	        }
+	      }).finally(() => {
+	        this.isSaving = false;
+	      });
+	    },
+
+	    executeDeleteAction() {
+	      this.isDeleting = true;
+	      this.executeAction(this.deleteNoteAction).then(({
+	        status
+	      }) => {
+	        if (status === 'success') {
+	          this.oldNote = '';
+	          this.isExist = false;
+	          this.cancelEditing();
+	        }
+	      }).finally(() => {
+	        this.isDeleting = false;
+	      });
+	    },
+
+	    executeAction(actionObject) {
+	      if (!actionObject) {
+	        console.error('No action object to execute');
+	        return;
+	      }
+
+	      const action = new Action(actionObject);
+	      return action.execute(this);
+	    }
+
+	  },
+	  watch: {
+	    id(id) {
+	      this.isExist = !!id;
+	    },
+
+	    text(text) {
+	      this.note = text;
+	      this.oldNote = text;
+	    },
+
+	    note() {
+	      if (!this.isEdit) {
+	        return;
+	      }
+
+	      this.$nextTick(() => {
+	        this.adjustHeight(this.$refs.noteText);
+	      });
+	    },
+
+	    isEdit(value) {
+	      if (value) {
+	        this.$nextTick(() => this.$refs.noteText.focus());
+	      }
+	    }
+
+	  },
+	  template: `
+		<div class="crm-timeline__card-note" v-show="isNoteVisible">
+		<div class="crm-timeline__card-note_user">
+			<User v-bind="user"></User>
+		</div>
+		<div class="crm-timeline__card-note_area">
+			<div class="crm-timeline__card-note_value">
+					<textarea
+						v-if="isEdit"
+						v-model="note"
+						@keydown.esc="cancelEditing"
+						@keydown.enter="onEnterHandle"
+						:disabled="!isEdit || isSaving"
+						:placeholder="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_PLACEHOLDER')"
+						ref="noteText"
+						class="crm-timeline__card-note_text"
+					></textarea>
+					<span
+						v-else
+						class="crm-timeline__card-note_text"
+					>
+						{{note}}
+					</span>
+
+				<span
+					v-if="isEditButtonVisible"
+					class="crm-timeline__card-note_edit"
+					@click.prevent.stop="startEditing"
+				>
+						<i></i>
+					</span>
+			</div>
+			<div v-if="isEdit" class="crm-timeline__card-note__controls">
+				<div class="crm-timeline__card-note__control --save">
+					<Button
+						@click="saveNote"
+						:state="saveButtonState" :type="ButtonType.PRIMARY"
+						:title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_SAVE')"
+					/>
+				</div>
+				<div class="crm-timeline__card-note__control --cancel">
+					<Button @click="cancelEditing"
+							:type="ButtonType.LIGHT"
+							:state="cancelButtonState"
+							:title="$Bitrix.Loc.getMessage('CRM_TIMELINE_USER_NOTE_CANCEL')"
+					/>
+				</div>
+			</div>
+		</div>
+		<div v-if="isDeleteButtonVisible" class="crm-timeline__card-note_cross" @click="deleteNote">
+			<i></i>
+		</div>
+		<div v-if="isDeleting" class="crm-timeline__card-note_dimmer"></div>
+		</div>
+	`
+	};
+
+	const DatePillColor = Object.freeze({
+	  DEFAULT: 'default',
+	  WARNING: 'warning'
+	});
+	var DatePill = {
+	  props: {
+	    value: Number,
+	    withTime: Boolean,
+	    backgroundColor: {
+	      type: String,
+	      required: false,
+	      default: DatePillColor.DEFAULT,
+
+	      validator(value) {
+	        return Object.values(DatePillColor).includes(value);
+	      }
+
+	    },
+	    action: Object | null
+	  },
+	  inject: ['isReadOnly'],
+
+	  data() {
+	    return {
+	      currentTimestamp: this.value,
+	      initialTimestamp: this.value,
+	      actionTimeoutId: null
+	    };
+	  },
+
+	  computed: {
+	    className() {
+	      return ['crm-timeline__date-pill', `--color-${this.backgroundColor}`, {
+	        '--readonly': this.isPillReadonly
+	      }];
+	    },
+
+	    formattedDate() {
+	      if (!this.currentTimestamp) {
+	        return null;
+	      }
+
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime().toDatetimeString({
+	        withDayOfWeek: true,
+	        delimiter: ', '
+	      });
+	    },
+
+	    currentDateInSiteFormat() {
+	      return main_date.DateTimeFormat.format(this.withTime ? crm_timeline_tools.DatetimeConverter.getSiteDateTimeFormat() : crm_timeline_tools.DatetimeConverter.getSiteDateFormat(), crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime().getValue());
+	    },
+
+	    calendarParams() {
+	      return {
+	        value: this.currentDateInSiteFormat,
+	        bTime: this.withTime,
+	        bHideTime: !this.withTime,
+	        bSetFocus: false
+	      };
+	    },
+
+	    isPillReadonly() {
+	      return this.isReadOnly || !this.action;
+	    }
+
+	  },
+	  watch: {
+	    value(newDate) // update date from push
+	    {
+	      this.initialTimestamp = newDate;
+	      this.currentTimestamp = newDate;
+	    }
+
+	  },
+	  methods: {
 	    openCalendar(event) {
+	      if (this.isPillReadonly) {
+	        return;
+	      }
+
 	      this.cancelScheduledActionExecution(); // eslint-disable-next-line bitrix-rules/no-bx
 
 	      BX.calendar({
 	        node: event.target,
 	        callback_after: newDate => {
-	          this.currentDate = Math.round(newDate.getTime() / 1000);
-	          this.scheduleActionExecution();
+	          this.currentTimestamp = crm_datetime.TimestampConverter.userToBrowser(newDate.getTime() / 1000);
+	          this.executeAction();
 	        },
 	        ...this.calendarParams
 	      });
-	    },
-
-	    scheduleActionExecution() {
-	      this.cancelScheduledActionExecution();
-	      this.actionTimeoutId = setTimeout(this.executeAction.bind(this), 3 * 1000);
 	    },
 
 	    cancelScheduledActionExecution() {
@@ -2923,27 +4516,78 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      if (this.currentDate === this.initialDate) {
+	      if (this.currentTimestamp === this.initialTimestamp) {
 	        return;
 	      } // to avoid unintended props mutation
 
 
 	      const actionDescription = main_core.Runtime.clone(this.action);
 	      (_actionDescription$ac = actionDescription.actionParams) !== null && _actionDescription$ac !== void 0 ? _actionDescription$ac : actionDescription.actionParams = {};
-	      actionDescription.actionParams.value = this.currentDateObject;
+	      actionDescription.actionParams.value = this.currentDateInSiteFormat;
 	      const action = new Action(actionDescription);
 	      action.execute(this);
-	      this.initialDate = this.currentDate;
+	      this.initialTimestamp = this.currentTimestamp;
 	    }
 
 	  },
 	  template: `
-		<span class="crm-timeline__date-pill" @click="openCalendar">
+		<span
+			:class="className"
+			@click="openCalendar"
+		>
 			<span>
-				{{ currentFormatDate }}
+				{{ formattedDate }}
 			</span>
 			<span class="crm-timeline__date-pill_caret"></span>
 		</span>`
+	};
+
+	const InfoGroup = {
+	  props: {
+	    blocks: {
+	      type: Object,
+	      required: false,
+	      default: () => ({})
+	    }
+	  },
+	  template: `
+		<table class="crm-timeline__info-group">
+			<tbody>
+				<tr
+					v-for="({title, block}, id) in blocks"
+					:key="id"
+					class="crm-timeline__info-group_block"
+				>
+					<td
+						:title="title"
+						class="crm-timeline__info-group_block-title"
+					>
+						{{title}}
+					</td>
+					<td class="crm-timeline__info-group_block-content">
+						<component
+							:is="block.rendererName"
+							v-bind="block.properties"
+						/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	`
+	};
+
+	const SmsMessage = {
+	  props: {
+	    contentBlock: Object
+	  },
+	  template: `
+		<div
+			class="crm-timeline__item_sms-message">
+			<span>
+				<component v-if="contentBlock" :is="contentBlock.rendererName" v-bind="contentBlock.properties"></component>
+			</span>
+		</div>
+	`
 	};
 
 	function _classPrivateMethodInitSpec$3(obj, privateSet) { _checkPrivateRedeclaration$6(obj, privateSet); privateSet.add(obj); }
@@ -2954,6 +4598,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _openEntityDetailTab = /*#__PURE__*/new WeakSet();
 
+	var _editNote = /*#__PURE__*/new WeakSet();
+
+	var _cancelEditNote = /*#__PURE__*/new WeakSet();
+
 	let CommonContentBlocks = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(CommonContentBlocks, _Base);
 
@@ -2962,6 +4610,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    babelHelpers.classCallCheck(this, CommonContentBlocks);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(CommonContentBlocks).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _cancelEditNote);
+
+	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _editNote);
 
 	    _classPrivateMethodInitSpec$3(babelHelpers.assertThisInitialized(_this), _openEntityDetailTab);
 
@@ -2974,16 +4626,20 @@ this.BX.Crm = this.BX.Crm || {};
 	      return {
 	        TextBlock: Text,
 	        LinkBlock: Link,
+	        DateBlock,
 	        WithTitle,
 	        LineOfTextBlocks,
 	        TimelineAudio,
 	        ClientMark: ClientMark$1,
 	        Money,
 	        EditableText,
+	        EditableDescription,
 	        EditableDate,
 	        PlayerAlert,
 	        DatePill,
-	        Note
+	        Note,
+	        InfoGroup,
+	        SmsMessage
 	      };
 	    }
 	    /**
@@ -2992,9 +4648,27 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  }, {
 	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
 	      if (action === 'Item:OpenEntityDetailTab' && main_core.Type.isStringFilled(actionData === null || actionData === void 0 ? void 0 : actionData.tabId)) {
 	        _classPrivateMethodGet$3(this, _openEntityDetailTab, _openEntityDetailTab2).call(this, actionData.tabId);
+	      }
+
+	      if (action === 'Note:StartEdit') {
+	        _classPrivateMethodGet$3(this, _editNote, _editNote2).call(this, item);
+	      }
+
+	      if (action === 'Note:FinishEdit') {
+	        _classPrivateMethodGet$3(this, _cancelEditNote, _cancelEditNote2).call(this, item);
 	      }
 	    }
 	  }], [{
@@ -3010,6 +4684,20 @@ this.BX.Crm = this.BX.Crm || {};
 	  // the event is handled by compatible code, it's a pain to use EventEmitter in this case
 	  // eslint-disable-next-line bitrix-rules/no-bx
 	  BX.onCustomEvent(window, 'OpenEntityDetailTab', [tabId]);
+	}
+
+	function _editNote2(item) {
+	  var _item$getLayoutConten;
+
+	  (_item$getLayoutConten = item.getLayoutContentBlockById('note')) === null || _item$getLayoutConten === void 0 ? void 0 : _item$getLayoutConten.setEditMode(true);
+	  item.highlightContentBlockById('note', true);
+	}
+
+	function _cancelEditNote2(item) {
+	  var _item$getLayoutConten2;
+
+	  (_item$getLayoutConten2 = item.getLayoutContentBlockById('note')) === null || _item$getLayoutConten2 === void 0 ? void 0 : _item$getLayoutConten2.setEditMode(false);
+	  item.highlightContentBlockById('note', false);
 	}
 
 	var ValueChange = {
@@ -3095,7 +4783,17 @@ this.BX.Crm = this.BX.Crm || {};
 	    }
 	  }, {
 	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
 	      if (action === 'Openline:OpenChat' && actionData && actionData.dialogId) {
 	        _classPrivateMethodGet$4(this, _openChat, _openChat2).call(this, actionData.dialogId);
 	      }
@@ -3166,8 +4864,20 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  babelHelpers.createClass(SignDocument, [{
 	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData,
+	        animationCallbacks
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
 	      const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId);
+	      const documentHash = (actionData === null || actionData === void 0 ? void 0 : actionData.documentHash) || '';
 	      const activityId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.activityId);
 
 	      if ((action === 'SignDocument:Open' || action === 'Activity:SignDocument:Open') && documentId > 0) {
@@ -3177,11 +4887,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      } else if ((action === 'SignDocument:UpdateActivityDeadline' || action === 'Activity:SignDocument:UpdateActivityDeadline') && activityId > 0) {
 	        _classPrivateMethodGet$5(this, _updateActivityDeadline, _updateActivityDeadline2).call(this, activityId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
 	      } else if (action === 'SignDocument:Resend' && documentId > 0 && actionData !== null && actionData !== void 0 && actionData.recipientHash) {
-	        _classPrivateMethodGet$5(this, _resendDocument, _resendDocument2).call(this, actionData);
+	        _classPrivateMethodGet$5(this, _resendDocument, _resendDocument2).call(this, actionData, animationCallbacks).then(() => {
+	          if (actionData.buttonId) {
+	            const btn = item.getLayoutFooterButtonById(actionData.buttonId);
+	            btn.disableWithTimer(60);
+	          }
+	        });
 	      } else if (action === 'SignDocument:TouchSigner' && documentId > 0) {
 	        _classPrivateMethodGet$5(this, _touchSigner, _touchSigner2).call(this, actionData);
-	      } else if (action === 'SignDocument:Download' && documentId > 0) {
-	        _classPrivateMethodGet$5(this, _download, _download2).call(this, actionData);
+	      } else if (action === 'SignDocument:Download' && documentHash) {
+	        _classPrivateMethodGet$5(this, _download, _download2).call(this, actionData, animationCallbacks);
 	      } else if (action === 'SignDocumentEntry:Delete' && actionData !== null && actionData !== void 0 && actionData.entryId) {
 	        ui_dialogs_messagebox.MessageBox.show({
 	          message: (actionData === null || actionData === void 0 ? void 0 : actionData.confirmationText) || '',
@@ -3250,24 +4965,42 @@ this.BX.Crm = this.BX.Crm || {};
 	function _resendDocument2({
 	  documentId,
 	  recipientHash
-	}) {
-	  main_core.ajax.runAction('sign.document.resendFile', {
-	    data: {
-	      memberHash: recipientHash,
-	      documentId: documentId
-	    }
-	  }).then(() => {
-	    ui_notification.UI.Notification.Center.notify({
-	      content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
-	      autoHideDelay: 5000
+	}, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+
+	  return new Promise((resolve, reject) => {
+	    main_core.ajax.runAction('sign.internal.document.resendFile', {
+	      data: {
+	        memberHash: recipientHash,
+	        documentId: documentId
+	      }
+	    }).then(() => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: main_core.Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
+	        autoHideDelay: 5000
+	      });
+
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
+
+	      resolve();
+	    }, response => {
+	      ui_notification.UI.Notification.Center.notify({
+	        content: response.errors[0].message,
+	        autoHideDelay: 5000
+	      });
+
+	      if (animationCallbacks.onStop) {
+	        animationCallbacks.onStop();
+	      }
+
+	      reject();
 	    });
-	  }, response => {
-	    ui_notification.UI.Notification.Center.notify({
-	      content: response.errors[0].message,
-	      autoHideDelay: 5000
-	    });
+	    console.log('resend document ' + documentId + ' for ' + recipientHash);
 	  });
-	  console.log('resend document ' + documentId + ' for ' + recipientHash);
 	}
 
 	function _touchSigner2({
@@ -3279,33 +5012,43 @@ this.BX.Crm = this.BX.Crm || {};
 	function _download2({
 	  documentHash,
 	  memberHash
-	}) {
-	  console.log('download ' + documentHash);
-	  const req = main_core.ajax.xhr();
-	  req.open("GET", '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' + '&memberHash=' + memberHash + '&documentHash=' + documentHash, true);
-	  req.responseType = "blob";
+	}, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
 
-	  req.onload = oEvent => {
-	    const blob = req.response;
-	    const url = window.URL.createObjectURL(new Blob([blob]));
-	    const link = document.createElement('a');
-	    link.href = url;
-	    link.setAttribute('download', 'doc.pdf');
-	    document.body.appendChild(link);
-	    link.click();
-	    document.body.removeChild(link);
-	  };
+	  const link = document.createElement('a');
+	  link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' + '&memberHash=' + memberHash + '&documentHash=' + documentHash;
+	  link.setAttribute('download', '');
+	  document.body.appendChild(link);
+	  link.click();
+	  document.body.removeChild(link);
 
-	  req.send();
+	  if (animationCallbacks.onStop) {
+	    animationCallbacks.onStop();
+	  }
 	}
 
 	function _classPrivateMethodInitSpec$6(obj, privateSet) { _checkPrivateRedeclaration$9(obj, privateSet); privateSet.add(obj); }
 
 	function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 
+	function _classStaticPrivateFieldSpecSet(receiver, classConstructor, descriptor, value) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "set"); _classApplyDescriptorSet(receiver, descriptor, value); return value; }
+
+	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
+
+	function _classStaticPrivateFieldSpecGet$1(receiver, classConstructor, descriptor) { _classCheckPrivateStaticAccess$1(receiver, classConstructor); _classCheckPrivateStaticFieldDescriptor$1(descriptor, "get"); return _classApplyDescriptorGet$1(receiver, descriptor); }
+
+	function _classCheckPrivateStaticFieldDescriptor$1(descriptor, action) { if (descriptor === undefined) { throw new TypeError("attempted to " + action + " private static field before its declaration"); } }
+
+	function _classCheckPrivateStaticAccess$1(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
+
+	function _classApplyDescriptorGet$1(receiver, descriptor) { if (descriptor.get) { return descriptor.get.call(receiver); } return descriptor.value; }
+
 	function _classPrivateMethodGet$6(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-	const ITEM_TYPE = 'Activity:Document';
-	const ACTION_NAMESPACE = ITEM_TYPE + ':';
+	const ACTION_NAMESPACE = 'Document:';
+
+	var _onJsEvent = /*#__PURE__*/new WeakSet();
 
 	var _openDocument$1 = /*#__PURE__*/new WeakSet();
 
@@ -3323,6 +5066,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _updateCreateDate = /*#__PURE__*/new WeakSet();
 
+	var _deleteDocument = /*#__PURE__*/new WeakSet();
+
+	var _onAjaxAction = /*#__PURE__*/new WeakSet();
+
 	let Document = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Document, _Base);
 
@@ -3331,6 +5078,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    babelHelpers.classCallCheck(this, Document);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onAjaxAction);
+
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _deleteDocument);
 
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _updateCreateDate);
 
@@ -3348,45 +5099,110 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _openDocument$1);
 
+	    _classPrivateMethodInitSpec$6(babelHelpers.assertThisInitialized(_this), _onJsEvent);
+
 	    return _this;
 	  }
 
 	  babelHelpers.createClass(Document, [{
 	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {
-	      const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId);
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData,
+	        response,
+	        animationCallbacks
+	      } = actionParams;
 
-	      if (documentId <= 0) {
+	      if (ActionType.isJsEvent(actionType)) {
+	        _classPrivateMethodGet$6(this, _onJsEvent, _onJsEvent2).call(this, action, actionData, animationCallbacks, item);
+	      } else if (ActionType.isAjaxAction(actionType)) {
+	        _classPrivateMethodGet$6(this, _onAjaxAction, _onAjaxAction2).call(this, action, actionType, actionData, response);
+	      }
+	    }
+	  }, {
+	    key: "onAfterItemRefreshLayout",
+	    value: function onAfterItemRefreshLayout(item) {
+	      var _item$getLayout$asPla, _item$getLayout$asPla2, _item$getLayout$asPla3, _action$actionParams;
+
+	      const itemsToPrint = _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).filter(candidate => candidate.getId() === item.getId());
+
+	      if (itemsToPrint.length <= 0) {
 	        return;
 	      }
 
-	      if (action === ACTION_NAMESPACE + 'Open') {
-	        _classPrivateMethodGet$6(this, _openDocument$1, _openDocument2$1).call(this, documentId);
-	      } else if (action === ACTION_NAMESPACE + 'CopyPublicLink') {
-	        // todo block button while loading
-	        _classPrivateMethodGet$6(this, _copyPublicLink, _copyPublicLink2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.publicUrl);
-	      } else if (action === ACTION_NAMESPACE + 'Print') {
-	        _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.printUrl);
-	      } else if (action === ACTION_NAMESPACE + 'DownloadPdf') {
-	        _classPrivateMethodGet$6(this, _downloadPdf, _downloadPdf2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.pdfUrl);
-	      } else if (action === ACTION_NAMESPACE + 'DownloadDocx') {
-	        _classPrivateMethodGet$6(this, _downloadDocx, _downloadDocx2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.docxUrl);
-	      } else if (action === ACTION_NAMESPACE + 'UpdateTitle') {
-	        _classPrivateMethodGet$6(this, _updateTitle, _updateTitle2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
-	      } else if (action === ACTION_NAMESPACE + 'UpdateCreateDate') {
-	        _classPrivateMethodGet$6(this, _updateCreateDate, _updateCreateDate2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
-	      } else {
-	        console.info(`Unknown action ${action} in ${ITEM_TYPE}`);
+	      const action = (_item$getLayout$asPla = item.getLayout().asPlainObject().footer) === null || _item$getLayout$asPla === void 0 ? void 0 : (_item$getLayout$asPla2 = _item$getLayout$asPla.additionalButtons) === null || _item$getLayout$asPla2 === void 0 ? void 0 : (_item$getLayout$asPla3 = _item$getLayout$asPla2.extra) === null || _item$getLayout$asPla3 === void 0 ? void 0 : _item$getLayout$asPla3.action;
+	      const isPrintEvent = main_core.Type.isPlainObject(action) && ActionType.isJsEvent(action.type) && action.value === ACTION_NAMESPACE + 'Print';
+
+	      if (!isPrintEvent) {
+	        return;
 	      }
+
+	      const printUrl = (_action$actionParams = action.actionParams) === null || _action$actionParams === void 0 ? void 0 : _action$actionParams.printUrl;
+
+	      if (!main_core.Type.isStringFilled(printUrl)) {
+	        return;
+	      }
+
+	      _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, printUrl, null, item);
+
+	      _classStaticPrivateFieldSpecSet(Document, Document, _toPrintAfterRefresh, _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).filter(remainingItem => !itemsToPrint.includes(remainingItem)));
 	    }
 	  }], [{
 	    key: "isItemSupported",
 	    value: function isItemSupported(item) {
-	      return item.getType() === ITEM_TYPE;
+	      return item.getType() === 'Document' || item.getType() === 'DocumentViewed' || item.getType() === 'Activity:Document';
 	    }
 	  }]);
 	  return Document;
 	}(Base);
+
+	function _onJsEvent2(action, actionData, animationCallbacks, item) {
+	  const documentId = main_core.Text.toInteger(actionData === null || actionData === void 0 ? void 0 : actionData.documentId); // if (documentId <= 0)
+	  // {
+	  // 	return;
+	  // }
+
+	  if (action === ACTION_NAMESPACE + 'Open') {
+	    _classPrivateMethodGet$6(this, _openDocument$1, _openDocument2$1).call(this, documentId);
+	  } else if (action === ACTION_NAMESPACE + 'CopyPublicLink') {
+	    // todo block button while loading
+	    _classPrivateMethodGet$6(this, _copyPublicLink, _copyPublicLink2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.publicUrl);
+	  } else if (action === ACTION_NAMESPACE + 'Print') {
+	    _classPrivateMethodGet$6(this, _printDocument, _printDocument2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.printUrl, animationCallbacks, item);
+	  } else if (action === ACTION_NAMESPACE + 'DownloadPdf') {
+	    _classPrivateMethodGet$6(this, _downloadPdf, _downloadPdf2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.pdfUrl);
+	  } else if (action === ACTION_NAMESPACE + 'DownloadDocx') {
+	    _classPrivateMethodGet$6(this, _downloadDocx, _downloadDocx2).call(this, actionData === null || actionData === void 0 ? void 0 : actionData.docxUrl);
+	  } else if (action === ACTION_NAMESPACE + 'UpdateTitle') {
+	    _classPrivateMethodGet$6(this, _updateTitle, _updateTitle2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	  } else if (action === ACTION_NAMESPACE + 'UpdateCreateDate') {
+	    _classPrivateMethodGet$6(this, _updateCreateDate, _updateCreateDate2).call(this, documentId, actionData === null || actionData === void 0 ? void 0 : actionData.value);
+	  } else if (action === ACTION_NAMESPACE + 'Delete') {
+	    var _actionData$confirmat;
+
+	    const confirmationText = (_actionData$confirmat = actionData.confirmationText) !== null && _actionData$confirmat !== void 0 ? _actionData$confirmat : '';
+
+	    if (confirmationText) {
+	      ui_dialogs_messagebox.MessageBox.show({
+	        message: confirmationText,
+	        modal: true,
+	        buttons: ui_dialogs_messagebox.MessageBoxButtons.YES_NO,
+	        onYes: () => {
+	          return _classPrivateMethodGet$6(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	        },
+	        onNo: messageBox => {
+	          messageBox.close();
+	        }
+	      });
+	    } else {
+	      _classPrivateMethodGet$6(this, _deleteDocument, _deleteDocument2).call(this, actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+	    }
+	  } else {
+	    console.info(`Unknown action ${action} in ${item.getType()}`);
+	  }
+	}
 
 	function _openDocument2$1(documentId) {
 	  crm_router.Router.Instance.openDocumentSlider(documentId);
@@ -3439,11 +5255,19 @@ this.BX.Crm = this.BX.Crm || {};
 	  return publicUrl;
 	}
 
-	function _printDocument2(printUrl) {
+	function _printDocument2(printUrl, animationCallbacks, item) {
 	  if (main_core.Type.isStringFilled(printUrl)) {
 	    window.open(printUrl, '_blank');
-	  } else {
-	    ui_dialogs_messagebox.MessageBox.alert(main_core.Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY'));
+	    return;
+	  } // there is no pdf yet. wait till document is transformed and update push comes in
+
+
+	  _classStaticPrivateFieldSpecGet$1(Document, Document, _toPrintAfterRefresh).push(item);
+
+	  const onStart = animationCallbacks === null || animationCallbacks === void 0 ? void 0 : animationCallbacks.onStart;
+
+	  if (main_core.Type.isFunction(onStart)) {
+	    onStart();
 	  }
 	}
 
@@ -3518,6 +5342,59 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	function _deleteDocument2(id, ownerTypeId, ownerId, animationCallbacks) {
+	  if (animationCallbacks.onStart) {
+	    animationCallbacks.onStart();
+	  }
+
+	  return main_core.ajax.runAction('crm.timeline.document.delete', {
+	    data: {
+	      id,
+	      ownerTypeId,
+	      ownerId
+	    }
+	  }).then(() => {
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
+	    return true;
+	  }, response => {
+	    ui_notification.UI.Notification.Center.notify({
+	      content: response.errors[0].message,
+	      autoHideDelay: 5000
+	    });
+
+	    if (animationCallbacks.onStop) {
+	      animationCallbacks.onStop();
+	    }
+
+	    return true;
+	  });
+	}
+
+	function _onAjaxAction2(action, actionType, actionData, response) {
+	  if (action === 'crm.api.integration.sign.convertDeal') {
+	    var _response$data;
+
+	    if (actionType === ActionType.AJAX_ACTION.FINISHED && !main_core.Type.isNil(response === null || response === void 0 ? void 0 : (_response$data = response.data) === null || _response$data === void 0 ? void 0 : _response$data.SMART_DOCUMENT)) {
+	      //todo extract it to router?
+	      const wizardUri = new main_core.Uri('/sign/doc/0/');
+	      wizardUri.setQueryParams({
+	        docId: response.data.SMART_DOCUMENT,
+	        stepId: 'changePartner',
+	        noRedirect: 'Y'
+	      });
+	      BX.SidePanel.Instance.open(wizardUri.toString());
+	    }
+	  }
+	}
+
+	var _toPrintAfterRefresh = {
+	  writable: true,
+	  value: []
+	};
+
 	function _classPrivateMethodInitSpec$7(obj, privateSet) { _checkPrivateRedeclaration$a(obj, privateSet); privateSet.add(obj); }
 
 	function _checkPrivateRedeclaration$a(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
@@ -3530,6 +5407,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _openTranscript = /*#__PURE__*/new WeakSet();
 
+	var _changePlayerState = /*#__PURE__*/new WeakSet();
+
+	var _downloadRecord = /*#__PURE__*/new WeakSet();
+
 	let Call = /*#__PURE__*/function (_Base) {
 	  babelHelpers.inherits(Call, _Base);
 
@@ -3538,6 +5419,10 @@ this.BX.Crm = this.BX.Crm || {};
 
 	    babelHelpers.classCallCheck(this, Call);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Call).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _downloadRecord);
+
+	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _changePlayerState);
 
 	    _classPrivateMethodInitSpec$7(babelHelpers.assertThisInitialized(_this), _openTranscript);
 
@@ -3550,17 +5435,35 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  babelHelpers.createClass(Call, [{
 	    key: "onItemAction",
-	    value: function onItemAction(item, action, actionData) {
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType,
+	        actionData
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
 	      if (action === 'Call:MakeCall' && actionData) {
 	        _classPrivateMethodGet$7(this, _makeCall, _makeCall2).call(this, actionData);
 	      }
 
-	      if (action === 'Call:Schedule' && actionData && actionData.activityId) {
-	        _classPrivateMethodGet$7(this, _scheduleCall, _scheduleCall2).call(this, actionData.activityId);
+	      if (action === 'Call:Schedule' && actionData) {
+	        _classPrivateMethodGet$7(this, _scheduleCall, _scheduleCall2).call(this, actionData.activityId, actionData.scheduleDate);
 	      }
 
 	      if (action === 'Call:OpenTranscript' && actionData && actionData.callId) {
 	        _classPrivateMethodGet$7(this, _openTranscript, _openTranscript2).call(this, actionData.callId);
+	      }
+
+	      if (action === 'Call:ChangePlayerState' && actionData && actionData.recordId) {
+	        _classPrivateMethodGet$7(this, _changePlayerState, _changePlayerState2).call(this, item, actionData.recordId);
+	      }
+
+	      if (action === 'Call:DownloadRecord' && actionData && actionData.url) {
+	        _classPrivateMethodGet$7(this, _downloadRecord, _downloadRecord2).call(this, actionData.url);
 	      }
 	    }
 	  }], [{
@@ -3597,8 +5500,24 @@ this.BX.Crm = this.BX.Crm || {};
 	  window.top['BXIM'].phoneTo(actionData.phone, params);
 	}
 
-	function _scheduleCall2(activityId) {
-	  console.warn('Not implemented yet');
+	function _scheduleCall2(activityId, scheduleDate) {
+	  if (BX.CrmTimelineManager) {
+	    const timeline = BX.CrmTimelineManager.getDefault();
+
+	    if (timeline) {
+	      const menuBar = timeline.getMenuBar();
+	      BX(menuBar.getActiveItem()).scrollIntoView({
+	        block: 'start',
+	        inline: 'nearest',
+	        behavior: 'smooth'
+	      });
+	      menuBar.setActiveItemById('todo');
+	      const todoEditor = menuBar.getTodoEditor();
+	      todoEditor.setFocused();
+	      todoEditor.setParentActivityId(activityId);
+	      todoEditor.setDeadLine(scheduleDate);
+	    }
+	  }
 	}
 
 	function _openTranscript2(callId) {
@@ -3609,6 +5528,114 @@ this.BX.Crm = this.BX.Crm || {};
 	  }
 	}
 
+	function _changePlayerState2(item, recordId) {
+	  const player = item.getLayoutContentBlockById('audio');
+
+	  if (!player) {
+	    return;
+	  }
+
+	  if (recordId !== player.id) {
+	    return;
+	  }
+
+	  if (player.state === 'play') {
+	    player.pause();
+	  } else {
+	    player.play();
+	  }
+	}
+
+	function _downloadRecord2(url) {
+	  location.href = url;
+	}
+
+	let ToDo = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(ToDo, _Base);
+
+	  function ToDo() {
+	    babelHelpers.classCallCheck(this, ToDo);
+	    return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(ToDo).apply(this, arguments));
+	  }
+
+	  babelHelpers.createClass(ToDo, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionType
+	      } = actionParams;
+
+	      if (actionType !== 'jsEvent') {
+	        return;
+	      }
+
+	      if (action === 'EditableDescription:StartEdit') {
+	        item.highlightContentBlockById('description', true);
+	      }
+
+	      if (action === 'EditableDescription:FinishEdit') {
+	        item.highlightContentBlockById('description', false);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return item.getType() === 'Activity:ToDo';
+	    }
+	  }]);
+	  return ToDo;
+	}(Base);
+
+	function _classPrivateMethodInitSpec$8(obj, privateSet) { _checkPrivateRedeclaration$b(obj, privateSet); privateSet.add(obj); }
+
+	function _checkPrivateRedeclaration$b(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+
+	function _classPrivateMethodGet$8(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
+	var _openHelpdesk = /*#__PURE__*/new WeakSet();
+
+	let Helpdesk = /*#__PURE__*/function (_Base) {
+	  babelHelpers.inherits(Helpdesk, _Base);
+
+	  function Helpdesk(...args) {
+	    var _this;
+
+	    babelHelpers.classCallCheck(this, Helpdesk);
+	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Helpdesk).call(this, ...args));
+
+	    _classPrivateMethodInitSpec$8(babelHelpers.assertThisInitialized(_this), _openHelpdesk);
+
+	    return _this;
+	  }
+
+	  babelHelpers.createClass(Helpdesk, [{
+	    key: "onItemAction",
+	    value: function onItemAction(item, actionParams) {
+	      const {
+	        action,
+	        actionData
+	      } = actionParams;
+
+	      if (action === 'Helpdesk:Open' && actionData && actionData.articleCode) {
+	        _classPrivateMethodGet$8(this, _openHelpdesk, _openHelpdesk2).call(this, actionData.articleCode);
+	      }
+	    }
+	  }], [{
+	    key: "isItemSupported",
+	    value: function isItemSupported(item) {
+	      return true;
+	    }
+	  }]);
+	  return Helpdesk;
+	}(Base);
+
+	function _openHelpdesk2(articleCode) {
+	  if (top.BX && top.BX.Helper) {
+	    top.BX.Helper.show(`redirect=detail&code=${articleCode}`);
+	  }
+	}
+
 	ControllerManager.registerController(Activity);
 	ControllerManager.registerController(CommonContentBlocks);
 	ControllerManager.registerController(OpenLines);
@@ -3616,10 +5643,14 @@ this.BX.Crm = this.BX.Crm || {};
 	ControllerManager.registerController(SignDocument);
 	ControllerManager.registerController(Document);
 	ControllerManager.registerController(Call);
+	ControllerManager.registerController(ToDo);
+	ControllerManager.registerController(Helpdesk);
 
 	exports.Item = Item;
 	exports.ConfigurableItem = ConfigurableItem;
 	exports.StreamType = StreamType;
+	exports.ControllerManager = ControllerManager;
+	exports.BaseController = Base;
 
-}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX.UI,BX.Main,BX.Event,BX.Crm.Timeline,BX.Vue3.Components,BX.UI,BX.Currency,BX.Vue3,BX.UI,BX.Main,BX.Crm,BX.UI.Dialogs,BX.Crm.Timeline,BX,BX));
+}((this.BX.Crm.Timeline = this.BX.Crm.Timeline || {}),BX.UI,BX.UI,BX.Event,BX,BX.Crm.Timeline,BX.Vue3.Components,BX.Main,BX.Currency,BX.Vue3,BX.UI,BX.Crm.DateTime,BX.Main,BX.Crm,BX.UI.Dialogs,BX.Crm.Timeline,BX,BX,BX.UI));
 //# sourceMappingURL=index.bundle.js.map

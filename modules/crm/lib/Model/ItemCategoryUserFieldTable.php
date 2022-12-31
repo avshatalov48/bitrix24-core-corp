@@ -55,16 +55,17 @@ class ItemCategoryUserFieldTable extends DataManager
 		);
 	}
 
-	public static function deleteByUserFieldName(string $userFieldName): void
+	public static function deleteByUserFieldName(string $userFieldName, int $entityTypeId): void
 	{
 		$connection = Application::getConnection();
 		$helper = $connection->getSqlHelper();
 
 		$connection->query(
 			sprintf(
-				'DELETE FROM %s WHERE USER_FIELD_NAME = %s',
+				'DELETE FROM %s WHERE USER_FIELD_NAME = %s AND ENTITY_TYPE_ID = %d',
 				$helper->quote(static::getTableName()),
-				$helper->convertToDbString($userFieldName)
+				$helper->convertToDbString($userFieldName),
+				$helper->convertToDbInteger($entityTypeId)
 			)
 		);
 	}

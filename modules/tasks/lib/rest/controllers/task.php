@@ -1,6 +1,9 @@
 <?php
 namespace Bitrix\Tasks\Rest\Controllers;
 
+use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
+use Bitrix\Crm\Service\Display;
+use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Main;
 use Bitrix\Main\Engine;
 use Bitrix\Main\Error;
@@ -8,13 +11,22 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\UI\PageNavigation;
 use Bitrix\Main\UserTable;
 use Bitrix\Pull\MobileCounter;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\AnalyticLogger;
+use Bitrix\Tasks\CheckList\Internals\CheckList;
+use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
 use Bitrix\Tasks\Comments\Task\CommentPoster;
 use Bitrix\Tasks\Exception;
+use Bitrix\Tasks\FileUploader\TaskController;
 use Bitrix\Tasks\Helper\Filter;
+use Bitrix\Tasks\Integration\CRM;
+use Bitrix\Tasks\Integration\Disk;
 use Bitrix\Tasks\Integration\SocialNetwork;
+use Bitrix\Tasks\Integration\TasksMobile;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\Counter\Template\TaskCounter;
+use Bitrix\Tasks\Internals\Registry\TaskRegistry;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
@@ -26,6 +38,7 @@ use Bitrix\Tasks\UI;
 use Bitrix\Tasks\Util;
 use Bitrix\Tasks\Util\Restriction\Bitrix24Restriction\Limit\TaskLimit;
 use Bitrix\Tasks\Util\Type\DateTime;
+use Bitrix\UI\FileUploader\Uploader;
 use TasksException;
 
 /**
@@ -201,6 +214,10 @@ final class Task extends Base
 			$row['STATUS'] = $row['REAL_STATUS'];
 			unset($row['REAL_STATUS']);
 		}
+		if (array_key_exists('DESCRIPTION', $row))
+		{
+			$row['DESCRIPTION'] = htmlspecialchars_decode($row['DESCRIPTION'], ENT_QUOTES);
+		}
 
 		$row = $this->fillGroupInfo([$row], $params)[0];
 		$row = $this->fillUserInfo([$row])[0];
@@ -208,9 +225,50 @@ final class Task extends Base
 		{
 			$row = $this->fillResultInfo([$row])[0];
 		}
+		if (array_key_exists('WITH_TIMER_INFO', $params))
+		{
+			$row = $this->fillWithTimerInfo([$row])[0];
+		}
 		if (in_array('COUNTERS', $select, true))
 		{
 			$row = $this->fillCounterInfo([$row])[0];
+		}
+		if (in_array('RELATED_TASKS', $select, true))
+		{
+			$row = $this->fillWithRelatedTasks([$row])[0];
+		}
+		if (in_array('SUB_TASKS', $select, true))
+		{
+			$row = $this->fillWithSubTasks([$row])[0];
+		}
+		if (in_array('TAGS', $select, true))
+		{
+			$row = $this->fillWithTags([$row])[0];
+		}
+		if (
+			array_key_exists('WITH_FILES_INFO', $params)
+			&& in_array(Disk\UserField::getMainSysUFCode(), $select, true)
+		)
+		{
+			$row = $this->fillWithFilesInfo([$row])[0];
+		}
+		if (
+			array_key_exists('WITH_CRM_INFO', $params)
+			&& in_array(CRM\UserField::getMainSysUFCode(), $select, true)
+		)
+		{
+			$row = $this->fillWithCrmInfo([$row])[0];
+		}
+		if (
+			array_key_exists('WITH_PARENT_TASK_INFO', $params)
+			&& in_array('PARENT_ID', $select, true)
+		)
+		{
+			$row = $this->fillWithParentTaskInfo([$row])[0];
+		}
+		if (array_key_exists('WITH_PARSED_DESCRIPTION', $params))
+		{
+			$row = $this->fillWithParsedDescription([$row])[0];
 		}
 
 		$this->formatDateFieldsForOutput($row);
@@ -230,6 +288,28 @@ final class Task extends Base
 		if (isset($params['GET_TASK_LIMIT_EXCEEDED']) && $params['GET_TASK_LIMIT_EXCEEDED'])
 		{
 			$row['TASK_LIMIT_EXCEEDED'] = TaskLimit::isLimitExceeded();
+		}
+
+		if (isset($row['CHECKLIST']))
+		{
+			$canAdd = TaskCheckListFacade::isActionAllowed(
+				$task->getId(),
+				null,
+				$this->getCurrentUser()->getId(),
+				TaskCheckListFacade::ACTION_ADD
+			);
+
+			$row['CHECKLIST'] = $this->fillActionsForCheckListItems(
+				$task->getId(),
+				$row['CHECKLIST'],
+				$canAdd
+			);
+
+			$objectTreeStructure = $this->buildTreeStructure($row['CHECKLIST']);
+			$objectTreeStructure = $this->fillTreeInfo($objectTreeStructure);
+
+			$row['CHECK_LIST_TREE'] = $objectTreeStructure->toTreeArray();
+			$row['CHECK_LIST_CAN_ADD'] = $canAdd;
 		}
 
 		return ['task' => $this->convertKeysToCamelCase($row)];
@@ -277,11 +357,33 @@ final class Task extends Base
 			{
 				$userIds[] = (int)$row['RESPONSIBLE_ID'];
 			}
+			if (array_key_exists('ACCOMPLICES', $row) && is_array($row['ACCOMPLICES']))
+			{
+				foreach ($row['ACCOMPLICES'] as $userId)
+				{
+					$userId = (int)$userId;
+					if (!$users[$userId])
+					{
+						$userIds[] = $userId;
+					}
+				}
+			}
+			if (array_key_exists('AUDITORS', $row) && is_array($row['AUDITORS']))
+			{
+				foreach ($row['AUDITORS'] as $userId)
+				{
+					$userId = (int)$userId;
+					if (!$users[$userId])
+					{
+						$userIds[] = $userId;
+					}
+				}
+			}
 		}
 		$userIds = array_unique($userIds);
 
 		$userResult = UserTable::getList([
-			'select' => ['ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO'],
+			'select' => ['ID', 'NAME', 'LAST_NAME', 'SECOND_NAME', 'LOGIN', 'PERSONAL_PHOTO', 'WORK_POSITION'],
 			'filter' => ['ID' => $userIds],
 		]);
 		while ($user = $userResult->fetch())
@@ -306,6 +408,7 @@ final class Task extends Base
 				'NAME' => $userName,
 				'LINK' => $link,
 				'ICON' => UI\Avatar::getPerson($user['PERSONAL_PHOTO']),
+				'WORK_POSITION' => $user['WORK_POSITION'],
 			];
 		}
 
@@ -318,6 +421,30 @@ final class Task extends Base
 			if (array_key_exists('RESPONSIBLE_ID', $row) && array_key_exists($row['RESPONSIBLE_ID'], $users))
 			{
 				$rows[$id]['RESPONSIBLE'] = $users[$row['RESPONSIBLE_ID']];
+			}
+			if (array_key_exists('ACCOMPLICES', $row) && is_array($row['ACCOMPLICES']))
+			{
+				$accomplicesData = [];
+				foreach ($row['ACCOMPLICES'] as $userId)
+				{
+					if (array_key_exists($userId, $users))
+					{
+						$accomplicesData[$userId] = $users[$userId];
+					}
+				}
+				$rows[$id]['ACCOMPLICES_DATA'] = $accomplicesData;
+			}
+			if (array_key_exists('AUDITORS', $row) && is_array($row['AUDITORS']))
+			{
+				$auditorsData = [];
+				foreach ($row['AUDITORS'] as $userId)
+				{
+					if (array_key_exists($userId, $users))
+					{
+						$auditorsData[$userId] = $users[$userId];
+					}
+				}
+				$rows[$id]['AUDITORS_DATA'] = $auditorsData;
 			}
 		}
 
@@ -417,6 +544,236 @@ final class Task extends Base
 		return $tasks;
 	}
 
+	private function fillWithTimerInfo(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		$timerManager = \CTaskTimerManager::getInstance($this->getCurrentUser()->getId());
+		$runningTaskData = $timerManager->getRunningTask(false);
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['TIME_ELAPSED'] = $task['TIME_SPENT_IN_LOGS'];
+			$tasks[$id]['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = 'N';
+
+			if ((int)$task['ID'] === (int)$runningTaskData['TASK_ID'] && $task['ALLOW_TIME_TRACKING'] === 'Y')
+			{
+				// elapsed time is a sum of times in task log plus time of the current timer
+				$tasks[$id]['TIME_ELAPSED'] += (time() - $runningTaskData['TIMER_STARTED_AT']);
+				$tasks[$id]['TIME_ELAPSED'] = (string)$tasks[$id]['TIME_ELAPSED'];
+				$tasks[$id]['TIMER_IS_RUNNING_FOR_CURRENT_USER'] = 'Y';
+			}
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithRelatedTasks(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['RELATED_TASKS'] = [];
+
+			$relatedTaskIds = [];
+			$relatedTaskIdsResult = \CTaskDependence::getList([], ['TASK_ID' => $task['ID']]);
+			while ($task = $relatedTaskIdsResult->fetch())
+			{
+				$relatedTaskIds[] = (int)$task['DEPENDS_ON_ID'];
+			}
+			if (!empty($relatedTaskIds))
+			{
+				$relatedTasks = \CTasks::GetList([], ['ID' => $relatedTaskIds], ['TITLE']);
+				while ($task = $relatedTasks->Fetch())
+				{
+					$tasks[$id]['RELATED_TASKS'][$task['ID']] = $task['TITLE'];
+				}
+			}
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithSubTasks(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['SUB_TASKS'] = [];
+
+			$subTasks = \CTasks::GetList([], ['PARENT_ID' => $task['ID']], ['TITLE']);
+			while ($task = $subTasks->Fetch())
+			{
+				$tasks[$id]['SUB_TASKS'][$task['ID']] = $task['TITLE'];
+			}
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithParentTaskInfo(array $tasks): array
+	{
+		// todo: load all parent tasks with TaskRegistry::getInstance()->load first in case of calling this method from listAction
+
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['PARENT_TASK'] = [
+				'ID' => 0,
+				'TITLE' => '',
+			];
+
+			if ($task['PARENT_ID'] > 0)
+			{
+				$tasks[$id]['PARENT_TASK'] = [
+					'ID' => $task['PARENT_ID'],
+					'TITLE' => TaskRegistry::getInstance()->get($task['PARENT_ID'])['TITLE'],
+				];
+			}
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithTags(array $tasks): array
+	{
+		$taskIds = [];
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['TAGS'] = [];
+			$taskIds[] = (int)$task['ID'];
+		}
+
+		$tags = [];
+		$tagsResult = \CTaskTags::GetList([], ['TASK_ID' => $taskIds]);
+		while ($tag = $tagsResult->Fetch())
+		{
+			$tags[$tag['TASK_ID']][] = $tag['NAME'];
+		}
+
+		foreach ($tasks as $id => $task)
+		{
+			if (array_key_exists($task['ID'], $tags))
+			{
+				$tasks[$id]['TAGS'] = $tags[$task['ID']];
+			}
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithFilesInfo(array $tasks): array
+	{
+		$fileIds = [];
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['FILES'] = [];
+			$fileIds[] = ($task[Disk\UserField::getMainSysUFCode()] ?: []);
+		}
+		$fileIds = array_merge(...$fileIds);
+		$fileIds = array_unique($fileIds);
+
+		if (empty($fileIds))
+		{
+			return $tasks;
+		}
+
+		$attachmentsData = Disk::getAttachmentData($fileIds);
+		foreach ($tasks as $id => $task)
+		{
+			foreach ($task[Disk\UserField::getMainSysUFCode()] as $fileId)
+			{
+				if ($attachmentsData[$fileId])
+				{
+					$tasks[$id]['FILES'][] = $attachmentsData[$fileId];
+				}
+			}
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithCrmInfo(array $tasks): array
+	{
+		if (!Loader::includeModule('crm'))
+		{
+			return $tasks;
+		}
+
+		$ufCrmTaskCode = CRM\UserField::getMainSysUFCode();
+		$ufCrmTask = CRM\UserField::getSysUFScheme()[$ufCrmTaskCode];
+		$displayField = Field::createByType('crm', $ufCrmTaskCode)
+			->setIsMultiple($ufCrmTask['MULTIPLE'] === 'Y')
+			->setIsUserField(true)
+			->setUserFieldParams($ufCrmTask)
+			->setContext(Field::MOBILE_CONTEXT)
+		;
+		$display = new Display(0, [$ufCrmTaskCode => $displayField]);
+
+		foreach ($tasks as $id => $task)
+		{
+			$tasks[$id]['CRM'] = [];
+
+			if (
+				empty($task[$ufCrmTaskCode])
+				|| !is_array($task[$ufCrmTaskCode])
+			)
+			{
+				continue;
+			}
+
+			$res = $display
+				->setItems([[$ufCrmTaskCode => $task[$ufCrmTaskCode]]])
+				->getValues(0)
+			;
+
+			if (
+				!is_array($res[$ufCrmTaskCode]['config']['entityList'])
+				|| count($res[$ufCrmTaskCode]['config']['entityList']) !== count($task[$ufCrmTaskCode])
+			)
+			{
+				continue;
+			}
+
+			$tasks[$id]['CRM'] = array_combine($task[$ufCrmTaskCode], $res[$ufCrmTaskCode]['config']['entityList']);
+		}
+
+		return $tasks;
+	}
+
+	private function fillWithParsedDescription(array $tasks): array
+	{
+		if ($textFragmentParserClass = TasksMobile\TextFragmentParser::getTextFragmentParserClass())
+		{
+			$textFragmentParser = new $textFragmentParserClass();
+
+			foreach ($tasks as $id => $task)
+			{
+				if (!$task['DESCRIPTION'])
+				{
+					$tasks[$id]['PARSED_DESCRIPTION'] = '';
+					continue;
+				}
+
+				$textFragmentParser->setText($task['DESCRIPTION']);
+				$textFragmentParser->setFiles($task['FILES'] ?: []);
+
+				$tasks[$id]['PARSED_DESCRIPTION'] = htmlspecialchars_decode($textFragmentParser->getParsedText(), ENT_QUOTES);
+			}
+		}
+
+		return $tasks;
+	}
+
 	/**
 	 * Returns fields of type datetime for task entity
 	 *
@@ -502,6 +859,86 @@ final class Task extends Base
 		}
 	}
 
+	private function processFiles(int $taskId = 0, array $fields = []): array
+	{
+		$filesUfCode = Disk\UserField::getMainSysUFCode();
+		if (array_key_exists($filesUfCode, $fields) && $fields[$filesUfCode] === '')
+		{
+			$fields[$filesUfCode] = [''];
+		}
+
+		if (
+			!array_key_exists('UPLOADED_FILES', $fields)
+			|| !is_array($fields['UPLOADED_FILES'])
+			|| empty($fields['UPLOADED_FILES'])
+		)
+		{
+			return $fields;
+		}
+
+		if (!is_array($fields[$filesUfCode]))
+		{
+			$fields[$filesUfCode] = [];
+		}
+
+		$controller = new TaskController(['taskId' => $taskId]);
+		$uploader = new Uploader($controller);
+		$pendingFiles = $uploader->getPendingFiles($fields['UPLOADED_FILES']);
+
+		foreach ($pendingFiles->getFileIds() as $fileId)
+		{
+			$addingResult = Disk::addFile($fileId);
+			if ($addingResult->isSuccess())
+			{
+				$fields[$filesUfCode][] = $addingResult->getData()['ATTACHMENT_ID'];
+			}
+		}
+		$pendingFiles->makePersistent();
+
+		return $fields;
+	}
+
+	private function processCrmElements(array $fields): array
+	{
+		if (
+			empty($fields['CRM'])
+			|| !is_array($fields['CRM'])
+			|| !Loader::includeModule('crm')
+		)
+		{
+			return $fields;
+		}
+
+		$crmUfCode = CRM\UserField::getMainSysUFCode();
+		if (!is_array($fields[$crmUfCode]))
+		{
+			$fields[$crmUfCode] = [];
+		}
+
+		foreach ($fields['CRM'] as $item)
+		{
+			$entityTypeName = $item['type'];
+			$entityId = $item['id'];
+
+			if ($entityTypeName === DynamicMultipleProvider::DYNAMIC_MULTIPLE_ID)
+			{
+				[$entityTypeId, $entityId] = DynamicMultipleProvider::parseId($entityId);
+				$entityTypeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeID($entityTypeId);
+			}
+			else
+			{
+				$entityTypeAbbr = \CCrmOwnerTypeAbbr::ResolveByTypeName($entityTypeName);
+			}
+
+			if ($entityTypeAbbr)
+			{
+				$fields[$crmUfCode][] = "{$entityTypeAbbr}_{$entityId}";
+			}
+		}
+
+		return $fields;
+	}
+
 	/**
 	 * Create new task
 	 *
@@ -515,12 +952,31 @@ final class Task extends Base
 	 * @throws TasksException
 	 * @throws \CTaskAssertException
 	 */
-	public function addAction(array $fields, array $params = []): array
+	public function addAction(array $fields, array $params = []): ?array
 	{
 		$fields = $this->filterFields($fields);
 		$fields = $this->formatDateFieldsForInput($fields);
+		$fields = $this->processFiles(0, $fields);
+		$fields = $this->processCrmElements($fields);
 
-		$task = \CTaskItem::add($fields, $this->getCurrentUser()->getId(), $params);
+		try
+		{
+			$task = \CTaskItem::add($fields, $this->getCurrentUser()->getId(), $params);
+		}
+		catch (\Exception $exception)
+		{
+			if ($errors = unserialize($exception->getMessage(), ['allowed_classes' => false]))
+			{
+				$error = $errors[0];
+				$this->addError(new Error($error['text'], $error['id']));
+			}
+			else
+			{
+				$this->addError(new Error($exception->getMessage()));
+			}
+
+			return null;
+		}
 
 		if ($params['PLATFORM'] === 'mobile')
 		{
@@ -543,12 +999,31 @@ final class Task extends Base
 	 * @throws Main\ObjectPropertyException
 	 * @throws Main\SystemException
 	 */
-	public function updateAction(\CTaskItem $task, array $fields, array $params = []): array
+	public function updateAction(\CTaskItem $task, array $fields, array $params = []): ?array
 	{
 		$fields = $this->filterFields($fields);
 		$fields = $this->formatDateFieldsForInput($fields);
+		$fields = $this->processFiles($task->getId(), $fields);
+		$fields = $this->processCrmElements($fields);
 
-		$task->update($fields, $params);
+		try
+		{
+			$task->update($fields, $params);
+		}
+		catch (\Exception $exception)
+		{
+			if ($errors = unserialize($exception->getMessage(), ['allowed_classes' => false]))
+			{
+				$error = $errors[0];
+				$this->addError(new Error($error['text'], $error['id']));
+			}
+			else
+			{
+				$this->addError(new Error($exception->getMessage()));
+			}
+
+			return null;
+		}
 
 		if (Loader::includeModule('pull'))
 		{
@@ -566,9 +1041,18 @@ final class Task extends Base
 	 * @return array
 	 * @throws TasksException
 	 */
-	public function deleteAction(\CTaskItem $task, array $params = []): array
+	public function deleteAction(\CTaskItem $task, array $params = []): ?array
 	{
-		$task->delete($params);
+		try
+		{
+			$task->delete($params);
+		}
+		catch (\Exception $exception)
+		{
+			$this->addError(new Error($exception->getMessage()));
+			return null;
+		}
+
 		return ['task' => true];
 	}
 
@@ -680,9 +1164,21 @@ final class Task extends Base
 		{
 			$tasks = $this->fillResultInfo($tasks);
 		}
+		if (array_key_exists('WITH_TIMER_INFO', $params))
+		{
+			$tasks = $this->fillWithTimerInfo($tasks);
+		}
+		if (array_key_exists('WITH_PARSED_DESCRIPTION', $params))
+		{
+			$tasks = $this->fillWithParsedDescription($tasks);
+		}
 		if (in_array('COUNTERS', $select, true))
 		{
 			$tasks = $this->fillCounterInfo($tasks);
+		}
+		if (in_array('TAGS', $select, true))
+		{
+			$tasks = $this->fillWithTags($tasks);
 		}
 
 		foreach ($tasks as &$task)
@@ -692,6 +1188,10 @@ final class Task extends Base
 				$task['SUB_STATUS'] = $task['STATUS'];
 				$task['STATUS'] = $task['REAL_STATUS'];
 				unset($task['REAL_STATUS']);
+			}
+			if (array_key_exists('DESCRIPTION', $task))
+			{
+				$task['DESCRIPTION'] = htmlspecialchars_decode($task['DESCRIPTION'], ENT_QUOTES);
 			}
 
 			$this->formatDateFieldsForOutput($task);
@@ -742,21 +1242,42 @@ final class Task extends Base
 			$taskIds[(int)$task['ID']] = $key;
 
 			$tasks[$key]['TASK_REQUIRE_RESULT'] = 'N';
+			$tasks[$key]['TASK_HAS_OPEN_RESULT'] = 'N';
 			$tasks[$key]['TASK_HAS_RESULT'] = 'N';
 		}
 
-		$hasResults = ResultTable::GetList([
-			'select' => ['TASK_ID'],
-			'filter' => [
-				'@TASK_ID' => array_keys($taskIds),
-				'=STATUS' => ResultTable::STATUS_OPENED,
-			],
-		])->fetchAll();
+		$query = (new Main\ORM\Query\Query(ResultTable::getEntity()))
+			->addSelect('TASK_ID')
+			->addSelect(new Main\Entity\ExpressionField(
+				'RES_ID',
+				'MAX(%s)',
+				'ID'
+			))
+			->whereIn('TASK_ID', array_keys($taskIds))
+			->addGroup('TASK_ID');
 
-		foreach ($hasResults as $row)
+		$lastResults = $query->fetchAll();
+
+		if (!empty($lastResults))
 		{
-			$taskId = $row['TASK_ID'];
-			$tasks[$taskIds[$taskId]]['TASK_HAS_RESULT'] = 'Y';
+			$lastResults = array_column($lastResults, 'RES_ID');
+			$results = ResultTable::GetList([
+				'select' => ['TASK_ID', 'STATUS'],
+				'filter' => [
+					'@ID' => $lastResults,
+				],
+			])->fetchAll();
+
+			foreach ($results as $row)
+			{
+				$taskId = $row['TASK_ID'];
+				$tasks[$taskIds[$taskId]]['TASK_HAS_RESULT'] = 'Y';
+
+				if ((int)$row['STATUS'] === ResultTable::STATUS_OPENED)
+				{
+					$tasks[$taskIds[$taskId]]['TASK_HAS_OPEN_RESULT'] = 'Y';
+				}
+			}
 		}
 
 		$requireResults = ParameterTable::getList([
@@ -1160,7 +1681,23 @@ final class Task extends Base
 	{
 		try
 		{
-			$row = $task->getData(true);
+			$task->startExecution($params);
+		}
+		catch (TasksException $e)
+		{
+			$this->errorCollection->add([new Error($e->getMessage())]);
+
+			return null;
+		}
+
+		return $this->getAction($task);
+	}
+
+	public function startTimerAction(\CTaskItem $task, array $params = []): ?array
+	{
+		try
+		{
+			$row = $task->getData(false);
 		}
 		catch (TasksException $e)
 		{
@@ -1169,14 +1706,17 @@ final class Task extends Base
 
 		if ($row['ALLOW_TIME_TRACKING'] === 'N')
 		{
-			$task->startExecution($params);
+			return null;
 		}
-		else if (!$this->startTimer($task, true))
+
+		$params['STOP_PREVIOUS'] = (array_key_exists('STOP_PREVIOUS', $params) ? $params['STOP_PREVIOUS'] : 'N');
+
+		if (!$this->startTimer($task, ($params['STOP_PREVIOUS'] === 'Y')))
 		{
 			return null;
 		}
 
-		return $this->getAction($task);
+		return $this->getAction($task, [], ['WITH_TIMER_INFO' => 'Y']);
 	}
 
 	/**
@@ -1187,7 +1727,7 @@ final class Task extends Base
 	 * @return bool|null
 	 * @throws TasksException
 	 */
-	private function startTimer(\CTaskItem $task, $stopPrevious = false): ?bool
+	private function startTimer(\CTaskItem $task, bool $stopPrevious = false): ?bool
 	{
 		$userId = $this->getCurrentUser()->getId();
 
@@ -1244,21 +1784,40 @@ final class Task extends Base
 	{
 		try
 		{
-			$row = $task->getData(true);
+			$task->pauseExecution($params);
+		}
+		catch (TasksException $e)
+		{
+			$this->errorCollection->add([new Error($e->getMessage())]);
+
+			return null;
+		}
+
+		return $this->getAction($task);
+	}
+
+	public function pauseTimerAction(\CTaskItem $task, array $params = []): ?array
+	{
+		try
+		{
+			$row = $task->getData(false);
 		}
 		catch (TasksException $e)
 		{
 			return null;
 		}
 
-		if ($row['ALLOW_TIME_TRACKING'] === 'Y' && !$this->stopTimer($task))
+		if ($row['ALLOW_TIME_TRACKING'] === 'N')
 		{
 			return null;
 		}
 
-		$task->pauseExecution($params);
+		if (!$this->stopTimer($task))
+		{
+			return null;
+		}
 
-		return $this->getAction($task);
+		return $this->getAction($task, [], ['WITH_TIMER_INFO' => 'Y']);
 	}
 
 	/**
@@ -1294,11 +1853,16 @@ final class Task extends Base
 		try
 		{
 			$taskId = (int)$task->getId();
+			$lastResult = ResultManager::getLastResult($taskId);
+
 			if (
 				array_key_exists('PLATFORM', $params)
 				&& in_array($params['PLATFORM'], ['web', 'mobile'])
 				&& ResultManager::requireResult($taskId)
-				&& !ResultManager::hasResult($taskId)
+				&& (
+					!$lastResult
+					|| (int) $lastResult['STATUS'] !== ResultTable::STATUS_OPENED
+				)
 			)
 			{
 				$this->errorCollection->add([new Error(GetMessage('TASKS_FAILED_RESULT_REQUIRED'))]);
@@ -1548,5 +2112,149 @@ final class Task extends Base
 		}
 
 		return new Error($exception->getMessage(), $exception->getCode());
+	}
+
+	private function fillActionsForCheckListItems($taskId, array $checkListItems, bool $canAdd): array
+	{
+		$canAddAccomplice = (
+			TaskAccessController::can(
+				$this->getCurrentUser()->getId(),
+				ActionDictionary::ACTION_TASK_EDIT,
+				$taskId
+			)
+			&& !TaskLimit::isLimitExceeded()
+		);
+
+		$checkListItems = TaskCheckListFacade::fillActionsForItems(
+			$taskId,
+			$this->getCurrentUser()->getId(),
+			$checkListItems
+		);
+
+		foreach ($checkListItems as $id => $item)
+		{
+			if (array_key_exists('ACTION', $item))
+			{
+				$checkListItems[$id]['ACTION']['ADD'] = $canAdd;
+				$checkListItems[$id]['ACTION']['ADD_ACCOMPLICE'] = $canAddAccomplice;
+			}
+		}
+
+		return $checkListItems;
+	}
+
+	/**
+	 * @param $checkListItems
+	 * @return CheckList
+	 * @throws Main\NotImplementedException
+	 */
+	private function buildTreeStructure($checkListItems): CheckList
+	{
+		$nodeId = 0;
+
+		$result = new CheckList(
+			$nodeId,
+			$this->getCurrentUser()->getId(),
+			TaskCheckListFacade::class
+		);
+
+		$sortIndex = 0;
+		$keyToSort = $this->getKeyToSort($checkListItems);
+
+		$arrayTreeStructure = TaskCheckListFacade::getArrayStructuredRoots($checkListItems, $keyToSort);
+
+		foreach ($arrayTreeStructure as $root)
+		{
+			$nodeId++;
+
+			$result->add($this->makeTree($nodeId, $root, $sortIndex, false));
+
+			$sortIndex++;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @param CheckList $tree
+	 * @return CheckList
+	 */
+	private function fillTreeInfo(CheckList $tree): CheckList
+	{
+		$completedCount = 0;
+
+		foreach ($tree->getDescendants() as $descendant)
+		{
+			/** @var CheckList $descendant */
+			$fields = $descendant->getFields();
+
+			if ($fields['IS_COMPLETE'])
+			{
+				$completedCount++;
+			}
+
+			$this->fillTreeInfo($descendant);
+		}
+
+		$tree->setFields(['COMPLETED_COUNT' => $completedCount]);
+
+		return $tree;
+	}
+
+	/**
+	 * @param $items
+	 * @return string
+	 */
+	private function getKeyToSort($items): string
+	{
+		$keyToSort = 'PARENT_ID';
+
+		foreach ($items as $item)
+		{
+			if (array_key_exists('PARENT_NODE_ID', $item))
+			{
+				$keyToSort = 'PARENT_NODE_ID';
+				break;
+			}
+		}
+
+		return $keyToSort;
+	}
+
+	/**
+	 * @param $nodeId
+	 * @param $root
+	 * @param $sortIndex
+	 * @param $displaySortIndex
+	 * @return CheckList
+	 * @throws Main\NotImplementedException
+	 */
+	private function makeTree($nodeId, $root, $sortIndex, $displaySortIndex): CheckList
+	{
+		$root['SORT_INDEX'] = $sortIndex;
+		$root['DISPLAY_SORT_INDEX'] = htmlspecialcharsbx($displaySortIndex);
+
+		$tree = new CheckList(
+			$nodeId,
+			$this->getCurrentUser()->getId(),
+			TaskCheckListFacade::class,
+			$root
+		);
+
+		$localSortIndex = 0;
+		foreach ($root['SUB_TREE'] as $item)
+		{
+			++$localSortIndex;
+
+			$nextDisplaySortIndex = (
+				$displaySortIndex === false
+					? $localSortIndex
+					: "$displaySortIndex.$localSortIndex"
+			);
+
+			$tree->add($this->makeTree(++$nodeId, $item, $localSortIndex - 1, $nextDisplaySortIndex));
+		}
+
+		return $tree;
 	}
 }

@@ -1446,10 +1446,12 @@ class CCrmEMail
 			$descr = preg_replace('/\r\n|\n|\r/', '<br>', htmlspecialcharsbx($body));
 		}
 
+		$isIncomingChannel = false;
 		if ($isIncome)
 		{
 			$direction = \CCrmActivityDirection::Incoming;
 			$completed = $isUnseen ? 'N' : 'Y';
+			$isIncomingChannel = \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled();
 		}
 		else
 		{
@@ -1523,6 +1525,7 @@ class CCrmEMail
 				),
 			),
 			'UF_MAIL_MESSAGE' => $messageId,
+			'IS_INCOMING_CHANNEL' => $isIncomingChannel ? 'Y' : 'N',
 		);
 
 		if (!empty($isIncome ? $sender : $rcpt))

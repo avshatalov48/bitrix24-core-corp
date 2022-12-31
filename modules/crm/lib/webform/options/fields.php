@@ -135,6 +135,14 @@ final class Fields
 						{
 							$gotoNextField = true;
 						}
+
+						foreach ($options['fields'] as $subFieldIndex => $subField)
+						{
+							$subField['required'] = $options['required']
+								&& in_array($subField['name'], ['ADDRESS_1', 'CITY'])
+							;
+							$options['fields'][$subFieldIndex] = $subField;
+						}
 					}
 					break;
 				case 'bool':

@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mobile\Integration\Catalog\EntityEditor;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -22,6 +23,8 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 	private const USER_PROVIDER_CONTEXT = 'CATALOG_DOCUMENT';
 	private const CONTRACTOR_PROVIDER_CONTEXT = 'catalog_document_contractors';
 
+	private const CLIENT_FIELD = 'client_light';
+	private const CLIENT_COMPANY_SELECTOR_TYPE = 'client_company';
 	private const CONTRACTOR_SELECTOR_TYPE = 'contractor';
 
 	private const ENTITY_LIST_POSTFIX = '_ENTITY_LIST';
@@ -89,22 +92,14 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 			{
 				$field['type'] = self::SELECT_FIELD;
 			}
-			elseif ($field['type'] === 'contractor')
-			{
-				$field['type'] = self::ENTITY_SELECTOR_FIELD;
-				$field['data'] = [
-					'selectorType' => self::CONTRACTOR_SELECTOR_TYPE,
-					'enableCreation' => true,
-				];
-			}
 			elseif ($field['type'] === 'datetime')
 			{
 				$enableTime = $field['data']['enableTime'] ?? true;
 				$field['type'] = $enableTime ? 'datetime' : 'date';
 			}
-			elseif (in_array($field['type'], ['moneyPay', 'document_total'], true))
+			elseif (in_array($field['type'], ['money', 'moneyPay', 'document_total'], true))
 			{
-				$field['type'] = 'money';
+				$field['type'] = 'opportunity';
 			}
 
 			$field['multiple'] = $field['data']['multiple'] ?? false;
@@ -180,11 +175,9 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 				$field = $field->getTimestamp();
 			}
 		}
-
 		unset($field);
 
 		$data['DOC_STATUS'] = $this->getStatuses();
-
 		return $data;
 	}
 
@@ -193,27 +186,19 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		return [
 			'Y' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_CONDUCTED'),
-				'color' => '#589308',
-				'backgroundColor' => '#e4f5c8',
+				'backgroundColor' => '#e0f5c2',
+				'color' => '#589309',
 			],
 			'N' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_NOT_CONDUCTED'),
-				'color' => '#535c69',
-				'backgroundColor' => '#eaebed',
+				'backgroundColor' => '#e0e2e4',
+				'color' => '#79818b',
 			],
 			'C' => [
 				'name' => Loc::getMessage('CATALOG_STORE_DOCUMENT_DETAIL_FIELD_DOC_STATUS_CANCELLED'),
-				'color' => '#b47a00',
-				'backgroundColor' => '#ffdfa1',
+				'backgroundColor' => '#faf4a0',
+				'color' => '#9d7e2b',
 			],
-		];
-	}
-
-	protected function getProductSummaryInfoTotal(array $document)
-	{
-		return [
-			'amount' => $document['TOTAL'],
-			'currency' => $document['CURRENCY'],
 		];
 	}
 
@@ -223,22 +208,7 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 
 		foreach ($this->getEntityFields() as $field)
 		{
-			if (
-				$field['type'] === self::ENTITY_SELECTOR_FIELD
-				&& $field['data']['selectorType'] === self::CONTRACTOR_SELECTOR_TYPE
-			)
-			{
-				$document[$field['name'] . self::ENTITY_LIST_POSTFIX] = [];
-
-				if (!empty($this->document[$field['name']]))
-				{
-					$document[$field['name'] . self::ENTITY_LIST_POSTFIX][] = [
-						'id' => $this->document[$field['name']],
-						'title' => $this->getContractorName(),
-					];
-				}
-			}
-			elseif ($field['type'] === self::FILE_FIELD && empty($this->config['skipFiles']))
+			if ($field['type'] === self::FILE_FIELD && empty($this->config['skipFiles']))
 			{
 				$document[$field['name'] . self::FILE_INFO_POSTFIX] = [];
 
@@ -271,6 +241,55 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		return $document;
 	}
 
+	/**
+	 * @return array
+	 */
+	protected function getContractorField(): array
+	{
+		$field = parent::getContractorField();
+
+		if ($this->contractorsProvider)
+		{
+			/**
+			 * @TODO keep DRY
+			 * @see \Bitrix\CrmMobile\UI\EntityEditor\Provider::getEntityFields()
+			 */
+
+			$permissions = [];
+
+			$categoryParams = $field['data']['categoryParams'] ?? [];
+			if (!empty($categoryParams) && is_array($categoryParams))
+			{
+				foreach ($categoryParams as $entityTypeId => $entity)
+				{
+					$entityTypeName = \CCrmOwnerType::ResolveName($entityTypeId);
+					$serviceUserPermissions = Container::getInstance()->getUserPermissions();
+					$permissions[$entityTypeName] = [
+						'read' => $serviceUserPermissions->checkReadPermissions($entityTypeId),
+						'add' => $serviceUserPermissions->checkAddPermissions($entityTypeId),
+					];
+				}
+			}
+
+			$field['data']['permissions'] = $permissions;
+		}
+		else
+		{
+			$field['type'] = self::ENTITY_SELECTOR_FIELD;
+			$field['data'] = [
+				'selectorType' => self::CONTRACTOR_SELECTOR_TYPE,
+				'provider' => [
+					'context' => self::CONTRACTOR_PROVIDER_CONTEXT,
+					'options' => [],
+				],
+				'enableCreation' => true,
+				'entityListField' => $field['name'] . self::ENTITY_LIST_POSTFIX,
+			];
+		}
+
+		return $field;
+	}
+
 	protected function getFileInfo(int $fileId): ?File
 	{
 		static $fileInfoCache = [];
@@ -281,6 +300,27 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 		}
 
 		return $fileInfoCache[$fileId];
+	}
+
+	/**
+	 * @param array $document
+	 * @return array
+	 */
+	protected function getContractorData(array $document): array
+	{
+		if (!$this->contractorsProvider)
+		{
+			return [
+				'CONTRACTOR_ID' . self::ENTITY_LIST_POSTFIX => [
+					[
+						'id' => $document['CONTRACTOR_ID'],
+						'title' => $this->getContractorName(),
+					],
+				],
+			];
+		}
+
+		return parent::getContractorData($document);
 	}
 
 	protected function getAdditionalUserData(array $document, array $userFields, array $usersInfo): array
@@ -348,29 +388,51 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 					],
 				];
 			}
-			elseif ($field['type'] === self::ENTITY_SELECTOR_FIELD)
-			{
-				if ($field['data']['selectorType'] === self::CONTRACTOR_SELECTOR_TYPE)
-				{
-					$field['data'] = array_merge($field['data'], [
-						'entityListField' => $field['name'] . self::ENTITY_LIST_POSTFIX,
-						'provider' => [
-							'context' => self::CONTRACTOR_PROVIDER_CONTEXT,
-						],
-					]);
-				}
-			}
 			elseif ($field['type'] === self::FILE_FIELD)
 			{
 				$field['data'] = array_merge($field['data'], [
 					'fileInfoField' => $field['name'] . self::FILE_INFO_POSTFIX,
+					'controller' => [
+						'entityId' => 'catalog-document',
+					],
 				]);
+			}
+
+			if ($field['type'] === self::USER_FIELD || $field['type'] === self::CLIENT_FIELD)
+			{
+				$field['data']['hasSolidBorder'] = true;
 			}
 		}
 
 		unset($field);
 
 		return $fields;
+	}
+
+	public function getEntityControllers(): array
+	{
+		$controllers = parent::getEntityControllers();
+		foreach ($controllers as $key => $controller)
+		{
+			if ($controller['name'] === 'PRODUCT_LIST_CONTROLLER')
+			{
+				$controllers[$key] = $this->prepareProductListController($controller);
+				break;
+			}
+		}
+
+		return $controllers;
+	}
+
+	private function prepareProductListController(array $controller): array
+	{
+		$config = $controller['config'] ?? [];
+
+		$config['currencyFieldName'] = 'CURRENCY';
+		$config['priceWithCurrencyFieldName'] = 'TOTAL_WITH_CURRENCY';
+		$config['productSummaryFieldName'] = 'DOCUMENT_PRODUCTS';
+
+		return array_merge($controller, ['config' => $config]);
 	}
 
 	/**
@@ -382,5 +444,15 @@ class StoreDocumentProvider extends \Bitrix\Catalog\v2\Integration\UI\EntityEdit
 			parent::prepareCurrencyListItem($currency),
 			CASE_LOWER
 		);
+	}
+
+	protected function getTotalInfoControlForNewDocument(): array
+	{
+		return $this->getTotalInfoControlForExistingDocument();
+	}
+
+	protected function shouldPrepareDateFields(): bool
+	{
+		return false;
 	}
 }

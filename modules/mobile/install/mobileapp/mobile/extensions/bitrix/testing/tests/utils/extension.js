@@ -1,6 +1,13 @@
 (() => {
 
-	const {describe, it, test, expect} = Testing.helpers();
+	const require = ext => jn.require(ext);
+
+	const { describe, it, test, expect } = require('testing');
+
+	const { md5 } = require('utils/hash');
+	const { clone } = require('utils/object');
+	const { isRegExp } = require('utils/type');
+	const { replaceAll } = require('utils/string');
 
 	describe('global utils objects', () => {
 
@@ -102,6 +109,17 @@
 			expect(r5).toBe('5.500,85');
 		});
 
+		test('replaceAll polyfill', () => {
+
+			expect(replaceAll('foobarfoo', 'foo', 'baz')).toBe('bazbarbaz');
+			expect(replaceAll('foobarfoo', 'bar', 'foo')).toBe('foofoofoo');
+			expect(replaceAll('foo', '', 'b')).toBe('bfbobob');
+			expect(replaceAll('foobarfoo', /foo/g, 'baz')).toBe('bazbarbaz');
+			expect(replaceAll('foobarfoo', new RegExp('bar', 'g'), 'baz')).toBe('foobazfoo');
+			expect(replaceAll('foo', 'egg', 'bro')).toBe('foo');
+
+		});
+
 	});
 
 	describe('hash utils test', () => {
@@ -116,6 +134,14 @@
 			expect(CommonUtils.md5({foo: 'bar'})).toBe('9bb58f26192e4ba00f01e2e7b136bbd8');
 			expect(CommonUtils.md5([])).toBe('d751713988987e9331980363e24189ce');
 			expect(CommonUtils.md5(['foo', 'bar'])).toBe('1ea13cb52ddd7c90e9f428d1df115d8f');
+		});
+
+		test('md5 util exports separately', () => {
+			expect(md5).toBeDefined();
+			expect(HashUtils).toBeDefined();
+
+			expect(md5('foobar')).toBe('3858f62230ac3c915f300c664312c63f');
+			expect(HashUtils.md5('foobar')).toBe('3858f62230ac3c915f300c664312c63f');
 		});
 
 	});
@@ -133,7 +159,7 @@
 
 			sources.map(source => {
 
-				let cloned = CommonUtils.objectClone(source);
+				let cloned = clone(source);
 				expect(cloned).toEqual(source);
 
 			});
@@ -147,7 +173,35 @@
 			expect(cloned).not.toBe(source);
 		});
 
-		it('can deep merge objects', () => {
+		it('properly clones arrays', () => {
+			const source = [100, 200, '300', {foo: 'bar'}];
+			const cloned = ObjectUtils.clone(source);
+			const mapped = cloned.map(item => item);
+
+			expect(Array.isArray(cloned)).toBeTrue();
+			expect(cloned.map).toBeDefined();
+			expect(typeof cloned.map).toBe('function');
+			expect(mapped[0]).toBe(100);
+			expect(mapped[1]).toBe(200);
+			expect(mapped[2]).toBe('300');
+			expect(mapped[3]).toEqual({foo: 'bar'});
+		});
+
+		it('properly clones nested arrays', () => {
+			const source = {foo: 'bar', baz: [1, 2, 3, {test: 'case'}]};
+			const cloned = ObjectUtils.clone(source);
+			const mapped = cloned.baz.map(item => item);
+
+			expect(Array.isArray(cloned.baz)).toBeTrue();
+			expect(cloned.baz.map).toBeDefined();
+			expect(typeof cloned.baz.map).toBe('function');
+			expect(mapped[0]).toBe(1);
+			expect(mapped[1]).toBe(2);
+			expect(mapped[2]).toBe(3);
+			expect(mapped[3]).toEqual({test: 'case'});
+		});
+
+		it('mutates target object while merging', () => {
 			const origin = {foo: 'bar', baz: {eggs: 'qux'}, qux: [1, 2, 3]};
 			const add = {hello: 'world', baz: {test: 'case'}, qux: [4, 5]};
 
@@ -163,6 +217,34 @@
 				qux: [4, 5],
 				hello: 'world',
 			});
+		});
+
+		it('allows to keep objects immutable while merging', () => {
+			const origin = {foo: 'bar', baz: {eggs: 'qux'}, qux: [1, 2, 3]};
+			const add = {hello: 'world', baz: {test: 'case'}, qux: [4, 5]};
+
+			const result = ObjectUtils.mergeImmutable(origin, add);
+
+			expect(result).not.toBe(origin);
+			expect(origin).toEqual({foo: 'bar', baz: {eggs: 'qux'}, qux: [1, 2, 3]});
+			expect(result).toEqual({
+				foo: 'bar',
+				baz: {
+					eggs: 'qux',
+					test: 'case',
+				},
+				qux: [4, 5],
+				hello: 'world',
+			});
+		});
+
+		test('merge corner cases', () => {
+			expect(ObjectUtils.merge()).not.toBeDefined();
+			expect(ObjectUtils.merge([1], [2, 3])).toEqual([2, 3]);
+			expect(ObjectUtils.merge({foo: 'bar'})).toEqual({foo: 'bar'});
+			expect(ObjectUtils.merge({foo: 'bar'}, [2, 3])).toEqual({foo: 'bar', 0: 2, 1: 3});
+			expect(ObjectUtils.merge({foo: 'bar'}, 100)).toEqual({foo: 'bar'});
+			expect(ObjectUtils.merge(100, 200)).toThrow();
 		});
 
 		it('can merge multiple objects', () => {
@@ -201,12 +283,20 @@
 		});
 
 		test('object deep get', () => {
-			const origin = {foo: 'bar', baz: {eggs: 'qux'}, qux: [1, 2, 3]};
+			const origin = {
+				foo: 'bar',
+				baz: {
+					eggs: 'qux',
+					meh: 0,
+				},
+				qux: [1, 2, 3]
+			};
 
 			expect(CommonUtils.objectDeepGet(origin, 'foo', 'def')).toBe('bar');
 			expect(CommonUtils.objectDeepGet(origin, 'baz.eggs', 'def')).toBe('qux');
 			expect(CommonUtils.objectDeepGet(origin, 'unknown', 'def')).toBe('def');
 			expect(CommonUtils.objectDeepGet(origin, 'unknown')).not.toBeDefined();
+			expect(CommonUtils.objectDeepGet(origin, 'baz.meh', 'def')).toBe(0);
 		});
 
 		test('objects equality', () => {
@@ -351,6 +441,22 @@
 			expect(CommonUtils.getPluralForm(-2, 'en')).toBe(1);
 			expect(CommonUtils.getPluralForm(5, 'en')).toBe(1);
 			expect(CommonUtils.getPluralForm(0, 'en')).toBe(1);
+
+		});
+
+	});
+
+	describe('type utils test', () => {
+
+		test('isRegExp function', () => {
+
+			const obj = new RegExp('foo', 'g');
+			const literal = /foo/g;
+
+			expect(isRegExp(obj)).toBeTrue();
+			expect(isRegExp(literal)).toBeTrue();
+			expect(isRegExp({})).toBeFalse();
+			expect(isRegExp('hello')).toBeFalse();
 
 		});
 

@@ -86,6 +86,7 @@ Bitte upgraden Sie einen kostenpflichtigen Tarif, um mehr Nutzer hinzuzufügen u
 $MESS["BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"] = "Nutzerlimit";
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Fehler beim Erstellen eines neuen Mail-Kontos:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Ihr Passwort und dessen Bestätigung stimmen nicht überein.";
+$MESS["INTRANET_INVITE_DIALOG_ACCESS_ERROR"] = "Zugriff verweigert";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC"] = "In Bitrix24 gibt es drei Optionen zur Nutzung von AD";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC1"] = "Mitarbeiter exportieren";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC2"] = "Unternehmensstruktur erstellen";

@@ -431,7 +431,7 @@ class LeadController extends EntityController
 			}
 			else
 			{
-				$sourceID = isset($settings['SOURCE_ID']) ? $settings['SOURCE_ID'] : '';
+				$sourceID = (isset($settings['SOURCE_ID']) && is_string($settings['SOURCE_ID'])) ? $settings['SOURCE_ID'] : '';
 				if($sourceID !== '')
 				{
 					$sourceList = \CCrmStatus::GetStatusList('SOURCE');
@@ -457,6 +457,8 @@ class LeadController extends EntityController
 				$data['TITLE'] =  Loc::getMessage('CRM_LEAD_MODIFICATION_IS_MANUAL_OPPORTUNITY');
 				$data['START_NAME'] = isset($settings['START_NAME']) ? $settings['START_NAME'] : $settings['START'];
 				$data['FINISH_NAME'] = isset($settings['FINISH_NAME']) ? $settings['FINISH_NAME'] : $settings['FINISH'];
+				$data['START'] = $settings['START'];
+				$data['FINISH'] = $settings['FINISH'];
 			}
 			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);

@@ -1,4 +1,5 @@
 <?php
+$MESS["WIZARD_FIELD_ACCESS_DENIED"] = "Insufficient permissions";
 $MESS["WIZARD_FIELD_MEASURE_CODE"] = "Unit of measurement";
 $MESS["WIZARD_FIELD_PRODUCT_AMOUNT"] = "Quantity arrived";
 $MESS["WIZARD_FIELD_PRODUCT_BARCODE"] = 'Bar code';

@@ -92,7 +92,7 @@
 	left:47px;
 	height:16px;
 	font-size:12px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	top:3px;
 	text-shadow:0 1px rgba(0,0,0,.15);
 	min-width:11px;
@@ -564,7 +564,7 @@
 	cursor:pointer;
 	display:inline-block;
 	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	font-size:13px;
 	line-height:16px;
 	height: 18px;

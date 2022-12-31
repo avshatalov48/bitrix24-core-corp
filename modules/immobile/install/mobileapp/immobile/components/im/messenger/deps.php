@@ -29,6 +29,7 @@ return [
 		'entity-ready',
 		'type',
 		'loc',
+		'utils/object',
 	],
 	'components' => [],
 ];

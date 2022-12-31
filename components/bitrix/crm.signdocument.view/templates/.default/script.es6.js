@@ -28,14 +28,8 @@ class SignDocumentView
 	{
 		this.pdfNode = parameters.pdfNode;
 		this.pdfSource = parameters.pdfSource;
-		if (parameters.printButtonId)
-		{
-			this.printButton = ButtonManager.createByUniqId(parameters.printButtonId);
-		}
-		if (parameters.downloadButtonId)
-		{
-			this.downloadButton = ButtonManager.createByUniqId(parameters.downloadButtonId);
-		}
+		this.printButton = ButtonManager.createByUniqId('crm-document-print');
+		this.downloadButton = ButtonManager.createByUniqId('crm-document-download');
 
 		this.#initViewer();
 		this.#bindEvents();
@@ -52,7 +46,7 @@ class SignDocumentView
 		}
 		viewer.setItems([Viewer.buildItemByNode(this.pdfNode)]);
 		viewer.setPdfSource(this.pdfSource);
-		viewer.setScale(0.92);
+		viewer.setScale(1.2);
 		viewer.open();
 	}
 
@@ -60,7 +54,7 @@ class SignDocumentView
 	{
 		if (!this.viewer && this.pdfNode)
 		{
-			this.viewer = new Viewer.SingleDocumentController({baseContainer: this.pdfNode});
+			this.viewer = new Viewer.SingleDocumentController({baseContainer: this.pdfNode, stretch: true});
 		}
 
 		return this.viewer ?? null;

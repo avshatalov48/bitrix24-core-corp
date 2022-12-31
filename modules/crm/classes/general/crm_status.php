@@ -211,6 +211,29 @@ class CCrmStatus
 			]
 		);
 
+		if (\Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled())
+		{
+			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument);
+			if ($factory)
+			{
+				$category = $factory->getDefaultCategory();
+				if ($category)
+				{
+					$stagesEntityId = $factory->getStagesEntityId($category->getId());
+					$arEntityType[$stagesEntityId] = [
+						'ID' => $stagesEntityId,
+						'NAME' => Loc::getMessage('CRM_STATUS_TYPE_SMART_DOCUMENT_STATUS'),
+						'SEMANTIC_INFO' => [],
+						'PREFIX' => static::getDynamicEntityStatusPrefix(\CCrmOwnerType::SmartDocument, $category->getId()),
+						'FIELD_ATTRIBUTE_SCOPE' => FieldAttributeManager::getEntityScopeByCategory($category->getId()),
+						'ENTITY_TYPE_ID' => \CCrmOwnerType::SmartDocument,
+						'IS_ENABLED' => true,
+						'CATEGORY_ID' => $category->getId(),
+					];
+				}
+			}
+		}
+
 		if(self::IsDepricatedTypesEnabled())
 		{
 			$arEntityType['PRODUCT'] = ['ID' => 'PRODUCT', 'NAME' => GetMessage('CRM_STATUS_TYPE_PRODUCT')];
@@ -1372,6 +1395,58 @@ class CCrmStatus
 				'NAME' => GetMessage('CRM_INVOICE_STATUS_REFUSED'),
 				'STATUS_ID' => 'D',
 				'SORT' => 140,
+				'SYSTEM' => 'Y',
+				'COLOR' => '#FF5752',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,
+			]
+		];
+	}
+
+	public static function GetDefaultSmartDocumentStatuses(): array
+	{
+		return [
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_DRAFT'),
+				'STATUS_ID' => 'DRAFT',
+				'SORT' => 10,
+				'SYSTEM' => 'Y',
+				'COLOR' => '#00A9F4',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_PROCESSING'),
+				'STATUS_ID' => 'PROCESSING',
+				'SORT' => 20,
+				'COLOR' => '#00C9FA',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_SENT'),
+				'STATUS_ID' => 'SENT',
+				'SORT' => 30,
+				'COLOR' => '#00D3E2',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_SEMISIGNED'),
+				'STATUS_ID' => 'SEMISIGNED',
+				'SORT' => 40,
+				'COLOR' => '#FEA300',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_SIGNED'),
+				'STATUS_ID' => 'SIGNED',
+				'SORT' => 50,
+				'COLOR' => '#47E4C2',
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_ARCHIVE'),
+				'STATUS_ID' => 'ARCHIVE',
+				'SORT' => 60,
+				'COLOR' => '#7BD500',
+				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::SUCCESS,
+			],
+			[
+				'NAME' => GetMessage('CRM_SMART_DOCUMENT_STATUS_NOTSIGNED'),
+				'STATUS_ID' => 'NOTSIGNED',
+				'SORT' => 70,
 				'SYSTEM' => 'Y',
 				'COLOR' => '#FF5752',
 				'SEMANTICS' => \Bitrix\Crm\PhaseSemantics::FAILURE,

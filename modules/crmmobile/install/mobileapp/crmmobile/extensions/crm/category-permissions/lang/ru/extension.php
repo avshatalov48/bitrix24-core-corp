@@ -1,0 +1,19 @@
+<?php
+$MESS['M_CRM_CATEGORY_PERMISSION_TITLE2'] = 'Права доступа к воронке';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_DEAL_ALL_FOR_ALL'] = 'Все сделки';
+$MESS['M_CRM_CATEGORY_PERMISSION_ITEM_ALL_FOR_ALL'] = 'Все элементы';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_NONE_FOR_ALL'] = 'Доступ закрыт';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_DEAL_OWN_FOR_ALL'] = 'Только свои сделки';
+$MESS['M_CRM_CATEGORY_PERMISSION_ITEM_OWN_FOR_ALL'] = 'Только свои элементы';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_MENU_COPY_FROM_TUNNELS2'] = 'Копировать права из воронки';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_MENU_CUSTOM'] = 'Экспертная настройка';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_DEAL_PRIMARY_SECTION'] = 'Для тех, кто работает в CRM';
+$MESS['M_CRM_CATEGORY_PERMISSION_ITEM_PRIMARY_SECTION'] = 'Для тех, кто работает c этим смарт-процессом';
+
+$MESS['M_CRM_CATEGORY_PERMISSION_MENU_ADDITIONAL_ACCESS'] = 'Дополнительно';

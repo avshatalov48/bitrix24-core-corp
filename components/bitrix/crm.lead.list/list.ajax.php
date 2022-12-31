@@ -155,24 +155,36 @@ if (isset($_REQUEST['MODE']) && $_REQUEST['MODE'] === 'SEARCH')
 		}
 
 		// advanced info - phone number, e-mail
-		$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => array_keys($leadIndex)));
-		while ($arRes = $obRes->Fetch())
+		if (!empty($leadIndex))
 		{
-			if (isset($leadIndex[$arRes['ELEMENT_ID']])
-				&& ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL'))
+			$obRes = CCrmFieldMulti::GetList(
+				['ID' => 'asc'],
+				['ENTITY_ID' => 'LEAD', 'ELEMENT_ID' => array_keys($leadIndex)]
+			);
+			while ($arRes = $obRes->Fetch())
 			{
-				$item = &$leadIndex[$arRes['ELEMENT_ID']];
-				if (!is_array($item['advancedInfo']))
-					$item['advancedInfo'] = array();
-				if (!is_array($item['advancedInfo']['multiFields']))
-					$item['advancedInfo']['multiFields'] = array();
-				$item['advancedInfo']['multiFields'][] = array(
-					'ID' => $arRes['ID'],
-					'TYPE_ID' => $arRes['TYPE_ID'],
-					'VALUE_TYPE' => $arRes['VALUE_TYPE'],
-					'VALUE' => $arRes['VALUE']
-				);
-				unset($item);
+				if (
+					isset($leadIndex[$arRes['ELEMENT_ID']])
+					&& ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
+				)
+				{
+					$item = &$leadIndex[$arRes['ELEMENT_ID']];
+					if (!is_array($item['advancedInfo']))
+					{
+						$item['advancedInfo'] = [];
+					}
+					if (!is_array($item['advancedInfo']['multiFields']))
+					{
+						$item['advancedInfo']['multiFields'] = [];
+					}
+					$item['advancedInfo']['multiFields'][] = [
+						'ID' => $arRes['ID'],
+						'TYPE_ID' => $arRes['TYPE_ID'],
+						'VALUE_TYPE' => $arRes['VALUE_TYPE'],
+						'VALUE' => $arRes['VALUE']
+					];
+					unset($item);
+				}
 			}
 		}
 		unset($leadIndex);
@@ -264,7 +276,7 @@ elseif ($action === 'REBUILD_SECURITY_ATTRS')
 		)
 	);
 }
-elseif ($action === 'SAVE_PROGRESS')
+elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';
@@ -761,7 +773,7 @@ elseif ($action === 'GET_ROW_COUNT')
 	}
 	__CrmLeadListEndResponse(array('DATA' => array('TEXT' => $text)));
 }
-elseif ($action === 'DELETE')
+elseif ($action === 'DELETE' && check_bitrix_sessid())
 {
 	Loc::loadMessages(__FILE__);
 
@@ -951,7 +963,7 @@ elseif ($action === 'DELETE')
 		);
 	}
 }
-elseif ($action === 'PREPARE_BATCH_CONVERSION')
+elseif ($action === 'PREPARE_BATCH_CONVERSION' && check_bitrix_sessid())
 {
 	CUtil::JSPostUnescape();
 
@@ -1108,7 +1120,7 @@ elseif ($action === 'PREPARE_BATCH_CONVERSION')
 		]
 	);
 }
-elseif ($action === 'STOP_BATCH_CONVERSION')
+elseif ($action === 'STOP_BATCH_CONVERSION' && check_bitrix_sessid())
 {
 	$params = isset($_REQUEST['PARAMS']) && is_array($_REQUEST['PARAMS']) ? $_REQUEST['PARAMS'] : array();
 	$gridID = isset($params['GRID_ID']) ? $params['GRID_ID'] : '';
@@ -1120,7 +1132,7 @@ elseif ($action === 'STOP_BATCH_CONVERSION')
 
 	__CrmLeadListEndResponse(array('STATUS' => 'SUCCESS'));
 }
-elseif ($action === 'PROCESS_BATCH_CONVERSION')
+elseif ($action === 'PROCESS_BATCH_CONVERSION' && check_bitrix_sessid())
 {
 	CUtil::JSPostUnescape();
 

@@ -1,29 +1,53 @@
-(() => {
-	const GroupingType = {
-		DEFAULT: 'DEFAULT',
-		MODERATORS: 'MODERATORS'
-	};
+/**
+ * @module layout/ui/fields/entity-selector
+ */
+jn.define('layout/ui/fields/entity-selector', (require, exports, module) => {
+
+	const { arrowDown, pen } = require('assets/common');
+	const { Haptics } = require('haptics');
+	const { BaseField } = require('layout/ui/fields/base');
+	const { isEqual } = require('utils/object');
+	const { isNil } = require('utils/type');
 
 	const CastType = {
 		STRING: 'string',
-		INT: 'int'
+		INT: 'int',
 	};
 
 	/**
-	 * @class Fields.EntitySelector
+	 * @class EntitySelectorField
 	 */
-	class EntitySelector extends Fields.BaseField
+	class EntitySelectorField extends BaseField
 	{
 		constructor(props)
 		{
 			super(props);
-
+			this.initSelectedIds = null;
 			this.state.entityList = this.prepareEntityListFromConfig(this.getConfig().entityList);
+			this.state.showAll = true;
+		}
+
+		componentWillReceiveProps(newProps)
+		{
+			super.componentWillReceiveProps(newProps);
+
+			const reloadEntityListFromProps = BX.prop.getBoolean(
+				BX.prop.getObject(newProps, 'config', {}),
+				'reloadEntityListFromProps',
+				false,
+			);
+			if (reloadEntityListFromProps)
+			{
+				this.state.entityList = BX.prop.getArray(newProps.config, 'entityList', []);
+			}
 		}
 
 		getConfig()
 		{
 			const config = super.getConfig();
+
+			const entityIds = BX.prop.getArray(config, 'entityIds', null);
+			const isComplex = BX.prop.getBoolean(config, 'isComplex', entityIds !== null);
 
 			return {
 				...config,
@@ -32,31 +56,33 @@
 				castType: BX.prop.getString(config, 'castType', CastType.INT),
 				provider: {
 					...BX.prop.getObject(config, 'provider', {}),
-					context: BX.prop.getString(config.provider, 'context', '')
+					context: BX.prop.getString(config.provider, 'context', ''),
 				},
 				enableCreation: BX.prop.getBoolean(config, 'enableCreation', false),
+				closeAfterCreation: BX.prop.getBoolean(config, 'closeAfterCreation', true),
 				reloadEntityListFromProps: BX.prop.getBoolean(config, 'reloadEntityListFromProps', false),
 				entityList: BX.prop.getArray(config, 'entityList', []),
-				parentWidget: BX.prop.get(config, 'parentWidget', PageManager),
-				groupingFrom: BX.prop.getInteger(config, 'groupingFrom', 0),
-				groupingType: BX.prop.getString(config, 'groupingType', GroupingType.DEFAULT)
+				canUnselectLast: BX.prop.getBoolean(config, 'canUnselectLast', true),
+				entityIds,
+				isComplex,
 			};
 		}
 
-		showEditIcon()
+		getValuesArray()
 		{
-			return BX.prop.getBoolean(this.props, 'showEditIcon', true);
+			const value = this.getValue();
+
+			if (this.isMultiple())
+			{
+				return value;
+			}
+
+			return this.isEmptyValue(value) ? [] : [value];
 		}
 
-		componentWillReceiveProps(newProps)
+		shouldShowEditIcon()
 		{
-			super.componentWillReceiveProps(newProps);
-
-			if (this.getConfig().reloadEntityListFromProps)
-			{
-				const entityList = BX.prop.getArray(newProps.config, 'entityList', []);
-				this.setState({entityList});
-			}
+			return BX.prop.getBoolean(this.props, 'showEditIcon', true);
 		}
 
 		getValueFromEntityList(entityList)
@@ -75,7 +101,7 @@
 		{
 			const list =
 				Utils.objectClone(entityList)
-					.filter((entity) => BX.type.isPlainObject(entity) && !this.isNil(entity.id))
+					.filter((entity) => BX.type.isPlainObject(entity) && !isNil(entity.id))
 			;
 
 			if (this.getConfig().castType === CastType.STRING)
@@ -112,18 +138,13 @@
 			return [];
 		}
 
-		isNil(value)
-		{
-			return value === undefined || value === null;
-		}
-
 		getEntitiesIds()
 		{
-			let values = this.isMultiple() ? this.props.value : [this.props.value];
+			let values = this.getValuesArray();
 
 			if (Array.isArray(values))
 			{
-				values = Utils.objectClone(values).filter((value) => !this.isNil(value));
+				values = Utils.objectClone(values).filter((value) => !isNil(value));
 
 				if (this.getConfig().castType === CastType.STRING)
 				{
@@ -172,85 +193,59 @@
 					style: {
 						flex: 1,
 						flexDirection: 'row',
-						alignItems: 'center'
-					}
+						alignItems: 'center',
+					},
 				},
 				Text({
 					style: this.styles.emptyValue,
 					numberOfLines: 1,
 					ellipsize: 'end',
-					text: BX.message('FIELDS_SELECTOR_CONTROL_SELECT')
-				})
+					text: BX.message('FIELDS_SELECTOR_CONTROL_SELECT'),
+				}),
 			);
 		}
 
 		renderEntityContent()
 		{
-			if (
-				this.getConfig().groupingFrom
-				&& this.state.entityList.length >= this.getConfig().groupingFrom
-			)
+			let showAllButton;
+			if (this.isMultiple())
 			{
-				return this.renderGroupedEntities();
+				const hiddenEntitiesCount = this.isMultiple() && this.getValue().filter((item, index) => index > 3).length;
+				showAllButton = this.renderShowAllButton(hiddenEntitiesCount);
 			}
 
-			return this.renderUngroupedEntities();
-		}
-
-		renderGroupedEntities()
-		{
 			return View(
 				{
 					style: {
-						flexDirection: 'row',
-						alignItems: 'center'
+						flexDirection: 'column',
+						flex: 1,
 					},
 				},
-				Text({
-					style: this.styles.entityText,
-					numberOfLines: 1,
-					ellipsize: 'end',
-					text: this.getGroupedEntitiesText(),
-				})
+				View(
+					{
+						style: this.styles.entityContent,
+					},
+					...this.renderEntities(this.state.entityList),
+				),
+				showAllButton,
 			);
-		}
-
-		getGroupedEntitiesText()
-		{
-			const entitiesCount = this.state.entityList.length;
-			let groupingType = this.getConfig().groupingType;
-			groupingType = (Object.keys(GroupingType).includes(groupingType) ? groupingType : GroupingType.DEFAULT);
-
-			const pluralForm = Utils.getPluralForm(entitiesCount);
-			const message = BX.message(`FIELDS_SELECTOR_GROUPING_TYPE_${groupingType}_PLURAL_${pluralForm}`);
-
-			return message.replace('#COUNT#', entitiesCount);
-		}
-
-		renderUngroupedEntities()
-		{
-			return View(
-				{
-					style: this.styles.entityContent
-				},
-				...this.prepareEntities()
-			);
-		}
-
-		prepareEntities()
-		{
-			if (this.isReadOnly())
-			{
-				return this.renderEntities(this.getConfig().entityList);
-			}
-
-			return this.renderEntities(this.state.entityList);
 		}
 
 		renderEntities(entityList)
 		{
 			return entityList.map((entity, index) => {
-				const showDot = this.isMultiple() && entityList.length - 1 !== index;
+				if (!entity.title)
+				{
+					entity.hidden = true;
+				}
+
+				if (!this.state.showAll && index > 3)
+				{
+					return null;
+				}
+
+				const showDot = this.isMultiple() && entityList.length - 1 !== index || !this.state.showAll && index === 3;
+
 				return this.renderEntity(entity, showDot);
 			});
 		}
@@ -261,14 +256,14 @@
 				{
 					style: {
 						flexDirection: 'row',
-						alignItems: 'center'
+						alignItems: 'center',
 					},
 				},
 				Text({
-					style: this.styles.entityText,
+					style: this.styles.value,
 					numberOfLines: 1,
 					ellipsize: 'end',
-					text: entity.title
+					text: entity.title,
 				}),
 				showDot && View({
 					style: {
@@ -276,17 +271,38 @@
 						borderRadius: 2.5,
 						marginLeft: 5,
 						marginRight: 5,
-						backgroundColor: '#a8adb4'
-					}
-				})
+						backgroundColor: '#a8adb4',
+					},
+				}),
 			);
 		}
 
-		focus()
+		handleAdditionalFocusActions()
 		{
-			super.focus();
+			return this.openSelector();
+		}
 
-			this.openSelector();
+		getValueWhileReady()
+		{
+			return new Promise((resolve) => {
+				let values;
+
+				if (this.isComplexSelector())
+				{
+					values = this.getSelectedIds();
+				}
+				else
+				{
+					values = super.getValue();
+				}
+
+				resolve(values);
+			});
+		}
+
+		canOpenEntity()
+		{
+			return false;
 		}
 
 		openEntity(id)
@@ -296,27 +312,82 @@
 
 		openSelector()
 		{
-			const config = this.getConfig();
-			const selector = EntitySelectorFactory.createByType(config.selectorType, {
-				provider: config.provider,
-				createOptions: {
-					enableCreation: config.enableCreation
-				},
-				initSelectedIds: this.state.entityList.map(entity => entity.id),
-				allowMultipleSelection: this.isMultiple(),
-				events: {
-					onClose: this.updateSelectorState.bind(this),
-					onViewHidden: this.removeFocus.bind(this)
-				},
-				widgetParams: {
-					title: this.getConfig().selectorTitle,
-					backdrop: {
-						mediumPositionPercent: 70
-					}
-				}
-			});
+			const {
+				selectorType,
+				provider,
+				enableCreation,
+				closeAfterCreation,
+				canUnselectLast,
+				selectorTitle,
+			} = this.getConfig();
 
-			selector.show({}, this.getConfig().parentWidget);
+			return (
+				EntitySelectorFactory
+					.createByType(selectorType, {
+						provider,
+						createOptions: {
+							enableCreation,
+							closeAfterCreation,
+						},
+						selectOptions: {
+							canUnselectLast,
+						},
+						entityIds: this.getEntityTypeIds(),
+						initSelectedIds: this.getSelectedIds(),
+						allowMultipleSelection: this.isMultiple(),
+						events: {
+							onCreate: this.onCreateEntity.bind(this),
+							onClose: (currentEntities) => {
+								this.currentEntities = currentEntities;
+							},
+							onViewHidden: () => {
+								this.removeFocus().then(() => {
+									if (this.currentEntities)
+									{
+										this.updateSelectorState(this.currentEntities);
+										this.currentEntities = null;
+									}
+								});
+							},
+						},
+						widgetParams: {
+							title: selectorTitle,
+							backdrop: {
+								mediumPositionPercent: 70,
+								horizontalSwipeAllowed: false,
+							},
+						},
+					})
+					.show({}, this.getParentWidget())
+			);
+		}
+
+		isComplexSelector()
+		{
+			const { isComplex } = this.getConfig();
+			if (isComplex)
+			{
+				return true;
+			}
+
+			const entityTypeIds = this.getEntityTypeIds();
+
+			return Array.isArray(entityTypeIds) && entityTypeIds.length > 0;
+		}
+
+		getEntityTypeIds()
+		{
+			return this.getConfig().entityIds;
+		}
+
+		getSelectedIds()
+		{
+			if (this.isComplexSelector())
+			{
+				return this.state.entityList.map(({ id, type }) => (type && id) && [type, id]).filter(Boolean);
+			}
+
+			return this.state.entityList.map((entity) => entity.id);
 		}
 
 		updateSelectorState(entities)
@@ -331,113 +402,220 @@
 			}
 		}
 
-		hasArrayDifference(first, second)
-		{
-			if (first.length !== second.length)
-			{
-				return true;
-			}
-
-			const firstDiff = first.filter((id) => !second.includes(id));
-			if (firstDiff.length)
-			{
-				return true;
-			}
-
-			const secondDiff = second.filter((id) => !first.includes(id));
-			if (secondDiff.length)
-			{
-				return true;
-			}
-
-			return false;
-		}
-
 		handleMultipleChoice(entities)
 		{
-			const selectedIds = entities.map((entity) => entity.id);
-			const currentIds = this.state.entityList.map((entity) => entity.id);
-
-			if (this.hasArrayDifference(selectedIds, currentIds))
-			{
-				this.setState({entityList: this.prepareEntityList(entities)}, () => {
-					this.handleChange(
-						this.getValueFromEntityList(entities),
-						this.prepareEntityList(entities)
-					);
-				});
-			}
+			this.state.showAll = true;
+			this.setStateEntityList(entities);
 		}
 
 		handleSingleChoice(entity)
 		{
-			const currentEntity = this.state.entityList[0];
-			const hasNextEntity = Boolean(entity) && !this.isNil(entity.id);
-			const hasCurrentEntity = Boolean(currentEntity) && !this.isNil(currentEntity.id);
-
-			if (!hasCurrentEntity && !hasNextEntity)
-			{
-				return;
-			}
-
-			if (hasCurrentEntity && hasNextEntity)
-			{
-				const castType = this.getConfig().castType;
-
-				if (
-					(castType === CastType.STRING && String(entity.id) === String(currentEntity.id))
-					|| (castType === CastType.INT && Number(entity.id) === Number(currentEntity.id))
-				)
-				{
-					return;
-				}
-			}
+			const hasNextEntity = Boolean(entity) && !isNil(entity.id);
 
 			if (hasNextEntity)
 			{
-				this.setState({entityList: this.prepareEntityList([entity])}, () => {
-					this.handleChange(
-						this.getValueFromEntityList([entity]),
-						this.prepareEntityList([entity])
-					);
-				});
+				this.setStateEntityList([entity]);
 			}
 			else
 			{
-				this.setState({entityList: []}, () => {
-					this.handleChange(null, []);
+				this.setStateEntityList([]);
+			}
+		}
+
+		onCreateEntity(entity)
+		{
+			return null;
+		}
+
+		setStateEntityList(entities)
+		{
+			const entityList = this.prepareEntityList(entities);
+
+			if (!isEqual(this.state.entityList, entityList))
+			{
+				if (this.hasDifferentIds(this.state.entityList, entityList))
+				{
+					Haptics.impactLight();
+				}
+
+				this.setState({ entityList }, () => {
+					this.handleChange(
+						this.getValueFromEntityList(entities),
+						entityList,
+					);
 				});
 			}
+		}
+
+		hasDifferentIds(source, target)
+		{
+			const sourceIds = source.map((entity) => String(entity.id));
+			const targetIds = target.map((entity) => String(entity.id));
+
+			return !isEqual(sourceIds, targetIds);
+		}
+
+		renderEditIcon()
+		{
+			if (this.props.editIcon)
+			{
+				return this.props.editIcon;
+			}
+
+			if (this.isEmpty() && this.hasHiddenEmptyView())
+			{
+				return View(
+					{
+						style: {
+							justifyContent: 'center',
+							alignItems: 'center',
+							width: 16,
+							height: 16,
+							marginLeft: 2,
+						},
+					},
+					Image(
+						{
+							style: {
+								height: 5,
+								width: 7,
+							},
+							svg: {
+								content: arrowDown(this.getTitleColor()),
+							},
+						},
+					),
+				);
+			}
+
+			return View(
+				{
+					style: {
+						width: 24,
+						height: 24,
+						justifyContent: 'center',
+						alignItems: 'center',
+						alignSelf: 'flex-start',
+						marginLeft: 5,
+						marginTop: (this.isLeftTitlePosition() ? undefined : 15),
+					},
+				},
+				Image(
+					{
+						style: {
+							height: 15,
+							width: 14,
+						},
+						svg: {
+							content: pen,
+						},
+					},
+				),
+			);
 		}
 
 		getDefaultStyles()
 		{
+			const styles = this.getChildFieldStyles();
+			if (this.hasHiddenEmptyView())
+			{
+				return this.getHiddenEmptyChildFieldStyles(styles);
+			}
+
+			return styles;
+		}
+
+		getChildFieldStyles()
+		{
 			const styles = super.getDefaultStyles();
+			const hasErrorMessage = this.hasErrorMessage();
 
 			return {
 				...styles,
 				entityContent: {
-					flex: 1,
 					flexDirection: 'row',
-					flexWrap: 'wrap'
+					flexWrap: 'wrap',
+					flexShrink: 2,
 				},
-				entityText: {
-					color: this.isReadOnly() ? '#333333' : '#0b66c3',
-					fontSize: this.isReadOnly() ? 19 : 16
+				value: {
+					...styles.value,
+					flex: null,
+					color: this.isReadOnly() && this.canOpenEntity() ? '#0b66c3' : styles.value.color,
 				},
 				wrapper: {
-					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 10
+					...styles.wrapper,
+					paddingBottom: hasErrorMessage ? 5 : 10,
 				},
 				readOnlyWrapper: {
-					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 9
+					...styles.readOnlyWrapper,
+					paddingBottom: hasErrorMessage ? 5 : 9,
 				},
-			}
+				title: {
+					...styles.title,
+					marginBottom: (this.isLeftTitlePosition() ? 0 : styles.title.marginBottom),
+				},
+			};
+		}
+
+		getHiddenEmptyChildFieldStyles(styles)
+		{
+			const isEmptyEditable = this.isEmptyEditable();
+			const hasErrorMessage = this.hasErrorMessage();
+			const isEmpty = this.isEmpty();
+			const paddingBottomWithoutError = isEmpty ? 18 : 9;
+
+			return {
+				...styles,
+				title: {
+					...styles.title,
+					marginBottom: isEmptyEditable ? 0 : styles.title.marginBottom,
+				},
+				innerWrapper: {
+					flex: isEmptyEditable ? null : 1,
+					flexShrink: 2,
+				},
+				container: {
+					...styles.container,
+					height: isEmptyEditable ? 0 : null,
+				},
+				wrapper: {
+					...styles.wrapper,
+					paddingTop: isEmpty ? 12 : 8,
+					paddingBottom: hasErrorMessage ? 5 : paddingBottomWithoutError,
+				},
+			};
+		}
+
+		getLeftTitleChildStyles(styles)
+		{
+			return {
+				...styles,
+				wrapper: {
+					...styles.wrapper,
+					paddingTop: 10,
+				},
+				readOnlyWrapper: {
+					...styles.readOnlyWrapper,
+					paddingTop: 10,
+				},
+			};
+		}
+
+		getSvgImages()
+		{
+			return {
+				defaultAvatar: (color = '#a8adb4') => {
+					return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 23.9989C18.6275 23.9989 24 18.6266 24 11.9995C24 5.37234 18.6275 0 12 0C5.37258 0 0 5.37234 0 11.9995C0 18.6266 5.37258 23.9989 12 23.9989Z" fill="${color}"/><path d="M17.5985 17.7266C18.2812 17.5141 18.6554 16.84 18.5169 16.1729L18.3223 15.2352C18.2245 14.6491 17.5047 13.9911 15.8947 13.6045C15.3492 13.4632 14.8307 13.2442 14.3576 12.9551C14.2542 12.9002 14.2699 12.3931 14.2699 12.3931L13.7514 12.3198C13.7514 12.2786 13.707 11.6704 13.707 11.6704C14.3275 11.4768 14.2636 10.3349 14.2636 10.3349C14.6576 10.5378 14.9142 9.63411 14.9142 9.63411C15.3803 8.37859 14.6822 8.4545 14.6822 8.4545C14.8043 7.68804 14.8043 6.90905 14.6822 6.14258C14.3718 3.6 9.69898 4.29025 10.2531 5.12064C8.88737 4.88706 9.199 7.77243 9.199 7.77243L9.49522 8.51962C9.08464 8.7669 9.16527 9.0507 9.25533 9.36771C9.29288 9.49987 9.33207 9.6378 9.33799 9.78127C9.3666 10.5013 9.84112 10.3521 9.84112 10.3521C9.87036 11.5405 10.5015 11.6952 10.5015 11.6952C10.62 12.4415 10.5461 12.3145 10.5461 12.3145L9.98451 12.3776C9.99211 12.5473 9.97722 12.7172 9.94017 12.8836C9.61386 13.0186 9.41409 13.1261 9.2163 13.2325C9.01381 13.3414 8.81339 13.4492 8.48141 13.5843C7.21353 14.1003 5.94196 14.3891 5.697 15.2925C5.64066 15.5002 5.55931 15.8574 5.48111 16.2352C5.34884 16.8741 5.72138 17.5055 6.37443 17.711C7.96659 18.2121 9.73498 18.5076 11.6013 18.5455H12.4216C14.2684 18.508 16.0194 18.2183 17.5985 17.7266Z" fill="white"/></svg>`;
+				},
+			};
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.EntitySelector = EntitySelector;
-	this.Fields.EntitySelector.GroupingType = GroupingType;
-})();
+	module.exports = {
+		EntitySelectorType: 'entity-selector',
+		EntitySelectorFieldClass: EntitySelectorField,
+		EntitySelectorField: (props) => new EntitySelectorField(props),
+		CastType,
+	};
+
+});

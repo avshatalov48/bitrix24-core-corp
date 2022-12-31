@@ -62,7 +62,13 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 
 				if (!empty($arParams["FIELDS"]["PARAMS"]))
 				{
-					if ($arParams["FIELDS"]["PARAMS"]["TYPE"] == "modify")
+					$type = null;
+					if (isset($arParams["FIELDS"]["PARAMS"]["TYPE"]))
+					{
+						$type = $arParams["FIELDS"]["PARAMS"]["TYPE"];
+					}
+
+					if ($type == "modify")
 					{
 						$eventTitlePhraseSuffix = '_MODIFY';
 						$actorUserId = $arParams["FIELDS"]["PARAMS"]["CHANGED_BY"];
@@ -70,7 +76,7 @@ if (intval($arParams["FIELDS"]["ENTITY_ID"]) > 0)
 						$changes_24 = implode(", ", CTaskNotifications::__Fields2Names($arChangesFields));
 						$message_24_2 = GetMessage("C_CRM_LFA_TASKS_CHANGED_MESSAGE_24_2");
 					}
-					elseif ($arParams["FIELDS"]["PARAMS"]["TYPE"] == "status")
+					elseif ($type == "status")
 					{
 						$eventTitlePhraseSuffix = '_STATUS';
 						$actorUserId = $arParams["FIELDS"]["PARAMS"]["CHANGED_BY"];

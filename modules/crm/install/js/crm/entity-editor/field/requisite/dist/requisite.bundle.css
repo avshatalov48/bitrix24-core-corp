@@ -70,7 +70,7 @@
 .crm-rq-org-item.crm-rq-org-item-selected::before {opacity: 1;}
 
 .crm-rq-org-name {
-	font: bold 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/22px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 }
 

@@ -6,6 +6,7 @@ use Bitrix\Crm\Automation\Helper;
 use Bitrix\Crm\Integration\Calendar;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Web\Uri;
 use CCrmOwnerType;
@@ -16,10 +17,12 @@ class NavigationBarPanel
 	public const ID_KANBAN = 'kanban';
 	public const ID_LIST = 'list';
 	public const ID_CALENDAR = 'calendar';
+	public const ID_ACTIVITY = 'activity';
 
 	private const LANG_MAP = [
 		self::ID_KANBAN => 'CRM_COMMON_KANBAN',
 		self::ID_LIST => 'CRM_COMMON_LIST',
+		self::ID_ACTIVITY => 'CRM_COMMON_ACTIVITY',
 		self::ID_CALENDAR => 'CRM_COMMON_CALENDAR',
 	];
 	private const ID_BINDING_CATEGORY = 'crm.navigation';
@@ -77,16 +80,21 @@ class NavigationBarPanel
 		$this->router = Container::getInstance()->getRouter();
 	}
 
+	public function setAllAllowableItems(string $activeId = ''): self
+	{
+		return $this->setItems($this->getAllowableItemsList(), $activeId);
+	}
+
 	public function setItems(array $ids, string $activeId = ''): self
 	{
-		if (empty($activeId) || !in_array($activeId, [self::ID_KANBAN, self::ID_LIST, self::ID_CALENDAR], true))
+		if (empty($activeId) || !in_array($activeId, $this->getAllowableItemsList(false), true))
 		{
 			$activeId = self::ID_LIST;
 		}
 
 		foreach ($ids as $id)
 		{
-			if (!in_array($id, [self::ID_AUTOMATION, self::ID_KANBAN, self::ID_LIST, self::ID_CALENDAR], true))
+			if (!in_array($id, $this->getAllowableItemsList(), true))
 			{
 				continue;
 			}
@@ -106,9 +114,14 @@ class NavigationBarPanel
 			}
 			else
 			{
+				$messageId = self::LANG_MAP[$id];
+				if (Crm::isUniversalActivityScenarioEnabled() && $messageId === 'CRM_COMMON_KANBAN')
+				{
+					$messageId = 'CRM_COMMON_PIPELINE';
+				}
 				$this->items[] = [
 					'id' => $id,
-					'name' => Loc::getMessage(self::LANG_MAP[$id]),
+					'name' => Loc::getMessage($messageId),
 					'active' => $id === $activeId,
 					'url' => $this->getUrl($id),
 				];
@@ -116,6 +129,35 @@ class NavigationBarPanel
 		}
 
 		return $this;
+	}
+
+	/**
+	 * @param bool $withAutomation
+	 * @return string[]
+	 */
+	private function getAllowableItemsList(bool $withAutomation = true): array
+	{
+		$names = [
+			self::ID_KANBAN,
+			self::ID_LIST,
+			self::ID_ACTIVITY,
+			self::ID_CALENDAR,
+		];
+
+		if ($withAutomation)
+		{
+			$names[] = self::ID_AUTOMATION;
+		}
+
+		if (
+			\Bitrix\Main\Config\Option::get('crm', 'enable_entity_uncompleted_act', 'Y') !== 'Y'
+			|| !\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+		)
+		{
+			unset($names[array_search(self::ID_ACTIVITY, $names)]);
+		}
+
+		return $names;
 	}
 
 	public function setBinding(string $key): self
@@ -156,6 +198,8 @@ class NavigationBarPanel
 		{
 			case self::ID_KANBAN:
 				return $this->router->getKanbanUrl($this->entityTypeId, $this->categoryId);
+			case self::ID_ACTIVITY:
+				return $this->router->getActivityUrl($this->entityTypeId, $this->categoryId);
 			case self::ID_LIST:
 				return $this->router->getItemListUrl($this->entityTypeId, $this->categoryId);
 			case self::ID_CALENDAR:

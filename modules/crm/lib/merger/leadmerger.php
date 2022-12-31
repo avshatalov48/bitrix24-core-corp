@@ -563,6 +563,11 @@ class LeadMerger extends EntityMerger
 			\CCrmOwnerType::Lead, $seedID,
 			\CCrmOwnerType::Lead, $targID
 		);
+
+		Crm\Relation\EntityRelationTable::rebind(
+			new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $seedID),
+			new Crm\ItemIdentifier(\CCrmOwnerType::Lead, $targID)
+		);
 	}
 	protected function resolveMergeCollisions($seedID, $targID, array &$results)
 	{

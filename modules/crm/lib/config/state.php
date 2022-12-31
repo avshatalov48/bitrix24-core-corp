@@ -263,11 +263,6 @@ class State
 
 	public static function getProductPriceChangingNotification(): ?array
 	{
-		if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled())
-		{
-			return null;
-		}
-
 		return [
 			'MESSAGE' => Loc::getMessage('CRM_STATE_CATALOG_PRODUCT_PRICE_CHANGING_BLOCKED'),
 			'ARTICLE_CODE' => '14842358'

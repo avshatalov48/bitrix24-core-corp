@@ -220,7 +220,12 @@ class Output extends Base\Output
 		$chatData = explode('@', $message['chat']['id']);
 		[$messageTo, $messageFrom] = $chatData;
 
-		$messageBody = $message['message']['text'] ? : '';
+
+		$messageBody =
+			!Library::isEmpty($message['message']['text'])
+				? $message['message']['text']
+				: ''
+		;
 
 		if (isset($message['message']['files']) && count($message['message']['files']) > 0)
 		{

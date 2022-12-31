@@ -31,6 +31,7 @@ $privacyDesc = $region
 	: null
 ;
 $privacyDesc = $privacyDesc ?: Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_TEXT');
+$notifyUserConsentHelperId = $region !== 'by' ? 5791365 : 16215312;
 
 $descImagePath = $this->GetFolder() . "/images/demo_main_";
 $descImagePath .= (in_array(LANGUAGE_ID, array('ru', 'ua', 'kz', 'by')) ? 'ru' : (LANGUAGE_ID === 'de' ? 'de' : 'en'));
@@ -91,7 +92,7 @@ foreach ($arResult["ITEMS"] as $index => $data)
 	$data['EMBEDDING'] = '<button 
 			type="button" 
 			class="ui-btn ui-btn-xs ui-btn-light-border ui-btn-round ui-btn-no-caps crm-webform-item-btn"  
- 			onclick="event.stopPropagation(); BX.Crm.WebFormList.showSiteCode(' . $data["ID"] . '); return false;"
+ 			onclick="event.stopPropagation(); BX.Crm.WebFormList.showSiteCode(' . $data["ID"] . ', {activeMenuItemId: \'inline\'}); return false;"
  		>' . Loc::getMessage('CRM_WEBFORM_LIST_ITEM_BTN_GET_SCRIPT'). '
  		</button>'
 	;
@@ -274,6 +275,12 @@ foreach ($arResult["ITEMS"] as $index => $data)
 		];
 	}
 
+	$data["GET_PAYMENT"] =
+		$data["IS_PAY"] === "Y"
+			? Loc::getMessage("CRM_WEBFORM_LIST_ITEM_GET_PAYMENT_ACTIVATED")
+			: Loc::getMessage("CRM_WEBFORM_LIST_ITEM_GET_PAYMENT_DEACTIVATED")
+	;
+
 	$arResult["ITEMS"][$index] = [
 		"id" => $data["ID"],
 		"columns" => $data,
@@ -348,7 +355,8 @@ if(!$arResult['HIDE_DESC'] || !$arResult['HIDE_DESC_FZ152']):?>
 					<span id="CRM_LIST_WEBFORM_NOTIFY_BTN_HIDE" class="webform-small-button webform-small-button-blue">
 						<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_BTN_OK')?>
 					</span>
-					<a onclick="BX.Helper.show('redirect=detail&HD_ID=5791365'); return false;" href="javascript: void();" target="_blank">
+					<a onclick="BX.Helper.show('redirect=detail&code=<?=$notifyUserConsentHelperId?>'); return false;"
+					   href="javascript: void();" target="_blank">
 						<?=Loc::getMessage('CRM_WEBFORM_LIST_NOTIFY_USER_CONSENT_BTN_DETAIL')?>
 					</a>
 				</div>

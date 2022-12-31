@@ -1,10 +1,12 @@
 <?php
+
 namespace Bitrix\ImConnector;
 
 use Bitrix\Main\Event;
 use Bitrix\Main\Data\Cache;
-use Bitrix\Main\EventManager;
+use Bitrix\Main\Application;
 use Bitrix\ImConnector\Model\StatusConnectorsTable;
+
 
 /**
  * Class Status
@@ -12,12 +14,15 @@ use Bitrix\ImConnector\Model\StatusConnectorsTable;
  */
 class Status
 {
-	/** @var Status[] */
+	/** @var array<string, Status[]> */
 	private static $instance = [];
-
-	private static $flagEvent = false;
-	private static $flagGenerationUpdateEvent = false;
+	/** @var array<int, array> */
 	private static $rowsCacheTable = [];
+
+	private static $flagSaveStatusEvent = false;
+	private static $flagGenerationUpdateEvent = false;
+	private $flagUpdated = false;
+
 	private $active = 'N';
 	private $connection = 'N';
 	private $register = 'N';
@@ -31,9 +36,9 @@ class Status
 	 * Receiving a state object of a specific connector all lines.
 	 *
 	 * @param string $connector
-	 * @return array|self[]
+	 * @return self[]|[]
 	 */
-	public static function getInstanceAllLine($connector)
+	public static function getInstanceAllLine($connector): array
 	{
 		$connector = Connector::getConnectorRealId($connector);
 
@@ -69,7 +74,7 @@ class Status
 	 *
 	 * @return array
 	 */
-	public static function getInstanceAll()
+	public static function getInstanceAll(): array
 	{
 		$raw = StatusConnectorsTable::getList([
 			'select' => [
@@ -98,7 +103,7 @@ class Status
 	/**
 	 * Receiving a state object of a specific connector lines.
 	 *
-	 * @param $connector
+	 * @param string $connector
 	 * @param string $line
 	 * @return self
 	 */
@@ -133,7 +138,7 @@ class Status
 	 * Removal of information about the all connector.
 	 *
 	 * @param string $line ID.
-	 * @return bool.
+	 * @return bool
 	 */
 	public static function deleteAll($line = '#empty#')
 	{
@@ -225,7 +230,7 @@ class Status
 	 * Removal of all lines for the connector, except one
 	 *
 	 * @param string $connector ID connector.
-	 * @param string $lineToKeep ID open line to be keeped.
+	 * @param int $lineToKeep ID open line to be keeped.
 	 * @return bool
 	 */
 	public static function deleteLinesExcept(string $connector, int $lineToKeep)
@@ -278,17 +283,15 @@ class Status
 	 */
 	public static function addEventHandlerSave(): void
 	{
-		if (empty(self::$flagEvent))
+		if (self::$flagSaveStatusEvent !== true)
 		{
-			EventManager::getInstance()->addEventHandler(
-				'main',
-				'OnAfterEpilog',
+			Application::getInstance()->addBackgroundJob(
 				[__CLASS__, 'save'],
-				false,
-				1000
+				[],
+				Application::JOB_PRIORITY_NORMAL
 			);
 
-			self::$flagEvent = true;
+			self::$flagSaveStatusEvent = true;
 		}
 	}
 
@@ -298,14 +301,12 @@ class Status
 	 */
 	public static function addEventHandlerGenerationUpdateEvent(): void
 	{
-		if (empty(self::$flagGenerationUpdateEvent))
+		if (self::$flagGenerationUpdateEvent !== true)
 		{
-			EventManager::getInstance()->addEventHandler(
-				'main',
-				'OnAfterEpilog',
+			Application::getInstance()->addBackgroundJob(
 				[__CLASS__, 'sendUpdateEvent'],
-				false,
-				1000
+				[],
+				Application::JOB_PRIORITY_LOW
 			);
 
 			self::$flagGenerationUpdateEvent = true;
@@ -341,7 +342,6 @@ class Status
 	}
 
 	/**
-	 * The event handler OnAfterEpilog.
 	 * Data is saved only when the script completes.
 	 */
 	public static function save(): void
@@ -351,31 +351,31 @@ class Status
 			foreach ($listLine as $line => $value)
 			{
 				$connector = self::$instance[$currentConnector][$line];
-				if(
-					!empty($connector)
-					&& $connector instanceof Status
+				if (
+					$connector instanceof Status
 					&& !empty($connector->id)
+					&& $connector->flagUpdated === true
 				)
 				{
 					$fields = [];
 
-					if(!empty($connector->active))
+					if (!empty($connector->active))
 					{
 						$fields['ACTIVE'] = $connector->active;
 					}
-					if(!empty($connector->connection))
+					if (!empty($connector->connection))
 					{
 						$fields['CONNECTION'] = $connector->connection;
 					}
-					if(!empty($connector->register))
+					if (!empty($connector->register))
 					{
 						$fields['REGISTER'] = $connector->register;
 					}
-					if(!empty($connector->error))
+					if (!empty($connector->error))
 					{
 						$fields['ERROR'] = $connector->error;
 					}
-					if($connector->data !== false)
+					if ($connector->data !== false)
 					{
 						$fields['DATA'] = $connector->data;
 					}
@@ -388,7 +388,6 @@ class Status
 	}
 
 	/**
-	 * The event handler OnAfterEpilog.
 	 * The generation of update events connector
 	 */
 	public static function sendUpdateEvent()
@@ -398,37 +397,44 @@ class Status
 			foreach ($listLine as $line => $value)
 			{
 				$connector = self::$instance[$currentConnector][$line];
-				$fields = array();
+				if (
+					$connector instanceof Status
+					&& $connector->flagUpdated === true
+				)
+				{
+					$fields = [];
 
-				if (!empty($connector->active))
-				{
-					$fields['ACTIVE'] = $connector->active;
-				}
-				if (!empty($connector->connection))
-				{
-					$fields['CONNECTION'] = $connector->connection;
-				}
-				if (!empty($connector->register))
-				{
-					$fields['REGISTER'] = $connector->register;
-				}
-				if (!empty($connector->error))
-				{
-					$fields['ERROR'] = $connector->error;
-				}
-				if ($connector->data !== false)
-				{
-					$fields['DATA'] = $connector->data;
-				}
+					if (!empty($connector->active))
+					{
+						$fields['ACTIVE'] = $connector->active;
+					}
+					if (!empty($connector->connection))
+					{
+						$fields['CONNECTION'] = $connector->connection;
+					}
+					if (!empty($connector->register))
+					{
+						$fields['REGISTER'] = $connector->register;
+					}
+					if (!empty($connector->error))
+					{
+						$fields['ERROR'] = $connector->error;
+					}
+					if ($connector->data !== false)
+					{
+						$fields['DATA'] = $connector->data;
+					}
 
-				//Event
-				$dataEvent = [
-					'connector' => $currentConnector,
-					'line' => $line,
-					'fields' => $fields
-				];
-				$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_UPDATE, $dataEvent);
-				$event->send();
+					$dataEvent = [
+						'connector' => $currentConnector,
+						'line' => $line,
+						'fields' => $fields
+					];
+					$event = new Event(Library::MODULE_ID, Library::EVENT_STATUS_UPDATE, $dataEvent);
+					$event->send();
+
+					$connector->flagUpdated = false;
+				}
 			}
 		}
 	}
@@ -519,6 +525,7 @@ class Status
 	{
 		$this->connector = $connector;
 		$this->line = $line;
+		$this->flagUpdated = false;
 		$status = null;
 
 		$cache = Cache::createInstance();
@@ -568,7 +575,6 @@ class Status
 				$this->id = $add->getId();
 			}
 
-			//Event
 			$dataEvent = [
 				'connector' => $connector,
 				'line' => $line
@@ -593,10 +599,10 @@ class Status
 	 */
 	public function setActive($status = false): void
 	{
-		self::addEventHandlerGenerationUpdateEvent();
-
-		if($this->active !== $status)
+		if ($this->active !== $status)
 		{
+			$this->flagUpdated = true;
+			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
@@ -619,10 +625,10 @@ class Status
 	 */
 	public function setConnection($status = false): void
 	{
-		self::addEventHandlerGenerationUpdateEvent();
-
-		if($this->connection !== $status)
+		if ($this->connection !== $status)
 		{
+			$this->flagUpdated = true;
+			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
@@ -644,10 +650,10 @@ class Status
 	 */
 	public function setRegister($status = false)
 	{
-		self::addEventHandlerGenerationUpdateEvent();
-
-		if($this->register !== $status)
+		if ($this->register !== $status)
 		{
+			$this->flagUpdated = true;
+			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
@@ -669,10 +675,10 @@ class Status
 	 */
 	public function setError($status = false)
 	{
-		self::addEventHandlerGenerationUpdateEvent();
-
-		if($this->error !== $status)
+		if ($this->error !== $status)
 		{
+			$this->flagUpdated = true;
+			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 
@@ -694,10 +700,10 @@ class Status
 	 */
 	public function setData($data = '')
 	{
-		self::addEventHandlerGenerationUpdateEvent();
-
-		if(serialize($this->data) !== serialize($data))
+		if (serialize($this->data) !== serialize($data))
 		{
+			$this->flagUpdated = true;
+			self::addEventHandlerGenerationUpdateEvent();
 			self::addEventHandlerSave();
 			self::cleanCache($this->connector, $this->line);
 

@@ -20,6 +20,8 @@ export class Document extends BaseCard
 		this.isDocumentDeducted = settings.documentStatus === 'Y';
 		this.isDeductLocked = settings.isDeductLocked;
 		this.masterSliderUrl = settings.masterSliderUrl;
+		this.inventoryManagementSource = settings.inventoryManagementSource;
+		this.permissions = settings.permissions;
 
 		this.addCopyLinkPopup();
 
@@ -55,6 +57,7 @@ export class Document extends BaseCard
 
 				let urlParams = {
 					isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
+					inventoryManagementSource: this.inventoryManagementSource,
 				};
 
 				if (action)
@@ -74,15 +77,37 @@ export class Document extends BaseCard
 					tab: 'products',
 					isNewDocument: this.entityId <= 0 ? 'Y' : 'N',
 					documentType: 'W',
+					inventoryManagementSource: this.inventoryManagementSource,
 				});
 				this.isTabAnalyticsSent = true;
 			}
 		});
 
+		this.#subscribeToProductRowSummaryEvents();
+
 		Document.#instance = this;
 
 		BX.UI.SidePanel.Wrapper.setParam("closeAfterSave", true);
 		this.showNotificationOnClose = false;
+	}
+
+	#subscribeToProductRowSummaryEvents()
+	{
+		EventEmitter.subscribe('BX.UI.EntityEditorProductRowSummary:onDetailProductListLinkClick', () => {
+			EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {tabId: 'tab_products'});
+		});
+
+		EventEmitter.subscribe('BX.UI.EntityEditorProductRowSummary:onAddNewRowInProductList', () => {
+			EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {tabId: 'tab_products'});
+			setTimeout(() => {
+				EventEmitter.emit('onFocusToProductList');
+			}, 500);
+		});
+	}
+
+	focusOnTab(tabId)
+	{
+		EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {tabId: tabId});
 	}
 
 	getControllersIssues(controllers)
@@ -150,14 +175,14 @@ export class Document extends BaseCard
 	 */
 	adjustToolPanel()
 	{
-		let editor = this.getEditorInstance();
+		const editor = this.getEditorInstance();
 		if (!editor)
 		{
 			return;
 		}
 
-		let savePanel = editor._toolPanel;
-		let saveButton = editor._toolPanel._editButton;
+		const savePanel = editor._toolPanel;
+		const saveButton = editor._toolPanel._editButton;
 
 		this.defaultSaveActionName = editor._ajaxForm._config.data.ACTION;
 		this.defaultOnSuccessCallback = editor._ajaxForm._config.onsuccess;
@@ -169,52 +194,54 @@ export class Document extends BaseCard
 			savePanel.onSaveButtonClick(event);
 		};
 
-		let deductAndSaveButton = Tag.render`<button class="ui-btn ui-btn-light-border">${Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON')}</button>`;
-		deductAndSaveButton.onclick = (event) => {
-			if (this.isDeductLocked)
-			{
-				this.openMasterSlider();
-				return;
-			}
-
-			editor._ajaxForm._config.data.ACTION = Document.saveAndDeductAction;
-			editor._ajaxForm._config.onsuccess = (result) => {
-				this.showNotificationOnClose = true;
-				let error = BX.prop.getString(result, 'ERROR', '');
-				if (!error)
-				{
-					this.setViewModeButtons(editor);
-				}
-
-				editor.onSaveSuccess(result);
-			};
-
-			savePanel.onSaveButtonClick(event);
-		};
-		saveButton.after(deductAndSaveButton);
-		this.deductAndSaveButton = deductAndSaveButton;
-
-		let deductButton = new Button({
-			text: this.isDocumentDeducted ? Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON') : Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_DEDUCT_BUTTON'),
-			color: ButtonColor.LIGHT_BORDER,
-			onclick: (button, event) => {
-				if (savePanel.isLocked())
-				{
-					return;
-				}
+		if (this.permissions.conduct && !this.isDocumentDeducted)
+		{
+			const deductAndSaveButton = Tag.render`<button class="ui-btn ui-btn-light-border">${Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON')}</button>`;
+			deductAndSaveButton.onclick = (event) => {
 				if (this.isDeductLocked)
 				{
 					this.openMasterSlider();
+
 					return;
 				}
-				button.setState(ButtonState.CLOCKING);
-				savePanel.setLocked(true);
 
-				const actionName = this.isDocumentDeducted ? Document.cancelDeductAction : Document.deductAction;
-				if (actionName === Document.deductAction)
-				{
+				editor._ajaxForm._config.data.ACTION = Document.saveAndDeductAction;
+				editor._ajaxForm._config.onsuccess = (result) => {
+					this.showNotificationOnClose = true;
+					const error = BX.prop.getString(result, 'ERROR', '');
+					if (!error)
+					{
+						this.setViewModeButtons(editor);
+					}
+
+					editor.onSaveSuccess(result);
+				};
+
+				savePanel.onSaveButtonClick(event);
+			};
+			saveButton.after(deductAndSaveButton);
+			this.deductAndSaveButton = deductAndSaveButton;
+
+			const deductButton = new Button({
+				text: Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_DEDUCT_BUTTON'),
+				color: ButtonColor.LIGHT_BORDER,
+				onclick: (button, event) => {
+					if (savePanel.isLocked())
+					{
+						return;
+					}
+					if (this.isDeductLocked)
+					{
+						this.openMasterSlider();
+
+						return;
+					}
+					button.setState(ButtonState.CLOCKING);
+					savePanel.setLocked(true);
+
+					const actionName = Document.deductAction;
 					const controllers = editor.getControllers();
-					let errorCollection = [];
+					const errorCollection = [];
 					controllers.forEach((controller) => {
 						if (controller instanceof BX.Crm.EntityStoreDocumentProductListController)
 						{
@@ -231,53 +258,115 @@ export class Document extends BaseCard
 						savePanel.addError(errorCollection[0]);
 						savePanel.setLocked(false);
 						button.setActive(true);
+
 						return;
 					}
-				}
 
-				let formData = {};
-				if (window.EntityEditorDocumentOrderShipmentController)
-				{
-					formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
-				}
-
-				let deductDocumentAjaxForm = editor.createAjaxForm(
+					let formData = {};
+					if (window.EntityEditorDocumentOrderShipmentController)
 					{
-						actionName: actionName,
-						enableRequiredUserFieldCheck: false,
-						formData: formData,
-					},
-					{
-						onSuccess: (result) => {
-							if (!this.isDocumentDeducted)
-							{
-								this.showNotificationOnClose = true;
-							}
-
-							button.setState(ButtonState.ACTIVE);
-							editor.onSaveSuccess(result);
-						},
-						onFailure: (result) => {
-							button.setState(ButtonState.ACTIVE);
-							editor.onSaveFailure(result);
-						},
+						formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
 					}
-				);
 
-				deductDocumentAjaxForm.addUrlParams({
-					action: actionName,
-					documentType: 'W',
-				});
+					const deductDocumentAjaxForm = editor.createAjaxForm(
+						{
+							actionName: actionName,
+							enableRequiredUserFieldCheck: false,
+							formData: formData,
+						},
+						{
+							onSuccess: (result) => {
+								if (!this.isDocumentDeducted)
+								{
+									this.showNotificationOnClose = true;
+								}
 
-				deductDocumentAjaxForm.submit();
-			},
-		}).render();
-		saveButton.after(deductButton);
-		this.deductButton = deductButton;
+								button.setState(ButtonState.ACTIVE);
+								editor.onSaveSuccess(result);
+							},
+							onFailure: (result) => {
+								button.setState(ButtonState.ACTIVE);
+								editor.onSaveFailure(result);
+							},
+						}
+					);
+
+					deductDocumentAjaxForm.addUrlParams({
+						action: actionName,
+						documentType: 'W',
+					});
+
+					deductDocumentAjaxForm.submit();
+				},
+			}).render();
+			saveButton.after(deductButton);
+			this.deductButton = deductButton;
+		}
+		else if (this.permissions.cancel)
+		{
+			const deductButton = new Button({
+				text:  Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON'),
+				color: ButtonColor.LIGHT_BORDER,
+				onclick: (button, event) => {
+					if (savePanel.isLocked())
+					{
+						return;
+					}
+					if (this.isDeductLocked)
+					{
+						this.openMasterSlider();
+
+						return;
+					}
+					button.setState(ButtonState.CLOCKING);
+					savePanel.setLocked(true);
+
+					const actionName = Document.cancelDeductAction;
+					let formData = {};
+					if (window.EntityEditorDocumentOrderShipmentController)
+					{
+						formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
+					}
+
+					const deductDocumentAjaxForm = editor.createAjaxForm(
+						{
+							actionName: actionName,
+							enableRequiredUserFieldCheck: false,
+							formData: formData,
+						},
+						{
+							onSuccess: (result) => {
+								if (!this.isDocumentDeducted)
+								{
+									this.showNotificationOnClose = true;
+								}
+
+								button.setState(ButtonState.ACTIVE);
+								editor.onSaveSuccess(result);
+							},
+							onFailure: (result) => {
+								button.setState(ButtonState.ACTIVE);
+								editor.onSaveFailure(result);
+							},
+						}
+					);
+
+					deductDocumentAjaxForm.addUrlParams({
+						action: actionName,
+						documentType: 'W',
+					inventoryManagementSource: this.inventoryManagementSource,
+					});
+
+					deductDocumentAjaxForm.submit();
+				},
+			}).render();
+			saveButton.after(deductButton);
+			this.deductButton = deductButton;
+		}
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onControlModeChange', (event) => {
-			let eventEditor = event.data[0];
-			let control = event.data[1].control;
+			const eventEditor = event.data[0];
+			const control = event.data[1].control;
 			if(control.getMode() === BX.Crm.EntityEditorMode.edit)
 			{
 				this.setEditModeButtons(eventEditor);
@@ -289,27 +378,27 @@ export class Document extends BaseCard
 		});
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onControlChange', (event) => {
-			let eventEditor = event.data[0];
+			const eventEditor = event.data[0];
 			this.setEditModeButtons(eventEditor);
 		});
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onControllerChange', (event) => {
-			let eventEditor = event.data[0];
+			const eventEditor = event.data[0];
 			this.setEditModeButtons(eventEditor);
 		});
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSwitchToViewMode', (event) => {
-			let eventEditor = event.data[0];
+			const eventEditor = event.data[0];
 			this.setViewModeButtons(eventEditor);
 		});
 
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onNothingChanged', (event) => {
-			let eventEditor = event.data[0];
+			const eventEditor = event.data[0];
 			this.setViewModeButtons(eventEditor);
 		});
 
 		EventEmitter.subscribe('onEntityCreate', (event) => {
-			let editor = event?.data[0]?.sender;
+			const editor = event?.data[0]?.sender;
 			if (editor)
 			{
 				editor._toolPanel.disableSaveButton();
@@ -318,7 +407,7 @@ export class Document extends BaseCard
 		});
 
 		EventEmitter.subscribe('beforeCrmEntityRedirect', (event) => {
-			let editor = event?.data[0]?.sender;
+			const editor = event?.data[0]?.sender;
 			if (editor)
 			{
 				editor._toolPanel.disableSaveButton();
@@ -471,9 +560,25 @@ export class Document extends BaseCard
 		{
 			this.#documentOnboardingManager  = new DocumentOnboardingManager({
 				onboardingData: onboardingData,
-				documentGuid: this.id
+				documentGuid: this.id,
+				productListController: this.getProductListController(),
 			});
 			this.#documentOnboardingManager.processOnboarding();
 		}
+	}
+
+	getProductListController(): BX.Crm.EntityStoreDocumentProductListController|null
+	{
+		const editor = this.getEditorInstance();
+		const controllers = editor.getControllers();
+		for (const controller of controllers)
+		{
+			if (controller instanceof BX.Crm.EntityStoreDocumentProductListController)
+			{
+				return controller;
+			}
+		}
+
+		return null;
 	}
 }

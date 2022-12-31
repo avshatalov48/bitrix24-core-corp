@@ -11,6 +11,8 @@ export default class EntityCounterFilterManager
 		'FIND'
 	];
 
+	static FILTER_OTHER_USERS = 'other-users';
+
 	#filterManager: BX.Main.Filter;
 	#fields: Object;
 	#isActive = true;
@@ -106,7 +108,7 @@ export default class EntityCounterFilterManager
 		return this.#isFilteredByField(field);
 	}
 	
-	isFiltered(userId: number, typeId: number, entityTypeId: number): boolean
+	isFiltered(userId: number, typeId: number, entityTypeId: number, isOtherUsersFilter: boolean): boolean
 	{
 		if (userId === 0 || typeId === EntityCounterType.UNDEFINED)
 		{
@@ -118,7 +120,11 @@ export default class EntityCounterFilterManager
 			: this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_USER_FIELD)
 				&& Type.isArray(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD])
 				&& this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD].length === 1
-				&& parseInt(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0], 10) === userId
+				&& (
+					isOtherUsersFilter
+						? this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0] === EntityCounterFilterManager.FILTER_OTHER_USERS
+						: parseInt(this.#fields[EntityCounterFilterManager.COUNTER_USER_FIELD][0], 10) === userId
+				)
 		;
 
 		const hasFilteredByTypeValue = this.isFilteredByFieldEx(EntityCounterFilterManager.COUNTER_TYPE_FIELD)

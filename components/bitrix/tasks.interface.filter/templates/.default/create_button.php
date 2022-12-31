@@ -41,7 +41,7 @@ $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-
 
 <div class="<?= $createButtonClass ?>">
 	<a class="ui-btn-main" id="tasks-buttonAdd" href="<?= $createButtonUri->getUri() ?>">
-		<?= GetMessage('TASKS_BTN_ADD_TASK') ?>
+		<?= GetMessage('TASKS_BTN_CREATE_TASK') ?>
 	</a>
 	<span id="tasks-popupMenuAdd" class="ui-btn-extra"></span>
 </div>
@@ -53,7 +53,7 @@ $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-
 			return [
 				{
 					tabId: 'popupMenuAdd',
-					text: '<?= GetMessageJS('TASKS_BTN_ADD_TASK') ?>',
+					text: '<?= GetMessageJS('TASKS_BTN_ADD_TASK_BY_TASK') ?>',
 					href: '<?= $createButtonUri->getUri() ?>',
 					onclick : function() {
 						this.close();
@@ -61,7 +61,7 @@ $createButtonClass .= ($arResult['IS_SCRUM_PROJECT'] ? ' ui-btn-light-border ui-
 				},
 				{
 					tabId: 'popupMenuAdd',
-					text: '<?= GetMessageJS('TASKS_BTN_ADD_TASK_BY_TEMPLATE') ?>',
+					text: '<?= GetMessageJS('TASKS_BTN_CREATE_TASK_BY_TEMPLATE') ?>',
 					href: '',
 					className: 'menu-popup-no-icon menu-popup-item-submenu',
 					cacheable: true,

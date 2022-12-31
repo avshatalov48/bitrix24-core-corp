@@ -22,7 +22,7 @@ class Video extends Base
 	{
 		parent::__construct($name, $fileId, $viewId, $previewId, $isTransformationEnabledInStorage);
 		$preview = $this->getPreviewData();
-		if(!empty($preview))
+		if(!empty($preview) && !empty($preview['WIDTH']) && !empty($preview['HEIGHT']))
 		{
 			$sizes = $this->calculateSizes($preview,
 				array('WIDTH' => $this->getJsViewerWidth(), 'HEIGHT' => $this->getJsViewerHeight()),
@@ -104,7 +104,7 @@ class Video extends Base
 			{
 				$sizeType = $params['SIZE_TYPE'];
 			}
-			if(!empty($preview) && isset($params['WIDTH']) && isset($params['HEIGHT']))
+			if(!empty($preview) && !empty($preview['WIDTH']) && !empty($preview['HEIGHT']) && isset($params['WIDTH']) && isset($params['HEIGHT']))
 			{
 				$sizes = $this->calculateSizes($preview, $params);
 				$params['WIDTH'] = $sizes['WIDTH'];

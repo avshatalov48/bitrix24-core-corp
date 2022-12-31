@@ -12,9 +12,10 @@ return [
 		'main.popup',
 		'main.qrcode',
 		'ui.avatar-editor',
-		'main.core',
 		'main.core.events',
+		'main.core',
 		'ui.qrauthorization',
+		'main.loader',
 	],
 	'skip_core' => false,
 ];

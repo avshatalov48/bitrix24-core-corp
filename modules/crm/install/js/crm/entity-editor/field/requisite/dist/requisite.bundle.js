@@ -2351,6 +2351,9 @@ this.BX = this.BX || {};
 
 	      this._autocomplete.subscribe('onClear', this.onClearAutocompleteValue.bind(this));
 
+	      this._autocomplete.subscribe('onInstallDefaultApp', this.onInstallDefaultApp.bind(this));
+
+	      main_core_events.EventEmitter.subscribe("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp", this.onInstallDefaultAppGlobal.bind(this));
 	      this.presetMenu = new PresetMenu(this.getName() + '_requisite_preset_menu', this.getPresetList());
 	      this.presetMenu.subscribe('onSelect', this.onAddRequisiteFromMenu.bind(this));
 	      var isReadonly = this.getEditor().isReadOnly();
@@ -2741,7 +2744,8 @@ this.BX = this.BX || {};
 	      return clientResolverProp ? {
 	        "isPlacement": BX.prop.getString(clientResolverProp, "IS_PLACEMENT", "N") === "Y",
 	        "numberOfPlacements": BX.prop.getArray(clientResolverProp, "PLACEMENTS", []).length,
-	        "countryId": BX.prop.getInteger(clientResolverProp, "COUNTRY_ID", 0)
+	        "countryId": BX.prop.getInteger(clientResolverProp, "COUNTRY_ID", 0),
+	        "defaultAppInfo": BX.prop.getObject(clientResolverProp, "DEFAULT_APP_INFO", {})
 	      } : {};
 	    }
 	  }, {
@@ -2752,7 +2756,7 @@ this.BX = this.BX || {};
 	      title = BX.prop.getString(clientResolverProp, "TITLE", "");
 	      var isPlacement = BX.prop.getString(clientResolverProp, 'IS_PLACEMENT', 'N') === 'Y';
 
-	      if (!isPlacement) {
+	      if (!isPlacement && main_core.Type.isStringFilled(title)) {
 	        title = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_FILL_IN').toLowerCase().replace('#field_name#', title);
 	      }
 
@@ -3249,6 +3253,30 @@ this.BX = this.BX || {};
 	          this.showDeleteConfirmation(selectedRequisiteId);
 	        }
 	      }
+	    }
+	  }, {
+	    key: "onInstallDefaultApp",
+	    value: function onInstallDefaultApp() {
+	      BX.onGlobalCustomEvent("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp");
+	    }
+	  }, {
+	    key: "onInstallDefaultAppGlobal",
+	    value: function onInstallDefaultAppGlobal() {
+	      var _this6 = this;
+
+	      BX.ajax.runAction('crm.requisite.schemedata.getRequisitesSchemeData', {
+	        data: {
+	          entityTypeId: this.getEditor().getEntityTypeId()
+	        }
+	      }).then(function (data) {
+	        if (main_core.Type.isPlainObject(data) && data.hasOwnProperty("data") && main_core.Type.isPlainObject(data["data"])) {
+	          _this6._schemeElement.setData(data["data"]);
+
+	          _this6.updateAutocompletePlaceholder();
+
+	          _this6.updateAutocompeteClientResolverPlacementParams();
+	        }
+	      });
 	    }
 	  }, {
 	    key: "onViewStringClick",

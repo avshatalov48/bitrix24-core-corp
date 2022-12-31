@@ -1,47 +1,12 @@
 (() => {
-	const styles = {
-		base: {
-			wrapper: {
-				flex: 1
-			},
-			container: {
-				flexDirection: 'row',
-				justifyContent: 'center',
-				alignContent: 'center',
-				borderWidth: 1,
-				borderRadius: 24,
-				height: 48
-			},
-			text: {
-				fontWeight: '500',
-				fontSize: 17,
-				ellipsize: 'end',
-				numberOfLines: 1
-			}
-		},
-		primary: {
-			container: {
-				borderColor: '#00a2e8',
-				backgroundColor: '#00a2e8'
-			},
-			text: {
-				color: '#ffffff'
-			}
-		},
-		secondary: {
-			container: {
-				borderColor: '#525c69',
-				backgroundColor: '#ffffff'
-			},
-			text: {
-				color: '#525c69'
-			}
-		}
-	};
+
+	const { throttle } = jn.require('utils/function');
+	const { get } = jn.require('utils/object');
+	const { ButtonsToolbar } = jn.require('layout/ui/buttons-toolbar');
 
 	const Types = {
 		PRIMARY: 'primary',
-		SECONDARY: 'secondary'
+		SECONDARY: 'secondary',
 	};
 
 	/**
@@ -54,10 +19,12 @@
 			super(props);
 
 			this.state = {
-				visible: false
+				visible: false,
 			};
 
 			this.setModel(this.props.model);
+
+			this.handleActionClick = throttle(this.handleActionClick, 500, this);
 		}
 
 		componentWillReceiveProps(newProps)
@@ -72,84 +39,84 @@
 
 		show()
 		{
-			this.setState({visible: true});
+			if (this.state.visible !== true)
+			{
+				this.setState({ visible: true });
+			}
 		}
 
 		hide()
 		{
-			this.setState({visible: false});
+			if (this.state.visible !== false)
+			{
+				this.setState({ visible: false });
+			}
+		}
+
+		getSafeAreaBottomHeight()
+		{
+			if (Application.getPlatform() === 'android')
+			{
+				return 0;
+			}
+
+			return get(device.screen, ['safeArea', 'bottom'], 0);
+		}
+
+		getHeight(visible)
+		{
+			if (!visible)
+			{
+				return 0;
+			}
+
+			return 58 + this.getSafeAreaBottomHeight();
 		}
 
 		render()
 		{
+			const { visible } = this.state;
+
 			return View(
 				{
-					style: (
-						this.state.visible
-							? UI.BottomToolbar.styles.innerContainer(false)
-							: {display: 'none'}
-					)
+					style: {
+						position: 'absolute',
+						left: 0,
+						right: 0,
+						bottom: 0,
+						height: this.getHeight(visible),
+					},
 				},
-				this.state.visible && (new UI.BottomToolbar({isWithSafeArea: false, items: this.prepareItems()}))
+				visible && ButtonsToolbar({
+					safeArea: visible,
+					buttons: this.prepareButtons(),
+				}),
 			);
 		}
 
-		prepareItems()
+		prepareButtons()
 		{
 			const filteredItems = this.props.actions.filter(action => action.onActiveCallback(this.props.item));
-			const edgeMargin = filteredItems.length === 1 ? 48 : 25;
 
 			return (
 				filteredItems
-					.map((action, index) => {
-						const buttonStyles = this.getButtonStyles(action.type);
+					.map((action) => new PrimaryButton({
+						text: action.title,
+						onClick: () => this.handleActionClick(action),
 
-						return View(
-							{
-								style: buttonStyles.wrapper
-							},
-							View(
-								{
-									style: {
-										...buttonStyles.container,
-										marginLeft: index > 0 ? 16 : edgeMargin,
-										marginRight: index === (filteredItems.length - 1) ? edgeMargin : 0
-									},
-									onClick: () => {
-										this.props.onActionStart(action);
-
-										action
-											.onClickCallback(this.model)
-											.then((data) => this.props.onActionSuccess(action, data))
-											.catch((data) => this.props.onActionFailure(action, data))
-										;
-									}
-								},
-								Text({
-									style: buttonStyles.text,
-									text: action.title
-								})
-							)
-						)
-					})
+					}))
 			);
 		}
 
-		getButtonStyles(type = Types.SECONDARY)
+		handleActionClick(action)
 		{
-			const buttonStyles = styles[type] || styles[Types.SECONDARY];
+			this.props.onActionStart(action);
 
-			return {
-				...styles.base,
-				container: {
-					...styles.base.container,
-					...buttonStyles.container
-				},
-				text: {
-					...styles.base.text,
-					...buttonStyles.text
-				}
-			};
+			action
+				.onClickCallback(this.model)
+				.then((data) => this.props.onActionSuccess(action, data))
+				.catch((data) => this.props.onActionFailure(action, data))
+			;
 		}
 	}
 

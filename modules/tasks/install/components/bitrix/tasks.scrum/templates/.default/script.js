@@ -889,8 +889,10 @@ this.BX.Tasks = this.BX.Tasks || {};
 	  babelHelpers.createClass(Name, [{
 	    key: "render",
 	    value: function render() {
+	      var _this2 = this;
+
 	      var visualClasses = this.completed ? '--completed' : '';
-	      visualClasses += this.important ? '--important' : '';
+	      visualClasses += this.important ? ' --important' : '';
 	      var value = main_core.Text.encode(this.value);
 
 	      if (this.important) {
@@ -901,6 +903,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 
 	      if (this.pathToTask) {
 	        this.node = main_core.Tag.render(_templateObject$3 || (_templateObject$3 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a\n\t\t\t\t\thref=\"", "\"\n\t\t\t\t\tclass=\"tasks-scrum__item--title ", "\"\n\t\t\t\t>\n\t\t\t\t\t", "\n\t\t\t\t</a>\n\t\t\t"])), main_core.Text.encode(this.pathToTask), visualClasses, value);
+	        main_core.Event.bind(this.node, 'click', function () {
+	          _this2.emit('urlClick');
+	        });
 	      } else {
 	        this.node = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__item--title ", "\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), visualClasses, value);
 	        main_core.Event.bind(this.node, 'click', this.onClick.bind(this));
@@ -1694,6 +1699,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.name = name;
 	      this.name.subscribe('click', function () {
 	        return _this2.emit('showTask');
+	      });
+	      this.name.subscribe('urlClick', function () {
+	        return _this2.emit('destroyActionPanel');
 	      });
 	    }
 	  }, {
@@ -3833,6 +3841,9 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      item.subscribe('showTask', function (baseEvent) {
 	        _this7.emit('showTask', baseEvent.getTarget());
 	      });
+	      item.subscribe('destroyActionPanel', function (baseEvent) {
+	        _this7.emit('destroyActionPanel', baseEvent.getTarget());
+	      });
 	      item.subscribe('changeTaskResponsible', function (baseEvent) {
 	        _this7.emit('changeTaskResponsible', baseEvent.getTarget());
 	      });
@@ -4287,7 +4298,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      if (this.mandatoryExists) {
 	        return main_core.Tag.render(_templateObject3$1 || (_templateObject3$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__content-empty--text\">\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_4'));
 	      } else {
-	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__content-empty--text\">\n\t\t\t\t\t<span class=\"tasks-scrum__content-empty--btn-create\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_2'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_3'));
+	        return main_core.Tag.render(_templateObject4 || (_templateObject4 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"tasks-scrum__content-empty--text\">\n\t\t\t\t\t<span class=\"tasks-scrum__content-empty--btn-create\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span> ", "\n\t\t\t\t</div>\n\t\t\t"])), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_2'), main_core.Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_3'));
 	      }
 	    }
 	  }, {
@@ -10214,6 +10225,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      this.entityStorage.getBacklog().subscribe('openAddTaskForm', this.onOpenAddTaskForm.bind(this));
 	      this.entityStorage.getBacklog().subscribe('updateItem', this.onUpdateItem.bind(this));
 	      this.entityStorage.getBacklog().subscribe('showTask', this.onShowTask.bind(this));
+	      this.entityStorage.getBacklog().subscribe('destroyActionPanel', this.onDestroyActionPanel.bind(this));
 	      this.entityStorage.getBacklog().subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
 	      this.entityStorage.getBacklog().subscribe('onShowResponsibleDialog', this.onShowResponsibleDialog.bind(this));
 	      this.entityStorage.getBacklog().subscribe('openAddEpicForm', this.onOpenEpicForm.bind(this));
@@ -10261,6 +10273,7 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      sprint.subscribe('updateItem', this.onUpdateItem.bind(this));
 	      sprint.subscribe('getSubTasks', this.onGetSubTasks.bind(this));
 	      sprint.subscribe('showTask', this.onShowTask.bind(this));
+	      sprint.subscribe('destroyActionPanel', this.onDestroyActionPanel.bind(this));
 	      sprint.subscribe('startSprint', this.onStartSprint.bind(this));
 	      sprint.subscribe('completeSprint', this.onCompleteSprint.bind(this));
 	      sprint.subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
@@ -10804,6 +10817,13 @@ this.BX.Tasks = this.BX.Tasks || {};
 	    value: function onShowTask(baseEvent) {
 	      var item = baseEvent.getData();
 	      this.sidePanel.openSidePanelByUrl(this.pathToTask.replace('#task_id#', item.getSourceId()));
+	    }
+	  }, {
+	    key: "onDestroyActionPanel",
+	    value: function onDestroyActionPanel(baseEvent) {
+	      var item = baseEvent.getData();
+	      this.destroyActionPanel();
+	      this.entityStorage.findEntityByItemId(item.getId()).deactivateGroupMode();
 	    }
 	  }, {
 	    key: "onTagsSearchOpen",
@@ -11779,7 +11799,8 @@ this.BX.Tasks = this.BX.Tasks || {};
 	      } else {
 	        var url = '/bitrix/components/bitrix/tasks.automation/slider.php?site_id=' + main_core.Loc.getMessage('SITE_ID') + '&project_id=' + this.groupId;
 	        this.sidePanel.openSidePanel(url, {
-	          customLeftBoundary: 0
+	          customLeftBoundary: 0,
+	          cacheable: false
 	        });
 	      }
 	    }

@@ -564,8 +564,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    // );
 
 	    const allIds = Object.keys(data.widgets);
-	    const contentInner = allIds.length === 0 ? this.renderEmptyInner() : this.renderWidgetRows(data.widgets, data.formName, data.formType); // FIXME ${showMoreLink}
-	    // let showMoreLink = '';
+	    const contentInner = allIds.length === 0 ? this.renderEmptyInner() : this.renderWidgetRows(data.widgets, data.formName, data.formType); // let showMoreLink = '';
 	    // if (data.showMoreLink)
 	    // {
 	    // 	const allWidgetsUrl = Type.isStringFilled(data.url.allWidgets) ? data.url.allWidgets : '/crm/button/';
@@ -589,15 +588,15 @@ this.BX.Crm = this.BX.Crm || {};
 						${0}
 					</button>
 
-					<button
+					<a
 						class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-round ui-btn-no-caps crm-form-embed__customization-settings--btn"
-						onclick="window.open('/crm/button/')"
+						href="${0}"
 						style="float: right"
 					>
 						${0}
-					</button>
+					</a>
 				</div>
-			`), contentInner, BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUTTON'), BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUTTON_ALL')), section);
+			`), contentInner, BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUTTON'), main_core.Text.encode(data.url.allWidgets), BX.Loc.getMessage('EMBED_SLIDER_WIDGET_FORM_ALL_WIDGETS')), section);
 	    return section;
 	  }
 
@@ -826,8 +825,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    // );
 
 	    const allIds = Object.keys(data.lines);
-	    const contentInner = allIds.length === 0 ? this.renderEmptyInner() : this.renderLineRows(data.lines, data.formName); // FIXME ${showMoreLink}
-	    // let showMoreLink = '';
+	    const contentInner = allIds.length === 0 ? this.renderEmptyInner() : this.renderLineRows(data.lines, data.formName); // let showMoreLink = '';
 	    // if (data.showMoreLink)
 	    // {
 	    // 	const allLinesUrl = Type.isStringFilled(data.url.allLines) ? data.url.allLines : '/services/contact_center/openlines';
@@ -841,10 +839,19 @@ this.BX.Crm = this.BX.Crm || {};
 	    // }
 
 	    main_core.Dom.append(main_core.Tag.render(_t2$2 || (_t2$2 = _$2`
-			<div class="crm-form-embed__customization-settings --without-btn">
+			<div class="crm-form-embed__customization-settings"> <!-- --without-btn -->
 				${0}
+				
+				<a
+					class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-round ui-btn-no-caps crm-form-embed__customization-settings--btn"
+					href="${0}"
+					style="float: right;"
+				>
+					${0}
+				</a>
+				<div style="clear: both"></div>
 			</div>
-		`), contentInner), section);
+		`), contentInner, main_core.Text.encode(data.url.allLines), BX.Loc.getMessage('EMBED_SLIDER_OPENLINES_FORM_ALL_LINES')), section);
 	    return section;
 	  }
 
@@ -3683,6 +3690,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      break;
 
 	    case 'link':
+	    default:
 	      babelHelpers.classPrivateFieldLooseBase(this, _publink)[_publink].load();
 
 	      break;

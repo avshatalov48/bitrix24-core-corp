@@ -369,6 +369,7 @@ BX.CTimeMan = function(div, DATA)
 		REOPEN: BX.delegate(this.ReOpenDay, this),
 		PAUSE: BX.delegate(this.PauseDay, this)
 	};
+	this.blockedBtn = null;
 
 	this.ERROR = false;
 	this.DENY_QUERY = false;
@@ -467,6 +468,8 @@ BX.CTimeMan.prototype._Update = function(data, action)
 			this.CloseDayShowForm();
 		}
 	}
+
+	this.unBlockActionBtn();
 }
 
 BX.CTimeMan.prototype.Query = function(action, data, callback, bForce)
@@ -716,9 +719,63 @@ BX.CTimeMan.prototype.ShowFormWeekly = function(data)
 	return false;
 }
 
+BX.CTimeMan.prototype.getActionBtn = function(e)
+{
+	if (
+		e.target.classList.contains('popup-window-button')
+		|| e.target.classList.contains('ui-btn')
+	)
+	{
+		return e.target;
+	}
+	else
+	{
+		return e.target.parentElement;
+	}
+}
+
+BX.CTimeMan.prototype.blockActionBtn = function(e)
+{
+	this.blockedBtn = this.getActionBtn(e);
+
+	if (this.blockedBtn.classList.contains('popup-window-button'))
+	{
+		BX.addClass(this.blockedBtn, 'popup-window-button-wait');
+	}
+	else
+	{
+		BX.addClass(this.blockedBtn, 'ui-btn-wait');
+	}
+}
+
+BX.CTimeMan.prototype.unBlockActionBtn = function()
+{
+	if (this.blockedBtn === null)
+	{
+		return;
+	}
+
+	if (this.blockedBtn.classList.contains('popup-window-button'))
+	{
+		BX.removeClass(this.blockedBtn, 'popup-window-button-wait');
+	}
+	else
+	{
+		BX.removeClass(this.blockedBtn, 'ui-btn-wait');
+	}
+
+	this.blockedBtn = null;
+}
 
 BX.CTimeMan.prototype.CloseDay = function(e)
 {
+	if (this.blockedBtn)
+	{
+		return BX.PreventDefault(e);
+	}
+
+	this.blockActionBtn(e);
+
 	var data = {timestamp: selectedTimestamp, report: errorReport};
 	if (this.WND && this.WND.CLOCKWND && (this.WND.CLOCKWND.customUserDate !== undefined))
 	{
@@ -736,6 +793,13 @@ BX.CTimeMan.prototype.CloseDay = function(e)
 
 BX.CTimeMan.prototype.OpenDay = function(e)
 {
+	if (this.blockedBtn)
+	{
+		return BX.PreventDefault(e);
+	}
+
+	this.blockActionBtn(e);
+
 	var data = {timestamp: selectedTimestamp, report: errorReport};
 	if (this.WND && this.WND.CLOCKWND && (this.WND.CLOCKWND.customUserDate !== undefined))
 	{
@@ -749,6 +813,13 @@ BX.CTimeMan.prototype.OpenDay = function(e)
 
 BX.CTimeMan.prototype.ReOpenDay = function(e)
 {
+	if (this.blockedBtn)
+	{
+		return BX.PreventDefault(e);
+	}
+
+	this.blockActionBtn(e);
+
 	var newActionName = 'reopen';
 	if (this.DATA && this.DATA.INFO && this.DATA.INFO.PAUSED)
 	{
@@ -762,6 +833,13 @@ BX.CTimeMan.prototype.ReOpenDay = function(e)
 
 BX.CTimeMan.prototype.PauseDay = function(e)
 {
+	if (this.blockedBtn)
+	{
+		return BX.PreventDefault(e);
+	}
+
+	this.blockActionBtn(e);
+
 	this.setTimestamp(0);
 	this.setReport('');
 	this.Query('pause', {}, BX.proxy(this._Update, this));
@@ -4072,10 +4150,7 @@ BX.CTimeManTabEditorControl.prototype.InitLHE = function()
 		{
 			if (!BX.CDialog)
 			{
-				arScripts = ["/bitrix/js/main/core/core_window.js"];
-				arCss = ["/bitrix/js/main/core/css/core_window.css"];
-				BX.loadCSS(arCss);
-				BX.loadScript(arScripts);
+				BX.Runtime.loadExtension('window');
 			}
 
 			var content = this.tabs[this.current_tab_id].CONTENT||'';
@@ -4675,10 +4750,10 @@ BX.CTimeManReportFormWeekly.prototype.GetContentPeopleRow = function()
 		html: '<div class="tm-report-popup-r1"></div><div class="tm-report-popup-r0"></div>\
 <div class="tm-report-popup-people-inner">\
 	<div class="tm-report-popup-user tm-report-popup-employee">\
-		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_FROM') + ':</span><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-avatar"' + (this.data.FROM.PHOTO ? ' style="background: url(\'' + this.data.FROM.PHOTO + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-name">' + this.data.FROM.NAME + '</a><span class="tm-report-popup-user-position">' + (this.data.FROM.WORK_POSITION || '&nbsp;') + '</span></span>\
+		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_FROM') + ':</span><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-avatar"' + (this.data.FROM.PHOTO ? ' style="background: url(\'' + encodeURI(this.data.FROM.PHOTO) + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-name">' + this.data.FROM.NAME + '</a><span class="tm-report-popup-user-position">' + (this.data.FROM.WORK_POSITION || '&nbsp;') + '</span></span>\
 	</div>\
 	<div class="tm-report-popup-user tm-report-popup-director">\
-		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_TO') + ':</span><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-avatar"' + (this.data.TO[0].PHOTO ? ' style="background: url(\'' + this.data.TO[0].PHOTO + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-name">' + this.data.TO[0].NAME + '</a><span class="tm-report-popup-user-position">' + (this.data.TO[0].WORK_POSITION || '&nbsp;') + '</span></span>\
+		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_TO') + ':</span><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-avatar"' + (this.data.TO[0].PHOTO ? ' style="background: url(\'' + encodeURI(this.data.TO[0].PHOTO) + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-name">' + this.data.TO[0].NAME + '</a><span class="tm-report-popup-user-position">' + (this.data.TO[0].WORK_POSITION || '&nbsp;') + '</span></span>\
 	</div>\
 </div>\
 <div class="tm-report-popup-r0"></div><div class="tm-report-popup-r1"></div>'
@@ -5809,10 +5884,10 @@ BX.CTimeManReportForm.prototype.GetContentPeopleRow = function()
 		html: '<div class="tm-report-popup-r1"></div><div class="tm-report-popup-r0"></div>\
 <div class="tm-report-popup-people-inner">\
 	<div class="tm-report-popup-user tm-report-popup-employee">\
-		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_FROM') + ':</span><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-avatar"' + (this.data.FROM.PHOTO ? ' style="background: url(\'' + this.data.FROM.PHOTO + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-name">' + this.data.FROM.NAME + '</a><span class="tm-report-popup-user-position">' + (this.data.FROM.WORK_POSITION || '&nbsp;') + '</span></span>\
+		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_FROM') + ':</span><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-avatar"' + (this.data.FROM.PHOTO ? ' style="background: url(\'' + encodeURI(this.data.FROM.PHOTO) + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-name">' + this.data.FROM.NAME + '</a><span class="tm-report-popup-user-position">' + (this.data.FROM.WORK_POSITION || '&nbsp;') + '</span></span>\
 	</div>\
 	<div class="tm-report-popup-user tm-report-popup-director">\
-		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_TO') + ':</span><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-avatar"' + (this.data.TO[0].PHOTO ? ' style="background: url(\'' + this.data.TO[0].PHOTO + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-name">' + BX.util.htmlspecialchars(this.data.TO[0].NAME) + '</a><span class="tm-report-popup-user-position">' + (BX.util.htmlspecialchars(this.data.TO[0].WORK_POSITION || '') || '&nbsp;') + '</span></span>\
+		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_TO') + ':</span><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-avatar"' + (this.data.TO[0].PHOTO ? ' style="background: url(\'' + encodeURI(this.data.TO[0].PHOTO) + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-name">' + BX.util.htmlspecialchars(this.data.TO[0].NAME) + '</a><span class="tm-report-popup-user-position">' + (BX.util.htmlspecialchars(this.data.TO[0].WORK_POSITION || '') || '&nbsp;') + '</span></span>\
 	</div>\
 </div>\
 <div class="tm-report-popup-r0"></div><div class="tm-report-popup-r1"></div>'
@@ -6930,10 +7005,10 @@ BX.JSTimeManReportFullForm.prototype.GetPeople = function()
 		html: '<div class="tm-report-popup-r1"></div><div class="tm-report-popup-r0"></div>\
 <div class="tm-report-popup-people-inner">\
 	<div class="tm-report-popup-user tm-report-popup-employee">\
-		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_FROM') + ':</span><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-avatar"' + (this.data.FROM.PHOTO ? ' style="background: url(\'' + this.data.FROM.PHOTO + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-name">' + this.data.FROM.NAME + '</a><span class="tm-report-popup-user-position">' + (BX.util.htmlspecialchars(this.data.FROM.WORK_POSITION || '') || '&nbsp;') + '</span></span>\
+		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_FROM') + ':</span><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-avatar"' + (this.data.FROM.PHOTO ? ' style="background: url(\'' + encodeURI(this.data.FROM.PHOTO) + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.FROM.URL + '" class="tm-report-popup-user-name">' + this.data.FROM.NAME + '</a><span class="tm-report-popup-user-position">' + (BX.util.htmlspecialchars(this.data.FROM.WORK_POSITION || '') || '&nbsp;') + '</span></span>\
 	</div>\
 	<div class="tm-report-popup-user tm-report-popup-director">\
-		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_TO') + ':</span><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-avatar"' + (this.data.TO[0].PHOTO ? ' style="background: url(\'' + this.data.TO[0].PHOTO + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-name">' + this.data.TO[0].NAME + '</a><span class="tm-report-popup-user-position">' + (BX.util.htmlspecialchars(this.data.TO[0].WORK_POSITION || '') || '&nbsp;') + '</span></span>\
+		<span class="tm-report-popup-user-label">' + BX.message('JS_CORE_TMR_TO') + ':</span><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-avatar"' + (this.data.TO[0].PHOTO ? ' style="background: url(\'' + encodeURI(this.data.TO[0].PHOTO) + '\') no-repeat scroll center center transparent; background-size: cover;"' : '') + '></a><span class="tm-report-popup-user-info"><a href="' + this.data.TO[0].URL + '" class="tm-report-popup-user-name">' + this.data.TO[0].NAME + '</a><span class="tm-report-popup-user-position">' + (BX.util.htmlspecialchars(this.data.TO[0].WORK_POSITION || '') || '&nbsp;') + '</span></span>\
 	</div>\
 </div>\
 <div class="tm-report-popup-r0"></div><div class="tm-report-popup-r1"></div>'

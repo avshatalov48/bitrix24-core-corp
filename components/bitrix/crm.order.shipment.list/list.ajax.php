@@ -39,7 +39,7 @@ if(!CCrmPerms::IsAuthorized())
 
 global $APPLICATION;
 
-if ($action === 'SAVE_PROGRESS')
+if ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
 	CUtil::JSPostUnescape();
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;

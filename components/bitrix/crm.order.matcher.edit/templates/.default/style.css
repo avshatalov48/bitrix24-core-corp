@@ -225,7 +225,7 @@ select {
 }
 
 .crm-orderform-edit-about-info-deal {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 /* Field constructor */
@@ -334,7 +334,7 @@ select {
 .crm-orderform-edit-right-list {
 	padding: 0;
 	margin: 0;
-	font: bold 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 11px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	text-transform: uppercase;
 }
@@ -701,7 +701,7 @@ select {
 .crm-orderform-edit-left-inner-field-title-item,
 .crm-orderform-edit-left-field-header-title,
 .crm-orderform-edit-left-inner-section-title-item  {
-	font: bold 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 }
 
@@ -730,7 +730,7 @@ select {
 	width: 100%;
 	border: 0;
 	border-bottom: 1px solid rgba(170,175,181, .2);
-	font: bold 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-orderform-edit-left-inner-field-title-field-item::-webkit-input-placeholder {color: rgba(0,0,0, .3);}
@@ -1028,7 +1028,7 @@ select {
 
 .crm-orderform-element-br {
 	height: 38px;
-	font: bold 14px/39px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/39px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-orderform-edit-left-inner-field-add {
@@ -1142,7 +1142,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 .crm-orderform-edit-task-options-destination-text {
 	display: inline-block;
 	vertical-align: middle;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .task-option-inp-del {
@@ -1198,7 +1198,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	color: #2067b0;
 	cursor: pointer;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	margin: 7px 7px 7px 18px;
 	line-height: 17px;
@@ -1253,7 +1253,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	display: inline-block;
 	overflow: hidden;
 	float: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-left: 26px;
 	cursor: pointer;
 	color: #5e6675;
@@ -1454,7 +1454,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 .crm-orderform-edit-task-options-checkbox-element {
 	position: relative;
 	display: inline-block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	vertical-align: middle;
 }
 
@@ -1565,7 +1565,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 .crm-orderform-edit-task-edit-deal-stage-macros {
 	display: inline-block;
 	margin: 0 0 0 13px;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	-webkit-transition: border-bottom-color 0.2s linear;
 	transition: border-bottom-color 0.2s linear;
@@ -1695,7 +1695,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	-moz-border-radius: 2px;
 	border-radius: 2px;
 	background: rgba(187,237,33, .34);
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #417505;
 }
 
@@ -1769,7 +1769,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 }
 
 .crm-orderform-edit-task-options-rule-select-item {
-	font: bold 14px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/19px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /*.rule-select-item-equally {*/
@@ -1859,7 +1859,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 }
 
 .crm-orderform-edit-form-type-upload-text {
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 
@@ -1867,7 +1867,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 
 .crm-orderform-edit-task-options-settings-title {
 	margin: 0 0 15px 0;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-orderform-edit-task-options-document-settings-radio-element {
@@ -1993,7 +1993,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 
 .crm-orderform-edit-task-options-account-setup-new-goods-add {
 	display: inline-block;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	vertical-align: middle;
 	border-bottom: 1px solid transparent;
@@ -2039,7 +2039,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 
 .bx-interface-grid .crm-orderform-edit-metric-col {
 	padding: 0 10px;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	text-align: center;
 	background: rgba(83,92,105, .07);
@@ -2093,7 +2093,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 }
 .crm-orderform-edit-task-options-metric-show-event-button span {
 	display: inline-block;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 	-webkit-transition: border-bottom-color 0.2s linear;
 	transition: border-bottom-color 0.2s linear;
@@ -2177,7 +2177,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 }
 
 .crm-orderform-edit-task-options-metric-create-title {
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 	margin: 0 0 12px 0;
 }
@@ -2222,7 +2222,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	-webkit-border-radius: 2px 2px 0 0;
 	-moz-border-radius: 2px 2px 0 0;
 	border-radius: 2px 2px 0 0;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	background: rgba(83,92,105, .09);
 	text-align: center;
 	cursor: pointer;
@@ -2527,7 +2527,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 }
 
 .crm-orderform-edit-popup-tooltip-element:last-child {
-	font: bold 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-orderform-edit-popup-tooltip-edit {
@@ -2780,7 +2780,7 @@ span.crm-orderform-edit-task-options-destination-wrap {
 	height: 32px;
 	line-height: 32px;
 	margin: 1px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	border-radius: var(--ui-field-border-radius, 1px);
 	background: #a1e7f7;
 	white-space: nowrap;

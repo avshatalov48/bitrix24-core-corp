@@ -1,5 +1,9 @@
 <?php
+
 return [
-	'layout/ui/entity-editor/control/*',
-	'layout/ui/entity-editor/enum',
+	'extensions' => [
+		'layout/ui/entity-editor/control/*',
+		'layout/ui/entity-editor/enum',
+		'layout/ui/fields',
+	],
 ];

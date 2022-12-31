@@ -21,3 +21,7 @@
 .crm-timeline__card-status.--clickable {
 	cursor: pointer;
 }
+
+.crm-timeline__card-status.--hint {
+	cursor: help;
+}

@@ -1,4 +1,6 @@
-
+/**
+ * @module uploader/const
+ */
 jn.define("uploader/const", (require, exports, module) => {
 	const Events = {
 		FILE_CREATED: "onfilecreated",

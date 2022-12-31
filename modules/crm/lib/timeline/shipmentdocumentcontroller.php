@@ -218,7 +218,9 @@ class ShipmentDocumentController extends EntityController
 				{
 					$data['DETAIL_LINK'] = \CComponentEngine::MakePathFromTemplate(
 						\COption::GetOptionString('crm', 'path_to_shipment_document_details'),
-						array('document_id' => $documentId)
+						[
+							'shipment_document_id' => $documentId,
+						]
 					);
 				}
 			}
@@ -247,7 +249,9 @@ class ShipmentDocumentController extends EntityController
 				{
 					$data['DETAIL_LINK'] = \CComponentEngine::MakePathFromTemplate(
 						\COption::GetOptionString('crm', 'path_to_shipment_document_details'),
-						array('document_id' => $documentId)
+						[
+							'shipment_document_id' => $documentId,
+						]
 					);
 				}
 			}

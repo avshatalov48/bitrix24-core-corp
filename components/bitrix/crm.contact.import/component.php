@@ -42,6 +42,18 @@ $arResult['ORIGIN_LIST'] = array(
 	'livemail' => GetMessage('CRM_FIELD_IMPORT_FILE_ORIGIN_LIVE_MAIL')
 );
 
+$zone = LANGUAGE_ID;
+if (CModule::IncludeModule('bitrix24'))
+{
+	$zone = \CBitrix24::getPortalZone();
+}
+
+if($zone !== 'ru')
+{
+	unset($arResult['ORIGIN_LIST']['yandex']);
+	unset($arResult['ORIGIN_LIST']['mailru']);
+}
+
 $fixedOrigin = isset($_REQUEST['origin'])? mb_strtolower($_REQUEST['origin']) : '';
 if($fixedOrigin !== '' && !isset($arResult['ORIGIN_LIST'][$fixedOrigin]))
 {

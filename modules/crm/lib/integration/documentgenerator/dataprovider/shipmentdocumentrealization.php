@@ -71,6 +71,11 @@ class ShipmentDocumentRealization extends ProductsDataProvider implements Nameab
 				$this->getCurrencyId()
 			);
 
+			if (!$this->isProductVariantSupported($item['PRODUCT_VARIANT']))
+			{
+				continue;
+			}
+
 			$item['ID'] = $shipmentItem->getId();
 			$item['QUANTITY'] = $shipmentItem->getQuantity();
 			$item['CUSTOMIZED'] = 'Y';
@@ -90,7 +95,7 @@ class ShipmentDocumentRealization extends ProductsDataProvider implements Nameab
 		{
 			return EntityAuthorization::checkPermission(
 				EntityPermissionType::READ,
-				\CCrmOwnerType::OrderShipment,
+				\CCrmOwnerType::ShipmentDocument,
 				$this->source,
 				\CCrmPerms::GetUserPermissions($userId)
 			);

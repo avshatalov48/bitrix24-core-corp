@@ -3,7 +3,6 @@
 
 namespace Bitrix\Crm\Service\Display\Field;
 
-
 use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Fileman\UserField\Types\AddressType;
 use Bitrix\Main\Loader;
@@ -47,6 +46,34 @@ class AddressField extends BaseSimpleField
 
 	protected function stripCoordinates(string $address): string
 	{
+		$parsedAddress = $this->prepareValue($address);
+		return (empty($parsedAddress[0]) ? $address : $parsedAddress[0]);
+	}
+
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		if ($this->isMultiple())
+		{
+			$results = [];
+
+			$fieldValue = (is_array($fieldValue) ? $fieldValue : [$fieldValue]);
+			foreach ($fieldValue as $value)
+			{
+				$results[] = $this->prepareValue($value);
+			}
+
+			return [
+				'value' => $results,
+			];
+		}
+
+		return [
+			'value' => $this->prepareValue($fieldValue),
+		];
+	}
+
+	protected function prepareValue($value): array
+	{
 		if (self::$filemanIncluded === null)
 		{
 			self::$filemanIncluded = Loader::includeModule('fileman');
@@ -54,10 +81,9 @@ class AddressField extends BaseSimpleField
 
 		if (!self::$filemanIncluded)
 		{
-			return $address;
+			return [$value];
 		}
 
-		$parsedAddress = AddressType::parseValue($address);
-		return (empty($parsedAddress[0]) ? $address : $parsedAddress[0]);
+		return AddressType::parseValue($value);
 	}
 }

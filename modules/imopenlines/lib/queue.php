@@ -949,7 +949,7 @@ class Queue
 			{
 				$countBusy  = SessionCheckTable::getCount([
 					'=SESSION.OPERATOR_ID' => $idUser,
-					'SESSION.CONFIG_ID' => $idLine,
+					'=SESSION.CONFIG_ID' => $idLine,
 					'<SESSION.STATUS' => $stopStatus
 				]);
 

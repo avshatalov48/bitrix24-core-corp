@@ -1,0 +1,1511 @@
+@font-face {
+	font-family: 'Montserrat-regular';
+	src: url('font/montserrat-regular.eot');
+	src:
+		url('font/montserrat-regular.eot?#iefix') format('embedded-opentype'),
+		url('font/montserrat-regular.woff2') format('woff2'),
+		url('font/montserrat-regular.woff') format('woff'),
+		url('font/montserrat-regular.ttf') format('truetype');
+	font-weight: normal;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Montserrat-regular';
+	src: url('font/montserrat-medium.eot');
+	src:
+		url('font/montserrat-medium.eot?#iefix') format('embedded-opentype'),
+		url('font/montserrat-medium.woff2') format('woff2'),
+		url('font/montserrat-medium.woff') format('woff'),
+		url('font/montserrat-medium.ttf') format('truetype');
+	font-weight: 500;
+	font-style: normal;
+}
+
+@font-face {
+	font-family: 'Montserrat-regular';
+	src: url('font/montserrat-semibold.eot');
+	src:
+		url('font/montserrat-semibold.eot?#iefix') format('embedded-opentype'),
+		url('font/montserrat-semibold.woff2') format('woff2'),
+		url('font/montserrat-semibold.woff') format('woff'),
+		url('font/montserrat-semibold.ttf') format('truetype');
+	font-weight: 600;
+	font-style: normal;
+}
+
+:root {
+	--intranet-pub-font-family-montserrat: 'Montserrat-regular', var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	--intranet-pub-font-family-primary: var(--ui-font-family-montserrat, var(--intranet-pub-font-family-montserrat));
+}
+
+html {
+	height: 100%;
+}
+
+body {
+	background: #2fc6f7;
+	box-sizing: border-box;
+	height: 100%;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	min-height: 650px;
+	margin: 0;
+	/*min-width: 1024px;*/
+	padding: 0;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+}
+
+.main-logo {
+	display: inline-block;
+	height: 87px;
+	text-decoration: none;
+	width: 226px;
+}
+
+.main-logo-ru {
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22226%22%20height%3D%2264%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23E2F5FD%22%20fill-rule%3D%22nonzero%22%20d%3D%22M7.47%2060.22c-4.268%200-7.304-2.97-7.304-7.414%200-4.4%203.014-7.436%207.304-7.436%204.29%200%207.304%203.058%207.304%207.436%200%204.444-3.08%207.414-7.304%207.414zm0-2.222c2.662%200%204.488-1.914%204.488-5.192%200-3.212-1.738-5.214-4.488-5.214-2.684%200-4.488%201.914-4.488%205.214%200%203.278%201.804%205.192%204.488%205.192zm14.366%202.222c-2.992%200-5.038-1.914-5.038-6.82%200-2.508.682-5.104%201.804-6.226%201.342-1.452%202.882-1.65%207.546-2.75v2.354c-4.114%201.012-5.258%201.188-5.918%202.046-.352.44-.616%201.166-.748%202.002h.044a6.024%206.024%200%200%201%203.014-.836c3.036%200%204.4%202.156%204.4%204.818%200%203.102-1.716%205.412-5.104%205.412zm.066-2.112c1.716%200%202.354-1.408%202.354-3.102%200-1.518-.506-2.992-2.222-2.992-.88%200-1.826.33-2.618.748-.022.286-.022.55-.022.748%200%203.124.946%204.598%202.508%204.598zM32.022%2060v-8.228H28.59l-.616-2.178h6.666v3.696c.374-.022.792-.044%201.188-.044%203.454%200%204.576%201.562%204.576%203.322%200%201.892-1.122%203.432-4.62%203.432h-3.762zm2.618-2.002h1.078c1.76%200%202.068-.638%202.068-1.386%200-.77-.374-1.342-2.068-1.342-.33%200-.748.022-1.078.044v2.684zm16.632-2.486h-6.666c.066%201.606%201.21%202.64%202.948%202.64%201.034%200%201.87-.286%202.618-.704l.792%201.804c-1.1.682-2.398.968-3.674.968-3.784%200-5.324-2.596-5.324-5.412%200-3.124%201.716-5.478%204.686-5.478%202.926%200%204.62%202.112%204.62%205.566v.616zm-6.688-1.826h4.026c-.022-1.188-.616-2.354-2.002-2.354-1.298%200-2.002%201.1-2.024%202.354zm7.986%209.988v-5.786h.682c1.452-1.782%202.156-3.938%202.948-8.294h6.402v8.294h1.474v5.786h-2.42V60H54.99v3.674h-2.42zm7.414-5.786v-6.16h-1.87c-.462%202.684-1.122%204.62-2.046%206.116v.044h3.916zM66.122%2060V49.594h2.574v4.62c0%20.836-.044%201.628-.088%202.244h.044c.286-.484.792-1.298%201.386-2.178l3.256-4.686h2.552V60h-2.574v-4.62c0-.836.044-1.628.088-2.244h-.044c-.286.484-.77%201.298-1.386%202.178L68.674%2060h-2.552zm12.32%200V49.594h2.618v3.74h4.092v-3.74h2.64V60h-2.64v-4.378H81.06V60h-2.618zm11.198%200l1.452-3.124c.33-.704.638-1.1%201.122-1.298v-.044c-1.188-.484-1.782-1.496-1.782-2.706%200-1.738%201.078-3.234%203.894-3.234h4.356V60h-2.618v-3.652h-1.628c-.308%200-.638.264-.924.99L92.478%2060H89.64zm3.388-6.952c0%20.814.528%201.364%201.54%201.364h1.496v-2.816H94.59c-1.1%200-1.562.616-1.562%201.452zm17.072%202.464h-6.666c.066%201.606%201.21%202.64%202.948%202.64%201.034%200%201.87-.286%202.618-.704l.792%201.804c-1.1.682-2.398.968-3.674.968-3.784%200-5.324-2.596-5.324-5.412%200-3.124%201.716-5.478%204.686-5.478%202.926%200%204.62%202.112%204.62%205.566v.616zm-6.688-1.826h4.026c-.022-1.188-.616-2.354-2.002-2.354-1.298%200-2.002%201.1-2.024%202.354zM114.566%2060v-8.228h-3.168v-2.178h9.548l-.682%202.178h-3.08V60h-2.618zm12.694%200V49.594h2.618v4.092h1.21c1.298%200%201.276-2.178%202.134-3.432.418-.572%201.012-.924%201.914-.924.286%200%20.77.044%201.078.154v2.222a1.767%201.767%200%200%200-.594-.088c-.308%200-.55.11-.726.33-.528.726-.616%202.222-1.496%202.75v.044c.528.198.88.594%201.21%201.276L136.5%2060h-2.838l-1.32-3.322c-.308-.704-.594-.99-.902-.99h-1.562V60h-2.618zm15.598.22c-3.102%200-5.192-2.332-5.192-5.456%200-3.124%202.09-5.434%205.192-5.434%203.102%200%205.214%202.31%205.214%205.434s-2.112%205.456-5.214%205.456zm0-2.112c1.65%200%202.508-1.408%202.508-3.344%200-1.914-.858-3.322-2.508-3.322s-2.508%201.408-2.508%203.322c0%201.936.858%203.344%202.508%203.344zM150.162%2060V49.594h2.574l1.584%202.596c.594.924%201.078%201.892%201.386%202.464h.044c.286-.55.792-1.54%201.386-2.464l1.562-2.596h2.574V60h-2.552v-4.576c0-.792.044-1.584.066-2.002h-.066c-.198.44-.572%201.078-.968%201.716l-1.474%202.398h-1.122l-1.474-2.42c-.396-.638-.77-1.276-.968-1.694h-.066c.044.418.066%201.254.066%202.09V60h-2.552zm13.706%200V49.594h9.152V60h-2.618v-8.074h-3.916V60h-2.618zm18.04%200l-.396-.99c-.748.682-1.694%201.21-2.992%201.21-1.98%200-3.454-1.32-3.454-3.322%200-1.408.682-2.288%201.76-2.838.726-.374%201.628-.55%202.684-.594l1.782-.066v-.33c0-1.21-.792-1.738-2.002-1.738-1.034%200-1.98.33-2.728.726l-.858-1.694a8.185%208.185%200%200%201%204.026-1.034c2.794%200%204.18%201.276%204.18%203.784v4.224c0%201.21.044%202.112.198%202.662h-2.2zm-.616-4.84l-1.408.044c-.682.022-1.166.132-1.518.33-.44.242-.638.66-.638%201.188%200%20.902.594%201.43%201.54%201.43.968%200%201.672-.484%202.024-.77V55.16zm5.214%204.84V49.594h2.618v3.74h4.092v-3.74h2.64V60h-2.64v-4.378h-4.092V60h-2.618zm11.946%200V49.594h2.574v4.62c0%20.836-.044%201.628-.088%202.244h.044c.286-.484.792-1.298%201.386-2.178l3.256-4.686h2.552V60h-2.574v-4.62c0-.836.044-1.628.088-2.244h-.044c-.286.484-.77%201.298-1.386%202.178L201.004%2060h-2.552zm12.32%200V49.594h2.618v3.872h2.09c.462-2.442%202.178-4.136%204.774-4.136%203.036%200%204.884%202.31%204.884%205.434s-1.826%205.456-4.884%205.456c-2.706%200-4.466-1.848-4.818-4.466h-2.046V60h-2.618zm9.482-1.892c1.606%200%202.222-1.408%202.222-3.344%200-1.914-.572-3.322-2.222-3.322s-2.222%201.408-2.222%203.322c0%201.936.616%203.344%202.222%203.344z%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M172.54%209.105c0-2.502-2.07-3.38-4.273-3.38-2.95%200-5.373.966-7.618%201.975l-1.542-4.608c2.51-1.141%205.99-2.414%2010.13-2.414%206.473%200%209.6%203.248%209.6%207.812%200%207.988-11.01%2010.226-12.86%2016.327h13.257v5.09h-21.096c1.19-14.263%2014.401-15.097%2014.401-20.802%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M188.526%2018.19h2.643v-3.117c0-2.238.176-4.827.264-5.398l-6.562%208.646a71.941%2071.941%200%200%201%203.655-.131zm-10.35%201.009L192.71.766h4.316V18.19h4.316v4.827h-4.316v6.89h-5.857v-6.89h-12.992V19.2z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M24.366%2025.473c3.735%200%205.285-1.188%205.285-3.683%200-1.426-.556-2.416-1.47-2.97-.993-.594-2.424-.753-4.053-.753h-1.789v7.406h2.027zM16.895%203.81h17.207l-1.351%204.396H22.339v5.465h1.789c2.821%200%205.325.356%207.272%201.386%202.305%201.188%203.696%203.326%203.696%206.653%200%204.672-2.822%208.197-10.85%208.197h-7.351V3.811zm21.142%207.366h5.206v7.484c0%201.545-.04%203.05-.16%204.119h.12c.437-.752%201.351-2.337%202.424-3.88l5.365-7.723h5.246v18.731h-5.246v-7.484c0-1.545.08-3.05.199-4.119h-.12a79.014%2079.014%200%200%201-2.424%203.88l-5.365%207.723h-5.245V11.177zM63.987%2015.612h-5.603v-4.435h17.724l-1.391%204.435h-5.365v14.296h-5.365zM85.407%2025.908c3.22%200%204.809-2.098%204.809-5.385%200-3.644-1.987-5.426-5.286-5.426-.676%200-1.232.04-1.828.238v10.177c.715.238%201.391.396%202.305.396zm-7.67-13.979a22.951%2022.951%200%200%201%207.432-1.227c6.994%200%2010.53%203.92%2010.53%209.82%200%205.624-3.814%209.782-9.894%209.782-.915%200-1.829-.119-2.703-.356v9.345h-5.365V11.93zm20.506-.752h5.206v7.484c0%201.545-.04%203.05-.159%204.119h.12c.437-.752%201.35-2.337%202.424-3.88l5.365-7.723h5.245v18.731H111.2v-7.484c0-1.545.079-3.05.198-4.119h-.119a79.015%2079.015%200%200%201-2.424%203.88l-5.365%207.723h-5.246V11.177zm21.659%200h5.365v7.168h1.987c2.265%200%202.186-3.802%203.855-6.02.715-.99%201.828-1.623%203.537-1.623.556%200%201.55.079%202.146.277v4.554a3.27%203.27%200%200%200-1.113-.198c-.596%200-.994.198-1.312.594-.954%201.188-1.112%203.604-2.503%204.475v.079c.914.357%201.589%201.03%202.146%202.218l3.377%207.207h-5.802l-2.225-5.861c-.477-1.148-.954-1.663-1.47-1.663h-2.623v7.524h-5.365V11.177zm18.36%209.465c0-5.94%204.61-9.94%2010.134-9.94%202.543%200%204.212.713%205.205%201.346v4.475c-1.351-1.03-2.782-1.584-4.61-1.584-3.298%200-5.245%202.495-5.245%205.663%200%203.524%201.987%205.425%205.007%205.425%201.67%200%202.941-.475%204.332-1.267l1.51%203.643c-1.55%201.109-3.974%201.901-6.597%201.901-6.24%200-9.736-4.158-9.736-9.662%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M214.316%2017.787a7.563%207.563%200%201%201%200-15.124%207.563%207.563%200%201%201%200%2015.124m0-17.285c-5.371%200-9.725%204.353-9.725%209.723%200%205.37%204.354%209.723%209.725%209.723%205.37%200%209.725-4.354%209.725-9.723%200-5.37-4.354-9.723-9.725-9.723%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M215.396%209.144h3.242v2.161h-5.402V5.903h2.16v3.241z%22/%3E%3C/g%3E%3C/svg%3E) no-repeat center;
+}
+
+.main-logo-en {
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22226%22%20height%3D%2235%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M51.726%2024.971c3.02%200%204.53-1.03%204.53-3.406%200-2.02-1.51-3.168-4.013-3.168h-3.299v6.574h2.782zm-.715-11.009c2.384%200%203.616-1.346%203.616-3.049%200-1.782-1.192-3.168-3.735-3.168h-1.948v6.217h2.067zM43.5%203.31h8.226c5.683%200%208.226%203.286%208.226%206.613%200%202.138-1.073%204.237-3.1%205.267v.079c3.14.832%204.889%203.366%204.889%206.296%200%203.96-3.1%207.841-9.3%207.841H43.5V3.31z%22/%3E%3Cpath%20d%3D%22M43.5%2029.802h154.074V0H43.5z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M64.562%2029.406h5.365v-18.73h-5.365v18.73zm-.556-24.513c0-1.702%201.39-3.088%203.259-3.088%201.828%200%203.218%201.307%203.218%203.088%200%201.743-1.39%203.169-3.218%203.169-1.868%200-3.26-1.386-3.26-3.169zm11.048%2019.642v-9.701h-3.458v-4.159h3.458V6.28l5.404-1.545v5.94h5.683l-1.232%204.159h-4.45v8.355c0%201.743.556%202.337%201.787%202.337a5.236%205.236%200%20002.782-.832l1.55%203.643c-1.39.95-3.854%201.465-5.722%201.465-3.577%200-5.802-1.98-5.802-5.267m12.995-13.86h4.53l.596%201.98c1.59-1.465%203.1-2.455%205.126-2.455.915%200%202.027.277%202.862.871l-1.868%204.436a4.59%204.59%200%2000-2.384-.713c-1.153%200-2.067.396-3.497%201.544v13.068h-5.365v-18.73zm14.148%2018.731h5.365v-18.73h-5.365v18.73zm-.557-24.513c0-1.702%201.391-3.088%203.259-3.088%201.828%200%203.219%201.307%203.219%203.088%200%201.743-1.391%203.169-3.22%203.169-1.867%200-3.258-1.386-3.258-3.169zm14.386%2015.088l-6.875-9.306h5.564l4.212%205.703%204.213-5.703h5.563l-6.955%209.306%207.034%209.425h-5.563l-4.332-5.861-4.371%205.861h-5.563z%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M145.99%208.64c0-2.502-2.07-3.38-4.272-3.38-2.95%200-5.373.966-7.62%201.976l-1.541-4.609c2.51-1.141%205.99-2.414%2010.13-2.414%206.474%200%209.6%203.248%209.6%207.812%200%207.988-11.01%2010.226-12.86%2016.327h13.257v5.091h-21.096c1.19-14.263%2014.402-15.097%2014.402-20.803%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M161.976%2017.725h2.643v-3.116c0-2.238.176-4.828.264-5.398l-6.562%208.646a71.941%2071.941%200%20013.655-.132zm-10.349%201.01L166.16.3h4.317v17.424h4.316v4.828h-4.316v6.89h-5.858v-6.89h-12.992v-3.819zm36.222-1.45a7.563%207.563%200%20110-15.124%207.563%207.563%200%20110%2015.124m0-17.285c-5.37%200-9.724%204.353-9.724%209.723%200%205.37%204.354%209.723%209.724%209.723%205.371%200%209.725-4.353%209.725-9.723%200-5.37-4.354-9.723-9.725-9.723%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M188.93%208.642h3.242v2.161h-5.403V5.402h2.16v3.24z%22/%3E%3C/g%3E%3C/svg%3E) no-repeat center;
+}
+
+.main-logo-ua {
+	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22183%22%20height%3D%2263%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23E2F5FD%22%20fill-rule%3D%22nonzero%22%20d%3D%22M14.694%2059.23c-5.037%200-7.475-3.128-7.475-7.636%200-4.53%202.783-7.889%207.774-7.889%201.426%200%203.128.322%204.071.736v2.53c-1.173-.62-2.53-.966-4.002-.966-2.967%200-4.6%201.771-4.922%204.21h7.406v2.23h-7.429c.207%202.737%201.863%204.485%204.853%204.485%201.495%200%202.737-.437%203.818-1.058l.805%202.162c-1.702.92-3.404%201.196-4.899%201.196zm6.417%203.611v-6.049h.713c1.518-1.863%202.254-4.117%203.082-8.67h6.693v8.67h1.541v6.05h-2.53V59h-6.969v3.841h-2.53zm7.751-6.049v-6.44h-1.955c-.483%202.806-1.173%204.83-2.139%206.394v.046h4.094zM35.279%2059V48.121h2.737v3.91h4.278v-3.91h2.76v10.88h-2.76v-4.578h-4.278V59h-2.737zm19.067%200l-.414-1.035c-.782.713-1.771%201.265-3.128%201.265-2.07%200-3.611-1.38-3.611-3.473%200-1.472.713-2.392%201.84-2.967.759-.39%201.702-.575%202.806-.62l1.863-.07v-.345c0-1.265-.828-1.817-2.093-1.817-1.081%200-2.07.345-2.852.76l-.897-1.772a8.557%208.557%200%200%201%204.209-1.08c2.921%200%204.37%201.333%204.37%203.955v4.416c0%201.265.046%202.208.207%202.783h-2.3zm-.644-5.06l-1.472.046c-.713.023-1.219.138-1.587.345-.46.253-.667.69-.667%201.242%200%20.943.621%201.495%201.61%201.495%201.012%200%201.748-.506%202.116-.805V53.94zm10.304%205.29c-3.473%200-5.359-2.392-5.359-5.589%200-3.427%202.254-5.796%205.543-5.796%201.38%200%202.438.368%203.036.736v2.208c-.759-.552-1.679-.85-2.737-.85-1.794%200-2.852%201.057-3.128%202.552h4.255v1.91h-4.301c.161%201.77%201.219%202.782%203.036%202.782%201.012%200%201.863-.322%202.622-.759l.828%201.748c-.874.598-2.3%201.058-3.795%201.058zM74.77%2059V48.121h2.737V52.4h1.265c1.357%200%201.334-2.277%202.231-3.588.437-.598%201.058-.966%202.001-.966.299%200%20.805.046%201.127.161v2.323a1.847%201.847%200%200%200-.621-.092c-.322%200-.575.115-.759.345-.552.76-.644%202.323-1.564%202.875v.046c.552.207.92.621%201.265%201.334L84.43%2059h-2.967l-1.38-3.473c-.322-.736-.621-1.035-.943-1.035h-1.633V59H74.77zm16.307.23c-3.243%200-5.428-2.438-5.428-5.704%200-3.266%202.185-5.68%205.428-5.68s5.451%202.414%205.451%205.68c0%203.266-2.208%205.704-5.451%205.704zm0-2.208c1.725%200%202.622-1.472%202.622-3.496%200-2-.897-3.473-2.622-3.473-1.725%200-2.622%201.472-2.622%203.473%200%202.024.897%203.496%202.622%203.496zM98.713%2059V48.121h2.691l1.656%202.714c.621.966%201.127%201.978%201.449%202.576h.046c.299-.575.828-1.61%201.449-2.576l1.633-2.714h2.691v10.88h-2.668v-4.785c0-.828.046-1.656.069-2.093h-.069c-.207.46-.598%201.127-1.012%201.794l-1.541%202.507h-1.173l-1.541-2.53c-.414-.667-.805-1.334-1.012-1.77h-.069c.046.436.069%201.31.069%202.184V59h-2.668zm14.329%200V48.121h9.568v10.88h-2.737v-8.442h-4.094V59h-2.737zm18.86%200l-.414-1.035c-.782.713-1.771%201.265-3.128%201.265-2.07%200-3.611-1.38-3.611-3.473%200-1.472.713-2.392%201.84-2.967.759-.39%201.702-.575%202.806-.62l1.863-.07v-.345c0-1.265-.828-1.817-2.093-1.817-1.081%200-2.07.345-2.852.76l-.897-1.772a8.557%208.557%200%200%201%204.209-1.08c2.921%200%204.37%201.333%204.37%203.955v4.416c0%201.265.046%202.208.207%202.783h-2.3zm-.644-5.06l-1.472.046c-.713.023-1.219.138-1.587.345-.46.253-.667.69-.667%201.242%200%20.943.621%201.495%201.61%201.495%201.012%200%201.748-.506%202.116-.805V53.94zm5.451%205.06V48.121h2.737v3.91h4.278v-3.91h2.76v10.88h-2.76v-4.578h-4.278V59h-2.737zm12.489%200V48.121h2.76v10.88h-2.76zm1.38-12.65c-.966%200-1.679-.713-1.679-1.633s.713-1.656%201.679-1.656c.966%200%201.702.713%201.702%201.656%200%20.897-.736%201.633-1.702%201.633zm3.289.138a1.409%201.409%200%200%201-1.403-1.403%201.414%201.414%200%201%201%202.829%200c0%20.782-.644%201.403-1.426%201.403zm4.393%200a1.394%201.394%200%200%201-1.403-1.403c0-.805.621-1.426%201.403-1.426.759%200%201.403.621%201.403%201.426%200%20.782-.644%201.403-1.403%201.403zM154.672%2059V48.121h2.76v10.88h-2.76z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M7.471%2025.183c3.736%200%205.285-1.188%205.285-3.683%200-1.425-.556-2.415-1.47-2.97-.993-.594-2.424-.752-4.053-.752H5.444v7.405h2.027zM.001%203.522h17.206l-1.351%204.395H5.444v5.465h1.789c2.821%200%205.325.357%207.272%201.386%202.305%201.188%203.696%203.326%203.696%206.653%200%204.673-2.822%208.197-10.85%208.197H.002V3.522z%22/%3E%3Cpath%20d%3D%22M0%2039.004h182.25V.212H0z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M21.062%2029.618h5.365v-18.73h-5.365v18.73zm-.556-24.513c0-1.702%201.39-3.088%203.259-3.088%201.828%200%203.219%201.307%203.219%203.088%200%201.743-1.391%203.169-3.22%203.169-1.867%200-3.258-1.387-3.258-3.169zM34.097%2015.323h-5.603v-4.436h17.724l-1.391%204.436h-5.365v14.295h-5.365zM55.517%2025.619c3.22%200%204.809-2.1%204.809-5.386%200-3.643-1.987-5.425-5.286-5.425-.676%200-1.232.04-1.828.237v10.178c.715.237%201.391.396%202.305.396zm-7.67-13.98a22.959%2022.959%200%200%201%207.432-1.227c6.994%200%2010.53%203.92%2010.53%209.82%200%205.624-3.814%209.782-9.894%209.782-.915%200-1.829-.119-2.703-.356v9.346h-5.365V11.64zm20.427%2017.98h5.365V10.886h-5.365v18.731zm-.557-24.514c0-1.702%201.391-3.088%203.26-3.088%201.827%200%203.218%201.307%203.218%203.088%200%201.743-1.39%203.169-3.219%203.169-1.868%200-3.259-1.387-3.259-3.169zm9.3%205.782h5.365v7.168h1.986c2.266%200%202.186-3.802%203.855-6.02.716-.99%201.828-1.623%203.537-1.623.557%200%201.55.08%202.146.277v4.554a3.277%203.277%200%200%200-1.112-.198c-.597%200-.994.198-1.312.594-.954%201.188-1.112%203.604-2.504%204.475v.08c.915.356%201.59%201.029%202.146%202.217l3.378%207.207H88.7l-2.225-5.86c-.477-1.149-.954-1.664-1.47-1.664h-2.623v7.524h-5.365v-18.73zm18.36%209.465c0-5.94%204.61-9.94%2010.133-9.94%202.544%200%204.213.713%205.206%201.347v4.474c-1.351-1.03-2.782-1.584-4.61-1.584-3.298%200-5.245%202.495-5.245%205.663%200%203.525%201.987%205.426%205.007%205.426%201.669%200%202.94-.476%204.332-1.268l1.51%203.643c-1.55%201.11-3.974%201.901-6.597%201.901-6.24%200-9.736-4.158-9.736-9.662%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M130.665%208.794c0-2.502-2.07-3.38-4.272-3.38-2.95%200-5.373.966-7.619%201.975l-1.541-4.608c2.51-1.141%205.99-2.414%2010.13-2.414%206.473%200%209.6%203.248%209.6%207.812%200%207.988-11.01%2010.226-12.86%2016.327h13.257v5.091h-21.096c1.19-14.263%2014.401-15.098%2014.401-20.803%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M146.652%2017.879h2.643v-3.116c0-2.238.176-4.828.264-5.398l-6.562%208.646a71.941%2071.941%200%200%201%203.655-.132zm-10.35%201.01L150.837.454h4.316V17.88h4.316v4.828h-4.316v6.89h-5.857v-6.89h-12.992v-3.819zm36.223-1.392a7.563%207.563%200%201%201%200-15.124%207.563%207.563%200%201%201%200%2015.124m0-17.285c-5.37%200-9.725%204.353-9.725%209.723%200%205.37%204.354%209.723%209.725%209.723%205.371%200%209.725-4.353%209.725-9.723%200-5.37-4.354-9.723-9.725-9.723%22/%3E%3Cpath%20fill%3D%22%230065A3%22%20d%3D%22M173.606%208.854h3.241v2.161h-5.402V5.614h2.16v3.24z%22/%3E%3C/g%3E%3C/svg%3E) no-repeat center;
+}
+
+.b_line_gray {
+	padding-top: 23px;
+	min-width: 100%;
+	margin-bottom: 32px;
+	border: none;
+	border-bottom: 1px solid #f2f2f2;
+}
+
+.log-main-table {
+	padding: 0 15px;
+	border-spacing: 0;
+	height: 100%;
+	overflow: hidden;
+	width: 100%;
+	background: url(images/bg_clouds_3.png) no-repeat center 69px;
+}
+
+.log-bottom-cell,
+.log-top-cell {
+	height: 25%;
+	text-align: center;
+	vertical-align: middle;
+	padding: 0;
+}
+
+.log-main-cell {
+	padding: 0;
+	text-align: center;
+	vertical-align: middle;
+}
+
+.log-bottom-cap {
+	display: inline-block;
+	height: 70px;
+	width: 50px;
+}
+
+.log-popup-wrap {
+	display: inline-block;
+	position: relative;
+	width: 100%;
+}
+
+.log-popup {
+	display: block;
+	overflow: hidden;
+	background-color: #fff;
+	border-radius: var(--ui-border-radius-3xl, 4px);
+	max-width: 705px;
+	position: relative;
+	padding: 26px 45px;
+	box-sizing: border-box;
+}
+
+.log-popup form {
+	width: 100%;
+}
+
+.log-popup-wrap .log-popup {
+	display: flex;
+	margin: 0 auto;
+	/*flex-direction: column;*/
+}
+
+.log-popup-text {
+	padding: 0;
+}
+
+.log-popup-form {
+	position: relative;
+	z-index: 1;
+}
+
+.log-popup-form-area {
+	width: 75%;
+	margin: auto;
+}
+
+.log-popup a {
+	font-size: 14px;
+	color: #2fc6f7;
+}
+
+.log-popup a:hover {
+	color: #1ab8eb;
+	border-color: #1ab8eb;
+}
+
+.log-header-box {
+	display: flex;
+	align-items: center;
+	/*justify-content: space-between;*/
+}
+
+.log-popup-header {
+	font-size: 27px;
+	line-height: 33px;
+	color: #333;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+}
+
+.log-popup-content {
+	background-color: #f5f1d6;
+	border-radius: 6px;
+	padding: 13px 23px 15px;
+}
+
+.login-item {
+	margin-bottom: 17px;
+}
+
+.login-item.--auth {
+	margin-bottom: 29px;
+}
+
+.login-item.--auth:last-child {
+	margin-bottom: 0;
+}
+
+.login-item.--user-remember {
+	margin-bottom: 35px;
+}
+
+.login-item.--flex-align-center {
+	display: flex;
+	align-items: center;
+}
+
+.login-item.--flex-align-center .login-label {
+	margin-right: 5px;
+}
+
+.login-forgotpass-item-box .login-item {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
+.login-label {
+	color: #7d9199;
+	vertical-align: middle;
+	font-size: 19px;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+}
+
+.login-item .login-label {
+	display: block;
+	margin-bottom: 5px;
+}
+
+.login-email-text {
+	color: #555;
+	display: inline-block;
+	font-weight: 600;
+	font-size: 19px;
+	height: 40px;
+	line-height: 37px;
+	text-shadow: 0 1px #fff;
+	vertical-align: top;
+}
+
+.login-label-thin {
+	font-size: 13px;
+	font-weight: 400;
+}
+
+.login-captcha-img {
+	border: 1px solid #ccc;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.login-captcha-img img { display: block; }
+
+.login-inp {
+	display: block;
+	width: 100%;
+	height: 47px;
+	padding: 0 13px;
+	background: #fff;
+	border: 2px solid #c8ccd1;
+	border-radius: 4px;
+	box-sizing: border-box;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 15px;
+	color: #333;
+	outline: none;
+}
+
+.login-inp:focus,
+.login-inp:focus-visible {
+	border-color: #00c7f9;
+}
+
+.login-inp-error {
+	border: 3px solid #f2cbcb;
+	border-radius: 4px;
+	margin-top: -2px;
+	margin-bottom: -2px;
+}
+
+.inp-error-text {
+	color: #c40000;
+	display: inline-block;
+	font: italic 12px Georgia;
+	vertical-align: middle;
+}
+
+.login-pass-complex {
+	background-color: #e3ebed;
+	border: 1px solid;
+	border-color: #d9e0e1 #e0e7e9 #dde5e7;
+	border-radius: 3px;
+	box-shadow: inset 0 1px 0 #e0e7e9;
+	height: 4px;
+	margin: 8px 0 2px 199px;
+	position: relative;
+	width: 249px;
+}
+
+.login-pass-complex-bar {
+	border-radius: 3px;
+	height: 6px;
+	left: 0;
+	top: -1px;
+	position: absolute;
+}
+
+.login-pass-complex-bar-red {
+	background-image: linear-gradient(top, #e15a5a, #c73838);
+	box-shadow: inset 0 2px 0 #f07e7e, inset 0 -1px 0 #c12222;
+}
+
+.login-pass-complex-bar-yellow {
+	background-image: linear-gradient(top, #ecb822, #dc7a15);
+	box-shadow: inset 0 1px 0 #efa615, inset 0 2px 0 #efc428, inset -1px 0 0 #da860d;
+}
+
+.login-pass-complex-bar-green {
+	background-image: linear-gradient(top, #a4c31e, #7eaa16);
+	box-shadow: inset 0 -1px 0 #7ca116, inset 0 1px 0 #a0c624, inset 0 2px 0 #bdd426;
+}
+
+.login-item-domain {
+	display: inline-block;
+	border: 2px solid #c4c9bb;
+	border-left: none;
+	border-radius: 0 2px 2px 0;
+	color: #555;
+	height: 36px;
+	margin-left: -1px;
+	font-weight: 600;
+	font-size: 17px;
+	line-height: 35px;
+	text-shadow: 0 1px #fff;
+	text-align: center;
+	vertical-align: top;
+	padding: 0 8px;
+}
+
+.login-item-description,
+.login-item-description-pas {
+	color: #555;
+	font-size: 12px;
+	text-shadow: 0 1px #fff;
+	padding: 6px 0 0 200px;
+}
+
+.login-item-description-pas {
+	font-family: Georgia, var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-style: italic;
+}
+
+.login-user-photo {
+	background: url(images/bx24-login-sprite5.png) no-repeat 0 -679px;
+	display: none;
+	height: 111px;
+	top: 76px;
+	left: 85px;
+	position: absolute;
+	width: 112px;
+}
+
+.login-user-photo-text {
+	bottom: 7px;
+	color: #fff;
+	font-family: Arial, sans-serif;
+	font-size: 12px;
+	font-weight: 600;
+	text-align: center;
+	position: absolute;
+	width: 100%;
+}
+
+.login-create-profile-soc-net .login-user-photo {
+	display: block;
+}
+
+.login-create-profile-soc-net .login-label-name,
+.login-create-profile-soc-net .login-label-surname {
+	opacity: 0;
+}
+
+a.login-item-link {
+	display: inline-block;
+	border-bottom: 2px solid #cdf0ff;
+	color: #2fc6f7;
+	vertical-align: bottom;
+	text-decoration: none;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	line-height: 20px;
+	position: relative;
+	bottom: 3px;
+	transition: border-color ease-in-out .1s;
+	text-transform: uppercase;
+}
+
+a.login-item-link:hover {
+	border-bottom: 2px solid #2fc6f7;
+}
+
+.login-item-description .login-item-link {
+	margin-top: 6px;
+}
+
+.login-intranet-logo-review {
+	padding: 6px 37px 12px 12px;
+	min-width: 467px;
+}
+
+.login-intranet-logo-rev-table {
+	border: none;
+	border-spacing: 0;
+	height: 55px;
+	width: 100%;
+}
+
+.login-intranet-logo-rev-cell {
+	padding: 0 20px 0 0;
+	width: 192px;
+}
+
+.login-intranet-logo-rev-text {
+	color: #4f5866;
+	font-size: 15px;
+	font-weight: 500;
+	vertical-align: middle;
+	white-space: nowrap;
+}
+
+.login-intranet-logo-rev-logo {
+	background: url(images/bx24-login-sprite5.png) 0 -597px repeat-x;
+	font-size: 30px;
+	font-weight: 600;
+	vertical-align: top;
+	padding: 0 10px;
+	text-align: center;
+	text-shadow: 0 -1px 1px rgba(0, 0, 0, 0.4);
+	white-space: nowrap;
+}
+
+.login-intranet-logo-rev-logo-text {
+	color: #fff;
+	display: inline-block;
+	margin-right: 7px;
+	max-width: 235px;
+	line-height: 55px;
+	overflow: hidden;
+	vertical-align: top;
+}
+
+.login-intranet-logo-rev-logo-24 {
+	color: #42c3ea;
+	display: inline-block;
+	line-height: 55px;
+	vertical-align: top;
+}
+
+.login-inp-captcha {
+	margin-left: 11px;
+	vertical-align: middle;
+	width: 115px;
+}
+
+.login-inp-active {
+	box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25), 0 0 0 2px #cdd2d5;
+}
+
+.login-file-block {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.login-file-name-field {
+	background-color: #fff;
+	border: 1px solid;
+	border-color: #b9bcbe #bdc1c3 #c1c5c8;
+	border-radius: 2px;
+	box-shadow: inset 0 1px 4px rgba(0, 0, 0, .25);
+	display: block;
+	height: 39px;
+	overflow: hidden;
+}
+
+.login-file-btn-wrap {
+	cursor: pointer;
+	display: block;
+	overflow: hidden;
+	padding-bottom: 1px;
+	position: relative;
+}
+
+.login-file-btn {
+	background-color: #ecf1f3;
+	background-image: linear-gradient(top, #f9f9fa, #dee9ec);
+	border: 1px solid;
+	border-color: #e8e4ca #d0ccb5 #a3a08e;
+	border-radius: 3px;
+	box-shadow: inset 0 1px 0 #fff, inset 0 0 0 1px rgba(255, 255, 255, .4), 0 1px 0 #dcd8c0;
+	color: #7a808c;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 16px;
+	font-weight: 600;
+	height: 39px;
+	line-height: 39px;
+	min-width: 70px;
+	max-width: 250px;
+	overflow: hidden;
+	padding: 0 12px;
+	text-align: center;
+	text-overflow: ellipsis;
+	text-shadow: 0 1px rgba(255, 255, 255, .7);
+	vertical-align: top;
+	white-space: nowrap;
+}
+
+.login-file-btn-wrap:hover .login-file-btn {
+	background-color: #f5f7f8;
+	background-image: linear-gradient(top, #fafafa, #f1f6f7);
+}
+
+.login-file-btn-wrap:active .login-file-btn {
+	background-color: #c5d4cc;
+	background-image: linear-gradient(top, #bbccc3, #cddad2);
+	box-shadow: inset 0 1px 1px 1px rgba(122, 128, 141, .78);
+	border-color: #f5f1d6;
+	border-radius: 2px;
+}
+
+.login-file-inp {
+	cursor: pointer;
+	font-size: 50px;
+	top: -10px;
+	right: 0;
+	opacity: 0;
+	filter: alpha(opacity=0);
+	position: absolute;
+}
+
+.login-item-checkbox {
+	margin-bottom: 11px;
+	overflow: hidden;
+	padding: 6px 0 0 192px;
+}
+
+.log-popup-content .login-item-checkbox { padding-left: 200px; }
+
+.login-alignment-checkbox {
+	display: inline-block;
+	height: 17px;
+	margin-left: -1px;
+	vertical-align: middle;
+	width: 1px;
+}
+
+.login-item-checkbox input[type="checkbox"] {
+	margin: 0 7px 0 2px;
+	vertical-align: middle;
+}
+
+.login-item-checkbox-label {
+	color: #5e5d5d;
+	font-size: 14px;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	line-height: normal;
+}
+
+.login-links { margin: 14px 0; }
+
+.login-inp-wrap {
+	padding-top: 7px;
+}
+
+.login-item-checkbox .login-links {
+	margin: 11px 0 0;
+	font-size: 14px;
+}
+
+.login-item-checkbox .login-links a {
+	font-size: 14px;
+	text-decoration: none;
+}
+
+.login-item-checkbox .login-links a:hover {
+	text-decoration: underline;
+}
+
+.login-links a {
+	font-size: 16px;
+	color: #0097c7;
+}
+
+.login-link-forgot-pass {
+	display: inline-block;
+	border-bottom: 2px solid #cdf0ff;
+	color: #0097c7;
+	text-decoration: none;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	line-height: 20px;
+	position: relative;
+	margin-left: 15px;
+	text-transform: uppercase;
+	transition: .1s;
+}
+
+.login-link-forgot-pass:hover {
+	transition: none;
+	color: #0097c7 !important;
+	border-color: #0097c7 !important;
+}
+
+.login-social-networks {
+	border-top: 1px solid #ecedee;
+	margin: 27px -24px 0;
+	padding: 19px 24px 0;
+	text-align: left;
+}
+
+.login-social-networks-block {
+	background-color: #ecf1f5;
+	border-radius: 6px;
+	border: 1px solid;
+	border-color: #c0d8e5 #d6e4ed #e5edf2;
+	box-shadow: inset 0 1px 1px #d6e4ed;
+	min-height: 39px;
+	padding: 18px 17px 0;
+}
+
+.login-social-net-yellow {
+	padding: 16px 18px 15px;
+}
+
+.login-social-networks-text {
+	color: #555;
+	display: inline-block;
+	font-size: 24px;
+	min-width: 202px;
+	margin-top: -4px;
+	vertical-align: middle;
+}
+
+.bx-auth-serv-icons {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.bx-auth-serv-icons a {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.bx-auth-serv-icons a:hover {
+	border: none !important;
+	margin: 1px !important;
+}
+
+.bx-auth-serv-icons .bx-auth-serv-icon,
+.bx-ss-selected span {
+	background: url('images/soc6.png?v=3') no-repeat 100px 100px;
+	display: inline-block;
+	width: 37px;
+	height: 37px;
+	margin: 0 8px 0 0;
+	padding: 0;
+	vertical-align: top;
+}
+
+
+.bx-auth-serv-icons .facebook {
+	background-position: -166px -15px;
+}
+
+.bx-auth-serv-icons .yandex {
+	background-position: -116px -15px;
+}
+
+.bx-auth-serv-icons .twitter {
+	background-position: -216px -15px;
+}
+
+.bx-auth-serv-icons .openid-mail-ru {
+	background-position: -69px -15px;
+}
+
+.bx-auth-serv-icons .liveid {
+	background-position: -362px -15px;
+}
+
+.bx-auth-serv-icons .vkontakte {
+	background-position: -314px -15px;
+}
+
+.bx-auth-serv-icons .apple {
+	background-position: -1276px -15px;
+}
+
+.bx-auth-serv-icons .zoom {
+	background-position: -1322px -15px;
+}
+
+.bx-auth-serv-icons .google,
+.bx-auth-serv-icons .google-plus {
+	background-position: -691px -15px;
+}
+
+.bx-auth-serv-icons .openid {
+	background-position: -553px -15px;
+}
+
+.bx-auth-serv-icons .livejournal {
+	background-position: -459px -15px;
+}
+
+.bx-auth-serv-icons .liveinternet {
+	background-position: -506px -15px;
+}
+
+.bx-auth-serv-icons .blogger {
+	background-position: -598px -15px;
+}
+
+.bx-auth-serv-icons .mymailru {
+	background-position: -265px -15px;
+}
+
+.bx-auth-serv-icons .mailru2 {
+	background-position: -265px -15px;
+}
+
+.bx-auth-serv-icons .odnoklassniki {
+	background-position: -644px -15px;
+}
+
+.bx-auth-serv-icons .dropbox {
+	background-position: -738px -15px;
+}
+
+.bx-auth-serv-icons .box {
+	background-position: -785px -15px;
+}
+
+.bx-auth-serv-icons .office365 {
+	background-position: -832px -15px;
+}
+
+.bx-auth-serv-icons .bitrix24 {
+	background-position: -1151px -15px;
+	width: 115px;
+}
+
+.bx-auth-serv-icons .bitrix24-ru {
+	background-position: -879px -15px;
+	width: 129px;
+}
+
+.bx-auth-serv-icons .bitrix24-ua {
+	background-position: -1018px -15px;
+	width: 123px;
+}
+
+.login-social-networks-popup-more {
+	background-color: #fff;
+	border-radius: 4px;
+	box-shadow: 0 6px 11px rgba(0, 0, 0, .17);
+	border: 1px solid;
+	border-color: #e1e1e1 #d1d1d1 #d1d1d1 #d1d1d1;
+	left: 547px;
+	position: absolute;
+	width: 39px;
+	min-height: 24px;
+	z-index: 1000;
+	padding: 5px;
+}
+
+.login-social-networks-popup-more a {
+	padding-bottom: 4px;
+}
+
+.login-social-networks-popup-hidden { display: none; }
+
+.login-social-networks-link-more {
+	color: #7a808c;
+	cursor: pointer;
+	display: inline-block;
+	font-size: 12px;
+	height: 21px;
+	line-height: 20px;
+	vertical-align: middle;
+	min-width: 32px;
+	text-shadow: 0 1px #fff;
+	text-align: center;
+	padding: 0 17px 0 9px;
+	position: relative;
+}
+
+.login-social-networks-link-more:before {
+	background: url(images/bx24-login-sprite5.png) no-repeat right -575px;
+	content: '';
+	height: 5px;
+	top: 9px;
+	right: 6px;
+	position: absolute;
+	width: 7px;
+}
+
+.login-create-profile {
+	padding-bottom: 28px;
+	position: relative;
+}
+
+.login-create-profile .login-item {
+	padding-left: 23px;
+}
+
+.login-create-profile-title {
+	color: #555;
+	font-size: 24px;
+	padding: 13px 0 16px 19px;
+}
+
+.login-forget-pass {
+	padding: 12px 0 0 224px;
+}
+
+.login-create-promo-cod {
+	padding-left: 225px;
+}
+
+a.login-create-promo-cod-link {
+	display: inline-block;
+	color: #2067b0;
+	font-size: 15px;
+	font-weight: 600;
+	border-bottom: 1px dashed #2067b0;
+	text-decoration: none;
+}
+
+.login-create-checkbox-agreement {
+	margin-top: 18px;
+	padding-left: 224px;
+}
+
+.login-create-checkbox {
+	display: inline-block;
+	margin: 0 7px 0 0;
+	vertical-align: middle;
+}
+
+.login-create-checkbox-label {
+	color: #000;
+	display: inline-block;
+	font-size: 13px;
+	vertical-align: middle;
+}
+
+.login-create-agreement-link {
+	display: inline-block;
+	vertical-align: middle;
+}
+
+
+.login-social-networks-title {
+	color: #a9b6c9;
+	display: inline-block;
+	font-size: 11px;
+	height: 22px;
+	line-height: 21px;
+	text-align: right;
+	vertical-align: middle;
+	width: 180px;
+}
+
+.login-social-link {
+	border: 1px solid #fff;
+	background-color: #fff;
+	border-radius: 3px;
+	display: inline-block;
+	height: 22px;
+	margin: 0 7px;
+	vertical-align: middle;
+	width: 22px;
+}
+
+.login-social-link:hover {
+	border-color: #ccc;
+}
+
+.login-social-link img {
+	display: block;
+	margin: 0;
+	border: none;
+}
+
+.log-popup-footer {
+	height: 45px;
+	padding-top: 17px;
+	position: relative;
+	text-align: center;
+}
+
+.log-popup-footer.--auth {
+	padding-top: 20px;
+}
+
+.log-popup-footer:before {
+	background: #13b1e3 url(images/ld_blue.gif) center no-repeat;
+	content: "";
+	height: 0;
+	width: 0;
+}
+
+.login-btn {
+	background: #2fc6f7;
+	color: #fff;
+	display: inline-block;
+	outline: none !important;
+	border: none;
+	vertical-align: middle;
+	text-decoration: none;
+	cursor: pointer;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	border-radius: 20px;
+	padding: 0 30px;
+	height: 42px;
+	line-height: 42px;
+	font-size: 17px !important;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+.login-btn-transparent {
+	background: #fff;
+	border: 1px solid #e0eaed;
+	color: #545c68;
+}
+
+.login-btn-transparent:hover {
+	border-color: #1ab8eb;
+}
+
+.login-btn-transparent:active {
+	border-color: #1a83bf;
+}
+
+a.login-btn {
+	height: 38px;
+	min-width: 110px;
+	line-height: 37px;
+	padding: 0 20px;
+}
+
+.login-btn:hover {
+	background: #1ab8eb;
+	color: #fff;
+}
+
+.login-btn:active {
+	background: #1a83bf;
+	color: #fff;
+}
+
+.login-btn.wait {
+	background: #13b1e3 url(images/ld_blue.gif) center no-repeat;
+	background-size: auto 70% !important;
+	color: rgba(0, 0, 0, 0);
+}
+
+.language-box {
+	box-sizing: border-box;
+	margin-left: 20px;
+	padding-right: 20px;
+	width: 63px;
+	height: 40px;
+	border: 2px solid rgba(255, 255, 255, .5);
+	border-radius: 19px;
+	text-align: center;
+	line-height: 36px;
+	cursor: pointer;
+	position: relative;
+	display: inline-block;
+	margin-right: 10px;
+}
+
+.language-flag {
+	background: url(images/bx24-login-sprite5.png) no-repeat 100px;
+	display: inline-block;
+	margin-right: 10px;
+	width: 46px;
+	height: 12px;
+	vertical-align: middle;
+}
+
+.language-box:hover {border-color: #d6d6d6;}
+
+.language-box.ru .language-flag {background-position: right -464px;}
+
+.language-box.en .language-flag {background-position: right -505px;}
+
+.language-box.de .language-flag {background-position: right -485px;}
+
+.language-box.ua .language-flag {background-position: right -540px;}
+
+.language-box.la .language-flag {background-position: right -685px;}
+
+.language-arrow {
+	background: url(images/bx24-login-sprite5.png) no-repeat -307px -528px;
+	height: 3px;
+	top: 11px;
+	right: 5px;
+	position: absolute;
+	width: 5px;
+}
+
+.language-box-item .menu-popup-item-icon { display: none; }
+
+.language-box-item .menu-popup-item-text {
+	margin-right: 2px;
+	color: #727a87;
+}
+
+.language-box-item {
+	padding-right: 25px;
+}
+
+.language-box-item .menu-popup-item-right {
+	background: url("images/bx24-login-sprite5.png") no-repeat 100px;
+	right: 5px;
+	width: 17px;
+}
+
+.language-box-item.ru .menu-popup-item-right {background-position: -311px -459px;}
+
+.language-box-item.en .menu-popup-item-right {background-position: -311px -500px;}
+
+.language-box-item.de .menu-popup-item-right {background-position: -311px -480px;}
+
+.language-box-item.ua .menu-popup-item-right {background-position: -311px -536px;}
+
+.language-box-item.la .menu-popup-item-right {background-position: -311px -681px;}
+
+.language-box-item.ru:hover .menu-popup-item-right {background: url("images/bx24-login-sprite5.png") no-repeat -311px -459px #f0f0f0 !important;}
+
+.language-box-item.en:hover .menu-popup-item-right {background: url("images/bx24-login-sprite5.png") no-repeat -311px -500px #f0f0f0 !important;}
+
+.language-box-item.de:hover .menu-popup-item-right {background: url("images/bx24-login-sprite5.png") no-repeat -311px -480px #f0f0f0 !important;}
+
+.language-box-item.ua:hover .menu-popup-item-right {background: url("images/bx24-login-sprite5.png") no-repeat -311px -536px #f0f0f0 !important;}
+
+.language-box-item.la:hover .menu-popup-item-right {background: url("images/bx24-login-sprite5.png") no-repeat -311px -681px #f0f0f0 !important;}
+
+.language-value {
+	color: #727a87;
+	display: inline-block;
+	font-size: 12px;
+	line-height: 11px;
+	margin-top: 5px;
+	vertical-align: top;
+}
+
+.errortext,
+.notetext {
+	background: #f9ebee;
+	border-radius: 6px;
+	font-weight: 600;
+	color: #bb404c;
+	font-size: 14px;
+	min-height: 16px;
+	margin: 0 0 12px;
+	padding: 10px 0 10px 42px;
+	position: relative;
+}
+
+.notetext {
+	background-color: #d6eecd;
+	color: #33823d;
+	padding: 10px 0 10px 16px;
+}
+
+.errortext:before {
+	background: url(images/bx24-login-sprite5.png) no-repeat -293px -416px;
+	content: "";
+	height: 17px;
+	left: 12px;
+	margin-top: -9px;
+	top: 50%;
+	position: absolute;
+	width: 19px;
+}
+
+.login-text-title {
+	color: #505a6a;
+	border-bottom: 1px solid #ecedee;
+	font-size: 24px;
+	font-weight: 600;
+	line-height: 30px;
+	margin-bottom: 25px;
+	text-align: center;
+}
+
+.login-text {
+	white-space: normal;
+	color: #727a87;
+	font-size: 14px;
+	line-height: 22px;
+}
+
+.login-text-padding {
+	padding: 0 46px;
+}
+
+.login-text-img {
+	text-align: center;
+}
+
+.log-popup-caption-wrap {
+	bottom: -1px;
+	left: 0;
+	height: 1px;
+	position: absolute;
+	width: 100%;
+}
+
+.log-popup-caption {
+	box-sizing: border-box;
+	color: #005e94;
+	font-size: 15px;
+	left: 0;
+	padding: 0 15px;
+	position: absolute;
+	top: 25px;
+	text-align: center;
+	width: 100%;
+}
+
+.log-popup-caption a {
+	color: #005e94;
+	transition: color 190ms ease;
+}
+
+.log-popup-caption a:hover {
+	color: #fff;
+}
+
+.log-creation-title {
+	padding: 30px 0 37px;
+	text-align: center;
+}
+
+.log-creation-title-text {
+	color: #21619a;
+	font-size: 38px;
+}
+
+.log-creation-title-descript {
+	color: #555;
+	font-size: 24px;
+}
+
+.log-status-bar {
+	margin-bottom: 12px;
+	text-align: center;
+}
+
+.log-status-bar-block {
+	background-color: #766c51;
+	border-top: 1px solid #5c543f;
+	border-radius: 12px;
+	box-shadow: inset 0 1px 0 #766c51;
+	display: inline-block;
+	margin-top: 28px;
+	height: 23px;
+	padding: 0 2px;
+	width: 580px;
+}
+
+.log-status-bar-stripe-wrap {
+	height: 20px;
+	position: relative;
+}
+
+.log-status-bar-stripe {
+	background: url(images/bx24-login-sprite5.png) repeat-x 0 -817px;
+	border-radius: 12px;
+	height: 20px;
+	left: 0;
+	top: 1px;
+	position: absolute;
+}
+
+.log-status-bar-descript {
+	color: #555;
+	font-size: 17px;
+	text-align: center;
+	text-shadow: 0 1px #fff;
+	padding: 6px 0 3px;
+}
+
+.log-popup-finish-text {
+	color: #555;
+	font-size: 24px;
+	text-align: center;
+}
+
+.log-popup-finish-text .login-item-link {
+	border: none;
+	font-size: 24px;
+	text-decoration: underline;
+}
+
+.log-finish-btn-wrap {
+	padding: 16px 0 0;
+	text-align: center;
+}
+
+.log-creation-finish-title {
+	padding-bottom: 18px;
+}
+
+.log-header-additional-wrap {
+	display: inline-block;
+	text-align: right;
+}
+
+.log-header-additional-text {
+	border-bottom: 2px solid #cdf0ff;
+	color: #2fc6f7;
+	vertical-align: bottom;
+	text-decoration: none;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	line-height: 20px;
+	position: relative;
+	bottom: 3px;
+	transition: border-color ease-in-out .1s;
+	font-size: 14px;
+	text-transform: uppercase;
+}
+
+.login-tr-btn {
+	color: #2fc6f7;
+	border: 2px solid #2fc6f7;
+	display: inline-block;
+	outline: none !important;
+	vertical-align: middle;
+	text-decoration: none;
+	cursor: pointer;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	border-radius: 20px;
+	padding: 0 30px;
+	height: 40px;
+	line-height: 40px;
+	font-size: 21px !important;
+}
+
+.login-tr-btn:hover {
+	color: #1ab8eb !important;
+	border: 2px solid #1ab8eb;
+}
+
+.login-tr-btn.login-btn:active {
+	color: #1ab8eb !important;
+	border: 2px solid #1ab8eb;
+}
+
+.login-wrapper {
+	display: flex;
+	margin-bottom: 19px;
+}
+
+.login-wrapper-inputs {
+	flex: 1;
+	margin: 10px 0 0;
+}
+
+.login-wrapper-qr {
+	display: flex;
+	margin: 10px 0 0 18px;
+}
+
+.login-wrapper-qr-link {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	min-width: 148px;
+	background: #fff;
+	box-sizing: border-box;
+	border-radius: 4px;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .13);
+	cursor: pointer;
+	transition: .1s;
+}
+
+.login-wrapper-qr-text {
+	padding: 0 15px;
+	font-size: 11px;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	color: #545c68;
+}
+
+.login-wrapper-qr-icon {
+	display: block;
+	width: 49px;
+	height: 49px;
+	margin-bottom: 15px;
+	background: url("data:image/svg+xml,%3Csvg width='30' height='30' viewBox='0 0 30 30' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10.1886 8.90239C10.0189 8.73328 9.78492 8.63633 9.54558 8.63633C9.30621 8.63633 9.07219 8.73328 8.90254 8.90239C8.73344 9.07207 8.63648 9.30602 8.63648 9.54543C8.63648 9.78484 8.73344 10.0187 8.90254 10.1885C9.07164 10.3576 9.30617 10.4545 9.54558 10.4545C9.78492 10.4545 10.0189 10.3576 10.1886 10.1885C10.3577 10.0188 10.4547 9.78484 10.4547 9.54543C10.4547 9.30602 10.3577 9.07207 10.1886 8.90239Z' fill='%23545C68'/%3E%3Cpath d='M13.1818 5H5.9091C5.40703 5 5 5.40703 5 5.9091V13.1818C5 13.6839 5.40703 14.0909 5.9091 14.0909H13.1818C13.6839 14.0909 14.0909 13.6839 14.0909 13.1818V5.9091C14.0909 5.40703 13.6839 5 13.1818 5ZM12.2727 12.2727H6.81816V6.81816H12.2727L12.2727 12.2727Z' fill='%23545C68'/%3E%3Cpath d='M21.0969 8.90239C20.9278 8.73328 20.6939 8.63633 20.4545 8.63633C20.2151 8.63633 19.9805 8.73328 19.8114 8.90239C19.6423 9.07207 19.5454 9.30602 19.5454 9.54543C19.5454 9.78484 19.6423 10.0187 19.8114 10.1885C19.9805 10.3576 20.2151 10.4545 20.4545 10.4545C20.6938 10.4545 20.9278 10.3576 21.0969 10.1885C21.2666 10.0188 21.3636 9.78484 21.3636 9.54543C21.3636 9.30602 21.2666 9.07207 21.0969 8.90239Z' fill='%23545C68'/%3E%3Cpath d='M24.0909 5H16.8182C16.3161 5 15.9091 5.40703 15.9091 5.9091V13.1818C15.9091 13.6839 16.3161 14.0909 16.8182 14.0909H24.0909C24.593 14.0909 25 13.6839 25 13.1818V5.9091C25 5.40703 24.593 5 24.0909 5ZM23.1818 12.2727H17.7273V6.81816H23.1818L23.1818 12.2727Z' fill='%23545C68'/%3E%3Cpath d='M10.1886 19.8115C10.0189 19.6424 9.78492 19.5454 9.54558 19.5454C9.30621 19.5454 9.07219 19.6424 8.90254 19.8115C8.73344 19.9812 8.63648 20.2151 8.63648 20.4545C8.63648 20.6939 8.73344 20.9278 8.90254 21.0976C9.07164 21.2667 9.30617 21.3636 9.54558 21.3636C9.78492 21.3636 10.0189 21.2667 10.1886 21.0976C10.3577 20.9279 10.4547 20.6939 10.4547 20.4545C10.4547 20.2151 10.3577 19.9812 10.1886 19.8115Z' fill='%23545C68'/%3E%3Cpath d='M13.1818 15.9091H5.9091C5.40703 15.9091 5 16.3161 5 16.8182V24.0909C5 24.5929 5.40703 25 5.9091 25H13.1818C13.6839 25 14.0909 24.5929 14.0909 24.0909V16.8182C14.0909 16.3161 13.6839 15.9091 13.1818 15.9091ZM12.2727 23.1818H6.81816V17.7273H12.2727L12.2727 23.1818Z' fill='%23545C68'/%3E%3Cpath d='M21.0606 19.5454H20.4546C19.9525 19.5454 19.5455 19.9525 19.5455 20.4545C19.5455 20.9566 19.9525 21.3636 20.4546 21.3636H21.0606C21.5627 21.3636 21.9697 20.9566 21.9697 20.4545C21.9697 19.9525 21.5627 19.5454 21.0606 19.5454Z' fill='%23545C68'/%3E%3Cpath d='M24.0909 21.3636C23.5888 21.3636 23.1818 21.7706 23.1818 22.2727V23.1818H21.0606C20.5585 23.1818 20.1515 23.5888 20.1515 24.0909C20.1515 24.593 20.5585 25 21.0606 25H24.0909C24.593 25 25 24.5929 25 24.0909V22.2727C25 21.7706 24.593 21.3636 24.0909 21.3636Z' fill='%23545C68'/%3E%3Cpath d='M16.8182 19.5454C16.3161 19.5454 15.9091 19.9525 15.9091 20.4545V21.6666C15.9091 22.1687 16.3161 22.5757 16.8182 22.5757C17.3202 22.5757 17.7273 22.1687 17.7273 21.6666V20.4545C17.7273 19.9525 17.3202 19.5454 16.8182 19.5454Z' fill='%23545C68'/%3E%3Cpath d='M21.0606 15.9091H19.2424C18.7403 15.9091 18.3333 16.3161 18.3333 16.8182C18.3333 17.3203 18.7403 17.7273 19.2424 17.7273H21.0606C21.5626 17.7273 21.9697 17.3203 21.9697 16.8182C21.9697 16.3161 21.5626 15.9091 21.0606 15.9091Z' fill='%23545C68'/%3E%3Cpath d='M8.1671e-05 1C8.1671e-05 0.447715 0.447797 2.11272e-07 1.00008 2.11272e-07H4.83341C5.3857 2.11272e-07 5.83342 0.447715 5.83342 1C5.83342 1.55229 5.3857 2 4.83341 2H1.00008C0.447797 2 8.1671e-05 1.55229 8.1671e-05 1Z' fill='%23545C68'/%3E%3Cpath d='M1.00008 2.11272e-07C1.55237 2.35413e-07 2 0.447716 2 1L2 4.83333C2 5.38562 1.55228 5.83333 1 5.83333C0.447715 5.83333 -2.41411e-08 5.38562 0 4.83333L8.1671e-05 1C8.1671e-05 0.447715 0.447797 2.11272e-07 1.00008 2.11272e-07Z' fill='%23545C68'/%3E%3Cpath d='M29.9999 29C29.9999 29.5523 29.5522 30 28.9999 30H25.1666C24.6143 30 24.1666 29.5523 24.1666 29C24.1666 28.4477 24.6143 28 25.1666 28H28.9999C29.5522 28 29.9999 28.4477 29.9999 29Z' fill='%23545C68'/%3E%3Cpath d='M28.9999 30C28.4476 30 28 29.5523 28 29V25.1667C28 24.6144 28.4477 24.1667 29 24.1667C29.5523 24.1667 30 24.6144 30 25.1667L29.9999 29C29.9999 29.5523 29.5522 30 28.9999 30Z' fill='%23545C68'/%3E%3Cpath d='M29 8.18385e-05C29.5523 8.18627e-05 30 0.447797 30 1.00008V4.83342C30 5.3857 29.5523 5.83342 29 5.83342C28.4477 5.83342 28 5.3857 28 4.83341V1.00008C28 0.447797 28.4477 8.18144e-05 29 8.18385e-05Z' fill='%23545C68'/%3E%3Cpath d='M30 1.00008C30 1.55237 29.5523 2 29 2L25.1667 2C24.6144 2 24.1667 1.55228 24.1667 1C24.1667 0.447715 24.6144 -4.82823e-08 25.1667 0L29 8.18385e-05C29.5523 8.18627e-05 30 0.447797 30 1.00008Z' fill='%23545C68'/%3E%3Cpath d='M1 29.9999C0.447715 29.9999 1.95737e-08 29.5522 4.37149e-08 28.9999L2.11276e-07 25.1666C2.35417e-07 24.6143 0.447715 24.1666 1 24.1666C1.55229 24.1666 2 24.6143 2 25.1666L2 28.9999C2 29.5522 1.55228 29.9999 1 29.9999Z' fill='%23545C68'/%3E%3Cpath d='M4.37149e-08 28.9999C9.19971e-08 28.4476 0.447716 28 1 28L4.83333 28C5.38562 28 5.83333 28.4477 5.83333 29C5.83333 29.5523 5.38562 30 4.83333 30L1 29.9999C0.447715 29.9999 1.95737e-08 29.5522 4.37149e-08 28.9999Z' fill='%23545C68'/%3E%3C/svg%3E") center no-repeat;
+	background-size: contain;
+	opacity: .7;
+}
+
+.log-popup-form-input {
+	display: inline-flex;
+	min-width: 100%;
+	flex-direction: column;
+	text-align: left;
+	white-space: normal;
+	pointer-events: none;
+	opacity: 0;
+	transition: .5s;
+	transform: translateX(-20%);
+}
+
+.log-popup-form-input.--show {
+	margin-left: 0;
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateX(0);
+}
+
+.log-popup-form-qr {
+	display: inline-flex;
+	min-width: 100%;
+	flex-direction: column;
+	align-items: center;
+	white-space: normal;
+	pointer-events: none;
+	opacity: 0;
+	transition: .5s;
+	transform: translateX(-20%);
+}
+
+.log-popup-form-qr.--show {
+	transform: translateX(-100%);
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.log-popup-form-qr-icon {
+	position: relative;
+	margin-bottom: 15px;
+	padding: 15px;
+	border: 3px solid transparent;
+	border-radius: 5px;
+}
+
+.log-popup-form-qr-icon:after {
+	content: '';
+	position: absolute;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	background: rgba(255, 255, 255, .82);
+	border-radius: 5px;
+	opacity: 0;
+	pointer-events: none;
+	transition: .2s;
+}
+
+.log-popup-form-qr-icon.--success:after,
+.log-popup-form-qr-icon.--loading:after {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.log-popup-form-qr-icon.--success {
+	border-color: #8dba00;
+}
+
+.log-popup-form-qr-icon.--loading {
+	border-color: #00c7f9;
+}
+
+.log-popup-form-qr-icon-status {
+	position: absolute;
+	width: 140px;
+	height: 140px;
+	top: 50%;
+	left: 50%;
+	margin: -70px 0 0 -70px;
+	border-radius: 100%;
+	background: #fff;
+	box-shadow: 0 2px 4px 0 rgba(0, 0, 0, .06);
+	z-index: 9;
+	opacity: 0;
+	pointer-events: none;
+	transition: .1s;
+}
+
+.log-popup-form-qr-icon.--success .log-popup-form-qr-icon-status.--success,
+.log-popup-form-qr-icon.--loading .log-popup-form-qr-icon-status.--loading {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.log-popup-form-qr-icon-status.--success:before {
+	content: '';
+	position: absolute;
+	top: 12px;
+	right: 12px;
+	bottom: 12px;
+	left: 12px;
+	border-radius: 100%;
+	background: #8ebb00;
+}
+
+.log-popup-form-qr-icon-status.--success:after {
+	content: '';
+	position: absolute;
+	width: 0;
+	opacity: 0;
+	height: 45px;
+	top: 47px;
+	left: 42px;
+	z-index: 9;
+	background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='26' viewBox='0 0 34 26'%3E%3Cpath fill='%23FFF' d='M7.44782416,8.15053747 C7.88965194,8.15053747 8.24782412,8.50870965 8.24782412,8.95053743 L8.24739503,19.0275375 L31.1834909,19.0279193 C31.6253186,19.0279193 31.9834908,19.3860915 31.9834908,19.8279192 L31.9834908,24.7543484 C31.9834908,25.1961762 31.6253186,25.5543484 31.1834909,25.5543484 L2.52139498,25.5543484 C2.07956721,25.5543484 1.72139503,25.1961762 1.72139503,24.7543484 L1.72139503,8.95053743 C1.72139503,8.50870965 2.07956721,8.15053747 2.52139498,8.15053747 L7.44782416,8.15053747 Z' transform='rotate(-45 7.196 12.852)'/%3E%3C/svg%3E") left center no-repeat;
+	background-size: 59px 45px;
+}
+
+.log-popup-form-qr-icon.--success .log-popup-form-qr-icon-status.--success:after {
+	animation: log-popup-form-qr-icon-status .3s linear forwards;
+	animation-delay: .1s;
+}
+
+@keyframes log-popup-form-qr-icon-status {
+	0% {
+		width: 0;
+		opacity: 0;
+	}
+	100% {
+		opacity: 1;
+		width: 59px;
+	}
+}
+
+.log-popup-form-qr-icon.--loading:after {
+	pointer-events: auto;
+	opacity: 1;
+	background: rgba(255, 255, 255, .75);
+}
+
+.log-popup-form-qr-icon .main-ui-loader-svg-circle {
+	stroke: #00c7f9;
+}
+
+.log-popup-form-qr-icon .main-ui-loader.main-ui-show {
+	z-index: 999;
+}
+
+.log-popup-form-qr-icon-img {
+	width: 220px;
+	height: 220px;
+}
+
+.log-popup-form-qr-header {
+	margin-bottom: 15px;
+	text-align: center;
+	font-family: var(--intranet-pub-font-family-primary);
+	font-weight: 500;
+	color: #333;
+}
+
+.log-popup-form-qr-header--top {
+	display: block;
+	margin-bottom: 10px;
+	font-size: 27px;
+}
+
+.log-popup-form-qr-header--bottom {
+	display: block;
+	font-size: 15px;
+}
+
+.log-socservice-wrapper {
+	display: flex;
+	justify-content: center;
+	margin: 27px 0 26px;
+	padding: 13px;
+	background: rgba(241, 245, 246, .8);
+	border-radius: 32px;
+}
+
+.login-checkbox-user-remember {
+	margin: 4px 5px 0 4px;
+	vertical-align: top;
+}
+
+.log-popup-form-qr-remember {
+	margin-bottom: 15px;
+}
+
+.login-inner.--full-width {
+	width: 100%;
+}

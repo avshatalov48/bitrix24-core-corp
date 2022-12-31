@@ -417,6 +417,8 @@ final class OnlyOffice extends Engine\Controller
 		$payloadData = $payload->getData();
 		$status = $payloadData['status'];
 
+		$this->processRestrictionLogs($status, $payloadData);
+
 		Application::getInstance()->addBackgroundJob(function () use ($status, $documentSession){
 			$this->processStatusToInfoModel($documentSession, $status);
 		});
@@ -459,6 +461,15 @@ final class OnlyOffice extends Engine\Controller
 		}
 
 		return new Response\Json(['error' => 0]);
+	}
+
+	protected function processRestrictionLogs(int $status, array $hookData): void
+	{
+		$restrictionManager = new Document\OnlyOffice\RestrictionManager();
+		if ($restrictionManager->shouldUseRestriction())
+		{
+			$restrictionManager->processHookData($status, $hookData);
+		}
 	}
 
 	protected function processStatusToInfoModel(Models\DocumentSession $documentSession, int $status): void

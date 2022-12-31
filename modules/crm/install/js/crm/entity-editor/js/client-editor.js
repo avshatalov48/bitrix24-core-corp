@@ -364,6 +364,13 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 				{
 					searchOptions.isMyCompany = 'Y';
 				}
+
+				var creationLegend = BX.prop.getString(this._settings, 'creationLegend', '');
+				if (creationLegend === '')
+				{
+					creationLegend = this.getMessage(this._entityTypeName.toLowerCase() + "ToCreateLegend");
+				}
+
 				this._searchControl = new BX.UI.Dropdown(
 					{
 						searchAction: 'crm.api.entity.search',
@@ -377,7 +384,7 @@ if(typeof BX.Crm.EntityEditorClientSearchBox === "undefined")
 						context: { origin: "crm.entity.editor", isEmbedded: this._editor.isEmbedded()  },
 						messages:
 							{
-								creationLegend: this.getMessage(this._entityTypeName.toLowerCase() + "ToCreateLegend"),
+								creationLegend: creationLegend,
 								notFound: this.getMessage("notFound")
 							},
 						events:

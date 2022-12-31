@@ -9,8 +9,8 @@ class Crm extends Social
 
 	const STRUCTURE = [
 		'shown' => [
-			'menu_crm_store',
 			'menu_crm_favorite',
+			'menu_crm_store',
 			'menu_marketing',
 			'menu_sites',
 			'menu_shop',

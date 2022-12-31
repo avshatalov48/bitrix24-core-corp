@@ -91,11 +91,11 @@
 		{
 			if (code === "DEAL_CHANGECATEGORY")
 			{
-				code = "DEAL_CHANGECATEGORY_LINK";
+				code = "DEAL_CHANGECATEGORY_LINK2";
 			}
 			if (code === "DYNAMIC_CHANGECATEGORY")
 			{
-				code = "DYNAMIC_CHANGECATEGORY_LINK";
+				code = "DYNAMIC_CHANGECATEGORY_LINK2";
 			}
 			code = "CRM_KANBAN_NOTIFY_" + code;
 			if (typeof BX.message[code] !== "undefined")
@@ -130,6 +130,8 @@
 			{
 				grid.resetMultiSelectMode();
 			}
+
+			params.eventId = (params.eventId || BX.Crm.Kanban.PullManager.registerRandomEventId());
 
 			return new Promise(function(resolve,reject){
 				grid.ajax(

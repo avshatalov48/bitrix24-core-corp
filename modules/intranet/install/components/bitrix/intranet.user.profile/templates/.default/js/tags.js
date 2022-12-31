@@ -382,7 +382,7 @@
 							style: (
 								BX.type.isNotEmptyString(user.PERSONAL_PHOTO_SRC)
 									? {
-										backgroundImage: "url(\'" + user.PERSONAL_PHOTO_SRC + "\')"
+										backgroundImage: "url(\'" + encodeURI(user.PERSONAL_PHOTO_SRC) + "\')"
 									}
 									: null
 							)

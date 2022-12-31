@@ -1,5 +1,6 @@
-(() =>
-{
+(() => {
+	const { MoneyType } = jn.require('layout/ui/fields/money');
+
 	class StoreCatalogProductPricesStep extends CatalogProductWizardStep
 	{
 		prepareFields()
@@ -8,23 +9,33 @@
 
 			const documentCurrency = this.entity.get('DOCUMENT_CURRENCY');
 
-			this.setDefaultValues({
-				'PURCHASING_PRICE': {
-					amount: '',
-					currency: documentCurrency,
-				},
-				'BASE_PRICE': {
-					amount: '',
-					currency: documentCurrency,
-				},
-			});
+			/**
+             * Purchasing price
+             */
+			const hasPurchasingPriceEditAccess = (
+				this.hasProductEditPermission()
+				&& this.hasPermission('catalog_purchas_info')
+			);
+
+			if (hasPurchasingPriceEditAccess)
+			{
+				this.setDefaultValues({
+					'PURCHASING_PRICE': {
+						amount: '',
+						currency: documentCurrency,
+					},
+				});
+			}
 
 			this.addField(
 				'PURCHASING_PRICE',
-				FieldFactory.Type.MONEY,
+				MoneyType,
 				BX.message('WIZARD_FIELD_PRODUCT_PURCHASING_PRICE'),
 				this.entity.get('PURCHASING_PRICE'),
 				{
+					disabled: !hasPurchasingPriceEditAccess,
+					placeholder: !hasPurchasingPriceEditAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
+					emptyValue: !hasPurchasingPriceEditAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
 					config: {
 						selectionOnFocus: true,
 						currencyReadOnly: true,
@@ -32,12 +43,32 @@
 				}
 			);
 
+			/**
+			 * Base price
+			 */
+			const hasBasePriceEditAccess = (
+				this.hasProductEditPermission()
+				&& this.hasPermission('catalog_price')
+			);
+			if (hasBasePriceEditAccess)
+			{
+				this.setDefaultValues({
+					'BASE_PRICE': {
+						amount: '',
+						currency: documentCurrency,
+					},
+				});
+			}
+
 			this.addField(
 				'BASE_PRICE',
-				FieldFactory.Type.MONEY,
+				MoneyType,
 				BX.message('WIZARD_FIELD_PRODUCT_BASE_PRICE'),
 				this.entity.get('BASE_PRICE'),
 				{
+					disabled: !hasBasePriceEditAccess,
+					placeholder: !hasBasePriceEditAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
+					emptyValue: !hasBasePriceEditAccess ? BX.message('WIZARD_FIELD_ACCESS_DENIED') : null,
 					config: {
 						selectionOnFocus: true,
 						currencyReadOnly: true,

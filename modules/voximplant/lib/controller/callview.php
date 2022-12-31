@@ -19,7 +19,9 @@ class CallView extends Engine\Controller
 			return null;
 		}
 
+		$entityId = (int)$entityId;
 		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+
 		if ($entityId > 0 && !\CCrmAuthorizationHelper::CheckReadPermission($entityType, $entityId, $userPermissions))
 		{
 			$this->addError(new Error('Access denied', 'ACCESS_DENIED'));

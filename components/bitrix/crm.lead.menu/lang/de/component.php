@@ -32,6 +32,7 @@ $MESS["LEAD_CONVERT"] = "Konvertieren";
 $MESS["LEAD_CONVERT_TITLE"] = "Lead konvertieren";
 $MESS["LEAD_COPY"] = "Lead kopieren";
 $MESS["LEAD_COPY_TITLE"] = "Lead kopieren";
+$MESS["LEAD_CREATE"] = "Lead erstellen";
 $MESS["LEAD_CREATE_ON_BASIS"] = "Daraus erstellen:";
 $MESS["LEAD_CREATE_ON_BASIS_DISABLE_HINT"] = "Nicht mehr anzeigen";
 $MESS["LEAD_CREATE_ON_BASIS_HINT_CONTENT"] = "Klicken Sie hier, um aus diesem Lead einen Auftrag, einen Kontakt oder ein Unternehmen zu erstellen. Die entsprechenden Optionen finden Sie in der Auswahlliste.";

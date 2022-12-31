@@ -424,14 +424,27 @@ class Entity
 		$hasOriginator = !empty($fields['ORIGINATOR_ID']) && $fields['ORIGINATOR_ID'] === 'bitrix.cms.sync';
 		if ($hasOriginator && !empty($fields['ORIGIN_ID']))
 		{
-			$orderId = trim($fields['ORIGIN_ID']);
+			$orderId = $fields['ORIGIN_ID'];
+			$orderId = is_string($orderId) || is_integer($orderId)
+				? trim((string)$orderId)
+				: null
+			;
 		}
 		else
 		{
 			$fieldName = Tracking\Channel\Order::getDealField();
 			$orderId = ($fieldName && isset($fields[$fieldName]))
-				? trim($fields[$fieldName])
-				: null;
+				? $fields[$fieldName]
+				: null
+			;
+			$orderId = is_array($orderId)
+				? current($orderId)
+				: $orderId
+			;
+			$orderId = is_string($orderId) || is_integer($orderId)
+				? trim((string)$orderId)
+				: null
+			;
 		}
 
 

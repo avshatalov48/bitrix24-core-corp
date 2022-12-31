@@ -1385,8 +1385,14 @@ class CVoxImplantRestService extends IRestService
 		if(!$userId)
 			throw new \Bitrix\Rest\RestException('USER_ID or USER_PHONE_INNER should be set');
 
+		$callId = $params['CALL_ID'];
+		if(!is_string($callId))
+		{
+			throw new \Bitrix\Rest\RestException('CALL_ID must be a string', 'INVALID_ARGUMENT');
+		}
+
 		$result = Rest\Helper::finishExternalCall(array(
-			'CALL_ID' => $params['CALL_ID'],
+			'CALL_ID' => $callId,
 			'USER_ID' => $userId,
 			'DURATION' => (int)$params['DURATION'],
 			'COST' => (double)$params['COST'],

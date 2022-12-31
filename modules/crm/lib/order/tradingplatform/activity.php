@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Order\TradingPlatform;
 
 use Bitrix\Main;
+use Bitrix\Sale;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -10,7 +11,9 @@ Main\Localization\Loc::loadMessages(__FILE__);
  * Class Activity
  * @package Bitrix\Crm\TradingPlatform
  */
-class Activity extends Platform
+class Activity
+	extends Platform
+	implements Sale\TradingPlatform\IRestriction
 {
 	const TRADING_PLATFORM_CODE = 'activity';
 

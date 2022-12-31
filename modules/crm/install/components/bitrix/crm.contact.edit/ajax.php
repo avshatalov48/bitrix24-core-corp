@@ -526,6 +526,10 @@ elseif($action === 'FIND_DUPLICATES')
 					{
 						$info['TITLE'] = $entityInfo['TITLE'];
 					}
+					if(isset($entityInfo['POST']))
+					{
+						$info['POST'] = $entityInfo['POST'];
+					}
 					if(isset($entityInfo['RESPONSIBLE_ID']))
 					{
 						$responsibleID = $entityInfo['RESPONSIBLE_ID'];
@@ -600,6 +604,7 @@ elseif($action === 'FIND_DUPLICATES')
 			'GROUP_ID' => isset($group['GROUP_ID']) ? $group['GROUP_ID'] : '',
 			'FIELD_ID' => isset($group['FIELD_ID']) ? $group['FIELD_ID'] : '',
 			'HASH_CODE' => isset($group['HASH_CODE']) ? intval($group['HASH_CODE']) : 0,
+			'TOTAL_DUPLICATES' => $totalEntities,
 			'ENTITY_TOTAL_TEXT' => \Bitrix\Crm\Integrity\Duplicate::entityCountToText($totalEntities)
 		);
 		unset($dupInfos);

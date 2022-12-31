@@ -15,4 +15,9 @@ class Link extends Base
 	{
 		return Loc::getMessage('CRM_TIMELINE_LINK_TITLE');
 	}
+
+	public function getIconCode(): ?string
+	{
+		return 'link';
+	}
 }

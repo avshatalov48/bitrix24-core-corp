@@ -3,6 +3,7 @@
 namespace Bitrix\DocumentGenerator\Body;
 
 use Bitrix\DocumentGenerator\Value;
+use Bitrix\Main\Application;
 use Bitrix\Main\Error;
 use Bitrix\Main\IO\File;
 use Bitrix\Main\Result;
@@ -182,7 +183,14 @@ class Docx extends ZipDocument
 			}
 		}
 		$this->contentTypesDocument = new \DOMDocument();
-		$this->contentTypesDocument->loadXML($this->zip->getFromName(static::PATH_CONTENT_TYPES));
+		try
+		{
+			$this->contentTypesDocument->loadXML($this->zip->getFromName(static::PATH_CONTENT_TYPES));
+		}
+		catch (\ValueError $emptyArgumentError)
+		{
+			Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+		}
 	}
 
 	/**
@@ -209,7 +217,14 @@ class Docx extends ZipDocument
 		$relationshipsDocument = new \DOMDocument();
 		if(!empty($relationshipsContent))
 		{
-			$relationshipsDocument->loadXML($relationshipsContent);
+			try
+			{
+				$relationshipsDocument->loadXML($relationshipsContent);
+			}
+			catch (\ValueError $emptyArgumentError)
+			{
+				Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+			}
 			foreach($relationshipsDocument->getElementsByTagName('Relationship') as $relationship)
 			{
 				$id = $relationship->attributes->getNamedItem('Id');
@@ -508,7 +523,14 @@ class Docx extends ZipDocument
 		if(!$this->numbering['document'])
 		{
 			$numberingDocument = new \DOMDocument();
-			$numberingDocument->loadXML($this->zip->getFromName($this->numbering['documentPath']));
+			try
+			{
+				$numberingDocument->loadXML($this->zip->getFromName($this->numbering['documentPath']));
+			}
+			catch (\ValueError $emptyArgumentError)
+			{
+				Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+			}
 			$this->numbering['document'] = $numberingDocument;
 		}
 

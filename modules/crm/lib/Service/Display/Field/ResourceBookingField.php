@@ -9,7 +9,7 @@ use Bitrix\Main\Loader;
 
 class ResourceBookingField extends BaseSimpleField
 {
-	protected const TYPE = 'resourcebooking';
+	public const TYPE = 'resourcebooking';
 
 	protected function getFormattedValueForExport($fieldValue, int $itemId, Options $displayOptions): string
 	{
@@ -42,6 +42,19 @@ class ResourceBookingField extends BaseSimpleField
 				'VALUE' => $this->getPreparedArrayValues($fieldValue),
 			]
 		);
+
 		return ResourceBooking::getPublicText($userField);
+	}
+
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		if (!Loader::includeModule('calendar') || !Calendar::isResourceBookingEnabled())
+		{
+			return [];
+		}
+
+		return [
+			'value' => !empty($fieldValue) ? $this->getPreparedValue($fieldValue, $itemId) : '',
+		];
 	}
 }

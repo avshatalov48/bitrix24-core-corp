@@ -1,6 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
-class CompanySettings extends EntitySettings
+
+class CompanySettings extends EntitySettings implements ISettingsSupportsCategory
 {
 	const FLAG_ENABLE_ADDRESS = 1;
 	/** @var int */
@@ -33,7 +35,7 @@ class CompanySettings extends EntitySettings
 	}
 
 	/**
-	 * Get Company Category Id.
+	 * @inheritDoc
 	 */
 	public function getCategoryId(): ?int
 	{

@@ -10,6 +10,7 @@ define('NO_AGENT_CHECK', true);
 define('DisableEventsCheck', true);
 
 use Bitrix\Crm\Service\Container;
+use Bitrix\Main\Application;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
@@ -17,6 +18,14 @@ use Bitrix\Tasks\Util\User;
 
 Loc::loadMessages(__DIR__.'/template.php');
 Loc::loadMessages(__DIR__.'/export_excel.php');
+
+/** @var $APPLICATION CMain */
+/** @var array $arResult */
+/** @var array $arParams */
+/** @var $component CBitrixComponent */
+/** @var $this CBitrixComponentTemplate */
+
+
 
 $APPLICATION->RestartBuffer();
 
@@ -33,20 +42,35 @@ header('Pragma: public');
 $userCache = [];
 $groupCache = [];
 $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
+
+$columns = $arParams['COLUMNS'];
+
+if ($arResult['EXPORT_ALL'])
+{
+	$arParams['COLUMNS'] = array_unique($arParams['COLUMNS']);
+	$columns = array_unique($arResult['EXPORT_COLUMNS']);
+}
 ?>
 
-<meta http-equiv="Content-type" content="text/html;charset=<? echo LANG_CHARSET ?>"/>
+<meta http-equiv="Content-type" content="text/html;charset=<?=LANG_CHARSET ?>"/>
 
 <table border="1">
 	<thead>
 	<tr>
-		<?php foreach ($arParams['COLUMNS'] as $field):
+		<?php foreach ($columns as $field):
 			if (in_array($field, $columnsToIgnore, true))
 			{
 				continue;
 			}
-
-			$header = Loc::getMessage('TASKS_EXCEL_'.$field);
+			if ($field === 'PARENT_ID')
+			{
+				$field = 'BASE_ID';
+			}
+			if ($field === 'PARENT_TITLE')
+			{
+				$field = 'BASE_TITLE';
+			}
+			$header = Loc::getMessage("TASKS_EXCEL_{$field}");
 			if ($header === null && array_key_exists($field, $arParams['UF']))
 			{
 				$header = $arParams['UF'][$field]['EDIT_FORM_LABEL'];
@@ -72,6 +96,13 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 
 				switch ($field)
 				{
+					case 'DESCRIPTION':
+						$columnValue = CTextParser::clearAllTags(
+							htmlspecialchars_decode($task[$field], ENT_QUOTES)
+						);
+						break;
+
+					case 'PARENT_TITLE':
 					case 'TITLE':
 						if (array_key_exists('__LEVEL', $task))
 						{
@@ -82,6 +113,10 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 							// due to http://jabber.bx/view.php?id=39850
 							$columnValue = $task[$field].' ';
 						}
+						break;
+
+					case 'PARENT_ID':
+						$columnValue = (int)$task[$field] === 0 ? '' : $task[$field];
 						break;
 
 					case 'ORIGINATOR_NAME':
@@ -116,6 +151,17 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 						}
 
 						$columnValue = $userCache[$userId];
+						break;
+
+					case 'A':
+					case 'U':
+						if (!$task[$field])
+						{
+							$columnValue = '';
+							break;
+						}
+
+						$columnValue = implode(', ', $task[$field]);
 						break;
 
 					case 'GROUP_NAME':
@@ -277,10 +323,26 @@ $columnsToIgnore = ['FLAG_COMPLETE', 'RESPONSIBLE_ID', 'CREATED_BY'];
 							{
 								$columnValue = implode(', ', $columnValue);
 							}
+							else
+							{
+								$columnValue = '';
+							}
 						}
-						else if (in_array(mb_strtoupper($columnValue), ['Y', 'N']))
+						else if (in_array(strtoupper($columnValue), ['Y', 'N']))
 						{
 							$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$columnValue);
+						}
+						$UFTypeQuery = "SELECT USER_TYPE_ID FROM b_user_field WHERE FIELD_NAME = '{$field}'";
+						$UFType = Application::getConnection()->query($UFTypeQuery)->fetch();
+
+						if ($UFType['USER_TYPE_ID'] === 'boolean')
+						{
+							$map = [
+								'1' => 'Y',
+								'0' => 'N',
+							];
+
+							$columnValue = Loc::getMessage('TASKS_EXCEL_COLUMN_'.$map[$columnValue]);
 						}
 						else if (trim($columnValue) === '')
 						{

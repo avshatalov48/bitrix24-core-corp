@@ -95,6 +95,10 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				{
 					return BX.UI.EntityEditorHtml.create(controlId, settings);
 				}
+				else if(type === "file")
+				{
+					return BX.UI.EntityEditorFile.create(controlId, settings);
+				}
 				else if(type === "money")
 				{
 					return BX.Crm.EntityEditorMoney.create(controlId, settings);
@@ -157,7 +161,7 @@ if(typeof BX.Crm.EntityEditorControlFactory === "undefined")
 				}
 				else if(type === "product_row_summary")
 				{
-					return BX.Crm.EntityEditorProductRowSummary.create(controlId, settings);
+					return BX.UI.EntityEditorProductRowSummary.create(controlId, settings);
 				}
 				else if(type === "requisite_selector")
 				{
@@ -299,43 +303,103 @@ if(typeof BX.Crm.EntityEditorControllerFactory === "undefined")
 {
 	BX.Crm.EntityEditorControllerFactory =
 		{
+			methods: null,
+
 			create: function(type, controllerId, settings)
 			{
-				if(type === "requisite_controller")
+				if (this.methods === null)
+				{
+					this.registerEventFactories();
+				}
+
+				if (type === "requisite_controller")
 				{
 					return BX.Crm.EntityEditorRequisiteController.create(controllerId, settings);
 				}
-				if(type === "product_row_proxy")
+				if (type === "product_row_proxy")
 				{
 					return BX.Crm.EntityEditorProductRowProxy.create(controllerId, settings);
 				}
-				else if(type === "product_list")
+				else if (type === "product_list")
 				{
 					return BX.Crm.EntityProductListController.create(controllerId, settings);
 				}
-				else if(type === "order_controller")
+				else if (type === "order_controller")
 				{
 					return BX.Crm.EntityEditorOrderController.create(controllerId, settings);
 				}
-				else if(type === "order_shipment_controller")
+				else if (type === "order_shipment_controller")
 				{
 					return BX.Crm.EntityEditorOrderShipmentController.create(controllerId, settings);
 				}
-				else if(type === "document_order_shipment_controller")
+				else if (type === "document_order_shipment_controller")
 				{
 					return BX.Crm.EntityEditorDocumentOrderShipmentController.create(controllerId, settings);
 				}
-				else if(type === "order_payment_controller")
+				else if (type === "order_payment_controller")
 				{
 					return BX.Crm.EntityEditorOrderPaymentController.create(controllerId, settings);
 				}
-				else if(type === "order_product_controller")
+				else if (type === "order_product_controller")
 				{
 					return BX.Crm.EntityEditorOrderProductController.create(controllerId, settings);
 				}
-				else if(type === "store_document_product_list")
+				else if (type === "store_document_product_list")
 				{
 					return BX.Crm.EntityStoreDocumentProductListController.create(controllerId, settings);
+				}
+
+				var controller = this.findEventController(type, controllerId, settings);
+				if (controller)
+				{
+					return controller;
+				}
+
+				return null;
+			},
+
+			registerEventFactories: function()
+			{
+				var eventArgs = {methods: {}};
+				BX.onCustomEvent(
+					window,
+					'BX.Crm.EntityEditorControllerFactory:onInitialize',
+					[this, eventArgs]
+				);
+
+				this.methods = {};
+
+				for (var name in eventArgs.methods)
+				{
+					if (eventArgs.methods.hasOwnProperty(name))
+					{
+						this.registerEventFactory(name, eventArgs.methods[name]);
+					}
+				}
+			},
+
+			registerEventFactory: function(name, method)
+			{
+				if (BX.type.isFunction(method))
+				{
+					this.methods[name] = method;
+				}
+			},
+
+			findEventController: function(type, controllerId, settings)
+			{
+				for (var name in this.methods)
+				{
+					if (!this.methods.hasOwnProperty(name))
+					{
+						continue;
+					}
+
+					var controller = this.methods[name](type, controllerId, settings);
+					if (controller)
+					{
+						return controller;
+					}
 				}
 
 				return null;
@@ -385,6 +449,10 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				{
 					return BX.Crm.OrderShipmentModel.create(id, settings);
 				}
+				else if(entityTypeId === BX.CrmEntityType.enumeration.shipmentDocument)
+				{
+					return BX.Crm.DocumentOrderShipmentModel.create(id, settings);
+				}
 				else if(entityTypeId === BX.CrmEntityType.enumeration.smartinvoice)
 				{
 					return BX.Crm.SmartInvoiceModel.create(id, settings);
@@ -397,6 +465,11 @@ if(typeof BX.Crm.EntityEditorModelFactory === "undefined")
 				{
 					return BX.Crm.FactoryBasedModel.create(id, settings);
 				}
+				else if(entityTypeId === BX.CrmEntityType.enumeration.storeDocument)
+				{
+					return BX.Crm.StoreDocumentModel.create(id, settings);
+				}
+
 				return BX.Crm.EntityModel.create(id, settings);
 			}
 		};

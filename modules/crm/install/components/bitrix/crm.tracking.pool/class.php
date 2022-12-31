@@ -58,7 +58,7 @@ class CrmTrackingChannelPoolComponent extends \CBitrixComponent implements Contr
 		}
 
 		$this->arResult['FEATURE_CODE'] = Loader::includeModule('bitrix24') && !Feature::isFeatureEnabled("crm_tracking_call")
-			? "crm_tracking_call"
+			? "limit_crm_calltracking"
 			: null
 		;
 	}

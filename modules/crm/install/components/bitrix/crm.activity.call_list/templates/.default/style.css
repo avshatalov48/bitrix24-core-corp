@@ -34,7 +34,7 @@
 	text-align: left;
 }
 .crm-activity-popup-edit-include-lead-list{
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	white-space: nowrap;
 }
 .crm-activity-popup-edit-include-lead-list-item{
@@ -116,7 +116,7 @@
 
 .activity-call-list-display-tab.activity-call-list-display-tab-active,
 .activity-call-list-display-tab.activity-call-list-display-tab-inactive{
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	-webkit-transition: all 250ms ease;
 	-moz-transition: all 250ms ease;
 	-ms-transition: all 250ms ease;

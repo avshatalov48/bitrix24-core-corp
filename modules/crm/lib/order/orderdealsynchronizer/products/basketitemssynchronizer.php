@@ -12,6 +12,7 @@ use Bitrix\Sale\Result;
 use CApplicationException;
 use CCrmDeal;
 use CMain;
+use Bitrix\Catalog;
 
 Loader::requireModule('sale');
 
@@ -59,7 +60,9 @@ class BasketItemsSynchronizer
 	 */
 	public function sync(): array
 	{
-		$converter = new EntityProductConverter;
+		$converter = new EntityProductConverter();
+		$converter->setBasketItem($this->basket);
+
 		$existRows = $this->getRelationsProductRows();
 
 		$result = [];

@@ -24,8 +24,11 @@ $APPLICATION->SetTitle(Loc::getMessage('SC_CRM_STORE_TITLE_2'));
 
 <?php $this->setViewTarget("inside_pagetitle_below", 100); ?>
 <div class="salescenter-main-header-feedback-container">
-	<? Bitrix24Manager::getInstance()->renderIntegrationRequestButton(); ?>
-	<? Bitrix24Manager::getInstance()->renderFeedbackPayOrderOfferButton(); ?>
+<?php
+	Bitrix24Manager::getInstance()->renderIntegrationRequestButton([
+		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CRM_STORE
+	]);
+	Bitrix24Manager::getInstance()->renderFeedbackPayOrderOfferButton(); ?>
 </div>
 <?php $this->endViewTarget(); ?>
 

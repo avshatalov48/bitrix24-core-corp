@@ -19,9 +19,6 @@ class NoAnswer
 	 * Determines if there are sessions that are not answered.
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function isThereSessionNoAnswer()
 	{
@@ -42,11 +39,6 @@ class NoAnswer
 	 *
 	 * @param int $limitTime
 	 * @param int $limit
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function sendMessageNoAnswer($limitTime = 60, $limit = 0)
 	{

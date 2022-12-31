@@ -1,5 +1,6 @@
 <?php
 
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Tasks\Access\TaskAccessController;
@@ -214,6 +215,10 @@ class TasksQuickFormComponent extends TasksBaseComponent
 		{
 			$result["task"] = $this->getJson($task, $arPaths, $nameTemplate);
 		}
+		$result['currentUser'] = [
+			'id' => $this->userId,
+			'fullName' => CurrentUser::get()->getFormattedName(),
+		];
 
 		return $result;
 	}

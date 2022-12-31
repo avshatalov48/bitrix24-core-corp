@@ -13,6 +13,12 @@ return array(
 		],
 		'readonly' => true,
 	],
+	'ui.uploader' => [
+		'value' => [
+			'allowUseControllers' => true,
+		],
+		'readonly' => true,
+	],
 	'ui.entity-selector' => [
 		'value' => [
 			'entities' => [

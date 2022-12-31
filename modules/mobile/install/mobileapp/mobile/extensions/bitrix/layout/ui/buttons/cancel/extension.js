@@ -1,16 +1,32 @@
 (() => {
+	/**
+	 * @class CancelButton
+	 */
 	class CancelButton extends BaseButton
 	{
 		getStyle()
 		{
+			if (this.isRounded())
+			{
+				return {
+					button: {
+						borderColor: '#828b95',
+						backgroundColor: '#ffffff',
+					},
+					icon: {},
+					text: {
+						color: '#525c69',
+					},
+				};
+			}
+
 			return {
-				button: {
-					borderColor: '#828B95',
-					backgroundColor: '#FFFFFF',
-				},
+				button: {},
 				icon: {},
 				text: {
-					color: '#525C69',
+					fontWeight: '500',
+					fontSize: 18,
+					color: '#525c69',
 				},
 			};
 		}

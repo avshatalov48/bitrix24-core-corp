@@ -63,23 +63,28 @@ class ResultManager
 
 	/**
 	 * @param int $taskId
-	 * @return bool
+	 * @return array|null
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function hasResult(int $taskId): bool
+	public static function getLastResult(int $taskId): ?array
 	{
 		$res = ResultTable::GetList([
-			'select' => ['ID'],
+			'select' => ['ID', 'TASK_ID', 'STATUS', 'TEXT', 'CREATED_BY', 'CREATED_AT', 'UPDATED_AT'],
 			'filter' => [
 				'=TASK_ID' => $taskId,
-				'=STATUS' => ResultTable::STATUS_OPENED,
 			],
+			'order' => ['ID' => 'DESC'],
 			'limit' => 1,
 		])->fetch();
 
-		return $res && (int)$res['ID'] > 0;
+		if (!$res || empty($res))
+		{
+			return null;
+		}
+
+		return $res;
 	}
 
 	/**
@@ -520,6 +525,8 @@ class ResultManager
 
 		$result = $result->toArray(false);
 
+		$lastResult = self::getLastResult($result['taskId']);
+
 		PushService::addEvent($recipients, [
 			'module_id' => PushService::MODULE_NAME,
 			'command' => $command,
@@ -527,7 +534,8 @@ class ResultManager
 				'result' => $result,
 				'taskId' => $result['taskId'],
 				'taskRequireResult' => self::requireResult($result['taskId']) ? "Y" : "N",
-				'taskHasResult' => self::hasResult($result['taskId']) ? "Y" : "N",
+				'taskHasResult' => $lastResult ? "Y" : "N",
+				'taskHasOpenResult' => ($lastResult && (int) $lastResult['STATUS'] === ResultTable::STATUS_OPENED) ? "Y" : "N",
 			],
 		]);
 	}

@@ -1,4 +1,7 @@
 (() => {
+
+	const { ButtonsToolbar } = jn.require('layout/ui/buttons-toolbar');
+
 	class ProjectEdit extends LayoutComponent
 	{
 		static get projectTypes()
@@ -196,17 +199,16 @@
 						}),
 					),
 				),
-				new ButtonsToolbar({
-					isWithSafeArea: true,
+				ButtonsToolbar({
 					buttons: [
-						new PrimaryButton({
-							text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_SAVE'),
-							onClick: () => this.onSaveClick(),
-							style: {},
-						}),
 						new CancelButton({
 							text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_CANCEL'),
 							onClick: () => this.onCancelClick(),
+							style: {},
+						}),
+						new PrimaryButton({
+							text: BX.message('MOBILE_LAYOUT_PROJECT_EDIT_SAVE'),
+							onClick: () => this.onSaveClick(),
 							style: {},
 						}),
 					],

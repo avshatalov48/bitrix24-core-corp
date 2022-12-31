@@ -48,8 +48,8 @@ $isRestriction = !empty($arResult['CLOUD_ERROR']['LIMIT']['RESTRICTION']);
 $isDemoEnd = !empty($arResult['CLOUD_ERROR']['DEMO']['END']);
 if ($isRestriction)
 {
-	$errorTitle = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_TITLE');
-	$errorDescription = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_DESCR', ['#LIMIT#' => $arResult['CLOUD_ERROR']['LIMIT']['LIMIT_VALUE']]);
+	$errorTitle = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_TITLE_1', ['#LIMIT#' => $arResult['CLOUD_ERROR']['LIMIT']['LIMIT_VALUE']]);
+	$errorDescription = Loc::getMessage('DISK_FILE_EDITOR_ONLYOFFICE_CLOUD_ERROR_RESTRICTION_DESCR_1', ['#LIMIT#' => $arResult['CLOUD_ERROR']['LIMIT']['LIMIT_VALUE']]);
 }
 if ($isDemoEnd)
 {

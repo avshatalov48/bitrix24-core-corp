@@ -3,6 +3,7 @@ import Manager from "./manager";
 import {Item, ConfigurableItem, StreamType} from 'crm.timeline.item';
 import ItemAnimation from "./animations/item";
 import ItemNew from "./animations/item-new";
+import {TimezoneOffset} from "crm.datetime";
 
 /** @memberof BX.Crm.Timeline */
 export default class Steam
@@ -15,8 +16,6 @@ export default class Steam
 		this._manager = null;
 		this._activityEditor = null;
 
-		this._userTimezoneOffset = null;
-		this._serverTimezoneOffset = null;
 		this._timeFormat = "";
 		this._year = 0;
 
@@ -155,28 +154,12 @@ export default class Steam
 
 	getUserTimezoneOffset()
 	{
-		if (!this._userTimezoneOffset)
-		{
-			this._userTimezoneOffset = parseInt(BX.message("USER_TZ_OFFSET"));
-			if (isNaN(this._userTimezoneOffset))
-			{
-				this._userTimezoneOffset = 0;
-			}
-		}
-		return this._userTimezoneOffset;
+		return TimezoneOffset.USER_TO_SERVER;
 	}
 
 	getServerTimezoneOffset()
 	{
-		if (!this._serverTimezoneOffset)
-		{
-			this._serverTimezoneOffset = parseInt(BX.message("SERVER_TZ_OFFSET"));
-			if (isNaN(this._serverTimezoneOffset))
-			{
-				this._serverTimezoneOffset = 0;
-			}
-		}
-		return this._serverTimezoneOffset;
+		return TimezoneOffset.SERVER_TO_UTC;
 	}
 
 	// @todo replace by DatetimeConverter
@@ -282,7 +265,7 @@ export default class Steam
 		return this.createItem(item.getData());
 	}
 
-	refreshItem(item: Item, animated: boolean = true): Promise
+	refreshItem(item: Item, animateUpdate: boolean = true, animateMove: true): Promise
 	{
 		const index = this.getItemIndex(item);
 		if(index < 0)
@@ -307,7 +290,7 @@ export default class Steam
 		{
 			this.addItem(item, newIndex);
 			item.refreshLayout();
-			if (animated)
+			if (animateUpdate)
 			{
 				return this.animateItemAdding(item);
 			}
@@ -317,7 +300,7 @@ export default class Steam
 
 		const anchor = this.createAnchor(newIndex);
 		this.addItem(newItem, newIndex);
-		if (animated)
+		if (animateMove)
 		{
 			newItem.layout({add: false});
 
@@ -342,6 +325,7 @@ export default class Steam
 		else
 		{
 			newItem.layout({anchor: anchor});
+			item.destroy();
 
 			return Promise.resolve();
 		}

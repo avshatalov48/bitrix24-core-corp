@@ -5,6 +5,7 @@ namespace Bitrix\DocumentGenerator\Body;
 use Bitrix\DocumentGenerator\DataProvider;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\Value;
+use Bitrix\Main\Application;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\Encoding;
 use Bitrix\Main\Web\DOM;
@@ -429,7 +430,14 @@ class DocxXml extends Xml
 				$blockDocument = new \DOMDocument();
 				$blockContentWithoutXmlDeclaration = str_replace('<?xml version="1.0"?>' . PHP_EOL, '', $blockContent);
 				$validXmlWithContent = Xml::getValidXmlWithContent($blockContentWithoutXmlDeclaration, 'w', static::getNamespaces());
-				$blockDocument->loadXML($validXmlWithContent);
+				try
+				{
+					$blockDocument->loadXML($validXmlWithContent);
+				}
+				catch (\ValueError $emptyArgumentError)
+				{
+					Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+				}
 				foreach(Xml::getDocumentContentNodes($blockDocument, 'w') as $blockNode)
 				{
 					$blockNode = $this->document->importNode($blockNode, true);

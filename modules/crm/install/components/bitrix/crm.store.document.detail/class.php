@@ -4,9 +4,14 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
+use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Crm\Order;
+use Bitrix\Crm\Service\EditorAdapter;
 use Bitrix\Sale;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Component\ComponentError;
@@ -26,6 +31,7 @@ if (!Main\Loader::includeModule('crm'))
 if (!Main\Loader::includeModule('catalog'))
 {
 	ShowError(GetMessage('CATALOG_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -48,7 +54,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 	public function getEntityTypeID()
 	{
-		return \CCrmOwnerType::OrderShipment;
+		return \CCrmOwnerType::ShipmentDocument;
 	}
 
 	protected function getUserFieldEntityID()
@@ -125,9 +131,31 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
 
 		$this->init();
+		if (!$this->checkDocumentReadRight())
+		{
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage(
+				Main\Loader::includeModule('bitrix24')
+					? 'CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_CLOUD'
+					: 'CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_BOX'
+			);
+			$this->includeComponentTemplate();
 
+			return;
+		}
 		//region Params
 		$this->arResult['DOCUMENT_ID'] = isset($this->arParams['~DOCUMENT_ID']) ? (int)$this->arParams['~DOCUMENT_ID'] : 0;
+
+		if ($this->arResult['DOCUMENT_ID'] === 0 && !$this->checkDocumentModifyRight())
+		{
+			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage(
+				Main\Loader::includeModule('bitrix24')
+					? 'CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_CLOUD'
+					: 'CRM_STORE_DOCUMENT_SHIPMENT_ERR_ACCESS_DENIED_BOX'
+			);
+			$this->includeComponentTemplate();
+
+			return;
+		}
 
 		$this->arResult['PATH_TO_SHIPMENT_DETAIL'] = $this->arParams['PATH_TO']['SHIPMENT'] ?? self::PATH_TO_SHIPMENT_DETAIL;
 
@@ -166,6 +194,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		if (!$this->tryToDetectMode())
 		{
 			$this->showErrors();
+
 			return;
 		}
 
@@ -201,6 +230,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		if ($this->getErrors())
 		{
 			$this->showErrors();
+
 			return;
 		}
 
@@ -223,6 +253,9 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$this->arResult['SITE_ID'] = $this->order->getSiteId();
 		$this->prepareEntityData();
+
+		$this->arResult['FOCUS_TO_PRODUCT_LIST'] = (bool)($this->request->get('productListFocus') ?? false);
+		$this->arResult['FOCUSED_TAB'] = $this->request->get('focusedTab');
 
 		//region GUID
 		$this->guid = $this->arResult['GUID'] = "realization_document_{$this->entityID}_details";
@@ -307,8 +340,21 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$this->checkIfInventoryManagementIsUsed();
 
+		$this->arResult['DOCUMENT_PERMISSIONS'] = [
+			'conduct' => $this->checkDocumentConductRight(),
+			'cancel' => $this->checkDocumentCancelRight(),
+		];
+
+		$this->arResult['IS_READ_ONLY'] = !$this->checkDocumentModifyRight();
+		$this->arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'] = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CARD_EDIT);
+		$this->arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'] = $this->checkDocumentCancelRight()	|| $this->checkDocumentConductRight();
+
 		$this->arResult['BUTTONS'] = $this->getToolbarButtons();
 		$this->arResult['COMPONENT_PRODUCTS'] = $this->getDocumentProducts();
+
+		$this->arResult['INVENTORY_MANAGEMENT_SOURCE'] =
+			InventoryManagementSourceBuilder::getInstance()->getInventoryManagementSource()
+		;
 
 		$this->includeComponentTemplate();
 	}
@@ -388,7 +434,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 						'secondary' => [
 							CCrmOwnerType::CompanyName => [
 								'action' => 'GET_SECONDARY_ENTITY_INFOS',
-								'url' => '/bitrix/components/bitrix/crm.order.details/ajax.php?'.bitrix_sessid_get(),
+								'url' => '/bitrix/components/bitrix/crm.store.document.detail/ajax.php?'.bitrix_sessid_get(),
 							],
 						],
 					],
@@ -429,7 +475,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			],
 			[
 				'name' => 'DOCUMENT_PRODUCTS',
-				'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_FIELD_PRODUCT'),
+				'title' => Loc::getMessage('CRM_STORE_DOCUMENT_SHIPMENT_FIELD_PRODUCT_2'),
 				'type' => 'product_row_summary',
 				'editable' => false,
 			],
@@ -1032,12 +1078,17 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			'CONTACT_DATA' => [],
 		];
 
-		$multiFieldData = [];
 		if ($companyId > 0)
 		{
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'PHONE', $multiFieldData);
-			self::prepareMultifieldData(\CCrmOwnerType::Company, $companyId, 'EMAIL', $multiFieldData);
-
+			\CCrmComponentHelper::prepareMultifieldData(
+				\CCrmOwnerType::Company,
+				[$companyId],
+				[
+					'PHONE',
+					'EMAIL',
+				],
+				$this->entityData
+			);
 			$isEntityReadPermitted = \CCrmCompany::CheckReadPermission($companyId, $this->userPermissions);
 			$companyInfo = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				\CCrmOwnerType::CompanyName,
@@ -1055,11 +1106,17 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		}
 
 		$iteration= 0;
+		\CCrmComponentHelper::prepareMultifieldData(
+			\CCrmOwnerType::Contact,
+			$contactIds,
+			[
+				'PHONE',
+				'EMAIL',
+			],
+			$this->entityData
+		);
 		foreach ($contactIds as $contactID)
 		{
-			self::prepareMultifieldData(\CCrmOwnerType::Contact, $contactID, 'PHONE', $multiFieldData);
-			self::prepareMultifieldData(\CCrmOwnerType::Contact, $contactID, 'EMAIL', $multiFieldData);
-
 			$isEntityReadPermitted = \CCrmContact::CheckReadPermission($contactID, $this->userPermissions);
 			$clientInfo['CONTACT_DATA'][] = \CCrmEntitySelectorHelper::PrepareEntityInfo(
 				\CCrmOwnerType::ContactName,
@@ -1072,6 +1129,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'REQUIRE_MULTIFIELDS' => true,
 					'REQUIRE_BINDINGS' => true,
 					'NAME_TEMPLATE' => Crm\Format\PersonNameFormatter::getFormat(),
+					'NORMALIZE_MULTIFIELDS' => true,
 				]
 			);
 			$iteration++;
@@ -1080,7 +1138,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$this->entityData['REQUISITE_BINDING'] = $this->order->getRequisiteLink();
 
-		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 		$this->entityData['USER_LIST_SELECT'] = $this->getDefaultUserList();
 
 		$categoryParams = CCrmComponentHelper::getEntityClientFieldCategoryParams(CCrmOwnerType::OrderShipment);
@@ -1122,6 +1179,8 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					'PRODUCT_NAME' => $basketItem->getField('NAME'),
 					'CURRENCY' => $basketItem->getCurrency(),
 					'QUANTITY' => $shipmentItem->getQuantity(),
+					'ID' => $basketItem->getId(),
+					'PRODUCT_ID' => $basketItem->getProductId()
 				];
 
 				$total += $basketItem->getPrice() * $shipmentItem->getQuantity();
@@ -1129,19 +1188,17 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		}
 
 		$currency = $this->shipment->getOrder()->getCurrency();
+		$documentIsDeducted = $this->entityData['DEDUCTED'] ?? 'Y';
 		$result = [
 			'count' => count($documentProducts),
 			'total' => \CCrmCurrency::MoneyToString($total, $currency),
 			'items' => [],
+			'isReadOnly' => $documentIsDeducted === 'Y' || !$this->checkDocumentModifyRight(),
 		];
 
 		foreach ($documentProducts as $product)
 		{
-			$productSum = Sale\PriceMaths::roundPrecision((float)$product['PRICE'] * (float)$product['QUANTITY']);
-			$result['items'][] = [
-				'PRODUCT_NAME' => $product['PRODUCT_NAME'],
-				'SUM' => CCurrencyLang::CurrencyFormat($productSum, $currency),
-			];
+			$result['items'][] = EditorAdapter::formProductRowData(Crm\ProductRow::createFromArray($product), $currency);
 		}
 
 		$this->entityData['DOCUMENT_PRODUCTS'] = $result;
@@ -1247,55 +1304,62 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 		$defaultStore = Catalog\StoreTable::getDefaultStoreId();
 
-		/** @var Sale\Reservation\BasketReservationService $basketReservation */
-		$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
-
 		/** @var Crm\Order\ShipmentItem $shipmentItem */
 		foreach ($this->shipment->getShipmentItemCollection() as $shipmentItem)
 		{
 			$basketItem = $shipmentItem->getBasketItem();
 
 			$documentProduct = [
+				'ID' => uniqid('bx_', true),
 				'STORE_TO' => 0,
+				'STORE_FROM' => 0,
 				'ELEMENT_ID' => $basketItem->getProductId(),
 				'PURCHASING_PRICE' => $basketItem->getBasePrice(),
 				'BASE_PRICE' => $basketItem->getPrice(),
 				'BASE_PRICE_EXTRA' => '',
 				'BASE_PRICE_EXTRA_RATE' => '',
 				'BASKET_ID' => $basketItem->getId(),
+				'AMOUNT' => 0,
+				'BARCODE' => '',
 			];
 
 			$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
-			if ($shipmentItemStoreCollection->isEmpty())
+			if ($shipmentItemStoreCollection && !$shipmentItemStoreCollection->isEmpty())
+			{
+				/** @var Crm\Order\ShipmentItemStore $shipmentItemStore */
+				foreach ($shipmentItemStoreCollection as $shipmentItemStore)
+				{
+					if ($basketItem->isReservableItem())
+					{
+						$documentProduct['STORE_FROM'] = $shipmentItemStore->getStoreId();
+					}
+
+					$documentProduct['AMOUNT'] = $shipmentItemStore->getQuantity();
+					$documentProduct['BARCODE'] = $shipmentItemStore->getBarcode();
+
+					$products[] = $documentProduct;
+				}
+			}
+			else
 			{
 				$storeId = $defaultStore;
 
 				$reserveQuantityCollection = $basketItem->getReserveQuantityCollection();
-				if ($reserveQuantityCollection->count() === 1)
+				if ($reserveQuantityCollection && $reserveQuantityCollection->count() === 1)
 				{
 					/** @var Sale\ReserveQuantity $reserveQuantity */
 					$reserveQuantity = $reserveQuantityCollection->current();
 					$storeId = $reserveQuantity->getStoreId();
 				}
 
-				$documentProduct['ID'] = uniqid('bx_', true);
-				$documentProduct['STORE_FROM'] = $storeId;
+				if ($basketItem->isReservableItem())
+				{
+					$documentProduct['STORE_FROM'] = $storeId;
+				}
+
 				$documentProduct['AMOUNT'] = $shipmentItem->getQuantity();
 
-				$products[count($products) + 1] = $documentProduct;
-			}
-			else
-			{
-				/** @var Crm\Order\ShipmentItemStore $shipmentItemStore */
-				foreach ($shipmentItemStoreCollection as $shipmentItemStore)
-				{
-					$documentProduct['ID'] = uniqid('bx_', true);
-					$documentProduct['STORE_FROM'] = $shipmentItemStore->getStoreId();
-					$documentProduct['AMOUNT'] = $shipmentItemStore->getQuantity();
-					$documentProduct['BARCODE'] = $shipmentItemStore->getBarcode();
-
-					$products[count($products) + 1] = $documentProduct;
-				}
+				$products[] = $documentProduct;
 			}
 		}
 
@@ -1322,9 +1386,6 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 			|| count($orderIds) === 0
 		)
 		{
-			/** @var Sale\Reservation\BasketReservationService $basketReservation */
-			$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
-
 			$productManager = new Crm\Order\ProductManager($ownerTypeId, $ownerId);
 			$productManager->setProductConverter(
 				new Crm\Order\ProductManager\EntityProductConverterWithReserve()
@@ -1354,34 +1415,7 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 					$deliverableProduct['STORE_ID'] = (int)$reserve['STORE_ID'];
 				}
 
-				$quantity = $deliverableProduct['QUANTITY'];
-				if ((int)$deliverableProduct['BASKET_CODE'] > 0)
-				{
-					$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
-						(int)$deliverableProduct['BASKET_CODE'],
-						$deliverableProduct['STORE_ID']
-					);
-
-					$quantity = min($quantity, $availableQuantity);
-				}
-				else
-				{
-					$storeQuantityRow = Catalog\StoreProductTable::getRow([
-						'select' => [
-							'AMOUNT',
-							'QUANTITY_RESERVED',
-						],
-						'filter' => [
-							'=STORE_ID' => $deliverableProduct['STORE_ID'],
-							'=PRODUCT_ID' => $deliverableProduct['PRODUCT_ID'],
-						],
-					]);
-					if ($storeQuantityRow)
-					{
-						$availableQuantity = $storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED'];
-						$quantity = min($quantity, $availableQuantity);
-					}
-				}
+				$quantity = $this->getEntityProductQuantity($deliverableProduct);
 
 				if ($quantity <= 0)
 				{
@@ -1405,6 +1439,47 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 		}
 
 		return $products;
+	}
+
+	private function getEntityProductQuantity(array $product): int
+	{
+		$quantity = $product['QUANTITY'];
+
+		if ($product['TYPE'] !== Sale\BasketItem::TYPE_SERVICE)
+		{
+			if ((int)$product['BASKET_CODE'] > 0)
+			{
+				/** @var Sale\Reservation\BasketReservationService $basketReservation */
+				$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
+
+				$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
+					(int)$product['BASKET_CODE'],
+					$product['STORE_ID']
+				);
+
+				$quantity = min($quantity, $availableQuantity);
+			}
+			else
+			{
+				$storeQuantityRow = Catalog\StoreProductTable::getRow([
+					'select' => [
+						'AMOUNT',
+						'QUANTITY_RESERVED',
+					],
+					'filter' => [
+						'=STORE_ID' => $product['STORE_ID'],
+						'=PRODUCT_ID' => $product['PRODUCT_ID'],
+					],
+				]);
+				if ($storeQuantityRow)
+				{
+					$availableQuantity = $storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED'];
+					$quantity = min($quantity, $availableQuantity);
+				}
+			}
+		}
+
+		return $quantity;
 	}
 
 	private function getOwnerEntity(): ?Crm\Item
@@ -1486,5 +1561,49 @@ class CrmStoreDocumentDetailComponent extends Crm\Component\EntityDetails\BaseCo
 
 
 		return $tourData;
+	}
+
+	private function checkDocumentReadRight(): bool
+	{
+		return
+			AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+
+	private function checkDocumentModifyRight(): bool
+	{
+		return
+			$this->checkDocumentReadRight()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+
+	private function checkDocumentConductRight(): bool
+	{
+		return
+			$this->checkDocumentReadRight()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+	
+	private function checkDocumentCancelRight(): bool
+	{
+		return
+			$this->checkDocumentReadRight()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
 	}
 }

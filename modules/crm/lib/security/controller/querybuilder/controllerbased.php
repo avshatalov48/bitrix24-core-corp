@@ -109,14 +109,18 @@ class ControllerBased extends QueryBuilder
 			}
 		}
 
-		$finalSqlConditions = array_merge(
-			$finalSqlConditions,
-			$this->buildObserverSqlCondition(
-				$attributes->getUserId(),
-				array_diff($attributes->getAllowedEntityTypes(), $unRestrictedEntityTypes),
-				$prefix
-			)
-		);
+		// / Leave for the backward compatibility. Observer access logic moved to the access_attrs table.
+		if (\Bitrix\Main\Config\Option::get('crm', 'CRM_MOVE_OBSERVERS_TO_ACCESS_ATTR_IN_WORK', 'Y')  === 'Y')
+		{
+			$finalSqlConditions = array_merge(
+				$finalSqlConditions,
+				$this->buildObserverSqlCondition(
+					$attributes->getUserId(),
+					array_diff($attributes->getAllowedEntityTypes(), $unRestrictedEntityTypes),
+					$prefix
+				)
+			);
+		}
 
 		$finalSqlConditions = array_filter($finalSqlConditions);
 
@@ -133,7 +137,8 @@ class ControllerBased extends QueryBuilder
 		$querySqlCondition = implode(' OR ', $finalSqlConditions);
 		if ($options->needReturnRawQuery())
 		{
-			$querySql = "SELECT {$prefix}P.ENTITY_ID FROM {$dataSourceTable} {$prefix}P WHERE {$querySqlCondition}";
+			$distinct = $options->isUseRawQueryDistinct() ? 'DISTINCT ' : '';
+			$querySql = "SELECT {$distinct}{$prefix}P.ENTITY_ID FROM {$dataSourceTable} {$prefix}P WHERE {$querySqlCondition}";
 			if ($options->getRawQueryLimit() > 0)
 			{
 				$order = $options->getRawQueryOrder();

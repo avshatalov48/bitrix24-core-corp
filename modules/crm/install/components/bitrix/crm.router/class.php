@@ -83,7 +83,19 @@ class CrmRouterComponent extends Bitrix\Crm\Component\Base
 		$this->arResult['roots'] = $this->getAllRoots();
 		$this->arResult['isUseToolbar'] = $this->isUseToolbar($componentName);
 
-		$this->includeComponentTemplate();
+		$templateName = '';
+		$entityTypeId = $parseResult->getEntityTypeId();
+		if (
+			!$this->arResult['isIframe']
+			&& $this->arResult['isPlainView']
+			&& CCrmOwnerType::IsDefined($entityTypeId)
+		)
+		{
+			$templateName = 'details';
+			$this->arResult['entityTypeId'] = $entityTypeId;
+		}
+
+		$this->includeComponentTemplate($templateName);
 	}
 
 	protected function isUsePadding(string $componentName): bool

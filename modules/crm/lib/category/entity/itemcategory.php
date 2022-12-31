@@ -10,6 +10,10 @@ use CCrmOwnerType;
 
 class ItemCategory extends Category
 {
+	private const SYS_CAT_LANG_PHRASE_PREFIX = 'CRM_CATEGORY_ENTITY_ITEM_CATEGORY_NAME';
+	private const SYS_CAT_LANG_PHRASE_PLURAL_SUFFIX = 'PLURAL';
+	private const SYS_CAT_LANG_PHRASE_SINGLE_SUFFIX = 'SINGLE';
+
 	protected $entityObject;
 
 	public function __construct(EO_ItemCategory $entityObject)
@@ -54,7 +58,22 @@ class ItemCategory extends Category
 		$code = $this->getCode();
 		if (!empty($code))
 		{
-			$name = Loc::getMessage($code);
+			$name = $this->getNameByCode($code, true);
+			if (!empty($name))
+			{
+				return $name;
+			}
+		}
+
+		return $this->entityObject->getName();
+	}
+
+	public function getSingleName(): ?string
+	{
+		$code = $this->getCode();
+		if (!empty($code))
+		{
+			$name = $this->getNameByCode($code, false);
 			if (!empty($name))
 			{
 				return $name;
@@ -69,6 +88,35 @@ class ItemCategory extends Category
 		$this->entityObject->setName($name);
 
 		return $this;
+	}
+
+	private function getNameByCode(string $code, bool $isPlural): ?string
+	{
+		$name = Loc::getMessage(
+			sprintf(
+				'%s_%s_%s',
+				self::SYS_CAT_LANG_PHRASE_PREFIX,
+				$code,
+				$isPlural
+					? self::SYS_CAT_LANG_PHRASE_PLURAL_SUFFIX
+					: self::SYS_CAT_LANG_PHRASE_SINGLE_SUFFIX
+			)
+		);
+
+		$defaultName = Loc::getMessage(
+			sprintf(
+				'%s_DEFAULT_%s_%s',
+				self::SYS_CAT_LANG_PHRASE_PREFIX,
+				CCrmOwnerType::ResolveName($this->getEntityTypeId()),
+				(
+					$isPlural
+						? self::SYS_CAT_LANG_PHRASE_PLURAL_SUFFIX
+						: self::SYS_CAT_LANG_PHRASE_SINGLE_SUFFIX
+				)
+			)
+		);
+
+		return $name ?: $defaultName;
 	}
 
 	public function getSort(): int
@@ -102,7 +150,37 @@ class ItemCategory extends Category
 
 	public function getCode(): string
 	{
-		return $this->entityObject->getCode();
+		return (string)$this->entityObject->getCode();
+	}
+
+	public function getDisabledFieldNames(): array
+	{
+		$settings = $this->entityObject->getSettings();
+
+		return (isset($settings['disabledFieldNames']) && is_array($settings['disabledFieldNames']))
+			? $settings['disabledFieldNames']
+			: [];
+	}
+
+	public function isTrackingEnabled(): bool
+	{
+		$settings = $this->entityObject->getSettings();
+
+		if (isset($settings['isTrackingEnabled']))
+		{
+			return (bool)$settings['isTrackingEnabled'];
+		}
+
+		return parent::isTrackingEnabled();
+	}
+
+	public function getUISettings(): array
+	{
+		$settings = $this->entityObject->getSettings();
+
+		return (isset($settings['uiSettings']) && is_array($settings['uiSettings']))
+			? $settings['uiSettings']
+			: [];
 	}
 
 	public function save(): Result

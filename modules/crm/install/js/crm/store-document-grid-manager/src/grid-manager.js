@@ -13,6 +13,7 @@ export class GridManager
 		this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
 		this.isConductDisabled = options.isConductDisabled;
 		this.masterSliderUrl = options.masterSliderUrl;
+		this.inventoryManagementSource = options.inventoryManagementSource;
 
 		window.top.BX.addCustomEvent('onEntityEditorDocumentOrderShipmentControllerDocumentSave', this.reloadGrid.bind(this));
 	}
@@ -39,7 +40,11 @@ export class GridManager
 								data: {
 									id: documentId,
 									value: 'N',
-								}
+								},
+								analyticsLabel: {
+									action: 'delete',
+									inventoryManagementSource: this.inventoryManagementSource,
+								},
 							}
 						).then((response) => {
 							popup.destroy();
@@ -90,7 +95,10 @@ export class GridManager
 									id: documentId,
 									value: 'Y',
 								},
-								analyticsLabel: 'deduct',
+								analyticsLabel: {
+									action: 'deduct',
+									inventoryManagementSource: this.inventoryManagementSource,
+								},
 							}
 						).then((response) => {
 							popup.destroy();
@@ -141,7 +149,10 @@ export class GridManager
 									id: documentId,
 									value: 'N',
 								},
-								analyticsLabel: 'cancelDeduct',
+								analyticsLabel: {
+									action: 'cancelDeduct',
+									inventoryManagementSource: this.inventoryManagementSource,
+								},
 							}
 						).then((response) => {
 							popup.destroy();
@@ -178,7 +189,11 @@ export class GridManager
 				data: {
 					ids: documentIds,
 					value: 'N',
-				}
+				},
+				analyticsLabel: {
+					action: 'delete',
+					inventoryManagementSource: this.inventoryManagementSource,
+				},
 			}
 		).then((response) => {
 			this.reloadGrid();
@@ -213,7 +228,10 @@ export class GridManager
 					ids: documentIds,
 					value: 'Y',
 				},
-				analyticsLabel: 'deduct',
+				analyticsLabel: {
+					inventoryManagementSource: this.inventoryManagementSource,
+					action: 'deduct',
+				},
 			}
 		).then((response) => {
 			this.reloadGrid();
@@ -248,7 +266,10 @@ export class GridManager
 					ids: documentIds,
 					value: 'N',
 				},
-				analyticsLabel: 'cancelDeduct',
+				analyticsLabel: {
+					inventoryManagementSource: this.inventoryManagementSource,
+					action: 'cancelDeduct',
+				},
 			}
 		).then((response) => {
 			this.reloadGrid();

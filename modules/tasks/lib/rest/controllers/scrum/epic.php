@@ -121,7 +121,7 @@ class Epic extends Base
 			$epic->setDescription($this->sanitizeText($fields['description'], $userFields));
 		}
 
-		$createdBy = 0;
+		$createdBy = null;
 		if (array_key_exists('createdBy', $fields) && is_numeric($fields['createdBy']))
 		{
 			$createdBy = (int) $fields['createdBy'];
@@ -251,7 +251,7 @@ class Epic extends Base
 			$inputEpic->setCreatedBy($createdBy);
 		}
 
-		$modifiedBy = 0;
+		$modifiedBy = null;
 		if (array_key_exists('modifiedBy', $fields) && is_numeric($fields['modifiedBy']))
 		{
 			$modifiedBy = (int) $fields['modifiedBy'];
@@ -289,6 +289,8 @@ class Epic extends Base
 				return null;
 			}
 		}
+
+		$epic = $epicService->getEpic($id);
 
 		return $epic->toArray();
 	}

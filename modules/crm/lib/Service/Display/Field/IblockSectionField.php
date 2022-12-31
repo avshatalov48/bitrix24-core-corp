@@ -1,14 +1,12 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Display\Field;
-
 
 use Bitrix\Crm\Service\Container;
 
 class IblockSectionField extends IblockElementField
 {
-	protected const TYPE = 'iblock_section';
+	public const TYPE = 'iblock_section';
 
 	public function loadLinkedEntities(array &$linkedEntitiesValues, array $linkedEntity): void
 	{
@@ -36,6 +34,11 @@ class IblockSectionField extends IblockElementField
 			return '';
 		}
 
-		return htmlspecialcharsbx($linkedEntitiesValues[$elementId]['NAME']);
+		return $this->sanitizeString((string)$linkedEntitiesValues[$elementId]['NAME']);
+	}
+
+	protected function getSelectorType(): string
+	{
+		return 'iblock-section-user-field';
 	}
 }

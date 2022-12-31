@@ -84,6 +84,11 @@ class Meeting extends Activity\Provider\Base
 	 */
 	public static function getPlannerActions(array $params = null)
 	{
+		if (!\Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+		{
+			return [];
+		}
+
 		return array(
 			array(
 				'ACTION_ID' => static::getId().'_MEETING',
@@ -112,7 +117,7 @@ class Meeting extends Activity\Provider\Base
 	{
 		return Loc::getMessage('CRM_ACTIVITY_PROVIDER_MEETING_SUBJECT', $replace);
 	}
-	
+
 	/**
 	 * @param array $activity Activity data.
 	 * @return array Fields.

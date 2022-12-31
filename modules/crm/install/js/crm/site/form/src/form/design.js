@@ -1,4 +1,5 @@
 import * as Util from '../util/registry';
+import {type Proxy, type ProxyItem} from './types';
 
 const Themes = {
 	'modern-light': {
@@ -111,6 +112,7 @@ type Options = {
 	shadow: ?boolean;
 	compact: ?boolean;
 	backgroundImage: ?UrlString;
+	proxy: ?Proxy,
 };
 
 class Model
@@ -138,6 +140,9 @@ class Model
 	compact: boolean = false;
 	style: Style = null;
 	backgroundImage: UrlString = null;
+	proxy: Proxy = {
+		fonts: [],
+	};
 
 	constructor(options: Options)
 	{
@@ -147,6 +152,11 @@ class Model
 	adjust(options: Options)
 	{
 		options = options || {};
+		if (typeof options.proxy === 'object')
+		{
+			this.setProxy(options.proxy);
+		}
+
 		if (typeof options.theme !== 'undefined')
 		{
 			this.theme = options.theme;
@@ -220,6 +230,35 @@ class Model
 		{
 			this.setBackgroundImage(options.backgroundImage);
 		}
+	}
+
+	setProxy ({fonts}: Proxy)
+	{
+		if (typeof fonts !== 'undefined')
+		{
+			this.proxy.fonts = Array.isArray(fonts) ? fonts : [];
+		}
+
+		return this;
+	}
+
+	#replaceFontUriByProxy(uri)
+	{
+		if (typeof uri !== 'string' || !uri)
+		{
+			return uri;
+		}
+
+		this.proxy.fonts.forEach((item: ProxyItem) => {
+			if (!item.source || !item.target)
+			{
+				return;
+			}
+
+			uri = uri.replace('https://' + item.source, 'https://' + item.target);
+		})
+
+		return uri;
 	}
 
 	setFont (family: string|Font, uri)
@@ -334,7 +373,7 @@ class Model
 
 	getFontUri (): Array
 	{
-		return this.font.uri;
+		return this.#replaceFontUriByProxy(this.font.uri);
 	}
 
 	getFontFamily (): Array

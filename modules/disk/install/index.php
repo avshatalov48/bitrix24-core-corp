@@ -147,6 +147,8 @@ Class disk extends CModule
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::deleteTrashCanEmptyFolderByTtlAgent(3);', 'disk', 'N', 8000);
 		/** @see \Bitrix\Disk\Internals\Cleaner::releaseObjectLocksAgent() */
 		CAgent::addAgent('Bitrix\\Disk\\Internals\\Cleaner::releaseObjectLocksAgent();', 'disk', 'N', 7200);
+		/** @see \Bitrix\Disk\Document\OnlyOffice\RestrictionManager::deleteOldOrPendingAgent() */
+		CAgent::addAgent('Bitrix\\Disk\\Document\\OnlyOffice\\RestrictionManager::deleteOldOrPendingAgent();', 'disk', 'N', 3600);
 
 		if(!$isWebdavInstalled)
 		{

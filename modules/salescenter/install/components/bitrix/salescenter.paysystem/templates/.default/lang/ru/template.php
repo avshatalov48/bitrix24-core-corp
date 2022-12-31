@@ -1,5 +1,7 @@
 <?php
 $MESS["SALESCENTER_SP_CONNECT_PAYMENT_BUTTON"] = "Подключить";
+$MESS["SALESCENTER_SP_CONNECT_YOOKASSA_PAYMENT_BUTTON"] = "Уже есть аккаунт в ЮKassa";
+$MESS["SALESCENTER_SP_CREATE_YOOKASSA_PAYMENT_BUTTON"] = "Создать аккаунт в ЮKassa";
 $MESS["SALESCENTER_SP_BUTTON_CLOSE"] = "Отмена";
 $MESS["SALESCENTER_SP_POPUP_TITLE"] = "Подтверждение";
 $MESS["SALESCENTER_SP_POPUP_CONTENT"] = "Вы не сохранили изменения. Уверены, что хотите закрыть?";

@@ -213,6 +213,7 @@
 	display: flex;
 	width: 35px;
 	min-width: 35px;
+	cursor: pointer;
 }
 
 .system-auth-form__item-logo.--center {
@@ -286,6 +287,14 @@
 
 .system-auth-form__item.--active .system-auth-form__item-logo--image.--windows {
 	background-image: url(images/system-auth-form__icon-windows--white.svg);
+}
+
+.system-auth-form__item-logo--image.--linux {
+	background-image: url(images/system-auth-form__icon-linux.svg);
+}
+
+.system-auth-form__item.--active .system-auth-form__item-logo--image.--linux {
+	background-image: url(images/system-auth-form__icon-linux--white.svg);
 }
 
 .system-auth-form__item-logo--image.--authentication {
@@ -459,6 +468,23 @@
 	cursor: pointer;
 }
 
+.system-auth-form__item-title-logo {
+	margin-left: 2px;
+	margin-bottom: 3px;
+	width: 18px;
+	height: 18px;
+}
+
+.system-auth-form__item-title-logo.--lock i {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background-color: var(--blue);
+	mask-image: url("../images/system-auth-form__icon-lock.svg");
+	mask-position: center;
+	mask-size: cover;
+}
+
 .system-auth-form__item-container.--stress-widget-sp .system-auth-form__item-title.--link-dotted {
 	margin-left: 5px;
 }
@@ -614,39 +640,65 @@
 	display: flex;
 	align-items: center;
 	overflow: hidden;
-	margin-bottom: 3px;
 }
 
 .system-auth-form__visited-icon	{
 	display: block;
-	width: 10px;
-	min-width: 10px;
-	height: 10px;
-	margin: 0 6px 0 0;
+	width: 13px;
+	min-width: 13px;
+	height: 13px;
+	margin: 0 2px 0 0;
 	background: center no-repeat;
+	cursor: pointer;
 }
 
-.system-auth-form__visited-icon.--apple {
-	background-size: 8px 9px;
-	background-image: url(images/system-auth-form__icon-apple.svg);
+.system-auth-form__visited-icon.--mobile {
+	background-size: 13px 13px;
+	background-image: url(images/system-auth-form__icon-mobile.svg);
 }
 
-.system-auth-form__visited-icon.--android {
-	background-size: 8px 9px;
-	background-image: url(images/system-auth-form__icon-android.svg);
+.system-auth-form__visited-icon.--desktop {
+	background-size: 13px 13px;
+	background-image: url(images/system-auth-form__icon-desktop.svg);
+}
+
+.system-auth-form__visited-icon.--unknown {
+	background-size: 13px 13px;
+	background-image: url(images/system-auth-form__icon-unknown.svg);
+}
+
+.system-auth-form__visited-icon.--tv {
+	background-size: 13px 13px;
+	background-image: url(images/system-auth-form__icon-tv.svg);
+}
+
+.system-auth-form__visited-icon.--tablet {
+	background-size: 13px 13px;
+	background-image: url(images/system-auth-form__icon-tablet.svg);
 }
 
 .system-auth-form__visited-text {
-	flex: 1;
+	margin-right: 3px;
 	overflow: hidden;
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	font: 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: var(--graphite_alpha_70);
+	cursor: pointer;
+}
+
+.system-auth-form__visited-time {
+	overflow: hidden;
+	flex-shrink: 0;
+	white-space: nowrap;
+	font: 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	color: var(--graphite_alpha_70);
+	cursor: pointer;
 }
 
 .system-auth-form__visited-action {
 	display: block;
+	flex: 1;
 	width: 29px;
 	height: 17px;
 	margin-left: 5px;
@@ -656,8 +708,12 @@
 	transition: .2s;
 }
 
-.system-auth-form__visited-item:hover .system-auth-form__visited-action {
+.--active{
 	opacity: .8;
+}
+
+.system-auth-form__visited-item:hover .system-auth-form__visited-action{
+	opacity: .7;
 	transition: .1s;
 }
 
@@ -666,7 +722,8 @@
 	transition: none;
 }
 
-.system-auth-form__show-history {
+.system-auth-form__show-history,
+.system-auth-form__settings {
 	display: inline-block;
 	font: 10px/14px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-regular, 400);
@@ -675,7 +732,12 @@
 	cursor: pointer;
 }
 
-.system-auth-form__show-history:hover {
+.system-auth-form__settings {
+	margin-bottom: 7px;
+}
+
+.system-auth-form__show-history:hover,
+.system-auth-form__settings:hover {
 	border-color: var(--graphite_alpha_70);
 }
 

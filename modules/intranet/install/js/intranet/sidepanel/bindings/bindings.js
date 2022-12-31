@@ -32,7 +32,7 @@
 					if (!sliderMode)
 					{
 						event.preventDefault();
-						BX.SidePanel.Instance.open(link.url);
+						BX.SidePanel.Instance.open(link.url, {cacheable: false});
 					}
 				},
 				customLeftBoundary: 240
@@ -53,15 +53,6 @@
 			},
 			{
 				condition: [
-					// '/company/personal/user/(\\d+)/tasks/report/construct/(\\d+)/create/',
-				],
-				loader: 'task-view-loader',
-				stopParameters: [
-					'PAGEN_(\\d+)',
-				]
-			},
-			{
-				condition: [
 					new RegExp("/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)&deadline=([0-9]+)", "i"),
 					new RegExp("/company/personal/user/(\\d+)/tasks/task/view/(\\d+)/\\?commentAction=([a-zA-Z]+)", "i"),
 				],
@@ -79,7 +70,7 @@
 					'/workgroups/group/(\\d+)/tasks/task/view/(\\d+)/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/view/(\\d+)/',
 				],
-				loader: 'task-view-loader',
+				loader: 'intranet:task-detail',
 				stopParameters: [
 					'PAGEN_(\\d+)',
 				],
@@ -105,7 +96,7 @@
 				condition: [
 					'/company/personal/user/(\\d+)/tasks/templates/template/view/(\\d+)/',
 				],
-				loader: 'task-view-loader',
+				loader: 'intranet:task-detail',
 				stopParameters: [
 					'PAGEN_(\\d+)',
 				],
@@ -122,7 +113,7 @@
 					'/workgroups/group/(\\d+)/tasks/task/edit/0/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/0/'
 				],
-				loader: 'task-new-loader',
+				loader: 'intranet:task-add',
 				options: {
 					label: {
 						text: BX.message('INTRANET_BINDINGS_TASK'),
@@ -145,7 +136,7 @@
 				condition: [
 					'/company/personal/user/(\\d+)/tasks/templates/template/edit/0/',
 				],
-				loader: 'task-new-loader',
+				loader: 'intranet:task-add',
 				options: {
 					label: {
 						text: BX.message('INTRANET_BINDINGS_TASK'),
@@ -160,7 +151,7 @@
 					'/workgroups/group/(\\d+)/tasks/task/edit/(\\d+)/',
 					'/extranet/contacts/personal/user/(\\d+)/tasks/task/edit/(\\d+)/'
 				],
-				loader: 'task-edit-loader',
+				loader: 'intranet:task-add',
 				options: {
 					label: {
 						text: BX.message("INTRANET_BINDINGS_TASK"),
@@ -170,7 +161,7 @@
 			},
 			{
 				condition: ['/crm/button/edit/(\\d+)/'],
-				loader: 'crm-button-view-loader'
+				loader: 'intranet:crm-button-view-loader'
 			},
 			{
 				condition: [
@@ -224,6 +215,7 @@
 				],
 				options: {
 					customLeftBoundary: 0,
+					// not
 					loader: "rest:marketplace2"
 				}
 			},
@@ -235,6 +227,7 @@
 					cacheable: false,
 					allowChangeHistory: false,
 					customLeftBoundary: 0,
+					// not
 					loader: "rest:marketplace1"
 				}
 			},
@@ -246,6 +239,7 @@
 				options: {
 					cacheable: false,
 					customLeftBoundary: 0,
+					// not
 					loader: "rest:marketplace1"
 				}
 			},
@@ -255,6 +249,7 @@
 				],
 				options: {
 					customLeftBoundary: 0,
+					// not
 					loader: "rest:marketplace1"
 				}
 			},
@@ -360,7 +355,7 @@
 			},
 			{
 				condition: [ new RegExp("/shop/orders/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
@@ -374,7 +369,7 @@
 					new RegExp("/shop/documents/details/sales_order/[0-9]+/", "i")
 				],
 				options: {
-					loader: "crm-entity-details-loader",
+					loader: "intranet:crm-entity-details-loader",
 					cacheable: false,
 					customLeftBoundary: 0,
 				}
@@ -392,7 +387,7 @@
 					new RegExp("/shop/documents-catalog/(\\d+)/product/", "i")
 				],
 				options: {
-					loader: "crm-entity-details-loader",
+					loader: "intranet:crm-entity-details-loader",
 					cacheable: false,
 					customLeftBoundary: 0,
 				}
@@ -417,7 +412,7 @@
 			},
 			{
 				condition: [ new RegExp("/crm/lead/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
@@ -428,7 +423,7 @@
 			},
 			{
 				condition: [ new RegExp("/crm/contact/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
@@ -439,17 +434,16 @@
 			},
 			{
 				condition: [ new RegExp("/crm/company/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					label: {
-						text: BX.message("INTRANET_BINDINGS_COMPANY"),
 						bgColor: "#F7A700"
 					}
 				}
 			},
 			{
 				condition: [ new RegExp("/crm/deal/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
@@ -471,7 +465,7 @@
 			},
 			{
 				condition: [ new RegExp("/type/[0-9]+/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 				}
@@ -531,6 +525,7 @@
 			},
 			{
 				condition: [
+					new RegExp(siteDir + "workgroups/group/[0-9]+/\\?scrum=Y$", "i"),
 					new RegExp(siteDir + "workgroups/group/[0-9]+/tasks/\\?scrum=Y$", "i")
 				],
 				options: {
@@ -576,7 +571,7 @@
 			},
 			{
 				condition: [ new RegExp("/saleshub/orders/order/\\?.*") ],
-				loader: "crm-entity-details-loader"
+				loader: "intranet:crm-entity-details-loader"
 			},
 			{
 				condition: [
@@ -593,7 +588,7 @@
 				],
 				options: {
 					width: 1080,
-					loader: 'create-mail-loader'
+					loader: 'intranet:create-mail-loader'
 				}
 			},
 			{
@@ -602,7 +597,7 @@
 				],
 				options: {
 					width: 1080,
-					loader: 'view-mail-loader'
+					loader: 'intranet:view-mail-loader'
 				}
 			},
 			{
@@ -762,7 +757,7 @@
 			},
 			{
 				condition: [ new RegExp("/shop/orders/payment/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
@@ -772,7 +767,7 @@
 			},
 			{
 				condition: [ new RegExp("/shop/orders/shipment/details/[0-9]+/", "i") ],
-				loader: "crm-entity-details-loader",
+				loader: "intranet:crm-entity-details-loader",
 				options: {
 					cacheable: false,
 					label: {
@@ -782,7 +777,8 @@
 			},
 			{
 				condition: [/\/contact_center\/lines_edit\/\?(.+)SIDE=Y/i,],
-				loader: "/bitrix/components/bitrix/imopenlines.lines.edit/templates/.default/images/imopenlines-view.svg",
+				// loader: "/bitrix/components/bitrix/imopenlines.lines.edit/templates/.default/images/imopenlines-view.svg",
+				loader: "intranet:imopenlines-view",
 				options: {
 					width: 996,
 					allowChangeHistory: false,

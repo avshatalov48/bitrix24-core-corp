@@ -78,7 +78,7 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 
 .crm-invoice-payment-client-pp-company-title {
 	font-size: 19px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-invoice-payment-client-pp-company-selected { padding: 4px 0; }
@@ -211,7 +211,7 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 .crm-invoice-payment-total-sum {
 	color: #7f7f7f;
 	font-size: 24px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-invoice-payment-system {
@@ -223,7 +223,7 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 .crm-invoice-payment-system-title {
 	color: #535c69;
 	font-size: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding: 0 0 10px 0;
 	margin: 0 0 20px 0;
 	border-bottom: 1px solid #eaecee;
@@ -401,7 +401,7 @@ input[type=checkbox].crm-invoice-payment-client-pp-company-checkbox {
 .crm-invoice-payment-paid-count-name
 {
 	font-size: 30px;
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-invoice-payment-paid-table-empty-row{

@@ -1,5 +1,5 @@
 <?php
-$MESS['CSPL_DOCUMENT_HAS_NO_PRODUCTS'] = 'В документе сейчас нет товаров';
+$MESS['CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2'] = 'В документе нет товаров';
 $MESS['CSPL_MENU'] = 'Меню';
 $MESS['CSPL_MENU_ADD_NEW_PRODUCT_TITLE'] = 'Новый товар';
 $MESS['CSPL_MENU_CREATE_PRODUCT'] = 'Создать товар';
@@ -21,3 +21,4 @@ $MESS['CSPL_PRODUCT_NOT_FOUND_BY_BARCODE'] = 'Товар с таким штри�
 $MESS['CSPL_PRODUCT_DELETE_CONFIRMATION'] = 'Вы уверены, что хотите удалить запись из документа?';
 $MESS['CSPL_PRODUCT_DELETE_CONFIRMATION_OK'] = 'Удалить';
 $MESS['CSPL_PRODUCT_DELETE_CONFIRMATION_CANCEL'] = 'Отмена';
+$MESS['CSPL_INSUFFICIENT_PERMISSIONS_FOR_PRODUCT_ADD'] = 'Недостаточно прав для создания товара';

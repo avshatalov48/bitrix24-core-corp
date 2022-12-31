@@ -197,6 +197,11 @@ class CrmDocumentViewComponent extends ViewComponent
 					];
 				}
 			}
+			$this->arResult['isSigningEnabled'] =
+				($provider instanceof \Bitrix\Crm\Integration\DocumentGenerator\DataProvider\Deal)
+				&& \Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()
+				&& \Bitrix\Sign\Config\Storage::instance()->isAvailable()
+			;
 		}
 		else
 		{

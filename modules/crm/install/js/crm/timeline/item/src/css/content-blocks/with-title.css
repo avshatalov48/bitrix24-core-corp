@@ -15,7 +15,7 @@
 .crm-timeline__card-container_info-title {
 	display: block;
 	font-family: var(--crm-timeline__font-helvetica);
-	font-size: var(--ui-font-size-xs, 12px);
+	font-size: var(--ui-font-size-sm, 13px);
 	color: var(--ui-color-palette-gray-50, rgba(168, 173, 180, 1));
 }
 

@@ -174,7 +174,7 @@ foreach($arResult['ORDER'] as $sKey => $arOrder)
 	{
 		if($arOrder['EDIT'])
 		{
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID))
+			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_ORDER_ADD_CALL_TITLE'),

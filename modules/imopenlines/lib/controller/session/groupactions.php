@@ -29,14 +29,21 @@ class GroupActions extends Controller
 	{
 		$result = [];
 
+		$filter = [
+			'<STATUS' => Session::STATUS_CLOSE,
+			'!=CLOSED' => 'Y',
+			'CONFIG_ID' => Config::getIdConfigCanJoin()
+		];
+
+		$requestData = $this->request->toArray();
+		$currentFilter = \Bitrix\Imopenlines\Helpers\Filter::getFilter($requestData['fields']['filterId']);
+		if ($currentFilter)
+		{
+			$filter = array_merge($filter, $currentFilter);
+		}
+
 		$sessions = SessionTable::getList([
-			'filter' => [
-				//Not closed
-				'<STATUS' => Session::STATUS_CLOSE,
-				'!=CLOSED' => 'Y',
-				//Id Config
-				'CONFIG_ID' => Config::getIdConfigCanJoin()
-			],
+			'filter' => $filter,
 			'select' => [
 				'ID',
 				'CHAT_ID'

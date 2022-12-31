@@ -12,6 +12,7 @@ class Display
 	/** @var $displayOptions Options */
 	protected $displayOptions;
 	protected $entityTypeId;
+	private $skipEmptyFields = true;
 
 	protected $items = [];
 
@@ -26,6 +27,13 @@ class Display
 	public function setDisplayOptions(Options $options): Display
 	{
 		$this->displayOptions = $options;
+
+		return $this;
+	}
+
+	public function skipEmptyFields(bool $skipEmptyFields): Display
+	{
+		$this->skipEmptyFields = $skipEmptyFields;
 
 		return $this;
 	}
@@ -117,7 +125,11 @@ class Display
 					{
 						$result[$itemId][$fieldId] = ''; // multiple user fields should be converted from empty array to empty string
 					}
-					continue;
+
+					if ($this->skipEmptyFields)
+					{
+						continue;
+					}
 				}
 
 				if (!isset($result[$itemId]) && $displayedField->isMultiple())

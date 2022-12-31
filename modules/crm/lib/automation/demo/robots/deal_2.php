@@ -3,6 +3,17 @@ use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
+
+$runtime = CBPRuntime::getRuntime();
+
+$socMess = $runtime->getActivityDescription('SocNetMessageActivity');
+$control = $runtime->getActivityDescription('CrmControlNotifyActivity');
+$call = $runtime->getActivityDescription('CrmCreateCallActivity');
+
+$messageTitle = $socMess['ROBOT_SETTINGS']['TITLE'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE');
+$controlTitle = $control['NAME'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CONTROL_TITLE');
+$callTitle = $call['ROBOT_SETTINGS']['TITLE'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CALL_TITLE');
+
 return array(
 	'NEW'                =>
 		array(
@@ -14,7 +25,7 @@ return array(
 						'MessageText'   => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_1_MESSAGE'),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 			),
 			array(
@@ -24,7 +35,7 @@ return array(
 						'MessageText'   => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_2_MESSAGE'),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'                 => 'A89107_4202_45529_8329',
 				'Delay'                =>
@@ -43,7 +54,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_3_MESSAGE"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A43681_96121_49224_5177',
 				'Delay'      =>
@@ -64,7 +75,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_4_MESSAGE"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A72347_45258_84718_96743',
 			),
@@ -78,7 +89,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_5_MESSAGE"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A55494_39534_99534_32980',
 			),
@@ -89,7 +100,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_6_MESSAGE"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A76441_86956_49274_46412',
 				'Delay'      =>
@@ -107,7 +118,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_7_MESSAGE"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A1071_37131_72289_5010',
 				'Delay'      =>
@@ -129,7 +140,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_8_MESSAGE"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A48681_34712_75278_71233',
 			),
@@ -142,7 +153,7 @@ return array(
 						'EndTime'     => '=dateadd({=System:Date},"13h")',
 						'Description' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_9_MESSAGE"),
 						'Responsible' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CALL_TITLE'),
+						'Title'       => $callTitle,
 					),
 				'Name'       => 'A95123_55448_52897_4285',
 				'Delay'      =>
@@ -160,7 +171,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_10_MESSAGE"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'                 => 'A46965_67429_31101_13033',
 				'Delay'                =>
@@ -183,7 +194,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_11_MESSAGE"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A13242_91178_35989_15181',
 			),
@@ -193,7 +204,7 @@ return array(
 					array(
 						'MessageText' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_12_MESSAGE"),
 						'ToHead'      => 'Y',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CONTROL_TITLE'),
+						'Title'       => $controlTitle,
 					),
 				'Name'       => 'A47783_37796_13345_67547',
 				'Delay'      =>
@@ -215,7 +226,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_13_MESSAGE"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'       => 'A12064_69309_94555_95843',
 			),
@@ -228,7 +239,7 @@ return array(
 						'EndTime'     => '=dateadd({=System:Date},"13h")',
 						'Description' => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_14_MESSAGE"),
 						'Responsible' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'       => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_CALL_TITLE'),
+						'Title'       => $callTitle,
 					),
 				'Name'       => 'A36005_50238_19111_65974',
 				'Delay'      =>
@@ -247,7 +258,7 @@ return array(
 						'MessageText'   => Loc::getMessage("CRM_AUTOMATION_DEMO_DEAL_2_15_MESSAGE"),
 						'MessageFormat' => 'robot',
 						'MessageUserTo' => '{=Document:ASSIGNED_BY_ID}',
-						'Title'         => Loc::getMessage('CRM_AUTOMATION_DEMO_DEAL_2_NOTIFY_TITLE'),
+						'Title'         => $messageTitle,
 					),
 				'Name'                 => 'A86014_91886_52193_79319',
 				'Delay'                =>

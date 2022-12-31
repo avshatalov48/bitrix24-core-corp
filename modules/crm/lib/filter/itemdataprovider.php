@@ -11,6 +11,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Factory;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\StatusTable;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\WebForm;
 use Bitrix\Main\Filter\EntityDataProvider;
@@ -685,7 +686,7 @@ class ItemDataProvider extends EntityDataProvider
 			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->getEntityTypeId());
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_type_' . $this->getEntityTypeId() . '_item_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'entityTypeId' => $this->getEntityTypeId(),
@@ -700,7 +701,7 @@ class ItemDataProvider extends EntityDataProvider
 			$result = [
 				'params' => [
 					'apiVersion' => 3,
-					'context' => 'CRM_TYPE_'.$this->getEntityTypeId().'_ITEM_FILTER_'.$fieldID,
+					'context' => EntitySelector::CONTEXT,
 					'multiple' => 'N',
 					'contextCode' => 'CRM',
 					'useClientDatabase' => 'N',
@@ -744,7 +745,7 @@ class ItemDataProvider extends EntityDataProvider
 					'multiple' => 'N',
 					'dialogOptions' => [
 						'height' => 200,
-						'context' => '',
+						'context' => EntitySelector::CONTEXT,
 						'entities' => [],
 					],
 				],
@@ -833,140 +834,8 @@ class ItemDataProvider extends EntityDataProvider
 	 */
 	public function prepareListFilter(array &$filter, array $requestFilter): void
 	{
-		if (isset($requestFilter['FIND']) && !empty($requestFilter['FIND']))
-		{
-			$filter['SEARCH_CONTENT'] = $requestFilter['FIND'];
-			SearchEnvironment::prepareSearchFilter($this->getEntityTypeId(), $filter, [
-				'ENABLE_PHONE_DETECTION' => false,
-			]);
-		}
-
-		if ($this->factory->isCrmTrackingEnabled())
-		{
-			$runtime = [];
-			\Bitrix\Crm\Tracking\UI\Filter::buildOrmFilter($filter, $requestFilter, $this->getEntityTypeId(), $runtime);
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_NUMBER, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
-			{
-				$filter[$fieldName] = $requestFilter[$fieldName];
-			}
-			elseif (isset($requestFilter['!'.$fieldName]) && $requestFilter['!'.$fieldName] === false)
-			{
-				$filter['!'.$fieldName] = $requestFilter['!'.$fieldName];
-			}
-			if (isset($requestFilter[$fieldName.'_from']) && $requestFilter[$fieldName.'_from'] > 0)
-			{
-				$filter['>='.$fieldName] = $requestFilter[$fieldName.'_from'];
-			}
-			if (isset($requestFilter[$fieldName.'_to']) && $requestFilter[$fieldName.'_to'] > 0)
-			{
-				$filter['<='.$fieldName] = $requestFilter[$fieldName.'_to'];
-			}
-			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] > 0)
-			{
-				$filter['='.$fieldName] = $requestFilter[$fieldName];
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_STRING, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
-			{
-				$filter[$fieldName] = $requestFilter[$fieldName];
-			}
-			elseif (isset($requestFilter['!'.$fieldName]) && $requestFilter['!'.$fieldName] === false)
-			{
-				$filter['!'.$fieldName] = $requestFilter['!'.$fieldName];
-			}
-			if (!empty($requestFilter[$fieldName]))
-			{
-				$filter['%'.$fieldName] = $requestFilter[$fieldName];
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_USER, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (!empty($requestFilter[$fieldName]))
-			{
-				$filter['='.$fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName] : (int)$requestFilter[$fieldName];
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_CRM_ENTITY, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (!empty($requestFilter[$fieldName]))
-			{
-				$filter['='.$fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName] : (int)$requestFilter[$fieldName];
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_ENTITY_SELECTOR, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (!empty($requestFilter[$fieldName]))
-			{
-				$filter['='.$fieldName] = is_array($requestFilter[$fieldName]) ? $requestFilter[$fieldName] : (int)$requestFilter[$fieldName];
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_DATE, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (isset($requestFilter[$fieldName]) && $requestFilter[$fieldName] === false)
-			{
-				$filter[$fieldName] = $requestFilter[$fieldName];
-			}
-			elseif (isset($requestFilter['!'.$fieldName]) && $requestFilter['!'.$fieldName] === false)
-			{
-				$filter['!'.$fieldName] = $requestFilter['!'.$fieldName];
-			}
-			if (!empty($requestFilter[$fieldName.'_from']))
-			{
-				$filter['>='.$fieldName] = $requestFilter[$fieldName.'_from'];
-			}
-			if (!empty($requestFilter[$fieldName.'_to']))
-			{
-				$filter['<='.$fieldName] = $requestFilter[$fieldName.'_to'];
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_BOOLEAN, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (!empty($requestFilter[$fieldName]))
-			{
-				$filterValue = $requestFilter[$fieldName] === 'Y';
-
-				$filter['='.$fieldName] = $filterValue;
-			}
-		}
-
-		foreach ($this->getFieldNamesByType(static::TYPE_LIST, static::DISPLAY_IN_FILTER) as $fieldName)
-		{
-			if (!empty($requestFilter[$fieldName]))
-			{
-				if($fieldName === static::FIELD_STAGE_SEMANTIC && $this->factory->isStagesEnabled())
-				{
-					static::processStageSemanticFilter($requestFilter, $filter);
-				}
-				else
-				{
-					$filter['='.$fieldName] = $requestFilter[$fieldName];
-				}
-			}
-		}
-
-		$parentFields = $this->getFieldNamesByType(
-			static::TYPE_PARENT,
-			static::DISPLAY_IN_FILTER
-		);
-		foreach ($parentFields as $fieldName)
-		{
-			if (!empty($requestFilter[$fieldName]))
-			{
-				$filter[$fieldName] = ParentFieldManager::transformEncodedFilterValueIntoInteger($fieldName, $requestFilter[$fieldName]);
-			}
-		}
+		$listFilter = new ListFilter($this->getEntityTypeId(), $this->getFieldsToDisplay(static::DISPLAY_IN_FILTER));
+		$listFilter->prepareListFilter($filter, $requestFilter);
 	}
 
 	public function getFieldNamesByType(string $type, string $whereToDisplay = self::DISPLAY_ANYWHERE): array
@@ -987,40 +856,7 @@ class ItemDataProvider extends EntityDataProvider
 
 	public static function processStageSemanticFilter(array $requestFilter, array &$filter): void
 	{
-		if (empty($requestFilter[static::FIELD_STAGE_SEMANTIC]))
-		{
-			return;
-		}
-
-		$semanticFilter = [];
-		if (in_array(PhaseSemantics::PROCESS, $requestFilter[static::FIELD_STAGE_SEMANTIC], true))
-		{
-			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => '',
-			];
-			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => PhaseSemantics::PROCESS,
-			];
-		}
-		if (in_array(PhaseSemantics::SUCCESS, $requestFilter[static::FIELD_STAGE_SEMANTIC], true))
-		{
-			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => PhaseSemantics::SUCCESS,
-			];
-		}
-		if (in_array(PhaseSemantics::FAILURE, $requestFilter[static::FIELD_STAGE_SEMANTIC], true))
-		{
-			$semanticFilter[] = [
-				'STAGE.SEMANTICS' => PhaseSemantics::FAILURE,
-			];
-		}
-
-		if (!empty($semanticFilter))
-		{
-			$filter[] = array_merge([
-				'LOGIC' => 'OR',
-			], $semanticFilter);
-		}
+		Filter::applyStageSemanticFilter($filter, $requestFilter, static::FIELD_STAGE_SEMANTIC);
 	}
 
 	protected function applySettingsDependantFilter(array &$filterFields): void

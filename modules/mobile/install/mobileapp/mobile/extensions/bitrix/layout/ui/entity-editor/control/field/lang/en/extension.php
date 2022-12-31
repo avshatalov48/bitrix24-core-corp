@@ -1,0 +1,3 @@
+<?php
+$MESS["M_ENTITY_EDITOR_FIELD_CANT_EDIT_HINT_TEXT"] = "Field \"#NAME#\" is read only";
+$MESS["M_ENTITY_EDITOR_FIELD_CANT_EDIT_HINT_TITLE"] = "Static field";

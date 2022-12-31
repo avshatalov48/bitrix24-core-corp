@@ -10,7 +10,7 @@ final class NullRepository extends Repository
 	{
 	}
 
-	public function getScheduledItems(): Result
+	public function getScheduledItems(?Query $queryParams = null): Result
 	{
 		return (new Result());
 	}

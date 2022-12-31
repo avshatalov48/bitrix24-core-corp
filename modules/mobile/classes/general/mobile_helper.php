@@ -942,7 +942,7 @@ class CMobileHelper
 			}
 			else
 			{
-				$result = "app.loadPageBlank({url: '".$result."', 'unique': ".($unique? 'true': 'false').", 'bx24ModernStyle': true})";
+				$result = "BXMobileApp.PageManager.loadPageBlank({url: '".$result."', 'unique': ".($unique? 'true': 'false').", 'bx24ModernStyle': true})";
 			}
 		}
 		return $result;

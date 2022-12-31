@@ -53,7 +53,7 @@ align-items: center;
 }
 .crm-report-chart-grid-user-name {
     max-width: 100%;
-    font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+    font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #2066B0;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -88,7 +88,7 @@ align-items: center;
 }
 .crm-report-chart-grid-value-bold {
     display: inline-block;
-    font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+    font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
     color: #333;
 }
 .crm-report-chart-grid-value-link {
@@ -135,7 +135,7 @@ align-items: center;
 }
 .crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-value,
 .crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-text {
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
 }
 .crm-report-chart-grid-rating-success .crm-report-chart-grid-rating-text {
     color: #6F9300;

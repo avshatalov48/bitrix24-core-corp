@@ -2,6 +2,7 @@
 
 	/**
 	 * @class EmptyListComponent
+	 * @deprecated Please use layout/ui/empty-screen instead
 	 */
 	class EmptyListComponent extends LayoutComponent
 	{

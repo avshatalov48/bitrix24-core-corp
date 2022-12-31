@@ -91,8 +91,6 @@ class CounterController
 
 		if (Counter::isSonetEnable())
 		{
-			$this->readAllGroups();
-
 			$projectProcessor = ProjectProcessor::getInstance();
 			$projectProcessor->recount(CounterDictionary::COUNTER_GROUP_EXPIRED, $this->userId);
 			$projectProcessor->recount(CounterDictionary::COUNTER_GROUP_COMMENTS, $this->userId);

@@ -15,11 +15,17 @@ declare type Signer = {
 
 export class SignDocument extends Base
 {
-	onItemAction(item: ConfigurableItem, action: String, actionData: ?Object): void
+	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
-		const documentId = Text.toInteger(actionData?.documentId);
-		const activityId = Text.toInteger(actionData?.activityId);
+		const {action, actionType, actionData, animationCallbacks} = actionParams;
+		if (actionType !== 'jsEvent')
+		{
+			return;
+		}
 
+		const documentId = Text.toInteger(actionData?.documentId);
+		const documentHash = actionData?.documentHash || '';
+		const activityId = Text.toInteger(actionData?.activityId);
 		if ((action === 'SignDocument:Open' || action === 'Activity:SignDocument:Open') && documentId > 0)
 		{
 			this.#openDocument(actionData);
@@ -34,15 +40,21 @@ export class SignDocument extends Base
 		}
 		else if (action === 'SignDocument:Resend' && documentId > 0 && actionData?.recipientHash)
 		{
-			this.#resendDocument(actionData);
+			this.#resendDocument(actionData, animationCallbacks).then(() => {
+				if (actionData.buttonId)
+				{
+					const btn = item.getLayoutFooterButtonById(actionData.buttonId);
+					btn.disableWithTimer(60);
+				}
+			});
 		}
 		else if (action === 'SignDocument:TouchSigner' && documentId > 0)
 		{
 			this.#touchSigner(actionData);
 		}
-		else if (action === 'SignDocument:Download' && documentId > 0)
+		else if (action === 'SignDocument:Download' && documentHash)
 		{
-			this.#download(actionData);
+			this.#download(actionData, animationCallbacks);
 		}
 		else if (action === 'SignDocumentEntry:Delete' && actionData?.entryId)
 		{
@@ -108,31 +120,49 @@ export class SignDocument extends Base
 		}
 	}
 
-	#resendDocument({documentId, recipientHash}): void
+	#resendDocument({documentId, recipientHash}, animationCallbacks): Promise
 	{
-		ajax.runAction(
-			'sign.document.resendFile',
-			{
-				data: {
-					memberHash: recipientHash,
-					documentId: documentId
-				},
-			}
-		).then(() =>
+		if (animationCallbacks.onStart)
 		{
-			UI.Notification.Center.notify({
-				content: Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
-				autoHideDelay: 5000,
-			});
-		}, (response) =>
-		{
-			UI.Notification.Center.notify({
-				content: response.errors[0].message,
-				autoHideDelay: 5000,
-			});
-		});
+			animationCallbacks.onStart();
+		}
 
-		console.log('resend document ' + documentId + ' for ' + recipientHash);
+		return new Promise((resolve, reject) => {
+			ajax.runAction(
+				'sign.internal.document.resendFile',
+				{
+					data: {
+						memberHash: recipientHash,
+						documentId: documentId
+					},
+				}
+			).then(() =>
+			{
+				UI.Notification.Center.notify({
+					content: Loc.getMessage('CRM_TIMELINE_ITEM_SIGN_DOCUMENT_RESEND_SUCCESS'),
+					autoHideDelay: 5000,
+				});
+				if (animationCallbacks.onStop)
+				{
+					animationCallbacks.onStop();
+
+				}
+				resolve();
+			}, (response) =>
+			{
+				UI.Notification.Center.notify({
+					content: response.errors[0].message,
+					autoHideDelay: 5000,
+				});
+				if (animationCallbacks.onStop)
+				{
+					animationCallbacks.onStop();
+				}
+				reject();
+			});
+
+			console.log('resend document ' + documentId + ' for ' + recipientHash);
+		})
 	}
 
 	#touchSigner({documentId}): void
@@ -140,27 +170,28 @@ export class SignDocument extends Base
 		console.log('touch signer document ' + documentId);
 	}
 
-	#download({documentHash, memberHash}): void
+	#download({documentHash, memberHash}, animationCallbacks): void
 	{
-		console.log('download ' + documentHash);
-		const req = ajax.xhr();
-		req.open("GET", '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
+		if (animationCallbacks.onStart)
+		{
+			animationCallbacks.onStart();
+		}
+
+		const link = document.createElement('a');
+		link.href = '/bitrix/services/main/ajax.php?action=sign.document.getFileForSrc' +
 			'&memberHash=' + memberHash +
-			'&documentHash=' + documentHash, true);
-		req.responseType = "blob";
+			'&documentHash=' + documentHash;
 
-		req.onload = (oEvent) => {
-			const blob = req.response;
-			const url = window.URL.createObjectURL(new Blob([blob]));
-			const link = document.createElement('a');
-			link.href = url;
-			link.setAttribute('download', 'doc.pdf');
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-		};
+		link.setAttribute('download', '');
 
-		req.send()
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+
+		if (animationCallbacks.onStop)
+		{
+			animationCallbacks.onStop();
+		}
 	}
 
 	static isItemSupported(item: ConfigurableItem): boolean

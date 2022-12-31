@@ -185,15 +185,6 @@ class Lead extends Entity
 	}
 
 	/**
-	 * @param array $data
-	 * @return string
-	 */
-	protected function getColumnId(array $data): string
-	{
-		return ($data['STATUS_ID'] ?? '');
-	}
-
-	/**
 	 * @return array
 	 */
 	public function getSemanticIds(): array

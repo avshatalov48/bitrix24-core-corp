@@ -1,15 +1,13 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Display\Field;
-
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Options;
 
 class IblockElementField extends BaseLinkedEntitiesField
 {
-	protected const TYPE = 'iblock_element';
+	public const TYPE = 'iblock_element';
 
 	public function loadLinkedEntities(array &$linkedEntitiesValues, array $linkedEntity): void
 	{
@@ -59,7 +57,11 @@ class IblockElementField extends BaseLinkedEntitiesField
 			return '';
 		}
 
-		$formattedValue = htmlspecialcharsbx($linkedEntitiesValues[$elementId]['NAME']);
+		$formattedValue = $this->sanitizeString((string)$linkedEntitiesValues[$elementId]['NAME']);
+		if ($this->isMobileContext())
+		{
+			return $formattedValue;
+		}
 
 		$detailUrl = $linkedEntitiesValues[$elementId]['DETAIL_PAGE_URL'];
 		if ($detailUrl !== '')
@@ -87,5 +89,61 @@ class IblockElementField extends BaseLinkedEntitiesField
 		}
 
 		return implode($displayOptions->getMultipleFieldsDelimiter(), $results);
+	}
+
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		if ($this->isMultiple())
+		{
+			$elementIds = [];
+
+			foreach ((array)$fieldValue as $value)
+			{
+				$elementIds[] = (int)$value;
+			}
+
+			return [
+				'value' => $elementIds,
+				'config' => $this->getPreparedConfig($elementIds),
+			];
+		}
+
+		$elementId = (int)$fieldValue;
+
+		return [
+			'value' => $elementId,
+			'config' => $this->getPreparedConfig([$elementId]),
+		];
+	}
+
+	/**
+	 * @param array $elementIds
+	 * @return array[]
+	 */
+	protected function getPreparedConfig(array $elementIds): array
+	{
+		$entityList = [];
+
+		$elements = $this->getLinkedEntitiesValues();
+
+		foreach ($elementIds as $elementId)
+		{
+			if (!empty($elements[$elementId]))
+			{
+				$entityList[] = [
+					'id' => $elementId,
+					'title' => $elements[$elementId]['NAME'],
+				];
+			}
+		}
+		return [
+			'entityList' => $entityList,
+			'selectorType' => $this->getSelectorType(),
+		];
+	}
+
+	protected function getSelectorType(): string
+	{
+		return 'iblock-element-user-field';
 	}
 }

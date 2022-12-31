@@ -3,7 +3,6 @@ $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_CONNECTED"] = "Livechat connected";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_CONNECTOR_ERROR_STATUS"] = "An error occurred while using live chat. Please check data specified and test again.";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_CONNECT_ACTIVE"] = "Connect";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_DESCRIPTION"] = "Connect a publicly accessible page containing your company chat to Open Channel and use the page link in e-mail signatures or simply share it in social networking services.";
-$MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_DESCRIPTION_1"] = "Install Live Chat on your website and talk to your customers online, wherever you are.<br> Connect the Live Chat page to an Open Channel and use the page link in e-mail signatures, or just share the Live Chat link in social services.";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_1"] = "Free";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_2"] = "Collect customer's contact information";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_3"] = "Save contacts and communication history to the CRM";

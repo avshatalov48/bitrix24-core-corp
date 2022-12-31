@@ -9,6 +9,7 @@ if (!CModule::IncludeModule('crm'))
 if (!CModule::IncludeModule('catalog'))
 {
 	ShowError(GetMessage('CATALOG_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 

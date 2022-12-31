@@ -129,6 +129,7 @@ include('InAppNotifier');
 			return {
 				GET_TASK_LIMIT_EXCEEDED: true,
 				WITH_RESULT_INFO: 'Y',
+				WITH_TIMER_INFO: 'Y',
 			};
 		}
 
@@ -208,7 +209,7 @@ include('InAppNotifier');
 			this.deadlines = result.deadlines;
 
 			this.task = new Task(this.currentUser);
-			this.task.cloneData(this.taskObjectData);
+			this.task.importProperties(this.taskObjectData);
 
 			this.rest = new Request();
 			this.options = new Options();
@@ -362,7 +363,7 @@ include('InAppNotifier');
 					break;
 
 				case 'taskComplete':
-					this.complete();
+					this.onCompleteAction();
 					break;
 
 				default:
@@ -386,6 +387,7 @@ include('InAppNotifier');
 			{
 				this.task.updateData({
 					taskRequireResult: data.taskRequireResult,
+					taskHasOpenResult: data.taskHasOpenResult,
 					taskHasResult: data.taskHasResult,
 				})
 			}
@@ -606,6 +608,14 @@ include('InAppNotifier');
 
 				case 'disapprove':
 					this.onDisapproveAction();
+					break;
+
+				case 'startTimer':
+					this.onStartTimerAction();
+					break;
+
+				case 'pauseTimer':
+					this.onPauseTimerAction();
 					break;
 
 				case 'start':
@@ -850,6 +860,14 @@ include('InAppNotifier');
 					this.onDisapproveAction();
 					break;
 
+				case 'startTimer':
+					this.onStartTimerAction();
+					break;
+
+				case 'pauseTimer':
+					this.onPauseTimerAction();
+					break;
+
 				case 'start':
 					this.onStartAction();
 					break;
@@ -981,16 +999,14 @@ include('InAppNotifier');
 		{
 			const taskId = this.task.id;
 
-			this.task.rawAccess['favorite.add'] = false;
-			this.task.rawAccess['favorite.delete'] = true;
-
+			this.task.updateActions({
+				canAddToFavorite: false,
+				canRemoveFromFavorite: true,
+			});
 			BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: true}, true);
 			this.redrawTaskPopupMenu();
 
-			this.task.favorite().add().then(() => {}, () => {
-				this.task.rawAccess['favorite.add'] = true;
-				this.task.rawAccess['favorite.delete'] = false;
-
+			this.task.addToFavorite().then(() => {}, () => {
 				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: false}, true);
 				this.redrawTaskPopupMenu();
 			});
@@ -1000,16 +1016,14 @@ include('InAppNotifier');
 		{
 			const taskId = this.task.id;
 
-			this.task.rawAccess['favorite.add'] = true;
-			this.task.rawAccess['favorite.delete'] = false;
-
+			this.task.updateActions({
+				canAddToFavorite: true,
+				canRemoveFromFavorite: false,
+			});
 			BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: false}, true);
 			this.redrawTaskPopupMenu();
 
-			this.task.favorite().remove().then(() => {}, () => {
-				this.task.rawAccess['favorite.add'] = false;
-				this.task.rawAccess['favorite.delete'] = true;
-
+			this.task.removeFromFavorite().then(() => {}, () => {
 				BX.postWebEvent('tasks.view.native::onTaskUpdate', {taskId, favorite: true}, true);
 				this.redrawTaskPopupMenu();
 			});
@@ -1017,10 +1031,12 @@ include('InAppNotifier');
 
 		onApproveAction()
 		{
-			this.task.rawAccess.approve = false;
-			this.task.rawAccess.disapprove = false;
-			this.task.rawAccess.complete = false;
-			this.task.rawAccess.renew = true;
+			this.task.updateActions({
+				canApprove: false,
+				canDisapprove: false,
+				canRenew: true,
+				canComplete: false,
+			});
 
 			this.updateTask({
 				status: Task.statusList.completed,
@@ -1038,11 +1054,13 @@ include('InAppNotifier');
 
 		onDisapproveAction()
 		{
-			this.task.rawAccess.approve = false;
-			this.task.rawAccess.disapprove = false;
-			this.task.rawAccess.renew = false;
-			this.task.rawAccess.complete = false;
-			this.task.rawAccess.start = true;
+			this.task.updateActions({
+				canApprove: false,
+				canDisapprove: false,
+				canRenew: false,
+				canComplete: false,
+				canStart: true,
+			});
 
 			this.updateTask({
 				status: Task.statusList.pending,
@@ -1058,11 +1076,57 @@ include('InAppNotifier');
 			});
 		}
 
+		onStartTimerAction()
+		{
+			this.task.updateActions({
+				canStartTimer: false,
+				canPauseTimer: true,
+				canStart: false,
+				canPause: false,
+				canRenew: false,
+			});
+
+			this.updateTask({status: Task.statusList.inprogress});
+			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
+
+			this.task.startTimer().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
+			});
+		}
+
+		onPauseTimerAction()
+		{
+			this.task.updateActions({
+				canStartTimer: true,
+				canPauseTimer: false,
+				canStart: false,
+				canPause: false,
+				canRenew: false,
+			});
+
+			this.updateTask({status: Task.statusList.pending});
+			this.redrawTaskPopupMenu();
+			this.sendOnItemActionStatusWebEvent();
+
+			this.task.pauseTimer().then(() => {
+				this.updateTask();
+				this.redrawTaskPopupMenu();
+				this.sendOnItemActionStatusWebEvent();
+			});
+		}
+
 		onStartAction()
 		{
-			this.task.rawAccess.start = false;
-			this.task.rawAccess.pause = true;
-			this.task.rawAccess.renew = false;
+			this.task.updateActions({
+				canStartTimer: false,
+				canPauseTimer: false,
+				canStart: false,
+				canPause: true,
+				canRenew: false,
+			});
 
 			this.updateTask({status: Task.statusList.inprogress});
 			this.redrawTaskPopupMenu();
@@ -1077,9 +1141,13 @@ include('InAppNotifier');
 
 		onPauseAction()
 		{
-			this.task.rawAccess.start = true;
-			this.task.rawAccess.pause = false;
-			this.task.rawAccess.renew = false;
+			this.task.updateActions({
+				canStartTimer: false,
+				canPauseTimer: false,
+				canStart: true,
+				canPause: false,
+				canRenew: false,
+			});
 
 			this.updateTask({status: Task.statusList.pending});
 			this.redrawTaskPopupMenu();
@@ -1094,9 +1162,11 @@ include('InAppNotifier');
 
 		onRenewAction()
 		{
-			this.task.rawAccess.start = true;
-			this.task.rawAccess.pause = false;
-			this.task.rawAccess.renew = false;
+			this.task.updateActions({
+				canStart: true,
+				canPause: false,
+				canRenew: false,
+			});
 
 			this.updateTask({
 				status: Task.statusList.pending,
@@ -1114,7 +1184,7 @@ include('InAppNotifier');
 
 		onCompleteAction()
 		{
-			if (!this.task.isRequireResult || this.task.isHasResult)
+			if (!this.task.isResultRequired || this.task.isOpenResultExists)
 			{
 				this.updateTask({
 					status: Task.statusList.completed,
@@ -1131,10 +1201,7 @@ include('InAppNotifier');
 			}
 			else
 			{
-				const oldStatus = this.task.status;
-				this.task.complete().then(() => {}, () => this.task.status = oldStatus);
-				this.task.status = oldStatus;
-				this.updateTask();
+				this.task.complete().then(() => {}, () => this.updateTask());
 			}
 		}
 
@@ -1150,7 +1217,7 @@ include('InAppNotifier');
 							backgroundColor: '#333333',
 						});
 
-						this.rest.call('delete', {taskId: this.task.id});
+						void this.task.remove();
 						if (this.taskCardHandler)
 						{
 							this.taskCardHandler.closeForm();
@@ -1163,12 +1230,11 @@ include('InAppNotifier');
 
 		onUnfollowAction()
 		{
-			const currentUserId = Number(this.currentUser.id);
+			delete this.task.auditors[this.currentUser.id.toString()];
 
-			this.task.auditors = this.task.auditors.filter(item => item !== currentUserId);
-			if (!this.task.isMember(currentUserId))
+			if (!this.task.isMember(this.currentUser.id))
 			{
-				this.task.stopWatch();
+				void this.task.stopWatch();
 				if (this.taskCardHandler)
 				{
 					this.taskCardHandler.closeForm();
@@ -1235,7 +1301,7 @@ include('InAppNotifier');
 		can(right)
 		{
 			const has = Object.prototype.hasOwnProperty;
-			return has.call(this.task.can, right) && Boolean(this.task.can[right]);
+			return (has.call(this.task.actions, right) && Boolean(this.task.actions[right]));
 		}
 
 		get popupMenuItemsMap()
@@ -1258,7 +1324,7 @@ include('InAppNotifier');
 					iconUrl: `${urlPrefix}add-favorite.png`,
 					action: this.onAddToFavoriteAction,
 				},
-				'favorite.remove': {
+				'favorite.delete': {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_DELETE_FAVORITE_TASK'),
 					iconUrl: `${urlPrefix}delete-favorite.png`,
 					action: this.onRemoveFromFavoriteAction,
@@ -1299,7 +1365,7 @@ include('InAppNotifier');
 					action: this.onDelegateAction,
 					disable: this.taskLimitExceeded,
 				},
-				update: {
+				edit: {
 					title: BX.message('TASKS_TASK_DETAIL_BTN_EDIT'),
 					iconUrl: `${urlPrefix}edit.png`,
 					action: this.openEditTaskPage,

@@ -17,5 +17,7 @@ return [
 		'comments/uploadqueue',
 		'catalog/background/barcodescanner',
 		'push/listener',
-	]
+		'crm:in-app-url/background',
+		'crm:background/timeline-notifications',
+	],
 ];

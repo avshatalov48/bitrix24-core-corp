@@ -33,15 +33,31 @@ $APPLICATION->IncludeComponent(
 );
 $this->endViewTarget();
 
-if (!empty($arResult['ERROR_MESSAGES']) && is_array($arResult['ERROR_MESSAGES'])): ?>
-	<?php foreach($arResult['ERROR_MESSAGES'] as $error):?>
-		<div class="ui-alert ui-alert-danger crm-store-document-list--alert" style="margin-bottom: 0;">
-			<span class="ui-alert-message"><?= $error ?></span>
-		</div>
-	<?php endforeach;?>
-	<?php
+if (!empty($arResult['ERROR_MESSAGES']) && is_array($arResult['ERROR_MESSAGES']))
+{
+	if (count($arResult['ERROR_MESSAGES']) === 1 && is_array($arResult['ERROR_MESSAGES'][0]))
+	{
+		$APPLICATION->IncludeComponent(
+			'bitrix:ui.info.error',
+			'',
+			$arResult['ERROR_MESSAGES'][0]
+		);
+	}
+	else
+	{
+		foreach ($arResult['ERROR_MESSAGES'] as $error)
+		{
+
+			?>
+			<div class="ui-alert ui-alert-danger catalog-store-document-list--alert" style="margin-bottom: 0;">
+				<span class="ui-alert-message"><?= $error ?></span>
+			</div>
+			<?php
+		}
+	}
+
 	return;
-endif;
+}
 
 $APPLICATION->IncludeComponent(
 	'bitrix:main.ui.grid',
@@ -92,6 +108,7 @@ if ($arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER'])
 			filterId: '<?= $arResult['FILTER_ID'] ?>',
 			isConductDisabled: <?= $arResult['OPEN_INVENTORY_MANAGEMENT_SLIDER_ON_ACTION'] ? 'true' : 'false' ?>,
 			masterSliderUrl: <?= CUtil::PhpToJSObject($arResult['MASTER_SLIDER_URL']) ?>,
+			inventoryManagementSource: <?= CUtil::PhpToJSObject($arResult['INVENTORY_MANAGEMENT_SOURCE']) ?>,
 		});
 	});
 </script>

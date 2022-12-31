@@ -106,15 +106,6 @@ else
 		['HIDE_ICONS' => true]
 	);
 
-	/*
-	$supervisorInv = \Bitrix\Crm\Kanban\SupervisorTable::isSupervisor($entityType) ? 'N' : 'Y';
-	CCrmUrlUtil::AddUrlParams(
-					CComponentEngine::MakePathFromTemplate(
-						$arResult['PATH_TO_INVOICE_KANBAN']
-					),
-					array('supervisor' => $supervisorInv, 'clear_filter' => 'Y')
-				)*/
-
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban',
 		'',

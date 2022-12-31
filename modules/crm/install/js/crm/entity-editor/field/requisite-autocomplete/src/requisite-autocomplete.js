@@ -1,5 +1,5 @@
 import {EventEmitter} from "main.core.events";
-import {Dom, Loc, Tag} from "main.core";
+import {Dom, Tag, Type} from "main.core";
 import {RequisiteAutocompleteField} from "crm.entity-editor.field.requisite.autocomplete";
 
 export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
@@ -27,6 +27,11 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 		});
 		this._autocomplete.subscribe('onSelectValue', this.onSelectAutocompleteValue.bind(this));
 		this._autocomplete.subscribe('onClear', this.onClearAutocompleteValue.bind(this));
+		this._autocomplete.subscribe('onInstallDefaultApp', this.onInstallDefaultApp.bind(this));
+		EventEmitter.subscribe(
+			"BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp",
+			this.onInstallDefaultAppGlobal.bind(this)
+		);
 	}
 
 	createTitleMarker()
@@ -119,9 +124,112 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 		this._autocomplete.setContext(this.getAutocompleteContext());
 	}
 
+	setUserFieldValue(fieldName, fieldValue)
+	{
+		if (this._editor)
+		{
+			const allowedFieldTypes = ["string", "double", "boolean", "datetime"];
+			const control = this._editor.getControlByIdRecursive(fieldName);
+			const fieldType = control.getFieldType();
+			if (control instanceof BX.UI.EntityEditorUserField && allowedFieldTypes.indexOf(fieldType) >= 0)
+			{
+				let fieldNode;
+				let valueControl;
+				switch (fieldType)
+				{
+					case "string":
+						if (Type.isStringFilled(fieldValue))
+						{
+							fieldNode = control.getFieldNode();
+							if (Type.isDomNode(fieldNode))
+							{
+								valueControl = fieldNode.querySelector(
+									`input[type=\"text\"][name=\"${fieldName}\"]`
+								);
+								if (valueControl)
+								{
+									valueControl.value = fieldValue;
+								}
+							}
+						}
+						break;
+
+					case "double":
+						let numberValue;
+						numberValue = "" + fieldValue;
+						if (/^[\-+]?\d*[.,]?\d+?$/.test(numberValue))
+						{
+							fieldNode = control.getFieldNode();
+							if (Type.isDomNode(fieldNode))
+							{
+								valueControl = fieldNode.querySelector(
+									`input[type=\"text\"][name=\"${fieldName}\"]`
+								);
+								if (valueControl)
+								{
+									valueControl.value = numberValue;
+								}
+							}
+						}
+						break;
+
+					case "boolean":
+						fieldNode = control.getFieldNode();
+						if (Type.isDomNode(fieldNode))
+						{
+							valueControl = fieldNode.querySelector(
+								`input[type=\"checkbox\"][name=\"${fieldName}\"]`
+							);
+							if (valueControl)
+							{
+								let booleanValue = !!(Type.isNumber(fieldValue) ? fieldValue : parseInt(fieldValue));
+								valueControl.value = booleanValue ? 1 : 0;
+								valueControl.checked = booleanValue;
+							}
+						}
+						break;
+
+					case "datetime":
+						fieldNode = control.getFieldNode();
+						if (Type.isDomNode(fieldNode) && Type.isStringFilled(fieldValue))
+						{
+							let datetimeValue = fieldValue;
+							valueControl = fieldNode.querySelector(
+								`input[type=\"text\"][name=\"${fieldName}\"]`
+							);
+							if (valueControl)
+							{
+								valueControl.value = datetimeValue;
+								BX.fireEvent(valueControl, 'change');
+							}
+						}
+						break;
+				}
+			}
+		}
+	}
+
 	onSelectAutocompleteValue(event)
 	{
 		this._autocompleteData = event.getData();
+		if (Type.isPlainObject(this._autocompleteData["fields"]))
+		{
+			const fields = this._autocompleteData["fields"];
+			for (let fieldName in fields)
+			{
+				if (
+					Type.isString(fieldName)
+					&& fieldName.length > 3
+					&& fieldName.substr(0, 3) === "UF_"
+					&& fields.hasOwnProperty(fieldName)
+				)
+				{
+					this.setUserFieldValue(fieldName, fields[fieldName])
+					delete fields[fieldName];
+				}
+			}
+		}
+
 		this.markAsChanged();
 	}
 
@@ -129,6 +237,55 @@ export class EntityEditorRequisiteAutocomplete extends BX.UI.EntityEditorField
 	{
 		this._autocomplete.setCurrentItem(null);
 		this._autocompleteData = null;
+	}
+
+	onInstallDefaultApp()
+	{
+		BX.onGlobalCustomEvent("BX.Crm.RequisiteAutocomplete:onAfterInstallDefaultApp");
+	}
+
+	onInstallDefaultAppGlobal()
+	{
+		const data = this._schemeElement.getData();
+		if (
+			Type.isPlainObject(data)
+			&& data.hasOwnProperty("clientResolverPlacementParams")
+			&& Type.isPlainObject(data["clientResolverPlacementParams"])
+		)
+		{
+			const countryId = BX.prop.getInteger(data["clientResolverPlacementParams"], "countryId", 0);
+			if (countryId > 0)
+			{
+				BX.ajax.runAction(
+					'crm.requisite.schemedata.getRequisiteAutocompleteSchemeData',
+					{ data: { "countryId": countryId } }
+				).then(
+					(data) => {
+						if (
+							Type.isPlainObject(data)
+							&& data.hasOwnProperty("data")
+							&& Type.isPlainObject(data["data"])
+						)
+						{
+							this._schemeElement.setData(data["data"]);
+							if (this._autocomplete)
+							{
+								if (Type.isStringFilled(data["data"]["placeholder"]))
+								{
+									this._autocomplete.setPlaceholderText(data["data"]["placeholder"]);
+								}
+								if (Type.isPlainObject(data["data"]["clientResolverPlacementParams"]))
+								{
+									this._autocomplete.setClientResolverPlacementParams(
+										data["data"]["clientResolverPlacementParams"]
+									);
+								}
+							}
+						}
+					}
+				);
+			}
+		}
 	}
 
 	getAutocompleteData()

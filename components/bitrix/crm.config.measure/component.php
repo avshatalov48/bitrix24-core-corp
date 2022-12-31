@@ -10,6 +10,13 @@ if (!CModule::IncludeModule('crm'))
 if (!CModule::IncludeModule('catalog'))
 {
 	ShowError(GetMessage('CATALOG_MODULE_NOT_INSTALLED'));
+
+	return;
+}
+
+if (!\Bitrix\Catalog\Access\AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_MEASURE_EDIT))
+{
+	$this->IncludeComponentTemplate('error');
 	return;
 }
 

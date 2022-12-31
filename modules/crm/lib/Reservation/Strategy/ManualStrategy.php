@@ -5,9 +5,13 @@ namespace Bitrix\Crm\Reservation\Strategy;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
-use Bitrix\Main\Result;
+use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
+
+Loc::loadMessages(__FILE__);
 
 /**
  * Manual change of the reserve quantity.
@@ -32,11 +36,27 @@ class ManualStrategy implements Strategy
 	{
 		$result = new ReservationResult();
 
-		$currentQuantity = $this->getRowQuantity($productRowId);
-		if (!isset($currentQuantity))
+		$productRow = $this->getProductRow($productRowId);
+		if (!$productRow)
 		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_RESERVATION_STRATEGY_MANUAL_STRATEGY_PRODUCT_NOT_FOUND'))
+			);
 			return $result;
 		}
+
+		if (
+			ReservationService::getInstance()->isRestrictedType((int)$productRow['TYPE'])
+			|| (int)$productRow['PRODUCT_ID'] === 0
+		)
+		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_RESERVATION_STRATEGY_MANUAL_STRATEGY_PRODUCT_NOT_SUPPORT_RESERVATION'))
+			);
+			return $result;
+		}
+
+		$currentQuantity = $this->getRowQuantity($productRow);
 
 		$deductedQuantity = $this->getDeductedQuantity($productRowId);
 		$freeQuantity = $currentQuantity - $deductedQuantity;
@@ -105,25 +125,34 @@ class ManualStrategy implements Strategy
 	/**
 	 * The quantity of product row in entity.
 	 *
-	 * @param int $productRowId
-	 *
-	 * @return float|null return `null` is row not found.
+	 * @param array $productRow
+	 * @return float
 	 */
-	private function getRowQuantity(int $productRowId): ?float
+	private function getRowQuantity(array $productRow): float
 	{
-		$row = ProductRowTable::getRow([
+		return (float)$productRow['QUANTITY'];
+	}
+
+	/**
+	 * Get product row.
+	 *
+	 * @param int $rowId
+	 *
+	 * @return array|null
+	 */
+	private function getProductRow(int $rowId): ?array
+	{
+		return ProductRowTable::getRow([
 			'select' => [
+				'ID',
 				'QUANTITY',
+				'TYPE',
+				'PRODUCT_ID',
 			],
 			'filter' => [
-				'=ID' => $productRowId,
+				'=ID' => $rowId,
 			],
 		]);
-		if ($row)
-		{
-			return (float)$row['QUANTITY'];
-		}
-		return null;
 	}
 
 	/**

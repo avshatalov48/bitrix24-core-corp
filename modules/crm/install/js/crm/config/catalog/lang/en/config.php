@@ -15,6 +15,10 @@ $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_V2"] = "Make ou
 $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_SUBSCRIBE"] = "Enable subscription for out-of-stock products";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_HINT"] = "Product catalog parameters will change in all sections it is used in.";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD"] = "Enable new product details form";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE"] = "Enable new product details form";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE"] = "Use legacy form";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT"] = "Note that you will not be able to switch back to the legacy form later because it is no longer supported. <a id=\"catalog-settings-new-productcard-popup-helpdesk\">Learn more</a> about the new form before migrating to it.";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE"] = "Migrate to new product details form";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS"] = "Set \"Tax Included\" option for new products and SKU's";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_CURRENT_CATALOG"] = "Processing catalog";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_UPDATE_TITLE"] = "Updating product preferences";

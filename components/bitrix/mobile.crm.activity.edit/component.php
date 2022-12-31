@@ -7,6 +7,12 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
+if (!CCrmPerms::IsAccessEnabled())
+{
+	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	return;
+}
+
 $arParams['ACTIVITY_CREATE_URL_TEMPLATE'] =  isset($arParams['ACTIVITY_CREATE_URL_TEMPLATE']) ? $arParams['ACTIVITY_CREATE_URL_TEMPLATE'] : '';
 $arParams['ACTIVITY_EDIT_URL_TEMPLATE'] =  isset($arParams['ACTIVITY_EDIT_URL_TEMPLATE']) ? $arParams['ACTIVITY_EDIT_URL_TEMPLATE'] : '';
 $arParams['ACTIVITY_SHOW_URL_TEMPLATE'] =  isset($arParams['ACTIVITY_SHOW_URL_TEMPLATE']) ? $arParams['ACTIVITY_SHOW_URL_TEMPLATE'] : '';
@@ -70,6 +76,13 @@ else
 		$ownerTypeName = $arParams['OWNER_TYPE'] = $_REQUEST['owner_type'];
 	}
 	$ownerTypeID = CCrmOwnerType::ResolveID($ownerTypeName);
+
+	$arFields = [
+		'TYPE_ID' => $typeID,
+		'OWNER_ID' => $ownerID,
+		'OWNER_TYPE_ID' => $ownerTypeID,
+		'RESPONSIBLE_ID' => $arResult['USER_ID'],
+	];
 }
 
 if(!CCrmActivityType::IsDefined($typeID))
@@ -78,15 +91,8 @@ if(!CCrmActivityType::IsDefined($typeID))
 	return;
 }
 
-if($ownerID > 0 && $ownerTypeID !== CCrmOwnerType::Undefined)
-{
-	if(!CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerID, $userPerms))
-	{
-		ShowError(GetMessage('CRM_PERMISSION_DENIED'));
-		return;
-	}
-}
-elseif(!CCrmPerms::IsAccessEnabled())
+$provider = CCrmActivity::GetActivityProvider($arFields);
+if (!$provider || !$provider::checkUpdatePermission($arFields))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;

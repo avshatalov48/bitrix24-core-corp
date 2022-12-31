@@ -279,7 +279,7 @@ $arImmutableFilters = array(
 );
 foreach ($arFilter as $k => $v)
 {
-	$v = trim($v);
+	$v = is_string($v) ? trim($v) : '';
 
 	if(in_array($k, $arImmutableFilters, true))
 	{

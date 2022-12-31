@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'selector/widget/entity/*',
+	'extensions' => [
+		'selector/widget/entity/*',
+		'crm:selector/entity/*',
+	],
 ];

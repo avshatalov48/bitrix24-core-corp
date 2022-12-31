@@ -1,14 +1,15 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Main;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Crm;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 
 Loc::loadMessages(__FILE__);
 
@@ -16,10 +17,12 @@ class ContactDataProvider extends EntityDataProvider
 {
 	/** @var ContactSettings|null */
 	protected $settings = null;
+	protected ?Crm\Service\Factory $factory = null;
 
 	function __construct(ContactSettings $settings)
 	{
 		$this->settings = $settings;
+		$this->factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
 	}
 
 	/**
@@ -38,7 +41,7 @@ class ContactDataProvider extends EntityDataProvider
 	 */
 	protected function getFieldName($fieldID)
 	{
-		$name = Loc::getMessage("CRM_CONTACT_FILTER_{$fieldID}");
+		$name = Loc::getMessage('CRM_CONTACT_FILTER_' . $fieldID);
 		if($name === null)
 		{
 			$name = \CCrmContact::GetFieldCaption($fieldID);
@@ -58,6 +61,8 @@ class ContactDataProvider extends EntityDataProvider
 	 */
 	public function prepareFields()
 	{
+		$companyCategoryId = $this->getCompanyCategoryId();
+
 		$result = [
 			'ID' => $this->createField('ID'),
 			'NAME' => $this->createField(
@@ -175,13 +180,19 @@ class ContactDataProvider extends EntityDataProvider
 			'COMPANY_ID' => $this->createField(
 				'COMPANY_ID',
 				[
-					'type' => 'dest_selector',
+					'type' => 'entity_selector',
+					'name' => $companyCategoryId
+						? Loc::getMessage('CRM_CONTACT_FILTER_COMPANY_ID')
+						: null,
 					'partial' => true
 				]
 			),
 			'COMPANY_TITLE' => $this->createField(
 				'COMPANY_TITLE',
 				[
+					'name' => $companyCategoryId
+						? Loc::getMessage('CRM_CONTACT_FILTER_COMPANY_TITLE')
+						: null,
 					'data' => [
 						'additionalFilter' => [
 							'isEmpty',
@@ -358,14 +369,15 @@ class ContactDataProvider extends EntityDataProvider
 		}
 		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
-			$referenceClass = ($factory ? $factory->getDataClass() : null);
+			$referenceClass = ($this->factory ? $this->factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_contact_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}
@@ -378,24 +390,28 @@ class ContactDataProvider extends EntityDataProvider
 		}
 		elseif($fieldID === 'COMPANY_ID')
 		{
-			return array(
-				'params' => array(
-					'apiVersion' => 3,
-					'context' => 'CRM_CONTACT_FILTER_COMPANY_ID',
-					'contextCode' => 'CRM',
-					'useClientDatabase' => 'N',
-					'enableAll' => 'N',
-					'enableDepartments' => 'N',
-					'enableUsers' => 'N',
-					'enableSonetgroups' => 'N',
-					'allowEmailInvitation' => 'N',
-					'allowSearchEmailUsers' => 'N',
-					'departmentSelectDisable' => 'Y',
-					'enableCrm' => 'Y',
-					'enableCrmCompanies' => 'Y',
-					'convertJson' => 'Y'
-				)
-			);
+			$companyCategoryId = $this->getCompanyCategoryId();
+
+			return [
+				'params' => [
+					'multiple' => 'Y',
+					'dialogOptions' => [
+						'height' => 200,
+						'context' => 'CRM_CONTACT_FILTER_COMPANY_ID',
+						'entities' => [
+							[
+								'id' => 'company',
+								'dynamicLoad' => true,
+								'dynamicSearch' => true,
+								'options' => [
+									'categoryId' => $companyCategoryId ?: 0,
+								],
+							]
+						],
+						'dropdownMode' => false,
+					],
+				],
+			];
 		}
 		elseif(Crm\Tracking\UI\Filter::hasField($fieldID))
 		{
@@ -471,5 +487,39 @@ class ContactDataProvider extends EntityDataProvider
 		}
 
 		return $result;
+	}
+
+	public function prepareListFilter(array &$filter, array $requestFilter): void
+	{
+		$listFilter = new ListFilter($this->getEntityTypeId(), $this->prepareFields());
+		$listFilter->prepareListFilter($filter, $requestFilter);
+	}
+
+	protected function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Contact;
+	}
+
+	/**
+	 * @return int|null
+	 */
+	private function getCompanyCategoryId(): ?int
+	{
+		$categoryId = $this->settings->getCategoryId();
+		if (is_null($categoryId))
+		{
+			return null;
+		}
+
+		if ($categoryId === 0)
+		{
+			return 0;
+		}
+
+		return EntityTypeRelationsRepository::getInstance()->getRelatedCategoryId(
+			\CCrmOwnerType::Contact,
+			\CCrmOwnerType::Company,
+			$categoryId
+		);
 	}
 }

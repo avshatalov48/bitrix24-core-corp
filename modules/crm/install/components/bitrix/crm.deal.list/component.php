@@ -13,7 +13,17 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 global $USER_FIELD_MANAGER, $USER, $APPLICATION, $DB;
 
-use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Field;
+use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Main;
+use Bitrix\Main\Context;
+use Bitrix\Main\Localization\Loc;
 
 $isErrorOccured = false;
 $errorMessage = '';
@@ -125,17 +135,6 @@ if ($isErrorOccured)
 		return;
 	}
 }
-
-use Bitrix\Main;
-use Bitrix\Crm;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Main\Context;
-use Bitrix\Crm\Service\Container;
-use Bitrix\Main\Localization\Loc;
 
 $isInCalendarMode = isset($arParams['CALENDAR_MODE']) && ($arParams['CALENDAR_MODE'] === 'Y');
 
@@ -356,6 +355,7 @@ if($enableWidgetFilter)
 	}
 }
 
+//region Old logic of the counter panel (not used)
 $enableCounterFilter = false;
 if(!$bInternal && isset($_REQUEST['counter']))
 {
@@ -391,16 +391,18 @@ if(!$bInternal && isset($_REQUEST['counter']))
 		}
 	}
 }
+//endregion
+
 $request = Main\Application::getInstance()->getContext()->getRequest();
 $fromAnalytics = $request->getQuery('from_analytics') === 'Y';
 $enableReportFilter = false;
 if($fromAnalytics)
 {
-	$reportId = Bitrix\Main\Context::getCurrent()->getRequest()['report_id'];
+	$reportId = Context::getCurrent()->getRequest()['report_id'];
 	if($reportId != '')
 	{
 		$reportHandler = Crm\Integration\Report\ReportHandlerFactory::createWithReportId($reportId);
-		$reportFilter = $reportHandler ? $reportHandler->prepareEntityListFilter(Bitrix\Main\Context::getCurrent()->getRequest()) : null;
+		$reportFilter = $reportHandler ? $reportHandler->prepareEntityListFilter(Context::getCurrent()->getRequest()) : null;
 
 		if(is_array($reportFilter) && !empty($reportFilter))
 		{
@@ -525,6 +527,7 @@ if (!$bInternal)
 				->setUserId($arResult['CURRENT_USER_ID'])
 				->setUserName(Container::getInstance()->getUserBroker()->getName($arResult['CURRENT_USER_ID']))
 				->setDefaultValues($entityFilter->getDefaultFieldIDs())
+				->setCategoryId($arResult['CATEGORY_ID'])
 				->getDefaultPresets()
 			;
 		}
@@ -612,6 +615,8 @@ if (!$bInternal)
 //endregion
 
 //region Headers initialization
+Container::getInstance()->getLocalization()->loadMessages();
+
 $arResult['HEADERS'] = array(
 	array('id' => 'ID', 'name' => GetMessage('CRM_COLUMN_ID'), 'sort' => 'id', 'first_order' => 'desc', 'width' => 60, 'editable' => false, 'type' => 'int', 'class' => 'minimal'),
 	array('id' => 'DEAL_SUMMARY', 'name' => GetMessage('CRM_COLUMN_DEAL'), 'sort' => 'title', 'width' => 200, 'default' => true, 'editable' => true),
@@ -761,6 +766,18 @@ Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeader
 	\CCrmOwnerType::Deal,
 	$arResult['HEADERS']
 );
+
+$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+
+if (
+	\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+	&& $factory
+	&& $factory->isLastActivityEnabled()
+)
+{
+	$arResult['HEADERS'][] = ['id' => Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME, 'name' => $factory->getFieldCaption(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'sort' => mb_strtolower(Crm\Item::FIELD_NAME_LAST_ACTIVITY_TIME), 'first_order' => 'desc', 'class' => 'datetime'];
+}
+unset($factory);
 
 if ($bInternal)
 {
@@ -1081,65 +1098,13 @@ else
 $arFilter['=IS_RECURRING'] = ($arParams['IS_RECURRING'] === 'Y') ? "Y" : 'N';
 
 //region Activity Counter Filter
-if(isset($arFilter['ACTIVITY_COUNTER']))
-{
-	if(is_array($arFilter['ACTIVITY_COUNTER']))
-	{
-		$counterTypeID = Bitrix\Crm\Counter\EntityCounterType::joinType(
-			array_filter($arFilter['ACTIVITY_COUNTER'], 'is_numeric')
-		);
-	}
-	else
-	{
-		$counterTypeID = (int)$arFilter['ACTIVITY_COUNTER'];
-	}
-
-	$counter = null;
-	if($counterTypeID > 0)
-	{
-		$counterUserIDs = array();
-		if(isset($arFilter['ASSIGNED_BY_ID']))
-		{
-			if(is_array($arFilter['ASSIGNED_BY_ID']))
-			{
-				$counterUserIDs = array_filter($arFilter['ASSIGNED_BY_ID'], 'is_numeric');
-			}
-			elseif($arFilter['ASSIGNED_BY_ID'] > 0)
-			{
-				$counterUserIDs[] = $arFilter['ASSIGNED_BY_ID'];
-			}
-		}
-
-		try
-		{
-			$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
-				CCrmOwnerType::Deal,
-				$counterTypeID,
-				0,
-				array_merge(
-					Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
-					array('DEAL_CATEGORY_ID' => $arResult['CATEGORY_ID'])
-				)
-			);
-
-			$arFilter += $counter->prepareEntityListFilter(
-				array(
-					'MASTER_ALIAS' => CCrmDeal::TABLE_ALIAS,
-					'MASTER_IDENTITY' => 'ID',
-					'USER_IDS' => $counterUserIDs,
-					'STAGE_SEMANTIC_ID' => ($arFilter['STAGE_SEMANTIC_ID'] ?? false)
-				)
-			);
-			unset($arFilter['ASSIGNED_BY_ID']);
-		}
-		catch(Bitrix\Main\NotSupportedException $e)
-		{
-		}
-		catch(Bitrix\Main\ArgumentException $e)
-		{
-		}
-	}
-}
+CCrmEntityHelper::applyCounterFilterWrapper(
+	\CCrmOwnerType::Deal,
+	$arResult['GRID_ID'],
+	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+	$arFilter,
+	$entityFilter
+);
 //endregion
 
 $arFilter = Crm\Deal\OrderFilter::prepareFilter($arFilter);
@@ -1165,7 +1130,11 @@ $arImmutableFilters = array(
 
 foreach ($arFilter as $k => $v)
 {
-	if(in_array($k, $arImmutableFilters, true))
+	// Check if first key character is aplpha and key is not immutable
+	if (
+		preg_match('/^[a-zA-Z]/', $k) !== 1
+		|| in_array($k, $arImmutableFilters, true)
+	)
 	{
 		continue;
 	}
@@ -1475,8 +1444,6 @@ if($actionData['ACTIVE'])
 					$arUpdateData = array('STAGE_ID' => $stageID);
 					if($CCrmDeal->Update($ID, $arUpdateData))
 					{
-						$DB->Commit();
-
 						$arErrors = array();
 						CCrmBizProcHelper::AutoStartWorkflows(
 							CCrmOwnerType::Deal,
@@ -2335,19 +2302,72 @@ if ($isInExportMode && $isStExport && $pageNum === 1)
 	}
 }
 
+$lastExportedId = -1;
 $limit = $pageSize + 1;
+
+/**
+ * During step export, sorting will only be done by ID
+ * and optimized selection with pagination by ID > LAST_ID instead of offset
+ */
 if ($isInExportMode && $isStExport)
 {
-	$total = (int)$arResult['STEXPORT_TOTAL_ITEMS'];
-	$processed = ($pageNum - 1) * $pageSize;
-	if ($total - $processed <= $pageSize)
-	{
-		$limit = $total - $processed;
-	}
-	unset($total, $processed);
-}
+	$limit = $pageSize;
+	$navListOptions['QUERY_OPTIONS'] = array('LIMIT' => $limit);
+	$arSort = array('ID' => 'ASC');
+	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ? $arParams['STEXPORT_TOTAL_ITEMS'] : $total;
 
-if(!isset($arSort['nearest_activity']))
+	$dbResultOnlyIds = CCrmDeal::GetListEx(
+		$arSort,
+		array_merge(
+			$arFilter,
+			array('>ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1)
+		),
+		false,
+		false,
+		array('ID'),
+		$navListOptions
+	);
+
+	$entityIds = array();
+	while($arDealRow = $dbResultOnlyIds->GetNext())
+	{
+		$entityIds[] = (int) $arDealRow['ID'];
+	}
+	$lastExportedId = end($entityIds);
+
+	if (!empty($entityIds))
+	{
+		$navListOptions['QUERY_OPTIONS'] = null;
+		$arFilter = array('@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N');
+
+		$dbResult = CCrmDeal::GetListEx(
+			$arSort,
+			$arFilter,
+			false,
+			false,
+			$arSelect,
+			$navListOptions
+		);
+
+		$qty = 0;
+		while($arDeal = $dbResult->GetNext())
+		{
+			$arResult['DEAL'][$arDeal['ID']] = $arDeal;
+			$arResult['DEAL_ID'][$arDeal['ID']] = $arDeal['ID'];
+			$arResult['DEAL_UF'][$arDeal['ID']] = array();
+
+			$categoryID = isset($arDeal['CATEGORY_ID']) ? (int)$arDeal['CATEGORY_ID'] : 0;
+			if(!isset($arResult['CATEGORIES'][$categoryID]))
+			{
+				$arResult['CATEGORIES'][$categoryID] = array();
+			}
+			$arResult['CATEGORIES'][$categoryID][] = $arDeal['ID'];
+		}
+	}
+	$enableNextPage = $pageNum * $pageSize <= $totalExportItems;
+	unset($entityIds);
+}
+elseif(!isset($arSort['nearest_activity']))
 {
 	if ($isInGadgetMode && isset($arNavParams['nTopCount']))
 	{
@@ -3058,11 +3078,64 @@ if (!$restriction->hasPermission())
 	}
 }
 
+if (isset($arResult['DEAL_ID']) && !empty($arResult['DEAL_ID']))
+{
+	// try to load product rows
+	$arProductRows = CCrmDeal::LoadProductRows(array_keys($arResult['DEAL_ID']));
+	foreach($arProductRows as $arProductRow)
+	{
+		$ownerID = $arProductRow['OWNER_ID'];
+		if(!isset($arResult['DEAL'][$ownerID]))
+		{
+			continue;
+		}
+
+		$arEntity = &$arResult['DEAL'][$ownerID];
+		if(!isset($arEntity['PRODUCT_ROWS']))
+		{
+			$arEntity['PRODUCT_ROWS'] = array();
+		}
+		$arEntity['PRODUCT_ROWS'][] = $arProductRow;
+	}
+
+	// fetch delivery and payment stage from latest related shipment/payment
+	$dealIds = array_keys($arResult['DEAL_ID']);
+	$shipmentStages = (new Crm\Deal\ShipmentsRepository())->getShipmentStages($dealIds);
+	$paymentStages = (new Crm\Deal\PaymentsRepository())->getPaymentStages($dealIds);
+
+	foreach ($dealIds as $dealId)
+	{
+		if (!isset($arResult['DEAL'][$dealId]))
+		{
+			continue;
+		}
+
+		if ($paymentStages[$dealId])
+		{
+			$arResult['DEAL'][$dealId]['PAYMENT_STAGE'] = $paymentStages[$dealId];
+			$displayFields['PAYMENT_STAGE'] =
+				Field::createByType(Field\PaymentStatusField::TYPE, 'PAYMENT_STAGE')
+				->setContext(Field::GRID_CONTEXT)
+			;
+		}
+
+		if ($shipmentStages[$dealId])
+		{
+			$arResult['DEAL'][$dealId]['DELIVERY_STAGE'] = $shipmentStages[$dealId];
+			$displayFields['DELIVERY_STAGE'] =
+				Field::createByType(Field\DeliveryStatusField::TYPE, 'DELIVERY_STAGE')
+				->setContext(Field::GRID_CONTEXT)
+			;
+		}
+	}
+}
+
 $displayValues =
 	(new Bitrix\Crm\Service\Display(CCrmOwnerType::Deal, $displayFields, $displayOptions))
 		->setItems($arResult['DEAL'])
 		->getAllValues()
 ;
+
 foreach ($displayValues as $dealId => $dealDisplayValues)
 {
 	foreach ($dealDisplayValues as $fieldId => $fieldValue)
@@ -3149,50 +3222,6 @@ if($arResult['ENABLE_TOOLBAR'])
 				'parentTypeId' => $parentItemIdentifier->getEntityTypeId(),
 				'parentId' => $parentItemIdentifier->getEntityId(),
 			];
-		}
-	}
-}
-
-if (isset($arResult['DEAL_ID']) && !empty($arResult['DEAL_ID']))
-{
-	// try to load product rows
-	$arProductRows = CCrmDeal::LoadProductRows(array_keys($arResult['DEAL_ID']));
-	foreach($arProductRows as $arProductRow)
-	{
-		$ownerID = $arProductRow['OWNER_ID'];
-		if(!isset($arResult['DEAL'][$ownerID]))
-		{
-			continue;
-		}
-
-		$arEntity = &$arResult['DEAL'][$ownerID];
-		if(!isset($arEntity['PRODUCT_ROWS']))
-		{
-			$arEntity['PRODUCT_ROWS'] = array();
-		}
-		$arEntity['PRODUCT_ROWS'][] = $arProductRow;
-	}
-
-	// fetch delivery and payment stage from latest related shipment/payment
-	$dealIds = array_keys($arResult['DEAL_ID']);
-	$shipmentStages = (new Crm\Deal\ShipmentsRepository())->getShipmentStages($dealIds);
-	$paymentStages = (new Crm\Deal\PaymentsRepository())->getPaymentStages($dealIds);
-
-	foreach ($dealIds as $dealId)
-	{
-		if (!isset($arResult['DEAL'][$dealId]))
-		{
-			continue;
-		}
-
-		if ($paymentStages[$dealId])
-		{
-			$arResult['DEAL'][$dealId]['PAYMENT_STAGE'] = $paymentStages[$dealId];
-		}
-
-		if ($shipmentStages[$dealId])
-		{
-			$arResult['DEAL'][$dealId]['DELIVERY_STAGE'] = $shipmentStages[$dealId];
 		}
 	}
 }
@@ -3335,7 +3364,8 @@ else
 
 		return array(
 			'PROCESSED_ITEMS' => count($arResult['DEAL']),
-			'TOTAL_ITEMS' => $arResult['STEXPORT_TOTAL_ITEMS']
+			'TOTAL_ITEMS' => $arResult['STEXPORT_TOTAL_ITEMS'],
+			'LAST_EXPORTED_ID' => $lastExportedId
 		);
 	}
 	else

@@ -2,25 +2,30 @@
 
 namespace Bitrix\Crm\Service\Display;
 
-
 use Bitrix\Crm\Kanban\Exception;
 use Bitrix\Crm\Service\Display\Field\AddressField;
 use Bitrix\Crm\Service\Display\Field\BooleanField;
+use Bitrix\Crm\Service\Display\Field\CrmCompanyField;
 use Bitrix\Crm\Service\Display\Field\CrmCurrencyField;
+use Bitrix\Crm\Service\Display\Field\CrmEntityField;
 use Bitrix\Crm\Service\Display\Field\CrmField;
 use Bitrix\Crm\Service\Display\Field\CrmStatusField;
+use Bitrix\Crm\Service\Display\Field\DateField;
+use Bitrix\Crm\Service\Display\Field\DateTimeField;
+use Bitrix\Crm\Service\Display\Field\DeliveryStatusField;
 use Bitrix\Crm\Service\Display\Field\EmployeeField;
+use Bitrix\Crm\Service\Display\Field\EnumerationField;
 use Bitrix\Crm\Service\Display\Field\FileField;
 use Bitrix\Crm\Service\Display\Field\IblockElementField;
 use Bitrix\Crm\Service\Display\Field\IblockSectionField;
 use Bitrix\Crm\Service\Display\Field\MoneyField;
 use Bitrix\Crm\Service\Display\Field\NumberField;
+use Bitrix\Crm\Service\Display\Field\OtherField;
+use Bitrix\Crm\Service\Display\Field\PaymentStatusField;
 use Bitrix\Crm\Service\Display\Field\ResourceBookingField;
 use Bitrix\Crm\Service\Display\Field\StringField;
+use Bitrix\Crm\Service\Display\Field\HlBlockField;
 use Bitrix\Crm\Service\Display\Field\TextField;
-use Bitrix\Crm\Service\Display\Field\DateField;
-use Bitrix\Crm\Service\Display\Field\DateTimeField;
-use Bitrix\Crm\Service\Display\Field\EnumerationField;
 use Bitrix\Crm\Service\Display\Field\UrlField;
 use Bitrix\Crm\Service\Display\Field\UserField;
 
@@ -42,7 +47,7 @@ abstract class Field
 	protected $displayParams = [];
 	protected $context;
 
-	private function __construct(string $id)
+	protected function __construct(string $id)
 	{
 		$this->setId($id);
 		$this->context = self::KANBAN_CONTEXT;
@@ -59,7 +64,7 @@ abstract class Field
 		return (self::getInstance($userFieldInfo['USER_TYPE_ID'], $id))
 			->setTitle($title)
 			->setIsMultiple($userFieldInfo['MULTIPLE'] === 'Y')
-			->setDisplayParams((array)$userFieldInfo['SETTINGS'])
+			->addDisplayParams((array)$userFieldInfo['SETTINGS'])
 			->setIsUserField(true)
 			->setUserFieldParams($userFieldInfo)
 		;
@@ -136,7 +141,7 @@ abstract class Field
 		}
 		$field =
 			(self::getInstance($type, $id))
-				->setDisplayParams($displayParams)
+				->addDisplayParams($displayParams)
 		;
 
 		if (isset($baseFieldInfo['TITLE']))
@@ -162,6 +167,27 @@ abstract class Field
 		if ($type === 'string')
 		{
 			return new StringField($id);
+		}
+
+		// @todo support later if needed
+		// if ($type === 'status')
+		// {
+		// 	return new StatusField($id);
+		// }
+
+		if ($type === 'payment_status')
+		{
+			return new PaymentStatusField($id);
+		}
+
+		if ($type === 'delivery_status')
+		{
+			return new DeliveryStatusField($id);
+		}
+
+		if ($type === 'hlblock')
+		{
+			return new HlBlockField($id);
 		}
 
 		if ($type === 'text')
@@ -244,7 +270,17 @@ abstract class Field
 			return new CrmField($id);
 		}
 
-		if ($type === 'number')
+		if ($type === 'crm_company')
+		{
+			return new CrmCompanyField($id);
+		}
+
+		if ($type === 'crm_entity')
+		{
+			return new CrmEntityField($id);
+		}
+
+		if (in_array($type, ['number', 'double', 'integer', 'float']))
 		{
 			return new NumberField($id);
 		}
@@ -254,7 +290,7 @@ abstract class Field
 			return new BooleanField($id);
 		}
 
-		return new StringField($id);
+		return new OtherField($id);
 	}
 
 	public function getType(): string
@@ -304,6 +340,13 @@ abstract class Field
 	public function setDisplayParams(array $displayParams): Field
 	{
 		$this->displayParams = $displayParams;
+
+		return $this;
+	}
+
+	public function addDisplayParams(array $displayParams): Field
+	{
+		$this->displayParams = array_merge($this->displayParams, $displayParams);
 
 		return $this;
 	}
@@ -535,10 +578,39 @@ abstract class Field
 		return $this->getFormattedValueForGrid($fieldValue, $itemId, $displayOptions);
 	}
 
-	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions)
+	/**
+	 * @param $fieldValue
+	 * @param int $itemId
+	 * @param Options $displayOptions
+	 * @return array
+	 */
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
 	{
-		return '';
-		// @todo return formatted value for mobile
+		if ($this->isMultiple())
+		{
+			$results = [];
+
+			$fieldValue = (is_array($fieldValue) ? $fieldValue : [$fieldValue]);
+			foreach ($fieldValue as $value)
+			{
+				$results[] = $this->renderSingleValue($value, $itemId, $displayOptions);
+			}
+
+			return [
+				'value' => $results,
+				'config' => $this->getMobileConfig($fieldValue, $itemId, $displayOptions),
+			];
+		}
+
+		return [
+			'value' => $this->renderSingleValue($fieldValue, $itemId, $displayOptions),
+			'config' => $this->getMobileConfig($fieldValue, $itemId, $displayOptions),
+		];
+	}
+
+	protected function getMobileConfig($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		return [];
 	}
 
 	/**
@@ -557,6 +629,15 @@ abstract class Field
 
 	protected function renderSingleValue($fieldValue, int $itemId, Options $displayOptions): string
 	{
+		if ($this->isMobileContext())
+		{
+			return str_replace(
+				'<br>',
+				'',
+				html_entity_decode($fieldValue, ENT_QUOTES, SITE_CHARSET)
+			);
+		}
+
 		if (!$this->isMultiple() && $fieldValue !== '')
 		{
 			if ($this->isUserField())
@@ -596,6 +677,7 @@ abstract class Field
 				[
 					'CONTEXT' => 'CRM_GRID',
 					'mode' => 'main.public_text',
+					'renderContext' => 'export',
 				]
 			)
 			)->render());
@@ -645,6 +727,16 @@ abstract class Field
 	{
 		$fieldType = $this->getType();
 		return $linkedEntitiesValues[$fieldType][$fieldValueId];
+	}
+
+	protected function sanitizeString(string $string): string
+	{
+		if ($this->isMobileContext())
+		{
+			return $string;
+		}
+
+		return htmlspecialcharsbx($string);
 	}
 
 	public function isKanbanContext(): bool

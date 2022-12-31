@@ -60,15 +60,27 @@ class ProcessEntityUncompletedActivitiesAgent extends Stepper
 
 	protected function getList(int $lastId, int $limit): array
 	{
-		return ActivityTable::query()
+		$ids = array_column(ActivityTable::query()
 			->setSelect([
 				'ID',
-				'RESPONSIBLE_ID',
 			])
 			->where('ID', '>', $lastId)
 			->where('COMPLETED', false)
 			->setLimit($limit)
 			->setOrder(['ID' => 'ASC'])
+			->fetchAll(), 'ID')
+		;
+		if (empty($ids))
+		{
+			return [];
+		}
+
+		return ActivityTable::query()
+			->setSelect([
+				'ID',
+				'RESPONSIBLE_ID',
+			])
+			->whereIn('ID', $ids)
 			->fetchAll()
 		;
 	}

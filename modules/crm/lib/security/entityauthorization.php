@@ -5,6 +5,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Order;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 
 class EntityAuthorization
 {
@@ -110,9 +112,25 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkCreatePermission($userPermissions);
 		}
+		elseif($entityTypeID === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Main\Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
+			return Order\Permissions\Shipment::checkCreatePermission($userPermissions);
+		}
 		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
-			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_store');
+			return Main\Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW);
 		}
 		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{
@@ -216,13 +234,29 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Payment::checkReadPermission($entityID, $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::OrderShipment || $entityTypeID === \CCrmOwnerType::ShipmentDocument)
+		elseif($entityTypeID === \CCrmOwnerType::OrderShipment)
 		{
+			return Order\Permissions\Shipment::checkReadPermission($entityID, $userPermissions);
+		}
+		elseif($entityTypeID === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Main\Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
 			return Order\Permissions\Shipment::checkReadPermission($entityID, $userPermissions);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
-			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_read');
+			return Main\Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 		}
 		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{
@@ -300,13 +334,29 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Payment::checkUpdatePermission($entityID, $userPermissions);
 		}
-		elseif($entityTypeID === \CCrmOwnerType::OrderShipment || $entityTypeID === \CCrmOwnerType::ShipmentDocument)
+		elseif($entityTypeID === \CCrmOwnerType::OrderShipment)
 		{
+			return Order\Permissions\Shipment::checkUpdatePermission($entityID, $userPermissions);
+		}
+		elseif($entityTypeID === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Main\Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
 			return Order\Permissions\Shipment::checkUpdatePermission($entityID, $userPermissions);
 		}
 		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
-			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_store');
+			return Main\Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW);
 		}
 		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{
@@ -381,9 +431,25 @@ class EntityAuthorization
 		{
 			return Order\Permissions\Shipment::checkDeletePermission($entityID, $userPermissions);
 		}
+		elseif($entityTypeID === \CCrmOwnerType::ShipmentDocument)
+		{
+			if (Main\Loader::includeModule('catalog'))
+			{
+				return
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+					&& AccessController::getCurrent()->checkByValue(
+						ActionDictionary::ACTION_STORE_DOCUMENT_DELETE,
+						\Bitrix\Catalog\StoreDocumentTable::TYPE_SALES_ORDERS
+					)
+				;
+			}
+
+			return Order\Permissions\Shipment::checkDeletePermission($entityID, $userPermissions);
+		}
 		elseif($entityTypeID === \CCrmOwnerType::StoreDocument)
 		{
-			return Main\Loader::includeModule('catalog') && Main\Engine\CurrentUser::get()->canDoOperation('catalog_store');
+			return Main\Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_VIEW);
 		}
 		elseif(\CCrmOwnerType::isUseFactoryBasedApproach($entityTypeID))
 		{

@@ -2754,7 +2754,7 @@ class CDiskVolumeComponent extends BaseComponent
 			foreach ($result as $row)
 			{
 				$row['INDICATOR_TYPE'] = $indicator::className();
-				if ($recalculatePercent)
+				if ($recalculatePercent && $totalSize > 0)
 				{
 					$percent = ((double)$row['FILE_SIZE'] + (double)$row['PREVIEW_SIZE']) * 100 / $totalSize;
 					$row['PERCENT'] = round((double)$percent, 1);
@@ -2885,7 +2885,11 @@ class CDiskVolumeComponent extends BaseComponent
 
 			foreach ($res['LIST'] as $indicatorModuleTypeId => $moduleMeasurement)
 			{
-				$percent = (double)$moduleMeasurement["$sizeField"] * 100 / $totalSize;
+				$percent = 0;
+				if ($totalSize > 0)
+				{
+					$percent = (double)$moduleMeasurement["$sizeField"] * 100 / $totalSize;
+				}
 				$res['LIST'][$indicatorModuleTypeId]['PERCENT'] = round((double)$percent, 1);
 			}
 
@@ -2894,7 +2898,7 @@ class CDiskVolumeComponent extends BaseComponent
 				array("$sizeField" => array(SORT_NUMERIC, SORT_DESC))
 			);
 
-			if (!$this->useDiskSizeAsTotalVolume() && $otherFileSize > 0)
+			if (!$this->useDiskSizeAsTotalVolume() && $otherFileSize > 0 && $totalSize > 0)
 			{
 				$percent = (double)$otherFileSize * 100 / $totalSize;
 				$res['OTHER'] = array(

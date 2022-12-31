@@ -170,8 +170,9 @@ class RpaKanbanComponent extends \Bitrix\Rpa\Components\ItemList implements \Bit
 			foreach($this->kanbanStageIds as $key => $stageId)
 			{
 				$stage = $stages->getByPrimary($stageId);
-				if(!$stageId)
+				if(!$stage)
 				{
+					unset($this->kanbanStageIds[$key]);
 					continue;
 				}
 				if(!in_array(Provider::FIELD_STAGE_SEMANTIC_IN_WORK, $requestFilter[Provider::FIELD_STAGE_SEMANTIC]) && !$stage->isFinal())

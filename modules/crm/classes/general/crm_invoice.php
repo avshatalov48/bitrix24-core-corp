@@ -1605,7 +1605,7 @@ class CAllCrmInvoice
 				$deliveryId, $paySystemId, $arOptions, $arErrors, $arWarnings
 			);
 
-			if (count($arOrder) <= 0)
+			if (!is_array($arOrder) || empty($arOrder))
 			{
 				if (is_array($arErrors) && isset($arErrors[0]['TEXT']))
 				{
@@ -1823,8 +1823,6 @@ class CAllCrmInvoice
 				$arFields['STATUS_ID'] = $orderStatus;
 			foreach (GetModuleEvents('crm', (($tmpOrderId <= 0) ? 'OnAfterCrmInvoiceAdd' : 'OnAfterCrmInvoiceUpdate'), true) as $arEvent)
 				ExecuteModuleEventEx($arEvent, array(&$arFields));
-
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($orderID, CCrmOwnerType::InvoiceName, ($tmpOrderId <= 0) ? 'kanban_add' : 'kanban_update');
 		}
 
 		return $orderID;
@@ -2127,8 +2125,6 @@ class CAllCrmInvoice
 				)
 			);
 		}
-
-		\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::InvoiceName, 'kanban_update');
 
 		return $result;
 	}
@@ -3010,10 +3006,12 @@ class CAllCrmInvoice
 			{
 				try
 				{
+					COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 					require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/modules/data.php");
 				}
 				catch (Exception $e)
 				{
+					COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'N');
 					$errMsg[] = $e->getMessage();
 					$bError = true;
 				}
@@ -3024,8 +3022,6 @@ class CAllCrmInvoice
 					ShowError($errString);
 					return false;
 				}
-
-				COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 
 				if ($catalogNormalizeStep !== 'Y')
 				{
@@ -3049,10 +3045,12 @@ class CAllCrmInvoice
 				{
 					try
 					{
+						COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 						require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/modules/data.php");
 					}
 					catch (Exception $e)
 					{
+						COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'N');
 						$errMsg[] = $e->getMessage();
 						$bError = true;
 					}
@@ -3063,8 +3061,6 @@ class CAllCrmInvoice
 						ShowError($errString);
 						return false;
 					}
-
-					COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 
 					if ($catalogNormalizeStep !== 'Y')
 					{
@@ -3096,10 +3092,12 @@ class CAllCrmInvoice
 					{
 						try
 						{
+							COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 							require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/modules/data.php");
 						}
 						catch (Exception $e)
 						{
+							COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'N');
 							$errMsg[] = $e->getMessage();
 							$bError = true;
 						}
@@ -3110,8 +3108,6 @@ class CAllCrmInvoice
 							ShowError($errString);
 							return false;
 						}
-
-						COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 
 						if ($catalogNormalizeStep !== 'Y')
 						{
@@ -3156,10 +3152,12 @@ class CAllCrmInvoice
 						{
 							try
 							{
+								COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 								require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/modules/data.php");
 							}
 							catch (Exception $e)
 							{
+								COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'N');
 								$errMsg[] = $e->getMessage();
 								$bError = true;
 							}
@@ -3170,8 +3168,6 @@ class CAllCrmInvoice
 								ShowError($errString);
 								return false;
 							}
-
-							COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 
 							if ($catalogNormalizeStep !== 'Y')
 							{
@@ -3241,10 +3237,12 @@ class CAllCrmInvoice
 								{
 									try
 									{
+										COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 										require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/modules/data.php");
 									}
 									catch (Exception $e)
 									{
+										COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'N');
 										$errMsg[] = $e->getMessage();
 										$bError = true;
 									}
@@ -3255,8 +3253,6 @@ class CAllCrmInvoice
 										ShowError($errString);
 										return false;
 									}
-
-									COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 
 									if ($catalogNormalizeStep !== 'Y')
 									{
@@ -3415,10 +3411,12 @@ class CAllCrmInvoice
 								{
 									try
 									{
+										COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 										require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/crm/install/modules/data.php");
 									}
 									catch (Exception $e)
 									{
+										COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'N');
 										$errMsg[] = $e->getMessage();
 										$bError = true;
 									}
@@ -3430,7 +3428,6 @@ class CAllCrmInvoice
 										return false;
 									}
 
-									COption::SetOptionString('crm', '~CRM_INVOICE_INST_ORDER_DATA_18_5_0', 'Y');
 								}
 							}
 						}

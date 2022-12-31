@@ -13,6 +13,8 @@ use Bitrix\Main\Engine\Response\Converter;
 use Bitrix\Main\Engine\Response\DataType\Page;
 use Bitrix\Main\Error;
 use Bitrix\Main\UI\PageNavigation;
+use Bitrix\Main\Loader;
+use Bitrix\Catalog;
 
 class ProductRow extends Base
 {
@@ -406,6 +408,7 @@ class ProductRow extends Base
 		}
 
 		$productRowsWithSnakeCaseKeys = $this->convertKeysToUpper($productRows);
+		$productRowsWithSnakeCaseKeys = $this->prepareForSave($productRowsWithSnakeCaseKeys);
 
 		$productsSetResult = $item->setProductRowsFromArrays($productRowsWithSnakeCaseKeys);
 		if (!$productsSetResult->isSuccess())
@@ -475,5 +478,98 @@ class ProductRow extends Base
 			'PRICE_BRUTTO',
 			'PRICE_ACCOUNT',
 		];
+	}
+
+	/**
+	 * Prepares product fields for save:
+	 * Checks attributes
+	 * Calculates TYPE and PRODUCT_NAME
+	 *
+	 * @param $productRows
+	 * @return array
+	 */
+	protected function prepareForSave($productRows): array
+	{
+		$result = [];
+		$fieldsInfo = $this->getFieldsInfo();
+
+		foreach ($productRows as $index => $productRow)
+		{
+			$result[$index] = $this->internalizeFields($productRow, $fieldsInfo);
+		}
+
+		$productIds = array_filter(array_column($result, 'PRODUCT_ID'));
+		if ($productIds && Loader::includeModule('catalog'))
+		{
+			$productData = [];
+
+			$productTableIterator = Catalog\ProductTable::getList([
+				'select' => [
+					'ID',
+					'PRODUCT_NAME' => 'IBLOCK_ELEMENT.NAME',
+					'TYPE',
+				],
+				'filter' => [
+					'@ID' => $productIds,
+				],
+			]);
+			while ($productItem = $productTableIterator->fetch())
+			{
+				$productData[$productItem['ID']] = $productItem;
+			}
+
+			foreach ($result as $index => $productRow)
+			{
+				$productId = $productRow['PRODUCT_ID'] ?? null;
+
+				if ($productId && isset($productData[$productId]))
+				{
+					$result[$index]['TYPE'] = (int)$productData[$productId]['TYPE'];
+					$result[$index]['PRODUCT_NAME'] ??= $productData[$productId]['PRODUCT_NAME'];
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Removes from $fields ReadOnly and Hidden values
+	 *
+	 * @param array $fields
+	 * @param array $fieldsInfo
+	 * @return array
+	 */
+	protected function internalizeFields(array $fields, array $fieldsInfo): array
+	{
+		$result = [];
+
+		$ignoredAttributes = [
+			\CCrmFieldInfoAttr::ReadOnly,
+			\CCrmFieldInfoAttr::Hidden
+		];
+
+		foreach ($fields as $fieldName => $fieldsValue)
+		{
+			$info = $fieldsInfo[$fieldName] ?? null;
+			if (!$info)
+			{
+				unset($fields[$fieldName]);
+				continue;
+			}
+
+			$attrs = $info['ATTRIBUTES'] ?? [];
+
+			$attrs = array_intersect($ignoredAttributes, $attrs);
+			if (!empty($attrs))
+			{
+				unset($fields[$fieldName]);
+				continue;
+			}
+
+			$result[$fieldName] = $fieldsValue;
+		}
+
+		return $result;
 	}
 }

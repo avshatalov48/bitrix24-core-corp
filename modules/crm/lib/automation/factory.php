@@ -445,8 +445,11 @@ class Factory
 					Trigger\DocumentCreateTrigger::className(),
 					Trigger\DocumentViewTrigger::className(),
 					Trigger\TaskStatusTrigger::className(),
+					Trigger\Sign\InitiatorSignedTrigger::className(),
+					Trigger\Sign\OtherMemberSignedTrigger::className(),
+					Trigger\Sign\AllMembersSignedTrigger::className(),
 					Trigger\AppTrigger::className(),
-				]
+			]
 				as $triggerClass
 			)
 			{

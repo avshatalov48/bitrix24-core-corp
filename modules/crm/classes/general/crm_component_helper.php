@@ -7,6 +7,9 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\StatusTable;
+use Bitrix\Main;
+use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
+use Bitrix\Crm\Category\EntityTypeRelationsRepository;
 
 class CCrmComponentHelper
 {
@@ -446,6 +449,23 @@ class CCrmComponentHelper
 		return $result;
 	}
 
+	public static function getRequisiteAutocompleteFieldInfoData(int $countryId): array
+	{
+		$clientResolverPropertyType = ClientResolver::getClientResolverPropertyWithPlacements($countryId);
+		$placementParams = ClientResolver::getClientResolverPlacementParams($countryId);
+		$featureRestriction = ClientResolver::getRestriction($countryId);
+
+		return [
+			'enabled' => !!$clientResolverPropertyType,
+			'featureRestrictionCallback' =>
+				$featureRestriction ? $featureRestriction->prepareInfoHelperScript() : ''
+			,
+			'placeholder' => ClientResolver::getClientResolverPlaceholderText($countryId),
+			'feedback_form' => EntityRequisite::getRequisiteFeedbackFormParams(),
+			'clientResolverPlacementParams' => $placementParams
+		];
+	}
+
 	public static function getEventTabParams(
 		int $entityId,
 		string $tabName,
@@ -524,22 +544,159 @@ class CCrmComponentHelper
 	 */
 	public static function getEntityClientFieldCategoryParams(int $entityTypeId, int $categoryId = 0): array
 	{
-		/**
-		 * It is required to determine the available parameters according to the specified
-		 * $entityTypeId/$categoryId. In the future, we will implement a repository in which
-		 * these links will be stored.
-		 *
-		 * | $entityTypeId | $categoryId | $companyCategoryId | UNIQUE?
-		 * | $entityTypeId | $categoryId | $contactCategoryId | UNIQUE?
-		 * ...
-		 *
-		 * We are currently returning default category ID for all entities.
-		 */
+		return array_map(
+			function ($categoryId)
+			{
+				return [
+					'categoryId' => $categoryId,
+				];
+			},
+			EntityTypeRelationsRepository::getInstance()->getMapByEntityTypeId(
+				$entityTypeId,
+				$categoryId
+			)
+		);
+	}
 
-		return [
-			CCrmOwnerType::Contact => ["categoryId" => 0],
-			CCrmOwnerType::Company => ["categoryId" => 0],
+	public static function prepareMultifieldData(
+		int $entityTypeId,
+		array $entityIds,
+		array $typeIds,
+		array &$entityData,
+		array $options = []
+	)
+	{
+		$addToDataLevel = isset($options['ADD_TO_DATA_LEVEL']) && $options['ADD_TO_DATA_LEVEL'] === true;
+		$copyMode = isset($options['COPY_MODE']) && $options['COPY_MODE'] === true;
+
+		if (empty($entityIds))
+		{
+			return;
+		}
+
+		$multiFieldEntityTypes = \CCrmFieldMulti::GetEntityTypes();
+		$multiFieldViewClassNames = [
+			'PHONE' => 'crm-entity-phone-number',
+			'EMAIL' => 'crm-entity-email',
+			'IM' => 'crm-entity-phone-number',
 		];
+
+		if (!isset($entityData['MULTIFIELD_DATA']))
+		{
+			$entityData['MULTIFIELD_DATA'] = [];
+		}
+
+		$filter = [
+			'=ENTITY_ID' => CCrmOwnerType::ResolveName($entityTypeId),
+			'@ELEMENT_ID' => $entityIds,
+		];
+		if (!empty($typeIds))
+		{
+			$filter['@TYPE_ID'] = $typeIds;
+		}
+
+		$dbResult = CCrmFieldMulti::GetListEx(['ID' => 'asc'], $filter);
+		while ($fields = $dbResult->fetch())
+		{
+			$elementID = (int)$fields['ELEMENT_ID'];
+			$entityKey = "{$entityTypeId}_{$elementID}";
+			$typeID = $fields['TYPE_ID'];
+			$value = $fields['VALUE'] ?? '';
+			if ($value === '')
+			{
+				continue;
+			}
+
+			$ID = $fields['ID'];
+			$complexID = isset($fields['COMPLEX_ID']) ? $fields['COMPLEX_ID'] : '';
+			$valueTypeID = isset($fields['VALUE_TYPE']) ? $fields['VALUE_TYPE'] : '';
+
+			if (!isset($entityData['MULTIFIELD_DATA'][$typeID]))
+			{
+				$entityData['MULTIFIELD_DATA'][$typeID] = array();
+			}
+
+			if (!isset($entityData['MULTIFIELD_DATA'][$typeID][$entityKey]))
+			{
+				$entityData['MULTIFIELD_DATA'][$typeID][$entityKey] = array();
+			}
+
+			//Is required for phone & email & messenger menu
+			if (
+				$typeID === 'PHONE'
+				|| $typeID === 'EMAIL'
+				|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
+			)
+			{
+				$formattedValue = $typeID === 'PHONE'
+					? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
+					: $value;
+
+				$entityData['MULTIFIELD_DATA'][$typeID][$entityKey][] = array(
+					'ID' => $ID,
+					'VALUE' => $value,
+					'VALUE_TYPE' => $valueTypeID,
+					'VALUE_FORMATTED' => $formattedValue,
+					'COMPLEX_ID' => $complexID,
+					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($complexID, false),
+				);
+			}
+			
+			if ($addToDataLevel)
+			{
+				$multiFieldID = $ID;
+				if ($copyMode)
+				{
+					$multiFieldID = "n0{$multiFieldID}";
+				}
+
+				$entityData[$typeID][] = [
+					'ID' => $multiFieldID,
+					'VALUE' => $value,
+					'VALUE_TYPE' => $valueTypeID,
+					'VIEW_DATA' => \CCrmViewHelper::PrepareMultiFieldValueItemData(
+						$typeID,
+						[
+							'VALUE' => $value,
+							'VALUE_TYPE_ID' => $valueTypeID,
+							'VALUE_TYPE' => $multiFieldEntityTypes[$typeID][$valueTypeID] ?? null,
+							'CLASS_NAME' => $multiFieldViewClassNames[$typeID] ?? '',
+						],
+						[
+							'ENABLE_SIP' => false,
+							'SIP_PARAMS' => [
+								'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName($entityTypeId),
+								'ENTITY_ID' => $elementID,
+								'AUTO_FOLD' => true,
+							],
+						]
+					)
+				];
+			}
+		}
+	}
+
+	/**
+	 * @return array
+	 */
+	public static function prepareClientEditorFieldsParams(): array
+	{
+		$result = [
+			CCrmOwnerType::ContactName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact, 'requisite')
+			],
+			CCrmOwnerType::CompanyName => [
+				'REQUISITES' => \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company, 'requisite')
+			]
+		];
+
+		if (Main\Loader::includeModule('location'))
+		{
+			$result[CCrmOwnerType::ContactName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Contact,'requisite_address');
+			$result[CCrmOwnerType::CompanyName]['ADDRESS'] = \CCrmComponentHelper::getFieldInfoData(CCrmOwnerType::Company,'requisite_address');
+		}
+
+		return $result;
 	}
 }
 

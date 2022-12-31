@@ -1,11 +1,11 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
-use Bitrix\Main;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
-
 use Bitrix\Crm;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Counter\EntityCounterType;
@@ -16,10 +16,12 @@ class CompanyDataProvider extends EntityDataProvider
 {
 	/** @var CompanySettings|null */
 	protected $settings = null;
+	protected ?Crm\Service\Factory $factory = null;
 
 	function __construct(CompanySettings $settings)
 	{
 		$this->settings = $settings;
+		$this->factory = Container::getInstance()->getFactory(\CCrmOwnerType::Company);
 	}
 
 	/**
@@ -38,7 +40,7 @@ class CompanyDataProvider extends EntityDataProvider
 	 */
 	protected function getFieldName($fieldID)
 	{
-		$name = Loc::getMessage("CRM_COMPANY_FILTER_{$fieldID}");
+		$name = Loc::getMessage('CRM_COMPANY_FILTER_' . $fieldID);
 		if($name === null)
 		{
 			$name = \CCrmCompany::GetFieldCaption($fieldID);
@@ -392,14 +394,15 @@ class CompanyDataProvider extends EntityDataProvider
 		}
 		elseif(in_array($fieldID, ['ASSIGNED_BY_ID', 'CREATED_BY_ID', 'MODIFY_BY_ID'], true))
 		{
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Company);
-			$referenceClass = ($factory ? $factory->getDataClass() : null);
+			$referenceClass = ($this->factory ? $this->factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_company_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}
@@ -482,5 +485,16 @@ class CompanyDataProvider extends EntityDataProvider
 		}
 
 		return $result;
+	}
+
+	public function prepareListFilter(array &$filter, array $requestFilter): void
+	{
+		$listFilter = new ListFilter($this->getEntityTypeId(), $this->prepareFields());
+		$listFilter->prepareListFilter($filter, $requestFilter);
+	}
+
+	protected function getEntityTypeId(): int
+	{
+		return \CCrmOwnerType::Company;
 	}
 }

@@ -1,7 +1,7 @@
 <?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)die();
 
-\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens', 'ui.fonts.opensans']);
+\Bitrix\Main\UI\Extension::load(['ui.buttons', 'ui.design-tokens', 'ui.fonts.opensans', 'ui.hint']);
 \Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/css/crm.css');
 
 $toolbarID =  $arParams['TOOLBAR_ID'];
@@ -10,6 +10,7 @@ $toolbarID =  $arParams['TOOLBAR_ID'];
 
 $moreItems = array();
 $enableMoreButton = false;
+$enableHint = false;
 $labelText = '';
 $requisitePresetSelectorIndex = 0;
 foreach($arParams["BUTTONS"] as $item):
@@ -111,10 +112,17 @@ foreach($arParams["BUTTONS"] as $item):
 	else
 	{
 		$iconClassName = 'ui-btn ui-btn-xs ui-btn-round';
-		$iconClassName .= isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'] ? ' ui-btn-primary' : ' ui-btn-light-border';
-		if(isset($item['ICON']))
+		if ($type === 'disabled')
 		{
-			$iconClassName .= $item['ICON'] === 'btn-new' ? ' ui-btn-icon-add' : ' ' . $item['ICON'];
+			$iconClassName .= ' ui-btn ui-btn-icon-lock ui-btn-disabled';
+		}
+		else
+		{
+			$iconClassName .= isset($item['HIGHLIGHT']) && $item['HIGHLIGHT'] ? ' ui-btn-primary' : ' ui-btn-light-border';
+			if(isset($item['ICON']))
+			{
+				$iconClassName .= $item['ICON'] === 'btn-new' ? ' ui-btn-icon-add' : ' ' . $item['ICON'];
+			}
 		}
 
 		if($alignment !== '')
@@ -129,8 +137,15 @@ foreach($arParams["BUTTONS"] as $item):
 			{
 				$dataAttrs .= ' '.$key.'="'.htmlspecialcharsbx($value).'"';
 			}
-
 		}
+
+		if (!empty($item['HINT']))
+		{
+			$enableHint = true;
+			$hint = htmlspecialcharsbx($item['HINT']);
+			$dataAttrs .= "data-hint='{$hint}' data-hint-no-icon";
+		}
+
 		?><a class="<?=$iconClassName !== '' ? htmlspecialcharsbx($iconClassName) : ''?>" href="<?=htmlspecialcharsbx($link)?>" title="<?=htmlspecialcharsbx($title)?>" <?=$onclick !== '' ? ' onclick="'.htmlspecialcharsbx($onclick).'; return false;"' : ''?><?=$dataAttrs;?>><span class="ui-btn-text"><?=htmlspecialcharsbx($text)?></span></a><?
 		if($alignment !== '')
 		{
@@ -138,7 +153,18 @@ foreach($arParams["BUTTONS"] as $item):
 		}
 	}
 endforeach;
-
+if ($enableHint)
+{
+	?>
+	<script>
+		BX.ready(
+			function(){
+				BX.UI.Hint.init(BX("<?=CUtil::JSEscape($toolbarID)?>"));
+			}
+		)
+	</script>
+	<?php
+}
 if(!empty($moreItems)):
 	?><span class="crm-toolbar-alignment-right">
 		<span class="crm-setting-btn"></span>

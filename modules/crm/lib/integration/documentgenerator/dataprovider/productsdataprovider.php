@@ -8,11 +8,11 @@ use Bitrix\Crm\Integration\DocumentGeneratorManager;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Order\PayableBasketItem;
+use Bitrix\Crm\ProductType;
 use Bitrix\Crm\UI\Barcode;
 use Bitrix\DocumentGenerator\DataProvider\ArrayDataProvider;
 use Bitrix\DocumentGenerator\DataProviderManager;
-use Bitrix\DocumentGenerator\Value;
-use Bitrix\Iblock\ElementTable;
+use Bitrix\DocumentGenerator\Dictionary;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Repository\PaymentRepository;
 
@@ -138,8 +138,8 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			{
 				$productData = $basketItem->getEntityObject()->toArray();
 				$productData['QUANTITY'] = $basketItem->getQuantity();
-				DocumentGeneratorManager::getInstance()->getProductLoader()->addRow($productData);
-				$result[] = Order::getProductProviderDataByBasketItem(
+
+				$item = Order::getProductProviderDataByBasketItem(
 					$productData,
 					new ItemIdentifier(
 						\CCrmOwnerType::OrderPayment,
@@ -147,6 +147,15 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 					),
 					$this->getCurrencyId()
 				);
+
+				if (!$this->isProductVariantSupported($item['PRODUCT_VARIANT']))
+				{
+					continue;
+				}
+
+				$result[] = $item;
+
+				DocumentGeneratorManager::getInstance()->getProductLoader()->addRow($productData);
 			}
 		}
 		else
@@ -154,6 +163,12 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 			$crmProducts = \CAllCrmProductRow::LoadRows($this->getCrmProductOwnerType(), $this->source);
 			foreach($crmProducts as $crmProduct)
 			{
+				$productVariant = $this->getProductVariantByType((int)$crmProduct['TYPE']);
+				if (!$this->isProductVariantSupported($productVariant))
+				{
+					continue;
+				}
+
 				if($crmProduct['TAX_INCLUDED'] !== 'Y')
 				{
 					$crmProduct['PRICE'] = $crmProduct['PRICE_EXCLUSIVE'];
@@ -169,6 +184,7 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 					'DISCOUNT_SUM' => $crmProduct['DISCOUNT_SUM'],
 					'TAX_RATE' => $crmProduct['TAX_RATE'],
 					'TAX_INCLUDED' => $crmProduct['TAX_INCLUDED'],
+					'PRODUCT_VARIANT' => $productVariant,
 					'SORT' => $crmProduct['SORT'],
 					'MEASURE_CODE' => $crmProduct['MEASURE_CODE'],
 					'MEASURE_NAME' => $crmProduct['MEASURE_NAME'],
@@ -182,6 +198,28 @@ abstract class ProductsDataProvider extends CrmEntityDataProvider
 		}
 
 		return $result;
+	}
+
+	private static function getProductVariantByType(int $type) : string
+	{
+		if ($type === ProductType::TYPE_SERVICE)
+		{
+			return Dictionary\ProductVariant::SERVICE;
+		}
+
+		return Dictionary\ProductVariant::GOODS;
+	}
+
+	protected function isProductVariantSupported(string $productVariant) : bool
+	{
+		$options = $this->getOptions()['VALUES'];
+
+		if (empty($options['productsTableVariant']))
+		{
+			return true;
+		}
+
+		return $options['productsTableVariant'] === $productVariant;
 	}
 
 	/**

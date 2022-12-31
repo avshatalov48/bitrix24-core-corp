@@ -1,6 +1,8 @@
 (() => {
 
-	const {describe, it, test, expect} = Testing.helpers();
+	const require = ext => jn.require(ext);
+
+	const { describe, it, test, expect } = require('testing');
 
 	describe('basic expectations test', () => {
 

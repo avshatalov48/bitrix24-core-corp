@@ -17,6 +17,8 @@ use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Counter;
 use Bitrix\Tasks\Internals\SearchIndex;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
+use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\Task\FavoriteTable;
 use Bitrix\Tasks\Internals\Task\LogTable;
@@ -707,6 +709,7 @@ final class Task extends \Bitrix\Tasks\Item
 		{
 			$groupId = intval($data['GROUP_ID']);
 
+			$lastResult = ResultManager::getLastResult((int) $id);
 			$arPullData = array(
 				'TASK_ID' => $id,
 				'AFTER' => array(
@@ -715,7 +718,8 @@ final class Task extends \Bitrix\Tasks\Item
 				'TS' => time(),
 				'event_GUID' => isset($data['META::EVENT_GUID']) ? $data['META::EVENT_GUID'] : sha1(uniqid('AUTOGUID', true)),
 				'taskRequireResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::requireResult((int)$id) ? "Y" : "N",
-				'taskHasResult' => \Bitrix\Tasks\Internals\Task\Result\ResultManager::hasResult((int)$id) ? "Y" : "N",
+				'taskHasResult' => $lastResult ? "Y" : "N",
+				'taskHasOpenResult' => ($lastResult && (int) $lastResult['STATUS'] === ResultTable::STATUS_OPENED) ? "Y" : "N",
 			);
 
 			Pull\PushService::addEvent($recipients, [

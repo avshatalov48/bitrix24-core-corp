@@ -736,7 +736,7 @@ elseif($action === 'COMPLETE')
 		__CrmMobileActivityEditEndResponse(array('ERROR' => GetMessage('CRM_ENTITY_ID_NOT_FOUND')));
 	}
 
-	$dbItem = CCrmActivity::GetList(array(), array('=ID' => $ID), false, false, array('OWNER_TYPE_ID', 'OWNER_ID'));
+	$dbItem = CCrmActivity::GetList(array(), array('=ID' => $ID));
 	$item = $dbItem->Fetch();
 	if(!is_array($item))
 	{
@@ -746,9 +746,10 @@ elseif($action === 'COMPLETE')
 	$ownerTypeID = isset($item['OWNER_TYPE_ID']) ? intval($item['OWNER_TYPE_ID']) : 0;
 	$ownerID = isset($item['OWNER_ID']) ? intval($item['OWNER_ID']) : 0;
 
-	if(!CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerID))
+	$provider = CCrmActivity::GetActivityProvider($item);
+	if (!$provider || !$provider::checkReadPermission($item))
 	{
-		__CrmMobileActivityEditEndResponse(array('ERROR' => 'Access denied.'));
+		__CrmMobileActivityEditEndResponse(['ERROR' => 'Access denied.']);
 	}
 
 	$completed = (isset($data['COMPLETED']) ? intval($data['COMPLETED']) : 0) > 0;

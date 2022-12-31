@@ -12,6 +12,7 @@ use Bitrix\Main\ORM\Data\DataManager;
 use Bitrix\Main\ORM\EntityError;
 use Bitrix\Main\ORM\Event;
 use Bitrix\Main\ORM\EventResult;
+use Bitrix\Main\ORM\Fields\ArrayField;
 use Bitrix\Main\ORM\Fields\DatetimeField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\StringField;
@@ -59,7 +60,7 @@ class ItemCategoryTable extends DataManager
 				->configureDefaultValue('N'),
 			(new StringField('CODE'))
 				->configureSize(255)
-				->configureDefaultValue(''),
+				->configureUnique(),
 			(new DatetimeField('CREATED_DATE'))
 				->configureRequired()
 				->configureDefaultValue(static function() {
@@ -76,6 +77,8 @@ class ItemCategoryTable extends DataManager
 			(new IntegerField('SORT'))
 				->configureRequired()
 				->configureDefaultValue(500),
+			(new ArrayField('SETTINGS'))
+				->configureSerializationJson(),
 		];
 	}
 

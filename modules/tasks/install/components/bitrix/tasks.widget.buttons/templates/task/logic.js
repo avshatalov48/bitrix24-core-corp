@@ -108,7 +108,14 @@ BX.namespace('Tasks.Component');
 						enableSearch: true,
 						multiple: false,
 						context: 'TASKS_MEMBER_SELECTOR_EDIT_responsible',
-						entities: [{id: 'user'}],
+						entities: [
+							{
+								id: 'user',
+								options: {
+									emailUsers: true,
+								}
+							},
+						],
 						events: {
 							'Item:onSelect': function(event) {
 								var item = event.getData().item;
@@ -635,4 +642,3 @@ BX.namespace('Tasks.Component');
 	});
 
 }).call(this);
-

@@ -7,6 +7,7 @@ use Bitrix\Crm\Integration\Sale\Reservation\Config\EntityFactory;
 use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Order\Payment;
 use Bitrix\Crm\ProductRowTable;
+use Bitrix\Crm\ProductType;
 use Bitrix\Crm\Reservation\BasketReservation;
 use Bitrix\Crm\Reservation\Internals\ProductReservationMapTable;
 use Bitrix\Crm\Reservation\Strategy\Factory\OptionStrategyFactory;
@@ -20,8 +21,10 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\Date;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Sale\Configuration;
 use Bitrix\Sale\Order;
+use Bitrix\Sale\Reservation\BasketReservationService;
 use CCrmOwnerType;
 use CCrmOwnerTypeAbbr;
 
@@ -33,6 +36,7 @@ class ReservationService
 	public function __construct()
 	{
 		Loader::requireModule('sale');
+		Loc::loadMessages(__FILE__);
 	}
 
 	/**
@@ -58,9 +62,9 @@ class ReservationService
 	/**
 	 * Default date reserve end, if it is not filled.
 	 *
-	 * @return Date|null
+	 * @return Date
 	 */
-	public function getDefaultDateReserveEnd(): ?Date
+	public function getDefaultDateReserveEnd(): Date
 	{
 		$config = EntityFactory::make(Deal::CODE);
 		$days = (int)$config->getReserveWithdrawalPeriod();
@@ -169,15 +173,56 @@ class ReservationService
 	}
 
 	/**
-	 * Reservation all products of deal.
+	 * Reservation products of deal.
 	 *
 	 * @param int $dealId
+	 * @param array $productRows
 	 *
 	 * @return Result
 	 */
-	public function reservationProductsByDeal(int $dealId): Result
+	public function reservationProductsByDealProductRows(int $dealId, array $productRows): Result
 	{
-		return $this->reservationProducts(CCrmOwnerType::Deal, $dealId);
+		$result = new Result();
+
+		$isHasManualReserves = false;
+		foreach ($productRows as $row)
+		{
+			if (isset($row['TYPE']) && $this->isRestrictedType((int)$row['TYPE']))
+			{
+				continue;
+			}
+
+			$rowId = (int)($row['ID'] ?? 0);
+			if (!$rowId)
+			{
+				continue;
+			}
+
+			$storeId = $row['STORE_ID'] ?? null;
+			$dateReserveEnd = $row['DATE_RESERVE_END'] ?? null;
+			$reserveQuantity = $row['INPUT_RESERVE_QUANTITY'] ?? $row['RESERVE_QUANTITY'] ?? null;
+
+			if (empty($storeId) && empty($dateReserveEnd) && empty($reserveQuantity))
+			{
+				continue;
+			}
+
+			$reserveQuantity = (float)$reserveQuantity;
+			$storeId = $storeId ? (int)$storeId : null;
+			$dateReserveEnd = $dateReserveEnd ? Date::createFromText($dateReserveEnd) : null;
+
+			$reserveResult = $this->reservationProductRow($rowId, $reserveQuantity, $storeId, $dateReserveEnd);
+			$result->addErrors($reserveResult->getErrors());
+
+			$isHasManualReserves = true;
+		}
+
+		if (!$isHasManualReserves)
+		{
+			return $this->reservationProducts(CCrmOwnerType::Deal, $dealId);
+		}
+
+		return $result;
 	}
 
 	/**
@@ -217,10 +262,29 @@ class ReservationService
 	 */
 	public function reservationProductRow(int $productRowId, float $quantity, ?int $storeId = null, ?Date $dateReserveEnd = null): Result
 	{
+		$result = new Result();
+
 		$strategy = $this->getStrategy();
 		if (!$strategy)
 		{
-			return new Result();
+			return $result;
+		}
+
+		$productRow = $this->getProductRow($productRowId);
+		if (empty($productRow))
+		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_RESERVATION_SERVICE_PRODUCT_NOT_FOUND'))
+			);
+			return $result;
+		}
+
+		if ($this->isRestrictedType((int)$productRow['TYPE']))
+		{
+			$result->addError(new Error(
+				Loc::getMessage('CRM_RESERVATION_SERVICE_PRODUCT_NOT_SUPPORT_RESERVATION'))
+			);
+			return $result;
 		}
 
 		if (!isset($storeId))
@@ -235,7 +299,7 @@ class ReservationService
 		$result = $strategy->reservationProductRow($productRowId, $quantity, $storeId, $dateReserveEnd);
 		if ($result->isSuccess())
 		{
-			[$ownerTypeId, $ownerId] = $this->getOwnerForRow($productRowId);
+			[$ownerTypeId, $ownerId] = $this->getOwnerForRow($productRow);
 
 			if ($ownerTypeId === CCrmOwnerType::Deal)
 			{
@@ -319,15 +383,20 @@ class ReservationService
 		foreach ($productRow2basket as $rowId => $basketId)
 		{
 			/**
-			 * @var BasketItem $basketItem
+			 * @var \Bitrix\Sale\BasketItem $basketItem
 			 */
 			$basketItem = $order->getBasket()->getItemById($basketId);
 			if ($basketItem)
 			{
-				$basketReserve = $basketItem->getReserveQuantityCollection()->current();
-				if ($basketReserve)
+				/** @var \Bitrix\Sale\ReserveQuantityCollection $reserveCollection */
+				$reserveCollection = $basketItem->getReserveQuantityCollection();
+				if ($reserveCollection)
 				{
-					$this->setReserveMap($rowId, $basketReserve->getId());
+					$basketReserve = $reserveCollection->current();
+					if ($basketReserve)
+					{
+						$this->setReserveMap($rowId, $basketReserve->getId());
+					}
 				}
 			}
 		}
@@ -366,29 +435,50 @@ class ReservationService
 	/**
 	 * Owner info of row.
 	 *
-	 * @param int $productRowId
-	 *
+	 * @param array $productRow
 	 * @return array in format [ownerTypeId, ownerId]
 	 */
-	private function getOwnerForRow(int $productRowId): array
+	private function getOwnerForRow(array $productRow): array
 	{
-		$row = ProductRowTable::getRow([
+		return [
+			(int)CCrmOwnerTypeAbbr::ResolveTypeID($productRow['OWNER_TYPE']),
+			(int)$productRow['OWNER_ID'],
+		];
+	}
+
+	/**
+	 * Get product row.
+	 *
+	 * @param int $rowId
+	 *
+	 * @return array|null
+	 */
+	private function getProductRow(int $rowId): ?array
+	{
+		return ProductRowTable::getRow([
 			'select' => [
+				'ID',
+				'QUANTITY',
+				'TYPE',
 				'OWNER_ID',
 				'OWNER_TYPE',
 			],
 			'filter' => [
-				'=ID' => $productRowId,
+				'=ID' => $rowId,
 			],
 		]);
-		if ($row)
-		{
-			return [
-				(int)CCrmOwnerTypeAbbr::ResolveTypeID($row['OWNER_TYPE']),
-				(int)$row['OWNER_ID'],
-			];
-		}
+	}
 
-		return [null, null];
+	public function isRestrictedType(int $type): bool
+	{
+		return in_array($type, $this->getRestrictedProductTypes(), true);
+	}
+
+	public function getRestrictedProductTypes(): array
+	{
+		return [
+			ProductType::TYPE_SET,
+			ProductType::TYPE_SERVICE,
+		];
 	}
 }

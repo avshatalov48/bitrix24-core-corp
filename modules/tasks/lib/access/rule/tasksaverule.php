@@ -12,6 +12,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Tasks\Access\ActionDictionary;
 use Bitrix\Tasks\Access\Model\TaskModel;
 use Bitrix\Main\Access\AccessibleItem;
+use Bitrix\Tasks\Access\Model\UserModel;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Access\Rule\Traits\AssignTrait;
 use Bitrix\Tasks\Access\Rule\Traits\GroupTrait;
@@ -78,23 +79,23 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 		}
 
 		// user can assign task to this man
-		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE) as $member)
+		if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $this->newTask))
 		{
-			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $member, $this->newTask))
-			{
-				$this->controller->addError(static::class, 'Access to assign responsible denied');
-				return false;
-			}
+			$this->controller->addError(static::class, 'Access to assign responsible denied');
+			return false;
 		}
 
 		// user can assign task to co-executors
-		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_ACCOMPLICE) as $member)
+		if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $this->newTask))
 		{
-			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $member, $this->newTask))
-			{
-				$this->controller->addError(static::class, 'Access to assign accomplice denied');
-				return false;
-			}
+			$this->controller->addError(static::class, 'Access to assign accomplice denied');
+			return false;
+		}
+
+		// user can assign task to auditors
+		if (!$this->canAssignAuditors())
+		{
+			return false;
 		}
 
 		// user can change director (if director has been changed)
@@ -170,5 +171,22 @@ class TaskSaveRule extends \Bitrix\Main\Access\Rule\AbstractRule
 	private function isNew(): bool
 	{
 		return !$this->oldTask->getId();
+	}
+
+	private function canAssignAuditors(): bool
+	{
+		if ($this->isNew())
+		{
+			$auditors = $this->newTask->getMembers(RoleDictionary::ROLE_AUDITOR);
+
+			return $this->controller->check(ActionDictionary::ACTION_TASK_AUDITORS_ADD, $this->newTask, $auditors);
+		}
+
+		$auditors = array_diff(
+			$this->newTask->getMembers(RoleDictionary::ROLE_AUDITOR),
+			$this->oldTask->getMembers(RoleDictionary::ROLE_AUDITOR),
+		);
+
+		return $this->controller->check(ActionDictionary::ACTION_TASK_AUDITORS_ADD, $this->oldTask, $auditors);
 	}
 }

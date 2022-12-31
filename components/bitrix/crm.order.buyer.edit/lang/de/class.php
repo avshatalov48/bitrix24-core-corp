@@ -1,0 +1,21 @@
+<?php
+$MESS["CRM_MODULE_NOT_INSTALLED"] = "Das Modul CRM ist nicht installiert.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Das Modul Kommerzieller Katalog ist nicht installiert.";
+$MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Das Modul Onlineshop ist nicht installiert.";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_ACTIVE"] = "Aktiv";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_CONFIRM_PASSWORD"] = "Neues Passwort bestätigen";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_CONFIRM_PASSWORD_NEW"] = "Passwort bestätigen";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_DATE_REGISTER"] = "Registriert am";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_EMAIL"] = "E-Mail";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_LAST_LOGIN"] = "Zuletzt eingeloggt";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_LAST_NAME"] = "Nachname";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_LOGIN"] = "Login";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_NAME"] = "Vorname";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_PASSWORD"] = "Neues Passwort";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_PASSWORD_NEW"] = "Passwort";
+$MESS["CRM_ORDER_BUYER_EDIT_COLUMN_SECOND_NAME"] = "Zweiter Vorname";
+$MESS["CRM_ORDER_BUYER_EDIT_CREATE_TITLE"] = "Kunden erstellen";
+$MESS["CRM_ORDER_BUYER_EDIT_EDIT_TITLE"] = "Kunden bearbeiten";
+$MESS["CRM_ORDER_BUYER_EDIT_LOAD_USER_ERROR"] = "Kunde existiert nicht oder Zugriffe verweigert.";
+$MESS["CRM_ORDER_BUYER_EDIT_SAVE_ERROR"] = "Beim Speichern des Kunden ist ein Fehler aufgetreten.";
+$MESS["CRM_PERMISSION_DENIED"] = "Zugriff verweigert.";

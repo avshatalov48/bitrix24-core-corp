@@ -6,7 +6,9 @@ use Bitrix\Crm\Service\Display\Options;
 
 class StringField extends BaseSimpleField
 {
-	protected const TYPE = 'string';
+	public const TYPE = 'string';
+
+	protected bool $hasHtmlTags = false;
 
 	public function prepareField(): void
 	{
@@ -32,5 +34,39 @@ class StringField extends BaseSimpleField
 		}
 
 		return $this->renderSingleValue($fieldValue, $itemId, $displayOptions);
+	}
+
+	protected function renderSingleValue($fieldValue, int $itemId, Options $displayOptions): string
+	{
+		$value = parent::renderSingleValue($fieldValue, $itemId, $displayOptions);
+
+		if (
+			$this->wasRenderedAsHtml
+			&& ($this->isMobileContext() || $this->isExportContext())
+		)
+		{
+			$strippedValue = strip_tags($value);
+			if ($strippedValue !== $value)
+			{
+				$this->hasHtmlTags = true;
+				$value = $strippedValue;
+			}
+		}
+
+		if (!$this->isMobileContext())
+		{
+			$value = preg_replace('/\s+/', ' ', $value);
+		}
+
+		return trim($value);
+	}
+
+	protected function getMobileConfig($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		$config = parent::getMobileConfig($fieldValue, $itemId, $displayOptions);
+
+		$config['editable'] = !$this->hasHtmlTags;
+
+		return $config;
 	}
 }

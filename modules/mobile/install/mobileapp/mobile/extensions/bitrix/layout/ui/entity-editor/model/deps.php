@@ -1,4 +1,7 @@
 <?php
 return [
-	'utils',
+	'extensions' => [
+		'event-emitter',
+		'utils',
+	],
 ];

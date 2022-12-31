@@ -127,11 +127,11 @@ else
 $userName = $arResult["USER_NAME"];
 $userUrl = CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_USER_PROFILE'], array("user_id" => $USER->GetID()));
 ?>
-<div class="user-block" id="user-block">
+<div class="user-block" id="user-block" data-user-id="<?= (int)$USER->getID() ?>">
 	<span class="ui-icon ui-icon-common-user user-img" id="user-block-icon"><?php
 		$style = (
 			$arResult['USER_PERSONAL_PHOTO_SRC']
-				? "background: url('" . $arResult['USER_PERSONAL_PHOTO_SRC']. "') no-repeat center; background-size: cover;"
+				? "background: url('" . \Bitrix\Main\Web\Uri::urnEncode($arResult['USER_PERSONAL_PHOTO_SRC']) . "') no-repeat center; background-size: cover;"
 				: ''
 		);
 		?><i style="<?= $style ?>"></i>
@@ -182,6 +182,26 @@ BX.ready(function() {
 		});
 	}
 	BX('user-block').addEventListener('click', handler);
+
+	BX.Event.EventEmitter.subscribe(
+		'BX.Intranet.UserProfile:Avatar:changed',
+		(event) => {
+			const data = event.getData()[0];
+			const block = BX('user-block');
+			const url = data && data['url'] ?data['url'] : '';
+			const userId = data && data['userId'] ? data['userId'] : 0;
+			if (block && block.dataset.userId === userId.toString())
+			{
+				const avatarNode = BX('user-block').querySelector('i');
+				avatarNode.style =
+					BX.Type.isStringFilled(url)
+						? "background-size: cover; background-image: url('" + encodeURI(url) + "')"
+						: ''
+				;
+			}
+
+		})
+	;
 });
 </script>
 <?

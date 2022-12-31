@@ -2,12 +2,14 @@
 
 namespace Bitrix\Crm\Relation;
 
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Binding\DealContactTable;
 use Bitrix\Crm\Binding\LeadContactTable;
 use Bitrix\Crm\Conversion\Entity\EntityConversionMapTable;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap;
 use Bitrix\Crm\Conversion\Entity\EO_EntityConversionMap_Collection;
+use Bitrix\Crm\Integration\Catalog\Contractor\DocumentRelationStorageStrategy;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Relation;
@@ -16,6 +18,7 @@ use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Crm\Settings\QuoteSettings;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
 
 class RelationManager
@@ -665,6 +668,33 @@ class RelationManager
 			;
 		}
 		//endregion
+
+		//@TODO collect predefined relations across modules via event
+		if (
+			Loader::includeModule('catalog')
+			&& Manager::isActiveProviderByModule('crm')
+		)
+		{
+			$predefinedRelations[] =
+				(new Relation(
+					new RelationIdentifier(
+						\CCrmOwnerType::Company,
+						\CCrmOwnerType::StoreDocument
+					),
+					clone $bindingSettings
+				))
+					->setStorageStrategy(new DocumentRelationStorageStrategy(\CCrmOwnerType::Company));
+
+			$predefinedRelations[] =
+				(new Relation(
+					new RelationIdentifier(
+						\CCrmOwnerType::Contact,
+						\CCrmOwnerType::StoreDocument
+					),
+					clone $bindingSettings
+				))
+					->setStorageStrategy(new DocumentRelationStorageStrategy(\CCrmOwnerType::Contact));
+		}
 
 		$this->mixinPredefinedRelationsForDynamic($predefinedRelations);
 

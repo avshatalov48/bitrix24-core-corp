@@ -1663,7 +1663,7 @@ class ImOpenLinesManager extends Base
 		$dealFields = [];
 		if (isset($contactId))
 		{
-			$contactData = Crm\Entity\Contact::getByID($contactId);
+			$contactData = Crm\Entity\Contact::getInstance()->getByID($contactId);
 			if (!empty($contactData['LAST_NAME']))
 			{
 				$dealFields = [

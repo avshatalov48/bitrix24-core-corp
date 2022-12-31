@@ -6,7 +6,11 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\Model\StoreDocument;
 use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
+use Bitrix\Main\Loader;
 
 Main\Localization\Loc::loadLanguageFile(__FILE__);
 
@@ -24,23 +28,24 @@ class RealizationDocument extends Main\Engine\Controller
 
 	private $needEnableAutomation = false;
 
+	private AccessController $accessController;
+
+	/**
+	 * @inheritDoc
+	 */
+	protected function init()
+	{
+		parent::init();
+
+		Loader::requireModule('catalog');
+
+		$this->accessController = AccessController::getCurrent();
+	}
+
 	protected function processBeforeAction(Main\Engine\Action $action)
 	{
 		if (!Main\Loader::includeModule('sale'))
 		{
-			return false;
-		}
-
-		$actionArguments = $action->getArguments();
-		$id = $actionArguments['id'] ? (int)$actionArguments['id'] : null;
-		if (!$this->checkPermission($id))
-		{
-			$this->addError(
-				new Main\Error(
-					Main\Localization\Loc::getMessage('CRM_CONTROLLER_REALIZATION_DOCUMENT_ACCESS_DENIED'),
-					self::REALIZATION_ACCESS_DENIED_ERROR_CODE
-				)
-			);
 			return false;
 		}
 
@@ -74,6 +79,15 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setRealizationAction(int $id, string $value): void
 	{
+		if ($value === 'Y' && !$this->checkModifyPermission($id))
+		{
+			return;
+		}
+		elseif ($value === 'N' && !$this->checkPermission(ActionDictionary::ACTION_STORE_DOCUMENT_DELETE, $id))
+		{
+			return;
+		}
+
 		$shipmentResult = $this->prepareShipment($id);
 		if (!$shipmentResult->isSuccess())
 		{
@@ -168,6 +182,15 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setRealizationListAction(array $ids, string $value)
 	{
+		if ($value === 'Y' && !$this->checkModifyPermission())
+		{
+			return;
+		}
+		elseif ($value === 'N' && !$this->checkPermission(ActionDictionary::ACTION_STORE_DOCUMENT_DELETE))
+		{
+			return;
+		}
+
 		$result = new Main\Result();
 
 		foreach ($ids as $id)
@@ -208,6 +231,16 @@ class RealizationDocument extends Main\Engine\Controller
 					self::REALIZATION_NOT_USED_INVENTORY_MANAGEMENT_ERROR_CODE
 				)
 			);
+			return;
+		}
+
+		$accessAction =
+			$value === 'Y'
+				? ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT
+				: ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL
+		;
+		if (!$this->checkPermission($accessAction, $id))
+		{
 			return;
 		}
 
@@ -271,16 +304,16 @@ class RealizationDocument extends Main\Engine\Controller
 				foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
 				{
 					$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
-					if ($shipmentItemStoreCollection->isEmpty())
+					if ($shipmentItemStoreCollection && $shipmentItemStoreCollection->isEmpty())
 					{
 						$basketItem = $shipmentItem->getBasketItem();
 
 						$reserveQuantityCollection = $basketItem->getReserveQuantityCollection();
-						if ($reserveQuantityCollection->isEmpty())
+						if ($reserveQuantityCollection && $reserveQuantityCollection->isEmpty())
 						{
 							$storeId = $this->defaultStoreId;
 						}
-						elseif ($reserveQuantityCollection->count() === 1)
+						elseif ($reserveQuantityCollection && $reserveQuantityCollection->count() === 1)
 						{
 							/** @var \Bitrix\Sale\ReserveQuantity $reserveQuantity */
 							$reserveQuantity = $reserveQuantityCollection->current();
@@ -361,6 +394,16 @@ class RealizationDocument extends Main\Engine\Controller
 	 */
 	public function setShippedListAction(array $ids, string $value): void
 	{
+		$accessAction =
+			$value === 'Y'
+				? ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT
+				: ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL
+		;
+		if (!$this->checkPermission($accessAction))
+		{
+			return;
+		}
+
 		$result = new Main\Result();
 
 		foreach ($ids as $id)
@@ -384,16 +427,41 @@ class RealizationDocument extends Main\Engine\Controller
 		}
 	}
 
-	private function checkPermission(?int $id): bool
+	/**
+	 * Check permissions on create or update model.
+	 *
+	 * @param int $id
+	 *
+	 * @return bool
+	 */
+	private function checkModifyPermission(int $id = 0): bool
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
+		return $this->checkPermission(ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY, $id);
+	}
 
-		if ($id && $id > 0)
+	/**
+	 * Check permissions.
+	 *
+	 * @param string $action
+	 * @param int $id
+	 *
+	 * @return bool
+	 */
+	private function checkPermission(string $action, int $id = 0): bool
+	{
+		$can = $this->accessController->check($action, StoreDocument::createForSaleRealization($id));
+		if (!$can)
 		{
-			return Crm\Order\Permissions\Shipment::checkUpdatePermission($id, $userPermissions);
+			$this->addError(
+				new Main\Error(
+					Main\Localization\Loc::getMessage('CRM_CONTROLLER_REALIZATION_DOCUMENT_ACCESS_DENIED'),
+					self::REALIZATION_ACCESS_DENIED_ERROR_CODE
+				)
+			);
+			return false;
 		}
 
-		return Crm\Order\Permissions\Shipment::checkCreatePermission($userPermissions);
+		return true;
 	}
 
 	private function prepareShipment(int $id): Main\Result

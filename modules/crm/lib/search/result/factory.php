@@ -34,40 +34,61 @@ class Factory
 		}
 	}
 
-	public static function createResultAdapter(int $entityTypeId): Adapter
+	public static function createResultAdapter(int $entityTypeId, ?int $categoryId = null): Adapter
 	{
+		$factory = Container::getInstance()->getFactory($entityTypeId);
+
 		switch ($entityTypeId)
 		{
 			case \CCrmOwnerType::Lead:
-				return new \Bitrix\Crm\Search\Result\Adapter\LeadAdapter();
+				$adapter = new \Bitrix\Crm\Search\Result\Adapter\LeadAdapter();
+				break;
 			case \CCrmOwnerType::Deal:
-				return new \Bitrix\Crm\Search\Result\Adapter\DealAdapter();
+				$adapter = new \Bitrix\Crm\Search\Result\Adapter\DealAdapter();
+				break;
 			case \CCrmOwnerType::Contact:
-				return new \Bitrix\Crm\Search\Result\Adapter\ContactAdapter();
+				$adapter = new \Bitrix\Crm\Search\Result\Adapter\ContactAdapter();
+				break;
 			case \CCrmOwnerType::Company:
-				return new \Bitrix\Crm\Search\Result\Adapter\CompanyAdapter();
+				$adapter = new \Bitrix\Crm\Search\Result\Adapter\CompanyAdapter();
+				break;
 			case \CCrmOwnerType::Invoice:
-				return new \Bitrix\Crm\Search\Result\Adapter\InvoiceAdapter();
+				$adapter = new \Bitrix\Crm\Search\Result\Adapter\InvoiceAdapter();
+				break;
 			case \CCrmOwnerType::Quote:
-				return new \Bitrix\Crm\Search\Result\Adapter\QuoteAdapter();
+				$adapter = new \Bitrix\Crm\Search\Result\Adapter\QuoteAdapter();
+				break;
 			default:
-				$factory = Container::getInstance()->getFactory($entityTypeId);
 				if ($factory)
 				{
 					if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
 					{
-						return new \Bitrix\Crm\Search\Result\Adapter\DynamicAdapter($factory);
+						$adapter = new \Bitrix\Crm\Search\Result\Adapter\DynamicAdapter($factory);
 					}
 					if ($entityTypeId === \CCrmOwnerType::SmartInvoice)
 					{
-						return new \Bitrix\Crm\Search\Result\Adapter\SmartInvoiceAdapter($factory);
+						$adapter = new \Bitrix\Crm\Search\Result\Adapter\SmartInvoiceAdapter($factory);
 					}
 				}
 
-				throw new NotImplementedException(
-					\CCrmOwnerType::ResolveName($entityTypeId) . ' search result provider is not implemented'
-				);
+				break;
 		}
+
+		if (!$adapter)
+		{
+			throw new NotImplementedException(
+				\CCrmOwnerType::ResolveName($entityTypeId) . ' search result provider is not implemented'
+			);
+		}
+
+		if ($factory && $categoryId)
+		{
+			$adapter->setCategory(
+				$factory->getCategory($categoryId)
+			);
+		}
+
+		return $adapter;
 	}
 
 	public static function getSupportedEntityTypeIds()

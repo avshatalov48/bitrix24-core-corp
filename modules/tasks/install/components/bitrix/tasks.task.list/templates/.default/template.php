@@ -232,7 +232,6 @@ $APPLICATION->IncludeComponent(
 		function() {
 			BX.Tasks.GridActions.gridId = '<?=$arParams['GRID_ID']?>';
 			BX.Tasks.GridActions.defaultPresetId = '<?=$arResult['DEFAULT_PRESET_KEY']?>';
-
 			BX.message({
 				TASKS_CONFIRM_GROUP_ACTION: '<?=GetMessageJS('TASKS_CONFIRM_GROUP_ACTION')?>',
 				TASKS_DELETE_SUCCESS: '<?=GetMessageJS('TASKS_DELETE_SUCCESS')?>',

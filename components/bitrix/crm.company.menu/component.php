@@ -11,7 +11,6 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
  * @var array $arResult
  */
 
-use Bitrix\Crm\Entity\Company;
 use Bitrix\Main\Localization\Loc;
 
 if (!CModule::IncludeModule('crm'))
@@ -174,11 +173,11 @@ if($arParams['TYPE'] === 'details')
 		);
 	}
 
-	if($bDelete && isset($scripts['DELETE']))
+	if ($bDelete && isset($scripts['DELETE']))
 	{
 		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('COMPANY_DELETE'),
-			'TITLE' => GetMessage('COMPANY_DELETE_TITLE'),
+			'TEXT' => Loc::getMessage('COMPANY_DELETE'),
+			'TITLE' => Loc::getMessage('COMPANY_DELETE_TITLE'),
 			'ONCLICK' => $scripts['DELETE'],
 			'ICON' => 'btn-delete'
 		);
@@ -216,7 +215,7 @@ if($arParams['TYPE'] === 'list')
 	}
 
 	$arResult['BUTTONS'][] = [
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => $createUrl,
 		'HIGHLIGHT' => true,
 		'IS_DISABLED' => !$bAdd,
@@ -563,7 +562,7 @@ if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 		$createUrl = CHTTP::urlAddParams($createUrl, array('mycompany' => 'y'));
 	}
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => $createUrl,
 		'TARGET' => '_blank',
 		'ICON' => 'btn-new'
@@ -605,8 +604,8 @@ if ($arParams['TYPE'] == 'show')
 if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && !empty($arParams['ELEMENT_ID']))
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('COMPANY_DELETE'),
-		'TITLE' => GetMessage('COMPANY_DELETE_TITLE'),
+		'TEXT' => Loc::getMessage('COMPANY_DELETE'),
+		'TITLE' => Loc::getMessage('COMPANY_DELETE_TITLE'),
 		'LINK' => "javascript:company_delete('".GetMessage('COMPANY_DELETE_DLG_TITLE')."', '".GetMessage('COMPANY_DELETE_DLG_MESSAGE')."', '".GetMessage('COMPANY_DELETE_DLG_BTNTITLE')."', '".CHTTP::urlAddParams(CComponentEngine::MakePathFromTemplate($arParams['PATH_TO_COMPANY_EDIT'],
 			array(
 				'company_id' => $arParams['ELEMENT_ID']

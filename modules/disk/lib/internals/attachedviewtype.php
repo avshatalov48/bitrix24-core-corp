@@ -21,9 +21,9 @@ use Bitrix\Main\NotImplementedException;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_AttachedViewType_Query query()
- * @method static EO_AttachedViewType_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_AttachedViewType_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_AttachedViewType_Result getById($id)
- * @method static EO_AttachedViewType_Result getList(array $parameters = array())
+ * @method static EO_AttachedViewType_Result getList(array $parameters = [])
  * @method static EO_AttachedViewType_Entity getEntity()
  * @method static \Bitrix\Disk\Internals\EO_AttachedViewType createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Internals\EO_AttachedViewType_Collection createCollection()

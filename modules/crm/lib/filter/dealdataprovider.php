@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Filter;
 use Bitrix\Catalog\Config\State;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm;
@@ -576,10 +577,12 @@ class DealDataProvider extends EntityDataProvider
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_deal_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}
@@ -634,7 +637,7 @@ class DealDataProvider extends EntityDataProvider
 				'alias' => 'ASSOCIATED_CONTACT_ID',
 				'params' => array(
 					'apiVersion' => 3,
-					'context' => 'CRM_DEAL_FILTER_CONTACT_ID',
+					'context' => EntitySelector::CONTEXT,
 					'contextCode' => 'CRM',
 					'useClientDatabase' => 'N',
 					'enableAll' => 'N',
@@ -655,7 +658,7 @@ class DealDataProvider extends EntityDataProvider
 			return array(
 				'params' => array(
 					'apiVersion' => 3,
-					'context' => 'CRM_DEAL_FILTER_COMPANY_ID',
+					'context' => EntitySelector::CONTEXT,
 					'contextCode' => 'CRM',
 					'useClientDatabase' => 'N',
 					'enableAll' => 'N',

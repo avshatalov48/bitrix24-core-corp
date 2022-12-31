@@ -391,7 +391,7 @@
 .crm-volume-popup-content-title{
 	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	font-size:15px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	padding-bottom:20px;
 	color:#535b69;
 	border-bottom:1px solid #cfd4d8;

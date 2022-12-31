@@ -195,7 +195,7 @@ class ElementType extends StringType
 
 		if (\CCrmSaleHelper::isWithOrdersMode())
 		{
-			$entityTypes[\CCrmOwnerType::OrderName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::OrderName);
+			$entityTypes[\CCrmOwnerType::OrderName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::Order);
 		}
 
 		if (InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())

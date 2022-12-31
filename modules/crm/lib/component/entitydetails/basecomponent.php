@@ -10,6 +10,7 @@ use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Security\EntityPermissionType;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -204,69 +205,11 @@ abstract class BaseComponent extends Crm\Component\Base
 
 			$multifields[$typeID][$fields['ID']] = [
 				'VALUE' => $fields['VALUE'] ?? '',
-				'VALUE_TYPE' => $fields['VALUE_TYPE'] ?? ''
+				'VALUE_TYPE' => $fields['VALUE_TYPE'] ?? '',
 			];
 		}
 
 		return $multifields;
-	}
-
-	protected static function prepareMultifieldData($entityTypeID, $entityID, $typeID, array &$data)
-	{
-		$dbResult = \CCrmFieldMulti::GetList(
-			array('ID' => 'asc'),
-			array(
-				'ENTITY_ID' => \CCrmOwnerType::ResolveName($entityTypeID),
-				'ELEMENT_ID' => $entityID,
-				'TYPE_ID' => $typeID
-			)
-		);
-
-		$entityKey = "{$entityTypeID}_{$entityID}";
-		while($fields = $dbResult->Fetch())
-		{
-			$value = $fields['VALUE'] ?? '';
-			$valueType = $fields['VALUE_TYPE'];
-			$multiFieldComplexID = $fields['COMPLEX_ID'];
-
-			if($value === '')
-			{
-				continue;
-			}
-
-			if(!isset($data[$typeID]))
-			{
-				$data[$typeID] = array();
-			}
-
-			if(!isset($data[$typeID][$entityKey]))
-			{
-				$data[$typeID][$entityKey] = array();
-			}
-
-			//Is required for phone & email & messenger menu
-			if($typeID === 'PHONE' || $typeID === 'EMAIL'
-				|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
-			)
-			{
-				$formattedValue = $typeID === 'PHONE'
-					? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
-					: $value;
-
-				$data[$typeID][$entityKey][] = array(
-					'ID' => $fields['ID'],
-					'VALUE' => $value,
-					'VALUE_TYPE' => $valueType,
-					'VALUE_FORMATTED' => $formattedValue,
-					'COMPLEX_ID' => $multiFieldComplexID,
-					'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($multiFieldComplexID, false)
-				);
-			}
-			else
-			{
-				$data[$typeID][$entityKey][] = $value;
-			}
-		}
 	}
 
 	protected function getRequestParamOrDefault($paramName, $default = null)
@@ -319,9 +262,10 @@ abstract class BaseComponent extends Crm\Component\Base
 	protected function showErrors()
 	{
 		$messages = array();
+		/** @var Error $error */
 		foreach($this->errorCollection as $error)
 		{
-			$message = $this->getErrorMessage($error);
+			$message = $error->getMessage();
 			if($message !== '')
 			{
 				$messages[] = $message;
@@ -557,7 +501,7 @@ abstract class BaseComponent extends Crm\Component\Base
 
 	protected function getEntitySelectorContext(): string
 	{
-		return $this->getComponentName();
+		return EntitySelector::CONTEXT;
 	}
 
 	/**

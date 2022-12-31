@@ -5,6 +5,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main\Grid;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Filter;
 use Bitrix\Tasks\Internals\Task\Template\TemplateTagTable;
@@ -25,7 +26,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 	public function configureActions()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return [];
 		}
@@ -52,7 +53,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 	protected function init()
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -82,7 +83,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 
 	public function batchDeleteAction($ids, $isAllSelected = false)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -91,17 +92,48 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 			'ID' => $ids,
 		];
 
-		if($isAllSelected)
+		if ($isAllSelected)
 		{
 			$filter = [];
 		}
 
 		$mgrResult = Manager\Task\Template::getList($this->userId, ['select' => ['ID'], 'filter' => $filter]);
-		$ids = array_column($mgrResult['DATA'], 'ID');
+		$templates = $mgrResult['DATA'];
+		$actionAllowed = true;
 
-		\CTaskTemplates::DeleteBatch($ids);
+		$nonAccessTemplates = [];
+		$templateService = new Bitrix\Tasks\Control\Template($this->userId);
 
-		return [];
+		$result = [];
+		foreach ($templates as $template)
+		{
+			foreach ($template['ALLOWED_ACTIONS'] as $action => $allowed)
+			{
+				$id = (int)$template['ID'];
+				if ($action === 'template_remove' && !$allowed)
+				{
+					$actionAllowed = false;
+					$nonAccessTemplates[] = $id;
+				}
+				elseif ($action === 'template_remove' && $allowed)
+				{
+					$result[] = $templateService->delete($id);
+				}
+			}
+		}
+		if (!$actionAllowed)
+		{
+			return [
+				'success' => false,
+				'message' => Loc::getMessage('TASKS_TEMPLATES_LIST_GROUP_ACTION_ERROR_MESSAGE', [
+					'#MESSAGE#' => Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'),
+					'#TEMPLATE_IDS#' => implode(',', $nonAccessTemplates),
+				]),
+				'needReload' => !empty($result)
+			];
+		}
+
+		return ['success' => true];
 	}
 
 	/**
@@ -116,7 +148,7 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 	 */
 	public function getListAction($select = null, $order = null, $filter = null, $limit = self::DEFAULT_LIMIT)
 	{
-		if (!\Bitrix\Main\Loader::includeModule('tasks'))
+		if (!Loader::includeModule('tasks'))
 		{
 			return null;
 		}
@@ -501,6 +533,11 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		}
 
 		$mgrResult = Manager\Task\Template::getList($this->userId, $getListParameters, $parameters);
+		$visibleColumns = explode(',', $this->getGridOptions()->getCurrentOptions()['columns']);
+		if (in_array('TASKS_TEMPLATE_TAGS', $visibleColumns, true))
+		{
+			$mgrResult['DATA'] = $this->mergeWithTags($mgrResult['DATA']);
+		}
 
 
 		//region NAV
@@ -512,6 +549,32 @@ class TasksTemplatesListComponent extends TasksBaseComponent
 		//endregion
 
 		return $mgrResult['DATA'];
+	}
+
+
+	protected function mergeWithTags(array $items)
+	{
+		if (empty($items))
+		{
+			return array();
+		}
+
+		$res = TemplateTagTable::getList([
+			'select' => [
+				'TEMPLATE_ID',
+				'NAME',
+			],
+			'filter' => [
+				'TEMPLATE_ID' => array_keys($items),
+			],
+		]);
+
+		while ($row = $res->fetch())
+		{
+			$items[$row['TEMPLATE_ID'] ]['TAGS'][] = $row['NAME'];
+		}
+
+		return $items;
 	}
 
 	protected function getOrder()

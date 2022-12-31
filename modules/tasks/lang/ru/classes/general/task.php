@@ -26,7 +26,7 @@ $MESS['TASKS_FIELDS_Y']='Да';
 $MESS['TASKS_FIELDS_N']='Нет';
 
 $MESS['TASKS_FIELDS_ID']='ID';
-$MESS['TASKS_FIELDS_PARENT_ID']='ID родительской задачи';
+$MESS['TASKS_FIELDS_PARENT_ID']='ID базовой задачи';
 $MESS['TASKS_FIELDS_TITLE']='Название';
 $MESS['TASKS_FIELDS_DESCRIPTION']='Описание';
 $MESS['TASKS_FIELDS_MARK']='Оценка';

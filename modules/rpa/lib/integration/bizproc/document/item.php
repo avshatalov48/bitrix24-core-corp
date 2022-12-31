@@ -194,7 +194,7 @@ class Item implements \IBPWorkflowDocument
 		return $fields;
 	}
 
-	public static function getDocument($documentId, $documentType = null): array
+	public static function getDocument($documentId, $documentType = null): ?array
 	{
 		$fields = null;
 		[$typeId, $itemId] = explode(':', $documentId);

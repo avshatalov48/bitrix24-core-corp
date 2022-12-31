@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Service\Timeline\Item;
 use Bitrix\Crm\Activity\IncomingChannel;
 use Bitrix\Crm\Service\Timeline\Layout;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItemFactory;
+use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
 
@@ -20,6 +21,33 @@ abstract class Activity extends Configurable
 	public function getType(): string
 	{
 		return sprintf('Activity:%s', $this->getActivityTypeId());
+	}
+
+	public function getSort(): array
+	{
+		if (!$this->getModel()->isScheduled())
+		{
+			return parent::getSort();
+		}
+
+		if ($this->isIncomingChannel())
+		{
+			// incoming channel activities have a negative timestamp because they must be first in the list
+			// and must be sorted in reverse order:
+			return [
+				$this->getDate()
+					? -(int)$this->getDate()->getTimestamp()
+					: 0,
+				(int)$this->getActivityId()
+			];
+		}
+
+		return [
+			$this->getDeadline()
+				? (int)$this->getDeadline()->getTimestamp()
+				: PHP_INT_MAX,
+			(int)$this->getActivityId()
+		];
 	}
 
 	public function getCounterType(): ?string
@@ -60,13 +88,9 @@ abstract class Activity extends Configurable
 		return parent::getBackgroundColorToken();
 	}
 
-	public function getTitleAction(): ?Layout\Action
-	{
-		return (new Layout\Action\JsEvent('Activity:View'))
-			->addActionParamInt('activityId', $this->getActivityId())
-		;
-	}
-
+	/**
+	 * @return array<string, Layout\Menu\MenuItem>
+	 */
 	public function getMenuItems(): array
 	{
 		$activityId = $this->getActivityId();
@@ -100,6 +124,7 @@ abstract class Activity extends Configurable
 					->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 					->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 					->addActionParamString('confirmationText', $this->getDeleteConfirmationText())
+					->setAnimation(Layout\Action\Animation::disableItem()->setForever())
 			)
 		;
 
@@ -117,7 +142,7 @@ abstract class Activity extends Configurable
 		{
 			return false;
 		}
-		$deadline = $this->getModel()->getDate();
+		$deadline = $this->getDeadline();
 		if ($deadline)
 		{
 			$deadline = $deadline->getTimestamp();
@@ -131,7 +156,7 @@ abstract class Activity extends Configurable
 
 	protected function isIncomingChannel(): bool
 	{
-		return IncomingChannel::getInstance()->isIncomingChannel( $this->getActivityId());
+		return $this->getAssociatedEntityModel()->get('IS_INCOMING_CHANNEL') === 'Y';
 	}
 
 	protected function isPlanned(): bool
@@ -159,12 +184,22 @@ abstract class Activity extends Configurable
 			->addActionParamInt('activityId', $this->getActivityId())
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+			->setAnimation(Layout\Action\Animation::showLoaderForItem()->setForever())
 		;
 	}
 
 	protected function getActivityId(): int
 	{
 		return $this->getModel()->getAssociatedEntityId();
+	}
+
+	protected function getDeadline(): ?DateTime
+	{
+		$deadline = $this->getAssociatedEntityModel()->get('DEADLINE');
+		return ($deadline && !\CCrmDateTimeHelper::IsMaxDatabaseDate($deadline))
+			? DateTime::createFromUserTime($deadline)
+			: null
+		;
 	}
 
 	protected function getDeleteConfirmationText(): string
@@ -179,6 +214,18 @@ abstract class Activity extends Configurable
 			return null;
 		}
 
+		return
+			(new Layout\Menu\MenuItemSubmenu(
+				Loc::getMessage('CRM_TIMELINE_POSTPONE'),
+				$this->getPostponeMenu($activityId)
+			))
+				->setSort(9950)
+				->setHideIfReadonly()
+		;
+	}
+
+	protected function getPostponeMenu(int $activityId): Layout\Menu
+	{
 		$postponeValues = [
 			3600 => Loc::getMessage('CRM_TIMELINE_POSTPONE_1H'),
 			7200 => Loc::getMessage('CRM_TIMELINE_POSTPONE_2H'),
@@ -188,11 +235,11 @@ abstract class Activity extends Configurable
 			259200 => Loc::getMessage('CRM_TIMELINE_POSTPONE_3D'),
 		];
 
-		$postponeSubmenu = new Layout\Menu();
+		$postponeMenu = new Layout\Menu();
 
 		foreach ($postponeValues as $offset => $title)
 		{
-			$postponeSubmenu->addItem(
+			$postponeMenu->addItem(
 				'postpone_' . $offset,
 				(new Layout\Menu\MenuItem($title))
 					->setAction(
@@ -201,18 +248,12 @@ abstract class Activity extends Configurable
 							->addActionParamInt('offset', $offset)
 							->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 							->addActionParamInt('ownerId', $this->getContext()->getEntityId())
+							->setAnimation(Layout\Action\Animation::showLoaderForBlock()->setForever())
 					)
 			);
 		}
 
-		return
-			(new Layout\Menu\MenuItemSubmenu(
-				Loc::getMessage('CRM_TIMELINE_POSTPONE'),
-				$postponeSubmenu
-			))
-				->setSort(9950)
-				->setHideIfReadonly()
-			;
+		return $postponeMenu;
 	}
 
 	private function createEditMenuItem(int $activityId): ?Layout\Menu\MenuItem
@@ -227,7 +268,7 @@ abstract class Activity extends Configurable
 				(new Layout\Action\JsEvent('Activity:Edit'))
 					->addActionParamInt('activityId', $activityId)
 			)
-			;
+		;
 	}
 
 	private function canEdit(): bool
@@ -247,9 +288,9 @@ abstract class Activity extends Configurable
 		);
 	}
 
-	private function canPostpone(): bool
+	protected function canPostpone(): bool
 	{
-		if (!$this->getModel()->getDate()) // items without deadline can not be postponed
+		if (!$this->getDeadline()) // items without deadline can not be postponed
 		{
 			return false;
 		}
@@ -259,4 +300,15 @@ abstract class Activity extends Configurable
 			$this->getContext()->getUserPermissions()->getCrmPermissions()
 		);
 	}
+
+	public function getNoteItemType(): int
+	{
+		return NoteTable::NOTE_TYPE_ACTIVITY;
+	}
+
+	public function getNoteItemId(): int
+	{
+		return $this->getActivityId();
+	}
+
 }

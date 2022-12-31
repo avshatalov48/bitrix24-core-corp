@@ -5,7 +5,8 @@ include('InAppNotifier');
 	const platform = Application.getPlatform();
 	const caches = new Map();
 
-	const { EntityReady } = jn.require('entity-ready');
+	const {EntityReady} = jn.require('entity-ready');
+	const {TaskCreateManager} = jn.require('tasks/layout/task/create');
 
 	class Util
 	{
@@ -603,7 +604,7 @@ include('InAppNotifier');
 				[Filter.counterType.none]: (groupId > 0 && groupId === Number(task.groupId) || task.isMember()),
 				[Filter.counterType.expired]: (task.getCounterMyExpiredCount() > 0),
 				[Filter.counterType.newComments]: (task.getCounterMyNewCommentsCount() > 0),
-				[Filter.counterType.supposedlyCompleted]: task.isWaitCtrl,
+				[Filter.counterType.supposedlyCompleted]: task.isSupposedlyCompleted,
 			};
 			switch (role)
 			{
@@ -2087,6 +2088,14 @@ include('InAppNotifier');
 					method: this.list.onPullTaskResultDelete,
 					context: this.list,
 				},
+				task_timer_start: {
+					method: this.list.onTaskTimerStart,
+					context: this.list,
+				},
+				task_timer_stop: {
+					method: this.list.onTaskTimerStop,
+					context: this.list,
+				},
 			};
 		}
 
@@ -2433,20 +2442,32 @@ include('InAppNotifier');
 			return [
 				'ID',
 				'TITLE',
+				'DESCRIPTION',
 				'STATUS',
+				'GROUP_ID',
+
 				'CREATED_BY',
-				'ACTIVITY_DATE',
 				'RESPONSIBLE_ID',
-				'DEADLINE',
-				'COMMENTS_COUNT',
-				'AUDITORS',
 				'ACCOMPLICES',
+				'AUDITORS',
+
+				'DEADLINE',
+				'ACTIVITY_DATE',
+				// 'START_DATE_PLAN',
+				// 'END_DATE_PLAN',
+
 				'FAVORITE',
 				'NOT_VIEWED',
-				'GROUP_ID',
 				'IS_MUTED',
 				'IS_PINNED',
+				'MATCH_WORK_TIME',
+				'TIME_SPENT_IN_LOGS',
+				'TIME_ESTIMATE',
+				'PRIORITY',
+
 				'COUNTERS',
+				'COMMENTS_COUNT',
+				'SERVICE_COMMENTS_COUNT',
 			];
 		}
 
@@ -2459,6 +2480,8 @@ include('InAppNotifier');
 				SEND_PULL: 'Y',
 				MODE: 'mobile',
 				WITH_RESULT_INFO: 'Y',
+				WITH_TIMER_INFO: 'Y',
+				WITH_PARSED_DESCRIPTION: 'Y',
 			};
 		}
 
@@ -2617,6 +2640,7 @@ include('InAppNotifier');
 
 			this.getTaskLimitExceeded();
 			this.checkDeadlinesUpdate();
+			this.getOwnerData();
 
 			BX.addCustomEvent('onPullEvent-tasks', (command, params) => {
 				if (command === 'user_counter')
@@ -2839,7 +2863,32 @@ include('InAppNotifier');
 			{
 				this.list.setFloatingButton({
 					icon: 'plus',
-					callback: () => this.list.showAudioInput(),
+					callback: () => {
+						if (apiVersion >= 45)
+						{
+							const taskCreateParameters = {
+								currentUser: this.currentUser,
+								responsible: this.owner,
+								groupId: this.groupId,
+								groupData: {},
+								diskFolderId: result.diskFolderId,
+								deadlines: this.options.get().deadlines.value,
+							};
+							if (this.groupId > 0)
+							{
+								taskCreateParameters.groupData = {
+									id: this.group.id,
+									name: this.group.name,
+									image: this.group.imageUrl,
+								};
+							}
+							TaskCreateManager.open(taskCreateParameters);
+						}
+						else
+						{
+							this.list.showAudioInput();
+						}
+					},
 				});
 			}
 			else
@@ -3329,6 +3378,14 @@ include('InAppNotifier');
 			}
 		}
 
+		getOwnerData()
+		{
+			(new RequestExecutor('tasksmobile.User.getUsersData', {userIds: [this.owner.id]}))
+				.call()
+				.then(response => this.owner = response.result[this.owner.id])
+			;
+		}
+
 		onTabsSelected(tabName)
 		{
 			const isDefaultRole = this.filter.getRole() === Filter.roleType.all;
@@ -3536,8 +3593,41 @@ include('InAppNotifier');
 				{
 					this.taskList.get(taskId).updateData({
 						taskRequireResult: data.taskRequireResult,
+						taskHasOpenResult: data.taskHasOpenResult,
 						taskHasResult: data.taskHasResult,
 					});
+				}
+				resolve();
+			});
+		}
+
+		onTaskTimerStart(data)
+		{
+			return new Promise((resolve) => {
+				const taskId = String(data.taskId);
+				if (this.taskList.has(taskId))
+				{
+					this.taskList.get(taskId).updateData({
+						timerIsRunningForCurrentUser: 'Y',
+						timeElapsed: data.timeElapsed,
+					});
+				}
+				resolve();
+			});
+		}
+
+		onTaskTimerStop(data)
+		{
+			return new Promise((resolve) => {
+				const taskId = String(data.taskId);
+				if (this.taskList.has(taskId))
+				{
+					const task = this.taskList.get(taskId);
+					if (Number(data.userId) === Number(task.currentUser.id))
+					{
+						task.updateData({timerIsRunningForCurrentUser: 'N'});
+					}
+					task.updateData({timeElapsed: data.timeElapsed[task.currentUser.id]});
 				}
 				resolve();
 			});
@@ -3569,7 +3659,7 @@ include('InAppNotifier');
 					image: this.group.imageUrl,
 				};
 			}
-			task.files = attachedFiles.disk;
+			task.diskFiles = attachedFiles.disk;
 
 			this.newTaskList.set(task.guid);
 			this.addItem(task, SectionHandler.sections.new);
@@ -3940,10 +4030,13 @@ include('InAppNotifier');
 			else if (this.taskList.has(taskId))
 			{
 				const task = this.taskList.get(taskId);
-				this.filter.pseudoUpdateCounters(-task.getCounterMyNewCommentsCount(), task);
 
-				task.pseudoRead();
-				this.updateItem(taskId);
+				if (apiVersion < 45)
+				{
+					this.filter.pseudoUpdateCounters(-task.getCounterMyNewCommentsCount(), task);
+					task.pseudoRead();
+					this.updateItem(taskId);
+				}
 
 				task.open();
 			}
@@ -3959,28 +4052,25 @@ include('InAppNotifier');
 					status: Task.statusList.pending,
 					activityDate: Date.now(),
 				});
-				task.renew();
+				void task.renew();
 			}
-			else if (task.isWaitCtrlCounts)
+			else if (task.isSupposedlyCompletedCounts)
 			{
 				this.onApproveAction(task);
 			}
 			else
 			{
-				if (!task.isRequireResult || task.isHasResult)
+				if (!task.isResultRequired || task.isOpenResultExists)
 				{
 					this.updateItem(task.id, {
 						status: Task.statusList.completed,
 						activityDate: Date.now(),
 					});
-					task.complete();
+					void task.complete();
 				}
 				else
 				{
-					const oldStatus = task.status;
-					task.complete().then(() => {}, () => task.status = oldStatus);
-					task.status = oldStatus;
-					this.updateItem(task.id);
+					task.complete().then(() => {}, () => this.updateItem(task.id));
 				}
 			}
 		}
@@ -4005,6 +4095,14 @@ include('InAppNotifier');
 
 				case 'disapprove':
 					this.onDisapproveAction(task);
+					break;
+
+				case 'startTimer':
+					this.onStartTimerAction(task);
+					break;
+
+				case 'pauseTimer':
+					this.onPauseTimerAction(task);
 					break;
 
 				case 'start':
@@ -4113,6 +4211,14 @@ include('InAppNotifier');
 
 				case 'disapprove':
 					this.onDisapproveAction(task);
+					break;
+
+				case 'startTimer':
+					this.onStartTimerAction(task);
+					break;
+
+				case 'pauseTimer':
+					this.onPauseTimerAction(task);
 					break;
 
 				case 'start':
@@ -4231,10 +4337,12 @@ include('InAppNotifier');
 		{
 			if (task.status === TaskList.statusList.waitCtrl)
 			{
-				task.rawAccess.approve = false;
-				task.rawAccess.disapprove = false;
-				task.rawAccess.complete = false;
-				task.rawAccess.renew = true;
+				task.updateActions({
+					canApprove: false,
+					canDisapprove: false,
+					canComplete: false,
+					canRenew: true,
+				});
 				task.approve().then(() => this.updateItem(task.id, {status: task.status}));
 				this.updateItem(task.id, {
 					status: task.status,
@@ -4250,14 +4358,48 @@ include('InAppNotifier');
 		{
 			if (task.status === TaskList.statusList.waitCtrl)
 			{
-				task.rawAccess.approve = false;
-				task.rawAccess.disapprove = false;
-				task.rawAccess.renew = false;
-				task.rawAccess.complete = false;
-				task.rawAccess.start = true;
+				task.updateActions({
+					canApprove: false,
+					canDisapprove: false,
+					canRenew: false,
+					canComplete: false,
+					canStart: true,
+				});
 				task.disapprove().then(() => this.updateItem(task.id, {status: task.status}));
 				this.updateItem(task.id, {status: task.status});
 			}
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onStartTimerAction(task)
+		{
+			task.updateActions({
+				canStartTimer: false,
+				canPauseTimer: true,
+				canStart: false,
+				canPause: false,
+				canRenew: false,
+			});
+			task.startTimer().then(() => this.updateItem(task.id, {status: task.status}));
+			this.updateItem(task.id, {status: task.status});
+		}
+
+		/**
+		 * @param {Task} task
+		 */
+		onPauseTimerAction(task)
+		{
+			task.updateActions({
+				canStartTimer: true,
+				canPauseTimer: false,
+				canStart: false,
+				canPause: false,
+				canRenew: false,
+			});
+			task.pauseTimer().then(() => this.updateItem(task.id, {status: task.status}));
+			this.updateItem(task.id, {status: task.status});
 		}
 
 		/**
@@ -4267,9 +4409,13 @@ include('InAppNotifier');
 		{
 			if (task.status !== TaskList.statusList.inprogress)
 			{
-				task.rawAccess.start = false;
-				task.rawAccess.pause = true;
-				task.rawAccess.renew = false;
+				task.updateActions({
+					canStartTimer: false,
+					canPauseTimer: false,
+					canStart: false,
+					canPause: true,
+					canRenew: false,
+				});
 				task.start().then(() => this.updateItem(task.id, {status: task.status}));
 				this.updateItem(task.id, {status: task.status});
 			}
@@ -4282,9 +4428,13 @@ include('InAppNotifier');
 		{
 			if (task.status !== TaskList.statusList.pending)
 			{
-				task.rawAccess.start = true;
-				task.rawAccess.pause = false;
-				task.rawAccess.renew = false;
+				task.updateActions({
+					canStartTimer: false,
+					canPauseTimer: false,
+					canStart: true,
+					canPause: false,
+					canRenew: false,
+				});
 				task.pause().then(() => this.updateItem(task.id, {status: task.status}));
 				this.updateItem(task.id, {status: task.status});
 			}
@@ -4297,9 +4447,11 @@ include('InAppNotifier');
 		{
 			if (task.isCompletedCounts)
 			{
-				task.rawAccess.start = true;
-				task.rawAccess.pause = false;
-				task.rawAccess.renew = false;
+				task.updateActions({
+					canStart: true,
+					canPause: false,
+					canRenew: false,
+				});
 				task.renew().then(() => this.updateItem(task.id, {
 					status: task.status,
 					activityDate: Date.now(),
@@ -4454,7 +4606,7 @@ include('InAppNotifier');
 		 */
 		onUnfollowAction(task)
 		{
-			task.auditors = task.auditors.filter(userId => userId !== Number(this.currentUser.id));
+			delete task.auditors[this.currentUser.id.toString()];
 
 			if (!task.isMember(this.currentUser.id))
 			{

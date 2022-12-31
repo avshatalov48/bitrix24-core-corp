@@ -1,6 +1,9 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\Permission\PermissionDictionary;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Crm\Product\Url;
@@ -162,6 +165,10 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 	{
 		$result = [];
 		$itemStoreCollection = $item->getShipmentItemStoreCollection();
+		if (!$itemStoreCollection)
+		{
+			return $result;
+		}
 
 		/** @var \Bitrix\Sale\ShipmentItemStore $barcode */
 		foreach ($itemStoreCollection as $barcode)
@@ -249,8 +256,10 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 
 				$productId = $basketItem->getProductId();
 
-				if ($basketItem->getField("MODULE") == "catalog" && !empty($catalogProductsFields[$productId]))
+				if ($basketItem->getField("MODULE") === "catalog" && !empty($catalogProductsFields[$productId]))
+				{
 					$params = $catalogProductsFields[$productId];
+				}
 
 				if (intval($basketItem->getField("MEASURE_CODE")) > 0)
 					$params["MEASURE_CODE"] = intval($basketItem->getField("MEASURE_CODE"));
@@ -333,7 +342,14 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			}
 
 			$params['BASKET_CODE'] = $item->getBasketCode();
-			$this->setStoresBarcodesInfo($params);
+			if (is_array($params['STORES']) && !empty($params['STORES']))
+			{
+				$params['STORES'] = $this->filterStores($params['STORES']);
+			}
+			if (!$basketItem->isService())
+			{
+				$this->setStoresBarcodesInfo($params);
+			}
 
 			if($this->arResult['SHOW_TOOL_PANEL'] != 'Y')
 			{
@@ -426,6 +442,29 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 			[".php","/bitrix/admin/"],
 			["/", "/shop/settings/"],
 			$url
+		);
+	}
+
+	private function filterStores(array $stores): array
+	{
+		$allowedStores = $this->getAllowedStores();
+		if (!$allowedStores)
+		{
+			return [];
+		}
+
+		if (in_array(PermissionDictionary::VALUE_VARIATION_ALL, $allowedStores, true))
+		{
+			return $stores;
+		}
+
+		$flippedAllowedStores = array_flip($allowedStores);
+
+		return array_filter(
+			$stores,
+			static function ($storeInfo) use ($flippedAllowedStores) {
+				return isset($flippedAllowedStores[$storeInfo['STORE_ID']]);
+			}
 		);
 	}
 
@@ -673,7 +712,18 @@ final class CCrmOrderShipmentProductListComponent extends \CBitrixComponent
 		$this->arResult['DEDUCTED'] = $this->shipment->getField('DEDUCTED');
 		$this->arResult['PRODUCTS'] = $this->getProductsFields($itemsCollection);
 		$this->arResult['SERVICE_URL'] = $this->getPath().'/ajax.php';
+		$this->arResult['ALLOW_SELECT_PRODUCT'] = $this->isAllowedCatalogView();
 		$this->arResult['ADD_PRODUCT_URL'] = $this->getPath().'/addproduct.php?shipmentId='.$this->shipment->getId().'&orderId='.$this->order->getId().'&'.bitrix_sessid_get();
 		$this->IncludeComponentTemplate();
+	}
+
+	private function getAllowedStores(): ?array
+	{
+		return AccessController::getCurrent()->getPermissionValue(ActionDictionary::ACTION_STORE_VIEW);
+	}
+
+	private function isAllowedCatalogView(): bool
+	{
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 	}
 }

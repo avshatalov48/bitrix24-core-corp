@@ -14,13 +14,13 @@ use Bitrix\Main\Localization\Loc;
 
 global $APPLICATION;
 
-$allowEdit = $arResult['ENTITY_DATA']['DEDUCTED'] !== 'Y';
+$allowEdit = $arResult['ENTITY_DATA']['DEDUCTED'] !== 'Y' && !$arResult['IS_READ_ONLY'];
 
 $APPLICATION->IncludeComponent(
 	'bitrix:catalog.store.document.product.list',
 	'.default',
 	[
-		'ALLOW_EDIT' => $allowEdit ? 'Y' : 'N',
+		'ALLOW_EDIT' => $allowEdit  ? 'Y' : 'N',
 		'CATALOG_ID' => \Bitrix\Crm\Product\Catalog::getDefaultId(),
 		'CURRENCY' => $arResult['ENTITY_DATA']['CURRENCY'] ?? null,
 		'BUILDER_CONTEXT' => \Bitrix\Catalog\Url\InventoryBuilder::TYPE_ID,
@@ -49,6 +49,9 @@ $APPLICATION->IncludeComponent(
 				'STORE_FROM_AVAILABLE_AMOUNT' => Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_COLUMN_STORE_FROM_AVAILABLE_AMOUNT'),
 			],
 			'INITIAL_PRODUCTS' => $arResult['COMPONENT_PRODUCTS'],
+			'RESTRICTED_PRODUCT_TYPES' => [
+				\Bitrix\Catalog\ProductTable::TYPE_SET,
+			],
 		],
 		'PRESELECTED_PRODUCT_ID' => $arParams['PRESELECTED_PRODUCT_ID'] ?? null,
 	],

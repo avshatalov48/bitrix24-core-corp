@@ -5,6 +5,7 @@
 	bottom: 0;
 	right: 0;
 	background-color: #fff;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .b24-form-state-container .b24-form-loader,
@@ -21,6 +22,7 @@
 	justify-content: center;
     overflow: hidden;
 	z-index: 15;
+	border-radius: var(--ui-border-radius-md);
 }
 
 .b24-form-wrapper.b24-form-border-top .b24-form-state-container .b24-form-state,

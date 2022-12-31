@@ -1,6 +1,7 @@
 <?php
 
 use Bitrix\DocumentGenerator\Body\Docx;
+use Bitrix\DocumentGenerator\Model;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -25,6 +26,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_ru.docx',
 		'PROVIDERS' => array_merge($invoiceAndDeal, [$shipmentDocumentRealization]),
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_SERVICE
 	],
 	[
 		'REGION' => 'ru',
@@ -55,6 +57,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_ru.docx',
 		'PROVIDERS' => $invoiceAndDeal,
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'ru',
@@ -125,6 +128,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_store_adjustment_ru.docx',
 		'PROVIDERS' => [$storeDocumentStoreAdjustment],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'ru',
@@ -135,6 +139,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_arrival_ru.docx',
 		'PROVIDERS' => [$storeDocumentArrival],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'ru',
@@ -145,6 +150,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/store_doc_moving_ru.docx',
 		'PROVIDERS' => [$storeDocumentMoving],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'ru',
@@ -155,6 +161,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/shipment_doc_realization_ru.docx',
 		'PROVIDERS' => [$shipmentDocumentRealization],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'by',
@@ -165,6 +172,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_by.docx',
 		'PROVIDERS' => $invoiceAndDeal,
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_SERVICE
 	],
 	[
 		'REGION' => 'by',
@@ -195,6 +203,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_by.docx',
 		'PROVIDERS' => [$deal],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'by',
@@ -205,6 +214,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/ttn_by.docx',
 		'PROVIDERS' => [$deal],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'by',
@@ -265,6 +275,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_kz.docx',
 		'PROVIDERS' => $invoiceAndDeal,
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_SERVICE
 	],
 	[
 		'REGION' => 'kz',
@@ -305,6 +316,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_kz.docx',
 		'PROVIDERS' => [$deal],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'kz',
@@ -325,6 +337,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/act_ua.docx',
 		'PROVIDERS' => $invoiceAndDeal,
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_SERVICE
 	],
 	[
 		'REGION' => 'ua',
@@ -385,6 +398,7 @@ return [
 		'BODY_TYPE' => Docx::class,
 		'FILE' => '/bitrix/modules/documentgenerator/data/templates/nakl_ua.docx',
 		'PROVIDERS' => [$deal],
+		'PRODUCTS_TABLE_VARIANT' => Model\TemplateTable::PRODUCTS_TABLE_VARIANT_GOODS
 	],
 	[
 		'REGION' => 'ua',

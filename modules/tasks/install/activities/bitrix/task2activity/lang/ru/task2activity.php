@@ -1,4 +1,5 @@
 <?php
+
 $MESS["BPSNMA_EMPTY_TASKASSIGNEDTO"] = "Свойство 'Ответственный' не указано.";
 $MESS["BPSNMA_EMPTY_TASKNAME"] = "Свойство 'Название задачи' не указано.";
 $MESS["TASK_EMPTY_GROUP"] = "Персональная задача";
@@ -34,4 +35,5 @@ $MESS["BPTA1A_TIME_TRACKING_M"] = "Время выполнения, минут";
 $MESS["BPTA1A_TASK_TASK_PRESENCE_ERROR"] = "Не существует задачи с id \"#TASK_ID#\"";
 $MESS["BPTA1A_MAKE_SUBTASK"] = "Сделать подзадачей";
 $MESS['BPTA1A_HOLD_TO_CLOSE'] = 'Остановить процесс на время выполнения задачи';
-?>
+$MESS["BPTA1A_TASK_URL_NAME"] = "Задача";
+$MESS["BPTA1A_TASK_URL_LABEL"] = "Открыть задачу";

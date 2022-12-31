@@ -20,7 +20,6 @@
 .crm__channel-selector--list {
 	background: #ffffff;
 	box-shadow: 0 1px 3px 0 rgba(0,0,0,.1);
-	border-radius: var(--ui-border-radius-sm, 8px);
 	box-sizing: border-box;
 }
 .crm__channel-selector--list.--empty {

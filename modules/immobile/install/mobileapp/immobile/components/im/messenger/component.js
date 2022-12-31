@@ -16,14 +16,13 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 {
 	window.Messenger.destructor();
 }
-
 /* endregion Clearing session variables after script reload */
-
 (() => {
 	/* region import */
 
 	const { Type } = jn.require('type');
 	const { Loc } = jn.require('loc');
+	const { get } = jn.require('utils/object');
 	const { createStore } = jn.require('statemanager/vuex');
 	const { VuexManager } = jn.require('statemanager/vuex-manager');
 	const { RestManager } = jn.require('im/messenger/lib/rest-manager');
@@ -196,6 +195,7 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 		{
 			BX.addCustomEvent(EventType.messenger.openDialog, this.openDialog.bind(this));
 			BX.addCustomEvent(EventType.messenger.openLine, this.openLine.bind(this));
+			BX.addCustomEvent(EventType.messenger.getOpenDialogParams, this.getOpenDialogParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.getOpenLineParams, this.getOpenLineParams.bind(this));
 			BX.addCustomEvent(EventType.messenger.joinCall, this.joinCall.bind(this));
 			BX.addCustomEvent(EventType.messenger.showSearch, this.openChatSearch.bind(this));
@@ -340,11 +340,30 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 
 		/* endregion initiation */
 
+
 		/* region event handlers */
 
-		openDialog(options)
+		openDialog(options = {})
 		{
 			Logger.info('EventType.messenger.openDialog', options);
+
+			//TODO: transfer the list of calls to the model and transfer the work with calls to the integration class
+			if (options.callId && !options.dialogId)
+			{
+				const call = this.recent.getCallById('call' + options.callId);
+				if (!call)
+				{
+					return;
+				}
+
+				const dialogId = get(call, 'params.call.associatedEntity.id', null);
+				if (!dialogId)
+				{
+					return;
+				}
+
+				options.dialogId = dialogId;
+			}
 
 			this.dialog.open(options);
 		}
@@ -424,15 +443,21 @@ if (typeof window.Messenger !== 'undefined' && typeof window.Messenger.destructo
 			Logger.log('EventType.chatDialog.taskStatusSuccess', taskId, result);
 		}
 
-		getOpenLineParams(options)
+		getOpenDialogParams(options = {})
+		{
+			const openDialogParamsResponseEvent = EventType.messenger.openDialogParams + '::' + options.dialogId;
+
+			const params = Dialog.getOpenDialogParams(options);
+			BX.postComponentEvent(openDialogParamsResponseEvent, [ params ]);
+		}
+
+		getOpenLineParams(options = {})
 		{
 			const openLineParamsResponseEvent = EventType.messenger.openLineParams + '::' + options.userCode;
 
-			this.dialog.getOpenLineParams(options)
-				.then(params => {
-					BX.postComponentEvent(openLineParamsResponseEvent, [ params ]);
-				})
-			;
+			Dialog.getOpenLineParams(options).then(params => {
+				BX.postComponentEvent(openLineParamsResponseEvent, [ params ]);
+			});
 		}
 
 		/* region legacy dialog integration */

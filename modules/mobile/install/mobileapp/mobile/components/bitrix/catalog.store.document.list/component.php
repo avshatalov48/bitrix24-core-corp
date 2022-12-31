@@ -2,7 +2,6 @@
 
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Main\Context;
-use Bitrix\Main\Engine\UrlManager;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorableImplementation;
 use Bitrix\Main\ErrorCollection;
@@ -10,6 +9,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Main\LoaderException;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Controller\Catalog\StoreDocumentList;
+use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -23,18 +23,18 @@ $component = new class {
 
 	private const NOT_CONDUCTED_STATUS_PARAMS = [
 		'value' => self::NOT_CONDUCTED,
-		'textColor' => '#535c69',
-		'backgroundColor' => '#eaebed',
+		'textColor' => '#79818b',
+		'backgroundColor' => '#e0e2e4',
 	];
 	private const CONDUCTED_STATUS_PARAMS = [
 		'value' => self::CONDUCTED,
-		'textColor' => '#589308',
-		'backgroundColor' => '#E4F5C8',
+		'textColor' => '#589309',
+		'backgroundColor' => '#e0f5c2',
 	];
 	private const CANCELLED_STATUS_PARAMS = [
 		'value' => self::CANCELLED,
-		'textColor' => '#B47A00',
-		'backgroundColor' => '#ffdfa1',
+		'textColor' => '#9d7e2b',
+		'backgroundColor' => '#faf4a0',
 	];
 
 	private const TYPE_LOGO_PATTERN = '/bitrix/mobileapp/mobile/components/bitrix/catalog.store.document.details/images/type_#DOCUMENT_TYPE#.png';
@@ -167,6 +167,7 @@ $component = new class {
 			'documentTabs' => $this->getDocumentTabs(),
 			'actions' => StoreDocumentList::getActionsList(),
 			'statuses' => $this->prepareStatuses(),
+			'permissions' => PermissionsProvider::getInstance()->getPermissions()
 		];
 	}
 

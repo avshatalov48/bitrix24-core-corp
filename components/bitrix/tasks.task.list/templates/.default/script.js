@@ -1178,6 +1178,7 @@ BX(function() {
 							{
 								row.setCellsContent({ACTIVITY_DATE: rowData.content.ACTIVITY_DATE});
 							}
+							row.setActions(rowData.actions);
 							row.setCellActions(rowData.cellActions);
 							row.setCounters(rowData.counters);
 

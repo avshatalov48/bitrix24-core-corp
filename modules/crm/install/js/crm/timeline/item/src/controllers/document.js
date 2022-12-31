@@ -1,24 +1,54 @@
-import { ajax as Ajax, Text, Type, Loc } from 'main.core';
-import {DateTimeFormat} from "main.date";
-import { Base } from './base';
+import { ajax as Ajax, Loc, Text, Type, Uri } from 'main.core';
+import { DateTimeFormat } from "main.date";
+import { type ActionAnimationCallbacks, type ActionParams, Base } from './base';
 import ConfigurableItem from '../configurable-item';
+import { ActionType } from "../action";
 import { Router } from "crm.router";
-import { MessageBox } from "ui.dialogs.messagebox";
+import {MessageBox, MessageBoxButtons} from "ui.dialogs.messagebox";
 import { DatetimeConverter } from "crm.timeline.tools";
-import {UI} from 'ui.notification';
+import { UI } from 'ui.notification';
 
-const ITEM_TYPE = 'Activity:Document';
-const ACTION_NAMESPACE = ITEM_TYPE + ':';
+const ACTION_NAMESPACE = 'Document:';
 
 export class Document extends Base
 {
-	onItemAction(item: ConfigurableItem, action: String, actionData: ?Object): void
+	static #toPrintAfterRefresh: ConfigurableItem[] = [];
+
+	static isItemSupported(item: ConfigurableItem): boolean
+	{
+		return (
+			item.getType() === 'Document'
+			|| item.getType() === 'DocumentViewed'
+			|| item.getType() === 'Activity:Document'
+		);
+	}
+
+	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
+	{
+		const {action, actionType, actionData, response, animationCallbacks} = actionParams;
+
+		if (ActionType.isJsEvent(actionType))
+		{
+			this.#onJsEvent(action, actionData, animationCallbacks, item);
+		}
+		else if (ActionType.isAjaxAction(actionType))
+		{
+			this.#onAjaxAction(action, actionType, actionData, response);
+		}
+	}
+
+	#onJsEvent(
+		action: string,
+		actionData: Object,
+		animationCallbacks: ?ActionAnimationCallbacks,
+		item: ConfigurableItem,
+	): void
 	{
 		const documentId = Text.toInteger(actionData?.documentId);
-		if (documentId <= 0)
-		{
-			return;
-		}
+		// if (documentId <= 0)
+		// {
+		// 	return;
+		// }
 
 		if (action === (ACTION_NAMESPACE + 'Open'))
 		{
@@ -31,7 +61,7 @@ export class Document extends Base
 		}
 		else if (action === (ACTION_NAMESPACE + 'Print'))
 		{
-			this.#printDocument(actionData?.printUrl);
+			this.#printDocument(actionData?.printUrl, animationCallbacks, item);
 		}
 		else if (action === (ACTION_NAMESPACE + 'DownloadPdf'))
 		{
@@ -49,9 +79,31 @@ export class Document extends Base
 		{
 			this.#updateCreateDate(documentId, actionData?.value);
 		}
+		else if (action === (ACTION_NAMESPACE + 'Delete'))
+		{
+			const confirmationText = actionData.confirmationText ?? '';
+			if (confirmationText)
+			{
+				MessageBox.show({
+					message: confirmationText,
+					modal: true,
+					buttons: MessageBoxButtons.YES_NO,
+					onYes: () => {
+						return this.#deleteDocument(actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+					},
+					onNo: (messageBox) => {
+						messageBox.close();
+					},
+				});
+			}
+			else
+			{
+				this.#deleteDocument(actionData.id, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
+			}
+		}
 		else
 		{
-			console.info(`Unknown action ${action} in ${ITEM_TYPE}`);
+			console.info(`Unknown action ${action} in ${item.getType()}`);
 		}
 	}
 
@@ -122,15 +174,20 @@ export class Document extends Base
 		return publicUrl;
 	}
 
-	#printDocument(printUrl: ?string): void
+	#printDocument(printUrl: ?string, animationCallbacks: ?ActionAnimationCallbacks, item: ConfigurableItem): void
 	{
 		if (Type.isStringFilled(printUrl))
 		{
 			window.open(printUrl, '_blank');
+			return;
 		}
-		else
+
+		// there is no pdf yet. wait till document is transformed and update push comes in
+		Document.#toPrintAfterRefresh.push(item);
+		const onStart = animationCallbacks?.onStart;
+		if (Type.isFunction(onStart))
 		{
-			MessageBox.alert(Loc.getMessage('CRM_TIMELINE_ITEM_ACTIVITY_DOCUMENT_PRINT_NOT_READY'));
+			onStart();
 		}
 	}
 
@@ -220,8 +277,89 @@ export class Document extends Base
 		}
 	}
 
-	static isItemSupported(item: ConfigurableItem): boolean
+	#deleteDocument(id: number, ownerTypeId: number, ownerId: number, animationCallbacks: Object): boolean
 	{
-		return item.getType() === ITEM_TYPE;
+		if (animationCallbacks.onStart)
+		{
+			animationCallbacks.onStart();
+		}
+		return Ajax.runAction(
+			'crm.timeline.document.delete',
+			{
+				data: {
+					id,
+					ownerTypeId,
+					ownerId,
+				}
+			}
+		).then(() => {
+			if (animationCallbacks.onStop)
+			{
+				animationCallbacks.onStop();
+			}
+			return true;
+		}, (response) =>
+		{
+			UI.Notification.Center.notify({
+				content: response.errors[0].message,
+				autoHideDelay: 5000,
+			});
+			if (animationCallbacks.onStop)
+			{
+				animationCallbacks.onStop();
+			}
+
+			return true;
+		});
+	}
+
+	#onAjaxAction(action: string, actionType: string, actionData: Object, response: Object): void
+	{
+		if (action === 'crm.api.integration.sign.convertDeal')
+		{
+			if (actionType === ActionType.AJAX_ACTION.FINISHED && !Type.isNil(response?.data?.SMART_DOCUMENT))
+			{
+				//todo extract it to router?
+				const wizardUri = new Uri('/sign/doc/0/');
+				wizardUri.setQueryParams({
+					docId: response.data.SMART_DOCUMENT,
+					stepId: 'changePartner',
+					noRedirect: 'Y',
+				});
+				BX.SidePanel.Instance.open(wizardUri.toString());
+			}
+		}
+	}
+
+	onAfterItemRefreshLayout(item: ConfigurableItem)
+	{
+		const itemsToPrint = Document.#toPrintAfterRefresh.filter(candidate => candidate.getId() === item.getId());
+		if (itemsToPrint.length <= 0)
+		{
+			return;
+		}
+
+		const action = item.getLayout().asPlainObject().footer?.additionalButtons?.extra?.action;
+		const isPrintEvent = (
+			Type.isPlainObject(action)
+			&& ActionType.isJsEvent(action.type)
+			&& action.value === (ACTION_NAMESPACE + 'Print')
+		);
+		if (!isPrintEvent)
+		{
+			return;
+		}
+
+		const printUrl = action.actionParams?.printUrl;
+		if (!Type.isStringFilled(printUrl))
+		{
+			return;
+		}
+
+		this.#printDocument(printUrl, null, item);
+
+		Document.#toPrintAfterRefresh =
+			Document.#toPrintAfterRefresh.filter(remainingItem => !itemsToPrint.includes(remainingItem))
+		;
 	}
 }

@@ -47,15 +47,20 @@ if(!empty($settingsItems))
 {
 	$settingsButtonId = htmlspecialcharsbx($toolbarId);
 	$settingsMenuId = htmlspecialcharsbx("{$toolbarId}_settings_menu");
+	$settingsButtonItems = Bitrix\Crm\UI\Tools\ToolBar::mapItems(
+		$settingsItems,
+		$toolbarId,
+		$arParams['TOOLBAR_PARAMS'] ?? []
+	);
 	$settingsButton = new SettingsButton([
 		'id' => $settingsButtonId,
 		'menu' => [
 			'id' => $settingsMenuId,
-			'items' => Bitrix\Crm\UI\Tools\ToolBar::mapItems($settingsItems, $toolbarId),
+			'items' => $settingsButtonItems,
 			'offsetLeft' => 20,
 			'closeByEsc' => true,
-			'angle' => true
-		]
+			'angle' => true,
+		],
 	]);
 	Toolbar::addButton($settingsButton);
 }
@@ -95,7 +100,6 @@ for($i = 0; $i < $itemCount; $i++)
 			'link' => $link,
 			'text' => $text,
 			'color' => Color::SUCCESS,
-			'icon' => Icon::ADD,
 			'click' => new JsCode('
 				var popup = this.menuWindow.popupWindow;
 				if (popup) {popup.setOffset({offsetLeft: BX.pos(popup.bindElement).width - 17});}
@@ -116,7 +120,7 @@ for($i = 0; $i < $itemCount; $i++)
 		$splitItems = isset($item['ITEMS']) && is_array($item['ITEMS']) ? $item['ITEMS'] : [];
 		$splitButton = new SplitButton([
 			'id' => htmlspecialcharsbx($buttonId),
-			'icon' => Icon::ADD,
+			'icon' => '',
 			'title' => $title,
 			'text' => $text,
 			'color' => Color::SUCCESS,
@@ -146,7 +150,7 @@ for($i = 0; $i < $itemCount; $i++)
 	{
 		$addButton = new AddButton([
 			'id' => htmlspecialcharsbx($buttonId),
-			'icon' => Icon::ADD,
+			'icon' => '',
 			'text' => $text,
 			'link' => $link,
 			'onclick' => $onClick,

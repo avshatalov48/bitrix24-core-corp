@@ -95,6 +95,11 @@ class UtmTable extends Entity\DataManager
 				continue;
 			}
 
+			if (!is_string($fields[$code]))
+			{
+				continue;
+			}
+
 			$primary = [
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => $entityId,

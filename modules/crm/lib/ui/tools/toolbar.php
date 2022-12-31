@@ -4,6 +4,7 @@ namespace Bitrix\Crm\UI\Tools;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Router;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\UI\Buttons\JsCode;
 use Bitrix\UI\Buttons\JsEvent;
@@ -18,7 +19,7 @@ class ToolBar
 		'toolbar_quote_list'
 	];
 
-	public static function mapItems(array $inputItems, string $toolbarId = null): array
+	public static function mapItems(array $inputItems, string $toolbarId = null, array $params = []): array
 	{
 		$inputItems = array_filter($inputItems);
 
@@ -93,9 +94,21 @@ class ToolBar
 
 			[$prefix, $entityName] = explode('_', $toolbarId);
 			$entityTypeId = CCrmOwnerType::ResolveID($entityName);
-			$isKanbanView = Container::getInstance()
-					->getRouter()
-					->getCurrentListView($entityTypeId) === Router::LIST_VIEW_KANBAN;
+			$currentView = Container::getInstance()
+				->getRouter()
+				->getCurrentListView($entityTypeId)
+			;
+
+			$isKanbanView = (
+				$currentView === Router::LIST_VIEW_KANBAN
+				|| $currentView === Router::LIST_VIEW_ACTIVITY
+			);
+
+			$factory = Container::getInstance()->getFactory($entityTypeId);
+			if ($factory && $factory->isCategoriesEnabled())
+			{
+				$isKanbanView = $isKanbanView && !is_null($params['CATEGORY_ID'] ?? null);
+			}
 
 			if (isset($entityTypeId) && $isKanbanView)
 			{
@@ -109,8 +122,13 @@ class ToolBar
 	public static function getKanbanSettings(): array
 	{
 		return [
-			'text' => Loc::getMessage('CRM_KANBAN_SETTINGS_TITLE'),
+			'id' => 'crm-kanban-settings-sub-menu',
+			'text' => Crm::isUniversalActivityScenarioEnabled()
+				? Loc::getMessage('CRM_PIPELINE_SETTINGS_TITLE')
+				: Loc::getMessage('CRM_KANBAN_SETTINGS_TITLE'),
 			'items' => [
+				// a 'sort' item could be added dynamically on frontend
+				// see crm.kanban.sort extension
 				[
 					'text' => Loc::getMessage('CRM_KANBAN_SETTINGS_FIELDS_VIEW'),
 					'onclick' => new JsEvent('crm-kanban-settings-fields-view'),
@@ -122,4 +140,5 @@ class ToolBar
 			]
 		];
 	}
+
 }

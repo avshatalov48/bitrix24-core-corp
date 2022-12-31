@@ -10,7 +10,7 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 use Bitrix\Disk\Driver;
 use Bitrix\Main;
-use Bitrix\Main\Application;
+use Bitrix\Main\Engine\Response\Component;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Tasks;
@@ -29,7 +29,6 @@ use Bitrix\Tasks\Integration\Forum\Task\Topic;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Integration\SocialNetwork\Group;
 use Bitrix\Tasks\Internals\Registry\TaskRegistry;
-use Bitrix\Tasks\Internals\Task\Result\ResultManager;
 use Bitrix\Tasks\Internals\Task\ViewedTable;
 use Bitrix\Tasks\Internals\UserOption;
 use Bitrix\Tasks\Kanban\StagesTable;
@@ -369,27 +368,7 @@ class TasksTaskComponent extends TasksBaseComponent
 
 		$componentParameters["ACTION"] = "edit";
 
-		Tasks\Dispatcher::globalDisable();
-
-		ob_start();
-		$APPLICATION->IncludeComponent(
-			"bitrix:tasks.task",
-			"",
-			$componentParameters,
-			null,
-			array("HIDE_ICONS" => "Y")
-		);
-
-		$html = ob_get_clean();
-
-		Tasks\Dispatcher::globalEnable();
-
-		$assetHtml = array_values(static::getApplicationResources());
-
-		return [
-			"html" => $html,
-			"asset" => $assetHtml,
-		];
+		return new Component('bitrix:tasks.task', '', $componentParameters);
 	}
 
 	public function setStateAction(array $state = [])
@@ -451,7 +430,36 @@ class TasksTaskComponent extends TasksBaseComponent
 		$isScrumTask = ($group && $group->isScrumProject());
 		if ($isScrumTask)
 		{
-			return (new KanbanService())->moveTask($taskId, $task['GROUP_ID'], $stage);
+			$featurePerms = \CSocNetFeaturesPerms::currentUserCanPerformOperation(
+				SONET_ENTITY_GROUP,
+				[$task['GROUP_ID']],
+				'tasks',
+				'sort'
+			);
+			$isAccess = (
+				is_array($featurePerms)
+				&& isset($featurePerms[$task['GROUP_ID']])
+				&& $featurePerms[$task['GROUP_ID']]
+			);
+			if (!$isAccess)
+			{
+				return false;
+			}
+
+			$kanbanService = new KanbanService();
+
+			$result = $kanbanService->moveTask($taskId, $stage['ID']);
+
+			if ($stage['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
+			{
+				$this->completeTask($taskId);
+			}
+			else
+			{
+				$this->renewTask($taskId);
+			}
+
+			return $result;
 		}
 
 		if (
@@ -4086,5 +4094,38 @@ class TasksTaskComponent extends TasksBaseComponent
 	public static function setState(array $state = array())
 	{
 		TasksTaskFormState::set($state);
+	}
+
+	private function completeTask(int $taskId)
+	{
+		$task = \CTaskItem::getInstance($taskId, User::getId());
+		if (
+			$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE)
+			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+		)
+		{
+			$task->complete();
+		}
+	}
+
+	private function renewTask(int $taskId)
+	{
+		$task = \CTaskItem::getInstance($taskId, User::getId());
+		if (
+			$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
+			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
+		)
+		{
+			$queryObject = \CTasks::getList(
+				[],
+				['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
+				['ID'],
+				['USER_ID' => User::getId()]
+			);
+			if ($queryObject->fetch())
+			{
+				$task->renew();
+			}
+		}
 	}
 }

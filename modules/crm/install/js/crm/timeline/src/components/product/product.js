@@ -17,6 +17,10 @@ export default {
 			required: true,
 			type: Boolean,
 		},
+		showProductLink: {
+			default: true,
+			type: Boolean,
+		},
 	},
 	methods: {
 		addProductToDeal()
@@ -112,21 +116,29 @@ export default {
 		<li
 			:class="{'crm-entity-stream-advice-list-item--active': product.isInDeal}"
 			class="crm-entity-stream-advice-list-item"
-		>	
+		>
 			<div class="crm-entity-stream-advice-list-content">
-				<div	
+				<div
 					:style="imageStyle"
 					class="crm-entity-stream-advice-list-icon"
 				>
 				</div>
 				<div class="crm-entity-stream-advice-list-inner">
 					<a
+						v-if="showProductLink"
 						@click.prevent="openDetailPage"
 						href="#"
 						class="crm-entity-stream-advice-list-name"
 					>
 						{{product.name}}
 					</a>
+					<span
+						v-else
+						class="crm-entity-stream-advice-list-name"
+					>
+						{{product.name}}
+					</span>
+
 					<div
 						v-if="isBottomAreaVisible"
 						class="crm-entity-stream-advice-list-desc-box"
@@ -142,7 +154,7 @@ export default {
 							v-html="price"
 							class="crm-entity-stream-advice-list-desc-value"
 						>
-							
+
 						</span>
 					</div>
 				</div>

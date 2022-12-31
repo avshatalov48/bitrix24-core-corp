@@ -6,6 +6,8 @@
 
 var ChatUtils = {};
 
+
+
 ChatUtils.isObjectChanged = function(currentProperties, newProperties)
 {
 	for (let name in newProperties)

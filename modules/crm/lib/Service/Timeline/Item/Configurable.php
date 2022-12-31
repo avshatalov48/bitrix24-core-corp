@@ -13,11 +13,13 @@ use Bitrix\Crm\Service\Timeline\Layout\Action\RunAjaxAction;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockWithTitle;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Crm\Service\Timeline\Layout\Converter;
 use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
 use Bitrix\Crm\Service\Timeline\Layout\MarketPanel;
 use Bitrix\Crm\Service\Timeline\Layout\Menu\MenuItem;
+use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\PhoneNumber;
@@ -39,13 +41,14 @@ abstract class Configurable extends Item
 
 	/**
 	 * Checks item status.
-	 * 
+	 *
 	 * @return bool
 	 */
 	public static function isActive(): bool
 	{
 		return true;
 	}
+
 	/**
 	 * Get model with data from timeline database table
 	 *
@@ -96,14 +99,15 @@ abstract class Configurable extends Item
 
 	public function jsonSerialize(): array
 	{
-		$result = [
-			'layout' =>  (new Converter($this->getLayout()))->toArray(),
+		return [
+			'layout' => (new Converter($this->getLayout()))->toArray(),
 			'type' => $this->getType(),
 			'id' => $this->getModel()->getId(),
 			'timestamp' => $this->getModel()->getDate() ? $this->getModel()->getDate()->getTimestamp() : null,
+			'sort' => $this->getSort(),
+			'languageId' => \Bitrix\Main\Context::getCurrent()->getLanguage(),
+			'canBeReloaded' => $this->canBeReloaded(),
 		];
-
-		return $result;
 	}
 
 	/**
@@ -116,6 +120,16 @@ abstract class Configurable extends Item
 	protected function buildLayout(): Layout
 	{
 		return (new Layout\Builder($this))->build();
+	}
+
+	public function getSort(): array
+	{
+		return [
+			$this->getDate()
+				? $this->getDate()->getTimestamp()
+				: 0,
+			(int)$this->getModel()->getId()
+		];
 	}
 
 	/**
@@ -133,7 +147,7 @@ abstract class Configurable extends Item
 	 *
 	 * @return string|null
 	 */
-	public function getCounterType():  ?string
+	public function getCounterType(): ?string
 	{
 		return null;
 	}
@@ -187,6 +201,7 @@ abstract class Configurable extends Item
 
 	/**
 	 * By default item is pinnable if it has title
+	 *
 	 * @return bool
 	 */
 	protected function isPinnable(): bool
@@ -212,6 +227,16 @@ abstract class Configurable extends Item
 	 * @return Layout\Action|null
 	 */
 	public function getTitleAction(): ?Layout\Action
+	{
+		return null;
+	}
+
+	/**
+	 * Hint icon in item header
+	 *
+	 * @return Layout\Header\InfoHelper|null
+	 */
+	public function getInfoHelper(): ?Layout\Header\InfoHelper
 	{
 		return null;
 	}
@@ -273,15 +298,23 @@ abstract class Configurable extends Item
 	 */
 	public function getContentBlocks(): ?array
 	{
-		$contentText = $this->getContentText();
-		if ($contentText)
+		$blocks = [];
+
+		if ($contentText = $this->getContentText())
 		{
-			return [
-				'content' => (new Text())->setValue($contentText),
-			];
+			$blocks['content'] =  (new Text())->setValue($contentText);
 		}
 
-		return null;
+		return $blocks;
+	}
+
+	public function getCommonContentBlocksBlocks(): array
+	{
+		$blocks = [];
+		if($this->needShowNotes()) {
+			$blocks['note'] =  $this->buildNoteBlock();
+		}
+		return $blocks;
 	}
 
 	/**
@@ -442,10 +475,12 @@ abstract class Configurable extends Item
 
 		if (($options & self::BLOCK_WITH_FORMATTED_VALUE))
 		{
+			$source = empty($communication['SOURCE'])
+				? ''
+				: PhoneNumber\Parser::getInstance()->parse($communication['SOURCE'])->format();
+
 			$formattedValue = empty($communication['FORMATTED_VALUE'])
-				? empty($communication['SOURCE'])
-					? ''
-					: PhoneNumber\Parser::getInstance()->parse($communication['SOURCE'])->format()
+				? $source
 				: $communication['FORMATTED_VALUE'];
 
 			$title = sprintf('%s %s', $title, $formattedValue);
@@ -461,7 +496,8 @@ abstract class Configurable extends Item
 		{
 			return (new ContentBlockWithTitle())
 				->setTitle(Loc::getMessage("CRM_TIMELINE_CLIENT_TITLE"))
-				->setContentBlock($textOrLink->setIsBold(true))
+				->setContentBlock($textOrLink->setIsBold(isset($url))->setColor(Text::COLOR_BASE_90))
+				->setInline()
 			;
 		}
 
@@ -470,7 +506,7 @@ abstract class Configurable extends Item
 				'title',
 				ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_CLIENT_TITLE'))
 			)
-			->addContentBlock('data', $textOrLink->setIsBold(true))
+			->addContentBlock('data', $textOrLink->setIsBold(isset($url))->setColor(Text::COLOR_BASE_90))
 		;
 	}
 
@@ -494,5 +530,51 @@ abstract class Configurable extends Item
 			->addActionParamInt('ownerTypeId', $this->getContext()->getEntityTypeId())
 			->addActionParamInt('ownerId', $this->getContext()->getEntityId())
 		;
+	}
+
+	private function buildNoteBlock(): ?Note
+	{
+		if ($noteModel = $this->model->getNote())
+		{
+			$note = (new Note(
+				$this->getContext(),
+				$noteModel->getId(),
+				$noteModel->getText(),
+				$noteModel->getItemType(),
+				$noteModel->getItemId(),
+				$noteModel->getUpdatedBy() ? Layout\User::createFromArray($noteModel->getUpdatedBy()) : null,
+			))->setSort(PHP_INT_MAX);
+		}
+		else
+		{
+			$note = Note::createEmpty(
+				$this->getContext(),
+				$this->getNoteItemType(),
+				$this->getNoteItemId(),
+			)
+				->setSort(PHP_INT_MAX)
+			;
+		}
+
+		return $note;
+	}
+
+	public function getNoteItemType(): int
+	{
+		return NoteTable::NOTE_TYPE_HISTORY;
+	}
+
+	public function getNoteItemId(): int
+	{
+		return $this->model->getId();
+	}
+
+	/**
+	 * Returns true if item data allowed to be re-fetched (e.g. after push-message handling)
+	 * @return bool
+	 */
+	protected function canBeReloaded(): bool
+	{
+		return true;
 	}
 }

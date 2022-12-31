@@ -12,7 +12,7 @@
 	color:#3f4b54;
 	cursor:pointer;
 	font-size:13px;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	height:23px;
 	margin-left:8px;
 	text-shadow:0 1px rgba(255,255,255,0.7);
@@ -611,7 +611,7 @@
 	cursor:pointer;
 	display:inline-block;
 	font-family:var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	font-size:13px;
 	height: 29px;
 	margin-left:12px;

@@ -23,6 +23,8 @@ Loc::loadMessages(__FILE__);
  */
 class Dictionary
 {
+	private const SHOW_MORE_PAYMENT_SLIDER_PATH = '/bitrix/components/bitrix/salescenter.paysystem.panel/slider.php?type=main&mode=main&IFRAME=Y&IFRAME_TYPE=SIDE_SLIDER';
+
 	/** @var static $instance Instance. */
 	private static $instance;
 
@@ -189,7 +191,7 @@ class Dictionary
 		return [
 			'enabled' => WebForm\Manager::isOrdersAvailable(),
 			'payers' => [],
-			'systems' => [],
+			'moreSystemSliderPath' => static::SHOW_MORE_PAYMENT_SLIDER_PATH,
 		];
 	}
 

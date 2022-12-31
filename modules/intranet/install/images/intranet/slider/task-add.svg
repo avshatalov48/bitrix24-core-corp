@@ -1,0 +1,90 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 100%"
+	 preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 100%" fill="none">
+
+	<svg height="100%">
+		<defs>
+			<g id="block-btn">
+				<rect x="0" y="18" width="163" height="39" rx="3.5" stroke="#C6CDD3"/>
+			</g>
+		</defs>
+
+		<rect width="100%" height="1285" fill="#EEF2F4"/>
+		<rect x="20" y="75" width="100%" height="711" rx="10" fill="white"/>
+		<use xlink:href="#block-btn" x="100%"  transform="translate(-183, 0)"></use>
+		<rect stroke="#C6CDD3" rx="3.5" width="39" height="39" x="100%" y="18" transform="translate(-238, 0)"/>
+
+		<rect x="40" y="596" width="131" height="39" rx="2" fill="#CEE96A"/>
+		<use xlink:href="#block-btn" x="182" y="578"></use>
+
+		<rect x="40" y="250" width="100%" height="70" rx="8" fill="#f8f9fa"/>
+		<rect x="40" y="332" width="100%" height="182" rx="8" fill="#f8f9fa"/>
+		<rect x="40" y="574" width="100%" height="1" rx="0.5" fill="#ecedee"/>
+	</svg>
+
+	<svg height="100%"  id="animated-elements">
+		<defs>
+			<g id="block-btn--animat">
+				<rect x="0" y="32" width="142" height="10" rx="2" fill="#dee3e6"/>
+			</g>
+			<g id="block-btn-bottom--animat">
+				<rect x="0" y="32" width="142" height="10" rx="2" fill="#ecedee"/>
+			</g>
+		</defs>
+
+		<rect x="30px" y="32" width="38%" height="10" rx="2" fill="#dee3e6"/>
+		<use xlink:href="#block-btn--animat" x="100%"  transform="translate(-173, 0)"></use>
+		<rect fill="#dee3e6" rx="2" width="10" height="10" x="100%" y="32" transform="translate(-223, 0)"/>
+
+		<rect x="40" y="98" width="71%" height="11" rx="2" fill="#ecedee"/>
+		<rect x="40" y="121" width="71%" height="9" rx="2" fill="#ecedee"/>
+		<rect x="40" y="139" width="71%" height="9" rx="2" fill="#ecedee"/>
+		<rect x="40" y="157" width="42%" height="9" rx="2" fill="#ecedee"/>
+		<rect x="60" y="611" width="91" height="9" rx="2" fill="#ecedee"/>
+		<use xlink:href="#block-btn-bottom--animat" x="193" y="578"></use>
+		<rect x="42" y="544" width="43%" height="9" rx="2" fill="#ecedee"/>
+		<use xlink:href="#block-btn-bottom--animat" y="578" x="100%"  transform="translate(-182, 0)"></use>
+	</svg>
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg height="100%">
+		<defs>
+			<g id="upper-right-corner">
+				<path d="M9.99997 10V0H0C5.52285 0 9.99997 4.47715 9.99997 10Z" fill="#eef2f4"/>
+			</g>
+			<g id="lower-right-corner">
+				<path d="M9.99997 0V10H0C5.52285 10 9.99997 5.52285 9.99997 0Z" fill="#eef2f4"/>
+			</g>
+
+			<g id="upper-right-corner-white">
+				<path d="M8 8V0H0C4.41829 0 8 3.58172 8 8Z" fill="#ffffff"/>
+			</g>
+			<g id="lower-right-corner-white">
+				<path d="M8 0V8H0C4.41829 8 8 4.41828 8 0Z" fill="#ffffff"/>
+			</g>
+		</defs>
+
+		<rect width="20" height="100%" fill="#EEF2F4" x="100%" transform="translate(-20)" />
+		<rect width="20" height="650" fill="#ffffff" x="100%" y="90" transform="translate(-40)" />
+		<use xlink:href="#upper-right-corner" x="100%" y="75" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="776" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner-white" x="100%" y="250" transform="translate(-48)" ></use>
+		<use xlink:href="#lower-right-corner-white" x="100%" y="312" transform="translate(-48)" ></use>
+		<use xlink:href="#upper-right-corner-white" x="100%" y="332" transform="translate(-48)" ></use>
+		<use xlink:href="#lower-right-corner-white" x="100%" y="506" transform="translate(-48)" ></use>
+	</svg>
+
+</svg>

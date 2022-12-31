@@ -734,7 +734,7 @@
 	display: inline-block;
 	min-width: 32px;
 	height: 16px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 11px;
 	color: #FFFFFF;
 	padding-left: 7px;

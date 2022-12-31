@@ -1,8 +1,9 @@
 <?php
 return [
+	'event-emitter',
 	'helpers/component',
 	'layout/ui/context-menu',
-	'layout/ui/empty-list',
+	'layout/ui/empty-screen',
 	'layout/ui/floating-button',
 	'notify',
 	'rest',

@@ -38,7 +38,7 @@ class TaskStatusTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_NAME_1');
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -95,5 +95,15 @@ class TaskStatusTrigger extends BaseTrigger
 			$result['FIELDS'] = array_values($taskFields);
 		}
 		return $result;
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_TASK_STATUS_DESCRIPTION') ?? '';
+	}
+
+	public static function getGroup(): array
+	{
+		return ['employeeControl', 'taskManagement'];
 	}
 }

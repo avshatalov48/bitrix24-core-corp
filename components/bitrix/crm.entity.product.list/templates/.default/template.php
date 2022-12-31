@@ -78,6 +78,9 @@ $rowIdPrefix = $arResult['PREFIX'].'_product_row_';
 
 $jsEventsManagerId = 'PageEventsManager_'.$arResult['COMPONENT_ID'];
 
+$disabledAddRowButton = !$component->checkProductReadRights() && $arResult['CATALOG_ENABLE_EMPTY_PRODUCT_ERROR'];
+$disabledSelectProductButton = !$component->checkProductReadRights();
+
 $editorConfig = [
 	'componentName' => $component->getName(),
 	'signedParameters' => $component->getSignedParameters(),
@@ -92,11 +95,16 @@ $editorConfig = [
 	'entityTypeId' => $arResult['ENTITY']['TYPE_ID'] ?? '',
 
 	'allowEdit' => $settings['ALLOW_EDIT'],
+	'allowedStores' => $arResult['ALLOWED_STORES'],
+	'allowEntityReserve' => $arResult['ALLOW_ENTITY_RESERVE'],
+	'allowProductView' => $arResult['ALLOW_PRODUCT_VIEW'],
+	'allowDiscountChange' => $arResult['ALLOW_DISCOUNT_CHANGE'],
+	'disabledAddRowButton' => $disabledAddRowButton,
+	'disabledSelectProductInput' => $disabledAddRowButton,
+	'disabledSelectProductButton' => $disabledSelectProductButton,
 	'allowCatalogPriceEdit' => $arResult['ALLOW_CATALOG_PRICE_EDIT'],
 	'allowCatalogPriceSave' => $arResult['ALLOW_CATALOG_PRICE_SAVE'],
-	'catalogPriceEditArticleCode' => $arResult['CATALOG_PRICE_EDIT_ARTICLE_CODE'],
-	'catalogPriceEditArticleHint' => $arResult['CATALOG_PRICE_EDIT_ARTICLE_HINT'],
-	'disableNotifyChangingPrice' => $arResult['CATALOG_PRICE_CHANGING_DISABLE_HINT'],
+	'enableEmptyProductError' => $arResult['CATALOG_ENABLE_EMPTY_PRODUCT_ERROR'],
 
 	'dataFieldName' => $arResult['PRODUCT_DATA_FIELD_NAME'],
 	'defaultDateReservation' => $arResult['DEFAULT_DATE_RESERVATION'],
@@ -135,6 +143,8 @@ $editorConfig = [
 
 	'isReserveBlocked' => $arResult['IS_RESERVE_BLOCKED'],
 	'isReserveEqualProductQuantity' => $arResult['IS_RESERVE_EQUAL_PRODUCT_QUANTITY'],
+
+	'restrictedProductTypes' => $arResult['RESTRICTED_PRODUCT_TYPES'],
 ];
 
 $productIdMask = '#PRODUCT_ID_MASK#';
@@ -164,8 +174,8 @@ $grid['ROWS']['template_0'] = [
 	'TAX_INCLUDED' => 'N',
 	'TAX_SUM' => 0,
 	'SUM' => 0,
-	'STORE_ID' => $arResult['DEFAULT_STORE_ID'],
-	'STORE_TITLE' => $stores[$arResult['DEFAULT_STORE_ID']]['TITLE'] ?? '',
+	'STORE_ID' => null,
+	'STORE_TITLE' => '',
 	'STORE_AVAILABLE' => null,
 	'STORE_AMOUNT' => 0,
 	'COMMON_STORE_AMOUNT' => 0,
@@ -182,6 +192,7 @@ $grid['ROWS']['template_0'] = [
 	'MEASURE_EXISTS' => true,
 	'SORT' => null,
 	'IS_NEW' => 'N',
+	'TYPE' => Crm\ProductType::TYPE_PRODUCT,
 ];
 
 $rows = [];
@@ -229,8 +240,6 @@ foreach ($grid['ROWS'] as $product)
 		'DISCOUNT_SUM' => $rawProduct['DISCOUNT_SUM'],
 		'DISCOUNT_ROW' => $rawProduct['QUANTITY'] * $rawProduct['DISCOUNT_SUM'],
 		'BASE_PRICE' => $rawProduct['BASE_PRICE'],
-		'CATALOG_PRICE' => $rawProduct['CATALOG_PRICE'] ?? $rawProduct['BASE_PRICE'],
-		'ENTERED_PRICE' => $rawProduct['BASE_PRICE'],
 		'PRICE' => $rawProduct['PRICE'],
 		'PRICE_EXCLUSIVE' => $rawProduct['PRICE_EXCLUSIVE'],
 		'PRICE_NETTO' => $rawProduct['PRICE_NETTO'],
@@ -261,6 +270,7 @@ foreach ($grid['ROWS'] as $product)
 		'SKU_TREE' => $rawProduct['SKU_TREE'],
 		'DETAIL_URL' => $rawProduct['DETAIL_URL'],
 		'IMAGE_INFO' => $rawProduct['IMAGE_INFO'],
+		'TYPE' => $rawProduct['TYPE'] ?? Crm\ProductType::TYPE_PRODUCT,
 	];
 	$selectorId = 'crm_grid_'.$rowId;
 	if ($rawProduct['ID'] !== $productIdMask)
@@ -347,6 +357,7 @@ foreach ($grid['ROWS'] as $product)
 		'CURRENCY' => [
 			'NAME' => $rowId.'_MEASURE_CODE',
 			'VALUE' => $rawProduct['MEASURE_CODE'],
+			'DISABLED' => !$arResult['IS_PRODUCT_EDITABLE'] && $rawProduct['PRODUCT_ID'] > 0,
 		],
 	];
 	// end region QUANTITY
@@ -471,7 +482,7 @@ foreach ($grid['ROWS'] as $product)
 	// end region TAX
 
 	// region SUM
-	$sum = $rawProduct['PRICE_EXCLUSIVE'] * $rawProduct['QUANTITY'] + $rawProduct['TAX_SUM'];
+	$sum = $rawProduct['PRICE'] * $rawProduct['QUANTITY'];
 	$sum = number_format($sum, $pricePrecision, '.', '');
 	$sumColumn = CCrmCurrency::MoneyToString($sum, $currency['ID']);
 
@@ -504,7 +515,7 @@ foreach ($grid['ROWS'] as $product)
 			: ''
 	;
 	$storeAvailable =
-		$rawProduct['STORE_AVAILABLE'] !== null
+		$rawProduct['STORE_AVAILABLE'] !== null && in_array((int)$rawProduct['STORE_ID'], $component->getAllowedStories(), true)
 			? $rawProduct['STORE_AVAILABLE'] . " " . $measureName
 			: ''
 	;
@@ -519,8 +530,8 @@ foreach ($grid['ROWS'] as $product)
 		'PRICE' => $priceColumn,
 		'QUANTITY' => $quantityColumn,
 		'SUM' => $sumColumn,
-		'DISCOUNT_PRICE' => $discountColumn,
-		'DISCOUNT_ROW' => $discountRowColumn,
+		'DISCOUNT_PRICE' => "<span data-name='DISCOUNT_PRICE'>{$discountColumn}</span>",
+		'DISCOUNT_ROW' => "<span data-name='DISCOUNT_ROW'>{$discountRowColumn}</span>",
 	];
 	if ($arResult['ALLOW_TAX'])
 	{
@@ -569,16 +580,24 @@ foreach ($rows as $key => $row)
 		?>
 		<div class="<?=$buttonTopPanelClasses?>">
 			<div>
-				<a class="ui-btn ui-btn-primary"
+				<?php
+				$lockedClasses = 'ui-btn-icon-lock ui-btn-disabled';
+				$buttonHintAttributes = 'data-hint="' . Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED') . '" data-hint-no-icon';
+				?>
+				<a class="ui-btn ui-btn-primary <?=$disabledAddRowButton ? $lockedClasses : ''?>"
 						data-role="product-list-add-button"
 						title="<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT_TITLE')?>"
-						tabindex="-1">
+						tabindex="-1"
+						<?=$disabledAddRowButton ? $buttonHintAttributes : ''?>
+				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT')?>
 				</a>
-				<a class="ui-btn ui-btn-light-border"
-						data-role="product-list-select-button"
-						title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
-						tabindex="-1">
+				<a class="ui-btn ui-btn-light-border <?=$disabledSelectProductButton ? $lockedClasses : ''?>"
+				   data-role="product-list-select-button"
+				   title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
+				   tabindex="-1"
+					<?=$disabledSelectProductButton ? $buttonHintAttributes : ''?>
+				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT')?>
 				</a>
 			</div>
@@ -641,16 +660,24 @@ foreach ($rows as $key => $row)
 		?>
 		<div class="<?=$buttonBottomPanelClasses?>">
 			<div>
-				<a class="ui-btn ui-btn-primary"
+				<?php
+				$lockedClasses = 'ui-btn-icon-lock ui-btn-disabled';
+				$buttonHintAttributes = 'data-hint="' . Loc::getMessage('CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED') . '" data-hint-no-icon';
+				?>
+				<a class="ui-btn ui-btn-primary <?=$disabledAddRowButton ? $lockedClasses : ''?>"
 				   data-role="product-list-add-button"
 				   title="<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT_TITLE')?>"
-				   tabindex="-1">
+				   tabindex="-1"
+					<?=$disabledAddRowButton ? $buttonHintAttributes : ''?>
+				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_ADD_PRODUCT')?>
 				</a>
-				<a class="ui-btn ui-btn-light-border"
+				<a class="ui-btn ui-btn-light-border <?=$disabledSelectProductButton ? $lockedClasses : ''?>"
 				   data-role="product-list-select-button"
 				   title="<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT_TITLE')?>"
-				   tabindex="-1">
+				   tabindex="-1"
+					<?=$disabledSelectProductButton ? $buttonHintAttributes : ''?>
+				>
 					<?=Loc::getMessage('CRM_ENTITY_PL_SELECT_PRODUCT')?>
 				</a>
 			</div>

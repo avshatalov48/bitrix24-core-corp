@@ -20,7 +20,20 @@ export default class StoreDocument extends Activity
 
 	getTypeDescription()
 	{
-		return this.getMessage("storeDocument");
+		const entityData = this.getAssociatedEntityData();
+		const providerType = BX.prop.getString(entityData, "PROVIDER_TYPE_ID", 0);
+
+		if (this.#isProductProvider(providerType))
+		{
+			return this.getMessage("storeDocumentProduct");
+		}
+
+		if (this.#isServiceProvider(providerType))
+		{
+			return this.getMessage("storeDocumentService");
+		}
+
+		return "";
 	}
 
 	getPrepositionText(direction)
@@ -48,6 +61,8 @@ export default class StoreDocument extends Activity
 
 		const entityData = this.getAssociatedEntityData();
 		const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
+		const providerType = BX.prop.getString(entityData, "PROVIDER_TYPE_ID", 0);
+
 		const isDone = this.isDone();
 
 		let wrapperClassName = this.getWrapperClassName();
@@ -124,29 +139,14 @@ export default class StoreDocument extends Activity
 		);
 		contentInnerWrapper.appendChild(detailWrapper);
 
-		detailWrapper.appendChild(
-			BX.create("DIV",
-				{
-					attrs: {className: "crm-entity-stream-content-detail-description"},
-					children: [
-						BX.create("SPAN", { text: this.getMessage("storeDocumentDescription") }),
-						BX.create("A", {
-							attrs: {
-								className: "crm-entity-stream-content-detail-target",
-								href: "#",
-							},
-							events: {
-								click: BX.delegate(function (e) {
-									top.BX.Helper.show('redirect=detail&code=14828480');
-									e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-								})
-							},
-							text: " " + BX.message('CRM_TIMELINE_DETAILS'),
-						})
-					]
-				}
-			)
-		);
+		if (this.#isProductProvider(providerType))
+		{
+			detailWrapper.appendChild(this.#prepareProduct());
+		}
+		else if (this.#isServiceProvider(providerType))
+		{
+			detailWrapper.appendChild(this.#prepareService());
+		}
 
 		const additionalDetails = this.prepareDetailNodes();
 		if(BX.type.isArray(additionalDetails))
@@ -204,6 +204,66 @@ export default class StoreDocument extends Activity
 		//endregion
 
 		return wrapper;
+	}
+
+	#prepareProduct()
+	{
+		return BX.create("DIV",
+			{
+				attrs: {className: "crm-entity-stream-content-detail-description"},
+				children: [
+					BX.create("SPAN", { text: this.getMessage("storeDocumentProductDescription") }),
+					BX.create("A", {
+						attrs: {
+							className: "crm-entity-stream-content-detail-target",
+							href: "#",
+						},
+						events: {
+							click: BX.delegate(function (e) {
+								top.BX.Helper.show('redirect=detail&code=14828480');
+								e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+							})
+						},
+						text: " " + BX.message('CRM_TIMELINE_DETAILS'),
+					})
+				]
+			}
+		)
+	}
+
+	#prepareService()
+	{
+		return BX.create("DIV",
+			{
+				attrs: {className: "crm-entity-stream-content-detail-description"},
+				children: [
+					BX.create("SPAN", { text: this.getMessage("storeDocumentServiceDescription") }),
+					BX.create("A", {
+						attrs: {
+							className: "crm-entity-stream-content-detail-target",
+							href: "#",
+						},
+						events: {
+							click: BX.delegate(function (e) {
+								top.BX.Helper.show('redirect=detail&code=16592066');
+								e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+							})
+						},
+						text: " " + BX.message('CRM_TIMELINE_DETAILS'),
+					})
+				]
+			}
+		)
+	}
+
+	#isProductProvider(providerType): boolean
+	{
+		return providerType === 'STORE_DOCUMENT_PRODUCT';
+	}
+
+	#isServiceProvider(providerType): boolean
+	{
+		return providerType === 'STORE_DOCUMENT_SERVICE';
 	}
 
 	static create(id, settings)

@@ -324,6 +324,21 @@ CREATE TABLE b_disk_onlyoffice_document_info
 	PRIMARY KEY (EXTERNAL_HASH)
 );
 
+CREATE TABLE IF NOT EXISTS b_disk_onlyoffice_restriction_log
+(
+	ID int not null auto_increment,
+	USER_ID int not null,
+	EXTERNAL_HASH varchar(128) not null,
+	STATUS tinyint DEFAULT 0,
+	CREATE_TIME datetime,
+	UPDATE_TIME datetime,
+
+	PRIMARY KEY (ID),
+
+	KEY IX_DISK_O_RL_UPDATE(UPDATE_TIME),
+	KEY IX_DISK_O_RL_USAGE(EXTERNAL_HASH, USER_ID)
+);
+
 CREATE TABLE b_disk_edit_session
 (
 	ID int(11) not null auto_increment,

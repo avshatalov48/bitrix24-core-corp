@@ -455,7 +455,7 @@
 	color: var(--crm-form-embed__gray-4);
 	font-family: Georgia, 'Helvetica Neue', Arial,  Helvetica, sans-serif;
 	font-style: normal;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-form-embed__settings--option-font.--modern {

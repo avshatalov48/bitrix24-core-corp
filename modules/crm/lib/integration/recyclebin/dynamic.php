@@ -167,7 +167,9 @@ class Dynamic extends RecyclableEntity
 	 */
 	public static function resolveEntityTypeId(string $entityType): int
 	{
-		return (int)str_replace(self::PREFIX, '', $entityType);
+		$entityTypeName = str_replace(self::SHORT_PREFIX, '', $entityType);
+
+		return \CCrmOwnerType::ResolveID($entityTypeName);
 	}
 
 	public static function getNotifyMessages(): array

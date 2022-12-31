@@ -17,6 +17,10 @@ class ScenarioMenuItem
 		'id' => 'crm',
 		'data' => ['extension' => 'landing.ui.panel.formsettingspanel.content.crm'],
 	];
+	public const PAY_SYSTEMS = [
+		'id' => 'pay-systems',
+		'data' => ['extension' => 'landing.ui.panel.formsettingspanel.content.pay-systems']
+	];
 	public const BUTTON_AND_HEADER = [
 		'id' => 'header-and-button',
 		'data' => ['extension' => 'landing.ui.panel.formsettingspanel.content.header-and-button'],

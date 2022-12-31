@@ -1,8 +1,14 @@
-(() => {
+/**
+ * @module layout/ui/fields/image-select
+ */
+jn.define('layout/ui/fields/image-select', (require, exports, module) => {
+
+	const { BaseField } = require('layout/ui/fields/base');
+
 	/**
-	 * @class Fields.ImageSelect
+	 * @class ImageSelectField
 	 */
-	class ImageSelect extends Fields.BaseField
+	class ImageSelectField extends BaseField
 	{
 		static get types()
 		{
@@ -31,7 +37,7 @@
 
 			if (this.props.images.loaded)
 			{
-				images.push(this.renderImage(ImageSelect.types.loaded));
+				images.push(this.renderImage(ImageSelectField.types.loaded));
 			}
 
 			return View(
@@ -58,8 +64,8 @@
 								alignSelf: 'center',
 							},
 						},
-						...images
-					)
+						...images,
+					),
 				),
 				ImageButton({
 					style: {
@@ -71,7 +77,7 @@
 						content: '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none"><path fill-rule="evenodd" clip-rule="evenodd" d="M20 40C31.0457 40 40 31.0457 40 20C40 8.95431 31.0457 0 20 0C8.95431 0 0 8.95431 0 20C0 31.0457 8.95431 40 20 40Z" fill="#767C87" fill-opacity="0.12"/><path fill-rule="evenodd" clip-rule="evenodd" d="M21.3805 13.3687H18.6203V18.6198H13.3691V21.3801H18.6203V26.6313H21.3805V21.3801H26.6318V18.6198H21.3805V13.3687Z" fill="#A8ADB4"/></svg>',
 					},
 					onClick: () => this.showImagePicker(),
-				})
+				}),
 			);
 		}
 
@@ -79,7 +85,7 @@
 		{
 			return View(
 				{
-					style: this.styles.image(this.props.value === id),
+					style: this.styles.image(this.getValue() === id),
 				},
 				Image({
 					style: {
@@ -163,23 +169,23 @@
 						maxAttachedFilesCount: 1,
 						previewMaxWidth: 640,
 						previewMaxHeight: 640,
-						attachButton: {items},
+						attachButton: { items },
 					},
 				},
-				data => this.onImageSelected(data)
+				data => this.onImageSelectFielded(data),
 			);
 		}
 
-		onImageSelected(data)
+		onImageSelectFielded(data)
 		{
 			const image = data[0];
 
 			if (image)
 			{
 				this.handleChange(
-					ImageSelect.types.loaded,
+					ImageSelectField.types.loaded,
 					(image.dataAttributes ? `${currentDomain}${image.dataAttributes.IMAGE}` : image.previewUrl),
-					image
+					image,
 				);
 			}
 		}
@@ -202,12 +208,15 @@
 						borderRadius: 24,
 					};
 
-					return (!isSelected ? style : {...style, ...styleSelected});
+					return (!isSelected ? style : { ...style, ...styleSelected });
 				},
 			};
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.ImageSelect = ImageSelect;
-})();
+	module.exports = {
+		ImageSelectType: 'image-select',
+		ImageSelectField: (props) => new ImageSelectField(props),
+	};
+
+});

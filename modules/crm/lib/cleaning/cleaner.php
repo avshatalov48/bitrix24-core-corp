@@ -2,10 +2,12 @@
 
 namespace Bitrix\Crm\Cleaning;
 
+use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Cleaning\Cleaner\Job;
 use Bitrix\Crm\EntityPermsTable;
 use Bitrix\Crm\EventRelationsTable;
 use Bitrix\Crm\Integration;
+use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Ml;
 use Bitrix\Crm\ProductRowTable;
@@ -58,6 +60,7 @@ final class Cleaner
 			'ENTITY_TYPE_ID' => $this->getEntityTypeId(),
 			'ENTITY_ID' => $this->getEntityId(),
 		]);
+		Badge::deleteByEntity(new ItemIdentifier($this->getEntityTypeId(), $this->getEntityId()));
 
 		return $this->runJobs();
 	}

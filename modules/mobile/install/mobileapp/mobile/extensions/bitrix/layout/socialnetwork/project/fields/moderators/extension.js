@@ -1,11 +1,13 @@
 (() => {
+	const { UserField } = jn.require('layout/ui/fields/user');
+
 	class ProjectModeratorsField extends LayoutComponent
 	{
 		render()
 		{
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.USER, {
+				UserField({
 					readOnly: this.props.readOnly,
 					showEditIcon: !this.props.readOnly,
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_MODERATORS_TITLE'),
@@ -17,8 +19,6 @@
 						},
 						entityList: this.props.moderatorsData,
 						parentWidget: this.props.parentWidget,
-						groupingFrom: 2,
-						groupingType: Fields.EntitySelector.GroupingType.MODERATORS,
 					},
 					onChange: (moderatorsIds, moderatorsData) => this.props.onChange(moderatorsIds, moderatorsData),
 				})

@@ -8,4 +8,5 @@ class LogMessageType
 	public const CALL_INCOMING = 1;
 	public const OPEN_LINE_INCOMING = 2;
 	public const TODO_CREATED = 3;
+	public const PING = 4;
 }

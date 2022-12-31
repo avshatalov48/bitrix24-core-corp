@@ -473,7 +473,18 @@ if (isset($_REQUEST['action']) && $arResult['CAN_EDIT'] && check_bitrix_sessid()
 					foreach ($arUndo as $key => $value)
 						$_REQUEST[$key] = $value;
 
-					__intr_process_action($action, array('IBLOCK_ID' => $GLOBALS['VISUAL_STRUCTURE_IBLOCK_ID']), $fake_res = null, $fake_mode = '', $fake_arUndo = array(), $fake_undo_text = '');
+					$fake_res = [];
+					$fake_mode = '';
+					$fake_arUndo = [];
+					$fake_undo_text = '';
+					__intr_process_action(
+						$action,
+						['IBLOCK_ID' => $GLOBALS['VISUAL_STRUCTURE_IBLOCK_ID']],
+						$fake_res,
+						$fake_mode,
+						$fake_arUndo,
+						$fake_undo_text
+					);
 				}
 			}
 		}

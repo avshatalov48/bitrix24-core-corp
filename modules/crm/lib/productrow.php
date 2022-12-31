@@ -4,6 +4,7 @@ namespace Bitrix\Crm;
 
 use Bitrix\Crm\Comparer\ProductRowComparer;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Reservation;
 use Bitrix\Main\Error;
 use Bitrix\Main\ORM\Fields\FieldTypeMask;
 use Bitrix\Main\ORM\Objectify\EntityObject;
@@ -17,12 +18,15 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 	public const ERROR_CODE_NORMALIZATION_DISCOUNT_SUM_REQUIRED = 'CRM_PRODUCTROW_NORMALIZATION_DISCOUNT_SUM_REQUIRED';
 
 	protected const REFERENCE_FIELD_NAME = 'IBLOCK_ELEMENT';
+	protected const REFERENCE_PRODUCT_ROW_RESERVATION_NAME = 'PRODUCT_ROW_RESERVATION';
 
 	/** @var IBlockElementProxyTable */
 	protected static $referenceDataClass = IBlockElementProxyTable::class;
 
 	/** @var EO_IBlockElementProxy */
 	protected $reference;
+
+	protected ?Reservation\ProductRowReservation $productRowReservation = null;
 
 	/**
 	 * Factory method for creation of a new instance of ProductRow
@@ -48,7 +52,13 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 			unset($filteredValues['ID']);
 		}
 
-		return new static($filteredValues);
+		$productRowObject = new static($filteredValues);
+		$productRowObject->set(
+			self::REFERENCE_PRODUCT_ROW_RESERVATION_NAME,
+			$productRowObject->createProductReservation($productRow)
+		);
+
+		return $productRowObject;
 	}
 
 	protected static function getScalarFieldNames(): array
@@ -88,6 +98,18 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		return $result;
 	}
 
+	private function toArrayWithReserve(): array
+	{
+		$productFields = $this->toArray();
+		$productReservation = $this->getProductRowReservation();
+		if ($productReservation)
+		{
+			$productFields += $productReservation->toArray();
+		}
+
+		return $productFields;
+	}
+
 	public function jsonSerialize()
 	{
 		return Container::getInstance()->getProductRowConverter()->toJson($this);
@@ -110,8 +132,8 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		$comparer = new ProductRowComparer();
 
 		return $comparer->areEquals(
-			$this->toArray(),
-			$anotherProductRow->toArray(),
+			$this->toArrayWithReserve(),
+			$anotherProductRow->toArrayWithReserve(),
 		);
 	}
 
@@ -386,5 +408,37 @@ class ProductRow extends EO_ProductRow implements \JsonSerializable
 		}
 
 		return $this->reference;
+	}
+
+	/**
+	 * @param array $fields
+	 *
+	 * @return Reservation\ProductRowReservation|null
+	 */
+	private function createProductReservation(array $fields): ?Reservation\ProductRowReservation
+	{
+		$productRowReservation = Reservation\ProductRowReservationFactory::createFromArray($this, $fields);
+		if (!$productRowReservation)
+		{
+			return null;
+		}
+
+		// mark as remove if store set empty. Don't delete if not setted, may be it is partial update of reserve.
+		if ($productRowReservation->hasStoreId() && empty($productRowReservation->getStoreId()))
+		{
+			if (!$productRowReservation->isNew())
+			{
+				$productRowReservation->delete();
+			}
+
+			return null;
+		}
+
+		if ($productRowReservation->isNew())
+		{
+			$productRowReservation->set(Reservation\ProductRowReservation::PRODUCT_ROW_NAME, $this);
+		}
+
+		return $productRowReservation;
 	}
 }

@@ -361,31 +361,6 @@ final class Operation extends Adapter
 
 		$item->setFromCompatibleData($fields);
 
-		if ($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
-		{
-			// region ship or unreserve
-			// todo move this code to a new api somehow
-			$processInventoryManagementResult = Reservation\EventsHandler\Deal::processInventoryManagement(
-				$item->getCompatibleData()
-			);
-			if ($processInventoryManagementResult->isSuccess())
-			{
-				$processInventoryManagementData = $processInventoryManagementResult->getData();
-				if (
-					isset($processInventoryManagementData['IS_EXECUTING'])
-					&& $processInventoryManagementData['IS_EXECUTING']
-				)
-				{
-					return $this->returnSuccess(true);
-				}
-			}
-			else
-			{
-				return $this->returnError($processInventoryManagementResult, $fields);
-			}
-			// endregion
-		}
-
 		$operation = $this->factory->getUpdateOperation($item);
 
 		$this->prepareOperation($operation, $compatibleOptions);

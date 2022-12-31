@@ -15,6 +15,8 @@
 
 	// start common code
 
+	const { Uuid } = jn.require('utils/uuid');
+
 	var PullStatus = {
 		Online: 'online',
 		Offline: 'offline',
@@ -49,6 +51,9 @@
 			this._eventListener = {};
 
 			this.context = 'client';
+
+			this._internalRpcResponseAwaiters = {};
+			BX.addCustomEvent("Pull::internalRpcResponse", this.onInternalRpcResponse.bind(this));
 		}
 
 		/**
@@ -256,22 +261,17 @@
 
 		getDebugInfo()
 		{
-			this.postComponentEvent("onPullGetDebugInfo");
-
-			if (!this._eventListener["onPullGetDebugInfoResult"])
+			this.executeInternalRpc("getDebugInfo", {}).then(result =>
 			{
-				this._eventListener["onPullGetDebugInfoResult"] = true;
-				this.receiveComponentEvent("onPullGetDebugInfoResult", data => {
-					if (typeof data === 'string')
-					{
-						console.info(data)
-					}
-					else
-					{
-						console.info(data.text);
-					}
-				});
-			}
+				if (typeof result === 'string')
+				{
+					console.info(result)
+				}
+				else
+				{
+					console.info(result.text);
+				}
+			})
 		}
 
 		setPublicIds(publicIds)
@@ -298,21 +298,29 @@
 			});
 		}
 
-		sendMessage(users, moduleId, command, params, expiry)
+		/**
+		 * Returns "last seen" time in seconds for the users. Result format: Object{userId: int}
+		 * If the user is currently connected - will return 0.
+		 * If the user if offline - will return diff between current timestamp and last seen timestamp in seconds.
+		 * If the user was never online - the record for user will be missing from the result object.
+		 *
+		 * @param {integer[]} userList Optional. If empty - returns all known to the server host users.
+		 * @returns {Promise}
+		 */
+		getUsersLastSeen(userList)
 		{
-			return this.sendMessageBatch([{
-				users: users,
-				moduleId: moduleId,
-				command: command,
-				params: params,
-				expiry: expiry
-			}]);
+			return this.executeInternalRpc("getUsersLastSeen", {userList});
 		}
 
-		sendMessageBatch(messageBatch)
+		sendMessage(users, moduleId, command, params, expiry)
 		{
-			BX.postComponentEvent("onPullSendMessageBatch", [messageBatch], "communication");
+			BX.postComponentEvent("onPullSendMessage", [users, moduleId, command, params, expiry], "communication");
 		}
+
+		// sendMessageBatch(messageBatch)
+		// {
+		// 	BX.postComponentEvent("onPullSendMessageBatch", [messageBatch], "communication");
+		// }
 
 		/**
 		 * @private
@@ -361,6 +369,40 @@
 						BXMobileApp.onCustomEvent(name, params, true);
 					}
 				}
+			}
+		}
+
+		executeInternalRpc(method, params)
+		{
+			const id = Uuid.getV4();
+
+			return new Promise((resolve, reject) => {
+				this._internalRpcResponseAwaiters[id] = {resolve, reject};
+				this.postComponentEvent("Pull::internalRpcRequest", {id, method, params});
+			})
+		}
+
+		onInternalRpcResponse(e)
+		{
+			const {id, result, error} = e;
+			if (!(id in this._internalRpcResponseAwaiters))
+			{
+				console.error("Pull: unknown internal rpc response id", id)
+				return;
+			}
+			const {resolve, reject} = this._internalRpcResponseAwaiters[id];
+			delete(this._internalRpcResponseAwaiters[id]);
+			if (typeof(result) !== 'undefined')
+			{
+				resolve(result);
+			}
+			else if (typeof(error) !== 'undefined')
+			{
+				reject(error);
+			}
+			else
+			{
+				console.error("Pull: internal rpc response does not contain neither result nor error", e);
 			}
 		}
 

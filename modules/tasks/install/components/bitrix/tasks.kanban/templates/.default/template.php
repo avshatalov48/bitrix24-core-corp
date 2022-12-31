@@ -1,11 +1,13 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) {
-    die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
 }
 
-if (!empty($arResult['ERRORS'])) {
-    ShowError(implode("\n", $arResult['ERRORS']));
+if (!empty($arResult['ERRORS']))
+{
+	ShowError(implode("\n", $arResult['ERRORS']));
     return;
 }
 
@@ -15,6 +17,13 @@ use Bitrix\Main\Web\Json;
 use Bitrix\Tasks\UI\Filter;
 use Bitrix\Tasks\Kanban\StagesTable;
 use Bitrix\Tasks\UI\ScopeDictionary;
+
+/** @var array $arResult */
+/** @var array $arParams */
+/** @var \Bitrix\Main\Application $APPLICATION */
+/** @var CBitrixComponent $component */
+/** @var $isBitrix24Template */
+
 
 Loc::loadMessages(__FILE__);
 
@@ -62,9 +71,10 @@ $clientTime = date(Date::convertFormatToPhp(FORMAT_DATETIME), (time() + \CTimeZo
 
 $APPLICATION->SetAdditionalCSS("/bitrix/js/intranet/intranet-common.css");
 
-if (!$emptyKanban) {
-    $bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-    $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-hidden');
+if (!$emptyKanban)
+{
+	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
+	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass . ' ' : '') . 'no-all-paddings no-background no-hidden');
 }
 
 $workMode = StagesTable::getWorkMode();
@@ -107,8 +117,71 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 	{
 		$showViewMode = ($isSprintView ? false : $showViewMode);
 	}
+	$order = $arResult['NEW_TASKS_ORDER'];
 
-    $APPLICATION->IncludeComponent(
+	$popupSortSubItems = [
+		[
+			'tabId' => 'popupMenuOptions',
+			'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>',
+			'params' => CUtil::PhpToJSObject([
+				'type' => 'sub',
+			]),
+		],
+		[
+			'tabId' => 'popupMenuOptions',
+			'text' => Loc::getMessage('KANBAN_SORT_DESC'),
+			'className' => ($order === 'desc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+			'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
+			'params' => CUtil::PhpToJSObject([
+				'order' => 'desc',
+				'type' => 'sub',
+			]),
+		],
+		[
+			'tabId' => 'popupMenuOptions',
+			'text' => Loc::getMessage('KANBAN_SORT_ASC'),
+			'className' => ($order === 'asc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+			'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
+			'params' => CUtil::PhpToJSObject([
+				'order' => 'asc',
+				'type' => 'sub',
+			]),
+		],
+	];
+
+	$popupSortItems = [
+		[
+			'tabId' => 'popupMenuOptions',
+			'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>',
+			'params' => CUtil::PhpToJSObject([]),
+		],
+		[
+			'tabId' => 'popupMenuOptions',
+			'html' => Loc::getMessage('KANBAN_SORT_ACTUAL')
+				. '<span class=\"menu-popup-item-sort-field-label\">'
+				. Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL")
+				. '</span>',
+			'className' => ($order === 'actual') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+			'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
+			'params' => CUtil::PhpToJSObject([
+				'order' => 'actual',
+			]),
+		],
+		[
+			'tabId' => 'popupMenuOptions',
+			'html' => Loc::getMessage('KANBAN_SORT_MY_SORT'),
+			'className' => ($order === 'asc' || $order === 'desc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
+			'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.enableCustomSort)',
+			'params' => CUtil::PhpToJSObject($popupSortSubItems),
+		],
+	];
+
+	if ($order === 'asc' || $order === 'desc')
+	{
+		$popupSortItems = array_merge($popupSortItems, $popupSortSubItems);
+	}
+
+	$APPLICATION->IncludeComponent(
         'bitrix:tasks.interface.header',
         '',
         array(
@@ -183,38 +256,8 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 					$arParams['PERSONAL'] != 'Y' && !$emptyKanban &&
 					!($arParams['SPRINT_SELECTED'] == 'Y' && !$arParams['SPRINT_ID'])
 				)
-					? array(
-							array(
-								'tabId' => 'popupMenuOptions',
-								'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE_MY') . '</b>'
-							),
-							array(
-								'tabId' => 'popupMenuOptions',
-								'html' => Loc::getMessage('KANBAN_SORT_ACTUAL').'<span class=\"menu-popup-item-sort-field-label\">'.Loc::getMessage("KANBAN_SORT_ACTUAL_RECOMMENDED_LABEL").'</span>',
-								'className' => ($arResult['NEW_TASKS_ORDER'] == 'actual') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
-								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
-								'params' => '{order: "actual"}'
-							),
-							array(
-								'tabId' => 'popupMenuOptions',
-								'html' => '<b>' . Loc::getMessage('KANBAN_SORT_TITLE') . '</b>'
-							),
-							array(
-								'tabId' => 'popupMenuOptions',
-								'text' => Loc::getMessage('KANBAN_SORT_DESC'),
-								'className' => ($arResult['NEW_TASKS_ORDER'] == 'desc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
-								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
-								'params' => '{order: "desc"}'
-							),
-							array(
-								'tabId' => 'popupMenuOptions',
-								'text' => Loc::getMessage('KANBAN_SORT_ASC'),
-								'className' => ($arResult['NEW_TASKS_ORDER'] == 'asc') ? 'menu-popup-item-accept' : 'menu-popup-item-none',
-								'onclick' => 'BX.delegate(BX.Tasks.KanbanComponent.ClickSort)',
-								'params' => '{order: "asc"}'
-							)
-						)
-					: array(),
+					? $popupSortItems
+					: [],
             'DEFAULT_ROLEID' => $arParams['DEFAULT_ROLEID'],
 
 			'SCOPE' => $scope,
@@ -278,6 +321,7 @@ if (isset($arParams['INCLUDE_INTERFACE_HEADER']) && $arParams['INCLUDE_INTERFACE
 		TIMELINE_MODE: "<?= $arParams['TIMELINE_MODE']?>",
 		SPRINT_ID: <?= $arParams['SPRINT_ID'] > 0 ? $arParams['SPRINT_ID'] : -1;?>
     };
+	BX.Tasks.KanbanComponent.openedCustomSort = '<?= $order === 'asc' || $order === 'desc'?>';
 
     var Kanban;
 

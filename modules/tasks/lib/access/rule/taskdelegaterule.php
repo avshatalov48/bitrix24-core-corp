@@ -57,13 +57,10 @@ class TaskDelegateRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return false;
 		}
 
-		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_RESPONSIBLE) as $member)
+		if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $this->newTask, [$this->user->getUserId()]))
 		{
-			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_RESPONSIBLE, $member, $this->newTask))
-			{
-				$this->controller->addError(static::class, 'Access to assign responsible denied');
-				return false;
-			}
+			$this->controller->addError(static::class, 'Access to assign responsible denied');
+			return false;
 		}
 
 		return true;

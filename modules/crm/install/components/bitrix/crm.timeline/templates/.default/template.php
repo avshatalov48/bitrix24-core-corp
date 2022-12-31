@@ -1,6 +1,8 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true){
+	die();
+}
 
 use Bitrix\Crm\Integration;
 
@@ -37,7 +39,7 @@ Bitrix\Main\UI\Extension::load([
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/crm/timeline_player/timeline_player.css');
 Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/js/calendar/planner.css');
 
-if(\Bitrix\Main\Loader::includeModule('disk'))
+if (\Bitrix\Main\Loader::includeModule('disk'))
 {
 	Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/components/bitrix/disk.uf.file/templates/.default/script.js');
 	Bitrix\Main\UI\Extension::load([
@@ -61,15 +63,16 @@ $jsLibraries = [
 	'date',
 ];
 
-if(\Bitrix\Main\Loader::includeModule('voximplant'))
+if (\Bitrix\Main\Loader::includeModule('voximplant'))
 {
 	$jsLibraries[] = 'voximplant_transcript';
 }
+
 $spotlightFastenShowed = true;
 if (!$arResult['READ_ONLY'])
 {
 	$spotlight = new \Bitrix\Main\UI\Spotlight("CRM_TIMELINE_FASTEN_SWITCHER");
-	if(!$spotlight->isViewed($USER->GetID()))
+	if (!$spotlight->isViewed($USER->GetID()))
 	{
 		$jsLibraries[] = 'spotlight';
 		$spotlightFastenShowed = false;
@@ -83,6 +86,10 @@ $prefix = mb_strtolower($guid);
 $listContainerID = "{$prefix}_list";
 $editorContainerID = "{$prefix}_editor";
 $menuBarContainerID = "{$prefix}_menu_bar";
+
+$todoContainerID = "{$prefix}_todo_container";
+$todoButtonID = "{$prefix}_todo_button";
+$todoCancelButtonID = "{$prefix}_todo_cancel_button";
 
 $commentContainerID = "{$prefix}_comment_container";
 $commentInputID = "{$prefix}_comment";
@@ -111,12 +118,13 @@ $scheduleItems = $arResult['SCHEDULE_ITEMS'];
 $historyItems = $arResult['HISTORY_ITEMS'];
 $fixedItems = $arResult['FIXED_ITEMS'];
 
-if(!empty($arResult['ERRORS']))
+if (!empty($arResult['ERRORS']))
 {
-	foreach($arResult['ERRORS'] as $error)
+	foreach ($arResult['ERRORS'] as $error)
 	{
 		ShowError($error);
 	}
+
 	return;
 }
 
@@ -133,50 +141,58 @@ if(!empty($arResult['ERRORS']))
 					"ID" => "some",
 					"ON_CLICK" => "BX.onCustomEvent('".$prefix."_menu', ['#ID#']);"
 				];
-				$menuItems = [([
+
+				$menuItems = [];
+				if ($arResult['ENABLE_TODO'])
+				{
+					$menuItems[] = [
+						"ID" => "todo",
+						"TITLE" => GetMessage("CRM_TIMELINE_ADD_TODO"),
+						"TEXT" => GetMessage("CRM_TIMELINE_ADD_TODO"),
+					] + $baseMenuItem;
+				}
+				$menuItems[] =[
 					"ID" => "comment",
 					"TITLE" => GetMessage("CRM_TIMELINE_COMMENT"),
 					"TEXT" => GetMessage("CRM_TIMELINE_COMMENT"),
-				] + $baseMenuItem)];
+				] + $baseMenuItem;
 
 				if ($arResult["ENABLE_TASK"])
 				{
 					$menuItems[] = [
-							"ID" => "task",
-							"TEXT" => GetMessage('CRM_TIMELINE_TASK'),
-							"TITLE" => GetMessage('CRM_TIMELINE_TASK'),
-						] + $baseMenuItem;
+						"ID" => "task",
+						"TEXT" => GetMessage('CRM_TIMELINE_TASK'),
+						"TITLE" => GetMessage('CRM_TIMELINE_TASK'),
+					] + $baseMenuItem;
 				}
 
 				if ($arResult["ENABLE_SMS"])
 				{
 					$menuItems[] = [
-							"ID" => "sms",
-							"TEXT" =>
-								(\Bitrix\Main\Loader::includeModule('messageservice') && \Bitrix\MessageService\Sender\Sms\Ednaru::isSupported())
-									? GetMessage("CRM_TIMELINE_SMS_TITLE2")
-									: GetMessage("CRM_TIMELINE_SMS_TITLE")
-							,
-							"TITLE" => GetMessage("CRM_TIMELINE_SMS") ,
-						] + $baseMenuItem;
+						"ID" => "sms",
+						"TEXT" => (\Bitrix\Main\Loader::includeModule('messageservice') && \Bitrix\MessageService\Sender\Sms\Ednaru::isSupported())
+							? GetMessage("CRM_TIMELINE_SMS_TITLE2")
+							: GetMessage("CRM_TIMELINE_SMS_TITLE"),
+						"TITLE" => GetMessage("CRM_TIMELINE_SMS"),
+					] + $baseMenuItem;
 				}
 
 				if ($arResult["ENABLE_EMAIL"])
 				{
 					$menuItems[] = [
-							"ID" => "email",
-							"TEXT" => GetMessage('CRM_TIMELINE_EMAIL'),
-							"TITLE" => GetMessage('CRM_TIMELINE_EMAIL'),
-						] + $baseMenuItem;
+						"ID" => "email",
+						"TEXT" => GetMessage('CRM_TIMELINE_EMAIL'),
+						"TITLE" => GetMessage('CRM_TIMELINE_EMAIL'),
+					] + $baseMenuItem;
 				}
 
 				if ($arResult["ENABLE_DELIVERY"])
 				{
 					$menuItems[] = [
-							"ID" => "delivery",
-							"TEXT" => GetMessage("CRM_TIMELINE_DELIVERY"),
-							"TITLE" => GetMessage("CRM_TIMELINE_DELIVERY"),
-						] + $baseMenuItem;
+						"ID" => "delivery",
+						"TEXT" => GetMessage("CRM_TIMELINE_DELIVERY"),
+						"TITLE" => GetMessage("CRM_TIMELINE_DELIVERY"),
+					] + $baseMenuItem;
 				}
 
 				if ($arResult["ENABLE_WAIT"])
@@ -215,10 +231,10 @@ if(!empty($arResult['ERRORS']))
 				if ($arResult["ENABLE_MEETING"])
 				{
 					$menuItems[] = [
-							"ID" => "meeting",
-							"TEXT" => GetMessage('CRM_TIMELINE_MEETING'),
-							"TITLE" => GetMessage('CRM_TIMELINE_MEETING'),
-						] + $baseMenuItem;
+						"ID" => "meeting",
+						"TEXT" => GetMessage('CRM_TIMELINE_MEETING'),
+						"TITLE" => GetMessage('CRM_TIMELINE_MEETING'),
+					] + $baseMenuItem;
 				}
 
 				if ($arResult["ENABLE_CALL"])
@@ -232,18 +248,12 @@ if(!empty($arResult['ERRORS']))
 
 				if ($arResult['ENABLE_VISIT'])
 				{
-					$classParams = $arResult['IS_VISIT_RESTRICTED']
-						? ['IS_LOCKED' => true]
-						: []
-					;
+					$classParams = $arResult['IS_VISIT_RESTRICTED'] ? ['IS_LOCKED' => true] : [];
 					$menuItems[] = [
-							'ID' => 'visit',
-							'TEXT' => GetMessage('CRM_TIMELINE_VISIT'),
-							'TITLE' => GetMessage('CRM_TIMELINE_VISIT'),
-						]
-						+ $classParams
-						+ $baseMenuItem
-					;
+						'ID' => 'visit',
+						'TEXT' => GetMessage('CRM_TIMELINE_VISIT'),
+						'TITLE' => GetMessage('CRM_TIMELINE_VISIT'),
+					] + $classParams + $baseMenuItem;
 				}
 
 				foreach($arResult['ADDITIONAL_TABS'] as $tab)
@@ -263,15 +273,18 @@ if(!empty($arResult['ERRORS']))
 				$menuBarObjectId .= '_menu';
 				$mode = true;
 
-				if (array_key_exists('ENTITY_CONFIG_SCOPE', $arParams)
+				if (
+					array_key_exists('ENTITY_CONFIG_SCOPE', $arParams)
 					&& array_key_exists('USER_SCOPE_ID', $arParams)
-					&& $arParams['ENTITY_CONFIG_SCOPE'] !== Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL)
+					&& $arParams['ENTITY_CONFIG_SCOPE'] !== Bitrix\Crm\Entity\EntityEditorConfigScope::PERSONAL
+				)
 				{
 					$menuBarObjectIdParts = [
 						'crm_scope_timeline',
 						$arParams['ENTITY_CONFIG_SCOPE'],
 						$arResult['ENTITY_TYPE_NAME'],
 					];
+
 					if (isset($arResult['EXTRAS']['CATEGORY_ID']) && $arResult['EXTRAS']['CATEGORY_ID'] > 0)
 					{
 						$menuBarObjectIdParts[] = $arResult['EXTRAS']['CATEGORY_ID'];
@@ -286,14 +299,31 @@ if(!empty($arResult['ERRORS']))
 					"",
 					array(
 						"ID" => $menuBarObjectId,
-						"ITEMS" => array_map(function ($item) {
-							$item["ON_CLICK"] = str_replace("#ID#", $item["ID"], $item["ON_CLICK"]);
-							return $item;
-						}, $menuItems),
+						"ITEMS" => array_map(
+							function ($item)
+							{
+								$item["ON_CLICK"] = str_replace("#ID#", $item["ID"], $item["ON_CLICK"]);
+
+								return $item;
+							},
+							$menuItems
+						),
 						"EDIT_MODE" => $mode,
 						"THEME" => "compact",
 					)
 				);?></div>
+				<?if($arResult['ENABLE_TODO']):?>
+				<div id="<?=htmlspecialcharsbx($todoContainerID)?>" class="crm-entity-stream-content-new-detail crm-entity-stream-content-new-detail-todo">
+
+					<div class="crm-entity-stream-content-new-comment-btn-container">
+						<button id="<?=htmlspecialcharsbx($todoButtonID)?>" class="ui-btn ui-btn-xs ui-btn-primary ui-btn-disabled">
+							<?=GetMessage('CRM_TIMELINE_SAVE_BUTTON')?>
+						</button>
+						<span id="<?=htmlspecialcharsbx($todoCancelButtonID)?>" class="ui-btn ui-btn-xs ui-btn-link"><?=GetMessage('CRM_TIMELINE_CANCEL_BTN')?></span>
+					</div>
+				</div>
+				<?endif?>
+
 				<div id="<?=htmlspecialcharsbx($commentContainerID)?>" class="crm-entity-stream-content-new-detail">
 					<textarea id="<?=htmlspecialcharsbx($commentInputID)?>" rows="1" class="crm-entity-stream-content-new-comment-textarea" placeholder="<?=GetMessage('CRM_TIMELINE_COMMENT_PLACEHOLDER')?>"></textarea>
 					<div class="crm-entity-stream-content-new-comment-btn-container">
@@ -511,6 +541,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				]
 			]
 		);
+
 		if ($menuExtensions)
 		{
 			echo 'var IntranetExtensions = ' . \CUtil::phpToJSObject($menuExtensions) . ";\n\n";
@@ -520,6 +551,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 		'summary' => 'CRM_TIMELINE_FINAL_SUMMARY_TITLE',
 		'documents' => 'CRM_TIMELINE_FINAL_SUMMARY_DOCUMENTS_TITLE',
 	];
+
 	if ($arResult['ENTITY_TYPE_ID'] === \CCrmOwnerType::SmartInvoice)
 	{
 		$finalSummaryPhraseCodes = [
@@ -534,10 +566,11 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 		{
 			BX.CrmSchedule.messages =
 			{
-				planned: "<?=GetMessageJS('CRM_TIMELINE_SCHEDULE_PLANNED')?>",
-				stub: "<?=GetMessageJS('CRM_TIMELINE_COMMON_SCHEDULE_STUB')?>",
-				leadStub: "<?=GetMessageJS('CRM_TIMELINE_LEAD_SCHEDULE_STUB')?>",
-				dealStub: "<?=GetMessageJS('CRM_TIMELINE_DEAL_SCHEDULE_STUB')?>"
+				planned: "<?=GetMessageJS('CRM_TIMELINE_SCHEDULE_PLANNED_NEW')?>",
+				stubTitle: "<?=GetMessageJS('CRM_TIMELINE_COMMON_SCHEDULE_STUB_TITLE')?>",
+				stub: "<?=GetMessageJS('CRM_TIMELINE_SCHEDULE_STUB_DEFAULT')?>",
+				leadStub: "<?=GetMessageJS('CRM_TIMELINE_SCHEDULE_STUB_LEAD')?>",
+				dealStub: "<?=GetMessageJS('CRM_TIMELINE_SCHEDULE_STUB_DEAL')?>"
 			};
 
 			BX.CrmHistory.messages =
@@ -684,8 +717,11 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				zoomCreatedMessage: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_CONFERENCE_MESSAGE")?>',
 				zoomCreatedCopyInviteLink: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_COPY_INVITE_LINK")?>',
 				zoomCreatedStartConference: '<?=GetMessageJS("CRM_TIMELINE_ZOOM_CREATED_START_CONFERENCE")?>',
-				storeDocument: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_TITLE_2')?>",
-				storeDocumentDescription: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_DESCRIPTION_2')?>",
+				storeDocumentProduct: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_TITLE_2')?>",
+				storeDocumentProductDescription: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_DESCRIPTION_3')?>",
+				storeDocumentService: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_SERVICE_TITLE')?>",
+				storeDocumentServiceDescription: "<?=GetMessageJS('CRM_TIMELINE_STORE_DOCUMENT_SERVICE_DESCRIPTION')?>",
+				automationDebugger: "<?=GetMessageJS('CRM_TIMELINE_AUTOMATION_DEBUGGER_TITLE')?>",
 			};
 
 			BX.CrmTimelineWaitEditor.messages =
@@ -870,7 +906,7 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 				"DISK_TMPLT_THUMB2": '',
 			});
 
-			BX.CrmTimelineManager.create(
+			var timeline = BX.CrmTimelineManager.create(
 				"<?=CUtil::JSEscape($guid)?>",
 				{
 					ownerTypeId: <?=$arResult['ENTITY_TYPE_ID']?>,
@@ -878,8 +914,10 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					ownerInfo: <?=CUtil::PhpToJSObject($arResult['ENTITY_INFO'])?>,
 					userId: <?=$arResult['USER_ID']?>,
 					readOnly: <?=$arResult['READ_ONLY'] ? 'true' : 'false'?>,
+					currentUser: <?=\Bitrix\Main\Web\Json::encode($arResult['LAYOUT_CURRENT_USER'])?>,
 					pullTagName: "<?=CUtil::JSEscape($arResult['PULL_TAG_NAME'])?>",
 					progressSemantics: "<?=CUtil::JSEscape($arResult['PROGRESS_SEMANTICS'])?>",
+					enableTodo: <?=$arResult['ENABLE_TODO'] ? 'true' : 'false'?>,
 					enableWait: <?=$arResult['ENABLE_WAIT'] ? 'true' : 'false'?>,
 					enableSms: <?=$arResult['ENABLE_SMS'] ? 'true' : 'false'?>,
 					enableZoom: <?=$arResult['ENABLE_ZOOM'] ? 'true' : 'false'?>,
@@ -923,10 +961,14 @@ $filterClassName = $arResult['IS_HISTORY_FILTER_APPLIED']
 					smsStatusSemantics: <?=CUtil::PhpToJSObject($arResult['SMS_STATUS_SEMANTICS'])?>,
 					editorZoomContainer: "<?=CUtil::JSEscape($zoomContainerID)?>",
 					visitParameters: <?= \CUtil::PhpToJSObject($arResult['VISIT_PARAMETERS'])?>,
+					editorTodoContainer:  "<?=CUtil::JSEscape($todoContainerID)?>",
+					editorTodoButton: "<?=CUtil::JSEscape($todoButtonID)?>",
+					editorTodoCancelButton: "<?=CUtil::JSEscape($todoCancelButtonID)?>",
 					spotlightFastenShowed: <?=$spotlightFastenShowed ? 'true' : 'false'?>,
 					audioPlaybackRate: <?= (float) $arResult['AUDIO_PLAYBACK_RATE'] ?>
 				}
 			);
+			BX.CrmTimelineManager.setDefault(timeline);
 		}
 	);
 </script>

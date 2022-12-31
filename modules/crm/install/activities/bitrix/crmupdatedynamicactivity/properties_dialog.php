@@ -106,5 +106,6 @@ $APPLICATION->IncludeComponent(
 			currentValues: <?= Json::encode($dialog->getCurrentValue('dynamic_entities_fields')) ?>,
 		});
 		script.init();
+		script.render();
 	})
 </script>

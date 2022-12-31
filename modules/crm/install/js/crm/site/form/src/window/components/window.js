@@ -47,7 +47,7 @@ let windowMixin = {
 	props: [
 		'show', 'title', 'position', 'vertical',
 		'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText',
-		'mountId'
+		'mountId', 'hideOnOverlayClick'
 	],
 	components: {
 		'b24-overlay': Overlay,
@@ -61,6 +61,12 @@ let windowMixin = {
 		};
 	},
 	methods: {
+		onOverlayClick() {
+			if (this.hideOnOverlayClick)
+			{
+				this.hide();
+			}
+		},
 		hide() {
 			this.show = false;
 			this.$emit('hide');
@@ -117,11 +123,11 @@ const Popup = {
 			:mountTo="getMountTo(mountId)"
 		>
 			<div class="b24-window">
-				<b24-overlay :show="show" @click="hide()"></b24-overlay>
+				<b24-overlay :show="show" @click="onOverlayClick()"></b24-overlay>
 				<transition :name="getTransitionName()" appear>
 					<div class="b24-window-popup" 
 						:class="classes()"
-						@click.self.prevent="hide()"
+						@click.self.prevent="onOverlayClick()"
 						v-show="show"
 					>
 						<div class="b24-window-popup-wrapper" 

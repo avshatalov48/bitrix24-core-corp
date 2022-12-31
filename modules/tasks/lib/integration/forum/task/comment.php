@@ -1417,7 +1417,12 @@ final class Comment extends \Bitrix\Tasks\Integration\Forum\Comment
 			return $newMentionedUserIds;
 		}
 
-		$mentionedUserIds = $matches[1];
+		$mentionedUserIds = array_filter(array_map('intval', $matches[1]));
+		if (empty($mentionedUserIds))
+		{
+			return $newMentionedUserIds;
+		}
+
 		$task = false;
 		$taskData = false;
 		$taskMembers = [];

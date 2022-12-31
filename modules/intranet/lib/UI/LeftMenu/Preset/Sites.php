@@ -12,6 +12,7 @@ class Sites extends Social
 			'menu_sites',
 			'menu_shop',
 			'menu_crm_favorite',
+			'menu_crm_store',
 			'menu_marketing',
 			'menu_tasks',
 			'menu_teamwork' => [

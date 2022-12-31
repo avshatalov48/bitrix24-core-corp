@@ -2,7 +2,7 @@ this.BX = this.BX || {};
 (function (exports,main_core,main_core_events,ui_designTokens,crm_placement_detailsearch,ui_dialogs_messagebox) {
 	'use strict';
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var RequisiteAutocompleteField = /*#__PURE__*/function (_EventEmitter) {
 	  babelHelpers.inherits(RequisiteAutocompleteField, _EventEmitter);
 
@@ -67,7 +67,8 @@ this.BX = this.BX || {};
 	      return {
 	        isPlacement: BX.prop.getBoolean(params, "isPlacement", false),
 	        numberOfPlacements: BX.prop.getInteger(params, "numberOfPlacements", 0),
-	        countryId: BX.prop.getInteger(params, "countryId", 0)
+	        countryId: BX.prop.getInteger(params, "countryId", 0),
+	        defaultAppInfo: BX.prop.getObject(params, "defaultAppInfo", {})
 	      };
 	    }
 	  }, {
@@ -106,7 +107,7 @@ this.BX = this.BX || {};
 	          items: [],
 	          enableCreation: true,
 	          enableCreationOnBlur: true,
-	          autocompleteDelay: 1000,
+	          autocompleteDelay: 1500,
 	          messages: {
 	            creationLegend: main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADD_REQUISITE'),
 	            notFound: main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_NOT_FOUND')
@@ -119,6 +120,7 @@ this.BX = this.BX || {};
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onBeforeSearchStart', this.onEntitySearchStart.bind(this));
 	        main_core_events.EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onSearchComplete', this.onEntitySearchComplete.bind(this));
 	        BX.addCustomEvent(this._dropdown, 'Dropdown:onGetPopupAlertContainer', this.onGetPopupAlertContainer.bind(this));
+	        BX.addCustomEvent(this._dropdown, 'Dropdown:onAfterInstallDefaultApp', this.onAfterInstallDefaultApp.bind(this));
 	      }
 
 	      this._dropdown.searchOptions = this._context;
@@ -132,7 +134,13 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "getDropdownPopup",
 	    value: function getDropdownPopup() {
-	      return this._dropdown.getPopupWindow();
+	      var tryCreate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+	      if (tryCreate) {
+	        return this._dropdown.getPopupWindow();
+	      }
+
+	      return this._dropdown.popupWindow;
 	    }
 	  }, {
 	    key: "closeDropdownPopup",
@@ -248,6 +256,16 @@ this.BX = this.BX || {};
 	    key: "setClientResolverPlacementParams",
 	    value: function setClientResolverPlacementParams(params) {
 	      this.clientResolverPlacementParams = this.filterclientResolverPlacementParams(params);
+
+	      if (this._dropdown) {
+	        this._dropdown.setPlacementParams(this.clientResolverPlacementParams);
+
+	        var isPlacement = BX.prop.getBoolean(this.clientResolverPlacementParams, "isPlacement", false);
+
+	        if (isPlacement) {
+	          this._dropdown.setExternalSearchHandler(this.externalSearchHandler);
+	        }
+	      }
 	    }
 	  }, {
 	    key: "setEnabled",
@@ -416,14 +434,16 @@ this.BX = this.BX || {};
 	        }
 
 	        if (this.detailAutocompletePlacement) {
-	          if (!this.dropdownPopup) {
-	            this.dropdownPopup = this._dropdown.getPopupWindow();
+	          var dropdownPopup = this.getDropdownPopup(true);
+
+	          if (dropdownPopup) {
+	            this.beforeEntitySearchPopupCloseHandler = this.onBeforeEntitySearchPopupClose.bind(this, dropdownPopup._tryCloseByEvent.bind(dropdownPopup));
+	            dropdownPopup._tryCloseByEvent = this.beforeEntitySearchPopupCloseHandler;
+	            this.entitySearchPopupCloseHandler = this.onEntitySearchPopupClose.bind(this);
+	            BX.addCustomEvent(dropdownPopup, 'onPopupClose', this.entitySearchPopupCloseHandler);
+	            dropdownPopup.show();
 	          }
 
-	          this.beforeEntitySearchPopupCloseHandler = this.onBeforeEntitySearchPopupClose.bind(this, this.dropdownPopup._tryCloseByEvent.bind(this.dropdownPopup));
-	          this.dropdownPopup._tryCloseByEvent = this.beforeEntitySearchPopupCloseHandler;
-	          this.entitySearchPopupCloseHandler = this.onEntitySearchPopupClose.bind(this);
-	          BX.addCustomEvent(this.dropdownPopup, 'onPopupClose', this.entitySearchPopupCloseHandler);
 	          this.placementsParamsHandler = this.onPlacementsParams.bind(this);
 	          BX.addCustomEvent(this.detailAutocompletePlacement, "Placements:params", this.placementsParamsHandler);
 	          this.beforeAddPlacementItemsHandler = this.onBeforeAppendPlacementItems.bind(this);
@@ -476,6 +496,11 @@ this.BX = this.BX || {};
 	    key: "onGetPopupAlertContainer",
 	    value: function onGetPopupAlertContainer(searchControl, container) {
 	      this.initPlacement(searchControl, container);
+	    }
+	  }, {
+	    key: "onAfterInstallDefaultApp",
+	    value: function onAfterInstallDefaultApp(dropdown) {
+	      this.emit("onInstallDefaultApp");
 	    }
 	  }, {
 	    key: "onBeforeEntitySearchPopupClose",
@@ -702,7 +727,13 @@ this.BX = this.BX || {};
 	    _this3.feedbackFormParams = BX.prop.getObject(options, "feedbackFormParams", {});
 	    _this3.canAddRequisite = BX.prop.getBoolean(options, "canAddRequisite", false);
 	    _this3.externalSearchHandler = BX.prop.getFunction(options, "externalSearchHandler", null);
-	    _this3.placementParams = BX.prop.getObject(options, "placementParams", null);
+	    _this3.placementParams = BX.prop.getObject(options, "placementParams", {});
+	    _this3.installDefaultAppHandler = _this3.onClickInstallDefaultApp.bind(babelHelpers.assertThisInitialized(_this3));
+	    _this3.installDefaultAppTimeout = 7000;
+	    _this3.installDefaultAppTimeoutHandler = _this3.onInstallDefaultAppTimeout.bind(babelHelpers.assertThisInitialized(_this3));
+	    _this3.afterInstallDefaultAppHandler = _this3.onAfterInstallDefaultApp.bind(babelHelpers.assertThisInitialized(_this3));
+	    _this3.popupAlertContainer = null;
+	    _this3.defaultAppInstallLoader = null;
 	    return _this3;
 	  }
 
@@ -710,6 +741,11 @@ this.BX = this.BX || {};
 	    key: "setPlacementParams",
 	    value: function setPlacementParams(params) {
 	      this.placementParams = params;
+	    }
+	  }, {
+	    key: "setExternalSearchHandler",
+	    value: function setExternalSearchHandler(handler) {
+	      this.externalSearchHandler = handler;
 	    }
 	  }, {
 	    key: "isTargetElementChanged",
@@ -745,21 +781,40 @@ this.BX = this.BX || {};
 	      this.minSearchStringLength = length;
 	    }
 	  }, {
+	    key: "getDefaultAppInfo",
+	    value: function getDefaultAppInfo() {
+	      return BX.prop.getObject(this.placementParams, "defaultAppInfo", {});
+	    }
+	  }, {
+	    key: "isDefaultAppCanInstall",
+	    value: function isDefaultAppCanInstall() {
+	      var defaultAppInfo = this.getDefaultAppInfo();
+	      return main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "code", "")) && main_core.Type.isStringFilled(BX.prop.get(defaultAppInfo, "title", "")) && BX.prop.get(defaultAppInfo, "isAvailable", "N") === "Y" && BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y";
+	    }
+	  }, {
 	    key: "getPopupAlertContainer",
 	    value: function getPopupAlertContainer() {
 	      if (!this.popupAlertContainer) {
 	        var items = [];
+
+	        if (this.isDefaultAppCanInstall()) {
+	          var appTitleText = main_core.Text.encode(this.getDefaultAppInfo()["title"]);
+	          var appInstallText = main_core.Text.encode(main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_INSTALL'));
+	          items.push(main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button\n\t\t\t\t\t\t\tclass=\"crm-rq-popup-item-add-inst-app-btn\"><span></span><span\n\t\t\t\t\t\t\t\tclass=\"crm-rq-popup-item-add-new-btn-text\"><span>", "</span><span\n\t\t\t\t\t\t\t\tstyle=\"margin-left: 20px; width: 100px;\"><a\n\t\t\t\t\t\t\t\t\thref=\"#\"\n\t\t\t\t\t\t\t\t\tonclick=\"", "\">", "</a>\n\t\t\t\t\t\t\t</span></span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"])), appTitleText, this.installDefaultAppHandler, appInstallText));
+	        }
+
 	        var feedbackAvailable = Object.keys(this.getFeedbackFormParams()).length > 0;
 
 	        if (feedbackAvailable) {
 	          var textParts = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE').split('#ADVICE_NEW_SERVICE_LINK#');
-	          var item = main_core.Tag.render(_templateObject5 || (_templateObject5 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-popup-item crm-rq-popup-item-helper\"></div>"])));
+	          var item = main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<div class=\"crm-rq-popup-item crm-rq-popup-item-helper\"></div>"])));
 
 	          if (textParts[0] && textParts[0].length) {
 	            main_core.Dom.append(document.createTextNode(textParts[0]), item);
 	          }
 
-	          main_core.Dom.append(main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["<a href=\"\" onclick=\"", "\">", "</a>"])), this.showFeedbackForm.bind(this), main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK')), item);
+	          var newServiceLinkText = main_core.Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK');
+	          main_core.Dom.append(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["<a href=\"\" onclick=\"", "\">", "</a>"])), this.showFeedbackForm.bind(this), newServiceLinkText), item);
 
 	          if (textParts[1] && textParts[1].length) {
 	            main_core.Dom.append(document.createTextNode(textParts[1]), item);
@@ -769,10 +824,10 @@ this.BX = this.BX || {};
 	        }
 
 	        if (this.canAddRequisite) {
-	          items.push(main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button class=\"crm-rq-popup-item-add-new-btn\">\n\t\t\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"></span>\n\t\t\t\t\t\t\t<span class=\"crm-rq-popup-item-add-new-btn-text\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t>", "</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"])), this.onEmptyValueEvent.bind(this), this.onEmptyValueEvent.bind(this), BX.prop.getString(this.messages, "creationLegend")));
+	          items.push(main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"crm-rq-popup-item crm-rq-popup-item-add-new\">\n\t\t\t\t\t\t<button class=\"crm-rq-popup-item-add-new-btn\">\n\t\t\t\t\t\t\t<span class=\"ui-btn crm-rq-btn ui-btn-icon-custom ui-btn-primary ui-btn-round\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"></span>\n\t\t\t\t\t\t\t<span class=\"crm-rq-popup-item-add-new-btn-text\"\n\t\t\t\t\t\t\t\tonclick=\"", "\"\n\t\t\t\t\t\t\t\t>", "</span>\n\t\t\t\t\t\t</button>\n\t\t\t\t\t</div>"])), this.onEmptyValueEvent.bind(this), this.onEmptyValueEvent.bind(this), BX.prop.getString(this.messages, "creationLegend")));
 	        }
 
-	        this.popupAlertContainer = items.length ? main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-popup-wrapper\">\n\t\t\t\t\t<div class=\"crm-rq-popup-items-list\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), items) : main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
+	        this.popupAlertContainer = items.length ? main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<div class=\"crm-rq-popup-wrapper\">\n\t\t\t\t\t<div class=\"crm-rq-popup-items-list\">", "</div>\n\t\t\t\t</div>\n\t\t\t"])), items) : main_core.Tag.render(_templateObject10 || (_templateObject10 = babelHelpers.taggedTemplateLiteral(["<div></div>"])));
 	        BX.onCustomEvent(this, "Dropdown:onGetPopupAlertContainer", [this, this.popupAlertContainer]);
 	      }
 
@@ -844,6 +899,75 @@ this.BX = this.BX || {};
 	      }
 
 	      return babelHelpers.get(babelHelpers.getPrototypeOf(Dropdown.prototype), "searchItemsByStr", this).call(this, target);
+	    }
+	  }, {
+	    key: "onClickInstallDefaultApp",
+	    value: function onClickInstallDefaultApp(event) {
+	      var _this4 = this;
+
+	      event.stopPropagation();
+	      event.preventDefault();
+
+	      if (this.defaultAppInstallLoader) {
+	        return;
+	      }
+
+	      if (main_core.Type.isDomNode(event.target) && main_core.Type.isDomNode(event.target.parentNode)) {
+	        var parent = event.target.parentNode;
+	        main_core.Dom.hide(event.target);
+	        this.defaultAppInstallLoader = this.defaultAppInstallLoader || new BX.Loader({
+	          target: parent,
+	          size: 30,
+	          offset: {
+	            top: "-23px"
+	          }
+	        });
+	        this.defaultAppInstallLoader.show();
+	      }
+
+	      if (this.isDefaultAppCanInstall()) {
+	        BX.loadExt('marketplace').then(function () {
+	          setTimeout(_this4.installDefaultAppTimeoutHandler, _this4.installDefaultAppTimeout, event.target);
+	          top.BX.addCustomEvent(top, "Rest:AppLayout:ApplicationInstall", _this4.afterInstallDefaultAppHandler);
+	          BX.rest.Marketplace.install({
+	            CODE: _this4.placementParams["defaultAppInfo"]["code"],
+	            SILENT_INSTALL: "Y",
+	            REDIRECT_PRIORITY: false,
+	            IFRAME: true
+	          });
+	        })["catch"](function () {
+	          top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", _this4.afterInstallDefaultAppHandler);
+	        });
+	      }
+	    }
+	  }, {
+	    key: "onInstallDefaultAppTimeout",
+	    value: function onInstallDefaultAppTimeout(elementToShow) {
+	      top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+
+	      if (this.defaultAppInstallLoader) {
+	        this.defaultAppInstallLoader.destroy();
+	        this.defaultAppInstallLoader = null;
+	      }
+
+	      if (main_core.Type.isDomNode(elementToShow)) {
+	        main_core.Dom.show(elementToShow);
+	      }
+	    }
+	  }, {
+	    key: "onAfterInstallDefaultApp",
+	    value: function onAfterInstallDefaultApp(installed, eventResult) {
+	      top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+	      BX.onCustomEvent(this, "Dropdown:onAfterInstallDefaultApp", [this]);
+
+	      if (this.defaultAppInstallLoader) {
+	        this.defaultAppInstallLoader.destroy();
+	        this.defaultAppInstallLoader = null;
+	      }
+
+	      if (this.popupWindow) {
+	        this.popupWindow.close();
+	      }
 	    }
 	  }]);
 	  return Dropdown;

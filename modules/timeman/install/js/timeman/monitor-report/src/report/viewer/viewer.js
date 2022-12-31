@@ -248,7 +248,7 @@ class Viewer
 						<div class="pwt-report-content">
 							<div class="pwt-report-content-header" style="margin-bottom: 0">
 								<div class="ui-icon ui-icon-common-user pwt-report-content-header-user-icon">
-									<i v-if="userIcon" :style="{backgroundImage: 'url(' + userIcon + ')'}"></i>
+									<i v-if="userIcon" :style="{backgroundImage: 'url(' + encodeURI(userIcon) + ')'}"></i>
 									<i v-else-if="!userIcon"></i>
 								</div>
 								<a class="pwt-report-content-header-title" :href="userLink">

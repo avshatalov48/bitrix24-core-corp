@@ -181,7 +181,7 @@ abstract class Queue
 	 * Queue constructor.
 	 * @param Session $session
 	 */
-	function __construct($session)
+	public function __construct($session)
 	{
 		if ($session instanceof Session)
 		{

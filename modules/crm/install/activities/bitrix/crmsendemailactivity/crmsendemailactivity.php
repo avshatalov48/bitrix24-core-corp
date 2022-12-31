@@ -126,8 +126,8 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		// <-- Bindings & Communications
 
 		$subject = $this->getSubject();
-		$message = $this->getMessageText();
 		$messageType = $this->MessageTextType;
+		$message = $this->getMessageText($messageType);
 
 		if ($message !== '')
 		{
@@ -964,20 +964,36 @@ class CBPCrmSendEmailActivity extends CBPActivity
 		return $subject;
 	}
 
-	private function getMessageText()
+	private function getMessageText($messageType)
 	{
 		$message = $this->getRawProperty('MessageText');
 		if ($this->MessageTextEncoded)
 		{
 			$message = self::decodeMessageText($message);
 		}
-		$message = $this->ParseValue($message, 'text');
-		if (is_array($message))
-		{
-			$message = implode(', ', \CBPHelper::MakeArrayFlat($message));
-		}
 
-		return $message;
+		return $this->ParseValue(
+			$message,
+			'text',
+			function($objectName, $fieldName, $property, $result) use ($messageType)
+			{
+				if (is_array($result))
+				{
+					$result = implode(', ', CBPHelper::makeArrayFlat($result));
+				}
+
+				if (
+					$messageType === 'html'
+					&& $property['ValueContentType'] !== 'html'
+					&& $property['Type'] !== 'S:HTML'
+				)
+				{
+					$result = htmlspecialcharsbx($result);
+				}
+
+				return $result;
+			}
+		);
 	}
 
 	private static function encodeMessageText($text)

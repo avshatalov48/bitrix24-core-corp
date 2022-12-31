@@ -49,11 +49,7 @@ class CCrmDateTimeHelper
 
 	public static function GetMaxDatabaseDate($preparedForInsert = true)
 	{
-		$maxDate = (new DateTime())
-			->setDate(9999, 12, 31)
-			->setTime(0, 0, 0)
-			->disableUserTime()
-		;
+		$maxDate =self::getMaxDatabaseDateObject();
 		if ($preparedForInsert)
 		{
 			return Main\Application::getConnection()->getSqlHelper()->convertToDbDateTime($maxDate);
@@ -61,6 +57,16 @@ class CCrmDateTimeHelper
 
 		return $maxDate->toString();
 	}
+
+	public static function getMaxDatabaseDateObject(): DateTime
+	{
+		return (new DateTime())
+			->setDate(9999, 12, 31)
+			->setTime(0, 0, 0)
+			->disableUserTime()
+		;
+	}
+
 	public static function IsMaxDatabaseDate($datetime, $format = false)
 	{
 		$parts = ParseDateTime($datetime, is_string($format) && $format !== '' ? $format : FORMAT_DATETIME);

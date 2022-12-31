@@ -1,6 +1,6 @@
 this.BX = this.BX || {};
 this.BX.Crm = this.BX.Crm || {};
-(function (exports,main_core_events,ui_notification,main_popup,main_core) {
+(function (exports,crm_kanban_sort,main_core_events,ui_notification,main_popup,main_core) {
 	'use strict';
 
 	var PullOperation = /*#__PURE__*/function () {
@@ -75,6 +75,12 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
+	      var insertItemParams = {};
+
+	      if (paramsItem.data.lastActivity && paramsItem.data.lastActivity.timestamp !== item.data.lastActivity.timestamp) {
+	        insertItemParams.canShowLastActivitySortTour = true;
+	      }
+
 	      var oldPrice = parseFloat(item.data.price);
 	      var oldColumnId = item.columnId;
 
@@ -89,11 +95,16 @@ this.BX.Crm = this.BX.Crm || {};
 	      item.useAnimation = true;
 	      item.setChangedInPullRequest();
 	      this.grid.resetMultiSelectMode();
-	      this.grid.insertItem(item);
 	      var newColumnId = paramsItem.data.columnId;
 	      var newColumn = this.grid.getColumn(newColumnId);
 	      var newPrice = parseFloat(paramsItem.data.price);
+	      insertItemParams.newColumnId = newColumnId;
+	      this.grid.insertItem(item, insertItemParams);
 	      item.columnId = newColumnId;
+
+	      if (!this.grid.getTypeInfoParam('showTotalPrice')) {
+	        return;
+	      }
 
 	      if (oldColumnId !== newColumnId) {
 	        var oldColumn = this.grid.getColumn(oldColumnId);
@@ -124,11 +135,39 @@ this.BX.Crm = this.BX.Crm || {};
 	        return;
 	      }
 
-	      this.grid.addItemTop(params.item);
+	      var column = this.grid.getColumn(params.item.data.columnId);
+
+	      if (!column) {
+	        return;
+	      }
+
+	      var sorter = crm_kanban_sort.Sorter.createWithCurrentSortType(column.getItems());
+	      var beforeItem = sorter.calcBeforeItemByParams(params.item.data.sort);
+
+	      if (beforeItem) {
+	        params.item.targetId = beforeItem.getId();
+	      }
+
+	      this.grid.addItem(params.item);
 	    }
 	  }]);
 	  return PullOperation;
 	}();
+
+	var ViewMode = {
+	  MODE_STAGES: 'STAGES',
+	  MODE_ACTIVITIES: 'ACTIVITIES',
+	  getDefault: function getDefault() {
+	    return this.MODE_STAGES;
+	  },
+	  getAll: function getAll() {
+	    return [this.MODE_STAGES, this.MODE_ACTIVITIES];
+	  },
+	  normalize: function normalize(mode) {
+	    return this.getAll().includes(mode) ? mode : this.getDefault();
+	  }
+	};
+	Object.freeze(ViewMode);
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
 
@@ -137,9 +176,13 @@ this.BX.Crm = this.BX.Crm || {};
 	 * @class PullQueue
 	 */
 
+	var LOAD_ITEMS_DELAY = 5000;
+
 	var _queue = /*#__PURE__*/new WeakMap();
 
 	var _grid = /*#__PURE__*/new WeakMap();
+
+	var _viewMode = /*#__PURE__*/new WeakMap();
 
 	var _isProgress = /*#__PURE__*/new WeakMap();
 
@@ -159,6 +202,11 @@ this.BX.Crm = this.BX.Crm || {};
 	      value: void 0
 	    });
 
+	    _classPrivateFieldInitSpec(this, _viewMode, {
+	      writable: true,
+	      value: void 0
+	    });
+
 	    _classPrivateFieldInitSpec(this, _isProgress, {
 	      writable: true,
 	      value: void 0
@@ -170,6 +218,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    });
 
 	    babelHelpers.classPrivateFieldSet(this, _grid, grid);
+	    babelHelpers.classPrivateFieldSet(this, _viewMode, ViewMode.normalize(babelHelpers.classPrivateFieldGet(this, _grid).getData().viewMode));
 	    babelHelpers.classPrivateFieldSet(this, _queue, new Map());
 	    babelHelpers.classPrivateFieldSet(this, _isProgress, false);
 	    babelHelpers.classPrivateFieldSet(this, _isFreeze, false);
@@ -178,17 +227,18 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  babelHelpers.createClass(PullQueue, [{
 	    key: "loadItem",
-	    value: function loadItem(isForce) {
+	    value: function loadItem() {
 	      var _this = this;
 
-	      if (this.loadItemsTimer) {
+	      var ignoreProgressStatus = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+	      var ignoreDelay = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+	      if (this.loadItemsTimer && !ignoreDelay) {
 	        return;
 	      }
 
 	      this.loadItemsTimer = setTimeout(function () {
-	        isForce = isForce || false;
-
-	        if (babelHelpers.classPrivateFieldGet(_this, _isProgress) && !isForce) {
+	        if (babelHelpers.classPrivateFieldGet(_this, _isProgress) && !ignoreProgressStatus) {
 	          _this.loadItemsTimer = null;
 	          return;
 	        }
@@ -231,7 +281,7 @@ this.BX.Crm = this.BX.Crm || {};
 	          babelHelpers.classPrivateFieldSet(_this, _isProgress, true);
 	          babelHelpers.classPrivateFieldGet(_this, _grid).loadNew(ids, false, true, true).then(loadNextOnSuccess, doNothingOnError);
 	        }
-	      }, 5000);
+	      }, ignoreDelay ? 0 : LOAD_ITEMS_DELAY);
 	    }
 	  }, {
 	    key: "push",
@@ -370,11 +420,26 @@ this.BX.Crm = this.BX.Crm || {};
 	          return;
 	        }
 
+	        var gridData = _this.grid.getData();
+
+	        var pullTag = gridData.pullTag,
+	            eventKanbanUpdatedTag = gridData.eventKanbanUpdatedTag,
+	            viewMode = gridData.viewMode;
 	        Pull.subscribe({
 	          moduleId: _this.grid.getData().moduleId,
-	          command: _this.grid.getData().pullTag,
-	          callback: function callback(params) {
+	          //command: this.grid.getData().pullTag,
+	          callback: function callback(data) {
+	            if (data.command !== pullTag && !(data.command.indexOf(eventKanbanUpdatedTag) === 0 && viewMode === ViewMode.MODE_ACTIVITIES)) {
+	              return;
+	            }
+
+	            var params = data.params;
+
 	            if (main_core.Type.isString(params.eventName)) {
+	              if (PullManager.eventIds.has(params.eventId)) {
+	                return;
+	              }
+
 	              if (_this.queue.isOverflow()) {
 	                return;
 	              }
@@ -407,7 +472,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onPullItemUpdated",
 	    value: function onPullItemUpdated(params) {
 	      if (this.updateItem(params)) {
-	        this.queue.loadItem();
+	        this.queue.loadItem(false, params.ignoreDelay || false);
 	      }
 	    }
 	  }, {
@@ -431,7 +496,7 @@ this.BX.Crm = this.BX.Crm || {};
 	    key: "onPullItemAdded",
 	    value: function onPullItemAdded(params) {
 	      if (this.addItem(params)) {
-	        this.queue.loadItem();
+	        this.queue.loadItem(false, params.ignoreDelay || false);
 	      }
 	    }
 	  }, {
@@ -545,9 +610,23 @@ this.BX.Crm = this.BX.Crm || {};
 	        }
 	      });
 	    }
+	  }], [{
+	    key: "registerRandomEventId",
+	    value: function registerRandomEventId() {
+	      var eventId = main_core.Text.getRandom(12);
+	      this.registerEventId(eventId);
+	      return eventId;
+	    }
+	  }, {
+	    key: "registerEventId",
+	    value: function registerEventId(eventId) {
+	      this.eventIds.add(eventId);
+	    }
 	  }]);
 	  return PullManager;
 	}();
+
+	babelHelpers.defineProperty(PullManager, "eventIds", new Set());
 
 	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9, _templateObject10;
 	var TYPE_VIEW = 'view';
@@ -947,5 +1026,5 @@ this.BX.Crm = this.BX.Crm || {};
 	exports.PullManager = PullManager;
 	exports.FieldsSelector = FieldsSelector;
 
-}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.Event,BX,BX.Main,BX));
+}((this.BX.Crm.Kanban = this.BX.Crm.Kanban || {}),BX.CRM.Kanban,BX.Event,BX,BX.Main,BX));
 //# sourceMappingURL=kanban.js.map

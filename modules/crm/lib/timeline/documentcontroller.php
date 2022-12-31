@@ -100,6 +100,26 @@ final class DocumentController extends EntityController
 		}
 	}
 
+	final public function onDocumentTransformationComplete(int $id, array $params): void
+	{
+		$ownerTypeId = (int)($params['ENTITY_TYPE_ID'] ?? \CCrmOwnerType::Undefined);
+		$ownerId = (int)($params['ENTITY_ID'] ?? 0);
+
+		if (\CCrmOwnerType::IsDefined($ownerTypeId) && $ownerId > 0)
+		{
+			$owner = new ItemIdentifier($ownerTypeId, $ownerId);
+			$entryIds = TimelineEntry::getEntriesIdsByAssociatedEntity(TimelineType::DOCUMENT, $id, 5);
+
+			foreach ($entryIds as $entryId)
+			{
+				$this->sendPullEventOnUpdate(
+					$owner,
+					$entryId,
+				);
+			}
+		}
+	}
+
 	public function prepareSearchContent(array $params)
 	{
 		$result = '';

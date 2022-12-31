@@ -3,8 +3,10 @@
 namespace Bitrix\Crm\Reservation\Strategy;
 
 use Bitrix\Crm\ProductRowTable;
+use Bitrix\Crm\ProductType;
 use Bitrix\Crm\Reservation\Internals\ProductRowReservationTable;
 use Bitrix\Crm\Reservation\Strategy\Reserve\ReservationResult;
+use Bitrix\Crm\Service\Sale\Reservation\ReservationService;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
@@ -103,6 +105,17 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 			return $result;
 		}
 
+		if (
+			ReservationService::getInstance()->isRestrictedType((int)$productRow['TYPE'])
+			|| (int)$productRow['PRODUCT_ID'] === 0
+		)
+		{
+			$result->addError(
+				new Error(Loc::getMessage('CRM_RESERVATION_STRATEGY_RESERVE_QUANTITY_EQUAL_PRODUCT_QUANTITY_STRATEGY_PRODUCT_NOT_SUPPORT_RESERVATION'))
+			);
+			return $result;
+		}
+
 		$productRowQuantity = (float)$productRow['QUANTITY'];
 		if ($productRowQuantity < $quantity)
 		{
@@ -153,6 +166,9 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 		{
 			$quantity = $productRowQuantity;
 			$isAutoReservation = true;
+
+			$reserveInfo->setReserveQuantity($quantity);
+			$reserveInfo->setDeltaReserveQuantity($quantity);
 		}
 
 		$saveResult = $this->saveCrmReserve([
@@ -184,15 +200,17 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 			'select' => [
 				'ID',
 				'QUANTITY',
-				'RESERVE_ID' => 'RESERVATION.ID',
-				'RESERVE_QUANTITY' => 'RESERVATION.RESERVE_QUANTITY',
-				'RESERVE_IS_AUTO' => 'RESERVATION.IS_AUTO',
-				'RESERVE_DATE_RESERVE_END' => 'RESERVATION.DATE_RESERVE_END',
-				'RESERVE_STORE_ID' => 'RESERVATION.STORE_ID',
+				'RESERVE_ID' => ProductRowReservationTable::PRODUCT_ROW_RESERVATION_NAME . '.ID',
+				'RESERVE_QUANTITY' => ProductRowReservationTable::PRODUCT_ROW_RESERVATION_NAME . '.RESERVE_QUANTITY',
+				'RESERVE_IS_AUTO' => ProductRowReservationTable::PRODUCT_ROW_RESERVATION_NAME . '.IS_AUTO',
+				'RESERVE_DATE_RESERVE_END' => ProductRowReservationTable::PRODUCT_ROW_RESERVATION_NAME . '.DATE_RESERVE_END',
+				'RESERVE_STORE_ID' => ProductRowReservationTable::PRODUCT_ROW_RESERVATION_NAME . '.STORE_ID',
 			],
 			'filter' => [
 				'=OWNER_TYPE' => CCrmOwnerTypeAbbr::ResolveByTypeID($ownerTypeId),
 				'=OWNER_ID' => $ownerId,
+				'!@TYPE' => ReservationService::getInstance()->getRestrictedProductTypes(),
+				'!=PRODUCT_ID' => 0,
 			],
 		])->fetchAll();
 	}
@@ -210,6 +228,8 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 			'select' => [
 				'ID',
 				'QUANTITY',
+				'TYPE',
+				'PRODUCT_ID',
 			],
 			'filter' => [
 				'=ID' => $rowId,
@@ -257,5 +277,16 @@ class ReserveQuantityEqualProductQuantityStrategy implements Strategy
 				'=ROW_ID' => $productRowId,
 			],
 		]);
+	}
+
+	/**
+	 * Checks product's type and returns true if type equals TYPE_SERVICE
+	 *
+	 * @param int $type
+	 * @return bool
+	 */
+	private function isServiceProduct(int $type): bool
+	{
+		return $type === ProductType::TYPE_SERVICE;
 	}
 }

@@ -123,7 +123,7 @@ class UserTopic extends Forum
 		$inserts = [];
 		while ($row = $res->fetch())
 		{
-			$inserts[] = '(' . (int)$row['ID'] . ', ' . $currentUserId . ', ' . $forumId . ', ' . $lastVisit . ')';
+			$inserts[] = '(' . (int)$row['FORUM_TOPIC_ID'] . ', ' . $currentUserId . ', ' . $forumId . ', ' . $lastVisit . ')';
 		}
 
 		$chunks = array_chunk($inserts, self::STEP_LIMIT);

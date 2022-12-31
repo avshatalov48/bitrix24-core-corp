@@ -41,7 +41,7 @@ else if (IsModuleInstalled("vote"))
 	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL(SITE_TEMPLATE_PATH.'/components/bitrix/voting.current/.userfield/style.css').'" type="text/css" rel="stylesheet" />');
 }
 
-if ($arParams["EMPTY_PAGE"] === "Y")
+if ($arResult['PAGE_MODE'] === 'detail_empty')
 {
 	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/components/bitrix/rating.vote/templates/like_react/style.css').'" type="text/css" rel="stylesheet" />');
 	Asset::getInstance()->addString('<link href="'.CUtil::GetAdditionalFileURL('/bitrix/js/ui/icons/base/ui.icons.base.css').'" type="text/css" rel="stylesheet" />');
@@ -81,18 +81,14 @@ if ($arResult["FatalError"] <> '')
 }
 else
 {
-	if (
-		$arParams["LOG_ID"] <= 0
-		&& $arParams["EMPTY_PAGE"] !== "Y"
-		&& !$arResult["AJAX_CALL"]
-	)
+	if (in_array($arResult['PAGE_MODE'], [ 'first', 'refresh' ], true))
 	{
 		?><div id="post-balloon-container" class="post-balloon-box"></div><?php
 		?><div id="lenta_wrapper_global" class="lenta-list-wrap"><?php
 	}
 	?>
 	<script>
-		var bGlobalReload = <?=($arResult["RELOAD"] ? "true" : "false")?>;
+		var bGlobalReload = <?= ($arResult['PAGE_MODE'] === 'refresh' ? 'true' : 'false') ?>;
 	</script>
 	<?php
 	Composite\AppCache::getInstance()->addAdditionalParam("page", "livefeed");
@@ -118,12 +114,8 @@ else
 	</script><?php
 
 	if (
-		$arParams["EMPTY_PAGE"] !== "Y"
-		&& !$arResult["AJAX_CALL"]
-		&& !$arResult["RELOAD"]
-		&& (int)$arParams["GROUP_ID"] <= 0
-		&& (int)$arParams["LOG_ID"] <= 0
-		&& $_REQUEST["empty_get_comments"] !== "Y"
+		$arResult['PAGE_MODE'] === 'first'
+		&& (int)$arParams['GROUP_ID'] <= 0
 	)
 	{
 		?><script>
@@ -163,7 +155,7 @@ else
 
 	$event_cnt = 0;
 
-	if ($arResult["RELOAD"])
+	if ($arResult['PAGE_MODE'] === 'refresh')
 	{
 		if ($arResult["RELOAD_JSON"])
 		{
@@ -241,7 +233,10 @@ else
 			backgroundCommon: <?=CUtil::PhpToJSObject($arResult["BACKGROUND_COMMON"])?>,
 			medalsList: <?=CUtil::PhpToJSObject($arResult["MEDALS_LIST"])?>,
 			importantData: <?=CUtil::PhpToJSObject($arResult["IMPORTANT_DATA"])?>,
-			postFormData: <?=CUtil::PhpToJSObject($arResult["POST_FORM_DATA"])?>
+			postFormData: <?=CUtil::PhpToJSObject($arResult["POST_FORM_DATA"])?>,
+			unreadLogIdData: '<?= $arResult['unreadLogIdData'] ?>',
+			unreadLogCommentIdData: '<?= $arResult['unreadLogCommentIdData'] ?>',
+			unreadBlogCommentIdData: '<?= $arResult['unreadBlogCommentIdData'] ?>',
 		};
 
 		BX.ready(function() {
@@ -250,11 +245,7 @@ else
 
 	</script>
 	<?php
-	if (
-		$arParams["LOG_ID"] <= 0
-		&& $arParams["EMPTY_PAGE"] !== "Y"
-		&& !$arResult["AJAX_CALL"]
-	)
+	if (in_array($arResult['PAGE_MODE'], [ 'first', 'refresh' ], true))
 	{
 		if (
 			isset($arResult["GROUP_NAME"])
@@ -340,7 +331,7 @@ else
 		require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/informer.php');
 		require($_SERVER['DOCUMENT_ROOT'] . $templateFolder . '/include/pinned.php');
 	}
-	elseif ($arParams["EMPTY_PAGE"] === "Y")
+	elseif ($arResult['PAGE_MODE'] === 'detail_empty')
 	{
 		?><div id="empty_comment" style="display: none;"><?php
 			?><div class="post-comment-block" style="position: relative;"><?php
@@ -397,10 +388,7 @@ else
 			});
 		</script><?php
 	}
-	elseif (
-		$arParams["LOG_ID"] > 0
-		&& $_REQUEST["empty_get_comments"] !== "Y"
-	)
+	elseif ($arResult['PAGE_MODE'] === 'detail')
 	{
 		if ($arResult['TARGET'] === 'ENTRIES_ONLY_PINNED')
 		{
@@ -474,11 +462,11 @@ else
 	}
 
 	if (
-		$arResult["AJAX_CALL"]
+		$arResult['PAGE_MODE'] === 'next'
 		|| $arResult["RELOAD_JSON"]
 	)
 	{
-		if ($arResult["AJAX_CALL"]) // next page
+		if ($arResult['PAGE_MODE'] === 'next')
 		{
 			$APPLICATION->RestartBuffer();
 		}
@@ -490,10 +478,7 @@ else
 		}
 	}
 
-	if (
-		$arParams["LOG_ID"] > 0
-		|| $arParams["EMPTY_PAGE"] === "Y"
-	)
+	if (in_array($arResult['PAGE_MODE'], [ 'detail', 'detail_comments' ], true))
 	{
 		?><script>
 			var commentVarLogID = null;
@@ -518,7 +503,7 @@ else
 		</script><?php
 	}
 
-	if ($arParams["EMPTY_PAGE"] === "Y")
+	if ($arResult['PAGE_MODE'] === 'detail_empty')
 	{
 		Composite\Engine::setEnable();
 		Composite\Engine::setUseAppCache();
@@ -638,8 +623,7 @@ else
 
 	} // if ($arResult["Events"] && is_array($arResult["Events"]) && count($arResult["Events"]) > 0)
 	elseif (
-		(int)$arParams["LOG_ID"] > 0
-		&& $_REQUEST["empty_get_comments"] === "Y"
+		in_array($arResult['PAGE_MODE'], [ 'detail', 'detail_comments' ], true)
 		&& (
 			!$arResult["Events"]
 			|| !is_array($arResult["Events"])
@@ -654,7 +638,7 @@ else
 
 		CMain::FinalActions(CUtil::PhpToJSObject($res));
 	}
-	elseif (!$arResult["AJAX_CALL"])
+	elseif ($arResult['PAGE_MODE'] !== 'next')
 	{
 		if ($arParams["LOG_ID"] > 0)
 		{
@@ -668,7 +652,7 @@ else
 		}
 	}
 
-	if ($arResult["AJAX_CALL"])
+	if ($arResult['PAGE_MODE'] === 'next')
 	{
 		$uri = new Uri(htmlspecialcharsback(POST_FORM_ACTION_URI));
 		$uri->deleteParams([
@@ -801,10 +785,7 @@ else
 		)
 	)
 	{
-		if (
-			$arParams["LOG_ID"] <= 0
-			&& $arParams["EMPTY_PAGE"] !== "Y"
-		)
+		if (!in_array($arResult['PAGE_MODE'], [ 'detail', 'detail_comments', 'detail_empty' ], true))
 		{
 			if ($event_cnt >= $arParams["PAGE_SIZE"])
 			{
@@ -864,15 +845,15 @@ else
 		?>
 		</script>
 		<?php
-		if ($arResult["RELOAD"])
+		if ($arResult['PAGE_MODE'] === 'refresh')
 		{
 			?></div><?php
 
 			if ($arResult["RELOAD_JSON"])
 			{
-				$strText = ob_get_clean();
+				$strText = ob_get_contents();
 
-				AddEventHandler("main", "OnEndBufferContent", function($staticContent) use($strText, $arResult)
+				AddEventHandler("main", "OnEndBufferContent", static function($staticContent) use($strText, $arResult)
 				{
 					$manifest = Composite\AppCache::getInstance();
 
@@ -1036,11 +1017,7 @@ else
 		}
 	}
 
-	if (
-		$arParams["LOG_ID"] <= 0
-		&& $arParams["EMPTY_PAGE"] !== "Y"
-		&& !$arResult["AJAX_CALL"]
-	)
+	if (in_array($arResult['PAGE_MODE'], [ 'first', 'refresh' ], true))
 	{
 		?></div><?php // lenta_wrapper_global
 	}

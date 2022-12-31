@@ -8,5 +8,5 @@ return [
 			],
 		],
 		'readonly' => true,
-	]
+	],
 ];

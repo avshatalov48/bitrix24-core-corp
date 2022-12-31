@@ -17,20 +17,35 @@ class CrmKanbanFilterComponent extends \CBitrixComponent
 		}
 
 		$type = $this->arParams['ENTITY_TYPE'] ?? '';
-		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($type);
+		$viewMode = ($this->arParams['VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES);
+		$entity = \Bitrix\Crm\Kanban\Entity::getInstance($type, $viewMode);
 		if(!$entity)
 		{
 			return false;
 		}
 
 		$categoryId = \Bitrix\Crm\Kanban\Helper::getCategoryId();
-		if($categoryId > 0 && $entity->isCategoriesSupported())
+		if($categoryId >= -1  && $entity->isCategoriesSupported())
 		{
+			if ($categoryId < 0 && !$entity->canUseAllCategories())
+			{
+				$categoryId = 0;
+			}
 			$entity->setCategoryId($categoryId);
+		}
+
+		$showAutomationView = true;
+		if (
+			isset($this->arParams['VIEW_MODE'])
+			&& $this->arParams['VIEW_MODE'] !== \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES
+		)
+		{
+			$showAutomationView = false;
 		}
 
 		$filterParams = [
 			'LIMITS' => null,
+			'SHOW_AUTOMATION_VIEW' => $showAutomationView,
 		];
 
 		$searchRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getSearchLimitRestriction();

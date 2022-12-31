@@ -299,10 +299,7 @@ class DealRecurringController extends DealController
 			$data['MODIFIED_FIELD'] = $fieldName;
 			unset($data['SETTINGS']);
 		}
-		elseif (
-			$typeID === TimelineType::LOG_MESSAGE
-			&& $typeCategoryId === LogMessageType::CALL_INCOMING
-		)
+		elseif ($typeID === TimelineType::LOG_MESSAGE)
 		{
 			$this->applySettingsBaseData($data, $base);
 		}

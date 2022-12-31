@@ -1,6 +1,9 @@
 <?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm;
 
 \Bitrix\Main\UI\Extension::load('ui.design-tokens');
 
@@ -118,8 +121,8 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 				$activity[$type][$id] = array_reverse($activity[$type][$id], true);
 			}
 
-			$activityCount = count($activity[$type][$id]);
-			$documentCount = count($document[$type][$id]);
+			$activityCount = count($activity[$type][$id] ?? []);
+			$documentCount = count($document[$type][$id] ?? []);
 
 			?>
 			<div class="crm-doc-drop">
@@ -129,76 +132,76 @@ if (!function_exists('CrmEntityTreeDrawActivity'))
 				<?php
 				if ($activityCount)
 				{
-				?>
+					?>
 
-				<div
-					class="crm-doc-droplist-wrapper"
-					id="crm-doc-activity-droplist-wrapper-<?= $type ?>-<?= $id ?>"
-				>
-					<ul class="crm-doc-droplist">
-						<?foreach ($activity[$type][$id] as $item):
-							$visual = $activityTypes['default'];
-							if (array_key_exists($item['TYPE_ID'], $activityTypes))
-							{
-								$provider = isset($activityTypes[$item['TYPE_ID']]['provider']) && $activityTypes[$item['TYPE_ID']]['provider'] === true;
-								if ($provider && ($provider = \CCrmActivity::GetActivityProvider($item)) !== null)
+					<div
+						class="crm-doc-droplist-wrapper"
+						id="crm-doc-activity-droplist-wrapper-<?= $type ?>-<?= $id ?>"
+					>
+						<ul class="crm-doc-droplist">
+							<?foreach ($activity[$type][$id] as $item):
+								$visual = $activityTypes['default'];
+								if (array_key_exists($item['TYPE_ID'], $activityTypes))
 								{
-									$visual = array(
-										'title' => $provider::getTypeName($item['PROVIDER_TYPE_ID'], $item['DIRECTION']),
-										'icon' => 'crm-doc-droplist-item-'.mb_strtolower($provider::getId())
-									);
+									$provider = isset($activityTypes[$item['TYPE_ID']]['provider']) && $activityTypes[$item['TYPE_ID']]['provider'] === true;
+									if ($provider && ($provider = \CCrmActivity::GetActivityProvider($item)) !== null)
+									{
+										$visual = array(
+											'title' => $provider::getTypeName($item['PROVIDER_TYPE_ID'], $item['DIRECTION']),
+											'icon' => 'crm-doc-droplist-item-'.mb_strtolower($provider::getId())
+										);
+									}
+									elseif (isset($activityTypes[$item['TYPE_ID'] .'_'. $item['DIRECTION']]))
+									{
+										$visual = $activityTypes[$item['TYPE_ID'] .'_'. $item['DIRECTION']];
+									}
+									elseif (isset($activityTypes[$item['TYPE_ID']]))
+									{
+										$visual = $activityTypes[$item['TYPE_ID']];
+									}
 								}
-								elseif (isset($activityTypes[$item['TYPE_ID'] .'_'. $item['DIRECTION']]))
-								{
-									$visual = $activityTypes[$item['TYPE_ID'] .'_'. $item['DIRECTION']];
-								}
-								elseif (isset($activityTypes[$item['TYPE_ID']]))
-								{
-									$visual = $activityTypes[$item['TYPE_ID']];
-								}
-							}
-							?>
-							<li class="crm-doc-droplist-item <?= $visual['icon']?>" title="<?= \htmlspecialcharsbx($visual['title']);?>"><?= $item['SUBJECT'];?></li>
-						<?endforeach;?>
-					</ul>
-				</div>
+								?>
+								<li class="crm-doc-droplist-item <?= $visual['icon']?>" title="<?= \htmlspecialcharsbx($visual['title']);?>"><?= $item['SUBJECT'];?></li>
+							<?endforeach;?>
+						</ul>
+					</div>
 
-				<?php
+					<?php
 				}
 
 				if ($documentCount)
 				{
-				?>
-				<div
-					class="crm-doc-droplist-wrapper"
-					id="crm-doc-document-droplist-wrapper-<?= $type ?>-<?= $id ?>"
-				>
-					<ul class="crm-doc-droplist<?=($documentCount === 1) ? ' one-item' : '' ?>">
-						<?php
-						foreach ($document[$type][$id] as $item)
-						{
+					?>
+					<div
+						class="crm-doc-droplist-wrapper"
+						id="crm-doc-document-droplist-wrapper-<?= $type ?>-<?= $id ?>"
+					>
+						<ul class="crm-doc-droplist<?=($documentCount === 1) ? ' one-item' : '' ?>">
+							<?php
+							foreach ($document[$type][$id] as $item)
+							{
+								?>
+								<li class="crm-doc-droplist-item crm-doc-droplist-item-document">
+									<a
+										href="javascript:void(0);"
+										onclick="BX.DocumentGenerator.Document.onBeforeCreate(
+											'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=<?= $item['ID'] ?>',
+											{sliderWidth: 1060},
+											'/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
+											)">
+										<?= Loc::getMessage('CRM_ENTITY_TREE_DOCUMENT_LABEL', [
+											'#TITLE#' => htmlspecialcharsbx($item['TITLE']),
+											'#DATE#' => $item['CREATE_TIME'],
+										]) ?>
+									</a>
+								</li>
+								<?php
+							}
 							?>
-							<li class="crm-doc-droplist-item crm-doc-droplist-item-document">
-								<a
-									href="javascript:void(0);"
-									onclick="BX.DocumentGenerator.Document.onBeforeCreate(
-										'/bitrix/components/bitrix/crm.document.view/slider.php?documentId=<?= $item['ID'] ?>',
-										{sliderWidth: 1060},
-										'/bitrix/components/bitrix/crm.document.view/templates/.default/images/document_view.svg'
-										)">
-									<?= Loc::getMessage('CRM_ENTITY_TREE_DOCUMENT_LABEL', [
-										'#TITLE#' => htmlspecialcharsbx($item['TITLE']),
-										'#DATE#' => $item['CREATE_TIME'],
-									]) ?>
-								</a>
-							</li>
-						<?php
-						}
-						?>
-					</ul>
-				</div>
+						</ul>
+					</div>
 
-				<?php
+					<?php
 				}
 				?>
 			</div>
@@ -249,6 +252,16 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 			$selected = true;
 		}
 
+		$category = null;
+		if ($item['TREE_TYPE'] === \CCrmOwnerType::Company)
+		{
+			$factory = Container::getInstance()->getFactory($item['TREE_TYPE']);
+			if ($factory)
+			{
+				$category = $factory->getItemCategory($item['ID']);
+			}
+		}
+
 		$renderProgressBar = function(string $statusId, array $statuses): string {
 			$name = $statuses[$statusId]['NAME'];
 			$width = isset($statuses[$statusId]['CHUNK'])
@@ -275,9 +288,9 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 					<div class="crm-doc-title"><span class="crm-doc-title-gray"><?= $lang['LEAD']?>:</span>
 						<a href="<?= $item['URL']?>" class="crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?= htmlspecialcharsbx($item['TITLE'])?></a>
 						<?if ($item['IS_RETURN_CUSTOMER'] === 'Y'):?>
-						<div>
-							<?= Loc::getMessage('CRM_ENTITY_TREE_IS_RETURN_CUSTOMER');?>
-						</div>
+							<div>
+								<?= Loc::getMessage('CRM_ENTITY_TREE_IS_RETURN_CUSTOMER');?>
+							</div>
 						<?endif;?>
 					</div>
 					<div class="crm-doc-info">
@@ -288,26 +301,26 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							</div>
 						<?endif;?>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
-						<div class="crm-doc-info-responsible">
-							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-								<?=CCrmViewHelper::PrepareUserBaloonHtml([
-									'PREFIX' => 'LEAD_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
-									'USER_ID' => $item['ASSIGNED_BY_ID'],
-									'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
-									'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
-									'ENCODE_USER_NAME' => true,
-								])?>
+							<div class="crm-doc-info-responsible">
+								<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
+									<?=CCrmViewHelper::PrepareUserBaloonHtml([
+										'PREFIX' => 'LEAD_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
+										'USER_ID' => $item['ASSIGNED_BY_ID'],
+										'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+										'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+										'ENCODE_USER_NAME' => true,
+									])?>
+								</div>
 							</div>
-						</div>
 						<?endif;?>
 						<div class="crm-doc-info-param">
 							<table class="crm-doc-table">
 								<tbody>
 								<?if ($item['SOURCE_ID']):?>
-								<tr>
-									<td><?= $lang['SOURCE']?>:</td>
-									<td><?= \htmlspecialcharsbx($statuses['SOURCE'][$item['SOURCE_ID']]['NAME'])?></td>
-								</tr>
+									<tr>
+										<td><?= $lang['SOURCE']?>:</td>
+										<td><?= \htmlspecialcharsbx($statuses['SOURCE'][$item['SOURCE_ID']]['NAME'])?></td>
+									</tr>
 								<?endif;?>
 								<tr>
 									<td><?= $lang['DATE_CREATE']?>:</td>
@@ -327,9 +340,9 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
 					<div class="crm-doc-cart-user">
 						<div class="crm-doc-cart-<?= $item['TREE_TYPE'] === \CCrmOwnerType::Company ? 'company' : 'user'?>-avatar"<?
-															?><?if ($item['TREE_TYPE'] === \CCrmOwnerType::Company && $item['LOGO']){?> style="background-image: url('<?= $item['LOGO_FILE']['src']?>'); background-position: center;"<?}?><?
-															?><?if ($item['TREE_TYPE'] === \CCrmOwnerType::Contact && $item['PHOTO']){?> style="background-image: url('<?= $item['PHOTO_FILE']['src']?>'); background-position: center;"<?}?><?
-															?>></div>
+						?><?if ($item['TREE_TYPE'] === \CCrmOwnerType::Company && $item['LOGO']){?> style="background-image: url('<?= $item['LOGO_FILE']['src']?>'); background-position: center;"<?}?><?
+						?><?if ($item['TREE_TYPE'] === \CCrmOwnerType::Contact && $item['PHOTO']){?> style="background-image: url('<?= $item['PHOTO_FILE']['src']?>'); background-position: center;"<?}?><?
+						?>></div>
 						<div class="crm-doc-cart-user-info">
 							<a href="<?= $item['URL']?>" class="crm-doc-cart-user-name crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 								if ($item['TREE_TYPE'] === \CCrmOwnerType::Company)
@@ -340,50 +353,57 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 								{
 									echo htmlspecialcharsbx($item['LAST_NAME'] . ' ' . $item['NAME'] . ' ' . $item['SECOND_NAME']);
 								}
-							?></a>
+								?></a>
 							<?if ($item['TREE_TYPE'] === \CCrmOwnerType::Contact && $item['COMPANY_TITLE']):?>
-							<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($item['COMPANY_TITLE'])?></div>
+								<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($item['COMPANY_TITLE'])?></div>
 							<?endif;?>
-							<?if ($item['TREE_TYPE'] === \CCrmOwnerType::Company && $item['COMPANY_TYPE']):?>
-							<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($statuses['COMPANY_TYPE'][$item['COMPANY_TYPE']]['NAME'])?></div>
+							<?if (
+								$item['TREE_TYPE'] === \CCrmOwnerType::Company
+								&& $item['COMPANY_TYPE']
+								&& (
+									!$category
+									|| !in_array(Crm\Item::FIELD_NAME_TYPE_ID, $category->getDisabledFieldNames(), true)
+								)
+							):?>
+								<div class="crm-doc-cart-user-company"><?= htmlspecialcharsbx($statuses['COMPANY_TYPE'][$item['COMPANY_TYPE']]['NAME'])?></div>
 							<?endif;?>
 							<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
 						</div>
 					</div>
 					<?if (isset($item['FM_VALUES'])):?>
-					<div class="crm-doc-cart-contact">
-						<table>
-						<?if (isset($item['FM_VALUES']['EMAIL'])):?>
-							<tr>
-								<td><?= $lang['EMAIL']?>:</td>
-								<td>
-									<?foreach ($item['FM_VALUES']['EMAIL'] as $p => $val):?>
-										<a href="mailto:<?= htmlspecialcharsbx($val)?>" class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-email"><?= htmlspecialcharsbx($val)?></a>
-									<?endforeach;?>
-								</td>
-							</tr>
-						<?endif;?>
-						<?if (isset($item['FM_VALUES']['PHONE'])):?>
-							<tr>
-								<td><?= $lang['PHONE']?>: </td>
-								<td>
-									<?foreach ($item['FM_VALUES']['PHONE'] as $p => $val):
-										$formatCU = \CCrmCallToUrl::PrepareLinkAttributes($val, [
-											'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($item['TREE_TYPE']),
-											'ENTITY_ID' => $item['ID'],
-										]);
-										?>
-									<a href="<?= htmlspecialcharsbx($formatCU['HREF'])?>"<?
-										?><?if ($formatCU['ONCLICK'] != ''){?> onclick="<?= htmlspecialcharsbx($formatCU['ONCLICK'])?>"<?}?><?
-										?> class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-phone"><?
-											?><?= $val?><?
-										?></a>
-									<?endforeach;?>
-								</td>
-							</tr>
-						<?endif;?>
-						</table>
-					</div>
+						<div class="crm-doc-cart-contact">
+							<table>
+								<?if (isset($item['FM_VALUES']['EMAIL'])):?>
+									<tr>
+										<td><?= $lang['EMAIL']?>:</td>
+										<td>
+											<?foreach ($item['FM_VALUES']['EMAIL'] as $p => $val):?>
+												<a href="mailto:<?= htmlspecialcharsbx($val)?>" class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-email"><?= htmlspecialcharsbx($val)?></a>
+											<?endforeach;?>
+										</td>
+									</tr>
+								<?endif;?>
+								<?if (isset($item['FM_VALUES']['PHONE'])):?>
+									<tr>
+										<td><?= $lang['PHONE']?>: </td>
+										<td>
+											<?foreach ($item['FM_VALUES']['PHONE'] as $p => $val):
+												$formatCU = \CCrmCallToUrl::PrepareLinkAttributes($val, [
+													'ENTITY_TYPE' => \CCrmOwnerType::ResolveName($item['TREE_TYPE']),
+													'ENTITY_ID' => $item['ID'],
+												]);
+												?>
+												<a href="<?= htmlspecialcharsbx($formatCU['HREF'])?>"<?
+												?><?if ($formatCU['ONCLICK'] != ''){?> onclick="<?= htmlspecialcharsbx($formatCU['ONCLICK'])?>"<?}?><?
+												?> class="crm-doc-gray crm-doc-bold crm-doc-clear crm-doc-cart-contact-item-phone"><?
+													?><?= $val?><?
+													?></a>
+											<?endforeach;?>
+										</td>
+									</tr>
+								<?endif;?>
+							</table>
+						</div>
 					<?endif;?>
 					<div class="crm-doc-cart-create">
 						<?= $lang['DATE_CREATE']?>: <span class="crm-doc-gray"><?= CrmEntityTreeConvertDateTime($item['DATE_CREATE'], FORMAT_DATE)?></span>
@@ -398,17 +418,17 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 						<a href="<?= $item['URL']?>" class="crm-doc-cart-title crm-doc-cart-title-deal crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 							?><span class="crm-doc-gray"><?= $lang['DEAL']?>:</span> <?
 							?><?= htmlspecialcharsbx($item['TITLE'])?><?
-						?></a>
+							?></a>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
-						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-							<?=CCrmViewHelper::PrepareUserBaloonHtml([
-								'PREFIX' => 'DEAL_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
-								'USER_ID' => $item['ASSIGNED_BY_ID'],
-								'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
-								'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
-								'ENCODE_USER_NAME' => true,
-							])?>
-						</div>
+							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
+								<?=CCrmViewHelper::PrepareUserBaloonHtml([
+									'PREFIX' => 'DEAL_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
+									'USER_ID' => $item['ASSIGNED_BY_ID'],
+									'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+									'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+									'ENCODE_USER_NAME' => true,
+								])?>
+							</div>
 						<?endif;?>
 						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
 					</div>
@@ -424,16 +444,16 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 									<td><?= CrmEntityTreeConvertDateTime($item['BEGINDATE'] ? $item['BEGINDATE'] : $item['DATE_CREATE'], FORMAT_DATE)?></td>
 								</tr>
 								<?if ($item['CLOSEDATE']):?>
-								<tr>
-									<td><?= $lang['DATE_CLOSE']?>:</td>
-									<td><?= CrmEntityTreeConvertDateTime($item['CLOSEDATE'], FORMAT_DATE)?></td>
-								</tr>
+									<tr>
+										<td><?= $lang['DATE_CLOSE']?>:</td>
+										<td><?= CrmEntityTreeConvertDateTime($item['CLOSEDATE'], FORMAT_DATE)?></td>
+									</tr>
 								<?endif;?>
 								<?if ($item['OPPORTUNITY'] > 0):?>
-								<tr>
-									<td><?= $lang['SUM']?>:</td>
-									<td><?= $item['OPPORTUNITY_FORMATTED']?></td>
-								</tr>
+									<tr>
+										<td><?= $lang['SUM']?>:</td>
+										<td><?= $item['OPPORTUNITY_FORMATTED']?></td>
+									</tr>
 								<?endif;?>
 							</table>
 						</div>
@@ -448,17 +468,17 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 						<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-sentence crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 							?><span class="crm-doc-gray"><?= $lang['QUOTE']?>:</span> <?
 							?><?= htmlspecialcharsbx($item['TITLE'])?><?
-						?></a>
+							?></a>
 						<?if ($item['ASSIGNED_BY_ID'] > 0):?>
-						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-							<?=CCrmViewHelper::PrepareUserBaloonHtml([
-								'PREFIX' => 'QUOTE_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
-								'USER_ID' => $item['ASSIGNED_BY_ID'],
-								'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
-								'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
-								'ENCODE_USER_NAME' => true,
-							])?>
-						</div>
+							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
+								<?=CCrmViewHelper::PrepareUserBaloonHtml([
+									'PREFIX' => 'QUOTE_'.$item['ID'].'_'.$item['ASSIGNED_BY_ID'],
+									'USER_ID' => $item['ASSIGNED_BY_ID'],
+									'USER_NAME'=> $item['ASSIGNED_BY_FORMATTED_NAME'],
+									'USER_PROFILE_URL' => $item['ASSIGNED_BY_URL'],
+									'ENCODE_USER_NAME' => true,
+								])?>
+							</div>
 						<?endif;?>
 						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], $item['LEAD_ID'], $result['DOCUMENT']);?>
 					</div>
@@ -475,10 +495,10 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 									<td><?= CrmEntityTreeConvertDateTime($item['BEGINDATE'] ? $item['BEGINDATE'] : $item['DATE_CREATE'], FORMAT_DATE)?></td>
 								</tr>
 								<?if ($item['CLOSEDATE']):?>
-								<tr>
-									<td><?= $lang['DATE_CLOSE']?>:</td>
-									<td><?= CrmEntityTreeConvertDateTime($item['CLOSEDATE'], FORMAT_DATE)?></td>
-								</tr>
+									<tr>
+										<td><?= $lang['DATE_CLOSE']?>:</td>
+										<td><?= CrmEntityTreeConvertDateTime($item['CLOSEDATE'], FORMAT_DATE)?></td>
+									</tr>
 								<?endif;?>
 							</table>
 						</div>
@@ -496,17 +516,17 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 						<a href="<?= $item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-invoice crm-tree-link" data-id="<?= $item['ID']?>" data-type="<?= $item['TREE_TYPE']?>"><?
 							?><span class="crm-doc-gray"><?= $lang[\CCrmOwnerType::ResolveName($item['TREE_TYPE'])]?><?= htmlspecialcharsbx($item['ACCOUNT_NUMBER'])?>:</span> <?
 							?><?= $item['ORDER_TOPIC'] <> '' ? htmlspecialcharsbx($item['ORDER_TOPIC']) : Loc::getMessage('CRM_ENTITY_TREE_UNTITLED')?><?
-						?></a>
+							?></a>
 						<?if ($item['RESPONSIBLE_ID'] > 0):?>
-						<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
-						<?=CCrmViewHelper::PrepareUserBaloonHtml([
-							'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
-							'USER_ID' => $item['RESPONSIBLE_ID'],
-							'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
-							'USER_PROFILE_URL' => $item['RESPONSIBLE_URL'],
-							'ENCODE_USER_NAME' => true,
-						])?>
-						</div>
+							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
+								<?=CCrmViewHelper::PrepareUserBaloonHtml([
+									'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
+									'USER_ID' => $item['RESPONSIBLE_ID'],
+									'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
+									'USER_PROFILE_URL' => $item['RESPONSIBLE_URL'],
+									'ENCODE_USER_NAME' => true,
+								])?>
+							</div>
 						<?endif;?>
 						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], null, $result['DOCUMENT']);?>
 					</div>
@@ -522,14 +542,64 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 									<td><?= CrmEntityTreeConvertDateTime($item['DATE_BILL'] ? $item['DATE_BILL'] : $item['DATE_INSERT_FORMAT'], FORMAT_DATE)?></td>
 								</tr>
 								<?if ($item['DATE_PAY_BEFORE']):?>
-								<tr>
-									<td><?= $lang['DATE_PAYED']?>:</td>
-									<td><?= CrmEntityTreeConvertDateTime($item['DATE_PAY_BEFORE'], FORMAT_DATE)?></td>
-								</tr>
+									<tr>
+										<td><?= $lang['DATE_PAYED']?>:</td>
+										<td><?= CrmEntityTreeConvertDateTime($item['DATE_PAY_BEFORE'], FORMAT_DATE)?></td>
+									</tr>
 								<?endif;?>
 								<tr>
 									<td><?= $lang['SUM']?>:</td>
 									<td><?= $item['PRICE_FORMATTED']?></td>
+								</tr>
+							</table>
+						</div>
+					</div>
+				</div>
+				<?
+				break;
+			case \CCrmOwnerType::StoreDocument:
+				?>
+				<div class="crm-doc-cart<?= $selected ? ' crm-tree-active' : ''?><?= $counter == 1 ? ' crm-doc-cart-top' : ''?>">
+					<div class="crm-doc-cart-info">
+						<a href="<?=$item['URL']?>" target="_top" class="crm-doc-cart-title crm-doc-cart-title-sentence crm-tree-link" data-id="<?=$item['ID']?>" data-type="<?=$item['TREE_TYPE']?>">
+							<span class="crm-doc-gray">
+								<?=htmlspecialcharsbx($item['TITLE'])?>
+							</span>
+						</a>
+						<?if ($item['RESPONSIBLE_ID'] > 0):?>
+							<div class="crm-doc-info-text"><?= $lang['ASSIGNED_BY']?>:
+								<?=CCrmViewHelper::PrepareUserBaloonHtml([
+									'PREFIX' => 'INVOICE_'.$item['ID'].'_'.$item['RESPONSIBLE_ID'],
+									'USER_ID' => $item['RESPONSIBLE_ID'],
+									'USER_NAME'=> $item['RESPONSIBLE_FORMATTED_NAME'],
+									'USER_PROFILE_URL' => $item['RESPONSIBLE_URL'],
+									'ENCODE_USER_NAME' => true,
+								])?>
+							</div>
+						<?endif;?>
+						<?CrmEntityTreeDrawActivity($item['ID'], $item['TREE_TYPE'], $result['ACTIVITY'], null, $result['DOCUMENT']);?>
+					</div>
+					<div class="crm-doc-cart-param">
+						<div class="crm-doc-info-progress">
+							<table class="crm-doc-info-table">
+								<tr>
+									<td>
+										<?=Loc::getMessage('CRM_ENTITY_TREE_STORE_DOCUMENT_STATUS')?>:
+									</td>
+									<td>
+										<?=StoreDocumentTable::getStatusName($item['STATUS'])?>
+									</td>
+								</tr>
+								<tr>
+									<td>
+										<?=Loc::getMessage('CRM_ENTITY_TREE_STORE_DOCUMENT_DATE_STATUS')?>:
+									</td>
+									<td>
+										<?=CrmEntityTreeConvertDateTime($item['DATE_STATUS'], FORMAT_DATE)?></td>
+								</tr>
+								<tr>
+									<td><?=Loc::getMessage('CRM_ENTITY_TREE_STORE_DOCUMENT_TOTAL')?>:</td>
+									<td><?=\CCrmCurrency::MoneyToString($item['TOTAL'], $item['CURRENCY']);?></td>
 								</tr>
 							</table>
 						</div>
@@ -577,7 +647,7 @@ if (!function_exists('CrmEntityTreeDrawItem'))
 							</div>
 						</div>
 					</div>
-					<?php
+				<?php
 				endif;
 				break;
 		}
@@ -611,16 +681,16 @@ if (!function_exists('CrmEntityTreeDrawRecur'))
 ?>
 <div class="crm-doc">
 	<div class="crm-doc-three">
-	<?
-	//parent with base element
-	foreach ($arResult['BASE'] as $item)
-	{
-		echo '<ul class="crm-doc-ul">';
-		CrmEntityTreeDrawItem($item, $arParams, $arResult);
-	}
-	CrmEntityTreeDrawRecur($arResult['TREE'], $arParams, $arResult);
-	echo str_repeat('</ul>', count($arResult['BASE']));
-	?>
+		<?
+		//parent with base element
+		foreach ($arResult['BASE'] as $item)
+		{
+			echo '<ul class="crm-doc-ul">';
+			CrmEntityTreeDrawItem($item, $arParams, $arResult);
+		}
+		CrmEntityTreeDrawRecur($arResult['TREE'], $arParams, $arResult);
+		echo str_repeat('</ul>', count($arResult['BASE']));
+		?>
 	</div>
 </div>
 

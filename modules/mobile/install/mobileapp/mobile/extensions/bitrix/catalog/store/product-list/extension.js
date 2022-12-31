@@ -1,5 +1,8 @@
 (() => {
 
+	const { EventEmitter } = jn.require('event-emitter');
+	const { EmptyScreen } = jn.require('layout/ui/empty-screen');
+
 	/**
 	 * @class StoreProductList
 	 */
@@ -8,6 +11,11 @@
 		constructor(props)
 		{
 			super(props);
+
+			this.uid = props.uid || Random.getString();
+			/** @type {EventEmitter} */
+			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+
 			this.mounted = false;
 			this.state = this.createStateFromProps(props);
 
@@ -34,8 +42,10 @@
 			this.productSelectorAdapter = new StoreProductSelectorAdapter({
 				root: this,
 				iblockId: this.state.catalog.id,
+				restrictedProductTypes: this.state.catalog.restricted_product_types,
 				basePriceId: this.state.catalog.base_price_id,
 				currency: this.state.catalog.currency_id,
+				enableCreation: !!this.props.permissions['catalog_product_add'],
 				onCreate: (productName) => this.wizardAdapter.openWizard(productName),
 				onSelect: (productId) => this.loadProductModel(productId),
 			});
@@ -58,6 +68,7 @@
 				documentCurrencyId: props.document.currency,
 				catalog: props.catalog,
 				measures: props.measures,
+				permissions: props.permissions,
 			};
 		}
 
@@ -130,6 +141,7 @@
 						{
 							return new StoreProductCard({
 								...props,
+								permissions: this.props.permissions,
 								onClick: this.showProductDetailsBackdrop.bind(this),
 								onLongClick: this.showProductContextMenu.bind(this),
 								onContextMenuClick: this.showProductContextMenu.bind(this),
@@ -144,9 +156,15 @@
 		renderEmptyScreen()
 		{
 			return FullScreen(
-				new EmptyListComponent({
-					text: BX.message('CSPL_DOCUMENT_HAS_NO_PRODUCTS'),
-					svg: SvgIcons.empty
+				new EmptyScreen({
+					image: {
+						uri: EmptyScreen.makeLibraryImagePath('products.png'),
+						style: {
+							width: 218,
+							height: 178,
+						}
+					},
+					title: () => BX.message('CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2'),
 				}),
 				this.renderAddButton()
 			);
@@ -157,7 +175,7 @@
 			if (this.state.document.editable)
 			{
 				return new UI.FloatingButtonComponent({
-					onClickHandler: this.showAddProductMenu.bind(this)
+					onClick: this.showAddProductMenu.bind(this)
 				});
 			}
 
@@ -201,6 +219,14 @@
 		{
 			const items = this.state.items.filter(item => item.id !== rowId);
 			this.setStateWithNotification({items});
+		}
+
+		scrollListToTheTop(animate = true)
+		{
+			if (this.listViewRef)
+			{
+				this.listViewRef.scrollToBegin(animate);
+			}
 		}
 
 		scrollListToTheEnd(animate = false)
@@ -253,7 +279,16 @@
 		showAddProductMenu()
 		{
 			let menu = new StoreDocumentAddProductMenu({
-				onChooseProduct: () => this.wizardAdapter.openWizard(),
+				onChooseProduct: () => {
+					if (!this.props.permissions['catalog_product_add'])
+					{
+						Notify.showUniqueMessage(BX.message('CSPL_INSUFFICIENT_PERMISSIONS_FOR_PRODUCT_ADD'));
+
+						return;
+					}
+
+					this.wizardAdapter.openWizard();
+				},
 				onChooseSku: () => this.createSkuInDesktop(),
 				onChooseBarcode: () => this.barcodeScannerAdapter.openScanner(),
 				onChooseDb: () => this.productSelectorAdapter.openSelector(),
@@ -304,19 +339,24 @@
 
 		notifyTabChanged()
 		{
-			this.emit(CatalogStoreEvents.Document.TabChange, [{id: this.props.tabId}]);
-			this.emit(CatalogStoreEvents.ProductList.TotalChanged, [{
-				total: this.calculateTotal(),
-				items: CommonUtils.objectClone(this.state.items),
-				currencyId: this.state.documentCurrencyId,
+			this.customEventEmitter.emit(CatalogStoreEvents.Document.TabChange, [this.props.tabId]);
+			this.customEventEmitter.emit(CatalogStoreEvents.ProductList.TotalChanged, [{
+				count: this.state.items.length,
+				total: {
+					amount: this.calculateTotal(),
+					currency: this.state.documentCurrencyId,
+				},
 			}]);
 		}
 
 		onChangeCurrency(documentCurrencyId)
 		{
-			this.currencyConverter.convert(documentCurrencyId).then(nextState => {
-				this.setStateWithNotification(nextState);
-			});
+			if (this.state.documentCurrencyId !== documentCurrencyId)
+			{
+				this.currencyConverter.convert(documentCurrencyId).then(nextState => {
+					this.setStateWithNotification(nextState);
+				});
+			}
 		}
 	}
 
@@ -333,7 +373,7 @@
 				style: {
 					flexDirection: 'column',
 					flexGrow: 1,
-					backgroundColor: '#F0F2F5',
+					backgroundColor: '#eef2f4',
 				}
 			},
 			...content

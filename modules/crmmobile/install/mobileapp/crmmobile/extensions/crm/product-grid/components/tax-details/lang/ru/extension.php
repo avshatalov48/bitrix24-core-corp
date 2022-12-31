@@ -1,0 +1,10 @@
+<?php
+
+$MESS['PRODUCT_GRID_TAX_DETAILS_TITLE'] = 'Настроить налог';
+$MESS['PRODUCT_GRID_TAX_DETAILS_CLOSE'] = 'Закрыть';
+$MESS['PRODUCT_GRID_TAX_DETAILS_DONE'] = 'Готово';
+$MESS['PRODUCT_GRID_TAX_DETAILS_TAX_RATE'] = 'Ставка налога';
+$MESS['PRODUCT_GRID_TAX_DETAILS_TAX_INCLUDED'] = 'Включён в стоимость';
+$MESS['PRODUCT_GRID_TAX_DETAILS_BASE_SUM'] = 'Стоимость без налога';
+$MESS['PRODUCT_GRID_TAX_DETAILS_TAX_SUM'] = 'Налог';
+$MESS['PRODUCT_GRID_TAX_DETAILS_FINAL_SUM'] = 'Стоимость итоговая';

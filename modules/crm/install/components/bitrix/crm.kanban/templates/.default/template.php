@@ -4,19 +4,23 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+/** @var array $arResult */
+/** @var \CBitrixComponentTemplate $this */
+
 if (isset($arResult['ERROR']))
 {
 	ShowError($arResult['ERROR']);
 	return;
 }
 
-use \Bitrix\Crm\Integration\PullManager;
-use Bitrix\Crm\Settings\QuoteSettings;
-use \Bitrix\Main\Localization\Loc;
-use \Bitrix\Crm\Kanban\Helper;
-use \Bitrix\Crm\Conversion\LeadConversionScheme;
-use \Bitrix\Crm\Category\DealCategory;
-use \Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Category\DealCategory;
+use Bitrix\Crm\Conversion\EntityConverter;
+use Bitrix\Crm\Conversion\LeadConversionScheme;
+use Bitrix\Crm\Integration\NotificationsManager;
+use Bitrix\Crm\Integration\PullManager;
+use Bitrix\Crm\Kanban\Helper;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Tour;
 
 Loc::loadMessages(__FILE__);
 
@@ -31,12 +35,10 @@ $APPLICATION->setPageProperty("BodyClass",
 $data = $arResult['ITEMS'];
 $date = new \Bitrix\Main\Type\Date;
 $isBitrix24 = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24');
-$demoAccess =
-	\CJSCore::IsExtRegistered('intranet_notify_dialog')
-	&& \Bitrix\Main\ModuleManager::isModuleInstalled('im')
-;
-
-
+// $demoAccess =
+// 	\CJSCore::IsExtRegistered('intranet_notify_dialog')
+// 	&& \Bitrix\Main\ModuleManager::isModuleInstalled('im')
+// ;
 
 // js extension reg
 \Bitrix\Main\UI\Extension::load([
@@ -60,6 +62,7 @@ $demoAccess =
 \CJSCore::Init(array(
 	'crm_common',
 	'crm.kanban',
+	'crm.kanban.sort',
 	'crm_visit_tracker',
 	'crm_activity_type',
 	'crm_partial_entity_editor',
@@ -95,6 +98,11 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 		function()
 		{
 			"use strict";
+
+			BX.CRM.Kanban.Restriction.init({
+				isUniversalActivityScenarioEnabled: <?= \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled() ? 'true' : 'false' ?>,
+				isLastActivityEnabled: <?= ($arResult['IS_LAST_ACTIVITY_ENABLED'] ?? false) ? 'true' : 'false' ?>,
+			});
 
 			<?php if (isset($arResult['RESTRICTED_VALUE_CLICK_CALLBACK'])):?>
 				BX.addCustomEvent(window, 'onCrmRestrictedValueClick', function() {
@@ -163,11 +171,12 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					itemType: "BX.CRM.Kanban.Item",
 					columnType: "BX.CRM.Kanban.Column",
 					dropZoneType: "BX.CRM.Kanban.DropZone",
-					canAddColumn: <?= $demoAccess ? 'true' : ($arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false')?>,
-					canEditColumn: <?= $demoAccess ? 'true' : ($arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false')?>,
-					canRemoveColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
-					canSortColumn: <?= $arResult['ACCESS_CONFIG_PERMS'] ? 'true' : 'false'?>,
+					canAddColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canAddColumn'] ?>,
+					canEditColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canEditColumn'] ?>,
+					canRemoveColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canRemoveColumn'] ?>,
+					canSortColumn: <?= $arResult['CONFIG_BY_VIEW_MODE']['canSortColumn'] ?>,
 					canSortItem: true,
+					canChangeItemStage: <?= $arResult['CONFIG_BY_VIEW_MODE']['canChangeItemStage'] ?>,
 					bgColor: <?= (SITE_TEMPLATE_ID === 'bitrix24' ? '"transparent"' : 'null')?>,
 					columns: <?= \CUtil::PhpToJSObject(array_values($data['columns']), false, false, true)?>,
 					items: <?= \CUtil::PhpToJSObject($data['items'], false, false, true)?>,
@@ -184,6 +193,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 							entityType: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_CHR'])?>",
 							entityTypeInt: "<?= \CUtil::JSEscape($arParams['ENTITY_TYPE_INT'])?>",
 							typeInfo: <?= \CUtil::PhpToJSObject($arParams['ENTITY_TYPE_INFO'])?>,
+							viewMode: "<?= \CUtil::JSEscape($arParams['VIEW_MODE'])?>",
 							isDynamicEntity: <?= ($arParams['IS_DYNAMIC_ENTITY'] ? 'true' : 'false') ?>,
 							entityPath: "<?= \CUtil::JSEscape($arParams['ENTITY_PATH'])?>",
 							editorConfigId: "<?= \CUtil::JSEscape($arParams['EDITOR_CONFIG_ID'])?>",
@@ -241,6 +251,7 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 								$arParams['ENTITY_TYPE_CHR'],
 								$arParams['EXTRA']
 							)) ?>",
+							eventKanbanUpdatedTag: "<?= PullManager::EVENT_KANBAN_UPDATED ?>",
 							moduleId: "<?= \CUtil::JSEscape(PullManager::MODULE_ID) ?>"
 						}
 				}
@@ -276,6 +287,11 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 
 			new BX.Crm.Kanban.PullManager(Kanban);
 
+			const sortSettings = BX.CRM.Kanban.Sort.Settings.createFromJson(
+				'<?= \Bitrix\Main\Web\Json::encode($arResult['SORT_SETTINGS']) ?>',
+			);
+			BX.CRM.Kanban.Sort.SettingsController.init(Kanban, sortSettings);
+
 			<?if ($isMergeEnabled):?>
 				BX.Crm.BatchMergeManager.create(
 					"<?=\CUtil::JSEscape($gridId)?>",
@@ -286,6 +302,29 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 					}
 				);
 			<?endif;?>
+
+			<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()):
+				$todoCreateNotificationSkipPeriod =
+					(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
+						->getCurrentSkipPeriod()
+				;
+			?>
+				BX.Runtime.loadExtension('crm.push-crm-settings').then((exports) => {
+					const PushCrmSettings = exports.PushCrmSettings;
+
+					/** @see BX.Crm.PushCrmSettings */
+					new PushCrmSettings({
+						entityTypeId: <?= (int)$arParams['ENTITY_TYPE_INT'] ?>,
+						rootMenu: Kanban.getSettingsButtonMenu(),
+						targetItemId: 'crm_kanban_cc_delimiter',
+						controller: BX.CRM.Kanban.Sort.SettingsController.Instance,
+						restriction: BX.CRM.Kanban.Restriction.Instance,
+						<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>
+						todoCreateNotificationSkipPeriod: '<?= \CUtil::JSEscape($todoCreateNotificationSkipPeriod) ?>',
+						<?php endif; ?>
+					});
+				});
+			<?php endif; ?>
 		}
 	);
 </script>
@@ -356,9 +395,12 @@ $gridId = Helper::getGridId($arParams['ENTITY_TYPE_CHR']);
 			}
 		);
 	</script>
-<?elseif ($arParams['ENTITY_TYPE_CHR'] === 'DEAL'):?>
-	<?\Bitrix\Crm\Integration\NotificationsManager::showSignUpFormOnCrmShopCreated()?>
-<?endif;
+<?elseif ($arParams['ENTITY_TYPE_CHR'] === 'DEAL'):
+	NotificationsManager::showSignUpFormOnCrmShopCreated();
+	print (Tour\ActivityViewMode::getInstance())->build();
+	print (Tour\NewCountersMode::getInstance())->build();
+	print (Tour\SortByLastActivityTime::getInstance())->build();
+endif;
 if (!empty($arResult['CLIENT_FIELDS_RESTRICTIONS'])):
 	Bitrix\Main\UI\Extension::load(['crm.restriction.client-fields']);
 	?>

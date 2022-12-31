@@ -579,10 +579,19 @@ this.BX.Crm = this.BX.Crm || {};
 	      })
 	    };
 	    this.showFieldsPanel(fieldsPanelOptions).then(result => {
+	      this.setFieldsDictionary(landing_ui_panel_fieldspanel.FieldsPanel.getInstance().getCrmFields());
+	      return result;
+	    }).then(result => {
 	      result.forEach(fieldName => {
+	        const fieldData = this.getFieldByName(fieldName);
+
+	        if (!main_core.Type.isString(fieldData.label) && main_core.Type.isString(fieldData.caption)) {
+	          fieldData.label = fieldData.caption;
+	        }
+
 	        this.addItem({
-	          sourceData: this.getFieldByName(fieldName),
-	          data: this.getFieldByName(fieldName)
+	          sourceData: fieldData,
+	          data: fieldData
 	        });
 	        this.onChange();
 	      });

@@ -13,6 +13,7 @@ use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Crm\Settings\InvoiceSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -220,7 +221,7 @@ abstract class ItemList extends Base
 			)
 			{
 				$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
-					'icon' => defined('Icon::FUNNEL') ? Icon::FUNNEL : '',
+					'icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 					'color' => Buttons\Color::LIGHT_BORDER,
 					'className' => 'ui-btn ui-btn-themes ui-btn-light-border ui-btn-dropdown ui-toolbar-btn-dropdown',
 					'text' => $this->category ? $this->category->getName() : Loc::getMessage('CRM_TYPE_TOOLBAR_ALL_ITEMS'),
@@ -234,7 +235,7 @@ abstract class ItemList extends Base
 						'role' => 'bx-crm-toolbar-categories-button',
 						'entity-type-id' => $this->factory->getEntityTypeId(),
 						'category-id' => $this->category ? $this->category->getId() : null,
-						'toolbar-collapsed-icon' => defined('Icon::FUNNEL') ? Icon::FUNNEL : '',
+						'toolbar-collapsed-icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 					],
 				]);
 			}
@@ -397,7 +398,11 @@ abstract class ItemList extends Base
 		if ($this->factory->isStagesEnabled())
 		{
 			$views[Service\Router::LIST_VIEW_KANBAN] = [
-				'title' => Loc::getMessage('CRM_COMMON_KANBAN'),
+				'title' =>
+					Crm::isUniversalActivityScenarioEnabled()
+					? Loc::getMessage('CRM_COMMON_PIPELINE')
+					: Loc::getMessage('CRM_COMMON_KANBAN')
+				,
 				'url' => Container::getInstance()->getRouter()->getKanbanUrl($this->entityTypeId, $this->getCategoryId()),
 				'isActive' => false,
 			];
@@ -536,10 +541,15 @@ abstract class ItemList extends Base
 			$disabledButtonClass = 'ui-btn-disabled-ex'; // to correct display hint
 		}
 
+		$buttonTitle = Loc::getMessage('CRM_COMMON_ACTION_CREATE_' . $this->entityTypeId);
+		if (!$buttonTitle)
+		{
+			$buttonTitle = Loc::getMessage('CRM_COMMON_ACTION_CREATE');
+		}
+
 		return [
 			'color' => Buttons\Color::SUCCESS,
-			'text' => Loc::getMessage('CRM_COMMON_ACTION_ADD'),
-			'icon' => Buttons\Icon::ADD,
+			'text' => $buttonTitle,
 			'link' => $link,
 			'dataset' => $disabledButtonDataset,
 			'className' => $disabledButtonClass,

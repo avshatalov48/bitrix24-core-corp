@@ -249,7 +249,7 @@ class DetailSearchItem
 				attrs: {"data-app-sid" : componentResult["APP_SID"]},
 				style: {"display": "none", overflow: "hidden"}
 			});
-			this.menuItem.getContainer().appendChild(iframeNode);
+			document.body.appendChild(iframeNode);
 			BX.html(iframeNode, response["data"]["html"]);
 			this.chaperonTimeoutId = setTimeout(this.chaperon.bind(this), this.expectedResponseTime, this.appSid);
 		}.bind(this), this.makeError.bind(this));
@@ -365,7 +365,7 @@ class DetailSearch
 	{
 		this.placementCode = placementCode;
 		this.searchParams = {};
-		this.container = BX.create("div");
+		this.container = BX.create("div", {props: {className: "placement-container"}});
 		this.containerLoader = null;
 		this.placementList = new Map();
 		this.firstPlacementAppId = 0;
@@ -539,7 +539,7 @@ class DetailSearch
 		}
 
 		BX.adjust(this.container, {
-			props: {className: "menu-popup"}
+			props: {className: "placement-container menu-popup"}
 		});
 
 		this.replaceEvents();

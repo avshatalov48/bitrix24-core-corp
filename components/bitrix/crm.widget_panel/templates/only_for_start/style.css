@@ -659,7 +659,7 @@ span.curr {
 
 .crm-widget-rating-pl {
 	font-size: 44px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	line-height: 35px;
 }
 
@@ -674,7 +674,7 @@ span.crm-widget-rating-result {
 }
 
 .crm-widget-rating-result span {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-widget-rating-result img {
@@ -866,7 +866,7 @@ span.crm-widget-rating-result {
 .crm-popup-title {
 	color: #3b434f;
 	line-height: 35px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	display: block;
 }
 
@@ -948,7 +948,7 @@ span.crm-widget-rating-result {
 }
 
 .bx-lists-dialog-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 14px;
 	color: #80868e;
 }
@@ -1176,7 +1176,7 @@ span.crm-widget-rating-result {
 	content: '';
 	text-align: center;
 	line-height: 29px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 16px;
 	width: 17px;
 	height: 13px;
@@ -1207,7 +1207,7 @@ span.crm-widget-rating-result {
 	line-height: 15px;
 	background: #b0b6bc;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #fff;
 	margin: 0 -10px 0;
 	border-radius: var(--ui-border-radius-xs);
@@ -1618,7 +1618,7 @@ div.field-container-period {
 
 .color-digit {
 	color: #fff;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	text-align: center;
 	width: 28px;
 	height: 28px;
@@ -1650,7 +1650,7 @@ div.field-container-period {
 	margin: 40px auto 0;
 	color: #818992;
 	font-size: 14px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	display: inline-block;
 }
 

@@ -9,8 +9,6 @@ use Bitrix\Main\Engine\Controller;
 
 class BarcodeScanner extends Controller
 {
-	use CatalogPermissions;
-
 	/**
 	 * @param string $id
 	 * @param string $barcode

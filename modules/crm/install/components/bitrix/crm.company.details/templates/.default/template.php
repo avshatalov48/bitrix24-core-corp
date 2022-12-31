@@ -2,6 +2,7 @@
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 
 use Bitrix\Crm\Attribute\FieldAttributeManager;
+use Bitrix\Crm\Category\NamingHelper;
 
 /** @var array $arParams */
 /** @var array $arResult */
@@ -58,9 +59,21 @@ $APPLICATION->IncludeComponent(
 
 ?><script type="text/javascript">
 		BX.ready(
-			function()
-			{
-				BX.message({ "CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_COMPANY_DETAIL_HISTORY_STUB')?>" });
+			function() {
+				BX.message({
+					"CRM_TIMELINE_HISTORY_STUB": "<?=GetMessageJS('CRM_COMPANY_DETAIL_HISTORY_STUB')?>"
+				});
+
+				<?
+				$labelText = $arResult['CATEGORY_ID']
+					? NamingHelper::getInstance()->getSingleName($arResult['CATEGORY_ID'])
+					: \CCrmOwnerType::GetDescription(\CCrmOwnerType::Company)
+				?>
+				var slider = top.BX && top.BX.SidePanel && top.BX.SidePanel.Instance.getSliderByWindow(window);
+				if (slider)
+				{
+					slider.getLabel().setText('<?=CUtil::JSEscape($labelText)?>');
+				}
 			}
 		);
 </script><?
@@ -101,6 +114,7 @@ $APPLICATION->IncludeComponent(
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
 			'CONTEXT' => $editorContext,
+			'ENABLE_PAGE_TITLE_CONTROLS' => $arResult['IS_EDIT_MODE'],
 			'ATTRIBUTE_CONFIG' => [
 				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
 				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(CCrmOwnerType::Company),

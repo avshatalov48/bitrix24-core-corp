@@ -164,12 +164,7 @@ if (\Bitrix\Main\Loader::includeModule("bitrix24"))
 //crm without leads by default
 \Bitrix\Crm\Settings\LeadSettings::enableLead(false);
 
-if (IsModuleInstalled('extranet'))
+if (\Bitrix\Main\Loader::includeModule('intranet'))
 {
-	\Bitrix\Main\Config\Option::set("crm", "crm_shop_enabled", "Y");
-
-	if (\Bitrix\Main\Loader::includeModule('intranet'))
-	{
-		\CIntranetUtils::clearMenuCache();
-	}
+	\CIntranetUtils::clearMenuCache();
 }

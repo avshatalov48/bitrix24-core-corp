@@ -15,6 +15,13 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 	'ui.alerts',
 ]);
 
+if ($arResult['TODO_CREATE_NOTIFICATION_PARAMS'])
+{
+	Bitrix\Main\UI\Extension::load([
+		'crm.activity.todo-create-notification',
+	]);
+}
+
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/main/utils.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_form.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/entity_event.js');
@@ -329,6 +336,10 @@ $exclusionConfirmDialogContentHelp = GetMessage("CRM_ENT_DETAIL_EXCLUDE_DIALOG_M
 					saveButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_SAVE')?>",
 					cancelButton: "<?=GetMessageJS('CRM_ENT_DETAIL_BUTTON_CANCEL')?>"
 				};
+
+			<? if ($arResult['TODO_CREATE_NOTIFICATION_PARAMS']) { ?>
+				new BX.Crm.Activity.TodoCreateNotification(<?=CUtil::PhpToJSObject($arResult['TODO_CREATE_NOTIFICATION_PARAMS'], false, true, true)?>);
+			<? } ?>
 		}
 	);
 </script>

@@ -16,7 +16,7 @@ $MESS['M_CSDL_TAB_MENU_MOVING'] = 'Перемещение';
 $MESS['M_CSDL_TAB_DEDUCT'] = 'Списание';
 $MESS['M_CSDL_TAB_MENU_DEDUCT'] = 'Списание';
 
-$MESS['M_CSDL_STATUS_CONDUCTED'] = 'Проведен';
+$MESS['M_CSDL_STATUS_CONDUCTED'] = 'Проведён';
 $MESS['M_CSDL_STATUS_NOT_CONDUCTED'] = 'Черновик';
 $MESS['M_CSDL_STATUS_CANCELLED'] = 'Отменён';
 

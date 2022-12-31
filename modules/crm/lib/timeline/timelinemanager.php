@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Timeline;
 
+use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main\Loader;
 use Bitrix\Crm\Service;
 
@@ -9,7 +10,7 @@ class TimelineManager
 {
 	/**
 	 * @param array $item
-	 * @return EntityController|null
+	 * @return Controller|null
 	 */
 	public static function resolveController(array $item)
 	{
@@ -59,6 +60,11 @@ class TimelineManager
 		if($typeID === TimelineType::DELIVERY)
 		{
 			return DeliveryController::getInstance();
+		}
+
+		if($typeID === TimelineType::LOG_MESSAGE)
+		{
+			return LogMessageController::getInstance();
 		}
 
 		if($assocEntityTypeID === \CCrmOwnerType::Activity)
@@ -145,12 +151,18 @@ class TimelineManager
 	public static function prepareDisplayData(array &$items, $userID = 0, $userPermissions = null, bool $checkPermissions = true)
 	{
 		$entityMap = array();
+		$items = NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_HISTORY);
+
 		foreach($items as $ID => $item)
 		{
 			if(!is_array($item))
 			{
 				continue;
 			}
+			$items[$ID]['sort'] = [
+				MakeTimeStamp($item['CREATED']) - \CTimeZone::GetOffset(),
+				(int)$item['ID']
+			];
 
 			$assocEntityTypeID = isset($item['ASSOCIATED_ENTITY_TYPE_ID']) ? (int)$item['ASSOCIATED_ENTITY_TYPE_ID'] : 0;
 			$assocEntityID = isset($item['ASSOCIATED_ENTITY_ID']) ? (int)$item['ASSOCIATED_ENTITY_ID'] : 0;
@@ -228,6 +240,14 @@ class TimelineManager
 						'STORAGE_TYPE_ID', 'STORAGE_ELEMENT_IDS', 'ORIGIN_ID', 'SETTINGS', 'RESULT_MARK'
 					]
 				);
+				$noteData = [];
+				foreach ($activityIDs as $activityId)
+				{
+					$noteData[$activityId] = [
+						'ID' => $activityId,
+					];
+				}
+				$noteData = NoteTable::loadForItems($noteData, NoteTable::NOTE_TYPE_ACTIVITY);
 				while($fields = $dbResult->Fetch())
 				{
 					$assocEntityID = (int)$fields['ID'];
@@ -252,6 +272,7 @@ class TimelineManager
 					$itemIDs = isset($entityInfos[$assocEntityID]['ITEM_IDS'])
 						? $entityInfos[$assocEntityID]['ITEM_IDS'] : array();
 
+					$note = $noteData[$assocEntityID]['NOTE'] ?? null;
 					if($isPermitted)
 					{
 						$fields = ActivityController::prepareEntityDataModel(
@@ -263,6 +284,10 @@ class TimelineManager
 						foreach($itemIDs as $itemID)
 						{
 							$items[$itemID]['ASSOCIATED_ENTITY'] = $fields;
+							if ($note)
+							{
+								$items[$itemID]['NOTE'] = $note;
+							}
 						}
 					}
 					else
@@ -272,6 +297,8 @@ class TimelineManager
 							unset($items[$itemID]);
 						}
 					}
+
+					$items = \Bitrix\Crm\Timeline\Entity\NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_ACTIVITY);
 				}
 
 				$communications = \CCrmActivity::PrepareCommunicationInfos(

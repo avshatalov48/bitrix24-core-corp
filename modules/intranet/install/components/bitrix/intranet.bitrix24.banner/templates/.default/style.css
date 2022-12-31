@@ -47,6 +47,7 @@
 	opacity:1;
 }
 .b24-app-block-content-apps span{
+	display:block;
 	color:#868d96;
 	text-transform:uppercase;
 	font-size:11px;
@@ -58,19 +59,18 @@
 	color:#535c69;
 }
 .b24-app-icon{
-	display:inline-block;
+	display:block;
 	width:30px;
 	height:30px;
 	line-height:30px;
 	vertical-align:middle;
-	margin-right:2px;
+	margin:0 auto;
 	background:url(images/sprite.png?1) no-repeat;
 	background-size:30px auto;
 }
 .b24-app-desktop .b24-app-icon{
 	width:24px;
 	height:24px;
-	margin:3px 0;
 	background-size:24px auto;
 }
 .b24-app-desktop .b24-app-icon.b24-app-icon.b24-app-icon-macos	{width:20px;background-position:center -72px;}

@@ -3,6 +3,7 @@
 namespace Bitrix\DocumentGenerator\Body;
 
 use Bitrix\DocumentGenerator\Body;
+use Bitrix\Main\Application;
 
 abstract class Xml extends Body
 {
@@ -111,7 +112,14 @@ abstract class Xml extends Body
 	protected function initDomDocument()
 	{
 		$this->document = new \DOMDocument();
-		$this->document->loadXML($this->content);
+		try
+		{
+			$this->document->loadXML($this->content);
+		}
+		catch (\ValueError $emptyArgumentError)
+		{
+			Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+		}
 		$this->xpath = new \DOMXPath($this->document);
 		foreach(static::getNamespaces() as $prefix => $namespaceUri)
 		{
@@ -213,7 +221,14 @@ abstract class Xml extends Body
 	{
 		$xml = static::getValidXmlWithContent($xml);
 		$temporaryDocument = new \DOMDocument();
-		$temporaryDocument->loadXML($xml);
+		try
+		{
+			$temporaryDocument->loadXML($xml);
+		}
+		catch (\ValueError $emptyArgumentError)
+		{
+			Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+		}
 		$nodes = static::getDocumentContentNodes($temporaryDocument);
 		foreach($nodes as $childNode)
 		{
@@ -231,7 +246,14 @@ abstract class Xml extends Body
 	{
 		$xml = static::getValidXmlWithContent($xml);
 		$temporaryDocument = new \DOMDocument();
-		$temporaryDocument->loadXML($xml);
+		try
+		{
+			$temporaryDocument->loadXML($xml);
+		}
+		catch (\ValueError $emptyArgumentError)
+		{
+			Application::getInstance()->getExceptionHandler()->writeToLog($emptyArgumentError);
+		}
 		$nodes = static::getDocumentContentNodes($temporaryDocument);
 		$refNode = null;
 		if($node->parentNode)

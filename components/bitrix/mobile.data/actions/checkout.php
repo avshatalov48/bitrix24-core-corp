@@ -11,10 +11,10 @@
  */
 global $APPLICATION, $USER;
 
+use Bitrix\Intranet\UI\LeftMenu\Preset\Manager;
+use Bitrix\Crm;
 use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Authentication\ApplicationPasswordTable;
-use Bitrix\Mobile\WebComponentManager;
 use Bitrix\Main\ModuleManager;
 use Bitrix\Im;
 
@@ -190,11 +190,31 @@ else
 	]);
 
 	$manager = new \Bitrix\Mobile\Tab\Manager($context);
-	if ($intent && strpos($intent, 'preset_') === 0) {
+
+	if ($intent && strpos($intent, 'preset_') === 0)
+	{
 		$components = explode('_', $intent);
-		if (count($components) >= 2) {
+		if (count($components) >= 2)
+		{
 			$preset = $components[1];
 			$manager->setPresetName($preset);
+		}
+	}
+	elseif (
+		Main\Loader::includeModule('intranet')
+		&& Main\Loader::includeModule('crm')
+		&& Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+	)
+	{
+		$lastInstalledPreset = CUserOptions::GetOption('mobile', 'last_installed_preset_by_left_menu');
+		if ($lastInstalledPreset !== 'crm')
+		{
+			$preset = Manager::getPreset(null, $siteId);
+			if ($preset->getCode() === 'crm' && $manager->getPresetName() !== 'crm')
+			{
+				$manager->setPresetName('crm');
+				CUserOptions::SetOption('mobile', 'last_installed_preset_by_left_menu', 'crm');
+			}
 		}
 	}
 

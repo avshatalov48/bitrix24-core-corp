@@ -87,6 +87,32 @@ class ObserverManager
 		);
 	}
 
+	public static function observersIdsByEntity(int $entityTypeId, int $entityId): array
+	{
+		$entityTypeId = static::normalizeEntityTypeId($entityTypeId);
+
+		if (empty($entityId))
+		{
+			return [];
+		}
+
+		$dbResult = Entity\ObserverTable::getList(
+			[
+				'filter' => [
+					'=ENTITY_TYPE_ID' => $entityTypeId,
+					'=ENTITY_ID' => $entityId
+				],
+				'select' => ['USER_ID']
+			]
+		);
+		$results = [];
+		while($fields = $dbResult->fetch())
+		{
+			$results[] = (int)$fields['USER_ID'];
+		}
+		return $results;
+	}
+
 	public static function getEntityBulkObserverIDs($entityTypeID, array $entityIDs)
 	{
 		$entityTypeID = static::normalizeEntityTypeId($entityTypeID);

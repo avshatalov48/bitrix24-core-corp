@@ -11,8 +11,13 @@ export class OpenLines extends Base
 		};
 	}
 
-	onItemAction(item: ConfigurableItem, action: String, actionData: ?Object): void
+	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
+		const {action, actionType, actionData} = actionParams;
+		if (actionType !== 'jsEvent')
+		{
+			return;
+		}
 		if (action === 'Openline:OpenChat' && actionData && actionData.dialogId)
 		{
 			this.#openChat(actionData.dialogId);

@@ -19,6 +19,7 @@ class Options
 	private $useDistinctUnion = false;
 	private $useJoin = false;
 	private $skipCheckOtherEntityTypes = false;
+	private $rawQueryDistinct = false;
 
 	public static function createFromArray(array $options): Options
 	{
@@ -213,5 +214,16 @@ class Options
 	public function canSkipCheckOtherEntityTypes(): bool
 	{
 		return $this->skipCheckOtherEntityTypes;
+	}
+
+	public function setUseRawQueryDistinct(bool $useDistinct): Options
+	{
+		$this->rawQueryDistinct = $useDistinct;
+		return $this;
+	}
+
+	public function isUseRawQueryDistinct(): bool
+	{
+		return $this->rawQueryDistinct;
 	}
 }

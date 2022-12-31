@@ -46,8 +46,9 @@ class Logo extends Base
 	public function toArray(): array
 	{
 		return [
-			'icon' => $this->getIconCode(),
 			'type' => $this->getIconType(),
+			'iconType' => $this->getIconType(),
+			'icon' => $this->getIconCode(),
 			'addIcon' => $this->getAdditionalIconCode(),
 			'addIconType' => $this->getAdditionalIconType(),
 			'inCircle' => $this->isInCircle(),

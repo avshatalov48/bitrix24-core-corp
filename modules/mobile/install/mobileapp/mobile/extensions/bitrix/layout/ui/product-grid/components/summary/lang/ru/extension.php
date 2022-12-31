@@ -1,0 +1,8 @@
+<?php
+
+$MESS['PRODUCT_GRID_SUMMARY_ITEMS_COUNT'] = 'Позиций: #NUM#';
+$MESS['PRODUCT_GRID_SUMMARY_TOTAL'] = 'Итого:';
+$MESS['PRODUCT_GRID_SUMMARY_TOTAL_TAX'] = 'Общая сумма налога:';
+$MESS['PRODUCT_GRID_SUMMARY_TAX_NOT_INCLUDED_MSGVER_1'] = 'Добавлен сверх цены';
+$MESS['PRODUCT_GRID_SUMMARY_TAX_INCLUDED'] = 'Включён в цену';
+$MESS['PRODUCT_GRID_SUMMARY_TAX_PARTLY_INCLUDED'] = 'Частично включён в стоимость';

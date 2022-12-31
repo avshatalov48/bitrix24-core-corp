@@ -138,7 +138,7 @@ class TunnelManager
 
 		if ($srcCategory === $dstCategory)
 		{
-			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_ADD_ERROR_SAME_CATEGORY')));
+			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_ADD_ERROR_SAME_CATEGORY2')));
 			return $result;
 		}
 
@@ -239,7 +239,7 @@ class TunnelManager
 
 		if ($srcCategory === $dstCategory)
 		{
-			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_ADD_ERROR_SAME_CATEGORY')));
+			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_ADD_ERROR_SAME_CATEGORY2')));
 			return $result;
 		}
 
@@ -438,5 +438,62 @@ class TunnelManager
 				'StageId' => $dstStage,
 			];
 		}
+	}
+
+	public function updateStageTunnels(array $tunnels, string $stageId,  int $userId): Main\Result
+	{
+		$result = new Main\Result();
+
+		if (!$this->isAvailable())
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_UNAVAILABLE')));
+			return $result;
+		}
+
+		$template = new Bizproc\Automation\Engine\Template($this->documentType, $stageId);
+
+		if ($template->isExternalModified())
+		{
+			$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_ADD_ERROR_EXTERNAL_TEMPLATE')));
+			return $result;
+		}
+
+		$templateRobots = $template->getRobots();
+		$robotsMap = [];
+		if (!empty($templateRobots) && is_array($templateRobots))
+		{
+			foreach ($templateRobots as $robot)
+			{
+				$robotsMap[$robot->getName()] = $robot;
+			}
+		}
+		$robots = [];
+		foreach ($tunnels as $tunnel)
+		{
+			if ($tunnel['srcCategory'] === $tunnel['dstCategory'])
+			{
+				$result->addError(new Error(Loc::getMessage('CRM_AUTOMATION_TUNNEL_ADD_ERROR_SAME_CATEGORY2')));
+				return $result;
+			}
+
+			if (!$tunnel['robot'])
+			{
+				$robot = $this->createRobot($tunnel['dstCategory'], $tunnel['dstStage']);
+				$robots[] = $robot;
+			}
+			else
+			{
+				$robotName = $tunnel['robot']['Name'];
+				if (isset($robotsMap[$robotName]))
+				{
+					$copy = clone $robotsMap[$robotName];
+					$copy->setProperty('CategoryId', $tunnel['dstCategory']);
+					$copy->setProperty('StageId', $tunnel['dstStage']);
+					$robots[] = $copy;
+				}
+			}
+		}
+
+		return $template->save($robots, $userId);
 	}
 }

@@ -26,14 +26,18 @@ Loader::requireModule('disk');
 
 class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Controllerable
 {
-	/** @var User */
-	protected $currentUser;
-	/** @var OnlyOffice\Configuration */
-	protected $onlyOfficeConfiguration;
+	public const ERROR_CODE_EXCEEDED_LIMIT = 'exceeded_limit';
+	public const ERROR_CODE_COULD_NOT_LOCK = 'could_not_lock';
+
+	protected User $currentUser;
+	protected OnlyOffice\Configuration $onlyOfficeConfiguration;
+	protected OnlyOffice\RestrictionManager $restrictionManager;
 
 	protected function processBeforeAction($actionName)
 	{
 		$this->onlyOfficeConfiguration = new OnlyOffice\Configuration();
+		$this->restrictionManager = new OnlyOffice\RestrictionManager();
+
 		if (!OnlyOffice\OnlyOfficeHandler::isEnabled())
 		{
 			return false;
@@ -243,6 +247,41 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		$this->arResult['SHOULD_BLOCK_EXTERNAL_LINK_FEATURE'] = (bool)$featureBlocker;
 		$this->arResult['BLOCKER_EXTERNAL_LINK_FEATURE'] = $featureBlocker;
 
+		if ($allowEdit && $configBuilder->isEditMode() && $this->shouldUseRestriction())
+		{
+			if ($this->lockForRestriction())
+			{
+				if (
+					!$this->isAllowedEditByRestriction($documentSession->getExternalHash(), $this->currentUser->getId())
+				)
+				{
+					$this->errorCollection[] = new Disk\Internals\Error\Error('Exceeded limit.', self::ERROR_CODE_EXCEEDED_LIMIT, [
+						'limit' => $this->restrictionManager->getLimit(),
+					]);
+
+					AddEventToStatFile(
+						'disk',
+						'disk_oo_limit_edit',
+						$documentSession->getExternalHash(),
+						ServiceLocator::getInstance()->get('disk.onlyofficeConfiguration')->getServer(),
+						'',
+						$this->currentUser->getId()
+					);
+				}
+				else
+				{
+					$this->registerRestrictionUsage($documentSession->getExternalHash(), $this->currentUser->getId());
+				}
+			}
+
+			if ($this->getErrorByCode(self::ERROR_CODE_EXCEEDED_LIMIT) || $this->getErrorByCode(self::ERROR_CODE_COULD_NOT_LOCK))
+			{
+				$this->processRestrictionError();
+
+				return;
+			}
+		}
+
 		$editorJsonConfigResult = $this->getEditorJsonConfig($configBuilder);
 		if (!$editorJsonConfigResult->isSuccess())
 		{
@@ -285,6 +324,43 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		{
 			$this->includeComponentTemplate();
 		}
+
+		if ($this->shouldUseRestriction())
+		{
+			$this->unlockForRestriction();
+		}
+	}
+
+	private function shouldUseRestriction(): bool
+	{
+		return $this->restrictionManager->shouldUseRestriction();
+	}
+
+	private function isAllowedEditByRestriction(string $documentKey, int $userId): bool
+	{
+		return $this->restrictionManager->isAllowedEdit($documentKey, $userId);
+	}
+
+	private function registerRestrictionUsage(string $documentKey, int $userId): void
+	{
+		$this->restrictionManager->registerUsage($documentKey, $userId);
+	}
+
+	private function lockForRestriction(): bool
+	{
+		if (!$this->restrictionManager->lock())
+		{
+			$this->errorCollection[] = new Disk\Internals\Error\Error('Could not get exclusive lock', self::ERROR_CODE_COULD_NOT_LOCK);
+
+			return false;
+		}
+
+		return true;
+	}
+
+	private function unlockForRestriction(): void
+	{
+		$this->restrictionManager->unlock();
 	}
 
 	protected function getLinkToEdit(OnlyOffice\Models\DocumentSession $documentSession)
@@ -425,6 +501,23 @@ class CDiskFileEditorOnlyOfficeComponent extends BaseComponent implements Contro
 		}
 
 		return (new Result())->setData($configBuilder->build());
+	}
+
+	protected function processRestrictionError(): void
+	{
+		$cloudErrorResult = [];
+
+		if ($this->getErrorByCode(self::ERROR_CODE_EXCEEDED_LIMIT))
+		{
+			$cloudErrorResult['LIMIT'] = [
+				'RESTRICTION' => true,
+				'LIMIT_VALUE' => $this->getErrorByCode(self::ERROR_CODE_EXCEEDED_LIMIT)->getCustomData()['limit'],
+			];
+		}
+		$cloudErrorResult['ERRORS'] = $this->getErrors();
+		$this->arResult['CLOUD_ERROR'] = $cloudErrorResult;
+
+		$this->includeComponentTemplate('cloud-error');
 	}
 
 	protected function processCloudError(Result $result): void

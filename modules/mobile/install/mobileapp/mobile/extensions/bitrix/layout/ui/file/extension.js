@@ -1,4 +1,6 @@
 (() => {
+	const { Alert } = jn.require('alert');
+
 	function getAbsolutePath(url)
 	{
 		if (url && url.indexOf('file://') !== 0 && url.indexOf('http://') !== 0 && url.indexOf('https://') !== 0)
@@ -21,13 +23,13 @@
 		return result;
 	}
 
-	function getFileMimeType(fileType)
+	function getFileMimeType(fileType, fileName = '')
 	{
-		fileType = fileType.toString().toLowerCase();
+		let mimeType = fileType.toString().toLowerCase();
 
-		if (fileType.indexOf('/') !== -1) // iOS old form
+		if (mimeType === 'application/octet-stream')
 		{
-			return fileType;
+			mimeType = fileName.split('.').pop().toLowerCase();
 		}
 
 		const mimeTypeMap = {
@@ -42,10 +44,20 @@
 			'ogg': 'video/ogg',
 			'mov': 'video/quicktime',
 			'zip': 'application/zip',
-			'php': 'text/php'
+			'php': 'text/php',
+		};
+
+		if (mimeTypeMap[mimeType])
+		{
+			return mimeTypeMap[mimeType];
 		}
 
-		return mimeTypeMap[fileType] ? mimeTypeMap[fileType] : '';
+		if (fileType.indexOf('/') !== -1) // iOS old form
+		{
+			return fileType;
+		}
+
+		return '';
 	}
 
 	function getExtension(uri)
@@ -121,7 +133,7 @@
 		return result;
 	}
 
-	function openViewer({fileType, url, name, images})
+	function openViewer({ fileType, url, name, images })
 	{
 		if (!url)
 		{
@@ -136,7 +148,7 @@
 		{
 			if (Array.isArray(images) && images.length)
 			{
-				viewer.openImageCollection(images)
+				viewer.openImageCollection(images);
 			}
 			else
 			{
@@ -153,9 +165,7 @@
 	{
 		return (
 			files
-				.filter((file) => {
-					return getType(getFileMimeType(file.type)) === 'image';
-				})
+				.filter(({ type, name }) => getType(getFileMimeType(type, name)) === 'image')
 				.map((image) => {
 					// primarily - find by id (we can have same images in different positions)
 					if (image.id && id)
@@ -178,17 +188,18 @@
 
 	function renderImage(options)
 	{
-		let {
+		const {
 			id,
-			url,
-			imageUri,
 			name,
 			fileType,
+			isLoading,
+			hasError,
 			styles,
 			attachmentCloseIcon,
 			onDeleteAttachmentItem,
-			files
 		} = options;
+
+		let { url, imageUri, files } = options;
 
 		imageUri = encodeURI(imageUri);
 		imageUri = getAbsolutePath(imageUri);
@@ -203,37 +214,108 @@
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => openViewer({fileType, url, name, images})
+				onClick: () => openViewer({ fileType, url, name, images }),
 			},
-			Image({
-				testId: 'pinnedFileImage',
-				style: styles.imagePreview,
-				uri: imageUri,
-				resizeMode: 'cover'
-			}),
-			onDeleteAttachmentItem && Image({
-				testId: 'pinnedFileDetach',
-				svg: {
-					content: attachmentCloseIcon
+			View(
+				{
+					style: {
+						flexDirection: 'column',
+						justifyContent: 'center',
+						alignItems: 'center',
+					},
 				},
-				resizeMode: 'cover',
-				style: styles.deleteButtonWrapper,
-				onClick: onDeleteAttachmentItem
-			}),
+				Image({
+					testId: 'pinnedFileImage',
+					style: styles.imagePreview,
+					uri: imageUri,
+					resizeMode: 'cover',
+				}),
+				View(
+					{
+						style: {
+							marginTop: 2,
+							width: 58,
+							justifyContent: 'center',
+							alignItems: 'center',
+						},
+					},
+					Text({
+						testId: 'pinnedFileName',
+						style: {
+							color: hasError ? '#ff615c' : '#a8adb4',
+							fontWeight: '500',
+							fontSize: 10,
+							backgroundColor: '#00000000',
+							textAlign: 'center',
+						},
+						text: name,
+						numberOfLines: 2,
+						ellipsize: Application.getPlatform() !== "android" ? 'middle' : 'end',
+					}),
+				),
+			),
+			isLoading && View(
+				{
+					style: {
+						...styles.imageOutline(false),
+						backgroundColor: '#ffffff',
+						borderColor: null,
+						opacity: 0.5,
+					},
+				},
+				Loader({
+					style: {
+						width: styles.imagePreview.width,
+						height: styles.imagePreview.height,
+					},
+					tintColor: '#000000',
+					animating: true,
+					size: 'small',
+				}),
+			),
+			View(
+				{
+					testId: 'pinnedFileOutline',
+					style: styles.imageOutline(hasError),
+				},
+			),
+			onDeleteAttachmentItem && View(
+				{
+					style: {
+						...styles.deleteButtonWrapper,
+						width: styles.deleteButtonWrapper.width + 8,
+						height: styles.deleteButtonWrapper.height + 8,
+					},
+					onClick: () => deleteItem(onDeleteAttachmentItem),
+				},
+				Image({
+					testId: 'pinnedFileDetach',
+					svg: {
+						content: attachmentCloseIcon,
+					},
+					resizeMode: 'cover',
+					style: {
+						width: styles.deleteButtonWrapper.width,
+						height: styles.deleteButtonWrapper.height,
+					},
+				})
+			),
 		);
 	}
 
 	function renderFile(options)
 	{
-		let {
-			url,
+		const {
 			name,
 			fileType,
+			isLoading,
+			hasError,
 			styles,
 			attachmentCloseIcon,
-			attachmentFileIconFolder,
-			onDeleteAttachmentItem
+			onDeleteAttachmentItem,
 		} = options;
+
+		let {url, attachmentFileIconFolder} = options;
 
 		url = encodeURI(url);
 		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
@@ -245,47 +327,199 @@
 			{
 				testId: 'pinnedFileContainer',
 				style: styles.wrapper,
-				onClick: () => openViewer({fileType, url, name})
+				onClick: () => openViewer({ fileType, url, name }),
 			},
-			View({
-					style: styles.imagePreview
-				},
-				Image(
-					{
-						testId: 'pinnedFileIcon',
-						style: {
-							marginTop: 3,
-							width: styles.imagePreview.width?  styles.imagePreview.width / 2 : 20,
-							height: styles.imagePreview.height?  styles.imagePreview.height / 2 : 20,
-						},
-						svg: {
-							uri: attachmentFileIconFolder + icon + '.svg'
-						},
-						resizeMode: 'contain'
-					}
-				),
-				Text({
-					testId: 'pinnedFileName',
+			View(
+				{
 					style: {
-						marginTop: 2,
-						color: '#a8adb4',
-						fontWeight: 'normal',
-						fontSize: 8,
-						textAlign: 'center',
-						backgroundColor: '#00000000'
+						flexDirection: 'column',
+						justifyContent: 'center',
+						alignItems: 'center',
 					},
-					text: name.substring(0, 4) + (name.length > 4 ? '...' : '')
-				})
+				},
+				View(
+					{
+						style: {
+							width: styles.imagePreview.width,
+							height: styles.imagePreview.height,
+							justifyContent: 'center',
+							alignItems: 'center',
+						},
+					},
+					Image(
+						{
+							testId: 'pinnedFileIcon',
+							style: {
+								width: styles.imagePreview.width ? styles.imagePreview.width / 2 : 20,
+								height: styles.imagePreview.height ? styles.imagePreview.height / 2 : 20,
+							},
+							svg: {
+								uri: attachmentFileIconFolder + icon + '.svg',
+							},
+							resizeMode: 'contain',
+						},
+					),
+				),
+				View(
+					{
+						style: {
+							marginTop: 2,
+							width: 58,
+							justifyContent: 'center',
+							alignItems: 'center',
+						},
+					},
+					Text({
+						testId: 'pinnedFileName',
+						style: {
+							color: hasError ? '#ff615c' : '#a8adb4',
+							fontWeight: '500',
+							fontSize: 10,
+							backgroundColor: '#00000000',
+							textAlign: 'center',
+						},
+						text: name,
+						numberOfLines: 2,
+						ellipsize: Application.getPlatform() !== "android" ? 'middle' : 'end',
+					}),
+				),
+			),
+			isLoading && View(
+				{
+					testId: 'pinnedFileLoader',
+					style: {
+						...styles.imageOutline(false),
+						backgroundColor: '#ffffff',
+						borderColor: null,
+						opacity: 0.5,
+					},
+				},
+				Loader({
+					style: {
+						width: styles.imagePreview.width,
+						height: styles.imagePreview.height,
+					},
+					tintColor: '#000000',
+					animating: true,
+					size: 'small',
+				}),
+			),
+			View(
+				{
+					testId: 'pinnedFileOutline',
+					style: styles.imageOutline(hasError),
+				},
 			),
 			onDeleteAttachmentItem && Image({
 				testId: 'pinnedFileDetach',
 				svg: {
-					content: attachmentCloseIcon
+					content: attachmentCloseIcon,
 				},
 				resizeMode: 'cover',
 				style: styles.deleteButtonWrapper,
-				onClick: onDeleteAttachmentItem
-			})
+				onClick: () => deleteItem(onDeleteAttachmentItem),
+			}),
+		);
+	}
+
+	function renderFileInLine(options)
+	{
+		const {
+			name,
+			fileType,
+			hasError,
+			styles,
+			size,
+		} = options;
+
+		let {url, attachmentFileIconFolder} = options;
+
+		url = encodeURI(url);
+		attachmentFileIconFolder = getAbsolutePath(attachmentFileIconFolder);
+
+		const extension = (getExtension(name || url));
+		const icon = (getFileType(extension) || 'empty');
+
+		return View(
+			{
+				testId: 'pinnedFileContainer',
+				style: styles.wrapper,
+				onClick: () => openViewer({fileType, url, name}),
+			},
+			View(
+				{
+					style: {
+						justifyContent: 'space-between',
+						flexDirection: 'row',
+					},
+				},
+				View(
+					{
+						style: {
+							flex: 1,
+							flexDirection: 'row',
+						},
+					},
+					Image(
+						{
+							testId: 'pinnedFileIcon',
+							style: {
+								width: 24,
+								height: 24,
+							},
+							svg: {
+								uri: `${attachmentFileIconFolder}${icon}.svg`,
+							},
+							resizeMode: 'contain',
+						},
+					),
+					Text({
+						testId: 'pinnedFileName',
+						style: {
+							flex: 1,
+							color: (hasError ? '#ff615c' : '#a8adb4'),
+							fontWeight: '400',
+							fontSize: 16,
+							backgroundColor: '#00000000',
+							marginLeft: 8,
+							marginRight: 12,
+						},
+						text: name,
+						numberOfLines: 1,
+						ellipsize: 'middle',
+					}),
+				),
+				Text({
+					testId: 'pinnedFileSize',
+					style: {
+						color: (hasError ? '#ff615c' : '#a8adb4'),
+						fontWeight: '400',
+						fontSize: 16,
+						backgroundColor: '#00000000',
+					},
+					text: size.toUpperCase(),
+					numberOfLines: 1,
+					ellipsize: 'middle',
+				}),
+			),
+		);
+	}
+
+	function deleteItem(onDeleteAttachmentItem)
+	{
+		Alert.confirm(
+			'',
+			BX.message('UI_FILE_ATTACHMENT_DELETE_CONFIRM_TITLE'),
+			[
+				{
+					text: BX.message('UI_FILE_ATTACHMENT_DELETE_CONFIRM_OK'),
+					type: 'destructive',
+					onPress: onDeleteAttachmentItem,
+				},
+				{
+					type: 'cancel',
+				},
+			],
 		);
 	}
 
@@ -293,8 +527,7 @@
 	{
 		let styles = {
 			wrapper: {
-				paddingTop: 3,
-				paddingRight: 3,
+				paddingTop: 8,
 			},
 			imagePreview: {
 				width: 40,
@@ -303,15 +536,27 @@
 				flexDirection: 'column',
 				alignItems: 'center',
 				justifyContent: 'center',
-				borderWidth: 0.5,
 				borderRadius: 6,
-				borderColor: '#525C69',
 			},
+			imageOutline: (hasError) => ({
+				width: 40,
+				height: 40,
+				position: 'absolute',
+				top: 8,
+				left: 9,
+				borderColor: hasError ? '#ff5752' : '#333333',
+				backgroundColor: hasError ? '#ff615c' : null,
+				borderWidth: 1,
+				opacity: hasError ? 0.5 : 0.08,
+				borderRadius: 6,
+			}),
 			deleteButtonWrapper: {
 				position: 'absolute',
 				top: 0,
-				right: 0
-			}
+				right: 0,
+				justifyContent: 'flex-start',
+				alignItems: 'flex-end',
+			},
 		};
 
 		if (externalStyles)
@@ -322,7 +567,7 @@
 		return styles;
 	}
 
-	const DEFAULT_CLOSE_ICON = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8" cy="8" r="7.5" fill="#B9C0CA" stroke="white"/><path fill-rule="evenodd" clip-rule="evenodd" d="M9 8L11 10L10 11L8 9L6 11L5 10L7 8L5 6L6 5L8 7L10 5L11 6L9 8Z" fill="white"/></svg>`;
+	const DEFAULT_CLOSE_ICON = `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="8.5" fill="#D5D7DB" stroke="white"/><path fill-rule="evenodd" clip-rule="evenodd" d="M10.125 9L12.375 11.25L11.25 12.375L9 10.125L6.75 12.375L5.625 11.25L7.875 9L5.625 6.75L6.75 5.625L9 7.875L11.25 5.625L12.375 6.75L10.125 9Z" fill="white"/></svg>`;
 	const DEFAULT_FILE_ICONS_FOLDER = '/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/file/images/file/';
 
 	/**
@@ -332,7 +577,11 @@
 	 * @param {String} options.url
 	 * @param {String} options.imageUri
 	 * @param {String} options.type
+	 * @param {String} options.size
 	 * @param {String} options.name
+	 * @param {Boolean} options.showName
+	 * @param {Boolean} options.isInLine
+	 * @param {Boolean} options.isLoading
 	 * @param {Object} options.styles
 	 * @param {String} options.attachmentCloseIcon
 	 * @param {String} options.attachmentFileIconFolder
@@ -342,13 +591,19 @@
 	 */
 	function File(options)
 	{
-		let {id, imageUri, type, attachmentCloseIcon, attachmentFileIconFolder, styles, files} = options;
+		const { url, type, name, showName } = options;
+		let { imageUri, attachmentCloseIcon, attachmentFileIconFolder, styles } = options;
 
+		styles = buildStyles(styles);
 		attachmentCloseIcon = attachmentCloseIcon || DEFAULT_CLOSE_ICON;
 		attachmentFileIconFolder = attachmentFileIconFolder || DEFAULT_FILE_ICONS_FOLDER;
-		styles = buildStyles(styles);
 
-		const fileType = getType(getFileMimeType(type));
+		const fileType = getType(getFileMimeType(type, name));
+
+		if (fileType === 'image' && url.indexOf('file://') === 0)
+		{
+			imageUri = url;
+		}
 
 		if (
 			(fileType === 'image' || (fileType === 'video' && imageUri.indexOf('file://') === 0))
@@ -357,12 +612,23 @@
 		{
 			return renderImage({
 				...options,
+				name: showName && name,
+				imageUri,
 				styles,
 				attachmentCloseIcon,
 				attachmentFileIconFolder,
 				fileType,
-				id,
-				files
+			});
+		}
+
+		if (options.isInLine)
+		{
+			return renderFileInLine({
+				...options,
+				styles,
+				attachmentCloseIcon,
+				attachmentFileIconFolder,
+				fileType,
 			});
 		}
 
@@ -371,7 +637,7 @@
 			styles,
 			attachmentCloseIcon,
 			attachmentFileIconFolder,
-			fileType
+			fileType,
 		});
 	}
 

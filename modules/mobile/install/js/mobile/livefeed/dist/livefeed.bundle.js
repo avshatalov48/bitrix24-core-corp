@@ -3852,9 +3852,9 @@ this.BX = this.BX || {};
 	      this.isBusyGettingNextPage = true;
 	      this.nextPageXhr = mobile_ajax.Ajax.wrap({
 	        type: 'json',
-	        method: 'GET',
+	        method: 'POST',
 	        url: this.getNextPageUrl(),
-	        data: '',
+	        data: {},
 	        callback: function callback(data) {
 	          _this.nextPageXhr = null;
 
@@ -3956,9 +3956,9 @@ this.BX = this.BX || {};
 	      }];
 	      this.refreshXhr = mobile_ajax.Ajax.wrap({
 	        type: 'json',
-	        method: 'GET',
+	        method: 'POST',
 	        url: reloadUrl,
-	        data: '',
+	        data: {},
 	        headers: headers,
 	        callback: function callback(data) {
 	          _this2.refreshXhr = null;

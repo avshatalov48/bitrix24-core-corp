@@ -93,7 +93,7 @@ class IBlockElementProperty
 				}
 				else
 				{
-					$listValue[] = $dataValue;
+					$listValue[] = null;
 				}
 			}
 		}

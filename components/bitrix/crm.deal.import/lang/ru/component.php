@@ -51,7 +51,7 @@ $MESS["CRM_FIELD_IMPORT_AUTO_DETECT_ENCODING"] = "Определить авто�
 $MESS["CRM_COLUMN_ASSIGNED_BY_ID"] = "Ответственный";
 $MESS["CRM_FIELD_IMPORT_DEFAULT_RESPONSIBLE"] = "Ответственный (по умолчанию)";
 $MESS["CRM_FIELD_NAME_FORMAT"] = "Формат имени";
-$MESS["CRM_COLUMN_CATEGORY_ID"] = "Направление";
+$MESS["CRM_COLUMN_CATEGORY_ID"] = "Воронка";
 $MESS["CRM_COLUMN_SOURCE"] = "Источник";
 $MESS["CRM_COLUMN_SOURCE_DESCRIPTION"] = "Дополнительно об источнике";
 ?>

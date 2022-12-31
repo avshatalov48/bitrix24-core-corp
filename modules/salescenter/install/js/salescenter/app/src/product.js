@@ -60,6 +60,7 @@ export default {
 				totalResultLabel: this.$root.$app.options.mode === 'delivery' ? Loc.getMessage('SALESCENTER_SHIPMENT_PRODUCT_BLOCK_TOTAL') : null,
 				urlBuilderContext: this.$root.$app.options.urlProductBuilderContext,
 				isCatalogPriceEditEnabled: this.$root.$app.options.isCatalogPriceEditEnabled,
+				isCatalogDiscountSetEnabled: this.$root.$app.options.isCatalogDiscountSetEnabled,
 				fieldHints: this.$root.$app.options.fieldHints,
 				hideUnselectedProperties: (this.$root.$app.options.templateMode === 'view'),
 				showCompilationModeSwitcher: (
@@ -163,7 +164,11 @@ export default {
 				fields.push(item.fields);
 			});
 			this.$store.commit('orderCreation/setBasket', fields);
-			this.changeCompilationProducts();
+
+			if (this.$root.$app.newCompilationId)
+			{
+				this.changeCompilationProducts();
+			}
 
 			if (this.isNeedDisableSubmit())
 			{

@@ -63,7 +63,7 @@ class SmartDocument extends Dynamic
 			TypeTable::createObject()
 				->setName('SmartDocument')
 				->setEntityTypeId(\CCrmOwnerType::SmartDocument)
-				->setTitle('Smart Document')
+				->setTitle(Loc::getMessage('CRM_TYPE_SMART_DOCUMENT_TYPE_TITLE'))
 				->setCode('BX_SMART_DOCUMENT')
 				->setCreatedBy(0)
 				->setIsCategoriesEnabled(false)
@@ -210,26 +210,30 @@ class SmartDocument extends Dynamic
 		parent::configureAddOperation($operation);
 
 		$operation->addAction(
-			Operation::ACTION_BEFORE_SAVE,
-			new Operation\Action\EnsureMyCompanyRequisitesNotEmpty()
-		);
-
-		$operation->addAction(
 			Operation::ACTION_AFTER_SAVE,
 			new class extends Operation\Action {
 				public function process(Item $item): Result
 				{
 					$provider = new \Bitrix\Crm\Activity\Provider\SignDocument();
 
+					$bindings = [[
+						'OWNER_TYPE_ID' => $item->getEntityTypeId(),
+						'OWNER_ID' => $item->getId(),
+					]];
+					
+					$parent = $item->get('PARENT_ID_' . \CCrmOwnerType::Deal);
+					if ($parent)
+					{
+						$bindings[] = [
+								'OWNER_TYPE_ID' => \CCrmOwnerType::Deal,
+								'OWNER_ID' => $parent,
+							];
+					}
+
 					return $provider->createActivity(
 						\Bitrix\Crm\Activity\Provider\SignDocument::PROVIDER_TYPE_ID_SIGN,
 						[
-							'BINDINGS' => [
-								[
-									'OWNER_TYPE_ID' => $item->getEntityTypeId(),
-									'OWNER_ID' => $item->getId(),
-								],
-							],
+							'BINDINGS' => $bindings,
 							'ASSOCIATED_ENTITY_ID' => $item->getId(),
 							'SUBJECT' => $item->getHeading(),
 							'COMPLETED' => 'N',

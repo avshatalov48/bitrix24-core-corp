@@ -1,5 +1,7 @@
 <?php
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\v2\Integration\Seo\Facebook\FacebookFacade;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Crm\Activity\Provider\Sms;
@@ -409,7 +411,17 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		$this->arResult['isDeliveryCollapsed'] = $collapseOptions['delivery'] ?? null;
 		$this->arResult['isAutomationCollapsed'] = $collapseOptions['automation'] ?? null;
 		$this->arResult['urlProductBuilderContext'] = Main\Loader::includeModule('catalog') ? Catalog\Url\ShopBuilder::TYPE_ID : '';
-		$this->arResult['isCatalogPriceEditEnabled'] = Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled();
+		if (\CCrmOwnerType::isCorrectEntityTypeId($ownerTypeId))
+		{
+			$this->arResult['isCatalogPriceEditEnabled'] = AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_PRICE_ENTITY_EDIT,
+				$ownerTypeId
+			);
+			$this->arResult['isCatalogDiscountSetEnabled'] = AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_PRODUCT_DISCOUNT_SET,
+				$ownerTypeId
+			);
+		}
 		$this->arResult['fieldHints'] = [];
 		if (!$this->arResult['isCatalogPriceEditEnabled'])
 		{
@@ -824,7 +836,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		elseif ($this->shipment)
 		{
 			/** @var Crm\Order\ShipmentItemCollection $shipmentItemCollection */
-			$shipmentItemCollection = $this->shipment->getShipmentItemCollection();
+			$shipmentItemCollection = $this->shipment->getShipmentItemCollection()->getShippableItems();
 
 			/** @var Bitrix\Crm\Order\ShipmentItem $shipmentItem */
 			foreach ($shipmentItemCollection as $shipmentItem)
@@ -2118,16 +2130,22 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 
 	/**
 	 * @param $date
-	 * @param string $format
+	 * @param string|null $format
 	 * @return string
 	 */
-	private function prepareTimeLineItemsDateTime($date, $format = 'j F Y H:i'): string
+	private function prepareTimeLineItemsDateTime($date, $format = null): string
 	{
+		if (!$format)
+		{
+			$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
+			$format = $culture->getLongDateFormat() . ' ' . $culture->getShortTimeFormat();
+		}
 		$result = '';
 		if ($date instanceof \Bitrix\Main\Type\DateTime)
 		{
 			$result = FormatDate($format, $date->getTimestamp() + CTimeZone::GetOffset());
 		}
+
 		return $result;
 	}
 
@@ -2181,12 +2199,13 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 				}
 				elseif ($item['TYPE_CATEGORY_ID'] == TimelineType::UNDEFINED)
 				{
+					$culture = \Bitrix\Main\Application::getInstance()->getContext()->getCulture();
 					$result[] = [
 						'type'=>'check',
 						'url'=>$item['CHECK_URL'],
 						'content'=>Loc::getMessage('SALESCENTER_TIMELINE_CHECK_CONTENT',[
 							'#ID#'=>$item['ASSOCIATED_ENTITY_ID'],
-							'#DATE_CREATED#'=>$this->prepareTimeLineItemsDateTime($item['CREATED'], 'j F Y')]),
+							'#DATE_CREATED#'=>$this->prepareTimeLineItemsDateTime($item['CREATED'], $culture->getLongDateFormat())]),
 					];
 				}
 			}
@@ -2622,7 +2641,7 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 	 */
 	public function getComponentResultAction(array $arParams): array
 	{
-		$this->arParams = $arParams;
+		$this->arParams = $this->onPrepareComponentParams($arParams);
 
 		$this->fillComponentResult();
 
@@ -2680,12 +2699,10 @@ class CSalesCenterAppComponent extends CBitrixComponent implements Controllerabl
 		if ($this->item)
 		{
 			$result['contactPhone'] = CrmManager::getInstance()->getItemContactPhoneFormatted($this->item);
+
+			$contact = CrmManager::getInstance()->getItemContactFields($this->item);
+			$result['title'] = is_array($contact)?  $contact['FULL_NAME']: '';
 		}
-
-		$this->item->getContactId();
-
-		$contact = CrmManager::getInstance()->getItemContactFields($this->item);
-		$result['title'] = is_array($contact)?  $contact['FULL_NAME']: '';
 
 		return $result;
 	}

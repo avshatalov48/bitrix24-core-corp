@@ -107,7 +107,7 @@
 .mode-unit-selected-hours [data-unit="hours"],
 .mode-unit-selected-mins [data-unit="mins"] {
 	color: #535c69;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	border-bottom: 1px dashed transparent;
 	cursor: default;
 }
@@ -643,7 +643,7 @@ select.crm-recur-options-inp {
 }
 .crm-recur-options-client-email-list.selected{
 	color:#0b66c3;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 .crm-recur-template-field
 {

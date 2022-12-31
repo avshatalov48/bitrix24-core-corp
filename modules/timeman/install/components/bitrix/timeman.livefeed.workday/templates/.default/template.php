@@ -1,4 +1,7 @@
 <?
+
+use Bitrix\Main\Web\Uri;
+
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
 CJSCore::Init(array('timeman'));
 ?><div class="feed-workday-table"><?
@@ -6,7 +9,7 @@ CJSCore::Init(array('timeman'));
 		?><span class="feed-workday-table-text"><?=GetMessage("TIMEMAN_ENTRY_FROM")?>:</span><?
 		?><span class="feed-workday-avatar"
 			<? if ($arParams["USER"]["PHOTO"] <> ''): ?>
-				style="background:url('<?=$arParams["USER"]["PHOTO"]?>') no-repeat center; background-size: cover;"
+				style="background:url('<?= Uri::urnEncode($arParams["USER"]["PHOTO"])?>') no-repeat center; background-size: cover;"
 			<? endif ?>
 			><?
 		?></span><?
@@ -21,7 +24,7 @@ CJSCore::Init(array('timeman'));
 		?><span class="feed-workday-table-text"><?=GetMessage("TIMEMAN_ENTRY_TO")?>:</span><?
 		?><span class="feed-workday-avatar"
 			<? if ($arParams["MANAGER"]["PHOTO"] <> ''): ?>
-				style="background:url('<?=$arParams["MANAGER"]["PHOTO"]?>') no-repeat center; background-size: cover;"
+				style="background:url('<?= Uri::urnEncode($arParams["MANAGER"]["PHOTO"])?>') no-repeat center; background-size: cover;"
 			<? endif ?>
 			><?
 		?></span><?

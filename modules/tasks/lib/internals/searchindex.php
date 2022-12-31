@@ -91,7 +91,6 @@ class SearchIndex
 	public static function getTaskSearchIndex($taskId)
 	{
 		$searchIndex = '';
-
 		if ((int)$taskId > 0)
 		{
 			$task = \CTaskItem::getInstanceFromPool($taskId, 1);
@@ -251,7 +250,7 @@ class SearchIndex
 				try
 				{
 					/** @var \CTaskItem $task */
-					$taskData = $task->getData(false);
+					$taskData = $task->getData(false, [], false);
 				}
 				catch (\Exception $exception)
 				{

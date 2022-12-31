@@ -1,8 +1,8 @@
 <?php
 
 return [
-	'extensions'=>[
+	'extensions' => [
 		'catalog/barcode-scanner',
 		'rest',
-	]
+	],
 ];

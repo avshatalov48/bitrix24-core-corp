@@ -8,6 +8,10 @@ this.BX = this.BX || {};
 	var ToolbarEvents = function ToolbarEvents() {
 	  babelHelpers.classCallCheck(this, ToolbarEvents);
 	};
+	/**
+	 * @memberOf BX.Crm
+	 */
+
 
 	babelHelpers.defineProperty(ToolbarEvents, "TYPE_UPDATED", 'TypeUpdated');
 	babelHelpers.defineProperty(ToolbarEvents, "CATEGORIES_UPDATED", 'CategoriesUpdated');
@@ -207,6 +211,27 @@ this.BX = this.BX || {};
 	          }, targetItemId);
 	        });
 	      }
+	    }
+	  }, {
+	    key: "getSettingsButton",
+	    value: function getSettingsButton() {
+	      var toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
+
+	      if (!toolbar) {
+	        return null;
+	      }
+
+	      for (var _i = 0, _Object$entries = Object.entries(toolbar.getButtons()); _i < _Object$entries.length; _i++) {
+	        var _Object$entries$_i = babelHelpers.slicedToArray(_Object$entries[_i], 2),
+	            key = _Object$entries$_i[0],
+	            button = _Object$entries$_i[1];
+
+	        if (button.getIcon() === ui_buttons.ButtonIcon.SETTING) {
+	          return button;
+	        }
+	      }
+
+	      return null;
 	    }
 	  }], [{
 	    key: "Instance",

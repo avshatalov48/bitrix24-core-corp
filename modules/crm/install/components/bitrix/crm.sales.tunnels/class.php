@@ -73,14 +73,14 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 
 		if(!$this->factory->isCategoriesEnabled() && $this->factory->getEntityTypeId() !== \CCrmOwnerType::Lead)
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ENTITY_CATEGORY_DISABLED')));
+			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ENTITY_CATEGORY_DISABLED2')));
 
 			return;
 		}
 
 		if(!$this->userPermissions->canWriteConfig())
 		{
-			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ACCESS_DENIED')));
+			$this->addError(new Error(Loc::getMessage('CRM_SALES_TUNNELS_ACCESS_DENIED2')));
 
 			return;
 		}
@@ -95,11 +95,11 @@ class SalesTunnels extends Bitrix\Crm\Component\Base implements Controllerable
 		}
 		else if($this->factory->getEntityTypeId() === \CCrmOwnerType::Deal)
 		{
-			$title = Loc::getMessage('CRM_SALES_TUNNELS_TITLE_DEAL');
+			$title = Loc::getMessage('CRM_SALES_TUNNELS_TITLE2_DEAL');
 		}
 		else
 		{
-			$title = Loc::getMessage('CRM_SALES_TUNNELS_TITLE', [
+			$title = Loc::getMessage('CRM_SALES_TUNNELS_TITLE2', [
 				'#NAME#' => htmlspecialcharsbx($name),
 			]);
 		}

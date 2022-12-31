@@ -10,6 +10,7 @@ return [
 	'rel' => [
 		'rest.client',
 		'main.core',
+		'ui.buttons',
 		'clipboard',
 		'loadext',
 		'popup',

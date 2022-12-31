@@ -1,6 +1,7 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Bitrix24\Feature;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Intranet\Component\UserProfile;
 use Bitrix\Main\Loader;
@@ -46,10 +47,18 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->init();
 
 		$this->arResult["isCloud"] = Loader::includeModule("bitrix24");
+
 		if ($this->arResult["isCloud"])
 		{
 			$licensePrefix = \CBitrix24::getLicensePrefix();
 			$this->arResult["isRusCloud"] = in_array($licensePrefix, array("ru", "by", "kz", "ua"));
+			$this->arResult["isAvailableUserLoginHistory"] = Feature::isFeatureEnabled("user_login_history");
+            $this->arResult["isConfiguredUserLoginHistory"] = true;
+		}
+		else
+		{
+            $this->arResult["isAvailableUserLoginHistory"] = true;
+			$this->arResult["isConfiguredUserLoginHistory"] = \Bitrix\Main\Config\Option::get('main', 'user_device_history', 'N') === 'Y';
 		}
 
 		$this->arResult["Urls"] = $this->getUrls();
@@ -63,7 +72,7 @@ class CIntranetUserProfileComponent extends UserProfile
 		$this->arResult["EnablePersonalConfigurationUpdate"] = true;
 		$this->arResult["EnableCommonConfigurationUpdate"] = $isAdminRights
 			&& $this->arResult["User"]["STATUS"] !== "email";
-		
+
 		$this->arResult["EnableSettingsForAll"] = \Bitrix\Main\Engine\CurrentUser::get()->canDoOperation('edit_other_settings');
 
 		$this->arResult["Permissions"] = $this->getPermissions();

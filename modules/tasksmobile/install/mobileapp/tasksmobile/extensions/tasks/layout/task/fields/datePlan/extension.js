@@ -1,0 +1,136 @@
+/**
+ * @module tasks/layout/task/fields/datePlan
+ */
+jn.define('tasks/layout/task/fields/datePlan', (require, exports, module) => {
+	const {DatePlanIs} = require('tasks/layout/task/fields/datePlanIs');
+	const {DatePlanStart} = require('tasks/layout/task/fields/datePlanStart');
+	const {DatePlanEnd} = require('tasks/layout/task/fields/datePlanEnd');
+	const {DatePlanDuration} = require('tasks/layout/task/fields/datePlanDuration');
+
+	class DatePlan extends LayoutComponent
+	{
+		constructor(props)
+		{
+			super(props);
+
+			this.state = {
+				readOnly: props.readOnly,
+				isDatePlan: props.isDatePlan,
+			};
+		}
+
+		componentWillReceiveProps(props)
+		{
+			this.state = {
+				readOnly: props.readOnly,
+				isDatePlan: props.isDatePlan,
+			};
+		}
+
+		updateState(newState)
+		{
+			this.setState({
+				readOnly: newState.readOnly,
+				isDatePlan: newState.isDatePlan,
+			});
+		}
+
+		getDeepMergeStyles()
+		{
+			return {
+				...this.props.deepMergeStyles,
+				wrapper: {
+					...this.props.deepMergeStyles.wrapper,
+					marginHorizontal: 10,
+				},
+				readOnlyWrapper: {
+					...this.props.deepMergeStyles.readOnlyWrapper,
+					marginHorizontal: 10,
+				},
+			};
+		}
+
+		animateBlock(isDatePlan)
+		{
+			this.datePlanBlockRef.animate({
+				duration: 200,
+				height: (isDatePlan ? 200 : 0),
+			});
+			this.datePlanBlockRef.animate({
+				duration: 600,
+				opacity: (isDatePlan ? 1 : 0),
+			});
+		}
+
+		render()
+		{
+			return View(
+				{
+					style: (this.props.style || {}),
+					testId: 'datePlanField',
+				},
+				new DatePlanIs({
+					readOnly: this.state.readOnly,
+					isDatePlan: this.state.isDatePlan,
+					deepMergeStyles: this.getDeepMergeStyles(),
+					ref: ref => this.props.onDatePlanIsRef(ref),
+					onChange: (value) => {
+						this.animateBlock(value);
+						this.props.onChange(value);
+					},
+				}),
+				View(
+					{
+						style: {
+							height: (this.state.isDatePlan ? 200 : 0),
+							opacity: (this.state.isDatePlan ? 1 : 0),
+						},
+						ref: ref => this.datePlanBlockRef = ref,
+					},
+					this.renderWithTopBorder(
+						new DatePlanStart({
+							readOnly: this.state.readOnly,
+							startDatePlan: this.props.startDatePlan,
+							datesResolver: this.props.datesResolver,
+							deepMergeStyles: this.getDeepMergeStyles(),
+							ref: ref => this.props.onDatePlanStartRef(ref),
+						})
+					),
+					this.renderWithTopBorder(
+						new DatePlanEnd({
+							readOnly: this.state.readOnly,
+							endDatePlan: this.props.endDatePlan,
+							datesResolver: this.props.datesResolver,
+							deepMergeStyles: this.getDeepMergeStyles(),
+							ref: ref => this.props.onDatePlanEndRef(ref),
+						})
+					),
+					this.renderWithTopBorder(
+						new DatePlanDuration({
+							readOnly: this.state.readOnly,
+							datesResolver: this.props.datesResolver,
+							deepMergeStyles: this.getDeepMergeStyles(),
+							ref: ref => this.props.onDatePlanDurationRef(ref),
+						})
+					),
+				),
+			);
+		}
+
+		renderWithTopBorder(field)
+		{
+			return View(
+				{},
+				View({
+					style: {
+						height: 0.5,
+						backgroundColor: '#e6e6e6',
+					},
+				}),
+				field,
+			);
+		}
+	}
+
+	module.exports = {DatePlan};
+});

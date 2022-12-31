@@ -106,7 +106,11 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$navParams = $this->gridOptions->getNavParams(['nPageSize' => static::DEFAULT_PAGE_SIZE]);
 		$pageSize = (int)$navParams['nPageSize'];
 		$pageNavigation = $this->getPageNavigation($pageSize);
-		$this->arResult['grid'] = $this->prepareGrid($listFilter, $pageNavigation);
+		$this->arResult['grid'] = $this->prepareGrid(
+			$listFilter,
+			$pageNavigation,
+			$this->gridOptions->getSorting(['sort' => $this->defaultGridSort])
+		);
 		$this->arResult['interfaceToolbar'] = $this->prepareInterfaceToolbar();
 		$this->arResult['jsParams'] = [
 			'entityTypeId' => $this->entityTypeId,
@@ -183,7 +187,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		return $this->notAccessibleFields;
 	}
 
-	protected function prepareGrid(array $listFilter, PageNavigation $pageNavigation): array
+	protected function prepareGrid(array $listFilter, PageNavigation $pageNavigation, array $gridSort): array
 	{
 		$grid = [];
 		$grid['GRID_ID'] = $this->getGridId();
@@ -194,10 +198,9 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 			if (isset($column['id'], $notAccessibleFields[$column['id']]))
 			{
 				unset($grid['COLUMNS'][$key]);
+				$grid['COLUMNS'] = array_values($grid['COLUMNS']);
 			}
 		}
-
-		$gridSort = $this->gridOptions->getSorting(['sort' => $this->defaultGridSort]);
 
 		if (isset($listFilter['@ID']) && empty($listFilter['@ID']))
 		{
@@ -272,7 +275,7 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 	protected function prepareInterfaceToolbar(): array
 	{
 		$toolbar = [];
-		if ($this->parentEntityTypeId > 0)
+		if ($this->parentEntityTypeId > 0 && $this->entityTypeId !== CCrmOwnerType::SmartDocument) // disable direct creation of smart documents from grid
 		{
 			$entityTypeDescription = $this->factory->getEntityDescription();
 
@@ -406,23 +409,28 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 				$this->userPermissions->getUserId(),
 				$this->userPermissions::OPERATION_EXPORT
 			);
-			$lastExportedId = $this->getMaxItemId();
+			$lastExportedId = -1;
 		}
 		else
 		{
 			$totalCount = $this->arParams['STEXPORT_TOTAL_ITEMS'];
 			$lastExportedId = $this->arParams['STEXPORT_LAST_EXPORTED_ID'];
-			$listFilter['<=ID'] = $lastExportedId;
+			$listFilter['>ID'] = $lastExportedId;
 		}
 
 		$pageNavigation = new PageNavigation($this->navParamName);
 		$pageNavigation
 			->allowAllRecords(false)
 			->setPageSize($this->arParams['STEXPORT_PAGE_SIZE'])
-			->setCurrentPage($this->arParams['PAGE_NUMBER']);
+			->setCurrentPage(1);
 
 		$this->setTemplateName($this->exportType);
-		$grid = $this->prepareGrid($listFilter, $pageNavigation);
+
+		$grid = $this->prepareGrid(
+			$listFilter,
+			$pageNavigation,
+			['sort' => ['ID' => 'asc']]
+		);
 
 		$this->arResult['HEADERS'] = [];
 		$columns = array_flip(array_column($grid['COLUMNS'], 'id'));
@@ -436,8 +444,10 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		$items = array_column($grid['ROWS'], 'columns');
 		$this->arResult['ITEMS'] = $items;
 
-		$pageNumber = $pageNavigation->getCurrentPage();
-		$lastPageNumber = ceil((int) $totalCount / (int)$pageNavigation->getPageSize());
+		$lastExportedId = end($items)['ID'];
+
+		$pageNumber = $this->arParams['PAGE_NUMBER'];
+		$lastPageNumber = ceil((int) $totalCount / (int) $this->arParams['STEXPORT_PAGE_SIZE']);
 
 		$this->arResult['FIRST_EXPORT_PAGE'] = $pageNumber <= 1;
 		$this->arResult['LAST_EXPORT_PAGE'] = $pageNumber >= $lastPageNumber;
@@ -450,26 +460,6 @@ class CrmItemListComponent extends Bitrix\Crm\Component\ItemList
 		];
 
 		return $returnValues;
-	}
-
-	protected function getMaxItemId(array $listFilter = [])
-	{
-		if ($result = $this->factory->getItemsFilteredByPermissions(
-			[
-				'select' => ['ID'],
-				'order' => ['ID' => 'DESC'],
-				'limit' => 1,
-				'filter' => $listFilter,
-			],
-			$this->userPermissions->getUserId(),
-			$this->userPermissions::OPERATION_EXPORT
-		))
-		{
-			$item = reset($result);
-			return $item->get('ID');
-		}
-
-		return 0;
 	}
 
 	protected function getSelect(): array

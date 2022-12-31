@@ -244,9 +244,21 @@ class ConversionManager
 	{
 		if (!isset(static::$configs[$entityTypeId]))
 		{
-			$config = EntityConversionConfig::loadByEntityTypeId($entityTypeId) ?? static::getDefaultConfig($entityTypeId);
+			$default = static::getDefaultConfig($entityTypeId);
+			$saved = EntityConversionConfig::loadByEntityTypeId($entityTypeId);
+			if ($saved)
+			{
+				foreach ($default->getItems() as $item)
+				{
+					//ensure that config always has all relevant items
+					if (!$saved->getItem($item->getEntityTypeID()))
+					{
+						$saved->addItem($item);
+					}
+				}
+			}
 
-			static::$configs[$entityTypeId] = $config;
+			static::$configs[$entityTypeId] = $saved ?? $default;
 		}
 
 		return static::$configs[$entityTypeId];

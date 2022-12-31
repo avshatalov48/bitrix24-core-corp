@@ -11,7 +11,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @global CDatabase $DB */
 /** @global CUser $USER */
 /** @global CMain $APPLICATION */
-/** @var boolean $bUnread */
+/** @var boolean $isUnread */
 /** @var array $arEvent */
 /** @var string $ind */
 
@@ -30,22 +30,14 @@ $arComponentParams = array_merge($arParams, [
 	"bReload" => $arResult["bReload"],
 	"IND" => $ind,
 	"EVENT" => [
-		"IS_UNREAD" => $bUnread,
+		"IS_UNREAD" => $isUnread,
 		"LOG_DATE" => $arEvent["LOG_DATE"],
 		"COMMENTS_COUNT" => $arEvent["COMMENTS_COUNT"],
 	],
 	"TOP_RATING_DATA" => ($arResult['TOP_RATING_DATA'][$arEvent["ID"]] ?? false),
-	"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false)
+	"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false),
+	'UNREAD_LOG_COMMENT_ID' => ($arResult['unreadLogCommentId'][(int)$arEvent['ID']] ?? []),
 ]);
-
-if (isset($arResult['UNREAD_COMMENTS_ID_LIST'][$arEvent['ID']]))
-{
-	$arComponentParams['UNREAD_COMMENTS_ID_LIST'] = $arResult['UNREAD_COMMENTS_ID_LIST'][$arEvent['ID']];
-}
-elseif ($arResult['LOG_COUNTER'] <= 0)
-{
-	$arComponentParams['UNREAD_COMMENTS_ID_LIST'] = [];
-}
 
 if ($arResult['currentUserId'] > 0)
 {

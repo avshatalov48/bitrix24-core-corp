@@ -18,7 +18,7 @@
 	width: 100%;
 	font-size: 17px;
 	line-height: 5px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #525c68;
 	margin: 0 0 15px 0;
 	color: #0069c4;
@@ -75,7 +75,7 @@
 }
 
 .crm-doc-title-gray {color: #49515a}
-.crm-doc-bold {font-weight: bold}
+.crm-doc-bold {font-weight: var(--ui-font-weight-bold)}
 .crm-doc-gray {color: #49515a}
 
 .crm-doc-info-responsible {
@@ -174,14 +174,14 @@
 .crm-doc-cart-user-name {
 	display: block;
 	overflow: hidden;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 14px;
 	margin: 6px 0;
 	color: #2b7bbc;
 }
 
 .crm-doc-three-title {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 14px;
 	color: #525c68;
 	line-height: 24px;
@@ -222,7 +222,7 @@
 
 .crm-doc-cart-title {
 	display: block;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 12px;
 	color: #2b7bbc;
 	line-height: 18px;

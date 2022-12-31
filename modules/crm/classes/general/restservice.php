@@ -30,6 +30,7 @@ use Bitrix\Crm\Binding\QuoteContactTable;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Iblock;
+use Bitrix\Catalog;
 
 if (!Loader::includeModule('rest'))
 {
@@ -1799,7 +1800,7 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 				continue;
 			}
 
-			$attrs = $info['ATTRIBUTES'] ?? array();
+			$attrs = is_array($info['ATTRIBUTES']) ? $info['ATTRIBUTES'] : [];
 			$isMultiple = in_array(CCrmFieldInfoAttr::Multiple, $attrs, true);
 
 			$ary = array_intersect($ignoredAttrs, $attrs);
@@ -1900,20 +1901,20 @@ abstract class CCrmRestProxyBase implements ICrmRestProxy
 		foreach($values as &$v)
 		{
 			$ID = $v['ID'] ?? 0;
-			$value = isset($v['VALUE']) ? trim($v['VALUE']) : '';
+			$value = isset($v['VALUE']) ? trim((string)$v['VALUE']) : '';
 			//Allow empty values for persistent fields for support deletion operation.
 			if($ID <= 0 && $value === '')
 			{
 				continue;
 			}
 
-			if($ID > 0 && isset($v['DELETE']) && mb_strtoupper($v['DELETE']) === 'Y')
+			if($ID > 0 && isset($v['DELETE']) && mb_strtoupper((string)$v['DELETE']) === 'Y')
 			{
 				//Empty fields will be deleted.
 				$value = '';
 			}
 
-			$valueType = isset($v['VALUE_TYPE']) ? trim($v['VALUE_TYPE']) : '';
+			$valueType = isset($v['VALUE_TYPE']) ? trim((string)$v['VALUE_TYPE']) : '';
 			if($valueType === '')
 			{
 				$valueType = CCrmFieldMulti::GetDefaultValueType($fieldName);
@@ -3864,7 +3865,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 			$descriptionType = (isset($fields['DESCRIPTION_TYPE']) && $fields['DESCRIPTION_TYPE'] === 'html') ?
 				'html' : 'text';
 			$fields['DESCRIPTION_TYPE'] = $descriptionType;
-			$description = isset($fields['DESCRIPTION']) ? trim($fields['DESCRIPTION']) : '';
+			$description = (isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION'])) ? trim($fields['DESCRIPTION']) : '';
 			$isNeedSanitize = ($descriptionType === 'html' && $description !== '' && mb_strpos($description, '<'));
 			if ($isNeedSanitize)
 			{
@@ -3991,6 +3992,11 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 				// Remove '*' for get rid of inefficient construction of price data
 				foreach($select as $k => $v)
 				{
+					if (!is_string($v))
+					{
+						unset($select[$k]);
+						continue;
+					}
 					if($v === '*')
 					{
 						$selectAll = true;
@@ -4232,7 +4238,7 @@ class CCrmProductRestProxy extends CCrmRestProxyBase
 				$descriptionType = 'text';
 			}
 
-			$description = isset($fields['DESCRIPTION']) ? trim($fields['DESCRIPTION']) : '';
+			$description = (isset($fields['DESCRIPTION']) && is_string($fields['DESCRIPTION'])) ? trim($fields['DESCRIPTION']) : '';
 			$isNeedSanitize = ($descriptionType === 'html' && $description !== '' && mb_strpos($description, '<'));
 			if ($isNeedSanitize)
 			{
@@ -5383,6 +5389,25 @@ class CCrmProductRowRestProxy extends CCrmRestProxyBase
 	{
 		$fieldsInfo = $this->getFieldsInfo();
 		$this->internalizeFields($fields, $fieldsInfo);
+
+		$productId = (int)($fields['PRODUCT_ID'] ?? null);
+		if ($productId && Loader::includeModule('catalog'))
+		{
+			$productRow = Catalog\ProductTable::getRow([
+				'select' => [
+					'PRODUCT_NAME' => 'IBLOCK_ELEMENT.NAME',
+					'TYPE',
+				],
+				'filter' => [
+					'=ID' => $productId,
+				],
+			]);
+			if ($productRow)
+			{
+				$fields['TYPE'] = (int)$productRow['TYPE'];
+				$fields['PRODUCT_NAME'] ??= $productRow['PRODUCT_NAME'];
+			}
+		}
 	}
 }
 
@@ -13804,11 +13829,12 @@ class CCrmExternalChannelConnectorRestProxy  extends CCrmRestProxyBase
 				$fields = $this->resolveArrayParam($arParams, 'fields');
 
 				$entity->prepareFields($fields);
+				$error = [];
 				$entity->checkFields($fields, $error);
 
 				$this->internalizeFields($fields, $fieldsInfo, array());
 
-				if(count($error)<=0)
+				if(count($error) <= 0)
 				{
 					$channelId = $entity::register($fields['TYPE_ID'], $fields['ORIGINATOR_ID'], $fields);
 				}
@@ -14048,7 +14074,7 @@ class CCrmExternalChannelRestProxy  extends CCrmRestProxyBase
 										$errorBatch[$num][] = new Main\Error("Agent fields or external fields is not defined.", 1002);
 									}
 
-									if(count($errorList[$num])<=0)
+									if(empty($errorList[$num]))
 									{
 										if($name === 'ACTIVITY')
 										{

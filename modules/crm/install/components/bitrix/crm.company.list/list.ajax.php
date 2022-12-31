@@ -197,24 +197,36 @@ if ($_REQUEST['MODE'] == 'SEARCH')
 		}
 
 		// advanced info - phone number, e-mail
-		$obRes = CCrmFieldMulti::GetList(array('ID' => 'asc'), array('ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => array_keys($companyIndex)));
-		while ($arRes = $obRes->Fetch())
+		if (!empty($companyIndex))
 		{
-			if (isset($companyIndex[$arRes['ELEMENT_ID']])
-				&& ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL'))
+			$obRes = CCrmFieldMulti::GetList(
+				['ID' => 'asc'],
+				['ENTITY_ID' => 'COMPANY', 'ELEMENT_ID' => array_keys($companyIndex)]
+			);
+			while ($arRes = $obRes->Fetch())
 			{
-				$item = &$companyIndex[$arRes['ELEMENT_ID']];
-				if (!is_array($item['advancedInfo']))
-					$item['advancedInfo'] = array();
-				if (!is_array($item['advancedInfo']['multiFields']))
-					$item['advancedInfo']['multiFields'] = array();
-				$item['advancedInfo']['multiFields'][] = array(
-					'ID' => $arRes['ID'],
-					'TYPE_ID' => $arRes['TYPE_ID'],
-					'VALUE_TYPE' => $arRes['VALUE_TYPE'],
-					'VALUE' => $arRes['VALUE']
-				);
-				unset($item);
+				if (
+					isset($companyIndex[$arRes['ELEMENT_ID']])
+					&& ($arRes['TYPE_ID'] === 'PHONE' || $arRes['TYPE_ID'] === 'EMAIL')
+				)
+				{
+					$item = &$companyIndex[$arRes['ELEMENT_ID']];
+					if (!is_array($item['advancedInfo']))
+					{
+						$item['advancedInfo'] = [];
+					}
+					if (!is_array($item['advancedInfo']['multiFields']))
+					{
+						$item['advancedInfo']['multiFields'] = [];
+					}
+					$item['advancedInfo']['multiFields'][] = [
+						'ID' => $arRes['ID'],
+						'TYPE_ID' => $arRes['TYPE_ID'],
+						'VALUE_TYPE' => $arRes['VALUE_TYPE'],
+						'VALUE' => $arRes['VALUE']
+					];
+					unset($item);
+				}
 			}
 		}
 		unset($companyIndex);

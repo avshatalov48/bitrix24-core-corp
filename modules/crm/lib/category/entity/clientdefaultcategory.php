@@ -89,6 +89,6 @@ class ClientDefaultCategory extends Category
 
 	public function delete(): Result
 	{
-		throw new InvalidOperationException('Default deal category can not be deleted');
+		throw new InvalidOperationException('Default client category can not be deleted');
 	}
 }

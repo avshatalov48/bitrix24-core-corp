@@ -1,8 +1,12 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Badge\Badge;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Timeline\Monitor;
+use Bitrix\Crm\Timeline\Entity\NoteTable;
+use Bitrix\Main;
 use Bitrix\Recyclebin;
 
 Main\Localization\Loc::loadMessages(__FILE__);
@@ -173,6 +177,8 @@ class ActivityController extends BaseController
 		$recyclingEntity->setTitle($entityData['TITLE']);
 
 		$slots = isset($entityData['SLOTS']) && is_array($entityData['SLOTS']) ? $entityData['SLOTS'] : array();
+		$this->notifyTimelineMonitorAboutMoveToBin($slots['BINDINGS'] ?? []);
+
 		$relations = ActivityRelationManager::getInstance()->buildCollection($entityID, $slots);
 		foreach($slots as $slotKey => $slotData)
 		{
@@ -225,6 +231,8 @@ class ActivityController extends BaseController
 
 		$this->suspendTimeline($entityID, $recyclingEntityID);
 		$this->suspendLiveFeed($entityID, $recyclingEntityID);
+		$this->suspendBadges((int)$entityID, (int)$recyclingEntityID);
+		$this->suspendNotes((int)$entityID, (int)$recyclingEntityID);
 
 		\CCrmActivity::DoDeleteElementIDs($entityID);
 
@@ -427,6 +435,8 @@ class ActivityController extends BaseController
 			return false;
 		}
 
+		$this->notifyTimelineMonitorAboutMoveFromBin($fields['BINDINGS'] ?? []);
+
 		//region Relations
 		ActivityRelationManager::getInstance()->recoverBindings($newEntityID, $relationMap);
 		Relation::updateEntityID(\CCrmOwnerType::Activity, $entityID, $newEntityID, $recyclingEntityID);
@@ -436,6 +446,8 @@ class ActivityController extends BaseController
 
 		$this->recoverTimeline($recyclingEntityID, $newEntityID);
 		$this->recoverLiveFeed($recyclingEntityID, $newEntityID);
+		$this->recoverBadges((int)$recyclingEntityID, (int)$newEntityID);
+		$this->recoverNotes((int)$recyclingEntityID, (int)$newEntityID);
 
 		//region Relations
 		Relation::unregisterRecycleBin($recyclingEntityID);
@@ -467,6 +479,8 @@ class ActivityController extends BaseController
 		$this->eraseSuspendedTimeline($recyclingEntityID);
 		$this->eraseSuspendedLiveFeed($recyclingEntityID);
 		$this->eraseSuspendedUserFields($recyclingEntityID);
+		$this->eraseSuspendedBadges($recyclingEntityID);
+		$this->eraseSuspendedNotes($recyclingEntityID);
 
 		//region Files
 		$files = isset($params['FILES']) ? $params['FILES'] : null;
@@ -543,6 +557,47 @@ class ActivityController extends BaseController
 	}
 	//endregion
 
+	//region Badges
+	protected function suspendBadges(int $entityId, int $recyclingEntityId): void
+	{
+		Badge::rebindSource(
+			$this->getSourceIdentifier($entityId),
+			$this->getSuspendedSourceIdentifier($recyclingEntityId),
+		);
+	}
+
+	protected function recoverBadges(int $recyclingEntityId, int $newEntityId): void
+	{
+		Badge::rebindSource(
+			$this->getSuspendedSourceIdentifier($recyclingEntityId),
+			$this->getSourceIdentifier($newEntityId),
+		);
+	}
+
+	protected function eraseSuspendedBadges(int $recyclingEntityId): void
+	{
+		Badge::deleteBySource($this->getSuspendedSourceIdentifier($recyclingEntityId));
+	}
+
+	private function getSourceIdentifier(int $entityId): Crm\Badge\SourceIdentifier
+	{
+		return new Crm\Badge\SourceIdentifier(
+			Crm\Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			$this->getEntityTypeID(),
+			$entityId,
+		);
+	}
+
+	private function getSuspendedSourceIdentifier(int $recyclingEntityId): Crm\Badge\SourceIdentifier
+	{
+		return new Crm\Badge\SourceIdentifier(
+			Crm\Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			$this->getSuspendedEntityTypeID(),
+			$recyclingEntityId,
+		);
+	}
+	//endregion
+
 	final public function getRecyclingEntityId(int $entityId): int
 	{
 		if (isset($this->entityIdToRecyclingEntityId[$entityId]))
@@ -571,5 +626,46 @@ class ActivityController extends BaseController
 		$this->entityIdToRecyclingEntityId[$entityId] = $recyclingEntityId;
 
 		return $recyclingEntityId;
+	}
+
+	//region Notes
+	protected function suspendNotes(int $entityId, int $recyclingEntityId): void
+	{
+		NoteTable::rebind(NoteTable::NOTE_TYPE_ACTIVITY, $entityId, NoteTable::NOTE_TYPE_SUSPENDED_ACTIVITY, $recyclingEntityId);
+	}
+
+	protected function recoverNotes(int $recyclingEntityId, int $newEntityId): void
+	{
+		NoteTable::rebind(NoteTable::NOTE_TYPE_SUSPENDED_ACTIVITY, $recyclingEntityId, NoteTable::NOTE_TYPE_ACTIVITY, $newEntityId);
+	}
+
+	protected function eraseSuspendedNotes(int $recyclingEntityId): void
+	{
+		NoteTable::deleteByItemId(NoteTable::NOTE_TYPE_SUSPENDED_ACTIVITY, $recyclingEntityId);
+	}
+	//endregion
+
+	protected function notifyTimelineMonitorAboutMoveToBin(array $bindings): void
+	{
+		$monitor = Monitor::getInstance();
+		foreach ($bindings as $binding)
+		{
+			if (\CCrmOwnerType::IsDefined($binding['OWNER_TYPE_ID']) && $binding['OWNER_ID'] > 0)
+			{
+				$monitor->onTimelineEntryRemove(new ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']));
+			}
+		}
+	}
+
+	protected function notifyTimelineMonitorAboutMoveFromBin(array $bindings): void
+	{
+		$monitor = Monitor::getInstance();
+		foreach ($bindings as $binding)
+		{
+			if (\CCrmOwnerType::IsDefined($binding['OWNER_TYPE_ID']) && $binding['OWNER_ID'] > 0)
+			{
+				$monitor->onTimelineEntryAdd(new ItemIdentifier($binding['OWNER_TYPE_ID'], $binding['OWNER_ID']));
+			}
+		}
 	}
 }

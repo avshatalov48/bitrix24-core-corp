@@ -242,8 +242,8 @@
 	    }
 	  }, {
 	    key: "showSiteCode",
-	    value: function showSiteCode(id) {
-	      BX.Crm.Form.Embed.openSlider(id);
+	    value: function showSiteCode(id, options = {}) {
+	      BX.Crm.Form.Embed.openSlider(id, options);
 	    }
 	  }, {
 	    key: "activateList",

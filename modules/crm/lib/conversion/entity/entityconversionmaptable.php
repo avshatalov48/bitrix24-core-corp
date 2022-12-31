@@ -91,6 +91,8 @@ class EntityConversionMapTable extends DataManager
 
 		$data = isset($data['DATA']) ? $sqlHelper->forSql($data['DATA']) : '';
 
+		self::cleanCache();
+
 		if($connection instanceof Main\DB\MysqlCommonConnection)
 		{
 			$connection->queryExecute(

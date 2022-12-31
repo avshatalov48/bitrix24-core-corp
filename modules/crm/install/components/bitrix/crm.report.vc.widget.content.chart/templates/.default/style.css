@@ -386,11 +386,13 @@
     z-index: 2;
 }
 .crm-report-chart-tooltip-value {
-    font: 700 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+    font: 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
     color: #525C69;
 }
 .crm-report-chart-tooltip-percent {
-    font: 700 9px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+    font: 9px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
     color: #828B95;
 }
 /* END OF TOOLTIP */
@@ -558,7 +560,7 @@
 }
 .crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-value,
 .crm-report-chart-grid-rating-bold .crm-report-chart-grid-rating-text {
-    font-weight: bold;
+    font-weight: var(--ui-font-weight-bold);
 }
 .crm-report-chart-grid-rating-success .crm-report-chart-grid-rating-text {
     color: #6F9300;

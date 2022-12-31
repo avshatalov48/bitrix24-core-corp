@@ -1036,14 +1036,22 @@ class Order extends Sale\Order
 	{
 		$respIds = intval($responsibleId) > 0 ? array($responsibleId) : array();
 
+		$counters = Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+			? [
+				Crm\Counter\EntityCounterType::CURRENT,
+				Crm\Counter\EntityCounterType::INCOMING_CHANNEL,
+				Crm\Counter\EntityCounterType::ALL
+			]
+			: [
+				Crm\Counter\EntityCounterType::PENDING,
+				Crm\Counter\EntityCounterType::IDLE,
+				Crm\Counter\EntityCounterType::ALL
+			]
+		;
 		Crm\Counter\EntityCounterManager::reset(
 			Crm\Counter\EntityCounterManager::prepareCodes(
 				\CCrmOwnerType::Order,
-				array(
-					Crm\Counter\EntityCounterType::PENDING,
-					Crm\Counter\EntityCounterType::IDLE,
-					Crm\Counter\EntityCounterType::ALL
-				),
+				$counters,
 				array('EXTENDED_MODE' => true)
 			),
 			$respIds

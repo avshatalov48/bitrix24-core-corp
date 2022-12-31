@@ -2,6 +2,7 @@
 
 return [
 	'extensions' => [
-		'testing/tests/*'
+		'testing/tests/*',
+		'crm:testing/tests/*',
 	]
 ];

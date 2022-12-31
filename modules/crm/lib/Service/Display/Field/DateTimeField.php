@@ -1,15 +1,13 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Display\Field;
-
 
 use Bitrix\Crm\Settings\LayoutSettings;
 use Bitrix\Main\Type\DateTime;
 
 class DateTimeField extends DateField
 {
-	protected const TYPE = 'datetime';
+	public const TYPE = 'datetime';
 
 	/**
 	 * @return array|string
@@ -17,7 +15,7 @@ class DateTimeField extends DateField
 	protected function getDefaultDatetimeFormat()
 	{
 		$layoutSettings = LayoutSettings::getCurrent();
-		if($layoutSettings && $layoutSettings->isSimpleTimeFormatEnabled())
+		if ($layoutSettings && $layoutSettings->isSimpleTimeFormatEnabled())
 		{
 			return [
 				'tommorow' => 'tommorow',
@@ -36,5 +34,13 @@ class DateTimeField extends DateField
 			'',
 			DateTime::convertFormatToPhp(FORMAT_DATETIME)
 		);
+	}
+
+	protected function getPreparedConfig(): array
+	{
+		return [
+			'enableTime' => true,
+			'checkTimezoneOffset' => true,
+		];
 	}
 }

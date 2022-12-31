@@ -5,6 +5,7 @@ namespace Bitrix\Mobile\Push;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Result;
+use Bitrix\Main\Web\Json;
 
 Loader::requireModule('pull');
 
@@ -35,7 +36,7 @@ final class DeviceChannel extends Channel
 				'EXPIRY' => 0,
 				'PARAMS'=> [
 					'command' => self::COMMON_MOBILE_PUSH_EVENT,
-					'message'=> $message,
+					'message'=> Json::encode($message),
 				],
 				'ADVANCED_PARAMS' => [
 					'senderName' => $message->getTitle() ?: self::APP_ID,

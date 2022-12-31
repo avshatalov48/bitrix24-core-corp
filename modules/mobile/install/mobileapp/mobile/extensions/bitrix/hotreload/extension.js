@@ -37,9 +37,9 @@
 							textColor:"#ffffff",
 							hideOnTap:true,
 							autoHide:true}, ()=>{});
-						reload();
+
 						clearTimeout(reloadTimeout)
-						reloadTimeout = clearTimeout(()=>reload(), 1000)
+						reloadTimeout = setTimeout(()=>reload(), 1000)
 					}
 					else
 						socket.oncommand(obj.command, obj.data)

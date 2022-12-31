@@ -28,9 +28,9 @@
 			return [];
 		}
 
-		save(items, key, options)
+		save(items, key, options = {})
 		{
-			let {saveDisk, unique} = options
+			const {saveDisk, unique} = options
 			if (typeof this.data[key] === "undefined")
 			{
 				this.data[key] = [];
@@ -39,10 +39,14 @@
 
 			if (unique)
 			{
-				let ids = items.map(item => item.id);
-				cacheItems = cacheItems
-					.filter(item => !ids.includes(item.id))
-					.concat(items)
+				const ids = items.map(item => item.id);
+
+				cacheItems = (
+					cacheItems
+						.filter(item => !ids.includes(item.id))
+						.concat(items)
+				);
+
 				this.data[key] = cacheItems;
 			}
 			else
@@ -108,35 +112,35 @@
 		isSingleChoose() {
 			return this.singleSelection ? this.singleSelection : false;
 		}
-		
+
 		processResult(query, items, excludeFields = [])
 		{
 			try
 			{
 				query = query.toLowerCase()
-				let queryWords = query.split(" ");
-				let shouldMatch = queryWords.length;
+				const queryWords = query.split(" ");
+				const shouldMatch = queryWords.length;
 				return items.map(item =>
 				{
 					let sort = this.getEntityWeight(item.params.type);
-					let matchCount = 0;
-					let matchedWords = [];
+					const matchCount = 0;
+					const matchedWords = [];
 					if (this.searchFields.length > 0 && query)
 					{
-						let reverse = this.searchFields.slice(0);
+						const reverse = this.searchFields.slice(0);
 						reverse.reverse().forEach(name =>
 						{
 							if (excludeFields.includes(name))
 								return;
 
-							let field = item[name];
+							const field = item[name];
 							if (field)
 							{
-								let fieldWords = field.toLowerCase().split(" ");
-								let findHandler = (word) => {
-									let items = queryWords.filter(queryWord =>
+								const fieldWords = field.toLowerCase().split(" ");
+								const findHandler = (word) => {
+									const items = queryWords.filter(queryWord =>
 									{
-										let match = word.indexOf(queryWord) === 0
+										const match = word.indexOf(queryWord) === 0
 											&& !matchedWords.includes(queryWord)
 										if (match) {
 											matchedWords.push(queryWord)
@@ -149,7 +153,7 @@
 
 								}
 
-								let result = fieldWords.filter(findHandler);
+								const result = fieldWords.filter(findHandler);
 								if (result.length > 0)
 								{
 									sort += this.searchFields.indexOf(name) + 1;
@@ -198,9 +202,8 @@
 
 		prepareItems(items)
 		{
-			return items.map(item =>
-			{
-				let modifiedItem = this.prepareItemForDrawing(item);
+			return items.map((item) => {
+				const modifiedItem = this.prepareItemForDrawing(item);
 				modifiedItem.searchFields = {}
 				this.searchFields.forEach(fieldName =>
 				{
@@ -211,7 +214,6 @@
 				})
 
 				return modifiedItem;
-
 			});
 		}
 

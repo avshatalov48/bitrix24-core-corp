@@ -58,9 +58,9 @@ use Bitrix\Disk\Volume;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Volume_Query query()
- * @method static EO_Volume_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Volume_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Volume_Result getById($id)
- * @method static EO_Volume_Result getList(array $parameters = array())
+ * @method static EO_Volume_Result getList(array $parameters = [])
  * @method static EO_Volume_Entity getEntity()
  * @method static \Bitrix\Disk\Internals\EO_Volume createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Internals\EO_Volume_Collection createCollection()

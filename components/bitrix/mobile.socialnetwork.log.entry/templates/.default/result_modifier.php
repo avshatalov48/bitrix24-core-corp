@@ -85,10 +85,10 @@ if (
 			$arResult["RECORDS"][$commentId] = array(
 				"ID" => $commentId,
 				"NEW" => (
-					($arResult["COUNTER_TYPE"] === "**")
-					&& (int)$comment["EVENT"]["USER_ID"] !== (int)$USER->GetID()
-					&& (int)$arResult["LAST_LOG_TS"] > 0
-					&& (MakeTimeStamp($comment["EVENT"]["LOG_DATE"]) - (int)$arResult["TZ_OFFSET"]) > $arResult["LAST_LOG_TS"]
+				($arResult["COUNTER_TYPE"] === "**")
+				&& (int)$comment["EVENT"]["USER_ID"] !== (int)$USER->GetID()
+				&& (int)$arResult["LAST_LOG_TS"] > 0
+				&& (MakeTimeStamp($comment["EVENT"]["LOG_DATE"]) - (int)$arResult["TZ_OFFSET"]) > $arResult["LAST_LOG_TS"]
 						? "Y"
 						: "N"
 				),

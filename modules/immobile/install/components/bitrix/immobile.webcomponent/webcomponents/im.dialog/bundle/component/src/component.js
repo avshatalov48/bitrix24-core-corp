@@ -50,6 +50,7 @@ ChatDialog.init = function()
 		this.dialogId = data.DIALOG_ID;
 		this.userId = data.USER_ID;
 		this.languageId = data.LANGUAGE_ID;
+		this.initLangAdditional(data.LANG_ADDITIONAL);
 
 		this.getInitData();
 
@@ -100,6 +101,20 @@ ChatDialog.init = function()
 
 	return true;
 };
+
+ChatDialog.initLangAdditional = function(langAdditional)
+{
+	this.langAdditional = langAdditional || {};
+
+	Object.keys(this.langAdditional).forEach(code => {
+		if (typeof this.langAdditional[code] !== 'string')
+		{
+			return;
+		}
+
+		BX.message[code] = this.langAdditional[code];
+	});
+}
 
 ChatDialog.openDialog = function(dialogId)
 {

@@ -1,6 +1,7 @@
 <?php
-use Bitrix\Iblock\PropertyTable;
+
 use Bitrix\Main\Loader;
+use Bitrix\Mobile\Integration\Catalog\PermissionsProvider;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
@@ -15,9 +16,9 @@ if (
 	\CCrmCatalog::EnsureDefaultExists();
 	$iblockId = \Bitrix\Crm\Product\Catalog::getDefaultId();
 }
-
 return [
 	'iblock' => [
 		'ID' => $iblockId,
 	],
+	'permissions' => PermissionsProvider::getInstance()->getPermissions(),
 ];

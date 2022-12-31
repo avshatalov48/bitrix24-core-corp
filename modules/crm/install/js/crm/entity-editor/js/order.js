@@ -7226,10 +7226,7 @@ if(typeof BX.Crm.EntityEditorOrderClient === "undefined")
 		{
 			for (var i = 0, length = this._editor._controllers.length; i < length; i++)
 			{
-				if (
-					this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController
-					|| this._editor._controllers[i] instanceof BX.Crm.EntityEditorDocumentOrderShipmentController
-				)
+				if (this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController)
 				{
 					this._editor._controllers[i].onDataChanged();
 					this._editor._controllers[i].unlockSending();
@@ -7244,10 +7241,7 @@ if(typeof BX.Crm.EntityEditorOrderClient === "undefined")
 
 		for (var i = 0, length = this._editor._controllers.length; i < length; i++)
 		{
-			if (
-				this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController
-				|| this._editor._controllers[i] instanceof BX.Crm.EntityEditorDocumentOrderShipmentController
-			)
+			if (this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController)
 			{
 				this._editor._controllers[i].onDataChanged();
 				this._editor._controllers[i].unlockSending();
@@ -7260,10 +7254,7 @@ if(typeof BX.Crm.EntityEditorOrderClient === "undefined")
 		BX.Crm.EntityEditorOrderClient.superclass.onContactInfosLoad.call(this, sender, result);
 		for (var i = 0, length = this._editor._controllers.length; i < length; i++)
 		{
-			if (
-				this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController
-				|| this._editor._controllers[i] instanceof BX.Crm.EntityEditorDocumentOrderShipmentController
-			)
+			if (this._editor._controllers[i] instanceof BX.Crm.EntityEditorOrderController)
 			{
 				this._editor._controllers[i].onDataChanged();
 				this._editor._controllers[i].unlockSending();
@@ -7929,6 +7920,54 @@ if(typeof BX.Crm.OrderPaymentModel === "undefined")
 		return self;
 	};
 }
+
+if (typeof BX.Crm.DocumentOrderShipmentModel === "undefined")
+{
+	BX.Crm.DocumentOrderShipmentModel = function()
+	{
+		BX.Crm.DocumentOrderShipmentModel.superclass.constructor.apply(this);
+	};
+	BX.extend(BX.Crm.DocumentOrderShipmentModel, BX.Crm.EntityModel);
+	BX.Crm.DocumentOrderShipmentModel.prototype.doInitialize = function()
+	{
+		BX.addCustomEvent(window, "Crm.EntityProgress.Change", BX.delegate(this.onEntityProgressChange, this));
+	};
+	BX.Crm.DocumentOrderShipmentModel.prototype.onEntityProgressChange = function(sender, eventArgs)
+	{
+		if (
+			BX.prop.getInteger(eventArgs, "entityTypeId", 0) !== this.getEntityTypeId()
+			|| BX.prop.getInteger(eventArgs, "entityId", 0) !== this.getEntityId()
+		)
+		{
+			return;
+		}
+
+		var stepId = BX.prop.getString(eventArgs, "currentStepId", "");
+		if (stepId !== this.getField("STATUS_ID", ""))
+		{
+			this.setField("STATUS_ID", stepId);
+		}
+	};
+	BX.Crm.DocumentOrderShipmentModel.prototype.isCaptionEditable = function()
+	{
+		return false;
+	};
+	BX.Crm.DocumentOrderShipmentModel.prototype.getEntityTypeId = function()
+	{
+		return BX.CrmEntityType.enumeration.shipmentDocument;
+	};
+	BX.Crm.DocumentOrderShipmentModel.prototype.getCaption = function()
+	{
+		return this.getField("TITLE", "");
+	};
+	BX.Crm.DocumentOrderShipmentModel.create = function(id, settings)
+	{
+		var self = new BX.Crm.DocumentOrderShipmentModel();
+		self.initialize(id, settings);
+		return self;
+	};
+}
+
 if(typeof(BX.Crm.EntityEditorOrderUserSelector) === "undefined")
 {
 	BX.Crm.EntityEditorOrderUserSelector = function()

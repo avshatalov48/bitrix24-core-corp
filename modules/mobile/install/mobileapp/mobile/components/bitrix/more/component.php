@@ -159,12 +159,6 @@ foreach ($event->getResults() as $eventResult)
 	}
 }
 
-$crmCallTrackerSpotlight = \Bitrix\Mobile\Integration\Crm\CallTracker::getSpotlightParams();
-if (is_array($crmCallTrackerSpotlight))
-{
-	$arResult['spotlights'][] = $crmCallTrackerSpotlight;
-}
-
 $editProfilePath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("user.profile");
 $workPosition = \CUtil::addslashes($arResult["user"]["WORK_POSITION"]);
 $canEditProfile = $USER->CanDoOperation('edit_own_profile');

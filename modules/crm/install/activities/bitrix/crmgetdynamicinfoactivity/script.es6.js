@@ -6,8 +6,9 @@ import {
 	Document,
 	getGlobalContext,
 	setGlobalContext,
+	InlineSelector,
+	Designer,
 } from 'bizproc.automation';
-import { EventEmitter } from 'main.core.events';
 
 const namespace = Reflection.namespace('BX.Crm.Activity');
 
@@ -29,6 +30,8 @@ class CrmGetDynamicInfoActivity
 	conditionGroup: ConditionGroup | undefined;
 
 	currentEntityTypeId: number;
+
+	onOpenFilterFieldsMenu: ?Function;
 
 	constructor(options)
 	{
@@ -96,15 +99,27 @@ class CrmGetDynamicInfoActivity
 		try
 		{
 			getGlobalContext();
+			if (this.isRobot)
+			{
+				this.onOpenFilterFieldsMenu = (event) => {
+					const dialog = Designer.getInstance().getRobotSettingsDialog();
+					const template = dialog.template;
+					const robot = dialog.robot;
+					if (template && robot)
+					{
+						template.onOpenMenu(event, robot);
+					}
+				}
+			}
 		}
 		catch(error)
 		{
 			setGlobalContext(new Context({document: this.document}));
-			this.initSelectors();
+			this.onOpenFilterFieldsMenu = (event) => this.addBPFields(event.getData().selector);
 		}
 	}
 
-	initSelectors(): void
+	addBPFields(selector: InlineSelector): void
 	{
 		const getSelectorProperties = ({properties, objectName, expressionPrefix}) => {
 			if (Type.isObject(properties))
@@ -157,65 +172,59 @@ class CrmGetDynamicInfoActivity
 			return [];
 		}
 
-		EventEmitter.subscribe(
-			'BX.Bizproc.Automation.Selector:onOpenMenu',
-			(event) => {
-				const selector = event.getData().selector;
-				selector.addGroup('workflowParameters', {
-					id: 'workflowParameters',
-					title: Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
-					children: [
-						{
-							id: 'parameters',
-							title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
-							children: getSelectorProperties({
-								properties: window.arWorkflowParameters || {},
-								objectName: 'Template',
-								expressionPrefix: '~*',
-							}),
-						},
-						{
-							id: 'variables',
-							title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
-							children: getSelectorProperties({
-								properties: window.arWorkflowVariables || {},
-								objectName: 'Variable',
-							}),
-						},
-						{
-							id: 'constants',
-							title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
-							children: getSelectorProperties({
-								properties: window.arWorkflowConstants || {},
-								objectName: 'Constant',
-								expressionPrefix: '~&',
-							}),
-						},
-					],
-				});
-				if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames)
+		selector.addGroup('workflowParameters', {
+			id: 'workflowParameters',
+			title: Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
+			children: [
 				{
-					selector.addGroup('globalVariables', {
-						id: 'globalVariables',
-						title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
-						children: getGlobalSelectorProperties({
-							properties: window.arWorkflowGlobalVariables || {},
-							visibilityNames: window.wfGVarVisibilityNames || {},
-							objectName: 'GlobalVar',
-						}),
-					});
-				}
-				selector.addGroup('globalConstants', {
-					id: 'globalConstants',
-					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
-					children: getGlobalSelectorProperties({
-						properties: window.arWorkflowGlobalConstants || {},
-						visibilityNames: window.wfGConstVisibilityNames || {},
-						objectName: 'GlobalConst',
+					id: 'parameters',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+					children: getSelectorProperties({
+						properties: window.arWorkflowParameters || {},
+						objectName: 'Template',
+						expressionPrefix: '~*',
 					}),
-				});
-			}
-		);
+				},
+				{
+					id: 'variables',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+					children: getSelectorProperties({
+						properties: window.arWorkflowVariables || {},
+						objectName: 'Variable',
+					}),
+				},
+				{
+					id: 'constants',
+					title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+					children: getSelectorProperties({
+						properties: window.arWorkflowConstants || {},
+						objectName: 'Constant',
+						expressionPrefix: '~&',
+					}),
+				},
+			],
+		});
+		if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames)
+		{
+			selector.addGroup('globalVariables', {
+				id: 'globalVariables',
+				title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
+				children: getGlobalSelectorProperties({
+					properties: window.arWorkflowGlobalVariables || {},
+					visibilityNames: window.wfGVarVisibilityNames || {},
+					objectName: 'GlobalVar',
+				}),
+			});
+		}
+		selector.addGroup('globalConstants', {
+			id: 'globalConstants',
+			title: Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
+			children: getGlobalSelectorProperties({
+				properties: window.arWorkflowGlobalConstants || {},
+				visibilityNames: window.wfGConstVisibilityNames || {},
+				objectName: 'GlobalConst',
+			}),
+		});
 	}
 
 	init(): void
@@ -261,6 +270,7 @@ class CrmGetDynamicInfoActivity
 			const selector = new ConditionGroupSelector(this.conditionGroup, {
 				fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
 				fieldPrefix: this.filteringFieldsPrefix,
+				onOpenMenu: this.onOpenFilterFieldsMenu,
 			});
 
 			Dom.clean(this.filterFieldsContainer);

@@ -12,6 +12,8 @@ use Bitrix\Main\NotImplementedException;
 use Bitrix\Main\ObjectException;
 use Bitrix\Main\ObjectPropertyException;
 use Bitrix\Main\SystemException;
+use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Access\TaskAccessController;
 use Bitrix\Tasks\Exception;
 use Bitrix\Tasks\CheckList\Internals\CheckList as CheckListItem;
 use Bitrix\Tasks\CheckList\Task\TaskCheckListFacade;
@@ -50,6 +52,53 @@ class Checklist extends Base
 				}
 			),
 		];
+	}
+
+	/**
+	 * Saves CheckList tree.
+	 *
+	 * @param int $taskId Task id.
+	 * @param array $items List fields.
+	 * @return array|null
+	 * @throws ArgumentException
+	 * @throws NotImplementedException
+	 * @throws ObjectException
+	 * @throws SystemException
+	 */
+	public function saveAction(int $taskId, array $items = [], array $parameters = [])
+	{
+		$userId = CurrentUser::get()->getId();
+
+		if (!TaskAccessController::can($userId, ActionDictionary::ACTION_CHECKLIST_SAVE, $taskId, $items))
+		{
+			$this->errorCollection->add(
+				[new Error(Loc::getMessage('TASKS_REST_TASK_CHECKLIST_ACCESS_DENIED'))]
+			);
+
+			return null;
+		}
+
+		foreach ($items as $id => $item)
+		{
+			$item['ID'] = ((int) $item['ID'] === 0 ? null : (int) $item['ID']);
+
+			$item['IS_COMPLETE'] = (
+				($item['IS_COMPLETE'] === true)
+				|| ((int) $item['IS_COMPLETE'] > 0)
+			);
+			$item['IS_IMPORTANT'] = (
+				($item['IS_IMPORTANT'] === true)
+				|| ((int) $item['IS_IMPORTANT'] > 0)
+			);
+
+			$items[$item['NODE_ID']] = $item;
+
+			unset($items[$id]);
+		}
+
+		$result = TaskCheckListFacade::merge($taskId, $userId, $items, $parameters);
+
+		return $this->getReturn($result);
 	}
 
 	/**
@@ -382,15 +431,25 @@ class Checklist extends Base
 		{
 			/** @var CheckListItem $checkListItem */
 			$checkListItem = $value->getData()['ITEM'];
-			$checkListItemData = $checkListItem->getFields();
+			if ($checkListItem)
+			{
+				$checkListItemData = $checkListItem->getFields();
+			}
+			else
+			{
+				$checkListItemData = $value->getData();
+			}
 		}
 		else if ($value instanceof CheckListItem)
 		{
 			$checkListItemData = $value->getFields();
 		}
 
-		$checkListItemData['TASK_ID'] = $checkListItemData['ENTITY_ID'];
-		unset($checkListItemData['ENTITY_ID']);
+		if ($checkListItemData)
+		{
+			$checkListItemData['TASK_ID'] = $checkListItemData['ENTITY_ID'];
+			unset($checkListItemData['ENTITY_ID']);
+		}
 
 		return ['checkListItem' => $this->convertKeysToCamelCase($checkListItemData)];
 	}

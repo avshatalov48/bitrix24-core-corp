@@ -1,23 +1,31 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	'NAME' => GetMessage('BPCTLCA_NAME'),
-	'DESCRIPTION' => GetMessage('BPCTLCA_DESCRIPTION'),
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('BPCTLCA_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('BPCTLCA_DESCRIPTION_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmTimelineCommentAdd',
 	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
-	),
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
+	],
 	'FILTER' => [
 		'INCLUDE' => [
-			['crm']
-		]
+			['crm'],
+		],
 	],
-	'ROBOT_SETTINGS' => array(
-		'CATEGORY' => 'employee'
-	),
-);
+	'ROBOT_SETTINGS' => [
+		'CATEGORY' => 'employee',
+		'GROUP' => ['informingEmployee'],
+		'SORT' => 800,
+	],
+];

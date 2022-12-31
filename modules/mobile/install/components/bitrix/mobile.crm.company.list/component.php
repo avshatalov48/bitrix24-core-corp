@@ -67,7 +67,9 @@ if (in_array("FULL_ADDRESS", $select))
 if (in_array("FULL_REG_ADDRESS", $select))
 	$select = array_merge($select, array('ADDRESS_LEGAL', 'REG_ADDRESS_2', 'REG_ADDRESS_CITY', 'REG_ADDRESS_REGION', 'REG_ADDRESS_PROVINCE', 'REG_ADDRESS_POSTAL_CODE', 'REG_ADDRESS_COUNTRY'));
 
-$filter = array();
+$filter = [
+	'@CATEGORY_ID' => 0,
+];
 if(isset($_REQUEST["search"]))
 {
 	CUtil::JSPostUnescape();

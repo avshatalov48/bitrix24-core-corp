@@ -5,7 +5,7 @@
 .crm-preview-header {
 	height: 52px;
 	position: relative;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-preview-header-title {
@@ -56,6 +56,6 @@
 
 .crm-preview-info { font-size: 0.9em; width: 100%; max-width: 450px;}
 .crm-preview-info td { padding: 4px 0 0 4px;}
-.crm-preview-info td:first-child {font-weight: bold;}
+.crm-preview-info td:first-child {font-weight: var(--ui-font-weight-bold);}
 .crm-preview-info td:nth-child(2) { padding-right: 10px;}
 .crm-preview-info-spacer { border-top: #cceffb 1px solid;}

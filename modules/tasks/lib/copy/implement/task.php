@@ -1,4 +1,4 @@
-<?
+<?php
 namespace Bitrix\Tasks\Copy\Implement;
 
 use Bitrix\Forum\Copy\Implement\Comment as CommentImplementer;
@@ -14,6 +14,8 @@ use Bitrix\Main\Type\Dictionary;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
 use Bitrix\Tasks\Copy\Template as TemplateCopier;
 use Bitrix\Tasks\Integration\Forum\Task\Comment;
+use Bitrix\Tasks\Internals\Task\ParameterTable;
+use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\TemplateTable;
 use Bitrix\Tasks\Util\Type\DateTime as TasksDateTime;
 
@@ -35,11 +37,16 @@ class Task extends Base
 	/** @var ?TaskCopier */
 	private $taskCopier = null;
 
+	/** @var EntityCopier*/
+	private $paramsCopier = null;
+
 	/** @var ?TemplateCopier*/
 	private $templateCopier = null;
 
 	/** @var ?EntityCopier*/
 	private $topicCopier = null;
+	/** @var ?EntityCopier*/
+	private $commentCopier = null;
 
 	private $targetGroupId;
 
@@ -76,6 +83,14 @@ class Task extends Base
 	}
 
 	/**
+	 * @param EntityCopier|null $commentCopier
+	 */
+	public function setCommentCopier(EntityCopier $commentCopier): void
+	{
+		$this->commentCopier = $commentCopier;
+	}
+
+	/**
 	 * To copy the task recurrence setting, you need to copy the template.
 	 *
 	 * @param ?TemplateCopier $templateCopier
@@ -83,6 +98,11 @@ class Task extends Base
 	public function setTemplateCopier(TemplateCopier $templateCopier): void
 	{
 		$this->templateCopier = $templateCopier;
+	}
+
+	public function setParamsCopier(EntityCopier $copier): void
+	{
+		$this->paramsCopier = $copier;
 	}
 
 	/**
@@ -292,6 +312,8 @@ class Task extends Base
 
 		$results = [];
 
+		$results[] = $this->copyParams($container, $entityId, $copiedEntityId);
+
 		$results[] = $this->copyChildTasks($entityId, $copiedEntityId);
 
 		$results[] = $this->copyComments($container, $entityId, $copiedEntityId);
@@ -402,44 +424,68 @@ class Task extends Base
 
 	private function copyComments(Container $parentContainer, int $taskId, int $copiedTaskId)
 	{
-		if (!$this->topicCopier)
+		if (!$this->commentCopier)
 		{
 			return new Result();
 		}
 
 		$dictionary = $parentContainer->getDictionary();
-		if (empty($dictionary["FORUM_TOPIC_ID"]))
+		if (empty($dictionary['FORUM_TOPIC_ID']))
 		{
 			return new Result();
 		}
 
-		$topicId = $dictionary["FORUM_TOPIC_ID"];
+		$topicId = $dictionary['FORUM_TOPIC_ID'];
+
+		$queryObject = TaskTable::getList([
+			'filter' => ['ID' => $copiedTaskId],
+			'select' => ['FORUM_TOPIC_ID'],
+		]);
+		if ($taskData = $queryObject->fetch())
+		{
+			$copiedTopicId = $taskData['FORUM_TOPIC_ID'];
+		}
+		else
+		{
+			return new Result();
+		}
+
 		$containerCollection = new ContainerCollection();
-		$container = new Container($topicId);
-		$dictionary = new Dictionary(["XML_ID" => "TASK_".$copiedTaskId]);
-		$container->setDictionary($dictionary);
-		$containerCollection[] = $container;
+
+		$dictionary = new Dictionary(['XML_ID' => 'TASK_' . $copiedTaskId]);
+
+		$queryObject = \CForumMessage::getList([], ['TOPIC_ID' => $topicId]);
+		while ($forumMessage = $queryObject->Fetch())
+		{
+			$container = new Container($forumMessage["ID"]);
+			$container->setParentId($copiedTopicId);
+			$container->setDictionary($dictionary);
+
+			$containerCollection[] = $container;
+		}
+
+		$results = [];
 
 		if (!$containerCollection->isEmpty())
 		{
-			$result = $this->topicCopier->copy($containerCollection);
-
-			if (!$result->getErrors())
-			{
-				$mapIdsCopiedTopics = $this->topicCopier->getMapIdsCopiedEntity();
-				if ($taskId && array_key_exists($topicId, $mapIdsCopiedTopics))
-				{
-					$copiedTopicId = $mapIdsCopiedTopics[$topicId];
-					$this->update($copiedTaskId, ["FORUM_TOPIC_ID" => $copiedTopicId]);
-
-					$this->addSocnetLog($copiedTaskId, $copiedTopicId, $result);
-				}
-			}
-
-			return $result;
+			$results[] = $this->commentCopier->copy($containerCollection);
 		}
 
-		return new Result();
+		$result = $this->getResult($results);
+
+		if (!$result->getErrors())
+		{
+			$this->addSocnetLog(
+				$copiedTaskId,
+				$copiedTopicId,
+				$this->commentCopier->getMapIdsByImplementer(
+					CommentImplementer::class,
+					$result->getData()
+				)
+			);
+		}
+
+		return $result;
 	}
 
 	private function copyReplica(Container $parentContainer, int $taskId, int $copiedTaskId)
@@ -483,6 +529,39 @@ class Task extends Base
 		if (!$containerCollection->isEmpty())
 		{
 			return $this->templateCopier->copy($containerCollection);
+		}
+
+		return new Result();
+	}
+
+	private function copyParams(Container $parentContainer, int $taskId, int $copiedTaskId): Result
+	{
+		if (!$this->paramsCopier)
+		{
+			return new Result();
+		}
+
+		$dictionary = new Dictionary();
+		$dictionary->set('TASK_ID', $copiedTaskId);
+
+		$containerCollection = new ContainerCollection();
+
+		$queryObject = ParameterTable::getList([
+			'select' => ['ID'],
+			'filter' => ['TASK_ID' => $taskId],
+		]);
+		while ($paramsData = $queryObject->fetch())
+		{
+			$container = new Container($paramsData['ID']);
+
+			$container->setDictionary($dictionary);
+
+			$containerCollection[] = $container;
+		}
+
+		if (!$containerCollection->isEmpty())
+		{
+			return $this->paramsCopier->copy($containerCollection);
 		}
 
 		return new Result();
@@ -568,14 +647,27 @@ class Task extends Base
 
 			$startPoint = $projectTerm["start_point"];
 			$startPointTime = TasksDateTime::createFrom($startPoint);
+			if (!$startPointTime)
+			{
+				$startPointTime = new TasksDateTime();
+			}
 
 			$oldStartPoint = ($projectTerm["old_start_point"] ? $projectTerm["old_start_point"] : $taskCreatedDate);
 			$oldStartPointTime = TasksDateTime::createFrom($oldStartPoint);
+			if (!$oldStartPointTime)
+			{
+				$oldStartPointTime = TasksDateTime::createFrom($taskCreatedDate);
+			}
+			if (!$oldStartPointTime)
+			{
+				$oldStartPointTime = new TasksDateTime();
+			}
+
 			$oldStartPointTime->setTime(0, 0);
 
 			$currentFieldDateTime = TasksDateTime::createFrom($currentFieldDate);
 
-			$startPointTime->add("PT".($currentFieldDateTime->getTimestamp()-$oldStartPointTime->getTimestamp())."S");
+			$startPointTime->add("PT".($currentFieldDateTime->getTimestamp() - $oldStartPointTime->getTimestamp())."S");
 
 			$phpDateTimeFormat = DateTime::convertFormatToPhp(FORMAT_DATETIME);
 			$deadline = $startPointTime->format($phpDateTimeFormat);
@@ -584,7 +676,17 @@ class Task extends Base
 			if ($endPoint)
 			{
 				$deadlineTime = TasksDateTime::createFrom($deadline);
+				if (!$deadlineTime)
+				{
+					$deadlineTime = new TasksDateTime();
+				}
+
 				$endPointTime = TasksDateTime::createFrom($endPoint);
+				if (!$endPointTime)
+				{
+					$endPointTime = new TasksDateTime();
+				}
+
 				$endPointTime->add("PT86399S");
 				if ($deadlineTime->getTimestamp() > $endPointTime->getTimestamp())
 				{
@@ -657,25 +759,24 @@ class Task extends Base
 		return null;
 	}
 
-	private function addSocnetLog($copiedTaskId, $copiedTopicId, Result $result): void
+	private function addSocnetLog($copiedTaskId, $copiedTopicId, array $mapIdsCopiedComments): void
 	{
-		if (!Loader::includeModule("forum"))
+		if (!Loader::includeModule('forum'))
 		{
 			return;
 		}
 
-		$mapIdsCopiedComments = $this->topicCopier->getMapIdsByImplementer(
-			CommentImplementer::class, $result->getData());
 		foreach ($mapIdsCopiedComments as $copiedMessageId)
 		{
 			if ($copiedMessageId)
 			{
 				$message = \CForumMessage::getByIDEx($copiedMessageId);
-				if ($message["NEW_TOPIC"] != "Y")
+
+				if ($message['NEW_TOPIC'] !== 'Y')
 				{
-					Comment::onAfterAdd("TK", $copiedTaskId, [
-						"TOPIC_ID" => $copiedTopicId,
-						"MESSAGE_ID" => $copiedMessageId
+					Comment::onAfterAdd('TK', $copiedTaskId, [
+						'TOPIC_ID' => $copiedTopicId,
+						'MESSAGE_ID' => $copiedMessageId
 					]);
 				}
 			}

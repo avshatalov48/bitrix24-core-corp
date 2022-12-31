@@ -141,7 +141,7 @@
 	display: inline-block;
 	margin-bottom: 13px;
 	padding: 5px 12px;
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-wizard-settings-block-hidden-notice-unselected {

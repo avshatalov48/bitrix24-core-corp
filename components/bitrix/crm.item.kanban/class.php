@@ -5,7 +5,6 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Router;
 use Bitrix\Crm\UI\Tools\ToolBar;
-use Bitrix\UI\Buttons;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 {

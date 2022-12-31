@@ -4,10 +4,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Intranet\Site\Sections\AutomationSection;
 use \Bitrix\Landing\Rights;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ModuleManager;
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/.superleft.menu_ext.php");
 CModule::IncludeModule("intranet");
@@ -65,13 +68,16 @@ $arMenu = [
 	]
 ];
 
-if (\Bitrix\Main\Config\Option::get('intranet', 'left_menu_crm_store_menu', 'N') == 'Y')
+if (
+	\Bitrix\Main\Config\Option::get('intranet', 'left_menu_crm_store_menu', 'Y') === 'Y'
+	&& Loader::includeModule('catalog')
+)
 {
 	$arMenu[] = array(
 		GetMessage("MENU_STORE_ACCOUNTING_SECTION"),
 		'/shop/documents/inventory/',
 		[
-			"/shop/documents/",
+			'/shop/documents/',
 		],
 		['menu_item_id' => 'menu_crm_store'],
 		''
@@ -238,6 +244,21 @@ $arMenu[] = [
 	''
 ];
 
+if ((\Bitrix\Main\Config\Option::get('sign', '~available') === 'Y') && ModuleManager::isModuleInstalled('sign'))
+{
+	$arMenu[] = [
+		Loc::getMessage('MENU_SIGN'),
+		'/sign/',
+		[],
+		[
+			'menu_item_id' => 'menu_sign',
+			'my_tools_section' => true,
+			'can_be_first_item' => true,
+		],
+		''
+	];
+}
+
 if (CModule::IncludeModule("intranet") && CIntranetUtils::IsExternalMailAvailable())
 {
 	$warningLink = $mailLink = \Bitrix\Main\Config\Option::get('intranet', 'path_mail_client', '/mail/');
@@ -267,8 +288,9 @@ $arMenu[] = [
 			"/workgroups/"
 		),
 		"sub_link" => "/company/personal/user/".$userId."/groups/create/",
-		"menu_item_id"=>"menu_all_groups",
-		"top_menu_id" => "sonetgroups_panel_menu"
+		"menu_item_id" => "menu_all_groups",
+		"top_menu_id" => "sonetgroups_panel_menu",
+		// todo oh 'counter_id' => 'workgroups',
 	],
 	""
 ];

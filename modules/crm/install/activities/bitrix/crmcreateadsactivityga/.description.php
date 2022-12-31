@@ -1,24 +1,32 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	'NAME' => GetMessage('CRM_CREATE_ADS_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_CREATE_ADS_DESC'),
-	'TYPE' => array('activity', 'robot_activity'),
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('CRM_CREATE_ADS_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CREATE_ADS_DESC_1'),
+	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmCreateAdsActivityGa',
 	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
-	),
-	'FILTER' => array(
-		'INCLUDE' => array(
-			array('crm', 'CCrmDocumentDeal'),
-			array('crm', 'CCrmDocumentLead')
-		),
-	),
-	'ROBOT_SETTINGS' => array(
-		'CATEGORY' => 'ads'
-	),
-);
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
+	],
+	'FILTER' => [
+		'INCLUDE' => [
+			['crm', 'CCrmDocumentDeal'],
+			['crm', 'CCrmDocumentLead'],
+		],
+	],
+	'ROBOT_SETTINGS' => [
+		'CATEGORY' => 'ads',
+		'GROUP' => ['ads'],
+		'SORT' => 4200,
+	],
+];

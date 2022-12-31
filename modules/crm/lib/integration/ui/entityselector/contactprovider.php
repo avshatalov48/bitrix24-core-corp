@@ -19,11 +19,6 @@ class ContactProvider extends EntityProvider
 		$this->options['categoryId'] = $this->categoryId;
 	}
 
-	public function getRecentItemIds(string $context): array
-	{
-		return parent::getRecentItemIds($context);
-	}
-
 	protected function getEntityTypeId(): int
 	{
 		return \CCrmOwnerType::Contact;

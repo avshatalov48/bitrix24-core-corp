@@ -1,4 +1,4 @@
-<?
+<?php
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 
 /**
@@ -12,8 +12,10 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main\Loader;
 use Bitrix\Main\SystemException;
 use Bitrix\Main\AccessDeniedException;
-use Bitrix\Main\LoaderException;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
 
 class CCrmShopPageController extends CBitrixComponent
 {
@@ -41,7 +43,9 @@ class CCrmShopPageController extends CBitrixComponent
 		{
 			if ($this->arParams["CONNECT_PAGE"] === "Y")
 			{
-				ShowError($e->getMessage());
+				$GLOBALS['APPLICATION']->SetTitle(\Bitrix\Main\Localization\Loc::getMessage('CRM_CATALOG_TITLE'));
+				Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
+				$this->includeComponentTemplate('error');
 			}
 		}
 		catch(SystemException $e)
@@ -55,7 +59,10 @@ class CCrmShopPageController extends CBitrixComponent
 	 */
 	protected function checkRequiredParams()
 	{
-		if (!Loader::includeModule("crm") || !CCrmSaleHelper::isShopAccess())
+		if (
+			!Loader::includeModule("crm")
+			|| !Loader::includeModule("catalog")
+		)
 		{
 			throw new AccessDeniedException();
 		}

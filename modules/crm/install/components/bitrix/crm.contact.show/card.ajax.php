@@ -176,6 +176,7 @@ if ($iContactId > 0)
 
 	if (!empty($arContact['PHOTO']))
 	{
+		$imageImg = '';
 		$imageFile = CFile::GetFileArray($arContact['PHOTO']);
 		if ($imageFile !== false)
 		{

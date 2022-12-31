@@ -25,9 +25,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_Version_Query query()
- * @method static EO_Version_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_Version_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_Version_Result getById($id)
- * @method static EO_Version_Result getList(array $parameters = array())
+ * @method static EO_Version_Result getList(array $parameters = [])
  * @method static EO_Version_Entity getEntity()
  * @method static \Bitrix\Disk\Internals\EO_Version createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Internals\EO_Version_Collection createCollection()

@@ -8,6 +8,8 @@ class Audio extends ContentBlock
 {
 	protected int $id = 0;
 	protected string $source = '';
+	protected ?string $title = null;
+	protected ?string $imageUrl = null;
 
 	public function getRendererName(): string
 	{
@@ -38,11 +40,37 @@ class Audio extends ContentBlock
 		return $this;
 	}
 
+	public function setTitle(?string $title): self
+	{
+		$this->title = $title;
+
+		return $this;
+	}
+
+	public function getTitle(): ?string
+	{
+		return $this->title;
+	}
+
+	public function setImageUrl(?string $imageUrl): self
+	{
+		$this->imageUrl = $imageUrl;
+
+		return $this;
+	}
+
+	public function getImageUrl(): ?string
+	{
+		return $this->imageUrl;
+	}
+
 	protected function getProperties(): array
 	{
 		return [
 			'id' => $this->getId(),
 			'src' => $this->getSource(),
+			'title' => $this->getTitle(),
+			'imageUrl' => $this->getImageUrl(),
 		];
 	}
 }

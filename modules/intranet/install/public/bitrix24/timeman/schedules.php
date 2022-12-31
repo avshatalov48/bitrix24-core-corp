@@ -4,7 +4,10 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
-$APPLICATION->SetPageProperty("BodyClass", "page-one-column");
+
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
+
 Loc::loadMessages($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/intranet/public_bitrix24/timeman/timeman.php");
 $APPLICATION->SetTitle(Loc::getMessage("TITLE"));
 $licenseType = "";

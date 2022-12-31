@@ -1,6 +1,8 @@
 <?php
 
 return [
-	'layout/ui/context-menu',
-	'layout/ui/fields/base',
+	'extensions' => [
+		'layout/ui/context-menu',
+		'layout/ui/fields/base-select',
+	],
 ];

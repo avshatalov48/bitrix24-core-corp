@@ -44,7 +44,6 @@
 		},
 		guideTitle: {
 			fontSize: 18,
-			paddingBottom: 18,
 		},
 		hintView: {
 			flex: 1,
@@ -73,27 +72,28 @@
 		constructor({showHint, hintText})
 		{
 			super({showHint, hintText});
-			this.setState({
-				showHint: Boolean(showHint),
-				hintText: hintText,
-			})
+
+			this.state.showHint = Boolean(showHint);
+			this.state.hintText = hintText || '';
 		}
 
-		render() {
+		render()
+		{
 			const {showHint, hintText} = this.state;
+
 			return View(
 				{},
-				(showHint ? this.hint(hintText) : null),
+				showHint && this.hint(hintText),
 				View(
 					{
 						style: styles.guideView,
 					},
 					Text({
 						style: styles.guideTitle,
-						text: BX.message('QR_HOW_TO_AUTH') + '↓'
+						text: BX.message('QR_HOW_TO_AUTH') + '↓',
 					}),
 					(cloud && Application.getApiVersion() >= 41 ? this.demoVideo() : null),
-					this.guideSteps(guideStepsTitles)
+					this.guideSteps(guideStepsTitles),
 				)
 			);
 		}

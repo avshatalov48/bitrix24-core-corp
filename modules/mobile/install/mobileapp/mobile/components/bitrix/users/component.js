@@ -5,6 +5,7 @@
 
 (() =>
 {
+	const { ProfileView } = jn.require("user/profile");
 	const storageId = "user.component.result";
 	let componentResult = {
 		/**

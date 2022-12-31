@@ -1,5 +1,6 @@
-import {Tag, Text, Loc, Event, Cache, Runtime} from 'main.core';
+import {Tag, Text, Loc, Event, Cache, Runtime, Dom} from 'main.core';
 import {EventEmitter, BaseEvent} from 'main.core.events';
+import { Row } from './product.list.row';
 
 export default class ReserveControl
 {
@@ -8,34 +9,37 @@ export default class ReserveControl
 	static QUANTITY_NAME = 'QUANTITY';
 	static DEDUCTED_QUANTITY_NAME = 'DEDUCTED_QUANTITY';
 
-	#model = null;
+	#row:Row = null;
 	#cache = new Cache.MemoryCache();
 	isReserveEqualProductQuantity = true;
+	wrapper = null;
+	measureName;
 
 	constructor(options)
 	{
-		this.#model = options.model;
+		this.#row = options.row;
 		this.inputFieldName = options.inputName || ReserveControl.INPUT_NAME;
 		this.dateFieldName = options.dateFieldName || ReserveControl.DATE_NAME;
 		this.quantityFieldName = options.quantityFieldName || ReserveControl.QUANTITY_NAME;
 		this.deductedQuantityFieldName = options.deductedQuantityFieldName || ReserveControl.DEDUCTED_QUANTITY_NAME;
 		this.defaultDateReservation = options.defaultDateReservation || null;
 		this.isBlocked = options.isBlocked || false;
+		this.measureName = options.measureName;
 
 		this.isReserveEqualProductQuantity =
 			options.isReserveEqualProductQuantity
 			&& (
 				this.getReservedQuantity() === this.getQuantity()
-				|| this.#model.getOption('id') === null // is new row
+				|| this.#row.isNewRow()
 			)
 		;
 	}
 
 	renderTo(node: HTMLElement): void
 	{
-		node.appendChild(
-			Tag.render`<div>${this.#getReserveInputNode()}</div>`
-		);
+		this.wrapper = node;
+
+		Dom.append(Tag.render`<div>${this.#getReserveInputNode()}</div>`, this.wrapper);
 		Event.bind(this.#getReserveInputNode().querySelector('input'), 'input', Runtime.debounce(this.onReserveInputChange, 800, this));
 
 		if (this.getReservedQuantity() > 0 || this.isReserveEqualProductQuantity)
@@ -43,7 +47,7 @@ export default class ReserveControl
 			this.#layoutDateReservation(this.getDateReservation());
 		}
 
-		node.appendChild(this.#getDateNode());
+		Dom.append(this.#getDateNode(), this.wrapper);
 
 		Event.bind(this.#getDateNode(), 'click', ReserveControl.#onDateInputClick.bind(this));
 		Event.bind(this.#getDateNode().querySelector('input'), 'change', this.onDateChange.bind(this));
@@ -65,22 +69,22 @@ export default class ReserveControl
 
 	getReservedQuantity()
 	{
-		return Text.toNumber(this.#model.getField(this.inputFieldName));
+		return Text.toNumber(this.#row.getField(this.inputFieldName));
 	}
 
 	getDateReservation()
 	{
-		return this.#model.getField(this.dateFieldName) || null;
+		return this.#row.getField(this.dateFieldName) || '';
 	}
 
 	getQuantity()
 	{
-		return Text.toNumber(this.#model.getField(this.quantityFieldName));
+		return Text.toNumber(this.#row.getField(this.quantityFieldName));
 	}
 
 	getDeductedQuantity()
 	{
-		return Text.toNumber(this.#model.getField(this.deductedQuantityFieldName));
+		return Text.toNumber(this.#row.getField(this.deductedQuantityFieldName));
 	}
 
 	getAvailableQuantity()
@@ -121,13 +125,14 @@ export default class ReserveControl
 
 		if (value > 0)
 		{
-			if (this.getDateReservation() === null)
+			const dateReservation = this.getDateReservation();
+			if (dateReservation === '')
 			{
 				this.changeDateReservation(this.defaultDateReservation);
 			}
 			else
 			{
-				this.#layoutDateReservation(this.#model.getField(this.dateFieldName));
+				this.#layoutDateReservation(dateReservation);
 			}
 		}
 		else if (value <= 0)
@@ -135,12 +140,8 @@ export default class ReserveControl
 			this.changeDateReservation();
 		}
 
-		this.#model.setField(this.inputFieldName, value);
-
-		EventEmitter.emit(this, 'onChange', {
-			NAME: this.inputFieldName,
-			VALUE: value,
-		})
+		this.setReservedQuantity(value, false);
+		this.#row.updateField(this.inputFieldName, value);
 	}
 
 	clearCache()
@@ -149,12 +150,20 @@ export default class ReserveControl
 		this.#cache.delete('reserveInput');
 	}
 
-	isInputDisabled()
+	isInputDisabled(): boolean
 	{
-		return this.isBlocked
-			|| this.#model.isSimple()
-			|| this.#model.isEmpty()
-		;
+		if (this.isBlocked)
+		{
+			return true;
+		}
+
+		const model = this.#row.getModel();
+		if (model)
+		{
+			return model.isSimple() || model.isService();
+		}
+
+		return false;
 	}
 
 	static #onDateInputClick(event: BaseEvent)
@@ -235,22 +244,20 @@ export default class ReserveControl
 		});
 	}
 
-	changeDateReservation(date: ?string = null)
+	changeDateReservation(date: string = '')
 	{
-		EventEmitter.emit(this, 'onChange', {
-			NAME: this.dateFieldName,
-			VALUE: date,
-		})
-
-		this.#model.setField(this.dateFieldName, date);
+		if (date !== this.getDateReservation())
+		{
+			this.#row.updateField(this.dateFieldName, date);
+		}
 
 		this.#layoutDateReservation(date);
 	}
 
-	#layoutDateReservation(date: ?string = null): void
+	#layoutDateReservation(date: string = ''): void
 	{
 		const linkText =
-			(date === null)
+			(date === '')
 				? ''
 				: Loc.getMessage(
 					'CRM_ENTITY_PL_RESERVED_DATE',
@@ -269,6 +276,15 @@ export default class ReserveControl
 		if (hiddenInput)
 		{
 			hiddenInput.value = date;
+		}
+	}
+
+	disable(wrapper: Element|null): void
+	{
+		const node = wrapper || this.wrapper;
+		if (node)
+		{
+			node.innerHTML = this.getReservedQuantity() + ' ' + Text.encode(this.measureName);
 		}
 	}
 }

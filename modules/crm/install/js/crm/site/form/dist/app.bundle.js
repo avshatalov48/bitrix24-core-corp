@@ -1050,7 +1050,6 @@ var Vue = exports.Vue;
     var eachNode = function eachNode(nodeList, callback) {
       if (nodeList && callback) {
         nodeList = isElementList(nodeList) ? nodeList : [nodeList];
-
         for (var i = 0; i < nodeList.length; i++) {
           if (callback(nodeList[i], i, nodeList.length) === true) {
             break;
@@ -1077,14 +1076,11 @@ var Vue = exports.Vue;
     var findParentBySelector = function findParentBySelector($el, selector) {
       var self = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
       var $root = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : document;
-
       if (self && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) !== -1) {
         return $el;
       }
-
       while (($el = $el.parentElement) && nodeListAsArray($root.querySelectorAll(selector)).indexOf($el) === -1) {
       }
-
       return $el;
     };
     var elementHasSelector = function elementHasSelector($el, selector) {
@@ -1104,7 +1100,6 @@ var Vue = exports.Vue;
         if (elementHasOverflowHidden($el)) {
           return true;
         }
-
         var scrollTop = $el.scrollTop;
         return scrollTop <= 0;
       }
@@ -1114,7 +1109,6 @@ var Vue = exports.Vue;
         if (elementHasOverflowHidden($el)) {
           return true;
         }
-
         var scrollTop = $el.scrollTop;
         var scrollHeight = $el.scrollHeight;
         var scrollTopWithHeight = scrollTop + $el.offsetHeight;
@@ -1126,7 +1120,6 @@ var Vue = exports.Vue;
         if (elementHasOverflowHidden($el)) {
           return true;
         }
-
         var scrollLeft = $el.scrollLeft;
         return scrollLeft <= 0;
       }
@@ -1136,7 +1129,6 @@ var Vue = exports.Vue;
         if (elementHasOverflowHidden($el)) {
           return true;
         }
-
         var scrollLeft = $el.scrollLeft;
         var scrollWidth = $el.scrollWidth;
         var scrollLeftWithWidth = scrollLeft + $el.offsetWidth;
@@ -1153,7 +1145,6 @@ var Vue = exports.Vue;
     };
 
     function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
     function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
     var FILL_GAP_AVAILABLE_METHODS = ['padding', 'margin', 'width', 'max-width', 'none'];
     var TOUCH_DIRECTION_DETECT_OFFSET = 3;
@@ -1174,19 +1165,16 @@ var Vue = exports.Vue;
         hideLockableOverflow();
         fillGaps();
       }
-
       addScrollableTarget(target);
       state.queue++;
     };
     var enablePageScroll = function enablePageScroll(target) {
       state.queue > 0 && state.queue--;
-
       if (state.queue <= 0) {
         state.scroll = true;
         showLockableOverflow();
         unfillGaps();
       }
-
       removeScrollableTarget(target);
     };
     var getScrollState = function getScrollState() {
@@ -1197,10 +1185,8 @@ var Vue = exports.Vue;
     };
     var getTargetScrollBarWidth = function getTargetScrollBarWidth($target) {
       var onlyExists = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
       if (isElement($target)) {
         var currentOverflowYProperty = $target.style.overflowY;
-
         if (onlyExists) {
           if (!getScrollState()) {
             $target.style.overflowY = $target.dataset.scrollLockSavedOverflowYProperty;
@@ -1208,7 +1194,6 @@ var Vue = exports.Vue;
         } else {
           $target.style.overflowY = 'scroll';
         }
-
         var width = getCurrentTargetScrollBarWidth($target);
         $target.style.overflowY = currentOverflowYProperty;
         return width;
@@ -1228,9 +1213,7 @@ var Vue = exports.Vue;
           var borderRightWidthCurrentProperty = $target.style.borderRightWidth;
           $target.style.borderLeftWidth = '0px';
           $target.style.borderRightWidth = '0px';
-
           var _currentWidth = $target.offsetWidth - $target.clientWidth;
-
           $target.style.borderLeftWidth = borderLeftWidthCurrentProperty;
           $target.style.borderRightWidth = borderRightWidthCurrentProperty;
           return _currentWidth;
@@ -1304,7 +1287,6 @@ var Vue = exports.Vue;
             }
           });
         });
-
         if (!getScrollState()) {
           hideLockableOverflow();
         }
@@ -1331,11 +1313,9 @@ var Vue = exports.Vue;
         selectors.map(function (selector) {
           state.lockableSelectors.push(selector);
         });
-
         if (!getScrollState()) {
           hideLockableOverflow();
         }
-
         addFillGapSelector(selector);
       }
     };
@@ -1357,7 +1337,6 @@ var Vue = exports.Vue;
           eachNode($targets, function ($target) {
             if (isElement($target)) {
               $target.dataset.scrollLockFillGap = '';
-
               if (!state.scroll) {
                 fillGapTarget($target);
               }
@@ -1375,7 +1354,6 @@ var Vue = exports.Vue;
           eachNode($targets, function ($target) {
             if (isElement($target)) {
               delete $target.dataset.scrollLockFillGap;
-
               if (!state.scroll) {
                 unfillGapTarget($target);
               }
@@ -1391,7 +1369,6 @@ var Vue = exports.Vue;
         var selectors = argumentAsArray(selector);
         selectors.map(function (selector) {
           state.fillGapSelectors.push(selector);
-
           if (!state.scroll) {
             fillGapSelector(selector);
           }
@@ -1405,7 +1382,6 @@ var Vue = exports.Vue;
           state.fillGapSelectors = state.fillGapSelectors.filter(function (fSelector) {
             return fSelector !== selector;
           });
-
           if (!state.scroll) {
             unfillGapSelector(selector);
           }
@@ -1417,31 +1393,26 @@ var Vue = exports.Vue;
         fillGaps();
       }
     };
-
     var hideLockableOverflow = function hideLockableOverflow() {
       var selector = arrayAsSelector(state.lockableSelectors);
       hideLockableOverflowSelector(selector);
     };
-
     var showLockableOverflow = function showLockableOverflow() {
       var selector = arrayAsSelector(state.lockableSelectors);
       showLockableOverflowSelector(selector);
     };
-
     var hideLockableOverflowSelector = function hideLockableOverflowSelector(selector) {
       var $targets = document.querySelectorAll(selector);
       eachNode($targets, function ($target) {
         hideLockableOverflowTarget($target);
       });
     };
-
     var showLockableOverflowSelector = function showLockableOverflowSelector(selector) {
       var $targets = document.querySelectorAll(selector);
       eachNode($targets, function ($target) {
         showLockableOverflowTarget($target);
       });
     };
-
     var hideLockableOverflowTarget = function hideLockableOverflowTarget($target) {
       if (isElement($target) && $target.dataset.scrollLockLocked !== 'true') {
         var computedStyle = window.getComputedStyle($target);
@@ -1452,7 +1423,6 @@ var Vue = exports.Vue;
         $target.dataset.scrollLockLocked = 'true';
       }
     };
-
     var showLockableOverflowTarget = function showLockableOverflowTarget($target) {
       if (isElement($target) && $target.dataset.scrollLockLocked === 'true') {
         $target.style.overflow = $target.dataset.scrollLockSavedInlineOverflowProperty;
@@ -1463,19 +1433,16 @@ var Vue = exports.Vue;
         delete $target.dataset.scrollLockLocked;
       }
     };
-
     var fillGaps = function fillGaps() {
       state.fillGapSelectors.map(function (selector) {
         fillGapSelector(selector);
       });
     };
-
     var unfillGaps = function unfillGaps() {
       state.fillGapSelectors.map(function (selector) {
         unfillGapSelector(selector);
       });
     };
-
     var fillGapSelector = function fillGapSelector(selector) {
       var $targets = document.querySelectorAll(selector);
       var isLockable = state.lockableSelectors.indexOf(selector) !== -1;
@@ -1483,28 +1450,22 @@ var Vue = exports.Vue;
         fillGapTarget($target, isLockable);
       });
     };
-
     var fillGapTarget = function fillGapTarget($target) {
       var isLockable = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
       if (isElement($target)) {
         var scrollBarWidth;
-
         if ($target.dataset.scrollLockLockable === '' || isLockable) {
           scrollBarWidth = getTargetScrollBarWidth($target, true);
         } else {
           var $lockableParent = findParentBySelector($target, arrayAsSelector(state.lockableSelectors));
           scrollBarWidth = getTargetScrollBarWidth($lockableParent, true);
         }
-
         if ($target.dataset.scrollLockFilledGap === 'true') {
           unfillGapTarget($target);
         }
-
         var computedStyle = window.getComputedStyle($target);
         $target.dataset.scrollLockFilledGap = 'true';
         $target.dataset.scrollLockCurrentFillGapMethod = state.fillGapMethod;
-
         if (state.fillGapMethod === 'margin') {
           var currentMargin = parseFloat(computedStyle.marginRight);
           $target.style.marginRight = "".concat(currentMargin + scrollBarWidth, "px");
@@ -1518,21 +1479,18 @@ var Vue = exports.Vue;
         }
       }
     };
-
     var unfillGapSelector = function unfillGapSelector(selector) {
       var $targets = document.querySelectorAll(selector);
       eachNode($targets, function ($target) {
         unfillGapTarget($target);
       });
     };
-
     var unfillGapTarget = function unfillGapTarget($target) {
       if (isElement($target)) {
         if ($target.dataset.scrollLockFilledGap === 'true') {
           var currentFillGapMethod = $target.dataset.scrollLockCurrentFillGapMethod;
           delete $target.dataset.scrollLockFilledGap;
           delete $target.dataset.scrollLockCurrentFillGapMethod;
-
           if (currentFillGapMethod === 'margin') {
             $target.style.marginRight = "";
           } else if (currentFillGapMethod === 'width') {
@@ -1545,25 +1503,21 @@ var Vue = exports.Vue;
         }
       }
     };
-
     var onResize = function onResize(e) {
       refillGaps();
     };
-
     var onTouchStart = function onTouchStart(e) {
       if (!state.scroll) {
         state.startTouchY = e.touches[0].clientY;
         state.startTouchX = e.touches[0].clientX;
       }
     };
-
     var onTouchMove = function onTouchMove(e) {
       if (!state.scroll) {
         var startTouchY = state.startTouchY,
-            startTouchX = state.startTouchX;
+          startTouchX = state.startTouchX;
         var currentClientY = e.touches[0].clientY;
         var currentClientX = e.touches[0].clientX;
-
         if (e.touches.length < 2) {
           var selector = arrayAsSelector(state.scrollableSelectors);
           var direction = {
@@ -1578,20 +1532,15 @@ var Vue = exports.Vue;
             left: startTouchX + TOUCH_DIRECTION_DETECT_OFFSET < currentClientX,
             right: startTouchX - TOUCH_DIRECTION_DETECT_OFFSET > currentClientX
           };
-
           var handle = function handle($el) {
             var skip = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
             if ($el) {
               var parentScrollableEl = findParentBySelector($el, selector, false);
-
               if (elementIsInputRange($el)) {
                 return false;
               }
-
               if (skip || elementIsScrollableField($el) && findParentBySelector($el, selector) || elementHasSelector($el, selector)) {
                 var prevent = false;
-
                 if (elementScrollLeftOnStart($el) && elementScrollLeftOnEnd($el)) {
                   if (direction.up && elementScrollTopOnStart($el) || direction.down && elementScrollTopOnEnd($el)) {
                     prevent = true;
@@ -1603,7 +1552,6 @@ var Vue = exports.Vue;
                 } else if (directionWithOffset.up && elementScrollTopOnStart($el) || directionWithOffset.down && elementScrollTopOnEnd($el) || directionWithOffset.left && elementScrollLeftOnStart($el) || directionWithOffset.right && elementScrollLeftOnEnd($el)) {
                   prevent = true;
                 }
-
                 if (prevent) {
                   if (parentScrollableEl) {
                     handle(parentScrollableEl, true);
@@ -1618,23 +1566,19 @@ var Vue = exports.Vue;
               e.preventDefault();
             }
           };
-
           handle(e.target);
         }
       }
     };
-
     var onTouchEnd = function onTouchEnd(e) {
       if (!state.scroll) {
         state.startTouchY = 0;
         state.startTouchX = 0;
       }
     };
-
     if (typeof window !== 'undefined') {
       window.addEventListener('resize', onResize);
     }
-
     if (typeof document !== 'undefined') {
       document.addEventListener('touchstart', onTouchStart);
       document.addEventListener('touchmove', onTouchMove, {
@@ -1642,7 +1586,6 @@ var Vue = exports.Vue;
       });
       document.addEventListener('touchend', onTouchEnd);
     }
-
     var deprecatedMethods = {
       hide: function hide(target) {
         throwError('"hide" is deprecated! Use "disablePageScroll" instead. \n https://github.com/FL3NKEY/scroll-lock#disablepagescrollscrollabletarget');
@@ -1654,7 +1597,6 @@ var Vue = exports.Vue;
       },
       toggle: function toggle(target) {
         throwError('"toggle" is deprecated! Do not use it.');
-
         if (getScrollState()) {
           disablePageScroll();
         } else {
@@ -1690,7 +1632,6 @@ var Vue = exports.Vue;
         clearQueueScrollLocks();
       }
     };
-
     var scrollLock = _objectSpread({
       disablePageScroll: disablePageScroll,
       enablePageScroll: enablePageScroll,
@@ -1732,14 +1673,12 @@ var Vue = exports.Vue;
           end: this.onTouchEnd.bind(this)
         };
       }
-
       babelHelpers.createClass(MoveObserver, [{
         key: "toggle",
         value: function toggle(mode, element) {
           if (element) {
             this.element = element;
           }
-
           mode ? this.run() : this.stop();
         }
       }, {
@@ -1766,7 +1705,6 @@ var Vue = exports.Vue;
           if (e.touches.length !== 1 || this.detecting) {
             return;
           }
-
           var touch = e.changedTouches[0];
           this.detecting = true;
           this.x = touch.pageX;
@@ -1781,19 +1719,15 @@ var Vue = exports.Vue;
           if (!this.detecting) {
             return;
           }
-
           var touch = e.changedTouches[0];
           var newX = touch.pageX;
           var newY = touch.pageY;
-
           if (!this.hasTouch(e.changedTouches, touch)) {
             return;
           }
-
           if (!this.detecting) {
             return;
           }
-
           e.preventDefault();
           this.deltaX = this.x - newX;
           this.deltaY = this.y - newY;
@@ -1805,11 +1739,9 @@ var Vue = exports.Vue;
           if (!this.hasTouch(e.changedTouches, this.touch) || !this.detecting) {
             return;
           }
-
           if (this.deltaY > 2 && this.deltaX > 2) {
             e.preventDefault();
           }
-
           this.detecting = false;
           this.handler(this, true);
         }
@@ -1821,7 +1753,6 @@ var Vue = exports.Vue;
               return true;
             }
           }
-
           return false;
         }
       }]);
@@ -1829,60 +1760,43 @@ var Vue = exports.Vue;
     }();
 
     function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
-
     function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
-
     function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
     function _classPrivateMethodGet(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
-
     var _element = /*#__PURE__*/new WeakMap();
-
     var _handler = /*#__PURE__*/new WeakMap();
-
     var _observer = /*#__PURE__*/new WeakMap();
-
     var _init = /*#__PURE__*/new WeakSet();
-
     var ViewObserver = /*#__PURE__*/function () {
       function ViewObserver(element, handler) {
         babelHelpers.classCallCheck(this, ViewObserver);
-
         _classPrivateMethodInitSpec(this, _init);
-
         _classPrivateFieldInitSpec(this, _element, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec(this, _handler, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec(this, _observer, {
           writable: true,
           value: void 0
         });
-
         babelHelpers.classPrivateFieldSet(this, _element, element);
         babelHelpers.classPrivateFieldSet(this, _handler, handler);
       }
-
       babelHelpers.createClass(ViewObserver, null, [{
         key: "observe",
         value: function observe(element, handler) {
           var instance = new ViewObserver(element, handler);
-
           _classPrivateMethodGet(instance, _init, _init2).call(instance);
         }
       }]);
       return ViewObserver;
     }();
-
     function _init2() {
       var _this = this;
-
       babelHelpers.classPrivateFieldSet(this, _observer, new IntersectionObserver(function (entries, observer) {
         entries.forEach(function (entry) {
           if (entry.isIntersecting) {
@@ -1906,25 +1820,19 @@ var Vue = exports.Vue;
       },
       disable: function disable(element) {
         var prevElement = this.getLastItem();
-
         if (prevElement) {
           addLockableTarget(prevElement);
           addFillGapTarget(prevElement);
         }
-
         disablePageScroll(element);
         this.items.push(element);
       },
       enable: function enable() {
         var _this = this;
-
         setTimeout(function () {
           var element = _this.items.pop();
-
           enablePageScroll(element);
-
           var prevElement = _this.getLastItem();
-
           if (prevElement) {
             removeFillGapTarget(prevElement);
             removeLockableTarget(prevElement);
@@ -1940,13 +1848,10 @@ var Vue = exports.Vue;
         if (!val || babelHelpers["typeof"](val) !== 'object' || Object.prototype.toString.call(val) !== '[object Object]') {
           return false;
         }
-
         var proto = Object.getPrototypeOf(val);
-
         if (proto === null) {
           return true;
         }
-
         var objectCtorString = Function.prototype.toString.call(Object);
         var ctor = proto.hasOwnProperty('constructor') && proto.constructor;
         return typeof ctor === 'function' && Function.prototype.toString.call(ctor) === objectCtorString;
@@ -1969,55 +1874,41 @@ var Vue = exports.Vue;
         text = text + '';
         fields = fields || {};
         var holders = text.match(/{{[ -.a-zA-Z]+}}/g);
-
         if (!holders || holders.length === 0) {
           return text;
         }
-
         var result = holders.reduce(function (s, item) {
           var value = item.replace(/^{+/, '').replace(/}+$/, '').trim();
           value = fields[value] ? fields[value] : '';
           var parts = s.split(item);
-
           for (var i = 0; i < parts.length; i = i + 1) {
             if (i === parts.length - 1 && parts.length > 1) {
               continue;
             }
-
             var left = parts[i].replace(/[ \t]+$/, '');
-
             if (!value) {
               left = left.replace(/[,]+$/, '');
             }
-
             left += (value ? ' ' : '') + value;
             parts[i] = left;
-
             if (i + 1 >= parts.length) {
               continue;
             }
-
             var right = parts[i + 1].replace(/^[ \t]+/, '');
-
             if (!/^[<!?.\n]+/.test(right)) {
               var isLeftClosed = !left || /[<!?.\n]+$/.test(left);
-
               if (isLeftClosed) {
                 right = right.replace(/^[ \t,]+/, '');
               }
-
               if (!/^[,]+/.test(right)) {
                 if (isLeftClosed) {
                   right = right.charAt(0).toUpperCase() + right.slice(1);
                 }
-
                 right = ' ' + right;
               }
             }
-
             parts[i + 1] = right;
           }
-
           return parts.join('').trim();
         }, text);
         return result ? result : text;
@@ -2030,13 +1921,11 @@ var Vue = exports.Vue;
       parseHex: function parseHex(hex) {
         hex = this.fillHex(hex);
         var parts = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})?$/i.exec(hex);
-
         if (!parts) {
           parts = [0, 0, 0, 1];
         } else {
           parts = [parseInt(parts[1], 16), parseInt(parts[2], 16), parseInt(parts[3], 16), parseInt(100 * (parseInt(parts[4] || 'ff', 16) / 255)) / 100];
         }
-
         return parts;
       },
       hexToRgba: function hexToRgba(hex) {
@@ -2048,19 +1937,15 @@ var Vue = exports.Vue;
       fillHex: function fillHex(hex) {
         var fillAlpha = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
         var alpha = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
-
         if (hex.length === 4 || fillAlpha && hex.length === 5) {
           hex = hex.replace(/([a-f0-9])/gi, "$1$1");
         }
-
         if (fillAlpha && hex.length === 7) {
           hex += 'ff';
         }
-
         if (alpha) {
           hex = hex.substr(0, 7) + (alpha.toLowerCase() + 'ff').substr(0, 2);
         }
-
         return hex;
       },
       isHexDark: function isHexDark(hex) {
@@ -2083,20 +1968,16 @@ var Vue = exports.Vue;
         if (fontsLoaded.includes(font)) {
           return;
         }
-
         var fontUrl = null;
-
         switch (font) {
           case 'lobster':
             fontUrl = 'https://fonts.googleapis.com/css2?family=Lobster:wght@100;200;300;400;500;600;700;800;900&subset=cyrillic-ext,latin-ext';
             break;
-
           default:
           case 'opensans':
             fontUrl = 'https://fonts.googleapis.com/css2?family=Open+Sans:wght@100;200;300;400;500;600;700;800;900&subset=cyrillic';
             break;
         }
-
         if (fontUrl) {
           var link = document.createElement('link');
           link.rel = 'stylesheet';
@@ -2108,42 +1989,32 @@ var Vue = exports.Vue;
     };
 
     function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
-
     function _checkPrivateRedeclaration$1(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
     var _namespace = /*#__PURE__*/new WeakMap();
-
     var _subscribers = /*#__PURE__*/new WeakMap();
-
     var _emittedOnce = /*#__PURE__*/new WeakMap();
-
     var Event = /*#__PURE__*/function () {
       function Event() {
         babelHelpers.classCallCheck(this, Event);
-
         _classPrivateFieldInitSpec$1(this, _namespace, {
           writable: true,
           value: []
         });
-
         _classPrivateFieldInitSpec$1(this, _subscribers, {
           writable: true,
           value: []
         });
-
         _classPrivateFieldInitSpec$1(this, _emittedOnce, {
           writable: true,
           value: []
         });
       }
-
       babelHelpers.createClass(Event, [{
         key: "setGlobalEventNamespace",
         value: function setGlobalEventNamespace() {
           for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
             args[_key] = arguments[_key];
           }
-
           babelHelpers.classPrivateFieldSet(this, _namespace, args);
         }
       }, {
@@ -2157,18 +2028,15 @@ var Vue = exports.Vue;
         key: "emit",
         value: function emit(type, data) {
           var _this = this;
-
           babelHelpers.classPrivateFieldGet(this, _emittedOnce).push(type);
           babelHelpers.classPrivateFieldGet(this, _subscribers).forEach(function (subscriber) {
             if (!subscriber.type || subscriber.type === type) {
               subscriber.callback.call(_this, data, _this, type);
             }
           });
-
           if (babelHelpers.classPrivateFieldGet(this, _namespace).length === 0) {
             return;
           }
-
           window.dispatchEvent(new window.CustomEvent([].concat(babelHelpers.toConsumableArray(babelHelpers.classPrivateFieldGet(this, _namespace)), [type]).join(':'), {
             detail: {
               object: this,
@@ -2183,7 +2051,6 @@ var Vue = exports.Vue;
           if (!type || typeof callback !== 'function') {
             return;
           }
-
           babelHelpers.classPrivateFieldGet(this, _subscribers).push({
             type: type,
             callback: callback
@@ -2215,10 +2082,8 @@ var Vue = exports.Vue;
 
     var Item = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Item, _Event);
-
       function Item(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Item);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item).call(this, options));
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
@@ -2228,18 +2093,14 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "label", '');
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "_selectedInternal", false);
         _this._selectedInternal = !!options.selected;
-
         if (Type.defined(options.label)) {
           _this.label = options.label;
         }
-
         if (Type.defined(options.value)) {
           _this.value = options.value;
         }
-
         return _this;
       }
-
       babelHelpers.createClass(Item, [{
         key: "onSelect",
         value: function onSelect(value) {
@@ -2281,22 +2142,18 @@ var Vue = exports.Vue;
           	list.push('b24-form-field-dark');
           }
           */
-
           if (this.field.multiple) {
             list.push('b24-form-control-group');
           }
-
           if (this.hasErrors) {
             list.push('b24-form-control-alert');
           }
-
           return list;
         },
         hasErrors: function hasErrors() {
           if (!this.field.validated || this.field.focused) {
             return false;
           }
-
           return !this.field.valid();
         }
       },
@@ -2310,7 +2167,6 @@ var Vue = exports.Vue;
         },
         onBlur: function onBlur() {
           var _this = this;
-
           this.field.focused = false;
           this.field.valid();
           setTimeout(function () {
@@ -2319,19 +2175,15 @@ var Vue = exports.Vue;
         },
         onKeyDown: function onKeyDown(e) {
           var value = e.key;
-
           if (this.field.filter(value)) {
             return;
           }
-
           if (['Esc', 'Delete', 'Backspace', 'Tab'].indexOf(e.key) >= 0) {
             return;
           }
-
           if (e.ctrlKey || e.metaKey) {
             return;
           }
-
           e.preventDefault();
         }
       }
@@ -2343,7 +2195,6 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(this, "language", 'en');
         babelHelpers.defineProperty(this, "messages", {});
       }
-
       babelHelpers.createClass(Storage, [{
         key: "setMessages",
         value: function setMessages(messages) {
@@ -2359,23 +2210,22 @@ var Vue = exports.Vue;
         value: function get(code) {
           var mess = this.messages;
           var lang = this.language || 'en';
-
           if (mess[lang] && mess[lang][code]) {
             return mess[lang][code];
           }
-
           lang = 'en';
-
           if (mess[lang] && mess[lang][code]) {
             return mess[lang][code];
           }
-
           return mess[code] || '';
         }
       }]);
       return Storage;
     }();
 
+    function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
+    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var Themes = {
       'modern-light': {
         dark: false,
@@ -2451,10 +2301,11 @@ var Vue = exports.Vue;
         }
       }
     };
-
+    var _replaceFontUriByProxy = /*#__PURE__*/new WeakSet();
     var Model = /*#__PURE__*/function () {
       function Model(options) {
         babelHelpers.classCallCheck(this, Model);
+        _classPrivateMethodInitSpec$1(this, _replaceFontUriByProxy);
         babelHelpers.defineProperty(this, "dark", null);
         babelHelpers.defineProperty(this, "font", {
           uri: '',
@@ -2480,14 +2331,18 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(this, "compact", false);
         babelHelpers.defineProperty(this, "style", null);
         babelHelpers.defineProperty(this, "backgroundImage", null);
+        babelHelpers.defineProperty(this, "proxy", {
+          fonts: []
+        });
         this.adjust(options);
       }
-
       babelHelpers.createClass(Model, [{
         key: "adjust",
         value: function adjust(options) {
           options = options || {};
-
+          if (babelHelpers["typeof"](options.proxy) === 'object') {
+            this.setProxy(options.proxy);
+          }
           if (typeof options.theme !== 'undefined') {
             this.theme = options.theme;
             var theme = Themes[options.theme] || {};
@@ -2507,6 +2362,7 @@ var Vue = exports.Vue;
               fieldFocusBackground: '',
               popupBackground: ''
             }, theme.color));
+
             /*
             options.font = this.getEffectiveOption(options.font);
             options.dark = options.dark === 'auto'
@@ -2520,34 +2376,36 @@ var Vue = exports.Vue;
           if (typeof options.font === 'string' || babelHelpers["typeof"](options.font) === 'object') {
             this.setFont(options.font);
           }
-
           if (typeof options.dark !== 'undefined') {
             this.setDark(options.dark);
           }
-
           if (babelHelpers["typeof"](options.color) === 'object') {
             this.setColor(options.color);
           }
-
           if (typeof options.shadow !== 'undefined') {
             this.setShadow(options.shadow);
           }
-
           if (typeof options.compact !== 'undefined') {
             this.setCompact(options.compact);
           }
-
           if (typeof options.border !== 'undefined') {
             this.setBorder(options.border);
           }
-
           if (typeof options.style !== 'undefined') {
             this.setStyle(options.style);
           }
-
           if (typeof options.backgroundImage !== 'undefined') {
             this.setBackgroundImage(options.backgroundImage);
           }
+        }
+      }, {
+        key: "setProxy",
+        value: function setProxy(_ref) {
+          var fonts = _ref.fonts;
+          if (typeof fonts !== 'undefined') {
+            this.proxy.fonts = Array.isArray(fonts) ? fonts : [];
+          }
+          return this;
         }
       }, {
         key: "setFont",
@@ -2556,7 +2414,6 @@ var Vue = exports.Vue;
             uri = family.uri;
             family = family.family;
           }
-
           this.font.family = family || '';
           this.font.uri = this.font.family ? uri || '' : '';
         }
@@ -2582,15 +2439,12 @@ var Vue = exports.Vue;
             if (typeof border.top !== 'undefined') {
               this.border.top = !!border.top;
             }
-
             if (typeof border.right !== 'undefined') {
               this.border.right = !!border.right;
             }
-
             if (typeof border.bottom !== 'undefined') {
               this.border.bottom = !!border.bottom;
             }
-
             if (typeof border.left !== 'undefined') {
               this.border.left = !!border.left;
             }
@@ -2613,36 +2467,28 @@ var Vue = exports.Vue;
           if (typeof color.primary !== 'undefined') {
             this.color.primary = Color.fillHex(color.primary, true);
           }
-
           if (typeof color.primaryText !== 'undefined') {
             this.color.primaryText = Color.fillHex(color.primaryText, true);
           }
-
           if (typeof color.text !== 'undefined') {
             this.color.text = Color.fillHex(color.text, true);
           }
-
           if (typeof color.background !== 'undefined') {
             var isPopupColorDepend = this.color.popupBackground === this.color.background;
             this.color.background = Color.fillHex(color.background, true);
-
             if (isPopupColorDepend || this.color.popupBackground.length === 0) {
               this.color.popupBackground = Color.fillHex(color.background, true, 'ff');
             }
           }
-
           if (typeof color.fieldBorder !== 'undefined') {
             this.color.fieldBorder = Color.fillHex(color.fieldBorder, true);
           }
-
           if (typeof color.fieldBackground !== 'undefined') {
             this.color.fieldBackground = Color.fillHex(color.fieldBackground, true);
           }
-
           if (typeof color.fieldFocusBackground !== 'undefined') {
             this.color.fieldFocusBackground = Color.fillHex(color.fieldFocusBackground, true);
           }
-
           if (typeof color.popupBackground !== 'undefined') {
             this.color.popupBackground = Color.fillHex(color.popupBackground, true);
           }
@@ -2655,7 +2501,7 @@ var Vue = exports.Vue;
       }, {
         key: "getFontUri",
         value: function getFontUri() {
-          return this.font.uri;
+          return _classPrivateMethodGet$1(this, _replaceFontUriByProxy, _replaceFontUriByProxy2).call(this, this.font.uri);
         }
       }, {
         key: "getFontFamily",
@@ -2668,30 +2514,23 @@ var Vue = exports.Vue;
           switch (babelHelpers["typeof"](option)) {
             case "object":
               var result = undefined;
-
               for (var key in option) {
                 if (option.hasOwnProperty(key)) {
                   continue;
                 }
-
                 var value = this.getEffectiveOption(option);
-
                 if (value) {
                   result = result || {};
                   result[key] = option;
                 }
               }
-
               return result;
-
             case "string":
               if (option) {
                 return option;
               }
-
               break;
           }
-
           return undefined;
         }
       }, {
@@ -2700,15 +2539,12 @@ var Vue = exports.Vue;
           if (this.dark !== null) {
             return this.dark;
           }
-
           if (!this.color.background) {
             return false;
           }
-
           if (this.color.background.indexOf('#') !== 0) {
             return false;
           }
-
           return Color.isHexDark(this.color.background);
         }
       }, {
@@ -2719,51 +2555,54 @@ var Vue = exports.Vue;
       }]);
       return Model;
     }();
+    function _replaceFontUriByProxy2(uri) {
+      if (typeof uri !== 'string' || !uri) {
+        return uri;
+      }
+      this.proxy.fonts.forEach(function (item) {
+        if (!item.source || !item.target) {
+          return;
+        }
+        uri = uri.replace('https://' + item.source, 'https://' + item.target);
+      });
+      return uri;
+    }
 
     var storedValues = null;
     var lsStoredValuesKey = 'b24-form-field-stored-values';
-
     function restore() {
       if (storedValues !== null) {
         return storedValues;
       }
-
       if (window.localStorage) {
         var stored = window.localStorage.getItem(lsStoredValuesKey);
-
         if (stored) {
           try {
             storedValues = JSON.parse(stored);
           } catch (e) {}
         }
       }
-
       storedValues = storedValues || {};
       storedValues.type = storedValues.type || {};
       storedValues.name = storedValues.name || {};
       return storedValues;
     }
-
     function storeFieldValues(fields) {
       try {
         if (!window.localStorage) {
           return storedValues;
         }
-
         var storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
         var stored = fields.reduce(function (result, field) {
           if (storedTypes.indexOf(field.getType()) >= 0 && field.autocomplete || field.autocomplete === true) {
             var value = field.value();
-
             if (value) {
               if (storedTypes.indexOf(field.getType()) >= 0 && field.autocomplete) {
                 result.type[field.getType()] = value;
               }
-
               result.name[field.name] = value;
             }
           }
-
           return result;
         }, restore());
         window.localStorage.setItem(lsStoredValuesKey, JSON.stringify(stored));
@@ -2771,22 +2610,18 @@ var Vue = exports.Vue;
     }
     function getStoredFieldValue(fieldType) {
       var storedTypes = ['name', 'second-name', 'last-name', 'email', 'phone'];
-
       if (storedTypes.indexOf(fieldType) < 0) {
         return '';
       }
-
       return restore()['type'][fieldType] || '';
     }
     function getStoredFieldValueByFieldName(fieldName) {
       return restore()['name'][fieldName] || '';
     }
 
-    function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$2(obj, privateSet); privateSet.add(obj); }
-
-    function _checkPrivateRedeclaration$2(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
-    function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+    function _classPrivateMethodInitSpec$2(obj, privateSet) { _checkPrivateRedeclaration$3(obj, privateSet); privateSet.add(obj); }
+    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateMethodGet$2(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
     var DefaultOptions = {
       type: 'string',
       label: 'Default field name',
@@ -2795,9 +2630,7 @@ var Vue = exports.Vue;
       visible: true,
       required: false
     };
-
     var _prepareValues = /*#__PURE__*/new WeakSet();
-
     var Controller = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller, _Event);
       babelHelpers.createClass(Controller, [{
@@ -2832,16 +2665,12 @@ var Vue = exports.Vue;
           return new Item(options);
         }
       }]);
-
       function Controller() {
         var _this;
-
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions;
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
-        _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _prepareValues);
-
+        _classPrivateMethodInitSpec$2(babelHelpers.assertThisInitialized(_this), _prepareValues);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "events", {
           blur: 'blur',
           focus: 'focus',
@@ -2856,12 +2685,9 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "formatters", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "filters", []);
         _this.visible = !!options.visible;
-
         _this.adjust(options);
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "reset",
         value: function reset() {
@@ -2941,11 +2767,9 @@ var Vue = exports.Vue;
         key: "validate",
         value: function validate(value) {
           var _this2 = this;
-
           if (value === '') {
             return true;
           }
-
           return !this.validators.some(function (validator) {
             return !validator.call(_this2, value);
           });
@@ -2954,7 +2778,6 @@ var Vue = exports.Vue;
         key: "hasValidValue",
         value: function hasValidValue() {
           var _this3 = this;
-
           return this.values().some(function (value) {
             return value !== '' && _this3.validate(value);
           });
@@ -2963,31 +2786,25 @@ var Vue = exports.Vue;
         key: "isEmptyRequired",
         value: function isEmptyRequired() {
           var items = this.selectedItems();
-
           if (this.required) {
             if (items.length === 0 || !items[0] || !items[0].selected || (items[0].value + '').trim() === '') {
               return true;
             }
           }
-
           return false;
         }
       }, {
         key: "valid",
         value: function valid() {
           var _this4 = this;
-
           if (!this.visible) {
             return true;
           }
-
           this.validated = true;
           var items = this.selectedItems();
-
           if (this.isEmptyRequired()) {
             return false;
           }
-
           return !items.some(function (item) {
             return !_this4.validate(item.value);
           });
@@ -3001,13 +2818,10 @@ var Vue = exports.Vue;
         key: "addItem",
         value: function addItem(options) {
           var _this5 = this;
-
           if (options.selected && !this.multiple && this.values().length > 0) {
             options.selected = false;
           }
-
           var item = this.constructor.createItem(options);
-
           if (item) {
             item.subscribe(item.events.changeSelected, function (data, obj, type) {
               _this5.emit(_this5.events.changeSelected, {
@@ -3018,7 +2832,6 @@ var Vue = exports.Vue;
             });
             this.items.push(item);
           }
-
           return item;
         }
       }, {
@@ -3027,11 +2840,9 @@ var Vue = exports.Vue;
           if (this.items.length > this.values().length) {
             return;
           }
-
           if (this.items.length > 0 && !this.multiple) {
             return;
           }
-
           this.addItem({});
         }
       }, {
@@ -3047,35 +2858,27 @@ var Vue = exports.Vue;
         key: "setValues",
         value: function setValues(values) {
           var _this6 = this;
-
-          values = _classPrivateMethodGet$1(this, _prepareValues, _prepareValues2).call(this, values);
-
+          values = _classPrivateMethodGet$2(this, _prepareValues, _prepareValues2).call(this, values);
           if (values.length === 0) {
             return this;
           }
-
           if (!this.multiple) {
             values = [values[0]];
           }
-
           if (this.isComponentDuplicable) {
             if (this.items.length > values.length) {
               this.items = this.items.slice(0, values.length - 1);
             }
-
             values.forEach(function (value, index) {
               var item = _this6.items[index];
-
               if (!item) {
                 item = _this6.addItem({
                   value: value
                 });
               }
-
               item.value = value;
             });
           }
-
           this.items.forEach(function (item) {
             item.selected = values.indexOf(item.getComparableValue()) >= 0;
           });
@@ -3085,7 +2888,6 @@ var Vue = exports.Vue;
         key: "adjust",
         value: function adjust() {
           var _this7 = this;
-
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions;
           var autocomplete = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
           this.options = Object.assign({}, this.options, options);
@@ -3099,7 +2901,6 @@ var Vue = exports.Vue;
           this.hint = this.options.hint || '';
           this.hintOnFocus = !!this.options.hintOnFocus;
           this.placeholder = this.options.placeholder || '';
-
           if (options.messages || !this.messages) {
             if (options.messages instanceof Storage) {
               this.messages = options.messages;
@@ -3108,7 +2909,6 @@ var Vue = exports.Vue;
               this.messages.setMessages(options.messages || {});
             }
           }
-
           if (options.design || !this.design) {
             if (options.design instanceof Model) {
               this.design = options.design;
@@ -3117,35 +2917,30 @@ var Vue = exports.Vue;
               this.design.adjust(options.design || {});
             }
           }
-
           var values = this.options.values || [];
           var value = this.options.value || values[0];
-
           if (autocomplete) {
             value = value || (this.autocomplete ? getStoredFieldValueByFieldName(this.name) : null) || (this.autocomplete ? getStoredFieldValue(this.getType()) : null) || '';
           }
-
           var items = this.options.items || [];
           var selected = !this.multiple || values.length > 0;
-
           if (values.length === 0) {
             values.push(value);
             selected = typeof value !== 'undefined' && value !== '';
-          } // empty single
+          }
 
-
+          // empty single
           if (items.length === 0 && !this.multiple) {
             if (typeof this.options.checked !== "undefined") {
               selected = !!this.options.checked;
             }
-
             items.push({
               value: value,
               selected: selected
             });
-          } // empty multi
+          }
 
-
+          // empty multi
           if (items.length === 0 && this.multiple) {
             values.forEach(function (value) {
               return items.push({
@@ -3154,7 +2949,6 @@ var Vue = exports.Vue;
               });
             });
           }
-
           items.forEach(function (item) {
             return _this7.addItem(item);
           });
@@ -3162,10 +2956,8 @@ var Vue = exports.Vue;
       }]);
       return Controller;
     }(Event);
-
     function _prepareValues2(values) {
       var _this8 = this;
-
       return values.filter(function (value) {
         return typeof value !== 'undefined';
       }).map(function (value) {
@@ -3198,7 +2990,6 @@ var Vue = exports.Vue;
       watch: {
         visible: function visible(val) {
           var _this = this;
-
           if (val) {
             this.$emit('visible:on');
             document.addEventListener('mouseup', this.listenerBind);
@@ -3208,15 +2999,12 @@ var Vue = exports.Vue;
             }, 0);
             document.removeEventListener('mouseup', this.listenerBind);
           }
-
           if (window.innerWidth <= 530) {
             setTimeout(function () {
               Scroll.toggle(_this.$el.querySelector('.b24-form-dropdown-container'), !val);
-
               _this.observers.move.toggle(val, _this.$refs.header);
             }, 0);
           }
-
           if (this.$root.flags) {
             this.$root.flags.hideEars = val;
           }
@@ -3228,34 +3016,28 @@ var Vue = exports.Vue;
         },
         listener: function listener(e) {
           var el = e.target;
-
           if (this.$el !== el && !this.$el.contains(el)) {
             this.close();
           }
         },
         observeMove: function observeMove(observer, isEnd) {
           var target = observer.element.parentElement;
-
           if (!isEnd) {
             if (!target.dataset.height) {
               target.dataset.height = target.clientHeight;
             }
-
             target.style.height = target.style.minHeight = parseInt(target.dataset.height) + parseInt(observer.deltaY) + 'px';
           }
-
           if (isEnd) {
             if (observer.deltaY < 0 && Math.abs(observer.deltaY) > target.dataset.height / 2) {
               if (document.activeElement) {
                 document.activeElement.blur();
               }
-
               this.close();
               setTimeout(function () {
                 if (!target) {
                   return;
                 }
-
                 target.dataset.height = null;
                 target.style.height = null;
                 target.style.minHeight = null;
@@ -3317,22 +3099,18 @@ var Vue = exports.Vue;
               y: 0,
               touch: null
             };
-
             var hasTouch = function hasTouch(list, item) {
               for (var i = 0; i < list.length; i++) {
                 if (list.item(i).identifier === item.identifier) {
                   return true;
                 }
               }
-
               return false;
             };
-
             el.addEventListener('touchstart', function (e) {
               if (e.touches.length !== 1 || data.started) {
                 return;
               }
-
               var touch = e.changedTouches[0];
               data.detecting = true;
               data.x = touch.pageX;
@@ -3343,47 +3121,37 @@ var Vue = exports.Vue;
               if (!data.started && !data.detecting) {
                 return;
               }
-
               var touch = e.changedTouches[0];
               var newX = touch.pageX;
               var newY = touch.pageY;
-
               if (!hasTouch(e.changedTouches, touch)) {
                 return;
               }
-
               if (data.detecting) {
                 if (Math.abs(data.x - newX) >= Math.abs(data.y - newY)) {
                   e.preventDefault();
                   data.started = true;
                 }
-
                 data.detecting = false;
               }
-
               if (data.started) {
                 e.preventDefault();
                 data.delta = data.x - newX;
               }
             });
-
             var onEnd = function onEnd(e) {
               if (!hasTouch(e.changedTouches, data.touch) || !data.started) {
                 return;
               }
-
               e.preventDefault();
-
               if (data.delta > 0) {
                 binding.value(true);
               } else if (data.delta < 0) {
                 binding.value(false);
               }
-
               data.started = false;
               data.detecting = false;
             };
-
             el.addEventListener('touchend', onEnd);
             el.addEventListener('touchcancel', onEnd);
           }
@@ -3394,7 +3162,6 @@ var Vue = exports.Vue;
           if (this.indexHeight && this.indexHeight > this.minHeight) {
             return this.indexHeight;
           }
-
           return this.minHeight;
         },
         width: function width() {
@@ -3417,13 +3184,11 @@ var Vue = exports.Vue;
         },
         getItem: function getItem() {
           var item = this.item || this.field.selectedItem();
-
           if (this.lastItem !== item) {
             this.lastItem = item;
             this.index = 0;
             this.heights = {};
           }
-
           return this.lastItem;
         },
         nextable: function nextable() {
@@ -3471,7 +3236,8 @@ var Vue = exports.Vue;
         }
       },
       methods: {
-        controlClasses: function controlClasses() {//b24-form-control-checked
+        controlClasses: function controlClasses() {
+          //b24-form-control-checked
         }
       }
     };
@@ -3494,7 +3260,6 @@ var Vue = exports.Vue;
         },
         closeDropDown: function closeDropDown() {
           var _this = this;
-
           setTimeout(function () {
             _this.dropDownOpened = false;
           }, 0);
@@ -3520,11 +3285,9 @@ var Vue = exports.Vue;
         },
         inputClasses: function inputClasses() {
           var list = [];
-
           if (this.item.value) {
             list.push('b24-form-control-not-empty');
           }
-
           return list;
         }
       },
@@ -3545,7 +3308,6 @@ var Vue = exports.Vue;
         onInput: function onInput() {
           var value = this.field.normalize(this.value);
           value = this.field.format(value);
-
           if (this.value !== value) {
             this.value = value;
           }
@@ -3601,13 +3363,11 @@ var Vue = exports.Vue;
       Double: function Double(value) {
         value = (value || '').replace(/,/g, '.');
         var dotIndex = value.indexOf('.');
-
         if (dotIndex === 0) {
           value = '0' + value;
         } else if (dotIndex < 0) {
           value += '.0';
         }
-
         return value.match(/^\d+\.\d+$/);
       },
       Integer: function Integer(value) {
@@ -3644,13 +3404,11 @@ var Vue = exports.Vue;
         value = value || '';
         var hasPlus = value.indexOf('+') === 0;
         value = value.replace(/[^\d]/g, '');
-
         if (!hasPlus && value.substr(0, 1) === '8') {
           if (window.navigator && (window.navigator.language || '').substring(0, 2) === 'ru') {
             value = '7' + value.substr(1);
           }
         }
-
         if (!phoneDb.list) {
           phoneDb.list = "247,ac,___-____|376,ad,___-___-___|971,ae,___-_-___-____|93,af,__-__-___-____|1268,ag,_ (___) ___-____|1264,ai,_ (___) ___-____|355,al,___ (___) ___-___|374,am,___-__-___-___|599,bq,___-___-____|244,ao,___ (___) ___-___|6721,aq,___-___-___|54,ar,__ (___) ___-____|1684,as,_ (___) ___-____|43,at,__ (___) ___-____|61,au,__-_-____-____|297,aw,___-___-____|994,az,___ (__) ___-__-__|387,ba,___-__-____|1246,bb,_ (___) ___-____|880,bd,___-__-___-___|32,be,__ (___) ___-___|226,bf,___-__-__-____|359,bg,___ (___) ___-___|973,bh,___-____-____|257,bi,___-__-__-____|229,bj,___-__-__-____|1441,bm,_ (___) ___-____|673,bn,___-___-____|591,bo,___-_-___-____|55,br,__-(__)-____-____|1242,bs,_ (___) ___-____|975,bt,___-_-___-___|267,bw,___-__-___-___|375,by,___ (__) ___-__-__|501,bz,___-___-____|243,cd,___ (___) ___-___|236,cf,___-__-__-____|242,cg,___-__-___-____|41,ch,__-__-___-____|225,ci,___-__-___-___|682,ck,___-__-___|56,cl,__-_-____-____|237,cm,___-____-____|86,cn,__ (___) ____-___|57,co,__ (___) ___-____|506,cr,___-____-____|53,cu,__-_-___-____|238,cv,___ (___) __-__|357,cy,___-__-___-___|420,cz,___ (___) ___-___|49,de,__-___-___|253,dj,___-__-__-__-__|45,dk,__-__-__-__-__|1767,dm,_ (___) ___-____|1809,do,_ (___) ___-____|,do,_ (___) ___-____|213,dz,___-__-___-____|593,ec,___-_-___-____|372,ee,___-___-____|20,eg,__ (___) ___-____|291,er,___-_-___-___|34,es,__ (___) ___-___|251,et,___-__-___-____|358,fi,___ (___) ___-__-__|679,fj,___-__-_____|500,fk,___-_____|691,fm,___-___-____|298,fo,___-___-___|262,fr,___-_____-____|33,fr,__ (___) ___-___|508,fr,___-__-____|590,fr,___ (___) ___-___|241,ga,___-_-__-__-__|1473,gd,_ (___) ___-____|995,ge,___ (___) ___-___|594,gf,___-_____-____|233,gh,___ (___) ___-___|350,gi,___-___-_____|299,gl,___-__-__-__|220,gm,___ (___) __-__|224,gn,___-__-___-___|240,gq,___-__-___-____|30,gr,__ (___) ___-____|502,gt,___-_-___-____|1671,gu,_ (___) ___-____|245,gw,___-_-______|592,gy,___-___-____|852,hk,___-____-____|504,hn,___-____-____|385,hr,___-__-___-___|509,ht,___-__-__-____|36,hu,__ (___) ___-___|62,id,__-__-___-__|353,ie,___ (___) ___-___|972,il,___-_-___-____|91,in,__ (____) ___-___|246,io,___-___-____|964,iq,___ (___) ___-____|98,ir,__ (___) ___-____|354,is,___-___-____|39,it,__ (___) ____-___|1876,jm,_ (___) ___-____|962,jo,___-_-____-____|81,jp,__ (___) ___-___|254,ke,___-___-______|996,kg,___ (___) ___-___|855,kh,___ (__) ___-___|686,ki,___-__-___|269,km,___-__-_____|1869,kn,_ (___) ___-____|850,kp,___-___-___|82,kr,__-__-___-____|965,kw,___-____-____|1345,ky,_ (___) ___-____|77,kz,_ (___) ___-__-__|856,la,___-__-___-___|961,lb,___-_-___-___|1758,lc,_ (___) ___-____|423,li,___ (___) ___-____|94,lk,__-__-___-____|231,lr,___-__-___-___|266,ls,___-_-___-____|370,lt,___ (___) __-___|352,lu,___ (___) ___-___|371,lv,___-__-___-___|218,ly,___-__-___-___|212,ma,___-__-____-___|377,mc,___-__-___-___|373,md,___-____-____|382,me,___-__-___-___|261,mg,___-__-__-_____|692,mh,___-___-____|389,mk,___-__-___-___|223,ml,___-__-__-____|95,mm,__-___-___|976,mn,___-__-__-____|853,mo,___-____-____|1670,mp,_ (___) ___-____|596,mq,___ (___) __-__-__|222,mr,___ (__) __-____|1664,ms,_ (___) ___-____|356,mt,___-____-____|230,mu,___-___-____|960,mv,___-___-____|265,mw,___-_-____-____|52,mx,__-__-__-____|60,my,__-_-___-___|258,mz,___-__-___-___|264,na,___-__-___-____|687,nc,___-__-____|227,ne,___-__-__-____|6723,nf,___-___-___|234,ng,___-__-___-__|505,ni,___-____-____|31,nl,__-__-___-____|47,no,__ (___) __-___|977,np,___-__-___-___|674,nr,___-___-____|683,nu,___-____|64,nz,__-__-___-___|968,om,___-__-___-___|507,pa,___-___-____|51,pe,__ (___) ___-___|689,pf,___-__-__-__|675,pg,___ (___) __-___|63,ph,__ (___) ___-____|92,pk,__ (___) ___-____|48,pl,__ (___) ___-___|970,ps,___-__-___-____|351,pt,___-__-___-____|680,pw,___-___-____|595,py,___ (___) ___-___|974,qa,___-____-____|40,ro,__-__-___-____|381,rs,___-__-___-____|7,ru,_ (___) ___-__-__|250,rw,___ (___) ___-___|966,sa,___-_-___-____|677,sb,___-_____|248,sc,___-_-___-___|249,sd,___-__-___-____|46,se,__-__-___-____|65,sg,__-____-____|386,si,___-__-___-___|421,sk,___ (___) ___-___|232,sl,___-__-______|378,sm,___-____-______|221,sn,___-__-___-____|252,so,___-_-___-___|597,sr,___-___-___|211,ss,___-__-___-____|239,st,___-__-_____|503,sv,___-__-__-____|1721,sx,_ (___) ___-____|963,sy,___-__-____-___|268,sz,___ (__) __-____|1649,tc,_ (___) ___-____|235,td,___-__-__-__-__|228,tg,___-__-___-___|66,th,__-__-___-___|992,tj,___-__-___-____|690,tk,___-____|670,tl,___-___-____|993,tm,___-_-___-____|216,tn,___-__-___-___|676,to,___-_____|90,tr,__ (___) ___-____|1868,tt,_ (___) ___-____|688,tv,___-_____|886,tw,___-____-____|255,tz,___-__-___-____|380,ua,___ (__) ___-__-__|256,ug,___ (___) ___-___|44,gb,__-__-____-____|598,uy,___-_-___-__-__|998,uz,___-__-___-____|396698,va,__-_-___-_____|1784,vc,_ (___) ___-____|58,ve,__ (___) ___-____|1284,vg,_ (___) ___-____|1340,vi,_ (___) ___-____|84,vn,__-__-____-___|678,vu,___-_____|681,wf,___-__-____|685,ws,___-__-____|967,ye,___-_-___-___|27,za,__-__-___-____|260,zm,___ (__) ___-____|263,zw,___-_-______|1,us,_ (___) ___-____|".split('|').map(function (item) {
             item = item.split(',');
@@ -3661,22 +3419,17 @@ var Vue = exports.Vue;
             };
           });
         }
-
         if (value.length > 0) {
           var mask = phoneDb.findMask(value);
           mask += ((mask.indexOf('-') >= 0 ? '-' : ' ') + '__').repeat(10);
-
           for (var i = 0; i < value.length; i++) {
             mask = mask.replace('_', value.substr(i, 1));
           }
-
           value = mask.replace(/[^\d]+$/, '').replace(/_/g, '0');
         }
-
         if (hasPlus || value.length > 0) {
           value = '+' + value;
         }
-
         return value;
       }
     };
@@ -3694,24 +3447,18 @@ var Vue = exports.Vue;
           return FieldString;
         }
       }]);
-
       function Controller$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
         var minSize = (options.size || {}).min || 0;
         var maxSize = (options.size || {}).max || 0;
-
         if (minSize || maxSize) {
           _this.validators.push(Validator.makeStringLengthValidator(minSize, maxSize));
-
           _this.normalizers.push(Normalizer.makeStringLengthNormalizer(maxSize));
         }
-
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "getOriginalType",
         value: function getOriginalType() {
@@ -3743,22 +3490,15 @@ var Vue = exports.Vue;
 
     var Controller$2 = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
         _this.validators.push(Validator.Email);
-
         _this.normalizers.push(Normalizer.Email);
-
         _this.filters.push(Filter.Email);
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputType",
         value: function getInputType() {
@@ -3785,24 +3525,16 @@ var Vue = exports.Vue;
 
     var Controller$3 = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
         _this.formatters.push(Formatter.Phone);
-
         _this.validators.push(Validator.Phone);
-
         _this.normalizers.push(Normalizer.Phone);
-
         _this.filters.push(Filter.Phone);
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputType",
         value: function getInputType() {
@@ -3829,22 +3561,15 @@ var Vue = exports.Vue;
 
     var Controller$4 = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
         _this.validators.push(Validator.Integer);
-
         _this.normalizers.push(Normalizer.Integer);
-
         _this.filters.push(Normalizer.Integer);
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputType",
         value: function getInputType() {
@@ -3861,22 +3586,15 @@ var Vue = exports.Vue;
 
     var Controller$5 = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
         _this.validators.push(Validator.Double);
-
         _this.normalizers.push(Normalizer.Double);
-
         _this.filters.push(Normalizer.Double);
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputType",
         value: function getInputType() {
@@ -3893,22 +3611,15 @@ var Vue = exports.Vue;
 
     var Controller$6 = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
         _this.validators.push(Validator.Double);
-
         _this.normalizers.push(Normalizer.Double);
-
         _this.filters.push(Normalizer.Double);
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputType",
         value: function getInputType() {
@@ -3930,12 +3641,10 @@ var Vue = exports.Vue;
 
     var Controller$7 = /*#__PURE__*/function (_BaseField$Controller) {
       babelHelpers.inherits(Controller$$1, _BaseField$Controller);
-
       function Controller$$1() {
         babelHelpers.classCallCheck(this, Controller$$1);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "isComponentDuplicable",
         get: function get() {
@@ -3973,13 +3682,11 @@ var Vue = exports.Vue;
           return FieldBool;
         }
       }]);
-
       function Controller$$1(options) {
         babelHelpers.classCallCheck(this, Controller$$1);
         options.multiple = false;
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
       }
-
       return Controller$$1;
     }(Controller);
 
@@ -4001,13 +3708,11 @@ var Vue = exports.Vue;
           return FieldCheckbox;
         }
       }]);
-
       function Controller$$1(options) {
         babelHelpers.classCallCheck(this, Controller$$1);
         options.multiple = false;
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
       }
-
       return Controller$$1;
     }(Controller);
 
@@ -4024,13 +3729,11 @@ var Vue = exports.Vue;
           return FieldCheckbox;
         }
       }]);
-
       function Controller$$1(options) {
         babelHelpers.classCallCheck(this, Controller$$1);
         options.multiple = true;
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
       }
-
       return Controller$$1;
     }(Controller);
 
@@ -4041,12 +3744,10 @@ var Vue = exports.Vue;
 
     var Controller$b = /*#__PURE__*/function (_BaseField$Controller) {
       babelHelpers.inherits(Controller$$1, _BaseField$Controller);
-
       function Controller$$1() {
         babelHelpers.classCallCheck(this, Controller$$1);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
       }
-
       babelHelpers.createClass(Controller$$1, null, [{
         key: "type",
         value: function type() {
@@ -4063,28 +3764,25 @@ var Vue = exports.Vue;
 
     var Item$1 = /*#__PURE__*/function (_BaseItem) {
       babelHelpers.inherits(Item$$1, _BaseItem);
-
       function Item$$1(options) {
         babelHelpers.classCallCheck(this, Item$$1);
-        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options));
-        /*
-        let value;
-        if (Util.Type.object(options.value))
-        {
-        	value = options.value;
-        	value.quantity = value.quantity ? Util.Conv.number(value.quantity) : 0;
-        }
-        else
-        {
-        	value = {id: options.value};
-        }
-        this.value = {
-        	id: value.id || '',
-        	quantity: value.quantity || this.quantity.min || this.quantity.step,
-        };
-        */
+        return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options)); /*
+                                                                                                                    let value;
+                                                                                                                    if (Util.Type.object(options.value))
+                                                                                                                    {
+                                                                                                                    	value = options.value;
+                                                                                                                    	value.quantity = value.quantity ? Util.Conv.number(value.quantity) : 0;
+                                                                                                                    }
+                                                                                                                    else
+                                                                                                                    {
+                                                                                                                    	value = {id: options.value};
+                                                                                                                    }
+                                                                                                                    this.value = {
+                                                                                                                    	id: value.id || '',
+                                                                                                                    	quantity: value.quantity || this.quantity.min || this.quantity.step,
+                                                                                                                    };
+                                                                                                                    */
       }
-
       babelHelpers.createClass(Item$$1, [{
         key: "getFileData",
         value: function getFileData() {}
@@ -4112,20 +3810,16 @@ var Vue = exports.Vue;
         value: {
           get: function get() {
             var value = this.item.value || {};
-
             if (value.content) {
               return JSON.stringify(this.item.value);
             }
-
             return '';
           },
           set: function set(newValue) {
             newValue = newValue || {};
-
             if (typeof newValue === 'string') {
               newValue = JSON.parse(newValue);
             }
-
             this.item.value = newValue;
             this.item.selected = !!newValue.content;
             this.field.addSingleEmptyItem();
@@ -4144,36 +3838,28 @@ var Vue = exports.Vue;
       methods: {
         setFiles: function setFiles() {
           var _this = this;
-
           this.errorTextTypeFile = null;
           var file = this.$refs.inputFiles.files[0];
-
           if (!file) {
             return;
           }
-
           var fileType = file.type || '';
           var fileExt = (file.name || '').split('.').pop();
           var acceptTypes = this.field.getAcceptTypes();
           acceptTypes = acceptTypes ? acceptTypes.split(',') : [];
-
           if (file && acceptTypes.length > 0) {
             var isTypeValid = acceptTypes.some(function (type) {
               type = type || '';
-
               if (type === fileType) {
                 return true;
               }
-
               if (type.indexOf('*') >= 0) {
                 return fileType.indexOf(type.replace(/\*/g, '')) >= 0;
               } else if (type.indexOf('.') === 0) {
                 return type === '.' + fileExt;
               }
-
               return false;
             });
-
             if (!isTypeValid) {
               file = null;
               var extensions = acceptTypes.filter(function (item) {
@@ -4185,12 +3871,10 @@ var Vue = exports.Vue;
               }, 15000);
             }
           }
-
           if (!file) {
             this.value = null;
           } else {
             var reader = new FileReader();
-
             reader.onloadend = function () {
               var result = reader.result.split(';');
               _this.value = {
@@ -4201,7 +3885,6 @@ var Vue = exports.Vue;
               };
               _this.$refs.inputFiles.value = null;
             };
-
             reader.readAsDataURL(file);
           }
         },
@@ -4254,17 +3937,13 @@ var Vue = exports.Vue;
         },
         select: function select(item) {
           var _this = this;
-
           this.closeDropDown();
-
           var select = function select() {
             if (_this.item) {
               _this.item.selected = false;
             }
-
             item.selected = true;
           };
-
           if (this.item && this.item.selected) {
             select();
           } else {
@@ -4285,16 +3964,13 @@ var Vue = exports.Vue;
           if (!this.item || !this.item.selected) {
             return '';
           }
-
           return this.item.label;
         },
         classes: function classes() {
           var list = [];
-
           if (this.itemLabel) {
             list.push('b24-form-control-not-empty');
           }
-
           return list;
         }
       },
@@ -4329,7 +4005,6 @@ var Vue = exports.Vue;
       required: false,
       bigPic: true
     };
-
     var Controller$c = /*#__PURE__*/function (_BaseField$Controller) {
       babelHelpers.inherits(Controller$$1, _BaseField$Controller);
       babelHelpers.createClass(Controller$$1, [{
@@ -4348,10 +4023,8 @@ var Vue = exports.Vue;
           return FieldList;
         }
       }]);
-
       function Controller$$1() {
         var _this;
-
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$2;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
@@ -4359,14 +4032,13 @@ var Vue = exports.Vue;
         _this.bigPic = !!options.bigPic;
         return _this;
       }
+
       /*
       adjust(options: Options = DefaultOptions)
       {
       	super.adjust(options);
       }
       */
-
-
       return Controller$$1;
     }(Controller);
 
@@ -4388,10 +4060,8 @@ var Vue = exports.Vue;
           return new Item$1(options);
         }
       }]);
-
       function Controller$$1() {
         var _this;
-
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$2;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
@@ -4399,7 +4069,6 @@ var Vue = exports.Vue;
         _this.contentTypes = (Array.isArray(options.contentTypes) ? options.contentTypes : []) || [];
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "getAcceptTypes",
         value: function getAcceptTypes() {
@@ -4407,19 +4076,14 @@ var Vue = exports.Vue;
             switch (item) {
               case 'image/*':
                 return [item, '.jpeg', '.png', '.ico'];
-
               case 'video/*':
                 return [item, '.mp4', '.avi'];
-
               case 'audio/*':
                 return [item, '.mp3', '.ogg', '.wav'];
-
               case 'x-bx/doc':
                 return ['application/pdf', 'application/msword', 'text/csv', 'text/plain', 'application/vnd.*', '.pdf', '.doc', '.docx', '.txt', '.ppt', '.pptx', '.xls', '.xlsx', '.csv', '.vsd', '.vsdx'].join(',');
-
               case 'x-bx/arc':
                 return ['application/zip', 'application/gzip', 'application/x-tar', 'application/x-rar-compressed', '.zip', '.7z', '.tar', '.gzip', '.rar'].join(',');
-
               default:
                 return item;
             }
@@ -4431,27 +4095,21 @@ var Vue = exports.Vue;
 
     var Item$2 = /*#__PURE__*/function (_BaseItem) {
       babelHelpers.inherits(Item$$1, _BaseItem);
-
       function Item$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Item$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options));
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "pics", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "discount", 0);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "changeablePrice", false);
-
         if (Array.isArray(options.pics)) {
           _this.pics = options.pics;
         }
-
         var price = Conv.number(options.price);
         _this.changeablePrice = !!options.changeablePrice;
-
         if (_this.changeablePrice) {
           price = null;
         }
-
         _this.discount = Conv.number(options.discount);
         var quantity = Type.object(options.quantity) ? options.quantity : {};
         _this.quantity = {
@@ -4461,7 +4119,6 @@ var Vue = exports.Vue;
           unit: quantity.unit || ''
         };
         var value;
-
         if (Type.object(options.value)) {
           value = options.value;
           value.quantity = value.quantity ? Conv.number(value.quantity) : 0;
@@ -4470,24 +4127,19 @@ var Vue = exports.Vue;
             id: options.value
           };
         }
-
         _this.value = {
           id: value.id || '',
           quantity: value.quantity || _this.quantity.min || _this.quantity.step,
           price: price
         };
-
         if (_this.changeablePrice) {
           _this.value.changeablePrice = true;
         }
-
         if (!options.price && !options.label && !options.value) {
           _this.selected = false;
         }
-
         return _this;
       }
-
       babelHelpers.createClass(Item$$1, [{
         key: "onSelect",
         value: function onSelect(value) {
@@ -4580,7 +4232,6 @@ var Vue = exports.Vue;
       methods: {
         onItemClick: function onItemClick(e) {
           var node = e.target.querySelector('.b24-form-control-input-text');
-
           if (node) {
             node.focus();
           }
@@ -4609,22 +4260,18 @@ var Vue = exports.Vue;
         onInput: function onInput(event) {
           var value = this.field.normalize(event.target.value);
           value = this.field.format(value);
-
           if (this.value !== value) {
             this.value = value;
           }
         },
         onKeyDown: function onKeyDown(e) {
           var val = e.key;
-
           if (!/[^\d]/.test(val || '')) {
             return;
           }
-
           if (val === 'Esc' || val === 'Delete' || val === 'Backspace') {
             return;
           }
-
           e.preventDefault();
         }
       }
@@ -4672,38 +4319,28 @@ var Vue = exports.Vue;
           return new Item$2(options);
         }
       }]);
-
       function Controller(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
-
         if (_this.hasChangeablePrice()) {
           _this.multiple = false;
         }
-
         _this.currency = options.currency;
-
         _this.validators.push(function (value) {
           return !value.changeablePrice || value.price > 0;
         });
-
         _this.validators.push(function (value) {
           return !value.changeablePrice || Validator.Money(value.price);
         });
-
         _this.filters.push(function (value) {
           return !value.changeablePrice || Filter.Money(value.price);
         });
-
         _this.normalizers.push(function (value) {
           return !value.changeablePrice ? value : Normalizer.Money(value.price);
         });
-
         return _this;
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getOriginalType",
         value: function getOriginalType() {
@@ -4734,7 +4371,6 @@ var Vue = exports.Vue;
           if (!options.value && !options.label && !options.price) {
             options.selected = false;
           }
-
           return babelHelpers.get(babelHelpers.getPrototypeOf(Controller.prototype), "addItem", this).call(this, options);
         }
       }]);
@@ -4756,13 +4392,11 @@ var Vue = exports.Vue;
       ampmLower: 'T',
       format: function format(date, dateFormat) {
         var hours12 = date.getHours();
-
         if (hours12 === 0) {
           hours12 = 12;
         } else if (hours12 > 12) {
           hours12 -= 12;
         }
-
         var ampm = date.getHours() > 11 ? 'PM' : 'AM';
         return dateFormat.replace(this.year, function () {
           return date.getFullYear();
@@ -4801,10 +4435,8 @@ var Vue = exports.Vue;
         var formatParts = dateFormat.split(this.re);
         var partsSize = formatParts.length;
         var isPm = false;
-
         for (var i = 0; i < partsSize; i++) {
           var part = dateParts[i];
-
           switch (formatParts[i]) {
             case this.ampm:
             case this.ampmLower:
@@ -4812,44 +4444,35 @@ var Vue = exports.Vue;
               break;
           }
         }
-
         for (var _i = 0; _i < partsSize; _i++) {
           var _part = dateParts[_i];
           var partInt = parseInt(_part);
-
           switch (formatParts[_i]) {
             case this.year:
               r.year = partInt;
               break;
-
             case this.month:
               r.month = partInt;
               break;
-
             case this.day:
               r.day = partInt;
               break;
-
             case this.hours:
             case this.hoursZeroFree:
               r.hours = partInt;
               break;
-
             case this.hours12:
             case this.hoursZeroFree12:
               r.hours = isPm ? (partInt > 11 ? 11 : partInt) + 12 : partInt > 11 ? 0 : partInt;
               break;
-
             case this.minutes:
               r.minutes = partInt;
               break;
-
             case this.seconds:
               r.seconds = partInt;
               break;
           }
         }
-
         return r;
       },
       isAmPm: function isAmPm(dateFormat) {
@@ -4976,17 +4599,16 @@ var Vue = exports.Vue;
         },
         currentPeriodDates: function currentPeriodDates() {
           var _this = this;
-
           var _this$currentPeriod = this.currentPeriod,
-              year = _this$currentPeriod.year,
-              month = _this$currentPeriod.month;
+            year = _this$currentPeriod.year,
+            month = _this$currentPeriod.month;
           var days = [];
           var date = new Date(year, month, 1);
           var today = new Date();
-          var offset = this.startWeekOnSunday ? 1 : 0; // append prev month dates
+          var offset = this.startWeekOnSunday ? 1 : 0;
 
+          // append prev month dates
           var startDay = date.getDay() || 7;
-
           if (startDay > 1 - offset) {
             for (var i = startDay - (2 - offset); i >= 0; i--) {
               var prevDate = new Date(date);
@@ -4997,17 +4619,15 @@ var Vue = exports.Vue;
               });
             }
           }
-
           while (date.getMonth() === month) {
             days.push({
               date: new Date(date)
             });
             date.setDate(date.getDate() + 1);
-          } // append next month dates
+          }
 
-
+          // append next month dates
           var daysLeft = 7 - days.length % 7;
-
           for (var _i2 = 1; _i2 <= daysLeft; _i2++) {
             var nextDate = new Date(date);
             nextDate.setDate(_i2);
@@ -5015,9 +4635,9 @@ var Vue = exports.Vue;
               outOfRange: true,
               date: nextDate
             });
-          } // define day states
+          }
 
-
+          // define day states
           days.forEach(function (day) {
             day.disabled = _this.isDateDisabled(day.date);
             day.today = areSameDates(day.date, today);
@@ -5031,11 +4651,9 @@ var Vue = exports.Vue;
           var currentYear = this.currentPeriod.year;
           var startYear = currentYear - this.selectableYearRange;
           var endYear = currentYear + this.selectableYearRange;
-
           for (var i = startYear; i <= endYear; i++) {
             years.push(i);
           }
-
           return years;
         },
         hasCurrentTime: function hasCurrentTime() {
@@ -5108,22 +4726,20 @@ var Vue = exports.Vue;
         parseSimpleDateString: function parseSimpleDateString(dateString, dateFormat) {
           var r = Format.parse(dateString, dateFormat);
           var day = r.day,
-              month = r.month,
-              year = r.year,
-              hours = r.hours,
-              minutes = r.minutes,
-              seconds = r.seconds;
+            month = r.month,
+            year = r.year,
+            hours = r.hours,
+            minutes = r.minutes,
+            seconds = r.seconds;
           var resolvedDate = new Date([paddNum(year, 4), paddNum(month, 2), paddNum(day, 2)].join('-'));
-
           if (isNaN(resolvedDate)) {
             return undefined;
           } else {
             var date = new Date(year, month - 1, day);
             [[year, 'setFullYear'], [hours, 'setHours'], [minutes, 'setMinutes'], [seconds, 'setSeconds']].forEach(function (_ref) {
               var _ref2 = babelHelpers.slicedToArray(_ref, 2),
-                  value = _ref2[0],
-                  method = _ref2[1];
-
+                value = _ref2[0],
+                method = _ref2[1];
               typeof value !== 'undefined' && date[method](value);
             });
             return date;
@@ -5135,7 +4751,6 @@ var Vue = exports.Vue;
         getHourList: function getHourList() {
           var list = [];
           var isAmPm = Format.isAmPm(this.displayFormat || this.format);
-
           for (var hours = 0; hours < 24; hours++) {
             var hoursDisplay = hours > 12 ? hours - 12 : hours === 0 ? 12 : hours;
             hoursDisplay += hours > 11 ? ' pm' : ' am';
@@ -5144,19 +4759,16 @@ var Vue = exports.Vue;
               name: isAmPm ? hoursDisplay : hours
             });
           }
-
           return list;
         },
         getMinuteList: function getMinuteList() {
           var list = [];
-
           for (var i = 0; i <= 60; i++) {
             list.push({
               value: paddNum(i, 2),
               name: paddNum(i, 2)
             });
           }
-
           return list;
         },
         incrementMonth: function incrementMonth() {
@@ -5180,7 +4792,6 @@ var Vue = exports.Vue;
             this.addCloseEvents();
             this.setupPosition();
           }
-
           this.direction = undefined;
         },
         close: function close() {
@@ -5190,7 +4801,6 @@ var Vue = exports.Vue;
             this.removeCloseEvents();
             this.teardownPosition();
           }
-
           this.$emit('close');
         },
         closeViaOverlay: function closeViaOverlay(e) {
@@ -5200,12 +4810,10 @@ var Vue = exports.Vue;
         },
         addCloseEvents: function addCloseEvents() {
           var _this2 = this;
-
           if (!this.closeEventListener) {
             this.closeEventListener = function (e) {
               return _this2.inspectCloseEvent(e);
             };
-
             ['click', 'keyup', 'focusin'].forEach(function (eventName) {
               return document.addEventListener(eventName, _this2.closeEventListener);
             });
@@ -5220,7 +4828,6 @@ var Vue = exports.Vue;
         },
         removeCloseEvents: function removeCloseEvents() {
           var _this3 = this;
-
           if (this.closeEventListener) {
             ['click', 'keyup'].forEach(function (eventName) {
               return document.removeEventListener(eventName, _this3.closeEventListener);
@@ -5230,47 +4837,38 @@ var Vue = exports.Vue;
         },
         setupPosition: function setupPosition() {
           var _this4 = this;
-
           if (!this.positionEventListener) {
             this.positionEventListener = function () {
               return _this4.positionFloater();
             };
-
             window.addEventListener('resize', this.positionEventListener);
           }
-
           this.positionFloater();
         },
         positionFloater: function positionFloater() {
           var _this5 = this;
-
           var inputRect = this.$el.getBoundingClientRect();
           var verticalClass = 'vdpPositionTop';
           var horizontalClass = 'vdpPositionLeft';
-
           var calculate = function calculate() {
             var rect = _this5.$refs.outerWrap.getBoundingClientRect();
-
             var floaterHeight = rect.height;
             var floaterWidth = rect.width;
-
             if (window.innerWidth > _this5.mobileBreakpointWidth) {
               // vertical
               if (inputRect.top + inputRect.height + floaterHeight > window.innerHeight && inputRect.top - floaterHeight > 0) {
                 verticalClass = 'vdpPositionBottom';
-              } // horizontal
+              }
 
-
+              // horizontal
               if (inputRect.left + floaterWidth > window.innerWidth) {
                 horizontalClass = 'vdpPositionRight';
               }
-
               _this5.positionClass = ['vdpPositionReady', verticalClass, horizontalClass].join(' ');
             } else {
               _this5.positionClass = 'vdpPositionFixed';
             }
           };
-
           this.$refs.outerWrap ? calculate() : this.$nextTick(calculate);
         },
         teardownPosition: function teardownPosition() {
@@ -5286,15 +4884,12 @@ var Vue = exports.Vue;
         selectDateItem: function selectDateItem(item) {
           if (!item.disabled) {
             var newDate = new Date(item.date);
-
             if (this.hasCurrentTime) {
               newDate.setHours(this.currentTime.hours);
               newDate.setMinutes(this.currentTime.minutes);
               newDate.setSeconds(this.currentTime.seconds);
             }
-
             this.$emit('input', this.formatDateToString(newDate, this.format));
-
             if (this.hasInputElement && !this.pickTime) {
               this.close();
             }
@@ -5308,13 +4903,11 @@ var Vue = exports.Vue;
             setSeconds: 59
           };
           var numValue = parseInt(event.target.value, 10) || 0;
-
           if (numValue > maxValues[method]) {
             numValue = maxValues[method];
           } else if (numValue < 0) {
             numValue = 0;
           }
-
           event.target.value = paddNum(numValue, method === 'setHours' ? 1 : 2);
           currentDate[method](numValue);
           this.$emit('input', this.formatDateToString(currentDate, this.format), true);
@@ -5322,21 +4915,16 @@ var Vue = exports.Vue;
       },
       template: "\n    <div class=\"vdpComponent\" v-bind:class=\"{vdpWithInput: hasInputElement}\">\n        <input\n            v-if=\"hasInputElement\"\n            type=\"text\"\n            v-bind=\"inputAttributes\"\n            v-bind:readonly=\"isReadOnly\"\n            v-bind:value=\"inputValue\"\n            v-on:input=\"editable && processUserInput($event.target.value)\"\n            v-on:focus=\"editable && open()\"\n            v-on:click=\"editable && open()\"\n        >\n        <button\n            v-if=\"editable && hasInputElement && inputValue\"\n            class=\"vdpClearInput\"\n            type=\"button\"\n            v-on:click=\"clear\"\n        ></button>\n            <div\n                v-if=\"opened\"\n                class=\"vdpOuterWrap\"\n                ref=\"outerWrap\"\n                v-on:click=\"closeViaOverlay\"\n                v-bind:class=\"[positionClass, {vdpFloating: hasInputElement}]\"\n            >\n                <div class=\"vdpInnerWrap\">\n                    <header class=\"vdpHeader\">\n                        <button\n                            class=\"vdpArrow vdpArrowPrev\"\n                            v-bind:title=\"prevMonthCaption\"\n                            type=\"button\"\n                            v-on:click=\"incrementMonth(-1)\"\n                        >{{ prevMonthCaption }}</button>\n                        <button\n                            class=\"vdpArrow vdpArrowNext\"\n                            type=\"button\"\n                            v-bind:title=\"nextMonthCaption\"\n                            v-on:click=\"incrementMonth(1)\"\n                        >{{ nextMonthCaption }}</button>\n                        <div class=\"vdpPeriodControls\">\n                            <div class=\"vdpPeriodControl\">\n                                <button v-bind:class=\"directionClass\" v-bind:key=\"currentPeriod.month\" type=\"button\">\n                                    {{ months[currentPeriod.month] }}\n                                </button>\n                                <select v-model=\"currentPeriod.month\">\n                                    <option v-for=\"(month, index) in months\" v-bind:value=\"index\" v-bind:key=\"month\">\n                                        {{ month }}\n                                    </option>\n                                </select>\n                            </div>\n                            <div class=\"vdpPeriodControl\">\n                                <button v-bind:class=\"directionClass\" v-bind:key=\"currentPeriod.year\" type=\"button\">\n                                    {{ currentPeriod.year }}\n                                </button>\n                                <select v-model=\"currentPeriod.year\">\n                                    <option v-for=\"year in yearRange\" v-bind:value=\"year\" v-bind:key=\"year\">\n                                        {{ year }}\n                                    </option>\n                                </select>\n                            </div>\n                        </div>\n                    </header>\n                    <table class=\"vdpTable\">\n                        <thead>\n                            <tr>\n                                <th class=\"vdpHeadCell\" v-for=\"weekday in weekdaysSorted\" v-bind:key=\"weekday\">\n                                    <span class=\"vdpHeadCellContent\">{{weekday}}</span>\n                                </th>\n                            </tr>\n                        </thead>\n                        <tbody\n                            v-bind:key=\"currentPeriod.year + '-' + currentPeriod.month\"\n                            v-bind:class=\"directionClass\"\n                        >\n                            <tr class=\"vdpRow\" v-for=\"(week, weekIndex) in currentPeriodDates\" v-bind:key=\"weekIndex\">\n                                <td\n                                    class=\"vdpCell\"\n                                    v-for=\"item in week\"\n                                    v-bind:class=\"{\n                                        selectable: !item.disabled,\n                                        selected: item.selected,\n                                        disabled: item.disabled,\n                                        today: item.today,\n                                        outOfRange: item.outOfRange\n                                    }\"\n                                    v-bind:data-id=\"item.dateKey\"\n                                    v-bind:key=\"item.dateKey\"\n                                    v-on:click=\"selectDateItem(item)\"\n                                >\n                                    <div\n                                        class=\"vdpCellContent\"\n                                    >{{ item.date.getDate() }}</div>\n                                </td>\n                            </tr>\n                        </tbody>\n                    </table>\n                    <div v-if=\"pickTime\" class=\"vdpTimeControls\">\n                        <span class=\"vdpTimeCaption\">{{ setTimeCaption }}</span>\n                        <div class=\"vdpTimeUnit\">\n                            <select class=\"vdpHoursInput\"\n                                v-if=\"pickMinutes\"\n                                v-on:input=\"inputTime('setHours', $event)\"\n                                v-on:change=\"inputTime('setHours', $event)\"\n                                v-bind:value=\"currentTime.hours\"\n                            >\n                                <option\n                                    v-for=\"item in getHourList()\"\n                                    :value=\"item.value\"\n                                >{{ item.name }}</option>\n                            </select>\n                        </div>\n                        <span v-if=\"pickMinutes\" class=\"vdpTimeSeparator\">:</span>\n                        <div v-if=\"pickMinutes\" class=\"vdpTimeUnit\">\n                            <select class=\"vdpHoursInput\"\n                                v-if=\"pickMinutes\"\n                                v-on:input=\"inputTime('setMinutes', $event)\"\n                                v-on:change=\"inputTime('setMinutes', $event)\"\n                                v-bind:value=\"currentTime.minutesPadded\"\n                            >\n                                <option\n                                    v-for=\"item in getMinuteList()\"\n                                    :value=\"item.value\"\n                                >{{ item.name }}</option>\n                            </select>\n                        </div>\n                        <span v-if=\"pickSeconds\" class=\"vdpTimeSeparator\">:</span>\n                        <div v-if=\"pickSeconds\" class=\"vdpTimeUnit\">\n                            <input\n                                v-if=\"pickSeconds\"\n                                type=\"number\" pattern=\"\\d*\" class=\"vdpSecondsInput\"\n                                v-on:input=\"inputTime('setSeconds', $event)\"\n                                v-bind:value=\"currentTime.secondsPadded\"\n                            >\n                        </div>\n                        <span class=\"vdpTimeCloseBtn\" @click=\"$emit('close');\">{{ closeButtonCaption }}</span>\n                    </div>\n                </div>\n            </div>\n    </div>\n    "
     };
-
     function paddNum(num, padsize) {
       return typeof num !== 'undefined' ? num.toString().length > padsize ? num : new Array(padsize - num.toString().length + 1).join('0') + num : undefined;
     }
-
     function chunkArray(inputArray, chunkSize) {
       var results = [];
-
       while (inputArray.length) {
         results.push(inputArray.splice(0, chunkSize));
       }
-
       return results;
     }
-
     function areSameDates(date1, date2) {
       return date1.getDate() === date2.getDate() && date1.getMonth() === date2.getMonth() && date1.getFullYear() === date2.getFullYear();
     }
@@ -5356,27 +4944,22 @@ var Vue = exports.Vue;
       methods: {
         setDate: function setDate(value, stopClose) {
           this.value = value;
-
           if (!stopClose) {
             this.closeDropDown();
           }
         },
         getWeekdays: function getWeekdays() {
           var list = [];
-
           for (var n = 1; n <= 7; n++) {
             list.push(this.field.messages.get('fieldDateDay' + n));
           }
-
           return list;
         },
         getMonths: function getMonths() {
           var list = [];
-
           for (var n = 1; n <= 12; n++) {
             list.push(this.field.messages.get('fieldDateMonth' + n));
           }
-
           return list;
         }
       }
@@ -5395,17 +4978,14 @@ var Vue = exports.Vue;
           return FieldDateTime;
         }
       }]);
-
       function Controller$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
         _this.dateFormat = options.format;
         _this.sundayFirstly = !!options.sundayFirstly;
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "getOriginalType",
         value: function getOriginalType() {
@@ -5442,12 +5022,10 @@ var Vue = exports.Vue;
 
     var Controller$g = /*#__PURE__*/function (_DateTimeField$Contro) {
       babelHelpers.inherits(Controller, _DateTimeField$Contro);
-
       function Controller() {
         babelHelpers.classCallCheck(this, Controller);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).apply(this, arguments));
       }
-
       babelHelpers.createClass(Controller, [{
         key: "hasTime",
         get: function get() {
@@ -5468,11 +5046,9 @@ var Vue = exports.Vue;
       computed: {
         link: function link() {
           var url = this.field.options.content.url.trim();
-
           if (!/^http:|^https:/.test(url)) {
             url = 'https://' + url;
           }
-
           var node = document.createElement('div');
           node.textContent = url;
           url = node.innerHTML;
@@ -5489,12 +5065,10 @@ var Vue = exports.Vue;
         },
         requestConsent: function requestConsent(e) {
           this.field.consentRequested = true;
-
           if (this.field.isLink()) {
             this.field.applyConsent();
             return true;
           }
-
           e ? e.preventDefault() : null;
           e ? e.stopPropagation() : null;
           this.$root.$emit('consent:request', this.field);
@@ -5516,10 +5090,8 @@ var Vue = exports.Vue;
           return FieldAgreement;
         }
       }]);
-
       function Controller$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller$$1);
         options.type = 'agreement';
         options.visible = true;
@@ -5530,7 +5102,6 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "consentRequested", false);
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "isLink",
         value: function isLink() {
@@ -5552,15 +5123,12 @@ var Vue = exports.Vue;
         key: "requestConsent",
         value: function requestConsent() {
           this.consentRequested = false;
-
           if (!this.required || this.valid()) {
             return true;
           }
-
           if (!this.isLink()) {
             this.consentRequested = true;
           }
-
           return false;
         }
       }]);
@@ -5569,12 +5137,10 @@ var Vue = exports.Vue;
 
     var Controller$i = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         babelHelpers.classCallCheck(this, Controller);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputName",
         value: function getInputName() {
@@ -5596,12 +5162,10 @@ var Vue = exports.Vue;
 
     var Controller$j = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         babelHelpers.classCallCheck(this, Controller);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputName",
         value: function getInputName() {
@@ -5623,12 +5187,10 @@ var Vue = exports.Vue;
 
     var Controller$k = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         babelHelpers.classCallCheck(this, Controller);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
-
       babelHelpers.createClass(Controller, [{
         key: "getInputName",
         value: function getInputName() {
@@ -5650,12 +5212,10 @@ var Vue = exports.Vue;
 
     var Controller$l = /*#__PURE__*/function (_StringField$Controll) {
       babelHelpers.inherits(Controller, _StringField$Controll);
-
       function Controller(options) {
         babelHelpers.classCallCheck(this, Controller);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller).call(this, options));
       }
-
       babelHelpers.createClass(Controller, null, [{
         key: "type",
         value: function type() {
@@ -5672,10 +5232,8 @@ var Vue = exports.Vue;
 
     var Controller$m = /*#__PURE__*/function (_BaseField$Controller) {
       babelHelpers.inherits(Controller$$1, _BaseField$Controller);
-
       function Controller$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "content", {
@@ -5684,20 +5242,16 @@ var Vue = exports.Vue;
         });
         _this.multiple = false;
         _this.required = false;
-
         if (babelHelpers["typeof"](options.content) === 'object') {
           if (options.content.type) {
             _this.content.type = options.content.type;
           }
-
           if (options.content.html) {
             _this.content.html = options.content.html;
           }
         }
-
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, null, [{
         key: "type",
         value: function type() {
@@ -5736,47 +5290,37 @@ var Vue = exports.Vue;
       methods: {
         load: function load() {
           var _this = this;
-
           var loadField = function loadField() {
             if (!window.BX || !window.BX.Calendar || !window.BX.Calendar.Resourcebooking) {
               return;
             }
-
             _this.liveFieldController = BX.Calendar.Resourcebooking.getLiveField({
               wrap: _this.$el,
               field: _this.field.booking,
               actionAgent: function actionAgent(action, options) {
                 var formData = new FormData();
                 var data = options.data || {};
-
                 for (var key in data) {
                   if (!data.hasOwnProperty(key)) {
                     continue;
                   }
-
                   var value = data[key];
-
                   if (babelHelpers["typeof"](value) === 'object') {
                     value = JSON.stringify(value);
                   }
-
                   formData.set(key, value);
                 }
-
                 return window.b24form.App.post(_this.$root.form.identification.address + '/bitrix/services/main/ajax.php?action=' + action, formData).then(function (response) {
                   return response.json();
                 });
               }
             });
-
             if (_this.liveFieldController && typeof _this.liveFieldController.check === 'function' && !isValidatorAdded) {
               _this.field.validators.push(function () {
                 return _this.liveFieldController.check();
               });
-
               isValidatorAdded = true;
             }
-
             _this.liveFieldController.subscribe('change', function (event) {
               _this.field.items = [];
               (event.data || []).filter(function (value) {
@@ -5789,9 +5333,7 @@ var Vue = exports.Vue;
               });
             });
           };
-
           var scriptLink = b24form.common.properties && b24form.common.properties.resourcebooking ? b24form.common.properties.resourcebooking.link : null;
-
           if (!loadAppPromise) {
             loadAppPromise = new Promise(function (resolve, reject) {
               var node = document.createElement('script');
@@ -5801,22 +5343,18 @@ var Vue = exports.Vue;
               document.head.appendChild(node);
             });
           }
-
           loadAppPromise.then(loadField)
           /*.catch((e) => {
           	this.message = 'App load failed:' + e;
-          })*/
-          ;
+          })*/;
         }
       }
     };
 
     var Controller$n = /*#__PURE__*/function (_BaseField$Controller) {
       babelHelpers.inherits(Controller$$1, _BaseField$Controller);
-
       function Controller$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
         _this.booking = options.booking;
@@ -5824,7 +5362,6 @@ var Vue = exports.Vue;
         _this.randomId = Math.random();
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, null, [{
         key: "type",
         value: function type() {
@@ -5841,17 +5378,14 @@ var Vue = exports.Vue;
 
     var Item$3 = /*#__PURE__*/function (_BaseItem) {
       babelHelpers.inherits(Item$$1, _BaseItem);
-
       function Item$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Item$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Item$$1).call(this, options));
         _this.value = {};
         _this.selected = false;
         return _this;
       }
-
       return Item$$1;
     }(Item);
 
@@ -5883,17 +5417,14 @@ var Vue = exports.Vue;
           return new Item$3(options);
         }
       }]);
-
       function Controller$$1(options) {
         var _this;
-
         babelHelpers.classCallCheck(this, Controller$$1);
-        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options)); //this.nestedFields = [];
-
+        _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
+        //this.nestedFields = [];
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "nestedFields", []);
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "adjust",
         value: function adjust(options) {
@@ -5901,9 +5432,20 @@ var Vue = exports.Vue;
           babelHelpers.get(babelHelpers.getPrototypeOf(Controller$$1.prototype), "adjust", this).call(this, options);
           setTimeout(function () {
             _this2.actualizeFields();
-
             _this2.actualizeValues();
           }, 0);
+        }
+      }, {
+        key: "setValues",
+        value: function setValues(values) {
+          values = values[0] || {};
+          this.nestedFields.forEach(function (field) {
+            var value = values[field.name];
+            if (typeof value === 'undefined') {
+              return;
+            }
+            field.setValues(Array.isArray(value) ? value : [value]);
+          });
         }
       }, {
         key: "actualizeFields",
@@ -5914,7 +5456,6 @@ var Vue = exports.Vue;
         key: "makeFields",
         value: function makeFields() {
           var _this3 = this;
-
           var list = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
           return list.map(function (options) {
             options.messages = _this3.options.messages;
@@ -5932,21 +5473,35 @@ var Vue = exports.Vue;
           });
         }
       }, {
+        key: "valid",
+        value: function valid() {
+          if (!this.visible) {
+            return true;
+          }
+          this.validated = true;
+          var valid = true;
+          this.nestedFields.forEach(function (field) {
+            if (!field.valid()) {
+              valid = false;
+            }
+          });
+          return valid;
+        }
+      }, {
         key: "actualizeValues",
         value: function actualizeValues() {
           var value = (this.nestedFields || []).reduce(function (acc, field) {
             var key = field.name || '';
             var val = field.value();
-
             if (key.length > 0) {
               acc[key] = val;
             }
-
             return acc;
           }, {});
           var item = this.item();
           item.value = value;
           item.selected = true;
+          console.log('value', value);
         }
       }]);
       return Controller$$1;
@@ -5954,15 +5509,14 @@ var Vue = exports.Vue;
 
     var Controller$p = /*#__PURE__*/function (_ContainerController) {
       babelHelpers.inherits(Controller$$1, _ContainerController);
-
       function Controller$$1() {
         babelHelpers.classCallCheck(this, Controller$$1);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "actualizeFields11",
-        value: function actualizeFields11() {//this.nestedFields = [].concat([this.searchField], this.makeFields(fields));
+        value: function actualizeFields11() {
+          //this.nestedFields = [].concat([this.searchField], this.makeFields(fields));
         }
       }], [{
         key: "type",
@@ -5975,17 +5529,14 @@ var Vue = exports.Vue;
 
     var Controller$q = /*#__PURE__*/function (_ContainerController) {
       babelHelpers.inherits(Controller$$1, _ContainerController);
-
       function Controller$$1() {
         babelHelpers.classCallCheck(this, Controller$$1);
         return babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).apply(this, arguments));
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "actualizeFields",
         value: function actualizeFields() {
           var _this = this;
-
           if (!this.presetField) {
             this.options.requisite = this.options.requisite || {};
             this.options.requisite.presets = (this.options.requisite.presets || []).filter(function (preset) {
@@ -6005,11 +5556,9 @@ var Vue = exports.Vue;
             });
             this.presetField.subscribe(this.presetField.events.changeSelected, function () {
               _this.actualizeFields();
-
               _this.actualizeValues();
             });
           }
-
           var v = this.presetField.value();
           var presets = this.options.requisite.presets;
           var preset = presets.filter(function (preset) {
@@ -6020,7 +5569,6 @@ var Vue = exports.Vue;
             return !options.disabled;
           }).forEach(function (options) {
             options = JSON.parse(JSON.stringify(options));
-
             if (options.fields && options.fields.length > 0) {
               if (['address', 'account'].includes(options.type)) {
                 fields.push({
@@ -6031,10 +5579,8 @@ var Vue = exports.Vue;
                   }
                 });
               }
-
               options.type = 'container';
             }
-
             fields.push(options);
           });
           this.nestedFields = [].concat([this.presetField], this.makeFields(fields));
@@ -6054,23 +5600,19 @@ var Vue = exports.Vue;
       accum['field-' + controller.type()] = controller.component();
       return accum;
     }, {}));
-
     var Factory = /*#__PURE__*/function () {
       function Factory() {
         babelHelpers.classCallCheck(this, Factory);
       }
-
       babelHelpers.createClass(Factory, null, [{
         key: "create",
         value: function create(options) {
           var controller = controllers.filter(function (controller) {
             return options.type === controller.type();
           })[0];
-
           if (!controller) {
             throw new Error("Unknown field type '".concat(options.type, "'"));
           }
-
           return new controller(options);
         }
       }, {
@@ -6113,7 +5655,6 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(this, "index", 1);
         babelHelpers.defineProperty(this, "pages", []);
       }
-
       babelHelpers.createClass(Navigation, [{
         key: "add",
         value: function add(page) {
@@ -6140,7 +5681,6 @@ var Vue = exports.Vue;
         key: "last",
         value: function last() {
           var validate = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : true;
-
           if (!validate || this.current().validate()) {
             this.index = this.count();
           }
@@ -6176,7 +5716,6 @@ var Vue = exports.Vue;
           if (this.count() <= 1) {
             return;
           }
-
           this.pages = this.pages.filter(function (page) {
             return page.fields.length > 0;
           });
@@ -6191,14 +5730,12 @@ var Vue = exports.Vue;
       }]);
       return Navigation;
     }();
-
     var Page = /*#__PURE__*/function () {
       function Page(title) {
         babelHelpers.classCallCheck(this, Page);
         babelHelpers.defineProperty(this, "fields", []);
         this.title = title;
       }
-
       babelHelpers.createClass(Page, [{
         key: "addField",
         value: function addField(field) {
@@ -6221,14 +5758,10 @@ var Vue = exports.Vue;
     }();
 
     var _OppositeActionTypes;
-
     function ownKeys$1(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
     function _objectSpread$1(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$1(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$1(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
-
-    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$3(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$3(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function _classPrivateFieldInitSpec$2(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var ConditionEvents = {
       change: 'change'
     };
@@ -6253,62 +5786,48 @@ var Vue = exports.Vue;
       change: 'change'
     };
     var OppositeActionTypes = (_OppositeActionTypes = {}, babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.hide, ActionTypes.show), babelHelpers.defineProperty(_OppositeActionTypes, ActionTypes.show, ActionTypes.hide), _OppositeActionTypes);
-
     var _form = /*#__PURE__*/new WeakMap();
-
     var _list = /*#__PURE__*/new WeakMap();
-
     var _groups = /*#__PURE__*/new WeakMap();
-
     var Manager = /*#__PURE__*/function () {
       function Manager(form) {
         babelHelpers.classCallCheck(this, Manager);
-
         _classPrivateFieldInitSpec$2(this, _form, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$2(this, _list, {
           writable: true,
           value: []
         });
-
         _classPrivateFieldInitSpec$2(this, _groups, {
           writable: true,
           value: []
         });
-
         babelHelpers.classPrivateFieldSet(this, _form, form);
         babelHelpers.classPrivateFieldGet(this, _form).subscribeAll(this.onFormEvent.bind(this));
       }
-
       babelHelpers.createClass(Manager, [{
         key: "onFormEvent",
         value: function onFormEvent(data, obj, type) {
           if (babelHelpers.classPrivateFieldGet(this, _list).length === 0) {
             return;
           }
-
           var event;
-
           switch (type) {
             case EventTypes.fieldChangeSelected:
               event = ConditionEvents.change;
               break;
-
             case EventTypes.fieldBlur:
             default:
               return;
           }
-
           this.trigger(data.field, event);
         }
       }, {
         key: "setDependencies",
         value: function setDependencies() {
           var _this = this;
-
           var depGroups = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
           babelHelpers.classPrivateFieldSet(this, _list, []);
           babelHelpers.classPrivateFieldSet(this, _groups, depGroups.filter(function (depGroup) {
@@ -6336,15 +5855,12 @@ var Vue = exports.Vue;
           if (babelHelpers["typeof"](dep) !== 'object' || babelHelpers["typeof"](dep.condition) !== 'object' || babelHelpers["typeof"](dep.action) !== 'object') {
             return;
           }
-
           if (!dep.condition.target || !dep.condition.event || !ConditionEvents[dep.condition.event]) {
             return;
           }
-
           if (!dep.action.target || !dep.action.type || !ActionTypes[dep.action.type]) {
             return;
           }
-
           dep.condition.operation = ConditionOperations.indexOf(dep.condition.operation) > 0 ? dep.condition.operation : Operations.equal;
           var item = {
             condition: _objectSpread$1({
@@ -6360,36 +5876,33 @@ var Vue = exports.Vue;
             }, dep.action)
           };
           babelHelpers.classPrivateFieldGet(this, _list).push(item);
-
           if (group) {
             group.list.push(item);
             item.group = group;
           }
-
           return item;
         }
       }, {
         key: "trigger",
         value: function trigger(field, event) {
           var _this2 = this;
-
           babelHelpers.classPrivateFieldGet(this, _list).filter(function (dep) {
             // 1. check event
             if (dep.condition.event !== event) {
               return false;
-            } // 2. check target
+            }
 
-
+            // 2. check target
             if (dep.condition.target !== field.name) {
               return false;
-            } // 3. check group
+            }
 
+            // 3. check group
 
             return true;
           }).forEach(function (dep) {
             var list;
             var logicAnd = true;
-
             if (dep.group && dep.group.typeId > 0) {
               logicAnd = dep.group.logic === 'and';
               list = dep.group.list.map(function (dep) {
@@ -6406,36 +5919,31 @@ var Vue = exports.Vue;
                 dep: dep,
                 field: field
               }];
-            } // 3.check value&operation
+            }
 
-
+            // 3.check value&operation
             var checkFunction = function checkFunction(item) {
               var dep = item.dep;
               var field = item.field;
               var values = field.getComparableValues();
-
               if (values.length === 0) {
                 values.push('');
               }
-
               return values.filter(function (value) {
                 return _this2.compare(value, dep.condition.value, dep.condition.operation);
               }).length === 0;
             };
+            var isOpposite = logicAnd ? list.some(checkFunction) : list.every(checkFunction);
 
-            var isOpposite = logicAnd ? list.some(checkFunction) : list.every(checkFunction); // 4. run action
-
+            // 4. run action
             _this2.getFieldsByTarget(dep.action.target).forEach(function (field) {
               var actionType = dep.action.type;
-
               if (isOpposite) {
                 actionType = OppositeActionTypes[dep.action.type];
-
                 if (!actionType) {
                   return;
                 }
               }
-
               _this2.runAction(_objectSpread$1(_objectSpread$1({}, dep.action), {}, {
                 type: actionType
               }), field);
@@ -6450,7 +5958,6 @@ var Vue = exports.Vue;
             var currentSectionEquals = false;
             page.fields.forEach(function (field) {
               var equals = target === field.name;
-
               if (field.type === 'layout' && field.content.type === 'section') {
                 if (equals) {
                   currentSectionEquals = true;
@@ -6461,7 +5968,6 @@ var Vue = exports.Vue;
               } else if (!equals && !currentSectionEquals) {
                 return;
               }
-
               fields.push(field);
             });
           });
@@ -6474,11 +5980,9 @@ var Vue = exports.Vue;
             case ActionTypes.change:
               //field.visible = true;
               return;
-
             case ActionTypes.show:
               field.visible = true;
               return;
-
             case ActionTypes.hide:
               field.visible = false;
               return;
@@ -6489,35 +5993,25 @@ var Vue = exports.Vue;
         value: function compare(a, b, operation) {
           a = a === null ? '' : a;
           b = b === null ? '' : b;
-
           switch (operation) {
             case Operations.greater:
               return parseFloat(a) > parseFloat(b);
-
             case Operations.greaterOrEqual:
               return parseFloat(a) >= parseFloat(b);
-
             case Operations.less:
               return parseFloat(a) < parseFloat(b);
-
             case Operations.lessOrEqual:
               return parseFloat(a) <= parseFloat(b);
-
             case Operations.empty:
               return !a;
-
             case Operations.any:
               return !!a;
-
             case Operations.contain:
               return a.indexOf(b) >= 0;
-
             case Operations.notContain:
               return a.indexOf(b) < 0;
-
             case Operations.notEqual:
               return a !== b;
-
             case Operations.equal:
             default:
               return a === b;
@@ -6526,57 +6020,43 @@ var Vue = exports.Vue;
       }]);
       return Manager;
     }();
-
     var ConditionOperations = [];
-
     for (var operationName in Operations) {
       ConditionOperations.push(Operations[operationName]);
     }
-
     for (var _operationName in OperationAliases) {
       ConditionOperations.push(Operations[_operationName]);
     }
 
-    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$4(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$4(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
+    function _classPrivateFieldInitSpec$3(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _form$1 = /*#__PURE__*/new WeakMap();
-
     var _isStartSent = /*#__PURE__*/new WeakMap();
-
     var _filledFields = /*#__PURE__*/new WeakMap();
-
     var Analytics$1 = /*#__PURE__*/function () {
       function Analytics$$1(form) {
         babelHelpers.classCallCheck(this, Analytics$$1);
-
         _classPrivateFieldInitSpec$3(this, _form$1, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$3(this, _isStartSent, {
           writable: true,
           value: false
         });
-
         _classPrivateFieldInitSpec$3(this, _filledFields, {
           writable: true,
           value: []
         });
-
         babelHelpers.classPrivateFieldSet(this, _form$1, form);
         babelHelpers.classPrivateFieldGet(this, _form$1).subscribeAll(this.onFormEvent.bind(this));
       }
-
       babelHelpers.createClass(Analytics$$1, [{
         key: "onFormEvent",
         value: function onFormEvent(data, obj, type) {
           if (babelHelpers.classPrivateFieldGet(this, _form$1).disabled) {
             return;
           }
-
           if (babelHelpers.classPrivateFieldGet(this, _form$1).editMode) {
             return; // don't handle analytics in form editor mode
           }
@@ -6585,24 +6065,19 @@ var Vue = exports.Vue;
             case EventTypes.showFirst:
               this.send('view');
               break;
-
             case EventTypes.view:
               // form
               babelHelpers.classPrivateFieldGet(this, _form$1).analyticsHandler('view', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
               break;
-
             case EventTypes.fieldFocus:
               if (!babelHelpers.classPrivateFieldGet(this, _isStartSent)) {
                 babelHelpers.classPrivateFieldSet(this, _isStartSent, true);
                 this.send('start');
                 babelHelpers.classPrivateFieldGet(this, _form$1).analyticsHandler('start', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
               }
-
               break;
-
             case EventTypes.fieldBlur:
               var field = data.field;
-
               if (babelHelpers.classPrivateFieldGet(this, _filledFields).indexOf(field.name) < 0 && field.hasValidValue()) {
                 babelHelpers.classPrivateFieldGet(this, _filledFields).push(field.name);
                 this.send('field', [{
@@ -6613,9 +6088,7 @@ var Vue = exports.Vue;
                   to: field.name
                 }]);
               }
-
               break;
-
             case EventTypes.sendSuccess:
               this.send('end');
               break;
@@ -6625,36 +6098,32 @@ var Vue = exports.Vue;
         key: "send",
         value: function send(type) {
           var replace = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-
           if (!b24form.common || !type) {
             return;
           }
+
           /**	@var Object[Type.Analytics] opt */
-
-
           var opt = b24form.common.properties.analytics;
-
           if (!opt || !opt[type]) {
             return;
           }
-
           var action = opt[type].name;
           var page = opt[type].code;
           replace.forEach(function (item) {
             action = action.replace(item.from, item.to);
             page = page.replace(item.from, item.to);
-          }); //////////// google
+          });
 
+          //////////// google
           var gaEventCategory = opt.category.replace('%name%', babelHelpers.classPrivateFieldGet(this, _form$1).title).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
           var gaEventAction = opt.template.name.replace('%name%', action).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
           b24form.util.analytics.trackGa('event', gaEventCategory, gaEventAction);
-
           if (page) {
             var gaPageName = opt.template.code.replace('%code%', page).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
             b24form.util.analytics.trackGa('pageview', gaPageName);
-          } //////////// yandex
+          }
 
-
+          //////////// yandex
           var yaEventName = opt.eventTemplate.code.replace('%code%', page).replace('%form_id%', babelHelpers.classPrivateFieldGet(this, _form$1).identification.id);
           b24form.util.analytics.trackYa(yaEventName);
         }
@@ -6662,64 +6131,48 @@ var Vue = exports.Vue;
       return Analytics$$1;
     }();
 
-    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$5(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$5(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
+    function _classPrivateFieldInitSpec$4(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _key = /*#__PURE__*/new WeakMap();
-
     var _use = /*#__PURE__*/new WeakMap();
-
     var _widgetId = /*#__PURE__*/new WeakMap();
-
     var _response = /*#__PURE__*/new WeakMap();
-
     var _target = /*#__PURE__*/new WeakMap();
-
     var _callback = /*#__PURE__*/new WeakMap();
-
     var ReCaptcha$1 = /*#__PURE__*/function () {
       function ReCaptcha$$1() {
         babelHelpers.classCallCheck(this, ReCaptcha$$1);
-
         _classPrivateFieldInitSpec$4(this, _key, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$4(this, _use, {
           writable: true,
           value: false
         });
-
         _classPrivateFieldInitSpec$4(this, _widgetId, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$4(this, _response, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$4(this, _target, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$4(this, _callback, {
           writable: true,
           value: void 0
         });
       }
-
       babelHelpers.createClass(ReCaptcha$$1, [{
         key: "adjust",
         value: function adjust(options) {
           if (typeof options.key !== "undefined") {
             babelHelpers.classPrivateFieldSet(this, _key, options.key);
           }
-
           if (typeof options.use !== "undefined") {
             babelHelpers.classPrivateFieldSet(this, _use, options.use);
           }
@@ -6740,11 +6193,9 @@ var Vue = exports.Vue;
           if (babelHelpers.classPrivateFieldGet(this, _key)) {
             return babelHelpers.classPrivateFieldGet(this, _key);
           }
-
           if (b24form && b24form.common) {
             return (b24form.common.properties.recaptcha || {}).key;
           }
-
           return null;
         }
       }, {
@@ -6758,11 +6209,9 @@ var Vue = exports.Vue;
           if (!window.grecaptcha) {
             return;
           }
-
           if (callback) {
             babelHelpers.classPrivateFieldSet(this, _callback, callback);
           }
-
           babelHelpers.classPrivateFieldSet(this, _response, '');
           window.grecaptcha.execute(babelHelpers.classPrivateFieldGet(this, _widgetId));
         }
@@ -6770,11 +6219,9 @@ var Vue = exports.Vue;
         key: "render",
         value: function render(target) {
           var _this = this;
-
           if (!window.grecaptcha) {
             return;
           }
-
           babelHelpers.classPrivateFieldSet(this, _target, target);
           babelHelpers.classPrivateFieldSet(this, _widgetId, window.grecaptcha.render(target, {
             sitekey: this.getKey(),
@@ -6783,7 +6230,6 @@ var Vue = exports.Vue;
             size: 'invisible',
             callback: function callback(response) {
               babelHelpers.classPrivateFieldSet(_this, _response, response);
-
               if (babelHelpers.classPrivateFieldGet(_this, _callback)) {
                 babelHelpers.classPrivateFieldGet(_this, _callback).call(_this);
                 babelHelpers.classPrivateFieldSet(_this, _callback, null);
@@ -6801,34 +6247,26 @@ var Vue = exports.Vue;
       return ReCaptcha$$1;
     }();
 
-    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$6(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$6(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
+    function _classPrivateFieldInitSpec$5(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _currency = /*#__PURE__*/new WeakMap();
-
     var _fields = /*#__PURE__*/new WeakMap();
-
     var Basket = /*#__PURE__*/function () {
       function Basket(fields, currency) {
         babelHelpers.classCallCheck(this, Basket);
-
         _classPrivateFieldInitSpec$5(this, _currency, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$5(this, _fields, {
           writable: true,
           value: []
         });
-
         babelHelpers.classPrivateFieldSet(this, _currency, currency);
         babelHelpers.classPrivateFieldSet(this, _fields, fields.filter(function (field) {
           return field.type === 'product';
         }));
       }
-
       babelHelpers.createClass(Basket, [{
         key: "has",
         value: function has() {
@@ -6837,7 +6275,6 @@ var Vue = exports.Vue;
           })) {
             return false;
           }
-
           return babelHelpers.classPrivateFieldGet(this, _fields).length > 0;
         }
       }, {
@@ -6906,6 +6343,7 @@ var Vue = exports.Vue;
      * https://github.com/linusborg/portal-vue
      * 
     */
+
     function _typeof(obj) {
       if (typeof Symbol === "function" && babelHelpers["typeof"](Symbol.iterator) === "symbol") {
         _typeof = function _typeof(obj) {
@@ -6916,42 +6354,32 @@ var Vue = exports.Vue;
           return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : babelHelpers["typeof"](obj);
         };
       }
-
       return _typeof(obj);
     }
-
     function _toConsumableArray(arr) {
       return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _nonIterableSpread();
     }
-
     function _arrayWithoutHoles(arr) {
       if (Array.isArray(arr)) {
         for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
           arr2[i] = arr[i];
         }
-
         return arr2;
       }
     }
-
     function _iterableToArray(iter) {
       if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
     }
-
     function _nonIterableSpread() {
       throw new TypeError("Invalid attempt to spread non-iterable instance");
     }
-
     var inBrowser = typeof window !== 'undefined';
-
     function freeze(item) {
       if (Array.isArray(item) || _typeof(item) === 'object') {
         return Object.freeze(item);
       }
-
       return item;
     }
-
     function combinePassengers(transports) {
       var slotProps = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       return transports.reduce(function (passengers, transport) {
@@ -6960,7 +6388,6 @@ var Vue = exports.Vue;
         return passengers.concat(newPassengers);
       }, []);
     }
-
     function stableSort(array, compareFn) {
       return array.map(function (v, idx) {
         return [idx, v];
@@ -6970,17 +6397,14 @@ var Vue = exports.Vue;
         return c[1];
       });
     }
-
     function pick(obj, keys) {
       return keys.reduce(function (acc, key) {
         if (obj.hasOwnProperty(key)) {
           acc[key] = obj[key];
         }
-
         return acc;
       }, {});
     }
-
     var transports = {};
     var targets = {};
     var sources = {};
@@ -6997,10 +6421,10 @@ var Vue = exports.Vue;
         open: function open(transport) {
           if (!inBrowser) return;
           var to = transport.to,
-              from = transport.from,
-              passengers = transport.passengers,
-              _transport$order = transport.order,
-              order = _transport$order === void 0 ? Infinity : _transport$order;
+            from = transport.from,
+            passengers = transport.passengers,
+            _transport$order = transport.order,
+            order = _transport$order === void 0 ? Infinity : _transport$order;
           if (!to || !from || !passengers) return;
           var newTransport = {
             to: to,
@@ -7009,21 +6433,17 @@ var Vue = exports.Vue;
             order: order
           };
           var keys = Object.keys(this.transports);
-
           if (keys.indexOf(to) === -1) {
             Vue.set(this.transports, to, []);
           }
-
           var currentIndex = this.$_getTransportIndex(newTransport); // Copying the array here so that the PortalTarget change event will actually contain two distinct arrays
 
           var newTransports = this.transports[to].slice(0);
-
           if (currentIndex === -1) {
             newTransports.push(newTransport);
           } else {
             newTransports[currentIndex] = newTransport;
           }
-
           this.transports[to] = stableSort(newTransports, function (a, b) {
             return a.order - b.order;
           });
@@ -7031,18 +6451,15 @@ var Vue = exports.Vue;
         close: function close(transport) {
           var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
           var to = transport.to,
-              from = transport.from;
+            from = transport.from;
           if (!to || !from && force === false) return;
-
           if (!this.transports[to]) {
             return;
           }
-
           if (force) {
             this.transports[to] = [];
           } else {
             var index = this.$_getTransportIndex(transport);
-
             if (index >= 0) {
               // Copying the array here so that the PortalTarget change event will actually contain two distinct arrays
               var newTransports = this.transports[to].slice(0);
@@ -7053,11 +6470,9 @@ var Vue = exports.Vue;
         },
         registerTarget: function registerTarget(target, vm, force) {
           if (!inBrowser) return;
-
           if (this.trackInstances && !force && this.targets[target]) {
             console.warn("[portal-vue]: Target ".concat(target, " already exists"));
           }
-
           this.$set(this.targets, target, Object.freeze([vm]));
         },
         unregisterTarget: function unregisterTarget(target) {
@@ -7065,11 +6480,9 @@ var Vue = exports.Vue;
         },
         registerSource: function registerSource(source, vm, force) {
           if (!inBrowser) return;
-
           if (this.trackInstances && !force && this.sources[source]) {
             console.warn("[portal-vue]: source ".concat(source, " already exists"));
           }
-
           this.$set(this.sources, source, Object.freeze([vm]));
         },
         unregisterSource: function unregisterSource(source) {
@@ -7087,14 +6500,12 @@ var Vue = exports.Vue;
         // Internal
         $_getTransportIndex: function $_getTransportIndex(_ref) {
           var to = _ref.to,
-              from = _ref.from;
-
+            from = _ref.from;
           for (var i in this.transports[to]) {
             if (this.transports[to][i].from === from) {
               return +i;
             }
           }
-
           return -1;
         }
       }
@@ -7139,7 +6550,6 @@ var Vue = exports.Vue;
       },
       created: function created() {
         var _this = this;
-
         this.$nextTick(function () {
           wormhole.registerSource(_this.name, _this);
         });
@@ -7182,7 +6592,6 @@ var Vue = exports.Vue;
         },
         sendUpdate: function sendUpdate() {
           var slotContent = this.normalizeSlots();
-
           if (slotContent) {
             var transport = {
               from: this.name,
@@ -7199,7 +6608,6 @@ var Vue = exports.Vue;
       render: function render(h) {
         var children = this.$slots["default"] || this.$scopedSlots["default"] || [];
         var Tag = this.tag;
-
         if (children && this.disabled) {
           return children.length <= 1 && this.slim ? this.normalizeOwnChildren(children)[0] : h(Tag, [this.normalizeOwnChildren(children)]);
         } else {
@@ -7252,7 +6660,6 @@ var Vue = exports.Vue;
       },
       created: function created() {
         var _this = this;
-
         this.$nextTick(function () {
           wormhole.registerTarget(_this.name, _this);
         });
@@ -7272,7 +6679,6 @@ var Vue = exports.Vue;
       },
       mounted: function mounted() {
         var _this2 = this;
-
         if (this.transition) {
           this.$nextTick(function () {
             // only when we have a transition, because it causes a re-render
@@ -7286,11 +6692,9 @@ var Vue = exports.Vue;
       computed: {
         ownTransports: function ownTransports() {
           var transports = this.transports[this.name] || [];
-
           if (this.multiple) {
             return transports;
           }
-
           return transports.length === 0 ? [] : [transports[transports.length - 1]];
         },
         passengers: function passengers() {
@@ -7305,11 +6709,9 @@ var Vue = exports.Vue;
         // can't be a computed prop because it has to "react" to this.children().
         noWrapper: function noWrapper() {
           var noWrapper = this.slim && !this.transition;
-
           if (noWrapper && this.children().length > 1) {
             console.warn('[portal-vue]: PortalTarget with `slim` option received more than one child element.');
           }
-
           return noWrapper;
         }
       },
@@ -7405,12 +6807,10 @@ var Vue = exports.Vue;
       created: function created() {
         if (typeof document === 'undefined') return;
         var el = document.querySelector(this.mountTo);
-
         if (!el) {
           console.error("[portal-vue]: Mount Point '".concat(this.mountTo, "' not found in document"));
           return;
         }
-
         var props = this.$props; // Target already exists
 
         if (wormhole.targets[props.name]) {
@@ -7419,12 +6819,9 @@ var Vue = exports.Vue;
           } else {
             this.portalTarget = wormhole.targets[props.name];
           }
-
           return;
         }
-
         var append = props.append;
-
         if (append) {
           var type = typeof append === 'string' ? append : 'DIV';
           var mountEl = document.createElement(type);
@@ -7433,9 +6830,7 @@ var Vue = exports.Vue;
         } // get props for target from $props
         // we have to rename a few of them
 
-
         var _props = pick(this.$props, targetProps);
-
         _props.slim = this.targetSlim;
         _props.tag = this.targetTag;
         _props.slotProps = this.targetSlotProps;
@@ -7448,12 +6843,10 @@ var Vue = exports.Vue;
       },
       beforeDestroy: function beforeDestroy() {
         var target = this.portalTarget;
-
         if (this.append) {
           var el = target.$el;
           el.parentNode.removeChild(el);
         }
-
         target.$destroy();
       },
       render: function render(h) {
@@ -7461,7 +6854,6 @@ var Vue = exports.Vue;
           console.warn("[portal-vue] Target wasn't mounted");
           return h();
         } // if there's no "manual" scoped slot, so we create a <Portal> ourselves
-
 
         if (!this.$scopedSlots.manual) {
           var props = pick(this.$props, portalProps);
@@ -7473,7 +6865,6 @@ var Vue = exports.Vue;
           }, this.$slots["default"]);
         } // else, we render the scoped slot
 
-
         var content = this.$scopedSlots.manual({
           to: this.to
         }); // if user used <template> for the scoped slot
@@ -7482,7 +6873,6 @@ var Vue = exports.Vue;
         if (Array.isArray(content)) {
           content = content[0];
         }
-
         if (!content) return h();
         return content;
       }
@@ -7490,7 +6880,7 @@ var Vue = exports.Vue;
 
     var Scrollable = {
       props: ['show', 'enabled', 'zIndex', 'text', 'topIntersected', 'bottomIntersected'],
-      template: "\n\t\t<div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-up-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorTopIntersected\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(false)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-up\"></button>\n\t\t\t\t</div>\n\t\t\t</transition>\t\t\t\t\t\t\n\t\t\t<div class=\"b24-window-scrollable\" :style=\"{ zIndex: zIndexComputed }\">\n\t\t\t\t<div v-if=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t\t<slot></slot>\n\t\t\t\t<div v-if=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t</div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-down-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-down\"></button>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-scroll-textable\"\n\t\t\t\t\tv-if=\"enabled && text && !anchorBottomIntersected && !hideEars\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<p class=\"b24-form-scroll-textable-text\">{{ text }}</p>\n\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow\">\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\t\n\t",
+      template: "\n\t\t<div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-up-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorTopIntersected\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(false)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-up\"></button>\n\t\t\t\t</div>\n\t\t\t</transition>\t\t\t\t\t\t\n\t\t\t<div class=\"b24-window-scrollable\" :style=\"{ zIndex: zIndexComputed }\">\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t\t<slot></slot>\n\t\t\t\t<div v-show=\"enabled\" class=\"b24-window-scroll-anchor\"></div>\n\t\t\t</div>\n\t\t\t<transition name=\"b24-a-fade\">\n\t\t\t\t<div class=\"b24-window-scroll-arrow-down-box\"\n\t\t\t\t\tv-if=\"enabled && !text && !anchorBottomIntersected && !hideEars\"\n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<button type=\"button\" class=\"b24-window-scroll-arrow-down\"></button>\n\t\t\t\t</div>\n\t\t\t\t<div class=\"b24-form-scroll-textable\"\n\t\t\t\t\tv-if=\"enabled && text && !anchorBottomIntersected && !hideEars\" \n\t\t\t\t\t:style=\"{ zIndex: zIndexComputed + 10}\"\n\t\t\t\t\t@click=\"scrollTo(true)\"\n\t\t\t\t>\n\t\t\t\t\t<p class=\"b24-form-scroll-textable-text\">{{ text }}</p>\n\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow\">\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t\t<div class=\"b24-form-scroll-textable-arrow-item\"></div>\n\t\t\t\t\t</div>\n\t\t\t\t</div>\n\t\t\t</transition>\n\t\t</div>\t\n\t",
       data: function data() {
         return {
           showed: false,
@@ -7518,16 +6908,13 @@ var Vue = exports.Vue;
           var duration = 100;
           var diff = toDown ? el.scrollHeight - el.offsetHeight - el.scrollTop : el.scrollTop;
           var step = diff / (duration / interval);
-
           var scroller = function scroller() {
             diff -= step;
             el.scrollTop += toDown ? +step : -step;
-
             if (diff > 0) {
               setTimeout(scroller, interval);
             }
           };
-
           scroller();
         },
         toggleScroll: function toggleScroll() {
@@ -7535,31 +6922,24 @@ var Vue = exports.Vue;
         },
         toggleObservingScrollHint: function toggleObservingScrollHint() {
           var _this = this;
-
           if (!window.IntersectionObserver) {
             return;
           }
-
           var scrollable = this.getScrollNode();
-
           if (!scrollable) {
             return;
           }
-
           var topAnchor = scrollable.firstElementChild;
           var bottomAnchor = scrollable.lastElementChild;
-
           if (!topAnchor && !bottomAnchor) {
             return;
           }
-
           if (this.anchorObserver) {
             topAnchor ? this.anchorObserver.unobserve(topAnchor) : null;
             bottomAnchor ? this.anchorObserver.unobserve(bottomAnchor) : null;
             this.anchorObserver = null;
             return;
           }
-
           this.anchorObserver = new IntersectionObserver(function (entries) {
             entries.forEach(function (entry) {
               if (entry.target === topAnchor) {
@@ -7588,7 +6968,6 @@ var Vue = exports.Vue;
           if (val && !this.showed) {
             this.showed = true;
           }
-
           this.toggleScroll();
           this.toggleObservingScrollHint();
         }
@@ -7600,33 +6979,28 @@ var Vue = exports.Vue;
       mountId = mountId || "empty";
       mountId = "b24-window-mount-".concat(mountId);
       var selector = "#".concat(mountId);
-
       if (document.getElementById(mountId)) {
         return selector;
       }
-
       var wrapper = document.querySelector(".".concat(className));
-
       if (!wrapper) {
         wrapper = document.createElement('div');
         wrapper.classList.add(className);
         document.body.appendChild(wrapper);
       }
-
       var container = document.createElement('div');
       container.id = mountId;
       container.classList.add('b24-form');
       wrapper.appendChild(container);
       return selector;
     }
-
     var Overlay = {
       props: ['show', 'background'],
       components: {},
       template: "\n\t\t<transition name=\"b24-a-fade\" appear>\n\t\t\t<div class=\"b24-window-overlay\"\n\t\t\t\t:style=\"{ backgroundColor: background }\" \n\t\t\t\t@click=\"$emit('click')\"\n\t\t\t\tv-show=\"show\"\n\t\t\t></div>\n\t\t</transition>\n\t"
     };
     var windowMixin = {
-      props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText', 'mountId'],
+      props: ['show', 'title', 'position', 'vertical', 'maxWidth', 'zIndex', 'scrollDown', 'scrollDownText', 'mountId', 'hideOnOverlayClick'],
       components: {
         'b24-overlay': Overlay,
         'b24-scrollable': Scrollable,
@@ -7638,24 +7012,26 @@ var Vue = exports.Vue;
         };
       },
       methods: {
+        onOverlayClick: function onOverlayClick() {
+          if (this.hideOnOverlayClick) {
+            this.hide();
+          }
+        },
         hide: function hide() {
           this.show = false;
           this.$emit('hide');
         },
         listenEsc: function listenEsc() {
           var _this = this;
-
           if (!this.escHandler) {
             this.escHandler = function (e) {
               if (_this.show && e.key === 'Escape') {
                 e.preventDefault();
                 e.stopPropagation();
-
                 _this.hide();
               }
             };
           }
-
           this.show ? document.addEventListener('keydown', this.escHandler) : document.removeEventListener('keydown', this.escHandler);
         },
         getMountTo: function getMountTo(mountId) {
@@ -7678,7 +7054,7 @@ var Vue = exports.Vue;
     };
     var Popup = {
       mixins: [windowMixin],
-      template: "\n\t\t<MountingPortal\n\t\t\tappend\n\t\t\t:disabled=\"!mountId\"\n\t\t\t:mountTo=\"getMountTo(mountId)\"\n\t\t>\n\t\t\t<div class=\"b24-window\">\n\t\t\t\t<b24-overlay :show=\"show\" @click=\"hide()\"></b24-overlay>\n\t\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t\t@click.self.prevent=\"hide()\"\n\t\t\t\t\t\tv-show=\"show\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t</MountingPortal>\n\t",
+      template: "\n\t\t<MountingPortal\n\t\t\tappend\n\t\t\t:disabled=\"!mountId\"\n\t\t\t:mountTo=\"getMountTo(mountId)\"\n\t\t>\n\t\t\t<div class=\"b24-window\">\n\t\t\t\t<b24-overlay :show=\"show\" @click=\"onOverlayClick()\"></b24-overlay>\n\t\t\t\t<transition :name=\"getTransitionName()\" appear>\n\t\t\t\t\t<div class=\"b24-window-popup\" \n\t\t\t\t\t\t:class=\"classes()\"\n\t\t\t\t\t\t@click.self.prevent=\"onOverlayClick()\"\n\t\t\t\t\t\tv-show=\"show\"\n\t\t\t\t\t>\n\t\t\t\t\t\t<div class=\"b24-window-popup-wrapper\" \n\t\t\t\t\t\t\t:style=\"{ maxWidth: maxWidth + 'px' }\"\n\t\t\t\t\t\t>\n\t\t\t\t\t\t\t<button @click=\"hide()\" type=\"button\" class=\"b24-window-close\" :style=\"{ zIndex: zIndexComputed + 20}\" ></button>\n\t\t\t\t\t\t\t<b24-scrollable\n\t\t\t\t\t\t\t\t:show=\"show\"\n\t\t\t\t\t\t\t\t:enabled=\"scrollDown\"\n\t\t\t\t\t\t\t\t:zIndex=\"zIndex\"\n\t\t\t\t\t\t\t\t:text=\"scrollDownText\"\n\t\t\t\t\t\t\t>\n\t\t\t\t\t\t\t\t<div v-if=\"title\" class=\"b24-window-popup-head\">\n\t\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-title\">{{ title }}</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t<div class=\"b24-window-popup-body\">\n\t\t\t\t\t\t\t\t\t<slot></slot>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</b24-scrollable>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>\n\t\t\t\t</transition>\n\t\t\t</div>\n\t\t</MountingPortal>\n\t",
       methods: {
         getTransitionName: function getTransitionName() {
           return 'b24-a-slide-' + (this.vertical || 'bottom');
@@ -7768,7 +7144,6 @@ var Vue = exports.Vue;
         },
         showPopup: function showPopup(field) {
           var _this = this;
-
           var text = field.options.content.text || '';
           var div = document.createElement('div');
           div.textContent = text;
@@ -7839,25 +7214,20 @@ var Vue = exports.Vue;
 
     var loaded = null;
     var callbacks = [];
-
     function load(callback) {
       if (loaded) {
         callback();
         return;
       }
-
       callbacks.push(callback);
-
       if (loaded === false) {
         return;
       }
-
       loaded = false;
       var node = document.createElement('SCRIPT');
       node.setAttribute("type", "text/javascript");
       node.setAttribute("async", "");
       node.setAttribute("src", 'https://www.google.com/recaptcha/api.js');
-
       node.onload = function () {
         return window.grecaptcha.ready(function () {
           loaded = true;
@@ -7866,10 +7236,8 @@ var Vue = exports.Vue;
           });
         });
       };
-
       (document.getElementsByTagName('head')[0] || document.documentElement).appendChild(node);
     }
-
     var ReCaptcha$2 = {
       props: ['form'],
       methods: {
@@ -7882,11 +7250,9 @@ var Vue = exports.Vue;
       },
       mounted: function mounted() {
         var _this = this;
-
         if (!this.canUse()) {
           return;
         }
-
         load(function () {
           return _this.renderCaptcha();
         });
@@ -7917,24 +7283,19 @@ var Vue = exports.Vue;
       methods: {
         prevPage: function prevPage() {
           var _this = this;
-
           this.form.loading = true;
           setTimeout(function () {
             _this.form.loading = false;
-
             _this.form.pager.prev();
           }, 300);
         },
         nextPage: function nextPage() {
           var _this2 = this;
-
           if (this.form.pager.current().validate()) {
             this.form.loading = true;
           }
-
           setTimeout(function () {
             _this2.form.loading = false;
-
             _this2.form.pager.next();
           }, 300);
         },
@@ -7948,29 +7309,22 @@ var Vue = exports.Vue;
         },
         classes: function classes() {
           var list = [];
-
           if (this.form.view.type === 'inline' && this.form.design.shadow) {
             list.push('b24-form-shadow');
           }
-
           if (this.form.design.compact) {
             list.push('b24-form-compact');
           }
-
           var border = this.form.design.border;
-
           for (var pos in border) {
             if (!border.hasOwnProperty(pos) || !border[pos]) {
               continue;
             }
-
             list.push('b24-form-border-' + pos);
           }
-
           if (this.form.loading || this.form.sent || this.form.error || this.form.disabled) {
             list.push('b24-from-state-on');
           }
-
           return list;
         }
       }
@@ -7991,37 +7345,30 @@ var Vue = exports.Vue;
       methods: {
         classes: function classes() {
           var list = [];
-
           if (this.form.design.isDark()) {
             list.push('b24-form-dark');
           } else if (this.form.design.isAutoDark()) ;
-
           if (this.form.design.style) {
             list.push('b24-form-style-' + this.form.design.style);
           }
-
           return list;
         },
         isDesignStylesApplied: function isDesignStylesApplied() {
           var color = this.form.design.color;
           var css = [];
           var fontFamily = this.form.design.getFontFamily();
-
           if (fontFamily) {
             fontFamily = fontFamily.trim();
             fontFamily = fontFamily.indexOf(' ') > 0 ? "\"".concat(fontFamily, "\"") : fontFamily;
             css.push('--b24-font-family: ' + fontFamily + ', var(--b24-font-family-default);');
           }
-
           var fontUri = this.form.design.getFontUri();
-
           if (fontUri) {
             var link = document.createElement('LINK');
             link.setAttribute('href', fontUri);
             link.setAttribute('rel', 'stylesheet');
             document.head.appendChild(link);
           }
-
           var colorMap = {
             style: '--b24-font-family',
             primary: '--b24-primary-color',
@@ -8034,29 +7381,25 @@ var Vue = exports.Vue;
             fieldFocusBackground: '--b24-field-focus-background-color',
             popupBackground: '--b24-popup-background-color'
           };
-
           for (var key in color) {
             if (!color.hasOwnProperty(key) || !color[key]) {
               continue;
             }
-
             if (!colorMap.hasOwnProperty(key) || !colorMap[key]) {
               continue;
             }
-
             var rgba = Color.hexToRgba(color[key]);
             css.push(colorMap[key] + ': ' + rgba + ';');
           }
-
           var primaryHover = Color.parseHex(color.primary);
           primaryHover[3] -= 0.3;
           primaryHover = Color.toRgba(primaryHover);
           css.push(colorMap.primaryHover + ': ' + primaryHover + ';');
-
           if (this.form.design.backgroundImage) {
             css.push("background-image: url(".concat(this.form.design.backgroundImage, ");"));
             css.push("background-size: cover;");
-            css.push("background-position: center;"); //css.push(`padding: 20px 0;`);
+            css.push("background-position: center;");
+            //css.push(`padding: 20px 0;`);
           }
           /*
           if (this.form.view.type === 'inline' && this.form.design.shadow)
@@ -8067,14 +7410,11 @@ var Vue = exports.Vue;
           }
           */
 
-
           css = css.join("\n");
-
           if (!this.designStyleNode) {
             this.designStyleNode = document.createElement('STYLE');
             this.designStyleNode.setAttribute('type', 'text/css');
           }
-
           if (css) {
             css = "\n\t\t\t\t.b24-window-mounts #b24-window-mount-".concat(this.form.getId(), ",\n\t\t\t\t.b24-form #b24-").concat(this.form.getId(), ", \n\t\t\t\t.b24-form #b24-").concat(this.form.getId(), ".b24-form-dark {\n\t\t\t\t\t").concat(css, "\n\t\t\t\t}");
             this.designStyleNode.textContent = '';
@@ -8082,12 +7422,10 @@ var Vue = exports.Vue;
             document.head.appendChild(this.designStyleNode);
             return true;
           }
-
           if (!css) {
             if (this.designStyleNode && this.designStyleNode.parentElement) {
               this.designStyleNode.parentElement.removeChild(this.designStyleNode);
             }
-
             return false;
           }
         }
@@ -8111,7 +7449,7 @@ var Vue = exports.Vue;
     };
     var Popup$1 = {
       mixins: [viewMixin],
-      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-popup v-bind:key=\"form.id\" \n\t\t\t\t:show=\"form.visible\"\n\t\t\t\t:position=\"form.view.position\"  \n\t\t\t\t:scrollDown=\"!this.form.isOnState()\"  \n\t\t\t\t:scrollDownText=\"scrollDownText\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t>\n\t\t\t\t<div v-if=\"form.view.title\" class=\"b24-window-header\">\n\t\t\t\t\t<div class=\"b24-window-header-title\">{{ form.view.title }}</div>\n\t\t\t\t</div>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-popup>\n\t\t</b24-form-container>\n\t"
+      template: "\n\t\t<b24-form-container :form=\"form\">\n\t\t\t<b24-popup v-bind:key=\"form.id\" \n\t\t\t\t:show=\"form.visible\"\n\t\t\t\t:position=\"form.view.position\"  \n\t\t\t\t:scrollDown=\"!this.form.isOnState()\"  \n\t\t\t\t:scrollDownText=\"scrollDownText\"\n\t\t\t\t@hide=\"form.hide()\"\n\t\t\t\t:hideOnOverlayClick=\"form.view.hideOnOverlayClick\"\n\t\t\t>\n\t\t\t\t<div v-if=\"form.view.title\" class=\"b24-window-header\">\n\t\t\t\t\t<div class=\"b24-window-header-title\">{{ form.view.title }}</div>\n\t\t\t\t</div>\n\t\t\t\t<slot></slot>\n\t\t\t</b24-popup>\n\t\t</b24-form-container>\n\t"
     };
     var Panel$1 = {
       mixins: [viewMixin],
@@ -8129,42 +7467,31 @@ var Vue = exports.Vue;
       'b24-form-widget': Widget$1
     };
 
-    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$7(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$7(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
+    function ownKeys$2(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+    function _objectSpread$2(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys$2(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys$2(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+    function _classPrivateFieldInitSpec$6(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var DefaultOptions$4 = {
       view: 'inline'
     };
-
     var _id$2 = /*#__PURE__*/new WeakMap();
-
     var _fields$1 = /*#__PURE__*/new WeakMap();
-
     var _dependence = /*#__PURE__*/new WeakMap();
-
     var _properties = /*#__PURE__*/new WeakMap();
-
     var _personalisation = /*#__PURE__*/new WeakMap();
-
     var _vue = /*#__PURE__*/new WeakMap();
-
     var Controller$r = /*#__PURE__*/function (_Event) {
       babelHelpers.inherits(Controller$$1, _Event);
-
       function Controller$$1() {
         var _options$editMode;
-
         var _this;
-
         var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
         babelHelpers.classCallCheck(this, Controller$$1);
         _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Controller$$1).call(this, options));
-
         _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _id$2, {
           writable: true,
           value: void 0
         });
-
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "identification", {});
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "view", {
           type: 'inline'
@@ -8173,22 +7500,18 @@ var Vue = exports.Vue;
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "analyticsHandler", {});
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "languages", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "language", 'en');
-
         _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _fields$1, {
           writable: true,
           value: []
         });
-
         _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _dependence, {
           writable: true,
           value: void 0
         });
-
         _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _properties, {
           writable: true,
           value: {}
         });
-
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "agreements", []);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "useSign", false);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "date", {
@@ -8201,7 +7524,6 @@ var Vue = exports.Vue;
           title: '$',
           format: '$#'
         });
-
         _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _personalisation, {
           writable: true,
           value: {
@@ -8209,7 +7531,6 @@ var Vue = exports.Vue;
             desc: ''
           }
         });
-
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "validated", false);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "visible", true);
         babelHelpers.defineProperty(babelHelpers.assertThisInitialized(_this), "loading", false);
@@ -8221,36 +7542,28 @@ var Vue = exports.Vue;
           text: '',
           handler: null
         });
-
         _classPrivateFieldInitSpec$6(babelHelpers.assertThisInitialized(_this), _vue, {
           writable: true,
           value: void 0
         });
-
         _this.setGlobalEventNamespace('b24:form');
-
         _this.messages = new Storage();
         _this.design = new Model();
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _dependence, new Manager(babelHelpers.assertThisInitialized(_this)));
         _this.analytics = new Analytics$1(babelHelpers.assertThisInitialized(_this));
         _this.recaptcha = new ReCaptcha$1();
-
         _this.emit(EventTypes.initBefore, options);
-
         options = _this.adjust(options);
         babelHelpers.classPrivateFieldSet(babelHelpers.assertThisInitialized(_this), _id$2, options.id || Math.random().toString().split('.')[1] + Math.random().toString().split('.')[1]);
         _this.provider = options.provider || {};
         _this.analyticsHandler = options.analyticsHandler || {};
         _this.editMode = (_options$editMode = options.editMode) !== null && _options$editMode !== void 0 ? _options$editMode : false;
-
         if (_this.provider.form) {
           _this.loading = true;
-
           if (_this.provider.form) {
             if (typeof _this.provider.form === 'string') ; else if (typeof _this.provider.form === 'function') {
               _this.provider.form().then(function (options) {
                 _this.adjust(options);
-
                 _this.load();
               })["catch"](function (e) {
                 if (window.console && console.log) {
@@ -8261,12 +7574,10 @@ var Vue = exports.Vue;
           }
         } else {
           _this.load();
-
           if (_this.provider.user) {
             if (typeof _this.provider.user === 'string') ; else if (_this.provider.user instanceof Promise) {
               _this.provider.user.then(function (user) {
                 _this.setValues(user);
-
                 return user;
               })["catch"](function (e) {
                 if (window.console && console.log) {
@@ -8278,18 +7589,15 @@ var Vue = exports.Vue;
             }
           }
         }
-
         _this.emit(EventTypes.init);
+        _this.render();
 
-        _this.render(); // track form views
-
-
+        // track form views
         ViewObserver.observe(document.querySelector('#b24-' + _this.getId() + ' .b24-form-wrapper'), function () {
           _this.emit(EventTypes.view);
         });
         return _this;
       }
-
       babelHelpers.createClass(Controller$$1, [{
         key: "load",
         value: function load() {
@@ -8301,10 +7609,8 @@ var Vue = exports.Vue;
         key: "reset",
         value: function reset() {
           var _this2 = this;
-
           babelHelpers.classPrivateFieldGet(this, _fields$1).forEach(function (field) {
             field.reset();
-
             if (babelHelpers.classPrivateFieldGet(_this2, _dependence)) {
               babelHelpers.classPrivateFieldGet(_this2, _dependence).trigger(field, 'change');
             }
@@ -8327,23 +7633,18 @@ var Vue = exports.Vue;
         key: "submit",
         value: function submit() {
           var _this3 = this;
-
           this.error = false;
           this.sent = false;
-
           if (!this.valid()) {
             return false;
           }
-
           storeFieldValues(this.getFields());
-
           if (!this.recaptcha.isVerified()) {
             this.recaptcha.verify(function () {
               return _this3.submit();
             });
             return false;
           }
-
           this.loading = true;
           var promise = Promise.resolve();
           var eventData = {
@@ -8351,12 +7652,10 @@ var Vue = exports.Vue;
           };
           this.emit(EventTypes.submit, eventData);
           promise = eventData.promise || promise;
-
           if (!this.provider.submit) {
             this.loading = false;
             return true;
           }
-
           var consents = this.agreements.reduce(function (acc, field) {
             acc[field.name] = field.value();
             return acc;
@@ -8367,7 +7666,6 @@ var Vue = exports.Vue;
           formData.set('consents', JSON.stringify(consents));
           formData.set('recaptcha', this.recaptcha.getResponse());
           formData.set('timeZoneOffset', new Date().getTimezoneOffset());
-
           if (typeof this.provider.submit === 'string') {
             promise = promise.then(function () {
               return window.fetch(_this3.provider.submit, {
@@ -8386,42 +7684,32 @@ var Vue = exports.Vue;
               return _this3.provider.submit(_this3, formData);
             });
           }
-
           promise.then(function (data) {
             _this3.sent = true;
             _this3.loading = false;
             _this3.stateText = data.message || _this3.messages.get('stateSuccess');
-
             if (!data.resultId) {
               _this3.error = true;
               return;
             }
-
             _this3.emit(EventTypes.sendSuccess, data);
-
             var redirect = data.redirect || {};
-
             if (redirect.url) {
               var handler = function handler() {
                 try {
                   top.location = redirect.url;
                 } catch (e) {}
-
                 window.location = redirect.url;
               };
-
               if (data.pay) {
                 _this3.stateButton.text = _this3.messages.get('stateButtonPay');
                 _this3.stateButton.handler = handler;
               }
-
               setTimeout(handler, (redirect.delay || 0) * 1000);
             } else if (data.refill.active) {
               _this3.stateButton.text = data.refill.caption;
-
               _this3.stateButton.handler = function () {
                 _this3.sent = false;
-
                 _this3.reset();
               };
             }
@@ -8429,7 +7717,6 @@ var Vue = exports.Vue;
             _this3.error = true;
             _this3.loading = false;
             _this3.stateText = _this3.messages.get('stateError');
-
             _this3.emit(EventTypes.sendError, e);
           });
           return false;
@@ -8440,22 +7727,17 @@ var Vue = exports.Vue;
           if (!values || babelHelpers["typeof"](values) !== 'object') {
             return;
           }
-
           if (babelHelpers.classPrivateFieldGet(this, _personalisation).title) {
             this.title = Conv.replaceText(babelHelpers.classPrivateFieldGet(this, _personalisation).title, values);
           }
-
           if (babelHelpers.classPrivateFieldGet(this, _personalisation).desc) {
             this.desc = Conv.replaceText(babelHelpers.classPrivateFieldGet(this, _personalisation).desc, values);
           }
-
           babelHelpers.classPrivateFieldGet(this, _fields$1).forEach(function (field) {
             var value = values[field.type] || values[field.name];
-
             if (typeof value === 'undefined' || !field.item()) {
               return;
             }
-
             field.setValues(Array.isArray(value) ? value : [value]);
           });
         }
@@ -8463,107 +7745,86 @@ var Vue = exports.Vue;
         key: "adjust",
         value: function adjust() {
           var _this4 = this;
-
           var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : DefaultOptions$4;
           options = Object.assign({}, DefaultOptions$4, options);
-
           if (babelHelpers["typeof"](options.identification) === 'object') {
             this.identification = options.identification;
           }
-
           if (options.messages) {
             this.messages.setMessages(options.messages || {});
           }
-
           if (options.language) {
             this.language = options.language;
             this.messages.setLanguage(this.language);
           }
-
           if (options.languages) {
             this.languages = options.languages;
-          } ////////////////////////////////////////
-
+          }
+          ////////////////////////////////////////
 
           if (options.handlers && babelHelpers["typeof"](options.handlers) === 'object') {
             Object.keys(options.handlers).forEach(function (key) {
               return _this4.subscribe(key, options.handlers[key]);
             });
           }
-
           if (options.properties && babelHelpers["typeof"](options.properties) === 'object') {
             Object.keys(options.properties).forEach(function (key) {
               return _this4.setProperty(key, options.properties[key]);
             });
           }
-
           if (typeof options.title !== 'undefined') {
             babelHelpers.classPrivateFieldGet(this, _personalisation).title = options.title;
             this.title = Conv.replaceText(options.title, {});
           }
-
           if (typeof options.desc !== 'undefined') {
             babelHelpers.classPrivateFieldGet(this, _personalisation).desc = options.desc;
             this.desc = Conv.replaceText(options.desc, {});
           }
-
           if (typeof options.useSign !== 'undefined') {
             this.useSign = !!options.useSign;
           }
-
           if (babelHelpers["typeof"](options.date) === 'object') {
             this.setDate(options.date);
           }
-
           if (babelHelpers["typeof"](options.currency) === 'object') {
             this.setCurrency(options.currency);
           }
-
           if (Array.isArray(options.fields)) {
             this.setFields(options.fields);
           }
-
           if (Array.isArray(options.agreements)) {
             this.agreements = [];
             options.agreements.forEach(function (fieldOptions) {
               fieldOptions.messages = _this4.messages;
               fieldOptions.design = _this4.design;
-
               _this4.agreements.push(new Controller$h(fieldOptions));
             });
           }
-
           this.setView(options.view);
-
           if (typeof options.buttonCaption !== 'undefined') {
             this.buttonCaption = options.buttonCaption;
           }
-
           if (typeof options.visible !== 'undefined') {
             this.visible = !!options.visible;
           }
-
           if (typeof options.design !== 'undefined') {
-            this.design.adjust(options.design);
+            this.design.adjust(_objectSpread$2({
+              proxy: options.proxy
+            }, options.design));
           }
-
           if (typeof options.recaptcha !== 'undefined') {
             this.recaptcha.adjust(options.recaptcha);
           }
-
           if (Array.isArray(options.dependencies)) {
             babelHelpers.classPrivateFieldGet(this, _dependence).setDependencies(options.dependencies);
           }
-
           if (options.node) {
             this.node = options.node;
           }
-
           if (!this.node) {
             this.node = document.createElement('div');
             document.body.appendChild(this.node);
           }
-
           return options;
         }
       }, {
@@ -8572,27 +7833,23 @@ var Vue = exports.Vue;
           var view = typeof (options || '') === 'string' ? {
             type: options
           } : options;
-
           if (typeof view.type !== 'undefined') {
             this.view.type = ViewTypes.includes(view.type) ? view.type : 'inline';
           }
-
           if (typeof view.position !== 'undefined') {
             this.view.position = ViewPositions.includes(view.position) ? view.position : null;
           }
-
           if (typeof view.vertical !== 'undefined') {
             this.view.vertical = ViewVerticals.includes(view.vertical) ? view.vertical : null;
           }
-
           if (typeof view.title !== 'undefined') {
             this.view.title = view.title;
           }
-
           if (typeof view.delay !== 'undefined') {
             this.view.delay = parseInt(view.delay);
             this.view.delay = isNaN(this.view.delay) ? 0 : this.view.delay;
           }
+          this.view.hideOnOverlayClick = typeof view.hideOnOverlayClick !== "undefined" ? Boolean(view.hideOnOverlayClick) : true;
         }
       }, {
         key: "setDate",
@@ -8600,15 +7857,12 @@ var Vue = exports.Vue;
           if (babelHelpers["typeof"](date) !== 'object') {
             return;
           }
-
           if (date.dateFormat) {
             this.date.dateFormat = date.dateFormat;
           }
-
           if (date.dateTimeFormat) {
             this.date.dateTimeFormat = date.dateTimeFormat;
           }
-
           if (typeof date.sundayFirstly !== 'undefined') {
             this.date.sundayFirstly = date.sundayFirstly;
           }
@@ -8619,15 +7873,12 @@ var Vue = exports.Vue;
           if (babelHelpers["typeof"](currency) !== 'object') {
             return;
           }
-
           if (currency.code) {
             this.currency.code = currency.code;
           }
-
           if (currency.title) {
             this.currency.title = currency.title;
           }
-
           if (currency.format) {
             this.currency.format = currency.format;
           }
@@ -8636,7 +7887,6 @@ var Vue = exports.Vue;
         key: "setFields",
         value: function setFields(fieldOptionsList) {
           var _this5 = this;
-
           babelHelpers.classPrivateFieldSet(this, _fields$1, []);
           var page = new Page(this.title);
           this.pager = new Navigation();
@@ -8645,29 +7895,23 @@ var Vue = exports.Vue;
             switch (options.type) {
               case 'page':
                 page = new Page(options.label || _this5.title);
-
                 _this5.pager.add(page);
-
                 return;
-
               case 'date':
               case 'datetime':
               case 'rq':
                 options.format = options.type === 'date' ? _this5.date.dateFormat : _this5.date.dateTimeFormat;
                 options.sundayFirstly = _this5.date.sundayFirstly;
                 break;
-
               case 'product':
                 options.currency = _this5.currency;
                 break;
             }
-
             if (Array.isArray(options.items) && options.items.length > 0) {
               options.items = options.items.filter(function (item) {
                 return !item.disabled;
               });
             }
-
             options.messages = _this5.messages;
             options.design = _this5.design;
             var field = Factory.create(options);
@@ -8721,15 +7965,12 @@ var Vue = exports.Vue;
           if (!key || typeof key !== 'string') {
             return;
           }
-
           if (value && value.toString) {
             value = value.toString();
           }
-
           if (typeof value !== 'string') {
             value = '';
           }
-
           babelHelpers.classPrivateFieldGet(this, _properties)[key] = value;
         }
       }, {
@@ -8777,22 +8018,19 @@ var Vue = exports.Vue;
     }(Event);
 
     function _classStaticPrivateMethodGet(receiver, classConstructor, method) { _classCheckPrivateStaticAccess(receiver, classConstructor); return method; }
-
     function _classCheckPrivateStaticAccess(receiver, classConstructor) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } }
     var Button = /*#__PURE__*/function () {
       function Button() {
         babelHelpers.classCallCheck(this, Button);
       }
-
       babelHelpers.createClass(Button, null, [{
         key: "create",
         value: function create(b24options) {
           var _b24options$views, _b24options$views$cli, _b24options$views2, _b24options$views2$cl;
-
           var btnOptions = Type.object(b24options === null || b24options === void 0 ? void 0 : (_b24options$views = b24options.views) === null || _b24options$views === void 0 ? void 0 : (_b24options$views$cli = _b24options$views.click) === null || _b24options$views$cli === void 0 ? void 0 : _b24options$views$cli.button) ? b24options === null || b24options === void 0 ? void 0 : (_b24options$views2 = b24options.views) === null || _b24options$views2 === void 0 ? void 0 : (_b24options$views2$cl = _b24options$views2.click) === null || _b24options$views2$cl === void 0 ? void 0 : _b24options$views2$cl.button : {};
           var outlined = (btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.outlined) === '1',
-              plain = (btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.plain) === '1',
-              rounded = (btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.rounded) === '1';
+            plain = (btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.plain) === '1',
+            rounded = (btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.rounded) === '1';
           var newButton = plain ? document.createElement("a") : document.createElement("button");
           newButton.classList.add('b24-form-click-btn');
           newButton.classList.add('b24-form-click-btn-' + b24options.id);
@@ -8802,33 +8040,23 @@ var Vue = exports.Vue;
           wrapper.appendChild(newButton);
           newButton.textContent = (btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.text) || 'Click';
           wrapper.classList.add(plain ? '--b24-mod-plain' : '--b24-mod-button');
-
           if (outlined) {
             wrapper.classList.add('--b24-mod-outlined');
           }
-
           if (rounded) {
             wrapper.classList.add('--b24-mod-rounded');
           }
-
           _classStaticPrivateMethodGet(Button, Button, _applyDecoration).call(Button, wrapper, btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.decoration);
-
           _classStaticPrivateMethodGet(Button, Button, _applyAlign).call(Button, wrapper, btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.align);
-
           var fontStyle = btnOptions === null || btnOptions === void 0 ? void 0 : btnOptions.font;
-
           _classStaticPrivateMethodGet(Button, Button, _loadFont).call(Button, fontStyle);
-
           _classStaticPrivateMethodGet(Button, Button, _applyFont).call(Button, newButton, fontStyle);
-
           _classStaticPrivateMethodGet(Button, Button, _applyColors).call(Button, newButton, btnOptions, b24options);
-
           return wrapper;
         }
       }]);
       return Button;
     }();
-
     function _applyDecoration(button, decoration) {
       switch (decoration) {
         case 'dotted':
@@ -8837,7 +8065,6 @@ var Vue = exports.Vue;
           break;
       }
     }
-
     function _applyAlign(button, align) {
       switch (align) {
         case 'center':
@@ -8848,7 +8075,6 @@ var Vue = exports.Vue;
           break;
       }
     }
-
     function _loadFont(fontStyle) {
       switch (fontStyle) {
         case 'modern':
@@ -8857,7 +8083,6 @@ var Vue = exports.Vue;
           break;
       }
     }
-
     function _applyFont(button, fontStyle) {
       switch (fontStyle) {
         case 'classic':
@@ -8867,42 +8092,36 @@ var Vue = exports.Vue;
           break;
       }
     }
-
     function _applyColors(button) {
       var _buttonParams$color, _buttonParams$color2, _buttonParams$color3, _buttonParams$color4, _buttonParams$color5, _buttonParams$color6, _buttonParams$color7, _buttonParams$color8, _buttonParams$color9;
-
       var buttonParams = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       var b24options = arguments.length > 2 ? arguments[2] : undefined;
       var outlined = (buttonParams === null || buttonParams === void 0 ? void 0 : buttonParams.outlined) === '1',
-          plain = (buttonParams === null || buttonParams === void 0 ? void 0 : buttonParams.plain) === '1';
+        plain = (buttonParams === null || buttonParams === void 0 ? void 0 : buttonParams.plain) === '1';
       var colorText = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color = buttonParams.color) === null || _buttonParams$color === void 0 ? void 0 : _buttonParams$color.text) || '#fff',
-          colorTextHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color2 = buttonParams.color) === null || _buttonParams$color2 === void 0 ? void 0 : _buttonParams$color2.textHover) || '#fff',
-          colorBackground = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color3 = buttonParams.color) === null || _buttonParams$color3 === void 0 ? void 0 : _buttonParams$color3.background) || '#3bc8f5',
-          colorBackgroundHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color4 = buttonParams.color) === null || _buttonParams$color4 === void 0 ? void 0 : _buttonParams$color4.backgroundHover) || '#3eddff',
-          colorBorder = colorBackground,
-          colorBorderHover = colorBackgroundHover;
+        colorTextHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color2 = buttonParams.color) === null || _buttonParams$color2 === void 0 ? void 0 : _buttonParams$color2.textHover) || '#fff',
+        colorBackground = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color3 = buttonParams.color) === null || _buttonParams$color3 === void 0 ? void 0 : _buttonParams$color3.background) || '#3bc8f5',
+        colorBackgroundHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color4 = buttonParams.color) === null || _buttonParams$color4 === void 0 ? void 0 : _buttonParams$color4.backgroundHover) || '#3eddff',
+        colorBorder = colorBackground,
+        colorBorderHover = colorBackgroundHover;
       var outlinedColorText = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color5 = buttonParams.color) === null || _buttonParams$color5 === void 0 ? void 0 : _buttonParams$color5.text) || '#535b69',
-          outlinedColorTextHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color6 = buttonParams.color) === null || _buttonParams$color6 === void 0 ? void 0 : _buttonParams$color6.textHover) || '#535b69',
-          outlinedColorBackground = 'transparent',
-          outlinedColorBackgroundHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color7 = buttonParams.color) === null || _buttonParams$color7 === void 0 ? void 0 : _buttonParams$color7.backgroundHover) || '#cfd4d8',
-          outlinedColorBorder = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color8 = buttonParams.color) === null || _buttonParams$color8 === void 0 ? void 0 : _buttonParams$color8.background) || '#c6cdd3',
-          outlinedColorBorderHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color9 = buttonParams.color) === null || _buttonParams$color9 === void 0 ? void 0 : _buttonParams$color9.backgroundHover) || '#c6cdd3';
+        outlinedColorTextHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color6 = buttonParams.color) === null || _buttonParams$color6 === void 0 ? void 0 : _buttonParams$color6.textHover) || '#535b69',
+        outlinedColorBackground = 'transparent',
+        outlinedColorBackgroundHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color7 = buttonParams.color) === null || _buttonParams$color7 === void 0 ? void 0 : _buttonParams$color7.backgroundHover) || '#cfd4d8',
+        outlinedColorBorder = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color8 = buttonParams.color) === null || _buttonParams$color8 === void 0 ? void 0 : _buttonParams$color8.background) || '#c6cdd3',
+        outlinedColorBorderHover = (buttonParams === null || buttonParams === void 0 ? void 0 : (_buttonParams$color9 = buttonParams.color) === null || _buttonParams$color9 === void 0 ? void 0 : _buttonParams$color9.backgroundHover) || '#c6cdd3';
       button.style.color = outlined ? outlinedColorText : colorText;
-
       if (!plain) {
         button.style.borderColor = outlined ? outlinedColorBorder : colorBorder;
         button.style.backgroundColor = outlined ? outlinedColorBackground : colorBackground;
       }
-
       var hoverStyle = "\n\t\t\t.b24-form-click-btn-wrapper-".concat(b24options.id, " > button:hover {\n\t\t\t\tcolor: ").concat(outlined ? outlinedColorTextHover : colorTextHover, " !important;\n\t\t\t\tbackground-color: ").concat(outlined ? outlinedColorBackgroundHover : colorBackgroundHover, " !important;\n\t\t\t\tborder-color: ").concat(outlined ? outlinedColorBorderHover : colorBorderHover, " !important;\n\t\t\t}\n\t\t\t.b24-form-click-btn-wrapper-").concat(b24options.id, " > a:hover {\n\t\t\t\tcolor: ").concat(outlined ? outlinedColorTextHover : colorTextHover, " !important;\n\t\t\t}\n\t\t");
       var styleElem = document.createElement('style');
-
       if (styleElem.styleSheet) {
         styleElem.styleSheet.cssText = hoverStyle;
       } else {
         styleElem.appendChild(document.createTextNode(hoverStyle));
       }
-
       document.getElementsByTagName('head')[0].appendChild(styleElem);
     }
 
@@ -8921,55 +8140,42 @@ var Vue = exports.Vue;
           });
         });
       }
-
       if (babelHelpers["typeof"](oldenLoaderData.presets) === 'object') {
         options.properties = options.properties || {};
         Object.keys(oldenLoaderData.presets).forEach(function (key) {
           options.properties[key] = oldenLoaderData.presets[key];
         });
       }
-
       if (oldenLoaderData.type === 'auto' && oldenLoaderData.delay) {
         if (babelHelpers["typeof"](options.view) === 'object' && parseInt(oldenLoaderData.delay) > 0) {
           options.view.delay = parseInt(oldenLoaderData.delay);
         }
       }
-
       if (babelHelpers["typeof"](oldenLoaderData.handlers) === 'object') {
         options.handlers = options.handlers || {};
         Object.keys(oldenLoaderData.handlers).forEach(function (key) {
           var value = oldenLoaderData.handlers[key];
-
           if (typeof value !== "function") {
             return;
           }
-
           var type;
           var handler;
-
           switch (key) {
             case 'load':
               type = EventTypes.init;
-
               handler = function handler(data, form) {
                 value(oldenLoaderData, form);
               };
-
               break;
-
             case 'fill':
               type = EventTypes.fieldBlur;
-
               handler = function handler(data) {
                 var field = data.field;
                 value(field.name, field.values());
               };
-
               break;
-
             case 'send':
               type = EventTypes.sendSuccess;
-
               if (typeof value === "function") {
                 handler = function handler(data, form) {
                   value(Object.assign(form.getFields().reduce(function (acc, field) {
@@ -8978,26 +8184,20 @@ var Vue = exports.Vue;
                   }, {}), data || {}), form);
                 };
               }
-
               break;
-
             case 'unload':
               type = EventTypes.destroy;
-
               handler = function handler(data, form) {
                 value(oldenLoaderData, form);
               };
-
               break;
           }
-
           if (type) {
             options.handlers[type] = handler ? handler : value;
           }
         });
       }
     }
-
     function createEventData(b24options) {
       return {
         id: b24options.id,
@@ -9017,29 +8217,22 @@ var Vue = exports.Vue;
         applyOldenLoaderData: applyOldenLoaderData
     });
 
-    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$8(obj, privateMap); privateMap.set(obj, value); }
-
-    function _checkPrivateRedeclaration$8(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
-
+    function _classPrivateFieldInitSpec$7(obj, privateMap, value) { _checkPrivateRedeclaration$9(obj, privateMap); privateMap.set(obj, value); }
+    function _checkPrivateRedeclaration$9(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
     var _forms = /*#__PURE__*/new WeakMap();
-
     var _userProviderPromise = /*#__PURE__*/new WeakMap();
-
     var Application = /*#__PURE__*/function () {
       function Application() {
         babelHelpers.classCallCheck(this, Application);
-
         _classPrivateFieldInitSpec$7(this, _forms, {
           writable: true,
           value: []
         });
-
         _classPrivateFieldInitSpec$7(this, _userProviderPromise, {
           writable: true,
           value: void 0
         });
       }
-
       babelHelpers.createClass(Application, [{
         key: "list",
         value: function list() {
@@ -9082,33 +8275,28 @@ var Vue = exports.Vue;
       }, {
         key: "createForm24",
         value: function createForm24(b24options, options) {
-          var _this = this;
-
+          var _b24form$common,
+            _b24form$common$prope,
+            _this = this;
           options.provider = options.provider || {};
-
           if (!options.provider.user) {
             options.provider.user = this.getUserProvider24(b24options, options);
           }
-
           if (!options.provider.entities) {
             var entities = b24form.util.url.parameter.get('b24form_entities');
-
             if (entities) {
               entities = JSON.parse(entities);
-
               if (babelHelpers["typeof"](entities) === 'object') {
                 options.provider.entities = entities;
               }
             }
           }
-
           options.provider.submit = this.getSubmitProvider24(b24options);
           options.analyticsHandler = this.getAnalyticsSender(b24options);
-
           if (b24options.lang) {
             options.language = b24options.lang;
           }
-
+          options.proxy = ((_b24form$common = b24form.common) === null || _b24form$common === void 0 ? void 0 : (_b24form$common$prope = _b24form$common.properties) === null || _b24form$common$prope === void 0 ? void 0 : _b24form$common$prope.proxy) || {};
           options.languages = b24form.common.languages || [];
           options.messages = options.messages || {};
           options.messages = Object.assign(b24form.common.messages, options.messages || {});
@@ -9152,22 +8340,17 @@ var Vue = exports.Vue;
         key: "getUserProvider24",
         value: function getUserProvider24(b24options) {
           var _this2 = this;
-
           var signTtl = 3600 * 24;
           var sign = b24form.util.url.parameter.get('b24form_data');
-
           if (!sign) {
             sign = b24form.util.url.parameter.get('b24form_user');
-
             if (sign) {
               b24options.sign = sign;
-
               if (b24form.util.ls.getItem('b24-form-sign', signTtl)) {
                 sign = null;
               }
             }
           }
-
           var eventData = {
             sign: sign
           };
@@ -9179,30 +8362,24 @@ var Vue = exports.Vue;
           }));
           sign = eventData.sign;
           var ttl = 3600 * 24 * 28;
-
           if (!sign) {
             if (b24form.user && babelHelpers["typeof"](b24form.user) === 'object') {
               b24options.entities = b24options.entities || b24form.user.entities || [];
               return b24form.user.fields || {};
             }
-
             try {
               var user = b24form.util.ls.getItem('b24-form-user', ttl);
-
               if (user !== null && babelHelpers["typeof"](user) === 'object') {
                 return user.fields || {};
               }
             } catch (e) {}
           }
-
           if (babelHelpers.classPrivateFieldGet(this, _userProviderPromise)) {
             return babelHelpers.classPrivateFieldGet(this, _userProviderPromise);
           }
-
           if (!sign) {
             return null;
           }
-
           b24options.sign = sign;
           b24form.util.ls.setItem('b24-form-sign', sign, signTtl);
           var formData = new FormData();
@@ -9215,13 +8392,11 @@ var Vue = exports.Vue;
             if (data.error) {
               throw new Error(data.error_description || data.error);
             }
-
             data = data.result;
             data = data && babelHelpers["typeof"](data) === 'object' ? data : {};
             data.fields = data && babelHelpers["typeof"](data.fields) === 'object' ? data.fields : {};
             var properties = data.properties || {};
             delete data.properties;
-
             _this2.list().filter(function (form) {
               return form.identification.id === b24options.id;
             }).forEach(function (form) {
@@ -9229,7 +8404,6 @@ var Vue = exports.Vue;
                 return form.setProperty(key, properties[key]);
               });
             });
-
             b24form.util.ls.setItem('b24-form-user', data, ttl);
             dispatchEvent(new CustomEvent('b24:form:app:user:loaded', {
               detail: {
@@ -9245,7 +8419,6 @@ var Vue = exports.Vue;
         key: "getSubmitProvider24",
         value: function getSubmitProvider24(b24options) {
           var _this3 = this;
-
           return function (form, formData) {
             var trace = b24options.usedBySiteButton && BX.SiteButton ? BX.SiteButton.getTrace() : window.b24Tracker && b24Tracker.guest ? b24Tracker.guest.getTrace() : null;
             var eventData = {
@@ -9267,13 +8440,10 @@ var Vue = exports.Vue;
               if (data.error) {
                 throw new Error(data.error_description || data.error);
               }
-
               data = data.result;
-
               if (data && data.gid && window.b24Tracker && b24Tracker.guest && b24Tracker.guest.setGid) {
                 b24Tracker.guest.setGid(data.gid);
               }
-
               return new Promise(function (resolve) {
                 resolve(data);
               });
@@ -9284,35 +8454,27 @@ var Vue = exports.Vue;
         key: "initFormScript24",
         value: function initFormScript24(b24options) {
           var _this4 = this;
-
           if (b24options.usedBySiteButton) {
             this.createWidgetForm24(b24options, Conv.cloneDeep(b24options.data));
             return;
           }
-
           var nodes = document.querySelectorAll('script[data-b24-form]');
           nodes = Array.prototype.slice.call(nodes);
           nodes.forEach(function (node) {
             var _b24options$views, _b24options$views$cli, _b24options$views$cli2;
-
             if (node.hasAttribute('data-b24-loaded')) {
               return;
             }
-
             var attributes = node.getAttribute('data-b24-form').split('/');
-
             if (attributes[1] !== b24options.id || attributes[2] !== b24options.sec) {
               return;
             }
-
             node.setAttribute('data-b24-loaded', true);
             var options = Conv.cloneDeep(b24options.data);
             var id = node.getAttribute('data-b24-id');
-
             if (id) {
               options.id = id;
             }
-
             switch (attributes[0]) {
               case 'auto':
                 setTimeout(function () {
@@ -9321,17 +8483,14 @@ var Vue = exports.Vue;
                   })).show();
                 }, (b24options.views.auto.delay || 1) * 1000);
                 break;
-
               case 'click':
                 var clickElement = node.nextElementSibling;
                 var buttonUseMode = (b24options === null || b24options === void 0 ? void 0 : (_b24options$views = b24options.views) === null || _b24options$views === void 0 ? void 0 : (_b24options$views$cli = _b24options$views.click) === null || _b24options$views$cli === void 0 ? void 0 : (_b24options$views$cli2 = _b24options$views$cli.button) === null || _b24options$views$cli2 === void 0 ? void 0 : _b24options$views$cli2.use) === '1';
-
                 if (buttonUseMode) {
                   var newButton = Button.create(b24options);
                   node.after(newButton);
                   clickElement = newButton.querySelector('.b24-form-click-btn');
                 }
-
                 if (clickElement) {
                   var form;
                   clickElement.addEventListener('click', function () {
@@ -9340,21 +8499,16 @@ var Vue = exports.Vue;
                         view: b24options.views.click
                       }));
                     }
-
                     form.show();
                   });
                 }
-
                 break;
-
               default:
                 var target = document.createElement('div');
                 node.parentElement.insertBefore(target, node);
-
                 _this4.createForm24(b24options, Object.assign(options, {
                   node: target
                 }));
-
                 break;
             }
           });
@@ -9363,18 +8517,14 @@ var Vue = exports.Vue;
         key: "getAnalyticsSender",
         value: function getAnalyticsSender(b24options) {
           var _this5 = this;
-
           return function (counter, formId) {
             if (window.sessionStorage) {
               var key = "b24-analytics-counter-".concat(formId, "-").concat(counter);
-
               if (sessionStorage.getItem(key) === 'y') {
                 return Promise.resolve([]);
               }
-
               sessionStorage.setItem(key, 'y');
             }
-
             var formData = new FormData();
             formData.append('counter', counter);
             formData.append('formId', formId);
@@ -9384,7 +8534,6 @@ var Vue = exports.Vue;
               if (data.error) {
                 throw new Error(data.error_description || data.error);
               }
-
               return new Promise(function (resolve) {
                 resolve(data);
               });
@@ -9394,7 +8543,6 @@ var Vue = exports.Vue;
       }]);
       return Application;
     }();
-
     var App = new Application();
 
     exports.App = App;

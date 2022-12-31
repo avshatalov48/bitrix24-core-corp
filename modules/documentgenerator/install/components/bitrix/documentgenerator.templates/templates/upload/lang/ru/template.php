@@ -9,6 +9,10 @@ $MESS["DOCGEN_TEMPLATE_ADD_REINSTALL_SUCCESS"] = "Файл шаблона изм
 $MESS["DOCGEN_TEMPLATE_ADD_DRAG_HERE"] = "Перетащить файл или <span class=\"docs-template-load-drag-line\" id=\"upload-template-text\">выбрать на компьютере</span>";
 $MESS["DOCGEN_TEMPLATE_ADD_FORMATS"] = "Формат файлов для шаблона документов - docx";
 $MESS["DOCGEN_TEMPLATE_ADD_MAIN_PROVIDER"] = "Привязать к разделам CRM";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_TITLE"] = "Табличная часть";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT"] = "Товары и Услуги";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_SERVICE"] = "Услуги";
+$MESS["DOCGEN_TEMPLATE_ADD_PRODUCTS_TABLE_VARIANT_GOODS"] = "Товары";
 $MESS["DOCGEN_TEMPLATE_ADD_USERS"] = "Кто будет работать с шаблоном";
 $MESS["DOCGEN_TEMPLATE_ADD_INSTALL"] = "Установить";
 $MESS["DOCGEN_TEMPLATE_ADD_SAVE"] = "Сохранить";

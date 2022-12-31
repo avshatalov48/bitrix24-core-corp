@@ -3,7 +3,6 @@ $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_CONNECTED"] = "Live-Chat verbunden";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_CONNECTOR_ERROR_STATUS"] = "Bei Nutzung des Live-Chats ist ein Fehler aufgetreten. Überprüfen Sie bitte die angegebenen Daten und versuchen Sie erneut.";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_CONNECT_ACTIVE"] = "Verbinden";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_DESCRIPTION"] = "Verbinden Sie eine öffentlich erreichbare Seite mit Ihrem Unternehmenschat mit einem Kommunikationskanal und verwenden Sie den Link zu dieser Seite in Ihrer E-Mail-Signatur oder teilen Sie diese Informationen in sozialen Netzwerken.";
-$MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_DESCRIPTION_1"] = "Installieren Sie Live-Chat auf Ihrer Website und kommunizieren Sie online mit Ihren Kunden, egal, wo Sie sich gerade befinden.<br> Verbinden Sie die Seite des Live-Chats mit einem Kommunikationskanal und fügen Sie den Link zur Seite in Ihrer E-Mail-Signatur hinzu, oder teilen Sie den Link zum Live-Chat in sozialen Services.";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_1"] = "Kostenlos";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_2"] = "Sammeln Sie die Kontaktinformationen Ihrer Kunden";
 $MESS["IMCONNECTOR_COMPONENT_LIVECHAT_INDEX_LIST_ITEM_3"] = "Speichern Sie Kontakte und Kommunikationshistory im CRM";

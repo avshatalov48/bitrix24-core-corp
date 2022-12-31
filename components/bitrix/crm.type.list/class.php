@@ -212,8 +212,7 @@ class CrmTypeListComponent extends Bitrix\Crm\Component\Base
 		{
 			$buttons[Toolbar\ButtonLocation::AFTER_TITLE][] = new Buttons\Button([
 				'color' => Buttons\Color::PRIMARY,
-				'text' => Loc::getMessage('CRM_COMMON_ACTION_ADD'),
-				'icon' => Buttons\Icon::ADD,
+				'text' => Loc::getMessage('CRM_COMMON_ACTION_CREATE'),
 				'link' => Container::getInstance()->getRouter()->getTypeDetailUrl(0)->getUri(),
 			]);
 		}

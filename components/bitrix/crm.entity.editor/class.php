@@ -5,17 +5,18 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 	die();
 }
 
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI\Spotlight;
 use Bitrix\Crm\Agent\Requisite\CompanyAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\CompanyUfAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
 use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\UI;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Spotlight;
 
 Loc::loadMessages(__FILE__);
 
@@ -36,6 +37,9 @@ class CCrmEntityEditorComponent extends UIFormComponent
 {
 	/** @var int */
 	protected $entityTypeID = 0;
+
+	/** @var int|null */
+	protected $categoryId;
 
 	protected function emitOnUIFormInitializeEvent(): void
 	{
@@ -59,6 +63,14 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'DUPLICATE_CONTROL' => [],
 				'USER_FIELD_PREFIX' => 'CRM',
 				'ENTITY_TYPE_TITLE' => '',
+				'CUSTOM_TOOL_PANEL_BUTTONS' => [],
+				'TOOL_PANEL_BUTTONS_ORDER' => [
+					'VIEW' => [],
+					'EDIT' => [
+						UI\EntityEditor\Action::DEFAULT_ACTION_BUTTON_ID,
+						UI\EntityEditor\Action::CANCEL_ACTION_BUTTON_ID,
+					],
+				],
 			]
 		);
 	}
@@ -402,9 +414,23 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->configID = $this->arResult['CONFIG_ID'] ?? $this->guid;
 
 		$this->entityID = $this->arResult['ENTITY_ID'];
-		$this->entityTypeID = $this->arResult['ENTITY_TYPE_ID'];
-		$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
-		$this->arResult['ENTITY_TYPE_NAME'] = $this->entityTypeName;
+
+		if (!empty($this->arResult['ENTITY_TYPE_ID']))
+		{
+			$this->entityTypeID = $this->arResult['ENTITY_TYPE_ID'];
+			$this->entityTypeName = CCrmOwnerType::ResolveName($this->entityTypeID);
+			$this->arResult['ENTITY_TYPE_NAME'] = $this->entityTypeName;
+		}
+		elseif ($this->arResult['ENTITY_TYPE_NAME'])
+		{
+			$this->entityTypeName = $this->arResult['ENTITY_TYPE_NAME'];
+			$this->entityTypeID = CCrmOwnerType::ResolveID($this->entityTypeName);
+			$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
+		}
+
+		$this->categoryId = isset($this->arParams['EXTRAS']['CATEGORY_ID'])
+			? (int)$this->arParams['EXTRAS']['CATEGORY_ID']
+			: 0;
 
 		if (empty($this->arResult['ENTITY_TYPE_TITLE']))
 		{
@@ -446,7 +472,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		}
 		//endregion
 
-		$this->arResult['PATH_TO_ENTITY_DETAILS'] = \CCrmOwnerType::GetDetailsUrl(
+		$this->arResult['PATH_TO_ENTITY_DETAILS'] = CCrmOwnerType::GetDetailsUrl(
 			$this->entityTypeID,
 			$this->entityID,
 			true,
@@ -574,7 +600,7 @@ class CCrmEntityEditorComponent extends UIFormComponent
 				'crm_' . $this->configID . '_add_field'
 			);
 			$this->arResult['REST_PLACEMENT_TAB_CONFIG'] = array(
-				'entity' => \CCrmOwnerType::ResolveName($this->entityTypeID),
+				'entity' => CCrmOwnerType::ResolveName($this->entityTypeID),
 				'placement' => \Bitrix\Rest\Api\UserFieldType::PLACEMENT_UF_TYPE,
 			);
 		}
@@ -611,6 +637,74 @@ class CCrmEntityEditorComponent extends UIFormComponent
 		$this->arResult['MESSAGES'] = (array)($this->arParams['MESSAGES'] ?? []);
 
 		$this->prepareRestrictions();
+	}
+
+	protected function getDefaultFieldOptionFlags(int $entityTypeId, string $fieldName): int
+	{
+		if (CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			if ($fieldName === 'CLIENT')
+			{
+				return 1; // showAlways
+			}
+		}
+
+		return 0;
+	}
+
+	protected function prepareDefaultOptionFlags()
+	{
+		$entityTypeId =
+			isset($this->arResult['ENTITY_TYPE_ID'])
+				? (int)$this->arResult['ENTITY_TYPE_ID']
+				: CCrmOwnerType::Undefined
+		;
+
+		if (!CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			return;
+		}
+
+		$configs = [];
+		if (is_array($this->arParams['~ENTITY_CONFIG']))
+		{
+			$configs[] = &$this->arParams['~ENTITY_CONFIG'];
+		}
+		if (is_array($this->arResult['ENTITY_CONFIG']))
+		{
+			$configs[] = &$this->arResult['ENTITY_CONFIG'];
+		}
+
+		foreach ($configs as &$config)
+		{
+			foreach ($config as &$section)
+			{
+				if (
+					isset($section['type'])
+					&& $section['type'] === 'section'
+					&& is_array($section['elements'])
+				)
+				{
+					foreach ($section['elements'] as &$element)
+					{
+						if (isset($element['name']))
+						{
+							$optionFlags = $this->getDefaultFieldOptionFlags($entityTypeId, $element['name']);
+							if ($optionFlags > 0)
+							{
+								$element['optionFlags'] = $optionFlags;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	protected function prepareConfig()
+	{
+		$this->prepareDefaultOptionFlags();
+		parent::prepareConfig();
 	}
 
 	protected function getDefaultEntityConfigOptions(): array

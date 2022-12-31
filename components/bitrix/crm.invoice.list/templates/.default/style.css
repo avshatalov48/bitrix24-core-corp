@@ -19,7 +19,7 @@ div.bx-popup-menu td.popupmenu div.popupitem td.gutter div.bizproc
 }
 
 a.bizproc {
-	display:block; 
+	display:block;
 	padding-right:20px;
 }
 a.bizproc_status_attention {
@@ -43,17 +43,17 @@ div.crm-info-links-wrapper .crm-info-contact-wrapper a {
 div.crm-info-links-wrapper .crm-info-company-wrapper,
 div.crm-info-links-wrapper .crm-info-company-wrapper a {
 	color: #484848;
-	font-size: 11px;
+	font-size: 12px;
 }
 div.crm-info-links-wrapper .crm-info-deal-wrapper,
 div.crm-info-links-wrapper .crm-info-deal-wrapper a {
 	color: black;
-	font-size: 11px;
+	font-size: 12px;
 }
 div.crm-info-links-wrapper .crm-info-quote-wrapper,
 div.crm-info-links-wrapper .crm-info-quote-wrapper a {
 	color: #0f1680;
-	font-size: 11px;
+	font-size: 12px;
 }
 
 div.bx-crm-view .crm-info-links-wrapper a:link,

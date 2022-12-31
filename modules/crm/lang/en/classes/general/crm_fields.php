@@ -18,6 +18,7 @@ $MESS["CRM_FIELDS_QUOTE"] = "Quote";
 $MESS["CRM_FIELDS_QUOTE_DESC"] = "Custom fields for quotes";
 $MESS["CRM_FIELDS_TEXT_ROW_COUNT"] = "Rows per text box";
 $MESS["CRM_FIELDS_TYPE_ADDRESS"] = "Address on Google Maps";
+$MESS["CRM_FIELDS_TYPE_ADDRESS_2"] = "Address";
 $MESS["CRM_FIELDS_TYPE_B"] = "Yes/No";
 $MESS["CRM_FIELDS_TYPE_B_DISPLAY"] = "Design";
 $MESS["CRM_FIELDS_TYPE_B_DISPLAY_CHECKBOX"] = "Checkbox";

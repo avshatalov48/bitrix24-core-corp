@@ -62,6 +62,7 @@ class Im
 			'SYSTEM' => 'Y',
 			'URL_PREVIEW' => 'N',
 			'IMPORTANT_CONNECTOR' => 'Y',
+			'NO_SESSION_OL' => 'Y',
 			'PARAMS' => [
 				'CLASS' => 'bx-messenger-content-item-ol-output',
 			]

@@ -1,4 +1,8 @@
 <?php
+
 return [
-	"pull/model"
+	"extensions" => [
+		"pull/model",
+		"utils"
+	],
 ];

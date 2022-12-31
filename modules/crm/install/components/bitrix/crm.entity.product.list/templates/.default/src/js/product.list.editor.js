@@ -11,6 +11,7 @@ import {ProductModel} from "catalog.product-model";
 import {PULL} from 'pull.client';
 import {FieldHintManager} from "./field.hint.manager";
 import {Guide} from 'ui.tour';
+import 'ui.hint';
 
 const GRID_TEMPLATE_ROW = 'template_0';
 const DEFAULT_PRECISION: number = 2;
@@ -57,6 +58,7 @@ export class Editor
 
 	onDialogSelectProductHandler = this.handleOnDialogSelectProduct.bind(this);
 	onSaveHandler = this.handleOnSave.bind(this);
+	onFocusToProductList = this.handleProductListFocus.bind(this);
 	onEntityUpdateHandler = this.handleOnEntityUpdate.bind(this);
 	onEditorSubmit = this.handleEditorSubmit.bind(this);
 	onInnerCancelHandler = this.handleOnInnerCancel.bind(this);
@@ -121,6 +123,14 @@ export class Editor
 				}
 			});
 		}
+
+		this
+			.getContainer()
+			.querySelectorAll('.crm-entity-product-list-add-block')
+			.forEach((buttonBlock) => {
+				BX.UI.Hint.init(buttonBlock);
+			})
+		;
 	}
 
 	subscribeDomEvents()
@@ -130,21 +140,27 @@ export class Editor
 
 		if (Type.isElementNode(container))
 		{
-			container.querySelectorAll('[data-role="product-list-select-button"]').forEach((selectButton) => {
-				Event.bind(
-					selectButton,
-					'click',
-					this.productSelectionPopupHandler
-				);
-			});
+			if (!this.getSettingValue('disabledSelectProductButton', false))
+			{
+				container.querySelectorAll('[data-role="product-list-select-button"]').forEach((selectButton) => {
+					Event.bind(
+						selectButton,
+						'click',
+						this.productSelectionPopupHandler
+					);
+				});
+			}
 
-			container.querySelectorAll('[data-role="product-list-add-button"]').forEach((addButton) => {
-				Event.bind(
-					addButton,
-					'click',
-					this.productRowAddHandler
-				);
-			});
+			if (!this.getSettingValue('disabledAddRowButton', false))
+			{
+				container.querySelectorAll('[data-role="product-list-add-button"]').forEach((addButton) => {
+					Event.bind(
+						addButton,
+						'click',
+						this.productRowAddHandler
+					);
+				});
+			}
 
 			container.querySelectorAll('[data-role="product-list-settings-button"]').forEach((configButton) => {
 				Event.bind(
@@ -193,6 +209,7 @@ export class Editor
 		this.unsubscribeCustomEvents();
 		EventEmitter.subscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+		EventEmitter.subscribe('onFocusToProductList', this.onFocusToProductList);
 		EventEmitter.subscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
 		EventEmitter.subscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 		EventEmitter.subscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
@@ -216,7 +233,7 @@ export class Editor
 						this.reloadGrid(false);
 					}
 				}
-			}).bind(this);
+			});
 		}
 	}
 
@@ -224,6 +241,7 @@ export class Editor
 	{
 		EventEmitter.unsubscribe('CrmProductSearchDialog_SelectProduct', this.onDialogSelectProductHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditor:onSave', this.onSaveHandler);
+		EventEmitter.unsubscribe('onFocusToProductList', this.onFocusToProductList);
 		EventEmitter.unsubscribe('onCrmEntityUpdate', this.onEntityUpdateHandler);
 		EventEmitter.unsubscribe('BX.Crm.EntityEditorAjax:onSubmit', this.onEditorSubmit);
 		EventEmitter.unsubscribe('EntityProductListController:onInnerCancel', this.onInnerCancelHandler);
@@ -288,6 +306,31 @@ export class Editor
 		});
 
 		this.setSettingValue('items', items);
+	}
+
+	handleProductListFocus(event: BaseEvent)
+	{
+		if (this.isReadOnly())
+		{
+			return;
+		}
+
+		let listHaveEmptyRows = false;
+
+		for (const product of this.products)
+		{
+			if (product.isEmptyRow())
+			{
+				listHaveEmptyRows = true;
+				this.focusProductSelector(product.fields['ID']);
+				break;
+			}
+		}
+
+		if (!listHaveEmptyRows)
+		{
+			this.handleProductRowAdd();
+		}
 	}
 
 	handleOnEntityUpdate(event: BaseEvent)
@@ -692,7 +735,6 @@ export class Editor
 	{
 		return [
 			'BASE_PRICE',
-			'ENTERED_PRICE',
 			'TAX_INCLUDED',
 			'PRICE_NETTO',
 			'PRICE_BRUTTO',
@@ -708,7 +750,7 @@ export class Editor
 			if (Type.isObject(products[product.getId()]))
 			{
 				product.updateUiCurrencyFields();
-				['BASE_PRICE', 'ENTERED_PRICE', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'CURRENCY_ID'].forEach((name) => {
+				['BASE_PRICE', 'DISCOUNT_ROW', 'DISCOUNT_SUM', 'CURRENCY_ID'].forEach((name) => {
 					product.updateField(name, Text.toNumber(products[product.getId()][name]));
 				});
 				product.setField('CURRENCY', products[product.getId()]['CURRENCY_ID']);
@@ -1490,6 +1532,13 @@ export class Editor
 		product.updateUiCurrencyFields();
 		this.updateTotalUiCurrency();
 
+		product
+			.getSelector()
+			?.setConfig(
+				'ENABLE_EMPTY_PRODUCT_ERROR',
+				this.getSettingValue('enableEmptyProductError', false)
+			)
+		;
 		return product;
 	}
 
@@ -1610,13 +1659,25 @@ export class Editor
 					['TAX_INCLUDED', 'VAT_INCLUDED'].forEach(name => delete(fields[name]));
 				}
 
-				fields['CATALOG_PRICE'] = fields['BASE_PRICE'];
-				fields['ENTERED_PRICE'] = fields['BASE_PRICE'];
-
 				if (productRow.getField('OFFER_ID') !== fields.ID)
 				{
 					fields['ROW_RESERVED'] = 0;
 					fields['DEDUCTED_QUANTITY'] = 0;
+					if (!this.getSettingValue('allowDiscountChange', true))
+					{
+						fields['DISCOUNT_ROW'] = 0;
+						fields['DISCOUNT_SUM'] = 0;
+						fields['DISCOUNT_RATE'] = 0;
+						fields['DISCOUNT'] = 0;
+						productRow.updateUiHtmlField(
+							'DISCOUNT_PRICE',
+							CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+						);
+						productRow.updateUiHtmlField(
+							'DISCOUNT_ROW',
+							CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+						);
+					}
 				}
 
 				Object.keys(fields).forEach((key) => {
@@ -1631,6 +1692,7 @@ export class Editor
 				productRow.setField('IS_NEW', data.isNew ? 'Y' : 'N');
 
 				productRow.layoutReserveControl();
+				productRow.layoutStoreSelector();
 				productRow.initHandlersForSelectors();
 				productRow.updateUiStoreAmountData();
 				productRow.modifyBasePriceInput();
@@ -1653,7 +1715,19 @@ export class Editor
 		{
 			product.layoutReserveControl();
 			product.initHandlersForSelectors();
-			product.changeEnteredPrice(0);
+			product.changeBasePrice(0);
+			if (!this.getSettingValue('allowDiscountChange', true))
+			{
+				product.setDiscount(0);
+				product.updateUiHtmlField(
+					'DISCOUNT_PRICE',
+					CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+				);
+				product.updateUiHtmlField(
+					'DISCOUNT_ROW',
+					CurrencyCore.currencyFormat(0, this.getCurrencyId(), true)
+				);
+			}
 			product.modifyBasePriceInput();
 			product.executeExternalActions();
 		}
@@ -1727,7 +1801,6 @@ export class Editor
 			'PRICE',
 			'CUSTOMIZED',
 			'BASE_PRICE',
-			'ENTERED_PRICE',
 			'DISCOUNT_ROW',
 			'DISCOUNT_SUM',
 			'DISCOUNT_TYPE_ID',
@@ -1740,6 +1813,7 @@ export class Editor
 			'SORT',
 			'MEASURE_CODE',
 			'MEASURE_NAME',
+			'TYPE',
 		];
 	}
 
@@ -2216,23 +2290,27 @@ export class Editor
 		EventEmitter.emit('onDemandRecalculateWrapper', [this]);
 	}
 
-	showFieldTourHint(fieldName: string, tourData: Object, endTourHandler: Function, addictedFields: Array<string> = []): void
+	showFieldTourHint(fieldName: string, tourData: Object, endTourHandler: Function, addictedFields: Array<string> = [], rowId: string = ''): void
 	{
 		if (this.products.length > 0)
 		{
-			const firstProductRowNode = this.products[0].getNode();
+			let productNode = this.products[0].getNode();
+			if (this.getProductByRowId(rowId))
+			{
+				productNode = this.getProductByRowId(rowId).getNode();
+			}
 
 			const addictedNodes = [];
 			for (const fieldName of addictedFields)
 			{
-				const fieldNode = firstProductRowNode.querySelector(`[data-name="${fieldName}"]`);
+				const fieldNode = productNode.querySelector(`[data-name="${fieldName}"]`);
 				if (fieldNode !== null)
 				{
 					addictedNodes.push(fieldNode);
 				}
 			}
 
-			const fieldNode = firstProductRowNode.querySelector(`[data-name="${fieldName}"]`);
+			const fieldNode = productNode.querySelector(`[data-name="${fieldName}"]`);
 
 			if (fieldNode !== null)
 			{
@@ -2259,5 +2337,10 @@ export class Editor
 
 			window.location.search += '&active_tab=tab_products';
 		});
+	}
+
+	getRestrictedProductTypes(): Array
+	{
+		return this.getSettingValue('restrictedProductTypes', []);
 	}
 }

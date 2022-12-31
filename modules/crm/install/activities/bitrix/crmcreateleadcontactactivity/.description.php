@@ -1,30 +1,38 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	'NAME' => GetMessage('CRM_CRLC_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_CRLC_DESC'),
-	'TYPE' => array('activity', 'robot_activity'),
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('CRM_CRLC_NAME'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CRLC_DESC_1'),
+	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmCreateLeadContactActivity',
 	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
-	),
-	'RETURN' => array(
-		'ContactId' => array(
-			'NAME' => GetMessage('CRM_CRLC_RETURN_CONTACT_ID'),
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
+	],
+	'RETURN' => [
+		'ContactId' => [
+			'NAME' => Loc::getMessage('CRM_CRLC_RETURN_CONTACT_ID'),
 			'TYPE' => 'int',
-		),
-	),
-	'FILTER' => array(
-		'INCLUDE' => array(
-			array('crm', 'CCrmDocumentLead')
-		),
-	),
-	'ROBOT_SETTINGS' => array(
+		],
+	],
+	'FILTER' => [
+		'INCLUDE' => [
+			['crm', 'CCrmDocumentLead'],
+		],
+	],
+	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
-		'RESPONSIBLE_PROPERTY' => 'Responsible'
-	),
-);
+		'RESPONSIBLE_PROPERTY' => 'Responsible',
+		'GROUP' => ['clientData'],
+		'SORT' => 4400,
+	],
+];

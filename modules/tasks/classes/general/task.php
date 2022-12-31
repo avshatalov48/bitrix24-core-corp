@@ -191,7 +191,7 @@ class CTasks
 		catch(\Exception $e)
 		{
 			$this->_errors[] = array(
-				"text" => GetMessage("TASKS_UNKNOWN_ADD_ERROR"),
+				"text" => $e->getMessage(),
 				"id"   => "ERROR_UNKNOWN_ADD_TASK_ERROR"
 			);
 			return false;

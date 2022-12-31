@@ -181,7 +181,10 @@ UI\Extension::load([
 			BX.OpenLines.GridActions.gridId = "<?= CUtil::JSEscape($arResult['GRID_ID'])?>";//TODO: del
 			BX.OpenLines.Actions.init(
 				"<?= CUtil::JSEscape($arResult['GRID_ID'])?>",
-				<?=CUtil::PhpToJSObject($arResult['groupActionsData'])?>
+				<?= CUtil::PhpToJSObject(array_merge(
+					$arResult['groupActionsData'],
+					['filterId' => $arResult['FILTER_ID']]
+				))?>
 			);
 
 			<?if($arResult['ALLOW_MODIFY_SETTINGS'] === true):?>

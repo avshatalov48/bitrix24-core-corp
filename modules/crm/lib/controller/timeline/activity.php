@@ -61,6 +61,29 @@ class Activity extends \Bitrix\Crm\Controller\Base
 		}
 	}
 
+	public function setDeadlineAction(int $activityId, int $ownerTypeId, int $ownerId, string $value): void
+	{
+		$activity = $this->loadActivity($activityId, $ownerTypeId, $ownerId);
+		if (!$activity)
+		{
+			return;
+		}
+
+		if(!\CCrmActivity::CheckUpdatePermission($ownerTypeId, $ownerId))
+		{
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return;
+		}
+		$deadline = $this->prepareDatetime($value);
+		if (!$deadline)
+		{
+			return;
+		}
+
+		\CCrmActivity::PostponeToDate($activity, $deadline, true);
+	}
+
 	public function deleteAction(int $activityId, int $ownerTypeId, int $ownerId): void
 	{
 		if (!$this->loadActivity($activityId, $ownerTypeId, $ownerId))

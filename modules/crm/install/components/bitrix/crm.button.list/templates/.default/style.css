@@ -20,7 +20,7 @@
 }
 
 .crm-button-list-createbutton-element {
-	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -159,7 +159,7 @@
 }
 
 .intranet-button-list-info-list-item-title {
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 
@@ -187,7 +187,7 @@
 }
 
 .intranet-button-list-createform-element {
-	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -317,7 +317,7 @@
 
 .intranet-button-list-widget {
 	border: 1px solid #b3b8be;
-	border-radius: 3px 3px 2px 2px;
+	border-radius: var(--ui-border-radius-md, 3px 3px 2px 2px);
 	-moz-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
 	overflow: hidden;
@@ -528,7 +528,7 @@ div.intranet-button-list-widget-content {
 	width: 130px;
 	height: 36px;
 	background: #4fc3f7;
-	font: bold 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px/18px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-align: center;
 	overflow: hidden;
 	opacity: .5;
@@ -945,7 +945,7 @@ div.intranet-button-list-widget-content {
 .intranet-button-list-activate-user-element {
 	display: inline-block;
 	width: 100%;
-	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #29619b;
 	vertical-align: middle;
 	overflow: hidden;
@@ -1175,7 +1175,7 @@ div.intranet-button-list-widget-content {
 	display: inline-block;
 	padding: 10px 0;
 	max-width: 600px;
-	font: bold 13px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 }
 

@@ -20,20 +20,12 @@ class Model
 	private ?AssociatedEntityModel $associatedEntityModel = null;
 	private ?HistoryItemModel $historyItemModel = null;
 
-
-	/*
-	 * @todo implement:
-	 *
-	 * ASSOCIATED_ENTITY_CLASS_NAME
-	 * TYPE_ID
-	 * TYPE_CATEGORY_ID
-	 * COMMENT
-	 */
+	private ?NoteModel $note  = null;
 
 	public static function createFromScheduledActivityArray(array $data): self
 	{
-		$deadline = ($data['DEADLINE'] && !\CCrmDateTimeHelper::IsMaxDatabaseDate($data['DEADLINE']))
-			? DateTime::createFromUserTime($data['DEADLINE'])
+		$createdDate = $data['CREATED']
+			? DateTime::createFromUserTime($data['CREATED'])
 			: null
 		;
 
@@ -43,8 +35,9 @@ class Model
 			->setAssociatedEntityId((int)$data['ID'])
 			->setAssociatedEntityTypeId(\CCrmOwnerType::Activity)
 			->setAuthorId((int)$data['RESPONSIBLE_ID'])
-			->setDate($deadline)
+			->setDate($createdDate)
 			->setAssociatedEntityModel(AssociatedEntityModel::createFromArray($data))
+			->setNote(self::createNote($data))
 		;
 	}
 
@@ -64,7 +57,8 @@ class Model
 			->setSettings((array)$data['SETTINGS'])
 			->setAssociatedEntityModel(self::createAssociatedEntityModel($data))
 			->setHistoryItemModel(self::createHistoryItemModel($data))
-			->setTypeCategoryId((int)$data['TYPE_CATEGORY_ID']);
+			->setTypeCategoryId((int)$data['TYPE_CATEGORY_ID'])
+			->setNote(self::createNote($data))
 		;
 	}
 
@@ -88,6 +82,11 @@ class Model
 		}
 
 		return HistoryItemModel::createFromArray($historyItemModelData);
+	}
+
+	private static function createNote(array $data): ?NoteModel
+	{
+		return isset($data['NOTE']) ? NoteModel::createFromArray($data['NOTE']) : null;
 	}
 
 	public function isScheduled(): bool
@@ -220,5 +219,17 @@ class Model
 		$this->typeCategoryId = $typeCategoryId;
 
 		return $this;
+	}
+
+	private function setNote(?NoteModel $data): self
+	{
+		$this->note = $data;
+
+		return $this;
+	}
+
+	public function getNote(): ?NoteModel
+	{
+		return $this->note;
 	}
 }

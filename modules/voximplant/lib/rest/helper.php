@@ -375,6 +375,13 @@ class Helper
 	{
 		$result = new Result();
 
+		if(!is_string($fields['CALL_ID']))
+		{
+			$result->addError(new Error('CALL_ID must be a string'));
+
+			return $result;
+		}
+
 		$call = Call::load($fields['CALL_ID']);
 
 		/*$call = CallTable::getRow(array(

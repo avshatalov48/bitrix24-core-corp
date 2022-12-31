@@ -1,5 +1,6 @@
 <?php
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Settings\Crm;
 
 /**
  * @deprecated
@@ -516,6 +517,10 @@ class CCrmUserCounterSettings
 
 		if($setting === self::ReckonActivitylessItems)
 		{
+			if (Crm::isUniversalActivityScenarioEnabled())
+			{
+				return false;
+			}
 			return self::GetBooleanValue('usr_counter_reckon_items', $default);
 		}
 

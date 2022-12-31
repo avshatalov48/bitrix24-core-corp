@@ -264,14 +264,14 @@ table.bx-interface-grid-double table.bx-grid-sorting td.bx-sort-sign div.empty {
 .sidebar-block.double .crm-double-set-radio{position: relative;bottom: -3px;margin: 0 1px 0 7px;}
 
 .crm-double-title{color: #555;}
-.crm-double-set-label{color: #555;font-weight: bold;}
+.crm-double-set-label{color: #555;font-weight: var(--ui-font-weight-bold);}
 .crm-double-set-label[disabled]{color: #a7abad;}
-.crm-double-set-label.fwb{font-weight: bold;color: #555;}
+.crm-double-set-label.fwb{font-weight: var(--ui-font-weight-bold);color: #555;}
 
 .crm-double-result-search{
 	clear: both;
 	color: #6c6e6f;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 }
 

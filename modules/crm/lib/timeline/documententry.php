@@ -126,4 +126,22 @@ class DocumentEntry extends TimelineEntry
 
 		return $result;
 	}
+
+	final public static function getDocumentCreatedEntryAuthorId(int $documentId): ?int
+	{
+		$query =
+			TimelineTable::query()
+				->setSelect(['AUTHOR_ID'])
+				->where('ASSOCIATED_ENTITY_TYPE_ID', TimelineType::DOCUMENT)
+				->where('ASSOCIATED_ENTITY_ID', $documentId)
+				->where('TYPE_ID', TimelineType::DOCUMENT)
+				->where('TYPE_CATEGORY_ID', TimelineType::CREATION)
+				->setOrder(['ID' => 'DESC'])
+				->setLimit(1)
+		;
+
+		$entry = $query->exec()->fetchObject();
+
+		return $entry ? $entry->getAuthorId() : null;
+	}
 }

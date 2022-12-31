@@ -667,7 +667,7 @@ class CIntranetContactCenterListComponent extends \CBitrixComponent implements C
 		switch ($region)
 		{
 			case 'ru':
-				return 'http://bitrix24ru.smn/abuse/contact-center.php';
+				return 'https://www.bitrix24.ru/abuse/contact-center.php';
 			case 'en':
 				return 'https://www.bitrix24.com/terms/contact_center-rules.php';
 			case 'la':

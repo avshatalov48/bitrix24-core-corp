@@ -8,7 +8,7 @@ class DynamicProvider extends EntityProvider
 {
 	public function __construct(array $options = [])
 	{
-		parent::__construct();
+		parent::__construct($options);
 
 		$this->options['dynamicTypeId'] = (int)($options['entityTypeId'] ?? 0);
 	}
@@ -33,9 +33,9 @@ class DynamicProvider extends EntityProvider
 		$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
 		if ($factory)
 		{
-			$items =  $factory->getItemsFilteredByPermissions([
+			$items = $factory->getItemsFilteredByPermissions([
 				'select' => ['ID'],
-				'filter' => $filter
+				'filter' => $filter,
 			]);
 
 			$result = [];

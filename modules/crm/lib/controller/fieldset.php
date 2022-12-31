@@ -81,10 +81,12 @@ class FieldSet extends Main\Engine\JsonController
 			$field['value'] = $value;
 			$field['valuePrintable'] = $value;
 			$fieldEntityTypeId = $field['editing']['entityTypeId'];
-			if ($fieldEntityTypeId === \CCrmOwnerType::Requisite)
-			{
-				$field['editing']['url'] = $rqEditUrl;
-			}
+
+			$field['editing']['url'] =
+				($fieldEntityTypeId === \CCrmOwnerType::Requisite)
+					? $rqEditUrl
+					: Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl($fieldEntityTypeId, $entityId)
+			;
 
 			$fields[] = $field;
 		}

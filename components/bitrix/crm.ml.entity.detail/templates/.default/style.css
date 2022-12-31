@@ -285,7 +285,7 @@
 .crm-ml-entity-report-title-mark {
 	text-transform: uppercase;
 	font: 9px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 	border-radius: 20px;
 	padding: 3px 12px 3px 9px;
 	vertical-align: middle;

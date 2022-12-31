@@ -170,6 +170,7 @@ export class Embed
 				this.#auto.load();
 				break;
 			case 'link':
+			default:
 				this.#publink.load();
 				break;
 		}

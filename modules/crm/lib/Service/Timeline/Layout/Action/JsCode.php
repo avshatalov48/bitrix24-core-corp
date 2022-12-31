@@ -23,6 +23,7 @@ class JsCode extends Action
 		return [
 			'type' => 'jsCode',
 			'value' => $this->getCode(),
+			'animation' => $this->getAnimation(),
 		];
 	}
 }

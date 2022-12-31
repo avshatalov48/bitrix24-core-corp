@@ -36,11 +36,24 @@ class Controller extends BaseField.Controller
 	adjust(options: BaseField.Options, autocomplete = true)
 	{
 		super.adjust(options);
-
 		setTimeout(() => {
 			this.actualizeFields();
 			this.actualizeValues();
 		}, 0);
+	}
+
+	setValues(values: Array<string>): this
+	{
+		values = values[0] || {};
+		this.nestedFields.forEach(field => {
+			const value = values[field.name];
+			if (typeof value === 'undefined')
+			{
+				return;
+			}
+
+			field.setValues(Array.isArray(value) ? value : [value]);
+		});
 	}
 
 	actualizeFields()
@@ -66,6 +79,25 @@ class Controller extends BaseField.Controller
 		});
 	}
 
+	valid()
+	{
+		if (!this.visible)
+		{
+			return true;
+		}
+
+		this.validated = true;
+		let valid = true;
+		this.nestedFields.forEach(field => {
+			if (!field.valid())
+			{
+				valid = false;
+			}
+		});
+
+		return valid;
+	}
+
 	actualizeValues()
 	{
 		const value = (this.nestedFields || []).reduce(
@@ -82,9 +114,11 @@ class Controller extends BaseField.Controller
 			{}
 		);
 
-		const item = this.item();
+		const item: Item = this.item();
 		item.value = value;
 		item.selected = true;
+
+		console.log('value', value)
 	}
 }
 

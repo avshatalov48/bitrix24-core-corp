@@ -17,6 +17,7 @@ jn.define('im/messenger/controller/recent/item-action', (require, exports, modul
 		ChatService,
 		UserService,
 	} = jn.require('im/messenger/service');
+	const { ProfileView } = jn.require("user/profile");
 
 	/**
 	 * @class ItemAction

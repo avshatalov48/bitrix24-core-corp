@@ -5,10 +5,15 @@ namespace Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Crm\UserField\FileViewer;
+use Bitrix\Main\Loader;
+use Bitrix\Mobile\UI\File;
 
 class FileField extends BaseLinkedEntitiesField
 {
-	protected const TYPE = 'file';
+	public const TYPE = 'file';
+
+	protected const VALUE_TYPE_FILE = 'file';
+	protected const VALUE_TYPE_IMAGE = 'image';
 
 	/** @var FileViewer */
 	protected $fileViewer;
@@ -55,7 +60,6 @@ class FileField extends BaseLinkedEntitiesField
 	{
 		$this->setWasRenderedAsHtml(true);
 		$displayParams = $this->getDisplayParams();
-		$fileUrlTemplate = ($displayOptions->getFileUrlTemplate() ?? '');
 		$linkedEntitiesValues = $this->getLinkedEntitiesValues();
 
 		$results = [];
@@ -71,25 +75,9 @@ class FileField extends BaseLinkedEntitiesField
 			}
 			$file = $linkedEntitiesValues[$fileId];
 
-			if ($fileUrlTemplate !== '')
-			{
-				$fileUrl = \CComponentEngine::MakePathFromTemplate(
-					$fileUrlTemplate,
-					[
-						'owner_id' => $itemId,
-						'field_name' => $this->getId(),
-						'file_id' => $file['ID'],
-					]
-				);
-			}
-			else
-			{
-				$fileUrl = $this->fileViewer->getUrl($itemId, $this->getId(), $file['ID']);
-			}
-
 			if (
 				isset($displayParams['VALUE_TYPE'])
-				&& $displayParams['VALUE_TYPE'] === \Bitrix\Crm\Field::VALUE_TYPE_IMAGE
+				&& $displayParams['VALUE_TYPE'] === self::VALUE_TYPE_IMAGE
 			)
 			{
 				$resizedFile = \CFile::ResizeImageGet(
@@ -116,11 +104,12 @@ class FileField extends BaseLinkedEntitiesField
 					'WIDTH' => $resizedFile['width'],
 					'HEIGHT' => $resizedFile['height'],
 				]);
-
 			}
 			else
 			{
+				$fileUrl = $this->getFileUrl($file['ID'], $itemId, $displayOptions);
 				$fileName = htmlspecialcharsbx($file['ORIGINAL_NAME'] ?? $file['FILE_NAME']);
+
 				if (!$this->isMultiple())
 				{
 					return '<a href="' . htmlspecialcharsbx($fileUrl) . '" target="_blank">' . $fileName . '</a>';
@@ -156,5 +145,99 @@ class FileField extends BaseLinkedEntitiesField
 		}
 
 		return implode($displayOptions->getMultipleFieldsDelimiter(), $results);
+	}
+
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		if (!Loader::includeModule('mobile'))
+		{
+			return [];
+		}
+
+		$fileInfo = [];
+		$value = [];
+
+		$isMultiple = $this->isMultiple();
+		$linkedEntitiesValues = $this->getLinkedEntitiesValues();
+		$displayParams = $this->getDisplayParams();
+		$isImage = isset($displayParams['VALUE_TYPE']) && $displayParams['VALUE_TYPE'] === self::VALUE_TYPE_IMAGE;
+
+		foreach ((array)$fieldValue as $fileId)
+		{
+			if (!empty($fileInfo) && !$isMultiple)
+			{
+				break;
+			}
+
+			if (!isset($linkedEntitiesValues[$fileId]) || !is_array($linkedEntitiesValues[$fileId]))
+			{
+				continue;
+			}
+
+			if ($isImage)
+			{
+				$fileInfo[$fileId] = File::loadWithPreview($fileId);
+			}
+			else
+			{
+				$fileInfo[$fileId] = $this->getPreparedFileForMobile((int)$fileId, $itemId, $displayOptions);
+			}
+
+			$value[] = $fileId;
+		}
+
+		return [
+			'config' => [
+				'module' => 'crm',
+				'fileInfo' => $fileInfo,
+				'mediaType' => $isImage ? self::VALUE_TYPE_IMAGE : self::VALUE_TYPE_FILE,
+			],
+			'value' => $value,
+		];
+	}
+
+	/**
+	 * @param int $fileId
+	 * @param int $itemId
+	 * @param Options $displayOptions
+	 * @return array
+	 */
+	protected function getPreparedFileForMobile(int $fileId, int $itemId, Options $displayOptions): array
+	{
+		if ($file = File::loadWithPreview($fileId))
+		{
+			$url = $this->getFileUrl($fileId, $itemId, $displayOptions);
+
+			return array_merge(
+				$file->getInfo(),
+				['url' => $url]
+			);
+		}
+
+		return [];
+	}
+
+	/**
+	 * @param int $fileId
+	 * @param int $itemId
+	 * @param Options $displayOptions
+	 * @return string
+	 */
+	protected function getFileUrl(int $fileId, int $itemId, Options $displayOptions): string
+	{
+		$fileUrlTemplate = ($displayOptions->getFileUrlTemplate() ?? '');
+		if ($fileUrlTemplate !== '')
+		{
+			return \CComponentEngine::MakePathFromTemplate(
+				$fileUrlTemplate,
+				[
+					'owner_id' => $itemId,
+					'field_name' => $this->getId(),
+					'file_id' => $fileId,
+				]
+			);
+		}
+
+		return $this->fileViewer->getUrl($itemId, $this->getId(), $fileId);
 	}
 }

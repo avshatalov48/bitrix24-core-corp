@@ -1,6 +1,6 @@
 <?php
+$MESS["CRM_ENTITY_PRODUCT_LIST_CATALOG_ERR_ACCESS_DENIED"] = "Insufficient permission to view the catalog.";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE"] = "Available stock";
-$MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT"] = "Available stock = Warehouse stock - Reserved quantity.";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_AVAILABLE_HINT_2"] = "Available stock = Warehouse stock - Reserved quantity. #HELPER_HTML_LINK#";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_BASE_PRICE"] = "Base price";
 $MESS["CRM_ENTITY_PRODUCT_LIST_COLUMN_CURRENCY"] = "Currency";

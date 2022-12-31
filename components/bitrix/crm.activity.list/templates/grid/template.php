@@ -646,7 +646,7 @@ if($enableToolbar)
 				'TOOLBAR_ID' => $toolbarID,
 				'BUTTONS' => array(
 					array(
-						'TEXT' => GetMessage('CRM_ACTIVITY_LIST_ADD'),
+						'TEXT' => GetMessage('CRM_ACTIVITY_LIST_CREATE'),
 						'TYPE' => 'crm-context-menu',
 						'ITEMS' => $toolbarButtons
 					)

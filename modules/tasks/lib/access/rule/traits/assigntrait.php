@@ -20,20 +20,26 @@ trait AssignTrait
 	 * @param AccessibleTask|null $newTask
 	 * @return bool
 	 */
-	private function canAssignTask(AccessibleTask $oldTask, string $role, $responsibleId, AccessibleTask $newTask): bool
+	private function canAssignTask(AccessibleTask $oldTask, string $role, AccessibleTask $newTask, array $assignsFrom = null): bool
 	{
-		$responsibleId = (int) $responsibleId;
 		$members = $oldTask->getMembers($role);
 		$groupId = $newTask->getGroupId();
 
-		$directors = $newTask->getMembers(RoleDictionary::ROLE_DIRECTOR);
-
-		foreach ($directors as $directorId)
+		if (!$assignsFrom)
 		{
-			$director = UserModel::createFromId((int) $directorId);
-			if (!$this->canAssign($director, $responsibleId, $members, $groupId))
+			$assignsFrom = $newTask->getMembers(RoleDictionary::ROLE_DIRECTOR);
+		}
+		$assignsTo = $newTask->getMembers($role);
+
+		foreach ($assignsTo as $assignTo)
+		{
+			foreach ($assignsFrom as $assignFrom)
 			{
-				return false;
+				$director = UserModel::createFromId((int) $assignFrom);
+				if (!$this->canAssign($director, $assignTo, $members, $groupId))
+				{
+					return false;
+				}
 			}
 		}
 

@@ -245,7 +245,7 @@ class ResultEntity
 			return null;
 		}
 
-		/** @var  $entityObject \CCrmContact */
+		/** @var  \CCrmContact $entityObject */
 		$entityObject = new $entity['CLASS_NAME'](false);
 
 		$entityMultiFields = array();
@@ -409,15 +409,12 @@ class ResultEntity
 		return $this->replaceDefaultFieldValue($fieldProperties['TEMPLATE']);
 	}
 
-	protected function getEntityFields($entityName)
+	protected function getEntityFields(string $entityName, ?bool $onlyDefaultsMode = null): array
 	{
-		if(isset($this->fields[$entityName]))
+		$filledFields = $this->fields[$entityName] ?? [];
+		if ($onlyDefaultsMode === false)
 		{
-			$fields = $this->fields[$entityName];
-		}
-		else
-		{
-			$fields =  array();
+			return $filledFields;
 		}
 
 		if(!$this->entityMap)
@@ -425,13 +422,8 @@ class ResultEntity
 			$this->entityMap = Entity::getMap();
 		}
 
-		if(!isset($this->entityMap[$entityName]['FIELD_AUTO_FILL_TEMPLATE']))
-		{
-			return $fields;
-		}
-
-
-		foreach($this->entityMap[$entityName]['FIELD_AUTO_FILL_TEMPLATE'] as $fieldName => $fieldProperties)
+		$fields = [];
+		foreach(($this->entityMap[$entityName]['FIELD_AUTO_FILL_TEMPLATE'] ?? []) as $fieldName => $fieldProperties)
 		{
 			if(isset($fields[$fieldName]) && $fields[$fieldName])
 			{
@@ -441,7 +433,12 @@ class ResultEntity
 			$fields[$fieldName] =  $this->replaceDefaultFieldValue($fieldProperties['TEMPLATE']);
 		}
 
-		return $fields;
+		if ($onlyDefaultsMode)
+		{
+			return $fields;
+		}
+
+		return $filledFields + $fields;
 	}
 
 	public function setProductRows($productList)
@@ -594,9 +591,7 @@ class ResultEntity
 
 	protected function addByEntityName($entityName, $params = array())
 	{
-		$id = null;
-
-		$entityFields = $this->getEntityFields($entityName);
+		$entityFields = $this->getEntityFields($entityName, false);
 		if($params['FIELDS'])
 		{
 			$entityFields = $params['FIELDS'] + $entityFields;
@@ -668,6 +663,7 @@ class ResultEntity
 				$entityFields['SOURCE_ID'] = 'CALLBACK';
 			}
 
+			$entityFields += $this->getEntityFields($entityName, true);
 
 			$addOptions = [
 				'DISABLE_USER_FIELD_CHECK' => true,
@@ -778,7 +774,10 @@ class ResultEntity
 
 			if ($requisiteFields)
 			{
-				Requisite::instance()->fill($entityTypeId, $id, $requisiteFields);
+				$form = \Bitrix\Crm\Integration\Sign\Form::create();
+				$form->load($this->formId);
+				$requisitePresetId = $form->getRequisitePresetId() ?? null;
+				Requisite::instance()->fill($entityTypeId, $id, $requisiteFields, $requisitePresetId);
 			}
 
 			$this->resultEntityPack[] = $resultEntityInfo;
@@ -912,7 +911,7 @@ class ResultEntity
 	{
 		$this->addClient();
 
-		$params = array();
+		$params = [];
 		if($this->companyId || $this->contactId)
 		{
 			$params['FIELDS'] = array();
@@ -1073,12 +1072,65 @@ class ResultEntity
 	}
 
 	/**
+	 * Default order pay system.
+	 *
+	 * If an order is specified, the pay system is selected taking into account the order restrictions.
+	 *
+	 * @param Crm\Order\Order|null $order
+	 *
+	 * @return Sale\PaySystem\Service|null
+	 */
+	private function getDefaultOrderPaySystem(?Crm\Order\Order $order = null): ?Sale\PaySystem\Service
+	{
+		if (isset($order))
+		{
+			$availablePaySystems = Sale\PaySystem\Manager::getListWithRestrictionsByOrder($order);
+		}
+		else
+		{
+			$availablePaySystems =
+				Sale\PaySystem\Manager::getList([
+					'filter' => [
+						'=ACTIVE' => 'Y',
+					],
+				])
+					->fetchAll()
+			;
+		}
+
+		if (empty($availablePaySystems))
+		{
+			return null;
+		}
+
+		foreach ($availablePaySystems as $paySystemInfo)
+		{
+			if ($paySystemInfo['ACTION_FILE'] === 'cash')
+			{
+				return new Sale\PaySystem\Service($paySystemInfo);
+			}
+		}
+
+		$paySystemInfo = reset($availablePaySystems);
+
+		return new Sale\PaySystem\Service($paySystemInfo);
+	}
+
+	/**
 	 * Create if not exists payments and deliveries.
 	 *
 	 * @param Crm\Order\Order $order
 	 * @param array $formData
 	 *
 	 * @return void
+	 * @throws Main\ArgumentException
+	 * @throws Main\ArgumentNullException
+	 * @throws Main\ArgumentOutOfRangeException
+	 * @throws Main\ArgumentTypeException
+	 * @throws Main\NotImplementedException
+	 * @throws Main\NotSupportedException
+	 * @throws Main\ObjectNotFoundException
+	 * @throws Main\SystemException
 	 */
 	private function fillOrderPaymentsAndDeliveries(Crm\Order\Order $order, array $formData): void
 	{
@@ -1086,11 +1138,12 @@ class ResultEntity
 		$payment = $paymentCollection->current();
 		if (!$payment)
 		{
-			$innerPaySystem = Sale\PaySystem\Manager::getObjectById(
-				Sale\PaySystem\Manager::getInnerPaySystemId()
-			);
-			$payment = $paymentCollection->createItem($innerPaySystem);
-			$payment->setField('SUM', $order->getPrice());
+			$orderPaySystem = $this->getDefaultOrderPaySystem($order);
+			if ($orderPaySystem)
+			{
+				$payment = $paymentCollection->createItem($orderPaySystem);
+				$payment->setField('SUM', $order->getPrice());
+			}
 		}
 
 		$shipmentCollection = $order->getShipmentCollection();
@@ -1125,7 +1178,11 @@ class ResultEntity
 		}
 
 		$this->orderId = $order->getId();
-		$this->paymentId = $payment->getId();
+
+		if ($payment)
+		{
+			$this->paymentId = $payment->getId();
+		}
 
 		$this->resultEntityPack[] = [
 			'RESULT_ID' => $this->resultId,
@@ -1190,6 +1247,17 @@ class ResultEntity
 				]
 			]
 		];
+
+		$paySystem = $this->getDefaultOrderPaySystem();
+		if ($paySystem)
+		{
+			$formData['PAYMENT'] = [
+				[
+					'PAY_SYSTEM_ID' => $paySystem->getField('ID'),
+					'SUM' => $this->getProductRowsSum(),
+				],
+			];
+		}
 
 		$client = ClientInfo::createFromOwner($ownerTypeId, $ownerId)->toArray();
 
@@ -1269,7 +1337,7 @@ class ResultEntity
 		];
 	}
 
-	protected function addInvoice($params = array())
+	protected function addInvoice($params = [])
 	{
 		if (Manager::isOrdersAvailable())
 		{
@@ -1279,7 +1347,7 @@ class ResultEntity
 
 		if(!isset($params['FIELDS']))
 		{
-			$params['FIELDS'] = array();
+			$params['FIELDS'] = [];
 		}
 
 		$personTypes = \CCrmPaySystem::getPersonTypeIDs();
@@ -1475,14 +1543,46 @@ class ResultEntity
 	{
 		// prepare bindings
 		$bindings = BindingSelector::findBindings($this->selector);
+
+		$mainEntityTypeId = Entity::getSchemes($this->scheme)['MAIN_ENTITY'];
+
 		foreach($this->resultEntityPack as $entity)
 		{
-			$bindings[] = array(
+			$entityTypeId = \CCrmOwnerType::ResolveID($entity['ENTITY_NAME']);
+			$bindings[] = [
 				'OWNER_ID' => $entity['ITEM_ID'],
-				'OWNER_TYPE_ID' => \CCrmOwnerType::ResolveID($entity['ENTITY_NAME'])
-			);
+				'OWNER_TYPE_ID' => $entityTypeId,
+			];
+
+			if ($mainEntityTypeId === $entityTypeId)
+			{
+				$mainEntityName = \CCrmOwnerType::GetDescription($entityTypeId);
+				$mainEntityLink = \Bitrix\Crm\Service\Container::getInstance()
+					->getRouter()
+					->getItemDetailUrl($entityTypeId, $entity['ITEM_ID'])
+					->getLocator();
+			}
 		}
+		if (
+			!isset($mainEntityName)
+			&& isset($this->resultEntityPack[0])
+		)
+		{
+			$entityTypeId = \CCrmOwnerType::ResolveID($this->resultEntityPack[0]['ENTITY_NAME']);
+			$mainEntityName = \CCrmOwnerType::GetDescription($entityTypeId);
+			$mainEntityLink = \Bitrix\Crm\Service\Container::getInstance()
+				->getRouter()
+				->getItemDetailUrl($entityTypeId, $this->resultEntityPack[0]['ITEM_ID'])
+				->getLocator();
+		}
+
+
 		$bindings = BindingSelector::sortBindings($bindings);
+		$bindings = $this->removeIgnoredActivityBindings($bindings);
+		if (empty($bindings))
+		{
+			return;
+		}
 
 		// add activity
 		$activityFields = array(
@@ -1531,18 +1631,18 @@ class ResultEntity
 		{
 			$activityFields['SUBJECT'] = Loc::getMessage(
 				'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT_CALL',
-				Array(
+				[
 					"%phone%" => htmlspecialcharsbx($this->callbackPhone ? $this->callbackPhone : $this->formData['NAME']),
-				)
+				]
 			);
 		}
 		else
 		{
 			$activityFields['SUBJECT'] = Loc::getMessage(
 				'CRM_WEBFORM_RESULT_ENTITY_NOTIFY_SUBJECT',
-				Array(
+				[
 					"%title%" => htmlspecialcharsbx($this->formData['NAME']),
-				)
+				]
 			);
 		}
 
@@ -1647,6 +1747,12 @@ class ResultEntity
 					);
 				}
 
+				if (isset($mainEntityLink) && isset($mainEntityName))
+				{
+					$imNotifyMessage .= "\n";
+					$imNotifyMessage .= $this->getEntityLink($mainEntityLink, $mainEntityName);
+				}
+
 				$imNotifyMessageOut = $imNotifyMessage . " (". $serverName . $url . ")";
 				$imNotifyMessageOut .= "\n\n";
 				$imNotifyMessageOut .= Result::formatFieldsByTemplate($this->activityFields);
@@ -1708,7 +1814,7 @@ class ResultEntity
 
 	protected function prepareFields($fields)
 	{
-		$entityFields = array();
+		$entityFields = [];
 		foreach($fields as $field)
 		{
 			$values = $field['values'];
@@ -1733,7 +1839,13 @@ class ResultEntity
 				case 'datetime':
 					foreach($values as $valueIndex => $value)
 					{
-						if (empty($value))
+						if (
+							empty($value)
+							|| (
+								in_array($field['type'], ['date', 'datetime'], true)
+								&& Main\Type\DateTime::tryParse($value, DATE_ATOM) !== null
+							)
+						)
 						{
 							continue;
 						}
@@ -1762,14 +1874,14 @@ class ResultEntity
 	{
 		$fields = $this->fields;
 
-		$targetFields = array(
-			'FM' => array()
-		);
-		$entityTypeNames = array(
+		$targetFields = [
+			'FM' => []
+		];
+		$entityTypeNames = [
 			\CCrmOwnerType::ContactName,
 			\CCrmOwnerType::CompanyName,
 			\CCrmOwnerType::LeadName
-		);
+		];
 		foreach ($entityTypeNames as $entityTypeName)
 		{
 			// check available fields
@@ -1789,7 +1901,7 @@ class ResultEntity
 			}
 
 			// check person fields
-			$fieldNameMap = array(
+			$fieldNameMap = [
 				[
 					'typeName' => [\CCrmOwnerType::LeadName, \CCrmOwnerType::ContactName],
 					'fieldName' => 'NAME',
@@ -1811,7 +1923,7 @@ class ResultEntity
 					'fieldName' => 'TITLE',
 					'fieldAlias' => 'COMPANY_TITLE'
 				],
-			);
+			];
 			foreach ($fieldNameMap as $item)
 			{
 				if (!in_array($entityTypeName, $item['typeName']))
@@ -1859,6 +1971,7 @@ class ResultEntity
 			$selector->setDynamicTypeId($scheme['MAIN_ENTITY']);
 		}
 
+		$isMainEntityAdded = false;
 		foreach ($this->entities as $entity)
 		{
 			if (empty($entity['typeId']) || empty($entity['id']))
@@ -1872,7 +1985,16 @@ class ResultEntity
 				continue;
 			}
 
-			$selector->setEntity($entity['typeId'], $entity['id']);
+			$skipRanking = false;
+			if (!in_array($entity['typeId'], [\CCrmOwnerType::Company, \CCrmOwnerType::Contact]))
+			{
+				$isMainEntityAdded = true;
+			}
+			else
+			{
+				$skipRanking = $isMainEntityAdded;
+			}
+			$selector->setEntity($entity['typeId'], $entity['id'], $skipRanking);
 		}
 
 		return $selector->search();
@@ -1920,7 +2042,7 @@ class ResultEntity
 					break;
 
 				case Entity::ENUM_ENTITY_SCHEME_LEAD_INVOICE:
-					$this->addLead(array('ADD_INVOICE' => true));
+					$this->addLead(['ADD_INVOICE' => true]);
 					break;
 
 				case Entity::ENUM_ENTITY_SCHEME_DEAL:
@@ -1932,15 +2054,15 @@ class ResultEntity
 					break;
 
 				case Entity::ENUM_ENTITY_SCHEME_DEAL_INVOICE:
-					$this->addDeal(array('ADD_INVOICE' => true));
+					$this->addDeal(['ADD_INVOICE' => true]);
 					break;
 
 				case Entity::ENUM_ENTITY_SCHEME_QUOTE_INVOICE:
-					$this->addQuote(array('ADD_INVOICE' => true));
+					$this->addQuote(['ADD_INVOICE' => true]);
 					break;
 
 				case Entity::ENUM_ENTITY_SCHEME_CONTACT_INVOICE:
-					$this->addClient(array('ADD_INVOICE' => true));
+					$this->addClient(['ADD_INVOICE' => true]);
 					break;
 
 				default:
@@ -2066,7 +2188,7 @@ class ResultEntity
 	/**
 	 * @param array $placeholders Placeholders
 	 */
-	public function setPlaceholders($placeholders = array())
+	public function setPlaceholders($placeholders = [])
 	{
 		$this->placeholders = $placeholders;
 	}
@@ -2268,5 +2390,30 @@ class ResultEntity
 		}
 
 		return $results;
+	}
+
+	/**
+	 * @return string|null
+	 */
+	private function getEntityLink(string $link, string $entityName): string
+	{
+		return Loc::getMessage('CRM_WEBFORM_RESULT_ENTITY_NOTIFY_MESSAGE')
+			. ': '
+			. '<a href="' . $link . '">'
+			. htmlspecialcharsbx($entityName)
+			. '</a>';
+	}
+
+	private function removeIgnoredActivityBindings(array $bindings): array
+	{
+		foreach ($bindings as $i => $binding)
+		{
+			if ($binding['OWNER_TYPE_ID'] == \CCrmOwnerType::SmartDocument) // do not create activity for smart document
+			{
+				unset($bindings[$i]);
+			}
+		}
+
+		return $bindings;
 	}
 }

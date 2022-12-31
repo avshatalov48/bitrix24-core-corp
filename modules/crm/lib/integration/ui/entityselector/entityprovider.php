@@ -7,6 +7,7 @@ use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Search;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Collection;
 use Bitrix\UI\EntitySelector\BaseProvider;
@@ -105,6 +106,7 @@ abstract class EntityProvider extends BaseProvider
 				'REQUIRE_MULTIFIELDS' => true,
 				'NAME_TEMPLATE' => \Bitrix\Crm\Format\PersonNameFormatter::getFormat(),
 				'REQUIRE_EDIT_REQUISITE_DATA' => $this->withRequisites,
+				'LARGE_IMAGES' => true,
 			]
 		);
 
@@ -136,19 +138,49 @@ abstract class EntityProvider extends BaseProvider
 
 	public function fillDialog(Dialog $dialog): void
 	{
-		$context = $dialog->getContext();
-		if(!empty($context))
+		$itemEntityId = $this->getItemEntityId();
+		$recentItems = $dialog->getRecentItems();
+		$recentItemsByEntityId = $recentItems->getEntityItems($itemEntityId);
+		$remainingItemsCount = Entity::ITEMS_LIMIT - count($recentItemsByEntityId);
+
+		if ($remainingItemsCount > 0)
 		{
-			$recentItems = $dialog->getRecentItems()->getEntityItems($this->getItemEntityId());
-			if(count($recentItems) < Entity::ITEMS_LIMIT)
+			foreach ($dialog->getGlobalRecentItems()->getEntityItems($this->getItemEntityId()) as $globalRecentItem)
 			{
-				$moreItemIds = $this->getRecentItemIds($context);
-				foreach($moreItemIds as $itemId)
+				if ($remainingItemsCount === 0)
 				{
-					$dialog->getRecentItems()->add(new RecentItem([
-						'id' => $itemId,
-						'entityId' => $this->getItemEntityId(),
-					]));
+					break;
+				}
+
+				if (!$recentItems->has($globalRecentItem))
+				{
+					$recentItems->add($globalRecentItem);
+					$remainingItemsCount--;
+				}
+			}
+		}
+
+		if ($remainingItemsCount > 0)
+		{
+			$context = $dialog->getContext() ?: EntitySelector::CONTEXT;
+			$moreItemIds = $this->getRecentItemIds($context);
+
+			foreach ($moreItemIds as $itemId)
+			{
+				if ($remainingItemsCount === 0)
+				{
+					break;
+				}
+
+				$recentItem = new RecentItem([
+					'id' => $itemId,
+					'entityId' => $itemEntityId,
+				]);
+
+				if (!$recentItems->has($recentItem))
+				{
+					$recentItems->add($recentItem);
+					$remainingItemsCount--;
 				}
 			}
 		}
@@ -172,15 +204,21 @@ abstract class EntityProvider extends BaseProvider
 		return [];
 	}
 
+	protected function getCategoryId(): int
+	{
+		return 0;
+	}
+
 	protected function getRecentItemIds(string $context): array
 	{
 		$ids = [];
 
 		$recentItems = Entity::getRecentlyUsedItems($context, $this->getItemEntityId(), [
 			'EXPAND_ENTITY_TYPE_ID' => $this->getEntityTypeId(),
+			'EXPAND_CATEGORY_ID' => $this->getCategoryId(),
 		]);
 
-		foreach($recentItems as $item)
+		foreach ($recentItems as $item)
 		{
 			$ids[] = $item['ENTITY_ID'];
 		}

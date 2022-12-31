@@ -25,6 +25,7 @@ use Bitrix\Tasks\Integration\CRM;
 use Bitrix\Tasks\Integration\Disk\Connector\Task as ConnectorTask;
 use Bitrix\Tasks\Integration\SocialNetwork;
 use Bitrix\Tasks\Internals\Counter;
+use Bitrix\Tasks\Internals\Task\MemberTable;
 use Bitrix\Tasks\Internals\Task\TagTable;
 use Bitrix\Tasks\Internals\TaskTable;
 use Bitrix\Tasks\Internals\UserOption;
@@ -53,6 +54,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 	protected $grid;
 
 	protected $exportAs = false;
+	protected bool $exportAllColumns = false;
 	protected $getChildRowsAction = false;
 	protected $pageSizes = array(
 		array("NAME" => "5", "VALUE" => "5"),
@@ -521,6 +523,10 @@ class TasksTaskListComponent extends TasksBaseComponent
 		$this->exportAs = (array_key_exists('EXPORT_AS', $_REQUEST) ? $_REQUEST['EXPORT_AS'] : false);
 		if ($this->exportAs !== false)
 		{
+			if (array_key_exists('COLUMNS', $_REQUEST) && $_REQUEST['COLUMNS'] === 'ALL')
+			{
+				$this->exportAllColumns = true;
+			}
 			$this->arParams['USE_PAGINATION'] = false;
 			$this->arParams['PAGINATION_PAGE_SIZE'] = 0;
 		}
@@ -1092,7 +1098,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 				'FAVORITE',
 				'IS_MUTED',
 				'IS_PINNED',
-				'IS_PINNED_IN_GROUP'
+				'IS_PINNED_IN_GROUP',
 			];
 
 			$columns = array_merge($columns, $preferredColumns, array_keys($this->getUF()));
@@ -1105,6 +1111,13 @@ class TasksTaskListComponent extends TasksBaseComponent
 		{
 			$columns[] = $crmColumn;
 			$this->arParams['IS_CRM_COLUMN_ADDED'] = true;
+		}
+
+		if ($this->exportAllColumns)
+		{
+			$columns = array_merge($this->grid->getAllColumns(), array_keys($this->getUF()));
+			$this->arResult['EXPORT_ALL'] = true;
+			$this->arResult['EXPORT_COLUMNS'] = $columns;
 		}
 
 		return array_unique($columns);
@@ -1363,6 +1376,20 @@ class TasksTaskListComponent extends TasksBaseComponent
 		else
 		{
 			$mgrResult = Manager\Task::getList(User::getId(), $getListParameters, $parameters);
+			if ($this->exportAllColumns)
+			{
+				$mgrResult['DATA'] = $this->mergeWithMembers(
+					$mgrResult['DATA'],
+					MemberTable::MEMBER_TYPE_ACCOMPLICE
+				);
+
+				$mgrResult['DATA'] = $this->mergeWithMembers(
+					$mgrResult['DATA'],
+					MemberTable::MEMBER_TYPE_AUDITOR
+				);
+
+				$mgrResult['DATA'] = $this->mergeWithParentTask($mgrResult['DATA']);
+			}
 			$this->arResult['CURRENT_PAGE'] = (int)$mgrResult['AUX']['OBJ_RES']->PAGEN;
 		}
 
@@ -1819,7 +1846,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 
 		if ($this->errors->checkNoFatals())
 		{
-			if ($this->exportAs)
+			if ($this->exportAs && !empty($this->arResult['LIST']))
 			{
 				$APPLICATION->RestartBuffer();
 
@@ -1836,8 +1863,7 @@ class TasksTaskListComponent extends TasksBaseComponent
 					}
 					$this->arResult['LIST'] = $list;
 				}
-
-				$this->IncludeComponentTemplate('export_'.mb_strtolower($this->exportAs));
+				$this->IncludeComponentTemplate('export_' . mb_strtolower($this->exportAs));
 				parent::doFinalActions();
 			}
 			else
@@ -1857,5 +1883,87 @@ class TasksTaskListComponent extends TasksBaseComponent
 	{
 		$this->errorCollection->add('ACTION_NOT_ALLOWED.RESTRICTED', Loc::getMessage('TASKS_ACTION_NOT_ALLOWED'));
 	}
+
+	private function mergeWithMembers(array $tasks, string $memberType): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+		$taskIds = array_map(static function (array $el): int {
+			return (int)$el['ID'];
+		}, $tasks);
+
+		$auditorRows = MemberTable::getList([
+			'select' => [
+				'USER',
+				'TASK_ID',
+			],
+			'filter' => [
+				'@TASK_ID' => $taskIds,
+				'=TYPE' => $memberType,
+			],
+		]);
+
+		while ($row = $auditorRows->fetchObject())
+		{
+			$tasks[$row->getTaskId()][$memberType][] = $row->getUser()->getName() . ' ' . $row->getUser()->getLastName();
+		}
+
+		return $tasks;
+	}
+
+	private function mergeWithParentTask(array $tasks): array
+	{
+		if (empty($tasks))
+		{
+			return [];
+		}
+		$parentTaskIds = [];
+		foreach ($tasks as $task)
+		{
+			$parentId = (int)$task['PARENT_ID'];
+			if ($parentId !== 0 )
+			{
+				$parentTaskIds[] = $parentId;
+			}
+		}
+
+		if (empty($parentTaskIds))
+		{
+			return $tasks;
+		}
+
+		$parentRows = TaskTable::getList([
+			'select' => [
+				'TITLE',
+				'ID'
+			],
+			'filter' => [
+				'@ID' => $parentTaskIds,
+			],
+		]);
+
+		$parentTasks = [];
+		while ($row = $parentRows->fetchObject())
+		{
+			$parentTasks[$row->getId()] = $row->getTitle();
+		}
+
+		foreach ($tasks as $task)
+		{
+			if ((int)$task['PARENT_ID'] === 0)
+			{
+				$task['PARENT_TITLE'] = '';
+				continue;
+			}
+
+			$tasks[$task['ID']]['PARENT_TITLE'] = $parentTasks[$task['PARENT_ID']];
+		}
+
+		return $tasks;
+	}
+
+
 
 }

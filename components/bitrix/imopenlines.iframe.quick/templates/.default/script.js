@@ -340,41 +340,45 @@ quickAnswersManager.prototype.renderResults = function(items)
 		if(items.hasOwnProperty(i))
 		{
 			this.answers[items[i].id] = items[i];
+
+			let divChildren = [];
+			divChildren.push(BX.create('div', {
+				attrs: {
+					'data-bx-item-id': items[i].id,
+					'data-bx-item-text': BX.Text.encode(items[i].text),
+					className: 'imopenlines-iframe-quick-result-item'
+				},
+				html: BX.Text.encode(items[i].name),
+				events: {
+					click: function()
+					{
+						manager.putMessage(this.getAttribute('data-bx-item-text'), this.getAttribute('data-bx-item-id'));
+					}
+				}
+			}));
+			if (items[i].can_edit) {
+				divChildren.push(BX.create('a', {
+					attrs: {
+						'data-bx-item-id': items[i].id,
+						className: 'imopenlines-iframe-quick-result-edit'
+					},
+					events: {
+						click: function(e)
+						{
+							e.preventDefault();
+							manager.editMessage(this.getAttribute('data-bx-item-id'));
+							return false;
+						}
+					}
+				}));
+			}
+
 			BX.append(BX.create('div', {
 				attrs:
 				{
 					className: 'imopenlines-iframe-quick-result-block' + (this.freshId == items[i].id? ' imopenlines-iframe-quick-result-block-fresh' : '')
 				},
-				children: [
-					BX.create('div', {
-						attrs: {
-							'data-bx-item-id': items[i].id,
-							'data-bx-item-text': BX.Text.encode(items[i].text),
-							className: 'imopenlines-iframe-quick-result-item'
-						},
-						html: BX.Text.encode(items[i].name),
-						events: {
-							click: function()
-							{
-								manager.putMessage(this.getAttribute('data-bx-item-text'), this.getAttribute('data-bx-item-id'));
-							}
-						}
-					}),
-					BX.create('a', {
-						attrs: {
-							'data-bx-item-id': items[i].id,
-							className: 'imopenlines-iframe-quick-result-edit'
-						},
-						events: {
-							click: function(e)
-							{
-								e.preventDefault();
-								manager.editMessage(this.getAttribute('data-bx-item-id'));
-								return false;
-							}
-						}
-					})
-				]
+				children: divChildren
 			}), this.resultContainer);
 		}
 	}

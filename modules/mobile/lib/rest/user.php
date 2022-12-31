@@ -348,7 +348,7 @@ class User extends \IRestService
 		$data['HEAD_DATA'] = array_merge($headData, $photoData);
 		$data['EMPLOYEES_LIST'] = "";
 
-		if (\CExtranet::isIntranetUser() === true)
+		if (Loader::includeModule('extranet') && \CExtranet::isIntranetUser() === true)
 		{
 			$employees = CIntranetUtils::getSubordinateEmployees($userId);
 			$employeeList = [];

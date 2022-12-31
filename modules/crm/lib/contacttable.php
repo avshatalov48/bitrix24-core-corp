@@ -69,7 +69,7 @@ class ContactTable extends ORM\Data\DataManager
 
 		$fieldRepository = ServiceLocator::getInstance()->get('crm.model.fieldRepository');
 
-		return [
+		$map = [
 			//fields here are sorted by b_crm_contact columns order in install.sql. Please, keep it that way
 
 			$fieldRepository->getId(),
@@ -291,6 +291,8 @@ class ContactTable extends ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_CONTACT_ENTITY_PHONE_FIELD'))
 			,
 		];
+
+		return array_merge($map, $fieldRepository->getUtm(\CCrmOwnerType::Contact));
 	}
 
 	public static function disableUserFieldsCheck(): void

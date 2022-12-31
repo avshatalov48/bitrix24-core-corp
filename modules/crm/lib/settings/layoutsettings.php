@@ -14,6 +14,8 @@ class LayoutSettings
 	/** @var BooleanSetting */
 	private $enableCatalogPriceEdit = null;
 	/** @var BooleanSetting */
+	private $enableEntityCommodityItemCreation = null;
+	/** @var BooleanSetting */
 	private $enableCatalogPriceSave = null;
 	/** @var BooleanSetting */
 	private $enableSimpleTimeFormat = null;
@@ -31,6 +33,7 @@ class LayoutSettings
 		$this->enableSlider = new BooleanSetting('enable_slider', true);
 		$this->enableFullCatalog = new BooleanSetting('enable_full_catalog', true);
 		$this->enableCatalogPriceEdit = new BooleanSetting('enable_product_price_edit', false);
+		$this->enableEntityCommodityItemCreation = new BooleanSetting('enable_entity_commodity_item_creation', false);
 		$this->enableCatalogPriceSave = new BooleanSetting('enable_catalog_price_save', false);
 		$this->enableSimpleTimeFormat = new BooleanSetting('enable_simple_time_format', true);
 		$this->enableUserNameSorting = new BooleanSetting('enable_user_name_sorting', false);
@@ -94,6 +97,14 @@ class LayoutSettings
 		return !$this->isCommonProductProcessingEnabled() || $this->enableCatalogPriceEdit->get();
 	}
 	/**
+	 * Check if user is allowed to create commodity item into entities without creation into catalog
+	 * @return bool
+	 */
+	public function isCreationEntityCommodityItemAllowed(): bool
+	{
+		return $this->enableEntityCommodityItemCreation->get();
+	}
+	/**
 	 * Enabled changing product prices from entity card
 	 * @param bool $enabled Enabled Flag.
 	 * @return void
@@ -101,6 +112,15 @@ class LayoutSettings
 	public function enableCatalogPriceEdit($enabled): void
 	{
 		$this->enableCatalogPriceEdit->set($enabled);
+	}
+	/**
+	 * Enabled creation commodity item into entities without creation into catalog
+	 * @param bool $enabled Enabled Flag.
+	 * @return void
+	 */
+	public function enableEntityCommodityItemCreation($enabled): void
+	{
+		$this->enableEntityCommodityItemCreation->set($enabled);
 	}
 	/**
 	 * Check if user is allowed to change product prices from entity card

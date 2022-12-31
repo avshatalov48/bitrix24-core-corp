@@ -1,6 +1,6 @@
 <?php
 
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
@@ -8,8 +8,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
 use \Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
-	'NAME' => Loc::getMessage('CRM_CDCA_NAME'),
-	'DESCRIPTION' => Loc::getMessage('CRM_CDCA_DESC'),
+	'NAME' => Loc::getMessage('CRM_CDCA_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CDCA_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmChangeDynamicCategoryActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -25,6 +25,7 @@ $arActivityDescription = [
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
-		'RESPONSIBLE_PROPERTY' => 'Responsible'
+		'RESPONSIBLE_PROPERTY' => 'Responsible',
+		'GROUP' => ['elementControl'],
 	],
 ];

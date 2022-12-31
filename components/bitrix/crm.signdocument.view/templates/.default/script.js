@@ -27,14 +27,8 @@
 
 	    this.pdfNode = parameters.pdfNode;
 	    this.pdfSource = parameters.pdfSource;
-
-	    if (parameters.printButtonId) {
-	      this.printButton = ui_buttons.ButtonManager.createByUniqId(parameters.printButtonId);
-	    }
-
-	    if (parameters.downloadButtonId) {
-	      this.downloadButton = ui_buttons.ButtonManager.createByUniqId(parameters.downloadButtonId);
-	    }
+	    this.printButton = ui_buttons.ButtonManager.createByUniqId('crm-document-print');
+	    this.downloadButton = ui_buttons.ButtonManager.createByUniqId('crm-document-download');
 
 	    _classPrivateMethodGet(this, _initViewer, _initViewer2).call(this);
 
@@ -50,7 +44,8 @@
 
 	      if (!this.viewer && this.pdfNode) {
 	        this.viewer = new Viewer.SingleDocumentController({
-	          baseContainer: this.pdfNode
+	          baseContainer: this.pdfNode,
+	          stretch: true
 	        });
 	      }
 
@@ -74,7 +69,7 @@
 
 	  viewer.setItems([Viewer.buildItemByNode(this.pdfNode)]);
 	  viewer.setPdfSource(this.pdfSource);
-	  viewer.setScale(0.92);
+	  viewer.setScale(1.2);
 	  viewer.open();
 	}
 

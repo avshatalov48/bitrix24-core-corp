@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/activity.js');
+
 \Bitrix\Main\UI\Extension::load([
 	'crm.channel-selector',
 ]);
@@ -29,7 +31,6 @@ $APPLICATION->IncludeComponent(
 	$this->getComponent(),
 	array('HIDE_ICONS' => 'Y')
 );
-
 
 if (\Bitrix\Crm\Integration\Bitrix24\Product::isRegionRussian(true))
 {

@@ -84,6 +84,7 @@ export class MobileDialogApplication
 		this.initCore()
 			.then(() => this.subscribeToEvents())
 			.then(() => this.initComponentParams())
+			.then(result => this.initLangAdditional(result))
 			.then(result => this.initMobileEntity(result))
 			.then(result => this.initMobileSettings(result))
 			.then(() => this.initComponent())
@@ -113,6 +114,29 @@ export class MobileDialogApplication
 	initComponentParams()
 	{
 		return BX.componentParameters.init();
+	}
+
+	initLangAdditional(data)
+	{
+		const langAdditional = data.LANG_ADDITIONAL || {};
+
+		console.log('0. initLangAdditional', langAdditional);
+
+		return new Promise((resolve, reject) => {
+			if (data.LANG_ADDITIONAL)
+			{
+				Object.keys(langAdditional).forEach(code => {
+					if (typeof langAdditional[code] !== 'string')
+					{
+						return;
+					}
+
+					BX.message[code] = langAdditional[code];
+				});
+			}
+
+			resolve(data);
+		});
 	}
 
 	initMobileEntity(data)
@@ -2605,7 +2629,7 @@ export class MobileDialogApplication
 					else if (params.id === 'goto_crm')
 					{
 						let crmData = this.controller.application.getDialogCrmData();
-						let openWidget = BX.MobileTools.resolveOpenFunction('/crm/'+crmData.entityType+'/show/'+crmData.entityId+'/');
+						let openWidget = BX.MobileTools.resolveOpenFunction('/crm/'+crmData.entityType+'/details/'+crmData.entityId+'/');
 						if (openWidget)
 						{
 							openWidget();

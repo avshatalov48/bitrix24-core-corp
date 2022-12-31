@@ -3,6 +3,7 @@ $MESS["CRM_SHOP_MENU_ITEM_EXPERT_SETTINGS"] = "Erweiterte Einstellungen";
 $MESS["CRM_SHOP_MENU_ITEM_GOODS"] = "Produkte";
 $MESS["SHOP_MENU_BUYER_GROUP_TITLE"] = "Kundengruppen";
 $MESS["SHOP_MENU_CATALOG_GOODS"] = "Produktkatalog";
+$MESS["SHOP_MENU_CATALOG_RIGHTS_SETTINGS"] = "Zugriffsrechte";
 $MESS["SHOP_MENU_CONTACT_CENTER"] = "Contact Center";
 $MESS["SHOP_MENU_CRM_CLIENTS"] = "Kunden";
 $MESS["SHOP_MENU_CRM_COMPANIES"] = "Unternehmen";

@@ -11,6 +11,8 @@ use Bitrix\Main\ORM\Fields\IntegerField;
 use Bitrix\Main\ORM\Fields\FloatField;
 use Bitrix\Main\ORM\Fields\Relations\Reference;
 use Bitrix\Main\ORM\Query\Join;
+use Bitrix\Crm\Reservation\ProductRowReservation;
+use Bitrix\Main\ORM\Query\Result;
 
 /**
  * Class ProductRowReservationTable
@@ -26,6 +28,8 @@ use Bitrix\Main\ORM\Query\Join;
  **/
 class ProductRowReservationTable extends DataManager
 {
+	public const PRODUCT_ROW_RESERVATION_NAME = 'PRODUCT_ROW_RESERVATION';
+
 	/**
 	 * Returns DB table name for entity.
 	 *
@@ -34,6 +38,11 @@ class ProductRowReservationTable extends DataManager
 	public static function getTableName()
 	{
 		return 'b_crm_product_row_reservation';
+	}
+
+	public static function getObjectClass(): string
+	{
+		return ProductRowReservation::class;
 	}
 
 	/**
@@ -86,7 +95,7 @@ class ProductRowReservationTable extends DataManager
 			),
 			//
 			new Reference(
-				'ROW',
+				ProductRowReservation::PRODUCT_ROW_NAME,
 				ProductRowTable::class,
 				Join::on('this.ROW_ID', 'ref.ID')
 			),
@@ -98,15 +107,30 @@ class ProductRowReservationTable extends DataManager
 	 *
 	 * @param int $rowId
 	 *
+	 * @return Result
+	 */
+	public static function getByRowId(int $rowId): Result
+	{
+		return
+			static::getList([
+				'filter' => [
+					'=ROW_ID' => $rowId,
+				],
+				'limit' => 1,
+			])
+		;
+	}
+
+	/**
+	 * Get reserve by product row id.
+	 *
+	 * @param int $rowId
+	 *
 	 * @return array|null
 	 */
 	public static function getRowByRowId(int $rowId): ?array
 	{
-		return static::getRow([
-			'filter' => [
-				'=ROW_ID' => $rowId,
-			],
-		]);
+		return static::getByRowId($rowId)->fetch();
 	}
 
 	public static function deleteByRowId($rowId)

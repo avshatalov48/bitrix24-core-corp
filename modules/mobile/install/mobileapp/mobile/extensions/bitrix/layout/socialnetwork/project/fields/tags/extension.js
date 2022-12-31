@@ -1,4 +1,7 @@
 (() => {
+	const { StringField } = jn.require('layout/ui/fields/string');
+	const { EntitySelectorField } = jn.require('layout/ui/fields/entity-selector');
+
 	class ProjectTagsField extends LayoutComponent
 	{
 		render()
@@ -7,7 +10,7 @@
 			{
 				return View(
 					{},
-					FieldFactory.create(FieldFactory.Type.STRING, {
+					StringField({
 						readOnly: true,
 						title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_TAGS_TITLE'),
 						value: this.props.value.join(', '),
@@ -17,7 +20,7 @@
 
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.ENTITY_SELECTOR, {
+				EntitySelectorField({
 					readOnly: false,
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_TAGS_TITLE'),
 					value: this.props.value,

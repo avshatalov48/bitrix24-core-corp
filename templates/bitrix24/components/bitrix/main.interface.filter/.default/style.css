@@ -1,0 +1,29 @@
+.filter-block-title { font-size: 1.2em; font-family: Verdana, Tahoma, sans-serif; font-weight: bold;  margin:0 0 21px; position:relative;}
+.filter-block-title a.filter-save { float: right; text-decoration:none; color: #a8a8a8; font-size:11px;  font-weight: normal;  line-height:17px; position:absolute; top:1px; right:26px;}
+.filter-block-title a.filter-save:hover { text-decoration:underline; }
+.filter-block-title a.filter-settings { width: 26px; height:18px; float:right; background:transparent url(images/filter-settings.gif) no-repeat 0 -18px; position:absolute; top:1px; right:-6px;}
+.filter-block-title a.filter-settings:hover { background:transparent url(images/filter-settings.gif) no-repeat 0 0; }
+.filter-block {}
+
+.filter-field { margin-bottom: 1em;}
+.filter-field label.filter-field-title { display: block; color: #313131; margin: 0 0 0.3em;}
+.filter-field input.filter-textbox { width: 220px; }
+.filter-field input.filter-quick-textbox { width: 120px; }
+.filter-field select.filter-quick-dropdown { width: 90px; }
+.filter-field input.filter-checkbox { vertical-align: middle;}
+.filter-field input.filter-interval { width:90px;}
+.filter-field input.filter-date-interval { width:75px; vertical-align: top;}
+.filter-field input.filter-date-days { width:40px; vertical-align: top;}
+.filter-field-buttons { text-align: right;}
+.filter-field select.filter-dropdown, .filter-field select.filter-listbox { width: 225px; }
+.filter-field span br {font-size:4px;}
+
+.filter-presets {  border-top: 1px solid #D8D8D8; padding: 0.8em 0 0 0; margin: 1.5em 0 0.8em 0; }
+.filter-presets label a { font-size: 11px; color: #A8A8A8; text-decoration:none; display:block; margin: 0 0 0.7em 0.5em;}
+.filter-presets label a:hover {text-decoration:underline;}
+.filter-presets ul { margin:0 0 0 1.5em; padding: 0; color: #ccc; list-style:disc;}
+.filter-presets li { margin: 0 0 0.5em 0}
+
+div.bx-filter-note {margin:12px 0px 12px 0px; background-color:#fffdc1; border:1px solid #e6e4af; padding:6px; color:#787878; text-align:center;}
+span.bx-filter-br {display:block; height:0.3em; overflow:hidden;}
+span.bx-filter-hellip { width:20px; display:inline-block; text-align:center;}

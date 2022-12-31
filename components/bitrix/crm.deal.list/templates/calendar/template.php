@@ -360,8 +360,8 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 {
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.filter',
-		isset($arParams['~FILTER_TEMPLATE']) ? $arParams['~FILTER_TEMPLATE'] : 'title',
-		array(
+		($arParams['~FILTER_TEMPLATE'] ?? 'title'),
+		[
 			'GRID_ID' => $arResult['GRID_ID'],
 			'FILTER_ID' => $arResult['GRID_ID'],
 			'FILTER' => $arResult['FILTER'],
@@ -374,24 +374,21 @@ if(!Bitrix\Main\Grid\Context::isInternalRequest()
 				'showPopupInCenter' => true,
 			],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
-				->setItems([
-					NavigationBarPanel::ID_AUTOMATION,
-					NavigationBarPanel::ID_KANBAN,
-					NavigationBarPanel::ID_LIST,
-					NavigationBarPanel::ID_CALENDAR
-				], NavigationBarPanel::ID_CALENDAR)
+				->setAllAllowableItems(NavigationBarPanel::ID_CALENDAR)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get(),
-			'LIMITS' => isset($arResult['LIVE_SEARCH_LIMIT_INFO']) ? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
+			'LIMITS' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
 			'ENABLE_LIVE_SEARCH' => true,
 			'DISABLE_SEARCH' => isset($arParams['~DISABLE_SEARCH']) && $arParams['~DISABLE_SEARCH'] === true,
-			'LAZY_LOAD' => array(
+			'LAZY_LOAD' => [
 				'GET_LIST' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=list&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
 				'GET_FIELD' => '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php?action=field&filter_id='.urlencode($arResult['GRID_ID']).'&category_id='.$arResult['CATEGORY_ID'].'&is_recurring='.$arParams['IS_RECURRING'].'&siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-			)
-		),
+			],
+		],
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		[
+			'HIDE_ICONS' => 'Y',
+		]
 	);
 
 	?>

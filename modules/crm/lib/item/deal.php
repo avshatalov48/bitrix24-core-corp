@@ -5,6 +5,7 @@ namespace Bitrix\Crm\Item;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Item;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Result;
 
 /**
  * @method int|null getQuoteId()

@@ -30,6 +30,7 @@ this.BX = this.BX || {};
 	    this.grid = BX.Main.gridManager.getInstanceById(this.gridId);
 	    this.isConductDisabled = options.isConductDisabled;
 	    this.masterSliderUrl = options.masterSliderUrl;
+	    this.inventoryManagementSource = options.inventoryManagementSource;
 	    window.top.BX.addCustomEvent('onEntityEditorDocumentOrderShipmentControllerDocumentSave', this.reloadGrid.bind(this));
 	  }
 
@@ -55,6 +56,10 @@ this.BX = this.BX || {};
 	              data: {
 	                id: documentId,
 	                value: 'N'
+	              },
+	              analyticsLabel: {
+	                action: 'delete',
+	                inventoryManagementSource: _this.inventoryManagementSource
 	              }
 	            }).then(function (response) {
 	              popup.destroy();
@@ -103,7 +108,10 @@ this.BX = this.BX || {};
 	                id: documentId,
 	                value: 'Y'
 	              },
-	              analyticsLabel: 'deduct'
+	              analyticsLabel: {
+	                action: 'deduct',
+	                inventoryManagementSource: _this2.inventoryManagementSource
+	              }
 	            }).then(function (response) {
 	              popup.destroy();
 
@@ -151,7 +159,10 @@ this.BX = this.BX || {};
 	                id: documentId,
 	                value: 'N'
 	              },
-	              analyticsLabel: 'cancelDeduct'
+	              analyticsLabel: {
+	                action: 'cancelDeduct',
+	                inventoryManagementSource: _this3.inventoryManagementSource
+	              }
 	            }).then(function (response) {
 	              popup.destroy();
 
@@ -186,6 +197,10 @@ this.BX = this.BX || {};
 	        data: {
 	          ids: documentIds,
 	          value: 'N'
+	        },
+	        analyticsLabel: {
+	          action: 'delete',
+	          inventoryManagementSource: this.inventoryManagementSource
 	        }
 	      }).then(function (response) {
 	        _this4.reloadGrid();
@@ -219,7 +234,10 @@ this.BX = this.BX || {};
 	          ids: documentIds,
 	          value: 'Y'
 	        },
-	        analyticsLabel: 'deduct'
+	        analyticsLabel: {
+	          inventoryManagementSource: this.inventoryManagementSource,
+	          action: 'deduct'
+	        }
 	      }).then(function (response) {
 	        _this5.reloadGrid();
 	      })["catch"](function (response) {
@@ -252,7 +270,10 @@ this.BX = this.BX || {};
 	          ids: documentIds,
 	          value: 'N'
 	        },
-	        analyticsLabel: 'cancelDeduct'
+	        analyticsLabel: {
+	          inventoryManagementSource: this.inventoryManagementSource,
+	          action: 'cancelDeduct'
+	        }
 	      }).then(function (response) {
 	        _this6.reloadGrid();
 	      })["catch"](function (response) {

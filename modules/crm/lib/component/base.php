@@ -151,6 +151,9 @@ abstract class Base extends \CBitrixComponent implements Errorable
 		$parameters = $this->getToolbarParameters();
 		if(!empty($parameters))
 		{
+			$bodyClass = $GLOBALS['APPLICATION']->GetPageProperty('BodyClass');
+			$GLOBALS['APPLICATION']->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'crm-pagetitle-view');
+
 			$template->SetViewTarget('below_pagetitle', 100);
 			global $APPLICATION;
 			$APPLICATION->IncludeComponent(

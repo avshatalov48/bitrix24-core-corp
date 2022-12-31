@@ -1,4 +1,5 @@
 (() => {
+	const { ProfileView } = jn.require("user/profile");
 	class Action
 	{
 		static get types()
@@ -320,6 +321,7 @@
 			if (Application.getApiVersion() >= 27)
 			{
 				widget.openWidget('list', {
+					groupStyle: true,
 					backdrop: {
 						bounceEnable: false,
 						swipeAllowed: true,

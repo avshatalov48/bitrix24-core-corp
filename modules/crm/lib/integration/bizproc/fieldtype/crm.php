@@ -1,4 +1,5 @@
 <?php
+
 namespace Bitrix\Crm\Integration\BizProc\FieldType;
 
 use Bitrix\Crm\Service\Container;
@@ -182,5 +183,16 @@ class Crm extends UserFieldBase
 				? \CCrmOwnerType::GetCaption($entityTypeId, $entityId, false)
 				: $value
 		;
+	}
+
+	public static function toSingleValue(FieldType $fieldType, $value)
+	{
+		if (is_array($value))
+		{
+			reset($value);
+			$value = (string)current($value);
+		}
+
+		return $value;
 	}
 }

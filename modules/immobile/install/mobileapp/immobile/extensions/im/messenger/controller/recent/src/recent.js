@@ -265,6 +265,11 @@ jn.define('im/messenger/controller/recent/recent', (require, exports, module) =>
 			this.callList.push(call);
 		}
 
+		getCallById(callId)
+		{
+			return this.callList.find(call => call.id === callId);
+		}
+
 		drawCall(callItem)
 		{
 			this.view.findItem({ id: callItem.id }, (item) => {

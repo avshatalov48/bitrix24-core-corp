@@ -56,4 +56,14 @@
 		return new ColoredLog(template, arguments);
 	};
 
+	if (!console.group)
+	{
+		console.group = (label) => console.log(`>>> ${label}`);
+	}
+
+	if (!console.groupEnd)
+	{
+		console.groupEnd = () => console.log(`<<<`);
+	}
+
 })();

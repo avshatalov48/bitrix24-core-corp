@@ -2,7 +2,9 @@
 
 namespace Bitrix\Crm\Controller\Timeline;
 
+use Bitrix\Main;
 use Bitrix\Main\Engine\Controller;
+use Bitrix\Catalog;
 
 /**
  * Class EncourageBuyProducts
@@ -22,10 +24,29 @@ class EncourageBuyProducts extends Controller
 			return;
 		}
 
+		$productField = null;
+		if ($productId > 0 && Main\Loader::includeModule('catalog'))
+		{
+			$productField = Catalog\ProductTable::getRow([
+				'select' => [
+					'PRODUCT_NAME' => 'IBLOCK_ELEMENT.NAME',
+					'TYPE',
+				],
+				'filter' => [
+					'=ID' => $productId,
+				],
+			]);
+		}
+
 		$row = [
 			'PRODUCT_ID' => $productId,
 			'QUANTITY' => 1,
 		];
+
+		if ($productField)
+		{
+			$row = array_merge($row, $productField);
+		}
 
 		if (isset($options['price']))
 		{

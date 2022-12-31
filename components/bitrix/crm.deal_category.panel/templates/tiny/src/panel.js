@@ -132,7 +132,7 @@ export class Panel extends Event.EventEmitter
 
 			menuItems.push({
 				id: 'tunnels',
-				text: Loc.getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS'),
+				text: Loc.getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS2'),
 				onclick: this.showTunnelSlider.bind(this),
 			});
 

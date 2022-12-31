@@ -5,6 +5,8 @@
 
 (function ()
 {
+	const ProfileEdit = jn.require("user/profile.edit")
+	const { ProfileView } = jn.require("user/profile")
 	let userId = BX.componentParameters.get("userId", "0");
 	let formFields = BX.componentParameters.get("items", []);
 	let formSections = BX.componentParameters.get("sections", []);

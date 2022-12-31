@@ -15,5 +15,5 @@ export default function makeErrorMessageFromResponse(response)
 		}, '');
 	}
 
-	return Loc.getMessage('CRM_ST_SAVE_ERROR');
+	return Loc.getMessage('CRM_ST_SAVE_ERROR2');
 }

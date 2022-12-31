@@ -8,6 +8,8 @@ use Bitrix\Catalog\Product\Price;
 use Bitrix\Crm\Product\Url;
 use Bitrix\Iblock\Url\AdminPage\BuilderManager;
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 
 Loc::loadMessages(__FILE__);
 
@@ -707,6 +709,35 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		return $result;
 	}
 
+	private function isProductPriceEditable(): bool
+	{
+		return AccessController::getCurrent()->checkByValue(
+			ActionDictionary::ACTION_PRICE_ENTITY_EDIT,
+			\CCrmOwnerType::Order
+		);
+	}
+	
+	private function isProductDiscountSet(): bool
+	{
+		return AccessController::getCurrent()->checkByValue(
+			ActionDictionary::ACTION_PRODUCT_DISCOUNT_SET,
+			\CCrmOwnerType::Order
+		);
+	}
+
+	private function isAllowedProductCreation(): bool
+	{
+		return
+			Main\Config\Option::get('sale', 'SALE_ADMIN_NEW_PRODUCT', 'Y') === 'Y'
+			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_EDIT)
+		;
+	}
+
+	private function isAllowedCatalogView(): bool
+	{
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
+	}
+
 	public function executeComponent()
 	{
 		global $APPLICATION;
@@ -819,7 +850,10 @@ final class CCrmOrderProductListComponent extends \CBitrixComponent
 		$this->arResult['SHOW_PAGINATION'] =
 		$this->arResult['SHOW_TOTAL_COUNTER'] =
 		$this->arResult['SHOW_PAGESIZE'] = !$this->order->isNew();
-		$this->arResult['ALLOW_CREATE_NEW_PRODUCT'] = Main\Config\Option::get('sale', 'SALE_ADMIN_NEW_PRODUCT', 'Y') == 'Y' ? true : false;
+		$this->arResult['ALLOW_SELECT_PRODUCT'] = $this->isAllowedCatalogView();
+		$this->arResult['ALLOW_CREATE_NEW_PRODUCT'] = $this->isAllowedProductCreation();
+		$this->arResult['ORDER_PRODUCT_PRICE_EDITABLE'] = $this->isProductPriceEditable();
+		$this->arResult['ALLOW_SET_ORDER_PRODUCT_DISCOUNT'] = $this->isProductDiscountSet();
 		$this->IncludeComponentTemplate();
 	}
 }

@@ -71,6 +71,11 @@ class ImopenlinesIframeQuickAjaxController
 				'name' => $converter->decode($answer->getName()),
 				'text' => $converter->decode($answer->getText()),
 				'id' => (int)$answer->getId(),
+				'can_edit' => \CIBlockElementRights::UserHasRightTo(
+					$answer->getIblock(),
+					$answer->getId(),
+					'element_edit'
+				),
 				'section' => (int)$answer->getCategory(),
 			);
 		}
@@ -94,6 +99,10 @@ class ImopenlinesIframeQuickAjaxController
 		$answer = QuickAnswer::getById($id);
 		if($answer)
 		{
+			if (!\CIBlockElementRights::UserHasRightTo($answer->getIblock(), $id, 'element_edit')) {
+				$this->errors[] = Loc::getMessage('IMOP_QUICK_ANSWERS_AJAX_EDIT_EDIT');
+				return false;
+			}
 			$answer->update(array('TEXT' => $text, 'MESSAGEID' => '', 'CATEGORY' => $sectionId));
 		}
 		else

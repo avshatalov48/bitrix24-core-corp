@@ -2,6 +2,7 @@
 
 namespace Bitrix\Mobile\InventoryControl\Dto;
 
+use Bitrix\Mobile\Integration\Catalog\Dto\Measure;
 use Bitrix\Mobile\Dto\Type;
 use Bitrix\Mobile\Dto\Dto;
 
@@ -55,12 +56,20 @@ final class DocumentProductRecord extends Dto
 	/** @var Store|null */
 	public $storeTo;
 
+	/** @var bool */
+	public $hasStoreFromAccess;
+
+	/** @var bool */
+	public $hasStoreToAccess;
+
 	public function getCasts(): array
 	{
 		return [
 			'measure' => Type::object(Measure::class),
 			'storeFrom' => Type::object(Store::class),
 			'storeTo' => Type::object(Store::class),
+			'hasStoreFromAccess' => Type::bool(),
+			'hasStoreToAccess' => Type::bool(),
 		];
 	}
 }

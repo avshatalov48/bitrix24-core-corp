@@ -1,0 +1,31 @@
+.crm-whats-new-slides-wrapper {
+	white-space: normal;
+	background-color: #e5f9ff;
+}
+
+.crm-whats-new-slide {
+	text-align: center;
+	padding: 20px;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+}
+
+.crm-whats-new-slide img {
+	padding-top: 10px;
+	padding-bottom: 15px;
+}
+
+.crm-whats-new-slide .crm-whats-new-slide-inner-title {
+	font-size: 16px;
+	color: #333;
+}
+
+.crm-whats-new-slide p {
+	color: #6A737F;
+	max-width: 400px;
+}
+
+.crm-whats-new-slide-buttons {
+	padding: 19px 0 12px;
+}

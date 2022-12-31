@@ -31,3 +31,4 @@ $MESS["CRM_DOCUMENT_VIEW_PUBLIC_URL_VIEWED_TIME"] = "Клиент перешел
 $MESS["CRM_DOCUMENT_VIEW_REQUISITES_MY_COMPANY_TITLE"] = "Реквизиты моей компании";
 $MESS["CRM_DOCUMENT_VIEW_PAYMENT_BUTTON"] = "Принять оплату";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Подписать";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Вы уже запустили подписание документа";

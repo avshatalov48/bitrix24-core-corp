@@ -9,7 +9,7 @@ use Bitrix\Main\Localization\Loc;
 
 $arActivityDescription = [
 	'NAME' => Loc::getMessage('CRM_UDA_NAME'),
-	'DESCRIPTION' => Loc::getMessage('CRM_UDA_DESC'),
+	'DESCRIPTION' => Loc::getMessage('CRM_UDA_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmUpdateDynamicActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -25,5 +25,7 @@ $arActivityDescription = [
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
+		'GROUP' => ['digitalWorkplace'],
+		'SORT' => 3150,
 	],
 ];

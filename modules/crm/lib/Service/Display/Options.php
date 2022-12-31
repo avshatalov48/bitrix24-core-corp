@@ -72,30 +72,6 @@ class Options
 		return $this;
 	}
 
-	public function needUseTextMode(): bool
-	{
-		return $this->useTextMode;
-	}
-
-	public function setUseTextMode(bool $useTextMode): Options
-	{
-		$this->useTextMode = $useTextMode;
-
-		return $this;
-	}
-
-	public function needReturnMultipleFieldsAsSingle(): bool
-	{
-		return $this->needReturnMultipleFieldsAsSingle;
-	}
-
-	public function setReturnMultipleFieldsAsSingle(bool $needReturnMultipleFieldsAsSingle): Options
-	{
-		$this->needReturnMultipleFieldsAsSingle = $needReturnMultipleFieldsAsSingle;
-
-		return $this;
-	}
-
 	public function getMultipleFieldsDelimiter(): string
 	{
 		return $this->multipleFieldsDelimiter;

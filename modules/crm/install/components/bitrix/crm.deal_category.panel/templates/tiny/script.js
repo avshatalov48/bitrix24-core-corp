@@ -111,7 +111,7 @@ this.BX.Crm.Deal = this.BX.Crm.Deal || {};
 	        });
 	        menuItems.push({
 	          id: 'tunnels',
-	          text: main_core.Loc.getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS'),
+	          text: main_core.Loc.getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS2'),
 	          onclick: this.showTunnelSlider.bind(this)
 	        });
 	        this.menu = new main_popup.PopupMenuWindow({

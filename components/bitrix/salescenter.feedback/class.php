@@ -96,6 +96,7 @@ class SalesCenterFeedbackComponent extends CBitrixComponent
 				'c_email' => CurrentUser::get()->getEmail(),
 				'city' => implode(' / ', $this->getUserGeoData()),
 				'partner_id' => \Bitrix\Main\Config\Option::get('bitrix24', 'partner_id', 0),
+				'sender_page' => $this->arParams['SENDER_PAGE'] ?? '',
 			];
 		}
 		else

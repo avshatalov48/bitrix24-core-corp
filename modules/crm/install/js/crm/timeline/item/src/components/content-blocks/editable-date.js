@@ -9,14 +9,15 @@ export default {
 		Link,
 	},
 	props: {
-		date: Number,
+		value: Number,
+		withTime: Boolean,
 		action: Object,
 	},
 	data(): Object
 	{
 		return {
-			currentDate: this.date,
-			initialDate: this.date,
+			currentDate: this.value,
+			initialDate: this.value,
 			actionTimeoutId: null,
 		};
 	},
@@ -50,8 +51,8 @@ export default {
 			BX.calendar({
 				node: event.target,
 				value: this.currentDateInSiteFormat,
-				bTime: false,
-				bHideTime: true,
+				bTime: this.withTime,
+				bHideTime: !this.withTime,
 				bSetFocus: false,
 				callback_after: (newDate: Date) => {
 					this.currentDate = Math.round(newDate.getTime() / 1000);

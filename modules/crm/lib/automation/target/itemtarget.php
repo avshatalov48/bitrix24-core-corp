@@ -32,7 +32,9 @@ class ItemTarget extends BaseTarget
 
 	public function getEntityId()
 	{
-		return $this->getEntity()->getId();
+		$entity = $this->getEntity();
+
+		return isset($entity) ? $entity->getId() : 0;
 	}
 
 	public function setEntityById($entityId)
@@ -50,19 +52,30 @@ class ItemTarget extends BaseTarget
 
 	public function getResponsibleId()
 	{
-		return $this->getEntity()->getAssignedById();
+		$entity = $this->getEntity();
+
+		return isset($entity) ? $entity->getAssignedById() : 0;
 	}
 
 	public function getEntityStatus()
 	{
-		return $this->getEntity()->getStageId();
+		$entity = $this->getEntity();
+
+		return isset($entity) ? $entity->getStageId() : '';
 	}
 
 	public function setEntityStatus($statusId, $executeBy = null)
 	{
+		$entity = $this->getEntity();
+		if (!isset($entity))
+		{
+			return false;
+		}
+
 		$context = clone Container::getInstance()->getContext();
 		$context->setUserId($executeBy ?? 0);
 		$context->setScope(Context::SCOPE_AUTOMATION);
+
 		$operation = $this->factory->getUpdateOperation(
 			$this->getEntity()->setStageId($statusId),
 			$context
@@ -79,9 +92,10 @@ class ItemTarget extends BaseTarget
 
 	public function getStatusInfos($categoryId = 0)
 	{
-		if ($categoryId === 0 && $this->factory->isCategoriesSupported())
+		$entity = $this->getEntity();
+		if ($categoryId === 0 && $this->factory->isCategoriesSupported() && isset($entity))
 		{
-			$categoryId = $this->getEntity()->getCategoryId();
+			$categoryId = $entity->getCategoryId();
 		}
 
 		$statusInfos = [];
@@ -94,7 +108,14 @@ class ItemTarget extends BaseTarget
 
 	public function getEntityStatuses()
 	{
-		$categoryId = $this->factory->isCategoriesSupported() ? $this->getEntity()->getCategoryId() : 0;
+		$entity = $this->getEntity();
+
+		$categoryId = 0;
+		if ($this->factory->isCategoriesEnabled() && isset($entity))
+		{
+			$categoryId = $entity->getCategoryId();
+		}
+
 		return array_keys($this->getStatusInfos($categoryId));
 	}
 
@@ -104,10 +125,6 @@ class ItemTarget extends BaseTarget
 		{
 			$documentId = mb_split('_(?=[^_]*$)', $this->getDocumentId());
 			$this->setEntityById($documentId[1] ?? 0);
-		}
-		if (is_null($this->entity))
-		{
-			return $this->factory->createItem([]);
 		}
 
 		return $this->entity;

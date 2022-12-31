@@ -1,10 +1,16 @@
 import { TextColor } from '../enums/text-color';
 import { TextWeight } from '../enums/text-weight';
 import { TextSize } from '../enums/text-size';
+import {Text} from "main.core";
 
 export default {
 	props: {
-		value: String,
+		value: String|Number,
+		title: {
+			type: String,
+			required: false,
+			default: '',
+		},
 		color: {
 			type: String,
 			required: false,
@@ -19,10 +25,15 @@ export default {
 			type: String,
 			required: false,
 			default: 'md',
-		}
+		},
+		multiline: {
+			type: Boolean,
+			required: false,
+			default: false,
+		},
 	},
 	computed: {
-		className() {
+		className(): Array {
 			return [
 				'crm-timeline__text-block',
 				this.colorClassname,
@@ -30,29 +41,37 @@ export default {
 				this.sizeClassname,
 			]
 		},
-		colorClassname() {
+		colorClassname(): string {
 			const upperCaseColorProp = this.color ? this.color.toUpperCase() : '';
 			const color = TextColor[upperCaseColorProp] ? TextColor[upperCaseColorProp] : '';
 			return `--color-${color}`;
 		},
 
-		weightClassname() {
+		weightClassname(): string {
 			const upperCaseWeightProp = this.weight ? this.weight.toUpperCase() : '';
 			const weight = TextWeight[upperCaseWeightProp] ? TextWeight[upperCaseWeightProp] : TextWeight.NORMAL;
 			return `--weight-${weight}`
 		},
 
-		sizeClassname() {
+		sizeClassname(): string {
 			const upperCaseWeightProp = this.size ? this.size.toUpperCase() : '';
 			const size = TextSize[upperCaseWeightProp] ? TextSize[upperCaseWeightProp] : TextSize.SM;
 			return `--size-${size}`;
 		},
+		encodedText(): string {
+			let text = Text.encode(this.value);
+			if (this.multiline)
+			{
+				text = text.replace(/\n/g, '<br />');
+			}
+
+			return text;
+		}
 	},
 	template: `
 		<span
-			:title="value"
+			:title="title"
 			:class="className"
-		>
-			{{value}}
-		</span>`
+			v-html="encodedText"
+		></span>`
 };

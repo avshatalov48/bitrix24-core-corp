@@ -7,12 +7,14 @@ use Bitrix\Main\Engine\CurrentUser;
 class Context
 {
 	public const SCOPE_MANUAL = 'manual';
-	public const SCOPE_TASK = 'task';
+	public const SCOPE_TASK = 'task'; // agents, background jobs
 	public const SCOPE_AUTOMATION = 'automation';
 	public const SCOPE_REST = 'rest';
 
+	protected $eventId;
 	protected $userId;
 	protected $scope;
+	protected array $itemOptions = [];
 
 	public function __construct(array $params = [])
 	{
@@ -68,5 +70,43 @@ class Context
 		}
 
 		return 0;
+	}
+
+	public function getEventId(): ?string
+	{
+		return $this->eventId;
+	}
+
+	public function setEventId(?string $eventId): Context
+	{
+		$this->eventId = $eventId;
+		return $this;
+	}
+
+	/**
+	 * @param string $optionName
+	 * @return mixed|null
+	 */
+	public function getItemOption(string $optionName)
+	{
+		$options = $this->getItemOptions();
+		return ($options[$optionName] ?? null);
+	}
+
+	public function getItemOptions(): array
+	{
+		return $this->itemOptions;
+	}
+
+	public function setItemOption(string $optionName, $value): Context
+	{
+		$this->itemOptions[$optionName] = $value;
+		return $this;
+	}
+
+	public function setItemOptions(array $itemOptions): Context
+	{
+		$this->itemOptions = $itemOptions;
+		return $this;
 	}
 }

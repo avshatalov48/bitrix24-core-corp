@@ -72,7 +72,7 @@ class Invoice extends Entity
 		];
 	}
 
-	public function getGridFilter(): array
+	public function getGridFilter(?string $filterId = null): array
 	{
 		$filter = [];
 
@@ -210,6 +210,8 @@ class Invoice extends Entity
 		$item['CURRENCY_ID'] = $item['CURRENCY'];
 
 		$item = parent::prepareItemCommonFields($item);
+
+		$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['PRICE'], $item['CURRENCY']);
 
 		return $item;
 	}

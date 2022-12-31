@@ -401,7 +401,7 @@ BX.Intranet.SearchTitle = function(arParams)
 						currentItem.TYPE == "users" || currentItem.TYPE == "sonetgroups" ?
 							BX.create('span', {
 								attrs: {
-									style: (typeof currentItem.ICON != 'undefined' && currentItem.ICON.length > 0 ? "background-image: url('" + currentItem.ICON + "')" : '')
+									style: (typeof currentItem.ICON != 'undefined' && currentItem.ICON.length > 0 ? "background-image: url('" + encodeURI(currentItem.ICON) + "')" : '')
 								},
 								props: {
 									className: 'search-title-top-item-img' + (!currentItem.ICON ? " search-title-top-item-img-default-" + currentItem.TYPE : "")// + currentItem.TYPE

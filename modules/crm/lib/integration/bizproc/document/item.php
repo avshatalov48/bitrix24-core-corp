@@ -14,6 +14,7 @@ use Bitrix\Main\Loader;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Main\Type\DateTime;
 
 if (!Loader::includeModule('bizproc'))
 {
@@ -312,9 +313,41 @@ class Item extends \CCrmDocument implements \IBPWorkflowDocument
 
 				return $file;
 
+			case FieldType::DATETIME:
+				if ($fieldInfo['bpValue'] && is_string($fieldInfo['bpValue']))
+				{
+					return new DateTime($fieldInfo['bpValue']);
+				}
+
 			default:
 				return $fieldInfo['bpValue'];
 		}
+	}
+
+	public static function GetUsersFromUserGroup($group, $documentId)
+	{
+		$group = mb_strtolower($group);
+		if ($group !== 'author')
+		{
+			return parent::GetUsersFromUserGroup($group, $documentId);
+		}
+
+		$users = [];
+		$documentInfo = static::GetDocumentInfo($documentId);
+
+		if ($documentInfo)
+		{
+			$factory = Container::getInstance()->getFactory($documentInfo['TYPE_ID']);
+			$item = isset($factory) ? $factory->getItem($documentInfo['ID']) : null;
+
+			$authorId = isset($item) ? $item->getAssignedById() : null;
+			if (isset($authorId))
+			{
+				$users[] = $authorId;
+			}
+		}
+
+		return $users;
 	}
 
 	protected static function isUserField(string $fieldId): bool

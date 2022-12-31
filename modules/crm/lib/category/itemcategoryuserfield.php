@@ -95,7 +95,7 @@ class ItemCategoryUserField
 			return;
 		}
 
-		ItemCategoryUserFieldTable::deleteByUserFieldName($fieldName);
+		ItemCategoryUserFieldTable::deleteByUserFieldName($fieldName, $this->entityTypeId);
 	}
 
 	public function filter(int $categoryId, array $fields): array

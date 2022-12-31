@@ -1,10 +1,18 @@
 <?php
 
 return [
-	'layout/ui/fields/base',
-	'layout/ui/file',
-	'layout/ui/context-menu',
-	'layout/ui/file-attachment',
-	'layout/ui/fields/file/menu',
-	'layout/ui/fields/file/file-preview',
+	'extensions' => [
+		'alert',
+		'assets/common',
+		'haptics',
+		'layout/ui/fields/base',
+		'layout/ui/fields/file/file-preview',
+		'layout/ui/file',
+		'layout/ui/file-attachment',
+		'uploader/client',
+		'uploader/const',
+		'utils/function',
+		'utils/object',
+		'utils/uuid',
+	],
 ];

@@ -76,10 +76,14 @@ class CrmChannelSelectorComponent extends Base
 	protected function prepareResult(): array
 	{
 		$communications = $this->loadCommunications();
+		$channels = $this->arParams['channels'] ?? [];
 
-		$channels = $this->getPhoneChannels($communications);
-		$channels[] = $this->getEmailChannel($communications);
-		$channels[] = $this->getOpenlineChannel($communications);
+		if (!$this->arParams['channels'])
+		{
+			$channels = $this->getPhoneChannels($communications);
+			$channels[] = $this->getEmailChannel($communications);
+			$channels[] = $this->getOpenlineChannel($communications);
+		}
 
 		$this->applyConfig($channels);
 

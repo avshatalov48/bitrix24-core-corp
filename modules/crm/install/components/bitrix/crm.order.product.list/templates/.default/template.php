@@ -173,7 +173,7 @@ foreach($arResult['PRODUCTS'] as $product)
 				</div>';
 		}
 	}
-	elseif (!$isReadOnly && $product['CUSTOM_PRICE'] != 'Y')
+	elseif (!$isReadOnly && $product['CUSTOM_PRICE'] != 'Y' && $arResult['ALLOW_SET_ORDER_PRODUCT_DISCOUNT'])
 	{
 		$discountsHtml = Loc::getMessage('CRM_ORDER_PL_DISCOUNTS_ABSENT');
 
@@ -184,7 +184,7 @@ foreach($arResult['PRODUCTS'] as $product)
 	}
 	//endregion
 
-	if (!$isReadOnly)
+	if (!$isReadOnly && $arResult['ORDER_PRODUCT_PRICE_EDITABLE'])
 	{
 		$priceInnerHtml = '<input id="crm-product-price-'.$product['BASKET_CODE'].'" name="'.$namePrefix.'[PRICE]" type="number" value="'.$product['PRICE'].'" class="crm-order-product-control-amount-field crm-order-product-control-price-field"> '.$product['CURRENCY_NAME_SHORT'];
 	}
@@ -228,7 +228,7 @@ foreach($arResult['PRODUCTS'] as $product)
 	$actionEditScript = ''; //For custom products
 	$productEditUrl = ''; //For catalog products
 
-	if(!empty($product['EDIT_PAGE_URL']))
+	if(!empty($product['EDIT_PAGE_URL']) && $arResult['ALLOW_SELECT_PRODUCT'])
 	{
 		$nameWithProperties = $propertiesNames ? "{$name} ({$propertiesNames})" : $name;
 		$productEditUrl = $product['EDIT_PAGE_URL'];
@@ -344,30 +344,32 @@ foreach($arResult['PRODUCTS'] as $product)
 
 	if($arResult['CAN_UPDATE_ORDER'])
 	{
-		$editAction = [
-			'TITLE' => Loc::getMessage('CRM_ORDER_PL_CHANGE_ITEM_IN_SHOPPING_CART'),
-			'TEXT' => Loc::getMessage('CRM_ORDER_PL_CHANGE')
-		];
+		$actions = [];
+		if ($arResult['ALLOW_SELECT_PRODUCT'])
+		{
+			$editAction = [
+				'TITLE' => Loc::getMessage('CRM_ORDER_PL_CHANGE_ITEM_IN_SHOPPING_CART'),
+				'TEXT' => Loc::getMessage('CRM_ORDER_PL_CHANGE')
+			];
 
-		if(!empty($productEditUrl))
-		{
-			$editAction['HREF'] = $productEditUrl;
-		}
-		else
-		{
-			$editAction['ONCLICK'] = $actionEditScript;
+			if(!empty($productEditUrl))
+			{
+				$editAction['HREF'] = $productEditUrl;
+			}
+			else
+			{
+				$editAction['ONCLICK'] = $actionEditScript;
+			}
+
+			$actions[] = $editAction;
 		}
 
 		$jsProductDelete = $jsObjName.".onProductDelete('".$product['BASKET_CODE']."')";
 
-		$actions =
-		[
-			$editAction,
-			[
-				'TITLE' => Loc::getMessage('CRM_ORDER_PL_REMOVE_ITEM_FROM_CART'),
-				'TEXT' => Loc::getMessage('CRM_ORDER_PL_TO_REMOVE'),
-				'ONCLICK' => $jsProductDelete
-			]
+		$actions[] = [
+			'TITLE' => Loc::getMessage('CRM_ORDER_PL_REMOVE_ITEM_FROM_CART'),
+			'TEXT' => Loc::getMessage('CRM_ORDER_PL_TO_REMOVE'),
+			'ONCLICK' => $jsProductDelete
 		];
 
 		$snippet = new \Bitrix\Main\Grid\Panel\Snippet();
@@ -467,10 +469,17 @@ if (!$isReadOnly)
 	$buttons = [
 		[
 			'TEXT' => Loc::getMessage('CRM_ORDER_PL_ADD_PRODUCT'),
-			'TITLE' => Loc::getMessage('CRM_ORDER_PL_ADD_PRODUCT'),
+			'TITLE' => $arResult['ALLOW_SELECT_PRODUCT'] ? Loc::getMessage('CRM_ORDER_PL_ADD_PRODUCT') : null,
 			'ICON' => 'btn-new',
-			'ONCLICK' => $jsObjName.".addProductSearch({lang: '".LANGUAGE_ID."', siteId: '".CUtil::JSEscape($arResult['ORDER_SITE_ID'])."', orderId: '".CUtil::JSEscape($arResult['ORDER_ID'])."'});"
-	]];
+			'ONCLICK' =>
+				$arResult['ALLOW_SELECT_PRODUCT']
+					? $jsObjName.".addProductSearch({lang: '".LANGUAGE_ID."', siteId: '".CUtil::JSEscape($arResult['ORDER_SITE_ID'])."', orderId: '".CUtil::JSEscape($arResult['ORDER_ID'])."'});"
+					: null
+			,
+			'TYPE' => !$arResult['ALLOW_SELECT_PRODUCT'] ? 'disabled' : null,
+			'HINT' => !$arResult['ALLOW_SELECT_PRODUCT'] ? Loc::getMessage('CRM_ORDER_PL_CATALOG_DENIED_HINT') : null,
+		]
+	];
 
 	if($arResult['ALLOW_CREATE_NEW_PRODUCT'])
 	{
@@ -505,7 +514,7 @@ if (!$isReadOnly)
 ?>
 
 <div class="crm-order-product-list-wrapper" id="crm-product-list-container">
-<?
+<?php
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
@@ -625,6 +634,7 @@ if(is_array($arResult['COUPONS_LIST']))
 				"<?=$arResult['GRID_ID']?>",
 				{
 					serviceUrl: '/bitrix/components/bitrix/crm.order.product.list/ajax.php',
+					orderId: '<?=CUtil::JSEscape($arResult['ORDER_ID'])?>',
 					siteId: '<?=CUtil::JSEscape($arResult['ORDER_SITE_ID'])?>',
 					languageId: '<?=LANGUAGE_ID?>',
 					skuOrder: <?=CUtil::PhpToJSObject($arResult['IBLOCKS_SKU_PARAMS_ORDER'])?>,
@@ -647,7 +657,8 @@ if(is_array($arResult['COUPONS_LIST']))
 							},
 							ARRAY_FILTER_USE_KEY
 					))?>,
-					componentName: '<?=$component->getName()?>'
+					componentName: '<?=$component->getName()?>',
+					isReadOnly: <?=Cutil::PhpToJSObject($isReadOnly)?>
 				}
 			);
 

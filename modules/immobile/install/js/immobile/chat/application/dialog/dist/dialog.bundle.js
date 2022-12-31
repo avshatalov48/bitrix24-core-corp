@@ -848,6 +848,8 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    }).then(function () {
 	      return _this.initComponentParams();
 	    }).then(function (result) {
+	      return _this.initLangAdditional(result);
+	    }).then(function (result) {
 	      return _this.initMobileEntity(result);
 	    }).then(function (result) {
 	      return _this.initMobileSettings(result);
@@ -887,6 +889,25 @@ this.BX.Messenger = this.BX.Messenger || {};
 	    key: "initComponentParams",
 	    value: function initComponentParams() {
 	      return BX.componentParameters.init();
+	    }
+	  }, {
+	    key: "initLangAdditional",
+	    value: function initLangAdditional(data) {
+	      var langAdditional = data.LANG_ADDITIONAL || {};
+	      console.log('0. initLangAdditional', langAdditional);
+	      return new Promise(function (resolve, reject) {
+	        if (data.LANG_ADDITIONAL) {
+	          Object.keys(langAdditional).forEach(function (code) {
+	            if (typeof langAdditional[code] !== 'string') {
+	              return;
+	            }
+
+	            BX.message[code] = langAdditional[code];
+	          });
+	        }
+
+	        resolve(data);
+	      });
 	    }
 	  }, {
 	    key: "initMobileEntity",
@@ -3055,7 +3076,7 @@ this.BX.Messenger = this.BX.Messenger || {};
 	          } else if (params.id === 'goto_crm') {
 	            var crmData = _this27.controller.application.getDialogCrmData();
 
-	            var openWidget = BX.MobileTools.resolveOpenFunction('/crm/' + crmData.entityType + '/show/' + crmData.entityId + '/');
+	            var openWidget = BX.MobileTools.resolveOpenFunction('/crm/' + crmData.entityType + '/details/' + crmData.entityId + '/');
 
 	            if (openWidget) {
 	              openWidget();

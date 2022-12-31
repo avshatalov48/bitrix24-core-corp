@@ -120,7 +120,7 @@
 						DATA: {
 							groupId: item.id,
 							groupName: item.title,
-							groupImageUrl: (item.avatar || ''),
+							groupImageUrl: (item.params.avatar || ''),
 							groupOpened: item.params.opened,
 							relationInitiatedByType: (item.params.initiatedByType || ''),
 							relationRole: (item.params.role || ''),

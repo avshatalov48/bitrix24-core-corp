@@ -16,6 +16,7 @@ $MESS["CRM_KANBAN_EMAIL_TYPE_HOME"] = "Private";
 $MESS["CRM_KANBAN_EMAIL_TYPE_OTHER"] = "Other";
 $MESS["CRM_KANBAN_EMAIL_TYPE_WORK"] = "Work";
 $MESS["CRM_KANBAN_ERROR_ACCESS_DENIED"] = "Access denied.";
+$MESS["CRM_KANBAN_ERROR_ACTIVITY_COMPLETE_FORBIDDEN"] = "Insufficient permission to complete the activity.";
 $MESS["CRM_KANBAN_ERROR_DEAL_STAGE_MISMATCH"] = "Cannot change deal stage decause deal pipeline has been changed.";
 $MESS["CRM_KANBAN_ERROR_LEAD_ALREADY_CONVERTED"] = "Cannot change status of a converted lead.";
 $MESS["CRM_KANBAN_ERROR_SESSION_EXPIRED"] = "Your session has expired.";

@@ -6,8 +6,8 @@ use Bitrix\Crm\Activity\Entity\IncomingChannelTable;
 use Bitrix\Crm\ActivityBindingTable;
 use Bitrix\Crm\Counter\QueryBuilder;
 use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 
 class IncomingChannel extends QueryBuilder
 {
@@ -24,9 +24,9 @@ class IncomingChannel extends QueryBuilder
 				['join_type' => 'INNER']
 			)
 		);
+		$this->applyResponsibleFilter($query, $this->getEntityAssignedColumnName());
 
 		$incomingChannelQuery = IncomingChannelTable::query();
-		$this->applyResponsibleFilter($incomingChannelQuery, 'RESPONSIBLE_ID');
 		$incomingChannelQuery->where('COMPLETED', false);
 		$incomingChannelQuery->addSelect('ACTIVITY_ID');
 
@@ -51,23 +51,25 @@ class IncomingChannel extends QueryBuilder
 		}
 		else
 		{
-			$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(DISTINCT %s)', 'ID'));
+			$query->registerRuntimeField('', $this->getQuantityExpression());
 			$query->addSelect('QTY');
 		}
 
 		return $query;
 	}
 
-	protected function applyReferenceFilter(array &$referenceFilter): void
+	protected function applyUncompletedActivityTableReferenceFilter(ConditionTree $referenceFilter): void
 	{
-		if (count($this->userIds) <= 1)
-		{
-			$referenceFilter['=ref.RESPONSIBLE_ID'] =new SqlExpression('?i', count($this->userIds) ? $this->userIds[0] : 0); // 0 means "All users"
-		}
-		else
-		{
-			$referenceFilter['@ref.RESPONSIBLE_ID'] =new SqlExpression(implode(',', $this->userIds));
-		}
-		$referenceFilter['=ref.IS_INCOMING_CHANNEL'] = new SqlExpression('?', 'Y');
+		$referenceFilter
+			->where('ref.RESPONSIBLE_ID', new SqlExpression('?i', 0))
+			->where('ref.IS_INCOMING_CHANNEL', new SqlExpression('?', 'Y'))
+		;
+	}
+
+	protected function applyEntityCountableActivityTableReferenceFilter(ConditionTree $referenceFilter): void
+	{
+		$referenceFilter
+			->where('ref.ACTIVITY_IS_INCOMING_CHANNEL', new SqlExpression('?', 'Y'))
+		;
 	}
 }

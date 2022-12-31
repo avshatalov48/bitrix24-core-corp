@@ -2,6 +2,7 @@
 namespace Bitrix\Mobile\AppTabs;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Mobile\Tab\Manager;
 use Bitrix\Mobile\Tab\Tabable;
 use Bitrix\Mobile\WebComponentManager;
 use Bitrix\Intranet\Invitation;
@@ -57,6 +58,7 @@ class Chat implements Tabable
 					'COMPONENT_CODE' => 'im.messenger',
 					'MESSAGES' => [
 						'COMPONENT_TITLE' => Loc::getMessage('TAB_NAME_IM_RECENT_FULL'),
+						'isCrmUniversalActivityScenarioEnabled' => $this->getIsCrmUniversalActivityScenarioEnabledMessage(),
 					],
 					'MIN_SEARCH_SIZE' => \Bitrix\Main\ORM\Query\Filter\Helper::getMinTokenSize(),
 					'IS_NETWORK_SEARCH_AVAILABLE' => $this->isNetworkSearchAvailable(),
@@ -85,7 +87,8 @@ class Chat implements Tabable
 					"TAB_CODE" => "chats",
 					"COMPONENT_CODE" => "im.recent",
 					"MESSAGES" => [
-						"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL")
+						"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
+						'isCrmUniversalActivityScenarioEnabled' => $this->getIsCrmUniversalActivityScenarioEnabledMessage(),
 					]
 				]
 			),
@@ -129,6 +132,7 @@ class Chat implements Tabable
 								"COMPONENT_CODE" => "im.openlines.recent",
 								"MESSAGES" => [
 									"COMPONENT_TITLE" => Loc::getMessage("TAB_NAME_IM_RECENT_FULL"),
+									'isCrmUniversalActivityScenarioEnabled' => $this->getIsCrmUniversalActivityScenarioEnabledMessage(),
 								]
 							]
 						),
@@ -178,11 +182,21 @@ class Chat implements Tabable
 			],
 		];
 
+		$firstTabId = 'chats';
 		if ($openlines)
 		{
 			if ($this->isLinesOperator())
 			{
-				$items = [$chats, $openlines, $notifications];
+				$userPresetId = (new Manager())->getPresetName();
+				if ($userPresetId === 'crm')
+				{
+					$firstTabId = 'openlines';
+					$items = [$openlines, $chats, $notifications];
+				}
+				else
+				{
+					$items = [$chats, $openlines, $notifications];
+				}
 			}
 			else
 			{
@@ -199,6 +213,9 @@ class Chat implements Tabable
 			"title" => Loc::getMessage("MD_COMPONENT_IM_RECENT"),
 			"componentCode" => "im.navigation",
 			"scriptPath" => \Bitrix\MobileApp\Janative\Manager::getComponentPath("im:im.navigation"),
+			"params" => [
+				"firstTabId" => $firstTabId,
+			],
 			"rootWidget" => [
 				"name" => "tabs",
 				"settings" => [
@@ -379,5 +396,18 @@ class Chat implements Tabable
 	{
 		return "chats";
 	}
-}
 
+	public function isCrmUniversalActivityScenarioEnabled(): bool
+	{
+		return (
+			Loader::includeModule('crm')
+			&& Loader::includeModule('crmmobile')
+			&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+		);
+	}
+
+	public function getIsCrmUniversalActivityScenarioEnabledMessage(): string
+	{
+		return $this->isCrmUniversalActivityScenarioEnabled() ? 'Y' : 'N';
+	}
+}

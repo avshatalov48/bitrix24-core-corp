@@ -196,23 +196,6 @@ else
 		<?php include 'messages.php' ?>
 		<div class="imconnector-field-section imconnector-field-section-control">
 			<div class="imconnector-field-box">
-				<div class="imconnector-field-box-subtitle">
-					<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_SIMPLE_FORM_DESCRIPTION')?>
-				</div>
-				<div class="imconnector-field-control-box imconnector-field-control-box-border">
-					<input
-						type="text"
-						class="imconnector-field-control-input"
-						value="<?=htmlspecialcharsbx($arResult['URL_WEBHOOK'])?>"
-						readonly
-					>
-					<button class="ui-btn copy-to-clipboard"
-					        data-text="<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['URL_WEBHOOK']))?>">
-						<?=Loc::getMessage('IMCONNECTOR_COMPONENT_WHATSAPPBYEDNA_COPY')?>
-					</button>
-				</div>
-			</div>
-			<div class="imconnector-field-box">
 				<form action="<?=$arResult['URL']['SIMPLE_FORM_EDIT']?>"
 				      method="post"
 				      class="imconnector-field-control-box-border">

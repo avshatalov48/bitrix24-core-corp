@@ -266,6 +266,20 @@ final class Controller extends Timeline\Controller
 		);
 	}
 
+	public function onPinSendLimitReached(
+		ItemIdentifier $identifier,
+		DocumentData $documentData,
+		MessageData $messageData
+	): array
+	{
+		return $this->handleSignEvent(
+			Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED,
+			$identifier,
+			$documentData,
+			$messageData
+		);
+	}
+
 	public function onSendIntegrityFailureNotice(
 		ItemIdentifier $identifier,
 		DocumentData $documentData,
@@ -401,6 +415,7 @@ final class Controller extends Timeline\Controller
 			Entry::TYPE_CATEGORY_INTEGRITY_SUCCESS => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_INTEGRITY_FAILURE => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 			Entry::TYPE_CATEGORY_SENT_INTEGRITY_FAILURE => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
+			Entry::TYPE_CATEGORY_PIN_SEND_LIMIT_REACHED => [TimelineEntry\Facade::SIGN_DOCUMENT_LOG,],
 		];
 	}
 

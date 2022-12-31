@@ -107,7 +107,7 @@ if ($isBitrix24Template)
 
 				$showLimitSlider = ($arResult['TASK_LIMIT_EXCEEDED'] || !Factory::canUseAutomation());
 				$openLimitSliderAction = "top.BX.UI.InfoHelper.show('limit_tasks_robots', {isLimit: true, limitAnalyticsLabels: {module: 'tasks'}})";
-				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {customLeftBoundary: 0});";
+				$openRobotSliderAction = "BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id='+{$projectId}, {cacheable: false, customLeftBoundary: 0});";
 
 				$lockClass = ($showLimitSlider ? 'ui-btn-icon-lock' : '');
 				$onClick = ($showLimitSlider ? $openLimitSliderAction : $openRobotSliderAction);

@@ -79,7 +79,7 @@ class Collection implements \Iterator, \ArrayAccess, \Countable
 		next($this->fields);
 	}
 
-	public function key(): int
+	public function key(): string
 	{
 		return key($this->fields);
 	}

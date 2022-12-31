@@ -17,6 +17,7 @@ use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UserField\Router;
+use Bitrix\Crm\UtmTable;
 
 if(!Main\Loader::includeModule('crm'))
 {
@@ -26,8 +27,12 @@ if(!Main\Loader::includeModule('crm'))
 
 Loc::loadMessages(__FILE__);
 
-class CCrmContactDetailsComponent extends CBitrixComponent
+class CCrmContactDetailsComponent
+	extends CBitrixComponent
+	implements Crm\Integration\UI\EntityEditor\SupportsEditorProvider
 {
+	private const UTM_FIELD_CODE = 'UTM';
+
 	use Crm\Entity\Traits\VisibilityConfig;
 
 	/** @var string */
@@ -360,7 +365,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		$this->initializeData();
 
 		//region GUID
-		$this->arResult['GUID'] = $this->arParams['GUID'] ?? "contact_{$this->entityID}_details";
+		$this->arResult['GUID'] = $this->arParams['GUID'] ?? $this->getDefaultGuid();
 		$this->guid = $this->arResult['GUID'];
 
 		$this->arResult['EDITOR_CONFIG_ID'] = $this->getEditorConfigId(
@@ -381,7 +386,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//region Page title
 		if($this->isCopyMode)
 		{
-			$APPLICATION->SetTitle(Loc::getMessage('CRM_CONTACT_COPY_PAGE_TITLE'));
+			$APPLICATION->SetTitle(
+				Crm\Category\NamingHelper::getInstance()->getLangPhrase(
+					'CRM_CONTACT_COPY_PAGE_TITLE',
+					$this->arResult['CATEGORY_ID']
+				)
+			);
 		}
 		elseif(isset($this->entityData['FORMATTED_NAME']))
 		{
@@ -389,7 +399,12 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		elseif(!$this->isEditMode)
 		{
-			$APPLICATION->SetTitle(Loc::getMessage('CRM_CONTACT_CREATION_PAGE_TITLE'));
+			$APPLICATION->SetTitle(
+				Crm\Category\NamingHelper::getInstance()->getLangPhrase(
+					'CRM_CONTACT_CREATION_PAGE_TITLE',
+					$this->arResult['CATEGORY_ID']
+				)
+			);
 		}
 		//endregion
 
@@ -409,16 +424,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//endregion
 
 		//region CONTROLLERS
-		$this->arResult['ENTITY_CONTROLLERS'] = array(
-			array(
-				"name" => "REQUISITE_CONTROLLER",
-				"type" => "requisite_controller",
-				"config" => array(
-					'requisiteFieldId' => 'REQUISITES',
-					'addressFieldId' => 'ADDRESS',
-				)
-			),
-		);
+		$this->prepareEntityControllers();
 		//endregion
 
 		//region Validators
@@ -530,7 +536,6 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			}
 			if (
 				CModule::IncludeModule('sale')
-				&& Main\Config\Option::get("crm", "crm_shop_enabled") === "Y"
 				&& CCrmSaleHelper::isWithOrdersMode()
 				&& !$this->arResult['CATEGORY_ID']
 			)
@@ -720,10 +725,22 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		$this->includeComponentTemplate();
 	}
+
+	public function getDefaultGuid(): string
+	{
+		return "contact_{$this->entityID}_details";
+	}
+
 	public function getDefaultConfigID()
 	{
 		return $this->getEditorConfigId();
 	}
+
+	public function prepareConfigID()
+	{
+		return $this->getDefaultConfigID();
+	}
+
 	public function prepareConfiguration()
 	{
 		if(isset($this->arResult['ENTITY_CONFIG']))
@@ -781,7 +798,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 							array('name' => 'EXPORT'),
 							array('name' => 'ASSIGNED_BY_ID'),
 							array('name' => 'COMMENTS'),
-							array('name' => 'UTM'),
+							array('name' => self::UTM_FIELD_CODE),
 						),
 						$userFieldConfigElements
 					)
@@ -790,6 +807,26 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 
 		return $this->arResult['ENTITY_CONFIG'];
 	}
+
+	public function prepareEntityControllers(): array
+	{
+		if (!isset($this->arResult['ENTITY_CONTROLLERS']))
+		{
+			$this->arResult['ENTITY_CONTROLLERS'] = [
+				[
+					'name' => 'REQUISITE_CONTROLLER',
+					'type' => 'requisite_controller',
+					'config' => [
+						'requisiteFieldId' => 'REQUISITES',
+						'addressFieldId' => 'ADDRESS',
+					],
+				],
+			];
+		}
+
+		return $this->arResult['ENTITY_CONTROLLERS'];
+	}
+
 	public function isSearchHistoryEnabled()
 	{
 		return $this->enableSearchHistory;
@@ -1075,12 +1112,18 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			)
 		);
 
-		Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
+		$category = $this->getCategory();
+		if (!$category || $category->isTrackingEnabled())
+		{
+			Tracking\UI\Details::appendEntityFields($this->entityFieldInfos);
+		}
 		$this->entityFieldInfos[] = array(
-			'name' => 'UTM',
+			'name' => self::UTM_FIELD_CODE,
 			'title' => Loc::getMessage('CRM_CONTACT_FIELD_UTM'),
 			'type' => 'custom',
-			'data' => array('view' => 'UTM_VIEW_HTML'),
+			'data' => array(
+				'view' => 'UTM_VIEW_HTML',
+			),
 			'editable' => false,
 			'enableAttributes' => false
 		);
@@ -1160,13 +1203,60 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		);
 		if ($this->editorAdapter)
 		{
-			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(
-				\CCrmOwnerType::Contact,
-				'crm_contact_details'
-			);
+			$parentFieldsInfo = $this->editorAdapter->getParentFieldsInfo(\CCrmOwnerType::Contact);
 			$this->entityFieldInfos = array_merge(
 				$this->entityFieldInfos,
 				array_values($parentFieldsInfo)
+			);
+		}
+
+		// filter out category-specific disabled fields
+		if ($category)
+		{
+			$disabledFieldNames = $category->getDisabledFieldNames();
+			$areUtmFieldsDisabled = !empty(
+				array_filter(
+					$disabledFieldNames,
+					static function ($disabledFieldName)
+					{
+						return in_array($disabledFieldName, UtmTable::getCodeList(), true);
+					}
+				)
+			);
+			$this->entityFieldInfos = array_values(
+				array_filter(
+					$this->entityFieldInfos,
+					function ($field) use ($disabledFieldNames, $areUtmFieldsDisabled)
+					{
+						$fieldNames = (
+							isset($field['data']['affectedFields'])
+							&& is_array($field['data']['affectedFields'])
+						)
+							? $field['data']['affectedFields']
+							: [$field['name']];
+
+						foreach ($fieldNames as $fieldName)
+						{
+							$isInDisabledFieldsList = (
+								(
+									$fieldName === self::UTM_FIELD_CODE
+									&& $areUtmFieldsDisabled
+								)
+								|| in_array(
+									$this->factory->getCommonFieldNameByMap($fieldName),
+									$disabledFieldNames,
+									true
+								)
+							);
+							if ($isInDisabledFieldsList)
+							{
+								return false;
+							}
+						}
+
+						return true;
+					}
+				)
 			);
 		}
 
@@ -1669,9 +1759,14 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		}
 		//endregion
 
-		if(isset($this->entityData['CATEGORY_ID']))
+		if (isset($this->entityData['CATEGORY_ID']))
 		{
 			$this->arResult['CATEGORY_ID'] = (int)$this->entityData['CATEGORY_ID'];
+		}
+
+		if (!isset($this->entityData['CATEGORY_ID']))
+		{
+			$this->entityData['CATEGORY_ID'] = (int)($this->arResult['CATEGORY_ID'] ?? 0);
 		}
 
 		//region User Fields
@@ -1763,97 +1858,18 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		//endregion
 		//region Company Data & Multifield Data
 		$companyData = array();
-		$multiFieldData = array();
 		if($this->entityID > 0)
 		{
-			$multiFieldDbResult = \CCrmFieldMulti::GetList(
-				array('ID' => 'asc'),
-				array(
-					'ENTITY_ID' => CCrmOwnerType::ContactName,
-					'ELEMENT_ID' => $this->entityID
-				)
+			\CCrmComponentHelper::prepareMultifieldData(
+				\CCrmOwnerType::Contact,
+				[$this->entityID],
+				[],
+				$this->entityData,
+				[
+					'ADD_TO_DATA_LEVEL' => true,
+					'COPY_MODE' => $this->isCopyMode,
+				]
 			);
-
-			$entityKey = CCrmOwnerType::Contact.'_'.$this->entityID;
-			$multiFieldEntityTypes = \CCrmFieldMulti::GetEntityTypes();
-			$multiFieldViewClassNames = array(
-				'PHONE' => 'crm-entity-phone-number',
-				'EMAIL' => 'crm-entity-email',
-				'IM' => 'crm-entity-phone-number'
-
-			);
-
-			while($multiField = $multiFieldDbResult->Fetch())
-			{
-				$typeID = $multiField['TYPE_ID'];
-				if(!isset($this->entityData[$typeID]))
-				{
-					$this->entityData[$typeID] = array();
-				}
-
-				$multiFieldID = $multiField['ID'];
-				if($this->isCopyMode)
-				{
-					$multiFieldID = "n0{$multiFieldID}";
-				}
-
-				$multiFieldComplexID = $multiField['COMPLEX_ID'];
-				$value = $multiField['VALUE'];
-				$valueType = $multiField['VALUE_TYPE'];
-				$multiFieldEntityType = $multiFieldEntityTypes[$typeID];
-
-				$this->entityData[$typeID][] = array(
-					'ID' => $multiFieldID,
-					'VALUE' => $value,
-					'VALUE_TYPE' => $valueType,
-					'VIEW_DATA' => \CCrmViewHelper::PrepareMultiFieldValueItemData(
-						$typeID,
-						array(
-							'VALUE' => $value,
-							'VALUE_TYPE_ID' => $valueType,
-							'VALUE_TYPE' => isset($multiFieldEntityType[$valueType]) ? $multiFieldEntityType[$valueType] : null,
-							'CLASS_NAME' => isset($multiFieldViewClassNames[$typeID]) ? $multiFieldViewClassNames[$typeID] : ''
-						),
-						array(
-							'ENABLE_SIP' => false,
-							'SIP_PARAMS' => array(
-								'ENTITY_TYPE_NAME' => CCrmOwnerType::ContactName,
-								'ENTITY_ID' => $this->entityID,
-								'AUTO_FOLD' => true
-							)
-						)
-					)
-				);
-
-				//Is required for phone & email & messenger menu
-				if($typeID === 'PHONE' || $typeID === 'EMAIL'
-					|| ($typeID === 'IM' && preg_match('/^imol\|/', $value) === 1)
-				)
-				{
-					if(!isset($multiFieldData[$typeID]))
-					{
-						$multiFieldData[$typeID] = array();
-					}
-
-					if(!isset($multiFieldData[$typeID][$entityKey]))
-					{
-						$multiFieldData[$typeID][$entityKey] = array();
-					}
-
-					$formattedValue = $typeID === 'PHONE'
-						? Main\PhoneNumber\Parser::getInstance()->parse($value)->format()
-						: $value;
-
-					$multiFieldData[$typeID][$entityKey][] = array(
-						'ID' => $multiFieldID,
-						'VALUE' => $value,
-						'VALUE_TYPE' => $valueType,
-						'VALUE_FORMATTED' => $formattedValue,
-						'COMPLEX_ID' => $multiFieldComplexID,
-						'COMPLEX_NAME' => \CCrmFieldMulti::GetEntityNameByComplex($multiFieldComplexID, false)
-					);
-				}
-			}
 
 			//region Requisites
 			if (!$this->isCopyMode)
@@ -1879,7 +1895,6 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 				}
 			}
 		}
-		$this->entityData['MULTIFIELD_DATA'] = $multiFieldData;
 
 		$companyIDs = array();
 		if($this->entityID > 0)
@@ -2087,7 +2102,7 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		];
 	}
 
-	protected function getCategoryId(): int
+	public function getCategoryId(): int
 	{
 		$categoryId = 0;
 		if ($this->entityID > 0)
@@ -2104,6 +2119,10 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 			// get category from conversion context:
 			$categoryId = $this->arResult['CONTEXT']['PARAMS']['CATEGORY_ID'] ?? $categoryId;
 		}
+		else
+		{
+			$categoryId = (int)($this->arResult['CATEGORY_ID'] ?? 0);
+		}
 
 		if ($categoryId && !($this->factory && $this->factory->isCategoryAvailable($categoryId)))
 		{
@@ -2113,9 +2132,33 @@ class CCrmContactDetailsComponent extends CBitrixComponent
 		return $categoryId;
 	}
 
+	/**
+	 * @return Crm\Category\Entity\Category|null
+	 */
+	protected function getCategory(): ?Crm\Category\Entity\Category
+	{
+		if (!$this->factory)
+		{
+			return null;
+		}
+
+		$categoryId = $this->arResult['CATEGORY_ID'] ?? $this->getCategoryId();
+		if (!$categoryId)
+		{
+			return null;
+		}
+
+		return $this->factory->getCategory($categoryId);
+	}
+
 	public function getEditorConfigId(string $sourceId = ''): string
 	{
 		$sourceId = ($sourceId === '') ? 'contact_details' : $sourceId;
+
+		if (!isset($this->arResult['CATEGORY_ID']))
+		{
+			$this->arResult['CATEGORY_ID'] = $this->getCategoryId();
+		}
 
 		return (new EditorHelper(\CCrmOwnerType::Contact))->getEditorConfigId($this->arResult['CATEGORY_ID'], $sourceId);
 	}

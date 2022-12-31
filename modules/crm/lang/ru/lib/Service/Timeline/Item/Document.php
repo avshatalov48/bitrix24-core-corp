@@ -1,0 +1,6 @@
+<?php
+
+$MESS['CRM_TIMELINE_DOCUMENT_TITLE'] = 'Подготовлен документ';
+$MESS['CRM_TIMELINE_DOCUMENT_MY_COMPANY'] = 'Ваша компания';
+$MESS['CRM_TIMELINE_DOCUMENT_REQUISITE_CAPTION'] = '#ORGANIZATION_NAME#, #SHORT_REQUISITE#';
+$MESS['CRM_TIMELINE_DOCUMENT_DELETION_CONFIRM'] = 'Вы действительно хотите удалить этот документ?';

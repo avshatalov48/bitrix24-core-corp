@@ -1,6 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
-class ContactSettings extends EntitySettings
+
+class ContactSettings extends EntitySettings implements ISettingsSupportsCategory
 {
 	const FLAG_ENABLE_ADDRESS = 1;
 
@@ -34,7 +36,7 @@ class ContactSettings extends EntitySettings
 	}
 
 	/**
-	 * Get Contact Category Id.
+	 * @inheritDoc
 	 */
 	public function getCategoryId(): ?int
 	{

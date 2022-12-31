@@ -55,3 +55,6 @@ $MESS["CRM_ENTITY_DISABLE_NOTIFICATION"] = "Больше не показыват
 $MESS["CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_COMMON"] = "Количество на складе";
 $MESS["CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_RESERVED"] = "В резерве";
 $MESS["CRM_ENTITY_PL_STORE_AVAILABLE_POPUP_QUANTITY_AVAILABLE"] = "Доступный остаток";
+$MESS["CRM_ENTITY_PL_PRICE_CHANGING_RESTRICTED"] = "Недостаточно прав для изменения цены продажи. Обратитесь к вашему руководителю или администратору Битрикс24";
+$MESS["CRM_ENTITY_PL_ROW_UPDATE_RESTRICTED_BY_STORE"] = "Недостаточно прав для изменения товара на этом складе. Обратитесь к вашему руководителю или администратору Битрикс24";
+$MESS["CRM_ENTITY_PL_ROW_UPDATE_STORE_RESTRICTED_BY_STORE"] = "Недостаточно прав для изменения товара на этом складе. Обратитесь к вашему руководителю или администратору Битрикс24";

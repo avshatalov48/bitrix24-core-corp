@@ -38,10 +38,10 @@ class Director
 		{
 			return \CCrmStatus::GetDefaultInvoiceStatuses();
 		}
-		// if ($factory instanceof Factory\SmartDocument)
-		// {
-		// 	return [];
-		// }
+		if ($factory instanceof Factory\SmartDocument)
+		{
+			return \CCrmStatus::GetDefaultSmartDocumentStatuses();
+		}
 
 		return null;
 	}

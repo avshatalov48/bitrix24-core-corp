@@ -1,147 +1,291 @@
-(() => {
-	const Type = {
-		STRING: 'string',
-		TEXTAREA: 'textarea',
-		NUMBER: 'number',
-		DATE: 'date',
-		DATETIME: 'datetime',
-		FILE: 'file',
-		STATUS: 'status',
-		SELECT: 'select',
-		USER: 'user',
-		IMAGE_SELECT: 'imageSelect',
-		MENU_SELECT: 'menuSelect',
-		COMBINED: 'combined',
-		ENTITY_SELECTOR: 'entity-selector',
-		MONEY: 'money',
-		BARCODE: 'barcode',
+/**
+ * @module layout/ui/fields
+ */
+jn.define('layout/ui/fields', (require, exports, module) => {
+
+	const { MultipleField } = require('layout/ui/fields/multiple-field');
+	const { StringType, StringField } = require('layout/ui/fields/string');
+	const { TextAreaType, TextAreaField } = require('layout/ui/fields/textarea');
+	const { NumberType, NumberField } = require('layout/ui/fields/number');
+	const { BarcodeType, BarcodeField } = require('layout/ui/fields/barcode');
+	const { DateTimeType, DateTimeField } = require('layout/ui/fields/datetime');
+	const { FileType, FileField } = require('layout/ui/fields/file');
+	const { StatusType, StatusField } = require('layout/ui/fields/status');
+	const { SelectType, SelectField } = require('layout/ui/fields/select');
+	const { UserType, UserField } = require('layout/ui/fields/user');
+	const { ProjectType, ProjectField } = require('layout/ui/fields/project');
+	const { TagType, TagField } = require('layout/ui/fields/tag');
+	const { ImageSelectType, ImageSelectField } = require('layout/ui/fields/image-select');
+	const { MenuSelectType, MenuSelectField } = require('layout/ui/fields/menu-select');
+	const { EntitySelectorType, EntitySelectorField } = require('layout/ui/fields/entity-selector');
+	const { MoneyType, MoneyField } = require('layout/ui/fields/money');
+	const { AddressType, AddressField } = require('layout/ui/fields/address');
+	const { UrlType, UrlField } = require('layout/ui/fields/url');
+	const { BooleanType, BooleanField } = require('layout/ui/fields/boolean');
+	const { PhoneType, PhoneField } = require('layout/ui/fields/phone');
+	const { ImType, ImField } = require('layout/ui/fields/im');
+	const { EmailType, EmailField } = require('layout/ui/fields/email');
+	const { WebType, WebField } = require('layout/ui/fields/web');
+	const { RequisiteType, RequisiteField } = require('layout/ui/fields/requisite');
+	const { RequisiteAddressType, RequisiteAddressField } = require('layout/ui/fields/requisite-address');
+	const { CombinedType, CombinedField } = require('layout/ui/fields/combined');
+	const { CombinedV2Type, CombinedV2Field } = require('layout/ui/fields/combined-v2');
+	const { MultipleCombinedType, MultipleCombinedField } = require('layout/ui/fields/multiple-combined');
+
+	let CrmElementType;
+	let CrmElementField;
+	let ClientType;
+	let ClientField;
+	let CrmStageType;
+	let CrmStageField;
+
+	try
+	{
+		CrmElementType = require('layout/ui/fields/crm-element').CrmElementType;
+		CrmElementField = require('layout/ui/fields/crm-element').CrmElementField;
+		ClientType = require('layout/ui/fields/client').ClientType;
+		ClientField = require('layout/ui/fields/client').ClientField;
+		CrmStageType = require('layout/ui/fields/crm-stage').CrmStageType;
+		CrmStageField = require('layout/ui/fields/crm-stage').CrmStageField;
+	}
+	catch (e)
+	{
+		console.warn(e);
+	}
+
+	const Types = [
+		StringType,
+		TextAreaType,
+		NumberType,
+		BarcodeType,
+		DateTimeType,
+		FileType,
+		StatusType,
+		SelectType,
+		UserType,
+		ProjectType,
+		TagType,
+		ImageSelectType,
+		MenuSelectType,
+		EntitySelectorType,
+		MoneyType,
+		AddressType,
+		UrlType,
+		BooleanType,
+		PhoneType,
+		ImType,
+		EmailType,
+		WebType,
+		ClientType,
+		CrmStageType,
+		CrmElementType,
+		RequisiteType,
+		RequisiteAddressType,
+		CombinedType,
+		CombinedV2Type,
+		MultipleCombinedType,
+	];
+
+	const ALIAS_TYPES = {
+		text: TextAreaType,
+		integer: NumberType,
+		double: NumberType,
+		date: DateTimeType,
+
+		enumeration: SelectType,
+		list: SelectType,
+		crm_status: SelectType,
+
+		iblock_element: EntitySelectorType,
+		iblock_section: EntitySelectorType,
+
+		employee: UserType,
+		moneyPay: MoneyType,
+		client_light: ClientType,
+
+		crm_entity: CrmElementType,
 	};
 
 	const WRAPPED_WITH_MULTIPLE_FIELD = [
-		Type.STRING,
-		Type.TEXT,
-		Type.NUMBER,
-		Type.DATE,
-		Type.DATETIME,
-		Type.COMBINED,
-		Type.MONEY,
-		Type.BARCODE
+		StringType,
+		TextAreaType,
+		NumberType,
+		MoneyType,
+		BarcodeType,
+		DateTimeType,
+		AddressType,
+		UrlType,
+		BooleanType,
+		CombinedType,
 	];
 
+	const renderField = (fieldData) => FieldFactory.create(fieldData.type, fieldData);
 
 	/**
 	 * @class FieldFactory
 	 */
 	class FieldFactory
 	{
+		static checkForAlias(type)
+		{
+			return ALIAS_TYPES[type] || type;
+		}
+
 		static has(type)
 		{
-			return Object.values(Type).includes(type);
+			type = this.checkForAlias(type);
+
+			return Types.includes(type);
 		}
 
 		static create(type, data)
 		{
-			if (data.multiple && WRAPPED_WITH_MULTIPLE_FIELD.find(fieldType => type === fieldType))
+			const fieldType = this.checkForAlias(type);
+
+			data = { ...data, type: fieldType };
+
+			if (data.multiple && WRAPPED_WITH_MULTIPLE_FIELD.includes(fieldType))
 			{
-				return new Fields.MultipleField({
-					...data,
-					renderField: (fieldData) => FieldFactory.create(type, fieldData)
-				});
+				return MultipleField({ ...data, renderField });
 			}
 
-			if (type === Type.STRING)
+			switch (fieldType)
 			{
-				return new Fields.StringInput(data);
+				case StringType:
+					return StringField(data);
+
+				case EmailType:
+					return EmailField(data);
+
+				case TextAreaType:
+					return TextAreaField(data);
+
+				case DateTimeType:
+					return DateTimeField(data);
+
+				case FileType:
+					return FileField(data);
+
+				case StatusType:
+					return StatusField(data);
+
+				case SelectType:
+					return SelectField(data);
+
+				case EntitySelectorType:
+					return EntitySelectorField(data);
+
+				case UserType:
+					return UserField(data);
+
+				case ProjectType:
+					return ProjectField(data);
+
+				case TagType:
+					return TagField(data);
+
+				case ImageSelectType:
+					return ImageSelectField(data);
+
+				case MenuSelectType:
+					return MenuSelectField(data);
+
+				case NumberType:
+					return NumberField(data);
+
+				case MoneyType:
+					return MoneyField(data);
+
+				case BarcodeType:
+					return BarcodeField(data);
+
+				case AddressType:
+					return AddressField(data);
+
+				case UrlType:
+					return UrlField(data);
+
+				case BooleanType:
+					return BooleanField(data);
+
+				case PhoneType:
+					return PhoneField(data);
+
+				case ImType:
+					return ImField(data);
+
+				case WebType:
+					return WebField(data);
+
+				case RequisiteType:
+					return RequisiteField(data);
+
+				case RequisiteAddressType:
+					return RequisiteAddressField(data);
+
+				case CombinedType:
+					return CombinedField({ ...data, renderField });
+
+				case CombinedV2Type:
+					return CombinedV2Field({ ...data, renderField });
+
+				case MultipleCombinedType:
+					return MultipleCombinedField({ ...data, renderField });
 			}
 
-			if (type === Type.TEXTAREA)
+			if (fieldType === CrmStageType && CrmStageField)
 			{
-				return new Fields.TextArea(data);
+				return CrmStageField(data);
 			}
 
-			if (type === Type.DATE)
+			if (fieldType === ClientType && ClientField)
 			{
-				return new Fields.DateField(data);
+				return ClientField(data);
 			}
 
-			if (type === Type.DATETIME)
+			if (fieldType === CrmElementType && CrmElementField)
 			{
-				return new Fields.DateField({
-					...data,
-					config: {
-						...data.config,
-						datePickerType: 'datetime',
-						dateFormat: 'd MMMM yyyy HH:mm'
-					}
-				});
+				return CrmElementField(data);
 			}
 
-			if (type === Type.FILE)
-			{
-				return new Fields.FileField(data);
-			}
+			console.warn('Type ' + type + ' not found. Trying to render the field as a StringInput.');
 
-			if (type === Type.STATUS)
-			{
-				return new Fields.StatusField(data);
-			}
-
-			if (type === Type.SELECT)
-			{
-				// temporary fix
-				if (data.config && data.config.items)
-				{
-					data.items = data.config.items;
-				}
-
-				return new Fields.Select(data);
-			}
-
-			if (type === Type.USER)
-			{
-				return new Fields.User(data);
-			}
-
-			if (type === Type.IMAGE_SELECT)
-			{
-				return new Fields.ImageSelect(data);
-			}
-
-			if (type === Type.MENU_SELECT)
-			{
-				return new Fields.MenuSelect(data);
-			}
-
-			if (type === Type.COMBINED)
-			{
-				return new Fields.CombinedField(data);
-			}
-
-			if (type === Type.NUMBER)
-			{
-				return new Fields.NumberField(data);
-			}
-
-			if (type === Type.ENTITY_SELECTOR)
-			{
-				return new Fields.EntitySelector(data);
-			}
-
-			if (type === Type.MONEY)
-			{
-				return new Fields.MoneyField(data);
-			}
-
-			if (type === Type.BARCODE)
-			{
-				return new Fields.BarcodeInput(data);
-			}
-
-			console.error('Type not found. Trying to render the field as a StringInput.');
-			return new Fields.StringInput(data); //
+			return StringField(data);
 		}
 	}
 
-	this.FieldFactory = FieldFactory;
-	this.FieldFactory.Type = Type;
-})();
+	module.exports = {
+		FieldFactory,
+		StringType,
+		TextAreaType,
+		NumberType,
+		BarcodeType,
+		DateTimeType,
+		FileType,
+		StatusType,
+		SelectType,
+		UserType,
+		ProjectType,
+		TagType,
+		ImageSelectType,
+		MenuSelectType,
+		EntitySelectorType,
+		MoneyType,
+		AddressType,
+		UrlType,
+		BooleanType,
+		PhoneType,
+		ImType,
+		EmailType,
+		WebType,
+		ClientType,
+		CrmStageType,
+		CrmElementType,
+		RequisiteType,
+		RequisiteAddressType,
+		CombinedType,
+		CombinedV2Type,
+		MultipleCombinedType,
+	};
+
+});

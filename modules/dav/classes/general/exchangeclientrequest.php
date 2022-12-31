@@ -191,9 +191,13 @@ class CDavExchangeClientRequest
 		$arMapTmp = array("idonly" => "IdOnly", "id_only" => "IdOnly", "allproperties" => "AllProperties", "all_properties" => "AllProperties");
 		$itemShapeLower = mb_strtolower($itemShape);
 		if (array_key_exists($itemShapeLower, $arMapTmp))
+		{
 			$itemShape = $arMapTmp[$itemShapeLower];
+		}
 		else
+		{
 			$itemShape = "AllProperties";
+		}
 
 		$this->body  = "<"."?xml version=\"1.0\" encoding=\"utf-8\"?".">\r\n";
 		$this->body .= "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\r\n";
@@ -215,8 +219,12 @@ class CDavExchangeClientRequest
 				);
 
 				foreach($arProbablyExtendedFields as $probablyFieldName)
+				{
 					if (isset($arAdditionalExtendedProperty[$probablyFieldName]))
+					{
 						$this->body .= ' ' . $probablyFieldName . '="' . $arAdditionalExtendedProperty[$probablyFieldName] . '"';
+					}
+				}
 
 				$this->body .= " />\r\n";
 			}
@@ -229,13 +237,17 @@ class CDavExchangeClientRequest
 		$this->body .= "   <ItemIds>\r\n";
 
 		if (!is_array($itemId))
+		{
 			$itemId = array("id" => $itemId);
+		}
 
 		$arKeys = array_keys($itemId);
 		if (count($itemId) > 0)
 		{
 			if ($arKeys[0]."!" != "0!")
+			{
 				$itemId = array($itemId);
+			}
 		}
 
 		foreach ($itemId as $value)
@@ -245,7 +257,9 @@ class CDavExchangeClientRequest
 
 			$this->body .= "    <t:ItemId Id=\"".htmlspecialcharsbx($id)."\"";
 			if (!is_null($changekey) && !empty($changekey))
+			{
 				$this->body .= " ChangeKey=\"".htmlspecialcharsbx($changekey)."\"";
+			}
 			$this->body .= "/>\r\n";
 		}
 

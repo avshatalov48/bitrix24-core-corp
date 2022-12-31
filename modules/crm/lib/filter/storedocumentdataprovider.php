@@ -139,10 +139,15 @@ class StoreDocumentDataProvider extends \Bitrix\Main\Filter\EntityDataProvider
 			]),
 			'CLIENT' => $this->createField('CLIENT', [
 				'default' => true,
-				'type' => 'entity_selector',
+				'type' => 'dest_selector',
 				'partial' => true,
 			]),
 			'STORES' => $this->createField('STORES', [
+				'partial' => true,
+				'type' => 'entity_selector',
+			]),
+			'PRODUCTS' => $this->createField('PRODUCTS', [
+				'default' => true,
 				'partial' => true,
 				'type' => 'entity_selector',
 			]),
@@ -191,6 +196,55 @@ class StoreDocumentDataProvider extends \Bitrix\Main\Filter\EntityDataProvider
 								'id' => 'store',
 								'dynamicLoad' => true,
 								'dynamicSearch' => true,
+							]
+						],
+						'dropdownMode' => false,
+					],
+				],
+			];
+		}
+
+		if ($fieldID === 'CLIENT')
+		{
+			return [
+				'params' => [
+					'apiVersion' => 3,
+					'context' => 'CRM_TIMELINE_FILTER_CLIENT',
+					'contextCode' => 'CRM',
+					'useClientDatabase' => 'N',
+					'enableAll' => 'N',
+					'enableDepartments' => 'N',
+					'enableUsers' => 'N',
+					'enableSonetgroups' => 'N',
+					'allowEmailInvitation' => 'N',
+					'allowSearchEmailUsers' => 'N',
+					'departmentSelectDisable' => 'Y',
+					'enableCrm' => 'Y',
+					'enableCrmContacts' => 'Y',
+					'enableCrmCompanies' => 'Y',
+					'addTabCrmContacts' => 'Y',
+					'addTabCrmCompanies' => 'Y',
+					'convertJson' => 'Y',
+					'multiple' => 'Y',
+				],
+			];
+		}
+
+		if ($fieldID === 'PRODUCTS')
+		{
+			return [
+				'params' => [
+					'multiple' => 'Y',
+					'dialogOptions' => [
+						'height' => 200,
+						'context' => $this->mode . '_product_filter',
+						'entities' => [
+							[
+								'id' => 'product',
+								'options' => [
+									'iblockId' => \Bitrix\Crm\Product\Catalog::getDefaultId(),
+									'basePriceId' => \Bitrix\Crm\Product\Price::getBaseId(),
+								],
 							]
 						],
 						'dropdownMode' => false,

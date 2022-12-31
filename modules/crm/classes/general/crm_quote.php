@@ -5,6 +5,7 @@ use Bitrix\Crm;
 use Bitrix\Crm\CompanyAddress;
 use Bitrix\Crm\ContactAddress;
 use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\Format\AddressFormatter;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Crm\Tracking;
@@ -14,12 +15,16 @@ use Bitrix\Crm\Binding\QuoteContactTable;
 
 class CAllCrmQuote
 {
+	use EntityFieldsNormalizer;
+
 	public static $sUFEntityID = 'CRM_QUOTE';
 
 	const USER_FIELD_ENTITY_ID = 'CRM_QUOTE';
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_QUOTE_SPD';
 	const TOTAL_COUNT_CACHE_ID = 'crm_quote_total_count';
 	const CACHE_TTL = 3600;
+
+	protected const TABLE_NAME = 'b_crm_quote';
 
 	protected static $TYPE_NAME = 'QUOTE';
 	private static $QUOTE_STATUSES = null;
@@ -324,7 +329,8 @@ class CAllCrmQuote
 					$clobFields[] = $fieldName;
 			}
 
-			$ID = intval($DB->Add('b_crm_quote', $arFields, $clobFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+			$this->normalizeEntityFields($arFields);
+			$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, $clobFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
 
 			if(defined('BX_COMP_MANAGED_CACHE'))
 			{
@@ -395,8 +401,6 @@ class CAllCrmQuote
 			foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteAdd', true) as $arEvent)
 				ExecuteModuleEventEx($arEvent, array(&$arFields));
 			//endregion
-
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::QuoteName, 'kanban_add');
 		}
 
 		return $result;
@@ -867,7 +871,9 @@ class CAllCrmQuote
 			}
 
 			unset($arFields['ID']);
-			$sUpdate = $DB->PrepareUpdate('b_crm_quote', $arFields);
+
+			$this->normalizeEntityFields($arFields);
+			$sUpdate = $DB->PrepareUpdate(self::TABLE_NAME, $arFields);
 
 			if ($sUpdate <> '')
 			{
@@ -969,8 +975,6 @@ class CAllCrmQuote
 				foreach (GetModuleEvents('crm', 'OnAfterCrmQuoteUpdate', true) as $arEvent)
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
 			}
-
-			\Bitrix\Crm\Kanban\SupervisorTable::sendItem($ID, CCrmOwnerType::QuoteName, 'kanban_update');
 		}
 		return $bResult;
 	}

@@ -164,7 +164,7 @@ class ContactSettings
 			self::includeModuleFile();
 
 			self::$descriptions= [
-				self::VIEW_LIST => GetMessage('CRM_CONTACT_SETTINGS_VIEW_LIST'),
+				self::VIEW_LIST => GetMessage('CRM_COMMON_LIST'),
 			];
 		}
 		return self::$descriptions;

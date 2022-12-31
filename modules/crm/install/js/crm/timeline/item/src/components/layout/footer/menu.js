@@ -1,8 +1,12 @@
 import {MenuManager} from "main.popup";
 import {Menu as LayoutMenu} from "../../layout/menu";
 const MenuId = 'timeline-more-button-menu';
+import {AdditionalButton, AdditionalButtonColor, AdditionalButtonIcon} from './add-button';
 
 export const Menu = {
+	components: {
+		AdditionalButton,
+	},
 	props: {
 		buttons: Array, // buttons that didn't fit into footer
 		items: Object, // real menu items
@@ -33,7 +37,13 @@ export const Menu = {
 			result = [...result, ...this.itemsArray];
 
 			return result;
-		}
+		},
+		buttonProps() {
+			return {
+				color: AdditionalButtonColor.DEFAULT,
+				icon: AdditionalButtonIcon.DOTS,
+			}
+		},
 	},
 	beforeUnmount(): void
 	{
@@ -61,5 +71,9 @@ export const Menu = {
 		},
 	},
 	// language=Vue
-	template: `<div class="crm-timeline__card-action_menu-item --dotted" @click="showMenu"><i></i></div>`
+	template: `
+		<div class="crm-timeline__card-action_menu-item" @click="showMenu">
+		<AdditionalButton iconName="dots" color="default"></AdditionalButton>
+		</div>
+	`
 };

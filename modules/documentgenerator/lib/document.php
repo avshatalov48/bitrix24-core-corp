@@ -34,6 +34,7 @@ class Document
 {
 	public const THIS_PLACEHOLDER = 'this';
 	public const STAMPS_ENABLED_PLACEHOLDER = 'stampsEnabled';
+	public const PRODUCTS_TABLE_VARIANT_PLACEHOLDER = 'productsTableVariant';
 	public const IMAGE = 'jpg';
 	public const PDF = 'pdf';
 
@@ -106,6 +107,7 @@ class Document
 		/** @var static $document */
 		$document = new $documentClassName($body, $fields, $data, $value);
 		$document->setTemplate($template);
+		$document->setProductsTableVariant($template->PRODUCTS_TABLE_VARIANT ?? '');
 		if($template->WITH_STAMPS === 'Y')
 		{
 			$document->enableStamps(true);
@@ -579,6 +581,20 @@ class Document
 	}
 
 	/**
+	 * @param bool $variant
+	 * @return $this
+	 */
+	public function setProductsTableVariant(string $variant): Document
+	{
+		if (Template::isValidProductsTableVariantValue($variant))
+		{
+			return $this->setValues([static::PRODUCTS_TABLE_VARIANT_PLACEHOLDER => $variant]);
+		}
+
+		return $this;
+	}
+
+	/**
 	 * @return bool
 	 */
 	public function isStampsEnabled(): bool
@@ -1032,7 +1048,7 @@ class Document
 	 * @param string $name
 	 * @return array|string
 	 */
-	protected function getValue($name)
+	public function getValue($name)
 	{
 		if(isset($this->values[$name]))
 		{

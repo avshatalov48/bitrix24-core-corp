@@ -1,11 +1,12 @@
 <?php
 namespace Bitrix\Crm\Category;
+
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Category\Entity\DealCategoryTable;
 use Bitrix\Crm\DealTable;
 use Bitrix\Crm\Entry\AddException;
@@ -1137,24 +1138,39 @@ class DealCategory
 
 	public static function getPermissionRoleConfigurations()
 	{
-		$results = array();
+		return self::getPermissionRoleConfigurationsList();
+	}
+
+	public static function getPermissionRoleConfigurationsWithDefault(): array
+	{
+		return self::getPermissionRoleConfigurationsList(true);
+	}
+
+	protected static function getPermissionRoleConfigurationsList(bool $enableDefault = false): array
+	{
+		$results = [];
 		self::includeLangFile();
-		foreach(self::getAll(false) as $entry)
+
+		foreach(self::getAll($enableDefault) as $entry)
 		{
-			$ID = $entry['ID'];
-			$name = isset($entry['NAME']) ? $entry['NAME'] : '';
+			$id = $entry['ID'];
+			$name = ($entry['NAME'] ?? '');
 
 			if($name === '')
 			{
-				$name = $ID;
+				$name = $id;
 			}
-			$entityType = self::convertToPermissionEntityType($ID);
-			$results[$entityType] = array(
+
+			$entityType = self::convertToPermissionEntityType($id);
+			$results[$entityType] = [
 				'TYPE' => $entityType,
-				'NAME' =>  GetMessage('CRM_DEAL_CATEGORY_PERMISSION_ENTITY', array('#CATEGORY#' => $name)),
-				'FIELDS' => array('STAGE_ID' => self::getStageList($ID))
-			);
+				'NAME' =>  Loc::getMessage('CRM_DEAL_CATEGORY_PERMISSION_ENTITY', ['#CATEGORY#' => $name]),
+				'FIELDS' => [
+					'STAGE_ID' => self::getStageList($id),
+				],
+			];
 		}
+
 		return $results;
 	}
 

@@ -8,7 +8,7 @@
 		constructor(props)
 		{
 			props = props || {};
-			props.backgroundColor = props.backgroundColor || '#F0F2F5';
+			props.backgroundColor = props.backgroundColor || '#f5f7f8';
 			props.loaderColor = props.loaderColor || '#82888F';
 			props.loaderSize = props.loaderSize || 'small';
 

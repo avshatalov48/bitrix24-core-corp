@@ -1,7 +1,9 @@
 <?php
 
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Filter\EntityDataProvider;
 use Bitrix\Crm\PhaseSemantics;
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Timeline;
 
 class CCrmEntityHelper
@@ -316,9 +318,18 @@ class CCrmEntityHelper
 	): void
 	{
 		$context = clone \Bitrix\Crm\Service\Container::getInstance()->getContext();
+
+		if (isset($options['ITEM_OPTIONS']))
+		{
+			$context->setItemOptions($options['ITEM_OPTIONS']);
+		}
 		if (isset($options['CURRENT_USER']) && (int)$options['CURRENT_USER'] > 0)
 		{
 			$context->setUserId((int)$options['CURRENT_USER']);
+		}
+		if (isset($options['eventId']))
+		{
+			$context->setEventId($options['eventId']);
 		}
 		$operation->setContext($context);
 
@@ -451,5 +462,36 @@ class CCrmEntityHelper
 
 			\Bitrix\Crm\Settings\Crm::setUniversalActivityScenarioEnabled(mb_strtoupper($enableUniversalActivityScenario) === 'Y');
 		}
+	}
+
+	public static function applyCounterFilterWrapper(
+		int $entityTypeId,
+		string $gridId,
+		array $extras,
+		array &$arFilter,
+		$entityFilter
+	): void
+	{
+		if (!\CCrmOwnerType::IsDefined($entityTypeId))
+		{
+			return;
+		}
+
+		if (isset($entityFilter))
+		{
+			$provider = $entityFilter->getEntityDataProvider();
+		}
+		else
+		{
+			$filterFactory = Service\Container::getInstance()->getFilterFactory();
+			$provider = $filterFactory->getDataProvider($filterFactory::getSettingsByGridId($entityTypeId, $gridId));
+		}
+
+		if ($provider instanceof EntityDataProvider)
+		{
+			$provider->applyCounterFilter($entityTypeId, $arFilter, $extras);
+		}
+
+		unset($filterFactory, $provider);
 	}
 }

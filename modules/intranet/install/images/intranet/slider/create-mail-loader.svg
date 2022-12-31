@@ -1,0 +1,104 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 100%"
+	 preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 100%" fill="none">
+
+	<svg height="100%">
+		<defs>
+			<g id="block-input">
+				<rect x="108.5" y="145.5" width="100%" height="37" rx="3.5" fill="white" stroke="#e0e0e0" />
+			</g>
+		</defs>
+		<rect width="100%" height="100%" fill="#EEF2F4" />
+
+		<rect x="20" y="74" width="100%" height="518" rx="10" fill="white" />
+		<use xlink:href="#block-input"></use>
+		<use xlink:href="#block-input" y="52" ></use>
+
+		<rect x="42" y="130" width="100%" height="1" fill="#ecedee" />
+		<rect x="42" y="309" width="100%" height="1" fill="#ecedee" />
+		<rect x="42" y="510" width="100%" height="1" fill="#ecedee" />
+		<rect x="39.5" y="531.5" width="119" height="39" rx="3.5" stroke="#C6CDD3" />
+	</svg>
+
+	<svg height="100%"  id="animated-elements">
+		<defs>
+			<g id="block-input--animat">
+				<rect x="55" y="161" width="41" height="8" rx="2" fill="#ecedee" />
+			</g>
+		</defs>
+
+		<circle cx="41" cy="36" r="20" fill="#dee3e6" />
+		<rect x="79" y="30" width="39%" height="13" rx="2" fill="#dee3e6" />
+
+		<rect x="42" y="100" width="53" height="8" rx="2" fill="#ecedee" />
+		<circle cx="123.5" cy="102.5" r="11.5" fill="#ecedee" />
+		<rect x="147" y="101" width="23%" height="6" rx="2" fill="#ecedee"/>
+
+		<use xlink:href="#block-input--animat"></use>
+		<use xlink:href="#block-input--animat" y="52" ></use>
+
+		<circle cx="65" cy="286" r="11" fill="#ecedee" />
+		<circle cx="96" cy="286" r="11" fill="#ecedee" />
+		<circle cx="127" cy="286" r="11" fill="#ecedee" />
+		<circle cx="158" cy="286" r="11" fill="#ecedee" />
+		<circle cx="189" cy="286" r="11" fill="#ecedee" />
+		<circle cx="220" cy="286" r="11" fill="#ecedee" />
+		<rect x="241.5" y="271.5" width="87" height="28" rx="3.5" stroke="#e0e0e0" />
+		<circle cx="350" cy="286" r="11" fill="#ecedee" />
+		<circle cx="399" cy="286" r="11" fill="#ecedee" />
+		<circle cx="430" cy="286" r="11" fill="#ecedee" />
+		<circle cx="461" cy="286" r="11" fill="#ecedee" />
+
+		<circle cx="511" cy="286" r="11" fill="#ecedee" />
+		<circle cx="542" cy="286" r="11" fill="#ecedee" />
+		<circle cx="573" cy="286" r="11" fill="#ecedee" />
+		<circle cx="604" cy="286" r="11" fill="#ecedee" />
+		<circle cx="635" cy="286" r="11" fill="#ecedee" />
+		<circle cx="685" cy="286" r="11" fill="#ecedee" />
+		<circle cx="716" cy="286" r="11" fill="#ecedee" />
+
+		<circle cx="65" cy="486" r="11" fill="#ecedee" />
+		<rect x="82.1777" y="483" width="33.0942" height="6" rx="2" fill="#ecedee" />
+		<circle cx="146" cy="486" r="11" fill="#ecedee" />
+		<rect x="163.408" y="483" width="104.297" height="6" rx="2" fill="#ecedee" />
+		<rect x="60.748" y="545.5" width="76.5039" height="10" rx="2" fill="#ecedee" />
+		<rect x="173" y="545.5" width="76.5" height="10" rx="2" fill="#ecedee" />
+	</svg>
+
+
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+
+
+
+	<svg height="100%">
+		<defs>
+			<g id="upper-right-corner">
+				<path d="M9.99997 10V0H0C5.52285 0 9.99997 4.47715 9.99997 10Z" fill="#eef2f4"/>
+			</g>
+			<g id="lower-right-corner">
+				<path d="M9.99997 0V10H0C5.52285 10 9.99997 5.52285 9.99997 0Z" fill="#eef2f4"/>
+			</g>
+		</defs>
+
+		<rect width="20" height="100%" fill="#EEF2F4" x="100%" transform="translate(-20)" />
+		<rect width="23" height="470" fill="#ffffff" x="100%" y="90" transform="translate(-43)" />
+		<rect width="1" height="37" fill="#e0e0e0" x="100%" y="145" transform="translate(-44)"/>
+		<rect width="1" height="37" fill="#e0e0e0" x="100%" y="198" transform="translate(-44)"/>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="74" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="582" transform="translate(-30)" ></use>
+	</svg>
+</svg>

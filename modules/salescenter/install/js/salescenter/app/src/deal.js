@@ -335,8 +335,10 @@ export default {
 							@click="openIntegrationWindow($event)"
 							class="ui-sidepanel-menu-link"
 						>
-							<div class="ui-sidepanel-menu-link-text">
-								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION')}
+							<div class="ui-sidepanel-menu-link-text"
+								 data-manager-openIntegrationRequestForm-params="sender_page:deal"
+							>
+								${Loc.getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_1')}
 							</div>
 						</a>
 					</li>

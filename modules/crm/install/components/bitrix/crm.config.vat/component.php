@@ -26,6 +26,12 @@ if (!CModule::IncludeModule('sale'))
 	return;
 }
 
+if (!\Bitrix\Catalog\Access\AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_VAT_EDIT))
+{
+	$this->IncludeComponentTemplate('vat_error');
+	return;
+}
+
 global $APPLICATION;
 
 $componentPage = '';

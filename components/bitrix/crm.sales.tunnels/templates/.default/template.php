@@ -33,7 +33,7 @@ Extension::load([
 	</div>
 	<div class="crm-st-footer">
 		<? if ($arResult['isCategoryCreatable']) : ?>
-			<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-add crm-st-add-category-btn"><?=Loc::getMessage('CRM_ST_ADD_NEW_CATEGORY_BUTTON_LABEL')?></button>
+			<button class="ui-btn ui-btn-link ui-btn-xs ui-btn-icon-add crm-st-add-category-btn"><?=Loc::getMessage('CRM_ST_ADD_NEW_CATEGORY_BUTTON_LABEL2')?></button>
 		<? endif; ?>
 	</div>
 </div>
@@ -63,7 +63,7 @@ $this->SetViewTarget('pagetitle', 100);
 	}
 	if ($arResult['isCategoryCreatable'])
 	{
-		?><button class="ui-btn ui-btn-primary crm-st-add-category-btn-top"><?=Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON')?></button><?php
+		?><button class="ui-btn ui-btn-primary crm-st-add-category-btn-top"><?=Loc::getMessage('CRM_ST_ADD_FUNNEL_BUTTON2')?></button><?php
 	}
 	?>
 </div>

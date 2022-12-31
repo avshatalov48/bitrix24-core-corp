@@ -1,0 +1,20 @@
+<?php
+$MESS["AUTH_1_SOCSERV"] = "Увійти через";
+$MESS["AUTH_2_FORM"] = "або через форму -";
+$MESS["AUTH_AUTHORIZE"] = "Увійти";
+$MESS["AUTH_AUTHORIZE_BY_QR"] = "ВХІД ПО QR";
+$MESS["AUTH_AUTHORIZE_BY_QR_INFO_1"] = "Відскануйте QR-код";
+$MESS["AUTH_AUTHORIZE_BY_QR_INFO_2"] = "у застосунку Бітрікс24 або камерою смартфона";
+$MESS["AUTH_BACK"] = "Назад";
+$MESS["AUTH_CAPTCHA_PROMT"] = "Введіть слово на картинці";
+$MESS["AUTH_FIRST_ONE"] = "Якщо ви вперше на сайті, заповніть, будь ласка, реєстраційну форму.";
+$MESS["AUTH_FORGOT_PASSWORD_2"] = "Забули свій пароль?";
+$MESS["AUTH_LOGIN"] = "Логін:";
+$MESS["AUTH_NONSECURE_NOTE"] = "Пароль буде надіслано у відкритому вигляді. Увімкніть JavaScript в браузері, щоб зашифрувати пароль перед відправкою.";
+$MESS["AUTH_PASSWORD"] = "Пароль:";
+$MESS["AUTH_PLEASE_AUTH"] = "Будь ласка, увійдіть:";
+$MESS["AUTH_REGISTER"] = "Зареєструватися";
+$MESS["AUTH_REMEMBER_ME"] = "Запам'ятати мене на цьому комп'ютері";
+$MESS["AUTH_SECURE_NOTE"] = "Перед відправкою форми авторизації пароль буде зашифрований в браузері. Це дозволить уникнути передачі паролю у відкритому вигляді.";
+$MESS["AUTH_SOCSERV"] = "Вхід через соціальні сервіси:";
+$MESS["AUTH_TITLE"] = "Вхід до Бітрікс24";

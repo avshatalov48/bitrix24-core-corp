@@ -1,27 +1,35 @@
-<?
-if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	"NAME" => GetMessage("CRM_CTRNA_DESCR_NAME"),
-	"DESCRIPTION" => GetMessage("CRM_CTRNA_DESCR_DESCR"),
-	"TYPE" => array('activity', 'robot_activity'),
-	"CLASS" => "CrmControlNotifyActivity",
-	"JSCLASS" => "BizProcActivity",
-	"CATEGORY" => array(
-		"ID" => "interaction",
-	),
-	'FILTER' => array(
-		'INCLUDE' => array(
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('CRM_CTRNA_DESCR_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CTRNA_DESCR_DESCR_1'),
+	'TYPE' => ['activity', 'robot_activity'],
+	'CLASS' => 'CrmControlNotifyActivity',
+	'JSCLASS' => 'BizProcActivity',
+	'CATEGORY' => [
+		'ID' => "interaction",
+	],
+	'FILTER' => [
+		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Order'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Invoice'],
 			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
-		),
-	),
-	'ROBOT_SETTINGS' => array(
+		],
+	],
+	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
 		'RESPONSIBLE_PROPERTY' => 'ToUsers',
 		'RESPONSIBLE_TO_HEAD' => 'ToHead',
-	),
-);
+		'GROUP' => ['employeeControl'],
+		'SORT' => 1800,
+	],
+];

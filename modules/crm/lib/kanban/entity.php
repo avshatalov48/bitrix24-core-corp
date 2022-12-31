@@ -5,12 +5,16 @@ namespace Bitrix\Crm\Kanban;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Automation\Starter;
 use Bitrix\Crm\Component\EntityDetails\BaseComponent;
+use Bitrix\Crm\Component\EntityList\ClientDataProvider;
+use Bitrix\Crm\Component\EntityList\GridId;
+use Bitrix\Crm\Counter\EntityCounter;
+use Bitrix\Crm\Exclusion;
+use Bitrix\Crm\Filter;
+use Bitrix\Crm\Item;
 use Bitrix\Crm\Entity\EntityEditorConfigScope;
 use Bitrix\Crm\Security\EntityAuthorization;
-use Bitrix\Crm\Filter;
-use Bitrix\Crm\Statistics\StatisticEntryManager;
-use Bitrix\Crm\Exclusion;
 use Bitrix\Crm\Service;
+use Bitrix\Crm\Statistics\StatisticEntryManager;
 use Bitrix\Crm\UserField\Visibility\VisibilityManager;
 use Bitrix\Main\Application;
 use Bitrix\Main\DI\ServiceLocator;
@@ -20,7 +24,7 @@ use Bitrix\Main\IO\Path;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Text\HtmlFilter;
-use Bitrix\Main\Type\Date;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter\FieldAdapter;
 use Bitrix\Main\UI\Filter\Options;
 use Bitrix\UI\Form\EntityEditorConfiguration;
@@ -36,6 +40,7 @@ abstract class Entity
 	protected const EDITOR_CONFIGURATION_CATEGORY = 'crm.entity.editor';
 	protected const OPTION_NAME_VIEW_FIELDS_PREFIX = 'kanban_select_more_v4_';
 	protected const OPTION_NAME_EDIT_FIELDS_PREFIX = 'kanban_edit_more_v4_';
+	protected const OPTION_NAME_CURRENT_SORT_PREFIX = 'kanban_current_sort_';
 	protected const VIEW_TYPE_VIEW = 'view';
 	protected const VIEW_TYPE_EDIT = 'edit';
 
@@ -47,6 +52,7 @@ abstract class Entity
 	protected $userFields;
 	protected $loadedItems = [];
 	protected $displayedFields;
+	protected $dateFormatter;
 	/** @var Service\Factory */
 	protected $factory;
 
@@ -63,7 +69,8 @@ abstract class Entity
 		],
 	];
 
-	protected static $instances = [];
+	protected static array $instances = [];
+	protected static array $gridIdInstances = [];
 
 	protected const PATH_MARKERS = [
 		'#lead_id#',
@@ -82,6 +89,7 @@ abstract class Entity
 	public function __construct()
 	{
 		Service\Container::getInstance()->getLocalization()->loadMessages();
+		$this->dateFormatter = new \Bitrix\Crm\Format\Date();
 		$this->initFactory();
 	}
 
@@ -157,6 +165,11 @@ abstract class Entity
 		return $this->factory->getStagesEntityId($this->getCategoryId());
 	}
 
+	public function getStagesList(): array
+	{
+		return \Bitrix\Crm\StatusTable::getStatusesByEntityId($this->getStatusEntityId());
+	}
+
 	/**
 	 * Get initial fields to select items
 	 *
@@ -186,13 +199,30 @@ abstract class Entity
 
 	public function getGridId(): string
 	{
-		$gridId = new \Bitrix\Crm\Component\EntityList\GridId($this->getTypeId());
+		$gridId = $this->getGridIdInstance($this->getTypeId());
 		if($this->factory->isCategoriesSupported())
 		{
 			return $gridId->getValueForCategory($this->getCategoryId());
 		}
 
 		return $gridId->getValue();
+	}
+
+	protected function getGridIdInstance(int $typeId): GridId
+	{
+		if (!isset(static::$gridIdInstances[$typeId]))
+		{
+			static::$gridIdInstances[$typeId] = new \Bitrix\Crm\Component\EntityList\GridId($typeId);
+		}
+
+		return static::$gridIdInstances[$typeId];
+	}
+
+	public function setGridIdInstance(GridId $gridId, int $typeId): self
+	{
+		static::$gridIdInstances[$typeId] = $gridId;
+
+		return $this;
 	}
 
 	public function getFilterPresets(): array
@@ -218,6 +248,16 @@ abstract class Entity
 	public function isCategoriesSupported(): bool
 	{
 		return $this->factory->isCategoriesSupported();
+	}
+
+	/**
+	 * Return true if this entity can show elements from all categories
+	 *
+	 * @return bool
+	 */
+	public function canUseAllCategories(): bool
+	{
+		return false;
 	}
 
 	/**
@@ -517,7 +557,26 @@ abstract class Entity
 			$fields = $this->getDefaultAdditionalSelectFields();
 		}
 
+		$this->removeNotVisibleFieldsForUser($fields);
+
 		return $fields;
+	}
+
+	/**
+	 * Remove fields that have visibility settings and are not visible to the current user
+	 *
+	 * @param array $fields
+	 */
+	protected function removeNotVisibleFieldsForUser(array &$fields): void
+	{
+		$visibleUserFields = VisibilityManager::filterNotAccessibleFields($this->getTypeId(), array_keys($fields));
+		foreach ($fields as $fieldName => $fieldTitle)
+		{
+			if (!in_array($fieldName, $visibleUserFields))
+			{
+				unset($fields[$fieldName]);
+			}
+		}
 	}
 
 	/**
@@ -1100,6 +1159,8 @@ abstract class Entity
 		{
 			$item['PRICE'] = $item['OPPORTUNITY_ACCOUNT'];
 		}
+
+		$item['ENTITY_CURRENCY_ID'] = $item['CURRENCY_ID'];
 		if (!empty($item['ACCOUNT_CURRENCY_ID']))
 		{
 			$item['CURRENCY_ID'] = $item['ACCOUNT_CURRENCY_ID'];
@@ -1111,21 +1172,23 @@ abstract class Entity
 		if (empty($item['CURRENCY_ID']) || $item['CURRENCY_ID'] === $currency)
 		{
 			$item['PRICE'] = (float)$item['PRICE'];
-			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['PRICE'], $currency);
+			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['OPPORTUNITY'], $item['ENTITY_CURRENCY_ID']);
 		}
 		else
 		{
 			$item['PRICE'] = \CCrmCurrency::ConvertMoney($item['PRICE'], $item['CURRENCY_ID'], $currency);
-			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['PRICE'], $currency);
+			$item['PRICE_FORMATTED'] = \CCrmCurrency::MoneyToString($item['OPPORTUNITY'], $item['ENTITY_CURRENCY_ID']);
 		}
 
-		$item['OPPORTUNITY'] = \CCrmCurrency::MoneyToString(
-			$item['OPPORTUNITY'],
-			$item['CURRENCY_ID']
-		);
+		$item['OPPORTUNITY_VALUE'] = $item['OPPORTUNITY'];
+
+		$item['OPPORTUNITY'] = [
+			'SUM' => $item['OPPORTUNITY'],
+			'CURRENCY' => $item['ENTITY_CURRENCY_ID'],
+		];
 
 		$item['OPENED'] = in_array($item['OPENED'], ['Y', '1', 1, true], true) ? 'Y' : 'N';
-		$item['DATE_FORMATTED'] = $this->getFormattedDate($item['DATE'], (bool)$item['FORMAT_TIME']);
+		$item['DATE_FORMATTED'] = $this->dateFormatter->format($item['DATE'], (bool)$item['FORMAT_TIME']);
 
 		return $item;
 	}
@@ -1162,9 +1225,10 @@ abstract class Entity
 	 * @param array $ids
 	 * @param bool $isIgnore
 	 * @param \CCrmPerms|null $permissions
+	 * @param array $params
 	 * @throws Exception
 	 */
-	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void
+	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null, array $params = []): void
 	{
 		$provider = $this->getItemsProvider();
 		if (!method_exists($provider, 'delete'))
@@ -1189,12 +1253,12 @@ abstract class Entity
 				);
 				if ($this->isDeleteAfterExclusion())
 				{
-					$entity->delete($id);
+					$entity->delete($id, $params);
 				}
 			}
 			else
 			{
-				$entity->delete($id);
+				$entity->delete($id, $params);
 			}
 		}
 	}
@@ -1327,28 +1391,29 @@ abstract class Entity
 	{
 		$result = new Result();
 
-		$provider = $this->getItemsProvider();
-		$entity = new $provider(false);
-		$fields = [$this->getStageFieldName() => $stageId];
-		$entity->Update(
-			$id,
-			$fields,
-			true,
-			true,
-			[
-				'REGISTER_SONET_EVENT' => true,
-			]
-		);
-		if (!empty($entity->LAST_ERROR))
+		if (!$this->factory->isStagesEnabled())
 		{
-			$result->addError(new Error($entity->LAST_ERROR));
-		}
-		elseif ($this->isNeedToRunAutomation())
-		{
-			$this->runAutomationOnUpdate($id, $fields);
+			return $result->addError(new Error("Entity {{$this->getTypeName()}} doesn't support stages."));
 		}
 
-		return $result;
+		$item = $this->factory->getItem($id);
+		if (!$item)
+		{
+			return $result->addError(new Error(Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND')));
+		}
+
+		if (!$item->hasField(Item::FIELD_NAME_STAGE_ID))
+		{
+			return $result->addError(new Error("Item {{$id}} doesn't support stages."));
+		}
+
+		$item->setStageId($stageId);
+
+		return
+			$this->factory
+				->getUpdateOperation($item)
+				->launch()
+		;
 	}
 
 	protected function runAutomationOnUpdate(int $id, array $fields): void
@@ -1499,12 +1564,16 @@ abstract class Entity
 		];
 	}
 
-	public function getGridFilter(): array
+	public function getGridFilter(?string $filterId = null): array
 	{
 		$result = [];
 
 		$filter = $this->getFilter();
 		$grid = $this->getFilterOptions();
+		if ($filterId)
+		{
+			$grid->setCurrentFilterPresetId($filterId);
+		}
 		$usedFields = $grid->getUsedFields();
 		foreach($this->getPersistentFilterFields() as $fieldName)
 		{
@@ -1604,6 +1673,11 @@ abstract class Entity
 			));
 		}
 
+		if (!$isFieldsInserted && !empty($fields))
+		{
+			$result = array_merge($result, $fields);
+		}
+
 		return $result;
 	}
 
@@ -1690,11 +1764,14 @@ abstract class Entity
 		];
 	}
 
-	public static function getInstance(string $entityTypeName): ?Entity
+	public static function getInstance(string $entityTypeName, string $viewMode = \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES): ?Entity
 	{
 		Loc::loadMessages(Path::combine(__DIR__, 'helper.php'));
 		Loc::loadMessages(Application::getDocumentRoot() . BX_ROOT . '/components'.\CComponentEngine::makeComponentPath('bitrix:crm.kanban') . '/ajax.fields.php');
-		if(!array_key_exists($entityTypeName, static::$instances))
+
+		$instanceId = $entityTypeName . '_' . $viewMode;
+
+		if(!array_key_exists($instanceId, static::$instances))
 		{
 			$instance = null;
 			if($entityTypeName === \CCrmOwnerType::LeadName)
@@ -1703,7 +1780,19 @@ abstract class Entity
 			}
 			elseif($entityTypeName === \CCrmOwnerType::DealName)
 			{
-				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.deal');
+				$instance = ServiceLocator::getInstance()->get(
+					$viewMode === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+						? 'crm.kanban.entity.deal.activities'
+						: 'crm.kanban.entity.deal'
+				);
+			}
+			elseif($entityTypeName === \CCrmOwnerType::ContactName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.contact');
+			}
+			elseif($entityTypeName === \CCrmOwnerType::CompanyName)
+			{
+				$instance = ServiceLocator::getInstance()->get('crm.kanban.entity.company');
 			}
 			elseif($entityTypeName === \CCrmOwnerType::InvoiceName)
 			{
@@ -1755,25 +1844,10 @@ abstract class Entity
 					}
 				}
 			}
-			static::$instances[$entityTypeName] = $instance;
+			static::$instances[$instanceId] = $instance;
 		}
 
-		return static::$instances[$entityTypeName];
-	}
-
-	/**
-	 * @param string|null $type
-	 * @return array|mixed
-	 */
-	public function getDateFormat(?string $type)
-	{
-		$lang = 'ru';
-		if (LANGUAGE_ID === 'de' || LANGUAGE_ID === 'en')
-		{
-			$lang = LANGUAGE_ID;
-		}
-
-		return ($type === null ? $this->dateFormats : $this->dateFormats[$type][$lang]);
+		return static::$instances[$instanceId];
 	}
 
 	/**
@@ -1796,6 +1870,8 @@ abstract class Entity
 				'price_formatted' => $data['PRICE_FORMATTED'],
 				'date' => $data['DATE_FORMATTED'],
 				'categoryId' => $data['CATEGORY_ID'] ?? null,
+				'sort' => $this->prepareItemSort($data),
+				'lastActivity' => $this->prepareItemLastActivity($data),
 			],
 			'rawData' => $data // @todo get only visible values for current user
 		];
@@ -1835,9 +1911,9 @@ abstract class Entity
 	 * @param array $data
 	 * @return string
 	 */
-	protected function getColumnId(array $data): string
+	public function getColumnId(array $data): string
 	{
-		return '';
+		return ($data[$this->getStageFieldName()] ?? '');
 	}
 
 	/**
@@ -1857,10 +1933,11 @@ abstract class Entity
 	}
 
 	/**
-	 * @param bool $clearCache  Clear static cache.
-	 * @return \Bitrix\Crm\Service\Display\Field[]
+	 * @param bool $clearCache Clear static cache.
+	 * @param string|null $context
+	 * @return Field[]
 	 */
-	public function getDisplayedFieldsList(bool $clearCache = false): array
+	public function getDisplayedFieldsList(bool $clearCache = false, ?string $context = null): array
 	{
 		if (is_array($this->displayedFields) && !$clearCache)
 		{
@@ -1873,25 +1950,28 @@ abstract class Entity
 		$baseFields = $this->getBaseFields();
 		$userFields = $this->getUserFields();
 		$extraFields = $this->getExtraDisplayedFields();
+		$context = ($context ?? Field::KANBAN_CONTEXT);
+		$dateFormat = $this->dateFormatter->getDateFormat('full');
 
 		foreach ($visibleFields as $fieldId => $title)
 		{
-			if (isset($extraFields[$fieldId]) && $extraFields[$fieldId] instanceof Service\Display\Field)
+			if (isset($extraFields[$fieldId]) && $extraFields[$fieldId] instanceof Field)
 			{
 				$this->displayedFields[$fieldId] = $extraFields[$fieldId];
 			}
 			elseif (isset($baseFields[$fieldId]))
 			{
-				$this->displayedFields[$fieldId] = Service\Display\Field::createFromBaseField($fieldId, $baseFields[$fieldId]);
+				$this->prepareValueType($fieldId, $baseFields[$fieldId]);
+				$this->displayedFields[$fieldId] = Field::createFromBaseField($fieldId, $baseFields[$fieldId]);
 			}
 			elseif (isset($userFields[$fieldId]))
 			{
-				$this->displayedFields[$fieldId] = Service\Display\Field::createFromUserField($fieldId, $userFields[$fieldId]);
+				$this->displayedFields[$fieldId] = Field::createFromUserField($fieldId, $userFields[$fieldId]);
 			}
 			else
 			{
 				$this->displayedFields[$fieldId] =
-					(Service\Display\Field::createByType('string', $fieldId)) // @todo is it correct use string for all?
+					(Field::createByType('string', $fieldId))
 						->setTitle($title)
 				;
 			}
@@ -1902,7 +1982,7 @@ abstract class Entity
 			}
 			if (in_array($this->displayedFields[$fieldId]->getType(), ['date', 'datetime']))
 			{
-				$this->displayedFields[$fieldId]->addDisplayParam('DATETIME_FORMAT', $this->getDateFormat('full'));
+				$this->displayedFields[$fieldId]->addDisplayParam('DATETIME_FORMAT', $dateFormat);
 			}
 			if ($fieldId === $this->getAssignedByFieldName())
 			{
@@ -1910,11 +1990,32 @@ abstract class Entity
 			}
 		}
 
+		foreach ($this->displayedFields as $field)
+		{
+			$field->setContext($context);
+		}
+
 		return $this->displayedFields;
 	}
 
 	/**
-	 * @return \Bitrix\Crm\Service\Display\Field[]
+	 * @param string $id
+	 * @param array $fieldInfo
+	 */
+	protected function prepareValueType(string $id, array &$fieldInfo): void
+	{
+		if ($id === 'OPPORTUNITY')
+		{
+			$fieldInfo['TYPE'] = 'money';
+		}
+		else
+		{
+			$fieldInfo['TYPE'] = ($fieldInfo['TYPE'] ?? 'string');
+		}
+	}
+
+	/**
+	 * @return Field[]
 	 */
 	protected function getExtraDisplayedFields()
 	{
@@ -2302,41 +2403,6 @@ abstract class Entity
 		return $traces;
 	}
 
-	protected function getFormattedDate($date, bool $formatTime): string
-	{
-		if ($date instanceof Date || $date instanceof \DateTime)
-		{
-			$timestamp = $date->getTimestamp();
-		}
-		elseif ($date === '')
-		{
-			return '';
-		}
-		else
-		{
-
-
-			$timestamp = \MakeTimeStamp($date);
-		}
-
-		$now = time() + \CTimeZone::GetOffset();
-		$dateFormat = $this->getDateFormat(
-			date('Y') === date('Y', $timestamp)
-				? 'short'
-				: 'full'
-		);
-
-		return (
-			!$formatTime
-			? \FormatDate($dateFormat, $timestamp, $now)
-			: (
-				($now - $timestamp) / 3600 > 48
-				? \FormatDate($dateFormat, $timestamp, $now)
-				: \FormatDate('x', $timestamp, $now)
-			)
-		);
-	}
-
 	/**
 	 * @return array
 	 */
@@ -2348,5 +2414,216 @@ abstract class Entity
 	public function getAllowStages(array $filter = []): array
 	{
 		return [];
+	}
+
+	public function setContactDataProvider(ClientDataProvider $dataProvider): self
+	{
+		$this->contactDataProvider = $dataProvider;
+
+		return $this;
+	}
+
+	public function setCompanyDataProvider(ClientDataProvider $dataProvider): self
+	{
+		$this->companyDataProvider = $dataProvider;
+
+		return $this;
+	}
+
+	public function applyCountersFilter(array &$filter): void
+	{
+		if (!$this->isActivityCountersFilterSupported())
+		{
+			return;
+		}
+
+		$filterFactory = Container::getInstance()->getFilterFactory();
+		$provider = $filterFactory->getDataProvider(
+			$filterFactory::getSettingsByGridId($this->getTypeId(), $this->getGridId()),
+		);
+		if ($provider instanceof Filter\EntityDataProvider)
+		{
+			$provider->applyCounterFilter(
+				$this->getTypeId(),
+				$filter,
+				EntityCounter::internalizeExtras($_REQUEST)
+			);
+		}
+		unset($filterFactory, $provider);
+	}
+
+	public function getSortSettings(): Sort\Settings
+	{
+		if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled() && $this->isLastActivityEnabled())
+		{
+			$currentSort = (string)\CUserOptions::GetOption(static::OPTION_CATEGORY, $this->getCurrentSortOptionName());
+			if (!Sort\Type::isDefined($currentSort))
+			{
+				$currentSort = $this->getDefaultSortType();
+			}
+		}
+		else
+		{
+			$currentSort = Sort\Type::BY_ID;
+		}
+
+		return new Sort\Settings($this->getSupportedSortTypes(), $currentSort);
+	}
+
+	protected function getCurrentSortOptionName(): string
+	{
+		$typePostfix = mb_strtolower($this->getTypeName()) . '_' . $this->categoryId;
+
+		return (static::OPTION_NAME_CURRENT_SORT_PREFIX . $typePostfix);
+	}
+
+	protected function getDefaultSortType(): string
+	{
+		return Sort\Type::BY_ID;
+	}
+
+	protected function getSupportedSortTypes(): array
+	{
+		return [Sort\Type::BY_ID];
+	}
+
+	final public function setCurrentSortType(string $sortType): Result
+	{
+		$result = new Result();
+
+		if (!Sort\Type::isDefined($sortType))
+		{
+			return $result->addError(
+				new Error('Sort type is invalid'),
+			);
+		}
+
+		if (!in_array($sortType, $this->getSupportedSortTypes(), true))
+		{
+			return $result->addError(
+				new Error('Sort type is not supported by this entity'),
+			);
+		}
+
+		$isSuccess = \CUserOptions::SetOption(static::OPTION_CATEGORY, $this->getCurrentSortOptionName(), $sortType);
+		if (!$isSuccess)
+		{
+			return $result->addError(
+				new Error('Sort type saving failed for unknown reason'),
+			);
+		}
+
+		return $result;
+	}
+
+	final public function prepareItemSort(array $rawRow): array
+	{
+		$sort = [];
+
+		$lastActivityTimeAsString = $rawRow[Item::FIELD_NAME_LAST_ACTIVITY_TIME] ?? null;
+		if (is_string($lastActivityTimeAsString))
+		{
+			try
+			{
+				// time was converted automatically to user time on the DB read
+				$lastActivityTime = DateTime::createFromUserTime($lastActivityTimeAsString);
+			}
+			catch (\Throwable $throwable)
+			{
+				$lastActivityTime = null;
+			}
+
+			if ($lastActivityTime)
+			{
+				// in server timezone
+				$sort['lastActivityTimestamp'] = $lastActivityTime->getTimestamp();
+			}
+		}
+
+		$sort['id'] = (int)($rawRow['ID'] ?? 0);
+
+		return $sort;
+	}
+
+	/**
+	 * @param Array<string, mixed> $rawRow
+	 * @return Array<string, mixed>|null
+	 */
+	final public function prepareItemLastActivity(array $rawRow): ?array
+	{
+		$id = (int)($rawRow['ID'] ?? null);
+		if ($id <= 0)
+		{
+			return null;
+		}
+
+		$info = $this->prepareMultipleItemsLastActivity([$rawRow]);
+
+		return $info[$id] ?? null;
+	}
+
+	/**
+	 * @param Array<Array<string, mixed>> $rawRows
+	 * @return Array<int, Array<string, mixed>>
+	 */
+	final public function prepareMultipleItemsLastActivity(array $rawRows): array
+	{
+		$allUserIds = [];
+		$result = [];
+		foreach ($rawRows as $singleRawRow)
+		{
+			$rowId = (int)($singleRawRow['ID'] ?? null);
+			if ($rowId <= 0)
+			{
+				continue;
+			}
+
+			$lastActivityBy = (int)($singleRawRow[Item::FIELD_NAME_LAST_ACTIVITY_BY] ?? null);
+			if ($lastActivityBy > 0)
+			{
+				$allUserIds[$rowId] = $lastActivityBy;
+			}
+
+			$lastActivityTimeString = (string)($singleRawRow[Item::FIELD_NAME_LAST_ACTIVITY_TIME] ?? null);
+			try
+			{
+				// time was converted automatically to user time on the DB read
+				$lastActivityTime = DateTime::createFromUserTime($lastActivityTimeString);
+			}
+			catch (\Throwable $throwable)
+			{
+				$lastActivityTime = null;
+			}
+
+			if ($lastActivityTime)
+			{
+				$result[$rowId]['timestamp'] = $lastActivityTime->toUserTime()->getTimestamp();
+			}
+		}
+
+		if (!empty($allUserIds))
+		{
+			$users = Container::getInstance()->getUserBroker()->getBunchByIds(array_unique($allUserIds));
+
+			foreach ($allUserIds as $rowId => $userId)
+			{
+				$user = $users[$userId] ?? null;
+				if ($user)
+				{
+					$result[$rowId]['user'] = [
+						'id' => $userId,
+						'link' => $user['SHOW_URL'] ?? null,
+						'picture' => $user['PHOTO_URL'] ?? null,
+					];
+				}
+			}
+		}
+
+		return $result;
+	}
+
+	public function isLastActivityEnabled(): bool
+	{
+		return ($this->factory && $this->factory->isLastActivityEnabled());
 	}
 }

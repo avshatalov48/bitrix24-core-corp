@@ -89,6 +89,7 @@ class Creation extends LogMessage
 	public function getContentBlocks(): ?array
 	{
 		$result = [];
+
 		$assocEntityTypeId = $this->getModel()->getAssociatedEntityTypeId();
 		if ($assocEntityTypeId === \CCrmOwnerType::Activity)
 		{

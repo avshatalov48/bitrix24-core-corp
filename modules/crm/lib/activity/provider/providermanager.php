@@ -1,7 +1,12 @@
 <?php
 namespace Bitrix\Crm\Activity\Provider;
 
+use Bitrix\Crm\Badge\SourceIdentifier;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\ORM\Query;
 
 Loc::loadMessages(__FILE__);
 
@@ -15,26 +20,27 @@ class ProviderManager
 	{
 		if(self::$providers === null)
 		{
-			self::$providers = array(
-				Meeting::getId()         => Meeting::className(),
-				Task::getId()			 => Task::className(),
-				Call::getId()            => Call::className(),
-				CallList::getId()        => CallList::className(),
-				Email::getId()           => Email::className(),
-				Sms::getId()             => Sms::className(),
-				Notification::getId()    => Notification::className(),
-				OpenLine::getId()        => OpenLine::className(),
-				WebForm::getId()         => WebForm::className(),
-				Livefeed::getId()        => Livefeed::className(),
+			self::$providers = [
+				Meeting::getId() => Meeting::className(),
+				Task::getId() => Task::className(),
+				Call::getId() => Call::className(),
+				CallList::getId() => CallList::className(),
+				Email::getId() => Email::className(),
+				Sms::getId() => Sms::className(),
+				Notification::getId() => Notification::className(),
+				OpenLine::getId() => OpenLine::className(),
+				WebForm::getId() => WebForm::className(),
+				Livefeed::getId() => Livefeed::className(),
 				ExternalChannel::getId() => ExternalChannel::className(),
-				Request::getId()         => Request::className(),
-				RestApp::getId()         => RestApp::className(),
-				Delivery::getId()        => Delivery::className(),
-				CallTracker::getId()    => CallTracker::class,
-				StoreDocument::getId()   => StoreDocument::className(),
+				Request::getId() => Request::className(),
+				RestApp::getId() => RestApp::className(),
+				Delivery::getId() => Delivery::className(),
+				CallTracker::getId() => CallTracker::class,
+				StoreDocument::getId() => StoreDocument::className(),
 				Document::getId() => Document::className(),
 				SignDocument::getId() => SignDocument::className(),
-			);
+				ToDo::getId() => ToDo::className(),
+			];
 
 			if(Visit::isAvailable())
 			{
@@ -154,5 +160,118 @@ class ProviderManager
 		{
 			$provider::processCreation($activityFields, $params);
 		}
+	}
+
+	/**
+	 * @param int $activityId
+	 * @param array $activityFields - fields after an update, in other words - current fields
+	 * @param array $bindings - bindings that were not changed in this update (there is a separate method for bindings change)
+	 * @return void
+	 */
+	final public static function syncBadgesOnActivityUpdate(int $activityId, array $activityFields, array $bindings = []): void
+	{
+		$provider = \CCrmActivity::GetActivityProvider($activityFields);
+		if (!isset($provider))
+		{
+			return;
+		}
+
+		if (empty($bindings))
+		{
+			$activityBindings = \CCrmActivity::GetBindings($activityId);
+			$bindings = is_array($activityBindings) ? $activityBindings : [];
+		}
+
+		$bindingsFiltered = self::filterBindings($bindings);
+		if (empty($bindingsFiltered))
+		{
+			return;
+		}
+
+		$provider::syncBadges($activityId, $activityFields, $bindingsFiltered);
+		foreach ($bindingsFiltered as $singleBinding)
+		{
+			Monitor::getInstance()->onBadgesSync(
+				new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID'])
+			);
+		}
+	}
+
+	final public static function syncBadgesOnBindingsChange(
+		int $activityId,
+		array $addedBindings,
+		array $removedBindings
+	): void
+	{
+		$container = Container::getInstance();
+		$source = new SourceIdentifier(
+			SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			\CCrmOwnerType::Activity,
+			$activityId,
+		);
+
+		$activity = $container->getActivityBroker()->getById($activityId);
+		if ($activity)
+		{
+			$provider = \CCrmActivity::GetActivityProvider($activity);
+			if ($provider)
+			{
+				$provider::syncBadges(
+					$activityId,
+					$activity,
+					self::filterBindings($addedBindings),
+				);
+			}
+		}
+
+		$removedBindingsFiltered = self::filterBindings($removedBindings);
+		if (empty($removedBindingsFiltered))
+		{
+			return;
+		}
+
+		$badgesToRemoveQuery =
+			\Bitrix\Crm\Badge\Model\BadgeTable::query()
+				->setSelect(['TYPE', 'VALUE', 'ENTITY_TYPE_ID', 'ENTITY_ID'])
+				->where('SOURCE_PROVIDER_ID', $source->getProviderId())
+				->where('SOURCE_ENTITY_TYPE_ID', $source->getEntityTypeId())
+				->where('SOURCE_ENTITY_ID', $source->getEntityId())
+		;
+		$bindingsFilter = Query\Query::filter()->logic(Query\Filter\ConditionTree::LOGIC_OR);
+		foreach ($removedBindingsFiltered as $binding)
+		{
+			$bindingsFilter->where(
+				Query\Query::filter()
+					->where('ENTITY_TYPE_ID', $binding['OWNER_TYPE_ID'])
+					->where('ENTITY_ID', $binding['OWNER_ID'])
+			);
+		}
+
+		$badgesToRemoveQuery->where($bindingsFilter);
+
+		foreach ($badgesToRemoveQuery->fetchCollection() as $badgeToRemove)
+		{
+			$badge = $container->getBadge($badgeToRemove->get('TYPE'), $badgeToRemove->get('VALUE'));
+			$badge->unbind(
+				new ItemIdentifier($badgeToRemove->get('ENTITY_TYPE_ID'), $badgeToRemove->get('ENTITY_ID')),
+				$source,
+			);
+		}
+	}
+
+	private static function filterBindings(array $bindings): array
+	{
+		return array_filter(
+			$bindings,
+			static function ($binding): bool {
+				return (
+					is_array($binding)
+					&& isset($binding['OWNER_TYPE_ID'])
+					&& isset($binding['OWNER_ID'])
+					&& \CCrmOwnerType::IsDefined($binding['OWNER_TYPE_ID'])
+					&& (int)$binding['OWNER_ID'] > 0
+				);
+			}
+		);
 	}
 }

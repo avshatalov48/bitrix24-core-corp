@@ -347,6 +347,10 @@ export class Entity extends EventEmitter
 			this.emit('showTask', baseEvent.getTarget());
 		});
 
+		item.subscribe('destroyActionPanel', (baseEvent: BaseEvent) => {
+			this.emit('destroyActionPanel', baseEvent.getTarget());
+		});
+
 		item.subscribe('changeTaskResponsible', (baseEvent: BaseEvent) => {
 			this.emit('changeTaskResponsible', baseEvent.getTarget());
 		});

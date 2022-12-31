@@ -31,9 +31,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_TmpFile_Query query()
- * @method static EO_TmpFile_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_TmpFile_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_TmpFile_Result getById($id)
- * @method static EO_TmpFile_Result getList(array $parameters = array())
+ * @method static EO_TmpFile_Result getList(array $parameters = [])
  * @method static EO_TmpFile_Entity getEntity()
  * @method static \Bitrix\Disk\Internals\EO_TmpFile createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Internals\EO_TmpFile_Collection createCollection()

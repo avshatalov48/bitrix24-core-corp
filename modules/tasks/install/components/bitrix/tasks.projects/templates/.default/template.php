@@ -118,7 +118,7 @@ if ($isBitrix24Template)
 		$btnText =
 			$arResult['isScrumList']
 				? Loc::getMessage('TASKS_PROJECTS_SCRUM_ADD_PROJECT')
-				: Loc::getMessage('TASKS_PROJECTS_ADD_PROJECT')
+				: Loc::getMessage('TASKS_PROJECTS_CREATE_PROJECT')
 		;
 
 		$createProjectUrl = $arParams['PATH_TO_GROUP_CREATE'];
@@ -144,7 +144,7 @@ if ($isBitrix24Template)
 		}
 		?>
 		<div class="pagetitle-container tasks-projects-filter-btn-add">
-			<a class="ui-btn ui-btn-success ui-btn-icon-add" href="<?= $createProjectUrl ?>" id="projectAddButton">
+			<a class="ui-btn ui-btn-success" href="<?= $createProjectUrl ?>" id="projectAddButton">
 				<?= $btnText ?>
 			</a>
 		</div>

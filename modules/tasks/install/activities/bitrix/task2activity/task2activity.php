@@ -5,9 +5,13 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\Emoji;
 
-class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActivityExternalEventListener, IBPEventDrivenActivity
+class CBPTask2Activity extends CBPActivity implements
+	IBPEventActivity,
+	IBPActivityExternalEventListener,
+	IBPEventDrivenActivity
 {
 	private $isInEventActivityMode = false;
 	private static $cycleCounter = [];
@@ -373,6 +377,7 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 		$this->TaskId = $result;
 		$this->markAsBPTask($result);
 		$this->WriteToTrackingService(str_replace("#VAL#", $result, GetMessage("BPSA_TRACK_OK")));
+		$this->logDebugTaskUrl($result);
 
 		return $result > 0;
 	}
@@ -1115,7 +1120,7 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 		$fields = self::__GetFields();
 		$bpOptions = [
 			'HoldToClose' => [
-				'Name' => \Bitrix\Main\Localization\Loc::getMessage('BPTA1A_HOLD_TO_CLOSE'),
+				'Name' => Loc::getMessage('BPTA1A_HOLD_TO_CLOSE'),
 				'Type' => \Bitrix\Bizproc\FieldType::BOOL,
 				'BaseType' => \Bitrix\Bizproc\FieldType::BOOL,
 				'Required' => true,
@@ -1168,5 +1173,31 @@ class CBPTask2Activity extends CBPActivity implements IBPEventActivity, IBPActiv
 		}
 
 		return parent::getDebugInfo($values, $map);
+	}
+
+	private function logDebugTaskUrl(int $taskId)
+	{
+		/** @var CBPDocumentService $documentService*/
+		$documentService = $this->workflow->getService('DocumentService');
+
+		$url = $documentService->getDocumentAdminPage(
+			\Bitrix\Tasks\Integration\Bizproc\Document\Task::resolveDocumentId($taskId)
+		);
+
+		$toWrite = [
+			'propertyName' => Loc::getMessage('BPTA1A_TASK_URL_NAME'),
+			'propertyValue' => $url,
+			'propertyLinkName' => Loc::getMessage('BPTA1A_TASK_URL_LABEL'),
+		];
+
+		$this->writeDebugTrack(
+			$this->getWorkflowInstanceId(),
+			$this->getName(),
+			$this->executionStatus,
+			$this->executionResult,
+			$this->Title ?? '',
+			$toWrite,
+			CBPTrackingType::DebugLink,
+		);
 	}
 }

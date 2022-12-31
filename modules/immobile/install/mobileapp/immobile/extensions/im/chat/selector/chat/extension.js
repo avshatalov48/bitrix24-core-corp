@@ -26,6 +26,7 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 						'L',
 						'O',
 					],
+					fillDialogWithDefaultValues: false,
 				},
 			},
 			'im-chat-user': {
@@ -36,6 +37,7 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 						'C',
 						'O',
 					],
+					fillDialogWithDefaultValues: false,
 				},
 			},
 			'im-bot': {
@@ -48,6 +50,7 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 						'S',
 						'N',
 					],
+					fillDialogWithDefaultValues: false,
 				},
 			},
 			'imbot-network' : {
@@ -173,16 +176,12 @@ jn.define('im/chat/selector/chat', (require, exports, module) => {
 
 		onFetchResult(items, cache = false)
 		{
-			if (this.items.length > 0)
+			if (this.provider.queryString !== this.query)
 			{
-				let ids = this.items.map(item => item.id);
-				items = items.filter(item => !ids.includes(item.id));
-				this.items = this.items.concat(items);
+				return;
 			}
-			else
-			{
-				this.items = items;
-			}
+
+			this.items = items;
 
 			this.items.forEach(item => this.addSectionCodeForItem(item));
 

@@ -6,6 +6,8 @@ use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
 class Text extends ContentBlock
 {
+	use TextPropertiesMixin;
+
 	public const COLOR_GREEN = 'green';
 	public const COLOR_BASE_50 = 'base_50';
 	public const COLOR_BASE_70 = 'base_70';
@@ -20,23 +22,34 @@ class Text extends ContentBlock
 	public const FONT_SIZE_MD = 'md';
 
 	protected ?string $value = null;
-	protected ?string $fontWeight = null;
-	protected ?string $fontSize = null;
-	protected ?string $color = null;
+	protected ?string $title = null;
+	protected ?bool $isMultiline = null;
 
 	public function getRendererName(): string
 	{
 		return 'TextBlock';
 	}
 
-	public function getColor(): ?string
+	public function getTitle(): ?string
 	{
-		return $this->color;
+		return $this->title;
 	}
 
-	public function setColor(?string $color): self
+	public function setTitle(?string $title): self
 	{
-		$this->color = $color;
+		$this->title = $title;
+
+		return $this;
+	}
+
+	public function isMultiline(): ?bool
+	{
+		return $this->isMultiline;
+	}
+
+	public function setIsMultiline(?bool $isMultiline = true): self
+	{
+		$this->isMultiline = $isMultiline;
 
 		return $this;
 	}
@@ -55,6 +68,11 @@ class Text extends ContentBlock
 
 	public function getIsBold(): ?bool
 	{
+		if (is_null($this->fontWeight))
+		{
+			return null;
+		}
+
 		return $this->fontWeight === self::FONT_WEIGHT_BOLD;
 	}
 
@@ -89,14 +107,15 @@ class Text extends ContentBlock
 		return $this;
 	}
 
-
 	protected function getProperties(): array
 	{
-		return [
-			'weight' => $this->getFontWeight(),
-			'size' => $this->getFontSize(),
-			'color' => $this->getColor(),
-			'value' => html_entity_decode($this->getValue()),
-		];
+		return array_merge(
+			$this->getTextProperties(),
+			[
+				'value' => html_entity_decode($this->getValue()),
+				'multiline' => $this->isMultiline(),
+				'title' => $this->getTitle(),
+			]
+		);
 	}
 }

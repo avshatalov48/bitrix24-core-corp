@@ -18,11 +18,6 @@
 			this.selectedItems = [];
 			this.singleSelection = false;
  			this.title = "";
-			this.doSearch = EntitySelector.debounce(function (text)
-			{
-				this.items = [];
-				this.provider.doSearch(text)
-			}, 100, this);
 
 			this.updateList = items => {
 				if (this.singleSelection === true) {
@@ -67,16 +62,14 @@
 
 		onFetchResult(items, cache = false)
 		{
-			if (this.items.length > 0) {
-				let ids = this.items.map(item => item.id);
-				items = items.filter(item => !ids.includes(item.id))
-				this.items = this.items.concat(items);
-			}
-			else
+			if (this.provider.queryString !== this.query)
 			{
-				this.items = items;
+				return;
 			}
-			this.items.forEach(item => item.sectionCode = "common")
+
+			this.items = items;
+
+			this.items.forEach(item => item.sectionCode = "common");
 			this.scopeFilter(this.items, cache);
 		}
 
@@ -180,23 +173,18 @@
 			this.resolve(data);
 		}
 
-		onListFill({text})
+		onListFill({ text })
 		{
-			this.provider.setQuery(text)
-			let search = this.query !== text
 			this.query = text;
-			if (search) {
-				if (this.query === "")
-				{
-					this.doSearch.cancel();
-					this.showRecent()
-				}
-				else
-				{
-					this.doSearch(text)
-				}
-			}
 
+			if (text === '')
+			{
+				this.provider.loadRecent();
+			}
+			else
+			{
+				this.provider.doSearch(text);
+			}
 		}
 
 		onScopeChanged({scope})
@@ -217,23 +205,6 @@
 			if (this.singleSelection && data.item.type === 'info') {
 				this.ui.close(() => this.onResult(this.provider.prepareResult([data.item])));
 			}
-		}
-
-		static debounce(fn, timeout, ctx)
-		{
-			let timer = 0;
-			let func = function ()
-			{
-				clearTimeout(timer);
-				timer = setTimeout(() => fn.apply(ctx, arguments), timeout);
-			};
-
-			func.cancel = function () {
-				clearTimeout(timer)
-			}
-
-			return func;
-
 		}
 	}
 

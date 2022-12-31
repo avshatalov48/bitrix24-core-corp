@@ -5,6 +5,7 @@ define('NO_AGENT_CHECK', true);
 define('BX_PUBLIC_MODE', true);
 define('DisableEventsCheck', true);
 
+use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
 use Bitrix\Crm;
 use Bitrix\Main;
 use Bitrix\Sale;
@@ -15,6 +16,9 @@ use Bitrix\Sale\Delivery;
 use Bitrix\Sale\Helpers\Order\Builder;
 use Bitrix\Catalog;
 use Bitrix\Crm\Service\Sale\Reservation\ShipmentService;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\StoreDocumentTable;
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
@@ -25,12 +29,27 @@ if (!Loader::includeModule('crm'))
 	die('Can\'t include module "CRM"');
 }
 
+if (!Loader::includeModule('catalog'))
+{
+	die('Can\'t include module "Catalog"');
+}
+
 /** @internal  */
 final class AjaxProcessor extends Crm\Order\AjaxProcessor
 {
 	private const PATH_TO_SHIPMENT_DETAIL = '/shop/documents/details/sales_order/#DOCUMENT_ID#/';
 
 	use Crm\Component\EntityDetails\SaleProps\AjaxProcessorTrait;
+
+	protected function getActionMethodName($action)
+	{
+		if ($action === 'GET_SECONDARY_ENTITY_INFOS')
+		{
+			$action = 'getSecondaryEntityInfos';
+		}
+
+		return parent::getActionMethodName($action);
+	}
 
 	protected function changeDeliveryAction(): void
 	{
@@ -40,17 +59,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if ((int)$formData['ID'] <= 0)
-		{
-			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
-			{
-				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-				return;
-			}
-		}
-		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		if (!$this->checkDocumentModifyRights())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
 			return;
 		}
 
@@ -127,17 +139,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if ((int)$formData['ID'] <= 0)
-		{
-			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
-			{
-				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-				return;
-			}
-		}
-		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		if (!$this->checkDocumentModifyRights())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
 			return;
 		}
 
@@ -192,14 +197,26 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function saveAction(): void
 	{
+		$this->showWarnings = false;
+
 		$this->saveOrder();
 	}
 
 	protected function saveAndDeductAction(): void
 	{
+		$this->showWarnings = false;
+
 		$result = $this->saveOrder();
 		if (!is_null($result))
 		{
+			if (!$this->checkDocumentDeductRights())
+			{
+				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
+
+				return;
+			}
+
 			[, $shipmentId] = $result;
 
 			$shipment = Sale\Repository\ShipmentRepository::getInstance()->getById($shipmentId);
@@ -259,15 +276,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		$isShipmentNew = $shipmentId === 0;
 		$isNew = $orderId === 0;
 
-		if (!$isNew && !Permissions\Order::checkUpdatePermission($orderId, $this->userPermissions))
+		if (!$this->checkDocumentModifyRights())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-			return;
-		}
 
-		if ($isNew && !Permissions\Order::checkCreatePermission($this->userPermissions))
-		{
-			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
 			return;
 		}
 
@@ -446,6 +458,17 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 							]);
 						}
 					}
+					else
+					{
+						Crm\Component\EntityDetails\BaseComponent::updateEntity(
+							CCrmOwnerType::Company,
+							$companyID,
+							$companyData,
+							[
+								'startWorkFlows' => true
+							],
+						);
+					}
 				}
 			}
 
@@ -496,6 +519,17 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 								'IS_PRIMARY' => $clientCollection->isPrimaryItemExists(\CCrmOwnerType::Contact) ? 'N' : 'Y',
 							]);
 						}
+					}
+					else
+					{
+						Crm\Component\EntityDetails\BaseComponent::updateEntity(
+							CCrmOwnerType::Contact,
+							$contactID,
+							$contactItem,
+							[
+								'startWorkFlows' => true
+							],
+						);
 					}
 				}
 			}
@@ -596,6 +630,13 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function deductAction(): void
 	{
+		if (!$this->checkDocumentDeductRights())
+		{
+			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
+			return;
+		}
+
 		$shipment = $this->deductShipment('Y');
 		if ($shipment)
 		{
@@ -611,6 +652,18 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 
 	protected function cancelDeductAction(): void
 	{
+		if (
+			!AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		)
+		{
+			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
+			return;
+		}
+
 		$shipment = $this->deductShipment('N');
 		if ($shipment)
 		{
@@ -629,12 +682,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		if (!$id)
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND'));
-			return null;
-		}
-
-		if (!Permissions\Shipment::checkUpdatePermission($id, $this->userPermissions))
-		{
-			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
 			return null;
 		}
 
@@ -680,7 +727,7 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
 			{
 				$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
-				if ($shipmentItemStoreCollection->isEmpty())
+				if ($shipmentItemStoreCollection && $shipmentItemStoreCollection->isEmpty())
 				{
 					$basketItem = $shipmentItem->getBasketItem();
 
@@ -764,19 +811,23 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		return null;
 	}
 
-	private function getUrlToDocumentDetail($documentId, $pathToDocumentDetail, $addCloseOnSaveParam = false)
+	private function getUrlToDocumentDetail($documentId, $pathToDocumentDetailTemplate, $addCloseOnSaveParam = false): string
 	{
-		if (!$pathToDocumentDetail)
+		if (!$pathToDocumentDetailTemplate)
 		{
-			$pathToDocumentDetail = self::PATH_TO_SHIPMENT_DETAIL;
+			$pathToDocumentDetailTemplate = self::PATH_TO_SHIPMENT_DETAIL;
 		}
+
+		$pathToDocumentDetail = str_replace('#DOCUMENT_ID#', $documentId, $pathToDocumentDetailTemplate);
 
 		if ($addCloseOnSaveParam)
 		{
 			$pathToDocumentDetail .= '?closeOnSave=Y';
 		}
 
-		return str_replace('#DOCUMENT_ID#', $documentId, $pathToDocumentDetail);
+		return
+			InventoryManagementSourceBuilder::getInstance()->addInventoryManagementSourceParam($pathToDocumentDetail)
+		;
 	}
 
 	private function createDataByComponent(Crm\Order\Shipment $shipment)
@@ -859,13 +910,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			{
 				$shipmentProducts = $this->prepareShipmentProducts($formDataProducts);
 				$formData['SHIPMENT'][$shipmentIndex]['PRODUCT'] = $shipmentProducts;
-
-				$checkProductQuantityResult = $this->checkProductsQuantity($formData['PRODUCT'], $shipmentProducts);
-				if (!$checkProductQuantityResult->isSuccess())
-				{
-					$this->addErrors($checkProductQuantityResult->getErrors());
-					return null;
-				}
 			}
 		}
 
@@ -925,30 +969,12 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				$contactData = $clientData['CONTACT_DATA'];
 				foreach($contactData as $contactItem)
 				{
-					$result['COMPANY_IDS'][] = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
+					$result['CONTACT_IDS'][] = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
 				}
 			}
 		}
 
 		return $result;
-	}
-
-	/**
-	 * @return string[]
-	 */
-	protected function getDefaultAcceptableErrorCodes(): array
-	{
-		return [
-			'CATALOG_QUANTITY_NOT_ENOGH',
-			'SALE_ORDER_SYSTEM_SHIPMENT_LESS_QUANTITY',
-			'CATALOG_NO_QUANTITY_PRODUCT',
-			'SALE_SHIPMENT_SYSTEM_QUANTITY_ERROR',
-			'SALE_BASKET_ITEM_WRONG_AVAILABLE_QUANTITY',
-			'SALE_BASKET_ITEM_REMOVE_IMPOSSIBLE_BECAUSE_SHIPPED',
-			'OB_DELIVERY_NOT_FOUND',
-			'SALE_ORDEREDIT_ERROR_CHANGE_USER_WITH_PAID_PAYMENTS',
-			'SALE_SHIPMENT_WRONG_DELIVERY_SERVICE',
-		];
 	}
 
 	protected function getFormData()
@@ -975,17 +1001,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if ((int)$formData['ID'] <= 0)
-		{
-			if (!Permissions\Shipment::checkCreatePermission($this->userPermissions))
-			{
-				$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-				return;
-			}
-		}
-		elseif (!Permissions\Shipment::checkUpdatePermission((int)$formData['ID'], $this->userPermissions))
+		if (!$this->checkDocumentModifyRights())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
 			return;
 		}
 
@@ -1060,6 +1079,8 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				$basketCode = ('n' . (count($result) + 1));
 			}
 
+			$productType = $product['TYPE'] ? (int)$product['TYPE'] : null;
+
 			$item = [
 				'NAME' => $product['NAME'],
 				'QUANTITY' => (float)$product['AMOUNT'] > 0 ? (float)$product['AMOUNT'] : 1,
@@ -1068,9 +1089,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 				'BASKET_CODE' => $basketCode,
 				'PRODUCT_ID' => $productId,
 				'OFFER_ID' => $productId,
-				'BASE_PRICE' => $product['PURCHASING_PRICE'],
+				'BASE_PRICE' => $product['BASE_PRICE'],
 				'PRICE' => $product['BASE_PRICE'],
 				'CUSTOM_PRICE' => 'Y',
+				'TYPE' => $productType ? Sale\Internals\Catalog\ProductTypeMapper::getType($productType) : null,
 				'DISCOUNT_PRICE' => 0,
 				'MEASURE_NAME' => $product['MEASURE_NAME'],
 				'MEASURE_CODE' => (int)$product['MEASURE_CODE'],
@@ -1135,70 +1157,6 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		return $result;
 	}
 
-	protected function checkProductsQuantity(array $basketProducts, array $shipmentProducts): Main\Result
-	{
-		$result = new Main\Result();
-
-		/** @var Sale\Reservation\BasketReservationService $basketReservation */
-		$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
-
-		foreach ($basketProducts as $product)
-		{
-			$basketCode = $product['BASKET_CODE'];
-			$productId = $product['PRODUCT_ID'];
-			$storeId = key($shipmentProducts[$basketCode]['BARCODE_INFO']);
-			$quantity = $product['QUANTITY'];
-			$availableQuantity = $quantity;
-
-			if ((int)$basketCode > 0)
-			{
-				$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
-					(int)$basketCode,
-					$storeId
-				);
-			}
-			else
-			{
-				$storeQuantityRow = Catalog\StoreProductTable::getRow([
-					'select' => [
-						'AMOUNT',
-						'QUANTITY_RESERVED',
-					],
-					'filter' => [
-						'=STORE_ID' => $storeId,
-						'=PRODUCT_ID' => $productId,
-					],
-				]);
-				if ($storeQuantityRow)
-				{
-					$availableQuantity = min(
-						$quantity,
-						$storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED']
-					);
-				}
-			}
-
-			if ($quantity > $availableQuantity)
-			{
-				$result->addError(
-					new Main\Error(
-						Loc::getMessage(
-							'CRM_STORE_DOCUMENT_SD_PRODUCT_QUANTITY_ERROR',
-							[
-								'#PRODUCT_NAME#' => $product['NAME'],
-								'#PRODUCT_ID#' => $product['PRODUCT_ID'],
-								'#STORE_NAME#' => \CCatalogStoreControlUtil::getStoreName($storeId),
-								'#STORE_ID#' => $storeId,
-							]
-						)
-					)
-				);
-			}
-		}
-
-		return $result;
-	}
-
 	protected function rollbackAction(): void
 	{
 		$formData = $this->getFormData();
@@ -1213,9 +1171,10 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 			return;
 		}
 
-		if (!Permissions\Shipment::checkUpdatePermission($shipmentId, $this->userPermissions))
+		if (!$this->checkDocumentModifyRights())
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
 			return;
 		}
 
@@ -1234,17 +1193,26 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 	{
 		$id = (int)$this->request['ACTION_ENTITY_ID'] > 0 ? (int)$this->request['ACTION_ENTITY_ID'] : 0;
 
+		if (
+			!$this->checkDocumentModifyRights()
+			|| !AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_DELETE,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		)
+		{
+			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
+			return;
+		}
+
+
 		if ($id <= 0)
 		{
 			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_SHIPMENT_NOT_FOUND'));
 			return;
 		}
 
-		if (!Permissions\Shipment::checkDeletePermission($id, $this->userPermissions))
-		{
-			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
-			return;
-		}
 		$shipmentRaw = Crm\Order\Shipment::getList([
 			'filter' => ['=ID' => $id],
 			'select' => ['ORDER_ID'],
@@ -1362,6 +1330,194 @@ final class AjaxProcessor extends Crm\Order\AjaxProcessor
 		}
 
 		return $response;
+	}
+
+	private function checkDocumentReadRights(): bool
+	{
+		return
+			AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+
+	private function checkDocumentModifyRights(): bool
+	{
+		return
+			$this->checkDocumentReadRights()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+
+	private function checkDocumentDeductRights(): bool
+	{
+		return
+			$this->checkDocumentReadRights()
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+
+	/**
+	 * Get info about client secondary entities. Action is 'GET_SECONDARY_ENTITY_INFOS'.
+	 */
+	protected function getSecondaryEntityInfosAction(): void
+	{
+		if (!Permissions\Order::checkCreatePermission($this->userPermissions))
+		{
+			$this->addError(Loc::getMessage('CRM_STORE_DOCUMENT_SD_INSUFFICIENT_RIGHTS'));
+
+			return;
+		}
+
+		$params = isset($this->request['PARAMS']) && is_array($this->request['PARAMS']) ? $this->request['PARAMS'] : [];
+
+		$checkParamsResult = $this->checkSecondaryInfosParams($params);
+		if (!$checkParamsResult->isSuccess())
+		{
+			$this->addErrors($checkParamsResult->getErrorMessages());
+			return;
+		}
+
+		$primaryId = isset($params['PRIMARY_ID']) ? (int)$params['PRIMARY_ID'] : 0;
+
+		$orderIds = [];
+		$userDataRaw = Crm\Binding\OrderContactCompanyTable::getList([
+			'select' => ['ORDER_ID'],
+			'filter' => [
+				'ENTITY_ID' => $primaryId,
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::Company,
+				'IS_PRIMARY' => 'Y',
+			],
+			'order' => ['ORDER_ID' => 'DESC'],
+			'limit' => 5,
+		]);
+
+		while ($user = $userDataRaw->fetch())
+		{
+			$orderIds[] = $user['ORDER_ID'];
+		}
+
+		$secondaryIds = [];
+		if (!empty($orderIds))
+		{
+			$contactRaw = Crm\Binding\OrderContactCompanyTable::getList([
+				'select' => ['ENTITY_ID', 'ORDER_ID'],
+				'filter' => [
+					'ORDER_ID' => $orderIds,
+					'ENTITY_TYPE_ID' => \CCrmOwnerType::Contact,
+					'IS_PRIMARY' => 'N',
+				],
+				'order' => ['ORDER_ID' => 'DESC'],
+			]);
+			$lastOrderWithSecond = null;
+			while ($contact = $contactRaw->fetch())
+			{
+				if (!empty($secondaryIds) && $lastOrderWithSecond !== $contact['ORDER_ID'])
+				{
+					break;
+				}
+
+				$secondaryIds[] = $contact['ENTITY_ID'];
+				$lastOrderWithSecond = $contact['ORDER_ID'];
+			}
+		}
+
+		if (empty($secondaryIds))
+		{
+			$secondaryIds = Crm\Binding\ContactCompanyTable::getCompanyContactIDs($primaryId);
+		}
+
+		$secondaryInfos = [];
+		foreach ($secondaryIds as $entityId)
+		{
+			if (!\CCrmContact::CheckReadPermission($entityId, $this->userPermissions))
+			{
+				continue;
+			}
+
+			$secondaryInfos[]  = \CCrmEntitySelectorHelper::PrepareEntityInfo(
+				\CCrmOwnerType::ContactName,
+				$entityId,
+				[
+					'ENTITY_EDITOR_FORMAT' => true,
+					'REQUIRE_REQUISITE_DATA' => true,
+					'REQUIRE_MULTIFIELDS' => true,
+					'NAME_TEMPLATE' => Crm\Format\PersonNameFormatter::getFormat(),
+				]
+			);
+		}
+
+		$this->addData([
+			'ENTITY_INFOS' => $secondaryInfos,
+		]);
+	}
+
+	private function checkSecondaryInfosParams(array $params): Main\Result
+	{
+		$result = new Main\Result();
+
+		$ownerTypeName = $params['OWNER_TYPE_NAME'] ?? '';
+		if ($ownerTypeName === '')
+		{
+			$result->addError(new Main\Error('Owner type is not specified.'));
+			return $result;
+		}
+
+		$ownerTypeId = \CCrmOwnerType::ResolveID($ownerTypeName);
+		if ($ownerTypeId !== \CCrmOwnerType::ShipmentDocument)
+		{
+			$description = \CCrmOwnerType::GetDescription($ownerTypeId);
+			$result->addError(new Main\Error("Type '{$description}' is not supported in current context."));
+			return $result;
+		}
+
+		$primaryTypeName = $params['PRIMARY_TYPE_NAME'] ?? '';
+		if ($primaryTypeName === '')
+		{
+			$result->addError(new Main\Error('Primary type is not specified.'));
+			return $result;
+		}
+
+		$primaryTypeId = \CCrmOwnerType::ResolveID($primaryTypeName);
+		if ($primaryTypeId !== \CCrmOwnerType::Company)
+		{
+			$description = \CCrmOwnerType::GetDescription($primaryTypeId);
+			$result->addError(new Main\Error("Primary type '{$description}' is not supported in current context."));
+			return $result;
+		}
+
+		$primaryId = isset($params['PRIMARY_ID']) ? (int)$params['PRIMARY_ID'] : 0;
+		if ($primaryId <= 0)
+		{
+			$result->addError(new Main\Error('Primary ID is not specified.'));
+			return $result;
+		}
+
+		$secondaryTypeName = $params['SECONDARY_TYPE_NAME'] ?? '';
+		if ($secondaryTypeName === '')
+		{
+			$result->addError(new Main\Error('Secondary type is not specified.'));
+			return $result;
+		}
+
+		$secondaryTypeId = \CCrmOwnerType::ResolveID($secondaryTypeName);
+		if ($secondaryTypeId !== \CCrmOwnerType::Contact)
+		{
+			$description = \CCrmOwnerType::GetDescription($secondaryTypeId);
+			$result->addError(new Main\Error("Secondary type '{$description}' is not supported in current context."));
+			return $result;
+		}
+
+		return $result;
 	}
 }
 

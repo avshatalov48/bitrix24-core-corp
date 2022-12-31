@@ -4,15 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 use Bitrix\Crm;
 use Bitrix\Crm\Activity\Provider\Zoom;
 use Bitrix\Crm\Integration;
-use Bitrix\Crm\Timeline\Entity\TimelineBindingTable;
-use Bitrix\Crm\Timeline\Entity\TimelineTable;
 use Bitrix\Crm\Timeline\TimelineEntry;
-use Bitrix\Crm\Timeline\TimelineManager;
-use Bitrix\Crm\Timeline\TimelineType;
 use Bitrix\Main;
-use Bitrix\Main\Entity\Base;
-use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Page\Asset;
 use Bitrix\Main\Type\DateTime;
@@ -31,6 +24,8 @@ class CCrmTimelineComponent extends CBitrixComponent
 	protected $entityTypeName = '';
 	/** @var int */
 	protected $entityTypeID = \CCrmOwnerType::Undefined;
+	/** @var int */
+	protected $categoryId = 0;
 	/** @var int */
 	protected $entityID = 0;
 	/** @var array|null  */
@@ -82,6 +77,16 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->entityID = $entityID;
 	}
 
+	public function getExtras(): ?array
+	{
+		return $this->extras;
+	}
+
+	public function setExtras(?array $extras): void
+	{
+		$this->extras = $extras;
+	}
+
 	public function getRepository(): \Bitrix\Crm\Service\Timeline\Repository
 	{
 		if (!$this->repository)
@@ -90,7 +95,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 			{
 				$this->repository = new \Bitrix\Crm\Service\Timeline\Repository(
 					new Crm\Service\Timeline\Context(
-						new Crm\ItemIdentifier($this->entityTypeID, $this->entityID),
+						new Crm\ItemIdentifier($this->entityTypeID, $this->entityID, $this->extras['CATEGORY_ID'] ?? 0),
 						Crm\Service\Timeline\Context::DESKTOP,
 					)
 				);
@@ -108,7 +113,14 @@ class CCrmTimelineComponent extends CBitrixComponent
 	{
 		$this->initialize();
 		$this->arResult['ERRORS'] = $this->errors;
-		$this->includeComponentTemplate();
+
+		$skipTemplate = $this->arParams['SKIP_TEMPLATE'] === 'Y';
+		if (!$skipTemplate)
+		{
+			$this->includeComponentTemplate();
+		}
+
+		return $this->arResult;
 	}
 	protected function initialize()
 	{
@@ -172,6 +184,15 @@ class CCrmTimelineComponent extends CBitrixComponent
 			mb_strtolower($this->guid),
 			array()
 		);
+
+		if (isset($this->arParams['~ENABLE_TODO']))
+		{
+			$this->arResult['ENABLE_TODO'] = (bool)$this->arParams['~ENABLE_TODO'];
+		}
+		else
+		{
+			$this->arResult['ENABLE_TODO'] = Crm\Settings\Crm::isUniversalActivityScenarioEnabled();
+		}
 
 		if (isset($this->arParams['~ENABLE_ZOOM']))
 		{
@@ -269,6 +290,13 @@ class CCrmTimelineComponent extends CBitrixComponent
 		$this->arResult['ENABLE_EMAIL'] = isset($this->arParams['~ENABLE_EMAIL']) ? (bool)$this->arParams['~ENABLE_EMAIL'] : true;
 		$this->arResult['ENABLE_TASK'] = isset($this->arParams['~ENABLE_TASK']) ? (bool)$this->arParams['~ENABLE_TASK'] : true;
 
+		if (!\Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+		{
+			$this->arResult['ENABLE_CALL'] = false;
+			$this->arResult['ENABLE_MEETING'] = false;
+			$this->arResult['ENABLE_WAIT'] = false;
+		}
+
 		$this->arResult['PROGRESS_SEMANTICS'] = isset($this->arParams['~PROGRESS_SEMANTICS']) ? $this->arParams['~PROGRESS_SEMANTICS'] : '';
 
 		$this->arResult['CURRENT_URL'] = $APPLICATION->GetCurPageParam('', array('bxajaxid', 'AJAX_CALL'));
@@ -286,6 +314,7 @@ class CCrmTimelineComponent extends CBitrixComponent
 
 		$this->arResult['READ_ONLY'] = isset($this->arParams['~READ_ONLY']) && $this->arParams['~READ_ONLY'] === true;
 		$this->arResult['USER_ID'] = \CCrmSecurityHelper::GetCurrentUserID();
+		$this->arResult['LAYOUT_CURRENT_USER'] = Crm\Service\Timeline\Layout\User::current()->toArray();
 
 		$this->prepareScheduleItems();
 		$this->prepareHistoryFilter();

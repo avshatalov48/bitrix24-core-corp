@@ -28,6 +28,7 @@ $MESS["DEAL_ADD_TITLE"] = "Auftrag hinzufügen";
 $MESS["DEAL_CHANGE_CATEGORY"] = "In die Pipeline verschieben";
 $MESS["DEAL_COPY"] = "Kopieren";
 $MESS["DEAL_COPY_TITLE"] = "Auftrag kopieren";
+$MESS["DEAL_CREATE"] = "Auftrag erstellen";
 $MESS["DEAL_CREATE_ON_BASIS"] = "Daraus erstellen:";
 $MESS["DEAL_CREATE_ON_BASIS_TITLE"] = "Angebot und Rechnung auf der Basis von Auftrag";
 $MESS["DEAL_CRM_RECURRING_LIST"] = "Vorlagen der wiederkehrenden Aufträge";

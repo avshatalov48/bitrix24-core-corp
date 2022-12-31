@@ -9,6 +9,6 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 \Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("version", "v5");
 \Bitrix\Main\Data\AppCacheManifest::getInstance()->addAdditionalParam("user", $USER->GetId());
 
-$APPLICATION->IncludeComponent("bitrix:mobile.im.dialog", ".default", array(),false, Array("HIDE_ICONS" => "Y"));
+$APPLICATION->IncludeComponent("bitrix:immobile.dialog", ".default", array(),false, Array("HIDE_ICONS" => "Y"));
 
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php")?>

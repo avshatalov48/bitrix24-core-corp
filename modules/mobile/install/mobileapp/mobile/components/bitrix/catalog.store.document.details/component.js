@@ -29,6 +29,12 @@
 	}
 
 	const isDocumentConducted = (item) => item && item.STATUS === 'Y';
+	const hasPermission = (item, permission) => {
+		return (
+			!item
+			|| result.permissions.document[item['DOC_TYPE']][permission] === true
+		);
+	};
 
 	const getArticleCodeByType = (type) => {
 		switch (type)
@@ -58,7 +64,7 @@
 							'mobile.catalog.storeDocumentDetails.conduct',
 							{
 								json: {
-									id: item.ID
+									entityId: item.ID
 								}
 							}
 						)
@@ -72,14 +78,30 @@
 							});
 					});
 				},
-				onActiveCallback: (item) => !isDocumentConducted(item),
+				onActiveCallback: (item) => {
+					return (
+						hasPermission(item, 'catalog_store_document_conduct')
+						&& !isDocumentConducted(item)
+					);
+				},
 			},
 		])
 		.renderTo(layout)
-		.setMenuActionsProvider((item, callbacks) => {
+		.setAnalyticsProvider((model) => {
+			return {
+				entity: 'store-document',
+				type: model.DOC_TYPE,
+			};
+		})
+		.setMenuActionsProvider((detailCard, callbacks) => {
+			const { entityModel } = detailCard;
 			const result = [];
 
-			if (isDocumentConducted(item))
+			const isCancelDocumentActive = (
+				hasPermission(entityModel, 'catalog_store_document_cancel')
+				&& isDocumentConducted(entityModel)
+			);
+			if (isCancelDocumentActive)
 			{
 				result.push({
 					id: 'cancelDocument',
@@ -92,7 +114,7 @@
 							'mobile.catalog.storeDocumentDetails.cancel',
 							{
 								json: {
-									id: item.ID
+									entityId: entityModel.ID
 								}
 							}
 						)
@@ -109,13 +131,13 @@
 
 			result.push({
 				type: UI.Menu.Types.DESKTOP,
-				showTopSeparator: isDocumentConducted(item),
+				showTopSeparator: isCancelDocumentActive,
 				data: {
 					qrUrl: desktopUrl
 				}
 			});
 
-			const articleCode = getArticleCodeByType(item.DOC_TYPE);
+			const articleCode = getArticleCodeByType(entityModel.DOC_TYPE);
 			if (articleCode)
 			{
 				result.push({

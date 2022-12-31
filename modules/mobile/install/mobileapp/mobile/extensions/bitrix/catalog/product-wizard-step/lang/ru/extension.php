@@ -14,3 +14,4 @@ $MESS['WIZARD_FIELD_PRODUCT_AMOUNT'] = 'Принято на склад';
 $MESS['WIZARD_FIELD_MEASURE_CODE'] = 'Единицы';
 $MESS['WIZARD_FIELD_PRODUCT_STORE'] = 'Склад';
 $MESS['WIZARD_FIELD_PRODUCT_BARCODE'] = 'Штрихкод';
+$MESS['WIZARD_FIELD_ACCESS_DENIED'] = 'Недостаточно прав';

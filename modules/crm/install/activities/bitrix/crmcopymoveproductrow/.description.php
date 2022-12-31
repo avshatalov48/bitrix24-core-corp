@@ -1,20 +1,25 @@
 <?php
 
+use Bitrix\Crm\Activity\Access\CatalogAccessChecker;
+use Bitrix\Main\Loader;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
+
 $arActivityDescription = [
-	'NAME' => GetMessage('CRM_CMPR_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_CMPR_DESC'),
+	'NAME' => Loc::getMessage('CRM_CMPR_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CMPR_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmCopyMoveProductRow',
 	'JSCLASS' => 'BizProcActivity',
 	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
 	],
 	'FILTER' => [
 		'INCLUDE' => [
@@ -25,5 +30,12 @@ $arActivityDescription = [
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
+		'GROUP' => ['goods'],
+		'SORT' => 500,
 	],
 ];
+
+if (Loader::includeModule('crm') && !CatalogAccessChecker::hasAccess())
+{
+	$arActivityDescription['EXCLUDED'] = true;
+}

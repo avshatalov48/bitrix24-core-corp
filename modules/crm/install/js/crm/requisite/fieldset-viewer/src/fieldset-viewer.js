@@ -13,6 +13,7 @@ type FieldsetViewerOptions = {
 	bindElement: HTMLElement,
 	popupOptions?: {[key: string]: any},
 	fieldListEditorOptions?: {[key: string]: any},
+	fieldsPanelOptions?: {[key: string]: any},
 	events: {
 		onClose?: (BaseEvent) => void,
 	},
@@ -151,7 +152,7 @@ export class FieldsetViewer extends EventEmitter
 		const title = (
 			Loc
 				.getMessage('CRM_REQUISITE_FIELDSET_VIEWER_BANNER_TITLE')
-				.replace('{{requisite}}', ` <strong>${data?.title}</strong>`)
+				.replace('{{requisite}}', ` <strong>${Text.encode(data?.title)}</strong>`)
 		);
 
 		const description = (() => {
@@ -209,6 +210,7 @@ export class FieldsetViewer extends EventEmitter
 					BX.SidePanel.Instance.open(
 						options?.editing?.url,
 						{
+							cacheable: false,
 							events: {
 								onClose: () => {
 									this.show();
@@ -273,10 +275,18 @@ export class FieldsetViewer extends EventEmitter
 						label: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_NAME_LABEL'),
 						type: 'string',
 					},
+					required: {
+						label: Loc.getMessage('CRM_REQUISITE_FIELDSET_VIEWER__SET_EDITOR_REQUIRED_LABEL'),
+						type: 'checkbox',
+					},
 				},
 				autoSave: false,
 				events: {
 					onSave: () => this.show(),
+				},
+				fieldsPanelOptions: {
+					hideVirtual: 1,
+					...(Type.isPlainObject(options.fieldsPanelOptions) ? options.fieldsPanelOptions : {}),
 				},
 				...(Type.isPlainObject(options.fieldListEditorOptions) ? options.fieldListEditorOptions : {}),
 			});

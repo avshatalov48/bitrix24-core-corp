@@ -12,11 +12,14 @@ use Bitrix\Main\Engine;
 use Bitrix\Main\Error;
 use Bitrix\Main\Engine\Action;
 use Bitrix\Main\Engine\ActionFilter;
+use Bitrix\Main\Loader;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+Loader::requireModule('disk');
 
 class DiskFileEditorOnlyOfficeController extends Engine\Controller
 {

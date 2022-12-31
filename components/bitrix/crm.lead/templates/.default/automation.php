@@ -29,7 +29,15 @@ if ($_REQUEST['IFRAME'] == 'Y' && $_REQUEST['IFRAME_TYPE'] == 'SIDE_SLIDER')
 }
 else
 {
-	include 'list.php';
+	$navigationIndex = CUserOptions::GetOption('crm.navigation', 'index');
+	$mainPage = explode(':', ($navigationIndex['lead'] ?? ''))[0];
+
+	if (!in_array($mainPage, ['list', 'kanban', 'calendar']))
+	{
+		$mainPage = 'list';
+	}
+	include "$mainPage.php";
+
 	Bitrix\Main\UI\Extension::load('sidepanel');
 	?>
 	<script>

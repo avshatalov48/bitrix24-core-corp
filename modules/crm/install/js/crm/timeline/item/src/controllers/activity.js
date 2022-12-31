@@ -6,8 +6,14 @@ import {UI} from 'ui.notification';
 
 export class Activity extends Base
 {
-	onItemAction(item: ConfigurableItem, action: String, actionData: ?Object): void
+	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
+		const {action, actionType, actionData, animationCallbacks} = actionParams;
+
+		if (actionType !== 'jsEvent')
+		{
+			return;
+		}
 		if (action === 'Activity:Edit' && actionData && actionData.activityId)
 		{
 			this.#editActivity(actionData.activityId);
@@ -26,7 +32,7 @@ export class Activity extends Base
 					modal: true,
 					buttons: MessageBoxButtons.YES_NO,
 					onYes: () => {
-						return this.#deleteActivity(actionData.activityId, actionData.ownerTypeId, actionData.ownerId);
+						return this.#deleteActivity(actionData.activityId, actionData.ownerTypeId, actionData.ownerId, animationCallbacks);
 					},
 					onNo: (messageBox) => {
 						messageBox.close();
@@ -58,8 +64,12 @@ export class Activity extends Base
 		}
 	}
 
-	#deleteActivity(activityId: Number, ownerTypeId: Number, ownerId: Number)
+	#deleteActivity(activityId: Number, ownerTypeId: Number, ownerId: Number, animationCallbacks: ?Object)
 	{
+		if (animationCallbacks.onStart)
+		{
+			animationCallbacks.onStart();
+		}
 		return Ajax.runAction(
 			'crm.timeline.activity.delete',
 			{
@@ -70,6 +80,10 @@ export class Activity extends Base
 				}
 			}
 		).then(() => {
+			if (animationCallbacks.onStop)
+			{
+				animationCallbacks.onStop();
+			}
 			return true;
 		}, (response) =>
 		{
@@ -77,6 +91,10 @@ export class Activity extends Base
 				content: response.errors[0].message,
 				autoHideDelay: 5000,
 			});
+			if (animationCallbacks.onStop)
+			{
+				animationCallbacks.onStop();
+			}
 
 			return true;
 		});
@@ -91,7 +109,10 @@ export class Activity extends Base
 	{
 		const itemType = item.getType();
 
-		return (itemType.indexOf('Activity:') === 0); // for items with type started from `Activity:`
+		return (
+			itemType.indexOf('Activity:') === 0  // for items with type started from `Activity:`
+			|| itemType === 'TodoCreated' // TodoCreated can contain link to activity
+		);
 	}
 }
 

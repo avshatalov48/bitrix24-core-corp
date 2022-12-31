@@ -155,6 +155,13 @@ class UserAbsence
 				$vacationTypes[(int)$enum_fields['ID']] = $enum_fields['EXTERNAL_ID'];
 			}
 
+			$timeZoneEnabled = \CTimeZone::Enabled();
+
+			if ($timeZoneEnabled)
+			{
+				\CTimeZone::Disable();
+			}
+
 			$absenceData = \CIntranetUtils::GetAbsenceData(
 				array(
 					'PER_USER' => true,
@@ -163,6 +170,11 @@ class UserAbsence
 				),
 				BX_INTRANET_ABSENCE_HR
 			);
+
+			if ($timeZoneEnabled)
+			{
+				\CTimeZone::Enable();
+			}
 
 			$result = Array();
 			foreach ($absenceData as $userId => $record)
@@ -173,7 +185,6 @@ class UserAbsence
 
 					$dateFrom = new \Bitrix\Main\Type\DateTime($data['DATE_FROM']);
 					$dateTo = new \Bitrix\Main\Type\DateTime($data['DATE_TO']);
-
 					$result[$userId][$index] = Array(
 						'ID' => $data['ID'],
 						'USER_ID' => $data['USER_ID'],
@@ -202,9 +213,10 @@ class UserAbsence
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\ObjectException
 	 */
-	public static function isAbsent($userId, $returnToDate = false)
+	public static function isAbsent($userId, bool $returnToDate = false)
 	{
 		$result = self::getCurrentMonth();
+
 		if (isset($result[$userId]))
 		{
 			$now = new \Bitrix\Main\Type\DateTime();
@@ -216,16 +228,15 @@ class UserAbsence
 				{
 					continue;
 				}
+
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
 					if ($returnToDate)
 					{
 						return $vacation;
 					}
-					else
-					{
-						return true;
-					}
+
+					return true;
 				}
 			}
 		}
@@ -241,9 +252,10 @@ class UserAbsence
 	 * @throws \Bitrix\Main\ArgumentOutOfRangeException
 	 * @throws \Bitrix\Main\ObjectException
 	 */
-	public static function isAbsentOnVacation($userId, $returnToDate = false)
+	public static function isAbsentOnVacation($userId, bool $returnToDate = false)
 	{
 		$result = self::getCurrentMonth();
+
 		if (isset($result[$userId]))
 		{
 			$now = new \Bitrix\Main\Type\DateTime();
@@ -255,16 +267,27 @@ class UserAbsence
 				{
 					continue;
 				}
+
+				$isCounterpart = $vacation['DATE_FROM_TS'] === $vacation['DATE_TO_TS'];
+
+				if ($isCounterpart)
+				{
+					$vacation['DATE_TO_TS'] += 86400;
+				}
+
 				if ($nowTs >= $vacation['DATE_FROM_TS'] && $nowTs < $vacation['DATE_TO_TS'])
 				{
+					if ($isCounterpart)
+					{
+						$vacation['DATE_TO_TS'] -= 86399;
+					}
+
 					if ($returnToDate)
 					{
 						return $vacation;
 					}
-					else
-					{
-						return true;
-					}
+
+					return true;
 				}
 			}
 		}

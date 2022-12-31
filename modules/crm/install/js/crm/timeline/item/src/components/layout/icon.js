@@ -1,6 +1,7 @@
 
 import { IconBackgroundColor } from '../enums/icon-background-color';
 import { Counter } from 'ui.cnt';
+import { Dom } from 'main.core';
 
 export const Icon = {
 	props: {
@@ -41,7 +42,7 @@ export const Icon = {
 			if (!this.counterType) {
 				return;
 			}
-
+			Dom.clean(this.counterNodeContainer);
 			const counter = new Counter({
 				value: 1,
 				border: true,
@@ -52,6 +53,14 @@ export const Icon = {
 	},
 	mounted() {
 		this.renderCounter();
+	},
+	watch: {
+		counterType(newCounterType): void // update if counter state changed
+		{
+			this.$nextTick(() => {
+				this.renderCounter();
+			});
+		}
 	},
 	template: `
 		<div :class="className">

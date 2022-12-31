@@ -6,6 +6,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\Access\CatalogAccessChecker;
 
 class CBPCrmCopyMoveProductRow extends CBPActivity
 {
@@ -184,13 +185,26 @@ class CBPCrmCopyMoveProductRow extends CBPActivity
 			'siteId' => $siteId,
 		]);
 
-		$dialog->setMap(static::getPropertiesMap($documentType));
+
+		if (!CatalogAccessChecker::hasAccess())
+		{
+			$dialog->setRenderer(CatalogAccessChecker::getDialogRenderer());
+		}
+		else
+		{
+			$dialog->setMap(static::getPropertiesMap($documentType));
+		}
 
 		return $dialog;
 	}
 
 	public static function GetPropertiesDialogValues($documentType, $activityName, &$arWorkflowTemplate, &$arWorkflowParameters, &$arWorkflowVariables, $arCurrentValues, &$errors)
 	{
+		if (!CatalogAccessChecker::hasAccess())
+		{
+			return false;
+		}
+
 		$errors = [];
 
 		$properties = [

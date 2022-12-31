@@ -8,6 +8,7 @@ $MESS["INTRANET_USER_LIST_ACTION_MESSAGE_TITLE"] = "Написать сообщ�
 $MESS["INTRANET_USER_LIST_ACTION_MESSAGE_HISTORY"] = "История переписки";
 $MESS["INTRANET_USER_LIST_ACTION_MESSAGE_HISTORY_TITLE"] = "Показать историю переписки с пользователем";
 $MESS["INTRANET_USER_LIST_ACTION_VIDEOCALL"] = "Видеозвонок";
+$MESS["INTRANET_USER_LIST_ACTION_LOGINHISTORY"] = "История входов";
 $MESS["INTRANET_USER_LIST_ACTION_VIDEOCALL_TITLE"] = "Начать видеозвонок с пользователем";
 $MESS["INTRANET_USER_LIST_ACTION_REINVITE"] = "Пригласить еще раз";
 $MESS["INTRANET_USER_LIST_ACTION_REINVITE_TITLE"] = "Пригласить пользователя еще раз";

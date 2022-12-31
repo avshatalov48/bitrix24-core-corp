@@ -141,6 +141,10 @@ trait ComponentTrait
 			}
 			$data['items'] = \CCrmInstantEditorHelper::PrepareListOptions($list, $options);
 		}
+		elseif ($property['TYPE'] === 'DATE')
+		{
+			$data['enableTime'] = $property['TIME'] === 'Y';
+		}
 		elseif ($lineCount = $this->getPropertyRowsCount($property))
 		{
 			$data['lineCount'] = (string)$lineCount;

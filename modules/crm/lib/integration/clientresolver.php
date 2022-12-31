@@ -12,6 +12,9 @@ use Bitrix\Main\Type\Date;
 use Bitrix\Crm;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\Requisite;
+use Bitrix\Rest\AppTable;
+use Bitrix\Rest\Marketplace;
 use Bitrix\Rest\PlacementTable;
 use Bitrix\Socialservices;
 
@@ -622,10 +625,94 @@ class ClientResolver
 					'VALUE' => 'PLACEMENT_' . $detailSearchHandlersByCountry[$countryId][0]['ID'],
 					'TITLE' => $detailSearchHandlersByCountry[$countryId][0]['TITLE'],
 					'IS_PLACEMENT' => 'Y',
-					'COUNTRY_ID' => $countryId,
+					'COUNTRY_ID' => $countryId
 				];
 			}
 			$result['PLACEMENTS'] = $detailSearchHandlersByCountry[$countryId];
+		}
+
+		/*
+		 * Blocking applications until silent installation is implemented in the REST module.
+		 *
+		if (!is_array($result))
+		{
+			$defaultAppInfo = static::getDefaultClientResolverApplicationParams($countryId);
+			if ($defaultAppInfo['code'] !== '')
+			{
+				if (!is_array($result))
+				{
+					$result = [];
+				}
+				$result['DEFAULT_APP_INFO'] = $defaultAppInfo;
+			}
+		}*/
+
+		return $result;
+	}
+
+	protected static function getDefaultClientResolverApplicationCodeByCountryMap()
+	{
+		static $map = null;
+
+		if ($map === null)
+		{
+			$map  = [
+				Requisite\Country::ID_BELARUS => 'integrations24.portal_nalog_gov_by',
+				Requisite\Country::ID_KAZAKHSTAN => 'integrations24.mns_kazakhstan_poisk_po_bin',
+			];
+		}
+
+		return $map;
+	}
+
+	public static function getDefaultClientResolverApplicationParams(int $countryId)
+	{
+		$result = [
+			'code' => '',
+			'title' => '',
+			'isAvailable' => 'N',
+			'isInstalled' => 'N',
+		];
+
+		$map = static::getDefaultClientResolverApplicationCodeByCountryMap();
+
+		if (isset($map[$countryId]))
+		{
+			$result['code'] = $map[$countryId];
+		}
+		
+		if ($result['code'] !== '' && Loader::includeModule('rest'))
+		{
+			$appInfo = Marketplace\Client::getApp($result['code']);
+
+			if (
+				is_array($appInfo['ITEMS'])
+				&& isset($appInfo['ITEMS']['NAME'])
+				&& is_string($appInfo['ITEMS']['NAME'])
+				&& $appInfo['ITEMS']['NAME'] !== ''
+			)
+			{
+				$result['isAvailable'] = 'Y';
+				$result['title'] = $appInfo['ITEMS']['NAME'];
+			}
+
+			$appInfo = AppTable::getList(
+				[
+					'filter' => [
+						'=CODE' => $result['code'],
+						'=ACTIVE' => AppTable::ACTIVE,
+						'=INSTALLED' => AppTable::INSTALLED,
+					],
+					'limit' => 1,
+				]
+			)->fetch();
+
+			$result['isInstalled'] =  $appInfo ? 'Y' : 'N';
+
+			if (isset($appInfo['APP_NAME']) && is_string($appInfo['APP_NAME']) && $appInfo['APP_NAME'] !== '')
+			{
+				$result['title'] = $appInfo['APP_NAME'];
+			}
 		}
 
 		return $result;
@@ -636,27 +723,39 @@ class ClientResolver
 		$clientResolverPropertyType = static::getClientResolverPropertyWithPlacements($countryId);
 
 		return (
-		$clientResolverPropertyType
-			? [
-			'isPlacement' => (
-				isset($clientResolverPropertyType['IS_PLACEMENT'])
-				&& $clientResolverPropertyType['IS_PLACEMENT'] === 'Y'
-			),
-			'numberOfPlacements' =>
-				is_array($clientResolverPropertyType['PLACEMENTS'])
-					? count($clientResolverPropertyType['PLACEMENTS'])
-					: 0
-			,
-			'countryId' => $countryId,
-		]
-			: null
+			$clientResolverPropertyType
+				? [
+					'isPlacement' => (
+						isset($clientResolverPropertyType['IS_PLACEMENT'])
+						&& $clientResolverPropertyType['IS_PLACEMENT'] === 'Y'
+					),
+					'numberOfPlacements' =>
+						is_array($clientResolverPropertyType['PLACEMENTS'])
+							? count($clientResolverPropertyType['PLACEMENTS'])
+							: 0
+					,
+					'countryId' => $countryId,
+					'defaultAppInfo' =>
+						$clientResolverPropertyType['DEFAULT_APP_INFO']
+						?? [
+							'code' => '',
+							'title' => '',
+							'isAvailable' => 'N',
+							'isInstalled' => 'N',
+						],
+				]
+				: null
 		);
 	}
 
 	public static function getClientResolverPlaceholderText(int $countryId): string
 	{
 		$clientResolverPropertyType = static::getClientResolverPropertyWithPlacements($countryId);
-		$title = is_array($clientResolverPropertyType) ? $clientResolverPropertyType['TITLE'] : '';
+		$title =
+			(is_array($clientResolverPropertyType) && isset($clientResolverPropertyType['TITLE']))
+				? $clientResolverPropertyType['TITLE']
+				: ''
+		;
 		if (is_string($title) && $title !== '' && $clientResolverPropertyType['IS_PLACEMENT'] !== 'Y')
 		{
 			$template = Loc::getMessage('CRM_CLIENT_REQUISITE_AUTOCOMPLETE_FILL_IN');

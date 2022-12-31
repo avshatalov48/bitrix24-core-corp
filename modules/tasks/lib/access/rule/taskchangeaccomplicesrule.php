@@ -44,13 +44,10 @@ class TaskChangeAccomplicesRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			$this->newTask = $params;
 		}
 
-		foreach ($this->newTask->getMembers(RoleDictionary::ROLE_ACCOMPLICE) as $member)
+		if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $this->newTask))
 		{
-			if (!$this->canAssignTask($this->oldTask, RoleDictionary::ROLE_ACCOMPLICE, $member, $this->newTask))
-			{
-				$this->controller->addError(static::class, 'Access to assign accomplice denied');
-				return false;
-			}
+			$this->controller->addError(static::class, 'Access to assign accomplice denied');
+			return false;
 		}
 
 		return true;

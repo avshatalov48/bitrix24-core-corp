@@ -5,9 +5,11 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
+
 $arActivityDescription = [
-	'NAME' => GetMessage('CRMBPGQR_DESCR_NAME'),
-	'DESCRIPTION' => GetMessage('CRMBPGQR_DESCR_DESCR'),
+	'NAME' => Loc::getMessage('CRMBPGQR_DESCR_NAME'),
+	'DESCRIPTION' => Loc::getMessage('CRMBPGQR_DESCR_DESCR_1_MSGVER_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGenerateQr',
 	'JSCLASS' => 'BizProcActivity',
@@ -17,10 +19,18 @@ $arActivityDescription = [
 	'FILTER' => [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
+			['crm', 'CCrmDocumentLead'],
+			['crm', \Bitrix\Crm\Integration\BizProc\Document\Dynamic::class],
 		],
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
+		'GROUP' => ['other'],
+		'ASSOCIATED_TRIGGERS' => [
+			'QR' => 1,
+		],
+		'SORT' => 3000,
+		'IS_SUPPORTING_ROBOT' => true,
 	],
 	'RETURN' => [
 		'PageLink' => [

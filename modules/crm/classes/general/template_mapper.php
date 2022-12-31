@@ -838,7 +838,7 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 
 		if ('' == $result)
 		{
-			if (array_key_exists($fieldName, $userFields))
+			if (is_array($userFields) && array_key_exists($fieldName, $userFields))
 			{
 				$userTypes = array('string', 'integer', 'double', 'date', 'datetime', 'url', 'enumeration', 'boolean', 'money', 'address');
 				if (in_array($userFields[$fieldName]['USER_TYPE_ID'], $userTypes))
@@ -849,7 +849,11 @@ class CCrmTemplateMapper extends CCrmTemplateMapperBase
 						$result = htmlspecialcharsbx($result);
 				}
 			}
-			else if (array_key_exists($fieldName, $entityInfo['FM']))
+			else if (
+				isset($entityInfo['FM'])
+				&& is_array($entityInfo['FM'])
+				&& array_key_exists($fieldName, $entityInfo['FM'])
+			)
 			{
 				$result = (array) $entityInfo['FM'][$fieldName];
 

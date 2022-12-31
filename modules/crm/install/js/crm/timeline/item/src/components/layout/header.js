@@ -4,6 +4,7 @@ import {Tag} from './header/tag'
 import {User} from './header/user'
 import {FormatDate} from './header/format-date';
 import {Runtime} from 'main.core';
+import {Hint} from './header/hint';
 
 export const Header = {
 	components: {
@@ -12,6 +13,7 @@ export const Header = {
 		Tag,
 		User,
 		FormatDate,
+		Hint,
 	},
 	props: {
 		title: String,
@@ -22,6 +24,7 @@ export const Header = {
 		changeStreamButton: Object|null,
 		tags: Object,
 		user: Object,
+		infoHelper: Object,
 	},
 	inject: [
 		'isReadOnly',
@@ -54,13 +57,19 @@ export const Header = {
 		tagsAscSorter(tagA, tagB): Number {
 			return tagA.sort - tagB.sort;
 		},
+
+		getChangeStreamButton(): ?Object
+		{
+			return this.$refs.changeStreamButton;
+		}
 	},
 	template: `
 		<div class="crm-timeline__card-top">
 			<div class="crm-timeline__card-top_info">
 				<div class="crm-timeline__card-top_info_left">
-					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton"></ChangeStreamButton>
+					<ChangeStreamButton v-if="changeStreamButton" v-bind="changeStreamButton" ref="changeStreamButton"></ChangeStreamButton>
 					<Title :title="title" :action="titleAction"></Title>
+					<Hint v-if="infoHelper" v-bind="infoHelper"></Hint>
 				</div>
 				<div ref="tags" class="crm-timeline__card-top_info_right">
 					<Tag

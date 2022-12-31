@@ -17,7 +17,7 @@ if(SITE_TEMPLATE_ID === 'bitrix24' && $arParams['~STYLES_LOADED'] !== 'Y')
 {
 	$APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
 	$bodyClass = $APPLICATION->GetPageProperty('BodyClass');
-	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings pagetitle-toolbar-field-view flexible-layout crm-pagetitle-view crm-toolbar');
+	$APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'no-paddings pagetitle-toolbar-field-view flexible-layout crm-toolbar');
 }
 
 $asset = Bitrix\Main\Page\Asset::getInstance();

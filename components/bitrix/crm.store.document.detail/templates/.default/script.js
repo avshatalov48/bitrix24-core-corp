@@ -4,6 +4,12 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 (function (exports,ui_designTokens,catalog_entityCard,ui_buttons,main_core,main_core_events) {
 	'use strict';
 
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+	function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 	function _classPrivateMethodInitSpec(obj, privateSet) { _checkPrivateRedeclaration(obj, privateSet); privateSet.add(obj); }
 
 	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
@@ -16,11 +22,21 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	var _documentGuid = /*#__PURE__*/new WeakMap();
 
+	var _productListController = /*#__PURE__*/new WeakMap();
+
 	var _hintProductListField = /*#__PURE__*/new WeakSet();
+
+	var _getFirstProductRow = /*#__PURE__*/new WeakSet();
+
+	var _getProductList = /*#__PURE__*/new WeakSet();
 
 	var DocumentOnboardingManager = /*#__PURE__*/function () {
 	  function DocumentOnboardingManager(params) {
 	    babelHelpers.classCallCheck(this, DocumentOnboardingManager);
+
+	    _classPrivateMethodInitSpec(this, _getProductList);
+
+	    _classPrivateMethodInitSpec(this, _getFirstProductRow);
 
 	    _classPrivateMethodInitSpec(this, _hintProductListField);
 
@@ -34,8 +50,17 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      value: void 0
 	    });
 
+	    _classPrivateFieldInitSpec(this, _productListController, {
+	      writable: true,
+	      value: null
+	    });
+
 	    babelHelpers.classPrivateFieldSet(this, _onboardingData, params.onboardingData);
 	    babelHelpers.classPrivateFieldSet(this, _documentGuid, params.documentGuid);
+
+	    if (params.productListController) {
+	      babelHelpers.classPrivateFieldSet(this, _productListController, params.productListController);
+	    }
 	  }
 
 	  babelHelpers.createClass(DocumentOnboardingManager, [{
@@ -45,7 +70,11 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      var step = babelHelpers.classPrivateFieldGet(this, _onboardingData).chainStep;
 
 	      if (chain === 1 && step === 1) {
-	        _classPrivateMethodGet(this, _hintProductListField, _hintProductListField2).call(this);
+	        var rowId = _classPrivateMethodGet(this, _getFirstProductRow, _getFirstProductRow2).call(this);
+
+	        if (rowId) {
+	          _classPrivateMethodGet(this, _hintProductListField, _hintProductListField2).call(this, rowId);
+	        }
 	      }
 	    }
 	  }]);
@@ -53,6 +82,7 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	}();
 
 	function _hintProductListField2() {
+	  var rowId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
 	  var buttonsContainer = document.querySelector("#".concat(babelHelpers.classPrivateFieldGet(this, _documentGuid), "_TABS_MENU"));
 	  var spotlight$$1 = new BX.SpotLight({
 	    id: 'arrow_spotlight',
@@ -80,21 +110,75 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    };
 
 	    main_core.Event.bind(buttonsContainer, 'click', buttonsPanelListener);
+
+	    var tabChangeListener = function tabChangeListener(event) {
+	      var _event$data2, _productListEditor$ge;
+
+	      if ((event === null || event === void 0 ? void 0 : (_event$data2 = event.data) === null || _event$data2 === void 0 ? void 0 : _event$data2.tabId) === 'tab_products') {
+	        return;
+	      }
+
+	      (_productListEditor$ge = productListEditor.getActiveHint()) === null || _productListEditor$ge === void 0 ? void 0 : _productListEditor$ge.close();
+	    };
+
 	    productListEditor.showFieldTourHint('AMOUNT', {
-	      title: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TITLE'),
+	      title: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TITLE_2'),
 	      text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_WAREHOUSE_PRODUCT_AMOUNT_GUIDE_TEXT')
 	    }, function () {
 	      main_core.userOptions.save('crm', 'warehouse-onboarding', 'secondChainStage', 2);
 	      main_core.userOptions.save('crm', 'warehouse-onboarding', 'chainStage', 2);
 	      main_core.Event.unbind(buttonsContainer, 'click', buttonsPanelListener);
 	      main_core_events.EventEmitter.unsubscribe('onDemandRecalculateWrapper', productListTabListener);
-	    });
+	      main_core_events.EventEmitter.unsubscribe('BX.Catalog.EntityCard.TabManager:onOpenTab', tabChangeListener);
+	    }, [], rowId);
+	    main_core_events.EventEmitter.subscribe('BX.Catalog.EntityCard.TabManager:onOpenTab', tabChangeListener);
 	  };
 
 	  main_core_events.EventEmitter.subscribe('onDemandRecalculateWrapper', productListTabListener);
 	}
 
+	function _getFirstProductRow2() {
+	  var productList = _classPrivateMethodGet(this, _getProductList, _getProductList2).call(this);
+
+	  var _iterator = _createForOfIteratorHelper(productList),
+	      _step;
+
+	  try {
+	    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	      var product = _step.value;
+
+	      if (!product.getModel().isService()) {
+	        return product.getId();
+	      }
+	    }
+	  } catch (err) {
+	    _iterator.e(err);
+	  } finally {
+	    _iterator.f();
+	  }
+
+	  return '';
+	}
+
+	function _getProductList2() {
+	  if (babelHelpers.classPrivateFieldGet(this, _productListController) && babelHelpers.classPrivateFieldGet(this, _productListController).productList) {
+	    if (babelHelpers.classPrivateFieldGet(this, _productListController).productList.products instanceof Array) {
+	      return babelHelpers.classPrivateFieldGet(this, _productListController).productList.products;
+	    }
+	  }
+
+	  return [];
+	}
+
 	var _templateObject;
+
+	function _createForOfIteratorHelper$1(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray$1(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+	function _unsupportedIterableToArray$1(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray$1(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray$1(o, minLen); }
+
+	function _arrayLikeToArray$1(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+	function _classPrivateMethodInitSpec$1(obj, privateSet) { _checkPrivateRedeclaration$1(obj, privateSet); privateSet.add(obj); }
 
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }
 
@@ -112,7 +196,11 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 
 	function _classApplyDescriptorSet(receiver, descriptor, value) { if (descriptor.set) { descriptor.set.call(receiver, value); } else { if (!descriptor.writable) { throw new TypeError("attempted to set read only private field"); } descriptor.value = value; } }
 
+	function _classPrivateMethodGet$1(receiver, privateSet, fn) { if (!privateSet.has(receiver)) { throw new TypeError("attempted to get private field on non-instance"); } return fn; }
+
 	var _documentOnboardingManager = /*#__PURE__*/new WeakMap();
+
+	var _subscribeToProductRowSummaryEvents = /*#__PURE__*/new WeakSet();
 
 	var Document = /*#__PURE__*/function (_BaseCard) {
 	  babelHelpers.inherits(Document, _BaseCard);
@@ -123,6 +211,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    babelHelpers.classCallCheck(this, Document);
 	    _this = babelHelpers.possibleConstructorReturn(this, babelHelpers.getPrototypeOf(Document).call(this, id, settings));
 
+	    _classPrivateMethodInitSpec$1(babelHelpers.assertThisInitialized(_this), _subscribeToProductRowSummaryEvents);
+
 	    _classPrivateFieldInitSpec$1(babelHelpers.assertThisInitialized(_this), _documentOnboardingManager, {
 	      writable: true,
 	      value: null
@@ -131,6 +221,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	    _this.isDocumentDeducted = settings.documentStatus === 'Y';
 	    _this.isDeductLocked = settings.isDeductLocked;
 	    _this.masterSliderUrl = settings.masterSliderUrl;
+	    _this.inventoryManagementSource = settings.inventoryManagementSource;
+	    _this.permissions = settings.permissions;
 
 	    _this.addCopyLinkPopup();
 
@@ -171,7 +263,8 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        }
 
 	        var urlParams = {
-	          isNewDocument: _this.entityId <= 0 ? 'Y' : 'N'
+	          isNewDocument: _this.entityId <= 0 ? 'Y' : 'N',
+	          inventoryManagementSource: _this.inventoryManagementSource
 	        };
 
 	        if (action) {
@@ -188,12 +281,15 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        _this.sendAnalyticsData({
 	          tab: 'products',
 	          isNewDocument: _this.entityId <= 0 ? 'Y' : 'N',
-	          documentType: 'W'
+	          documentType: 'W',
+	          inventoryManagementSource: _this.inventoryManagementSource
 	        });
 
 	        _this.isTabAnalyticsSent = true;
 	      }
 	    });
+
+	    _classPrivateMethodGet$1(babelHelpers.assertThisInitialized(_this), _subscribeToProductRowSummaryEvents, _subscribeToProductRowSummaryEvents2).call(babelHelpers.assertThisInitialized(_this));
 
 	    _classStaticPrivateFieldSpecSet(Document, Document, _instance, babelHelpers.assertThisInitialized(_this));
 
@@ -203,6 +299,13 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  }
 
 	  babelHelpers.createClass(Document, [{
+	    key: "focusOnTab",
+	    value: function focusOnTab(tabId) {
+	      main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
+	        tabId: tabId
+	      });
+	    }
+	  }, {
 	    key: "getControllersIssues",
 	    value: function getControllersIssues(controllers) {
 	      var validateErrorCollection = [];
@@ -278,52 +381,51 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	        savePanel.onSaveButtonClick(event);
 	      };
 
-	      var deductAndSaveButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ui-btn-light-border\">", "</button>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON'));
+	      if (this.permissions.conduct && !this.isDocumentDeducted) {
+	        var deductAndSaveButton = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<button class=\"ui-btn ui-btn-light-border\">", "</button>"])), main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_SAVE_AND_DEDUCT_BUTTON'));
 
-	      deductAndSaveButton.onclick = function (event) {
-	        if (_this2.isDeductLocked) {
-	          _this2.openMasterSlider();
-
-	          return;
-	        }
-
-	        editor._ajaxForm._config.data.ACTION = Document.saveAndDeductAction;
-
-	        editor._ajaxForm._config.onsuccess = function (result) {
-	          _this2.showNotificationOnClose = true;
-	          var error = BX.prop.getString(result, 'ERROR', '');
-
-	          if (!error) {
-	            _this2.setViewModeButtons(editor);
-	          }
-
-	          editor.onSaveSuccess(result);
-	        };
-
-	        savePanel.onSaveButtonClick(event);
-	      };
-
-	      saveButton.after(deductAndSaveButton);
-	      this.deductAndSaveButton = deductAndSaveButton;
-	      var deductButton = new ui_buttons.Button({
-	        text: this.isDocumentDeducted ? main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON') : main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_DEDUCT_BUTTON'),
-	        color: ui_buttons.ButtonColor.LIGHT_BORDER,
-	        onclick: function onclick(button, event) {
-	          if (savePanel.isLocked()) {
-	            return;
-	          }
-
+	        deductAndSaveButton.onclick = function (event) {
 	          if (_this2.isDeductLocked) {
 	            _this2.openMasterSlider();
 
 	            return;
 	          }
 
-	          button.setState(ui_buttons.ButtonState.CLOCKING);
-	          savePanel.setLocked(true);
-	          var actionName = _this2.isDocumentDeducted ? Document.cancelDeductAction : Document.deductAction;
+	          editor._ajaxForm._config.data.ACTION = Document.saveAndDeductAction;
 
-	          if (actionName === Document.deductAction) {
+	          editor._ajaxForm._config.onsuccess = function (result) {
+	            _this2.showNotificationOnClose = true;
+	            var error = BX.prop.getString(result, 'ERROR', '');
+
+	            if (!error) {
+	              _this2.setViewModeButtons(editor);
+	            }
+
+	            editor.onSaveSuccess(result);
+	          };
+
+	          savePanel.onSaveButtonClick(event);
+	        };
+
+	        saveButton.after(deductAndSaveButton);
+	        this.deductAndSaveButton = deductAndSaveButton;
+	        var deductButton = new ui_buttons.Button({
+	          text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_DEDUCT_BUTTON'),
+	          color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	          onclick: function onclick(button, event) {
+	            if (savePanel.isLocked()) {
+	              return;
+	            }
+
+	            if (_this2.isDeductLocked) {
+	              _this2.openMasterSlider();
+
+	              return;
+	            }
+
+	            button.setState(ui_buttons.ButtonState.CLOCKING);
+	            savePanel.setLocked(true);
+	            var actionName = Document.deductAction;
 	            var controllers = editor.getControllers();
 	            var errorCollection = [];
 	            controllers.forEach(function (controller) {
@@ -341,41 +443,95 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	              button.setActive(true);
 	              return;
 	            }
-	          }
 
-	          var formData = {};
+	            var formData = {};
 
-	          if (window.EntityEditorDocumentOrderShipmentController) {
-	            formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
-	          }
-
-	          var deductDocumentAjaxForm = editor.createAjaxForm({
-	            actionName: actionName,
-	            enableRequiredUserFieldCheck: false,
-	            formData: formData
-	          }, {
-	            onSuccess: function onSuccess(result) {
-	              if (!_this2.isDocumentDeducted) {
-	                _this2.showNotificationOnClose = true;
-	              }
-
-	              button.setState(ui_buttons.ButtonState.ACTIVE);
-	              editor.onSaveSuccess(result);
-	            },
-	            onFailure: function onFailure(result) {
-	              button.setState(ui_buttons.ButtonState.ACTIVE);
-	              editor.onSaveFailure(result);
+	            if (window.EntityEditorDocumentOrderShipmentController) {
+	              formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
 	            }
-	          });
-	          deductDocumentAjaxForm.addUrlParams({
-	            action: actionName,
-	            documentType: 'W'
-	          });
-	          deductDocumentAjaxForm.submit();
-	        }
-	      }).render();
-	      saveButton.after(deductButton);
-	      this.deductButton = deductButton;
+
+	            var deductDocumentAjaxForm = editor.createAjaxForm({
+	              actionName: actionName,
+	              enableRequiredUserFieldCheck: false,
+	              formData: formData
+	            }, {
+	              onSuccess: function onSuccess(result) {
+	                if (!_this2.isDocumentDeducted) {
+	                  _this2.showNotificationOnClose = true;
+	                }
+
+	                button.setState(ui_buttons.ButtonState.ACTIVE);
+	                editor.onSaveSuccess(result);
+	              },
+	              onFailure: function onFailure(result) {
+	                button.setState(ui_buttons.ButtonState.ACTIVE);
+	                editor.onSaveFailure(result);
+	              }
+	            });
+	            deductDocumentAjaxForm.addUrlParams({
+	              action: actionName,
+	              documentType: 'W'
+	            });
+	            deductDocumentAjaxForm.submit();
+	          }
+	        }).render();
+	        saveButton.after(deductButton);
+	        this.deductButton = deductButton;
+	      } else if (this.permissions.cancel) {
+	        var _deductButton = new ui_buttons.Button({
+	          text: main_core.Loc.getMessage('CRM_STORE_DOCUMENT_DETAIL_CANCEL_DEDUCT_BUTTON'),
+	          color: ui_buttons.ButtonColor.LIGHT_BORDER,
+	          onclick: function onclick(button, event) {
+	            if (savePanel.isLocked()) {
+	              return;
+	            }
+
+	            if (_this2.isDeductLocked) {
+	              _this2.openMasterSlider();
+
+	              return;
+	            }
+
+	            button.setState(ui_buttons.ButtonState.CLOCKING);
+	            savePanel.setLocked(true);
+	            var actionName = Document.cancelDeductAction;
+	            var formData = {};
+
+	            if (window.EntityEditorDocumentOrderShipmentController) {
+	              formData = window.EntityEditorDocumentOrderShipmentController.demandFormData();
+	            }
+
+	            var deductDocumentAjaxForm = editor.createAjaxForm({
+	              actionName: actionName,
+	              enableRequiredUserFieldCheck: false,
+	              formData: formData
+	            }, {
+	              onSuccess: function onSuccess(result) {
+	                if (!_this2.isDocumentDeducted) {
+	                  _this2.showNotificationOnClose = true;
+	                }
+
+	                button.setState(ui_buttons.ButtonState.ACTIVE);
+	                editor.onSaveSuccess(result);
+	              },
+	              onFailure: function onFailure(result) {
+	                button.setState(ui_buttons.ButtonState.ACTIVE);
+	                editor.onSaveFailure(result);
+	              }
+	            });
+	            deductDocumentAjaxForm.addUrlParams({
+	              action: actionName,
+	              documentType: 'W',
+	              inventoryManagementSource: _this2.inventoryManagementSource
+	            });
+	            deductDocumentAjaxForm.submit();
+	          }
+	        }).render();
+
+	        saveButton.after(_deductButton);
+	        this.deductButton = _deductButton;
+	      }
+
 	      main_core_events.EventEmitter.subscribe('BX.Crm.EntityEditor:onControlModeChange', function (event) {
 	        var eventEditor = event.data[0];
 	        var control = event.data[1].control;
@@ -557,10 +713,36 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	      if (babelHelpers.classPrivateFieldGet(this, _documentOnboardingManager) === null) {
 	        babelHelpers.classPrivateFieldSet(this, _documentOnboardingManager, new DocumentOnboardingManager({
 	          onboardingData: onboardingData,
-	          documentGuid: this.id
+	          documentGuid: this.id,
+	          productListController: this.getProductListController()
 	        }));
 	        babelHelpers.classPrivateFieldGet(this, _documentOnboardingManager).processOnboarding();
 	      }
+	    }
+	  }, {
+	    key: "getProductListController",
+	    value: function getProductListController() {
+	      var editor = this.getEditorInstance();
+	      var controllers = editor.getControllers();
+
+	      var _iterator = _createForOfIteratorHelper$1(controllers),
+	          _step;
+
+	      try {
+	        for (_iterator.s(); !(_step = _iterator.n()).done;) {
+	          var controller = _step.value;
+
+	          if (controller instanceof BX.Crm.EntityStoreDocumentProductListController) {
+	            return controller;
+	          }
+	        }
+	      } catch (err) {
+	        _iterator.e(err);
+	      } finally {
+	        _iterator.f();
+	      }
+
+	      return null;
 	    }
 	  }], [{
 	    key: "getInstance",
@@ -570,6 +752,23 @@ this.BX.Crm.Store = this.BX.Crm.Store || {};
 	  }]);
 	  return Document;
 	}(catalog_entityCard.BaseCard);
+
+	function _subscribeToProductRowSummaryEvents2() {
+	  main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorProductRowSummary:onDetailProductListLinkClick', function () {
+	    main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
+	      tabId: 'tab_products'
+	    });
+	  });
+	  main_core_events.EventEmitter.subscribe('BX.UI.EntityEditorProductRowSummary:onAddNewRowInProductList', function () {
+	    main_core_events.EventEmitter.emit('BX.Catalog.EntityCard.TabManager:onOpenTab', {
+	      tabId: 'tab_products'
+	    });
+	    setTimeout(function () {
+	      main_core_events.EventEmitter.emit('onFocusToProductList');
+	    }, 500);
+	  });
+	}
+
 	var _instance = {
 	  writable: true,
 	  value: void 0

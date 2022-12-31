@@ -11,6 +11,7 @@ $MESS["AUTH_PROFILE_B24NET"] = "Моя страница Битрикс24.Нет�
 
 $MESS["INTRANET_USER_PROFILE_DESKTOP_APPLE"] = "Битрикс24 для macOS";
 $MESS["INTRANET_USER_PROFILE_DESKTOP_WINDOWS"] = "Битрикс24 для Windows";
+$MESS["INTRANET_USER_PROFILE_DESKTOP_LINUX"] = "Битрикс24 для Linux";
 $MESS["INTRANET_USER_PROFILE_OTP_TITLE"] = "Защищено OTP";
 $MESS["INTRANET_USER_PROFILE_OTP_MESSAGE"] = "Двухфакторная авторизация";
 $MESS["INTRANET_USER_PROFILE_OTP_DESCRIPTION"] = "Как это работает";
@@ -25,6 +26,8 @@ $MESS["INTRANET_USER_PROFILE_SOON"] = "Скоро";
 $MESS["INTRANET_USER_PROFILE_GOTO"] = "Перейти";
 $MESS["INTRANET_USER_PROFILE_CONFIGURE"] = "Настроить";
 $MESS["INTRANET_USER_PROFILE_DOWNLOAD"] = "Скачать";
+$MESS["INTRANET_USER_PROFILE_DOWNLOAD_LINUX_DEB"] = "Для Linux DEB";
+$MESS["INTRANET_USER_PROFILE_DOWNLOAD_LINUX_RBM"] = "Для Linux RBM";
 $MESS["INTRANET_USER_PROFILE_ADMIN_PANEL"] = "Администрирование";
 
 $MESS["INTRANET_USER_PROFILE_PULSE_TITLE"] = "Пульс активности";
@@ -56,6 +59,13 @@ $MESS["INTRANET_USER_PROFILE_MOBILE_SHOW_QR_SMALL"] = "Показать код";
 $MESS["INTRANET_USER_PROFILE_MOBILE_HOW_DOES_IT_WORK"] = "Как это работает?";
 
 $MESS["INTRANET_USER_PROFILE_HISTORY_TITLE"] = "История входов";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE"] = "Выйти на всех устройствах";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_THIS_DEVICE_DESCRIPTION"] = "Последний вход в профиль Битрикс24";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_WITHOUT_THIS_MESSAGE"] = "Будет выполнен выход из вашего профиля Битрикс24 на всех устройствах, кроме текущего. Продолжить?";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_WITHOUT_THIS_RESULT"] = "Вы успешно вышли на всех устройствах, кроме текущего";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_ERROR"] = "Произошла ошибка при попытке выйти из профиля. Попробуйте ещё раз";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_LOGOUT_ALL_DEVICE_TITLE"] = "Подтвердите действие";
+$MESS["INTRANET_USER_PROFILE_HISTORY_BUTTON_SHOW_FULL_LIST"] = "Показать всю историю входов";
 $MESS["INTRANET_USER_PROFILE_extranet"] = "Экстранет";
 $MESS["INTRANET_USER_PROFILE_visitor"] = "Посетитель";
 $MESS["INTRANET_USER_PROFILE_fired"] = "Уволен";

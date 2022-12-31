@@ -88,7 +88,7 @@ $arUrlRewrite = array(
 		"PATH" => "/desktop_app/router.php",
 	),
 	array(
-		"CONDITION" => "#^/tasks/getfile/(\\d+)/(\\d+)/([^/]+)#",
+		"CONDITION" => "#^/7/getfile/(\\d+)/(\\d+)/([^/]+)#",
 		"RULE" => "taskid=\$1&fileid=\$2&filename=\$3",
 		"PATH" => "/tasks/getfile.php",
 	),
@@ -605,6 +605,12 @@ $arUrlRewrite = array(
 		"ID" => "",
 		"PATH" => "/marketing/contact.php",
 	),
+	array (
+		'CONDITION' => '#^/shop/settings/permissions/#',
+		'RULE' => '',
+		'ID' => 'bitrix:catalog.config.permissions',
+		'PATH' => '/shop/settings/permissions/index.php',
+	),
 	array(
 		"CONDITION" => "#^/shop/settings/#",
 		"RULE" => "",
@@ -634,6 +640,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:catalog.catalog.controller",
 		"PATH" => "/shop/documents-catalog/index.php",
+	),
+	array(
+		"CONDITION" => "#^/shop/documents-stores/#",
+		"RULE" => "",
+		"ID" => "bitrix:catalog.store.entity.controller",
+		"PATH" => "/shop/documents-stores/index.php",
 	),
 	array(
 		"CONDITION" => "#^/marketing/rc/#",
@@ -801,6 +813,12 @@ $arUrlRewrite = array(
 		"RULE" => "",
 		"ID" => "bitrix:sign.start",
 		"PATH" => "/sign/index.php",
+	),
+	array(
+		"CONDITION" => "#^/timeman/login-history/([0-9]+)/.*#",
+		"RULE" => "user=\$1",
+		"ID" => "bitrix:intranet.user.login.history",
+		"PATH" => "/timeman/login-history/index.php"
 	),
 );
 ?>

@@ -266,6 +266,7 @@ class LeadController extends BaseController
 		$this->suspendProductRows($entityID, $recyclingEntityID);
 		$this->suspendScoringHistory($entityID, $recyclingEntityID);
 		$this->suspendCustomRelations((int)$entityID, (int)$recyclingEntityID);
+		$this->suspendBadges((int)$entityID, (int)$recyclingEntityID);
 
 		//region Relations
 		foreach($relations as $relation)
@@ -378,6 +379,7 @@ class LeadController extends BaseController
 		$this->recoverProductRows($recyclingEntityID, $newEntityID);
 		$this->recoverScoringHistory($recyclingEntityID, $newEntityID);
 		$this->recoverCustomRelations((int)$recyclingEntityID, (int)$newEntityID);
+		$this->recoverBadges((int)$recyclingEntityID, (int)$newEntityID);
 
 		$this->recoverActivities($recyclingEntityID, $entityID, $newEntityID, $params, $relationMap);
 
@@ -454,6 +456,7 @@ class LeadController extends BaseController
 		$this->eraseSuspendedUserFields($recyclingEntityID);
 		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 		$this->eraseSuspendedCustomRelations($recyclingEntityID);
+		$this->eraseSuspendedBadges($recyclingEntityID);
 
 		Relation::deleteByRecycleBin($recyclingEntityID);
 	}

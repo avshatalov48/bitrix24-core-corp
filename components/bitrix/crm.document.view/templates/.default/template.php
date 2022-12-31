@@ -31,6 +31,11 @@ Extension::load([
 ]);
 Asset::getInstance()->addJs('/bitrix/js/crm/activity.js');
 
+$downloadButtonOptions = \CUserOptions::GetOption('crm.document.view', 'download_button', []);
+$defaultDownloadFormat = in_array(mb_strtolower($downloadButtonOptions['format']), ['doc', 'pdf'], true)
+	? mb_strtolower($downloadButtonOptions['format'])
+	: 'pdf';
+
 $renderRequisiteSection = function(?string $entityName, array $data): void {
 	?>
 		<div class="crm__document-view--sidebar-requisite-field">
@@ -78,7 +83,15 @@ if ($arParams['IS_SLIDER']):
 				<?php if (Bitrix24Manager::isEnabled()):
 					?><button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.DocumentGenerator.Feedback.open('<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['PROVIDER']));?>', '<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['TEMPLATE_NAME']));?>', '<?=htmlspecialcharsbx(CUtil::JSEscape($arResult['TEMPLATE_CODE']));?>');"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_FEEDBACK');?></button>
 				<?php endif;?>
-				<button class="ui-btn ui-btn-md ui-btn-icon-download ui-btn-light-border ui-btn-dropdown" id="crm-document-download"><?=Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD');?></button>
+				<div
+					class="ui-btn-split ui-btn-light-border crm__document-view--btn-icon-<?=mb_strtolower($defaultDownloadFormat)?>"
+					id="crm-document-download"
+				>
+					<button class="ui-btn-main">
+						<span class="ui-btn-text"><?=Loc::getMessage('CRM_COMMON_ACTION_DOWNLOAD');?></span>
+					</button>
+					<button class="ui-btn-menu"></button>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -190,10 +203,10 @@ endif;
 						<div class="crm__document-view--sidebar-control --in-details">
 							<label class="crm__document-view--label" type="text" for="crm-document-stamp"><?=Loc::getMessage('CRM_DOCUMENT_VIEW_SIGN_AND_STAMP');?></label>
 							<input class="crm__document-view--checkbox" type="checkbox" id="crm-document-stamp"<?php
-							if ($arResult['stampsEnabled']):
+							if ($arResult['stampsEnabled'] && $arResult['changeStampsEnabled']):
 								?> checked<?php
 							endif;
-							if (!$arResult['editTemplateUrl']):
+							if (!$arResult['editTemplateUrl'] || !$arResult['changeStampsEnabled']):
 								?> disabled<?php
 							endif;?>>
 						</div>
@@ -207,16 +220,18 @@ endif;
 					);
 				?></div>
 				<?php
-				if (\Bitrix\Crm\Settings\Crm::isDocumentSigningEnabled()) {?>
+				if ($arResult['isSigningEnabled']):
+					echo \Bitrix\Crm\Tour\Sign\SignDocumentFromSlider::getInstance()->build();
+				?>
 				<div class="crm__document-view--sidebar-section">
-					<div class="crm__document-view--sidebar-control">
+					<div class="crm__document-view--sidebar-control" id="crm-document-sign" >
 						<label class="crm__document-view--label --label-icon --icon-sign crm__document-view--sidebar-control-sign">
 							<?=Loc::getMessage('CRM_DOCUMENT_VIEW_SIGN_BUTTON');?>
 						</label>
 						<span class="crm__document-view--arrow"> </span>
 					</div>
 				</div>
-				<?}?>
+				<?php endif; ?>
 			</div>
 			<?php if ($arResult['editDocumentUrl']):?>
 				<div class="crm__document-view--link-inner">

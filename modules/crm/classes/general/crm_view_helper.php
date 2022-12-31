@@ -6,7 +6,9 @@ use Bitrix\Crm\Conversion\LeadConversionType;
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Color\PhaseColorScheme;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Workflow\PaymentStage;
+use Bitrix\Main\UI\Extension;
 
 class CCrmViewHelper
 {
@@ -156,7 +158,7 @@ class CCrmViewHelper
 			$format = CSite::GetNameFormat(false);
 		}
 
-		$user = \Bitrix\Crm\Service\Container::getInstance()->getUserBroker()->getById($userID);
+		$user = Container::getInstance()->getUserBroker()->getById($userID);
 		return is_array($user) ? CUser::FormatName($format, $user, true, $htmlEncode) : '';
 	}
 	public static function RenderInfo($url, $titleHtml, $descriptionHtml, array $options = null)
@@ -549,9 +551,11 @@ class CCrmViewHelper
 	public static function RenderNearestActivity($arParams)
 	{
 		$gridManagerID = isset($arParams['GRID_MANAGER_ID']) ? $arParams['GRID_MANAGER_ID'] : '';
+		$preparedGridId = htmlspecialcharsbx(CUtil::JSescape($gridManagerID));
 		$mgrID = mb_strtolower($gridManagerID);
 
 		$entityTypeName = isset($arParams['ENTITY_TYPE_NAME'])? mb_strtolower($arParams['ENTITY_TYPE_NAME']) : '';
+		$entityTypeId = CCrmOwnerType::ResolveID($arParams['ENTITY_TYPE_NAME']);
 		$entityID = isset($arParams['ENTITY_ID']) ? $arParams['ENTITY_ID'] : '';
 
 		$allowEdit = isset($arParams['ALLOW_EDIT']) ? $arParams['ALLOW_EDIT'] : false;
@@ -593,11 +597,18 @@ class CCrmViewHelper
 			{
 				if($useGridExtension)
 				{
-					$menuID = htmlspecialcharsbx($menuID);
-					$menuParams = "{offsetLeft: 30, autoHide: true, closeByEsc: true, angle: { position: 'top', offset: 10 }}";
-					$menuItems = array_map('array_change_key_case', $menuItems);
-					$menuItems = CUtil::PhpToJSObject($menuItems);
-					$jsOnClick = "BX.Main.MenuManager.show('{$menuID}', this, {$menuItems}, {$menuParams});";
+					if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
+					{
+						$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ");";
+					}
+					else
+					{
+						$menuID = htmlspecialcharsbx($menuID);
+						$menuParams = "{offsetLeft: 30, autoHide: true, closeByEsc: true, angle: { position: 'top', offset: 10 }}";
+						$menuItems = array_map('array_change_key_case', $menuItems);
+						$menuItems = CUtil::PhpToJSObject($menuItems);
+						$jsOnClick = "BX.Main.MenuManager.show('{$menuID}', this, {$menuItems}, {$menuParams});";
+					}
 
 					$result .= '<div 
 									class="crm-nearest-activity-plus" 
@@ -653,11 +664,18 @@ class CCrmViewHelper
 
 			if($useGridExtension)
 			{
-				$menuID = htmlspecialcharsbx($menuID);
-				$menuParams = "{offsetLeft: 30, autoHide: true, closeByEsc: true, angle: { position: 'top', offset: 10 }}";
-				$menuItems = array_map('array_change_key_case', $menuItems);
-				$menuItems = CUtil::PhpToJSObject($menuItems);
-				$jsOnClick = "BX.Main.MenuManager.show('{$menuID}', this, {$menuItems}, {$menuParams});";
+				if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
+				{
+					$jsOnClick = "BX.CrmUIGridExtension.showActivityAddingPopup(this, '".$preparedGridId."', " . (int)$entityTypeId . ", " . (int)$entityID . ");";
+				}
+				else
+				{
+					$menuID = htmlspecialcharsbx($menuID);
+					$menuParams = "{offsetLeft: 30, autoHide: true, closeByEsc: true, angle: { position: 'top', offset: 10 }}";
+					$menuItems = array_map('array_change_key_case', $menuItems);
+					$menuItems = CUtil::PhpToJSObject($menuItems);
+					$jsOnClick = "BX.Main.MenuManager.show('{$menuID}', this, {$menuItems}, {$menuParams});";
+				}
 
 				return '<span class="crm-activity-add-hint">'.htmlspecialcharsbx($hintText).'</span>
 						<a 
@@ -2180,6 +2198,8 @@ class CCrmViewHelper
 	}
 
 	/**
+	 * @deprecated see \Bitrix\Crm\Service\Display\Field\PaymentStatusField
+	 *
 	 * @param string $stage
 	 * @param string $cssPrefix
 	 * @return string
@@ -2207,6 +2227,8 @@ class CCrmViewHelper
 	}
 
 	/**
+	 * @deprecated see \Bitrix\Crm\Service\Display\Field\DeliveryStatusField
+	 *
 	 * @param string $stage
 	 * @param string $cssPrefix
 	 * @return string
@@ -2615,7 +2637,7 @@ class CCrmViewHelper
 		else
 		{
 			$arParams['PREFIX'] = \CCrmStatus::getDynamicEntityStatusPrefix((int)$arParams['ENTITY_TYPE_ID'], (int)$arParams['CATEGORY_ID']);
-			$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory((int)$arParams['ENTITY_TYPE_ID']);
+			$factory = Container::getInstance()->getFactory((int)$arParams['ENTITY_TYPE_ID']);
 			if ($factory)
 			{
 				$stages = $factory->getStages((int)$arParams['CATEGORY_ID']);
@@ -2850,7 +2872,7 @@ class CCrmViewHelper
 
 	protected static function PrepareItemsStatuses($entityTypeId, $categoryId): array
 	{
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if ($factory && $factory->isStagesSupported())
 		{
 			$stages = $factory->getStages($categoryId);
@@ -3057,7 +3079,7 @@ class CCrmViewHelper
 		}
 
 		$result = [];
-		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($entityTypeId);
+		$factory = Container::getInstance()->getFactory($entityTypeId);
 		if ($categoryId === '0')
 		{
 			foreach ($factory->getCategories() as $category)
@@ -3220,6 +3242,7 @@ class CCrmViewHelper
 	{
 		return CCrmCurrency::GetCurrencyText($currencyID);
 	}
+
 	public static function RenderSipContext()
 	{
 		echo '<script type="text/javascript">',
@@ -3246,5 +3269,62 @@ class CCrmViewHelper
 		'}', "\n";
 
 		echo '}); </script>';
+	}
+
+	public static function getDetailFrameWrapperScript(
+		int $entityTypeId,
+		int $entityId,
+		int $entityCategoryId = null,
+		int $viewCategoryId = null
+	): string
+	{
+		Extension::load(['crm_common', 'sidepanel']);
+
+		$router = Container::getInstance()->getRouter();
+		$url = $router->getItemDetailUrl($entityTypeId, $entityId, $entityCategoryId);
+		if (is_array($_GET))
+		{
+			$url->addParams($_GET);
+		}
+		$url = CUtil::JSEscape($url->getUri());
+
+		$viewUrl = $router->getItemListUrlInCurrentView($entityTypeId, $viewCategoryId);
+
+		if (!$viewUrl)
+		{
+			return '';
+		}
+
+		$viewUrl = CUtil::JSEscape($viewUrl);
+
+		return (
+			'<script type="text/javascript">' . PHP_EOL
+			. 'BX.ready(' . PHP_EOL
+			. '    function ()' . PHP_EOL
+			. '    {' . PHP_EOL
+			. '        BX.Crm.Page.initialize();' . PHP_EOL
+			. '        BX.SidePanel.Instance.open(' . PHP_EOL
+			. "            \"$url\"," . PHP_EOL
+			. '            {' . PHP_EOL
+			. '                cacheable: false,' . PHP_EOL
+			. '                loader: "crm-entity-details-loader",' . PHP_EOL
+			. '                events: {' . PHP_EOL
+			. '                    onCloseComplete: function () {' . PHP_EOL
+			. '                        let themePicker = '. PHP_EOL
+			. '                            BX.getClass("BX.Intranet.Bitrix24.ThemePicker.Singleton")' . PHP_EOL
+			. '                        ;' . PHP_EOL
+			. '                        if (themePicker)' . PHP_EOL
+			. '                        {' . PHP_EOL
+			. '                            themePicker.showLoader(BX("workarea-content"));' . PHP_EOL
+			. '                        }' . PHP_EOL
+			. "                        window.location = \"$viewUrl\";" . PHP_EOL
+			. '                    }' . PHP_EOL
+			. '                }' . PHP_EOL
+			. '            }' . PHP_EOL
+			. '        );' . PHP_EOL
+			. '    }' . PHP_EOL
+			. ');' . PHP_EOL
+			. '</script>'
+		);
 	}
 }

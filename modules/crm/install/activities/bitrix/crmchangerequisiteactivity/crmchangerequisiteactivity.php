@@ -327,7 +327,7 @@ class CBPCrmChangeRequisiteActivity extends CBPCrmGetRequisitesInfoActivity
 
 	public static function ValidateProperties($testProperties = [], CBPWorkflowTemplateUser $user = null)
 	{
-		$testProperties['FieldsValues'] = self::normalizeFieldsValues($testProperties['FieldsValues']);
+		$testProperties['FieldsValues'] = self::normalizeFieldsValues($testProperties['FieldsValues'] ?? []);
 		$errors = parent::ValidateProperties($testProperties, $user);
 
 		$isPropertySpecified = false;

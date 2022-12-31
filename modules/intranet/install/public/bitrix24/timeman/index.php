@@ -1,15 +1,17 @@
 <?
+
+use Bitrix\Main\ModuleManager;
+
 require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/intranet/public_bitrix24/timeman/index.php");
 $APPLICATION->SetTitle(GetMessage("TITLE"));
-$licenseType = "";
-if (\Bitrix\Main\Loader::includeModule("bitrix24"))
-{
-	$licenseType = CBitrix24::getLicenseType();
-}
 
-if (COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y" || \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence"))
+if (
+	COption::GetOptionString("bitrix24", "absence_limits_enabled", "") !== "Y"
+	|| ModuleManager::isModuleInstalled("timeman")
+	|| (\Bitrix\Main\Loader::includeModule("bitrix24") && \Bitrix\Bitrix24\Feature::isFeatureEnabled("absence"))
+)
 {
 	$workTimeStart = 9;
 	$workTimeEnd = 18;
@@ -47,7 +49,9 @@ else
 	<div style="text-align: center;"><img src="images/<?=$lang?>/absence.png"/></div>
 	<p><?=GetMessage("ABSENCE_TARIFF_RESTRICTION_TITLE")?></p>
 	<br/>
-	<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("absence")?></div>
+	<?php if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
+		<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("absence")?></div>
+	<?php endif;?>
 	<?
 }
 ?>

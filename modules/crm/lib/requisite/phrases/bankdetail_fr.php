@@ -1,0 +1,19 @@
+<?php
+$phrasesConfig = [
+	'encoding' => 'UTF-8',
+	'lang' => 'fr',
+	'phrases' => [
+		'CRM_BANK_DETAIL_SECTION_FR_TITLE' => 'Coordonnées bancaires',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_NAME_FR_FIELD' => 'Banque',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ADDR_FR_FIELD' => 'Adresse de la Banque',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NAME_FR_FIELD' => 'Titulaire du compte',
+		'CRM_BANK_DETAIL_ENTITY_RQ_ACC_NUM_FR_FIELD' => 'Numéro de compte',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BANK_ROUTE_NUM_FR_FIELD' => 'Numéro de routage',
+		'CRM_BANK_DETAIL_ENTITY_RQ_SWIFT_FR_FIELD' => 'SWIFT',
+		'CRM_BANK_DETAIL_ENTITY_RQ_IBAN_FR_FIELD' => 'IBAN',
+		'CRM_BANK_DETAIL_ENTITY_RQ_BIC_FR_FIELD' => 'BIC',
+		'CRM_BANK_DETAIL_ENTITY_RQ_CODEB_FR_FIELD' => 'Code Banque',
+		'CRM_BANK_DETAIL_ENTITY_RQ_CODEG_FR_FIELD' => 'Code Guichet',
+		'CRM_BANK_DETAIL_ENTITY_RQ_RIB_FR_FIELD' => 'Clé RIB',
+	]
+];

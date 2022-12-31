@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","edit","color","dragButton"],"mappings":"AAGAA,GAAGC,OAAO,qBAAqB,CAACC,EAASC,EAASC,KAEjD,MAAMC,EAAO,CAACC,EAAQ,YAAc,uYAAuYA,aAE3a,MAAMC,EAAa,ocAEnBH,EAAOD,QAAU,CAAEE,KAAAA,EAAME,WAAAA","file":"extension.map.js"}

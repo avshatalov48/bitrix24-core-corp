@@ -2,10 +2,13 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
+use Bitrix\Crm\Integration\OpenLineManager;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Main\Localization\Loc;
+use CCrmActivity;
 
 class OpenLineIncoming extends LogMessage
 {
@@ -16,7 +19,7 @@ class OpenLineIncoming extends LogMessage
 
 	public function getIconCode(): ?string
 	{
-		return 'IM';
+		return 'open-line-incoming-message';
 	}
 
 	public function getTitle(): ?string
@@ -26,43 +29,28 @@ class OpenLineIncoming extends LogMessage
 
 	public function getContentBlocks(): ?array
 	{
+		$userCode = $this->getAssociatedEntityModel()->get('PROVIDER_PARAMS')['USER_CODE'];
+		$connectorType = OpenLineManager::getLineConnectorType($userCode);
+
+		$sourceList = [];
+		$providerId = $this->getAssociatedEntityModel()->get('PROVIDER_ID');
+		if ($providerId && $provider = CCrmActivity::GetProviderById($providerId))
+		{
+			$sourceList = $provider::getResultSources();
+		}
+
+		$channelName = empty($sourceList)
+			? (string)$this->getAssociatedEntityModel()->get('TITLE')
+			: $sourceList[$connectorType] ?? $sourceList['livechat'];
+
 		return [
-			'link' => (new LineOfTextBlocks())
-				->addContentBlock(
-					'title',
-					(new Text())
-						->setValue(sprintf('%s:', Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_LINK')))
-						->setColor(Text::COLOR_BASE_70)
-						->setFontSize(Text::FONT_SIZE_SM)
-				)
-				->addContentBlock(
-					'data',
-					(new Text())->setValue('link with ...')
-				),
-			'date' => (new LineOfTextBlocks())
-				->addContentBlock(
-					'title',
-					(new Text())
-						->setValue(sprintf('%s:', Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_DATE')))
-						->setColor(Text::COLOR_BASE_70)
-						->setFontSize(Text::FONT_SIZE_SM)
-				)
-				->addContentBlock(
-					'data',
-					(new Text())->setValue('some date and time')
-				),
-			'description' => (new LineOfTextBlocks())
-				->addContentBlock(
-					'title',
-					(new Text())
-						->setValue(sprintf('%s:', Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_DESCRIPTION')))
-						->setColor(Text::COLOR_BASE_70)
-						->setFontSize(Text::FONT_SIZE_SM)
-				)
-				->addContentBlock(
-					'data',
-					(new Text())->setValue('some text ...')
-				),
+			'content' =>
+				(new LineOfTextBlocks())
+					->addContentBlock(
+						'title',
+						ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_LOG_OL_INCOMING_CHANNEL'))
+					)
+					->addContentBlock('data', (new Text())->setValue($channelName)->setColor(Text::COLOR_BASE_90))
 		];
 	}
 }

@@ -47,4 +47,5 @@ $MESS["MENU_STORE_ACCOUNTING_SECTION"] = "Складской учёт";
 $MESS["MENU_AUTOMATION_SECTION"] = "Автоматизация";
 $MESS["MENU_LISTS_SECTION"] = "Списки";
 $MESS["MENU_SITES_AND_STORES"] = "Сайты и Магазины";
+$MESS["MENU_SIGN"] = "Подпись";
 ?>

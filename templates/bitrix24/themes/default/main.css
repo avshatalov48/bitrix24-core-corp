@@ -1,0 +1,288 @@
+body {
+	background: #eef2f4;
+	background: -webkit-linear-gradient(top, #535c69 63px, transparent 63px) repeat-x, #eef2f4;
+	background: linear-gradient(to bottom, #535c69 63px, transparent 63px) repeat-x, #eef2f4;
+}
+
+.im-bar-mode table.bx-layout-inner-inner-table td.bx-layout-inner-inner-cont {
+	padding-right: 66px;
+}
+
+.header-search-inner {
+	background-color: #717a84
+}
+
+.header-search-active .header-search-inner {
+	background-color: #fff;
+}
+
+.header-search-input::-webkit-input-placeholder {
+	color:#a5adb3;
+}
+.header-search-input::-moz-placeholder {
+	color: #a5adb3;
+	opacity:  1;
+}
+.header-search-input:-ms-input-placeholder {
+	color: #a5adb3;
+}
+
+.header-search-icon:before {
+	background-image: url('data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2214.219%22%20height%3D%2214.25%22%20viewBox%3D%220%200%2014.219%2014.25%22%3E%0A%09%3Cpath%20fill-rule%3D%22evenodd%22%20fill%3D%22%23a5adb3%22%20d%3D%22M13.895%2012.32l-3.662-3.663c-.015-.015-.034-.026-.05-.04A5.544%205.544%200%201%200%208.6%2010.2c.013.016.024.034.04.05l3.662%203.662a1.127%201.127%200%200%200%201.593-1.593zM5.553%209.8A4.232%204.232%200%201%201%209.785%205.57%204.233%204.233%200%200%201%205.553%209.8z%22/%3E%3C/svg%3E');
+}
+
+.logo-text {
+	color: #fff;
+}
+
+.logo img {
+	/*background-color: #535c69;*/
+	border-radius: 3px;
+}
+
+.menu-scroll-mode .menu-items-block .logo-text {
+	color: #535c69;
+}
+
+/* content layout */
+.bx-layout-inner-inner-table {
+	background-color: #eef2f4;
+}
+
+/* timeman styles */
+.bx-time {
+	color: #fff;
+}
+
+.timeman-right-side {
+	color: #e3ebed;
+}
+
+.timeman-block-active .timeman-background {
+	background-color: #3d4653 !important;
+	border-color: #838b93 !important;
+}
+
+.timeman-start .timeman-background,
+.timeman-paused .timeman-background {
+	background-color: #91b33e;
+	border-color: #afc776;
+}
+
+.timeman-start:hover .timeman-background,
+.timeman-paused:hover .timeman-background {
+	background-color: #7d964c;
+}
+
+.timeman-start .bx-time, .timeman-paused .bx-time {
+	color: #fff;
+}
+.timeman-start .timeman-right-side, .timeman-paused .timeman-right-side {
+	color: #fff;
+}
+
+.timeman-expired .timeman-background {
+	background-color: #af393e;
+	border-color: #c47276;
+}
+
+.timeman-block:hover .timeman-background {
+	background: #78808b;
+}
+
+.timeman-expired .timeman-background {
+	background-color: #af393e;
+	border-color: #c47276;
+}
+
+.timeman-not-cl-text {
+	color: #fff;
+}
+
+.timeman-beginning-but i {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2217%22%20viewBox%3D%220%200%2016%2017%22%3E%0A%20%20%3Cg%20fill%3D%22%23FFFFFF%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M8.2%2C0.8%20C12.5%2C0.8%2016%2C4.3%2016%2C8.6%20C16%2C12.9%2012.5%2C16.4%208.2%2C16.4%20C3.9%2C16.4%200.4%2C12.9%200.4%2C8.6%20C0.4%2C4.3%203.9%2C0.8%208.2%2C0.8%20Z%20M8.2%2C15.6%20C12%2C15.6%2015.1%2C12.5%2015.2%2C8.6%20C15.2%2C4.7%2012%2C1.6%208.2%2C1.6%20C4.3%2C1.6%201.2%2C4.8%201.2%2C8.6%20C1.2%2C12.5%204.4%2C15.6%208.2%2C15.6%20Z%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M10.7%2C6%20L5.6%2C6%20C5.5%2C6%205.5%2C6.1%205.5%2C6.1%20L5.5%2C11.2%20C5.5%2C11.3%205.6%2C11.3%205.6%2C11.3%20L10.7%2C11.3%20C10.8%2C11.3%2010.8%2C11.2%2010.8%2C11.2%20L10.8%2C6.1%20C10.8%2C6%2010.8%2C6%2010.7%2C6%20Z%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
+}
+
+.timeman-completed .timeman-beginning-but i,
+.timeman-start .timeman-beginning-but i {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%3E%0A%20%20%3Cg%20fill%3D%22%23fff%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M8.2%2C0.3%20C12.5%2C0.3%2016%2C3.8%2016%2C8.1%20C16%2C12.4%2012.5%2C15.9%208.2%2C15.9%20C3.9%2C15.9%200.4%2C12.4%200.4%2C8.1%20C0.4%2C3.8%203.9%2C0.3%208.2%2C0.3%20Z%20M8.2%2C15.1%20C12%2C15.1%2015.1%2C12%2015.2%2C8.1%20C15.2%2C4.2%2012%2C1.1%208.2%2C1.1%20C4.3%2C1.1%201.2%2C4.3%201.2%2C8.1%20C1.2%2C12%204.4%2C15.1%208.2%2C15.1%20Z%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M7%2C4.7%20C6.8%2C4.6%206.6%2C4.7%206.6%2C4.8%20L6.6%2C11.7%20C6.6%2C11.9%206.9%2C11.9%207%2C11.8%20L11.5%2C8.3%20C11.6%2C8.2%2011.6%2C8.1%2011.5%2C8%20L7%2C4.7%20Z%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
+}
+
+.timeman-paused .timeman-beginning-but i {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2216%22%20height%3D%2217%22%20viewBox%3D%220%200%2016%2017%22%3E%0A%20%20%3Cg%20fill%3D%22%23FFFFFF%22%3E%0A%20%20%20%20%3Cpath%20d%3D%22M8.2%2C0.8%20C12.5%2C0.8%2016%2C4.3%2016%2C8.6%20C16%2C12.9%2012.5%2C16.4%208.2%2C16.4%20C3.9%2C16.4%200.4%2C12.9%200.4%2C8.6%20C0.4%2C4.3%203.9%2C0.8%208.2%2C0.8%20Z%20M8.2%2C15.6%20C12%2C15.6%2015.1%2C12.5%2015.2%2C8.6%20C15.2%2C4.7%2012%2C1.6%208.2%2C1.6%20C4.3%2C1.6%201.2%2C4.8%201.2%2C8.6%20C1.2%2C12.5%204.4%2C15.6%208.2%2C15.6%20Z%22/%3E%0A%20%20%20%20%3Cpath%20d%3D%22M7.5%205L5.7%205C5.6%205%205.5%205.1%205.5%205.2L5.5%2012.1C5.5%2012.2%205.6%2012.3%205.7%2012.3L7.5%2012.3C7.6%2012.3%207.7%2012.2%207.7%2012.1L7.7%205.2C7.6%205.1%207.6%205%207.5%205zM10.6%205L8.9%205C8.8%205%208.7%205.1%208.7%205.2L8.7%2012.1C8.7%2012.2%208.8%2012.3%208.9%2012.3L10.6%2012.3C10.7%2012.3%2010.8%2012.2%2010.8%2012.1L10.8%205.2C10.8%205.1%2010.7%205%2010.6%205z%22/%3E%0A%20%20%3C/g%3E%0A%3C/svg%3E%0A');
+}
+
+/* userblock styles */
+.user-block:hover:after,
+.user-block.--hover:after,
+.user-block.--wait:after {
+	background-color: #78808b;
+}
+
+.user-block-active:after {
+	background: #3d4653 !important;
+}
+
+.user-name {
+	color: #fff;
+}
+
+.user-name:after {
+	border-top-color: #FFF;
+}
+
+/* footer */
+#copyright {
+	color: #888e96;
+}
+
+.footer-link {
+	border-left: 1px solid #c8d2d5;
+	color: #8f8e96;
+}
+
+.footer-link:hover {
+	color: #6a6876;
+}
+
+#bitrix24-logo {
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2289%22%20height%3D%2217%22%20viewBox%3D%220%200%2089%2017%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%232FC7F7%22%3E%3Cpath%20d%3D%22M.024%201.467h7.338l-.58%201.88H2.35V5.68h.766c1.204%200%202.277.153%203.103.59.98.51%201.58%201.42%201.58%202.852%200%202-1.202%203.502-4.624%203.502H.035V1.467h-.01zM3.21%2010.73c1.592%200%202.252-.508%202.252-1.572%200-.616-.236-1.03-.625-1.266-.425-.25-1.038-.32-1.734-.32h-.767v3.17h.873v-.01zm5.827-6.116h2.218V7.82c0%20.663-.012%201.302-.07%201.763h.046c.19-.32.58-.993%201.04-1.656l2.288-3.3h2.24v8.01h-2.24V9.43c0-.663.035-1.302.082-1.763h-.047c-.188.32-.59.994-1.038%201.656l-2.29%203.3h-2.24v-8.01h.012zM20.103%206.507h-2.395V4.614h7.562l-.59%201.893h-2.29v6.117h-2.287M25.966%204.934c.885-.308%201.97-.52%203.173-.52%202.984%200%204.494%201.68%204.494%204.2%200%202.4-1.628%204.188-4.223%204.188-.39%200-.778-.048-1.155-.154v4h-2.29V4.933zm3.268%205.986c1.368%200%202.053-.9%202.053-2.307%200-1.56-.85-2.32-2.254-2.32-.283%200-.53.013-.778.108v4.355c.306.094.59.165.98.165zm5.474-6.306h2.218V7.82c0%20.663-.012%201.302-.07%201.763h.046c.19-.32.578-.993%201.038-1.656l2.29-3.3h2.24v8.01h-2.24V9.43c0-.663.034-1.302.082-1.763h-.048c-.188.32-.59.994-1.038%201.656l-2.29%203.3h-2.24v-8.01h.012zm9.237%200h2.29V7.68h.848c.968%200%20.932-1.622%201.64-2.58.307-.426.78-.7%201.51-.7.236%200%20.66.037.92.12v1.952c-.13-.047-.306-.083-.472-.083-.258%200-.423.082-.553.248-.4.508-.472%201.538-1.074%201.916v.036c.39.153.673.437.92.946l1.44%203.088h-2.478l-.943-2.508c-.2-.497-.402-.71-.626-.71h-1.12v3.218h-2.29v-8.01h-.01zM51.78%208.66c0-2.543%201.97-4.247%204.316-4.247%201.086%200%201.794.308%202.218.58V6.91c-.578-.438-1.19-.675-1.97-.675-1.404%200-2.24%201.065-2.24%202.426%200%201.503.848%202.32%202.134%202.32.708%200%201.25-.202%201.852-.545l.65%201.562c-.662.473-1.7.816-2.81.816-2.665-.023-4.15-1.798-4.15-4.152z%22/%3E%3C/g%3E%3Cpath%20fill%3D%22%230066A1%22%20d%3D%22M84.21.047c-2.29%200-4.153%201.858-4.153%204.153%200%202.295%201.852%204.153%204.152%204.153s4.152-1.846%204.152-4.14c0-2.308-1.852-4.166-4.153-4.166zm0%207.395c-1.782%200-3.22-1.444-3.22-3.23%200-1.787%201.438-3.23%203.22-3.23%201.78%200%203.22%201.443%203.22%203.23.012%201.786-1.44%203.23-3.22%203.23z%22/%3E%3Cpath%20fill%3D%22%230066A1%22%20d%3D%22M84.68%203.74V2.353h-.93v2.318h2.312V3.74%22/%3E%3Cg%20fill%3D%22%230066A1%22%3E%3Cpath%20d%3D%22M66.36%203.797c0-1.064-.885-1.443-1.817-1.443-1.263%200-2.29.414-3.244.84l-.662-1.964C61.71.745%2063.198.2%2064.956.2c2.76%200%204.093%201.385%204.093%203.337%200%203.42-4.696%204.378-5.486%206.98h5.65v2.177h-9C60.73%206.6%2066.36%206.247%2066.36%203.797z%22/%3E%3Cpath%20d%3D%22M68.766%208.116l6.206-7.88h1.84V7.69h1.84v2.07h-1.84v2.946h-2.5V9.76h-5.546V8.116zm4.412-.426h1.133V6.353c0-.958.072-2.07.12-2.307L71.632%207.75c.212-.025%201.12-.06%201.545-.06z%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E') center 9px no-repeat;
+	border: 2px solid #d5dde1;
+}
+
+#bitrix24-logo.bitrix24-logo-en {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2266%22%20height%3D%2213%22%20viewBox%3D%220%200%2066%2013%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%232FC7F7%22%3E%3Cpath%20d%3D%22M.024%201.495h3.503c2.42%200%203.504%201.408%203.504%202.828%200%20.91-.46%201.81-1.32%202.248v.036c1.333.355%202.088%201.444%202.088%202.698%200%201.692-1.32%203.348-3.964%203.348H.024V1.495zM3.22%206.05c1.015%200%201.546-.58%201.546-1.3%200-.758-.507-1.362-1.593-1.362h-.825V6.05h.873zm.307%204.71c1.286%200%201.935-.44%201.935-1.456%200-.864-.65-1.36-1.71-1.36H2.348v2.815h1.18zm5.238-8.59c0-.734.59-1.326%201.393-1.326.778%200%201.368.557%201.368%201.326%200%20.745-.59%201.36-1.368%201.36-.803-.012-1.393-.603-1.393-1.36zM9%204.642h2.29v8.01H9v-8.01zm4.473%205.928V6.417h-1.475V4.642h1.475v-1.88l2.3-.663V4.64h2.418l-.53%201.775h-1.9V9.99c0%20.745.237.994.768.994.437%200%20.885-.154%201.192-.355l.66%201.56c-.59.403-1.64.628-2.442.628-1.51%200-2.465-.84-2.465-2.248zm5.544-5.928h1.935l.26.852c.672-.627%201.32-1.053%202.182-1.053.39%200%20.86.12%201.215.368L23.806%206.7c-.4-.248-.802-.307-1.015-.307-.495%200-.884.166-1.486.663v5.584h-2.29V4.642zM24.81%202.17c0-.734.59-1.326%201.392-1.326.78%200%201.368.557%201.368%201.326%200%20.745-.59%201.36-1.368%201.36-.79-.012-1.392-.603-1.392-1.36zm.236%202.472h2.288v8.01h-2.288v-8.01zM30.944%208.618L28.02%204.642h2.37l1.793%202.437%201.793-2.438h2.372l-2.962%203.976%202.997%204.034h-2.37l-1.853-2.508-1.864%202.508h-2.372%22/%3E%3C/g%3E%3Cg%20fill%3D%22%230066A1%22%3E%3Cpath%20d%3D%22M43.733%203.766c0-1.064-.885-1.443-1.817-1.443-1.262%200-2.288.414-3.244.84l-.66-1.976c1.073-.485%202.56-1.03%204.317-1.03%202.76%200%204.093%201.385%204.093%203.337%200%203.42-4.695%204.378-5.486%206.98h5.65v2.177h-9c.507-6.08%206.146-6.435%206.146-8.884z%22/%3E%3Cpath%20d%3D%22M46.128%208.085l6.194-7.88h1.84V7.66h1.84v2.07h-1.84v2.945h-2.49V9.73H46.13V8.084zm4.424-.426h1.133V6.32c0-.958.07-2.07.118-2.307l-2.82%203.703c.236-.024%201.133-.06%201.57-.06z%22/%3E%3C/g%3E%3Cpath%20fill%3D%22%230066A1%22%20d%3D%22M61.582.075c-2.29%200-4.153%201.858-4.153%204.153%200%202.295%201.852%204.153%204.152%204.153s4.153-1.857%204.153-4.152S63.87.075%2061.582.075zm0%207.395c-1.78%200-3.22-1.444-3.22-3.23%200-1.787%201.44-3.23%203.22-3.23%201.78%200%203.22%201.443%203.22%203.23%200%201.786-1.44%203.23-3.22%203.23z%22/%3E%3Cpath%20fill%3D%22%230066A1%22%20d%3D%22M62.042%203.767V2.382h-.92V4.7h2.3v-.933%22/%3E%3C/g%3E%3C/svg%3E');
+}
+
+#bitrix24-logo.bitrix24-logo-ua {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2278%22%20height%3D%2217%22%20viewBox%3D%220%200%2078%2017%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%230066A1%22%3E%3Cpath%20d%3D%22M55.743%203.854c0-1.064-.885-1.443-1.817-1.443-1.263%200-2.29.415-3.244.84l-.66-1.975C51.093.79%2052.58.245%2054.338.245c2.76%200%204.092%201.385%204.092%203.337%200%203.42-4.695%204.378-5.485%206.98h5.65v2.178h-9c.518-6.082%206.146-6.436%206.146-8.886z%22/%3E%3Cpath%20d%3D%22M58.15%208.173l6.193-7.88h1.84v7.454h1.84v2.07h-1.84v2.946h-2.5V9.817h-5.546V8.173h.012zm4.41-.426h1.134V6.41c0-.958.07-2.07.118-2.307l-2.796%203.703c.212-.024%201.12-.06%201.545-.06z%22/%3E%3C/g%3E%3Cg%20fill%3D%22%232FC7F7%22%3E%3Cpath%20d%3D%22M.024%201.524h7.338l-.58%201.88H2.35v2.332h.766c1.204%200%202.277.154%203.103.592.98.508%201.58%201.42%201.58%202.85%200%202-1.202%203.503-4.624%203.503H.035V1.525h-.01zm3.185%209.264c1.592%200%202.252-.51%202.252-1.574%200-.615-.236-1.03-.625-1.266-.425-.248-1.038-.32-1.734-.32h-.767V10.8h.873v-.012zm5.555-8.59c0-.733.59-1.325%201.393-1.325.778%200%201.368.557%201.368%201.326%200%20.744-.59%201.36-1.368%201.36-.803-.013-1.393-.604-1.393-1.36zM9%204.672h2.29v8.01H9V4.67zM14.558%206.564h-2.395V4.67h7.562l-.59%201.894h-2.288v6.117h-2.29M20.42%204.99c.886-.307%201.97-.52%203.175-.52%202.984%200%204.494%201.68%204.494%204.2%200%202.402-1.63%204.188-4.224%204.188-.39%200-.78-.047-1.156-.153v4h-2.29V4.99zm3.28%205.987c1.37%200%202.054-.9%202.054-2.307%200-1.562-.85-2.32-2.254-2.32-.283%200-.53.013-.778.108v4.354c.295.094.578.165.98.165zM28.904%202.2c0-.735.59-1.327%201.393-1.327.778%200%201.368.557%201.368%201.326%200%20.744-.59%201.36-1.368%201.36-.803-.013-1.393-.604-1.393-1.36zm.236%202.47h2.288v8.01h-2.29V4.67zm3.727%200h2.29v3.066h.848c.968%200%20.932-1.62%201.64-2.58.307-.426.78-.698%201.51-.698.236%200%20.66.036.92.12v1.95c-.13-.047-.306-.082-.47-.082-.26%200-.426.083-.556.248-.402.51-.473%201.538-1.074%201.917v.037c.39.153.672.437.92.946l1.44%203.088h-2.478l-.944-2.507c-.2-.497-.4-.71-.625-.71h-1.134v3.218h-2.29V4.67zM40.69%208.72c0-2.544%201.97-4.248%204.317-4.248%201.085%200%201.793.308%202.218.58v1.917c-.578-.438-1.192-.675-1.97-.675-1.404%200-2.242%201.065-2.242%202.426%200%201.502.85%202.318%202.135%202.318.708%200%201.25-.2%201.853-.544l.65%201.562c-.66.473-1.7.816-2.808.816-2.655-.023-4.153-1.798-4.153-4.152z%22/%3E%3C/g%3E%3Cpath%20fill%3D%22%230066A1%22%20d%3D%22M73.59.104c-2.287%200-4.15%201.858-4.15%204.153%200%202.295%201.85%204.153%204.15%204.153%202.302%200%204.154-1.846%204.154-4.14%200-2.296-1.852-4.166-4.153-4.166zm0%207.395c-1.78%200-3.22-1.445-3.22-3.23%200-1.788%201.44-3.23%203.22-3.23%201.783%200%203.222%201.442%203.222%203.23%200%201.785-1.44%203.23-3.22%203.23z%22/%3E%3Cpath%20fill%3D%22%230066A1%22%20d%3D%22M74.064%203.796V2.41h-.932v2.32h2.312v-.934%22/%3E%3C/g%3E%3C/svg%3E');
+}
+
+.bx-lang-btn {
+	border: 2px solid #d5dde1;
+}
+
+.bx-lang-btn:after {
+	border-color: #8ca0a9 transparent transparent transparent;
+}
+
+.workarea-content-paddings {
+	padding: 15px 15px 20px;
+}
+
+.start-page #sidebar {
+	padding-top: 20px;
+}
+
+.start-page .pagetitle-wrap {
+	background: #eef2f4;
+}
+
+.pagetitle {
+	color: #333;
+}
+
+.pagetitle-star {
+	background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2018%2017%22%3E%3Cpath%20fill%3D%22none%22%20stroke%3D%22%23AFB5BB%22%20d%3D%22M13.915%2016.225l-.936-5.461%203.968-3.868-5.484-.797-2.452-4.97L6.558%206.1l-5.484.797%203.969%203.868-.937%205.461%204.905-2.578%204.904%202.578z%22/%3E%3C/svg%3E');
+}
+
+.feed-add-post-block {
+	padding-top: 4px;
+	background: #fff;
+}
+
+/* socialnetwork.log.ex */
+
+.feed-post-block {
+	background-color: #fff;
+}
+
+/*.feed-post-block.feed-post-block-pinned {*/
+/*	margin-bottom: 0;*/
+/*}*/
+
+/*.feed-post-block.feed-post-block-pinned {*/
+/*	border-bottom-width: 4px;*/
+/*}*/
+
+.feed-new-message-informer-place {
+	background-color: #eef2f4;
+}
+
+/* tasks.interface.toolbar */
+.tasks-pagetitle-view .pagetitle-below {
+	border-top: 1px solid #dce2e6;
+}
+
+.tasks-view-switcher-list-item,
+.tasks-view-switcher-list-item:link,
+.tasks-view-switcher-list-item:visited {
+	color: #545c6a;
+}
+
+.tasks-view-switcher-list .tasks-view-switcher-list-item-active {
+	border-bottom: 2px solid #b1b8bf;
+}
+
+.pagetitle-toolbar-field-view .webform-small-button-separate-wrap {
+	margin: 0 19px 0 0;
+}
+
+.bx-placeholder {
+	border-bottom: 15px solid #eef2f4;
+	max-width: none;
+}
+
+.bx-placeholder-wrap {
+	padding-top: 1px;
+}
+
+.pagetitle-container .webform-small-button:last-of-type,
+.pagetitle-flexible-space .webform-small-button:last-child,
+.crm-interface-toolbar-button-container .webform-small-button:last-child {
+	margin-right: 0;
+}
+/* END OF COGWHEEL */
+
+.pagetitle-toolbar-field-view .webform-small-button.bx24-top-toolbar-add {
+	margin: 0 19px 0 0;
+}
+
+/* toolbar buttons */
+
+.pagetitle-wrap .webform-small-button-transparent {
+	webkit-box-shadow: inset 0 0 0 1px #c8d1d6;
+	box-shadow: inset 0 0 0 1px #c8d1d6;
+	border: none;
+}
+
+.pagetitle-wrap .webform-small-button-transparent .webform-button-icon,
+.pagetitle-wrap .webform-small-button-transparent .webform-small-button-icon {
+	opacity: .7;
+}
+
+.pagetitle-wrap .webform-small-button-transparent .webform-button-text,
+.pagetitle-wrap .webform-small-button-transparent .webform-small-button-text {
+	color: #7a818a;
+}
+
+.pagetitle-wrap .webform-small-button-transparent:active .webform-button-text,
+.pagetitle-wrap .webform-small-button-transparent:active .webform-small-button-text,
+.pagetitle-wrap .webform-small-button-transparent.webform-button-active .webform-button-text,
+.pagetitle-wrap .webform-small-button-transparent.webform-button-active .webform-small-button-text {
+	color: #fff;
+}
+
+/* timeman */
+
+.timeman-tasks:before {
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%226%22%20height%3D%229%22%20viewBox%3D%220%200%206%209%22%3E%0A%20%20%3Cpolygon%20fill%3D%22%23fff%22%20points%3D%226%200%200%200%200%209%201%209%201%205%206%205%22/%3E%0A%3C/svg%3E%0A') center center no-repeat;
+}
+
+.timeman-event:before {
+	background: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%229%22%20height%3D%2211%22%20viewBox%3D%220%200%209%2011%22%3E%0A%20%20%3Cpath%20fill%3D%22%23fff%22%20d%3D%22M9.2%2C8.1%20L9%2C8.1%20C8.7%2C8.1%208.1%2C7.9%208%2C7.1%20L8%2C5%20C8%2C4%207.2%2C3.2%206.3%2C3.1%20L6.3%2C1.3%20C6.3%2C1%206.1%2C0.8%205.8%2C0.8%20L5.1%2C0.8%20C4.8%2C0.8%204.6%2C1%204.6%2C1.3%20L4.6%2C3.1%20C3.6%2C3.2%202.9%2C4%202.9%2C5%20L2.9%2C7.1%20C2.9%2C7.9%202.3%2C8%201.9%2C8.1%20L1.7%2C8.1%20C1.6%2C8.1%201.4%2C8.2%201.4%2C8.4%20L1.4%2C9.6%20C1.4%2C9.7%201.5%2C9.9%201.7%2C9.9%20L4.6%2C9.9%20L4.6%2C10.5%20C4.6%2C10.8%204.8%2C11%205.1%2C11%20L5.8%2C11%20C6.1%2C11%206.3%2C10.8%206.3%2C10.5%20L6.3%2C9.9%20L9.2%2C9.9%20C9.3%2C9.9%209.5%2C9.8%209.5%2C9.6%20L9.5%2C8.4%20C9.5%2C8.2%209.4%2C8.1%209.2%2C8.1%20Z%22%20transform%3D%22translate%28-1%29%22/%3E%0A%3C/svg%3E%0A');
+}
+
+.bitrix24-default-theme.ui-page-slider-wrapper {
+	background: #eef2f4;
+}

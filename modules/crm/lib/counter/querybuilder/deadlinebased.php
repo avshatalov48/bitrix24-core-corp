@@ -7,8 +7,8 @@ use Bitrix\Crm\ActivityTable;
 use Bitrix\Crm\Counter\QueryBuilder;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
-use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Entity\ReferenceField;
+use Bitrix\Main\ORM\Query\Filter\ConditionTree;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 
@@ -19,7 +19,7 @@ class DeadlineBased extends QueryBuilder
 {
 	protected ?Date $periodFrom = null;
 	protected ?Date $periodTo = null;
-	protected $useOnlyMinDeadline = false;
+	protected ?bool $hasAnyIncomingChannel = null;
 
 	public function getPeriodFrom(): ?Date
 	{
@@ -69,26 +69,16 @@ class DeadlineBased extends QueryBuilder
 		return \CCrmDateTimeHelper::getServerTime($highBound,$this->userIds[0] ?? null)->disableUserTime();
 	}
 
-	public function useOnlyMinDeadline(): bool
+	public function hasAnyIncomingChannel(): ?bool
 	{
-		return $this->useOnlyMinDeadline;
+		return $this->hasAnyIncomingChannel;
 	}
 
-	public function setUseOnlyMinDeadline(bool $useOnlyMinDeadline): self
+	public function setHasAnyIncomingChannel(?bool $hasAnyIncomingChannel): self
 	{
-		$this->useOnlyMinDeadline = $useOnlyMinDeadline;
+		$this->hasAnyIncomingChannel = $hasAnyIncomingChannel;
 
 		return $this;
-	}
-
-	public function build(\Bitrix\Main\ORM\Query\Query $query): \Bitrix\Main\ORM\Query\Query
-	{
-		if (!$this->useOnlyMinDeadline)
-		{
-			return $this->buildCompatible($query);
-		}
-
-		return parent::build($query);
 	}
 
 	protected function buildCompatible(\Bitrix\Main\ORM\Query\Query $query): \Bitrix\Main\ORM\Query\Query
@@ -104,11 +94,10 @@ class DeadlineBased extends QueryBuilder
 				array('join_type' => 'INNER')
 			)
 		);
+		$this->applyResponsibleFilter($query, $this->getEntityAssignedColumnName());
 
 		//region Activity (inner join with correlated query for fix issue #109347)
 		$activityQuery = ActivityTable::query();
-
-		$this->applyResponsibleFilter($activityQuery, 'RESPONSIBLE_ID');
 		$this->applyDeadlineFilter($activityQuery);
 
 		$activityQuery->addFilter('=COMPLETED', 'N');
@@ -134,40 +123,32 @@ class DeadlineBased extends QueryBuilder
 		}
 		else
 		{
-			$query->registerRuntimeField('', new ExpressionField('QTY', 'COUNT(DISTINCT %s)', 'ID'));
+			$query->registerRuntimeField('', $this->getQuantityExpression());
 			$query->addSelect('QTY');
 		}
 
 		return $query;
 	}
 
-	protected function applyReferenceFilter(array &$referenceFilter): void
+	protected function applyUncompletedActivityTableReferenceFilter(ConditionTree $referenceFilter): void
 	{
-		if (count($this->userIds) <= 1)
+		$referenceFilter
+			->where('ref.RESPONSIBLE_ID', new SqlExpression('?i', 0))
+		;
+		if (is_null($this->hasAnyIncomingChannel()))
 		{
-			$referenceFilter['=ref.RESPONSIBLE_ID'] =new SqlExpression('?i', count($this->userIds) ? $this->userIds[0] : 0); // 0 means "All users"
+			$referenceFilter->whereIn('ref.HAS_ANY_INCOMING_CHANEL', ['N', 'Y']);
 		}
 		else
 		{
-			$referenceFilter['@ref.RESPONSIBLE_ID'] =new SqlExpression(implode(',', $this->userIds));
+			$referenceFilter
+				->where('ref.HAS_ANY_INCOMING_CHANEL', new SqlExpression('?', $this->hasAnyIncomingChannel() ? 'Y' : 'N'));
 		}
 
-		$referenceFilter['=ref.IS_INCOMING_CHANNEL'] = new SqlExpression('?', 'N');
-		if (count($this->userIds) <= 1)
-		{
-			$this->applyDeadlineReferenceFilter($referenceFilter);
-		}
+		$this->applyDeadlineReferenceFilter($referenceFilter, 'MIN_DEADLINE');
 	}
 
-	protected function applyCounterTypeFilter(\Bitrix\Main\ORM\Query\Query $query): void
-	{
-		if($this->getSelectType() === self::SELECT_TYPE_ENTITIES && count($this->userIds) > 1)
-		{
-			$this->applyDeadlineHavingFilter($query);
-		}
-	}
-
-	private function applyDeadlineReferenceFilter(array &$referenceFilter): void
+	private function applyDeadlineReferenceFilter(ConditionTree $referenceFilter, string $fieldName): void
 	{
 		$lowBound = $this->getLowBound();
 		$highBound = $this->getHighBound();
@@ -176,37 +157,11 @@ class DeadlineBased extends QueryBuilder
 
 		if ($lowBound)
 		{
-			$referenceFilter['>=ref.MIN_DEADLINE'] = new SqlExpression($sqlHelper->convertToDbDateTime($lowBound));
+			$referenceFilter->where('ref.' . $fieldName, '>=', new SqlExpression($sqlHelper->convertToDbDateTime($lowBound)));
 		}
 		if ($highBound)
 		{
-			$referenceFilter['<=ref.MIN_DEADLINE'] = new SqlExpression($sqlHelper->convertToDbDateTime($highBound));
-		}
-	}
-
-	private function applyDeadlineHavingFilter(\Bitrix\Main\ORM\Query\Query $query): void
-	{
-		$lowBound = $this->getLowBound();
-		$highBound = $this->getHighBound();
-
-		$sqlHelper = Application::getConnection()->getSqlHelper();
-
-		if ($lowBound && $highBound)
-		{
-			$query->whereExpr(
-				'MIN(MIN_DEADLINE) BETWEEN ' .
-				$sqlHelper->convertToDbDateTime($lowBound) .
-				' AND ' . $sqlHelper->convertToDbDateTime($highBound),
-				[]
-			);
-		}
-		elseif ($lowBound)
-		{
-			$query->whereExpr('MIN(MIN_DEADLINE) >= '. $sqlHelper->convertToDbDateTime($lowBound), []);
-		}
-		elseif ($highBound)
-		{
-			$query->whereExpr('MIN(MIN_DEADLINE) <= '. $sqlHelper->convertToDbDateTime($highBound), []);
+			$referenceFilter->where('ref.' . $fieldName, '<=', new SqlExpression($sqlHelper->convertToDbDateTime($highBound)));
 		}
 	}
 
@@ -224,5 +179,13 @@ class DeadlineBased extends QueryBuilder
 		{
 			$query->addFilter('<=DEADLINE', $highBound->toUserTime());
 		}
+	}
+
+	protected function applyEntityCountableActivityTableReferenceFilter(ConditionTree $referenceFilter): void
+	{
+		$referenceFilter
+			->where('ref.ACTIVITY_IS_INCOMING_CHANNEL', new SqlExpression('?', 'N'))
+		;
+		$this->applyDeadlineReferenceFilter($referenceFilter, 'ACTIVITY_DEADLINE');
 	}
 }

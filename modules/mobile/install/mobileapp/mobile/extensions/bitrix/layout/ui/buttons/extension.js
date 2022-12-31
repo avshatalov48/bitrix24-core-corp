@@ -1,24 +1,40 @@
 (() => {
 	class BaseButton extends LayoutComponent
 	{
+		animate(options)
+		{
+			if (this.buttonRef)
+			{
+				this.buttonRef.animate(options);
+			}
+		}
+
 		render()
 		{
+			const { icon, text, onClick } = this.props;
+			const rounded = this.isRounded();
+
+			let { style, testId } = this.props;
+			style = style || {};
+			testId = testId || this.constructor.name.toUpperCase();
+
 			return View(
 				{
 					style: {
 						...{
 							flexDirection: 'row',
 							justifyContent: 'center',
-							borderWidth: 1,
-							borderRadius: 23,
-							height: 48,
+							height: rounded ? 48 : 52,
+							borderRadius: rounded ? 24 : 0,
 						},
 						...this.getStyle().button,
-						...this.props.style.button,
+						...(style.button || {}),
 					},
-					onClick: this.props.onClick,
+					testId,
+					ref: (ref) => this.buttonRef = ref,
+					onClick: onClick,
 				},
-				(this.props.icon && Image({
+				(icon && Image({
 					style: {
 						...{
 							width: 28,
@@ -26,10 +42,10 @@
 							alignSelf: 'center',
 						},
 						...this.getStyle().icon,
-						...this.props.style.icon
+						...(style.icon || {}),
 					},
 					svg: {
-						content: this.props.icon,
+						content: icon,
 					},
 				})),
 				Text({
@@ -41,11 +57,16 @@
 							numberOfLines: 1,
 						},
 						...this.getStyle().text,
-						...this.props.style.text,
+						...(style.text || {}),
 					},
-					text: this.props.text,
+					text,
 				}),
 			);
+		}
+
+		isRounded()
+		{
+			return BX.prop.getBoolean(this.props, 'rounded', false);
 		}
 
 		getStyle()

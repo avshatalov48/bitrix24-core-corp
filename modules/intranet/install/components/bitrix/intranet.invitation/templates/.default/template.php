@@ -62,10 +62,7 @@ if ($arResult["IS_CLOUD"])
 	$APPLICATION->AddViewContent("left-panel", '');
 }
 
-if (
-	$arResult["IS_CLOUD"]
-	&& $arResult['canCurrentUserInvite']
-)
+if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 {
 	$isMaxUsersUnlimited = ($arResult["USER_MAX_COUNT"] == 0);
 
@@ -98,7 +95,7 @@ if (
 	<div class="popup-window-tabs-content popup-window-tabs-content-invite">
 		<?php
 		//fast registration
-		if ($arResult["IS_CLOUD"])
+		if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 		{
 			$isSelfRegisterEnable = $arResult["REGISTER_SETTINGS"]["REGISTER"] === "Y";
 			?>
@@ -216,6 +213,7 @@ if (
 		?>
 
 		<!-- invite by email-->
+		<?php if ($arResult['canCurrentUserInvite']): ?>
 		<div class="invite-wrap js-intranet-invitation-block" data-role="invite-block">
 			<div class="invite-title-container">
 				<div class="invite-title-icon invite-title-icon-message"></div>
@@ -351,6 +349,7 @@ if (
 				</div>
 			</form>
 		</div>
+		<?php endif; ?>
 
 		<!-- extranet -->
 		<?php
@@ -386,7 +385,7 @@ if (
 
 		<?php
 		// integrator
-		if ($arResult["IS_CLOUD"])
+		if ($arResult["IS_CLOUD"] && $arResult['canCurrentUserInvite'])
 		{
 		?>
 			<div class="invite-wrap js-intranet-invitation-block" data-role="integrator-block">
@@ -408,6 +407,7 @@ if (
 		?>
 
 		<!-- Active Directory -->
+		<?php if ($arResult['canCurrentUserInvite']): ?>
 		<div class="invite-wrap js-intranet-invitation-block" data-role="active-directory-block">
 			<div class="invite-title-container">
 				<div class="invite-title-icon invite-title-icon-activedirectory"></div>
@@ -434,6 +434,7 @@ if (
 				</div>
 			</div>
 		</div>
+		<?php endif; ?>
 
 		<div class="invite-wrap js-intranet-invitation-block" data-role="success-block"
 			 style="position: fixed; left: 0; right: 0; top: 0; bottom: 0; background: #fff; z-index: 90;"

@@ -14,6 +14,16 @@ class EmailTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_NAME_1');
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_EMAIL_DESCRIPTION') ?? '';
+	}
+
+	public static function getGroup(): array
+	{
+		return ['clientCommunication'];
 	}
 }

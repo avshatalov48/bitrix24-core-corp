@@ -39,6 +39,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	var _hintSuccessDealDocumentInTimeline = /*#__PURE__*/new WeakSet();
 
+	var _createHintToSuccessDocument = /*#__PURE__*/new WeakSet();
+
 	var DealOnboardingManager = /*#__PURE__*/function () {
 	  babelHelpers.createClass(DealOnboardingManager, null, [{
 	    key: "productsTabId",
@@ -49,6 +51,8 @@ this.BX.Crm = this.BX.Crm || {};
 
 	  function DealOnboardingManager(params) {
 	    babelHelpers.classCallCheck(this, DealOnboardingManager);
+
+	    _classPrivateMethodInitSpec(this, _createHintToSuccessDocument);
 
 	    _classPrivateMethodInitSpec(this, _hintSuccessDealDocumentInTimeline);
 
@@ -171,13 +175,6 @@ this.BX.Crm = this.BX.Crm || {};
 	  var productsTabButton = babelHelpers.classPrivateFieldGet(this, _dealDetailManager).getTabMenuItemContainer(DealOnboardingManager.productsTabId);
 
 	  var productsTabGuide = _classPrivateMethodGet(this, _createHintToProductTab, _createHintToProductTab2).call(this, productsTabButton, {
-	    onShow: function onShow() {
-	      var popupContainer = productsTabGuide.getPopup().getPopupContainer();
-	      var rightOffset = main_core.Dom.getPosition(productsTabButton).width / 2;
-	      var centerLeftPos = parseFloat(popupContainer.style.left) - rightOffset;
-	      popupContainer.style.left = "".concat(centerLeftPos, "px");
-	      productsTabGuide.handleResizeWindow();
-	    },
 	    onClose: function onClose() {
 	      main_core.userOptions.save('crm', 'warehouse-onboarding', 'firstChainStage', 1);
 	    }
@@ -304,6 +301,23 @@ this.BX.Crm = this.BX.Crm || {};
 	    };
 
 	    main_core.Event.bind(buttonsContainer, 'click', buttonsPanelListener);
+	    var productList = productListEditor.products;
+	    var rowId = '';
+
+	    if (productList instanceof Array) {
+	      var firstProductRow = productList.find(function (row) {
+	        return !row.getModel().isService();
+	      });
+
+	      if (firstProductRow) {
+	        rowId = firstProductRow.getId();
+	      }
+	    }
+
+	    if (!rowId) {
+	      return;
+	    }
+
 	    productListEditor.showFieldTourHint('STORE_INFO', {
 	      title: main_core.Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TITLE'),
 	      text: main_core.Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_PRODUCT_STORE_GUIDE_TEXT')
@@ -314,7 +328,7 @@ this.BX.Crm = this.BX.Crm || {};
 	      });
 	      main_core.Event.unbind(buttonsContainer, 'click', buttonsPanelListener);
 	      main_core_events.EventEmitter.unsubscribe('onDemandRecalculateWrapper', productListTabListener);
-	    }, ['RESERVE_INFO']);
+	    }, ['RESERVE_INFO'], rowId);
 	  };
 
 	  main_core_events.EventEmitter.subscribe('onDemandRecalculateWrapper', productListTabListener);
@@ -385,50 +399,59 @@ this.BX.Crm = this.BX.Crm || {};
 
 	      var onHistoryNodeAddedHandler = function onHistoryNodeAddedHandler(event) {
 	        main_core_events.EventEmitter.unsubscribe('BX.Crm.Timeline.Items.FinalSummaryDocuments:onHistoryNodeAdded', onHistoryNodeAddedHandler);
+	        BX.onCustomEvent(window, 'OpenEntityDetailTab', ['main']);
 
 	        var _event$data2 = babelHelpers.slicedToArray(event.data, 1),
 	            timelineDocsNode = _event$data2[0];
 
-	        var documentLinkNode = timelineDocsNode.querySelector('.crm-entity-stream-content-document-description');
-	        var guideText = {
-	          title: main_core.Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE'),
-	          text: main_core.Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT')
+	        var previousNodePos = {
+	          x: 0,
+	          y: 0
 	        };
-	        var successDealGuide = new ui_tour.Guide({
-	          steps: [{
-	            target: documentLinkNode,
-	            title: guideText.title,
-	            text: guideText.text,
-	            position: 'bottom',
-	            events: {
-	              onClose: function onClose() {
-	                main_core.userOptions.save('crm', 'warehouse-onboarding', 'successDealGuideIsOver', true);
-	                unsubscribeFromHintClicks();
-	              }
-	            }
-	          }],
-	          onEvents: true
-	        });
+	        var documentLinkNodeWatcherId = setInterval(function () {
+	          var documentLinkNode = timelineDocsNode.querySelector('.crm-entity-stream-content-document-description');
 
-	        var dealContainer = _classPrivateMethodGet(_this5, _getContentContainer, _getContentContainer2).call(_this5);
+	          if (documentLinkNode === null) {
+	            return;
+	          }
 
-	        var buttonsContainer = _classPrivateMethodGet(_this5, _getButtonsContainer, _getButtonsContainer2).call(_this5);
-
-	        var unsubscribeFromHintClicks = function unsubscribeFromHintClicks() {
-	          main_core.Event.unbind(dealContainer, 'click', successDealGuide.close.bind(successDealGuide));
-	          main_core.Event.unbind(buttonsContainer, 'click', successDealGuide.close.bind(successDealGuide));
-	        };
-
-	        BX.onCustomEvent(window, 'OpenEntityDetailTab', ['main']);
-	        setTimeout(function () {
 	          var nodePos = main_core.Dom.getPosition(documentLinkNode);
+
+	          if (nodePos.x === 0 && nodePos.y === 0) {
+	            return;
+	          }
+
+	          if (nodePos.x !== previousNodePos.x || nodePos.y !== previousNodePos.y) {
+	            previousNodePos.x = nodePos.x;
+	            previousNodePos.y = nodePos.y;
+	            return;
+	          }
+
+	          clearInterval(documentLinkNodeWatcherId);
+
+	          var successDealGuide = _classPrivateMethodGet(_this5, _createHintToSuccessDocument, _createHintToSuccessDocument2).call(_this5, documentLinkNode, {
+	            onClose: function onClose() {
+	              main_core.userOptions.save('crm', 'warehouse-onboarding', 'successDealGuideIsOver', true);
+	              unsubscribeFromHintClicks();
+	            }
+	          });
+
+	          var dealContainer = _classPrivateMethodGet(_this5, _getContentContainer, _getContentContainer2).call(_this5);
+
+	          var buttonsContainer = _classPrivateMethodGet(_this5, _getButtonsContainer, _getButtonsContainer2).call(_this5);
+
+	          var unsubscribeFromHintClicks = function unsubscribeFromHintClicks() {
+	            main_core.Event.unbind(dealContainer, 'click', successDealGuide.close.bind(successDealGuide));
+	            main_core.Event.unbind(buttonsContainer, 'click', successDealGuide.close.bind(successDealGuide));
+	          };
+
 	          window.scrollTo(0, nodePos.y - 250);
 	          successDealGuide.showNextStep();
 	          main_core.Event.bind(buttonsContainer, 'click', successDealGuide.close.bind(successDealGuide));
 	          setTimeout(function () {
 	            main_core.Event.bind(dealContainer, 'click', successDealGuide.close.bind(successDealGuide));
 	          }, 3000);
-	        }, 500);
+	        }, 100);
 	      };
 
 	      main_core_events.EventEmitter.subscribe('BX.Crm.Timeline.Items.FinalSummaryDocuments:onHistoryNodeAdded', onHistoryNodeAddedHandler);
@@ -436,6 +459,24 @@ this.BX.Crm = this.BX.Crm || {};
 	  };
 
 	  main_core_events.EventEmitter.subscribe('Crm.EntityProgress.Saved', timelineGuideListener);
+	}
+
+	function _createHintToSuccessDocument2(target) {
+	  var guideEvents = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+	  var guideText = {
+	    title: main_core.Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE'),
+	    text: main_core.Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT')
+	  };
+	  return new ui_tour.Guide({
+	    steps: [{
+	      target: target,
+	      title: guideText.title,
+	      text: guideText.text,
+	      position: 'bottom',
+	      events: guideEvents
+	    }],
+	    onEvents: true
+	  });
 	}
 
 	function _classPrivateFieldInitSpec$1(obj, privateMap, value) { _checkPrivateRedeclaration$1(obj, privateMap); privateMap.set(obj, value); }

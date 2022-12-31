@@ -424,7 +424,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 					$leadCalculatedValue[$result['STATUS_KEY']]['value'] = $result['VALUE'];
 					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['VALUE'] = 0;
-					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['currencyId'] = 'RUB';
+					$leadCalculatedValue[$result['STATUS_KEY']]['additionalValues']['sum']['currencyId'] = \CCrmCurrency::GetAccountCurrencyID();
 
 					if ($result['SUM'])
 					{
@@ -590,7 +590,14 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$querySql .= ') as res';
 		$queryWithResult = $connection->query($querySql);
 		$result = $queryWithResult->fetchAll();
-		return !empty($result[0]) ? $result[0] : ['COUNT' => 0, 'SUM' => 0, 'CURRENCY' => 'RUB'];
+
+		return !empty($result[0])
+			? $result[0]
+			: [
+				'COUNT' => 0,
+				'SUM' => 0,
+				'CURRENCY' => \CCrmCurrency::GetAccountCurrencyID()
+			];
 	}
 
 	private function addToQueryFilterCase(Query $query, $filterParameters = null)
@@ -909,7 +916,6 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	 */
 	public function getMultipleData()
 	{
-
 		$calculatedData = $this->getCalculatedData();
 		$items = [];
 		$config = [];

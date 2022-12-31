@@ -14,14 +14,13 @@ $MESS["TAB_NAME_STREAM"] = "Живая лента";
 $MESS["TAB_NAME_NEWS"] = "Новости";
 $MESS["TAB_NAME_NEWS_SHORT"] = "Новости";
 
+$MESS["TAB_NAME_CRM"] = "CRM";
+
 $MESS['TASKS_ROLE_VIEW_ALL'] = 'Все задачи';
 $MESS['TASKS_ROLE_RESPONSIBLE'] = 'Делаю';
 $MESS['TASKS_ROLE_ACCOMPLICE'] = 'Помогаю';
 $MESS['TASKS_ROLE_AUDITOR'] = 'Наблюдаю';
 $MESS['TASKS_ROLE_ORIGINATOR'] = 'Поручил';
-
-$MESS["TAB_NAME_CALLTRACKER"] = "Трекер звонков";
-$MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Звонки";
 
 $MESS["TAB_TASKS_INPUT_PANEL_B24_DISK"] = "Битрикс24.Диск";
 $MESS["TAB_TASKS_INPUT_PANEL_NEW_TASK"] = "Новая задача";

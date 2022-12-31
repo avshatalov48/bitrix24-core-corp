@@ -1813,6 +1813,7 @@ if ($anonymousId > 0)
 	\CUser::AppendUserGroup($anonymousId, $groupId);
 }
 
+// default trading platforms
 if (\Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control', 'N') === 'Y')
 {
 	$platformCode = \Bitrix\Crm\Order\TradingPlatform\RealizationDocument::TRADING_PLATFORM_CODE;
@@ -1823,7 +1824,33 @@ if (\Bitrix\Main\Config\Option::get('catalog', 'default_use_store_control', 'N')
 	}
 }
 
+$platformCode = \Bitrix\Crm\Order\TradingPlatform\Activity::TRADING_PLATFORM_CODE;
+$platform = \Bitrix\Crm\Order\TradingPlatform\Activity::getInstanceByCode($platformCode);
+if (!$platform->isInstalled())
+{
+	$platform->install();
+}
+
+$dynamicEntityTypeList = [\CCrmOwnerType::Deal, \CCrmOwnerType::SmartInvoice];
+foreach ($dynamicEntityTypeList as $type)
+{
+	$platformCode = \Bitrix\Crm\Order\TradingPlatform\DynamicEntity::getCodeByEntityTypeId($type);
+	$platform = \Bitrix\Crm\Order\TradingPlatform\DynamicEntity::getInstanceByCode($platformCode);
+	if (!$platform->isInstalled())
+	{
+		$platform->install();
+	}
+}
+
 if ($DB->TableExists("b_crm_shipment_realization") && $DB->TableExists("b_sale_order_delivery"))
 {
 	$DB->query("INSERT IGNORE INTO b_crm_shipment_realization (SHIPMENT_ID, IS_REALIZATION) SELECT ID, 'Y' FROM b_sale_order_delivery;");
 }
+
+// catalog rights
+if (!\Bitrix\Catalog\Access\Permission\PermissionTable::getCount())
+{
+	\Bitrix\Catalog\Access\Install\AccessInstaller::installClean();
+}
+
+\Bitrix\Main\Config\Option::set('crm', 'enable_entity_commodity_item_creation', 'N');

@@ -1,6 +1,7 @@
 import {Item as ItemType} from "../types";
 import {Item} from "crm.timeline.item";
 import {Type} from "main.core";
+import {TimezoneOffset} from "crm.datetime";
 
 /** @memberof BX.Crm.Timeline */
 export default class CompatibleItem extends Item
@@ -76,6 +77,11 @@ export default class CompatibleItem extends Item
 			this._data = data;
 			this.clearCachedData();
 		}
+	}
+
+	getSort(): Array
+	{
+		return this._data['sort'] ?? [];
 	}
 
 	getAssociatedEntityData()
@@ -517,18 +523,8 @@ export default class CompatibleItem extends Item
 
 	static getUserTimezoneOffset()
 	{
-		if(!this.userTimezoneOffset)
-		{
-			this.userTimezoneOffset = parseInt(BX.message("USER_TZ_OFFSET"));
-			if(isNaN(this.userTimezoneOffset))
-			{
-				this.userTimezoneOffset = 0;
-			}
-		}
-		return this.userTimezoneOffset;
+		return TimezoneOffset.USER_TO_SERVER;
 	}
-
-	static userTimezoneOffset;
 
 	static messages = {};
 }

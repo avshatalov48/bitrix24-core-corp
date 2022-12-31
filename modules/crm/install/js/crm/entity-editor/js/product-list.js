@@ -27,6 +27,20 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 		BX.addCustomEvent(window, 'EntityProductListController', this.handleSetProductList.bind(this));
 		BX.addCustomEvent(window, 'onEntityDetailsTabShow', this.onTabShow.bind(this));
 		BX.addCustomEvent(window, 'Crm.EntityProgress.Saved', BX.delegate(this.onEntityProgressSave, this));
+		BX.addCustomEvent(
+			window,
+			'BX.UI.EntityEditorProductRowSummary:onDetailProductListLinkClick',
+			this.detailsProductRowSummaryLinkClickHandler.bind(this)
+		);
+
+		BX.addCustomEvent(window,
+			'BX.UI.EntityEditorProductRowSummary:onAddNewRowInProductList',
+			() => {
+				BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
+				setTimeout(() => {
+					BX.onCustomEvent(window, 'onFocusToProductList');
+				}, 500);
+			});
 
 		this._editor.addModeChangeListener(this._editorModeChangeHandler);
 
@@ -65,6 +79,11 @@ if (typeof BX.Crm.EntityProductListController === "undefined")
 		{
 			this.reinitializeProductList();
 		}
+	};
+
+	BX.Crm.EntityProductListController.prototype.detailsProductRowSummaryLinkClickHandler = function()
+	{
+		BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
 	};
 
 	BX.Crm.EntityProductListController.prototype.handleSetProductList = function(event)

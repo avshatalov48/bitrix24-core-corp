@@ -1,8 +1,16 @@
 <?
+
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\Loader;
+
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 IncludeModuleLangFile(__FILE__);
 
-if (!CModule::IncludeModule('crm'))
+if (
+	!Loader::includeModule('crm')
+	|| !Loader::includeModule('catalog')
+)
 {
 	return;
 }
@@ -45,7 +53,12 @@ if($_SERVER["REQUEST_METHOD"]=="POST" && $_POST["action"] <> '' && check_bitrix_
 			{
 				__CrmShowEndJsonResonse(array('ERROR' => GetMessage('CRM_PRODUCT_NOT_FOUND')));
 			}
-			if(!CCrmProduct::CheckDeletePermission($entityID, $currentUserPermissions))
+			if (
+				!(
+					AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+					&& AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_DELETE)
+				)
+			)
 			{
 				__CrmShowEndJsonResonse(array('ERROR' => GetMessage('CRM_PRODUCT_ACCESS_DENIED')));
 			}

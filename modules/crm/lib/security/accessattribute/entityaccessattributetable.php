@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Security\AccessAttribute;
 
 use Bitrix\Main;
+use Bitrix\Main\ORM\Fields\ExpressionField;
 
 abstract class EntityAccessAttributeTable extends Main\ORM\Data\DataManager
 {
@@ -22,6 +23,26 @@ abstract class EntityAccessAttributeTable extends Main\ORM\Data\DataManager
 		];
 	}
 
+	public static function addBatch(array $attrRows): void
+	{
+		foreach ($attrRows as &$data)
+		{
+			self::validateAttrsData($data);
+
+			$isOpened = isset($data['IS_OPENED']) && $data['IS_OPENED'];
+			$isAlwaysReadable = isset($data['IS_ALWAYS_READABLE']) && $data['IS_ALWAYS_READABLE'];
+
+			$data['ENTITY_ID'] = (int)$data['ENTITY_ID'];
+			$data['USER_ID'] = (int)$data['USER_ID'];
+			$data['CATEGORY_ID'] = (int)$data['CATEGORY_ID'];
+			$data['IS_OPENED'] = $isOpened ? 'Y' : 'N';
+			$data['IS_ALWAYS_READABLE'] = $isAlwaysReadable ? 'Y' : 'N';
+			$data['PROGRESS_STEP'] = isset($data['PROGRESS_STEP']) ? $data['PROGRESS_STEP'] : '';
+		}
+
+		static::addMulti($attrRows, true);
+	}
+
 	public static function upsert(array $data)
 	{
 		$entityId = isset($data['ENTITY_ID']) ? (int)$data['ENTITY_ID'] : 0;
@@ -31,29 +52,22 @@ abstract class EntityAccessAttributeTable extends Main\ORM\Data\DataManager
 		$isAlwaysReadable = isset($data['IS_ALWAYS_READABLE']) && $data['IS_ALWAYS_READABLE'];
 		$progressStep = isset($data['PROGRESS_STEP']) ? $data['PROGRESS_STEP'] : '';
 
-		if ($entityId <= 0)
-		{
-			throw new Main\ArgumentException('The parameter "ENTITY_ID" must be greater than zero.', 'data');
-		}
+		self::validateAttrsData($data);
 
-		if ($userId < 0)
-		{
-			throw new Main\ArgumentException('The parameter "USER_ID" must not be negative.', 'data');
-		}
-
-		if ($categoryId < 0)
-		{
-			throw new Main\ArgumentException('The parameter "CATEGORY_ID" must not be negative.', 'data');
-		}
-
-		$existedEntity = static::getList([
+		$result = static::getList([
 			'filter' => [
 				'=ENTITY_ID' => $entityId,
 			],
 			'select' => [
-				'ID'
+				new ExpressionField('CNT', 'COUNT(1)'),
+				new ExpressionField('ID', 'MAX(ID)'),
+			],
+			'group' => [
+				'ENTITY_ID'
 			]
 		])->fetch();
+
+		$entityCount = (int) $result['CNT'];
 
 		$updateFields = [
 			'CATEGORY_ID' => $categoryId,
@@ -61,14 +75,20 @@ abstract class EntityAccessAttributeTable extends Main\ORM\Data\DataManager
 			'IS_OPENED' => $isOpened ? 'Y' : 'N',
 			'IS_ALWAYS_READABLE' => $isAlwaysReadable ? 'Y' : 'N',
 			'PROGRESS_STEP' => $progressStep,
+			'ENTITY_ID' => $entityId,
 		];
-		if ($existedEntity)
+
+		if ($entityCount > 1)
 		{
-			static::update($existedEntity['ID'], $updateFields);
+			static::deleteByEntity($entityId);
+			static::add($updateFields);
+		}
+		elseif ($entityCount === 1)
+		{
+			static::update($result['ID'], $updateFields);
 		}
 		else
 		{
-			$updateFields['ENTITY_ID'] = $entityId;
 			static::add($updateFields);
 		}
 	}
@@ -85,5 +105,32 @@ abstract class EntityAccessAttributeTable extends Main\ORM\Data\DataManager
 		$connection->queryExecute(
 			"DELETE FROM {$tableName} WHERE ENTITY_ID = {$entityID}"
 		);
+	}
+
+	private static function validateAttrsData(array $data): void
+	{
+		if (!isset($data['ENTITY_ID']) || (int)$data['ENTITY_ID'] <= 0)
+		{
+			throw new Main\ArgumentException(
+				'The parameter "ENTITY_ID" is required and must be greater than zero.',
+				'data'
+			);
+		}
+
+		if (!isset($data['USER_ID']) || (int)$data['USER_ID'] < 0)
+		{
+			throw new Main\ArgumentException(
+				'The parameter "USER_ID" is required and must not be negative.',
+				'data'
+			);
+		}
+
+		if (!isset($data['CATEGORY_ID']) || (int)$data['CATEGORY_ID'] < 0)
+		{
+			throw new Main\ArgumentException(
+				'The parameter "CATEGORY_ID" is required and must not be negative.',
+				'data'
+			);
+		}
 	}
 }

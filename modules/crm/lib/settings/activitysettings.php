@@ -12,6 +12,7 @@ class ActivitySettings
 	const KEEP_REASSIGNED_CALLS = 4;
 	const KEEP_REASSIGNED_MEETINGS = 5;
 	const MARK_FORWARDED_EMAIL_AS_OUTGOING = 6;
+	const USE_OUTDATED_CALENDAR_ACTIVITIES = 7;
 
 	/** @var ActivitySettings  */
 	private static $current = null;
@@ -79,6 +80,10 @@ class ActivitySettings
 		{
 			return Main\Config\Option::get('crm', 'act_mark_fwd_emai_outgoing', 'N', '') === 'Y';
 		}
+		elseif($ID === self::USE_OUTDATED_CALENDAR_ACTIVITIES)
+		{
+			return Main\Config\Option::get('crm', 'use_outdated_calendar_activities', 'N', '') === 'Y';
+		}
 		else
 		{
 			throw new Main\NotSupportedException("The setting '{$ID}' is not supported in current context");
@@ -111,6 +116,10 @@ class ActivitySettings
 		elseif($ID === self::MARK_FORWARDED_EMAIL_AS_OUTGOING)
 		{
 			Main\Config\Option::set('crm', 'act_mark_fwd_emai_outgoing', $value ? 'Y' : 'N', '');
+		}
+		elseif($ID === self::USE_OUTDATED_CALENDAR_ACTIVITIES)
+		{
+			Main\Config\Option::set('crm', 'use_outdated_calendar_activities', $value ? 'Y' : 'N', '');
 		}
 		else
 		{
@@ -205,6 +214,16 @@ class ActivitySettings
 	public static function prepareViewListItems()
 	{
 		return \CCrmEnumeration::PrepareListItems(self::getViewDescriptions());
+	}
+
+	public static function areOutdatedCalendarActivitiesEnabled(): bool
+	{
+		if (!Crm::isUniversalActivityScenarioEnabled())
+		{
+			return true;
+		}
+
+		return (bool)self::getValue(self::USE_OUTDATED_CALENDAR_ACTIVITIES) ;
 	}
 	/**
 	 * Include language file

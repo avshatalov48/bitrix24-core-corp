@@ -392,11 +392,13 @@
 	align-items: baseline;
 }
 .crm-report-column-funnel-tooltip-value {
-	font: 700 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	color: #525C69;
 }
 .crm-report-column-funnel-tooltip-percent {
-	font: 700 9px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: 9px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	color: #828B95;
 }
 /* END OF TOOLTIP */
@@ -455,7 +457,7 @@
 }
 .crm-report-column-funnel-grid-user-name {
 	max-width: 100%;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066B0;
 	text-overflow: ellipsis;
 	white-space: nowrap;
@@ -490,7 +492,7 @@
 .crm-report-column-funnel-grid-value-bold {
 	display: inline-block;
 	border-bottom: 1px dashed transparent;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #333;
 	transition: color .3s, border-bottom .3s;
 	cursor: pointer;
@@ -517,12 +519,12 @@
 }
 .crm-report-column-funnel-grid-value-dark-grey {
 	display: block;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #525C69;
 }
 .crm-report-column-funnel-grid-value-grey {
 	display: block;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #A8ADB4;
 }
 .crm-report-column-funnel-grid-value-up .crm-report-column-funnel-grid-triangle {
@@ -564,7 +566,7 @@
 }
 .crm-report-column-funnel-grid-rating-bold .crm-report-column-funnel-grid-rating-value,
 .crm-report-column-funnel-grid-rating-bold .crm-report-column-funnel-grid-rating-text {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 .crm-report-column-funnel-grid-rating-success .crm-report-column-funnel-grid-rating-text {
 	color: #6F9300;

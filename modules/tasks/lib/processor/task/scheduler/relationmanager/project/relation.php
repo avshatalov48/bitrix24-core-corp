@@ -130,7 +130,7 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 
 	public function updateLag()
 	{
-		if(!$this->getTask() || !$this->getParentTask())
+		if (!$this->getTask() || !$this->getParentTask())
 		{
 			return;
 		}
@@ -141,7 +141,7 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 		$calendar = Calendar::getInstance();
 
 		// head task was already changed outside this worker, but we need to get original lag, so use pristine dates
-		if($parentTask->isHead() && !empty($parentPristineData))
+		if (!empty($parentPristineData) && $parentTask->isHead())
 		{
 			$fromTaskDateStart = $parentPristineData['START_DATE_PLAN_GMT'];
 			$fromTaskDateEnd = $parentPristineData['END_DATE_PLAN_GMT'];
@@ -151,14 +151,16 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 			$fromTaskDateStart = $parentTask->getStartDatePlanGmt(true);
 			$fromTaskDateEnd = $parentTask->getEndDatePlanGmt();
 		}
-
 		$toTaskDateStart = $task->getStartDatePlanGmt(true);
 		$toTaskDateEnd = $task->getEndDatePlanGmt();
-
 		$matchWorkTime = $task->getMatchWorkTime();
 
 		if ($this->getType() == ProjectDependenceTable::LINK_TYPE_START_START)
 		{
+			if (!isset($fromTaskDateStart, $toTaskDateStart))
+			{
+				return;
+			}
 			if ($matchWorkTime)
 			{
 				$lag = $calendar->calculateDuration($fromTaskDateStart, $toTaskDateStart);
@@ -170,6 +172,10 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 		}
 		else if ($this->getType() == ProjectDependenceTable::LINK_TYPE_START_FINISH)
 		{
+			if (!isset($fromTaskDateStart, $toTaskDateEnd))
+			{
+				return;
+			}
 			if ($matchWorkTime)
 			{
 				$lag = $calendar->calculateDuration($fromTaskDateStart, $toTaskDateEnd);
@@ -181,6 +187,10 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 		}
 		else if ($this->getType() == ProjectDependenceTable::LINK_TYPE_FINISH_FINISH)
 		{
+			if (!isset($fromTaskDateEnd, $toTaskDateEnd))
+			{
+				return;
+			}
 			if ($matchWorkTime)
 			{
 				$lag = $calendar->calculateDuration($fromTaskDateEnd, $toTaskDateEnd);
@@ -192,6 +202,10 @@ final class Relation extends \Bitrix\Tasks\Processor\Task\Scheduler\Relation
 		}
 		else
 		{
+			if (!isset($fromTaskDateEnd, $toTaskDateStart))
+			{
+				return;
+			}
 			if ($matchWorkTime)
 			{
 				$lag = $calendar->calculateDuration($fromTaskDateEnd, $toTaskDateStart);

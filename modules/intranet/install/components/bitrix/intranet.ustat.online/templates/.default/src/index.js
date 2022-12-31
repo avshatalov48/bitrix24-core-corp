@@ -623,7 +623,7 @@ class UstatOnline
 		let userStyle = "";
 		if (user.avatar)
 		{
-			userStyle = 'background-image: url("' + user.avatar + '");';
+			userStyle = 'background-image: url("' + encodeURI(user.avatar) + '");';
 		}
 
 		const userId = this.getNumberUserId(user.id);

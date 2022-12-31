@@ -144,7 +144,7 @@ elseif ($action === 'REBUILD_SEARCH_CONTENT')
 		)
 	);
 }
-elseif ($action === 'SAVE_PROGRESS')
+elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';

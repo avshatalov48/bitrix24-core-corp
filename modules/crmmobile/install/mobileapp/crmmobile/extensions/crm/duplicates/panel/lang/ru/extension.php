@@ -1,0 +1,4 @@
+<?php
+$MESS['MCRM_DUPLICATES_PANEL_CONTACT_USE'] = 'использовать';
+$MESS['MCRM_DUPLICATES_PANEL_CONTACT_OPEN'] = 'открыть';
+$MESS['MCRM_DUPLICATES_PANEL_TITLE'] = 'Найденные совпадения';

@@ -1,8 +1,14 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 use Bitrix\Main\Localization\Loc;
 
 /** @var CBitrixComponentTemplate $this */
+/** @var string $templateFolder */
 /** @var array $arParams */
 /** @var array $arResult */
 /** @global CDatabase $DB */
@@ -31,7 +37,7 @@ if (
 		$classList[] = 'lenta-pinned-panel-collapsed';
 	}
 
-	?><div data-livefeed-pinned-panel class="<?=implode(' ', $classList)?>"><?
+	?><div data-livefeed-pinned-panel class="<?=implode(' ', $classList)?>"><?php
 
 		?><div class="lenta-pinned-collapsed-posts">
 			<div class="lenta-pinned-collapsed-posts-content">
@@ -47,7 +53,7 @@ if (
 			<div class="lenta-pinned-collapsed-posts-control">
 				<div class="lenta-pinned-collapsed-posts-btn"><?=Loc::getMessage('MOBILE_LOG_PINNED_COLLAPSED_COUNTER_BUTTON')?></div>
 			</div>
-		</div><?
+		</div><?php
 
 		if (!empty($arResult['pinnedEvents']))
 		{
@@ -74,5 +80,5 @@ if (
 				$targetHtml = ob_get_contents();
 			}
 		}
-	?></div><?
+	?></div><?php
 }

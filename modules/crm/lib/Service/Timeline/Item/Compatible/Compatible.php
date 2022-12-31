@@ -28,7 +28,18 @@ abstract class Compatible extends Item
 
 	protected function applyTypeCompatibility(array $data): array
 	{
-		return $this->convertType($data);
+		$data = $this->convertType($data);
+		if (isset($data['sort']) && is_array($data['sort']))
+		{
+			$data['sort'] = array_map('intval', $data['sort']);
+		}
+
+		return $data;
+	}
+
+	public function getSort(): array
+	{
+		return array_map('intval', $this->data['sort'] ?? []);
 	}
 
 	private function convertType($value)

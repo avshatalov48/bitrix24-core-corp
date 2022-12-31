@@ -79,10 +79,11 @@ class SearchAction extends Search\SearchAction
 				$searchResultProvider->setAdditionalFilter($this->getAdditionalFilter($entityTypeId, $options));
 
 				$searchResult = $searchResultProvider->getSearchResult($searchQuery);
+				$categoryId = $options['categoryId'] ?? 0;
 
 				$results = array_merge(
 					$results,
-					Factory::createResultAdapter($entityTypeId)->adapt($searchResult)
+					Factory::createResultAdapter($entityTypeId, $categoryId)->adapt($searchResult)
 				);
 
 				$this->limit = static::LIMIT - count($results);
@@ -213,6 +214,7 @@ class SearchAction extends Search\SearchAction
 		$result = [];
 		$supportedEntityTypeIds = Factory::getSupportedEntityTypeIds();
 		$itemsByEntityType = [];
+		$entityTypeToCategoryMap = [];
 
 		foreach ($items as $item)
 		{
@@ -221,6 +223,10 @@ class SearchAction extends Search\SearchAction
 			{
 				$itemsByEntityType[$entityTypeId] = [];
 			}
+			/**
+			 * Assuming that all entity type's items have the same category
+			 */
+			$entityTypeToCategoryMap[$entityTypeId] = $item['CATEGORY_ID'];
 			$itemsByEntityType[$entityTypeId][] = (int)$item['ENTITY_ID'];
 		}
 
@@ -233,7 +239,10 @@ class SearchAction extends Search\SearchAction
 
 				$result = array_merge(
 					$result,
-					Factory::createResultAdapter($entityTypeId)->adapt($searchResult)
+					Factory::createResultAdapter(
+						$entityTypeId,
+						$entityTypeToCategoryMap[$entityTypeId] ?? null
+					)->adapt($searchResult)
 				);
 			}
 		}

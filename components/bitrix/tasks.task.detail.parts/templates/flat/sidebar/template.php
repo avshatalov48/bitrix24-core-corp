@@ -122,7 +122,7 @@ $taskLimitExceeded = $arResult['TASK_LIMIT_EXCEEDED'];
 			<div class="task-detail-sidebar-item task-detail-sidebar-item-robot">
 				<div class="task-detail-sidebar-item-title"><?=Loc::getMessage('TASKS_SIDEBAR_AUTOMATION')?>:</div>
 				<div class="task-detail-sidebar-item-value">
-					<span onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$taskData['GROUP_ID']?>&amp;task_id=<?=(int)$taskData['ID']?>')"><?=Loc::getMessage('TASKS_SIDEBAR_ROBOTS_1')?></span>
+					<span onclick="BX.SidePanel.Instance.open('/bitrix/components/bitrix/tasks.automation/slider.php?site_id='+BX.message('SITE_ID')+'&amp;project_id=<?=(int)$taskData['GROUP_ID']?>&amp;task_id=<?=(int)$taskData['ID']?>', {cacheable: false, customLeftBoundary: 0})"><?=Loc::getMessage('TASKS_SIDEBAR_ROBOTS_1')?></span>
 				</div>
 			</div>
 		<?endif;?>
@@ -389,7 +389,7 @@ if(\Bitrix\Main\Loader::includeModule('rest'))
 {
 	$restPlacementHandlerList = \Bitrix\Rest\PlacementTable::getHandlersList(\CTaskRestService::PLACEMENT_TASK_VIEW_SIDEBAR);
 	foreach($restPlacementHandlerList as $app):?>
-		<div class="task-sidebar-restapp-<?=$app['APP_ID']?>" id="task-sidebar-restapp-<?=$app['APP_ID']?>">
+		<div class="task-detail-sidebar-placement task-sidebar-restapp-<?=$app['APP_ID']?>" id="task-sidebar-restapp-<?=$app['APP_ID']?>">
 			<?php
 			$placementSid = $APPLICATION->includeComponent(
 				'bitrix:app.layout',

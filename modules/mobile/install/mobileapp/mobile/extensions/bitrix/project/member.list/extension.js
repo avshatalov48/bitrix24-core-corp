@@ -363,7 +363,7 @@
 					isDisabled: !this.list.canInvite,
 					onClickCallback: () => new Promise((resolve) => {
 						contextMenu.close(() => this.onAddMembersClick());
-						resolve();
+						resolve({ closeMenu: false });
 					}),
 				},
 				{
@@ -374,7 +374,7 @@
 					isDisabled: !this.list.isOwner,
 					onClickCallback: () => new Promise((resolve) => {
 						contextMenu.close(() => this.onWaitingClick());
-						resolve();
+						resolve({ closeMenu: false });
 					}),
 				},
 				{
@@ -384,7 +384,7 @@
 					isSelected: (this.filter.getRequestInitiatingType() === ProjectMember.requestInitiatingType.group),
 					onClickCallback: () => new Promise((resolve) => {
 						contextMenu.close(() => this.onInvitedClick());
-						resolve();
+						resolve({ closeMenu: false });
 					}),
 				},
 				{
@@ -397,7 +397,7 @@
 					isDisabled: !this.filter.getRequestInitiatingType(),
 					onClickCallback: () => new Promise((resolve) => {
 						contextMenu.close(() => this.onClearFilterClick());
-						resolve();
+						resolve({ closeMenu: false });
 					}),
 				}
 			];

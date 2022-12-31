@@ -12,37 +12,37 @@ class Form
 
 	private Crm\WebForm\Options $options;
 
-	public static function getFieldSet(int $entityTypeId): ?Crm\FieldSet\Item
+	public static function getFieldSet(int $entityTypeId, ?int $presetId = null): ?Crm\FieldSet\Item
 	{
 		$factory = new Crm\FieldSet\Factory;
-
-		$code = 'def-req-' . $entityTypeId;
+		$code = 'def-req-' . $entityTypeId . ($presetId ? '-' . $presetId : '');
 		$item = $factory->getItemByCode($code);
 		if ($item)
 		{
 			return $item;
 		}
 
-		$factory->installDefaults();
+		$factory->installDefaults($presetId);
 		return $factory->getItemByCode($code);
 	}
 
 	public static function getFieldSetValues(
 		int $entityTypeId,
 		int $entityId,
-		array $options = []
+		array $options = [],
+		?int $requisitePresetId = null
 	): array
 	{
 		$result = [];
 
-		$set = self::getFieldSet($entityTypeId);
+		$set = self::getFieldSet($entityTypeId, $requisitePresetId);
 		if (!$set)
 		{
 			return $result;
 		}
 
 		$values = Crm\WebForm\Requisite::instance()
-			->load($entityTypeId, $entityId)
+			->load($entityTypeId, $entityId, $requisitePresetId)
 			->getData()
 		;
 		if (!$values)
@@ -218,9 +218,9 @@ class Form
 		return $this;
 	}
 
-	public function appendFieldsFromFieldSet(int $entityTypeId): self
+	public function appendFieldsFromFieldSet(int $entityTypeId, ?int $requisitePresetId = null): self
 	{
-		$item = self::getFieldSet($entityTypeId);
+		$item = self::getFieldSet($entityTypeId, $requisitePresetId);
 		if ($item)
 		{
 			foreach ($item->getFields() as $field)
@@ -236,6 +236,12 @@ class Form
 				}
 
 				$this->appendField($field);
+			}
+
+
+			if ($requisitePresetId !== null && $requisitePresetId > 0)
+			{
+				$this->setRequisitePresetId($requisitePresetId);
 			}
 		}
 
@@ -261,6 +267,37 @@ class Form
 			'RESULT_FAILURE_TEXT' => $failureText,
 		]);
 		return $this;
+	}
+
+	public function setRequisitePresetId(int $requisitePresetId): self
+	{
+		$this->form->merge([
+			'FORM_SETTINGS' => [
+				'REQUISITE_PRESET_ID' => $requisitePresetId
+			]
+		]);
+
+		return $this;
+	}
+
+	public function getRequisitePresetId(): ?int
+	{
+		$formData = $this->form->get();
+		return
+			$formData['FORM_SETTINGS']['REQUEST_PRESET_ID']
+				? (int)$formData['FORM_SETTINGS']['REQUEST_PRESET_ID']
+				: null
+		;
+	}
+
+	public function getRequisitePresetIdByFieldSet(int $entityTypeId): ?int
+	{
+		$fieldSet = static::getFieldSet($entityTypeId);
+		if (!$fieldSet)
+		{
+			return null;
+		}
+		return $fieldSet->getRequisitePresetId();
 	}
 
 	public function setRefillButtonCaption(string $text): self

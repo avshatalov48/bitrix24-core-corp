@@ -11,11 +11,13 @@ class EntityViewSettings
 	const LIST_VIEW          = BX_CRM_VIEW_LIST;
 	const WIDGET_VIEW        = BX_CRM_VIEW_WIDGET;
 	const KANBAN_VIEW        = BX_CRM_VIEW_KANBAN;
+	const ACTIVITY_VIEW      = BX_CRM_VIEW_ACTIVITY;
 	const CALENDAR_VIEW      = BX_CRM_VIEW_CALENDAR;
 
 	const LIST_VIEW_NAME     = 'LIST';
 	const WIDGET_VIEW_NAME   = 'WIDGET';
 	const KANBAN_VIEW_NAME   = 'KANBAN';
+	const ACTIVITY_VIEW_NAME   = 'ACTIVITY';
 	const CALENDAR_VIEW_NAME = 'CALENDAR';
 
 	/**
@@ -29,15 +31,23 @@ class EntityViewSettings
 		{
 			return self::LIST_VIEW;
 		}
-		elseif($name === self::WIDGET_VIEW_NAME)
+
+		if($name === self::WIDGET_VIEW_NAME)
 		{
 			return self::WIDGET_VIEW;
 		}
-		elseif($name === self::KANBAN_VIEW_NAME)
+
+		if($name === self::KANBAN_VIEW_NAME)
 		{
 			return self::KANBAN_VIEW;
 		}
-		elseif($name === self::CALENDAR_VIEW_NAME)
+
+		if($name === self::ACTIVITY_VIEW_NAME)
+		{
+			return self::ACTIVITY_VIEW;
+		}
+
+		if($name === self::CALENDAR_VIEW_NAME)
 		{
 			return self::CALENDAR_VIEW;
 		}
@@ -56,15 +66,23 @@ class EntityViewSettings
 		{
 			return self::LIST_VIEW_NAME;
 		}
-		elseif($ID === self::WIDGET_VIEW)
+
+		if($ID === self::WIDGET_VIEW)
 		{
 			return self::WIDGET_VIEW_NAME;
 		}
-		elseif($ID === self::KANBAN_VIEW)
+
+		if($ID === self::KANBAN_VIEW)
 		{
 			return self::KANBAN_VIEW_NAME;
 		}
-		elseif($ID === self::CALENDAR_VIEW)
+
+		if($ID === self::ACTIVITY_VIEW)
+		{
+			return self::ACTIVITY_VIEW_NAME;
+		}
+
+		if($ID === self::CALENDAR_VIEW)
 		{
 			return self::CALENDAR_VIEW_NAME;
 		}

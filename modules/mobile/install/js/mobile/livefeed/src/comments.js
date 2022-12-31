@@ -134,7 +134,7 @@ class Comments
 
 		this.emptyCommentsXhr = Ajax.wrap({
 			type: 'json',
-			method: 'GET',
+			method: 'POST',
 			url: `${Loc.getMessage('MSLPathToLogEntry').replace("#log_id#", logId)}&empty_get_comments=Y${(!Type.isNil(timestampValue) ? `&LAST_LOG_TS=${timestampValue}` : '')}`,
 			data: {},
 			processData: true,

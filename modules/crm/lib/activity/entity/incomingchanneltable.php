@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Activity\Entity;
 
+use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\ORM\Fields\BooleanField;
 use Bitrix\Main\ORM\Fields\IntegerField;
 
@@ -24,6 +25,14 @@ class IncomingChannelTable extends \Bitrix\Main\Entity\DataManager
 			(new BooleanField('COMPLETED'))
 				->configureStorageValues('N', 'Y')
 				->configureRequired(),
+			new ReferenceField(
+				'BINDINGS',
+			\Bitrix\Crm\ActivityBindingTable::class,
+				[
+					'=this.ACTIVITY_ID' => 'ref.ACTIVITY_ID'
+				],
+				['join_type' => 'INNER']
+			),
 		];
 	}
 }

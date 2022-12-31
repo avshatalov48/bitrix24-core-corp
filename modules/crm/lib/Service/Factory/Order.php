@@ -183,4 +183,11 @@ final class Order extends Service\Factory
 	{
 		return true;
 	}
+
+	public function getFieldsMap(): array
+	{
+		return [
+			Item::FIELD_NAME_ASSIGNED => 'RESPONSIBLE_ID',
+		];
+	}
 }

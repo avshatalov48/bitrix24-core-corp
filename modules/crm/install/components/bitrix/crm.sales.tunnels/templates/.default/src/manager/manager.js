@@ -154,7 +154,7 @@ export default class Manager
 
 		return Backend
 			.createCategory({
-				name: Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER'),
+				name: Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2'),
 				sort: this.getMaxSort() + 10
 			})
 			.then((response) => {

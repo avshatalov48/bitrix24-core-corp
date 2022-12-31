@@ -9,7 +9,7 @@ class Invoice
 	 * @param array $parameters Parameters that will be passed to the component.
 	 * @return string HTML code of the preview.
 	 */
-	public function buildPreview($parameters)
+	public static function buildPreview($parameters)
 	{
 		global $APPLICATION;
 		if(empty($parameters['NAME_TEMPLATE']))
@@ -32,7 +32,7 @@ class Invoice
 	 * @param array $parameters Allowed key: invoiceId.
 	 * @return bool True if current user has access to the invoice.
 	 */
-	public function checkUserReadAccess($parameters)
+	public static function checkUserReadAccess($parameters)
 	{
 		return \CCrmInvoice::CheckReadPermission($parameters['invoiceId'], \CCrmPerms::GetCurrentUserPermissions());
 	}

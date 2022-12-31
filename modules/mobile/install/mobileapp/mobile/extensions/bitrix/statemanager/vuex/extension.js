@@ -6,6 +6,9 @@
  * @source: https://unpkg.com/vuex@4.0.2/dist/vuex.global.prod.js
  */
 
+/**
+ * @module statemanager/vuex
+ */
 jn.define('statemanager/vuex', (require, exports, module) => {
 
 	const { inject, reactive, watch } = jn.require('statemanager/vuex/reactivity');

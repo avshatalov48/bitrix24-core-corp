@@ -57,8 +57,8 @@ $MESS["CRM_DEAL_FIELD_PRODUCT_ROWS"] = "Товары";
 $MESS["CRM_DEAL_FIELD_QUOTE_ID"] = "Предложение";
 $MESS["CRM_FIELD_COMPARE_CONTACTS_REMOVED"] = "Удалена связь с контактами";
 $MESS["CRM_FIELD_COMPARE_CONTACTS_ADDED"] = "Добавлена связь с контактами";
-$MESS["CRM_FIELD_COMPARE_DEAL_CATEGORY"] = "Изменено направление";
-$MESS["CRM_DEAL_FIELD_CATEGORY_ID"] = "Направление";
+$MESS["CRM_FIELD_COMPARE_DEAL_CATEGORY"] = "Изменена воронка";
+$MESS["CRM_DEAL_FIELD_CATEGORY_ID"] = "Воронка";
 $MESS["CRM_DEAL_FIELD_IS_NEW"] = "Новая сделка";
 $MESS["CRM_DEAL_FIELD_IS_RETURN_CUSTOMER"] = "Повторная сделка";
 $MESS["CRM_DEAL_FIELD_DATE_CREATE"] = "Дата создания";
@@ -96,4 +96,3 @@ $MESS["CRM_FIELD_COMPARE_SOURCE_ID"] = "Изменено поле \"Источн
 $MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY"] = "Изменен режим расчета поля \"Сумма\"";
 $MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_Y"] = "Вручную";
 $MESS["CRM_FIELD_COMPARE_IS_MANUAL_OPPORTUNITY_N"] = "На основе стоимости товаров";
-?>

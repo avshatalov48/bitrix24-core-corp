@@ -10,6 +10,7 @@ export default class MenuBar
 		this._container = null;
 		this._activityEditor = null;
 		this._commentEditor = null;
+		this._todoEditor = null;
 		this._waitEditor = null;
 		this._smsEditor = null;
 		this._zoomEditor = null;
@@ -40,6 +41,7 @@ export default class MenuBar
 		this._activityEditor = BX.prop.get(this._settings, "activityEditor", null);
 
 		this._commentEditor = BX.prop.get(this._settings, "commentEditor");
+		this._todoEditor = BX.prop.get(this._settings, "todoEditor");
 		this._waitEditor = BX.prop.get(this._settings, "waitEditor");
 		this._smsEditor = BX.prop.get(this._settings, "smsEditor");
 		this._zoomEditor = BX.prop.get(this._settings, "zoomEditor");
@@ -69,18 +71,28 @@ export default class MenuBar
 			if (firstId === null)
 			{
 				const id = item.dataset.id;
-				if (["comment", "wait", "sms", "zoom"].indexOf(id) >= 0 && this[("_" + id + "Editor")])
+				if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(id) >= 0 && this[("_" + id + "Editor")])
 				{
 					firstId = id;
 				}
 			}
 		}.bind(this));
-		this.setActiveItemById(firstId || "comment");
+		this.setActiveItemById(firstId || 'todo');
 	}
 
 	getId()
 	{
 		return this._id;
+	}
+
+	getActiveItem()
+	{
+		return this._activeItem;
+	}
+
+	getTodoEditor()
+	{
+		return this._todoEditor;
 	}
 
 	setActiveItemById(id)
@@ -234,11 +246,15 @@ export default class MenuBar
 				}
 			);
 		}
-		else if (["comment", "wait", "sms", "zoom"].indexOf(action) >= 0 && this[("_" + action + "Editor")])
+		else if (['comment', 'wait', 'sms', 'zoom', 'todo'].indexOf(action) >= 0 && this[("_" + action + "Editor")])
 		{
 			if (this._commentEditor)
 			{
 				this._commentEditor.setVisible(action === "comment");
+			}
+			if (this._todoEditor)
+			{
+				this._todoEditor.setVisible(action === 'todo');
 			}
 			if (this._waitEditor)
 			{

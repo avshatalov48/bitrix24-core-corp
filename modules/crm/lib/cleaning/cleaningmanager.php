@@ -7,6 +7,7 @@ use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Main;
 use Bitrix\Main\Result;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 
 class CleaningManager
 {
@@ -174,6 +175,17 @@ class CleaningManager
 								$binding = new \Bitrix\Crm\Order\ContactCompanyBinding($options->getEntityTypeId());
 								$binding->unbind($options->getEntityId());
 							}
+
+							return new Result();
+						}
+					}
+				)
+				->addJob(
+					new class extends Cleaner\Job {
+						public function run(Options $options): Result
+						{
+							(new Contractor\ContactCompanyBinding($options->getEntityTypeId()))
+								->unbind($options->getEntityId());
 
 							return new Result();
 						}

@@ -9,7 +9,7 @@ class CCrmActivity extends CAllCrmActivity
 	const FIELD_MULTI_TABLE_NAME = 'b_crm_field_multi';
 	const DB_TYPE = 'MYSQL';
 
-	public static function DoSaveBindings($ID, &$arBindings, $registerUncompletedActivities = true)
+	public static function DoSaveBindings($ID, &$arBindings, $registerBindingsChanges = true)
 	{
 		global $DB;
 
@@ -20,20 +20,15 @@ class CCrmActivity extends CAllCrmActivity
 			return false;
 		}
 
-		if(!is_array($arPresentComms = self::GetBindings($ID)))
+		if(!is_array($existedBindings = self::GetBindings($ID)))
 		{
 			self::RegisterError(array('text' => self::GetLastErrorMessage()));
 			return false;
 		}
 
-		$ar2Add = array();
-		$ar2Delete = array();
-		self::PrepareAssociationsSave($arBindings, $arPresentComms, $ar2Add, $ar2Delete);
-
-		$existedBindings = $registerUncompletedActivities
-			? self::GetBindings($ID)
-			: []
-		;
+		$added = array();
+		$removed = array();
+		self::PrepareBindingChanges($existedBindings, $arBindings, $added, $removed);
 
 		if($ID > 0)
 		{
@@ -42,10 +37,28 @@ class CCrmActivity extends CAllCrmActivity
 
 		if(count($arBindings) == 0)
 		{
-			if ($registerUncompletedActivities && !empty($existedBindings))
+			if (!empty($existedBindings))
 			{
-				\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForActivity($ID, $existedBindings);
+				if ($registerBindingsChanges)
+				{
+					\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForActivity($ID, $existedBindings);
+				}
+
+				\Bitrix\Crm\Activity\Provider\ProviderManager::syncBadgesOnBindingsChange($ID, [], $existedBindings);
 			}
+
+			$monitor = \Bitrix\Crm\Service\Timeline\Monitor::getInstance();
+			foreach ($existedBindings as $binding)
+			{
+				if (\CCrmOwnerType::IsDefined($binding['OWNER_TYPE_ID']) && (int)$binding['OWNER_ID'] > 0)
+				{
+					$monitor->onActivityRemoveIfSuitable(
+						new \Bitrix\Crm\ItemIdentifier((int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID']),
+						$ID
+					);
+				}
+			}
+
 			return true;
 		}
 
@@ -108,9 +121,32 @@ class CCrmActivity extends CAllCrmActivity
 			false,
 			'File: '.__FILE__.'<br/>Line: '.__LINE__
 		);
-		if (!empty($newBindings) && $registerUncompletedActivities)
+		if (!empty($newBindings) && $registerBindingsChanges)
 		{
 			\Bitrix\Crm\Activity\UncompletedActivity::synchronizeForActivity($ID, $newBindings);
+		}
+
+		\Bitrix\Crm\Activity\Provider\ProviderManager::syncBadgesOnBindingsChange($ID, $added, $removed);
+
+		if ($registerBindingsChanges)
+		{
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onChangeActivityBindings($ID, $existedBindings, $arBindings);
+		}
+
+		$monitor = \Bitrix\Crm\Service\Timeline\Monitor::getInstance();
+		foreach ($added as $binding)
+		{
+			if (\CCrmOwnerType::IsDefined($binding['OWNER_TYPE_ID']) && (int)$binding['OWNER_ID'] > 0)
+			{
+				$monitor->onActivityAddIfSuitable(new \Bitrix\Crm\ItemIdentifier((int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID']), $ID);
+			}
+		}
+		foreach ($removed as $binding)
+		{
+			if (\CCrmOwnerType::IsDefined($binding['OWNER_TYPE_ID']) && (int)$binding['OWNER_ID'] > 0)
+			{
+				$monitor->onActivityRemoveIfSuitable(new \Bitrix\Crm\ItemIdentifier((int)$binding['OWNER_TYPE_ID'], (int)$binding['OWNER_ID']), $ID);
+			}
 		}
 
 		return true;
@@ -263,6 +299,8 @@ class CCrmActivity extends CAllCrmActivity
 			{
 				unset($arComm['ID']);
 			}
+			$arComm['TYPE'] = (string)$arComm['TYPE'];
+			$arComm['VALUE'] = (string)$arComm['VALUE'];
 
 			$data = $DB->PrepareInsert(self::COMMUNICATION_TABLE_NAME, $arComm);
 			if($bulkColumns == '')

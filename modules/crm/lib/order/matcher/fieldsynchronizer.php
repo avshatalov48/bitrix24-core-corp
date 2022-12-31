@@ -1743,9 +1743,13 @@ class FieldSynchronizer
 				$fieldInfo = $availableFields[$propertyName];
 				$field['ID'] = $fieldInfo['id'];
 			}
-			else
+			elseif (isset($availableFields[$fieldCode]))
 			{
 				$fieldInfo = $availableFields[$fieldCode];
+			}
+			else
+			{
+				throw new SystemException("Cannot find available field with name '{$fieldCode}'");
 			}
 
 			if ($fieldInfo['entity_name'] === \CCrmOwnerType::OrderName)
@@ -1766,7 +1770,12 @@ class FieldSynchronizer
 				static::prepareFiles($prepared, $field);
 				static::prepareRequisiteFields($prepared, $field);
 
-				$prepared['RELATIONS'] = isset($relations[$fieldCode]) ? $relations[$fieldCode] : static::getDefaultRelations();
+				$prepared['RELATIONS'] =
+					$relations[$fieldCode]
+					?? $relations[ $fieldInfo['entity_field_name'] ] // short name, ex: ADDRESS
+					?? $relations[ $propertyName ] // full name with prefix, ex: ORDER_ADDRESS
+					?? static::getDefaultRelations()
+				;
 
 				$fieldsToUpdate[] = $prepared;
 			}
@@ -1778,6 +1787,15 @@ class FieldSynchronizer
 				$prepared['ENTITY_NAME'] = $fieldInfo['entity_name'];
 				$prepared['ENTITY_FIELD_CODE'] = $fieldInfo['entity_field_name'];
 
+				if (
+					empty($prepared['CODE'])
+					|| empty($prepared['ENTITY_NAME'])
+					|| empty($prepared['ENTITY_FIELD_CODE'])
+				)
+				{
+					throw new SystemException("Not filled all entity info for field '{$fieldCode}'");
+				}
+
 				if (isset($field['VALUE_TYPE']))
 				{
 					$prepared['MULTI_FIELD_TYPE'] = $field['VALUE_TYPE'];
@@ -1786,7 +1804,7 @@ class FieldSynchronizer
 				static::prepareFiles($prepared, $field);
 				static::prepareRequisiteFields($prepared, $field);
 
-				$prepared['RELATIONS'] = isset($relations[$fieldCode]) ? $relations[$fieldCode] : static::getDefaultRelations();
+				$prepared['RELATIONS'] = $relations[$fieldCode] ?? static::getDefaultRelations();
 
 				$fieldsToCreate[] = $prepared;
 			}

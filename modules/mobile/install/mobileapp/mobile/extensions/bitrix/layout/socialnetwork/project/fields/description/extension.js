@@ -1,11 +1,13 @@
 (() => {
+	const { TextAreaField } = jn.require('layout/ui/fields/textarea');
+
 	class ProjectDescriptionField extends LayoutComponent
 	{
 		render()
 		{
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.TEXTAREA, {
+				TextAreaField({
 					readOnly: false,
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_DESCRIPTION_TITLE'),
 					value: this.props.value,

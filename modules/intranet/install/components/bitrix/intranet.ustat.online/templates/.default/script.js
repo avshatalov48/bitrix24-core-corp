@@ -3,25 +3,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 (function (exports,rest_client,main_popup,main_core,pull_client,ui_graph_circle) {
 	'use strict';
 
-	function _templateObject2() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\tclass=\"intranet-ustat-online-popup-item\"\n\t\t\t\t\thref=\"", "\" \n\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t>\n\t\t\t\t\t<span class=\"intranet-ustat-online-popup-avatar-new\">\n\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<span class=\"intranet-ustat-online-popup-avatar-status-icon\"></span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet-ustat-online-popup-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</a>\n\t\t\t"]);
-
-	  _templateObject2 = function _templateObject2() {
-	    return data;
-	  };
-
-	  return data;
-	}
-
-	function _templateObject() {
-	  var data = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"intranet-ustat-online-popup-name-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-container\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-content\">\n\t\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-content-box\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-inner\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"]);
-
-	  _templateObject = function _templateObject() {
-	    return data;
-	  };
-
-	  return data;
-	}
+	var _templateObject, _templateObject2;
 	var UserPopup = /*#__PURE__*/function () {
 	  function UserPopup(parent) {
 	    var _this = this;
@@ -111,7 +93,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            _this2.allOnlineUserPopup.destroy();
 	          },
 	          onAfterPopupShow: function onAfterPopupShow(popup) {
-	            var popupContent = main_core.Tag.render(_templateObject(), _this2.getPopupTitle(action));
+	            var popupContent = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t\t<div>\n\t\t\t\t\t\t\t<span class=\"intranet-ustat-online-popup-name-title\">\n\t\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t\t</span>\n\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-container\">\n\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-content\">\n\t\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-content-box\">\n\t\t\t\t\t\t\t\t\t\t<div class=\"intranet-ustat-online-popup-inner\"></div>\n\t\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t"])), _this2.getPopupTitle(action));
 	            popup.contentContainer.appendChild(popupContent);
 	            _this2.popupInnerContainer = popupContent.querySelector(".intranet-ustat-online-popup-inner");
 	            _this2.loader = _this2.showLoader({
@@ -200,10 +182,10 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        var avatarIcon = "<i></i>";
 
 	        if (main_core.Type.isString(users[i]['AVATAR']) && users[i]['AVATAR']) {
-	          avatarIcon = "<i style=\"background-image: url('".concat(users[i]['AVATAR'], "')\"></i>");
+	          avatarIcon = "<i style=\"background-image: url('".concat(encodeURI(users[i]['AVATAR']), "')\"></i>");
 	        }
 
-	        var userNode = main_core.Tag.render(_templateObject2(), users[i]['PATH_TO_USER_PROFILE'], avatarIcon, users[i]['NAME']);
+	        var userNode = main_core.Tag.render(_templateObject2 || (_templateObject2 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t<a \n\t\t\t\t\tclass=\"intranet-ustat-online-popup-item\"\n\t\t\t\t\thref=\"", "\" \n\t\t\t\t\ttarget=\"_blank\"\n\t\t\t\t>\n\t\t\t\t\t<span class=\"intranet-ustat-online-popup-avatar-new\">\n\t\t\t\t\t\t<div class=\"ui-icon ui-icon-common-user intranet-ustat-online-popup-avatar-img\">\n\t\t\t\t\t\t\t", "\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<span class=\"intranet-ustat-online-popup-avatar-status-icon\"></span>\n\t\t\t\t\t</span>\n\t\t\t\t\t<span class=\"intranet-ustat-online-popup-name\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</a>\n\t\t\t"])), users[i]['PATH_TO_USER_PROFILE'], avatarIcon, users[i]['NAME']);
 	        this.popupInnerContainer.appendChild(userNode);
 	      }
 	    }
@@ -246,7 +228,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  return UserPopup;
 	}();
 
-	function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it.return != null) it.return(); } finally { if (didErr) throw err; } } }; }
+	function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 	function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -521,7 +503,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	          _this3.checkOnline();
 	        }
-	      }).catch(function (error) {});
+	      })["catch"](function (error) {});
 	    }
 	  }, {
 	    key: "setUserToLocal",
@@ -564,7 +546,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            _this4.setUserToLocal(user);
 
 	            resolve();
-	          }).catch(function (error) {
+	          })["catch"](function (error) {
 	            requestUserList.push(userId);
 	            resolve();
 	          });
@@ -610,7 +592,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	            _this4.setUserToLocal(user);
 	          }
-	        }).catch(function (error) {});
+	        })["catch"](function (error) {});
 	      });
 	    }
 	  }, {
@@ -641,7 +623,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        _this5.getUserFromDb(userId).then(function (user) {
 	          resolve(user);
 	          return true;
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          if (skipRest) {
 	            reject(null);
 	            return true;
@@ -651,7 +633,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            _this5.addUserToDb(user);
 
 	            resolve(user);
-	          }).catch(function (error) {
+	          })["catch"](function (error) {
 	            reject(null);
 	          });
 	        });
@@ -696,7 +678,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	      return new Promise(function (resolve, reject) {
 	        BX.indexedDB.getValue(_this6.ITEMS.obClientDb, "users", "U" + userId).then(function (user) {
-	          if (user && babelHelpers.typeof(user) === 'object') {
+	          if (user && babelHelpers["typeof"](user) === 'object') {
 	            if (user.hasOwnProperty("entityId")) {
 	              user.id = _this6.getNumberUserId(user.entityId);
 	            }
@@ -705,7 +687,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          } else {
 	            resolve(null);
 	          }
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          reject(null);
 	        });
 	      });
@@ -741,7 +723,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	          } else {
 	            resolve(null);
 	          }
-	        }).catch(function (error) {
+	        })["catch"](function (error) {
 	          resolve(null);
 	        });
 	      });
@@ -937,14 +919,14 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  }, {
 	    key: "renderUser",
 	    value: function renderUser(user, showAnimation) {
-	      if (!user || babelHelpers.typeof(user) !== 'object') {
+	      if (!user || babelHelpers["typeof"](user) !== 'object') {
 	        return;
 	      }
 
 	      var userStyle = "";
 
 	      if (user.avatar) {
-	        userStyle = 'background-image: url("' + user.avatar + '");';
+	        userStyle = 'background-image: url("' + encodeURI(user.avatar) + '");';
 	      }
 
 	      var userId = this.getNumberUserId(user.id);

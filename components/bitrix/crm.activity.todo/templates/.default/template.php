@@ -3,6 +3,7 @@
 use Bitrix\Main\Localization\Loc;
 
 \Bitrix\Main\UI\Extension::load('ui.fonts.opensans');
+\Bitrix\Main\UI\Extension::load('ui.cnt');
 
 if ($arParams['IS_AJAX'] == 'Y')
 {
@@ -16,6 +17,18 @@ if ($arParams['IS_AJAX'] == 'Y')
 		CRM_ACTIVITY_TODO_VIEW_TITLE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_VIEW_TITLE'));?>',
 		CRM_ACTIVITY_TODO_CLOSE: '<?= CUtil::JSEscape(Loc::getMessage('CRM_ACTIVITY_TODO_CLOSE'));?>'
 	});
+	BX.ready(function()
+	{
+		document.querySelectorAll('.crm-activity-todo-items [data-counter]').forEach(function(counterNode) {
+			var counterType = counterNode.dataset.counterType;
+			var counter = new BX.UI.Counter({
+				value: 1,
+				border: true,
+				color: BX.UI.Counter.Color[counterType.toUpperCase()],
+			});
+			counter.renderTo(counterNode);
+		});
+	})
 </script>
 
 <div id="crm-activity-todo-items" class="crm-activity-todo-items">
@@ -55,10 +68,31 @@ if ($arParams['IS_AJAX'] == 'Y')
 			<?if ($item['DETAIL_EXIST']):?>
 				<a href="<?= $uriView->getUri();?>" data-id="<?= $item['ID']?>" class="crm-activity-todo-link">
 					<span class="crm-activity-todo-link-txt"><?= $item['SUBJECT']?></span>
-					<span class="crm-activity-todo-link-num"><?= $item['DEADLINED'] ? ' <span>1</span>' : ''?><? ?></span>
+					<?if ($item['IS_INCOMING_CHANNEL']) {?>
+					<span data-counter data-counter-type="success"></span>
+					<?
+					}
+					if ($item['DEADLINED']) {
+					?>
+						<span data-counter data-counter-type="danger"></span>
+					<?
+					}
+					?>
 				</a>
 			<?else:?>
-				<span data-id="<?= $item['ID']?>" class="crm-activity-todo-link"><?= $item['SUBJECT']?></span>
+				<span data-id="<?= $item['ID']?>" class="crm-activity-todo-link">
+					<span class="crm-activity-todo-link-txt"><?= $item['SUBJECT']?></span>
+					<?if ($item['IS_INCOMING_CHANNEL']) {?>
+						<span data-counter data-counter-type="success"></span>
+						<?
+					}
+					if ($item['DEADLINED']) {
+						?>
+						<span data-counter data-counter-type="danger"></span>
+						<?
+					}
+					?>
+				</span>
 			<?endif;?>
 			<?if (!empty($item['CONTACTS'])):?>
 			<div class="crm-activity-todo-info">

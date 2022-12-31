@@ -1,0 +1,150 @@
+.crm-activity__todo-editor {
+	--crm-activity__todo-editor-min-height: 88px;
+	--crm-activity__todo-editor-border-radius: var(--ui-border-radius-2xs, 2px);
+
+	box-sizing: border-box;
+	position: relative;
+	display: block;
+	background-color: var(--ui-color-background-primary, #fff);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica), 'Helvetica Neue');
+	border-radius: var(--crm-activity__todo-editor-border-radius);
+}
+
+.crm-activity__todo-editor.--is-edit .crm-activity__todo-editor_textarea {
+	min-height: var(--crm-activity__todo-editor-min-height);
+	padding-bottom: 50px;
+	transition-property: border-color;
+}
+
+.crm-activity__todo-editor_textarea {
+	box-sizing: border-box;
+	display: block;
+	width: 100%;
+	min-height: 40px;
+	padding: 11px 9px 0 15px;
+	border: 1px solid var(--ui-color-base-20, #dfe0e3);
+	border-radius: var(--crm-activity__todo-editor-border-radius);
+	color: var(--ui-color-text-primary, #333);
+	font-family: inherit;
+	font-size: var(--ui-font-size-lg, 15px);
+	line-height: 17px;
+	outline: none;
+	resize: none;
+	background-color: transparent;
+	overflow: hidden;
+}
+
+.crm-activity__todo-editor_textarea::placeholder {
+	color: var(--ui-color-base-40, #bdc1c6);
+}
+
+.crm-activity__todo-editor_textarea:focus {
+	outline: none;
+	border-color: var(--ui-color-palette-blue-40, #7EDCF9);
+}
+
+.crm-activity__todo-editor_deadline {
+	position: absolute;
+	bottom: 3px;
+	left: 9px;
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: flex-start;
+	font-family: inherit;
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor_deadline-text {
+	position: relative;
+	margin-top: 1px;
+	color: var(--ui-color-base-50, #a8adb4);
+	border-bottom: 1px dashed var(--ui-color-base-20, #dfe0e3);
+	transition-property: border-color;
+	transition-duration: 0.2s;
+	transition-timing-function: linear;
+}
+
+.crm-activity__todo-editor_deadline:hover .crm-activity__todo-editor_deadline-text {
+	border-color: transparent;
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor_deadline-icon {
+	width: 26px;
+	height: 26px;
+	mask-image: url("./images/crm-activity__todo-editor_calendar-icon.svg");
+	mask-size: 22px;
+	mask-position: 0 -1px;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-40, #bdc1c6);
+	transition-timing-function: inherit;
+	transition-duration: inherit;
+	transition-property: background-color;
+}
+
+.crm-activity__todo-editor_action-btns {
+	position: absolute;
+	bottom: 1px;
+	right: 10px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: flex-start;
+}
+
+.crm-activity__todo-editor_action-btn {
+	position: relative;
+	padding: 0;
+	margin-right: 10px;
+	border: none;
+	outline: none;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+.crm-activity__todo-editor_action-btn:hover {
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor_action-btn:hover .crm-activity__todo-editor_action-btn-icon {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+	transition-duration: unset;
+}
+
+.crm-activity__todo-editor_action-btn:last-child {
+	margin-right: 0;
+}
+
+.crm-activity__todo-editor_action-btn-icon {
+	display: inline-block;
+	width: 26px;
+	height: 26px;
+	mask-size: 22px 22px;
+	mask-position: center center;
+	mask-repeat: no-repeat;
+	background-color: var(--ui-color-base-30, #D5D7DB);
+	transition: background-color 0.2s linear;
+}
+
+.crm-activity__todo-editor_action-btn-icon.--micro {
+	mask-image: url("./images/crm-activity__todo-editor_micro-icon.svg");
+}
+
+.crm-activity__todo-editor_action-btn-icon.--attach {
+	mask-image: url("./images/crm-activity__todo-editor_attach-icon.svg");
+}
+
+.crm-activity__todo-editor_action-btn-icon.--attach-2 {
+	mask-image: url("./images/crm-activity__todo-editor_attach-2-icon.svg");
+}
+
+.crm-activity__todo-editor_deadline,
+.crm-activity__todo-editor_action-btns {
+	z-index: -999;
+}
+
+.crm-activity__todo-editor.--is-edit .crm-activity__todo-editor_deadline,
+.crm-activity__todo-editor.--is-edit .crm-activity__todo-editor_action-btns {
+	z-index: 1;
+}

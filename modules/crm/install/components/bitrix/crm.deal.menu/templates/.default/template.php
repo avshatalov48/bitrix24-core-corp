@@ -29,21 +29,26 @@ if (!empty($arResult['BUTTONS']))
 		$template = SITE_TEMPLATE_ID === 'bitrix24' ? 'slider' : 'type2';
 	}
 
+	$toolbarParams = ($arParams['TOOLBAR_PARAMS'] ?? []);
+	$toolbarParams['CATEGORY_ID'] = isset($arResult['CATEGORY_ID']) ? $arResult['CATEGORY_ID'] : null;
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.interface.toolbar',
 		$template,
-		array(
+		[
 			'TOOLBAR_ID' => $arResult['TOOLBAR_ID'],
-			'BUTTONS' => $arResult['BUTTONS']
-		),
+			'BUTTONS' => $arResult['BUTTONS'],
+			'TOOLBAR_PARAMS' => $toolbarParams,
+		],
 		$component,
-		array('HIDE_ICONS' => 'Y')
+		[
+			'HIDE_ICONS' => 'Y',
+		]
 	);
 }
 
 if(isset($arResult['SONET_SUBSCRIBE']) && is_array($arResult['SONET_SUBSCRIBE'])):
 	$subscribe = $arResult['SONET_SUBSCRIBE'];
-?><script type="text/javascript">
+	?><script type="text/javascript">
 BX.ready(
 	function()
 	{
@@ -62,7 +67,7 @@ endif;
 
 if(isset($arResult['CATEGORY_CHANGER'])):
 	$categoryChanger = $arResult['CATEGORY_CHANGER'];
-?><script type="text/javascript">
+	?><script type="text/javascript">
 	BX.ready(
 		function()
 		{
@@ -71,12 +76,12 @@ if(isset($arResult['CATEGORY_CHANGER'])):
 			)?>;
 
 			BX.CrmDealCategorySelectDialog.messages =
-			{
-				title: "<?=GetMessageJS('CRM_DEAL_CATEGORY_SELECT_DLG_TITLE')?>",
-				field: "<?=GetMessageJS('CRM_DEAL_CATEGORY_SELECT_DLG_FIELD')?>",
-				saveButton: "<?=GetMessageJS('CRM_BUTTON_SAVE')?>",
-				cancelButton: "<?=GetMessageJS('CRM_BUTTON_CANCEL')?>"
-			};
+				{
+					title: "<?=GetMessageJS('CRM_DEAL_CATEGORY_SELECT_DLG_TITLE')?>",
+					field: "<?=GetMessageJS('CRM_DEAL_CATEGORY_SELECT_DLG_FIELD')?>",
+					saveButton: "<?=GetMessageJS('CRM_BUTTON_SAVE')?>",
+					cancelButton: "<?=GetMessageJS('CRM_BUTTON_CANCEL')?>"
+				};
 
 			BX.Crm.DealCategoryChanger.create(
 				"<?=CUtil::JSEscape($categoryChanger['ID'])?>",
@@ -89,10 +94,10 @@ if(isset($arResult['CATEGORY_CHANGER'])):
 			);
 
 			BX.Crm.DealCategoryChanger.messages =
-			{
-				dialogTitle: "<?=GetMessageJS('CRM_DEAL_MOVE_TO_CATEGORY_DLG_TITLE')?>",
-				dialogSummary: "<?=GetMessageJS('CRM_DEAL_MOVE_TO_CATEGORY_DLG_SUMMARY')?>"
-			};
+				{
+					dialogTitle: "<?=GetMessageJS('CRM_DEAL_MOVE_TO_CATEGORY_DLG_TITLE')?>",
+					dialogSummary: "<?=GetMessageJS('CRM_DEAL_MOVE_TO_CATEGORY_DLG_SUMMARY')?>"
+				};
 		}
 	);
 </script><?

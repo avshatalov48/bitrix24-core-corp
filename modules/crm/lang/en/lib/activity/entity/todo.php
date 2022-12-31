@@ -1,0 +1,5 @@
+<?php
+$MESS["CRM_TODO_ENTITY_ACTIVITY_ALREADY_COMPLETED"] = "Cannot edit completed activity.";
+$MESS["CRM_TODO_ENTITY_ACTIVITY_DESCRIPTION_CONTACT_CLIENT_IN_DEAL"] = "Contact customer";
+$MESS["CRM_TODO_ENTITY_ACTIVITY_EMPTY_DESCRIPTION"] = "Description is required.";
+$MESS["CRM_TODO_ENTITY_ACTIVITY_PARENT_ACTIVITY_RESTRICT"] = "Cannot plan a child activity for a completed activity.";

@@ -2,23 +2,32 @@
 
 namespace Bitrix\Crm\Activity\Provider;
 
-
+use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Activity\IncomingChannel;
+use Bitrix\Crm\Badge;
+use Bitrix\Crm\Communication;
+use Bitrix\Crm\Integration\VoxImplantManager;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\ActivitySettings;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Crm\Settings\ActivitySettings;
-use Bitrix\Crm\Activity\CommunicationStatistics;
-use \Bitrix\Crm\Communication;
-use Bitrix\Crm\Integration\VoxImplantManager;
 use Bitrix\Voximplant\ConfigTable;
+use CCrmActivity;
+use CCrmActivityType;
 
 Loc::loadMessages(__FILE__);
 
 class Call extends Base
 {
-	const ACTIVITY_PROVIDER_ID = 'VOXIMPLANT_CALL';
-	const ACTIVITY_PROVIDER_TYPE_CALL = 'CALL';
-	const ACTIVITY_PROVIDER_TYPE_CALLBACK = 'CALLBACK';
+	public const ACTIVITY_PROVIDER_ID = 'VOXIMPLANT_CALL';
+	public const ACTIVITY_PROVIDER_TYPE_CALL = 'CALL';
+	public const ACTIVITY_PROVIDER_TYPE_CALLBACK = 'CALLBACK';
+
+	public const UNCOMPLETED_ACTIVITY_MISSED = 1;
+	public const UNCOMPLETED_ACTIVITY_INCOMING = 2;
 
 	public static function getId()
 	{
@@ -94,7 +103,7 @@ class Call extends Base
 
 	public static function getTypesFilterPresets()
 	{
-		// Call presets is already in filter (compatible TYPE_ID = \CCrmActivityType::Call)
+		// Call presets is already in filter (compatible TYPE_ID = CCrmActivityType::Call)
 		// Add Callback only.
 		return array(
 			array(
@@ -220,11 +229,16 @@ class Call extends Base
 	 */
 	public static function getPlannerActions(array $params = null)
 	{
+		if (!\Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
+		{
+			return [];
+		}
+
 		return array(
 			array(
 				'ACTION_ID' => self::getId().'_'.self::ACTIVITY_PROVIDER_TYPE_CALL,
 				'NAME' => Loc::getMessage('VOXIMPLANT_ACTIVITY_PROVIDER_CALL_PLANNER_ACTION_NAME'),
-				'TYPE_ID' => \CCrmActivityType::Call,
+				'TYPE_ID' => CCrmActivityType::Call,
 				'PROVIDER_ID' => self::getId(),
 				'PROVIDER_TYPE_ID' => self::ACTIVITY_PROVIDER_TYPE_CALL
 			)
@@ -309,7 +323,7 @@ class Call extends Base
 		if($formData['comment'])
 		{
 			$activityId = $formData['id'];
-			$activityFields = \CCrmActivity::GetByID($activityId, false);
+			$activityFields = CCrmActivity::GetByID($activityId, false);
 
 			$callId = mb_strpos($activityFields['ORIGIN_ID'], 'VI_') === false? null : mb_substr($activityFields['ORIGIN_ID'], 3);
 			if($callId)
@@ -410,5 +424,133 @@ class Call extends Base
 		{
 			\Bitrix\Crm\Automation\Trigger\OutgoingCallTrigger::execute($activityFields['BINDINGS'], $activityFields);
 		}
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public static function syncBadges(int $activityId, array $activityFields, array $bindings): void
+	{
+		$badge = Container::getInstance()->getBadge(
+			Badge\Type\CallStatus::CALL_STATUS_TYPE,
+			Badge\Type\CallStatus::MISSED_CALL_VALUE,
+		);
+
+		$sourceIdentifier = new Badge\SourceIdentifier(
+			Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			\CCrmOwnerType::Activity,
+			$activityId,
+		);
+
+		$isCompleted = isset($activityFields['COMPLETED']) && $activityFields['COMPLETED'] === 'Y';
+		if ($isCompleted)
+		{
+			foreach ($bindings as $singleBinding)
+			{
+				$itemIdentifier = new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']);
+				$badge->unbind($itemIdentifier, $sourceIdentifier);
+			}
+
+			return;
+		}
+
+		$isMissed = isset($activityFields['SETTINGS']['MISSED_CALL']) && $activityFields['SETTINGS']['MISSED_CALL'] === true;
+		if ($isMissed)
+		{
+			foreach ($bindings as $singleBinding)
+			{
+				$itemIdentifier = new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']);
+				$badge->bind($itemIdentifier, $sourceIdentifier);
+			}
+		}
+		else
+		{
+			foreach ($bindings as $singleBinding)
+			{
+				$itemIdentifier = new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']);
+				$badge->unbind($itemIdentifier, $sourceIdentifier);
+			}
+		}
+	}
+
+	/**
+	 * @param int $activityId Activity ID
+	 * @param int $options    Fetch options [UNCOMPLETED_ACTIVITY_MISSED|UNCOMPLETED_ACTIVITY_INCOMING]
+	 *
+	 * @return array
+	 */
+	public static function getUncompletedActivityIdList(int $activityId, int $options = 0): array
+	{
+		$bindings = CCrmActivity::GetBindings($activityId);
+		if (!is_array($bindings))
+		{
+			return [];
+		}
+
+		if (empty($bindings))
+		{
+			return [];
+		}
+
+		// fetch not completed CALL activities
+		$dbResult = CCrmActivity::GetList(
+			[],
+			[
+				'TYPE_ID' => CCrmActivityType::Call,
+				'PROVIDER_ID' => static::getId(),
+				'PROVIDER_TYPE_ID' => static::ACTIVITY_PROVIDER_TYPE_CALL,
+				'CHECK_PERMISSIONS' => 'N',
+				'COMPLETED' => 'N',
+				'BINDINGS' => $bindings,
+			],
+			false,
+			false,
+			['ID', 'SETTINGS']
+		);
+
+		$missedOnly = $options & self::UNCOMPLETED_ACTIVITY_MISSED;
+		$incomingOnly = $options & self::UNCOMPLETED_ACTIVITY_INCOMING;
+
+		$result = [];
+		while ($arResult = $dbResult->Fetch())
+		{
+			if ($missedOnly)
+			{
+				$isMissedCall = isset($arResult['SETTINGS']['MISSED_CALL'])
+					&& $arResult['SETTINGS']['MISSED_CALL'];
+
+				if ($isMissedCall)
+				{
+					$result[] = (int)$arResult["ID"];
+				}
+			}
+			else
+			{
+				// all call activities excluding last created call activity
+				if ($activityId !== (int)$arResult["ID"])
+				{
+					$result[] = (int)$arResult["ID"];
+				}
+			}
+
+			if ($incomingOnly)
+			{
+				$result = array_filter(
+					$result,
+					fn($activityId): bool => IncomingChannel::getInstance()->isIncomingChannel($activityId)
+				);
+			}
+		}
+
+		return array_values(array_unique($result));
+	}
+
+	public static function hasPlanner(array $activity): bool
+	{
+		if(!Crm::isUniversalActivityScenarioEnabled())
+		{
+			return true;
+		}
+		return !$activity['ORIGIN_ID'];
 	}
 }

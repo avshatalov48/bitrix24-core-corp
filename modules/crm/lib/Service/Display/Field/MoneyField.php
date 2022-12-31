@@ -1,17 +1,59 @@
 <?php
 
-
 namespace Bitrix\Crm\Service\Display\Field;
 
 use Bitrix\Crm\Service\Display\Options;
 
 class MoneyField extends BaseSimpleField
 {
-	protected const TYPE = 'money';
+	public const TYPE = 'money';
 
-	protected function getFormattedValueForExport($fieldValue, int $itemId, Options $displayOptions)
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
 	{
-		$fieldValue = is_array($fieldValue) ? $fieldValue : [$fieldValue];
-		return implode($displayOptions->getMultipleFieldsDelimiter(), $fieldValue);
+		$results = [];
+
+		if (!is_array($fieldValue))
+		{
+			$fieldValue = [$fieldValue];
+		}
+
+		foreach ($fieldValue as $value)
+		{
+			$results[] = $this->getValue($value);
+		}
+
+		return [
+			'value' => $this->isMultiple() ? $results : ($results[0] ?? null),
+		];
+	}
+
+	/**
+	 * @param array|string|null $fieldValue
+	 * @return array
+	 */
+	protected function getValue($fieldValue): array
+	{
+		if (empty($fieldValue))
+		{
+			return [
+				'amount' => '',
+				'currency' => '',
+			];
+		}
+
+		if (is_array($fieldValue))
+		{
+			return [
+				'amount' => $fieldValue['SUM'] ?? '',
+				'currency' => $fieldValue['CURRENCY'] ?? '',
+			];
+		}
+
+		[$amount, $currency] = explode('|', $fieldValue);
+
+		return [
+			'amount' => $amount,
+			'currency' => $currency,
+		];
 	}
 }

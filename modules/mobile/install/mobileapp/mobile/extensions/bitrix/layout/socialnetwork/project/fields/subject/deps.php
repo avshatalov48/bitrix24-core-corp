@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'layout/ui/fields',
+	'extensions' => [
+		'layout/ui/fields/string',
+		'layout/ui/fields/menu-select',
+	],
 ];

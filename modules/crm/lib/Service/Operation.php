@@ -255,8 +255,12 @@ abstract class Operation
 			}
 		}
 
-		if ($result->isSuccess() && $this->getItem()->isStagesEnabled())
+		if ($result->isSuccess())
 		{
+			if($this->getItem()->isStagesEnabled())
+			{
+				$this->createToDoActivity();
+			}
 			$this->preparePullEvent();
 			$this->sendPullEvent();
 		}
@@ -279,10 +283,10 @@ abstract class Operation
 				[$this, 'updateItemFromUpdateEvent']
 			);
 			$automationResult = $this->runAutomation();
-			if (!$automationResult->isSuccess())
-			{
-				$result->addErrors($automationResult->getErrors());
-			}
+			// if (!$automationResult->isSuccess())
+			// {
+			// 	$result->addErrors($automationResult->getErrors());
+			// }
 			EventManager::getInstance()->removeEventHandler('crm', $eventType, $eventId);
 		}
 
@@ -302,8 +306,13 @@ abstract class Operation
 
 		$userPermissions = Container::getInstance()->getUserPermissions($this->getContext()->getUserId());
 
-		foreach($this->fieldsCollection as $field)
+		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			$fieldResult = $field->processWithPermissions($this->item, $userPermissions);
 			if (!$fieldResult->isSuccess())
 			{
@@ -328,8 +337,13 @@ abstract class Operation
 			return $result;
 		}
 
-		foreach($this->fieldsCollection as $field)
+		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			$fieldResult = $field->process($this->item, $this->getContext());
 			if (!$fieldResult->isSuccess())
 			{
@@ -389,6 +403,12 @@ abstract class Operation
 		foreach ($this->fieldsCollection as $field)
 		{
 			$fieldName = $field->getName();
+
+			if ($this->item->isFieldDisabled($fieldName))
+			{
+				continue;
+			}
+
 			if ($field->isRequired())
 			{
 				if ($field->isUserField() && !$this->isCheckRequiredUserFields())
@@ -553,8 +573,13 @@ abstract class Operation
 		}
 
 		$isChanged = false;
-		foreach($this->fieldsCollection as $field)
+		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			$fieldResult = $field->processAfterSave($this->itemBeforeSave, $this->item, $this->getContext());
 			if (!$fieldResult->isSuccess())
 			{
@@ -1018,6 +1043,10 @@ abstract class Operation
 		return new Result();
 	}
 
+	protected function createToDoActivity(): void
+	{
+	}
+
 	protected function sendPullEvent(): void
 	{
 	}
@@ -1035,10 +1064,13 @@ abstract class Operation
 			$params['CATEGORY_ID'] = $data['CATEGORY_ID'];
 		}
 
-		if ($this->getContext()->getScope() === Context::SCOPE_AUTOMATION)
+		if ($this->keepCurrentUser())
 		{
 			$params['SKIP_CURRENT_USER'] = false;
 		}
+
+		$context = $this->getContext();
+		$params['EVENT_ID'] = $context->getEventId();
 
 		$this->pullParams = $params;
 	}
@@ -1046,6 +1078,11 @@ abstract class Operation
 	protected function getPullData(): array
 	{
 		return $this->getItem()->getCompatibleData();
+	}
+
+	protected function keepCurrentUser(): bool
+	{
+		return in_array($this->getContext()->getScope(), [Context::SCOPE_AUTOMATION, Context::SCOPE_TASK], true);
 	}
 
 	protected function updatePermissions(): void
@@ -1102,41 +1139,32 @@ abstract class Operation
 			return;
 		}
 
-		$userIds = $this->getUserIdsForCountersReset();
-
-		if ($this->isCountersUpdateNeeded() && !empty($userIds))
-		{
-			EntityCounterManager::reset(
-				$this->getCountersCodes(),
-				$userIds,
-			);
-		}
+		$this->notifyCounterMonitor();
 	}
 
-	protected function isCountersUpdateNeeded(): bool
+	protected function notifyCounterMonitor(): void
 	{
-		return false;
 	}
 
-	protected function getUserIdsForCountersReset(): array
+	protected function getCounterMonitorSignificantFields(): array
 	{
-		return [];
-	}
+		$factory = Container::getInstance()->getFactory($this->item->getEntityTypeId());
 
-	protected function getCountersCodes(): array
-	{
-		$extra = [];
+		$fields = [
+			Item::FIELD_NAME_ID,
+			Item::FIELD_NAME_ASSIGNED,
+			Item::FIELD_NAME_STAGE_ID,
+			Item::FIELD_NAME_CATEGORY_ID,
+		];
 
-		if ($this->item->isCategoriesSupported())
-		{
-			$extra['CATEGORY_ID'] = $this->item->getCategoryId();
-		}
+		return array_reduce($fields, static function(array $preparedFields, string $fieldName) use ($factory): array {
+			if ($factory->isFieldExists($fieldName))
+			{
+				$preparedFields[$fieldName] = $factory->getEntityFieldNameByMap($fieldName);
+			}
 
-		return EntityCounterManager::prepareCodes(
-			$this->item->getEntityTypeId(),
-			$this->getTypesOfCountersToReset(),
-			$extra,
-		);
+			return $preparedFields;
+		}, []);
 	}
 
 	protected function getTypesOfCountersToReset(): array

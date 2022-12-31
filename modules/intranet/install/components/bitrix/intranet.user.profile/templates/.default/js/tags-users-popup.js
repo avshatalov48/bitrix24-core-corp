@@ -230,7 +230,7 @@
 					{
 						avatarNode = BX.create("IMG", {
 							attrs: {
-								src: data.USERS[i].PERSONAL_PHOTO.SRC
+								src: encodeURI(data.USERS[i].PERSONAL_PHOTO.SRC)
 							},
 							props: {
 								className: "iup-tags-item-users-popup-avatar-img"

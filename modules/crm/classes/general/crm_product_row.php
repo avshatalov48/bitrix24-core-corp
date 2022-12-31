@@ -419,7 +419,11 @@ class CAllCrmProductRow
 				'CUSTOMIZED' => array('TYPE' => 'char'),
 				'MEASURE_CODE' => array('TYPE' => 'integer'),
 				'MEASURE_NAME' => array('TYPE' => 'string'),
-				'SORT' => array('TYPE' => 'integer')
+				'SORT' => array('TYPE' => 'integer'),
+				'TYPE' => array(
+					'TYPE' => 'integer',
+					'ATTRIBUTES' => array(CCrmFieldInfoAttr::ReadOnly)
+				),
 			);
 		}
 
@@ -434,31 +438,32 @@ class CAllCrmProductRow
 
 	protected static function GetFields()
 	{
-		return array(
-			'ID' => array('FIELD' => 'PR.ID', 'TYPE' => 'int'),
-			'OWNER_ID' => array('FIELD' => 'PR.OWNER_ID', 'TYPE' => 'int'),
-			'OWNER_TYPE' => array('FIELD' => 'PR.OWNER_TYPE', 'TYPE' => 'string'),
-			'PRODUCT_ID' => array('FIELD' => 'PR.PRODUCT_ID', 'TYPE' => 'int'),
-			'PRODUCT_NAME' => array('FIELD' => 'PR.PRODUCT_NAME', 'TYPE' => 'string'),
-			'ORIGINAL_PRODUCT_NAME' => array('FIELD' => 'E.NAME', 'TYPE' => 'string', 'FROM' => 'LEFT OUTER JOIN b_iblock_element E ON PR.PRODUCT_ID = E.ID'),
-			'PRODUCT_DESCRIPTION' => array('FIELD' => 'E.DETAIL_TEXT', 'TYPE' => 'string', 'FROM' => 'LEFT OUTER JOIN b_iblock_element E ON PR.PRODUCT_ID = E.ID'),
-			'PRICE' => array('FIELD' => 'PR.PRICE', 'TYPE' => 'double'),
-			'PRICE_EXCLUSIVE' => array('FIELD' => 'PR.PRICE_EXCLUSIVE', 'TYPE' => 'double'),
-			'PRICE_NETTO' => array('FIELD' => 'PR.PRICE_NETTO', 'TYPE' => 'double'),
-			'PRICE_BRUTTO' => array('FIELD' => 'PR.PRICE_BRUTTO', 'TYPE' => 'double'),
-			'PRICE_ACCOUNT' => array('FIELD' => 'PR.PRICE_ACCOUNT', 'TYPE' => 'double'),
-			'QUANTITY' => array('FIELD' => 'PR.QUANTITY', 'TYPE' => 'double'),
-			'DISCOUNT_TYPE_ID' => array('FIELD' => 'PR.DISCOUNT_TYPE_ID', 'TYPE' => 'int'),
-			'DISCOUNT_RATE' => array('FIELD' => 'PR.DISCOUNT_RATE', 'TYPE' => 'double'),
-			'DISCOUNT_SUM' => array('FIELD' => 'PR.DISCOUNT_SUM', 'TYPE' => 'double'),
-			'TAX_RATE' => array('FIELD' => 'PR.TAX_RATE', 'TYPE' => 'double'),
-			'TAX_INCLUDED' => array('FIELD' => 'PR.TAX_INCLUDED', 'TYPE' => 'char'),
-			'CUSTOMIZED' => array('FIELD' => 'PR.CUSTOMIZED', 'TYPE' => 'char'),
-			'MEASURE_CODE' => array('FIELD' => 'PR.MEASURE_CODE', 'TYPE' => 'int'),
-			'MEASURE_NAME' => array('FIELD' => 'PR.MEASURE_NAME', 'TYPE' => 'string'),
-			'SORT' => array('FIELD' => 'PR.SORT', 'TYPE' => 'int'),
-			'XML_ID' => array('FIELD' => 'PR.XML_ID', 'TYPE' => 'string'),
-		);
+		return [
+			'ID' => ['FIELD' => 'PR.ID', 'TYPE' => 'int'],
+			'OWNER_ID' => ['FIELD' => 'PR.OWNER_ID', 'TYPE' => 'int'],
+			'OWNER_TYPE' => ['FIELD' => 'PR.OWNER_TYPE', 'TYPE' => 'string'],
+			'PRODUCT_ID' => ['FIELD' => 'PR.PRODUCT_ID', 'TYPE' => 'int'],
+			'PRODUCT_NAME' => ['FIELD' => 'PR.PRODUCT_NAME', 'TYPE' => 'string'],
+			'ORIGINAL_PRODUCT_NAME' => ['FIELD' => 'E.NAME', 'TYPE' => 'string', 'FROM' => 'LEFT OUTER JOIN b_iblock_element E ON PR.PRODUCT_ID = E.ID'],
+			'PRODUCT_DESCRIPTION' => ['FIELD' => 'E.DETAIL_TEXT', 'TYPE' => 'string', 'FROM' => 'LEFT OUTER JOIN b_iblock_element E ON PR.PRODUCT_ID = E.ID'],
+			'PRICE' => ['FIELD' => 'PR.PRICE', 'TYPE' => 'double'],
+			'PRICE_EXCLUSIVE' => ['FIELD' => 'PR.PRICE_EXCLUSIVE', 'TYPE' => 'double'],
+			'PRICE_NETTO' => ['FIELD' => 'PR.PRICE_NETTO', 'TYPE' => 'double'],
+			'PRICE_BRUTTO' => ['FIELD' => 'PR.PRICE_BRUTTO', 'TYPE' => 'double'],
+			'PRICE_ACCOUNT' => ['FIELD' => 'PR.PRICE_ACCOUNT', 'TYPE' => 'double'],
+			'QUANTITY' => ['FIELD' => 'PR.QUANTITY', 'TYPE' => 'double'],
+			'DISCOUNT_TYPE_ID' => ['FIELD' => 'PR.DISCOUNT_TYPE_ID', 'TYPE' => 'int'],
+			'DISCOUNT_RATE' => ['FIELD' => 'PR.DISCOUNT_RATE', 'TYPE' => 'double'],
+			'DISCOUNT_SUM' => ['FIELD' => 'PR.DISCOUNT_SUM', 'TYPE' => 'double'],
+			'TAX_RATE' => ['FIELD' => 'PR.TAX_RATE', 'TYPE' => 'double'],
+			'TAX_INCLUDED' => ['FIELD' => 'PR.TAX_INCLUDED', 'TYPE' => 'char'],
+			'CUSTOMIZED' => ['FIELD' => 'PR.CUSTOMIZED', 'TYPE' => 'char'],
+			'MEASURE_CODE' => ['FIELD' => 'PR.MEASURE_CODE', 'TYPE' => 'int'],
+			'MEASURE_NAME' => ['FIELD' => 'PR.MEASURE_NAME', 'TYPE' => 'string'],
+			'SORT' => ['FIELD' => 'PR.SORT', 'TYPE' => 'int'],
+			'XML_ID' => ['FIELD' => 'PR.XML_ID', 'TYPE' => 'string'],
+			'TYPE' => ['FIELD' => 'PR.TYPE', 'TYPE' => 'int'],
+		];
 	}
 
 	protected static function GetExtendedFields()
@@ -651,6 +656,7 @@ class CAllCrmProductRow
 
 	public static function LoadRows($ownerType, $ownerID, $assoc = false)
 	{
+		// @todo. move code from \CAllCrmDeal::LoadProductRows here and remove fillBasketReserves below
 		$ownerType = strval($ownerType);
 		$filter = array();
 
@@ -703,6 +709,8 @@ class CAllCrmProductRow
 			$ary['MEASURE_NAME'] = isset($ary['MEASURE_NAME']) ? $ary['MEASURE_NAME'] : '';
 
 			$ary['RESERVE_ID'] = null;
+
+			$ary['TYPE'] = isset($ary['TYPE']) ? (int)$ary['TYPE'] : \Bitrix\Crm\ProductType::TYPE_PRODUCT;
 
 			if($productID > 0 && $ary['MEASURE_CODE'] <= 0)
 			{
@@ -908,7 +916,7 @@ class CAllCrmProductRow
 				}
 			}
 
-			$safeRow = array(
+			$safeRow = [
 				'ID' => $rowID,
 				'OWNER_TYPE' => $ownerType,
 				'OWNER_ID' => $ownerID,
@@ -930,7 +938,9 @@ class CAllCrmProductRow
 				'MEASURE_NAME' => $arRow['MEASURE_NAME'],
 				'CUSTOMIZED' => 'Y', //Is always enabled for disable requests to product catalog
 				'SORT' => $arRow['SORT'],
-			);
+
+				'TYPE' => (int)($arRow['TYPE'] ?? \Bitrix\Crm\ProductType::TYPE_PRODUCT),
+			];
 
 			if(isset($arRow['XML_ID']))
 			{

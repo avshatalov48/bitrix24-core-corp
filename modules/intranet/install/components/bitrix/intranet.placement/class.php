@@ -50,6 +50,9 @@ class IntranetPlacementComponent extends \CBitrixComponent implements Controller
 				'filter' => [
 					'=PLACEMENT' => $placementCode,
 				],
+				'cache' => [
+					'ttl' => 86400
+				]
 			]
 		);
 
@@ -89,8 +92,10 @@ class IntranetPlacementComponent extends \CBitrixComponent implements Controller
 
 		$this->arResult['ITEMS'] = $this->getPlacamentList($this->arParams['PLACEMENT_CODE']);
 
-		$this->includeComponentTemplate();
-
+		if (sizeof($this->arResult['ITEMS']) > 0)
+		{
+			$this->includeComponentTemplate();
+		}
 		return true;
 	}
 

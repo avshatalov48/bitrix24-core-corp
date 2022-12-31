@@ -26,6 +26,7 @@ class Result extends EO_Result
 		{
 			$arr['text'] = $this->getText();
 			$arr['formattedText'] = $this->getFormattedText();
+			$arr['files'] = $this->get(ResultTable::UF_FILE_NAME);
 		}
 
 		return $arr;

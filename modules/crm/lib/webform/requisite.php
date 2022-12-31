@@ -404,18 +404,6 @@ class Requisite
 		);
 	}
 
-	public function dump()
-	{
-		echo "<pre>";
-		$line = "\n" . str_repeat('-', 155);
-
-		foreach ($this->getPresets() as $preset)
-		{
-			echo $line; echo $line; echo $line;
-			echo "\n\n\n PRESET: "; print_r($preset);
-		}
-	}
-
 	private static function makeOperationFields(array $fields, array $values, string $prefix = ''): array
 	{
 		$result = [];
@@ -442,11 +430,11 @@ class Requisite
 		return $result;
 	}
 
-	public function fill(int $entityTypeId, int $entityId, array $values): Result
+	public function fill(int $entityTypeId, int $entityId, array $values, ?int $requisitePresetId = null): Result
 	{
 		$result = new Result();
 
-		$presetId = (int)($values['presetId'] ?? $this->getDefaultPreset($entityTypeId));
+		$presetId = (int)($requisitePresetId ?? $this->getDefaultPreset($entityTypeId)['id'] ?? null);
 		if ($presetId <= 0)
 		{
 			return $result;
@@ -492,10 +480,6 @@ class Requisite
 
 		$requisite = self::makeOperationFields($requisite, $values);
 
-		//print_R($requisite);
-		//print_R($account);
-		//print_R($addresses);
-		//print_R($values);
 
 		$id = (int)EntityRequisite::getSingleInstance()->getList([
 			'select' => ['ID'],
@@ -565,13 +549,17 @@ class Requisite
 		return $result;
 	}
 
-	public function load(int $entityTypeId, int $entityId): Result
+	public function load(int $entityTypeId, int $entityId, ?int $requisitePresetId = null): Result
 	{
 		$result = new Result();
 
 		$splitMode = $this->splitAccountFields;
 		$this->splitAccountFields = false;
-		$preset = $this->getDefaultPreset($entityTypeId);
+		$preset =
+			$requisitePresetId !== null && $requisitePresetId >= 0
+				? $this->getPreset($requisitePresetId)
+				: $this->getDefaultPreset($entityTypeId)
+		;
 		$this->splitAccountFields = $splitMode;
 
 		if (!$preset)
@@ -631,6 +619,10 @@ class Requisite
 					'=TYPE_ID' => $address['id'],
 					'=ANCHOR_TYPE_ID' => $entityTypeId,
 					'=ANCHOR_ID' => $entityId,
+				],
+				'order' => [
+					'ADDRESS_1' => 'DESC',
+					'LOC_ADDR_ID' => 'DESC',
 				],
 			])->fetch();
 

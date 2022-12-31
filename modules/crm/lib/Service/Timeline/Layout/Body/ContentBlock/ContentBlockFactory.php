@@ -77,7 +77,7 @@ class ContentBlockFactory
 	public static function createTitle(string $titleText): Text
 	{
 		return (new Text())
-			->setValue(sprintf('%s:', $titleText))
+			->setValue(sprintf('%s', $titleText))
 			->setColor(Text::COLOR_BASE_70)
 			->setFontSize(Text::FONT_SIZE_SM)
 		;

@@ -36,4 +36,5 @@ $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_TEXT_FOR_DOUBLE"] = "Товар \"#NAME#\" у
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_ADD"] = "Добавить";
 $MESS["CRM_ORDER_PL_PROD_EXIST_DLG_BUTT_CANCEL"] = "Отмена";
 $MESS["CRM_ORDER_PL_CHOOSE_ACTION"] = "Выберите действие";
+$MESS["CRM_ORDER_PL_CATALOG_DENIED_HINT"] = "Недостаточно прав на просмотр каталога";
 ?>

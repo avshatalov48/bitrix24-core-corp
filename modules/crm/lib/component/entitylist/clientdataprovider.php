@@ -205,12 +205,12 @@ abstract class ClientDataProvider
 				switch ($field->getType()) // force absolute date/time format for export
 				{
 					case \Bitrix\Crm\Field::TYPE_DATE:
-						$field->setDisplayParams([
+						$field->addDisplayParams([
 							'DATETIME_FORMAT' => \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATE)],
 						);
 						break;
 					case \Bitrix\Crm\Field::TYPE_DATETIME:
-						$field->setDisplayParams([
+						$field->addDisplayParams([
 							'DATETIME_FORMAT' => \Bitrix\Main\Type\DateTime::convertFormatToPhp(FORMAT_DATETIME)],
 						);
 						break;
@@ -523,22 +523,29 @@ abstract class ClientDataProvider
 
 	protected function loadMultifieldInfo(array $clientIds): array
 	{
-		$result = [];
-
 		$entityName = \CCrmOwnerType::ResolveName($this->clientEntityTypeId);
 		$filter = [
 			'=ENTITY_ID' => $entityName,
 			'@ELEMENT_ID' => $clientIds,
 		];
 
-		$values = [];
-		$rawValues = [];
 		$items = \Bitrix\Crm\FieldMultiTable::getList([
 			'order' => [
 				'ID' => 'ASC',
 			],
 			'filter' => $filter,
 		]);
+
+		return $this->getPreparedMultifieldInfoValues($items, $entityName);
+	}
+
+	protected function getPreparedMultifieldInfoValues(\Bitrix\Main\ORM\Query\Result $items, string $entityName): array
+	{
+		$result = [];
+
+		$values = [];
+		$rawValues = [];
+
 		while ($multifield = $items->fetch())
 		{
 			$value = $multifield['VALUE'];
@@ -708,6 +715,11 @@ abstract class ClientDataProvider
 			{
 				$fieldWithPrefix = '~' . $this->fieldHelper->addPrefixToFieldId($titlePart);
 				$fields[$titlePart] = $clientInfo[$fieldWithPrefix] ?? '';
+			}
+
+			if (!$clientInfo['CONTACT_IS_ACCESSIBLE'])
+			{
+				return \CCrmEntitySelectorHelper::getHiddenTitle(\CCrmOwnerType::ContactName);
 			}
 
 			return \CCrmContact::prepareFormattedName($fields);

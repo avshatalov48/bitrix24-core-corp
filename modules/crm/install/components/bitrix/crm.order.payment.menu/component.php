@@ -92,11 +92,7 @@ if($arParams['TYPE'] === 'list')
 	if ($bConfig)
 	{
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('ORDER_PAYMENT_CRM_TYPE'),
-			'TITLE' => GetMessage('ORDER_PAYMENT_CRM_TYPE'),
-			'ONCLICK' => \Bitrix\Crm\Settings\LeadSettings::showCrmTypePopup()
-		);
+		$arResult['BUTTONS'][] = \Bitrix\Crm\Settings\LeadSettings::getCrmTypeMenuItem(true);
 	}
 
 	if(count($arResult['BUTTONS']) > 1)

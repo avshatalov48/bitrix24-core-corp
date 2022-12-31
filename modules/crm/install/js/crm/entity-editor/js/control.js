@@ -508,6 +508,7 @@ if(typeof BX.Crm.EntityEditorMoneyPay === "undefined")
 		{
 			var paymentDocumentsOptions = {
 				IS_USED_INVENTORY_MANAGEMENT: this._model.getField('IS_USED_INVENTORY_MANAGEMENT', false),
+				SALES_ORDERS_RIGHTS: this._model.getField('SALES_ORDERS_RIGHTS', {}),
 				IS_INVENTORY_MANAGEMENT_RESTRICTED: this._model.getField('IS_INVENTORY_MANAGEMENT_RESTRICTED', false),
 				OWNER_TYPE_ID: ownerTypeId,
 				OWNER_ID: this._model.getField('ID') ? parseInt(this._model.getField('ID')) : 0,
@@ -1385,7 +1386,6 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 				if(this._mode === BX.UI.EntityEditorMode.edit)
 				{
 					BX.addClass(this._wrapper, "crm-entity-widget-content-block-field-container crm-entity-widget-content-block-field-container-double");
-
 					this._valueInput = BX.create(
 						"input",
 						{
@@ -1399,7 +1399,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 						}
 					);
 					BX.bind(this._valueInput, "input", BX.delegate(this.onValueChange, this));
-					this._wrapper.appendChild(this._valueInput);
+
 
 					this._valueTypeInput = BX.create(
 						"input",
@@ -1412,7 +1412,14 @@ if(typeof BX.Crm.EntityEditorMultifieldItem === "undefined")
 								}
 						}
 					);
-					this._wrapper.appendChild(this._valueTypeInput);
+
+					this._wrapper.appendChild(BX.create("div", {
+						props: {className: "crm-entity-widget-content-input-wrapper"},
+						children: [
+							this._valueInput,
+							this._valueTypeInput,
+						]
+					}));
 
 					this._valueTypeSelector = BX.create(
 						"div",
@@ -1676,7 +1683,7 @@ if(typeof BX.Crm.EntityEditorMultifieldItemPhone ==="undefined")
 			this._wrapper.appendChild(this._valueInput);
 
 			this._wrapper.appendChild(BX.create("div", {
-				props: {className: "crm-entity-widget-content-input-phone-wrapper"},
+				props: {className: "crm-entity-widget-content-input-wrapper"},
 				children: [
 					this._countryFlagNode = BX.create("span", {
 						props: {className: "crm-entity-widget-content-country-flag"}
@@ -2146,407 +2153,10 @@ if(typeof BX.Crm.EntityEditorMultifield === "undefined")
 
 if(typeof BX.Crm.EntityEditorProductRowSummary === 'undefined')
 {
-	BX.Crm.EntityEditorProductRowSummary = function()
-	{
-		BX.Crm.EntityEditorProductRowSummary.superclass.constructor.apply(this);
-		this._loader = null;
-		this._productsContainer = null;
-		this._previousData = [];
-
-		this._itemCount = 0;
-		this._totalCount = 0;
-
-		this._showAllProducts = false;
-		this._moreButton = null;
-		this._moreButtonRow = null;
-		this._TotalsRow = null;
-		this._moreButtonClickHandler = BX.delegate(this._onMoreButtonClick, this);
-
-		this._visibleItemsLimit = 5;
-		this._showInTabItemsLimit = 10;
-	};
-	BX.extend(BX.Crm.EntityEditorProductRowSummary, BX.Crm.EntityEditorField);
-	BX.Crm.EntityEditorProductRowSummary.prototype.getMessage = function(name)
-	{
-		var m = BX.Crm.EntityEditorProductRowSummary.messages;
-		return m.hasOwnProperty(name) ? m[name] : BX.Crm.EntityEditorProductRowSummary.superclass.getMessage.apply(this, arguments);
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.clearLayout = function(options)
-	{
-		if(this.checkIfNeedClearLayout(options))	// clear layout if animation not required or position not preserved
-		{
-			return BX.Crm.EntityEditorProductRowSummary.superclass.clearLayout.apply(this, arguments);
-		}
-
-		this._hasLayout = false;
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.layout = function(options)
-	{
-		if(this._hasLayout)
-		{
-			return;
-		}
-		var wasLayoutCleared = this.checkIfNeedClearLayout(options);
-
-		if (wasLayoutCleared)
-		{
-			this.ensureWrapperCreated({});
-			this.adjustWrapper();
-		}
-
-		var data = this.getValue();
-
-		if(!BX.type.isPlainObject(data))
-		{
-			return;
-		}
-
-		var title = this.getTitle();
-		var items = BX.prop.getArray(data, 'items', []);
-
-		this._totalCount = BX.prop.getInteger(data, 'count', 0);
-
-		this._itemCount = items.length;
-		var length = this._itemCount;
-		var maxLength = this._showAllProducts ? (this._showInTabItemsLimit - 1) : this._visibleItemsLimit;
-		var restLength = 0;
-		if(
-			(length > maxLength)
-		)
-		{
-			restLength = (this._totalCount - maxLength);
-			length = maxLength;
-		}
-
-		if (wasLayoutCleared)
-		{
-			if (this.isDragEnabled())
-			{
-				this._wrapper.appendChild(this.createDragButton());
-			}
-
-			this._wrapper.appendChild(this.createTitleNode(title));
-			this._productsContainer = BX.create(
-				'div',
-				{
-					props: {
-						className: 'crm-entity-widget-content-block-products-list'
-					}
-				}
-			);
-		}
-		else
-		{
-			BX.cleanNode(this._productsContainer);
-		}
-
-		var needAnimate = BX.prop.getBoolean(options, 'isRefreshViewModeLayout', false);
-		if (!wasLayoutCleared && needAnimate)
-		{
-			items = this.addAnimationInfo(items, length, maxLength);
-			length = items.length; // because length maybe was changed
-		}
-		for (var i = 0; i < length; i++)
-		{
-			this.addProductRow(items[i]);
-		}
-
-		this._moreButton = null;
-		if (restLength > 0)
-		{
-			this.addMoreButton(restLength);
-		}
-		this.addTotalRow(data['total']);
-
-		if (wasLayoutCleared)
-		{
-			this._wrapper.appendChild(
-				BX.create(
-					'div',
-					{
-						props: {className: 'crm-entity-widget-content-block-products'},
-						children: [this._productsContainer]
-					}
-				)
-			);
-
-			if (this.isContextMenuEnabled())
-			{
-				this._wrapper.appendChild(this.createContextMenuButton());
-			}
-
-			if (this.isDragEnabled())
-			{
-				this.initializeDragDropAbilities();
-			}
-		}
-
-		this.registerLayout(options);
-		this._hasLayout = true;
-		this._previousData = data;
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.checkIfNeedClearLayout = function(options)
-	{
-		return (
-			!BX.prop.getBoolean(options, 'preservePosition', false)
-			|| !BX.prop.getBoolean(options, 'isRefreshViewModeLayout', false)
-		);
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.addAnimationInfo = function(products, lengthLimit, maxLengthLimit)
-	{
-		var result = [];
-		var oldProducts = BX.prop.getArray(this._previousData, 'items', []);
-		var sameProducts = this.extractSameProducts(oldProducts, products);
-		for (var i = 0; i < lengthLimit; i++)
-		{
-			if (oldProducts.length > i && !this.isProductInList(oldProducts[i], sameProducts))
-			{
-				oldProducts[i].animation = 'out';
-				result.push(oldProducts[i]); // animate product removal
-			}
-			if (!this.isProductInList(products[i], sameProducts))
-			{
-				products[i].animation = 'in'; // animate new product appeared
-			}
-			result.push(products[i]);
-		}
-		// also process items from old list if old list larger than current:
-		for (i = lengthLimit; i < oldProducts.length; i++)
-		{
-			if (i > maxLengthLimit)
-			{
-				break;
-			}
-			if (!this.isProductInList(oldProducts[i], sameProducts))
-			{
-				oldProducts[i].animation = 'out';
-				result.push(oldProducts[i]); // animate product removal
-			}
-		}
-		return result;
-	};
-	/** return items which are both in list1 and list2 */
-	BX.Crm.EntityEditorProductRowSummary.prototype.extractSameProducts = function(list1, list2)
-	{
-		var result = [];
-		for (var i = 0; i < list1.length; i++)
-		{
-			for (var j = 0; j < list2.length; j++)
-			{
-				if (this.areProductsEqual(list1[i], list2[j]))
-				{
-					result.push(list1[i]);
-				}
-			}
-		}
-
-		return result;
-	};
-	/** check if "product" is in "list" */
-	BX.Crm.EntityEditorProductRowSummary.prototype.isProductInList = function(product, list)
-	{
-		for (var i = 0; i < list.length; i++)
-		{
-			if (this.areProductsEqual(product, list[i]))
-			{
-				return true;
-			}
-		}
-		return false;
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.areProductsEqual = function(product1, product2)
-	{
-		return (product1['PRODUCT_NAME'] === product2['PRODUCT_NAME']);
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.addMoreButton = function(restLength)
-	{
-		var row = BX.create('div', {
-			props: {
-				className: 'crm-entity-widget-content-block-products-item'
-			}
-		});
-		this._moreButtonRow = row;
-		this._productsContainer.appendChild(row);
-
-		var nameCell = BX.create("div", {
-			props: {
-				className: 'crm-entity-widget-content-block-products-item-name'
-			}
-		});
-		row.appendChild(nameCell);
-
-		this._moreButton = BX.create(
-			'span',
-			{
-				attrs: {
-					className: 'crm-entity-widget-content-block-products-show-more'
-				},
-				events: {
-					click: this._moreButtonClickHandler
-				},
-				text: this.getMessage('notShown').replace(/#COUNT#/gi, restLength.toString())
-			}
-		);
-		nameCell.appendChild(this._moreButton);
-
-		row.appendChild(
-			BX.create('div', {
-				props: {
-					className: 'crm-entity-widget-content-block-products-price'
-				}
-			})
-		);
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.addTotalRow = function(total)
-	{
-		var row = BX.create('div', {
-			props: {
-				className: 'crm-entity-widget-content-block-products-item'
-			}
-		});
-		this._TotalsRow = row;
-		this._productsContainer.appendChild(row);
-		var nameCell = BX.create('div', {
-			props: {
-				className: 'crm-entity-widget-content-block-products-item-name'
-			},
-			html: this.getMessage('total')
-		});
-		row.appendChild(nameCell);
-
-		var valueCell = BX.create('div', {
-			props: {
-				className: 'crm-entity-widget-content-block-products-price'
-			},
-			html: total
-		});
-		row.appendChild(valueCell);
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype._onMoreButtonClick = function(e)
-	{
-		if(this._totalCount >= this._showInTabItemsLimit)
-		{
-			BX.onCustomEvent(window, 'OpenEntityDetailTab', ['tab_products']);
-			return;
-		}
-		BX.remove(this._moreButtonRow);
-		BX.remove(this._TotalsRow);
-
-		this._showAllProducts = true;
-
-		var data = this.getValue();
-		var items = BX.prop.getArray(data, 'items', []);
-		for(var i = this._visibleItemsLimit; i < this._itemCount; i++)
-		{
-			var product = BX.clone(items[i]);
-			product.animation = 'in';
-			this.addProductRow(product);
-		}
-
-		this.addTotalRow(data['total']);
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.doClearLayout = function()
-	{
-		this._productsContainer = null;
-		this._moreButton = null;
-		this._moreButtonRow = null;
-		this._TotalsRow = null;
-	};
-	BX.Crm.EntityEditorProductRowSummary.prototype.addProductRow = function(data)
-	{
-		var row = BX.create('div', {
-			props: {
-				className: 'crm-entity-widget-content-block-products-item'
-			}
-		});
-
-		var animation = BX.prop.getString(data, 'animation', null);
-		switch (animation)
-		{
-			case 'in':
-				row.className += ' crm-entity-widget-content-block-products-in';
-				setTimeout(function()
-				{
-					if (BX.Type.isDomNode(row))
-					{
-						BX.Dom.removeClass(row, 'crm-entity-widget-content-block-products-in');
-					}
-				}, 1000);
-				break;
-			case 'out':
-				row.className += ' crm-entity-widget-content-block-products-out';
-				setTimeout(function()
-				{
-					if (BX.Type.isDomNode(row))
-					{
-						BX.Dom.remove(row);
-					}
-				}, 1000);
-				break;
-		}
-		this._productsContainer.appendChild(row);
-
-		var nameCell = BX.create('div', {
-			props: {
-				className: 'crm-entity-widget-content-block-products-item-name'
-			}
-		});
-		var url = BX.prop.getString(data, 'URL', '');
-		if(url !== '')
-		{
-			nameCell.appendChild(
-				BX.create(
-					'a',
-					{
-						attrs: {
-							target: '_blank',
-							href: url
-						},
-						text: data['PRODUCT_NAME']
-					}
-				)
-			);
-		}
-		else
-		{
-			nameCell.innerHTML = BX.util.htmlspecialchars(data['PRODUCT_NAME']);
-		}
-		row.appendChild(nameCell);
-
-		var valueCell = BX.create(
-			'div',
-			{
-				props: {
-					className: 'crm-entity-widget-content-block-products-price'
-				}
-			}
-		);
-		row.appendChild(valueCell);
-
-		valueCell.appendChild(
-			BX.create(
-				'div',
-				{
-					attrs: {
-						className: 'crm-entity-widget-content-block-products-price-value'
-					},
-					html: data['SUM']
-				}
-			)
-		);
-	};
-
-	if(typeof(BX.Crm.EntityEditorProductRowSummary.messages) === 'undefined')
-	{
-		BX.Crm.EntityEditorProductRowSummary.messages = {};
-	}
-
-	BX.Crm.EntityEditorProductRowSummary.create = function(id, settings)
-	{
-		var self = new BX.Crm.EntityEditorProductRowSummary();
-		self.initialize(id, settings);
-		return self;
-	}
+	/**
+	 * @deprecated
+	 */
+	BX.Crm.EntityEditorProductRowSummary = BX.UI.EntityEditorProductRowSummary;
 }
 
 if(typeof BX.Crm.EntityEditorFileStorage === "undefined")
@@ -2878,6 +2488,7 @@ if(typeof BX.Crm.EntityEditorHidden === "undefined")
 					value: value
 				}
 			});
+
 			this._innerWrapper.appendChild(this._input);
 		}
 
@@ -7902,6 +7513,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
+					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
 					enableDeletion: false,
 					enableQuickEdit: this.isQuickEditEnabled(),
 					mode: BX.prop.getInteger(params, "mode", BX.Crm.EntityEditorClientMode.select),
@@ -8031,6 +7643,7 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 					categoryId: BX.prop.getInteger(categoryParams, 'categoryId', 0),
 					entityInfo: entityInfo,
 					enableCreation: enableCreation,
+					creationLegend: this._schemeElement.getDataStringParam('creationLegend', ''),
 					enableDeletion: BX.prop.getBoolean(params, "enableDeletion", true),
 					enableQuickEdit: this.isQuickEditEnabled(),
 					mode: BX.prop.getInteger(params, "mode", BX.Crm.EntityEditorClientMode.select),
@@ -8247,6 +7860,19 @@ if(typeof BX.Crm.EntityEditorClientLight === "undefined")
 		result.addError(BX.UI.EntityValidationError.create({ field: this }));
 		this.showRequiredFieldError(this.getContentWrapper());
 	};
+	BX.Crm.EntityEditorClientLight.prototype.showRequiredFieldError =  function(anchor)
+	{
+		var requiredFieldErrorMessage = this._schemeElement.getDataStringParam('requiredFieldErrorMessage', '');
+		if (requiredFieldErrorMessage)
+		{
+			this.showError(requiredFieldErrorMessage, anchor);
+		}
+		else
+		{
+			BX.Crm.EntityEditorClientLight.superclass.showRequiredFieldError.call(this, anchor);
+		}
+	};
+
 	BX.Crm.EntityEditorClientLight.prototype.validateSearchBoxes = function(searchBoxes, validator, result)
 	{
 		var hasValidValue = false;

@@ -2,6 +2,8 @@
 
 namespace Bitrix\Mobile\Controller\Catalog;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreBarcodeTable;
 use Bitrix\Main\Error;
 use Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts;
@@ -83,5 +85,13 @@ class StoreDocumentProduct extends \Bitrix\Main\Engine\Controller
 		}
 
 		return (new ConvertCurrency($currencyId))->enrich($result);
+	}
+
+	/**
+	 * @return bool
+	 */
+	private function hasReadPermissions(): bool
+	{
+		return AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 	}
 }

@@ -20,7 +20,7 @@ class Status extends Base
 
 	public static function getName()
 	{
-		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_NAME');
+		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_NAME_1');
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -73,5 +73,10 @@ class Status extends Base
 		];
 
 		return $result;
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_STATUS_DESCRIPTION') ?? '';
 	}
 }

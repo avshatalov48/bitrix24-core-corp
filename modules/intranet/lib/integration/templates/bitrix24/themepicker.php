@@ -1149,7 +1149,7 @@ class ThemePicker
 		return $config;
 	}
 
-	private function isCustomThemeId($themeId)
+	public function isCustomThemeId($themeId)
 	{
 		if (!is_string($themeId))
 		{

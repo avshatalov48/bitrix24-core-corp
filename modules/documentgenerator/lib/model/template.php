@@ -7,6 +7,7 @@ use Bitrix\DocumentGenerator\DataProvider\Filterable;
 use Bitrix\DocumentGenerator\DataProviderManager;
 use Bitrix\DocumentGenerator\Driver;
 use Bitrix\DocumentGenerator\Integration\Bitrix24Manager;
+use Bitrix\DocumentGenerator\Dictionary;
 use Bitrix\DocumentGenerator\Template;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
@@ -33,6 +34,10 @@ Loc::loadMessages(__FILE__);
  */
 class TemplateTable extends FileModel
 {
+	public const PRODUCTS_TABLE_VARIANT_ALL = '';
+	public const PRODUCTS_TABLE_VARIANT_SERVICE = Dictionary\ProductVariant::SERVICE;
+	public const PRODUCTS_TABLE_VARIANT_GOODS = Dictionary\ProductVariant::GOODS;
+
 	protected static $fileFieldNames = [
 		'FILE_ID',
 	];
@@ -127,13 +132,26 @@ class TemplateTable extends FileModel
 			),
 			new Main\Entity\IntegerField('NUMERATOR_ID'),
 			new Main\Entity\BooleanField('WITH_STAMPS', [
-				'values' => array('N', 'Y'),
+				'values' => ['N', 'Y'],
 				'default_value' => 'N',
+			]),
+			new Main\Entity\EnumField('PRODUCTS_TABLE_VARIANT', [
+				'values' => self::getProductsTableVariantList(),
+				'default_value' => self::PRODUCTS_TABLE_VARIANT_ALL,
 			]),
 			new Main\Entity\BooleanField('IS_DELETED', [
-				'values' => array('Y', 'N'),
+				'values' => ['Y', 'N'],
 				'default_value' => 'N',
 			]),
+		];
+	}
+
+	public static function getProductsTableVariantList() : array
+	{
+		return [
+			self::PRODUCTS_TABLE_VARIANT_ALL,
+			self::PRODUCTS_TABLE_VARIANT_GOODS,
+			self::PRODUCTS_TABLE_VARIANT_SERVICE
 		];
 	}
 

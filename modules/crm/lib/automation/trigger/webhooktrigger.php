@@ -31,7 +31,7 @@ class WebHookTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBHOOK_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBHOOK_NAME_1');
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -145,5 +145,15 @@ class WebHookTrigger extends BaseTrigger
 		}
 
 		return $result;
+	}
+
+	public static function getGroup(): array
+	{
+		return ['other'];
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_WEBHOOK_DESCRIPTION') ?? '';
 	}
 }

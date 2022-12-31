@@ -4,7 +4,10 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
 require($_SERVER["DOCUMENT_ROOT"] . "/bitrix/header.php");
-$APPLICATION->SetPageProperty("BodyClass", "page-one-column");
+
+$bodyClass = $APPLICATION->GetPageProperty("BodyClass");
+$APPLICATION->SetPageProperty("BodyClass", ($bodyClass ? $bodyClass." " : "")."page-one-column");
+
 IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"] . "/bitrix/modules/intranet/public_bitrix24/timeman/timeman.php");
 $APPLICATION->SetTitle(Loc::getMessage("TITLE"));
 $licenseType = "";
@@ -41,8 +44,9 @@ elseif (!(!ModuleManager::isModuleInstalled("timeman") && in_array($licenseType,
 	<div style="text-align: center;"><img src="images/<?= $lang ?>/timeman.png"/></div>
 	<p><?= Loc::getMessage("TARIFF_RESTRICTION_TEXT2") ?></p>
 	<br/>
-	<div style="text-align: center;"><?
-		CBitrix24::showTariffRestrictionButtons("timeman") ?></div>
+	<?php if (\Bitrix\Main\Loader::includeModule('bitrix24')): ?>
+		<div style="text-align: center;"><?CBitrix24::showTariffRestrictionButtons("timeman")?></div>
+	<?php endif;?>
 	<?
 }
 ?>

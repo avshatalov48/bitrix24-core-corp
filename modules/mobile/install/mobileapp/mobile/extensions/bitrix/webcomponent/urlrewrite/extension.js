@@ -14,6 +14,19 @@
 					this.href = currentDomain + url.pathname + url.search + url.hash;
 				}
 
+				if (Application.getApiVersion() >= 45 && typeof BX.MobileTools !== 'undefined')
+				{
+					const openWidget = BX.MobileTools.resolveOpenFunction(this.href);
+					if (openWidget)
+					{
+						openWidget();
+
+						e.preventDefault();
+
+						return true;
+					}
+				}
+
 				/**
 				 * Find mobile url
 				 */

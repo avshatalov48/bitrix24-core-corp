@@ -36,16 +36,22 @@ if (!class_exists("CDavExchangeCalendar"))
 			$arMapTmp = array("calendar_id" => "CalendarId", "calendarid" => "CalendarId", "mailbox" => "Mailbox");
 			CDavExchangeClient::NormalizeArray($arFilter, $arMapTmp);
 			if (!array_key_exists("CalendarId", $arFilter))
+			{
 				$arFilter["CalendarId"] = "calendar";
+			}
 
 			$arMapTmp = array("calendarview" => "CalendarView", "calendar_view" => "CalendarView", "itemshape" => "ItemShape", "item_shape" => "ItemShape");
 			CDavExchangeClient::NormalizeArray($arMode, $arMapTmp);
 			if (!array_key_exists("ItemShape", $arMode))
+			{
 				$arMode["ItemShape"] = "AllProperties";
+			}
 
 			$arParentFolderId = array("id" => $arFilter["CalendarId"]);
 			if (array_key_exists("Mailbox", $arFilter))
+			{
 				$arParentFolderId["mailbox"] = $arFilter["Mailbox"];
+			}
 
 			$arItem = null;
 			if (array_key_exists("CalendarView", $arMode))
@@ -69,7 +75,9 @@ if (!class_exists("CDavExchangeCalendar"))
 				}
 
 				if (is_null($arItem))
+				{
 					$this->AddError("WrongCalendarViewMode", "Wrong CalendarView mode.");
+				}
 			}
 
 			$request->CreateFindItemBody($arParentFolderId, $arItem, $arMode["ItemShape"]);
@@ -97,7 +105,9 @@ if (!class_exists("CDavExchangeCalendar"))
 				$arResponseCode = $responseMessage->GetPath("/FindItemResponseMessage/ResponseCode");
 				$responseCode = null;
 				if (count($arResponseCode) > 0)
+				{
 					$responseCode = $arResponseCode[0]->GetContent();
+				}
 
 				$responseClass = $responseMessage->GetAttribute("ResponseClass");
 
@@ -106,7 +116,9 @@ if (!class_exists("CDavExchangeCalendar"))
 					$arMessageText = $responseMessage->GetPath("/FindItemResponseMessage/MessageText");
 					$messageText = "Error";
 					if (count($arMessageText) > 0)
+					{
 						$messageText = $arMessageText[0]->GetContent();
+					}
 
 					$this->AddError(!is_null($responseCode) ? $this->Encode($responseCode) : $this->Encode($responseClass), $this->Encode($messageText));
 					continue;
@@ -114,7 +126,9 @@ if (!class_exists("CDavExchangeCalendar"))
 
 				$arCalendarItem = $responseMessage->GetPath("/FindItemResponseMessage/RootFolder/Items/CalendarItem");
 				foreach ($arCalendarItem as $calendarItem)
+				{
 					$arResultItemsList[] = $this->ConvertCalendarToArray($calendarItem);
+				}
 			}
 
 			return $arResultItemsList;
@@ -1673,13 +1687,32 @@ if (!class_exists("CDavExchangeCalendar"))
 						$tmpNumItems += count($arModifiedUserCalendarItems);
 						if (is_array($arModifiedUserCalendarItems))
 						{
+							$eventIds = [];
+							$eventsFromExchange = [];
 							foreach ($arModifiedUserCalendarItems as $value)
 							{
-								$modifiedItem = $exchange->GetById($value["XML_ID"]);
+								$eventIds[] = ['id' => $value['XML_ID']];
+							}
 
-								if (is_array($modifiedItem) && count($modifiedItem) > 0)
+							$modifiedItems = $exchange->GetById($eventIds);
+
+							if (is_array($modifiedItems) && !empty($modifiedItems))
+							{
+								foreach ($modifiedItems as $item)
 								{
-									$modifiedItem = $modifiedItem[0];
+									$eventsFromExchange[$item['XML_ID']] = $item;
+								}
+							}
+
+							foreach ($arModifiedUserCalendarItems as $value)
+							{
+								if (
+									array_key_exists($value["XML_ID"], $eventsFromExchange)
+									&& $eventsFromExchange[$value["XML_ID"]]
+									&& is_array($eventsFromExchange[$value["XML_ID"]])
+								)
+								{
+									$modifiedItem = $eventsFromExchange[$value["XML_ID"]];
 									$modifyEventFields = [
 										"ID" => $value["ID"],
 										"NAME" => $modifiedItem["NAME"],

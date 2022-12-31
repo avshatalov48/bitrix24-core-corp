@@ -1,4 +1,5 @@
-<?
+<?php
+$MESS["CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_DESCRIPTION"] = "Changes the stage when a new entity is created in the item form.";
 $MESS["CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_NAME"] = "Document created";
+$MESS["CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_NAME_1"] = "Track new entity";
 $MESS["CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_TEMPLATE_LABEL"] = "Template";
-?>

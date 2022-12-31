@@ -97,6 +97,47 @@ class EntityContactTable extends DataManager
 		])->fetchCollection()->getContactIdList();
 	}
 
+	public static function getBulkContactBindings(int $entityTypeId, array $entityIds): array
+	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($entityIds, false);
+		if (empty($entityIds))
+		{
+			return [];
+		}
+
+		$map = [];
+		foreach ($entityIds as $entityId)
+		{
+			$map[$entityId] = [];
+		}
+
+		$collection = static::getList([
+			'select' => ['ENTITY_ID', 'CONTACT_ID', 'ROLE_ID', 'IS_PRIMARY', 'SORT'],
+			'filter' => [
+				'=ENTITY_TYPE_ID' => $entityTypeId,
+				'@ENTITY_ID' => $entityIds,
+			],
+			'order' => [
+				'ENTITY_ID' => 'ASC',
+				'SORT' => 'ASC',
+			],
+		])->fetchCollection();
+
+		foreach ($collection as $row)
+		{
+			$map[$row->getEntityId()][] = [
+				'CONTACT_ID' => $row->getContactId(),
+				'ROLE_ID' => $row->getRoleId(),
+				'IS_PRIMARY' => $row->getIsPrimary() ? 'Y' : 'N',
+				'SORT' => $row->getSort(),
+			];
+		}
+
+		EntityBinding::normalizeEntityBindings(\CCrmOwnerType::Contact, $map);
+
+		return $map;
+	}
+
 	/**
 	 * @param int $entityTypeId
 	 * @param int $contactId

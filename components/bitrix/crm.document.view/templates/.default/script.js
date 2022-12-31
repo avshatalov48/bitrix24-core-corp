@@ -24,6 +24,7 @@
 		this.transformationErrorCode = 0;
 		this.viewer = null;
 		this.publicUrl = null;
+		this.sendedToSign = false;
 	};
 
 	BX.Crm.DocumentView.init = function(options)
@@ -207,40 +208,41 @@
 				this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
 			}
 		}, this));
+
 		var downloadButton = BX.UI.ButtonManager.createFromNode(document.getElementById('crm-document-download'));
 		if (downloadButton)
 		{
+			// fix popup menu position
+			downloadButton.getMenuButton().bindEvent('click', function () {
+				var popup = downloadButton.menuWindow.popupWindow;
+				if (popup) {
+					popup.setWidth(BX.pos(downloadButton.getContainer()).width);
+					popup.setOffset({ offsetLeft: BX.pos(popup.bindElement).width - 20 });
+				}
+			});
+			// set action to main button
+			BX.Crm.DocumentView.rebindDownloadButtonClick(downloadButton);
+			// set menu
 			downloadButton.setMenu({
-				items: [
-					{
-						text: 'PDF',
-						onclick: function() {
-							if(this.pdfUrl)
-							{
-								window.open(this.pdfUrl,'_blank');
-							}
-							else if (this.preview.imageUrl)
-							{
-								this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
-							}
-							else
-							{
-								this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
-							}
-						}.bind(this)
-					},
-					{
-						text: 'DOCX',
-						onclick: function() {
-							if(this.downloadUrl && !this.progress)
-							{
-								window.open(this.downloadUrl, '_blank');
-							}
-						}.bind(this)
+				closeByEsc: true,
+				angle: true,
+				autoHide: true,
+				items: [{
+					text: 'PDF',
+					onclick: function() {
+						BX.Crm.DocumentView.downloadPdf(downloadButton);
+						BX.userOptions.save('crm.document.view', 'download_button', 'format', 'pdf', false);
 					}
-				]
-			})
+				}, {
+					text: 'DOCX',
+					onclick: function() {
+						BX.Crm.DocumentView.downloadDoc(downloadButton);
+						BX.userOptions.save('crm.document.view', 'download_button', 'format', 'doc', false);
+					}
+				}]
+			});
 		}
+
 		BX.bind(document.getElementById('crm-document-edit-document'), 'click', BX.proxy(function()
 		{
 			if(BX.SidePanel)
@@ -257,6 +259,40 @@
 			{
 				top.location.href = this.editDocumentUrl;
 			}
+		}, this));
+		BX.bind(document.getElementById('crm-document-sign'), 'click', BX.proxy(function(e)
+		{
+			if (this.sendedToSign)
+			{
+				this.showError(BX.message('CRM_DOCUMENT_VIEW_SIGN_CLICKED'));
+				return
+			}
+			this.sendedToSign = true;
+			if (!this.rightPanelLoader)
+			{
+				this.rightPanelLoader = new BX.Loader({size: 100, offset: {left: "33%", top: "-10%"}})
+			}
+			this.rightPanelLoader.show(e.currentTarget.closest('.--company-information'));
+			return new Promise(function(resolve, reject) {
+				BX.ajax.runAction('crm.api.integration.sign.convertDeal', {
+					data: {
+						documentId: Number(this.documentId)
+					}
+				}).then(BX.proxy(function(response)
+				{
+					if (typeof response.data.SMART_DOCUMENT !== 'undefined')
+					{
+						BX.SidePanel.Instance.open('/sign/doc/0/?docId=' + response.data.SMART_DOCUMENT + '&stepId=changePartner&noRedirect=Y');
+					}
+					this.sendedToSign = false;
+					this.rightPanelLoader.hide();
+				}, this), BX.proxy(function(response)
+				{
+					this.sendedToSign = false;
+					this.rightPanelLoader.hide();
+					reject(response.errors.pop().message);
+				}, this));
+			}.bind(this))
 		}, this));
 
 		BX.Event.EventEmitter.subscribe('BX.Crm.ChannelSelector.List:getLink', function() {
@@ -773,6 +809,54 @@
 		{
 			this.showError(response.errors.pop().message)
 		}, this));
+	};
+
+	BX.Crm.DocumentView.downloadPdf = function(downloadButton)
+	{
+		if (this.pdfUrl)
+		{
+			window.open(this.pdfUrl,'_blank');
+
+			BX.addClass(downloadButton.getContainer(), "crm__document-view--btn-icon-pdf");
+			BX.removeClass(downloadButton.getContainer(), "crm__document-view--btn-icon-doc");
+			BX.Crm.DocumentView.rebindDownloadButtonClick(downloadButton);
+		}
+		else if (this.preview.imageUrl)
+		{
+			this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR'));
+		}
+		else
+		{
+			this.showError(BX.message('CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS'));
+		}
+	};
+
+	BX.Crm.DocumentView.downloadDoc = function(downloadButton)
+	{
+		if (this.downloadUrl && !this.progress)
+		{
+			window.open(this.downloadUrl, '_blank');
+
+			BX.addClass(downloadButton.getContainer(), "crm__document-view--btn-icon-doc");
+			BX.removeClass(downloadButton.getContainer(), "crm__document-view--btn-icon-pdf");
+			BX.Crm.DocumentView.rebindDownloadButtonClick(downloadButton);
+		}
+	};
+
+	BX.Crm.DocumentView.rebindDownloadButtonClick = function(downloadButton)
+	{
+		var isPdf = BX.hasClass(downloadButton.getContainer(), 'crm__document-view--btn-icon-pdf');
+
+		downloadButton.getMainButton().bindEvent('click', function () {
+			if (isPdf)
+			{
+				BX.Crm.DocumentView.downloadPdf(downloadButton);
+			}
+			else
+			{
+				BX.Crm.DocumentView.downloadDoc(downloadButton);
+			}
+		});
 	};
 
 })(window);

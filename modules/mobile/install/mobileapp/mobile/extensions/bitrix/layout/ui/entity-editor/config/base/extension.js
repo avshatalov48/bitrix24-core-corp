@@ -1,4 +1,7 @@
 (() => {
+	/**
+	 * @class EntityConfigBaseItem
+	 */
 	class EntityConfigBaseItem
 	{
 		constructor()

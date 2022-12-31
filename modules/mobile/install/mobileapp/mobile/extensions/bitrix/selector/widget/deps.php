@@ -1,5 +1,9 @@
 <?php
 
 return [
-	'selector/providers/common',
+	'extensions' => [
+		'selector/providers/common',
+		'utils/array',
+		'utils/object',
+	],
 ];

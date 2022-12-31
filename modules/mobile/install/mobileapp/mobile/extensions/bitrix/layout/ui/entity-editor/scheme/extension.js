@@ -21,7 +21,7 @@
 
 		initialize(id, settings)
 		{
-			this.id = CommonUtils.isNotEmptyString(id) ? id : CommonUtils.getRandom(4);
+			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
 			this.settings = settings ? settings : {};
 
 			this.elements = [];

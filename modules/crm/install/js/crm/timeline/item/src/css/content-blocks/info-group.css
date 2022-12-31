@@ -1,0 +1,29 @@
+.crm-timeline__info-group {
+
+}
+
+.crm-timeline__info-group_block {
+
+}
+
+.crm-timeline__info-group_block-title,
+.crm-timeline__info-group_block-content {
+	vertical-align: top;
+
+}
+
+.crm-timeline__info-group_block-title {
+	box-sizing: border-box;
+	max-width: 200px;
+	font-size: var(--ui-font-size-sm, 13px);
+	line-height: var(--ui-font-line-height-3xs, 1.2);
+	color: var(--ui-color-text-subtle, #828b95);
+	padding-right: 30px;
+	padding-bottom: 6px;
+}
+
+.crm-timeline__info-group_block-content {
+	padding: 0;
+	white-space: normal;
+	word-break: break-all;
+}

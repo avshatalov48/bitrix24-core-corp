@@ -94,6 +94,11 @@ final class ConfigBuilder
 		return $this->getMode() === self::MODE_VIEW;
 	}
 
+	public function isEditMode(): bool
+	{
+		return $this->getMode() === self::MODE_EDIT;
+	}
+
 	public function allowEdit(bool $allowed): self
 	{
 		$this->permissions['edit'] = $allowed;

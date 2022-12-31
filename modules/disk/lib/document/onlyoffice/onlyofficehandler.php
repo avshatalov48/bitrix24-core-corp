@@ -69,7 +69,7 @@ class OnlyOfficeHandler extends DocumentHandler implements FileCreatable, IViewe
 			'xodt',
 			'odt',
 			'odp',
-			'odt',
+			'ods',
 			'otp',
 			'ots',
 			'ott',

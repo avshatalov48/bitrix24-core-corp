@@ -766,7 +766,7 @@ export class Category extends Event.EventEmitter
 		const title = this.getTitle();
 		const titleEditor = this.getTitleEditor();
 		const {value} = titleEditor;
-		const newTitle = value.trim() || Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER');
+		const newTitle = value.trim() || Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2');
 
 		if (title.innerText !== newTitle)
 		{
@@ -904,7 +904,7 @@ export class Category extends Event.EventEmitter
 					},
 				},
 				(items.length > 0 ? {
-					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS'),
+					text: Loc.getMessage('CRM_MENU_RIGHTS_CATEGORY_COPY_FROM_TUNNELS2'),
 					items: items
 				} : null),
 				{ delimiter : true },
@@ -959,7 +959,7 @@ export class Category extends Event.EventEmitter
 				<span 
 					class="crm-st-remove-button" 
 					onclick="${this.onRemoveButtonClick.bind(this)}" 
-					title="${Loc.getMessage('CRM_ST_REMOVE_CATEGORY')}"
+					title="${Loc.getMessage('CRM_ST_REMOVE_CATEGORY2')}"
 					> </span>
 			`;
 
@@ -1096,7 +1096,7 @@ export class Category extends Event.EventEmitter
 					 onkeydown="${onKeyDown}"
 					 onblur="${onBlur}"
 					 value="${Text.encode(this.name)}"
-					 placeholder="${Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER')}"
+					 placeholder="${Loc.getMessage('CRM_ST_TITLE_EDITOR_PLACEHOLDER2')}"
 				 >
 			`;
 		});
@@ -1160,7 +1160,7 @@ export class Category extends Event.EventEmitter
 			Tag.render`
 				<span 
 					class="crm-st-category-action-drag"
-					title="${Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON')}"
+					title="${Loc.getMessage('CRM_ST_CATEGORY_DRAG_BUTTON2')}"
 					>&nbsp;</span>
 			`
 		));
@@ -1205,12 +1205,12 @@ export class Category extends Event.EventEmitter
 				overlay: {
 					opacity: 30,
 				},
-				titleBar: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE')
+				titleBar: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_TITLE2')
 					.replace('#name#', this.getTitle().innerText),
-				content: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION'),
+				content: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_POPUP_DESCRIPTION2'),
 				buttons: [
 					new PopupWindowButton({
-						text: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_REMOVE_BUTTON_LABEL'),
+						text: Loc.getMessage('CRM_ST_REMOVE_CATEGORY_CONFIRM_REMOVE_BUTTON_LABEL2'),
 						className: 'popup-window-button-decline',
 						events: {
 							click() {

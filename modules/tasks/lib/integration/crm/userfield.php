@@ -1,4 +1,4 @@
-<?
+<?php
 /**
  * Class implements all further interactions with "disk" module considering "task" entity
  *
@@ -9,6 +9,8 @@
  */
 
 namespace Bitrix\Tasks\Integration\CRM;
+
+use Bitrix\Main\IO\File;
 
 class UserField extends \Bitrix\Tasks\Integration\CRM
 {
@@ -23,47 +25,50 @@ class UserField extends \Bitrix\Tasks\Integration\CRM
 
 	public static function getSysUFScheme()
 	{
-		if(!static::isInstalled())
+		if (!static::isInstalled())
 		{
-			return array();
+			return [];
 		}
 
 		static $scheme;
 
-		if(!$scheme)
+		if (!$scheme)
 		{
+			$names = [];
 			$langs = static::getLangs();
-			$names = array(
-			);
-			foreach($langs as $lang)
+			foreach ($langs as $lang)
 			{
-				$MESS = array();
-				@include($_SERVER['DOCUMENT_ROOT'].'/'.BX_ROOT.'/modules/crm/lang/'.$lang.'/install/index.php');
+				$MESS = [];
+				$fileName = "{$_SERVER['DOCUMENT_ROOT']}/" . BX_ROOT . "/modules/crm/lang/{$lang}/install/index.php";
+				if (File::isFileExists($fileName))
+				{
+					@include($fileName);
+				}
 				$names[$lang] = $MESS['CRM_UF_NAME'];
 			}
 
-			$scheme = array(
-				static::getMainSysUFCode() => array(
-					'FIELD_NAME'    => static::getMainSysUFCode(),
-					'USER_TYPE_ID'  => 'crm',
-					'XML_ID'        => '',
-					'MULTIPLE'      => 'Y',
-					'MANDATORY'     => 'N',
-					'SHOW_FILTER'   => 'N',
-					'SHOW_IN_LIST'  => 'N',
-					'EDIT_IN_LIST'  => 'N',
+			$scheme = [
+				static::getMainSysUFCode() => [
+					'FIELD_NAME' => static::getMainSysUFCode(),
+					'USER_TYPE_ID' => 'crm',
+					'XML_ID' => '',
+					'MULTIPLE' => 'Y',
+					'MANDATORY' => 'N',
+					'SHOW_FILTER' => 'N',
+					'SHOW_IN_LIST' => 'N',
+					'EDIT_IN_LIST' => 'N',
 					'IS_SEARCHABLE' => 'N',
-					'SETTINGS'      => array(
+					'SETTINGS' => [
 						'LEAD' => 'Y',
 						'CONTACT' => 'Y',
 						'COMPANY' => 'Y',
 						'DEAL' => 'Y',
-					),
+					],
 					'EDIT_FORM_LABEL' => $names,
 					'LIST_COLUMN_LABEL' => $names,
 					'LIST_FILTER_LABEL' => $names,
-				)
-			);
+				],
+			];
 		}
 
 		return $scheme;

@@ -1,10 +1,8 @@
 this.BX = this.BX || {};
-(function (exports,rest_client,main_core) {
+(function (exports,rest_client,main_core,ui_buttons) {
 	'use strict';
 
-	function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
-
-	function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { babelHelpers.defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+	function _classStaticPrivateMethodGet(receiver, classConstructor, method) { if (receiver !== classConstructor) { throw new TypeError("Private static access of wrong provenance"); } return method; }
 	var Manager = /*#__PURE__*/function () {
 	  function Manager() {
 	    babelHelpers.classCallCheck(this, Manager);
@@ -66,7 +64,7 @@ this.BX = this.BX || {};
 	        rest_client.rest.callMethod('salescenter.manager.getConfig').then(function (result) {
 	          Manager.init(result.answer.result);
 	          resolve(result.answer.result);
-	        })["catch"](function (reason) {
+	        }).catch(function (reason) {
 	          reject(reason);
 	        });
 	      });
@@ -98,7 +96,7 @@ this.BX = this.BX || {};
 	          width: 760
 	        }).then(function () {
 	          resolve();
-	        })["catch"](function (reason) {
+	        }).catch(function (reason) {
 	          reject(reason);
 	        });
 	      });
@@ -147,7 +145,7 @@ this.BX = this.BX || {};
 	            Manager.isSitePublished = true;
 	            Manager.firePublicConnectedSiteEvent();
 	            resolve(result);
-	          })["catch"](function (reason) {
+	          }).catch(function (reason) {
 	            reject(reason);
 	          });
 	        } else {
@@ -405,7 +403,7 @@ this.BX = this.BX || {};
 	          } else {
 	            resolve(result);
 	          }
-	        })["catch"](function (reason) {
+	        }).catch(function (reason) {
 	          reject(reason);
 	        });
 	      });
@@ -485,7 +483,7 @@ this.BX = this.BX || {};
 	        rest_client.rest.callMethod(method, data).then(function (result) {
 	          resolve(result);
 	          Manager.showNotification(BX.message('SALESCENTER_MANAGER_HIDE_URL_SUCCESS'));
-	        })["catch"](function (result) {
+	        }).catch(function (result) {
 	          reject(result);
 	        });
 	      });
@@ -504,7 +502,7 @@ this.BX = this.BX || {};
 	        rest_client.rest.callMethod(method, data).then(function (result) {
 	          resolve(result);
 	          Manager.showNotification(BX.message('SALESCENTER_MANAGER_DELETE_URL_SUCCESS'));
-	        })["catch"](function (result) {
+	        }).catch(function (result) {
 	          reject(result);
 	        });
 	      });
@@ -522,11 +520,11 @@ this.BX = this.BX || {};
 	        options = {};
 	      }
 
-	      options = _objectSpread(_objectSpread({}, {
+	      options = babelHelpers.objectSpread({}, {
 	        cacheable: false,
 	        allowChangeHistory: false,
 	        events: {}
-	      }), options);
+	      }, options);
 	      return new Promise(function (resolve) {
 	        if (main_core.Type.isString(url) && url.length > 1) {
 	          options.events.onClose = function (event) {
@@ -663,7 +661,7 @@ this.BX = this.BX || {};
 	          if (formId > 0) {
 	            Manager.addNewFormPage(formId).then(function (result) {
 	              resolve(result);
-	            })["catch"](function (reason) {
+	            }).catch(function (reason) {
 	              reject(reason);
 	            });
 	          }
@@ -709,7 +707,7 @@ this.BX = this.BX || {};
 	            }).show();
 	            reject();
 	          }
-	        })["catch"](function (error) {
+	        }).catch(function (error) {
 	          Manager.getPopup({
 	            id: popupId,
 	            title: BX.message('SALESCENTER_MANAGER_ERROR_POPUP'),
@@ -932,11 +930,22 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "openIntegrationRequestForm",
 	    value: function openIntegrationRequestForm(event) {
+	      var params = _classStaticPrivateMethodGet(Manager, Manager, _getDataSettingFromEventDomNode).call(Manager, event);
+
 	      if (event && main_core.Type.isFunction(event.preventDefault)) {
 	        event.preventDefault();
 	      }
 
-	      return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=integration_request', {
+	      if (!main_core.Type.isPlainObject(params)) {
+	        params = {};
+	      }
+
+	      var url = new main_core.Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php');
+	      url.setQueryParams({
+	        feedback_type: 'integration_request'
+	      });
+	      url.setQueryParams(params);
+	      return Manager.openSlider(url.toString(), {
 	        width: 735
 	      });
 	    }
@@ -959,7 +968,7 @@ this.BX = this.BX || {};
 	      return new Promise(function (resolve, reject) {
 	        Manager.openSlider(url.toString(), sliderOptions).then(function (slider) {
 	          resolve(slider.getData());
-	        })["catch"](function (reason) {});
+	        }).catch(function (reason) {});
 	      });
 	    }
 	  }, {
@@ -970,7 +979,7 @@ this.BX = this.BX || {};
 	          reject('wrong params');
 	        }
 
-	        params = _objectSpread(_objectSpread({}, params), {
+	        params = babelHelpers.objectSpread({}, params, {
 	          action: 'salescenter.manager.addAnalytic',
 	          sessid: BX.bitrix_sessid()
 	        });
@@ -1004,7 +1013,7 @@ this.BX = this.BX || {};
 	        }).then(function (response) {
 	          Manager.fieldsMap = response.data.fields;
 	          resolve(response.data.fields);
-	        })["catch"](function (response) {
+	        }).catch(function (response) {
 	          reject(response.errors);
 	        });
 	      });
@@ -1033,7 +1042,7 @@ this.BX = this.BX || {};
 	          }
 	        }).then(function (response) {
 	          resolve(response.data.pageUrl);
-	        })["catch"](function (response) {
+	        }).catch(function (response) {
 	          reject(response.errors);
 	        });
 	      });
@@ -1041,6 +1050,52 @@ this.BX = this.BX || {};
 	  }]);
 	  return Manager;
 	}();
+
+	var _getDataSettingFromEventDomNode = function _getDataSettingFromEventDomNode(event) {
+	  var node = null;
+
+	  if (main_core.Type.isDomNode(event.button)) {
+	    node = event.button;
+	  } else if (main_core.Type.isDomNode(event.target)) {
+	    node = event.target;
+	  }
+
+	  if (main_core.Type.isObject(node)) {
+	    var dataset = node.dataset ? node.dataset : {};
+	    var settings = dataset.hasOwnProperty('managerOpenintegrationrequestformParams') ? dataset.managerOpenintegrationrequestformParams : '';
+	    return _classStaticPrivateMethodGet(this, Manager, _parseParamsDataSetting).call(this, settings);
+	  }
+
+	  return null;
+	};
+
+	var _parseParamsDataSetting = function _parseParamsDataSetting(settings) {
+	  var result = {};
+
+	  if (main_core.Type.isStringFilled(settings)) {
+	    var fields = settings.split(',');
+
+	    try {
+	      for (var inx in fields) {
+	        if (!fields.hasOwnProperty(inx)) {
+	          continue;
+	        }
+
+	        var _fields$inx$split = fields[inx].split(':'),
+	            _fields$inx$split2 = babelHelpers.slicedToArray(_fields$inx$split, 2),
+	            name = _fields$inx$split2[0],
+	            value = _fields$inx$split2[1];
+
+	        if (main_core.Type.isStringFilled(name)) {
+	          result[name] = value;
+	        }
+	      }
+	    } catch (e) {}
+	  }
+
+	  return result;
+	};
+
 	babelHelpers.defineProperty(Manager, "sessionId", null);
 	babelHelpers.defineProperty(Manager, "connectedSiteId", null);
 	babelHelpers.defineProperty(Manager, "addUrlPopup", null);
@@ -1089,5 +1144,5 @@ this.BX = this.BX || {};
 
 	exports.Manager = Manager;
 
-}((this.BX.Salescenter = this.BX.Salescenter || {}),BX,BX));
+}((this.BX.Salescenter = this.BX.Salescenter || {}),BX,BX,BX.UI));
 //# sourceMappingURL=manager.bundle.js.map

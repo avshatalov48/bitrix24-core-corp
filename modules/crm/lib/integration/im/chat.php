@@ -10,14 +10,22 @@
 namespace Bitrix\Crm\Integration\Im;
 
 use Bitrix\Crm;
+use Bitrix\Crm\Activity\Provider\ProviderManager;
+use Bitrix\Crm\Badge\Model\BadgeTable;
+use Bitrix\Crm\Badge\SourceIdentifier;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Timeline\ActivityController;
 use Bitrix\Im;
+use Bitrix\ImOpenLines\Session;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 
 class Chat
 {
 	public const CHAT_ENTITY_TYPE = "CRM";
+
+	private const ACTION_ADD = 'add';
+	private const ACTION_READ = 'read';
 
 	public static function isEntitySupported(int $entityTypeId): bool
 	{
@@ -168,6 +176,59 @@ class Chat
 				}
 			}
 		}
+	}
+
+	public static function OnAfterMessagesAdd($messageId, $messageFields): void
+	{
+		if (
+			$messageId <= 0
+			|| empty($messageFields['CHAT_ENTITY_ID'])
+			|| !Main\Loader::includeModule('im')
+			|| !Main\Loader::includeModule('imopenlines')
+		)
+		{
+			return;
+		}
+
+		$activity = static::getOpenLineLastActivity((string)$messageFields['CHAT_ENTITY_ID']);
+		if (empty($activity) || $activity['RESPONSIBLE_ID'] <= 0)
+		{
+			return;
+		}
+
+		if ($activity['COMPLETED'] === 'Y')
+		{
+			\CCrmActivity::Update($activity['ID'], ['COMPLETED' => false]);
+		}
+
+		static::tryNotifyAboutChatChanges(
+			$activity,
+			static::ACTION_ADD,
+			(int)$messageFields['FROM_USER_ID']
+		);
+	}
+
+	public static function OnAfterChatRead(array $data): void
+	{
+		if (
+			empty($data['CHAT_ENTITY_ID'])
+			|| !Main\Loader::includeModule('im')
+			|| !Main\Loader::includeModule('imopenlines')
+		)
+		{
+			return;
+		}
+
+		$activity = static::getOpenLineLastActivity((string)$data['CHAT_ENTITY_ID']);
+		if (empty($activity) || $activity['RESPONSIBLE_ID'] <= 0)
+		{
+			return;
+		}
+
+		static::tryNotifyAboutChatChanges(
+			$activity,
+			static::ACTION_READ
+		);
 	}
 
 	public static function onEntityModification($entityTypeID, $entityID, array $params)
@@ -789,5 +850,58 @@ class Chat
 		}
 
 		return $data;
+	}
+
+	private static function getOpenLineLastActivity(string $code): array
+	{
+		$session = new Session();
+		$sessionLoadResult = $session->getLast(['USER_CODE' => $code]);
+		if (!$sessionLoadResult->isSuccess())
+		{
+			return [];
+		}
+
+		$sessionData = $session->getData();
+		if ($sessionData['CLOSED'] === 'Y')
+		{
+			return [];
+		}
+
+		$result = [];
+		$activityId = (int)$sessionData['CRM_ACTIVITY_ID'];
+		if ($activityId > 0)
+		{
+			$result = \CCrmActivity::GetByID($activityId, false);
+		}
+
+		return is_array($result) ? $result : [];
+	}
+
+	private static function tryNotifyAboutChatChanges(array $activity, string $action, ?int $fromUserId = null): void
+	{
+		if (isset($fromUserId) && $fromUserId === (int)$activity['RESPONSIBLE_ID'])
+		{
+			return;
+		}
+
+		$currentCountOfBadges = BadgeTable::getCount([
+			'=SOURCE_PROVIDER_ID' => SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			'SOURCE_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+			'SOURCE_ENTITY_ID' => (int)$activity['ID']
+		]);
+
+		$needNotifyAboutActivityUpdate =
+			($action === static::ACTION_ADD && $currentCountOfBadges === 0)
+			|| ($action === static::ACTION_READ && $currentCountOfBadges > 0)
+		;
+
+		if ($needNotifyAboutActivityUpdate)
+		{
+			ActivityController::getInstance()
+				->notifyTimelinesAboutActivityUpdate($activity, (int)$activity['RESPONSIBLE_ID'])
+			;
+
+			ProviderManager::syncBadgesOnActivityUpdate((int)$activity['ID'], $activity);
+		}
 	}
 }

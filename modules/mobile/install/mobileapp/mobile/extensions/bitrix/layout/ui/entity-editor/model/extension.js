@@ -1,35 +1,57 @@
 (() => {
+
+	const { clone } = jn.require('utils/object');
+	const { EventEmitter } = jn.require('event-emitter');
+
 	/**
 	 * @class EntityModel
 	 */
 	class EntityModel
 	{
-		static create(id, settings)
+		static create(id, uid, settings)
 		{
 			const self = new EntityModel();
-			self.initialize(id, settings);
+
+			self.initialize(id, uid, settings);
+
 			return self;
 		}
 
 		constructor()
 		{
-			this.id = "";
+			this.id = '';
 			this.settings = {};
 			this.data = null;
 		}
 
-		initialize(id, settings)
+		initialize(id, uid, settings)
 		{
-			this.id = CommonUtils.isNotEmptyString(id) ? id : CommonUtils.getRandom(4);
+			this.id = CommonUtils.isNotEmptyString(id) ? id : Random.getString();
+
+			this.uid = CommonUtils.isNotEmptyString(uid) ? uid : Random.getString();
+			/** @type {EventEmitter} */
+			this.customEventEmitter = EventEmitter.createWithUid(this.uid);
+
 			this.settings = settings ? settings : {};
-			this.isIdentifiableEntity = BX.prop.getBoolean(this.settings, "IS_IDENTIFIABLE_ENTITY", true);
-			this.data = BX.prop.getObject(this.settings, "data", {});
-			this.lockedFields = {};
+			this.isIdentifiableEntity = BX.prop.getBoolean(this.settings, 'IS_IDENTIFIABLE_ENTITY', true);
+			this.data = clone(BX.prop.getObject(this.settings, 'data', {}));
+
+			this.customEventEmitter.emit('UI.EntityEditor.Model::onReady', [this.getFields()]);
+		}
+
+		getUid()
+		{
+			return this.uid;
 		}
 
 		isIdentifiable()
 		{
 			return this.isIdentifiableEntity;
+		}
+
+		hasField(name)
+		{
+			return this.data.hasOwnProperty(name);
 		}
 
 		getField(name, defaultValue)
@@ -44,12 +66,19 @@
 
 		setField(name, newValue)
 		{
+			const hasChanged = this.data[name] !== newValue;
+
 			this.data[name] = newValue;
+
+			if (hasChanged)
+			{
+				this.customEventEmitter.emit('UI.EntityEditor.Model::onChange', [this.getFields(), name]);
+			}
 		}
 
 		getFields()
 		{
-			return {...this.data};
+			return { ...this.data };
 		}
 	}
 

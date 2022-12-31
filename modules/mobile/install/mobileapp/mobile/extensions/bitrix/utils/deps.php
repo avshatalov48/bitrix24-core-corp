@@ -8,9 +8,10 @@ return [
 		'utils/object',
 		'utils/function',
 		'utils/prop',
-		'utils/loc',
+		'loc',
 		'utils/random',
 		'utils/storage',
 		'utils/if-api',
+		'utils/date',
 	]
 ];

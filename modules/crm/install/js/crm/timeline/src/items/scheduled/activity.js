@@ -195,6 +195,35 @@ export default class Activity extends Scheduled
 		return (new DatetimeConverter(time)).toUserTime().getValue();
 	}
 
+	getCreatedDate()
+	{
+		const entityData = this.getAssociatedEntityData();
+		const time = BX.parseDate(
+			entityData["CREATED_SERVER"],
+			false,
+			"YYYY-MM-DD",
+			"YYYY-MM-DD HH:MI:SS"
+		);
+
+		if(!time)
+		{
+			return null;
+		}
+
+		return (new DatetimeConverter(time)).toUserTime().getValue();
+	}
+
+	isIncomingChannel()
+	{
+		if (this.isDone())
+		{
+			return false;
+		}
+		const entityData = this.getAssociatedEntityData();
+
+		return entityData.hasOwnProperty('IS_INCOMING_CHANNEL') && entityData.IS_INCOMING_CHANNEL === 'Y';
+	}
+
 	markAsDone(isDone)
 	{
 		isDone = !!isDone;
@@ -218,8 +247,17 @@ export default class Activity extends Scheduled
 
 	prepareContent(options)
 	{
-		const deadline = this.getDeadline();
-		const timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+		let timeText = '';
+		const isIncomingChannel = this.isIncomingChannel();
+		if (isIncomingChannel)
+		{
+			timeText = this.formatDateTime(this.getCreatedDate());
+		}
+		else
+		{
+			const deadline = this.getDeadline();
+			timeText = deadline ? this.formatDateTime(deadline) : this.getMessage("termless");
+		}
 
 		const entityData = this.getAssociatedEntityData();
 		const direction = BX.prop.getInteger(entityData, "DIRECTION", 0);
@@ -249,6 +287,10 @@ export default class Activity extends Scheduled
 		if(this.isCounterEnabled())
 		{
 			iconClassName += " crm-entity-stream-section-counter";
+		}
+		if(isIncomingChannel)
+		{
+			iconClassName += " crm-entity-stream-section-counter --incoming-counter";
 		}
 		wrapper.appendChild(BX.create("DIV", { attrs: { className: iconClassName } }));
 

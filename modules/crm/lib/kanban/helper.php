@@ -66,18 +66,28 @@ class Helper
 	 */
 	public static function getGridId($type)
 	{
-		if ($type == 'DEAL')
+		$gridId = 'CRM_' . $type . '_LIST_V12';
+
+		if ($type === \CCrmOwnerType::DealName && self::$categoryId >= 0)
 		{
-			return 'CRM_' . $type . '_LIST_V12_C_' . self::$categoryId;
+			return $gridId . '_C_' . self::$categoryId;
 		}
-		else if ($type == 'LEAD' || $type == 'QUOTE' || $type === 'ORDER')
+
+		if (in_array(
+			$type,
+			[
+				\CCrmOwnerType::DealName,
+				\CCrmOwnerType::LeadName,
+				\CCrmOwnerType::QuoteName,
+				\CCrmOwnerType::OrderName,
+			],
+			true
+		))
 		{
-			return 'CRM_' . $type . '_LIST_V12';
+			return $gridId;
 		}
-		else
-		{
-			return self::FILTER_PREFIX . $type;
-		}
+
+		return self::FILTER_PREFIX . $type;
 	}
 
 	/**

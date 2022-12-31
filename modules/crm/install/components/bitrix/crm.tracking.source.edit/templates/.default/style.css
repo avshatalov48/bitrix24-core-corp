@@ -420,7 +420,7 @@
 	background: white;
 	padding: 0 10px;
 	color: #2067b0;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	cursor: pointer;
 }
 .crm-analytics-source-block-utm-content-btn:hover {

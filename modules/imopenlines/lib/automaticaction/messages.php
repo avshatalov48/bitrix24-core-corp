@@ -24,6 +24,25 @@ class Messages
 		'network'
 	];
 
+	/** @var Session */
+	protected $sessionManager = null;
+	protected $session = [];
+	//protected $config = [];
+	/**Chat*/
+	//protected $chat = null;
+
+	/**
+	 * Messages constructor.
+	 * @param Session $session
+	 */
+	public function __construct($session)
+	{
+		$this->sessionManager = $session;
+		$this->session = $session->getData();
+		//$this->config = $session->getConfig();
+		//$this->chat = $session->getChat();
+	}
+
 	/**
 	 * @return bool
 	 */
@@ -214,25 +233,6 @@ class Messages
 		}
 
 		return $result;
-	}
-
-	/**Session*/
-	protected $sessionManager = null;
-	protected $session = [];
-	protected $config = [];
-	/**Chat*/
-	protected $chat = null;
-
-	/**
-	 * Messages constructor.
-	 * @param Session $session
-	 */
-	public function __construct($session)
-	{
-		$this->sessionManager = $session;
-		$this->session = $session->getData();
-		$this->config = $session->getConfig();
-		$this->chat = $session->getChat();
 	}
 
 	/**

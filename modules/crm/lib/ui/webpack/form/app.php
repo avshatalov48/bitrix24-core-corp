@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\UI\Webpack\Form;
 
 use Bitrix\Crm\UI\Webpack;
+use Bitrix\Main;
 
 /**
  * Class App
@@ -65,5 +66,31 @@ class App extends Webpack\Base
 	{
 		$this->fileDir = 'form';
 		$this->fileName = 'app.js';
+	}
+
+	protected function fixAppFileDuplicates()
+	{
+		$files = Main\FileTable::query()
+			->setSelect(['ID'])
+			->where('MODULE_ID', 'crm')
+			->where('SUBDIR', 'crm/form')
+			->where('FILE_NAME', 'app.js')
+			->setOrder(['ID' => 'DESC'])
+			->setLimit(3)
+			->fetchAll()
+		;
+		if (count($files) > 1)
+		{
+			foreach ($files as $file)
+			{
+				\CFile::Delete($file['ID']);
+			}
+		}
+	}
+
+	public function build()
+	{
+		$this->fixAppFileDuplicates();
+		return parent::build();
 	}
 }

@@ -58,6 +58,20 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 							'RESPONSIBLE_SECOND_NAME' => 'RESPONSIBLE.SECOND_NAME', 'ORDER_TOPIC' => 'DELIVERY.NAME',
 							'DATE_INSERT_FORMAT' => 'DATE_INSERT_SHORT', 'STATUS_ID', 'ORDER_ID'
 		],
+		\CCrmOwnerType::StoreDocument => [
+			'ID',
+			'DOC_TYPE',
+			'RESPONSIBLE_ID',
+			'STATUS',
+			'DATE_STATUS',
+			'TOTAL',
+			'CURRENCY',
+			'TITLE',
+			'RESPONSIBLE_LOGIN' => 'RESPONSIBLE.LOGIN',
+			'RESPONSIBLE_NAME' => 'RESPONSIBLE.NAME',
+			'RESPONSIBLE_LAST_NAME' => 'RESPONSIBLE.LAST_NAME',
+			'RESPONSIBLE_SECOND_NAME' => 'RESPONSIBLE.SECOND_NAME',
+		],
 	];
 
 	protected $documentProvidersMap;
@@ -706,6 +720,10 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 		{
 			return '\Bitrix\Crm\Order\Shipment';
 		}
+		if ($entityTypeId === \CCrmOwnerType::StoreDocument)
+		{
+			return \Bitrix\Catalog\StoreDocumentTable::class;
+		}
 
 		return '\CCrm'.\CCrmOwnerType::ResolveName($entityTypeId);
 	}
@@ -750,7 +768,12 @@ class CrmEntityTreeComponent extends \CBitrixComponent
 			}
 			elseif (in_array(
 				$entityTypeId,
-				[\CCrmOwnerType::Order, \CCrmOwnerType::OrderPayment, \CCrmOwnerType::OrderShipment],
+				[
+					\CCrmOwnerType::Order,
+					\CCrmOwnerType::OrderPayment,
+					\CCrmOwnerType::OrderShipment,
+					\CCrmOwnerType::StoreDocument,
+				],
 				true
 			))
 			{

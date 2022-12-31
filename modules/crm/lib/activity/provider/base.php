@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
 use Bitrix\Main;
+use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
@@ -243,6 +244,11 @@ class Base
 	public static function getPlannerTitle(array $activity)
 	{
 		return '';
+	}
+
+	public static function hasPlanner(array $activity): bool
+	{
+		return true;
 	}
 
 	/**
@@ -612,13 +618,30 @@ class Base
 		{
 			return $result->setData(['id' => $activityId]);
 		}
-		global $APPLICATION;
-		$ex = $APPLICATION->GetException();
-		if($ex)
+
+		foreach (\CCrmActivity::GetErrorMessages() as $errorMessage)
 		{
-			$result->addError(new Main\Error((string)$ex->GetString()));
+			$result->addError(new Error($errorMessage));
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Add, update or remove badges associated with activity of this type
+	 *
+	 * @param int $activityId       Activity ID
+	 * @param array $activityFields Activity
+	 * @param array $bindings       Activity bindings - badges should be synced only for these entities
+	 *
+	 * @return void
+	 */
+	public static function syncBadges(int $activityId, array $activityFields, array $bindings): void
+	{
+	}
+
+	public static function getDefaultPingOffsets(): array
+	{
+		return [];
 	}
 }

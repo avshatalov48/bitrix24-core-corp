@@ -2,38 +2,62 @@
 
 namespace Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 
-use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
 use Bitrix\Crm\Service\Timeline\Layout\Mixin;
-use Bitrix\Main\Type\Date;
 
-class EditableDate extends ContentBlock
+class EditableDate extends Date
 {
 	use Mixin\Actionable;
 
-	private ?Date $date = null;
+	public const STYLE_TEXT = 'text';
+	public const STYLE_PILL = 'pill';
+
+	public const BACKGROUND_COLOR_WARNING = 'warning';
+	public const BACKGROUND_COLOR_DEFAULT = 'default';
+
+	private string $style = self::STYLE_TEXT;
+	private ?string $backgroundColor = null;
 
 	public function getRendererName(): string
 	{
-		return 'EditableDate';
+		return
+			$this->getStyle() === self::STYLE_PILL
+				? 'DatePill'
+				: 'EditableDate'
+		;
 	}
 
-	public function getDate(): ?Date
+	public function getStyle(): string
 	{
-		return $this->date;
+		return $this->style;
 	}
 
-	public function setDate(?Date $date): self
+	public function setStyle(string $style): self
 	{
-		$this->date = $date;
+		$this->style = $style;
+
+		return $this;
+	}
+
+	public function getBackgroundColor(): ?string
+	{
+		return $this->backgroundColor;
+	}
+
+	public function setBackgroundColor(?string $backgroundColor): self
+	{
+		$this->backgroundColor = $backgroundColor;
 
 		return $this;
 	}
 
 	protected function getProperties(): array
 	{
-		return [
-			'date' => $this->date,
-			'action' => $this->getAction(),
-		];
+		return array_merge(
+			parent::getProperties(),
+			[
+				'action' => $this->getAction(),
+				'backgroundColor' => $this->getBackgroundColor(),
+			]
+		);
 	}
 }

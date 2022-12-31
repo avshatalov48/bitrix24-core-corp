@@ -7,6 +7,8 @@ export type EntityCounterPanelOptions = {
 	data: Array,
 	codes: Array,
 	extras: Object,
+	withExcludeUsers: ?boolean,
 	filterLastPresetId: String,
-	filterLastPresetData: Array
+	filterLastPresetData: Array,
+	isNewCountersTourSeen: String
 };

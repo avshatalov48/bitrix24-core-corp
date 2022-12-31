@@ -181,12 +181,12 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('report', 'onDefaultBoardsCollect', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\EventHandler', 'onDefaultBoardsCollect');
 
 		//collect statistics
-		$eventManager->registerEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionStart');
-		$eventManager->registerEventHandler('imopenlines', 'OnSessionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionUpdate');
-		$eventManager->registerEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionFinish');
-		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onChatAnswer');
-		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onChatSkip');
-		$eventManager->registerEventHandler('imopenlines', 'OnSessionVote', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionVote');
+		$eventManager->registerEventHandler('imopenlines', 'OnSessionStart', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionStart', 500);
+		$eventManager->registerEventHandler('imopenlines', 'OnSessionUpdate', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionUpdate', 500);
+		$eventManager->registerEventHandler('imopenlines', 'OnSessionFinish', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionFinish', 500);
+		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onChatAnswer', 500);
+		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onChatSkip', 500);
+		$eventManager->registerEventHandler('imopenlines', 'OnSessionVote', 'imopenlines', '\Bitrix\ImOpenLines\Integrations\Report\Statistics\EventHandler', 'onSessionVote', 500);
 
 		$eventManager->registerEventHandler('imopenlines', 'OnImopenlineChangeQueueType', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueTypeChange');
 		$eventManager->registerEventHandler('imopenlines', 'OnQueueOperatorsAdd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onQueueOperatorsAdd');
@@ -206,13 +206,13 @@ final class imopenlines extends \CModule
 		$eventManager->registerEventHandler('timeman', 'OnAfterTMDayEnd', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'onAfterTMDayEnd');
 		$eventManager->registerEventHandler('intranet', 'OnStartAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnStartAbsence');
 		$eventManager->registerEventHandler('intranet', 'OnEndAbsence', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'OnEndAbsence');
+		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnChatAnswer', 50);
+		$eventManager->registerEventHandler('imopenlines', 'OnOperatorTransfer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnOperatorTransfer', 50);
+		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
+		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
+		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish', 50);
 
-		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnChatAnswer');
-		$eventManager->registerEventHandler('imopenlines', 'OnOperatorTransfer', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnOperatorTransfer');
-		$eventManager->registerEventHandler('imopenlines', 'OnChatSkip', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
-		$eventManager->registerEventHandler('imopenlines', 'OnChatMarkSpam', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
-		$eventManager->registerEventHandler('imopenlines', 'OnChatFinish', 'imopenlines', '\Bitrix\ImOpenLines\Queue\Event', 'checkFreeSlotOnFinish');
-		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer');
+		$eventManager->registerEventHandler('imopenlines', 'OnChatAnswer', 'imopenlines', '\Bitrix\ImOpenLines\SalesCenter\Catalog', 'OnChatAnswer', 500);
 
 		$eventManager->registerEventHandler('crm', 'onSiteFormFilledOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFilled');
 		$eventManager->registerEventHandler('crm', 'onSiteFormFillOpenlines', 'imopenlines', '\Bitrix\ImOpenLines\Widget\FormHandler', 'onOpenlinesFormFill');

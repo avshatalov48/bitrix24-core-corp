@@ -21,12 +21,15 @@ BX.CRM.Kanban.Item = function(options)
 	this.popupTooltip = null;
 	this.plannerCurrent = null;
 	this.fieldsWrapper = null;
+	this.badgesWrapper = null;
 	this.clientName = null;
 	this.clientNameItems = [];
 	this.useAnimation = false;
 	this.isAnimationInProgress = false;
 	this.changedInPullRequest = false;
 	this.notChangeTotal = false;
+	this.itemActivityZeroClass = 'crm-kanban-item-activity-zero';
+	this.activityAddingPopup = null;
 };
 
 BX.CRM.Kanban.Item.prototype = {
@@ -158,7 +161,7 @@ BX.CRM.Kanban.Item.prototype = {
 
 	/**
 	 * Return full node for item.
-	 * @returns {DOMNode}
+	 * @returns {Element}
 	 */
 	render: function()
 	{
@@ -203,7 +206,7 @@ BX.CRM.Kanban.Item.prototype = {
 		const isAutomationDebugItem = data['isAutomationDebugItem'];
 		const additionalLabel =
 			isAutomationDebugItem
-				? '<span class="crm-kanban-debug-item-label">' + BX.message('CRM_KANBAN_ITEM_DEBUG_TITLE') + ' </span>'
+				? '<span class="crm-kanban-debug-item-label">' + BX.message('CRM_KANBAN_ITEM_DEBUG_TITLE_MSGVER_1') + ' </span>'
 				: ''
 		;
 		this.link.innerHTML = additionalLabel + this.clipTitle(data.name);
@@ -281,11 +284,89 @@ BX.CRM.Kanban.Item.prototype = {
 			}
 		}
 
+		BX.Dom.clean(this.lastActivityTime);
+		BX.Dom.clean(this.lastActivityBy);
+		const lastActivity = data.lastActivity;
+		if (BX.Type.isPlainObject(lastActivity) && BX.CRM.Kanban.Restriction.Instance.isLastActivityInfoInKanbanItemAvailable())
+		{
+			const timestamp = BX.Text.toInteger(lastActivity.timestamp);
+			if (timestamp > 0)
+			{
+				const userNow = BX.Crm.DateTime.Factory.getUserNow();
+				const userNowTimestamp = Math.round(userNow.getTime() / 1000);
+
+				let ago;
+				if (userNowTimestamp - timestamp <= 60)
+				{
+					// less than a minute
+					ago = BX.Text.encode(BX.Loc.getMessage('CRM_KANBAN_JUST_NOW'));
+				}
+				else
+				{
+					ago = BX.Main.Date.format(
+						[
+							['i', 'idiff'],
+							['H', 'Hdiff'],
+							['yesterday', 'yesterday'],
+							['m', BX.Crm.DateTime.Dictionary.Format.DAY_SHORT_MONTH_FORMAT],
+							['-', BX.Crm.DateTime.Dictionary.Format.MEDIUM_DATE_FORMAT],
+						],
+						timestamp,
+						userNow,
+					);
+				}
+
+				BX.Dom.append(
+					BX.Tag.render`<span class="crm-kanban-item-last-activity-time-ago">${ago}</span>`,
+					this.lastActivityTime,
+				);
+			}
+
+			const lastActivityBy = lastActivity.user;
+			if (BX.Type.isPlainObject(lastActivityBy))
+			{
+				let pictureStyle = '';
+				if (BX.Type.isStringFilled(lastActivityBy.picture))
+				{
+					const currentUrl = new BX.Uri(window.location.href);
+					const pictureUrl = new BX.Uri(lastActivityBy.picture);
+
+					if (
+						//relative url
+						pictureUrl.getHost() === ''
+						|| currentUrl.getHost() === pictureUrl.getHost()
+					)
+					{
+						pictureStyle = `style="background-image: url(${encodeURI(BX.Text.encode(pictureUrl.toString()))})"`;
+					}
+				}
+
+				let href = '#';
+				if (BX.Type.isStringFilled(lastActivityBy.link) && lastActivityBy.link.startsWith('/'))
+				{
+					href = lastActivityBy.link;
+				}
+
+				BX.Dom.append(
+					BX.Tag.render`<a
+ 						class="crm-kanban-item-last-activity-by-userpic"
+ 						href="${BX.Text.encode(href)}"
+ 						bx-tooltip-user-id="${BX.Text.toInteger(lastActivityBy.id)}"
+						${pictureStyle}></a>`
+					,
+					this.lastActivityBy
+				);
+			}
+		}
+
 		if (this.needRenderFields())
 		{
 			this.fieldsWrapper.innerHTML = null;
 			this.layoutFields();
 		}
+
+		BX.Dom.clean(this.badgesWrapper);
+		this.layoutBadges();
 
 		layout = this.container;
 
@@ -294,8 +375,8 @@ BX.CRM.Kanban.Item.prototype = {
 
 	needRenderFields: function()
 	{
-		var wrapperCreated = this.fieldsWrapper ? true : false;
-		var itemHasFields = this.getData().fields ? true : false;
+		var wrapperCreated = !!this.fieldsWrapper;
+		var itemHasFields = !!this.getData().fields;
 
 		return wrapperCreated && itemHasFields;
 	},
@@ -479,6 +560,32 @@ BX.CRM.Kanban.Item.prototype = {
 					]
 				}))
 			}
+		}
+	},
+
+	layoutBadges: function()
+	{
+		for (let i = 0; i < this.data.badges.length; i++)
+		{
+			const badge = this.data.badges[i];
+
+			const badgeValueClass = 'crm-kanban-item-fields-item-value crm-kanban-item-status';
+			const badgeValueStyle = `
+				background-color: ${badge.backgroundColor};
+				border-color: ${badge.backgroundColor};
+				color: ${badge.textColor};
+			`;
+
+			const item = BX.Tag.render`
+				<div class="crm-kanban-item-fields-item">
+					<div class="crm-kanban-item-fields-item-title">
+						<div class="crm-kanban-item-fields-item-title-text">${badge.fieldName}</div>
+					</div>
+					<div class="${badgeValueClass}" style="${badgeValueStyle}">${badge.textValue}</div>
+				</div>
+			`;
+
+			BX.Dom.append(item, this.badgesWrapper);
 		}
 	},
 
@@ -984,14 +1091,13 @@ BX.CRM.Kanban.Item.prototype = {
 		});
 		this.container.appendChild(this.checkedButton);
 
-		if(false && this.data.fieldsEditor)
-		{
-			this.container.appendChild(this.getItemFieldsEditor());
-		}
-		else if(this.data.fields.length > 0)
+		if(this.data.fields.length)
 		{
 			this.container.appendChild(this.getItemFields());
 		}
+
+		this.badgesWrapper = BX.Tag.render`<div class="crm-kanban-item-badges"></div>`;
+		BX.Dom.append(this.badgesWrapper, this.container);
 
 		// plan
 		if (gridData.showActivity)
@@ -1025,7 +1131,7 @@ BX.CRM.Kanban.Item.prototype = {
 				props: {
 					className: "crm-kanban-item-plan"
 				},
-				text: "+ " + BX.message("CRM_KANBAN_ACTIVITY_TO_PLAN"),
+				text: "+ " + BX.message("CRM_KANBAN_ACTIVITY_TO_PLAN2"),
 				events: {
 					click: BX.delegate(this.showPlannerMenu, this)
 				}
@@ -1035,10 +1141,8 @@ BX.CRM.Kanban.Item.prototype = {
 					className: "crm-kanban-item-planner"
 				},
 				children: [
-					this.activityEmpty,
-					this.activityExist,
-					this.activityPlan
-				]
+					this.activityPlan,
+				],
 			});
 			this.container.appendChild(this.planner);
 		}
@@ -1073,12 +1177,23 @@ BX.CRM.Kanban.Item.prototype = {
 				className: "crm-kanban-item-connect"
 			},
 			children: [
+				this.activityEmpty,
+				this.activityExist,
 				this.contactPhone,
 				this.contactEmail,
-				this.contactIm
-			]
+				this.contactIm,
+			],
 		});
 		this.container.appendChild(this.contactBlock);
+
+		this.lastActivityTime = BX.Tag.render`<div class="crm-kanban-item-last-activity-time"></div>`;
+		this.lastActivityBy = BX.Tag.render`<div class="crm-kanban-item-last-activity-by"></div>`;
+
+		this.lastActivityBlock =
+			BX.Tag.render`<div class="crm-kanban-item-last-activity">${this.lastActivityTime}${this.lastActivityBy}</div>`
+		;
+		this.container.appendChild(this.lastActivityBlock);
+
 		// hover / shadow
 		this.container.appendChild(this.createShadow());
 	},
@@ -1466,37 +1581,68 @@ BX.CRM.Kanban.Item.prototype = {
 	 */
 	showPlannerMenu: function(node)
 	{
-		var popupMenu = BX.PopupMenu.create(
-			"kanban_planner_menu_" + this.getId(),
-			node.isNode ? node : this.activityPlan,
-			this.getPlannerMenu(),
-			{
-				className: "crm-kanban-planner-popup-window",
-				autoHide: true,
-				offsetLeft: 50,
-				angle: true,
-				overlay: {
-					backgroundColor: "transparent",
-					opacity: "0"
-				},
-				events: {
-					onPopupClose: function()
-					{
-						BX.removeClass(this.container, "crm-kanban-item-hover");
-						BX.unbind(window, "scroll", BX.proxy(this.adjustPopup, this));
-						popupMenu.destroy()
-					}.bind(this)
-				}
-			}
-		);
+		const id = this.getId();
+		const popupId = `kanban_planner_menu_${id}`;
+		const bindElement = node.isNode ? node : this.activityPlan;
 
-		BX.addCustomEvent(window, "Crm.Kanban:selectPlannerMenu", function()
+		if (BX.CRM.Kanban.Restriction.Instance.isTodoActivityCreateAvailable())
 		{
-			popupMenu.destroy()
-		});
+			if (!this.activityAddingPopup)
+			{
+				this.activityAddingPopup = new BX.Crm.Activity.AddingPopup(
+					this.getGridData().entityTypeInt,
+					id,
+					{
+						events: {
+							onSave: function() {
+								void this.animate({
+									duration: this.grid.animationDuration,
+									draw: function(progress) {
+										this.layout.container.style.opacity = 100 - progress * 50 + '%';
+									}.bind(this),
+									useAnimation: (this.layout.container.style.opacity === '1'),
+								});
+							}.bind(this)
+						}
+					}
+				);
+			}
+			this.activityAddingPopup.show(bindElement);
+		}
+		else
+		{
+			var popupMenu = BX.PopupMenu.create(
+				popupId,
+				bindElement,
+				this.getPlannerMenu(),
+				{
+					className: "crm-kanban-planner-popup-window",
+					autoHide: true,
+					offsetLeft: 50,
+					angle: true,
+					overlay: {
+						backgroundColor: "transparent",
+						opacity: "0"
+					},
+					events: {
+						onPopupClose: function()
+						{
+							BX.removeClass(this.container, "crm-kanban-item-hover");
+							BX.unbind(window, "scroll", BX.proxy(this.adjustPopup, this));
+							popupMenu.destroy()
+						}.bind(this)
+					}
+				}
+			);
 
-		popupMenu.show();
-		BX.bind(window, "scroll", BX.proxy(this.adjustPopup, this));
+			BX.addCustomEvent(window, "Crm.Kanban:selectPlannerMenu", function()
+			{
+				popupMenu.destroy()
+			});
+
+			popupMenu.show();
+			BX.bind(window, "scroll", BX.proxy(this.adjustPopup, this));
+		}
 	},
 
 	/**
@@ -1521,18 +1667,19 @@ BX.CRM.Kanban.Item.prototype = {
 			this.switchVisible(this.activityExist, false);
 			this.switchVisible(this.activityPlan, true);
 			this.switchVisible(this.activityEmpty, true);
-			if (
-				gridData.reckonActivitylessItems &&
-				gridData.userId == data.assignedBy
-			)
+
+			var activityEmptyHtml = '';
+			if (gridData.reckonActivitylessItems && gridData.userId === parseInt(data.assignedBy, 10))
 			{
-				this.activityEmpty.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY") +
-					(columnData.type === "PROGRESS" ? " <span>1</span>" : "");
+				activityEmptyHtml = (columnData.type === "PROGRESS" ? this.getActivityCounterHtml(1) : '');
 			}
 			else
 			{
-				this.activityEmpty.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY");
+				activityEmptyHtml = this.getActivityCounterHtml(0);
+				this.activityEmpty.classList.add(this.itemActivityZeroClass);
 			}
+
+			this.activityEmpty.innerHTML = activityEmptyHtml;
 		}
 	},
 
@@ -1543,13 +1690,103 @@ BX.CRM.Kanban.Item.prototype = {
 			var data = this.getData();
 			var column = this.getColumn();
 			var columnData = column.getData();
-			this.activityExist.innerHTML = BX.message("CRM_KANBAN_ACTIVITY_MY") +
-				(
-					(data.activityErrorTotal && columnData.type === "PROGRESS")
-						? " <span>" + data.activityErrorTotal + "</span>"
-						: ""
-				);
+
+			if (columnData.type !== 'PROGRESS')
+			{
+				return;
+			}
+
+			var html = '';
+
+			this.activityExist.classList.remove(...this.activityExist.classList);
+			this.activityExist.classList.add('crm-kanban-item-activity');
+
+			const userId = this.getGrid().getData().userId;
+
+			if (userId !== BX.prop.getNumber(this.data, 'assignedBy', 0))
+			{
+				html = this.getActivityCounterHtml(data.activityCounterTotal);
+				if (data.activityProgress && !data.activityCounterTotal)
+				{
+					html += this.getActivitiesIndicatorHtml(data, userId);
+				}
+
+				this.activityExist.classList.add(this.itemActivityZeroClass);
+			}
+			else
+			{
+				if (data.activityErrorTotal && data.activityIncomingTotal)
+				{
+					html = this.getActivityCounterHtml(
+						data.activityCounterTotal,
+						'crm-kanban-item-activity-all-counters'
+					);
+				}
+				else if (data.activityErrorTotal)
+				{
+					html = this.getActivityCounterHtml(
+						data.activityErrorTotal,
+						'crm-kanban-item-activity-deadline-counter'
+					);
+				}
+				else if (data.activityIncomingTotal)
+				{
+					html = this.getActivityCounterHtml(
+						data.activityIncomingTotal,
+						'crm-kanban-item-activity-incoming-counter'
+					);
+				}
+				else
+				{
+					html = this.getActivityCounterHtml(0);
+					this.activityExist.classList.add(this.itemActivityZeroClass);
+
+					if (data.activityProgress && !data.activityCounterTotal)
+					{
+						html += this.getActivitiesIndicatorHtml(data, userId);
+					}
+				}
+			}
+
+			if (html.length)
+			{
+				this.activityExist.innerHTML = html;
+			}
 		}
+	},
+
+	getActivityCounterHtml(value, additionalClass = '')
+	{
+		if (value > 99)
+		{
+			value = '99+';
+			additionalClass += ' crm-kanban-item-activity-counter--narrow';
+		}
+		else
+		{
+			value = String(value);
+		}
+
+		return `
+			<span class="crm-kanban-item-activity-counter ${additionalClass}">
+				${value}
+			</span>
+		`;
+	},
+
+	getActivitiesIndicatorHtml(data, userId)
+	{
+		let indicatorClassName = 'crm-kanban-item-activity-indicator';
+		if (!(
+			data.activitiesByUser
+			&& data.activitiesByUser[userId]
+			&& data.activitiesByUser[userId]['activityProgress']
+		))
+		{
+			indicatorClassName += ' crm-kanban-item-activity-indicator--grey';
+		}
+
+		return `<span class="${indicatorClassName}"></span>`;
 	},
 
 	/**
@@ -1853,8 +2090,14 @@ BX.CRM.Kanban.Item.prototype = {
 	 */
 	isItemMoveDisabled: function()
 	{
-		var itemColumnData = this.getColumn().getData();
 		var grid = this.getGrid();
+
+		if (!grid.options.canChangeItemStage)
+		{
+			return true;
+		}
+
+		var itemColumnData = this.getColumn().getData();
 		return (grid.getTypeInfoParam('disableMoveToWin') && itemColumnData.type === "WIN");
 	},
 }

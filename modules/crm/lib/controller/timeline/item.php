@@ -4,6 +4,7 @@
 namespace Bitrix\Crm\Controller\Timeline;
 
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
@@ -34,6 +35,72 @@ class Item extends \Bitrix\Crm\Controller\Base
 			return;
 		}
 		$this->setPinned($id, $ownerTypeId, $ownerId, false);
+	}
+
+	public function loadAction(
+		int $ownerTypeId,
+		int $ownerId,
+		string $context = Service\Timeline\Context::DESKTOP,
+		array $activityIds = [],
+		array $historyIds = []
+	): array
+	{
+		$permissions = Container::getInstance()->getUserPermissions();
+		if (!$permissions->checkReadPermissions($ownerTypeId, $ownerId))
+		{
+			$this->addError(\Bitrix\Crm\Controller\ErrorCode::getAccessDeniedError());
+
+			return [];
+		}
+
+		$identifier = new ItemIdentifier($ownerTypeId, $ownerId);
+
+		$allowedContexts = [
+			Service\Timeline\Context::DESKTOP,
+			Service\Timeline\Context::MOBILE,
+		];
+		$context = in_array($context, $allowedContexts) ? $context : Service\Timeline\Context::DESKTOP;
+		$context = new Service\Timeline\Context($identifier, $context);
+
+		$repository = new Service\Timeline\Repository($context);
+
+		$activityIds = array_map(function ($id) {
+			$id = explode('_', $id);
+			return $id[1] && is_numeric($id[1]) ? (int)$id[1] : null;
+		}, $activityIds);
+
+		$activityIds = array_filter($activityIds);
+
+		$historyIds = array_map('intval', $historyIds);
+
+		$result = [];
+
+		if (!empty($activityIds))
+		{
+			$query = (new Service\Timeline\Repository\Query())
+				->setFilter([ '@ID' => $activityIds ])
+				->setLimit(100);
+			$scheduled = $repository->getScheduledItems($query)->getItems();
+			foreach ($scheduled as $item)
+			{
+				$result[$item->getModel()->getId()] = $item;
+			}
+		}
+
+		if (!empty($historyIds))
+		{
+			$query = (new Service\Timeline\Repository\Query())
+				->setFilter([ 'ID' => $historyIds ])
+				->setLimit(100);
+
+			$history = $repository->getHistoryItemsPage($query)->getItems();
+			foreach ($history as $item)
+			{
+				$result[$item->getModel()->getId()] = $item;
+			}
+		}
+
+		return $result;
 	}
 
 	private function checkBinding(int $id, int $ownerTypeId, int $ownerId): bool

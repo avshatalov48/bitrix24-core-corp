@@ -14,30 +14,29 @@ use \Bitrix\ImOpenLines\Im,
  */
 class WorkTime
 {
-	/**Session*/
+	/** @var Session */
 	protected $sessionManager = null;
 	protected $session = [];
 	protected $config = [];
 	/**Chat*/
-	protected $chat = null;
+	//protected $chat = null;
 
 	/**
 	 * Queue constructor.
 	 * @param Session $session
 	 */
-	function __construct($session)
+	public function __construct($session)
 	{
 		$this->sessionManager = $session;
 		$this->session = $session->getData();
 		$this->config = $session->getConfig();
-		$this->chat = $session->getChat();
+		//$this->chat = $session->getChat();
 	}
 
 	/**
 	 * Is the current time the working time of the open line?
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ObjectException
 	 */
 	public function isWorkTimeLine(): bool
 	{
@@ -45,7 +44,7 @@ class WorkTime
 
 		if ($this->config['WORKTIME_ENABLE'] != 'N')
 		{
-			$timezone = !empty($this->config["WORKTIME_TIMEZONE"])? new \DateTimeZone($this->config["WORKTIME_TIMEZONE"]) : null;
+			$timezone = !empty($this->config["WORKTIME_TIMEZONE"]) ? new \DateTimeZone($this->config["WORKTIME_TIMEZONE"]) : null;
 			$numberDate = new DateTime(null, null, $timezone);
 
 			if (!empty($this->config['WORKTIME_DAYOFF']))
@@ -103,22 +102,17 @@ class WorkTime
 	 * @param bool $finish
 	 * @param bool $vote
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
-	public function checkOperatorWorkTime($finish = false, $vote = false):bool
+	public function checkOperatorWorkTime($finish = false, $vote = false): bool
 	{
 		if(
-			$this->config['CHECK_AVAILABLE'] === 'Y' &&
-			Config::isTimeManActive()
+			$this->config['CHECK_AVAILABLE'] === 'Y'
+			&& Config::isTimeManActive()
 		)
 		{
 			$queueManager = Queue::initialization($this->sessionManager);
 
-			//Dialog is accepted by the operator.
+			// Dialog is accepted by the operator.
 			if(
 				$this->session['OPERATOR_ID'] > 0 && $this->session['STATUS'] >= Session::STATUS_ANSWER &&
 				$queueManager->isRemoveSession($finish, $vote) === false
@@ -155,36 +149,27 @@ class WorkTime
 	 */
 	public function automaticAddMessage($finish = false, $vote = false)
 	{
-		$result = $this->sendMessage($finish, $vote);
-
-		return $result;
+		return $this->sendMessage($finish, $vote);
 	}
 
 	/**
 	 * Automatic processing of outgoing message.
 	 *
 	 * @return bool
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public function automaticSendMessage()
 	{
-		$result = true;
-
 		if (
-			$this->session['SEND_NO_WORK_TIME_TEXT'] != 'N' &&
-			!empty($this->session['OPERATOR_ID']) &&
-			Queue::isRealOperator($this->session['OPERATOR_ID']) &&
-			$this->checkOperatorWorkTime()
+			$this->session['SEND_NO_WORK_TIME_TEXT'] != 'N'
+			&& !empty($this->session['OPERATOR_ID'])
+			&& Queue::isRealOperator($this->session['OPERATOR_ID'])
+			&& $this->checkOperatorWorkTime()
 		)
 		{
 			$this->sessionManager->update(['SEND_NO_WORK_TIME_TEXT' => 'N']);
 		}
 
-		return $result;
+		return true;
 	}
 
 	/**
@@ -198,12 +183,13 @@ class WorkTime
 	{
 		$result = false;
 
-		if(
-			$this->config['WORKTIME_DAYOFF_RULE'] == Session::RULE_TEXT && isset($this->config['WORKTIME_DAYOFF_TEXT']) &&
-			$this->session['SEND_NO_WORK_TIME_TEXT'] != 'Y' &&
-			$this->sessionManager->isEnableSendSystemMessage() &&
-			$this->sessionManager->getAction() != Session::ACTION_CLOSED &&
-			!$this->checkOperatorWorkTime($finish, $vote)
+		if (
+			$this->config['WORKTIME_DAYOFF_RULE'] == Session::RULE_TEXT
+			&& isset($this->config['WORKTIME_DAYOFF_TEXT'])
+			&& $this->session['SEND_NO_WORK_TIME_TEXT'] != 'Y'
+			&& $this->sessionManager->isEnableSendSystemMessage()
+			&& $this->sessionManager->getAction() != Session::ACTION_CLOSED
+			&& !$this->checkOperatorWorkTime($finish, $vote)
 		)
 		{
 			$result = Im::addMessage([
@@ -211,6 +197,7 @@ class WorkTime
 				'MESSAGE' => $this->config['WORKTIME_DAYOFF_TEXT'],
 				'SYSTEM' => 'Y',
 				'IMPORTANT_CONNECTOR' => 'Y',
+				'NO_SESSION_OL' => 'Y',
 				'PARAMS' => [
 					'CLASS'=> 'bx-messenger-content-item-ol-output',
 					'IMOL_FORM' => 'offline',

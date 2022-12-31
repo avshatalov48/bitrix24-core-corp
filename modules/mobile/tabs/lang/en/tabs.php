@@ -1,6 +1,5 @@
 <?php
-$MESS["TAB_NAME_CALLTRACKER"] = "Call tracker";
-$MESS["TAB_NAME_CALLTRACKER_SHORT"] = "Calls";
+$MESS["TAB_NAME_CRM"] = "CRM";
 $MESS["TAB_NAME_IM_OPENLINES"] = "Open Channels";
 $MESS["TAB_NAME_IM_OPENLINES_SHORT"] = "Open Channels";
 $MESS["TAB_NAME_IM_RECENT"] = "Chats";

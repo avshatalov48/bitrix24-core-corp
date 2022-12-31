@@ -7,6 +7,7 @@ use Bitrix\Crm\Conversion\Exception\AutocreationDisabledException;
 use Bitrix\Crm\Conversion\Exception\CreationFailedException;
 use Bitrix\Crm\Conversion\Exception\DestinationHasWorkflowsException;
 use Bitrix\Crm\Conversion\Exception\DestinationItemNotFoundException;
+use Bitrix\Crm\Conversion\Exception\NoActiveDestinationsException;
 use Bitrix\Crm\Conversion\Exception\SourceHasParentException;
 use Bitrix\Crm\Conversion\Exception\SourceItemNotFoundException;
 use Bitrix\Crm\Integration\Channel\DealChannelBinding;
@@ -132,7 +133,13 @@ class EntityConverter
 
 	final public function convert(): void
 	{
-		foreach ($this->config->getActiveItems() as $configItem)
+		$items = $this->config->getActiveItems();
+		if (empty($items))
+		{
+			throw new NoActiveDestinationsException($this->sourceFactory->getEntityTypeId());
+		}
+
+		foreach ($items as $configItem)
 		{
 			$this->convertByConfigItem($configItem);
 		}

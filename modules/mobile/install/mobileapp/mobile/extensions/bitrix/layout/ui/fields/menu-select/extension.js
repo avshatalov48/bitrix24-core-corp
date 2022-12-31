@@ -1,23 +1,80 @@
-(() => {
+/**
+ * @module layout/ui/fields/menu-select
+ */
+jn.define('layout/ui/fields/menu-select', (require, exports, module) => {
+
+	const { BaseSelectField } = require('layout/ui/fields/base-select');
+
 	/**
-	 * @class Fields.MenuSelect
+	 * @class MenuSelectField
 	 */
-	class MenuSelect extends Fields.BaseField
+	class MenuSelectField extends BaseSelectField
 	{
-		getDefaultStyles()
+		getConfig()
 		{
+			const config = super.getConfig();
+
 			return {
-				...super.getDefaultStyles(),
-				selectorWrapper: {
-					flexDirection: 'row',
-					alignItems: 'center',
-				},
-				value: {
-					color: '#333333',
-					fontSize: 16,
-					marginRight: 4,
-				},
+				...config,
+				menuTitle: BX.prop.getString(config, 'menuTitle', ''),
+				items: this.getMenuItems(config),
+				showIcon: BX.prop.getBoolean(config, 'showIcon', false),
+				partiallyHidden: BX.prop.getBoolean(config, 'partiallyHidden', false),
+				defaultSectionCode: BX.prop.getString(config, 'defaultSectionCode', 'default'),
+				emptyValueIcon: BX.prop.getString(config, 'emptyValueIcon', ''),
 			};
+		}
+
+		getMenuItems(config)
+		{
+			let items = BX.prop.getArray(config, 'menuItems', []);
+
+			if (!items.length)
+			{
+				items = BX.prop.getArray(config, 'items', []);
+			}
+
+			return items;
+
+		}
+
+		shouldShowIcon()
+		{
+			return this.getConfig().showIcon;
+		}
+
+		shouldShowPartiallyHidden()
+		{
+			return this.getConfig().partiallyHidden;
+		}
+
+		getItemId(item)
+		{
+			return item.id;
+		}
+
+		getSelectedItem()
+		{
+			return this.getItems().find((item) => this.getItemId(item) === this.getValue());
+		}
+
+		getSelectedItemTitle()
+		{
+			const selectedItem = this.getSelectedItem();
+
+			return selectedItem ? selectedItem.title : BX.message('FIELDS_SELECT_EMPTY_TEXT');
+		}
+
+		getSelectedItemIcon()
+		{
+			if (!this.shouldShowIcon())
+			{
+				return null;
+			}
+
+			const selectedItem = this.getSelectedItem();
+
+			return (selectedItem ? selectedItem.icon : null);
 		}
 
 		renderReadOnlyContent()
@@ -27,25 +84,47 @@
 				return this.renderEmptyContent();
 			}
 
-			return Text(
+			return View(
 				{
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				(this.getSelectedItemIcon() && Image({
+					style: this.styles.icon,
+					svg: {
+						content: this.getSelectedItemIcon(),
+					},
+				})),
+				Text({
 					style: this.styles.value,
-					text: this.props.value
-				}
+					text: this.getSelectedItemTitle(),
+				}),
 			);
 		}
 
 		renderEditableContent()
 		{
+			if (this.isEmpty() && this.props.emptyValue)
+			{
+				return this.renderEmptyContent();
+			}
+
 			return View(
 				{
 					style: this.styles.selectorWrapper,
 				},
+				(this.getSelectedItemIcon() && Image({
+					style: this.styles.icon,
+					svg: {
+						content: this.getSelectedItemIcon(),
+					},
+				})),
 				Text({
 					style: this.styles.value,
 					numberOfLines: 1,
 					ellipsize: 'end',
-					text: this.props.value || BX.message('FIELDS_SELECT_EMPTY_TEXT'),
+					text: this.getSelectedItemTitle(),
 				}),
 				Image({
 					style: {
@@ -60,33 +139,100 @@
 			);
 		}
 
-		focus()
+		renderEmptyContent()
 		{
-			super.focus();
+			const config = this.getConfig();
+
+			if (this.isReadOnly())
+			{
+				return View(
+					{
+						style: this.styles.selectorWrapper,
+					},
+					(config.emptyValueIcon && Image({
+						style: this.styles.icon,
+						svg: {
+							content: config.emptyValueIcon,
+						},
+					})),
+					super.renderEmptyContent(),
+				);
+			}
+			else if (this.props.emptyValue)
+			{
+				return View(
+					{
+						style: this.styles.selectorWrapper,
+					},
+					(config.emptyValueIcon && Image({
+						style: this.styles.icon,
+						svg: {
+							content: config.emptyValueIcon,
+						},
+					})),
+					Text({
+						style: this.styles.emptyValue,
+						numberOfLines: 1,
+						ellipsize: 'end',
+						text: this.props.emptyValue,
+					}),
+					Image({
+						style: {
+							width: 7,
+							height: 5,
+						},
+						resizeMode: 'center',
+						svg: {
+							content: `<svg width="7" height="5" viewBox="0 0 7 5" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.09722 0.235352L4.02232 2.31025L3.49959 2.8249L2.98676 2.31025L0.91186 0.235352L0.179688 0.967524L3.50451 4.29235L6.82933 0.967524L6.09722 0.235352Z" fill="#A8ADB4"/></svg>`,
+						},
+					}),
+				);
+			}
+
+			return super.renderEmptyContent();
+		}
+
+		isSelected({ id })
+		{
+			const values = this.getValuesArray();
+
+			return values.includes(id);
+		}
+
+		handleAdditionalFocusActions()
+		{
+			const { menuTitle, defaultSectionCode, shouldResizeContent } = this.getConfig();
 
 			const contextMenu = new ContextMenu({
 				params: {
 					showCancelButton: false,
-					title: (this.props.menuTitle || ''),
+					showActionLoader: false,
+					title: menuTitle,
+					showPartiallyHidden: this.shouldShowPartiallyHidden(),
+					shouldResizeContent
 				},
-				actions: this.props.menuItems.map((item) => ({
+				actions: this.getItems().map((item) => ({
 					id: String(item.id),
 					title: String(item.title),
 					subtitle: (item.subtitle ? String(item.subtitle) : ''),
-					isSelected: item.isSelected,
+					isSelected: this.isSelected(item),
 					isDisabled: item.isDisabled,
 					data: {
 						svgIcon: item.icon,
+						imgUri: item.img,
 					},
+					sectionCode: (item.sectionCode || defaultSectionCode),
 					onClickCallback: () => new Promise((resolve) => {
 						contextMenu.close(() => this.handleChange(item.id, item.title));
-						resolve();
+						resolve({ closeMenu: false });
 					}),
 				})),
 			});
-			contextMenu.show(this.props.parentWidget).then(
+
+			return contextMenu.show(this.getParentWidget()).then(
 				() => this.setListeners(contextMenu.layoutWidget),
-				() => {}
+				() => {
+				},
 			);
 		}
 
@@ -115,8 +261,42 @@
 		{
 			super.removeFocus();
 		}
+
+		getDefaultStyles()
+		{
+			const styles = super.getDefaultStyles();
+
+			return {
+				...styles,
+				selectorWrapper: {
+					flexDirection: 'row',
+					alignItems: 'center',
+					height: 24,
+				},
+				emptyValue: {
+					...styles.emptyValue,
+					flex: undefined,
+					marginRight: 4,
+					marginLeft: (this.getConfig().emptyValueIcon ? 6 : undefined),
+				},
+				value: {
+					color: '#333333',
+					fontSize: 16,
+					marginRight: 4,
+					marginLeft: (this.getSelectedItemIcon() ? 6 : undefined),
+				},
+				icon: {
+					width: 24,
+					height: 24,
+					alignSelf: 'center',
+				},
+			};
+		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.MenuSelect = MenuSelect;
-})();
+	module.exports = {
+		MenuSelectType: 'menu-select',
+		MenuSelectField: (props) => new MenuSelectField(props),
+	};
+
+});

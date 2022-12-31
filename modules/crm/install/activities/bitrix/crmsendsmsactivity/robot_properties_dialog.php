@@ -16,7 +16,7 @@ if (!$selectedRecipientType)
 {
 	$selectedRecipientType = CBPCrmSendSmsActivity::RECIPIENT_TYPE_ENTITY;
 	$dialogContext = $dialog->getContext();
-	if (isset($dialogContext['ADD_MENU_CATEGORY']) && $dialogContext['ADD_MENU_CATEGORY'] === 'employee')
+	if (isset($dialogContext['addMenuGroup']) && in_array($dialogContext['addMenuGroup'], ['informingEmployee', 'employee_category']))
 	{
 		$selectedRecipientType = CBPCrmSendSmsActivity::RECIPIENT_TYPE_USER;
 	}

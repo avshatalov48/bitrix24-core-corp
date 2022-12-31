@@ -91,7 +91,7 @@ this.BX = this.BX || {};
 	  return DocumentManager;
 	}();
 
-	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8;
+	var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5, _templateObject6, _templateObject7, _templateObject8, _templateObject9;
 	var SPECIFIC_REALIZATION_ERROR_CODES = ['REALIZATION_ACCESS_DENIED', 'REALIZATION_CANNOT_DELETE', 'REALIZATION_ALREADY_DEDUCTED', 'REALIZATION_NOT_DEDUCTED', 'REALIZATION_PRODUCT_NOT_FOUND', 'SHIPMENT_ACCESS_DENIED', 'PAYMENT_ACCESS_DENIED'];
 	var SPECIFIC_ERROR_CODES = SPECIFIC_REALIZATION_ERROR_CODES.concat(['DEDUCTION_STORE_ERROR1', 'SALE_PROVIDER_SHIPMENT_QUANTITY_NOT_ENOUGH', 'SALE_SHIPMENT_EXIST_SHIPPED', 'SALE_PAYMENT_DELETE_EXIST_PAID', 'DDCT_DEDUCTION_QUANTITY_STORE_ERROR']);
 	var EntityEditorPaymentDocuments = /*#__PURE__*/function () {
@@ -110,6 +110,7 @@ this.BX = this.BX || {};
 	    this._rootNode = main_core.Tag.render(_templateObject || (_templateObject = babelHelpers.taggedTemplateLiteral(["<div class=\"", "\"></div>"])), this.constructor._rootNodeClass);
 	    this._menus = [];
 	    this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
+	    this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 	    this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
 	    this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
 
@@ -436,7 +437,8 @@ this.BX = this.BX || {};
 	  }, {
 	    key: "_renderRealizationDocument",
 	    value: function _renderRealizationDocument(doc) {
-	      var _this5 = this;
+	      var _this$_salesOrderRigh,
+	          _this5 = this;
 
 	      var labelOptions = {
 	        customClass: 'crm-entity-widget-payment-label',
@@ -463,53 +465,63 @@ this.BX = this.BX || {};
 	      var popupMenu;
 	      var menuItems = [];
 
-	      if (doc.DEDUCTED === 'Y') {
-	        menuItems.push({
-	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCEL'),
-	          className: doc.DEDUCTED === 'Y' ? '' : 'menu-popup-item-accept-sm',
-	          onclick: function onclick() {
-	            _this5._setRealizationDeductedStatus(doc, false);
+	      if ((_this$_salesOrderRigh = this._salesOrderRights) !== null && _this$_salesOrderRigh !== void 0 && _this$_salesOrderRigh.view) {
+	        var _this$_salesOrderRigh2, _this$_salesOrderRigh4, _this$_salesOrderRigh5;
 
-	            popupMenu.close();
+	        if (doc.DEDUCTED === 'Y' && (_this$_salesOrderRigh2 = this._salesOrderRights) !== null && _this$_salesOrderRigh2 !== void 0 && _this$_salesOrderRigh2.conduct) {
+	          var _this$_salesOrderRigh3;
+
+	          if ((_this$_salesOrderRigh3 = this._salesOrderRights) !== null && _this$_salesOrderRigh3 !== void 0 && _this$_salesOrderRigh3.conduct) {
+	            menuItems.push({
+	              text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCEL'),
+	              className: doc.DEDUCTED === 'Y' ? '' : 'menu-popup-item-accept-sm',
+	              onclick: function onclick() {
+	                _this5._setRealizationDeductedStatus(doc, false);
+
+	                popupMenu.close();
+	              }
+	            });
 	          }
-	        });
-	      } else {
-	        menuItems.push({
-	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CONDUCT'),
-	          className: doc.DEDUCTED === 'Y' ? 'menu-popup-item-accept-sm' : '',
-	          onclick: function onclick() {
-	            _this5._setRealizationDeductedStatus(doc, true);
+	        } else if (doc.DEDUCTED !== 'Y' && (_this$_salesOrderRigh4 = this._salesOrderRights) !== null && _this$_salesOrderRigh4 !== void 0 && _this$_salesOrderRigh4.cancel) {
+	          menuItems.push({
+	            text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CONDUCT'),
+	            className: doc.DEDUCTED === 'Y' ? 'menu-popup-item-accept-sm' : '',
+	            onclick: function onclick() {
+	              _this5._setRealizationDeductedStatus(doc, true);
 
-	            popupMenu.close();
-	          }
-	        });
-	      }
-
-	      menuItems.push({
-	        text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
-	        className: doc.DEDUCTED === 'Y' ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
-	        onclick: function onclick() {
-	          if (doc.DEDUCTED === 'Y') {
-	            return false;
-	          }
-
-	          popupMenu.close();
-	          ui_dialogs_messagebox.MessageBox.show({
-	            title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
-	            message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
-	            modal: true,
-	            buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
-	            onOk: function onOk(messageBox) {
-	              messageBox.close();
-
-	              _this5._removeDocument(doc);
-	            },
-	            onCancel: function onCancel(messageBox) {
-	              messageBox.close();
+	              popupMenu.close();
 	            }
 	          });
 	        }
-	      });
+
+	        if ((_this$_salesOrderRigh5 = this._salesOrderRights) !== null && _this$_salesOrderRigh5 !== void 0 && _this$_salesOrderRigh5["delete"]) {
+	          menuItems.push({
+	            text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
+	            className: doc.DEDUCTED === 'Y' ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
+	            onclick: function onclick() {
+	              if (doc.DEDUCTED === 'Y') {
+	                return false;
+	              }
+
+	              popupMenu.close();
+	              ui_dialogs_messagebox.MessageBox.show({
+	                title: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
+	                message: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
+	                modal: true,
+	                buttons: ui_dialogs_messagebox.MessageBoxButtons.OK_CANCEL,
+	                onOk: function onOk(messageBox) {
+	                  messageBox.close();
+
+	                  _this5._removeDocument(doc);
+	                },
+	                onCancel: function onCancel(messageBox) {
+	                  messageBox.close();
+	                }
+	              });
+	            }
+	          });
+	        }
+	      }
 
 	      var openSlider = function openSlider() {
 	        return _this5._viewRealizationSlider(doc.ID);
@@ -534,12 +546,14 @@ this.BX = this.BX || {};
 	        _this5._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU'), new ui_label.Label(labelOptions).render());
+	      var actionMenu = menuItems.length > 0 ? main_core.Tag.render(_templateObject6 || (_templateObject6 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t\t\t<div class=\"ui-label ui-label-md ui-label-light crm-entity-widget-payment-action\" onclick=\"", "\">\n\t\t\t\t\t\t<span class=\"ui-label-inner\">", "</span>\n\t\t\t\t\t</div>\n\t\t\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')) : '';
+	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-detail\">\n\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t", " (", ")\n\t\t\t\t</a>\n\t\t\t\t<div class=\"crm-entity-widget-payment-detail-inner\">\n\t\t\t\t\t", "\n\t\t\t\t\t", "\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, actionMenu, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderAddDocument",
 	    value: function _renderAddDocument() {
-	      var _this6 = this;
+	      var _this6 = this,
+	          _this$_salesOrderRigh6;
 
 	      var latestOrderId = this._latestOrderId();
 
@@ -561,7 +575,7 @@ this.BX = this.BX || {};
 
 	      var isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
 
-	      if (isAvailableInventoryManagement) {
+	      if (isAvailableInventoryManagement && (_this$_salesOrderRigh6 = this._salesOrderRights) !== null && _this$_salesOrderRigh6 !== void 0 && _this$_salesOrderRigh6.modify) {
 	        var menuItem = {
 	          text: main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT')
 	        };
@@ -593,13 +607,13 @@ this.BX = this.BX || {};
 	        _this6._menus.push(popupMenu);
 	      };
 
-	      return main_core.Tag.render(_templateObject7 || (_templateObject7 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
+	      return main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-add-box\">\n\t\t\t\t<a href=\"#\" class=\"crm-entity-widget-payment-add\" onclick=\"", "\">\n\t\t\t\t\t+ ", "\n\t\t\t\t</a>\n\t\t\t</div>\n\t\t"])), openMenu, main_core.Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_CREATE_DOCUMENT'));
 	    }
 	  }, {
 	    key: "_renderTotalSum",
 	    value: function _renderTotalSum() {
 	      var totalSum = this._options.TOTAL_AMOUNT;
-	      var node = main_core.Tag.render(_templateObject8 || (_templateObject8 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-total\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t\t<span data-hint=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"crm-entity-widget-payment-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
+	      var node = main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-widget-payment-total\">\n\t\t\t\t<span>\n\t\t\t\t\t", "\n\t\t\t\t\t<span data-hint=\"", "\"></span>\n\t\t\t\t</span>\n\t\t\t\t<span class=\"crm-entity-widget-payment-text\">", "</span>\n\t\t\t</div>\n\t\t"])), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM'), this._getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_TOTAL_SUM_TOOLTIP'), this._renderMoney(totalSum));
 	      BX.UI.Hint.init(node);
 	      return node;
 	    }
@@ -1178,7 +1192,7 @@ this.BX = this.BX || {};
 	}();
 	babelHelpers.defineProperty(EntityEditorPaymentDocuments, "_rootNodeClass", 'crm-entity-widget-inner crm-entity-widget-inner--payment');
 
-	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
+	var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6$1, _templateObject7$1, _templateObject8$1, _templateObject9$1, _templateObject10, _templateObject11, _templateObject12, _templateObject13, _templateObject14;
 	var TimelineSummaryDocuments = /*#__PURE__*/function (_EntityEditorPaymentD) {
 	  babelHelpers.inherits(TimelineSummaryDocuments, _EntityEditorPaymentD);
 
@@ -1372,7 +1386,7 @@ this.BX = this.BX || {};
 	        return _this5._viewRealizationSlider(doc.ID);
 	      };
 
-	      return main_core.Tag.render(_templateObject9 || (_templateObject9 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
+	      return main_core.Tag.render(_templateObject9$1 || (_templateObject9$1 = babelHelpers.taggedTemplateLiteral(["\n\t\t\t<div class=\"crm-entity-stream-content-detail-table-row\">\n\t\t\t\t<div class=\"crm-entity-stream-content-document-description\">\n\t\t\t\t\t<a class=\"ui-link\" onclick=\"", "\">\n\t\t\t\t\t\t", " (", ")\n\t\t\t\t\t</a>\n\t\t\t\t\t<span class=\"crm-entity-stream-content-document-description__label\">\n\t\t\t\t\t\t", "\n\t\t\t\t\t</span>\n\t\t\t\t</div>\n\t\t\t</div>\n\t\t"])), openSlider, title, sum, new ui_label.Label(labelOptions).render());
 	    }
 	  }, {
 	    key: "_renderTotalSum",

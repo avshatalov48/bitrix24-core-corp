@@ -11,6 +11,7 @@ $MESS["BPC_MES_CREATE_TASK"] = "Aufgabe erstellen";
 $MESS["BPC_MES_CREATE_TASK_RESULT"] = "Als Zusammenfassung des Aufgabenstatus markieren";
 $MESS["BPC_MES_DELETE"] = "Löschen";
 $MESS["BPC_MES_DELETE_POST_CONFIRM"] = "Möchten Sie den Kommentar wirklich löschen?";
+$MESS["BPC_MES_DELETE_TASK_RESULT"] = "Zusammenfassung des Status löschen";
 $MESS["BPC_MES_EDIT"] = "Bearbeiten";
 $MESS["BPC_MES_HIDE"] = "Ausblenden";
 $MESS["BPC_MES_REMOVE_TASK_RESULT"] = "Markierung als Zusammenfassung des Aufgabenstatus aufheben";

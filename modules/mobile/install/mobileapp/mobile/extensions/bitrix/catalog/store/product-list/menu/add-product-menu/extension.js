@@ -13,6 +13,7 @@
 				actions: this.items,
 				params: {
 					showCancelButton: true,
+					showActionLoader: false,
 				}
 			});
 		}

@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","ProductRow"],"mappings":"AAGAA,GAAGC,OAAO,0BAA0B,CAACC,EAASC,EAASC,KAEtD,MAAMC,WAAEA,GAAeH,EAAQ,sCAE/BE,EAAOD,QAAU,CAAEE,WAAAA","file":"extension.map.js"}

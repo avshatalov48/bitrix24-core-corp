@@ -1,4 +1,5 @@
 import {DateTimeFormat} from 'main.date';
+import { DatetimeConverter } from 'crm.timeline.tools';
 
 export const CalendarIcon = {
 	props: {
@@ -10,19 +11,21 @@ export const CalendarIcon = {
 	},
 
 	computed: {
-
+		userTime() {
+			return DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().getValue();
+		},
 		date() {
-			return DateTimeFormat.format('d', this.timestamp);
+			return DateTimeFormat.format('d', this.userTime);
 		},
 		month() {
-			return DateTimeFormat.format('F', this.timestamp);
+			return DateTimeFormat.format('F', this.userTime);
 		},
 		dayWeek() {
-			return DateTimeFormat.format('D', this.timestamp);
+			return DateTimeFormat.format('D', this.userTime);
 		},
 
 		time() {
-			return DateTimeFormat.format('H:i', this.timestamp);
+			return DatetimeConverter.createFromServerTimestamp(this.timestamp).toUserTime().toTimeString();
 		},
 	},
 	template: `

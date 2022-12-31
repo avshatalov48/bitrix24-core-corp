@@ -3,6 +3,7 @@ $MESS["CRM_ORDER_PL_ADD"] = "Hinzufügen";
 $MESS["CRM_ORDER_PL_ADD_PRODUCT"] = "Produkt hinzufügen";
 $MESS["CRM_ORDER_PL_APPLY"] = "Anwenden";
 $MESS["CRM_ORDER_PL_AVAILABLE"] = "Verfügbar";
+$MESS["CRM_ORDER_PL_CATALOG_DENIED_HINT"] = "Sie haben nicht genügend Rechte, um den Katalog anzuzeigen.";
 $MESS["CRM_ORDER_PL_CHANGE"] = "Bearbeiten";
 $MESS["CRM_ORDER_PL_CHANGE_ITEM_IN_SHOPPING_CART"] = "Element des Warenkorbs bearbeiten";
 $MESS["CRM_ORDER_PL_CHOOSE_ACTION"] = "Aktion auswählen";

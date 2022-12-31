@@ -5,9 +5,11 @@ class Structure
 {
 	protected $data = null;
 	protected $rules = array();
-
+	private bool $classChanged;
+	protected static ?StructureChecker $checker = null;
 	public function __construct($data = array(), $rules = array())
 	{
+		$this->classChanged = true;
 		$this->setRules($rules);
 
 		if(is_array($data) && !empty($data))
@@ -75,14 +77,13 @@ class Structure
 
 	protected function check($value, $initial = false)
 	{
-		static $checker;
-
-		if(!$checker)
+		if(!self::$checker || $this->classChanged)
 		{
-			$checker = new StructureChecker($this->getRules());
+			self::$checker = new StructureChecker($this->getRules());
+			$this->classChanged = false;
 		}
 
-		return $checker->check($value, $initial);
+		return self::$checker->check($value, $initial);
 	}
 
 	public function getRules()

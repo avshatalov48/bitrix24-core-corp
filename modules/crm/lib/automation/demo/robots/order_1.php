@@ -59,6 +59,14 @@ HTML;
 	return 'base64,' . base64_encode($mailBody);
 };
 
+$runtime = CBPRuntime::getRuntime();
+
+$email = $runtime->getActivityDescription('CrmSendEmailActivity');
+$allowDelivery = $runtime->getActivityDescription('CrmSetOrderAllowDelivery');
+
+$emailTitle = $email['NAME'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_EMAIL_TITLE');
+$deliveryTitle = $allowDelivery['NAME'] ?? Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_ALLOW_DELIVERY_TITLE');
+
 return array(
 	'N' => array(
 		array (
@@ -72,7 +80,7 @@ return array(
 					'MessageFrom' => '',
 					'MessageTextEncoded' => '1',
 					'Attachment' => '',
-					'Title' => Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_EMAIL_TITLE'),
+					'Title' => $emailTitle,
 				),
 			'Name' => 'A55212_94855_26115_62703',
 			'Condition' =>
@@ -95,7 +103,7 @@ return array(
 					'MessageFrom' => '',
 					'MessageTextEncoded' => '1',
 					'Attachment' => '',
-					'Title' => Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_EMAIL_TITLE'),
+					'Title' => $emailTitle,
 				),
 			'Name' => 'A6399_28970_46418_16409',
 			'Delay' =>
@@ -123,7 +131,7 @@ return array(
 			'Type' => 'CrmSetOrderAllowDelivery',
 			'Properties' =>
 				array (
-					'Title' => Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_ALLOW_DELIVERY_TITLE'),
+					'Title' => $deliveryTitle,
 				),
 			'Name' => 'A22097_33160_61403_50820',
 		),
@@ -138,7 +146,7 @@ return array(
 					'MessageFrom' => '',
 					'MessageTextEncoded' => '1',
 					'Attachment' => '',
-					'Title' => Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_EMAIL_TITLE'),
+					'Title' => $emailTitle,
 				),
 			'Name' => 'A20358_3458_26512_35912',
 			'Condition' =>
@@ -163,7 +171,7 @@ return array(
 					'MessageFrom' => '',
 					'MessageTextEncoded' => '1',
 					'Attachment' => '',
-					'Title' => Loc::getMessage('CRM_AUTOMATION_DEMO_ORDER_1_EMAIL_TITLE'),
+					'Title' => $emailTitle,
 				),
 			'Name' => 'A35684_47771_46305_4412',
 			'Condition' =>

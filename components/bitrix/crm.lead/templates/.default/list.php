@@ -49,12 +49,6 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Lead)
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.counter.panel',
 		'',
@@ -64,11 +58,6 @@ else
 			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_LEAD_LIST']
 		)
 	);
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');
 

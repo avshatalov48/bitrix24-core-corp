@@ -53,7 +53,9 @@
 					}
 
 					return null;
-				}).catch((response) => console.error(response));
+				}).catch((response) => {
+					ErrorNotifier.showErrors(response.errors);
+				});
 			};
 		}
 

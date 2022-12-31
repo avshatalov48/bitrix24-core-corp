@@ -13,6 +13,7 @@ use Bitrix\Main\Error;
 use Bitrix\Main\Event;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
 
 abstract class Base extends Controller
 {
@@ -192,5 +193,30 @@ abstract class Base extends Controller
 		}
 
 		return $convertedFieldsInfo;
+	}
+
+	protected function prepareDatetime(string $datetime): ?DateTime
+	{
+		if ($this->getScope() === self::SCOPE_REST)
+		{
+			$datetime = \CRestUtil::unConvertDateTime($datetime, true);
+			if (!$datetime)
+			{
+				$this->addError(new Error(Loc::getMessage('CRM_CONTROLLER_BASE_WRONG_DATE_FORMAT'), 'WRONG_DATETIME_FORMAT'));
+
+				return null;
+			}
+		}
+
+		try
+		{
+			return DateTime::createFromUserTime($datetime);
+		}
+		catch(\Bitrix\Main\ObjectException $e)
+		{
+			$this->addError(new Error(Loc::getMessage('CRM_CONTROLLER_BASE_WRONG_DATE_FORMAT'), 'WRONG_DATETIME_FORMAT'));
+
+			return null;
+		}
 	}
 }

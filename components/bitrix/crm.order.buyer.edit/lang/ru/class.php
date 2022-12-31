@@ -1,6 +1,7 @@
 <?
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль CRM не установлен.";
 $MESS["CRM_MODULE_NOT_INSTALLED_SALE"] = "Модуль sale не установлен.";
+$MESS["CRM_MODULE_NOT_INSTALLED_CATALOG"] = "Модуль catalog не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен.";
 $MESS["CRM_ORDER_BUYER_EDIT_LOAD_USER_ERROR"] = "Покупатель не существует или к нему нет доступа.";
 $MESS["CRM_ORDER_BUYER_EDIT_SAVE_ERROR"] = "Во время сохранения произошла ошибка.";

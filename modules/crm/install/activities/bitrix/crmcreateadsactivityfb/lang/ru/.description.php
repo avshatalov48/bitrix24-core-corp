@@ -1,4 +1,6 @@
-<?
-$MESS["CRM_CREATE_ADS_NAME"] = "Реклама Facebook";
-$MESS["CRM_CREATE_ADS_DESC"] = "Добавляет email и телефонные номера в рекламную аудиторию Facebook";
-?>
+<?php
+
+$MESS['CRM_CREATE_ADS_NAME'] = 'Реклама Facebook';
+$MESS['CRM_CREATE_ADS_DESC'] = 'Добавляет email и телефонные номера в рекламную аудиторию Facebook';
+$MESS['CRM_CREATE_ADS_NAME_1'] = 'Добавить клиента в рекламную аудиторию Facebook';
+$MESS['CRM_CREATE_ADS_DESC_1'] = 'Добавляет обезличенные данные клиентов в аудиторию Facebook';

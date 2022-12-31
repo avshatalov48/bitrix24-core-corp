@@ -15,7 +15,7 @@
 }
 
 .crm-report-financial-rating-bold {
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-report-financial-rating-right {
@@ -107,7 +107,7 @@
 
 .crm-report-managersrating-grid-user-name {
 	max-width: 100%;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #2066B0;
 	text-overflow: ellipsis;
 	white-space: nowrap;

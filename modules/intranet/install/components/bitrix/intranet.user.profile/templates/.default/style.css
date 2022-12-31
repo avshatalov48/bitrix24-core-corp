@@ -1232,14 +1232,6 @@
 	transition: .1s;
 }
 
-.bx-ie11 .intranet-user-profile-tags-item {
-	display: block;
-}
-
-.bx-ie11 .intranet-user-profile-tags-item-title {
-	display: inline-block;
-}
-
 .intranet-user-profile-tags-item-disabled {
 	opacity: .4;
 	pointer-events: none;

@@ -62,6 +62,7 @@ $component = new class {
 
 		return [
 			'card' => $this->getDetailCard(),
+			'permissions' => \Bitrix\Mobile\Integration\Catalog\PermissionsProvider::getInstance()->getPermissions()
 		];
 	}
 };

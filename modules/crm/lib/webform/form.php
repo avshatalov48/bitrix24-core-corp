@@ -16,7 +16,6 @@ use Bitrix\Main\Type\DateTime;
 use Bitrix\SalesCenter;
 use Bitrix\Crm\UI\Webpack;
 use Bitrix\Crm\SiteButton;
-use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\WebForm\Internals;
 
 Loc::loadMessages(__FILE__);
@@ -699,7 +698,7 @@ class Form
 		}
 
 		$this->buildScript();
-		if ($isAdded)
+		if ($isAdded && (int)$this->params['TYPE_ID'] === Internals\FormTable::TYPE_DEFAULT)
 		{
 			LandingTable::createLanding($this->id, $result['NAME']);
 		}
@@ -801,17 +800,18 @@ class Form
 			?: $options['color']['primaryText'];
 
 		$options['backgroundImage'] = '';
-		$bgImageId = $this->params['BACKGROUND_IMAGE'];
-		if ($bgImageId && $file = \CFile::getByID($bgImageId)->fetch())
+		$bgImageId = $this->params['BACKGROUND_IMAGE'] ?? 0;
+		if ($bgImageId)
 		{
-			if ($file['~src'])
+			$bgImagePath = \CFile::getFileArray($bgImageId)['SRC'] ?? '';
+			if ($bgImagePath)
 			{
-				$options['backgroundImage'] = $file['~src'];
-			}
-			else
-			{
-				$options['backgroundImage'] = Main\Web\WebPacker\Builder::getDefaultSiteUri()
-					. \CFile::GetPath($bgImageId);
+				if (!preg_match('#^(https?://)#', $bgImagePath))
+				{
+					$bgImagePath = Main\Web\WebPacker\Builder::getDefaultSiteUri() . $bgImagePath;
+				}
+
+				$options['backgroundImage'] = $bgImagePath;
 			}
 		}
 
@@ -1454,9 +1454,9 @@ class Form
 			if ($field['type'] === Internals\FieldTable::TYPE_ENUM_DATETIME)
 			{
 				$activityFieldValues = array_map(
-					function ($fieldValue)
-					{
-						return DateTime::createFromUserTime($fieldValue)->getTimestamp();
+					static function ($fieldValue) {
+						$dateTimeWithAtomFormat = DateTime::tryParse($fieldValue, DATE_ATOM);
+						return ($dateTimeWithAtomFormat ?? DateTime::createFromUserTime($fieldValue))->getTimestamp();
 					},
 					$activityFieldValues
 				);
@@ -1622,10 +1622,12 @@ class Form
 					$resultRedirectUrl = null;
 					if ($resultEntity->getOrderId())
 					{
+						$excludedPaySystems = $this->params['FORM_SETTINGS']['DISABLED_PAY_SYSTEMS'] ?? [];
 						$urlInfo = SalesCenter\Integration\LandingManager::getInstance()->getUrlInfoByOrderId(
 							$resultEntity->getOrderId(),
 							[
-								'paymentId' => $resultEntity->getPaymentId() ?: 0
+								'paymentId' => $resultEntity->getPaymentId() ?: 0,
+								'excludedPS' => $excludedPaySystems
 							]
 						);
 						$resultRedirectUrl = $urlInfo['url'] ?? null;

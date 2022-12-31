@@ -6,16 +6,22 @@ class EntityCounterManager
 {
 	public static function parseCode($code)
 	{
-		$result = array(
+		$result = [
 			'ENTITY_TYPE_ID' => \CCrmOwnerType::Undefined,
 			'TYPE_ID' => EntityCounterType::UNDEFINED,
-			'EXTRAS' => array()
-
-		);
+			'EXTRAS' => [],
+		];
 
 		$parts = explode('_', $code);
 
 		$qty = count($parts);
+		if ($parts[$qty - 1] === \Bitrix\Crm\Counter\EntityCounterType::EXCLUDE_USERS_CODE_SUFFIX)
+		{
+			$result['EXTRAS']['EXCLUDE_USERS'] = true;
+			unset($parts[$qty - 1]);
+			$qty--;
+		}
+
 		if($qty >= 2)
 		{
 			$result['ENTITY_TYPE_ID'] = \CCrmOwnerType::ResolveID($parts[1]);
@@ -99,6 +105,7 @@ class EntityCounterManager
 				}
 			}
 		}
+		$excludeUsers = (bool)($extras['EXCLUDE_USERS'] ?? false);
 
 		foreach($typeIDs as $typeID)
 		{
@@ -106,6 +113,10 @@ class EntityCounterManager
 			if($typeName === '')
 			{
 				continue;
+			}
+			if ($excludeUsers)
+			{
+				$typeName .= '_' . \Bitrix\Crm\Counter\EntityCounterType::EXCLUDE_USERS_CODE_SUFFIX;
 			}
 
 			if(!is_null($categoryId)) // counter for definite category
@@ -161,6 +172,36 @@ class EntityCounterManager
 			}
 		}
 	}
+
+	public static function resetExcludeUsersCounters(array $codes, array $userIds): void
+	{
+		$codes = array_unique($codes);
+		$resetForDefiniteUser = count($userIds) === 1;
+		$excludeCodes = [];
+		foreach ($codes as $code)
+		{
+			$excludeCodes[] = self::convertCodeToExcluded($code);
+		}
+		foreach($userIds as $userId)
+		{
+			foreach($excludeCodes as $code)
+			{
+				$resetForDefiniteUser
+					? EntityCounter::resetExcludedByCode($code, $userId)
+					: EntityCounter::resetByCodeForAll($code)
+				;
+			}
+		}
+	}
+
+	public static function convertCodeToExcluded(string $code): string
+	{
+		$codeParams = self::parseCode($code);
+		$codeParams['EXTRAS']['EXCLUDE_USERS'] = true;
+
+		return self::prepareCode($codeParams['ENTITY_TYPE_ID'], $codeParams['TYPE_ID'], $codeParams['EXTRAS']);
+	}
+
 	public static function processSettingChange($name, $value)
 	{
 		if($name !== \CCrmUserCounterSettings::ReckonActivitylessItems)

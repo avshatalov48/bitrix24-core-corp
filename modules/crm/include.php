@@ -37,6 +37,7 @@ define('BX_CRM_VIEW_LIST', 1);
 define('BX_CRM_VIEW_WIDGET', 2);
 define('BX_CRM_VIEW_KANBAN', 3);
 define('BX_CRM_VIEW_CALENDAR', 4);
+define('BX_CRM_VIEW_ACTIVITY', 5);
 //endregion
 
 define('REGISTRY_TYPE_CRM_INVOICE', 'CRM_INVOICE');
@@ -113,3 +114,5 @@ if (IsModuleInstalled('disk'))
 }
 
 \Bitrix\Main\Page\Asset::getInstance()->addJsKernelInfo("crm", array("/bitrix/js/crm/crm.js"));
+
+\Bitrix\Crm\Engine\AutoWire\Binder::registerDefaultAutoWirings();

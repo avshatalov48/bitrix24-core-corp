@@ -1081,14 +1081,17 @@ class Form extends Main\Engine\JsonController
 
 	private function getOpenlinesUrl(): string
 	{
-		if (\Bitrix\Main\Loader::includeModule('imopenlines'))
+		if (
+			\Bitrix\Main\Loader::includeModule('imopenlines')
+			&& method_exists(\Bitrix\ImOpenLines\Common::class, 'getDialogListUrl')
+		)
 		{
-			return \Bitrix\ImOpenLines\Common::getContactCenterPublicFolder();
+			return \Bitrix\ImOpenLines\Common::getDialogListUrl();
 		}
 
 		$openlinesUrl = \Bitrix\Main\ModuleManager::isModuleInstalled('bitrix24')
-			? '/contact_center'
-			: '/services/contact_center';
+			? '/openlines/list'
+			: '/services/openlines/list';
 		return \CCrmUrlUtil::ToAbsoluteUrl($openlinesUrl);
 	}
 

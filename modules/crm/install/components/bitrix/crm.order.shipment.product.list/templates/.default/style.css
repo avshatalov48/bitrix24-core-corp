@@ -136,7 +136,7 @@
 	color: #000;
 	vertical-align: middle;
 	text-align: center;
-	font: bold 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 11px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /**/
@@ -440,7 +440,7 @@
 	background-color: #e4e8eb;
 }
 
-.crm-order-total-box-row-final .crm-order-total-box-row-column { font-weight: bold; }
+.crm-order-total-box-row-final .crm-order-total-box-row-column { font-weight: var(--ui-font-weight-bold); }
 
 /*region promotion*/
 .crm-order-product-control-promotion-title {

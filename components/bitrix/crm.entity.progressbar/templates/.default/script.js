@@ -382,7 +382,8 @@ if(typeof BX.Crm.EntityDetailProgressControl === "undefined")
 					"ACTION" : "SAVE_PROGRESS",
 					"VALUE": value,
 					"TYPE": type,
-					"ID": id
+					"ID": id,
+					sessid: BX.bitrix_sessid(),
 				};
 
 				BX.onCustomEvent(this, 'Crm.EntityProgress.onSaveBefore', [ this, data ]);

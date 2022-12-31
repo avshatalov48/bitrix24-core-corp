@@ -1,5 +1,8 @@
 <?php
+
 return [
-	'layout/ui/fields/base',
-	'layout/ui/fields/string',
+	'extensions' => [
+		'layout/ui/fields/string',
+		'utils/string',
+	],
 ];

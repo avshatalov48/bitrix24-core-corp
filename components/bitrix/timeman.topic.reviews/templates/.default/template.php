@@ -8,7 +8,7 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 		<?php endif?>
 		<?php foreach ($arResult["COMMENTS"] as $res):?>
 			<div class="timeman-comment">
-				<span class="timeman-comment-avatar"<?php if ($res["AUTHOR_PHOTO"]):?> style="background:url('<?php echo $res["AUTHOR_PHOTO"]["CACHE"]["src"]?>') no-repeat center center; background-size: cover;"<?php endif?>></span>
+				<span class="timeman-comment-avatar"<?php if ($res["AUTHOR_PHOTO"]):?> style="background:url('<?php echo \Bitrix\Main\Web\Uri::urnEncode($res["AUTHOR_PHOTO"]["CACHE"]["src"])?>') no-repeat center center; background-size: cover;"<?php endif?>></span>
 				<span class="timeman-comment-body">
 					<div class="timeman-comment-header">
 						<span class="timeman-comment-createdby">

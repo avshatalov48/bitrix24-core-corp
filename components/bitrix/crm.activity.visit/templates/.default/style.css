@@ -183,7 +183,7 @@
 	margin: 0 10px 0;
 	border-bottom: 1px solid #3bc8f5;
 	color: #3bc8f5;
-	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s;
 }
@@ -777,7 +777,7 @@
 	background: #ebeef2;
 	color: #0b66c3;
 	text-transform: uppercase;
-	font: bold 9px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 9px/11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-main-user-photo-count {
@@ -796,7 +796,7 @@
 	background: #7ed321;
 	color: #fff;
 	text-align: center;
-	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-main-user-photo-count-info {
@@ -1009,7 +1009,7 @@
 
 .crm-activity-visit-facesearch-profile-search-item {
 	color: #80868e;
-	font: bold 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-profile-search-main {
@@ -1065,7 +1065,7 @@
 .crm-activity-visit-facesearch-profile-search-found-more-item {
 	color: #424956;
 	text-transform: uppercase;
-	font: bold 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 10px/12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-activity-visit-facesearch-profile-search-found-more-count {

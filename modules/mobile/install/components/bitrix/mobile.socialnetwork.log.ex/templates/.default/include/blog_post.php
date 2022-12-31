@@ -11,7 +11,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 /** @var array $arEvent */
 /** @global CDatabase $DB */
 /** @global CMain $APPLICATION */
-/** @var boolean $bUnread */
+/** @var boolean $isUnread */
+/** @var string $ind */
 
 $component = $this->getComponent();
 
@@ -64,7 +65,7 @@ if ((int)$arEvent["SOURCE_ID"] > 0)
 			(int)($arParams["LOG_ID"]) <= 0
 			|| $arParams["IS_LIST"] === 'Y'
 		),
-		"IS_UNREAD" => $bUnread,
+		"IS_UNREAD" => $isUnread,
 		"IS_HIDDEN" => false,
 		"LAST_LOG_TS" => ($arResult["LAST_LOG_TS"] > 0 ? $arResult["LAST_LOG_TS"] + $arResult["TZ_OFFSET"] : 0),
 		"CACHE_TIME" => $arParams["CACHE_TIME"],
@@ -85,7 +86,8 @@ if ((int)$arEvent["SOURCE_ID"] > 0)
 		"GROUP_READ_ONLY" => (isset($arResult["GROUP_READ_ONLY"]) && $arResult["GROUP_READ_ONLY"] === "Y" ? "Y" : "N"),
 		"TOP_RATING_DATA" => ($arResult['TOP_RATING_DATA'][$arEvent["ID"]] ?? false),
 		"TARGET" => (isset($arParams["TARGET"]) && $arParams["TARGET"] <> '' ? $arParams["TARGET"] : false),
-		"SITE_TEMPLATE_ID" => (isset($arParams["SITE_TEMPLATE_ID"]) && $arParams["SITE_TEMPLATE_ID"] <> '' ? $arParams["SITE_TEMPLATE_ID"] : "")
+		"SITE_TEMPLATE_ID" => (isset($arParams["SITE_TEMPLATE_ID"]) && $arParams["SITE_TEMPLATE_ID"] <> '' ? $arParams["SITE_TEMPLATE_ID"] : ""),
+		'UNREAD_BLOG_COMMENT_ID' => ($arResult['unreadBlogCommentId'][(int)$arEvent['SOURCE_ID']] ?? []),
 	];
 
 	if ($arParams["USE_FOLLOW"] === "Y")

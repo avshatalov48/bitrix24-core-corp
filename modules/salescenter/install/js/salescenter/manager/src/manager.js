@@ -1,5 +1,6 @@
 import {rest as Rest} from 'rest.client';
 import {Type, Uri, ajax as Ajax, Event} from 'main.core';
+import {BaseButton} from 'ui.buttons';
 
 import 'clipboard';
 import 'loadext';
@@ -1052,11 +1053,78 @@ export class Manager
 
 	static openIntegrationRequestForm(event)
 	{
+		let params = Manager.#getDataSettingFromEventDomNode(event)
+
 		if (event && Type.isFunction(event.preventDefault))
 		{
 			event.preventDefault();
 		}
-		return Manager.openSlider('/bitrix/components/bitrix/salescenter.feedback/slider.php?feedback_type=integration_request', {width: 735});
+
+		if (!Type.isPlainObject(params))
+		{
+			params = {};
+		}
+
+		let url = (new Uri('/bitrix/components/bitrix/salescenter.feedback/slider.php'));
+
+		url.setQueryParams({feedback_type: 'integration_request'});
+		url.setQueryParams(params);
+
+		return Manager.openSlider(url.toString(), {width: 735});
+	}
+
+	static #parseParamsDataSetting(settings): Object
+	{
+		const result = {};
+
+		if (Type.isStringFilled(settings))
+		{
+			let fields = settings.split(',');
+
+			try
+			{
+				for (let inx in fields)
+				{
+					if (!fields.hasOwnProperty(inx))
+					{
+						continue;
+					}
+
+					let [name, value] = fields[inx].split(':');
+
+					if (Type.isStringFilled(name))
+					{
+						result[name] = value;
+					}
+				}
+			}
+			catch (e) {}
+		}
+
+		return result;
+	}
+
+	static #getDataSettingFromEventDomNode(event): ?Object
+	{
+		let node = null;
+		if (Type.isDomNode(event.button))
+		{
+			node = event.button;
+		}
+		else if (Type.isDomNode(event.target))
+		{
+			node = event.target;
+		}
+
+		if (Type.isObject(node))
+		{
+			let dataset = node.dataset ? node.dataset : {};
+			let settings = dataset.hasOwnProperty('managerOpenintegrationrequestformParams') ? dataset.managerOpenintegrationrequestformParams : '';
+
+			return this.#parseParamsDataSetting(settings);
+		}
+
+		return null;
 	}
 
 	static openApplication(params = {})

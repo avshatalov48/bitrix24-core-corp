@@ -1,4 +1,37 @@
 (() => {
+
+	const {
+		FieldFactory,
+		BooleanType,
+		StringType,
+		TextAreaType,
+		NumberType,
+		BarcodeType,
+		UrlType,
+		AddressType,
+		MoneyType,
+	} = jn.require('layout/ui/fields');
+
+	const { Loc } = jn.require('loc');
+	const { FocusManager } = jn.require('layout/ui/fields/focus-manager');
+	const { isEqual } = jn.require('utils/object');
+	const { stringify } = jn.require('utils/string');
+	const { PlanRestriction } = jn.require('layout/ui/plan-restriction');
+	const { DuplicateTooltip } = jn.require('layout/ui/entity-editor/tooltip/duplicate');
+	const { useCallback } = jn.require('utils/function');
+
+	const EDIT_MODE_FIELD_BACKGROUND_COLOR = '#f8fafb';
+
+	const INLINE_FIELDS = new Set([
+		StringType,
+		TextAreaType,
+		NumberType,
+		BarcodeType,
+		UrlType,
+		AddressType,
+		MoneyType,
+	]);
+
 	/**
 	 * @class EntityEditorField
 	 */
@@ -7,89 +40,253 @@
 		constructor(props)
 		{
 			super(props);
+			this.state.value = this.getValueFromModel();
 
-			this.state = {
-				value: this.getValueFromModel()
-			};
-
-			/** @type {Fields.BaseField} */
+			/** @type {BaseField} */
 			this.fieldRef = null;
-
+			this.fieldViewRef = null;
+			this.bindRef = this.bindRef.bind(this);
 			this.onChangeState = this.onChangeState.bind(this);
 			this.onFocusIn = this.onFocusIn.bind(this);
 			this.onFocusOut = this.onFocusOut.bind(this);
+			this.onFieldClick = this.handleFieldClick.bind(this);
+		}
+
+		get showBorder()
+		{
+			return BX.prop.getBoolean(this.props.settings, 'showBorder', true);
 		}
 
 		initializeStateFromModel()
 		{
-			this.setState({
-				value: this.getValueFromModel()
-			});
+			if (!this.isChanged)
+			{
+				this.state.value = this.getValueFromModel();
+			}
 		}
 
-		render()
+		isInline()
 		{
-			const content = FieldFactory.create(this.type, {
-				ref: (ref) => this.fieldRef = ref,
-				id: this.getId(),
+			if (!this.isEditable())
+			{
+				return false;
+			}
+
+			return INLINE_FIELDS.has(FieldFactory.checkForAlias(this.type));
+		}
+
+		isEditable()
+		{
+			if (this.isEditRestricted())
+			{
+				return false;
+			}
+
+			return super.isEditable();
+		}
+
+		prepareFieldProps()
+		{
+			const id = this.getId();
+
+			const restrictedEdit = this.isEditRestricted();
+			const showEditIcon = restrictedEdit || this.isSingleEditEnabled();
+			const tooltip = this.getTooltip();
+
+			return {
+				ref: this.bindRef,
+				id,
+				uid: this.getUid(),
+				type: this.type,
+				testId: `${this.model.id}_${id}`,
+				uid: this.uid,
 				title: this.getTitle(),
 				multiple: this.isMultiple(),
-				value: this.state.value,
 				placeholder: this.isNewEntity() && this.getCreationPlaceholder(),
-				readOnly: this.readOnly,
+				readOnly: this.isReadOnly(),
+				editable: this.isEditable(),
 				onChange: this.onChangeState,
 				onFocusIn: this.onFocusIn,
 				onFocusOut: this.onFocusOut,
 				config: this.prepareConfig(),
-				required: this.isRequired()
-			});
+				required: this.isRequired(),
+				showRequired: this.isShowRequired(),
+				showEditIcon,
+				restrictedEdit,
+				showBorder: this.showBorder,
+				hasSolidBorderContainer: this.hasSolidBorderContainer(),
+				hasHiddenEmptyView: true,
+				tooltip: isFunction(tooltip) ? useCallback(tooltip) : null,
+			};
+		}
 
+		getTooltip()
+		{
+			if (this.hasDuplicate())
+			{
+				return DuplicateTooltip.create({
+					uid: this.getUid(),
+					fieldType: this.getId(),
+					settings: this.settings,
+					entityId: this.editor.getEntityId(),
+					entityType: this.editor.getEntityTypeName(),
+				});
+			}
+
+			return null;
+		}
+
+		hasDuplicate()
+		{
+			return DuplicateTooltip.isEnabledDuplicateControl(this.schemeElement.getData(), this.editor.getEntityTypeName());
+		}
+
+		bindRef(ref)
+		{
+			this.fieldRef = ref;
+		}
+
+		isReadOnly()
+		{
+			const readonly = !this.isEditable();
+			const showReadOnlyOnInitialize = this.isInitialReadOnly() && this.getMode() === BX.UI.EntityEditorMode.view;
+			return readonly || showReadOnlyOnInitialize;
+		}
+
+		isVisible()
+		{
+			if (this.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways))
+			{
+				return true;
+			}
+
+			if (!super.isVisible())
+			{
+				return false;
+			}
+
+			return this.isNeedToDisplay();
+		}
+
+		renderField()
+		{
 			return View(
 				{
 					style: {
-						flexDirection: 'column'
-					}
+						marginBottom: this.isVisible() ? 6 : 0,
+					},
 				},
-				content || this.renderDefaultContent()
-			)
+				this.getFieldInstance(this.getValue()),
+			);
+		}
+
+		render()
+		{
+			return View(
+				{
+					style: {
+						display: this.isVisible() ? 'flex' : 'none',
+					},
+					ref: (ref) => this.fieldViewRef = ref,
+					onClick: this.onFieldClick,
+				},
+				this.renderField() || this.renderDefaultContent(),
+			);
 		}
 
 		prepareConfig()
 		{
-			return this.schemeElement.getData();
+			return {
+				...this.schemeElement.getData(),
+				type: this.type,
+				enableKeyboardHide: true,
+				parentWidget: this.layout,
+				styles: {
+					externalWrapperBackgroundColor: this.getFieldBackgroundColor(),
+					externalWrapperBorderColor: this.getFieldBorderColor(),
+				},
+				deepMergeStyles: {
+					externalWrapper: this.showBorder ? {} : {
+						marginHorizontal: 16,
+					},
+				},
+				ellipsize: true,
+			};
+		}
+
+		getFieldBackgroundColor()
+		{
+			if (this.hasSolidBorderContainer())
+			{
+				return this.parent.isInEditMode() ? EDIT_MODE_FIELD_BACKGROUND_COLOR : '#fcfcfd';
+			}
+
+			return null;
+		}
+
+		getFieldBorderColor()
+		{
+			if (this.hasSolidBorderContainer())
+			{
+				return this.getSolidBorderContainerColor();
+			}
+
+			return this.parent.isInEditMode() ? '#e4e6e7' : '#ebebeb';
+		}
+
+		getSolidBorderContainerColor()
+		{
+			return '#dfe0e3';
 		}
 
 		onChangeState(value)
 		{
-			this.setValue(value);
+			return this.setValue(value);
 		}
 
 		onFocusIn()
 		{
-			this.emit('EntityEditorField::onFocusIn', [{
-				editorId: this.editor.getId(),
-				fieldName: this.getName()
-			}]);
+			this.editor
+				.blurInlineFields(this)
+				.then(() => {
+					this.customEventEmitter.emit('UI.EntityEditor.Field::onFocusIn', [this.getName()]);
+
+					if (this.fieldRef && this.fieldRef.hasKeyboard())
+					{
+						setTimeout(() => this.editor.scrollToFocusedField(this.fieldViewRef), 300);
+					}
+				})
+			;
 		}
 
 		onFocusOut()
 		{
-			this.emit('EntityEditorField::onFocusOut', [{
-				editorId: this.editor.getId(),
-				fieldName: this.getName()
-			}]);
+			this.customEventEmitter.emit('UI.EntityEditor.Field::onFocusOut', [this.getName()]);
+		}
+
+		handleFieldClick()
+		{
+			const promise = (
+				FocusManager
+					.blurFocusedFieldIfHas(this.fieldRef)
+					.then(() => this.editor.blurInlineFields(this))
+			);
+
+			if (this.isEditRestricted() && this.getFeatureSlider())
+			{
+				promise.then(() => this.showFeatureSlider());
+			}
+			else
+			{
+				promise.then(() => this.switchToSingleEditMode());
+			}
 		}
 
 		renderDefaultContent()
 		{
-			return View(
-				{},
-				Text(
-					{
-						text: `Field ${String(this.type)} ${String(this.getTitle())} ${String(this.editor.state.value)}`
-					}
-				)
-			)
+			console.warn(`Field is not supported yet - ${String(this.type)} - ${String(this.getTitle())}.`, this.getValue());
+
+			return View();
 		}
 
 		isMultiple()
@@ -101,11 +298,11 @@
 		{
 			if (!this.schemeElement)
 			{
-				return "";
+				return '';
 			}
 
 			let title = this.schemeElement.getTitle();
-			if (title === "")
+			if (title === '')
 			{
 				title = this.schemeElement.getName();
 			}
@@ -130,24 +327,36 @@
 
 		getValuesToSave()
 		{
-			return {
-				[this.getName()]: this.getValue()
-			};
-		}
+			if (!this.fieldRef || !this.isEditable())
+			{
+				return {};
+			}
 
-		getName()
-		{
-			return this.schemeElement ? this.schemeElement.getName() : "";
+			const promise = (
+				this.fieldRef
+					.getValueWhileReady()
+					.then((value) => ({ [this.getName()]: value }))
+			);
+
+			return {
+				[this.getName()]: promise,
+			};
 		}
 
 		validate()
 		{
-			if (!this.isEditable())
+			if (!this.fieldRef || !this.isEditable())
 			{
 				return true;
 			}
 
-			return this.fieldRef.validate();
+			const isValid = this.fieldRef.validate();
+			if (!isValid)
+			{
+				this.editor.scrollToInvalidField(this.fieldViewRef);
+			}
+
+			return isValid;
 		}
 
 		isRequired()
@@ -155,21 +364,239 @@
 			return this.schemeElement && this.schemeElement.isRequired();
 		}
 
+		isShowRequired()
+		{
+			return this.schemeElement && this.schemeElement.isShowRequired();
+		}
+
 		setValue(value)
 		{
-			return new Promise((resolve) => {
-				this.setState({value}, () => {
-					this.emit('EntityEditorField::onChangeState', [{
-						editorId: this.editor.getId(),
-						fieldName: this.getName(),
-						fieldValue: value,
-					}]);
+			if (!isEqual(this.state.value, value))
+			{
+				return new Promise((resolve) => {
+					this.setState({ value }, () => {
+						this.markAsChanged();
+						this.customEventEmitter.emit('UI.EntityEditor.Field::onChangeState', [{
+							fieldName: this.getName(),
+							fieldValue: value,
+						}]);
 
-					resolve();
+						resolve();
+					});
 				});
-			})
+			}
+
+			return Promise.resolve();
+		}
+
+		isNeedToDisplay()
+		{
+			if (
+				this.isInEditMode()
+				|| this.checkOptionFlag(BX.UI.EntityEditorControlOptions.showAlways)
+				|| this.schemeElement.isShownAlways
+			)
+			{
+				return true;
+			}
+
+			return this.hasContentToDisplay();
+		}
+
+		checkOptionFlag(flag)
+		{
+			return BX.UI.EntityEditorControlOptions.check(this.getOptionFlags(), flag);
+		}
+
+		getOptionFlags()
+		{
+			return (
+				this.schemeElement
+					? this.schemeElement.getOptionsFlags()
+					: BX.UI.EntityEditorControlOptions.none
+			);
+		}
+
+		hasContentToDisplay()
+		{
+			return this.hasValue() || this.hasValueFromModel();
+		}
+
+		hasValue()
+		{
+			const value = this.getValue();
+
+			return this.hasFilledValue(value);
+		}
+
+		hasValueFromModel()
+		{
+			const value = this.getValueFromModel();
+
+			return this.hasFilledValue(value);
+		}
+
+		hasFilledValue(value)
+		{
+			if (this.type === BooleanType)
+			{
+				return true;
+			}
+
+			if (this.type === MoneyType && !this.isMultiple())
+			{
+				const { amount } = value;
+
+				return stringify(amount) !== '';
+			}
+
+			const fieldInstance = this.getFieldInstance(value);
+
+			return !fieldInstance.isEmpty();
+		}
+
+		getFieldInstance(value)
+		{
+			return FieldFactory.create(this.type, {
+				...this.prepareFieldProps(),
+				value,
+			});
+		}
+
+		showReadOnlyFieldHint()
+		{
+			Notify.showUniqueMessage(
+				Loc.getMessage('M_ENTITY_EDITOR_FIELD_CANT_EDIT_HINT_TEXT', { '#NAME#': this.getTitle() }),
+				Loc.getMessage('M_ENTITY_EDITOR_FIELD_CANT_EDIT_HINT_TITLE'),
+				{ time: 3 },
+			);
+		}
+
+		switchToSingleEditMode()
+		{
+			if (!this.isSingleEditEnabled())
+			{
+				if (!this.editor.readOnly)
+				{
+					this.showReadOnlyFieldHint();
+				}
+
+				return Promise.reject();
+			}
+
+			return this.editor.switchControlMode(
+				this,
+				BX.UI.EntityEditorMode.edit,
+				BX.UI.EntityEditorModeOptions.individual,
+			);
+		}
+
+		blurInlineFields(fieldToSkip = null)
+		{
+			if (fieldToSkip && fieldToSkip === this)
+			{
+				return Promise.resolve();
+			}
+
+			return this.switchToViewMode();
+		}
+
+		doSetMode(mode, options, notify)
+		{
+			if (this.getMode() === mode)
+			{
+				return Promise.resolve();
+			}
+
+			return new Promise(resolve => {
+				this.setState({ mode }, () => {
+					let promise = Promise.resolve();
+
+					if (
+						mode === BX.UI.EntityEditorMode.edit
+						&& options === BX.UI.EntityEditorModeOptions.individual
+					)
+					{
+						promise = promise.then(() => this.focusField());
+					}
+
+					promise.then(() => {
+						this.processControlModeChange(notify);
+						resolve();
+					});
+				});
+			});
+		}
+
+		focusField()
+		{
+			if (this.fieldRef)
+			{
+				return this.fieldRef.focus();
+			}
+
+			return Promise.reject();
+		}
+
+		isSingleEditEnabled()
+		{
+			return (
+				(this.isModeToggleEnabled() || this.parent.isInEditMode())
+				&& this.isEditable()
+				&& this.getDataBooleanParam('enableEditInView', true)
+				&& this.getDataBooleanParam('enableSingleEdit', true)
+			);
+		}
+
+		hasSolidBorderContainer()
+		{
+			return this.getDataBooleanParam('hasSolidBorder', false);
+		}
+
+		isInitialReadOnly()
+		{
+			return this.getDataBooleanParam('initialReadOnly', false);
+		}
+
+		isEditRestricted()
+		{
+			return BX.prop.getBoolean(this.getRestrictionParams(), 'isRestricted', false);
+		}
+
+		getFeatureSlider()
+		{
+			return BX.prop.getString(this.getRestrictionParams(), 'mobileHelperId', null);
+		}
+
+		getRestrictionParams()
+		{
+			return this.schemeElement ? this.schemeElement.getDataParam('restriction', {}) : {};
+		}
+
+		showFeatureSlider()
+		{
+			void PlanRestriction.open(
+				{
+					title: this.getTitle(),
+				},
+				this.layout,
+			);
 		}
 	}
 
-	jnexport(EntityEditorField)
+	const styles = {
+		defaultFieldWrapper: (visible, parentMode, showBorder) => ({
+			externalWrapper: {
+				paddingHorizontal: 16,
+				display: visible ? 'flex' : 'none',
+			},
+			wrapper: {
+				borderBottomWidth: showBorder ? 0.5 : 0,
+				borderBottomColor: parentMode === BX.UI.EntityEditorMode.edit ? '#e4e6e7' : '#ebebeb',
+			},
+		}),
+	};
+
+	jnexport(EntityEditorField);
+	EntityEditorField.Styles = styles;
 })();

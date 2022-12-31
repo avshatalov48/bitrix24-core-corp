@@ -505,7 +505,11 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		}
 		$this->getActivityAdditionalData($activityId, $activity, $provider);
 
+		$activity['SUBJECT'] ??= $this->arParams['SUBJECT'];
+		$activity['DESCRIPTION_HTML'] ??= $this->arParams['BODY'];
+
 		$this->arResult['ACTIVITY'] = $activity;
+
 		$this->arResult['PROVIDER'] = $provider;
 		$this->arResult['DESTINATION_ENTITIES'] = $this->getDestinationEntities($activity);
 		$this->arResult['COMMUNICATIONS_DATA'] = $this->getCommunicationsData($activity['COMMUNICATIONS']);
@@ -593,7 +597,6 @@ class CrmActivityPlannerComponent extends \Bitrix\Crm\Component\Base
 		$this->arResult['COMMUNICATIONS'] = $activity['COMMUNICATIONS'];
 		$this->arResult['PROVIDER'] = $provider;
 		$this->arResult['ACTIVITY'] = $activity;
-
 		$this->arResult['TYPE_ICON'] = $this->getTypeIcon($activity);
 		$this->arResult['FILES_LIST'] = $this->prepareFilesForView($activity);
 

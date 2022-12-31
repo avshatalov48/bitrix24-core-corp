@@ -13,6 +13,16 @@ class OutgoingCallTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OUTGOING_CALL_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OUTGOING_CALL_NAME_1');
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OUTGOING_CALL_DESCRIPTION') ?? '';
+	}
+
+	public static function getGroup(): array
+	{
+		return ['clientCommunication'];
 	}
 }

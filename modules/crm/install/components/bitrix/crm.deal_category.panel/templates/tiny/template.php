@@ -43,13 +43,13 @@ $menuItems[] = [
 	'delimiter' => true,
 ];
 $menuItems[] = [
-	'text' => Loc::getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS'),
+	'text' => Loc::getMessage('CRM_DEAL_CATEGORY_PANEL_TUNNELS2'),
 	'onclick' => new JsCode("BX.SidePanel.Instance.open('{$tunnelsUrl}', { cacheable: false, customLeftBoundary: 40, allowChangeHistory: false });")
 ];
 
 $categoryButton = new Button([
 	'id' => $buttonId,
-	'icon' => defined('Icon::FUNNEL') ? Icon::FUNNEL : '',
+	'icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 	'text' => $arResult['CATEGORY_NAME'] ?: htmlspecialcharsbx($arResult['ITEMS'][0]['NAME']),
 	'color' => Color::LIGHT_BORDER,
 	'menu' => [
@@ -62,7 +62,7 @@ $categoryButton = new Button([
 		'role' => 'bx-crm-toolbar-categories-button',
 		'entity-type-id' => \CCrmOwnerType::Deal,
 		'category-id' => $arResult['CATEGORY_ID'],
-		'toolbar-collapsed-icon' => defined('Icon::FUNNEL') ? Icon::FUNNEL : '',
+		'toolbar-collapsed-icon' => defined('Bitrix\UI\Buttons\Icon::FUNNEL') ? Icon::FUNNEL : '',
 	],
 ]);
 

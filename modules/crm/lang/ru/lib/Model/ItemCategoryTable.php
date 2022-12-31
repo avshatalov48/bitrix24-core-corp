@@ -1,3 +1,3 @@
 <?php
-$MESS["CRM_CATEGORY_TABLE_DELETE_ERROR_ITEMS"] = "Найдены элементы, относящиеся к направлению";
-$MESS["CRM_CATEGORY_TABLE_DELETE_ERROR_DEFAULT"] = "Это направление является направлением по умолчанию";
+$MESS["CRM_CATEGORY_TABLE_DELETE_ERROR_ITEMS"] = "Найдены элементы, относящиеся к воронке";
+$MESS["CRM_CATEGORY_TABLE_DELETE_ERROR_DEFAULT"] = "Эта воронка является воронкой по умолчанию";

@@ -6,6 +6,7 @@ use Bitrix\Crm\CallList\Internals\CallListCreatedTable;
 use Bitrix\Crm\CallList\Internals\CallListItemTable;
 use Bitrix\Crm\CallList\Internals\CallListTable;
 use Bitrix\Crm\CompanyAddress;
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main\ArgumentException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Error;
@@ -46,20 +47,15 @@ final class CallList
 	}
 
 	/**
-	 * @param $id
+	 * @param int $id
+	 * @param bool $loadItems
+	 * @param array $options
 	 * @return static
 	 * @throws ArgumentException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	public static function createWithId($id, $loadItems = false)
+	public static function createWithId(int $id, bool $loadItems = false, array $options = [])
 	{
-		$id = (int)$id;
-
-		if ($id <= 0)
-		{
-			throw new ArgumentException('id should be positive', 'id');
-		}
-
 		$row = CallListTable::getById($id)->fetch();
 		if (!$row)
 		{
@@ -69,9 +65,12 @@ final class CallList
 		$callList = new static;
 		$callList->setFromArray($row);
 		$callList->new = false;
-		$userPermissions = \Bitrix\Crm\Service\Container::getInstance()->getUserPermissions();
 
-		if (!$userPermissions->isAdmin() && (int)$callList->getEntityTypeId() !== 0)
+		$userId = (int)($options['userId'] ?? Container::getInstance()->getContext()->getUserId());
+		$checkPermissions = (bool)($options['checkPermissions'] ?? true);
+		$userPermissions = Container::getInstance()->getUserPermissions($userId);
+
+		if ($checkPermissions && !$userPermissions->isAdmin() && (int)$callList->getEntityTypeId() !== 0)
 		{
 			$canReadType = $userPermissions->canReadType((int)$callList->getEntityTypeId());
 			if (!$canReadType)
@@ -105,12 +104,16 @@ final class CallList
 					unset($callList->items[$key]);
 				}
 
-				$canReadItem = $userPermissions->checkReadPermissions($callList->entityTypeId, $item->getElementId());
-				if (!$canReadItem)
+				if ($checkPermissions)
 				{
-					unset($callList->items[$key]);
-					continue;
+					$canReadItem = $userPermissions->checkReadPermissions($callList->entityTypeId, $item->getElementId());
+					if (!$canReadItem)
+					{
+						unset($callList->items[$key]);
+						continue;
+					}
 				}
+
 				$item->setName($itemFields[$item->getElementId()]['NAME']);
 				$item->setCompanyTitle($itemFields[$item->getElementId()]['COMPANY_TITLE']);
 				$item->setCompanyPost($itemFields[$item->getElementId()]['POST']);
@@ -123,14 +126,12 @@ final class CallList
 				{
 					$item->setAssociatedEntity($itemFields[$item->getElementId()]['ASSOCIATED_ENTITY']);
 				}
-
 			}
 
 			if (empty($callList->items))
 			{
 				throw new \Bitrix\Main\SystemException('Call list is empty or access denied', 403);
 			}
-
 		}
 
 		return $callList;

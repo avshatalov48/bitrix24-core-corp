@@ -67,7 +67,7 @@ class DealTable extends Main\ORM\Data\DataManager
 
 			$fieldRepository->getId(),
 
-			$fieldRepository->getCreatedTime('DATE_CREATE'),
+			$fieldRepository->getCreatedTime('DATE_CREATE', true),
 
 			$fieldRepository->getShortDate(
 				'DATE_CREATE_SHORT',
@@ -76,7 +76,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_DATE_CREATE_SHORT_FIELD'))
 			,
 
-			$fieldRepository->getUpdatedTime('DATE_MODIFY'),
+			$fieldRepository->getUpdatedTime('DATE_MODIFY', true),
 
 			$fieldRepository->getShortDate(
 				'DATE_MODIFY_SHORT',
@@ -85,7 +85,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle('CRM_DEAL_ENTITY_DATE_MODIFY_SHORT_FIELD')
 			,
 
-			$fieldRepository->getCreatedBy('CREATED_BY_ID'),
+			$fieldRepository->getCreatedBy('CREATED_BY_ID', true),
 
 			(new ReferenceField(
 				'CREATED_BY',
@@ -95,7 +95,7 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_CREATED_BY_FIELD'))
 			,
 
-			$fieldRepository->getUpdatedBy('MODIFY_BY_ID'),
+			$fieldRepository->getUpdatedBy('MODIFY_BY_ID', true),
 
 			(new ReferenceField(
 				'MODIFY_BY',
@@ -374,9 +374,13 @@ class DealTable extends Main\ORM\Data\DataManager
 				->configureTitle(Loc::getMessage('CRM_DEAL_ENTITY_ORDER_STAGE_FIELD'))
 			,
 
-			$fieldRepository->getMovedBy('MOVED_BY_ID'),
+			$fieldRepository->getMovedBy('MOVED_BY_ID', true),
 
 			$fieldRepository->getMovedTime(),
+
+			$fieldRepository->getLastActivityBy(),
+
+			$fieldRepository->getLastActivityTime(),
 
 			(new ExpressionField(
 				'IS_WORK',

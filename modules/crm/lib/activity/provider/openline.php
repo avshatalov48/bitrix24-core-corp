@@ -3,8 +3,17 @@
 namespace Bitrix\Crm\Activity\Provider;
 
 use Bitrix\Crm\Activity\CommunicationStatistics;
+use Bitrix\Crm\Badge;
+use Bitrix\Crm\Integration\OpenLineManager;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\Crm;
+use Bitrix\Crm\Timeline\Entity\TimelineTable;
+use Bitrix\Crm\Timeline\LogMessageEntry;
+use Bitrix\Crm\Timeline\LogMessageType;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
+use CCrmOwnerType;
 
 Loc::loadMessages(__FILE__);
 
@@ -12,7 +21,7 @@ class OpenLine extends Base
 {
 	const ACTIVITY_PROVIDER_ID = 'IMOPENLINES_SESSION';
 
-	static $isActive = null;
+	static $isActive;
 	static $activeLine = 0;
 
 	public static function getId()
@@ -177,11 +186,77 @@ class OpenLine extends Base
 	public static function checkFields($action, &$fields, $id, $params = null)
 	{
 		$result = new Main\Result();
+
 		//Only END TIME can be taken for DEADLINE!
 		if (isset($fields['END_TIME']) && $fields['END_TIME'] !== '')
 		{
 			$fields['DEADLINE'] = $fields['END_TIME'];
 		}
 		return $result;
+	}
+
+	public static function onAfterAdd($activityFields, array $params = null)
+	{
+		if (
+			$activityFields['DIRECTION'] === \CCrmActivityDirection::Incoming
+			&& isset($activityFields['PROVIDER_PARAMS']['USER_CODE'])
+			&& $activityFields['ID'] > 0
+		)
+		{
+			$logMessageId = LogMessageEntry::detectIdByParams(
+				$activityFields['PROVIDER_PARAMS']['USER_CODE'],
+				LogMessageType::OPEN_LINE_INCOMING,
+				'SOURCE'
+			);
+			if (isset($logMessageId))
+			{
+				TimelineTable::update($logMessageId, [
+					'ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity,
+					'ASSOCIATED_ENTITY_ID' => $activityFields['ID'],
+				]);
+			}
+		}
+	}
+
+	/**
+	 * @inheritdoc
+	 */
+	public static function syncBadges(int $activityId, array $activityFields, array $bindings): void
+	{
+		$badge = Container::getInstance()->getBadge(
+			Badge\Type\OpenLineStatus::OPENLINE_STATUS_TYPE,
+			Badge\Type\OpenLineStatus::CHAT_NOT_READ_VALUE,
+		);
+
+		$sourceIdentifier = new Badge\SourceIdentifier(
+			Badge\SourceIdentifier::CRM_OWNER_TYPE_PROVIDER,
+			CCrmOwnerType::Activity,
+			$activityId,
+		);
+
+		$userCode = $activityFields['PROVIDER_PARAMS']['USER_CODE'] ?? null;
+		$responsibleId = $activityFields['RESPONSIBLE_ID'] ?? null;
+		$isNotReadChat = OpenLineManager::getChatUnReadMessages($userCode, $responsibleId) > 0;
+		if ($isNotReadChat)
+		{
+			foreach ($bindings as $singleBinding)
+			{
+				$itemIdentifier = new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']);
+				$badge->bind($itemIdentifier, $sourceIdentifier);
+			}
+		}
+		else
+		{
+			foreach ($bindings as $singleBinding)
+			{
+				$itemIdentifier = new ItemIdentifier((int)$singleBinding['OWNER_TYPE_ID'], (int)$singleBinding['OWNER_ID']);
+				$badge->unbind($itemIdentifier, $sourceIdentifier);
+			}
+		}
+	}
+
+	public static function hasPlanner(array $activity): bool
+	{
+		return !Crm::isUniversalActivityScenarioEnabled();
 	}
 }

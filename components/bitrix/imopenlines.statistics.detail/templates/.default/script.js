@@ -37,6 +37,7 @@ BX.ready(function(){
 		BX.OpenLines.Actions = {
 			actionController: 'imopenlines.session.groupactions',
 			gridId: null,
+			filterId: null,
 			transferDialog: null,
 			transferItems: null,
 			transferInputId: null,
@@ -45,6 +46,7 @@ BX.ready(function(){
 			init: function (gridId, data)
 			{
 				this.gridId = gridId;
+				this.filterId = data.filterId;
 				this.transferItems = data.transfer.items;
 				this.transferInputId = data.transfer.inputId;
 				this.transferInputName = data.transfer.inputName;
@@ -214,6 +216,7 @@ BX.ready(function(){
 						if (forAll)
 						{
 							fields.forAll = 'Y';
+							fields.filterId = this.filterId;
 						}
 
 						if (actionName === "spam")

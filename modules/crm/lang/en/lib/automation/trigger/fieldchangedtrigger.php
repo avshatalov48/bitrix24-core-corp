@@ -1,3 +1,4 @@
-<?
+<?php
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_DESCRIPTION"] = "Changes the stage when the item's field value(s) changes.";
 $MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME"] = "Field change";
-?>
+$MESS["CRM_AUTOMATION_TRIGGER_FIELD_CHANGED_NAME_1"] = "Track field value change";

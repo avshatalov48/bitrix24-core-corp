@@ -20,6 +20,7 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			'Title' => '',
 			'EntityTypeId' => 0,
 			'EntityId' => 0,
+			'OnlyDynamicEntities' => 'N',
 		];
 
 		$this->SetPropertiesTypes([
@@ -94,12 +95,14 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			}
 		}
 
+		$showOnlyDynamicEntities = static::showOnlyDynamicEntities($dialog);
+
 		return [
 			'EntityTypeId' => [
 				'Name' => Loc::getMessage('CRM_DDA_ELEMENT_TYPE'),
 				'FieldName' => 'entity_type_id',
 				'Type' => FieldType::SELECT,
-				'Options' => $typeNames,
+				'Options' => $showOnlyDynamicEntities ? static::getOnlyDynamicEntities($typeNames) : $typeNames,
 				'Required' => true,
 			],
 			'EntityId' => [
@@ -108,11 +111,59 @@ class CBPCrmDeleteDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 				'Type' => FieldType::INT,
 				'Required' => true,
 			],
+			'OnlyDynamicEntities' => [
+				'FieldName' => 'only_dynamic_entities',
+				'Type' => 'bool',
+				'Default' => $showOnlyDynamicEntities ? 'Y' : 'N',
+				'Settings' => [
+					'Hidden' => true,
+				],
+			],
 		];
 	}
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
-		return static::getPropertiesDialogMap();
+		$map = static::getPropertiesDialogMap();
+		unset($map['OnlyDynamicEntities']);
+
+		return $map;
+	}
+
+	private static function showOnlyDynamicEntities(?\Bitrix\Bizproc\Activity\PropertiesDialog $dialog = null): bool
+	{
+		if (!$dialog)
+		{
+			return false;
+		}
+
+		$context = $dialog->getContext() ?? [];
+		if ($context['addMenuGroup'] === 'digitalWorkplace')
+		{
+			return true;
+		}
+
+		$workflowTemplate = $dialog->getWorkflowTemplate();
+		$currentActivity = \CBPWorkflowTemplateLoader::FindActivityByName(
+			$workflowTemplate,
+			$dialog->getActivityName()
+		);
+
+		return (
+			is_array($currentActivity)
+			&& is_array($currentActivity['Properties'])
+			&& $currentActivity['Properties']['OnlyDynamicEntities'] === 'Y'
+		);
+	}
+
+	private static function getOnlyDynamicEntities(array $dynamicTypeIdOptions): array
+	{
+		return array_filter(
+			$dynamicTypeIdOptions,
+			static function($key) {
+				return ($key >= CCrmOwnerType::DynamicTypeStart && $key <= CCrmOwnerType::DynamicTypeEnd);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
 	}
 }

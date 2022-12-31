@@ -672,6 +672,11 @@ Class intranet extends CModule
 
 	public function migrateToBox()
 	{
+		\Bitrix\Main\Config\Option::set('intranet', '~bitrix24_migrated_from_cloud', 'Y');
+		\Bitrix\Main\Config\Option::set('main', 'wizard_firstportal_s1', 'Y', 's1');
+		\Bitrix\Main\Config\Option::set('main', '~wizard_id', 'portal', 's1');
+		\Bitrix\Main\Config\Option::set('main', 'wizard_solution', 'bitrix:portal', 's1');
+
 		if (
 			\Bitrix\Main\ModuleManager::isModuleInstalled('extranet')
 			&& \Bitrix\Main\IO\Directory::isDirectoryExists(\Bitrix\Main\Application::getDocumentRoot().'/bitrix/modules/extranet')

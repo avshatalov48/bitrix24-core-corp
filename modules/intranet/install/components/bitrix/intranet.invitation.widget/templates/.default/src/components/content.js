@@ -52,8 +52,9 @@ export const ContentComponent = {
 				return;
 			}
 
-			new BX.PopupWindow('inviteHint' + Text.getRandom(8), bindNode, {
+			const popup = new BX.PopupWindow('inviteHint' + Text.getRandom(8), bindNode, {
 				content: message,
+				className: 'bx-invite-hint-warning',
 				zIndex: 15000,
 				angle: true,
 				offsetTop: 0,
@@ -68,9 +69,15 @@ export const ContentComponent = {
 						setTimeout(function () {
 							this.close();
 						}.bind(this), 4000);
-					}
+					},
 				}
-			}).show();
+			});
+
+			popup.show();
+			const node = popup.getPopupContainer();
+			node.addEventListener('click', () => {
+				popup.close();
+			});
 		},
 		sendAnalytics(code)
 		{

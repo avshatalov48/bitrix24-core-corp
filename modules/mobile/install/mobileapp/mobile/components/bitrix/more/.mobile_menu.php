@@ -2,9 +2,11 @@
 
 use Bitrix\Intranet\AI;
 use Bitrix\Main\Config\Option;
-use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Main\ModuleManager;
+use Bitrix\Mobile\Tab\Manager;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -35,13 +37,13 @@ if (CModule::IncludeModule("socialnetwork"))
 		if ($feature === 'calendar')
 		{
 			$allowedFeatures[$feature] =
-				array_key_exists($feature, $arSocNetFeaturesSettings) &&
-				array_key_exists("allowed", $arSocNetFeaturesSettings[$feature]) &&
-				(
+				array_key_exists($feature, $arSocNetFeaturesSettings)
+				&& array_key_exists("allowed", $arSocNetFeaturesSettings[$feature])
+				&& (
 					(
-						in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]["allowed"]) &&
-						is_array($arUserActiveFeatures) &&
-						in_array($feature, $arUserActiveFeatures)
+						in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]["allowed"])
+						&& is_array($arUserActiveFeatures)
+						&& in_array($feature, $arUserActiveFeatures)
 					)
 					|| in_array(SONET_ENTITY_GROUP, $arSocNetFeaturesSettings[$feature]["allowed"])
 				);
@@ -49,11 +51,11 @@ if (CModule::IncludeModule("socialnetwork"))
 		else
 		{
 			$allowedFeatures[$feature] =
-				array_key_exists($feature, $arSocNetFeaturesSettings) &&
-				array_key_exists("allowed", $arSocNetFeaturesSettings[$feature]) &&
-				in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]["allowed"]) &&
-				is_array($arUserActiveFeatures) &&
-				in_array($feature, $arUserActiveFeatures);
+				array_key_exists($feature, $arSocNetFeaturesSettings)
+				&& array_key_exists("allowed", $arSocNetFeaturesSettings[$feature])
+				&& in_array(SONET_ENTITY_USER, $arSocNetFeaturesSettings[$feature]["allowed"])
+				&& is_array($arUserActiveFeatures)
+				&& in_array($feature, $arUserActiveFeatures);
 		}
 	}
 }
@@ -87,6 +89,7 @@ $imageDir = $this->getPath() . "/images/";
 $diskComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("user.disk");
 $calendarComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("calendar.events");
 $workgroupsComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("workgroups");
+$catalogStoreDocumentListComponentVersion = \Bitrix\MobileApp\Janative\Manager::getComponentVersion("catalog.store.document.list");
 
 $taskParams = json_encode([
 	"COMPONENT_CODE" => "tasks.list",
@@ -95,14 +98,16 @@ $taskParams = json_encode([
 	"LANGUAGE_ID" => LANGUAGE_ID,
 	"SITE_DIR" => SITE_DIR,
 	"PATH_TO_TASK_ADD" => "/mobile/tasks/snmrouter/?routePage=#action#&TASK_ID=#taskId#",
-	"MESSAGES" => []
+	"MESSAGES" => [],
 ]);
 
-$initialized = true;
+$crmIsInitialized = true;
+$crmTabIsAvailable = false;
 
 if (Loader::includeModule('crm'))
 {
-	$initialized = \Bitrix\Crm\Settings\Crm::wasInitiated();
+	$crmTabIsAvailable = (new Manager())->getTabAvailabilityState('crm');
+	$crmIsInitialized = $crmTabIsAvailable || \Bitrix\Crm\Settings\Crm::wasInitiated();
 }
 
 $menuStructure = [];
@@ -128,7 +133,7 @@ $favoriteItems[] = [
 	"imageUrl" => $imageDir . "favorite/icon-crm.png?3",
 	"color" => "#00ACE3",
 	"type" => 'info',
-	"hidden" => $initialized,
+	"hidden" => $crmIsInitialized,
 	"attrs" => [
 		"onclick" => <<<JS
 				qrauth.open({
@@ -138,6 +143,7 @@ $favoriteItems[] = [
 					redirectUrl: '/crm/deal/'
 				})
 JS
+		,
 	],
 ];
 
@@ -149,14 +155,15 @@ $favoriteItems[] = [
 		[
 			"title" => Loc::getMessage("MORE_ADD"),
 			"identifier" => "add",
-			"color" => "#7CB316"
-		]
+			"color" => "#7CB316",
+		],
 	],
 	"attrs" => [
 		"actionOnclick" => <<<JS
 					PageManager.openPage({url:"/mobile/calendar/edit_event.php", modal:true, data:{ modal:"Y"}});
 JS
-		, "onclick" => <<<JS
+		,
+		"onclick" => <<<JS
 
 			PageManager.openList(
 			{
@@ -182,6 +189,7 @@ JS
 				});
 			}
 JS
+		,
 	],
 
 	"hidden" => !(ModuleManager::isModuleInstalled('calendar') && !$isExtranetUser && $allowedFeatures["calendar"]),
@@ -225,7 +233,8 @@ if (\Bitrix\MobileApp\Mobile::getApiVersion() < 41)
 					});
 				}
 JS
-			, "id" => "doc_user"
+			,
+			"id" => "doc_user",
 		],
 		"hidden" => !$diskEnabled || !$allowedFeatures["files"],
 		"id" => "doc_user",
@@ -240,7 +249,7 @@ $favoriteItems[] = [
 		"url" => '/mobile/?mobile_action=disk_folder_list&type=user&path=/&entityId=' . $USER->GetID(),
 		"table_settings" => [
 			"useTagsInSearch" => "NO",
-			"type" => "files"
+			"type" => "files",
 		],
 		"_type" => "list",
 		"id" => "doc_user",
@@ -284,6 +293,7 @@ $favoriteItems[] = [
 				}
 			})
 JS
+		,
 	],
 	"id" => "users",
 ];
@@ -321,7 +331,8 @@ $favoriteItems[] = [
 				}
 
 JS
-		, "id" => "doc_shared"
+		,
+		"id" => "doc_shared",
 	],
 	"hidden" => !$diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
 ];
@@ -343,7 +354,8 @@ $favoriteItems[] = [
 				}
 			});
 JS
-		, "id" => "doc_shared"
+		,
+		"id" => "doc_shared",
 	],
 	"hidden" => $diskEnabled || $isExtranetUser || !$allowedFeatures["files"],
 ];
@@ -351,7 +363,7 @@ JS
 $favorite = [
 	"title" => Loc::getMessage("MB_SEC_FAVORITE"),
 	"hidden" => false,
-	"_code"=>"favorite",
+	"_code" => "favorite",
 	"sort" => 100,
 	"items" => $favoriteItems,
 ];
@@ -372,11 +384,16 @@ if (CModule::IncludeModule("rest"))
 		'order' => ["ID" => "ASC"],
 		'filter' => [
 			"=ACTIVE" => \Bitrix\Rest\AppTable::ACTIVE,
-			"=MOBILE" => \Bitrix\Rest\AppTable::ACTIVE
+			"=MOBILE" => \Bitrix\Rest\AppTable::ACTIVE,
 		],
 		'select' => [
-			'ID', 'STATUS', 'ACCESS', 'MENU_NAME' => 'LANG.MENU_NAME', 'MENU_NAME_DEFAULT' => 'LANG_DEFAULT.MENU_NAME', 'MENU_NAME_LICENSE' => 'LANG_LICENSE.MENU_NAME'
-		]
+			'ID',
+			'STATUS',
+			'ACCESS',
+			'MENU_NAME' => 'LANG.MENU_NAME',
+			'MENU_NAME_DEFAULT' => 'LANG_DEFAULT.MENU_NAME',
+			'MENU_NAME_LICENSE' => 'LANG_LICENSE.MENU_NAME',
+		],
 	]);
 
 	while ($apps = $dbApps->fetch())
@@ -430,7 +447,7 @@ if (CModule::IncludeModule("rest"))
 						"cache" => false,
 						"id" => $apps["ID"],
 						"url" => $siteDir . "mobile/marketplace/?id=" . $apps["ID"],
-					]
+					],
 				];
 			}
 		}
@@ -442,7 +459,7 @@ if (CModule::IncludeModule("rest"))
 			"title" => Loc::getMessage("MB_MARKETPLACE_GROUP_TITLE_2"),
 			"sort" => 110,
 			"hidden" => CMobile::getInstance()->getApiVersion() <= 15,
-			"items" => $arMenuApps
+			"items" => $arMenuApps,
 		];
 	}
 }
@@ -464,7 +481,7 @@ if (
 	$crmMenuItems = [
 		"title" => "CRM",
 		"sort" => 120,
-		"hidden" => !$initialized,
+		"hidden" => !$crmIsInitialized,
 		"items" => [
 			[
 				"title" => Loc::getMessage("MB_CRM_ACTIVITY"),
@@ -480,7 +497,7 @@ if (
 				"title" => Loc::getMessage("MB_CRM_CONTACT"),
 				"imageUrl" => $imageDir . "crm/icon-crm-contact.png",
 				"color" => $crmImageBackgroundColor,
-				"hidden" => $userPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'READ'),
+				"hidden" => $crmTabIsAvailable || $userPerms->HavePerm('CONTACT', BX_CRM_PERM_NONE, 'READ'),
 				"attrs" => [
 					"url" => "/mobile/crm/contact/",
 					"id" => "crm_contact_list",
@@ -491,7 +508,7 @@ if (
 				"title" => Loc::getMessage("MB_CRM_COMPANY"),
 				"imageUrl" => $imageDir . "crm/icon-crm-company.png",
 				"color" => $crmImageBackgroundColor,
-				"hidden" => $userPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'READ'),
+				"hidden" => $crmTabIsAvailable || $userPerms->HavePerm('COMPANY', BX_CRM_PERM_NONE, 'READ'),
 				"attrs" => [
 					"url" => "/mobile/crm/company/",
 					"id" => "crm_company_list",
@@ -502,7 +519,7 @@ if (
 				"title" => Loc::getMessage("MB_CRM_DEAL"),
 				"imageUrl" => $imageDir . "crm/icon-crm-deal.png",
 				"color" => $crmImageBackgroundColor,
-				"hidden" => !\CAllCrmDeal::IsAccessEnabled(),
+				"hidden" => $crmTabIsAvailable || !\CAllCrmDeal::IsAccessEnabled(),
 				"attrs" => [
 					"url" => "/mobile/crm/deal/",
 					"id" => "crm_deal_list",
@@ -553,7 +570,7 @@ if (
 				],
 
 			],
-		]
+		],
 	];
 
 	$menuStructure[] = $crmMenuItems;
@@ -571,7 +588,7 @@ if (
 {
 	$catalogMenuItems = [];
 
-	if ($USER->CanDoOperation('catalog_read'))
+	if (AccessController::getCurrent()->check(\Bitrix\Catalog\Access\ActionDictionary::ACTION_CATALOG_READ))
 	{
 		$storeItemTitle = Loc::getMessage("MENU_CATALOG_STORE");
 
@@ -583,7 +600,7 @@ if (
 			"attrs" => [
 				"id" => "catalog.store.document.list",
 				"onclick" => <<<JS
-					if (Application.getApiVersion() < 41)
+					if (Application.getApiVersion() < 45)
 					{
 						ComponentHelper.openLayout({
 							name: 'app-update-notifier',
@@ -601,6 +618,7 @@ if (
 						ComponentHelper.openLayout({
 							name: 'catalog.store.document.list',
 							object: 'layout',
+							version: "{$catalogStoreDocumentListComponentVersion}",
 							widgetParams: {
 								titleParams: {
 									text: "$storeItemTitle",
@@ -611,6 +629,7 @@ if (
 						});
 					}
 JS
+				,
 			],
 		];
 
@@ -629,6 +648,30 @@ JS
 							object: 'layout',
 							widgetParams: {
 								title: 'Entity Selector Test'
+							}
+						});
+JS,
+				],
+			];
+
+			$catalogMenuItems[] = [
+				"title" => "Stage slider",
+				"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+				"color" => '#8590a2',
+				"hidden" => false,
+				"attrs" => [
+					"id" => "crm:crm.category.view.test",
+					"onclick" => <<<JS
+						ComponentHelper.openLayout({
+							name: 'crm:crm.category.view.test',
+							object: 'layout',
+							widgetParams: {
+								title: 'Stage slider'
+							},
+							componentParams: {
+										entityTypeId: 2,
+										categoryId: 1,
+										readOnly: true
 							}
 						});
 JS,
@@ -655,6 +698,54 @@ JS,
 JS,
 				],
 			];
+
+			$catalogMenuItems[] = [
+				"title" => "crm:crm.category.list",
+				"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+				"color" => '#8590a2',
+				"hidden" => false,
+				"attrs" => [
+					"id" => "crm:crm.category.list",
+					"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'crm:crm.category.list',
+					componentParams: {
+						entityTypeId: 2,
+						currentCategoryId: 0,
+						readOnly: false,
+					},
+					widgetParams: {
+						modal: true,
+						backdrop: {
+							showOnTop: true,
+							swipeContentAllowed: false,
+						}
+					}
+				});
+JS,
+				],
+			];
+
+			$catalogMenuItems[] = [
+				"title" => "crm:crm.test",
+				"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+				"color" => '#8590a2',
+				"hidden" => false,
+				"attrs" => [
+					"id" => "crm:crm.test",
+					"onclick" => <<<JS
+						ComponentHelper.openLayout({
+								name: "crm:crm.test",
+								version: '1',
+								object: "layout",
+								componentParams: {},
+								widgetParams: {
+									title: "crm:crm.test"
+								}
+						});
+JS,
+				],
+			];
 		}
 	}
 
@@ -664,7 +755,7 @@ JS,
 			"title" => Loc::getMessage("MENU_CATALOG"),
 			"sort" => 125,
 			"hidden" => false,
-			"items" => $catalogMenuItems
+			"items" => $catalogMenuItems,
 		];
 	}
 }
@@ -721,6 +812,7 @@ if (!$isExtranetUser)
 					});	
 				}
 JS
+			,
 		],
 	];
 }
@@ -755,13 +847,13 @@ if (
 					}
 				});
 JS
-			, "id" => "workgroups_extranet"
+			,
+			"id" => "workgroups_extranet",
 		],
 	];
 }
 
 $menuStructure[] = $groupSection;
-
 
 $timemanEnabledForUser = false;
 if (Loader::includeModule('timeman'))
@@ -777,13 +869,13 @@ $menuStructure[] = [
 			"title" => Loc::getMessage("MENU_WORK_DAY_MANAGE"),
 			"imageUrl" => $imageDir . "favorite/icon-timeman.png",
 			"color" => "#2FC6F6",
-			"type"=>"info",
+			"type" => "info",
 			"params" => [
 				"url" => $siteDir . "mobile/timeman/",
-				"backdrop"=>["onlyMediumPosition" => false, "mediumPositionPercent" => 80]
+				"backdrop" => ["onlyMediumPosition" => false, "mediumPositionPercent" => 80],
 			],
-		]
-	]
+		],
+	],
 ];
 
 $voximplantInstalled = false;
@@ -804,10 +896,11 @@ if ($voximplantInstalled = Loader::includeModule('voximplant'))
 					"onclick" => <<<JS
 						BX.postComponentEvent("onNumpadRequestShow");
 JS
+					,
 
 				],
-			]
-		]
+			],
+		],
 	];
 }
 
@@ -815,10 +908,10 @@ $settingsComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("s
 $qrComponentPath = \Bitrix\MobileApp\Janative\Manager::getComponentPath("qrcodeauth");
 $settingsUserId = $USER->GetID();
 $settingsSiteId = SITE_ID;
-$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($settingsUserId) : $USER->isAdmin()))? "true": "false";
+$isUserAdmin = ((\CModule::IncludeModule('bitrix24') ? \CBitrix24::isPortalAdmin($settingsUserId) : $USER->isAdmin()))
+	? "true" : "false";
 
 $settingsLanguageId = LANGUAGE_ID;
-
 
 $menuStructure[] = [
 	'title' => Loc::getMessage('MB_SEC_B24'),
@@ -829,16 +922,17 @@ $menuStructure[] = [
 			"title" => Loc::getMessage("TO_LOGIN_ON_DESKTOP"),
 			"useLetterImage" => true,
 			"color" => "#4BA3FB",
-			'type'=>'info',
+			'type' => 'info',
 			"imageUrl" => $imageDir . "settings/desktop_login.png",
-			'attrs'=>[
+			'attrs' => [
 				"onclick" => <<<JS
 				qrauth.open({
 					title: this.title,
 					showHint: false
 				})
 JS
-			]
+				,
+			],
 		],
 		[
 			"title" => Loc::getMessage("MENU_SETTINGS"),
@@ -866,10 +960,11 @@ JS
 							}
 						});
 JS
+				,
 
-			]
-		]
-	]
+			],
+		],
+	],
 ];
 
 if (Loader::includeModule("intranet") && !$isExtranetUser)
@@ -892,7 +987,7 @@ if (Loader::includeModule("intranet") && !$isExtranetUser)
 						"/mobile/marketplace/?id=$assistantAppId&" .
 						"lazyload=Y&mobileMode=Y&assistantId={$assistant["id"]}",
 					"cache" => false,
-				]
+				],
 			];
 		}
 
@@ -928,33 +1023,56 @@ JS,
 		],
 	];
 
+	$developerMenuItems[] = [
+		"title" => "Developer playground",
+		"imageUrl" => $imageDir . "catalog/icon-catalog-store.png",
+		"color" => '#8590a2',
+		"hidden" => false,
+		"attrs" => [
+			"id" => "playground",
+			"onclick" => <<<JS
+				ComponentHelper.openLayout({
+					name: 'playground',
+					object: 'layout',
+					widgetParams: {
+						title: 'Developer playground'
+					}
+				});
+JS,
+		],
+	];
+
 	if (!empty($developerMenuItems))
 	{
 		$menuStructure[] = [
 			"title" => "Development",
 			"sort" => 150,
 			"hidden" => false,
-			"items" => $developerMenuItems
+			"items" => $developerMenuItems,
 		];
 	}
 }
 
-
 return [
 	"menu" => $menuStructure,
 	"popupMenuItems" => [
-		["title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
+		[
+			"title" => Loc::getMessage("MENU_CHANGE_ACCOUNT"),
 			"sectionCode" => "menu",
 			"id" => "switch_account",
 			"iconUrl" => $imageDir . "settings/change_account_popup.png?5",
 			"onclick" => <<<JS
 				Application.exit();
 JS
+			,
 
 		],
-		["title" => Loc::getMessage("MENU_SETTINGS_TABS"), "sectionCode" => "menu", "id" => "tab.settings",
+		[
+			"title" => Loc::getMessage("MENU_SETTINGS_TABS"),
+			"sectionCode" => "menu",
+			"id" => "tab.settings",
 			"iconUrl" => $imageDir . "settings/tab_settings.png?9",
-			"onclick"=><<<JS
+			"onclick" => <<<JS
 					ComponentHelper.openList({
 					name: "tab.settings",
 					object: "list",
@@ -966,7 +1084,8 @@ JS
 					}
 				});
 JS
+			,
 
-		]
-	]
+		],
+	],
 ];

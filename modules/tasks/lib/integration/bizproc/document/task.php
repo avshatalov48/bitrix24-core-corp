@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace Bitrix\Tasks\Integration\Bizproc\Document;
 
 use Bitrix\Main;
@@ -66,7 +67,6 @@ class Task implements \IBPWorkflowDocument
 				$members = array_column($members, 'USER_ID');
 
 				return in_array($userId, $members);
-				break;
 			}
 
 			case \CBPCanUserOperateOperation::WriteDocument:
@@ -77,7 +77,6 @@ class Task implements \IBPWorkflowDocument
 				])->fetch()['USER_ID'];
 
 				return (int) $creatorId === (int) $userId;
-				break;
 			}
 		}
 
@@ -805,6 +804,11 @@ class Task implements \IBPWorkflowDocument
 		else
 		{
 			$fields['GROUP_ID'] = null;
+		}
+
+		if ((int)$fields['PARENT_ID'] <= 0) // issue: 0155930
+		{
+			$fields['PARENT_ID'] = null;
 		}
 	}
 

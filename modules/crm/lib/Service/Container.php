@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Service;
 
+use Bitrix\Crm\Badge\Badge;
 use Bitrix\Crm\Conversion;
 use Bitrix\Crm\Filter;
 use Bitrix\Crm\Integration;
@@ -351,6 +352,29 @@ class Container
 		return ServiceLocator::getInstance()->get('crm.service.broker.dynamic');
 	}
 
+	public function getActivityBroker(): Broker\Activity
+	{
+		return ServiceLocator::getInstance()->get('crm.service.broker.activity');
+	}
+
+	public function getBadge(string $type, string $value): Badge
+	{
+		$identifier = static::getIdentifierByClassName(Badge::class, [$type, $value]);
+
+		if(!ServiceLocator::getInstance()->has($identifier))
+		{
+			$badge = $this->createBadge($type, $value);
+			ServiceLocator::getInstance()->addInstance($identifier, $badge);
+		}
+
+		return ServiceLocator::getInstance()->get($identifier);
+	}
+
+	protected function createBadge(string $type, string $value): Badge
+	{
+		return Badge::createByType($type, $value);
+	}
+
 	public function getDirector(): Director
 	{
 		return ServiceLocator::getInstance()->get('crm.service.director');
@@ -464,7 +488,7 @@ class Container
 	{
 		return ServiceLocator::getInstance()->get('crm.service.multifieldStorage');
 	}
-	
+
 	public function getShipmentProductService(): ProductService
 	{
 		return ServiceLocator::getInstance()->get('crm.shipment.product');

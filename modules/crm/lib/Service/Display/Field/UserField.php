@@ -5,10 +5,11 @@ namespace Bitrix\Crm\Service\Display\Field;
 
 use Bitrix\Crm\Service\Display\Options;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\UI\EntitySelector;
 
 class UserField extends BaseLinkedEntitiesField
 {
-	protected const TYPE = 'user';
+	public const TYPE = 'user';
 
 	protected function getFormattedValueForKanban($fieldValue, int $itemId, Options $displayOptions)
 	{
@@ -59,11 +60,12 @@ class UserField extends BaseLinkedEntitiesField
 			if (isset($displayParams['AS_ARRAY']) && $displayParams['AS_ARRAY'])
 			{
 				return [
-					'link' => htmlspecialcharsbx($showUrl),
-					'title' => htmlspecialcharsbx($user['FORMATTED_NAME']),
-					'picture' => htmlspecialcharsbx($user['PHOTO_URL']),
+					'link' => $this->sanitizeString((string)$showUrl),
+					'title' => $this->sanitizeString((string)$user['FORMATTED_NAME']),
+					'picture' => $this->sanitizeString((string)$user['PHOTO_URL']),
 				];
 			}
+
 			return \CCrmViewHelper::PrepareUserBaloonHtml([
 				'PREFIX' => $prefix,
 				'USER_ID' => $user['ID'],
@@ -74,6 +76,62 @@ class UserField extends BaseLinkedEntitiesField
 		}
 
 		return '';
+	}
+
+	protected function getFormattedValueForMobile($fieldValue, int $itemId, Options $displayOptions): array
+	{
+		if ($this->isMultiple())
+		{
+			$userIds = [];
+			if (is_array($fieldValue))
+			{
+				foreach ($fieldValue as $value)
+				{
+					$userIds[] = (int)$value;
+				}
+			}
+			return [
+				'value' => $userIds,
+				'config' => $this->getPreparedConfig($userIds),
+			];
+		}
+
+		$userId = (int)$fieldValue;
+		return [
+			'value' => $userId,
+			'config' => $this->getPreparedConfig([$userId]),
+		];
+	}
+
+	/**
+	 * @param array $userIds
+	 * @return array[]
+	 */
+	protected function getPreparedConfig(array $userIds): array
+	{
+		$users = $this->getLinkedEntitiesValues();
+		$entityList = [];
+		foreach ($userIds as $userId)
+		{
+			if (!empty($users[$userId]))
+			{
+				$entityList[] = [
+					'id' => $userId,
+					'title' => $users[$userId]['FORMATTED_NAME'],
+					'imageUrl' => $users[$userId]['PHOTO_URL'],
+					'customData' => [
+						'position' => $users[$userId]['WORK_POSITION'],
+					],
+				];
+			}
+		}
+		return [
+			'entityList' => $entityList,
+			'provider' => [
+				'context' => EntitySelector::CONTEXT,
+			],
+			'showSubtitle' => true,
+		];
 	}
 
 	public function loadLinkedEntities(array &$linkedEntitiesValues, array $linkedEntity): void
@@ -109,6 +167,7 @@ class UserField extends BaseLinkedEntitiesField
 	protected function getPreparedValueForExport($elementId): string
 	{
 		$linkedEntitiesValues = $this->getLinkedEntitiesValues();
-		return htmlspecialcharsbx($linkedEntitiesValues[$elementId]['FORMATTED_NAME']);
+
+		return $this->sanitizeString((string)$linkedEntitiesValues[$elementId]['FORMATTED_NAME']);
 	}
 }

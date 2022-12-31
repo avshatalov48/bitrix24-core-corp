@@ -323,6 +323,8 @@
 	color: #fff;
 	text-align: center;
 	white-space: normal;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .bitrix24-default-theme .crm-onec-helper .ui-tile-list-name-text,

@@ -164,13 +164,18 @@ final class Manager
 			{
 				foreach ($basket as $basketItem)
 				{
-					/** @var Sale\ReserveQuantity $reserveQuantityCollection */
-					foreach ($basketItem->getReserveQuantityCollection() as $reserveQuantityCollection)
+					/** @var Sale\ReserveQuantityCollection $reserveCollection */
+					$reserveCollection = $basketItem->getReserveQuantityCollection();
+					if ($reserveCollection)
 					{
-						$deleteResult = $reserveQuantityCollection->delete();
-						if (!$deleteResult->isSuccess())
+						/** @var Sale\ReserveQuantity $reserveQuantityCollection */
+						foreach ($reserveCollection as $reserveQuantityCollection)
 						{
-							$result->addErrors($deleteResult->getErrors());
+							$deleteResult = $reserveQuantityCollection->delete();
+							if (!$deleteResult->isSuccess())
+							{
+								$result->addErrors($deleteResult->getErrors());
+							}
 						}
 					}
 				}
@@ -220,11 +225,12 @@ final class Manager
 
 		// get products and their quantity from shipments
 		$orderProductList = $this->getOrderShipmentProductList($orderList);
+		$orderServiceList = $this->getOrderShipmentServiceList($orderList);
 
 		// search difference between entity and shipments products
 		$diffProducts = $this->getDifferenceBetweenProducts(
 			$this->getEntityProductsForProductManager(),
-			$orderProductList
+			array_merge($orderProductList, $orderServiceList)
 		);
 
 		// add products to new order
@@ -268,7 +274,13 @@ final class Manager
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
 				foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
 				{
-					if (!$shipmentItem->getShipmentItemStoreCollection()->isEmpty())
+					if (!$shipmentItem->getBasketItem()->isReservableItem())
+					{
+						continue;
+					}
+
+					$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
+					if ($shipmentItemStoreCollection && !$shipmentItemStoreCollection->isEmpty())
 					{
 						continue;
 					}
@@ -294,13 +306,6 @@ final class Manager
 					}
 				}
 			}
-		}
-
-		$checkAvailabilityProductsOnStore = $this->checkAvailabilityProductsOnStore($orderList);
-		if (!$checkAvailabilityProductsOnStore->isSuccess())
-		{
-			$result->addErrors($checkAvailabilityProductsOnStore->getErrors());
-			return $result;
 		}
 
 		foreach ($orderList as $order)
@@ -358,11 +363,7 @@ final class Manager
 	 */
 	private function getEntityOrderList(): array
 	{
-		static $orderList = [];
-		if ($orderList)
-		{
-			return $orderList;
-		}
+		$orderList = [];
 
 		$bindingResult = Crm\Order\EntityBinding::getList([
 			'select' => ['ORDER_ID'],
@@ -421,6 +422,10 @@ final class Manager
 
 		/** @var Crm\Order\ShipmentItemStoreCollection $shipmentItemStoreCollection */
 		$shipmentItemStoreCollection = $shipmentsItem->getShipmentItemStoreCollection();
+		if (!$shipmentItemStoreCollection)
+		{
+			return $result;
+		}
 
 		$fields = [
 			'BASKET_ID' => $shipmentsItem->getBasketId(),
@@ -433,102 +438,6 @@ final class Manager
 		if (!$setFieldResult->isSuccess())
 		{
 			$result->addErrors($setFieldResult->getErrors());
-		}
-
-		return $result;
-	}
-
-	private function checkAvailabilityProductsOnStore(array $orderList): Main\Result
-	{
-		$result = new Main\Result();
-
-		/** @var Sale\Reservation\BasketReservationService $basketReservation */
-		$basketReservation = Main\DI\ServiceLocator::getInstance()->get('sale.basketReservation');
-
-		/** @var Crm\Order\Order $order */
-		foreach ($orderList as $order)
-		{
-			$products = [];
-
-			/** @var Crm\Order\Shipment $shipment */
-			foreach ($order->getShipmentCollection()->getNotSystemItems() as $shipment)
-			{
-				$isCanceled = !$shipment->isShipped() && $shipment->getField('EMP_DEDUCTED_ID');
-				if ($isCanceled || $shipment->isShipped())
-				{
-					continue;
-				}
-
-				/** @var Crm\Order\ShipmentItem $item */
-				foreach ($shipment->getShipmentItemCollection() as $item)
-				{
-					/** @var Crm\Order\ShipmentItemStore $shipmentItemStore */
-					foreach ($item->getShipmentItemStoreCollection() as $shipmentItemStore)
-					{
-						$basketCode = $item->getBasketCode();
-						$productId = $item->getProductId();
-						$storeId = $shipmentItemStore->getStoreId();
-						$quantity = $shipmentItemStore->getQuantity();
-
-						if (isset($products[$basketCode]) && $products[$basketCode]['storeId'] === $storeId)
-						{
-							$products[$basketCode]['quantity'] += $quantity;
-						}
-						else
-						{
-							$products[$basketCode] = [
-								'quantity' => $quantity,
-								'storeId' => $storeId,
-								'productId' => $productId,
-							];
-						}
-					}
-				}
-			}
-
-			foreach ($products as $basketCode => $product)
-			{
-				$storeId = $product['storeId'];
-				$quantity = $product['quantity'];
-				$productId = $product['productId'];
-
-				$availableQuantity = $quantity;
-
-				if ((int)$basketCode > 0)
-				{
-					$availableQuantity = $basketReservation->getAvailableCountForBasketItem(
-						(int)$basketCode,
-						$storeId
-					);
-				}
-				else
-				{
-					$storeQuantityRow = Catalog\StoreProductTable::getRow([
-						'select' => [
-							'AMOUNT',
-							'QUANTITY_RESERVED',
-						],
-						'filter' => [
-							'=STORE_ID' => $storeId,
-							'=PRODUCT_ID' => $productId,
-						],
-					]);
-					if ($storeQuantityRow)
-					{
-						$availableQuantity = min(
-							$quantity,
-							$storeQuantityRow['AMOUNT'] - $storeQuantityRow['QUANTITY_RESERVED']
-						);
-					}
-				}
-
-				if ($quantity > $availableQuantity)
-				{
-					$result->addError(
-						new Main\Error("For product with id {$productId} quantity in shipment more than store")
-					);
-				}
-			}
 		}
 
 		return $result;
@@ -547,33 +456,15 @@ final class Manager
 			foreach ($order->getShipmentCollection()->getNotSystemItems() as $shipment)
 			{
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
-				foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
+				foreach ($shipment->getShipmentItemCollection()->getShippableItems() as $shipmentItem)
 				{
 					/** @var Crm\Order\BasketItem $basketItem */
 					$basketItem = $shipmentItem->getBasketItem();
+
 					$basketXmlId = $basketItem->getField('XML_ID');
 
 					$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
-					if ($shipmentItemStoreCollection->isEmpty())
-					{
-						$quantity = $shipmentItem->getQuantity();
-
-						if (isset($orderProductList[$basketXmlId]))
-						{
-							$orderProductList[$basketXmlId]['QUANTITY'] += $quantity;
-							$orderProductList[$basketXmlId]['STORE_LIST'][$this->defaultStore] += $quantity;
-						}
-						else
-						{
-							$orderProductList[$basketXmlId] = [
-								'QUANTITY' => $quantity,
-								'STORE_LIST' => [
-									$this->defaultStore => $quantity,
-								],
-							];
-						}
-					}
-					else
+					if ($shipmentItemStoreCollection && !$shipmentItemStoreCollection->isEmpty())
 					{
 						/** @var Crm\Order\ShipmentItemStore $shipmentItemStore */
 						foreach ($shipmentItemStoreCollection as $shipmentItemStore)
@@ -605,11 +496,68 @@ final class Manager
 							}
 						}
 					}
+					else
+					{
+						$quantity = $shipmentItem->getQuantity();
+
+						if (isset($orderProductList[$basketXmlId]))
+						{
+							$orderProductList[$basketXmlId]['QUANTITY'] += $quantity;
+							$orderProductList[$basketXmlId]['STORE_LIST'][$this->defaultStore] += $quantity;
+						}
+						else
+						{
+							$orderProductList[$basketXmlId] = [
+								'QUANTITY' => $quantity,
+								'STORE_LIST' => [
+									$this->defaultStore => $quantity,
+								],
+							];
+						}
+					}
 				}
 			}
 		}
 
 		return $orderProductList;
+	}
+
+	/**
+	 * @param Crm\Order\Order[] $orderList
+	 * @return array
+	 */
+	private function getOrderShipmentServiceList(array $orderList): array
+	{
+		$orderServiceList = [];
+		foreach ($orderList as $order)
+		{
+			/** @var Crm\Order\Shipment $shipment */
+			foreach ($order->getShipmentCollection()->getNotSystemItems() as $shipment)
+			{
+				/** @var Crm\Order\ShipmentItem $shipmentItem */
+				foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
+				{
+					if ($shipmentItem->isShippable())
+					{
+						continue;
+					}
+
+					$basketXmlId = $shipmentItem->getBasketItem()->getField('XML_ID');
+					$quantity = $shipmentItem->getQuantity();
+
+					if (isset($orderServiceList[$basketXmlId]))
+					{
+						$orderServiceList[$basketXmlId]['QUANTITY'] += $quantity;
+					}
+					else
+					{
+						$orderServiceList[$basketXmlId]['QUANTITY'] = $quantity;
+					}
+				}
+			}
+		}
+
+		return $orderServiceList;
 	}
 
 	private function getDifferenceBetweenProducts(array $entityProducts, array $orderProductList): array
@@ -625,8 +573,8 @@ final class Manager
 					continue;
 				}
 
-				$entityProductStoreList = $entityProduct['STORE_LIST'];
-				$orderProductStoreList = $orderProductList[$basketXmlId]['STORE_LIST'];
+				$entityProductStoreList = $entityProduct['STORE_LIST'] ?? [];
+				$orderProductStoreList = $orderProductList[$basketXmlId]['STORE_LIST'] ?? [];
 
 				$newStoreList = [];
 				foreach ($entityProductStoreList as $storeId => $storeQuantity)

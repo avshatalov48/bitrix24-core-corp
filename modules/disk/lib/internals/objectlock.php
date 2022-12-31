@@ -28,9 +28,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ObjectLock_Query query()
- * @method static EO_ObjectLock_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ObjectLock_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ObjectLock_Result getById($id)
- * @method static EO_ObjectLock_Result getList(array $parameters = array())
+ * @method static EO_ObjectLock_Result getList(array $parameters = [])
  * @method static EO_ObjectLock_Entity getEntity()
  * @method static \Bitrix\Disk\Internals\EO_ObjectLock createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Internals\EO_ObjectLock_Collection createCollection()

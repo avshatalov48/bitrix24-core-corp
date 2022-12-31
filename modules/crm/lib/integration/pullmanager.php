@@ -13,23 +13,19 @@ use Bitrix\Pull\Model\WatchTable;
 
 class PullManager
 {
-	public const
-		MODULE_ID = 'crm',
-		EVENT_KANBAN_UPDATED = 'CRM_KANBANUPDATED';
+	public const MODULE_ID = 'crm';
+	public const EVENT_KANBAN_UPDATED = 'CRM_KANBANUPDATED';
 
-	protected const
-		EVENT_STAGE_ADDED = 'STAGEADDED',
-		EVENT_STAGE_UPDATED = 'STAGEUPDATED',
-		EVENT_STAGE_DELETED = 'STAGEDELETED';
+	protected const EVENT_STAGE_ADDED = 'STAGEADDED';
+	protected const EVENT_STAGE_UPDATED = 'STAGEUPDATED';
+	protected const EVENT_STAGE_DELETED = 'STAGEDELETED';
 
-	protected const
-		EVENT_ITEM_ADDED = 'ITEMADDED',
-		EVENT_ITEM_UPDATED = 'ITEMUPDATED',
-		EVENT_ITEM_DELETED = 'ITEMDELETED';
+	protected const EVENT_ITEM_ADDED = 'ITEMADDED';
+	protected const EVENT_ITEM_UPDATED = 'ITEMUPDATED';
+	protected const EVENT_ITEM_DELETED = 'ITEMDELETED';
 
-	protected
-		$eventIds = [],
-		$isEnabled = false;
+	protected $eventIds = [];
+	protected $isEnabled = false;
 
 	private static $instance;
 
@@ -92,7 +88,9 @@ class PullManager
 	 */
 	public function sendItemUpdatedEvent(array $item, ?array $params = null): bool
 	{
-		return $this->sendItemEvent(self::EVENT_ITEM_UPDATED, $item, $params);
+		$this->sendItemEvent(self::EVENT_ITEM_UPDATED, $item, $params);
+
+		return true;
 	}
 
 	/**
@@ -114,8 +112,7 @@ class PullManager
 	protected function sendItemEvent(string $eventName, array $item, ?array $params = null): bool
 	{
 		$kanbanTag = $this->getKanbanTag($params['TYPE'], $params);
-		$eventParams = $this->prepareItemEventParams($item, $eventName);
-		$eventParams['skipCurrentUser'] = (!isset($params['SKIP_CURRENT_USER']) || $params['SKIP_CURRENT_USER'] === true);
+		$eventParams = $this->prepareItemEventParams($item, $eventName, $params);
 
 		$isKanbanEventSent = $this->sendKanbanEvent($item, $kanbanTag, $eventParams);
 
@@ -213,14 +210,13 @@ class PullManager
 
 	/**
 	 * @param $item
-	 * @param string $eventId
+	 * @param string $eventName
 	 * @param array $params
 	 * @return bool
 	 */
-	protected function sendKanbanEvent($item, string $eventId, array $params = []): bool
+	protected function sendKanbanEvent($item, string $eventName, array $params = []): bool
 	{
-		$params['eventId'] = $eventId;
-		$userIds = $this->getSubscribedUserIdsWithItemPermissions($item, $eventId);
+		$userIds = $this->getSubscribedUserIdsWithItemPermissions($item, $eventName);
 
 		if ($params['skipCurrentUser'])
 		{
@@ -229,19 +225,23 @@ class PullManager
 		}
 		unset($params['skipCurrentUser']);
 
-		return $this->sendUserEvent($eventId, $params, $userIds);
+		return $this->sendUserEvent($eventName, $params, $userIds);
 	}
 
 	/**
 	 * @param $item
 	 * @param string $eventName
+	 * @param array $params
 	 * @return array
 	 */
-	protected function prepareItemEventParams($item, string $eventName = ''): array
+	protected function prepareItemEventParams($item, string $eventName = '', array $params = []): array
 	{
 		return [
 			'eventName' => $eventName,
-			'item' => $item
+			'item' => $item,
+			'skipCurrentUser' => (!isset($params['SKIP_CURRENT_USER']) || $params['SKIP_CURRENT_USER'] === true),
+			'eventId' => ($params['EVENT_ID'] ?? null),
+			'ignoreDelay' => ($params['IGNORE_DELAY'] ?? false),
 		];
 	}
 

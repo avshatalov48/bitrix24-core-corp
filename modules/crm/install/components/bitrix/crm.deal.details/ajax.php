@@ -6,8 +6,8 @@ define('DisableEventsCheck', true);
 
 require_once($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/main/include/prolog_before.php');
 
-use Bitrix\Crm\Binding\OrderEntityTable;
 use Bitrix\Main;
+use Bitrix\Main\Application;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\Synchronization\UserFieldSynchronizer;
 use Bitrix\Crm\Conversion\DealConversionConfig;
@@ -15,7 +15,7 @@ use Bitrix\Crm\Conversion\DealConversionWizard;
 use Bitrix\Crm\Recurring;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm;
-use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Crm\Order\OrderDealSynchronizer;
 use Bitrix\Crm\Service\Container;
 
 if (!CModule::IncludeModule('crm'))
@@ -60,13 +60,19 @@ $APPLICATION->RestartBuffer();
 Header('Content-Type: application/x-javascript; charset='.LANG_CHARSET);
 
 $currentUserID = CCrmSecurityHelper::GetCurrentUserID();
-$currentUserPermissions =  CCrmPerms::GetCurrentUserPermissions();
+$currentUserPermissions = CCrmPerms::GetCurrentUserPermissions();
 
-$action = isset($_POST['ACTION']) ? $_POST['ACTION'] : '';
-if($action === '' && isset($_POST['MODE']))
+$isFactoryEnabled = Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled();
+
+$context = Application::getInstance()->getContext();
+$request = $context->getRequest();
+$action = $request->getPost('ACTION') ?? '';
+$mode = $request->getPost('MODE');
+if ($action === '' && $mode)
 {
-	$action = $_POST['MODE'];
+	$action = $mode;
 }
+
 if($action === '')
 {
 	__CrmDealDetailsEndJsonResonse(array('ERROR'=>'ACTION IS NOT DEFINED!'));
@@ -83,7 +89,7 @@ if($action === 'GET_FORMATTED_SUM')
 	__CrmDealDetailsEndJsonResonse(
 		array(
 			'FORMATTED_SUM' => CCrmCurrency::MoneyToString($sum, $currencyID, '#'),
-			'FORMATTED_SUM_WITH_CURRENCY' => CCrmCurrency::MoneyToString($sum, $currencyID, '')
+			'FORMATTED_SUM_WITH_CURRENCY' => CCrmCurrency::MoneyToString($sum, $currencyID, ''),
 		)
 	);
 }
@@ -117,7 +123,7 @@ elseif($action === 'MOVE_TO_CATEGORY')
 		$recurringData = \Bitrix\Crm\Recurring\Manager::getList(
 			array(
 				'filter' => array('DEAL_ID' => $ID),
-				'limit' => 1
+				'limit' => 1,
 			),
 			\Bitrix\Crm\Recurring\Manager::DEAL
 		);
@@ -167,6 +173,7 @@ elseif($action === 'SAVE')
 
 	$params = isset($_POST['PARAMS']) && is_array($_POST['PARAMS']) ? $_POST['PARAMS'] : array();
 	$categoryID =  isset($params['CATEGORY_ID']) ? (int)$params['CATEGORY_ID'] : 0;
+	$viewMode = ($params['VIEW_MODE'] ?? null);
 
 	if(($ID > 0 && !\CCrmDeal::CheckUpdatePermission($ID, $currentUserPermissions))
 		|| ($ID === 0 && !\CCrmDeal::CheckCreatePermission($currentUserPermissions, $categoryID))
@@ -181,7 +188,7 @@ elseif($action === 'SAVE')
 		__CrmDealDetailsEndJsonResonse([
 			'ERROR' => $diskQuotaRestriction->getErrorMessage(),
 			'RESTRICTION' => true,
-			'RESTRICTION_ACTION' => $diskQuotaRestriction->prepareInfoHelperScript()
+			'RESTRICTION_ACTION' => $diskQuotaRestriction->prepareInfoHelperScript(),
 		]);
 	}
 
@@ -303,10 +310,11 @@ elseif($action === 'SAVE')
 		{
 			$companyItem = $companyData[0];
 			$companyID = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
-			$categoryId = isset($companyItem['categoryId']) ? (int)$companyItem['categoryId'] : 0;
-
 			// unlikely situation but check in case of mismatch
-			if($categoryId !== $categoryParams[CCrmOwnerType::Company]['categoryId'])
+			if (
+				isset($companyItem['categoryId'])
+				&& (int)$companyItem['categoryId'] !== $categoryParams[CCrmOwnerType::Company]['categoryId']
+			)
 			{
 				__CrmDealDetailsEndJsonResonse(['ERROR' => 'INVALID CLIENT COMPANY CATEGORY ID']);
 			}
@@ -318,7 +326,7 @@ elseif($action === 'SAVE')
 					$companyItem,
 					array(
 						'userPermissions' => $currentUserPermissions,
-						'startWorkFlows' => true
+						'startWorkFlows' => true,
 					)
 				);
 
@@ -373,10 +381,11 @@ elseif($action === 'SAVE')
 			}
 
 			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
-			$categoryId = isset($contactItem['categoryId']) ? (int)$contactItem['categoryId'] : 0;
-
 			// unlikely situation but check in case of mismatch
-			if($categoryId !== $categoryParams[CCrmOwnerType::Contact]['categoryId'])
+			if (
+				isset($contactItem['categoryId'])
+				&& (int)$contactItem['categoryId'] !== $categoryParams[CCrmOwnerType::Contact]['categoryId']
+			)
 			{
 				__CrmDealDetailsEndJsonResonse(['ERROR' => 'INVALID CLIENT CONTACT CATEGORY ID!']);
 			}
@@ -388,7 +397,7 @@ elseif($action === 'SAVE')
 					$contactItem,
 					array(
 						'userPermissions' => $currentUserPermissions,
-						'startWorkFlows' => true
+						'startWorkFlows' => true,
 					)
 				);
 
@@ -607,7 +616,7 @@ elseif($action === 'SAVE')
 			$recurringFields = array(
 				"ACTIVE" => "N",
 				"NEXT_EXECUTION" => null,
-				"PARAMS" => $fields['RECURRING']
+				"PARAMS" => $fields['RECURRING'],
 			);
 		}
 		else
@@ -616,7 +625,7 @@ elseif($action === 'SAVE')
 			$startDate = null;
 			$recurringFields = [
 				"CATEGORY_ID" => $categoryId,
-				"PARAMS" => $fields['RECURRING']
+				"PARAMS" => $fields['RECURRING'],
 			];
 			if ((int)$fields['RECURRING']['MODE'] === Recurring\Manager::SINGLE_EXECUTION)
 			{
@@ -677,7 +686,7 @@ elseif($action === 'SAVE')
 		$recurringRow = Recurring\Manager::getList(
 			array(
 				'filter' => array("=DEAL_ID" => $ID),
-				'select' => array('ID')
+				'select' => array('ID'),
 			),
 			Recurring\Manager::DEAL
 		);
@@ -830,6 +839,9 @@ elseif($action === 'SAVE')
 				$fields[\Bitrix\Crm\Item::FIELD_NAME_PRODUCTS] = $productRows;
 			}
 
+			// @todo will be need in the future, when realtime mode is enabled for current user too
+			$saveOptions['EVENT_ID'] = $request->getPost('EVENT_ID');
+
 			if($isNew)
 			{
 				$now = time() + CTimeZone::GetOffset();
@@ -870,11 +882,44 @@ elseif($action === 'SAVE')
 					$bankDetailID > 0 ? $bankDetailID : null
 				);
 
+				// region InventoryManagement
+				if (!$isFactoryEnabled)
+				{
+					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+					if ($factory)
+					{
+						$itemBeforeSave = $factory->createItem();
+						$itemBeforeSave->setFromCompatibleData($fields);
+
+						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
+						$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeAdd($fields);
+						$fields = $inventoryManagementCheckResult->getData();
+					}
+				}
+				// endregion
+
+				$saveOptions['ITEM_OPTIONS'] = [
+					'VIEW_MODE' => $viewMode,
+					'STAGE_ID' => $fields['STAGE_ID'],
+				];
 				$ID = $entity->Add($fields, true, $saveOptions);
 				if($ID <= 0)
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
+				}
+
+				if ($ID > 0 && isset($inventoryManagementCheckResult))
+				{
+					if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\InventoryManagementError::INVENTORY_MANAGEMENT_ERROR_CODE))
+					{
+						Crm\Activity\Provider\StoreDocument::addProductActivity($ID);
+					}
+
+					if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\AvailabilityServices::AVAILABILITY_SERVICES_ERROR_CODE))
+					{
+						Crm\Activity\Provider\StoreDocument::addServiceActivity($ID);
+					}
 				}
 			}
 			else
@@ -927,7 +972,58 @@ elseif($action === 'SAVE')
 					$saveOptions['REGISTER_STATISTICS'] = false;
 				}
 
-				if(!$entity->Update($ID, $fields, true, true, $saveOptions))
+				// region InventoryManagement
+				if (!$isFactoryEnabled)
+				{
+					$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+					if ($factory)
+					{
+						$itemBeforeSave = $factory->getItem($ID);
+						if (!$itemBeforeSave)
+						{
+							$itemBeforeSave = $factory->createItem();
+							$oldFields = CCrmDeal::GetByID($ID);
+							if ($oldFields)
+							{
+								$itemBeforeSave->setFromCompatibleData($oldFields);
+							}
+						}
+
+						$inventoryManagementChecker = new Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
+						$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeUpdate($fields);
+						if (!$inventoryManagementCheckResult->isSuccess())
+						{
+							if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\InventoryManagementError::INVENTORY_MANAGEMENT_ERROR_CODE))
+							{
+								Crm\Activity\Provider\StoreDocument::addProductActivity($ID);
+							}
+
+							if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(Crm\Reservation\Error\AvailabilityServices::AVAILABILITY_SERVICES_ERROR_CODE))
+							{
+								Crm\Activity\Provider\StoreDocument::addServiceActivity($ID);
+							}
+
+							__CrmDealDetailsEndJsonResonse([
+								'ERROR' => current($inventoryManagementCheckResult->getErrorMessages()),
+							]);
+						}
+
+						$fields = $inventoryManagementCheckResult->getData();
+					}
+				}
+				// endregion
+
+				// verification products before update deal (need for correct updating OPPORTUNITY)
+				if (!empty($productRows))
+				{
+					$result = (new OrderDealSynchronizer())->verifyDealProducts($ID, $productRows);
+					if (!$result->isSuccess())
+					{
+						$errorMessage = join(', ', $result->getErrorMessages());
+					}
+				}
+
+				if (empty($errorMessage) && !$entity->Update($ID, $fields, true, true, $saveOptions))
 				{
 					$checkExceptions = $entity->GetCheckExceptions();
 					$errorMessage = $entity->LAST_ERROR;
@@ -971,35 +1067,11 @@ elseif($action === 'SAVE')
 		}
 
 		// save and synchronize products has already been done in \Bitrix\Crm\Entity\Compatibility\Adapter::performUpdate
-		if (!Bitrix\Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled())
+		if (!$isFactoryEnabled)
 		{
-			$isSaveSupplementReserveData =
-				Bitrix\Main\Loader::includeModule('catalog')
-				&& Bitrix\Catalog\Component\UseStore::isUsed()
-				&& !\CCrmSaleHelper::isWithOrdersMode()
-				&& Crm\Restriction\RestrictionManager::getInventoryControlIntegrationRestriction()->hasPermission()
-			;
-
-			Crm\Reservation\DealProductsHitDataSupplement::getInstance()->setProductRows((int)$ID, $productRows);
-			$productRowsSaveTookPlace = false;
 			if (!$isExternal && $enableProductRows && (!$isNew || !empty($productRows)))
 			{
-				if ($isSaveSupplementReserveData)
-				{
-					\Bitrix\Crm\Reservation\EventsHandler\Deal::disableReservationAfterCrmDealProductRowsSave();
-				}
-
-				CCrmProductRow::setPerRowInsert(true);
 				$saveProductRowsResult = \CCrmDeal::SaveProductRows($ID, $productRows, true, true, false);
-				$productRowsSaveTookPlace = true;
-				CCrmProductRow::setPerRowInsert(false);
-				Crm\Reservation\DealProductsHitDataSupplement::getInstance()->readDealSaveData((int)$ID);
-
-				if ($isSaveSupplementReserveData)
-				{
-					\Bitrix\Crm\Reservation\EventsHandler\Deal::enableReservationAfterCrmDealProductRowsSave();
-				}
-
 				if(!$saveProductRowsResult)
 				{
 					/** @var CApplicationException $ex */
@@ -1011,16 +1083,33 @@ elseif($action === 'SAVE')
 			}
 
 			if (
-				(
-					$productRowsSaveTookPlace
-					|| !empty($productRows)
-				)
-				&& $isSaveSupplementReserveData
+				$ID > 0
+				&& \CCrmSaleHelper::isProcessInventoryManagement()
+				&& isset($itemBeforeSave, $inventoryManagementCheckResult)
+				&& $inventoryManagementCheckResult->isSuccess()
 			)
 			{
-				Crm\Reservation\DealProductsHitDataSupplement::getInstance()->saveSupplementReserveData((int)$ID);
+				$factory = Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+				if ($factory)
+				{
+					$itemAfterSave = $factory->getItem($ID);
+					if ($itemAfterSave)
+					{
+						$processInventoryManagementResult =
+							(new Crm\Reservation\Component\InventoryManagement($itemBeforeSave, $itemAfterSave))
+								->process()
+						;
+						if (!$processInventoryManagementResult->isSuccess())
+						{
+							__CrmDealDetailsEndJsonResonse([
+								'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
+							]);
+						}
+					}
+				}
 			}
 		}
+		//endregion
 
 		if(!empty($productRowSettings))
 		{
@@ -1068,7 +1157,7 @@ elseif($action === 'SAVE')
 						$entityInfo,
 						array(
 							'userPermissions' => $currentUserPermissions,
-							'startWorkFlows' => true
+							'startWorkFlows' => true,
 						)
 					);
 				}
@@ -1158,9 +1247,9 @@ elseif($action === 'SAVE')
 					'NAME_TEMPLATE' =>
 						isset($params['NAME_TEMPLATE'])
 							? $params['NAME_TEMPLATE']
-							: \Bitrix\Crm\Format\PersonNameFormatter::getFormat()
+							: \Bitrix\Crm\Format\PersonNameFormatter::getFormat(),
 				)
-			)
+			),
 		);
 
 		$result['REDIRECT_URL'] = \CCrmOwnerType::GetDetailsUrl(
@@ -1270,9 +1359,9 @@ elseif($action === 'CONVERT')
 						'NAME' => 'SYNCHRONIZE',
 						'DATA' => array(
 							'CONFIG' => $config->toJavaScript(),
-							'FIELD_NAMES' => array_values($syncFieldNames)
-						)
-					)
+							'FIELD_NAMES' => array_values($syncFieldNames),
+						),
+					),
 				)
 			);
 		}
@@ -1322,8 +1411,8 @@ elseif($action === 'CONVERT')
 			array(
 				'DATA' => array(
 					'URL' => $wizard->getRedirectUrl(),
-					'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N'
-				)
+					'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N',
+				),
 			)
 		);
 	}
@@ -1336,8 +1425,8 @@ elseif($action === 'CONVERT')
 				array(
 					'DATA' => array(
 						'URL' => $url,
-						'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N'
-					)
+						'IS_FINISHED' => $wizard->isFinished() ? 'Y' : 'N',
+					),
 				)
 			);
 		}
@@ -1381,7 +1470,7 @@ elseif($action === 'DELETE')
 		$ex = $APPLICATION->GetException();
 		__CrmDealDetailsEndJsonResonse(
 			array(
-				'ERROR' => ($ex instanceof CApplicationException) ? $ex->GetString() : GetMessage('CRM_DEAL_DELETION_ERROR')
+				'ERROR' => ($ex instanceof CApplicationException) ? $ex->GetString() : GetMessage('CRM_DEAL_DELETION_ERROR'),
 			)
 		);
 	}
@@ -1447,7 +1536,7 @@ elseif($action === 'GET_BINDING_INFOS')
 				'ENTITY_EDITOR_FORMAT' => true,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
 				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
-				'NAME_TEMPLATE' => $nameTemplate
+				'NAME_TEMPLATE' => $nameTemplate,
 			)
 		);
 	}
@@ -1521,7 +1610,7 @@ elseif($action === 'ADD_BINDING')
 				'ENTITY_EDITOR_FORMAT' => true,
 				'REQUIRE_REQUISITE_DATA' => $isReadPermitted,
 				'REQUIRE_MULTIFIELDS' => $isReadPermitted,
-				'NAME_TEMPLATE' => $nameTemplate
+				'NAME_TEMPLATE' => $nameTemplate,
 			)
 		);
 	}
@@ -1583,8 +1672,8 @@ elseif($action === 'DELETE_BINDING')
 		array(
 			'DATA' => array(
 				'ENTITY_TYPE_NAME' => CCrmOwnerType::ResolveName($entityTypeID),
-				'ENTITY_ID' => $entityID
-			)
+				'ENTITY_ID' => $entityID,
+			),
 		)
 	);
 }
@@ -1774,7 +1863,7 @@ elseif($action === 'PREPARE_EDITOR_HTML')
 			'INITIAL_MODE' => $initialMode !== '' ? $initialMode : 'edit',
 			'SHOW_EMPTY_FIELDS' => $showEmptyFields,
 			'IS_EMBEDDED' =>$isEmbedded,
-			'CONTEXT' => $context
+			'CONTEXT' => $context,
 		)
 	);
 

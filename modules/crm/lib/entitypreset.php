@@ -6,6 +6,7 @@ use Bitrix\Crm\Order\Matcher\BaseEntityMatcher;
 use Bitrix\Crm\Order\Matcher\Internals\OrderPropsMatchTable;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
+use Bitrix\Main\Data\Cache;
 use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
@@ -14,15 +15,20 @@ Loc::loadMessages(__FILE__);
 
 class EntityPreset
 {
-	const Undefined = 0;
-	const Requisite = 8;    // refresh FirstEntityType and LastEntityType constants (see the CCrmOwnerType constants)
-	const FirstEntityType = 8;
-	const LastEntityType = 8;
+	public const Undefined = 0;
+	public const Requisite = 8;    // refresh FirstEntityType and LastEntityType constants (see the CCrmOwnerType constants)
+	public const FirstEntityType = 8;
+	public const LastEntityType = 8;
 
-	const NO_ERRORS = 0;
-	const ERR_DELETE_PRESET_USED = 1;
-	const ERR_PRESET_NOT_FOUND = 2;
-	const ERR_INVALID_ENTITY_TYPE = 3;
+	public const NO_ERRORS = 0;
+	public const ERR_DELETE_PRESET_USED = 1;
+	public const ERR_PRESET_NOT_FOUND = 2;
+	public const ERR_INVALID_ENTITY_TYPE = 3;
+
+	protected const CACHE_PATH = '/crm/entitypreset/';
+	protected const CACHE_TTL = 86400;
+	protected const CACHE_ID_LIST_FOR_REQUISITE_ENTITY_EDITOR = 'listForRequisiteEntityEditor';
+	protected const CACHE_ID_ACTIVE_ITEM_LIST = 'activeItemList';
 
 	private static $singleInstance = null;
 
@@ -30,6 +36,8 @@ class EntityPreset
 	private static $countryInfo = null;
 	private static $countryList = null;
 	private static $fieldInfo = null;
+
+	private static $staticCache = [];
 
 	public static function getSingleInstance()
 	{
@@ -176,39 +184,95 @@ class EntityPreset
 
 	public static function getActiveItemList()
 	{
-		$entity = self::getSingleInstance();
-		$dbResult = $entity->getList(
-			array(
-				'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
-				'filter' => self::getActivePresetFilter(),
-				'select' => array('ID', 'NAME')
-			)
-		);
+		$results = [];
 
-		$results = array();
-		while ($fields = $dbResult->fetch())
+		if (isset(static::$staticCache[static::CACHE_ID_ACTIVE_ITEM_LIST]))
 		{
-			$results[$fields['ID']] = $fields['NAME'];
+			$results = static::$staticCache[static::CACHE_ID_ACTIVE_ITEM_LIST];
 		}
+		else
+		{
+			$cache = Cache::createInstance();
+			if (
+				$cache->initCache(
+					static::CACHE_TTL,
+					static::CACHE_ID_ACTIVE_ITEM_LIST,
+					static::CACHE_PATH
+				)
+			)
+			{
+				$results = $cache->getVars();
+			}
+			elseif ($cache->startDataCache())
+			{
+				$entity = self::getSingleInstance();
+				$dbResult = $entity->getList(
+					array(
+						'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
+						'filter' => self::getActivePresetFilter(),
+						'select' => array('ID', 'NAME')
+					)
+				);
+
+				$results = [];
+				while ($fields = $dbResult->fetch())
+				{
+					$results[$fields['ID']] = $fields['NAME'];
+				}
+
+				$cache->endDataCache($results);
+			}
+
+			static::$staticCache[static::CACHE_ID_ACTIVE_ITEM_LIST] = $results;
+		}
+
 		return $results;
 	}
 
 	public static function getListForRequisiteEntityEditor()
 	{
-		$entity = self::getSingleInstance();
-		$dbResult = $entity->getList(
-			array(
-				'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
-				'filter' => self::getActivePresetFilter(),
-				'select' => array('ID', 'NAME', 'COUNTRY_ID')
-			)
-		);
+		$results = [];
 
-		$results = array();
-		while ($fields = $dbResult->fetch())
+		if (isset(static::$staticCache[static::CACHE_ID_LIST_FOR_REQUISITE_ENTITY_EDITOR]))
 		{
-			$results[$fields['ID']] = $fields;
+			$results = static::$staticCache[static::CACHE_ID_LIST_FOR_REQUISITE_ENTITY_EDITOR];
 		}
+		else
+		{
+			$cache = Cache::createInstance();
+			if (
+				$cache->initCache(
+					static::CACHE_TTL,
+					static::CACHE_ID_LIST_FOR_REQUISITE_ENTITY_EDITOR,
+					static::CACHE_PATH
+				)
+			)
+			{
+				$results = $cache->getVars();
+			}
+			elseif ($cache->startDataCache())
+			{
+				$results = [];
+
+				$entity = self::getSingleInstance();
+				$dbResult = $entity->getList(
+					array(
+						'order' => array('SORT' => 'ASC', 'ID' => 'ASC'),
+						'filter' => self::getActivePresetFilter(),
+						'select' => array('ID', 'NAME', 'COUNTRY_ID')
+					)
+				);
+				while ($fields = $dbResult->fetch())
+				{
+					$results[$fields['ID']] = $fields;
+				}
+
+				$cache->endDataCache($results);
+			}
+
+			static::$staticCache[static::CACHE_ID_LIST_FOR_REQUISITE_ENTITY_EDITOR] = $results;
+		}
+
 		return $results;
 	}
 
@@ -420,6 +484,12 @@ class EntityPreset
 		return (is_array($row)? $row : null);
 	}
 
+	public function clearCache()
+	{
+		Cache::clearCache(true, static::CACHE_PATH);
+		static::$staticCache = [];
+	}
+
 	public function add($fields, $options = array())
 	{
 		unset($fields['ID'], $fields['DATE_MODIFY'], $fields['MODIFY_BY_ID']);
@@ -430,6 +500,8 @@ class EntityPreset
 		{
 			$fields['SETTINGS'] = $this->settingsPrepareFieldsBeforeSave($fields['SETTINGS']);
 		}
+
+		$this->clearCache();
 
 		return PresetTable::add($fields);
 	}
@@ -444,6 +516,8 @@ class EntityPreset
 		{
 			$fields['SETTINGS'] = $this->settingsPrepareFieldsBeforeSave($fields['SETTINGS']);
 		}
+
+		$this->clearCache();
 
 		return PresetTable::update($id, $fields);
 	}
@@ -497,6 +571,8 @@ class EntityPreset
 				}
 			}
 		}
+
+		$this->clearCache();
 
 		return PresetTable::delete($id);
 	}

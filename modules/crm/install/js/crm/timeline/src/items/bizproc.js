@@ -10,6 +10,12 @@ export default class Bizproc extends History
 
 	getTitle()
 	{
+		const type = this.getTextDataParam("TYPE");
+		if (type === 'AUTOMATION_DEBUG_INFORMATION')
+		{
+			return this.getMessage('automationDebugger');
+		}
+
 		return this.getMessage("bizproc");
 	}
 
@@ -71,6 +77,10 @@ export default class Bizproc extends History
 			return '<strong>#TITLE#</strong>: #ERROR_TEXT#'
 				.replace('#TITLE#', BX.util.htmlspecialchars(this.getTextDataParam("ACTIVITY_TITLE")))
 				.replace('#ERROR_TEXT#', BX.util.htmlspecialchars(this.getTextDataParam("ERROR_TEXT")))
+		}
+		else if (type === 'AUTOMATION_DEBUG_INFORMATION')
+		{
+			return BX.Text.encode(this.getTextDataParam('AUTOMATION_DEBUG_TEXT'));
 		}
 
 		const workflowName = this.getTextDataParam("WORKFLOW_TEMPLATE_NAME");

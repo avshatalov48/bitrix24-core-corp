@@ -42,6 +42,9 @@ unset($map['ReturnFields'], $returnFieldsProperty['Map'], $returnFieldsProperty[
 		<div data-role="bca-cuda-return-fields-container"></div>
 	</div>
 </div>
+<div hidden>
+	<?= $dialog->renderFieldControl($dialog->getMap()['OnlyDynamicEntities']) ?>
+</div>
 
 <script>
 	BX.ready(function()

@@ -467,7 +467,7 @@ class Input
 			{
 				if (!Library::isEmpty($status['message']['date']))
 				{
-					$status['message']['date'] = DateTime::createFromTimestamp($status['message']['date']);
+					$status['message']['date'] = DateTime::createFromTimestamp((int)$status['message']['date']);
 				}
 
 				$event = $this->sendEventStatusDelivery($status);

@@ -47,7 +47,8 @@ class TimelineTable  extends Entity\DataManager
 			'SETTINGS' => array('data_type' => 'text', 'serialized' => true),
 			'BINDINGS' => array(
 				'data_type' => TimelineBindingTable::class,
-				'reference' => array('=this.ID' => 'ref.OWNER_ID')
+				'reference' => array('=this.ID' => 'ref.OWNER_ID'),
+				'join_type' => 'inner'
 			),
 		);
 	}
@@ -71,5 +72,11 @@ class TimelineTable  extends Entity\DataManager
 		}
 
 		Main\Application::getConnection()->queryExecute("DELETE from b_crm_timeline WHERE ".implode(' AND ', $values));
+	}
+
+	public static function onAfterDelete(Entity\Event $event)
+	{
+		$primary = $event->getParameter('primary');
+		NoteTable::deleteByItemId(NoteTable::NOTE_TYPE_HISTORY, $primary['ID']);
 	}
 }

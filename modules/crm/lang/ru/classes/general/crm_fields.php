@@ -71,4 +71,5 @@ $MESS["CRM_FIELDS_TYPE_URL"] = "Ссылка";
 $MESS["CRM_FIELDS_TYPE_E_DISPLAY_UI"] = "Набираемый список";
 $MESS["CRM_FIELDS_TYPE_E_DISPLAY_DIALOG"] = "Диалог выбора сущностей";
 $MESS["CRM_FIELDS_TYPE_ADDRESS"] = "Адрес Google карты";
+$MESS["CRM_FIELDS_TYPE_ADDRESS_2"] = "Адрес";
 $MESS["CRM_FIELDS_TYPE_RESOURCEBOOKING"] = "Бронирование ресурсов";

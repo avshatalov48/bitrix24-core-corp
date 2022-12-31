@@ -7,6 +7,7 @@
 		constructor(props)
 		{
 			super(props);
+
 			/** @type {EntityEditorSection[]} */
 			this.sections = [];
 		}
@@ -19,35 +20,31 @@
 			return this.sections;
 		}
 
-		renderSections() {
+		renderSections()
+		{
 			return this.renderFromModel((ref, index) => {
-				this.sections[index] = ref
+				this.sections[index] = ref;
 			});
 		}
 
 		render()
 		{
+			const renderedSections = this.renderSections();
+			if (!renderedSections || renderedSections.length === 0)
+			{
+				return null;
+			}
+
 			return View(
 				{
 					style: {
 						style: {
-							flexDirection: 'column'
-						}
-					}
+							flexDirection: 'column',
+						},
+					},
 				},
-				...this.renderSections()
-			)
-		}
-
-		validate(result)
-		{
-			const validator = EntityAsyncValidator.create();
-
-			this.sections.forEach((field) => {
-				validator.addResult(field.validate(result));
-			})
-
-			return validator.validate();
+				...renderedSections,
+			);
 		}
 	}
 

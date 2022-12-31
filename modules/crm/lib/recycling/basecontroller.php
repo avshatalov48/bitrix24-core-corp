@@ -1,8 +1,10 @@
 <?php
 namespace Bitrix\Crm\Recycling;
 
-use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Crm\Badge\Badge;
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Main;
 
 abstract class BaseController
 {
@@ -862,6 +864,31 @@ abstract class BaseController
 	protected function eraseSuspendedCustomRelations(int $recyclingEntityId): void
 	{
 		Crm\Relation\EntityRelationTable::deleteByItem($this->getSuspendedEntityTypeID(), $recyclingEntityId);
+	}
+	//endregion
+
+	//region Badges
+	protected function suspendBadges(int $entityId, int $recyclingEntityId): void
+	{
+		Badge::rebindEntity(
+			new ItemIdentifier($this->getEntityTypeID(), $entityId),
+			new ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityId),
+		);
+	}
+
+	protected function recoverBadges(int $recyclingEntityId, int $newEntityId): void
+	{
+		Badge::rebindEntity(
+			new ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityId),
+			new ItemIdentifier($this->getEntityTypeID(), $newEntityId),
+		);
+	}
+
+	protected function eraseSuspendedBadges(int $recyclingEntityId): void
+	{
+		Badge::deleteByEntity(
+			new ItemIdentifier($this->getSuspendedEntityTypeID(), $recyclingEntityId),
+		);
 	}
 	//endregion
 }

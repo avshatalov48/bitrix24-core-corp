@@ -28,12 +28,33 @@
 		constructor(entity)
 		{
 			super();
+			/** @var {BaseCatalogProductEntity} */
 			this.entity = entity;
 		}
 
 		getTitle()
 		{
 			return this.entity.getTitle();
+		}
+
+		getPermissions()
+		{
+			return this.entity.getDictionaryValues('permissions');
+		}
+
+		hasPermission(permission)
+		{
+			const permissions = this.getPermissions();
+
+			return (
+				permissions.hasOwnProperty(permission)
+				&& permissions[permission] === true
+			);
+		}
+
+		hasProductEditPermission()
+		{
+			return this.hasPermission('catalog_product_edit');
 		}
 
 		notifyAboutDataChanges()

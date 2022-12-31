@@ -5,8 +5,7 @@ define("STOP_STATISTICS", true);
 
 require_once($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/main/include/prolog_before.php");
 
-\Bitrix\Main\Loader::includeModule('crm');
-if (\Bitrix\Crm\Restriction\RestrictionManager::getContactExportRestriction()->hasPermission())
+if (\Bitrix\Main\Loader::includeModule('crm') && \Bitrix\Crm\Restriction\RestrictionManager::getContactExportRestriction()->hasPermission())
 {
 	$APPLICATION->IncludeComponent(
 		"bitrix:stssync.server",

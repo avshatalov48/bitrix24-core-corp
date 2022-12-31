@@ -1,11 +1,13 @@
 (() => {
+	const { ImageSelectField } = jn.require('layout/ui/fields/image-select');
+
 	class ProjectAvatarField extends LayoutComponent
 	{
 		render()
 		{
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.IMAGE_SELECT, {
+				ImageSelectField({
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_AVATAR_TITLE'),
 					images: {
 						default:

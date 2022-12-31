@@ -203,50 +203,6 @@ class TemplateFieldHandler
 	 * @return $this
 	 * @throws TemplateFieldValidateException
 	 */
-	public function prepareFiles(bool $checkFileRights): self
-	{
-		if (
-			!$checkFileRights
-			|| !isset($this->fields['FILES'])
-			|| !$this->fields['FILES']
-		)
-		{
-			return $this;
-		}
-
-		if (
-			is_string($this->fields['FILES'])
-			&& !empty($this->fields['FILES'])
-		)
-		{
-			$this->fields['FILES'] = unserialize($this->fields['FILES'], ['allowed_classes' => false]);
-		}
-
-		if (!is_array($this->fields['FILES']))
-		{
-			throw new TemplateFieldValidateException(Loc::getMessage('TASKS_BAD_FILE_ID_EX'));
-		}
-
-		$ar = \CTaskFiles::checkFilesAccessibilityByUser($this->fields['FILES'], $this->userId);
-
-		foreach ($this->fields['FILES'] as $fileId)
-		{
-			if (
-				!isset($ar['f' . $fileId])
-				|| ($ar['f' . $fileId] === false)
-			)
-			{
-				throw new TemplateFieldValidateException(Loc::getMessage('TASKS_BAD_FILE_ID_EX'));
-			}
-		}
-
-		return $this;
-	}
-
-	/**
-	 * @return $this
-	 * @throws TemplateFieldValidateException
-	 */
 	public function prepareParentId()
 	{
 		if(

@@ -1,69 +1,104 @@
-import { DateTimeFormat } from "main.date";
 import { Runtime } from "main.core";
 import { Action } from "../../action";
+import { DatetimeConverter } from "crm.timeline.tools";
+import { DateTimeFormat } from "main.date";
+import { TimestampConverter } from "crm.datetime";
+
+export const DatePillColor = Object.freeze({
+	DEFAULT: 'default',
+	WARNING: 'warning',
+});
+
 
 export default {
 	props: {
-		date: Number,
-		action: Object,
+		value: Number,
+		withTime: Boolean,
+		backgroundColor: {
+			type: String,
+			required: false,
+			default: DatePillColor.DEFAULT,
+			validator(value: string) {
+				return Object.values(DatePillColor).includes(value);
+			},
+		},
+		action: Object|null,
 	},
+	inject: ['isReadOnly'],
 	data(): Object
 	{
 		return {
-			currentDate: this.date,
-			initialDate: this.date,
+			currentTimestamp: this.value,
+			initialTimestamp: this.value,
 			actionTimeoutId: null,
 		};
 	},
 	computed: {
-		currentFormatDate() {
-			if (!this.currentDateObject)
+		className() {
+			return [
+				'crm-timeline__date-pill',
+				`--color-${this.backgroundColor}`, {
+				'--readonly': this.isPillReadonly,
+				}
+			]
+		},
+		formattedDate(): string {
+			if (!this.currentTimestamp)
 			{
 				return null;
 			}
 
-			return DateTimeFormat.format(this.dateFormat, this.currentDateObject);
+			return DatetimeConverter.createFromServerTimestamp(this.currentTimestamp).toUserTime().toDatetimeString({ withDayOfWeek: true, delimiter:', ' })
+		},
+		currentDateInSiteFormat(): ?string
+		{
+			return DateTimeFormat.format(
+				this.withTime
+					? DatetimeConverter.getSiteDateTimeFormat()
+					: DatetimeConverter.getSiteDateFormat(),
+				(DatetimeConverter.createFromServerTimestamp(this.currentTimestamp)).toUserTime().getValue()
+			);
 		},
 
-		dateFormat() {
-			return 'D, j M, H:i';
-		},
-
-		currentDateObject(): ?Date {
-			return this.currentDate ? new Date(this.currentDate * 1000) : null;
-		},
-
-		calendarParams() {
+		calendarParams(): Object {
 			return {
-				value: this.currentFormatDate,
-				bTime: true,
-				bHideTime: false,
+				value: this.currentDateInSiteFormat,
+				bTime: this.withTime,
+				bHideTime: !this.withTime,
 				bSetFocus: false,
 			}
 		},
+
+		isPillReadonly(): boolean {
+			return this.isReadOnly || !this.action;
+		}
+	},
+	watch: {
+		value(newDate): void // update date from push
+		{
+			this.initialTimestamp = newDate;
+			this.currentTimestamp = newDate;
+		}
 	},
 	methods: {
 		openCalendar(event: PointerEvent): void
 		{
+			if (this.isPillReadonly)
+			{
+				return;
+			}
 			this.cancelScheduledActionExecution();
 
 			// eslint-disable-next-line bitrix-rules/no-bx
 			BX.calendar({
 				node: event.target,
 				callback_after: (newDate: Date) => {
-					this.currentDate = Math.round(newDate.getTime() / 1000);
+					this.currentTimestamp = TimestampConverter.userToBrowser(newDate.getTime() / 1000);
 
-					this.scheduleActionExecution();
+					this.executeAction();
 				},
 				...this.calendarParams,
 			});
-		},
-
-		scheduleActionExecution(): void
-		{
-			this.cancelScheduledActionExecution();
-
-			this.actionTimeoutId = setTimeout(this.executeAction.bind(this), 3 * 1000);
 		},
 		cancelScheduledActionExecution(): void
 		{
@@ -80,7 +115,7 @@ export default {
 				return;
 			}
 
-			if (this.currentDate === this.initialDate)
+			if (this.currentTimestamp === this.initialTimestamp)
 			{
 				return;
 			}
@@ -89,18 +124,21 @@ export default {
 			const actionDescription = Runtime.clone(this.action);
 
 			actionDescription.actionParams ??= {};
-			actionDescription.actionParams.value = this.currentDateObject;
+			actionDescription.actionParams.value = this.currentDateInSiteFormat;
 
 			const action = new Action(actionDescription);
 			action.execute(this);
 
-			this.initialDate = this.currentDate;
+			this.initialTimestamp = this.currentTimestamp;
 		},
 	},
 	template: `
-		<span class="crm-timeline__date-pill" @click="openCalendar">
+		<span
+			:class="className"
+			@click="openCalendar"
+		>
 			<span>
-				{{ currentFormatDate }}
+				{{ formattedDate }}
 			</span>
 			<span class="crm-timeline__date-pill_caret"></span>
 		</span>`

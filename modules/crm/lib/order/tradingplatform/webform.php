@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Order\TradingPlatform;
 
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\Sale;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -11,7 +12,9 @@ Main\Localization\Loc::loadMessages(__FILE__);
  * Class WebForm
  * @package Bitrix\Crm\TradingPlatform
  */
-class WebForm extends Platform
+class WebForm
+	extends Platform
+	implements Sale\TradingPlatform\IRestriction
 {
 	public const CODE_DELIMITER = '_';
 	public const TRADING_PLATFORM_CODE = 'webform';

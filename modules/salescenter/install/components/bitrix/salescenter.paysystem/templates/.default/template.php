@@ -133,8 +133,11 @@ Extension::load([
 					</div>
 					<div data-bx-salescenter-block="auth" style="display: none;" class="salescenter-button-container">
 						<div class="ui-text-2"><?=Loc::getMessage('SALESCENTER_SP_CONNECT_HINT')?></div>
-						<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-primary ui-btn-width">
-							<?=Loc::getMessage('SALESCENTER_SP_CONNECT_PAYMENT_BUTTON')?>
+						<a id="bx-salescenter-create-button" href="https://yookassa.ru/joinups/?source=bitrix24" target="_blank" class="ui-btn ui-btn-md ui-btn-primary">
+							<?=Loc::getMessage('SALESCENTER_SP_CREATE_YOOKASSA_PAYMENT_BUTTON')?>
+						</a>
+						<a id="bx-salescenter-connect-button" href="javascript: void(0);" class="ui-btn ui-btn-md ui-btn-light-border">
+							<?=Loc::getMessage('SALESCENTER_SP_CONNECT_YOOKASSA_PAYMENT_BUTTON')?>
 						</a>
 					</div>
 					<div data-bx-salescenter-block="settings" style="display: none;" class="salescenter-button-container">

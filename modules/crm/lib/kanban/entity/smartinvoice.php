@@ -23,6 +23,7 @@ class SmartInvoice extends Dynamic
 	{
 		return (new Filter\Preset\SmartInvoice())
 			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->setCategoryId($this->categoryId)
 			->getDefaultPresets()
 		;
 	}

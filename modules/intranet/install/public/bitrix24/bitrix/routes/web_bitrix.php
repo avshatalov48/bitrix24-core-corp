@@ -168,6 +168,8 @@ return function (RoutingConfigurator $routes) {
 			$routes->any('schedules/{any}', new PublicPageController('/timeman/schedules.php'));
 			$routes->any('settings/{any}', new PublicPageController('/timeman/settings.php'));
 			$routes->any('worktime/{any}', new PublicPageController('/timeman/worktime.php'));
+			$routes->any('login-history/{user}/{any}', new PublicPageController('/timeman/login-history/index.php'))
+				->where('user', '[0-9]+');
 		}
 	);
 

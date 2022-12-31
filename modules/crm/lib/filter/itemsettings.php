@@ -5,7 +5,7 @@ namespace Bitrix\Crm\Filter;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Model\Dynamic\Type;
 
-class ItemSettings extends EntitySettings
+class ItemSettings extends EntitySettings implements ISettingsSupportsCategory
 {
 	/** @var Type */
 	protected $type;
@@ -44,7 +44,10 @@ class ItemSettings extends EntitySettings
 		return $this->getEntityTypeName();
 	}
 
-	public function getCategoryId(): int
+	/**
+	 * @inheritDoc
+	 */
+	public function getCategoryId(): ?int
 	{
 		return $this->categoryId;
 	}

@@ -13,6 +13,7 @@ $chosenEntityValues = $dialog->getCurrentValue('dynamic_entities_fields');
 
 $typeIdField = $dialog->getMap()['DynamicTypeId'];
 $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
+
 ?>
 <div class="bizproc-automation-popup-settings">
 	<span class="bizproc-automation-popup-settings-title bizproc-automation-popup-settings-title-autocomplete">
@@ -33,6 +34,10 @@ $entitiesFields = $dialog->getMap()['DynamicEntitiesFields']['Map'];
 		<?php endforeach; ?>
 	</div>
 <?php endforeach; ?>
+
+<div hidden>
+	<?= $dialog->renderFieldControl($dialog->getMap()['OnlyDynamicEntities']) ?>
+</div>
 
 <script>
 	BX.ready(function()

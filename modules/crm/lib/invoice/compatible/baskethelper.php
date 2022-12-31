@@ -282,8 +282,12 @@ class BasketHelper
 
 				if ($arShoppingCartItem['DISCOUNT_PRICE'] > 0)
 				{
-					$arShoppingCartItem['DISCOUNT_PRICE_PERCENT'] = $arShoppingCartItem['DISCOUNT_PRICE'] * 100 /
-						($arShoppingCartItem['DISCOUNT_PRICE'] + $arShoppingCartItem['PRICE']);
+					$arShoppingCartItem['DISCOUNT_PRICE_PERCENT'] = 0.0;
+					if ($arShoppingCartItem['DISCOUNT_PRICE'] + $arShoppingCartItem['PRICE'] != 0)
+					{
+						$arShoppingCartItem['DISCOUNT_PRICE_PERCENT'] = $arShoppingCartItem['DISCOUNT_PRICE'] * 100 /
+							($arShoppingCartItem['DISCOUNT_PRICE'] + $arShoppingCartItem['PRICE']);
+					}
 				}
 				$result[$itemIndex] = $arShoppingCartItem;
 			}

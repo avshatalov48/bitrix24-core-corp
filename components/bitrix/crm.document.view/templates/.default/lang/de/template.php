@@ -25,6 +25,7 @@ $MESS["CRM_DOCUMENT_VIEW_SHOW_FULL_DOCUMENT"] = "Dokument vollständig anzeigen"
 $MESS["CRM_DOCUMENT_VIEW_SIGNED"] = "mit Unterschriften und einem Stempel";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_AND_STAMP"] = "Stempel und Signatur";
 $MESS["CRM_DOCUMENT_VIEW_SIGN_BUTTON"] = "Unterschreiben";
+$MESS["CRM_DOCUMENT_VIEW_SIGN_CLICKED"] = "Sie haben die Unterschreibung des Dokuments bereits gestartet.";
 $MESS["CRM_DOCUMENT_VIEW_SMS_PUBLIC_URL_NECESSARY"] = "Öffentlicher Link ist erforderlich, um SMS zu versenden";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_NO_PDF_ERROR"] = "PDF-Version des Dokuments kann nicht gefunden werden. Evtl. war die Dateikonvertierung  fehlgeschlagen.";
 $MESS["CRM_DOCUMENT_VIEW_TRANSFORMATION_PROGRESS"] = "Bitte warten Sie, bis die Konvertierung abgeschlossen wird";

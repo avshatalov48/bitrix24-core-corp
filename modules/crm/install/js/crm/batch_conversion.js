@@ -177,7 +177,8 @@ if(typeof(BX.Crm.BatchConversionManager) === "undefined")
 			var data =
 				{
 					ACTION: "PREPARE_BATCH_CONVERSION",
-					PARAMS: params
+					PARAMS: params,
+					sessid: BX.bitrix_sessid(),
 				};
 
 			BX.ajax(

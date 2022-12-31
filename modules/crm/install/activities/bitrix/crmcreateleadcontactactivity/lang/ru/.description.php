@@ -1,5 +1,6 @@
-<?
-$MESS["CRM_CRLC_NAME"] = "Создать Контакт к Лиду";
-$MESS["CRM_CRLC_DESC"] = "Создать Контакт и пометить Лид как повторный";
-$MESS["CRM_CRLC_RETURN_CONTACT_ID"] = "ID Контакта";
-?>
+<?php
+
+$MESS['CRM_CRLC_NAME'] = 'Создать Контакт к Лиду';
+$MESS['CRM_CRLC_DESC'] = 'Создать Контакт и пометить Лид как повторный';
+$MESS['CRM_CRLC_RETURN_CONTACT_ID'] = 'ID Контакта';
+$MESS['CRM_CRLC_DESC_1'] = 'Создаёт контакт из лида, если менеджер хочет продолжить работу с клиентом';

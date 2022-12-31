@@ -5,7 +5,20 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 }
 
 use Bitrix\Main;
+use Bitrix\UI;
 use Bitrix\Crm;
+
+$fontProxy = [];
+if (Main\Loader::includeModule('ui') && class_exists('\Bitrix\UI\Fonts\Proxy'))
+{
+	foreach (UI\Fonts\Proxy::getMap() as $sourceDomain => $targetDomain)
+	{
+		$fontProxy[] = [
+			'source' => $sourceDomain,
+			'target' => $targetDomain,
+		];
+	}
+}
 
 return [
 	'js' => [
@@ -35,6 +48,9 @@ return [
 					'link' => Main\Loader::includeModule('crm')
 						? Crm\UI\Webpack\Form\ResourceBooking::instance()->getEmbeddedFileUrl()
 						: null
+				],
+				"proxy" => [
+					"fonts" => $fontProxy,
 				],
 			]
 		]

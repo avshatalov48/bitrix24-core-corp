@@ -7,6 +7,7 @@ if (!CModule::IncludeModule('bizproc'))
 
 use Bitrix\Crm;
 use \Bitrix\Crm\Service;
+use Bitrix\Main\Localization\Loc;
 
 class CCrmDocument
 {
@@ -2416,6 +2417,41 @@ class CCrmDocument
 			$clientCode = 'bizproc_script_' . ($status === CBPWorkflowStatus::Created ? 'start' : 'execution');
 			self::logScriptExecution($rootActivity->getWorkflowTemplateId(), $clientCode);
 		}
+	}
+
+	public static function onDebugSessionDocumentStatusChanged($documentId, int $userId, string $status)
+	{
+		if (!class_exists('\Bitrix\Bizproc\Debugger\Session\DocumentStatus'))
+		{
+			return;
+		}
+
+		switch ($status)
+		{
+			case \Bitrix\Bizproc\Debugger\Session\DocumentStatus::INTERCEPTED:
+				$text = Loc::getMessage('CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_INTERCEPTED');
+				break;
+			case \Bitrix\Bizproc\Debugger\Session\DocumentStatus::REMOVED:
+				$text = Loc::getMessage('CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_REMOVED');
+				break;
+			case \Bitrix\Bizproc\Debugger\Session\DocumentStatus::IN_DEBUG:
+				$text = Loc::getMessage('CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_IN_DEBUG');
+				break;
+			case \Bitrix\Bizproc\Debugger\Session\DocumentStatus::FINISHED:
+				$text = Loc::getMessage('CRM_DOCUMENT_AUTOMATION_DEBUG_MESSAGE_FINISHED');
+				break;
+			default:
+				$text = '';
+		}
+
+		if ($text)
+		{
+			\Bitrix\Crm\Timeline\BizprocController::getInstance()
+				->onDebugDocumentStatusChange($documentId, $userId, $text)
+			;
+		}
+
+		return;
 	}
 
 	private static function logScriptExecution($tplId, $clientCode): void

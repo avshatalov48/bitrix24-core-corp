@@ -175,6 +175,7 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		$this->arResult['PATH_TO_ORDER_EDIT'] = CrmCheckPath('PATH_TO_ORDER_EDIT', $this->arParams['PATH_TO_ORDER_EDIT'], '');
 		$this->arResult['PATH_TO_ORDER_SHIPMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_SHIPMENT_EDIT', $this->arParams['PATH_TO_ORDER_SHIPMENT_EDIT'], '');
 		$this->arResult['PATH_TO_ORDER_PAYMENT_EDIT'] = CrmCheckPath('PATH_TO_ORDER_PAYMENT_EDIT', $this->arParams['PATH_TO_ORDER_PAYMENT_EDIT'], '');
+		$this->arResult['TODO_CREATE_NOTIFICATION_PARAMS'] = $this->getTodoCreateNotificationParams();
 
 		$this->arResult['ENTITY_CREATE_URLS'] = array(
 			\CCrmOwnerType::DealName =>
@@ -275,5 +276,72 @@ class CCrmEntityPopupComponent extends CBitrixComponent
 		}
 
 		return '';
+	}
+
+	protected function getTodoCreateNotificationParams(): ?array
+	{
+		if (isset($this->arParams['~ENABLE_TODO_CREATE_NOTIFICATION']) && !$this->arParams['~ENABLE_TODO_CREATE_NOTIFICATION'])
+		{
+			return null;
+		}
+
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory($this->entityTypeID);
+
+		$todoCreateNotificationAvailable =
+			$this->entityID
+			&& !$this->arResult['READ_ONLY']
+			&& $factory
+			&& $factory->isStagesEnabled()
+			&& \Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+		;
+		if (!$todoCreateNotificationAvailable)
+		{
+			return null;
+		}
+		$allowedEntityTypeIds = [
+			CCrmOwnerType::Deal,
+		];
+		if (!in_array($this->entityTypeID, $allowedEntityTypeIds, true))
+		{
+			return null;
+		}
+
+		$stageIdField = $factory->getEntityFieldNameByMap(\Bitrix\Crm\Item::FIELD_NAME_STAGE_ID);
+		$select = [
+			\Bitrix\Crm\Item::FIELD_NAME_ID,
+			$stageIdField
+		];
+		if ($factory->isCategoriesSupported())
+		{
+			$select[] = \Bitrix\Crm\Item::FIELD_NAME_CATEGORY_ID;
+		}
+		$item = $factory->getItems([
+			'filter' => ['=ID' => $this->entityID],
+			'select' => $select,
+			'limit' => 1,
+		])[0];
+
+		$stages =
+			$factory->isCategoriesSupported()
+			? $factory->getStages($item->getCategoryId())
+			: $factory->getStages()
+		;
+		$finalStages = [];
+		foreach ($stages as $stage)
+		{
+			if (\Bitrix\Crm\PhaseSemantics::isFinal($stage->getSemantics()))
+			{
+				$finalStages[] = $stage->getStatusId();
+			}
+		}
+
+		return [
+			'entityTypeId' => $this->entityTypeID,
+			'entityId' => $this->entityID,
+			'entityStageId' => $item->getStageId(),
+			'stageIdField' => $stageIdField,
+			'finalStages' => $finalStages,
+			'skipPeriod' => (new \Bitrix\Crm\Activity\TodoCreateNotification($this->entityTypeID))->getCurrentSkipPeriod(),
+		];
 	}
 }

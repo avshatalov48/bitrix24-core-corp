@@ -39,7 +39,7 @@ class GridId
 	{
 		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($this->entityTypeId))
 		{
-			return self::DYNAMIC_TYPE_GRID_ID_PREFIX . '-' . $this->entityTypeId;
+			return static::DYNAMIC_TYPE_GRID_ID_PREFIX . '-' . $this->entityTypeId;
 		}
 
 		$gridId = \CCrmOwnerType::ResolveName($this->entityTypeId);
@@ -56,7 +56,7 @@ class GridId
 			&& (isset($context['IS_MY_COMPANY']) && $context['IS_MY_COMPANY'])
 		)
 		{
-			$gridId = self::DEFAULT_GRID_MY_COMPANY_SUFFIX;
+			$gridId = static::DEFAULT_GRID_MY_COMPANY_SUFFIX;
 		}
 
 		// possible values:
@@ -69,7 +69,7 @@ class GridId
 		// CRM_MYCOMPANY_LIST_V12
 		// etc...
 
-		return self::DEFAULT_GRID_ID_PREFIX . $gridId . self::DEFAULT_GRID_ID_SUFFIX;
+		return static::DEFAULT_GRID_ID_PREFIX . $gridId . static::DEFAULT_GRID_ID_SUFFIX;
 	}
 
 	public function getDefaultSuffix(int $categoryId): string

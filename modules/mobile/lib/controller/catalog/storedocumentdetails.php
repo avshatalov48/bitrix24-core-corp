@@ -4,13 +4,19 @@ declare(strict_types = 1);
 
 namespace Bitrix\Mobile\Controller\Catalog;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreBarcodeTable;
 use Bitrix\Catalog\StoreDocumentBarcodeTable;
 use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Catalog\UI\FileUploader\DocumentController;
+use Bitrix\Catalog\UI\FileUploader\ProductController;
+use Bitrix\Catalog\v2\Image\MorePhotoImage;
+use Bitrix\Catalog\v2\Sku\BaseSku;
+use Bitrix\Main\Request;
 use Bitrix\Mobile\InventoryControl\Command\ConductDocumentCommand;
 use Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
-use Bitrix\Main\Engine\JsonPayload;
 use Bitrix\Main\Error;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -24,7 +30,11 @@ use Bitrix\Catalog\StoreDocumentFileTable;
 use Bitrix\Currency\CurrencyManager;
 use Bitrix\Catalog\StoreDocumentElementTable;
 use Bitrix\Sale\PriceMaths;
+use Bitrix\UI\FileUploader\PendingFileCollection;
+use Bitrix\UI\FileUploader\Uploader;
 use CCatalogStoreDocsBarcode;
+use Bitrix\Catalog\Access;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 Loader::requireModule('catalog');
 
@@ -35,34 +45,39 @@ Loader::requireModule('catalog');
  */
 class StoreDocumentDetails extends Controller
 {
-	use ReadsApplicationErrors;
-	use CatalogPermissions;
+	/** @var AccessController */
+	private $accessController;
 
-	/**
-	 * @inherit
-	 */
-	public function getLoadActionsList(): array
+	use ReadsApplicationErrors;
+
+	public function __construct(Request $request = null)
+	{
+		parent::__construct($request);
+
+		$this->accessController = AccessController::getCurrent();
+	}
+
+	public function getTabIds(): array
 	{
 		return ['main', 'products'];
 	}
 
 	/**
-	 * @param array $params
+	 * @param int|null $entityId
+	 * @param string|null $docType
 	 * @return array
 	 */
-	public function loadMainAction(array $params = []): array
+	public function loadMainAction(int $entityId = null, string $docType = null): array
 	{
-		if (!$this->hasReadPermissions())
+		if (!$this->checkDocumentReadRights($entityId, $docType))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_READ_PERMS')));
 
 			return [];
 		}
 
-		$id = $params['id'] ?? null;
-		if ($id === null)
+		if ($entityId === null)
 		{
-			$docType = $params['docType'] ?? null;
 			if (empty($docType))
 			{
 				throw new \DomainException('Parameter {docType} is required for document creation.');
@@ -72,7 +87,7 @@ class StoreDocumentDetails extends Controller
 		}
 		else
 		{
-			$provider = StoreDocumentProvider::createById($id);
+			$provider = StoreDocumentProvider::createById($entityId);
 		}
 
 		return [
@@ -81,38 +96,32 @@ class StoreDocumentDetails extends Controller
 	}
 
 	/**
-	 * @param array $params
+	 * @param int|null $entityId
+	 * @param string|null $docType
 	 * @return array
 	 */
-	public function loadProductsAction(array $params): array
+	public function loadProductsAction(int $entityId = null, string $docType = null): array
 	{
-		if (!$this->hasReadPermissions())
+		if (!$this->checkDocumentReadRights($entityId, $docType))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_READ_PRODUCTS_PERMS')));
 
 			return [];
 		}
 
-		$documentId = isset($params['id']) ? (int)$params['id'] : null;
-		$documentType = $params['docType'] ?? null;
-
-		return DocumentProducts\Facade::loadByDocumentId($documentId, $documentType);
+		return DocumentProducts\Facade::loadByDocumentId($entityId, $docType);
 	}
 
-	/**
-	 * @inheritDoc
-	 */
-	protected function add(array $parameters, array $data): ?int
+	public function addInternalAction(string $docType, array $data): ?int
 	{
-		if (!$this->hasWritePermissions())
+		if (!$this->checkDocumentModifyRights(null, $docType))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_ADD_PERMS')));
 
 			return null;
 		}
 
-		$documentType = $parameters['docType'] ?? '';
-		if (!$documentType)
+		if (!$docType)
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_NOT_FOUND')));
 
@@ -137,11 +146,11 @@ class StoreDocumentDetails extends Controller
 			}
 		}
 
-		$fields['DOC_TYPE'] = $documentType;
+		$fields['DOC_TYPE'] = $docType;
 		$fields['SITE_ID'] = SITE_ID;
 		$fields['CREATED_BY'] = $this->getCurrentUser()->getId();
 		$fields['CURRENCY'] = $fields['CURRENCY'] ?: CurrencyManager::getBaseCurrency();
-		
+
 		$documentId = (int)\CCatalogDocs::add($this->prepareFieldsForSaving($fields));
 		if (!$documentId)
 		{
@@ -170,23 +179,21 @@ class StoreDocumentDetails extends Controller
 			$this->updateCatalogProducts($data['PRODUCTS']);
 		}
 
+		$this->updateCatalogContractor($documentId, $data);
+
 		return $documentId;
 	}
 
-	/**
-	 * @inheritDoc
-	 */
-	protected function update($parameters, $data): ?int
+	public function updateInternalAction(int $entityId, array $data): ?int
 	{
-		if (!$this->hasWritePermissions())
+		if (!$this->checkDocumentModifyRights($entityId))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_UPDATE_PERMS')));
 
 			return null;
 		}
 
-		$documentId = isset($parameters['id']) ? (int)$parameters['id'] : 0;
-		if (!$documentId)
+		if (!$entityId)
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_NOT_FOUND')));
 
@@ -211,7 +218,7 @@ class StoreDocumentDetails extends Controller
 		}
 		$fields['MODIFIED_BY'] = $this->getCurrentUser()->getId();
 
-		$result = \CCatalogDocs::update($documentId, $this->prepareFieldsForSaving($fields));
+		$result = \CCatalogDocs::update($entityId, $this->prepareFieldsForSaving($fields));
 		if (!$result)
 		{
 			$this->addError(
@@ -227,7 +234,7 @@ class StoreDocumentDetails extends Controller
 		 */
 		if (isset($data['DOCUMENT_FILES']))
 		{
-			$this->updateFiles($documentId, $data['DOCUMENT_FILES']);
+			$this->updateFiles($entityId, $data['DOCUMENT_FILES']);
 		}
 
 		/**
@@ -235,37 +242,36 @@ class StoreDocumentDetails extends Controller
 		 */
 		if (isset($data['PRODUCTS']))
 		{
-			$this->updateDocumentProductRecords($documentId, $data['PRODUCTS']);
+			$this->updateDocumentProductRecords($entityId, $data['PRODUCTS']);
 			$this->updateCatalogProducts($data['PRODUCTS']);
 		}
 
-		return $documentId;
+		$this->updateCatalogContractor($entityId, $data);
+
+		return $entityId;
 	}
 
 	/**
-	 * @param JsonPayload $payload
+	 * @param int $entityId
 	 * @return array|null
 	 */
-	public function conductAction(JsonPayload $payload): ?array
+	public function conductAction(int $entityId): ?array
 	{
-		if (!$this->hasWritePermissions())
+		if (!$this->checkDocumentConductRights($entityId))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_CONDUCT_PERMS')));
 
 			return null;
 		}
 
-		$data = $payload->getData();
-		$id = (int)($data['id'] ?? 0);
-
-		if (!$id)
+		if (!$entityId)
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_NOT_FOUND')));
 
 			return null;
 		}
 
-		$command = new ConductDocumentCommand($id, (int)$this->getCurrentUser()->getId());
+		$command = new ConductDocumentCommand($entityId, (int)$this->getCurrentUser()->getId());
 		$result = $command();
 
 		if (!$result->isSuccess())
@@ -275,34 +281,31 @@ class StoreDocumentDetails extends Controller
 		}
 
 		return [
-			'load' => $this->createLoadResponse(['id' => $id])
+			'load' => $this->createLoadResponse(),
 		];
 	}
 
 	/**
-	 * @param JsonPayload $payload
+	 * @param int $entityId
 	 * @return array|null
 	 */
-	public function cancelAction(JsonPayload $payload):? array
+	public function cancelAction(int $entityId): ?array
 	{
-		if (!$this->hasWritePermissions())
+		if (!$this->checkDocumentCancelRights($entityId))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_CANCELLATION_PERMS')));
 
 			return null;
 		}
 
-		$data = $payload->getData();
-		$id = (int)($data['id'] ?? 0);
-
-		if (!$id)
+		if (!$entityId)
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_NOT_FOUND')));
 
 			return null;
 		}
 
-		$result = \CCatalogDocs::cancellationDocument($id, $this->getCurrentUser()->getId());
+		$result = \CCatalogDocs::cancellationDocument($entityId, $this->getCurrentUser()->getId());
 		if (!$result)
 		{
 			$this->addError(
@@ -314,19 +317,20 @@ class StoreDocumentDetails extends Controller
 		}
 
 		return [
-			'load' => $this->createLoadResponse(['id' => $id])
+			'load' => $this->createLoadResponse(),
 		];
 	}
 
-	/**
-	 * @inherit
-	 */
-	protected function getEntityTitle(int $entityId): string
+	protected function getEntityTitle(): string
 	{
-		$document = StoreDocumentTable::getList(['filter' => ['=ID' => $entityId]])->fetch();
-		if ($document)
+		$entityId = $this->findInSourceParametersList('entityId');
+		if ($entityId)
 		{
-			return $document['TITLE'] ?? '';
+			$document = StoreDocumentTable::getList(['filter' => ['=ID' => $entityId]])->fetch();
+			if ($document)
+			{
+				return $document['TITLE'] ?? '';
+			}
 		}
 
 		return '';
@@ -348,8 +352,8 @@ class StoreDocumentDetails extends Controller
 
 		$existingElements = [];
 		$existingElementsList = StoreDocumentElementTable::getList([
-			'select' => ['ID'],
-			'filter' => ['=DOC_ID' => $documentId]
+			'select' => ['*'],
+			'filter' => ['=DOC_ID' => $documentId],
 		]);
 		while ($element = $existingElementsList->fetch())
 		{
@@ -364,7 +368,7 @@ class StoreDocumentDetails extends Controller
 		{
 			$existingDocumentBarcodes = StoreDocumentBarcodeTable::getList([
 				'select' => ['ID'],
-				'filter' => ['DOC_ELEMENT_ID' => $documentRecordIds]
+				'filter' => ['DOC_ELEMENT_ID' => $documentRecordIds],
 			]);
 			while ($existingBarcode = $existingDocumentBarcodes->fetch())
 			{
@@ -401,39 +405,71 @@ class StoreDocumentDetails extends Controller
 
 			$fields = [
 				'DOC_ID' => $documentId,
-				'AMOUNT' => (float)$productDto->amount,
 				'ELEMENT_ID' => (int)$productDto->productId,
-				'PURCHASING_PRICE' => isset($pricePurchase['amount']) ? (float)$pricePurchase['amount'] : null,
-				'BASE_PRICE' => isset($priceSell['amount']) ? (float)$priceSell['amount'] : null,
 			];
 
-			if (in_array(
-				$document['DOC_TYPE'],
-				[
-					StoreDocumentTable::TYPE_ARRIVAL,
-					StoreDocumentTable::TYPE_STORE_ADJUSTMENT,
-					StoreDocumentTable::TYPE_MOVING
-				],
-				true
-			))
+			if ($this->checkEditPurchasePriceRights())
 			{
-				$fields['STORE_TO'] = isset($productDto->storeToId)
-					? (int)$productDto->storeToId
-					: null;
+				$fields['PURCHASING_PRICE'] = isset($pricePurchase['amount']) ? (float)$pricePurchase['amount'] : null;
+			}
+			if ($this->checkEditPriceRights())
+			{
+				$fields['BASE_PRICE'] = isset($priceSell['amount']) ? (float)$priceSell['amount'] : null;
 			}
 
-			if (in_array(
-				$document['DOC_TYPE'],
-				[
-					StoreDocumentTable::TYPE_MOVING,
-					StoreDocumentTable::TYPE_DEDUCT,
-				],
-				true
-			))
+			$existingStoreTo = isset($existingElements[(int)$productDto->id]['STORE_TO'])
+				? (int)$existingElements[(int)$productDto->id]['STORE_TO']
+				: null;
+			$hasAccessToExistingStoreTo = !$existingStoreTo || $this->checkStoreAccessRights($existingStoreTo);
+			if ($hasAccessToExistingStoreTo)
 			{
-				$fields['STORE_FROM'] = isset($productDto->storeFromId)
+				$storeTo = isset($productDto->storeToId)
+					? (int)$productDto->storeToId
+					: null;
+				$hasStoreToAccess = !$storeTo || $this->checkStoreAccessRights($storeTo);
+				if (
+					$hasStoreToAccess
+					&& in_array(
+						$document['DOC_TYPE'],
+						[
+							StoreDocumentTable::TYPE_ARRIVAL,
+							StoreDocumentTable::TYPE_STORE_ADJUSTMENT,
+							StoreDocumentTable::TYPE_MOVING,
+						],
+						true
+					)
+				)
+				{
+					$fields['STORE_TO'] = $storeTo;
+					$fields['AMOUNT'] = (float)$productDto->amount;
+				}
+			}
+
+			$existingStoreFrom = isset($existingElements[(int)$productDto->id]['STORE_FROM'])
+				? (int)$existingElements[(int)$productDto->id]['STORE_FROM']
+				: null;
+			$hasAccessToExistingStoreFrom = !$existingStoreFrom || $this->checkStoreAccessRights($existingStoreFrom);
+			if ($hasAccessToExistingStoreFrom)
+			{
+				$storeFrom = isset($productDto->storeFromId)
 					? (int)$productDto->storeFromId
 					: null;
+				$hasStoreFromAccess = !$storeFrom || $this->checkStoreAccessRights($storeFrom);
+				if (
+					$hasStoreFromAccess
+					&& in_array(
+						$document['DOC_TYPE'],
+						[
+							StoreDocumentTable::TYPE_MOVING,
+							StoreDocumentTable::TYPE_DEDUCT,
+						],
+						true
+					)
+				)
+				{
+					$fields['STORE_FROM'] = $storeFrom;
+					$fields['AMOUNT'] = (float)$productDto->amount;
+				}
 			}
 
 			if (isset($existingElements[$productDto->id]))
@@ -456,7 +492,7 @@ class StoreDocumentDetails extends Controller
 			{
 				CCatalogStoreDocsBarcode::add([
 					'BARCODE' => $productDto->barcode,
-					'DOC_ELEMENT_ID' => $documentRecordId
+					'DOC_ELEMENT_ID' => $documentRecordId,
 				]);
 			}
 		}
@@ -478,17 +514,27 @@ class StoreDocumentDetails extends Controller
 				'ID',
 				'BASE_PRICE',
 				'PURCHASING_PRICE',
-				'AMOUNT'
+				'AMOUNT',
 			],
-			'filter' => ['=DOC_ID' => $documentId]
+			'filter' => ['=DOC_ID' => $documentId],
 		]);
 		$documentTotal = 0.00;
 		while ($element = $elementsList->fetch())
 		{
-			$documentTotal += PriceMaths::roundPrecision((float)$element['PURCHASING_PRICE'] * (float)$element['AMOUNT']);
+			$documentTotal += PriceMaths::roundPrecision((float)$element['PURCHASING_PRICE']
+				* (float)$element['AMOUNT']);
 		}
 
 		\CCatalogDocs::update($documentId, ['TOTAL' => $documentTotal]);
+	}
+
+	private function getDocumentPendingFiles(array $tokens): PendingFileCollection
+	{
+		$fileController = new DocumentController([
+			'fieldName' => 'DOCUMENT_FILES',
+		]);
+
+		return (new Uploader($fileController))->getPendingFiles($tokens);
 	}
 
 	/**
@@ -498,34 +544,16 @@ class StoreDocumentDetails extends Controller
 	private function updateFiles(int $documentId, array $files): void
 	{
 		$isSuccess = true;
+		$pendingFiles = null;
 
-		$fileIds = array_filter($files, function ($file) {
-			return !is_array($file);
-		});
+		$fileIds = array_filter($files, static fn ($file) => !is_array($file));
+		$filesToSave = array_filter($files, static fn ($file) => is_array($file) && !empty($file['token']));
 
-		$filesToSave = array_filter($files, function ($file) {
-			return is_array($file);
-		});
-		foreach ($filesToSave as $fileToSave)
+		if (!empty($filesToSave))
 		{
-			$fileId = \CFile::saveFile(
-				[
-					'MODULE_ID' => 'catalog',
-					'name' => $fileToSave['name'],
-					'type' => $fileToSave['type'],
-					'content' => base64_decode($fileToSave['content'])
-				],
-				'catalog_store_documents'
-			);
-
-			if ((int)$fileId > 0)
-			{
-				$fileIds[] = $fileId;
-			}
-			else
-			{
-				$isSuccess = false;
-			}
+			$tokens = array_column($filesToSave, 'token');
+			$pendingFiles = $this->getDocumentPendingFiles($tokens);
+			$fileIds = array_merge($fileIds, $pendingFiles->getFileIds());
 		}
 
 		$existingFiles = StoreDocumentFileTable::getList([
@@ -560,7 +588,14 @@ class StoreDocumentDetails extends Controller
 				'DOCUMENT_ID' => $documentId,
 				'FILE_ID' => $fileToAdd,
 			]);
-			if (!$addResult->isSuccess())
+			if ($addResult->isSuccess())
+			{
+				if ($pendingFile = $pendingFiles->getByFileId($fileToAdd))
+				{
+					$pendingFile->makePersistent();
+				}
+			}
+			else
 			{
 				$isSuccess = false;
 			}
@@ -576,11 +611,25 @@ class StoreDocumentDetails extends Controller
 		}
 	}
 
+	private function getProductPendingFiles(array $tokens, BaseSku $sku): PendingFileCollection
+	{
+		$fileController = new ProductController([
+			'productId' => $sku->getId(),
+		]);
+
+		return (new Uploader($fileController))->getPendingFiles($tokens);
+	}
+
 	/**
 	 * @param array $products
 	 */
 	private function updateCatalogProducts(array $products): void
 	{
+		if (!$this->checkProductModifyRights())
+		{
+			return;
+		}
+
 		foreach ($products as $product)
 		{
 			$productDto = new DocumentProductRecord($product);
@@ -625,14 +674,16 @@ class StoreDocumentDetails extends Controller
 			 */
 			$gallery = $productDto->gallery ?? [];
 			$receivedFileIds = [];
-			$newImages = [];
+			$newImageIds = [];
+			$tokens = [];
+
 			foreach ($gallery as $file)
 			{
 				if (is_array($file))
 				{
-					if (isset($file['new']))
+					if (!empty($file['token']))
 					{
-						$newImages[] = $file;
+						$tokens[] = $file['token'];
 					}
 				}
 				else
@@ -641,12 +692,18 @@ class StoreDocumentDetails extends Controller
 				}
 			}
 
+			$pendingFiles = null;
+			if (!empty($tokens))
+			{
+				$pendingFiles = $this->getProductPendingFiles($tokens, $sku);
+				$newImageIds = $pendingFiles->getFileIds();
+			}
+
 			/**
 			 * Remove
 			 */
 			$imageCollection = $sku->getImageCollection();
-			$morePhotos = $imageCollection->getMorePhotos();
-			foreach ($morePhotos as $image)
+			foreach ($imageCollection as $image)
 			{
 				if (in_array((int)$image->getFields()['ID'], $receivedFileIds, true))
 				{
@@ -659,31 +716,64 @@ class StoreDocumentDetails extends Controller
 			/**
 			 * Add new
 			 */
-			foreach ($newImages as $newImage)
-			{
-				$fileId = \CFile::saveFile(
-					[
-						'MODULE_ID' => 'catalog',
-						'name' => $newImage['new']['name'],
-						'type' => $newImage['new']['type'],
-						'content' => base64_decode($newImage['new']['content']),
-					],
-					'catalog'
-				);
+			$morePhotoProperty = $sku->getPropertyCollection()->findByCode(MorePhotoImage::CODE);
+			$hasMorePhoto = $morePhotoProperty && $morePhotoProperty->isActive();
 
-				if ((int)$fileId > 0)
+			foreach ($newImageIds as $newImage)
+			{
+				$fileArray = \CFile::MakeFileArray($newImage);
+
+				if ($hasMorePhoto)
 				{
-					$imageCollection->addValues([
-						\CFile::MakeFileArray($fileId)
-					]);
+					$imageCollection->addValues([$fileArray]);
+				}
+				else
+				{
+					$previewImage = $imageCollection->getPreviewImage();
+					$previewImageValue = $previewImage->getFileStructure();
+					if (empty($previewImageValue))
+					{
+						$previewImage->setFileStructure($fileArray);
+						continue;
+					}
+
+					$detailImage = $imageCollection->getDetailImage();
+					$detailImageValue = $detailImage->getFileStructure();
+					if (empty($detailImageValue))
+					{
+						$detailImage->setFileStructure($fileArray);
+						continue;
+					}
+
+					break;
 				}
 			}
 
 			$result = $sku->save();
-			if (!$result->isSuccess())
+			if ($result->isSuccess())
+			{
+				if ($pendingFiles)
+				{
+					$pendingFiles->makePersistent();
+				}
+			}
+			else
 			{
 				$this->addNonCriticalErrors($result->getErrors());
 			}
+		}
+	}
+
+	/**
+	 * @param int $entityId
+	 * @param array $data
+	 */
+	private function updateCatalogContractor(int $entityId, array $data): void
+	{
+		$contractorsProvider = Manager::getActiveProvider();
+		if ($contractorsProvider)
+		{
+			$contractorsProvider::onAfterDocumentSaveSuccessForMobile($entityId, $data);
 		}
 	}
 
@@ -713,12 +803,12 @@ class StoreDocumentDetails extends Controller
 		return array_keys(
 			array_filter(
 				array_map(
-					function ($field) {
+					static function ($field) {
 						return $field->getDataType();
 					},
 					StoreDocumentTable::getEntity()->getFields()
 				),
-				function($v) {
+				static function ($v) {
 					return in_array($v, ['datetime', 'date'], true);
 				}
 			)
@@ -745,6 +835,7 @@ class StoreDocumentDetails extends Controller
 
 	/**
 	 * Checks unique barcodes
+	 *
 	 * @param array $data
 	 * @return bool
 	 */
@@ -795,7 +886,7 @@ class StoreDocumentDetails extends Controller
 				{
 					$isSuccess = false;
 					$message = Loc::getMessage('MOBILE_CONTROLLER_CATALOG_DETAILS_ERROR_BARCODE_ALREADY_EXISTS', [
-						'#BARCODE#' => htmlspecialcharsbx($barcode)
+						'#BARCODE#' => htmlspecialcharsbx($barcode),
 					]);
 					$this->addError(new Error($message));
 				}
@@ -803,5 +894,102 @@ class StoreDocumentDetails extends Controller
 		}
 
 		return $isSuccess;
+	}
+
+	private function checkEditPurchasePriceRights(): bool
+	{
+		return (
+			$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& $this->accessController->check(ActionDictionary::ACTION_PRODUCT_PURCHASE_INFO_VIEW)
+		);
+	}
+
+	private function checkEditPriceRights(): bool
+	{
+		return (
+			$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& $this->accessController->check(ActionDictionary::ACTION_PRICE_EDIT)
+		);
+	}
+
+	private function checkDocumentBaseRights(): bool
+	{
+		return (
+			$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& $this->accessController->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+		);
+	}
+
+	private function checkProductModifyRights(): bool
+	{
+		return (
+			$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& $this->accessController->check(ActionDictionary::ACTION_PRODUCT_EDIT)
+		);
+	}
+
+	private function checkStoreAccessRights(int $storeId): bool
+	{
+		if (!$this->checkDocumentBaseRights())
+		{
+			return false;
+		}
+
+		return $this->accessController->checkByValue(
+			ActionDictionary::ACTION_STORE_VIEW,
+			(string)$storeId
+		);
+	}
+
+	private function checkDocumentReadRights(int $entityId = null, string $docType = null): bool
+	{
+		return (
+			$this->checkDocumentBaseRights()
+			&& $this->accessController->check(
+				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
+				(
+				$entityId
+					? Access\Model\StoreDocument::createFromId($entityId)
+					: Access\Model\StoreDocument::createFromArray(['DOC_TYPE' => $docType])
+				)
+			)
+		);
+	}
+
+	private function checkDocumentConductRights(int $documentId): bool
+	{
+		return (
+			$this->checkDocumentBaseRights()
+			&& $this->accessController->check(
+				ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT,
+				Access\Model\StoreDocument::createFromId($documentId)
+			)
+		);
+	}
+
+	private function checkDocumentCancelRights(int $documentId): bool
+	{
+		return (
+			$this->checkDocumentBaseRights()
+			&& $this->accessController->check(
+				ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL,
+				Access\Model\StoreDocument::createFromId($documentId)
+			)
+		);
+	}
+
+	private function checkDocumentModifyRights(int $entityId = null, string $docType = null): bool
+	{
+		return (
+			$this->checkDocumentBaseRights()
+			&& $this->accessController->check(
+				ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+				(
+				$entityId
+					? Access\Model\StoreDocument::createFromId($entityId)
+					: Access\Model\StoreDocument::createFromArray(['DOC_TYPE' => $docType])
+				)
+			)
+		);
 	}
 }

@@ -1,4 +1,9 @@
 <?php
+
 return [
-	'layout/ui/bottom-toolbar',
+	'extensions' => [
+		'utils/function',
+		'utils/object',
+		'layout/ui/buttons-toolbar',
+	],
 ];

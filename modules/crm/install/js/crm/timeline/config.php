@@ -12,6 +12,8 @@ return [
 		'currency',
 		'ui.design-tokens',
 		'pull.client',
+		'crm.activity.todo-editor',
+		'crm.datetime',
 		'crm.timeline.tools',
 		'main.core.events',
 		'crm.timeline.item',

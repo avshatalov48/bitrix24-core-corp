@@ -25,6 +25,7 @@ class Redirect extends Action
 			'type' => 'redirect',
 			'value' => $this->getUrl(),
 			'actionParams' => $this->getActionParams(),
+			'animation' => $this->getAnimation(),
 		];
 	}
 }

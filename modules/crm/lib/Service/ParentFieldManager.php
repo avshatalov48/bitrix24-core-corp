@@ -9,6 +9,7 @@ use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Relation\EntityRelationTable;
 use Bitrix\Crm\RelationIdentifier;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Crm\UserField\Types\ElementType;
 use Bitrix\Main\Application;
 use Bitrix\Main\ORM\Fields\ExpressionField;
@@ -621,7 +622,7 @@ class ParentFieldManager
 		$result = [
 			'params' => [
 				'apiVersion' => 3,
-				'context' => 'CRM_TYPE_' . $entityTypeId . '_ITEM_FILTER_' . $fieldId,
+				'context' => EntitySelector::CONTEXT,
 				'multiple' => 'N',
 				'contextCode' => 'CRM',
 				'useClientDatabase' => 'N',

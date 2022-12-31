@@ -25,40 +25,11 @@
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 28px;
-	height: 28px;
 	margin-left: 9px;
-	cursor: pointer;
-	opacity: .4;
-	transition: var(--crm-timeline__transition-hover);
 }
 
 .crm-timeline__card-action_menu-item:first-child {
 	margin-left: unset;
-}
-
-.crm-timeline__card-action_menu-item.--hover,
-.crm-timeline__card-action_menu-item:hover {
-	opacity: .6;
-	transition: unset;
-}
-
-.crm-timeline__card-action_menu-item i {
-	width: 28px;
-	height: 28px;
-	background: center no-repeat;
-}
-
-.crm-timeline__card-action_menu-item.--dotted i {
-	background-image: url(../image/crm-timeline_icon-dotted.svg);
-}
-
-.crm-timeline__card-action_menu-item.--note i {
-	background-image: url(../image/crm-timeline_icon-note.svg);
-}
-
-.crm-timeline__card-action_menu-item.--list i {
-	background-image: url(../image/crm-timeline_icon-list.svg);
 }
 
 .crm-timeline__card-action-btn {
@@ -74,4 +45,73 @@
 
 .crm-timeline__card-action-btn.ui-btn:last-child {
 	margin-right: unset;
+}
+
+.crm-timeline__card_add-button {
+	width: 28px;
+	height: 28px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+	mask-size: 28px 28px;
+	mask-repeat: no-repeat;
+	mask-position: center center;
+	cursor: pointer;
+	transition: filter var(--crm-timeline__transition-hover) linear;
+}
+
+.crm-timeline__card_add-button .main-ui-loader-svg-circle {
+	stroke: var(--ui-color-base-40, #bdc1c6);
+	stroke-width: 4px;
+}
+
+.crm-timeline__card_add-button.--hover,
+.crm-timeline__card_add-button:hover {
+	filter: brightness(90%);
+	transition-duration: unset;
+}
+
+.crm-timeline__card_add-button.--state-disabled,
+.crm-timeline__card_add-button.--state-disabled:hover {
+	filter: brightness(115%);
+	cursor: not-allowed;
+}
+
+.crm-timeline__card_add-button.--state-hidden{
+	display: none;
+}
+
+.crm-timeline__card_add-button.--color-default {
+	background-color: var(--ui-color-base-40, #bdc1c6);
+}
+
+.crm-timeline__card_add-button.--color-primary {
+	background-color: rgba(var(--ui-color-primary-rgb), 1);
+}
+
+.crm-timeline__card_add-button.--icon-note {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-note.svg);
+}
+
+.crm-timeline__card_add-button.--icon-print {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-print.svg);
+}
+
+.crm-timeline__card_add-button.--icon-script {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-script.svg);
+}
+
+.crm-timeline__card_add-button.--icon-dots {
+	mask-image: url(../../images/add-btn-icons/add-btn-icon-dots.svg);
+}
+
+.crm-timeline__card_add-button-fade-enter-active,
+.crm-timeline__card_add-button-fade-leave-active {
+	transition: opacity 0.25s ease-in-out;
+}
+
+.crm-timeline__card_add-button-fade-enter-from,
+.crm-timeline__card_add-button-fade-leave-to {
+	opacity: 0;
 }

@@ -1,10 +1,16 @@
 import {Action} from "../../../action";
 import {Label} from 'ui.label';
 import {TagType} from '../../enums/tag-type';
+import {Dom, Type} from 'main.core';
 
 export const Tag = {
 	props: {
 		title: {
+			type: String,
+			required: false,
+			default: '',
+		},
+		hint: {
 			type: String,
 			required: false,
 			default: '',
@@ -26,6 +32,7 @@ export const Tag = {
 			return {
 				'crm-timeline__card-status': true,
 				'--clickable': !!this.action,
+				'--hint': !!this.hint,
 			}
 		},
 
@@ -59,14 +66,15 @@ export const Tag = {
 
 			const {title, type} = tagOptions;
 
-			const uppercaseTitle = title && typeof title === 'string' ? title.toUpperCase() : '';
+			const uppercaseTitle = title && Type.isString(title) ? title.toUpperCase() : '';
 			const label = new Label({
 				text: uppercaseTitle,
 				color: this.getLabelColorFromTagType(type),
 				fill: true,
 			});
 
-			this.tagContainerRef.appendChild(label.render());
+			Dom.clean(this.tagContainerRef);
+			Dom.append(label.render(), this.tagContainerRef);
 		},
 
 		executeAction() {
@@ -81,7 +89,11 @@ export const Tag = {
 	mounted() {
 		this.renderTag({title: this.title, type: this.type});
 	},
+
+	updated() {
+		this.renderTag({title: this.title, type: this.type})
+	},
 	template: `
-		<div ref="tag" :class="className" @click="executeAction"></div>
+		<div ref="tag" :title="hint" :class="className" @click="executeAction"></div>
 	`
 };

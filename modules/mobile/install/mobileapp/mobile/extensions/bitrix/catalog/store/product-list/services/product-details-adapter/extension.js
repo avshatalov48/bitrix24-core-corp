@@ -36,6 +36,7 @@
 
 			const product = state.items.find(item => item.id === recordId);
 			const measures = this.measures;
+			const permissions = state.permissions;
 			const catalog = this.catalog;
 			const document = state.document;
 
@@ -45,6 +46,7 @@
 				componentParams: {
 					product,
 					measures,
+					permissions,
 					catalog,
 					document,
 				},
@@ -54,7 +56,8 @@
 					backdrop: {
 						onlyMediumPosition: false,
 						mediumPositionPercent: 80,
-						navigationBarColor: '#EEF2F4'
+						navigationBarColor: '#EEF2F4',
+						horizontalSwipeAllowed: false,
 					},
 				}
 			});

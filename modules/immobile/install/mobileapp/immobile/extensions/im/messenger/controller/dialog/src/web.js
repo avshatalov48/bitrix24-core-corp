@@ -38,6 +38,25 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				return false;
 			}
 
+			const pageParams = this.getOpenDialogParams(dialogId, dialogTitleParams, userCode);
+			if (this.isOpenlineDialog(dialogId, dialogTitleParams, userCode))
+			{
+				PageManager.openWebComponent(pageParams);
+
+				BX.postComponentEvent('onTabChange', ['openlines'], 'im.navigation');
+
+				return true;
+			}
+
+			PageManager.openWebComponent(pageParams);
+
+			BX.postComponentEvent('onTabChange', ['chats'], 'im.navigation');
+
+			return true;
+		}
+
+		static getOpenDialogParams(dialogId, dialogTitleParams = null, userCode = null)
+		{
 			const chatSettings = Application.storage.getObject('settings.chat', {
 				quoteEnable: ChatPerformance.isGestureQuoteSupported(),
 				quoteFromRight: false,
@@ -126,21 +145,19 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 				WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 				WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
+				LANG_ADDITIONAL: {
+					isCrmUniversalActivityScenarioEnabled: Loc.getMessage('isCrmUniversalActivityScenarioEnabled'),
+				},
 			};
 
-			const isOpenlineDialog = (
-				recentItem && (recentItem.chat && recentItem.chat.type === 'lines' || !Type.isUndefined(recentItem.lines))
-				|| dialogTitleParams && dialogTitleParams.chatType === 'lines'
-				|| userCode
-			);
-			if (isOpenlineDialog)
+			if (this.isOpenlineDialog(dialogId, dialogTitleParams, userCode))
 			{
 				openDialogParams.DIALOG_TYPE = 'chat';
 
-				const pageParams = {
+				return {
 					page_id: 'im-' + dialogId,
 					data: openDialogParams,
-					url : '/mobile/web_mobile_component/im.dialog/?version=' + MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0'),
+					url: '/mobile/web_mobile_component/im.dialog/?version=' + MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0'),
 					animated: true,
 					titleParams,
 					textPanelParams: {
@@ -154,18 +171,12 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 						},
 					},
 				};
-
-				PageManager.openWebComponent(pageParams);
-
-				BX.postComponentEvent('onTabChange', ['openlines'], 'im.navigation');
-
-				return true;
 			}
 
 			openDialogParams.DIALOG_ID = dialogId;
 			openDialogParams.DIALOG_TYPE = DialogHelper.isDialogId(dialogId) ? 'chat' : 'user';
 
-			const pageParams = {
+			return {
 				page_id: 'im-' + dialogId,
 				data: openDialogParams,
 				url: '/mobile/web_mobile_component/im.dialog.vue/?version=' + MessengerParams.get('COMPONENT_CHAT_DIALOG_VUE_VERSION', '1.0.0'),
@@ -186,28 +197,30 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 				},
 				background: backgroundConfig
 			};
-
-			PageManager.openWebComponent(pageParams);
-
-			BX.postComponentEvent('onTabChange', ['chats'], 'im.navigation');
-
-			return true;
 		}
 
-		static getOpenLineParams(options = {})
+		static getOpenLineParams(userCode, dialogTitleParams = null)
 		{
 			return new Promise(resolve => {
-				this.getOpenlineDialogByUserCode(options.userCode).then((dialog) => {
+				this.getOpenlineDialogByUserCode(userCode).then((dialog) => {
 					let titleParams;
-					if (options.titleParams)
+					if (dialogTitleParams)
 					{
 						titleParams = {
-							text: options.titleParams.name,
-							imageUrl: encodeURI(options.titleParams.avatar),
+							text: dialogTitleParams.name,
+							imageUrl: encodeURI(dialogTitleParams.avatar),
 							useLetterImage: true,
-							detailText: options.titleParams.description,
-							imageColor: options.titleParams.color,
+							detailText: dialogTitleParams.description,
+							imageColor: dialogTitleParams.color,
 						};
+
+						if (
+							Type.isStringFilled(dialogTitleParams.name)
+							&& !Type.isStringFilled(dialogTitleParams.description)
+						)
+						{
+							titleParams.detailText = Loc.getMessage('IMMOBILE_MESSENGER_DIALOG_OPEN');
+						}
 					}
 					else
 					{
@@ -234,6 +247,9 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 							WIDGET_CHAT_RECIPIENTS_VERSION: MessengerParams.get('WIDGET_CHAT_RECIPIENTS_VERSION', '1.0.0'),
 							WIDGET_CHAT_TRANSFER_VERSION: MessengerParams.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 							WIDGET_BACKDROP_MENU_VERSION: MessengerParams.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
+							LANG_ADDITIONAL: {
+								isCrmUniversalActivityScenarioEnabled: Loc.getMessage('isCrmUniversalActivityScenarioEnabled'),
+							},
 						},
 						url: '/mobile/web_mobile_component/im.dialog/?version='
 							+ MessengerParams.get('COMPONENT_CHAT_DIALOG_VERSION', '1.0.0')
@@ -268,6 +284,25 @@ jn.define('im/messenger/controller/dialog/web', (require, exports, module) => {
 						resolve({ dialog_id: 0 });
 					});
 			});
+		}
+
+		static isOpenlineDialog(dialogId, dialogTitleParams = null, userCode = null)
+		{
+			const recentItem = ChatUtils.objectClone(MessengerStore.getters['recentModel/getById'](dialogId));
+
+			return (
+				recentItem
+				&& (
+					recentItem.chat
+					&& recentItem.chat.type === 'lines'
+					|| !Type.isUndefined(recentItem.lines)
+				)
+				|| (
+					dialogTitleParams
+					&& dialogTitleParams.chatType === 'lines'
+				)
+				|| userCode
+			);
 		}
 	}
 

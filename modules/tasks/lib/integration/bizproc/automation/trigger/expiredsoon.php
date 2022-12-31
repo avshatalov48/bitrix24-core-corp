@@ -14,6 +14,11 @@ class ExpiredSoon extends Base
 
 	public static function getName()
 	{
-		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_EXPIRED_SOON_NAME');
+		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_EXPIRED_SOON_NAME_1');
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('TASKS_AUTOMATION_TRIGGER_EXPIRED_SOON_DESCRIPTION') ?? '';
 	}
 }

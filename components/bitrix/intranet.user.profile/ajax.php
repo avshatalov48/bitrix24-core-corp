@@ -185,7 +185,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			}
 			else
 			{
-				if (\Bitrix\Main\Loader::includeModule("im"))
+				if (Loader::includeModule("im"))
 				{
 					$arMessageFields = array(
 						"TO_USER_ID" => $this->userId,
@@ -243,6 +243,11 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			return false;
 		}
 
+		if (Loader::includeModule('intranet'))
+		{
+			\Bitrix\Intranet\Composite\CacheProvider::deleteUserCache();
+		}
+
 		$newUserData = \Bitrix\Main\UserTable::getList(array(
 			'select' => array('ID', 'PERSONAL_PHOTO'),
 			'filter' => array(
@@ -255,7 +260,6 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			UI\Avatar\Mask\Helper::save($newUserData["PERSONAL_PHOTO"], $newPhotoMaskFile);
 		}
 
-
 		if ($newUserData['PERSONAL_PHOTO'] > 0)
 		{
 			$file = \CFile::GetFileArray($newUserData['PERSONAL_PHOTO']);
@@ -263,7 +267,7 @@ class CIntranetUserProfileComponentAjaxController extends \Bitrix\Main\Engine\Co
 			{
 				$fileTmp = \CFile::ResizeImageGet(
 					$file,
-					array('width' => 212, 'height' => 212),
+					array('width' => 512, 'height' => 512),
 					BX_RESIZE_IMAGE_PROPORTIONAL,
 					false,
 					false,

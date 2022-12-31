@@ -131,10 +131,13 @@ class Agent
 			return '';
 		}
 
-		if ($taskData['DEADLINE'])
+		if (is_null($taskData['DEADLINE']))
 		{
-			self::add($taskId, $taskData['DEADLINE'], true);
+			self::remove($taskData['ID']);
+			return '';
 		}
+
+		self::add($taskId, $taskData['DEADLINE'], true);
 
 		if (in_array((int)$taskData['STATUS'], $statesCompleted, true))
 		{

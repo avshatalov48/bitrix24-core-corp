@@ -7,8 +7,7 @@ use Bitrix\Mobile\Dto\InvalidDtoException;
 
 final class ObjectCaster extends Caster
 {
-	/** @var string */
-	private $type;
+	private string $type;
 
 	public function __construct(string $type, bool $isCollection = false)
 	{

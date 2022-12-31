@@ -1780,7 +1780,8 @@ if(typeof(BX.CrmProgressControl) === "undefined")
 						"ACTION" : "SAVE_PROGRESS",
 						"VALUE": value,
 						"TYPE": type,
-						"ID": id
+						"ID": id,
+						sessid: BX.bitrix_sessid(),
 					};
 				BX.onCustomEvent(this, 'CrmProgressControlBeforeSave', [ this, data ]);
 

@@ -7,6 +7,8 @@ import {OpenLines} from "./controllers/openlines";
 import {SignDocument} from "./controllers/sign-document";
 import {Document} from "./controllers/document";
 import {Call} from "./controllers/call";
+import {ToDo} from "./controllers/todo";
+import {Helpdesk} from "./controllers/helpdesk";
 
 ControllerManager.registerController(Activity);
 ControllerManager.registerController(CommonContentBlocks);
@@ -15,3 +17,5 @@ ControllerManager.registerController(Modification);
 ControllerManager.registerController(SignDocument);
 ControllerManager.registerController(Document);
 ControllerManager.registerController(Call);
+ControllerManager.registerController(ToDo);
+ControllerManager.registerController(Helpdesk);

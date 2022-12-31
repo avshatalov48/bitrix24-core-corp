@@ -4,13 +4,20 @@ namespace Bitrix\Crm\Order\OrderDealSynchronizer\Products;
 
 use Bitrix\Catalog\Product\CatalogProvider;
 use Bitrix\Crm\Order\Order;
+use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowSynchronizer\BasketItemFiller;
+use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowSynchronizer\SyncResult;
 use Bitrix\Crm\Order\OrderDealSynchronizer\SynchronizeException;
 use Bitrix\Crm\Order\ProductManager\EntityProductConverter;
 use Bitrix\Crm\ProductRowTable;
 use Bitrix\Crm\Service\Sale\Basket\ProductRelationsBuilder;
+use Bitrix\Main\Diag\Logger;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
+use Bitrix\Sale\Basket\RefreshFactory;
 use Bitrix\Sale\BasketItem;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Psr\Log\NullLogger;
 
 /**
  * Synchronize order basket with deal product rows.
@@ -30,8 +37,10 @@ use Bitrix\Sale\BasketItem;
  * $result = $synchronizer->syncAndSave($withVerification);
  * ```
  */
-class ProductRowSynchronizer
+class ProductRowSynchronizer implements LoggerAwareInterface
 {
+	use LoggerAwareTrait;
+
 	/**
 	 * @var Order
 	 */
@@ -68,6 +77,20 @@ class ProductRowSynchronizer
 	{
 		$this->order = $order;
 		$this->productRows = $productRows;
+
+		$this->logger = Logger::create('crm.orderdealsynchronizer.productrowsynchronizer') ?? new NullLogger();
+	}
+
+	/**
+	 * Log debug information with auto added order info.
+	 *
+	 * @param string $message
+	 *
+	 * @return void
+	 */
+	private function logDebug(string $message): void
+	{
+		$this->logger->debug("[{$this->order->getField('XML_ID')}|{$this->order->getId()}] - {$message}\n");
 	}
 
 	/**
@@ -77,18 +100,24 @@ class ProductRowSynchronizer
 	 */
 	public function verify(): Result
 	{
+		$this->logDebug("verify: start");
+
 		try
 		{
 			$this->sync(true);
 		}
 		catch (SynchronizeException $e)
 		{
+			$this->logDebug('verify: end, error: ' . $e->getMessage());
+
 			$result = new Result();
 			$result->addError(
 				new Error($e->getMessage())
 			);
 			return $result;
 		}
+
+		$this->logDebug('verify: end, success');
 
 		return $this->order->verify();
 	}
@@ -106,20 +135,26 @@ class ProductRowSynchronizer
 	 * @param bool $withVerification if TRUE, then all changes to the basket (setting values, deleting an item, etc.)
 	 * are processed with verification of the correctness of the operation.
 	 *
-	 * @return array new basket items in format `['rowId' => 'basketItem']`.
+	 * @return SyncResult
+	 *
 	 * @throws SynchronizeException
 	 */
-	public function sync(bool $withVerification): array
+	public function sync(bool $withVerification): SyncResult
 	{
+		$this->logDebug('sync: start, verification: ' . ($withVerification ? 1 : 0));
+
+		$syncResult = new SyncResult();
+
 		$basket = $this->order->getBasket();
 		if (!$basket)
 		{
-			return [];
+			$this->logDebug('sync: skip, without basket');
+
+			return $syncResult;
 		}
 
 		$converter = new EntityProductConverter;
 
-		$newProductRows = [];
 		$usedBasketCodes = [];
 		$productRowIdToBasketId = $this->getRelationsProductRows();
 
@@ -140,7 +175,11 @@ class ProductRowSynchronizer
 			$quantity = (float)$dealBasketItem['QUANTITY'];
 			if ($quantity === 0.0)
 			{
-				continue;
+				// skip only during verification.
+				if ($withVerification)
+				{
+					continue;
+				}
 			}
 
 			$basketId = $productRowIdToBasketId[$rowId] ?? null;
@@ -150,7 +189,7 @@ class ProductRowSynchronizer
 				$dealBasketItem['CURRENCY'] = $this->order->getCurrency();
 				$dealBasketItem['XML_ID'] = BasketXmlId::getXmlIdFromRowId($rowId);
 
-				// for custom products - not setted provider
+				// for custom products - does not set the provider.
 				$productId = (int)$dealBasketItem['PRODUCT_ID'];
 				if ($productId > 0)
 				{
@@ -158,33 +197,19 @@ class ProductRowSynchronizer
 				}
 
 				$basketItem = $basket->createItem('catalog', $dealBasketItem['PRODUCT_ID']);
-
-				$newProductRows[$rowId] = $basketItem;
+				$syncResult->addNewBasketItem($rowId, $basketItem);
 			}
 
-			unset(
-				$dealBasketItem['MODULE'],
-			);
-			$dealBasketItem = $this->clearBasketItemExtraFields($dealBasketItem);
-
-			$result = $basketItem->setFields($dealBasketItem);
-			if (!$result->isSuccess())
+			$filler = new BasketItemFiller($basketItem);
+			$filler->fill($dealBasketItem);
+			if ($filler->getChanged())
 			{
-				if ($withVerification)
+				$result = $filler->getResult();
+				if (!$result->isSuccess() && $withVerification)
 				{
 					self::throwSyncExceptionByResult($result);
 				}
-				else
-				{
-					foreach ($dealBasketItem as $name => $value)
-					{
-						$result = $basketItem->setField($name, $value);
-						if (!$result->isSuccess())
-						{
-							$basketItem->setFieldNoDemand($name, $value);
-						}
-					}
-				}
+				$syncResult->markChanged();
 			}
 
 			$usedBasketCodes[] = $basketItem->getBasketCode();
@@ -203,10 +228,16 @@ class ProductRowSynchronizer
 				{
 					self::throwSyncExceptionByResult($result);
 				}
+
+				$syncResult->markChanged();
 			}
 		}
 
-		return $newProductRows;
+		$changed = $syncResult->getChanged() ? 1 : 0;
+		$count = count($syncResult->getNewBasketItems());
+		$this->logDebug("sync: finish, changed: {$changed}, new basket items: {$count}");
+
+		return $syncResult;
 	}
 
 	/**
@@ -218,14 +249,32 @@ class ProductRowSynchronizer
 	 */
 	public function syncAndSave(bool $withVerification): Result
 	{
-		$newProductRows = $this->sync($withVerification);
+		$this->logDebug('syncAndSave: start');
+
+		$syncResult = $this->sync($withVerification);
+		if (!$syncResult->getChanged())
+		{
+			$this->logDebug('syncAndSave: skip, no changed');
+
+			return new Result();
+		}
+
+		/** @var \Bitrix\Crm\Order\BasketItem $basketItem */
+		foreach ($this->order->getBasket() as $basketItem)
+		{
+			if ($basketItem->getId() === 0)
+			{
+				$strategy = RefreshFactory::createSingle($basketItem->getBasketCode());
+				$this->order->getBasket()->refresh($strategy);
+			}
+		}
 
 		$this->order->doFinalAction(true);
 
 		$result = $this->order->save();
 		if ($result->isSuccess())
 		{
-			foreach ($newProductRows as $rowId => $basketItem)
+			foreach ($syncResult->getNewBasketItems() as $rowId => $basketItem)
 			{
 				ProductRowTable::update($rowId, [
 					'XML_ID' => ProductRowXmlId::getXmlIdFromBasketId($basketItem->getId()),
@@ -233,25 +282,14 @@ class ProductRowSynchronizer
 			}
 		}
 
+		$status = $result->isSuccess() ? 1 : 0;
+		if (!$status)
+		{
+			$status .= ", errors: " . join(', ', $result->getErrorMessages());
+		}
+		$this->logDebug("syncAndSave: save order, result: {$status}");
+
 		return $result;
-	}
-
-	/**
-	 * Deleting fields that are not available for the basket item.
-	 *
-	 * @param array $fields
-	 *
-	 * @return array
-	 */
-	private function clearBasketItemExtraFields(array $fields): array
-	{
-		$availableFields = BasketItem::getAllFields();
-
-		return array_filter(
-			$fields,
-			fn($key) => in_array($key, $availableFields),
-			ARRAY_FILTER_USE_KEY
-		);
 	}
 
 	/**

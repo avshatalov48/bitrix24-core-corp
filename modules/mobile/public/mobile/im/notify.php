@@ -4,6 +4,6 @@ require($_SERVER["DOCUMENT_ROOT"]."/bitrix/header.php");
 
 CModule::IncludeModule('im');
 
-$APPLICATION->IncludeComponent("bitrix:mobile.im.notify", ".default", array(), false, Array("HIDE_ICONS" => "Y"));
+$APPLICATION->IncludeComponent("bitrix:immobile.notify", ".default", array(), false, Array("HIDE_ICONS" => "Y"));
 ?>
 <?require($_SERVER["DOCUMENT_ROOT"]."/bitrix/footer.php")?>

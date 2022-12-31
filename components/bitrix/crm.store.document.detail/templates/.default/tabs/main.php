@@ -32,8 +32,21 @@ global $APPLICATION;
 		'ENTITY_CONTROLLERS' => $arResult['ENTITY_CONTROLLERS'],
 		'ENTITY_FIELDS' => $arResult['ENTITY_FIELDS'],
 		'ENTITY_DATA' => $arResult['ENTITY_DATA'],
-		'ENABLE_SECTION_EDIT' => true,
-		'ENABLE_SECTION_CREATION' => true,
+		'ENABLE_SECTION_EDIT' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+		'ENABLE_SECTION_CREATION' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+
+		'ENABLE_FIELDS_CONTEXT_MENU' => !$arResult['IS_READ_ONLY'],
+		'ENABLE_PAGE_TITLE_CONTROLS' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+		'ENABLE_SETTINGS_FOR_ALL' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+		'ENABLE_SECTION_DRAG_DROP' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+
+		'ENABLE_CONFIGURATION_UPDATE' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+		'ENABLE_COMMON_CONFIGURATION_UPDATE' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+		'ENABLE_PERSONAL_CONFIGURATION_UPDATE' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+
+		'ENABLE_CONFIG_CONTROL' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+		'ENABLE_CONFIG_SCOPE_TOGGLE' => $arResult['UI_ENTITY_CARD_SETTINGS_EDITABLE'],
+
 		'SERVICE_URL' => '/bitrix/components/bitrix/crm.store.document.detail/ajax.php?'.bitrix_sessid_get(),
 		'CONTEXT_ID' => $arResult['CONTEXT_ID'],
 		'CONTEXT' => $editorContext,
@@ -63,15 +76,15 @@ global $APPLICATION;
 		array_merge(
 			$editor,
 			[
-				'ENTITY_TYPE_ID' => \CCrmOwnerType::OrderShipment,
+				'ENTITY_TYPE_ID' => \CCrmOwnerType::ShipmentDocument,
 				'ENTITY_ID' => $arResult['DOCUMENT_ID'],
 				'ENTITY_TYPE_TITLE' => \Bitrix\Main\Localization\Loc::getMessage('CRM_STORE_DOCUMENT_DETAIL_DOC_TYPE_SHORT_SHIPMENT'),
 				'EXTRAS' => $extras,
-				'READ_ONLY' => $arResult['ENTITY_DATA']['DEDUCTED'] === 'Y',
+				'READ_ONLY' => $arResult['ENTITY_DATA']['DEDUCTED'] === 'Y' || $arResult['IS_READ_ONLY'],
 				'DETAIL_MANAGER_ID' => $guid,
 				'MODULE_ID' => 'crm',
 				'MESSAGES' => [],
-				'IS_TOOL_PANEL_ALWAYS_VISIBLE' => true,
+				'IS_TOOL_PANEL_ALWAYS_VISIBLE' => $arResult['IS_TOOL_PANEL_ALWAYS_VISIBLE'],
 			]
 		)
 	);
@@ -89,10 +102,11 @@ global $APPLICATION;
 					'ENTITY_INFO' => $entityInfo,
 					'EXTRAS' => $arResult['EXTRAS'],
 					'ACTIVITY_EDITOR_ID' => $activityEditorID,
-					'READ_ONLY' => false,
+					'READ_ONLY' => $arResult['IS_READ_ONLY'],
 					'ENTITY_CONFIG_SCOPE' => $entityEditorInfo['ENTITY_CONFIG_SCOPE'],
 					'USER_SCOPE_ID' => $entityEditorInfo['USER_SCOPE_ID'],
 
+					'ENABLE_TODO' => false,
 					'ENABLE_TASK' => false,
 					'ENABLE_WAIT' => false,
 					'ENABLE_SMS' => false,

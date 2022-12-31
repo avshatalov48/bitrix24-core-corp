@@ -44,6 +44,7 @@ class LivefeedImportantList
 		livefeedImportantListWidget.setListener((eventName, user) => {
 			if (eventName === 'onItemSelected')
 			{
+				const { ProfileView } = jn.require("user/profile");
 				ProfileView.open(
 					{
 						userId: user.id,

@@ -55,7 +55,8 @@ if(!$arFields)
 $ownerTypeID = intval($arFields['OWNER_TYPE_ID']);
 $ownerID = intval($arFields['OWNER_ID']);
 
-if (!CCrmActivity::CheckReadPermission($ownerTypeID, $ownerID, $userPerms))
+$provider = CCrmActivity::GetActivityProvider($arFields);
+if (!$provider || !$provider::checkReadPermission($arFields))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
@@ -63,14 +64,10 @@ if (!CCrmActivity::CheckReadPermission($ownerTypeID, $ownerID, $userPerms))
 
 $typeID = isset($arFields['TYPE_ID']) ? intval($arFields['TYPE_ID']) : CCrmActivityType::Undefined;
 //Permissions -->
-$canChange = CCrmActivity::CheckUpdatePermission($ownerTypeID, $ownerID, $userPerms);
+$canChange = $provider::checkUpdatePermission($arFields);
 //for robots
-$provider = CCrmActivity::GetActivityProvider($arFields);
-$isTypeEditable= false;
-if (
-	$provider
-	&& $provider::isTypeEditable($arFields['PROVIDER_TYPE_ID'], $arFields['DIRECTION'])
-)
+$isTypeEditable = false;
+if ($provider::isTypeEditable($arFields['PROVIDER_TYPE_ID'], $arFields['DIRECTION']))
 {
 	$isTypeEditable = true;
 }

@@ -90,7 +90,7 @@ class Filter
 	}
 
 	/**
-	 * Return true if has filter field.
+	 * Return true if filter has field.
 	 *
 	 * @param string $fieldId Field ID.
 	 * @return bool
@@ -99,11 +99,21 @@ class Filter
 	{
 		return in_array(
 			$fieldId,
-			[
-				self::SourceId,
-				self::ChannelCode,
-			]
+			self::getFields()
 		);
+	}
+
+	/**
+	 * Returns all available filter fields' codes
+	 *
+	 * @return string[]
+	 */
+	public static function getFields(): array
+	{
+		return [
+			self::SourceId,
+			self::ChannelCode,
+		];
 	}
 
 	/**

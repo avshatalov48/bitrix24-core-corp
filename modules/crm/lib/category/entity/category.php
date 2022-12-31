@@ -15,6 +15,18 @@ abstract class Category implements \JsonSerializable
 
 	abstract public function getName(): string;
 
+	public function getSingleName(): ?string
+	{
+		return null;
+	}
+
+	public function getSingleNameIfPossible(): string
+	{
+		$result = $this->getSingleName();
+
+		return is_null($result) ? $this->getName() : $result;
+	}
+
 	abstract public function setName(string $name): Category;
 
 	abstract public function getSort(): int;
@@ -37,6 +49,21 @@ abstract class Category implements \JsonSerializable
 	public function getCode(): string
 	{
 		return '';
+	}
+
+	public function getDisabledFieldNames(): array
+	{
+		return [];
+	}
+
+	public function isTrackingEnabled(): bool
+	{
+		return true;
+	}
+
+	public function getUISettings(): array
+	{
+		return [];
 	}
 
 	public function getData(): array

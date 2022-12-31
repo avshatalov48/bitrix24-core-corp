@@ -2,9 +2,8 @@
 
 namespace Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts\Product;
 
-use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Main\Loader;
-use Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts\Measures;
+use Bitrix\Mobile\Integration\Catalog\ProductGrid\SkuDataProvider;
 use Bitrix\Mobile\InventoryControl\Dto\DocumentProductRecord;
 use Bitrix\Mobile\InventoryControl\UrlBuilder;
 use Bitrix\Mobile\UI\File;
@@ -27,7 +26,7 @@ final class CompleteSku implements Enricher
 		}
 
 		$result = [];
-		$productInfo = $this->loadProductsData($productIds);
+		$productInfo = SkuDataProvider::load($productIds);
 
 		foreach ($records as $origRecord)
 		{
@@ -81,81 +80,6 @@ final class CompleteSku implements Enricher
 		}
 
 		return $result;
-	}
-
-	/**
-	 * @param int[] $productIds
-	 * @return array
-	 * @todo Remove duplication with component bitrix:catalog.store.document.product.list
-	 */
-	private function loadProductsData(array $productIds): array
-	{
-		$repositoryFacade = ServiceContainer::getRepositoryFacade();
-
-		if (!$repositoryFacade || empty($productIds))
-		{
-			return [];
-		}
-
-		$productInfo = [];
-		$productSkuIblockMap = [];
-		foreach ($productIds as $skuId)
-		{
-			$sku = $repositoryFacade->loadVariation($skuId);
-			if (!$sku)
-			{
-				continue;
-			}
-
-			/** @var \Bitrix\Catalog\v2\Product\BaseProduct $product */
-			$product = $sku->getParent();
-
-			$fields = $sku->getFields();
-			$fields['PRODUCT_ID'] = $product->getId();
-			$fields['SKU_ID'] = $skuId;
-			$fields['OFFERS_IBLOCK_ID'] = 0;
-			$fields['SKU_TREE'] = [];
-
-			$fields['SECTION_IDS'] = $product->getSectionCollection()->getValues();
-
-			$fields['GALLERY'] = $sku->getFrontImageCollection()->toArray();
-
-			$fields['MEASURE'] = Measures::findById($sku->getField('MEASURE'));
-
-			if (!$product->isSimple())
-			{
-				$fields['OFFERS_IBLOCK_ID'] = $fields['IBLOCK_ID'];
-				$fields['IBLOCK_ID'] = $product->getIblockId();
-				$productSkuIblockMap[$product->getIblockId()] = $productSkuIblockMap[$product->getIblockId()] ?? [];
-				$productSkuIblockMap[$product->getIblockId()][$product->getId()][] = $sku->getId();
-			}
-
-			$productInfo[$skuId] = $fields;
-		}
-
-		if ($productSkuIblockMap)
-		{
-			foreach ($productSkuIblockMap as $iblockId => $productMap)
-			{
-				$skuTree = ServiceContainer::make('sku.tree', ['iblockId' => $iblockId]);
-				if ($skuTree)
-				{
-					$skuTreeItems = $skuTree->loadWithSelectedOffers($productMap);
-					foreach ($skuTreeItems as $productId => $offers)
-					{
-						foreach ($offers as $skuId => $skuTreeItem)
-						{
-							if (isset($productInfo[$skuId]))
-							{
-								$productInfo[$skuId]['SKU_TREE'] = $skuTreeItem;
-							}
-						}
-					}
-				}
-			}
-		}
-
-		return $productInfo;
 	}
 
 	private function convertSkuProps(array $skuTree): array

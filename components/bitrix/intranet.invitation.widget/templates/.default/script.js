@@ -7,7 +7,7 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  props: {
 	    size: {
 	      type: Number,
-	      default: 85
+	      "default": 85
 	    }
 	  },
 	  template: "\n\t\t<div></div>\n\t",
@@ -175,8 +175,9 @@ this.BX.Intranet = this.BX.Intranet || {};
 	        return;
 	      }
 
-	      new BX.PopupWindow('inviteHint' + main_core.Text.getRandom(8), bindNode, {
+	      var popup = new BX.PopupWindow('inviteHint' + main_core.Text.getRandom(8), bindNode, {
 	        content: message,
+	        className: 'bx-invite-hint-warning',
 	        zIndex: 15000,
 	        angle: true,
 	        offsetTop: 0,
@@ -193,7 +194,12 @@ this.BX.Intranet = this.BX.Intranet || {};
 	            }.bind(this), 4000);
 	          }
 	        }
-	      }).show();
+	      });
+	      popup.show();
+	      var node = popup.getPopupContainer();
+	      node.addEventListener('click', function () {
+	        popup.close();
+	      });
 	    },
 	    sendAnalytics: function sendAnalytics(code) {
 	      BX.ajax.runAction("intranet.invitationwidget.analyticsLabel", {
@@ -259,15 +265,18 @@ this.BX.Intranet = this.BX.Intranet || {};
 	  template: "\n\t\t<div>\n\t\t\t<LoaderComponent v-if=\"loading\" :size=\"100\" />\n\t\t\t<ContentComponent \n\t\t\t\tv-if=\"!loading && loaded\"\n\t\t\t\t:invitationLink=\"invitationLink\"\n\t\t\t\t:structureLink=\"structureLink\"\n\t\t\t\t:isInvitationAvailable=\"isInvitationAvailable\"\n\t\t\t\t:isExtranetAvailable=\"isExtranetAvailable\"\n\t\t\t\t:users=\"users\"\n\t\t\t\t:isCrurrentUserAdmin=\"isCrurrentUserAdmin\"\n\t\t\t>\n\t\t\t</ContentComponent>\n\t\t</div>\n\t"
 	};
 
+	function _classPrivateFieldInitSpec(obj, privateMap, value) { _checkPrivateRedeclaration(obj, privateMap); privateMap.set(obj, value); }
+
+	function _checkPrivateRedeclaration(obj, privateCollection) { if (privateCollection.has(obj)) { throw new TypeError("Cannot initialize the same private elements twice on an object"); } }
 	var namespace = main_core.Reflection.namespace('BX.Intranet');
 
-	var _vue = new WeakMap();
+	var _vue = /*#__PURE__*/new WeakMap();
 
 	var InvitationWidget = /*#__PURE__*/function () {
 	  function InvitationWidget(params) {
 	    babelHelpers.classCallCheck(this, InvitationWidget);
 
-	    _vue.set(this, {
+	    _classPrivateFieldInitSpec(this, _vue, {
 	      writable: true,
 	      value: void 0
 	    });
@@ -314,6 +323,20 @@ this.BX.Intranet = this.BX.Intranet || {};
 
 	      this.popup = new B24.PopupBlur({
 	        autoHide: true,
+	        autoHideHandler: function autoHideHandler(event) {
+	          if (event.target === _this.popup.getPopupContainer() || _this.popup.getPopupContainer().contains(event.target)) {
+	            return null;
+	          }
+
+	          var result = event;
+	          var hints = document.querySelectorAll('.bx-invite-hint-warning');
+	          hints.forEach(function (element) {
+	            if (event.target === element || element.contains(event.target)) {
+	              result = null;
+	            }
+	          });
+	          return result;
+	        },
 	        closeByEsc: true,
 	        contentPadding: 0,
 	        padding: 0,

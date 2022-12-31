@@ -34,6 +34,7 @@ class ActionDictionary
 		ACTION_TASK_RATE					= 'task_rate',
 		ACTION_TASK_CHANGE_STATUS			= 'task_change_status',
 		ACTION_TASK_REMINDER				= 'task_reminder',
+		ACTION_TASK_AUDITORS_ADD			= 'task_auditors_add',
 
 		ACTION_TASK_ELAPSED_TIME			= 'task_elapsed_time',
 		ACTION_TASK_FAVORITE_ADD			= 'task_favorite_add',

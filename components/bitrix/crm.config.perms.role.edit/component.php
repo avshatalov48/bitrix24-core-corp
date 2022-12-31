@@ -131,6 +131,19 @@ $operationsWithImport[] = 'IMPORT';
 $operationsWithAutomation = $operationsWithImport;
 $operationsWithAutomation[] = 'AUTOMATION';
 
+$entityOperationsMap = [
+	'LEAD' => $operationsWithAutomation,
+	'QUOTE' => $operationsWithImport,
+	'INVOICE' => $operationsWithImport,
+	'CONTACT' => $operationsWithImport,
+	'COMPANY' => $operationsWithImport,
+	'ORDER' => $operationsWithAutomation,
+	'WEBFORM' => ['READ', 'WRITE'],
+	'BUTTON' => ['READ', 'WRITE'],
+	'SALETARGET' => ['READ', 'WRITE'],
+	'EXCLUSION' => ['READ', 'WRITE'],
+];
+
 $arResult['ENTITY'] = [];
 
 $arResult['ENTITY']['CONTACT'] = GetMessage('CRM_ENTITY_TYPE_CONTACT');
@@ -142,7 +155,7 @@ foreach ($factory->getCategories() as $category)
 		continue;
 	}
 	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
-	$entityTitle = $category->getName();
+	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] =  htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
 	$entityOperationsMap[$entityName] = $operationsWithImport;
@@ -157,15 +170,13 @@ foreach ($factory->getCategories() as $category)
 		continue;
 	}
 	$entityName = htmlspecialcharsbx(Service\UserPermissions::getPermissionEntityType($factory->getEntityTypeId(), $category->getId()));
-	$entityTitle = $category->getName();
+	$entityTitle = $category->getSingleNameIfPossible();
 	$arResult['ENTITY'][$entityName] = htmlspecialcharsbx($entityTitle);
 	$arResult['ROLE_PERM'][$entityName] = $permissionSet;
-	$entityOperationsMap[$entityName] = $operations;
+	$entityOperationsMap[$entityName] = $operationsWithImport;
 }
 
-$arResult['ENTITY']['DEAL'] = GetMessage('CRM_ENTITY_TYPE_DEAL');
-
-$dealCategoryConfigs = Bitrix\Crm\Category\DealCategory::getPermissionRoleConfigurations();
+$dealCategoryConfigs = Bitrix\Crm\Category\DealCategory::getPermissionRoleConfigurationsWithDefault();
 foreach($dealCategoryConfigs as $typeName => $config)
 {
 	$arResult['ENTITY'][$typeName] = isset($config['NAME']) ? htmlspecialcharsbx($config['NAME']) : $typeName;
@@ -186,19 +197,6 @@ if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isOldInvoicesEnabled())
 	$arResult['ENTITY'][\CCrmOwnerType::InvoiceName] = \CCrmOwnerType::GetDescription(\CCrmOwnerType::Invoice);
 }
 
-$entityOperationsMap = [
-	'LEAD' => $operationsWithAutomation,
-	'QUOTE' => $operationsWithImport,
-	'INVOICE' => $operationsWithImport,
-	'CONTACT' => $operationsWithImport,
-	'COMPANY' => $operationsWithImport,
-	'ORDER' => $operationsWithAutomation,
-	'WEBFORM' => ['READ', 'WRITE'],
-	'BUTTON' => ['READ', 'WRITE'],
-	'SALETARGET' => ['READ', 'WRITE'],
-	'EXCLUSION' => ['READ', 'WRITE'],
-];
-
 $arResult['ENTITY_FIELDS'] = array(
 	'DEAL' => array('STAGE_ID' => CCrmStatus::GetStatusListEx('DEAL_STAGE')),
 	'LEAD' => array('STATUS_ID' => CCrmStatus::GetStatusListEx('STATUS'))
@@ -216,7 +214,7 @@ if (\Bitrix\Crm\Settings\InvoiceSettings::getCurrent()->isSmartInvoiceEnabled())
 			$entityTitle = \CCrmOwnerType::GetDescription(\CCrmOwnerType::SmartInvoice);
 			if ($smartInvoiceFactory->isCategoriesEnabled())
 			{
-				$entityTitle .= ' ' . $category->getName();
+				$entityTitle .= ' ' . $category->getSingleNameIfPossible();
 			}
 			$arResult['ENTITY'][$entityName] = $entityTitle;
 			foreach ($smartInvoiceFactory->getStages($category->getId()) as $stage)

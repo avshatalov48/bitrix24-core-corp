@@ -1,8 +1,23 @@
 import ConfigurableItem from '../configurable-item';
 
+export type ActionParams =
+{
+	action: String,
+	actionType: String,
+	actionData: ?Object,
+	response: ?Object,
+	animationCallbacks: ?ActionAnimationCallbacks,
+};
+
+export type ActionAnimationCallbacks =
+{
+	onStart: ?function,
+	onStop: ?function,
+};
+
 export class Base
 {
-	onItemAction(item: ConfigurableItem, action: String, actionData: ?Object): void
+	onItemAction(item: ConfigurableItem, actionParams: ActionParams): void
 	{
 
 	}
@@ -10,6 +25,10 @@ export class Base
 	getContentBlockComponents(item: ConfigurableItem): Object
 	{
 		return {};
+	}
+
+	onAfterItemRefreshLayout(item: ConfigurableItem): void
+	{
 	}
 
 	/**

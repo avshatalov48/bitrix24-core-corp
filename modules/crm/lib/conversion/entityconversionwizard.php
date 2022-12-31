@@ -179,44 +179,30 @@ class EntityConversionWizard
 
 	public function save()
 	{
-		$session = self::getSession();
-		if (!$session)
+		$storage = self::getSessionLocalStorage($this->getEntityTypeID());
+		if (!$storage)
 		{
 			return;
 		}
 
-		$storageName = static::getSessionStorageName($this->getEntityTypeID());
-
-		if ($session->has($storageName) && is_array($session->get($storageName)))
-		{
-			$wizards = $session->get($storageName);
-		}
-		else
-		{
-			$wizards = [];
-		}
-
-		$wizards[$this->getEntityID()] = $this->externalize();
-
-		$session->set($storageName, $wizards);
+		$storage->set($this->getEntityID(), $this->externalize());
 	}
 
-	private static function getSession(): ?Main\Session\SessionInterface
+	/**
+	 * @internal
+	 *
+	 * @param int $srcEntityTypeId
+	 * @return Main\Data\LocalStorage\SessionLocalStorage|null
+	 */
+	final protected static function getSessionLocalStorage(int $srcEntityTypeId): ?Main\Data\LocalStorage\SessionLocalStorage
 	{
-		$session = Main\Application::getInstance()->getSession();
-
-		//todo rewrite using $session->isAccessible() (dependency on main 22.200.0) or use SessionLocalStorage instead of session
-		try
+		$storageManager = Main\Application::getInstance()->getSessionLocalStorageManager();
+		if (!$storageManager->isReady())
 		{
-			$session->start();
-		}
-		catch (\Throwable $throwable)
-		{
-			//session is not accessible in this context
 			return null;
 		}
 
-		return $session->isStarted() ? $session : null;
+		return $storageManager->get(static::getSessionStorageName($srcEntityTypeId));
 	}
 
 	/**
@@ -247,42 +233,30 @@ class EntityConversionWizard
 
 	public static function loadByIdentifier(ItemIdentifier $source): ?self
 	{
-		$session = self::getSession();
-		if (!$session)
+		$storage = self::getSessionLocalStorage($source->getEntityTypeId());
+		if (!$storage)
 		{
 			return null;
 		}
 
-		$storageName = static::getSessionStorageName($source->getEntityTypeId());
-
-		if (!$session->has($storageName) || !is_array($session->get($storageName)))
+		$externalizedWizardParams = $storage[$source->getEntityId()] ?? null;
+		if (!is_array($externalizedWizardParams))
 		{
 			return null;
 		}
 
-		$externalizedWizardParams = $session->get($storageName)[$source->getEntityId()] ?? null;
-
-		return static::createFromExternalized((array)$externalizedWizardParams);
+		return static::createFromExternalized($externalizedWizardParams);
 	}
 
 	public static function removeByIdentifier(ItemIdentifier $source): void
 	{
-		$session = self::getSession();
-		if (!$session)
+		$storage = self::getSessionLocalStorage($source->getEntityTypeId());
+		if (!$storage)
 		{
 			return;
 		}
 
-		$storageName = static::getSessionStorageName($source->getEntityTypeId());
-
-		if ($session->has($storageName) && is_array($session->get($storageName)))
-		{
-			$externalizedWizards = $session->get($storageName);
-
-			unset($externalizedWizards[$source->getEntityId()]);
-
-			$session->set($storageName, $externalizedWizards);
-		}
+		unset($storage[$source->getEntityId()]);
 	}
 
 	private static function getSessionStorageName(int $srcEntityTypeID): string

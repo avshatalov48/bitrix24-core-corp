@@ -163,7 +163,7 @@ class CompanySettings
 			self::includeModuleFile();
 
 			self::$descriptions= array(
-				self::VIEW_LIST => GetMessage('CRM_COMPANY_SETTINGS_VIEW_LIST'),
+				self::VIEW_LIST => GetMessage('CRM_COMMON_LIST'),
 			);
 		}
 		return self::$descriptions;

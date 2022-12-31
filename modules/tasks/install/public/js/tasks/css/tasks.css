@@ -687,34 +687,87 @@
 }
 
 
+.task-detail-description .forum-quote,
+.task-detail-description table.quote,
+.task-comment-content .forum-quote,
+.task-comment-content table.quote,
+.reviews-post-text table.quote {
+	background: #F3F6F7;
+	background-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%228%22%20height%3D%2214%22%3E%3Cpath%20fill%3D%22%23525C69%22%20fill-rule%3D%22evenodd%22%20d%3D%22M0%2011.813C2.563%2010.6%203.844%209.171%203.844%207.531c-1.104-.121-2.01-.551-2.719-1.29C.417%205.5.063%204.646.063%203.675c0-1.033.348-1.903%201.046-2.612C1.807.354%202.677%200%203.72%200c1.146%200%202.146.46%203%201.382C7.573%202.303%208%203.422%208%204.738%208%208.685%205.74%2011.773%201.219%2014L0%2011.813z%22%20opacity%3D%22.303%22/%3E%3C/svg%3E);
+	background-position: 12px 9px;
+	background-repeat: no-repeat;
+	border: 1px solid #e0e2e3;
+	border-radius: 8px;
+	margin: 10px 0;
+	width: 90%;
+}
 
-.task-detail-description .forum-quote, .task-detail-description table.quote,
-.task-comment-content .forum-quote, .task-comment-content table.quote, .reviews-post-text table.quote
-{background:url(images/quote-gray.png) no-repeat left top #F7F7F7; border:1px solid #E8E8E8; border-spacing:0; margin:10px 0;  width:90%;}
+.task-detail-description .forum-quote th,
+.task-detail-description table.quote th,
+.task-comment-content .forum-quote th,
+.task-comment-content table.quote th,
+.reviews-post-text table.quote th {
+	display: none !important;
+}
 
-.task-detail-description .forum-quote th, .task-detail-description table.quote th,
-.task-comment-content .forum-quote th, .task-comment-content table.quote th, .reviews-post-text table.quote th
-{display:none!important;}
+.task-detail-description .forum-quote td,
+.task-detail-description table.quote td,
+.task-comment-content .forum-quote td,
+.task-comment-content table.quote td,
+.reviews-post-text table.quote td {
+	border: none;
+	color: #525C69;
+	padding: 8px 40px 8px 27px;
+	word-break: break-all;
+	word-wrap: break-word;
+	font-size: 14px;
+}
 
-.task-detail-description .forum-quote td, .task-detail-description table.quote td,
-.task-comment-content .forum-quote td, .task-comment-content table.quote td, .reviews-post-text table.quote td
-{border:none; color:#7D7D7D; padding:10px 17px; word-break: break-all;  word-wrap: break-word;}
+.task-detail-description .forum-code,
+.task-detail-description table.code,
+.task-comment-content .forum-code,
+.task-comment-content table.code,
+.reviews-post-text table.code {
+	border-spacing: 0;
+	font-size: 14px;
+	line-height: 15px;
+	margin: 10px 0;
+	padding: 0;
+	width: 90%;
+	background-color: #F3F6F7;
+	border: 1px solid #e0e2e3;
+	border-radius: 8px;
+	border-spacing: 0;
+}
 
-.task-detail-description .forum-code, .task-detail-description table.code,
-.task-comment-content .forum-code, .task-comment-content table.code, .reviews-post-text table.code
-{background-color:#F7F7F7; border:1px solid #E8E8E8; border-spacing:0; font-family:"Courier New", serif; font-size:12px; line-height:15px; margin:10px 0; padding:10px 17px; width:90%;}
+.task-detail-description .forum-code th,
+.task-detail-description table.code th,
+.task-comment-content .forum-code th,
+.task-comment-content table.code th,
+.reviews-post-text table.code th {
+	display: none;
+}
 
-.task-detail-description .forum-code th, .task-detail-description table.code th,
-.task-comment-content .forum-code th, .task-comment-content table.code th, .reviews-post-text table.code th
-{display:none;}
+.task-detail-description .forum-code td,
+.task-detail-description table.code td,
+.task-comment-content .forum-code td,
+.task-comment-content table.code td,
+.reviews-post-text table.code td {
+	padding: 8px 40px 8px 27px;
+}
 
-.task-detail-description .forum-code td, .task-detail-description table.code td,
-.task-comment-content .forum-code td, .task-comment-content table.code td, .reviews-post-text table.code td
-{padding:0;}
-
-.task-detail-description .forum-code pre, .task-detail-description table.code pre,
-.task-comment-content .forum-code  pre, .task-comment-content table.code  pre, .reviews-post-text table.code pre
-{color:#7D7D7D; margin:0; white-space: pre-wrap;}
+.task-detail-description .forum-code pre,
+.task-detail-description table.code pre,
+.task-comment-content .forum-code pre,
+.task-comment-content table.code pre,
+.reviews-post-text table.code pre {
+	color: #333;
+	margin: 0;
+	white-space: pre-wrap;
+	font-family: var(--ui-font-family-system-mono, Consolas, monospace);
+	font-size: 14px;
+	line-height: 15px;
+}
 
 .task-detail pre { white-space: pre-wrap;}
 

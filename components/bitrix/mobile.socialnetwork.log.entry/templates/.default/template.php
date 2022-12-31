@@ -36,7 +36,7 @@ else
 	)
 	{
 		$arEvent = $arResult["Event"];
-		$bUnread = $arParams["EVENT"]["IS_UNREAD"];
+		$isUnread = $arParams["EVENT"]["IS_UNREAD"];
 
 		$strTopic = "";
 		if (
@@ -248,7 +248,7 @@ else
 		else
 		{
 			$itemClassList[] = 'lenta-item';
-			if ($bUnread)
+			if ($isUnread)
 			{
 				$itemClassList[] = 'lenta-item-new';
 			}
@@ -1070,7 +1070,10 @@ else
 						var arEntryCommentID = [];
 						BXMobileApp.onCustomEvent('onPullExtendWatch', {'id': 'UNICOMMENT<?=$arEvent["COMMENTS_PARAMS"]["ENTITY_XML_ID"]?>'}, true);
 
-						BXMobileApp.onCustomEvent('onCommentsGet', { log_id: <?=$arEvent["EVENT"]["ID"]?>, ts: '<?=time()?>'}, true);
+						BXMobileApp.onCustomEvent('onCommentsGet', {
+							log_id: <?=$arEvent["EVENT"]["ID"]?>,
+							ts: '<?=time()?>',
+						}, true);
 					</script><?php
 
 					if ($arEvent["CAN_ADD_COMMENTS"] === "Y")

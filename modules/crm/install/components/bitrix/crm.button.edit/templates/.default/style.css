@@ -193,7 +193,7 @@
 .crm-button-edit-channel-title-item {
 	display: inline-block;
 	padding: 10px 7px;
-	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	vertical-align: middle;
 }
@@ -296,7 +296,7 @@
 
 .crm-button-edit-channel-lines-title-item {
 	display: inline-block;
-	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #535c69;
 	vertical-align: middle;
 }
@@ -730,7 +730,7 @@ select::-ms-expand {
 }
 
 .crm-button-edit-channel-lines-display-options-title-item {
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #1a1a1a;
 }
 
@@ -926,7 +926,7 @@ select::-ms-expand {
 .crm-button-edit-sidebar-title-item {
 	display: inline-block;
 	margin: 0 0 13px 0;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #555c6d;
 }
 
@@ -1338,7 +1338,7 @@ select::-ms-expand {
 
 .crm-button-edit-hello-title-item {
 	display: inline-block;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-button-edit-constructor-block {
@@ -1555,7 +1555,7 @@ select::-ms-expand {
 	display: inline-block;
 	/*width: -webkit-calc(100% - 22px);*/
 	/*width: calc(100% - 22px);*/
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #000;
 	vertical-align: middle;
 }
@@ -1574,7 +1574,8 @@ select::-ms-expand {
 	/*width: calc(100% - 32px);*/
 	min-width: 196px;
 	border: 1px solid rgba(82,92,104,.24);
-	font: 700 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 	color: #424956;
 	-webkit-transition: border-color .3s;
 	transition: border-color .3s;
@@ -2013,7 +2014,7 @@ select::-ms-expand {
 
 .crm-button-edit-hello-pages {
 	padding: 12px 0 0 10px;
-	font: bold 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px/20px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #424956;
 }
 

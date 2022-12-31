@@ -28,6 +28,7 @@ class Builder
 			->setMarketPanel($this->item->getMarketPanel())
 			->setIsLogMessage($this->item->isLogMessage())
 		;
+		$this->applyLayoutPartsDependencies($layout);
 
 		return $layout;
 	}
@@ -53,8 +54,9 @@ class Builder
 		$userId = $this->item->getAuthorId();
 
 		$changeStreamButton = $this->item->getChangeStreamButton();
+		$infoHelper = $this->item->getInfoHelper();
 
-		return ($title || $date || $tags || $userId || $changeStreamButton)
+		return ($title || $date || $tags || $userId || $changeStreamButton || $infoHelper)
 			? (new Layout\Header())
 				->setChangeStreamButton($changeStreamButton)
 				->setTitle($title)
@@ -63,6 +65,7 @@ class Builder
 				->setDatePlaceholder($this->item->getDatePlaceholder())
 				->setTags($tags ?? [])
 				->setUser($this->createLayoutUser($userId))
+				->setInfoHelper($infoHelper)
 			: null
 		;
 	}
@@ -71,7 +74,19 @@ class Builder
 	{
 		$body = new Layout\Body();
 		$body->setLogo($this->item->getLogo());
-		$body->setContentBlocks($this->item->getContentBlocks() ?? []);
+		$contentBlocks = array_merge(
+			$this->item->getCommonContentBlocksBlocks(),
+			$this->item->getContentBlocks() ?? [],
+		);
+		$currentSort = 0;
+		foreach ($contentBlocks as $contentBlock)
+		{
+			if (is_null($contentBlock->getSort()))
+			{
+				$contentBlock->setSort($currentSort++);
+			}
+		}
+		$body->setContentBlocks($contentBlocks);
 
 		return $body;
 	}
@@ -83,6 +98,14 @@ class Builder
 		$buttons = $this->item->getButtons();
 		if (!empty($buttons))
 		{
+			$currentSort = 0;
+			foreach ($buttons as $button)
+			{
+				if (is_null($button->getSort()))
+				{
+					$button->setSort($currentSort++);
+				}
+			}
 			$footer->setButtons($buttons);
 		}
 		$additionalButtons = [];
@@ -90,9 +113,15 @@ class Builder
 		{
 			$additionalButtons['extra'] = $this->item->getAdditionalIconButton();
 		}
+
 		if ($this->item->needShowNotes())
 		{
-			$additionalButtons['notes'] = new Layout\Footer\IconButton('page', Loc::getMessage('CRM_TIMELINE_NOTES_TITLE'));
+			$additionalButtons['notes'] = (new Layout\Footer\IconButton(
+				'note', Loc::getMessage('CRM_TIMELINE_NOTES_TITLE')
+			))
+				->setAction((new Layout\Action\JsEvent('Note:StartEdit')))
+				->setHideIfReadonly()
+			;
 		}
 		if (!empty($additionalButtons))
 		{
@@ -126,7 +155,7 @@ class Builder
 		return $footer;
 	}
 
-	private function createLayoutUser(?int $userId): ?Layout\Header\User
+	private function createLayoutUser(?int $userId): ?Layout\User
 	{
 		if (!$userId)
 		{
@@ -139,7 +168,7 @@ class Builder
 			return null;
 		}
 
-		return new Layout\Header\User(
+		return new Layout\User(
 			$userData['FORMATTED_NAME'],
 			$userData['SHOW_URL'],
 			$userData['PHOTO_URL'] ?? null
@@ -164,5 +193,18 @@ class Builder
 		}
 
 		return Menu\MenuItemFactory::createFromArray($menu);
+	}
+
+	private function applyLayoutPartsDependencies(Layout $layout): void
+	{
+		$noteBlock = $layout->getBody()->getContentBlocks()['note'] ?? null;
+		if ($noteBlock && !is_null($noteBlock->getId()))
+		{
+			$footerNoteAdditionalButton = $layout->getFooter()->getAdditionalButtons()['notes'] ?? null;
+			if ($footerNoteAdditionalButton)
+			{
+				$footerNoteAdditionalButton->setColor(Layout\Footer\IconButton::COLOR_PRIMARY);
+			}
+		}
 	}
 }

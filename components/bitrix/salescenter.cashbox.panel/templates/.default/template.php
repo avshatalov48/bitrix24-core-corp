@@ -1,8 +1,9 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 
-use Bitrix\Main\UI\Extension,
-	Bitrix\Main\Localization\Loc;
+use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Localization\Loc;
+use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
@@ -21,7 +22,11 @@ Extension::load([
 ]);
 
 \Bitrix\UI\Toolbar\Facade\Toolbar::deleteFavoriteStar();
-\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();
+Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
+	[
+		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CASHBOX
+	]
+);
 ?>
 
 <?php if ($arResult['isCashboxCountryConflict']): ?>

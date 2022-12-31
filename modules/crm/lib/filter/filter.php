@@ -1,7 +1,9 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm;
+use Bitrix\Crm\PhaseSemantics;
 
 class Filter extends \Bitrix\Main\Filter\Filter
 {
@@ -18,6 +20,39 @@ class Filter extends \Bitrix\Main\Filter\Filter
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function getFields()
+	{
+		$fields = parent::getFields();
+
+		if (
+			isset($this->params['filterFieldsCallback'])
+			&& is_callable($this->params['filterFieldsCallback'])
+		)
+		{
+			$fields = array_filter(
+				$fields,
+				$this->params['filterFieldsCallback'],
+				ARRAY_FILTER_USE_KEY
+			);
+		}
+
+		if (
+			isset($this->params['modifyFieldsCallback'])
+			&& is_callable($this->params['modifyFieldsCallback'])
+		)
+		{
+			$fields = array_map(
+				$this->params['modifyFieldsCallback'],
+				$fields
+			);
+		}
+
+		return $fields;
 	}
 
 	/**
@@ -64,6 +99,44 @@ class Filter extends \Bitrix\Main\Filter\Filter
 			{
 				$factory->getDataClass();
 			}
+		}
+	}
+
+	public static function applyStageSemanticFilter(array &$filter, array $requestFilter, string $fieldStageSemantic): void
+	{
+		if (empty($requestFilter[$fieldStageSemantic]))
+		{
+			return;
+		}
+
+		$semanticFilter = [];
+		if (in_array(PhaseSemantics::PROCESS, $requestFilter[$fieldStageSemantic], true))
+		{
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => '',
+			];
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => PhaseSemantics::PROCESS,
+			];
+		}
+		if (in_array(PhaseSemantics::SUCCESS, $requestFilter[$fieldStageSemantic], true))
+		{
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => PhaseSemantics::SUCCESS,
+			];
+		}
+		if (in_array(PhaseSemantics::FAILURE, $requestFilter[$fieldStageSemantic], true))
+		{
+			$semanticFilter[] = [
+				'STAGE.SEMANTICS' => PhaseSemantics::FAILURE,
+			];
+		}
+
+		if (!empty($semanticFilter))
+		{
+			$filter[] = array_merge([
+				'LOGIC' => 'OR',
+			], $semanticFilter);
 		}
 	}
 }

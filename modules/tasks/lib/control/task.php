@@ -28,6 +28,7 @@ use Bitrix\Tasks\Internals\Task\ParameterTable;
 use Bitrix\Tasks\Internals\Task\ProjectDependenceTable;
 use Bitrix\Tasks\Internals\Task\ProjectLastActivityTable;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 use Bitrix\Tasks\Internals\Task\SearchIndexTable;
 use Bitrix\Tasks\Internals\Task\SortingTable;
 use Bitrix\Tasks\Internals\Task\Template\TemplateDependenceTable;
@@ -158,7 +159,7 @@ class Task
 		}
 		catch (\Exception $e)
 		{
-			throw new TaskAddException();
+			throw new TaskAddException($e->getMessage());
 		}
 
 		$this->addToFavorite($fields);
@@ -615,6 +616,8 @@ class Task
 		$before['GROUP_ID'] = (int) $this->sourceTaskData['GROUP_ID'];
 		$after['GROUP_ID'] = (int) $taskData['GROUP_ID'];
 
+		$lastResult = ResultManager::getLastResult($this->taskId);
+
 		$params = [
 			'TASK_ID' => $this->taskId,
 			'USER_ID' => $this->userId,
@@ -628,7 +631,8 @@ class Task
 				'removedParticipants' => array_values($removedParticipants),
 			],
 			'taskRequireResult' => ResultManager::requireResult($this->taskId) ? "Y" : "N",
-			'taskHasResult' => ResultManager::hasResult($this->taskId) ? "Y" : "N",
+			'taskHasResult' => $lastResult ? "Y" : "N",
+			'taskHasOpenResult' => ($lastResult && (int) $lastResult['STATUS'] === ResultTable::STATUS_OPENED) ? "Y" : "N",
 		];
 
 		try
@@ -1516,6 +1520,8 @@ class Task
 	 */
 	private function prepareAddPullEventParameters(array $mergedFields): array
 	{
+		$lastResult = ResultManager::getLastResult($this->taskId);
+
 		return [
 			'TASK_ID' => $this->taskId,
 			'AFTER' => $mergedFields,
@@ -1525,7 +1531,8 @@ class Task
 				'addCommentExists' => $this->isAddedComment,
 			],
 			'taskRequireResult' => ResultManager::requireResult($this->taskId) ? "Y" : "N",
-			'taskHasResult' => ResultManager::hasResult($this->taskId) ? "Y" : "N",
+			'taskHasResult' => $lastResult ? "Y" : "N",
+			'taskHasOpenResult' => ($lastResult && (int) $lastResult['STATUS'] === ResultTable::STATUS_OPENED) ? "Y" : "N",
 		];
 	}
 

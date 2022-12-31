@@ -49,8 +49,9 @@ if (
 if (!empty($arResult['IMAGES']))
 {
 	$gridBlockClassesList = [ 'disk-ui-file-thumbnails-grid' ];
-	$screenWidth = (int)($arResult['deviceWidth'] / $arResult['devicePixelRatio']);
-	$screenHeight = (int)($arResult['deviceHeight'] / $arResult['devicePixelRatio']);
+	$devicePixelRatio = empty($arResult['devicePixelRatio']) ? 1 : $arResult['devicePixelRatio'];
+	$screenWidth = (int)($arResult['deviceWidth'] / $devicePixelRatio);
+	$screenHeight = (int)($arResult['deviceHeight'] / $devicePixelRatio);
 
 	$vertical = ($arResult['IMAGES'][0]['IMAGE']['HEIGHT'] > $arResult['IMAGES'][0]['IMAGE']['WIDTH']);
 	$count = count($arResult['IMAGES']);

@@ -8,7 +8,14 @@ class QrTrigger extends BaseTrigger
 {
 	public static function isSupported($entityTypeId)
 	{
-		return ($entityTypeId === \CCrmOwnerType::Deal);
+		if (\CCrmOwnerType::isPossibleDynamicTypeId($entityTypeId))
+		{
+			return parent::isSupported($entityTypeId);
+		}
+
+		$supported = [\CCrmOwnerType::Deal, \CCrmOwnerType::Lead];
+
+		return in_array($entityTypeId, $supported, true);
 	}
 
 	public static function isEnabled()
@@ -24,7 +31,7 @@ class QrTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_NAME_1');
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -46,5 +53,15 @@ class QrTrigger extends BaseTrigger
 		}
 
 		return true;
+	}
+
+	public static function getGroup(): array
+	{
+		return ['other'];
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_QR_DESCRIPTION') ?? '';
 	}
 }

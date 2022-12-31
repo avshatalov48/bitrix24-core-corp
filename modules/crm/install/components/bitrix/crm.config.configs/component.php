@@ -18,6 +18,7 @@ if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
 }
 
 use \Bitrix\Crm\Settings;
+use Bitrix\Crm\Settings\Crm;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ModuleManager;
 
@@ -461,17 +462,10 @@ if($_SERVER['REQUEST_METHOD'] == 'POST' && check_bitrix_sessid())
 				);
 			}
 
-			if(isset($_POST['ENABLE_ENTITY_CATALOG_PRICE_EDIT']))
+			if(isset($_POST['ENABLE_CREATION_ENTITY_COMMODITY_ITEM']))
 			{
-				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableCatalogPriceEdit(
-					mb_strtoupper($_POST['ENABLE_ENTITY_CATALOG_PRICE_EDIT']) === 'Y'
-				);
-			}
-
-			if(isset($_POST['ENABLE_ENTITY_CATALOG_PRICE_SAVE']))
-			{
-				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableCatalogPriceSave(
-					mb_strtoupper($_POST['ENABLE_ENTITY_CATALOG_PRICE_SAVE']) === 'Y'
+				\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->enableEntityCommodityItemCreation(
+					mb_strtoupper($_POST['ENABLE_CREATION_ENTITY_COMMODITY_ITEM']) === 'Y'
 				);
 			}
 
@@ -553,24 +547,16 @@ if (\Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCommonProductProcessing
 {
 	$arResult['FIELDS']['tab_main'][] = array(
 		'id' => 'PRODUCT_CONFIG',
-		'name' => GetMessage('CRM_SECTION_PRODUCT_CONFIG'),
+		'name' => GetMessage('CRM_SECTION_PRODUCT_CONFIG_MSGVER_1'),
 		'type' => 'section'
 	);
 
 	$arResult['FIELDS']['tab_main'][] = array(
-		'id' => 'ENABLE_ENTITY_CATALOG_PRICE_EDIT',
-		'name' => GetMessage('CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_EDIT_2'),
+		'id' => 'ENABLE_CREATION_ENTITY_COMMODITY_ITEM',
+		'name' => GetMessage('CRM_FIELD_ENABLE_CREATION_ENTITY_COMMODITY_ITEM'),
+		'title' => GetMessage('CRM_FIELD_ENABLE_CREATION_ENTITY_COMMODITY_ITEM_HINT'),
 		'type' => 'checkbox',
-		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled(),
-		'required' => false
-	);
-
-	$arResult['FIELDS']['tab_main'][] = array(
-		'id' => 'ENABLE_ENTITY_CATALOG_PRICE_SAVE',
-		'name' => GetMessage('CRM_FIELD_ENABLE_ENTITY_CATALOG_PRICE_SAVE'),
-		'type' => 'checkbox',
-		'show' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceEditEnabled() ? 'Y' : 'N',
-		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCatalogPriceSaveEnabled(),
+		'value' => \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isCreationEntityCommodityItemAllowed(),
 		'required' => false
 	);
 }
@@ -865,15 +851,16 @@ $arResult['FIELDS']['tab_activity_config'][] = array(
 	'value' => Settings\ActivitySettings::getValue(Settings\ActivitySettings::KEEP_UNBOUND_TASKS),
 	'required' => false
 );
-
-$arResult['FIELDS']['tab_activity_config'][] = array(
-	'id' => 'RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS',
-	'name' => GetMessage('CRM_FIELD_RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS2'),
-	'type' => 'checkbox',
-	'value' => CCrmUserCounterSettings::GetValue(CCrmUserCounterSettings::ReckonActivitylessItems, true),
-	'required' => false
-);
-
+if (!Crm::isUniversalActivityScenarioEnabled())
+{
+	$arResult['FIELDS']['tab_activity_config'][] = [
+		'id' => 'RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS',
+		'name' => GetMessage('CRM_FIELD_RECKON_ACTIVITYLESS_ITEMS_IN_COUNTERS2'),
+		'type' => 'checkbox',
+		'value' => CCrmUserCounterSettings::GetValue(CCrmUserCounterSettings::ReckonActivitylessItems, true),
+		'required' => false
+	];
+}
 
 $activityCompetionConfig = \Bitrix\Crm\Settings\LeadSettings::getCurrent()->getActivityCompletionConfig();
 $html = '';

@@ -1,0 +1,3 @@
+<?php
+$MESS["FIELDS_BOOLEAN_NO"] = "No";
+$MESS["FIELDS_BOOLEAN_YES"] = "Yes";

@@ -12,7 +12,7 @@ $MESS["TASKS_DURATION_HOURS"] = "часов";
 $MESS["TASKS_DURATION_DAYS"] = "дней";
 
 $MESS["TASKS_EXCEL_ID"] = "ID";
-$MESS["TASKS_EXCEL_TITLE"] = "Задача";
+$MESS["TASKS_EXCEL_TITLE"] = "Название";
 $MESS["TASKS_EXCEL_RESPONSIBLE_ID"] = "Ответственный";
 $MESS["TASKS_EXCEL_RESPONSIBLE_NAME"] = "Ответственный";
 $MESS["TASKS_EXCEL_CREATED_BY"] = "Постановщик";
@@ -31,7 +31,7 @@ $MESS["TASKS_EXCEL_MARK"] = "Оценка";
 $MESS["TASKS_EXCEL_ADD_IN_REPORT"] = "В отчете";
 $MESS["TASKS_EXCEL_GROUP_ID"] = "Проект";
 $MESS["TASKS_EXCEL_GROUP_NAME"] = "Проект";
-$MESS["TASKS_EXCEL_TAG"] = "Тэги";
+$MESS["TASKS_EXCEL_TAG"] = "Теги";
 
 $MESS["TASKS_EXCEL_CHANGED_DATE"] = "Дата изменения";
 $MESS["TASKS_EXCEL_ACTIVITY_DATE"] = "Активность";
@@ -49,3 +49,11 @@ $MESS["TASKS_LIST_CRM_TYPE_CO"] = "Компания";
 $MESS["TASKS_LIST_CRM_TYPE_C"] = "Контакт";
 $MESS["TASKS_LIST_CRM_TYPE_L"] = "Лид";
 $MESS["TASKS_LIST_CRM_TYPE_D"] = "Сделка";
+
+$MESS['TASKS_EXCEL_DESCRIPTION'] = 'Описание';
+$MESS['TASKS_EXCEL_ACTIVITY_DATE'] = 'Последняя активность';
+$MESS['TASKS_EXCEL_DATE_START'] = 'Дата начала работы';
+$MESS['TASKS_EXCEL_U'] = 'Наблюдатели';
+$MESS['TASKS_EXCEL_A'] = 'Соисполнители';
+$MESS['TASKS_EXCEL_BASE_ID'] = 'ID базовой задачи';
+$MESS['TASKS_EXCEL_BASE_TITLE'] = 'Название базовой задачи';

@@ -91,6 +91,11 @@ class Input extends Base\Input
 				$file['name'] = $params['attachmentName'];
 			}
 			$message['message']['files'] = [$file];
+
+			if (isset($params['caption']) && !is_null($params['caption']))
+			{
+				$message['message']['text'] = $params['caption'];
+			}
 		}
 
 		return $message;

@@ -77,16 +77,13 @@ final class Editor
 			"NAME_TEMPLATE" => $parameters['USER_NAME_FORMAT'],
 			//"AT_THE_END_HTML" => $htmlAfterTextarea,
 			"LHE" => array(
-
 				"id" => $parameters['ID'],
-				"documentCSS" => "body {color:#434343;}",
-				"fontSize" => "12px",
+				"iframeCss" => "body { padding: 12px 18px 8px 12px !important; color: #151515; line-height: var(--ui-font-line-height-lg, 22px); }",
+				"fontSize" => "14.5px",
 				"bInitByJS" => false,
-				"height" => 100,
 				"lazyLoad" => 'N',
 				"bbCode" => $parameters['BBCODE_MODE'], // set editor mode: bbcode or html
 				"setFocusAfterShow" => !!$parameters['ENTITY_ID'], // when creating task, we should not
-				"iframeCss" => "body { padding-left: 10px !important; }",
 			),
 			//"USE_CLIENT_DATABASE" => "Y",
 			//"ALLOW_EMAIL_INVITATION" => ($arResult["ALLOW_EMAIL_INVITATION"] ? 'Y' : 'N')

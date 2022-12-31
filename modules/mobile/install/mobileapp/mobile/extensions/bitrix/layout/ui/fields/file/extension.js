@@ -1,32 +1,247 @@
-(() => {
+/**
+ * @module layout/ui/fields/file
+ */
+jn.define('layout/ui/fields/file', (require, exports, module) => {
+
+	const { Alert } = require('alert');
+	const { clip, pen } = require('assets/common');
+	const { Haptics } = require('haptics');
+	const { BaseField } = require('layout/ui/fields/base');
+	const { filePreview } = require('layout/ui/fields/file/file-preview');
+	const { UploaderClient } = require('uploader/client');
+	const { Events } = require('uploader/const');
+	const { debounce, throttle } = require('utils/function');
+	const { clone, isEqual } = require('utils/object');
+	const { Uuid } = require('utils/uuid');
+
 	const MEDIA_TYPE = {
 		IMAGE: 'image',
 		VIDEO: 'video',
-		FILE: 'file'
-	}
+		FILE: 'file',
+	};
+
+	const FILE_TASK_ID_PREFIX = 'mobile-file-field-';
+	const HIDDEN_FILES_COUNTER_WIDTH = 36;
+	const HIDDEN_FILES_COUNTER_HEIGHT = 36;
+	const FILE_PREVIEW_MEASURE = 66;
+	const EDIT_BUTTON_WIDTH = 36;
+	const VISIBLE_FILES_COUNT = 3;
 
 	/**
-	 * @class Fields.FileField
+	 * @class FileField
 	 */
-	class FileField extends Fields.BaseField
+	class FileField extends BaseField
 	{
 		constructor(props)
 		{
 			super(props);
 
+			this.uuid = Uuid.getV4();
+			this.queuedValue = null;
+			this.displayedAlertsSet = new Set();
+
 			/** @type {UI.FileAttachment} */
 			this.fileAttachmentRef = null;
 			this.fileAttachmentWidget = null;
+
+			this.loadingFileResolver = new Map();
+
+			this.onUploadDone = this.onUploadDone.bind(this);
+			this.onUploadError = this.onUploadError.bind(this);
+
+			this.deleteFileHandler = this.onDeleteFile.bind(this);
+			this.throttleFileErrorNotification = throttle(() => Haptics.notifyWarning(), 3000, this);
+
+			this.debouncedHandleChange = debounce(() => {
+				if (this.queuedValue !== null)
+				{
+					super.handleChange(this.queuedValue);
+				}
+			}, 50, this);
 		}
 
-		showEditMenu()
+		componentWillReceiveProps(newProps)
 		{
-			return BX.prop.getBoolean(this.props, 'showEditMenu', true);
+			super.componentWillReceiveProps(newProps);
+
+			if (this.queuedValue !== null && isEqual(this.queuedValue, newProps.value))
+			{
+				this.queuedValue = null;
+			}
+
+			if (this.fileAttachmentRef)
+			{
+				this.fileAttachmentRef.onChangeAttachments(this.getFilesInfo(newProps.value));
+			}
+
+			// workaround for Android, componentDidUpdate not working stable
+			setTimeout(() => this.checkLoadingFilesResolvers(), 50);
 		}
 
-		renderMenu()
+		componentWillUnmount()
 		{
-			if (this.isReadOnly() || this.isEmpty())
+			super.componentWillUnmount();
+
+			this.cancelAllUploadTasks();
+		}
+
+		componentDidUpdate(prevProps, prevState)
+		{
+			this.checkLoadingFilesResolvers();
+		}
+
+		showFilesName()
+		{
+			return BX.prop.getBoolean(this.props, 'showFilesName', this.getMediaTypeId(this.getConfig().mediaType) !== 0);
+		}
+
+		checkLoadingFilesResolvers()
+		{
+			const files = this.getValue();
+
+			files.forEach((file) => {
+				if (BX.type.isPlainObject(file) && this.loadingFileResolver.has(file.id))
+				{
+					const { resolve, reject } = this.loadingFileResolver.get(file.id);
+
+					if (file.hasError)
+					{
+						reject(file);
+						this.loadingFileResolver.delete(file.id);
+					}
+					else if (!file.isUploading)
+					{
+						resolve(file);
+						this.loadingFileResolver.delete(file.id);
+					}
+				}
+			});
+		}
+
+		getConfig()
+		{
+			const config = super.getConfig();
+			const controller = BX.prop.getObject(config, 'controller', {});
+
+			if (!this.isReadOnly())
+			{
+				const entityId = BX.prop.getString(controller, 'entityId', null);
+				const endpoint = BX.prop.getString(controller, 'endpoint', null);
+
+				if (entityId && !endpoint)
+				{
+					controller.endpoint = this.resolveControllerEndPoint(entityId);
+				}
+
+				if (!controller.endpoint)
+				{
+					console.warn('FileField: "entityId" or "endpoint" option must be defined in controller config.');
+				}
+
+				const options = BX.prop.getObject(controller, 'options', {});
+
+				options.fieldName = this.getId();
+				controller.options = options;
+			}
+
+			return {
+				...config,
+				controller,
+				fileInfo: BX.prop.getObject(config, 'fileInfo', {}),
+				mediaType: BX.prop.getString(config, 'mediaType', MEDIA_TYPE.FILE),
+				isEnabledToEdit: BX.prop.getBoolean(config, 'enableToEdit', !this.isReadOnly()),
+				emptyEditableButtonStyle: BX.prop.getObject(config, 'emptyEditableButtonStyle', {}),
+			};
+		}
+
+		resolveControllerEndPoint(entityId)
+		{
+			switch (entityId)
+			{
+				case 'crm-entity':
+					return 'crm.FileUploader.EntityFieldController';
+
+				case 'catalog-product':
+					return 'catalog.UI.fileUploader.productController';
+
+				case 'catalog-document':
+					return 'catalog.UI.fileUploader.documentController';
+			}
+
+			return null;
+		}
+
+		prepareValue(value)
+		{
+			let preparedValue = super.prepareValue(value);
+
+			if (!preparedValue)
+			{
+				preparedValue = [];
+			}
+
+			if (!Array.isArray(preparedValue))
+			{
+				preparedValue = [preparedValue];
+			}
+
+			return preparedValue;
+		}
+
+		prepareSingleValue(value)
+		{
+			if (Array.isArray(value))
+			{
+				return value[0] || null;
+			}
+
+			return value;
+		}
+
+		getValidationError()
+		{
+			let error = super.getValidationError();
+			if (!error)
+			{
+				const hasFileWithError = this.getValue().find((file) => file.hasError === true);
+				if (hasFileWithError)
+				{
+					error = BX.message('FIELDS_FILE_VALIDATION_ERROR');
+				}
+			}
+
+			return error;
+		}
+
+		isDiskEnabled()
+		{
+			const config = this.getConfig();
+
+			return (
+				config.disk
+				&& config.disk.isDiskModuleInstalled
+				&& config.disk.isWebDavModuleInstalled
+			);
+		}
+
+		getFilesCount()
+		{
+			return this.getValue().length;
+		}
+
+		isEmpty()
+		{
+			return this.getFilesCount() === 0;
+		}
+
+		showAddButton()
+		{
+			return BX.prop.getBoolean(this.props, 'showAddButton', true);
+		}
+
+		renderEditIcon()
+		{
+			if (this.isEmpty())
 			{
 				return null;
 			}
@@ -34,62 +249,43 @@
 			return View(
 				{
 					style: {
-						flexDirection: 'row'
-					}
+						width: EDIT_BUTTON_WIDTH,
+						alignItems: 'flex-end',
+						alignSelf: 'flex-start',
+					},
 				},
-				View({
-					style: {
-						width: 1,
-						backgroundColor: '#DBDDE0',
-						marginRight: 11.5
-					}
-				}),
-				fileMenu(this.openMenu.bind(this))
-			)
-		}
-
-		componentWillReceiveProps(newProps)
-		{
-			super.componentWillReceiveProps(newProps);
-			this.isInitialValueEmpty = !CommonUtils.isNotEmptyObject(this.getConfig().fileInfo);
-			if (this.fileAttachmentRef)
-			{
-				this.fileAttachmentRef.onChangeAttachments(this.getFilesInfo(newProps.value));
-			}
-		}
-
-		getConfig()
-		{
-			const config = super.getConfig();
-
-			return {
-				...config,
-				fileInfo: BX.prop.getObject(config, 'fileInfo', {}),
-				mediaType: BX.prop.getString(config, 'mediaType', MEDIA_TYPE.FILE)
-			};
-		}
-
-		canFocusTitle()
-		{
-			return BX.prop.getBoolean(this.props, 'canFocusTitle', false);
-		}
-
-		getContentClickHandler()
-		{
-			return null;
+				View(
+					{
+						style: {
+							width: 28,
+							height: 28,
+							justifyContent: 'center',
+							alignItems: 'center',
+							marginTop: 30,
+						},
+						onClick: () => {
+							this.onOpenAttachmentList();
+						},
+					},
+					Image(
+						{
+							style: {
+								width: 14,
+								height: 15,
+							},
+							svg: {
+								content: pen,
+							},
+						},
+					),
+				),
+			);
 		}
 
 		// workaround to focus if already focused (because there is no events for file picker close)
-		setFocus(callback = null)
+		setFocus()
 		{
-			Fields.FocusManager.blurFocusedFieldIfHas(this, () => {
-				this.setState({focus: true}, () => {
-					Fields.FocusManager.setFocusedField(this);
-
-					callback && callback();
-					this.props.onFocusIn && this.props.onFocusIn();
-				});
-			});
+			return this.setFocusInternal();
 		}
 
 		renderReadOnlyContent()
@@ -101,45 +297,77 @@
 
 			return View(
 				{
-					style: this.styles.fieldWrapper
+					style: this.styles.fieldWrapper,
 				},
-				this.getFilesView()
-			)
+				this.getFilesView(),
+			);
 		}
 
 		renderEditableContent()
 		{
+			if (this.isEmpty())
+			{
+				return this.renderEmptyEditableContent();
+			}
+
 			return View(
 				{
-					style: this.styles.fieldWrapper
+					style: this.styles.fieldWrapper,
+					clickable: false,
 				},
-				this.isEmpty() ? this.renderAddButton() : this.getFilesView()
+				this.getFilesView(),
 			);
 		}
 
-		renderAddButton()
+		renderEmptyEditableContent()
 		{
+			if (this.hasHiddenEmptyView())
+			{
+				return null;
+			}
+
+			const { emptyEditableButtonStyle } = this.styles;
+
 			return View(
 				{
-					style: this.styles.addFileButtonContainer,
-					onClick: () => this.setFocus(this.openFilePicker.bind(this))
+					style: {
+						height: 40,
+						width: '100%',
+						flexDirection: 'row',
+						justifyContent: 'center',
+						alignItems: 'center',
+						borderWidth: 1,
+						borderColor: (emptyEditableButtonStyle.borderColor || emptyEditableButtonStyle.backgroundColor),
+						borderRadius: 6,
+						backgroundColor: emptyEditableButtonStyle.backgroundColor,
+					},
+					clickable: false,
 				},
-				this.getMediaTypeId(this.getConfig().mediaType) === 2 ? Image(
+				Image(
 					{
-						style: this.styles.addFileButtonIcon,
+						style: {
+							width: 18,
+							height: 17,
+							marginRight: 7,
+						},
+						clickable: false,
 						resizeMode: 'center',
 						svg: {
-							content: svgImages.file.content.replace(/%color%/g, this.getButtonStyles().iconColor)
-						}
-					}
-				) : null,
+							content: svgImages.file.content.replace(/%color%/g, emptyEditableButtonStyle.iconColor),
+						},
+					},
+				),
 				Text(
 					{
-						style: this.styles.addFileButtonText,
-						text: this.getAddButtonText(this.getConfig().mediaType)
-					}
-				)
-			)
+						style: {
+							fontSize: 16,
+							color: emptyEditableButtonStyle.textColor,
+						},
+						clickable: false,
+						text: this.getAddButtonText(this.getConfig().mediaType),
+					},
+				),
+			);
 		}
 
 		getFilesInfo(values)
@@ -172,178 +400,267 @@
 
 		getFilesView()
 		{
-			const files = this.getFilesInfo(this.props.value);
+			const files = this.getFilesInfo(this.getValue());
 
-			const fieldWidth = device.screen.width - 20 * 2 - 40 * 2 - 25;
-			const visibleFilesCount = Math.floor(fieldWidth / 50);
-
-			const hiddenFilesCount = Math.max(files.length - visibleFilesCount, 0);
+			const hiddenFilesCount = Math.max(files.length - VISIBLE_FILES_COUNT, 0);
 			const visibleFiles = files.slice(0, files.length - hiddenFilesCount);
+			const isEnableToEdit = this.getConfig().isEnabledToEdit;
+
+			const canDeleteFilesInPreview = !this.isReadOnly() && isEnableToEdit;
 
 			return View(
 				{
 					style: {
-						flexWrap: 'no-wrap',
-						flexDirection: 'row',
-						borderWidth: 0
-					}
+						flexDirection: 'column',
+					},
 				},
 				View(
 					{
-						style: this.styles.filesListWrapper
+						style: {
+							flexWrap: 'no-wrap',
+							flexDirection: 'row',
+							borderWidth: 0,
+						},
 					},
-					...visibleFiles.map((file, index) => filePreview(file, index, files, this.isInitialValueEmpty, this.onDeleteFile.bind(this))),
-					hiddenFilesCount > 0 ? this.renderHiddenFilesCounter(hiddenFilesCount) : null,
+					View(
+						{
+							style: this.styles.filesListWrapper,
+						},
+						...visibleFiles.map((file, index) => filePreview(
+							file,
+							index,
+							files,
+							(canDeleteFilesInPreview || file.token) && this.deleteFileHandler,
+							this.showFilesName(),
+						)),
+						hiddenFilesCount && this.renderHiddenFilesCounter(hiddenFilesCount),
+					),
 				),
-				this.renderMenu()
-			)
+				this.renderAddButton(),
+			);
 		}
 
-		openMenu()
+		renderAddButton()
 		{
-			let actions = [];
-			if (this.isReadOnly())
+			if (this.isReadOnly() || !this.showAddButton())
 			{
-				actions = [
-					{
-						id: 'open',
-						title: BX.message('FIELDS_FILE_OPEN_GALLERY'),
-						data: {
-							svgIcon: `<svg width="18" height="22" viewBox="0 0 18 22" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M15.7509 19.4851C15.7509 19.6597 15.6065 19.7998 15.4301 19.7998H2.57123C2.39342 19.7998 2.25034 19.6597 2.25034 19.4851V2.51483C2.25034 2.34168 2.39342 2.20014 2.57123 2.20014H8.67908C8.85688 2.20014 8.99997 2.34168 8.99997 2.51483V8.48721C8.99997 8.66036 9.14443 8.80053 9.32224 8.80053H15.4301C15.6065 8.80053 15.7509 8.94209 15.7509 9.11524V19.4851ZM11.2503 3.39708C11.2503 3.33387 11.3045 3.28028 11.3711 3.28028C11.4031 3.28028 11.4337 3.29264 11.4559 3.31463L14.6119 6.39977C14.6592 6.44511 14.6592 6.51932 14.6119 6.56604C14.5883 6.58803 14.5591 6.60041 14.5258 6.60041H11.3711C11.3045 6.60041 11.2503 6.54681 11.2503 6.48222V3.39708ZM17.529 6.14004L11.6031 0.34493C11.3781 0.125054 11.0711 0 10.7502 0H1.20574C0.53897 0 0 0.527702 0 1.17908V20.8223C0 21.4723 0.53897 22 1.20574 22H16.7955C17.4596 22 18 21.4723 18 20.8223V7.25179C18 6.83403 17.8305 6.43412 17.529 6.14004ZM13.0978 11.0007H4.90073C4.67988 11.0007 4.49929 11.1766 4.49929 11.3937V12.8078C4.49929 13.0235 4.67988 13.2008 4.90073 13.2008H13.0978C13.3201 13.2008 13.5006 13.0235 13.5006 12.8078V11.3937C13.5006 11.1766 13.3201 11.0007 13.0978 11.0007ZM4.9827 8.80053H6.26761C6.53431 8.80053 6.74963 8.5889 6.74963 8.3278V7.07176C6.74963 6.81066 6.53431 6.60041 6.26761 6.60041H4.9827C4.71599 6.60041 4.49929 6.81066 4.49929 7.07176V8.3278C4.49929 8.5889 4.71599 8.80053 4.9827 8.80053ZM13.0978 15.4009H4.90073C4.67988 15.4009 4.49929 15.5755 4.49929 15.7926V17.2081C4.49929 17.4238 4.67988 17.6011 4.90073 17.6011H13.0978C13.3201 17.6011 13.5006 17.4238 13.5006 17.2081V15.7926C13.5006 15.5755 13.3201 15.4009 13.0978 15.4009Z" fill="#525C69"/></svg>`
-						},
-						onClickCallback: () => new Promise((resolve) => {
-							menu.close(() => {
-								this.onOpenAttachmentList();
-							});
-							resolve();
-						}),
-					}
-				];
-			}
-			else
-			{
-				actions = [
-					{
-						id: 'add',
-						title: this.getAddButtonText(this.getConfig().mediaType),
-						data: {
-							svgIcon: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M21.5239 12.712C20.7847 12.712 20.0694 12.8141 19.3913 13.0048H14.6384C14.4784 13.0048 14.3484 12.8773 14.3484 12.7198V7.28735C14.3484 7.12985 14.2197 7.0011 14.0597 7.0011H8.56344C8.40344 7.0011 8.27469 7.12985 8.27469 7.28735V22.7236C8.27469 22.8823 8.40344 23.0098 8.56344 23.0098H14.0528C14.2872 23.728 14.6223 24.4006 15.0414 25.0111H7.33469C6.73469 25.0111 6.24969 24.5311 6.24969 23.9398V6.07235C6.24969 5.47985 6.73469 4.99985 7.33469 4.99985H15.9234C16.2122 4.99985 16.4884 5.1136 16.6909 5.3136L22.0234 10.5848C22.2947 10.8523 22.4472 11.2161 22.4472 11.5961V12.7657C22.1443 12.7302 21.8362 12.712 21.5239 12.712ZM10.6597 15.0061H15.9751C15.3903 15.5894 14.897 16.2642 14.5184 17.0073H10.6597C10.4609 17.0073 10.2984 16.8461 10.2984 16.6498V15.3636C10.2984 15.1661 10.4609 15.0061 10.6597 15.0061ZM10.6597 19.0086H13.8215C13.7198 19.5131 13.6664 20.035 13.6664 20.5694C13.6664 20.7172 13.6705 20.8641 13.6786 21.0098H10.6597C10.4609 21.0098 10.2984 20.8486 10.2984 20.6523V19.3648C10.2984 19.1673 10.4609 19.0086 10.6597 19.0086ZM16.3734 8.08985C16.3734 8.03235 16.4222 7.9836 16.4822 7.9836C16.5109 7.9836 16.5384 7.99485 16.5584 8.01485L19.3984 10.8211C19.4409 10.8623 19.4409 10.9298 19.3984 10.9723C19.3772 10.9923 19.3509 11.0036 19.3209 11.0036H16.4822C16.4222 11.0036 16.3734 10.9548 16.3734 10.8961V8.08985ZM10.7334 13.0048H11.8897C12.1297 13.0048 12.3234 12.8123 12.3234 12.5748V11.4323C12.3234 11.1948 12.1297 11.0036 11.8897 11.0036H10.7334C10.4934 11.0036 10.2984 11.1948 10.2984 11.4323V12.5748C10.2984 12.8123 10.4934 13.0048 10.7334 13.0048ZM21.5238 26.3742C18.3179 26.3742 15.719 23.7753 15.719 20.5694C15.719 17.3635 18.3179 14.7646 21.5238 14.7646C24.7297 14.7646 27.3286 17.3635 27.3286 20.5694C27.3286 23.7753 24.7297 26.3742 21.5238 26.3742ZM22.346 17.3471H20.7016V19.7472H18.3015V21.3916H20.7016V23.7916H22.346V21.3916H24.7461V19.7472H22.346V17.3471Z" fill="#525C69"/></svg>`
-						},
-						onClickCallback: () => new Promise((resolve) => {
-							menu.close(() => {
-								this.openFilePicker();
-							});
-							resolve();
-						}),
-					},
-					{
-						id: 'edit',
-						title: BX.message('FIELDS_FILE_EDIT'),
-						data: {
-							svgIcon: `<svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M19.7425 6.25L23.75 10.2997L12.1325 21.875L8.125 17.8253L19.7425 6.25ZM6.26396 23.2285C6.22606 23.3719 6.26667 23.5234 6.36953 23.629C6.47509 23.7345 6.62668 23.7751 6.77014 23.7345L11.25 22.5276L7.47122 18.75L6.26396 23.2285Z" fill="#525C69"/></svg>`
-						},
-						onClickCallback: () => new Promise((resolve) => {
-							menu.close(() => {
-								this.onOpenAttachmentList();
-							});
-							resolve();
-						}),
-					}
-				];
+				return null;
 			}
 
-			const menu = new ContextMenu({
-				params: {
-					showCancelButton: true
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+						alignItems: 'center',
+						marginTop: 10,
+					},
 				},
-				actions,
-			});
-			menu.show();
+				View(
+					{
+						style: {
+							width: 20,
+							height: 18,
+							justifyContent: 'center',
+							alignItems: 'center',
+							marginRight: 4,
+						},
+					},
+					Image(
+						{
+							style: {
+								width: 17,
+								height: 19,
+							},
+							svg: {
+								content: clip,
+							},
+						},
+					),
+				),
+				Text(
+					{
+						style: {
+							color: '#a8adb4',
+							fontSize: 15,
+						},
+						text: this.getAddButtonText(this.getConfig().mediaType),
+					},
+				),
+			);
+		}
+
+		getAddButtonText(mediaType)
+		{
+			if (!this.isEmpty() && !this.isMultiple())
+			{
+				if (mediaType === MEDIA_TYPE.IMAGE)
+				{
+					return BX.message('FIELDS_FILE_EDIT_IMAGE');
+				}
+
+				if (mediaType === MEDIA_TYPE.VIDEO)
+				{
+					return BX.message('FIELDS_FILE_EDIT_VIDEO');
+				}
+
+				return BX.message('FIELDS_FILE_EDIT_FILE');
+			}
+
+			if (mediaType === MEDIA_TYPE.IMAGE)
+			{
+				return BX.message('FIELDS_FILE_ADD_IMAGE');
+			}
+
+			if (mediaType === MEDIA_TYPE.VIDEO)
+			{
+				return BX.message('FIELDS_FILE_ADD_VIDEO');
+			}
+
+			return this.isMultiple() ? BX.message('FIELDS_FILE_ADD_FILES') : BX.message('FIELDS_FILE_ADD_FILE');
 		}
 
 		openFilePicker()
 		{
-			if (!this.isReadOnly())
-			{
-				const items = [
-					{
-						id: 'mediateka',
-						name: BX.message('FIELDS_FILE_MEDIATEKA')
-					},
-					{
-						id: 'camera',
-						name: BX.message('FIELDS_FILE_CAMERA')
-					}
-				];
-
-				if (
-					BX.componentParameters.get('MODULE_WEBDAV_INSTALLED', 'N') === 'Y'
-					&& BX.componentParameters.get('MODULE_DISK_INSTALLED', 'N') === 'Y'
-				)
-				{
-					items.push({
-						id: 'disk',
-						name: BX.message('FIELDS_FILE_B24_DISK'),
-						dataSource: {
-							multiple: false,
-							url: this.getConfig().fileAttachPath
-						}
-					});
-				}
-
-				dialogs.showImagePicker({
-						settings: {
-							resize: {
-								targetWidth: -1,
-								targetHeight: -1,
-								sourceType: 1,
-								encodingType: 0,
-								mediaType: this.getMediaTypeId(this.getConfig().mediaType),
-								allowsEdit: true,
-								saveToPhotoAlbum: true,
-								cameraDirection: 0
-							},
-							maxAttachedFilesCount: this.isMultiple() ? '100' : '1',
-							previewMaxWidth: 40,
-							previewMaxHeight: 40,
-							attachButton: {items}
-						}
-					},
-					data => this.onAddFile(data)
-				);
-			}
-		}
-
-		onAddFile(addedFiles)
-		{
-			const filteredFiles = this.filterFilesByValidMediaType(this.getConfig().mediaType, addedFiles)
-
-			if(addedFiles.length > filteredFiles.length)
-			{
-				navigator.notification.alert(BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_TEXT'), null, '');
-			}
-
-			if(filteredFiles.length === 0)
+			if (this.isReadOnly())
 			{
 				return;
 			}
 
-			let files = this.props.value;
+			const items = [
+				{
+					id: 'mediateka',
+					name: BX.message('FIELDS_FILE_MEDIATEKA'),
+				},
+				{
+					id: 'camera',
+					name: BX.message('FIELDS_FILE_CAMERA'),
+				},
+			];
 
-			if (!Array.isArray(files))
+			if (this.isDiskEnabled())
 			{
-				files = [];
+				items.push({
+					id: 'disk',
+					name: BX.message('FIELDS_FILE_B24_DISK'),
+					dataSource: {
+						multiple: this.isMultiple(),
+						url: this.getConfig().disk.fileAttachPath,
+					},
+				});
 			}
+
+			dialogs.showImagePicker(
+				{
+					settings: {
+						resize: {
+							targetWidth: -1,
+							targetHeight: -1,
+							sourceType: 1,
+							encodingType: 0,
+							mediaType: this.getMediaTypeId(this.getConfig().mediaType),
+							allowsEdit: true,
+							saveToPhotoAlbum: true,
+							cameraDirection: 0,
+						},
+						maxAttachedFilesCount: (this.isMultiple() ? '100' : '1'),
+						previewMaxWidth: 120,
+						previewMaxHeight: 120,
+						attachButton: { items },
+					},
+				},
+				data => this.removeFocus().then(() => this.onAddFile(data)),
+				() => this.removeFocus(),
+			);
+		}
+
+		handleChange(...values)
+		{
+			this.queuedValue = Array.isArray(values[0]) ? [...values[0]] : [];
+
+			this.debouncedHandleChange();
+
+			return Promise.resolve();
+		}
+
+		getValue()
+		{
+			if (this.queuedValue)
+			{
+				return this.queuedValue;
+			}
+
+			return super.getValue();
+		}
+
+		hasUploadingFiles()
+		{
+			const files = clone(this.getValue());
+
+			return files.some((file) => BX.type.isPlainObject(file) && file.isUploading);
+		}
+
+		getValueWhileReady()
+		{
+			const files = clone(this.getValue());
+
+			const loadingFilePromises = (
+				files
+					.filter((file) => BX.type.isPlainObject(file) && file.isUploading)
+					.map((file) => new Promise((resolve, reject) => {
+						this.loadingFileResolver.set(file.id, { resolve, reject });
+					}))
+			);
+
+			if (loadingFilePromises.length === 0)
+			{
+				return Promise.resolve(this.isMultiple() ? files : (files[0] || null));
+			}
+
+			return (
+				Promise
+					.all(loadingFilePromises)
+					.then(() => this.getValueWhileReady())
+			);
+		}
+
+		onAddFile(addedFiles)
+		{
+			let addedFilesWithFilter = this.filterFilesByValidMediaType(addedFiles, this.getConfig().mediaType);
+
+			if (addedFiles.length > addedFilesWithFilter.length)
+			{
+				Alert.alert(
+					BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_TITLE'),
+					BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_DESCR'),
+				);
+			}
+
+			if (addedFilesWithFilter.length === 0)
+			{
+				return;
+			}
+
+			addedFilesWithFilter = clone(addedFilesWithFilter);
+
+			if (this.isDiskEnabled())
+			{
+				addedFilesWithFilter = this.prepareDiskFiles(addedFilesWithFilter);
+			}
+			const fileUploadTasks = this.prepareFileUploadTasks(addedFilesWithFilter);
+			this.uploadFiles(fileUploadTasks);
+
+			let files;
 
 			if (this.isMultiple())
 			{
-				files = [...files, ...filteredFiles];
+				files = [...this.getValue(), ...addedFilesWithFilter];
 			}
 			else
 			{
-				files = [...filteredFiles];
+				files = [...addedFilesWithFilter];
 			}
 
+			Haptics.impactLight();
 			this.handleChange(files);
 		}
 
@@ -354,208 +671,535 @@
 					style: this.styles.hiddenFilesCounterWrapper,
 					onClick: () => {
 						this.onOpenAttachmentList();
-					}
+					},
 				},
 				Text(
 					{
 						style: this.styles.hiddenFilesCounterText,
-						text: '+' + String(hiddenFilesCount)
-					}
-				)
-			)
+						text: '+' + String(hiddenFilesCount),
+					},
+				),
+			);
 		}
 
 		onOpenAttachmentList()
 		{
-			PageManager.openWidget(
+			void this.getPageManager().openWidget(
 				'layout',
 				{
-					title: BX.message('FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', this.props.value.length),
+					title: BX.message('FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', this.getFilesCount()),
 					useLargeTitleMode: true,
 					modal: false,
 					backdrop: {
-						mediumPositionPercent: 75
+						mediumPositionPercent: 75,
+						horizontalSwipeAllowed: false,
 					},
 					onReady: (layoutWidget) => {
 						this.fileAttachmentWidget = layoutWidget;
+						const imageSize = device.screen.width > 375 ? FILE_PREVIEW_MEASURE : device.screen.width * FILE_PREVIEW_MEASURE / 375;
 
 						layoutWidget.showComponent(
 							new UI.FileAttachment({
 								ref: (ref) => this.fileAttachmentRef = ref,
-								attachments: this.getFilesInfo(this.props.value),
+								attachments: this.getFilesInfo(this.getValue()),
 								layoutWidget,
 								onDeleteAttachmentItem: !this.isReadOnly() && this.onDeleteFile.bind(this),
 								styles: {
 									wrapper: {
-										marginBottom: 10
+										marginBottom: 12,
+										marginRight: 10,
+										paddingRight: 9,
 									},
 									imagePreview: {
-										width: 70,
-										height: 70
+										width: imageSize,
+										height: imageSize,
 									},
+									imageOutline: (hasError) => ({
+										width: imageSize,
+										height: imageSize,
+										position: 'absolute',
+										top: 8,
+										right: 9,
+										borderColor: hasError ? '#ff5752' : '#333333',
+										backgroundColor: hasError ? '#ff615c' : null,
+										borderWidth: 1,
+										opacity: hasError ? 0.5 : 0.08,
+										borderRadius: 6,
+									}),
 									deleteButtonWrapper: this.isReadOnly() ? null : {
-										width: 25,
-										height: 25
-									}
+										width: 18,
+										height: 18,
+										right: 0,
+									},
 								},
-							})
+								showName: this.showFilesName(),
+							}),
 						);
 					},
-					onError: error => reject(error)
-				}
+					onError: error => reject(error),
+				},
 			);
 		}
 
 		onDeleteFile(deletedFileIndex)
 		{
-			const attachments = this.props.value.filter((file, currentIndex) => currentIndex !== deletedFileIndex);
+			const files = this.getValue();
+			let filesAfterDeletion = [];
 
-			this.handleChange(attachments);
+			if (this.isMultiple())
+			{
+				filesAfterDeletion = files.filter((file, currentIndex) => currentIndex !== deletedFileIndex);
+			}
+
+			const deletedFile = files.find((file) => !filesAfterDeletion.includes(file));
+			if (deletedFile)
+			{
+				this.cancelFileUploadTask(deletedFile);
+			}
+
+			Haptics.impactLight();
+			this.handleChange(filesAfterDeletion);
 
 			if (this.fileAttachmentWidget)
 			{
 				this.fileAttachmentWidget.setTitle({
-					text: BX.message('FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', attachments.length),
-					largeMode: true
+					text: BX.message('FIELDS_FILE_ATTACHMENTS_DIALOG_TITLE').replace('#NUM#', filesAfterDeletion.length),
+					largeMode: true,
 				});
 			}
 		}
 
 		getDefaultStyles()
 		{
-			const buttonStyles = this.getButtonStyles();
+			const styles = this.getChildFieldStyles();
+
+			if (this.hasHiddenEmptyView())
+			{
+				return this.getHiddenEmptyChildFieldStyles(styles);
+			}
+
+			return styles;
+		}
+
+		getChildFieldStyles()
+		{
+			const hasErrorMessage = this.hasErrorMessage();
+			const paddingBottomWithoutError = this.isEmpty() ? 12 : 10;
 
 			return {
 				...super.getDefaultStyles(),
 				fieldWrapper: {
-					flex: 1
+					flex: 1,
+					borderWidth: 0,
 				},
 				wrapper: {
-					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 10
+					paddingTop: this.isEmpty() ? 12 : 7,
+					paddingBottom: hasErrorMessage ? 5 : paddingBottomWithoutError,
 				},
 				readOnlyWrapper: {
 					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 9
-				},
-				addFileButtonContainer: {
-					height: 40,
-					width: '100%',
-					flexDirection: 'row',
-					justifyContent: 'center',
-					alignItems: 'center',
-					borderRadius: 6,
-					borderWidth: 1,
-					...buttonStyles.container,
-				},
-				addFileButtonIcon: {
-					width: 18,
-					height: 17,
-					marginRight: 7
-				},
-				addFileButtonText: {
-					fontSize: 16,
-					...buttonStyles.text,
+					paddingBottom: hasErrorMessage ? 5 : 9,
 				},
 				filesListWrapper: {
 					flexDirection: 'row',
-					alignItems: 'center',
+					alignItems: 'flex-start',
 					borderColor: '#ffffff',
-					flexGrow: 2
+					flexGrow: 2,
 				},
 				hiddenFilesCounterWrapper: {
-					borderColor: '#525C69',
+					borderColor: '#dee2e5',
 					borderWidth: 0.5,
-					borderRadius: 20,
-					width: 40,
-					height: 40,
+					borderRadius: 18,
+					width: HIDDEN_FILES_COUNTER_WIDTH,
+					height: HIDDEN_FILES_COUNTER_HEIGHT,
 					alignItems: 'center',
-					alignSelf: 'center',
-					justifyContent: 'center'
+					alignSelf: 'flex-start',
+					justifyContent: 'center',
+					marginLeft: 7,
+					marginTop: 10,
 				},
 				hiddenFilesCounterText: {
 					fontSize: 17,
-					color: '#828B95'
-				}
-			}
+					color: '#828b95',
+				},
+				emptyEditableButtonStyle: {
+					borderColor: '#00a2e8',
+					backgroundColor: '#00a2e8',
+					iconColor: '#ffffff',
+					textColor: '#ffffff',
+					...this.getConfig().emptyEditableButtonStyle,
+				},
+			};
 		}
 
-		getButtonStyles()
+		getHiddenEmptyChildFieldStyles(styles)
 		{
-			switch (this.getButtonType())
-			{
-				case 'primary':
-					return {
-						iconColor: '#ffffff',
-						container: {
-							backgroundColor: '#00a2e8',
-							borderColor: '#00a2e8',
-						},
-						text: {
-							color: '#ffffff',
-						},
-					};
-				default:
-					return {
-						iconColor: '#b9c0ca',
-						container: {
-							backgroundColor: '#ffffff',
-							borderColor: '#82888f',
-						},
-						text: {
-							color: '#525c69',
-						},
-					}
-			}
-		}
+			const isEmpty = this.isEmpty();
 
-		getButtonType()
-		{
-			return BX.prop.getString(this.getConfig(), 'buttonType', 'default');
-		}
-
-		getAddButtonText(mediaType)
-		{
-			switch (mediaType)
-			{
-				case MEDIA_TYPE.IMAGE:
-					return BX.message('FIELDS_FILE_ADD_IMAGE')
-				case MEDIA_TYPE.VIDEO:
-					return BX.message('FIELDS_FILE_ADD_VIDEO')
-				default:
-					return BX.message('FIELDS_FILE_ADD_FILE')
-			}
+			return {
+				...styles,
+				wrapper: {
+					paddingTop: isEmpty ? 12 : 8,
+					paddingBottom: isEmpty ? 18 : 14,
+				},
+			};
 		}
 
 		getMediaTypeId(mediaType)
 		{
-			switch (mediaType) {
+			switch (mediaType)
+			{
 				case MEDIA_TYPE.IMAGE:
-					return 0
+					return 0;
 				case MEDIA_TYPE.VIDEO:
-					return 1
+					return 1;
 				default:
-					return 2
+					return 2;
 			}
 		}
 
-		filterFilesByValidMediaType(mediaType, files)
+		filterFilesByValidMediaType(files, mediaType)
 		{
-			if(mediaType === MEDIA_TYPE.FILE)
+			if (mediaType === MEDIA_TYPE.FILE)
 			{
 				return files;
 			}
 
 			return files.filter(file => UI.File.getType(UI.File.getFileMimeType(file.type)) === mediaType);
 		}
+
+		prepareDiskFiles(files)
+		{
+			return files.map((file) => {
+				if (!file.dataAttributes)
+				{
+					return file;
+				}
+				return {
+					id: file.dataAttributes.VALUE,
+					name: file.name,
+					type: file.type,
+					url: file.url,
+					uuid: this.uuid,
+					isUploading: false,
+					isDiskFile: true,
+				};
+			});
+		}
+
+		prepareFileUploadTasks(files)
+		{
+			if (!files || !Array.isArray(files))
+			{
+				return [];
+			}
+
+			const { controller: controllerConfig } = this.getConfig();
+			const { endpoint: controller, options: controllerOptions } = controllerConfig;
+
+			return (
+				files
+					.filter(file => !file.isDiskFile)
+					.map((file) => {
+						const uuid = Uuid.getV4();
+						const taskId = FILE_TASK_ID_PREFIX + uuid;
+						const extension = this.getExtension(file.name);
+
+						let fileName = file.name;
+						if (extension === 'heic')
+						{
+							fileName = fileName.substring(0, fileName.length - extension.length) + 'jpg';
+						}
+
+						file.id = taskId;
+						file.uuid = this.uuid;
+						file.isUploading = true;
+
+						return {
+							taskId,
+							controller,
+							controllerOptions,
+							params: file,
+							name: fileName,
+							type: file.type,
+							mimeType: this.getFileMimeType(file.type),
+							url: file.url,
+							resize: this.getResizeOptions(file.type),
+							onDestroyEventName: Events.FILE_CREATED,
+						};
+					})
+			);
+		}
+
+		uploadFiles(tasks)
+		{
+			if (tasks.length === 0)
+			{
+				return false;
+			}
+
+			tasks.forEach((task) => this.getUploader().addTask(task));
+
+			return true;
+		}
+
+		cancelAllUploadTasks()
+		{
+			this
+				.getValue()
+				.forEach((file) => this.cancelFileUploadTask(file))
+			;
+		}
+
+		cancelFileUploadTask(file)
+		{
+			if (!file || !file.id || !file.isUploading)
+			{
+				return;
+			}
+
+			this.getUploader().cancelTask(file.id);
+		}
+
+		/**
+		 * @returns {UploaderClient}
+		 */
+		getUploader()
+		{
+			if (!this.uploader)
+			{
+				this.uploader = new UploaderClient(`ui/fields/file/${this.getId()}`);
+				this.uploader
+					.on('done', this.onUploadDone)
+					.on('error', this.onUploadError)
+				;
+			}
+
+			return this.uploader;
+		}
+
+		onUploadDone(id, eventData)
+		{
+			const { file: currentFile, result } = eventData;
+
+			if (!currentFile || !result)
+			{
+				return;
+			}
+
+			if (currentFile.params.uuid !== this.uuid)
+			{
+				return;
+			}
+
+			if (result.status !== 'success')
+			{
+				this.showUploaderErrorAlert(result);
+				this.processUploaderErrors(currentFile);
+
+				return;
+			}
+
+			const files = clone(this.getValue());
+			const uploadedFile = files.find((file) => file.id === currentFile.params.id);
+
+			if (uploadedFile)
+			{
+				uploadedFile.isUploading = false;
+				uploadedFile.token = result.data.token;
+				this.handleChange(files);
+			}
+		}
+
+		onUploadError(id, eventData)
+		{
+			const { file: currentFile, error: result } = eventData;
+
+			if (!currentFile || !result)
+			{
+				return;
+			}
+
+			if (currentFile.params.uuid !== this.uuid)
+			{
+				return;
+			}
+
+			this.showUploaderErrorAlert(result);
+			this.processUploaderErrors(currentFile);
+		}
+
+		processUploaderErrors(currentFile)
+		{
+			const files = clone(this.getValue());
+			const fileWithError = files.find((file) => file.id === currentFile.params.id);
+
+			if (fileWithError)
+			{
+				fileWithError.isUploading = false;
+				fileWithError.hasError = true;
+
+				this.throttleFileErrorNotification();
+				this.handleChange(files);
+			}
+		}
+
+		showUploaderErrorAlert(result)
+		{
+			const firstNonSystemError = this.getFirstNonSystemError(result.errors);
+			const title = firstNonSystemError && firstNonSystemError.message || BX.message('FIELDS_FILE_UPLOAD_ALERT_TITLE');
+			const text = firstNonSystemError && firstNonSystemError.description || BX.message('FIELDS_FILE_UPLOAD_ALERT_DESCR');
+			const hash = title + text;
+
+			if (this.displayedAlertsSet.has(hash))
+			{
+				return;
+			}
+
+			this.displayedAlertsSet.add(hash);
+
+			Alert.alert(
+				title,
+				text,
+				() => this.displayedAlertsSet.delete(hash),
+				BX.message('FIELDS_FILE_MEDIA_TYPE_ALERT_CONFIRM'),
+			);
+
+			console.error(result);
+		}
+
+		getFirstNonSystemError(errors)
+		{
+			if (!errors || !Array.isArray(errors))
+			{
+				return null;
+			}
+
+			return errors.find(({ type, system }) => type === 'file-uploader' && !system);
+		}
+
+		/**
+		 * @param {string} uri
+		 * @returns {string}
+		 */
+		getExtension(uri)
+		{
+			if (uri && uri.indexOf('.') >= 0)
+			{
+				return uri.split('.').pop().toLowerCase();
+			}
+
+			return '';
+		}
+
+		getResizeOptions(type)
+		{
+			const mimeType = this.getFileMimeType(type);
+			const fileType = this.getType(mimeType);
+			const shouldBeConverted = ((fileType === 'image' && mimeType !== 'image/gif') || fileType === 'video');
+
+			if (shouldBeConverted)
+			{
+				return {
+					quality: 80,
+					width: 1920,
+					height: 1080,
+				};
+			}
+
+			return null;
+		}
+
+		getFileMimeType(fileType)
+		{
+			fileType = fileType.toString().toLowerCase();
+
+			if (fileType.indexOf('/') !== -1) // iOS old form
+			{
+				return fileType;
+			}
+
+			const mimeTypeMap = {
+				png: 'image/png',
+				gif: 'image/gif',
+				jpg: 'image/jpeg',
+				jpeg: 'image/jpeg',
+				heic: 'image/heic',
+				mp3: 'audio/mpeg',
+				mp4: 'video/mp4',
+				mpeg: 'video/mpeg',
+				ogg: 'video/ogg',
+				mov: 'video/quicktime',
+				zip: 'application/zip',
+				php: 'text/php',
+			};
+
+			return (mimeTypeMap[fileType] || '');
+		}
+
+		getType(mimeType)
+		{
+			const result = mimeType.substring(0, mimeType.indexOf('/'));
+			const types = ['image', 'video', 'audio'];
+
+			if (!types.includes(result))
+			{
+				return 'file';
+			}
+
+			return result;
+		}
+
+		renderLeftIcons()
+		{
+			if (this.isEmptyEditable())
+			{
+				return View(
+					{
+						style: {
+							width: 24,
+							height: 24,
+							justifyContent: 'center',
+							alignItems: 'center',
+							marginRight: 8,
+						},
+					},
+					Image(
+						{
+							style: {
+								width: 15,
+								height: 17,
+							},
+							svg: {
+								content: svgImages.fileIcon(this.getTitleColor()),
+							},
+						},
+					),
+				);
+			}
+
+			return null;
+		}
+
+		handleAdditionalFocusActions()
+		{
+			this.openFilePicker();
+		}
 	}
 
 	const svgImages = {
 		file: {
-			content: `<svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.659 0.783569H0.15918V3.1169H12.9925L10.659 0.783569Z" fill="%color%"/><path d="M18.8258 4.28357H0.15918V17.1169H18.8258V4.28357Z" fill="%color%"/></svg>`
+			content: `<svg width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.659 0.783569H0.15918V3.1169H12.9925L10.659 0.783569Z" fill="%color%"/><path d="M18.8258 4.28357H0.15918V17.1169H18.8258V4.28357Z" fill="%color%"/></svg>`,
 		},
-	}
+		fileIcon: (color = '#a8adb4') => {
+			return `<svg width="15" height="17" viewBox="0 0 15 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.1125 6.70259C14.2311 6.82119 14.2311 7.01346 14.1125 7.13205L13.3167 7.92786C13.1981 8.04645 13.0059 8.04645 12.8873 7.92786L8.20094 3.24153C6.85315 1.89374 4.64767 1.89374 3.29988 3.24153C1.95209 4.58932 1.95209 6.7948 3.29988 8.14259L9.04885 13.8916C9.89408 14.7368 11.2668 14.7368 12.112 13.8916C12.9572 13.0463 12.9572 11.6736 12.112 10.8284L6.97567 5.69206C6.6325 5.34889 6.09358 5.34889 5.75041 5.69206C5.40724 6.03523 5.40724 6.57415 5.75041 6.91732L9.82411 10.991C9.9427 11.1096 9.9427 11.3019 9.82411 11.4205L9.0283 12.2163C8.90971 12.3349 8.71743 12.3349 8.59884 12.2163L4.52514 8.14259C3.50808 7.12552 3.50808 5.48386 4.52514 4.46679C5.54221 3.44973 7.18387 3.44973 8.20094 4.46679L13.3373 9.60313C14.8564 11.1222 14.8564 13.5977 13.3373 15.1168C11.8182 16.6359 9.34266 16.6359 7.82358 15.1168L2.07461 9.36785C0.052928 7.34616 0.052928 4.03795 2.07461 2.01626C4.0963 -0.00542164 7.40451 -0.00542164 9.4262 2.01626L14.1125 6.70259Z" fill="${color}"/></svg>`;
+		},
+	};
 
-	this.Fields = this.Fields || {};
-	this.Fields.FileField = FileField;
-})();
+	module.exports = {
+		FileType: 'file',
+		FileField: (props) => new FileField(props),
+		MediaType: MEDIA_TYPE,
+	};
+
+});

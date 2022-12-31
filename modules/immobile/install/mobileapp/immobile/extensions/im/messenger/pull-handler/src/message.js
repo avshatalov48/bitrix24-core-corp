@@ -8,6 +8,7 @@
  */
 jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 
+	const { Loc } = jn.require('loc');
 	const { PullHandler } = jn.require('im/messenger/pull-handler/base');
 	const { DialogConverter } = jn.require('im/messenger/lib/converter');
 	const { MessengerParams } = jn.require('im/messenger/lib/params');
@@ -141,6 +142,8 @@ jn.define('im/messenger/pull-handler/message', (require, exports, module) => {
 		handleMessageDelete(params, extra, command)
 		{
 			Logger.info('MessagePullHandler.handleMessageDelete: ', params);
+
+			params.text = Loc.getMessage('IMMOBILE_PULL_HANDLER_MESSAGE_DELETED');
 
 			this.updateMessage(params);
 		}

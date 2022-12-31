@@ -5,9 +5,8 @@ use Bitrix\Crm;
 use Bitrix\Crm\Binding\ContactCompanyTable;
 use Bitrix\Crm\Category\PermissionEntityTypeHelper;
 use Bitrix\Crm\CompanyAddress;
-use Bitrix\Crm\Counter\EntityCounterManager;
-use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Entity\Traits\UserFieldPreparer;
+use Bitrix\Crm\Entity\Traits\EntityFieldsNormalizer;
 use Bitrix\Crm\EntityAddress;
 use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\Integrity\DuplicateBankDetailCriterion;
@@ -15,16 +14,17 @@ use Bitrix\Crm\Integrity\DuplicateCommunicationCriterion;
 use Bitrix\Crm\Integrity\DuplicateIndexMismatch;
 use Bitrix\Crm\Integrity\DuplicateManager;
 use Bitrix\Crm\Integrity\DuplicateRequisiteCriterion;
-use Bitrix\Crm\Integrity\DuplicateVolatileCriterion;
-use Bitrix\Crm\Integrity\Volatile;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Tracking;
 use Bitrix\Crm\UtmTable;
 use Bitrix\Main;
+use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Crm\Integration\Catalog\Contractor;
 
 class CAllCrmCompany
 {
 	use UserFieldPreparer;
+	use EntityFieldsNormalizer;
 
 	static public $sUFEntityID = 'CRM_COMPANY';
 
@@ -32,6 +32,8 @@ class CAllCrmCompany
 	const SUSPENDED_USER_FIELD_ENTITY_ID = 'CRM_COMPANY_SPD';
 	const TOTAL_COUNT_CACHE_ID = 'crm_company_total_count';
 	const CACHE_TTL = 3600;
+
+	protected const TABLE_NAME = 'b_crm_company';
 
 	public $LAST_ERROR = '';
 	protected $checkExceptions = array();
@@ -1249,6 +1251,8 @@ class CAllCrmCompany
 		if (isset($arFields['REVENUE']))
 			$arFields['REVENUE'] = floatval($arFields['REVENUE']);
 
+		$arFields['CATEGORY_ID'] = $arFields['CATEGORY_ID'] ?? 0;
+
 		if(!isset($arFields['TITLE']) || trim($arFields['TITLE']) === '')
 		{
 			$arFields['TITLE'] = self::GetAutoTitle();
@@ -1256,8 +1260,6 @@ class CAllCrmCompany
 
 		$fields = self::GetUserFields();
 		$this->fillEmptyFieldValues($arFields, $fields);
-
-		$arFields['CATEGORY_ID'] = $arFields['CATEGORY_ID'] ?? 0;
 
 		if (!$this->CheckFields($arFields, false, $options))
 		{
@@ -1374,7 +1376,10 @@ class CAllCrmCompany
 			}
 
 			unset($arFields['ID']);
-			$ID = intval($DB->Add('b_crm_company', $arFields, array(), 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__));
+
+			$this->normalizeEntityFields($arFields);
+			$ID = (int) $DB->Add(self::TABLE_NAME, $arFields, [], 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
 			//Append ID to TITLE if required
 			if($ID > 0 && $arFields['TITLE'] === self::GetAutoTitle())
 			{
@@ -1472,6 +1477,8 @@ class CAllCrmCompany
 					->setCurrentFields($arFields)
 			;
 			$duplicateCriterionRegistrar->register($data);
+
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityAdd(CCrmOwnerType::Company, $arFields);
 
 			// tracking of entity
 			Tracking\Entity::onAfterAdd(CCrmOwnerType::Company, $ID, $arFields);
@@ -1613,8 +1620,34 @@ class CAllCrmCompany
 			}
 		}
 
+		if ($result)
+		{
+			$item = $this->createPullItem($arFields);
+			Crm\Integration\PullManager::getInstance()->sendItemAddedEvent(
+				$item,
+				[
+					'TYPE' => self::$TYPE_NAME,
+					'SKIP_CURRENT_USER' => ($userID !== 0),
+					'CATEGORY_ID' => ($arFields['CATEGORY_ID'] ?? 0),
+				]
+			);
+		}
+
 		return $result;
 	}
+
+	protected function createPullItem(array $data = []): array
+	{
+		return [
+			'id'=> $data['ID'],
+			'data' => [
+				'id' =>  $data['ID'],
+				'name' => HtmlFilter::encode($data['TITLE'] ?: '#' . $data['ID']),
+				'link' => CCrmOwnerType::GetEntityShowPath(CCrmOwnerType::Company, $data['ID']),
+			],
+		];
+	}
+
 	static public function BuildEntityAttr($userID, $arAttr = array())
 	{
 		$userID = (int)$userID;
@@ -1925,7 +1958,10 @@ class CAllCrmCompany
 			}
 
 			unset($arFields["ID"]);
-			$sUpdate = $DB->PrepareUpdate('b_crm_company', $arFields, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
+
+			$this->normalizeEntityFields($arFields);
+			$sUpdate = $DB->PrepareUpdate(self::TABLE_NAME, $arFields);
+
 			if ($sUpdate <> '')
 			{
 				$DB->Query("UPDATE b_crm_company SET {$sUpdate} WHERE ID = {$ID}", false, 'FILE: '.__FILE__.'<br /> LINE: '.__LINE__);
@@ -2070,39 +2106,21 @@ class CAllCrmCompany
 			if($bResult)
 			{
 				$previousAssignedByID = isset($arRow['ASSIGNED_BY_ID']) ? (int)$arRow['ASSIGNED_BY_ID'] : 0;
-				if(($assignedByID > 0 || $previousAssignedByID > 0) || $assignedByID !== $previousAssignedByID)
-				{
-					$assignedByIDs = array();
-					if($assignedByID > 0)
-					{
-						$assignedByIDs[] = $assignedByID;
-					}
-					if($previousAssignedByID > 0)
-					{
-						$assignedByIDs[] = $previousAssignedByID;
-					}
-
-					EntityCounterManager::reset(
-						EntityCounterManager::prepareCodes(
-							CCrmOwnerType::Company,
-							[
-								EntityCounterType::PENDING,
-								EntityCounterType::OVERDUE,
-								EntityCounterType::ALL,
-							],
-							[
-								'CATEGORY_ID' => $categoryId,
-								'EXTENDED_MODE' => true,
-							]
-						),
-						$assignedByIDs
-					);
-				}
 				if ($assignedByID !== $previousAssignedByID && $enableDupIndexInvalidation)
 				{
 					DuplicateManager::onChangeEntityAssignedBy(CCrmOwnerType::Company, $ID);
 				}
+
+				\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(
+					CCrmOwnerType::Company,
+					$arRow,
+					[
+						'ASSIGNED_BY_ID' => $arFields['ASSIGNED_BY_ID'] ?? $arRow['ASSIGNED_BY_ID'],
+						'CATEGORY_ID' => $arFields['CATEGORY_ID'] ?? $arRow['CATEGORY_ID'],
+					]
+				);
 			}
+
 
 			if (isset($arFields['FM']) && is_array($arFields['FM']))
 			{
@@ -2303,6 +2321,16 @@ class CAllCrmCompany
 				$afterEvents = GetModuleEvents('crm', 'OnAfterCrmCompanyUpdate');
 				while ($arEvent = $afterEvents->Fetch())
 					ExecuteModuleEventEx($arEvent, array(&$arFields));
+
+				$item = $this->createPullItem(array_merge($arRow, $arFields));
+				Crm\Integration\PullManager::getInstance()->sendItemUpdatedEvent(
+					$item,
+					[
+						'TYPE' => self::$TYPE_NAME,
+						'SKIP_CURRENT_USER' => ($iUserId !== 0),
+						'CATEGORY_ID' => ($arFields['CATEGORY_ID'] ?? 0),
+					]
+				);
 			}
 		}
 		return $bResult;
@@ -2519,26 +2547,7 @@ class CAllCrmCompany
 			\Bitrix\Crm\Statistics\CompanyGrowthStatisticEntry::unregister($ID);
 			//<-- Statistics & History
 
-			if($assignedByID > 0)
-			{
-				EntityCounterManager::reset(
-					EntityCounterManager::prepareCodes(
-						CCrmOwnerType::Company,
-						[
-							EntityCounterType::PENDING,
-							EntityCounterType::OVERDUE,
-							EntityCounterType::ALL,
-						],
-						[
-							'CATEGORY_ID' => $categoryId,
-							'EXTENDED_MODE' => true,
-						]
-					),
-					[
-						$assignedByID,
-					]
-				);
-			}
+			\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityDelete(CCrmOwnerType::Company, $arFields);
 
 			CCrmActivity::DeleteByOwner(CCrmOwnerType::Company, $ID);
 
@@ -2577,6 +2586,8 @@ class CAllCrmCompany
 				(new \Bitrix\Crm\Order\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
 			}
 
+			(new Contractor\ContactCompanyBinding(\CCrmOwnerType::Company))->unbind($ID);
+
 			\Bitrix\Crm\Timeline\CompanyController::getInstance()->onDelete(
 				$ID,
 				array('FIELDS' => $arFields)
@@ -2598,6 +2609,17 @@ class CAllCrmCompany
 				ExecuteModuleEventEx($arEvent, array($ID));
 			}
 		}
+
+		$item = $this->createPullItem($arFields);
+		Crm\Integration\PullManager::getInstance()->sendItemDeletedEvent(
+			$item,
+			[
+				'TYPE' => self::$TYPE_NAME,
+				'SKIP_CURRENT_USER' => false,
+				'EVENT_ID' => ($arOptions['eventId'] ?? null),
+				'CATEGORY_ID' => ($arFields['CATEGORY_ID'] ?? 0),
+			]
+		);
 
 		return true;
 	}
@@ -3373,7 +3395,7 @@ class CAllCrmCompany
 		return GetMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE');
 	}
 
-	public static function GetAutoTitle($number = '')
+	public static function GetAutoTitle(string $number = ''): string
 	{
 		return GetMessage('CRM_COMPANY_DEFAULT_TITLE_TEMPLATE', array('%NUMBER%' => $number));
 	}

@@ -1,5 +1,8 @@
 <?php
 
 return [
-	'extensions' => ['utils/string']
+	'extensions' => [
+		'utils/hash',
+		'utils/string',
+	],
 ];

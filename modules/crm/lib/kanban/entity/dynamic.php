@@ -256,10 +256,6 @@ class Dynamic extends Kanban\Entity
 	{
 		$item['PRICE'] = $item[Item::FIELD_NAME_OPPORTUNITY_ACCOUNT];
 		$item['ASSIGNED_BY'] = $item[Item::FIELD_NAME_ASSIGNED];
-		if (!empty($item['ACCOUNT_CURRENCY_ID']))
-		{
-			$item['CURRENCY_ID'] = $item[Item::FIELD_NAME_ACCOUNT_CURRENCY_ID];
-		}
 		$item['DATE'] = $item['CREATED_TIME'];
 
 		return parent::prepareItemCommonFields($item);
@@ -323,6 +319,7 @@ class Dynamic extends Kanban\Entity
 		return (new Filter\Preset\Dynamic())
 			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
 			->setStagesEnabled($this->factory->isStagesEnabled())
+			->setCategoryId($this->categoryId)
 			->getDefaultPresets()
 		;
 	}
@@ -341,26 +338,12 @@ class Dynamic extends Kanban\Entity
 		return null;
 	}
 
-	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
-	{
-		$item = $this->loadedItems[$id] ?? $this->factory->getItem($id);
-		if(!$item)
-		{
-			$result = new Result();
-			return $result->addError(new Error(Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND')));
-		}
-		$item->setStageId($stageId);
-		$operation = $this->factory->getUpdateOperation($item);
-
-		return $operation->launch();
-	}
-
 	public function isNeedToRunAutomation(): bool
 	{
 		return false;
 	}
 
-	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null): void
+	public function deleteItems(array $ids, bool $isIgnore = false, \CCrmPerms $permissions = null, array $params = []): void
 	{
 		$items = $this->factory->getItemsFilteredByPermissions([
 			'filter' => [
@@ -423,15 +406,6 @@ class Dynamic extends Kanban\Entity
 		}
 
 		return $fields;
-	}
-
-	/**
-	 * @param array $data
-	 * @return string
-	 */
-	protected function getColumnId(array $data): string
-	{
-		return ($data['STAGE_ID'] ?? '');
 	}
 
 	public function updateItemsCategory(array $ids, int $categoryId, \CCrmPerms $permissions): Result

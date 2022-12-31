@@ -271,6 +271,7 @@
 	 * @param {?string|?Object} [config.analyticsLabel]
 	 * @param {string} [config.method='POST']
 	 * @param {Object} [config.data]
+	 * @param {Object} [config.json]
 	 * @param {?Object} [config.getParameters]
 	 * @param {?Object} [config.headers]
 	 * @param {?Object} [config.timeout]
@@ -438,35 +439,44 @@
 			 */
 			this.onCacheFetched = null;
 			this.cacheId = null;
+			this.jsonEnabled = false;
+		}
+
+		enableJson()
+		{
+			this.jsonEnabled = true;
+
+			return this;
 		}
 
 		call(useCache = false)
 		{
 			this.abortCurrentRequest();
-			if (this.onCacheFetched && useCache)
+			if (this.onCacheFetched)
 			{
 				if (!this.cacheId)
 				{
 					this.cacheId = Object.toMD5(this.options) + '/' + Object.toMD5(this.navigation)  + '/' + this.action;
 				}
-				let cache = Application.storage.getObject(this.cacheId, null);
-				if(cache !== null)
+				if (useCache)
 				{
-					this.onCacheFetched(cache);
+					const cache = Application.storage.getObject(this.cacheId, null);
+					if (cache !== null)
+					{
+						this.onCacheFetched(cache);
+					}
 				}
 			}
 
+			const dataKey = this.jsonEnabled ? 'json' : 'data';
+
 			BX.ajax.runAction(this.action, {
-				data:this.options,
+				[dataKey]:this.options,
 				navigation:this.navigation,
 				onCreate:this.onRequestCreate.bind(this)
 			})
 				.then(response => {
-					if (
-						useCache
-						&& this.cacheId
-						&& (!response.errors || response.errors.length === 0)
-					)
+					if (this.cacheId && (!response.errors || response.errors.length === 0))
 					{
 						Application.storage.setObject(this.cacheId, response)
 					}
@@ -504,7 +514,7 @@
 		/**
 		 *
 		 * @param {function<object>} func
-		 * @returns {RequestExecutor}
+		 * @returns {RunActionExecutor}
 		 */
 		setHandler(func)
 		{
@@ -515,7 +525,7 @@
 		/**
 		 *
 		 * @param {function<object>} func
-		 * @returns {RequestExecutor}
+		 * @returns {RunActionExecutor}
 		 */
 		setCacheHandler(func)
 		{

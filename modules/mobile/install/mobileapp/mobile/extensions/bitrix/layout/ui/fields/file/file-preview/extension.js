@@ -1,13 +1,17 @@
-(() => {
+/**
+ * @module layout/ui/fields/file/file-preview
+ */
+jn.define('layout/ui/fields/file/file-preview', (require, exports, module) => {
+
 	/**
 	 * @function filePreview
 	 */
-	const filePreview = (file, index, files, isInitialValueEmpty, onDeleteFile) => {
+	const filePreview = (file, index, files, onDeleteFile, showName) => {
 		return View(
 			{
 				style: {
-					marginRight: 5
-				}
+					marginRight: 3,
+				},
 			},
 			UI.File({
 				id: file.id,
@@ -15,17 +19,21 @@
 				imageUri: file.previewUrl || file.url,
 				type: file.type,
 				name: file.name,
-				onDeleteAttachmentItem: isInitialValueEmpty && (() => onDeleteFile(index)),
+				isLoading: file.isUploading || false,
+				hasError: file.hasError || false,
+				onDeleteAttachmentItem: onDeleteFile && (() => onDeleteFile(index)),
 				styles: {
 					deleteButtonWrapper: {
-						width: 16,
-						height: 16
-					}
+						width: 18,
+						height: 18,
+					},
 				},
 				files,
-			})
+				showName,
+			}),
 		);
-	}
+	};
 
-	jnexport(filePreview)
-})();
+	module.exports = { filePreview };
+
+});

@@ -33,6 +33,16 @@ class DeliveryFinishedTrigger extends BaseTrigger
 	 */
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_DELIVERY_FINISHED_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_DELIVERY_FINISHED_NAME_1');
+	}
+
+	public static function getGroup(): array
+	{
+		return ['delivery'];
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_DELIVERY_FINISHED_DESCRIPTION') ?? '';
 	}
 }

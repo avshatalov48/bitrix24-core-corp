@@ -1,25 +1,16 @@
-import {Action} from "../../action";
+import {BitrixVue} from 'ui.vue3';
+import {BaseButton} from './baseButton';
 import { ButtonOptions, Button as UIButton } from 'ui.buttons';
 import {ButtonType} from '../enums/button-type';
 import {ButtonState} from '../enums/button-state';
 import {Type} from 'main.core';
 
-export const Button = {
+export const Button  = BitrixVue.cloneComponent(BaseButton, {
 	props: {
-		title: {
-			type: String,
-			required: false,
-			default: '',
-		},
 		type: {
 			type: String,
 			required: false,
 			default: ButtonType.SECONDARY,
-		},
-		state: {
-			type: String,
-			required: false,
-			default: ButtonState.DEFAULT,
 		},
 		iconName: {
 			type: String,
@@ -31,13 +22,16 @@ export const Button = {
 			required: false,
 			default: 'extra_small'
 		},
-		action: Object,
 	},
+
 	data() {
 		return {
 			popup: null,
+			uiButton: Object.freeze(null),
+			timerSecondsRemaining: 0,
 		}
 	},
+
 	computed: {
 		buttonOptions(): ButtonOptions {
 			const upperCaseIconName = Type.isString(this.iconName) ? this.iconName.toUpperCase() : '';
@@ -45,17 +39,18 @@ export const Button = {
 			const color = this.itemTypeToButtonColorDict[this.type] || UIButton.Color.LIGHT_BORDER;
 			const text = this.type === ButtonType.ICON ? '' : this.title;
 			return {
+				id: this.id,
 				round: true,
 				dependOnTheme: false,
 				size: UIButton.Size[upperCaseButtonSize],
 				text: text,
 				color: color,
-				state: this.itemStateToButtonStateDict[this.state],
+				state: this.itemStateToButtonStateDict[this.currentState],
 				icon: UIButton.Icon[upperCaseIconName],
 			}
 		},
 
-		itemTypeToButtonColorDict() {
+		itemTypeToButtonColorDict(): Object {
 			return {
 				[ButtonType.PRIMARY]: UIButton.Color.PRIMARY,
 				[ButtonType.SECONDARY]: UIButton.Color.LIGHT_BORDER,
@@ -64,19 +59,59 @@ export const Button = {
 			}
 		},
 
-		itemStateToButtonStateDict() {
-			return {
-				[ButtonState.LOADING]: UIButton.State.WAITING,
-				[ButtonState.DISABLED]: UIButton.State.DISABLED,
-			}
-		},
-
 		buttonContainerRef(): HTMLElement | undefined {
 			return this.$refs.buttonContainer;
 		},
-
 	},
+
 	methods: {
+		getUiButton(): ?UIButton
+		{
+			return this.uiButton;
+		},
+
+		disableWithTimer(sec: number)
+		{
+			this.setButtonState(ButtonState.DISABLED);
+			const btn = this.getUiButton();
+			let remainingSeconds = sec;
+
+			btn.setText(this.formatSeconds(remainingSeconds));
+
+			const timer = setInterval(() => {
+				if (remainingSeconds < 1)
+				{
+					clearInterval(timer);
+					btn.setText(this.title);
+					this.setButtonState(ButtonState.DEFAULT);
+					return;
+				}
+
+				remainingSeconds--;
+				btn.setText(this.formatSeconds(remainingSeconds));
+			}, 1000);
+		},
+
+		formatSeconds(sec: number): string {
+			const minutes = Math.floor(sec / 60);
+			const seconds = sec % 60;
+
+			const formatMinutes = this.formatNumber(minutes);
+			const formatSeconds = this.formatNumber(seconds);
+
+			return `${formatMinutes}:${formatSeconds}`;
+		},
+
+		formatNumber(num: number): string {
+			return num < 10 ? `0${num}` : num;
+		},
+
+		setButtonState(state): void
+		{
+			this.parentSetButtonState(state);
+			this.getUiButton()?.setState(this.itemStateToButtonStateDict[this.currentState] ?? null);
+		},
+
 		renderButton(): void {
 			if (!this.buttonContainerRef) {
 				return;
@@ -84,23 +119,24 @@ export const Button = {
 			this.buttonContainerRef.innerHTML = '';
 			const button = new UIButton(this.buttonOptions);
 			button.renderTo(this.buttonContainerRef);
-		},
-
-		executeAction(): void
-		{
-			if (this.action && this.state !== ButtonState.DISABLED && this.state !== ButtonState.LOADING)
-			{
-				const action = new Action(this.action);
-				action.execute(this);
-			}
+			this.uiButton = button;
 		},
 	},
+
+	watch: {
+		state(newValue): void
+		{
+			this.setButtonState(newValue);
+		},
+	},
+
 	mounted() {
 		this.renderButton();
 	},
 	updated() {
 		this.renderButton();
 	},
+
 	template: `
 		<div
 			:class="$attrs.class"
@@ -108,4 +144,4 @@ export const Button = {
 			@click="executeAction">
 		</div>
 	`
-};
+});

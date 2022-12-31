@@ -516,7 +516,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$dealCalculatedValue[$result['STAGE_KEY']]['currencyId'] = !empty($result['ACCOUNT_CURRENCY_ID'])
 								? $result['ACCOUNT_CURRENCY_ID'] : null;
 							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['sum']['VALUE'] = 0;
-							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['sum']['currencyId'] = 'RUB';
+							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['sum']['currencyId'] = \CCrmCurrency::GetAccountCurrencyID();;
 
 							if ($result['SUM'])
 							{
@@ -544,7 +544,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 							$dealCalculatedValue[$result['STAGE_KEY']]['currencyId'] = !empty($result['ACCOUNT_CURRENCY_ID'])
 								? $result['ACCOUNT_CURRENCY_ID'] : null;
 							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['sum']['VALUE'] = 0;
-							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['sum']['currencyId'] = 'RUB';
+							$dealCalculatedValue[$result['STAGE_KEY']]['additionalValues']['sum']['currencyId'] = \CCrmCurrency::GetAccountCurrencyID();
 
 							if ($result['SUM'])
 							{
@@ -782,7 +782,13 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		$queryWithResult = $connection->query($querySql);
 		$result = $queryWithResult->fetchAll();
 
-		return !empty($result[0]) ? $result[0] : ['COUNT' => 0, 'SUM' => 0, 'CURRENCY' => 'RUB'];
+		return !empty($result[0])
+			? $result[0]
+			: [
+				'COUNT' => 0,
+				'SUM' => 0,
+				'CURRENCY' => \CCrmCurrency::GetAccountCurrencyID()
+			];
 	}
 
 	/**
@@ -1362,10 +1368,10 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	 */
 	public function getMultipleData()
 	{
-
 		$calculatedData = $this->getCalculatedData();
 		$items = [];
-		$amountDealCurrencyId = 'RUB';
+		$amountDealCurrencyId = \CCrmCurrency::GetAccountCurrencyID();
+
 		$config = [
 			'title' => $this->getFormElement('label')->getValue()
 		];
@@ -1619,8 +1625,7 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 		$amountCalculateItem = $calculatedData['amount']['value'];
 		$calculatedDataValues = array_values($calculatedData);
-		$currencyOfFirstElement = isset($calculatedDataValues[0]['currencyId']) ? $calculatedDataValues[0]['currencyId']
-			: 'RUB';
+		$currencyOfFirstElement =  $calculatedDataValues[0]['currencyId'] ?? \CCrmCurrency::GetAccountCurrencyID();
 
 		switch ($calculateValue)
 		{

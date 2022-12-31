@@ -1,8 +1,43 @@
-(() => {
-	const ERROR_TEXT_COLOR = '#F0371B';
+/**
+ * @module layout/ui/fields/base
+ */
+jn.define('layout/ui/fields/base', (require, exports, module) => {
+
+	const { transition } = require('animation');
+	const { Haptics } = require('haptics');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { throttle, debounce } = require('utils/function');
+	const { isEqual, mergeImmutable, isEmpty } = require('utils/object');
+	const { capitalize, stringify } = require('utils/string');
+	const { isNil } = require('utils/type');
+	const { arrowDown, arrowUp } = require('assets/common');
+
+	const ERROR_TEXT_COLOR = '#ff5752';
+	const TOOLTIP_COLOR = '#E89B06';
+
+	const TitlePosition = {
+		top: 'top',
+		left: 'left',
+	};
+
+	const fadeOut = (ref) => transition(ref, {
+		opacity: 0,
+		duration: 50,
+		option: 'easeIn',
+	})();
+	const fadeIn = (ref) => transition(ref, {
+		opacity: 1,
+		duration: 50,
+		option: 'easeOut',
+	})();
+
+	const tooltipTriangle = (color) => `<svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<path fill-rule="evenodd" clip-rule="evenodd" d="M2.60352 2.97461L0 0V4H4.86133C3.99634 4 3.17334 3.62695 2.60352 2.97461Z" fill="${color}"/>
+	</svg>`;
 
 	/**
-	 * @class Fields.BaseField
+	 * @class BaseField
+	 * @abstract
 	 */
 	class BaseField extends LayoutComponent
 	{
@@ -10,27 +45,118 @@
 		{
 			super(props);
 
+			this.testId = props.testId || '';
 			this.state = {
 				focus: (props.focus || false),
-				additionalStyles: {},
-				errorMessage: null
+				errorMessage: null,
+				tooltipMessage: null,
+				tooltipColor: TOOLTIP_COLOR,
+				showAll: false,
 			};
+
+			this.uid = props.uid || Random.getString();
+			this.preparedValue = null;
+
+			this.handleContentClick = this.handleContentClick.bind(this);
+			this.setFocusInternal = throttle(this.setFocusInternal, 300, this);
+
+			this.debouncedValidation = debounce(this.validate, 300, this);
+
+			this.customContentClickHandler = null;
+			this.customValidation = null;
+
+			this.fieldContainerRef = null;
+			this.showHideButton = false;
+		}
+
+		componentDidMount()
+		{
 			if (this.state.focus)
 			{
-				Fields.FocusManager.setFocusedField(this);
-				props.onFocusIn && props.onFocusIn();
-			}
+				FocusManager.setFocusedField(this);
 
-			this.currentTickValidation = false;
-			this.debouncedValidation = Utils.debounce(this.validate, 500, this, true);
+				if (this.props.onFocusIn)
+				{
+					this.props.onFocusIn();
+				}
+
+				void this.handleAdditionalFocusActions();
+			}
 		}
 
 		componentWillReceiveProps(newProps)
 		{
+			this.preparedValue = null;
+
 			if (this.needToValidateCurrentTick(newProps))
 			{
-				this.currentTickValidation = true;
+				this.debouncedValidation(false);
 			}
+
+			if (
+				newProps.hasOwnProperty('focus')
+				&& newProps.focus === true
+				&& this.state.focus === false
+			)
+			{
+				this.state.focus = true;
+				FocusManager.setFocusedField(this);
+
+				if (newProps.onFocusIn)
+				{
+					newProps.onFocusIn();
+				}
+
+				// componentDidUpdate still doesn't work correctly on Android, so we use this workaround
+				setTimeout(() => this.handleAdditionalFocusActions(), 0/*30*/);
+			}
+
+			this.testId = newProps.testId || '';
+		}
+
+		shouldComponentUpdate(nextProps, nextState)
+		{
+			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
+
+			return !isEqual(this.props, nextProps) || !isEqual(this.state, nextState);
+
+			// ToDo DEV: enable for debug
+			// if (!isEqual(this.props, nextProps))
+			// {
+			// 	let found = false;
+			// 	for (const [key, value] of Object.entries(this.props))
+			// 	{
+			// 		if (!isEqual(this.props[key], nextProps[key]))
+			// 		{
+			// 			console.log(this.props.title, this.props, key, value, nextProps[key]);
+			// 			found = true;
+			// 		}
+			// 	}
+			//
+			// 	if (!found)
+			// 	{
+			// 		console.log('diff not found', this.props.title, this.props, nextProps);
+			// 	}
+			// }
+			//
+			// if (!isEqual(this.state, nextState))
+			// {
+			// 	console.log('!!! state not equal', this.state, nextState);
+			// }
+			//
+			// if (!isEqual(this.props, nextProps) || !isEqual(this.state, nextState))
+			// {
+			// 	return true;
+			// }
+			//
+			// console.log('OK!!! NO RENDER!!! ;)', this.props.title, this);
+			//
+			// return false;
+		}
+
+		useHapticOnChange()
+		{
+			return false;
 		}
 
 		hasKeyboard()
@@ -38,28 +164,14 @@
 			return false;
 		}
 
-		needToValidateCurrentTick(newProps)
+		needToValidateCurrentTick({ readOnly, value })
 		{
-			if (this.currentTickValidation)
+			if (readOnly)
 			{
 				return false;
 			}
 
-			if (this.props.value === newProps.value)
-			{
-				return false;
-			}
-
-			if (
-				BX.type.isPlainObject(this.props.value)
-				&& BX.type.isPlainObject(newProps.value)
-				&& JSON.stringify(this.props.value) === JSON.stringify(newProps.value)
-			)
-			{
-				return false;
-			}
-
-			return true;
+			return !isEqual(this.props.value, value);
 		}
 
 		isMultiple()
@@ -69,7 +181,17 @@
 
 		isReadOnly()
 		{
+			if (this.isDisabled())
+			{
+				return true;
+			}
+
 			return BX.prop.getBoolean(this.props, 'readOnly', false);
+		}
+
+		isEditable()
+		{
+			return BX.prop.getBoolean(this.props, 'editable', false);
 		}
 
 		isHidden()
@@ -97,14 +219,68 @@
 			return BX.prop.getBoolean(this.props, 'canFocusTitle', true);
 		}
 
-		getConfig()
+		isDisabled()
 		{
-			return BX.prop.getObject(this.props, 'config', {});
+			return BX.prop.getBoolean(this.props, 'disabled', false);
 		}
 
-		showEditIcon()
+		isLeftTitlePosition()
 		{
-			return BX.prop.getBoolean(this.props, 'showEditIcon', false);
+			return (BX.prop.getString(this.props, 'titlePosition', TitlePosition.top) === TitlePosition.left);
+		}
+
+		hasHiddenEmptyView()
+		{
+			return BX.prop.getBoolean(this.props, 'hasHiddenEmptyView', false);
+		}
+
+		shouldAnimateOnFocus()
+		{
+			return this.isEmptyEditable() && this.hasKeyboard();
+		}
+
+		showBorder()
+		{
+			return BX.prop.getBoolean(this.props, 'showBorder', false);
+		}
+
+		hasSolidBorderContainer()
+		{
+			return BX.prop.getBoolean(this.props, 'hasSolidBorderContainer', false);
+		}
+
+		getExternalWrapperBorderColor()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'externalWrapperBorderColor', null);
+		}
+
+		getExternalWrapperBackgroundColor()
+		{
+			const styles = this.getConfig().styles || {};
+
+			return BX.prop.getString(styles, 'externalWrapperBackgroundColor', null);
+		}
+
+		getConfig()
+		{
+			const config = BX.prop.getObject(this.props, 'config', {});
+
+			return {
+				...config,
+				parentWidget: BX.prop.get(config, 'parentWidget', undefined),
+			};
+		}
+
+		getParentWidget()
+		{
+			return this.getConfig().parentWidget;
+		}
+
+		getPageManager()
+		{
+			return this.getParentWidget() || PageManager;
 		}
 
 		getId()
@@ -112,29 +288,52 @@
 			return this.props.id;
 		}
 
-		handleChange(...values)
+		hasNestedFields()
 		{
-			this.props.onChange(...values);
+			return false;
 		}
 
-		setAdditionalStyles(additionalStyles)
+		getParent()
 		{
-			this.setState({additionalStyles});
+			return this.props.parent;
+		}
+
+		handleChange(...values)
+		{
+			if (this.useHapticOnChange())
+			{
+				Haptics.impactLight();
+			}
+
+			if (typeof this.props.onChange === 'function')
+			{
+				return this.props.onChange(...values);
+			}
+
+			return Promise.resolve();
 		}
 
 		getStyles()
 		{
-			const styles = {
-				...this.getDefaultStyles(),
-				...this.getConfig().styles
-			};
+			let compiledStyles = this.getDefaultStyles();
+			const { styles, deepMergeStyles } = this.getConfig();
 
-			for (const [key, value] of Object.entries(this.state.additionalStyles))
+			if (styles)
 			{
-				styles[key] = {...styles[key], ...value};
+				compiledStyles = { ...compiledStyles, ...styles };
 			}
 
-			return styles;
+			if (deepMergeStyles)
+			{
+				compiledStyles = mergeImmutable(compiledStyles, deepMergeStyles);
+			}
+
+			return compiledStyles;
+		}
+
+		getTooltipColor()
+		{
+			return this.state.tooltipColor;
 		}
 
 		getDefaultStyles()
@@ -142,82 +341,192 @@
 			const base = {
 				flex: 1,
 				fontSize: 16,
-				fontWeight: '400'
+				fontWeight: '400',
+				color: '#333333',
 			};
 			const emptyValue = {
 				...base,
-				color: '#A8ADB4'
+				color: '#a8adb4',
 			};
 			const value = {
 				...base,
-				color: '#333333',
+				color: this.isDisabled() ? '#82888f' : '#333333',
 			};
 
+			let styles = this.getBaseFieldStyles();
+
+			if (this.isLeftTitlePosition())
+			{
+				styles = mergeImmutable(styles, this.getLeftTitleStyles());
+			}
+			else if (this.hasHiddenEmptyView())
+			{
+				styles = mergeImmutable(styles, this.getHiddenEmptyFieldStyles());
+			}
+
 			return {
+				...styles,
+				base,
+				emptyValue,
+				value,
+			};
+		}
+
+		getBaseFieldStyles()
+		{
+			const isReadOnly = this.isReadOnly();
+
+			return {
+				externalWrapper: this.getExternalWrapperStyle(),
 				wrapper: {
-					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 13
+					paddingTop: 8,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : 12,
 				},
 				readOnlyWrapper: {
-					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 12
+					paddingTop: 8,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : 12,
+				},
+				innerWrapper: {
+					flexDirection: 'column',
+					flex: 1,
 				},
 				title: {
-					marginBottom: this.isReadOnly() ? 1 : 4,
+					marginBottom: 2,
 					color: this.getTitleColor(),
 					fontSize: 10,
-					fontWeight: '500'
+					fontWeight: isReadOnly ? '400' : '500',
+					flexShrink: 2,
 				},
 				container: {
 					flexDirection: 'row',
-					alignItems: 'center'
+					alignItems: 'center',
 				},
-				errorWrapper: {
+				tooltipWrapper: {
 					marginLeft: 1,
-					marginTop: -2
+					marginTop: -2,
+					marginBottom: 2,
 				},
-				errorIcon: {
+				tooltipIcon: {
 					width: 5,
-					height: 5
+					height: 5,
 				},
-				errorContainer: {
+				tooltipContainer: {
 					marginTop: -1,
 					paddingLeft: 6,
 					paddingRight: 9,
-					backgroundColor: '#FF5752',
+					backgroundColor: this.getTooltipColor(),
 					borderTopRightRadius: 8,
 					borderBottomLeftRadius: 8,
-					alignSelf: 'flex-start'
+					alignSelf: 'flex-start',
 				},
 				errorText: {
-					color: '#ffffff',
+					color: '#fff',
 					fontSize: 13,
 				},
-				base,
-				emptyValue,
-				value
+				iconBeforeTitle: {
+					width: 12,
+					height: 12,
+					marginRight: 5,
+				},
+				iconAfterTitle: {
+					width: 12,
+					height: 12,
+					marginLeft: 5,
+				},
 			};
+		}
+
+		getExternalWrapperStyle()
+		{
+			if (this.showBorder())
+			{
+				if (this.hasSolidBorderContainer())
+				{
+					return {
+						marginHorizontal: 6,
+						paddingHorizontal: 16,
+						paddingVertical: 9,
+						backgroundColor: this.getExternalWrapperBackgroundColor(),
+						borderRadius: 6,
+						borderColor: this.getExternalWrapperBorderColor(),
+						borderWidth: this.showBorder() ? 1 : 0,
+					};
+				}
+
+				return {
+					marginHorizontal: 16,
+					backgroundColor: this.getExternalWrapperBackgroundColor(),
+					borderBottomWidth: this.showBorder() ? 1 : 0,
+					borderBottomColor: this.getExternalWrapperBorderColor(),
+				};
+			}
+
+			return {};
+		}
+
+		getHiddenEmptyFieldStyles()
+		{
+			const isEmptyEditable = this.isEmptyEditable();
+			const isFocusedEmptyEditable = isEmptyEditable && !this.state.focus;
+			const paddingBottomWithoutError = isEmptyEditable ? 21 : 14;
+
+			return {
+				wrapper: {
+					justifyContent: isFocusedEmptyEditable ? 'center' : 'flex-start',
+					paddingTop: isEmptyEditable ? 14 : 8,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : paddingBottomWithoutError,
+				},
+				readOnlyWrapper: {
+					justifyContent: isFocusedEmptyEditable ? 'center' : 'flex-start',
+				},
+				title: {
+					fontSize: isEmptyEditable ? 16 : 10,
+					marginBottom: this.isEmpty() ? 0 : 2,
+					fontWeight: '400',
+				},
+				container: {
+					opacity: isFocusedEmptyEditable ? 0 : 1,
+					height: isFocusedEmptyEditable ? 0 : null,
+				},
+			};
+		}
+
+		getLeftTitleStyles()
+		{
+			return {
+				wrapper: {
+					paddingBottom: 5,
+				},
+				readOnlyWrapper: {
+					paddingBottom: 5,
+				},
+				title: {
+					marginBottom: 0,
+				},
+				container: {
+					flex: 1,
+				},
+			};
+		}
+
+		isEmptyEditable()
+		{
+			return !this.isReadOnly() && this.isEmpty() && this.hasHiddenEmptyView();
 		}
 
 		getTitleColor()
 		{
-			if (this.hasError())
-			{
-				return ERROR_TEXT_COLOR;
-			}
-
 			if (this.state.focus && this.canFocusTitle())
 			{
 				return '#0b66c3';
 			}
 
-			return '#a8adb4';
-		}
+			if (this.hasErrorMessage())
+			{
+				return ERROR_TEXT_COLOR;
+			}
 
-		validateCurrentTick()
-		{
-			this.currentTickValidation = false;
-			this.debouncedValidation();
+			return '#a8adb4';
 		}
 
 		render()
@@ -227,52 +536,84 @@
 				return null;
 			}
 
-			if (this.currentTickValidation)
-			{
-				this.validateCurrentTick();
-			}
-
 			this.styles = this.getStyles();
+
+			const titleContent = this.isLeftTitlePosition()
+				? this.renderLeftTitleContent()
+				: this.renderTopTitleContent();
 
 			return View(
 				{
-					style: this.isReadOnly() ? this.styles.readOnlyWrapper : this.styles.wrapper,
-					onClick: this.getContentClickHandler()
+					style: this.styles.externalWrapper,
+					ref: (ref) => this.fieldContainerRef = ref,
 				},
 				View(
 					{
-						style: {
-							flexDirection: 'row',
-							alignItems: 'center'
-						}
+						testId: `${this.testId}_FIELD`,
+						onClick: this.getContentClickHandler(),
+						style: (this.isReadOnly() ? this.styles.readOnlyWrapper : this.styles.wrapper),
 					},
 					View(
 						{
 							style: {
-								flexDirection: 'column',
-								flexGrow: 2
-							}
+								flexDirection: 'row',
+								alignItems: 'center',
+							},
 						},
-						View(
-							{
-								style: {
-									flexDirection: 'row'
-								}
-							},
-							this.showTitle() && this.renderTitle(),
-							this.renderRequired()
-						),
-						View(
-							{
-								style: this.styles.container
-							},
-							this.renderContent()
-						),
+						this.renderLeftIcons(),
+						titleContent,
+						this.renderRightIcons(),
+						this.renderAdditionalContent(),
 					),
-					!this.isReadOnly() && this.showEditIcon() ? this.renderEditIcon() : null
 				),
-				this.hasErrorMessage() && this.renderError()
-			)
+				this.hasErrorMessage() && this.renderError(),
+				!this.hasErrorMessage() && this.hasTooltipMessage() && this.renderTooltip(),
+			);
+		}
+
+		renderLeftTitleContent()
+		{
+			return View(
+				{
+					style: {
+						flex: 1,
+						flexDirection: 'row',
+						alignItems: 'center',
+					},
+				},
+				View(
+					{
+						testId: `${this.testId}_TITLE`,
+						style: {
+							flexDirection: 'row',
+							width: 105,
+						},
+					},
+					(this.showTitle() && this.renderTitle()),
+					(this.showTitle() && this.renderRequired()),
+				),
+				this.renderContentBlock(),
+			);
+		}
+
+		renderTopTitleContent()
+		{
+			return View(
+				{
+					style: this.styles.innerWrapper,
+				},
+				!this.showTitle() ? null : View(
+					{
+						testId: `${this.testId}_TITLE`,
+						style: {
+							flexDirection: 'row',
+						},
+					},
+					this.renderTitle(),
+					this.renderRequired(),
+				),
+				this.renderContentBlock(),
+			);
 		}
 
 		getContentClickHandler()
@@ -282,77 +623,254 @@
 				return null;
 			}
 
-			return () => {
-				if (this.props.onContentClick)
-				{
-					this.props.onContentClick();
-				}
+			return this.handleContentClick;
+		}
 
-				if (!this.state.focus)
-				{
-					this.focus();
-				}
+		handleContentClick()
+		{
+			if (this.props.onContentClick)
+			{
+				this.props.onContentClick();
+			}
+
+			if (this.customContentClickHandler)
+			{
+				this.customContentClickHandler();
+			}
+			else
+			{
+				this.focus();
 			}
 		}
 
-		focus(callback = null)
+		isPossibleToFocus()
 		{
-			if (!this.isReadOnly())
-			{
-				this.setFocus(callback);
-			}
+			return !this.isReadOnly();
 		}
 
-		setFocus(callback = null)
+		/**
+		 * @public
+		 * @return {Promise<never>|Promise<void>|*}
+		 */
+		focus()
 		{
-			if (this.state.focus === true)
+			if (this.isPossibleToFocus())
 			{
-				return;
+				return this.setFocus();
 			}
 
-			Fields.FocusManager.blurFocusedFieldIfHas(this, () => {
-				this.setState({focus: true}, () => {
-					Fields.FocusManager.setFocusedField(this);
+			return Promise.reject();
+		}
 
-					callback && callback();
-					this.props.onFocusIn && this.props.onFocusIn();
-				});
+		/**
+		 * @protected
+		 * @return {Promise<void>|*}
+		 */
+		setFocus()
+		{
+			if (this.state.focus !== true)
+			{
+				return this.setFocusInternal();
+			}
+
+			return Promise.resolve();
+		}
+
+		/**
+		 * @internal
+		 */
+		setFocusInternal()
+		{
+			const setFocusState = () => new Promise((resolve) => {
+				let promise = Promise.resolve();
+
+				if (this.shouldAnimateOnFocus())
+				{
+					promise = promise.then(() => fadeOut(this.fieldContainerRef));
+				}
+
+				promise.then(() => this.setState({ focus: true }, () => {
+					FocusManager.setFocusedField(this);
+
+					if (this.shouldAnimateOnFocus())
+					{
+						void fadeIn(this.fieldContainerRef);
+					}
+
+					const { onFocusIn } = this.props;
+					if (onFocusIn)
+					{
+						onFocusIn();
+					}
+
+					resolve();
+				}));
 			});
+
+			return (
+				FocusManager
+					.blurFocusedFieldIfHas(this)
+					.then(() => setFocusState())
+					.then(() => this.handleAdditionalFocusActions())
+			);
 		}
 
-		removeFocus(callback = null)
+		handleAdditionalFocusActions()
+		{
+			return Promise.resolve();
+		}
+
+		removeFocus()
 		{
 			if (this.state.focus === false)
 			{
-				return;
+				return Promise.resolve();
 			}
 
-			this.currentTickValidation = true;
+			const shouldAnimateOnBlur = this.shouldAnimateOnFocus();
 
-			this.setState({focus: false}, () => {
-				callback && callback();
-				this.props.onFocusOut && this.props.onFocusOut();
+			return new Promise((resolve) => {
+				let promise = Promise.resolve();
+
+				if (shouldAnimateOnBlur)
+				{
+					promise = promise.then(() => fadeOut(this.fieldContainerRef));
+				}
+
+				promise.then(() => this.setState({ focus: false }, () => {
+					if (shouldAnimateOnBlur)
+					{
+						void fadeIn(this.fieldContainerRef);
+					}
+
+					const { onFocusOut } = this.props;
+					if (onFocusOut)
+					{
+						onFocusOut();
+					}
+
+					this.debouncedValidation();
+					resolve();
+				}));
 			});
+		}
+
+		getValue()
+		{
+			if (this.preparedValue === null)
+			{
+				this.preparedValue = this.prepareValue(this.props.value);
+			}
+
+			return this.preparedValue;
+		}
+
+		prepareValue(value)
+		{
+			if (this.isMultiple())
+			{
+				if (!Array.isArray(value))
+				{
+					if (isNil(value))
+					{
+						value = [];
+					}
+					else
+					{
+						value = [value];
+					}
+				}
+
+				return value.map((value) => this.prepareSingleValue(value));
+			}
+
+			return this.prepareSingleValue(value);
+		}
+
+		prepareSingleValue(value)
+		{
+			return value;
+		}
+
+		getValueWhileReady()
+		{
+			return Promise.resolve(this.getValue());
 		}
 
 		isEmpty()
 		{
+			const value = this.getValue();
+
 			if (this.isMultiple())
 			{
-				if (!Array.isArray(this.props.value) || this.props.value.length === 0)
-				{
-					return true;
-				}
-
-				return this.props.value.every((value) => this.isEmptyValue(value));
+				return (
+					value.length === 0
+					|| value.every((value) => this.isEmptyValue(value))
+				);
 			}
 
-			return this.isEmptyValue(this.props.value);
+			return this.isEmptyValue(value);
 		}
 
 		isEmptyValue(value)
 		{
-			return !value;
+			return stringify(value) === '';
+		}
+
+		validate(checkFocusOut = true)
+		{
+			if (this.isReadOnly())
+			{
+				return true;
+			}
+
+			const error = this.getValidationError();
+			if (error)
+			{
+				this.setError(error);
+
+				return false;
+			}
+
+			if (checkFocusOut || this.hasErrorMessage())
+			{
+				const error = this.getValidationErrorOnFocusOut();
+				if (error)
+				{
+					this.setError(error);
+
+					return false;
+				}
+			}
+
+			this.clearError();
+
+			if (!checkFocusOut)
+			{
+				this.checkTooltip();
+			}
+
+			return true;
+		}
+
+		getValidationError()
+		{
+			if (!this.checkRequired())
+			{
+				return BX.message('FIELDS_BASE_REQUIRED_ERROR');
+			}
+
+			if (this.hasCustomValidation())
+			{
+				return this.getCustomValidationError();
+			}
+
+			return null;
+		}
+
+		getValidationErrorOnFocusOut()
+		{
+			return null;
 		}
 
 		checkRequired()
@@ -365,67 +883,243 @@
 			return !this.isEmpty();
 		}
 
-		validate()
+		hasCustomValidation()
 		{
-			if (this.isReadOnly())
-			{
-				return true;
-			}
-
-			if (!this.checkRequired())
-			{
-				this.showRequiredError();
-
-				return false;
-			}
-
-			if (this.hasError())
-			{
-				this.clearError();
-			}
-
-			return true;
+			return Boolean(this.props.customValidation);
 		}
 
-		showRequiredError()
+		getCustomValidationError()
 		{
-			this.setError(BX.message('FIELDS_BASE_REQUIRED_ERROR'));
-		}
-
-		setError(errorMessage)
-		{
-			this.setState({
-				errorMessage
-			});
-		}
-
-		hasError()
-		{
-			return this.state.errorMessage !== null;
+			return this.props.customValidation(this);
 		}
 
 		hasErrorMessage()
 		{
-			return this.hasError() && this.state.errorMessage.length;
+			return typeof this.state.errorMessage === 'string' && this.state.errorMessage.length;
+		}
+
+		hasErrorOrTooltip()
+		{
+			return this.hasErrorMessage() || this.hasTooltipMessage();
+		}
+
+		setError(errorMessage)
+		{
+			if (this.state.errorMessage !== errorMessage)
+			{
+				this.setState({ errorMessage, tooltipColor: ERROR_TEXT_COLOR, tooltipMessage: null });
+			}
 		}
 
 		clearError()
 		{
-			this.setState({
-				errorMessage: null
-			});
+			if (this.state.errorMessage !== null)
+			{
+				this.setState({ errorMessage: null });
+			}
+		}
+
+		renderTooltip()
+		{
+			const tooltipMessage = this.getTooltipMessage();
+			return View(
+				{
+					style: this.styles.tooltipWrapper,
+				},
+				Image(
+					{
+						style: this.styles.tooltipIcon,
+						svg: {
+							content: tooltipTriangle(this.getTooltipColor()),
+						},
+					},
+				),
+				View(
+					{
+						style: this.styles.tooltipContainer,
+					},
+					typeof tooltipMessage === 'string'
+						? Text(
+							{
+								style: this.styles.errorText,
+								text: this.getTooltipMessage(),
+								numberOfLines: 1,
+								ellipsize: 'end',
+							})
+						: tooltipMessage,
+				),
+			);
+		}
+
+		checkTooltip()
+		{
+			const { tooltip } = this.props;
+
+			if (tooltip)
+			{
+				tooltip(this).then(({ message, color }) => {
+					this.setTooltip(message, color);
+				});
+			}
+		}
+
+		clearTooltip()
+		{
+			const emptyMessage = { tooltipMessage: null };
+
+			if (this.getParent())
+			{
+				this.getParent().updateTooltip(emptyMessage);
+			}
+			else
+			{
+				this.updateTooltip(emptyMessage);
+			}
+		}
+
+		hasTooltipMessage()
+		{
+			return (typeof this.state.tooltipMessage === 'string' && this.state.tooltipMessage.length)
+				|| this.state.tooltipMessage instanceof LayoutComponent;
+		}
+
+		getTooltipMessage()
+		{
+			return this.state.tooltipMessage;
+		}
+
+		setTooltip(tooltipMessage, tooltipColor)
+		{
+			const newTooltip = { tooltipMessage, tooltipColor };
+			if (this.getParent())
+			{
+				this.getParent().updateTooltip(newTooltip);
+			}
+			else
+			{
+				this.updateTooltip(newTooltip);
+			}
+		}
+
+		updateTooltip({ tooltipMessage, tooltipColor })
+		{
+			const result = {};
+
+			if (this.state.tooltipMessage !== tooltipMessage)
+			{
+				result.tooltipMessage = tooltipMessage;
+			}
+
+			if (typeof tooltipColor !== 'undefined' && this.state.tooltipColor !== tooltipColor)
+			{
+				result.tooltipColor = tooltipColor;
+			}
+
+			if (!isEmpty(result))
+			{
+				this.setState(result);
+			}
 		}
 
 		renderTitle()
 		{
-			return Text(
+			return View(
 				{
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				this.hasIconBeforeTitle() && Image({
+					style: this.styles.iconBeforeTitle,
+					svg: this.getIconBeforeTitle(),
+					resizeMode: 'contain',
+				}),
+				Text({
+					testId: `${this.testId}_NAME`,
 					style: this.styles.title,
 					numberOfLines: 1,
 					ellipsize: 'end',
-					text: (this.props.title || BX.message('FIELDS_BASE_EMPTY_TITLE')).toLocaleUpperCase(Application.getLang())
-				}
+					text: (
+						this.isEmptyEditable() && this.hasCapitalizeTitleInEmpty()
+							? capitalize(this.getTitleText(), true)
+							: this.getTitleText().toLocaleUpperCase(env.languageId)
+					),
+				}),
+				this.hasIconAfterTitle() && Image({
+					style: this.styles.iconAfterTitle,
+					svg: this.getIconAfterTitle(),
+					resizeMode: 'contain',
+				}),
+			);
+		}
+
+		getTitleText()
+		{
+			return typeof this.props.title === 'string'
+				? this.props.title
+				: BX.message('FIELDS_BASE_EMPTY_TITLE');
+		}
+
+		hasCapitalizeTitleInEmpty()
+		{
+			return true;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		hasIconBeforeTitle()
+		{
+			return Boolean(this.getIconBeforeTitle());
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		hasIconAfterTitle()
+		{
+			return Boolean(this.getIconAfterTitle());
+		}
+
+		/**
+		 * @returns {Object|null}
+		 */
+		getIconBeforeTitle()
+		{
+			return this.getTitleIcon('before');
+		}
+
+		/**
+		 * @returns {Object|null}
+		 */
+		getIconAfterTitle()
+		{
+			return this.getTitleIcon('after');
+		}
+
+		/**
+		 *
+		 * @param {String} position
+		 * @returns {Object}
+		 */
+		getTitleIcon(position)
+		{
+			const icon = BX.prop.getObject(
+				this.getConfig(),
+				'titleIcon',
+				{},
+			);
+
+			if (
+				icon[position]
+				&& icon[position].uri
+				&& icon[position].uri.indexOf(currentDomain) !== 0
 			)
+			{
+				icon[position].uri = `${currentDomain}${icon[position].uri}`;
+			}
+
+			return (icon[position] || null);
 		}
 
 		renderRequired()
@@ -434,14 +1128,26 @@
 				this.isRequired() && this.showRequired() && !this.isReadOnly()
 					? Text(
 						{
+							testId: `${this.testId}_REQUIRED`,
 							style: {
 								...this.styles.title,
 								color: ERROR_TEXT_COLOR,
 							},
-							text: '*'
-						}
+							text: '*',
+						},
 					)
 					: null
+			);
+		}
+
+		renderContentBlock()
+		{
+			return View(
+				{
+					testId: `${this.testId}_CONTENT`,
+					style: this.styles.container,
+				},
+				this.renderContent(),
 			);
 		}
 
@@ -453,6 +1159,16 @@
 			}
 
 			return this.renderEditableContent();
+		}
+
+		renderAdditionalContent()
+		{
+			if (this.props.renderAdditionalContent)
+			{
+				return this.props.renderAdditionalContent();
+			}
+
+			return null;
 		}
 
 		renderReadOnlyContent()
@@ -467,67 +1183,206 @@
 
 		renderEmptyContent()
 		{
-			return Text(
-				{
-					style: this.styles.emptyValue,
-					text: BX.message('FIELDS_BASE_EMPTY_VALUE')
-				}
-			);
+			return Text({
+				style: this.styles.emptyValue,
+				text: this.getReadOnlyEmptyValue(),
+			});
+		}
+
+		getReadOnlyEmptyValue()
+		{
+			return this.props.emptyValue || BX.message('FIELDS_BASE_EMPTY_VALUE');
 		}
 
 		renderError()
 		{
+			const { errorMessage } = this.state;
+
 			return View(
 				{
-					style: this.styles.errorWrapper
+					style: this.styles.tooltipWrapper,
 				},
 				Image(
 					{
-						style: this.styles.errorIcon,
+						style: this.styles.tooltipIcon,
 						svg: {
-							content: `<svg width="5" height="4" viewBox="0 0 5 4" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M2.60352 2.97461L0 0V4H4.86133C3.99634 4 3.17334 3.62695 2.60352 2.97461Z" fill="#FF5752"/></svg>`
-						}
-					}
+							content: tooltipTriangle(ERROR_TEXT_COLOR),
+						},
+					},
 				),
 				View(
 					{
-						style: this.styles.errorContainer
+						style: this.styles.tooltipContainer,
 					},
 					Text(
 						{
 							style: this.styles.errorText,
-							text: this.state.errorMessage,
+							text: errorMessage,
 							numberOfLines: 1,
-							ellipsize: 'end'
-						}
-					)
-				)
-			)
+							ellipsize: 'end',
+						},
+					),
+				),
+			);
+		}
+
+		renderRightIcons()
+		{
+			if (!this.shouldShowEditIcon())
+			{
+				return null;
+			}
+
+			if (!this.isReadOnly())
+			{
+				return this.renderEditIcon();
+			}
+
+			return this.renderDefaultIcon();
+		}
+
+		renderLeftIcons()
+		{
+			return null;
+		}
+
+		shouldShowEditIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'showEditIcon', false);
 		}
 
 		renderEditIcon()
 		{
+			if (this.props.editIcon)
+			{
+				return this.props.editIcon;
+			}
+
+			return null;
+		}
+
+		isEditRestricted()
+		{
+			return BX.prop.getBoolean(this.props, 'restrictedEdit', false);
+		}
+
+		renderDefaultIcon()
+		{
+			return null;
+		}
+
+		static getExtensionPath()
+		{
+			return `${currentDomain}/bitrix/mobileapp/mobile/extensions/bitrix/layout/ui/fields`;
+		}
+
+		renderShowAllButton(hiddenFieldsCount = null)
+		{
+			if (this.state.showAll || isNil(hiddenFieldsCount) || Number.isInteger(hiddenFieldsCount) && hiddenFieldsCount <= 0)
+			{
+				return null;
+			}
+
 			return View(
 				{
 					style: {
-						paddingLeft: 5
-					}
+						flexDirection: 'row',
+						paddingTop: 3,
+						paddingBottom: 6,
+					},
+					onClick: () => {
+						this.setState({
+							showAll: true,
+						});
+					},
 				},
-				Image(
+				View(
 					{
 						style: {
-							height: 15,
-							width: 9
+							width: 20,
+							height: 20,
+							justifyContent: 'center',
+							alignItems: 'center',
 						},
+					},
+					Image({
+						style: {
+							width: 12,
+							height: 7,
+						},
+						resizeMode: 'cover',
 						svg: {
-							content: `<svg width="10" height="17" viewBox="0 0 10 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M0.367432 2.26728L5.48231 7.38216L6.56745 8.42731L5.48231 9.47308L0.367432 14.588L1.84577 16.0663L9.48439 8.42768L1.84577 0.789062L0.367432 2.26728Z" fill="#C2C5CA"/></svg>`
-						}
-					}
-				)
-			)
+							content: arrowDown(),
+						},
+					}),
+				),
+				Text({
+					style: {
+						flex: 1,
+						color: '#a8adb4',
+						fontSize: 13,
+					},
+					text: `${BX.message('FIELDS_BASE_SHOW_ALL')} ${this.showAllCount() ? hiddenFieldsCount : ''}`,
+				}),
+			);
+		}
+
+		renderHideButton()
+		{
+			if (this.state.showAll && this.showHideButton)
+			{
+				return View(
+					{
+						style: {
+							flexDirection: 'row',
+							paddingTop: 3,
+							paddingBottom: 6,
+						},
+						onClick: () => {
+							this.setState({
+								showAll: false,
+							});
+						},
+					},
+					View(
+						{
+							style: {
+								width: 20,
+								height: 20,
+								justifyContent: 'center',
+								alignItems: 'center',
+							},
+						},
+						Image({
+							style: {
+								width: 12,
+								height: 7,
+							},
+							resizeMode: 'cover',
+							svg: {
+								content: arrowUp(),
+							},
+						}),
+					),
+					Text({
+						style: {
+							flex: 1,
+							color: '#a8adb4',
+							fontSize: 13,
+						},
+						text: `${BX.message('FIELDS_BASE_HIDE')}`,
+					}),
+				);
+			}
+
+			return null;
+		}
+
+		showAllCount()
+		{
+			return true;
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.BaseField = BaseField;
-})();
+	module.exports = { BaseField };
+});

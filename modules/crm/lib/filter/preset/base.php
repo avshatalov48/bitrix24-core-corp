@@ -43,6 +43,9 @@ abstract class Base
 	 */
 	protected bool $isStagesEnabled = false;
 
+	/** @var int|null */
+	protected ?int $categoryId = null;
+
 	/**
 	 * Get default presets to entity filter
 	 *
@@ -107,6 +110,16 @@ abstract class Base
 	{
 		$this->isStagesEnabled = $isStagesEnabled;
 
+		return $this;
+	}
+
+	/**
+	 * @param int|null $categoryId
+	 * @return Base
+	 */
+	public function setCategoryId(?int $categoryId): self
+	{
+		$this->categoryId = $categoryId;
 		return $this;
 	}
 }

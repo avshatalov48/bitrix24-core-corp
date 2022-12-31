@@ -104,6 +104,7 @@ if(!$isInternal)
 }
 
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$preparedGridId = htmlspecialcharsbx(CUtil::JSescape($gridManagerID));
 $gridManagerCfg = array(
 	'ownerType' => 'DEAL',
 	'gridId' => $arResult['GRID_ID'],
@@ -232,6 +233,14 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 
 		if($arDeal['EDIT'])
 		{
+			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
+			{
+				$arActivitySubMenuItems[] = array(
+					'TEXT' => GetMessage('CRM_DEAL_ADD_TODO'),
+					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Deal . ", " . (int)$arDeal['ID'] . ");"
+				);
+			}
+
 			if (RestrictionManager::isHistoryViewPermitted())
 			{
 				$arActions[] = $arActivityMenuItems[] = array(
@@ -245,7 +254,7 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 				);
 			}
 
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID))
+			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_DEAL_ADD_CALL_TITLE'),
@@ -411,8 +420,8 @@ foreach($arResult['DEAL'] as $sKey =>  $arDeal)
 			'PRODUCT_ID' => isset($arDeal['PRODUCT_ROWS']) ? htmlspecialcharsbx(CCrmProductRow::RowsToString($arDeal['PRODUCT_ROWS'])) : '',
 			'STATE_ID' => isset($arResult['STATE_LIST'][$arDeal['STATE_ID']]) ? $arResult['STATE_LIST'][$arDeal['STATE_ID']] : $arDeal['STATE_ID'],
 			'WEBFORM_ID' => isset($arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']]) ? $arResult['WEBFORM_LIST'][$arDeal['WEBFORM_ID']] : $arDeal['WEBFORM_ID'],
-			'PAYMENT_STAGE' => isset($arDeal['PAYMENT_STAGE']) ? CCrmViewHelper::RenderDealPaymentStageControl($arDeal['PAYMENT_STAGE']) : '',
-			'DELIVERY_STAGE' => CCrmViewHelper::RenderDealDeliveryStageControl($arDeal['DELIVERY_STAGE']),
+			'PAYMENT_STAGE' => ($arDeal['PAYMENT_STAGE'] ?? ''),
+			'DELIVERY_STAGE' => ($arDeal['DELIVERY_STAGE'] ?? ''),
 			'STAGE_ID' => CCrmViewHelper::RenderDealStageControl(
 				array(
 					'PREFIX' => "{$arResult['GRID_ID']}_PROGRESS_BAR_",
@@ -1100,7 +1109,7 @@ $APPLICATION->IncludeComponent(
 $APPLICATION->IncludeComponent(
 	'bitrix:crm.interface.grid',
 	'titleflex',
-	array(
+	[
 		'GRID_ID' => $arResult['GRID_ID'],
 		'HEADERS' => $arResult['HEADERS'],
 		'HEADERS_SECTIONS' => $arResult['HEADERS_SECTIONS'],
@@ -1113,8 +1122,8 @@ $APPLICATION->IncludeComponent(
 		'AJAX_ID' => $arResult['AJAX_ID'],
 		'AJAX_OPTION_JUMP' => $arResult['AJAX_OPTION_JUMP'],
 		'AJAX_OPTION_HISTORY' => $arResult['AJAX_OPTION_HISTORY'],
-		'AJAX_LOADER' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null,
-		'HIDE_FILTER' => isset($arParams['HIDE_FILTER']) ? $arParams['HIDE_FILTER'] : null,
+		'AJAX_LOADER' => ($arParams['AJAX_LOADER'] ?? null),
+		'HIDE_FILTER' => ($arParams['HIDE_FILTER'] ?? null),
 		'FILTER' => $arResult['FILTER'],
 		'FILTER_PRESETS' => $arResult['FILTER_PRESETS'],
 		'FILTER_PARAMS' => [
@@ -1130,38 +1139,35 @@ $APPLICATION->IncludeComponent(
 				'showPopupInCenter' => true,
 			],
 		],
-		'LIVE_SEARCH_LIMIT_INFO' => isset($arResult['LIVE_SEARCH_LIMIT_INFO'])
-			? $arResult['LIVE_SEARCH_LIMIT_INFO'] : null,
+		'LIVE_SEARCH_LIMIT_INFO' => ($arResult['LIVE_SEARCH_LIMIT_INFO'] ?? null),
 		'ENABLE_LIVE_SEARCH' => true,
 		'ACTION_PANEL' => $controlPanel,
-		'PAGINATION' => isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
-			? $arResult['PAGINATION'] : array(),
+		'PAGINATION' => (
+			isset($arResult['PAGINATION']) && is_array($arResult['PAGINATION'])
+			? $arResult['PAGINATION']
+			: []
+		),
 		'ENABLE_ROW_COUNT_LOADER' => true,
 		'PRESERVE_HISTORY' => $arResult['PRESERVE_HISTORY'],
 		'MESSAGES' => $messages,
 		'DISABLE_NAVIGATION_BAR' => $arResult['DISABLE_NAVIGATION_BAR'],
 		'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $arResult['CATEGORY_ID']))
-			->setItems([
-				NavigationBarPanel::ID_AUTOMATION,
-				NavigationBarPanel::ID_KANBAN,
-				NavigationBarPanel::ID_LIST,
-				NavigationBarPanel::ID_CALENDAR
-			], NavigationBarPanel::ID_LIST)
+			->setAllAllowableItems(NavigationBarPanel::ID_LIST)
 			->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 			->get(),
 		'IS_EXTERNAL_FILTER' => $arResult['IS_EXTERNAL_FILTER'],
-		'EXTENSION' => array(
+		'EXTENSION' => [
 			'ID' => $gridManagerID,
-			'CONFIG' => array(
+			'CONFIG' => [
 				'ownerTypeName' => CCrmOwnerType::DealName,
 				'gridId' => $arResult['GRID_ID'],
 				'activityEditorId' => $activityEditorID,
 				'activityServiceUrl' => '/bitrix/components/bitrix/crm.activity.editor/ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'taskCreateUrl'=> isset($arResult['TASK_CREATE_URL']) ? $arResult['TASK_CREATE_URL'] : '',
+				'taskCreateUrl'=> ($arResult['TASK_CREATE_URL'] ?? ''),
 				'serviceUrl' => '/bitrix/components/bitrix/crm.deal.list/list.ajax.php?siteID='.SITE_ID.'&'.bitrix_sessid_get(),
-				'loaderData' => isset($arParams['AJAX_LOADER']) ? $arParams['AJAX_LOADER'] : null
-			),
-			'MESSAGES' => array(
+				'loaderData' => ($arParams['AJAX_LOADER'] ?? null),
+			],
+			'MESSAGES' => [
 				'deletionDialogTitle' => GetMessage('CRM_DEAL_DELETE_TITLE'),
 				'deletionDialogMessage' => GetMessage('CRM_DEAL_DELETE_CONFIRM'),
 				'deletionDialogButtonTitle' => GetMessage('CRM_DEAL_DELETE'),
@@ -1171,10 +1177,10 @@ $APPLICATION->IncludeComponent(
 				'exclusionDialogMessage' => GetMessage('CRM_DEAL_EXCLUDE_CONFIRM'),
 				'exclusionDialogMessageHelp' => GetMessage('CRM_DEAL_EXCLUDE_CONFIRM_HELP'),
 				'exclusionDialogButtonTitle' => GetMessage('CRM_DEAL_EXCLUDE'),
-			)
-		),
-		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE']
-	),
+			],
+		],
+		'NAME_TEMPLATE' => $arParams['NAME_TEMPLATE'],
+	],
 	$component
 );
 ?>
@@ -1261,6 +1267,28 @@ if(!$isInternal):
 	BX.ready(
 			function()
 			{
+				<?php if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled()):
+					$todoCreateNotificationSkipPeriod =
+						(new \Bitrix\Crm\Activity\TodoCreateNotification(\CCrmOwnerType::Deal))
+							->getCurrentSkipPeriod()
+					;
+				?>
+				BX.Runtime.loadExtension(['crm.push-crm-settings', 'crm.toolbar-component']).then((exports) => {
+					/** @see BX.Crm.ToolbarComponent */
+					const settingsButton = exports.ToolbarComponent.Instance.getSettingsButton();
+
+					/** @see BX.Crm.PushCrmSettings */
+					new exports.PushCrmSettings({
+						entityTypeId: <?= (int)\CCrmOwnerType::Deal ?>,
+						rootMenu: settingsButton ? settingsButton.getMenuWindow() : undefined,
+						grid: BX.Reflection.getClass('BX.Main.gridManager') ? BX.Main.gridManager.getInstanceById('<?= \CUtil::JSEscape($arResult['GRID_ID']) ?>') : undefined,
+						<?php if (is_string($todoCreateNotificationSkipPeriod)): ?>
+						todoCreateNotificationSkipPeriod: '<?= \CUtil::JSEscape($todoCreateNotificationSkipPeriod) ?>',
+						<?php endif; ?>
+					});
+				});
+				<?php endif; ?>
+
 				BX.CrmActivityEditor.items['<?= CUtil::JSEscape($activityEditorID)?>'].addActivityChangeHandler(
 						function()
 						{

@@ -98,6 +98,7 @@ $APPLICATION->IncludeComponent(
 			'EXTERNAL_CONTEXT_ID' => $arResult['EXTERNAL_CONTEXT_ID'],
 			'CONTEXT_ID' => $arResult['CONTEXT_ID'],
 			'CONTEXT' => $editorContext,
+			'ENABLE_PAGE_TITLE_CONTROLS' => $arResult['IS_EDIT_MODE'],
 			'ATTRIBUTE_CONFIG' => [
 				'ENTITY_SCOPE' => $arResult['ENTITY_ATTRIBUTE_SCOPE'],
 				'CAPTIONS' => FieldAttributeManager::getCaptionsForEntityWithStages(CCrmOwnerType::Contact),

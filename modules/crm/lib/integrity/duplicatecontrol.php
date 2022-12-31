@@ -85,7 +85,7 @@ class DuplicateControl
 		\Bitrix\Main\Config\Option::delete('crm', array('name'=>'dup_ctrl'));
 		\Bitrix\Main\Config\Option::set('crm', 'dup_ctrl', serialize(self::$currentSettings));
 	}
-	private static function loadCurrentSettings()
+	public static function loadCurrentSettings()
 	{
 		if(self::$currentSettings === null)
 		{

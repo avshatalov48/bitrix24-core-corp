@@ -1,10 +1,13 @@
 <?php
+
 return [
-	'layout/ui/detail-card/tabs',
-	'catalog/store/product-list',
-	'utils/error-notifier',
-	'catalog/barcode-scanner',
-	'notify',
-	'helpers/component',
-	'files',
+	'extensions' => [
+		'notify',
+		'helpers/component',
+		'utils/error-notifier',
+		'utils/string',
+		'catalog/barcode-scanner',
+		'catalog/store/product-list',
+		'layout/ui/detail-card/tabs',
+	],
 ];

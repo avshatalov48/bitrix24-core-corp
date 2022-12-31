@@ -51,7 +51,7 @@ if ($_REQUEST['MODE'] == 'section')
 			array(
 				'IBLOCK_ID' => $arIBlock["ID"],
 				'SECTION_ID' => $SECTION_ID,
-				'CHECK_PERMISSIONS' => $arParams['CAN_EDIT']? 'N': 'Y',
+				'CHECK_PERMISSIONS' => 'Y',
 			),
 			false,
 			false,
@@ -82,7 +82,7 @@ elseif ($_REQUEST['MODE'] == 'search')
 		array(
 			"IBLOCK_ID" => $arIBlock["ID"],
 			"%NAME" => $_REQUEST['search'],
-			'CHECK_PERMISSIONS' => $arParams['CAN_EDIT']? 'N': 'Y',
+			'CHECK_PERMISSIONS' => 'Y',
 		),
 		false,
 		array("nTopCount" => 20),
@@ -129,7 +129,7 @@ if(isset($_GET['value']))
 			array(
 				"IBLOCK_ID" => $arIBlock["ID"],
 				"=ID" => $arValues,
-				'CHECK_PERMISSIONS' => $arParams['CAN_EDIT']? 'N': 'Y',
+				'CHECK_PERMISSIONS' => 'Y',
 			),
 			false,
 			false,
@@ -186,11 +186,12 @@ document.getElementById('<?echo $win_id?>').__object.InitControl('bx_emp_search_
 	$arSections = array();
 
 	$iblock_id = isset($arIBlock["ID"]) ? intval($arIBlock["ID"]) : 0;
+	$arRes = [];
 	if ($iblock_id > 0)
 	{
 		$dbRes = CIBlockSection::GetTreeList(array(
 			'IBLOCK_ID' => $iblock_id,
-			'CHECK_PERMISSIONS' => $arParams['CAN_EDIT']? 'N': 'Y',
+			'CHECK_PERMISSIONS' => 'Y',
 		));
 		while ($arRes = $dbRes->GetNext())
 		{

@@ -220,13 +220,20 @@ class QuoteConversionWizard extends EntityConversionWizard
 	 */
 	public static function load($entityID)
 	{
-		if (!(isset($_SESSION['QUOTE_CONVERTER']) && $_SESSION['QUOTE_CONVERTER'][$entityID]))
+		$storage = self::getSessionLocalStorage(\CCrmOwnerType::Quote);
+		if (!$storage)
+		{
+			return null;
+		}
+
+		$externalizedWizardParams = $storage[$entityID] ?? null;
+		if (!is_array($externalizedWizardParams))
 		{
 			return null;
 		}
 
 		$item = new QuoteConversionWizard($entityID);
-		$item->internalize($_SESSION['QUOTE_CONVERTER'][$entityID]);
+		$item->internalize($externalizedWizardParams);
 		return $item;
 	}
 

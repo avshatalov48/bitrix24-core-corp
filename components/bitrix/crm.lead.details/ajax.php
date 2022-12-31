@@ -265,10 +265,11 @@ elseif($action === 'SAVE')
 		{
 			$companyItem = $companyData[0];
 			$companyID = isset($companyItem['id']) ? (int)$companyItem['id'] : 0;
-			$categoryId = isset($companyItem['categoryId']) ? (int)$companyItem['categoryId'] : 0;
-
 			// unlikely situation but check in case of mismatch
-			if($categoryId !== $categoryParams[CCrmOwnerType::Company]['categoryId'])
+			if (
+				isset($companyItem['categoryId'])
+				&& (int)$companyItem['categoryId'] !== $categoryParams[CCrmOwnerType::Company]['categoryId']
+			)
 			{
 				__CrmLeadDetailsEndJsonResponse(['ERROR' => 'INVALID CLIENT COMPANY CATEGORY ID!']);
 			}
@@ -334,10 +335,11 @@ elseif($action === 'SAVE')
 			}
 
 			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
-			$categoryId = isset($contactItem['categoryId']) ? (int)$contactItem['categoryId'] : 0;
-
 			// unlikely situation but check in case of mismatch
-			if($categoryId !== $categoryParams[CCrmOwnerType::Contact]['categoryId'])
+			if (
+				isset($contactItem['categoryId'])
+				&& (int)$contactItem['categoryId'] !== $categoryParams[CCrmOwnerType::Contact]['categoryId']
+			)
 			{
 				__CrmLeadDetailsEndJsonResponse(['ERROR' => 'INVALID CLIENT CONTACT CATEGORY ID!']);
 			}

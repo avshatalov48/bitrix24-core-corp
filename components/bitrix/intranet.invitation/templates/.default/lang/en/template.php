@@ -86,6 +86,7 @@ Please upgrade to one of the commercial plans to add more users and enjoy a lot 
 $MESS["BX24_INVITE_DIALOG_USERS_LIMIT_TITLE"] = "User limit";
 $MESS["BX24_INVITE_DIALOG_WARNING_CREATE_MAILBOX_ERROR"] = "Error creating new mailbox:";
 $MESS["BX24_INVITE_DIALOG_WARNING_MAILBOX_PASSWORD_CONFIRM"] = "Your password and confirmation password do not match.";
+$MESS["INTRANET_INVITE_DIALOG_ACCESS_ERROR"] = "Access denied";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC"] = "Bitrix24 has three options to use AD";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC1"] = "Export employees";
 $MESS["INTRANET_INVITE_DIALOG_ACTIVE_DIRECTORY_DESC2"] = "Create company structure";

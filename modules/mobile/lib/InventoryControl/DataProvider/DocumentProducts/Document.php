@@ -2,9 +2,13 @@
 
 namespace Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Main\Loader;
+use Bitrix\Mobile\Integration\Catalog\Catalog;
 use Bitrix\Mobile\InventoryControl\Dto;
+use Bitrix\Catalog\Access;
 
 Loader::includeModule('catalog');
 
@@ -27,7 +31,13 @@ class Document
 				'id' => (int)$document['ID'],
 				'type' => $document['DOC_TYPE'],
 				'currency' => $document['CURRENCY'],
-				'editable' => $document['STATUS'] !== self::STATUS_CONDUCTED,
+				'editable' => (
+					$document['STATUS'] !== self::STATUS_CONDUCTED
+					&& AccessController::getCurrent()->check(
+						ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+						Access\Model\StoreDocument::createFromArray($document)
+					)
+				),
 				'total' => [
 					'amount' => (float)$document['TOTAL'],
 					'currency' => $document['CURRENCY'],

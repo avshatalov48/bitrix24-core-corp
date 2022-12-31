@@ -219,10 +219,16 @@ class WaitController extends EntityController
 
 		if(isset($data['END_TIME']))
 		{
+			$deadlineTimestamp = MakeTimeStamp($data['END_TIME']) - \CTimeZone::GetOffset();
 			$data['DEADLINE_SERVER'] = date(
 				'Y-m-d H:i:s',
-				MakeTimeStamp($data['END_TIME']) - \CTimeZone::GetOffset()
+				$deadlineTimestamp
 			);
+			$sort = [$deadlineTimestamp, (int)$data['ID']];
+		}
+		else
+		{
+			$sort = [PHP_INT_MAX, (int)$data['ID']];
 		}
 
 		$ownerTypeID = isset($data['OWNER_TYPE_ID']) ? (int)$data['OWNER_TYPE_ID'] : 0;
@@ -239,7 +245,8 @@ class WaitController extends EntityController
 			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Wait,
 			'ASSOCIATED_ENTITY_ID' => isset($data['ID']) ? (int)$data['ID'] : 0,
 			'ASSOCIATED_ENTITY' => $data,
-			'AUTHOR_ID' => isset($data['AUTHOR_ID']) ? (int)$data['AUTHOR_ID'] : 0
+			'AUTHOR_ID' => isset($data['AUTHOR_ID']) ? (int)$data['AUTHOR_ID'] : 0,
+			'sort' => $sort,
 		);
 
 		if(isset($options['ENABLE_USER_INFO']) && $options['ENABLE_USER_INFO'] === true)

@@ -420,7 +420,7 @@ class Controller extends Event
 		}
 		if (typeof options.design !== 'undefined')
 		{
-			this.design.adjust(options.design);
+			this.design.adjust({proxy: options.proxy, ...options.design});
 		}
 		if (typeof options.recaptcha !== 'undefined')
 		{
@@ -479,6 +479,10 @@ class Controller extends Event
 			this.view.delay = parseInt(view.delay);
 			this.view.delay = isNaN(this.view.delay) ? 0 : this.view.delay;
 		}
+		this.view.hideOnOverlayClick = typeof view.hideOnOverlayClick !== "undefined"
+			? Boolean(view.hideOnOverlayClick)
+			: true
+		;
 	}
 
 	setDate(date: Type.Date)

@@ -1,0 +1,3 @@
+<?php
+$MESS["SIMPLELIST_KANBAN_CLIENT"] = "Customer";
+$MESS["SIMPLELIST_KANBAN_TOTAL_SUM_DEAL"] = "Deal amount";

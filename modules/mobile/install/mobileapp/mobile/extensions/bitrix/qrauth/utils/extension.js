@@ -12,8 +12,10 @@
 			urlData,
 			type,
 			showHint,
-			hintText
+			hintText,
+			layout
 		}) => {
+			layout = layout || null;
 			let componentUrl = availableComponents["qrcodeauth"].publicUrl;
 			PageManager.openComponent("JSStackComponent", {
 				scriptPath: componentUrl,
@@ -37,7 +39,7 @@
 						},
 					}
 				}
-			});
+			}, layout);
 		},
 		listenUniversalLink: () => {
 			let handler = (data)=> {

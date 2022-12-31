@@ -46,6 +46,7 @@ $MESS["CRM_ACTIVITY_REBUILD_SEARCH_CONTENT"] = "Для обеспечения р
 $MESS["CRM_ACTIVITY_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Перестроение поискового индекса для дел";
 $MESS["CRM_ACTIVITY_REBUILD_SEARCH_CONTENT_DLG_SUMMARY"] = "Будет произведено перестроение поискового индекса для дел. Выполнение этой операции может занять продолжительное время.";
 $MESS["CRM_ACTIVITY_LIST_ADD"] = "Добавить";
+$MESS["CRM_ACTIVITY_LIST_CREATE"] = "Создать";
 $MESS["CRM_REBUILD_SEARCH_CONTENT_STATE"] = "#processed# из #total#";
 $MESS["CRM_ACTIVITY_BUILD_TIMELINE_DLG_TITLE"] = "Подготовка истории дел";
 $MESS["CRM_ACTIVITY_BUILD_TIMELINE_STATE"] = "#processed# из #total#";

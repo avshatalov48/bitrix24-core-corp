@@ -1,4 +1,5 @@
 <?php
+$MESS["KANBAN_SORT_MY_SORT"] = "Meine Sortierordnung";
 $MESS["TASKS_KANBAN_RESULT_REQUIRED"] = "Aufgabenersteller verlangt, dass Sie eine Zusammenfassung des Aufgabenstatus bereitstellen.<br> Schreiben Sie einen Kommentar zur Aufgabe und markieren Sie ihn als die Zusammenfassung des Aufgabenstatus.";
 $MESS["TASK_ACCESS_NOTIFY_MESSAGE"] = "<a href=\"#URL#\">Konfigurieren Sie bitte Phasen der Aufgaben in Projekten</a> für mich, oder gewähren Sie mir die entsprechenden Zugriffsrechte, damit ich das selbst machen kann.";
 $MESS["TASK_KANBAN_PERSONAL_TITLE"] = "Planer";

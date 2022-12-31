@@ -40,6 +40,9 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 		'NEW_CARD' => ($this->request->getQuery('NEW_CARD') === 'Y' ? 'Y' : 'N'),
 		'GUID' => ($this->request->getQuery('GUID') ?? ''),
 		'PLATFORM' => 'mobile',
+		'FRAGMENT_TYPE' => ($this->request->getQuery('FRAGMENT_TYPE') ?? ''),
+		'FRAGMENT_ID' => ($this->request->getQuery('FRAGMENT_ID') ?? ''),
+		'RESULT_ID' => ($this->request->getQuery('RESULT_ID') ?? ''),
 	];
 
 	foreach ($params as $k => $v)
@@ -58,6 +61,8 @@ if (CModule::IncludeModule('tasks') && CModule::IncludeModule('mobileapp'))
 		'selector',
 		'view',
 		'efficiency',
+		'comments',
+		'fragmentrenderer',
 	];
 
 	$routePage = ($this->request->getQuery('routePage') ?: 'roles');

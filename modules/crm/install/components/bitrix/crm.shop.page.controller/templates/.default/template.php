@@ -52,6 +52,7 @@ $APPLICATION->IncludeComponent(
 			"sale_location_import" => $selfFolderUrl."sale_location_import.php",
 			"iblock_subelement_edit" => $selfFolderUrl."iblock_subelement_edit.php",
 			"report_view" => $selfFolderUrl."sale_report_view.php",
+			"permissions" => $selfFolderUrl."/permissions/index.php",
 		),
 		"SIDE_PANEL_PAGE_LIST" => array(
 			"sale_location_import",

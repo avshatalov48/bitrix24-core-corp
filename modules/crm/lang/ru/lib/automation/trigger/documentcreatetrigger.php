@@ -1,3 +1,6 @@
 <?php
+
 $MESS['CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_NAME'] = 'Генерация документа';
 $MESS['CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_TEMPLATE_LABEL'] = 'Шаблон';
+$MESS['CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_NAME_1'] = 'Отследить создание документа';
+$MESS['CRM_AUTOMATION_TRIGGER_DOCUMENT_CREATE_DESCRIPTION'] = 'Меняет стадию в момент, когда был создан новый документ в карточке элемента';

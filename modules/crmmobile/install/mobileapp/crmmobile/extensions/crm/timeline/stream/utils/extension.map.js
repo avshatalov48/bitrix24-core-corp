@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","ItemPositionCalculator","Patch"],"mappings":"AAGAA,GAAGC,OAAO,6BAA6B,CAACC,EAASC,EAASC,KAEzD,MAAMC,uBAAEA,GAA2BH,EAAQ,sDAC3C,MAAMI,MAAEA,GAAUJ,EAAQ,mCAE1BE,EAAOD,QAAU,CAChBE,uBAAAA,EACAC,MAAAA","file":"extension.map.js"}

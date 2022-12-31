@@ -2,6 +2,9 @@
 
 namespace Bitrix\Mobile\Controller\Catalog;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Integration\Catalog\EntityEditor\StoreDocumentProvider;
 use Bitrix\Mobile\Helpers\ReadsApplicationErrors;
@@ -19,7 +22,7 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 
 	public function conductAction(int $id, CurrentUser $currentUser): ?array
 	{
-		if (!$currentUser->CanDoOperation('catalog_store'))
+		if (!$this->checkDocumentAccess(ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT, $id, $currentUser))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_CONDUCT_PERMS')));
 
@@ -56,7 +59,7 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 
 	public function cancellationAction(int $id, CurrentUser $currentUser): ?array
 	{
-		if (!$currentUser->CanDoOperation('catalog_store'))
+		if (!$this->checkDocumentAccess(ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT, $id, $currentUser))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_CANCELLATION_PERMS')));
 
@@ -102,7 +105,7 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 
 	public function deleteAction(int $id, CurrentUser $currentUser): ?array
 	{
-		if (!$currentUser->CanDoOperation('catalog_store'))
+		if (!$this->checkDocumentAccess(ActionDictionary::ACTION_STORE_DOCUMENT_DELETE, $id, $currentUser))
 		{
 			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_ERROR_DELETE_PERMS')));
 
@@ -123,5 +126,19 @@ class StoreDocument extends \Bitrix\Main\Engine\Controller
 		return [
 			'result' => $result,
 		];
+	}
+
+	/**
+	 * @param string $action
+	 * @param int $documentId
+	 * @param CurrentUser $currentUser
+	 * @return bool
+	 */
+	private function checkDocumentAccess(string $action, int $documentId, CurrentUser $currentUser): bool
+	{
+		return AccessController::getInstance($currentUser->getId())->check(
+			$action,
+			Access\Model\StoreDocument::createFromId($documentId)
+		);
 	}
 }

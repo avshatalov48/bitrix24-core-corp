@@ -23,14 +23,14 @@ class Correction
 {
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public static function getCountBrokenSessions()
 	{
 		$connection = Application::getConnection();
 
-		$sql = 'SELECT
-				   count(*) AS COUNT
+		$sql = "
+			SELECT
+				count(*) AS COUNT
 			FROM
 				 b_imopenlines_session
 			WHERE
@@ -38,14 +38,16 @@ class Correction
 					SELECT count(*)
 					FROM b_imopenlines_session_check
 					WHERE b_imopenlines_session_check.SESSION_ID = b_imopenlines_session.ID
-					) AND
-				b_imopenlines_session.CLOSED !=\'Y\'';
+				) 
+				AND
+				b_imopenlines_session.CLOSED != 'Y'
+		";
 
 		$raw = $connection->query($sql);
 
 		$result = $raw->fetch()['COUNT'];
 
-		if(empty($result) || !is_numeric($result))
+		if (empty($result) || !is_numeric($result))
 		{
 			$result = 0;
 		}
@@ -60,11 +62,6 @@ class Correction
 	 * @param bool $closeDay
 	 * @param int $limit
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function repairBrokenSessions($correction = true, $closeDay = false, $limit = 0)
 	{
@@ -74,7 +71,7 @@ class Correction
 		];
 
 		$closeDay = intval($closeDay);
-		if($closeDay<=0)
+		if ($closeDay<=0)
 		{
 			$closeDay = false;
 		}
@@ -97,7 +94,7 @@ class Correction
 			'!=CLOSED' => 'Y',
 			'=CHECK.SESSION_ID' => null
 		]);
-		if(!empty($limit))
+		if (!empty($limit))
 		{
 			$query->setLimit($limit);
 		}
@@ -105,7 +102,7 @@ class Correction
 
 		$oldCloseTime = new DateTime();
 		$closeTime = (new DateTime())->add('30 DAY');
-		if($closeDay)
+		if ($closeDay)
 		{
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
@@ -114,14 +111,14 @@ class Correction
 		{
 			$message = 0;
 
-			if(!empty($session['LAST_MESSAGE_ID']) && Loader::includeModule('im'))
+			if (!empty($session['LAST_MESSAGE_ID']) && Loader::includeModule('im'))
 			{
 				$message = MessageTable::getById($session['LAST_MESSAGE_ID'])->fetch();
 			}
 
 			if (empty($message) || ($closeDay && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
 			{
-				if($correction)
+				if ($correction)
 				{
 					$chat = new Chat($session['CHAT_ID']);
 
@@ -132,18 +129,18 @@ class Correction
 			}
 			else
 			{
-				if($correction)
+				if ($correction)
 				{
 					$addFields = [
 						'SESSION_ID' => $session['ID'],
 						'DATE_CLOSE' =>  $closeTime
 					];
 
-					if(
-						$session['STATUS'] < Session::STATUS_ANSWER ||
-						empty($session['OPERATOR_ID']) ||
-						!Queue::isRealOperator($session['OPERATOR_ID']) ||
-						!(Im\User::getInstance($session['OPERATOR_ID'])->isActive()))
+					if (
+						$session['STATUS'] < Session::STATUS_ANSWER
+						|| empty($session['OPERATOR_ID'])
+						|| !Queue::isRealOperator($session['OPERATOR_ID'])
+						|| !(Im\User::getInstance($session['OPERATOR_ID'])->isActive()))
 					{
 						$addFields['DATE_QUEUE'] = new DateTime();
 					}
@@ -167,41 +164,43 @@ class Correction
 
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public static function getCountSessionsThatNotShown()
 	{
 		$connection = Application::getConnection();
 
-		$sql = 'SELECT
-				   count(*) AS COUNT
+		$sql = "
+			SELECT
+				count(*) AS COUNT
 			FROM
 				 b_imopenlines_session_check,
 				 b_imopenlines_session
 			WHERE
 				0 = (
 					SELECT
-						   count(*)
+						count(*)
 					FROM
-						 b_im_relation
+						b_im_relation
 					WHERE
 						b_im_relation.CHAT_ID = b_imopenlines_session.CHAT_ID AND
 						b_im_relation.USER_ID != b_imopenlines_session.USER_ID
-					) AND
+				) 
+				AND
 				0 < (
 					SELECT count(*)
 					FROM b_imopenlines_session_check
 					WHERE b_imopenlines_session_check.SESSION_ID = b_imopenlines_session.ID
-					) AND
-				b_imopenlines_session.ID = b_imopenlines_session_check.SESSION_ID AND
-				b_imopenlines_session_check.DATE_QUEUE IS NULL AND
-				b_imopenlines_session.CLOSED !=\'Y\'';
+				) 
+				AND b_imopenlines_session.ID = b_imopenlines_session_check.SESSION_ID 
+				AND b_imopenlines_session_check.DATE_QUEUE IS NULL 
+				AND b_imopenlines_session.CLOSED != 'Y'
+		";
 
 		$raw = $connection->query($sql);
 
 		$result = $raw->fetch()['COUNT'];
 
-		if(empty($result) || !is_numeric($result))
+		if (empty($result) || !is_numeric($result))
 		{
 			$result = 0;
 		}
@@ -214,7 +213,6 @@ class Correction
 	 *
 	 * @param int $limit
 	 * @return array
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public static function setSessionsThatNotShown($limit = 0)
 	{
@@ -222,23 +220,24 @@ class Correction
 
 		$connection = Application::getConnection();
 
-		$sql = 'SELECT
-		   b_imopenlines_session.ID AS SESSION_ID,
-		   b_im_chat.LAST_MESSAGE_ID AS LAST_MESSAGE_ID,
-		   b_im_chat.ID AS CHAT_ID,
-		   (
-			   SELECT b_im_message.DATE_CREATE
-			   FROM b_im_message
-			   WHERE b_im_message.CHAT_ID = b_imopenlines_session.CHAT_ID AND
-					 b_im_message.AUTHOR_ID != 0
-			   ORDER BY b_im_message.DATE_CREATE DESC
-			   LIMIT 1
-			   ) DATE_SEND_LAST_MESSAGE
+		$sql = "
+			SELECT
+				b_imopenlines_session.ID AS SESSION_ID,
+				b_im_chat.LAST_MESSAGE_ID AS LAST_MESSAGE_ID,
+				b_im_chat.ID AS CHAT_ID,
+				(
+					SELECT b_im_message.DATE_CREATE
+					FROM b_im_message
+					WHERE b_im_message.CHAT_ID = b_imopenlines_session.CHAT_ID AND
+						b_im_message.AUTHOR_ID != 0
+					ORDER BY b_im_message.DATE_CREATE DESC
+					LIMIT 1
+				) as DATE_SEND_LAST_MESSAGE
 			FROM
-				 b_imopenlines_session_check,
-				 b_imopenlines_session,
-				 b_im_chat,
-				 b_imopenlines_config
+				b_imopenlines_session_check,
+				b_imopenlines_session,
+				b_im_chat,
+				b_imopenlines_config
 			WHERE
 				0 = (
 					SELECT
@@ -248,21 +247,23 @@ class Correction
 					WHERE
 						b_im_relation.CHAT_ID = b_imopenlines_session.CHAT_ID AND
 						b_im_relation.USER_ID != b_imopenlines_session.USER_ID
-					) AND
+					) 
+				AND
 				0 < (
 					SELECT count(*)
 					FROM b_imopenlines_session_check
 					WHERE b_imopenlines_session_check.SESSION_ID = b_imopenlines_session.ID
-					) AND
-				b_imopenlines_session.ID = b_imopenlines_session_check.SESSION_ID AND
-				b_imopenlines_session_check.DATE_QUEUE IS NULL AND
-				b_imopenlines_session.CLOSED !=\'Y\' AND
-				b_im_chat.ID = b_imopenlines_session.CHAT_ID AND
-				b_imopenlines_session.CONFIG_ID = b_imopenlines_config.ID
+					) 
+				AND b_imopenlines_session.ID = b_imopenlines_session_check.SESSION_ID 
+				AND b_imopenlines_session_check.DATE_QUEUE IS NULL 
+				AND b_imopenlines_session.CLOSED != 'Y' 
+				AND b_im_chat.ID = b_imopenlines_session.CHAT_ID 
+				AND b_imopenlines_session.CONFIG_ID = b_imopenlines_config.ID
 			ORDER BY
-				DATE_SEND_LAST_MESSAGE DESC';
+				DATE_SEND_LAST_MESSAGE DESC
+		";
 
-		if(!empty($limit))
+		if (!empty($limit))
 		{
 			$sql = $sql . '
 			LIMIT 10';
@@ -286,12 +287,6 @@ class Correction
 	 * @param bool $closeDay
 	 * @param int $limit
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\Db\SqlQueryException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function repairSessionsThatNotShown($correction = true, $closeDay = false, $limit = 0)
 	{
@@ -300,14 +295,14 @@ class Correction
 			'UPDATE' => []
 		];
 
-		if(is_numeric($closeDay) && $closeDay<=0)
+		if (is_numeric($closeDay) && $closeDay<=0)
 		{
 			$closeDay = false;
 		}
 
 		$oldCloseTime = new DateTime();
 		$queueTime = new DateTime();
-		if($closeDay)
+		if ($closeDay)
 		{
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
@@ -318,14 +313,14 @@ class Correction
 		{
 			$message = 0;
 
-			if(!empty($session['LAST_MESSAGE_ID']) && Loader::includeModule('im'))
+			if (!empty($session['LAST_MESSAGE_ID']) && Loader::includeModule('im'))
 			{
 				$message = MessageTable::getById($session['LAST_MESSAGE_ID'])->fetch();
 			}
 
 			if (empty($message) || ($closeDay && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
 			{
-				if($correction)
+				if ($correction)
 				{
 					$chat = new Chat($session['CHAT_ID']);
 
@@ -336,7 +331,7 @@ class Correction
 			}
 			else
 			{
-				if($correction)
+				if ($correction)
 				{
 					$resultSessionUpdate = SessionCheckTable::update($session['SESSION_ID'], ['DATE_QUEUE' => $queueTime]);
 
@@ -357,26 +352,27 @@ class Correction
 
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public static function getCountSessionsNoDateClose()
 	{
 		$connection = Application::getConnection();
 
-		$sql = 'SELECT
-				   count(*) AS COUNT
+		$sql = "
+			SELECT
+				count(*) AS COUNT
 			FROM
-				 b_imopenlines_session_check,
-				 b_imopenlines_session
+				b_imopenlines_session_check,
+				b_imopenlines_session
 			WHERE
 				b_imopenlines_session.ID = b_imopenlines_session_check.SESSION_ID AND
-				b_imopenlines_session_check.DATE_CLOSE IS NULL';
+				b_imopenlines_session_check.DATE_CLOSE IS NULL
+		";
 
 		$raw = $connection->query($sql);
 
 		$result = $raw->fetch()['COUNT'];
 
-		if(empty($result) || !is_numeric($result))
+		if (empty($result) || !is_numeric($result))
 		{
 			$result = 0;
 		}
@@ -391,11 +387,6 @@ class Correction
 	 * @param bool $closeDay
 	 * @param int $limit
 	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
 	 */
 	public static function closeOldSession($correction = true, $closeDay = false, $limit = 0)
 	{
@@ -405,7 +396,7 @@ class Correction
 		];
 
 		$closeDay = intval($closeDay);
-		if($closeDay<=0)
+		if ($closeDay<=0)
 		{
 			$closeDay = false;
 		}
@@ -419,7 +410,7 @@ class Correction
 		$query->setFilter([
 			'=DATE_CLOSE' => null
 		]);
-		if(!empty($limit))
+		if (!empty($limit))
 		{
 			$query->setLimit($limit);
 		}
@@ -427,7 +418,7 @@ class Correction
 
 		$oldCloseTime = new DateTime();
 		$closeTime = (new DateTime())->add('30 DAY');
-		if($closeDay)
+		if ($closeDay)
 		{
 			$oldCloseTime->add('-' . $closeDay . ' DAY');
 		}
@@ -436,14 +427,14 @@ class Correction
 		{
 			$message = 0;
 
-			if(!empty($sessionCheck['LAST_MESSAGE_ID']) && Loader::includeModule('im'))
+			if (!empty($sessionCheck['LAST_MESSAGE_ID']) && Loader::includeModule('im'))
 			{
 				$message = MessageTable::getById($sessionCheck['LAST_MESSAGE_ID'])->fetch();
 			}
 
 			if (empty($message) || ($closeDay && $message['DATE_CREATE'] instanceof DateTime && $message['DATE_CREATE']->getTimestamp() < $oldCloseTime->getTimestamp()))
 			{
-				if($correction)
+				if ($correction)
 				{
 					$chat = new Chat($sessionCheck['CHAT_ID']);
 
@@ -454,7 +445,7 @@ class Correction
 			}
 			else
 			{
-				if($correction)
+				if ($correction)
 				{
 					$resultSessionUpdate = SessionCheckTable::update($sessionCheck['SESSION_ID'], ['DATE_CLOSE' => $closeTime]);
 
@@ -475,30 +466,16 @@ class Correction
 
 	/**
 	 * @return int
-	 * @throws \Bitrix\Main\Db\SqlQueryException
 	 */
 	public static function getCountStatusClosedSessions()
 	{
-		$connection = Application::getConnection();
+		$query = new ORM\Query\Query(SessionTable::getEntity());
+		$query->setFilter([
+			'<STATUS' => Session::STATUS_CLOSE,
+			'CLOSED' => 'Y'
+		]);
 
-		$sql = 'SELECT
-				   count(*) AS COUNT
-			FROM
-				 b_imopenlines_session
-			WHERE
-				CLOSED = \'Y\' AND
-				STATUS < \'60\'';
-
-		$raw = $connection->query($sql);
-
-		$result = $raw->fetch()['COUNT'];
-
-		if(empty($result) || !is_numeric($result))
-		{
-			$result = 0;
-		}
-
-		return $result;
+		return (int)$query->queryCountTotal();
 	}
 
 	/**
@@ -506,11 +483,7 @@ class Correction
 	 *
 	 * @param bool $correction
 	 * @param int $limit
-	 * @return array
-	 * @throws \Bitrix\Main\ArgumentException
-	 * @throws \Bitrix\Main\LoaderException
-	 * @throws \Bitrix\Main\ObjectPropertyException
-	 * @throws \Bitrix\Main\SystemException
+	 * @return int[]
 	 */
 	public static function setStatusClosedSessions($correction = true, $limit = 0)
 	{
@@ -525,7 +498,7 @@ class Correction
 			'<STATUS' => Session::STATUS_CLOSE,
 			'CLOSED' => 'Y'
 		]);
-		if(!empty($limit))
+		if (!empty($limit))
 		{
 			$query->setLimit($limit);
 		}
@@ -533,7 +506,7 @@ class Correction
 
 		while ($session = $sessionManager->fetch())
 		{
-			if($correction)
+			if ($correction)
 			{
 				$resultSessionUpdate = SessionTable::update($session['ID'], ['STATUS' => Session::STATUS_CLOSE]);
 
@@ -544,12 +517,102 @@ class Correction
 						SessionCheckTable::delete($session['CHECK_SESSION_ID']);
 					}
 
-					$result[] = $session['ID'];
+					$result[] = (int)$session['ID'];
 				}
 			}
 			else
 			{
-				$result[] = $session['ID'];
+				$result[] = (int)$session['ID'];
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * @return int
+	 */
+	public static function getCountChatSessionId(): int
+	{
+		$status = Session::STATUS_CLOSE;
+		$sql = "
+			SELECT
+				count(*) AS COUNT
+			FROM
+				b_imopenlines_session s
+				INNER JOIN b_im_chat c
+					ON s.CHAT_ID = c.ID
+			WHERE
+				s.CLOSED != 'Y'
+				AND s.SPAM != 'Y'
+				AND s.STATUS < {$status}
+				AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.ENTITY_DATA_1, '|', 6), '|', -1) = '0'
+		";
+
+		return Application::getConnection()->queryScalar($sql);
+	}
+
+	/**
+	 * @return int[]
+	 */
+	public static function restoreChatSessionId($correction = true, $limit = 0): array
+	{
+		$status = Session::STATUS_CLOSE;
+		$sql = "
+			SELECT
+				s.ID,
+				s.CONFIG_ID, 
+				s.USER_ID,
+				s.SOURCE,
+				s.CHAT_ID,
+				s.USER_CODE, 
+				c.ENTITY_DATA_1 as SESS_DATA
+			FROM
+				b_imopenlines_session s
+				INNER JOIN b_im_chat c
+					ON s.CHAT_ID = c.ID
+			WHERE
+				s.CLOSED != 'Y'
+				AND s.SPAM != 'Y'
+				AND s.STATUS < {$status}
+				AND SUBSTRING_INDEX(SUBSTRING_INDEX(c.ENTITY_DATA_1, '|', 6), '|', -1) = '0'
+		";
+
+		if ($limit > 0)
+		{
+			$sql .= " LIMIT {$limit}";
+		}
+
+		$result = [];
+		$res = Application::getConnection()->query($sql);
+
+		while ($row = $res->fetch())
+		{
+			if ($correction)
+			{
+				$fieldData = explode("|", $row['SESS_DATA']);
+				if ((int)$fieldData[5] == 0)
+				{
+					$session = new \Bitrix\ImOpenLines\Session($row);
+
+					$resultSessionStart = $session->load(array_merge($row, ['SKIP_CREATE' => 'Y']));
+					if ($resultSessionStart)
+					{
+						$updateRes = $session->getChat()->updateFieldData([
+							\Bitrix\ImOpenLines\Chat::FIELD_SESSION => [
+								'ID' => $session->getData('ID')
+							]
+						]);
+						if ($updateRes->isSuccess())
+						{
+							$result[] = (int)$row['ID'];
+						}
+					}
+				}
+			}
+			else
+			{
+				$result[] = (int)$row['ID'];
 			}
 		}
 

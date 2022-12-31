@@ -19,6 +19,7 @@ $APPLICATION->includeComponent(
 	'bitrix:salescenter.feedback', '',
 	[
 		'FEEDBACK_TYPE' => $request->get('feedback_type'),
+		'SENDER_PAGE' => $request->get('sender_page'),
 	]
 );
 

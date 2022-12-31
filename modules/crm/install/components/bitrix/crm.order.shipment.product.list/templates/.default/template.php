@@ -22,7 +22,7 @@ $basketCodes = [];
 $rows = [];
 $storeBarcodeInfo = [];
 $isSetItems = $arResult['LOADING_SET_ITEMS'];
-$isReadOnly = !$arResult['CAN_UPDATE_ORDER'] || $isSetItems;
+$isReadOnly = !$arResult['CAN_UPDATE_ORDER'];
 $storeBarcodeTmplB =
 	'<div data-ps-basketcode="#BASKET_CODE#" data-ps-store-id="#STORE_ID#" style="padding-bottom: 10px;">
 	<button 
@@ -91,7 +91,7 @@ foreach($arResult['PRODUCTS'] as $product)
 	//region AMOUNT
 	$innerAmountHtml = '';
 	$product['AMOUNT'] = (float)$product['AMOUNT'];
-	if (!$isReadOnly)
+	if (!$isReadOnly && !$isSetItems)
 	{
 		$innerAmountHtml = '
 			<input 
@@ -115,12 +115,19 @@ foreach($arResult['PRODUCTS'] as $product)
 	}
 	//eng region
 
+	$nameHtml =
+		$arResult['ALLOW_SELECT_PRODUCT']
+			? '<a href="'.$product['EDIT_PAGE_URL'].'" class="crm-order-product-info-name-text">'.htmlspecialcharsbx($product['NAME']).'</a>'
+			: htmlspecialcharsbx($product['NAME'])
+	;
+
+
 	$columns = [
 		'NAME' => '
 			<div class="crm-order-product-container">
 				<div class="'.$nameClass.'">
-					'.$setButtonHtml.
-					'<a href="'.$product['EDIT_PAGE_URL'].'" class="crm-order-product-info-name-text">'.htmlspecialcharsbx($product['NAME']).'</a>
+					'.$setButtonHtml.'
+					'.$nameHtml.'
 					'.$innerNameHtml.'
 				</div>			
 			</div>',

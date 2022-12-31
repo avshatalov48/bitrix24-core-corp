@@ -34,11 +34,16 @@ trait ProductFinder
 			{
 				if (isset($product['RESERVE']))
 				{
+					$reserve = null;
 					$productReserveId = (int)current(array_keys($product['RESERVE']));
+
 					$reserveCollection = $basketItem->getReserveQuantityCollection();
-					$reserve = array_filter($reserveCollection->toArray(), static function ($reserveItem) use ($productReserveId) {
-						return (int)$reserveItem['ID'] === $productReserveId;
-					});
+					if ($reserveCollection)
+					{
+						$reserve = array_filter($reserveCollection->toArray(), static function ($reserveItem) use ($productReserveId) {
+							return (int)$reserveItem['ID'] === $productReserveId;
+						});
+					}
 
 					if (!$reserve)
 					{

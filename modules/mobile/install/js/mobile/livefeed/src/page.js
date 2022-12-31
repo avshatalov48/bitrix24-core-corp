@@ -100,9 +100,9 @@ class Page
 
 		this.nextPageXhr = Ajax.wrap({
 			type: 'json',
-			method: 'GET',
+			method: 'POST',
 			url: this.getNextPageUrl(),
-			data: '',
+			data: {},
 			callback: (data) => {
 				this.nextPageXhr = null;
 
@@ -237,9 +237,9 @@ class Page
 
 		this.refreshXhr = Ajax.wrap({
 			type: 'json',
-			method: 'GET',
+			method: 'POST',
 			url: reloadUrl,
-			data: '',
+			data: {},
 			headers: headers,
 			callback: (data) => {
 				this.refreshXhr = null;

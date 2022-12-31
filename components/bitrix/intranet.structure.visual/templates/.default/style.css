@@ -147,11 +147,6 @@
     /*box-shadow: 0 0 3px rgba(172,172,172,0.6);*/
 }
 
-.bx-ie .structure-avatar.ui-icon,
-.bx-ie .structure-avatar.ui-icon-md {
-	width: 23px;
-}
-
 .structure-boss-name {color:#000; display:block; font-size:11px; overflow:hidden; text-decoration:none; text-overflow:ellipsis; padding-top:1px; width:152px; white-space:nowrap;}
 .structure-boss-name:hover,
 .structure-boss-name:link,
@@ -367,6 +362,10 @@
 .structure-undo-inner {
     width: 230px;
     display: inline-block;
+}
+
+.structure-undo-text {
+	word-wrap: break-word;
 }
 
 .structure-undo.structure-undo-scroll {

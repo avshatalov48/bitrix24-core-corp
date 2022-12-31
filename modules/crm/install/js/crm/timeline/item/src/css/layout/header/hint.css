@@ -1,0 +1,60 @@
+.crm-timeline__header-hint {
+	margin-left: -3px;
+	width: auto;
+}
+.crm-timeline__header-hint.--active {
+	opacity: 1;
+}
+
+.crm-timeline__hint_popup-content {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-start;
+	align-items: center;
+}
+
+.crm-timeline__hint_popup-content-icon {
+	display: flex;
+	width: var(--ui-size-xl, 24px);
+	height: var(--ui-size-xl, 24px);
+	margin-right: var(--ui-space-inline-xs, 8px);
+}
+
+.crm-timeline__hint_popup-content-icon i {
+	display: inline-block;
+	width: var(--ui-size-xl, 24px);
+	height: var(--ui-size-xl, 24px);
+	mask-repeat: no-repeat;
+	mask-size: contain;
+	mask-image: none;
+	background-color: var(--ui-color-background-primary, #fff);
+}
+
+.crm-timeline__hint_popup-content-icon.--auto-sum {
+	mask-image: url('../../../../image/hint-icons/hint-icon-auto-summ.svg');
+}
+
+.crm-timeline__hint_popup-content-text {
+	--text-color: #fff;
+
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-font-line-height-md, 20px);
+	font-weight: var(--ui-font-weight-normal, 400);
+	color: var(--text-color);
+}
+
+.crm-timeline__hint_popup-content-link {
+	opacity: 0.5;
+	text-decoration: underline;
+	text-decoration-color: transparent;
+	transition-property: opacity, text-decoration-color;
+	transition-duration: 0.2s;
+	transition-timing-function: linear;
+}
+
+.crm-timeline__hint_popup-content-link:hover {
+	opacity: 1;
+	cursor: pointer;
+	transition-duration: 0s;
+	text-decoration-color: var(--text-color);
+}

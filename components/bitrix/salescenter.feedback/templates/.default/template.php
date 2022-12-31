@@ -19,7 +19,7 @@ Loc::loadLanguageFile(__FILE__);
 
 if ($arParams['FEEDBACK_TYPE'] === 'integration_request')
 {
-	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE');
+	$pageTitle = Loc::getMessage('SALESCENTER_FEEDBACK_INTEGRATION_REQUEST_TITLE_MSGVER_1');
 }
 else
 {

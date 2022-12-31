@@ -12,6 +12,7 @@ import ReserveControl from "./reserve.control";
 import {PopupMenu} from "main.popup";
 import {ProductSelector} from "catalog.product-selector";
 import StoreAvailablePopup from './store.available.popup';
+import MoneyControl from './money.control';
 
 type Action = {
 	type: string,
@@ -39,7 +40,6 @@ export class Row
 	fields: Object = {};
 	externalActions: Array<Action> = [];
 
-	handleFocusUnchangeablePrice = this.#showChangePriceNotify.bind(this);
 	handleChangeStoreData = this.#onChangeStoreData.bind(this);
 	handleProductErrorsChange = Runtime.debounce(this.#onProductErrorsChange, 500, this);
 	handleMainSelectorClear = Runtime.debounce(this.#onMainSelectorClear.bind(this), 500, this);
@@ -67,6 +67,7 @@ export class Row
 		this.#initStoreAvailablePopup();
 		this.#initReservedControl();
 		this.modifyBasePriceInput();
+		this.modifyQuantityInput();
 		this.refreshFieldsLayout();
 
 		requestAnimationFrame(this.initHandlers.bind(this));
@@ -86,11 +87,6 @@ export class Row
 		return this.mainSelector;
 	}
 
-	clearChanges()
-	{
-		this.getModel().clearChangedList();
-	}
-
 	isNewRow(): Boolean
 	{
 		return isNaN(+this.getField('ID'));
@@ -106,7 +102,7 @@ export class Row
 		this.id = id;
 	}
 
-	getSettings()
+	getSettings(): {}
 	{
 		return this.settings;
 	}
@@ -207,14 +203,6 @@ export class Row
 			);
 		}
 
-		if (this.reserveControl)
-		{
-			EventEmitter.unsubscribeAll(
-				this.reserveControl,
-				'onChange'
-			);
-		}
-
 		EventEmitter.unsubscribe(
 			this.model,
 			'onChangeStoreData',
@@ -230,7 +218,7 @@ export class Row
 
 	#initActions()
 	{
-		if (this.getEditor().isReadOnly())
+		if (this.getEditor().isReadOnly() || this.isRestrictedStoreInfo())
 		{
 			return;
 		}
@@ -250,6 +238,7 @@ export class Row
 					{
 						text: Loc.getMessage('CRM_ENTITY_PL_COPY'),
 						onclick: this.handleCopyAction.bind(this),
+						disabled: this.editor.getSettingValue('disabledSelectProductInput'),
 					},
 					{
 						text: Loc.getMessage('CRM_ENTITY_PL_DELETE'),
@@ -281,110 +270,39 @@ export class Row
 			return;
 		}
 
+		const control = new MoneyControl({
+			node: priceNode,
+			hint: Loc.getMessage('CRM_ENTITY_PL_PRICE_CHANGING_RESTRICTED'),
+		});
 		if (!this.#isEditableCatalogPrice())
 		{
-			priceNode.setAttribute('disabled', true);
-			Dom.addClass(priceNode,'ui-ctl-element');
-			priceNode
-				.querySelector('.main-grid-editor-money-price')
-				?.setAttribute('disabled', 'true')
-			;
-			if (!this.editor.getSettingValue('disableNotifyChangingPrice'))
-			{
-				Event.bind(priceNode, 'mouseenter', this.handleFocusUnchangeablePrice);
-			}
+			control.disable();
 		}
 		else
 		{
-			priceNode.removeAttribute('disabled');
-			Dom.removeClass(priceNode,'ui-ctl-element');
-			priceNode
-				.querySelector('.main-grid-editor-money-price')
-				?.removeAttribute('disabled')
-			;
-			Event.unbind(priceNode, 'mouseenter', this.handleFocusUnchangeablePrice);
+			control.enable();
 		}
 	}
 
-	#showChangePriceNotify()
+	modifyQuantityInput(): void
 	{
-		if (this.editor.getSettingValue('disableNotifyChangingPrice'))
+		if (!this.isRestrictedStoreInfo())
 		{
 			return;
 		}
 
-		const hint = Text.encode(this.editor.getSettingValue('catalogPriceEditArticleHint'));
-
-		const changePriceNotifyId = 'disabled-crm-changing-price';
-		let changePriceNotify = BX.UI.Notification.Center.getBalloonById(changePriceNotifyId);
-		if (!changePriceNotify)
+		const countField = this.#getNodeChildByDataName('QUANTITY');
+		if (countField)
 		{
-			const content = Tag.render`
-				<div>
-					<div style="padding: 9px">${hint}</div>
-				</div>
-			`;
-
-			const buttonRow = Tag.render`<div></div>`;
-			content.appendChild(buttonRow);
-
-			const articleCode = this.editor.getSettingValue('catalogPriceEditArticleCode');
-			if (articleCode)
-			{
-				const moreLink = Tag.render`
-					<span class="ui-notification-balloon-action">
-						${Loc.getMessage('CRM_ENTITY_MORE_LINK')}
-					</span>
-				`;
-
-				Event.bind(moreLink, 'click', () => {
-					top.BX.Helper.show("redirect=detail&code=" + articleCode);
-					changePriceNotify.close();
-				});
-				buttonRow.appendChild(moreLink);
-			}
-
-			const disableNotificationLink = Tag.render`
-				<span class="ui-notification-balloon-action">
-					${Loc.getMessage('CRM_ENTITY_DISABLE_NOTIFICATION')}
-				</span>
-			`;
-
-			Event.bind(disableNotificationLink, 'click', () => {
-				changePriceNotify.close();
-				this.editor.setSettingValue('disableNotifyChangingPrice', true);
-				ajax
-					.runComponentAction(
-						this.editor.getComponentName(),
-						'setGridSetting',
-						{
-							mode: 'class',
-							data: {
-								signedParameters: this.editor.getSignedParameters(),
-								settingId: 'DISABLE_NOTIFY_CHANGING_PRICE',
-								selected: true,
-							}
-						}
-					);
+			const control = new MoneyControl({
+				node: countField,
+				hint: Loc.getMessage('CRM_ENTITY_PL_ROW_UPDATE_RESTRICTED_BY_STORE'),
 			});
-
-			buttonRow.appendChild(disableNotificationLink);
-
-			const notificationOptions = {
-				id: changePriceNotifyId,
-				closeButton: true,
-				category: Row.CATALOG_PRICE_CHANGING_DISABLED,
-				autoHideDelay: 10000,
-				content,
-			};
-
-			changePriceNotify = BX.UI.Notification.Center.notify(notificationOptions);
+			control.disable();
 		}
-
-		changePriceNotify.show();
 	}
 
-	#isEditableCatalogPrice()
+	#isEditableCatalogPrice(): boolean
 	{
 		return this.editor.canEditCatalogPrice()
 			|| !this.getModel().isCatalogExisted()
@@ -392,11 +310,9 @@ export class Row
 		;
 	}
 
-	#isSaveableCatalogPrice()
+	#isSaveableCatalogPrice(): boolean
 	{
-		return this.editor.canSaveCatalogPrice()
-			|| (this.getModel().isCatalogExisted() && this.getModel().isNew())
-		;
+		return this.getModel().isCatalogExisted() && this.getModel().isNew();
 	}
 
 	#initSelector()
@@ -418,12 +334,24 @@ export class Row
 					ENABLE_INPUT_DETAIL_LINK: true,
 					ROW_ID: this.getId(),
 					ENABLE_SKU_SELECTION: true,
+					ENABLE_EMPTY_PRODUCT_ERROR: false,
+					SELECTOR_INPUT_DISABLED: this.editor.getSettingValue('disabledSelectProductInput'),
 					URL_BUILDER_CONTEXT: this.editor.getSettingValue('productUrlBuilderContext'),
+					RESTRICTED_PRODUCT_TYPES: this.getEditor().getRestrictedProductTypes(),
 				},
 				mode: ProductSelector.MODE_EDIT,
 			};
 
 			this.mainSelector = new ProductSelector('crm_grid_' + this.getId(), selectorOptions);
+		}
+		else
+		{
+			this.mainSelector.subscribeEvents();
+		}
+
+		if (this.isRestrictedStoreInfo())
+		{
+			this.mainSelector.setMode(ProductSelector.MODE_VIEW);
 		}
 
 		const mainInfoNode = this.#getNodeChildByDataName('MAIN_INFO');
@@ -432,14 +360,14 @@ export class Row
 			const numberSelector = mainInfoNode.querySelector('.main-grid-row-number');
 			if (!Type.isDomNode(numberSelector))
 			{
-				mainInfoNode.appendChild(Tag.render`<div class="main-grid-row-number"></div>`);
+				Dom.append(Tag.render`<div class="main-grid-row-number"></div>`, mainInfoNode);
 			}
 
 			let selectorWrapper =  mainInfoNode.querySelector('.main-grid-row-product-selector');
 			if (!Type.isDomNode(selectorWrapper))
 			{
-				selectorWrapper = Tag.render`<div class="main-grid-row-product-selector"></div>`
-				mainInfoNode.appendChild(selectorWrapper)
+				selectorWrapper = Tag.render`<div class="main-grid-row-product-selector"></div>`;
+				Dom.append(selectorWrapper, mainInfoNode);
 			}
 
 			this.mainSelector.skuTreeInstance = null;
@@ -478,17 +406,6 @@ export class Row
 				model: this.model,
 			}
 		);
-		const storeWrapper = this.#getNodeChildByDataName('STORE_INFO');
-		if (this.storeSelector && storeWrapper)
-		{
-			storeWrapper.innerHTML = '';
-			this.storeSelector.renderTo(storeWrapper);
-
-			if (this.isReserveBlocked())
-			{
-				this.#applyStoreSelectorRestrictionTweaks();
-			}
-		}
 
 		EventEmitter.subscribe(
 			this.storeSelector,
@@ -501,6 +418,34 @@ export class Row
 			'onClear',
 			this.handleStoreFieldClear
 		);
+
+		if (this.isRestrictedStoreInfo() && this.storeSelector.searchInput)
+		{
+			this.storeSelector.searchInput.disable(
+				Loc.getMessage('CRM_ENTITY_PL_ROW_UPDATE_STORE_RESTRICTED_BY_STORE')
+			);
+		}
+
+		this.layoutStoreSelector();
+	}
+
+	layoutStoreSelector()
+	{
+		const storeWrapper = this.#getNodeChildByDataName('STORE_INFO');
+		if (this.storeSelector && storeWrapper)
+		{
+			storeWrapper.innerHTML = '';
+
+			if (this.#needStoreSelectorInput())
+			{
+				this.storeSelector.renderTo(storeWrapper);
+
+				if (this.isReserveBlocked())
+				{
+					this.#applyStoreSelectorRestrictionTweaks();
+				}
+			}
+		}
 	}
 
 	#initStoreAvailablePopup()
@@ -534,7 +479,7 @@ export class Row
 
 		storeSearchInput.toggleIcon(this.storeSelector.searchInput.getSearchIcon(), 'none');
 		storeSearchInput.getNameInput().disabled = true;
-		storeSearchInput.getNameInput().classList.add('crm-entity-product-list-locked-field');
+		Dom.addClass(storeSearchInput.getNameInput(), 'crm-entity-product-list-locked-field');
 		if (this.storeSelector.getWrapper())
 		{
 			this.storeSelector.getWrapper().onclick = () => this.editor.openIntegrationLimitSlider();
@@ -544,23 +489,15 @@ export class Row
 	#initReservedControl()
 	{
 		const storeWrapper = this.#getNodeChildByDataName('RESERVE_INFO');
-		if (storeWrapper)
+		if (storeWrapper && this.#getAllowedStores().length)
 		{
 			this.reserveControl = new ReserveControl({
-				model: this.getModel(),
+				row: this,
 				isReserveEqualProductQuantity: this.#isReserveEqualProductQuantity(),
 				defaultDateReservation: this.editor.getSettingValue('defaultDateReservation'),
 				isBlocked: this.isReserveBlocked(),
+				measureName: this.#getMeasureName(),
 			});
-
-			EventEmitter.subscribe(
-				this.reserveControl,
-				'onChange',
-				(event) => {
-					const item = event.getData();
-					this.updateField(item.NAME, item.VALUE);
-				}
-			);
 
 			EventEmitter.subscribe(
 				this.reserveControl,
@@ -569,6 +506,11 @@ export class Row
 					this.editor.openIntegrationLimitSlider();
 				}
 			);
+
+			if (this.isRestrictedStoreInfo())
+			{
+				this.reserveControl.disable();
+			}
 
 			this.layoutReserveControl();
 		}
@@ -625,7 +567,7 @@ export class Row
 		this.initHandlersForSelectors();
 	}
 
-	#onStoreFieldClear(event)
+	#onStoreFieldClear()
 	{
 		this.initHandlersForSelectors();
 	}
@@ -637,7 +579,27 @@ export class Row
 		{
 			storeWrapper.innerHTML = '';
 			this.reserveControl.clearCache();
-			this.reserveControl.renderTo(storeWrapper);
+
+			if (this.#needReserveControlInput())
+			{
+				if (this.isRestrictedStoreInfo())
+				{
+					storeWrapper.innerHTML = this.reserveControl.getReservedQuantity() + ' ' + Text.encode(this.#getMeasureName());
+					return;
+				}
+
+				this.reserveControl.renderTo(storeWrapper);
+			}
+		}
+	}
+
+	clearReserveControl()
+	{
+		const storeWrapper = this.#getNodeChildByDataName('RESERVE_INFO');
+		if (storeWrapper && this.reserveControl)
+		{
+			storeWrapper.innerHTML = '';
+			this.reserveControl.clearCache();
 		}
 	}
 
@@ -660,7 +622,7 @@ export class Row
 		{
 			result = {};
 
-			for (let fieldName of fields)
+			for (const fieldName of fields)
 			{
 				result[fieldName] = this.getField(fieldName);
 			}
@@ -668,7 +630,7 @@ export class Row
 
 		if ('PRODUCT_NAME' in result)
 		{
-			let fixedProductName = this.getField('FIXED_PRODUCT_NAME', '');
+			const fixedProductName = this.getField('FIXED_PRODUCT_NAME', '');
 
 			if (Type.isStringFilled(fixedProductName))
 			{
@@ -743,16 +705,6 @@ export class Row
 	getBasePrice(): number
 	{
 		return this.getField('BASE_PRICE', 0);
-	}
-
-	getEnteredPrice(): number
-	{
-		return this.getField('ENTERED_PRICE', this.getBasePrice());
-	}
-
-	getCatalogPrice(): number
-	{
-		return this.getField('CATALOG_PRICE', this.getBasePrice());
 	}
 
 	isPriceNetto(): boolean
@@ -843,6 +795,15 @@ export class Row
 		return false;
 	}
 
+	isEmptyRow(): boolean
+	{
+		return (
+			!Type.isStringFilled(this.getField('NAME', '').trim())
+			&& this.model.isEmpty()
+			&& this.getBasePrice() <= 0
+		)
+	}
+
 	getTaxIncluded(): 'Y' | 'N'
 	{
 		return this.getField('TAX_INCLUDED', 'N');
@@ -907,15 +868,6 @@ export class Row
 				this.changeProductId(value);
 				break;
 
-			case 'ENTERED_PRICE':
-			case 'PRICE':
-				this.changeEnteredPrice(value, mode);
-				break;
-
-			case 'CATALOG_PRICE':
-				this.changeCatalogPrice(value, mode);
-				break;
-
 			case 'QUANTITY':
 				this.changeQuantity(value, mode);
 				break;
@@ -977,8 +929,9 @@ export class Row
 			case 'DATE_RESERVE_END':
 				this.changeDateReserveEnd(value);
 				break;
+			case 'PRICE':
 			case 'BASE_PRICE':
-				this.setBasePrice(value);
+				this.changeBasePrice(value, mode);
 				break;
 			case 'DEDUCTED_QUANTITY':
 				this.setDeductedQuantity(value);
@@ -986,13 +939,15 @@ export class Row
 			case 'ROW_RESERVED':
 				this.setRowReserved(value);
 				break;
+			case 'TYPE':
+				this.setType(value);
+				break;
 			case 'SKU_TREE':
 			case 'DETAIL_URL':
 			case 'IMAGE_INFO':
 			case 'COMMON_STORE_AMOUNT':
 				this.setField(code, value);
 				break;
-
 		}
 	}
 
@@ -1031,97 +986,6 @@ export class Row
 		const preparedValue = this.parseInt(value);
 
 		this.setProductId(preparedValue);
-	}
-
-	changeEnteredPrice(value, mode = MODE_SET)
-	{
-		const originalPrice = value;
-		// price can't be less than zero
-		value = Math.max(value, 0);
-
-		const preparedValue = this.parseFloat(value, this.getPricePrecision());
-
-		this.setField('ENTERED_PRICE', preparedValue);
-		if (mode === MODE_EDIT && originalPrice >= 0)
-		{
-			if (!this.#isEditableCatalogPrice)
-			{
-				return;
-			}
-
-			if (this.getModel().isCatalogExisted() && this.#isSaveableCatalogPrice())
-			{
-				this.#showPriceNotifier(preparedValue);
-			}
-			else
-			{
-				this.setBasePrice(preparedValue, mode);
-			}
-
-			this.addActionProductChange();
-			this.addActionUpdateTotal();
-			this.addActionDisableSaveButton();
-		}
-		else
-		{
-			this.refreshFieldsLayout();
-		}
-
-		this.#togglePriceHintPopup(originalPrice < 0 && originalPrice !== value);
-	}
-
-	changeCatalogPrice(value)
-	{
-		const preparedValue = this.parseFloat(value, this.getPricePrecision());
-		this.setField('CATALOG_PRICE', preparedValue);
-		this.refreshFieldsLayout();
-	}
-
-	#showPriceNotifier(enteredPrice)
-	{
-		const disabledPriceNotify = BX.UI.Notification.Center.getBalloonByCategory(Row.CATALOG_PRICE_CHANGING_DISABLED);
-		if (disabledPriceNotify)
-		{
-			disabledPriceNotify.close();
-		}
-		this.getModel().showSaveNotifier(
-			'priceChanger_' + this.getId(),
-			{
-				title: Loc.getMessage('CATALOG_PRODUCT_MODEL_SAVING_NOTIFICATION_PRICE_CHANGED_QUERY'),
-				events: {
-					onCancel: () => {
-						if (this.getBasePrice() > this.getEnteredPrice())
-						{
-							this.setField('ENTERED_PRICE', this.getBasePrice());
-							this.updateUiInputField('PRICE', this.getBasePrice())
-						}
-
-						this.setPrice(enteredPrice);
-
-						if (this.getField('DISCOUNT_SUM') > 0)
-						{
-							const settingPopup = this.getEditor().getSettingsPopup();
-							const setting = settingPopup?.getSetting('DISCOUNTS');
-							if (setting && setting.checked === false)
-							{
-								settingPopup.requestGridSettings(setting, true);
-							}
-						}
-					},
-					onSave: () => {
-						this.setField('ENTERED_PRICE', enteredPrice);
-						this.setField('PRICE', enteredPrice);
-						this.changeCatalogPrice('CATALOG_PRICE', enteredPrice);
-						this.setBasePrice(enteredPrice);
-						this.getModel().save(['BASE_PRICE', 'CURRENCY']);
-
-						this.refreshFieldsLayout();
-						this.addActionUpdateTotal();
-						this.executeExternalActions();
-					}
-				},
-			}
-		);
 	}
 
 	changeQuantity(value, mode = MODE_SET)
@@ -1267,22 +1131,31 @@ export class Row
 		this.setField('STORE_AVAILABLE', this.model.getStoreCollection().getStoreAvailableAmount(value));
 
 		this.updateUiStoreAmountData();
+		this.layoutReserveControl();
 		this.addActionProductChange();
 	}
 
 	#onChangeStoreData()
 	{
-		const storeId = this.getField('STORE_ID');
+		let storeId = this.getField('STORE_ID');
 
-		if (!this.isReserveBlocked() && this.isNewRow())
+		if (!this.isReserveBlocked() && this.isNewRow() && this.storeSelector)
 		{
 			const currentAmount = this.getModel().getStoreCollection().getStoreAmount(storeId);
 			if (currentAmount <= 0 && this.getModel().isChanged())
 			{
 				const maxStore = this.getModel().getStoreCollection().getMaxFilledStore();
-				if (maxStore.AMOUNT > currentAmount && this.storeSelector)
+				if (maxStore.AMOUNT > currentAmount)
 				{
 					this.storeSelector.onStoreSelect(maxStore.STORE_ID, Text.decode(maxStore.STORE_TITLE));
+				}
+				else if (Type.isNil(storeId))
+				{
+					storeId = +this.storeSelector.getStoreId();
+					if (storeId > 0)
+					{
+						this.changeStore(storeId);
+					}
 				}
 			}
 		}
@@ -1303,19 +1176,13 @@ export class Row
 		const storeId = this.getField('STORE_ID');
 		const available = this.model.getStoreCollection().getStoreAvailableAmount(storeId);
 
-		const measureName =
-			Type.isStringFilled(this.model.getField('MEASURE_NAME'))
-				? this.model.getField('MEASURE_NAME')
-				: this.editor.getDefaultMeasure()?.SYMBOL || ''
-		;
-
-		if (!this.getModel().isCatalogExisted())
+		if (!this.getModel().isCatalogExisted() || this.isRestrictedStoreInfo() || this.getModel().isService())
 		{
 			availableWrapper.innerHTML = '';
 		}
 		else
 		{
-			availableWrapper.innerHTML = Text.toNumber(available) + ' ' + Text.encode(measureName);
+			availableWrapper.innerHTML = Text.toNumber(available) + ' ' + this.#getMeasureName();
 		}
 	}
 
@@ -1328,19 +1195,13 @@ export class Row
 			return;
 		}
 
-		if (!this.getModel().isCatalogExisted())
+		if (!this.getModel().isCatalogExisted() || this.getModel().isService())
 		{
 			reserveWrapper.innerHTML = '';
 			return;
 		}
 
-		const measureName =
-			Type.isStringFilled(this.model.getField('MEASURE_NAME'))
-				? this.model.getField('MEASURE_NAME')
-				: this.editor.getDefaultMeasure()?.SYMBOL || ''
-		;
-
-		reserveWrapper.innerHTML = Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + Text.encode(measureName);
+		reserveWrapper.innerHTML = Text.toNumber(this.getField('ROW_RESERVED')) + ' ' + this.#getMeasureName();
 	}
 
 	setDeductedQuantity(value)
@@ -1352,19 +1213,13 @@ export class Row
 			return;
 		}
 
-		if (!this.getModel().isCatalogExisted())
+		if (!this.getModel().isCatalogExisted() || this.getModel().isService())
 		{
 			deductedWrapper.innerHTML = '';
 			return;
 		}
 
-		const measureName =
-			Type.isStringFilled(this.model.getField('MEASURE_NAME'))
-				? this.model.getField('MEASURE_NAME')
-				: this.editor.getDefaultMeasure()?.SYMBOL || ''
-		;
-
-		deductedWrapper.innerHTML = Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + Text.encode(measureName);
+		deductedWrapper.innerHTML = Text.toNumber(this.getField('DEDUCTED_QUANTITY')) + ' ' + this.#getMeasureName();
 	}
 
 	changeStoreName(value: number)
@@ -1386,7 +1241,7 @@ export class Row
 		const preparedValue = Text.toNumber(value);
 		const reserveDifference = preparedValue - this.getField('INPUT_RESERVE_QUANTITY');
 
-		if (reserveDifference == 0 || isNaN(reserveDifference))
+		if (reserveDifference === 0 || isNaN(reserveDifference))
 		{
 			return;
 		}
@@ -1510,7 +1365,11 @@ export class Row
 			this.addActionProductChange();
 			this.addActionUpdateTotal();
 
-			if (this.#isReserveEqualProductQuantity())
+			if (
+				this.reserveControl
+				&& this.#isReserveEqualProductQuantity()
+				&& this.#needReserveControlInput()
+			)
 			{
 				if (!this.getModel().getField('DATE_RESERVE_END'))
 				{
@@ -1520,52 +1379,14 @@ export class Row
 				this.resetReserveFields();
 
 				this.onAfterExecuteExternalActions = () => {
-					this.reserveControl?.setReservedQuantity(
-						this.getField('QUANTITY'),
-						true
-					);
+
+					this.reserveControl.changeInputValue(this.getField('QUANTITY'));
 				};
 			}
 		}
 	}
 
-	setPrice(value)
-	{
-		const originalPrice = value;
-		// price can't be less than zero
-		value = Math.max(value, 0);
-		const calculatedFields = this.getCalculator()
-			.setFields(this.getCalculator().calculateBasePrice(this.getBasePrice()))
-			.calculatePrice(value)
-		;
-
-		delete(calculatedFields['BASE_PRICE']);
-		this.setFields(calculatedFields);
-		this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
-		this.addActionProductChange();
-		this.addActionUpdateTotal();
-		this.executeExternalActions();
-		this.#togglePriceHintPopup(originalPrice < 0 && originalPrice !== value);
-	}
-
-	setBasePrice(value, mode = MODE_SET)
-	{
-		const originalPrice = value;
-		// price can't be less than zero
-		value = Math.max(value, 0);
-		const calculatedFields = this.getCalculator()
-			.setFields(this.getCalculator().calculateBasePrice(this.getCatalogPrice()))
-			.calculatePrice(value)
-		;
-
-		this.setFields(calculatedFields);
-		this.refreshFieldsLayout(['PRICE_NETTO', 'PRICE_BRUTTO']);
-		this.addActionProductChange();
-		this.addActionUpdateTotal();
-		this.#togglePriceHintPopup(originalPrice !== value);
-	}
-
-	setBasePrice(value, mode = MODE_SET)
+	changeBasePrice(value, mode = MODE_SET)
 	{
 		const originalPrice = value;
 		// price can't be less than zero
@@ -1582,7 +1403,7 @@ export class Row
 			const calculatedFields = this.getCalculator().calculateBasePrice(value);
 			this.setFields(calculatedFields);
 
-			const exceptFieldNames = (mode === MODE_EDIT) ? ['BASE_PRICE', 'PRICE', 'ENTERED_PRICE'] : [];
+			const exceptFieldNames = (mode === MODE_EDIT) ? ['BASE_PRICE', 'PRICE'] : [];
 			this.refreshFieldsLayout(exceptFieldNames);
 
 			this.addActionProductChange();
@@ -1988,7 +1809,7 @@ export class Row
 			return;
 		}
 
-		const uiType = this.getUiFieldType(field);
+		const uiType = this.getUiFieldType(uiName);
 		if (!uiType)
 		{
 			return;
@@ -2052,7 +1873,7 @@ export class Row
 		}
 	}
 
-	getUiFieldName(field)
+	getUiFieldName(field): string
 	{
 		let result = null;
 
@@ -2071,8 +1892,7 @@ export class Row
 				result = field;
 				break;
 
-			case 'PRICE_NETTO':
-			case 'PRICE_BRUTTO':
+			case 'BASE_PRICE':
 				result = 'PRICE';
 				break;
 
@@ -2085,16 +1905,16 @@ export class Row
 		return result;
 	}
 
-	getUiFieldType(field)
+	getUiFieldType(field): string
 	{
 		let result = null;
 
 		switch (field)
 		{
 			case 'PRICE':
-			case 'ENTERED_PRICE':
 			case 'QUANTITY':
 			case 'TAX_RATE':
+			case 'DISCOUNT_PRICE':
 			case 'DISCOUNT_RATE':
 			case 'DISCOUNT_SUM':
 			case 'DISCOUNT_ROW':
@@ -2120,7 +1940,7 @@ export class Row
 		return result;
 	}
 
-	allowUpdateUiField(field)
+	allowUpdateUiField(field): boolean
 	{
 		let result = true;
 
@@ -2147,27 +1967,27 @@ export class Row
 	}
 
 	// proxy
-	parseInt(value: number | string, defaultValue: number = 0)
+	parseInt(value: number | string, defaultValue: number = 0): number
 	{
 		return this.getEditor().parseInt(value, defaultValue);
 	}
 
-	parseFloat(value: number | string, precision: number, defaultValue = 0)
+	parseFloat(value: number | string, precision: number, defaultValue = 0): number
 	{
 		return this.getEditor().parseFloat(value, precision, defaultValue);
 	}
 
-	getPricePrecision()
+	getPricePrecision(): number
 	{
 		return this.getEditor().getPricePrecision();
 	}
 
-	getQuantityPrecision()
+	getQuantityPrecision(): number
 	{
 		return this.getEditor().getQuantityPrecision();
 	}
 
-	getCommonPrecision()
+	getCommonPrecision(): number
 	{
 		return this.getEditor().getCommonPrecision();
 	}
@@ -2242,12 +2062,13 @@ export class Row
 
 		if (this.onAfterExecuteExternalActions)
 		{
-			this.onAfterExecuteExternalActions.call();
+			const callback = this.onAfterExecuteExternalActions;
 			this.onAfterExecuteExternalActions = null;
+			callback.call();
 		}
 	}
 
-	isEmpty()
+	isEmpty(): boolean
 	{
 		return (
 			!Type.isStringFilled(this.getField('PRODUCT_NAME', '').trim())
@@ -2256,14 +2077,47 @@ export class Row
 		)
 	}
 
-	isReserveBlocked()
+	isReserveBlocked(): boolean
 	{
 		return this.getSettingValue('isReserveBlocked', false);
+	}
+
+	isRestrictedStoreInfo(): boolean
+	{
+		const storeId = this.getField('STORE_ID')?.toString();
+		if (Type.isNil(storeId) || storeId === '0')
+		{
+			return false;
+		}
+		else if (this.getModel().isSimple() || this.getModel().isService())
+		{
+			return false;
+		}
+
+		return !this.#getAllowedStores().includes(storeId)
+			|| !this.editor.getSettingValue('allowEntityReserve', true)
+		;
+	}
+
+	#getAllowedStores(): Array
+	{
+		return this.editor.getSettingValue('allowedStores', []);
 	}
 
 	#isReserveEqualProductQuantity(): Boolean
 	{
 		return this.editor.getSettingValue('isReserveEqualProductQuantity', false);
+	}
+
+	#getMeasureName()
+	{
+		const measureName =
+			Type.isStringFilled(this.model.getField('MEASURE_NAME'))
+				? this.model.getField('MEASURE_NAME')
+				: this.editor.getDefaultMeasure()?.SYMBOL || ''
+		;
+
+		return Text.encode(measureName);
 	}
 
 	#getNodeChildByDataName(name: String): HTMLElement
@@ -2277,5 +2131,25 @@ export class Row
 		{
 			this.storeAvailablePopup.refreshStoreInfo();
 		}
+	}
+
+	setType(value)
+	{
+		this.setField('TYPE', value);
+
+		if (this.getModel().isService())
+		{
+			this.clearReserveControl();
+		}
+	}
+
+	#needReserveControlInput(): boolean
+	{
+		return !this.getModel().isSimple() && !this.getModel().isService();
+	}
+
+	#needStoreSelectorInput(): boolean
+	{
+		return !this.getModel().isSimple() && !this.getModel().isService();
 	}
 }

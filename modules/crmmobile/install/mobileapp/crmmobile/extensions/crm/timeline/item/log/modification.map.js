@@ -1,0 +1,1 @@
+{"version":3,"sources":["modification.js"],"names":["jn","define","require","exports","module","TimelineItemBase","Modification"],"mappings":"AAGAA,GAAGC,OAAO,sCAAsC,CAACC,EAASC,EAASC,KAElE,MAAMC,iBAAEA,GAAqBH,EAAQ,0BAKrC,MAAMI,UAAqBD,GAK3BD,EAAOD,QAAU,CAAEG,aAAAA","file":"modification.map.js"}

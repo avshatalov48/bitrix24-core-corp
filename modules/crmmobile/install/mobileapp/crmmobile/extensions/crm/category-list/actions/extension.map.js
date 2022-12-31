@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","CategorySelectActions","SelectTunnelDestination","SelectCurrentCategory","CreateTunnel"],"mappings":"AAGAA,GAAGC,OAAO,6BAA6B,CAACC,EAASC,EAASC,KACzD,MAAMC,EAAwB,CAC7BC,wBAAyB,0BACzBC,sBAAuB,wBACvBC,aAAc,gBAGfJ,EAAOD,QAAU,CAAEE,sBAAAA","file":"extension.map.js"}

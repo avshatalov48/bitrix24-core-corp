@@ -172,7 +172,6 @@ export class Widget extends Tab
 			? this.renderEmptyInner()
 			: this.renderWidgetRows(data.widgets, data.formName, data.formType);
 
-		// FIXME ${showMoreLink}
 		// let showMoreLink = '';
 		// if (data.showMoreLink)
 		// {
@@ -198,13 +197,13 @@ export class Widget extends Tab
 						${BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUTTON')}
 					</button>
 
-					<button
+					<a
 						class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-round ui-btn-no-caps crm-form-embed__customization-settings--btn"
-						onclick="window.open('/crm/button/')"
+						href="${Text.encode(data.url.allWidgets)}"
 						style="float: right"
 					>
-						${BX.Loc.getMessage('EMBED_SLIDER_WIDGET_SETTINGS_BUTTON_ALL')}
-					</button>
+						${BX.Loc.getMessage('EMBED_SLIDER_WIDGET_FORM_ALL_WIDGETS')}
+					</a>
 				</div>
 			`,
 			section

@@ -147,25 +147,25 @@ abstract class Factory
 
 	final public function getItemByEntityObject(EntityObject $object): Item
 	{
-		$disabledFieldNames = [];
+		$disabledFields = [];
 
 		/** @see Item::isCategoriesSupported() */
 		if (!$this->isCategoriesSupported())
 		{
-			$disabledFieldNames[] = Item::FIELD_NAME_CATEGORY_ID;
+			$disabledFields[] = new Item\DisabledField(Item::FIELD_NAME_CATEGORY_ID);
 		}
 
 		/** @see Item::isStagesEnabled() */
 		if (!$this->isStagesEnabled())
 		{
-			$disabledFieldNames[] = Item::FIELD_NAME_STAGE_ID;
+			$disabledFields[] = new Item\DisabledField(Item::FIELD_NAME_STAGE_ID);
 		}
 
 		$item = new $this->itemClassName(
 			$this->getEntityTypeId(),
 			$object,
 			$this->getFieldsMap(),
-			$disabledFieldNames
+			$disabledFields
 		);
 
 		$this->configureItem($item, $object);
@@ -184,6 +184,11 @@ abstract class Factory
 		if (count($fileFields) > 0)
 		{
 			$item->addImplementation(new Item\FieldImplementation\File($entityObject, $fileFields, $this->getFieldsMap()));
+		}
+
+		if ($item->isCategoriesSupported())
+		{
+			$item->refreshCategoryDependentDisabledFields();
 		}
 	}
 
@@ -623,7 +628,8 @@ abstract class Factory
 
 		if (in_array(Item::FIELD_NAME_PRODUCTS, $select, true))
 		{
-			$select[] = Item::FIELD_NAME_PRODUCTS.'.IBLOCK_ELEMENT';
+			$select[] = Item::FIELD_NAME_PRODUCTS . '.IBLOCK_ELEMENT';
+			$select[] = Item::FIELD_NAME_PRODUCTS . '.PRODUCT_ROW_RESERVATION';
 		}
 
 		return $select;
@@ -755,7 +761,10 @@ abstract class Factory
 			// no available stages for not authorized user
 			return null;
 		}
-		if (!$this->isStagesSupported())
+		if (
+			!$this->isStagesSupported()
+			|| !$item->isStagesEnabled()
+		)
 		{
 			return null;
 		}
@@ -1312,7 +1321,24 @@ abstract class Factory
 		$trackedObject = new TrackedObject\Item($itemBeforeSave, $item);
 
 		$trackedObject->bindToEntityType($this->getEntityName(), $this->getEntityDescription());
-		$trackedObject->setTrackedFieldNames($this->getTrackedFieldNames());
+
+		$trackedFieldNames = [];
+		foreach ($this->getTrackedFieldNames() as $trackedFieldName)
+		{
+			if (
+				$itemBeforeSave->isFieldDisabled($trackedFieldName)
+				|| (
+					$item
+					&& $item->isFieldDisabled($trackedFieldName)
+				)
+			)
+			{
+				continue;
+			}
+
+			$trackedFieldNames[] = $trackedFieldName;
+		}
+		$trackedObject->setTrackedFieldNames($trackedFieldNames);
 
 		foreach ($this->getDependantTrackedObjects() as $dependantTrackedObject)
 		{
@@ -1651,6 +1677,26 @@ abstract class Factory
 	}
 
 	/**
+	 * Returns true if this entity supports LAST_ACTIVITY_* fields and all associated logic
+	 *
+	 * @return bool
+	 */
+	public function isLastActivitySupported(): bool
+	{
+		return false;
+	}
+
+	/**
+	 * Returns true if 'last activity' functionality is enabled in UI
+	 *
+	 * @return bool
+	 */
+	public function isLastActivityEnabled(): bool
+	{
+		return $this->isLastActivitySupported();
+	}
+
+	/**
 	 * Return actual counters settings.
 	 *
 	 * @return EntityCounterSettings
@@ -1662,6 +1708,16 @@ abstract class Factory
 				? EntityCounterSettings::createDefault($this->isStagesSupported())
 				: new EntityCounterSettings()
 			;
+	}
+
+	/**
+	 * Return true if inventory management is enabled for this entity.
+	 *
+	 * @return bool
+	 */
+	public function isInventoryManagementEnabled(): bool
+	{
+		return false;
 	}
 
 	public function getEditorAdapter(): EditorAdapter
@@ -1759,6 +1815,23 @@ abstract class Factory
 		}
 
 		return $this->itemsCategoryCache[$id];
+	}
+
+	/**
+	 * Return category of the item with $id.
+	 *
+	 * @param int $id - Item identifier.
+	 * @return Category|null
+	 */
+	public function getItemCategory(int $id): ?Category
+	{
+		$categoryId = (int)$this->getItemCategoryId($id);
+		if (!$categoryId)
+		{
+			return null;
+		}
+
+		return $this->getCategory($categoryId);
 	}
 
 	public function clearItemCategoryCache(int $id): void

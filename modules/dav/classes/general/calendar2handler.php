@@ -298,9 +298,21 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 					if ($bCalendarData)
 					{
-						$content = $this->GetICalContent($event, $siteId);
-						$resource->AddProperty('getcontentlength', mb_strlen($content));
-						$resource->AddProperty('calendar-data', $content, CDavGroupDav::CALDAV);
+						if ($event && is_string($event))
+						{
+							$event = $this->Read($calendarId, $event);
+						}
+
+						if ($event && is_array($event))
+						{
+							$content = $this->GetICalContent($event, $siteId);
+							$resource->AddProperty('getcontentlength', mb_strlen($content));
+							$resource->AddProperty('calendar-data', $content, CDavGroupDav::CALDAV);
+						}
+						else
+						{
+							$resource->AddProperty('getcontentlength', "");
+						}
 					}
 					else
 					{
@@ -394,28 +406,28 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 		{
 			if ($event["DT_SKIP_TIME"] === "Y")
 			{
-				$dtStart = array(
+				$dtStart = [
 					"VALUE" => date("Ymd", MakeTimeStamp($event["DATE_FROM"])),
-					"PARAMETERS" => array("VALUE" => "DATE")
-				);
-				$dtEnd = array(
+					"PARAMETERS" => ["VALUE" => "DATE"]
+				];
+				$dtEnd = [
 					"VALUE" => date("Ymd", MakeTimeStamp($event["DATE_TO"]) + 86400 /* + one day*/),
-					"PARAMETERS" => array("VALUE" => "DATE")
-				);
+					"PARAMETERS" => ["VALUE" => "DATE"]
+				];
 			}
 			else
 			{
-				$dtStart = array(
+				$dtStart = [
 					"VALUE" => date("Ymd\\THis", MakeTimeStamp($event["DATE_FROM"])),
-					"PARAMETERS" => array("TZID" => $event["TZ_FROM"])
-				);
-				$dtEnd = array(
+					"PARAMETERS" => ["TZID" => $event["TZ_FROM"]]
+				];
+				$dtEnd = [
 					"VALUE" => date("Ymd\\THis", MakeTimeStamp($event["DATE_TO"])),
-					"PARAMETERS" => array("TZID" => $event["TZ_TO"])
-				);
+					"PARAMETERS" => ["TZID" => $event["TZ_TO"]]
+				];
 			}
 
-			$iCalEvent = array(
+			$iCalEvent = [
 				"TYPE" => "VEVENT",
 				"CREATED" => date("Ymd\\THis\\Z", MakeTimeStamp($event["DATE_CREATE"])),
 				"LAST-MODIFIED" => date("Ymd\\THis\\Z", MakeTimeStamp($event["TIMESTAMP_X"])),
@@ -424,29 +436,43 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				"SUMMARY" => $event["NAME"],
 				"DTSTART" => $dtStart,
 				"DTEND" => $dtEnd
-			);
+			];
 
 			if (isset($event["ACCESSIBILITY"]) && ($event["ACCESSIBILITY"] === 'free' || $event["ACCESSIBILITY"] === 'quest'))
+			{
 				$iCalEvent["TRANSP"] = 'TRANSPARENT';
+			}
 			else
+			{
 				$iCalEvent["TRANSP"] = 'OPAQUE';
+			}
 
 			if (isset($event["LOCATION"]))
 			{
-				if(is_array($event["LOCATION"]) && isset($event["LOCATION"]["NEW"]))
+				if (is_array($event["LOCATION"]) && isset($event["LOCATION"]["NEW"]))
+				{
 					$iCalEvent["LOCATION"] = $event["LOCATION"]["NEW"];
-				elseif($event["LOCATION"] != '')
+				}
+				elseif ($event["LOCATION"] != '')
+				{
 					$iCalEvent["LOCATION"] = $event["LOCATION"];
+				}
 			}
 
 			if (isset($event["IMPORTANCE"]))
 			{
 				if ($event["IMPORTANCE"] === "low")
+				{
 					$iCalEvent["PRIORITY"] = 9;
+				}
 				elseif ($event["IMPORTANCE"] === "high")
+				{
 					$iCalEvent["PRIORITY"] = 1;
+				}
 				else
+				{
 					$iCalEvent["PRIORITY"] = 5;
+				}
 			}
 
 			if ((isset($event["DESCRIPTION"]) && $event["DESCRIPTION"] !== '') || $event['ATTENDEES_CODES'])
@@ -456,7 +482,7 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				{
 					$event['MEETING']['LANGUAGE_ID'] = \CCalendar::getUserLanguageId((int)$event['OWNER_ID']);
 				}
-				if (isset($event['ATTENDEES_CODES']) && count($event['ATTENDEES_CODES']) > 1)
+				if (isset($event['ATTENDEES_CODES']) && is_array($event['ATTENDEES_CODES']) && count($event['ATTENDEES_CODES']) > 1)
 				{
 					$users = self::GetAttendees($event['ATTENDEES_CODES']);
 					IncludeModuleLangFile($_SERVER["DOCUMENT_ROOT"].BX_ROOT."/modules/dav/classes/general/calendarhandler.php");
@@ -471,29 +497,31 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				}
 			}
 
-			if (isset($event["REMIND"]) && is_array($event["REMIND"]) && count($event["REMIND"]) > 0)
+			if (isset($event["REMIND"]) && is_array($event["REMIND"]) && !empty($event["REMIND"]))
 			{
-				$arPeriodMapTmp = array("min" => "M", "hour" => "H", "day" => "D");
+				$arPeriodMapTmp = ["min" => "M", "hour" => "H", "day" => "D"];
 				foreach($event["REMIND"] as $key => $remind)
 				{
 					$type = $arPeriodMapTmp[$remind['type']];
-					$iCalEvent["@VALARM".$key] = array(
+					$iCalEvent["@VALARM".$key] = [
 						"TYPE" => "VALARM",
 						"ACTION" => "DISPLAY",
-						"TRIGGER" => array(
+						"TRIGGER" => [
 							"VALUE" => "-P".($type === 'D' ? '' : 'T').$remind['count'].$type
-						)
-					);
+						]
+					];
 				}
 			}
 
-			if (is_array($event["RRULE"]) && in_array($event["RRULE"]["FREQ"], array("DAILY", "WEEKLY", "MONTHLY", "YEARLY")))
+			if (is_array($event["RRULE"]) && in_array($event["RRULE"]["FREQ"], ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"]))
 			{
 				$val = "FREQ=".$event["RRULE"]["FREQ"];
 				$val .= ";INTERVAL=".$event["RRULE"]["INTERVAL"];
 
-				if ($event["RRULE"]["FREQ"] === "WEEKLY" && count($event["RRULE"]["BYDAY"]) > 0)
+				if ($event["RRULE"]["FREQ"] === "WEEKLY" && is_array($event["RRULE"]["BYDAY"]) && count($event["RRULE"]["BYDAY"]) > 0)
+				{
 					$val .= ";BYDAY=".implode(",", $event["RRULE"]["BYDAY"]);
+				}
 
 				if (isset($event["RRULE"]["COUNT"]) && $event["RRULE"]["COUNT"])
 				{
@@ -534,22 +562,22 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 				{
 					if ($event["DT_SKIP_TIME"] == 'Y')
 					{
-						$iCalEvent["EXDATE"] = array(
+						$iCalEvent["EXDATE"] = [
 							"VALUE" => implode(',', $exdate),
-							"PARAMETERS" => array(
+							"PARAMETERS" => [
 								"VALUE" => "DATE"
-							)
-						);
+							]
+						];
 					}
 					else
 					{
-						$iCalEvent["EXDATE"] = array(
+						$iCalEvent["EXDATE"] = [
 							"VALUE" => implode(',', $exdate),
-							"PARAMETERS" => array(
+							"PARAMETERS" => [
 								"TZID" => $event["TZ_FROM"],
 								"VALUE" => "DATE-TIME"
-							)
-						);
+							]
+						];
 					}
 				}
 			}
@@ -882,7 +910,9 @@ if (CModule::IncludeModule("calendar") && class_exists("CCalendar") && !class_ex
 
 			$oldEvent = $this->GetEntry('GET', $id, $calendarId);
 			if (is_null($oldEvent) || !is_array($oldEvent))
+			{
 				return $oldEvent;
+			}
 
 			$arResult['data'] = $this->groupdav->GetResponse()->Encode($this->GetICalContent($oldEvent, $siteId));
 			$arResult['mimetype'] = 'text/calendar; charset=utf-8';

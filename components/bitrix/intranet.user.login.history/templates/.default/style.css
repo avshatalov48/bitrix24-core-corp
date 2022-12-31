@@ -1,0 +1,33 @@
+.bx-user-login-history-device-type-icon{
+	display: block;
+	margin: 0 auto;
+	width: 22px;
+	min-width: 22px;
+	height: 22px;
+	background: center no-repeat;
+}
+
+.bx-user-login-history-device-type-icon.--mobile {
+	background-size: 22px 22px;
+	background-image: url(images/mobile.svg);
+}
+
+.bx-user-login-history-device-type-icon.--desktop {
+	background-size: 22px 22px;
+	background-image: url(images/desk.svg);
+}
+
+.bx-user-login-history-device-type-icon.--unknown {
+	background-size: 22px 22px;
+	background-image: url(images/unknow.svg);
+}
+
+.bx-user-login-history-device-type-icon.--tv {
+	background-size: 22px 22px;
+	background-image: url(images/tv.svg);
+}
+
+.bx-user-login-history-device-type-icon.--tablet {
+	background-size: 22px 22px;
+	background-image: url(images/tablet.svg);
+}

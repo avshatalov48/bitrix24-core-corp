@@ -8,15 +8,18 @@ use Bitrix\Crm\Color\PhaseColorScheme;
 use Bitrix\Crm\Format\PersonNameFormatter;
 use Bitrix\Crm\Kanban\Entity;
 use Bitrix\Crm\Kanban\EntityNotFoundException;
+use Bitrix\Crm\Kanban\Sort;
 use Bitrix\Crm\Restriction\RestrictionManager;
 use Bitrix\Crm\Search\SearchEnvironment;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Field\BooleanField;
 use Bitrix\Crm\Service\ParentFieldManager;
 use Bitrix\Crm\UI\Filter\EntityHandler;
 use Bitrix\Main\Entity\ExpressionField;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Text\HtmlFilter;
+use Bitrix\Main\Type\DateTime;
 use Bitrix\Rest\Marketplace\Url;
 
 abstract class Kanban
@@ -37,6 +40,7 @@ abstract class Kanban
 	protected $statusKey;
 	protected $nameTemplate;
 	protected $fieldSum;
+	protected string $viewMode;
 
 	protected $params = [];
 	protected $semanticIds = [];
@@ -48,6 +52,8 @@ abstract class Kanban
 
 	protected $blockPage = 1;
 	protected $currentUserId = 0;
+
+	protected $fieldsContext = Service\Display\Field::KANBAN_CONTEXT;
 
 	protected $exclusiveFieldsReturnCustomer = [
 		'HONORIFIC' => true,
@@ -74,6 +80,8 @@ abstract class Kanban
 		'UTM_SOURCE', 'UTM_MEDIUM', 'UTM_CAMPAIGN', 'UTM_CONTENT', 'UTM_TERM',
 		'STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'
 	];
+
+	protected ?array $order = null;
 
 	/**
 	 * @param string $entityType
@@ -106,18 +114,24 @@ abstract class Kanban
 	{
 		Loc::loadLanguageFile(__FILE__);
 		$this->entityType = $entityType;
+		$this->viewMode = $params['VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES;
 
 		$type = mb_strtoupper($this->entityType);
-		$this->entity = Entity::getInstance($type);
+		$this->entity = Entity::getInstance($type, $this->viewMode);
 
 		if(!$this->entity)
 		{
-			throw new EntityNotFoundException('Entity not found by type');
+			throw new EntityNotFoundException('Entity not found by type: ' . $entityType);
 		}
 
 		$this->params = $params;
 
-		$this->setCategoryId($this->params['CATEGORY_ID'] ?? null);
+		$categoryId = ($this->params['CATEGORY_ID'] ?? null);
+		if ($categoryId === -1 && !$this->entity->canUseAllCategories())
+		{
+			$categoryId = 0;
+		}
+		$this->setCategoryId($categoryId);
 		$this->setNameTemplate($this->params['NAME_TEMPLATE'] ?? null);
 
 		$this->entity->setCanEditCommonSettings($this->canEditSettings());
@@ -148,7 +162,17 @@ abstract class Kanban
 	 */
 	protected function setCategoryId(?int $categoryId): void
 	{
-		if ($categoryId && $categoryId > 0 && $this->entity->isCategoriesSupported())
+		if (!$this->entity->isCategoriesSupported())
+		{
+			return;
+		}
+
+		if ($categoryId === -1 && !$this->entity->canUseAllCategories())
+		{
+			$categoryId = 0;
+		}
+
+		if ($categoryId >= -1)
 		{
 			$this->entity->setCategoryId($categoryId);
 		}
@@ -399,22 +423,33 @@ abstract class Kanban
 
 		$params['originalColumns'] = ($params['originalColumns'] ?? false);
 
+		$filter = ($params['filter'] ?? []);
+		unset($params['filter']);
+
 		if(empty($columns))
 		{
 			$runtime = [];
 			$baseCurrency = $this->currency;
 			if($this->entity->getTypeName() === \CCrmOwnerType::OrderName)
 			{
-				$filter = $this->getOrderFilter($runtime);
-				if(isset($filter[$this->getStatusKey()]))
+				$filterCommon = $this->getOrderFilter($runtime);
+				if(isset($filterCommon[$this->getStatusKey()]))
 				{
-					$this->allowStages = $filter[$this->getStatusKey()];
+					$this->allowStages = $filterCommon[$this->getStatusKey()];
 				}
 			}
 			else
 			{
-				$filter = $this->getFilter($params);
+				$filterCommon = $this->getFilter($params);
 			}
+
+			$filter = array_merge($filterCommon, $filter);
+
+			if ($params['VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES && $filter['CATEGORY_ID'] === -1)
+			{
+				unset($filter['CATEGORY_ID']);
+			}
+
 			$sort = 0;
 			$winColumn = [];
 			$userPerms = $this->getCurrentUserPermissions();
@@ -453,6 +488,7 @@ abstract class Kanban
 					'dropzone' => $isDropZone,
 					'alwaysShowInDropzone' => $this->isAlwaysShowInDropzone($status),
 					'canAddItem' => $this->entity->canAddItemToStage($status['STATUS_ID'], $userPerms),
+					'blockedIncomingMoving' => ($status['BLOCKED_INCOMING_MOVING'] ?? false),
 				];
 
 				$column = array_merge($column, $this->getAdditionalColumnParams());
@@ -612,16 +648,27 @@ abstract class Kanban
 	protected function getFilter(array $params = []): array
 	{
 		static $filter = null;
+		$entity = $this->getEntity();
 
 		if($params['FORCE_FILTER'] === 'Y')
 		{
-			if ($this->getEntity()->isCategoriesSupported())
+			$forceFilter = [];
+
+			if ($entity->canUseAllCategories() && $entity->getCategoryId() === -1)
 			{
-				return [
-					'CATEGORY_ID' => $this->entity->getCategoryId(),
+				$forceFilter = [];
+			}
+
+			if ($entity->isCategoriesSupported())
+			{
+				$forceFilter = [
+					'CATEGORY_ID' => $entity->getCategoryId(),
 				];
 			}
-			return [];
+
+			$this->prepareSemanticIdsAndStages($forceFilter);
+
+			return $forceFilter;
 		}
 
 		if($filter !== null)
@@ -648,8 +695,14 @@ abstract class Kanban
 		];
 		$filterHistory = ['STAGE_ID_FROM_HISTORY', 'STAGE_ID_FROM_SUPPOSED_HISTORY', 'STAGE_SEMANTIC_ID_FROM_HISTORY'];
 		//from main.filter
-		$grid = $this->entity->getFilterOptions();
-		$gridFilter = $this->entity->getGridFilter();
+		$grid = $entity->getFilterOptions();
+
+		$filterId = ($params['FILTER_PRESET_ID'] ?? null);
+		if ($filterId)
+		{
+			$grid->setCurrentFilterPresetId($filterId);
+		}
+		$gridFilter = $entity->getGridFilter($filterId);
 		$search = $grid->GetFilter($gridFilter);
 		\Bitrix\Crm\UI\Filter\EntityHandler::internalize($gridFilter, $search);
 		if(!isset($search['FILTER_APPLIED']))
@@ -764,7 +817,7 @@ abstract class Kanban
 					}
 					elseif ($key === 'ORDER_TOPIC' ||
 						(
-							$this->entity instanceof \Bitrix\Crm\Kanban\Entity\Order
+							$entity instanceof \Bitrix\Crm\Kanban\Entity\Order
 							&& $key === 'ACCOUNT_NUMBER'
 						)
 					)
@@ -772,10 +825,8 @@ abstract class Kanban
 						$filter['~' . $key] = '%' . $search[$key] . '%';
 					}
 					elseif(
-						$key === 'ENTITIES_LINKS' &&
-						(
-						$this->entity->isEntitiesLinksInFilterSupported()
-						)
+						$key === 'ENTITIES_LINKS'
+						&& $entity->isEntitiesLinksInFilterSupported()
 					)
 					{
 						$ownerData = explode('_', $search[$key]);
@@ -787,7 +838,7 @@ abstract class Kanban
 							$ownerID = (int)$ownerData[1];
 							if(!empty($ownerTypeName) && $ownerID > 0)
 							{
-								$filter[$this->entity->getFilterFieldNameByEntityTypeName($ownerTypeName)] = $ownerID;
+								$filter[$entity->getFilterFieldNameByEntityTypeName($ownerTypeName)] = $ownerID;
 							}
 						}
 					}
@@ -800,7 +851,7 @@ abstract class Kanban
 					}
 					else
 					{
-						$filter[$this->entity->prepareFilterField($key)] = $search[$key];
+						$filter[$entity->prepareFilterField($key)] = $search[$key];
 					}
 				}
 				elseif(isset($search['!' . $key]) && $search['!' . $key] === false)
@@ -839,10 +890,10 @@ abstract class Kanban
 		//overdue
 		if(
 			isset($filter['OVERDUE'])
-			&& ($this->entity->isOverdueFilterSupported())
+			&& ($entity->isOverdueFilterSupported())
 		)
 		{
-			$key = $this->entity->getCloseDateFieldName();
+			$key = $entity->getCloseDateFieldName();
 			$date = new \Bitrix\Main\Type\Date;
 			if($filter['OVERDUE'] === 'Y')
 			{
@@ -855,75 +906,23 @@ abstract class Kanban
 			}
 		}
 		// counters
-		if(
-			isset($filter['ACTIVITY_COUNTER'])
-			&& $this->entity->isActivityCountersFilterSupported()
-		)
+		if ($entity->isActivityCountersFilterSupported())
 		{
-			if(is_array($filter['ACTIVITY_COUNTER']))
-			{
-				$counterTypeID = \Bitrix\Crm\Counter\EntityCounterType::joinType(
-					array_filter($filter['ACTIVITY_COUNTER'], 'is_numeric')
-				);
-			}
-			else
-			{
-				$counterTypeID = (int)$filter['ACTIVITY_COUNTER'];
-			}
-
-			$counter = null;
-			if($counterTypeID > 0)
-			{
-				// get assigned for this counter
-				$counterUserIDs = array();
-				if(isset($filter['ASSIGNED_BY_ID']))
-				{
-					if(is_array($filter['ASSIGNED_BY_ID']))
-					{
-						$counterUserIDs = array_filter($filter['ASSIGNED_BY_ID'], 'is_numeric');
-					}
-					elseif($filter['ASSIGNED_BY_ID'] > 0)
-					{
-						$counterUserIDs[] = $filter['ASSIGNED_BY_ID'];
-					}
-				}
-				// set counter to the filter
-				try
-				{
-					$counter = \Bitrix\Crm\Counter\EntityCounterFactory::create(
-						$this->entity->getTypeId(),
-						$counterTypeID,
-						0
-					);
-					$filter += $counter->prepareEntityListFilter(
-						array(
-							'MASTER_ALIAS' => $this->entity->getTableAlias(),
-							'MASTER_IDENTITY' => 'ID',
-							'USER_IDS' => $counterUserIDs
-						)
-					);
-					if(isset($filter['ASSIGNED_BY_ID']))
-					{
-						unset($filter['ASSIGNED_BY_ID']);
-					}
-				} catch(\Bitrix\Main\NotSupportedException $e)
-				{
-				} catch(\Bitrix\Main\ArgumentException $e)
-				{
-				}
-			}
+			$entity->applyCountersFilter($filter);
 		}
 
 		$filter = Deal\OrderFilter::prepareFilter($filter);
-		$filter = \Bitrix\Crm\Automation\Debugger\DebuggerFilter::prepareFilter($filter, $this->entity->getTypeId());
+		$filter = \Bitrix\Crm\Automation\Debugger\DebuggerFilter::prepareFilter($filter, $entity->getTypeId());
 
-		//deal
-		if($this->entity->isCategoriesSupported())
+		if(
+			($entity->isCategoriesSupported() && !$entity->canUseAllCategories())
+			|| ($entity->canUseAllCategories() && $entity->getCategoryId() > -1)
+		)
 		{
 			$filter['CATEGORY_ID'] = $this->entity->getCategoryId();
 		}
 		//invoice
-		if($this->entity->isRecurringSupported())
+		if($entity->isRecurringSupported())
 		{
 			$filter['!IS_RECURRING'] = 'Y';
 		}
@@ -934,7 +933,7 @@ abstract class Kanban
 		//detect success/fail columns
 		$this->prepareSemanticIdsAndStages($filter);
 
-		$entityTypeId = $this->entity->getTypeId();
+		$entityTypeId = $entity->getTypeId();
 		//region Apply Search Restrictions
 		$searchRestriction = RestrictionManager::getSearchLimitRestriction();
 		if(!$searchRestriction->isExceeded($entityTypeId))
@@ -951,6 +950,28 @@ abstract class Kanban
 		\CCrmEntityHelper::prepareMultiFieldFilter($filter, [], '=%', false);
 
 		return $filter;
+	}
+
+	protected function getOrder(): array
+	{
+		if ($this->order === null)
+		{
+			$sortType = 'DESC';
+			if ($this->getEntity()->getSortSettings()->getCurrentType() === Sort\Type::BY_LAST_ACTIVITY_TIME)
+			{
+				$this->order = [
+					Item::FIELD_NAME_LAST_ACTIVITY_TIME => $sortType,
+				];
+			}
+			else
+			{
+				$this->order = [
+					Item::FIELD_NAME_ID => $sortType,
+				];
+			}
+		}
+
+		return $this->order;
 	}
 
 	/**
@@ -1049,34 +1070,11 @@ abstract class Kanban
 		}
 
 		$statuses = [];
-		$allStatuses = [];
-		$statusEntityId = $this->entity->getStatusEntityId();
-		$statusList = \Bitrix\Crm\StatusTable::getList([
-			'filter' => [
-				'=ENTITY_ID' => $statusEntityId,
-			],
-			'order' => [
-				'SORT' => 'ASC',
-			],
-		]);
-		while($status = $statusList->fetch())
-		{
-			$allStatuses[] = $status;
-		}
-		if($statusEntityId === Order\OrderStatus::NAME)
-		{
-			$orderStatuses = Order\OrderStatus::getListInCrmFormat($isClear);
-			foreach($orderStatuses as &$status)
-			{
-				$status['SEMANTICS'] = Order\OrderStatus::getSemanticID($status['STATUS_ID']);
-			}
-			unset($status);
-			$allStatuses = array_merge($allStatuses, $orderStatuses);
-		}
+		$allStatuses = $this->entity->getStagesList();
 
 		foreach($allStatuses as $status)
 		{
-			$status['STATUS_ID'] = htmlspecialcharsbx($status['STATUS_ID']);
+			$status['STATUS_ID'] = $this->sanitizeString((string)$status['STATUS_ID']);
 
 			if($status['SEMANTICS'] === PhaseSemantics::SUCCESS)
 			{
@@ -1106,6 +1104,40 @@ abstract class Kanban
 	 */
 	protected function isDropZone(array $status = []): bool
 	{
+		if (!isset($status['STATUS_ID']))
+		{
+			return false;
+		}
+
+		if (!empty($this->allowStages) && !in_array($status['STATUS_ID'], $this->allowStages, true))
+		{
+			return true;
+		}
+
+		if (in_array($status['STATUS_ID'], $this->allowStages, true))
+		{
+			return false;
+		}
+
+		if (
+			(
+				$status['PROGRESS_TYPE'] === 'WIN'
+				&& !in_array(PhaseSemantics::SUCCESS, $this->allowSemantics, true)
+			)
+			|| (
+				$status['PROGRESS_TYPE'] === 'LOOSE'
+				&& !in_array(PhaseSemantics::FAILURE, $this->allowSemantics, true)
+			)
+			|| (
+				$status['PROGRESS_TYPE'] !== 'WIN'
+				&& $status['PROGRESS_TYPE'] !== 'LOOSE'
+				&& !in_array(PhaseSemantics::PROCESS, $this->allowSemantics, true)
+			)
+		)
+		{
+			return true;
+		}
+
 		return false;
 	}
 
@@ -1150,13 +1182,24 @@ abstract class Kanban
 		return ($status['PROGRESS_TYPE'] === 'WIN' || $status['PROGRESS_TYPE'] === 'LOOSE');
 	}
 
+	protected function shouldShowField(\Bitrix\Crm\Service\Display\Field $displayField, $value): bool
+	{
+		if ($this->isMobileContext() && $displayField->getType() === BooleanField::TYPE)
+		{
+			return isset($value);
+		}
+
+		return !empty($value);
+	}
+
 	/**
 	 * Base method for getting data.
 	 * @param array $filter
 	 * @param int $blockPage
+	 * @param array $params
 	 * @return array
 	 */
-	public function getItems(array $filter = [], int $blockPage = 1): array
+	public function getItems(array $filter = [], int $blockPage = 1, array $params = []): array
 	{
 		$this->blockPage = $blockPage;
 
@@ -1172,7 +1215,7 @@ abstract class Kanban
 
 		$type = $this->entity->getTypeName();
 		$runtime = [];
-		$filterCommon = ($type === \CCrmOwnerType::OrderName ? $this->getOrderFilter($runtime) : $this->getFilter());
+		$filterCommon = ($type === \CCrmOwnerType::OrderName ? $this->getOrderFilter($runtime) : $this->getFilter($params['filter'] ?? []));
 
 		// remove conflict keys and merge filters
 		$filter = array_merge($filterCommon, $filter);
@@ -1195,7 +1238,7 @@ abstract class Kanban
 		$parameters = [
 			'filter' => $filter,
 			'select' => $select,
-			'order' => ['ID' => 'DESC'],
+			'order' => $this->getOrder(),
 			'limit' => static::BLOCK_SIZE,
 			'offset' => static::BLOCK_SIZE * ($this->blockPage - 1),
 		];
@@ -1239,13 +1282,15 @@ abstract class Kanban
 		$specialReqKeys = $this->getSpecialReqKeys();
 		$result = [];
 
+		$lastActivityInfo = $this->getEntity()->prepareMultipleItemsLastActivity($rows);
+
 		$activeAutomationDebugEntityIds = \CCrmBizProcHelper::getActiveDebugEntityIds($this->entity->getTypeId());
 
 		foreach($rows as $rowId => $row)
 		{
 			if (is_array($renderedRows[$rowId]))
 			{
-				$row = array_merge($row, $renderedRows[$rowId]);
+				$row = $this->mergeItemFieldsValues($row, $renderedRows[$rowId]);
 			}
 
 			if ($row['CONTACT_ID'] > 0)
@@ -1264,17 +1309,19 @@ abstract class Kanban
 				if (array_key_exists($code, $row) && array_key_exists($code, $displayedFields))
 				{
 					$displayedField = $displayedFields[$code];
-					if (!empty($row[$code]))
+					if ($this->shouldShowField($displayedField, $row[$code]))
 					{
-						$fields[] = [
+						$field = [
 							'code' => $code,
-							'title' => htmlspecialcharsbx($displayedField->getTitle()),
+							'title' => $this->sanitizeString($displayedField->getTitle()),
 							'type' => $displayedField->getType(),
-							'value' => $row[$code],
 							'valueDelimiter' => in_array($displayedField->getType(), $inlineFieldTypes) ? ', ' : '<br>',
 							'icon' => $displayedField->getDisplayParam('icon'),
 							'html' => $displayedField->wasRenderedAsHtml(),
+							'isMultiple' => $displayedField->isMultiple(),
 						];
+						$this->prepareField($field, $row[$code], $renderedRows[$rowId]);
+						$fields[] = $field;
 					}
 				}
 			}
@@ -1347,24 +1394,35 @@ abstract class Kanban
 			}
 
 			//add
-			$result[$row['ID']] = [
-				'id' =>  $row['ID'],
-				'name' => htmlspecialcharsbx($row['TITLE'] ?: '#' . $row['ID']),
-				'link' => ($row['LINK'] ?? str_replace($this->getPathMarkers(), $row['ID'], $path)),
-				'columnId' => ($columnId = htmlspecialcharsbx($row[$this->getStatusKey()])),
-				'columnColor' => (isset($columns[$columnId]) ? $columns[$columnId]['color'] : ''),
+			$columnId = $this->sanitizeString((string)$row[$this->getStatusKey()]);
+			$rowId = $row['ID'];
+			$result[$rowId] = [
+				'id' =>  $rowId,
+				'name' => $this->sanitizeString($this->getItemTitle($row) ?: '#' . $rowId),
+				'link' => $row['LINK'] ?? str_replace($this->getPathMarkers(), $rowId, $path),
+				'columnId' => $columnId,
+				'columnColor' => $columns[$columnId]['color'] ?? '',
 				'price' => $row['PRICE'],
 				'price_formatted' => $row['PRICE_FORMATTED'],
+				'entity_price' => $row['OPPORTUNITY_VALUE'],
+				'currency' => $row['CURRENCY_ID'],
+				'entity_currency' => $row['ENTITY_CURRENCY_ID'],
 				'date' => $row['DATE_FORMATTED'],
+				'dateCreate' => $row['DATE_CREATE'],
 				'contactId' => (int)$row['CONTACT_ID'],
 				'companyId' => (!empty($row['COMPANY_ID']) ? (int)$row['COMPANY_ID'] : null),
 				'contactType' => $row['CONTACT_TYPE'],
 				'modifyById' => ($row['MODIFY_BY_ID'] ?? 0),
 				'modifyByAvatar' => '',
+				'activityStageId' => ($row['ACTIVITY_STAGE_ID'] ?? null),
 				'activityShow' => 1,
 				'activityErrorTotal' => 0,
+				'activityIncomingTotal' => 0,
+				'activityCounterTotal' => 0,
 				'activityProgress' => 0,
 				'activityTotal' => 0,
+				'activitiesByUser' => [],
+				'badges' => [],
 				'page' => $this->blockPage,
 				'fields' => $fields,
 				'return' => $returnCustomer,
@@ -1372,7 +1430,10 @@ abstract class Kanban
 				'assignedBy' => $row['ASSIGNED_BY'],
 				'required' => $required,
 				'required_fm' => $requiredFm,
+				'sort' => $this->getEntity()->prepareItemSort($rows[$rowId]),
+				'lastActivity' => $lastActivityInfo[$row['ID']] ?? null,
 			];
+			$result[$rowId] = array_merge($result[$rowId], $this->prepareAdditionalFields($row));
 			$isRestricted = (!empty($restrictedItemIds) && in_array($row['ID'], $restrictedItemIds));
 			if ($isRestricted)
 			{
@@ -1397,14 +1458,88 @@ abstract class Kanban
 				!empty($activeAutomationDebugEntityIds) && in_array($row['ID'], $activeAutomationDebugEntityIds)
 			;
 			$result[$row['ID']]['isAutomationDebugItem'] = $isAutomationDebugItem;
-
 		}
-		$result = $this->sort($result);
+
+		if ($this->getEntity()->getSortSettings()->isUserSortSupported())
+		{
+			$result = $this->sort($result);
+		}
 
 		return [
 			'ITEMS' => $result,
 			'RESTRICTED_VALUE_CLICK_CALLBACK' => $restrictedValueClickCallback,
 		];
+	}
+
+	protected function prepareAdditionalFields(array $item): array
+	{
+		return [];
+	}
+
+	/**
+	 * @param array $row
+	 * @param array $displayedFields
+	 * @return array
+	 */
+	protected function mergeItemFieldsValues(array $row, array $displayedFields = []): array
+	{
+		return array_merge($row, $displayedFields);
+	}
+
+	/**
+	 * @param array $data
+	 * @param $value
+	 * @param array|null $displayedFieldsValues
+	 */
+	protected function prepareField(array &$data, $value, ?array $displayedFieldsValues = []): void
+	{
+		$data['value'] = $value;
+	}
+
+	/**
+	 * @param array $row
+	 * @return string|null
+	 */
+	protected function getItemTitle(array $row): ?string
+	{
+		return ($row['TITLE'] ?? null);
+	}
+
+	/**
+	 * @param string $context
+	 * @return $this
+	 */
+	public function setFieldsContext(string $context): self
+	{
+		$this->fieldsContext = $context;
+		return $this;
+	}
+
+	/**
+	 * @return string
+	 */
+	protected function getFieldsContext(): string
+	{
+		return $this->fieldsContext;
+	}
+
+	final protected function isMobileContext(): bool
+	{
+		return $this->getFieldsContext() === \Bitrix\Crm\Service\Display\Field::MOBILE_CONTEXT;
+	}
+
+	public function setContactEntityDataProvider(Component\EntityList\ClientDataProvider $provider): self
+	{
+		$this->getEntity()->setContactDataProvider($provider);
+
+		return $this;
+	}
+
+	public function setCompanyEntityDataProvider(Component\EntityList\ClientDataProvider $provider): self
+	{
+		$this->getEntity()->setCompanyDataProvider($provider);
+
+		return $this;
 	}
 
 	/**
@@ -1465,7 +1600,7 @@ abstract class Kanban
 	 */
 	protected function getDisplayedFieldsList($clearCache = false): array
 	{
-		return $this->entity->getDisplayedFieldsList($clearCache);
+		return $this->entity->getDisplayedFieldsList($clearCache, $this->getFieldsContext());
 	}
 
 	/**
@@ -1796,5 +1931,15 @@ abstract class Kanban
 	protected function getStatusKey(): string
 	{
 		return ($this->statusKey ?? $this->entity->getStageFieldName());
+	}
+
+	protected function sanitizeString(string $string): string
+	{
+		if ($this->isMobileContext())
+		{
+			return $string;
+		}
+
+		return htmlspecialcharsbx($string);
 	}
 }

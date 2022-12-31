@@ -220,7 +220,7 @@ class CCrmExternalChannelImportActivity extends \CCrmExternalChannelRestProxy
 		$this->fields = $fields;
 	}
 
-	protected function innerAdd($activity, &$resultList)
+	protected function innerAdd(&$activity, &$resultList, array $params = null)
 	{
 		$error = array();
 		$resultList = array(
@@ -1140,9 +1140,11 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 	/**
 	 * @param $id
 	 * @param $fields
+	 * @param $errors
+	 * @param array|null $params
 	 * @return Result
 	 */
-	protected function innerUpdate($id, $fields)
+	protected function innerUpdate($id, &$fields, &$errors, array $params = null)
 	{
 		$result = new Result();
 		$entity = $this->getEntity();
@@ -1170,9 +1172,11 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 
 	/**
 	 * @param $fields
+	 * @param $errors
+	 * @param array|null $params
 	 * @return Result
 	 */
-	protected function innerAdd($fields)
+	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
 		$result = new Result();
 		$entity = $this->getEntity();
@@ -1196,9 +1200,11 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 
 	/**
 	 * @param $id
+	 * @param $errors
+	 * @param array|null $params
 	 * @return Result
 	 */
-	protected function innerDelete($id)
+	protected function innerDelete($id, &$errors, array $params = null)
 	{
 		$result = new Result();
 		$entity = $this->getEntity();
@@ -1398,11 +1404,13 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 						{
 							$this->prepareFieldsAddress($requisite);
 							$id = $r['ID'];
-							$r = $this->innerUpdate($id, $requisite);
+							$errors = [];
+							$r = $this->innerUpdate($id, $requisite, $errors);
 						}
 						else
 						{
-							$r = $this->innerAdd($requisite);
+							$errors = [];
+							$r = $this->innerAdd($requisite, $errors);
 							$data = $r->getData();
 							$id = $data['RESULT'];
 						}
@@ -1467,7 +1475,8 @@ class CCrmExternalChannelImportRequisite extends CCrmExternalChannelImportAgent
 			{
 				if(!in_array($list['ID'], $proccessList))
 				{
-					$r = $this->innerDelete($list['ID']);
+					$errors = [];
+					$r = $this->innerDelete($list['ID'], $errors);
 					if($r->getErrors())
 						$result->addErrors($r->getErrors());
 				}
@@ -1597,11 +1606,13 @@ class CCrmExternalChannelImportBank extends CCrmExternalChannelImportRequisite
 				if($r = $res->fetch())
 				{
 					$id = $r['ID'];
-					$r = $this->innerUpdate($id, $bank);
+					$errors = [];
+					$r = $this->innerUpdate($id, $bank, $errors);
 				}
 				else
 				{
-					$r = $this->innerAdd($bank);
+					$errors = [];
+					$r = $this->innerAdd($bank, $errors);
 					$data = $r->getData();
 					$id = $data['RESULT'];
 				}
@@ -1645,9 +1656,11 @@ class CCrmExternalChannelImportBank extends CCrmExternalChannelImportRequisite
 	/**
 	 * @param $id
 	 * @param $fields
+	 * @param $errors
+	 * @param array|null $params
 	 * @return Result
 	 */
-	protected function innerUpdate($id, $fields)
+	protected function innerUpdate($id, &$fields, &$errors, array $params = null)
 	{
 		$result = new Result();
 		$entity = $this->getEntity();
@@ -1675,9 +1688,11 @@ class CCrmExternalChannelImportBank extends CCrmExternalChannelImportRequisite
 
 	/**
 	 * @param $fields
+	 * @param $errors
+	 * @param array|null $params
 	 * @return Result
 	 */
-	protected function innerAdd($fields)
+	protected function innerAdd(&$fields, &$errors, array $params = null)
 	{
 		$result = new Result();
 		$entity = $this->getEntity();
@@ -1701,9 +1716,11 @@ class CCrmExternalChannelImportBank extends CCrmExternalChannelImportRequisite
 
 	/**
 	 * @param $id
+	 * @param $errors
+	 * @param array|null $params
 	 * @return Result
 	 */
-	protected function innerDelete($id)
+	protected function innerDelete($id, &$errors, array $params = null)
 	{
 		$result = new Result();
 		$entity = $this->getEntity();

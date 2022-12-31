@@ -20,6 +20,10 @@ class ProductRowComparer extends ComparerBase
 			&& self::areFieldsEquals($a, $b, 'TAX_INCLUDED')
 			&& self::areFieldsEquals($a, $b, 'CUSTOMIZED')
 			&& self::areFieldsEquals($a, $b, 'SORT')
+			&& self::areFieldsEquals($a, $b, 'RESERVE_ID')
+			&& self::areFieldsEquals($a, $b, 'RESERVE_QUANTITY')
+			&& self::areFieldsEquals($a, $b, 'DATE_RESERVE_END')
+			&& self::areFieldsEquals($a, $b, 'STORE_ID')
 			&& self::areFieldsEquals($a, $b, 'TAX_RATE')
 		);
 	}

@@ -5,12 +5,14 @@ import {Button} from './button';
 import {ButtonState} from '../enums/button-state';
 import {ButtonScope} from '../enums/button-scope';
 import {ButtonType} from '../enums/button-type';
+import {AdditionalButton} from './footer/add-button';
 
 export const Footer = {
 	components: {
 		Buttons,
 		Menu,
 		Button,
+		AdditionalButton,
 	},
 	props: {
 		buttons: Object,
@@ -53,7 +55,9 @@ export const Footer = {
 		visibleButtons(): Array
 		{
 			return this.buttons
-				? Object.values(this.buttons).filter(this.visibleButtonsFilter)
+				?  Object.keys(this.buttons)
+					.map((id) => ({id, ...this.buttons[id]}))
+					.filter(this.visibleButtonsFilter)
 				: [];
 		},
 
@@ -83,18 +87,53 @@ export const Footer = {
 
 		buttonsSorter(buttonA, buttonB) {
 			return buttonA?.sort - buttonB?.sort;
+		},
+
+		getButtonById(buttonId: string): ?Object
+		{
+			if (this.$refs.buttons)
+			{
+				const foundButton = this.$refs.buttons.getButtonById(buttonId);
+				if (foundButton)
+				{
+					return foundButton;
+				}
+			}
+
+			if (this.$refs.additionalButtons)
+			{
+				return this.visibleAndSortedAdditionalButtons.reduce((found, button, index) =>
+				{
+					if (found)
+					{
+						return found;
+					}
+					if (button.id === buttonId)
+					{
+						return buttons[index];
+					}
+
+					return null;
+				}, null);
+			}
+
+			return null;
 		}
 	},
 	template: `
 		<div class="crm-timeline__card-action">
-			<Buttons :items="baseButtons" />
+			<Buttons ref="buttons" :items="baseButtons" />
 			<div class="crm-timeline__card-action_menu">
-				<Button
+				<div
 					v-for="button in visibleAndSortedAdditionalButtons"
 					:key="button.id"
-					v-bind="button"
 					class="crm-timeline__card-action_menu-item"
-				/>
+				>
+					<additional-button
+						v-bind="button"
+					>
+					</additional-button>
+				</div>
 				<Menu v-if="hasMenu" :buttons="moreButtons" v-bind="menu" />
 			</div>
 		</div>

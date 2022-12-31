@@ -1,0 +1,3 @@
+<?php
+$MESS['ALERT_CONFIRMATION_CONFIRM'] = 'Понятно';
+$MESS['ALERT_CONFIRMATION_CANCEL'] = 'Отмена';

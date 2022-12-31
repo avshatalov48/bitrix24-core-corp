@@ -25,5 +25,6 @@ $arActivityDescription = [
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
+		'GROUP' => ['digitalWorkplace'],
 	],
 ];

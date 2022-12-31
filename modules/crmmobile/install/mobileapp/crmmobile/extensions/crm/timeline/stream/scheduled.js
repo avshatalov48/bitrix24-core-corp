@@ -1,0 +1,96 @@
+/**
+ * @module crm/timeline/stream/scheduled
+ */
+jn.define('crm/timeline/stream/scheduled', (require, exports, module) => {
+
+	const { Loc } = require('loc');
+	const { TimelineStreamBase } = require('crm/timeline/stream/base');
+	const { TimelineItemModel } = require('crm/timeline/item');
+	const { TimelineItemBackground } = require('crm/timeline/item/ui/styles');
+
+	/**
+	 * @class TimelineStreamScheduled
+	 */
+	class TimelineStreamScheduled extends TimelineStreamBase
+	{
+		getId()
+		{
+			return 'scheduled';
+		}
+
+		getItemSortDirection()
+		{
+			return 'asc';
+		}
+
+		makeItemModel(props)
+		{
+			const model = super.makeItemModel(props);
+			model.isScheduled = true;
+			return model;
+		}
+
+		/**
+		 * @public
+		 * @return {TimelineItemModel[]}
+		 */
+		getAttentionableItems()
+		{
+			return this.items.filter(item => item.needsAttention || item.isIncomingChannel);
+		}
+
+		/**
+		 * @public
+		 * @return {TimelineItemModel[]}
+		 */
+		getNeedsAttentionItems()
+		{
+			return this.items.filter(item => item.needsAttention);
+		}
+
+		/**
+		 * @public
+		 * @return {TimelineItemModel[]}
+		 */
+		getIncomingChannelItems()
+		{
+			return this.items.filter(item => item.isIncomingChannel);
+		}
+
+		exportToListView()
+		{
+			if (!this.items.length && !this.isEditable)
+			{
+				return [];
+			}
+
+			const result = [];
+
+			result.push({
+				type: 'Divider',
+				key: 'Divider_scheduled',
+				props: {
+					color: '#9DCF00',
+					text: Loc.getMessage('CRM_TIMELINE_SCHEDULED_TITLE2'),
+				}
+			});
+
+			if (!this.items.length)
+			{
+				result.push({
+					type: 'CreateReminder',
+					key: 'CreateReminder',
+					props: {}
+				});
+			}
+
+			return [
+				...result,
+				...this.exportCollapsibleGroup(this.items),
+			];
+		}
+	}
+
+	module.exports = { TimelineStreamScheduled };
+
+});

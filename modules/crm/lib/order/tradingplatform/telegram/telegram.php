@@ -3,8 +3,11 @@
 namespace Bitrix\Crm\Order\TradingPlatform\Telegram;
 
 use Bitrix\Crm;
+use Bitrix\Sale;
 
-class Telegram extends Crm\Order\TradingPlatform\Platform
+class Telegram
+	extends Crm\Order\TradingPlatform\Platform
+	implements Sale\TradingPlatform\IRestriction
 {
 	const TRADING_PLATFORM_CODE = 'telegram';
 

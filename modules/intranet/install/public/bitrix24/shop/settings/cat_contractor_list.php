@@ -1,3 +1,4 @@
 <?
-define("SELF_FOLDER_URL", "/shop/settings/");
-require($_SERVER["DOCUMENT_ROOT"]."/bitrix/modules/catalog/admin/cat_contractor_list.php");
+require_once($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/main/include/prolog_before.php');
+
+LocalRedirect('/shop/documents/contractors/');

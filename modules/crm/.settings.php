@@ -1,4 +1,7 @@
 <?php
+
+use Bitrix\Crm\Integration\UI\EntitySelector\DynamicMultipleProvider;
+
 return array(
 	'controllers' => array(
 		'value' => array(
@@ -22,6 +25,12 @@ return array(
 	'ui.selector' => [
 		'value' => [
 			'crm.selector'
+		],
+		'readonly' => true,
+	],
+	'ui.uploader' => [
+		'value' => [
+			'allowUseControllers' => true,
 		],
 		'readonly' => true,
 	],
@@ -131,6 +140,9 @@ return array(
 			'crm.service.broker.dynamic' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Dynamic',
 			],
+			'crm.service.broker.activity' => [
+				'className' => '\\Bitrix\\Crm\\Service\\Broker\\Activity',
+			],
 			'crm.service.director' => [
 				'className' => '\\Bitrix\\Crm\\Service\\Director',
 			],
@@ -167,8 +179,17 @@ return array(
 			'crm.kanban.entity.deal' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Deal',
 			],
+			'crm.kanban.entity.deal.activities' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\DealActivities',
+			],
 			'crm.kanban.entity.invoice' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Invoice',
+			],
+			'crm.kanban.entity.contact' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Contact',
+			],
+			'crm.kanban.entity.company' => [
+				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Company',
 			],
 			'crm.kanban.entity.quote' => [
 				'className' => '\\Bitrix\\Crm\\Kanban\\Entity\\Quote',
@@ -287,12 +308,6 @@ return array(
 			'crm.reservation' => [
 				'className' => \Bitrix\Crm\Service\Sale\Reservation\ReservationService::class,
 			],
-			'crm.basket' => [
-				'className' => \Bitrix\Crm\Service\Sale\BasketService::class,
-			],
-			'crm.order.buyer' => [
-				'className' => \Bitrix\Crm\Service\Sale\Order\BuyerService::class,
-			],
 			'crm.reservation.shipment' => [
 				'className' => \Bitrix\Crm\Service\Sale\Reservation\ShipmentService::class,
 				// TODO: 'autowire' => true,
@@ -303,8 +318,17 @@ return array(
 					];
 				},
 			],
+			'crm.basket' => [
+				'className' => \Bitrix\Crm\Service\Sale\BasketService::class,
+			],
+			'crm.order.buyer' => [
+				'className' => \Bitrix\Crm\Service\Sale\Order\BuyerService::class,
+			],
 			'crm.sale.entity.linkBuilder' => [
 				'className' => Bitrix\Crm\Service\Sale\EntityLinkBuilder\EntityLinkBuilder::class,
+			],
+			'crm.integration.sign' => [
+				'className' => \Bitrix\Crm\Service\Integration\Sign::class,
 			],
 		],
 		'readonly' => true,
@@ -359,6 +383,13 @@ return array(
 					'provider' => [
 						'moduleId' => 'crm',
 						'className' => '\\Bitrix\\Crm\\Integration\\UI\\EntitySelector\\DynamicProvider'
+					],
+				],
+				[
+					'entityId' => 'dynamic_multiple',
+					'provider' => [
+						'moduleId' => 'crm',
+						'className' => DynamicMultipleProvider::class,
 					],
 				],
 				[

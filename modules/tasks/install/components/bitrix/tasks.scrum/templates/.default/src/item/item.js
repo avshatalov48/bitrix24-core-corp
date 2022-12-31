@@ -184,6 +184,7 @@ export class Item extends EventEmitter
 		this.name = name;
 
 		this.name.subscribe('click', () => this.emit('showTask'));
+		this.name.subscribe('urlClick', () => this.emit('destroyActionPanel'));
 	}
 
 	getName(): Name

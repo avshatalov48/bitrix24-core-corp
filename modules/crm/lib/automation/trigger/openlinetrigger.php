@@ -38,7 +38,7 @@ class OpenLineTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_NAME1');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_NAME_2');
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -109,5 +109,15 @@ class OpenLineTrigger extends BaseTrigger
 			);
 		}
 		return $configs;
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_DESCRIPTION') ?? '';
+	}
+
+	public static function getGroup(): array
+	{
+		return ['clientCommunication'];
 	}
 }

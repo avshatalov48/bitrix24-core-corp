@@ -1,75 +1,171 @@
-(() => {
+/**
+ * @module layout/ui/fields/number
+ */
+jn.define('layout/ui/fields/number', (require, exports, module) => {
+
+	const { StringFieldClass } = require('layout/ui/fields/string');
+	const { stringify } = require('utils/string');
+
+	/** @var NumberPrecision */
 	const Types = {
 		INTEGER: 'integer',
-		DOUBLE: 'double'
+		DOUBLE: 'double',
+		NUMBER: 'number',
 	};
 
 	/**
-	 * @class Fields.NumberField
+	 * @class NumberField
 	 */
-	class NumberField extends Fields.StringInput
+	class NumberField extends StringFieldClass
 	{
-		getConfig()
+		renderReadOnlyContent()
 		{
-			const config = super.getConfig();
-			const type = config.type === Types.INTEGER ? Types.INTEGER : Types.DOUBLE;
-			const precision = type === Types.INTEGER ? 0 : BX.prop.getInteger(config, 'precision', 2);
+			return (
+				this.isMoneyFieldEnabledView()
+					? this.renderEditableContent()
+					: super.renderReadOnlyContent()
+			);
+		}
+
+		renderEditableContent()
+		{
+			return (
+				this.isMoneyFieldEnabledView()
+					? MoneyField(this.getFieldInputProps())
+					: super.renderEditableContent()
+			);
+		}
+
+		getFieldInputProps()
+		{
+			const fieldProps = super.getFieldInputProps();
+			const formatConfig = this.getFormatConfig();
 
 			return {
-				...config,
-				type,
-				precision,
-				keyboardType: type === Types.INTEGER ? 'number-pad' : 'decimal-pad'
+				...fieldProps,
+				...formatConfig,
+				enable: !this.isReadOnly(),
 			};
 		}
 
-		changeText(currentText)
+		getConfig()
 		{
-			const previousValue = String(this.props.value) || '';
-			const hasComma = currentText.includes(',');
+			const config = super.getConfig();
+			const isInteger = this.isIntegerField();
 
-			const formattedText = hasComma ? currentText.replace(',', '.') : currentText;
+			return {
+				...config,
+				precision: this.getPrecision(),
+				type: isInteger ? Types.INTEGER : Types.DOUBLE,
+				keyboardType: isInteger ? 'number-pad' : 'decimal-pad',
+			};
+		}
 
-			if (this.isNumber(formattedText) || currentText === '')
+		getFormatConfig()
+		{
+			const config = this.getConfig();
+
+			const formatConfig = {
+				decimalDigits: BX.prop.getInteger(config, 'precision', 0),
+				decimalSeparator: BX.prop.getString(config, 'decimalSeparator', '.'),
+				hideZero: BX.prop.getBoolean(config, 'hideZero', true),
+				useGroupSeparator: BX.prop.getBoolean(config, 'useGroupSeparator', false),
+			};
+
+			if (formatConfig.useGroupSeparator)
 			{
-				const result = hasComma ? this.formatValue(formattedText, previousValue).replace('.', ',') : this.formatValue(formattedText, previousValue);
-				this.handleChange(result);
+				formatConfig.groupSize = BX.prop.getInteger(config, 'groupSize', 0);
+				formatConfig.groupSeparator = BX.prop.getString(config, 'groupSeparator', ' ');
 			}
-			else
+
+			return formatConfig;
+		}
+
+		getPrecision()
+		{
+			const config = super.getConfig();
+			return BX.prop.getInteger(config, 'precision', 0);
+		}
+
+		prepareSingleValue(value)
+		{
+			const preparedValue = super.prepareSingleValue(value);
+			if (preparedValue === '' || this.isMoneyFieldEnabledView())
 			{
-				this.setState({
-					value: previousValue
-				});
+				return preparedValue;
 			}
+
+			const previousValue = stringify(this.props.value);
+			const hasComma = preparedValue.includes(',');
+			const formattedValue = hasComma ? preparedValue.replace(',', '.') : preparedValue;
+
+			if (formattedValue !== '' && this.isInteger(formattedValue))
+			{
+				let result = this.formatValue(formattedValue, previousValue);
+
+				if (hasComma)
+				{
+					result = result.replace('.', ',');
+				}
+
+				return result;
+			}
+
+			return super.prepareSingleValue(previousValue);
 		}
 
 		isNumber(text)
 		{
-			const config = this.getConfig();
+			return !isNaN(Number(text));
+		}
 
-			if (config.type === Types.INTEGER)
+		isInteger(value)
+		{
+			return Number.isInteger(Number(value));
+		}
+
+		isIntegerField()
+		{
+			const config = super.getConfig();
+			const type = config.type || this.props.type;
+			const precision = this.getPrecision();
+
+			return type === Types.INTEGER || precision === 0;
+		}
+
+		getValidationError()
+		{
+			let error = super.getValidationError();
+			if (!error)
 			{
-				return Number.isInteger(Number(text));
+				const value = stringify(this.getValue());
+
+				if (this.isIntegerField() && !this.isInteger(value))
+				{
+					error = BX.message('FIELDS_ERROR_INTEGER_NUMBER');
+				}
+				else if (!this.isNumber(value))
+				{
+					error = BX.message('FIELD_ERROR_NUMBER2');
+				}
 			}
 
-			if (config.type === Types.DOUBLE)
-			{
-				return !isNaN(Number(text));
-			}
-
-			return false;
+			return error;
 		}
 
 		formatValue(text, previousValue)
 		{
-			const config = this.getConfig();
+			const { precision } = this.getConfig();
 
-			if (config.type === Types.DOUBLE)
+			if (precision > 0)
 			{
-				const precisionRegex = new RegExp(`^$|^(\\d+(\\.\\d{0,${config.precision}})?|\\.?\\d{1,${config.precision}})$`, 'g');
+				const precisionRegex = new RegExp(
+					`^$|^(\\d+(\\.\\d{0,${precision}})?|\\.?\\d{1,${precision}})$`,
+					'g',
+				);
 				if (precisionRegex.test(text))
 				{
-					if (Number(previousValue.replace(',', '.')) === 0 && !text.includes('.'))
+					if (previousValue && Number(previousValue.replace(',', '.')) === 0 && !text.includes('.'))
 					{
 						return text.slice(-1);
 					}
@@ -78,8 +174,8 @@
 				}
 				else
 				{
-					const pow = Math.pow(10, config.precision);
-					const result = (Math.trunc(Number(text) * pow) / pow).toFixed(config.precision);
+					const pow = Math.pow(10, precision);
+					const result = (Math.trunc(Number(text) * pow) / pow).toFixed(precision);
 
 					return String(result);
 				}
@@ -87,9 +183,17 @@
 
 			return text;
 		}
+
+		isMoneyFieldEnabledView()
+		{
+			return Application.getApiVersion() >= 42;
+		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.NumberField = NumberField;
-	this.Fields.NumberField.Types = Types;
-})();
+	module.exports = {
+		NumberType: 'number',
+		NumberField: (props) => new NumberField(props),
+		NumberPrecision: Types,
+	};
+
+});

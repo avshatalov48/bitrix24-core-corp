@@ -3,8 +3,10 @@
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
 use Bitrix\Catalog\ContractorTable;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
+use Bitrix\Catalog\v2\Contractor\Provider\Manager;
 
 /**
  * Class StoreDocumentArrival
@@ -88,6 +90,47 @@ class StoreDocumentArrival extends StoreDocument
 	/**
 	 * @inheritDoc
 	 */
+	protected function fetchData()
+	{
+		parent::fetchData();
+
+		if (!Loader::includeModule('catalog'))
+		{
+			return;
+		}
+
+		if (Manager::getActiveProvider())
+		{
+			$contractor = Manager::getActiveProvider()::getContractorByDocumentId((int)$this->data['ID']);
+			if ($contractor)
+			{
+				$this->data['CONTRACTOR_PERSON_NAME'] = $contractor->getContactPersonFullName();
+				$this->data['CONTRACTOR_PHONE'] = $contractor->getPhone();
+				$this->data['CONTRACTOR_NAME'] = $contractor->getName();
+				$this->data['CONTRACTOR_COMPANY'] = $contractor->getName();
+				$this->data['CONTRACTOR_INN'] = $contractor->getInn();
+				$this->data['CONTRACTOR_KPP'] = $contractor->getKpp();
+				$this->data['CONTRACTOR_ADDRESS'] = $contractor->getAddress();
+			}
+		}
+		else
+		{
+			$contractorName = null;
+			if ($this->data['CONTRACTOR_PERSON_TYPE'] === ContractorTable::TYPE_INDIVIDUAL)
+			{
+				$contractorName = $this->data['CONTRACTOR_PERSON_NAME'];
+			}
+			elseif ($this->data['CONTRACTOR_PERSON_TYPE'] === ContractorTable::TYPE_COMPANY)
+			{
+				$contractorName = $this->data['CONTRACTOR_COMPANY'];
+			}
+			$this->data['CONTRACTOR_NAME'] = $contractorName;
+		}
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	public function isPrintable(): Result
 	{
 		return new Result();
@@ -98,18 +141,7 @@ class StoreDocumentArrival extends StoreDocument
 	 */
 	public function getDocumentContractorName(): string
 	{
-		$result = '';
-
-		if ($this->data['CONTRACTOR_PERSON_TYPE'] === ContractorTable::TYPE_INDIVIDUAL)
-		{
-			$result = $this->data['CONTRACTOR_PERSON_NAME'];
-		}
-		elseif ($this->data['CONTRACTOR_PERSON_TYPE'] === ContractorTable::TYPE_COMPANY)
-		{
-			$result = $this->data['CONTRACTOR_COMPANY'];
-		}
-
-		return (string)$result;
+		return (string)$this->data['CONTRACTOR_NAME'];
 	}
 
 	/**

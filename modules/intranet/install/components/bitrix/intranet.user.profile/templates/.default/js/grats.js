@@ -351,7 +351,7 @@
 					&& BX.type.isNotEmptyString(authorsData[postData.AUTHOR_ID].PHOTO)
 				)
 				{
-					userPic = "background-size: cover; background-image: url('" + authorsData[postData.AUTHOR_ID].PHOTO + "')";
+					userPic = "background-size: cover; background-image: url('" + encodeURI(authorsData[postData.AUTHOR_ID].PHOTO) + "')";
 					userName = authorsData[postData.AUTHOR_ID].NAME + ' ' + authorsData[postData.AUTHOR_ID].LAST_NAME;
 				}
 

@@ -494,6 +494,7 @@ class ContactCenter
 				}
 			}
 		}
+		$this->getKufarItem($itemsList);
 
 		$result->setData($itemsList);
 
@@ -691,25 +692,64 @@ class ContactCenter
 	 * @param array $filter
 	 * @return Result
 	 */
-	public function saleGetItems($filter = array())
+	public function saleGetItems($filter = [])
 	{
-		$result = new Result();
+		$data = [];
 
-		$data = static::isRegionRussian() ?
-			array(
-				'sale' => array(
-					"NAME" => Loc::getMessage("CONTACT_CENTER_REST_ESHOP"),
-					"LOGO_CLASS" => "ui-icon ui-icon-service-import",
-					"SELECTED" => (\Bitrix\Rest\AppTable::getRow(['filter'=>[
+		if (static::isRegionRussian())
+		{
+			$data[] = [
+				"NAME" => Loc::getMessage("CONTACT_CENTER_REST_ESHOP"),
+				"LOGO_CLASS" => "ui-icon ui-icon-service-import",
+				"SELECTED" => (\Bitrix\Rest\AppTable::getRow([
+					'filter'=> [
 						'ACTIVE' => 'Y',
-						'CODE' => 'bitrix.eshop']])),
-					"ONCLICK" => "BX.SidePanel.Instance.open('/marketplace/detail/bitrix.eshop/')"
-				)
-			):array();
+						'CODE' => 'bitrix.eshop',
+					],
+				])),
+				"ONCLICK" => "BX.SidePanel.Instance.open('/marketplace/detail/bitrix.eshop/')",
+			];
+		}
 
+		$result = new Result();
 		$result->setData($data);
 
 		return $result;
+	}
+
+	private function getKufarItem(array &$itemList): void
+	{
+		if (Application::getInstance()->getLicense()->getRegion() !== 'by')
+		{
+			return;
+		}
+		$id = '';
+
+		if(array_key_exists('b24kufar', $itemList))
+		{
+			$id = 'b24kufar';
+		}
+		elseif(array_key_exists('b24_kufar', $itemList))
+		{
+			$id = 'b24_kufar';
+		}
+
+		if($id === '')
+		{
+			$itemList['b24kufar'] = [
+				'NAME' => 'Kufar',
+				'SELECTED' => false,
+				'LOGO_CLASS' => "ui-icon ui-icon-service-kufar",
+				'LINK' => "/marketplace/detail/integrations24.kufar/"
+			];
+
+			return;
+		}
+
+		$itemList[$id]['SELECTED'] = true;
+		$itemList[$id]['LOGO_CLASS'] = "ui-icon ui-icon-service-light-kufar";
+
+		return;
 	}
 
 	private function getDynamicItems()
@@ -901,7 +941,14 @@ class ContactCenter
 				try
 				{
 					$channelData = JSON::decode($channelInfo['DATA']);
-					$channelName = trim($channelData[$connectorCode]['name']);
+					if (is_string($channelData[$connectorCode]['name']))
+					{
+						$channelName = trim($channelData[$connectorCode]['name']);
+					}
+					else
+					{
+						$channelName = '';
+					}
 				}
 				catch (\Exception $exception)
 				{

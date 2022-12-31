@@ -19,7 +19,10 @@ class Custom extends PresetAbstract
 			\COption::GetOptionString('intranet', 'left_menu_custom_preset_sort', '')
 			, ['allowed_classes' => false]
 		);
-		return is_array($structure) ? ['shown' => $structure['show'], 'hidden' => $structure['hide']] : [];
+		return is_array($structure) ? [
+			'shown' => is_array($structure['show']) ? $structure['show'] : [],
+			'hidden' => is_array($structure['hide']) ? $structure['hide'] : []
+		] : [];
 	}
 
 	public static function isAvailable(): bool

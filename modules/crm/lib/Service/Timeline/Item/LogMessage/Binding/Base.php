@@ -18,24 +18,26 @@ abstract class Base extends LogMessage
 
 	final public function getContentBlocks(): ?array
 	{
+		$result = [];
+
 		/** @var AssociatedEntityModel $model */
 		$model = $this->getAssociatedEntityModel();
 
-		return [
-			'content' => (new LineOfTextBlocks())
-				->addContentBlock(
-					'title',
-					ContentBlockFactory::createTitle((string)$model->get('ENTITY_TYPE_CAPTION'))
-				)
-				->addContentBlock(
-					'data',
-					ContentBlockFactory::createTextOrLink(
-						(string)$model->get('TITLE'),
-						empty($model->get('SHOW_URL'))
-							? null
-							: new Redirect(new Uri($model->get('SHOW_URL')))
-					)->setIsBold(true)
-				)
-		];
+		$result['content'] = (new LineOfTextBlocks())
+			->addContentBlock(
+				'title',
+				ContentBlockFactory::createTitle((string)$model->get('ENTITY_TYPE_CAPTION'))
+			)
+			->addContentBlock(
+				'data',
+				ContentBlockFactory::createTextOrLink(
+					(string)$model->get('TITLE'),
+					empty($model->get('SHOW_URL'))
+						? null
+						: new Redirect(new Uri($model->get('SHOW_URL')))
+				)->setIsBold(true)
+			);
+
+		return $result;
 	}
 }

@@ -1,36 +1,48 @@
-(() => {
+/**
+ * @module layout/ui/fields/status
+ */
+jn.define('layout/ui/fields/status', (require, exports, module) => {
+
+	const { arrowRight } = require('assets/common');
+	const { BaseField } = require('layout/ui/fields/base');
+
 	/**
-	 * @class Fields.StatusField
+	 * @class StatusField
 	 */
-	class StatusField extends Fields.BaseField
+	class StatusField extends BaseField
 	{
+		canFocusTitle()
+		{
+			return false;
+		}
+
 		renderContent()
 		{
-			const statuses = this.props.value;
+			const statuses = this.getValue();
 
 			return View(
 				{
-					style: this.styles.statusList
+					style: this.styles.statusList,
 				},
-				...(statuses ||  []).map((status, index) => (
+				...(statuses || []).map((status, index) => (
 					View(
 						{
 							style: this.styles.statusItem(
 								this.isReadOnly(),
 								index,
 								statuses.length - 1,
-								status.backgroundColor
-							)
+								status.backgroundColor,
+							),
 						},
 						Text(
 							{
 								style: this.styles.statusItemText(status.color),
-								text: status.name
-							}
-						)
+								text: status.name,
+							},
+						),
 					)
-				))
-			)
+				)),
+			);
 		}
 
 		getDefaultStyles()
@@ -40,41 +52,70 @@
 				statusList: {
 					flexDirection: 'row',
 					flexWrap: 'wrap',
-					flex: 1
+					flex: 1,
+					marginTop: 3,
 				},
 				statusItem: (readOnly, index, lastIndex, backgroundColor) => ({
+					height: 21,
+					borderRadius: 10.5,
+					paddingHorizontal: 8,
+					paddingVertical: 1,
+					justifyContent: 'center',
 					marginBottom: readOnly ? 1 : 4,
-					paddingLeft: 10,
-					paddingRight: 10,
-					paddingTop: 3,
-					paddingBottom: 3,
-					borderRadius: 10,
 					marginRight: lastIndex !== index ? 10 : 0,
-					backgroundColor: backgroundColor.replace(/[^#0-9a-fA-F]/g, '')
+					backgroundColor: backgroundColor.replace(/[^#0-9a-fA-F]/g, ''),
 				}),
 				statusItemText: (color) => ({
 					color: color.replace(/[^#0-9a-fA-F]/g, ''),
-					fontSize: 13,
-					fontWeight: '500'
+					fontSize: 9,
+					fontWeight: '700',
 				}),
-				title: {
-					color: '#A8ADB4',
-					fontSize: 10,
-					fontWeight: '500',
-					marginBottom: 5
-				},
 				wrapper: {
 					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 9
+					paddingBottom: this.hasErrorMessage() ? 5 : 9,
 				},
 				readOnlyWrapper: {
 					paddingTop: 7,
-					paddingBottom: this.hasErrorMessage() ? 5 : 11
+					paddingBottom: this.hasErrorMessage() ? 5 : 11,
 				},
-			}
+			};
+		}
+
+		shouldShowEditIcon()
+		{
+			return BX.prop.getBoolean(this.props, 'showEditIcon', true);
+		}
+
+		renderEditIcon()
+		{
+			return View(
+				{
+					style: {
+						justifyContent: 'center',
+						alignItems: 'center',
+						width: 24,
+						height: 24,
+						marginLeft: 5,
+					},
+				},
+				Image(
+					{
+						style: {
+							height: 15,
+							width: 9,
+						},
+						svg: {
+							content: arrowRight(),
+						},
+					},
+				),
+			);
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.StatusField = StatusField;
-})();
+	module.exports = {
+		StatusType: 'status',
+		StatusField: (props) => new StatusField(props),
+	};
+
+});

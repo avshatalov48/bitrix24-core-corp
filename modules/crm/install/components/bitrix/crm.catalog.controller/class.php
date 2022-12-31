@@ -4,6 +4,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Main;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
@@ -19,6 +21,7 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	private const PAGE_SECTION_DETAIL = 'section_detail';
 	private const PAGE_PRODUCT_DETAIL = 'product_detail';
 	private const PAGE_CSV_IMPORT = 'csv_import';
+	private const PAGE_ERROR = 'error';
 
 	private const MODE_SLIDER_VIEW_NAME = 'sliderList';
 
@@ -76,6 +79,14 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 			'#SITE_DIR#crm/product/index.php'
 		);
 		$params['SEF_MODE'] = 'Y';
+		if (!isset($params['SEF_URL_TEMPLATES']) || !is_array($params['SEF_URL_TEMPLATES']))
+		{
+			$params['SEF_URL_TEMPLATES'] = [];
+		}
+		if (!isset($params['VARIABLE_ALIASES']) || !is_array($params['VARIABLE_ALIASES']))
+		{
+			$params['VARIABLE_ALIASES'] = [];
+		}
 
 		return $params;
 	}
@@ -137,10 +148,23 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 	public function executeComponent()
 	{
 		$this->checkModules();
-		$this->checkAccess();
 		if ($this->isExistErrors())
 		{
 			$this->showErrors();
+			return;
+		}
+		$this->checkAccess();
+		if ($this->isExistErrors())
+		{
+			$request = Main\Application::getInstance()->getContext()->getRequest();
+			$this->arResult['IS_SIDE_PANEL'] = (
+				$request->get('IFRAME') === 'Y'
+				&& $request->get('IFRAME_TYPE') === 'SIDE_SLIDER'
+				&& $request->get('disableRedirect') !== 'Y'
+			);
+
+			$this->includeComponentTemplate(self::PAGE_ERROR);
+
 			return;
 		}
 		$this->initConfig();
@@ -192,7 +216,10 @@ class CrmCatalogControllerComponent extends CBitrixComponent implements Main\Err
 
 	protected function checkAccess(): void
 	{
-
+		if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		{
+			$this->addErrorMessage('Access Denied');
+		}
 	}
 
 	protected function initConfig(): void

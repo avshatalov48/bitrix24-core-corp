@@ -62,13 +62,18 @@ class Update extends Operation
 	{
 		foreach ($this->fieldsCollection as $field)
 		{
+			if ($this->item->isFieldDisabled($field->getName()))
+			{
+				continue;
+			}
+
 			if ($field->isValueCanBeChanged() && $this->item->isChanged($field->getName()))
 			{
 				return true;
 			}
 		}
 
-		$additionalFields = [Item::FIELD_NAME_PRODUCTS, Item::FIELD_NAME_FM];
+		$additionalFields = [Item::FIELD_NAME_PRODUCTS, Item::FIELD_NAME_FM, Item::FIELD_NAME_LAST_ACTIVITY_TIME];
 
 		foreach ($additionalFields as $fieldName)
 		{
@@ -129,70 +134,21 @@ class Update extends Operation
 		$registrar->updateByItem($this->getItemBeforeSave(), $this->getItem());
 	}
 
-	protected function isCountersUpdateNeeded(): bool
+	protected function notifyCounterMonitor(): void
 	{
-		$difference = ComparerBase::compareEntityFields(
-			$this->itemBeforeSave->getData(Values::ACTUAL),
-			$this->item->getData(),
+		$oldFieldsValues = [];
+		$newFieldsValues = [];
+		foreach ($this->getCounterMonitorSignificantFields() as $commonFieldName => $entityFieldName)
+		{
+			$oldFieldsValues[$entityFieldName] = $this->itemBeforeSave->remindActual($commonFieldName);
+			$newFieldsValues[$entityFieldName] = $this->item->get($commonFieldName);
+		}
+
+		\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityUpdate(
+			$this->getItem()->getEntityTypeId(),
+			$oldFieldsValues,
+			$newFieldsValues
 		);
-
-		return (
-			$difference->isChanged(Item::FIELD_NAME_ASSIGNED)
-			|| $difference->isChanged(Item::FIELD_NAME_STAGE_ID)
-			|| $difference->isChanged(Item::FIELD_NAME_CATEGORY_ID)
-		);
-	}
-
-	protected function getUserIdsForCountersReset(): array
-	{
-		if (!$this->item->hasField(Item::FIELD_NAME_ASSIGNED))
-		{
-			return [];
-		}
-
-		$userIds = [];
-
-		$assigned = $this->item->getAssignedById();
-		if ($assigned > 0)
-		{
-			$userIds[] = $assigned;
-		}
-
-		$previousAssigned = $this->itemBeforeSave->remindActual(Item::FIELD_NAME_ASSIGNED);
-		if ($previousAssigned > 0 && $assigned !== $previousAssigned)
-		{
-			$userIds[] = $previousAssigned;
-		}
-
-		return $userIds;
-	}
-
-	protected function getCountersCodes(): array
-	{
-		$codes = parent::getCountersCodes();
-
-		if (!$this->item->isCategoriesSupported())
-		{
-			return $codes;
-		}
-
-		$previousCategoryId = $this->itemBeforeSave->remindActual(Item::FIELD_NAME_CATEGORY_ID);
-		$currentCategoryId = $this->item->getCategoryId();
-
-		if ($previousCategoryId !== $currentCategoryId)
-		{
-			$codesForPreviousCategory = EntityCounterManager::prepareCodes(
-				$this->item->getEntityTypeId(),
-				$this->getTypesOfCountersToReset(),
-				[
-					'CATEGORY_ID' => $previousCategoryId,
-				],
-			);
-
-			$codes = array_merge($codes, $codesForPreviousCategory);
-		}
-
-		return $codes;
 	}
 
 	protected function autocompleteActivities(): Result
@@ -308,12 +264,6 @@ class Update extends Operation
 	protected function sendPullEvent(): void
 	{
 		parent::sendPullEvent();
-
-		\Bitrix\Crm\Kanban\SupervisorTable::sendItem(
-			$this->item->getId(),
-			\CCrmOwnerType::ResolveName($this->item->getEntityTypeId()),
-			'kanban_update'
-		);
 
 		PullManager::getInstance()->sendItemUpdatedEvent($this->pullItem, $this->pullParams);
 	}

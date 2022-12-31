@@ -517,7 +517,7 @@ class KanbanService implements Errorable
 		return $this->errorCollection->getErrorByCode($code);
 	}
 
-	public function moveTask(int $taskId, int $groupId, array $stage): bool
+	public function moveTask(int $taskId, int $stageId): bool
 	{
 		$itemService = new ItemService();
 		$entityService = new EntityService();
@@ -539,18 +539,6 @@ class KanbanService implements Errorable
 			return false;
 		}
 
-		$featurePerms = \CSocNetFeaturesPerms::currentUserCanPerformOperation(
-			SONET_ENTITY_GROUP,
-			[$groupId],
-			'tasks',
-			'sort'
-		);
-		$isAccess = (is_array($featurePerms) && isset($featurePerms[$groupId]) && $featurePerms[$groupId]);
-		if (!$isAccess)
-		{
-			return false;
-		}
-
 		$taskObject = new \CTasks;
 
 		$queryObject = TaskStageTable::getList([
@@ -563,19 +551,10 @@ class KanbanService implements Errorable
 		if ($taskStage = $queryObject->fetch())
 		{
 			TaskStageTable::update($taskStage['ID'], [
-				'STAGE_ID' => $stage['ID'],
+				'STAGE_ID' => $stageId,
 			]);
 
-			$taskObject->update($taskId, ['STAGE_ID' => $stage['ID']]);
-		}
-
-		if ($stage['SYSTEM_TYPE'] === StagesTable::SYS_TYPE_FINISH)
-		{
-			$this->completeTask($taskId);
-		}
-		else
-		{
-			$this->renewTask($taskId);
+			$taskObject->update($taskId, ['STAGE_ID' => $stageId]);
 		}
 
 		return true;
@@ -826,38 +805,5 @@ class KanbanService implements Errorable
 	private function isTasksInBasket(array $taskIds): array
 	{
 		return Recyclebin\Task::isInTheRecycleBin($taskIds);
-	}
-
-	private function completeTask(int $taskId)
-	{
-		$task = \CTaskItem::getInstance($taskId, User::getId());
-		if (
-			$task->checkAccess(ActionDictionary::ACTION_TASK_COMPLETE)
-			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
-		)
-		{
-			$task->complete();
-		}
-	}
-
-	private function renewTask(int $taskId)
-	{
-		$task = \CTaskItem::getInstance($taskId, User::getId());
-		if (
-			$task->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
-			|| $task->checkAccess(ActionDictionary::ACTION_TASK_APPROVE)
-		)
-		{
-			$queryObject = \CTasks::getList(
-				[],
-				['ID' => $taskId, '=STATUS' => \CTasks::STATE_COMPLETED],
-				['ID'],
-				['USER_ID' => User::getId()]
-			);
-			if ($queryObject->fetch())
-			{
-				$task->renew();
-			}
-		}
 	}
 }

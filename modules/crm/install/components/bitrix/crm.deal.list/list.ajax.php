@@ -228,7 +228,7 @@ elseif ($action === 'REBUILD_SECURITY_ATTRS')
 		)
 	);
 }
-elseif ($action === 'SAVE_PROGRESS')
+elseif ($action === 'SAVE_PROGRESS' && check_bitrix_sessid())
 {
 	$ID = isset($_REQUEST['ID']) ? intval($_REQUEST['ID']) : 0;
 	$typeName = isset($_REQUEST['TYPE']) ? $_REQUEST['TYPE'] : '';
@@ -257,6 +257,43 @@ elseif ($action === 'SAVE_PROGRESS')
 	}
 
 	$arFields = array('STAGE_ID' => $stageID);
+
+	// region InventoryManagement
+	if (!\Bitrix\Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled())
+	{
+		$factory = \Bitrix\Crm\Service\Container::getInstance()->getFactory(\CCrmOwnerType::Deal);
+		if ($factory)
+		{
+			$itemBeforeSave = $factory->getItem($ID);
+		}
+
+		$inventoryManagementChecker = new \Bitrix\Crm\Reservation\Component\InventoryManagementChecker($itemBeforeSave);
+		$inventoryManagementCheckResult = $inventoryManagementChecker->checkBeforeUpdate($arFields);
+		if (!$inventoryManagementCheckResult->isSuccess())
+		{
+			if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(
+				\Bitrix\Crm\Reservation\Error\InventoryManagementError::INVENTORY_MANAGEMENT_ERROR_CODE)
+			)
+			{
+				\Bitrix\Crm\Activity\Provider\StoreDocument::addProductActivity($ID);
+			}
+
+			if ($inventoryManagementCheckResult->getErrorCollection()->getErrorByCode(
+				\Bitrix\Crm\Reservation\Error\AvailabilityServices::AVAILABILITY_SERVICES_ERROR_CODE)
+			)
+			{
+				\Bitrix\Crm\Activity\Provider\StoreDocument::addServiceActivity($ID);
+			}
+
+			__CrmDealListEndResponse([
+				'ERROR' => current($inventoryManagementCheckResult->getErrorMessages()),
+			]);
+		}
+
+		$arFields = $inventoryManagementCheckResult->getData();
+	}
+	// endregion
+
 	$CCrmDeal = new CCrmDeal(false);
 	if($CCrmDeal->Update(
 		$ID,
@@ -278,6 +315,30 @@ elseif ($action === 'SAVE_PROGRESS')
 		$starter = new \Bitrix\Crm\Automation\Starter(\CCrmOwnerType::Deal, $ID);
 		$starter->setUserIdFromCurrent()->runOnUpdate($arFields, []);
 		//end region
+
+		// region InventoryManagement
+		if (!\Bitrix\Crm\Settings\DealSettings::getCurrent()->isFactoryEnabled())
+		{
+			if ($factory)
+			{
+				$itemAfterSave = $factory->getItem($ID);
+			}
+
+			if (isset($itemBeforeSave, $itemAfterSave))
+			{
+				$processInventoryManagementResult =
+					(new \Bitrix\Crm\Reservation\Component\InventoryManagement($itemBeforeSave, $itemAfterSave))
+						->process()
+				;
+				if (!$processInventoryManagementResult->isSuccess())
+				{
+					__CrmDealListEndResponse([
+						'ERROR' => current($processInventoryManagementResult->getErrorMessages()),
+					]);
+				}
+			}
+		}
+		// endregion
 
 		__CrmDealListEndResponse(array('TYPE' => CCrmOwnerType::DealName, 'ID' => $ID, 'VALUE' => $stageID));
 	}

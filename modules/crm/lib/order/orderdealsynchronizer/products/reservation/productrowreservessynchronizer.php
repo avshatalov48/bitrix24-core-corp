@@ -68,9 +68,14 @@ class ProductRowReservesSynchronizer
 				continue;
 			}
 
+			$basketReserveCollection = $basketItem->getReserveQuantityCollection();
+			if (!$basketReserveCollection)
+			{
+				continue;
+			}
+
 			$isNewBasketReserve = false;
 
-			$basketReserveCollection = $basketItem->getReserveQuantityCollection();
 			$basketReserve = $basketReserveCollection->current();
 			if (!$basketReserve)
 			{

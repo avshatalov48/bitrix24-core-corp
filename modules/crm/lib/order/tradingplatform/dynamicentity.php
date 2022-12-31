@@ -6,7 +6,9 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Sale;
 
-class DynamicEntity extends Platform
+class DynamicEntity
+	extends Platform
+	implements Sale\TradingPlatform\IRestriction
 {
 	protected $entity;
 

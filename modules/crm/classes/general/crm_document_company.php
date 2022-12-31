@@ -120,6 +120,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			'COMMENTS' => array(
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
+				'ValueContentType' => 'html',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,
@@ -320,22 +321,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			$arFields[$key] = (is_array($arFields[$key]) && !CBPHelper::IsAssociativeArray($arFields[$key])) ? $arFields[$key] : array($arFields[$key]);
 			if ($fieldType == "user")
 			{
-				$ar = array();
-				foreach ($arFields[$key] as $v1)
-				{
-					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
-					{
-						$ar[] = mb_substr($v1, mb_strlen("user_"));
-					}
-					else
-					{
-						$a1 = self::GetUsersFromUserGroup($v1, "COMPANY_0");
-						foreach ($a1 as $a11)
-							$ar[] = $a11;
-					}
-				}
-
-				$arFields[$key] = $ar;
+				$arFields[$key] = \CBPHelper::extractUsers($arFields[$key], $arDocumentID['DOCUMENT_TYPE']);
 			}
 			elseif ($fieldType == "select" && mb_substr($key, 0, 3) == "UF_")
 			{
@@ -484,6 +470,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 		if (!$arResult)
 			throw new Exception(GetMessage('CRM_DOCUMENT_ELEMENT_IS_NOT_FOUND'));
 
+		$complexDocumentId = [$arDocumentID['DOCUMENT_TYPE'][0], $arDocumentID['DOCUMENT_TYPE'][1], $documentId];
 		$arDocumentFields = self::GetDocumentFields($arDocumentID['TYPE']);
 
 		$arKeys = array_keys($arFields);
@@ -506,22 +493,7 @@ class CCrmDocumentCompany extends CCrmDocument implements IBPWorkflowDocument
 			$arFields[$key] = (is_array($arFields[$key]) && !CBPHelper::IsAssociativeArray($arFields[$key])) ? $arFields[$key] : array($arFields[$key]);
 			if ($fieldType == "user")
 			{
-				$ar = array();
-				foreach ($arFields[$key] as $v1)
-				{
-					if (mb_substr($v1, 0, mb_strlen("user_")) == "user_")
-					{
-						$ar[] = mb_substr($v1, mb_strlen("user_"));
-					}
-					else
-					{
-						$a1 = self::GetUsersFromUserGroup($v1, $documentId);
-						foreach ($a1 as $a11)
-							$ar[] = $a11;
-					}
-				}
-
-				$arFields[$key] = $ar;
+				$arFields[$key] = \CBPHelper::extractUsers($arFields[$key], $complexDocumentId);
 			}
 			elseif ($fieldType == "select" && mb_substr($key, 0, 3) == "UF_")
 			{

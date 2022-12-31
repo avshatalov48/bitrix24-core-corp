@@ -1,4 +1,7 @@
 (() => {
+
+	const { isEqual } = jn.require('utils/object');
+
 	/**
 	 * @class ProductSummarySection
 	 */
@@ -8,27 +11,35 @@
 		{
 			super(props);
 
-			this.initialize(props.id, props.settings, props.type);
-
-			const summaryData = this.getValueFromModel({});
+			const { count = 0, totalRaw = {} } = this.getValueFromModel({});
 			this.state = {
-				count: summaryData.count,
-				total: summaryData.total
+				count: count,
+				total: totalRaw,
 			};
 
+			this.productTabLoaded = false;
 			this.buildStyles();
 
 			this.switchToAddingProduct = this.switchToAddingProduct.bind(this);
 			this.switchToProductsList = this.switchToProductsList.bind(this);
+			this.onProductTabContentLoaded = this.onProductTabContentLoaded.bind(this);
+		}
+
+		componentDidMount()
+		{
+			this.customEventEmitter.on('DetailCard::onTabContentLoaded', (tabId) => {
+				if (tabId === 'products')
+				{
+					this.productTabLoaded = true;
+				}
+			});
 		}
 
 		initializeStateFromModel()
 		{
-			const summaryData = this.getValueFromModel({});
-			this.setState({
-				count: summaryData.count,
-				total: summaryData.total
-			});
+			const { count = 0, totalRaw = {} } = this.getValueFromModel({});
+			this.state.count = count;
+			this.state.total = totalRaw;
 		}
 
 		render()
@@ -37,7 +48,7 @@
 
 			return View(
 				{},
-				showButton ? this.renderButton() : this.renderSummary()
+				showButton ? this.renderButton() : this.renderSummary(),
 			);
 		}
 
@@ -46,21 +57,21 @@
 			return View(
 				{
 					style: this.styles.addButtonContainer,
-					onClick: this.switchToAddingProduct
+					onClick: this.switchToAddingProduct,
 				},
 				Image(
 					{
 						style: this.styles.addButtonIcon,
 						resizeMode: 'center',
-						svg: svgImages.cube
-					}
+						svg: svgImages.cube,
+					},
 				),
 				Text(
 					{
 						style: this.styles.addButtonText,
-						text: BX.message('FIELDS_PRODUCT_ADD_PRODUCT')
-					}
-				)
+						text: BX.message('FIELDS_PRODUCT_ADD_PRODUCT'),
+					},
+				),
 			);
 		}
 
@@ -69,56 +80,56 @@
 			return View(
 				{
 					style: this.styles.productWrapper(this.readOnly),
-					onClick: this.switchToProductsList
+					onClick: this.switchToProductsList,
 				},
 				View(
 					{
-						style: this.styles.productHeader
+						style: this.styles.productHeader,
 					},
 					Text(
 						{
 							style: this.styles.productTitle,
-							text: this.getTitle().toLocaleUpperCase(Application.getLang())
-						}
+							text: this.getTitle().toLocaleUpperCase(env.languageId),
+						},
 					),
 					Text(
 						{
 							style: this.styles.productPriceTitle,
-							text: BX.message('FIELDS_PRODUCT_PRICE').toLocaleUpperCase(Application.getLang())
-						}
-					)
+							text: BX.message('FIELDS_PRODUCT_PRICE').toLocaleUpperCase(env.languageId),
+						},
+					),
 				),
 				View(
 					{
-						style: this.styles.productContent
+						style: this.styles.productContent,
 					},
 					Image(
 						{
 							style: this.styles.productIcon,
 							resizeMode: 'center',
-							svg: svgImages.cube
-						}
+							svg: svgImages.cube,
+						},
 					),
 					Text(
 						{
 							style: this.styles.productCountText,
-							text: BX.message('FIELDS_PRODUCT_COUNT') + ': ' + this.state.count
-						}
+							text: BX.message('FIELDS_PRODUCT_COUNT') + ': ' + this.state.count,
+						},
 					),
 					View(
 						{
-							style: this.styles.separator
-						}
+							style: this.styles.separator,
+						},
 					),
 					Text({
 						text: Money.create(this.state.total).formatted,
 						style: {
 							fontSize: 16,
 							fontWeight: 'bold',
-							color: '#333333'
-						}
-					})
-				)
+							color: '#333333',
+						},
+					}),
+				),
 			);
 		}
 
@@ -134,22 +145,33 @@
 
 		switchToAddingProduct()
 		{
-			const tab = {id: 'products'};
+			const tab = { id: 'products' };
 			const changed = true;
 
-			BX.postComponentEvent('DetailCard::onTabClick', [tab, changed]);
-			// wait when tab opens
-			setTimeout(() => {
-				BX.postComponentEvent('DetailCard::onAddProductsButtonClick', []);
-			}, 300);
+			this.customEventEmitter.emit('DetailCard::onTabClick', [tab, changed]);
+
+			if (this.productTabLoaded)
+			{
+				setTimeout(() => this.customEventEmitter.emit('DetailCard::onAddProductsButtonClick'), 500);
+			}
+			else
+			{
+				this.customEventEmitter.on('DetailCard::onTabContentLoaded', this.onProductTabContentLoaded);
+			}
+		}
+
+		onProductTabContentLoaded()
+		{
+			setTimeout(() => this.customEventEmitter.emit('DetailCard::onAddProductsButtonClick'), 100);
+			this.customEventEmitter.off('DetailCard::onTabContentLoaded', this.onProductTabContentLoaded);
 		}
 
 		switchToProductsList()
 		{
-			const tab = {id: 'products'};
+			const tab = { id: 'products' };
 			const changed = true;
 
-			BX.postComponentEvent('DetailCard::onTabClick', [tab, changed]);
+			this.customEventEmitter.emit('DetailCard::onTabClick', [tab, changed]);
 		}
 
 		getTitle()
@@ -176,9 +198,18 @@
 			};
 		}
 
-		setValue({count, total})
+		setValue({ count, total })
 		{
-			this.setState({count, total});
+			return new Promise((resolve) => {
+				if (!isEqual(this.state.count, count) || !isEqual(this.state.total, total))
+				{
+					this.setState({ count, total }, resolve);
+				}
+				else
+				{
+					resolve();
+				}
+			});
 		}
 
 		getValuesToSave()
@@ -214,73 +245,73 @@
 					borderColor: '#00a2e8',
 					borderWidth: 1,
 					borderRadius: 6,
-					flexDirection: 'row'
+					flexDirection: 'row',
 				},
 				addButtonIcon: {
 					width: 16,
 					height: 17,
-					marginRight: 10
+					marginRight: 10,
 				},
 				addButtonText: {
 					color: '#525c69',
 					fontSize: 16,
-					fontWeight: '500'
+					fontWeight: '500',
 				},
 				productWrapper: (readOnly) => ({
 					paddingTop: readOnly ? 8 : 12,
-					borderWidth: 0
+					borderWidth: 0,
 				}),
 				productHeader: {
 					justifyContent: 'space-between',
 					alignItems: 'center',
 					flexDirection: 'row',
 					marginBottom: 4,
-					width: '100%'
+					width: '100%',
 				},
 				productTitle: {
 					color: '#b9c0ca',
-					fontSize: 10
+					fontSize: 10,
 				},
 				productPriceTitle: {
 					color: '#b9c0ca',
-					fontSize: 10
+					fontSize: 10,
 				},
 				productContent: {
 					flexDirection: 'row',
 					marginBottom: 12.5,
 					justifyContent: 'center',
-					alignItems: 'center'
+					alignItems: 'center',
 				},
 				productIcon: {
 					width: 13,
 					height: 14,
 					marginLeft: 4.5,
-					marginRight: 7
+					marginRight: 7,
 				},
 				productCountText: {
 					color: '#0b66c3',
-					fontSize: 16
+					fontSize: 16,
 				},
 				separator: {
-					height: 1,
 					flex: 1,
-					backgroundColor: '#d4dce0',
+					// height: 1,
+					// backgroundColor: '#d4dce0',
 					marginLeft: 6,
-					marginRight: 6
+					marginRight: 6,
 				},
 				productCurrency: {
 					color: '#a8adb4',
-					fontSize: 16
-				}
-			}
+					fontSize: 16,
+				},
+			};
 		}
 	}
 
 	const svgImages = {
 		cube: {
-			content: `<svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93984 0.793431C6.92683 0.797378 6.91326 0.805271 6.89912 0.812375L0.80446 3.22473C0.651753 3.29656 0.596329 3.45206 0.591797 3.63518V11.4025C0.593494 11.5761 0.68455 11.7411 0.80446 11.7877L6.84033 14.1746C6.91499 14.2077 7.01283 14.203 7.09371 14.1809L13.1837 11.775C13.3036 11.726 13.393 11.5579 13.3919 11.3835V3.68569C13.3953 3.44888 13.3364 3.30995 13.1792 3.23733L7.05298 0.812446C7.01113 0.791134 6.9783 0.78238 6.93984 0.793431ZM6.97604 1.62068L12.0346 3.62878L6.97604 5.62425L1.91298 3.62248L6.97604 1.62068Z" fill="#B9C0CA"/></svg>`
-		}
-	}
+			content: `<svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M6.93984 0.793431C6.92683 0.797378 6.91326 0.805271 6.89912 0.812375L0.80446 3.22473C0.651753 3.29656 0.596329 3.45206 0.591797 3.63518V11.4025C0.593494 11.5761 0.68455 11.7411 0.80446 11.7877L6.84033 14.1746C6.91499 14.2077 7.01283 14.203 7.09371 14.1809L13.1837 11.775C13.3036 11.726 13.393 11.5579 13.3919 11.3835V3.68569C13.3953 3.44888 13.3364 3.30995 13.1792 3.23733L7.05298 0.812446C7.01113 0.791134 6.9783 0.78238 6.93984 0.793431ZM6.97604 1.62068L12.0346 3.62878L6.97604 5.62425L1.91298 3.62248L6.97604 1.62068Z" fill="#B9C0CA"/></svg>`,
+		},
+	};
 
 	jnexport(ProductSummarySection);
 })();

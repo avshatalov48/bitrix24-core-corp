@@ -1,8 +1,18 @@
 <?
+
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\Loader;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
+
+$canChangeOptionCanByZero =
+	Loader::includeModule('catalog')
+	&& AccessController::getCurrent()->check(ActionDictionary::ACTION_SELL_NEGATIVE_COMMODITIES_SETTINGS_EDIT)
+;
 
 return [
 	'css' => [
@@ -12,13 +22,16 @@ return [
 	],
 	'js' => 'dist/catalog.bundle.js',
 	'rel' => [
-		'main.core',
 		'main.popup',
 		'ui.buttons',
 		'catalog.store-use',
 		'ui.vue',
 		'ui.notification',
 		'ui.design-tokens',
+		'main.core',
 	],
 	'skip_core' => false,
+	'settings' => [
+		'isCanChangeOptionCanByZero' => $canChangeOptionCanByZero,
+	],
 ];

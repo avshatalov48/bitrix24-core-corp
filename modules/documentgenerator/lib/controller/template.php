@@ -336,6 +336,11 @@ class Template extends Base
 			unset($template['PROVIDER_NAMES']);
 			unset($template['PROVIDERS']);
 			unset($template['FILE']);
+			if (!empty($template['ID']))
+			{
+				unset($template['PRODUCTS_TABLE_VARIANT']);
+			}
+
 			$result = $this->add($template, $providers, [TemplateUserTable::ALL_USERS]);
 		}
 

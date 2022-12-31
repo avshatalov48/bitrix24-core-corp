@@ -9,14 +9,22 @@ use Bitrix\Main\Web\Json;
 
 final class Configurator
 {
-	private $controller;
-	private $tabs = [];
-	private $editMode = true;
-	private $activeTabId;
+	private Controller $controller;
+	private array $tabs = [];
+	private bool $editMode = true;
+	private array $dynamicTabOptions = [];
+	private ?string $activeTabId = null;
 
 	public function __construct(Controller $controller)
 	{
 		$this->controller = $controller;
+	}
+
+	public function setDynamicTabOptions(array $options): self
+	{
+		$this->dynamicTabOptions = $options;
+
+		return $this;
 	}
 
 	private function getActionsList(): array
@@ -33,7 +41,7 @@ final class Configurator
 
 	private function getEndpoint(): string
 	{
-		$fullName = mb_strtolower(Resolver::getNameByController($this->controller));
+		$fullName = Resolver::getNameByController($this->controller);
 
 		return explode(':', $fullName)[1];
 	}
@@ -53,6 +61,11 @@ final class Configurator
 	private function isSaveable(): bool
 	{
 		return $this->hasControllerAction('save');
+	}
+
+	private function isCountersLoadSupported(): bool
+	{
+		return $this->hasControllerAction('loadTabCounters');
 	}
 
 	private function checkTabAction(Tabs\Base $tab): bool
@@ -113,15 +126,22 @@ final class Configurator
 		return [
 			'endpoint' => $this->getEndpoint(),
 			'isEditMode' => $this->isEditMode(),
+			'dynamicTabOptions' => $this->dynamicTabOptions,
 			'tabs' => array_map(static function (Tabs\Base $tab) {
 				return $tab->jsonSerialize();
 			}, $this->tabs),
 			'activeTab' => $this->getActiveTabId(),
+			'isCountersLoadSupported' => $this->isCountersLoadSupported(),
 		];
 	}
 
 	public function toJson(): string
 	{
 		return Json::encode($this->toArray());
+	}
+
+	public function mapTabs(\Closure $handler): array
+	{
+		return array_map(fn ($item) => $handler($item), $this->tabs);
 	}
 }

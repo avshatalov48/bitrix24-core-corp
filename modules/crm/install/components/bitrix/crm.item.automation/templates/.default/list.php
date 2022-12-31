@@ -9,6 +9,14 @@ global $APPLICATION;
 
 $cmpName = 'bitrix:crm.item.list';
 
+$navigationIndex = CUserOptions::GetOption('crm.navigation', 'index');
+$mainPage = explode(':', ($navigationIndex[strtolower(\CCrmOwnerType::ResolveName($arParams['entityTypeId']))] ?? ''))[0];
+
+if (strtolower($mainPage) === 'kanban')
+{
+	$cmpName = 'bitrix:crm.item.kanban';
+}
+
 if ((int)$arParams['entityTypeId'] === \CCrmOwnerType::Quote)
 {
 	$cmpName = 'bitrix:crm.quote';

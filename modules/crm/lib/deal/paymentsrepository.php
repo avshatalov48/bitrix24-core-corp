@@ -31,7 +31,7 @@ final class PaymentsRepository
 	 */
 	public function getPaymentStages(array $dealIds): array
 	{
-		if (count($dealIds) === 0)
+		if (empty($dealIds))
 		{
 			return [];
 		}

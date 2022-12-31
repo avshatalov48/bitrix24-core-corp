@@ -20,7 +20,11 @@ $APPLICATION->SetTitle(Loc::getMessage('SALESCENTER_CRM_FORM_PANEL_TITLE'));
 Toolbar::deleteFavoriteStar();
 
 $b24Manager = Bitrix24Manager::getInstance();
-$b24Manager->addIntegrationRequestButtonToToolbar();
+$b24Manager->addIntegrationRequestButtonToToolbar(
+	[
+		Bitrix24Manager::ANALYTICS_SENDER_PAGE => Bitrix24Manager::ANALYTICS_LABEL_SALESHUB_CRM_FORM
+	]
+);
 $b24Manager->addFeedbackButtonToToolbar();
 
 Extension::load([

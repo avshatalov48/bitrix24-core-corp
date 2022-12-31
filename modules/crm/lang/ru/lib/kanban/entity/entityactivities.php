@@ -1,0 +1,7 @@
+<?php
+$MESS['KANBAN_ACTIVITY_STAGE_OVERDUE'] = 'Просрочены';
+$MESS['KANBAN_ACTIVITY_STAGE_PENDING'] = 'На сегодня';
+$MESS['KANBAN_ACTIVITY_STAGE_THIS_WEEK'] = 'На этой неделе';
+$MESS['KANBAN_ACTIVITY_STAGE_NEXT_WEEK'] = 'На следующей неделе';
+$MESS['KANBAN_ACTIVITY_STAGE_IDLE'] = 'Без дел';
+$MESS['KANBAN_ACTIVITY_STAGE_LATER'] = 'Больше двух недель';

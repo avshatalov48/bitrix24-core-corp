@@ -2,6 +2,7 @@ import Wait from "./editors/wait";
 import Sms from "./editors/sms";
 import Rest from "./editors/rest";
 import Comment from "./editors/comment";
+import ToDo from "./editors/todo";
 import Scheduled from "./items/scheduled";
 import {Item} from "crm.timeline.item";
 import Document from "./items/document";
@@ -30,6 +31,7 @@ export default class Manager
 		this._progressSemantics = "";
 
 		this._commentEditor = null;
+		this._todoEditor = null;
 		this._waitEditor = null;
 		this._smsEditor = null;
 		this._zoomEditor = null;
@@ -42,6 +44,7 @@ export default class Manager
 
 		this._userId = 0;
 		this._readOnly = false;
+		this._currentUser = null;
 		this._pullTagName = "";
 	}
 
@@ -71,6 +74,7 @@ export default class Manager
 
 		this._userId = BX.prop.getInteger(this._settings, "userId", 0);
 		this._readOnly = BX.prop.getBoolean(this._settings, "readOnly", false);
+		this._currentUser = BX.prop.getObject(this._settings, "currentUser", null);
 
 		const activityEditorId = this.getSetting("activityEditorId");
 		if (BX.type.isNotEmptyString(activityEditorId))
@@ -155,6 +159,7 @@ export default class Manager
 		this._schedule.setHistory(this._history);
 		this._fixedHistory.setHistory(this._history);
 
+		var isTodoEnabled = BX.prop.getBoolean(this._settings, 'enableTodo', false);
 		this._commentEditor = Comment.create(
 			this._id,
 			{
@@ -169,12 +174,23 @@ export default class Manager
 				cancelButton: this.getSetting("editorCommentCancelButton")
 			}
 		);
-		this._commentEditor.setVisible(true);
+		this._commentEditor.setVisible(!isTodoEnabled && !this._readOnly);
 		this._commentEditor.setHistory(this._history);
 
-		if (this._readOnly)
+		if (isTodoEnabled)
 		{
-			this._commentEditor.setVisible(false);
+			this._todoEditor = ToDo.create(
+				this._id,
+				{
+					manager: this,
+					ownerTypeId: this._ownerTypeId,
+					ownerId: this._ownerId,
+					container: this.getSetting("editorTodoContainer"),
+					button: this.getSetting("editorTodoButton"),
+					cancelButton: this.getSetting("editorTodoCancelButton")
+				}
+			);
+			this._todoEditor.setVisible(!this._readOnly);
 		}
 
 		if (BX.prop.getBoolean(this._settings, "enableWait", false))
@@ -260,6 +276,8 @@ export default class Manager
 				scheduleStream: this._schedule,
 				fixedHistoryStream: this._fixedHistory,
 				historyStream: this._history,
+				ownerTypeId: this._ownerTypeId,
+				ownerId: this._ownerId,
 			});
 		}
 		this._menuBar = MenuBar.create(
@@ -270,6 +288,7 @@ export default class Manager
 				ownerInfo: this._ownerInfo,
 				activityEditor: this._activityEditor,
 				commentEditor: this._commentEditor,
+				todoEditor: this._todoEditor,
 				waitEditor: this._waitEditor,
 				smsEditor: this._smsEditor,
 				zoomEditor: this._zoomEditor,
@@ -800,6 +819,10 @@ export default class Manager
 
 	isStubCounterEnabled()
 	{
+		if (this.getSetting('enableTodo', false))
+		{
+			return false; // do not show counter for new scenarios
+		}
 		if (this._ownerId <= 0)
 		{
 			return false;
@@ -836,6 +859,16 @@ export default class Manager
 		return this._smsEditor;
 	}
 
+	getTodoEditor()
+	{
+		return this._todoEditor;
+	}
+
+	getMenuBar(): ?MenuBar
+	{
+		return this._menuBar;
+	}
+
 	processSheduleLayoutChange()
 	{
 	}
@@ -850,14 +883,25 @@ export default class Manager
 		if (this._waitEditor && editor === this._waitEditor)
 		{
 			this._waitEditor.setVisible(false);
-			this._commentEditor.setVisible(true);
-			this._menuBar.setActiveItemById("comment");
 		}
 		if (this._smsEditor && editor === this._smsEditor)
 		{
 			this._smsEditor.setVisible(false);
+		}
+		if (this._commentEditor && editor === this._commentEditor && this._todoEditor)
+		{
+			this._commentEditor.setVisible(false);
+		}
+
+		if (this._todoEditor)
+		{
+			this._todoEditor.setVisible(true);
+			this._menuBar.setActiveItemById('todo');
+		}
+		else
+		{
 			this._commentEditor.setVisible(true);
-			this._menuBar.setActiveItemById("comment");
+			this._menuBar.setActiveItemById('comment');
 		}
 	}
 
@@ -866,14 +910,25 @@ export default class Manager
 		if (this._waitEditor && editor === this._waitEditor)
 		{
 			this._waitEditor.setVisible(false);
-			this._commentEditor.setVisible(true);
-			this._menuBar.setActiveItemById("comment");
 		}
 		if (this._smsEditor && editor === this._smsEditor)
 		{
 			this._smsEditor.setVisible(false);
+		}
+		if (this._commentEditor && editor === this._commentEditor && this._todoEditor)
+		{
+			this._commentEditor.setVisible(false);
+		}
+
+		if (this._todoEditor)
+		{
+			this._todoEditor.setVisible(true);
+			this._menuBar.setActiveItemById('todo');
+		}
+		else
+		{
 			this._commentEditor.setVisible(true);
-			this._menuBar.setActiveItemById("comment");
+			this._menuBar.setActiveItemById('comment');
 		}
 	}
 
@@ -980,6 +1035,11 @@ export default class Manager
 		this._spotlightFastenShowed = true;
 	}
 
+	getCurrentUser(): ?Object
+	{
+		return this._currentUser;
+	}
+
 	getAudioPlaybackRateSelector()
 	{
 		if (!this.audioPlaybackRateSelector)
@@ -1016,6 +1076,11 @@ export default class Manager
 		return this.audioPlaybackRateSelector;
 	}
 
+	hasScheduledItems(): boolean
+	{
+		return this._schedule.getItems().length > 0;
+	}
+
 	static create(id, settings)
 	{
 		const self = new Manager();
@@ -1024,5 +1089,20 @@ export default class Manager
 		return self;
 	}
 
+	static getDefault(): ?Manager
+	{
+		return Manager.#defaultInstance;
+	}
+	static setDefault(instance): void
+	{
+		Manager.#defaultInstance = instance;
+	}
+
+	static getById(id): ?Manager
+	{
+		return Manager.instances[id] || null;
+	}
+
+	static #defaultInstance = null;
 	static instances = {};
 }

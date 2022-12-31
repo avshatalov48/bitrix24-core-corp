@@ -39,7 +39,6 @@
 		loader: null,
 		isKeyMetaPressed: false,
 		clickStatus: null,
-		animationDuration: 800,
 		cancelEditHandler: null,
 		blockSize: 20,
 
@@ -225,13 +224,15 @@
 				}
 			}
 
+			this.setPullItemBackground(item);
 			item.animate({
-				duration: this.animationDuration,
+				duration: this.getGrid().animationDuration,
 				draw: function(progress) {
 					item.layout.container.style.opacity = progress*100+'%';
 				},
 				useAnimation: item.useAnimation
 			}).then(function(){
+				this.setPullItemBackground(item, '#fff');
 				item.useAnimation = false;
 				item.layout.container.style.opacity = '100%';
 				BX.Event.EventEmitter.emit(
@@ -447,8 +448,11 @@
 				return;
 			}
 
+			var params = gridData.params;
+			params['VIEW_MODE'] = gridData.viewMode;
+
 			var context = {
-				PARAMS: gridData.params
+				PARAMS: params,
 			};
 			context[this.getGrid().getTypeInfoParam('stageIdKey')] = this.getId();
 
@@ -1018,14 +1022,14 @@
 
 				this.editorNodeCreate = BX.create("div", {
 					props: {
-						className: "crm-kanban-qiuck-form-buttons"
+						className: "crm-kanban-quick-form-buttons"
 					},
 					children: [
 						this.quickFormSaveButton = BX.create("input", {
 							attrs: {
 								type: "button",
 								value: BX.message("CRM_KANBAN_POPUP_SAVE"),
-								className: "ui-btn ui-btn-sm ui-btn-primary"
+								className: "ui-btn ui-btn-xs ui-btn-primary"
 							},
 							events: {
 								click: function(ev) {
@@ -1039,7 +1043,7 @@
 							attrs: {
 								type: "button",
 								value: BX.message("CRM_KANBAN_CONFIRM_N"),
-								className: "ui-btn ui-btn-sm ui-btn-link"
+								className: "ui-btn ui-btn-xs ui-btn-link"
 							},
 							events: {
 								click: function() {
@@ -1372,12 +1376,17 @@
 
 				if (found)
 				{
+					const currentOpacityPercent = itemToRemove.layout.container.style.opacity * 100;
+					const useAnimation = (currentOpacityPercent === 100 ? itemToRemove.useAnimation : false);
+
+					this.setPullItemBackground(itemToRemove);
 					itemToRemove.animate({
-						duration: this.animationDuration,
+						useAnimation,
+						duration: this.getGrid().animationDuration,
 						draw: function(progress) {
-							itemToRemove.layout.container.style.opacity = 100-progress*100+'%';
+							const opacity = currentOpacityPercent - progress * currentOpacityPercent + '%';
+							itemToRemove.layout.container.style.opacity = opacity;
 						},
-						useAnimation: itemToRemove.useAnimation
 					}).then(function(value){
 						if (itemToRemove.isCountable() && itemToRemove.isVisible())
 						{
@@ -1399,6 +1408,19 @@
 					resolve();
 				}
 			}.bind(this));
+		},
+
+		/**
+		 *
+		 * @param {BX.CRM.Kanban.Item} item
+		 * @param {string} backgroundColor
+		 */
+		setPullItemBackground: function(item, backgroundColor = '#fffabf')
+		{
+			if (item.changedInPullRequest && item.layout.bodyContainer.children[0])
+			{
+				item.layout.bodyContainer.children[0].style.backgroundColor = backgroundColor;
+			}
 		},
 
 		cleanLayoutItems: function()

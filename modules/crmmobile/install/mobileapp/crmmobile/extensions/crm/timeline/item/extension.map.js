@@ -1,0 +1,1 @@
+{"version":3,"sources":["extension.js"],"names":["jn","define","require","exports","module","TimelineItemFactory","TimelineItemModel"],"mappings":"AAGAA,GAAGC,OAAO,qBAAqB,CAACC,EAASC,EAASC,KAEjD,MAAMC,oBAAEA,GAAwBH,EAAQ,6BACxC,MAAMI,kBAAEA,GAAsBJ,EAAQ,2BAEtCE,EAAOD,QAAU,CAChBE,oBAAAA,EACAC,kBAAAA","file":"extension.map.js"}

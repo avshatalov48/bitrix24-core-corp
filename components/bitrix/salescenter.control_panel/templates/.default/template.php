@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true) die();
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\SalesCenter\Integration\Bitrix24Manager;
 
 $messages = Loc::loadLanguageFile(__FILE__);
 
@@ -28,8 +29,12 @@ Extension::load([
 	'ui.fonts.opensans',
 ]);
 
-\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar();
-\Bitrix\SalesCenter\Integration\Bitrix24Manager::getInstance()->addFeedbackButtonToToolbar();
+Bitrix24Manager::getInstance()->addIntegrationRequestButtonToToolbar(
+	[
+		Bitrix24Manager::ANALYTICS_SENDER_PAGE =>Bitrix24Manager::ANALYTICS_LABEL_SALESHUB
+	]
+);
+Bitrix24Manager::getInstance()->addFeedbackButtonToToolbar();
 
 ?>
 <script>

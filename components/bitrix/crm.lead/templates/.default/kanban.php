@@ -86,8 +86,6 @@ else
 {
 	$entityType = \CCrmOwnerType::LeadName;
 
-	// counters
-	$this->SetViewTarget('below_pagetitle', 1000);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.counter.panel',
 		'',
@@ -97,7 +95,6 @@ else
 			'PATH_TO_ENTITY_LIST' => $arResult['PATH_TO_LEAD_KANBAN']
 		)
 	);
-	$this->EndViewTarget();
 
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.dedupe.autosearch',
@@ -147,16 +144,6 @@ else
 		$component,
 		['HIDE_ICONS' => true]
 	);
-
-	/*
-	$supervisorInv = \Bitrix\Crm\Kanban\SupervisorTable::isSupervisor($entityType) ? 'N' : 'Y';
-	CCrmUrlUtil::AddUrlParams(
-							CComponentEngine::MakePathFromTemplate(
-								$arResult['PATH_TO_LEAD_KANBAN']
-							),
-							array('supervisor' => $supervisorInv, 'clear_filter' => 'Y')
-						)
-	 */
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 

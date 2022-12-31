@@ -11,8 +11,17 @@ class Menu extends Base
 
 	protected array $menuItems = [];
 
+	protected int $currentSort = 0;
+	protected const SORT_STEP = 100;
+
 	public function addItem(string $id, MenuItem $item): self
 	{
+		if ($item->getSort() === null)
+		{
+			$item->setSort($this->currentSort);
+			$this->currentSort += self::SORT_STEP;
+		}
+
 		$this->menuItems[$id] = $item;
 
 		return $this;

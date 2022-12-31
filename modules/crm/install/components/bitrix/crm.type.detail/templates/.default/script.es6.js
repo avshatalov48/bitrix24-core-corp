@@ -1013,7 +1013,7 @@ class CustomSectionsController
 			this.addSectionItemButton = Tag.render`<div class="crm-type-custom-section-add-item-container">
 				<span class="crm-type-custom-section-add-item-button" onclick="${() => {
 				this.sectionsListContainer.append(this.renderSectionItem());
-			}}">${Loc.getMessage('CRM_COMMON_ACTION_ADD')}</span>
+			}}">${Loc.getMessage('CRM_COMMON_ACTION_CREATE')}</span>
 			</div>`;
 			this.settingsContainer.append(this.addSectionItemButton);
 		}

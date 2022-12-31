@@ -46,51 +46,48 @@ class Session
 	protected $isDisabledSendSystemMessage = false;
 	protected $isForcedSendVote = false;
 
-	const RULE_TEXT = 'text';
-	const RULE_FORM = 'form';
-	const RULE_NONE = 'none';
+	public const RULE_TEXT = 'text';
+	public const RULE_FORM = 'form';
+	public const RULE_NONE = 'none';
 
-	const ACTION_NO_ANSWER = 'no_answer';
-	const ACTION_CLOSED = 'closed';
-	const ACTION_NONE = 'none';
+	public const ACTION_NO_ANSWER = 'no_answer';
+	public const ACTION_CLOSED = 'closed';
+	public const ACTION_NONE = 'none';
 
-	const MODE_INPUT = 'input';
-	const MODE_OUTPUT = 'output';
+	public const MODE_INPUT = 'input';
+	public const MODE_OUTPUT = 'output';
 
-	const CACHE_QUEUE = 'queue';
-	const CACHE_CLOSE = 'close';
-	const CACHE_MAIL = 'mail';
-	const CACHE_INIT = 'init';
-	const CACHE_NO_ANSWER = 'no_answer';
+	public const CACHE_QUEUE = 'queue';
+	public const CACHE_CLOSE = 'close';
+	public const CACHE_MAIL = 'mail';
+	public const CACHE_INIT = 'init';
+	public const CACHE_NO_ANSWER = 'no_answer';
 
 	/** New dialog opens. */
-	const STATUS_NEW = 0;
+	public const STATUS_NEW = 0;
 	/** The operator sent the dialog to the queue. */
-	const STATUS_SKIP = 5;
+	public const STATUS_SKIP = 5;
 	/** The operator took the dialogue to work. */
-	const STATUS_ANSWER = 10;
+	public const STATUS_ANSWER = 10;
 	/** The client is waiting for the operator's response. */
-	const STATUS_CLIENT = 20;
+	public const STATUS_CLIENT = 20;
 	/** The client is waiting for the operator's answer (new question after answer). */
-	const STATUS_CLIENT_AFTER_OPERATOR = 25;
+	public const STATUS_CLIENT_AFTER_OPERATOR = 25;
 	/** The operator responded to the client. */
-	const STATUS_OPERATOR = 40;
+	public const STATUS_OPERATOR = 40;
 	/** The dialogue in the mode of closing (pending the vote or after auto-answer). */
-	const STATUS_WAIT_CLIENT = 50;
+	public const STATUS_WAIT_CLIENT = 50;
 	/** The conversation has ended. */
-	const STATUS_CLOSE = 60;
+	public const STATUS_CLOSE = 60;
 	/** Spam / forced termination. */
-	const STATUS_SPAM = 65;
+	public const STATUS_SPAM = 65;
 	/** Duplicate session. The session is considered closed. */
-	const STATUS_DUPLICATE = 69;
+	public const STATUS_DUPLICATE = 69;
 	/** Closed without sending special messages and notifications. */
-	const STATUS_SILENTLY_CLOSE = 75;
+	public const STATUS_SILENTLY_CLOSE = 75;
 
-	const ORM_SAVE = 'save';
-	const ORM_GET = 'get';
-
-	const VOTE_LIKE = 5;
-	const VOTE_DISLIKE = 1;
+	public const VOTE_LIKE = 5;
+	public const VOTE_DISLIKE = 1;
 
 	/**
 	 * Session constructor.
@@ -186,7 +183,6 @@ class Session
 
 		$result->setResult(false);
 
-		//params
 		$this->connectorId = $params['SOURCE'];
 
 		$fields = [];
@@ -214,7 +210,12 @@ class Session
 		}
 		if (empty($this->config))
 		{
-			$result->addError(new Error(Loc::getMessage('IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION'), 'NO IMOL CONFIGURATION', __METHOD__, $params));
+			$result->addError(new Error(
+				Loc::getMessage('IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION'),
+				'NO IMOL CONFIGURATION',
+				__METHOD__,
+				$params
+			));
 		}
 
 		if ($result->isSuccess())
@@ -224,7 +225,6 @@ class Session
 				$result->addError(new Error(Loc::getMessage('IMOL_SESSION_ERROR_NO_CHAT'), 'NO CHAT', __METHOD__, $params));
 			}
 		}
-		//END params
 
 		if ($result->isSuccess())
 		{
@@ -255,7 +255,6 @@ class Session
 					{
 						$result->addErrors($resultCreate->getErrors());
 					}
-					//END Creating a new session
 				}
 			}
 			else
@@ -360,7 +359,11 @@ class Session
 				//Send message
 				if ($fields['PARENT_ID'] > 0)
 				{
-					$messageId = Messages\Session::sendMessageStartSessionByMessage($fields['CHAT_ID'], $fields['SESSION_ID'], $fields['PARENT_ID']);
+					$messageId = Messages\Session::sendMessageStartSessionByMessage(
+						$fields['CHAT_ID'],
+						$fields['SESSION_ID'],
+						$fields['PARENT_ID']
+					);
 				}
 				else
 				{
@@ -731,7 +734,12 @@ class Session
 				}
 				else
 				{
-					$result->addError(new Error(Loc::getMessage('IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION'), 'NO IMOL CONFIGURATION', __METHOD__, $params));
+					$result->addError(new Error(
+						Loc::getMessage('IMOL_SESSION_ERROR_NO_IMOL_CONFIGURATION'),
+						'NO IMOL CONFIGURATION',
+						__METHOD__,
+						$params
+					));
 				}
 			}
 
@@ -785,12 +793,12 @@ class Session
 						$this->session['PAUSE'] = 'N';
 
 						Model\SessionTable::update($loadSession['ID'], [
-							'END_ID' => 0,
-							'CLOSED' => 'N',
-							'DATE_CLOSE' => '',
-							'WAIT_ANSWER' => 'N',
-							'WAIT_ACTION' => 'Y',
-							'PAUSE' => 'N',
+							'END_ID' => $this->session['END_ID'],
+							'CLOSED' => $this->session['CLOSED'],
+							'DATE_CLOSE' => $this->session['DATE_CLOSE'],
+							'WAIT_ANSWER' => $this->session['WAIT_ANSWER'],
+							'WAIT_ACTION' => $this->session['WAIT_ACTION'],
+							'PAUSE' => $this->session['PAUSE'],
 							//'STATUS' => self::STATUS_WAIT_CLIENT
 						]);
 						Model\SessionCheckTable::add([
@@ -805,8 +813,8 @@ class Session
 						$this->chat->updateFieldData([
 							Chat::FIELD_SESSION => [
 								'ID' => $this->session['SESSION_ID'],
-								'PAUSE' => 'N',
-								'WAIT_ANSWER' => 'N',
+								'PAUSE' => $this->session['PAUSE'],
+								'WAIT_ANSWER' => $this->session['WAIT_ANSWER'],
 								'DATE_CREATE' => $this->session['DATE_CREATE']->getTimestamp()
 							],
 						]);
@@ -956,7 +964,6 @@ class Session
 			{
 				$sessionUpdate['TIME_ANSWER'] = $currentDate->getTimestamp()-$dateCreate->getTimestamp();
 			}
-
 		}
 
 		$this->update($sessionUpdate);
@@ -1157,6 +1164,7 @@ class Session
 							'RECENT_ADD' => $userViewChat? 'Y': 'N',
 							'SYSTEM' => 'Y',
 							'IMPORTANT_CONNECTOR' => 'Y',
+							'NO_SESSION_OL' => 'Y',
 							'PARAMS' => [
 								'CLASS' => 'bx-messenger-content-item-ol-output',
 								'IMOL_FORM' => 'history',
@@ -1207,6 +1215,7 @@ class Session
 							'SYSTEM'=> 'Y',
 							'RECENT_ADD' => $userViewChat? 'Y': 'N',
 							'IMPORTANT_CONNECTOR' => 'Y',
+							'NO_SESSION_OL' => 'Y',
 							'PARAMS' => [
 								'IMOL_VOTE' => $this->session['ID'],
 								'IMOL_VOTE_TEXT' => $this->config['VOTE_MESSAGE_1_TEXT'],
@@ -1528,7 +1537,7 @@ class Session
 	 *
 	 * TODO: the DATE_MODIFY field serves as a trigger for automatic actions!
 	 * TODO: Required express refactor the method and change the approach.
-	 * TODO: Hack. Manually changing the session status \Bitrix\ImOpenLines\Queue\All::transferToNext imopenlines/lib/queue/all.php:211
+	 * TODO: Hack. Manually changing the session status @see \Bitrix\ImOpenLines\Queue\All::transferToNext imopenlines/lib/queue/all.php:211
 	 *
 	 * @param $fields
 	 * @return bool
@@ -1582,20 +1591,24 @@ class Session
 
 			//do not pause
 			if (
-				$this->session['PAUSE'] === 'N' ||
-				$fields['PAUSE'] === 'N'
+				$this->session['PAUSE'] === 'N'
+				|| $fields['PAUSE'] === 'N'
 			)
 			{
 				if (
-					isset($fields['USER_ID']) &&
-					User::getInstance($fields['USER_ID'])->isConnector()
+					isset($fields['USER_ID'])
+					&& User::getInstance($fields['USER_ID'])->isConnector()
 				)
 				{
 					if (
-						$this->session['VOTE_SESSION'] &&
+						$this->session['VOTE_SESSION']
+						&&
 						(
-							$this->session['WAIT_ACTION'] === 'Y' &&
-							$fields['WAIT_ACTION'] !== 'N' ||
+							(
+								$this->session['WAIT_ACTION'] === 'Y'
+								&& $fields['WAIT_ACTION'] !== 'N'
+							)
+							||
 							$fields['WAIT_ACTION'] === 'Y'
 						)
 					)
@@ -1640,8 +1653,11 @@ class Session
 						$dateClose->add('1 MONTH');
 					}
 					elseif (
-						$this->session['WAIT_ANSWER'] == 'Y' &&
-						$fields['WAIT_ANSWER'] != 'N' ||
+						(
+							$this->session['WAIT_ANSWER'] == 'Y'
+							&& $fields['WAIT_ANSWER'] != 'N'
+						)
+						||
 						$fields['WAIT_ANSWER'] == 'Y'
 					)
 					{
@@ -1658,8 +1674,11 @@ class Session
 						}
 					}
 					elseif (
-						$this->session['WAIT_ACTION'] === 'Y' &&
-						$fields['WAIT_ACTION'] !== 'N' ||
+						(
+							$this->session['WAIT_ACTION'] === 'Y'
+							&& $fields['WAIT_ACTION'] !== 'N'
+						)
+						||
 						$fields['WAIT_ACTION'] === 'Y'
 					)
 					{
@@ -1832,7 +1851,15 @@ class Session
 					User::getInstance($this->session['USER_ID'])->isOnline())
 
 				{
-					\CAgent::AddAgent('\Bitrix\ImOpenLines\Mail::sendOperatorAnswerAgent('.$this->session['ID'].');', "imopenlines", "N", 60, "", "Y", \ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL"));
+					\CAgent::AddAgent(
+						'\Bitrix\ImOpenLines\Mail::sendOperatorAnswerAgent('.$this->session['ID'].');',
+						"imopenlines",
+						"N",
+						60,
+						"",
+						"Y",
+						\ConvertTimeStamp(time()+\CTimeZone::GetOffset()+60, "FULL")
+					);
 				}
 				else
 				{
@@ -1946,12 +1973,13 @@ class Session
 			{
 				if (
 					(
-						$this->session['STATUS'] >= self::STATUS_ANSWER &&
-						!in_array($this->session['STATUS'], [self::STATUS_CLIENT, self::STATUS_CLIENT_AFTER_OPERATOR])
-					) ||
+						$this->session['STATUS'] >= self::STATUS_ANSWER
+						&& !in_array($this->session['STATUS'], [self::STATUS_CLIENT, self::STATUS_CLIENT_AFTER_OPERATOR])
+					)
+					||
 					(
-						$fields['STATUS'] >= self::STATUS_ANSWER &&
-						!in_array($fields['STATUS'], [self::STATUS_CLIENT, self::STATUS_CLIENT_AFTER_OPERATOR])
+						$fields['STATUS'] >= self::STATUS_ANSWER
+						&& !in_array($fields['STATUS'], [self::STATUS_CLIENT, self::STATUS_CLIENT_AFTER_OPERATOR])
 					)
 				)
 				{
@@ -1988,9 +2016,20 @@ class Session
 				$crmManager->setSessionDataClose($updateDateCrmClose);
 			}
 		}
+
+		if (
+			isset($fields['SKIP_CHANGE_STATUS'])
+			&& $fields['SKIP_CHANGE_STATUS'] === true
+			&& isset($fields['STATUS'])
+		)
+		{
+			unset($fields['STATUS']);
+		}
+
 		unset(
 			$fields['USER_ID'],
 			$fields['SKIP_DATE_CLOSE'],
+			$fields['SKIP_CHANGE_STATUS'],
 			$fields['FORCE_CLOSE'],
 			$fields['INPUT_MESSAGE']
 		);
@@ -2056,8 +2095,8 @@ class Session
 		}
 
 		if (
-			$this->session['STATUS'] < self::STATUS_CLOSE &&
-			$this->session['CLOSED'] === 'Y'
+			$this->session['STATUS'] < self::STATUS_CLOSE
+			&& $this->session['CLOSED'] === 'Y'
 		)
 		{
 			$this->session['STATUS'] = self::STATUS_CLOSE;
@@ -2065,8 +2104,8 @@ class Session
 		}
 
 		if (
-			$this->session['ID'] &&
-			!empty($fields)
+			$this->session['ID']
+			&& !empty($fields)
 		)
 		{
 			Model\SessionTable::update($this->session['ID'], $fields);
@@ -2086,7 +2125,12 @@ class Session
 			}
 		}
 
-		Debug::addSession($this,  __METHOD__, ['fields' => $fields, 'updateCheckTable' => $updateCheckTable, 'updateChatSession' => $updateChatSession, 'updateDateCrmClose' => $updateDateCrmClose]);
+		Debug::addSession($this,  __METHOD__, [
+			'fields' => $fields,
+			'updateCheckTable' => $updateCheckTable,
+			'updateChatSession' => $updateChatSession,
+			'updateDateCrmClose' => $updateDateCrmClose
+		]);
 
 		return true;
 	}
@@ -2137,6 +2181,7 @@ class Session
 					),
 					'SYSTEM' => 'Y',
 					'IMPORTANT_CONNECTOR' => 'Y',
+					'NO_SESSION_OL' => 'Y',
 					'PARAMS' => [
 						'CLASS'=> 'bx-messenger-content-item-ol-output',
 					]
@@ -2151,25 +2196,6 @@ class Session
 				]);
 			}
 		}
-
-		$update = [
-			'DATE_MODIFY' => new DateTime()
-		];
-
-		if (
-			is_object($GLOBALS['USER'])
-			&& method_exists($GLOBALS['USER'], 'GetId')
-		)
-		{
-			$update['USER_ID'] = $GLOBALS['USER']->GetId();
-		}
-
-		if (isset($params['INPUT_MESSAGE']))
-		{
-			$update['INPUT_MESSAGE'] = $params['INPUT_MESSAGE'];
-		}
-
-		$this->update($update);
 	}
 
 	/**
@@ -2417,7 +2443,9 @@ class Session
 	public static function setQueueFlagCache($type = "")
 	{
 		if (!$type)
+		{
 			return false;
+		}
 
 		$app = Application::getInstance();
 		$managedCache = $app->getManagedCache();
@@ -2455,7 +2483,9 @@ class Session
 	public static function getQueueFlagCache($type = "")
 	{
 		if (!$type)
+		{
 			return false;
+		}
 
 		$app = Application::getInstance();
 		$managedCache = $app->getManagedCache();
@@ -2647,6 +2677,7 @@ class Session
 
 		if (!empty($updateFields))
 		{
+			$updateFields['SKIP_CHANGE_STATUS'] = true;
 			$result = $this->update($updateFields);
 		}
 
@@ -2693,7 +2724,10 @@ class Session
 				{
 					if ($session->isCloseVote())
 					{
-						Im::addCloseVoteMessage($session->getData('CHAT_ID'), $session->getConfig('VOTE_TIME_LIMIT'));
+						Im::addCloseVoteMessage(
+							$session->getData('CHAT_ID'),
+							$session->getConfig('VOTE_TIME_LIMIT')
+						);
 					}
 				}
 				else
@@ -2701,7 +2735,7 @@ class Session
 
 					Debug::addSession($session,  __METHOD__, ['sessionId' => $sessionId, 'action' => $action, 'userId' => $userId]);
 
-					if ($session->session['ID'] == $sessionId)
+					if ($session->getData('ID') == $sessionId)
 					{
 						if (
 							$session->getData('CLOSED') !== 'Y'
@@ -2722,6 +2756,8 @@ class Session
 							{
 								//TODO: hack!
 								$updateSession['STATUS'] = self::STATUS_WAIT_CLIENT;
+								$updateSession['DATE_MODIFY'] = new DateTime;
+								$updateSession['USER_ID'] = $userId;
 							}
 
 							$session->update($updateSession);
@@ -2822,11 +2858,23 @@ class Session
 
 					if ($voteValue > 0)
 					{
-						\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_HEAD_AND_COMMENT, $sessionData['ID'], ['vote' => $voteValue, 'comment' => $commentValue], $sessionData['OPERATOR_ID'], $userId);
+						\Bitrix\ImOpenLines\Chat::sendRatingNotify(
+							\Bitrix\ImOpenLines\Chat::RATING_TYPE_HEAD_AND_COMMENT,
+							$sessionData['ID'],
+							['vote' => $voteValue, 'comment' => $commentValue],
+							$sessionData['OPERATOR_ID'],
+							$userId
+						);
 					}
 					else
 					{
-						\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_COMMENT, $sessionData['ID'], $commentValue, $sessionData['OPERATOR_ID'], $userId);
+						\Bitrix\ImOpenLines\Chat::sendRatingNotify(
+							\Bitrix\ImOpenLines\Chat::RATING_TYPE_COMMENT,
+							$sessionData['ID'],
+							$commentValue,
+							$sessionData['OPERATOR_ID'],
+							$userId
+						);
 					}
 
 					$result = true;
@@ -2839,7 +2887,13 @@ class Session
 
 					if ($voteValue > 0)
 					{
-						\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_HEAD, $sessionData['ID'], $voteValue, $sessionData['OPERATOR_ID'], $userId);
+						\Bitrix\ImOpenLines\Chat::sendRatingNotify(
+							\Bitrix\ImOpenLines\Chat::RATING_TYPE_HEAD,
+							$sessionData['ID'],
+							$voteValue,
+							$sessionData['OPERATOR_ID'],
+							$userId
+						);
 					}
 
 					$result = true;
@@ -2848,7 +2902,13 @@ class Session
 				{
 					$fieldsUpdate['COMMENT_HEAD'] = $commentValue;
 
-					\Bitrix\ImOpenLines\Chat::sendRatingNotify(\Bitrix\ImOpenLines\Chat::RATING_TYPE_COMMENT, $sessionData['ID'], $commentValue, $sessionData['OPERATOR_ID'], $userId);
+					\Bitrix\ImOpenLines\Chat::sendRatingNotify(
+						\Bitrix\ImOpenLines\Chat::RATING_TYPE_COMMENT,
+						$sessionData['ID'],
+						$commentValue,
+						$sessionData['OPERATOR_ID'],
+						$userId
+					);
 
 					$result = true;
 				}
@@ -2942,7 +3002,6 @@ class Session
 
 		//statistics
 		ConfigStatistic::getInstance($duplicateSession['CONFIG_ID'])->addClosed()->deleteInWork();
-		//statistics END
 
 		return $result;
 	}
@@ -3072,7 +3131,9 @@ class Session
 	public static function onSessionProlongLastMessage($chatId, $dialogId, $entityType = '', $entityId = '', $userId = '')
 	{
 		if ($entityType != 'LINES')
+		{
 			return true;
+		}
 
 		self::prolongDueChatActivity($chatId);
 
@@ -3082,7 +3143,9 @@ class Session
 	public static function onSessionProlongWriting($params)
 	{
 		if ($params['CHAT']['ENTITY_TYPE'] != 'LINES')
+		{
 			return true;
+		}
 
 		self::prolongDueChatActivity($params['CHAT']['ID']);
 
@@ -3092,7 +3155,9 @@ class Session
 	public static function onSessionProlongChatRename($chatId, $title, $entityType = '', $entityId = '', $userId = '')
 	{
 		if ($entityType != 'LINES')
+		{
 			return true;
+		}
 
 		self::prolongDueChatActivity($chatId);
 
@@ -3174,5 +3239,4 @@ class Session
 	{
 		return '';
 	}
-
 }

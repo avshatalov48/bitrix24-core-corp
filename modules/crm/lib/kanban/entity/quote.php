@@ -124,15 +124,6 @@ class Quote extends Entity
 		return $item;
 	}
 
-	/**
-	 * @param array $data
-	 * @return string
-	 */
-	protected function getColumnId(array $data): string
-	{
-		return ($data['STATUS_ID'] ?? '');
-	}
-
 	public function getRequiredFieldsByStages(array $stages): array
 	{
 		$factory = Service\Container::getInstance()->getFactory($this->getTypeId());
@@ -160,26 +151,6 @@ class Quote extends Entity
 				'kanbanItemClassName' => 'crm-kanban-item crm-kanban-item-invoice',
 			]
 		);
-	}
-
-	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
-	{
-		$factory = Service\Container::getInstance()->getFactory(\CCrmOwnerType::Quote);
-		if (!$factory)
-		{
-			return parent::updateItemStage($id, $stageId, $newStateParams, $stages);
-		}
-
-		$item = $factory->getItem($id);
-		if (!$item)
-		{
-			$result = new Result();
-			return $result->addError(new Error(Loc::getMessage('CRM_TYPE_ITEM_NOT_FOUND')));
-		}
-		$item->setStageId($stageId);
-		$operation = $factory->getUpdateOperation($item);
-
-		return $operation->launch();
 	}
 
 	public function canAddItemToStage(string $stageId, \CCrmPerms $userPermissions): bool

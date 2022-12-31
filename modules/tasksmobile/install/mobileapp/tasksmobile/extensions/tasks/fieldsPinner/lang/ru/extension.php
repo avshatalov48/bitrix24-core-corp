@@ -1,0 +1,5 @@
+<?php
+
+$MESS["TASKSMOBILE_FIELDS_PINNER_NOTIFICATION_TITLE_PIN"] = "Поле закреплено";
+$MESS["TASKSMOBILE_FIELDS_PINNER_NOTIFICATION_TITLE_UNPIN"] = "Поле откреплено";
+$MESS["TASKSMOBILE_FIELDS_PINNER_NOTIFICATION_MESSAGE"] = "Форма обновится при следующем создании задачи";

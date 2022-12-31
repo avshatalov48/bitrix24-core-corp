@@ -47,22 +47,11 @@ else
 	$entityType = \CCrmOwnerType::OrderName;
 
 	// counters stub
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.counter.panel',
 		'',
 		array('ENTITY_TYPE_NAME' => $entityType)
 	);
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 
 	// menu
 	$APPLICATION->IncludeComponent(

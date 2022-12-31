@@ -1,7 +1,10 @@
 <?php
 
 $MESS['TASKS_BTN_ADD_TASK']='Добавить задачу';
+$MESS['TASKS_BTN_CREATE_TASK']='Создать';
 $MESS['TASKS_BTN_ADD_TASK_BY_TEMPLATE']='Добавить задачу по шаблону';
+$MESS['TASKS_BTN_CREATE_TASK_BY_TEMPLATE']='Задачу по шаблону';
+$MESS['TASKS_BTN_ADD_TASK_BY_TASK']='Задачу';
 $MESS['TASKS_BTN_LIST_TASK_TEMPLATE']='Список всех шаблонов';
 $MESS['TASKS_AJAX_ERROR_LOAD_TEMPLATES']='Ошибка загрузки списка';
 $MESS['TASKS_AJAX_LOAD_TEMPLATES']='Загрузка списка...';
@@ -11,6 +14,10 @@ $MESS['TASKS_BTN_IMPORT']='Импорт списка';
 $MESS['TASKS_BTN_IMPORT_CSV']='из CSV';
 $MESS['TASKS_BTN_EXPORT']='Экспорт списка';
 $MESS['TASKS_BTN_EXPORT_EXCEL']='в Excel';
+$MESS['TASKS_BTN_EXPORT_EXCEL_GRID_FIELDS']='Только поля из списка';
+$MESS['TASKS_BTN_EXPORT_EXCEL_ALL_FIELDS']='Все поля задач';
+$MESS['TASKS_BTN_EXPORT_TO_EXCEL']='Экспорт списка в Excel';
+
 $MESS['TASKS_BTN_SYNC']='Синхронизация списка';
 $MESS['TASKS_BTN_SYNC_OUTLOOK']='с Outlook';
 $MESS['TASKS_BTN_GROUP_WO']='Без проекта';

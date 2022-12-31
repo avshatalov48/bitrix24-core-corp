@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Timeline;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
+use Bitrix\Crm\Service\Timeline\Repository\IgnoredItemsRules;
 use Bitrix\Main;
 use Bitrix\Main\DI\ServiceLocator;
 use Bitrix\Main\Type\DateTime;
@@ -193,6 +194,11 @@ class Controller
 		{
 			return null;
 		}
+		if ((new IgnoredItemsRules($context))->isTimelineItemIgnored($timelineEntry))
+		{
+			return null;
+		}
+
 		$timelineEntry['IS_FIXED'] = \Bitrix\Crm\Timeline\TimelineEntry::isFixed(
 			$timelineEntryId, $context->getEntityTypeId(), $context->getEntityId()
 		)  ? 'Y' : 'N';
@@ -264,6 +270,8 @@ class Controller
 		);
 		if ($item)
 		{
+			$item->getModel()->setIsFixed(false); // update pull event should be sent about base history item
+
 			(new \Bitrix\Crm\Service\Timeline\Item\Pusher($item))->sendUpdateEvent();
 		}
 	}

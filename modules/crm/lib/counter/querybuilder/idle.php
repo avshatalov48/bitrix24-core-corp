@@ -20,6 +20,12 @@ class Idle extends QueryBuilder
 		return \Bitrix\Main\ORM\Query\Join::TYPE_LEFT;
 	}
 
+	protected function useEntityCountableActivityTable(): bool
+	{
+		// EntityCountableTable can not be used for idle counter
+		return false;
+	}
+
 	protected function applyCounterTypeFilter(\Bitrix\Main\ORM\Query\Query $query): void
 	{
 		$query->whereNull('B.ENTITY_ID');
@@ -37,18 +43,11 @@ class Idle extends QueryBuilder
 			)
 		);
 		$query->whereNull('W.OWNER_ID');
-
-		if($this->entityTypeId !== \CCrmOwnerType::Order)
-			$assignedColumn = 'ASSIGNED_BY_ID';
-		else
-			$assignedColumn = 'RESPONSIBLE_ID';
-
-		$this->applyResponsibleFilter($query, $assignedColumn);
 	}
 
-	protected function applyReferenceFilter(array &$referenceFilter): void
+	protected function applyUncompletedActivityTableReferenceFilter(\Bitrix\Main\ORM\Query\Filter\ConditionTree $referenceFilter): void
 	{
-		$referenceFilter['=ref.RESPONSIBLE_ID'] =new SqlExpression('?i', 0); // 0 means "All users"
+		$referenceFilter->where('ref.RESPONSIBLE_ID', new SqlExpression('?i', 0)); // 0 means "All users"
 	}
 
 	public function buildCompatible(\Bitrix\Main\ORM\Query\Query $query): \Bitrix\Main\ORM\Query\Query
@@ -91,12 +90,7 @@ class Idle extends QueryBuilder
 		);
 		$query->addFilter('==W.OWNER_ID', null);
 
-		if($this->entityTypeId !== \CCrmOwnerType::Order)
-			$assignedColumn = 'ASSIGNED_BY_ID';
-		else
-			$assignedColumn = 'RESPONSIBLE_ID';
-
-		$this->applyResponsibleFilter($query, $assignedColumn);
+		$this->applyResponsibleFilter($query, $this->getEntityAssignedColumnName());
 
 		return $query;
 	}

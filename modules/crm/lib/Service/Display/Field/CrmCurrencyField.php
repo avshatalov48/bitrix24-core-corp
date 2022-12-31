@@ -9,7 +9,7 @@ use Bitrix\Crm\Service\Display\Options;
 
 class CrmCurrencyField extends BaseSimpleField
 {
-	protected const TYPE = 'crm_currency';
+	public const TYPE = 'crm_currency';
 
 	protected function getFormattedValueForKanban($fieldValue, int $itemId, Options $displayOptions)
 	{

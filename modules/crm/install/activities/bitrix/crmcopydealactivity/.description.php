@@ -1,30 +1,38 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	'NAME' => GetMessage('CRM_CDA_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_CDA_DESC'),
-	'TYPE' => array('activity', 'robot_activity'),
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('CRM_CDA_NAME'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CDA_DESC_1'),
+	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmCopyDealActivity',
 	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
-		"OWN_ID" => 'crm',
-		"OWN_NAME" => 'CRM',
-	),
-	'RETURN' => array(
-		'DealId' => array(
-			'NAME' => GetMessage('CRM_CDA_RETURN_DEAL_ID'),
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
+	],
+	'RETURN' => [
+		'DealId' => [
+			'NAME' => Loc::getMessage('CRM_CDA_RETURN_DEAL_ID'),
 			'TYPE' => 'int',
-		),
-	),
-	'FILTER' => array(
-		'INCLUDE' => array(
-			array('crm', 'CCrmDocumentDeal')
-		),
-	),
-	'ROBOT_SETTINGS' => array(
+		],
+	],
+	'FILTER' => [
+		'INCLUDE' => [
+			['crm', 'CCrmDocumentDeal'],
+		],
+	],
+	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
-		'RESPONSIBLE_PROPERTY' => 'Responsible'
-	),
-);
+		'RESPONSIBLE_PROPERTY' => 'Responsible',
+		'GROUP' => ['repeatSales'],
+		'SORT' => 3200,
+	],
+];

@@ -16,7 +16,7 @@
 .crm-activity-popup-info-person-link-triangle {
 	border-bottom: 1px dashed #8f949c;
 	color: #80868e;
-	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	transition: border-bottom .3s ease-in-out;
 	-webkit-font-smoothing: antialiased;
@@ -50,7 +50,7 @@
 	padding: 10px;
 	background: #c0eefd;
 	color: #1968b8;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: background .2s linear;
 	-webkit-font-smoothing: antialiased;
 }
@@ -141,7 +141,7 @@
 
 .crm-activity-popup-title {
 	color: #80868e;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -185,7 +185,7 @@
 .select-date-active {
 	height: 35px;
 	background: #bceefc;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -380,7 +380,7 @@
 
 .crm-event-time {
 	color: #0b66c3;
-	font: bold 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -416,7 +416,7 @@
 	border-radius: 2px;
 	background: rgba(4, 180, 171, .7);
 	color: #fff;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -453,7 +453,7 @@
 
 .crm-activity-popup-timeline-sidebar-date {
 	color: #535c69;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -504,7 +504,7 @@
 	display: inline-block;
 	margin: 10px;
 	color: #1968b8;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -785,7 +785,7 @@
 	height: 30px;
 	border-radius: 1px;
 	vertical-align: middle;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	line-height: 29px;
 	transition: background-color .2s linear;
@@ -996,7 +996,7 @@
 	max-width: 410px;
 	color: #80868e;
 	vertical-align: middle;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1179,7 +1179,7 @@
 	color: #535c69;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1231,7 +1231,7 @@
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1314,7 +1314,7 @@
 .crm-task-list-options-destination-text {
 	display: inline-block;
 	vertical-align: middle;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1373,7 +1373,7 @@
 	text-decoration: none;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-bottom .3s ease;
 	-webkit-font-smoothing: antialiased;
 }
@@ -1709,7 +1709,7 @@
 
 .crm-task-list-mail-item-inner-user-title {
 	color: #000;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1917,7 +1917,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-1c-info-item { margin: 13px 0 0; }
 
 .crm-task-list-1c-info-order {
-	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -1949,7 +1949,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-bottom: 1px solid #0b66c3;
 	color: #0b66c3;
 	text-decoration: none;
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-bottom .3s ease;
 	-webkit-font-smoothing: antialiased;
 }
@@ -1982,7 +1982,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	display: inline-block;
 	margin: 0 5px 0 0;
 	width: 150px;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 	text-overflow: ellipsis;
 	overflow: hidden;
@@ -1998,7 +1998,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-form-adress {
 	display: inline-block;
 	margin: 16px 0 0;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2062,7 +2062,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	min-width: 140px;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2164,7 +2164,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-meet-item { color: #80868e; }
 
 .crm-task-list-meet-topic {
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-font-smoothing: antialiased;
 }
 
@@ -2484,7 +2484,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-bottom: 1px solid transparent;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 17px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 17px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-item-inner-description-name { color: #333; }
@@ -2701,7 +2701,7 @@ table.quote td { padding: 0.95em 1.5em; }
 .crm-task-list-mail-additionally-info-content {
 	width: calc(100% - 70px - 70px);
 	color: #525c69;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-task-list-mail-additionally-info-name {
@@ -2764,7 +2764,7 @@ table.quote td { padding: 0.95em 1.5em; }
 	border-radius: 2px;
 	background: #bcedfc;
 	vertical-align: middle;
-	font: bold 13px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px/30px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: background 0.2s linear;
 }
 

@@ -9,7 +9,8 @@ class CompanyProvider extends EntityProvider
 	/** @var CompanyTable */
 	protected static $dataClass = CompanyTable::class;
 
-	protected $enableMyCompanyOnly = false;
+	protected bool $enableMyCompanyOnly = false;
+	protected bool $excludeMyCompany = false;
 	protected $categoryId;
 
 	public function __construct(array $options = [])
@@ -20,21 +21,22 @@ class CompanyProvider extends EntityProvider
 		$this->options['categoryId'] = $this->categoryId;
 
 		$this->enableMyCompanyOnly = (bool)($options['enableMyCompanyOnly'] ?? $this->enableMyCompanyOnly);
+		$this->excludeMyCompany = (bool)($options['excludeMyCompany'] ?? $this->excludeMyCompany);
+
 		$this->options['enableMyCompanyOnly'] = $this->enableMyCompanyOnly;
+		$this->options['excludeMyCompany'] = $this->excludeMyCompany;
 	}
 
 	public function getRecentItemIds(string $context): array
 	{
-		if($this->enableMyCompanyOnly)
+		if($this->enableMyCompanyOnly || $this->excludeMyCompany)
 		{
 			$ids = CompanyTable::getList([
 				'select' => ['ID'],
 				'order' => [
 					'ID' => 'ASC',
 				],
-				'filter' => [
-					'=IS_MY_COMPANY' => 'Y',
-				],
+				'filter' => $this->getCompanyFilter(),
 			])->fetchCollection()->getIdList();
 		}
 		else
@@ -50,17 +52,16 @@ class CompanyProvider extends EntityProvider
 		return \CCrmOwnerType::Company;
 	}
 
+	protected function getCategoryId(): int
+	{
+		return $this->options['categoryId'];
+	}
+
 	protected function fetchEntryIds(array $filter): array
 	{
-		if ($this->enableMyCompanyOnly)
-		{
-			$filter['=IS_MY_COMPANY'] = 'Y';
-		}
-		$filter['=CATEGORY_ID'] = $this->categoryId;
-
 		$collection = static::$dataClass::getList([
 			'select' => ['ID'],
-			'filter' => $filter,
+			'filter' => array_merge($filter, $this->getAdditionalFilter()),
 		])->fetchCollection();
 
 		return $collection->getIdList();
@@ -71,9 +72,25 @@ class CompanyProvider extends EntityProvider
 		$filter = [
 			'=CATEGORY_ID' =>  $this->categoryId,
 		];
-		if ($this->enableMyCompanyOnly)
+
+		return array_merge($filter, $this->getCompanyFilter());
+	}
+
+	private function getCompanyFilter(): array
+	{
+		$filter = [];
+
+		if($this->enableMyCompanyOnly)
 		{
-			$filter['=IS_MY_COMPANY'] = 'Y';
+			$filter = [
+				'=IS_MY_COMPANY' => 'Y',
+			];
+		}
+		elseif ($this->excludeMyCompany)
+		{
+			$filter = [
+				'=IS_MY_COMPANY' => 'N',
+			];
 		}
 
 		return $filter;

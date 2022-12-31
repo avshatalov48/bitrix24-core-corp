@@ -31,6 +31,8 @@ namespace PHPSTORM_META
 		'crm.service.broker.deal',
 		'crm.service.broker.order',
 		'crm.service.broker.dynamic',
+		'crm.service.broker.activity',
+		'crm.service.activity.badge',
 		'crm.service.director',
 		'crm.service.eventhistory',
 		'crm.service.typesMap',
@@ -43,6 +45,9 @@ namespace PHPSTORM_META
 		'crm.service.multifieldStorage',
 		'crm.kanban.entity.lead',
 		'crm.kanban.entity.deal',
+		'crm.kanban.entity.deal.activities',
+		'crm.kanban.entity.contact',
+		'crm.kanban.entity.company',
 		'crm.kanban.entity.invoice',
 		'crm.kanban.entity.quote',
 		'crm.kanban.entity.order',
@@ -72,6 +77,7 @@ namespace PHPSTORM_META
 		'crm.conversion.mapper',
 		'crm.service.webform.scenario',
 		'crm.model.fieldRepository',
+		'crm.integration.sign',
 	);
 
 	expectedArguments(\Bitrix\Main\DI\ServiceLocator::get(), 0, argumentsSet('bitrix_crm_serviceLocator_codes'));
@@ -106,6 +112,7 @@ namespace PHPSTORM_META
 		'crm.service.broker.deal' => \Bitrix\Crm\Service\Broker\Deal::class,
 		'crm.service.broker.order' => \Bitrix\Crm\Service\Broker\Order::class,
 		'crm.service.broker.dynamic' => \Bitrix\Crm\Service\Broker\Dynamic::class,
+		'crm.service.broker.activity' => \Bitrix\Crm\Service\Broker\Activity::class,
 		'crm.service.director' => \Bitrix\Crm\Service\Director::class,
 		'crm.service.eventhistory' => \Bitrix\Crm\Service\EventHistory::class,
 		'crm.service.typesMap' => \Bitrix\Crm\Service\TypesMap::class,
@@ -118,6 +125,8 @@ namespace PHPSTORM_META
 		'crm.service.multifieldStorage' => \Bitrix\Crm\Service\MultifieldStorage::class,
 		'crm.kanban.entity.lead' => \Bitrix\Crm\Kanban\Entity\Lead::class,
 		'crm.kanban.entity.deal' => \Bitrix\Crm\Kanban\Entity\Deal::class,
+		'crm.kanban.entity.deal.activities' => \Bitrix\Crm\Kanban\Entity\DealActivities::class,
+		'crm.kanban.entity.contact' => \Bitrix\Crm\Kanban\Entity\Contact::class,
 		'crm.kanban.entity.invoice' => \Bitrix\Crm\Kanban\Entity\Invoice::class,
 		'crm.kanban.entity.quote' => \Bitrix\Crm\Kanban\Entity\Quote::class,
 		'crm.kanban.entity.order' => \Bitrix\Crm\Kanban\Entity\Order::class,
@@ -147,5 +156,6 @@ namespace PHPSTORM_META
 		'crm.conversion.mapper' => \Bitrix\Crm\Conversion\Mapper::class,
 		'crm.service.webform.scenario' => \Bitrix\Crm\Service\WebForm\WebFormScenarioService::class,
 		'crm.model.fieldRepository' => \Bitrix\Crm\Model\FieldRepository::class,
+		'crm.integration.sign' => \Bitrix\Crm\Service\Integration\Sign::class,
 	]));
 }

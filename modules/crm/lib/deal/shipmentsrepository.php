@@ -31,7 +31,7 @@ final class ShipmentsRepository
 	 */
 	public function getShipmentStages(array $dealIds): array
 	{
-		if (count($dealIds) === 0)
+		if (empty($dealIds))
 		{
 			return [];
 		}

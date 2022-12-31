@@ -48,7 +48,13 @@
 
 		static openTask(taskId, data, params)
 		{
-			if (Application.getApiVersion() >= 31)
+			const apiVersion = Application.getApiVersion();
+
+			if (apiVersion >= 45)
+			{
+				TaskBackgroundAction.openTaskTabsComponentByTaskId(taskId, data, params);
+			}
+			else if (apiVersion >= 31)
 			{
 				TaskBackgroundAction.openTaskComponentByTaskId(taskId, data, params);
 			}
@@ -244,6 +250,117 @@
 
 			PageManager.openComponent('JSStackComponent', param);
 			console.log({title: 'PageManager.openComponent', param});
+		}
+
+		static openTaskTabsComponentByTaskId(taskId, data, params)
+		{
+			const guid = TaskBackgroundAction.getGuid();
+			const componentCode = 'tasks.task.tabs';
+			const defaultTitle = BX.message('MOBILE_TASKS_TASK_CARD_TOP_BAR_DEFAULT_TITLE');
+			const title = (data.taskInfo ? data.taskInfo.title : defaultTitle);
+			const {userId, taskObject} = params;
+
+			let expiredCounter = 0;
+			let newCommentsCounter = 0;
+			let expiredCounterColor = Task.counterColors.gray;
+			let newCommentsCounterColor = Task.counterColors.gray;
+			if (taskObject)
+			{
+				expiredCounter = (!taskObject.isCompletedCounts && !taskObject.isDeferred && taskObject.isExpired ? 1 : 0);
+				newCommentsCounter = taskObject._counter.value - expiredCounter;
+				if (taskObject.isMember && !taskObject.isMuted)
+				{
+					expiredCounterColor = Task.counterColors.danger;
+					newCommentsCounterColor = Task.counterColors.success;
+				}
+			}
+
+			const tabs = {
+				items: [
+					{
+						id: 'tasks.task.view',
+						title: BX.message('MOBILE_TASKS_VIEW_TAB_TASK'),
+						counter: expiredCounter,
+						label: (expiredCounter > 0 ? String(expiredCounter) : ''),
+						style: {
+							activeBadgeColor: expiredCounterColor,
+							inactiveBadgeColor: expiredCounterColor,
+						},
+						widget: {
+							name: 'layout',
+							code: 'tasks.task.view',
+							settings: {
+								objectName: 'layout',
+							},
+						},
+					},
+					{
+						id: 'tasks.task.comments',
+						title: BX.message('MOBILE_TASKS_VIEW_TAB_COMMENT'),
+						counter: newCommentsCounter,
+						label: (newCommentsCounter > 0 ? String(newCommentsCounter) : ''),
+						style: {
+							activeBadgeColor: newCommentsCounterColor,
+							inactiveBadgeColor: newCommentsCounterColor,
+						},
+						widget: {
+							name: 'web',
+							code: 'tasks.task.comments',
+							settings: {
+								page: {
+									url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=comments&TASK_ID=${taskId}&GUID=${guid}`,
+									loading: {
+										type: 'comments',
+									},
+									preload: true,
+								},
+							},
+						},
+					},
+					// {
+					// 	id: 'tasks.task.old',
+					// 	title: 'old',
+					// 	component: {
+					// 		name: 'JSStackComponent',
+					// 		componentCode: `web: ${env.siteDir}mobile/tasks/snmrouter/?routePage=view&TASK_ID=${taskId}&GUID=${guid}&NEW_CARD=Y`,
+					// 		rootWidget: {
+					// 			name: 'web',
+					// 			settings: {
+					// 				page: {
+					// 					preload: false,
+					// 					url: `${env.siteDir}mobile/tasks/snmrouter/?routePage=view&TASK_ID=${taskId}&GUID=${guid}&NEW_CARD=Y`,
+					// 				},
+					// 			},
+					// 		},
+					// 	},
+					// },
+				],
+			};
+
+			PageManager.openComponent('JSStackComponent', {
+				name: 'JSStackComponent',
+				scriptPath: availableComponents[`tasks:${componentCode}`].publicUrl,
+				canOpenInDefault: true,
+				componentCode,
+				rootWidget: {
+					name: 'tabs',
+					settings: {
+						objectName: 'tabs',
+						title: (taskObject ? taskObject.title : title),
+						grabTitle: false,
+						grabButtons: true,
+						grabSearch: false,
+						tabs,
+					},
+				},
+				params: {
+					COMPONENT_CODE: componentCode,
+					TASK_ID: taskId,
+					USER_ID: (userId || env.userId),
+					TASK_OBJECT: taskObject,
+					GUID: guid,
+				},
+			});
 		}
 
 		static makeComponentTaskUrl(taskId, action = 'view', tabId = 'taskTab', messageId = 0)

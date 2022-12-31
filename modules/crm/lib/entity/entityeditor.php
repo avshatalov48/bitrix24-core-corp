@@ -1,6 +1,7 @@
 <?php
 namespace Bitrix\Crm\Entity;
 
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Crm;
 
@@ -142,7 +143,7 @@ class EntityEditor
 	 */
 	public static function getUserSelectorContext()
 	{
-		return 'CRM_ENTITY_EDITOR';
+		return EntitySelector::CONTEXT;
 	}
 	/**
 	 * Save selected User in Finder API

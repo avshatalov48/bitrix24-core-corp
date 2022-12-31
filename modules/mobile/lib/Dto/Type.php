@@ -11,6 +11,40 @@ use Bitrix\Mobile\Dto\Caster\ObjectCaster;
 
 final class Type
 {
+	public static function makeCasterByPropertyType(\ReflectionType $type): ?Caster
+	{
+		if (!method_exists($type, 'getName'))
+		{
+			return null;
+		}
+
+		$typeName = $type->getName();
+
+		switch ($typeName)
+		{
+			case 'int':
+				$caster = new IntCaster(); break;
+			case 'float':
+				$caster = new FloatCaster(); break;
+			case 'string':
+				$caster = new StringCaster(); break;
+			case 'bool':
+				$caster = new BoolCaster(); break;
+			case 'array':
+				$caster = null; break;
+			default:
+				$caster = class_exists($typeName) ? new ObjectCaster($typeName) : null;
+				break;
+		}
+
+		if ($caster && $type->allowsNull())
+		{
+			$caster->nullable();
+		}
+
+		return $caster;
+	}
+
 	public static function int(): IntCaster
 	{
 		return new IntCaster();

@@ -15,3 +15,6 @@
 	align-items: center;
 	padding-left: 0;
 }
+.ui-counter-panel__item-head {
+	padding-right: 5px;
+}

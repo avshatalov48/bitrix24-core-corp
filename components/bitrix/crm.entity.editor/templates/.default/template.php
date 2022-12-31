@@ -587,12 +587,6 @@ if(!empty($htmlEditorConfigs))
 
 			BX.Crm.EntityProductListController.messages = BX.Crm.EntityEditorProductRowProxy.messages;
 
-			BX.Crm.EntityEditorProductRowSummary.messages =
-			{
-				notShown: "<?=GetMessageJS('CRM_ENTITY_ED_PRODUCT_NOT_SHOWN')?>",
-				total: "<?=GetMessageJS('CRM_ENTITY_ED_TOTAL')?>"
-			};
-
 			BX.Crm.ClientEditorEntityRequisitePanel.messages =
 			{
 				toggle: "<?=GetMessageJS('CRM_ENTITY_ED_TOGGLE_REQUISITES')?>"
@@ -856,6 +850,8 @@ if(!empty($htmlEditorConfigs))
 						showEmptyFields: <?=$arResult['SHOW_EMPTY_FIELDS'] ? 'true' : 'false'?>,
                         ajaxData: <?=CUtil::PhpToJSObject($arResult['COMPONENT_AJAX_DATA'])?>,
 						isEmbedded: <?=$arResult['IS_EMBEDDED'] ? 'true' : 'false'?>,
+						customToolPanelButtons: <?=CUtil::PhpToJSObject($arResult['CUSTOM_TOOL_PANEL_BUTTONS'])?>,
+						toolPanelButtonsOrder: <?=CUtil::PhpToJSObject($arResult['TOOL_PANEL_BUTTONS_ORDER'])?>,
 						restrictions: <?=CUtil::PhpToJSObject($arResult['RESTRICTIONS'])?>
 					}
 				)

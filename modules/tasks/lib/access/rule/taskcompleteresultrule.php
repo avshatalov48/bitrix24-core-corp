@@ -5,6 +5,7 @@ namespace Bitrix\Tasks\Access\Rule;
 use Bitrix\Main\Access\AccessibleItem;
 use Bitrix\Tasks\Access\Role\RoleDictionary;
 use Bitrix\Tasks\Internals\Task\Result\ResultManager;
+use Bitrix\Tasks\Internals\Task\Result\ResultTable;
 
 class TaskCompleteResultRule extends \Bitrix\Main\Access\Rule\AbstractRule
 {
@@ -32,9 +33,14 @@ class TaskCompleteResultRule extends \Bitrix\Main\Access\Rule\AbstractRule
 			return true;
 		}
 
+		$lastResult = ResultManager::getLastResult($task->getId());
+
 		if (
 			ResultManager::requireResult($task->getId())
-			&& !ResultManager::hasResult($task->getId())
+			&& (
+				!$lastResult
+				|| (int) $lastResult['STATUS'] !== ResultTable::STATUS_OPENED
+			)
 		)
 		{
 			$this->controller->addError(static::class, 'Unable to complete task without result');

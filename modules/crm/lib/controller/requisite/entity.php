@@ -1,8 +1,6 @@
 <?php
 namespace Bitrix\Crm\Controller\Requisite;
 
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\EntityAddressType;
 use Bitrix\Crm\EntityRequisite;
 use Bitrix\Crm\Integration\ClientResolver;
 use Bitrix\Main\Engine\Controller;

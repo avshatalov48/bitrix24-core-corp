@@ -1,5 +1,5 @@
 .popup-window-custom-title {
-	font: bold 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #80868e;
 	line-height: 49px;
 	padding: 0 0 0 20px;

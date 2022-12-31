@@ -18,5 +18,5 @@ $MESS["CRM_MENU_EXCH1C"] = "Интеграция с &quot;1С:Предприят
 $MESS["CRM_MENU_INFO"] = "Справка";
 $MESS["CRM_MENU_MAILTEMPLATE"] = "Почтовые шаблоны";
 $MESS["CRM_MENU_SLOT"] = "Аналитические отчёты";
-$MESS["CRM_MENU_DEAL_CATEGORY"] = "Направления сделок";
+$MESS["CRM_MENU_DEAL_CATEGORY"] = "Воронки сделок";
 ?>

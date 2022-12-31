@@ -1,5 +1,6 @@
-import {Loc} from "main.core";
-import {DateTimeFormat} from "main.date";
+import { Loc } from "main.core";
+import { DateTimeFormat } from "main.date";
+import { TimestampConverter, Factory } from "crm.datetime";
 
 declare type DateTimeFormatOptions = {
 	withDayOfWeek: Boolean,
@@ -18,16 +19,7 @@ export default class DatetimeConverter
 	 */
 	static createFromServerTimestamp(timestamp: Number): DatetimeConverter
 	{
-		let serverTimezoneOffset = parseInt(Loc.getMessage('CRM_TIMELINE_SERVER_TZ_OFFSET'));
-		if(isNaN(serverTimezoneOffset))
-		{
-			serverTimezoneOffset = 0;
-		}
-		const clientTimezoneOffset = - (new Date()).getTimezoneOffset() * 60;
-
-		const timestampInClientTz = timestamp + serverTimezoneOffset - clientTimezoneOffset;
-
-		const date = new Date(timestampInClientTz * 1000);
+		const date = Factory.createFromTimestampInServerTimezone(timestamp);
 
 		return new DatetimeConverter(date);
 	}
@@ -47,7 +39,8 @@ export default class DatetimeConverter
 
 	toUserTime(): DatetimeConverter
 	{
-		this.#datetime = new Date(this.#datetime.getTime() + 1000 * DatetimeConverter.getUserTimezoneOffset());
+		const serverTimestamp = Math.floor(this.#datetime.getTime() / 1000);
+		this.#datetime = new Date(TimestampConverter.serverToUser(serverTimestamp) * 1000);
 
 		return this;
 	}
@@ -91,24 +84,11 @@ export default class DatetimeConverter
 					['today', 'today'],
 					['tommorow', 'tommorow'],
 					['yesterday', 'yesterday'],
-					['', (this.#datetime.getFullYear() === (new Date()).getFullYear() ?  this.#shortDateFormat :  this.#fullDateFormat)]
+					['', (this.#datetime.getFullYear() === (Factory.getUserNow()).getFullYear() ?  this.#shortDateFormat :  this.#fullDateFormat)]
 				],
 				this.#datetime
 			)
 		);
-	}
-
-	static getUserTimezoneOffset(): Number
-	{
-		if(!this.userTimezoneOffset)
-		{
-			this.userTimezoneOffset = parseInt(Loc.getMessage('USER_TZ_OFFSET'));
-			if(isNaN(this.userTimezoneOffset))
-			{
-				this.userTimezoneOffset = 0;
-			}
-		}
-		return this.userTimezoneOffset;
 	}
 
 	static getSiteDateFormat(): string
@@ -120,6 +100,4 @@ export default class DatetimeConverter
 	{
 		return DateTimeFormat.convertBitrixFormat(Loc.getMessage('FORMAT_DATETIME'));
 	}
-
-	static userTimezoneOffset;
 }

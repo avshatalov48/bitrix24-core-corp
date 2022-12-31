@@ -1,8 +1,8 @@
-import {Reflection, Event, ajax as Ajax, Text, Type, Dom} from "main.core";
-import {EventEmitter} from "main.core.events";
-import {BaseButton} from "ui.buttons";
-import {Router} from "crm.router";
-import {Menu} from "main.popup";
+import { ajax as Ajax, Dom, Event, Reflection, Text, Type } from "main.core";
+import { EventEmitter } from "main.core.events";
+import { BaseButton, Button, ButtonIcon } from "ui.buttons";
+import { Router } from "crm.router";
+import { Menu } from "main.popup";
 
 import 'ui.hint';
 
@@ -18,6 +18,9 @@ class ToolbarEvents
 	static CATEGORIES_UPDATED = 'CategoriesUpdated';
 }
 
+/**
+ * @memberOf BX.Crm
+ */
 export default class ToolbarComponent extends EventEmitter
 {
 	constructor() {
@@ -213,6 +216,25 @@ export default class ToolbarComponent extends EventEmitter
 				}, targetItemId);
 			});
 		}
+	}
+
+	getSettingsButton(): ?Button
+	{
+		const toolbar: ?BX.UI.Toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
+		if (!toolbar)
+		{
+			return null;
+		}
+
+		for (const [key: string, button: Button] of Object.entries(toolbar.getButtons()))
+		{
+			if (button.getIcon() === ButtonIcon.SETTING)
+			{
+				return button;
+			}
+		}
+
+		return null;
 	}
 }
 

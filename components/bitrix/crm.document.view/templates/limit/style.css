@@ -22,7 +22,7 @@
 }
 
 .document-limit-desc-number {
-	font-weight: 700;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .document-limit-img-lock {

@@ -1,8 +1,10 @@
-import {AudioPlayer} from 'ui.vue3.components.audioplayer';
+import {AudioPlayer, AudioPlayerState} from 'ui.vue3.components.audioplayer';
 import {BitrixVue} from 'ui.vue3';
-import {Button} from 'ui.buttons';
+import {Menu} from 'main.popup';
+import {Dom, bind, unbind} from 'main.core';
+import { LogoType } from '../enums/logo-type';
 
-const defaultPlaybackRateValues = [0.5, 1, 1.25, 1.5, 1.75, 2];
+const defaultPlaybackRateValues = [0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0];
 
 export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 	props: {
@@ -20,7 +22,8 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 	data() {
 		return {
 			...this.parentData(),
-			playbackRate: 1,
+			playbackRate: defaultPlaybackRateValues[2],
+			isSeeking: false,
 		}
 	},
 	computed: {
@@ -50,37 +53,30 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 				},
 			];
 		},
+
 		totalTimeClassname() {
 			return [
 				'ui-vue-audioplayer-total-time',
-				{
-					'--hidden': this.isTotalTimeHidden,
-				}
 			]
 		},
 
 		progressPosition() {
 			return `width: ${this.progressInPixel}px;`;
 		},
+
 		seekPosition() {
 			const minSeekWidth = 20;
 			const seekWidth = this.$refs.seek?.offsetWidth ? this.$refs.seek.offsetWidth : minSeekWidth;
+
 			return `left: ${this.progressInPixel - (seekWidth / 2)}px;`;
 		},
 
 		formatTimeCurrent() {
 			return this.formatTime(this.timeCurrent);
 		},
+
 		formatTimeTotal() {
 			return this.formatTime(this.timeTotal);
-		},
-
-		isTotalTimeHidden() {
-			const totalTimeRef = this.$refs.totalTime;
-			const seekRef = this.$refs.seek;
-			if (!this.loaded || !totalTimeRef || !seekRef) return true;
-			const seekWidth = seekRef.offsetWidth;
-			return (this.progressInPixel + seekWidth / 2) >= totalTimeRef.offsetLeft;
 		},
 
 		playbackRateMenuItems() {
@@ -95,16 +91,19 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 	},
 	methods: {
 		changePlaybackRate(playbackRate: number) {
-			const audio = this.$refs.source;
-
 			this.playbackRate = playbackRate;
-			audio.playbackRate = playbackRate;
+			if (this.$refs?.source?.playbackRate)
+			{
+				this.$refs.source.playbackRate = playbackRate;
+			}
 		},
+
 		createPlaybackRateMenuItem(options = {}) {
 			const rate = options.rate || 1;
 			const text = options.text || '';
 			const isActive = options.isActive || false;
 			const className = `playback-speed-menu-item ${isActive ? 'menu-popup-item-accept-sm' : ''}`;
+
 			return {
 				text: text,
 				className,
@@ -115,54 +114,154 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 				}
 			}
 		},
+
 		getPlaybackRateOptionText(rate: number): string {
-			return `${rate}x`;
+			return this.isFloat(rate) ? `${rate}x` : `${rate}.0x`;
 		},
-		renderPlaybackRateButton() {
-			const playbackRateButtonContainer = this.$refs.playbackRateButtonContainer;
-			playbackRateButtonContainer.innerHTML = '';
-			const btn = new Button({
-				text: this.getPlaybackRateOptionText(this.playbackRate),
-				round: true,
-				dropdown: true,
-				color: Button.Color.LIGHT_BORDER,
-				size: Button.Size.EXTRA_SMALL,
-				noCaps: true,
-				className: 'playback-speed-button crm-timeline__playback-speed-menu_scope',
-				menu: {
-					className: 'crm-timeline__playback-speed-menu_scope',
-					width: 100,
-					events: {
-						onPopupShow: ()=> {
-							const btnContainerWidth = btn.getContainer().offsetWidth;
-							const popupWindow = btn.getMenuWindow().getPopupWindow();
 
-							popupWindow.setWidth(btnContainerWidth * 1.8);
-							popupWindow.setOffset({
-								offsetLeft: btnContainerWidth - 8,
-							});
+		showPlaybackRateMenu() {
+			const menu = new Menu({
+				id: `12xx${this.id}`,
+				className: 'crm-timeline__playback-speed-menu_scope',
+				width: 100,
+				bindElement: this.$refs.playbackRateButtonContainer,
+				events: {
+					onPopupShow: ()=> {
+						const {width: btnContainerWidth} = Dom.getPosition(this.$refs.playbackRateButtonContainer);
+						const popupWindow = menu.getPopupWindow();
 
-							popupWindow.adjustPosition();
-						}
-					},
-					angle: {
-						position: 'top',
-					},
-					offsetLeft: 0,
-					items: this.playbackRateMenuItems,
+						popupWindow.setOffset({
+							offsetLeft: btnContainerWidth / 2,
+						});
+
+						popupWindow.adjustPosition();
+					}
 				},
+				angle: {
+					position: 'top',
+				},
+				offsetLeft: 0,
+				items: this.playbackRateMenuItems,
 			});
 
-			btn.renderTo(playbackRateButtonContainer);
+			menu.show();
 		},
-	},
-	watch: {
-		playbackRate() {
-			this.renderPlaybackRateButton();
+
+		isFloat(n: number) {
+			return n % 1 !== 0;
 		},
-	},
-	mounted() {
-		this.renderPlaybackRateButton();
+
+		startSeeking(event) {
+			this.isSeeking = true;
+			const {clientX} = event;
+			this.source().pause();
+
+			bind(document, 'mouseup', this.finishSeeking);
+			bind(document, 'mousemove', this.seeking);
+			this.setSeekByCursor(clientX);
+		},
+
+		seeking(event) {
+			if (!this.isSeeking)
+			{
+				return;
+			}
+
+			const timeline = this.$refs.track;
+			const {clientX} = event;
+
+			const {left, right, width} = Dom.getPosition(timeline);
+			if (clientX < left)
+			{
+				this.seek = 0;
+			}
+			else if (clientX > right)
+			{
+				this.seek = width - 1;
+			}
+			else
+			{
+				this.seek = clientX - left;
+			}
+
+			this.setPosition();
+
+			event.preventDefault();
+		},
+
+		finishSeeking() {
+			this.isSeeking = false;
+			this.setPosition();
+			this.source().play();
+			unbind(document, 'mouseup', this.finishSeeking);
+			unbind(document, 'mousemove', this.seeking);
+		},
+
+		setSeekByCursor(x: number) {
+			const timeline = this.$refs.track;
+			const {clientX} = event;
+
+			const {left, right, width} = Dom.getPosition(timeline);
+			if (clientX < left)
+			{
+				this.seek = 0;
+			}
+			else if (x > right)
+			{
+				this.seek = width;
+			}
+			else
+			{
+				this.seek = clientX - left;
+			}
+		},
+
+		setPosition(event)
+		{
+			if (!this.loaded)
+			{
+				this.loadFile(true);
+				return false;
+			}
+
+			const pixelPerPercent = this.$refs.track.offsetWidth / 100;
+
+			this.setProgress(this.seek / pixelPerPercent, this.seek);
+
+			this.source().currentTime = this.timeTotal/100*this.progress;
+		},
+
+
+		changeLogoIcon(icon: String)
+		{
+			if (!this.$parent)
+			{
+				return;
+			}
+
+			const logo = this.$parent.getLogo();
+			if (!logo)
+			{
+				return;
+			}
+
+			logo.setIcon(icon);
+		},
+
+		audioEventRouterWrapper(eventName: String, event)
+		{
+			this.audioEventRouter(eventName, event);
+
+			if (eventName === 'play')
+			{
+				this.changeLogoIcon(LogoType.CALL_AUDIO_PAUSE);
+			}
+
+			if (eventName === 'pause')
+			{
+				this.changeLogoIcon(LogoType.CALL_AUDIO_PLAY);
+			}
+		}
 	},
 	template: `
 		<div
@@ -181,26 +280,28 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 				</button>
 			</div>
 			<div class="ui-vue-audioplayer-timeline-container">
-				<div class="ui-vue-audioplayer-track-container" @mousemove="seeking" @click="setPosition" ref="track">
+				<div class="ui-vue-audioplayer-track-container" @mousedown="startSeeking" ref="track">
 					<div class="ui-vue-audioplayer-track-mask"></div>
 					<div class="ui-vue-audioplayer-track" :style="progressPosition"></div>
-					<div @click.stop class="ui-vue-audioplayer-track-seek" :style="seekPosition">
+					<div @mousedown="startSeeking" class="ui-vue-audioplayer-track-seek" :style="seekPosition">
 						<div ref="seek" class="ui-vue-audioplayer-track-seek-icon"></div>
-						<div :class="timeCurrentClassname">{{formatTimeCurrent}}</div>
 					</div>
 <!--					<div class="ui-vue-audioplayer-track-event" @mousemove="seeking"></div>-->
 				</div>
 				<div :class="totalTimeClassname">
+					<div :class="timeCurrentClassname">{{formatTimeCurrent}}</div>
 					<div ref="totalTime" class="ui-vue-audioplayer-time">{{formatTimeTotal}}</div>
 				</div>
 			</div>
 			<div
-				v-if="isShowPlaybackRateMenu"
+				@click="showPlaybackRateMenu"
 				ref="playbackRateButtonContainer"
-				class="ui-vue-audioplayer_playback-speed-menu-container">
+				class="ui-vue-audioplayer_playback-speed-menu-container"
+			>
+				{{ getPlaybackRateOptionText(playbackRate) }}
 			</div>
 			<audio
-				v-if="src" 
+				v-if="src"
 				:src="src"
 				class="ui-vue-audioplayer-source"
 				ref="source"
@@ -214,9 +315,9 @@ export const TimelineAudio = BitrixVue.cloneComponent(AudioPlayer, {
 				@loadeddata="audioEventRouter('loadeddata', $event)"
 				@loadedmetadata="audioEventRouter('loadedmetadata', $event)"
 				@timeupdate="audioEventRouter('timeupdate', $event)"
-				@play="audioEventRouter('play', $event)"
+				@play="audioEventRouterWrapper('play', $event)"
 				@playing="audioEventRouter('playing', $event)"
-				@pause="audioEventRouter('pause', $event)"
+				@pause="audioEventRouterWrapper('pause', $event)"
 			></audio>
 		</div>
 	`

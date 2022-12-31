@@ -52,6 +52,21 @@ class PhaseSemantics
 		$semanticID = mb_strtoupper($semanticID);
 		return $semanticID === self::SUCCESS || $semanticID === self::FAILURE;
 	}
+
+	/**
+	 * @return boolean
+	 */
+	public static function isSuccess($semanticID): bool
+	{
+		if (!is_string($semanticID))
+		{
+			return false;
+		}
+
+		$semanticID = mb_strtoupper($semanticID);
+		return $semanticID === self::SUCCESS;
+	}
+
 	/**
 	* @return boolean
 	*/

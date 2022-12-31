@@ -1,5 +1,7 @@
-(() =>
-{
+(() => {
+
+	const { FieldFactory, CombinedType } = jn.require('layout/ui/fields');
+
 	const styles = {
 		editor: {
 			container: {
@@ -10,9 +12,12 @@
 				paddingLeft: 18,
 				paddingRight: 18,
 			},
-		}
+		},
 	};
 
+	/**
+	 * @class FieldsLayout
+	 */
 	class FieldsLayout extends LayoutComponent
 	{
 		constructor(props)
@@ -21,19 +26,19 @@
 			this.state = {
 				fieldValues: props.fields.reduce(
 					(values, field) => (
-						field.type === FieldFactory.Type.COMBINED
+						field.type === CombinedType
 							? {
 								...values,
 								[field.primaryField.id]: field.primaryField.value,
-								[field.secondaryField.id]: field.secondaryField.value
+								[field.secondaryField.id]: field.secondaryField.value,
 							}
 							: {
-							...values,
-								[field.id]: field.value
+								...values,
+								[field.id]: field.value,
 							}
 					),
-					{}
-				) // convert [{id1,value1}, {id2,value2}] to {id1: value1, id2: value2}
+					{},
+				), // convert [{id1,value1}, {id2,value2}] to {id1: value1, id2: value2}
 			};
 			this.focusOnFirstField = props.focusOnFirstField;
 			this.fieldRefMap = {};
@@ -44,7 +49,7 @@
 			const fieldValues = this.state.fieldValues;
 			fieldValues[fieldId] = fieldValue;
 
-			this.setState({fieldValues});
+			this.setState({ fieldValues });
 		}
 
 		render()
@@ -59,37 +64,40 @@
 
 		renderEditor()
 		{
-			/** @type {Fields.BaseField[]} */
+			/** @type {BaseField[]} */
 			const fields = this.props.fields.map((field) =>
-				(field.type === FieldFactory.Type.COMBINED)
-					? FieldFactory.create(
-						field.type,
-						{
-							primaryField: FieldFactory.create(field.primaryField.type, {
+				(field.type === CombinedType)
+					? FieldFactory.create(CombinedType, {
+						value: {
+							[field.primaryField.id]: this.getFieldValue(field.primaryField.id),
+							[field.secondaryField.id]: this.getFieldValue(field.secondaryField.id),
+						},
+						onChange: (value) => {
+							this.onChangeValue(field.primaryField.id, value[field.primaryField.id]);
+							this.onChangeValue(field.secondaryField.id, value[field.secondaryField.id]);
+						},
+						config: {
+							primaryField: {
 								...field.primaryField,
 								readOnly: false,
 								value: this.getFieldValue(field.primaryField.id),
-								onChange: this.onChangeValue.bind(this, field.primaryField.id),
-							}),
-							secondaryField: FieldFactory.create(field.secondaryField.type, {
+							},
+							secondaryField: {
 								...field.secondaryField,
 								readOnly: false,
 								value: this.getFieldValue(field.secondaryField.id),
 								onChange: this.onChangeValue.bind(this, field.secondaryField.id),
-							}),
-							ref: (ref) => this.processFieldRef(field.id, ref),
-						}
-					)
-					: FieldFactory.create(
-						field.type,
-						{
-							...field,
-							value: this.getFieldValue(field.id),
-							readOnly: false,
-							onChange: this.onChangeValue.bind(this, field.id),
-							ref: (ref) => this.processFieldRef(field.id, ref),
-						}
-					)
+							},
+						},
+						ref: (ref) => this.processFieldRef(field.id, ref),
+					})
+					: FieldFactory.create(field.type, {
+						...field,
+						value: this.getFieldValue(field.id),
+						readOnly: false,
+						onChange: this.onChangeValue.bind(this, field.id),
+						ref: (ref) => this.processFieldRef(field.id, ref),
+					}),
 			);
 
 			return FieldsWrapper({
@@ -108,9 +116,18 @@
 				this.focusOnFirstField = false;
 				setTimeout(
 					() => this.fieldRefMap[fieldId].focus(),
-					BX.prop.getNumber(this.props, 'fieldFocusDelay', 100)
+					BX.prop.getNumber(this.props, 'fieldFocusDelay', 100),
 				);
 			}
+		}
+
+		/**
+		 * @param {String} fieldId
+		 * @returns {*|BaseField}
+		 */
+		getFieldRef(fieldId)
+		{
+			return this.fieldRefMap.hasOwnProperty(fieldId) ? this.fieldRefMap[fieldId] : null;
 		}
 
 		getFieldValue(fieldId)
@@ -148,12 +165,16 @@
 		}
 	}
 
+	/**
+	 * @class FieldEditorStep
+	 */
 	class FieldEditorStep extends WizardStep
 	{
 		constructor()
 		{
 			super();
 			this.fields = [];
+			/** @var {FieldsLayout} */
 			this.editorRef = null;
 		}
 
@@ -169,14 +190,14 @@
 				type,
 				title,
 				value,
-				...extraProps
+				...extraProps,
 			});
 		}
 
 		addCombinedField(primaryField, secondaryField)
 		{
 			this.fields.push({
-				type: FieldFactory.Type.COMBINED,
+				type: CombinedType,
 				primaryField,
 				secondaryField,
 			});
@@ -200,7 +221,7 @@
 					focusOnFirstField: true,
 					...props,
 					ref: (ref) => this.editorRef = ref,
-				})
+				}),
 			);
 		}
 
@@ -228,7 +249,7 @@
 			return (this.editorRef && this.editorRef.validate())
 				? Promise.resolve()
 				: Promise.reject()
-			;
+				;
 		}
 	}
 

@@ -27,3 +27,4 @@ $MESS["SHOP_MENU_CONTACT_CENTER"] = "Контакт-центр";
 $MESS["SHOP_MENU_GOODS_DOCUMENTS"] = 'Товары и Склады';
 $MESS["SHOP_MENU_CATALOG_GOODS"] = 'Каталог товаров';
 $MESS["SHOP_MENU_PAY_SYSTEMS_DELIVERY"] = "Платежи и Доставка";
+$MESS["SHOP_MENU_CATALOG_RIGHTS_SETTINGS"] = "Права доступа";

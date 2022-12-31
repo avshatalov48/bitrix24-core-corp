@@ -30,6 +30,7 @@ $extra = $request->get('extra');
 $version = $request->get('version');
 $force = $request->get('force');
 $onlyItems = $request->get('onlyItems');
+$viewMode = $request->get('viewMode');
 $result = null;
 
 //get one or more items
@@ -50,6 +51,7 @@ if ($action == 'get' && (!empty($id) || $minId))
 			),
 			'EXTRA' => $extra,
 			'ONLY_ITEMS' => ($onlyItems ?? 'N'),
+			'VIEW_MODE' => $viewMode,
 		]
 	);
 }
@@ -59,7 +61,8 @@ elseif ($action == 'get')
 	$result = $APPLICATION->IncludeComponent('bitrix:crm.kanban', '', array(
 		'IS_AJAX' => 'Y',
 		'ENTITY_TYPE' => $type,
-		'EXTRA' => $extra
+		'EXTRA' => $extra,
+		'VIEW_MODE' => $viewMode,
 	));
 }
 //get next page
@@ -72,6 +75,7 @@ elseif ($action == 'page' && !empty($column))
 		'PAGE' => $page,
 		'EXTRA' => $extra,
 		'ONLY_ITEMS' => ($onlyItems ?? 'N'),
+		'VIEW_MODE' => $viewMode,
 	));
 }
 //change stage
@@ -80,7 +84,8 @@ elseif ($action == 'status' && !empty($id) && !empty($newState))
 	$params = array(
 		'IS_AJAX' => 'Y',
 		'ENTITY_TYPE' => $type,
-		'EXTRA' => $extra
+		'EXTRA' => $extra,
+		'VIEW_MODE' => $viewMode,
 	);
 	// in version 2 we don't need in items
 	if ($version == 2)
@@ -110,7 +115,8 @@ elseif ($version == 2)
 		'IS_AJAX' => 'Y',
 		'ENTITY_TYPE' => $type,
 		'EMPTY_RESULT' => 'Y',
-		'EXTRA' => $extra
+		'EXTRA' => $extra,
+		'VIEW_MODE' => $viewMode,
 	));
 }
 else
@@ -166,7 +172,8 @@ if ($version == 2)
 						'type' => $column['type'],
 						'sum' => round($column['total']),
 						'sum_init' => 0,
-						'sum_format' => $column['total_format']
+						'sum_format' => $column['total_format'],
+						'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
 					)
 				);
 			}

@@ -3,24 +3,37 @@
 	flex-direction: column;
 	background-color: var(--crm-timeline__card-color-background);
 	border-radius: var(--crm-timeline__card-border-radius);
+	position: relative;
 }
 
 .crm-timeline__card.--stream-type-pinned {
-	background-color: var(--ui-color-palette-green-10, #fafded);
+	--crm-timeline__card-color-background: var(--ui-color-palette-green-10, #fafded);
 }
 
 .crm-timeline__card.--stream-type-scheduled {
-	background-color: #FFFEEF;
+	--crm-timeline__card-color-background: #FFFEEF;
 }
 
 .crm-timeline__card.--log-message {
 	--crm-timeline__card_log-message-white-rgb: 255, 255, 255;
-	background-color: rgba(var(--ui-color-background-primary-rgb, var(--crm-timeline__card_log-message-white-rgb)), 0.95);
+	background-color: var(--ui-color-base-02, #f8fafb);
 	opacity: 1;
 }
 
 .crm-timeline__card.--disabled {
 	--crm-timeline__logo-background: var(--ui-color-palette-gray-10, rgba(130, 139, 149, .7));
+}
+
+.crm-timeline__card .crm-timeline__card_fade {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(255, 255 ,255, .5);
+	border-radius: var(--crm-timeline__card-border-radius);
+	z-index: 2;
+	animation: timeline__card-fade-background 160ms ease;
 }
 
 .crm-timeline__card-tags {
@@ -82,11 +95,16 @@
 
 .crm-timeline__card-container_block {
 	display: block;
-	margin-bottom: 10px;
+	margin-bottom: 6px;
 }
 
 .crm-timeline__card-container_block:last-child {
 	margin-bottom: unset;
+}
+
+.crm-timeline__card-container_block .--highlighted{
+	position: relative;
+	z-index: 3;
 }
 
 .crm-timeline__card-bottom {
@@ -103,4 +121,17 @@
 
 .crm-timeline__player-alert {
 	--ui-alert-border-radius: 32px;
+}
+
+.crm-entity-stream-section .main-ui-loader {
+	z-index: 4;
+}
+
+@keyframes timeline__card-fade-background {
+	0% {
+		background: rgba(255, 255 ,255, 0);
+	}
+	100% {
+		background: rgba(255, 255 ,255, .5);
+	}
 }

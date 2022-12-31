@@ -181,7 +181,7 @@ class CBPCrmGenerateQr extends CBPActivity
 	{
 		$defaultDescription = GetMessage(
 			'CRMBPGQR_DESCRIPTION_DEFAULT',
-			['#CONTACT_NAME#' => '{=Document:CONTACT.NAME}']
+			['#CONTACT_NAME#' => self::getContactNameExpression($documentType)]
 		);
 		if (!empty($context['isRobot']))
 		{
@@ -250,5 +250,30 @@ class CBPCrmGenerateQr extends CBPActivity
 		$currentActivity["Properties"] = $properties;
 
 		return true;
+	}
+
+	private static function getContactNameExpression(array $documentType): string
+	{
+		$fields = CBPRuntime::getRuntime(true)
+			->getService('DocumentService')
+			->getDocumentFields($documentType)
+		;
+
+		if (isset($fields['CONTACT.NAME']))
+		{
+			return '{=Document:CONTACT.NAME}';
+		}
+
+		if (isset($fields['NAME']))
+		{
+			return '{=Document:NAME}';
+		}
+
+		if (isset($fields['TITLE']))
+		{
+			return '{=Document:TITLE}';
+		}
+
+		return '#CONTACT_NAME#';
 	}
 }

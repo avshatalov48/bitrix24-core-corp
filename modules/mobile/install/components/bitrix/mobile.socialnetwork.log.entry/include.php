@@ -657,7 +657,7 @@ if (!function_exists('__SLMGetLogCommentRecord'))
 		$timeFormated = FormatDate(GetMessage("SONET_SLM_FORMAT_TIME"), $timestamp);
 		$dateTimeFormated = FormatDate(
 			(
-				$arParams["DATE_TIME_FORMAT"] == "FULL"
+			$arParams["DATE_TIME_FORMAT"] == "FULL"
 					? $GLOBALS["DB"]->DateFormatToPHP(str_replace(":SS", "", FORMAT_DATETIME))
 					: $arParams["DATE_TIME_FORMAT"]
 			),

@@ -52,6 +52,8 @@ export default class Rest extends HistoryActivity
 			{
 				iconNode.style.backgroundImage = "url('" +  entityData['APP_TYPE']['ICON_SRC'] + "')";
 				iconNode.style.backgroundPosition = "center center";
+				iconNode.style.backgroundSize = "cover";
+				iconNode.style.backgroundColor = "transparent";
 			}
 		}
 

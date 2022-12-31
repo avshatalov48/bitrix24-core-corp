@@ -1076,7 +1076,7 @@
 	margin: 0 6px;
 	padding: 0 0 2px 0;
 	font-size: 13px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	color: #0b66c3;
 	border-bottom: 1px dashed #0b66c3;
 	line-height: normal;
@@ -1122,7 +1122,7 @@
 .crm-automation-popup-select-input:checked + .crm-automation-popup-settings-link {
 	border-bottom: 1px dashed transparent;
 	color: #525c68;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .crm-automation-popup-settings .multiple
@@ -1352,7 +1352,7 @@
 	height: 32px;
 	line-height: 32px;
 	margin: 1px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	border-radius: 1px;
 	background: #a1e7f7;
 	white-space: nowrap;
@@ -1415,7 +1415,7 @@
 
 .crm-automation-popup-adv-title {
 	float: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 13px;
 	color: #80868e;
 	padding: 0 7px 0 0;

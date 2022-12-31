@@ -55,6 +55,8 @@ $arDefaultUrlTemplates404 = array(
 	'details' => 'details/#deal_id#/',
 	'calendar' => 'calendar/',
 	'automation' => 'automation/#category_id#/',
+	'activity' => 'activity/',
+	'activitycategory' => 'activity/category/#category_id#/',
 );
 
 $arDefaultUrlTemplatesContact = array(
@@ -273,7 +275,15 @@ if(isset($_GET['redirect_to']))
 	}
 }
 
-if($componentPage === 'list' || $componentPage === 'recur_category' || $componentPage === 'category' || $componentPage === 'kanbancategory' || $componentPage === 'calendarcategory' || $componentPage === 'calendar')
+if(
+	$componentPage === 'list'
+	|| $componentPage === 'recur_category'
+	|| $componentPage === 'category'
+	|| $componentPage === 'kanbancategory'
+	|| $componentPage === 'calendarcategory'
+	|| $componentPage === 'calendar'
+	|| $componentPage === 'activitycategory'
+)
 {
 	$categoryID = isset($arResult['VARIABLES']['category_id']) ? (int)$arResult['VARIABLES']['category_id'] : -1;
 	$currentCategoryID = (int)CUserOptions::GetOption('crm', 'current_deal_category', -1);
@@ -304,6 +314,13 @@ elseif($componentPage === 'recur_category')
 }
 elseif($componentPage === 'kanbancategory')
 {
+	$componentPage = 'kanban';
+}
+elseif($componentPage === 'activitycategory' || $componentPage === 'activity')
+{
+	$arResult['KANBAN_VIEW_MODE'] = \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES;
+	$arResult['CAN_USE_ALL_CATEGORIES'] = true;
+	$arResult['PATH_TO_DEAL_KANBANCATEGORY'] = $arResult['PATH_TO_DEAL_ACTIVITYCATEGORY'];
 	$componentPage = 'kanban';
 }
 elseif($componentPage === 'calendarcategory')

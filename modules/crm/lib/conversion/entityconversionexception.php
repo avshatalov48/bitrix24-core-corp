@@ -21,6 +21,7 @@ class EntityConversionException extends Main\SystemException
 	public const CREATE_FAILED = 110;
 	public const UPDATE_DENIED = 120;
 	public const NOT_SUPPORTED = 130;
+	public const NO_ACTIVE_DESTINATIONS = 140;
 
 	protected $srcEntityTypeID = \CCrmOwnerType::Undefined;
 	protected $dstEntityTypeID = \CCrmOwnerType::Undefined;
@@ -96,6 +97,10 @@ class EntityConversionException extends Main\SystemException
 		{
 			$message = "The {$entityTypeName} entity type is not supported in current context.";
 		}
+		elseif ($code === self::NO_ACTIVE_DESTINATIONS)
+		{
+			$message = "No destinations selected for an entity of type {$entityTypeName}";
+		}
 		else
 		{
 			$message = 'A general error has occurred';
@@ -131,61 +136,61 @@ class EntityConversionException extends Main\SystemException
 		$entityTypeID =  $this->getTargetEntityTypeID();
 		$entityTypeName =  \CCrmOwnerType::ResolveName($entityTypeID);
 
-		if($code === EntityConversionException::NOT_FOUND)
+		$message = null;
+
+		if ($code === EntityConversionException::NOT_FOUND)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_NOT_FOUND");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_NOT_FOUND");
 		}
-		if($code === EntityConversionException::NOT_SYNCHRONIZED)
+		elseif ($code === EntityConversionException::NOT_SYNCHRONIZED)
 		{
-			return GetMessage("CRM_CONV_EX_NOT_SYNCHRONIZED");
+			$message = GetMessage("CRM_CONV_EX_NOT_SYNCHRONIZED");
 		}
-		elseif($code === EntityConversionException::EMPTY_FIELDS)
+		elseif ($code === EntityConversionException::EMPTY_FIELDS)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_EMPTY_FIELDS");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_EMPTY_FIELDS");
 		}
-		elseif($code === EntityConversionException::INVALID_OPERATION)
+		elseif ($code === EntityConversionException::INVALID_OPERATION)
 		{
-			return $this->extMessage !== ''
-				? $this->extMessage
-				: GetMessage("CRM_CONV_EX_INVALID_OPERATION");
+			$message = $this->extMessage !== '' ? $this->extMessage : GetMessage("CRM_CONV_EX_INVALID_OPERATION");
 		}
-		elseif($code === EntityConversionException::HAS_WORKFLOWS)
+		elseif ($code === EntityConversionException::HAS_WORKFLOWS)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_HAS_WORKFLOWS");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_HAS_WORKFLOWS");
 		}
-		elseif($code === EntityConversionException::AUTOCREATION_DISABLED)
+		elseif ($code === EntityConversionException::AUTOCREATION_DISABLED)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_AUTOCREATION_DISABLED");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_AUTOCREATION_DISABLED");
 		}
-		elseif($code === EntityConversionException::INVALID_FIELDS)
+		elseif ($code === EntityConversionException::INVALID_FIELDS)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_INVALID_FIELDS").preg_replace('/<br\s*\/?>/i', "\r\n", $this->extMessage);
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_INVALID_FIELDS").preg_replace('/<br\s*\/?>/i', "\r\n", $this->extMessage);
 		}
-		elseif($code === EntityConversionException::CREATE_DENIED)
+		elseif ($code === EntityConversionException::CREATE_DENIED)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_CREATE_DENIED");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_CREATE_DENIED");
 		}
-		elseif($code === EntityConversionException::CREATE_FAILED)
+		elseif ($code === EntityConversionException::CREATE_FAILED)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_CREATE_FAILED").preg_replace('/<br\s*\/?>/i', "\r\n", $this->extMessage);
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_CREATE_FAILED").preg_replace('/<br\s*\/?>/i', "\r\n", $this->extMessage);
 		}
-		elseif($code === EntityConversionException::READ_DENIED)
+		elseif ($code === EntityConversionException::READ_DENIED)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_READ_DENIED");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_READ_DENIED");
 		}
-		elseif($code === EntityConversionException::UPDATE_DENIED)
+		elseif ($code === EntityConversionException::UPDATE_DENIED)
 		{
-			return GetMessage("CRM_CONV_EX_{$entityTypeName}_UPDATE_DENIED");
+			$message = GetMessage("CRM_CONV_EX_{$entityTypeName}_UPDATE_DENIED");
 		}
-		elseif($code === EntityConversionException::NOT_SUPPORTED)
+		elseif ($code === EntityConversionException::NOT_SUPPORTED)
 		{
-			return GetMessage(
+			$message = GetMessage(
 				'CRM_CONV_EX_ENTITY_NOT_SUPPORTED',
 				array('#ENTITY_TYPE_NAME#' => \CCrmOwnerType::GetDescription($entityTypeID))
 			);
 		}
 
-		return $this->getMessage();
+		return $message ?: $this->getMessage();
 	}
 
 	public function externalize()

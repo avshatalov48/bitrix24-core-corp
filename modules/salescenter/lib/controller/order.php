@@ -646,10 +646,12 @@ class Order extends Base
 	 */
 	private function convertionLeadWithExistDeal(int $leadId, int $dealId): void
 	{
-		$lead = new CCrmLead(false);
-		$lead->Update($leadId, $fields = [
+		$fields = [
 			'STATUS_ID' => 'CONVERTED',
-		]);
+		];
+
+		$lead = new CCrmLead(false);
+		$lead->Update($leadId, $fields);
 		if ($lead->LAST_ERROR)
 		{
 			// as can't change status, that no point in converting.
@@ -775,6 +777,8 @@ class Order extends Base
 
 		if ($result->isSuccess())
 		{
+			$isPaymentSaved = $payment && $payment->getId();
+
 			Bitrix24Manager::getInstance()->increasePaymentsCount();
 
 			$binding = $order->getEntityBinding();
@@ -834,7 +838,7 @@ class Order extends Base
 				$data['deal'] = $this->getEntityData($entityTypeId, $entityId);
 			}
 
-			if ($payment)
+			if ($isPaymentSaved)
 			{
 				$this->processDocumentSelectorOptions($payment->getId(), $options);
 
@@ -853,7 +857,7 @@ class Order extends Base
 
 			if ($options['sendingMethod'] === 'sms')
 			{
-				if ($payment)
+				if ($isPaymentSaved)
 				{
 					$isSent = CrmManager::getInstance()->sendPaymentBySms($payment, $options['sendingMethodDesc'], $shipment);
 					if (!$isSent)
@@ -872,7 +876,7 @@ class Order extends Base
 			}
 			elseif ($options['dialogId'])
 			{
-				if ($payment)
+				if ($isPaymentSaved)
 				{
 					$r = new Main\Result();
 
@@ -903,12 +907,19 @@ class Order extends Base
 					$this->addErrors($r->getErrors());
 				}
 
-				if (!isset($options['skipPublicMessage']) || $options['skipPublicMessage'] === 'n')
+				if (
+					$isPaymentSaved
+					&& (
+						!isset($options['skipPublicMessage'])
+						|| $options['skipPublicMessage'] === 'n'
+					)
+				)
 				{
 					$paymentData = [];
 					$paySystemService = Sale\PaySystem\Manager::getObjectById($payment->getPaymentSystemId());
 
 					if ($options['connector'] === 'imessage'
+						&& $paySystemService
 						&& SaleManager::getInstance()->isApplePayPayment($paySystemService->getFieldsValues())
 					)
 					{
@@ -941,7 +952,7 @@ class Order extends Base
 			}
 			else
 			{
-				if ($payment)
+				if ($isPaymentSaved)
 				{
 					$publicUrl = ImOpenLinesManager::getInstance()->getPublicUrlInfoForPayment($payment);
 
@@ -970,7 +981,10 @@ class Order extends Base
 
 			// save restriction pay systems for order payment
 			$availablePaySystemIds = (array) ($options['availablePaySystemsIds'] ?? []);
-			if ($payment && $availablePaySystemIds)
+			if (
+				$isPaymentSaved
+				&& $availablePaySystemIds
+			)
 			{
 				$result = PaymentAvailablesPaySystems::setBindings($payment->getId(), $availablePaySystemIds);
 				if (!$result->isSuccess())

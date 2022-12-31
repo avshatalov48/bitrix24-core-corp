@@ -1,6 +1,8 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
-class DealSettings extends EntitySettings
+
+class DealSettings extends EntitySettings implements ISettingsSupportsCategory
 {
 	const FLAG_RECURRING = 1;
 	public const FLAG_ENABLE_CLIENT_FIELDS = 2;
@@ -40,10 +42,9 @@ class DealSettings extends EntitySettings
 	}
 
 	/**
-	 * Get Deal Category ID.
-	 * @return int
+	 * @inheritDoc
 	 */
-	public function getCategoryID()
+	public function getCategoryId(): ?int
 	{
 		return $this->categoryID;
 	}

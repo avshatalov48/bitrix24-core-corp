@@ -3,6 +3,8 @@
 namespace Bitrix\Crm\Service;
 
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm\Attribute\FieldAttributeManager;
 use Bitrix\Crm\Binding\EntityBinding;
 use Bitrix\Crm\CompanyTable;
@@ -25,6 +27,7 @@ use Bitrix\Crm\Order;
 use Bitrix\Crm\Requisite\EntityLink;
 use Bitrix\Crm\Security\EntityAuthorization;
 use Bitrix\Crm\StatusTable;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Currency\CurrencyTable;
 use Bitrix\Main\InvalidOperationException;
 use Bitrix\Main\Loader;
@@ -253,7 +256,7 @@ class EditorAdapter
 		}
 		if ($item->hasField(Item::FIELD_NAME_OPPORTUNITY))
 		{
-			$this->entityData[static::FIELD_PRODUCT_ROW_SUMMARY] = $this->getProductsSummaryEntityData($item);
+			$this->entityData[static::FIELD_PRODUCT_ROW_SUMMARY] = $this->getProductsSummaryEntityData($item, $mode);
 			$this->entityData = array_merge($this->entityData, $this->getOpportunityEntityData($item));
 		}
 
@@ -848,7 +851,7 @@ class EditorAdapter
 	 * @param string|null $context
 	 * @return array
 	 */
-	public function getParentFieldsInfo(int $childEntityTypeId, ?string $context = null): array
+	public function getParentFieldsInfo(int $childEntityTypeId, ?string $context = EntitySelector::CONTEXT): array
 	{
 		$relationManager = Container::getInstance()->getRelationManager();
 		$customParentRelations = $relationManager->getParentRelations($childEntityTypeId)->filterOutPredefinedRelations();
@@ -917,6 +920,12 @@ class EditorAdapter
 	 */
 	public static function getProductRowSummaryField(string $title, ?string $fieldName = null): array
 	{
+		$showProductLink = true;
+		if (Loader::includeModule('catalog') && !AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		{
+			$showProductLink = false;
+		}
+
 		return [
 			'name' => $fieldName ?? static::FIELD_PRODUCT_ROW_SUMMARY,
 			'title' => $title,
@@ -926,6 +935,7 @@ class EditorAdapter
 			'mergeable' => false,
 			'transferable' => false,
 			'showAlways' => true,
+			'showProductLink' => $showProductLink,
 		];
 	}
 
@@ -1012,6 +1022,22 @@ class EditorAdapter
 			'required' => $field->isRequired(),
 			'showAlways' => true,
 		];
+	}
+
+	/**
+	 * Returns products summary data from <b>item</b> to display it in product row summary block
+	 *
+	 * @param Item $item
+	 * @param int $mode
+	 * @return array
+	 */
+	public function getProductRowSummaryDataByItem(Item $item, int $mode = ComponentMode::VIEW): array
+	{
+		if ($item->hasField(Item::FIELD_NAME_OPPORTUNITY))
+		{
+			return $this->getProductsSummaryEntityData($item, $mode);
+		}
+		return [];
 	}
 
 	protected static function getCurrencyListEscaped(): array
@@ -1523,6 +1549,7 @@ class EditorAdapter
 				'REQUIRE_REQUISITE_DATA' => true,
 				'REQUIRE_MULTIFIELDS' => true,
 				'NAME_TEMPLATE' => PersonNameFormatter::getFormat(),
+				'NORMALIZE_MULTIFIELDS' => true,
 				'REQUIRE_EDIT_REQUISITE_DATA' => $requireEditRequisiteData,
 			]
 		);
@@ -1580,29 +1607,35 @@ class EditorAdapter
 		return $this->srcItemProductsEntityData;
 	}
 
-	protected function getProductsSummaryEntityData(Item $item): array
+	protected function getProductsSummaryEntityData(Item $item, int $mode = ComponentMode::VIEW): array
 	{
+		$entityTypeId = $item->getEntityTypeId();
+		$entityId = $item->getId();
+
+		$isReadOnly = true;
+		if (
+			(
+				$mode === ComponentMode::MODIFICATION
+				&& EntityAuthorization::checkUpdatePermission($entityTypeId, $entityId)
+			)
+			|| EntityAuthorization::checkCreatePermission($entityTypeId)
+		)
+		{
+			$isReadOnly = false;
+		}
+
 		$products = $item->getProductRows();
 		if (is_null($products))
 		{
-			return [];
+			return ['isReadOnly' => $isReadOnly];
 		}
 
 		$rowData = [];
 		$numberOfProcessedProducts = 1;
+		/** @var \Bitrix\Crm\ProductRow $product */
 		foreach ($products as $product)
 		{
-			$url = '';
-			if ($product->getProductId() > 0)
-			{
-				$url = Container::getInstance()->getRouter()->getProductDetailUrl($product->getProductId());
-			}
-
-			$rowData[] = [
-				'PRODUCT_NAME' => $product->getProductName(),
-				'SUM' => Money::format($product->getPrice() * $product->getQuantity(), $item->getCurrencyId()),
-				'URL' => $url,
-			];
+			$rowData[] = self::formProductRowData($product, $item->getCurrencyId());
 
 			$numberOfProcessedProducts++;
 			if ($numberOfProcessedProducts >= static::MAX_PRODUCT_ROWS_IN_SUMMARY)
@@ -1620,8 +1653,66 @@ class EditorAdapter
 		return [
 			'count' => count($products),
 			'total' => Money::format($total, $item->getCurrencyId()),
+			'totalRaw' => [
+				'amount' => $total,
+				'currency' => $item->getCurrencyId(),
+			],
 			'items' => $rowData,
+			'isReadOnly' => $isReadOnly,
 		];
+	}
+
+	/**
+	 * Returns formed product info from <b>$product</b> for display it in product summary list block
+	 *
+	 * @param \Bitrix\Crm\ProductRow $product
+	 * @param string $currencyId
+	 * @param bool $checkTaxes
+	 * @return array
+	 */
+	public static function formProductRowData(\Bitrix\Crm\ProductRow $product, string $currencyId, bool $checkTaxes = false): array
+	{
+		$url = '';
+		if ($product->getProductId() > 0)
+		{
+			$url = Container::getInstance()->getRouter()->getProductDetailUrl($product->getProductId());
+		}
+
+		$sum = 0;
+		if ($checkTaxes && $product->getField('TAX_INCLUDED') !== 'Y')
+		{
+			$sum = round($product->getField('PRICE_EXCLUSIVE') * $product->getField('QUANTITY'), 2) * (1 + $product->getField('TAX_RATE') / 100);
+		}
+		else
+		{
+			$sum = $product->getPrice() * $product->getQuantity();
+		}
+
+		$productRowData = [
+			'PRODUCT_NAME' => $product->getProductName(),
+			'SUM' => Money::format($sum, $currencyId),
+			'URL' => $url,
+		];
+
+		if (Loader::includeModule('catalog'))
+		{
+			$productData = $product->toArray();
+			$sku =
+				\Bitrix\Catalog\v2\IoC\ServiceContainer::getRepositoryFacade()
+					->loadVariation($productData['PRODUCT_ID'])
+			;
+
+			if ($sku)
+			{
+				$image = $sku->getFrontImageCollection()->getFrontImage();
+				$productRowData['PHOTO_URL'] = $image ? $image->getSource() : null;
+				$productRowData['VARIATION_INFO'] =
+					\Bitrix\Catalog\v2\Helpers\PropertyValue::getSkuPropertyDisplayValues($sku)
+				;
+			}
+		}
+
+		return $productRowData;
 	}
 
 	protected function getOpportunityEntityData(Item $item): array
@@ -2240,9 +2331,9 @@ class EditorAdapter
 					'primary' => [
 						\CCrmOwnerType::CompanyName => [
 							'action' => 'GET_CLIENT_INFO',
-							'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get()
-						]
-					]
+							'url' => '/bitrix/components/bitrix/crm.company.show/ajax.php?'.bitrix_sessid_get(),
+						],
+					],
 				],
 				'clientEditorFieldsParams' => $clientEditorFieldsParams,
 				'useExternalRequisiteBinding' => true,

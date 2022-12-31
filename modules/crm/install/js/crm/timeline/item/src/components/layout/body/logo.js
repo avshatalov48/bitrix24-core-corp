@@ -14,6 +14,11 @@ export const Logo = {
 		},
 		action: Object,
 	},
+	data() {
+		return {
+			currentIcon: this.icon,
+		}
+	},
 	computed: {
 		className(): string
 		{
@@ -28,7 +33,8 @@ export const Logo = {
 		iconClassname() {
 			return [
 				'crm-timeline__card-logo_icon',
-				`--${this.type||this.icon}`, {
+				`--${this.currentIcon}`,
+				`--type-${this.iconType}`, {
 					'--in-circle': this.inCircle,
 				}
 			]
@@ -42,6 +48,12 @@ export const Logo = {
 			]
 		},
 	},
+	watch: {
+		icon(newIcon): void
+		{
+			this.currentIcon = newIcon;
+		}
+	},
 	methods: {
 		executeAction() {
 			if (!this.action)
@@ -52,6 +64,9 @@ export const Logo = {
 			const action = new Action(this.action);
 			action.execute(this);
 		},
+		setIcon(icon: String) {
+			this.currentIcon = icon;
+		}
 	},
 	template: `
 		<div :class="className" @click="executeAction">

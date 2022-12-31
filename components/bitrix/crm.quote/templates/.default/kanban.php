@@ -109,15 +109,6 @@ else
 		['HIDE_ICONS' => true]
 	);
 
-	/*
-	$supervisorInv = \Bitrix\Crm\Kanban\SupervisorTable::isSupervisor($entityType) ? 'N' : 'Y';
-	CCrmUrlUtil::AddUrlParams(
-				CComponentEngine::MakePathFromTemplate(
-					$arResult['PATH_TO_QUOTE_KANBAN']
-				),
-				array('supervisor' => $supervisorInv, 'clear_filter' => 'Y')
-			)*/
-
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
 	$APPLICATION->IncludeComponent(

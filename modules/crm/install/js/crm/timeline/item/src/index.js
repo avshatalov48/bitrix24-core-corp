@@ -1,6 +1,8 @@
 import Item from './item'
 import ConfigurableItem from './configurable-item'
 import {StreamType} from './stream-type';
+import ControllerManager from './controller-manager';
+import {Base as BaseController} from './controllers/base';
 import "./controller-registry"
 import './css/common-vars.css';
 import './css/layout/icon.css';
@@ -17,10 +19,16 @@ import './css/layout/footer.css';
 import './css/content-blocks/text.css';
 import './css/layout/body/calendar-icon.css';
 import './css/content-blocks/date-pill.css';
+import './css/content-blocks/editable-text.css';
+import './css/layout/header/hint.css';
+import './css/content-blocks/info-group.css';
+import './css/content-blocks/sms-message.css';
 import './css/main.css';
 
 export {
 	Item,
 	ConfigurableItem,
 	StreamType,
+	ControllerManager,
+	BaseController
 };

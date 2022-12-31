@@ -54,6 +54,7 @@ type EntityEditorPaymentDocumentsOptions = {
 	PARENT_CONTEXT: StartsSalescenterApp,
 	IS_DELIVERY_AVAILABLE: boolean,
 	IS_USED_INVENTORY_MANAGEMENT: boolean,
+	SALES_ORDERS_RIGHTS: {},
 	IS_INVENTORY_MANAGEMENT_RESTRICTED: boolean,
 	IS_WITH_ORDERS_MODE: boolean,
 	PHRASES: Phrases,
@@ -114,6 +115,7 @@ export class EntityEditorPaymentDocuments
 		this._rootNode = Tag.render`<div class="${this.constructor._rootNodeClass}"></div>`;
 		this._menus = [];
 		this._isUsedInventoryManagement = this._options.IS_USED_INVENTORY_MANAGEMENT;
+		this._salesOrderRights = this._options.SALES_ORDERS_RIGHTS;
 		this._isInventoryManagementRestricted = this._options.IS_INVENTORY_MANAGEMENT_RESTRICTED;
 		this._isWithOrdersMode = this._options.IS_WITH_ORDERS_MODE;
 
@@ -497,53 +499,63 @@ export class EntityEditorPaymentDocuments
 		let popupMenu;
 		let menuItems = [];
 
-		if (doc.DEDUCTED === 'Y')
+		if (this._salesOrderRights?.view)
 		{
-			menuItems.push({
-				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCEL'),
-				className: (doc.DEDUCTED === 'Y') ? '' : 'menu-popup-item-accept-sm',
-				onclick: () => {
-					this._setRealizationDeductedStatus(doc, false);
-					popupMenu.close();
-				}
-			});
-		}
-		else
-		{
-			menuItems.push({
-				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CONDUCT'),
-				className: (doc.DEDUCTED === 'Y') ? 'menu-popup-item-accept-sm' : '',
-				onclick: () => {
-					this._setRealizationDeductedStatus(doc, true);
-					popupMenu.close();
-				}
-			});
-		}
-
-		menuItems.push({
-			text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
-			className: (doc.DEDUCTED === 'Y') ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
-			onclick: () => {
-				if (doc.DEDUCTED === 'Y')
+			if (doc.DEDUCTED === 'Y' && this._salesOrderRights?.conduct)
+			{
+				if (this._salesOrderRights?.conduct)
 				{
-					return false;
+					menuItems.push({
+						text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CANCEL'),
+						className: (doc.DEDUCTED === 'Y') ? '' : 'menu-popup-item-accept-sm',
+						onclick: () => {
+							this._setRealizationDeductedStatus(doc, false);
+							popupMenu.close();
+						}
+					});
 				}
-				popupMenu.close();
-				MessageBox.show({
-					title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
-					message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
-					modal: true,
-					buttons: MessageBoxButtons.OK_CANCEL,
-					onOk: messageBox => {
-						messageBox.close();
-						this._removeDocument(doc);
-					},
-					onCancel: messageBox => {
-						messageBox.close();
-					},
+
+			}
+			else if (doc.DEDUCTED !== 'Y' && this._salesOrderRights?.cancel)
+			{
+				menuItems.push({
+					text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_STATUS_CONDUCT'),
+					className: (doc.DEDUCTED === 'Y') ? 'menu-popup-item-accept-sm' : '',
+					onclick: () => {
+						this._setRealizationDeductedStatus(doc, true);
+						popupMenu.close();
+					}
 				});
 			}
-		});
+
+			if (this._salesOrderRights?.delete)
+			{
+				menuItems.push({
+					text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE'),
+					className: (doc.DEDUCTED === 'Y') ? 'menu-popup-no-icon crm-entity-widget-realization-menu-item-remove' : '',
+					onclick: () => {
+						if (doc.DEDUCTED === 'Y')
+						{
+							return false;
+						}
+						popupMenu.close();
+						MessageBox.show({
+							title: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_REMOVE_CONFIRM_TITLE'),
+							message: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_SHIPMENT_DOCUMENT_CONFIRM_REMOVE_TEXT'),
+							modal: true,
+							buttons: MessageBoxButtons.OK_CANCEL,
+							onOk: messageBox => {
+								messageBox.close();
+								this._removeDocument(doc);
+							},
+							onCancel: messageBox => {
+								messageBox.close();
+							},
+						});
+					}
+				});
+			}
+		}
 
 		const openSlider = () => this._viewRealizationSlider(doc.ID);
 
@@ -567,15 +579,24 @@ export class EntityEditorPaymentDocuments
 			this._menus.push(popupMenu);
 		};
 
+
+		const actionMenu =
+			menuItems.length > 0
+				? Tag.render`
+					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
+						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
+					</div>
+				`
+				:''
+		;
+
 		return Tag.render`
 			<div class="crm-entity-widget-payment-detail">
 				<a class="ui-link" onclick="${openSlider}">
 					${title} (${sum})
 				</a>
 				<div class="crm-entity-widget-payment-detail-inner">
-					<div class="ui-label ui-label-md ui-label-light crm-entity-widget-payment-action" onclick="${openMenu}">
-						<span class="ui-label-inner">${Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_ACTIONS_MENU')}</span>
-					</div>
+					${actionMenu}
 					${(new Label(labelOptions)).render()}
 				</div>
 			</div>
@@ -600,10 +621,10 @@ export class EntityEditorPaymentDocuments
 			});
 		}
 
-		let isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
-		if (isAvailableInventoryManagement)
+		const isAvailableInventoryManagement = this._isUsedInventoryManagement && !this._isWithOrdersMode;
+		if (isAvailableInventoryManagement && this._salesOrderRights?.modify)
 		{
-			let menuItem = {
+			const menuItem = {
 				text: Loc.getMessage('CRM_ENTITY_ED_PAYMENT_DOCUMENTS_DOCUMENT_TYPE_SHIPMENT_DOCUMENT'),
 			};
 
@@ -619,7 +640,6 @@ export class EntityEditorPaymentDocuments
 
 			menuItems.push(menuItem);
 		}
-
 		const openMenu = event => {
 			event.preventDefault();
 			const popupMenu = MenuManager.create({

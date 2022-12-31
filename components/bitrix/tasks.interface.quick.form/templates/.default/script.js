@@ -181,7 +181,7 @@ BX.Tasks.QuickForm.prototype.applyChanges = function(data, found)
 
 	this.unfadeGrid();
 	this.enable();
-	this.clear();
+	this.clear(data.currentUser);
 	this.focus();
 };
 
@@ -424,11 +424,13 @@ BX.Tasks.QuickForm.prototype.enable = function()
 	BX.removeClass(this.layout.saveButton, "ui-btn-clock");
 };
 
-BX.Tasks.QuickForm.prototype.clear = function()
+BX.Tasks.QuickForm.prototype.clear = function(data)
 {
 	this.layout.title.value = "";
 	this.layout.deadline.value = "";
 	this.layout.description.value = "";
+	this.projectSelector.clearProject();
+	this.userSelector.setCurrentUser(data);
 };
 
 BX.Tasks.QuickForm.prototype.focus = function()
@@ -694,5 +696,19 @@ BX.Tasks.QuickForm.UserSelector.prototype.onSelect = function(item, type, search
 
 	this.userDialog.hide();
 };
+
+BX.Tasks.QuickForm.UserSelector.prototype.setCurrentUser = function(userData)
+{
+	this.userId = userData.id;
+	this.userNameFormatted = userData.fullName;
+	this.form.layout.responsible.value = this.userNameFormatted;
+	this.form.layout.responsibleId.value = this.userId;
+	var currentUser = this.userDialog.getItem({
+		id: this.userId,
+		entityId: 'user',
+	});
+	currentUser && currentUser.select();
+	this.userDialog.hide();
+}
 
 })();

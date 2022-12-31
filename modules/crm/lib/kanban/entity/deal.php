@@ -4,20 +4,22 @@ namespace Bitrix\Crm\Kanban\Entity;
 
 use Bitrix\Crm\Category\DealCategory;
 use Bitrix\Crm\Category\DealCategoryChangeError;
+use Bitrix\Crm\Component\EntityList\ClientDataProvider;
 use Bitrix\Crm\Deal\PaymentsRepository;
 use Bitrix\Crm\Deal\ShipmentsRepository;
+use Bitrix\Crm\Filter;
+use Bitrix\Crm\Item;
+use Bitrix\Crm\Kanban\Entity;
+use Bitrix\Crm\Kanban\Sort;
 use Bitrix\Crm\PhaseSemantics;
 use Bitrix\Crm\Recurring;
-use Bitrix\Crm\Kanban\Entity;
-use Bitrix\Crm\Filter;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Display\Field;
 use Bitrix\Crm\Settings\DealSettings;
 use Bitrix\Main\Error;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\UI\Filter\Options;
-use Bitrix\Crm\Component\EntityList\ClientDataProvider;
-use Bitrix\Crm\Service\Display\Field;
 
 class Deal extends Entity
 {
@@ -28,7 +30,26 @@ class Deal extends Entity
 
 	public function getItemsSelectPreset(): array
 	{
-		return ['ID', 'STAGE_ID', 'TITLE', 'DATE_CREATE', 'BEGINDATE', 'OPPORTUNITY', 'OPPORTUNITY_ACCOUNT', 'EXCH_RATE', 'CURRENCY_ID', 'ACCOUNT_CURRENCY_ID', 'IS_REPEATED_APPROACH', 'IS_RETURN_CUSTOMER', 'CONTACT_ID', 'COMPANY_ID', 'MODIFY_BY_ID', 'ASSIGNED_BY'];
+		return [
+			'ID',
+			'STAGE_ID',
+			'TITLE',
+			'DATE_CREATE',
+			'BEGINDATE',
+			'OPPORTUNITY',
+			'OPPORTUNITY_ACCOUNT',
+			'EXCH_RATE',
+			'CURRENCY_ID',
+			'ACCOUNT_CURRENCY_ID',
+			'IS_REPEATED_APPROACH',
+			'IS_RETURN_CUSTOMER',
+			'CONTACT_ID',
+			'COMPANY_ID',
+			'MODIFY_BY_ID',
+			'ASSIGNED_BY',
+			Item::FIELD_NAME_LAST_ACTIVITY_TIME,
+			Item::FIELD_NAME_LAST_ACTIVITY_BY,
+		];
 	}
 
 	public function isContactCenterSupported(): bool
@@ -82,6 +103,7 @@ class Deal extends Entity
 	{
 		return (new Filter\Preset\Deal())
 			->setDefaultValues($this->getFilter()->getDefaultFieldIDs())
+			->setCategoryId($this->categoryId)
 			->getDefaultPresets()
 		;
 	}
@@ -181,32 +203,23 @@ class Deal extends Entity
 		$items = parent::appendRelatedEntitiesValues($items, $selectedFields);
 		$dealIds = array_keys($items);
 
-		if (in_array('DELIVERY_STAGE', $selectedFields))
+		if (in_array('DELIVERY_STAGE', $selectedFields, true))
 		{
 			$shipmentStages = (new ShipmentsRepository())->getShipmentStages($dealIds);
 			foreach ($items as $itemId => $item)
 			{
-				if (isset($shipmentStages[$itemId]))
-				{
-					$items[$itemId]['DELIVERY_STAGE'] = \CCrmViewHelper::RenderDealDeliveryStageControl(
-						$shipmentStages[$itemId],
-						'crm-kanban-item-status'
-					);
-				}
+				$items[$itemId]['DELIVERY_STAGE'] = $shipmentStages[$itemId];
 			}
 		}
 
-		if (in_array('PAYMENT_STAGE', $selectedFields))
+		if (in_array('PAYMENT_STAGE', $selectedFields, true))
 		{
 			$paymentStages = (new PaymentsRepository())->getPaymentStages($dealIds);
 			foreach ($items as $itemId => $item)
 			{
 				if (isset($paymentStages[$itemId]))
 				{
-					$items[$itemId]['PAYMENT_STAGE'] = \CCrmViewHelper::RenderDealPaymentStageControl(
-						$paymentStages[$itemId],
-						'crm-kanban-item-status'
-					);
+					$items[$itemId]['PAYMENT_STAGE'] = $paymentStages[$itemId];
 				}
 			}
 		}
@@ -217,13 +230,9 @@ class Deal extends Entity
 	protected function getExtraDisplayedFields()
 	{
 		$result = parent::getExtraDisplayedFields();
-		$result['DELIVERY_STAGE'] =
-			(Field::createByType('string', 'DELIVERY_STAGE'))
-				->setDisplayParams(['VALUE_TYPE' => 'html']);
 
-		$result['PAYMENT_STAGE'] =
-			(Field::createByType('string', 'PAYMENT_STAGE'))
-				->setDisplayParams(['VALUE_TYPE' => 'html']);
+		$result['DELIVERY_STAGE'] = Field::createByType(Field\DeliveryStatusField::TYPE, 'DELIVERY_STAGE');
+		$result['PAYMENT_STAGE'] = Field::createByType(Field\PaymentStatusField::TYPE,'PAYMENT_STAGE');
 
 		return $result;
 	}
@@ -301,13 +310,13 @@ class Deal extends Entity
 
 	public function updateItemStage(int $id, string $stageId, array $newStateParams, array $stages): Result
 	{
-		$result = new Result();
-
-		$item = $this->loadedItems[$id] ?? $this->getItem($id);
-		if(!$item)
+		$result = $this->getItemViaLoadedItems($id);
+		if (!$result->isSuccess())
 		{
-			return $result->addError(new Error('Deal not found'));
+			return $result;
 		}
+
+		$item = $result->getData()['item'];
 
 		$stageCategoryID = (int) DealCategory::resolveFromStageID($stageId);
 		$dealCategoryID = (int) $item['CATEGORY_ID'];
@@ -319,6 +328,25 @@ class Deal extends Entity
 		return parent::updateItemStage($id, $stageId, $newStateParams, $stages);
 	}
 
+	protected function getItemViaLoadedItems(int $id): Result
+	{
+		$result = new Result();
+
+		$item = ($this->loadedItems[$id] ?? $this->getItem($id));
+		if($item)
+		{
+			$result->setData([
+				'item' => $item,
+			]);
+		}
+		else
+		{
+			$result->addError(new Error('Deal not found'));
+		}
+
+		return $result;
+	}
+
 	public function getFilterLazyLoadParams(): ?array
 	{
 		$path = '/bitrix/components/bitrix/crm.deal.list/filter.ajax.php'
@@ -328,15 +356,6 @@ class Deal extends Entity
 			'GET_LIST' => $path . '&action=list',
 			'GET_FIELD' => $path . '&action=field'
 		];
-	}
-
-	/**
-	 * @param array $data
-	 * @return string
-	 */
-	protected function getColumnId(array $data): string
-	{
-		return ($data['STAGE_ID'] ?? '');
 	}
 
 	public function getClientFieldsRestrictions(): ?array
@@ -354,11 +373,17 @@ class Deal extends Entity
 		];
 	}
 
-	public function getGridFilter(): array
+	public function getGridFilter(?string $filterId = null): array
 	{
-		$result = parent::getGridFilter();
+		$result = parent::getGridFilter($filterId);
 
-		$filterFieldsValues = $this->getFilterOptions()->GetFilter($result);
+		$filterOptions = $this->getFilterOptions();
+		if ($filterId)
+		{
+			$filterOptions->setCurrentFilterPresetId($filterId);
+		}
+
+		$filterFieldsValues = $filterOptions->GetFilter($result);
 		$this->getContactDataProvider()->prepareFilter($result, $filterFieldsValues);
 		$this->getCompanyDataProvider()->prepareFilter($result, $filterFieldsValues);
 
@@ -391,7 +416,13 @@ class Deal extends Entity
 				&& in_array(
 					$field['NAME'],
 					[
-						'ORDER_STAGE', 'DELIVERY_STAGE', 'PAYMENT_STAGE', 'PAYMENT_PAID', 'ORDER_SOURCE'
+						'ORDER_STAGE',
+						'DELIVERY_STAGE',
+						'PAYMENT_STAGE',
+						'PAYMENT_PAID',
+						'ORDER_SOURCE',
+						'IS_PRODUCT_RESERVED',
+						'ROBOT_DEBUGGER',
 					]
 				)
 			)
@@ -461,6 +492,19 @@ class Deal extends Entity
 			PhaseSemantics::PROCESS,
 			PhaseSemantics::SUCCESS,
 			PhaseSemantics::FAILURE,
+		];
+	}
+
+	protected function getDefaultSortType(): string
+	{
+		return Sort\Type::BY_LAST_ACTIVITY_TIME;
+	}
+
+	protected function getSupportedSortTypes(): array
+	{
+		return [
+			Sort\Type::BY_ID,
+			Sort\Type::BY_LAST_ACTIVITY_TIME,
 		];
 	}
 }

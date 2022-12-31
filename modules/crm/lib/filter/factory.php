@@ -1,9 +1,12 @@
 <?php
+
 namespace Bitrix\Crm\Filter;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Main\Filter\DataProvider;
+use Bitrix\Crm\Tracking;
 
 class Factory
 {
@@ -144,6 +147,7 @@ class Factory
 	{
 		$filterId = $settings->getID();
 		$parameters = (array)$parameters;
+		$factory = Container::getInstance()->getFactory($settings->getEntityTypeID());
 		$provider = $this->getDataProvider($settings);
 		if (!$provider)
 		{
@@ -165,6 +169,53 @@ class Factory
 		)
 		{
 			$additionalProviders = array_merge($additionalProviders, $this->getClientDataProviders($settings));
+		}
+
+		$parameters['filterFieldsCallback'] = null;
+		$parameters['modifyFieldsCallback'] = null;
+
+		if (
+			$settings instanceof ISettingsSupportsCategory
+			&& $factory
+			&& ($categoryId = $settings->getCategoryId())
+			&& ($category = $factory->getCategory($categoryId))
+		)
+		{
+			$parameters['filterFieldsCallback'] = function ($code) use ($factory, $category)
+			{
+				// filter out tracking fields for categories that do not support tracking
+				if (
+					in_array($code, Tracking\UI\Filter::getFields(), true)
+					&& !$category->isTrackingEnabled()
+				)
+				{
+					return false;
+				}
+
+				// filter out category-specific disabled fields
+				return !in_array(
+					$factory->getCommonFieldNameByMap($code),
+					$category->getDisabledFieldNames(),
+					true
+				);
+			};
+
+			$categoryUISettings = $category->getUISettings();
+			$defaultFilterFields = isset($categoryUISettings['grid']['defaultFields'])
+				? $categoryUISettings['filter']['defaultFields']
+				: [];
+
+			if ($defaultFilterFields)
+			{
+				$parameters['modifyFieldsCallback'] = function (Main\Filter\Field $field) use ($defaultFilterFields)
+				{
+					$field->markAsDefault(
+						in_array($field->getId(), $defaultFilterFields, true)
+					);
+
+					return $field;
+				};
+			}
 		}
 
 		return $this->createFilter($filterId, $provider, $additionalProviders, $parameters);

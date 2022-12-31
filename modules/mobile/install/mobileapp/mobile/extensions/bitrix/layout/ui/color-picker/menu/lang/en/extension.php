@@ -1,0 +1,4 @@
+<?php
+$MESS["COLOR_MENU_DETAIL_TITLE"] = "Selected color";
+$MESS["COLOR_MENU_NAVIGATION_BUTTON"] = "Next";
+$MESS["COLOR_MENU_NAVIGATION_TITLE"] = "Select color";

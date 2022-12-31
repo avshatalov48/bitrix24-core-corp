@@ -21,8 +21,8 @@ class LogMessageEntry extends TimelineEntry
 			'CREATED' => $created,
 			'AUTHOR_ID' => $authorId,
 			'SETTINGS' => $settings,
-			'ASSOCIATED_ENTITY_TYPE_ID' => $entityTypeId,
-			'ASSOCIATED_ENTITY_ID' => $entityId,
+			'ASSOCIATED_ENTITY_TYPE_ID' => $params['ASSOCIATED_ENTITY_TYPE_ID'] ?? $entityTypeId,
+			'ASSOCIATED_ENTITY_ID' => $params['ASSOCIATED_ENTITY_ID'] ?? $entityId,
 		]);
 		if (!$result->isSuccess())
 		{
@@ -54,5 +54,29 @@ class LogMessageEntry extends TimelineEntry
 			$newEntityId,
 			[TimelineType::LOG_MESSAGE]
 		);
+	}
+
+	public static function detectIdByParams(string $sourceId, int $typeCategoryId, string $key = 'SOURCE_ID'): ?int
+	{
+		$items = TimelineTable::getList([
+			'select' => ['ID', 'SETTINGS'],
+			'filter' => [
+				'=TYPE_ID' => TimelineType::LOG_MESSAGE,
+				'=TYPE_CATEGORY_ID' => $typeCategoryId,
+				'!=ASSOCIATED_ENTITY_TYPE_ID' => CCrmOwnerType::Activity
+			],
+			'order' => ['ID' => 'DESC']
+		])->fetchAll();
+
+		foreach ($items as $item)
+		{
+			$logMessageSourceId = $item['SETTINGS']['BASE'][$key] ?? '';
+			if ($sourceId === $logMessageSourceId)
+			{
+				return (int)$item['ID'];
+			}
+		}
+
+		return null;
 	}
 }

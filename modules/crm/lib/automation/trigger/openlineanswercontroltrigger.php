@@ -24,7 +24,7 @@ class OpenLineAnswerControlTrigger extends OpenLineTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_NAME_1');
 	}
 
 	public function setInputData($data)
@@ -137,5 +137,15 @@ class OpenLineAnswerControlTrigger extends OpenLineTrigger
 			$values[$key] = ($field['Type'] === 'user') ? 'user_'.$data[$id] : $data[$id];
 		}
 		return $values;
+	}
+
+	public static function getGroup(): array
+	{
+		return ['clientCommunication'];
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_OPENLINE_ANSWER_CTRL_DESCRIPTION') ?? '';
 	}
 }

@@ -20,6 +20,7 @@ class Tasks extends Social
 				'menu_all_groups',
 			],
 			'menu_crm_favorite',
+			'menu_crm_store',
 			'menu_marketing',
 			'menu_sites',
 			'menu_shop',

@@ -7,6 +7,7 @@
 	--user-icon-container-right-margin: 8px;
 	box-shadow: 0 2px 3px rgba(0, 0, 0, .06);
 	background: var(--ui-color-background-note, #fff8cf);
+	position: relative;
 }
 
 .crm-timeline__card-note_user {
@@ -28,10 +29,7 @@
 
 .crm-timeline__card-note_value {
 	min-height: 21px;
-	font-family: var(--crm-timeline__font-helvetica);
-	font-size: var(--ui-font-size-md, 14px);
-	line-height: var(--ui-typography-text-md-line-height, 18px);
-	color: var(--ui-color-text-primary, rgba(51, 51, 51, 1));
+	width: 100%;
 }
 
 .crm-timeline__card-note_edit {
@@ -58,6 +56,16 @@
 	background: url(../image/crm-timeline_icon-edit.svg) center no-repeat;
 }
 
+.crm-timeline__card-note_dimmer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(255, 255, 255, 0.3);
+	display: block;
+}
+
 .crm-timeline__card-note_cross {
 	display: flex;
 	align-items: center;
@@ -82,10 +90,29 @@
 }
 
 .crm-timeline__card-note_text {
-	min-height: 100%;
-	position: relative;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
+	white-space: pre-wrap;
+	height: 24px;
+	width: 100%;
+	vertical-align: middle;
 	border: none;
+	background-color: transparent;
 	outline: none;
+	resize: none;
+	word-break: break-word;
+	font-family: inherit;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-typography-text-md-line-height, 18px);
+	color: var(--ui-color-text-primary, rgba(51, 51, 51, 1));
+}
+
+.crm-timeline__card-note_text::placeholder {
+	font-family: inherit;
+	font-size: var(--ui-font-size-md, 14px);
+	line-height: var(--ui-typography-text-md-line-height, 18px);
+	color: var(--ui-color-base-50, #A8ADB4);
 }
 
 .crm-timeline__card-note_placeholder {

@@ -44,6 +44,16 @@
 	cursor: pointer;
 }
 
+.crm-rq-popup-item-add-inst-app-btn {
+	border: none;
+	outline: 0;
+	padding: 14px 20px;
+	background-color: #effaff;
+	display: block;
+	width: 100%;
+	text-align: left;
+}
+
 .crm-rq-popup-item-add-new-btn-text {
 	font: 14px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #a1a5ac;
@@ -76,4 +86,23 @@
 .ui-dropdown-container.rq-dropdown-container
 {
 	margin-bottom: 0;
+}
+
+.crm-rq-popup-item-add-inst-app-btn .main-ui-loader {
+	position: relative;
+	top: 26px;
+	left: 20px;
+}
+
+.crm-rq-popup-item-add-inst-app-btn a {
+	color: #2067b0;
+	text-decoration: none;
+	-webkit-transition: border-bottom-color 0.2s linear;
+	-o-transition: border-bottom-color 0.2s linear;
+	transition: border-bottom-color 0.2s linear;
+}
+
+.crm-rq-popup-item-add-inst-app-btn a:hover {
+	color: #2067b0;
+	text-decoration: none;
 }

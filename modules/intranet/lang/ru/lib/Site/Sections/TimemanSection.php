@@ -1,4 +1,4 @@
-<?
+<?php
 $MESS['TIMEMAN_SECTION_ROOT_ITEM_TITLE'] = "Время и Отчеты";
 $MESS['TIMEMAN_SECTION_ABSENCE_ITEM_TITLE'] = "График отсутствий";
 $MESS['TIMEMAN_SECTION_WORK_TIME_ITEM_TITLE'] = "Рабочее время";
@@ -8,3 +8,5 @@ $MESS['TIMEMAN_SECTION_WORK_REPORT_ITEM_TITLE'] = "Рабочие отчеты";
 $MESS['TIMEMAN_SECTION_SCHEDULES_ITEM_TITLE'] = "Рабочие графики";
 $MESS['TIMEMAN_SECTION_PERMISSIONS_ITEM_TITLE'] = "Права доступа";
 $MESS['TIMEMAN_SECTION_MEETINGS_ITEM_TITLE'] = "Собрания и планерки";
+$MESS['TIMEMAN_SECTION_USER_LOGIN_HISTORY'] = "История входов";
+

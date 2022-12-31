@@ -1,6 +1,8 @@
 <?php
 namespace Bitrix\Crm\Timeline\Entity;
 
+use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Service\Timeline\Monitor;
 use Bitrix\Main;
 use Bitrix\Main\Entity;
 use \Bitrix\Crm\Timeline\TimelineType;
@@ -102,7 +104,26 @@ class TimelineBindingTable  extends Entity\DataManager
 			throw new Main\ArgumentException('Owner ID must be greater than zero.', 'ownerID');
 		}
 
+		$affectedBindings =
+			self::query()
+				->setSelect([
+					'ENTITY_TYPE_ID',
+					'ENTITY_ID',
+				])
+				->where('OWNER_ID', $ownerID)
+				->fetchCollection()
+		;
+
 		Main\Application::getConnection()->queryExecute("DELETE from b_crm_timeline_bind WHERE OWNER_ID = {$ownerID}");
+
+		$monitor = Monitor::getInstance();
+		foreach ($affectedBindings as $binding)
+		{
+			if (\CCrmOwnerType::IsDefined($binding->getEntityTypeId()) && $binding->getEntityId() > 0)
+			{
+				$monitor->onTimelineEntryRemoveIfSuitable(new ItemIdentifier($binding->getEntityTypeId(), $binding->getEntityId()), (int)$ownerID);
+			}
+		}
 	}
 
 	/**
@@ -115,6 +136,11 @@ class TimelineBindingTable  extends Entity\DataManager
 	 */
 	public static function transferOwnership($oldEntityTypeID, $oldEntityID, $newEntityTypeID, $newEntityID)
 	{
+		$oldEntityTypeID = (int)$oldEntityTypeID;
+		$oldEntityID = (int)$oldEntityID;
+		$newEntityTypeID = (int)$newEntityTypeID;
+		$newEntityID = (int)$newEntityID;
+
 		$connection = Main\Application::getConnection();
 		$dbResult = $connection->query(
 			"SELECT OWNER_ID FROM b_crm_timeline_bind WHERE ENTITY_TYPE_ID = {$oldEntityTypeID} AND ENTITY_ID = {$oldEntityID}"
@@ -183,6 +209,15 @@ class TimelineBindingTable  extends Entity\DataManager
 		$connection->queryExecute(
 			"UPDATE b_crm_timeline SET ASSOCIATED_ENTITY_TYPE_ID = {$newEntityTypeID}, ASSOCIATED_ENTITY_ID = {$newEntityID} WHERE ASSOCIATED_ENTITY_TYPE_ID = {$oldEntityTypeID} AND ASSOCIATED_ENTITY_ID = {$oldEntityID}"
 		);
+
+		if (\CCrmOwnerType::IsDefined($oldEntityTypeID) && $oldEntityID > 0)
+		{
+			Monitor::getInstance()->onTimelineEntryRemove(new ItemIdentifier($oldEntityTypeID, $oldEntityID));
+		}
+		if (\CCrmOwnerType::IsDefined($newEntityTypeID) && $newEntityID > 0)
+		{
+			Monitor::getInstance()->onTimelineEntryAdd(new ItemIdentifier($newEntityTypeID, $newEntityID));
+		}
 	}
 	/**
 	 * Transfer events from old associated entity of one type to new entity of another type.
@@ -209,6 +244,10 @@ class TimelineBindingTable  extends Entity\DataManager
 	 */
 	public static function rebind($entityTypeID, $oldEntityID, $newEntityID, array $typeIDs)
 	{
+		$entityTypeID = (int)$entityTypeID;
+		$oldEntityID = (int)$oldEntityID;
+		$newEntityID = (int)$newEntityID;
+
 		$connection = Main\Application::getConnection();
 		$typeIDs = array_filter(array_map('intval', $typeIDs));
 		if(!empty($typeIDs))
@@ -294,6 +333,18 @@ class TimelineBindingTable  extends Entity\DataManager
 				);
 			}
 		}
+
+		if (\CCrmOwnerType::IsDefined($entityTypeID))
+		{
+			if ($oldEntityID > 0)
+			{
+				Monitor::getInstance()->onTimelineEntryRemove(new ItemIdentifier($entityTypeID, $oldEntityID));
+			}
+			if ($newEntityID > 0)
+			{
+				Monitor::getInstance()->onTimelineEntryAdd(new ItemIdentifier($entityTypeID, $newEntityID));
+			}
+		}
 	}
 
 	/**
@@ -308,6 +359,11 @@ class TimelineBindingTable  extends Entity\DataManager
 	 */
 	public static function attach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID,  array $typeIDs)
 	{
+		$srcEntityTypeID = (int)$srcEntityTypeID;
+		$srcEntityID = (int)$srcEntityID;
+		$targEntityTypeID = (int)$targEntityTypeID;
+		$targEntityID = (int)$targEntityID;
+
 		$connection = Main\Application::getConnection();
 		$typeIDs = array_filter(array_map('intval', $typeIDs));
 		if(!empty($typeIDs))
@@ -350,10 +406,20 @@ class TimelineBindingTable  extends Entity\DataManager
 				$connection->queryExecute($query);
 			}
 		}
+
+		if (\CCrmOwnerType::IsDefined($targEntityTypeID) && $targEntityID > 0)
+		{
+			Monitor::getInstance()->onTimelineEntryAdd(new ItemIdentifier($targEntityTypeID, $targEntityID));
+		}
 	}
 
 	public static function detach($srcEntityTypeID, $srcEntityID, $targEntityTypeID, $targEntityID, array $typeIDs)
 	{
+		$srcEntityTypeID = (int)$srcEntityTypeID;
+		$srcEntityID = (int)$srcEntityID;
+		$targEntityTypeID = (int)$targEntityTypeID;
+		$targEntityID = (int)$targEntityID;
+
 		$connection = Main\Application::getConnection();
 		$typeIDs = array_filter(array_map('intval', $typeIDs));
 		if(!empty($typeIDs))
@@ -387,6 +453,10 @@ class TimelineBindingTable  extends Entity\DataManager
 			);
 		}
 
+		if (\CCrmOwnerType::IsDefined($targEntityTypeID) && $targEntityID > 0)
+		{
+			Monitor::getInstance()->onTimelineEntryRemove(new ItemIdentifier($targEntityTypeID, $targEntityID));
+		}
 	}
 
 	public static function checkBindingExists(int $id, int $ownerTypeId, int $ownerId): bool

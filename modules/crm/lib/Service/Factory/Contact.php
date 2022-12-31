@@ -262,7 +262,7 @@ class Contact extends Service\Factory
 			],
 			Item\Contact::FIELD_NAME_EXPORT => [
 				'TYPE' => Field::TYPE_BOOLEAN,
-				'ATTRIBUTES' => [\CCrmFieldInfoAttr::NotDisplayed, \CCrmFieldInfoAttr::HasDefaultValue],
+				'ATTRIBUTES' => [],
 			],
 			Item::FIELD_NAME_HAS_PHONE => [
 				'TYPE' => Field::TYPE_BOOLEAN,

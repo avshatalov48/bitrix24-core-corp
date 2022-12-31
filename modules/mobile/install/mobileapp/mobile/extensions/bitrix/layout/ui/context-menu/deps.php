@@ -1,4 +1,7 @@
 <?php
 return [
-	'layout/ui/context-menu/*',
+	'extensions' => [
+		'haptics',
+		'layout/ui/context-menu/*',
+	],
 ];

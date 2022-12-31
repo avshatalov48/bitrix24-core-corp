@@ -1,31 +1,24 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
-	die();
 
-$phrase = 'CRM_CHANGE_STATUS_NAME';
-if (
-	isset($documentType)
-	&& (
-		$documentType[2] === 'DEAL'
-		|| mb_strpos($documentType[2], 'DYNAMIC') === 0
-	)
-)
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
-	$phrase = 'CRM_CHANGE_DEAL_STAGE_NAME';
+	die();
 }
 
+use Bitrix\Main\Localization\Loc;
+
 $arActivityDescription = [
-	'NAME'           => GetMessage('CRM_CHANGE_STATUS_NAME'),
-	'DESCRIPTION'    => GetMessage('CRM_CHANGE_STATUS_DESC_1'),
-	'TYPE'           => ['activity', 'robot_activity'],
-	'CLASS'          => 'CrmChangeStatusActivity',
-	'JSCLASS'        => 'BizProcActivity',
-	'CATEGORY'       => [
-		'ID'       => 'document',
-		"OWN_ID"   => 'crm',
-		"OWN_NAME" => 'CRM',
+	'NAME' => Loc::getMessage('CRM_CHANGE_STATUS_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_CHANGE_STATUS_DESC_2'),
+	'TYPE' => ['activity', 'robot_activity'],
+	'CLASS' => 'CrmChangeStatusActivity',
+	'JSCLASS' => 'BizProcActivity',
+	'CATEGORY' => [
+		'ID' => 'document',
+		'OWN_ID' => 'crm',
+		'OWN_NAME' => 'CRM',
 	],
-	'FILTER'         => [
+	'FILTER' => [
 		'INCLUDE' => [
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'CCrmDocumentLead'],
@@ -37,6 +30,7 @@ $arActivityDescription = [
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
-		'TITLE'    => GetMessage($phrase),
+		'GROUP' => ['elementControl'],
+		'SORT' => 2700,
 	],
 ];

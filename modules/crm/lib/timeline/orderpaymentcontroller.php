@@ -367,6 +367,11 @@ class OrderPaymentController extends EntityController
 	 */
 	public function onSend($ownerId, $params)
 	{
+		if ((int)$ownerId === 0)
+		{
+			return;
+		}
+
 		$params['SETTINGS']['CHANGED_ENTITY'] = \CCrmOwnerType::OrderPaymentName;
 		$this->notifyOrderPaymentEntry($ownerId, $params);
 

@@ -9,6 +9,9 @@ if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true) die();
  * @global CMain $APPLICATION
  */
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\AccessDeniedException;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\SystemException;
@@ -67,6 +70,70 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 		{
 			throw new SystemException("Error: PAGE_ID parameter missing.");
 		}
+	}
+
+	/**
+	 * Check required params.
+	 *
+	 * @throws SystemException
+	 */
+	protected function checkAccessRights(): bool
+	{
+		if (!Loader::includeModule('catalog'))
+		{
+			return true;
+		}
+
+		$isCatalogPage =
+			mb_stripos($this->arParams['PAGE_ID'], 'menu_catalog_goods_') === 0
+			|| preg_match('/^menu_catalog_\d+$/', $this->arParams['PAGE_ID']) === 1
+		;
+		if (AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
+		{
+			return true;
+		}
+		elseif ($isCatalogPage)
+		{
+			throw new AccessDeniedException();
+		}
+
+		$action2pages = [
+			ActionDictionary::ACTION_MEASURE_EDIT => [
+				'cat_measure_list',
+				'cat_measure_edit',
+			],
+			ActionDictionary::ACTION_VAT_EDIT => [
+				'cat_vat_admin',
+				'cat_vat_edit',
+			],
+			ActionDictionary::ACTION_PRICE_GROUP_EDIT => [
+				'cat_group_admin',
+				'cat_group_edit',
+				'cat_round_list',
+			],
+			ActionDictionary::ACTION_PRODUCT_DISCOUNT_SET => [
+				'sale_discount_preset_list',
+				'sale_discount_coupons',
+				'sale_discount',
+			],
+			ActionDictionary::ACTION_PRODUCT_PRICE_EXTRA_EDIT => [
+				'cat_extra',
+			],
+		];
+		foreach ($action2pages as $action => $pages)
+		{
+			if (in_array($this->arParams['PAGE_ID'], $pages, true))
+			{
+				$can = AccessController::getCurrent()->check($action);
+				if (!$can)
+				{
+					throw new AccessDeniedException();
+				}
+				break;
+			}
+		}
+
+		return true;
 	}
 
 	protected function getAddressMap()
@@ -150,7 +217,10 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 
 		$_REQUEST["lang"] = LANGUAGE_ID;
 
-		define("SELF_FOLDER_URL", $this->arParams["SEF_FOLDER"]);
+		if (!defined('SELF_FOLDER_URL'))
+		{
+			define('SELF_FOLDER_URL', $this->arParams['SEF_FOLDER']);
+		}
 	}
 
 	protected function formatResult()
@@ -183,12 +253,17 @@ class CCrmAdminPageInclude extends \CBitrixComponent
 		try
 		{
 			$this->checkRequiredParams();
+			$this->checkAccessRights();
 			$this->getRealPagePath();
 			$this->checkPage();
 			$this->setSettings();
 			$this->formatResult();
 
 			$this->includeComponentTemplate();
+		}
+		catch(AccessDeniedException $e)
+		{
+			$this->includeComponentTemplate('error');
 		}
 		catch(SystemException $e)
 		{

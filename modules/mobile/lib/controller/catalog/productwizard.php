@@ -2,13 +2,28 @@
 
 namespace Bitrix\Mobile\Controller\Catalog;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Main\Engine\Controller;
 use Bitrix\Main\Error;
+use Bitrix\Main\Localization\Loc;
 use Bitrix\Mobile\Integration\Catalog\ProductWizard\ConfigQuery;
 use Bitrix\Mobile\Integration\Catalog\ProductWizard\SaveProductCommand;
 
-class ProductWizard extends \Bitrix\Main\Engine\Controller
+class ProductWizard extends Controller
 {
-	use CatalogPermissions;
+	/** @var AccessController */
+	private $accessController;
+
+	/**
+	 * @inheritDoc
+	 */
+	public function __construct(\Bitrix\Main\Request $request = null)
+	{
+		parent::__construct($request);
+
+		$this->accessController = AccessController::getCurrent();
+	}
 
 	/**
 	 * Get config data for catalog product wizard.
@@ -18,9 +33,9 @@ class ProductWizard extends \Bitrix\Main\Engine\Controller
 	 */
 	public function configAction(string $wizardType): array
 	{
-		if (!$this->hasReadPermissions())
+		if (!$this->accessController->check(ActionDictionary::ACTION_CATALOG_READ))
 		{
-			$this->addError(new Error($this->getInsufficientPermissionsError()));
+			$this->addError(new Error(Loc::getMessage('MOBILE_CONTROLLER_CATALOG_PRODUCT_WIZARD_ACCESS_DENIED')));
 			return [];
 		}
 
@@ -36,12 +51,6 @@ class ProductWizard extends \Bitrix\Main\Engine\Controller
 	 */
 	public function saveProductAction(array $fields, int $id = null): ?array
 	{
-		if (!$this->hasWritePermissions())
-		{
-			$this->addError(new Error($this->getInsufficientPermissionsError()));
-			return null;
-		}
-
 		$result = (new SaveProductCommand($fields, $id))->execute();
 
 		if ($result->isSuccess())

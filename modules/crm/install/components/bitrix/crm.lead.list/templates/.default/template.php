@@ -129,6 +129,7 @@ if(!$isInternal):
 endif;
 
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
+$preparedGridId = htmlspecialcharsbx(CUtil::JSescape($gridManagerID));
 $gridManagerCfg = array(
 	'ownerType' => 'LEAD',
 	'gridId' => $arResult['GRID_ID'],
@@ -272,6 +273,14 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 
 		if($arLead['EDIT'])
 		{
+			if (\Bitrix\Crm\Settings\Crm::isUniversalActivityScenarioEnabled())
+			{
+				$arActivitySubMenuItems[] = array(
+					'TEXT' => GetMessage('CRM_LEAD_ADD_TODO'),
+					'ONCLICK' => "BX.CrmUIGridExtension.showActivityAddingPopupFromMenu('".$preparedGridId."', " . CCrmOwnerType::Lead . ", " . (int)$arLead['ID'] . ");"
+				);
+			}
+
 			if(IsModuleInstalled('subscribe'))
 			{
 				$arActions[] = array(
@@ -295,7 +304,7 @@ foreach($arResult['LEAD'] as $sKey => $arLead)
 				);
 			}
 
-			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID))
+			if(IsModuleInstalled(CRM_MODULE_CALENDAR_ID) && \Bitrix\Crm\Settings\ActivitySettings::areOutdatedCalendarActivitiesEnabled())
 			{
 				$arActivityMenuItems[] = array(
 					'TITLE' => GetMessage('CRM_LEAD_ADD_CALL_TITLE'),

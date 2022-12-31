@@ -1,5 +1,6 @@
 "use strict";
 
+
 (function(){
 
 	class ChatBackgroundAction

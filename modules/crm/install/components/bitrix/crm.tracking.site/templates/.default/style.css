@@ -252,7 +252,7 @@
 	display: inline-block;
 	overflow: hidden;
 	float: left;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	padding-left: 26px;
 	cursor: pointer;
 	color: #5e6675;

@@ -1,4 +1,23 @@
 (() => {
+
+	const { ProjectSelector } = jn.require('selector/widget/entity/socialnetwork/project');
+	const { TaskTagSelector } = jn.require('selector/widget/entity/tasks/task-tag');
+
+	let CrmContactSelector;
+	let CrmCompanySelector;
+	let CrmElementSelector;
+
+	try
+	{
+		CrmContactSelector = jn.require('crm/selector/entity/contact').CrmContactSelector;
+		CrmCompanySelector = jn.require('crm/selector/entity/company').CrmCompanySelector;
+		CrmElementSelector = jn.require('crm/selector/entity/element').CrmElementSelector;
+	}
+	catch (e)
+	{
+		console.warn(e);
+	}
+
 	/**
 	 * @class EntitySelectorFactory.Type
 	 */
@@ -8,8 +27,15 @@
 		STORE: 'store',
 		CONTRACTOR: 'contractor',
 		USER: 'user',
-		PROJECT_TAG: 'project_tag'
-	}
+		PROJECT: 'project',
+		PROJECT_TAG: 'project_tag',
+		CRM_CONTACT: 'contact',
+		CRM_COMPANY: 'company',
+		CRM_ELEMENT: 'crm-element',
+		TASK_TAG: 'task_tag',
+		IBLOCK_ELEMENT_USER_FIELD: 'iblock-element-user-field',
+		IBLOCK_SECTION_USER_FIELD: 'iblock-section-user-field',
+	};
 
 	/**
 	 * @class EntitySelectorFactory
@@ -43,9 +69,44 @@
 				return SocialNetworkUserSelector.make(data);
 			}
 
+			if (type === Type.PROJECT)
+			{
+				return ProjectSelector.make(data);
+			}
+
 			if (type === Type.PROJECT_TAG)
 			{
 				return ProjectTagSelector.make(data);
+			}
+
+			if (type === Type.CRM_CONTACT && CrmContactSelector)
+			{
+				return CrmContactSelector.make(data);
+			}
+
+			if (type === Type.CRM_COMPANY && CrmCompanySelector)
+			{
+				return CrmCompanySelector.make(data);
+			}
+
+			if (type === Type.CRM_ELEMENT && CrmElementSelector)
+			{
+				return CrmElementSelector.make(data);
+			}
+
+			if (type === Type.TASK_TAG)
+			{
+				return TaskTagSelector.make(data);
+			}
+
+			if (type === Type.IBLOCK_ELEMENT_USER_FIELD)
+			{
+				return IblockElementUserFieldSelector.make(data);
+			}
+
+			if (type === Type.IBLOCK_SECTION_USER_FIELD)
+			{
+				return IblockSectionUserFieldSelector.make(data);
 			}
 
 			return null;

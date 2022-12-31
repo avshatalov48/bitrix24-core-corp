@@ -116,38 +116,72 @@ class Helper
 	 */
 	public static function unRegisterApp($params): bool
 	{
-		$result = true;
+		$result = false;
 
-		if(!empty($params['REST_APP_ID']))
+		if (empty($params['REST_APP_ID']) || empty($params['ID']))
 		{
-			$filter['REST_APP_ID'] = $params['REST_APP_ID'];
+			return false;
+		}
 
-			if(!empty($params['ID']))
-			{
-				$filter['ID_CONNECTOR'] = mb_strtolower($params['ID']);
-			}
+		$filter = [
+			'REST_APP_ID' => $params['REST_APP_ID'],
+			'ID_CONNECTOR' => mb_strtolower($params['ID']),
+		];
 
+		$connection = \Bitrix\Main\Application::getInstance()->getConnection();
+		$connection->startTransaction();
+
+		try
+		{
 			$raw = StatusConnectorsTable::getList([
 				'select' => ['ID', 'LINE', 'CONNECTOR'],
 				'filter' => [
-					'=CONNECTOR' => $filter['ID_CONNECTOR']
-				]
+					'=CONNECTOR' => $filter['ID_CONNECTOR'],
+				],
 			]);
 			while ($row = $raw->fetch())
 			{
-				\Bitrix\ImConnector\Status::delete($row['CONNECTOR'], $row['LINE']);
+				$result = true;
+				$isStatusDeleted = \Bitrix\ImConnector\Status::delete($row['CONNECTOR'], $row['LINE']);
+				if (!$isStatusDeleted)
+				{
+					$result = false;
+					break;
+				}
 			}
 
-			$raw = CustomConnectorsTable::getList(array(
-				'select' => array('ID', 'REST_PLACEMENT_ID'),
-				'filter' => $filter
-			));
-
-			while ($row = $raw->fetch())
+			if ($result)
 			{
-				CustomConnectorsTable::delete($row['ID']);
-				self::unRegisterPlacement($row['REST_PLACEMENT_ID']);
+				$raw = CustomConnectorsTable::getList([
+					'select' => ['ID', 'REST_PLACEMENT_ID'],
+					'filter' => $filter,
+				]);
+
+				while ($row = $raw->fetch())
+				{
+					$deleteConnectorResult = CustomConnectorsTable::delete($row['ID']);
+					$isPlacementUnRegistered = self::unRegisterPlacement($row['REST_PLACEMENT_ID']);
+					if (!$isPlacementUnRegistered || !$deleteConnectorResult->isSuccess())
+					{
+						$result = false;
+						break;
+					}
+				}
 			}
+
+			if ($result)
+			{
+				$connection->commitTransaction();
+			}
+			else
+			{
+				$connection->rollbackTransaction();
+			}
+		}
+		catch (\Exception $e)
+		{
+			$connection->rollbackTransaction();
+			$result = false;
 		}
 
 		return $result;
@@ -209,7 +243,7 @@ class Helper
 	 *
 	 * @return bool
 	 */
-	protected static function unRegisterPlacement($placementId)
+	protected static function unRegisterPlacement($placementId): bool
 	{
 		if (intval($placementId) > 0)
 		{
@@ -222,7 +256,7 @@ class Helper
 			//count == 0 because this method is called after delete of connector
 			if (count($connectors) == 0)
 			{
-				self::deletePlacement($placementId);
+				return self::deletePlacement($placementId)->isSuccess();
 			}
 		}
 

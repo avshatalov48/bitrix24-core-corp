@@ -1,5 +1,18 @@
 (() => {
 
+	const { Loc } = jn.require('loc');
+	const { md5 } = jn.require('utils/hash');
+	const { debounce } = jn.require('utils/function');
+	const { trim, number_format } = jn.require('utils/string');
+	const {
+		clone,
+		merge,
+		get,
+		set,
+		isObjectLike,
+		isEmpty,
+	} = jn.require('utils/object');
+
 	/**
 	 * @class Utils
 	 * @deprecated Please use specific utils from utils/string, utils/object, etc.
@@ -8,27 +21,27 @@
 	{
 		static md5(any)
 		{
-			return HashUtils.md5(any);
+			return md5(any);
 		}
 
 		static objectClone(properties)
 		{
-			return ObjectUtils.clone(properties);
+			return clone(properties);
 		}
 
 		static objectMerge(currentProperties, newProperties)
 		{
-			return ObjectUtils.merge(currentProperties, newProperties);
+			return merge(currentProperties, newProperties);
 		}
 
 		static objectDeepSet(obj, path, value)
 		{
-			return ObjectUtils.set(obj, path, value);
+			return set(obj, path, value);
 		}
 
 		static objectDeepGet(obj, path, defaultValue)
 		{
-			return ObjectUtils.get(obj, path, defaultValue);
+			return get(obj, path, defaultValue);
 		}
 
 		static isString(value)
@@ -43,7 +56,7 @@
 
 		static isObjectLike(value)
 		{
-			return ObjectUtils.isObjectLike(value);
+			return isObjectLike(value);
 		}
 
 		static isNotEmptyString(value)
@@ -53,12 +66,12 @@
 
 		static isNotEmptyObject(value)
 		{
-			return !ObjectUtils.isEmpty(value);
+			return !isEmpty(value);
 		}
 
 		static isEmptyObject(value)
 		{
-			return ObjectUtils.isEmpty(value);
+			return isEmpty(value);
 		}
 
 		static getRandom(length = 8)
@@ -68,17 +81,17 @@
 
 		static debounce(fn, timeout, ctx, immediate = false)
 		{
-			return FunctionUtils.debounce(fn, timeout, ctx, immediate);
+			return debounce(fn, timeout, ctx, immediate);
 		}
 
 		static trim(s)
 		{
-			return StringUtils.trim(s);
+			return trim(s);
 		}
 
 		static number_format(number, decimals, dec_point, thousands_sep)
 		{
-			return StringUtils.number_format(number, decimals, dec_point, thousands_sep);
+			return number_format(number, decimals, dec_point, thousands_sep);
 		}
 
 		static getPluralForm(value, languageId)

@@ -143,4 +143,9 @@ final class SignDocument extends Base
 
 		ActivityController::getInstance()->notifyTimelinesAboutActivityUpdate($activity);
 	}
+
+	public static function isCompletable()
+	{
+		return false;
+	}
 }

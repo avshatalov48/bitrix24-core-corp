@@ -6,7 +6,10 @@
  * @copyright 2001-2013 Bitrix
  */
 
+use Bitrix\Main\Type\Date;
 use Bitrix\Tasks\Access\ActionDictionary;
+use Bitrix\Tasks\Integration\Pull\PushService;
+use Bitrix\Tasks\Util\User;
 
 /**
  * @access public
@@ -53,7 +56,7 @@ final class CTaskTimerManager
 
 	public static function onBeforeTaskUpdate(/** @noinspection PhpUnusedParameterInspection */$id, $arFields, $arTask)
 	{
-		$userId = \Bitrix\Tasks\Util\User::getId();
+		$userId = User::getId();
 
 		if ($userId)
 		{
@@ -178,7 +181,6 @@ final class CTaskTimerManager
 			return (false);
 	}
 
-
 	public function start($taskId)
 	{
 		global $CACHE_MANAGER;
@@ -186,62 +188,79 @@ final class CTaskTimerManager
 		// Stop timer of user (if it is run)
 		$this->stop();
 
-		$oTaskItem = CTaskItem::getInstance($taskId, $this->userId);
+		$task = CTaskItem::getInstance($taskId, $this->userId);
 
 		try
 		{
-			$arTask = $oTaskItem->getData(false);
+			$taskData = $task->getData(false);
 		}
 		catch (TasksException $e)
 		{
 			return false;
 		}
 
-		if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING) )
-			return (false);
+		if (!$task->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING))
+		{
+			return false;
+		}
 
 		// Run timer for given task
-		$arTimer = CTaskTimerCore::start($this->userId, $taskId);
+		$timer = CTaskTimerCore::start($this->userId, $taskId);
 
 		$this->cachedLastTimer = null;
 
-		$arAffectedUsers = array_unique(array_merge(
-			array($this->userId, $arTask['RESPONSIBLE_ID']),
-			(array) $arTask['ACCOMPLICES']
-		));
-
-		foreach ($arAffectedUsers as $userId)
-			$CACHE_MANAGER->ClearByTag('tasks_user_' . $userId);
-
-		if ($arTimer === false)
-			return (false);
-		else
+		$affectedUsers = array_unique(
+			array_merge(
+				[$this->userId, $taskData['RESPONSIBLE_ID']],
+				(array)$taskData['ACCOMPLICES']
+			)
+		);
+		foreach ($affectedUsers as $userId)
 		{
-			// Add task to day plan
-			$USERID = \Bitrix\Tasks\Util\User::getId();
-			if ($USERID && ($USERID == $this->userId))
-			{
-				$arTasksInDayPlan = CTaskPlannerMaintance::getCurrentTasksList();
-				if ( ! in_array($taskId, $arTasksInDayPlan) )
-					CTaskPlannerMaintance::plannerActions(array('add' => array($taskId)));
-			}
-
-			if ($arTask['REAL_STATUS'] != CTasks::STATE_IN_PROGRESS)
-			{
-				if (
-					( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_START) )
-					&& $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_RENEW)
-				)
-				{
-					$oTaskItem->renew();
-				}
-
-				if ($oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_START))
-					$oTaskItem->startExecution();
-			}
-
-			return ($arTimer);
+			$CACHE_MANAGER->ClearByTag("tasks_user_{$userId}");
 		}
+
+		if ($timer === false)
+		{
+			return false;
+		}
+
+		// Add task to day plan
+		$currentUserId = User::getId();
+		if ($currentUserId && ($currentUserId === $this->userId))
+		{
+			$dayPlanTasks = CTaskPlannerMaintance::getCurrentTasksList();
+			if (!in_array($taskId, $dayPlanTasks))
+			{
+				CTaskPlannerMaintance::plannerActions(['add' => [$taskId]]);
+			}
+		}
+
+		if ((int)$taskData['REAL_STATUS'] !== CTasks::STATE_IN_PROGRESS)
+		{
+			if ($task->checkAccess(ActionDictionary::ACTION_TASK_START))
+			{
+				$task->startExecution();
+			}
+			elseif ($task->checkAccess(ActionDictionary::ACTION_TASK_RENEW))
+			{
+				$task->renew();
+			}
+		}
+
+		PushService::addEvent(
+			$this->userId,
+			[
+				'module_id' => 'tasks',
+				'command' => 'task_timer_start',
+				'params' => [
+					'taskId' => $taskId,
+					'timeElapsed' => (int)$taskData['TIME_SPENT_IN_LOGS'] + (time() - $timer['TIMER_STARTED_AT']),
+				],
+			]
+		);
+
+		return $timer;
 	}
 
 
@@ -251,59 +270,93 @@ final class CTaskTimerManager
 
 		if ($taskId)
 		{
-			$oTaskItem = CTaskItem::getInstance($taskId, $this->userId);
-			if ( ! $oTaskItem->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING) )
-				return (false);
+			$task = CTaskItem::getInstance($taskId, $this->userId);
+			if (!$task->checkAccess(ActionDictionary::ACTION_TASK_TIME_TRACKING))
+			{
+				return false;
+			}
 		}
 
-		$arTimer = CTaskTimerCore::stop($this->userId, $taskId);
-		$dateFormat = \Bitrix\Main\Type\Date::convertFormatToPhp(\CSite::GetDateFormat());
+		$timer = CTaskTimerCore::stop($this->userId, $taskId);
 
-		$userOffset = \Bitrix\Tasks\Util\User::getTimeZoneOffset($this->userId);
+		$dateFormat = Date::convertFormatToPhp(\CSite::GetDateFormat());
+		$userOffset = User::getTimeZoneOffset($this->userId);
 
-		$dateStart = date($dateFormat, $arTimer['TIMER_STARTED_AT'] + $userOffset);
-		$dateStop = date($dateFormat, $arTimer['TIMER_STARTED_AT'] + $arTimer['TIMER_ACCUMULATOR'] + $userOffset);
+		$dateStart = date($dateFormat, $timer['TIMER_STARTED_AT'] + $userOffset);
+		$dateStop = date($dateFormat, $timer['TIMER_STARTED_AT'] + $timer['TIMER_ACCUMULATOR'] + $userOffset);
 
 		$this->cachedLastTimer = null;
 
-		if (($arTimer !== false) && ($arTimer['TIMER_ACCUMULATOR'] > 0))
+		if ($timer !== false && $timer['TIMER_ACCUMULATOR'] > 0)
 		{
 			/** @noinspection PhpDeprecationInspection */
-			$o = new CTaskElapsedTime();
-			$o->add(
-				array(
-					'USER_ID'      => $this->userId,
-					'TASK_ID'      => $arTimer['TASK_ID'],
-					'SECONDS'      => $arTimer['TIMER_ACCUMULATOR'],
+			$elapsedTime = new CTaskElapsedTime();
+			$elapsedTime->add(
+				[
+					'USER_ID' => $this->userId,
+					'TASK_ID' => $timer['TASK_ID'],
+					'SECONDS' => $timer['TIMER_ACCUMULATOR'],
 					'COMMENT_TEXT' => '',
 					'CREATED_DATE' => $dateStart,
-					'DATE_START'   => $dateStart,
-					'DATE_STOP'    => $dateStop,
-				),
-				array(
-					'SOURCE_SYSTEM' => 'Y'
-				)
+					'DATE_START' => $dateStart,
+					'DATE_STOP' => $dateStop,
+				],
+				[
+					'SOURCE_SYSTEM' => 'Y',
+				]
 			);
 
-			$oTaskItem = CTaskItem::getInstance($arTimer['TASK_ID'], $this->userId);
+			$task = CTaskItem::getInstance($timer['TASK_ID'], $this->userId);
 
 			try
 			{
-				$arTask = $oTaskItem->getData(false);
+				$taskData = $task->getData(false);
 			}
 			catch (TasksException $e)
 			{
 				return false;
 			}
 
-			$arAffectedUsers = array_unique(array_merge(
-				array($this->userId, $arTask['RESPONSIBLE_ID']),
-				(array) $arTask['ACCOMPLICES']
-			));
+			$timeElapsed = [
+				$this->userId => $taskData['TIME_SPENT_IN_LOGS'],
+			];
+			$affectedUsers = array_unique(
+				array_merge(
+					[$this->userId, $taskData['RESPONSIBLE_ID']],
+					(array)$taskData['ACCOMPLICES']
+				)
+			);
+			foreach ($affectedUsers as $userId)
+			{
+				$CACHE_MANAGER->ClearByTag("tasks_user_{$userId}");
 
-			foreach ($arAffectedUsers as $userId)
-				$CACHE_MANAGER->ClearByTag('tasks_user_' . $userId);
+				if ((int)$userId !== $this->userId)
+				{
+					$timeElapsed[$userId] = $taskData['TIME_SPENT_IN_LOGS'];
+
+					$affectedUserTimer = CTaskTimerCore::get($userId, $timer['TASK_ID']);
+					if ($affectedUserTimer !== false && $affectedUserTimer['TIMER_STARTED_AT'] > 0)
+					{
+						$timeElapsed[$userId] += time() - $affectedUserTimer['TIMER_STARTED_AT'];
+					}
+				}
+			}
+
+			PushService::addEvent(
+				$affectedUsers,
+				[
+					'module_id' => 'tasks',
+					'command' => 'task_timer_stop',
+					'params' => [
+						'taskId' => (int)$timer['TASK_ID'],
+						'userId' => $this->userId,
+						'timeElapsed' => $timeElapsed,
+					],
+				]
+			);
 		}
+
+		return $timer;
 	}
 
 

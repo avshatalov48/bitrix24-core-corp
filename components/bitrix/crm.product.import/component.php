@@ -1,5 +1,8 @@
 <?php
+
 use Bitrix\Iblock;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
@@ -14,14 +17,31 @@ if (!CModule::IncludeModule('crm'))
 	return;
 }
 
+if (!CModule::IncludeModule('catalog'))
+{
+	ShowError(GetMessage('CATALOG_MODULE_NOT_INSTALLED'));
+
+	return;
+}
+
 /** @global CMain $APPLICATION */
 /** @global CUser $USER */
 global $USER, $APPLICATION;
 
-$CrmPerms = new CCrmPerms($USER->GetID());
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
+
+if (
+	!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+	|| !AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_IMPORT_EXECUTION)
+)
 {
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
+	global $APPLICATION;
+	$APPLICATION->IncludeComponent(
+		"bitrix:ui.info.error",
+		"",
+		[
+			'TITLE' => GetMessage('CRM_IMPORT_ACCESS_RESTRICTED'),
+		]
+	);
 	return;
 }
 
@@ -696,7 +716,7 @@ else if (isset($_REQUEST['import']) && isset($_SESSION['CRM_IMPORT_FILE']))
 					$productIndex = $data;
 					$data = null;
 				}
-				else if (mb_substr($currentKey, 0, 1) === '~' || empty($data))
+				else if (mb_substr($currentKey, 0, 1) === '~' || $data === '')
 				{
 					continue;
 				}

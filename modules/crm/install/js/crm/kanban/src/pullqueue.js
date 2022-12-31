@@ -1,13 +1,17 @@
 import PullOperation from "./pulloperation";
+import {ViewMode} from "./viewmode";
 
 /**
  * @class PullQueue
  */
 
+const LOAD_ITEMS_DELAY = 5000;
+
 export default class PullQueue
 {
 	#queue: Map<number>;
 	#grid: BX.CRM.Kanban.Grid;
+	#viewMode: string;
 	#isProgress: boolean;
 	#isFreeze: boolean;
 	loadItemsTimer;
@@ -15,23 +19,23 @@ export default class PullQueue
 	constructor(grid: BX.CRM.Kanban.Grid): void
 	{
 		this.#grid = grid;
+		this.#viewMode = ViewMode.normalize(this.#grid.getData().viewMode);
 		this.#queue = new Map();
 		this.#isProgress = false;
 		this.#isFreeze = false;
 		this.loadItemsTimer = null;
 	}
 
-	loadItem(isForce: boolean): void
+	loadItem(ignoreProgressStatus: boolean = false, ignoreDelay: boolean = false): void
 	{
-		if (this.loadItemsTimer)
+		if (this.loadItemsTimer && !ignoreDelay)
 		{
 			return;
 		}
 
 		this.loadItemsTimer = setTimeout(
 			() => {
-				isForce = (isForce || false);
-				if (this.#isProgress && !isForce)
+				if (this.#isProgress && !ignoreProgressStatus)
 				{
 					this.loadItemsTimer = null;
 					return;
@@ -79,7 +83,7 @@ export default class PullQueue
 					;
 				}
 			},
-			5000
+			ignoreDelay ? 0 : LOAD_ITEMS_DELAY
 		);
 	}
 

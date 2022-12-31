@@ -13,9 +13,9 @@ use Bitrix\Main\Type\DateTime;
  *
  * <<< ORMENTITYANNOTATION
  * @method static EO_ObjectExtendedIndex_Query query()
- * @method static EO_ObjectExtendedIndex_Result getByPrimary($primary, array $parameters = array())
+ * @method static EO_ObjectExtendedIndex_Result getByPrimary($primary, array $parameters = [])
  * @method static EO_ObjectExtendedIndex_Result getById($id)
- * @method static EO_ObjectExtendedIndex_Result getList(array $parameters = array())
+ * @method static EO_ObjectExtendedIndex_Result getList(array $parameters = [])
  * @method static EO_ObjectExtendedIndex_Entity getEntity()
  * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex createObject($setDefaultValues = true)
  * @method static \Bitrix\Disk\Internals\Index\EO_ObjectExtendedIndex_Collection createCollection()

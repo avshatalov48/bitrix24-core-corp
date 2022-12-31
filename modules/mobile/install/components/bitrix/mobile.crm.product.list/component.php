@@ -1,22 +1,32 @@
 <?php
+
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Main\Loader;
+
 if(!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true) die();
 
-if(!CModule::IncludeModule('crm'))
+if(!Loader::includeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
 	return;
 }
 
+if(!Loader::includeModule('catalog'))
+{
+	ShowError('The Commercial Catalog module is not installed.');
+	return;
+}
+
 global $APPLICATION;
 
-$userPerms = CCrmPerms::GetCurrentUserPermissions();
-if (!$userPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'READ'))
+if (!AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ))
 {
 	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 
-$arResult["IS_CREATE_PERMITTED"] = CCrmProduct::CheckCreatePermission($userPerms);
+$arResult["IS_CREATE_PERMITTED"] = AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_ADD);
 
 $activeSectionID = $arParams['SECTION_ID'] = isset($arParams['SECTION_ID']) ? intval($arParams['SECTION_ID']) : 0;
 if(isset($_GET['SECTION_ID']))
@@ -331,8 +341,8 @@ foreach ($arProducts as &$item)
 	CCrmMobileHelper::PrepareProductItem($item, $productParams);
 	$arResult['PRODUCTS'][] = $item;
 
-	$isEditPermitted = CCrmProduct::CheckUpdatePermission($item['ID'], $userPerms);
-	$isDeletePermitted = CCrmProduct::CheckDeletePermission($item['ID'], $userPerms);
+	$isEditPermitted = AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_EDIT);
+	$isDeletePermitted = AccessController::getCurrent()->check(ActionDictionary::ACTION_PRODUCT_DELETE);
 
 	$detailEditUrl = CComponentEngine::MakePathFromTemplate($arParams['PRODUCT_EDIT_URL_TEMPLATE'],
 		array('product_id' => $item['ID'])

@@ -27,6 +27,7 @@ use Bitrix\Main\Web\Uri;
  * @property-read string MODULE_ID
  * @property-read int NUMERATOR_ID
  * @property-read string WITH_STAMPS
+ * @property-read string $PRODUCTS_TABLE_VARIANT
  * @property-read string IS_DELETED
  * @property-read string SORT
  * @property-read string CREATE_TIME
@@ -386,5 +387,10 @@ class Template
 	public function isDeleted(): bool
 	{
 		return $this->IS_DELETED === 'Y';
+	}
+
+	public static function isValidProductsTableVariantValue(string $value) : bool
+	{
+		return in_array($value, TemplateTable::getProductsTableVariantList());
 	}
 }

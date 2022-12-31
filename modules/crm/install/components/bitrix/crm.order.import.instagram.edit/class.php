@@ -5,6 +5,8 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 	die();
 }
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Crm\Order\Import\Instagram;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Error;
@@ -74,6 +76,18 @@ class CrmOrderConnectorInstagramEdit extends CBitrixComponent
 		}
 
 		return $state;
+	}
+
+	/**
+	 * Check access to execute instagram import
+	 *
+	 * @return bool
+	 */
+	private function checkAccess(): bool
+	{
+		return AccessController::getCurrent()->check(
+			ActionDictionary::ACTION_CATALOG_IMPORT_EXECUTION
+		);
 	}
 
 	protected function checkSessionNotifications()
@@ -342,7 +356,17 @@ class CrmOrderConnectorInstagramEdit extends CBitrixComponent
 	{
 		if (!$this->errorCollection->isEmpty())
 		{
-			ShowError(implode('<br>', $this->errorCollection->toArray()));
+			if (count($this->errorCollection) > 1)
+			{
+				ShowError(implode('<br>', $this->errorCollection->toArray()));
+			}
+			else
+			{
+				$errors = $this->errorCollection->toArray();
+
+				$this->arResult['ERROR_TITLE'] = (string)reset($errors);
+				$this->includeComponentTemplate('error');
+			}
 		}
 	}
 
@@ -358,7 +382,11 @@ class CrmOrderConnectorInstagramEdit extends CBitrixComponent
 
 		if ($this->checkModules())
 		{
-			if ($this->isImportAvailable())
+			if (!$this->checkAccess())
+			{
+				$this->errorCollection[] = new Error(Loc::getMessage('CRM_OIIE_ERROR_ACCESS_DENIED'));
+			}
+			elseif ($this->isImportAvailable())
 			{
 				if ($this->request->get('reload') === 'y' || $this->request->get('reload') === 'Y')
 				{

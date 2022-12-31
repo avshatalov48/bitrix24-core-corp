@@ -80,6 +80,8 @@ BX.CRM.Kanban.DropZone.prototype = {
 					this.droppedItems[i].getColumn().renderSubTitle();
 				}
 			}
+
+			this.getGrid().resetMultiSelectMode();
 		}
 	},
 

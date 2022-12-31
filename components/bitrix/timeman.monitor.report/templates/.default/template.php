@@ -7,6 +7,7 @@
 
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\UI\Extension;
+use Bitrix\Main\Web\Uri;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -51,7 +52,7 @@ function getEmployeeLayout($employeeName, $employeeIcon, $employeeLink): string
 		<div class="timeman-pwt-report-employee-container">
 			<div class="timeman-pwt-report-employee">
 				<div class="ui-icon ui-icon-common-user timeman-pwt-report-employee-icon">
-					<i '. ($employeeIcon ? 'style="background-image: url(\''. $employeeIcon . '\')" ' : ''). '></i>
+					<i '. ($employeeIcon ? 'style="background-image: url(\''.Uri::urnEncode($employeeIcon) . '\')" ' : ''). '></i>
 				</div>
 				<a class="timeman-pwt-report-text" href="' . $employeeLink . '">
 					' . htmlspecialcharsbx($employeeName) . '

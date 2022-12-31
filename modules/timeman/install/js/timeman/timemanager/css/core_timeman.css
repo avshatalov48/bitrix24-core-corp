@@ -711,7 +711,14 @@ a.tm-report-popup-user-name-log:hover{text-decoration: underline;}
 .report-popup-next-slide {display:block; text-align:right; top:0;  position:fixed;z-index:500;outline:none;}
 .report-popup-next-slide span {background:url("/bitrix/js/tasks/css/images/task-popup-sprite.png") no-repeat 0 -113px; cursor:pointer; display:block; height:60px; position:absolute; right:15px; width:28px; top:340px;  }
 .report-popup-next-slide:hover span {background-position:-35px -113px;}
-.tm-popup-est-right-item {display:inline-block; font-size:11px; margin-top:5px; padding:0 3px; width:144px;}
+
+.tm-popup-est-right-item {
+	display: inline-block;
+	font-size: 12px;
+	margin-top: 5px;
+	padding: 0 3px;
+	width: 144px;
+}
 .tm-popup-item-name {color:#a3a3a0; text-align:right; }
 
 .tm-edit-link{background-image: url(/bitrix/themes/.default/public/popup/pencil.gif);
@@ -733,7 +740,7 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 	background-color: #f2f2f2;
 	margin-bottom: 2px;
 	padding: 5px;
-	font-size: 11px;
+	font-size: 14px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 .timeman-comment-body {display: inline-block;vertical-align: top;overflow: hidden;width: 81%;}
@@ -743,7 +750,12 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .timeman-comment-createdby { vertical-align: middle; padding-right: 5px; }
 .timeman-comment-content { overflow: hidden; padding-left: 10px; }
 .timeman-comment-time { color:#929292; padding-right: 15px; vertical-align: middle; display: inline-block; }
-.tm-item-comments-add a { text-decoration: underline !important; font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica)); font-size: 11px; }
+
+.tm-item-comments-add a {
+	text-decoration: underline !important;
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: 13px;
+}
 .tm-item-comments-add a:link, .tm-item-comments-add a:visited, .tm-item-comments-add a:active { color: #929292; }
 .tm-item-comments-add a:hover { color: #727272; }
 
@@ -752,7 +764,10 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 	height: auto;
 	width: 99%;
 	border: 1px solid #dfdfdf;
-	font: 11px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-size: var(--ui-font-size-md, 12px);
+	line-height: var(--ui-font-line-height-md, 15px);
+	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+
 	margin-bottom: 5px;
 	resize: none;
 	margin-top: 5px;
@@ -821,7 +836,13 @@ border-radius: 2px;bottom:0px;display: inline-block;}
 .tm-but-active.tm-but-not-rated .tm-popup-estimate-but-c{background:url("../images/timeman-sprite.3.png")  repeat-x  0 -332px !important;}
 .tm-but-active.tm-but-not-rated .tm-popup-estimate-but-r{background:url("../images/timeman-sprite.3.png") no-repeat -96px -230px !important;}
 
-.tm-popup-est-right-item {display:inline-block; font-size: 11px; margin-top:5px; padding:0 3px; width:130px;}
+.tm-popup-est-right-item {
+	display: inline-block;
+	font-size: 12px;
+	margin-top: 5px;
+	padding: 0 3px;
+	width: 130px;
+}
 .tm-popup-item-name {color:#a3a3a0; text-align:right;}
 
 .tm-settings-item {cursor:pointer;margin-right: 10px;white-space: nowrap;}

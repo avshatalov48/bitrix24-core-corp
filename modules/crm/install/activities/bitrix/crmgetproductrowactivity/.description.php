@@ -1,13 +1,18 @@
 <?php
 
+use Bitrix\Crm\Activity\Access\CatalogAccessChecker;
+use Bitrix\Main\Loader;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
 }
 
+use Bitrix\Main\Localization\Loc;
+
 $arActivityDescription = [
-	'NAME' => GetMessage('CRM_BP_GPR_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_BP_GPR_DESC'),
+	'NAME' => Loc::getMessage('CRM_BP_GPR_NAME_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_BP_GPR_DESC_1'),
 	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmGetProductRowActivity',
 	'JSCLASS' => 'BizProcActivity',
@@ -18,47 +23,47 @@ $arActivityDescription = [
 	],
 	'RETURN' => [
 		'RowProductId' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_PRODUCT_ID'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_PRODUCT_ID'),
 			'TYPE' => 'int',
 		],
 		'RowProductName' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_PRODUCT_NAME'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_PRODUCT_NAME'),
 			'TYPE' => 'string',
 		],
 		'RowPriceAccount' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_PRICE_ACCOUNT'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_PRICE_ACCOUNT'),
 			'TYPE' => 'double',
 		],
 		'RowQuantity' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_QUANTITY'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_QUANTITY'),
 			'TYPE' => 'double',
 		],
 		'RowMeasureName' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_MEASURE_NAME'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_MEASURE_NAME'),
 			'TYPE' => 'string',
 		],
 		'RowDiscountRate' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_DISCOUNT_RATE'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_DISCOUNT_RATE'),
 			'TYPE' => 'double',
 		],
 		'RowDiscountSum' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_DISCOUNT_SUM'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_DISCOUNT_SUM'),
 			'TYPE' => 'double',
 		],
 		'RowTaxRate' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_TAX_RATE'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_TAX_RATE'),
 			'TYPE' => 'double',
 		],
 		'RowTaxIncluded' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_TAX_INCLUDED'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_TAX_INCLUDED'),
 			'TYPE' => 'bool',
 		],
 		'RowSumAccount' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT'),
 			'TYPE' => 'double',
 		],
 		'RowSumAccountMoney' => [
-			'NAME' => GetMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT_MONEY'),
+			'NAME' => Loc::getMessage('CRM_BP_GPR_RETURN_ROW_SUM_ACCOUNT_MONEY'),
 			'TYPE' => 'int',
 		],
 	],
@@ -70,5 +75,13 @@ $arActivityDescription = [
 	],
 	'ROBOT_SETTINGS' => [
 		'CATEGORY' => 'employee',
+		'GROUP' => ['delivery', 'goods'],
+		'SORT' => 600,
+		'IS_SUPPORTING_ROBOT' => true,
 	],
 ];
+
+if (Loader::includeModule('crm') && !CatalogAccessChecker::hasAccess())
+{
+	$arActivityDescription['EXCLUDED'] = true;
+}

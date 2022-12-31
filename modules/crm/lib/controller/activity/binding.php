@@ -216,7 +216,7 @@ class Binding extends Base
 		$result = $this->activityEntity::Update(
 			$activityId,
 			[
-				'BINDINGS' => $bindings,
+				'BINDINGS' => array_values($bindings),
 			],
 			true,
 			false,

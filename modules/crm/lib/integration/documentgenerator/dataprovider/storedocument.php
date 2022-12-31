@@ -2,18 +2,21 @@
 
 namespace Bitrix\Crm\Integration\DocumentGenerator\DataProvider;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\MeasureTable;
 use Bitrix\Catalog\StoreDocumentElementTable;
 use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Catalog\v2\Sku\BaseSku;
 use Bitrix\DocumentGenerator\DataProvider\User;
+use Bitrix\DocumentGenerator\Dictionary\ProductVariant;
 use Bitrix\DocumentGenerator\Nameable;
 use Bitrix\Main\Error;
+use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Result;
 use Bitrix\Main\Type\DateTime;
-use Bitrix\Main\Engine\CurrentUser;
 
 /**
  * Class StoreDocument
@@ -70,7 +73,7 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 	{
 		if ($this->isLoaded())
 		{
-			return CurrentUser::get()->canDoOperation('catalog_read');
+			return Loader::includeModule('catalog') && AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ);
 		}
 
 		return false;
@@ -180,6 +183,11 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 
 		while ($documentElementRaw = $documentElementList->fetch())
 		{
+			if (!$this->isProductVariantSupported(ProductVariant::GOODS))
+			{
+				continue;
+			}
+
 			$sku = $this->getSkuByProductId($documentElementRaw['ELEMENT_ID']);
 
 			$result[] = [
@@ -189,6 +197,7 @@ abstract class StoreDocument extends ProductsDataProvider implements Nameable
 				'QUANTITY' => $documentElementRaw['AMOUNT'],
 				'PRICE' => $documentElementRaw['PURCHASING_PRICE'],
 				'MEASURE_CODE' => $sku ? $this->getMeasureCodeBySku($sku) : null,
+				'PRODUCT_VARIANT' => ProductVariant::GOODS,
 				'CUSTOMIZED' => 'Y',
 				'CURRENCY_ID' => $sku ? $this->getCurrencyBySku($sku) : null,
 			];

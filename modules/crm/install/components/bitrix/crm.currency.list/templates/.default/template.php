@@ -44,7 +44,17 @@ foreach($arResult['CURRENCIES'] as $key => &$arCurrency)
 			'ICONCLASS' => 'delete',
 			'TITLE' => GetMessage('CRM_CURRENCY_DELETE_TITLE'),
 			'TEXT' => GetMessage('CRM_CURRENCY_DELETE'),
-			'ONCLICK' => 'crm_currency_delete_grid(\''.CUtil::JSEscape(GetMessage('CRM_CURRENCY_DELETE_TITLE')).'\', \''.CUtil::JSEscape(sprintf(GetMessage('CRM_CURRENCY_DELETE_CONFIRM'), htmlspecialcharsbx($arCurrency['NAME']))).'\', \''.CUtil::JSEscape(GetMessage('CRM_CURRENCY_DELETE')).'\', \''.CUtil::JSEscape($arCurrency['PATH_TO_CURRENCY_DELETE']).'\')'
+			'ONCLICK' => 'crm_currency_delete_grid(\''
+				. CUtil::JSEscape(GetMessage('CRM_CURRENCY_DELETE_TITLE')) . '\', '
+				. '\'' . CUtil::JSEscape(GetMessage(
+						'CRM_CURRENCY_DELETE_CONFIRM_MESSAGE',
+						[
+							'#CURRENCY#' => htmlspecialcharsbx($arCurrency['NAME']),
+						]
+					)) . '\', '
+				. '\'' . CUtil::JSEscape(GetMessage('CRM_CURRENCY_DELETE')) . '\', '
+				. '\'' . CUtil::JSEscape($arCurrency['PATH_TO_CURRENCY_DELETE']) .'\''
+				. ')'
 		);
 	}
 

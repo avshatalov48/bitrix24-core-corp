@@ -19,3 +19,5 @@ $MESS["CRM_OIIE_TITLE_WITH_ASTERISK"] = "Подключение Instagram* к в
 $MESS["CRM_OIIE_GO_TO_IMPORT"] = "Вы успешно подключили страницу - <a href=\"#LINK#\">перейти к импорту товаров</a>";
 $MESS["CRM_OIIE_IMPORT_CONNECTED"] = "Импорт товаров успешно подключен";
 $MESS["CRM_OIIE_IMPORT_DISCONNECTED"] = "Импорт товаров успешно отключен";
+
+$MESS["CRM_OIIE_ERROR_ACCESS_DENIED"] = "Недостаточно прав для выполнения импорта";

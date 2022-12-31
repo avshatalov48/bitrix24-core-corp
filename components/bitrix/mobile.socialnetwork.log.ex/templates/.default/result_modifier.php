@@ -1,6 +1,13 @@
-<?if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED!==true)die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
 
 /** @global CUser $USER */
+/** @var array $arParams */
+/** @var array $arResult */
 
 $arResult['TOP_RATING_DATA'] = (
 	\Bitrix\Main\ModuleManager::isModuleInstalled('intranet')
@@ -12,16 +19,26 @@ $arResult['TOP_RATING_DATA'] = (
 		: []
 );
 
-$arResult['TARGET'] = (isset($arParams['TARGET']) ? $arParams['TARGET'] : '');
+$arResult['TARGET'] = ($arParams['TARGET'] ?? '');
 
 $arResult['PAGE_MODE'] = 'first';
-if ($arResult["RELOAD"])
+if ($arResult['RELOAD'])
 {
 	$arResult['PAGE_MODE'] = 'refresh';
 }
-elseif ($arResult["AJAX_CALL"])
+elseif ($arResult['AJAX_CALL'])
 {
 	$arResult['PAGE_MODE'] = 'next';
 }
-
-//AddMessage2Log($arResult["PAGE_MODE"]);
+elseif ($arParams['EMPTY_PAGE'] === 'Y')
+{
+	$arResult['PAGE_MODE'] = 'detail_empty';
+}
+elseif ($_REQUEST['empty_get_comments'] === 'Y')
+{
+	$arResult['PAGE_MODE'] = 'detail_comments';
+}
+elseif ((int)$arParams['LOG_ID'] > 0)
+{
+	$arResult['PAGE_MODE'] = 'detail';
+}

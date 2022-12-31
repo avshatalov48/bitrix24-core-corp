@@ -103,6 +103,7 @@ class Conversion extends Operation
 
 		$result->setRedirectUrl(new Uri($wizard->getRedirectUrl()));
 		$result->setIsConversionFinished($wizard->isFinished());
+		$result->setData($wizard->getResultData());
 
 		return $result;
 	}

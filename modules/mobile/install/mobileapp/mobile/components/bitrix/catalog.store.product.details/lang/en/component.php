@@ -1,15 +1,16 @@
 <?php
+$MESS["CSPD_ACCESS_DENIED"] = "Insufficient permissions";
+$MESS["CSPD_ACCESS_DENIED_NOTIFY_TEXT"] = "Please contact your Bitrix24 administrator";
 $MESS["CSPD_ADD_SKU_OR_SERIAL_NUMBER"] = "Add SKU or S/N";
 $MESS["CSPD_CLOSE"] = "Close";
-$MESS["CSPD_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Create product in the full version";
 $MESS["CSPD_DONE"] = "Done";
-$MESS["CSPD_ERROR_EMPTY_FIELD"] = "This field is required";
+$MESS["CSPD_EDIT_ACCESS_DENIED_NOTIFY_TITLE"] = "Insufficient permission to edit items";
 $MESS["CSPD_FIELDS_BARCODE"] = "Barcode";
-$MESS["CSPD_FIELDS_CURRENCY"] = "Currency";
-$MESS["CSPD_FIELDS_CURRENCY_RUB"] = "RUB";
-$MESS["CSPD_FIELDS_CURRENCY_USD"] = "USD";
 $MESS["CSPD_FIELDS_MEASURES"] = "Unit of measurement";
 $MESS["CSPD_FIELDS_PHOTOS"] = "Product images";
+$MESS["CSPD_FIELDS_PHOTOS_UPLOADING"] = "Uploading product images";
+$MESS["CSPD_FIELDS_PHOTOS_UPLOADING_BUTTON"] = "OK";
+$MESS["CSPD_FIELDS_PHOTOS_UPLOADING_DESC"] = "Please wait for the upload process to complete or delete the images.";
 $MESS["CSPD_FIELDS_PRODUCT_NAME"] = "Product name";
 $MESS["CSPD_FIELDS_PRODUCT_SECTIONS"] = "Bind to section";
 $MESS["CSPD_FIELDS_PURCHASING_PRICE"] = "Purchase price";
@@ -18,4 +19,4 @@ $MESS["CSPD_FIELDS_STORE"] = "Warehouse";
 $MESS["CSPD_FIELDS_STORE_TO_AMOUNT"] = "Quantity arrived";
 $MESS["CSPD_MORE_OPPORTUNITIES"] = "Additional options";
 $MESS["CSPD_OPEN_PRODUCT_IN_DESKTOP_VERSION"] = "Open product in the full version";
-$MESS["CSPD_SAVE"] = "Save";
+$MESS["CSPD_READ_ACCESS_DENIED_NOTIFY_TITLE"] = "You don't have view permission";

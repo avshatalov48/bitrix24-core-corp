@@ -6,6 +6,7 @@ use Bitrix\Catalog\ProductTable;
 use Bitrix\Catalog\v2\IoC\ServiceContainer;
 use Bitrix\Catalog\v2\Product\BaseProduct;
 use Bitrix\Main\Loader;
+use Bitrix\Mobile\Integration\Catalog\Repository\MeasureRepository;
 use Bitrix\Mobile\InventoryControl\Dto\DocumentProductRecord;
 use Bitrix\Mobile\InventoryControl\Dto\ProductFromWizard;
 use Bitrix\Mobile\InventoryControl\UrlBuilder;
@@ -33,11 +34,11 @@ final class Wizard
 			'price' => [
 				'purchase' => [
 					'amount' => (float)$product->purchasingPrice['amount'],
-					'currency' => $currency,
+					'currency' => $product->purchasingPrice['currency'] ?? $currency,
 				],
 				'sell' => [
 					'amount' => (float)$product->basePrice['amount'],
-					'currency' => $currency,
+					'currency' => $product->basePrice['currency'] ?? $currency,
 				]
 			]
 		]);
@@ -67,8 +68,8 @@ final class Wizard
 		}
 
 		$record->measure = !empty($product->measureCode)
-			? Measures::findByCode($product->measureCode)
-			: Measures::default();
+			? MeasureRepository::findByCode($product->measureCode)
+			: MeasureRepository::getDefaultMeasure();
 
 		return $record;
 	}

@@ -279,6 +279,7 @@ export class Plan extends View
 		this.entityStorage.getBacklog().subscribe('openAddTaskForm', this.onOpenAddTaskForm.bind(this));
 		this.entityStorage.getBacklog().subscribe('updateItem', this.onUpdateItem.bind(this));
 		this.entityStorage.getBacklog().subscribe('showTask', this.onShowTask.bind(this));
+		this.entityStorage.getBacklog().subscribe('destroyActionPanel', this.onDestroyActionPanel.bind(this));
 		this.entityStorage.getBacklog().subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
 		this.entityStorage.getBacklog().subscribe('onShowResponsibleDialog', this.onShowResponsibleDialog.bind(this));
 		this.entityStorage.getBacklog().subscribe('openAddEpicForm', this.onOpenEpicForm.bind(this));
@@ -325,6 +326,7 @@ export class Plan extends View
 		sprint.subscribe('updateItem', this.onUpdateItem.bind(this));
 		sprint.subscribe('getSubTasks', this.onGetSubTasks.bind(this));
 		sprint.subscribe('showTask', this.onShowTask.bind(this));
+		sprint.subscribe('destroyActionPanel', this.onDestroyActionPanel.bind(this));
 		sprint.subscribe('startSprint', this.onStartSprint.bind(this));
 		sprint.subscribe('completeSprint', this.onCompleteSprint.bind(this));
 		sprint.subscribe('changeTaskResponsible', this.onChangeTaskResponsible.bind(this));
@@ -943,6 +945,15 @@ export class Plan extends View
 		const item = baseEvent.getData();
 
 		this.sidePanel.openSidePanelByUrl(this.pathToTask.replace('#task_id#', item.getSourceId()));
+	}
+
+	onDestroyActionPanel(baseEvent: BaseEvent)
+	{
+		const item = baseEvent.getData();
+
+		this.destroyActionPanel();
+
+		(this.entityStorage.findEntityByItemId(item.getId())).deactivateGroupMode();
 	}
 
 	onTagsSearchOpen(baseEvent: BaseEvent)

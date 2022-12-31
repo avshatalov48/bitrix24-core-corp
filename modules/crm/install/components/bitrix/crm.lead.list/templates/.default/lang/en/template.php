@@ -123,3 +123,4 @@ $MESS["CRM_SIP_MGR_MAKE_CALL"] = "Call";
 $MESS["CRM_SIP_MGR_UNKNOWN_RECIPIENT"] = "Unknown recipient";
 $MESS["CRM_STATUS_INIT"] = "- Status -";
 $MESS["CRM_TIMELINE_REBUILD_SEARCH_CONTENT_DLG_TITLE"] = "Rebuild search index for leads, deals, contacts, companies and other entities";
+$MESS["CRM_LEAD_ADD_TODO"] = "Activity";

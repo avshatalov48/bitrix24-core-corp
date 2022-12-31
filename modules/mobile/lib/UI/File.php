@@ -59,8 +59,8 @@ final class File implements \JsonSerializable
 			return null;
 		}
 
-		$width = (int)($previewOptions['width'] ?? 0) ?: 80;
-		$height = (int)($previewOptions['height'] ?? 0) ?: 80;
+		$width = (int)($previewOptions['width'] ?? 0) ?: 120;
+		$height = (int)($previewOptions['height'] ?? 0) ?: 120;
 		$file->preview = $file->getPreview($width, $height);
 
 		return $file;

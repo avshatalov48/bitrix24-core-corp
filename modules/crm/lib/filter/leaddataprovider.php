@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Filter;
 
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\ParentFieldManager;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
@@ -513,10 +514,12 @@ class LeadDataProvider extends EntityDataProvider
 			$referenceClass = ($factory ? $factory->getDataClass() : null);
 
 			return $this->getUserEntitySelectorParams(
-				strtolower('crm_lead_filter_' . $fieldID),
+				EntitySelector::CONTEXT,
 				[
 					'fieldName' => $fieldID,
 					'referenceClass' => $referenceClass,
+					'isEnableAllUsers' => $fieldID === 'ASSIGNED_BY_ID',
+					'isEnableOtherUsers' => $fieldID === 'ASSIGNED_BY_ID',
 				]
 			);
 		}

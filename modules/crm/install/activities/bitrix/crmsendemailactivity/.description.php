@@ -1,19 +1,25 @@
-<?
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
 
-$arActivityDescription = array(
-	'NAME' => GetMessage('CRM_SEMA_NAME'),
-	'DESCRIPTION' => GetMessage('CRM_SEMA_DESC'),
-	'TYPE' => array('activity', 'robot_activity'),
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Main\Localization\Loc;
+
+$arActivityDescription = [
+	'NAME' => Loc::getMessage('CRM_SEMA_NAME_1_MSG_1'),
+	'DESCRIPTION' => Loc::getMessage('CRM_SEMA_DESC_1_MSG_1'),
+	'TYPE' => ['activity', 'robot_activity'],
 	'CLASS' => 'CrmSendEmailActivity',
 	'JSCLASS' => 'BizProcActivity',
-	'CATEGORY' => array(
+	'CATEGORY' => [
 		'ID' => 'document',
 		"OWN_ID" => 'crm',
 		"OWN_NAME" => 'CRM',
-	),
-	'FILTER' => array(
-		'INCLUDE' => array(
+	],
+	'FILTER' => [
+		'INCLUDE' => [
 			['crm', 'CCrmDocumentLead'],
 			['crm', 'CCrmDocumentDeal'],
 			['crm', 'CCrmDocumentContact'],
@@ -22,9 +28,17 @@ $arActivityDescription = array(
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Dynamic'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\Quote'],
 			['crm', 'Bitrix\Crm\Integration\BizProc\Document\SmartInvoice'],
-		),
-	),
-	'ROBOT_SETTINGS' => array(
-		'CATEGORY' => 'client'
-	),
-);
+		],
+	],
+	'ROBOT_SETTINGS' => [
+		'CATEGORY' => 'client',
+		'GROUP' => ['clientCommunication', 'delivery'],
+		'ASSOCIATED_TRIGGERS' => [
+			'EMAIL_READ' => 1,
+			'EMAIL_LINK' => 2,
+			'EMAIL' => 3,
+			'EMAIL_SENT' => 4,
+		],
+		'SORT' => 1000,
+	],
+];

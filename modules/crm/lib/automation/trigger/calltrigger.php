@@ -15,7 +15,7 @@ class CallTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALL_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALL_NAME_1');
 	}
 
 	public function checkApplyRules(array $trigger)
@@ -44,5 +44,15 @@ class CallTrigger extends BaseTrigger
 			$result['LINES'] = array_values(\CVoxImplantConfig::GetLines(false, true));
 		}
 		return $result;
+	}
+
+	public static function getGroup(): array
+	{
+		return ['clientCommunication'];
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_CALL_DESCRIPTION') ?? '';
 	}
 }

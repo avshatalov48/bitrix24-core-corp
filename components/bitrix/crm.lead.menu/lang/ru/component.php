@@ -2,6 +2,7 @@
 $MESS["CRM_MODULE_NOT_INSTALLED"] = "Модуль crm не установлен.";
 $MESS["CRM_PERMISSION_DENIED"] = "Доступ запрещен";
 $MESS["LEAD_ADD"] = "Добавить лид";
+$MESS["LEAD_CREATE"] = "Создать лид";
 $MESS["LEAD_ADD_TITLE"] = "Добавить лид";
 $MESS["LEAD_COPY"] = "Копировать лид";
 $MESS["LEAD_COPY_TITLE"] = "Копировать лид";

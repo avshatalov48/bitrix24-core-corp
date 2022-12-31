@@ -302,6 +302,7 @@ if($enableWidgetFilter)
 	}
 }
 
+//region Old logic of the counter panel (not used)
 $enableCounterFilter = false;
 if(!$bInternal && isset($_REQUEST['counter']))
 {
@@ -334,6 +335,7 @@ if(!$bInternal && isset($_REQUEST['counter']))
 		}
 	}
 }
+//endregion
 
 $enableReportFilter = Main\Application::getInstance()->getContext()->getRequest()->getQuery('from_analytics') === 'Y';
 
@@ -838,61 +840,13 @@ else
 //endregion
 
 //region Activity Counter Filter
-if(isset($arFilter['ACTIVITY_COUNTER']))
-{
-	if(is_array($arFilter['ACTIVITY_COUNTER']))
-	{
-		$counterTypeID = Bitrix\Crm\Counter\EntityCounterType::joinType(
-			array_filter($arFilter['ACTIVITY_COUNTER'], 'is_numeric')
-		);
-	}
-	else
-	{
-		$counterTypeID = (int)$arFilter['ACTIVITY_COUNTER'];
-	}
-
-	$counter = null;
-	if($counterTypeID > 0)
-	{
-		$counterUserIDs = array();
-		if(isset($arFilter['ASSIGNED_BY_ID']))
-		{
-			if(is_array($arFilter['ASSIGNED_BY_ID']))
-			{
-				$counterUserIDs = array_filter($arFilter['ASSIGNED_BY_ID'], 'is_numeric');
-			}
-			elseif($arFilter['ASSIGNED_BY_ID'] > 0)
-			{
-				$counterUserIDs[] = $arFilter['ASSIGNED_BY_ID'];
-			}
-		}
-
-		try
-		{
-			$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
-				CCrmOwnerType::Lead,
-				$counterTypeID,
-				0,
-				Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST)
-			);
-
-			$arFilter += $counter->prepareEntityListFilter(
-				array(
-					'MASTER_ALIAS' => CCrmLead::TABLE_ALIAS,
-					'MASTER_IDENTITY' => 'ID',
-					'USER_IDS' => $counterUserIDs
-				)
-			);
-			unset($arFilter['ASSIGNED_BY_ID']);
-		}
-		catch(Bitrix\Main\NotSupportedException $e)
-		{
-		}
-		catch(Bitrix\Main\ArgumentException $e)
-		{
-		}
-	}
-}
+CCrmEntityHelper::applyCounterFilterWrapper(
+	\CCrmOwnerType::Lead,
+	$arResult['GRID_ID'],
+	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+	$arFilter,
+	$entityFilter
+);
 //endregion
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
@@ -910,10 +864,14 @@ $arImmutableFilters = array(
 
 foreach ($arFilter as $k => $v)
 {
-	if(in_array($k, $arImmutableFilters, true))
+	if (
+		preg_match('/^[a-zA-Z]/', $k) !== 1
+		|| in_array($k, $arImmutableFilters, true)
+	)
 	{
 		continue;
 	}
+
 	if (Crm\Service\ParentFieldManager::isParentFieldName($k))
 	{
 		$arFilter[$k] = Crm\Service\ParentFieldManager::transformEncodedFilterValueIntoInteger($k, $v);
@@ -1277,8 +1235,6 @@ if($actionData['ACTIVE'])
 
 					if($CCrmLead->Update($ID, $arUpdateData))
 					{
-						$DB->Commit();
-
 						CCrmBizProcHelper::AutoStartWorkflows(
 							CCrmOwnerType::Lead,
 							$ID,
@@ -1989,19 +1945,65 @@ if ($isInExportMode && $isStExport && $pageNum === 1)
 	}
 }
 
+$lastExportedId = -1;
 $limit = $pageSize + 1;
+
+/**
+ * During step export, sorting will only be done by ID
+ * and optimized selection with pagination by ID > LAST_ID instead of offset
+ */
 if ($isInExportMode && $isStExport)
 {
-	$total = (int)$arResult['STEXPORT_TOTAL_ITEMS'];
-	$processed = ($pageNum - 1) * $pageSize;
-	if ($total - $processed <= $pageSize)
-	{
-		$limit = $total - $processed;
-	}
-	unset($total, $processed);
-}
+	$limit = $pageSize;
+	$navListOptions['QUERY_OPTIONS'] = array('LIMIT' => $limit);
+	$arSort = array('ID' => 'ASC');
+	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ? $arParams['STEXPORT_TOTAL_ITEMS'] : $total;
 
-if(isset($arSort['nearest_activity']))
+	$dbResultOnlyIds = CCrmLead::GetListEx(
+		$arSort,
+		array_merge(
+			$arFilter,
+			array('>ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1)
+		),
+		false,
+		false,
+		array('ID'),
+		$navListOptions
+	);
+
+	$entityIds = array();
+	while($arDealRow = $dbResultOnlyIds->GetNext())
+	{
+		$entityIds[] = (int) $arDealRow['ID'];
+	}
+	$lastExportedId = end($entityIds);
+
+	if (!empty($entityIds))
+	{
+		$navListOptions['QUERY_OPTIONS'] = null;
+		$arFilter = array('@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N');
+
+		$dbResult = CCrmLead::GetListEx(
+			$arSort,
+			$arFilter,
+			false,
+			false,
+			$arSelect,
+			$navListOptions
+		);
+
+		$qty = 0;
+		while($arLead = $dbResult->GetNext())
+		{
+			$arResult['LEAD'][$arLead['ID']] = $arLead;
+			$arResult['LEAD_ID'][$arLead['ID']] = $arLead['ID'];
+			$arResult['LEAD_UF'][$arLead['ID']] = array();
+		}
+	}
+	$enableNextPage = $pageNum * $pageSize <= $totalExportItems;
+	unset($entityIds);
+}
+elseif(isset($arSort['nearest_activity']))
 {
 	$navListOptions = ($isInExportMode && !$isStExport)
 		? array()
@@ -2045,27 +2047,6 @@ if(isset($arSort['nearest_activity']))
 	$entityIDs = array_keys($arResult['LEAD']);
 	if(!empty($entityIDs))
 	{
-		if ($isInExportMode && $isStExport)
-		{
-			if (!is_array($arSort))
-			{
-				$arSort = array();
-			}
-
-			if (!isset($arSort['ID']))
-			{
-				$order = mb_strtoupper($arSort['nearest_activity']);
-				if ($order === 'ASC' || $order === 'DESC')
-				{
-					$arSort['ID'] = $arSort['nearest_activity'];
-				}
-				else
-				{
-					$arSort['ID'] = 'asc';
-				}
-				unset($order);
-			}
-		}
 		//Permissions are already checked.
 		$dbResult = CCrmLead::GetListEx(
 			$arSort,
@@ -2164,26 +2145,6 @@ else
 					$arOptions,
 					array('QUERY_OPTIONS' => array('LIMIT' => $limit, 'OFFSET' => $pageSize * ($pageNum - 1)))
 				);
-		}
-
-		if ($isInExportMode && $isStExport)
-		{
-			if (!is_array($arSort))
-			{
-				$arSort = array();
-			}
-
-			if (!isset($arSort['ID']))
-			{
-				if (!empty($arSort))
-				{
-					$arSort['ID'] = array_shift(array_slice($arSort, 0, 1));
-				}
-				else
-				{
-					$arSort['ID'] = 'asc';
-				}
-			}
 		}
 
 		$dbResult = CCrmLead::GetListEx(
@@ -2932,7 +2893,8 @@ else
 
 		return array(
 			'PROCESSED_ITEMS' => count($arResult['LEAD']),
-			'TOTAL_ITEMS' => $arResult['STEXPORT_TOTAL_ITEMS']
+			'TOTAL_ITEMS' => $arResult['STEXPORT_TOTAL_ITEMS'],
+			'LAST_EXPORTED_ID' => $lastExportedId
 		);
 	}
 	else

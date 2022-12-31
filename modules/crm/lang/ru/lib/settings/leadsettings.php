@@ -2,6 +2,7 @@
 $MESS["CRM_LEAD_SETTINGS_VIEW_WIDGET"] = "Аналитика по лидам";
 $MESS["CRM_LEAD_SETTINGS_VIEW_LIST"] = "Обычный список лидов";
 $MESS["CRM_LEAD_SETTINGS_VIEW_KANBAN"] = "Канбан лидов";
+$MESS["CRM_LEAD_SETTINGS_CRM_TYPE_MENU_ITEM"] = "Режим работы CRM";
 $MESS["CRM_TYPE_TITLE"] = "Выберите удобный способ работы с CRM";
 $MESS["CRM_TYPE_SAVE"] = "Сохранить";
 $MESS["CRM_TYPE_CANCEL"] = "Отменить";

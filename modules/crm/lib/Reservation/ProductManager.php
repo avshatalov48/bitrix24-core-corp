@@ -47,19 +47,25 @@ class ProductManager extends Crm\Order\ProductManager
 
 			foreach ($entityProducts as $product)
 			{
-				$productData = $product['PRODUCT'];
-
-				$shipmentItem = $this->getBasketItemByEntityProduct($productData, $foundProducts, true);
-				if (!$shipmentItem)
+				$quantity = (float)$product['QUANTITY'];
+				if ($quantity <= 0.0)
 				{
-					$shipmentItem = $basket->createItem('catalog', $productData['PRODUCT_ID']);
-					$foundProducts[] = $shipmentItem->getBasketCode();
+					continue;
 				}
 
-				$setFieldsResult = $shipmentItem->setFields([
+				$productData = $product['PRODUCT'];
+
+				$basketItem = $this->getBasketItemByEntityProduct($productData, $foundProducts, true);
+				if (!$basketItem)
+				{
+					$basketItem = $basket->createItem('catalog', $productData['PRODUCT_ID']);
+					$foundProducts[] = $basketItem->getBasketCode();
+				}
+
+				$basketItemFields = [
 					'LID' => SITE_ID,
 					'NAME' => $productData['NAME'],
-					'QUANTITY' => $product['QUANTITY'],
+					'QUANTITY' => $quantity,
 					'CURRENCY' => $currency,
 					'BASE_PRICE' => $productData['BASE_PRICE'],
 					'PRICE' => $productData['PRICE'],
@@ -67,11 +73,13 @@ class ProductManager extends Crm\Order\ProductManager
 					'MEASURE_CODE' => $productData['MEASURE_CODE'],
 					'MEASURE_NAME' => $productData['MEASURE_NAME'],
 					'PRODUCT_PROVIDER_CLASS' => '\\' . Catalog\Product\CatalogProvider::class,
-				]);
+					'TYPE' => $productData['TYPE'] ?? null,
+				];
 
+				$setFieldsResult = $basketItem->setFields($basketItemFields);
 				if ($setFieldsResult->isSuccess())
 				{
-					$basketItems[] = $shipmentItem;
+					$basketItems[] = $basketItem;
 				}
 				else
 				{
@@ -118,10 +126,14 @@ class ProductManager extends Crm\Order\ProductManager
 					];
 				}
 
+				$shipmentItemQuantity = array_sum($storeList);
+				if ($shipmentItemQuantity <= 0.0)
+				{
+					continue;
+				}
+
 				/** @var Crm\Order\ShipmentItem $shipmentItem */
 				$shipmentItem = $newShipmentItemCollection->createItem($basketItem);
-
-				$shipmentItemQuantity = array_sum($storeList);
 				$setQuantityResult = $shipmentItem->setQuantity($shipmentItemQuantity);
 				if (!$setQuantityResult->isSuccess())
 				{
@@ -129,8 +141,19 @@ class ProductManager extends Crm\Order\ProductManager
 					continue;
 				}
 
+				if (!$basketItem->isReservableItem())
+				{
+					continue;
+				}
+
 				/** @var Crm\Order\ShipmentItemStoreCollection $shipmentItemStoreCollection */
 				$shipmentItemStoreCollection = $shipmentItem->getShipmentItemStoreCollection();
+				if (!$shipmentItemStoreCollection)
+				{
+					$shipmentItem->delete();
+
+					continue;
+				}
 
 				foreach ($storeList as $storeId => $storeQuantity)
 				{
@@ -148,6 +171,11 @@ class ProductManager extends Crm\Order\ProductManager
 					}
 				}
 			}
+		}
+
+		if ($result->isSuccess() && $newShipmentItemCollection->isEmpty())
+		{
+			$newShipment->delete();
 		}
 
 		return $result;

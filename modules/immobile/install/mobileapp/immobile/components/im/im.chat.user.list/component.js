@@ -64,7 +64,7 @@ ChatUserList.init = function()
 ChatUserList.openUserProfile = function(userId, userData = {})
 {
 	console.log('ChatUserList.openUserProfile', userId, userData);
-
+	const { ProfileView } = jn.require("user/profile");
 	ProfileView.open({
 		userId,
 		imageUrl: ChatUtils.getAvatar(userData.avatar),

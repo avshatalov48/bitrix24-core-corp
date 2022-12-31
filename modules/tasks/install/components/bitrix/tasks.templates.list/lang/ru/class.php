@@ -5,7 +5,7 @@ $MESS['TASKS_TEMPLATE_TITLE'] = "Название";
 $MESS['TASKS_TEMPLATE_RESPONSIBLE_ID'] = "Ответственный";
 $MESS['TASKS_TEMPLATE_CREATED_BY'] = "Постановщик";
 $MESS['TASKS_TEMPLATE_GROUP_ID'] = "Группа";
-$MESS['TASKS_TEMPLATE_TAGS'] = "Тэги";
+$MESS['TASKS_TEMPLATE_TAGS'] = "Теги";
 $MESS['TASKS_TEMPLATE_FOR_NEW_USER'] = "Для новых пользователей";
 $MESS['TASKS_TEMPLATE_PRIORITY'] = "Приоритет";
 $MESS['TASKS_TEMPLATE_REGULAR'] = "Повтор";
@@ -16,3 +16,6 @@ $MESS['TASKS_TEMPLATES_NO'] = 'Нет';
 
 $MESS['TASKS_PRESET_ACTIVE_REGULAR'] = 'Регулярные';
 $MESS['TASKS_PRESET_NEW_USER'] = 'Для новых пользователей';
+$MESS['TASKS_TEMPLATES_LIST_GROUP_ACTION_ERROR_MESSAGE'] = '"#MESSAGE#" в следующих шаблонах: #TEMPLATE_IDS#';
+$MESS['TASKS_TEMPLATES_LIST_TITLE_ERROR'] = 'Ошибка';
+$MESS['TASKS_TEMPLATES_LIST_CLOSE'] = 'Закрыть';

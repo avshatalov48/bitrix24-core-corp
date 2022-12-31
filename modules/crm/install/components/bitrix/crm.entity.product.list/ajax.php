@@ -9,7 +9,6 @@ use Bitrix\Main\Engine\Response;
 use Bitrix\Main\Error;
 use Bitrix\Main\ErrorCollection;
 use Bitrix\Main\Loader;
-use Bitrix\Crm;
 
 class ProductListController extends \Bitrix\Main\Engine\Controller
 {

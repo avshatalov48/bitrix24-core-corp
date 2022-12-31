@@ -24,6 +24,7 @@ class RunAjaxAction extends Action
 			'type' => 'runAjaxAction',
 			'value' => $this->getAction(),
 			'actionParams' => $this->getActionParams(),
+			'animation' => $this->getAnimation(),
 		];
 	}
 }

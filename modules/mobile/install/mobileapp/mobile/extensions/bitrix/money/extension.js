@@ -17,25 +17,26 @@
 					'PARTS': ['#'],
 					'SINGLE': '#',
 					'VALUE_INDEX': 0,
-				}
+				},
 			};
 		}
 
-		constructor({amount, currency})
+		constructor({ amount, currency })
 		{
+			amount = amount || 0;
+
 			this.amount = parseFloat(amount);
 			this.currency = currency;
 
 			if (!isFinite(this.amount))
 			{
-				console.log(amount);
 				throw new Error('Invalid money amount');
 			}
 		}
 
-		static create({amount, currency})
+		static create({ amount, currency })
 		{
-			return new Money({amount, currency});
+			return new Money({ amount, currency });
 		}
 
 		static init()
@@ -60,7 +61,6 @@
 							resolve(response.data);
 						})
 						.catch((response) => {
-							console.log(response.errors);
 							reject(response.errors);
 						});
 				}

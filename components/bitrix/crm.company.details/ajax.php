@@ -303,10 +303,11 @@ if($action === 'SAVE')
 		foreach($contactData as $contactItem)
 		{
 			$contactID = isset($contactItem['id']) ? (int)$contactItem['id'] : 0;
-			$categoryId = isset($contactItem['categoryId']) ? (int)$contactItem['categoryId'] : 0;
-
 			// unlikely situation but check in case of mismatch
-			if($categoryId !== $categoryParams[CCrmOwnerType::Contact]['categoryId'])
+			if (
+				isset($contactItem['categoryId'])
+				&& (int)$contactItem['categoryId'] !== $categoryParams[CCrmOwnerType::Contact]['categoryId']
+			)
 			{
 				__CrmCompanyDetailsEndJsonResonse(['ERROR' => 'INVALID CLIENT CONTACT CATEGORY ID!']);
 			}

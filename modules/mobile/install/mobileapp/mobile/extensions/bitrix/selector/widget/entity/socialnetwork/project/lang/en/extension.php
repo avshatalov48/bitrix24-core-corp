@@ -1,0 +1,3 @@
+<?php
+$MESS["SELECTOR_COMPONENT_PICK_PROJECT"] = "Projects";
+$MESS["SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PROJECT"] = "Start typing to select project";

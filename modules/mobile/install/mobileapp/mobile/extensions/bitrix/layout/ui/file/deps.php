@@ -2,4 +2,5 @@
 
 return [
 	'utils',
+	'alert',
 ];

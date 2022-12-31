@@ -11,7 +11,7 @@ jn.define('type', (require, exports, module) => {
 	const objectCtorString = Function.prototype.toString.call(Object);
 
 	/**
-	 * @memberOf BX
+	 * @class Type
 	 */
 	class Type
 	{

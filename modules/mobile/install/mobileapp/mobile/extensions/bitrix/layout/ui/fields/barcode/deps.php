@@ -1,6 +1,8 @@
 <?php
 
 return [
-	'layout/ui/fields/string',
-	'catalog/barcode-scanner',
+	'extensions' => [
+		'layout/ui/fields/string',
+		'catalog/barcode-scanner',
+	],
 ];

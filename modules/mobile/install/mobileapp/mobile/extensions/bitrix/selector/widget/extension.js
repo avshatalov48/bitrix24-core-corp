@@ -1,6 +1,13 @@
-(() =>
-{
+(() => {
+
+	const { uniqBy } = jn.require('utils/array');
+	const { isEqual } = jn.require('utils/object');
+
+	const SERVICE_SECTION_CODE = 'service';
+	const COMMON_SECTION_CODE = 'common';
+
 	const CREATE_BUTTON_CODE = 'create';
+	const DEFAULT_RETURN_KEY = 'done';
 
 	/**
 	 * @class EntitySelectorWidget
@@ -8,47 +15,91 @@
 	class EntitySelectorWidget
 	{
 		constructor({
-			entityId,
-			provider,
-			searchOptions,
-			createOptions,
-			widgetParams,
-			allowMultipleSelection,
-			events,
-			initSelectedIds
-		})
+						entityIds,
+						provider,
+						searchOptions,
+						createOptions,
+						selectOptions,
+						widgetParams,
+						allowMultipleSelection,
+						closeOnSelect,
+						events,
+						initSelectedIds,
+						returnKey,
+					})
 		{
+			this.apiVersion = Application.getApiVersion();
+			this.isApiVersionGreaterThan44 = this.apiVersion >= 44;
+			this.isApiVersionGreaterThan45 = this.apiVersion >= 45;
+
+			this.returnKey = returnKey || DEFAULT_RETURN_KEY;
 			this.queryText = '';
 			this.isItemCreating = false;
+			this.manualSelection = false;
+
 			this.currentItems = [];
+			this.currentSections = [];
 			this.currentSelectedItems = [];
 
-			this.entityId = entityId;
 			this.searchOptions = searchOptions || {};
 			this.createOptions = createOptions || {};
+			this.selectOptions = selectOptions || {};
 			this.widgetParams = widgetParams || {};
 			this.allowMultipleSelection = allowMultipleSelection !== false;
+			this.closeOnSelect = this.allowMultipleSelection === false && closeOnSelect;
 			this.events = events || {};
-			this.initSelectedIds = initSelectedIds || [];
-			this.initSelectedIds = this.initSelectedIds.map(id => id.toString());
+
+			this.entityIds = Array.isArray(entityIds) ? entityIds : [entityIds];
+			this.initSelectedIds = this.prepareInitSelectedIds(initSelectedIds);
 
 			this.setupProvider(provider);
+		}
+
+		prepareInitSelectedIds(initSelectedIds)
+		{
+			initSelectedIds = Array.isArray(initSelectedIds) ? initSelectedIds : [];
+			initSelectedIds = initSelectedIds.map((data) => {
+				let entityId, id;
+
+				if (Array.isArray(data))
+				{
+					[entityId, id] = data;
+				}
+				else
+				{
+					entityId = this.entityIds[0];
+					id = data;
+				}
+
+				return [entityId, id.toString()];
+			});
+
+			return initSelectedIds;
 		}
 
 		setupProvider(provider)
 		{
 			this.provider = new CommonSelectorProvider(
 				provider.context || null,
-				provider.options || {}
+				provider.options || {},
 			);
-			this.provider.setPreselectedItems(
-				this.initSelectedIds.map(initSelectedId => [this.entityId, initSelectedId])
-			);
+
+			if (this.searchOptions.searchFields)
+			{
+				this.provider.setSearchFields(this.searchOptions.searchFields);
+			}
+
+			if (this.searchOptions.entityWeight)
+			{
+				this.provider.setEntityWeight(this.searchOptions.entityWeight);
+			}
+
+			this.provider.setPreselectedItems(this.initSelectedIds);
+
 			this.provider.setListener({
 				onFetchResult: this.onProviderFetchResult.bind(this),
-				onRecentResult: this.onProviderRecentResult.bind(this)
+				onRecentResult: this.onProviderRecentResult.bind(this),
 			});
-			this.provider.processResult = (query, items, excludeFields = []) => items;
 		}
 
 		getSearchPlaceholder()
@@ -68,7 +119,7 @@
 			return text;
 		}
 
-		show({widgetParams} = {}, parentWidget = PageManager)
+		show({ widgetParams } = {}, parentWidget = PageManager)
 		{
 			return new Promise((resolve, reject) => {
 				if (this.widget)
@@ -77,42 +128,50 @@
 				}
 
 				parentWidget = (parentWidget || PageManager);
-				parentWidget.openWidget(
-					'selector',
-					{
-						...(widgetParams || this.widgetParams),
-						onReady: (widget) => {
-							this.widget = widget;
+				parentWidget
+					.openWidget('selector', (widgetParams || this.widgetParams))
+					.then((widget) => {
+						this.widget = widget;
 
-							if (typeof this.widget.setPlaceholder === 'function')
+						if (this.isApiVersionGreaterThan45)
+						{
+							this.widget.setReturnKey(this.returnKey);
+						}
+
+						if (typeof this.widget.setPlaceholder === 'function')
+						{
+							const placeholder = this.getSearchPlaceholder();
+							if (placeholder)
 							{
-								const placeholder = this.getSearchPlaceholder();
-								if (placeholder)
-								{
-									this.widget.setPlaceholder(placeholder);
-								}
+								this.widget.setPlaceholder(placeholder);
 							}
+						}
 
-							this.widget.setRightButtons([{
-								name: BX.message('PROVIDER_WIDGET_DONE'),
-								callback: () => this.close()
-							}]);
-							this.widget.allowMultipleSelection(this.allowMultipleSelection);
-							this.provider.loadRecent();
-							this.widget.setListener((eventName, data) => {
-								const callbackName = eventName + 'Listener';
+						this.widget.setRightButtons([{
+							name: (
+								this.closeOnSelect
+									? BX.message('PROVIDER_WIDGET_CLOSE')
+									: BX.message('PROVIDER_WIDGET_SELECT')
+							),
+							type: 'text',
+							color: '#0065a3',
+							callback: () => this.close(),
+						}]);
 
-								if (typeof this[callbackName] === 'function')
-								{
-									this[callbackName].apply(this, [data])
-								}
-							});
+						this.widget.allowMultipleSelection(this.allowMultipleSelection);
+						this.provider.loadRecent();
 
-							resolve();
-						},
-						onError: error => reject(error)
-					}
-				);
+						this.widget.setListener((eventName, data) => {
+							const callbackName = eventName + 'Listener';
+							if (typeof this[callbackName] === 'function')
+							{
+								this[callbackName].apply(this, [data]);
+							}
+						});
+
+						resolve();
+					})
+					.catch(reject);
 			});
 		}
 
@@ -123,9 +182,24 @@
 		 *
 		 * @param text
 		 */
-		onListFillListener({text})
+		clickEnterListener({ text })
 		{
-			this.queryText = text;
+			if (!this.isApiVersionGreaterThan45)
+			{
+				return;
+			}
+
+			Keyboard.dismiss();
+		}
+
+		/**
+		 * Specific method call from widget.setListener().
+		 *
+		 * @param text
+		 */
+		onListFillListener({ text })
+		{
+			this.queryText = text.trim();
 
 			if (text === '')
 			{
@@ -143,7 +217,7 @@
 		 * @param text
 		 * @param item
 		 */
-		onItemSelectedListener({text, item})
+		onItemSelectedListener({ text, item })
 		{
 			if (!(item && item.hasOwnProperty('params') && item.params.hasOwnProperty('code')))
 			{
@@ -155,52 +229,69 @@
 			switch (buttonCode)
 			{
 				case CREATE_BUTTON_CODE:
-					if (
-						!this.createOptions.enableCreation
-						|| !this.createOptions.handler
-						|| this.getIsItemCreating()
-					)
+					this.createItem(text);
+					break;
+			}
+		}
+
+		createItem(text)
+		{
+			if (
+				!this.createOptions.enableCreation
+				|| !this.createOptions.handler
+				|| this.getIsItemCreating()
+			)
+			{
+				return;
+			}
+
+			this.setIsItemCreating(true);
+
+			this.createOptions
+				.handler(text)
+				.then((item) => {
+					if (item && item.id)
 					{
-						return;
-					}
-
-					this.setIsItemCreating(true);
-
-					this.createOptions.handler(text).then((item) => {
-						if (item)
+						if (!this.provider.isInRecentCache(item))
 						{
-							if (!this.provider.isInRecentCache(item))
-							{
-								this.provider.addToRecentCache(item);
-							}
+							this.provider.addToRecentCache(item);
+						}
 
-							const preparedItem = this.provider.prepareItemForDrawing(item);
-							this.provider.prepareResult([preparedItem]);
+						this.manualSelection = true;
+
+						const preparedItem = this.provider.prepareItemForDrawing(item);
+						this.provider.prepareResult([preparedItem]);
+
+						if (!this.isInSelected(preparedItem))
+						{
+							let selected = [preparedItem];
 
 							if (this.allowMultipleSelection)
 							{
-								if (!this.isInSelected(preparedItem))
-								{
-									this.setSelected([
-										...[preparedItem],
-										...this.currentSelectedItems
-									]);
-								}
-								this.setIsItemCreating(false);
-								this.resetQuery();
+								selected = [
+									...selected,
+									...this.currentSelectedItems,
+								];
 							}
-							else
-							{
-								if (!this.isInSelected(preparedItem))
-								{
-									this.setSelected([preparedItem]);
-								}
-								void this.close();
-							}
+
+							this.setSelected(selected);
 						}
-					});
-					break;
-			}
+					}
+
+					const closeParams = {
+						...item,
+						queryText: this.queryText,
+					};
+
+					this.setIsItemCreating(false);
+					this.resetQuery();
+
+					if (this.createOptions.closeAfterCreation)
+					{
+						this.closeOnCreation(closeParams);
+					}
+				})
+			;
 		}
 
 		/**
@@ -210,14 +301,31 @@
 		 * @param scope
 		 * @param items
 		 */
-		onSelectedChangedListener({text, scope, items})
+		onSelectedChangedListener({ text, scope, items })
 		{
-			this.currentSelectedItems = items;
+			this.manualSelection = true;
 
-			if (!this.allowMultipleSelection)
+			if (!this.hasItemsInCurrentItems(items))
+			{
+				this.setItems([...items, ...this.currentItems]);
+			}
+
+			this.setSelected(items);
+
+			if (this.closeOnSelect)
 			{
 				void this.close();
 			}
+		}
+
+		/**
+		 * Specific method call from widget.setListener().
+		 *
+		 * @param {Object} section
+		 */
+		sectionButtonClickListener(section)
+		{
+			this.createItem(this.queryText);
 		}
 
 		/**
@@ -250,52 +358,88 @@
 
 		// region provider event handlers
 
-		onProviderRecentResult(items)
+		onProviderRecentResult(items, cache = false)
 		{
-			const defaultItems = [
-				{
+			if (this.queryText !== '')
+			{
+				return;
+			}
+
+			if (cache === false)
+			{
+				items = items.filter(({ id }) => id !== 'loading');
+			}
+
+			const hasOwnItems = items.length > 0;
+
+			if (items.length === 0)
+			{
+				items.push({
 					title: this.searchOptions.startTypingText || BX.message('PROVIDER_WIDGET_START_TYPING_TO_SEARCH'),
 					type: 'button',
-					unselectable: true
-				}
-			];
+					sectionCode: COMMON_SECTION_CODE,
+					unselectable: true,
+				});
+			}
 
-			this.setItems(items.length ? items : defaultItems);
+			this.setItems(items);
 
-			if (items.length && this.initSelectedIds.length)
+			if (!this.manualSelection && hasOwnItems)
 			{
-				this.setSelected(
-					this.initSelectedIds.reduce((result, initSelectedId) => {
-						const selectedItems = items.filter(item => {
-							return (
-								item.params.type === this.entityId
-								&& item.params.id.toString() === initSelectedId.toString()
-							)
-						});
-						if (
-							selectedItems.length
-							&& (
-								this.allowMultipleSelection
-								|| result.length === 0
-							)
-						)
-						{
-							result.push(selectedItems[0]);
-						}
-						return result;
-					}, [])
-				);
+				const filteredSelectedItems = this.filterSelectedByItems(items);
+				this.setSelected(filteredSelectedItems);
 			}
 		}
 
-		onProviderFetchResult(items)
+		filterSelectedByItems(items)
+		{
+			return this.initSelectedIds.reduce((result, [entityId, selectedId]) => {
+				const selectedItem = items.find(item => {
+					if (!item.params || !item.params.id)
+					{
+						return false;
+					}
+
+					return (
+						this.entityIds.includes(item.params.type)
+						&& item.params.type.toString() === entityId.toString()
+						&& item.params.id.toString() === selectedId.toString()
+					);
+				});
+
+				if (
+					selectedItem
+					&& (
+						this.allowMultipleSelection
+						|| result.length === 0
+					)
+				)
+				{
+					result.push(selectedItem);
+				}
+
+				return result;
+			}, []);
+		}
+
+		onProviderFetchResult(items, cache = false)
 		{
 			if (this.provider.queryString !== this.queryText)
 			{
 				return;
 			}
 
-			if (this.createOptions.enableCreation)
+			if (cache === false)
+			{
+				items = items.filter(({ id }) => id !== 'loading');
+			}
+
+			if (items.length === 0)
+			{
+				items.unshift(this.getEmptyResultButtonItem());
+			}
+
+			if (this.createOptions.enableCreation && !this.isApiVersionGreaterThan44)
 			{
 				items.unshift(this.getCreateButtonItem());
 			}
@@ -305,6 +449,18 @@
 
 		// endregion
 
+		/**
+		 * @param {array} itemsToCheck
+		 */
+		hasItemsInCurrentItems(itemsToCheck)
+		{
+			return itemsToCheck.every((itemToCheck) => {
+				return this.currentItems.some((item) => {
+					return item.id === itemToCheck.id;
+				});
+			});
+		}
+
 		setItems(items)
 		{
 			if (!this.widget)
@@ -312,8 +468,88 @@
 				return;
 			}
 
-			this.currentItems = items;
-			this.widget.setItems(items);
+			items = uniqBy(items, 'id');
+
+			const isRecent = this.queryText === '';
+			const sections = [];
+
+			const serviceItems = items.filter((item) => item.sectionCode === SERVICE_SECTION_CODE);
+			if (serviceItems.length)
+			{
+				serviceItems.forEach((item, index) => {
+					item.hideBottomLine = index === items.length - 1;
+
+					return item;
+				});
+
+				sections.push({ id: SERVICE_SECTION_CODE });
+			}
+
+			items
+				.filter((item) => !item.sectionCode || item.sectionCode === COMMON_SECTION_CODE)
+				.forEach((item, index) => {
+					item.hideBottomLine = index === items.length - 1;
+					item.sectionCode = COMMON_SECTION_CODE;
+
+					return item;
+				})
+			;
+
+			const title = (
+				isRecent
+					? BX.message('PROVIDER_SEARCH_RECENT_SECTION_TITLE')
+					: BX.message('PROVIDER_SEARCH_SECTION_TITLE')
+			);
+			const buttonText = this.getCommonSectionButtonText(isRecent);
+			const styles = this.getCommonSectionStyles();
+
+			sections.push({
+				id: COMMON_SECTION_CODE,
+				title,
+				buttonText,
+				styles,
+				backgroundColor: '#ffffff',
+			});
+
+			if (!isEqual(this.currentSections, sections))
+			{
+				this.currentSections = sections;
+				this.widget.setSections(this.currentSections);
+			}
+
+			if (!isEqual(this.currentItems, items))
+			{
+				this.currentItems = items;
+				this.widget.setItems(this.currentItems);
+			}
+		}
+
+		getCommonSectionButtonText(isRecent)
+		{
+			if (!this.createOptions.enableCreation || isRecent)
+			{
+				return '';
+			}
+
+			return this.getCreateButtonItemTitle();
+		}
+
+		getCommonSectionStyles()
+		{
+			return {
+				title: {
+					font: {
+						size: 15,
+						color: '#525c69',
+					},
+				},
+				button: {
+					font: {
+						size: 15,
+						color: this.getIsItemCreating() ? '#525c69' : '#0065a3',
+					},
+				},
+			};
 		}
 
 		setSelected(items)
@@ -323,8 +559,22 @@
 				return;
 			}
 
-			this.currentSelectedItems = items;
-			this.widget.setSelected(items);
+			if (
+				this.selectOptions.canUnselectLast === false
+				&& this.currentSelectedItems.length === 1
+				&& items.length === 0
+			)
+			{
+				return;
+			}
+
+			items = uniqBy(items, 'id');
+
+			if (!isEqual(this.currentSelectedItems, items))
+			{
+				this.currentSelectedItems = items;
+				this.widget.setSelected(this.currentSelectedItems);
+			}
 		}
 
 		isInSelected(item)
@@ -341,16 +591,21 @@
 		{
 			this.isItemCreating = isItemCreating;
 
-			this.setItems(
-				this.currentItems.map((item) => {
+			let items = this.currentItems;
+
+			if (!this.isApiVersionGreaterThan44)
+			{
+				items = items.map((item) => {
 					if (item.params && item.params.code === CREATE_BUTTON_CODE)
 					{
 						item.title = this.getCreateButtonItemTitle();
 					}
 
 					return item;
-				})
-			);
+				});
+			}
+
+			this.setItems(items);
 		}
 
 		resetQuery()
@@ -386,9 +641,36 @@
 			}
 		}
 
+		onWidgetClosed()
+		{
+			this.widget = null;
+			if (this.events.onWidgetClosed)
+			{
+				this.events.onWidgetClosed(this.extractEntityItems(this.currentSelectedItems));
+			}
+		}
+
+		closeOnCreation(entity)
+		{
+			if (this.events.onCreateBeforeClose)
+			{
+				this.events.onCreateBeforeClose(entity);
+			}
+
+			this.close().then(() => {
+				if (this.events.onCreate)
+				{
+					this.events.onCreate(entity);
+				}
+			});
+		}
+
 		extractEntityItems(items)
 		{
-			return items.map(item => item.params);
+			return items.map((item) => ({
+				...item.params,
+				imageUrl: item.imageUrl,
+			}));
 		}
 
 		getCreateButtonItem()
@@ -397,17 +679,28 @@
 				title: this.getCreateButtonItemTitle(),
 				type: 'button',
 				unselectable: true,
-				params: {'code': CREATE_BUTTON_CODE},
+				sectionCode: SERVICE_SECTION_CODE,
+				params: { 'code': CREATE_BUTTON_CODE },
 			};
 		}
 
 		getCreateButtonItemTitle()
 		{
 			return (
-				this.isItemCreating
+				this.getIsItemCreating()
 					? (this.createOptions.creatingText || BX.message('PROVIDER_WIDGET_CREATING_ITEM'))
 					: (this.createOptions.createText || BX.message('PROVIDER_WIDGET_CREATE_ITEM'))
 			);
+		}
+
+		getEmptyResultButtonItem()
+		{
+			return {
+				title: BX.message('PROVIDER_SEARCH_NO_RESULTS'),
+				type: 'button',
+				sectionCode: COMMON_SECTION_CODE,
+				unselectable: true,
+			};
 		}
 
 		close()
@@ -421,7 +714,7 @@
 				}
 
 				this.widget.close(() => {
-					this.widget = null;
+					this.onWidgetClosed();
 					resolve();
 				});
 			});

@@ -17,19 +17,20 @@ Loc::loadMessages(__FILE__);
  */
 class Welcome
 {
-	/**Session*/
+	/** @var Session */
 	protected $sessionManager = null;
 	protected $session = [];
 	protected $config = [];
-	/**Chat*/
-	protected $chat = null;
+	/** @var Chat */
 	protected $clientChat = null;
+	/** @var Chat */
+	protected $chat = null;
 
 	/**
 	 * Welcome constructor.
 	 * @param Session $session
 	 */
-	function __construct($session)
+	public function __construct($session)
 	{
 		$this->sessionManager = $session;
 		$this->session = $session->getData();
@@ -142,6 +143,7 @@ class Welcome
 			"ATTACH" => $attach,
 			"SYSTEM" => 'Y',
 			"IMPORTANT_CONNECTOR" => 'Y',
+			'NO_SESSION_OL' => 'Y',
 			"PARAMS" => [
 				"COMPONENT_ID" => FormHandler::FORM_COMPONENT_NAME,
 				"IS_WELCOME_FORM" => 'Y',

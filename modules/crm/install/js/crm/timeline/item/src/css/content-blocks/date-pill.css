@@ -10,11 +10,22 @@
 	font-size: var(--ui-font-size-xs, 12px);
 	font-weight: var(--ui-font-weight-semi-bold, 600);
 	line-height: var(--ui-font-line-height-xl, 1.62);
-	text-transform: lowercase;
 	border-radius: 64px;
-	background-color: var(--ui-color-primary, #2fc6f6);
-	color: var(--ui-color-on-primary, #fff);
+	color: var(--ui-color-text-subtle, #828b95);
 	cursor: pointer;
+}
+
+.crm-timeline__date-pill.--color-default {
+	background-color: var(--ui-color-base-04, #F1F4F6);
+}
+
+.crm-timeline__date-pill.--color-warning {
+	background-color: var(--ui-color-accent-yellow, #FEF3B8);
+}
+
+.crm-timeline__date-pill.--readonly {
+	padding-right: 9px;
+	cursor: default;
 }
 
 .crm-timeline__date-pill_caret {
@@ -28,7 +39,10 @@
 	mask-image: url("../../images/common/crm-timeline__bottom-caret.svg");
 	mask-size: contain;
 	mask-position: center center;
-	--crm-timeline__date-pill_caret-white: 255, 255, 255;
-	background-color: rgba(var(--ui-color-on-primary-rgb, var(--crm-timeline__date-pill_caret-white)), 0.54);
+	--crm-timeline__date-pill_caret-color: 130, 139, 149;
+	background-color: rgba(var(--ui-color-text-subtle-rgb, var(--crm-timeline__date-pill_caret-color)), 0.54);
 }
 
+.crm-timeline__date-pill.--readonly .crm-timeline__date-pill_caret{
+	display: none;
+}

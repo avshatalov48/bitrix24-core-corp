@@ -144,7 +144,11 @@ class Item
 
 		$fieldNames = [];
 
-		$entityFields = WebForm\EntityFieldProvider::getFieldsTree();
+		$hiddenTypes = [
+			\CCrmOwnerType::SmartDocument,
+			WebForm\EntityFieldProvider::TYPE_VIRTUAL,
+		];
+		$entityFields = WebForm\EntityFieldProvider::getFieldsTree($hiddenTypes);
 		$fields = array_map(
 			function (array $field) use ($isSet)
 			{

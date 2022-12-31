@@ -307,7 +307,7 @@ class Base
 							" "
 							. Loc::getMessage('IMCONNECTOR_WALL_DATE_TEXT')
 							. " "
-							. DateTime::createFromTimestamp($attachment['wall']['date'])->toString();
+							. DateTime::createFromTimestamp((int)$attachment['wall']['date'])->toString();
 					}
 					$message['message']['text'] .= "[/URL]";
 
@@ -324,7 +324,7 @@ class Base
 			&& !Library::isEmpty($message['message']['date'])
 		)
 		{
-			$message['message']['date'] = DateTime::createFromTimestamp($message['message']['date']);
+			$message['message']['date'] = DateTime::createFromTimestamp((int)$message['message']['date']);
 		}
 
 		if (
@@ -467,7 +467,7 @@ class Base
 
 			if (!Library::isEmpty($attachment['date']))
 			{
-				$returnText .= "[" . DateTime::createFromTimestamp($attachment['date'])->toString() . "]";
+				$returnText .= "[" . DateTime::createFromTimestamp((int)$attachment['date'])->toString() . "]";
 			}
 		}
 

@@ -163,12 +163,10 @@ $arResult['AUX_TEMPLATE_DATA']['EDITOR_PARAMETERS'] = array(
 	"NAME_TEMPLATE" => $arParams["NAME_TEMPLATE"],
 	//"AT_THE_END_HTML" => $htmlAfterTextarea,
 	"LHE" => array(
-
 		"id" => $arResult['TEMPLATE_DATA']['ID'],
-		"iframeCss" => "body { padding-left: 10px !important; }",
-		"fontSize" => "14px",
+		"iframeCss" => "body { padding: 12px 18px 8px 12px !important; color: #151515; line-height: var(--ui-font-line-height-lg, 22px); }",
+		"fontSize" => "14.5px",
 		"bInitByJS" => false,
-		"height" => 100,
 		"lazyLoad" => 'N',
 		"bbCode" => $bbCode, // set editor mode: bbcode or html
 		"setFocusAfterShow" => !!intval($arResult['DATA']['TASK']['ID']), // when creating task, we should not

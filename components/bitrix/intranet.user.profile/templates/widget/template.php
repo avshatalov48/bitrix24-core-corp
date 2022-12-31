@@ -9,6 +9,7 @@
 use Bitrix\Intranet\Integration\Templates\Bitrix24\ThemePicker;
 use \Bitrix\Intranet\Binding;
 use \Bitrix\ImBot\Bot\Partner24;
+use Bitrix\Intranet\Site\Sections\TimemanSection;
 use \Bitrix\Main;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
@@ -138,6 +139,14 @@ BX.ready(function() {
 					'APP_MAC_INSTALLED' => $arResult['User']['APP_MAC_INSTALLED'] ? 'Y' : 'N',
 					'APP_IOS_INSTALLED' => $arResult['User']['APP_IOS_INSTALLED'] ? 'Y' : 'N',
 					'APP_ANDROID_INSTALLED' => $arResult['User']['APP_ANDROID_INSTALLED'] ? 'Y' : 'N',
+					'APP_LINUX_INSTALLED' => $arResult['User']['APP_LINUX_INSTALLED'] ? 'Y' : 'N',
+				],
+				'loginHistory' => [
+					'url' => TimemanSection::getUserLoginHistoryUrl(),
+					'isCloud' => $bitrix24Included,
+					'isHide' => $bitrix24Included && (\CBitrix24::getPortalZone() === 'ua'),
+					'isAvailableUserLoginHistory' => isset($arResult['isAvailableUserLoginHistory']) && $arResult['isAvailableUserLoginHistory'],
+					'isConfiguredUserLoginHistory' => isset($arResult['isConfiguredUserLoginHistory']) && $arResult['isConfiguredUserLoginHistory']
 				],
 				'stressLevel' => Main\Config\Option::get('intranet', 'stresslevel_available', 'Y') === 'Y' && (
 					!$bitrix24Included || \Bitrix\Bitrix24\Release::isAvailable('stresslevel')

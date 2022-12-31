@@ -73,6 +73,7 @@ export class RequisiteAutocompleteField extends EventEmitter
 			isPlacement: BX.prop.getBoolean(params, "isPlacement", false),
 			numberOfPlacements: BX.prop.getInteger(params, "numberOfPlacements", 0),
 			countryId: BX.prop.getInteger(params, "countryId", 0),
+			defaultAppInfo: BX.prop.getObject(params, "defaultAppInfo", {}),
 		};
 	}
 
@@ -127,7 +128,7 @@ export class RequisiteAutocompleteField extends EventEmitter
 					items: [],
 					enableCreation: true,
 					enableCreationOnBlur: true,
-					autocompleteDelay: 1000,
+					autocompleteDelay: 1500,
 					messages:
 					{
 						creationLegend: Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADD_REQUISITE'),
@@ -142,6 +143,7 @@ export class RequisiteAutocompleteField extends EventEmitter
 			EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onBeforeSearchStart', this.onEntitySearchStart.bind(this));
 			EventEmitter.subscribe(this._dropdown, 'BX.UI.Dropdown:onSearchComplete', this.onEntitySearchComplete.bind(this));
 			BX.addCustomEvent(this._dropdown, 'Dropdown:onGetPopupAlertContainer', this.onGetPopupAlertContainer.bind(this));
+			BX.addCustomEvent(this._dropdown, 'Dropdown:onAfterInstallDefaultApp', this.onAfterInstallDefaultApp.bind(this));
 		}
 		this._dropdown.searchOptions = this._context;
 		this._dropdown.targetElement = this._domNodes.requisiteSearchString;
@@ -151,9 +153,14 @@ export class RequisiteAutocompleteField extends EventEmitter
 		this.setShowFeedbackLink(this._showFeedbackLink);
 	}
 
-	getDropdownPopup()
+	getDropdownPopup(tryCreate = false)
 	{
-		return this._dropdown.getPopupWindow();
+		if (tryCreate)
+		{
+			return this._dropdown.getPopupWindow();
+		}
+
+		return this._dropdown.popupWindow;
 	}
 
 	closeDropdownPopup()
@@ -279,6 +286,15 @@ export class RequisiteAutocompleteField extends EventEmitter
 	setClientResolverPlacementParams(params)
 	{
 		this.clientResolverPlacementParams = this.filterclientResolverPlacementParams(params);
+		if (this._dropdown)
+		{
+			this._dropdown.setPlacementParams(this.clientResolverPlacementParams);
+			const isPlacement = BX.prop.getBoolean(this.clientResolverPlacementParams, "isPlacement", false);
+			if (isPlacement)
+			{
+				this._dropdown.setExternalSearchHandler(this.externalSearchHandler);
+			}
+		}
 	}
 
 	setEnabled(enabled)
@@ -463,23 +479,25 @@ export class RequisiteAutocompleteField extends EventEmitter
 
 			if (this.detailAutocompletePlacement)
 			{
-				if (!this.dropdownPopup)
+				const dropdownPopup = this.getDropdownPopup(true);
+
+				if (dropdownPopup)
 				{
-					this.dropdownPopup = this._dropdown.getPopupWindow();
+					this.beforeEntitySearchPopupCloseHandler = this.onBeforeEntitySearchPopupClose.bind(
+						this,
+						dropdownPopup._tryCloseByEvent.bind(dropdownPopup)
+					);
+					dropdownPopup._tryCloseByEvent = this.beforeEntitySearchPopupCloseHandler;
+
+					this.entitySearchPopupCloseHandler = this.onEntitySearchPopupClose.bind(this);
+					BX.addCustomEvent(
+						dropdownPopup,
+						'onPopupClose',
+						this.entitySearchPopupCloseHandler
+					);
+
+					dropdownPopup.show();
 				}
-
-				this.beforeEntitySearchPopupCloseHandler = this.onBeforeEntitySearchPopupClose.bind(
-					this,
-					this.dropdownPopup._tryCloseByEvent.bind(this.dropdownPopup)
-				);
-				this.dropdownPopup._tryCloseByEvent = this.beforeEntitySearchPopupCloseHandler;
-
-				this.entitySearchPopupCloseHandler = this.onEntitySearchPopupClose.bind(this);
-				BX.addCustomEvent(
-					this.dropdownPopup,
-					'onPopupClose',
-					this.entitySearchPopupCloseHandler
-				);
 
 				this.placementsParamsHandler = this.onPlacementsParams.bind(this);
 				BX.addCustomEvent(
@@ -567,7 +585,12 @@ export class RequisiteAutocompleteField extends EventEmitter
 	{
 		this.initPlacement(searchControl, container);
 	}
-	
+
+	onAfterInstallDefaultApp(dropdown)
+	{
+		this.emit("onInstallDefaultApp");
+	}
+
 	onBeforeEntitySearchPopupClose(originalHandler, event)
 	{
 		if (this.onDocumentClickConfirm)
@@ -610,7 +633,8 @@ export class RequisiteAutocompleteField extends EventEmitter
 		this.destroyPlacement();
 	}
 
-	destroyPlacement() {
+	destroyPlacement()
+	{
 		if (this.searchQueryInputHandler) {
 			this._domNodes.requisiteSearchString.removeEventListener("input", this.searchQueryInputHandler);
 			this._domNodes.requisiteSearchString.removeEventListener("keyup", this.searchQueryInputHandler);
@@ -826,12 +850,23 @@ class Dropdown extends BX.UI.Dropdown
 		this.feedbackFormParams = BX.prop.getObject(options, "feedbackFormParams", {});
 		this.canAddRequisite = BX.prop.getBoolean(options, "canAddRequisite", false);
 		this.externalSearchHandler = BX.prop.getFunction(options, "externalSearchHandler", null);
-		this.placementParams = BX.prop.getObject(options, "placementParams", null);
+		this.placementParams = BX.prop.getObject(options, "placementParams", {});
+		this.installDefaultAppHandler = this.onClickInstallDefaultApp.bind(this);
+		this.installDefaultAppTimeout = 7000;
+		this.installDefaultAppTimeoutHandler = this.onInstallDefaultAppTimeout.bind(this);
+		this.afterInstallDefaultAppHandler = this.onAfterInstallDefaultApp.bind(this);
+		this.popupAlertContainer = null;
+		this.defaultAppInstallLoader = null;
 	}
 
 	setPlacementParams(params)
 	{
 		this.placementParams = params;
+	}
+
+	setExternalSearchHandler(handler)
+	{
+		this.externalSearchHandler = handler
 	}
 
 	isTargetElementChanged()
@@ -866,24 +901,66 @@ class Dropdown extends BX.UI.Dropdown
 	{
 		this.minSearchStringLength = length;
 	}
+	
+	getDefaultAppInfo()
+	{
+		return BX.prop.getObject(this.placementParams, "defaultAppInfo", {});
+	}
+	
+	isDefaultAppCanInstall()
+	{
+		const defaultAppInfo = this.getDefaultAppInfo();
+		
+		return (
+			Type.isStringFilled(BX.prop.get(defaultAppInfo, "code", ""))
+			&& Type.isStringFilled(BX.prop.get(defaultAppInfo, "title", ""))
+			&& BX.prop.get(defaultAppInfo, "isAvailable", "N") === "Y"
+			&& BX.prop.get(defaultAppInfo, "isInstalled", "N") !== "Y"
+		);
+	}
 
 	getPopupAlertContainer()
 	{
 		if (!this.popupAlertContainer)
 		{
 			let items = [];
+
+			if (this.isDefaultAppCanInstall())
+			{
+				const appTitleText = Text.encode(this.getDefaultAppInfo()["title"]);
+				const appInstallText = Text.encode(Loc.getMessage('REQUISITE_AUTOCOMPLETE_INSTALL'));
+				items.push(
+					Tag.render`
+					<div class="crm-rq-popup-item crm-rq-popup-item-add-new">
+						<button
+							class="crm-rq-popup-item-add-inst-app-btn"><span></span><span
+								class="crm-rq-popup-item-add-new-btn-text"><span>${appTitleText}</span><span
+								style="margin-left: 20px; width: 100px;"><a
+									href="#"
+									onclick="${this.installDefaultAppHandler}">${appInstallText}</a>
+							</span></span>
+						</button>
+					</div>`
+				);
+			}
+
 			let feedbackAvailable = (Object.keys(this.getFeedbackFormParams()).length > 0);
 			if (feedbackAvailable)
 			{
-				let textParts = Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE').split('#ADVICE_NEW_SERVICE_LINK#');
-				let item = Tag.render`<div class="crm-rq-popup-item crm-rq-popup-item-helper"></div>`;
+				const textParts =
+					Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE').split('#ADVICE_NEW_SERVICE_LINK#')
+				;
+				const item = Tag.render`<div class="crm-rq-popup-item crm-rq-popup-item-helper"></div>`;
 
 				if (textParts[0] && textParts[0].length)
 				{
 					Dom.append(document.createTextNode(textParts[0]), item);
 				}
-
-				Dom.append(Tag.render`<a href="" onclick="${this.showFeedbackForm.bind(this)}">${Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK')}</a>`, item);
+				const newServiceLinkText = Loc.getMessage('REQUISITE_AUTOCOMPLETE_ADVICE_NEW_SERVICE_LINK');
+				Dom.append(
+					Tag.render`<a href="" onclick="${this.showFeedbackForm.bind(this)}">${newServiceLinkText}</a>`,
+					item
+				);
 
 				if (textParts[1] && textParts[1].length)
 				{
@@ -982,5 +1059,97 @@ class Dropdown extends BX.UI.Dropdown
 		}
 
 		return super.searchItemsByStr(target);
+	}
+
+	onClickInstallDefaultApp(event)
+	{
+		event.stopPropagation();
+		event.preventDefault();
+
+		if (this.defaultAppInstallLoader)
+		{
+			return;
+		}
+
+		if (Type.isDomNode(event.target) && Type.isDomNode(event.target.parentNode))
+		{
+			const parent = event.target.parentNode;
+
+			Dom.hide(event.target);
+
+			this.defaultAppInstallLoader = (
+				this.defaultAppInstallLoader
+				|| new BX.Loader({
+					target: parent,
+					size: 30,
+					offset: { top: "-23px" }
+				})
+			);
+			this.defaultAppInstallLoader.show();
+		}
+
+		if (this.isDefaultAppCanInstall())
+		{
+			BX.loadExt('marketplace').then(
+				() => {
+					setTimeout(this.installDefaultAppTimeoutHandler, this.installDefaultAppTimeout, event.target);
+					top.BX.addCustomEvent(
+						top,
+						"Rest:AppLayout:ApplicationInstall",
+						this.afterInstallDefaultAppHandler
+					);
+					BX.rest.Marketplace.install(
+						{
+							CODE: this.placementParams["defaultAppInfo"]["code"],
+							SILENT_INSTALL: "Y",
+							REDIRECT_PRIORITY: false,
+							IFRAME: true
+						}
+					);
+				}
+			).catch(
+				() => {
+					top.BX.removeCustomEvent(
+						top,
+						"Rest:AppLayout:ApplicationInstall",
+						this.afterInstallDefaultAppHandler
+					);
+				}
+			);
+		}
+	}
+
+	onInstallDefaultAppTimeout(elementToShow)
+	{
+		top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+
+		if (this.defaultAppInstallLoader)
+		{
+			this.defaultAppInstallLoader.destroy();
+			this.defaultAppInstallLoader = null;
+		}
+
+		if (Type.isDomNode(elementToShow))
+		{
+			Dom.show(elementToShow);
+		}
+	}
+
+	onAfterInstallDefaultApp(installed, eventResult)
+	{
+		top.BX.removeCustomEvent(top, "Rest:AppLayout:ApplicationInstall", this.afterInstallDefaultAppHandler);
+
+		BX.onCustomEvent(this, "Dropdown:onAfterInstallDefaultApp", [this]);
+
+		if (this.defaultAppInstallLoader)
+		{
+			this.defaultAppInstallLoader.destroy();
+			this.defaultAppInstallLoader = null;
+		}
+
+		if (this.popupWindow)
+		{
+			this.popupWindow.close();
+		}
 	}
 }

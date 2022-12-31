@@ -64,12 +64,6 @@ if (!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Comp
 }
 else
 {
-	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
 	if (!$isMyCompanyMode)
 	{
 		$APPLICATION->IncludeComponent(
@@ -83,11 +77,6 @@ else
 				'PATH_TO_ENTITY_LIST' => $pathToList,
 			]
 		);
-	}
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
 	}
 
 	$APPLICATION->ShowViewContent('crm-grid-filter');

@@ -88,6 +88,25 @@ class AddressFormatter
 		return (bool)EntityAddress::isLocationModuleIncluded();
 	}
 
+	public function formatLocationAddressArrayAsString(
+		array $location,
+		$formatId = EntityAddressFormatter::Undefined,
+		$strategy = StringConverter::STRATEGY_TYPE_TEMPLATE_COMMA,
+		$content = StringConverter::CONTENT_TYPE_TEXT
+	): string
+	{
+		$result = '';
+
+		$format = $this->getLocationAddressFormat($formatId);
+
+		if ($format instanceof LocationAddressFormat)
+		{
+			$result = Address::fromArray($location)->toString($format, $strategy, $content);
+		}
+
+		return $result;
+	}
+
 	public function formatTextComma(
 		array $fields,
 		$formatId = EntityAddressFormatter::Undefined

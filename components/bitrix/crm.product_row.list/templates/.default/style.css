@@ -549,7 +549,7 @@ body table.bx-edit-table td.bx-field-value .crm-item-sale input.crm-item-table-i
 	border-bottom:1px dashed #2067b0;
 	color:#2067b0 !important;
 	display:inline-block;
-	font-weight:bold;
+	font-weight:var(--ui-font-weight-bold);
 	text-decoration:none;
 	vertical-align:top;
 	margin: 4px;

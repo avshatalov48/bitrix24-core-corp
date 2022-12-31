@@ -253,6 +253,14 @@ class QuickAnswer
 	}
 
 	/**
+	 * @return int
+	 */
+	public function getIblock()
+	{
+		return (int)self::$dataManager->getIblockId();
+	}
+
+	/**
 	 * Returns count of records on $filter.
 	 *
 	 * @param array $filter

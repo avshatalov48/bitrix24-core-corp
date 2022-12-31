@@ -1,7 +1,7 @@
 (() => {
 	const defaultParams = {
 		useLargeTitleMode: false,
-		detailTextColor: '#a8adb4'
+		detailTextColor: '#a8adb4',
 	};
 
 	class DetailCardNavigation
@@ -28,18 +28,31 @@
 			const typeData = this.typeMap.get(type);
 			if (typeData)
 			{
-				return {
+				const params = {
+					...defaultParams,
 					detailText: typeData.name,
-					imageUrl: typeData.logo,
-					...defaultParams
 				};
+
+				if (typeData.hasOwnProperty('logo'))
+				{
+					params.imageUrl = typeData.logo;
+				}
+
+				if (typeData.hasOwnProperty('svg'))
+				{
+					let { svg } = typeData;
+					if (svg.indexOf('http') === -1)
+					{
+						svg = currentDomain + svg;
+					}
+
+					params.svg = { uri: svg };
+				}
+
+				return params;
 			}
 
-			return {
-				detailText: null,
-				imageUrl: null,
-				...defaultParams
-			};
+			return { ...defaultParams };
 		}
 	}
 

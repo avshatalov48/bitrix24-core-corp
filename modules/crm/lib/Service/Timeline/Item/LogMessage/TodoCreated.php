@@ -2,16 +2,28 @@
 
 namespace Bitrix\Crm\Service\Timeline\Item\LogMessage;
 
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Item\LogMessage;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\ContentBlockFactory;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Date;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\LineOfTextBlocks;
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Text;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Type\DateTime;
+use CCrmActivity;
+
+Container::getInstance()->getLocalization()->loadMessages();
 
 class TodoCreated extends LogMessage
 {
 	public function getType(): string
 	{
 		return 'TodoCreated';
+	}
+
+	public function getIconCode(): ?string
+	{
+		return 'circle-check';
 	}
 
 	public function getTitle(): ?string
@@ -21,19 +33,81 @@ class TodoCreated extends LogMessage
 
 	public function getContentBlocks(): ?array
 	{
-		return [
-			'content' => (new LineOfTextBlocks())
+		$activityData = $this->getModel()->getSettings()['ACTIVITY_DATA'];
+
+		$baseActivityId = $activityData['ASSOCIATED_ENTITY_ID'] ?? 0;
+		$deadlineTimestamp = $activityData['DEADLINE_TIMESTAMP'] ?? null;
+		$description = trim($activityData['DESCRIPTION'] ?? '');
+
+		$result = [];
+		if ($baseActivityId)
+		{
+			$baseActivity = CCrmActivity::GetList(
+				[],
+				[
+					'=ID' => $baseActivityId,
+					'CHECK_PERMISSIONS' => 'N'
+				],
+				false,
+				false,
+				[
+					'SUBJECT',
+					'ID'
+				]
+			)->Fetch();
+			if ($baseActivity)
+			{
+				$result['baseActivity'] = (new LineOfTextBlocks())
+					->addContentBlock(
+						'title',
+						ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_LINK'))
+					)
+					->addContentBlock(
+						'value',
+						(new Text())
+							->setValue($baseActivity['SUBJECT'] ?: Loc::getMessage('CRM_COMMON_UNTITLED'))
+							->setColor(Text::COLOR_BASE_90)
+					)
+				;
+			}
+		}
+		if ($deadlineTimestamp)
+		{
+			$result['created'] = (new LineOfTextBlocks())
 				->addContentBlock(
 					'title',
-					(new Text())
-						->setValue(sprintf('%s:', Loc::getMessage('CRM_TIMELINE_LOG_OL_INCOMING_CHANNEL')))
-						->setColor(Text::COLOR_BASE_70)
-						->setFontSize(Text::FONT_SIZE_SM)
+					ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_DATE'))
 				)
 				->addContentBlock(
-					'data',
-					(new Text())->setValue('Channel name')->setFontWeight(Text::FONT_WEIGHT_BOLD)
+					'value',
+					(new Date())->setDate(DateTime::createFromTimestamp($deadlineTimestamp))->setColor(Text::COLOR_BASE_90)
 				)
-		];
+			;
+		}
+
+		if ($description)
+		{
+			$titleContentBlock = ContentBlockFactory::createTitle(Loc::getMessage('CRM_TIMELINE_LOG_TODO_CREATED_DESCRIPTION'));
+			$isMultiline = strpos($description, "\n") !== false;
+			$descriptionContentBLock = (new Text())
+				->setValue($description)
+				->setIsMultiline($isMultiline)
+				->setColor(Text::COLOR_BASE_90)
+			;
+			if ($isMultiline)
+			{
+				$result['descriptionTitle'] = $titleContentBlock;
+				$result['descriptionValue'] = $descriptionContentBLock;
+			}
+			else
+			{
+				$result['description'] = (new LineOfTextBlocks())
+					->addContentBlock('title', $titleContentBlock)
+					->addContentBlock('value', $descriptionContentBLock)
+				;
+			}
+		}
+
+		return $result;
 	}
 }

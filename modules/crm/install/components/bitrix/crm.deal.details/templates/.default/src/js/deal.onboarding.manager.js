@@ -122,13 +122,6 @@ export class DealOnboardingManager
 		const productsTabGuide = this.#createHintToProductTab(
 			productsTabButton,
 			{
-				onShow: () => {
-					const popupContainer = productsTabGuide.getPopup().getPopupContainer();
-					const rightOffset = Dom.getPosition(productsTabButton).width/2;
-					const centerLeftPos = parseFloat(popupContainer.style.left) - rightOffset;
-					popupContainer.style.left = `${centerLeftPos}px`;
-					productsTabGuide.handleResizeWindow();
-				},
 				onClose: () => {
 					userOptions.save('crm', 'warehouse-onboarding', 'firstChainStage', 1);
 				},
@@ -261,6 +254,22 @@ export class DealOnboardingManager
 			}
 			Event.bind(buttonsContainer, 'click', buttonsPanelListener);
 
+			const productList = productListEditor.products;
+			let rowId = '';
+			if (productList instanceof Array)
+			{
+				const firstProductRow = productList.find((row) => !row.getModel().isService());
+				if (firstProductRow)
+				{
+					rowId = firstProductRow.getId();
+				}
+			}
+
+			if (!rowId)
+			{
+				return;
+			}
+
 			productListEditor.showFieldTourHint(
 				'STORE_INFO',
 				{
@@ -282,7 +291,8 @@ export class DealOnboardingManager
 						productListTabListener
 					);
 				},
-				['RESERVE_INFO']
+				['RESERVE_INFO'],
+				rowId
 			);
 		}
 
@@ -373,43 +383,51 @@ export class DealOnboardingManager
 						onHistoryNodeAddedHandler
 					);
 
-					const [timelineDocsNode] = event.data;
-					const documentLinkNode = timelineDocsNode.querySelector('.crm-entity-stream-content-document-description');
-
-					const guideText = {
-						title: Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE'),
-						text: Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT'),
-					};
-
-					const successDealGuide = new Guide({
-						steps: [
-							{
-								target: documentLinkNode,
-								title: guideText.title,
-								text: guideText.text,
-								position: 'bottom',
-								events: {
-									onClose: () => {
-										userOptions.save('crm', 'warehouse-onboarding', 'successDealGuideIsOver', true);
-										unsubscribeFromHintClicks();
-									},
-								}
-							}
-						],
-						onEvents: true
-					});
-
-					const dealContainer = this.#getContentContainer();
-					const buttonsContainer = this.#getButtonsContainer();
-
-					const unsubscribeFromHintClicks = () => {
-						Event.unbind(dealContainer, 'click', successDealGuide.close.bind(successDealGuide));
-						Event.unbind(buttonsContainer, 'click', successDealGuide.close.bind(successDealGuide));
-					};
-
 					BX.onCustomEvent(window, 'OpenEntityDetailTab', ['main']);
-					setTimeout(() => {
+					const [timelineDocsNode] = event.data;
+					const previousNodePos = {
+						x: 0,
+						y: 0,
+					};
+					const documentLinkNodeWatcherId = setInterval(() => {
+						const documentLinkNode = timelineDocsNode.querySelector('.crm-entity-stream-content-document-description');
+						if (documentLinkNode === null)
+						{
+							return;
+						}
+
 						const nodePos = Dom.getPosition(documentLinkNode);
+						if (nodePos.x === 0 && nodePos.y === 0)
+						{
+							return;
+						}
+
+						if (
+							nodePos.x !== previousNodePos.x
+							|| nodePos.y !== previousNodePos.y
+						)
+						{
+							previousNodePos.x = nodePos.x;
+							previousNodePos.y = nodePos.y;
+							return;
+						}
+						clearInterval(documentLinkNodeWatcherId);
+
+						const successDealGuide = this.#createHintToSuccessDocument(documentLinkNode, {
+							onClose: () => {
+								userOptions.save('crm', 'warehouse-onboarding', 'successDealGuideIsOver', true);
+								unsubscribeFromHintClicks();
+							},
+						});
+
+						const dealContainer = this.#getContentContainer();
+						const buttonsContainer = this.#getButtonsContainer();
+
+						const unsubscribeFromHintClicks = () => {
+							Event.unbind(dealContainer, 'click', successDealGuide.close.bind(successDealGuide));
+							Event.unbind(buttonsContainer, 'click', successDealGuide.close.bind(successDealGuide));
+						};
+
 						window.scrollTo(0, nodePos.y - 250);
 						successDealGuide.showNextStep();
 
@@ -417,7 +435,7 @@ export class DealOnboardingManager
 						setTimeout(() => {
 							Event.bind(dealContainer, 'click', successDealGuide.close.bind(successDealGuide));
 						}, 3000);
-					}, 500);
+					}, 100);
 				}
 
 				EventEmitter.subscribe(
@@ -431,5 +449,26 @@ export class DealOnboardingManager
 			'Crm.EntityProgress.Saved',
 			timelineGuideListener
 		);
+	}
+
+	#createHintToSuccessDocument(target: HTMLElement, guideEvents: Object = {}): Guide
+	{
+		const guideText = {
+			title: Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TITLE'),
+			text: Loc.getMessage('CRM_DEAL_DETAIL_WAREHOUSE_SUCCESS_DEAL_GUIDE_TEXT'),
+		};
+
+		return new Guide({
+			steps: [
+				{
+					target: target,
+					title: guideText.title,
+					text: guideText.text,
+					position: 'bottom',
+					events: guideEvents,
+				},
+			],
+			onEvents: true
+		});
 	}
 }

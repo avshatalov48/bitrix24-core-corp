@@ -41,7 +41,20 @@
 	const eventTimeRange = 30;
 	const crmPathTemplate = "mobile/crm/#ENTITY#/?page=view&#ENTITY#_id=#ID#";
 	const entityTypes = ["lead", "contact", "company", "deal"];
+	const inAppOpener = () => {
+		try
+		{
+			const { inAppUrl } = jn.require('in-app-url');
 
+			return inAppUrl;
+		}
+		catch (e)
+		{
+			console.log(e, 'In-app-url not found');
+
+			return null;
+		}
+	};
 // endregion Constants
 
 // region Common functions
@@ -189,7 +202,6 @@
 			this._onNativeCallAnsweredHandler = this._onNativeCallAnswered.bind(this);
 			this._onNativeCallEndedHandler = this._onNativeCallEnded.bind(this);
 			this._onNativeCallMutedHandler = this._onNativeCallMuted.bind(this);
-
 			this.init();
 		}
 
@@ -1258,14 +1270,53 @@
 			let entityId = params.entityId;
 			let crmUrl = getCrmShowPath(entityType, entityId);
 
-			if (crmUrl)
-			{
-				PageManager.openPage({
-					'url': crmUrl,
-					'bx24ModernStyle': true
-				});
-				this.ui.rollUp();
+
+			if(!crmUrl) {
+				return;
 			}
+
+			if (Application.getApiVersion() >= 45)
+			{
+				if (typeof BX.MobileTools !== 'undefined')
+				{
+					const openWidget = BX.MobileTools.resolveOpenFunction(crmUrl);
+					if (openWidget)
+					{
+						openWidget();
+					}
+				}
+				else
+				{
+					const inAppUrl = inAppOpener();
+					if(inAppUrl)
+					{
+						inAppUrl.open(
+							`/crm/${entityType}/details/${entityId}/`,
+							{
+								canOpenInDefault: true,
+								bx24ModernStyle: true,
+							},
+							() => {
+								this._onOpenPage(crmUrl);
+							}
+						);
+					}
+				}
+			}
+			else
+			{
+				this._onOpenPage(crmUrl);
+			}
+
+			this.ui.rollUp();
+		}
+
+		_onOpenPage(url)
+		{
+			PageManager.openPage({
+				'url': url,
+				'bx24ModernStyle': true,
+			});
 		}
 
 		_onNativeCallAnswered(nativeAction)
@@ -1393,7 +1444,7 @@
 				let data = result.data();
 				this.log('voximplant.call.sendWait data:', data);
 
-				// call could be already finished by this moment
+				// the call could have been already finished by this moment
 				if (!this.callInit && !this.callActive)
 				{
 					return;

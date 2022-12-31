@@ -9,13 +9,22 @@
 	display: block;
 	width: 11px;
 	height: 10px;
-	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2210%22%20viewBox%3D%220%200%2011%2010%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M346.697954%2C919%20L348.626577%2C920.928622%20L341.709035%2C927.844782%20L339.780413%2C925.91616%20L346.697954%2C919%20Z%20M338.64341%2C928.723438%20C338.624068%2C928.79666%20338.644791%2C928.874026%20338.69729%2C928.927906%20C338.751169%2C928.981785%20338.828535%2C929.002508%20338.901757%2C928.981785%20L341.188197%2C928.365621%20L339.259574%2C926.436999%20L338.64341%2C928.723438%20Z%22%20transform%3D%22translate%28-338%20-919%29%22/%3E%3C/svg%3E) no-repeat center;
-	opacity: .5;
-	transition: .5s;
+	mask-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2210%22%20viewBox%3D%220%200%2011%2010%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M346.697954%2C919%20L348.626577%2C920.928622%20L341.709035%2C927.844782%20L339.780413%2C925.91616%20L346.697954%2C919%20Z%20M338.64341%2C928.723438%20C338.624068%2C928.79666%20338.644791%2C928.874026%20338.69729%2C928.927906%20C338.751169%2C928.981785%20338.828535%2C929.002508%20338.901757%2C928.981785%20L341.188197%2C928.365621%20L339.259574%2C926.436999%20L338.64341%2C928.723438%20Z%22%20transform%3D%22translate%28-338%20-919%29%22/%3E%3C/svg%3E);
+	-webkit-mask-image: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2211%22%20height%3D%2210%22%20viewBox%3D%220%200%2011%2010%22%3E%3Cpath%20fill%3D%22%23525C69%22%20d%3D%22M346.697954%2C919%20L348.626577%2C920.928622%20L341.709035%2C927.844782%20L339.780413%2C925.91616%20L346.697954%2C919%20Z%20M338.64341%2C928.723438%20C338.624068%2C928.79666%20338.644791%2C928.874026%20338.69729%2C928.927906%20C338.751169%2C928.981785%20338.828535%2C929.002508%20338.901757%2C928.981785%20L341.188197%2C928.365621%20L339.259574%2C926.436999%20L338.64341%2C928.723438%20Z%22%20transform%3D%22translate%28-338%20-919%29%22/%3E%3C/svg%3E);
+	mask-repeat: no-repeat;
+	mask-position: center;
+	opacity: 0.5;
+	transition: opacity 0.2s linear;
+	background-color: #525c69;
+}
+
+.bitrix24-light-theme .pagetitle-edit-button:before {
+	background-color: #c7cbcf;
 }
 
 .pagetitle-edit-button:hover:before {
 	opacity: 1;
+	transition-duration: unset;
 }
 
 /*region Card main*/
@@ -835,7 +844,7 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	color: #a3a9b1;
 	font: 12px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	-webkit-box-pack: justify;
-	justify-content: space-between;
+	/*justify-content: space-between;*/
 }
 
 .crm-entity-card-widget-edit .crm-entity-widget-content-block-title,
@@ -874,6 +883,10 @@ span.crm-entity-widget-client-connect-btn { margin-left: 25px; }
 	word-break: break-all;
 	word-break: break-word;
 	font: 15px/17px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+}
+
+.crm-entity-widget-content-block-mutlifield-type {
+	word-break: normal;
 }
 
 .crm-entity-widget-content-block-inner .field_crm_entity_type {
@@ -1299,7 +1312,7 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .crm-entity-widget-content-block-inner-box-title-text {
 	color: #333;
 	vertical-align: middle;
-	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-widget-content-block-inner-box-title-desc {
@@ -1432,7 +1445,7 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 	width: calc(100% - 20px);
 	color: #525c69;
 	white-space: nowrap;
-	font: bold 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px/16px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	transition: border-bottom .3s;
 }
 
@@ -1658,7 +1671,7 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .crm-entity-requisites-slider-widget-title-text {
 	color: #525c69;
 	vertical-align: middle;
-	font: bold 14px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/24px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-requisites-slider-remove {
@@ -1945,12 +1958,12 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .money-editor > input[type="text"],
 .field-item.money > input[type="text"],
 .crm-entity-widget-content-block-field-container-double .crm-entity-widget-content-input,
-.crm-entity-widget-content-block-field-container-double .crm-entity-widget-content-input-phone-wrapper { margin-right: 10px; }
+.crm-entity-widget-content-block-field-container-double .crm-entity-widget-content-input-wrapper { margin-right: 10px; }
 
 .crm-entity-widget-content-input,
 .money-editor > input[type="text"],
 .field-item.money > input[type="text"],
-.crm-entity-widget-content-input-phone-wrapper {
+.crm-entity-widget-content-input-wrapper {
 	-webkit-box-flex: 1.8;
 	-ms-flex: 1.8;
 	flex: 1.8;
@@ -1983,7 +1996,6 @@ a.crm-entity-widget-client-box-name:hover { color: #3f51b5; }
 .field-item.datetime {
 	position: relative;
 	width: 50%;
-	min-width: 220px;
 }
 
 .fields.crm_status select,
@@ -2180,7 +2192,7 @@ div.crm-entity-widget-content-block-checkbox-label {
 	background: #e0e5e9;
 	color: #525c69;
 	text-align: center;
-	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-widget-content-block-badge-fields .crm-entity-widget-content-block-checkbox-label {
@@ -2244,7 +2256,7 @@ div.crm-entity-widget-content-block-radio-label {
 	background: #e0e5e9;
 	color: #525c69;
 	text-align: center;
-	font: bold 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px/15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-widget-content-block-radio-description {
@@ -3589,7 +3601,7 @@ div.crm-entity-widget-content-block-radio-label {
 	text-transform: uppercase;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font: bold 7px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 7px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 	-o-text-overflow: ellipsis;
 }
@@ -3917,7 +3929,7 @@ div.crm-entity-widget-content-block-radio-label {
 }
 
 .crm-entiy-widget-inner-search-field .crm-entity-widget-content-input,
-.crm-entiy-widget-inner-search-field .crm-entity-widget-content-input-phone-wrapper {
+.crm-entiy-widget-inner-search-field .crm-entity-widget-content-input-wrapper {
 	-webkit-box-flex: 1;
 	-ms-flex-positive: 1;
 	flex-grow: 1;
@@ -4045,9 +4057,25 @@ div.crm-entity-widget-content-block-radio-label {
 }
 
 .crm-entity-card-container-content .ui-entity-editor-header-title-text {
+	display: inline;
+	word-wrap: break-word;
 	text-transform: uppercase;
 	font: 11px/23px var(--ui-font-family-secondary, var(--ui-font-family-open-sans));
 	font-weight: var(--ui-font-weight-semi-bold, 600);
+}
+
+.crm-entity-card-container-content input.ui-entity-editor-header-title-text {
+	display: block;
+	width: 100%;
+}
+
+.crm-entity-card-container-content .ui-entity-editor-header-title {
+	flex: 1;
+	overflow: hidden;
+}
+
+.crm-entity-card-container-content .ui-entity-editor-header-actions {
+	margin-left: 15px;
 }
 
 .crm-entity-card-container-content .ui-entity-editor-section-edit .crm-widget-employee-remove,
@@ -4296,7 +4324,8 @@ div.crm-entity-widget-content-block-radio-label {
 
 .crm-entity-widget-payment-label .ui-label-inner, .crm-entity-widget-payment-action .ui-label-inner {
 	text-transform: uppercase;
-	font: 700 9px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: 9px/13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font-weight: var(--ui-font-weight-bold);
 }
 
 .ui-label-light, .ui-label:not(.ui-label-fill) {

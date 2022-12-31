@@ -210,7 +210,7 @@ export class UserPopup
 
 			if (Type.isString(users[i]['AVATAR']) && users[i]['AVATAR'])
 			{
-				avatarIcon = `<i style="background-image: url('${users[i]['AVATAR']}')"></i>`;
+				avatarIcon = `<i style="background-image: url('${encodeURI(users[i]['AVATAR'])}')"></i>`;
 			}
 
 			const userNode = Tag.render`

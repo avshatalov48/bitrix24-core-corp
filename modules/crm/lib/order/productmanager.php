@@ -6,7 +6,7 @@ use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Order\OrderDealSynchronizer\Products\ProductRowXmlId;
 use Bitrix\Main\Type\Date;
-use Bitrix\Sale;
+use Bitrix\Catalog;
 
 Main\Localization\Loc::loadMessages(__FILE__);
 
@@ -66,7 +66,7 @@ class ProductManager
 			return $result;
 		}
 
-		/** @var Sale\BasketItem $basketItem */
+		/** @var BasketItem $basketItem */
 		foreach ($this->order->getBasket() as $basketItem)
 		{
 			$item = $basketItem->toArray();
@@ -94,6 +94,8 @@ class ProductManager
 	{
 		$orderProducts = $this->getUnShippableProductList();
 		$entityProducts = $this->getConvertedToBasketEntityProductList();
+
+		$entityProducts = $this->filterShippableProducts($entityProducts);
 
 		return
 			(new ProductManager\MergeStrategy\Selling($this->getOrder()))
@@ -172,7 +174,7 @@ class ProductManager
 			/** @var Payment $payment */
 			foreach ($this->order->getPaymentCollection() as $payment)
 			{
-				/** @var Sale\PayableBasketItem $payable */
+				/** @var PayableBasketItem $payable */
 				foreach ($payment->getPayableItemCollection()->getBasketItems() as $payable)
 				{
 					$basketItem = $payable->getEntityObject();
@@ -199,6 +201,7 @@ class ProductManager
 			'PRODUCT_ID' => $basketItem->getField('PRODUCT_ID'),
 			'OFFER_ID' => $basketItem->getField('PRODUCT_ID'),
 			'QUANTITY' => (float)$basketItem->getField('QUANTITY'),
+			'TYPE' => (int)$basketItem->getField('TYPE'),
 		];
 	}
 
@@ -214,7 +217,7 @@ class ProductManager
 			$shipment = $this->order->getShipmentCollection()->getSystemShipment();
 
 			/** @var ShipmentItem $shipmentItem */
-			foreach ($shipment->getShipmentItemCollection() as $shipmentItem)
+			foreach ($shipment->getShipmentItemCollection()->getShippableItems() as $shipmentItem)
 			{
 				/** @var BasketItem $basketItem */
 				$basketItem = $shipmentItem->getBasketItem();
@@ -492,6 +495,18 @@ class ProductManager
 			return $resultProductList;
 		}
 
+		$productIds = [];
+		foreach ($basketProducts as $product)
+		{
+			$productId = (int)($product['skuId'] ?? $product['productId']);
+			if ($productId)
+			{
+				$productIds[] = $productId;
+			}
+		}
+
+		$productTypes = self::getCatalogProductTypes(array_unique($productIds));
+
 		$usedIndexes = [];
 		foreach ($basketProducts as $product)
 		{
@@ -628,6 +643,7 @@ class ProductManager
 				'TAX_RATE' => $product['taxRate'],
 				'TAX_INCLUDED' => $product['taxIncluded'],
 				'XML_ID' => $basketId ? ProductRowXmlId::getXmlIdFromBasketId($basketId) : null,
+				'TYPE' => $productTypes[$productId] ?? Crm\ProductType::TYPE_PRODUCT,
 			];
 
 			if (!empty($product['discount']))
@@ -647,5 +663,35 @@ class ProductManager
 		}
 
 		return $resultProductList;
+	}
+
+	private function filterShippableProducts(array $products): array
+	{
+		return array_filter($products, static function ($product) {
+			return $product['TYPE'] === null;
+		});
+	}
+
+	private static function getCatalogProductTypes(array $productIds): array
+	{
+		$result = [];
+
+		if (!$productIds || !Main\Loader::includeModule('catalog'))
+		{
+			return $result;
+		}
+
+		$productIterator = Catalog\ProductTable::getList([
+			'select' => ['ID', 'TYPE'],
+			'filter' => [
+				'@ID' => $productIds,
+			],
+		]);
+		while ($product = $productIterator->fetch())
+		{
+			$result[$product['ID']] = (int)$product['TYPE'];
+		}
+
+		return $result;
 	}
 }

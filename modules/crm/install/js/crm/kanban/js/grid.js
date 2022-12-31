@@ -44,6 +44,7 @@ BX.CRM.Kanban.Grid = function(options)
 	BX.addCustomEvent("BX.Crm.EntityEditor:onForceCommonConfigScopeForAll", BX.proxy(this.onForceCommonEditorConfigScopeForAll, this));
 	// BX.addCustomEvent("BX.CRM.Kanban.Item.select", BX.proxy(this.onMultiSelectMode, this));
 	BX.addCustomEvent("onPopupShow", BX.proxy(this.onPopupShow, this));
+	BX.addCustomEvent("onPopupClose", BX.proxy(this.onPopupClose, this));
 	BX.addCustomEvent("CrmDragItemDragRelease", BX.proxy(this.onEditorDragItemRelease, this));
 
 	//setInterval(BX.proxy(this.loadNew, this), this.loadNewInterval * 1000);
@@ -76,11 +77,13 @@ BX.CRM.Kanban.Grid.prototype = {
 	ccItem: null,
 	restItem: null,
 	popupCancel: null,
+	handleScrollWithOpenPopupInKanbanColumn: null,
 	dropZonesShow: false,
 	schemeInline: null,
 	isBindEvents: false,
 	fieldsSelectors: {},
 	headersSections: {},
+	animationDuration: 800,
 
 	/**
 	 * Get current checkeds items.
@@ -473,6 +476,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		data.sessid = BX.bitrix_sessid();
 		data.extra = gridData.params;
 		data.entity_type = gridData.entityType;
+		data.viewMode = gridData.viewMode;
 		data.version = 2;
 		data.ajaxParams = this.ajaxParams;
 		data.entityPath = gridData.entityPath;
@@ -958,9 +962,10 @@ BX.CRM.Kanban.Grid.prototype = {
 	 * @param {boolean} force Force load without filter.
 	 * @param {boolean} forceUpdate Force update entity.
 	 * @param {boolean} onlyItems
+	 * @param {boolean} useAnimation
 	 * @returns {Promise}
 	 */
-	loadNew: function(id, force, forceUpdate, onlyItems)
+	loadNew: function(id, force, forceUpdate, onlyItems, useAnimation)
 	{
 		var gridData = this.getData();
 		var entityIds = (typeof id !== 'undefined' ? (Array.isArray(id) ? id : [id]) : 0);
@@ -985,6 +990,8 @@ BX.CRM.Kanban.Grid.prototype = {
 		{
 			return Promise.resolve();
 		}
+
+		useAnimation = BX.Type.isBoolean(useAnimation) ? useAnimation : false;
 
 		return new Promise(function(resolve, reject){
 			this.ajax(
@@ -1012,6 +1019,7 @@ BX.CRM.Kanban.Grid.prototype = {
 							for (var i = data.items.length - 1; i >= 0; i--)
 							{
 								var item = data.items[i];
+								item.useAnimation = useAnimation;
 								var existItem = this.getItem(item.id);
 								if (item.id <= 0)
 								{
@@ -1033,11 +1041,22 @@ BX.CRM.Kanban.Grid.prototype = {
 										newColumn.incPrice(parseFloat(item.data.price));
 										existItem.data.price = item.data.price;
 
+										const sorter = BX.CRM.Kanban.Sort.Sorter.createWithCurrentSortType(newColumn.getItems());
+										const beforeItem = sorter.calcBeforeItemByParams(item.data.sort);
+
 										if (newColumn !== existColumn || forceUpdate === true)
 										{
 											item.notChangeTotal = true;
+											if (beforeItem)
+											{
+												item.targetId = beforeItem.getId();
+											}
 											this.updateItem(item.id, item);
 											titlesForRender[newColumn.getId()] = newColumn;
+										}
+										else if (newColumn.getPreviousItemSibling(existItem) !== beforeItem)
+										{
+											this.moveItem(existItem, newColumn, beforeItem);
 										}
 									}
 									else
@@ -1108,6 +1127,10 @@ BX.CRM.Kanban.Grid.prototype = {
 			if (options.notChangeTotal)
 			{
 				item.notChangeTotal = options.notChangeTotal;
+			}
+			if (options.useAnimation)
+			{
+				item.useAnimation = options.useAnimation;
 			}
 			this.moveItem(item, this.getColumn(options.columnId), this.getItem(options.targetId));
 		}
@@ -1266,6 +1289,18 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onBeforeItemMoved: function(event)
 	{
+		if (this.isBlockedIncomingMoving(event.targetColumn))
+		{
+			BX.UI.Notification.Center.notify(
+				{
+					content: BX.message('CRM_KANBAN_MOVE_ITEM_TO_COLUMN_BLOCKED_2'),
+					autoHideDelay: 5000,
+				}
+			);
+
+			event.denyAction();
+		}
+
 		var item = event.getItem();
 		var column = item.getColumn();
 
@@ -1778,8 +1813,12 @@ BX.CRM.Kanban.Grid.prototype = {
 				this.unhideItem(this.ccItem);
 			}
 			gridData.contactCenterShow = !gridData.contactCenterShow;
-			menu.removeMenuItem('crm_kanban_cc_delimiter');
-			menu.removeMenuItem('crm_kanban_cc');
+
+			if (menu)
+			{
+				menu.removeMenuItem('crm_kanban_cc_delimiter');
+				menu.removeMenuItem('crm_kanban_cc');
+			}
 		}
 
 		this.ajax({
@@ -2433,7 +2472,7 @@ BX.CRM.Kanban.Grid.prototype = {
 		var match = sliderUrl.match(new RegExp(maskUrl));
 		if (match && match[1])
 		{
-			this.loadNew(match[1], false, true, true);
+			this.loadNew(match[1], false, true, true, true);
 		}
 	},
 
@@ -2444,6 +2483,21 @@ BX.CRM.Kanban.Grid.prototype = {
 	 */
 	onPopupShow: function(popupWindow)
 	{
+		if (this.isPopupInKanbanColumn(popupWindow)) {
+
+			if (this.handleScrollWithOpenPopupInKanbanColumn) {
+				this.onPopupClose();
+			}
+
+			this.handleScrollWithOpenPopupInKanbanColumn = (e) => {
+				popupWindow.close();
+			}
+
+			BX.Event.EventEmitter.subscribe(this, 'Kanban.Column:onScroll', this.handleScrollWithOpenPopupInKanbanColumn);
+			BX.Event.bind(window, 'scroll', this.handleScrollWithOpenPopupInKanbanColumn);
+			BX.Event.bind(this.layout.gridContainer, 'scroll', this.handleScrollWithOpenPopupInKanbanColumn);
+		}
+
 		var kanbanSettingsClasses = [
 			'menu-popup-toolbar_lead_list_menu',
 			'menu-popup-toolbar_deal_list_menu',
@@ -2489,6 +2543,37 @@ BX.CRM.Kanban.Grid.prototype = {
 				}, null);
 			}
 		}
+	},
+
+	/**
+	 * On popup close.
+	 * @returns {void}
+	 */
+	onPopupClose: function() {
+		if (this.handleScrollWithOpenPopupInKanbanColumn) {
+			BX.Event.EventEmitter.unsubscribe(this, 'Kanban.Column:onScroll', this.handleScrollWithOpenPopupInKanbanColumn);
+			BX.Event.unbind(window, 'scroll', this.handleScrollWithOpenPopupInKanbanColumn);
+			BX.Event.unbind(this.layout.gridContainer, 'scroll', this.handleScrollWithOpenPopupInKanbanColumn);
+
+			this.handleScrollWithOpenPopupInKanbanColumn = null;
+		}
+	},
+
+	/**
+	 * Is popup kanban column.
+	 * @param {BX.PopupWindow} popupWindow
+	 * @returns {boolean}
+	 */
+	isPopupInKanbanColumn(popupWindow)
+	{
+		const kanbanColumnClassname = 'main-kanban-column';
+		let kanbanColumnElem = popupWindow.bindElement;
+
+		while (kanbanColumnElem && !BX.Dom.hasClass(kanbanColumnElem, kanbanColumnClassname)) {
+			kanbanColumnElem = kanbanColumnElem.parentNode;
+		}
+
+		return !!kanbanColumnElem;
 	},
 
 	/**
@@ -2572,7 +2657,8 @@ BX.CRM.Kanban.Grid.prototype = {
 		{
 			categories.push({
 				id: columns[i].id,
-				name: columns[i].name
+				name: columns[i].name,
+				blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
 			});
 		}
 		for (var i = 0, c = drops.length; i < c; i++)
@@ -2592,12 +2678,18 @@ BX.CRM.Kanban.Grid.prototype = {
 			{
 				categories.push({
 					id: drops[i].id,
-					name: drops[i].name
+					name: drops[i].name,
+					blockedIncomingMoving: this.isBlockedIncomingMoving(columns[i]),
 				});
 			}
 		}
 		for (var i = 0, c = categories.length; i < c; i++)
 		{
+			if (categories[i].blockedIncomingMoving)
+			{
+				continue;
+			}
+
 			items.push({
 				id: "kanban_column_" + categories[i].id,
 				column: categories[i],
@@ -2646,7 +2738,7 @@ BX.CRM.Kanban.Grid.prototype = {
 			}
 			this.actionPanel.appendItem({
 				id: "kanban_category",
-				text: BX.message("CRM_KANBAN_PANEL_CATEGORY"),
+				text: BX.message("CRM_KANBAN_PANEL_CATEGORY2"),
 				icon: "/bitrix/js/crm/kanban/images/crm-kanban-actionpanel-fulling.svg",
 				items: items
 			});
@@ -2805,6 +2897,11 @@ BX.CRM.Kanban.Grid.prototype = {
 				}.bind(this)
 			});
 		}*/
+	},
+
+	isBlockedIncomingMoving: function(column)
+	{
+		return ((column && column.data && column.data.blockedIncomingMoving) || false);
 	},
 
 	/**
@@ -2989,23 +3086,29 @@ BX.CRM.Kanban.Grid.prototype = {
 		this.onApplyFilter();
 	},
 
-	insertItem: function(item)
+	insertItem: function(item, params = {})
 	{
-		var beforeItem = null;
+		const columnId = (params.hasOwnProperty('newColumnId') ? params.newColumnId : item.columnId);
+		const newColumn = this.getColumn(columnId);
 
-		var newColumn = this.getColumn(item.getData().columnId);
 		if(newColumn)
 		{
-			if (item !== newColumn.getFirstItem())
+			const sorter = BX.CRM.Kanban.Sort.Sorter.createWithCurrentSortType(newColumn.getItems());
+
+			const beforeItem = sorter.calcBeforeItem(item);
+			if (
+				sorter.getSortType() === BX.CRM.Kanban.Sort.Type.BY_LAST_ACTIVITY_TIME
+				&& params.canShowLastActivitySortTour
+			)
 			{
-				beforeItem = newColumn.getFirstItem();
-			}
-			else if(item === newColumn.getFirstItem() && newColumn.getItemsCount() > 1)
-			{
-				beforeItem = newColumn.getNextItemSibling(newColumn.getFirstItem());
+				BX.Event.EventEmitter.emit('Kanban.Grid::onShowSortByLastActivityTour', {
+					target: ".main-kanban-item[data-id='"+item.id+"']",
+					stepId: 'step-sort-by-last-activity-time',
+					delay: 1000,
+				});
 			}
 
-			this.moveItem(item, item.getData().columnId, beforeItem);
+			this.moveItem(item, newColumn.getId(), beforeItem);
 		}
 		else
 		{
@@ -3082,24 +3185,28 @@ BX.CRM.Kanban.Grid.prototype = {
 		return this.getData().typeInfo;
 	},
 
+	/**
+	 * @returns {BX.Main.Menu|null}
+	 */
 	getSettingsButtonMenu: function()
 	{
-		var toolbar = BX.UI.ToolbarManager.getDefaultToolbar();
-		if (!toolbar)
-		{
-			return;
-		}
-		var settingsButtonMenu = null;
-		for (const [key, button] of Object.entries(toolbar.buttons)) {
-			if (button.icon == 'ui-btn-icon-setting')
-			{
-				settingsButtonMenu = button.menuWindow;
+		const button = BX.Crm.ToolbarComponent.Instance.getSettingsButton();
 
-				break;
-			}
-		}
+		return button ? button.getMenuWindow() : null;
+	},
 
-		return settingsButtonMenu;
+	setCurrentSortType(sortType)
+	{
+		return new Promise((resolve, reject) => {
+			this.ajax(
+				{
+					action: 'setCurrentSortType',
+					sortType,
+				},
+				resolve,
+				reject,
+			);
+		});
 	}
 };
 

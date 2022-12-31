@@ -286,6 +286,48 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			$fields['SYSTEM_CODE'] = '';
 		}
 
+		if (!empty($fields['PARAMETERS']))
+		{
+			$maxParametersLength = 65535;
+			if (self::getCompressedFieldLength($fields['PARAMETERS']) > $maxParametersLength)
+			{
+				$response = "
+					<script>
+						alert('" . Loc::getMessage('BIZPROC_WFEDIT_PARAMETERS_SAVE_ERROR') . "');
+					</script>
+				";
+				$this->sendResponse($response);
+			}
+		}
+
+		if (!empty($fields['VARIABLES']))
+		{
+			$maxVariablesLength = 65535;
+			if (self::getCompressedFieldLength($fields['VARIABLES']) > $maxVariablesLength)
+			{
+				$response = "
+					<script>
+						alert('" . Loc::getMessage('BIZPROC_WFEDIT_VARIABLES_SAVE_ERROR') . "');
+					</script>
+				";
+				$this->sendResponse($response);
+			}
+		}
+
+		if (!empty($fields['CONSTANTS']))
+		{
+			$maxConstantsLength = 16777215;
+			if (self::getCompressedFieldLength($fields['CONSTANTS']) > $maxConstantsLength)
+			{
+				$response = "
+					<script>
+						alert('" . Loc::getMessage('BIZPROC_WFEDIT_CONSTANTS_SAVE_ERROR') . "');
+					</script>
+				";
+				$this->sendResponse($response);
+			}
+		}
+
 		try
 		{
 			if($this->arResult['ID'] > 0)
@@ -389,5 +431,15 @@ class CDiskBizprocEditComponent extends BaseComponent implements SidePanelWrappa
 			}
 			$this->sendResponse($response);
 		}
+	}
+
+	private static function getCompressedFieldLength($field)
+	{
+		if (CBPWorkflowTemplateLoader::useGZipCompression())
+		{
+			return mb_strlen(gzcompress(serialize($field), 9));
+		}
+
+		return mb_strlen(serialize($field));
 	}
 }

@@ -15,6 +15,7 @@ import Zoom from "../items/scheduled/zoom";
 import ItemNew from "../animations/item-new";
 import {ConfigurableItem} from "crm.timeline.item";
 import {StreamType} from 'crm.timeline.item';
+import {DatetimeConverter} from "crm.timeline.tools";
 
 /** @memberof BX.Crm.Timeline.Streams */
 export default class Schedule extends Stream
@@ -27,16 +28,10 @@ export default class Schedule extends Stream
 		this._wrapper = null;
 		this._anchor = null;
 		this._stub = null;
-		this._timeFormat = "";
 	}
 
 	doInitialize()
 	{
-		const datetimeFormat = BX.message("FORMAT_DATETIME").replace(/:SS/, "");
-		const dateFormat = BX.message("FORMAT_DATE");
-		const timeFormat = BX.util.trim(datetimeFormat.replace(dateFormat, ""));
-		this._timeFormat = BX.date.convertBitrixFormat(timeFormat);
-
 		if(!this.isStubMode())
 		{
 			let itemData = this.getSetting("itemData");
@@ -175,17 +170,7 @@ export default class Schedule extends Stream
 
 	formatDateTime(time)
 	{
-		const now = new Date();
-		return BX.date.format(
-			[
-				[ "today", "today, " + this._timeFormat ],
-				[ "tommorow", "tommorow, " + this._timeFormat ],
-				[ "yesterday", "yesterday, " + this._timeFormat ],
-				[ "" , (time.getFullYear() === now.getFullYear() ? "j F " : "j F Y ") + this._timeFormat ]
-			],
-			time,
-			now
-		);
+		return (new DatetimeConverter(time)).toDatetimeString({delimiter: ', '});
 	}
 
 	checkItemForTermination(item)
@@ -209,37 +194,24 @@ export default class Schedule extends Stream
 
 	calculateItemIndex(item)
 	{
-		let i, length;
-		const time = item.getDeadline();
-		if(time)
-		{
-			//Item has deadline
-			for(i = 0, length = this._items.length; i < length; i++)
-			{
-				const curTime = this._items[i].getDeadline();
-				if(!curTime || time <= curTime)
-				{
-					return i;
-				}
-			}
-		}
-		else
-		{
-			//Item has't deadline
-			const sourceId = item.getSourceId();
-			for(i = 0, length = this._items.length; i < length; i++)
-			{
-				if(this._items[i].getDeadline())
-				{
-					continue;
-				}
+		const sort = item.getSort();
 
-				if(sourceId <= this._items[i].getSourceId())
+		for(let i =0; i < this._items.length; i++)
+		{
+			const curSort = this._items[i].getSort();
+			for (let j = 0; j < curSort.length; j++)
+			{
+				if (sort.length <= j || sort[j] !== curSort[j])
 				{
-					return i;
+					if (sort[j] < curSort[j])
+					{
+						return i;
+					}
+					break;
 				}
 			}
 		}
+
 		return this._items.length;
 	}
 
@@ -311,6 +283,9 @@ export default class Schedule extends Stream
 				container: this.getWrapper(),
 				itemClassName: this.getItemClassName(),
 				isReadOnly: this.isReadOnly(),
+				currentUser: this._manager.getCurrentUser(),
+				ownerTypeId: this._manager.getOwnerTypeId(),
+				ownerId: this._manager.getOwnerId(),
 				streamType: this.getStreamType(),
 				data: data,
 			})
@@ -610,8 +585,13 @@ export default class Schedule extends Stream
 	{
 		if(!this._stub)
 		{
-			const stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
+			let stubClassName = "crm-entity-stream-section crm-entity-stream-section-planned crm-entity-stream-section-notTask";
 			let stubIconClassName = "crm-entity-stream-section-icon crm-entity-stream-section-icon-info";
+			const canAddTodo = this.getManager().getSetting('enableTodo', false);
+			if (canAddTodo && !this.isReadOnly())
+			{
+				stubClassName += ' --active';
+			}
 
 			let stubMessage = this.getMessage("stub");
 
@@ -648,6 +628,12 @@ export default class Schedule extends Stream
 														[
 															BX.create("DIV",
 																{
+																	attrs: { className: "crm-entity-stream-content-title" },
+																	text: this.getMessage("stubTitle"),
+																}
+															),
+															BX.create("DIV",
+																{
 																	attrs: { className: "crm-entity-stream-content-detail" },
 																	text: stubMessage
 																}
@@ -661,6 +647,10 @@ export default class Schedule extends Stream
 						]
 				}
 			);
+			if (canAddTodo && !this.isReadOnly())
+			{
+				BX.bind(this._stub, "click", BX.delegate(this.focusOnTodoEditor, this));
+			}
 			this._wrapper.appendChild(this._stub);
 		}
 
@@ -681,6 +671,15 @@ export default class Schedule extends Stream
 			this._stub = BX.remove(this._stub);
 		}
 
+	}
+
+	focusOnTodoEditor()
+	{
+		const menuBar = this.getManager().getMenuBar();
+		menuBar.setActiveItemById('todo');
+
+		const todoEditor = menuBar.getTodoEditor();
+		todoEditor.setFocused();
 	}
 
 	getMessage(name)

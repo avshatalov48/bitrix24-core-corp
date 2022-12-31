@@ -7,6 +7,7 @@ use Bitrix\Crm\Integration;
 use Bitrix\Crm\ItemIdentifier;
 use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Service\Timeline\Context;
+use Bitrix\Crm\Timeline\Entity\NoteTable;
 use Bitrix\Main;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
@@ -143,6 +144,35 @@ class ActivityController extends EntityController
 				)
 			);
 		}
+		elseif($typeID === \CCrmActivityType::Provider
+			&& isset($fields['PROVIDER_ID'])
+			&& $fields['PROVIDER_ID'] === Activity\Provider\ToDo::getId()
+		)
+		{
+			$logMessageController = LogMessageController::getInstance();
+			foreach ($bindings as $binding)
+			{
+				$logMessageController->onCreate(
+					[
+						'ENTITY_TYPE_ID' => $binding['OWNER_TYPE_ID'],
+						'ENTITY_ID' => $binding['OWNER_ID'],
+						'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
+						'ASSOCIATED_ENTITY_ID' => $ownerID,
+						'SETTINGS' => [
+							'ACTIVITY_DATA' => [
+								'DESCRIPTION' => $fields['DESCRIPTION'],
+								'ASSOCIATED_ENTITY_ID' => $fields['ASSOCIATED_ENTITY_ID'],
+								'DEADLINE_TIMESTAMP' => $fields['DEADLINE'] ? (DateTime::createFromUserTime($fields['DEADLINE'])->getTimestamp()) : null,
+							]
+						]
+					],
+					LogMessageType::TODO_CREATED,
+					$params['CURRENT_USER'] ?? null
+				);
+			}
+
+
+		}
 
 		if(isset($params['ENABLE_PUSH']) && $params['ENABLE_PUSH'] === false)
 		{
@@ -152,6 +182,10 @@ class ActivityController extends EntityController
 		$enableHistoryPush = $historyEntryID > 0;
 		$enableSchedulePush = self::isActivitySupported($fields) && $status === \CCrmActivityStatus::Waiting;
 
+		if (!isset($fields['CREATED']))
+		{
+			$fields['CREATED'] = (new DateTime())->toString();
+		}
 		$pullEventData = [$ownerID => $fields];
 
 		if ($enableSchedulePush)
@@ -206,6 +240,8 @@ class ActivityController extends EntityController
 			? $params['CURRENT_BINDINGS'] : array();
 		$previousFields = isset($params['PREVIOUS_FIELDS']) && is_array($params['PREVIOUS_FIELDS'])
 			? $params['PREVIOUS_FIELDS'] : array();
+		$additionalParams = isset($params['ADDITIONAL_PARAMS']) && is_array($params['ADDITIONAL_PARAMS'])
+			? $params['ADDITIONAL_PARAMS'] : [];
 
 		$typeID = isset($currentFields['TYPE_ID']) ? (int)$currentFields['TYPE_ID'] : \CCrmActivityType::Undefined;
 		$providerID = isset($currentFields['PROVIDER_ID']) ? $currentFields['PROVIDER_ID'] : '';
@@ -258,6 +294,16 @@ class ActivityController extends EntityController
 					'BINDINGS' => self::mapBindings($currentBindings),
 				];
 
+				// workaround to correct sort timeline history of completed calls
+				// when it automatically close
+				if (
+					isset($additionalParams['CUSTOM_CREATION_TIME'])
+					&& Crm\Settings\Crm::isUniversalActivityScenarioEnabled()
+				)
+				{
+					$historyData['CREATED'] = DateTime::createFromUserTime($additionalParams['CUSTOM_CREATION_TIME'])->add('-1 second');
+				}
+
 				if (
 					isset($params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'])
 					&& $params['CURRENT_FIELDS']['SETTINGS']['MISSED_CALL'] === true
@@ -272,7 +318,16 @@ class ActivityController extends EntityController
 		}
 		elseif($prevCompleted && !$curCompleted)
 		{
-			if($typeID == \CCrmActivityType::Provider && $providerID == Activity\Provider\Zoom::PROVIDER_ID)
+			if(
+				$typeID == \CCrmActivityType::Provider
+				&& in_array(
+					$providerID,
+					[
+						Activity\Provider\ToDo::getId(),
+						Activity\Provider\Zoom::getId(),
+					]
+				)
+			)
 			{
 				// do nothing
 			}
@@ -572,6 +627,7 @@ class ActivityController extends EntityController
 			Activity\Provider\StoreDocument::getId(),
 			Activity\Provider\Document::getId(),
 			Activity\Provider\SignDocument::getId(),
+			Activity\Provider\ToDo::getId(),
 		];
 	}
 
@@ -589,6 +645,7 @@ class ActivityController extends EntityController
 			|| $providerID === Activity\Provider\Zoom::getId()
 			|| $providerID === Activity\Provider\Document::getId()
 			|| $providerID === Activity\Provider\SignDocument::getId()
+			|| $providerID === Activity\Provider\ToDo::getId()
 		);
 	}
 
@@ -616,19 +673,38 @@ class ActivityController extends EntityController
 			array('ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => 512)
 		);
 
-		if(isset($data['DEADLINE']))
+		$sort = [];
+		$createdTimestamp = MakeTimeStamp($data['CREATED']) - \CTimeZone::GetOffset();
+		$data['CREATED_SERVER'] = date(
+			'Y-m-d H:i:s',
+			$createdTimestamp
+		);
+		if ($data['IS_INCOMING_CHANNEL'] === 'Y')
+		{
+			// incoming channel activities have a negative timestamp because they must be first in the list
+			// and must be sorted in reverse order:
+			$sort = [-$createdTimestamp, (int)$data['ID']];
+		}
+		elseif(isset($data['DEADLINE']))
 		{
 			if(isset($data['DEADLINE']) && \CCrmDateTimeHelper::IsMaxDatabaseDate($data['DEADLINE']))
 			{
 				unset($data['DEADLINE']);
+				$sort = [PHP_INT_MAX, (int)$data['ID']];
 			}
 			else
 			{
+				$deadlineTimestamp = MakeTimeStamp($data['DEADLINE']) - \CTimeZone::GetOffset();
 				$data['DEADLINE_SERVER'] = date(
 					'Y-m-d H:i:s',
-					MakeTimeStamp($data['DEADLINE']) - \CTimeZone::GetOffset()
+					$deadlineTimestamp
 				);
+				$sort = [$deadlineTimestamp, (int)$data['ID']];
 			}
+		}
+		else
+		{
+			$sort = [PHP_INT_MAX, (int)$data['ID']];
 		}
 
 		$ID = isset($data['ID']) ? (int)$data['ID'] : 0;
@@ -724,7 +800,8 @@ class ActivityController extends EntityController
 			'ASSOCIATED_ENTITY_TYPE_ID' => \CCrmOwnerType::Activity,
 			'ASSOCIATED_ENTITY_ID' => $ID,
 			'ASSOCIATED_ENTITY' => $data,
-			'AUTHOR_ID' => isset($data['RESPONSIBLE_ID']) ? (int)$data['RESPONSIBLE_ID'] : 0
+			'AUTHOR_ID' => isset($data['RESPONSIBLE_ID']) ? (int)$data['RESPONSIBLE_ID'] : 0,
+			'sort' => $sort,
 		);
 
 		if(isset($options['ENABLE_USER_INFO']) && $options['ENABLE_USER_INFO'] === true)
@@ -749,10 +826,13 @@ class ActivityController extends EntityController
 		$typeID = isset($fields['TYPE_ID']) ? (int)$fields['TYPE_ID'] : 0;
 		$providerID = isset($fields['PROVIDER_ID']) ? $fields['PROVIDER_ID'] : '';
 
-		\CCrmActivity::PrepareDescriptionFields(
-			$fields,
-			array('ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => 512)
-		);
+		if ($providerID !== Activity\Provider\ToDo::getId())
+		{
+			\CCrmActivity::PrepareDescriptionFields(
+				$fields,
+				['ENABLE_HTML' => false, 'ENABLE_BBCODE' => false, 'LIMIT' => 512]
+			);
+		}
 
 		$ownerTypeID = isset($fields['OWNER_TYPE_ID']) ? (int)$fields['OWNER_TYPE_ID'] : \CCrmOwnerType::Undefined;
 		$ownerID = isset($fields['OWNER_ID']) ? (int)$fields['OWNER_ID'] : 0;
@@ -953,7 +1033,7 @@ class ActivityController extends EntityController
 		);
 		return is_object($dbResult) ? $dbResult->Fetch() : null;
 	}
-	protected static function resolveAuthorID(array $fields)
+	public static function resolveAuthorID(array $fields)
 	{
 
 		$authorID = 0;
@@ -1127,10 +1207,10 @@ class ActivityController extends EntityController
 		);
 	}
 
-	final public function notifyTimelinesAboutActivityUpdate(array $activity, ?int $userId = null): void
+	final public function notifyTimelinesAboutActivityUpdate(array $activity, ?int $userId = null, bool $forceUpdateHistoryItems = false): void
 	{
 		$bindings = \CCrmActivity::GetBindings($activity['ID']);
-		$this->notifyTimelinesAboutActivityUpdateForBindings($activity, $bindings, $userId);
+		$this->notifyTimelinesAboutActivityUpdateForBindings($activity, $bindings, $userId, $forceUpdateHistoryItems);
 	}
 
 	protected function notifyTimelinesAboutActivityUpdateForBindings(array $activity, array $bindings, ?int $userId = null, bool $forceUpdateHistoryItems = false): void
@@ -1146,7 +1226,7 @@ class ActivityController extends EntityController
 		}
 
 		$isCompleted = ($activity['COMPLETED'] ?? 'N') === 'Y';
-		if ($isCompleted)
+		if ($isCompleted || $forceUpdateHistoryItems)
 		{
 			$timelineEntryIds = TimelineEntry::getEntriesIdsByAssociatedEntity(
 				\CCrmOwnerType::Activity,
@@ -1162,7 +1242,8 @@ class ActivityController extends EntityController
 				}
 			}
 		}
-		else
+
+		if (!$isCompleted)
 		{
 			$scheduledData = $activity;
 			$items = [$activity['ID'] => &$scheduledData];
@@ -1174,6 +1255,7 @@ class ActivityController extends EntityController
 					'ENABLE_PERMISSION_CHECK' => false,
 				]
 			);
+			$items = NoteTable::loadForItems($items, NoteTable::NOTE_TYPE_ACTIVITY);
 
 			foreach ($identifiers as $identifier)
 			{

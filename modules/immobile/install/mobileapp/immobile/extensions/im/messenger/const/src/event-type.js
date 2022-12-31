@@ -17,6 +17,8 @@ jn.define('im/messenger/const/event-type', (require, exports, module) => {
 		/** Messenger component events */
 		messenger: {
 			openDialog: 'ImMobile.Messenger.Dialog:open',
+			getOpenDialogParams: 'ImMobile.Messenger.Dialog:getOpenParams',
+			openDialogParams: 'ImMobile.Messenger.Dialog:openParams',
 			openLine: 'ImMobile.Messenger.Openlines:open',
 			getOpenLineParams: 'ImMobile.Messenger.Openlines:getOpenParams',
 			openLineParams: 'ImMobile.Messenger.Openlines:openParams',

@@ -12,6 +12,9 @@
 		},
 
 		ProductList: {
+			ListChanged: 'StoreEvents.ProductList.ListChanged',
+			StartUpdateSummary: 'StoreEvents.ProductList.StartUpdateSummary',
+			FinishUpdateSummary: 'StoreEvents.ProductList.FinishUpdateSummary',
 			TotalChanged: 'StoreEvents.ProductList.TotalChanged',
 		},
 

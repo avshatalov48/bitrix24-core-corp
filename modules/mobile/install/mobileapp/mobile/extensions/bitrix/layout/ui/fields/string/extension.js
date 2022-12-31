@@ -1,13 +1,27 @@
-(() => {
+/**
+ * @module layout/ui/fields/string
+ */
+jn.define('layout/ui/fields/string', (require, exports, module) => {
+
+	const { BaseField } = require('layout/ui/fields/base');
+	const { FocusManager } = require('layout/ui/fields/focus-manager');
+	const { isEqual } = require('utils/object');
+	const { stringify } = require('utils/string');
+
 	/**
-	 * @class Fields.StringInput
+	 * @class StringField
 	 */
-	class StringInput extends Fields.BaseField
+	class StringField extends BaseField
 	{
 		constructor(props)
 		{
 			super(props);
+
+			this.valueFromKeyboard = null;
+			this.state.showAll = this.getValue().length <= 180;
+
 			this.inputRef = null;
+			this.showHideButton = this.getValue().length > 180;
 		}
 
 		getConfig()
@@ -17,8 +31,83 @@
 			return {
 				...config,
 				keyboardType: 'default',
-				selectionOnFocus: BX.prop.getBoolean(config, 'selectionOnFocus', false)
+				autoCapitalize: BX.prop.getString(config, 'autoCapitalize', undefined),
+				enableKeyboardHide: BX.prop.getBoolean(config, 'enableKeyboardHide', false),
+				selectionOnFocus: BX.prop.getBoolean(config, 'selectionOnFocus', false),
+				ellipsize: BX.prop.getBoolean(config, 'ellipsize', false),
+				readOnlyElementType: BX.prop.getString(config, 'readOnlyElementType', 'Text'),
+				onLinkClick: BX.prop.getFunction(config, 'onLinkClick', undefined),
+				onSubmitEditing: BX.prop.getFunction(config, 'onSubmitEditing', null),
 			};
+		}
+
+		shouldComponentUpdate(nextProps, nextState)
+		{
+			if (this.isReadOnly() && this.showHideButton && this.state.showAll && this.props.value === nextProps.value)
+			{
+				this.state.showAll = false;
+
+				return true;
+			}
+
+			nextState = Array.isArray(nextState) ? nextState[0] : nextState;
+
+			let prevPropsToCompare = this.props;
+			let nextPropsToCompare = nextProps;
+
+			if (this.valueFromKeyboard !== null)
+			{
+				const valueFromKeyboard = this.valueFromKeyboard;
+
+				this.valueFromKeyboard = null;
+
+				if (valueFromKeyboard !== nextProps.value)
+				{
+					// console.log('!!! valueFromKeyboard not equal', this.valueFromKeyboard, nextProps.value);
+					return true;
+				}
+
+				const { value: prevValue, ...prevPropsWithoutValue } = this.props;
+				const { value: nextValue, ...nextPropsWithoutValue } = nextProps;
+
+				prevPropsToCompare = prevPropsWithoutValue;
+				nextPropsToCompare = nextPropsWithoutValue;
+			}
+
+			return !isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState);
+
+			// ToDo DEV: enable for debug
+			// if (!isEqual(prevPropsToCompare, nextPropsToCompare))
+			// {
+			// 	let found = false;
+			// 	for (const [key, value] of Object.entries(prevPropsToCompare))
+			// 	{
+			// 		if (!isEqual(prevPropsToCompare[key], nextPropsToCompare[key]))
+			// 		{
+			// 			console.log(prevPropsToCompare.title, prevPropsToCompare, key, value, nextPropsToCompare[key]);
+			// 			found = true;
+			// 		}
+			// 	}
+			//
+			// 	if (!found)
+			// 	{
+			// 		console.log('diff not found', prevPropsToCompare.title, prevPropsToCompare, nextPropsToCompare);
+			// 	}
+			// }
+			//
+			// if (!isEqual(this.state, nextState))
+			// {
+			// 	console.log('!!! state not equal', this.state, nextState);
+			// }
+			//
+			// if (!isEqual(prevPropsToCompare, nextPropsToCompare) || !isEqual(this.state, nextState))
+			// {
+			// 	return true;
+			// }
+			//
+			// console.log('OK!!! NO RENDER!!! ;)', prevPropsToCompare.title, this);
+			//
+			// return false;
 		}
 
 		hasKeyboard()
@@ -26,24 +115,88 @@
 			return true;
 		}
 
+		/**
+		 * @param {any} value
+		 * @returns {String}
+		 */
+		prepareSingleValue(value)
+		{
+			return stringify(value);
+		}
+
+		/**
+		 * @param {string} value
+		 * @returns {boolean}
+		 */
 		isEmptyValue(value)
 		{
-			return this.stringify(value).trim() === '';
+			return value.trim() === '';
 		}
 
 		getDefaultStyles()
 		{
-			const styles = super.getDefaultStyles();
+			const defaultStyles = super.getDefaultStyles();
+			const styles = this.getChildFieldStyles(defaultStyles);
+
+			if (this.isLeftTitlePosition())
+			{
+				return this.getLeftTitleChildStyles(styles);
+			}
+			else if (this.hasHiddenEmptyView())
+			{
+				return this.getHiddenEmptyChildFieldStyles(styles);
+			}
+
+			return styles;
+		}
+
+		getChildFieldStyles(styles)
+		{
+			return {
+				...styles,
+				externalWrapper: {
+					...styles.externalWrapper,
+					borderBottomColor: this.showBorder() && this.state.focus ? '#0b66c3' : this.getExternalWrapperBorderColor(),
+				},
+				editableValue: {
+					...styles.base,
+				},
+				textPlaceholder: {
+					color: '#a8adb4',
+				},
+			};
+		}
+
+		getLeftTitleChildStyles(styles)
+		{
+			return styles;
+		}
+
+		getHiddenEmptyChildFieldStyles(styles)
+		{
+			const isFocusedEmptyEditable = this.isEmptyEditable() && !this.state.focus;
+			const paddingBottomWithoutError = isFocusedEmptyEditable ? 20 : 11.5;
 
 			return {
 				...styles,
-				editableValue: {
-					...styles.base,
-					color: '#333333'
-				},
 				textPlaceholder: {
-					color: '#A8ADB4'
-				}
+					color: '#a8adb4',
+				},
+				wrapper: {
+					...styles.wrapper,
+					paddingTop: isFocusedEmptyEditable ? 14 : 8,
+					paddingBottom: this.hasErrorOrTooltip() ? 5 : paddingBottomWithoutError,
+				},
+				title: {
+					...styles.title,
+					fontSize: isFocusedEmptyEditable ? 16 : 10,
+					marginBottom: isFocusedEmptyEditable ? 0 : 2,
+				},
+				container: {
+					...styles.container,
+					// value = 1 to enable focus on Android
+					height: isFocusedEmptyEditable ? 1 : null,
+				},
 			};
 		}
 
@@ -54,29 +207,98 @@
 				return this.renderEmptyContent();
 			}
 
-			return Text(
+			const params = this.getReadOnlyRenderParams();
+
+			const getContent = (readOnlyElementType) => {
+				switch (readOnlyElementType)
 				{
-					style: this.styles.value,
-					text: this.stringify(this.props.value)
+					case 'BBCodeText':
+						return BBCodeText({
+							...params,
+							value: this.getValue(),
+							onLinkClick: this.getConfig().onLinkClick,
+						});
+
+					case 'TextInput':
+						return TextInput({
+							...params,
+							value: this.getValue(),
+							enable: false,
+						});
+
+					default:
+						return Text({
+							...params,
+							text: this.getValue(),
+						});
 				}
+			};
+
+			return View(
+				{
+					style: {
+						flexDirection: 'column',
+						flex: 1,
+					},
+				},
+				View(
+					{
+						style: {
+							flexDirection: 'row',
+							flexGrow: 2,
+						},
+					},
+					getContent(this.getConfig().readOnlyElementType),
+				),
+				this.renderShowAllButton(1),
+				this.renderHideButton(),
 			);
+		}
+
+		getReadOnlyRenderParams()
+		{
+			return {
+				style: {
+					...this.styles.value,
+					maxHeight: this.state.showAll ? null : 50,
+				}
+			};
+		}
+
+		getEllipsizeParams()
+		{
+			return this.getConfig().ellipsize ? {
+				numberOfLines: 1,
+				ellipsize: 'end',
+			} : null;
 		}
 
 		renderEditableContent()
 		{
-			return TextField({
+			return TextField(this.getFieldInputProps());
+		}
+
+		getFieldInputProps()
+		{
+			const { keyboardType, enableKeyboardHide, autoCapitalize } = this.getConfig();
+			const { focus } = this.state;
+
+			return {
 				ref: (ref) => this.inputRef = ref,
 				style: this.styles.editableValue,
-				forcedValue: this.stringify(this.props.value),
-				focus: this.state.focus,
-				keyboardType: this.getConfig().keyboardType,
+				value: this.getValue(),
+				focus: focus || undefined,
+				keyboardType,
+				enableKeyboardHide,
+				autoCapitalize,
 				placeholder: this.getPlaceholder(),
 				placeholderTextColor: this.styles.textPlaceholder.color,
 				onFocus: () => this.setFocus(),
 				onBlur: () => this.removeFocus(),
 				onChangeText: (text) => this.changeText(text),
-				onSubmitEditing: () => this.inputRef.blur()
-			});
+				onSubmitEditing: () => FocusManager.blurFocusedFieldIfHas(),
+				onLinkClick: this.getConfig().onLinkClick,
+			};
 		}
 
 		getPlaceholder()
@@ -86,44 +308,60 @@
 
 		changeText(currentText)
 		{
+			this.valueFromKeyboard = currentText;
 			this.handleChange(currentText);
 		}
 
-		setFocus(callback = null)
-		{
-			if (this.getConfig().selectionOnFocus)
-			{
-				const val = this.stringify(this.props.value);
-				this.inputRef.setSelection(0, val.length);
-			}
-
-			super.setFocus(callback);
-		}
-
+		/**
+		 * @public
+		 * @return {Promise<never>|Promise<void>|*}
+		 */
 		focus()
 		{
-			super.focus();
-
-			if (this.inputRef)
+			if (this.isPossibleToFocus())
 			{
 				this.inputRef.focus();
+
+				return Promise.resolve();
 			}
+
+			return Promise.reject();
 		}
 
-		/**
-		 * @param {any} value
-		 * @returns {String}
-		 */
-		stringify(value)
+		handleAdditionalFocusActions()
 		{
-			if (typeof value === 'undefined' || value === null)
+			if (this.inputRef)
 			{
-				return '';
+				if (this.getConfig().selectionOnFocus)
+				{
+					if (Application.getApiVersion() >= 46)
+					{
+						this.inputRef.selectAll();
+					}
+					else
+					{
+						this.inputRef.setSelection(0, this.getValue().length);
+					}
+				}
 			}
-			return String(value);
+
+			return Promise.resolve();
+		}
+
+		hasCapitalizeTitleInEmpty()
+		{
+			return !this.state.focus;
+		}
+
+		showAllCount()
+		{
+			return false;
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.StringInput = StringInput;
-})();
+	module.exports = {
+		StringFieldClass: StringField,
+		StringType: 'string',
+		StringField: (props) => new StringField(props),
+	};
+});

@@ -477,5 +477,10 @@ class DealMerger extends EntityMerger
 			\CCrmOwnerType::Deal, $seedID,
 			\CCrmOwnerType::Deal, $targID
 		);
+
+		Crm\Relation\EntityRelationTable::rebind(
+			new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $seedID),
+			new Crm\ItemIdentifier(\CCrmOwnerType::Deal, $targID)
+		);
 	}
 }

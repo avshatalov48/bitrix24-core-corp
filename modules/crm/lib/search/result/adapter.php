@@ -2,6 +2,7 @@
 
 namespace Bitrix\Crm\Search\Result;
 
+use Bitrix\Crm\Category\Entity\Category;
 use Bitrix\Crm\Search\Result;
 use Bitrix\Main\Type\Collection;
 use Bitrix\Main\Search\ResultItem;
@@ -9,6 +10,9 @@ use Bitrix\Main\Web\Uri;
 
 abstract class Adapter
 {
+	/** @var Category|null */
+	protected ?Category $category = null;
+
 	/**
 	 * Convert \Bitrix\Crm\Search\Result to array of \Bitrix\Main\Search\ResultItem
 	 *
@@ -156,4 +160,14 @@ abstract class Adapter
 	abstract protected function prepareSubTitle(array $item): string;
 
 	abstract protected function areMultifieldsSupported(): bool;
+
+	/**
+	 * @param Category|null $category
+	 * @return Adapter
+	 */
+	public function setCategory(?Category $category): Adapter
+	{
+		$this->category = $category;
+		return $this;
+	}
 }

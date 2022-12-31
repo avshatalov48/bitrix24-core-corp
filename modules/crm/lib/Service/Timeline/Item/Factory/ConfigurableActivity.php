@@ -4,6 +4,7 @@ namespace Bitrix\Crm\Service\Timeline\Item\Factory;
 
 use Bitrix\Crm\Activity\Provider\Document;
 use Bitrix\Crm\Activity\Provider\SignDocument;
+use Bitrix\Crm\Activity\Provider\ToDo;
 use Bitrix\Crm\Activity\ProviderId;
 use Bitrix\Crm\Service\Timeline\Context;
 use Bitrix\Crm\Service\Timeline\Item;
@@ -53,6 +54,10 @@ class ConfigurableActivity
 				}
 
 				return new Item\NotAvailable($context, $model);
+			}
+			if ($providerId === ToDo::getId())
+			{
+				return new Item\Activity\ToDo($context, $model);
 			}
 		}
 

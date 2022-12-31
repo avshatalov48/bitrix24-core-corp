@@ -211,4 +211,16 @@ if (
 	});
 </script><?
 }
+else if (
+	\Bitrix\Intranet\CurrentUser::get()->isAdmin() &&
+	\Bitrix\Main\Context::getCurrent()->getRequest()->get('showInviteDialog')
+)
+{
 ?>
+<script>
+	BX.ready(function () {
+		<?=CIntranetInviteDialog::ShowInviteDialogLink($arInviteParams)?>;
+	});
+</script>
+<?php
+}

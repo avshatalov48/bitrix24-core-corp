@@ -4,6 +4,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 if (!CModule::IncludeModule('crm'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED'));
+
 	return;
 }
 
@@ -20,16 +21,7 @@ if (!CCrmQuote::LocalComponentCausedUpdater())
 if (!CModule::IncludeModule('sale'))
 {
 	ShowError(GetMessage('CRM_MODULE_NOT_INSTALLED_SALE'));
-	return;
-}
 
-/**@var $USER \CUser*/
-global $USER;
-$CrmPerms = new CCrmPerms($USER->GetID());
-
-if (!$CrmPerms->HavePerm('CONFIG', BX_CRM_PERM_CONFIG, 'WRITE'))
-{
-	ShowError(GetMessage('CRM_PERMISSION_DENIED'));
 	return;
 }
 

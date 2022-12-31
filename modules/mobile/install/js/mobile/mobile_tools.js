@@ -159,6 +159,10 @@
 		{
 			return BX.message('can_perform_calls') === 'Y';
 		},
+		isCrmUniversalActivityScenarioEnabled: function ()
+		{
+			return BX.message('isCrmUniversalActivityScenarioEnabled') === 'Y';
+		},
 		getMobileUrlParams: function (url)
 		{
 			var mobileRegReplace = [
@@ -234,14 +238,29 @@
 						useSearchBar:true,
 						cache:false
 					}
-				}
+				},
+				{
+					exp: /(^.*\/((?!mobile\/)[\w.,@?^=%&:\/~+#-])*)(\/knowledge)([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/gi,
+					replace: "$1/mobile$3$4",
+					useNewStyle: true
+				},
+				{
+					exp: /(\/mobile\/knowledge\/[\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/gi,
+					replace: "$1",
+					useNewStyle: true,
+					notRequireChanges: true,
+				},
 			];
 
 			var params = null;
 			for (var i = 0; i < mobileRegReplace.length; i++)
 			{
 				var mobileLink = url.replace(mobileRegReplace[i].exp, mobileRegReplace[i].replace);
-				if (mobileLink != url)
+				var matchUrl = url.match(mobileRegReplace[i].exp);
+				if (
+					mobileLink != url
+					|| (mobileRegReplace[i].notRequireChanges && matchUrl !== null)
+				)
 				{
 					params = {
 						url: mobileLink,
@@ -272,6 +291,7 @@
 					resolveFunction: BX.MobileTools.actionFromTaskActionUrl,
 					openFunction: function(data) {
 						BXMobileApp.Events.postToComponent("task.view.onCommentAction", data, "tasks.view");
+						BXMobileApp.Events.postToComponent("task.view.onCommentAction", data, "tasks.task.tabs");
 					}
 				},
 				{
@@ -295,7 +315,7 @@
 				{
 					resolveFunction: BX.MobileTools.diskFileIdFromUrl,
 					openFunction: function(fileId) {
-						BXMobileApp.Document.open({
+						BXMobileApp.UI.Document.open({
 							url: "/mobile/ajax.php?mobile_action=disk_download_file&action=downloadFile&fileId=" + fileId
 						})
 					}
@@ -339,6 +359,11 @@
 				})
 			}
 
+			if (Application.getApiVersion() >= 45 && this.isCrmUniversalActivityScenarioEnabled())
+			{
+				resolveList.push(BX.MobileTools.resolverCrmCondition);
+			}
+
 			var resolveData = null;
 			var inputData = null;
 			for (var i = 0; i < resolveList.length; i++)
@@ -360,20 +385,60 @@
 
 			return resultOpenFunction;
 		},
-		resolveOpenFunction: function(url)
+		resolveOpenFunction: function(url, loadParams = {})
 		{
-			var func = BX.MobileTools.getOpenFunction(url);
-			if(!func)
+			const openFunction = BX.MobileTools.getOpenFunction(url);
+
+			if(!openFunction)
 			{
-				var params = BX.MobileTools.getMobileUrlParams(url);
-				if(params)
-				{
-					func = function(){ BXMobileApp.PageManager.loadPageBlank(params) };
-				}
+				const mobileUrlParams = BX.MobileTools.getMobileUrlParams(url);
+				const pageLoadParams = mobileUrlParams || { url, ...loadParams };
+
+				return () => BXMobileApp.PageManager.loadPageBlank(pageLoadParams, true);
 			}
 
-			return func;
+			return openFunction;
 		},
+		resolverCrmCondition: ({
+			resolveFunction: (props) => {
+				const url = BX.type.isString(props) ? props : props.url;
+
+				if(!url || !BX.type.isStringFilled(url.trim()))
+				{
+					return null;
+				}
+
+				const supportedEvents = [
+					'onCRMDealList',
+					'onCRMCompanyList',
+					'onCRMContactList',
+					'onCRMDealView',
+					'onCRMCompanyView',
+					'onCRMContactView',
+				];
+
+				const eventName = Object.keys(pageViewEvents)
+					.reverse()
+					.find((key) => pageViewEvents[key].test(url));
+				if (supportedEvents.includes(eventName))
+				{
+					return { url, eventName };
+				}
+
+				const isValidLink = /\/crm\/(deal|company|contact)/gi.test(url);
+				if(isValidLink)
+				{
+					return { url };
+				}
+
+				return null;
+
+			},
+			openFunction: (props) => {
+				BXMobileApp.Events.postToComponent('crmbackground::router', props, 'background');
+			},
+		}),
+
 		userIdFromUrl:function(url)
 		{
 			var regs = [
@@ -709,6 +774,7 @@
 		onCRMLeadList: /\/mobile\/crm\/lead/gi,
 		onCRMDealList: /\/mobile\/crm\/deal/gi,
 		onCRMContactList: /\/mobile\/crm\/contact/gi,
+		onCRMCompanyList: /\/mobile\/crm\/company/gi,
 		onCRMActivityList: /\/mobile\/crm\/activity\/list.php/gi,
 		onCRMContactView: /\/mobile\/crm\/contact\/\?page=view&contact_id=/gi,
 		onCRMDealView: /\/mobile\/crm\/deal\/\?page=view&deal_id=/gi,

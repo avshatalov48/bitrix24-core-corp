@@ -5,26 +5,28 @@ use Bitrix\Main;
 
 class EntityCounterType
 {
-	const UNDEFINED = 0;
-	const IDLE  = 1;
-	const PENDING = 2;
-	const OVERDUE = 4;
-	const INCOMING_CHANNEL = 8;
+	public const UNDEFINED = 0;
+	public const IDLE  = 1;
+	public const PENDING = 2;
+	public const OVERDUE = 4;
+	public const INCOMING_CHANNEL = 8;
 
-	const CURRENT = 6;  //PENDING|OVERDUE
-	const ALL_DEADLINE_BASED = 7;  //IDLE|PENDING|OVERDUE
-	const ALL = 15;  //IDLE|PENDING|OVERDUE|INCOMINGCHANNEL
+	public const CURRENT = 6;  //PENDING|OVERDUE
+	public const ALL_DEADLINE_BASED = 7;  //IDLE|PENDING|OVERDUE
+	public const ALL = 15;  //IDLE|PENDING|OVERDUE|INCOMINGCHANNEL
 
-	const FIRST = 1;
-	const LAST = 15;
+	public const FIRST = 1;
+	public const LAST = 15;
 
-	const IDLE_NAME  = 'IDLE';
-	const PENDING_NAME = 'PENDING';
-	const OVERDUE_NAME = 'OVERDUE';
-	const CURRENT_NAME = 'CURRENT';
-	const INCOMING_CHANNEL_NAME = 'INCOMINGCHANNEL';
-	const ALL_DEADLINE_BASED_NAME = 'ALLDEADLINEBASED';
-	const ALL_NAME = 'ALL';
+	public const IDLE_NAME  = 'IDLE';
+	public const PENDING_NAME = 'PENDING';
+	public const OVERDUE_NAME = 'OVERDUE';
+	public const CURRENT_NAME = 'CURRENT';
+	public const INCOMING_CHANNEL_NAME = 'INCOMINGCHANNEL';
+	public const ALL_DEADLINE_BASED_NAME = 'ALLDEADLINEBASED';
+	public const ALL_NAME = 'ALL';
+
+	public const EXCLUDE_USERS_CODE_SUFFIX = 'excl';
 
 	private static $all = null;
 
@@ -321,21 +323,21 @@ class EntityCounterType
 
 		$countersSettings = $factory->getCountersSettings();
 
-		if ($countersSettings->isIncomingCounterEnabled())
+		if ($countersSettings->isIncomingCounterEnabledInFilter())
 		{
 			$items[self::INCOMING_CHANNEL] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_INCOMING_CHANNEL');
 		}
-		if ($countersSettings->isIdleCounterEnabled())
-		{
-			$items[self::IDLE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_IDLE');
-		}
-		if ($countersSettings->isPendingCounterEnabled() || $countersSettings->isCurrentCounterEnabled())
+		if ($countersSettings->isPendingCounterEnabledInFilter() || $countersSettings->isCurrentCounterEnabledInFilter())
 		{
 			$items[self::PENDING] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_PENDING');
 		}
-		if ($countersSettings->isOverdueCounterEnabled() || $countersSettings->isCurrentCounterEnabled())
+		if ($countersSettings->isOverdueCounterEnabledInFilter() || $countersSettings->isCurrentCounterEnabledInFilter())
 		{
 			$items[self::OVERDUE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_OVERDUE');
+		}
+		if ($countersSettings->isIdleCounterEnabledInFilter())
+		{
+			$items[self::IDLE] = GetMessage('CRM_ENTITY_COUNTER_TYPE_FILTER_IDLE');
 		}
 
 		return array_merge(

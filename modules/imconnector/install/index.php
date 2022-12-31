@@ -1,4 +1,4 @@
-<?
+<?php
 
 use Bitrix\ImConnector\Rest\Status;
 use Bitrix\ImConnector\InfoConnectors;
@@ -11,11 +11,9 @@ use Bitrix\Main\ModuleManager;
 use Bitrix\Main\Config\Option;
 use Bitrix\Main\Localization\Loc;
 
-Loc::loadMessages(__FILE__);
-
 if (!class_exists('imconnector'))
 {
-	Class ImConnector extends CModule
+	class imconnector extends \CModule
 	{
 		protected $errors = [];
 
@@ -40,7 +38,7 @@ if (!class_exists('imconnector'))
 		 * @param array $arParams
 		 * @return bool
 		 */
-		function InstallDB($arParams = [])
+		public function InstallDB($arParams = [])
 		{
 			global $DB, $APPLICATION;
 			$this->errors = false;
@@ -130,7 +128,7 @@ if (!class_exists('imconnector'))
 			return true;
 		}
 
-		function UnInstallDB($arParams = [])
+		public function UnInstallDB($arParams = [])
 		{
 			global $DB, $APPLICATION;
 			$this->errors = false;
@@ -191,30 +189,15 @@ if (!class_exists('imconnector'))
 			return true;
 		}
 
-		/**
-		 * @return bool
-		 */
-		function InstallEvents()
-		{
-			return true;
-		}
 
 		/**
 		 * @return bool
 		 */
-		function UnInstallEvents()
+		public function InstallFiles()
 		{
-			return true;
-		}
-
-		/**
-		 * @return bool
-		 */
-		function InstallFiles()
-		{
-			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/pub/imconnector', $_SERVER['DOCUMENT_ROOT'] . '/pub/imconnector', true, true);
-			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/components/bitrix', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components/bitrix', true, true);
-			\CopyDirFiles($_SERVER['DOCUMENT_ROOT'] . '/bitrix/modules/imconnector/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js', true, true);
+			\CopyDirFiles($_SERVER["DOCUMENT_ROOT"]. '/bitrix/modules/imconnector/install/pub', $_SERVER['DOCUMENT_ROOT']. '/pub', true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/imconnector/install/components', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/components', true, true);
+			\CopyDirFiles($_SERVER['DOCUMENT_ROOT']. '/bitrix/modules/imconnector/install/js', $_SERVER['DOCUMENT_ROOT'] . '/bitrix/js', true, true);
 
 			return true;
 		}
@@ -222,14 +205,16 @@ if (!class_exists('imconnector'))
 		/**
 		 * @return bool
 		 */
-		function UnInstallFiles()
+		public function UnInstallFiles()
 		{
 			Directory::deleteDirectory($_SERVER['DOCUMENT_ROOT'] . '/pub/imconnector/');
+			\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imconnector/install/components/bitrix', $_SERVER["DOCUMENT_ROOT"].'/bitrix/components/bitrix');
+			\DeleteDirFiles($_SERVER['DOCUMENT_ROOT'].'/bitrix/modules/imconnector/install/js', $_SERVER["DOCUMENT_ROOT"].'/bitrix/js');
 
 			return true;
 		}
 
-		function DoInstall()
+		public function DoInstall()
 		{
 			global $APPLICATION;
 
@@ -259,7 +244,7 @@ if (!class_exists('imconnector'))
 			}
 		}
 
-		function DoUninstall()
+		public function DoUninstall()
 		{
 			global $APPLICATION;
 

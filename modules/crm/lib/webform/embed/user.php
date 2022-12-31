@@ -8,6 +8,7 @@
 
 namespace Bitrix\Crm\WebForm\Embed;
 
+use Bitrix\Main;
 use Bitrix\Crm;
 use Bitrix\Crm\Entity\Identificator;
 
@@ -230,7 +231,7 @@ class User
 			];
 		}
 
-		if (!is_array_assoc($map))
+		if (!Main\Type\Collection::isAssociative($map))
 		{
 			$map = array_combine($map, $map);
 		}

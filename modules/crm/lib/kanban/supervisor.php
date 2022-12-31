@@ -6,6 +6,8 @@ use Bitrix\Main\Entity;
 use Bitrix\Main\Localization\Loc;
 
 /**
+ * @deprecated
+ *
  * Class SupervisorTable
  *
  * DO NOT WRITE ANYTHING BELOW THIS

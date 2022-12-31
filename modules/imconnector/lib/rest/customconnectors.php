@@ -467,7 +467,7 @@ if (Loader::includeModule('rest'))
 
 			if (!empty($appId))
 			{
-				if (Helper::unRegisterApp(array(
+				if (!empty($params['ID']) && Helper::unRegisterApp(array(
 					'ID' => $params['ID'],
 					'REST_APP_ID' => $appId,
 				)))

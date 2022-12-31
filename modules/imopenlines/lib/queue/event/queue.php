@@ -27,7 +27,7 @@ abstract class Queue
 	 * Queue constructor.
 	 * @param $configLine
 	 */
-	function __construct($configLine)
+	public function __construct($configLine)
 	{
 		$this->configLine = $configLine;
 	}

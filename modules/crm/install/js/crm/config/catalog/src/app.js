@@ -1,6 +1,6 @@
 import LocMixin from './loc';
 import Reservation from './reservation';
-import {Loc, ajax, Tag} from 'main.core';
+import {Loc, ajax, Tag, Extension, Event} from 'main.core';
 import {Menu, Popup} from 'main.popup';
 import {Button} from 'ui.buttons';
 import {Slider} from 'catalog.store-use'
@@ -36,7 +36,6 @@ export default Vue.extend({
 			 *
 			 */
 			isStoreControlUsed: null,
-			isCommonProductProcessingEnabled: null,
 			productsCnt: null,
 			/**
 			 * Reservation settings
@@ -48,13 +47,17 @@ export default Vue.extend({
 			initDefaultQuantityTrace: null,
 			initDefaultCanBuyZero: null,
 			initDefaultSubscribe: null,
+			initCheckRightsOnDecreaseStoreAmount: null,
 			defaultQuantityTrace: null,
 			defaultCanBuyZero: null,
 			defaultSubscribe: null,
+			checkRightsOnDecreaseStoreAmount: null,
 			/**
 			 * Product card
 			 */
 			productCardSliderEnabled: null,
+			isCanEnableProductCardSlider: false,
+			isBitrix24: false,
 			defaultProductVatIncluded: null,
 		};
 	},
@@ -63,9 +66,37 @@ export default Vue.extend({
 		this.initialize(this.initData);
 		this.productUpdaterPopup = null;
 		this.settingsMenu = null;
-		this.slider = BX.SidePanel.Instance.getSlider(Const.url);
+
+		let sliderUrl = Const.url;
+		if (this.configCatalogSource)
+		{
+			sliderUrl += '?configCatalogSource=' + this.configCatalogSource;
+		}
+		this.slider = BX.SidePanel.Instance.getSlider(sliderUrl);
 	},
 	computed: {
+		hasAccessToReservationSettings()
+		{
+			if (this.initData.hasAccessToReservationSettings !== undefined)
+			{
+				return this.initData.hasAccessToReservationSettings === true;
+			}
+
+			return true;
+		},
+		hasAccessToCatalogSettings()
+		{
+			if (this.initData.hasAccessToCatalogSettings !== undefined)
+			{
+				return this.initData.hasAccessToCatalogSettings === true;
+			}
+
+			return true;
+		},
+		isCanChangeOptionCanByZero()
+		{
+			return Extension.getSettings('crm.config.catalog')?.isCanChangeOptionCanByZero === true;
+		},
 		isReservationUsed()
 		{
 			return (
@@ -94,6 +125,7 @@ export default Vue.extend({
 				this.initDefaultQuantityTrace === this.defaultQuantityTrace
 				&& this.initDefaultCanBuyZero === this.defaultCanBuyZero
 				&& this.initDefaultSubscribe === this.defaultSubscribe
+				&& this.initCheckRightsOnDecreaseStoreAmount === this.checkRightsOnDecreaseStoreAmount
 			);
 		},
 		needProgressBarOnProductsUpdating()
@@ -142,7 +174,7 @@ export default Vue.extend({
 					<div class="catalog-settings-popup-content">
 						<h3>
 							${Loc.getMessage('CRM_CFG_C_SETTINGS_TURN_OFF_QUANTITY_TRACE_TITLE')}
-						</h3>	
+						</h3>
 						<div class="catalog-settings-popup-text">
 							${Loc.getMessage('CRM_CFG_C_SETTINGS_TURN_OFF_QUANTITY_TRACE_TEXT')}
 						</div>
@@ -166,10 +198,63 @@ export default Vue.extend({
 		{
 			this.isChanged = true;
 		},
+		onEnableProductCardCheckboxClick()
+		{
+			if (!this.productCardSliderEnabled && this.isBitrix24)
+			{
+				this.askToEnableProductCardSlider();
+			}
+
+			this.markAsChanged();
+		},
+		askToEnableProductCardSlider()
+		{
+			const askPopup = new Popup(null, null, {
+				events: {
+					onPopupClose: () => askPopup.destroy(),
+					onPopupShow: () => {
+						const helpdeskLink = document.getElementById('catalog-settings-new-productcard-popup-helpdesk');
+						if (helpdeskLink)
+						{
+							Event.bind(helpdeskLink, 'click', () => top.BX.Helper.show('redirect=detail&code=11657084'));
+						}
+					},
+				},
+				content: Tag.render`
+					<div class="catalog-settings-new-productcard-popup-content">
+						${Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT')}
+					</div>
+				`,
+				className: 'catalog-settings-new-productcard-popup',
+				titleBar: Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE'),
+				maxWidth: 800,
+				overlay: true,
+				buttons: [
+					new Button({
+						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE'),
+						color: Button.Color.PRIMARY,
+						onclick: () => {
+							this.productCardSliderEnabled = false;
+							askPopup.close();
+						},
+					}),
+					new Button({
+						text : Loc.getMessage('CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE'),
+						onclick: () => askPopup.close(),
+					}),
+				]
+			});
+			askPopup.show();
+		},
 		openStoreControlMaster(mode = '')
 		{
+			let sliderUrl = '/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode;
+			if (this.configCatalogSource)
+			{
+				sliderUrl += '&inventoryManagementSource=' + this.configCatalogSource;
+			}
 			new Slider().open(
-				'/bitrix/components/bitrix/catalog.warehouse.master.clear/slider.php?mode=' + mode,
+				sliderUrl,
 				{}
 			)
 				.then((slider) => {
@@ -231,7 +316,6 @@ export default Vue.extend({
 		initialize(data)
 		{
 			this.isStoreControlUsed = data.isStoreControlUsed;
-			this.isCommonProductProcessingEnabled = data.isCommonProductProcessingEnabled;
 			this.productsCnt = data.productsCnt;
 
 			/**
@@ -248,12 +332,16 @@ export default Vue.extend({
 			this.initDefaultQuantityTrace = this.defaultQuantityTrace = data.defaultQuantityTrace;
 			this.initDefaultCanBuyZero = this.defaultCanBuyZero = data.defaultCanBuyZero;
 			this.initDefaultSubscribe = this.defaultSubscribe = data.defaultSubscribe;
+			this.initCheckRightsOnDecreaseStoreAmount = this.checkRightsOnDecreaseStoreAmount = data.checkRightsOnDecreaseStoreAmount;
 
 			/**
 			 * Other settings
 			 */
 			this.defaultProductVatIncluded = data.defaultProductVatIncluded;
 			this.productCardSliderEnabled = data.productCardSliderEnabled;
+			this.isCanEnableProductCardSlider = data.isCanEnableProductCardSlider;
+			this.isBitrix24 = data.isBitrix24;
+			this.configCatalogSource = this.configCatalogSource ?? data.configCatalogSource;
 
 			this.isChanged = false;
 		},
@@ -279,6 +367,7 @@ export default Vue.extend({
 							reservationSettings: this.makeReservationSettings(),
 							productCardSliderEnabled: this.productCardSliderEnabled,
 							defaultProductVatIncluded: this.defaultProductVatIncluded,
+							checkRightsOnDecreaseStoreAmount: this.checkRightsOnDecreaseStoreAmount,
 						}
 					}
 				}).then((response) => {
@@ -443,14 +532,14 @@ export default Vue.extend({
 							style="display: flex; align-items: center"
 							class="ui-slider-heading-4"
 						>
-							{{loc.CRM_CFG_C_SETTINGS_TITLE}}		
+							{{loc.CRM_CFG_C_SETTINGS_TITLE}}
 							<div v-if="isStoreControlUsed" class="catalog-settings-main-header-feedback-container">
 								<div
 									@click.prevent="showSettingsMenu"
 									class="ui-toolbar-right-buttons"
 								>
 									<button class="ui-btn ui-btn-light-border ui-btn-icon-setting ui-btn-themes"></button>
-								</div>								
+								</div>
 							</div>
 						</div>
 						<div class="ui-slider-inner-box">
@@ -474,13 +563,13 @@ export default Vue.extend({
 								>
 									{{loc.CRM_CFG_C_SETTINGS_TURN_INVENTORY_CONTROL_ON}}
 								</a>
-							</template>	
+							</template>
 						</div>
 					</div>
 				</div>
 				<div class="catalog-settings-main-settings">
 					<div
-						v-if="isReservationUsed"
+						v-if="isReservationUsed && hasAccessToReservationSettings"
 						class="ui-slider-section"
 					>
 						<div class="ui-slider-heading-4">
@@ -510,7 +599,7 @@ export default Vue.extend({
 										:disabled="reservationEntity.code !== 'deal'"
 									>
 										{{reservationEntity.name}}
-									</option>								
+									</option>
 								</select>
 							</div>
 						</div>
@@ -522,7 +611,7 @@ export default Vue.extend({
 							@change="onReservationSettingsValuesChanged($event, index)"
 						></reservation>
 					</div>
-					<div class="ui-slider-section">
+					<div v-if="hasAccessToCatalogSettings" class="ui-slider-section">
 						<div class="ui-slider-heading-4">
 							{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS}}
 							<span
@@ -535,13 +624,13 @@ export default Vue.extend({
 							</span>
 						</div>
 						<div
-							v-if="isCommonProductProcessingEnabled"
+							v-if="isCanEnableProductCardSlider"
 							class="catalog-settings-editor-checkbox-content-block"
 						>
 							<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
 								<input
+									@click="onEnableProductCardCheckboxClick"
 									v-model="productCardSliderEnabled"
-									@click="markAsChanged"
 									id="product_card_slider_enabled"
 									type="checkbox"
 									class="ui-ctl-element"
@@ -599,8 +688,8 @@ export default Vue.extend({
 						<div v-if="isCanBuyZeroInDocsVisible" class="catalog-settings-editor-checkbox-content-block">
 							<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
 								<input
-									:checked="defaultCanBuyZero"
-									disabled="disabled"
+									v-model="checkRightsOnDecreaseStoreAmount"
+									@click="markAsChanged"
 									type="checkbox"
 									class="ui-ctl-element"
 								>
@@ -618,7 +707,7 @@ export default Vue.extend({
 							</div>
 						</div>
 						<div
-							v-if="isReservationUsed"
+							v-if="isReservationUsed && isCanChangeOptionCanByZero"
 							class="catalog-settings-editor-checkbox-content-block"
 						>
 							<div class="ui-ctl ui-ctl-checkbox ui-ctl-w100">
@@ -628,6 +717,7 @@ export default Vue.extend({
 									id="default_can_buy_zero"
 									type="checkbox"
 									class="ui-ctl-element"
+									:disabled="!isCanChangeOptionCanByZero"
 								>
 								<label for="default_can_buy_zero" class="ui-ctl-label-text">
 									{{loc.CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_V2}}
@@ -653,13 +743,13 @@ export default Vue.extend({
 						@click="save"
 						:class="saveButtonClasses"
 					>
-						{{loc.CRM_CFG_C_SETTINGS_SAVE_BUTTON}}					
+						{{loc.CRM_CFG_C_SETTINGS_SAVE_BUTTON}}
 					</button>
 					<a
 						@click="cancel"
 						class="ui-btn ui-btn-link"
 					>
-						{{loc.CRM_CFG_C_SETTINGS_CANCEL_BUTTON}}					
+						{{loc.CRM_CFG_C_SETTINGS_CANCEL_BUTTON}}
 					</a>
 				</div>
 			</div>

@@ -1,4 +1,25 @@
 <?php
+
+use Bitrix\Crm;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
+use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
+use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
+use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
+use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
+use Bitrix\Crm\ContactAddress;
+use Bitrix\Crm\EntityAddress;
+use Bitrix\Crm\EntityAddressType;
+use Bitrix\Crm\Format\AddressFormatter;
+use Bitrix\Crm\Integrity\Volatile;
+use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Settings\ContactSettings;
+use Bitrix\Crm\Settings\HistorySettings;
+use Bitrix\Crm\Settings\LayoutSettings;
+use Bitrix\Crm\Tracking;
+use Bitrix\Crm\WebForm\Manager as WebFormManager;
+use Bitrix\Main;
+use Bitrix\Main\Localization\Loc;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
 /**
@@ -37,6 +58,8 @@ if (!$isErrorOccured && $isBizProcInstalled)
 }
 
 $arResult['CATEGORY_ID'] = (int)($arParams['CATEGORY_ID'] ?? 0);
+$factory = Container::getInstance()->getFactory(\CCrmOwnerType::Contact);
+$category = $factory && $arResult['CATEGORY_ID'] ? $factory->getCategory($arResult['CATEGORY_ID']) : null;
 
 $userPermissions = CCrmPerms::GetCurrentUserPermissions();
 if (!$isErrorOccured && !CCrmContact::CheckReadPermission(0, $userPermissions, $arResult['CATEGORY_ID']))
@@ -99,7 +122,7 @@ if (!$isErrorOccured && $isInExportMode)
 $exportRestriction = \Bitrix\Crm\Restriction\RestrictionManager::getContactExportRestriction();
 if (!$isErrorOccured && $isInExportMode && !$exportRestriction->hasPermission())
 {
-	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
+	Container::getInstance()->getLocalization()->loadMessages();
 	$errorMessage = \Bitrix\Main\Localization\Loc::getMessage('CRM_FEATURE_RESTRICTION_ERROR');
 	$isErrorOccured = true;
 }
@@ -116,25 +139,6 @@ if ($isErrorOccured)
 		return;
 	}
 }
-
-use Bitrix\Crm;
-use Bitrix\Crm\Agent\Duplicate\Background\ContactIndexRebuild;
-use Bitrix\Crm\Agent\Duplicate\Background\ContactMerge;
-use Bitrix\Crm\Agent\Duplicate\Volatile\IndexRebuild;
-use Bitrix\Crm\Agent\Requisite\ContactAddressConvertAgent;
-use Bitrix\Crm\Agent\Requisite\ContactUfAddressConvertAgent;
-use Bitrix\Crm\ContactAddress;
-use Bitrix\Crm\EntityAddress;
-use Bitrix\Crm\EntityAddressType;
-use Bitrix\Crm\Format\AddressFormatter;
-use Bitrix\Crm\Integrity\Volatile;
-use Bitrix\Crm\Settings\ContactSettings;
-use Bitrix\Crm\Settings\HistorySettings;
-use Bitrix\Crm\Settings\LayoutSettings;
-use Bitrix\Crm\Tracking;
-use Bitrix\Crm\WebForm\Manager as WebFormManager;
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
 
 $CCrmBizProc = new CCrmBizProc('CONTACT');
 
@@ -169,6 +173,7 @@ $arResult['SESSION_ID'] = bitrix_sessid();
 $arResult['NAVIGATION_CONTEXT_ID'] = isset($arParams['NAVIGATION_CONTEXT_ID']) ? $arParams['NAVIGATION_CONTEXT_ID'] : '';
 $arResult['PRESERVE_HISTORY'] = isset($arParams['PRESERVE_HISTORY']) ? $arParams['PRESERVE_HISTORY'] : false;
 $arResult['ENABLE_SLIDER'] = \Bitrix\Crm\Settings\LayoutSettings::getCurrent()->isSliderEnabled();
+$arResult['CRM_CUSTOM_PAGE_TITLE'] = $arParams['CRM_CUSTOM_PAGE_TITLE'] ?? null;
 
 if(LayoutSettings::getCurrent()->isSimpleTimeFormatEnabled())
 {
@@ -270,6 +275,7 @@ if ($enableWidgetFilter)
 	}
 }
 
+//region Old logic of the counter panel (not used)
 $enableCounterFilter = false;
 if(!$bInternal && isset($_REQUEST['counter']))
 {
@@ -305,6 +311,7 @@ if(!$bInternal && isset($_REQUEST['counter']))
 		}
 	}
 }
+//endregion
 
 $request = Main\Application::getInstance()->getContext()->getRequest();
 $fromAnalytics = $request->getQuery('from_analytics') === 'Y';
@@ -368,12 +375,17 @@ if (!$bInternal)
 		$filterFlags |= Crm\Filter\ContactSettings::FLAG_ENABLE_ADDRESS;
 	}
 	$entityFilter = Crm\Filter\Factory::createEntityFilter(
-		new Crm\Filter\ContactSettings(['ID' => $arResult['GRID_ID'], 'flags' => $filterFlags])
+		new Crm\Filter\ContactSettings([
+			'ID' => $arResult['GRID_ID'],
+			'categoryID' => $arResult['CATEGORY_ID'],
+			'flags' => $filterFlags,
+		])
 	);
 	$arResult['FILTER_PRESETS'] = (new Bitrix\Crm\Filter\Preset\Contact())
 		->setUserId((int) $arResult['CURRENT_USER_ID'])
 		->setUserName(CCrmViewHelper::GetFormattedUserName($arResult['CURRENT_USER_ID'], $arParams['NAME_TEMPLATE']))
 		->setDefaultValues($entityFilter->getDefaultFieldIDs())
+		->setCategoryId($arResult['CATEGORY_ID'])
 		->getDefaultPresets()
 	;
 }
@@ -473,7 +485,12 @@ $arResult['HEADERS'] = array_merge(
 		array('id' => 'SECOND_NAME', 'name' => GetMessage('CRM_COLUMN_SECOND_NAME'), 'sort' => 'second_name', 'editable' => true, 'class' => 'username'),
 		array('id' => 'BIRTHDATE', 'name' => GetMessage('CRM_COLUMN_BIRTHDATE'), 'sort' => 'BIRTHDATE', 'first_order' => 'desc', 'type' => 'date', 'editable' => true),
 		array('id' => 'POST', 'name' => GetMessage('CRM_COLUMN_POST'), 'sort' => 'post', 'editable' => true),
-		array('id' => 'COMPANY_ID', 'name' => GetMessage('CRM_COLUMN_COMPANY_ID'), 'sort' => 'company_title', 'editable' => false),
+		[
+			'id' => 'COMPANY_ID',
+			'name' => Loc::getMessage('CRM_COLUMN_COMPANY_ID'),
+			'sort' => 'company_title',
+			'editable' => false,
+		],
 		array('id' => 'TYPE_ID', 'name' => GetMessage('CRM_COLUMN_TYPE'), 'sort' => 'type_id', 'type' => 'list', 'editable' => array('items' => CCrmStatus::GetStatusList('CONTACT_TYPE'))),
 		array('id' => 'ASSIGNED_BY', 'name' => GetMessage('CRM_COLUMN_ASSIGNED_BY'), 'sort' => 'assigned_by', 'default' => true, 'editable' => false, 'class' => 'username')
 	)
@@ -485,7 +502,7 @@ if($isInExportMode)
 	$CCrmFieldMulti->ListAddHeaders($arResult['HEADERS']);
 }
 
-Crm\Service\Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
+Container::getInstance()->getParentFieldManager()->prepareGridHeaders(
 	\CCrmOwnerType::Contact,
 	$arResult['HEADERS']
 );
@@ -522,7 +539,10 @@ $arResult['HEADERS'] = array_merge(
 	)
 );
 
-Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
+if (!$category || $category->isTrackingEnabled())
+{
+	Tracking\UI\Grid::appendColumns($arResult['HEADERS']);
+}
 
 $utmList = \Bitrix\Crm\UtmTable::getCodeNames();
 foreach ($utmList as $utmCode => $utmName)
@@ -532,6 +552,46 @@ foreach ($utmList as $utmCode => $utmName)
 		'name' => $utmName,
 		'sort' => false, 'default' => $isInExportMode, 'editable' => false
 	);
+}
+
+// filter out category-specific disabled fields
+if ($factory && $category)
+{
+	$arResult['HEADERS'] = array_values(
+		array_filter(
+			$arResult['HEADERS'],
+			static function ($header) use ($factory, $category)
+			{
+				return !in_array(
+					$factory->getCommonFieldNameByMap($header['id']),
+					$category->getDisabledFieldNames(),
+					true
+				);
+			}
+		)
+	);
+
+	$categoryUISettings = $category->getUISettings();
+	$defaultGridColumns = isset($categoryUISettings['grid']['defaultFields'])
+		? $categoryUISettings['grid']['defaultFields']
+		: [];
+
+	if (!empty($defaultGridColumns))
+	{
+		$arResult['HEADERS'] = array_map(
+			static function ($header) use ($defaultGridColumns)
+			{
+				$header['default'] = in_array(
+					$header['id'],
+					$defaultGridColumns,
+					true
+				);
+
+				return $header;
+			},
+			$arResult['HEADERS']
+		);
+	}
 }
 
 $CCrmUserType->ListAddHeaders($arResult['HEADERS']);
@@ -827,64 +887,13 @@ else
 //endregion
 
 //region Activity Counter Filter
-if(isset($arFilter['ACTIVITY_COUNTER']))
-{
-	if(is_array($arFilter['ACTIVITY_COUNTER']))
-	{
-		$counterTypeID = Bitrix\Crm\Counter\EntityCounterType::joinType(
-			array_filter($arFilter['ACTIVITY_COUNTER'], 'is_numeric')
-		);
-	}
-	else
-	{
-		$counterTypeID = (int)$arFilter['ACTIVITY_COUNTER'];
-	}
-
-	$counter = null;
-	if($counterTypeID > 0)
-	{
-		$counterUserIDs = array();
-		if(isset($arFilter['ASSIGNED_BY_ID']))
-		{
-			if(is_array($arFilter['ASSIGNED_BY_ID']))
-			{
-				$counterUserIDs = array_filter($arFilter['ASSIGNED_BY_ID'], 'is_numeric');
-			}
-			elseif($arFilter['ASSIGNED_BY_ID'] > 0)
-			{
-				$counterUserIDs[] = $arFilter['ASSIGNED_BY_ID'];
-			}
-		}
-
-		try
-		{
-			$counter = Bitrix\Crm\Counter\EntityCounterFactory::create(
-				CCrmOwnerType::Contact,
-				$counterTypeID,
-				0,
-				array_merge(
-					Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
-					['CATEGORY_ID' => $arResult['CATEGORY_ID']]
-				)
-			);
-
-			$arFilter += $counter->prepareEntityListFilter(
-				array(
-					'MASTER_ALIAS' => CCrmContact::TABLE_ALIAS,
-					'MASTER_IDENTITY' => 'ID',
-					'USER_IDS' => $counterUserIDs
-				)
-			);
-			unset($arFilter['ASSIGNED_BY_ID']);
-		}
-		catch(Bitrix\Main\NotSupportedException $e)
-		{
-		}
-		catch(Bitrix\Main\ArgumentException $e)
-		{
-		}
-	}
-}
+CCrmEntityHelper::applyCounterFilterWrapper(
+	\CCrmOwnerType::Contact,
+	$arResult['GRID_ID'],
+	Bitrix\Crm\Counter\EntityCounter::internalizeExtras($_REQUEST),
+	$arFilter,
+	$entityFilter
+);
 //endregion
 
 CCrmEntityHelper::PrepareMultiFieldFilter($arFilter, array(), '=%', false);
@@ -902,10 +911,15 @@ $arImmutableFilters = array(
 	'@CATEGORY_ID',
 );
 
+$arImmutableFiltersOperations = '!';
+
 foreach ($arFilter as $k => $v)
 {
-	//Check if first key character is aplpha and key is not immutable
-	if(preg_match('/^[a-zA-Z]/', $k) !== 1 || in_array($k, $arImmutableFilters, true))
+	// Check if first key character is aplpha and key is not immutable
+	if (
+		preg_match('/^[a-zA-Z]/', $k) !== 1
+		|| in_array($k, $arImmutableFilters, true)
+	)
 	{
 		continue;
 	}
@@ -1804,17 +1818,65 @@ if ($isInExportMode && $isStExport && $pageNum === 1)
 	}
 }
 
+$lastExportedId = -1;
 $limit = $pageSize + 1;
+
+/**
+ * During step export, sorting will only be done by ID
+ * and optimized selection with pagination by ID > LAST_ID instead of offset
+ */
 if ($isInExportMode && $isStExport)
 {
-	$total = (int)$arResult['STEXPORT_TOTAL_ITEMS'];
-	$processed = ($pageNum - 1) * $pageSize;
-	if ($total - $processed <= $pageSize)
-		$limit = $total - $processed;
-	unset($total, $processed);
-}
+	$limit = $pageSize;
+	$navListOptions['QUERY_OPTIONS'] = array('LIMIT' => $limit);
+	$arSort = array('ID' => 'ASC');
+	$totalExportItems = $arParams['STEXPORT_TOTAL_ITEMS'] ? $arParams['STEXPORT_TOTAL_ITEMS'] : $total;
 
-if(isset($arSort['nearest_activity']))
+	$dbResultOnlyIds = CCrmContact::GetListEx(
+		$arSort,
+		array_merge(
+			$arFilter,
+			array('>ID' => $arParams['STEXPORT_LAST_EXPORTED_ID'] ?? -1)
+		),
+		false,
+		false,
+		array('ID'),
+		$navListOptions
+	);
+
+	$entityIds = array();
+	while($arDealRow = $dbResultOnlyIds->GetNext())
+	{
+		$entityIds[] = (int) $arDealRow['ID'];
+	}
+	$lastExportedId = end($entityIds);
+
+	if (!empty($entityIds))
+	{
+		$navListOptions['QUERY_OPTIONS'] = null;
+		$arFilter = array('@ID' => $entityIds, 'CHECK_PERMISSIONS' => 'N');
+
+		$dbResult = CCrmContact::GetListEx(
+			$arSort,
+			$arFilter,
+			false,
+			false,
+			$arSelect,
+			$navListOptions
+		);
+
+		$qty = 0;
+		while($arContact = $dbResult->GetNext())
+		{
+			$arResult['CONTACT'][$arContact['ID']] = $arContact;
+			$arResult['CONTACT_ID'][$arContact['ID']] = $arContact['ID'];
+			$arResult['CONTACT_UF'][$arContact['ID']] = array();
+		}
+	}
+	$enableNextPage = $pageNum * $pageSize <= $totalExportItems;
+	unset($entityIds);
+}
+elseif(isset($arSort['nearest_activity']))
 {
 	$navListOptions = ($isInExportMode && !$isStExport)
 		? array()
@@ -1861,27 +1923,6 @@ if(isset($arSort['nearest_activity']))
 	$entityIDs = array_keys($arResult['CONTACT']);
 	if(!empty($entityIDs))
 	{
-		if ($isInExportMode && $isStExport)
-		{
-			if (!is_array($arSort))
-			{
-				$arSort = array();
-			}
-
-			if (!isset($arSort['ID']))
-			{
-				$order = mb_strtoupper($arSort['nearest_activity']);
-				if ($order === 'ASC' || $order === 'DESC')
-				{
-					$arSort['ID'] = $arSort['nearest_activity'];
-				}
-				else
-				{
-					$arSort['ID'] = 'asc';
-				}
-				unset($order);
-			}
-		}
 		//Permissions are already checked.
 		$dbResult = CCrmContact::GetListEx(
 			$arSort,
@@ -1984,26 +2025,6 @@ else
 				);
 		}
 
-		if ($isInExportMode && $isStExport)
-		{
-			if (!is_array($arSort))
-			{
-				$arSort = array();
-			}
-
-			if (!isset($arSort['ID']))
-			{
-				if (!empty($arSort))
-				{
-					$arSort['ID'] = array_shift(array_slice($arSort, 0, 1));
-				}
-				else
-				{
-					$arSort['ID'] = 'asc';
-				}
-			}
-		}
-
 		$dbResult = CCrmContact::GetListEx(
 			$arSort,
 			$arFilter,
@@ -2078,7 +2099,7 @@ if ($arResult['ENABLE_BIZPROC'] && !empty($arResult['CONTACT']))
 	}
 }
 
-$parentFieldValues = Crm\Service\Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
+$parentFieldValues = Container::getInstance()->getParentFieldManager()->loadParentElementsByChildren(
 	\CCrmOwnerType::Contact,
 	$arResult['CONTACT']
 );
@@ -2205,8 +2226,11 @@ foreach($arResult['CONTACT'] as &$arContact)
 	);
 	$arContact['CONTACT_FORMATTED_NAME'] = htmlspecialcharsbx($arContact['~CONTACT_FORMATTED_NAME']);
 
-	$typeID = isset($arContact['TYPE_ID']) ? $arContact['TYPE_ID'] : '';
-	$arContact['CONTACT_TYPE_NAME'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
+	if (!$category || !in_array(Crm\Item::FIELD_NAME_TYPE_ID, $category->getDisabledFieldNames(), true))
+	{
+		$typeID = isset($arContact['TYPE_ID']) ? $arContact['TYPE_ID'] : '';
+		$arContact['CONTACT_TYPE_NAME'] = isset($arResult['TYPE_LIST'][$typeID]) ? $arResult['TYPE_LIST'][$typeID] : $typeID;
+	}
 
 	$arContact['PATH_TO_USER_CREATOR'] = CComponentEngine::MakePathFromTemplate(
 		$arParams['PATH_TO_USER_PROFILE'],
@@ -2472,7 +2496,7 @@ if($arResult['ENABLE_TOOLBAR'])
 		$parentEntityId = (int)($arParams['PARENT_ENTITY_ID'] ?? 0);
 		if (\CCrmOwnerType::IsDefined($parentEntityTypeId) && $parentEntityId > 0)
 		{
-			$arResult['PATH_TO_CONTACT_ADD'] = Crm\Service\Container::getInstance()->getRouter()->getItemDetailUrl(
+			$arResult['PATH_TO_CONTACT_ADD'] = Container::getInstance()->getRouter()->getItemDetailUrl(
 				\CCrmOwnerType::Contact,
 				0,
 				null,
@@ -2767,7 +2791,8 @@ else
 
 		return array(
 			'PROCESSED_ITEMS' => count($arResult['CONTACT']),
-			'TOTAL_ITEMS' => $arResult['STEXPORT_TOTAL_ITEMS']
+			'TOTAL_ITEMS' => $arResult['STEXPORT_TOTAL_ITEMS'],
+			'LAST_EXPORTED_ID' => $lastExportedId
 		);
 	}
 	else

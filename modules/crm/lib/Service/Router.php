@@ -3,6 +3,7 @@ namespace Bitrix\Crm\Service;
 
 use Bitrix\Crm\Integration\IntranetManager;
 use Bitrix\Crm\ItemIdentifier;
+use Bitrix\Crm\Kanban;
 use Bitrix\Crm\Service\Router\ParseResult;
 use Bitrix\Crm\Settings\EntityViewSettings;
 use Bitrix\Intranet\Util;
@@ -22,7 +23,9 @@ use Bitrix\Main\Web\Uri;
 class Router
 {
 	public const LIST_VIEW_KANBAN = EntityViewSettings::KANBAN_VIEW_NAME;
+	public const LIST_VIEW_ACTIVITY = EntityViewSettings::ACTIVITY_VIEW_NAME;
 	public const LIST_VIEW_LIST = EntityViewSettings::LIST_VIEW_NAME;
+	public const LIST_VIEW_CALENDAR = EntityViewSettings::CALENDAR_VIEW_NAME;
 
 	protected const GET_COMPONENT_NAME = 'c';
 	protected const GET_COMPONENT_PARAMETERS = 'cp';
@@ -163,6 +166,25 @@ class Router
 		];
 	}
 
+	public function getEntityTypeByComponent(string $componentName, array $componentParams): int
+	{
+		static $map = null;
+
+		if ($map === null)
+		{
+			$map = array_flip($this->getItemDetailComponentNamesMap());
+		}
+
+		$entityTypeId = isset($map[$componentName]) ? (int)$map[$componentName] : \CCrmOwnerType::Undefined;
+
+		if (!\CCrmOwnerType::IsDefined($entityTypeId) && isset($componentParams['ENTITY_TYPE_ID']))
+		{
+			$entityTypeId = (int)$componentParams['ENTITY_TYPE_ID'];
+		}
+
+		return $entityTypeId;
+	}
+
 	public function saveCustomUrlTemplates(array $templates): void
 	{
 		Option::set(static::MODULE_ID, static::OPTION_NAME_TEMPLATES, Json::encode($templates));
@@ -269,7 +291,15 @@ class Router
 		);
 		if (is_string($componentName))
 		{
-			$result = new ParseResult($componentName, $componentParameters);
+			$result = new ParseResult(
+				$componentName,
+				$componentParameters,
+				null,
+				$this->getEntityTypeByComponent(
+					$componentName,
+					$componentParameters
+				)
+			);
 		}
 		else
 		{
@@ -295,10 +325,16 @@ class Router
 			$componentName = null;
 		}
 
+		$componentParameters = $httpRequest->get(static::GET_COMPONENT_PARAMETERS);
+
 		return new ParseResult(
 			$componentName,
-			$httpRequest->get(static::GET_COMPONENT_PARAMETERS),
-			$httpRequest->get(static::GET_COMPONENT_TEMPLATE)
+			$componentParameters,
+			$httpRequest->get(static::GET_COMPONENT_TEMPLATE),
+			$this->getEntityTypeByComponent(
+				$componentName,
+				$componentParameters
+			)
 		);
 	}
 
@@ -447,13 +483,7 @@ class Router
 
 	protected function getKanbanUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
 	{
-		return $this->getUrlForTemplate(
-			'bitrix:crm.item.kanban',
-			[
-				'entityTypeId' => $entityTypeId,
-				'categoryId' => $categoryId ?? 0,
-			]
-		);
+		return $this->getKanbanUrlViaViewModeWithNewRouting($entityTypeId, $categoryId, \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES);
 	}
 
 	protected function getKanbanUrlWithOldRouting(int $entityTypeId, int $categoryId = null): ?Uri
@@ -478,6 +508,62 @@ class Router
 		}
 
 		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+	}
+
+	public function getActivityUrl(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		if ($this->isNewRoutingForListEnabled($entityTypeId))
+		{
+			return $this->getKanbanActivityUrlWithNewRouting($entityTypeId, $categoryId);
+		}
+
+		return $this->getKanbanActivityUrlWithOldRouting($entityTypeId, $categoryId);
+	}
+
+	protected function getKanbanActivityUrlWithNewRouting(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		return $this->getKanbanUrlViaViewModeWithNewRouting($entityTypeId, $categoryId, \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES);
+	}
+
+	// @todo remove code duplication with getKanbanUrlWithOldRouting
+	protected function getKanbanActivityUrlWithOldRouting(int $entityTypeId, int $categoryId = null): ?Uri
+	{
+		if ($entityTypeId === \CCrmOwnerType::DealCategory)
+		{
+			return null;
+		}
+
+		if ($entityTypeId === \CCrmOwnerType::Deal)
+		{
+			$template = Option::get(self::MODULE_ID, 'path_to_deal_category_activity');
+
+			return new Uri(\CComponentEngine::makePathFromTemplate($template, ['category_id' => $categoryId ?? 0]));
+		}
+
+		$entityName = mb_strtolower(\CCrmOwnerType::ResolveName($entityTypeId));
+		$template = Option::get(static::MODULE_ID, "path_to_{$entityName}_activity");
+		if (empty($template))
+		{
+			return null;
+		}
+
+		return new Uri(\CComponentEngine::makePathFromTemplate($template));
+	}
+
+	protected function getKanbanUrlViaViewModeWithNewRouting(
+		int $entityTypeId,
+		int $categoryId = null,
+		string $viewMode = \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES
+	): ?Uri
+	{
+		return $this->getUrlForTemplate(
+			'bitrix:crm.item.kanban',
+			[
+				'entityTypeId' => $entityTypeId,
+				'categoryId' => $categoryId ?? 0,
+				'viewMode' => $viewMode,
+			]
+		);
 	}
 
 	public function getCalendarUrl(int $entityTypeId, int $categoryId = null): ?Uri
@@ -852,14 +938,23 @@ class Router
 	{
 		$currentView = $this->getCurrentListView($entityTypeId);
 
-		if ($currentView === static::LIST_VIEW_KANBAN)
-		{
-			return $this->getKanbanUrl($entityTypeId, $categoryId);
-		}
+		$methodMap = [
+			static::LIST_VIEW_KANBAN => 'getKanbanUrl',
+			static::LIST_VIEW_LIST => 'getItemListUrl',
+			static::LIST_VIEW_CALENDAR => 'getCalendarUrl',
+			static::LIST_VIEW_ACTIVITY => 'getActivityUrl',
+		];
 
-		if ($currentView === static::LIST_VIEW_LIST)
+		if (!isset($methodMap[$currentView]))
 		{
-			return $this->getItemListUrl($entityTypeId, $categoryId);
+			$currentView = $this->getDefaultListView($entityTypeId);
+		}
+		
+		if (isset($methodMap[$currentView]))
+		{
+			$methodName = $methodMap[$currentView];
+
+			return $this->$methodName($entityTypeId, $categoryId);
 		}
 
 		return null;
@@ -1177,6 +1272,10 @@ class Router
 	public function getItemDetailComponentNamesMap(): array
 	{
 		return [
+			\CCrmOwnerType::Lead => 'bitrix:crm.lead.details',
+			\CCrmOwnerType::Deal => 'bitrix:crm.deal.details',
+			\CCrmOwnerType::Contact => 'bitrix:crm.contact.details',
+			\CCrmOwnerType::Company => 'bitrix:crm.company.details',
 			\CCrmOwnerType::Quote => 'bitrix:crm.quote.details',
 			\CCrmOwnerType::SmartInvoice => 'bitrix:crm.invoice.details',
 			\CCrmOwnerType::SmartDocument => 'bitrix:crm.document.details',

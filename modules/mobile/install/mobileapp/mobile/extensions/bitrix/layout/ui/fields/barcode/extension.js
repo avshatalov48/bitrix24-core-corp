@@ -1,8 +1,14 @@
-(() => {
+/**
+ * @module layout/ui/fields/barcode
+ */
+jn.define('layout/ui/fields/barcode', (require, exports, module) => {
+
+	const { StringFieldClass } = require('layout/ui/fields/string');
+
 	/**
-	 * @class Fields.BarcodeInput
+	 * @class BarcodeField
 	 */
-	class BarcodeInput extends Fields.StringInput
+	class BarcodeField extends StringFieldClass
 	{
 		renderEditableContent()
 		{
@@ -10,37 +16,57 @@
 				{
 					style: {
 						flex: 1,
-						flexDirection: 'row'
-					}
+						flexDirection: 'row',
+					},
 				},
-				TextField({
-					ref: (ref) => this.inputRef = ref,
-					style: this.styles.editableValue,
-					forcedValue: this.stringify(this.props.value),
-					keyboardType: this.getConfig().keyboardType,
-					placeholder: this.getPlaceholder(),
-					placeholderTextColor: this.styles.textPlaceholder.color,
-					onFocus: () => this.setFocus(),
-					onBlur: () => this.removeFocus(),
-					onChangeText: (text) => this.changeText(text),
-					onSubmitEditing: () => this.inputRef.blur()
+				super.renderEditableContent(),
+			);
+		}
+
+		renderEditIcon()
+		{
+			return View(
+				{
+					style: {
+						flexDirection: 'row',
+					},
+				},
+				View({
+					style: {
+						width: 1,
+						backgroundColor: '#dbdde0',
+						marginRight: 11.5,
+					},
 				}),
 				View(
 					{
+						style: {
+							paddingTop: 10,
+							paddingBottom: 10,
+							paddingLeft: 9,
+							paddingRight: 9,
+						},
 						onClick: () => {
 							BarcodeScannerWidget.open({
 								layoutProps: {
-									onBarcodeScanned: this.handleOnBarCodeScanned.bind(this)
-								}
+									onBarcodeScanned: this.handleOnBarCodeScanned.bind(this),
+								},
+								parentWidget: this.getParentWidget(),
 							});
-						}
+						},
 					},
-					Text({
-						style: this.styles.scanBarcodeText,
-						text: this.props.scanBarcodeText || BX.message('FIELDS_INLINE_FIELD_SCAN_BARCODE_TEXT')
-					})
-				)
-            );
+					Image({
+						style: {
+							width: 18,
+							height: 18,
+						},
+						svg: {
+							content: `<svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.78866 0.71875H0.0996094V17.2761H1.78866V0.71875ZM17.9001 0.718791H16.2111V17.2762H17.9001V0.718791ZM9.83665 0.71875H11.3265V17.2761H9.83665V0.71875ZM9.23647 0.718791H7.54742V17.2762H9.23647V0.718791ZM2.5338 0.718791H5.54707V17.2762H2.5338V0.718791ZM14.6215 0.718791H12.2371V17.2762H14.6215V0.718791Z" fill="#525C69"/></svg>`,
+						},
+						resizeMode: 'center',
+					}),
+				),
+			);
 		}
 
 		handleOnBarCodeScanned(barcode, scanner)
@@ -48,21 +74,18 @@
 			scanner.stopScanning();
 			this.changeText(barcode.value);
 			scanner.close();
+			this.setFocus();
 		}
 
-		getDefaultStyles()
+		shouldShowEditIcon()
 		{
-			const styles = super.getDefaultStyles();
-
-			return {
-				...styles,
-				scanBarcodeText: {
-					color: '#333333',
-				},
-			};
+			return true;
 		}
 	}
 
-	this.Fields = this.Fields || {};
-	this.Fields.BarcodeInput = BarcodeInput;
-})();
+	module.exports = {
+		BarcodeType: 'barcode',
+		BarcodeField: (props) => new BarcodeField(props),
+	};
+
+});

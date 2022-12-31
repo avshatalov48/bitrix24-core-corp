@@ -89,7 +89,7 @@ if($arParams['TYPE'] === 'list')
 			)
 		);
 		$addButton  = [
-			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 			'LINK' => $addLink,
 			'HIGHLIGHT' => true
 		];

@@ -95,6 +95,7 @@ function getUserData(array $user): array
 		'link' => CComponentEngine::makePathFromTemplate("/company/personal/user/{$userId}/"),
 		'icon' => Avatar::getPerson($user['PERSONAL_PHOTO']),
 		'isAdmin' => User::isSuper($userId),
+		'workPosition' => $user['WORK_POSITION'],
 	];
 }
 

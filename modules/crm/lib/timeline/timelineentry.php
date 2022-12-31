@@ -221,6 +221,7 @@ class TimelineEntry
 			}
 			$connection->queryExecute("DELETE FROM b_crm_timeline_search WHERE OWNER_ID IN ($conditionSql)");
 			$connection->queryExecute("DELETE FROM b_crm_timeline WHERE ID IN ($conditionSql)");
+			$connection->queryExecute("DELETE FROM b_crm_timeline_note WHERE ITEM_ID IN ($conditionSql) AND ITEM_TYPE=" . (int)\Bitrix\Crm\Timeline\Entity\NoteTable::NOTE_TYPE_HISTORY);
 		}
 		//endregion
 
@@ -230,6 +231,9 @@ class TimelineEntry
 		);
 		$connection->queryExecute(
 			"DELETE b.* FROM b_crm_timeline_bind b INNER JOIN b_crm_timeline t ON b.OWNER_ID = t.ID AND t.ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND t.ASSOCIATED_ENTITY_ID = {$entityID}"
+		);
+		$connection->queryExecute(
+			"DELETE FROM b_crm_timeline_note WHERE ITEM_ID IN (SELECT ID FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}) AND ITEM_TYPE=" . (int)\Bitrix\Crm\Timeline\Entity\NoteTable::NOTE_TYPE_HISTORY
 		);
 		$connection->queryExecute(
 			"DELETE FROM b_crm_timeline WHERE ASSOCIATED_ENTITY_TYPE_ID = {$entityTypeID} AND ASSOCIATED_ENTITY_ID = {$entityID}"
@@ -353,6 +357,8 @@ class TimelineEntry
 	}
 	public static function registerBindings($entryID, array $bindings)
 	{
+		$monitor = Crm\Service\Timeline\Monitor::getInstance();
+
 		foreach($bindings as $binding)
 		{
 			$entityID = isset($binding['ENTITY_ID']) ? (int)$binding['ENTITY_ID'] : 0;
@@ -370,9 +376,12 @@ class TimelineEntry
 					$parameters['IS_FIXED'] = $binding['IS_FIXED'] ? 'Y' : 'N';
 				}
 				Entity\TimelineBindingTable::upsert($parameters);
+
+				$monitor->onTimelineEntryAddIfSuitable(new Crm\ItemIdentifier($entityTypeID, $entityID), (int)$entryID);
 			}
 		}
 	}
+
 	public static function shift($ID, DateTime $time)
 	{
 		Entity\TimelineTable::update($ID, array('CREATED' => $time));

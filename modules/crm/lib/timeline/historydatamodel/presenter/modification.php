@@ -32,6 +32,14 @@ class Modification extends Presenter
 		$fieldName = $settings['FIELD'] ?? '';
 		$data['MODIFIED_FIELD'] = $fieldName;
 
+		if ($fieldName === Item::FIELD_NAME_IS_MANUAL_OPPORTUNITY)
+		{
+			$castToString = fn(bool $val) => $val ? 'Y' : 'N';
+
+			$data['START'] = is_bool($settings['START']) ? $castToString($settings['START']) : $settings['START'];
+			$data['FINISH'] = is_bool($settings['FINISH']) ? $castToString($settings['FINISH']) : $settings['START'];
+		}
+
 		return $data;
 	}
 }

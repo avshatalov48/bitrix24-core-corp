@@ -7,6 +7,7 @@ use Bitrix\Crm\Integration\PullManager;
 use Bitrix\Crm\Integrity;
 use Bitrix\Crm\Item;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\Service\Context;
 use Bitrix\Crm\Service\Operation;
 use Bitrix\Crm\Statistics;
 use Bitrix\Crm\Timeline\TimelineManager;
@@ -72,19 +73,14 @@ class Delete extends Operation
 		return $result;
 	}
 
-	protected function isCountersUpdateNeeded(): bool
+	protected function notifyCounterMonitor(): void
 	{
-		return true;
-	}
-
-	protected function getUserIdsForCountersReset(): array
-	{
-		if ($this->itemBeforeSave->hasField(Item::FIELD_NAME_ASSIGNED) && $this->itemBeforeSave->getAssignedById() > 0)
+		$fieldsValues = [];
+		foreach ($this->getCounterMonitorSignificantFields() as $commonFieldName => $entityFieldName)
 		{
-			return [$this->itemBeforeSave->getAssignedById()];
+			$fieldsValues[$entityFieldName] = $this->itemBeforeSave->remindActual($commonFieldName);
 		}
-
-		return [];
+		\Bitrix\Crm\Counter\Monitor::getInstance()->onEntityDelete($this->getItem()->getEntityTypeId(), $fieldsValues);
 	}
 
 	protected function registerStatistics(Statistics\OperationFacade $statisticsFacade): Result
@@ -207,6 +203,11 @@ class Delete extends Operation
 	protected function getPullData(): array
 	{
 		return $this->getItemBeforeSave()->getCompatibleData();
+	}
+
+	protected function keepCurrentUser(): bool
+	{
+		return true;
 	}
 
 	protected function updatePermissions(): void

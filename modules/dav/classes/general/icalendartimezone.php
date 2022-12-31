@@ -17,9 +17,11 @@ class CDavICalendarTimeZone
 		$comps = $t->GetComponents();
 		foreach ($comps as $comp)
 		{
-			$t = self::ParseVTimezone($comp, intval(date("Y", $date)));
+			$t = self::ParseVTimezone($comp, intval(date("Y", (int)$date)));
 			if ($t !== false)
+			{
 				$arTimeMap[] = $t;
+			}
 		}
 
 		if ($arTimeMap)
@@ -135,16 +137,18 @@ class CDavICalendarTimeZone
 	public static function GetFormattedServerDateTime($text, $tzid = false, CDavICalendar $calendar = null)
 	{
 		$date = self::ParseDateTime($text, $tzid, $calendar);
-		return date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), $date);
+		return date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATETIME), (int)$date);
 	}
 
 	public static function GetFormattedServerDate($text)
 	{
 		if (preg_match('/(\+|-)([0-9]{2}):?([0-9]{2})([0-9]{2})?$/', $text, $match))
+		{
 			$text = mb_substr($text, 0, -mb_strlen($match[0]));
+		}
 
 		$date = self::ParseDateTime($text);
-		return date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), $date);
+		return date($GLOBALS["DB"]->DateFormatToPHP(FORMAT_DATE), (int)$date);
 	}
 
 	public static function ParseDateTime($text, $tzid = false, CDavICalendar $calendar = null)
@@ -217,9 +221,11 @@ class CDavICalendarTimeZone
 				$comps = $t->GetComponents();
 				foreach ($comps as $comp)
 				{
-					$t = self::ParseVTimezone($comp, intval(date("Y", $date)));
+					$t = self::ParseVTimezone($comp, intval(date("Y", (int)$date)));
 					if ($t !== false)
+					{
 						$arTimeMap[] = $t;
+					}
 				}
 
 				if ($arTimeMap)
@@ -342,7 +348,9 @@ class CDavICalendarTimeZone
 			return false;
 		$switchTime = self::ParseDateTime($t);
 		if (!is_int($switchTime))
+		{
 			return false;
+		}
 
 		$rrules = $vtimezone->GetPropertyValue('RRULE');
 		if ($rrules == null)
@@ -354,7 +362,9 @@ class CDavICalendarTimeZone
 
 		$switchYear = date("Y", $switchTime);
 		if ($switchYear > $year)
+		{
 			return false;
+		}
 
 		$rrules = explode(';', $rrules);
 		foreach ($rrules as $rrule)
@@ -423,10 +433,14 @@ class CDavICalendarTimeZone
 		}
 
 		if ($rruleInterval == 12)
+		{
 			$month = date("n", $switchTime);
+		}
 
 		if (empty($month) || !isset($weekday))
+		{
 			return false;
+		}
 
 		$switchTime = strftime('%H:%M:%S', $switchTime);
 		$switchTime = explode(':', $switchTime);

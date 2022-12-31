@@ -629,9 +629,24 @@ jn.define('im/messenger/controller/dialog/dialog', (require, exports, module) =>
 			});
 		}
 
-		getOpenLineParams(options = {})
+		static getOpenDialogParams(options = {})
 		{
-			return WebDialog.getOpenLineParams(options);
+			const {
+				dialogId,
+				dialogTitleParams,
+			} = options;
+
+			return WebDialog.getOpenDialogParams(dialogId, dialogTitleParams);
+		}
+
+		static getOpenLineParams(options = {})
+		{
+			const {
+				userCode,
+				dialogTitleParams
+			} = options;
+
+			return WebDialog.getOpenLineParams(userCode, dialogTitleParams);
 		}
 
 		createAudioCall()

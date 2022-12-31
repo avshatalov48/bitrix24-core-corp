@@ -2001,11 +2001,11 @@ BX.ImMessengerMobile.prototype.dialogStatusRedrawDelay = function(params)
 				}
 				if (this.BXIM.bitrixCrm && session.crmLink)
 				{
-					var linkParams = BX.MobileTools.getMobileUrlParams(session.crmLink);
-					if (linkParams)
+					var loadFunction = BX.MobileTools.resolveOpenFunction(session.crmLink);
+					if (loadFunction)
 					{
 						items.push({image: "/bitrix/mobileapp/mobile/extensions/bitrix/menu/header/images/lifefeed_v1.png", name: BX.message('IM_M_OL_GOTO_CRM'), action: function() {
-							BXMobileApp.PageManager.loadPageBlank(linkParams);
+							loadFunction();
 						}});
 					}
 				}
@@ -3891,10 +3891,19 @@ BX.ImWebRTCMobile.prototype.pullPhoneUiEvent = function()
 				crmUrl = this.BXIM.pathToCrmLead.replace('#ID#', eventName[1]);
 			}
 
-			BXMobileApp.PageManager.loadPageBlank({
-				'url' : crmUrl,
-				'bx24ModernStyle' : true
-			});
+			const openWidget = BX.MobileTools.resolveOpenFunction(crmUrl, { 'bx24ModernStyle' : true })
+			if (openWidget)
+			{
+				openWidget();
+			}
+			else
+			{
+				BXMobileApp.PageManager.loadPageBlank({
+					'url' : crmUrl,
+					'bx24ModernStyle' : true
+				});
+			}
+
 			BX.MobileCallUI.form.rollUp();
 		}
 		/* Contact list */

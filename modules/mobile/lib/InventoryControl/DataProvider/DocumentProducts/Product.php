@@ -2,7 +2,10 @@
 
 namespace Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts;
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 use Bitrix\Catalog\StoreDocumentElementTable;
+use Bitrix\Catalog\StoreDocumentTable;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Security\Random;
 use Bitrix\Mobile\InventoryControl\DataProvider\DocumentProducts\Product\CompleteBarcodes;
@@ -43,6 +46,10 @@ final class Product
 			'BASE_PRICE',
 		];
 
+		$hasPurchasePriceReadAccess = AccessController::getCurrent()->check(
+			ActionDictionary::ACTION_PRODUCT_PURCHASE_INFO_VIEW
+		);
+
 		$rows = StoreDocumentElementTable::getList([
 			'order' => $order,
 			'filter' => $filter,
@@ -50,19 +57,37 @@ final class Product
 		]);
 		while ($row = $rows->Fetch())
 		{
+			$hasStoreFromAccess = $row['STORE_FROM'] ? self::hasStoreAccess((int)$row['STORE_FROM']) : true;
+			$hasStoreToAccess = $row['STORE_TO'] ? self::hasStoreAccess((int)$row['STORE_TO']) : true;
+
 			$records[] = new DocumentProductRecord([
 				'id' => (int)$row['ID'],
 				'documentId' => (int)$row['DOC_ID'],
 				'productId' => (int)$row['ELEMENT_ID'],
-				'storeFromId' => (int)$row['STORE_FROM'],
-				'storeToId' => (int)$row['STORE_TO'],
+				'storeFromId' => $hasStoreFromAccess ? (int)$row['STORE_FROM'] : null,
+				'hasStoreFromAccess' => $hasStoreFromAccess,
+				'storeToId' => $hasStoreToAccess ? (int)$row['STORE_TO'] : null,
+				'storeToAccess' => self::hasStoreAccess((int)$row['STORE_TO']),
+				'hasStoreToAccess' => $hasStoreToAccess,
 				'name' => $row['ELEMENT_NAME'],
-				'amount' => (float)$row['AMOUNT'],
+				/**
+				 * @todo
+				 * the STORE_FROM field needs to be checked instead for the following types:
+				 * StoreDocumentTable::TYPE_DEDUCT
+				 * StoreDocumentTable::TYPE_MOVING
+				 */
+				'amount' => self::hasStoreAccess((int)$row['STORE_TO'])
+					? (float)$row['AMOUNT']
+					: null,
 				'price' => [
-					'purchase' => [
-						'amount' => (float)$row['PURCHASING_PRICE'],
-						'currency' => $currency,
-					],
+					'purchase' => $hasPurchasePriceReadAccess
+						?
+						[
+							'amount' => (float)$row['PURCHASING_PRICE'],
+							'currency' => $currency,
+						]
+						: null
+					,
 					'sell' => [
 						'amount' => (float)$row['BASE_PRICE'],
 						'currency' => $currency,
@@ -77,6 +102,14 @@ final class Product
 			new CompleteStores(),
 			new CompleteBarcodes(),
 		]);
+	}
+
+	private static function hasStoreAccess(int $storeId): bool
+	{
+		return AccessController::getCurrent()->checkByValue(
+			ActionDictionary::ACTION_STORE_VIEW,
+			(string)$storeId
+		);
 	}
 
 	public static function loadProductModel(int $productId, ?int $documentId = null): DocumentProductRecord

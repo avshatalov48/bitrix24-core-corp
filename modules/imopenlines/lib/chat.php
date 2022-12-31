@@ -733,6 +733,7 @@ class Chat
 					'CONFIG_ID' => $queueId,
 					'QUEUE_HISTORY' => [],
 					'SKIP_DATE_CLOSE' => true,
+					'SKIP_CHANGE_STATUS' => true,
 					'DATE_MODIFY' => new DateTime(),
 					'OPERATOR_FROM_CRM' => 'N'
 				];
@@ -902,7 +903,8 @@ class Chat
 				]);
 
 				$updateDataSession = [
-					'OPERATOR_FROM_CRM' => 'N'
+					'OPERATOR_FROM_CRM' => 'N',
+					'SKIP_CHANGE_STATUS' => true,
 				];
 
 				if ($userFrom->isBot() && !$session->getData('DATE_OPERATOR'))
@@ -1743,8 +1745,11 @@ class Chat
 							(new AutomaticAction($session))->automaticAddMessage($messageId);
 
 							$session->update([
+								'DATE_FIRST_LAST_USER_ACTION' => new DateTime(),
 								'MESSAGE_COUNT' => true,
-								'DATE_LAST_MESSAGE' => new DateTime()
+								'DATE_LAST_MESSAGE' => new DateTime(),
+								'DATE_MODIFY' => new DateTime(),//this will change status!
+								'USER_ID' => $userId,
 							]);
 
 							$queueManager = Queue::initialization($session);

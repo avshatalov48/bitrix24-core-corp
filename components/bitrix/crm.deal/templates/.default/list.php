@@ -54,10 +54,6 @@ if(!Bitrix\Crm\Integration\Bitrix24Manager::isAccessEnabled(CCrmOwnerType::Deal)
 else
 {
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
-	if($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
 
 	if ($arResult['IS_RECURRING'] !== 'Y')
 	{
@@ -76,11 +72,6 @@ else
 					)
 			)
 		);
-	}
-
-	if($isBitrix24Template)
-	{
-		$this->EndViewTarget();
 	}
 
 	if($isBitrix24Template)

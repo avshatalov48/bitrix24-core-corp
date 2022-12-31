@@ -31,9 +31,17 @@ final class SignDocument extends Activity
 		return 'document';
 	}
 
+	public function getBackgroundColorToken(): string
+	{
+		return Layout\Icon::BACKGROUND_PRIMARY_ALT;
+	}
+
 	public function getTitle(): ?string
 	{
-		return Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CREATED_AT');
+		return $this->getModel()->isScheduled()
+		? Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT')
+		: Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLOSED')
+		;
 	}
 
 	public function getLogo(): ?Layout\Body\Logo
@@ -96,7 +104,7 @@ final class SignDocument extends Activity
 		}
 
 		$activityData = $this->getAssociatedEntityModel()->toArray();
-		$deadLine = $this->model->getDate();
+		$deadLine = $this->getDeadline();
 
 		if (\Bitrix\Crm\Activity\Provider\SignDocument::checkUpdatePermission($activityData))
 		{
@@ -119,8 +127,12 @@ final class SignDocument extends Activity
 		$blocks['updatedAt'] = (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 					->setTitle(Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_UPDATED_AT'))
 					->setContentBlock(
-						(new Layout\Body\ContentBlock\Text())
-							->setValue($this->getDocument()->getUpdatedTime()));
+						(new Layout\Body\ContentBlock\Date())
+							->setDate($this->getDocument()
+								->getUpdatedTime()
+								->toUserTime()
+							)
+					);
 
 		$blocks['myCompany'] = (new Layout\Body\ContentBlock\ContentBlockWithTitle())
 					->setTitle(Loc::getMessage('CRM_TYPE_ITEM_FIELD_MYCOMPANY_ID'))
@@ -137,7 +149,7 @@ final class SignDocument extends Activity
 			$blocks['client' . $clientCount] =
 				(new Layout\Body\ContentBlock\ContentBlockWithTitle())
 					->setTitle(
-						Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CLIENT_WITH_COUNT', ['#CLIENT_COUNT#' => $clientCount])
+						Loc::getMessage('CRM_TIMELINE_ACTIVITY_SIGN_DOCUMENT_CONTER_AGENT')
 					)
 					->setContentBlock(
 						(new Layout\Body\ContentBlock\Text())
@@ -153,12 +165,13 @@ final class SignDocument extends Activity
 
 	public function getButtons(): ?array
 	{
-		$buttons = [];
-		$buttons['open'] = (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_OPEN'),
-					Layout\Footer\Button::TYPE_PRIMARY))
-					->setAction($this->getOpenDocumentAction());
-
 		$signDocument = $this->getSignDocument();
+
+		$buttons = $signDocument ? ['open' => (new Layout\Footer\Button(Loc::getMessage('CRM_COMMON_ACTION_OPEN'),
+			Layout\Footer\Button::TYPE_PRIMARY))
+			->setAction($this->getOpenDocumentAction())
+		] : [];
+
 		if ($signDocument && $signDocument->canBeChanged())
 		{
 			$buttons['edit'] = (new Layout\Footer\Button(
@@ -166,7 +179,7 @@ final class SignDocument extends Activity
 				Layout\Footer\Button::TYPE_SECONDARY,
 			))->setAction(
 				(new Layout\Action\JsEvent($this->getType() . ':Modify'))
-					->addActionParamInt('documentId', $this->getSignDocument()->getId())
+					->addActionParamInt('documentId', $this->getDocumentId())
 			);
 		}
 
@@ -187,15 +200,20 @@ final class SignDocument extends Activity
 		return (int)$this->getAssociatedEntityModel()->get('ASSOCIATED_ENTITY_ID');
 	}
 
+	private function getEntityTypeId(): int
+	{
+		return (int)$this->getAssociatedEntityModel()->get('OWNER_TYPE_ID');
+	}
+
 	private function getDocument(): \Bitrix\Crm\Item
 	{
 		if (!$this->document)
 		{
-			$factory = Container::getInstance()->getFactory(\CCrmOwnerType::SmartDocument);
+			$factory = Container::getInstance()->getFactory($this->getEntityTypeId());
 			if (!$factory)
 			{
 				throw new ObjectNotFoundException(
-					'Factory for ' . \CCrmOwnerType::ResolveName(\CCrmOwnerType::SmartDocument) . ' was not found'
+					'Factory for ' . \CCrmOwnerType::ResolveName($this->getEntityTypeId()) . ' was not found'
 				);
 			}
 
@@ -204,7 +222,7 @@ final class SignDocument extends Activity
 			$this->document = $factory->getItem($documentId);
 			if (!$this->document)
 			{
-				$identifier = new ItemIdentifier(\CCrmOwnerType::SmartDocument, $documentId);
+				$identifier = new ItemIdentifier($this->getEntityTypeId(), $documentId);
 
 				throw new ObjectNotFoundException('Item was not found: ' . $identifier);
 			}
@@ -216,7 +234,7 @@ final class SignDocument extends Activity
 	private function getMyCompanyCaption(): string
 	{
 		//todo validate if this way of getting requisites is correct
-		$link = EntityLink::getByEntity(\CCrmOwnerType::SmartDocument, $this->getDocumentId());
+		$link = EntityLink::getByEntity($this->getEntityTypeId(), $this->getDocumentId());
 		if ($link)
 		{
 			$requisiteId = $link['MC_REQUISITE_ID'] ?? null;
@@ -227,7 +245,7 @@ final class SignDocument extends Activity
 		{
 			$requisites = EntityRequisite::getSingleInstance()->getById($linkedRequisiteId);
 		}
-		elseif ($this->getDocument()->getMycompanyId() > 0)
+		elseif (isset($this->getDocument()->getData()['MYCOMPANY_ID']) && $this->getDocument()->getMycompanyId() > 0)
 		{
 			$defaultRequisite = new DefaultRequisite(
 				new ItemIdentifier(\CCrmOwnerType::Company, $this->getDocument()->getMycompanyId())

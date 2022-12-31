@@ -263,6 +263,45 @@ class ContactCompanyTable extends Entity\DataManager
 		return $results;
 	}
 	/**
+	 * Get binding map for company's collection.
+	 *
+	 * @param array $companyIDs Array of Company IDs.
+	 * @return array
+	 * @throws Main\ArgumentException
+	 * @throws Main\ObjectPropertyException
+	 * @throws Main\SystemException
+	 */
+	public static function getBulkCompanyBindings(array $companyIDs): array
+	{
+		\Bitrix\Main\Type\Collection::normalizeArrayValuesByInt($companyIDs, false);
+		if (empty($companyIDs))
+		{
+			return [];
+		}
+
+		$bindingMap = [];
+		foreach ($companyIDs as $companyID)
+		{
+			$bindingMap[$companyID] = [];
+		}
+
+		$dbResult = self::getList([
+			'filter' => ['@COMPANY_ID' => $companyIDs],
+			'select' => ['COMPANY_ID', 'CONTACT_ID', 'SORT', 'ROLE_ID', 'IS_PRIMARY'],
+			'order' => ['COMPANY_ID' => 'ASC', 'SORT' => 'ASC']
+		]);
+		while($ary = $dbResult->fetch())
+		{
+			$bindingMap[$ary['COMPANY_ID']][] = [
+				'CONTACT_ID' => (int)$ary['CONTACT_ID'],
+				'SORT' => (int)$ary['SORT'],
+				'ROLE_ID' => (int)$ary['ROLE_ID'],
+				'IS_PRIMARY' => $ary['IS_PRIMARY']
+			];
+		}
+		return $bindingMap;
+	}
+	/**
 	 * Check if contact has companies.
 	 * @param int $contactID Contact ID.
 	 * @return bool

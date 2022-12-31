@@ -1,7 +1,11 @@
 <?php
 
 return [
-	'layout/ui/fields/entity-selector',
-	'user/profile',
-	'selector/recipient'
+	'extensions' => [
+		'assets/common',
+		'layout/ui/fields/entity-selector',
+		'layout/ui/user-list',
+		'selector/recipient',
+		'user/profile',
+	],
 ];

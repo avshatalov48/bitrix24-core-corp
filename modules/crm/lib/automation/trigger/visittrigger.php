@@ -34,6 +34,16 @@ class VisitTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_VISIT_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_VISIT_NAME_1');
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_VISIT_DESCRIPTION') ?? '';
+	}
+
+	public static function getGroup(): array
+	{
+		return ['other'];
 	}
 }

@@ -32,7 +32,7 @@ class Money extends Value implements Nameable
 			{
 				$isMoney = 'N';
 			}
-			$result = Number2Word_Rus(round($this->value, 2), $isMoney, $options['CURRENCY_ID']);
+			$result = Number2Word_Rus(round((float)$this->value, 2), $isMoney, $options['CURRENCY_ID']);
 			if($result !== '')
 			{
 				return $result;

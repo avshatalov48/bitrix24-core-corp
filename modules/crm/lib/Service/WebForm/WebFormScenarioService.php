@@ -516,6 +516,7 @@ class WebFormScenarioService
 				ScenarioMenuItem::FIELDS['id'],
 				ScenarioMenuItem::AGREEMENTS['id'],
 				ScenarioMenuItem::CRM['id'],
+				ScenarioMenuItem::PAY_SYSTEMS['id'],
 				ScenarioMenuItem::BUTTON_AND_HEADER['id'],
 				ScenarioMenuItem::DESIGN['id'],
 				ScenarioMenuItem::OTHER['id'],
@@ -697,6 +698,7 @@ class WebFormScenarioService
 				ScenarioMenuItem::FIELDS['id'],
 				ScenarioMenuItem::AGREEMENTS['id'],
 				ScenarioMenuItem::CRM['id'],
+				ScenarioMenuItem::PAY_SYSTEMS['id'],
 				ScenarioMenuItem::DESIGN['id'],
 				ScenarioMenuItem::OTHER['id'],
 			])
@@ -748,6 +750,7 @@ class WebFormScenarioService
 			ScenarioMenuItem::FIELDS['id'],
 			ScenarioMenuItem::AGREEMENTS['id'],
 			ScenarioMenuItem::CRM['id'],
+			ScenarioMenuItem::PAY_SYSTEMS['id'],
 			ScenarioMenuItem::BUTTON_AND_HEADER['id'],
 			ScenarioMenuItem::SPAM_PROTECTION['id'],
 			ScenarioMenuItem::FIELDS_RULES['id'],

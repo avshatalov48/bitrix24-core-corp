@@ -1,0 +1,10 @@
+<?php
+$MESS["M_CRM_STAGE_DETAIL_DEFAULT_STAGE_DEFAULT_NAME"] = "New stage";
+$MESS["M_CRM_STAGE_DETAIL_DEFAULT_STAGE_NAME"] = "Name";
+$MESS["M_CRM_STAGE_DETAIL_DELETE"] = "Delete stage";
+$MESS["M_CRM_STAGE_DETAIL_DELETE_OK"] = "Delete";
+$MESS["M_CRM_STAGE_DETAIL_DELETE_TEXT"] = "Are you sure you want to delete the stage?";
+$MESS["M_CRM_STAGE_DETAIL_FUNNEL"] = "Stage \"#STAGE_NAME#\"";
+$MESS["M_CRM_STAGE_DETAIL_FUNNEL_EMPTY"] = "Untitled stage";
+$MESS["M_CRM_STAGE_DETAIL_NAME"] = "Stage name";
+$MESS["M_CRM_STAGE_DETAIL_SAVE"] = "Save";

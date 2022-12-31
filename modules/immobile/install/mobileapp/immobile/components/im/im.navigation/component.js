@@ -15,7 +15,7 @@
 			this.firstSetBadge = true;
 			this.counters = {};
 
-			this.currentTab = 'chats';
+			this.currentTab = BX.componentParameters.get('firstTabId', 'chats');
 			this.previousTab = 'none';
 
 			this.tabMapping = {

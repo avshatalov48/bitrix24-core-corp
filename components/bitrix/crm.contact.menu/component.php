@@ -211,7 +211,7 @@ if($arParams['TYPE'] === 'list')
 	}
 
 	$arResult['BUTTONS'][] = [
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => $addEntityUrl,
 		'HIGHLIGHT' => true,
 		'IS_DISABLED' => !$bAdd,
@@ -640,7 +640,7 @@ elseif ($qty >= 3)
 if ($bAdd && $arParams['TYPE'] != 'list' && $arParams['TYPE'] !== 'portrait')
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => CComponentEngine::MakePathFromTemplate(
 			$arParams[$isSliderEnabled ? 'PATH_TO_CONTACT_DETAILS' : 'PATH_TO_CONTACT_EDIT'],
 			array('contact_id' => 0)

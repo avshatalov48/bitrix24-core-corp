@@ -39,13 +39,11 @@
 	mask: url(images/task_new_mask_right.min.svg) top right / auto;
 }
 
-.bx-ie .side-panel-loader.task-new-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.task-new-loader .side-panel-loader-mask.left {
 	background: url(images/task_new_mask_left.min.svg) top left no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.task-new-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.task-new-loader .side-panel-loader-mask.right {
 	background: url(images/task_new_mask_right.min.svg) top right no-repeat;
 	background-size: auto;
@@ -93,13 +91,11 @@
 	mask: url(images/task_edit_mask_right.min.svg) top right / auto;
 }
 
-.bx-ie .side-panel-loader.task-edit-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.task-edit-loader .side-panel-loader-mask.left {
 	background: url(images/task_edit_mask_left.min.svg) top left no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.task-edit-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.task-edit-loader .side-panel-loader-mask.right {
 	background: url(images/task_edit_mask_right.min.svg) top right no-repeat;
 	background-size: auto;
@@ -136,13 +132,11 @@
 	mask: url(images/task_view_mask_right.min.svg) top right / auto;
 }
 
-.bx-ie .side-panel-loader.task-view-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.task-view-loader .side-panel-loader-mask.left {
 	background: url(images/task_view_mask_left.min.svg) top left no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.task-view-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.task-view-loader .side-panel-loader-mask.right {
 	background: url(images/task_view_mask_right.min.svg) top right no-repeat;
 	background-size: auto;
@@ -225,7 +219,6 @@
 	mask: url(images/crm_mask_right.min.svg) top left / auto;
 }
 
-.bx-ie .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.left {
 	left: 0;
 	width: calc(100% - 15px);
@@ -236,7 +229,6 @@
 	mask: none;
 }
 
-.bx-ie .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.right {
 	background: url(images/crm_mask_right.min.svg) 0 0 no-repeat;
 	background-size: auto;
@@ -245,7 +237,6 @@
 	mask: none;
 }
 
-.bx-ie .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.top,
 .bx-firefox .side-panel-loader.crm-entity-details-loader .side-panel-loader-mask.top {
 	width: calc(100% - 10px);
 	background: url(images/crm_mask_top.min.svg) top right no-repeat;
@@ -310,13 +301,11 @@
 	mask: url(images/crm_webform_mask_right.min.svg) top right / auto;
 }
 
-.bx-ie .side-panel-loader.crm-button-view-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.crm-button-view-loader .side-panel-loader-mask.left {
 	background: url(images/crm_webform_mask_left.min.svg) top left no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.crm-button-view-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.crm-button-view-loader .side-panel-loader-mask.right {
 	background: url(images/crm_webform_mask_right.min.svg) top right no-repeat;
 	background-size: auto;
@@ -360,13 +349,11 @@
 	mask: url(images/crm_webform2_mask_right.min.svg) top right / auto;
 }
 
-.bx-ie .side-panel-loader.crm-webform-view-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.crm-webform-view-loader .side-panel-loader-mask.left {
 	background: url(images/crm_webform2_mask_left.min.svg) top left no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.crm-webform-view-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.crm-webform-view-loader .side-panel-loader-mask.right {
 	background: url(images/crm_webform2_mask_right.min.svg) top right no-repeat;
 	background-size: auto;
@@ -405,13 +392,11 @@
 	mask: url(images/create_mail_right_mask.min.svg) -20px 7px / auto no-repeat;
 }
 
-.bx-ie .side-panel-loader.create-mail-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.create-mail-loader .side-panel-loader-mask.left {
 	background: url(images/create_mail_left_mask.min.svg) 6px 34px no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.create-mail-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.create-mail-loader .side-panel-loader-mask.right {
 	background: url(images/create_mail_right_mask.min.svg) -20px 7px no-repeat;
 	background-size: auto;
@@ -449,13 +434,11 @@
 	mask: url(images/view_mail_right_mask.min.svg) top right / auto no-repeat;
 }
 
-.bx-ie .side-panel-loader.view-mail-loader .side-panel-loader-mask.left,
 .bx-firefox .side-panel-loader.view-mail-loader .side-panel-loader-mask.left {
 	background: url(images/view_mail_left_mask.min.svg) 28px 28px no-repeat;
 	background-size: auto;
 }
 
-.bx-ie .side-panel-loader.view-mail-loader .side-panel-loader-mask.right,
 .bx-firefox .side-panel-loader.view-mail-loader .side-panel-loader-mask.right {
 	background: url(images/view_mail_right_mask.min.svg) top right no-repeat;
 	background-size: auto;
@@ -465,7 +448,6 @@
 
 /**/
 
-.bx-ie .side-panel-loader-mask,
 .bx-firefox .side-panel-loader-mask {
 	background: transparent;
 	-moz-animation: none;

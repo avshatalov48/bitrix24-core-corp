@@ -17,6 +17,7 @@ use Bitrix\Tasks\Copy\Implement\Robots;
 use Bitrix\Tasks\Copy\Implement\Stage as StageImplementer;
 use Bitrix\Tasks\Copy\Implement\TaskCheckList as CheckListImplementer;
 use Bitrix\Tasks\Copy\Implement\Task as TaskImplementer;
+use Bitrix\Tasks\Copy\Implement\TaskParams;
 use Bitrix\Tasks\Copy\Implement\Template as TemplateImplementer;
 use Bitrix\Tasks\Copy\Stage as StageCopier;
 use Bitrix\Tasks\Copy\Task as TaskCopier;
@@ -164,10 +165,11 @@ class TaskManager
 		$taskImplementer->setTargetGroupId($this->targetGroupId);
 		$taskImplementer->setProjectTerm($this->projectTerm);
 		$taskImplementer->setTemplateCopier($this->getTemplateCopier());
+		$taskImplementer->setParamsCopier($this->getParamsCopier());
 
 		if ($this->markerComment && Loader::includeModule("forum"))
 		{
-			$taskImplementer->setTopicCopier($this->getTopicCopier());
+			$taskImplementer->setCommentCopier($this->getCommentCopier());
 		}
 
 		return $taskImplementer;
@@ -193,9 +195,9 @@ class TaskManager
 		return new CheckListCopier($checklistImplementer, $this->executiveUserId);
 	}
 
-	private function getTopicCopier()
+	private function getCommentCopier()
 	{
-		return new EntityCopier($this->getTopicImplementer());
+		return new EntityCopier($this->getCommentImplementer());
 	}
 
 	private function getTemplateCopier(): Template
@@ -203,18 +205,19 @@ class TaskManager
 		return new Template($this->getTemplateImplementer());
 	}
 
-	private function getTopicImplementer()
+	private function getParamsCopier(): EntityCopier
+	{
+		return new EntityCopier(new TaskParams());
+	}
+
+	private function getCommentImplementer()
 	{
 		global $USER_FIELD_MANAGER;
 		$commentImplementer = new CommentImplementer();
 		$commentImplementer->setUserFieldManager($USER_FIELD_MANAGER);
 		$commentImplementer->setExecutiveUserId($this->executiveUserId);
-		$commentCopier = new EntityCopier($commentImplementer);
 
-		$topicImplementer = new TopicImplementer();
-		$topicImplementer->setCommentCopier($commentCopier);
-
-		return $topicImplementer;
+		return $commentImplementer;
 	}
 
 	private function getTemplateImplementer(): TemplateImplementer

@@ -92,16 +92,17 @@
 	background: url(data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2212%22%20height%3D%2216%22%20viewBox%3D%220%200%2012%2016%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cpath%20fill%3D%22%23F16C09%22%20d%3D%22M4.29%2016C1.762%2015.073.06%2012.692%200%2010%200%205.46%204.49%201.213%207%200c-.48%204.19%205%205.287%205%2010.75C12%2014.627%207.71%2016%207.71%2016H4.29z%22/%3E%3Cpath%20fill%3D%22%23FFF%22%20d%3D%22M5%2016c-1.182-1.007-1.904-2.45-2-4%20.133-2.054%201.25-3.916%203-5%201.48%203.148%203%202.8%203%205-.003%201.573-.743%203.054-2%204H5z%22/%3E%3C/g%3E%3C/svg%3E) center center no-repeat;
 	background-size: 100% 100%;
 }
-
-a.crm-activity-todo-link,
-a.crm-activity-todo-link:hover {
-	display: block;
+.crm-activity-todo-link{
+	display: flex;
 	overflow: hidden;
 	font-size: 14px;
-	color: #0b66c3;
 	margin: 0 0 5px 0;
-	white-space: nowrap;
 	text-overflow: ellipsis;
+
+}
+a.crm-activity-todo-link,
+a.crm-activity-todo-link:hover {
+	color: #0b66c3;
 	text-decoration: none !important;
 }
 
@@ -111,7 +112,8 @@ a.crm-activity-todo-link:hover {
 	overflow: hidden;
 	-ms-text-overflow: ellipsis;
 	text-overflow: ellipsis;
-	max-width: calc(100% - 30px);
+	white-space: nowrap;
+	padding-right: 4px;
 }
 
 .crm-activity-todo-link-num {

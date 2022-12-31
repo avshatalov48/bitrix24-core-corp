@@ -1,131 +1,236 @@
 <?php
-if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
-use Bitrix\Main;
-use Bitrix\Main\Localization\Loc;
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
+
+use Bitrix\Crm\Service\Container;
 use Bitrix\Crm\Counter\EntityCounter;
 use Bitrix\Crm\Counter\EntityCounterType;
 use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\MessageHelper;
 use Bitrix\Crm\Security\EntityAuthorization;
+use Bitrix\Crm\Settings\Crm;
+use Bitrix\Main\Localization\Loc;
 
 Loc::loadMessages(__FILE__);
 
 class CCrmEntityCounterPanelComponent extends CBitrixComponent
 {
-	/** @var int */
+	/**
+	 * @var int
+	 */
 	protected $userID = 0;
-	/** @var string */
+
+	/**
+	 * @var string
+	 */
 	protected $guid = '';
-	/** @var string */
+
+	/**
+	 * @var string
+	 */
 	protected $entityTypeName = '';
-	/** @var int */
-	protected $entityTypeID = \CCrmOwnerType::Undefined;
-	/** @var array */
-	protected $extras = array();
-	/** @var string  */
+
+	/**
+	 * @var int
+	 */
+	protected $entityTypeID = CCrmOwnerType::Undefined;
+
+	/**
+	 * @var int
+	 */
+	protected int $categoryId = 0;
+
+	/**
+	 * @var array
+	 */
+	protected $extras = [];
+
+	/**
+	 * @var string
+	 */
 	protected $entityListUrl = '';
-	/** @var array */
-	protected $errors = array();
-	/** @var bool */
+
+	/**
+	 * @var array
+	 */
+	protected $errors = [];
+
+	/**
+	 * @var bool
+	 */
 	protected $isVisible = true;
-	/** @var bool  */
+
+	/**
+	 * @var bool
+	 */
 	protected $recalculate = false;
 
 	public function executeComponent()
 	{
 		$this->initialize();
-		if($this->isVisible)
+		
+		if ($this->isVisible)
 		{
-			foreach($this->errors as $message)
+			foreach ($this->errors as $message)
 			{
 				ShowError($message);
 			}
+
 			$this->includeComponentTemplate();
 		}
 	}
-	protected function initialize()
+
+	protected function initialize(): void
 	{
 		if (!Bitrix\Main\Loader::includeModule('crm'))
 		{
 			$this->errors[] = GetMessage('CRM_MODULE_NOT_INSTALLED');
+
 			return;
 		}
 
 		$this->userID = $this->arResult['USER_ID'] = CCrmSecurityHelper::GetCurrentUserID();
-		$dbUsers = \CUser::GetList(
+
+		$dbUsers = CUser::GetList(
 			'last_name',
 			'asc',
-			array('ID' => $this->userID),
-			array('FIELDS' => array('ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE'))
+			['ID' => $this->userID],
+			['FIELDS' => ['ID', 'NAME', 'SECOND_NAME', 'LAST_NAME', 'LOGIN', 'TITLE']]
 		);
 
 		$userFields = $dbUsers->Fetch();
+		
 		$this->arResult['USER_NAME'] =  is_array($userFields)
-			? \CUser::FormatName(\CSite::GetNameFormat(false), $userFields) : "[{$this->userID}]";
+			? CUser::FormatName(CSite::GetNameFormat(false), $userFields)
+			: "[{$this->userID}]";
 
-		$this->guid = $this->arResult['GUID'] = isset($this->arParams['GUID']) ? $this->arParams['GUID'] : 'counter_panel';
-		if(isset($this->arParams['ENTITY_TYPE_NAME']))
+		$this->guid = $this->arResult['GUID'] = $this->arParams['GUID'] ?? 'counter_panel';
+		if (isset($this->arParams['ENTITY_TYPE_NAME']))
 		{
 			$this->entityTypeName = $this->arParams['ENTITY_TYPE_NAME'];
 		}
+
 		$this->entityTypeID = CCrmOwnerType::ResolveID($this->entityTypeName);
-		if(!CCrmOwnerType::IsDefined($this->entityTypeID))
+
+		if (!CCrmOwnerType::IsDefined($this->entityTypeID))
 		{
 			$this->errors[] = GetMessage('CRM_COUNTER_ENTITY_TYPE_NOT_DEFINED');
+
 			return;
 		}
 
-		if(isset($this->arParams['EXTRAS']) && is_array($this->arParams['EXTRAS']))
+		if (isset($this->arParams['EXTRAS']) && is_array($this->arParams['EXTRAS']))
 		{
 			$this->extras = $this->arParams['EXTRAS'];
 		}
 
-		if(!EntityAuthorization::checkReadPermission($this->entityTypeID, 0, null, $this->extras))
+		// setup category ID
+		if (isset($this->arParams['EXTRAS']['DEAL_CATEGORY_ID']))
+		{
+			$this->categoryId = (int)$this->arParams['EXTRAS']['DEAL_CATEGORY_ID'];
+		}
+		elseif (isset($this->arParams['EXTRAS']['CATEGORY_ID']))
+		{
+			$this->categoryId = (int)$this->arParams['EXTRAS']['CATEGORY_ID'];
+		}
+
+		if (!EntityAuthorization::checkReadPermission($this->entityTypeID, 0, null, $this->extras))
 		{
 			$this->isVisible = false;
 		}
 
-		if(isset($this->arParams['PATH_TO_ENTITY_LIST']))
+		if (isset($this->arParams['PATH_TO_ENTITY_LIST']))
 		{
 			$this->entityListUrl = $this->arParams['PATH_TO_ENTITY_LIST'];
 		}
 
 		$this->recalculate = isset($_REQUEST['recalc']) && mb_strtoupper($_REQUEST['recalc']) === 'Y';
 
-		$data = array();
-		$codes = array();
+		// fill current user data
+		$data = [];
+		$codes = [];
 		$total = 0;
-		$allSupportedTypes = EntityCounterType::getAllSupported($this->entityTypeID, true);
-		foreach($allSupportedTypes as $typeID)
+		$this->fillCountersData(
+			$total,
+			$codes,
+			$data,
+			$this->extras
+		);
+
+		// fill other users data
+		$otherData = [];
+		$otherCodes = [];
+		$otherTotal = 0;
+		$withExcludeUsers = false;
+		if (Crm::isUniversalActivityScenarioEnabled() && $this->isOtherCountersSupported())
 		{
-			if(
-				EntityCounterType::isGroupingForArray($typeID, $allSupportedTypes)
-			)
+			$withExcludeUsers = true;
+
+			$this->fillCountersData(
+				$otherTotal,
+				$otherCodes,
+				$otherData,
+				array_merge($this->extras, ['EXCLUDE_USERS'=> true])
+			);
+		}
+
+		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
+		$this->arResult['CATEGORY_ID'] = $this->categoryId;
+		$this->arResult['EXTRAS'] = $this->extras;
+		$this->arResult['TOTAL'] = $total; 							// temporarily unused
+		$this->arResult['OTHER_TOTAL'] = $otherTotal; 				// temporarily unused
+		$this->arResult['CODES'] = array_merge($codes, $otherCodes);
+		$this->arResult['DATA'] = array_merge($data, $otherData);
+		$this->arResult['ENTITY_NUMBER_DECLENSIONS'] = MessageHelper::getEntityNumberDeclensionMessages($this->entityTypeID);
+		$this->arResult['ENTITY_PLURALS'] = MessageHelper::getEntityPluralMessages($this->entityTypeID);
+		$this->arResult['WITH_EXCLUDE_USERS'] = $withExcludeUsers;
+	}
+
+	private function fillCountersData(int &$total, array &$codes, array &$data, array $extras): void
+	{
+		$allSupportedTypes = EntityCounterType::getAllSupported($this->entityTypeID, true);
+
+		foreach ($allSupportedTypes as $typeId)
+		{
+			if (EntityCounterType::isGroupingForArray($typeId, $allSupportedTypes))
 			{
-				$codes[] = EntityCounter::prepareCode($this->entityTypeID, $typeID, $this->extras);
+				$codes[] = EntityCounter::prepareCode($this->entityTypeID, $typeId, $extras);
+
 				continue;
 			}
 
-			$counter = EntityCounterFactory::create($this->entityTypeID, $typeID, $this->userID, $this->extras);
+			$counter = EntityCounterFactory::create($this->entityTypeID, $typeId, $this->userID, $extras);
 			$code = $counter->getCode();
 			$value = $counter->getValue($this->recalculate);
 			$data[$code] = array(
-				'TYPE_ID' => $typeID,
-				'TYPE_NAME' => EntityCounterType::resolveName($typeID),
+				'TYPE_ID' => $typeId,
+				'TYPE_NAME' => EntityCounterType::resolveName($typeId),
 				'CODE' => $code,
 				'VALUE' => $value,
 				'URL' => $counter->prepareDetailsPageUrl($this->entityListUrl)
 			);
+
 			$total += $value;
+
 			$codes[] = $code;
 		}
+	}
 
-		$this->arResult['ENTITY_TYPE_ID'] = $this->entityTypeID;
-		$this->arResult['EXTRAS'] = $this->extras;
-		$this->arResult['TOTAL'] = $total;
-		$this->arResult['CODES'] = $codes;
-		$this->arResult['DATA'] = $data;
-		$this->arResult['ENTITY_NUMBER_DECLENSIONS'] = \Bitrix\Crm\MessageHelper::getEntityNumberDeclensionMessages($this->entityTypeID);
-		$this->arResult['ENTITY_PLURALS'] = \Bitrix\Crm\MessageHelper::getEntityPluralMessages($this->entityTypeID);
+	private function isOtherCountersSupported(): bool
+	{
+		$uPermissions = Container::getInstance()->getUserPermissions();
+		$permissionEntityType = $uPermissions::getPermissionEntityType($this->entityTypeID, $this->categoryId);
+		$hasAllPermissions = $uPermissions->isAdmin() || $uPermissions->getCrmPermissions()->GetPermType($permissionEntityType) >= $uPermissions::PERMISSION_ALL;
+
+		$isAllowedEntity = in_array(
+			$this->entityTypeID,
+			[CCrmOwnerType::Lead, CCrmOwnerType::Deal, CCrmOwnerType::Contact, CCrmOwnerType::Company],
+			true
+		);
+
+		return $isAllowedEntity && $hasAllPermissions;
 	}
 }

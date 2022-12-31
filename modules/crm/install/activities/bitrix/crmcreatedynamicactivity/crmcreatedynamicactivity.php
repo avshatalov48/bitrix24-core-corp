@@ -2,7 +2,6 @@
 
 use Bitrix\Bizproc\Activity\PropertiesDialog;
 use Bitrix\Bizproc\FieldType;
-use Bitrix\Crm\Integration\BizProc\Document;
 use Bitrix\Crm;
 use Bitrix\Main\Error;
 use Bitrix\Main\Result;
@@ -24,6 +23,7 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			'Title' => '',
 			'DynamicTypeId' => 0,
 			'DynamicEntitiesFields' => [],
+			'OnlyDynamicEntities' => 'N',
 
 			// return
 			'ItemId' => null,
@@ -172,12 +172,14 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 			}
 		}
 
+		$showOnlyDynamicEntities = static::showOnlyDynamicEntities($dialog);
+
 		return [
 			'DynamicTypeId' => [
 				'Name' => Loc::getMessage('CRM_CDA_TYPE_ID'),
 				'FieldName' => 'dynamic_type_id',
 				'Type' => FieldType::SELECT,
-				'Options' => $typeNames,
+				'Options' => $showOnlyDynamicEntities ? static::getOnlyDynamicEntities($typeNames) : $typeNames,
 				'Required' => true,
 			],
 			'DynamicEntitiesFields' => [
@@ -187,13 +189,21 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 					return $currentActivity['Properties']['DynamicEntitiesFields'];
 				},
 			],
+			'OnlyDynamicEntities' => [
+				'FieldName' => 'only_dynamic_entities',
+				'Type' => 'bool',
+				'Default' => $showOnlyDynamicEntities ? 'Y' : 'N',
+				'Settings' => [
+					'Hidden' => true,
+				],
+			],
 		];
 	}
 
 	protected static function getPropertiesMap(array $documentType, array $context = []): array
 	{
 		$map = static::getPropertiesDialogMap();
-		unset($map['DynamicEntitiesFields']);
+		unset($map['DynamicEntitiesFields'], $map['OnlyDynamicEntities']);
 
 		return $map;
 	}
@@ -259,5 +269,42 @@ class CBPCrmCreateDynamicActivity extends \Bitrix\Bizproc\Activity\BaseActivity
 	protected static function isRequiredFieldId(string $fieldId): bool
 	{
 		return $fieldId === Crm\Item::FIELD_NAME_CREATED_BY;
+	}
+
+	private static function showOnlyDynamicEntities(?PropertiesDialog $dialog = null): bool
+	{
+		if (!$dialog)
+		{
+			return false;
+		}
+
+		$context = $dialog->getContext() ?? [];
+		if ($context['addMenuGroup'] === 'digitalWorkplace')
+		{
+			return true;
+		}
+
+		$workflowTemplate = $dialog->getWorkflowTemplate();
+		$currentActivity = \CBPWorkflowTemplateLoader::FindActivityByName(
+			$workflowTemplate,
+			$dialog->getActivityName()
+		);
+
+		return (
+			is_array($currentActivity)
+			&& is_array($currentActivity['Properties'])
+			&& $currentActivity['Properties']['OnlyDynamicEntities'] === 'Y'
+		);
+	}
+
+	private static function getOnlyDynamicEntities(array $dynamicTypeIdOptions): array
+	{
+		return array_filter(
+			$dynamicTypeIdOptions,
+			static function($key) {
+				return ($key >= CCrmOwnerType::DynamicTypeStart && $key <= CCrmOwnerType::DynamicTypeEnd);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
 	}
 }

@@ -420,9 +420,9 @@ class WebFormList
 			});
 	}
 
-	showSiteCode(id)
+	showSiteCode(id, options = {})
 	{
-		BX.Crm.Form.Embed.openSlider(id);
+		BX.Crm.Form.Embed.openSlider(id, options);
 	}
 
 	activateList(mode: boolean = true)

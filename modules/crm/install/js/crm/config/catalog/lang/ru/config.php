@@ -15,6 +15,10 @@ $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO_IN_DOCS"] = "Р
 $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_CAN_BUY_ZERO"] = "Разрешить продажу товара при отсутствии товара на складе (включая разрешение отрицательного количества товара)";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCTS_SETTINGS_DEFAULT_SUBSCRIBE"] = "Разрешить подписку при отсутствии товара";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD"] = "Включить новую карточку товара";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TITLE"] = "Вы переходите на новую карточку товара";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_TEXT"] = "Обратите внимание, что вернуться на старую карточку товара не получится, так как она больше не поддерживается в Битрикс24. <a id=\"catalog-settings-new-productcard-popup-helpdesk\">Почитайте подробнее</a> про работу с новой карточкой товара, прежде чем сделать переход.";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_AGREE"] = "Включить новую карточку товара";
+$MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_ENABLE_NEW_CARD_ASK_DISAGREE"] = "Оставить старую карточку товара";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_CARD_SET_VAT_IN_PRICE_FOR_NEW_PRODUCTS"] = "Устанавливать параметр \"НДС включен в цену\" при создании новых товаров и предложений";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_UPDATE_TITLE"] = "Обновление настроек товаров";
 $MESS["CRM_CFG_C_SETTINGS_PRODUCT_SETTINGS_UPDATE_WAIT"] = "Операция может занять некоторое время. Пожалуйста, дождитесь её завершения.";

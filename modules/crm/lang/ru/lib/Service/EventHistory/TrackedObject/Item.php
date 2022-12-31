@@ -6,4 +6,4 @@ $MESS['CRM_TRACKED_OBJECT_ITEM_EVENT_NAME_DELETE_COMPANIES'] = 'Удалена �
 $MESS['CRM_TRACKED_OBJECT_ITEM_EVENT_NAME_ADD_PRODUCT_ROWS'] = 'Добавлены товары';
 $MESS['CRM_TRACKED_OBJECT_ITEM_EVENT_NAME_DELETE_PRODUCT_ROWS'] = 'Удалены товары';
 $MESS['CRM_TRACKED_OBJECT_ITEM_EVENT_NAME_UPDATE_STAGE_ID'] = 'Стадия изменена';
-$MESS['CRM_TRACKED_OBJECT_ITEM_EVENT_NAME_UPDATE_CATEGORY_ID'] = 'Направление изменено';
+$MESS['CRM_TRACKED_OBJECT_ITEM_EVENT_NAME_UPDATE_CATEGORY_ID'] = 'Воронка изменена';

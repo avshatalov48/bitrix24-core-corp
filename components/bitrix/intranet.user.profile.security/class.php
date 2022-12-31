@@ -1,6 +1,8 @@
 <?php
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)die();
 
+use Bitrix\Bitrix24\Feature;
+use Bitrix\Main\Engine\CurrentUser;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Loader;
 use Bitrix\Main\ModuleManager;
@@ -29,8 +31,8 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		$menuItems = array();
 		$isOwnProfile = $this->arParams["USER_ID"] === (int)$USER->GetID();
 		$isAdminRights = (
-			$this->arResult["IS_CLOUD"] && \CBitrix24::IsPortalAdmin(\Bitrix\Main\Engine\CurrentUser::get()->getId())
-			|| \Bitrix\Main\Engine\CurrentUser::get()->isAdmin()
+			$this->arResult["IS_CLOUD"] && \CBitrix24::IsPortalAdmin(CurrentUser::get()->getId())
+			|| CurrentUser::get()->isAdmin()
 		)
 			? true : false;
 
@@ -147,6 +149,19 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 			}
 		}
 
+		$lockedShowLoginHistory = $this->arResult["IS_CLOUD"] && !Feature::isFeatureEnabled('user_login_history');
+
+		if (($isAdminRights || $isOwnProfile) && !$lockedShowLoginHistory)
+		{
+			$menuItems["history"] = [
+				"NAME" => Loc::getMessage("INTRANET_USER_PROFILE_LOGIN_HISTORY_TITLE"),
+				"ATTRIBUTES" => [
+					'onclick' => "openUserLoginHistory();",
+				],
+				"ACTIVE" => false,
+			];
+		}
+
 		return $menuItems;
 	}
 
@@ -157,7 +172,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 		$this->arResult["IS_CLOUD"] = Loader::includeModule("bitrix24");
 
 		//otp
-		if (\Bitrix\Main\Loader::includeModule("security") && Bitrix\Security\Mfa\Otp::isOtpEnabled())
+		if (Loader::includeModule("security") && Bitrix\Security\Mfa\Otp::isOtpEnabled())
 		{
 			$this->arResult["OTP"]["IS_ENABLED"] = "Y";
 			$this->arResult["OTP"]["IS_EXIST"] = \CSecurityUser::IsUserOtpExist($this->arParams["USER_ID"]);
@@ -171,7 +186,7 @@ class CIntranetUserProfileSecurityComponent extends \CBitrixComponent
 
 		if (
 			isset($_GET["page"])
-			&& in_array($_GET["page"], array("auth", "synchronize", "appPasswords", "otpConnected", "socnetEmail",
+			&& in_array($_GET["page"], array("auth", "history", "synchronize", "appPasswords", "otpConnected", "socnetEmail",
 				"otp", "recoveryCodes", "socserv", "mailingAgreement")
 			)
 		)

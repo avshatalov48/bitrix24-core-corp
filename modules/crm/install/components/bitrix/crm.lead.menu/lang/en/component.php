@@ -32,6 +32,7 @@ $MESS["LEAD_CONVERT"] = "Convert";
 $MESS["LEAD_CONVERT_TITLE"] = "Convert Lead";
 $MESS["LEAD_COPY"] = "Copy lead";
 $MESS["LEAD_COPY_TITLE"] = "Copy lead";
+$MESS["LEAD_CREATE"] = "Create lead";
 $MESS["LEAD_CREATE_ON_BASIS"] = "Generate: ";
 $MESS["LEAD_CREATE_ON_BASIS_DISABLE_HINT"] = "Do not show this again";
 $MESS["LEAD_CREATE_ON_BASIS_HINT_CONTENT"] = "Click to generate a deal, a contact or a company for this lead. Select desired option in the drop down menu.";

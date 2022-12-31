@@ -67,7 +67,6 @@ export class Openlines extends Widget
 			? this.renderEmptyInner()
 			: this.renderLineRows(data.lines, data.formName);
 
-		// FIXME ${showMoreLink}
 		// let showMoreLink = '';
 		// if (data.showMoreLink)
 		// {
@@ -82,8 +81,17 @@ export class Openlines extends Widget
 		// }
 
 		Dom.append(Tag.render`
-			<div class="crm-form-embed__customization-settings --without-btn">
+			<div class="crm-form-embed__customization-settings"> <!-- --without-btn -->
 				${contentInner}
+				
+				<a
+					class="ui-btn ui-btn-sm ui-btn-light-border ui-btn-round ui-btn-no-caps crm-form-embed__customization-settings--btn"
+					href="${Text.encode(data.url.allLines)}"
+					style="float: right;"
+				>
+					${BX.Loc.getMessage('EMBED_SLIDER_OPENLINES_FORM_ALL_LINES')}
+				</a>
+				<div style="clear: both"></div>
 			</div>
 		`, section);
 		return section;

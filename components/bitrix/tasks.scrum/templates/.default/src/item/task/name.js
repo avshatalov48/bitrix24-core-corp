@@ -36,7 +36,7 @@ export class Name extends EventEmitter
 	render(): HTMLElement
 	{
 		let visualClasses = this.completed ? '--completed' : '';
-		visualClasses += this.important ? '--important' : '';
+		visualClasses += this.important ? ' --important' : '';
 
 		let value = Text.encode(this.value);
 		if (this.important)
@@ -56,6 +56,10 @@ export class Name extends EventEmitter
 					${value}
 				</a>
 			`;
+
+			Event.bind(this.node, 'click', () => {
+				this.emit('urlClick');
+			});
 		}
 		else
 		{

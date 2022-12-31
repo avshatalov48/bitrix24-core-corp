@@ -19,6 +19,16 @@
 			return BX.message('SELECTOR_COMPONENT_START_TYPING_TO_SEARCH_PRODUCT');
 		}
 
+		static getSearchPlaceholderWithCreation()
+		{
+			return BX.message('SELECTOR_COMPONENT_SEARCH_WITH_CREATION_PLACEHOLDER_PRODUCT');
+		}
+
+		static getSearchPlaceholderWithoutCreation()
+		{
+			return BX.message('SELECTOR_COMPONENT_SEARCH_WITHOUT_CREATION_PLACEHOLDER_PRODUCT');
+		}
+
 		static isCreationEnabled()
 		{
 			return true;
@@ -66,6 +76,20 @@
 		static getTitle()
 		{
 			return BX.message('SELECTOR_COMPONENT_PICK_PRODUCT_2');
+		}
+
+		static getSearchFields()
+		{
+			return [
+				'PARENT_DETAIL_TEXT',
+				'PARENT_PREVIEW_TEXT',
+				'PARENT_SEARCH_PROPERTIES',
+				'PARENT_NAME',
+				'DETAIL_TEXT',
+				'PREVIEW_TEXT',
+				'SEARCH_PROPERTIES',
+				...super.getSearchFields(),
+			];
 		}
 	}
 

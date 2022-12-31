@@ -105,6 +105,12 @@ a.client-info-wrapper > .client-info-description-wrapper {
 	font-size: 11px;
 }
 
+.add-document-button {
+	font-weight: 600;
+	font-size: 14px;
+	text-transform: none;
+}
+
 @media (min-width: 1500px) {
 	.ui-alert.crm-store-document-list--alert {
 		margin: 0 auto;

@@ -295,18 +295,19 @@ abstract class Base extends Crm\Security\Controller
 			return;
 		}
 
-		$attributes = $this->prepareAccessAttributes($fields);
-		if (!is_array($attributes))
+		$ownerAttributes = $this->prepareAccessAttributes($fields);
+		if (!is_array($ownerAttributes))
 		{
 			return;
 		}
-		$attributes['ENTITY_ID'] = $entityId;
+		$ownerAttributes['ENTITY_ID'] = $entityId;
 
 		$entityType = \CCrmOwnerType::ResolveName($this->getEntityTypeId());
 
 		/** @var $class \Bitrix\Crm\Security\AccessAttribute\EntityAccessAttributeTable */
 		$class = Manager::getEntityDataClass($entityType);
-		$class::upsert($attributes);
+
+		$class::upsert($ownerAttributes);
 	}
 
 	public function unregister(string $permissionEntityType, int $entityId): void
@@ -421,5 +422,22 @@ abstract class Base extends Crm\Security\Controller
 	{
 		$controller = Crm\Security\Manager::getCompatibleController();
 		$controller->unregister($permissionEntityType, $entityId);
+	}
+
+	private function makeObserversAttributes(array $observerIds, array $ownerAttributes): array
+	{
+		$observerIds = array_unique($observerIds);
+		$observerAttributes = [];
+		foreach ($observerIds as $obsId)
+		{
+			if ($obsId === (int) $ownerAttributes['USER_ID'])
+			{
+				continue;
+			}
+			$attr = $ownerAttributes;
+			$attr['USER_ID'] = $obsId;
+			$observerAttributes[] = $attr;
+		}
+		return $observerAttributes;
 	}
 }

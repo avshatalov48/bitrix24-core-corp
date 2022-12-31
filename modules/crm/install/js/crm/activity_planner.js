@@ -2221,6 +2221,8 @@ BX.namespace('BX.Crm.Activity');
 
 						params.FROM_ACTIVITY_ID = self.getOriginalMessageId();
 						params.MESSAGE_TYPE     = self.getMessageType();
+						params.SUBJECT = self.getSetting('subject', '');
+						params.BODY = self.getSetting('body', '');
 
 						var postData = {
 							COMMUNICATIONS: {}

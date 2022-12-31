@@ -1,15 +1,25 @@
 <?php
 
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Url\InventoryManagementSourceBuilder;
+use Bitrix\Catalog\Access\ActionDictionary;
+use Bitrix\Catalog\StoreDocumentTable;
+use Bitrix\Crm\Order\Internals\ShipmentRealizationTable;
+use Bitrix\Sale\Internals\ShipmentItemTable;
 use Bitrix\Main;
 use Bitrix\Main\Context;
 use Bitrix\Main\Engine\Contract\Controllerable;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\DateTime;
+use Bitrix\Main\Web\Uri;
 use Bitrix\Crm;
 use Bitrix\Main\Web\Json;
+use Bitrix\Sale\Internals\ShipmentTable;
 use Bitrix\UI;
 use Bitrix\Catalog;
+use Bitrix\Catalog\Access\Model\StoreDocument;
 use Bitrix\Sale;
+use Bitrix\UI\Buttons\LockedButton;
 
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
@@ -37,16 +47,11 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 	private $navParamName = 'page';
 
-	private $analyticsSource = '';
-
 	/** @var Crm\Filter\StoreDocumentDataProvider $itemProvider */
 	private $itemProvider;
 
 	/** @var Main\Filter\Filter $filter */
 	private $filter;
-
-	/** @var string $mode */
-	private $mode;
 
 	/** @var array $stores */
 	private $stores;
@@ -72,11 +77,12 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$this->init();
 		if (!$this->checkDocumentReadRights())
 		{
-			$this->arResult['ERROR_MESSAGES'][] = Loc::getMessage(
-				Main\Loader::includeModule('bitrix24')
-					? 'CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_CLOUD'
-					: 'CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED_BOX'
-			);
+			$this->arResult['ERROR_MESSAGES'][] = [
+				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ERR_ACCESS_DENIED'),
+				'HELPER_CODE' => 15955386,
+				'LESSON_ID' => 25010,
+				'COURSE_ID' => 48,
+			];
 			$this->includeComponentTemplate();
 
 			return;
@@ -89,13 +95,31 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 		$this->initInventoryManagementSlider();
 
+		$this->arResult['INVENTORY_MANAGEMENT_SOURCE'] =
+			InventoryManagementSourceBuilder::getInstance()->getInventoryManagementSource()
+		;
+
 		$this->includeComponentTemplate();
 	}
 
 	private function checkDocumentReadRights(): bool
 	{
-		$userPermissions = \CCrmPerms::GetCurrentUserPermissions();
-		return Crm\Order\Permissions\Order::checkReadPermission(0, $userPermissions);
+		return
+			AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_READ)
+			&& AccessController::getCurrent()->check(ActionDictionary::ACTION_INVENTORY_MANAGEMENT_ACCESS)
+			&& AccessController::getCurrent()->checkByValue(
+				ActionDictionary::ACTION_STORE_DOCUMENT_VIEW,
+				StoreDocumentTable::TYPE_SALES_ORDERS
+			)
+		;
+	}
+
+	private function checkDocumentModifyRights(): bool
+	{
+		return AccessController::getCurrent()->check(
+			ActionDictionary::ACTION_STORE_DOCUMENT_MODIFY,
+			StoreDocument::createForSaleRealization(0)
+		);
 	}
 
 	public function configureActions()
@@ -104,35 +128,32 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 	private function getFilterId()
 	{
-		return self::FILTER_ID . '_' . $this->mode;
+		return self::FILTER_ID . '_' . self::SHIPMENT_MODE;
 	}
 
-	private function getGridId()
+	public static function getGridId(): string
 	{
-		return self::GRID_ID . '_' . $this->mode;
+		return self::GRID_ID . '_' . self::SHIPMENT_MODE;
 	}
 
 	private function init()
 	{
 		$this->initMode();
 
-		$this->itemProvider = new Crm\Filter\StoreDocumentDataProvider($this->mode);
+		$this->itemProvider = new Crm\Filter\StoreDocumentDataProvider(self::SHIPMENT_MODE);
 		$this->filter = new Main\Filter\Filter($this->getFilterId(), $this->itemProvider);
-
-		$this->analyticsSource = $this->request->get('inventoryManagementSource') ?? '';
 	}
 
 	private function initMode()
 	{
-		$this->mode = self::SHIPMENT_MODE;
-		$this->arResult['MODE'] = $this->mode;
+		$this->arResult['MODE'] = self::SHIPMENT_MODE;
 	}
 
 	private function prepareGrid()
 	{
 		$result = [];
 
-		$gridId = $this->getGridId();
+		$gridId = self::getGridId();
 		$result['GRID_ID'] = $gridId;
 		$gridColumns = $this->itemProvider->getGridColumns();
 
@@ -170,14 +191,26 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 			],
 			$this->getUserSelectColumns($this->getUserReferenceColumns())
 		);
-		$list = Crm\Order\Shipment::getList([
-			'order' => $gridSort['sort'],
-			'offset' => $pageNavigation->getOffset(),
-			'limit' => $pageNavigation->getLimit(),
-			'filter' => $listFilter,
-			'select' => $select,
-			'runtime' => $this->getListRuntime(),
-		])->fetchAll();
+
+		if (!empty($listFilter['PRODUCTS']))
+		{
+			unset($listFilter['PRODUCTS']);
+		}
+
+		$query = Sale\Internals\ShipmentTable::query()
+			->setOrder($gridSort['sort'])
+			->setOffset($pageNavigation->getOffset())
+			->setLimit($pageNavigation->getLimit())
+			->setFilter($listFilter)
+			->setSelect($select);
+
+		foreach ($this->getListRuntime() as $field)
+		{
+			$query->registerRuntimeField($field);
+		}
+
+		$list = $query->fetchAll();
+
 		$totalCount = $this->getTotalCount();
 
 		if($totalCount > 0)
@@ -220,70 +253,126 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$result['PAGE_SIZES'] = [['NAME' => 10, 'VALUE' => '10'], ['NAME' => 20, 'VALUE' => '20'], ['NAME' => 50, 'VALUE' => '50']];
 		$result['SHOW_ROW_CHECKBOXES'] = true;
 		$result['SHOW_CHECK_ALL_CHECKBOXES'] = true;
-		$result['SHOW_ACTION_PANEL'] = true;
+
+
+		$result['ACTION_PANEL'] = $this->getGroupActionPanel();
+		$result['SHOW_ACTION_PANEL'] = !empty($result['ACTION_PANEL']);
+
+		return $result;
+	}
+
+	private function getGroupActionPanel(): ?array
+	{
+		$resultItems = [];
+
+		$storeDocument = StoreDocument::createForSaleRealization(0);
+		$canDelete = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_DELETE, $storeDocument);
+		$canCancel = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL, $storeDocument);
+		$canConduct = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT, $storeDocument);
+
 		$snippet = new Main\Grid\Panel\Snippet();
-		$removeButton = $snippet->getRemoveButton();
-		$snippet->setButtonActions($removeButton, [
-			[
-				'ACTION' => Main\Grid\Panel\Actions::CALLBACK,
-				'CONFIRM' => true,
-				'CONFIRM_APPLY_BUTTON' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT'),
-				'DATA' => [
-					[
-						'JS' => 'BX.Crm.StoreDocumentGridManager.Instance.deleteSelectedDocuments()'
+
+		if ($canDelete)
+		{
+			$removeButton = $snippet->getRemoveButton();
+			$snippet->setButtonActions($removeButton, [
+				[
+					'ACTION' => Main\Grid\Panel\Actions::CALLBACK,
+					'CONFIRM' => true,
+					'CONFIRM_APPLY_BUTTON' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT'),
+					'DATA' => [
+						[
+							'JS' => 'BX.Crm.StoreDocumentGridManager.Instance.deleteSelectedDocuments()'
+						],
 					],
-				],
-			]
-		]);
+				]
+			]);
+
+			$resultItems[] = $removeButton;
+		}
 
 		$dropdownActions = [
 			[
 				'NAME' => Loc::getMessage('CRM_DOCUMENT_LIST_SELECT_GROUP_ACTION'),
 				'VALUE' => 'none',
 			],
-			[
+		];
+		if ($canConduct)
+		{
+			$dropdownActions[] = [
 				'NAME' => Loc::getMessage('CRM_DOCUMENT_LIST_CONDUCT_GROUP_ACTION'),
 				'VALUE' => 'conduct',
-			],
-			[
+			];
+		}
+		if ($canCancel)
+		{
+			$dropdownActions[] = [
 				'NAME' => Loc::getMessage('CRM_DOCUMENT_LIST_CANCEL_GROUP_ACTION'),
 				'VALUE' => 'cancel',
-			]
-		];
+			];
+		}
+		if (count($dropdownActions) > 1)
+		{
+			$dropdownActionsButton = [
+				'TYPE' => Main\Grid\Panel\Types::DROPDOWN,
+				'ID' => 'action_button_'. self::getGridId(),
+				'NAME' => 'action_button_'. self::getGridId(),
+				'ITEMS' => $dropdownActions,
+			];
 
-		$dropdownActionsButton = [
-			'TYPE' => Main\Grid\Panel\Types::DROPDOWN,
-			'ID' => 'action_button_'. $this->getGridId(),
-			'NAME' => 'action_button_'. $this->getGridId(),
-			'ITEMS' => $dropdownActions,
-		];
-
-		$applyButton = $snippet->getApplyButton([
-			'ONCHANGE' => [
-				[
-					'ACTION' => Main\Grid\Panel\Actions::CALLBACK,
-					'DATA' => [
-						[
-							'JS' => 'BX.Crm.StoreDocumentGridManager.Instance.processApplyButtonClick()',
+			$applyButton = $snippet->getApplyButton([
+				'ONCHANGE' => [
+					[
+						'ACTION' => Main\Grid\Panel\Actions::CALLBACK,
+						'DATA' => [
+							[
+								'JS' => 'BX.Crm.StoreDocumentGridManager.Instance.processApplyButtonClick()',
+							]
 						]
 					]
 				]
-			]
-		]);
+			]);
 
-		$result['ACTION_PANEL'] = [
+			$resultItems[] = $dropdownActionsButton;
+			$resultItems[] = $applyButton;
+		}
+
+		if (empty($resultItems))
+		{
+			return null;
+		}
+		return [
 			'GROUPS' => [
 				[
-					'ITEMS' => [
-						$removeButton,
-						$dropdownActionsButton,
-						$applyButton,
-					],
+					'ITEMS' => $resultItems,
 				],
 			]
 		];
+	}
 
-		return $result;
+	private function formClientFilterLogic(array $clientFilter): array
+	{
+		$formedFilterData = [
+			'CONTACT' => [],
+			'COMPANY' => [],
+		];
+
+		foreach ($clientFilter as $jsonClientItem)
+		{
+			$clientItem = Bitrix\Main\Web\Json::decode($jsonClientItem);
+
+			if (isset($clientItem['CONTACT']))
+			{
+				$formedFilterData['CONTACT'][] = $clientItem['CONTACT'][0];
+			}
+
+			if (isset($clientItem['COMPANY']))
+			{
+				$formedFilterData['COMPANY'][] = $clientItem['COMPANY'][0];
+			}
+		}
+
+		return $formedFilterData;
 	}
 
 	private function getUserReferenceColumns()
@@ -384,6 +473,11 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 	{
 		$urlToDocumentDetail = $this->getUrlToDocumentDetail($item['ID']);
 
+		$storeDocument = StoreDocument::createForSaleRealization((int)$item['ID']);
+		$canDelete = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_DELETE, $storeDocument);
+		$canCancel = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CANCEL, $storeDocument);
+		$canConduct = AccessController::getCurrent()->check(ActionDictionary::ACTION_STORE_DOCUMENT_CONDUCT, $storeDocument);
+
 		$actions = [
 			[
 				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_OPEN_TITLE'),
@@ -392,26 +486,37 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 				'DEFAULT' => true,
 			],
 		];
+
 		if ($item['DEDUCTED'] === 'N')
 		{
-			$actions[] = [
-				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TITLE'),
-				'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT'),
-				'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.conductDocument(" . $item['ID'] . ")",
-			];
-			$actions[] = [
-				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TITLE'),
-				'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT'),
-				'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.deleteDocument(" . $item['ID'] . ")",
-			];
+			if ($canConduct)
+			{
+				$actions[] = [
+					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CONDUCT_TEXT'),
+					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.conductDocument(" . $item['ID'] . ")",
+				];
+			}
+
+			if ($canDelete)
+			{
+				$actions[] = [
+					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_DELETE_TEXT'),
+					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.deleteDocument(" . $item['ID'] . ")",
+				];
+			}
 		}
 		else
 		{
-			$actions[] = [
-				'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TITLE'),
-				'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT'),
-				'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.cancelDocument(" . $item['ID'] . ")",
-			];
+			if ($canCancel)
+			{
+				$actions[] = [
+					'TITLE' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TITLE'),
+					'TEXT' => Loc::getMessage('CRM_DOCUMENT_LIST_ACTION_CANCEL_TEXT'),
+					'ONCLICK' => "BX.Crm.StoreDocumentGridManager.Instance.cancelDocument(" . $item['ID'] . ")",
+				];
+			}
 		}
 
 		return $actions;
@@ -453,6 +558,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		foreach ($fetchResult as $item)
 		{
 			$contacts[$item['ID']] = $item;
+			$contacts[$item['ID']]['HAS_ACCESS'] = CCrmContact::CheckReadPermission($item['ID']);
 		}
 
 		return $contacts;
@@ -474,6 +580,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		foreach ($fetchResult as $item)
 		{
 			$companies[$item['ID']] = $item;
+			$companies[$item['ID']]['HAS_ACCESS'] = CCrmCompany::CheckReadPermission($item['ID']);
 		}
 
 		return $companies;
@@ -616,17 +723,29 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 	private function prepareClient($clientData): string
 	{
-		if ($clientData['CONTACT'] && $clientData['COMPANY'])
+		if (
+			isset($clientData['CONTACT'], $clientData['COMPANY'])
+			&& $clientData['CONTACT']['HAS_ACCESS']
+			&& $clientData['COMPANY']['HAS_ACCESS']
+		)
 		{
 			$client = $this->getContactCompanyLink($clientData);
 		}
-		else if ($clientData['CONTACT'])
+		else if (isset($clientData['CONTACT']) && $clientData['CONTACT']['HAS_ACCESS'])
 		{
 			$client = $this->getContactLink($clientData['CONTACT']);
 		}
-		else if ($clientData['COMPANY'])
+		else if (isset($clientData['COMPANY']) && $clientData['COMPANY']['HAS_ACCESS'])
 		{
 			$client = $this->getCompanyLink($clientData['COMPANY']);
+		}
+		else if (isset($clientData['CONTACT']))
+		{
+			$client = Loc::getMessage('CRM_DOCUMENT_LIST_HIDDEN_CONTACT');
+		}
+		else if (isset($clientData['COMPANY']))
+		{
+			$client = Loc::getMessage('CRM_DOCUMENT_LIST_HIDDEN_COMPANY');
 		}
 		else
 		{
@@ -651,7 +770,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 		return "<a href='{$contactUrl}'
 		 		   bx-tooltip-user-id='{$userId}'
-		 		   bx-tooltip-loader='/bitrix/components/bitrix/crm.contact.show/card.ajax.php' 
+		 		   bx-tooltip-loader='/bitrix/components/bitrix/crm.contact.show/card.ajax.php'
 		 		   bx-tooltip-classname='crm_balloon_contact'>
 		 		   {$name}
 		 		</a>";
@@ -675,8 +794,8 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		$userId = "COMPANY_{$companyId}";
 
 		return "<a href='{$companyUrl}'
-		 		   bx-tooltip-user-id='{$userId}' 
-		 		   bx-tooltip-loader='/bitrix/components/bitrix/crm.company.show/card.ajax.php' 
+		 		   bx-tooltip-user-id='{$userId}'
+		 		   bx-tooltip-loader='/bitrix/components/bitrix/crm.company.show/card.ajax.php'
 		 		   bx-tooltip-classname='crm_balloon_company'>{$title}</a>";
 	}
 
@@ -723,9 +842,15 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		];
 		$runtime = array_merge($runtime, $this->getListRuntime());
 
+		$listFilter = $this->getListFilter();
+		if (!empty($listFilter['PRODUCTS']))
+		{
+			unset($listFilter['PRODUCTS']);
+		}
+
 		$count = Crm\Order\Shipment::getList([
 			'select' => ['CNT'],
-			'filter' => $this->getListFilter(),
+			'filter' => $listFilter,
 			'runtime' => $runtime,
 		])->fetch();
 
@@ -761,7 +886,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 	private function prepareToolbar()
 	{
 		$filterOptions = [
-			'GRID_ID' => $this->getGridId(),
+			'GRID_ID' => self::getGridId(),
 			'FILTER_ID' => $this->filter->getID(),
 			'FILTER' => $this->filter->getFieldArrays(),
 			'FILTER_PRESETS' => [],
@@ -773,22 +898,41 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		];
 		UI\Toolbar\Facade\Toolbar::addFilter($filterOptions);
 
-		$addDocumentButton = UI\Buttons\CreateButton::create([
-			'text' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON'),
-			'color' => UI\Buttons\Color::SUCCESS,
-			'dataset' => [
-				'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::ADD,
-			],
-			'classList' => ['add-document-button'],
-		]);
-		$addDocumentUrl = $this->getUrlToDocumentDetail(0);
-		$analyticsSourcePart = $this->analyticsSource ? '&inventoryManagementSource=' . $this->analyticsSource : '';
-		if ($this->mode === self::SHIPMENT_MODE)
+		if (!$this->checkDocumentModifyRights())
 		{
-			$addDocumentButton->setLink($addDocumentUrl . '?DOCUMENT_TYPE=' . self::TYPE_SHIPMENT  . $analyticsSourcePart);
+			$addDocumentButton = LockedButton::create([
+				'text' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2'),
+				'color' => \Bitrix\UI\Buttons\Color::SUCCESS,
+				'hint' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_DISABLE_HINT_MSGVER_1'),
+				'classList' => [
+					'add-document-button',
+					'add-document-button-disabled',
+				],
+			]);
+		}
+		else
+		{
+			$addDocumentButton = UI\Buttons\CreateButton::create([
+				'text' => Loc::getMessage('CRM_DOCUMENT_LIST_ADD_DOCUMENT_BUTTON_2'),
+				'color' => UI\Buttons\Color::SUCCESS,
+				'dataset' => [
+					'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::ADD,
+				],
+				'classList' => ['add-document-button'],
+			]);
+
+			$addDocumentButton->setLink($this->getUrlToNewDocumentDetail(self::TYPE_SHIPMENT));
 		}
 
 		UI\Toolbar\Facade\Toolbar::addButton($addDocumentButton, UI\Toolbar\ButtonLocation::AFTER_TITLE);
+	}
+
+	private function getUrlToNewDocumentDetail(string $documentType): string
+	{
+		$uriEntity = new Uri($this->getUrlToDocumentDetail(0, $documentType));
+		$uriEntity->addParams(['focusedTab' => 'tab_products']);
+
+		return $uriEntity->getUri();
 	}
 
 	private function getUserFilter()
@@ -801,9 +945,72 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 
 	private function getListFilter(): array
 	{
-		$filter = array_merge($this->getUserFilter(), $this->getIsRealizeFilter());
+		static $filter = null;
+		if ($filter === null)
+		{
+			$filter = array_merge($this->getUserFilter(), $this->getIsRealizeFilter());
 
-		$filter = $this->prepareListFilter($filter);
+			$filter = $this->prepareListFilter($filter);
+
+			if (isset($filter['CLIENT']))
+			{
+				$formedClientFilterData = $this->formClientFilterLogic($filter['CLIENT']);
+				$clientFilter = [
+					'LOGIC' => 'OR',
+					[
+						'=ENTITY_TYPE_ID' => CCrmOwnerType::Company,
+						'=ENTITY_ID' => $formedClientFilterData['COMPANY']
+					],
+					[
+						'=ENTITY_TYPE_ID' => CCrmOwnerType::Contact,
+						'=ENTITY_ID' => $formedClientFilterData['CONTACT']
+					],
+				];
+
+				$fetchResult = Bitrix\Crm\Binding\OrderContactCompanyTable::getList([
+					'select' => [
+						new Bitrix\Main\Entity\ExpressionField('DISTINCT_ORDER_ID', 'DISTINCT %s', 'ORDER_ID'),
+					],
+					'filter' => $clientFilter
+				])->fetchAll();
+
+				$orderIds = array_column($fetchResult, 'DISTINCT_ORDER_ID');
+				unset($filter['CLIENT']);
+				$filter['=ORDER_ID'] = $orderIds;
+			}
+
+			if (isset($filter['PRODUCTS']))
+			{
+				$productFilter = [
+					'=BASKET_PRODUCTS.PRODUCT_ID' => $filter['PRODUCTS'],
+					'=SYSTEM' => 'N',
+				];
+
+				$fetchResult = ShipmentTable::getList([
+					'select' => [
+						new Bitrix\Main\Entity\ExpressionField('DISTINCT_ID', 'DISTINCT %s', 'ID'),
+					],
+					'filter' => $productFilter,
+					'runtime' => [
+						new \Bitrix\Main\Entity\ReferenceField(
+							'DLV_BASKET',
+							ShipmentItemTable::getEntity(),
+							['=this.ID' => 'ref.ORDER_DELIVERY_ID'],
+							['join_type' => 'left'],
+						),
+						new \Bitrix\Main\Entity\ReferenceField(
+							'BASKET_PRODUCTS',
+							Sale\Internals\BasketTable::getEntity(),
+							['=this.DLV_BASKET.BASKET_ID' => 'ref.ID'],
+							['join_type' => 'left'],
+						),
+					]
+				]);
+				$fetchResult = $fetchResult->fetchAll();
+				$shipmentIds = array_column($fetchResult, 'DISTINCT_ID');
+				$filter['=ID'] = $shipmentIds;
+			}
+		}
 
 		return $filter;
 	}
@@ -818,7 +1025,7 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 					'=this.ID' => 'ref.SHIPMENT_ID',
 				],
 				'left_join'
-			)
+			),
 		];
 	}
 
@@ -830,15 +1037,22 @@ class CrmStoreDocumentListComponent extends CBitrixComponent implements Controll
 		];
 	}
 
-	private function getUrlToDocumentDetail($documentId)
+	private function getUrlToDocumentDetail($documentId, $documentType = null): string
 	{
-		$pathToDocumentDetail = $this->arParams['PATH_TO']['SALES_ORDER'] ?? '';
-		if ($pathToDocumentDetail === '')
+		$pathToDocumentDetailTemplate = $this->arParams['PATH_TO']['SALES_ORDER'] ?? '';
+		if ($pathToDocumentDetailTemplate === '')
 		{
-			return $pathToDocumentDetail;
+			return $pathToDocumentDetailTemplate;
 		}
 
-		return str_replace('#DOCUMENT_ID#', $documentId, $pathToDocumentDetail);
+		$pathToDocumentDetail = str_replace('#DOCUMENT_ID#', $documentId, $pathToDocumentDetailTemplate);
+
+		if ($documentType)
+		{
+			$pathToDocumentDetail .= '?DOCUMENT_TYPE=' . $documentType;
+		}
+
+		return InventoryManagementSourceBuilder::getInstance()->addInventoryManagementSourceParam($pathToDocumentDetail);
 	}
 
 	private function isUserFilterApplied()

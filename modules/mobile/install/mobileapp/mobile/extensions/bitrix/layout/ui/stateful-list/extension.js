@@ -1,11 +1,19 @@
-(() =>
-{
+(() => {
+	const { NavigationLoader } = jn.require('navigation-loader');
+	const { debounce } = jn.require('utils/function');
+	const { merge, mergeImmutable, get, clone, isEqual } = jn.require('utils/object');
+
 	const ITEMS_LOAD_LIMIT = 20;
 	const DEFAULT_BLOCK_PAGE = 1;
 	const MINIMAL_SEARCH_LENGTH = 3;
 
 	const ACTION_DELETE = 'delete';
 	const ACTION_UPDATE = 'update';
+
+	const renderType = {
+		cache: 'cache',
+		ajax: 'ajax',
+	}
 
 	/**
 	 * @class StatefulList
@@ -19,10 +27,19 @@
 			this.isLoading = false;
 			this.blockPage = DEFAULT_BLOCK_PAGE;
 			this.stateBeforeSearch = null;
+			this.simpleList = null;
+			this.searchBarIsInited = false;
+			this.isApiGreaterThen44 = (Application.getApiVersion() > 44);
+			this.nameOfClickEnterEvent = (this.isApiGreaterThen44 ? 'clickEnter' : 'clickSearch');
+			this.needAnimateIds = [];
+			this.layoutRightButtons = null;
+			this.menuProps = null;
 
 			this.actions = this.getValue(props, 'actions', {});
 			this.itemLayoutOptions = this.getValue(props, 'itemLayoutOptions', {});
-			this.itemParams = this.getValue(props, 'itemParams', {});
+			this.menuButtons = this.getValue(props, 'menuButtons', []);
+			this.needInitMenu = this.getValue(props, 'needInitMenu', true);
+			this.canUseSearchObject = this.canUseSearchObjectHandler();
 
 			this.layout = this.getValue(props, 'layout', null, false);
 			this.layoutMenuActions = this.getValue(props, 'layoutMenuActions', []);
@@ -33,85 +50,180 @@
 			this.updateItemHandler = this.updateItemHandler.bind(this);
 			this.deleteItemHandler = this.deleteItemHandler.bind(this);
 			this.addItemHandler = this.addItemHandler.bind(this);
+			this.menuShowHandler = this.menuShow.bind(this);
 
 			this.state = this.getInitialState();
 			this.state.itemType = this.getValue(props, 'itemType', ListItemsFactory.Type.Base);
 			this.state.actionParams = this.getValue(props, 'actionParams', {});
+			this.state.itemParams = this.getValue(props, 'itemParams', {});
 			this.state.itemActions = this.getValue(props, 'itemActions', []);
 
 			this.pull = this.getValue(props, 'pull', null);
 
-			this.debounceSearch = CommonUtils.debounce(params => {
-				this.search(params)
+			this.getRuntimeParams = this.getValue(props, 'getRuntimeParams', null);
+			this.searchConfig = this.getPreparedSearchConfig();
+
+			this.onSearchTextChanged = this.onSearchTextChangedHandler.bind(this);
+			this.onSearchClick = this.onSearchClickHandler.bind(this);
+			this.onSearchCancel = this.onSearchCancelHandler.bind(this);
+			this.onViewShow = this.onViewShowHandler.bind(this);
+
+			this.debounceSearch = debounce((params, callback) => {
+				this.search(params, callback)
 			}, 500, this);
 
 			this.loadFirstItems();
 		}
 
+		getPreparedSearchConfig()
+		{
+			const defaultConfig = {
+				mode: 'bar',
+				searchLayout: null,
+				searchLayoutCallback: null,
+			};
+			const config = this.getValue(this.props, 'search', {});
+
+			return mergeImmutable(defaultConfig, config);
+		}
+
 		componentDidMount()
 		{
-			this.initMenu();
+			if (this.needInitMenu)
+			{
+				this.initMenu();
+				this.initSearchBar();
+			}
+
+			this.layout.on('onViewShown', () => {
+				this.onViewShow();
+			});
 		}
 
 		componentWillReceiveProps(newProps)
 		{
-			super.componentWillReceiveProps(newProps);
-
 			if (newProps.actionParams)
 			{
-				this.setState({
-					actionParams: this.getValue(newProps, 'actionParams'),
-				});
+				this.state.actionParams = this.getValue(newProps, 'actionParams');
 			}
+
+			this.needInitMenu = this.getValue(newProps, 'needInitMenu', true);
+			if (
+				this.needInitMenu
+				&& (
+					(newProps.menuButtons && !isEqual(this.menuButtons, newProps.menuButtons))
+					|| !newProps.menuButtons
+				)
+			)
+			{
+				this.menuButtons = (Array.isArray(newProps.menuButtons) ? newProps.menuButtons : []);
+				this.initMenu(newProps);
+			}
+
+			this.state.itemActions = this.getValue(newProps, 'itemActions', []);
 		}
 
 		componentWillUnmount()
 		{
-			if (this.layout && this.layout.searchBar)
+			if (this.layoutOptions.useSearch)
 			{
-				this.layout.searchBar.removeAllListeners('cancel');
-				this.layout.searchBar.removeAllListeners('clickSearch');
-				this.layout.searchBar.removeAllListeners('textChanged');
-				this.layout.removeAllListeners('onViewShown');
+				this.removeSearchBarListeners();
 			}
+
+			this.layout.removeEventListener('onViewShown', this.onViewShow);
+		}
+
+		removeSearchBarListeners()
+		{
+			const search = this.getSearchObject();
+			if (!search)
+			{
+				return;
+			}
+
+			// search.removeAllListeners('cancel');
+			// search.removeAllListeners('clickSearch');
+			// search.removeAllListeners('textChanged');
+			// this.layout.removeAllListeners('onViewShown');
+
+			search.removeEventListener('cancel', this.onSearchCancel);
+			search.removeEventListener(this.nameOfClickEnterEvent, this.onSearchClick);
+			search.removeEventListener('textChanged', this.onSearchTextChanged);
 		}
 
 		getValue(object, property, defaultValue = null, isObjectClone = true)
 		{
 			if (object.hasOwnProperty(property) && isObjectClone)
 			{
-				return CommonUtils.objectClone(object[property]);
+				return clone(object[property]);
 			}
 
-			if (object.hasOwnProperty(property))
-			{
-				return object[property];
-			}
-
-			return defaultValue;
+			return get(object, property, defaultValue);
 		}
 
-		initMenu()
+		initMenu(props = null, buttons = null)
 		{
+			if (!buttons)
+			{
+				buttons = this.getMenuButtons(props);
+			}
+
+			if (!isEqual(buttons, this.layoutRightButtons))
+			{
+				this.layoutRightButtons = buttons;
+				layout.setRightButtons(buttons);
+			}
+		}
+
+		setMenuButtons(buttons)
+		{
+			this.menuButtons = buttons;
+
+			return this;
+		}
+
+		getMenuButtons(props = null)
+		{
+			if (!props)
+			{
+				props = this.props;
+			}
+
 			const buttons = [];
 
 			if (this.layout && this.layoutOptions.useSearch)
 			{
 				buttons.push(this.getSearchBarButtonConfig());
-				this.initSearchBar();
+				//this.initSearchBar();
+			}
+
+			if (this.layout && Array.isArray(this.menuButtons))
+			{
+				this.menuButtons.forEach(button => {
+					buttons.push(button);
+				});
 			}
 
 			if (this.layoutMenuActions.length)
 			{
-				const menu = new UI.Menu(this.props.layoutMenuActions);
+				this.menuProps = props;
 				buttons.push({
 					type: 'more',
 					badgeCode: 'access_more',
-					callback: () => menu.show()
+					callback: this.menuShowHandler,
 				});
 			}
 
-			layout.setRightButtons(buttons);
+			return buttons;
+		}
+
+		menuShow()
+		{
+			if (this.menuProps.layoutMenuActions)
+			{
+				const menu = new UI.Menu(this.menuProps.layoutMenuActions);
+				menu.show();
+			}
 		}
 
 		loadFirstItems()
@@ -141,56 +253,166 @@
 
 		showSearchBar()
 		{
-			this.layout.searchBar.show();
-			if (this.state.searchText)
+			const search = this.getSearchObject();
+			if (!search)
 			{
-				this.layout.searchBar.setText(this.state.searchText);
+				return;
+			}
+
+			search.show();
+			this.setSearchText();
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		isSearchInLayoutMode()
+		{
+			return (this.getSearchMode() === 'layout');
+		}
+
+		/**
+		 * @returns {String}
+		 */
+		getSearchMode()
+		{
+			const search = this.getSearchObject();
+
+			return search.mode;
+		}
+
+		setSearchText()
+		{
+			const searchText = this.state.searchText;
+			if (!searchText)
+			{
+				return;
+			}
+
+			const search = this.getSearchObject();
+
+			if (this.canUseSearchObject)
+			{
+				search.text = searchText;
+			}
+			else
+			{
+				search.setText(searchText);
 			}
 		}
 
 		initSearchBar()
 		{
-			const searchBar = this.layout.searchBar;
-			searchBar.on('cancel', () => {
-				this.cancelSearch();
-			});
-
-			searchBar.on('clickSearch', params => {
-				this.debounceSearch(params);
-			});
-
-			searchBar.on('textChanged', params => {
-				this.debounceSearch(params);
-			});
-
-			this.layout.on('onViewShown', () => {
-				if (this.state.searchText)
-				{
-					this.showSearchBar();
-				}
-			});
-		}
-
-		cancelSearch()
-		{
-			this.setState(this.stateBeforeSearch, () => {
-				this.stateBeforeSearch = null;
-				this.reload();
-			});
-		}
-
-		search(params)
-		{
-			if (!params.text)
+			if (!this.layout || !this.layoutOptions.useSearch || this.searchBarIsInited)
 			{
 				return;
 			}
 
+			const searchBar = this.getSearchObject(true);
+
+			if (!searchBar)
+			{
+				return;
+			}
+
+			this.searchBarIsInited = true;
+
+			searchBar.on('cancel', () => {
+				this.onSearchCancel();
+			});
+
+			searchBar.on(this.nameOfClickEnterEvent, params => {
+				this.onSearchClick(params);
+			});
+
+			searchBar.on('textChanged', params => {
+				this.onSearchTextChanged(params);
+			});
+
+			if (this.isApiGreaterThen44)
+			{
+				searchBar.setReturnKey('done');
+			}
+		}
+
+		onSearchCancelHandler()
+		{
+			this.cancelSearch();
+		}
+
+		onSearchClickHandler(params)
+		{
+			params.eventName = this.nameOfClickEnterEvent;
+			this.debounceSearch(params);
+		}
+
+		onSearchTextChangedHandler(params)
+		{
+			params.eventName = 'textChanged';
+			this.debounceSearch(params);
+		}
+
+		onViewShowHandler()
+		{
+			if (this.searchBarIsInited && this.state.searchText)
+			{
+				this.showSearchBar();
+			}
+
+			if (this.needAnimateIds.length)
+			{
+				this.getSimpleList().lastElementIdAddedWithAnimation = this.needAnimateIds[this.needAnimateIds.length-1];
+				this.needAnimateIds.map(id => this.blinkItem(id));
+			}
+
+			this.needAnimateIds = [];
+		}
+
+		cancelSearch()
+		{
+			if (this.stateBeforeSearch && !this.isSearchCancelled())
+			{
+				this.setState(this.stateBeforeSearch, () => {
+					this.stateBeforeSearch = null;
+					this.reload();
+				});
+			}
+		}
+
+		search(params, callback)
+		{
+			if (typeof params !== 'object' || this.isSearchCancelled(params))
+			{
+				return;
+			}
+
+			const presetId = (params.filterPresetId || null);
+
+			if (params.text && params.text !== this.state.searchText)
+			{
+				this.searchByPhrase(params.text, presetId, callback);
+			}
+			else if (presetId && presetId !== this.state.searchText)
+			{
+				this.searchByPreset(presetId, callback);
+			}
+			else
+			{
+				Keyboard.dismiss();
+			}
+		}
+
+		/**
+		 * @param {string} searchText
+		 * @param {string} searchPresetId
+		 * @param {function|null} callback
+		 */
+		searchByPhrase(searchText, searchPresetId, callback = null)
+		{
 			const actionParams = this.getValue(this.state, 'actionParams');
-			const searchText = params.text;
 
 			if (
-				params.text.length < MINIMAL_SEARCH_LENGTH
+				searchText.length < MINIMAL_SEARCH_LENGTH
 				&& actionParams.loadItems.extra
 				&& actionParams.loadItems.extra.search
 			)
@@ -199,29 +421,228 @@
 				return;
 			}
 
-			if (params.text.length < MINIMAL_SEARCH_LENGTH)
+			if (searchText.length < MINIMAL_SEARCH_LENGTH)
 			{
 				return;
 			}
 
 			if (this.stateBeforeSearch === null)
 			{
-				this.stateBeforeSearch = CommonUtils.objectClone(this.state);
+				this.stateBeforeSearch = clone(this.state);
 			}
 
-			this.setState(() => {
-				const initialState = this.getInitialState();
-				actionParams.loadItems.extra = (actionParams.loadItems.extra || {});
-				actionParams.loadItems.extra.search = searchText;
-				initialState.actionParams = actionParams;
-				initialState.searchText = searchText;
-				return initialState;
-			}, () => {
-				this.loadItems(DEFAULT_BLOCK_PAGE, true, {
-					useCache: false,
-					subscribeUser: false,
+			this.updateStateBySearch({
+				searchText,
+				searchPresetId,
+				callback,
+			});
+		}
+
+		searchByPreset(searchPresetId, callback)
+		{
+			if (this.stateBeforeSearch === null)
+			{
+				this.stateBeforeSearch = clone(this.state);
+			}
+
+			this.updateStateBySearch({
+				searchPresetId,
+				callback,
+			});
+		}
+
+		/**
+		 * @private
+		 * @param {Object} params
+		 */
+		updateStateBySearch(params)
+		{
+			this.setState(
+				this.getPreparedSearchInitialState(params),
+				() => {
+					this.updateStateBySearchCallback(params)
+				}
+			);
+		}
+
+		/**
+		 * @private
+		 * @param {Object} params
+		 */
+		updateStateBySearchCallback(params)
+		{
+			this.loadItems(DEFAULT_BLOCK_PAGE, true, {
+				useCache: false,
+				subscribeUser: false,
+			});
+
+			/*
+			@todo check this
+			if (
+				!params.skipCallback
+				&& typeof this.searchConfig.callback === 'function'
+				&& this.searchConfig.params
+			)
+			{
+				this.searchConfig.callback(...Object.values(this.searchConfig.params));
+			}
+			*/
+
+			if (typeof params.callback === 'function')
+			{
+				params.callback();
+			}
+		}
+
+		/**
+		 * @private
+		 * @param {Object} params
+		 * @returns {Object}
+		 */
+		getPreparedSearchInitialState(params)
+		{
+			// @todo maybe need to clone actionParams?
+			const actionParams = this.getValue(this.state, 'actionParams');
+			const initialState = this.getInitialState();
+			actionParams.loadItems.extra = (actionParams.loadItems.extra || {});
+
+			if (params.searchText)
+			{
+				actionParams.loadItems.extra.search = params.searchText;
+				initialState.searchText = params.searchText;
+			}
+
+			if (params.searchPresetId)
+			{
+				actionParams.loadItems.extra.filterParams = (actionParams.loadItems.extra.filterParams || {});
+				actionParams.loadItems.extra.filterParams.FILTER_PRESET_ID = params.searchPresetId;
+				initialState.searchPresetId = params.searchPresetId;
+			}
+
+			initialState.actionParams = actionParams;
+
+			return initialState;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		isSearchCancelled(params)
+		{
+			params = (params || {});
+
+			if (typeof this.getRuntimeParams === 'function')
+			{
+				const { state } = this;
+
+				const runtimeParams = this.props.getRuntimeParams({
+					state,
+					params,
+				});
+
+				if (runtimeParams.cancelSearch)
+				{
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		updateItems(ids, showAnimateOnView = true, showAnimateImmediately = false)
+		{
+			return new Promise(resolve => {
+				this.loadItemsByIds(ids).then(items => {
+					this.prepareItems(items);
+
+					if (showAnimateOnView)
+					{
+						this.fillAnimateIds(items);
+					}
+
+					const simpleList = this.getSimpleList();
+
+					const animatePromises = [];
+					items.forEach(({ id }) => {
+						if (showAnimateImmediately)
+						{
+							animatePromises.push(simpleList.setLoading(id));
+						}
+					});
+
+					Promise.all(animatePromises).then(() => {
+
+						const dropLoadingPromises = [];
+						items.forEach(({ id }) => {
+							dropLoadingPromises.push(simpleList.dropLoading(id));
+						});
+
+						Promise.all(dropLoadingPromises).then(() => {
+							this.getSimpleList().listView.updateRows(items).then(() => {
+								items.forEach(item => {
+									const { id } = item;
+
+									if (this.state.items.has(id))
+									{
+										this.state.items.set(id, item);
+									}
+								});
+
+								this.modifyCache(ACTION_UPDATE, {items});
+
+								resolve();
+							});
+						});
+					});
 				});
 			});
+		}
+
+		/**
+		 * @param {Number[]} ids
+		 * @returns {Promise}
+		 */
+		loadItemsByIds(ids)
+		{
+			return new Promise((resolve, reject) => {
+				if (!ids.length)
+				{
+					resolve([]);
+					return;
+				}
+
+				const data = clone(this.state.actionParams.loadItems || {});
+				data.extra = (data.extra || {});
+				const filterParams = (data.extra.filterParams || {});
+				filterParams.ID = ids;
+				merge(data.extra, { filterParams }, { subscribeUser: true, filter: {} });
+
+				BX.ajax.runAction(this.actions.loadItems, { data })
+					.then(response => {
+						if (response.errors.length)
+						{
+							reject(response.errors);
+						}
+						resolve(response.data.items);
+					}, response => {
+						console.error(response.errors);
+						reject(response.errors);
+					});
+			});
+		}
+
+		fillAnimateIds(items)
+		{
+			items.forEach(item => this.addToAnimateIds(item.id));
+		}
+
+		addToAnimateIds(id)
+		{
+			const { needAnimateIds } = this;
+			if (!needAnimateIds.includes(id))
+			{
+				needAnimateIds.push(id);
+			}
 		}
 
 		loadItems(blockPage = DEFAULT_BLOCK_PAGE, append = true, params = {})
@@ -254,10 +675,6 @@
 			this.showTitleLoader();
 
 			const config = {
-/*				data: {
-					extra: this.extra,
-					entityType: this.actionParams,
-				},*/
 				data: (this.state.actionParams.loadItems || {}),
 				navigation: {
 					page: blockPage,
@@ -265,20 +682,26 @@
 				},
 			};
 
-			config.data.extra = (config.data.extra || {});
+			config.data.extra = config.data.extra || {};
+			if (params.extra)
+			{
+				config.data.extra = merge(
+					config.data.extra,
+					params.extra
+				);
+			}
 			config.data.extra.subscribeUser = (params.subscribeUser || true);
 
 			const useCache = (
 				blockPage === DEFAULT_BLOCK_PAGE
 				&& (params.useCache === undefined || params.useCache)
+				&& this.props.cacheName !== undefined
 			);
 
 			new RunActionExecutor(this.actions.loadItems, config.data, config.navigation)
 				.setCacheId(this.props.cacheName)
 				.setCacheHandler(response => this.drawListFromCache(response, blockPage, append))
-				.setHandler(response => {
-					setTimeout(() => this.drawListFromAjax(response, blockPage, append), 100);
-				})
+				.setHandler(response => this.drawListFromAjax(response, blockPage, append))
 				.call(useCache);
 		}
 
@@ -287,17 +710,37 @@
 			const params = {
 				append: append,
 				incBlockPage: false,
+				renderType: renderType.cache,
 			}
+
+			BX.postComponentEvent('UI.StatefulList::onDrawList', [{
+				renderType: renderType.cache,
+				items: response.data.items,
+				blockPage: this.blockPage,
+				params,
+			}]);
+
 			this.drawList(response, blockPage, params);
 		}
 
 		drawListFromAjax(response, blockPage, append)
 		{
+			const { loadItems } = this.state.actionParams;
+
+			BX.postComponentEvent('UI.StatefulList::onDrawListFromAjax', [{
+				renderType: renderType.ajax,
+				items: response.data.items,
+				blockPage: this.blockPage,
+				params: loadItems,
+			}]);
+
 			const params = {
 				append: append,
 				incBlockPage: true,
 				useLoader: true,
+				renderType: renderType.ajax,
 			};
+
 			this.drawList(response, blockPage, params);
 		}
 
@@ -308,35 +751,29 @@
 				return;
 			}
 
-			if (response.errors && response.errors.length)
+			this.isLoading = false;
+
+			if (response.errors && response.errors.length && response.data)
 			{
 				response.errors.forEach((error) => {
 					this.showError(error.message);
 				});
-				this.isLoading = false;
 				this.setState({
 					allItemsLoaded: true,
 				});
 				return;
 			}
 
-			if (params.useLoader)
-			{
-				this.showTitleLoader();
-			}
+			const { data } = response;
 
-			this.isLoading = false;
-
-			const data = response.data;
-
+			this.prepareItems(data.items);
 			const items = new Map();
-			data.items.map(element => {
-				element.type = this.generateType(element);
-				element.key = String(element.id);
-				items.set(element.id, element)
-			});
+			data.items.forEach(element => items.set(element.id, element));
 
-			const newState = {};
+			const newState = {
+				renderType: params.renderType,
+			};
+
 			if (items.size < ITEMS_LOAD_LIMIT)
 			{
 				newState.allItemsLoaded = true;
@@ -347,15 +784,16 @@
 			if (blockPage === DEFAULT_BLOCK_PAGE)
 			{
 				newState.permissions = (newState.permissions || {});
-				newState.permissions.editable = (data.permissions && data.permissions.write);
-				newState.permissions.viewable = (data.permissions && data.permissions.read);
+				newState.permissions.edit = (data.permissions && data.permissions.write);
+				newState.permissions.view = (data.permissions && data.permissions.read);
+				newState.permissions.add = (data.permissions && data.permissions.add);
 				newState.settingsIsLoaded = true;
 			}
 
 			if (params.append)
 			{
 				newState.items = this.state.items;
-				for (let item of items.values())
+				for (const item of items.values())
 				{
 					newState.items.set(item.id, item);
 				}
@@ -370,6 +808,20 @@
 				this.blockPage = blockPage;
 			}
 
+			if (
+				isEqual(this.state.items, newState.items)
+				&& isEqual(this.state.permissions, newState.permissions)
+				&& isEqual(this.state.isRefreshing, newState.isRefreshing)
+				&& isEqual(this.state.settingsIsLoaded, newState.settingsIsLoaded)
+			)
+			{
+				if (params.useLoader)
+				{
+					this.hideTitleLoader();
+				}
+				return;
+			}
+
 			this.setState(newState, () => {
 				if (params.useLoader)
 				{
@@ -378,28 +830,70 @@
 			});
 		}
 
+		prepareItems(items)
+		{
+			items.map(item => {
+				item.type = this.generateType(item);
+				item.key = String(item.id);
+			});
+		}
+
 		showTitleLoader()
 		{
-			layout.setTitle({useProgress: true}, true);
+			NavigationLoader.show();
 		}
 
 		hideTitleLoader()
 		{
-			layout.setTitle({useProgress: false}, true);
+			NavigationLoader.hide();
 		}
 
 		reloadListHandler()
 		{
-			this.reload({
-				skipItems: true
-			});
+			const initialStateParams = {
+				skipItems: true,
+			};
+
+			const loadItemsParams = {
+				useCache: false,
+			}
+
+			this.reload(initialStateParams, loadItemsParams, this.props.reloadListCallbackHandler);
 		}
 
-		reload(initialStateParams = {}, loadItemsParams = {})
+		/**
+		 * @param {Object} initialStateParams
+		 * @param {Object} loadItemsParams
+		 * @param {Function|null} callback
+		 */
+		reload(initialStateParams = {}, loadItemsParams = {}, callback = () => {})
 		{
 			this.isRefreshing = false;
+
+			if (typeof callback !== 'function')
+			{
+				callback = () => {};
+			}
+
 			this.setState(this.getInitialState(initialStateParams), () => {
+				this.initSearchBar();
 				this.loadItems(DEFAULT_BLOCK_PAGE, false, loadItemsParams);
+
+				const simpleList = this.getSimpleList();
+				if (simpleList)
+				{
+					simpleList.dropShowReloadListNotification()
+				}
+
+				if (initialStateParams.menuButtons)
+				{
+					this
+						.setMenuButtons(initialStateParams.menuButtons)
+						.initMenu()
+					;
+				}
+
+				callback();
 			});
 		}
 
@@ -409,11 +903,15 @@
 				isRefreshing: true,
 				allItemsLoaded: false,
 				permissions: {
-					editable: false,
-					viewable: false,
+					add: false,
+					edit: false,
+					view: false,
 				},
 				settingsIsLoaded: false,
 				searchText: null,
+				searchPresetId: null,
+				renderType: null,
+				forcedShowSkeleton: null,
 			};
 
 			if (!params.skipItems)
@@ -421,16 +919,41 @@
 				initialState.items = new Map();
 			}
 
+			if (params.itemParams)
+			{
+				initialState.itemParams = params.itemParams;
+			}
+
+			if (params.forcedShowSkeleton)
+			{
+				initialState.forcedShowSkeleton = params.forcedShowSkeleton;
+			}
+
 			return initialState;
 		}
 
-		updateItemHandler(itemId, params)
+		updateItemHandler(itemId, params = {})
 		{
+			const showAnimate = BX.prop.getBoolean(params, 'showAnimate', true);
+			return this.updateItems([itemId], false, showAnimate);
+
+			/*
+			Remove later. There is a field check for changes to show the animation for each field,
+			but I have not yet found work with isShowAnimate in the code.
+			So I'll leave it commented out for now, maybe I'll get back to this code soon.
+
 			return new Promise((resolve, reject) => {
 				const items = this.state.items;
 				const item = items.get(itemId);
 
-				for (let name in params.data)
+				if (!item)
+				{
+					resolve();
+				}
+
+				this.setLoadingOfItem(item.id);
+
+				for (const name in params.data)
 				{
 					if (name !== 'fields')
 					{
@@ -438,33 +961,57 @@
 					}
 				}
 
-				// @todo need add new filled fields too
 				if (params.data.fields)
 				{
-					for (let paramsFieldIndex in params.data.fields)
+					for (const paramsFieldIndex in params.data.fields)
 					{
-						for (let index in item.data.fields)
+						const newField = params.data.fields[paramsFieldIndex];
+						const fieldName = newField.name;
+						let field = this.getFieldByName(item, fieldName);
+						if (field)
 						{
-							if (params.data.fields[paramsFieldIndex].name === item.data.fields[index].name)
-							{
-								//CommonUtils.objectClone(params.data.fields[paramsFieldIndex]);
-								item.data.fields[index] = Object.assign(
-									item.data.fields[index],
-									params.data.fields[paramsFieldIndex]
-								)
-							}
+							const isShowAnimate = (field.value !== newField.value);
+
+							field = Object.assign(
+								field,
+								newField,
+								{ isShowAnimate }
+							)
+						}
+						else
+						{
+							newField.isShowAnimate = true;
+							item.data.fields.push(newField);
 						}
 					}
 				}
 
 				item.type = this.generateType(item);
 				items.set(itemId, item);
-				this.modifyCache(ACTION_UPDATE, {item});
-
-				this.setState({items}, () => {
-					resolve();
+				this.modifyCache(ACTION_UPDATE, {
+					items: [item],
 				});
-			});
+
+				this.getItemComponent(item.id).dropLoading(() => {
+					this.setState({items}, () => {
+						resolve();
+					});
+				});
+			});*/
+		}
+
+		animateField()
+		{
+
+		}
+
+		/**
+		 * @param {Object} item
+		 * @param {String} fieldName
+		 */
+		getFieldByName(item, fieldName)
+		{
+			return item.data.fields.find(field => field.name === fieldName);
 		}
 
 		addItemHandler(itemId, params)
@@ -491,14 +1038,73 @@
 
 		deleteItemHandler(itemId)
 		{
+			return this.deleteItem(itemId);
+		}
+
+		/**
+		 * @param {Number} itemId
+		 * @param {String} animationType
+		 * @returns {Promise}
+		 */
+		deleteItem(itemId, animationType = 'top')
+		{
 			return new Promise((resolve, reject) => {
-				this.setState(state => {
-					const items = state.items;
-					items.delete(itemId);
-					this.modifyCache(ACTION_DELETE, {itemId});
-					resolve({items});
-				});
+				const simpleList = this.getSimpleList();
+				const item = simpleList.getItemComponent(itemId);
+
+				if (!item)
+				{
+					reject();
+					return;
+				}
+
+				this.deleteRowFromListView({ itemId, animationType, onDelete: resolve });
 			});
+		}
+
+		deleteRowFromListView({ itemId, animationType = 'top', onDelete })
+		{
+			const { items } = this.state;
+			const { listView } = this.getSimpleList();
+			const { index, section } = listView.getElementPosition(itemId);
+
+			listView.deleteRow(section, index, animationType, () => {
+					this.modifyCache(ACTION_DELETE, { itemId });
+					this.setState((state) => {
+						const items = clone(state.items);
+						items.delete(itemId);
+
+						return { items };
+					}, () => {
+						if (typeof onDelete === 'function')
+						{
+							onDelete({ items });
+						}
+					});
+				},
+			);
+		}
+
+		blinkItem(itemId, showUpdated = true)
+		{
+			return this.getSimpleList().blinkItem(itemId, showUpdated);
+		}
+
+		/**
+		 * @param {Number} itemId
+		 * @returns {LayoutComponent}
+		 */
+		getItemComponent(itemId)
+		{
+			return this.getSimpleList().getItemComponent(itemId);
+		}
+
+		/**
+		 * @returns {SimpleList}
+		 */
+		getSimpleList()
+		{
+			return this.simpleList;
 		}
 
 		/*
@@ -521,7 +1127,7 @@
 				return;
 			}
 
-			if (action === ACTION_UPDATE && this.updateItemInCache(cache, params.item))
+			if (action === ACTION_UPDATE && this.updateItemsInCache(cache, params.items))
 			{
 				Application.storage.setObject(cacheName, cache);
 			}
@@ -537,6 +1143,11 @@
 				}
 				return false;
 			});
+		}
+
+		updateItemsInCache(cache, items = [])
+		{
+			return items.every(item => this.updateItemInCache(cache, item));
 		}
 
 		updateItemInCache(cache, item)
@@ -567,7 +1178,7 @@
 					return;
 				}
 
-				for (let key in group)
+				for (const key in group)
 				{
 					if (BX.type.isPlainObject(group[key]) && !Array.isArray(group[key]))
 					{
@@ -605,8 +1216,14 @@
 
 		render()
 		{
+			const testId = this.getValue(this.props, 'testId');
+			const title = this.getValue(this.props, 'title');
+			const { permissions } = this.state;
+
 			return View(
 				{
+					testId,
+					onPan: this.props.onPanListHandler || null,
 					style: {
 						backgroundColor: '#F0F2F5',
 						flex: 1,
@@ -617,23 +1234,32 @@
 						style: {
 							flex: 1,
 							flexDirection: 'column',
+							backgroundColor: title ? '#F4F7F8' : '#F0F2F5',
 						},
 					},
-
-					new SimpleList({
-						permissions: {
-							editable: this.state.permissions.editable,
-							viewable: this.state.permissions.viewable,
+					title && Text({
+						style: {
+							fontSize: 13,
+							color: '#525C69',
+							marginVertical: 10,
+							marginLeft: 20,
 						},
+						text: title,
+					}),
+					new SimpleList({
+						...this.props,
+						testId,
+						permissions,
 						settingsIsLoaded: this.state.settingsIsLoaded,
+						renderType: this.state.renderType,
 						itemType: this.state.itemType,
 						items: this.state.items,
-						itemParams: this.itemParams,
+						itemParams: this.state.itemParams,
+						getItemCustomStyles: BX.prop.getFunction(this.props, 'getItemCustomStyles', null),
 						isSearchEnabled: this.stateBeforeSearch !== null,
-						emptyListText: this.props.emptyListText,
-						emptySearchText: this.props.emptySearchText,
 						blockPage: this.blockPage,
 						allItemsLoaded: this.state.allItemsLoaded,
+						forcedShowSkeleton: this.state.forcedShowSkeleton,
 						itemLayoutOptions: this.itemLayoutOptions,
 						itemActions: this.state.itemActions,
 						loadItemsHandler: this.loadItemsHandler,
@@ -641,11 +1267,14 @@
 						addItemHandler: this.addItemHandler,
 						updateItemHandler: this.updateItemHandler,
 						deleteItemHandler: this.deleteItemHandler,
-						itemDetailOpenHandler: this.props.itemDetailOpenHandler,
-						floatingButtonClickHandler: (this.props.floatingButtonClickHandler || null),
+						showFloatingButton: BX.prop.getBoolean(this.props, 'isShowFloatingButton', true),
 						itemsLoadLimit: ITEMS_LOAD_LIMIT,
 						isRefreshing: this.state.isRefreshing,
+						ref: ref => this.simpleList = ref,
 						pull: this.pull,
+						onDetailCardUpdateHandler: this.props.onDetailCardUpdateHandler || null,
+						onDetailCardCreateHandler: this.props.onDetailCardCreateHandler || null,
+						onNotViewableHandler: this.props.onNotViewableHandler || null,
 					}),
 				)
 			);
@@ -656,6 +1285,110 @@
 			if (errorText.length)
 			{
 				navigator.notification.alert(errorText, null, '');
+			}
+		}
+
+		/**
+		 * @param {Number} id
+		 * @returns {Boolean}
+		 */
+		hasItem(id)
+		{
+			return Boolean(this.getItem(id));
+		}
+
+		/**
+		 * @param {Number} id
+		 * @returns {Object}
+		 */
+		getItem(id)
+		{
+			id = Number(id);
+			return this.state.items.get(id);
+		}
+
+		/**
+		 * @returns Map
+		 */
+		getItems()
+		{
+			return this.state.items;
+		}
+
+		/**
+		 * @param key: string
+		 * @returns {null|{section: number, index: number}}
+		 */
+		getItemPosition(key)
+		{
+			return this.getSimpleList().listView.getElementPosition(String(key));
+		}
+
+		/**
+		 * @returns {null|*}
+		 */
+		getSearchObject(initSearch = false)
+		{
+			const { layout } = this.props;
+
+			if (!layout)
+			{
+				return null;
+			}
+
+			if (this.canUseSearchObject && layout.search)
+			{
+				if (initSearch)
+				{
+					layout.search.mode = this.searchConfig.mode;
+				}
+				return layout.search;
+			}
+
+			if(layout.searchBar)
+			{
+				return layout.searchBar;
+			}
+
+			return null;
+		}
+
+		/**
+		 * @returns {boolean}
+		 */
+		canUseSearchObjectHandler()
+		{
+			return (Application.getApiVersion() >= 42);
+		}
+
+		setLoadingOfItem(itemId)
+		{
+			const item = this.getItemComponent(itemId);
+			if (!item)
+			{
+				return Promise.resolve();
+			}
+
+			return new Promise(resolve => item.setLoading(resolve));
+		}
+
+		unsetLoadingOfItem(itemId, blink = true)
+		{
+			const item = this.getItemComponent(itemId);
+			if (!item)
+			{
+				return Promise.resolve();
+			}
+
+			return new Promise(resolve => item.dropLoading(resolve, blink));
+		}
+
+		setShowReloadListNotification()
+		{
+			const simpleList = this.getSimpleList();
+			if (simpleList)
+			{
+				simpleList.setShowReloadListNotification()
 			}
 		}
 	}

@@ -5,5 +5,6 @@ return [
 		'testing',
 		'utils',
 		'utils/object',
+		'utils/type',
 	],
 ];

@@ -266,6 +266,7 @@ class DynamicController extends BaseController
 		$this->suspendProductRows($entityID, $recyclingEntityID);
 		$this->suspendScoringHistory($entityID, $recyclingEntityID);
 		$this->suspendCustomRelations($entityID, $recyclingEntityID);
+		$this->suspendBadges($entityID, $recyclingEntityID);
 	}
 
 	/**
@@ -371,6 +372,7 @@ class DynamicController extends BaseController
 		$this->recoverProductRows($recyclingEntityID, $newEntityID);
 		$this->recoverScoringHistory($recyclingEntityID, $newEntityID);
 		$this->recoverCustomRelations($recyclingEntityID, $newEntityID);
+		$this->recoverBadges($recyclingEntityID, $newEntityID);
 	}
 
 	protected function createItem(array $fields): Crm\Item
@@ -469,6 +471,7 @@ class DynamicController extends BaseController
 		$this->eraseSuspendedChats($recyclingEntityID);
 		$this->eraseSuspendedScoringHistory($recyclingEntityID);
 		$this->eraseSuspendedCustomRelations($recyclingEntityID);
+		$this->eraseSuspendedBadges($recyclingEntityID);
 	}
 
 	public function eraseAll(): void

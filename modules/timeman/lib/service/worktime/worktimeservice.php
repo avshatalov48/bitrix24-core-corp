@@ -327,10 +327,10 @@ class WorktimeService extends BaseService
 		if (count($actions) > 1)
 		{
 			// todo interface should send schedule/shift id, so we can choose the right action
-			return $result->addProhibitedActionError(WorktimeServiceResult::ERROR_FOR_USER, WorktimeServiceResult::ERROR_MULTI_ACTIONS);
+			// todo wtf return $result->addProhibitedActionError(WorktimeServiceResult::ERROR_FOR_USER, WorktimeServiceResult::ERROR_MULTI_ACTIONS);
 		}
 		/** @var WorktimeAction $action */
-		$action = reset($actions);
+		$action = end($actions);
 		if ($action->getRecord() && !$action->getRecordManager())
 		{
 			return $result->addError(new Error('WorktimeAction must have WorktimeRecordManager instance ' . __FILE__ . ':' . __LINE__));

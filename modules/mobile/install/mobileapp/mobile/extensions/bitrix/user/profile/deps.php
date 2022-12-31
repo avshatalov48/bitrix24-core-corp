@@ -2,12 +2,9 @@
 
 return [
 	'extensions' => [
-		"files/const",
-		"files/converter",
-		"files/entry",
 		'tasks:task',
 		'disk',
-		'user/account'
+		'im/messenger/api/dialog-opener',
 	],
 	'components' => [
 		'user.profile',

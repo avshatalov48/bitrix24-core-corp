@@ -107,29 +107,13 @@ class CIntranetRestService extends IRestService
 	{
 		CModule::IncludeModule('iblock');
 
-		$arQuery = array_change_key_case($arQuery, CASE_UPPER);
-
-		$arSort = array("LEFT_MARGIN" => 'ASC');
-		if(isset($arQuery['SORT']))
-		{
-			$sort = ToUpper($arQuery['SORT']);
-			if(in_array($sort, self::$arAllowedDepartmentFields))
-			{
-				$order = isset($arQuery['ORDER']) ? ToUpper($arQuery['ORDER']) : '';
-				if($order != 'DESC')
-					$order = 'ASC';
-
-				$arSort = array($sort => $order);
-			}
-		}
-
 		if(isset($arQuery['FILTER']) && is_array($arQuery['FILTER']))
 		{
 			$arQuery = $arQuery['FILTER'];
 		}
 
 		$dbRes = CIBlockSection::GetList(
-			$arSort,
+			self::prepareSort($arQuery),
 			self::prepareDeptData($arQuery),
 			false,
 			self::$arSelectDepartmentFields,
@@ -280,6 +264,26 @@ class CIntranetRestService extends IRestService
 		}
 
 		return $res;
+	}
+
+	protected static function prepareSort($query): array
+	{
+		$query = array_change_key_case($query, CASE_UPPER);
+		$sort = ['LEFT_MARGIN' => 'ASC'];
+
+		if (isset($query['SORT']) && is_string($query['SORT']))
+		{
+			$sortField = mb_strtoupper($query['SORT']);
+			if (in_array($sortField, self::$arAllowedDepartmentFields))
+			{
+				$order = isset($query['ORDER']) && is_string($query['ORDER']) ? mb_strtoupper($query['ORDER']) : '';
+				if ($order != 'DESC')
+					$order = 'ASC';
+
+				$sort = [$sortField => $order];
+			}
+		}
+		return $sort;
 	}
 
 	protected static function prepareDeptData($arData)

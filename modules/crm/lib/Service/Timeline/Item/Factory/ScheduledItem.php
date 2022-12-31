@@ -52,6 +52,11 @@ class ScheduledItem
 			{
 				return null;
 			}
+
+			public function getSort(): array
+			{
+				return [];
+			}
 		};
 	}
 }

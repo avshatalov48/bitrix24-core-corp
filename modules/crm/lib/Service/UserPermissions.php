@@ -533,6 +533,7 @@ class UserPermissions
 	 * If $categoryId is defined, access checked for this category
 	 * Otherwise, check read access for at least one category
 	 *
+	 * If both $id and $categoryId are passed, $categoryId must contain correct category for $id.
 	 *
 	 * @param int $entityTypeId
 	 * @param int $id

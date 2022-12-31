@@ -46,7 +46,7 @@ class Tag
 		}, $insertRows);
 
 		$sql = "
-			INSERT INTO ". TagTable::getTableName() ."
+			INSERT IGNORE INTO ". TagTable::getTableName() ."
 			(`USER_ID`, `TASK_ID`, `NAME`)
 			VALUES
 			(". implode("),(", $insertRows) .")

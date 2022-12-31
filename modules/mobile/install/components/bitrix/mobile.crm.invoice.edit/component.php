@@ -519,16 +519,16 @@ else
 			CUtil::JSPostUnescape();
 
 			//Check entities access -->
-			$quoteID = isset($_POST['UF_QUOTE_ID']) ? intval($_POST['UF_QUOTE_ID']) : 0;
-			if($quoteID > 0 && !CCrmQuote::CheckReadPermission($quoteID))
+			$quoteID = isset($_POST['UF_QUOTE_ID']) ? intval($_POST['UF_QUOTE_ID']) : null;
+			if ($quoteID > 0 && !CCrmQuote::CheckReadPermission($quoteID))
 			{
-				$quoteID = 0;
+				$quoteID = null;
 			}
 
-			$dealID = isset($_POST['UF_DEAL_ID']) ? intval($_POST['UF_DEAL_ID']) : 0;
-			if($dealID > 0 && !CCrmDeal::CheckReadPermission($dealID))
+			$dealID = isset($_POST['UF_DEAL_ID']) ? intval($_POST['UF_DEAL_ID']) : null;
+			if ($dealID > 0 && !CCrmDeal::CheckReadPermission($dealID))
 			{
-				$dealID = 0;
+				$dealID = null;
 			}
 
 			$info = CCrmInvoice::__GetCompanyAndContactFromPost($_POST);
@@ -604,12 +604,21 @@ else
 				'RESPONSIBLE_ID' => intval($_POST['RESPONSIBLE_ID']),
 				'COMMENTS' => $comments,
 				'USER_DESCRIPTION' => $userDescription,
-				'UF_QUOTE_ID' => $quoteID,
-				'UF_DEAL_ID' => $dealID,
 				'UF_COMPANY_ID' => $companyID,
 				'UF_CONTACT_ID' => $contactID,
 				'UF_MYCOMPANY_ID' => $myCompanyId
 			);
+
+			if ($quoteID !== null)
+			{
+				$arFields['UF_QUOTE_ID'] = $quoteID;
+			}
+
+			if ($dealID !== null)
+			{
+				$arFields['UF_DEAL_ID'] = $dealID;
+			}
+
 			unset($dateInsert);
 
 			if ($bTaxMode)

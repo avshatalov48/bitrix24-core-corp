@@ -2152,12 +2152,15 @@ class TasksKanbanComponent extends \CBitrixComponent
 								),
 								false, false,
 								array(
-									'ID', 'GROUP_NAME', 'GROUP_ID'
+									'ID', 'GROUP_NAME', 'GROUP_ID' , 'GROUP_SCRUM_MASTER_ID'
 								)
 							);
 							while ($row = $res->fetch())
 							{
-								if ($this->canReadGroupTasks($row['GROUP_ID']))
+								if (
+									$this->canReadGroupTasks($row['GROUP_ID'])
+									&& (empty($row['GROUP_SCRUM_MASTER_ID']))
+								)
 								{
 									$views[$row['GROUP_ID']] = array(
 										'ID' => $row['GROUP_ID'],
@@ -3434,7 +3437,7 @@ class TasksKanbanComponent extends \CBitrixComponent
 		$groupId = $this->arParams['GROUP_ID'];
 
 		if (
-			($order = $this->request('order')) &&
+			$order &&
 			in_array($order, ['asc', 'desc', 'actual']) &&
 			$this->canSortTasks()
 		)

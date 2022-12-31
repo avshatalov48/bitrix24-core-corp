@@ -320,7 +320,8 @@ class CCrmBizProcHelper
 		}
 
 		$session = Bizproc\Debugger\Session\Manager::getActiveSession();
-		if (!$session || !$session->isStartedInDocumentType(\CCrmBizProcHelper::ResolveDocumentType($entityTypeId)))
+		$documentType = \CCrmBizProcHelper::ResolveDocumentType($entityTypeId);
+		if (!$session || !$documentType || !$session->isStartedInDocumentType($documentType))
 		{
 			return [];
 		}
@@ -335,6 +336,13 @@ class CCrmBizProcHelper
 		}
 
 		return $ids;
+	}
+
+	public static function isActiveDebugEntity(int $entityTypeId, int $entityId): bool
+	{
+		$ids = static::getActiveDebugEntityIds($entityTypeId);
+
+		return in_array($entityId, $ids, true);
 	}
 }
 

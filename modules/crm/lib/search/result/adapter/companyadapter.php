@@ -2,6 +2,8 @@
 
 namespace Bitrix\Crm\Search\Result\Adapter;
 
+use Bitrix\Crm\Item;
+
 class CompanyAdapter extends \Bitrix\Crm\Search\Result\Adapter
 {
 	protected function loadItemsByIds(array $ids): array
@@ -34,17 +36,32 @@ class CompanyAdapter extends \Bitrix\Crm\Search\Result\Adapter
 
 	protected function prepareSubTitle(array $item): string
 	{
-		$typesList = $this->getTypesList();
-		$industriesList = $this->getIndustriesList();
-
 		$descriptions = [];
-		if (isset($typesList[$item['COMPANY_TYPE']]))
+
+		if (
+			!$this->category
+			|| !in_array(Item::FIELD_NAME_TYPE_ID, $this->category->getDisabledFieldNames(), true)
+		)
 		{
-			$descriptions[] = $typesList[$item['COMPANY_TYPE']];
+			$typesList = $this->getTypesList();
+
+			if (isset($typesList[$item['COMPANY_TYPE']]))
+			{
+				$descriptions[] = $typesList[$item['COMPANY_TYPE']];
+			}
 		}
-		if (isset($industriesList[$item['INDUSTRY']]))
+
+		if (
+			!$this->category
+			|| !in_array(Item\Company::FIELD_NAME_INDUSTRY, $this->category->getDisabledFieldNames(), true)
+		)
 		{
-			$descriptions[] = $industriesList[$item['INDUSTRY']];
+			$industriesList = $this->getIndustriesList();
+
+			if (isset($industriesList[$item['INDUSTRY']]))
+			{
+				$descriptions[] = $industriesList[$item['INDUSTRY']];
+			}
 		}
 
 		return implode(', ', $descriptions);

@@ -4,8 +4,10 @@ namespace Bitrix\Crm\Controller;
 
 use Bitrix\Crm\Order\Order;
 use Bitrix\Crm\Service\Container;
+use Bitrix\Crm\UI\EntitySelector;
 use Bitrix\Main;
 use Bitrix\Crm;
+use Bitrix\UI\EntitySelector\Dialog;
 
 class Entity extends Main\Engine\Controller
 {
@@ -60,9 +62,10 @@ class Entity extends Main\Engine\Controller
 			}
 		}
 
+		$lastRecentlyUsed = self::getRecentlyUsedItems($category, $code, ['RAW_FORMAT' => true]);
 		$values = array_unique(
 			array_merge(
-				self::getRecentlyUsedItems($category, $code, ['RAW_FORMAT' => true]),
+				$lastRecentlyUsed,
 				array_values($values)
 			)
 		);
@@ -73,7 +76,46 @@ class Entity extends Main\Engine\Controller
 			$values = array_slice($values, $qty - static::ITEMS_LIMIT);
 		}
 
+		$newValues = array_diff($values, $lastRecentlyUsed);
+		if (!empty($newValues))
+		{
+			static::saveRecentItemsInSelector($newValues);
+		}
+
 		\CUserOptions::SetOption($category, $code, $values);
+	}
+
+	private static function saveRecentItemsInSelector(array $rawItems): void
+	{
+		$items = [];
+		$entities = [];
+
+		foreach ($rawItems as $rawItem)
+		{
+			[$entityTypeId, $entityId] = explode(':', $rawItem);
+			$entityTypeId = (int)$entityTypeId;
+			$entityId = (int)$entityId;
+
+			if (\CCrmOwnerType::IsDefined($entityTypeId) && $entityId > 0)
+			{
+				$entityName = \CCrmOwnerType::ResolveName($entityTypeId);
+
+				$entities[$entityName] = ['id' => $entityName];
+				$items[] = [
+					'entityId' => $entityName,
+					'id' => $entityId,
+				];
+			}
+		}
+
+		if (!empty($entities) && !empty($items))
+		{
+			$dialog = new Dialog([
+				'context' => EntitySelector::CONTEXT,
+				'entities' => array_values($entities),
+			]);
+			$dialog->saveRecentItems($items);
+		}
 	}
 
 	/**
@@ -252,6 +294,7 @@ class Entity extends Main\Engine\Controller
 			$map[$key] = [
 				'ENTITY_TYPE_ID' => $entityTypeId,
 				'ENTITY_ID' => (int)$entityId,
+				'CATEGORY_ID' => $categoryId,
 			];
 		}
 

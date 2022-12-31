@@ -7,16 +7,19 @@ class ParseResult
 	protected $componentName;
 	protected $componentParameters;
 	protected $templateName;
+	protected int $entityTypeId = \CCrmOwnerType::Undefined;
 
 	public function __construct(
 		string $componentName = null,
 		array $componentParameters = null,
-		string $templateName = null
+		string $templateName = null,
+		int $entityTypeId = \CCrmOwnerType::Undefined
 	)
 	{
 		$this->componentName = $componentName;
 		$this->componentParameters = $componentParameters;
 		$this->templateName = $templateName;
+		$this->entityTypeId = $entityTypeId;
 	}
 
 	public function isFound(): bool
@@ -37,5 +40,10 @@ class ParseResult
 	public function getTemplateName(): ?string
 	{
 		return $this->templateName;
+	}
+
+	public function getEntityTypeId(): int
+	{
+		return $this->entityTypeId;
 	}
 }

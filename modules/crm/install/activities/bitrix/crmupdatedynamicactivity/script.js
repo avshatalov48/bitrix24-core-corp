@@ -1,4 +1,4 @@
-(function (exports,main_core,main_popup,main_core_events,bizproc_automation) {
+(function (exports,main_core,main_popup,bizproc_automation) {
 	'use strict';
 
 	var namespace = main_core.Reflection.namespace('BX.Crm.Activity');
@@ -52,8 +52,6 @@
 	      if (!main_core.Type.isNil(this.currentEntityTypeId) && main_core.Type.isObject(options.currentValues)) {
 	        this.currentValues.set(this.currentEntityTypeId, options.currentValues);
 	      }
-
-	      this.render();
 	    }
 	  }
 
@@ -75,18 +73,35 @@
 	  }, {
 	    key: "initAutomationContext",
 	    value: function initAutomationContext() {
+	      var _this2 = this;
+
 	      try {
 	        bizproc_automation.getGlobalContext();
+
+	        if (this.isRobot) {
+	          this.onOpenFilterFieldsMenu = function (event) {
+	            var dialog = bizproc_automation.Designer.getInstance().getRobotSettingsDialog();
+	            var template = dialog.template;
+	            var robot = dialog.robot;
+
+	            if (template && robot) {
+	              template.onOpenMenu(event, robot);
+	            }
+	          };
+	        }
 	      } catch (error) {
 	        bizproc_automation.setGlobalContext(new bizproc_automation.Context({
 	          document: this.document
 	        }));
-	        this.initSelectors();
+
+	        this.onOpenFilterFieldsMenu = function (event) {
+	          return _this2.addBPFields(event.getData().selector);
+	        };
 	      }
 	    }
 	  }, {
-	    key: "initSelectors",
-	    value: function initSelectors() {
+	    key: "addBPFields",
+	    value: function addBPFields(selector) {
 	      var getSelectorProperties = function getSelectorProperties(_ref) {
 	        var properties = _ref.properties,
 	            objectName = _ref.objectName,
@@ -156,60 +171,55 @@
 	        return [];
 	      };
 
-	      main_core_events.EventEmitter.subscribe('BX.Bizproc.Automation.Selector:onOpenMenu', function (event) {
-	        var selector = event.getData().selector;
-	        selector.addGroup('workflowParameters', {
-	          id: 'workflowParameters',
-	          title: main_core.Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
-	          children: [{
-	            id: 'parameters',
-	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
-	            children: getSelectorProperties({
-	              properties: window.arWorkflowParameters || {},
-	              objectName: 'Template',
-	              expressionPrefix: '~*'
-	            })
-	          }, {
-	            id: 'variables',
-	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
-	            children: getSelectorProperties({
-	              properties: window.arWorkflowVariables || {},
-	              objectName: 'Variable'
-	            })
-	          }, {
-	            id: 'constants',
-	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
-	            children: getSelectorProperties({
-	              properties: window.arWorkflowConstants || {},
-	              objectName: 'Constant',
-	              expressionPrefix: '~&'
-	            })
-	          }]
+	      selector.addGroup('workflowParameters', {
+	        id: 'workflowParameters',
+	        title: main_core.Loc.getMessage('BIZPROC_WFEDIT_MENU_PARAMS'),
+	        children: [{
+	          id: 'parameters',
+	          title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_PARAMETERS_LIST'),
+	          children: getSelectorProperties({
+	            properties: window.arWorkflowParameters || {},
+	            objectName: 'Template',
+	            expressionPrefix: '~*'
+	          })
+	        }, {
+	          id: 'variables',
+	          title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST_1'),
+	          children: getSelectorProperties({
+	            properties: window.arWorkflowVariables || {},
+	            objectName: 'Variable'
+	          })
+	        }, {
+	          id: 'constants',
+	          title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_CONSTANTS_LIST'),
+	          children: getSelectorProperties({
+	            properties: window.arWorkflowConstants || {},
+	            objectName: 'Constant',
+	            expressionPrefix: '~&'
+	          })
+	        }]
+	      });
+
+	      if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames) {
+	        selector.addGroup('globalVariables', {
+	          id: 'globalVariables',
+	          title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
+	          children: getGlobalSelectorProperties({
+	            properties: window.arWorkflowGlobalVariables || {},
+	            visibilityNames: window.wfGVarVisibilityNames || {},
+	            objectName: 'GlobalVar'
+	          })
 	        });
+	      }
 
-	        if (window.arWorkflowGlobalVariables && window.wfGVarVisibilityNames) {
-	          selector.addGroup('globalVariables', {
-	            id: 'globalVariables',
-	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_VARIABLES_LIST'),
-	            children: getGlobalSelectorProperties({
-	              properties: window.arWorkflowGlobalVariables || {},
-	              visibilityNames: window.wfGVarVisibilityNames || {},
-	              objectName: 'GlobalVar'
-	            })
-	          });
-	        }
-
-	        if (window.arWorkflowGlobalConstants && window.wfGConstVisibilityNames) {
-	          selector.addGroup('globalConstants', {
-	            id: 'globalConstants',
-	            title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
-	            children: getGlobalSelectorProperties({
-	              properties: window.arWorkflowGlobalConstants || {},
-	              visibilityNames: window.wfGConstVisibilityNames || {},
-	              objectName: 'GlobalConst'
-	            })
-	          });
-	        }
+	      selector.addGroup('globalConstants', {
+	        id: 'globalConstants',
+	        title: main_core.Loc.getMessage('BIZPROC_AUTOMATION_CMP_GLOB_CONSTANTS_LIST'),
+	        children: getGlobalSelectorProperties({
+	          properties: window.arWorkflowGlobalConstants || {},
+	          visibilityNames: window.wfGConstVisibilityNames || {},
+	          objectName: 'GlobalConst'
+	        })
 	      });
 	    }
 	  }, {
@@ -244,7 +254,8 @@
 	      if (!main_core.Type.isNil(this.conditionGroup) && !main_core.Type.isNil(this.currentEntityTypeId)) {
 	        var selector = new bizproc_automation.ConditionGroupSelector(this.conditionGroup, {
 	          fields: Object.values(this.filterFieldsMap.get(this.currentEntityTypeId)),
-	          fieldPrefix: this.filteringFieldsPrefix
+	          fieldPrefix: this.filteringFieldsPrefix,
+	          onOpenMenu: this.onOpenFilterFieldsMenu
 	        });
 	        this.filterFieldsContainer.appendChild(selector.createNode());
 	      }
@@ -252,10 +263,10 @@
 	  }, {
 	    key: "renderEntityFields",
 	    value: function renderEntityFields() {
-	      var _this2 = this;
+	      var _this3 = this;
 
 	      Object.keys(this.currentValues.get(this.currentEntityTypeId)).forEach(function (fieldId) {
-	        return _this2.addCondition(fieldId);
+	        return _this3.addCondition(fieldId);
 	      });
 	    }
 	  }, {
@@ -434,5 +445,5 @@
 
 	namespace.CrmUpdateDynamicActivity = CrmUpdateDynamicActivity;
 
-}((this.window = this.window || {}),BX,BX.Main,BX.Event,BX.Bizproc.Automation));
+}((this.window = this.window || {}),BX,BX.Main,BX.Bizproc.Automation));
 //# sourceMappingURL=script.js.map

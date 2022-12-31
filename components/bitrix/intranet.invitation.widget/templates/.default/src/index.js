@@ -63,6 +63,24 @@ class InvitationWidget
 
 		this.popup = new B24.PopupBlur({
 			autoHide: true,
+			autoHideHandler: (event) => {
+				if (event.target === this.popup.getPopupContainer() || this.popup.getPopupContainer().contains(event.target))
+				{
+					return null;
+				}
+
+				let result = event;
+				const hints = document.querySelectorAll('.bx-invite-hint-warning');
+
+				hints.forEach((element) => {
+					if (event.target === element || element.contains(event.target))
+					{
+						result = null;
+					}
+				});
+
+				return result;
+			},
 			closeByEsc: true,
 			contentPadding: 0,
 			padding: 0,

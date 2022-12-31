@@ -1,9 +1,14 @@
-<?php if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true)
+{
+	die();
+}
 
 class CrmActivityTodoComponent extends \CBitrixComponent
 {
-	private $ids = 0;
-	private $typeId = 0;
+	private array $ids = [];
+	private int $typeId = 0;
 
 	/**
 	 * Init class' vars.
@@ -105,136 +110,265 @@ class CrmActivityTodoComponent extends \CBitrixComponent
 	 * Get all activities.
 	 * @return array
 	 */
-	private function getActivity()
+	private function getActivity(): array
 	{
-		$return = array();
-		$high = \CCrmActivityPriority::High;
-		$contactTypeId = \CCrmOwnerType::Contact;
-
-		//make filter
-		$filter = array(
-			'BINDINGS' => array()
-		);
-		if (isset($this->arParams['RESPONSIBLE_ID']))
-		{
-			$filter['RESPONSIBLE_ID'] = $this->arParams['RESPONSIBLE_ID'];
-		}
-		if (isset($this->arParams['COMPLETED']))
-		{
-			$filter['COMPLETED'] = $this->arParams['COMPLETED'];
-		}
-		foreach ($this->ids as $id)
-		{
-			if ($id > 0)
-			{
-				$filter['BINDINGS'][] = array(
-					'OWNER_ID' => intval($id),
-					'OWNER_TYPE_ID' => $this->typeId,
-				);
-			}
-		}
+		$filter = $this->getFilter();
 		if (empty($filter['BINDINGS']))
 		{
-			return $return;
+			return [];
 		}
 
-		//get activities
-		$contacts = array();
-		$select = array();
-		$sort = array('COMPLETED' => 'ASC', 'PRIORITY' => 'DESC', 'DEADLINE' => 'ASC', 'ID' => 'DESC');
-		$res = \CCrmActivity::GetList($sort, $filter, false, false, $select);
-		while ($activity = $res->getNext())
+		$return = [];
+		$contacts = [];
+
+		$this->prepareActivities($return, $contacts, $filter);
+		if ($waiter = $this->getWaiter())
+		{
+			$return[$waiter['ID']] = $waiter;
+		}
+
+		$this->prepareContacts($return, $contacts);
+
+		return $return;
+	}
+
+	private function prepareActivities(array &$activities, array &$contacts, array $filter): void
+	{
+		$sort = [
+			'COMPLETED' => 'ASC',
+			'PRIORITY' => 'DESC',
+			'DEADLINE' => 'ASC',
+			'ID' => 'DESC',
+		];
+
+		$select = [
+			'COMPLETED',
+			'ID',
+			'OWNER_ID',
+			'OWNER_TYPE_ID',
+			'ASSOCIATED_ENTITY_ID',
+			'COMPLETED',
+			'CREATED',
+			'DEADLINE',
+			'START_TIME',
+			'SUBJECT',
+			'PROVIDER_ID',
+			'PROVIDER_TYPE_ID',
+			'TYPE_ID',
+			'DIRECTION',
+			'IS_INCOMING_CHANNEL',
+			'ORIGIN_ID',
+		];
+
+		$activityList = \CCrmActivity::GetList($sort, $filter, false, false, $select);
+		while ($activity = $activityList->getNext())
 		{
 			if (!($activity['PROVIDER'] = \CCrmActivity::GetActivityProvider($activity)))
 			{
 				continue;
 			}
+			$activity['SORT'] = [];
+			if ($activity['IS_INCOMING_CHANNEL'] === 'Y')
+			{
+				$activity['SORT'][] = -\Bitrix\Main\Type\DateTime::createFromUserTime($activity['CREATED'])->getTimestamp();
+			}
+			else
+			{
+				if (isset($activity['DEADLINE']))
+				{
+					if (\CCrmDateTimeHelper::IsMaxDatabaseDate($activity['DEADLINE']))
+					{
+						$activity['SORT'][] = PHP_INT_MAX;
+					}
+					else
+					{
+						$activity['SORT'][] = \Bitrix\Main\Type\DateTime::createFromUserTime($activity['DEADLINE'])->getTimestamp();
+					}
+				}
+				else
+				{
+					$activity['SORT'][] = PHP_INT_MAX;
+				}
+			}
+			$activity['SORT'][] = (int)$activity['ID'];
+
 			if (isset($activity['DEADLINE']) && \CCrmDateTimeHelper::IsMaxDatabaseDate($activity['DEADLINE']))
 			{
 				$activity['DEADLINE'] = '';
 			}
-			if ($activity['COMPLETED'] === 'N' && $activity['PROVIDER']::canCompleteOnView($activity['PROVIDER_TYPE_ID']))
+
+			if (
+				$activity['COMPLETED'] === 'N'
+				&& $activity['PROVIDER']::canCompleteOnView($activity['PROVIDER_TYPE_ID'])
+				&& \CCrmActivity::Complete($activity['ID'])
+			)
 			{
-				if (\CCrmActivity::Complete($activity['ID']))
-				{
-					$activity['COMPLETED'] = 'Y';
-				}
+				$activity['COMPLETED'] = 'Y';
 			}
-			if ($activity['DEADLINE'] && $activity['COMPLETED'] != 'Y')
+
+			if ($activity['DEADLINE'] && $activity['COMPLETED'] !== 'Y')
 			{
-				$dateTime = \makeTimeStamp($activity['DEADLINE']);
-				$date = \Bitrix\Main\Type\DateTime::createFromTimestamp($dateTime);
-				//$date->add('-'.date('G', $dateTime).' hours')->add('-'.date('i', $dateTime).' minutes');
-				$activity['DEADLINED'] = $date->getTimeStamp() < time() + \CTimeZone::getOffset();
+				$date = \Bitrix\Main\Type\DateTime::createFromUserTime($activity['DEADLINE']);
+				$tomorrowDate = CCrmDateTimeHelper::getUserDate((new \Bitrix\Main\Type\DateTime())->add('+1 day'));
+				$tomorrow = CCrmDateTimeHelper::getServerTime(\Bitrix\Main\Type\DateTime::createFromTimestamp($tomorrowDate->getTimestamp()));
+				$activity['DEADLINED'] = $date->getTimeStamp() < $tomorrow->getTimestamp();
 			}
 			else
 			{
 				$activity['DEADLINED'] = false;
 			}
-			$activity['CONTACTS'] = array();
-			foreach (\CCrmActivity::GetBindings($activity['ID']) as $binding)
-			{
-				if ($binding['OWNER_TYPE_ID'] == $contactTypeId)
-				{
-					if (!isset($contacts[$binding['OWNER_ID']]))
-					{
-						$contacts[$binding['OWNER_ID']] = array();
-					}
-					$contacts[$binding['OWNER_ID']][] = $activity['ID'];
-				}
-			}
-			$activity['PROVIDER_TITLE'] = $activity['PROVIDER']::getTypeName($activity['PROVIDER_TYPE_ID'], $activity['DIRECTION']);
+
+			$activity['CONTACTS'] = [];
+			$this->appendContactsIds($contacts, $activity['ID']);
+
+			$activity['PROVIDER_TITLE'] = $activity['PROVIDER']::getTypeName(
+				$activity['PROVIDER_TYPE_ID'],
+				$activity['DIRECTION']
+			);
 			$activity['PROVIDER_ANCHOR'] = (array)$activity['PROVIDER']::getStatusAnchor();
 			$activity['ICON'] = $this->getTypeIcon($activity);
-			$activity['HIGH'] = ($activity['PRIORITY'] == $high) ? 'Y' : 'N';
-			$activity['DETAIL_EXIST'] = true;
-			$return[$activity['ID']] = $activity;
+			$activity['HIGH'] = ((int)$activity['PRIORITY'] === \CCrmActivityPriority::High ? 'Y' : 'N');
+			$activity['DETAIL_EXIST'] = $activity['PROVIDER']::hasPlanner($activity);
+			$activity['IS_INCOMING_CHANNEL'] = ($activity['IS_INCOMING_CHANNEL'] === 'Y');
+
+			$activities[$activity['ID']] = $activity;
 		}
-		//waiter
-		$wait = \Bitrix\Crm\Pseudoactivity\WaitEntry::getRecentByOwner(
-			$this->typeId,
-			$id
-		);
-		if ($wait)
-		{
-			$wait['ID'] = 'w' . $wait['ID'];
-			$wait['HIGH'] = 'N';
-			$wait['DETAIL_EXIST'] = false;
-			$wait['CONTACTS'] = array();
-			$wait['SUBJECT'] = nl2br(\htmlspecialcharsbx($wait['DESCRIPTION']));
-			$wait['ICON'] = $this->getTypeIcon($wait);
-			$return[$wait['ID']] = $wait;
-		}
-		//get contacts for activities
-		if (!empty($contacts))
-		{
-			$contactsVals = array();
-			$path = $this->getEntityPath('contact');
-			$select = array('ID', 'NAME', 'LAST_NAME');
-			$res = \CCrmContact::getListEx(array(), array('ID' => array_keys($contacts)), false, false, $select);
-			while ($row = $res->getNext())
+
+		$this->sortActivities($activities);
+	}
+
+	private function sortActivities(&$activities): void
+	{
+		uasort($activities, function ($a, $b) {
+			$aSort = $a['SORT'];
+			$bSort = $b['SORT'];
+
+			foreach ($aSort as $index => $aValue)
 			{
-				$row['TITLE'] = trim($row['NAME'] . ' ' . $row['LAST_NAME']);
-				$row['URL'] = str_replace('#contact_id#', $row['ID'], $path);
-				$contactsVals[$row['ID']] = $row;
-			}
-			//fill activities with contacts
-			if (!empty($contactsVals))
-			{
-				foreach ($contacts as $cid => $aIds)
+				$bValue = $bSort[$index] ?? 0;
+
+				if ($aValue === $bValue)
 				{
-					if (isset($contactsVals[$cid]))
-					{
-						foreach ($aIds as $aid)
-						{
-							$return[$aid]['CONTACTS'][] = $contactsVals[$cid];
-						}
-					}
+					continue;
 				}
+
+				return $aValue - $bValue;
+			}
+
+			return 0;
+		});
+	}
+
+	private function getFilter(): array
+	{
+		$filter = [
+			'BINDINGS' => [],
+		];
+
+		if (isset($this->arParams['RESPONSIBLE_ID']))
+		{
+			$filter['RESPONSIBLE_ID'] = $this->arParams['RESPONSIBLE_ID'];
+		}
+
+		if (isset($this->arParams['COMPLETED']))
+		{
+			$filter['COMPLETED'] = $this->arParams['COMPLETED'];
+		}
+
+		foreach ($this->ids as $id)
+		{
+			if ($id > 0)
+			{
+				$filter['BINDINGS'][] = [
+					'OWNER_ID' => (int)$id,
+					'OWNER_TYPE_ID' => $this->typeId,
+				];
 			}
 		}
 
-		return $return;
+		return $filter;
+	}
+
+	private function appendContactsIds(array &$contacts, int $activityId): void
+	{
+		$contactTypeId = \CCrmOwnerType::Contact;
+
+		foreach (\CCrmActivity::GetBindings($activityId) as $binding)
+		{
+			if ((int)$binding['OWNER_TYPE_ID'] === $contactTypeId)
+			{
+				if (!isset($contacts[$binding['OWNER_ID']]))
+				{
+					$contacts[$binding['OWNER_ID']] = [];
+				}
+
+				$contacts[$binding['OWNER_ID']][] = $activityId;
+			}
+		}
+	}
+
+	private function getWaiter(): ?array
+	{
+		$id = current($this->ids);
+		$waiter = \Bitrix\Crm\Pseudoactivity\WaitEntry::getRecentByOwner($this->typeId, $id);
+		if (!$waiter)
+		{
+			return null;
+		}
+
+		$waiter['ID'] = 'w' . $waiter['ID'];
+		$waiter['HIGH'] = 'N';
+		$waiter['DETAIL_EXIST'] = false;
+		$waiter['CONTACTS'] = [];
+		$waiter['SUBJECT'] = nl2br(\htmlspecialcharsbx($waiter['DESCRIPTION']));
+		$waiter['ICON'] = $this->getTypeIcon($waiter);
+
+		return $waiter;
+	}
+
+	private function prepareContacts(array &$activities, array $contacts): void
+	{
+		if (empty($contacts))
+		{
+			return;
+		}
+
+		$contactValues = [];
+		$path = $this->getEntityPath('contact');
+		$select = [
+			'ID',
+			'NAME',
+			'LAST_NAME',
+		];
+
+		$contactsList = \CCrmContact::getListEx(
+			[],
+			['ID' => array_keys($contacts)],
+			false,
+			false,
+			$select
+		);
+
+		while ($contact = $contactsList->getNext())
+		{
+			$contact['TITLE'] = trim($contact['NAME'] . ' ' . $contact['LAST_NAME']);
+			$contact['URL'] = str_replace('#contact_id#', $contact['ID'], $path);
+			$contactValues[$contact['ID']] = $contact;
+		}
+
+		if (!empty($contactValues))
+		{
+			foreach ($contacts as $cid => $aIds)
+			{
+				if (isset($contactValues[$cid]))
+				{
+					foreach ($aIds as $aid)
+					{
+						$activities[$aid]['CONTACTS'][] = $contactValues[$cid];
+					}
+				}
+			}
+		}
 	}
 
 	/**

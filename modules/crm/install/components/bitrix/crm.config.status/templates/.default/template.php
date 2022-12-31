@@ -553,7 +553,7 @@ else
 
 					<div class="crm-previously-funnels">
 						<span class="crm-previously-title">
-							<?=GetMessage('CRM_STATUS_VIEW_FUNNEL')?>
+							<?=GetMessage('CRM_STATUS_VIEW_FUNNEL2')?>
 						</span>
 						<div class="crm-previously-funnel">
 							<span class="crm-previously-funnel-subtitle">

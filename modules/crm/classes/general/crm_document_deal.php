@@ -194,6 +194,7 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 			'COMMENTS' => [
 				'Name' => GetMessage('CRM_FIELD_COMMENTS'),
 				'Type' => 'text',
+				'ValueContentType' => 'html',
 				'Filterable' => false,
 				'Editable' => true,
 				'Required' => false,
@@ -841,6 +842,20 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 		{
 			Crm\Tracking\UI\Details::saveEntityData(\CCrmOwnerType::Deal, $id, $arFields);
 		}
+
+		$CCrmBizProc = new CCrmBizProc('DEAL');
+
+		if (false === $CCrmBizProc->CheckFields(false, true))
+		{
+			throw new Exception($CCrmBizProc->LAST_ERROR);
+		}
+
+		if (!$CCrmBizProc->StartWorkflow($id))
+		{
+			throw new Exception($CCrmBizProc->LAST_ERROR);
+		}
+
+		// no automation
 
 		return \CCrmOwnerType::DealName . '_' . $id;
 	}

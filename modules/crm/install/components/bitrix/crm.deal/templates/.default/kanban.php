@@ -1,4 +1,13 @@
-<?php if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED!==true) die();
+<?php
+
+if(!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
+{
+	die();
+}
+
+use Bitrix\Crm\Kanban;
+use Bitrix\Crm\UI\NavigationBarPanel;
+use Bitrix\Main\Localization\Loc;
 
 // js/css
 $APPLICATION->SetAdditionalCSS('/bitrix/themes/.default/bitrix24/crm-entity-show.css');
@@ -7,25 +16,24 @@ $APPLICATION->SetPageProperty('BodyClass', ($bodyClass ? $bodyClass.' ' : '').'n
 $asset = Bitrix\Main\Page\Asset::getInstance();
 $asset->addJs('/bitrix/js/crm/common.js');
 
-// some common langs
-use Bitrix\Crm\Category\DealCategory;
-use Bitrix\Crm\UI\NavigationBarPanel;
-use Bitrix\Main\Localization\Loc;
-
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal.menu/component.php');
 Loc::loadMessages($_SERVER['DOCUMENT_ROOT'].'/bitrix/components/bitrix/crm.deal.list/templates/.default/template.php');
 
 \Bitrix\Crm\Settings\Crm::markAsInitiated();
 
 // if not isset
-$categoryID = isset($arResult['VARIABLES']['category_id']) ? $arResult['VARIABLES']['category_id'] : 0;
-$arResult['PATH_TO_DEAL_EDIT'] = isset($arResult['PATH_TO_DEAL_EDIT']) ? $arResult['PATH_TO_DEAL_EDIT'] : '';
-$arResult['PATH_TO_DEAL_LIST'] = isset($arResult['PATH_TO_DEAL_LIST']) ? $arResult['PATH_TO_DEAL_LIST'] : '';
-$arResult['PATH_TO_DEAL_CATEGORY'] = isset($arResult['PATH_TO_DEAL_CATEGORY']) ? $arResult['PATH_TO_DEAL_CATEGORY'] : '';
-$arResult['PATH_TO_DEAL_KANBAN'] = isset($arResult['PATH_TO_DEAL_KANBAN']) ? $arResult['PATH_TO_DEAL_KANBAN'] : '';
-$arResult['PATH_TO_DEAL_KANBANCATEGORY'] = isset($arResult['PATH_TO_DEAL_KANBANCATEGORY']) ? $arResult['PATH_TO_DEAL_KANBANCATEGORY'] : '';
-$arResult['PATH_TO_DEAL_CALENDARCATEGORY'] = isset($arResult['PATH_TO_DEAL_CALENDARCATEGORY']) ? $arResult['PATH_TO_DEAL_CALENDARCATEGORY'] : '';
-$arResult['PATH_TO_DEAL_IMPORT'] = isset($arResult['PATH_TO_DEAL_IMPORT']) ? $arResult['PATH_TO_DEAL_IMPORT'] : '';
+
+$canUseAllCategories = ($arResult['CAN_USE_ALL_CATEGORIES'] ?? false);
+$defaultCategoryId = ($canUseAllCategories ? -1 : 0);
+$categoryID = ($arResult['VARIABLES']['category_id'] ?? $defaultCategoryId);
+$arResult['PATH_TO_DEAL_EDIT'] = ($arResult['PATH_TO_DEAL_EDIT'] ?? '');
+$arResult['PATH_TO_DEAL_LIST'] = ($arResult['PATH_TO_DEAL_LIST'] ?? '');
+$arResult['PATH_TO_DEAL_CATEGORY'] = ($arResult['PATH_TO_DEAL_CATEGORY'] ?? '');
+$arResult['PATH_TO_DEAL_ACTIVITY'] = ($arResult['PATH_TO_DEAL_ACTIVITY'] ?? '');
+$arResult['PATH_TO_DEAL_KANBAN'] = ($arResult['PATH_TO_DEAL_KANBAN'] ?? '');
+$arResult['PATH_TO_DEAL_KANBANCATEGORY'] = ($arResult['PATH_TO_DEAL_KANBANCATEGORY'] ?? '');
+$arResult['PATH_TO_DEAL_CALENDARCATEGORY'] = ($arResult['PATH_TO_DEAL_CALENDARCATEGORY'] ?? '');
+$arResult['PATH_TO_DEAL_IMPORT'] = ($arResult['PATH_TO_DEAL_IMPORT'] ?? '');
 
 // csv and excel delegate to list
 $context = \Bitrix\Main\Application::getInstance()->getContext();
@@ -105,11 +113,6 @@ else
 	$isBitrix24Template = SITE_TEMPLATE_ID === 'bitrix24';
 
 	// counters
-	if ($isBitrix24Template)
-	{
-		$this->SetViewTarget('below_pagetitle', 1000);
-	}
-
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.entity.counter.panel',
 		'',
@@ -125,11 +128,6 @@ else
 				)
 		)
 	);
-
-	if ($isBitrix24Template)
-	{
-		$this->EndViewTarget();
-	}
 
 	// filter
 	if (!$isBitrix24Template)
@@ -174,7 +172,7 @@ else
 			'ELEMENT_ID' => 0,
 			'CATEGORY_ID' => $categoryID,
 			'TYPE' => 'list',
-			'DISABLE_EXPORT' => 'Y'
+			'DISABLE_EXPORT' => 'Y',
 		),
 		$component
 	);
@@ -186,6 +184,10 @@ else
 	}
 	$userPermissions = CCrmPerms::GetCurrentUserPermissions();
 	$map = array_fill_keys(CCrmDeal::GetPermittedToReadCategoryIDs($userPermissions), true);
+	if ($canUseAllCategories)
+	{
+		$map['-1'] = true;
+	}
 	// first available category
 	if (!array_key_exists($categoryID, $map))
 	{
@@ -195,18 +197,19 @@ else
 			array('category_id' => $accessCID)
 		), true);
 	}
+
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.deal_category.panel',
 		$isBitrix24Template ? 'tiny' : '',
-		array(
-			'PATH_TO_DEAL_LIST' => $arResult['PATH_TO_DEAL_KANBAN'],
+		[
+			'PATH_TO_DEAL_LIST' => ($arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES ? $arResult['PATH_TO_DEAL_ACTIVITY'] : $arResult['PATH_TO_DEAL_KANBAN']),
 			'PATH_TO_DEAL_EDIT' => $arResult['PATH_TO_DEAL_EDIT'],
 			'PATH_TO_DEAL_CATEGORY' => $arResult['PATH_TO_DEAL_KANBANCATEGORY'],
 			'PATH_TO_DEAL_CATEGORY_LIST' => $arResult['PATH_TO_DEAL_CATEGORY_LIST'],
 			'PATH_TO_DEAL_CATEGORY_EDIT' => $arResult['PATH_TO_DEAL_CATEGORY_EDIT'],
-			'ENABLE_CATEGORY_ALL' => 'N',
-			'CATEGORY_ID' => $categoryID
-		),
+			'ENABLE_CATEGORY_ALL' => ($arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES ? 'Y' : 'N'),
+			'CATEGORY_ID' => $categoryID,
+		],
 		$component
 	);
 
@@ -218,33 +221,25 @@ else
 	\Bitrix\Crm\Kanban\Helper::setCategoryId($categoryID);
 
 	// filter
+	$activeItemId = (
+		$arResult['KANBAN_VIEW_MODE'] === \Bitrix\Crm\Kanban\ViewMode::MODE_ACTIVITIES
+			? NavigationBarPanel::ID_ACTIVITY
+			: NavigationBarPanel::ID_KANBAN
+	);
 	$APPLICATION->IncludeComponent(
 		'bitrix:crm.kanban.filter',
 		'',
 		[
 			'ENTITY_TYPE' => $entityType,
+			'VIEW_MODE' => $arResult['KANBAN_VIEW_MODE'],
 			'NAVIGATION_BAR' => (new NavigationBarPanel(CCrmOwnerType::Deal, $categoryID))
-				->setItems([
-					NavigationBarPanel::ID_AUTOMATION,
-					NavigationBarPanel::ID_KANBAN,
-					NavigationBarPanel::ID_LIST,
-					NavigationBarPanel::ID_CALENDAR
-				], NavigationBarPanel::ID_KANBAN)
+				->setAllAllowableItems($activeItemId)
 				->setBinding($arResult['NAVIGATION_CONTEXT_ID'])
 				->get()
 		],
 		$component,
 		['HIDE_ICONS' => true]
 	);
-
-	/*
-	$supervisorInv = \Bitrix\Crm\Kanban\SupervisorTable::isSupervisor($entityType) ? 'N' : 'Y';
-	CCrmUrlUtil::AddUrlParams(
-							CComponentEngine::MakePathFromTemplate(
-								$arResult['PATH_TO_DEAL_KANBAN']
-							),
-							array('supervisor' => $supervisorInv, 'clear_filter' => 'Y')
-						)*/
 
 	\Bitrix\Crm\Service\Container::getInstance()->getLocalization()->loadMessages();
 
@@ -253,6 +248,7 @@ else
 		'',
 		array(
 			'ENTITY_TYPE' => $entityType,
+			'VIEW_MODE' => ($arResult['KANBAN_VIEW_MODE'] ?? \Bitrix\Crm\Kanban\ViewMode::MODE_STAGES),
 			'SHOW_ACTIVITY' => 'Y',
 			'EXTRA' => array(
 				'CATEGORY_ID' => $categoryID

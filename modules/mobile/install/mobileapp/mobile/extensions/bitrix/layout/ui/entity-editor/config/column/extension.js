@@ -1,4 +1,7 @@
 (() => {
+	/**
+	 * @class EntityConfigColumn
+	 */
 	class EntityConfigColumn extends EntityConfigBaseItem
 	{
 		static create(settings)

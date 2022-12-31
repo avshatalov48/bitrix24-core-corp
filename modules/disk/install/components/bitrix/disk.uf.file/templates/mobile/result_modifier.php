@@ -275,5 +275,6 @@ if ($this->__page === "show")
 	}
 
 	$arResult['FILES_LIMIT'] = 3;
-	$arResult['IMAGES_LIMIT'] = (int)floor(($arResult['deviceWidth'] / $arResult['devicePixelRatio'] - 34) / 58) * 3;
+	$devicePixelRatio = empty($arResult['devicePixelRatio']) ? 1 : $arResult['devicePixelRatio'];
+	$arResult['IMAGES_LIMIT'] = (int)floor(($arResult['deviceWidth'] / $devicePixelRatio - 34) / 58) * 3;
 }

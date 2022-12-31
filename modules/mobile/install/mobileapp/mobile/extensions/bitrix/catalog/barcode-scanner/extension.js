@@ -26,7 +26,7 @@
 							'catalog.analytics.sendAnalyticsLabel',
 							{analyticsLabel: 'catalog:barcodeScanned'}
 						);
-						if (!typeof this.props.onBarcodeScanned === 'function')
+						if (typeof this.props.onBarcodeScanned !== 'function')
 						{
 							this.stopScanning();
 							return;
@@ -126,7 +126,9 @@
 				widgetParams.title = widgetTitle;
 			}
 
-			PageManager
+			const parentWidget = options.parentWidget || PageManager;
+
+			parentWidget
 				.openWidget('layout', widgetParams)
 				.then(layoutWidget => {
 					const barcodeScanner = new BarcodeScanner(layoutProps);
@@ -138,7 +140,7 @@
 		static getWidgetParams()
 		{
 			return {
-				title: BX.message('CATALOG_BARCODE_SCANNER_TITLE'),
+				title: BX.message('CATALOG_BARCODE_SCANNER_TITLE2'),
 				backdrop: {
 					mediumPositionPercent: 70,
 					horizontalSwipeAllowed: false,

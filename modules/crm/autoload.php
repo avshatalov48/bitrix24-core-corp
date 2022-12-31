@@ -123,7 +123,7 @@ CModule::AddAutoloadClasses(
 		'CCrmActivityEmailSender' => 'classes/general/crm_activity.php',
 		'CCrmProductSection' => 'classes/general/crm_product_section.php',
 		'CCrmProductSectionDbResult' => 'classes/general/crm_product_section.php',
-		'CCrmActivityDbResult' => 'classes/general/crm_activity.php',
+		'CCrmActivityDbResult' => 'classes/general/crm_activity_db_result.php',
 		'CCrmInvoiceRestService' => 'classes/general/restservice_invoice.php',
 		'CCrmInvoiceEvent' => 'classes/general/crm_invoice_event.php',
 		'CCrmInvoiceEventFormat' => 'classes/general/crm_invoice_event.php',
@@ -245,7 +245,7 @@ $classAliases = [
 	['Bitrix\Crm\Communication\Type', 'Bitrix\Crm\CommunicationType'],
 ];
 
-if (IsModuleInstalled('sale'))
+if (\Bitrix\Main\Loader::includeModule('sale'))
 {
 	$classAliases[] = ['Bitrix\Crm\Order\Builder\OrderBuilderCrm', 'Bitrix\Crm\Order\OrderBuilderCrm'];
 	$classAliases[] = ['Bitrix\Crm\Order\Builder\OrderBuilderRest', 'Bitrix\Crm\Order\OrderBuilderRest'];

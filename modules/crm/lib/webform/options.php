@@ -112,7 +112,9 @@ class Options
 			'payment' => [
 				'use' => $formData['IS_PAY'] === 'Y',
 				'payer' => '',
-				'systems' => []
+				'disabledSystems' => $this->convertPaySystemIds(
+					$formData['FORM_SETTINGS']['DISABLED_PAY_SYSTEMS'] ?? []
+				),
 			],
 			'captcha' => [
 				'key' => ReCaptcha::getKey(2),
@@ -297,6 +299,9 @@ class Options
 						'CAPTION' => $options['result']['refill']['caption'] ?? '',
 					],
 				'VIEWS' => $views,
+				'DISABLED_PAY_SYSTEMS' =>	$this->convertPaySystemIds(
+					$options['payment']['disabledSystems'] ?? []
+				),
 			],
 
 			'ASSIGNED_BY_ID' => array_filter(
@@ -318,6 +323,21 @@ class Options
 			'CALL_FROM' => $options['callback']['from'],
 			'CALL_TEXT' => $options['callback']['text'],
 		];
+	}
+
+	/**
+	 * @param array $paySystemsIds
+	 * @return int[]
+	 */
+	private function convertPaySystemIds(array $paySystemsIds): array
+	{
+		$result = [];
+		foreach ($paySystemsIds as $paySystemsId)
+		{
+			$result[] = (int)$paySystemsId;
+		}
+
+		return $result;
 	}
 
 	public static function getViewOptions(): array

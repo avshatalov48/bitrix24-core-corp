@@ -53,6 +53,10 @@ CJSCore::Init('file_dialog');
 		BX.ajax.get(urlSelect, 'multiselect=N&dialogName='+dialogName,
 			BX.delegate(function() {
 				setTimeout(BX.delegate(function() {
+					BX.DiskFileDialog.obElementBindPopup[dialogName].overlay = {
+						backgroundColor: "#404040",
+						opacity: ".1"
+					};
 					BX.DiskFileDialog.obCallback[dialogName] = {'saveButton' :function(tab, path, selected)
 					{
 						var i;

@@ -12,7 +12,8 @@
 	function BannerButton({title, description, onClick, ...options})
 	{
 		options = options || {};
-		options.backgroundColor = options.backgroundColor || '#C3F2FF';
+		options.backgroundColor = BX.prop.getString(options, 'backgroundColor', '#C3F2FF');
+		options.showArrow = BX.prop.getBoolean(options, 'showArrow', true);
 
 		const emptyCallback = () => {};
 
@@ -40,7 +41,7 @@
 					style: Styles.description,
 				})
 			),
-			View(
+			options.showArrow && View(
 				{
 					style: Styles.arrow,
 				},

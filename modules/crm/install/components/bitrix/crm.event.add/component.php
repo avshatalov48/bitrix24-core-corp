@@ -229,11 +229,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST')
 			break;
 			case 'CONTACT':
 				$CCrmContact = new CCrmContact();
-				$CCrmContact->Update($_POST['ENTITY_ID'], $arField = array(), false);
+				$arField = [];
+				$CCrmContact->Update($_POST['ENTITY_ID'], $arField, false);
 			break;
 			case 'COMPANY':
 				$CCrmCompany = new CCrmCompany();
-				$CCrmCompany->Update($_POST['ENTITY_ID'], $arField = array(), false);
+				$arField = [];
+				$CCrmCompany->Update($_POST['ENTITY_ID'], $arField, false);
 			break;
 			case 'DEAL':
 				if (isset($_POST['STAGE_ID']))

@@ -32,7 +32,7 @@ class Crm
 
 	public static function isUniversalActivityScenarioEnabled(): bool
 	{
-		return (bool)\Bitrix\Main\Config\Option::get(self::OPTION_MODULE, self::UNIVERSAL_ACTIVITY_OPTION_NAME, false);
+		return (bool)\Bitrix\Main\Config\Option::get(self::OPTION_MODULE, self::UNIVERSAL_ACTIVITY_OPTION_NAME, true);
 	}
 
 	public static function setUniversalActivityScenarioEnabled(bool $isEnabled): void

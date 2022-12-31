@@ -885,6 +885,18 @@ input.mobile-grid-field-subtasks-more-input[type=checkbox]:checked ~ .mobile-gri
 	height: 300px;
 }
 
+.task-detail-no-comments.--full-height {
+	height: 100%;
+}
+
+.task-detail-no-comments.--hidden {
+	display: none;
+}
+
+.--hidden {
+	display: none;
+}
+
 .task-detail-no-comments-inner {
 	display: table;
 	align-self: center;

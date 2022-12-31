@@ -457,6 +457,7 @@ class Connector
 									"MESSAGE" => $addVoteResult,
 									"SYSTEM" => 'Y',
 									"IMPORTANT_CONNECTOR" => 'Y',
+									'NO_SESSION_OL' => 'Y',
 									"PARAMS" => [
 										"CLASS" => "bx-messenger-content-item-ol-output"
 									],
@@ -483,8 +484,18 @@ class Connector
 								ReplyBlock::delete($session->getData('ID'), $chat);
 							}
 
-							$updateSession['MESSAGE_COUNT'] = true;
-							$updateSession['DATE_LAST_MESSAGE'] = new DateTime();
+							$updateSession = [
+								'MESSAGE_COUNT' => true,
+								'DATE_LAST_MESSAGE' => new DateTime(),
+							];
+
+							if (!$finishSession && !$voteSession)
+							{
+								//$updateSession['STATUS'] = Session::STATUS_CLIENT;
+								$updateSession['INPUT_MESSAGE'] = true;
+								$updateSession['DATE_MODIFY'] = new DateTime;
+								$updateSession['USER_ID'] = $session->getData('USER_ID');
+							}
 
 							if (isset($params['extra']))
 							{
@@ -753,8 +764,9 @@ class Connector
 				)
 				{
 					$updateSession = [
+						'DATE_MODIFY' => new DateTime,
 						'MESSAGE_COUNT' => true,
-						'DATE_LAST_MESSAGE' => new DateTime()
+						'DATE_LAST_MESSAGE' => new DateTime
 					];
 
 					if (
@@ -1273,6 +1285,10 @@ class Connector
 						'DATE_MODIFY' => new DateTime(),
 						'USER_ID' => $messageFields['AUTHOR_ID'],
 					];
+					if ($messageFields['SYSTEM'] === 'Y')
+					{
+						$updateSession['SKIP_CHANGE_STATUS'] = true;
+					}
 					if (
 						!$session->getData('DATE_FIRST_ANSWER') &&
 						!empty($session->getData('OPERATOR_ID')) &&

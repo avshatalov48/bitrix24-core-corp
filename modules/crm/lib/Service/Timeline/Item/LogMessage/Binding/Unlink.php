@@ -15,4 +15,9 @@ class Unlink extends Base
 	{
 		return Loc::getMessage('CRM_TIMELINE_UNLINK_TITLE');
 	}
+
+	public function getIconCode(): ?string
+	{
+		return 'unlink';
+	}
 }

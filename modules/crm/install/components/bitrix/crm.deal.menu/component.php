@@ -439,7 +439,7 @@ if($arParams['TYPE'] === 'list')
 		];
 
 		$btnCfg = [
-			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 			'TYPE' => 'crm-btn-double',
 			'HIGHLIGHT' => true,
 			'IS_DISABLED' => !$bAdd,
@@ -468,7 +468,7 @@ if($arParams['TYPE'] === 'list')
 
 		if($arResult['RC']['CAN_USE'])
 		{
-			$itemAdd = ['TEXT' => GetMessage('CRM_COMMON_ACTION_ADD')];
+			$itemAdd = ['TEXT' => GetMessage('DEAL_CREATE')];
 			if($isSliderEnabled)
 			{
 				$itemAdd['ONCLICK'] = 'BX.SidePanel.Instance.open("' . CUtil::JSEscape($link) . '")';
@@ -480,7 +480,7 @@ if($arParams['TYPE'] === 'list')
 
 			$arResult['BUTTONS'][] = [
 				'TYPE' => 'crm-btn-double',
-				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+				'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 				'LINK' => $link,
 				'ITEMS' => [
 					$itemAdd,
@@ -494,8 +494,8 @@ if($arParams['TYPE'] === 'list')
 		else
 		{
 			$arResult['BUTTONS'][] = [
-				'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-				'TITLE' => GetMessage('CRM_COMMON_ACTION_ADD'),
+				'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
+				'TITLE' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 				'LINK' => $link,
 				'HIGHLIGHT' => true,
 				'IS_DISABLED' => !$bAdd,
@@ -506,8 +506,8 @@ if($arParams['TYPE'] === 'list')
 	else
 	{
 		$arResult['BUTTONS'][] = [
-			'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
-			'TITLE' => GetMessage('CRM_COMMON_ACTION_ADD'),
+			'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
+			'TITLE' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 			'LINK' => CCrmUrlUtil::AddUrlParams($baseCreateUrl, []),
 			'HIGHLIGHT' => true,
 			'IS_DISABLED' => !$bAdd,
@@ -696,11 +696,7 @@ if($arParams['TYPE'] === 'list')
 	if ($bConfig && !$isInSlider)
 	{
 		CCrmComponentHelper::RegisterScriptLink('/bitrix/js/crm/common.js');
-		$arResult['BUTTONS'][] = array(
-			'TEXT' => GetMessage('DEAL_CRM_TYPE'),
-			'TITLE' => GetMessage('DEAL_CRM_TYPE'),
-			'ONCLICK' => \Bitrix\Crm\Settings\LeadSettings::showCrmTypePopup()
-		);
+		$arResult['BUTTONS'][] = \Bitrix\Crm\Settings\LeadSettings::getCrmTypeMenuItem(true);
 		if (\CCrmSaleHelper::isWithOrdersMode())
 		{
 			$scenarioSelectionPath = CComponentEngine::makeComponentPath('bitrix:crm.scenario_selection');
@@ -902,7 +898,7 @@ if (($arParams['TYPE'] == 'edit' || $arParams['TYPE'] == 'show') && $bDelete && 
 if ($bAdd && $arParams['TYPE'] != 'list')
 {
 	$arResult['BUTTONS'][] = array(
-		'TEXT' => GetMessage('CRM_COMMON_ACTION_ADD'),
+		'TEXT' => GetMessage('CRM_COMMON_ACTION_CREATE'),
 		'LINK' => CCrmUrlUtil::AddUrlParams(
 			CComponentEngine::MakePathFromTemplate(
 				$arParams[$isSliderEnabled ? 'PATH_TO_DEAL_DETAILS' : 'PATH_TO_DEAL_EDIT'],

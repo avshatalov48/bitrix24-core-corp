@@ -54,11 +54,10 @@ class Deal
 
 	/**
 	 * @param int $id
-	 * @param array $rows
 	 *
 	 * @return void
 	 */
-	public static function OnAfterCrmDealProductRowsSave(int $id, array $rows)
+	public static function OnAfterCrmDealProductRowsSave(int $id)
 	{
 		(new OrderDealSynchronizer)->updateOrderFromDeal($id);
 	}

@@ -1,3 +1,6 @@
+/**
+ * @module uploader/client
+ */
 jn.define("uploader/client", (require, exports, module) => {
 
 	const eventMap = {
@@ -48,7 +51,7 @@ jn.define("uploader/client", (require, exports, module) => {
 		}
 
 		cancelTask(taskId){
-			taskId = this.clientContext + "-" +taskId
+			taskId = this.clientContext + "-" + taskId;
 			BX.postComponentEvent("onFileUploadTaskCancel", [{taskIds: [taskId]}], this.context)
 		}
 

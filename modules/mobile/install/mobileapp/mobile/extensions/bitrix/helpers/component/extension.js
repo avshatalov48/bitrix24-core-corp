@@ -57,16 +57,15 @@
 
 
 		/**
-		 *
 		 * @param options - parameters
 		 * @param options.name - name of component (display in debugger)
 		 * @param options.version - name of component (display in debugger)
 		 * @param options.object - name of list object
 		 * @param options.widgetParams - parameters of list widget
 		 * @param options.componentParams - parameters of component which will be available thought BX.componentsParameters
-		 *
+		 * @param parentWidget
 		 */
-		static openLayout(options = {})
+		static openLayout(options = {}, parentWidget = null)
 		{
 			if (!options.name)
 			{
@@ -88,14 +87,17 @@
 			widgetParams.settings =  options.widgetParams || {};
 			widgetParams.settings.objectName = "layout";
 
-			PageManager.openComponent("JSStackComponent",
+			PageManager.openComponent(
+				"JSStackComponent",
 				{
 					scriptPath: "/mobileapp/jn/" + options.name + "/?version=" + version,
 					componentCode: options.name,
 					canOpenInDefault: canOpenInDefault,
 					params: options.componentParams,
-					rootWidget: widgetParams
-				});
+					rootWidget: widgetParams,
+				},
+				parentWidget
+			);
 		}
 	}
 

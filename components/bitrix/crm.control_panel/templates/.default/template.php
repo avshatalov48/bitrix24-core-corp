@@ -13,7 +13,6 @@ if ($isBitrix24)
 {
 	$this->SetViewTarget("above_pagetitle");
 }
-
 $APPLICATION->IncludeComponent(
 	"bitrix:main.interface.buttons",
 	"",

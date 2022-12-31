@@ -18,6 +18,18 @@ export default Vue.extend({
 			this.setProductsGrid(controller.getProductList());
 		});
 	},
+	computed: {
+		showProductLink()
+		{
+			return this.data.showProductLink === undefined || this.data.showProductLink === true;
+		}
+	},
+	methods: {
+		isAddToDealVisible()
+		{
+			return this.isProductsGridAvailable() && this.data.canAddProductToDeal === true;
+		},
+	},
 	// language=Vue
 	template: `
 		<div class="crm-entity-stream-section crm-entity-stream-section-history crm-entity-stream-section-history crm-entity-stream-section-advice">
@@ -31,7 +43,8 @@ export default Vue.extend({
 					<product-list
 						:products="products"
 						:dealId="dealId"
-						:isAddToDealVisible="isProductsGridAvailable"
+						:isAddToDealVisible="isAddToDealVisible()"
+						:showProductLink="showProductLink"
 						@product-added-to-deal="handleProductAddedToDeal"
 						@product-adding-to-deal="handleProductAddingToDeal"
 					></product-list>

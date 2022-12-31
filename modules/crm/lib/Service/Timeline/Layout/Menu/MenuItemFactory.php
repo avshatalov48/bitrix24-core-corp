@@ -12,7 +12,6 @@ class MenuItemFactory
 	public static function createEditMenuItem(): MenuItem
 	{
 		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_EDIT')))
-			->setIcon('edit')
 			->setHideIfReadonly()
 			->setSort(9900)
 		;
@@ -21,15 +20,27 @@ class MenuItemFactory
 	public static function createViewMenuItem(): MenuItem
 	{
 		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_VIEW')))
-			->setIcon('view')
 			->setSort(9900)
+		;
+	}
+
+	public static function createDownloadFileMenuItem(string $filename = null): MenuItem
+	{
+		$title = (string)Loc::getMessage('CRM_TIMELINE_MENU_DOWNLOAD_FILE');
+		if (isset($filename))
+		{
+			$title = sprintf('%s "%s"', $title, $filename);
+		}
+
+		return (new MenuItem($title))
+			->setHideIfReadonly()
+			->setSort(9995)
 		;
 	}
 
 	public static function createDeleteMenuItem(): MenuItem
 	{
 		return (new MenuItem(Loc::getMessage('CRM_TIMELINE_MENU_DELETE')))
-			->setIcon('delete')
 			->setHideIfReadonly()
 			->setSort(9999)
 		;
@@ -45,9 +56,13 @@ class MenuItemFactory
 		if (is_array($menuItem['items']))
 		{
 			$menuItems = [];
+			$index = 0;
+
 			foreach ($menuItem['items'] as $item)
 			{
-				$id = $item['id'] ?? \Bitrix\Main\Security\Random::getString(4, true);
+				$id = $item['id'] ?? "submenu_$index";
+				$index++;
+
 				$menuItems[$id] = self::createFromArray($item);
 			}
 

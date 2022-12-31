@@ -2,29 +2,55 @@
 {
 	include("InAppNotifier");
 
+	const { md5 } = jn.require('utils/hash');
+
 	/**
 	 * @class Notify
 	 */
 	class Notify
 	{
-		static showMessage(message = "", title = "")
+		/**
+		 * @param {String} message
+		 * @param {String} title
+		 * @param {Object?} options
+		 * @param {String?} options.title
+		 * @param {String?} options.message
+		 * @param {String?} options.code
+		 * @param {String?} options.imageUrl
+		 * @param {String?} options.backgroundColor
+		 * @param {Number?} options.time
+		 * @param {Boolean?} options.blur
+		 * @param {Object?} options.data
+		 */
+		static showMessage(message = "", title = "", options = {})
 		{
-			if (typeof InAppNotifier != "undefined")
+			if (typeof InAppNotifier !== "undefined")
 			{
 				InAppNotifier.showNotification({
-					title: title,
 					backgroundColor: "#075776",
 					time: 2,
 					blur: true,
-					message: message
-				})
+					...options,
+					message,
+					title,
+				});
 			}
 			else
 			{
-				navigator.notification.alert(message, () =>
-				{
+				navigator.notification.alert(message, () => {
 				}, title, 'OK');
 			}
+		}
+
+		static showUniqueMessage(message = "", title = "", options = {})
+		{
+			let { code } = options;
+			if (!code)
+			{
+				code = md5({ ...options, message, title })
+			}
+
+			this.showMessage(message, title, { ...options, code });
 		}
 
 		static showIndicatorSuccess(options = {}, delay = 0)

@@ -1,5 +1,8 @@
 <?php
+
 return [
-	'layout/ui/detail-card',
-	'catalog/store/activation-wizard'
+	'extensions' => [
+		'layout/ui/detail-card',
+		'catalog/store/activation-wizard',
+	],
 ];

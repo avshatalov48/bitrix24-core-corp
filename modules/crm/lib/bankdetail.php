@@ -39,36 +39,42 @@ class BankDetailTable extends Entity\DataManager
 	 */
 	public static function getMap()
 	{
-		return array(
-			'ID' => array('data_type' => 'integer', 'primary' => true, 'autocomplete' => true),
-			'ENTITY_TYPE_ID' => array('data_type' => 'integer', 'required' => true),
-			'ENTITY_ID' => array('data_type' => 'integer', 'required' => true),
-			'COUNTRY_ID' => array('data_type' => 'integer', 'required' => true, 'default_value' => 0),
-			'DATE_CREATE' => array('data_type' => 'datetime', 'default_value' => new Main\Type\DateTime()),
-			'DATE_MODIFY' => array('data_type' => 'datetime'),
-			'CREATED_BY_ID' => array('data_type' => 'integer'),
-			'MODIFY_BY_ID' => array('data_type' => 'integer'),
-			'NAME' => array('data_type' => 'string', 'required' => true, 'validation' => array(__CLASS__, 'validateName')),
-			'CODE' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateCode')),
-			'XML_ID' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateXmlId')),
-			'ORIGINATOR_ID' => array('data_type' => 'string'),
-			'ACTIVE' => array('data_type' => 'boolean', 'values' => array('N', 'Y'), 'default_value' => 'Y'),
-			'SORT' => array('data_type' => 'integer', 'default_value' => 500),
-			'RQ_BANK_NAME' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField255')),
-			'RQ_BANK_ADDR' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField255')),
-			'RQ_BANK_ROUTE_NUM' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField9')),
-			'RQ_BIK' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField11')),
-			'RQ_MFO' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField6')),
-			'RQ_ACC_NAME' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField150')),
-			'RQ_ACC_NUM' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField34')),
-			'RQ_IIK' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField20')),
-			'RQ_ACC_CURRENCY' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField100')),
-			'RQ_COR_ACC_NUM' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField34')),
-			'RQ_IBAN' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField34')),
-			'RQ_SWIFT' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField11')),
-			'RQ_BIC' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateRqStringField11')),
-			'COMMENTS' => array('data_type' => 'string', 'validation' => array(__CLASS__, 'validateComments'))
-		);
+		return [
+			'ID' => ['data_type' => 'integer', 'primary' => true, 'autocomplete' => true],
+			'ENTITY_TYPE_ID' => ['data_type' => 'integer', 'required' => true],
+			'ENTITY_ID' => ['data_type' => 'integer', 'required' => true],
+			'COUNTRY_ID' => ['data_type' => 'integer', 'required' => true, 'default_value' => 0],
+			'DATE_CREATE' => ['data_type' => 'datetime', 'default_value' => new Main\Type\DateTime()],
+			'DATE_MODIFY' => ['data_type' => 'datetime'],
+			'CREATED_BY_ID' => ['data_type' => 'integer'],
+			'MODIFY_BY_ID' => ['data_type' => 'integer'],
+			'NAME' => ['data_type' => 'string', 'required' => true, 'validation' => [__CLASS__, 'validateName']],
+			'CODE' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateCode']],
+			'XML_ID' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateXmlId']],
+			'ORIGINATOR_ID' => ['data_type' => 'string'],
+			'ACTIVE' => ['data_type' => 'boolean', 'values' => ['N', 'Y'], 'default_value' => 'Y'],
+			'SORT' => ['data_type' => 'integer', 'default_value' => 500],
+			'RQ_BANK_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField255']],
+			'RQ_BANK_CODE' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
+			'RQ_BANK_ADDR' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField255']],
+			'RQ_BANK_ROUTE_NUM' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField9']],
+			'RQ_BIK' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField11']],
+			'RQ_MFO' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField6']],
+			'RQ_ACC_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField150']],
+			'RQ_ACC_NUM' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField34']],
+			'RQ_ACC_TYPE' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
+			'RQ_IIK' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField20']],
+			'RQ_ACC_CURRENCY' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField100']],
+			'RQ_COR_ACC_NUM' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField34']],
+			'RQ_IBAN' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField34']],
+			'RQ_SWIFT' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField11']],
+			'RQ_BIC' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField11']],
+			'RQ_CODEB' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField5']],
+			'RQ_CODEG' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField5']],
+			'RQ_RIB' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField2']],
+			'RQ_AGENCY_NAME' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateRqStringField50']],
+			'COMMENTS' => ['data_type' => 'string', 'validation' => [__CLASS__, 'validateComments']]
+		];
 	}
 
 	/**
@@ -156,6 +162,18 @@ class BankDetailTable extends Entity\DataManager
 	}
 
 	/**
+	 * Returns validators for RQ_... field with max length 50 chars.
+	 *
+	 * @return array
+	 */
+	public static function validateRqStringField50()
+	{
+		return array(
+			new Main\Entity\Validator\Length(null, 50)
+		);
+	}
+
+	/**
 	 * Returns validators for RQ_... field with max length 20 chars.
 	 *
 	 * @return array
@@ -200,6 +218,30 @@ class BankDetailTable extends Entity\DataManager
 	{
 		return array(
 			new Main\Entity\Validator\Length(null, 6)
+		);
+	}
+
+	/**
+	 * Returns validators for RQ_... field with max length 5 chars.
+	 *
+	 * @return array
+	 */
+	public static function validateRqStringField5()
+	{
+		return array(
+			new Main\Entity\Validator\Length(null, 5)
+		);
+	}
+
+	/**
+	 * Returns validators for RQ_... field with max length 2 chars.
+	 *
+	 * @return array
+	 */
+	public static function validateRqStringField2()
+	{
+		return array(
+			new Main\Entity\Validator\Length(null, 2)
 		);
 	}
 

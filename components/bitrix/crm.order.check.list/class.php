@@ -139,12 +139,10 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 	protected function getHeaders()
 	{
 		return [
-			...[
-				array("id" => "TITLE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TITLE"), "sort" => "ID", "default" => true, 'editable' => false),
-				array("id" => "CHECK_TYPE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TYPE"), "sort" => "TYPE", "default" => true, 'editable' => false),
-				array("id" => "CHECK_STATUS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_STATUS"), "sort" => "STATUS", "default" => true, 'editable' => false),
-				array("id" => "CASHBOX_NAME", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true, 'editable' => false),
-			],
+			array("id" => "TITLE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TITLE"), "sort" => "ID", "default" => true, 'editable' => false),
+			array("id" => "CHECK_TYPE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_TYPE"), "sort" => "TYPE", "default" => true, 'editable' => false),
+			array("id" => "CHECK_STATUS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_STATUS"), "sort" => "STATUS", "default" => true, 'editable' => false),
+			array("id" => "CASHBOX_NAME", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_CASHBOX_ID"), "sort" => "CASHBOX_ID", "default" => true, 'editable' => false),
 			...(
 				CCrmSaleHelper::isWithOrdersMode()
 					? [
@@ -152,15 +150,13 @@ class CCrmOrderCheckListComponent extends \CBitrixComponent
 					]
 					: []
 			),
-			...[
-				array("id" => "DATE_CREATE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => false, 'editable' => false),
-				array("id" => "FORMATTED_SUM", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SUM"), "sort" => "SUM", "default" => true, 'editable' => false),
-				array("id" => "LINK_PARAMS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_LINK"), "default" => true, 'editable' => false),
-				array("id" => "PAYMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"), "sort" => "PAYMENT_ID", "default" => true, 'editable' => false),
-				array("id" => "SHIPMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"), "sort" => "SHIPMENT_ID", "default" => true, 'editable' => false),
-				array("id" => "PAYMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"), "sort" => "PAYMENT_ID", "default" => false, 'editable' => false),
-				array("id" => "SHIPMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"), "sort" => "SHIPMENT_ID", "default" => false, 'editable' => false),
-			]
+			array("id" => "DATE_CREATE", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_DATE_CREATE"), "sort" => "DATE_CREATE", "default" => false, 'editable' => false),
+			array("id" => "FORMATTED_SUM", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SUM"), "sort" => "SUM", "default" => true, 'editable' => false),
+			array("id" => "LINK_PARAMS", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_LINK"), "default" => true, 'editable' => false),
+			array("id" => "PAYMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_DESCR"), "sort" => "PAYMENT_ID", "default" => true, 'editable' => false),
+			array("id" => "SHIPMENT", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_DESCR"), "sort" => "SHIPMENT_ID", "default" => true, 'editable' => false),
+			array("id" => "PAYMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_PAYMENT_ID"), "sort" => "PAYMENT_ID", "default" => false, 'editable' => false),
+			array("id" => "SHIPMENT_ID", "name" => Loc::getMessage("CRM_COLUMN_ORDER_CHECK_SHIPMENT_ID"), "sort" => "SHIPMENT_ID", "default" => false, 'editable' => false),
 		];
 	}
 

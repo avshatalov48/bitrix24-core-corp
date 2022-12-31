@@ -293,13 +293,20 @@ class LeadConversionWizard extends EntityConversionWizard
 	 */
 	public static function load($entityID)
 	{
-		if(!(isset($_SESSION['LEAD_CONVERTER']) && $_SESSION['LEAD_CONVERTER'][$entityID]))
+		$storage = self::getSessionLocalStorage(\CCrmOwnerType::Lead);
+		if (!$storage)
+		{
+			return null;
+		}
+
+		$externalizedWizardParams = $storage[$entityID] ?? null;
+		if (!is_array($externalizedWizardParams))
 		{
 			return null;
 		}
 
 		$item = new LeadConversionWizard($entityID);
-		$item->internalize($_SESSION['LEAD_CONVERTER'][$entityID]);
+		$item->internalize($externalizedWizardParams);
 		return $item;
 	}
 

@@ -19,6 +19,16 @@ class Bitrix24Manager extends Base
 	const FEATURE_NAME = 'salescenter';
 	const OPTION_PAYMENTS_COUNT_PARAM = 'payments_limit';
 
+	const ANALYTICS_DATA_SET_INTEGRATION = 'manager-openIntegrationRequestForm-params';
+	const ANALYTICS_SENDER_PAGE = 'sender_page';
+	const ANALYTICS_LABEL_SALESHUB = 'saleshub';
+	const ANALYTICS_LABEL_SALESHUB_RECEIVING_PAYMENT = 'receiving_payment';
+	const ANALYTICS_LABEL_SALESHUB_CRM_STORE = 'crm_store';
+	const ANALYTICS_LABEL_SALESHUB_CRM_FORM = 'crm_form';
+	const ANALYTICS_LABEL_SALESHUB_CASHBOX = 'saleshub_cashbox';
+	const ANALYTICS_LABEL_SALESHUB_DELIVERY = 'saleshub_delivery';
+	const ANALYTICS_LABEL_SALESHUB_PAYSYSTEM = 'saleshub_paysystem';
+
 	/**
 	 * @return string
 	 */
@@ -363,25 +373,53 @@ class Bitrix24Manager extends Base
 				'text' => Loc::getMessage('SALESCENTER_FEEDBACK'),
 				'dataset' => [
 					'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO
-				]
+				],
 			]);
 		}
 	}
 
-	public function addIntegrationRequestButtonToToolbar()
+	public function addIntegrationRequestButtonToToolbar($params = [])
 	{
-		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
+		if ($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			Toolbar::addButton([
+
+			$button = [
 				'color' => Color::LIGHT_BORDER,
 				'click' => new JsHandler('BX.Salescenter.Manager.openIntegrationRequestForm'),
-				'text' => Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION'),
-				'dataset' => [
-					'toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO
-				]
-			]);
+				'text' => Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_1'),
+				'dataset' => ['toolbar-collapsed-icon' => \Bitrix\UI\Buttons\Icon::INFO],
+			];
+
+			if (count($params) > 0)
+			{
+				$button['dataset'][self::ANALYTICS_DATA_SET_INTEGRATION] = self::prepareParamsIntegrationRequest($params);
+			}
+
+			Toolbar::addButton($button);
 		}
+	}
+
+	static private function prepareParamsIntegrationRequest(array $params = []): ?string
+	{
+		$list = [];
+
+		if (count($params) > 0)
+		{
+			foreach ($params as $name => $value)
+			{
+				$list[] = $name . ':' . $value;
+			}
+
+			return implode(',', $list);
+		}
+
+		return null;
+	}
+
+	static private function renderAttrDataSet(array $params): string
+	{
+		return "data-" . self::ANALYTICS_DATA_SET_INTEGRATION . "=" . self::prepareParamsIntegrationRequest($params);
 	}
 
 	public function renderFeedbackButton()
@@ -393,12 +431,12 @@ class Bitrix24Manager extends Base
 		}
 	}
 
-	public function renderIntegrationRequestButton()
+	public function renderIntegrationRequestButton(array $params = [])
 	{
 		if($this->isEnabled() && $this->isIntegrationRequestPossible() && Loader::includeModule('ui'))
 		{
 			Extension::load(['salescenter.manager']);
-			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">'.Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION').'</button>';
+			echo '<button class="ui-btn ui-btn-md ui-btn-light-border" ' . self::renderAttrDataSet($params) . ' onclick="BX.Salescenter.Manager.openIntegrationRequestForm(event);">' . Loc::getMessage('SALESCENTER_LEFT_PAYMENT_INTEGRATION_MSGVER_1') . '</button>';
 		}
 	}
 

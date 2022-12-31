@@ -99,35 +99,6 @@ class CCrmVCard
 					$this->arCard['LAST_NAME'] = isset($arName[0])? $arName[0]: '';
 					$this->arCard['SECOND_NAME'] = isset($arName[2])? $arName[2]: '';
 				}
-				if ($this->GetParam($value, 'TYPE') == 'PHOTO')
-				{
-					$photo = $this->GetParam($value, 'VALUE');
-
-					$tmpFile = $_SERVER['DOCUMENT_ROOT'].'/upload/crm/vCardImage.tmp';
-					$fh = fopen($tmpFile, 'w') or $this->lastError = GetMessage('CRM_VCARD_ERR_TMP_FILE');
-					fwrite($fh, base64_decode($photo));
-					fclose($fh);
-
-					$arPhoto = @CFile::GetImageSize($tmpFile);
-
-					if (is_array($arPhoto))
-					{
-						if ($arPhoto['mime'] == 'image/jpeg')
-							$photoName = md5($photo).'.jpg';
-						if ($arPhoto['mime'] == 'image/png')
-							$photoName = md5($photo).'.png';
-						if ($arPhoto['mime'] == 'image/gif')
-							$photoName = md5($photo).'.gif';
-
-						$this->arCard['PHOTO'] = array(
-							'name'		=> $photoName,
-							'type'		=> $arPhoto['mime'],
-							'content'	=> base64_decode($photo),
-							'MODULE_ID'	=> 'crm'
-						);
-					}
-					unlink($tmpFile);
-				}
 				if ($this->GetParam($value, 'TYPE') == 'ADR')
 				{
 					$labelValue = $this->GetParam($value, 'ADR');

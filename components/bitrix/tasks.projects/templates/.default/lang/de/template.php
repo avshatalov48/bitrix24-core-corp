@@ -1,5 +1,6 @@
 <?php
 $MESS["TASKS_PROJECTS_ADD_PROJECT"] = "Ein Projekt erstellen";
+$MESS["TASKS_PROJECTS_CREATE_PROJECT"] = "Erstellen";
 $MESS["TASKS_PROJECTS_ENTITY_SELECTOR_TAG_SEARCH_FOOTER_ADD"] = "Tag hinzufügen:";
 $MESS["TASKS_PROJECTS_FIRST_PROJECT_CREATION_TOUR_GUIDE_POPUP_TEXT"] = "Das neue Projekt wird automatisch geöffnet";
 $MESS["TASKS_PROJECTS_FIRST_PROJECT_CREATION_TOUR_GUIDE_POPUP_TITLE"] = "Klicken Sie, um ein Projekt zu erstellen";

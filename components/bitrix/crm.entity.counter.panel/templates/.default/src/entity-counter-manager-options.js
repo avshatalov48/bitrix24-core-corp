@@ -3,5 +3,6 @@ export type EntityCounterManagerOptions = {
 	entityTypeId: number,
 	serviceUrl: string,
 	codes: Array,
-	extras: Object
+	extras: Object,
+	withExcludeUsers: ?boolean,
 };

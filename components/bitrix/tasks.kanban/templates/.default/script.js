@@ -1,5 +1,88 @@
 BX.namespace("Tasks.KanbanComponent");
 
+BX.Tasks.KanbanComponent.enableCustomSort = function(event, item)
+{
+	if (BX.Tasks.KanbanComponent.openedCustomSort)
+	{
+		return;
+	}
+
+	BX.Tasks.KanbanComponent.sortMenuItem = item;
+
+	item.params.forEach(function(paramsItem){
+		paramsItem.params = BX.parseJSON(paramsItem.params);
+		paramsItem.onclick = BX.Tasks.KanbanComponent.ClickSort;
+		item.menuWindow.addMenuItem(paramsItem);
+	});
+	var sortDescItem = null;
+	item.menuWindow.menuItems.forEach(function(menuItem){
+		BX.removeClass(BX(menuItem.layout.item), "menu-popup-item-accept");
+		if (
+			typeof menuItem.params.order !== 'undefined'
+			&&  menuItem.params.order === 'desc'
+		)
+		{
+			sortDescItem = menuItem;
+		}
+	});
+	BX.addClass(BX(item.layout.item), "menu-popup-item-accept");
+	if (!sortDescItem)
+	{
+		return;
+	}
+	BX.addClass(BX(sortDescItem.layout.item), "menu-popup-item-accept");
+	BX.ajax({
+		method: "POST",
+		dataType: "json",
+		url: ajaxHandlerPath,
+		data: {
+			action: "setNewTaskOrder",
+			order: sortDescItem.params.order,
+			sessid: BX.bitrix_sessid(),
+			params: ajaxParams
+		},
+		onsuccess: function(data)
+		{
+			BX.onCustomEvent(this, "onTaskSortChanged", [data]);
+		}
+	});
+	BX.Tasks.KanbanComponent.openedCustomSort = true;
+}
+
+BX.Tasks.KanbanComponent.getMySortButton = function(event, item)
+{
+	if (typeof BX.Tasks.KanbanComponent.sortMenuItem !== 'undefined')
+	{
+		return BX.Tasks.KanbanComponent.sortMenuItem;
+	}
+
+	item.menuWindow.menuItems.forEach(function(menuItem){
+		if (Array.isArray(menuItem.params))
+		{
+			BX.Tasks.KanbanComponent.sortMenuItem = menuItem;
+		}
+	});
+
+	return BX.Tasks.KanbanComponent.sortMenuItem;
+}
+
+BX.Tasks.KanbanComponent.disableCustomSort = function(event, item)
+{
+	if (!BX.Tasks.KanbanComponent.openedCustomSort)
+	{
+		return;
+	}
+	var items = item.menuWindow.menuItems.slice(0);
+	items.forEach(function(paramsItem){
+		if (
+			typeof paramsItem.params.type !== 'undefined'
+			&&  paramsItem.params.type === 'sub'
+		)
+		item.menuWindow.removeMenuItem(paramsItem.id);
+	});
+	BX.Tasks.KanbanComponent.openedCustomSort = false;
+}
+
 BX.Tasks.KanbanComponent.ClickSort = function(event, item)
 {
 	var order = "desc";
@@ -12,15 +95,24 @@ BX.Tasks.KanbanComponent.ClickSort = function(event, item)
 		order = item.params.order;
 	}
 
+	if (BX.Tasks.KanbanComponent.openedCustomSort && order === 'actual')
+	{
+		BX.Tasks.KanbanComponent.disableCustomSort(event, item);
+	}
 	// refresh icons and save selected
 	if (!BX.hasClass(BX(item.layout.item), "menu-popup-item-accept"))
 	{
-		var menuItems = item.menuWindow.menuItems;
-		for (var i = 0, c = menuItems.length; i < c; i++)
-		{
-			BX.removeClass(BX(menuItems[i].layout.item), "menu-popup-item-accept");
-		}
-		BX.addClass(BX(item.layout.item), "menu-popup-item-accept");
+			var menuItems = item.menuWindow.menuItems;
+			for (var i = 0, c = menuItems.length; i < c; i++)
+			{
+				BX.removeClass(BX(menuItems[i].layout.item), 'menu-popup-item-accept');
+			}
+			BX.addClass(BX(item.layout.item), "menu-popup-item-accept");
+			if (order === 'asc' || order === 'desc')
+			{
+				var sortMenuItem = BX.Tasks.KanbanComponent.getMySortButton(event, item);
+				sortMenuItem && BX.addClass(BX(sortMenuItem.layout.item), "menu-popup-item-accept");
+			}
 
 		BX.ajax({
 			method: "POST",

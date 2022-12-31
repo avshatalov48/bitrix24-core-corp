@@ -3,9 +3,10 @@ namespace Bitrix\Crm\Product\Url;
 
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
-use Bitrix\Main\UI\Extension;
 use Bitrix\Catalog;
 use Bitrix\Crm;
+use Bitrix\Catalog\Access\AccessController;
+use Bitrix\Catalog\Access\ActionDictionary;
 
 if (Loader::includeModule('catalog'))
 {
@@ -58,7 +59,7 @@ if (Loader::includeModule('catalog'))
 				$this->getUrlTemplate(self::PAGE_CSV_IMPORT),
 				$this->templateVariables
 			);
-			if ($importUrl !== '')
+			if ($importUrl !== '' && AccessController::getCurrent()->check(ActionDictionary::ACTION_CATALOG_IMPORT_EXECUTION))
 			{
 				$result[] = [
 					'TEXT' => Loc::getMessage('CRM_PRODUCT_BUILDER_CONTEXT_MENU_ITEM_CSV_IMPORT_NAME'),

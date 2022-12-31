@@ -272,6 +272,7 @@ if(typeof(BX.AutorunProcessManager) === "undefined")
 				{
 					data["PARAMS"] = this._params;
 				}
+				data.sessid = BX.bitrix_sessid();
 
 				BX.ajax(
 					{

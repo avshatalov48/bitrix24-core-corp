@@ -5,6 +5,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 \Bitrix\Main\Localization\Loc::loadMessages(__FILE__);
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/interface_grid.js');
 \Bitrix\Main\Page\Asset::getInstance()->addJs('/bitrix/js/crm/common.js');
+\Bitrix\Main\Page\Asset::getInstance()->addCss('/bitrix/components/bitrix/crm.entity.details/templates/.default/style.css');
 $jsObjName = 'BX.Crm.Order.Shipment.ProductAdd.listObj_'.$arResult['GRID_ID'];
 $gridManagerID = $arResult['GRID_ID'].'_MANAGER';
 $rows = [];

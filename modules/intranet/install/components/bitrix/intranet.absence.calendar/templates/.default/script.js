@@ -1138,6 +1138,7 @@ BX.AbsenceCalendar.Init = function(arParams)
 			buttons: [
 				new BX.PopupWindowButton({
 					className : "popup-window-button-accept",
+					text: BX.message('INTR_ABSENCE_POPUP_BUTTON'),
 					events : { click : function()
 					{
 						var form = BX('ABSENCE_FORM');
@@ -1171,7 +1172,10 @@ BX.AbsenceCalendar.Init = function(arParams)
 							}
 							else
 							{
-								BX.AbsenceCalendar.popup.setContent(result);
+								var processed = BX.processHTML(result);
+
+								BX.AbsenceCalendar.popup.setContent(processed.HTML);
+								BX.ajax.processScripts(processed.SCRIPT);
 								jsBXAC.LoadData();
 							}
 						});
@@ -1216,6 +1220,11 @@ BX.AbsenceCalendar.Init = function(arParams)
 						},
 						this)
 					);
+				},
+				onPopupClose: function()
+				{
+					BX.AbsenceCalendar.popup.destroy();
+					BX.AbsenceCalendar.bInit = false;
 				}
 			}
 		});

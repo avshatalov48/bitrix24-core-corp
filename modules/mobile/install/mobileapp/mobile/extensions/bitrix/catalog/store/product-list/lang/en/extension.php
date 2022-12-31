@@ -1,6 +1,8 @@
 <?php
 $MESS["CSPL_CREATE_PRODUCT_IN_DESKTOP_VERSION"] = "Create product in the full version";
 $MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS"] = "Inventory object has no products";
+$MESS["CSPL_DOCUMENT_HAS_NO_PRODUCTS_V2"] = "Inventory object has no products";
+$MESS["CSPL_INSUFFICIENT_PERMISSIONS_FOR_PRODUCT_ADD"] = "Insufficient permission to create a product";
 $MESS["CSPL_MENU"] = "Menu";
 $MESS["CSPL_MENU_ADD_NEW_PRODUCT_TITLE"] = "New product";
 $MESS["CSPL_MENU_CHOOSE_FROM_DB"] = "Pick from catalog";

@@ -946,12 +946,12 @@ for ($i = 0; $i < $nRows; $i++)
 	if (isset($cols[0][$i]))
 	{
 		$pdf->SetX($sellerX);
-		$pdf->Cell($textWidth, 18, $cols[0][$i], 0, 'L');
+		$pdf->Cell($textWidth, 18, $cols[0][$i], 0, 0, 'L');
 	}
 	if (isset($cols[1][$i]))
 	{
 		$pdf->SetX($customerX);
-		$pdf->Cell($textWidth, 18, $cols[1][$i], 0, 'L');
+		$pdf->Cell($textWidth, 18, $cols[1][$i], 0, 0, 'L');
 	}
 	$pdf->Ln();
 	if ($i === $boldCount)

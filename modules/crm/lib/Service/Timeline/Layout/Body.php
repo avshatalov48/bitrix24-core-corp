@@ -3,6 +3,7 @@
 namespace Bitrix\Crm\Service\Timeline\Layout;
 
 use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock;
+use Bitrix\Crm\Service\Timeline\Layout\Body\ContentBlock\Note;
 use Bitrix\Crm\Service\Timeline\Layout\Body\Logo;
 
 class Body extends Base

@@ -3,6 +3,9 @@
 use Bitrix\Crm\Service\Container;
 use Bitrix\Main\Loader;
 use Bitrix\Main\Localization\Loc;
+use Bitrix\Crm\Counter\EntityCounterFactory;
+use Bitrix\Crm\Counter\EntityCounterType;
+use Bitrix\Crm\Integration\Catalog\Contractor\CategoryRepository;
 
 if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 {
@@ -11,7 +14,31 @@ if (!defined("B_PROLOG_INCLUDED") || B_PROLOG_INCLUDED !== true)
 
 class CrmControlPanel extends CBitrixComponent
 {
+	public const MENU_ID_CRM_CLIENT = 'crm_clients';
+	public const MENU_ID_CRM_CONTACT = 'menu_crm_contact';
+	public const MENU_ID_CRM_COMPANY = 'menu_crm_company';
+	public const MENU_ID_CRM_STORE_CONTRACTORS = 'menu_crm_store_contractors';
+	public const MENU_ID_CRM_STORE_CONTRACTORS_COMPANIES = 'menu_crm_store_contractors_companies';
+	public const MENU_ID_CRM_STORE_CONTRACTORS_CONTACTS = 'menu_crm_store_contractors_contacts';
+	public const MENU_ID_CRM_CONTACT_CENTER = 'menu_contact_center';
+
 	protected $oldMenuStructure;
+
+	protected array $contractorCategories = [];
+
+	public function __construct($component = null)
+	{
+		parent::__construct($component);
+
+		$this->contractorCategories = [
+			\CCrmOwnerType::Company => CategoryRepository::getIdByEntityTypeId(
+				\CCrmOwnerType::Company
+			),
+			\CCrmOwnerType::Contact => CategoryRepository::getIdByEntityTypeId(
+				\CCrmOwnerType::Contact
+			),
+		];
+	}
 
 	public function createMenuTree($standardItems)
 	{
@@ -33,11 +60,12 @@ class CrmControlPanel extends CBitrixComponent
 				],
 			],
 			[
-				'ID' => 'crm_clients',
+				'ID' => self::MENU_ID_CRM_CLIENT,
 				'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CLIENTS'),
 				'SUB_ITEMS' => [
 					['ID' => 'CONTACT'],
 					['ID' => 'COMPANY'],
+					...$this->getContractorsMenuSubItems(),
 					['ID' => 'CONTACT_CENTER', 'SLIDER_MODE' => true],
 				],
 			],
@@ -91,7 +119,13 @@ class CrmControlPanel extends CBitrixComponent
 				'SUB_ITEMS' => [
 					['ID' => 'SETTINGS'],
 					['ID' => 'MY_COMPANY'],
-					['ID' => 'PERMISSIONS'],
+					[
+						'ID' => 'PERMISSIONS',
+						'SUB_ITEMS' => [
+							['ID' => 'CRM_PERMISSIONS'],
+							['ID' => 'CATALOG_PERMISSIONS'],
+						],
+					],
 					['ID' => 'SALES_CENTER_PAYMENT', 'SLIDER_MODE' => true],
 					['ID' => 'SALES_CENTER_DELIVERY', 'SLIDER_MODE' => true],
 					['ID' => 'DYNAMIC_LIST'],
@@ -213,9 +247,9 @@ class CrmControlPanel extends CBitrixComponent
 			}
 
 			$categoryId = $category->getId();
-			$counter = \Bitrix\Crm\Counter\EntityCounterFactory::create(
+			$counter = EntityCounterFactory::create(
 				$entityTypeId,
-				\Bitrix\Crm\Counter\EntityCounterType::ALL,
+				EntityCounterType::ALL,
 				$userPermissionsService->getUserId(),
 				[
 					'CATEGORY_ID' => $categoryId,
@@ -244,6 +278,53 @@ class CrmControlPanel extends CBitrixComponent
 		}
 
 		return $result;
+	}
+
+	/**
+	 * @param int $entityTypeId
+	 * @param string $url
+	 * @param string $menuId
+	 * @param array $counterExtras
+	 * @return array|null
+	 */
+	protected function getContractorsMenuItem(
+		int $entityTypeId,
+		string $url,
+		string $menuId,
+		array $counterExtras
+	): ?array
+	{
+		if (!isset($this->contractorCategories[$entityTypeId]))
+		{
+			return null;
+		}
+		$categoryId = $this->contractorCategories[$entityTypeId];
+
+		$counter = EntityCounterFactory::create(
+			$entityTypeId,
+			EntityCounterType::ALL,
+			Container::getInstance()->getUserPermissions()->getUserId(),
+			array_merge(
+				$counterExtras,
+				[
+					'CATEGORY_ID' => $categoryId,
+				]
+			)
+		);
+
+		return [
+			'ID' => CCrmComponentHelper::getMenuActiveItemId(
+				CCrmOwnerType::ResolveName($entityTypeId),
+				$categoryId
+			),
+			'MENU_ID' => $menuId,
+			'NAME' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_' . CCrmOwnerType::ResolveName($entityTypeId)),
+			'TITLE' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_' . CCrmOwnerType::ResolveName($entityTypeId) . '_TITLE'),
+			'URL' => $url,
+			'ON_CLICK' => 'event.preventDefault();BX.SidePanel.Instance.open("' . CUtil::JSescape($url) . '", {cacheable: false, customLeftBoundary: 0,});',
+			'COUNTER' => $counter->getValue(),
+			'COUNTER_ID' => $counter->getCode(),
+		];
 	}
 
 	protected function prepareItems($items)
@@ -400,5 +481,51 @@ class CrmControlPanel extends CBitrixComponent
 		}
 
 		return true;
+	}
+
+	/**
+	 * @return array|array[]
+	 */
+	private function getContractorsMenuSubItems(): array
+	{
+		$result = [];
+
+		if (
+			isset($this->contractorCategories[\CCrmOwnerType::Company])
+			|| isset($this->contractorCategories[\CCrmOwnerType::Contact])
+		)
+		{
+			$subItems = [];
+
+			if (isset($this->contractorCategories[\CCrmOwnerType::Company]))
+			{
+				$subItems[] = [
+					'ID' => CCrmComponentHelper::getMenuActiveItemId(
+						CCrmOwnerType::ResolveName(\CCrmOwnerType::Company),
+						$this->contractorCategories[\CCrmOwnerType::Company]
+					)
+				];
+			}
+
+			if (isset($this->contractorCategories[\CCrmOwnerType::Contact]))
+			{
+				$subItems[] = [
+					'ID' => CCrmComponentHelper::getMenuActiveItemId(
+						CCrmOwnerType::ResolveName(\CCrmOwnerType::Contact),
+						$this->contractorCategories[\CCrmOwnerType::Contact]
+					)
+				];
+			}
+
+			$result = [
+				[
+					'ID' => self::MENU_ID_CRM_STORE_CONTRACTORS,
+					'TEXT' => Loc::getMessage('CRM_CTRL_PANEL_ITEM_CONTRACTORS'),
+					'SUB_ITEMS' => $subItems,
+				],
+			];
+		}
+
+		return $result;
 	}
 }

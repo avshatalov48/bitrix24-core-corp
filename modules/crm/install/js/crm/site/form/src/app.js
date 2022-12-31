@@ -81,6 +81,7 @@ class Application
 			options.language = b24options.lang;
 		}
 
+		options.proxy = b24form.common?.properties?.proxy || {};
 		options.languages = b24form.common.languages || [];
 		options.messages = options.messages || {};
 		options.messages = Object.assign(

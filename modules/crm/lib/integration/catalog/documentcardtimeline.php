@@ -26,7 +26,7 @@ class DocumentCardTimeline
 			'PREFIX' => 'store_document',
 			'ENABLE_UI' => false,
 			'ENABLE_TOOLBAR' => false,
-			'ENABLE_EMAIL_ADD' => false,
+			'ENABLE_EMAIL_ADD' => true,
 			'ENABLE_TASK_ADD' => false,
 			'MARK_AS_COMPLETED_ON_VIEW' => false,
 			'SKIP_VISUAL_COMPONENTS' => 'Y'
@@ -46,6 +46,7 @@ class DocumentCardTimeline
 			'ENTITY_TYPE_NAME' => \CCrmOwnerType::StoreDocumentName,
 			'ENTITY_INFO' => $entityInfo,
 			'ACTIVITY_EDITOR_ID' => $editorId,
+			'ENABLE_TODO' => false,
 			'ENABLE_TASK' => false,
 			'ENABLE_WAIT' => false,
 			'ENABLE_SMS' => false,

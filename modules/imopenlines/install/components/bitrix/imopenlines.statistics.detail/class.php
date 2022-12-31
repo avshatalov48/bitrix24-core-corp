@@ -117,9 +117,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	 */
 	private function getUfTypeManager()
 	{
-		/** @global \CUserTypeManager $USER_FIELD_MANAGER */
-		global $USER_FIELD_MANAGER;
-		return $USER_FIELD_MANAGER;
+		return \Bitrix\Imopenlines\Helpers\Filter::getUfTypeManager();
 	}
 
 	/**
@@ -127,7 +125,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	 */
 	private function isFdcMode(): bool
 	{
-		return defined('IMOL_FDC');
+		return \Bitrix\Imopenlines\Helpers\Filter::isFdcMode();
 	}
 
 	/**
@@ -222,15 +220,7 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	{
 		if ($this->ufFields === null)
 		{
-			$this->ufFields = [];
-
-			$ufData = \CUserTypeEntity::GetList(array(), array('ENTITY_ID' => SessionTable::getUfId(), 'LANG' => LANGUAGE_ID));
-			while($field = $ufData->Fetch())
-			{
-				$field['USER_TYPE'] = $this->getUfTypeManager()->getUserType($field['USER_TYPE_ID']);
-
-				$this->ufFields[$field['FIELD_NAME']] = $field;
-			}
+			$this->ufFields = \Bitrix\ImOpenLines\Helpers\Filter::getUfFieldList();
 		}
 
 		return $this->ufFields;
@@ -659,15 +649,15 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 					'type' => 'list',
 					'items' => array(
 						'' => Loc::getMessage('OL_STATS_FILTER_UNSET'),
-						'0' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_NEW'),
-						'5' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW'),
-						'10' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW'),
-						'20' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_NEW'),
-						'25' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW'),
-						'40' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW'),
-						'50' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2'),
-						'60' => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLOSED'),
-						'65' => Loc::getMessage('OL_STATS_HEADER_SPAM_2'),
+						(string)Session::STATUS_NEW => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_NEW'),
+						(string)Session::STATUS_SKIP => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_SKIP_NEW'),
+						(string)Session::STATUS_ANSWER => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_ANSWER_NEW'),
+						(string)Session::STATUS_CLIENT => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_NEW'),
+						(string)Session::STATUS_CLIENT_AFTER_OPERATOR => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLIENT_AFTER_OPERATOR_NEW'),
+						(string)Session::STATUS_OPERATOR => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_OPERATOR_NEW'),
+						(string)Session::STATUS_WAIT_CLIENT => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_WAIT_ACTION_2'),
+						(string)Session::STATUS_CLOSE => Loc::getMessage('OL_COMPONENT_TABLE_STATUS_CLOSED'),
+						(string)Session::STATUS_SPAM => Loc::getMessage('OL_STATS_HEADER_SPAM_2'),
 					),
 					'params' => array(
 						'multiple' => 'Y'
@@ -803,11 +793,11 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 					'type' => 'list',
 					'items' => array(
 						'wo' => Loc::getMessage('OL_STATS_HEADER_VOTE_HEAD_WO'),
-						'5' => 5,
+						'5' => Session::VOTE_LIKE,
 						'4' => 4,
 						'3' => 3,
 						'2' => 2,
-						'1' => 1,
+						'1' => Session::VOTE_DISLIKE,
 					),
 					'params' => array(
 						'multiple' => 'Y'
@@ -850,363 +840,8 @@ class ImOpenLinesComponentStatisticsDetail extends \CBitrixComponent
 	 */
 	private function getFilter()
 	{
-		$request = HttpApplication::getInstance()->getContext()->getRequest();
-
-		$filterOptions = new \Bitrix\Main\UI\Filter\Options($this->filterId);
-		$filter = $filterOptions->getFilter($this->getFilterDefinition());
-
-		$result = array();
-
-		$allowedUserIds = Security\Helper::getAllowedUserIds(
-			Security\Helper::getCurrentUserId(),
-			$this->userPermissions->getPermission(Security\Permissions::ENTITY_SESSION, Security\Permissions::ACTION_VIEW)
-		);
-
-		if ($request->get('GUEST_USER_ID'))
-		{
-			$result['=USER_ID'] = intval($request->get('GUEST_USER_ID'));
-		}
-
-		if (!isset($filter['OPERATOR_ID']) && $request->get('OPERATOR_ID') !== null)
-		{
-			$value = $request->get('OPERATOR_ID');
-			$filter['OPERATOR_ID'] = (
-				is_string($value) && mb_strtolower($value) === 'empty'
-					? 'empty'
-					: intval($value)
-			);
-		}
-
-		if (isset($filter['CLIENT_NAME']))
-		{
-			$filterUserClient = \Bitrix\Main\UserUtils::getUserSearchFilter(Array(
-				'FIND' => $filter['CLIENT_NAME']
-			));
-
-			$filterUserClient['EXTERNAL_AUTH_ID'] = array('imconnector');
-
-			$userClientRaw = \Bitrix\Main\UserTable::getList(Array(
-				'select' => Array('ID'),
-				'filter' => $filterUserClient
-			));
-
-			while ($userClientRow = $userClientRaw->fetch())
-			{
-				$result['=USER_ID'][] = $userClientRow['ID'];
-			}
-
-			if (empty($result['=USER_ID']))
-			{
-				$result['=USER_ID'] = -1;
-			}
-		}
-
-		if (isset($filter['OPERATOR_ID']))
-		{
-			$filter['OPERATOR_ID'] =
-				mb_strtolower($filter['OPERATOR_ID']) === 'empty'
-					? false
-					: (int)$filter['OPERATOR_ID']
-			;
-
-			if (is_array($allowedUserIds))
-			{
-				$result['=OPERATOR_ID'] = array_intersect(array_merge($allowedUserIds, array(false)), array($filter['OPERATOR_ID']));
-			}
-			else
-			{
-				$result['=OPERATOR_ID'] = $filter['OPERATOR_ID'];
-			}
-		}
-		elseif (is_array($allowedUserIds))
-		{
-			$result['=OPERATOR_ID'] = $allowedUserIds;
-		}
-
-		$extractDateRange = function($fieldName) use (&$filter, &$result)
-		{
-			if ($filter["{$fieldName}_from"] <> '')
-			{
-				try
-				{
-					$result[">={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_from"]);
-				}
-				catch (\Exception $e)
-				{
-				}
-			}
-			if ($filter["{$fieldName}_to"] <> '')
-			{
-				try
-				{
-					$result["<={$fieldName}"] = new \Bitrix\Main\Type\DateTime($filter["{$fieldName}_to"]);
-				}
-				catch (\Exception $e)
-				{
-				}
-			}
-		};
-
-		$extractDateRange('DATE_CREATE');
-		$extractDateRange('DATE_CLOSE');
-
-		if (is_array($filter['SOURCE']))
-		{
-			$result['=SOURCE'] = $filter['SOURCE'];
-		}
-
-		if (is_array($filter['CONFIG_ID']))
-		{
-			$result['=CONFIG_ID'] = $filter['CONFIG_ID'];
-		}
-		else if ($this->configId)
-		{
-			$result['=CONFIG_ID'] = $this->configId;
-		}
-
-		if (!empty($filter['EXTRA_URL']))
-		{
-			$result['%EXTRA_URL'] = $filter['EXTRA_URL'];
-		}
-
-		if (!empty($filter['EXTRA_TARIFF']))
-		{
-			$result['=EXTRA_TARIFF'] = $filter['EXTRA_TARIFF'];
-		}
-
-		if (!empty($filter['EXTRA_USER_LEVEL']))
-		{
-			$result['=EXTRA_USER_LEVEL'] = $filter['EXTRA_USER_LEVEL'];
-		}
-
-		if (!empty($filter['EXTRA_PORTAL_TYPE']))
-		{
-			$result['=EXTRA_PORTAL_TYPE'] = $filter['EXTRA_PORTAL_TYPE'];
-		}
-
-		if (isset($filter['STATUS']))
-		{
-			switch ($filter['STATUS'])
-			{
-				case 'client':
-					$result['<STATUS'] = 40;
-					break;
-
-				case 'operator':
-					$result['>=STATUS'] = 40;
-					$result['<STATUS'] = 60;
-					break;
-
-				case 'closed':
-					$result['>=STATUS'] = 60;
-					break;
-			}
-		}
-
-		if (is_array($filter['STATUS_DETAIL']))
-		{
-			$result['=STATUS'] = $filter['STATUS_DETAIL'];
-		}
-
-		if (isset($filter['CRM']))
-		{
-			$result['=CRM'] = $filter['CRM'];
-		}
-
-		if (isset($filter['CRM_ENTITY']) && $filter['CRM_ENTITY'] != '')
-		{
-			$crmFilter = array();
-			try
-			{
-				$crmFilter = \Bitrix\Main\Web\Json::decode($filter['CRM_ENTITY']);
-			}
-			catch (\Bitrix\Main\ArgumentException $e)
-			{
-			}
-
-			if (count($crmFilter) == 1)
-			{
-				//TODO: improve search
-				$entityTypes = array_keys($crmFilter);
-				$entityType = $entityTypes[0];
-				$entityId = $crmFilter[$entityType][0];
-				//$result['=CRM_ENTITY_TYPE'] = $entityType;
-				//$result['=CRM_ENTITY_ID'] = $entityId;
-			}
-		}
-
-		if (isset($filter['SEND_FORM']))
-		{
-			if ($filter['SEND_FORM'] == 'Y')
-			{
-				$result['!=SEND_FORM'] = 'none';
-			}
-			else
-			{
-				$result['=SEND_FORM'] = 'none';
-			}
-		}
-
-
-		$extractBoolean = function($fieldName, $typeCast = 'enum') use (&$filter, &$result)
-		{
-			if (isset($filter[$fieldName]))
-			{
-				$trueVal = $typeCast == 'enum' ? 'Y' : 1;
-				if ($filter[$fieldName] == 'Y')
-				{
-					$result["={$fieldName}"] = $trueVal;
-				}
-				else if ($filter[$fieldName] == 'N')
-				{
-					$result["!={$fieldName}"] = $trueVal;
-				}
-			}
-		};
-
-		$extractBoolean('SEND_HISTORY', 'enum');
-		$extractBoolean('SPAM', 'enum');
-
-		$extractNumberRange = function($fieldName, $typeCast = 'intval') use (&$filter, &$result)
-		{
-			if (isset($filter["{$fieldName}_numsel"]))
-			{
-				if ($filter["{$fieldName}_numsel"] == 'range')
-				{
-					if ($typeCast($filter["{$fieldName}_from"]) > 0 && $typeCast($filter["{$fieldName}_to"]) == 0)
-					{
-						$filter["{$fieldName}_numsel"] = 'more';
-						$filter["{$fieldName}_from"] = $typeCast($filter["{$fieldName}_from"]) - 1;
-					}
-					elseif ($typeCast($filter["{$fieldName}_from"]) == 0 && $typeCast($filter["{$fieldName}_to"]) > 0)
-					{
-						$filter["{$fieldName}_numsel"] = 'less';
-						$filter["{$fieldName}_to"] = $typeCast($filter["{$fieldName}_to"]) + 1;
-					}
-					else
-					{
-						$result[">={$fieldName}"] = $typeCast($filter["{$fieldName}_from"]);
-						$result["<={$fieldName}"] = $typeCast($filter["{$fieldName}_to"]);
-					}
-				}
-				if ($filter["{$fieldName}_numsel"] == 'more')
-				{
-					$result[">{$fieldName}"] = $typeCast($filter["{$fieldName}_from"]);
-				}
-				elseif ($filter["{$fieldName}_numsel"] == 'less')
-				{
-					$result["<{$fieldName}"] = $typeCast($filter["{$fieldName}_to"]);
-				}
-				elseif ($filter["{$fieldName}_numsel"] != 'range')
-				{
-					$result["={$fieldName}"] = $typeCast($filter["{$fieldName}_from"]);
-				}
-			}
-			elseif (isset($filter["{$fieldName}"]))
-			{
-				$result["={$fieldName}"] = $typeCast($filter["{$fieldName}"]);
-			}
-		};
-
-		$extractNumberRange('MESSAGE_COUNT', 'intval');
-		$extractNumberRange('EXTRA_REGISTER', 'intval');
-
-		if (isset($filter['TYPE']))
-		{
-			$result['=MODE'] = $filter['TYPE'];
-		}
-
-		if (isset($filter['ID']))
-		{
-			$result['=ID'] = $filter['ID'];
-		}
-
-		if (isset($filter['WORKTIME']))
-		{
-			$result['=WORKTIME'] = $filter['WORKTIME'];
-		}
-
-		if (isset($filter['VOTE']))
-		{
-			$result['=VOTE'] = intval($filter['VOTE']);
-		}
-
-		if (is_array($filter['VOTE_HEAD']))
-		{
-			foreach ($filter['VOTE_HEAD'] as $key => $value)
-			{
-				if ($value == 'wo')
-				{
-					$filter['VOTE_HEAD'][$key] = 0;
-				}
-			}
-			$result['=VOTE_HEAD'] = $filter['VOTE_HEAD'];
-		}
-
-		$minSearchToken = \Bitrix\Main\Config\Option::get('imopenlines', 'min_search_token');
-		if (
-			isset($filter['FIND'])
-			&& (
-				$minSearchToken <= 0
-				|| \Bitrix\Main\Search\Content::isIntegerToken($filter['FIND'])
-				|| mb_strlen($filter['FIND']) >= $minSearchToken
-			)
-			&& \Bitrix\Main\Search\Content::canUseFulltextSearch($filter['FIND'], \Bitrix\Main\Search\Content::TYPE_MIXED)
-		)
-		{
-			global $DB;
-			if (
-				!\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT')
-				&& $DB->IndexExists('b_imopenlines_session_index', array('SEARCH_CONTENT'), true)
-			)
-			{
-				\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->enableFullTextIndex('SEARCH_CONTENT');
-			}
-			if (\Bitrix\Imopenlines\Model\SessionIndexTable::getEntity()->fullTextIndexEnabled('SEARCH_CONTENT'))
-			{
-				if (\Bitrix\Main\Search\Content::isIntegerToken($filter['FIND']))
-				{
-					$result['*INDEX.SEARCH_CONTENT'] = \Bitrix\Main\Search\Content::prepareIntegerToken($filter['FIND']);
-				}
-				else
-				{
-					$result['*INDEX.SEARCH_CONTENT'] = \Bitrix\Main\Search\Content::prepareStringToken($filter['FIND']);
-				}
-			}
-		}
-
-		// UF
-		foreach ($this->getUfFieldList() as $fieldName => $field)
-		{
-			if (
-				$field['SHOW_FILTER'] != 'N'
-				&& $field['USER_TYPE']['BASE_TYPE'] !== \CUserTypeManager::BASE_TYPE_FILE
-			)
-			{
-				if ($field['USER_TYPE']['BASE_TYPE'] === \CUserTypeManager::BASE_TYPE_DATETIME)
-				{
-					$extractDateRange($fieldName);
-				}
-				elseif ($field['USER_TYPE']['USER_TYPE_ID'] === \Bitrix\Main\UserField\Types\BooleanType::USER_TYPE_ID)
-				{
-					$extractBoolean($fieldName, 'intval');
-				}
-				elseif ($field['USER_TYPE']['BASE_TYPE'] === \CUserTypeManager::BASE_TYPE_INT)
-				{
-					$extractNumberRange($fieldName, 'intval');
-				}
-				elseif ($field['USER_TYPE']['BASE_TYPE'] === \CUserTypeManager::BASE_TYPE_DOUBLE)
-				{
-					$extractNumberRange($fieldName, 'doubleval');
-				}
-				elseif (isset($filter[$fieldName]))
-				{
-					$result["={$fieldName}"] = $filter[$fieldName];
-				}
-			}
-		}
-
-		return $result;
+		$filterDefinition = $this->getFilterDefinition();
+		return \Bitrix\ImOpenLines\Helpers\Filter::getFilter($this->filterId, $this->arResult, $filterDefinition);
 	}
 
 	/**

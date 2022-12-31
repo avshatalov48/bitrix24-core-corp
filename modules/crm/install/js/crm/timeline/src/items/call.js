@@ -286,8 +286,11 @@ export default class Call extends HistoryActivity
 		wrapper.appendChild(this._actionContainer);
 		//endregion
 
-		if (!this.isReadOnly())
+		if (!this.isReadOnly()) {
+
 			wrapper.appendChild(this.prepareFixedSwitcherLayout());
+		}
+
 
 		return outerWrapper;
 	}

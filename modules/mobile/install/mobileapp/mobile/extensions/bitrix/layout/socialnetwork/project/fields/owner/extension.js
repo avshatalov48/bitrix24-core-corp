@@ -1,11 +1,13 @@
 (() => {
+	const { UserField } = jn.require('layout/ui/fields/user');
+
 	class ProjectOwnerField extends LayoutComponent
 	{
 		render()
 		{
 			return View(
 				{},
-				FieldFactory.create(FieldFactory.Type.USER, {
+				UserField({
 					readOnly: this.props.readOnly,
 					showEditIcon: !this.props.readOnly,
 					title: BX.message('MOBILE_LAYOUT_PROJECT_FIELDS_OWNER_TITLE'),

@@ -274,4 +274,40 @@ class BindingHelper
 		}
 		return $result;
 	}
+
+	/**
+	 * @param int $ownerTypeId
+	 * @param array $ownerIds
+	 * @param int $entityTypeId - Type of Bound Entity
+	 * @return Array<int, Array<string, mixed>> [ownerId => bindings[]]
+	 */
+	final public static function getBulkEntityBindings(int $ownerTypeId, array $ownerIds, int $entityTypeId): ?array
+	{
+		if ($ownerTypeId === \CCrmOwnerType::Lead && $entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return LeadContactTable::getBulkLeadBindings($ownerIds);
+		}
+		if ($ownerTypeId === \CCrmOwnerType::Deal && $entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return DealContactTable::getBulkDealBindings($ownerIds);
+		}
+		if ($ownerTypeId === \CCrmOwnerType::Contact && $entityTypeId === \CCrmOwnerType::Company)
+		{
+			return ContactCompanyTable::getBulkContactBindings($ownerIds);
+		}
+		if ($ownerTypeId === \CCrmOwnerType::Company && $entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return ContactCompanyTable::getBulkCompanyBindings($ownerIds);
+		}
+		if ($ownerTypeId === \CCrmOwnerType::Quote && $entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return QuoteContactTable::getBulkQuoteBindings($ownerIds);
+		}
+		if (\CCrmOwnerType::isUseDynamicTypeBasedApproach($ownerTypeId) && $entityTypeId === \CCrmOwnerType::Contact)
+		{
+			return EntityContactTable::getBulkContactBindings($ownerTypeId, $ownerIds);
+		}
+
+		return null;
+	}
 }

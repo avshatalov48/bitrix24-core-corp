@@ -24,7 +24,7 @@
 	margin: 0 6px;
 	padding: 0 0 2px 0;
 	font-size: 13px;
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 	color: #0b66c3 !important;
 	border-bottom: 1px dashed #0b66c3;
 	line-height: normal;

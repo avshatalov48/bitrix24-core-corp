@@ -18,6 +18,7 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 			'color' => $column['color'],
 			'data' => [
 				'type' => $column['type'],
+				'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
 			],
 		];
 
@@ -38,22 +39,22 @@ foreach ($arResult['ITEMS']['columns'] as $k => &$column)
 
 	if (!$column['dropzone'])
 	{
-		$column = array(
+		$column = [
 			'id' => $column['id'],
 			'total' => (int) $column['count'],
 			'color' => $column['color'],
 			'name' => htmlspecialcharsback($column['name']),
 			'canAddItem' => $column['canAddItem'],
-			'canSort' => $arResult['ACCESS_CONFIG_PERMS'] &&
-						!($column['type'] == 'WIN' || $column['type'] == 'LOOSE'),
-			'data' => array(
+			'canSort' => ($arResult['CONFIG_BY_VIEW_MODE']['accessConfigPerms'] && $column['type'] === 'PROGRESS'),
+			'data' => [
 				'sort' => $column['sort'],
 				'type' => $column['type'],
 				'sum' => round($column['total']),
 				'sum_init' => 0,
-				'sum_format' => $column['total_format']
-			)
-		);
+				'sum_format' => $column['total_format'],
+				'blockedIncomingMoving' => ($column['blockedIncomingMoving'] ?? false),
+			],
+		];
 	}
 }
 unset($column);

@@ -517,6 +517,10 @@ RecentList.getOpenDialogParams = function(dialogId, modern, push)
 			WIDGET_CHAT_TRANSFER_VERSION : BX.componentParameters.get('WIDGET_CHAT_TRANSFER_VERSION', '1.0.0'),
 
 			WIDGET_BACKDROP_MENU_VERSION : BX.componentParameters.get('WIDGET_BACKDROP_MENU_VERSION', '1.0.0'),
+
+			LANG_ADDITIONAL: {
+				isCrmUniversalActivityScenarioEnabled: BX.message('isCrmUniversalActivityScenarioEnabled'),
+			},
 		};
 	}
 	else
@@ -575,6 +579,7 @@ RecentList.openUserProfile = function(userId, userData = {})
 			url: currentDomain+'/mobile/users/?user_id='+userId+'&FROM_DIALOG=Y',
 		};
 	}
+	const { ProfileView } = jn.require("user/profile");
 	ProfileView.open(params);
 };
 

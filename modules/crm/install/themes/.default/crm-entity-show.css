@@ -165,7 +165,7 @@ table.bx-crm-view-fieldset-content-table input.crm-fld-element-input { height: 1
 .crm-entity-info-header h2 {
 	margin: 3px 0 11px;
 	padding: 0 5px;
-	font: bold 14px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 14px/14px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-entity-info-section {
@@ -345,7 +345,7 @@ h1 sup.sup-header {
 	border-radius: 2px;
 	background: #d8f2ce;
 	vertical-align: middle;
-	font: bold 12px/16px "Helvetica Noue", Helvetica, Arial, sans-sherif;
+	font: var(--ui-font-weight-bold) 12px/16px "Helvetica Noue", Helvetica, Arial, sans-sherif;
 }
 
 #pagetitle { position: relative; }
@@ -358,7 +358,7 @@ h1.crm-fld-block {
 h1:hover .crm-fld-icon { background: url("images/crm/mini-sprite.png") no-repeat 0 -55px; }
 
 h1 .crm-fld.crm-fld-input .crm-fld-text,
-h1.crm-fld-edit .crm-fld.crm-fld-input .crm-fld-element-input { font: bold 21px "Helvetica Noue", Helvetica, Arial, sans-sherif; }
+h1.crm-fld-edit .crm-fld.crm-fld-input .crm-fld-element-input { font: var(--ui-font-weight-bold) 21px "Helvetica Noue", Helvetica, Arial, sans-sherif; }
 
 h1.crm-fld-block .crm-fld-icon {
 	position: static;
@@ -377,7 +377,7 @@ h1.crm-fld-edit .crm-fld-icon { display: none; }
 #pagetitle .crm-fld-element-input {
 	padding: 5px 7px 5px 5px;
 	height: 25px;
-	font: bold 21px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 21px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .crm-navigation {
@@ -429,7 +429,7 @@ h1.crm-fld-edit .crm-fld-icon { display: none; }
 	border-radius: 4px 4px 0 0;
 	background: url("images/crm/mini-sprite.png") repeat-x 0 -200px #efefef;
 	white-space: nowrap;
-	font: bold 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 /* for old templates */
@@ -442,7 +442,7 @@ table.bx-edit-table td.bx-heading .bx-crm-view-fieldset-title {
 	border-radius: 4px 4px 0 0;
 	background: none;
 	white-space: nowrap;
-	font: bold 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 .bx-crm-view-fieldset-minimized .bx-crm-view-fieldset-title {
@@ -454,7 +454,7 @@ table.bx-edit-table td.bx-heading .bx-crm-view-fieldset-title {
 .bx-crm-view-fieldset-close-title {
 	border-bottom: 1px dashed #0069c4;
 	color: #0069c4;
-	font: bold 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px/32px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	cursor: pointer;
 }
 
@@ -532,7 +532,7 @@ div.bx-crm-view .bx-crm-view-fieldset-title a.bx-crm-view-fieldset-title-button 
 	vertical-align: top;
 	text-decoration: none;
 	text-shadow: 0 1px 0 #fff;
-	font: bold 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 13px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
 
 table.bx-crm-view-fieldset-content-table {
@@ -693,7 +693,7 @@ table.crm-view-table thead td {
 	padding: 4px 5px !important;
 	border-bottom: 1px solid #fff !important;
 	background: #f5f6f8 !important;
-	font-weight: bold !important;
+	font-weight: var(--ui-font-weight-bold) !important;
 }
 
 table.crm-view-table thead td:first-child {
@@ -955,7 +955,7 @@ div.bx-crm-dialog-view-activity-file .finder-box-selected-item-icon {
 
 .bx-crm-dialog-tittle-text {
 	margin-left: 9px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 15px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
@@ -1006,7 +1006,7 @@ span.bx-crm-dialog-title-text {
 	vertical-align: middle;
 	text-overflow: ellipsis;
 	white-space: nowrap;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 15px;
 	font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 }
@@ -1458,7 +1458,7 @@ a.bx-crm-dialog-activity-fwplayer-download-link {
 .crm-connection-search-dlg-button {
 	display: inline-block;
 	margin-right: 3px;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	font-size: 11px;
 }
 
@@ -1706,7 +1706,7 @@ table.bx-interface-grid div.crm-nearest-activity-subject {
 	max-width: 140px;
 	color: #000;
 	text-overflow: ellipsis;
-	font-size: 12px;
+	font-size: 13px;
 }
 
 table.main-grid-table div.crm-nearest-activity-plus,
@@ -1732,13 +1732,14 @@ table.bx-interface-grid div.crm-nearest-activity-plus:active { background-positi
 
 .bx-no-touch table.main-grid-table tr:hover div.crm-nearest-activity-plus,
 .bx-no-touch table.bx-interface-grid tr:hover div.crm-nearest-activity-plus { display: block; }
+.bx-no-touch table.main-grid-table tr div.crm-nearest-activity-plus.--active { display: block; }
 
 table.bx-interface-grid tr td.crm-current-activity { background-color: #fbf6e5 !important; }
 
 div.crm-client-summary-wrapper .crm-client-description-wrapper,
 div.crm-info-wrapper .crm-info-description-wrapper {
 	color: #484848;
-	font-size: 11px;
+	font-size: 12px;
 }
 
 a.crm-info-wrapper {
@@ -1754,12 +1755,12 @@ tr.bx-over a.crm-info-wrapper:hover { border-color: #bbd7f2; }
 
 a.crm-info-wrapper > .crm-info-description-wrapper {
 	color: #484848;
-	font-size: 11px;
+	font-size: 12px;
 }
 
 .crm-info-legend-wrapper {
 	color: #828b95;
-	font-size: 11px;
+	font-size: 12px;
 }
 
 table.main-grid-table a.crm-activity-add,
@@ -1771,7 +1772,7 @@ table.bx-interface-grid a.crm-activity-add {
 	color: #2067b0;
 	text-decoration: none;
 	white-space: nowrap;
-	font-size: 12px;
+	font-size: 13px;
 	cursor: pointer;
 }
 
@@ -1780,13 +1781,14 @@ table.bx-interface-grid a.crm-activity-add:hover { text-decoration: none; }
 
 table.main-grid-table tr:hover td a.crm-activity-add,
 table.bx-interface-grid tr:hover td a.crm-activity-add { visibility: visible; }
+table.main-grid-table tr td a.crm-activity-add.--active { visibility: visible; }
 
 table.main-grid-table span.crm-activity-add-hint,
 table.bx-interface-grid span.crm-activity-add-hint {
 	display: block;
 	color: #8d8d8d;
 	white-space: nowrap;
-	font-size: 12px;
+	font-size: 13px;
 }
 
 table.main-grid-table tr:hover td span.crm-activity-add-hint,
@@ -1797,7 +1799,7 @@ table.bx-crm-grid-multi-field-viewer td { padding: 4px; }
 table.bx-crm-grid-multi-field-viewer span.crm-multi-field-value-type,
 div.bx-crm-multi-field-wrapper span.crm-multi-field-value-type {
 	color: #484848;
-	font-size: 10px;
+	font-size: 11px;
 }
 
 table.bx-crm-grid-multi-field-viewer span.crm-multi-field-value-type { padding-left: 5px; }
@@ -1816,7 +1818,7 @@ div.bx-crm-multi-field-wrapper span.crm-multi-field-popup-button {
 	display: inline-block;
 	border-bottom: 1px dashed #0069c4;
 	color: #0069c4;
-	font-size: 11px;
+	font-size: 12px;
 	cursor: pointer;
 }
 
@@ -1859,6 +1861,8 @@ a.crm-activity-subject:before {
 	background-repeat: no-repeat;
 	content: "";
 }
+
+div.crm-activity-crm_todo a.crm-activity-subject:before { background-position: 0 -143px; }
 
 div.crm-activity-meeting a.crm-activity-subject:before { background-position: 0 -92px; }
 

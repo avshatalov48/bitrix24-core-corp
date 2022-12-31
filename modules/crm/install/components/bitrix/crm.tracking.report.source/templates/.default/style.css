@@ -124,13 +124,13 @@
 .crm-tracking-report-source-rating-text {
 	font: 10px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	text-transform: uppercase;
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 	white-space: nowrap;
 	color: rgba(128, 137, 147, 0.7);
 }
 .crm-tracking-report-source-rating-bold .crm-tracking-report-source-rating-value,
 .crm-tracking-report-source-rating-bold .crm-tracking-report-source-rating-text {
-	font-weight: bold;
+	font-weight: var(--ui-font-weight-bold);
 }
 .crm-tracking-report-source-rating-success .crm-tracking-report-source-rating-text {
 	color: #6F9300;

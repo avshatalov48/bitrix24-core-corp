@@ -19,6 +19,11 @@ class PaymentTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_PAYMENT_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_PAYMENT_NAME_1');
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_PAYMENT_DESCRIPTION') ?? '';
 	}
 }

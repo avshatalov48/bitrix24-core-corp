@@ -3,8 +3,8 @@
 namespace Bitrix\Crm\Service\Timeline\Layout;
 
 use Bitrix\Crm\Service\Timeline\Layout\Header\ChangeStreamButton;
+use Bitrix\Crm\Service\Timeline\Layout\Header\InfoHelper;
 use Bitrix\Crm\Service\Timeline\Layout\Header\Tag;
-use Bitrix\Crm\Service\Timeline\Layout\Header\User;
 use Bitrix\Main\Type\DateTime;
 
 class Header extends Base
@@ -19,6 +19,7 @@ class Header extends Base
 	 */
 	protected array $tags = [];
 	protected ?User $user = null;
+	protected ?InfoHelper $infoHelper = null;
 
 	public function getChangeStreamButton(): ?ChangeStreamButton
 	{
@@ -128,6 +129,18 @@ class Header extends Base
 		return $this;
 	}
 
+	public function getInfoHelper(): ?InfoHelper
+	{
+		return $this->infoHelper;
+	}
+
+	public function setInfoHelper(?InfoHelper $infoHelper): self
+	{
+		$this->infoHelper = $infoHelper;
+
+		return $this;
+	}
+
 	public function toArray(): array
 	{
 		return [
@@ -138,6 +151,7 @@ class Header extends Base
 			'datePlaceholder' => $this->getDatePlaceholder(),
 			'tags' => $this->getTags(),
 			'user' => $this->getUser(),
+			'infoHelper' => $this->getInfoHelper(),
 		];
 	}
 }

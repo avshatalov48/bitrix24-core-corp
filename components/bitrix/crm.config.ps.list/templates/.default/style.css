@@ -38,7 +38,7 @@
 }
 
 .crm-config-ps-list-createform-element {
-	font: bold 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 15px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #0b66c3;
 }
 
@@ -589,7 +589,7 @@ div.crm-config-ps-list-widget-content {
 .crm-config-ps-list-activate-user-element {
 	display: inline-block;
 	width: 100%;
-	font: bold 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
+	font: var(--ui-font-weight-bold) 12px var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 	color: #29619b;
 	vertical-align: middle;
 	overflow: hidden;

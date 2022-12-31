@@ -75,7 +75,7 @@ class CleaningAgent extends Crm\Agent\AgentBase
 
 	public static function activate()
 	{
-		\CAgent::AddAgent(
+		self::$isActive = !!(\CAgent::AddAgent(
 			__CLASS__.'::run();',
 			'crm',
 			'N',
@@ -83,6 +83,6 @@ class CleaningAgent extends Crm\Agent\AgentBase
 			'',
 			'Y',
 			ConvertTimeStamp(time() + \CTimeZone::GetOffset(), 'FULL')
-		);
+		));
 	}
 }

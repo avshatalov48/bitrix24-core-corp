@@ -9,11 +9,11 @@ CJSCore::Init(["popup"]);
 		padding: 18px;
 		border: 1px solid #d7e0e4;
 		-webkit-border-radius: 1px;
-		border-radius: 1px;
+		border-radius: var(--ui-border-radius-sm, 1px);
 	}
 
 	.crm-lead-popup-content {
-		font-family:'Helvetica Neue', Helvetica, Arial, sans-serif;
+		font-family: var(--ui-font-family-primary, var(--ui-font-family-helvetica));
 		font-size:16px;
 		min-width:500px;
 		color:#000;
@@ -115,7 +115,7 @@ CJSCore::Init(["popup"]);
 		background: #f7f9fa;
 		cursor: pointer;
 		display: block;
-		border-radius: 2px;
+		border-radius: var(--ui-border-radius-xs, 2px);
 		padding: 21px;
 		position: relative;
 		-webkit-transition: .2s;

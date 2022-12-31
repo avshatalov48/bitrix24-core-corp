@@ -20,10 +20,16 @@
 	--ui-font-weight-medium: 600;
 }
 
-.bx-linux:root,
-.bx-linux body {
+.bx-linux.bx-font-medium:root,
+.bx-linux.bx-font-medium body {
 	--ui-font-weight-bold: 500;
 	--ui-font-weight-semi-bold: 500;
+}
+
+.bx-linux.bx-font-semi-bold:root,
+.bx-linux.bx-font-semi-bold body {
+	--ui-font-weight-bold: 600;
+	--ui-font-weight-semi-bold: 600;
 }
 
 b,

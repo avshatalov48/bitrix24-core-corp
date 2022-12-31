@@ -1,0 +1,305 @@
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100% 1285"
+	 preserveAspectRatio="xMinYMin meet" style="width: 100%; height: 1285px" fill="none">
+
+	<svg height="1285px">
+		<defs>
+			<g id="block-btn-max-top">
+				<rect x="0" y="28" width="96" height="39" rx="3.5" stroke="#C6CDD3" />
+			</g>
+
+			<g id="block-btn-middle-top">
+				<rect x="0" y="28" width="43" height="39" rx="3.5" stroke="#C6CDD3" />
+			</g>
+
+			<g id="block-btn-min-top">
+				<rect x="0" y="28" width="31" height="31" rx="3.5" stroke="#C6CDD3" />
+			</g>
+
+			<g id="block-1">
+				<rect x="40" width="44%" height="58" fill="#FDFDFD" stroke="#EDEEF0" />
+			</g>
+		</defs>
+
+		<rect width="100%" height="1285" fill="#EEF2F4" />
+		<use xlink:href="#block-btn-max-top" x="100%" transform="translate(-116)"></use>
+		<use xlink:href="#block-btn-middle-top" x="100%" transform="translate(-173)"></use>
+		<rect x="100%" y="34" width="1" height="28" fill="#dbdfe3" transform="translate(-193)"/>
+		<use xlink:href="#block-btn-middle-top" x="100%" transform="translate(-256)"></use>
+		<use xlink:href="#block-btn-middle-top" x="100%" transform="translate(-313)"></use>
+		<use xlink:href="#block-btn-middle-top" x="100%" transform="translate(-369)"></use>
+
+		<use xlink:href="#block-btn-min-top" x="100%" y="75" transform="translate(-51, 0)" />
+		<rect x="20" y="215" width="46%" height="194" rx="10" fill="#F5F8F9" />
+		<rect x="20" y="424" width="46%" height="247" rx="10" fill="#F5F8F9" />
+		<rect x="20" y="686" width="46%" height="103" rx="10" fill="#F5F8F9" />
+		<rect x="20" y="804" width="46%" height="103" rx="10" fill="#F5F8F9" />
+		<rect x="20" y="922" width="46%" height="76" rx="10" fill="#F5F8F9" />
+		<rect x="20" y="1013" width="46%" height="57" rx="10" fill="#F5F8F9" />
+		<rect x="20" y="1085" width="46%" height="57" rx="10" fill="#F5F8F9" />
+
+		<rect x="46%" y="214" width="54%" height="94" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="359" width="54%" height="128" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="502" width="54%" height="80" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="597" width="54%" height="58" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="670" width="54%" height="58" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="779" width="54%" height="128" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="922" width="54%" height="80" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="1017" width="54%" height="58" rx="10" fill="white" transform="translate(28)"/>
+		<rect x="46%" y="1090" width="54%" height="58" rx="10" fill="white" transform="translate(28)"/>
+
+		<use xlink:href="#block-1" y="492"></use>
+		<use xlink:href="#block-1" y="592"></use>
+		<rect x="46%" y="492" width="1" height="58" fill="#EDEEF0" transform="translate(-56)"/>
+		<rect x="46%" y="592" width="1" height="58" fill="#EDEEF0" transform="translate(-56)"/>
+		<rect x="46%" y="424" width="20" height="247" fill="#F5F8F9" transform="translate(-55)"/>
+
+		<rect x="46%" y="264" width="54%" height="1" fill="#e2e3e5" transform="translate(28)"/>
+	</svg>
+
+	<svg height="100%">
+		<defs>
+			<g id="upper-right-corner">
+				<path d="M9.99997 10V0H0C5.52285 0 9.99997 4.47715 9.99997 10Z" fill="#eef2f4"/>
+			</g>
+			<g id="lower-right-corner">
+				<path d="M9.99997 0V10H0C5.52285 10 9.99997 5.52285 9.99997 0Z" fill="#eef2f4"/>
+			</g>
+		</defs>
+
+		<rect width="63" height="100%" fill="#EEF2F4" x="46%" y="215" transform="translate(-35)" />
+		<use xlink:href="#upper-right-corner" x="46%" y="215" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="399" transform="translate(-45)" ></use>
+		<use xlink:href="#upper-right-corner" x="46%" y="424" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="661" transform="translate(-45)" ></use>
+		<use xlink:href="#upper-right-corner" x="46%" y="686" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="779" transform="translate(-45)" ></use>
+		<use xlink:href="#upper-right-corner" x="46%" y="804" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="897" transform="translate(-45)" ></use>
+		<use xlink:href="#upper-right-corner" x="46%" y="922" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="988" transform="translate(-45)" ></use>
+		<use xlink:href="#upper-right-corner" x="46%" y="1013" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="1060" transform="translate(-45)" ></use>
+		<use xlink:href="#upper-right-corner" x="46%" y="1085" transform="translate(-45)" ></use>
+		<use xlink:href="#lower-right-corner" x="46%" y="1132" transform="translate(-45)" ></use>
+
+		<rect width="20" height="100%" fill="#EEF2F4" x="100%" y="214" transform="translate(-20)" />
+		<use xlink:href="#upper-right-corner" x="100%" y="214" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="298" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="359" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="477" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="502" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="572" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="597" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="645" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="670" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="718" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="779" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="897" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="922" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="992" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="1017" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="1065" transform="translate(-30)" ></use>
+
+		<use xlink:href="#upper-right-corner" x="100%" y="1090" transform="translate(-30)" ></use>
+		<use xlink:href="#lower-right-corner" x="100%" y="1138" transform="translate(-30)" ></use>
+	</svg>
+
+
+
+	<svg height="1285px" id="animated-elements">
+		<defs>
+			<g id="block-btn-max-top--animat">
+				<rect x="0" y="42" width="76" height="10" rx="2" fill="#dee3e6" />
+			</g>
+
+			<g id="block-btn-middle-top--animat">
+				<rect x="0" y="42" width="22" height="10" rx="2" fill="#dee3e6" />
+			</g>
+
+			<g id="block-btn-min-top--animat">
+				<rect x="0" y="114" width="10" height="10" rx="2" fill="#dee3e6" />
+			</g>
+
+			<g id="block-stage--animat">
+				<rect x="0" y="103" width="22%" height="32" rx="2" fill="#dee3e6" />
+				<svg x="22%" y="103">
+					<path fill-rule="evenodd" clip-rule="evenodd" d="M-136 3C-136 1.34315 -134.657 0 -133 0H3.90631C5.23847 0 6.41107 0.878484 6.78542 2.15697L11 16.5505L6.81322 29.8979C6.42085 31.1488 5.26171 32 3.95075 32H-133C-134.657 32 -136 30.6569 -136 29V3Z" fill="#dee3e6" fill-opacity="1"/>
+				</svg>
+			</g>
+
+			<g id="block-item-1--animat">
+				<rect x="0" y="233" width="64" height="10" rx="2" fill="#e4e8ea" />
+			</g>
+
+			<g id="block-item-2--animat">
+				<rect x="60" y="515" width="12%" height="10" rx="2" fill="#e4e8ea" />
+			</g>
+
+			<g id="block-item-3--animat">
+				<rect x="40" y="704" width="64" height="10" rx="2" fill="#e4e8ea" />
+				<rect x="40" y="729" width="19%" height="10" rx="2" fill="#e4e8ea" />
+				<rect x="40" y="751" width="19%" height="10" rx="2" fill="#e4e8ea" />
+			</g>
+
+			<g id="block-item-4--animat">
+				<rect x="40" y="965" width="19%" height="10" rx="2" fill="#e4e8ea" />
+			</g>
+
+			<g id="block-item-5--animat">
+				<rect x="0" y="236" width="73" height="10" rx="2" fill="#ecedee" />
+			</g>
+
+			<g id="block-item-6--animat">
+				<rect x="0" y="376" width="29%" height="8" rx="2" fill="#ecedee" />
+			</g>
+
+			<g id="block-item-7--animat">
+				<rect x="0" y="394" width="22%" height="8" rx="2" fill="#ecedee" />
+				<rect x="0" y="411" width="10%" height="8" rx="2" fill="#ecedee" />
+			</g>
+
+			<g id="block-item-8--animat">
+				<rect x="0" y="439" width="36%" height="8" rx="2" fill="#ecedee" />
+				<rect x="0" y="456" width="22%" height="8" rx="2" fill="#ecedee" />
+			</g>
+
+
+
+
+		</defs>
+
+		<rect x="25" y="40" width="46%" height="13" rx="2" fill="#dee3e6" />
+		<use xlink:href="#block-btn-max-top--animat" x="100%" transform="translate(-106)"></use>
+		<use xlink:href="#block-btn-middle-top--animat" x="100%" transform="translate(-162)"></use>
+		<use xlink:href="#block-btn-middle-top--animat" x="100%" transform="translate(-246)"></use>
+		<use xlink:href="#block-btn-middle-top--animat" x="100%" transform="translate(-302)"></use>
+		<use xlink:href="#block-btn-middle-top--animat" x="100%" transform="translate(-358)"></use>
+
+		<use xlink:href="#block-btn-min-top--animat" x="100%" transform="translate(-41)"></use>
+
+		<use xlink:href="#block-stage--animat" x="25"></use>
+		<use xlink:href="#block-stage--animat" x="22%" transform="translate(37)"></use>
+		<use xlink:href="#block-stage--animat" x="44%" transform="translate(49)"></use>
+		<use xlink:href="#block-stage--animat" x="66%" transform="translate(61)"></use>
+
+
+		<rect x="40" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+
+		<rect x="143" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+		<rect x="246" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+		<rect x="349" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+		<rect x="452" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+		<rect x="555" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+		<rect x="658" y="170" width="64" height="10" rx="2" fill="#dee3e6" />
+
+		<use xlink:href="#block-item-1--animat" x="40"></use>
+		<use xlink:href="#block-item-1--animat" x="46%" transform="translate(-117)"></use>
+		<use xlink:href="#block-item-1--animat" x="40" y="49"></use>
+		<rect x="40" y="301" width="16%" height="20" rx="2" fill="#e4e8ea" />
+		<rect x="40" y="349" width="10%" height="10" rx="2" fill="#e4e8ea" />
+		<rect x="40" y="368" width="139" height="13" rx="2" fill="#e4e8ea" />
+		<use xlink:href="#block-item-1--animat" x="40" y="208"></use>
+		<use xlink:href="#block-item-1--animat" x="40" y="238"></use>
+		<use xlink:href="#block-item-1--animat" x="40" y="337"></use>
+		<use xlink:href="#block-item-1--animat" x="40" y="707"></use>
+		<use xlink:href="#block-item-1--animat" x="46%" y="208" transform="translate(-117)"></use>
+		<use xlink:href="#block-item-1--animat" x="46%" y="208" transform="translate(-198)"></use>
+		<use xlink:href="#block-item-1--animat" x="46%" y="337" transform="translate(-117)"></use>
+		<use xlink:href="#block-item-1--animat" x="46%" y="337" transform="translate(-198)"></use>
+		<use xlink:href="#block-item-2--animat" ></use>
+		<use xlink:href="#block-item-2--animat" y="100"></use>
+
+		<use xlink:href="#block-item-3--animat" ></use>
+		<use xlink:href="#block-item-3--animat" y="118"></use>
+
+		<use xlink:href="#block-item-4--animat" ></use>
+		<use xlink:href="#block-item-4--animat" y="72"></use>
+		<use xlink:href="#block-item-4--animat" y="144"></use>
+
+		<use xlink:href="#block-item-5--animat" x="46%" transform="translate(48)"></use>
+		<use xlink:href="#block-item-5--animat" x="46%" transform="translate(136)"></use>
+		<use xlink:href="#block-item-5--animat" x="46%" transform="translate(225)"></use>
+		<use xlink:href="#block-item-5--animat" x="46%" transform="translate(315)"></use>
+		<rect x="100%" y="236" width="39" height="10" rx="2" fill="#ecedee" transform="translate(-79)"/>
+		<rect x="46%" y="281" width="13%" height="10" rx="2" fill="#ecedee" transform="translate(48)" />
+
+		<use xlink:href="#block-item-6--animat" x="46%" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" transform="translate(48)"></use>
+		<use xlink:href="#block-item-8--animat" x="46%" transform="translate(48)"></use>
+
+		<use xlink:href="#block-item-6--animat" x="46%" y="142" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" y="142" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" y="217" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" y="292" transform="translate(48)"></use>
+
+		<use xlink:href="#block-item-7--animat" x="46%" y="420" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" y="562" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" y="640" transform="translate(48)"></use>
+		<use xlink:href="#block-item-7--animat" x="46%" y="712" transform="translate(48)"></use>
+		<use xlink:href="#block-item-6--animat" x="46%" y="420" transform="translate(48)"></use>
+		<use xlink:href="#block-item-6--animat" x="46%" y="562" transform="translate(48)"></use>
+		<use xlink:href="#block-item-8--animat" x="46%" y="420" transform="translate(48)"></use>
+
+		<rect x="73%" y="323" width="124" height="21" rx="10.5" fill="#dee3e5" transform="translate(-62)"/>
+		<rect x="73%" y="743" width="124" height="21" rx="10.5" fill="#dee3e5" transform="translate(-62)"/>
+	</svg>
+
+
+
+	<rect id="msk1" width="100%" fill="url(#msk_gd)" mask="url(#headerMsk)" height="1270"/>
+
+	<mask id="headerMsk" fill="white">
+		<use xlink:href="#animated-elements"/>
+	</mask>
+
+	<linearGradient x1="66.6%" y1="50%" x2="33.3%" y2="50%" id="msk_gd">
+		<stop stop-color="#000000" stop-opacity="0" offset="0%"/>
+		<stop stop-color="#000000" stop-opacity="0.07" offset="50%"/>
+		<stop stop-color="#000000" stop-opacity="0" offset="100%"/>
+	</linearGradient>
+
+	<animate xlink:href="#msk1" attributeName="x" from="-100%" to="100%" dur="1s" begin="0s" repeatCount="indefinite"/>
+
+	<svg height="1285px">
+		<defs>
+			<g id="line">
+				<rect x="46%" y="0" width="14" height="1" rx="0.5" fill="#dfe3e6" transform="translate(13)"/>
+			</g>
+
+			<g id="circle">
+				<circle cx="46%" cy="0" r="15.5" fill="#dfe3e6" transform="translate(-2)"/>
+			</g>
+		</defs>
+
+		<use xlink:href="#line" y="234"></use>
+		<use xlink:href="#line" y="374"></use>
+		<use xlink:href="#line" y="523"></use>
+		<use xlink:href="#line" y="627"></use>
+		<use xlink:href="#line" y="692"></use>
+		<use xlink:href="#line" y="802"></use>
+		<use xlink:href="#line" y="947"></use>
+		<use xlink:href="#line" y="1040"></use>
+		<use xlink:href="#line" y="1110"></use>
+
+		<use xlink:href="#circle" y="234.5"></use>
+		<use xlink:href="#circle" y="374.5"></use>
+		<use xlink:href="#circle" y="523.5"></use>
+		<use xlink:href="#circle" y="627.5"></use>
+		<use xlink:href="#circle" y="692.5"></use>
+		<use xlink:href="#circle" y="802.5"></use>
+		<use xlink:href="#circle" y="947.5"></use>
+		<use xlink:href="#circle" y="1040.5"></use>
+		<use xlink:href="#circle" y="1110.5"></use>
+
+		<rect x="46%" y="333" width="54%" height="1" fill="#dfe3e6" transform="translate(-2)"/>
+		<rect x="46%" y="753" width="54%" height="1" fill="#dfe3e6" transform="translate(-2)"/>
+		<rect x="46%" y="234" width="1" height="878" fill="#dfe3e6" transform="translate(-2)"/>
+	</svg>
+</svg>

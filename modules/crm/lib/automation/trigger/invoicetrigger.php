@@ -24,7 +24,7 @@ class InvoiceTrigger extends BaseTrigger
 
 	public static function getName()
 	{
-		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_INVOICE_NAME');
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_INVOICE_NAME_1');
 	}
 
 	/**
@@ -103,5 +103,15 @@ class InvoiceTrigger extends BaseTrigger
 				]
 			);
 		}
+	}
+
+	public static function getDescription(): string
+	{
+		return Loc::getMessage('CRM_AUTOMATION_TRIGGER_INVOICE_DESCRIPTION') ?? '';
+	}
+
+	public static function getGroup(): array
+	{
+		return ['payment'];
 	}
 }

@@ -98,7 +98,7 @@ export class Dropzone extends EventEmitter
 				<div class="tasks-scrum__content-empty--text">
 					<span class="tasks-scrum__content-empty--btn-create">
 						${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_2')}
-					</span>${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_3')}
+					</span> ${Loc.getMessage('TASKS_SCRUM_SPRINT_BLANK_3')}
 				</div>
 			`;
 		}

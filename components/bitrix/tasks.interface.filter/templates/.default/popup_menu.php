@@ -1,4 +1,10 @@
 <?php
+
+use Bitrix\Main\Localization\Loc;
+use Bitrix\Main\Web\Json;
+use Bitrix\Tasks\Access\TaskAccessController;
+use Bitrix\Tasks\Helper\Filter;
+
 if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 {
 	die();
@@ -28,7 +34,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 		<?php if($arParams['USE_GROUP_BY_SUBTASKS'] == 'Y'):?>
 		<?php
-		$instance = \CTaskListState::getInstance($arParams['USER_ID']);
+		$instance = CTaskListState::getInstance($arParams['USER_ID']);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
 		$groupBySubTasks = $submodes['VIEW_SUBMODE_WITH_SUBTASKS']['SELECTED'] == 'Y';
@@ -88,7 +94,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 
 		<?php if($arParams['USE_GROUP_BY_GROUPS'] == 'Y'):?>
 		<?php
-		$instance = \CTaskListState::getInstance($arParams['USER_ID']);
+		$instance = CTaskListState::getInstance($arParams['USER_ID']);
 		$state = $instance->getState();
 		$submodes = $state['SUBMODES'];
 		$groupByGroups = $submodes['VIEW_SUBMODE_WITH_GROUPS']['SELECTED'] == 'Y';
@@ -289,7 +295,7 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 			delimiter: true
 		});
 
-		<?php if(\Bitrix\Tasks\Access\TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT)): ?>
+		<?php if(TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT)): ?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_IMPORT')?>',
@@ -305,7 +311,56 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 		});
 		<?php endif; ?>
 
-		<?php if(\Bitrix\Tasks\Access\TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_EXPORT)): ?>
+		<?php if(TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_EXPORT)):?>
+
+		var baloonShowed = false;
+		var baloonLifeTime = 5000;
+
+		var onClickExport = function(exportType = ''){
+			if (
+				typeof BX.Main.gridManager === 'undefined'
+				|| typeof BX.Main.gridManager.getInstanceById('<?=$arParams['GRID_ID']?>') === 'undefined'
+			)
+			{
+				return;
+			}
+
+			if (
+				!BX.Main.gridManager.getInstanceById('<?=$arParams['GRID_ID']?>').getEmptyStub()
+			)
+			{
+				var hrefExport =
+					'<?=$arParams['PATH_TO_TASKS']?>'
+					+ '?F_STATE=sv'
+					+ '<?=CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST)?>'
+					+ '&EXPORT_AS=EXCEL&ncc=1'
+				;
+
+				if (exportType === 'all')
+				{
+					hrefExport += '&COLUMNS=ALL';
+				}
+
+				window.location.href = hrefExport;
+			}
+			else
+			{
+				if (!baloonShowed)
+				{
+					BX.UI.Notification.Center.notify({
+						content: '<?=Loc::getMessage('TASKS_INTERFACE_FILTER_NO_TASKS_FOR_EXPORT')?>',
+						autoHideDelay: baloonLifeTime,
+					});
+
+					baloonShowed = true;
+
+					setTimeout(function() {
+						baloonShowed = false;
+					}, baloonLifeTime + 500);
+				}
+			}
+		};
+		<?php if ($arParams['SCOPE'] === 'tasks_gantt'): ?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
 			text: '<?=GetMessageJS('TASKS_BTN_EXPORT')?>',
@@ -315,15 +370,43 @@ if (!defined('B_PROLOG_INCLUDED') || B_PROLOG_INCLUDED !== true)
 					tabId: "popupMenuOptions",
 					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL')?>',
 					className: "tasks-interface-filter-icon-excel",
-					href: '<?=$arParams['PATH_TO_TASKS']?>?F_STATE=sV<?= CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST); ?>&EXPORT_AS=EXCEL&ncc=1'
+					href: '<?=$arParams['PATH_TO_TASKS']?>?F_STATE=sV<?= CTaskListState::encodeState(CTaskListState::VIEW_MODE_LIST); ?>&EXPORT_AS=EXCEL&ncc=1',
 				}
 			]
+
+		})
+		<?php else:?>
+		menuItemsOptions.push({
+			tabId: "popupMenuOptions",
+			text: '<?=GetMessageJS('TASKS_BTN_EXPORT_TO_EXCEL')?>',
+			className: "<?=$groupBySubTasks ? 'menu-popup-item-none' : 'menu-popup-item-none'?>",
+			items: [
+				{
+					tabId: "popupMenuOptions",
+					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL_GRID_FIELDS')?>',
+					className: "tasks-interface-filter-icon-excel",
+					onclick: function(){
+						onClickExport();
+					}
+				},
+				{
+					tabId: "popupMenuOptions",
+					text: '<?=GetMessageJS('TASKS_BTN_EXPORT_EXCEL_ALL_FIELDS')?>',
+					className: "tasks-interface-filter-icon-excel",
+					onclick: function(){
+						onClickExport('all');
+					},
+				},
+
+			]
 		});
+		<?php endif;?>
+
 		<?php endif; ?>
 
 		<?php if(
-		\Bitrix\Tasks\Access\TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_EXPORT)
-		&& \Bitrix\Tasks\Access\TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT)
+		TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_EXPORT)
+		&& TaskAccessController::can($arResult['USER_ID'], \Bitrix\Tasks\Access\ActionDictionary::ACTION_TASK_IMPORT)
 		): ?>
 		menuItemsOptions.push({
 			tabId: "popupMenuOptions",
