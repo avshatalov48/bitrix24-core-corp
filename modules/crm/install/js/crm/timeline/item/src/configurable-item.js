@@ -167,9 +167,9 @@ export default class ConfigurableItem extends TimelineItem
 
 	getCreatedDate(): Date
 	{
-		const serverTimezoneDate = (this.#timestamp ? new Date(this.#timestamp * 1000) : new Date());
+		const timestamp = this.#timestamp ? this.#timestamp : Date.now() / 1000;
 
-		return BX.prop.extractDate((new DatetimeConverter(serverTimezoneDate)).toUserTime().getValue());
+		return BX.prop.extractDate(DatetimeConverter.createFromServerTimestamp(timestamp).toUserTime().getValue());
 	}
 
 	getSourceId(): number
@@ -249,7 +249,7 @@ export default class ConfigurableItem extends TimelineItem
 			return null;
 		}
 
-		return (new DatetimeConverter(new Date(this.#timestamp * 1000))).toUserTime().getValue();
+		return DatetimeConverter.createFromServerTimestamp(this.#timestamp).toUserTime().getValue();
 	}
 
 	getSort(): Array

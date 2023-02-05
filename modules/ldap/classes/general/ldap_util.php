@@ -534,9 +534,9 @@ class CLdapUtil
 		return false;
 	}
 
-	public static function isLdapPaginationAviable()
+	public static function isLdapPaginationAviable(): bool
 	{
-		return function_exists("ldap_control_paged_result");
+		return true;
 	}
 
 	/**

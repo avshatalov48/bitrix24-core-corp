@@ -69,15 +69,17 @@ abstract class Base
 
 		$instance = null;
 
-		if ($userId > 0 && !isset($instanceByUserId[$userId]))
+		$index = static::class . '_' . $userId;
+
+		if ($userId > 0 && !isset($instanceByUserId[$index]))
 		{
 			$instance = new static($userId);
-			$instanceByUserId[$userId] = $instance;
+			$instanceByUserId[$index] = $instance;
 		}
 
-		if ($instance === null && isset($instanceByUserId[$userId]))
+		if ($instance === null && isset($instanceByUserId[$index]))
 		{
-			$instance = $instanceByUserId[$userId];
+			$instance = $instanceByUserId[$index];
 		}
 
 		return $instance;

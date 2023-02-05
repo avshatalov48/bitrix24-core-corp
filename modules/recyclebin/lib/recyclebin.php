@@ -27,6 +27,11 @@ class Recyclebin
 
 		$handler = self::getHandler($entity);
 
+		if (!class_exists($handler))
+		{
+			return null;
+		}
+
 		$result = call_user_func([$handler, 'moveFromRecyclebin'], $entity);
 
 		if ($result)

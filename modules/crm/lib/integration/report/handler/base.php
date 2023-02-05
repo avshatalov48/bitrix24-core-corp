@@ -35,6 +35,10 @@ abstract class Base extends BaseReport
 	protected static $userFields = [];
 	protected static $requiredUserFieldsList = ['ID', 'LOGIN', 'NAME', 'LAST_NAME', 'SECOND_NAME','PERSONAL_PHOTO'];
 
+	private ?Filter $filter = null;
+	private array $filterParameters = [];
+	private array $users = [];
+
 	/**
 	 * @param array|Request $requestParameters
 	 *
@@ -47,44 +51,42 @@ abstract class Base extends BaseReport
 
 	protected function getFilterParameters()
 	{
-		static $filterParameters = [];
-
 		$filter = $this->getFilter();
 		$filterId = $filter->getFilterParameters()['FILTER_ID'];
 
-		if (!$filterParameters[$filterId])
+		if (!$this->filterParameters[$filterId])
 		{
 			//@TODO it is HACK here cant be filter class by no means
 			//maybe add some construction to collect all filters for reports in one container
 			$options = new Options($filterId, $filter->getPresetsList());
 			$fieldList = $filter->getFieldsList();
 			$rawParameters = $options->getFilter($fieldList);
-			$filterParameters[$filterId] = $this->mutateFilterParameter($rawParameters, $fieldList);
+
+			$this->filterParameters[$filterId] = $this->mutateFilterParameter($rawParameters, $fieldList);
 		}
 
-		return $filterParameters[$filterId];
+		return $this->filterParameters[$filterId];
 	}
 
 	protected function getFilter()
 	{
-		static $filter;
-		if ($filter)
+		if (isset($this->filter))
 		{
-			return $filter;
+			return $this->filter;
 		}
 
 		$boardKey = $this->getWidgetHandler()->getWidget()->getBoardId();
 		$board = $this->getAnalyticBoardByKey($boardKey);
 		if ($board)
 		{
-			$filter = $board->getFilter();
+			$this->filter = $board->getFilter();
 		}
 		else
 		{
-			$filter = new Filter($boardKey);
+			$this->filter = new Filter($boardKey);
 		}
 
-		return $filter;
+		return $this->filter;
 	}
 
 	protected function mutateFilterParameter($filterParameters, array $fieldList)
@@ -445,18 +447,15 @@ abstract class Base extends BaseReport
 	 */
 	public function getUserInfo($userId, array $params = [])
 	{
-		static $users = [];
-
 		$userId = (int)$userId;
-
 		if (!$userId)
 		{
 			return ['name' => Loc::getMessage('CRM_REPORT_BASE_USER_DEFAULT_NAME')];
 		}
 
-		if(isset($users[$userId]))
+		if (isset($this->users[$userId]))
 		{
-			return $users[$userId];
+			return $this->users[$userId];
 		}
 
 		// prepare link to profile
@@ -485,7 +484,7 @@ abstract class Base extends BaseReport
 			false
 		);
 
-		$userName =  !empty($userName) ? $userName : Loc::getMessage('CRM_REPORT_BASE_USER_DEFAULT_NAME');
+		$userName = !empty($userName) ? $userName : Loc::getMessage('CRM_REPORT_BASE_USER_DEFAULT_NAME');
 
 		// prepare icon
 		$fileTmp = \CFile::ResizeImageGet(
@@ -501,14 +500,14 @@ abstract class Base extends BaseReport
 		);
 		$userIcon = $fileTmp['src'];
 
-		$users[$userId] = [
+		$this->users[$userId] = [
 			'id' => $userId,
 			'name' => $userName,
 			'link' => $link,
 			'icon' => $userIcon
 		];
 
-		return $users[$userId];
+		return $this->users[$userId];
 	}
 
 	public static function getPreviousPeriod(DateTime $from, DateTime $to)

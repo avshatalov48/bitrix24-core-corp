@@ -16,16 +16,13 @@ use Bitrix\Crm\UtmTable;
 use Bitrix\Main\Application;
 use Bitrix\Main\DB\SqlExpression;
 use Bitrix\Main\Entity\Query;
-use Bitrix\Main\Entity\ReferenceField;
 use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\ORM\Fields\ExpressionField;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\DropDown;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\Hidden;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
 use Bitrix\Report\VisualConstructor\IReportMultipleGroupedData;
 use Bitrix\Report\VisualConstructor\IReportSingleData;
-
 
 /**
  * Class Lead
@@ -44,15 +41,12 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	const WHAT_WILL_CALCULATE_LEAD_DATA_FOR_FUNNEL = 'LEAD_DATA_FOR_FUNNEL';
 	const WHAT_WILL_CALCULATE_SUCCESS_LEAD_DATA_FOR_FUNNEL = 'SUCCESS_LEAD_DATA_FOR_FUNNEL';
 
-
 	const GROUPING_BY_STATE = 'STATE';
 	const GROUPING_BY_DATE = 'DATE';
 	const GROUPING_BY_SOURCE = 'SOURCE';
 	const GROUPING_BY_RESPONSIBLE = 'RESPONSIBLE';
 
-
 	const FILTER_FIELDS_PREFIX = 'FROM_LEAD_';
-
 
 	const STATUS_DEFAULT_COLORS = [
 		'DEFAULT_COLOR' => '#ACE9FB',
@@ -60,6 +54,10 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		'DEFAULT_FINAL_UN_SUCCESS_COLOR' => '#FFBEBD',
 		'DEFAULT_LINE_COLOR' => '#ACE9FB',
 	];
+
+	private array $statusesList = [];
+	private string $leadUnSuccessStatusName = '';
+	private ?int $leadAmountCount = null;
 
 	public function __construct()
 	{
@@ -539,20 +537,22 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		return $successSpentTime;
 	}
 
-	private function getLeadAmountCount()
+	private function getLeadAmountCount(): int
 	{
-		static $result;
-		if (!$result)
+		if (isset($this->leadAmountCount))
 		{
-			$query = new Query(LeadTable::getEntity());
-			$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('COUNT', 'COUNT(DISTINCT %s)', 'FULL_HISTORY.OWNER_ID'));
-			$this->addToQueryFilterCase($query);
-			$this->addPermissionsCheck($query);
-			$result = $query->exec()->fetchAll();
-			$result = !empty($result[0]['COUNT']) ? $result[0]['COUNT'] : 0;
+			return $this->leadAmountCount;
 		}
 
-		return $result;
+		$query = new Query(LeadTable::getEntity());
+		$query->addSelect(new \Bitrix\Main\Entity\ExpressionField('COUNT', 'COUNT(DISTINCT %s)', 'FULL_HISTORY.OWNER_ID'));
+		$this->addToQueryFilterCase($query);
+		$this->addPermissionsCheck($query);
+		$result = $query->exec()->fetchAll();
+
+		$this->leadAmountCount = empty($result[0]['COUNT']) ? 0 : (int)$result[0]['COUNT'];
+
+		return $this->leadAmountCount;
 	}
 
 	private function getLeadAmountCountByResponsible()
@@ -815,22 +815,22 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 	/**
 	 * @return array
+	 *
 	 * @throws \Bitrix\Main\ArgumentException
 	 * @throws \Bitrix\Main\ObjectPropertyException
 	 * @throws \Bitrix\Main\SystemException
 	 */
-	private function getStatusList()
+	private function getStatusList(): array
 	{
-		static $result = null;
-		if ($result !== null)
+		if (empty($this->statusList))
 		{
-			return $result;
-		}
-		$result = \CCrmStatus::GetStatus('STATUS');
-		$result = \Bitrix\Crm\Color\PhaseColorScheme::fillDefaultColors($result);
-		return $result;
-	}
+			$result = \CCrmStatus::GetStatus('STATUS');
 
+			$this->statusesList = \Bitrix\Crm\Color\PhaseColorScheme::fillDefaultColors($result);
+		}
+
+		return $this->statusesList;
+	}
 
 	/**
 	 * @return array
@@ -848,20 +848,19 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	}
 
 	/**
-	 * @return mixed
+	 * @return string
 	 */
-	private function getLeadUnSuccessStatusName()
+	private function getLeadUnSuccessStatusName(): string
 	{
-		static $unSuccessStatusName;
-		if (!$unSuccessStatusName)
+		if (empty($this->leadUnSuccessStatusName))
 		{
 			$statusSemanticInfo = \CCrmStatus::GetLeadStatusSemanticInfo();
-			$unSuccessStatusName = $statusSemanticInfo['FINAL_UNSUCCESS_FIELD'];
+
+			$this->leadUnSuccessStatusName = $statusSemanticInfo['FINAL_UNSUCCESS_FIELD'];
 		}
 
-		return $unSuccessStatusName;
+		return $this->leadUnSuccessStatusName;
 	}
-
 
 	/**
 	 * array with format
@@ -1306,7 +1305,7 @@ class Lead extends Base implements IReportSingleData, IReportMultipleData, IRepo
 	 */
 	public function isEnabled()
 	{
-		if (!\Bitrix\Crm\Settings\LeadSettings::isEnabled())
+		if (!LeadSettings::isEnabled())
 		{
 			return false;
 		}

@@ -58,6 +58,8 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 		'DEFAULT_LINE_COLOR' => '#ACE9FB',
 	];
 
+	private $permissionEntity = null;
+
 	abstract protected function formatData(array $data = []): array;
 
 	public function __construct()
@@ -488,30 +490,15 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 	private function addPermissionsCheck(Query $query)
 	{
 		global $USER;
-		static $permissionEntity;
 
 		if (is_object($USER) && $USER->IsAdmin())
 		{
 			return;
 		}
 
-		$permissionSql = \CCrmPerms::BuildSql(
-			\CCrmOwnerType::OrderName,
-			'',
-			'READ',
-			array('RAW_QUERY' => true, 'PERMS'=> \CCrmPerms::GetCurrentUserPermissions())
-		);
-
-		if ($permissionSql)
+		$permissionEntity = $this->getPermissionEntity();
+		if (isset($permissionEntity))
 		{
-			if (!$permissionEntity)
-			{
-				$permissionEntity = \Bitrix\Main\Entity\Base::compileEntity(
-					'order_user_perms',
-					['ENTITY_ID' => ['data_type' => 'integer']],
-					['table_name' => "({$permissionSql})"]
-				);
-			}
 
 			$query->registerRuntimeField(
 				'',
@@ -735,5 +722,31 @@ abstract class BaseGrid extends Handler\Base implements IReportSingleData, IRepo
 		}
 
 		return $conversionStatuses;
+	}
+
+	private function getPermissionEntity()
+	{
+		if (isset($this->permissionEntity))
+		{
+			return $this->permissionEntity;
+		}
+
+		$permissionSql = \CCrmPerms::BuildSql(
+			\CCrmOwnerType::OrderName,
+			'',
+			'READ',
+			['RAW_QUERY' => true, 'PERMS'=> \CCrmPerms::GetCurrentUserPermissions()]
+		);
+
+		if ($permissionSql)
+		{
+			$this->permissionEntity = \Bitrix\Main\Entity\Base::compileEntity(
+				'order_user_perms',
+				['ENTITY_ID' => ['data_type' => 'integer']],
+				['table_name' => "({$permissionSql})"]
+			);
+		}
+
+		return $this->permissionEntity;
 	}
 }

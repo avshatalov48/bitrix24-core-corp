@@ -122,18 +122,37 @@ class CLDAP
 		ldap_close($this->conn);
 	}
 
+	/**
+	 * @return array
+	 */
 	public function RootDSE()
 	{
 		$values = $this->_RootDSE('namingcontexts');
-		if ($values == false)
+		if (!$values)
+		{
 			$values = $this->_RootDSE('namingContexts');
+		}
+
+		if (!$values)
+		{
+			return [];
+		}
+
 		return $this->WorkAttr($values);
 	}
 
+	/**
+	 * @param string $filtr
+	 * @return array|false
+	 */
 	public function _RootDSE($filtr)
 	{
 		$sr = ldap_read($this->conn, '', 'objectClass=*', Array($filtr), 0);
-		//$sr = ldap_read($this->conn, '', 'objectClass=*');
+		if ($sr === false)
+		{
+			return false;
+		}
+
 		$entry = ldap_first_entry($this->conn, $sr);
 
 		$attributes = ldap_get_attributes($this->conn, $entry);
@@ -196,16 +215,43 @@ class CLDAP
 
 			do
 			{
-				if(CLdapUtil::isLdapPaginationAviable())
-					ldap_control_paged_result($this->conn, $pageSize, false, $cookie);
-
-				if($fields === false)
-					$sr = @ldap_search($this->conn, $BaseDN, $str);
-				else
-					$sr = @ldap_search($this->conn, $BaseDN, $str, $fields);
-
-				if($sr)
+				$searchAttributes = is_array($fields) ? $fields : [];
+				$searchControls = null;
+				if (CLdapUtil::isLdapPaginationAviable())
 				{
+					$searchControls = [
+						['oid' => LDAP_CONTROL_PAGEDRESULTS, 'value' => ['size' => $pageSize, 'cookie' => $cookie]],
+					];
+				}
+
+				$sr = @ldap_search(
+					$this->conn,
+					$BaseDN,
+					$str,
+					$searchAttributes,
+					0,
+					-1,
+					-1,
+					LDAP_DEREF_NEVER,
+					$searchControls
+				);
+
+				if ($sr)
+				{
+					if (CLdapUtil::isLdapPaginationAviable())
+					{
+						ldap_parse_result(
+							$this->conn,
+							$sr,
+							$error_code,
+							$matched_dn,
+							$error_message,
+							$referrals,
+							$controls
+						);
+						$cookie = $controls[LDAP_CONTROL_PAGEDRESULTS]['value']['cookie'] ?? '';
+					}
+
 					$entry = ldap_first_entry($this->conn, $sr);
 
 					if($entry)
@@ -242,9 +288,6 @@ class CLDAP
 						}
 						while($entry = ldap_next_entry($this->conn, $entry));
 					}
-
-					if(CLdapUtil::isLdapPaginationAviable())
-						@ldap_control_paged_result_response($this->conn, $sr, $cookie);
 				}
 				elseif($sr === false)
 				{

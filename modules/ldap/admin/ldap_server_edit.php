@@ -166,7 +166,7 @@ if($_SERVER['REQUEST_METHOD'] == "POST" && ($save <> '' || $apply <> '') && $MOD
 	}
 }
 
-if($_REQUEST['check_server'] <> '' || $_REQUEST['refresh_groups'] <> '')
+if($_REQUEST['check_server'] <> '' || $_REQUEST['refresh_groups'] <> '' || $_REQUEST['more_groups'] <> '')
 	$bPostback = true;
 
 $ldp = false;
@@ -354,7 +354,7 @@ if($bPostback)
 			)
 		);
 	}
-	elseif($_REQUEST['refresh_groups'] == '')
+	elseif($_REQUEST['refresh_groups'] == '' && $_REQUEST['more_groups'] == '')
 	{
 		$message = new CAdminMessage(Array("MESSAGE" => GetMessage("LDAP_EDIT_OK_CON"), "TYPE"=>"OK"));
 	}

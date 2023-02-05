@@ -47,7 +47,7 @@ Class ldap extends CModule
 	
 	function InstallDB($arParams = array())
 	{
-		global $DB, $DBType, $APPLICATION;
+		global $DB, $APPLICATION;
 		$this->errors = array();
 		if ($this->CheckLDAP())
 		{
@@ -55,7 +55,7 @@ Class ldap extends CModule
 			
 			if(!$DB->Query("SELECT 'x' FROM b_ldap_server WHERE 1=0", true))
 			{
-				$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/".$DBType."/install.sql");
+				$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/mysql/install.sql");
 			}
 			
 			if (is_array($errors))
@@ -83,11 +83,11 @@ Class ldap extends CModule
 	
 	function UnInstallDB($arParams = array())
 	{
-		global $DB, $APPLICATION, $DBType;
+		global $DB, $APPLICATION;
 		$errors = false;
 		if($arParams['savedata']!="Y")
 		{
-			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/".$DBType."/uninstall.sql");
+			$errors = $DB->RunSQLBatch($_SERVER['DOCUMENT_ROOT']."/bitrix/modules/ldap/install/db/mysql/uninstall.sql");
 			if (!is_array($errors))
 				COption::RemoveOption('ldap');
 		}
@@ -207,7 +207,7 @@ Class ldap extends CModule
 
 	function DoInstall()
 	{
-		global $DB, $DBType, $DOCUMENT_ROOT, $APPLICATION;
+		global $DB, $DOCUMENT_ROOT, $APPLICATION;
 		$APPLICATION->ResetException();
 		if ($this->InstallDB())
 		{
@@ -219,7 +219,7 @@ Class ldap extends CModule
 
 	function DoUninstall()
 	{
-		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step, $DBType;
+		global $DB, $DOCUMENT_ROOT, $APPLICATION, $step;
 		$step = intval($step);
 		if($step<2)
 			$APPLICATION->IncludeAdminFile(Loc::getMessage("LDAP_UNINSTALL_TITLE"), $DOCUMENT_ROOT."/bitrix/modules/ldap/install/unstep1.php");

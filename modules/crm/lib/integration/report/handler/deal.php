@@ -20,7 +20,6 @@ use Bitrix\Main\Localization\Loc;
 use Bitrix\Main\Type\Date;
 use Bitrix\Main\Type\DateTime;
 use Bitrix\Main\UI\Filter\DateType;
-use Bitrix\Main\Web\Uri;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\DropDown;
 use Bitrix\Report\VisualConstructor\Fields\Valuable\Hidden;
 use Bitrix\Report\VisualConstructor\IReportMultipleData;
@@ -35,7 +34,6 @@ use Bitrix\Report\VisualConstructor\Views\JsComponent\AmChart\LinearGraph;
  */
 class Deal extends Base implements IReportSingleData, IReportMultipleData, IReportMultipleGroupedData
 {
-
 	const WHAT_WILL_CALCULATE_DEAL_COUNT = 'DEAL_COUNT';
 	const WHAT_WILL_CALCULATE_DEAL_SUM = 'DEAL_SUM';
 	const WHAT_WILL_CALCULATE_DEAL_WON_COUNT = 'DEAL_WON_COUNT';
@@ -70,6 +68,9 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 		'DEFAULT_FINAL_UN_SUCCESS_COLOR' => '#FFBEBD',
 		'DEFAULT_LINE_COLOR' => '#ACE9FB',
 	];
+
+	private array $stageList = [];
+    private array $stageColorList = [];
 
 	public function __construct()
 	{
@@ -1172,52 +1173,50 @@ class Deal extends Base implements IReportSingleData, IReportMultipleData, IRepo
 
 	private function getStageColorList($entityId)
 	{
-		static $result = [];
-		if (!empty($result[$entityId]))
+		if (!empty($this->stageColorList[$entityId]))
 		{
-			return $result[$entityId];
+			return $this->stageColorList[$entityId];
 		}
 
 		$stageInfos = DealCategory::getStageInfos(DealCategory::convertFromStatusEntityID($entityId));
-		$result[$entityId] = array_column($stageInfos, 'COLOR', 'STATUS_ID');
 
-		return $result[$entityId];
+		$this->stageColorList[$entityId] = array_column($stageInfos, 'COLOR', 'STATUS_ID');
+
+		return $this->stageColorList[$entityId];
 	}
 
-	private function getStageList()
+	private function getStageList(): array
 	{
-		static $stageList = [];
-		if (!empty($stageList))
+		if (empty($this->stageList))
 		{
-			return $stageList;
-		}
-
-		$filterParameters = $this->getFilterParameters();
-		$categories = [];
-		if (!isset($filterParameters['CATEGORY_ID']['value']))
-		{
-			$categories[] = 0;
-		}
-		else
-		{
-			$categories[] = $filterParameters['CATEGORY_ID']['value'];
-		}
-
-		foreach ($categories as $category)
-		{
-			$stageListByCategory = DealCategory::getStageList($category);
-			$entityId = $category == 0 ? 'DEAL_STAGE' : 'DEAL_STAGE_'.$category;
-			foreach ($stageListByCategory as $stageId => $name)
+			$filterParameters = $this->getFilterParameters();
+			$categories = [];
+			if (!isset($filterParameters['CATEGORY_ID']['value']))
 			{
-				$stageList[$stageId] = [
-					'NAME' => $name,
-					'STATUS_ID' => $stageId,
-					'ENTITY_ID' => $entityId
-				];
+				$categories[] = 0;
+			}
+			else
+			{
+				$categories[] = $filterParameters['CATEGORY_ID']['value'];
+			}
+
+			foreach ($categories as $category)
+			{
+				$stageListByCategory = DealCategory::getStageList($category);
+				$entityId = $category == 0 ? 'DEAL_STAGE' : 'DEAL_STAGE_' . $category;
+
+				foreach ($stageListByCategory as $stageId => $name)
+				{
+					$this->stageList[$stageId] = [
+						'NAME' => $name,
+						'STATUS_ID' => $stageId,
+						'ENTITY_ID' => $entityId
+					];
+				}
 			}
 		}
 
-		return $stageList;
+		return $this->stageList;
 	}
 
 	private function getSourceNameList()

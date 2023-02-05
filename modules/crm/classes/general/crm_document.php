@@ -968,7 +968,7 @@ class CCrmDocument
 							//skip empty crm entity references
 							$value = null;
 						}
-						elseif ($value !== null && array_key_exists("CheckFields", $arCustomType))
+						elseif ($value !== null && $arCustomType && array_key_exists("CheckFields", $arCustomType))
 						{
 							$arErrorsTmp1 = call_user_func_array(
 								$arCustomType["CheckFields"],

@@ -15,6 +15,7 @@ use Bitrix\Main\Entity\ReferenceField;
 
 abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 {
+	private $permissionSql = null;
 	public function getSearchResult(string $searchQuery): Result
 	{
 		$result = new Result();
@@ -279,15 +280,13 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 
 	protected function getPermissionSql()
 	{
-		static $permissionSql;
-
-		if ($permissionSql === null)
+		if ($this->permissionSql === null)
 		{
-			$permissionSql = '';
+			$this->permissionSql = '';
 
 			if (!\CCrmPerms::IsAdmin($this->userId))
 			{
-				$permissionSql = \CCrmPerms::BuildSqlForEntitySet(
+				$this->permissionSql = \CCrmPerms::BuildSqlForEntitySet(
 					$this->getPermissionEntityTypes(),
 					'',
 					'READ',
@@ -299,7 +298,7 @@ abstract class IndexSupportedProvider extends \Bitrix\Crm\Search\Result\Provider
 			}
 		}
 
-		return $permissionSql;
+		return $this->permissionSql;
 	}
 
 	protected function isShortIndexSupported(): bool

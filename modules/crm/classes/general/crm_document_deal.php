@@ -734,6 +734,10 @@ class CCrmDocumentDeal extends CCrmDocument implements IBPWorkflowDocument
 				}
 				unset($value);
 			}
+			elseif ($documentFields[$key]['Type'] === 'string' && is_array($fields[$key]))
+			{
+				$fields[$key] = \CBPHelper::makeArrayFlat($fields[$key]);
+			}
 
 			if (!$documentFields[$key]['Multiple'] && is_array($fields[$key]))
 			{

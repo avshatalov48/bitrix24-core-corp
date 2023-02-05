@@ -33,10 +33,8 @@ class CBPCrmResourceBooking extends CBPActivity
 		}
 
 		$name = $this->ResourceName;
-		$start = $this->ResourceStart;
+		$start = $this->getResourceStart();
 		$duration = (int) $this->ResourceDuration;
-
-		$start = $start ? Main\Type\DateTime::createFromUserTime($start) : null;
 
 		$fieldId = $this->ResourceField;
 
@@ -240,5 +238,20 @@ class CBPCrmResourceBooking extends CBPActivity
 				'Default' => \Bitrix\Bizproc\Automation\Helper::getResponsibleUserExpression($documentType),
 			),
 		];
+	}
+
+	/**
+	 * @return mixed|null
+	 */
+	private function getResourceStart()
+	{
+		$start = $this->ResourceStart;
+
+		if (is_array($start))
+		{
+			$start = current(\CBPHelper::makeArrayFlat($start));
+		}
+
+		return $start ? Main\Type\DateTime::createFromUserTime((string)$start) : null;
 	}
 }

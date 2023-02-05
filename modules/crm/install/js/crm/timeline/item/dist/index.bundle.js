@@ -2697,8 +2697,8 @@ this.BX.Crm = this.BX.Crm || {};
 	  }, {
 	    key: "getCreatedDate",
 	    value: function getCreatedDate() {
-	      const serverTimezoneDate = babelHelpers.classPrivateFieldGet(this, _timestamp) ? new Date(babelHelpers.classPrivateFieldGet(this, _timestamp) * 1000) : new Date();
-	      return BX.prop.extractDate(new crm_timeline_tools.DatetimeConverter(serverTimezoneDate).toUserTime().getValue());
+	      const timestamp = babelHelpers.classPrivateFieldGet(this, _timestamp) ? babelHelpers.classPrivateFieldGet(this, _timestamp) : Date.now() / 1000;
+	      return BX.prop.extractDate(crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(timestamp).toUserTime().getValue());
 	    }
 	  }, {
 	    key: "getSourceId",
@@ -2729,7 +2729,7 @@ this.BX.Crm = this.BX.Crm || {};
 	        return null;
 	      }
 
-	      return new crm_timeline_tools.DatetimeConverter(new Date(babelHelpers.classPrivateFieldGet(this, _timestamp) * 1000)).toUserTime().getValue();
+	      return crm_timeline_tools.DatetimeConverter.createFromServerTimestamp(babelHelpers.classPrivateFieldGet(this, _timestamp)).toUserTime().getValue();
 	    }
 	  }, {
 	    key: "getSort",
